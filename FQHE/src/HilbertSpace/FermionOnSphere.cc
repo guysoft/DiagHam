@@ -59,6 +59,7 @@ using std::ios;
 
 FermionOnSphere::FermionOnSphere()
 {
+  this->LookUpTableShift = 0;
 }
 
 // basic constructor
@@ -464,8 +465,8 @@ int FermionOnSphere::AdAdAA (int index, int m1, int m2, int n1, int n2, double& 
 {
   int StateLzMax = this->StateLzMax[index];
   unsigned long State = this->StateDescription[index];
-  if ((n1 > StateLzMax) || (n2 > StateLzMax) || ((State & (0x1ul << n1)) == 0) 
-      || ((State & (0x1ul << n2)) == 0) || (n1 == n2) || (m1 == m2))
+  if ((n1 > StateLzMax) || (n2 > StateLzMax) || ((State & (0x1ul << n1)) == 0x0ul) 
+      || ((State & (0x1ul << n2)) == 0x0ul) || (n1 == n2) || (m1 == m2))
     {
       coefficient = 0.0;
       return this->TargetSpace->HilbertSpaceDimension;
@@ -550,8 +551,8 @@ int FermionOnSphere::AdAdAASafe (int index, int m1, int m2, int n1, int n2, doub
 {
   int StateLzMax = this->StateLzMax[index];
   unsigned long State = this->StateDescription[index];
-  if ((n1 > StateLzMax) || (n2 > StateLzMax) || ((State & (0x1ul << n1)) == 0) 
-      || ((State & (0x1ul << n2)) == 0) || (n1 == n2) || (m1 == m2))
+  if ((n1 > StateLzMax) || (n2 > StateLzMax) || ((State & (0x1ul << n1)) == 0x0ul) 
+      || ((State & (0x1ul << n2)) == 0x0ul) || (n1 == n2) || (m1 == m2))
     {
       coefficient = 0.0;
       return this->TargetSpace->HilbertSpaceDimension;
@@ -638,7 +639,7 @@ int FermionOnSphere::ProdAdProdA (int index, int* m, int* n, int nbrIndices, dou
   --nbrIndices;
   for (int i = 0; i < nbrIndices; ++i)
     {
-      if ((n[i] > StateLzMax) || ((State & (((unsigned long) (0x1)) << n[i])) == 0))
+      if ((n[i] > StateLzMax) || ((State & (0x1ul << n[i])) == 0x0ul))
 	{
 	  coefficient = 0.0;
 	  return this->TargetSpace->HilbertSpaceDimension;
@@ -670,7 +671,7 @@ int FermionOnSphere::ProdAdProdA (int index, int* m, int* n, int nbrIndices, dou
       coefficient *= this->SignLookUpTable[(TmpState >> (Index + 32)) & this->SignLookUpTableMask[Index + 32]];
       coefficient *= this->SignLookUpTable[(TmpState >> (Index + 48)) & this->SignLookUpTableMask[Index + 48]];
 #endif
-      TmpState &= ~(((unsigned long) (0x1)) << Index);
+      TmpState &= ~(0x1ul << Index);
       if (NewLzMax == Index)
 	while ((TmpState >> NewLzMax) == 0)
 	  --NewLzMax;
@@ -678,7 +679,7 @@ int FermionOnSphere::ProdAdProdA (int index, int* m, int* n, int nbrIndices, dou
   for (int i = nbrIndices; i >= 0; --i)
     {
       Index = m[i];
-      if ((TmpState & (((unsigned long) (0x1)) << Index))!= 0)
+      if ((TmpState & (0x1ul << Index))!= 0x0ul)
 	{
 	  coefficient = 0.0;
 	  return this->TargetSpace->HilbertSpaceDimension;
@@ -696,7 +697,7 @@ int FermionOnSphere::ProdAdProdA (int index, int* m, int* n, int nbrIndices, dou
 	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 48)) & this->SignLookUpTableMask[Index + 48]];
 #endif
 	}
-      TmpState |= (((unsigned long) (0x1)) << Index);
+      TmpState |= (0x1ul << Index);
     }
   return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
 }
@@ -751,8 +752,8 @@ double FermionOnSphere::AA (int index, int n1, int n2)
 {
   this->ProdATemporaryState = this->StateDescription[index];
 
-  if (((ProdATemporaryState & (((unsigned long) (0x1)) << n1)) == 0) 
-      || ((ProdATemporaryState & (((unsigned long) (0x1)) << n2)) == 0) || (n1 == n2))
+  if (((ProdATemporaryState & (0x1ul << n1)) == 0x0ul) 
+      || ((ProdATemporaryState & (0x1ul << n2)) == 0x0ul) || (n1 == n2))
     return 0.0;
 
   this->ProdALzMax = this->StateLzMax[index];
@@ -763,14 +764,14 @@ double FermionOnSphere::AA (int index, int n1, int n2)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
-  this->ProdATemporaryState &= ~(((unsigned long) (0x1)) << n2);
+  this->ProdATemporaryState &= ~(0x1ul << n2);
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> n1) & this->SignLookUpTableMask[n1]];
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
 #ifdef  __64_BITS__
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
-  this->ProdATemporaryState &= ~(((unsigned long) (0x1)) << n1);
+  this->ProdATemporaryState &= ~(0x1ul << n1);
 
   if (this->ProdATemporaryState == 0x0ul)
     {
@@ -780,6 +781,49 @@ double FermionOnSphere::AA (int index, int n1, int n2)
   while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
     --this->ProdALzMax;
   return Coefficient;
+}
+
+// apply a_n1 a_n2 operator to a given state without keeping it in cache
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphere::AA (int index, int n1, int n2, double& coefficient)
+{
+  unsigned long TmpState = this->StateDescription[index];
+
+  if (((TmpState & (0x1ul << n1)) == 0x0ul) || ((TmpState & (0x1ul << n2)) == 0x0ul) || (n1 == n2))
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+   
+  coefficient = this->SignLookUpTable[(TmpState >> n2) & this->SignLookUpTableMask[n2]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
+#endif
+  TmpState &= ~(0x1ul << n2);
+  coefficient *= this->SignLookUpTable[(TmpState >> n1) & this->SignLookUpTableMask[n1]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
+#endif
+  TmpState &= ~(0x1ul << n1);
+
+  if (TmpState == 0x0ul)
+    {
+      return this->TargetSpace->FindStateIndex(TmpState, 0);      
+    }
+  int TmpLzMax = this->StateLzMax[index];
+  while ((TmpState >> TmpLzMax) == 0x0ul)
+    --TmpLzMax;
+  return this->TargetSpace->FindStateIndex(TmpState, TmpLzMax);
 }
 
 // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
@@ -798,7 +842,7 @@ int FermionOnSphere::ProdAd (int* m, int nbrIndices, double& coefficient)
   for (int i = nbrIndices - 1; i >= 0; --i)
     {
       Index = m[i];
-      if ((TmpState & (0x1l << Index)) != 0)
+      if ((TmpState & (0x1l << Index)) != 0x0ul)
 	{
 	  coefficient = 0.0;
 	  return this->TargetSpace->HilbertSpaceDimension;
@@ -831,7 +875,7 @@ int FermionOnSphere::ProdAd (int* m, int nbrIndices, double& coefficient)
 int FermionOnSphere::AdAd (int m1, int m2, double& coefficient)
 {
   unsigned long TmpState = this->ProdATemporaryState;
-  if ((TmpState & (((unsigned long) (0x1)) << m2))!= 0)
+  if ((TmpState & (0x1ul << m2))!= 0x0ul)
     {
       coefficient = 0.0;
       return this->TargetSpace->HilbertSpaceDimension;
@@ -849,8 +893,8 @@ int FermionOnSphere::AdAd (int m1, int m2, double& coefficient)
       coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) (0x1)) << m2);
-  if ((TmpState & (((unsigned long) (0x1)) << m1))!= 0)
+  TmpState |= (0x1ul << m2);
+  if ((TmpState & (0x1ul << m1))!= 0x0ul)
     {
       coefficient = 0.0;
       return this->TargetSpace->HilbertSpaceDimension;
@@ -866,9 +910,61 @@ int FermionOnSphere::AdAd (int m1, int m2, double& coefficient)
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) (0x1)) << m1);
+  TmpState |= (0x1ul << m1);
   return this->FindStateIndex(TmpState, NewLzMax);
 }
+
+// apply a^+_m1 a^+_m2 operator to the state 
+//
+// index = index of the state on which the operator has to be applied
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphere::AdAd (int index, int m1, int m2, double& coefficient)
+{
+  unsigned long TmpState = this->StateDescription[index];
+  if ((TmpState & (0x1ul << m2))!= 0x0ul)
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  int NewLzMax = this->StateLzMax[index];
+  coefficient = 1.0;
+  if (m2 > NewLzMax)
+    NewLzMax = m2;
+  else
+    {
+      coefficient *= this->SignLookUpTable[(TmpState >> m2) & this->SignLookUpTableMask[m2]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 16))  & this->SignLookUpTableMask[m2 + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 32)) & this->SignLookUpTableMask[m2 + 32]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
+#endif
+    }
+  TmpState |= (0x1ul << m2);
+  if ((TmpState & (0x1ul << m1))!= 0x0ul)
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  if (m1 > NewLzMax)
+    NewLzMax = m1;
+  else
+    {      
+      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
+#endif
+    }
+  TmpState |= (0x1ul << m1);
+  return this->FindStateIndex(TmpState, NewLzMax);
+}
+
+
 
 // apply a^+_m a_m operator to a given state 
 //
@@ -926,7 +1022,7 @@ int FermionOnSphere::AdA (int index, int m, int n, double& coefficient)
 {
   int StateLzMax = this->StateLzMax[index];
   unsigned long State = this->StateDescription[index];
-  if ((n > StateLzMax) || ((State & (((unsigned long) (0x1)) << n)) == 0))
+  if ((n > StateLzMax) || ((State & (0x1ul << n)) == 0))
     {
       coefficient = 0.0;
       return this->TargetSpace->HilbertSpaceDimension;
@@ -939,7 +1035,7 @@ int FermionOnSphere::AdA (int index, int m, int n, double& coefficient)
   coefficient *= this->SignLookUpTable[(TmpState >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
 #endif
-  TmpState &= ~(((unsigned long) (0x1)) << n);
+  TmpState &= ~(0x1ul << n);
   if ((TmpState != 0x0ul))
     {
       while ((TmpState >> NewLzMax) == 0)
@@ -947,7 +1043,7 @@ int FermionOnSphere::AdA (int index, int m, int n, double& coefficient)
     }
   else
     NewLzMax = 0;
-  if ((TmpState & (((unsigned long) (0x1)) << m))!= 0)
+  if ((TmpState & (0x1ul << m))!= 0x0ul)
     {
       coefficient = 0.0;
       return this->TargetSpace->HilbertSpaceDimension;
@@ -965,7 +1061,7 @@ int FermionOnSphere::AdA (int index, int m, int n, double& coefficient)
       coefficient *= this->SignLookUpTable[(TmpState >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) (0x1)) << m);
+  TmpState |= (0x1ul << m);
   return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
 }
 
@@ -981,7 +1077,7 @@ long FermionOnSphere::AdA (long index, int m, int n, double& coefficient)
 {
   int StateLzMax = this->StateLzMax[index];
   unsigned long State = this->StateDescription[index];
-  if ((n > StateLzMax) || ((State & (((unsigned long) (0x1)) << n)) == 0))
+  if ((n > StateLzMax) || ((State & (0x1ul << n)) == 0x0ul))
     {
       coefficient = 0.0;
       return this->LargeHilbertSpaceDimension;
@@ -994,7 +1090,7 @@ long FermionOnSphere::AdA (long index, int m, int n, double& coefficient)
   coefficient *= this->SignLookUpTable[(TmpState >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
 #endif
-  TmpState &= ~(((unsigned long) (0x1)) << n);
+  TmpState &= ~(0x1ul << n);
   if (TmpState != 0x0ul)
     {
       while ((TmpState >> NewLzMax) == 0)
@@ -1002,7 +1098,7 @@ long FermionOnSphere::AdA (long index, int m, int n, double& coefficient)
     }
   else
     NewLzMax = 0;
-  if ((TmpState & (((unsigned long) (0x1)) << m))!= 0)
+  if ((TmpState & (0x1ul << m))!= 0x0ul)
     {
       coefficient = 0.0;
       return this->LargeHilbertSpaceDimension;
@@ -1020,7 +1116,7 @@ long FermionOnSphere::AdA (long index, int m, int n, double& coefficient)
       coefficient *= this->SignLookUpTable[(TmpState >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) (0x1)) << m);
+  TmpState |= (0x1ul << m);
   return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
 }
 
@@ -1031,7 +1127,7 @@ long FermionOnSphere::AdA (long index, int m, int n, double& coefficient)
 // coefficient = reference on the double where the multiplicative factor has to be stored
 unsigned long FermionOnSphere::Ad (unsigned long state, int m, double& coefficient)
 {
-  if ((state & (0x1ul << m)) != 0)
+  if ((state & (0x1ul << m)) != 0x0ul)
     {
       coefficient=0.0;
       return 0x0l;
@@ -1053,10 +1149,10 @@ unsigned long FermionOnSphere::Ad (unsigned long state, int m, double& coefficie
   return state;
 }
 
-// apply a_n1 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdAd call
+// apply a_n  operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad or A call
 //
 // index = index of the state on which the operator has to be applied
-// n1 = first index for annihilation operator
+// n = first index for annihilation operator
 // return value =  multiplicative factor 
 
 double FermionOnSphere::A (int index, int n)
@@ -1064,7 +1160,7 @@ double FermionOnSphere::A (int index, int n)
   this->ProdATemporaryState = this->StateDescription[index];
   int StateLzMax = this->StateLzMax[index];
 
-  if ((n > StateLzMax) || ((this->ProdATemporaryState & (((unsigned long) (0x1)) << n)) == 0))
+  if ((n > StateLzMax) || ((this->ProdATemporaryState & (0x1ul << n)) == 0x0ul))
     return 0.0;
 
   this->ProdALzMax = this->StateLzMax[index];
@@ -1076,47 +1172,110 @@ double FermionOnSphere::A (int index, int n)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
 #endif
   
-  this->ProdATemporaryState &= ~(((unsigned long) (0x1)) << n);
+  this->ProdATemporaryState &= ~(0x1ul << n);
 
   if (this->ProdATemporaryState == 0x0ul)
     {
       this->ProdALzMax = 0;
       return Coefficient;      
     }
-  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
+  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0x0ul)
     --this->ProdALzMax;
   return Coefficient;
 }
 
-
-// apply a^+_m1 operator to the state produced using A method (without destroying it)
+// apply a^+_n1  operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad or A call
 //
-// m1 = index for creation operator
+// index = index of the state on which the operator has to be applied
+// m = index for annihilation operator
+// return value =  multiplicative factor 
+
+double FermionOnSphere::Ad (int index, int m)
+{
+  this->ProdATemporaryState = this->StateDescription[index];
+  int StateLzMax = this->StateLzMax[index];
+
+  if ((this->ProdATemporaryState & (0x1ul << m)) != 0x0ul)
+    return 0.0;
+
+
+  double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> m) & this->SignLookUpTableMask[m]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (m + 16))  & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+  
+  this->ProdATemporaryState |= (0x1ul << m);
+  this->ProdALzMax = this->StateLzMax[index];
+  if (m > this->ProdALzMax)
+    this->ProdALzMax = m;
+  return Coefficient;
+}
+
+// apply a_n operator to the state produced using the A or Ad method (without destroying it)
+//
+// n = first index for creation operator
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int FermionOnSphere::Ad (int m1, double& coefficient)
+int FermionOnSphere::A (int n, double& coefficient)
 {
   unsigned long TmpState = this->ProdATemporaryState;
-    
-  if ((TmpState & (((unsigned long) (0x1)) << m1))!= 0)
+  if ((TmpState & (0x1ul << n))== 0x0ul)
     {
       coefficient = 0.0;
       return this->TargetSpace->HilbertSpaceDimension;
     }
   int NewLzMax = this->ProdALzMax;
-  if (m1 > NewLzMax)
-    NewLzMax = m1;
+  coefficient *= this->SignLookUpTable[(TmpState >> n) & this->SignLookUpTableMask[n]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n + 16))  & this->SignLookUpTableMask[n + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(TmpState >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#endif
+  TmpState &= ~(0x1ul << n);
+
+  if (TmpState == 0x0ul)
+    {
+      NewLzMax = 0;
+    }
+  else
+    {
+      while ((TmpState >> NewLzMax) == 0x0ul)
+	--NewLzMax;
+    }
+  return this->FindStateIndex(TmpState, NewLzMax);
+}
+
+// apply a^+_m operator to the state produced using the A or Ad method (without destroying it)
+//
+// m = index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphere::Ad (int m, double& coefficient)
+{
+  unsigned long TmpState = this->ProdATemporaryState;
+    
+  if ((TmpState & (0x1ul << m))!= 0x0ul)
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  int NewLzMax = this->ProdALzMax;
+  if (m > NewLzMax)
+    NewLzMax = m;
   else
     {      
-      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
+      coefficient *= this->SignLookUpTable[(TmpState >> m) & this->SignLookUpTableMask[m]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 16))  & this->SignLookUpTableMask[m + 16]];
 #ifdef  __64_BITS__
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) (0x1)) << m1);
+  TmpState |= (0x1ul << m);
   return this->FindStateIndex(TmpState, NewLzMax);
 }
 
@@ -1275,7 +1434,7 @@ void FermionOnSphere::GetOccupied(int state, int* orbitals)
   unsigned long TmpState = this->StateDescription[state];
   int i = 0;
   for (int l = 0; l < this->NbrLzValue; ++l)
-      if ((TmpState >> l) & ((unsigned long) 0x1l))
+      if ((TmpState >> l) & 0x1ul)
           orbitals[i++] = l;
 }
 
@@ -1289,7 +1448,7 @@ ostream& FermionOnSphere::PrintState (ostream& Str, int state)
 {
   unsigned long TmpState = this->StateDescription[state];
   for (int i = 0; i < this->NbrLzValue; ++i)
-    Str << ((TmpState >> i) & ((unsigned long) 0x1)) << " ";
+    Str << ((TmpState >> i) & 0x1ul) << " ";
 //  Str << " key = " << this->Keys[state] << " lzmax position = " << this->LzMaxPosition[Max * (this->NbrFermions + 1) + TmpState[Max]]
 //  Str << " position = " << this->FindStateIndex(TmpState, this->StateLzMax[state]);
 //  if (state !=  this->FindStateIndex(TmpState, this->StateLzMax[state]))
@@ -1357,7 +1516,7 @@ int FermionOnSphere::GenerateStates(int nbrFermions, int lzMax, int currentLzMax
     return pos;
   if ((nbrFermions == 1) && (currentLzMax >= totalLz))
     {
-      this->StateDescription[pos] = ((unsigned long) 0x1) << totalLz;
+      this->StateDescription[pos] = 0x1ul << totalLz;
       this->StateLzMax[pos] = lzMax;
       return pos + 1;
     }
@@ -1365,7 +1524,7 @@ int FermionOnSphere::GenerateStates(int nbrFermions, int lzMax, int currentLzMax
     {
       unsigned long Mask = 0;
       for (int i = currentLzMax - nbrFermions + 1; i <= currentLzMax; ++i)
-	Mask |= (((unsigned long) 1) << i);
+	Mask |= (0x1ul << i);
       this->StateDescription[pos] = Mask;
       this->StateLzMax[pos] = lzMax;
       return pos + 1;
@@ -1373,7 +1532,7 @@ int FermionOnSphere::GenerateStates(int nbrFermions, int lzMax, int currentLzMax
 
   int ReducedCurrentLzMax = currentLzMax - 1;
   int TmpPos = this->GenerateStates(nbrFermions - 1, lzMax, ReducedCurrentLzMax, totalLz - currentLzMax, pos);
-  unsigned long Mask = ((unsigned long) 1) << currentLzMax;
+  unsigned long Mask = 0x1ul << currentLzMax;
   for (int i = pos; i < TmpPos; i++)
     this->StateDescription[i] |= Mask;
   if (lzMax == currentLzMax)
@@ -1497,19 +1656,19 @@ void FermionOnSphere::GenerateSignLookUpTable()
 #ifdef __64_BITS__
   this->SignLookUpTableMask = new unsigned long [128];
   for (int i = 0; i < 48; ++i)
-    this->SignLookUpTableMask[i] = (unsigned long) 0xffff;
+    this->SignLookUpTableMask[i] = 0xfffful;
   for (int i = 48; i < 64; ++i)
-    this->SignLookUpTableMask[i] = ((unsigned long) 0xffff) >> (i - 48);
+    this->SignLookUpTableMask[i] = 0xfffful >> (i - 48);
   for (int i = 64; i < 128; ++i)
-    this->SignLookUpTableMask[i] = (unsigned long) 0;
+    this->SignLookUpTableMask[i] = 0x0ul;
 #else
   this->SignLookUpTableMask = new unsigned long [64];
   for (int i = 0; i < 16; ++i)
-    this->SignLookUpTableMask[i] = (unsigned long) 0xffff;
+    this->SignLookUpTableMask[i] = 0xfffful;
   for (int i = 16; i < 32; ++i)
-    this->SignLookUpTableMask[i] = ((unsigned long) 0xffff) >> (i - 16);
+    this->SignLookUpTableMask[i] = 0xfffful >> (i - 16);
   for (int i = 32; i < 64; ++i)
-    this->SignLookUpTableMask[i] = (unsigned long) 0;
+    this->SignLookUpTableMask[i] = 0x0ul;
 #endif
 }
 
@@ -1637,7 +1796,7 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
       MaxNorm = 1.0;
       while (Pos < this->NbrFermions)
 	{
-	  if ((TmpStateDescription & ((unsigned long) 1)) == ((unsigned long) 1))
+	  if ((TmpStateDescription & 0x1ul) == 0x1ul)
 	    {
 	      Indices[Pos] = Lz;
 	      ++Pos;
@@ -1738,7 +1897,7 @@ void FermionOnSphere::EvaluateWaveFunctions (RealVector* states, int nbrStates, 
       MaxNorm = 1.0;
       while (Pos < this->NbrFermions)
 	{
-	  if ((TmpStateDescription & ((unsigned long) 1)) == ((unsigned long) 1))
+	  if ((TmpStateDescription & 0x1ul) == 0x1ul)
 	    {
 	      Indices[Pos] = Lz;
 	      ++Pos;
@@ -1912,37 +2071,37 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrix (int subsytem
 	  ++TmpIndex;
 	  while ((TmpIndex <= MaxIndex) && ((this->StateDescription[TmpIndex] & TmpMask) == TmpComplementarySubsystem))
 	    ++TmpIndex;
-	  TmpPartialNbrOne = TmpNbrOne[TmpComplementarySubsystem & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[TmpComplementarySubsystem & 0xfful];
 	  TmpNbrFermions = TmpPartialNbrOne;
-	  TmpTotalLz = TmpSumOccupation[TmpComplementarySubsystem & 0xffl];
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 8) & 0xffl];
+	  TmpTotalLz = TmpSumOccupation[TmpComplementarySubsystem & 0xfful];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 8) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 8) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 8) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne << 3;
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 16) & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 16) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 16) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 16) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne << 4;
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 24) & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 24) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 24) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 24) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne * 24;
 #ifdef  __64_BITS__
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 32) & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 32) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 32) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 32) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne << 5;
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 40) & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 40) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 40) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 40) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne * 40;
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 48) & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 48) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 48) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 48) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne * 48;
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 56) & 0xffl];      
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 56) & 0xfful];      
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 56) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 56) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne * 56;
 #endif
 	  if ((TmpNbrFermions == NbrFermionsComplementarySector) && (ShiftedLzComplementarySector == TmpTotalLz))
@@ -2114,37 +2273,37 @@ HermitianMatrix FermionOnSphere::EvaluatePartialDensityMatrix (int subsytemSize,
 	  ++TmpIndex;
 	  while ((TmpIndex <= MaxIndex) && ((this->StateDescription[TmpIndex] & TmpMask) == TmpComplementarySubsystem))
 	    ++TmpIndex;
-	  TmpPartialNbrOne = TmpNbrOne[TmpComplementarySubsystem & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[TmpComplementarySubsystem & 0xfful];
 	  TmpNbrFermions = TmpPartialNbrOne;
-	  TmpTotalLz = TmpSumOccupation[TmpComplementarySubsystem & 0xffl];
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 8) & 0xffl];
+	  TmpTotalLz = TmpSumOccupation[TmpComplementarySubsystem & 0xfful];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 8) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 8) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 8) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne << 3;
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 16) & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 16) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 16) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 16) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne << 4;
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 24) & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 24) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 24) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 24) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne * 24;
 #ifdef  __64_BITS__
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 32) & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 32) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 32) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 32) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne << 5;
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 40) & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 40) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 40) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 40) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne * 40;
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 48) & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 48) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 48) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 48) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne * 48;
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 56) & 0xffl];      
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 56) & 0xfful];      
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 56) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 56) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne * 56;
 #endif
 	  if ((TmpNbrFermions == NbrFermionsComplementarySector) && (ShiftedLzComplementarySector == TmpTotalLz))
@@ -2523,37 +2682,37 @@ RealSymmetricMatrix  FermionOnSphere::EvaluateShiftedPartialDensityMatrix (int s
 	  ++TmpIndex;
 	  while ((TmpIndex <= MaxIndex) && ((this->StateDescription[TmpIndex] & TmpMask) == TmpComplementarySubsystem))
 	    ++TmpIndex;
-	  TmpPartialNbrOne = TmpNbrOne[TmpComplementarySubsystem & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[TmpComplementarySubsystem & 0xfful];
 	  TmpNbrFermions = TmpPartialNbrOne;
-	  TmpTotalLz = TmpSumOccupation[TmpComplementarySubsystem & 0xffl];
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 8) & 0xffl];
+	  TmpTotalLz = TmpSumOccupation[TmpComplementarySubsystem & 0xfful];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 8) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 8) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 8) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne << 3;
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 16) & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 16) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 16) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 16) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne << 4;
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 24) & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 24) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 24) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 24) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne * 24;
 #ifdef  __64_BITS__
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 32) & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 32) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 32) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 32) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne << 5;
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 40) & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 40) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 40) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 40) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne * 40;
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 48) & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 48) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 48) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 48) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne * 48;
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 56) & 0xffl];      
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 56) & 0xfful];      
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 56) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 56) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne * 56;
 #endif
 	  if ((TmpNbrFermions == NbrFermionsComplementarySector) && (ShiftedLzComplementarySector == TmpTotalLz))
@@ -2724,37 +2883,37 @@ RealVector& FermionOnSphere::EvaluatePartialSchmidtDecomposition(int subsytemSiz
 	  ++TmpIndex;
 	  while ((TmpIndex <= MaxIndex) && ((this->StateDescription[TmpIndex] & TmpMask) == TmpComplementarySubsystem))
 	    ++TmpIndex;
-	  TmpPartialNbrOne = TmpNbrOne[TmpComplementarySubsystem & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[TmpComplementarySubsystem & 0xfful];
 	  TmpNbrFermions = TmpPartialNbrOne;
-	  TmpTotalLz = TmpSumOccupation[TmpComplementarySubsystem & 0xffl];
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 8) & 0xffl];
+	  TmpTotalLz = TmpSumOccupation[TmpComplementarySubsystem & 0xfful];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 8) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 8) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 8) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne << 3;
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 16) & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 16) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 16) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 16) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne << 4;
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 24) & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 24) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 24) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 24) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne * 24;
 #ifdef  __64_BITS__
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 32) & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 32) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 32) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 32) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne << 5;
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 40) & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 40) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 40) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 40) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne * 40;
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 48) & 0xffl];
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 48) & 0xfful];
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 48) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 48) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne * 48;
-	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 56) & 0xffl];      
+	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 56) & 0xfful];      
 	  TmpNbrFermions += TmpPartialNbrOne;
-	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 56) & 0xffl];
+	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 56) & 0xfful];
 	  TmpTotalLz += TmpPartialNbrOne * 56;
 #endif
 	  if ((TmpNbrFermions == NbrFermionsComplementarySector) && (ShiftedLzComplementarySector == TmpTotalLz))
@@ -3666,37 +3825,37 @@ RealVector& FermionOnSphere::EvaluatePartialSchmidtDecompositionParticlePartitio
 // 	  ++TmpIndex;
 // 	  while ((TmpIndex <= MaxIndex) && ((this->StateDescription[TmpIndex] & TmpMask) == TmpComplementarySubsystem))
 // 	    ++TmpIndex;
-// 	  TmpPartialNbrOne = TmpNbrOne[TmpComplementarySubsystem & 0xffl];
+// 	  TmpPartialNbrOne = TmpNbrOne[TmpComplementarySubsystem & 0xfful];
 // 	  TmpNbrFermions = TmpPartialNbrOne;
-// 	  TmpTotalLz = TmpSumOccupation[TmpComplementarySubsystem & 0xffl];
-// 	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 8) & 0xffl];
+// 	  TmpTotalLz = TmpSumOccupation[TmpComplementarySubsystem & 0xfful];
+// 	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 8) & 0xfful];
 // 	  TmpNbrFermions += TmpPartialNbrOne;
-// 	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 8) & 0xffl];
+// 	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 8) & 0xfful];
 // 	  TmpTotalLz += TmpPartialNbrOne << 3;
-// 	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 16) & 0xffl];
+// 	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 16) & 0xfful];
 // 	  TmpNbrFermions += TmpPartialNbrOne;
-// 	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 16) & 0xffl];
+// 	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 16) & 0xfful];
 // 	  TmpTotalLz += TmpPartialNbrOne << 4;
-// 	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 24) & 0xffl];
+// 	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 24) & 0xfful];
 // 	  TmpNbrFermions += TmpPartialNbrOne;
-// 	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 24) & 0xffl];
+// 	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 24) & 0xfful];
 // 	  TmpTotalLz += TmpPartialNbrOne * 24;
 // #ifdef  __64_BITS__
-// 	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 32) & 0xffl];
+// 	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 32) & 0xfful];
 // 	  TmpNbrFermions += TmpPartialNbrOne;
-// 	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 32) & 0xffl];
+// 	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 32) & 0xfful];
 // 	  TmpTotalLz += TmpPartialNbrOne << 5;
-// 	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 40) & 0xffl];
+// 	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 40) & 0xfful];
 // 	  TmpNbrFermions += TmpPartialNbrOne;
-// 	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 40) & 0xffl];
+// 	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 40) & 0xfful];
 // 	  TmpTotalLz += TmpPartialNbrOne * 40;
-// 	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 48) & 0xffl];
+// 	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 48) & 0xfful];
 // 	  TmpNbrFermions += TmpPartialNbrOne;
-// 	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 48) & 0xffl];
+// 	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 48) & 0xfful];
 // 	  TmpTotalLz += TmpPartialNbrOne * 48;
-// 	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 56) & 0xffl];      
+// 	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 56) & 0xfful];      
 // 	  TmpNbrFermions += TmpPartialNbrOne;
-// 	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 56) & 0xffl];
+// 	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 56) & 0xfful];
 // 	  TmpTotalLz += TmpPartialNbrOne * 56;
 // #endif
 // 	  if ((TmpNbrFermions == NbrFermionsComplementarySector) && (ShiftedLzComplementarySector == TmpTotalLz))

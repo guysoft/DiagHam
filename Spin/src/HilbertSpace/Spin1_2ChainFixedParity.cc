@@ -76,7 +76,7 @@ Spin1_2ChainFixedParity::Spin1_2ChainFixedParity (int chainLength, int parity)
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
-  if (this->ChainLength  > 32)
+  if (this->ChainLength  > 63)
     {
       this->ChainLength = 1;
     }

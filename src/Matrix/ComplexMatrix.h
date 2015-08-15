@@ -342,6 +342,12 @@ class ComplexMatrix : public Matrix
   // return value = reference on current matrix
   ComplexMatrix& Multiply (const ComplexMatrix& M);
 
+  // multiply a matrix to the right by another matrix without using temporary matrix
+  //
+  // M = matrix used as multiplicator
+  // return value = reference on current matrix
+  ComplexMatrix& Multiply (const RealMatrix& M);
+
   // multiply a matrix to the right by another matrix without using temporary matrix and in a given range of indices
   // beware the matrix is not resized after multiplication in order the operation to be thread safe
   //
@@ -350,6 +356,15 @@ class ComplexMatrix : public Matrix
   // nbrLine = number of lines to multiply
   // return value = reference on current matrix
   ComplexMatrix& Multiply (const ComplexMatrix& M, int startLine, int nbrLine);
+
+  // multiply a matrix to the right by another matrix without using temporary matrix and in a given range of indices
+  // beware the matrix is not resized after multiplication in order the operation to be thread safe
+  //
+  // M = matrix used as multiplicator
+  // startLine = starting line in destination matrix
+  // nbrLine = number of lines to multiply
+  // return value = reference on current matrix
+  ComplexMatrix& Multiply (const RealMatrix& M, int startLine, int nbrLine);
 
   // multiply two matrices, taking the hermitian conjugate of the left nmatrix first (i.e. M1^+ M2)
   //

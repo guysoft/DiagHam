@@ -61,6 +61,7 @@ class RealMatrix : public Matrix
   friend class RealVector;
   friend class ComplexVector;
   friend class RealDiagonalMatrix;
+  friend class ComplexMatrix;
 
  protected:
 

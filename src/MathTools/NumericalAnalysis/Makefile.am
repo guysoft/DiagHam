@@ -11,4 +11,7 @@ Abstract1DComplexTrialFunction.cc \
 Abstract1DComplexFunctionOnSphere.cc \
 Abstract1DComplexTrialFunctionOnSphere.cc \
 AntisymmetrizedComplexFunction.cc \
-SymmetrizedComplexFunction.cc 
+SymmetrizedComplexFunction.cc \
+Tabulated1DRealFunction.cc \
+Constant1DRealFunction.cc \
+Linear1DRealFunction.cc

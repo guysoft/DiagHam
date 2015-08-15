@@ -34,11 +34,12 @@
 
 #include "config.h"
 #include "MathTools/NumericalAnalysis/Abstract1DRealFunction.h"
+#include "GeneralTools/GarbageFlag.h"
 
+#include <iostream>
 
-
-class AbstractNumericalInterval;
-class AbstractSubdividedInterval;
+using std::cout;
+using std::endl;
 
 
 class Tabulated1DRealFunction : public Abstract1DRealFunction
@@ -46,24 +47,26 @@ class Tabulated1DRealFunction : public Abstract1DRealFunction
 
  protected:
 
-  // pointer to the interval description
-  AbstractSubdividedInterval* Interval;
+  // array containing the coordinates where the tabluated function is defined
+  double* TabulatedCoordinates;
 
   // array containing function tabulated values 
   double* TabulatedValues;
+  
+  // number of tabluated values
+  long NbrValues;
+
+  // garbage flag used to share data
+  GarbageFlag Flag;
 
  public:
 
-  // constructor from raw datas
+  // constructor
   //
-  // interval = interval on which the function is defined (including the subdivision scheme)
-  Tabulated1DRealFunction(AbstractSubdividedInterval* interval, double* tabulatedValues = 0);
-
-  // constructor from a C function
-  //
-  // interval = interval on which the function is defined (including the subdivision scheme)
-  // function = pointer to the C function that described the mathematical function that will be used to initialized the tabulated function
-  Tabulated1DRealFunction(AbstractSubdividedInterval* interval, double (*function) (double));
+  // tabulatedCoordinates = array containing the coordinates where the tabluated function is defined
+  // tabulatedValues = array containing function tabulated values 
+  // nbrValues = number of tabluated values
+  Tabulated1DRealFunction(double* tabulatedCoordinates, double* tabulatedValues, long nbrValues);
 
   // copy constructor 
   //
@@ -119,6 +122,11 @@ class Tabulated1DRealFunction : public Abstract1DRealFunction
   // return value = integral value
   double GetIntegral(AbstractNumericalInterval& interval);
 
+  // evaluate the primitive of the function on the same interval that the function itself
+  //
+  // return value = function primitive
+  Abstract1DRealFunction* GetPrimitive();
+
  protected:
 
   // use linear interpolation to obtain function value at a given point
@@ -133,6 +141,11 @@ class Tabulated1DRealFunction : public Abstract1DRealFunction
   // return value = function value obatined using spline interpolation
   double ValueFromSplineInterpolation (const double& x);
   
+  // find the index of the largest tabulated coordinate lower than a given point
+  //
+  // x = point whose floor index has to be found
+  // return value = floor index
+  long GetFloorIndex(const double& x);
     
 };
 
@@ -141,9 +154,63 @@ class Tabulated1DRealFunction : public Abstract1DRealFunction
 // i = index of the tabulated value
 // return value = reference on the tabulated value
 
-inline double& operator [](unsigned long i)
+inline double& Tabulated1DRealFunction::operator [](unsigned long i)
 {
   return this->TabulatedValues[i];
+}
+
+// use linear interpolation to obtain function value at a given point
+//
+// x = point where the function has to be evaluated
+// return value = function value obatined using linear interpolation
+
+inline double Tabulated1DRealFunction::ValueFromLinearInterpolation (const double& x)
+{
+  long Index = this->GetFloorIndex(x); 
+  if (Index < 0)
+    return this->TabulatedValues[0];
+  if (Index >= (this->NbrValues - 1))
+    return this->TabulatedValues[this->NbrValues - 1];
+  return (((this->TabulatedValues[Index + 1] - this->TabulatedValues[Index]) * (x - this->TabulatedCoordinates[Index]) 
+	   / (this->TabulatedCoordinates[Index + 1] - this->TabulatedCoordinates[Index])) + this->TabulatedValues[Index]);
+}
+  
+// use spline interpolation to obtain function value at a given point
+//
+// x = point where the function has to be evaluated
+// return value = function value obatined using spline interpolation
+
+inline double Tabulated1DRealFunction::ValueFromSplineInterpolation (const double& x)
+{
+  return 0.0;
+}
+
+// find the index of the largest tabulated coordinate lower than a given point
+//
+// x = point whose floor index has to be found
+// return value = floor index
+
+inline long Tabulated1DRealFunction::GetFloorIndex(const double& x)
+{
+  if (x < this->TabulatedCoordinates[0])
+    return -1l;
+  long EndIndex = this->NbrValues - 1l;
+  if (x >= this->TabulatedCoordinates[EndIndex])
+    return EndIndex;
+  long StartIndex = 0l;
+  long MidIndex;
+   
+  while((EndIndex - StartIndex) > 1)
+    {       
+      MidIndex = (StartIndex + EndIndex) >> 1;       
+      if(this->TabulatedCoordinates[MidIndex] > x)
+	EndIndex = MidIndex;
+      else
+	StartIndex = MidIndex;
+    }
+  if (this->TabulatedCoordinates[EndIndex] == x)
+    return EndIndex;
+  return StartIndex;
 }
 
 #endif

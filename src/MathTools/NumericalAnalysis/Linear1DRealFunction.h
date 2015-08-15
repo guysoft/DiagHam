@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                        class of abstract 1D function                       //
+//                       class of linear 1D real function                     //
 //                                                                            //
-//                        last modification : 08/07/2004                      //
+//                        last modification : 11/08/2015                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,69 +28,97 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACT1DREALFUNCTION_H
-#define ABSTRACT1DREALFUNCTION_H
+#ifndef LINEAR1DREALFUNCTION_H
+#define LINEAR1DREALFUNCTION_H
 
 
 #include "config.h"
+#include "MathTools/NumericalAnalysis/Abstract1DRealFunction.h"
+#include "GeneralTools/GarbageFlag.h"
 
 
-class AbstractNumericalInterval;
-
-
-class Abstract1DRealFunction
+class Linear1DRealFunction : public Abstract1DRealFunction
 {
+
+ protected:
+
+   // linear coefficient
+  double LinearCoefficient;
+
+ // value of the function at zero
+  double OffsetValue;
 
  public:
 
-  // virtual destructor
+  // constructor
   //
-  virtual ~Abstract1DRealFunction();
+  // linearCoefficient = linear coefficient
+  // offsetValue = value of the function at zerooffsetValue
+  Linear1DRealFunction(double linearCoefficient, double offsetValue = 0.0);
+
+  // copy constructor 
+  //
+  // function = function to copy
+  Linear1DRealFunction(const Linear1DRealFunction& function);
+
+  // destructor
+  //
+  ~Linear1DRealFunction();
 
   // clone function 
   //
   // return value = clone of the function 
-  virtual Abstract1DRealFunction* Clone () = 0;
+  Abstract1DRealFunction* Clone ();
 
   // evaluate function at a given point
   //
   // x = point where the function has to be evaluated
   // return value = function value at x  
-  virtual double operator ()(double x);
+  double operator ()(double x);
 
   // get function derivative at a given point
   //
   // x = point where the function derivative has to be evaluated
   // return value = function derivative
-  virtual double GetDerivative(const double& x);
+  double GetDerivative(const double& x);
 
   // evaluate derivative of the function on the same interval that the function itself
   //
   // return value = function derivative
-  virtual Abstract1DRealFunction* GetDerivative();
+  Abstract1DRealFunction* GetDerivative();
 
   // get function laplacian at a given point
   //
   // x = point where the function laplacian has to be evaluated
   // return value = function laplacian
-  virtual double GetLaplacian(const double& x);
+  double GetLaplacian(const double& x);
 
   // evaluate laplacian of the function on the same interval that the function itself
   //
   // return value = function laplacian
-  virtual Abstract1DRealFunction* GetLaplacian();
+  Abstract1DRealFunction* GetLaplacian();
 
   // evaluate integral on the function of a given interval
   // 
   // interval = reference on the interval on which the integral has to be evaluated
   // return value = integral value
-  virtual double GetIntegral(AbstractNumericalInterval& interval);
+  double GetIntegral(AbstractNumericalInterval& interval);
 
-  // evaluate the primitive of the function on the same interval that the function itself
-  //
-  // return value = function primitive
-  virtual Abstract1DRealFunction* GetPrimitive();
+ protected:
 
+    
 };
+
+// evaluate function at a given point
+//
+// x = point where the function has to be evaluated
+// return value = function value at x  
+
+inline double Linear1DRealFunction::operator ()(double x)
+{
+  return ((this->LinearCoefficient * x) + this->OffsetValue);
+}
+
+
 
 #endif

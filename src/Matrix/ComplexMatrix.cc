@@ -971,6 +971,24 @@ ComplexMatrix& ComplexMatrix::Multiply (const ComplexMatrix& M)
   return *this;
 }
 
+// multiply a matrix to the right by another matrix without using temporary matrix
+//
+// M = matrix used as multiplicator
+// return value = reference on current matrix
+
+ComplexMatrix& ComplexMatrix::Multiply (const RealMatrix& M)
+{
+  if (M.NbrColumn >  this->TrueNbrColumn)
+    {
+      int OldNbrColumn = this->NbrColumn;
+      this->Resize(this->NbrRow, M.NbrColumn);
+      this->Resize(this->NbrRow, OldNbrColumn);
+    }
+  this->Multiply(M, 0, this->NbrRow);
+  this->Resize(this->NbrRow, M.NbrColumn);
+  return *this;
+}
+
 // multiply a matrix to the right by another matrix without using temporary matrix and in a given range of indices
 // beware the matrix is not resized after multiplication in order the operation to be thread safe
 //
@@ -980,6 +998,39 @@ ComplexMatrix& ComplexMatrix::Multiply (const ComplexMatrix& M)
 // return value = reference on current matrix
 
 ComplexMatrix& ComplexMatrix::Multiply (const ComplexMatrix& M, int startLine, int nbrLine)
+{
+  if ((M.NbrRow != this->NbrColumn) || (M.NbrColumn >  this->TrueNbrColumn))
+    return *this;
+  int EndLine  = nbrLine + startLine;
+  Complex* TmpElements = new Complex [this->NbrColumn];
+  Complex Tmp;
+  for (int i = startLine; i < EndLine; ++i)
+    {
+      for (int k = 0; k < this->NbrColumn; ++k)
+	TmpElements[k] = this->Columns[k].Components[i];
+      for (int j = 0; j < M.NbrColumn; ++j)
+	{
+	  Tmp = TmpElements[0] * M.Columns[j].Components[0];
+	  for (int k = 1; k < this->NbrColumn; ++k)
+	    {
+	      Tmp += TmpElements[k] * M.Columns[j].Components[k];
+	    }    
+	  this->Columns[j].Components[i] = Tmp;
+	}  
+    }
+  delete[] TmpElements;
+  return *this;
+}
+
+// multiply a matrix to the right by another matrix without using temporary matrix and in a given range of indices
+// beware the matrix is not resized after multiplication in order the operation to be thread safe
+//
+// M = matrix used as multiplicator
+// startLine = starting line in destination matrix
+// nbrLine = number of lines to multiply
+// return value = reference on current matrix
+
+ComplexMatrix& ComplexMatrix::Multiply (const RealMatrix& M, int startLine, int nbrLine)
 {
   if ((M.NbrRow != this->NbrColumn) || (M.NbrColumn >  this->TrueNbrColumn))
     return *this;

@@ -2,6 +2,10 @@
 #include "GeneralTools/ArrayTools.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
 
+#include "MathTools/NumericalAnalysis/Constant1DRealFunction.h"
+#include "MathTools/NumericalAnalysis/Tabulated1DRealFunction.h"
+#include "MathTools/NumericalAnalysis/Linear1DRealFunction.h"
+
 #include "Options/Options.h"
 #include <iostream>
 #include <stdlib.h>
@@ -29,7 +33,7 @@ using std::ofstream;
 // nbrStates = reference on the number of states
 // return value = true if no error occured
 bool DensityOfStatesParseSpectrumFile(char* spectrumFileName, OptionManager* manager, double**& spectrum, int*& spectrumSize, 
-				      int*& spectrumWeight, int& nbrSectors, double& minEnergy, double& maxEnergy, long& nbrStates);
+				      int*& spectrumWeight, int& nbrSectors, double& minEnergy, double& maxEnergy, long& nbrStates, Abstract1DRealFunction* densityOfStates);
 
 
 // perform the density of states on a parsed spectrum
@@ -71,8 +75,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption ('c', "energy-column", "index of the column that contains the energies (0 being the first column)", 1);
   (*SystemGroup) += new SingleIntegerOption ('d', "degeneracy-column", "index of the optional column that contains the energies degeneracy not appearing explicitly in the spectrum (must be larger than energy-column)", 0);
   (*SystemGroup) += new BooleanOption('\n', "z2-symmetry", "assume that the spectrum is invariant under the transformation Q<->-Q and that only the Q>=0 are available in the spectrum");
+  (*SystemGroup) += new SingleStringOption ('\n', "unfold-spectrum", "unfold the spectrum using the tabulated density of states in an ASCII file");
   (*SystemGroup) += new SingleIntegerOption('\n', "filter-column", "if equal or greater than 0, apply a filter on the corresponding quantum number column", -1);
   (*SystemGroup) += new SingleIntegerOption('\n', "filter-value", "value of the quantum number that should be kept if --filter-value is applied", 0);
+  (*SystemGroup) += new SingleIntegerOption('\n', "window-min", "when having a single quantum number sector, set the index of the first eigenvalue to consider", 0);
+  (*SystemGroup) += new SingleIntegerOption('\n', "window-max", "when having a single quantum number sector, set the index of the last eigenvalue to consider (negative if up to the last available eigenvalue)", -1);
   (*SystemGroup) += new BooleanOption('\n', "discard-quantumnumbers", "do not use any information (such as the degeneragy) from the quantum numbers");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "name of the output file where the density of states will be stored (if none, try to deduce it from either --spectrum or --multiple-spectra replacing the dat extension with dos)");
   (*OutputGroup) += new SingleIntegerOption ('b', "nbr-bins", "number of bins", 100);
@@ -101,7 +108,14 @@ int main(int argc, char** argv)
     {
       if (Manager.GetString("multiple-spectra") == 0)
 	{  
-	  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("spectrum"), "dat", "dos");
+	  if (Manager.GetString("unfold-spectrum") != 0)
+	    {
+	      OutputFileName = ReplaceExtensionToFileName(Manager.GetString("spectrum"), "dat", "unfoldeddos");
+	    }
+	  else
+	    {
+	      OutputFileName = ReplaceExtensionToFileName(Manager.GetString("spectrum"), "dat", "dos");
+	    }
 	  if (OutputFileName == 0)
 	    {
 	      cout << "error, can't guess output file name from " << Manager.GetString("spectrum") << endl;
@@ -110,7 +124,14 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("multiple-spectra"), "dat", "dos");
+	  if (Manager.GetString("unfold-spectrum") != 0)
+	    {
+	      OutputFileName = ReplaceExtensionToFileName(Manager.GetString("multiple-spectra"), "dat", "unfoldeddos");
+	    }
+	  else
+	    {
+	      OutputFileName = ReplaceExtensionToFileName(Manager.GetString("multiple-spectra"), "dat", "dos");
+	    }
 	  if (OutputFileName == 0)
 	    {
 	      cout << "error, can't guess output file name from " << Manager.GetString("multiple-spectra") << endl;
@@ -133,10 +154,29 @@ int main(int argc, char** argv)
   int* SpectrumWeight;
   int NbrSectors;
 
+  Abstract1DRealFunction* DensityOfStates = 0;
+  double DensityOfStatesThreshold = 1e-5;
+  if (Manager.GetString("unfold-spectrum") != 0)
+    {
+      MultiColumnASCIIFile DensityOfStateFile;
+      if (DensityOfStateFile.Parse(Manager.GetString("unfold-spectrum")) == false)
+	{
+	  DensityOfStateFile.DumpErrors(cout);
+	  return false;
+	}
+      Tabulated1DRealFunction TmpFunction(DensityOfStateFile.GetAsDoubleArray(0), DensityOfStateFile.GetAsDoubleArray(1), 
+					  DensityOfStateFile.GetNbrLines());
+      DensityOfStates = TmpFunction.GetPrimitive();
+    }
+  else
+    {
+      DensityOfStates = new Linear1DRealFunction(1.0);
+    }
+ 
   if (Manager.GetString("multiple-spectra") == 0)
     {
       if (DensityOfStatesParseSpectrumFile(Manager.GetString("spectrum"), &Manager, Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
-			       MinEnergy, MaxEnergy, NbrStates) == false)
+					   MinEnergy, MaxEnergy, NbrStates, DensityOfStates) == false)
 	{
 	  return 0;
 	}
@@ -161,7 +201,7 @@ int main(int argc, char** argv)
 	{
 	  cout << "checking file " << SpectraFile(0, i) << endl;
 	  if (DensityOfStatesParseSpectrumFile(SpectraFile(0, i), &Manager, Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
-					       MinEnergy, MaxEnergy, NbrStates) == false)
+					       MinEnergy, MaxEnergy, NbrStates, DensityOfStates) == false)
 	    {
 	      return 0;
 	    }
@@ -193,7 +233,7 @@ int main(int argc, char** argv)
       double DummyMaxEnergy = -1.0e300;
       long DummyNbrStates = 0l; 
       if (DensityOfStatesParseSpectrumFile(Manager.GetString("spectrum"), &Manager, Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
-					   DummyMinEnergy, DummyMaxEnergy, DummyNbrStates) == false)
+					   DummyMinEnergy, DummyMaxEnergy, DummyNbrStates, DensityOfStates) == false)
 	{
 	  return 0;
 	}
@@ -226,7 +266,7 @@ int main(int argc, char** argv)
 	  long DummyNbrStates = 0l; 
 	  cout << "processing file " << SpectraFile(0, i) << endl;
 	  if (DensityOfStatesParseSpectrumFile(SpectraFile(0, i), &Manager, Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
-					       DummyMinEnergy, DummyMaxEnergy, DummyNbrStates) == false)
+					       DummyMinEnergy, DummyMaxEnergy, DummyNbrStates, DensityOfStates) == false)
 	    {
 	      return 0;
 	    }
@@ -281,7 +321,7 @@ int main(int argc, char** argv)
   for (int i = 0 ; i < NbrBins; ++i)
     {
       double DOS = (((double) NbrStatePerBin[i]) / ((double) NbrStates));
-      File << (MinEnergy + (BinSize * (((double) i) + 0.5))) << " " << (DOS / BinSize) << endl;
+      File << (MinEnergy + (BinSize * ((double) i))) << " " << (DOS / BinSize) << endl;
     }  
   File.close();
 
@@ -312,7 +352,7 @@ int main(int argc, char** argv)
 // return value = true if no error occured
 
 bool DensityOfStatesParseSpectrumFile(char* spectrumFileName, OptionManager* manager, double**& spectrum, int*& spectrumSize, 
-				      int*& spectrumWeight, int& nbrSectors, double& minEnergy, double& maxEnergy, long& nbrStates)
+				      int*& spectrumWeight, int& nbrSectors, double& minEnergy, double& maxEnergy, long& nbrStates, Abstract1DRealFunction* densityOfStates)
 {
   MultiColumnASCIIFile SpectrumFile;
   if (SpectrumFile.Parse(spectrumFileName) == false)
@@ -323,14 +363,35 @@ bool DensityOfStatesParseSpectrumFile(char* spectrumFileName, OptionManager* man
   nbrSectors = 1;
   if ((manager->GetInteger("energy-column") == 0) || (manager->GetBoolean("discard-quantumnumbers") == true))
     {
-      int TmpSize = SpectrumFile.GetNbrLines();
       spectrumSize = new int [1];
       spectrum = new double*[1];
-      spectrumWeight = new int[1];
-      spectrum[0] = SpectrumFile.GetAsDoubleArray(manager->GetInteger("energy-column"));
-      spectrumSize[0] = TmpSize;
-      spectrumWeight[0] = 1;
-    }
+      spectrumWeight = new int[1]; 
+      double* TmpSpectrum = SpectrumFile.GetAsDoubleArray(manager->GetInteger("energy-column"));
+      int TmpSize = SpectrumFile.GetNbrLines();
+      if (manager->GetBoolean("discard-quantumnumbers") == true)
+	{
+	  SortArrayUpOrdering<double>(TmpSpectrum, TmpSize);
+	}
+      if ((manager->GetInteger("window-min") > 0) || (manager->GetInteger("window-max") >= 0))
+	{
+	  int MaxIndex = manager->GetInteger("window-max");
+	  if (MaxIndex < 0)
+	    MaxIndex = TmpSize - 1;
+	  int MinIndex = manager->GetInteger("window-min");
+	  spectrumSize[0] = MaxIndex - MinIndex + 1;
+	  spectrumWeight[0] = 1;
+	  spectrum[0] = new double[spectrumSize[0]];
+	  for (int i = MinIndex; i <= MaxIndex; ++i)
+	    spectrum[0][i - MinIndex] = TmpSpectrum[i];
+	  delete[] TmpSpectrum;
+	}
+      else
+	{
+	  spectrum[0] = TmpSpectrum;
+	  spectrumSize[0] = TmpSize;
+	  spectrumWeight[0] = 1;
+	}
+   }
   else
     {
       int TmpSize = SpectrumFile.GetNbrLines();
@@ -476,7 +537,7 @@ bool DensityOfStatesParseSpectrumFile(char* spectrumFileName, OptionManager* man
       spectrum[nbrSectors] = new double [TmpSize - CurrentIndex];
       spectrumSize[nbrSectors]= TmpSize - CurrentIndex;
       ++nbrSectors;            
-      spectrum[0][0] = TmpSpectrum[0];
+      spectrum[0][0] = (*densityOfStates)(TmpSpectrum[0]);
       nbrSectors = 0;
       CurrentIndex = 0;
       for (int i = 1; i < TmpSize; ++i)
@@ -490,7 +551,7 @@ bool DensityOfStatesParseSpectrumFile(char* spectrumFileName, OptionManager* man
 		  ++nbrSectors;
 		}
 	    }
-	  spectrum[nbrSectors][i - CurrentIndex] = TmpSpectrum[i];
+	  spectrum[nbrSectors][i - CurrentIndex] = (*densityOfStates)(TmpSpectrum[i]);
 	}
       ++nbrSectors;            
       for (int i = 0; i < NbrQuantumNumber; ++i)

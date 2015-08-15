@@ -62,6 +62,7 @@ class RealVector : public Vector
   friend class RealPtrVector;
   friend class AbstractHamiltonian;
   friend class RealMatrix;
+  friend class ComplexMatrix;
   friend class HermitianMatrix;
   friend class RealSymmetricMatrix;
   friend class RealUpperTriangularMatrix;
@@ -69,6 +70,8 @@ class RealVector : public Vector
   friend class RealDiagonalMatrix;
   friend class RealAntisymmetricMatrix;
   friend class RealTriDiagonalSymmetricMatrix;
+
+
   friend Complex operator * (const ComplexVector& V1, const RealVector& V2);
   friend Complex operator * (const RealVector& V1, const ComplexVector& V2);
   friend double operator * (RealPtrVector& V1, RealVector& V2);

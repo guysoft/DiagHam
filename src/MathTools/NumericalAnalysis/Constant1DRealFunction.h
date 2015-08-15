@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                        class of abstract 1D function                       //
+//                      class of constant 1D real function                    //
 //                                                                            //
-//                        last modification : 08/07/2004                      //
+//                        last modification : 08/08/2015                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,81 +28,92 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+#ifndef CONSTANT1DREALFUNCTION_H
+#define CONSTANT1DREALFUNCTION_H
+
+
 #include "config.h"
 #include "MathTools/NumericalAnalysis/Abstract1DRealFunction.h"
+#include "GeneralTools/GarbageFlag.h"
 
 
-// destructor
-//
-
-Abstract1DRealFunction::~Abstract1DRealFunction()
+class Constant1DRealFunction : public Abstract1DRealFunction
 {
-}
+
+ protected:
+
+  // value of the function
+  double ConstantValue;
+
+ public:
+
+  // constructor
+  //
+  // constantValue  = value of the function
+  Constant1DRealFunction(double constantValue);
+
+  // copy constructor 
+  //
+  // function = function to copy
+  Constant1DRealFunction(const Constant1DRealFunction& function);
+
+  // destructor
+  //
+  ~Constant1DRealFunction();
+
+  // clone function 
+  //
+  // return value = clone of the function 
+  Abstract1DRealFunction* Clone ();
+
+  // evaluate function at a given point
+  //
+  // x = point where the function has to be evaluated
+  // return value = function value at x  
+  double operator ()(double x);
+
+  // get function derivative at a given point
+  //
+  // x = point where the function derivative has to be evaluated
+  // return value = function derivative
+  double GetDerivative(const double& x);
+
+  // evaluate derivative of the function on the same interval that the function itself
+  //
+  // return value = function derivative
+  Abstract1DRealFunction* GetDerivative();
+
+  // get function laplacian at a given point
+  //
+  // x = point where the function laplacian has to be evaluated
+  // return value = function laplacian
+  double GetLaplacian(const double& x);
+
+  // evaluate laplacian of the function on the same interval that the function itself
+  //
+  // return value = function laplacian
+  Abstract1DRealFunction* GetLaplacian();
+
+  // evaluate integral on the function of a given interval
+  // 
+  // interval = reference on the interval on which the integral has to be evaluated
+  // return value = integral value
+  double GetIntegral(AbstractNumericalInterval& interval);
+
+ protected:
+
+    
+};
 
 // evaluate function at a given point
 //
 // x = point where the function has to be evaluated
 // return value = function value at x  
 
-double Abstract1DRealFunction::operator ()(double x)
+inline double Constant1DRealFunction::operator ()(double x)
 {
-  return 0.0;
+  return this->ConstantValue;
 }
 
-// get function derivative at a given point
-//
-// x = point where the function derivative has to be evaluated
-// return value = function derivative
 
-double Abstract1DRealFunction::GetDerivative(const double& x)
-{
-  return 0.0;
-}
-
-// evaluate derivative of the function on the same interval that the function itself
-//
-// return value = function derivative
-
-Abstract1DRealFunction* Abstract1DRealFunction::GetDerivative()
-{
-  return 0;
-}
-
-// get function laplacian at a given point
-//
-// x = point where the function laplacian has to be evaluated
-// return value = function laplacian
-
-double Abstract1DRealFunction::GetLaplacian(const double& x)
-{
-  return 0.0;
-}
-
-// evaluate laplacian of the function on the same interval that the function itself
-//
-// return value = function laplacian
-
-Abstract1DRealFunction* Abstract1DRealFunction::GetLaplacian()
-{
-  return 0;
-}
-
-// evaluate integral on the function of a given interval
-// 
-// interval = reference on the interval on which the integral has to be evaluated
-// return value = integral value
-
-double Abstract1DRealFunction::GetIntegral(AbstractNumericalInterval& interval)
-{
-  return 0.0;
-}
-
-// evaluate the primitive of the function on the same interval that the function itself
-//
-// return value = function primitive
-
-Abstract1DRealFunction* Abstract1DRealFunction::GetPrimitive()
-{
-  return 0;
-}
-
+#endif

@@ -173,6 +173,15 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value =  multiplicative factor 
   virtual double AA (int index, int n1, int n2);
 
+  // apply a_n1 a_n2 operator to a given state without keeping it in cache
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AA (int index, int n1, int n2, double& coefficient);
+
   // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next ProdA call
   //
   // index = index of the state on which the operator has to be applied
@@ -198,6 +207,15 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual int AdAd (int m1, int m2, double& coefficient);
+
+  // apply a^+_m1 a^+_m2 operator to the state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AdAd (int index, int m1, int m2, double& coefficient);
 
   // apply a^+_m1 a^+_m2 operator to the state produced using AA method (without destroying it)
   //
@@ -324,20 +342,34 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value = index of the destination state 
   virtual int AdA (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
   
-  // apply a_n1  operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad call
+  // apply a_n  operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad or A call
   //
   // index = index of the state on which the operator has to be applied
-  // n1 = index for annihilation operator
+  // n = index for annihilation operator
   // return value =  multiplicative factor 
-  virtual double A (int index, int n1);
+  virtual double A (int index, int n);
 
-  // apply a^+_m1 operator to the state produced using AAA method (without destroying it)
+  // apply a^+_m  operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad or A call
   //
-  // m1 = first index for creation operator
+  // index = index of the state on which the operator has to be applied
+  // m = index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double Ad (int index, int m);
+
+  // apply a_n operator to the state produced using the A or Ad method (without destroying it)
+  //
+  // n = first index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  virtual int Ad (int m1, double& coefficient);
-  
+  virtual int A (int n, double& coefficient);
+
+  // apply a^+_m operator to the state produced using the A or Ad method (without destroying it)
+  //
+  // m = first index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad (int m, double& coefficient);
+
   // apply a^+_m operator to the state produced using A method (without destroying it)
   //
   // m = first index for creation operator

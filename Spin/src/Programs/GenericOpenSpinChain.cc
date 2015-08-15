@@ -257,11 +257,11 @@ int main(int argc, char** argv)
 
   int MaxSzValue = NbrSpins * SpinValue;
   int InitalSzValue = MaxSzValue & 1;
-  if  ((Manager.GetDouble("hz-value") != 0) || (Manager.GetDouble("random-hzvalue") != 0.0) || (Manager.GetDouble("random-gaussianhzvalue") != 0.0))
+  if  ((Manager.GetDouble("hz-value") != 0) || (Manager.GetDouble("random-hzvalue") != 0.0) || (Manager.GetDouble("random-gaussianhzvalue") != 0.0) || (Manager.GetString("fullhz-values") != 0))
     InitalSzValue = -MaxSzValue;
-  if (Manager.GetInteger("initial-sz") > 1)
+  if ((Manager.GetInteger("initial-sz") != 0) || (Manager.GetInteger("nbr-sz") > 0))
     {
-      InitalSzValue += (Manager.GetInteger("initial-sz") & ~1);
+      InitalSzValue = Manager.GetInteger("initial-sz");
     }
   if (Manager.GetInteger("nbr-sz") > 0)
     {
