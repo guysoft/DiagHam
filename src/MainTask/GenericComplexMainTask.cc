@@ -816,9 +816,9 @@ void GenericComplexMainTask::AddOptionGroup(OptionManager *optionManager)
 // terminate = indicate if line should be terminated with endl
 void GenericComplexMainTask::WriteResult(ofstream& file, double value, bool terminate)
 {
-  file << SubspaceStr <<" ";
+  if (SubspaceStr[0] != '\0')
+    file << SubspaceStr << " ";
   file << value;
-  // cout <<"wrote value "<<value<<" to file"<<endl;
   if (terminate)
     file << endl;
 }

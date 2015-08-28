@@ -58,8 +58,7 @@ class Spin1_2ChainFull : public Spin1_2Chain
   // constructor for complete Hilbert space with no restriction on total spin projection Sz
   //
   // chainLength = number of spin 1/2
-  // memorySize = memory size in bytes allowed for look-up table
-  Spin1_2ChainFull (int chainLength, int memorySize);
+  Spin1_2ChainFull (int chainLength);
 
   // copy constructor (without duplicating datas)
   //

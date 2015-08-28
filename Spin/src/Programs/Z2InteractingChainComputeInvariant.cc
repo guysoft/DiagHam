@@ -91,7 +91,7 @@ int main(int argc, char** argv)
       cout << "can't read " << Manager.GetString("antiperiodic-state") << endl;
     }
 
-  Spin1_2Chain* Chain = new Spin1_2ChainFull (NbrSpinsPeriodic, 1000000);
+  Spin1_2Chain* Chain = new Spin1_2ChainFull (NbrSpinsPeriodic);
 
   FermionParityOperator Operator(Chain, NbrSpinsPeriodic);
   

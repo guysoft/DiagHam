@@ -161,7 +161,7 @@ int main(int argc, char** argv)
 	{
 	  if (Manager.GetBoolean("use-parity") == false)
 	    {
-	      Chain = new Spin1_2ChainFull (NbrSpins, 1000000);
+	      Chain = new Spin1_2ChainFull (NbrSpins);
 	    }
 	  else
 	    {

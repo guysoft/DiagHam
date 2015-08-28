@@ -69,9 +69,8 @@ Spin1_2ChainFull::Spin1_2ChainFull ()
 // constructor for complete Hilbert space with no restriction on total spin projection Sz
 //
 // chainLength = number of spin 1/2
-// memorySize = memory size in bytes allowed for look-up table
 
-Spin1_2ChainFull::Spin1_2ChainFull (int chainLength, int memorySize) 
+Spin1_2ChainFull::Spin1_2ChainFull (int chainLength) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;

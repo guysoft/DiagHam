@@ -63,12 +63,12 @@ FQHEMPSTwistedSymmetrizedStateMatrix::FQHEMPSTwistedSymmetrizedStateMatrix(Abstr
 {
   this->MPSMatrix = matrix;
   this->PLevel = this->MPSMatrix->GetTruncationLevel();
-  this->NbrCFTSectors = 1;  
-  this->TransferMatrixLargestEigenvalueDegeneracy = 1;  
   this->NbrBMatrices = 0;
   this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
   if (antiSymmetrizeFlag == false)
     {
+      this->NbrCFTSectors = 1;  
+      this->TransferMatrixLargestEigenvalueDegeneracy = 1;  
       this->NbrBMatrices = this->MPSMatrix->GetNbrMatrices();
       this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
       cout << "symmetrizing B matrices with a twist" << endl;
@@ -89,6 +89,8 @@ FQHEMPSTwistedSymmetrizedStateMatrix::FQHEMPSTwistedSymmetrizedStateMatrix(Abstr
     }
   else
     {
+      this->NbrCFTSectors = 4;  
+      this->TransferMatrixLargestEigenvalueDegeneracy = 1;  
       this->NbrBMatrices = 2;
       this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
       cout << "antisymmetrizing B matrices with a twist" << endl;
@@ -102,11 +104,6 @@ FQHEMPSTwistedSymmetrizedStateMatrix::FQHEMPSTwistedSymmetrizedStateMatrix(Abstr
 	  this->RealBMatrices[0] = Multiply(this->MPSMatrix->GetMatrices()[0], this->MPSMatrix->GetMatrices()[0]);
 	  this->RealBMatrices[1] = Multiply(this->MPSMatrix->GetMatrices()[0], this->MPSMatrix->GetMatrices()[1]);
 	}
-//       SparseRealMatrix TmpB00 = Multiply(this->MPSMatrix->GetMatrices()[0], this->MPSMatrix->GetMatrices()[0]);
-//       SparseRealMatrix TmpB10 = Multiply(this->MPSMatrix->GetMatrices()[1], this->MPSMatrix->GetMatrices()[0]);
-//       SparseRealMatrix TmpB01 = Multiply(this->MPSMatrix->GetMatrices()[0], this->MPSMatrix->GetMatrices()[1]);
-//       this->RealBMatrices[0] = CreateBlockDiagonalMatrix(TmpB00, TmpB00, 1.0, -1.0);
-//       this->RealBMatrices[1] = CreateBlockOffDiagonalMatrix(TmpB10, TmpB01, 1.0, -1.0);
     }
   this->NbrNValuesPerPLevelCFTSector = new int* [this->PLevel + 1];
   this->NInitialValuePerPLevelCFTSector = new int* [this->PLevel + 1];
@@ -122,8 +119,8 @@ FQHEMPSTwistedSymmetrizedStateMatrix::FQHEMPSTwistedSymmetrizedStateMatrix(Abstr
       this->GlobalIndexMapper[p] = new int** [this->NbrCFTSectors];
       for (int CurrentCFTSector = 0; CurrentCFTSector < this->NbrCFTSectors; ++CurrentCFTSector)
 	{
-	  int MinQ;
-	  int MaxQ;
+ 	  int MinQ;
+ 	  int MaxQ;
 	  this->MPSMatrix->GetChargeIndexRange(p, CurrentCFTSector, MinQ, MaxQ);
 	  this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector] = MinQ;
 	  this->NLastValuePerPLevelCFTSector[p][CurrentCFTSector] = MaxQ;
@@ -139,7 +136,11 @@ FQHEMPSTwistedSymmetrizedStateMatrix::FQHEMPSTwistedSymmetrizedStateMatrix(Abstr
 		  this->GlobalIndexMapper[p][CurrentCFTSector][TmpQ - MinQ][i] = this->MPSMatrix->GetBondIndexWithFixedChargePLevelCFTSector(i, p, TmpQ, CurrentCFTSector);
 		}
 	    }
-	}
+	  this->MPSMatrix->GetChargeIndexRange(p, CurrentCFTSector, MinQ, MaxQ);
+	  this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector] = MinQ;
+	  this->NLastValuePerPLevelCFTSector[p][CurrentCFTSector] = MaxQ;
+	  this->NbrNValuesPerPLevelCFTSector[p][CurrentCFTSector] = this->NLastValuePerPLevelCFTSector[p][CurrentCFTSector] - this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector] + 1;
+       	}
     }
   this->PhysicalIndices = new unsigned long[this->NbrBMatrices];
   for (int i = 0; i < this->NbrBMatrices; ++i)

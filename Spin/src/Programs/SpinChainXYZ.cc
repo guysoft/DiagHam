@@ -130,7 +130,7 @@ int main(int argc, char** argv)
   bool FirstRun = true;
   if (Manager.GetBoolean("no-parity") == true)
     { 
-      Spin1_2Chain* Chain = new Spin1_2ChainFull (NbrSpins, 1000000);
+      Spin1_2Chain* Chain = new Spin1_2ChainFull (NbrSpins);
       
       if (Chain->GetHilbertSpaceDimension() > 0)
 	{
