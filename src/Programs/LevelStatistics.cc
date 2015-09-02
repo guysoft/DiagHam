@@ -54,10 +54,11 @@ bool LevelStatisticsParseSpectrumFile(char* spectrumFileName, OptionManager* man
 // nbrSpacingPerBin = array that contains the number of level spacing per bin
 // nbrRejectedSpacings = reference on the number of rejected level spacings (i.e. that cannot be stored in any bin)
 // nbrAcceptedSpacings = reference on the number of accepted level spacings (i.e. that can be stored in a bin)
-void LevelStatisticsPerformLevelStatistics(double** spectrum, int* spectrumSize, int* spectrumWeight, int nbrSectors, 
-					   double minAverageSpacing, double maxAverageSpacing, double averageSpacing, long nbrSpacings,
-					   int nbrBins, double binSize, long* nbrSpacingPerBin, long& nbrRejectedSpacings, long& nbrAcceptedSpacings, 
-					   Abstract1DRealFunction* densityOfStates, double densityOfStatesThreshold);
+// return value = average value of min(lambda_{n+1}-lambda_{n}, lambda_{n}-lambda_{n-1}) / max(lambda_{n+1}-lambda_{n}, lambda_{n}-lambda_{n-1}) 
+double LevelStatisticsPerformLevelStatistics(double** spectrum, int* spectrumSize, int* spectrumWeight, int nbrSectors, 
+					     double minAverageSpacing, double maxAverageSpacing, double averageSpacing, long nbrSpacings,
+					     int nbrBins, double binSize, long* nbrSpacingPerBin, long& nbrRejectedSpacings, long& nbrAcceptedSpacings, 
+					     Abstract1DRealFunction* densityOfStates, double densityOfStatesThreshold);
 
 
 
@@ -606,20 +607,24 @@ bool LevelStatisticsParseSpectrumFile(char* spectrumFileName, OptionManager* man
 // nbrSpacingPerBin = array that contains the number of level spacing per bin
 // nbrRejectedSpacings = reference on the number of rejected level spacings (i.e. that cannot be stored in any bin)
 // nbrAcceptedSpacings = reference on the number of accepted level spacings (i.e. that can be stored in a bin)
+// return value = average value of min(lambda_{n+1}-lambda_{n}, lambda_{n}-lambda_{n-1}) / max(lambda_{n+1}-lambda_{n}, lambda_{n}-lambda_{n-1}) 
 
-void LevelStatisticsPerformLevelStatistics(double** spectrum, int* spectrumSize, int* spectrumWeight, int nbrSectors, 
-					   double minAverageSpacing, double maxAverageSpacing, double averageSpacing, long nbrSpacings,
-					   int nbrBins, double binSize, long* nbrSpacingPerBin, long& nbrRejectedSpacings, long& nbrAcceptedSpacings, 
-					   Abstract1DRealFunction* densityOfStates, double densityOfStatesThreshold)
+double LevelStatisticsPerformLevelStatistics(double** spectrum, int* spectrumSize, int* spectrumWeight, int nbrSectors, 
+					     double minAverageSpacing, double maxAverageSpacing, double averageSpacing, long nbrSpacings,
+					     int nbrBins, double binSize, long* nbrSpacingPerBin, long& nbrRejectedSpacings, long& nbrAcceptedSpacings, 
+					     Abstract1DRealFunction* densityOfStates, double densityOfStatesThreshold)
 {
+  double Min = 0.0;
+  double Max = 0.0;
   for (int i = 0; i < nbrSectors; ++i)
     {     
       if (spectrumSize[i] > 1)
 	{
-	  int Lim = spectrumSize[i];	  
+	  int Lim = spectrumSize[i] - 1;	  
+	  double TmpInfDiff;
+	  double TmpSupDiff;
 	  for (int j = 1; j < Lim; ++j)
 	    {
-	      //	      double TmpDiff = ((*densityOfStates)(spectrum[i][j]) - (*densityOfStates)(spectrum[i][j - 1]));
 	      double TmpDiff = (spectrum[i][j] - spectrum[i][j - 1]) / averageSpacing;
 	      int TmpIndex = int (TmpDiff / binSize);
 	      if (TmpIndex < nbrBins)
@@ -631,7 +636,33 @@ void LevelStatisticsPerformLevelStatistics(double** spectrum, int* spectrumSize,
 		{
 		  ++ nbrRejectedSpacings;
 		}
+	      double TmpDiff2 = (spectrum[i][j + 1] - spectrum[i][j]) / averageSpacing;
+	      for (int i = 1; i < Lim; ++i)
+		{
+		  if (TmpDiff2 > TmpDiff)
+		    {
+		      Min += TmpDiff;
+		      Max += TmpDiff2;
+		    }
+		  else
+		    {
+		      Max += TmpDiff;
+		      Min += TmpDiff2;
+		    }
+		}
+	    }
+	  double TmpDiff = (spectrum[i][Lim] - spectrum[i][Lim - 1]) / averageSpacing;
+	  int TmpIndex = int (TmpDiff / binSize);
+	  if (TmpIndex < nbrBins)
+	    {
+	      nbrSpacingPerBin[TmpIndex]++;
+	      ++nbrAcceptedSpacings;
+	    }
+	  else
+	    {
+	      ++ nbrRejectedSpacings;
 	    }
 	}
     }
+  return (Min / Max);
 }

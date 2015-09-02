@@ -1010,10 +1010,16 @@ ComplexMatrix& ComplexMatrix::Multiply (const ComplexMatrix& M, int startLine, i
 	TmpElements[k] = this->Columns[k].Components[i];
       for (int j = 0; j < M.NbrColumn; ++j)
 	{
-	  Tmp = TmpElements[0] * M.Columns[j].Components[0];
-	  for (int k = 1; k < this->NbrColumn; ++k)
+// 	  Tmp = TmpElements[0] * M.Columns[j].Components[0];
+// 	  for (int k = 1; k < this->NbrColumn; ++k)
+// 	    {
+// 	      Tmp += TmpElements[k] * M.Columns[j].Components[k];
+// 	    }    
+	  Tmp = 0.0;
+	  Complex* TmpColumn = M.Columns[j].Components;
+	  for (int k = 0; k < this->NbrColumn; ++k)
 	    {
-	      Tmp += TmpElements[k] * M.Columns[j].Components[k];
+	      Tmp += TmpElements[k] * TmpColumn[k];
 	    }    
 	  this->Columns[j].Components[i] = Tmp;
 	}  

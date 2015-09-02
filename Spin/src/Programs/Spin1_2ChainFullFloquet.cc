@@ -391,10 +391,6 @@ int main(int argc, char** argv)
     }
 
   RealDiagonalMatrix* HamiltonianEigenvalues = new RealDiagonalMatrix[NbrSteps]; 
-  RealMatrix* Basis = new RealMatrix[NbrSteps];
-  RealMatrix* TransposedBasis = new RealMatrix[NbrSteps];
-  ComplexMatrix* ComplexBasis = new ComplexMatrix[NbrSteps];
-  ComplexMatrix* TransposedComplexBasis = new ComplexMatrix[NbrSteps];
 
   ComplexMatrix* StepMatrices = new ComplexMatrix[NbrSteps + 1];
   for (int j = 0; j < NbrSteps; ++j)
@@ -441,33 +437,31 @@ int main(int argc, char** argv)
 	      SpinChainRealFullHamiltonian* Hamiltonian = new SpinChainRealFullHamiltonian(Space, NbrSpins, LocalJxValues, LocalJyValues, LocalJzValues, 
 											   LocalHxValues, LocalHzValues, Manager.GetBoolean("use-periodic"));
 	      RealSymmetricMatrix HRep (Hamiltonian->GetHilbertSpaceDimension(), true);
-	      Basis[j] = RealMatrix(Hamiltonian->GetHilbertSpaceDimension(), Hamiltonian->GetHilbertSpaceDimension());
+	      RealMatrix TmpBasis (Hamiltonian->GetHilbertSpaceDimension(), Hamiltonian->GetHilbertSpaceDimension());
 	      HamiltonianEigenvalues[j] = RealDiagonalMatrix(Hamiltonian->GetHilbertSpaceDimension());
 	      Hamiltonian->GetHamiltonian(HRep);
 	      cout << "done in " << Dt << "sec" << endl;      
 	      cout << "diagonalizing H" << j << " Hamiltonian" <<  endl;
 	      gettimeofday (&(TotalStartingTime), 0);
-	      HRep.LapackDiagonalize(HamiltonianEigenvalues[j], Basis[j]);
+	      HRep.LapackDiagonalize(HamiltonianEigenvalues[j], TmpBasis);
 	      delete Hamiltonian;
 	      if (StepMatrices[j].GetNbrRow() == 0)
 		{
-		  StepMatrices[j] = ComplexMatrix(Basis[j]);
+		  StepMatrices[j] = ComplexMatrix(TmpBasis);
 		}
 	      else
 		{
-		  StepMatrices[j].Multiply(Basis[j]);
+		  StepMatrices[j].Multiply(TmpBasis);
 		}
-	      TransposedBasis[j].Copy(Basis[j]);
-	      TransposedBasis[j].Transpose();
-	      Basis[j].Transpose();
-	      StepMatrices[j + 1] = ComplexMatrix(Basis[j]);
+	      TmpBasis.Transpose();
+	      StepMatrices[j + 1] = ComplexMatrix(TmpBasis);
 	    }
 	}
       else
 	{
 	  SpinChainFullHamiltonian* Hamiltonian = new SpinChainFullHamiltonian(Space, NbrSpins, LocalJxValues, LocalJyValues, LocalJzValues,
 									       LocalHxValues, LocalHyValues, LocalHzValues, Manager.GetBoolean("use-periodic"));
-	  ComplexBasis[j] = ComplexMatrix (Hamiltonian->GetHilbertSpaceDimension(), Hamiltonian->GetHilbertSpaceDimension());
+	  StepMatrices[j + 1] = ComplexMatrix (Hamiltonian->GetHilbertSpaceDimension(), Hamiltonian->GetHilbertSpaceDimension());
 	  HermitianMatrix HRep (Hamiltonian->GetHilbertSpaceDimension(), true);
 	  HamiltonianEigenvalues[j] = RealDiagonalMatrix(Hamiltonian->GetHilbertSpaceDimension());
 	  Hamiltonian->GetHamiltonian(HRep);
@@ -477,19 +471,16 @@ int main(int argc, char** argv)
 	  cout << "done in " << Dt << "sec" << endl;      
 	  cout << "diagonalizing H" << j << " Hamiltonian" <<  endl;
 	  gettimeofday (&(TotalStartingTime), 0);
-	  HRep.LapackDiagonalize(HamiltonianEigenvalues[j], ComplexBasis[j]);
+	  HRep.LapackDiagonalize(HamiltonianEigenvalues[j], StepMatrices[j + 1]);
 	  delete Hamiltonian;
 	  if (StepMatrices[j].GetNbrRow() == 0)
 	    {
-	      StepMatrices[j].Copy(ComplexBasis[j]);
+	      StepMatrices[j].Copy(StepMatrices[j + 1]);
 	    }
 	  else
 	    {
-	      StepMatrices[j].Multiply(ComplexBasis[j]);
+	      StepMatrices[j].Multiply(StepMatrices[j + 1]);
 	    }
-	  TransposedComplexBasis[j].Copy(ComplexBasis[j]);
-	  TransposedComplexBasis[j].HermitianTranspose();
-	  StepMatrices[j + 1] = ComplexBasis[j];
 	  StepMatrices[j + 1].HermitianTranspose();
 	}
       delete[] LocalJxValues;
@@ -527,57 +518,6 @@ int main(int argc, char** argv)
 	      UnitaryEvolution.Multiply(StepMatrices[i + 1]);
 	    }
 	}
-//       for (int i = 0; i < NbrSteps; ++i)
-// 	{
-// 	  if (i == 0)
-// 	    {
-// 	      if (ComplexBasis[i].GetNbrRow() != 0)
-// 		{
-// 		  UnitaryEvolution.Copy(ComplexBasis[i]);
-// 		}
-// 	      else
-// 		{
-// 		  if (Basis[i].GetNbrRow() != 0)
-// 		    {
-// 		      UnitaryEvolution = ComplexMatrix(Basis[i]);
-// 		    }
-// 		  else
-// 		    {
-// 		      UnitaryEvolution = ComplexMatrix(Space->GetHilbertSpaceDimension(), Space->GetHilbertSpaceDimension());
-// 		      UnitaryEvolution.SetToIdentity();
-// 		    }
-// 		}
-// 	    }
-// 	  else
-// 	    {
-// 	      if (ComplexBasis[i].GetNbrRow() != 0)
-// 		{
-// 		  UnitaryEvolution.Multiply(ComplexBasis[i]);
-// 		}
-// 	      else
-// 		{
-// 		  if (Basis[i].GetNbrRow() != 0)
-// 		    {
-// 		      UnitaryEvolution.Multiply(Basis[i]);
-// 		    }
-// 		}
-// 	    }
-// 	  for (int k = 0; k < UnitaryEvolution.GetNbrColumn(); ++k)
-// 	    {
-// 	      UnitaryEvolution[k] *= Phase(TauSteps[i] * HamiltonianEigenvalues[i][k]);
-// 	    }
-// 	  if (TransposedComplexBasis[i].GetNbrRow() != 0)
-// 	    {
-// 	      UnitaryEvolution.Multiply(TransposedComplexBasis[i]);
-// 	    }
-// 	  else
-// 	    {
-// 	      if (TransposedBasis[i].GetNbrRow() != 0)
-// 		{
-// 		  UnitaryEvolution.Multiply(TransposedBasis[i]);
-// 		}
-// 	    }
-// 	}
       gettimeofday (&(TotalEndingTime), 0);
       Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
 		     ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
