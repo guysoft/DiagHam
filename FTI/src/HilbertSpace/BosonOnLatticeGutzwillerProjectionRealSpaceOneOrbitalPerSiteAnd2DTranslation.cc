@@ -218,7 +218,7 @@ for(int k =0 ;k <NbrRepresentant; k++)
  	  SlaterJastrow.SetMatrixElement(p,q,jastrowEigenVecs[p][this->Lx*this->Ly - 1 - TemporaryState[q]]);
     }	      
     }
-    trialState[i] +=  Conj(ExponentialFactors[MomentumTable[k]/this->MaxYMomentum][MomentumTable[k]%this->MaxYMomentum]) * SlaterCF.Determinant() * SlaterJastrow.Determinant()* Phase(-1.0*PositionY*(MomentumTable[k]/this->MaxYMomentum)*phaseTranslationX);
+    trialState[i] +=  Conj(ExponentialFactors[MomentumTable[k]/this->MaxYMomentum][MomentumTable[k]%this->MaxYMomentum]) * SlaterCF.Determinant() * SlaterJastrow.Determinant() * Phase(-1.0*PositionY*(MomentumTable[k]/this->MaxYMomentum)*phaseTranslationX);
 }
  trialState[i] /= sqrt(this->NbrStateInOrbit[i]);
  delete [] TranslationOfRepresentant;

@@ -82,6 +82,12 @@ class TightBindingModelHofstadterSquare : public Abstract2DTightBindingModel
   ~TightBindingModelHofstadterSquare();
 
 
+  // get the eigenstates in real space, using CoreComputeBandStructureWithEmbedding
+  // 
+  // return value = tight binding eigenvectors
+  HermitianMatrix GetRealSpaceTightBindingEigenstates();
+
+
   // get the tight binding hamiltonian in real space 
   // 
   // return value = tight binding hamiltonian
@@ -97,6 +103,9 @@ HermitianMatrix  BuildTightBindingHamiltonianRealSpace(int* nbrConnectedOrbitals
   // minStateIndex = minimum index of the state to compute
   // nbrStates = number of states to compute
   virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates);
+
+  // version with real-space embedding of the wavefunctions
+  virtual void CoreComputeBandStructureWithEmbedding(long minStateIndex, long nbrStates);
 
   // initialize number of flux quanta
   // nbrFluxQuanta = number of quanta of flux piercing the unit cell
