@@ -212,7 +212,7 @@ inline unsigned long BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation
 	    }
 	  this->ApplySingleXTranslation(TmpStateDescription);      
 	}
-      this->ApplySingleYTranslation(stateDescription);      
+      this->ApplySingleYTranslation(stateDescription);
     }
   return CanonicalState;  
 }

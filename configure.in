@@ -119,6 +119,7 @@ if test "x$HAVE_PKG_GSL" != "xno"; then
 
   found=no
   gsl_dir=
+  gsl_libdir=
 
   # test if location given by user
   
@@ -144,8 +145,13 @@ if test "x$HAVE_PKG_GSL" != "xno"; then
     for d in $HOME $HOME/src $prefix $prefix/src /usr /usr/local /usr/local/src
     do
       if test -f "$d/include/gsl/gsl_version.h"; then
-        if test -f "$d/lib/libgsl.a"; then
-          gsl_dir="$d"
+        if test -f "$d/lib/libgsl*"; then
+          gsl_libdir="$d/lib"
+          found=yes
+          break
+        fi
+	if test -f "$d/lib64/libgsl*"; then
+          gsl_libdir="$d/lib64"
           found=yes
           break
         fi
@@ -163,7 +169,7 @@ if test "x$HAVE_PKG_GSL" != "xno"; then
   # define and export variables for makefile
   
   GSL_INCLUDES="-I$gsl_dir/include/"
-  GSL_LIBS="-L$gsl_dir/lib/ -lgsl -lgslcblas"
+  GSL_LIBS="-L$gsl_libdir/ -lgsl -lgslcblas"
 fi
 
 if test X${HAVE_PKG_GSL} = Xyes; then

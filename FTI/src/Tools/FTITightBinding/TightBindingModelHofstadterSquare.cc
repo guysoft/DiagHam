@@ -248,6 +248,19 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIn
 }
 
 
+// core part that compute the band structure
+//
+// minStateIndex = minimum index of the state to compute
+// nbrStates = number of states to compute
+
+void TightBindingModelHofstadterSquare::CoreComputeBandStructureWithEmbedding(long minStateIndex, long nbrStates)
+{
+  /// @todo calculate single-particle states using Fourier transform with respect to site position
+
+
+}
+
+
 
 // nbrFluxQuanta = number of quanta of flux piercing the unit cell
 void TightBindingModelHofstadterSquare::SetNbrFluxQuanta(int nbrFluxQuanta)
@@ -262,10 +275,12 @@ void TightBindingModelHofstadterSquare::SetNbrFluxQuanta(int nbrFluxQuanta)
     case 'x':
       this->LxTranslationPhase = 1.0;  // no phase for translating in the y-direction in Landau gauge...
       this->LyTranslationPhase = Polar(1.0, 2.0*M_PI*FluxDensity*this->UnitCellY);
+      cout << "'x-axis' gauge: LyTranslationPhase= exp(I*"<<2.0*M_PI*FluxDensity*this->UnitCellY<<")="<<LyTranslationPhase<<endl;
       break;
     case 'y':
       this->LxTranslationPhase = Polar(1.0, -2.0*M_PI*FluxDensity*this->UnitCellX);
       this->LyTranslationPhase = 1.0;  // no phase for translating in the y-direction in Landau gauge...
+      cout << "'y-axis' gauge: LxTranslationPhase= exp(I*"<<-2.0*M_PI*FluxDensity*this->UnitCellX<<")="<<LxTranslationPhase<<endl;
       break;
     default:
       cout << "Unknown Quantization axis! Exiting TightBindingModelHofstadterSquare..."<<endl;
@@ -332,11 +347,21 @@ int TightBindingModelHofstadterSquare::EncodeSublatticeIndex(int posx, int posy,
   for (int x=1;x<=posx; ++x)
     translationPhase*=tmpPhase;
   translationPhase*=Polar(1.0, KY*numYTranslations);
-  //cout << "tX="<<numXTranslations<< ", tY="<<numYTranslations<<", translationPhase= " <<translationPhase<<endl;
+  cout << "tX="<<numXTranslations<< ", tY="<<numYTranslations<<", translationPhase= " <<translationPhase<<endl;
   return rst;
 }
 
 
+
+
+// get the eigenstates in real space, using CoreComputeBandStructureWithEmbedding
+// 
+// return value = tight binding eigenvectors
+
+HermitianMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingEigenstates()
+{
+  /// @todo to be written
+}
 
 // get the tight binding hamiltonian in real space 
 // 

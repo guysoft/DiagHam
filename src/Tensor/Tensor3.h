@@ -1,6 +1,7 @@
 
 #ifndef _TENSOR3_H
 #define _TENSOR3_H
+#include "config.h"
 
 #include<iostream>
 #include "GeneralTools/GarbageFlag.h"

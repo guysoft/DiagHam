@@ -122,6 +122,7 @@ int main(int argc, char** argv)
   (*MiscGroup) += new BooleanOption ('\n', "write-grid", "output wave function on grid points");
   (*MiscGroup) += new BooleanOption ('\n', "write-random", "output wave function on random points");
   (*MiscGroup) += new SingleIntegerOption ('\n', "max-grid", "number of grid points in each direction",10);
+  (*MiscGroup) += new SingleIntegerOption  ('\n', "test", "test Monte Carlo observable", 0);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -135,6 +136,20 @@ int main(int argc, char** argv)
       Manager.DisplayHelp (cout);
       return 0;
     }
+
+
+  if (Manager.GetInteger("test")>0)
+    {
+      RealObservable testObservable(16,1);
+      for (int i=0; i<Manager.GetInteger("test"); ++i)
+	testObservable << i;
+      cout << "Mean="<<testObservable.Average()<<endl;
+      cout << "Variance="<<testObservable.Variance()<<endl;
+      cout << "BinVariance="<<testObservable.VarianceOfBins()<<endl;
+      cout << "ErrorEstimate="<<testObservable.ErrorEstimate()<<endl;
+      exit(0);
+    }
+
 
   if (Manager.GetBoolean("list-wavefunctions") == true)
     {

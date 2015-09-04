@@ -144,7 +144,7 @@ int main(int argc, char** argv)
       char *TmpExtension = GetExtensionFromFileName(Manager.GetString("eigenvalue-file"),4);
       if (TmpExtension!=0)
 	{
-	  FilePrefix=RemoveExtensionFromFileName(Manager.GetString("eigenvalue-file"), TmpExtension);
+	  FilePrefix = RemoveExtensionFromFileName(Manager.GetString("eigenvalue-file"), TmpExtension);
 	  delete [] TmpExtension;
 	}
       else

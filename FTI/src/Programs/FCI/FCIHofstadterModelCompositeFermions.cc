@@ -187,9 +187,17 @@ int main(int argc, char** argv)
       sprintf (OutputName, "bosons_lattice_CF_n_%d_X_%d_Y_%d_x_%d_y_%d_q_%d_p_%d_kx_%d_ky_%d%s.vec", NbrBosons, NxZero, NyZero, MaxMomentumX ,MaxMomentumY , NbrFluxQuanta, CFFlux, XMomentum , YMomentum ,boundaryCdStr);
     }
 
-  int AttachedFlux = CFFlux * NbrBosons;  
+  int AttachedFlux = CFFlux * NbrBosons;
+
+  int TotalFluxCF =  (NbrFluxQuanta-AttachedFlux);
+  int TotalFluxJastrow =  AttachedFlux;
+
+  /// @todo: calculer les tailles de cellules magnétiques pour CF et Jastrow (qui peuvent être différent)
+
+  // a voir si on peut faire un choix pour qu'ils soient commensurables.
+
   int FluxPerCellCF =  (NbrFluxQuanta-AttachedFlux)/( NxZero* NyZero );  
-  int FluxPerCellJastrow =  (AttachedFlux* NbrBosons)/( NxZero* NyZero );  
+  int FluxPerCellJastrow =  AttachedFlux/( NxZero* NyZero );  
   // constructing 1P states:
   bool verbose = Manager.GetBoolean("debug");
   if (verbose) cout << "* CF states contribute "<<NbrFluxQuanta-AttachedFlux<<" flux"<<endl;
@@ -255,7 +263,7 @@ int main(int argc, char** argv)
 // AbstractQHEOnLatticeHamiltonian* JastrowHamiltonian = new ParticleOnLatticeDeltaHamiltonian(JastrowSpace, /*NbrParticles*/ 1, Lx, Ly, AttachedFlux, /* U*/  0.0 , /*ReverseHopping */ false, /* Delta */ 0.0, /* Random */ 0.0, Architecture.GetArchitecture(), 0, NULL);
 
   TightBindingMatrix = JastrowTightBindingModel.GetRealSpaceTightBindingHamiltonian(); 
-  ParticleOnLatticeRealSpaceHamiltonian JastrowHamiltonian (&CFSpace, 1 /*NbrParticles*/, JastrowTightBindingModel.GetNbrBands() * JastrowTightBindingModel.GetNbrStatePerBand(),  TightBindingMatrix, DensityDensityInteraction,
+   ParticleOnLatticeRealSpaceHamiltonian JastrowHamiltonian (&CFSpace, 1 /*NbrParticles*/, JastrowTightBindingModel.GetNbrBands() * JastrowTightBindingModel.GetNbrStatePerBand(),  TightBindingMatrix, DensityDensityInteraction,
  									   Architecture.GetArchitecture(), MemorySpace);
 
 
@@ -268,7 +276,7 @@ int main(int argc, char** argv)
   RealDiagonalMatrix JastrowEigenVals(JastrowHamiltonian.GetHilbertSpaceDimension());
   HJastrow.Diagonalize(JastrowEigenVals, JastrowEigenVecs, /* error*/  1e-10 , /* maxIter */ 250);
 
-  BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation Space (NbrBosons,Lx,Ly , XMomentum, MaxMomentumX , YMomentum, MaxMomentumY );
+  BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation Space (NbrBosons, Lx, Ly , XMomentum, MaxMomentumX, YMomentum, MaxMomentumY);
   ComplexVector TrialState(Space.GetHilbertSpaceDimension(),true);
   double PhaseTranslationX = 2.0*M_PI*NbrFluxQuanta/(Lx*Ly) * NxZero;
   Space.GetCompositeFermionWavefunction(TrialState, JastrowEigenVecs, CFEigenVecs,PhaseTranslationX );

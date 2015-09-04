@@ -270,14 +270,15 @@ void BosonOnLattice::SetNbrFluxQuanta(int nbrFluxQuanta)
   switch (this->LandauGaugeAxis)
     {
     case 'x':
-      //cout << "FluxDensity="<<this->FluxDensity<<endl;
+      cout << "FluxDensity="<<this->FluxDensity<<endl;
       this->LxTranslationPhase = 1.0;  // no phase for translating in the y-direction in Landau gauge...
       this->LyTranslationPhase = Polar(1.0, 2.0*M_PI*FluxDensity*this->Ly);
+      cout << "LyTranslationPhase= exp(I*"<<2.0*M_PI*FluxDensity*this->Ly<<")="<<LyTranslationPhase<<endl;
       break;
     case 'y':
-      //cout << "FluxDensity="<<this->FluxDensity<<endl;
+      cout << "FluxDensity="<<this->FluxDensity<<endl;
       this->LxTranslationPhase = Polar(1.0, -2.0*M_PI*FluxDensity*this->Lx);
-      //cout << "LxTranslationPhase= exp(I*"<<2.0*M_PI*FluxDensity*this->Lx<<")="<<LxTranslationPhase<<endl;
+      cout << "LxTranslationPhase= exp(I*"<<-2.0*M_PI*FluxDensity*this->Lx<<")="<<LxTranslationPhase<<endl;
       this->LyTranslationPhase = 1.0;  // no phase for translating in the y-direction in Landau gauge...
       break;
     default:

@@ -70,7 +70,7 @@ BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::BosonOnLatticeGutzw
   this->MaxMomentum = 0;
   this->NbrSite = 0;
   this->MomentumModulo = 0;
-  this->XMomentum = 0; 
+  this->XMomentum = 0;
   this->YMomentum = 0;
   this->StateShift = 2 * (this->MaxMomentum / this->MomentumModulo);
   this->MomentumIncrement = (this->NbrBosons * this->StateShift/2) % this->MomentumModulo;
@@ -80,7 +80,7 @@ BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::BosonOnLatticeGutzw
   this->LargeHilbertSpaceDimension = 0l;
   this->HilbertSpaceDimension = 0;
   this->StateDescription = 0;
-  this->StateMaxMomentum = 0;  
+  this->StateMaxMomentum = 0;
   this->LargeHilbertSpaceDimension = 0;
 }
 

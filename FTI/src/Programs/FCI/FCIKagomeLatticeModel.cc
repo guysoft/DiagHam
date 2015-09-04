@@ -375,7 +375,7 @@ int main(int argc, char** argv)
 		    }
 		  else
 		    {
-		  Space = new FermionOnSquareLatticeMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		      Space = new FermionOnSquareLatticeMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
 		    }
 		}
 	      else

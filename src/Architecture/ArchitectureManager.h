@@ -44,7 +44,7 @@ class ArchitectureManager
 
  protected:
 
-  // pointer to the best avalaible architecture in agrement with the option constraints
+  // pointer to the best avalaible architecture in agreement with the option constraints
   AbstractArchitecture* Architecture;
 
   // pointer to the option manager

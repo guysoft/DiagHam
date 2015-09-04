@@ -113,13 +113,13 @@ inline void BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTra
   
   for (int i = 0; i < this->NbrSite; i++)
     { 	
-         if (this->StateDescription[index]>> i & 1ul == 1 )
-{
-	 positionX +=  (i/this->StateXShift) *  Nx;
-         positionY += ((i%this->StateXShift)/this->StateYShift) * Ny;
-         positionX += (i % Nx);
-         positionY += ((i%this->StateYShift)/ Nx) ;
-}
+      if ( ((this->StateDescription[index]>> i) & 1ul ) == 1 )
+	{
+	  positionX +=  (i/this->StateXShift) *  Nx;
+	  positionY += ((i%this->StateXShift)/this->StateYShift) * Ny;
+	  positionX += (i % Nx); 
+	  positionY += ((i%this->StateYShift)/ Nx) ;
+	}
     }
 }
 

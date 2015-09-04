@@ -78,8 +78,9 @@ class AbstractPrecalculationOperation: public AbstractArchitectureOperation
   // apply operation for SMP architecture
   //
   // architecture = pointer to the architecture
+  // mpiNodeNbr = node on which architecture is run
   // return value = true if no error occurs
-  virtual bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture);
+  virtual bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture, int mpiNodeNbr);
   
   // apply operation for SimpleMPI architecture
   //

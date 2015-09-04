@@ -63,7 +63,9 @@ int main(int argc, char** argv)
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "record-step", "number of iteration between two consecutive result recording of energy value (0 if no on-disk recording is needed)", 0);
   (*MonteCarloGroup) += new SingleStringOption ('\n', "record-file", "name of the file where energy recording has to be done", "montecarlo.dat");
   (*MonteCarloGroup) += new BooleanOption  ('\n', "show-details", "show intermediate values used for energy calculation", false);
+  (*MiscGroup) += new BooleanOption  ('h', "test", "test Monte Carlo observable");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
+
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {

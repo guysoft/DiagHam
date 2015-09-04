@@ -160,6 +160,14 @@ class AbstractArchitectureOperation
   // architecture = pointer to the architecture
   // return value = true if no error occurs
   virtual bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture);
+
+  // apply operation for SMP architecture
+  //
+  // architecture = pointer to the architecture
+  // mpiNodeNbr = optional argument, indicating the number of the MPI node on which this SMP architecture is run
+  // return value = true if no error occurs
+  virtual bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture, int mpiNodeNbr) 
+  {return this->ArchitectureDependentApplyOperation(architecture);}
   
   // apply operation for simple MPI architecture
   //

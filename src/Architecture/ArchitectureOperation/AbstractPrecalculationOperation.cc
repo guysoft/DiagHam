@@ -77,7 +77,7 @@ void AbstractPrecalculationOperation::SetIndicesRange (const long& firstComponen
 // architecture = pointer to the architecture
 // return value = true if no error occurs
 
-bool AbstractPrecalculationOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
+bool AbstractPrecalculationOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture, int mpiNodeNbr)
 {
   long Step = this->LargeNbrComponent / ((long) architecture->GetNbrThreads());
   long TmpFirstComponent = this->LargeFirstComponent;
@@ -114,7 +114,7 @@ bool AbstractPrecalculationOperation::ArchitectureDependentApplyOperation(Simple
   architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
   this->SetIndicesRange(TmpMinimumIndex, (TmpMaximumIndex - TmpMinimumIndex + 1));
   if (architecture->GetLocalArchitecture()->GetArchitectureID() == AbstractArchitecture::SMP)
-    this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture());
+    this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture(), architecture->GetNodeNbr());
   else
     this->RawApplyOperation();
   return true;

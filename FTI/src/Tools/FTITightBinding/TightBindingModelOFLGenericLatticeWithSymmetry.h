@@ -47,7 +47,7 @@ using std::cout;
 using std::endl;
 
 // flag to switch additional debug output
-//#define DEBUG_OUTPUT
+#define DEBUG_OUTPUT
 
 class TightBindingModelOFLGenericLatticeWithSymmetry : public Abstract2DTightBindingModel
 {

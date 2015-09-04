@@ -567,7 +567,7 @@ char* AddSegmentInFileName(char* inputName, const char* insertion, const char* e
 	    ++SizeString;	  
 	  StrElement += SizeString;
 	}
-      if (StrElement!='\0')
+      if (*StrElement!='\0')
 	{
 	  char* StringEnd=NULL;
 	  StringEnd = new char[strlen(StrElement)+1];

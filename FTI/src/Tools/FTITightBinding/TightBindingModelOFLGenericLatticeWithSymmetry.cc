@@ -423,7 +423,7 @@ TightBindingModelOFLGenericLatticeWithSymmetry::TightBindingModelOFLGenericLatti
 		++CurrentJumpTerm;
 		if (TRSymmetrize)
 		  {
-		    this->ExpressInExtendedCell(-dG1, -dG2, sub1, sub2, n1, n2, dG1Eff, dG2Eff, sub1Eff, sub2Eff);		    
+		    this->ExpressInExtendedCell(-dG1, -dG2, sub2, sub1, n1, n2, dG1Eff, dG2Eff, sub1Eff, sub2Eff);   // changed argument from  (...sub1, sub2...) to  (...sub2, sub1...)
                     DeltaG1[CurrentJumpTerm]=dG1Eff;
 		    DeltaG2[CurrentJumpTerm]=dG2Eff;
 		    InitialSublattice[CurrentJumpTerm]=sub1Eff;

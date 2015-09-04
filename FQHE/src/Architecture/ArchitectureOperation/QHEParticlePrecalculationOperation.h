@@ -51,6 +51,9 @@ class QHEParticlePrecalculationOperation: public AbstractPrecalculationOperation
   // flag to indicate if the operation has to be applied to the first pass of the precalculations
   bool FirstPass;
 
+  // variable to store memory requirements - non-zero matrix elements
+  long RequiredMemory;
+
  public:
   
   // constructor 
@@ -93,7 +96,14 @@ class QHEParticlePrecalculationOperation: public AbstractPrecalculationOperation
   //
   // architecture = pointer to the architecture
   // return value = true if no error occurs
-  bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture);
+  bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture) {return this->ArchitectureDependentApplyOperation(architecture, -1);}
+
+  // apply operation for SMP architecture
+  //
+  // architecture = pointer to the architecture
+  // return value = true if no error occurs
+  bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture, int mpiNodeNbr);
+
 
   
 };

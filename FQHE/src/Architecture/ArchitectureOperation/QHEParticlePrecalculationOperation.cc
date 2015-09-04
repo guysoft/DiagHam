@@ -44,6 +44,7 @@ QHEParticlePrecalculationOperation::QHEParticlePrecalculationOperation (Abstract
   this->Hamiltonian = hamiltonian;
   this->OperationType = AbstractArchitectureOperation::QHEParticlePrecalculation;
   this->FirstPass = firstPass;
+  this->RequiredMemory = 0;
 }
 
 // copy constructor 
@@ -57,6 +58,7 @@ QHEParticlePrecalculationOperation::QHEParticlePrecalculationOperation(const QHE
   this->Hamiltonian = operation.Hamiltonian;
   this->OperationType = AbstractArchitectureOperation::QHEParticlePrecalculation;
   this->FirstPass = operation.FirstPass;
+  this->RequiredMemory = operation.RequiredMemory;
 }
   
 // destructor
@@ -94,7 +96,7 @@ bool QHEParticlePrecalculationOperation::RawApplyOperation()
 {
   if (this->FirstPass ==  true)
     {
-      this->Hamiltonian->PartialFastMultiplicationMemory(this->FirstComponent, this->NbrComponent);
+      this->RequiredMemory = this->Hamiltonian->PartialFastMultiplicationMemory(this->FirstComponent, this->NbrComponent);
     }
   else
     {
@@ -109,7 +111,7 @@ bool QHEParticlePrecalculationOperation::RawApplyOperation()
 // architecture = pointer to the architecture
 // return value = true if no error occurs
 
-bool QHEParticlePrecalculationOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
+bool QHEParticlePrecalculationOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture, int mpiNodeNbr)
 {
   long *SegmentIndices=0;
   int TmpNbrThreads = architecture->GetNbrThreads();
@@ -131,7 +133,12 @@ bool QHEParticlePrecalculationOperation::ArchitectureDependentApplyOperation(SMP
     }
   architecture->SendJobs();
   for (int i = 0; i < architecture->GetNbrThreads(); ++i)
-    delete TmpOperations[i];
+    {
+      if (mpiNodeNbr>=0)
+	cout << "node "<<mpiNodeNbr<<" ";
+      cout << "thread "<<i<<" = "<<TmpOperations[i]->RequiredMemory<<endl;
+      delete TmpOperations[i];
+    }
   delete[] TmpOperations;
   if (Hamiltonian->GetLoadBalancing(TmpNbrThreads, SegmentIndices)==false)
     delete [] SegmentIndices;
