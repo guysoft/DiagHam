@@ -797,7 +797,7 @@ void FCICheckerboardLatticeModelComputeInteractingOrbitals(int*& nbrInteractingO
       tightBindingModel->GetRealSpaceIndex(0, 0, p, q);
       interactingOrbitalsSpatialIndices[0][2 * Index] = p;
       interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
-      interactingOrbitalsPotentials[0][Index] = 0.5 * uPotential;
+      interactingOrbitalsPotentials[0][Index] = uPotential;
       ++Index;
       if (vPotential != 0.0)
 	{
@@ -812,7 +812,7 @@ void FCICheckerboardLatticeModelComputeInteractingOrbitals(int*& nbrInteractingO
       tightBindingModel->GetRealSpaceIndex(0, 0, p, q);
       interactingOrbitalsSpatialIndices[1][2 * Index] = p;
       interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
-      interactingOrbitalsPotentials[1][Index] = 0.5 * uPotential;
+      interactingOrbitalsPotentials[1][Index] = uPotential;
       ++Index;
       if (vPotential != 0.0)
 	{
