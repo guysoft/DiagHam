@@ -236,10 +236,11 @@ int main(int argc, char** argv)
 	  return 0;
 	}
 
-      LevelStatisticsPerformLevelStatistics(Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
-					    MinAverageSpacing, MaxAverageSpacing, AverageSpacing, NbrSpacings,
-					    NbrBins, BinSize, NbrSpacingPerBin, NbrRejectedSpacings, NbrAcceptedSpacings,
-					    DensityOfStates, DensityOfStatesThreshold);
+      double AverageR = LevelStatisticsPerformLevelStatistics(Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
+							      MinAverageSpacing, MaxAverageSpacing, AverageSpacing, NbrSpacings,
+							      NbrBins, BinSize, NbrSpacingPerBin, NbrRejectedSpacings, NbrAcceptedSpacings,
+							      DensityOfStates, DensityOfStatesThreshold);
+      cout << "<r>=" << AverageR << endl;
       for (int i = 0; i < NbrSectors; ++i)
 	{    
 	  if (SpectrumSize[i] > 0)
@@ -257,6 +258,9 @@ int main(int argc, char** argv)
 	  SpectraFile.DumpErrors(cout);
 	  return false;
 	}
+      double* AverageRValues = new double[SpectraFile.GetNbrLines()];
+      double TotalAverageR = 0.0;
+      double TotalAverageRError = 0.0;
       for (int i = 0; i < SpectraFile.GetNbrLines(); ++i)
 	{
 	  double DummyAverageSpacing = 0.0;
@@ -270,10 +274,12 @@ int main(int argc, char** argv)
 	      return 0;
 	    }
 	  
-	  LevelStatisticsPerformLevelStatistics(Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
-						MinAverageSpacing, MaxAverageSpacing, AverageSpacing, NbrSpacings,
-						NbrBins, BinSize, NbrSpacingPerBin, NbrRejectedSpacings, NbrAcceptedSpacings,
-						DensityOfStates, DensityOfStatesThreshold);
+	  AverageRValues[i] = LevelStatisticsPerformLevelStatistics(Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
+								    MinAverageSpacing, MaxAverageSpacing, AverageSpacing, NbrSpacings,
+								    NbrBins, BinSize, NbrSpacingPerBin, NbrRejectedSpacings, NbrAcceptedSpacings,
+								    DensityOfStates, DensityOfStatesThreshold);
+	  TotalAverageR += AverageRValues[i];
+	  TotalAverageRError += AverageRValues[i] * AverageRValues[i];
 	  for (int i = 0; i < NbrSectors; ++i)
 	    {    
 	      if (SpectrumSize[i] > 0)
@@ -283,6 +289,21 @@ int main(int argc, char** argv)
 	  delete[] SpectrumSize;
 	  delete[] SpectrumWeight;	  
 	}
+      TotalAverageR /= SpectraFile.GetNbrLines();
+      TotalAverageRError /= SpectraFile.GetNbrLines();
+      TotalAverageRError = sqrt(TotalAverageRError - (TotalAverageR * TotalAverageR));
+      char* OutputRFileName = ReplaceExtensionToFileName(OutputFileName, "levelstat", "rvalue");
+      ofstream File;
+      File.open(OutputRFileName, ios::binary | ios::out);
+      File.precision(14);
+      File << "# Average r = " << TotalAverageR  << " " << TotalAverageRError << endl;
+      File << "# file name <r>" << endl;
+      for (int i = 0; i < SpectraFile.GetNbrLines(); ++i)
+	{
+	  File << SpectraFile(0, i) << " " << AverageRValues[i] << endl;
+	}
+      File.close();
+      cout << "<r>=" << TotalAverageR << " " << TotalAverageRError << endl;     
     }
 
   double Sum = 0.0;
