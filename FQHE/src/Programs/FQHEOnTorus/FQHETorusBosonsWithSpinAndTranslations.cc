@@ -107,6 +107,9 @@ int main(int argc, char** argv)
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
   char* SavePrecalculationFileName = Manager.GetString("save-precalculation");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
+  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+    Memory = Architecture.GetArchitecture()->GetLocalMemory();
+
   bool NoSzFlag = Manager.GetBoolean("no-sz");
   if ((TotalSpin & 1) != (NbrBosons & 1))
     {

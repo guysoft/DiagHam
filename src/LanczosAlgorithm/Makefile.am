@@ -20,7 +20,6 @@ ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm.cc \
 BasicLanczosAlgorithmWithGroundStateDiskStorage.cc \
 ComplexBasicLanczosAlgorithmWithGroundStateFastDisk.cc \
 BasicBlockLanczosAlgorithm.cc \
-LanczosManager.cc \
 InternalReorthogonalizedLanczosAlgorithm.cc \
 ProjectedLanczosAlgorithmWithGroundState.cc \
 ProjectedReorthogonalizedLanczosAlgorithmDiskStorage.cc \
@@ -35,5 +34,6 @@ ImplicitlyRestartedArnoldiAlgorithm.cc \
 FullReorthogonalizedComplexBlockLanczosAlgorithmWithDiskStorage.cc \
 ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk.cc \
 ComplexBasicLanczosAlgorithmWithProjector.cc \
-ComplexBasicLanczosAlgorithmWithGroundStateAndProjector.cc
-#ComplexBasicLanczosAlgorithmDiskWithGroundState.cc 
+ComplexBasicLanczosAlgorithmWithGroundStateAndProjector.cc \
+LanczosManager.cc
+#ComplexBasicLanczosAlgorithmDiskWithGroundState.cc
