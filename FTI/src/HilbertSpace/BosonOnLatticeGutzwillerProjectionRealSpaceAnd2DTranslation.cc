@@ -386,7 +386,11 @@ long BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::GenerateStates
 
 int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::AdA (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
 {
+//  cout <<"inside int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::AdA (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)"<<endl;
+//  cout <<"creation operator = "<< m  <<endl;
+//  cout <<"annihilation operator = "<< n  <<endl;
   unsigned long State = this->StateDescription[index];
+//  cout <<State<<endl;
   if ((State & (0x1ul << n)) == 0)
     {
       coefficient = 0.0;
@@ -394,12 +398,14 @@ int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::AdA (int index,
     }
   coefficient = 1.0;
   State &= ~(0x1ul << n);
+//  cout <<State<<endl;
   if ((State & (0x1ul << m))!= 0)
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
   State |= (0x1ul << m);
+//  cout <<"State = " << State<<endl;
   this->ProdATemporaryNbrStateInOrbit =  this->NbrStateInOrbit[index];
   return this->SymmetrizeAdAdResult(State, coefficient, nbrTranslationX, nbrTranslationY);
 }
@@ -446,3 +452,32 @@ ostream& BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::PrintState
   return Str;
 }
 
+// apply a_n operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdAd call
+//
+// index = index of the state on which the operator has to be applied
+// n = first index for annihilation operator
+// return value =  multiplicative factor 
+
+double BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::A (int index, int n)
+{
+  this->ProdATemporaryStateMaxMomentum = this->StateMaxMomentum[index];
+  this->ProdATemporaryState = this->StateDescription[index];
+  if ((n >  this->ProdATemporaryStateMaxMomentum) || ((this->ProdATemporaryState & (0x1ul << n)) == 0x0ul))
+    {
+      return 0.0;
+    }
+  this->ProdATemporaryNbrStateInOrbit = this->NbrStateInOrbit[index];
+  double Coefficient = 1.0;
+  this->ProdATemporaryState &= ~(0x1ul << n);
+  if (this->ProdATemporaryState == 0x0ul)
+    {
+      this->ProdATemporaryStateMaxMomentum = 0;
+    }
+  else
+    {
+      if (this->ProdATemporaryStateMaxMomentum == n)
+	while ((this->ProdATemporaryState >> this->ProdATemporaryStateMaxMomentum) == 0x0ul)
+	  --this->ProdATemporaryStateMaxMomentum;
+    }
+  return Coefficient;
+}

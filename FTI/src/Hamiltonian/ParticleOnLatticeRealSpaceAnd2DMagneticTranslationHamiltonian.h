@@ -687,8 +687,13 @@ inline void  ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian::Eval
 															       int* indexArray, Complex* coefficientArray, long& position)
 {
   if (this->OneBodyGenericInteractionFactors == 0)
-    return;
+{
 
+//   cout <<" in   if (this->OneBodyGenericInteractionFactors == 0) "<<endl; 
+   return;
+}
+
+//  cout <<" in inline void  ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 															       int* indexArray, Complex* coefficientArray, long& position)"<<endl;
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   int Index;

@@ -503,6 +503,7 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwo
 
 inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory)
 {
+//  cout <<"inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory)"<<endl;
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   double Coefficient3;
@@ -775,6 +776,8 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNOne
 inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 
 															       int* indexArray, Complex* coefficientArray, long& position)
 {
+
+//  cout <<"inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 													       int* indexArray, Complex* coefficientArray, long& position)"<<endl;
   if (this->OneBodyGenericInteractionFactors == 0)
     return;
 
@@ -853,8 +856,12 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNOne
 
 inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNOneBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory)
 {
+//   cout <<"inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNOneBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory)"<<endl;
   if (this->OneBodyGenericInteractionFactors == 0) 
+ {
+//cout <<" in   if (this->OneBodyGenericInteractionFactors == 0)  "<<endl;
     return;
+}
   int Index;
   double Coefficient = 0.0;
   int NbrTranslationsX;
@@ -863,28 +870,28 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNOne
   
   if (this->HermitianSymmetryFlag == false)
     {
+  //  cout <<"  if (this->HermitianSymmetryFlag == false)"<<endl;
+
       for (int i = firstComponent; i < lastComponent; ++i)
 	{
 	  for (int j = 0; j < this->NbrSites; ++j)
 	    {
 	      int TmpNbrConnectedSites = this->OneBodyGenericNbrConnectedSites[j];
+//              cout <<j<< " "<< TmpNbrConnectedSites<<endl;
 	      int* TmpConnectedSites = this->OneBodyGenericConnectedSites[j];
-	      Coefficient = particles->A (i,j);
-	      double TmpCoefficient;
-	      if (Coefficient != 0.0)
-	      {
-		for (int k = 0; k < TmpNbrConnectedSites; ++k)
+	      double TmpCoefficient ;
+              for (int k = 0; k < TmpNbrConnectedSites; ++k)
 		  {
-		    TmpCoefficient = Coefficient;
+		    TmpCoefficient = 1.0;
+//                    cout <<k<<" "<< TmpConnectedSites[k] <<endl;
 		    Index = particles->AdA(i, j, TmpConnectedSites[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
-		    if (Index < Dim)
+		    if ((Index < Dim) &&(TmpCoefficient != 0.0 ))
 		      {
 			++memory;
 			++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
 		      }
-		  }
-		}
 	    }
+}
 	}
     }
   else

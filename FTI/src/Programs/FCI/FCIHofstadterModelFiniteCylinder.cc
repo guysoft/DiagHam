@@ -37,12 +37,14 @@
 #include <fstream>
 
 using std::cout;
+using std::cin;
 using std::endl;
 using std::ios;
 using std::ofstream;
 
 void  ComputeDensity(int NbrFermions, ComplexMatrix & eigenVectors, int X1, int Y1,  int X2, int Y2, TightBindingModelHofstadterFiniteCylinder * tightBindingModel);
-void  ComputeCurrent(FermionOnLatticeRealSpaceAnd1DTranslation * space, double fluxDensity, ComplexVector & groundState);
+void  ComputeCurrent(FermionOnLatticeRealSpaceAnd1DTranslation * space, double * tunnelElementX, double * tunnelElementY, double fluxDensity, ComplexVector & groundState);
+
 
 int main(int argc, char** argv)
 {
@@ -72,7 +74,8 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
-  
+  (*SystemGroup) += new BooleanOption  ('\n', "torus", "compute mean value of the Hamiltonian against each eigenstate",false);
+
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-chernnumber", "compute the chern number (only in singleparticle-spectrum mode)");
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebody", "export the one-body information (band structure and eigenstates) in a binary file");
@@ -115,9 +118,29 @@ int main(int argc, char** argv)
   int Flux = Manager.GetInteger("total-flux");
   char Axis ='y';
 
+  double * TunnelElementX = new double[NbrSiteY];
+  double * TunnelElementY = new double[NbrSiteY];
+  
+  cout <<"Give Tunneling element"<<endl;
+/*  for (int i = 0; i <NbrSiteY; i++)
+    cin >> TunnelElementX[i];*/
+
+  TunnelElementX[0] = 1.37; 
+  TunnelElementX[1] = 1.1673;
+  TunnelElementX[2] = 1.0;
+  TunnelElementX[3] = 1.0;
+  TunnelElementX[4] = 1.1673;
+  TunnelElementX[5] = 1.37;
+
+/*  for (int i = 0; i <NbrSiteY; i++)
+    cin >> TunnelElementY[i];*/
+
+  for (int i = 0; i <NbrSiteY; i++)
+    TunnelElementY[i] = 1.0;
+
   if( Manager.GetBoolean("compute-current") == true)
 {
-   TightBindingModelHofstadterFiniteCylinder  TightBindingModel (NbrSiteX, NbrSiteY, Flux,Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), Manager.GetDouble("flux-inserted"));
+   TightBindingModelHofstadterFiniteCylinder  TightBindingModel (NbrSiteX, NbrSiteY, Flux, TunnelElementX, TunnelElementY, Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), Manager.GetDouble("flux-inserted"),true,Manager.GetBoolean("torus"));
 
    FermionOnLatticeRealSpaceAnd1DTranslation  Space (NbrParticles,NbrSiteX*NbrSiteY, Manager.GetInteger("only-kx"),NbrSiteX);
    char* StateFileName = Manager.GetString("groundstate-file");
@@ -137,7 +160,7 @@ int main(int argc, char** argv)
 	      cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
 	      return -1;
 	    }
-   ComputeCurrent(&Space,TightBindingModel.GetFluxDensity() ,State);
+   ComputeCurrent(&Space, TunnelElementX, TunnelElementY,TightBindingModel.GetFluxDensity() ,State);
    return 0;
 
 }
@@ -188,6 +211,8 @@ else
       sprintf (EigenvalueOutputFile,"%s.dat",FilePrefix);
     }
   
+
+
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
       bool ExportOneBody = false;
@@ -195,10 +220,10 @@ else
 	ExportOneBody = true;
 
       Abstract2DTightBindingModel * TightBindingModel;
-      TightBindingModel = new TightBindingModelHofstadterFiniteCylinder(NbrSiteX, NbrSiteY, Flux,Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), Manager.GetDouble("flux-inserted"), ExportOneBody);
+      TightBindingModel = new TightBindingModelHofstadterFiniteCylinder(NbrSiteX, NbrSiteY, Flux, TunnelElementX, TunnelElementY, Axis,Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), Manager.GetDouble("flux-inserted"), ExportOneBody,Manager.GetBoolean("torus"));
       
       
-      //TightBindingModel->WriteAsciiSpectrum(EigenvalueOutputFile);
+    TightBindingModel->WriteAsciiSpectrum(EigenvalueOutputFile);
 
     HermitianMatrix TmpHam (TightBindingModel->GetRealSpaceTightBindingHamiltonian());
     RealDiagonalMatrix TmpHam2(TmpHam.GetNbrRow());
@@ -249,10 +274,10 @@ else
   double * ChemicalPotential= new double[NbrSiteX* NbrSiteY];
   for(int i = 0 ; i <NbrSiteX* NbrSiteY ; i++)
    ChemicalPotential[i] =0.0 ;
- TightBindingModel2DAtomicLimitLattice * TightBindingModel1 = new  TightBindingModel2DAtomicLimitLattice(NbrSiteX, 1,NbrSiteY, ChemicalPotential,0,0, Architecture.GetArchitecture());
+ TightBindingModel1 = new  TightBindingModel2DAtomicLimitLattice(NbrSiteX, 1,NbrSiteY, ChemicalPotential,0,0, Architecture.GetArchitecture());
 }
  
-  TightBindingModelHofstadterFiniteCylinder  * TightBindingModel  = new TightBindingModelHofstadterFiniteCylinder(NbrSiteX, NbrSiteY, Flux,Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),Manager.GetDouble("flux-inserted"));
+  TightBindingModelHofstadterFiniteCylinder  * TightBindingModel  = new TightBindingModelHofstadterFiniteCylinder(NbrSiteX, NbrSiteY, Flux, TunnelElementX, TunnelElementY, Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),Manager.GetDouble("flux-inserted"), true,Manager.GetBoolean("torus"));
 
   HermitianMatrix TightBindingMatrix = 0;
 
@@ -262,9 +287,9 @@ else
      TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();  
 
   bool FirstRunFlag = true;
- /* RealDiagonalMatrix TmpHam2(TightBindingMatrix.GetNbrRow());
+ RealDiagonalMatrix TmpHam2(TightBindingMatrix.GetNbrRow());
   TightBindingMatrix.LapackDiagonalize(TmpHam2);
-
+/*
   for (int i = 0; i < TmpHam2.GetNbrRow(); ++i)
   {
     cout << i << " : " << TmpHam2[i] << endl;
@@ -416,7 +441,7 @@ void  ComputeDensity(int NbrFermions, ComplexMatrix & eigenVectors, int X1, int 
 }
 
 
-void  ComputeCurrent(FermionOnLatticeRealSpaceAnd1DTranslation * space, double fluxDensity, ComplexVector & groundState)
+void  ComputeCurrent(FermionOnLatticeRealSpaceAnd1DTranslation * space, double * tunnelElementX, double * tunnelElementY, double fluxDensity, ComplexVector & groundState)
 {
  Complex Test = 0.0;
  int Ly = space->GetNbrSites() / space->GetMaxXMomentum();
@@ -429,7 +454,7 @@ cout <<"Flux density : "<<fluxDensity<<endl;
 
    Complex Result = Operator.PartialMatrixElement(groundState,groundState,0,space->GetHilbertSpaceDimension());
 
-   Result *= Phase(2.0*M_PI*fluxDensity*((double) y));
+   Result *= tunnelElementX[y]*Phase(2.0*M_PI*fluxDensity*((double) y));
    Test += 2.0*Result.Re;
 
    cout <<x<<" " <<y <<" " <<Result<<endl;
@@ -441,7 +466,7 @@ cout <<"Flux density : "<<fluxDensity<<endl;
  for(int y =0; y < Ly - 1;y++)
   {
    ParticleOnLatticeRealSpaceAnd1DTranslationOneBodyOperator Operator(space, space->GetLinearizedIndexSafe(x, y+1), space->GetLinearizedIndexSafe(x, y));
-   Complex Result = Operator.PartialMatrixElement(groundState,groundState,0,space->GetHilbertSpaceDimension());
+   Complex Result = tunnelElementY[y]*Operator.PartialMatrixElement(groundState,groundState,0,space->GetHilbertSpaceDimension());
    cout <<x<<" " <<y <<" " <<Result<<endl;
    Test += 2.0*Result.Re;
    }

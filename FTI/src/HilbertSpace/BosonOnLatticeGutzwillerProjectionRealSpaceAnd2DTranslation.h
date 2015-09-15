@@ -111,6 +111,16 @@ class BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation : public  Ferm
   // return value = index of the destination state 
   virtual int AdAd (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
+
+
+  // apply a_n operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdAd call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n = first index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double A (int index, int n) ;
+
+
   // print a given State
   //
   // Str = reference on current output stream 
@@ -166,6 +176,8 @@ class BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation : public  Ferm
 inline int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient, 
 										   int& nbrTranslationX, int& nbrTranslationY)
 {
+//  cout <<"in inline int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient,   int& nbrTranslationX, int& nbrTranslationY)"<<endl;
+//  cout <<state <<" "<< nbrTranslationX<< " " <<nbrTranslationY<<endl;
   this->FindCanonicalFormAndTestMomentumConstraint(state, nbrTranslationX, nbrTranslationY);
   if (nbrTranslationX < 0)
     {
@@ -180,6 +192,7 @@ inline int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::Symmetri
     {
       coefficient *= this->RescalingFactors[this->ProdATemporaryNbrStateInOrbit][this->NbrStateInOrbit[TmpIndex]];
     }
+//  cout <<"coefficient " <<coefficient<<endl;
   return TmpIndex;
 }
 

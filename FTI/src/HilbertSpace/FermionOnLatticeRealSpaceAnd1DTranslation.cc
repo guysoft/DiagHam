@@ -98,8 +98,9 @@ FermionOnLatticeRealSpaceAnd1DTranslation::FermionOnLatticeRealSpaceAnd1DTransla
 
 FermionOnLatticeRealSpaceAnd1DTranslation::FermionOnLatticeRealSpaceAnd1DTranslation (int nbrFermions, int nbrSite, int xMomentum,  int maxXMomentum, unsigned long memory)
 {  
-  cout <<" Creating FermionOnLatticeRealSpaceAnd1DTranslation with  nbrFermions " <<  nbrFermions<< ",  nbrSite = "<< nbrSite << " xMomentum = "<< xMomentum<<" maxXMomentum = " << maxXMomentum<<endl;
-  this->NbrFermions = nbrFermions;
+//  cout <<" Creating FermionOnLatticeRealSpaceAnd1DTranslation with  nbrFermions " <<  nbrFermions<< ",  nbrSite = "<< nbrSite << " xMomentum = "<< xMomentum<<" maxXMomentum = " << maxXMomentum<<endl;
+  
+this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->NbrSite = nbrSite;
   this->MaxMomentum =  this->NbrSite;
@@ -108,8 +109,8 @@ FermionOnLatticeRealSpaceAnd1DTranslation::FermionOnLatticeRealSpaceAnd1DTransla
   this->MomentumModulo =  this->MaxXMomentum;
   this->NbrSitePerUnitCell = this->NbrSite / this->MaxXMomentum;
   this->StateShift = this->MaxMomentum / this->MomentumModulo;
-  this->MomentumIncrement = (this->NbrFermions * this->StateShift) % this->MomentumModulo;
-  this->ComplementaryStateShift =  this->MaxMomentum - this->StateShift;
+  this->MomentumIncrement = (this->NbrFermions * this->StateShift / 2) % this->MomentumModulo;
+  this->ComplementaryStateShift =  2 * this->MaxMomentum - this->StateShift;
   this->MomentumMask = (0x1ul << this->StateShift) - 0x1ul;
 
   this->XMomentum = xMomentum % this->MaxXMomentum;

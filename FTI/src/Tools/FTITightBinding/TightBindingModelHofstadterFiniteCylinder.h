@@ -48,15 +48,17 @@ class TightBindingModelHofstadterFiniteCylinder : public Abstract2DTightBindingM
 
   // number of flux quanta in cell (cancelled by opposite flux)
   int NbrFluxQuanta;
-
+  
   // auxiliary variables:
   // flux density:
   double FluxDensity;
   double FluxInserted;
-
+  double * TunnelElementX;
+  double * TunnelElementY;
   // magnetic translation phases;
   Complex LxTranslationPhase;
   Complex LyTranslationPhase;
+  bool TorusGeometry;
 
  public:
 
@@ -72,7 +74,7 @@ class TightBindingModelHofstadterFiniteCylinder : public Abstract2DTightBindingM
   // gammaY = boundary condition twisting angle along y
   // architecture = pointer to the architecture
   // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
-  TightBindingModelHofstadterFiniteCylinder(int nbrSiteX, int nbrSiteY,int nbrFlux, char axis,double gammaX, double gammaY,  AbstractArchitecture* architecture,   double fluxInserted = 0, bool storeOneBodyMatrices = true);
+  TightBindingModelHofstadterFiniteCylinder(int nbrSiteX, int nbrSiteY, int nbrFlux, double * tunnelElementX, double * tunnelElementY, char axis,double gammaX, double gammaY,  AbstractArchitecture* architecture,   double fluxInserted = 0, bool storeOneBodyMatrices = true, bool torusGeometry = false);
 
   // destructor
   //
@@ -149,6 +151,16 @@ inline int TightBindingModelHofstadterFiniteCylinder::EncodeSublatticeIndex(int 
       posx=0;
       --numXTranslations;
     }
+
+  if (posy < 0)
+    {
+      posy+=NbrSiteY;
+    }
+  while (posy >= NbrSiteY)
+    {
+      posy-=NbrSiteY;
+    }
+
 
   Complex tmpPhase(1.0,0.0);
   Complex tmpPhase2;

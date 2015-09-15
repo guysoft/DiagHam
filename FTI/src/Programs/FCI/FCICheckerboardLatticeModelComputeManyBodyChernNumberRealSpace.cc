@@ -337,10 +337,13 @@ cout <<"end of smoothing"<<endl;
 
    Complex Tmp = ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaMinusYModulo] * ManyBodyState[ShiftedGammaPlusXModulo*IncNbrPointY + ShiftedGammaY];
    ManyBodyChernNumber-= Tmp;
+
    cout << " ( " << ShiftedGammaX<< " , " << ShiftedGammaMinusYModulo << " ) -> ( " << ShiftedGammaPlusXModulo << " , " <<ShiftedGammaY<< " ) "<< Tmp<<endl;
 
    Tmp =  ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaPlusYModulo] *  ManyBodyState[ShiftedGammaMinusXModulo*IncNbrPointY + ShiftedGammaY];
+
    cout << " ( " << ShiftedGammaX<< " , " << ShiftedGammaPlusYModulo << " ) -> ( " << ShiftedGammaMinusXModulo << " , " <<ShiftedGammaY<< " ) "<< Tmp<<endl;
+
    ManyBodyChernNumber-= Tmp;   
 
    Tmp =  ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaPlusYModulo] *  ManyBodyState[ShiftedGammaPlusXModulo*IncNbrPointY + ShiftedGammaY];
@@ -349,7 +352,8 @@ cout <<"end of smoothing"<<endl;
 
    Tmp =  ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaMinusYModulo] *  ManyBodyState[ShiftedGammaMinusXModulo*IncNbrPointY + ShiftedGammaY];
    ManyBodyChernNumber+= Tmp;
-     cout << " ( " << ShiftedGammaX<< " , " << ShiftedGammaMinusYModulo << " ) -> ( " << ShiftedGammaMinusXModulo << " , " <<ShiftedGammaY<< " ) "<< Tmp<<endl;
+
+  cout << " ( " << ShiftedGammaX<< " , " << ShiftedGammaMinusYModulo << " ) -> ( " << ShiftedGammaMinusXModulo << " , " <<ShiftedGammaY<< " ) "<< Tmp<<endl;
 
 }
 }

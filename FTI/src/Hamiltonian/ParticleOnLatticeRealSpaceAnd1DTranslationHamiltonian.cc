@@ -93,7 +93,7 @@ ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::ParticleOnLatticeRealSpac
   long MinIndex;
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
-  cout <<" MaxIndex = "<< MaxIndex<<" MinIndex  = "<< MinIndex <<endl;
+//  cout <<" MaxIndex = "<< MaxIndex<<" MinIndex  = "<< MinIndex <<endl;
   this->PrecalculationShift = (int) MinIndex;  
   this->HermitianSymmetryFlag = true;//true;
   

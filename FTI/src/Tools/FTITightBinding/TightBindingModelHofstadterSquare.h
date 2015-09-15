@@ -75,7 +75,7 @@ class TightBindingModelHofstadterSquare : public Abstract2DTightBindingModel
   // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
   TightBindingModelHofstadterSquare(int nbrCellX, int nbrCellY, int unitCellX, int unitCellY, int nbrFlux, char axis,
 				       double gammaX, double gammaY, 
-				       AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
+				       AbstractArchitecture* architecture, bool storeOneBodyMatrices = true,  bool useEmbedding = false);
 
   // destructor
   //
@@ -85,7 +85,7 @@ class TightBindingModelHofstadterSquare : public Abstract2DTightBindingModel
   // get the eigenstates in real space, using CoreComputeBandStructureWithEmbedding
   // 
   // return value = tight binding eigenvectors
-  HermitianMatrix GetRealSpaceTightBindingEigenstates();
+  ComplexMatrix GetRealSpaceTightBindingEigenstates();
 
 
   // get the tight binding hamiltonian in real space 
@@ -121,13 +121,13 @@ HermitianMatrix  BuildTightBindingHamiltonianRealSpace(int* nbrConnectedOrbitals
   int EncodeSublatticeIndex(int posx, int posy, double KX, double KY, Complex &translationPhase);
 
 
- // code set of quantum numbers posx, posy into a single integer
- // posx = position along x-direction
- // posy = position along y-direction
- // numXTranslations = number of translation in the x direction to get back to the unit cell 
- // numXTranslations = number of translation in the y direction to get back to the unit cell
- //
- int  EncodeSublatticeIndex(int posx, int posy,int & numXTranslations,int &numYTranslations, Complex &translationPhase);
+  // code set of quantum numbers posx, posy into a single integer
+  // posx = position along x-direction
+  // posy = position along y-direction
+  // numXTranslations = number of translation in the x direction to get back to the unit cell 
+  // numXTranslations = number of translation in the y direction to get back to the unit cell
+  //
+  int  EncodeSublatticeIndex(int posx, int posy,int & numXTranslations,int &numYTranslations, Complex &translationPhase);
   
 
  int  GetRealSpaceTightBindingLinearizedIndexSafe(int x, int y, int orbitalIndex, int & numXTranslations, int &numYTranslations);

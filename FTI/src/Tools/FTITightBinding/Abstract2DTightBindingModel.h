@@ -332,6 +332,9 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   //embeddingFileName = name of the ascii file that defines the embedding
   //
   bool SetEmbeddingFromAsciiFile(char* embeddingFileName);
+
+
+  virtual int  EncodeSublatticeIndex(int posx, int posy,int & numXTranslations,int &numYTranslations, Complex &translationPhase);
   
    // compute the index in real space lattice starting from the cartesian coordinates
   //
@@ -619,4 +622,19 @@ inline double Abstract2DTightBindingModel::GetProjectedMomentum(int kx, int ky, 
     p = i - this->OffsetReal * j;
     q = j;
   }
+
+// code set of quantum numbers posx, posy into a single integer
+// posx = position along x-direction
+// posy = position along y-direction
+// numXTranslations = number of translation in the x direction to get back to the unit cell 
+// numXTranslations = number of translation in the y direction to get back to the unit cell
+//
+inline int  Abstract2DTightBindingModel::EncodeSublatticeIndex(int posx, int posy,int & numXTranslations,int &numYTranslations, Complex &translationPhase)
+{
+  std::cout <<"using dummy Abstract2DTightBindingModel::EncodeSublatticeIndex(int posx, int posy,int & numXTranslations,int &numYTranslations, Complex &translationPhase)"<<std::endl;
+return -1;
+}
+
+
+
 #endif
