@@ -62,7 +62,9 @@ FQHEMPSTwistedSymmetrizedStateMatrix::FQHEMPSTwistedSymmetrizedStateMatrix()
 FQHEMPSTwistedSymmetrizedStateMatrix::FQHEMPSTwistedSymmetrizedStateMatrix(AbstractFQHEMPSMatrix* matrix, int shift, bool antiSymmetrizeFlag)
 {
   this->MPSMatrix = matrix;
+
   this->PLevel = this->MPSMatrix->GetTruncationLevel();
+
   this->NbrBMatrices = 0;
   this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
   if (antiSymmetrizeFlag == false)

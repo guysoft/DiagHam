@@ -103,15 +103,19 @@ FermionOnSphereHaldaneBasisLong::FermionOnSphereHaldaneBasisLong (int nbrFermion
   else
     this->InvertUnshift = this->InvertShift;
 
-  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
+  if (this->LargeHilbertSpaceDimension >= (1l << 30))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
   this->Flag.Initialize();
 
-  this->StateDescription = new ULONGLONG [this->HilbertSpaceDimension];
-  this->StateLzMax = new int [this->HilbertSpaceDimension];
+  this->StateDescription = new ULONGLONG [this->LargeHilbertSpaceDimension];
+  this->StateLzMax = new int [this->LargeHilbertSpaceDimension];
 #ifdef  __64_BITS__
-  int ReducedHilbertSpaceDimension = (this->HilbertSpaceDimension >> 6) + 1;
+  int ReducedHilbertSpaceDimension = (this->LargeHilbertSpaceDimension >> 6) + 1;
 #else
-  int ReducedHilbertSpaceDimension = (this->HilbertSpaceDimension >> 5) + 1;
+  int ReducedHilbertSpaceDimension = (this->LargeHilbertSpaceDimension >> 5) + 1;
 #endif
   this->KeepStateFlag = new unsigned long [ReducedHilbertSpaceDimension];
   for (int i = 0; i < ReducedHilbertSpaceDimension; ++i)
@@ -132,7 +136,7 @@ FermionOnSphereHaldaneBasisLong::FermionOnSphereHaldaneBasisLong (int nbrFermion
 #endif
   this->GenerateStates(ReferenceStateLzMax, this->ReferenceState, 1, Memory);  
 
-  int NewHilbertSpaceDimension = 0;
+  long NewHilbertSpaceDimension = 0l;
   unsigned long TmpKeepStateFlag;
   int TmpNbrOne[] = {  
   0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 
@@ -174,12 +178,12 @@ FermionOnSphereHaldaneBasisLong::FermionOnSphereHaldaneBasisLong (int nbrFermion
   delete[] this->LookUpTable;
   ULONGLONG* TmpStateDescription = new ULONGLONG [NewHilbertSpaceDimension];
   int* TmpStateLzMax = new int [NewHilbertSpaceDimension];
-  NewHilbertSpaceDimension = 0;
+  NewHilbertSpaceDimension = 0l;
   int TotalIndex = 0;
 #ifdef  __64_BITS__
-  if ((this->HilbertSpaceDimension & 0x3f) != 0)
+  if ((this->LargeHilbertSpaceDimension & 0x3fl) != 0)
 #else
-  if ((this->HilbertSpaceDimension & 0x1f) != 0)
+  if ((this->LargeHilbertSpaceDimension & 0x1fl) != 0)
 #endif
     --ReducedHilbertSpaceDimension;
   for (int i = 0; i < ReducedHilbertSpaceDimension; ++i)
@@ -201,14 +205,14 @@ FermionOnSphereHaldaneBasisLong::FermionOnSphereHaldaneBasisLong (int nbrFermion
 	}
     }
 #ifdef  __64_BITS__
-  this->HilbertSpaceDimension &= 0x3f;
+  this->LargeHilbertSpaceDimension &= 0x3fl;
  #else
-  this->HilbertSpaceDimension &= 0x1f;
+  this->LargeHilbertSpaceDimension &= 0x1fl;
  #endif
-  if (this->HilbertSpaceDimension != 0)
+  if (this->LargeHilbertSpaceDimension != 0l)
     {
       TmpKeepStateFlag = this->KeepStateFlag[ReducedHilbertSpaceDimension];
-      for (int j = 0; j < this->HilbertSpaceDimension; ++j)
+      for (long j = 0l; j < this->LargeHilbertSpaceDimension; ++j)
 	{
 	  if ((TmpKeepStateFlag >> j) & 0x1l)
 	    {
@@ -225,7 +229,11 @@ FermionOnSphereHaldaneBasisLong::FermionOnSphereHaldaneBasisLong (int nbrFermion
   delete[] this->KeepStateFlag;
   this->StateDescription = TmpStateDescription;
   this->StateLzMax = TmpStateLzMax;
-  this->HilbertSpaceDimension = NewHilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = NewHilbertSpaceDimension;
+  if (this->LargeHilbertSpaceDimension >= (1l << 30))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
 
   delete[] this->TmpGeneratedStates;
   delete[] this->TmpGeneratedStatesLzMax;
@@ -264,15 +272,16 @@ FermionOnSphereHaldaneBasisLong::FermionOnSphereHaldaneBasisLong (char* fileName
       return;
     }
   ReadLittleEndian(File, this->HilbertSpaceDimension);
+  ReadLittleEndian(File, this->LargeHilbertSpaceDimension);
   ReadLittleEndian(File, this->NbrFermions);
   ReadLittleEndian(File, this->LzMax);
   ReadLittleEndian(File, this->TotalLz);
   ReadLittleEndian(File, this->ReferenceState);
   this->StateDescription = new ULONGLONG [this->HilbertSpaceDimension];
   this->StateLzMax = new int [this->HilbertSpaceDimension];
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+  for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
     ReadLittleEndian(File, this->StateDescription[i]);
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+  for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
     ReadLittleEndian(File, this->StateLzMax[i]);
 
   File.close();
@@ -323,6 +332,7 @@ FermionOnSphereHaldaneBasisLong::FermionOnSphereHaldaneBasisLong(const FermionOn
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
+  this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateLzMax = fermions.StateLzMax;
@@ -373,6 +383,7 @@ FermionOnSphereHaldaneBasisLong& FermionOnSphereHaldaneBasisLong::operator = (co
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
+  this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateLzMax = fermions.StateLzMax;
@@ -416,13 +427,14 @@ bool FermionOnSphereHaldaneBasisLong::WriteHilbertSpace (char* fileName)
       return false;
     }
   WriteLittleEndian(File, this->HilbertSpaceDimension);
+  WriteLittleEndian(File, this->LargeHilbertSpaceDimension);
   WriteLittleEndian(File, this->NbrFermions);
   WriteLittleEndian(File, this->LzMax);
   WriteLittleEndian(File, this->TotalLz);
   WriteLittleEndian(File, this->ReferenceState);
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+  for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
     WriteLittleEndian(File, this->StateDescription[i]);
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+  for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
     WriteLittleEndian(File, this->StateLzMax[i]);
   File.close();
   return true;

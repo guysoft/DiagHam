@@ -197,7 +197,7 @@ class BosonOnSphereHaldaneBasisShort :  public BosonOnSphereShort
 					       unsigned long* tmpMonomial, unsigned long* tmpMonomial2,
 					       LongRational& rhoRootInvAlphaCoef, LongRational& rhoRootConstCoef, unsigned long maxRoot, AbstractArchitecture* architecture, long currentNbrComponents = 0, bool symmetryFlag = false);
 
-  // compute of many coefficients have to be computed to get a single coefficient of the Jack polynomial decomposition 
+  // compute how many coefficients have to be computed to get a single coefficient of the Jack polynomial decomposition 
   //
   // index = index of the component to compute
   // evaluatedCoeffcients = that indicates which coefficients have already been computed
