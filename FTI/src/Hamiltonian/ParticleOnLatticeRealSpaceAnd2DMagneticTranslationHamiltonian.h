@@ -693,7 +693,7 @@ inline void  ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian::Eval
    return;
 }
 
-//  cout <<" in inline void  ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 															       int* indexArray, Complex* coefficientArray, long& position)"<<endl;
+  cout <<" in inline void  ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 															       int* indexArray, Complex* coefficientArray, long& position)"<<endl;
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   int Index;
@@ -710,7 +710,9 @@ inline void  ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian::Eval
 	  Complex* TmpInteractionFactors = this->OneBodyGenericInteractionFactors[j];
 	  for (int k = 0; k < TmpNbrConnectedSites; ++k)
 	    {
+
 	      Index = particles->AdA(index, j, TmpConnectedSites[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
+              cout <<"j = " <<j <<" ; TmpConnectedSites[k] = " << TmpConnectedSites[k]<<" index " << index <<" Index = " << Index<<endl;
 	      if (Index < Dim)
 		{ 
                   ((BosonOnLatticeRealSpaceOneOrbitalPerSiteAnd2DTranslation * ) particles)->GetPositionSum(Index,PositionX,PositionY);

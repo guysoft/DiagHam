@@ -125,7 +125,7 @@ BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::BosonOnLatticeGutzw
   this->YMomentumFullMask = 0x0ul;
   for (int i = 0; i < this->NbrYMomentumBlocks; ++i)
     {
-      this->YMomentumFullMask |= this->YMomentumMask << (i *  this->YMomentumBlockSize);
+      this->YMomentu<mFullMask |= this->YMomentumMask << (i *  this->YMomentumBlockSize);
     }
   this->ComplementaryYMomentumFullMask = ~this->YMomentumFullMask; 
 	
@@ -386,6 +386,7 @@ long BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::GenerateStates
 
 int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::AdA (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
 {
+
 //  cout <<"inside int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::AdA (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)"<<endl;
 //  cout <<"creation operator = "<< m  <<endl;
 //  cout <<"annihilation operator = "<< n  <<endl;
@@ -405,7 +406,7 @@ int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::AdA (int index,
       return this->HilbertSpaceDimension;
     }
   State |= (0x1ul << m);
-//  cout <<"State = " << State<<endl;
+  cout <<" m = " << m << " n = " <<n << " State = "<< this->StateDescription[index] <<" -> "<<"State = " << State<<endl;
   this->ProdATemporaryNbrStateInOrbit =  this->NbrStateInOrbit[index];
   return this->SymmetrizeAdAdResult(State, coefficient, nbrTranslationX, nbrTranslationY);
 }
@@ -460,6 +461,7 @@ ostream& BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::PrintState
 
 double BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::A (int index, int n)
 {
+  cout <<"using BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::A "<<endl;
   this->ProdATemporaryStateMaxMomentum = this->StateMaxMomentum[index];
   this->ProdATemporaryState = this->StateDescription[index];
   if ((n >  this->ProdATemporaryStateMaxMomentum) || ((this->ProdATemporaryState & (0x1ul << n)) == 0x0ul))
@@ -481,3 +483,27 @@ double BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::A (int index
     }
   return Coefficient;
 }
+
+
+// apply a^+_m operator to the state produced using AuAu method (without destroying it)
+//
+// m = first index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of the destination state 
+
+int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::Ad (int m, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  cout <<"using BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::Ad "<<endl;
+  unsigned long TmpState = this->ProdATemporaryState;
+  if ((TmpState & (0x1ul << m)) != 0)
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  
+  TmpState |= (0x1ul << m);
+  return this->SymmetrizeAdAdResult(TmpState, coefficient, nbrTranslationX, nbrTranslationY);
+}
+

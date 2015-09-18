@@ -123,8 +123,64 @@ class BosonOnLatticeGutzwillerProjectionRealSpace : public FermionOnLatticeRealS
   virtual long EvaluatePartialEntanglementMatrixCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
 						      ComplexVector& groundState, ComplexMatrix* entanglementMatrix);
 
+  // apply a_n  operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad or A call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n = index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double A (int index, int n);
+
+  // apply a^+_n  operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad or A call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n = index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double Ad (int index, int n);
+
+
+  // apply a^+_m a_n operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AdA (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m a_n operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual long AdA (long index, int m, int n, double& coefficient);
+
+
+  // apply a^+_m operator to the state produced using the A or Ad method (without destroying it)
+  //
+  // m = index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad (int m, double& coefficient);
+
+
+  // get the particle statistic 
+  //
+  // return value = particle statistic
+  virtual int GetParticleStatistic();
+
+
 };
 
+// get the particle statistic 
+//
+// return value = particle statistic
+
+inline int BosonOnLatticeGutzwillerProjectionRealSpace::GetParticleStatistic()
+{
+  return ParticleOnSphere::BosonicStatistic;
+}
 
 #endif
 

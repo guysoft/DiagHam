@@ -120,6 +120,15 @@ class BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation : public  Ferm
   // return value =  multiplicative factor 
   virtual double A (int index, int n) ;
 
+  // apply a^+_m operator to the state produced using AuAu method (without destroying it)
+  //
+  // m = first index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // return value = index of the destination state 
+  virtual int Ad (int m, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+
 
   // print a given State
   //
@@ -161,6 +170,10 @@ class BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation : public  Ferm
   // return value = true if the state satisfies the momentum constraint
   virtual bool TestMomentumConstraint(unsigned long stateDescription);
 
+  // get the particle statistic 
+  //
+  // return value = particle statistic
+  virtual int GetParticleStatistic();
 
 };
 
@@ -177,8 +190,9 @@ inline int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::Symmetri
 										   int& nbrTranslationX, int& nbrTranslationY)
 {
 //  cout <<"in inline int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient,   int& nbrTranslationX, int& nbrTranslationY)"<<endl;
-//  cout <<state <<" "<< nbrTranslationX<< " " <<nbrTranslationY<<endl;
-  this->FindCanonicalFormAndTestMomentumConstraint(state, nbrTranslationX, nbrTranslationY);
+  cout <<state <<" "<< nbrTranslationX<< " " <<nbrTranslationY<<endl;
+  state = this->FindCanonicalFormAndTestMomentumConstraint(state, nbrTranslationX, nbrTranslationY);
+  cout <<state <<" "<< nbrTranslationX<< " " <<nbrTranslationY<<endl;
   if (nbrTranslationX < 0)
     {
       coefficient = 0.0;
@@ -188,6 +202,7 @@ inline int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::Symmetri
   while ((state >> TmpMaxMomentum) == 0x0ul)
     --TmpMaxMomentum;
   int TmpIndex = this->FindStateIndex(state, TmpMaxMomentum);
+  cout <<" TmpIndex = " << TmpIndex<<endl;
   if (TmpIndex < this->HilbertSpaceDimension)
     {
       coefficient *= this->RescalingFactors[this->ProdATemporaryNbrStateInOrbit][this->NbrStateInOrbit[TmpIndex]];
@@ -207,27 +222,49 @@ inline int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::Symmetri
 
 inline unsigned long BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::FindCanonicalFormAndTestMomentumConstraint(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)
 {
+ cout <<"inside inline unsigned long BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::FindCanonicalFormAndTestMomentumConstraint(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)"<<endl;
   unsigned long CanonicalState = stateDescription;
   unsigned long stateDescriptionReference = stateDescription;  
   unsigned long TmpStateDescription;  
   nbrTranslationX = 0;
   nbrTranslationY = 0;
-   for (int m = 0; (m < this->MaxYMomentum) && (stateDescriptionReference != stateDescription) ; ++m)
+  TmpStateDescription = stateDescription;
+  for (int n = 1; n < this->MaxXMomentum; ++n)
     {
-      TmpStateDescription = stateDescription;
-      for (int n = 0; (n < this->MaxXMomentum) && (TmpStateDescription != stateDescription) ; ++n)
+      cout <<"TmpStateDescription = "<< TmpStateDescription <<endl;
+      this->ApplySingleXTranslation(TmpStateDescription);      
+      if (TmpStateDescription < CanonicalState)
 	{
+	  CanonicalState = TmpStateDescription;
+	  nbrTranslationX = n;	      
+	  nbrTranslationY = 0;	      
+	}
+    }
+  for (int m = 1; m < this->MaxYMomentum; ++m)
+    {
+      cout <<"stateDescription = "<< stateDescription <<endl;
+      this->ApplySingleYTranslation(stateDescription);      
+      cout <<"stateDescription = after this->ApplySingleYTranslation"<< stateDescription <<endl;
+      if (stateDescription < CanonicalState)
+	{
+	  CanonicalState = stateDescription;
+	  nbrTranslationX = 0;	      
+	  nbrTranslationY = m;	      
+	}
+      TmpStateDescription = stateDescription;
+      for (int n = 1; n < this->MaxXMomentum; ++n) 
+	{
+         cout <<"TmpStateDescription = "<< TmpStateDescription <<endl;
+	  this->ApplySingleXTranslation(TmpStateDescription);      
 	  if (TmpStateDescription < CanonicalState)
 	    {
 	      CanonicalState = TmpStateDescription;
 	      nbrTranslationX = n;	      
 	      nbrTranslationY = m;	      
 	    }
-	  this->ApplySingleXTranslation(TmpStateDescription);      
 	}
-      this->ApplySingleYTranslation(stateDescription);
     }
-  return CanonicalState;  
+  return CanonicalState;
 }
 
 //  test if the state and its translated version can be used to create a state corresponding to the momentum constraint
@@ -278,6 +315,15 @@ inline bool BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::TestMom
   return true;
 }
 
+
+// get the particle statistic 
+//
+// return value = particle statistic
+
+inline int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::GetParticleStatistic()
+{
+  return ParticleOnSphere::BosonicStatistic;
+}
 
 #endif
 

@@ -39,7 +39,7 @@
 using std::cout;
 using std::endl;
 
-// #define DEBUG_OUTPUT
+ #define DEBUG_OUTPUT
 
 
 // default constructor
@@ -214,6 +214,7 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIn
 		  break;
 		}
 
+
 #ifdef DEBUG_OUTPUT
 	      cout << TmpOneBodyHamiltonian<< endl;
 #endif
@@ -231,7 +232,11 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIn
 #endif
 		  this->OneBodyBasis[Index] = TmpMatrix;
 		  for (int i = 0; i < this->NbrBands; ++i)
+{
 		    this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
+ cout <<i<<" " <<TmpDiag(i, i)<<endl;
+}                   
+cout <<"end of void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIndex, long nbrStates)"<<endl;
 		}
 	      else
 		{
@@ -542,7 +547,6 @@ ComplexMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingEigenst
 }
 } 
   return EigenStates;
-  /// @todo to be written
 }
 
 // get the tight binding hamiltonian in real space 
@@ -711,8 +715,9 @@ HermitianMatrix  TightBindingModelHofstadterSquare::BuildTightBindingHamiltonian
 		  {
                   tmpPhase = 1.0;
                   int Tmp = orbitalIndices[k][l] - k;
-                  if ( (orbitalIndices[k][l]%this->UnitCellX - k%this->UnitCellX) ==0  ) 
+                  if( ( (orbitalIndices[k][l]%this->UnitCellX - k%this->UnitCellX) ==0  ) && (spatialIndices[k][l << 1]==0 ) )
 		  {
+
 		       if( spatialIndices[k][(l << 1) + 1] >= 0)
                           for (int p=0; p < i; p++)
            			  tmpPhase*=this->LxTranslationPhase;

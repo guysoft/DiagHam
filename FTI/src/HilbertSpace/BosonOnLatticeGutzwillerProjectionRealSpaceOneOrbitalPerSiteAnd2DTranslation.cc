@@ -69,6 +69,7 @@ BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation::Bo
 										      int yMomentum, int maxYMomentum, unsigned long memory):
  BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation (nbrBosons,lx*ly,xMomentum,maxXMomentum,yMomentum,maxYMomentum,memory), Lx(lx),Ly(ly)
 {  
+cout <<"using BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation"<<endl;
 }
 
 // copy constructor (without duplicating datas)

@@ -198,13 +198,23 @@ int main(int argc, char** argv)
       
       if (Manager.GetBoolean("landau-x"))
 	lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_landau-x");
-}
-else
+      }
+      else
+      {
+      if ( Manager.GetBoolean("no-translation") == false)
 {
-if ( Manager.GetBoolean("no-translation") == false)
-      lenFilePrefix += sprintf (FilePrefix, "%s_realspace_hofstadter_X_%d_Y_%d_q_%d", StatisticPrefix, UnitCellX, UnitCellY, FluxPerCell);
+      if ( Manager.GetBoolean("hardcore") == false)
+             lenFilePrefix += sprintf (FilePrefix, "%s_realspace_hofstadter_X_%d_Y_%d_q_%d", StatisticPrefix, UnitCellX, UnitCellY, FluxPerCell);
 else
-      lenFilePrefix += sprintf (FilePrefix, "%s_realspace_notranslation_hofstadter_X_%d_Y_%d_q_%d", StatisticPrefix, UnitCellX, UnitCellY, FluxPerCell);
+            lenFilePrefix += sprintf (FilePrefix, "%s_realspace_hardcore_hofstadter_X_%d_Y_%d_q_%d", StatisticPrefix, UnitCellX, UnitCellY, FluxPerCell);
+}
+       else
+{
+      if ( Manager.GetBoolean("hardcore") == false)
+             lenFilePrefix += sprintf (FilePrefix, "%s_realspace_notranslation_hofstadter_X_%d_Y_%d_q_%d", StatisticPrefix, UnitCellX, UnitCellY, FluxPerCell);
+	else
+             lenFilePrefix += sprintf (FilePrefix, "%s_realspace_notranslation_hardcore_hofstadter_X_%d_Y_%d_q_%d", StatisticPrefix, UnitCellX, UnitCellY, FluxPerCell);
+}
 }
 
     }
@@ -240,7 +250,7 @@ else
     }
   else
     {
-      if (Manager.GetBoolean("flat-band") == false)
+      if ((Manager.GetBoolean("flat-band") == false)&&(Manager.GetBoolean("hardcore") == false ))
 	lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_u_%g",Manager.GetDouble("u-potential"));
 
       lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_gx_%g_gy_%g", Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
@@ -464,15 +474,15 @@ else
 	}
 else
 {
-          RealSymmetricMatrix DensityDensityInteraction(TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), true);
- 	   if (Manager.GetBoolean("boson") == true)
-		    {
-			if(Manager.GetBoolean("hardcore") == false)
-			{
-				if(Manager.GetBoolean("no-translation") == true)
-		 			Space = new BosonOnLatticeRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
-				else
- 			     		Space = new BosonOnLatticeRealSpaceOneOrbitalPerSiteAnd2DTranslation(NbrParticles, UnitCellX*NbrCellX, UnitCellY*NbrCellY, i, NbrCellX, j,  NbrCellY);
+    RealSymmetricMatrix DensityDensityInteraction(TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), true);
+    if (Manager.GetBoolean("boson") == true)
+       {
+	if(Manager.GetBoolean("hardcore") == false)
+	   {
+		if(Manager.GetBoolean("no-translation") == true)
+			Space = new BosonOnLatticeRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
+		else
+	     		Space = new BosonOnLatticeRealSpaceOneOrbitalPerSiteAnd2DTranslation(NbrParticles, UnitCellX*NbrCellX, UnitCellY*NbrCellY, i, NbrCellX, j,  NbrCellY);
 
 			      double UPotential = Manager.GetDouble("u-potential");
 			      for (int x = 0; x <  NbrCellX; ++x)
@@ -489,22 +499,30 @@ else
 			}
 			else
 			{
-				if(Manager.GetBoolean("no-translation") == true)
-		 			Space = new BosonOnLatticeGutzwillerProjectionRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
+         			if(Manager.GetBoolean("no-translation") == true)
+	        			Space = new BosonOnLatticeGutzwillerProjectionRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
 				else
  			     		Space = new BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation(NbrParticles, UnitCellX*NbrCellX, UnitCellY*NbrCellY, i, NbrCellX, j,  NbrCellY);
-			
 			}
-
 			  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 			  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 			  HermitianMatrix TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
+    RealDiagonalMatrix TmpHam2(TightBindingMatrix.GetNbrRow());
+    TightBindingMatrix.LapackDiagonalize(TmpHam2);
+    for (int p = 0; p < TightBindingMatrix.GetNbrRow(); ++p)
+	{
+	  cout << p << " : " << TmpHam2[p] << endl;
+	}
+
 			if(Manager.GetBoolean("no-translation") == false)
 		{
 	    double FluxDensity =  (((double) FluxPerCell)/( (double) (UnitCellX*UnitCellY)));
 
-	    double PhaseTranslationX = 2.0* M_PI * FluxDensity * UnitCellX;
+	    double PhaseTranslationX = -2.0* M_PI * FluxDensity * UnitCellX;
 	    double PhaseTranslationY = 0.0;
+//	    PhaseTranslationX = 0.0;
+
+
 
 	    Hamiltonian = new ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
  												   i,  NbrCellX, j,  NbrCellY, PhaseTranslationX, PhaseTranslationY,
@@ -512,9 +530,7 @@ else
  												   Architecture.GetArchitecture(), Memory);
                }
 		else
- 		  Hamiltonian = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
- 									   TightBindingMatrix, DensityDensityInteraction,
- 							   Architecture.GetArchitecture(), Memory);
+ 		  Hamiltonian = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), TightBindingMatrix, DensityDensityInteraction, Architecture.GetArchitecture(), Memory);
 }
 else 
 {

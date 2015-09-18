@@ -281,21 +281,6 @@ long FermionOnLatticeRealSpace::EvaluateHilbertSpaceDimension(int nbrFermions)
 }
 
 
-// evaluate Hilbert space dimension with a fixed number of fermions with spin up
-//
-// nbrFermions = number of fermions
-// currentKx = current momentum along x for a single particle
-// currentKy = current momentum along y for a single particle
-// currentTotalKx = current total momentum along x
-// currentTotalKy = current total momentum along y
-// nbrSpinUp = number of fermions with spin up
-// return value = Hilbert space dimension
-
-// long FermionOnLatticeRealSpace::EvaluateHilbertSpaceDimension(int nbrFermions,int nbrSpinUp)
-// {
-//  
-// }
-
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given momentum sector.
 // 
 // nbrParticleSector = number of particles that belong to the subsytem 

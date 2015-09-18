@@ -248,7 +248,7 @@ inline int BosonOnLatticeRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigne
 }
 
 
-
+ 
 // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
 //
 // stateDescription = unsigned integer describing the state

@@ -90,7 +90,7 @@ BosonOnLatticeGutzwillerProjectionRealSpace::BosonOnLatticeGutzwillerProjectionR
   this->NbrSite = nbrSite;
   this->LzMax = this->NbrSite - 1;
   this->NbrLzValue = this->LzMax + 1;
-  this->MaximumSignLookUp = 16;
+  this->MaximumSignLookUp = 0;
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons);
   cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
@@ -262,6 +262,168 @@ HermitianMatrix BosonOnLatticeGutzwillerProjectionRealSpace::EvaluatePartialDens
       return TmpDensityMatrixZero;
     }
 }
+
+// apply a_n  operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad or A call
+//
+// index = index of the state on which the operator has to be applied
+// n = first index for annihilation operator
+// return value =  multiplicative factor 
+
+double BosonOnLatticeGutzwillerProjectionRealSpace::A (int index, int n)
+{
+  this->ProdATemporaryState = this->StateDescription[index];
+  int StateLzMax = this->StateLzMax[index];
+
+  if ((n > StateLzMax) || ((this->ProdATemporaryState & (0x1ul << n)) == 0x0ul))
+    return 0.0;
+
+  this->ProdALzMax = this->StateLzMax[index];
+
+  double Coefficient = 1.0;
+  
+  this->ProdATemporaryState &= ~(0x1ul << n);
+
+  if (this->ProdATemporaryState == 0x0ul)
+    {
+      this->ProdALzMax = 0;
+      return Coefficient;      
+    }
+  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0x0ul)
+    --this->ProdALzMax;
+  return Coefficient;
+}
+
+// apply a^+_n1  operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad or A call
+//
+// index = index of the state on which the operator has to be applied
+// m = index for annihilation operator
+// return value =  multiplicative factor 
+
+double BosonOnLatticeGutzwillerProjectionRealSpace::Ad (int index, int m)
+{
+  this->ProdATemporaryState = this->StateDescription[index];
+  int StateLzMax = this->StateLzMax[index];
+
+  if ((this->ProdATemporaryState & (0x1ul << m)) != 0x0ul)
+    return 0.0;
+
+  double Coefficient = 1.0;
+   
+  this->ProdATemporaryState |= (0x1ul << m);
+  this->ProdALzMax = this->StateLzMax[index];
+  if (m > this->ProdALzMax)
+    this->ProdALzMax = m;
+  return Coefficient;
+}
+
+// apply a^+_m operator to the state produced using the A or Ad method (without destroying it)
+//
+// m = index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnLatticeGutzwillerProjectionRealSpace::Ad (int m, double& coefficient)
+{
+  unsigned long TmpState = this->ProdATemporaryState;
+    
+  if ((TmpState & (0x1ul << m))!= 0x0ul)
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  int NewLzMax = this->ProdALzMax;
+  if (m > NewLzMax)
+    NewLzMax = m;
+
+  TmpState |= (0x1ul << m);
+  return this->FindStateIndex(TmpState, NewLzMax);
+}
+
+
+// apply a^+_m a_n operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnLatticeGutzwillerProjectionRealSpace::AdA (int index, int m, int n, double& coefficient)
+{
+  int StateLzMax = this->StateLzMax[index];
+  unsigned long State = this->StateDescription[index];
+  if ((n > StateLzMax) || ((State & (0x1ul << n)) == 0))
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  int NewLzMax = StateLzMax;
+  unsigned long TmpState = State;
+  coefficient = 1.0;
+  TmpState &= ~(0x1ul << n);
+  if ((TmpState != 0x0ul))
+    {
+      while ((TmpState >> NewLzMax) == 0)
+	--NewLzMax;
+    }
+  else
+    NewLzMax = 0;
+  if ((TmpState & (0x1ul << m))!= 0x0ul)
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  if (m > NewLzMax)
+    {
+      NewLzMax = m;
+    }
+
+  TmpState |= (0x1ul << m);
+  return this->FindStateIndex(TmpState, NewLzMax);
+}
+
+// apply a^+_m a_n operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+long BosonOnLatticeGutzwillerProjectionRealSpace::AdA (long index, int m, int n, double& coefficient)
+{
+  int StateLzMax = this->StateLzMax[index];
+  unsigned long State = this->StateDescription[index];
+  if ((n > StateLzMax) || ((State & (0x1ul << n)) == 0x0ul))
+    {
+      coefficient = 0.0;
+      return this->LargeHilbertSpaceDimension;
+    }
+  int NewLzMax = StateLzMax;
+  unsigned long TmpState = State;
+  coefficient = 1.0;
+  TmpState &= ~(0x1ul << n);
+  if (TmpState != 0x0ul)
+    {
+      while ((TmpState >> NewLzMax) == 0)
+	--NewLzMax;
+    }
+  else
+    NewLzMax = 0;
+  if ((TmpState & (0x1ul << m))!= 0x0ul)
+    {
+      coefficient = 0.0;
+      return this->LargeHilbertSpaceDimension;
+    }
+  if (m > NewLzMax)
+    {
+      NewLzMax = m;
+    }
+
+  TmpState |= (0x1ul << m);
+  return this->FindStateIndex(TmpState, NewLzMax);
+}
+
 
 // evaluate the orbital cut entanglement matrix. The entanglement matrix is only evaluated for fixed number of particles
 // 

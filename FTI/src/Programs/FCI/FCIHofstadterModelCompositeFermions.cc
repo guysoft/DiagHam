@@ -197,15 +197,26 @@ int main(int argc, char** argv)
   TightBindingModelHofstadterSquare  JastrowTightBindingModel (MaxMomentumXJastrow, MaxMomentumYJastrow, NxZeroJastrow, NyZeroJastrow, FluxPerCellJastrow, Axis, SolenoidCF_X, SolenoidCF_Y, Architecture.GetArchitecture(),true,true);
   ComplexMatrix JastrowEigenVecs =  JastrowTightBindingModel.GetRealSpaceTightBindingEigenstates();
 
+
+ if(Manager.GetBoolean("no-translation")==false)
+{
   BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation Space (NbrBosons, Lx, Ly , XMomentum, MaxMomentumX, YMomentum, MaxMomentumY);
+  char* OutputName;
+  if ( (OutputName = Manager.GetString("output-file")) == NULL)
+    {
+      OutputName = new char [300];
+
+      sprintf (OutputName, "bosons_lattice_CF_n_%d_X_%d_Y_%d_x_%d_y_%d_q_%d_p_%d_kx_%d_ky_%d%s.vec", NbrBosons, NxZero, NyZero, MaxMomentumX ,MaxMomentumY , NbrFluxQuanta, CFFlux, XMomentum , YMomentum ,boundaryCdStr);
+    }
+
   ComplexVector TrialState(Space.GetHilbertSpaceDimension(),true);
   double PhaseTranslationX = 2.0*M_PI*NbrFluxQuanta/(Lx*Ly) * NxZero;
   Space.GetCompositeFermionWavefunction(TrialState, JastrowEigenVecs, CFEigenVecs,PhaseTranslationX );
   cout <<"State Norm " << TrialState.Norm()<<endl;
   TrialState/= TrialState.Norm();
   TrialState.WriteVector(OutputName);
- 
- if(Manager.GetBoolean("no-translation"))
+ }
+else
 {
   BosonOnLatticeGutzwillerProjectionRealSpace Space1 (NbrBosons,Lx*Ly);
   ComplexVector TrialState1(Space1.GetHilbertSpaceDimension(),true);
