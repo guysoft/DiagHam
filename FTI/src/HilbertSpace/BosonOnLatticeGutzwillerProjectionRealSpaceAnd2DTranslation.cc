@@ -125,7 +125,7 @@ BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::BosonOnLatticeGutzw
   this->YMomentumFullMask = 0x0ul;
   for (int i = 0; i < this->NbrYMomentumBlocks; ++i)
     {
-      this->YMomentu<mFullMask |= this->YMomentumMask << (i *  this->YMomentumBlockSize);
+      this->YMomentumFullMask |= this->YMomentumMask << (i *  this->YMomentumBlockSize);
     }
   this->ComplementaryYMomentumFullMask = ~this->YMomentumFullMask; 
 	
