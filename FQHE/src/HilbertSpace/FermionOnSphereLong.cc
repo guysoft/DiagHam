@@ -1078,9 +1078,10 @@ void FermionOnSphereLong::GenerateLookUpTable(unsigned long memory)
 // totalLz = momentum total value
 // return value = Hilbert space dimension
 
-int FermionOnSphereLong::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
+long FermionOnSphereLong::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
 {
-  return this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax, (totalLz + nbrFermions * lzMax) >> 1);
+  cout << "test " << nbrFermions << " " << lzMax << " " << ((totalLz + (nbrFermions * lzMax)) >> 1) << " " << totalLz << endl;
+  return this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax, (totalLz + (nbrFermions * lzMax)) >> 1);
 }
 
 // evaluate Hilbert space dimension with shifted values for lzMax and totalLz
@@ -1090,17 +1091,17 @@ int FermionOnSphereLong::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMa
 // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
 // return value = Hilbert space dimension
 
-int FermionOnSphereLong::ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
+long FermionOnSphereLong::ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
 {
   if ((nbrFermions == 0) || (totalLz < 0)  || (lzMax < (nbrFermions - 1)))
-    return 0;
+    return 0l;
   int LzTotalMax = ((2 * lzMax - nbrFermions + 1) * nbrFermions) >> 1;
   if (LzTotalMax < totalLz)
-    return 0;
+    return 0l;
   if ((nbrFermions == 1) && (lzMax >= totalLz))
-    return 1;
+    return 1l;
   if (LzTotalMax == totalLz)
-    return 1;
+    return 1l;
   return  (this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax)
 	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz));
 }

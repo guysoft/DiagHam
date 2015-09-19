@@ -36,8 +36,14 @@
 
 #include "config.h"
 #include "HilbertSpace/FermionOnSphereLong.h"
+#include "Vector/RationalVector.h"
+#include "Vector/LongRationalVector.h"
 
 #include <iostream>
+
+
+class RationalPolynomial;
+class LongRationalPolynomial;
 
 
 class FermionOnSphereHaldaneBasisLong :  public FermionOnSphereLong
@@ -132,6 +138,62 @@ class FermionOnSphereHaldaneBasisLong :  public FermionOnSphereLong
   // return value = vector with non-zero component being rho factor of possible singular coefficients
   RealVector& CheckPossibleSingularCoefficientsInJackPolynomial(RealVector& jack, double alpha, double error);
   
+  // create the Jack polynomial decomposition corresponding to the root partition, assuming only rational numbers occur
+  //
+  // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+  // alphaNumerator = numerator of the Jack polynomial alpha coefficient
+  // alphaDenominator = numerator of the Jack polynomial alpha coefficient
+  // architecture = architecture to use for precalculation
+  // symbolicDepth = use symbolic calculation to solve singular values if non zero, if greater than zero it will use symbolic calculation up to a given depth (below that depth it will rely on numerical calculation),
+  //                 -1 if the symbolic calculation has to be done up to the point the singular value problem has been solved
+  // minIndex = start computing the Jack polynomial from the minIndex-th component
+  // maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+  // fileName = optional file name to store temporary calculations
+  // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
+  virtual LongRationalVector& GenerateJackPolynomial(LongRationalVector& jack, long alphaNumerator, long alphaDenominator, AbstractArchitecture* architecture, int symbolicDepth = 0, long minIndex = 0l, long maxIndex = 0l, char* fileName = 0);
+  
+  // create the Jack polynomial decomposition corresponding to the root partition, assuming only rational numbers occur and the resulting state is invariant under the Lz<->-Lz symmetry
+  //
+  // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+  // alphaNumerator = numerator of the Jack polynomial alpha coefficient
+  // alphaDenominator = numerator of the Jack polynomial alpha coefficient
+  // architecture = architecture to use for precalculation
+  // symbolicDepth = use symbolic calculation to solve singular values if non zero, if greater than zero it will use symbolic calculation up to a given depth (below that depth it will rely on numerical calculation),
+  //                 -1 if the symbolic calculation has to be done up to the point the singular value problem has been solved
+  // minIndex = start computing the Jack polynomial from the minIndex-th component
+  // maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+  // fileName = optional file name to store temporary calculations
+  // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
+  LongRationalVector& GenerateSymmetrizedJackPolynomial(LongRationalVector& jack, long alphaNumerator, long alphaDenominator, AbstractArchitecture* architecture, int symbolicDepth = 0, long minIndex = 0l, long maxIndex = 0l, char* fileName = 0);
+
+  // compute a single coefficient of the Jack polynomial decomposition corresponding to the root partition, assuming only rational numbers occur and using (partial symbolic calculation)
+  //
+  // index = index of the component to compute
+  // numerators = array of polynomials attached to each coefficient numerator
+  // denominators = array of polynomials attached to each coefficient denominator
+  // tmpMonomial = temporary array for monomial description
+  // tmpMonomial2 = temporary array for monomial description
+  // rhoRootInvAlphaCoef = coefficient in front of inv alpha in the rho for the root partition
+  // rhoRootConstCoef = constant coefficient in the rho for the root partition
+  // maxRoot = fermionic expression for the root partition
+  // architecture = architecture to use for precalculation
+  // currentNbrComponents = current number of components computed for the symbolic of the index-th compoment
+  // symmetryFlag = true iof the Lz <-> -Lz symmetry has to be used
+  // return value = total number of components computed for the symbolic of the index-th compoment
+  long GenerateSingleJackPolynomialCoefficient(long index, LongRationalPolynomial* numerators, LongRationalPolynomial* denominators, long* connectedIndices, long* connectedCoefficients, 
+					       unsigned long* tmpMonomial, unsigned long* tmpMonomial2,
+					       LongRational& rhoRootInvAlphaCoef, LongRational& rhoRootConstCoef, ULONGLONG maxRoot, AbstractArchitecture* architecture, long currentNbrComponents = 0, bool symmetryFlag = false);
+
+  // compute of many coefficients have to be computed to get a single coefficient of the Jack polynomial decomposition 
+  //
+  // index = index of the component to compute
+  // evaluatedCoeffcients = that indicates which coefficients have already been computed
+  // tmpMonomial = temporary array for monomial description
+  // tmpMonomial2 = temporary array for monomial description
+  // maxRoot = fermionic expression for the root partition
+  // return value = true if a fully symbolic calculation has been performed
+  long GenerateSingleJackPolynomialCoefficientCountOnly(long index, int* evaluatedCoeffcients, unsigned long* tmpMonomial, unsigned long* tmpMonomial2, ULONGLONG maxRoot);
+
  protected:
 
   // find state index
