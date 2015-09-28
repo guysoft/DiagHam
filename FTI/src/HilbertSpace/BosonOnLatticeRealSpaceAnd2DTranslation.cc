@@ -116,11 +116,6 @@ BosonOnLatticeRealSpaceAnd2DTranslation::BosonOnLatticeRealSpaceAnd2DTranslation
   this->StateXShift = this->NbrSite / this->MaxXMomentum;
   this->ComplementaryStateXShift = this->MaxMomentum - this->StateXShift;
   this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
-//   cout << "this->MaxXMomentum=" << this->MaxXMomentum << endl;
-//   cout << "this->XMomentum=" << this->XMomentum << endl;
-//   cout << "this->StateXShift=" << this->StateXShift << endl;
-//   cout << "this->ComplementaryStateXShift=" << this->ComplementaryStateXShift << endl;
-//   cout << "this->XMomentumMask=" << hex << this->XMomentumMask << dec << endl;
 
   this->MaxYMomentum = maxYMomentum;
   this->KyMomentum = yMomentum % this->MaxYMomentum;
@@ -130,13 +125,6 @@ BosonOnLatticeRealSpaceAnd2DTranslation::BosonOnLatticeRealSpaceAnd2DTranslation
   this->ComplementaryStateYShift = this->YMomentumBlockSize - this->StateYShift;
   this->YMomentumMask = (0x1ul << this->StateYShift) - 0x1ul;
   this->YMomentumBlockMask = (0x1ul << this->YMomentumBlockSize) - 0x1ul;  
-//   cout << "this->MaxYMomentum=" << this->MaxYMomentum << endl;
-//   cout << "this->NbrYMomentumBlocks=" << this->NbrYMomentumBlocks << endl;
-//  cout << "this->StateYShift=" << this->StateYShift << endl;
-//   cout << "this->YMomentumBlockSize=" << this->YMomentumBlockSize << endl;
-//   cout << "this->ComplementaryStateYShift=" << this->ComplementaryStateYShift << endl;
-//   cout << "this->YMomentumMask=" << hex << this->YMomentumMask << dec << endl;
-//   cout << "this->YMomentumBlockMask=" << hex << this->YMomentumBlockMask << dec << endl;
 	
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons);
   cout << "intermediate Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;

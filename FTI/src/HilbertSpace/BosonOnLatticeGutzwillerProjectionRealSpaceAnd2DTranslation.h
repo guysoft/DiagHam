@@ -111,8 +111,6 @@ class BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation : public  Ferm
   // return value = index of the destination state 
   virtual int AdAd (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
-
-
   // apply a_n operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdAd call
   //
   // index = index of the state on which the operator has to be applied
@@ -190,9 +188,9 @@ inline int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::Symmetri
 										   int& nbrTranslationX, int& nbrTranslationY)
 {
 //  cout <<"in inline int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient,   int& nbrTranslationX, int& nbrTranslationY)"<<endl;
-  cout <<state <<" "<< nbrTranslationX<< " " <<nbrTranslationY<<endl;
+//  cout <<state <<" "<< nbrTranslationX<< " " <<nbrTranslationY<<endl;
   state = this->FindCanonicalFormAndTestMomentumConstraint(state, nbrTranslationX, nbrTranslationY);
-  cout <<state <<" "<< nbrTranslationX<< " " <<nbrTranslationY<<endl;
+//  cout <<state <<" "<< nbrTranslationX<< " " <<nbrTranslationY<<endl;
   if (nbrTranslationX < 0)
     {
       coefficient = 0.0;
@@ -202,7 +200,7 @@ inline int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::Symmetri
   while ((state >> TmpMaxMomentum) == 0x0ul)
     --TmpMaxMomentum;
   int TmpIndex = this->FindStateIndex(state, TmpMaxMomentum);
-  cout <<" TmpIndex = " << TmpIndex<<endl;
+//  cout <<" TmpIndex = " << TmpIndex<<endl;
   if (TmpIndex < this->HilbertSpaceDimension)
     {
       coefficient *= this->RescalingFactors[this->ProdATemporaryNbrStateInOrbit][this->NbrStateInOrbit[TmpIndex]];
@@ -222,7 +220,7 @@ inline int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::Symmetri
 
 inline unsigned long BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::FindCanonicalFormAndTestMomentumConstraint(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)
 {
- cout <<"inside inline unsigned long BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::FindCanonicalFormAndTestMomentumConstraint(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)"<<endl;
+//  cout <<"inside inline unsigned long BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::FindCanonicalFormAndTestMomentumConstraint(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)"<<endl;
   unsigned long CanonicalState = stateDescription;
   unsigned long stateDescriptionReference = stateDescription;  
   unsigned long TmpStateDescription;  
@@ -231,7 +229,7 @@ inline unsigned long BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation
   TmpStateDescription = stateDescription;
   for (int n = 1; n < this->MaxXMomentum; ++n)
     {
-      cout <<"TmpStateDescription = "<< TmpStateDescription <<endl;
+//      cout <<"TmpStateDescription = "<< TmpStateDescription <<endl;
       this->ApplySingleXTranslation(TmpStateDescription);      
       if (TmpStateDescription < CanonicalState)
 	{
@@ -242,9 +240,9 @@ inline unsigned long BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation
     }
   for (int m = 1; m < this->MaxYMomentum; ++m)
     {
-      cout <<"stateDescription = "<< stateDescription <<endl;
+//      cout <<"stateDescription = "<< stateDescription <<endl;
       this->ApplySingleYTranslation(stateDescription);      
-      cout <<"stateDescription = after this->ApplySingleYTranslation"<< stateDescription <<endl;
+//      cout <<"stateDescription = after this->ApplySingleYTranslation"<< stateDescription <<endl;
       if (stateDescription < CanonicalState)
 	{
 	  CanonicalState = stateDescription;
@@ -254,7 +252,7 @@ inline unsigned long BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation
       TmpStateDescription = stateDescription;
       for (int n = 1; n < this->MaxXMomentum; ++n) 
 	{
-         cout <<"TmpStateDescription = "<< TmpStateDescription <<endl;
+//         cout <<"TmpStateDescription = "<< TmpStateDescription <<endl;
 	  this->ApplySingleXTranslation(TmpStateDescription);      
 	  if (TmpStateDescription < CanonicalState)
 	    {

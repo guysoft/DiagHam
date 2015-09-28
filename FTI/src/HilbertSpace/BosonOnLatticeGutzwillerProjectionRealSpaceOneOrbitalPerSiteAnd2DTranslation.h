@@ -106,19 +106,28 @@ class BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslati
 
 inline void BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation::GetPositionSum(int index, int & positionX, int & positionY)
 {
+//  cout <<"inside inline void BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation::GetPositionSum(int index, int & positionX, int & positionY)"<<endl;
   positionX =0;
   positionY =0;
   int Nx = this->Lx / this->MaxXMomentum;
   int Ny = this->Ly / this->MaxYMomentum;
-  
+//cout <<"Nx = "<<Nx << endl;
+//  cout <<"Ny = "<<Ny << endl;
+//  cout <<"this->StateXShift = "<<this->StateXShift<<endl;
+//  cout <<"this->StateYShift = "<<this->StateYShift<<endl;
+//  cout <<"this->StateDescription[index] = "<<this->StateDescription[index]<<endl;
   for (int i = 0; i < this->NbrSite; i++)
     { 	
       if ( ((this->StateDescription[index]>> i) & 1ul ) == 1 )
 	{
 	  positionX +=  (i/this->StateXShift) *  Nx;
+//          cout <<"positionX = "<<positionX <<endl;
 	  positionY += ((i%this->StateXShift)/this->StateYShift) * Ny;
+//          cout <<"positionY = "<<positionY <<endl;
 	  positionX += (i % Nx); 
+//          cout <<"positionX = "<<positionX <<endl;
 	  positionY += ((i%this->StateYShift)/ Nx) ;
+//          cout <<"positionY = "<<positionY <<endl;
 	}
     }
 }
@@ -131,6 +140,7 @@ inline void BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTra
 
 inline void BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation::GetPositionSum(unsigned long * monomial, int & positionX, int & positionY)
 {
+//  cout <<"inside inline void BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation::GetPositionSum(unsigned long * monomial, int & positionX, int & positionY)"<<endl;
   positionX =0;
   positionY =0;
   int Nx = this->Lx / this->MaxXMomentum;

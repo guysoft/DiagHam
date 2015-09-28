@@ -272,14 +272,6 @@ else
       
       TightBindingModel->WriteAsciiSpectrum(EigenvalueOutputFile);
 
-    HermitianMatrix TmpHam (TightBindingModel->GetRealSpaceTightBindingHamiltonian());
-    RealDiagonalMatrix TmpHam2(TmpHam.GetNbrRow());
-    TmpHam.LapackDiagonalize(TmpHam2);
-    for (int i = 0; i < TmpHam.GetNbrRow(); ++i)
-	{
-	  cout << i << " : " << TmpHam2[i] << endl;
-	}
-
       for (int n=0; n<TightBindingModel->GetNbrBands()-1; ++n)
 	{
 	  double BandSpread = TightBindingModel->ComputeBandSpread(n);
@@ -507,22 +499,12 @@ else
 			  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 			  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 			  HermitianMatrix TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
-    RealDiagonalMatrix TmpHam2(TightBindingMatrix.GetNbrRow());
-    TightBindingMatrix.LapackDiagonalize(TmpHam2);
-    for (int p = 0; p < TightBindingMatrix.GetNbrRow(); ++p)
-	{
-	  cout << p << " : " << TmpHam2[p] << endl;
-	}
-
 			if(Manager.GetBoolean("no-translation") == false)
 		{
 	    double FluxDensity =  (((double) FluxPerCell)/( (double) (UnitCellX*UnitCellY)));
 
 	    double PhaseTranslationX = -2.0* M_PI * FluxDensity * UnitCellX;
-	    double PhaseTranslationY = 0.0;
-//	    PhaseTranslationX = 0.0;
-
-
+ 	    double PhaseTranslationY = 0.0;
 
 	    Hamiltonian = new ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
  												   i,  NbrCellX, j,  NbrCellY, PhaseTranslationX, PhaseTranslationY,

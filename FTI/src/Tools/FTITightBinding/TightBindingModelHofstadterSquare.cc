@@ -39,7 +39,7 @@
 using std::cout;
 using std::endl;
 
- #define DEBUG_OUTPUT
+// #define DEBUG_OUTPUT
 
 
 // default constructor
@@ -232,11 +232,9 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIn
 #endif
 		  this->OneBodyBasis[Index] = TmpMatrix;
 		  for (int i = 0; i < this->NbrBands; ++i)
-{
+                  {
 		    this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
- cout <<i<<" " <<TmpDiag(i, i)<<endl;
-}                   
-cout <<"end of void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIndex, long nbrStates)"<<endl;
+                  }                   
 		}
 	      else
 		{
@@ -514,8 +512,6 @@ int TightBindingModelHofstadterSquare::EncodeSublatticeIndex(int posx, int posy,
 
 ComplexMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingEigenstates()
 {
-  cout <<"NbrBands " <<this->NbrBands <<endl;
-  cout <<" NbrStatePerBand = " <<this->NbrStatePerBand<<endl;
   ComplexMatrix EigenStates(this->NbrBands *  this->NbrStatePerBand,this->NbrBands *  this->NbrStatePerBand ,true);
   int Kx;  int Ky;
   int K1;  int K2;
@@ -540,8 +536,6 @@ ComplexMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingEigenst
   int PositionInUnitCellY = PositionY %  this->UnitCellY;
   int UnitCellsY = PositionY /  this->UnitCellY;
   int PositionInUnitCell = PositionInUnitCellX + this->UnitCellX*PositionInUnitCellY;
-
-//  cout <<"i = " <<i <<" j = " <<j << "  MomentumIndex = " <<MomentumIndex<<" BandNumber = " <<BandNumber<<" PositionInUnitCell = " <<PositionInUnitCell <<" "<< this->OneBodyBasis[MomentumIndex][BandNumber][PositionInUnitCell]<<" " << Phase(K1*UnitCellsX+ K2*UnitCellsY)<<endl;
 
   EigenStates[i][j] = this->OneBodyBasis[MomentumIndex][BandNumber][PositionInUnitCell] * Phase(K1*UnitCellsX+ K2*UnitCellsY);
 }
@@ -700,7 +694,6 @@ HermitianMatrix  TightBindingModelHofstadterSquare::BuildTightBindingHamiltonian
   int   NumYTranslations;
   Complex  tmpPhase, tmpPhase2;
   Complex TmpXPhase = Complex(1.0,0);
-  cout <<" this->LxTranslationPhase  = " << this->LxTranslationPhase<<endl;
   for (int i = 0; i < this->NbrSiteX; ++i)
     {
       for (int j = 0; j < this->NbrSiteY; ++j)
@@ -746,7 +739,6 @@ HermitianMatrix  TightBindingModelHofstadterSquare::BuildTightBindingHamiltonian
 	    }
 	}      
     }
-//  cout <<TmpHamiltonian<<endl;
   return TmpHamiltonian;
 }
 

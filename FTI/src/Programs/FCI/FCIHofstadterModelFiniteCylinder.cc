@@ -125,12 +125,16 @@ int main(int argc, char** argv)
 /*  for (int i = 0; i <NbrSiteY; i++)
     cin >> TunnelElementX[i];*/
 
-  TunnelElementX[0] = 1.37; 
-  TunnelElementX[1] = 1.1673;
-  TunnelElementX[2] = 1.0;
-  TunnelElementX[3] = 1.0;
-  TunnelElementX[4] = 1.1673;
-  TunnelElementX[5] = 1.37;
+  TunnelElementX[0] = 1.0374; 
+  TunnelElementX[1] = 1.0212;
+  TunnelElementX[2] = 1.0094;
+  TunnelElementX[3] = 1.0022;
+  TunnelElementX[4] = 1.0;
+  TunnelElementX[5] = 1.0022;
+  TunnelElementX[6] = 1.0094;
+  TunnelElementX[7] = 1.0212;
+  TunnelElementX[8] = 1.0374;
+
 
 /*  for (int i = 0; i <NbrSiteY; i++)
     cin >> TunnelElementY[i];*/

@@ -209,7 +209,8 @@ BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::BosonOnLatticeGutzw
   this->YMomentumBlockMask = bosons.YMomentumBlockMask;  
   this->ComplementaryStateShift = bosons.ComplementaryStateShift;
   this->MomentumMask = bosons.MomentumMask;
-
+  this->ComplementaryYMomentumFullMask = bosons.ComplementaryYMomentumFullMask;
+  this->YMomentumFullMask = bosons.YMomentumFullMask;
   this->MaxMomentum = bosons.MaxMomentum;
   this->NbrMomentum = bosons.NbrMomentum;
   this->MomentumModulo = bosons.MomentumModulo;
@@ -406,7 +407,7 @@ int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::AdA (int index,
       return this->HilbertSpaceDimension;
     }
   State |= (0x1ul << m);
-  cout <<" m = " << m << " n = " <<n << " State = "<< this->StateDescription[index] <<" -> "<<"State = " << State<<endl;
+//  cout <<" m = " << m << " n = " <<n << " State = "<< this->StateDescription[index] <<" -> "<<"State = " << State<<endl;
   this->ProdATemporaryNbrStateInOrbit =  this->NbrStateInOrbit[index];
   return this->SymmetrizeAdAdResult(State, coefficient, nbrTranslationX, nbrTranslationY);
 }
@@ -461,7 +462,7 @@ ostream& BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::PrintState
 
 double BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::A (int index, int n)
 {
-  cout <<"using BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::A "<<endl;
+//  cout <<"using BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::A "<<endl;
   this->ProdATemporaryStateMaxMomentum = this->StateMaxMomentum[index];
   this->ProdATemporaryState = this->StateDescription[index];
   if ((n >  this->ProdATemporaryStateMaxMomentum) || ((this->ProdATemporaryState & (0x1ul << n)) == 0x0ul))
@@ -495,7 +496,7 @@ double BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::A (int index
 
 int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::Ad (int m, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
 {
-  cout <<"using BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::Ad "<<endl;
+//  cout <<"using BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::Ad "<<endl;
   unsigned long TmpState = this->ProdATemporaryState;
   if ((TmpState & (0x1ul << m)) != 0)
     {

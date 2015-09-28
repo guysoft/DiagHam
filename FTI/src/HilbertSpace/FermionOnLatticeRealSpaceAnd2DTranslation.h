@@ -38,7 +38,7 @@
 #include "HilbertSpace/FermionOnTorusWithMagneticTranslations.h"
 
 #include <iostream>
-
+#include <bitset>
 
 
 class  FermionOnLatticeRealSpaceAnd2DTranslation : public FermionOnTorusWithMagneticTranslations
@@ -460,8 +460,8 @@ inline void FermionOnLatticeRealSpaceAnd2DTranslation::ApplySingleXTranslation(u
 
 inline void FermionOnLatticeRealSpaceAnd2DTranslation::ApplySingleYTranslation(unsigned long& stateDescription)
 {
-  stateDescription = (((stateDescription & this->ComplementaryYMomentumFullMask) >> this->StateYShift) | 
-		      ((stateDescription & this->YMomentumFullMask) << this->ComplementaryStateYShift));
+//  cout << std::bitset<16>(stateDescription) << " " <<std::bitset<16>(this->ComplementaryYMomentumFullMask) << " " <<std::bitset<16>(this->StateYShift)<<" " <<std::bitset<16>(this->YMomentumFullMask)<< " " <<std::bitset<16>(this->ComplementaryStateYShift)<<endl;
+  stateDescription = (((stateDescription & this->ComplementaryYMomentumFullMask) >> this->StateYShift) | ((stateDescription & this->YMomentumFullMask) << this->ComplementaryStateYShift));
 }
 
 // get the fermonic sign when performing a single translation in the x direction on a state description, and apply the single translation
