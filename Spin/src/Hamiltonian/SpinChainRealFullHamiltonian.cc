@@ -83,8 +83,8 @@ SpinChainRealFullHamiltonian::SpinChainRealFullHamiltonian(AbstractSpinChain* ch
       this->JzFactor = new double [this->NbrSpin];
       for (int i = 0; i < this->NbrSpin; i++)
 	{
-	  this->JPlusFactor[i] = jx[i] + jy[i];
-	  this->JMinusFactor[i] = jx[i] - jy[i];
+	  this->JPlusFactor[i] = 0.25 * (jx[i] + jy[i]);
+	  this->JMinusFactor[i] = 0.25 * (jx[i] - jy[i]);
 	  this->JzFactor[i] = jz[i];
 	}
    }
@@ -96,7 +96,6 @@ SpinChainRealFullHamiltonian::SpinChainRealFullHamiltonian(AbstractSpinChain* ch
       this->HzFactor[i] = hz[i];
     }
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
-  this->PeriodicBoundaryConditions = false;
   this->EvaluateDiagonalMatrixElements();
 }
 

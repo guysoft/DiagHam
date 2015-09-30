@@ -165,8 +165,8 @@ int main(int argc, char** argv)
       if (HFieldFile.GetNbrLines() == NbrSpins)
 	{
 	  HxValues = HFieldFile.GetAsDoubleArray(0);
-	  HyValues = HFieldFile.GetAsDoubleArray(0);
-	  HzValues = HFieldFile.GetAsDoubleArray(0);
+	  HyValues = HFieldFile.GetAsDoubleArray(1);
+	  HzValues = HFieldFile.GetAsDoubleArray(2);
 	}
       else
 	{
