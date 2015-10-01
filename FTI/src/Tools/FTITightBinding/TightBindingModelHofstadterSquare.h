@@ -94,7 +94,7 @@ class TightBindingModelHofstadterSquare : public Abstract2DTightBindingModel
   HermitianMatrix GetRealSpaceTightBindingHamiltonian();
 
 
-HermitianMatrix  BuildTightBindingHamiltonianRealSpace(int* nbrConnectedOrbitals, int** orbitalIndices, int** spatialIndices, Complex** hoppingAmplitudes);
+  HermitianMatrix  BuildTightBindingHamiltonianRealSpace(int* nbrConnectedOrbitals, int** orbitalIndices, int** spatialIndices, Complex** hoppingAmplitudes);
 
  protected :
 
@@ -145,7 +145,7 @@ HermitianMatrix  BuildTightBindingHamiltonianRealSpace(int* nbrConnectedOrbitals
 inline int TightBindingModelHofstadterSquare::EncodeSublatticeIndex(int posx, int posy,int & numXTranslations,int &numYTranslations, Complex &translationPhase) 
 {
   numXTranslations=0;
-  numYTranslations=0;  
+  numYTranslations=0;
 
   while (posx<0)
     {
@@ -160,7 +160,7 @@ inline int TightBindingModelHofstadterSquare::EncodeSublatticeIndex(int posx, in
   while (posy<0)
     {
       posy+=this->UnitCellY;
-      ++numYTranslations;      
+      ++numYTranslations;
     }
   while (posy>=this->UnitCellY)
     {
@@ -223,7 +223,7 @@ inline int  TightBindingModelHofstadterSquare::GetRealSpaceTightBindingLinearize
     y +=  this->NbrSiteY;
     numYTranslations++;
   }
-  return this->GetRealSpaceTightBindingLinearizedIndex(x, y, orbitalIndex); 
+  return this->GetRealSpaceTightBindingLinearizedIndex(x, y, orbitalIndex);
 }
 
 

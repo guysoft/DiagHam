@@ -176,8 +176,8 @@ for(int k =0 ;k <NbrRepresentant; k++)
     {
     for (int q = 0; q < NbrBosons; ++q)
     {
-    	  SlaterCF.SetMatrixElement(p,q,cFEigenVecs[p][this->Lx*this->Ly - 1 - TemporaryState[q]]);
- 	  SlaterJastrow.SetMatrixElement(p,q,jastrowEigenVecs[p][this->Lx*this->Ly - 1 - TemporaryState[q]]);
+    	  SlaterCF.SetMatrixElement(p,q,cFEigenVecs[p][TemporaryState[q]]);
+ 	  SlaterJastrow.SetMatrixElement(p,q,jastrowEigenVecs[p][TemporaryState[q]]);
     }	      
     }
     trialState[i] +=  Conj(ExponentialFactors[MomentumTable[k]/this->MaxYMomentum][MomentumTable[k]%this->MaxYMomentum]) * SlaterCF.Determinant() * SlaterJastrow.Determinant() * Phase(-1.0*PositionY*(MomentumTable[k]/this->MaxYMomentum)*phaseTranslationX);

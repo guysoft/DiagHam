@@ -266,7 +266,7 @@ else
 
       Abstract2DTightBindingModel *TightBindingModel;
       if (Manager.GetBoolean("triangular")==false)
-	TightBindingModel= new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
+	TightBindingModel= new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody,true);
       else
 	TightBindingModel= new TightBindingModelHofstadterTriangularQuarter(NbrCellX, NbrCellY, Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
       
@@ -339,7 +339,7 @@ else
   Abstract2DTightBindingModel *TightBindingModel;
   if (Manager.GetBoolean("triangular")==false)
     TightBindingModel= new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis,
-							     Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
+							     Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),false,true);
   else
     TightBindingModel= new TightBindingModelHofstadterTriangularQuarter(NbrCellX, NbrCellY, Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
   
@@ -503,7 +503,7 @@ else
 		{
 	    double FluxDensity =  (((double) FluxPerCell)/( (double) (UnitCellX*UnitCellY)));
 
-	    double PhaseTranslationX = -2.0* M_PI * FluxDensity * UnitCellX;
+	    double PhaseTranslationX = 2.0* M_PI * FluxDensity * UnitCellX;
  	    double PhaseTranslationY = 0.0;
 
 	    Hamiltonian = new ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 

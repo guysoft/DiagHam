@@ -293,15 +293,12 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructureWithEmbedding(lo
 			  int InitialIndex = this->EncodeSublatticeIndex(i, j, 0.0, 0.0, TranslationPhase); // TranlationPhase always one, so can be discarded
 			  int FinalIndex = this->EncodeSublatticeIndex(i+1, j, 0.0, 0.0, TranslationPhase);
 
-//			  int InitialIndex = this->EncodeSublatticeIndex(i, j, K1, K2, TranslationPhase); // TranlationPhase always one, so can be discarded
-//			  int FinalIndex = this->EncodeSublatticeIndex(i+1, j, K1, K2, TranslationPhase);
 			  if (InitialIndex>=FinalIndex)
 			    TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, FinalIndex, -TranslationPhase*PhaseEmbeddingX);
 #ifdef DEBUG_OUTPUT
 			  cout << "H["<<InitialIndex<<"->"<<FinalIndex<<"]="<<-TranslationPhase<<endl;
 #endif
 
-//			  FinalIndex = this->EncodeSublatticeIndex(i-1, j, K1, K2, TranslationPhase);
 			  FinalIndex = this->EncodeSublatticeIndex(i-1, j, 0.0,0.0, TranslationPhase);
 			  if (InitialIndex>=FinalIndex)
 			    TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, FinalIndex, -TranslationPhase*Conj(PhaseEmbeddingX));
@@ -309,7 +306,6 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructureWithEmbedding(lo
 			  cout << "H["<<InitialIndex<<"->"<<FinalIndex<<"]="<<-TranslationPhase<<endl;
 #endif
 			  
-//			  FinalIndex = this->EncodeSublatticeIndex(i, j+1, K1, K2, TranslationPhase);
 			  FinalIndex = this->EncodeSublatticeIndex(i, j+1, 0.0, 0.0, TranslationPhase);
 			  if (InitialIndex>=FinalIndex)
 			    TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, FinalIndex, -TranslationPhase*Conj(Phase)*PhaseEmbeddingY);
@@ -317,7 +313,6 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructureWithEmbedding(lo
 			  cout << "H["<<InitialIndex<<"->"<<FinalIndex<<"]="<<-TranslationPhase*Conj(Phase)<<endl;
 #endif
 
-//			  FinalIndex = this->EncodeSublatticeIndex(i, j-1, K1, K2, TranslationPhase);
 			  FinalIndex = this->EncodeSublatticeIndex(i, j-1,0.0, 0.0, TranslationPhase);
 			  if (InitialIndex>=FinalIndex)
 			    TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, FinalIndex, -TranslationPhase*Phase*Conj(PhaseEmbeddingY));
@@ -515,6 +510,9 @@ ComplexMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingEigenst
   ComplexMatrix EigenStates(this->NbrBands *  this->NbrStatePerBand,this->NbrBands *  this->NbrStatePerBand ,true);
   int Kx;  int Ky;
   int K1;  int K2;
+  int OrbitalIndex = 0;
+  int UnitCellsX = 0;
+  int UnitCellsY = 0;
   for(int i = 0; i <this->NbrBands *  this->NbrStatePerBand;i++)
      {
         int BandNumber = i/this->NbrStatePerBand;
@@ -524,24 +522,15 @@ ComplexMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingEigenst
 
    K1 = this->KxFactor*(((double) Kx) + this->GammaX);
    K2 = this->KyFactor*(((double) Ky) + this->GammaY);
-
   for(int j = 0; j <this->NbrBands *  this->NbrStatePerBand;j++) 
   { 
-   int PositionX = j%(this->NbrSiteX*this->UnitCellX);
-
-   int PositionInUnitCellX = PositionX % this->UnitCellX;
-   int UnitCellsX = PositionX / this->UnitCellX;
- 
-  int PositionY = j/(this->NbrSiteX*this->UnitCellX);
-  int PositionInUnitCellY = PositionY %  this->UnitCellY;
-  int UnitCellsY = PositionY /  this->UnitCellY;
-  int PositionInUnitCell = PositionInUnitCellX + this->UnitCellX*PositionInUnitCellY;
-
-  EigenStates[i][j] = this->OneBodyBasis[MomentumIndex][BandNumber][PositionInUnitCell] * Phase(K1*UnitCellsX+ K2*UnitCellsY);
-}
-} 
+    this->GetRealSpaceTightBindingLinearizedIndex(j, UnitCellsX, UnitCellsY, OrbitalIndex);
+    EigenStates[i][j] = this->OneBodyBasis[MomentumIndex][BandNumber][OrbitalIndex] * Phase(K1*UnitCellsX + K2*UnitCellsY);
+  }
+  }
   return EigenStates;
 }
+
 
 // get the tight binding hamiltonian in real space 
 // 
@@ -700,17 +689,28 @@ HermitianMatrix  TightBindingModelHofstadterSquare::BuildTightBindingHamiltonian
 	{
 	  for (int k = 0; k < this->NbrBands; ++k)
 	    {
-	      int Index2 = this->GetRealSpaceTightBindingLinearizedIndex(i, j, k);
+	      int InitialIndex = this->GetRealSpaceTightBindingLinearizedIndex(i, j, k);
 	      for (int l = 0; l < nbrConnectedOrbitals[k]; ++l)
 		{
-		  int Index1 = this->GetRealSpaceTightBindingLinearizedIndexSafe(spatialIndices[k][l << 1] + i, spatialIndices[k][(l << 1) + 1] + j, orbitalIndices[k][l],NumXTranslations,NumYTranslations);                 
-                  if (Index1 >= Index2)
+		  int FinalIndex = this->GetRealSpaceTightBindingLinearizedIndexSafe(spatialIndices[k][l << 1] + i, spatialIndices[k][(l << 1) + 1] + j, orbitalIndices[k][l],NumXTranslations,NumYTranslations);                 
+			  if (InitialIndex>=FinalIndex)
 		  {
                   tmpPhase = 1.0;
                   int Tmp = orbitalIndices[k][l] - k;
                   if( ( (orbitalIndices[k][l]%this->UnitCellX - k%this->UnitCellX) ==0  ) && (spatialIndices[k][l << 1]==0 ) )
 		  {
+		       if( spatialIndices[k][(l << 1) + 1] >= 0)
+                          for (int p=0; p < i; p++)
+           			tmpPhase*=Conj(this->LxTranslationPhase);
+			else
+                        {
+                             for (int p=0; p < i; p++)
+				  tmpPhase*=this->LxTranslationPhase;
+                        }
+               	   }
 
+/*                  if( ( (orbitalIndices[k][l]%this->UnitCellX - k%this->UnitCellX) ==0  ) && (spatialIndices[k][l << 1]==0 ) )
+		  {
 		       if( spatialIndices[k][(l << 1) + 1] >= 0)
                           for (int p=0; p < i; p++)
            			  tmpPhase*=this->LxTranslationPhase;
@@ -721,6 +721,7 @@ HermitianMatrix  TightBindingModelHofstadterSquare::BuildTightBindingHamiltonian
                         }
                	   }
 
+*/
 
                   if( NumXTranslations>0)
                      tmpPhase*= Phase(-2.0*M_PI*this->FluxDensity*this->NbrSiteX*this->UnitCellX*(orbitalIndices[k][l]/this->UnitCellX));
@@ -730,7 +731,9 @@ HermitianMatrix  TightBindingModelHofstadterSquare::BuildTightBindingHamiltonian
       
                   int TmpX = spatialIndices[k][l << 1] + i;
                   int TmpY = spatialIndices[k][(l << 1)+1] + j;
-		  TmpHamiltonian.AddToMatrixElement(Index1, Index2, hoppingAmplitudes[k][l]*tmpPhase);
+		  TmpHamiltonian.AddToMatrixElement(InitialIndex, FinalIndex, hoppingAmplitudes[k][l]*tmpPhase);
+
+
 #ifdef DEBUG_OUTPUT
 		  cout <<"x = " <<i<< " y = " <<j <<" k = " <<k<< " going to X = " <<  TmpX  << " Y = "<<TmpY<<" index "<< orbitalIndices[k][l]<<" Coefficient" << hoppingAmplitudes[k][l]*tmpPhase<<"NumTranslation X = "<<NumXTranslations <<endl;
 #endif

@@ -91,6 +91,8 @@ int main(int argc, char** argv)
   bool HardCore = Manager.GetBoolean("hard-core");
   int CFFlux = Manager.GetInteger("flux-per-CF");
   char Axis ='y';
+  bool EmbeddingFlag = true;
+
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
 
   double SolenoidCF_X=0.0, SolenoidCF_Y=0.0;
@@ -149,9 +151,6 @@ int main(int argc, char** argv)
   int MaxMomentumXJastrow =  Lx/NxZeroJastrow;
   int MaxMomentumYJastrow =  Ly/NyZeroJastrow;
 
-  /// @todo: calculer les tailles de cellules magnétiques pour CF et Jastrow (qui peuvent être différent)
-  // a voir si on peut faire un choix pour qu'ils soient commensurables.
-
   int FluxPerCellCF =  TotalFluxCF/( MaxMomentumXCF* MaxMomentumYCF);
   int FluxPerCellJastrow =  TotalFluxJastrow/( MaxMomentumXJastrow* MaxMomentumYJastrow);  
 
@@ -167,8 +166,17 @@ int main(int argc, char** argv)
   sprintf (OutputNameCFEnergy, "HoftadterModel_bandstructure_X_%d_Y_%d_x_%d_y_%d_q_%d.dat", NxZeroCF,NyZeroCF, MaxMomentumXCF,MaxMomentumYCF, FluxPerCellCF);
   TightBindingModelCF.WriteAsciiSpectrum(OutputNameCFEnergy);
   
+ if(Manager.GetBoolean("no-translation")==true)
+  {
+    NxZeroCF = NxZeroCF* MaxMomentumXCF;
+    NyZeroCF = NyZeroCF* MaxMomentumYCF;
+    FluxPerCellCF *= MaxMomentumXCF * MaxMomentumYCF;
+    MaxMomentumXCF = 1;
+    MaxMomentumYCF = 1;
+    EmbeddingFlag = false;
+  }
 
-  TightBindingModelHofstadterSquare TightBindingModelCF2 (MaxMomentumXCF, MaxMomentumYCF, NxZeroCF, NyZeroCF, FluxPerCellCF, Axis, SolenoidCF_X, SolenoidCF_Y, Architecture.GetArchitecture(),true,true);
+  TightBindingModelHofstadterSquare TightBindingModelCF2 (MaxMomentumXCF, MaxMomentumYCF, NxZeroCF, NyZeroCF, FluxPerCellCF, Axis, SolenoidCF_X, SolenoidCF_Y, Architecture.GetArchitecture(),true, EmbeddingFlag);
 
   sprintf (OutputNameCFEnergy, "HoftadterModel_bandstructureWithEmbedding_X_%d_Y_%d_x_%d_y_%d_q_%d.dat", NxZeroCF, NyZeroCF, MaxMomentumXCF,MaxMomentumYCF, FluxPerCellCF);
   TightBindingModelCF2.WriteAsciiSpectrum(OutputNameCFEnergy);
@@ -194,8 +202,21 @@ int main(int argc, char** argv)
   
   
   cout <<"  FluxPerCellJastrow = "<<  FluxPerCellJastrow <<endl;
-  TightBindingModelHofstadterSquare  JastrowTightBindingModel (MaxMomentumXJastrow, MaxMomentumYJastrow, NxZeroJastrow, NyZeroJastrow, FluxPerCellJastrow, Axis, SolenoidCF_X, SolenoidCF_Y, Architecture.GetArchitecture(),true,true);
+
+ if(Manager.GetBoolean("no-translation")==true)
+  {
+    NxZeroJastrow = NxZeroJastrow* MaxMomentumXJastrow;
+    NyZeroJastrow = NyZeroJastrow* MaxMomentumYJastrow;
+    FluxPerCellJastrow *= MaxMomentumXJastrow * MaxMomentumYJastrow;
+    MaxMomentumXJastrow= 1;
+    MaxMomentumYJastrow= 1;
+    EmbeddingFlag = false;
+  }
+
+  TightBindingModelHofstadterSquare  JastrowTightBindingModel (MaxMomentumXJastrow, MaxMomentumYJastrow, NxZeroJastrow, NyZeroJastrow, FluxPerCellJastrow, Axis, SolenoidCF_X, SolenoidCF_Y, Architecture.GetArchitecture(),true,EmbeddingFlag);
   ComplexMatrix JastrowEigenVecs =  JastrowTightBindingModel.GetRealSpaceTightBindingEigenstates();
+
+
 
 
  if(Manager.GetBoolean("no-translation")==false)
@@ -221,8 +242,17 @@ else
   BosonOnLatticeGutzwillerProjectionRealSpace Space1 (NbrBosons,Lx*Ly);
   ComplexVector TrialState1(Space1.GetHilbertSpaceDimension(),true);
   Space1.GetCompositeFermionWavefunction(TrialState1, JastrowEigenVecs, CFEigenVecs);
+
+  HermitianMatrix TmpHam = JastrowTightBindingModel.GetRealSpaceTightBindingHamiltonian();
+  ComplexMatrix TmpMatrix( Lx* Ly, Lx* Ly,true);
+  TmpMatrix.SetToIdentity();
+  RealDiagonalMatrix TmpDiag;
+  TmpHam.LapackDiagonalize(TmpDiag, TmpMatrix);
+
   cout <<JastrowEigenVecs<<endl;
-  cout <<CFEigenVecs<<endl;
+
+  cout <<TmpMatrix<<endl;
+// cout <<CFEigenVecs<<endl;
   char* OutputName1;
   if ( (OutputName1 = Manager.GetString("output-file")) == NULL)
     {
@@ -287,46 +317,3 @@ void  FindMagneticCell(const int nbrFluxQuanta,const int lx, const int ly, int &
 	  }
 }
 
-/*
-  int FluxModulo = FindGCD(NbrFluxQuanta,  NbrSites);
-  int p = NbrFluxQuanta /  FluxModulo;
-  int q =  NbrSites /  FluxModulo;
-  int NxZero = Lx;
-  int NyZero = Ly;
-  double OptimizeAspectRatio=0;
-  cout <<"p= "<< p << " q = " <<q<<endl;
-
-  for(int i =1 ; i <=sqrt(q) ; i++)
-  {
- 	if (q%i == 0 )
-	{
-           int TmpNxZero;
-	   int TmpNyZero;
-           if(( Lx%i==0 ) && ( Ly% (q/i) == 0))
-	   {	
-	     TmpNxZero = i;	
-	     TmpNyZero = q/i;
-            }
-	    else
-	   {
-            	 if(( Ly%i == 0 ) && ( Lx% (q/i) == 0))
-		 {
-	            TmpNxZero = q/i;	
-         	    TmpNyZero = i;
-		 }
-	   }
-
-            double TmpAspectRatio =  ((double) TmpNyZero)/ ((double) TmpNxZero);
-             if(  TmpAspectRatio > 1  ) 
-	     {
-                TmpAspectRatio = 1.0/TmpAspectRatio;
-             }
-             if ( TmpAspectRatio > OptimizeAspectRatio)
-             {
-                OptimizeAspectRatio = TmpAspectRatio;
-		NxZero = TmpNxZero;
-		NyZero = TmpNyZero;
-             }
-	   }
-	  }
-*/
