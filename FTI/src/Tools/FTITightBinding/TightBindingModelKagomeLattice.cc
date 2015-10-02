@@ -390,3 +390,36 @@ HermitianMatrix TightBindingModelKagomeLattice::GetRealSpaceTightBindingHamilton
   return TmpMatrix;
 }
 
+// get the high symmetry points 
+//
+// pointNames = name of each high symmetry point
+// pointCoordinates = coordinates in the first Brillouin zone of the high symmetry points
+// return value = number of high symmetry points
+
+int TightBindingModelKagomeLattice::GetHighSymmetryPoints(char**& pointNames, double**& pointCoordinates)
+{
+  int NbrHighSymmetryPoints = 3;
+  pointNames = new char*[NbrHighSymmetryPoints];
+  pointCoordinates = new double*[NbrHighSymmetryPoints];
+
+  pointNames[0] = new char[16];
+  sprintf (pointNames[0], "Gamma");
+  pointCoordinates[0] = new double[2];
+  pointCoordinates[0][0] = 0.0; 
+  pointCoordinates[0][1] = 0.0; 
+
+  pointNames[1] = new char[16];
+  sprintf (pointNames[1], "M");
+  pointCoordinates[1] = new double[2];
+  pointCoordinates[1][0] = M_PI; 
+  pointCoordinates[1][1] = 0.0; 
+
+  pointNames[2] = new char[16];
+  sprintf (pointNames[2], "K");
+  pointCoordinates[2] = new double[2];
+  pointCoordinates[2][0] =  2.0 * M_PI / 3.0; 
+  pointCoordinates[2][1] = 2.0 * M_PI / 3.0; 
+
+  return NbrHighSymmetryPoints;
+}
+

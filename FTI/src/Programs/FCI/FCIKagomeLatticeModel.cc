@@ -104,6 +104,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
+  (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-highsymmetryspectrum", "only compute the one body spectrum, restricting to lines connecting the high symmetry points");
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-chernnumber", "compute the Chern number of the fully filled band (only available in singleparticle-spectrum mode)");
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-berrycurvature", "compute the Berry curvature number of the fully filled band (only available in singleparticle-spectrum mode)");
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebody", "export the one-body information (band structure and eigenstates) in a binary file");
@@ -276,44 +277,55 @@ int main(int argc, char** argv)
 	}
     }
 
-  if (Manager.GetBoolean("singleparticle-spectrum") == true)
+  if ((Manager.GetBoolean("singleparticle-spectrum") == true) || (Manager.GetBoolean("singleparticle-highsymmetryspectrum") == true))
     {
-      bool ExportOneBody = false;
-      if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("singleparticle-chernnumber") == true) || (Manager.GetBoolean("singleparticle-berrycurvature") == true))
-	ExportOneBody = true;
-      TightBindingModelKagomeLattice TightBindingModel(NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
-					   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
-      if (Manager.GetBoolean("singleparticle-chernnumber") == true)
+      if (Manager.GetBoolean("singleparticle-highsymmetryspectrum") == false)
 	{
-	  cout << "Chern number = " << TightBindingModel.ComputeChernNumber(0) << endl;
-	}
-      if (Manager.GetBoolean("singleparticle-berrycurvature") == true)
-	{
-	  cout << "Chern number = " << TightBindingModel.ComputeBerryCurvature(0, ReplaceExtensionToFileName(EigenvalueOutputFile, "dat", "berrycurvature.dat")) << endl;
-	}
-      TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);
-      double BandSpread = TightBindingModel.ComputeBandSpread(0);
-      double DirectBandGap = TightBindingModel.ComputeDirectBandGap(0);
-      cout << "Spread = " << BandSpread << "  Direct Gap = " << DirectBandGap  << "  Flattening = " << (BandSpread / DirectBandGap) << endl;
-      if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true))
-	{
-	  char* BandStructureOutputFile = new char [512];
-	  if (Manager.GetString("export-onebodyname") != 0)
-	    strcpy(BandStructureOutputFile, Manager.GetString("export-onebodyname"));
-	  else
-	    sprintf (BandStructureOutputFile, "%s_tightbinding.dat", FilePrefix);
-	  if (Manager.GetBoolean("export-onebody") == true)
+	  bool ExportOneBody = false;
+	  if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("singleparticle-chernnumber") == true) || (Manager.GetBoolean("singleparticle-berrycurvature") == true))
+	    ExportOneBody = true;
+	  TightBindingModelKagomeLattice TightBindingModel(NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
+							   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
+	  if (Manager.GetBoolean("singleparticle-chernnumber") == true)
 	    {
-	      TightBindingModel.WriteBandStructure(BandStructureOutputFile);
+	      cout << "Chern number = " << TightBindingModel.ComputeChernNumber(0) << endl;
 	    }
-	  else
+	  if (Manager.GetBoolean("singleparticle-berrycurvature") == true)
 	    {
-	      TightBindingModel.WriteBandStructureASCII(BandStructureOutputFile);
+	      cout << "Chern number = " << TightBindingModel.ComputeBerryCurvature(0, ReplaceExtensionToFileName(EigenvalueOutputFile, "dat", "berrycurvature.dat")) << endl;
 	    }
-	  delete[] BandStructureOutputFile;
-	}	  
-      return 0;
-
+	  TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);
+	  double BandSpread = TightBindingModel.ComputeBandSpread(0);
+	  double DirectBandGap = TightBindingModel.ComputeDirectBandGap(0);
+	  cout << "Spread = " << BandSpread << "  Direct Gap = " << DirectBandGap  << "  Flattening = " << (BandSpread / DirectBandGap) << endl;
+	  if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true))
+	    {
+	      char* BandStructureOutputFile = new char [512];
+	      if (Manager.GetString("export-onebodyname") != 0)
+		strcpy(BandStructureOutputFile, Manager.GetString("export-onebodyname"));
+	      else
+		sprintf (BandStructureOutputFile, "%s_tightbinding.dat", FilePrefix);
+	      if (Manager.GetBoolean("export-onebody") == true)
+		{
+		  TightBindingModel.WriteBandStructure(BandStructureOutputFile);
+		}
+	      else
+		{
+		  TightBindingModel.WriteBandStructureASCII(BandStructureOutputFile);
+		}
+	      delete[] BandStructureOutputFile;
+	    }	  
+	  return 0;
+	}
+      else
+	{
+	  TightBindingModelKagomeLattice TightBindingModel(2, 2,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
+							   Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
+							   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 
+							   Architecture.GetArchitecture(), false);
+	  TightBindingModel.WriteAsciiSpectrumAlongHighSymmetryPoints(EigenvalueOutputFile, NbrSitesX);
+	  return 0;	  
+	}
     }
 
   int MinKx = 0;

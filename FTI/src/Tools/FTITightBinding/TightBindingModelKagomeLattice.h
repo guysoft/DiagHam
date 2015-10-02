@@ -106,6 +106,13 @@ class TightBindingModelKagomeLattice : public Abstract2DTightBindingModel
   // return value = Bloch hamiltonian
   virtual HermitianMatrix ComputeBlochHamiltonian(double kx, double ky);
 
+  // get the high symmetry points 
+  //
+  // pointNames = name of each high symmetry point
+  // pointCoordinates = coordinates in the first Brillouin zone of the high symmetry points
+  // return value = number of high symmetry points
+  virtual int GetHighSymmetryPoints(char**& pointNames, double**& pointCoordinates);
+
  protected :
 
   // core part that compute the band structure

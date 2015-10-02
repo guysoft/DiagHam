@@ -164,6 +164,13 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // return value = true if no error occured
   virtual bool WriteAsciiSpectrum(char* fileName);
 
+  // write the energy spectrum in an ASCII file, focusing on lines connecting the high symmetry points
+  //
+  // fileName = name of the ASCII file 
+  // nbrSteps = number of steps between two consecutive high symmetry points
+  // return value = true if no error occured
+  virtual bool WriteAsciiSpectrumAlongHighSymmetryPoints(char* fileName, int nbrSteps);
+
   // write the full band structure information in an ASCII file
   //
   // fileName = name of the output file 
@@ -357,6 +364,13 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // ky = momentum along the x axis
   // return value = Bloch hamiltonian
   virtual HermitianMatrix ComputeBlochHamiltonian(double kx, double ky);
+
+  // get the high symmetry points 
+  //
+  // pointNames = name of each high symmetry point
+  // pointCoordinates = coordinates in the first Brillouin zone of the high symmetry points
+  // return value = number of high symmetry points
+  virtual int GetHighSymmetryPoints(char**& pointNames, double**& pointCoordinates);
 
  protected:
 

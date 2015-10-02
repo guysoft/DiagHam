@@ -177,6 +177,111 @@ bool Abstract2DTightBindingModel::WriteAsciiSpectrum(char* fileName)
   return true;
 }
 
+// write the energy spectrum in an ASCII file, focusing on lines connecting the high symmetry points
+//
+// fileName = name of the ASCII file 
+// nbrSteps = number of steps between two consecutive high symmetry points
+// return value = true if no error occured
+
+bool Abstract2DTightBindingModel::WriteAsciiSpectrumAlongHighSymmetryPoints(char* fileName, int nbrSteps)
+{
+  double** HighSymmetryPointCoordinates = 0;
+  char** HighSymmetryPointNames = 0;
+  int NbrHighSymmetryPoints = this->GetHighSymmetryPoints(HighSymmetryPointNames, HighSymmetryPointCoordinates);
+  if (NbrHighSymmetryPoints > 0)
+    {
+      if (nbrSteps < NbrHighSymmetryPoints)
+	{
+	  nbrSteps = NbrHighSymmetryPoints;
+	}
+
+      int* HighSymmetryPointIndices = new int[NbrHighSymmetryPoints];
+      double* TmpKxStarting = new double [NbrHighSymmetryPoints];
+      double* TmpKyStarting = new double [NbrHighSymmetryPoints];
+      double* TmpKxEnding = new double [NbrHighSymmetryPoints];
+      double* TmpKyEnding = new double [NbrHighSymmetryPoints];
+      double* TmpLengths = new double [NbrHighSymmetryPoints];
+      for (int i = 0; i < NbrHighSymmetryPoints; ++i)
+	{
+	  TmpKxStarting[i] = HighSymmetryPointCoordinates[i][0];
+	  TmpKyStarting[i] = HighSymmetryPointCoordinates[i][1];
+	  TmpKxEnding[i] = HighSymmetryPointCoordinates[(i + 1) % NbrHighSymmetryPoints][0];
+	  TmpKyEnding[i] = HighSymmetryPointCoordinates[(i + 1) % NbrHighSymmetryPoints][1];
+	  double TmpLength = sqrt(((TmpKxEnding[i] - TmpKxStarting[i]) * (TmpKxEnding[i] - TmpKxStarting[i]))
+				  + ((TmpKyEnding[i] - TmpKyStarting[i]) * (TmpKyEnding[i] - TmpKyStarting[i])));
+	  TmpLengths[i] = TmpLength;
+	}
+      double TotalLength = 0.0;
+      for (int i = 0; i < NbrHighSymmetryPoints; ++i)
+	{
+	  TotalLength += TmpLengths[i];
+	}
+      double LengthIncrement = TotalLength / ((double) nbrSteps);
+      
+      HighSymmetryPointIndices[0] = 0;      
+      for (int i = 1; i < NbrHighSymmetryPoints; ++i)
+	{
+	  HighSymmetryPointIndices[i] = HighSymmetryPointIndices[i - 1] + (int) ((TmpLengths[i - 1] / LengthIncrement));
+	  if (HighSymmetryPointIndices[i] == HighSymmetryPointIndices[i - 1])
+	    HighSymmetryPointIndices[i]++; 
+	}
+      nbrSteps = HighSymmetryPointIndices[NbrHighSymmetryPoints - 1] + ((int) (TmpLengths[NbrHighSymmetryPoints - 1] / LengthIncrement));
+      if (nbrSteps == HighSymmetryPointIndices[NbrHighSymmetryPoints - 1])
+	{
+	  ++nbrSteps;
+	}
+
+      double* TmpKx = new double [nbrSteps];
+      double* TmpKy = new double [nbrSteps];
+      int Index = 0;
+      for (int i = 0; i < (NbrHighSymmetryPoints - 1); ++i)
+	{
+	  int TmpNbrSteps = HighSymmetryPointIndices[i + 1] - HighSymmetryPointIndices[i];
+	  for (int j = 0; j < TmpNbrSteps; ++j)
+	    {
+	      TmpKx[Index] = (((((double) j) / ((double) TmpNbrSteps)) * TmpKxEnding[i]) 
+			      + ((((double) (TmpNbrSteps - j)) / ((double) TmpNbrSteps)) * TmpKxEnding[i]));
+	      TmpKy[Index] = (((((double) j) / ((double) TmpNbrSteps)) * TmpKyEnding[i]) 
+			      + ((((double) (TmpNbrSteps - j)) / ((double) TmpNbrSteps)) * TmpKyEnding[i]));
+	      ++Index;
+	    }
+	}
+      int TmpNbrSteps = nbrSteps - HighSymmetryPointIndices[NbrHighSymmetryPoints - 1];
+      for (int j = 0; j < TmpNbrSteps; ++j)
+	{
+	  TmpKx[Index] = (((((double) j) / ((double) TmpNbrSteps)) * TmpKxEnding[NbrHighSymmetryPoints - 1]) 
+			  + ((((double) (TmpNbrSteps - j)) / ((double) TmpNbrSteps)) * TmpKxEnding[NbrHighSymmetryPoints - 1]));
+	  TmpKy[Index] = (((((double) j) / ((double) TmpNbrSteps)) * TmpKyEnding[NbrHighSymmetryPoints - 1]) 
+			  + ((((double) (TmpNbrSteps - j)) / ((double) TmpNbrSteps)) * TmpKyEnding[NbrHighSymmetryPoints - 1]));
+	  ++Index;
+	}
+      double* TmpEnergies = new double [this->NbrBands];
+      ofstream File;
+      File.open(fileName);
+      for (int i = 0; i < NbrHighSymmetryPoints; ++i)
+	File << " # index = " << HighSymmetryPointIndices[i] << " -> " << HighSymmetryPointNames[i] << endl;
+      File << "# index    k_x    k_y";
+      for (int i = 0; i < this->NbrBands; ++i)
+	File <<  "    E_" << i;
+      File << endl;
+      for (int i = 0; i < nbrSteps; ++i)
+	{
+	  this->ComputeBandStructureSinglePoint(TmpKx[i], TmpKy[i], TmpEnergies);
+	  File << i << " " << TmpKx[i] << " " << TmpKy[i]; 
+	  for (int j = 0; j < this->NbrBands; ++j)
+	    File << " " << TmpEnergies[j];
+	  File << endl;
+	}
+      File.close();
+      return true;
+    }
+  else
+    {
+      cout << "high symmetry points are not available for this tight binding model" << endl;
+      return false;
+    }
+}
+
 // write the full band structure information in an ASCII file
 //
 // fileName = name of the output file 
@@ -1516,3 +1621,15 @@ HermitianMatrix Abstract2DTightBindingModel::ComputeBlochHamiltonian(double kx, 
   return TmpOneBodyHamiltonian;
 }
 
+// get the high symmetry points 
+//
+// pointNames = name of each high symmetry point
+// pointCoordinates = coordinates in the fist Brillouin zone of the high symmetry points
+// return value = number of high symmetry points
+
+int Abstract2DTightBindingModel::GetHighSymmetryPoints(char**& pointNames, double**& pointCoordinates)
+{
+  pointNames = 0;
+  pointCoordinates = 0;
+  return 0;
+}

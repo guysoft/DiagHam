@@ -45,6 +45,18 @@ using std::ofstream;
 // output = reference on the output stream
 void HubbardSuperconductorOrderParameterMatrixDiagonalize(ComplexMatrix& orderParameter, ostream& output);
 
+// compute the Fourier transform of the superconductor order parameter
+//
+// nbrUnitCellX = number of unit cells in the x direction
+// nbrUnitCellY = number of unit cells in the y direction
+// nbrOrbitals = number of orbitals per unit cells
+// spinIndex1 = spin index of the first creation operator
+// spinIndex2 = spin index of the second creation operator
+// orderParameter = reference to the superconductor order parameter matrix
+// output = reference on the output stream
+void HubbardSuperconductorOrderParameterFourrierTransform(int nbrUnitCellX, int nbrUnitCellY, int nbrOrbitals, int spinIndex1, int spinIndex2,
+							  ComplexMatrix& orderParameter, ostream& output);
+
 
 int main(int argc, char** argv)
 {
@@ -384,20 +396,23 @@ int main(int argc, char** argv)
   RightSpace->SetTargetSpace(LeftSpace);
     
   ofstream File;
+  char* OutputFileName;
   if (Manager.GetString("output-file") != 0)
-    File.open(Manager.GetString("output-file"), ios::binary | ios::out);
+    {
+      OutputFileName = new char [strlen(Manager.GetString("output-file")) + 1];
+      File.open(OutputFileName, ios::binary | ios::out);
+    }
   else
     {
       if (Manager.GetString("left-state") != 0)
 	{
-	  char* TmpFileName = ReplaceExtensionToFileName(Manager.GetString("left-state"), "vec", "orderparam.dat");
-	  if (TmpFileName == 0)
+	  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("left-state"), "vec", "orderparam.dat");
+	  if (OutputFileName == 0)
 	    {
 	      cout << "no vec extension was find in " << Manager.GetString("left-state") << " file name" << endl;
 	      return 0;
 	    }
-	  File.open(TmpFileName, ios::binary | ios::out);
-	  delete[] TmpFileName;
+	  File.open(OutputFileName, ios::binary | ios::out);
 	}
       else
 	{
@@ -407,20 +422,30 @@ int main(int argc, char** argv)
 	      DegenerateFile.DumpErrors(cout);
 	      return -1;
 	    }
-	  char* TmpFileName = ReplaceExtensionToFileName(DegenerateFile(0, 0), "vec", "orderparam.dat");
-	  if (TmpFileName == 0)
+	  OutputFileName = ReplaceExtensionToFileName(DegenerateFile(0, 0), "vec", "orderparam.dat");
+	  if (OutputFileName == 0)
 	    {
 	      cout << "no vec extension was find in " << DegenerateFile(0, 0) << " file name" << endl;
 	      return 0;
 	    }
-	  File.open(TmpFileName, ios::binary | ios::out);
-	  delete[] TmpFileName;
+	  File.open(OutputFileName, ios::binary | ios::out);
 	}
     }
-
   File.precision(14);
   cout.precision(14);
 
+  ofstream FileFourierTransform;
+  if ((RightMomentumFlag == true) && (LeftMomentumFlag == true))
+    {
+      char* TmpFileName = ReplaceExtensionToFileName(OutputFileName, "dat", "fourier.dat");
+      if (TmpFileName == 0)
+	{
+	  cout << "no dat extension was find in " << OutputFileName << " file name" << endl;
+	  return 0;
+	}
+      FileFourierTransform.open(TmpFileName, ios::binary | ios::out);
+      FileFourierTransform.precision(14);
+    }
 
   if (Manager.GetBoolean("only-cc") == true)
     {
@@ -676,7 +701,10 @@ int main(int argc, char** argv)
     }
 
   File.close();
-
+  if ((RightMomentumFlag == true) && (LeftMomentumFlag == true))
+    {
+      FileFourierTransform.close();
+    }
   return 0;
 }
 
@@ -722,5 +750,84 @@ void HubbardSuperconductorOrderParameterMatrixDiagonalize(ComplexMatrix& orderPa
   else
     {
       output << " " << SqrNorm(orderParameter[0][0]) << " " << Norm(orderParameter[0][0]) << " " << Arg(orderParameter[0][0]);
+    }
+}
+
+
+// compute the Fourier transform of the superconductor order parameter
+//
+// nbrUnitCellX = number of unit cells in the x direction
+// nbrUnitCellY = number of unit cells in the y direction
+// nbrOrbitals = number of orbitals per unit cells
+// spinIndex1 = spin index of the first creation operator
+// spinIndex2 = spin index of the second creation operator
+// orderParameter = reference to the superconductor order parameter matrix
+// output = reference on the output stream
+
+void HubbardSuperconductorOrderParameterFourrierTransform(int nbrUnitCellX, int nbrUnitCellY, int nbrOrbitals, int spinIndex1, int spinIndex2,
+							  ComplexMatrix& orderParameter, ostream& output)
+{
+  int TotalNbrUnitCells = nbrUnitCellX * nbrUnitCellY;
+  Complex** TmpPhases = new Complex*[nbrUnitCellX];
+  for (int Kx1 = 0; Kx1 < nbrUnitCellX; ++Kx1)
+    {
+      for (int Ky1 = 0; Ky1 < nbrUnitCellY; ++Ky1)
+	{
+	  ComplexMatrix TmpMatrix1;
+	  TmpMatrix1.Copy(orderParameter);
+	  for (int x = 0; x < nbrUnitCellX; ++x)
+	    {
+	      for (int y = 0; y < nbrUnitCellY; ++y)
+		{
+		  Complex TmpPhase = Phase (2.0 * M_PI * ((((double) (Kx1 * x)) / ((double) nbrUnitCellX)) + (((double) (Ky1 * y)) / ((double) nbrUnitCellY))));
+		  for (int i = 0; i < nbrOrbitals; ++i)
+		    {
+		      int TmpIndex = i + ((x * nbrUnitCellY) + y) * nbrOrbitals;
+		      for (int j = 0; j < TmpMatrix1.GetNbrRow(); ++j)
+			{
+			  TmpMatrix1[TmpIndex][j] *= TmpPhase;
+			}
+		    }
+		}
+	    }
+	  for (int Kx2 = 0; Kx2 < nbrUnitCellX; ++Kx2)
+	    {
+	      for (int Ky2 = 0; Ky2 < nbrUnitCellY; ++Ky2)
+		{
+		  ComplexMatrix TmpMatrix2;
+		  TmpMatrix2.Copy(TmpMatrix1);
+		  for (int x = 0; x < nbrUnitCellX; ++x)
+		    {
+		      for (int y = 0; y < nbrUnitCellY; ++y)
+			{
+			  Complex TmpPhase = Phase (2.0 * M_PI * ((((double) (Kx1 * x)) / ((double) nbrUnitCellX)) + (((double) (Ky1 * y)) / ((double) nbrUnitCellY))));
+			  for (int i = 0; i < nbrOrbitals; ++i)
+			    {
+			      int TmpIndex = i + ((x * nbrUnitCellY) + y) * nbrOrbitals;
+			      for (int j = 0; j < TmpMatrix2.GetNbrColumn(); ++j)
+				{
+				  TmpMatrix2[j][TmpIndex] *= TmpPhase;
+				}
+			    }
+			}
+		    }
+		  for (int i = 0; i < nbrOrbitals; ++i)
+		    {
+		      for (int j = 0; j < nbrOrbitals; ++j)
+			{
+			  Complex Tmp = 0.0;
+			  for (int k = i; k < TmpMatrix2.GetNbrRow(); k += nbrOrbitals)
+			    {
+			      for (int l = j; l < TmpMatrix2.GetNbrColumn(); l += nbrOrbitals)
+				{				  
+				  Tmp += TmpMatrix2[k][l];
+				}
+			    }
+			  output << Kx1 << " " << Ky1 << " " << Kx2 << " " << Ky2 << " " << spinIndex1 << " " << spinIndex2 << " " << i << " " << j << " " << Tmp.Re << " " << Tmp.Im << endl;
+			}
+		    }
+		}	      
+	    }
+	}
     }
 }
