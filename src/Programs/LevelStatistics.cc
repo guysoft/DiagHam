@@ -54,11 +54,14 @@ bool LevelStatisticsParseSpectrumFile(char* spectrumFileName, OptionManager* man
 // nbrSpacingPerBin = array that contains the number of level spacing per bin
 // nbrRejectedSpacings = reference on the number of rejected level spacings (i.e. that cannot be stored in any bin)
 // nbrAcceptedSpacings = reference on the number of accepted level spacings (i.e. that can be stored in a bin)
-// return value = average value of min(lambda_{n+1}-lambda_{n}, lambda_{n}-lambda_{n-1}) / max(lambda_{n+1}-lambda_{n}, lambda_{n}-lambda_{n-1}) 
-double LevelStatisticsPerformLevelStatistics(double** spectrum, int* spectrumSize, int* spectrumWeight, int nbrSectors, 
-					     double minAverageSpacing, double maxAverageSpacing, double averageSpacing, long nbrSpacings,
-					     int nbrBins, double binSize, long* nbrSpacingPerBin, long& nbrRejectedSpacings, long& nbrAcceptedSpacings, 
-					     Abstract1DRealFunction* densityOfStates, double densityOfStatesThreshold);
+// ratio = reference on the ratio of the adjacent gaps
+// varianceRatio = reference on the variance of ratio of the adjacent gaps
+// nbrRatios = reference on the number of ratios
+void LevelStatisticsPerformLevelStatistics(double** spectrum, int* spectrumSize, int* spectrumWeight, int nbrSectors, 
+					   double minAverageSpacing, double maxAverageSpacing, double averageSpacing, long nbrSpacings,
+					   int nbrBins, double binSize, long* nbrSpacingPerBin, long& nbrRejectedSpacings, long& nbrAcceptedSpacings, 
+					   Abstract1DRealFunction* densityOfStates, double densityOfStatesThreshold,
+					   double& ratio, double& varianceRatio, double& nbrRatios);
 
 
 
@@ -236,11 +239,15 @@ int main(int argc, char** argv)
 	  return 0;
 	}
 
-      double AverageR = LevelStatisticsPerformLevelStatistics(Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
-							      MinAverageSpacing, MaxAverageSpacing, AverageSpacing, NbrSpacings,
-							      NbrBins, BinSize, NbrSpacingPerBin, NbrRejectedSpacings, NbrAcceptedSpacings,
-							      DensityOfStates, DensityOfStatesThreshold);
-      cout << "<r>=" << AverageR << endl;
+      double AverageR = 0.0;
+      double NbrRatios = 0.0;
+      double VarianceAverageR = 0.0;
+      LevelStatisticsPerformLevelStatistics(Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
+					    MinAverageSpacing, MaxAverageSpacing, AverageSpacing, NbrSpacings,
+					    NbrBins, BinSize, NbrSpacingPerBin, NbrRejectedSpacings, NbrAcceptedSpacings,
+					    DensityOfStates, DensityOfStatesThreshold,
+					    AverageR, VarianceAverageR, NbrRatios);
+      cout << "<r>=" << (AverageR / NbrRatios) << " 0.0" << endl;
       for (int i = 0; i < NbrSectors; ++i)
 	{    
 	  if (SpectrumSize[i] > 0)
@@ -258,15 +265,17 @@ int main(int argc, char** argv)
 	  SpectraFile.DumpErrors(cout);
 	  return false;
 	}
-      double* AverageRValues = new double[SpectraFile.GetNbrLines()];
-      double TotalAverageR = 0.0;
-      double TotalAverageRError = 0.0;
+      double AverageR = 0.0;
+      double VarianceAverageR = 0.0;
       for (int i = 0; i < SpectraFile.GetNbrLines(); ++i)
 	{
 	  double DummyAverageSpacing = 0.0;
 	  double DummyMinAverageSpacing = 1.0e300;
 	  double DummyMaxAverageSpacing = 0.0;
 	  long DummyNbrSpacings = 0l; 
+	  double TmpAverageR = 0.0;
+	  double TmpNbrRatios = 0.0;
+	  double TmpVarianceAverageR = 0.0;
 	  cout << "processing file " << SpectraFile(0, i) << endl;
 	  if (LevelStatisticsParseSpectrumFile(SpectraFile(0, i), &Manager, Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
 					       DummyMinAverageSpacing, DummyMaxAverageSpacing, DummyAverageSpacing, DummyNbrSpacings, DensityOfStates) == false)
@@ -274,12 +283,13 @@ int main(int argc, char** argv)
 	      return 0;
 	    }
 	  
-	  AverageRValues[i] = LevelStatisticsPerformLevelStatistics(Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
-								    MinAverageSpacing, MaxAverageSpacing, AverageSpacing, NbrSpacings,
-								    NbrBins, BinSize, NbrSpacingPerBin, NbrRejectedSpacings, NbrAcceptedSpacings,
-								    DensityOfStates, DensityOfStatesThreshold);
-	  TotalAverageR += AverageRValues[i];
-	  TotalAverageRError += AverageRValues[i] * AverageRValues[i];
+	  LevelStatisticsPerformLevelStatistics(Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
+						MinAverageSpacing, MaxAverageSpacing, AverageSpacing, NbrSpacings,
+						NbrBins, BinSize, NbrSpacingPerBin, NbrRejectedSpacings, NbrAcceptedSpacings,
+						DensityOfStates, DensityOfStatesThreshold,
+						TmpAverageR, TmpVarianceAverageR, TmpNbrRatios);
+	  AverageR += (TmpAverageR / TmpNbrRatios);
+	  VarianceAverageR +=  (TmpAverageR / TmpNbrRatios) * (TmpAverageR / TmpNbrRatios);
 	  for (int i = 0; i < NbrSectors; ++i)
 	    {    
 	      if (SpectrumSize[i] > 0)
@@ -289,21 +299,20 @@ int main(int argc, char** argv)
 	  delete[] SpectrumSize;
 	  delete[] SpectrumWeight;	  
 	}
-      TotalAverageR /= SpectraFile.GetNbrLines();
-      TotalAverageRError /= SpectraFile.GetNbrLines();
-      TotalAverageRError = sqrt(TotalAverageRError - (TotalAverageR * TotalAverageR));
       char* OutputRFileName = ReplaceExtensionToFileName(OutputFileName, "levelstat", "rvalue");
       ofstream File;
       File.open(OutputRFileName, ios::binary | ios::out);
       File.precision(14);
-      File << "# Average r = " << TotalAverageR  << " " << TotalAverageRError << endl;
+      File << "# Average r = " << (AverageR / SpectraFile.GetNbrLines()) << " " 
+	   << sqrt (((VarianceAverageR / SpectraFile.GetNbrLines()) - ((AverageR / SpectraFile.GetNbrLines()) * (AverageR / SpectraFile.GetNbrLines()))) / (SpectraFile.GetNbrLines() - 1)) << endl;
       File << "# file name <r>" << endl;
       for (int i = 0; i < SpectraFile.GetNbrLines(); ++i)
 	{
-	  File << SpectraFile(0, i) << " " << AverageRValues[i] << endl;
+	  File << SpectraFile(0, i) << endl;
 	}
       File.close();
-      cout << "<r>=" << TotalAverageR << " " << TotalAverageRError << endl;     
+      cout << "<r>=" << (AverageR / SpectraFile.GetNbrLines()) << " " 
+	   << sqrt (((VarianceAverageR / SpectraFile.GetNbrLines()) - ((AverageR / SpectraFile.GetNbrLines()) * (AverageR / SpectraFile.GetNbrLines()))) / (SpectraFile.GetNbrLines() - 1)) << endl;
     }
 
   double Sum = 0.0;
@@ -407,7 +416,6 @@ bool LevelStatisticsParseSpectrumFile(char* spectrumFileName, OptionManager* man
 	  spectrum[0] = new double[spectrumSize[0]];
 	  for (int i = MinIndex; i <= MaxIndex; ++i)
 	    spectrum[0][i - MinIndex] = (*densityOfStates)(TmpSpectrum[i]);
-	  delete[] TmpSpectrum;
 	}
       else
 	{
@@ -628,15 +636,16 @@ bool LevelStatisticsParseSpectrumFile(char* spectrumFileName, OptionManager* man
 // nbrSpacingPerBin = array that contains the number of level spacing per bin
 // nbrRejectedSpacings = reference on the number of rejected level spacings (i.e. that cannot be stored in any bin)
 // nbrAcceptedSpacings = reference on the number of accepted level spacings (i.e. that can be stored in a bin)
-// return value = average value of min(lambda_{n+1}-lambda_{n}, lambda_{n}-lambda_{n-1}) / max(lambda_{n+1}-lambda_{n}, lambda_{n}-lambda_{n-1}) 
+// ratio = reference on the ratio of the adjacent gaps
+// varianceRatio = reference on the variance of ratio of the adjacent gaps
+// nbrRatios = reference on the number of ratios
 
-double LevelStatisticsPerformLevelStatistics(double** spectrum, int* spectrumSize, int* spectrumWeight, int nbrSectors, 
+void LevelStatisticsPerformLevelStatistics(double** spectrum, int* spectrumSize, int* spectrumWeight, int nbrSectors, 
 					     double minAverageSpacing, double maxAverageSpacing, double averageSpacing, long nbrSpacings,
 					     int nbrBins, double binSize, long* nbrSpacingPerBin, long& nbrRejectedSpacings, long& nbrAcceptedSpacings, 
-					     Abstract1DRealFunction* densityOfStates, double densityOfStatesThreshold)
+					     Abstract1DRealFunction* densityOfStates, double densityOfStatesThreshold,
+					     double& ratio, double& varianceRatio, double& nbrRatios)
 {
-  double Min = 0.0;
-  double Max = 0.0;
   for (int i = 0; i < nbrSectors; ++i)
     {     
       if (spectrumSize[i] > 1)
@@ -658,17 +667,24 @@ double LevelStatisticsPerformLevelStatistics(double** spectrum, int* spectrumSiz
 		  ++ nbrRejectedSpacings;
 		}
 	      double TmpDiff2 = (spectrum[i][j + 1] - spectrum[i][j]) / averageSpacing;
-	      for (int i = 1; i < Lim; ++i)
+	      if (TmpDiff2 > TmpDiff)
 		{
-		  if (TmpDiff2 > TmpDiff)
+		  if (TmpDiff2 > MACHINE_PRECISION)
 		    {
-		      Min += TmpDiff;
-		      Max += TmpDiff2;
+		      double Tmp = TmpDiff / TmpDiff2;
+		      ratio += Tmp;	
+		      varianceRatio += Tmp * Tmp;	      
+		      nbrRatios += 1.0;
 		    }
-		  else
+		}
+	      else
+		{
+		  if (TmpDiff > MACHINE_PRECISION)
 		    {
-		      Max += TmpDiff;
-		      Min += TmpDiff2;
+		      double Tmp =  TmpDiff2 / TmpDiff;
+		      ratio += Tmp;	
+		      varianceRatio += Tmp * Tmp;	      
+		      nbrRatios += 1.0;
 		    }
 		}
 	    }
@@ -681,9 +697,8 @@ double LevelStatisticsPerformLevelStatistics(double** spectrum, int* spectrumSiz
 	    }
 	  else
 	    {
-	      ++ nbrRejectedSpacings;
+	      ++nbrRejectedSpacings;
 	    }
 	}
     }
-  return (Min / Max);
 }
