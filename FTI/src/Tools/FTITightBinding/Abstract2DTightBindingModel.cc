@@ -1485,3 +1485,34 @@ void Abstract2DTightBindingModel::CoreComputeBandStructure(long minStateIndex, l
     }
 }
 
+// compute the band structure at a single point of the Brillouin zone
+//
+// kx = momentum along the x axis
+// ky = momentum along the x axis
+// energies = array where the energies will be stored
+
+void Abstract2DTightBindingModel::ComputeBandStructureSinglePoint(double kx, double ky, double* energies)
+{
+  HermitianMatrix TmpOneBodyHamiltonian = this->ComputeBlochHamiltonian(kx, ky);
+  RealDiagonalMatrix TmpDiag;
+#ifdef __LAPACK__
+  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
+#else
+  TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
+#endif
+  for (int i = 0; i < this->NbrBands; ++i)
+    energies[i] = TmpDiag(i, i);
+}
+
+// compute the Bloch hamiltonian at a point of the Brillouin zone
+//
+// kx = momentum along the x axis
+// ky = momentum along the x axis
+// return value = Bloch hamiltonian
+
+HermitianMatrix Abstract2DTightBindingModel::ComputeBlochHamiltonian(double kx, double ky)
+{
+  HermitianMatrix TmpOneBodyHamiltonian;
+  return TmpOneBodyHamiltonian;
+}
+

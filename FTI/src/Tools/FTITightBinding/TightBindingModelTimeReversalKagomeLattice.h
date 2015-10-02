@@ -92,6 +92,13 @@ class TightBindingModelTimeReversalKagomeLattice : public Abstract2DTightBinding
   //
   ~TightBindingModelTimeReversalKagomeLattice();
 
+  // compute the Bloch hamiltonian at a point of the Brillouin zone
+  //
+  // kx = momentum along the x axis
+  // ky = momentum along the x axis
+  // return value = Bloch hamiltonian
+  virtual HermitianMatrix ComputeBlochHamiltonian(double kx, double ky);
+
  protected :
 
   // core part that computes the band structure

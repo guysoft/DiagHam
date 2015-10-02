@@ -110,86 +110,98 @@ void TightBindingModelTimeReversalKagomeLattice::CoreComputeBandStructure(long m
   long MaxStateIndex = minStateIndex + nbrStates;
   double KX;
   double KY;
-  int sign = -1;
   
   for (int kx = 0; kx < this->NbrSiteX; ++kx)
-  {
-    for (int ky = 0; ky < this->NbrSiteY; ++ky)
-      {
-	int Index = (kx * this->NbrSiteY) + ky;
-
-	HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
-	
-	KX = this->KxFactor * (((double) kx) + this->GammaX);
-	KY = this->KyFactor * (((double) ky) + this->GammaY);
-	Complex HAB (-this->NNHopping, -this->NNSpinOrbit);
-	HAB *= 1 + Phase(KX);
-	Complex HAC(-this->NNHopping, this->NNSpinOrbit);
-	HAC *= 1 + Phase(KY);
-	Complex HBC(- this->NNHopping, - this->NNSpinOrbit);
-	HBC *= 1 + Phase(KY - KX);
-
-		
-	double InvKX = this->KxFactor * (((double) -kx) + this->GammaX);
-	double InvKY = this->KyFactor * (((double) -ky) + this->GammaY);
-	Complex InvHAB = Complex(- this->NNHopping, - this->NNSpinOrbit);
-	InvHAB *= 1 + Phase(InvKX);
-	Complex InvHAC = Complex(- this->NNHopping,  this->NNSpinOrbit);
-	InvHAC *= 1 + Phase(InvKY);
-	Complex InvHBC = Complex(- this->NNHopping, - this->NNSpinOrbit);
-	InvHBC *= 1 + Phase(InvKY - InvKX);
-
-	TmpOneBodyHamiltonian.SetMatrixElement(0, 1, HAB);
-	TmpOneBodyHamiltonian.SetMatrixElement(0, 2, HAC);
-	TmpOneBodyHamiltonian.SetMatrixElement(1, 2, HBC);
-	if (this->TimeReversal == true)
+    {
+      for (int ky = 0; ky < this->NbrSiteY; ++ky)
 	{
-	  TmpOneBodyHamiltonian.SetMatrixElement(3, 4, Conj(InvHAB));
-	  TmpOneBodyHamiltonian.SetMatrixElement(3, 5, Conj(InvHAC));
-	  TmpOneBodyHamiltonian.SetMatrixElement(4, 5, Conj(InvHBC));
-	}
-	else
-	{
-	  TmpOneBodyHamiltonian.SetMatrixElement(3, 4, HAB);
-	  TmpOneBodyHamiltonian.SetMatrixElement(3, 5, HAC);
-	  TmpOneBodyHamiltonian.SetMatrixElement(4, 5, HBC);
-	}
-	
-	TmpOneBodyHamiltonian.SetMatrixElement(0, 4, this->MixingTerm12);
-	TmpOneBodyHamiltonian.SetMatrixElement(0, 5, this->MixingTerm13);
-	TmpOneBodyHamiltonian.SetMatrixElement(1, 3, sign*this->MixingTerm12);
-	TmpOneBodyHamiltonian.SetMatrixElement(1, 5, this->MixingTerm23);
-	TmpOneBodyHamiltonian.SetMatrixElement(2, 3, sign*this->MixingTerm13);
-	TmpOneBodyHamiltonian.SetMatrixElement(2, 4, sign*this->MixingTerm23);
-
-	if (this->OneBodyBasis != 0)
-		{
-		  ComplexMatrix TmpMatrix(this->NbrBands, this->NbrBands, true);
-		  TmpMatrix.SetToIdentity();
-		  RealDiagonalMatrix TmpDiag;
+	  int Index = (kx * this->NbrSiteY) + ky;
+	  
+	  HermitianMatrix TmpOneBodyHamiltonian = this->ComputeBlochHamiltonian(this->KxFactor* ((double) kx), this->KyFactor * ((double) ky));
+	  	  
+	  if (this->OneBodyBasis != 0)
+	    {
+	      ComplexMatrix TmpMatrix(this->NbrBands, this->NbrBands, true);
+	      TmpMatrix.SetToIdentity();
+	      RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
-		  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
+	      TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
 #else
-		  TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
+	      TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
 #endif
-		  this->OneBodyBasis[Index] = TmpMatrix;
-		  for (int i = 0; i < this->NbrBands; ++i)
-		    this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
-		}
-	      else
-		{
-		  RealDiagonalMatrix TmpDiag;
+	      this->OneBodyBasis[Index] = TmpMatrix;
+	      for (int i = 0; i < this->NbrBands; ++i)
+		this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
+	    }
+	  else
+	    {
+	      RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
-		  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
+	      TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
 #else
-		  TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
+	      TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
 #endif
-		  for (int i = 0; i < this->NbrBands; ++i)
-		    this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
-		}
+	      for (int i = 0; i < this->NbrBands; ++i)
+		this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
 	    }
 	}
     }
+}
 
 
+
+// compute the Bloch hamiltonian at a point of the Brillouin zone
+//
+// kx = momentum along the x axis
+// ky = momentum along the x axis
+// return value = Bloch hamiltonian
+
+HermitianMatrix TightBindingModelTimeReversalKagomeLattice::ComputeBlochHamiltonian(double kx, double ky)
+{
+  double KX = kx + (this->KxFactor * this->GammaX);
+  double KY = ky + (this->KyFactor * this->GammaY);
+  double InvKX = -kx + (this->KxFactor * this->GammaX);
+  double InvKY = -ky + (this->KyFactor * this->GammaY);
+  double Sign = -1.0;
+
+  HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
+  Complex HAB (-this->NNHopping, -this->NNSpinOrbit);
+  HAB *= 1 + Phase(KX);
+  Complex HAC(-this->NNHopping, this->NNSpinOrbit);
+  HAC *= 1 + Phase(KY);
+  Complex HBC(- this->NNHopping, - this->NNSpinOrbit);
+  HBC *= 1 + Phase(KY - KX);
+  
+  
+  Complex InvHAB = Complex(- this->NNHopping, - this->NNSpinOrbit);
+  InvHAB *= 1 + Phase(InvKX);
+  Complex InvHAC = Complex(- this->NNHopping,  this->NNSpinOrbit);
+  InvHAC *= 1 + Phase(InvKY);
+  Complex InvHBC = Complex(- this->NNHopping, - this->NNSpinOrbit);
+  InvHBC *= 1 + Phase(InvKY - InvKX);
+  
+  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, HAB);
+  TmpOneBodyHamiltonian.SetMatrixElement(0, 2, HAC);
+  TmpOneBodyHamiltonian.SetMatrixElement(1, 2, HBC);
+  if (this->TimeReversal == true)
+    {
+      TmpOneBodyHamiltonian.SetMatrixElement(3, 4, Conj(InvHAB));
+      TmpOneBodyHamiltonian.SetMatrixElement(3, 5, Conj(InvHAC));
+      TmpOneBodyHamiltonian.SetMatrixElement(4, 5, Conj(InvHBC));
+    }
+  else
+    {
+      TmpOneBodyHamiltonian.SetMatrixElement(3, 4, HAB);
+      TmpOneBodyHamiltonian.SetMatrixElement(3, 5, HAC);
+      TmpOneBodyHamiltonian.SetMatrixElement(4, 5, HBC);
+    }
+  
+  TmpOneBodyHamiltonian.SetMatrixElement(0, 4, this->MixingTerm12);
+  TmpOneBodyHamiltonian.SetMatrixElement(0, 5, this->MixingTerm13);
+  TmpOneBodyHamiltonian.SetMatrixElement(1, 3, Sign * this->MixingTerm12);
+  TmpOneBodyHamiltonian.SetMatrixElement(1, 5, this->MixingTerm23);
+  TmpOneBodyHamiltonian.SetMatrixElement(2, 3, Sign * this->MixingTerm13);
+  TmpOneBodyHamiltonian.SetMatrixElement(2, 4, Sign * this->MixingTerm23);
+  return TmpOneBodyHamiltonian;
+}
 

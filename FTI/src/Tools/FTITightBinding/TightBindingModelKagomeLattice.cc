@@ -190,30 +190,8 @@ void TightBindingModelKagomeLattice::CoreComputeBandStructure(long minStateIndex
 	      KX = this->ProjectedMomenta[Index] [0];
 	      KY = this->ProjectedMomenta[Index] [1];
 
-	      Complex HAB (-2.0 * this->NNHopping, -2.0 * this->NNSpinOrbit);
-	      HAB *= cos (KX*0.5);
-	      Complex HAC(-2.0 * this->NNHopping, 2.0 * this->NNSpinOrbit);
-	      HAC *= cos (KY*0.5);
-	      Complex HBC(-2.0 * this->NNHopping, -2.0 * this->NNSpinOrbit);
-	      HBC *= cos((KX - KY)*0.5);
-	      
-	      Complex HAB2 (-2.0 * this->NextNNHopping, 2.0 * this->NextNNSpinOrbit);
-	      HAB2 *= cos ((KX - 2.0 * KY)*0.5);
-	      Complex HAC2 (-2.0 * this->NextNNHopping, -2.0 * this->NextNNSpinOrbit);
-	      HAC2 *= cos ((2.0 * KX - KY)*0.5);
-	      Complex HBC2 (-2.0 * this->NextNNHopping, 2.0  *  this->NextNNSpinOrbit);
-	      HBC2 *= cos ((KX + KY)*0.5);
-	      
-	      HAB += HAB2;
-	      HAC += HAC2;
-	      HBC += HBC2;
+	      HermitianMatrix TmpOneBodyHamiltonian = this->ComputeBlochHamiltonian(KX, KY);
 
-	      HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
-	      TmpOneBodyHamiltonian.SetMatrixElement(0, 0, this->MuS);
-	      TmpOneBodyHamiltonian.SetMatrixElement(0, 1, HAB);
-	      TmpOneBodyHamiltonian.SetMatrixElement(0, 2, HAC);
-	      TmpOneBodyHamiltonian.SetMatrixElement(1, 2, HBC);
-	      
 	      if (this->OneBodyBasis != 0)
 		{
 		  ComplexMatrix TmpMatrix(this->NbrBands, this->NbrBands, true);
@@ -243,6 +221,41 @@ void TightBindingModelKagomeLattice::CoreComputeBandStructure(long minStateIndex
 	}
     }
 }
+
+// compute the Bloch hamiltonian at a point of the Brillouin zone
+//
+// kx = momentum along the x axis
+// ky = momentum along the x axis
+// return value = Bloch hamiltonian
+
+HermitianMatrix TightBindingModelKagomeLattice::ComputeBlochHamiltonian(double kx, double ky)
+{
+  Complex HAB (-2.0 * this->NNHopping, -2.0 * this->NNSpinOrbit);
+  HAB *= cos (kx * 0.5);
+  Complex HAC(-2.0 * this->NNHopping, 2.0 * this->NNSpinOrbit);
+  HAC *= cos (ky * 0.5);
+  Complex HBC(-2.0 * this->NNHopping, -2.0 * this->NNSpinOrbit);
+  HBC *= cos((kx - ky) * 0.5);
+  
+  Complex HAB2 (-2.0 * this->NextNNHopping, 2.0 * this->NextNNSpinOrbit);
+  HAB2 *= cos ((kx - 2.0 * ky) * 0.5);
+  Complex HAC2 (-2.0 * this->NextNNHopping, -2.0 * this->NextNNSpinOrbit);
+  HAC2 *= cos ((2.0 * kx - ky) * 0.5);
+  Complex HBC2 (-2.0 * this->NextNNHopping, 2.0  *  this->NextNNSpinOrbit);
+  HBC2 *= cos ((kx + ky) * 0.5);
+  
+  HAB += HAB2;
+  HAC += HAC2;
+  HBC += HBC2;
+  
+  HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
+  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, this->MuS);
+  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, HAB);
+  TmpOneBodyHamiltonian.SetMatrixElement(0, 2, HAC);
+  TmpOneBodyHamiltonian.SetMatrixElement(1, 2, HBC);
+  return TmpOneBodyHamiltonian;
+}
+
 
 // get the tight binding hamiltonian in real space 
 // 

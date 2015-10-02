@@ -344,6 +344,20 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // q = reference on the second lattice index
   virtual void GetRealSpaceIndex (int i, int j, int& p, int& q);
   
+  // compute the band structure at a single point of the Brillouin zone
+  //
+  // kx = momentum along the x axis
+  // ky = momentum along the x axis
+  // energies = array where the energies will be stored
+  virtual void ComputeBandStructureSinglePoint(double kx, double ky, double* energies);
+
+  // compute the Bloch hamiltonian at a point of the Brillouin zone
+  //
+  // kx = momentum along the x axis
+  // ky = momentum along the x axis
+  // return value = Bloch hamiltonian
+  virtual HermitianMatrix ComputeBlochHamiltonian(double kx, double ky);
+
  protected:
 
   // write an header that describes the tight binding model
