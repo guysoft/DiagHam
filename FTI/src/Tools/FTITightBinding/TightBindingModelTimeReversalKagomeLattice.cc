@@ -205,3 +205,73 @@ HermitianMatrix TightBindingModelTimeReversalKagomeLattice::ComputeBlochHamilton
   return TmpOneBodyHamiltonian;
 }
 
+// get the high symmetry points 
+//
+// pointNames = name of each high symmetry point
+// pointCoordinates = coordinates in the first Brillouin zone of the high symmetry points
+// return value = number of high symmetry points
+
+int TightBindingModelTimeReversalKagomeLattice::GetHighSymmetryPoints(char**& pointNames, double**& pointCoordinates)
+{
+  int NbrHighSymmetryPoints = 3;
+  pointNames = new char*[NbrHighSymmetryPoints];
+  pointCoordinates = new double*[NbrHighSymmetryPoints];
+
+  pointNames[0] = new char[16];
+  sprintf (pointNames[0], "Gamma");
+  pointCoordinates[0] = new double[2];
+  pointCoordinates[0][0] = 0.0; 
+  pointCoordinates[0][1] = 0.0; 
+
+  pointNames[1] = new char[16];
+  sprintf (pointNames[1], "K");
+  pointCoordinates[1] = new double[2];
+  pointCoordinates[1][0] = 4.0 * M_PI / 3.0; 
+  pointCoordinates[1][1] = 2.0 * M_PI / 3.0; 
+
+  pointNames[2] = new char[16];
+  sprintf (pointNames[2], "M");
+  pointCoordinates[2] = new double[2];
+  pointCoordinates[2][0] = M_PI; 
+  pointCoordinates[2][1] = 0.0; 
+
+  return NbrHighSymmetryPoints;
+}
+
+// compute the distance between two points in the first Brillouin zone, changing the coordinates the second one by a reciprocal lattice vector if needed
+//
+// kx1 = momentum of the first point along the x axis
+// ky1 = momentum of the first point along the y axis
+// kx2 = reference on the momentum of the second point along the x axis
+// ky2 = reference on the momentum of the second point along the y axis
+// return value = distance between the two points
+
+double TightBindingModelTimeReversalKagomeLattice::GetDistanceReciprocalSpace(double kx1, double ky1, double& kx2, double& ky2)
+{
+  double AngleFactor = 2.0 * cos(2.0 * M_PI / 3.0);
+  double DiffKx = kx1 - kx2;
+  double DiffKy = ky1 - ky2;
+  double MinDistance = sqrt ((DiffKx * DiffKx) + (DiffKy * DiffKy) + (AngleFactor * DiffKx * DiffKy));
+  double MinKx2 = kx2;
+  double MinKy2 = ky2;
+  for (int i = -1; i <= 1; ++i)
+    {
+      double TmpKx2  = kx2 + (2.0 * ((double) i) * M_PI);
+      for (int j = -1; j <= 1; ++j)
+	{
+	  double TmpKy2  = ky2 + (2.0 * ((double) j) * M_PI);	  
+	  double DiffKx = kx1 - TmpKx2;
+	  double DiffKy = ky1 - TmpKy2;
+	  double TmpDistance =  sqrt ((DiffKx * DiffKx) + (DiffKy * DiffKy) + (AngleFactor * DiffKx * DiffKy));
+	  if (TmpDistance < MinDistance)
+	    {
+	      MinDistance = TmpDistance;
+	      MinKx2 = TmpKx2;
+	      MinKy2 = TmpKy2;
+	    }
+	}
+    }
+  kx2 = MinKx2;
+  ky2 = MinKy2;
+  return MinDistance;
+}

@@ -113,6 +113,15 @@ class TightBindingModelKagomeLattice : public Abstract2DTightBindingModel
   // return value = number of high symmetry points
   virtual int GetHighSymmetryPoints(char**& pointNames, double**& pointCoordinates);
 
+  // compute the distance between two points in the first Brillouin zone, changing the coordinates the second one by a reciprocal lattice vector if needed
+  //
+  // kx1 = momentum of the first point along the x axis
+  // ky1 = momentum of the first point along the y axis
+  // kx2 = reference on the momentum of the second point along the x axis
+  // ky2 = reference on the momentum of the second point along the y axis
+  // return value = distance between the two points
+  virtual double GetDistanceReciprocalSpace(double kx1, double ky1, double& kx2, double& ky2);
+
  protected :
 
   // core part that compute the band structure

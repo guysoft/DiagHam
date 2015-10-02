@@ -207,8 +207,7 @@ bool Abstract2DTightBindingModel::WriteAsciiSpectrumAlongHighSymmetryPoints(char
 	  TmpKyStarting[i] = HighSymmetryPointCoordinates[i][1];
 	  TmpKxEnding[i] = HighSymmetryPointCoordinates[(i + 1) % NbrHighSymmetryPoints][0];
 	  TmpKyEnding[i] = HighSymmetryPointCoordinates[(i + 1) % NbrHighSymmetryPoints][1];
-	  double TmpLength = sqrt(((TmpKxEnding[i] - TmpKxStarting[i]) * (TmpKxEnding[i] - TmpKxStarting[i]))
-				  + ((TmpKyEnding[i] - TmpKyStarting[i]) * (TmpKyEnding[i] - TmpKyStarting[i])));
+	  double TmpLength = this->GetDistanceReciprocalSpace(TmpKxStarting[i], TmpKyStarting[i], TmpKxEnding[i], TmpKyEnding[i]);
 	  TmpLengths[i] = TmpLength;
 	}
       double TotalLength = 0.0;
@@ -240,9 +239,9 @@ bool Abstract2DTightBindingModel::WriteAsciiSpectrumAlongHighSymmetryPoints(char
 	  for (int j = 0; j < TmpNbrSteps; ++j)
 	    {
 	      TmpKx[Index] = (((((double) j) / ((double) TmpNbrSteps)) * TmpKxEnding[i]) 
-			      + ((((double) (TmpNbrSteps - j)) / ((double) TmpNbrSteps)) * TmpKxEnding[i]));
+			      + ((((double) (TmpNbrSteps - j)) / ((double) TmpNbrSteps)) * TmpKxStarting[i]));
 	      TmpKy[Index] = (((((double) j) / ((double) TmpNbrSteps)) * TmpKyEnding[i]) 
-			      + ((((double) (TmpNbrSteps - j)) / ((double) TmpNbrSteps)) * TmpKyEnding[i]));
+			      + ((((double) (TmpNbrSteps - j)) / ((double) TmpNbrSteps)) * TmpKyStarting[i]));
 	      ++Index;
 	    }
 	}
@@ -250,9 +249,9 @@ bool Abstract2DTightBindingModel::WriteAsciiSpectrumAlongHighSymmetryPoints(char
       for (int j = 0; j < TmpNbrSteps; ++j)
 	{
 	  TmpKx[Index] = (((((double) j) / ((double) TmpNbrSteps)) * TmpKxEnding[NbrHighSymmetryPoints - 1]) 
-			  + ((((double) (TmpNbrSteps - j)) / ((double) TmpNbrSteps)) * TmpKxEnding[NbrHighSymmetryPoints - 1]));
+			  + ((((double) (TmpNbrSteps - j)) / ((double) TmpNbrSteps)) * TmpKxStarting[NbrHighSymmetryPoints - 1]));
 	  TmpKy[Index] = (((((double) j) / ((double) TmpNbrSteps)) * TmpKyEnding[NbrHighSymmetryPoints - 1]) 
-			  + ((((double) (TmpNbrSteps - j)) / ((double) TmpNbrSteps)) * TmpKyEnding[NbrHighSymmetryPoints - 1]));
+			  + ((((double) (TmpNbrSteps - j)) / ((double) TmpNbrSteps)) * TmpKyStarting[NbrHighSymmetryPoints - 1]));
 	  ++Index;
 	}
       double* TmpEnergies = new double [this->NbrBands];
@@ -1632,4 +1631,37 @@ int Abstract2DTightBindingModel::GetHighSymmetryPoints(char**& pointNames, doubl
   pointNames = 0;
   pointCoordinates = 0;
   return 0;
+}
+
+// compute the distance between two points in the first Brillouin zone, changing the coordinates the second one by a reciprocal lattice vector if needed
+//
+// kx1 = momentum of the first point along the x axis
+// ky1 = momentum of the first point along the y axis
+// kx2 = reference on the momentum of the second point along the x axis
+// ky2 = reference on the momentum of the second point along the y axis
+// return value = distance between the two points
+
+double Abstract2DTightBindingModel::GetDistanceReciprocalSpace(double kx1, double ky1, double& kx2, double& ky2)
+{
+  double MinDistance = sqrt (((kx1 - kx2) * (kx1 - kx2)) + ((ky1 - ky2) * (ky1 - ky2)));
+  double MinKx2 = kx2;
+  double MinKy2 = ky2;
+  for (int i = -1; i <= 1; ++i)
+    {
+      double TmpKx2  = kx2 + (2.0 * ((double) i) * M_PI);
+      for (int j = -1; j <= 1; ++j)
+	{
+	  double TmpKy2  = ky2 + (2.0 * ((double) j) * M_PI);	  
+	  double TmpDistance = sqrt (((kx1 - TmpKx2) * (kx1 - TmpKx2)) + ((ky1 - TmpKy2) * (ky1 - TmpKy2)));
+	  if (TmpDistance < MinDistance)
+	    {
+	      MinDistance = TmpDistance;
+	      MinKx2 = TmpKx2;
+	      MinKy2 = TmpKy2;
+	    }
+	}
+    }
+  kx2 = MinKx2;
+  ky2 = MinKy2;
+  return MinDistance;
 }

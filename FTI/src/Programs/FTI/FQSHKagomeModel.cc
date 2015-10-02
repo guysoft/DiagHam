@@ -82,6 +82,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mixing-23", "mixing term coupling the two copies of the kagome lattice (sites 2 and 3)", 0.0);
   
   (*SystemGroup) += new BooleanOption ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
+  (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-highsymmetryspectrum", "only compute the one body spectrum, restricting to lines connecting the high symmetry points");
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-z2invariant", "compute the z2 invariant of the fully filled band (only available in singleparticle-spectrum mode)");
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebody", "export the one-body information (band structure and eigenstates) in a binary file");
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebodytext", "export the one-body information (band structure and eigenstates) in an ASCII text file");
@@ -290,72 +291,94 @@ int main(int argc, char** argv)
  
   Abstract2DTightBindingModel* TightBindingModel;
   
-  if (Manager.GetBoolean("singleparticle-spectrum") == true)
+  if ((Manager.GetBoolean("singleparticle-spectrum") == true) || (Manager.GetBoolean("singleparticle-highsymmetryspectrum") == true))
     {
-      bool ExportOneBody = false;
-      if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("export-onebodytheta") == true) || (Manager.GetBoolean("singleparticle-z2invariant") == true))
-	ExportOneBody = true;
-      
-      if (TiltedFlag == false)
+      if (Manager.GetBoolean("singleparticle-highsymmetryspectrum") == false)
 	{
-	  TightBindingModel = new TightBindingModelTimeReversalKagomeLattice (NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
-									      Manager.GetDouble("l1"), Manager.GetDouble("l2"), 
-									      Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"),
-									      Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), TimeReversalFlag, ExportOneBody);
-	}
-      else
-	{
-	  TightBindingModel = new TightBindingModelTimeReversalKagomeLatticeTilted (NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
-										    Manager.GetDouble("l1"), Manager.GetDouble("l2"), 
-										    Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"),
-										    Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), TimeReversalFlag, ExportOneBody);
-	}
-      if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true))
-	{
-	  char* BandStructureOutputFile = new char [512 + strlen(InteractionPrefix)];
-	  if (Manager.GetString("export-onebodyname") != 0)
-	    strcpy(BandStructureOutputFile, Manager.GetString("export-onebodyname"));
+	  bool ExportOneBody = false;
+	  if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("export-onebodytheta") == true) || (Manager.GetBoolean("singleparticle-z2invariant") == true))
+	    ExportOneBody = true;
+	  
+	  if (TiltedFlag == false)
+	    {
+	      TightBindingModel = new TightBindingModelTimeReversalKagomeLattice (NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
+										  Manager.GetDouble("l1"), Manager.GetDouble("l2"), 
+										  Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"),
+										  Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), TimeReversalFlag, ExportOneBody);
+	    }
 	  else
 	    {
-	      if (TiltedFlag == false)
+	      TightBindingModel = new TightBindingModelTimeReversalKagomeLatticeTilted (NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
+											Manager.GetDouble("l1"), Manager.GetDouble("l2"), 
+											Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"),
+											Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), TimeReversalFlag, ExportOneBody);
+	    }
+	  if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true))
+	    {
+	      char* BandStructureOutputFile = new char [512 + strlen(InteractionPrefix)];
+	      if (Manager.GetString("export-onebodyname") != 0)
+		strcpy(BandStructureOutputFile, Manager.GetString("export-onebodyname"));
+	      else
 		{
-		  sprintf (BandStructureOutputFile, "%s_%s_n_%d_x_%d_y_%d_t1_%f_t2_%f_l1_%f_l2_%f_mix12_%f_mix13_%f_mix23_%f_gx_%f_gy_%f_tightbinding.dat", 
-			   StatisticPrefix, InteractionPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), 
-			   Manager.GetDouble("l2"), Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"), 
-			   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		  if (TiltedFlag == false)
+		    {
+		      sprintf (BandStructureOutputFile, "%s_%s_n_%d_x_%d_y_%d_t1_%f_t2_%f_l1_%f_l2_%f_mix12_%f_mix13_%f_mix23_%f_gx_%f_gy_%f_tightbinding.dat", 
+			       StatisticPrefix, InteractionPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), 
+			       Manager.GetDouble("l2"), Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"), 
+			       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		    }
+		  else
+		    {
+		      sprintf (BandStructureOutputFile, "%s_%stilted_n_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_t1_%f_t2_%f_l1_%f_l2_%f_mix12_%f_mix13_%f_mix23_%f_gx_%f_gy_%f_tightbinding.dat", 
+			       StatisticPrefix, InteractionPrefix, NbrParticles, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
+			       Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"), 
+			       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		}
+		}
+	      if (Manager.GetBoolean("export-onebody") == true)
+		{
+		  TightBindingModel->WriteBandStructure(BandStructureOutputFile);
 		}
 	      else
 		{
-		  sprintf (BandStructureOutputFile, "%s_%stilted_n_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_t1_%f_t2_%f_l1_%f_l2_%f_mix12_%f_mix13_%f_mix23_%f_gx_%f_gy_%f_tightbinding.dat", 
-			   StatisticPrefix, InteractionPrefix, NbrParticles, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
-			   Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"), 
-			   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		  TightBindingModel->WriteBandStructureASCII(BandStructureOutputFile);
 		}
+	      delete[] BandStructureOutputFile;
 	    }
-	  if (Manager.GetBoolean("export-onebody") == true)
+	  if (Manager.GetBoolean("singleparticle-z2invariant") == true)
+	    cout << "Z2 invariant = " << TightBindingModel->ComputeZ2Invariant(2) << endl;
+	  
+	  if (Manager.GetBoolean("export-onebodytheta") == true)
 	    {
-	      TightBindingModel->WriteBandStructure(BandStructureOutputFile);
+	      cout << "Z2 invariant = " << TightBindingModel->ComputeZ2Invariant(2) << endl;
+	      char* ThetaOutputFile = new char [512];
+	      sprintf(ThetaOutputFile, "%s_%s_n_%d_x_%d_y_%d_t1_%f_t2_%f_l1_%f_l2_%f_mix12_%f_mix13_%f_mix23_%f_gx_%f_gy_%f_theta.dat", StatisticPrefix, InteractionPrefix, 
+		      NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), 
+		      Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	      TightBindingModel->WriteAsciiDMatrixEigenValues(ThetaOutputFile, 2);
+	    }
+	  return 0;
+	}
+      else
+	{
+	  
+	  if (TiltedFlag == false)
+	    {
+	      TightBindingModel = new TightBindingModelTimeReversalKagomeLattice (2, 2,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
+										  Manager.GetDouble("l1"), Manager.GetDouble("l2"), 
+										  Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"),
+										  Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), TimeReversalFlag, false);
 	    }
 	  else
 	    {
-	      TightBindingModel->WriteBandStructureASCII(BandStructureOutputFile);
+	      TightBindingModel = new TightBindingModelTimeReversalKagomeLatticeTilted (2, 2, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
+											Manager.GetDouble("l1"), Manager.GetDouble("l2"), 
+											Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"),
+											Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), TimeReversalFlag, false);
 	    }
-	  delete[] BandStructureOutputFile;
+	  TightBindingModel->WriteAsciiSpectrumAlongHighSymmetryPoints(EigenvalueOutputFile, NbrSitesX);
+	  return 0;	  
 	}
-      if (Manager.GetBoolean("singleparticle-z2invariant") == true)
-	cout << "Z2 invariant = " << TightBindingModel->ComputeZ2Invariant(2) << endl;
-      
-      if (Manager.GetBoolean("export-onebodytheta") == true)
-	{
-	  cout << "Z2 invariant = " << TightBindingModel->ComputeZ2Invariant(2) << endl;
-	  char* ThetaOutputFile = new char [512];
-	  sprintf(ThetaOutputFile, "%s_%s_n_%d_x_%d_y_%d_t1_%f_t2_%f_l1_%f_l2_%f_mix12_%f_mix13_%f_mix23_%f_gx_%f_gy_%f_theta.dat", StatisticPrefix, InteractionPrefix, 
-		  NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), 
-		  Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
-	  TightBindingModel->WriteAsciiDMatrixEigenValues(ThetaOutputFile, 2);
-	}
-      return 0;
-      
     }
 
   int MinKx = 0;
