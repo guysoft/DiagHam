@@ -69,9 +69,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "three-body", "use three body delta interaction instead of two-body interaction");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics", 0);
-//   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
-//   (*SystemGroup) += new BooleanOption  ('\n', "get-lvalue", "compute mean l value from <L^2> for each eigenvalue");
-//   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
+  (*SystemGroup) += new SingleDoubleOption ('\n', "shift-energy", "shift energies by a given amount, usually to improve the Lanczos convergence", 0.0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-tz", " only evaluate one jz sector (negative if all sectors have to be computed) ", 1000);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-y", "only evaluate one kz sector (negative if all sectors have to be computed)", 1000);
   (*SystemGroup) += new BooleanOption  ('\n', "tzsymmetrized-basis", "use Tz <-> -Tz symmetrized version of the basis (only valid if total-tz=0)");
@@ -271,7 +269,8 @@ int main(int argc, char** argv)
 	
       
 //        double Shift = - 0.5 * ((double) (NbrParticles * NbrParticles)) / (0.5 * ((double) NbrFluxQuanta));
-//        Hamiltonian->ShiftHamiltonian(Shift);
+	if (Manager.GetDouble("shift-energy") != 0.0)
+	  Hamiltonian->ShiftHamiltonian(Manager.GetDouble("shift-energy"));
 	char* EigenvectorName = 0;
 	if (Manager.GetBoolean("eigenstate") == true)	
 	{
