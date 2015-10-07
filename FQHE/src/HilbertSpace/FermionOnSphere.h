@@ -600,6 +600,21 @@ class FermionOnSphere :  public ParticleOnSphere
 								  ParticleOnSphere* destinationHilbertSpace,
 								  ComplexVector& groundState,  HermitianMatrix* densityMatrix);
 
+  // core part of the evaluation entanglement matrix particle partition calculation
+  // 
+  // minIndex = first index to consider in complementary Hilbert space
+  // nbrIndex = number of indices to consider in complementary Hilbert space
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e part B)
+  // destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+  // groundState = reference on the total system ground state
+  // entanglementMatrix = reference on the entanglement matrix where result has to stored
+  // removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+  // return value = number of components that have been added to the entanglement matrix
+  virtual long EvaluatePartialEntanglementMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  
+								       ParticleOnSphere* destinationHilbertSpace,
+								       RealVector& groundState,  RealMatrix* entanglementMatrix, 
+								       bool removeBinomialCoefficient);
+  
   // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. The entanglement matrix is only evaluated in a given Lz sector.
   // 
   // nbrFermionSector = number of particles that belong to the subsytem 

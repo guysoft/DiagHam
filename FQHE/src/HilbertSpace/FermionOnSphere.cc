@@ -3419,25 +3419,116 @@ RealMatrix FermionOnSphere::EvaluatePartialEntanglementMatrixParticlePartition(i
   cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
   long TmpNbrNonZeroElements = 0;
 
-  double TmpInvBinomial = 1.0;
-  if(removeBinomialCoefficient == false )
-    {
-      BinomialCoefficients TmpBinomial (this->NbrFermions);
-      TmpInvBinomial = sqrt(1.0 / (TmpBinomial(this->NbrFermions, nbrFermionSector)));
-    }
   
   
   FermionOnSphere TmpHilbertSpace(ComplementaryNbrFermionSector, this->TotalLz - lzSector, this->LzMax);
   
   FactorialCoefficient Factorial;
   RealMatrix TmpEntanglementMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, TmpHilbertSpace.HilbertSpaceDimension, true);
+
+  TmpNbrNonZeroElements = this->EvaluatePartialEntanglementMatrixParticlePartitionCore(0, TmpHilbertSpace.HilbertSpaceDimension, &TmpHilbertSpace,
+										       &TmpDestinationHilbertSpace, 
+										       groundState, &TmpEntanglementMatrix, removeBinomialCoefficient);
+
+
+//   double TmpInvBinomial = 1.0;
+//   if(removeBinomialCoefficient == false )
+//     {
+//       BinomialCoefficients TmpBinomial (this->NbrFermions);
+//       TmpInvBinomial = sqrt(1.0 / (TmpBinomial(this->NbrFermions, nbrFermionSector)));
+//     }
+
+//   for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+//     {
+//       unsigned long TmpState = TmpHilbertSpace.StateDescription[MinIndex];
+//       for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+// 	{
+// 	  unsigned long TmpState2 = TmpDestinationHilbertSpace.StateDescription[j];
+// 	  if ((TmpState & TmpState2) == 0x0ul)
+// 	    {
+// 	      int TmpLzMax = this->LzMax;
+// 	      unsigned long TmpState3 = TmpState | TmpState2;
+// 	      while ((TmpState3 >> TmpLzMax) == 0x0ul)
+// 		--TmpLzMax;
+// 	      int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
+// 	      if (TmpPos != this->HilbertSpaceDimension)
+// 		{
+// 		  double Coefficient = TmpInvBinomial;
+// 		  unsigned long Sign = 0x0ul;
+// 		  int Pos2 = TmpDestinationHilbertSpace.LzMax;
+// 		  while ((Pos2 > 0) && (TmpState2 != 0x0ul))
+// 		    {
+// 		      while (((TmpState2 >> Pos2) & 0x1ul) == 0x0ul)
+// 			--Pos2;
+// 		      TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
+// #ifdef  __64_BITS__
+// 		      TmpState3 ^= TmpState3 >> 32;
+// #endif	
+// 		      TmpState3 ^= TmpState3 >> 16;
+// 		      TmpState3 ^= TmpState3 >> 8;
+// 		      TmpState3 ^= TmpState3 >> 4;
+// 		      TmpState3 ^= TmpState3 >> 2;
+// 		      TmpState3 ^= TmpState3 >> 1;
+// 		      Sign ^= TmpState3;
+// 		      TmpState2 &= ~(0x1ul << Pos2);
+// 		      --Pos2;
+// 		    }
+// 		  if ((Sign & 0x1ul) == 0x0ul)		  
+// 		    Coefficient *= 1.0;
+// 		  else
+// 		    Coefficient *= -1.0;
+		  
+// 		  TmpNbrNonZeroElements++;
+// 		  TmpEntanglementMatrix.SetMatrixElement(j, MinIndex, Coefficient*groundState[TmpPos]);
+// 		}
+// 	    }
+// 	}
+//     }
   
-  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+  if (TmpNbrNonZeroElements > 0)
     {
-      unsigned long TmpState = TmpHilbertSpace.StateDescription[MinIndex];
-      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+      return TmpEntanglementMatrix;
+    }
+  else
+    {
+      RealMatrix TmpEntanglementMatrixZero;
+      return TmpEntanglementMatrixZero;
+    }
+}
+
+// core part of the evaluation entanglement matrix particle partition calculation
+// 
+// minIndex = first index to consider in complementary Hilbert space
+// nbrIndex = number of indices to consider in complementary Hilbert space
+// complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e part B)
+// destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+// groundState = reference on the total system ground state
+// entanglementMatrix = reference on the entanglement matrix where result has to stored
+// removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+// return value = number of components that have been added to the entanglement matrix
+
+long FermionOnSphere::EvaluatePartialEntanglementMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  
+									      ParticleOnSphere* destinationHilbertSpace,
+									      RealVector& groundState, RealMatrix* entanglementMatrix, 
+									      bool removeBinomialCoefficient)
+{
+  FermionOnSphere* TmpDestinationHilbertSpace = (FermionOnSphere*) destinationHilbertSpace;
+  FermionOnSphere* TmpHilbertSpace = (FermionOnSphere*) complementaryHilbertSpace;
+  double TmpInvBinomial = 1.0;
+  long TmpNbrNonZeroElements = 0l;
+
+  if(removeBinomialCoefficient == false)
+    {
+      BinomialCoefficients TmpBinomial (this->NbrFermions);
+      TmpInvBinomial = sqrt(1.0 / (TmpBinomial(this->NbrFermions, TmpDestinationHilbertSpace->NbrFermions)));
+    }
+  int MaxIndex = minIndex + nbrIndex;
+  for (; minIndex < MaxIndex; ++minIndex)    
+    {
+      unsigned long TmpState = TmpHilbertSpace->StateDescription[minIndex];
+      for (int j = 0; j < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++j)
 	{
-	  unsigned long TmpState2 = TmpDestinationHilbertSpace.StateDescription[j];
+	  unsigned long TmpState2 = TmpDestinationHilbertSpace->StateDescription[j];
 	  if ((TmpState & TmpState2) == 0x0ul)
 	    {
 	      int TmpLzMax = this->LzMax;
@@ -3449,7 +3540,7 @@ RealMatrix FermionOnSphere::EvaluatePartialEntanglementMatrixParticlePartition(i
 		{
 		  double Coefficient = TmpInvBinomial;
 		  unsigned long Sign = 0x0ul;
-		  int Pos2 = TmpDestinationHilbertSpace.LzMax;
+		  int Pos2 = TmpDestinationHilbertSpace->LzMax;
 		  while ((Pos2 > 0) && (TmpState2 != 0x0ul))
 		    {
 		      while (((TmpState2 >> Pos2) & 0x1ul) == 0x0ul)
@@ -3473,21 +3564,14 @@ RealMatrix FermionOnSphere::EvaluatePartialEntanglementMatrixParticlePartition(i
 		    Coefficient *= -1.0;
 		  
 		  TmpNbrNonZeroElements++;
-		  TmpEntanglementMatrix.SetMatrixElement(j, MinIndex, Coefficient*groundState[TmpPos]);
+		  entanglementMatrix->SetMatrixElement(j, minIndex, Coefficient * groundState[TmpPos]);
 		}
 	    }
 	}
-    }
-  
-  if (TmpNbrNonZeroElements > 0)
-    return TmpEntanglementMatrix;
-  else
-    {
-      RealMatrix TmpEntanglementMatrixZero;
-      return TmpEntanglementMatrixZero;
-    }
+    }  
+  return TmpNbrNonZeroElements;
 }
-
+  
 // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. 
 // The entanglement matrix is only evaluated in a given Lz sector and both A and B are resticted to a given number of orbitals
 // 
