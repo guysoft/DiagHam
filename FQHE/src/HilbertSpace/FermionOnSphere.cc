@@ -3428,63 +3428,7 @@ RealMatrix FermionOnSphere::EvaluatePartialEntanglementMatrixParticlePartition(i
 
   TmpNbrNonZeroElements = this->EvaluatePartialEntanglementMatrixParticlePartitionCore(0, TmpHilbertSpace.HilbertSpaceDimension, &TmpHilbertSpace,
 										       &TmpDestinationHilbertSpace, 
-										       groundState, &TmpEntanglementMatrix, removeBinomialCoefficient);
-
-
-//   double TmpInvBinomial = 1.0;
-//   if(removeBinomialCoefficient == false )
-//     {
-//       BinomialCoefficients TmpBinomial (this->NbrFermions);
-//       TmpInvBinomial = sqrt(1.0 / (TmpBinomial(this->NbrFermions, nbrFermionSector)));
-//     }
-
-//   for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
-//     {
-//       unsigned long TmpState = TmpHilbertSpace.StateDescription[MinIndex];
-//       for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
-// 	{
-// 	  unsigned long TmpState2 = TmpDestinationHilbertSpace.StateDescription[j];
-// 	  if ((TmpState & TmpState2) == 0x0ul)
-// 	    {
-// 	      int TmpLzMax = this->LzMax;
-// 	      unsigned long TmpState3 = TmpState | TmpState2;
-// 	      while ((TmpState3 >> TmpLzMax) == 0x0ul)
-// 		--TmpLzMax;
-// 	      int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
-// 	      if (TmpPos != this->HilbertSpaceDimension)
-// 		{
-// 		  double Coefficient = TmpInvBinomial;
-// 		  unsigned long Sign = 0x0ul;
-// 		  int Pos2 = TmpDestinationHilbertSpace.LzMax;
-// 		  while ((Pos2 > 0) && (TmpState2 != 0x0ul))
-// 		    {
-// 		      while (((TmpState2 >> Pos2) & 0x1ul) == 0x0ul)
-// 			--Pos2;
-// 		      TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
-// #ifdef  __64_BITS__
-// 		      TmpState3 ^= TmpState3 >> 32;
-// #endif	
-// 		      TmpState3 ^= TmpState3 >> 16;
-// 		      TmpState3 ^= TmpState3 >> 8;
-// 		      TmpState3 ^= TmpState3 >> 4;
-// 		      TmpState3 ^= TmpState3 >> 2;
-// 		      TmpState3 ^= TmpState3 >> 1;
-// 		      Sign ^= TmpState3;
-// 		      TmpState2 &= ~(0x1ul << Pos2);
-// 		      --Pos2;
-// 		    }
-// 		  if ((Sign & 0x1ul) == 0x0ul)		  
-// 		    Coefficient *= 1.0;
-// 		  else
-// 		    Coefficient *= -1.0;
-		  
-// 		  TmpNbrNonZeroElements++;
-// 		  TmpEntanglementMatrix.SetMatrixElement(j, MinIndex, Coefficient*groundState[TmpPos]);
-// 		}
-// 	    }
-// 	}
-//     }
-  
+										       groundState, &TmpEntanglementMatrix, removeBinomialCoefficient); 
   if (TmpNbrNonZeroElements > 0)
     {
       return TmpEntanglementMatrix;
