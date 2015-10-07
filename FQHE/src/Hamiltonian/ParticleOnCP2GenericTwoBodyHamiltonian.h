@@ -84,11 +84,12 @@ class ParticleOnCP2GenericTwoBodyHamiltonian : public AbstractQHEOnSphereFullHam
   // nbrParticles = number of particles
   // nbrFluxQuanta = number of flux quanta
   // pseudoPotential = pointer to an array containing the SU(3) pseudopotentials describing the interaction
-  // clebschGordanCoefficients = pointer to an array containing Gordan coefficients
-  // nbrCoefficientsPerRepresentation = number of  CG coefficients for a given 2-body representation
+  // nbrPseudoPotentials = number of pseudo-potentials
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnCP2GenericTwoBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrFluxQuanta, double* pseudoPotential, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnCP2GenericTwoBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrFluxQuanta, 
+					 double* pseudoPotential, int nbrPseudoPotentials, 
+					 AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //

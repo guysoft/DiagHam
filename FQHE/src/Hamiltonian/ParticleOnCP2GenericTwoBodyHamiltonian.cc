@@ -60,10 +60,13 @@ using std::cos;
 // nbrParticles = number of particles
 // nbrFluxQuanta = number of flux quanta
 // pseudoPotential = pointer to an array containing the SU(3) pseudopotentials describing the interaction
+// nbrPseudoPotentials = number of pseudo-potentials
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnCP2GenericTwoBodyHamiltonian::ParticleOnCP2GenericTwoBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrFluxQuanta, double* pseudoPotential, AbstractArchitecture* architecture, long memory)
+ParticleOnCP2GenericTwoBodyHamiltonian::ParticleOnCP2GenericTwoBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrFluxQuanta, 
+									       double* pseudoPotential, int nbrPseudoPotentials,
+									       AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -72,12 +75,15 @@ ParticleOnCP2GenericTwoBodyHamiltonian::ParticleOnCP2GenericTwoBodyHamiltonian(P
   this->LzMax = this->NbrLzValue - 1;
   this->PseudoPotentialIndexMax = 0;
   this->PseudoPotential = new double[this->NbrFluxQuanta + 1];
-  for (int i = 0; i <= this->NbrFluxQuanta; ++i)
-  {
-    this->PseudoPotential[i] = pseudoPotential[i];
-    if (this->PseudoPotential[i] != 0)
-      this->PseudoPotentialIndexMax = i;
-  }    
+  for (int i = 0; i < nbrPseudoPotentials; ++i)
+    {
+      this->PseudoPotential[i] = pseudoPotential[i];
+    }    
+  for (int i = nbrPseudoPotentials; i <= this->NbrFluxQuanta; ++i)
+    {
+      this->PseudoPotential[i] = 0.0;
+    }
+  this->PseudoPotentialIndexMax = nbrPseudoPotentials - 1;
   this->quantumNumberTz = new int [this->NbrLzValue];
   this->quantumNumberY = new int [this->NbrLzValue];
   this->quantumNumberR = new int [this->NbrLzValue];

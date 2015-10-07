@@ -115,6 +115,7 @@ int main(int argc, char** argv)
   bool TzMinusParity = Manager.GetBoolean("minus-tzparity");
   double* OneBodyPotentials = 0;
   double* PseudoPotentials = 0;
+  int NbrPseudoPotentials = 0;
   
   char* StatisticPrefix = new char [16];
   if (Manager.GetBoolean("boson") == false)
@@ -158,8 +159,7 @@ int main(int argc, char** argv)
 	  InteractionDefinition.DumpErrors(cout) << endl;
 	  return -1;
 	}
-      int TmpNbrPseudoPotentials;
-      if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', PseudoPotentials, TmpNbrPseudoPotentials) == false)
+      if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', PseudoPotentials, NbrPseudoPotentials) == false)
 	{
 	  cout << "Weights is not defined or as a wrong value in " << Manager.GetString("interaction-file") << endl;
 	  return -1;
@@ -256,7 +256,8 @@ int main(int argc, char** argv)
 	if (ThreeBodyFlag == false)
 	{
 	  if (OneBodyPotentials == 0)
-	    Hamiltonian = new ParticleOnCP2GenericTwoBodyHamiltonian(Space, NbrParticles, NbrFluxQuanta, PseudoPotentials, Architecture.GetArchitecture(), Memory);
+	    Hamiltonian = new ParticleOnCP2GenericTwoBodyHamiltonian(Space, NbrParticles, NbrFluxQuanta, PseudoPotentials, NbrPseudoPotentials,
+								     Architecture.GetArchitecture(), Memory);
 // 	  else
 // 	    Hamiltonian = new ParticleOnCP2DeltaHamiltonian(Space, NbrParticles, NbrFluxQuanta, OneBodyPotentials, Architecture.GetArchitecture(), Memory);
 	}
@@ -400,7 +401,8 @@ int main(int argc, char** argv)
     if (ThreeBodyFlag == false)
     {
       if (OneBodyPotentials == 0)
-	Hamiltonian = new ParticleOnCP2GenericTwoBodyHamiltonian(Space, NbrParticles, NbrFluxQuanta, PseudoPotentials, Architecture.GetArchitecture(), Memory);
+	Hamiltonian = new ParticleOnCP2GenericTwoBodyHamiltonian(Space, NbrParticles, NbrFluxQuanta, PseudoPotentials, NbrPseudoPotentials,
+								 Architecture.GetArchitecture(), Memory);
 //       else
 // 	Hamiltonian = new ParticleOnCP2DeltaHamiltonian(Space, NbrParticles, NbrFluxQuanta, OneBodyPotentials, Architecture.GetArchitecture(), Memory);
     }
