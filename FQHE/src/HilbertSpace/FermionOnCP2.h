@@ -45,6 +45,8 @@ class FermionOnCP2 : public FermionOnSphere
  protected:
   // Number of flux quanta
   int NbrFluxQuanta;
+  // Minimum value of Y
+  int MinY;
   // total value of Tz
   int TotalTz;
   // total value of Y
@@ -75,6 +77,16 @@ class FermionOnCP2 : public FermionOnSphere
   // totalKz = total value of kz
   // memory = amount of memory granted for precalculations
   FermionOnCP2 (int nbrFermions, int nbrFluxQuanta, int totalTz, int totalY, unsigned long memory = 10000000);
+  
+  // constructor for truncated Hilbert space
+  // 
+  // nbrBosons = number of bosons
+  // nbrFluxQuanta = number of flux quanta (p) of full Hilbert space
+  // minY = minimum accessible value of y
+  // totalTz = total value of Tz
+  // totalY = total value of y
+  // memory = amount of memory granted for precalculations
+  FermionOnCP2 (int nbrFermions, int nbrFluxQuanta, int minY, int totalTz, int totalY, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -140,6 +152,30 @@ class FermionOnCP2 : public FermionOnSphere
   //nbrParticles = number of particles involved (1 for HilbertSpace, 2 for two-body interaction...)
   //return value = index of the state
   int GetLinearizedIndex(int tz, int y, int nbrParticles);
+  
+  // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. The entanglement matrix is only evaluated in a given tz, y sector.
+  // 
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // tzSector = tz sector in which the density matrix has to be evaluated
+  // ySector = y sector in which the density matrix has to be evaluated
+  // groundState = reference on the total system ground state
+  // removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+  // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
+  virtual RealMatrix EvaluatePartialEntanglementMatrixParticlePartition (int nbrFermionSector, int tzSector, int ySector, RealVector& groundState, bool removeBinomialCoefficient = false);
+  
+  // evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using a generic real space partition. 
+  // The entanglement matrix is only evaluated in a given tz, y sector and computed from precalculated particle entanglement matrix. The cut has to be at a given value of Y
+  // 
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // tzSector = Tz sector in which the density matrix has to be evaluated 
+  // ySector = Y sector in which the density matrix has to be evaluated 
+  // weightOrbitalA = weight of each orbital in the A part (starting from the leftmost orbital)
+  // minYB = minimum value of Y that has to be kept in the B partition
+  // weightOrbitalB = weight of each orbital in the B part (starting from the leftmost orbital)
+  // entanglementMatrix = reference on the entanglement matrix (will be overwritten)
+  // return value = reference on the entanglement matrix
+  virtual RealMatrix& EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix (int nbrFermionSector, int tzSector, int ySector, double* weightOrbitalA, 
+														int minYB, double* weightOrbitalB, RealMatrix& entanglementMatrix);
   
   
   protected:

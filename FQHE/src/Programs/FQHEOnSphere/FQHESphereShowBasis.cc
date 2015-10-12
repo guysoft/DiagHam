@@ -71,6 +71,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "consider particles with SU(2) spin");
   (*SystemGroup) += new BooleanOption  ('\n', "4-D", "consider particles on the 4D sphere (only available in the bosonic mode)");
   (*SystemGroup) += new BooleanOption  ('\n', "cp2", "consider particles on the CP2 ");
+  (*SystemGroup) += new BooleanOption  ('\n', "truncated-cp2", "consider particles on a truncated CP2 geometry");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "min-y", "minimum value of y for a truncated CP2 geometry", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "tzZ3symmetrized-basis", "use Tz <-> -Tz and Z3 permutations symmetrized version of the CP2 basis (only valid if total-tz=0 and total-y = 0)");
   (*SystemGroup) += new BooleanOption  ('\n', "minus-tzparity", "select the  Tz <-> -Tz symmetric sector with negative parity");
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system (only useful in su(2)/su(4) mode)", 0);
@@ -139,6 +141,8 @@ int main(int argc, char** argv)
   bool ComplexFlag = Manager.GetBoolean("complex-vector");
   bool FourDFlag = Manager.GetBoolean("4-D");
   bool CP2Flag = Manager.GetBoolean("cp2");
+  bool TruncatedCP2Flag = Manager.GetBoolean("truncated-cp2");
+  int MinY = Manager.GetInteger("min-y");
   bool SymFlagTzZ3 = Manager.GetBoolean("tzZ3symmetrized-basis");
   bool TzMinusParity = Manager.GetBoolean("minus-tzparity");
   int TotalSz = Manager.GetInteger("total-sz");
@@ -150,7 +154,13 @@ int main(int argc, char** argv)
   if (FourDFlag == true)
     NbrOrbitals = (NbrFluxQuanta + 1)*(NbrFluxQuanta + 2)*(NbrFluxQuanta + 3) / 6;
   if (CP2Flag == true)
+  {
     NbrOrbitals = (NbrFluxQuanta + 1)*(NbrFluxQuanta + 2) / 2;
+    if (TruncatedCP2Flag == false)      
+      MinY = -2*NbrFluxQuanta;
+    else
+      NbrOrbitals -= (2*NbrFluxQuanta + MinY) * (2*NbrFluxQuanta + MinY + 3) / 18;
+  }
   
   {
     int TmpL=0;
@@ -395,10 +405,19 @@ int main(int argc, char** argv)
 		      Space = new FermionOnSphereFourLandauLevels(NbrParticles, TotalLz, NbrFluxQuanta);
 		    else
 		      if (CP2Flag == true)
-			if (NbrOrbitals < 64)
-			  Space = new FermionOnCP2(NbrParticles, NbrFluxQuanta, TzValue, YValue);
+		      {
+			if (TruncatedCP2Flag == false)
+			{
+			  if (NbrOrbitals < 64)
+			    Space = new FermionOnCP2(NbrParticles, NbrFluxQuanta, TzValue, YValue);
+			  else
+			    Space = new FermionOnCP2Long(NbrParticles, NbrFluxQuanta, TzValue, YValue);
+			}
 			else
-			  Space = new FermionOnCP2Long(NbrParticles, NbrFluxQuanta, TzValue, YValue);
+			{
+			  Space = new FermionOnCP2(NbrParticles, NbrFluxQuanta, MinY, TzValue, YValue);
+			}
+		      }
     }
   
   if (Manager.GetString("get-index") != 0)
