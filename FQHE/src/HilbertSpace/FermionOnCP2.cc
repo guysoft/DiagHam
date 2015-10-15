@@ -78,7 +78,10 @@ FermionOnCP2::FermionOnCP2 (int nbrFermions, int nbrFluxQuanta, int totalTz, int
   this->NbrLzValue = (this->NbrFluxQuanta + 1)*(this->NbrFluxQuanta + 2)/2;
   this->LzMax = NbrLzValue - 1;  
   this->MaximumSignLookUp = 16;
-  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrFluxQuanta, this->NbrFluxQuanta, this->NbrFluxQuanta, 0, 0);
+  if (this->NbrFermions > 0)
+    this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrFluxQuanta, this->NbrFluxQuanta, this->NbrFluxQuanta, 0, 0);
+  else
+    this->LargeHilbertSpaceDimension = 1l;
   this->quantumNumberTz = new int [this->NbrLzValue];
   this->quantumNumberY = new int [this->NbrLzValue];
   this->quantumNumberR = new int [this->NbrLzValue];
@@ -95,14 +98,22 @@ FermionOnCP2::FermionOnCP2 (int nbrFermions, int nbrFluxQuanta, int totalTz, int
       this->TargetSpace = this;
       this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
       this->StateLzMax = new int [this->HilbertSpaceDimension];  
-      this->LargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrFluxQuanta, this->NbrFluxQuanta, this->NbrFluxQuanta, 0, 0, 0l);
-      int TmpLzMax = this->LzMax;
-      for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
-	{
-	  while ((this->StateDescription[i] >> TmpLzMax) == 0x0ul)
-	    --TmpLzMax;
-	  this->StateLzMax[i] = TmpLzMax;
-	}
+      if (this->NbrFermions > 0)
+      {
+	this->LargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrFluxQuanta, this->NbrFluxQuanta, this->NbrFluxQuanta, 0, 0, 0l);
+	int TmpLzMax = this->LzMax;
+	for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
+	  {
+	    while ((this->StateDescription[i] >> TmpLzMax) == 0x0ul)
+	      --TmpLzMax;
+	    this->StateLzMax[i] = TmpLzMax;
+	  }
+      }
+      else
+      {
+	this->StateDescription[0] = 0x0ul; 
+	this->StateLzMax[0] = 0;
+      }
       this->GenerateLookUpTable(memory);      
 #ifdef __DEBUG__
       long UsedMemory = 0;
@@ -130,7 +141,7 @@ FermionOnCP2::FermionOnCP2 (int nbrFermions, int nbrFluxQuanta, int totalTz, int
 }
 
 
-// basic constructor
+// constructor for truncated CP2 geometry
 // 
 // nbrBosons = number of bosons
 // p = number of flux quanta (determines an irreducible representation of SU(3), along with q=0 (LLL))
@@ -150,9 +161,12 @@ FermionOnCP2::FermionOnCP2 (int nbrFermions, int nbrFluxQuanta, int minY, int to
   this->TotalR = (this->TotalY + 3*this->TotalTz + 2*this->NbrFermions*this->NbrFluxQuanta)/6;
   this->TotalS = (this->TotalY - 3*this->TotalTz + 2*this->NbrFermions*this->NbrFluxQuanta)/6;
   this->NbrLzValue = (this->NbrFluxQuanta + 1)*(this->NbrFluxQuanta + 2)/2 - (2*this->NbrFluxQuanta + this->MinY) * (2*this->NbrFluxQuanta + this->MinY + 3) / 18;
-  this->LzMax = NbrLzValue - 1;  
+  this->LzMax = this->NbrLzValue - 1;  
   this->MaximumSignLookUp = 16;
-  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrFluxQuanta, this->NbrFluxQuanta, this->NbrFluxQuanta, 0, 0);
+  if (this->NbrFermions > 0)
+    this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrFluxQuanta, this->NbrFluxQuanta, this->NbrFluxQuanta, 0, 0);
+  else
+    this->LargeHilbertSpaceDimension = 1l;
   this->quantumNumberTz = new int [this->NbrLzValue];
   this->quantumNumberY = new int [this->NbrLzValue];
   this->quantumNumberR = new int [this->NbrLzValue];
@@ -169,14 +183,22 @@ FermionOnCP2::FermionOnCP2 (int nbrFermions, int nbrFluxQuanta, int minY, int to
       this->TargetSpace = this;
       this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
       this->StateLzMax = new int [this->HilbertSpaceDimension];  
-      this->LargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrFluxQuanta, this->NbrFluxQuanta, this->NbrFluxQuanta, 0, 0, 0l);
-      int TmpLzMax = this->LzMax;
-      for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
-	{
-	  while ((this->StateDescription[i] >> TmpLzMax) == 0x0ul)
-	    --TmpLzMax;
-	  this->StateLzMax[i] = TmpLzMax;
-	}
+      if (this->NbrFermions > 0)
+      {
+	this->LargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrFluxQuanta, this->NbrFluxQuanta, this->NbrFluxQuanta, 0, 0, 0l);
+	int TmpLzMax = this->LzMax;
+	for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
+	  {
+	    while ((this->StateDescription[i] >> TmpLzMax) == 0x0ul)
+	      --TmpLzMax;
+	    this->StateLzMax[i] = TmpLzMax;
+	  }
+      }
+      else
+      {
+	this->StateDescription[0] = 0x0ul; 
+	this->StateLzMax[0] = 0;
+      }
       this->GenerateLookUpTable(memory);      
 #ifdef __DEBUG__
       long UsedMemory = 0;
@@ -779,10 +801,10 @@ RealMatrix FermionOnCP2::EvaluatePartialEntanglementMatrixParticlePartition(int 
 {
   if (nbrFermionSector == 0)
     {
-      if (tzSector == 0)
+      if ((tzSector == 0) && (ySector == 0))
 	{
-	  cout <<this->TotalTz << "  " << this->TotalY << endl;
-	  cout << this->NbrFluxQuanta << endl;
+// 	  cout <<this->TotalTz << "  " << this->TotalY << endl;
+// 	  cout << this->NbrFluxQuanta << endl;
 	  FermionOnCP2 TmpHilbertSpace(this->NbrFermions, this->NbrFluxQuanta, this->TotalTz - tzSector, this->TotalY - ySector);
 	  RealMatrix TmpEntanglementMatrix(1, TmpHilbertSpace.GetHilbertSpaceDimension(), true);
 	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
@@ -863,27 +885,197 @@ RealMatrix FermionOnCP2::EvaluatePartialEntanglementMatrixParticlePartition(int 
 }
 
 
+
+// evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. 
+// The entanglement matrix is only evaluated in a given Lz sector and both A and B are resticted to a given number of orbitals
+// 
+// nbrFermionSector = number of particles that belong to the subsytem 
+// tzSector = Tz sector in which the density matrix has to be evaluated 
+// ySector = Y sector in which the density matrix has to be evaluated 
+// maxYA = maximum value of Y in the A partition
+// minYB = minimum value of Y in the B partition
+// groundState = reference on the total system ground state
+// removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+// return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
+
+RealMatrix FermionOnCP2::EvaluatePartialEntanglementMatrixParticlePartition(int nbrFermionSector, int tzSector, int ySector,
+									       int maxYA, int minYB,
+									       RealVector& groundState, bool removeBinomialCoefficient)
+{
+  int NbrOrbitalA = (maxYA + 1)*(maxYA + 2)/2;
+  int NbrOrbitalB = (this->NbrFluxQuanta + 1)*(this->NbrFluxQuanta + 2)/2 - (2*this->NbrFluxQuanta + minYB) * (2*this->NbrFluxQuanta + minYB + 3) / 18;
+  
+  int ShiftYA = 2*(this->NbrFluxQuanta - maxYA);
+  
+  cout << NbrOrbitalA << " " << NbrOrbitalB << endl;
+  int ComplementaryNbrFermionSector = this->NbrFermions - nbrFermionSector;
+  
+  int RSector = (ySector + 3*tzSector + 2*nbrFermionSector*this->NbrFluxQuanta);
+  int SSector = (ySector - 3*tzSector + 2*nbrFermionSector*this->NbrFluxQuanta);
+  
+  if ((RSector < 0) || (SSector < 0) || ((RSector % 6) != 0) || ((SSector % 6) != 0) || (RSector + SSector > 6*this->NbrFluxQuanta*nbrFermionSector))
+    {
+      RealMatrix TmpEntanglementMatrixZero;
+      return TmpEntanglementMatrixZero;  
+    }
+    
+  int ComplementaryRSector = (this->TotalY - ySector + 3*(this->TotalTz - tzSector) + 2*ComplementaryNbrFermionSector*this->NbrFluxQuanta);
+  int ComplementarySSector = (this->TotalY - ySector - 3*(this->TotalTz - tzSector) + 2*ComplementaryNbrFermionSector*this->NbrFluxQuanta);
+  
+  if ((ComplementaryRSector < 0) || (ComplementarySSector < 0) || ((ComplementaryRSector % 6) != 0) || ((ComplementarySSector % 6) != 0) || (ComplementaryRSector + ComplementarySSector > 6*this->NbrFluxQuanta*ComplementaryNbrFermionSector))
+    {
+      RealMatrix TmpEntanglementMatrixZero;
+      return TmpEntanglementMatrixZero;  
+    }
+  
+  if (nbrFermionSector == 0)
+    {
+      if ((tzSector == 0) && (ySector == 0))
+	{
+// 	  cout << this->NbrFermions << " " << this->NbrFluxQuanta << " " << minYB << " " << this->TotalTz - tzSector << " " << this->TotalY - ySector << endl;
+	  FermionOnCP2 TmpHilbertSpace(this->NbrFermions, this->NbrFluxQuanta, minYB, this->TotalTz - tzSector, this->TotalY - ySector);
+	  RealMatrix TmpEntanglementMatrix(1, TmpHilbertSpace.HilbertSpaceDimension, true);
+	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	    {
+	      int TmpLzMax = this->LzMax ;
+	      unsigned long TmpState = this->StateDescription[i];
+	      while ((TmpState >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      int TmpIndex = TmpHilbertSpace.FindStateIndex(TmpState, TmpLzMax);
+	      if (TmpIndex < TmpHilbertSpace.HilbertSpaceDimension)
+		TmpEntanglementMatrix.SetMatrixElement(0, TmpIndex, groundState[i]);
+	    }
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  RealMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;	
+	}
+    }
+  
+  
+  if (nbrFermionSector == this->NbrFermions)
+    {
+      if ((tzSector == this->TotalLz) && (ySector == this->TotalY) )
+	{
+	  FermionOnCP2 TmpDestinationHilbertSpace(nbrFermionSector, maxYA ,tzSector, ySector + ShiftYA);
+	  RealMatrix TmpEntanglementMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, 1,true);
+	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	    {
+	      int TmpLzMax = this->LzMax;
+	      unsigned long TmpState = this->StateDescription[i];
+	      while ((TmpState >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      
+	      int TmpIndex = TmpDestinationHilbertSpace.FindStateIndex(TmpState, TmpLzMax);
+	      if (TmpIndex < TmpDestinationHilbertSpace.HilbertSpaceDimension)
+		TmpEntanglementMatrix.SetMatrixElement(TmpIndex, 0, groundState[i]);
+	    }
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  RealMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;	  
+	}
+    }
+  
+  FermionOnCP2 TmpDestinationHilbertSpace(nbrFermionSector, maxYA, tzSector, ySector + ShiftYA);
+  cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
+  long TmpNbrNonZeroElements = 0;
+
+  double TmpInvBinomial = 1.0;
+  if(removeBinomialCoefficient == false )
+    {
+      BinomialCoefficients TmpBinomial (this->NbrFermions);
+      TmpInvBinomial = sqrt(1.0 / (TmpBinomial(this->NbrFermions, nbrFermionSector)));
+    }
+  
+  
+  FermionOnCP2 TmpHilbertSpace(ComplementaryNbrFermionSector, this->NbrFluxQuanta, minYB, this->TotalTz - tzSector, this->TotalY - ySector);
+  
+  FactorialCoefficient Factorial;
+  RealMatrix TmpEntanglementMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, TmpHilbertSpace.HilbertSpaceDimension, true);
+  
+  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+    {
+      unsigned long TmpState = TmpHilbertSpace.StateDescription[MinIndex] << (this->NbrLzValue - NbrOrbitalB);
+      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpState2 = TmpDestinationHilbertSpace.StateDescription[j];
+	  if ((TmpState & TmpState2) == 0x0ul)
+	    {
+	      int TmpLzMax = this->LzMax;
+	      unsigned long TmpState3 = TmpState | TmpState2;
+	      while ((TmpState3 >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
+	      if (TmpPos != this->HilbertSpaceDimension)
+		{
+		  double Coefficient = TmpInvBinomial;
+		  unsigned long Sign = 0x0ul;
+		  int Pos2 = TmpDestinationHilbertSpace.LzMax;
+		  while ((Pos2 > 0) && (TmpState2 != 0x0ul))
+		    {
+		      while (((TmpState2 >> Pos2) & 0x1ul) == 0x0ul)
+			--Pos2;
+		      TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
+#ifdef  __64_BITS__
+		      TmpState3 ^= TmpState3 >> 32;
+#endif	
+		      TmpState3 ^= TmpState3 >> 16;
+		      TmpState3 ^= TmpState3 >> 8;
+		      TmpState3 ^= TmpState3 >> 4;
+		      TmpState3 ^= TmpState3 >> 2;
+		      TmpState3 ^= TmpState3 >> 1;
+		      Sign ^= TmpState3;
+		      TmpState2 &= ~(0x1ul << Pos2);
+		      --Pos2;
+		    }
+		  if ((Sign & 0x1ul) == 0x0ul)		  
+		    Coefficient *= 1.0;
+		  else
+		    Coefficient *= -1.0;
+		  
+		  TmpNbrNonZeroElements++;
+		  TmpEntanglementMatrix.SetMatrixElement(j, MinIndex, Coefficient*groundState[TmpPos]);
+		}
+	    }
+	}
+    }
+  
+  if (TmpNbrNonZeroElements > 0)
+    return TmpEntanglementMatrix;
+  else
+    {
+      RealMatrix TmpEntanglementMatrixZero;
+      return TmpEntanglementMatrixZero;
+    }
+}
 // evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using a generic real space partition. 
 // The entanglement matrix is only evaluated in a given Lz sector and computed from precalculated particle entanglement matrix. The cut has to be at a given value of Y.
 // 
 // nbrFermionSector = number of particles that belong to the subsytem 
 // tzSector = Tz sector in which the density matrix has to be evaluated 
 // ySector = Y sector in which the density matrix has to be evaluated 
+// maxYA = maximum value of Y in the A partition
 // weightOrbitalA = weight of each orbital in the A part (starting from the leftmost orbital)
 // minYB = minimum value of Y that has to be kept in the B partition
 // weightOrbitalB = weight of each orbital in the B part (starting from the leftmost orbital)
 // entanglementMatrix = reference on the entanglement matrix (will be overwritten)
 // return value = reference on the entanglement matrix
 
-RealMatrix& FermionOnCP2::EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix (int nbrFermionSector, int tzSector, int ySector, double* weightOrbitalA, 
+RealMatrix& FermionOnCP2::EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix (int nbrFermionSector, int tzSector, int ySector, int maxYA, double* weightOrbitalA, 
 														int minYB, double* weightOrbitalB, RealMatrix& entanglementMatrix)
 {  
+  int ShiftYA = 2*(this->NbrFluxQuanta - maxYA);
   
+  cout << "Evaluate entanglement" << endl;
+  int RSector = (ySector + 3*tzSector + 2*nbrFermionSector*this->NbrFluxQuanta);
+  int SSector = (ySector - 3*tzSector + 2*nbrFermionSector*this->NbrFluxQuanta);
   
-  int rSector = (ySector + 3*tzSector + 2*nbrFermionSector*this->NbrFluxQuanta);
-  int sSector = (ySector - 3*tzSector + 2*nbrFermionSector*this->NbrFluxQuanta);
-  
-  if ((rSector < 0) || (sSector < 0) || ((rSector % 6) != 0) || ((sSector % 6) != 0) || (rSector + sSector > 6*this->NbrFluxQuanta*nbrFermionSector))
+  if ((RSector < 0) || (SSector < 0) || ((RSector % 6) != 0) || ((SSector % 6) != 0) || (RSector + SSector > 6*this->NbrFluxQuanta*nbrFermionSector))
     {
       return entanglementMatrix;	  
     }
@@ -899,15 +1091,12 @@ RealMatrix& FermionOnCP2::EvaluateEntanglementMatrixGenericRealSpacePartitionFro
     }
   
   
-  int TmpNbrFluxQuantaA = this->NbrFluxQuanta;
-  if (minYB != -2 * this->NbrFluxQuanta)
-    TmpNbrFluxQuantaA = minYB - 3;
-  FermionOnCP2 TmpDestinationHilbertSpace(nbrFermionSector, TmpNbrFluxQuantaA, tzSector, ySector);
+  FermionOnCP2 TmpDestinationHilbertSpace(nbrFermionSector, maxYA, tzSector, ySector + ShiftYA);
   cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
   unsigned long* TmpMonomial1 = new unsigned long [ComplementaryNbrFermionsSector];
   unsigned long* TmpMonomial3 = new unsigned long [this->NbrFermions];
   
-  FermionOnCP2 TmpHilbertSpace(ComplementaryNbrFermionsSector, this->NbrFluxQuanta, tzSector, ySector);
+  FermionOnCP2 TmpHilbertSpace(ComplementaryNbrFermionsSector, this->NbrFluxQuanta, minYB, this->TotalTz - tzSector, this->TotalY - ySector);
   for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
     {
       TmpDestinationHilbertSpace.ConvertToMonomial(TmpDestinationHilbertSpace.StateDescription[i],TmpMonomial3);

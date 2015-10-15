@@ -163,18 +163,34 @@ class FermionOnCP2 : public FermionOnSphere
   // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
   virtual RealMatrix EvaluatePartialEntanglementMatrixParticlePartition (int nbrFermionSector, int tzSector, int ySector, RealVector& groundState, bool removeBinomialCoefficient = false);
   
+  // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. 
+  // The entanglement matrix is only evaluated in a given tz, Y sector and both A and B are resticted to a given number of orbitals
+  //  
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // tzSector = Tz sector in which the density matrix has to be evaluated 
+  // ySector = Y sector in which the density matrix has to be evaluated 
+  // maxYA = maximum value of Y in the A partition
+  // minYB = minimum value of Y in the B partition
+  // groundState = reference on the total system ground state
+  // removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+  // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
+  virtual RealMatrix EvaluatePartialEntanglementMatrixParticlePartition(int nbrFermionSector, int tzSector, int ySector,
+									       int maxYA, int minYB, 
+									       RealVector& groundState, bool removeBinomialCoefficient);
+  
   // evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using a generic real space partition. 
   // The entanglement matrix is only evaluated in a given tz, y sector and computed from precalculated particle entanglement matrix. The cut has to be at a given value of Y
   // 
   // nbrFermionSector = number of particles that belong to the subsytem 
   // tzSector = Tz sector in which the density matrix has to be evaluated 
   // ySector = Y sector in which the density matrix has to be evaluated 
+  // maxYA = maximum value of Y in the A partition
   // weightOrbitalA = weight of each orbital in the A part (starting from the leftmost orbital)
   // minYB = minimum value of Y that has to be kept in the B partition
   // weightOrbitalB = weight of each orbital in the B part (starting from the leftmost orbital)
   // entanglementMatrix = reference on the entanglement matrix (will be overwritten)
   // return value = reference on the entanglement matrix
-  virtual RealMatrix& EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix (int nbrFermionSector, int tzSector, int ySector, double* weightOrbitalA, 
+  virtual RealMatrix& EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix (int nbrFermionSector, int tzSector, int ySector, int maxYA, double* weightOrbitalA, 
 														int minYB, double* weightOrbitalB, RealMatrix& entanglementMatrix);
   
   
@@ -225,7 +241,7 @@ class FermionOnCP2 : public FermionOnSphere
   //quantumNumberY = array that gives the quantum number y for a single particle state
   inline void FermionOnCP2::GetQuantumNumbersFromLinearizedIndex(int* quantumNumberTz, int* quantumNumberY, int* quantumNumberR, int* quantumNumberS)
   {
-    for (int tzMax = 0; tzMax <= this->NbrFluxQuanta; ++tzMax)
+    for (int tzMax = (2*this->NbrFluxQuanta + this->MinY) / 3; tzMax <= this->NbrFluxQuanta; ++tzMax)
     {
       for (int shiftedTz = 0; shiftedTz <= tzMax; ++shiftedTz)
 	{
@@ -250,8 +266,9 @@ class FermionOnCP2 : public FermionOnSphere
   //return value = index of the state
   inline int FermionOnCP2::GetLinearizedIndex(int tz, int y, int nbrParticles)
   {
+    int TruncationShift = (2 * this->NbrFluxQuanta + this->MinY) * (2*this->NbrFluxQuanta + this->MinY + 3) / 18;
     int tzMax = (y + 2*nbrParticles*this->NbrFluxQuanta)/3;
-    int index = tzMax*(tzMax + 1)/2 + (tz + tzMax)/2 ;
+    int index = tzMax*(tzMax + 1)/2 + (tz + tzMax)/2  - TruncationShift;
 //     cout <<index << endl;
 //     int index = this->LzMax - (tzMax*(tzMax + 1)/2 + (tz + tzMax)/2) ;
     return index;

@@ -75,7 +75,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "largest-lz", "only compute the largest block of the reduced density matrix (Lz=0 or 1/2)");
   (*SystemGroup) += new BooleanOption  ('\n', "positive-momenta", "only compute the positive jz and lz sectors");
   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
-//   (*SystemGroup) += new BooleanOption  ('\n', "use-svd", "use singular value decomposition instead of diagonalization to compute the entropy");
+  
+  (*SystemGroup) += new BooleanOption  ('\n', "realspace-cut", "use real space partition instead of particle partition");
+  (*SystemGroup) += new SingleStringOption  ('\n', "realspace-generic", "use a generic real space partition instead of particle partition (geometrical weight has to be provided through this external file)");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
   (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
@@ -131,7 +133,9 @@ int main(int argc, char** argv)
   bool EigenstateFlag = Manager.GetBoolean("density-eigenstate");
   bool LargestLSector = Manager.GetBoolean("largest-lz");
   bool PositiveSectors = Manager.GetBoolean("positive-momenta");
-//   bool RealSpaceCut = Manager.GetBoolean("realspace-cut");
+  bool RealSpaceCut = Manager.GetBoolean("realspace-cut");
+  
+  
   int MinTza = Manager.GetInteger("min-tza");
   int MinYa = Manager.GetInteger("min-ya");
   int MaxTza = Manager.GetInteger("max-tza");
@@ -141,7 +145,7 @@ int main(int argc, char** argv)
   int FilterNa = Manager.GetInteger("na-eigenstate");
   int NbrEigenstates = Manager.GetInteger("nbr-eigenstates");
   bool ShowTimeFlag = Manager.GetBoolean("show-time");
-//   bool SVDFlag = Manager.GetBoolean("use-svd");
+  
   int* TotalTz = 0;
   int* TotalY = 0;
   bool Statistics = true;
@@ -155,6 +159,9 @@ int main(int argc, char** argv)
   bool MinusTzSymmetry = false;
   bool TzZ3Symmetry = false;
   bool SVDFlag = Manager.GetBoolean("use-svd");
+  if (RealSpaceCut == true)
+    SVDFlag = true;
+  int TotalNbrOrbitals = (NbrFluxQuanta + 1) * (NbrFluxQuanta + 2)/2;
 //   int MaxLzA = Manager.GetInteger("max-lza");
 //   int MinLzA = Manager.GetInteger("min-lza");
 //   if ((ComputeLValueFlag == true) && (DensityMatrixFileName == 0))
@@ -202,7 +209,8 @@ int main(int argc, char** argv)
 	    Weights[i] = 1.0;
 	} 
     }
-
+    
+    
   for (int i = 0; i < NbrSpaces; ++i)
     {
       TotalTz[i] = 0;
@@ -250,6 +258,88 @@ int main(int argc, char** argv)
       }
   
   
+  double* WeightAOrbitals = 0;
+  double* WeightBOrbitals = 0;
+  int TmpMinYB = - 2 * NbrFluxQuanta;
+  int TmpMaxYA = NbrFluxQuanta;
+  int NbrAOrbitals = TotalNbrOrbitals;
+  int NbrBOrbitals = TotalNbrOrbitals;
+  if (Manager.GetString("realspace-generic") != 0)
+    {
+      ConfigurationParser RealSpaceWeights;
+      if (RealSpaceWeights.Parse(Manager.GetString("realspace-generic")) == false)
+	{
+	  RealSpaceWeights.DumpErrors(cout) << endl;
+	  return -1;
+	}
+      double* TmpSquareWeights = 0;
+      int TmpNbrOrbitals = 0;
+      if (RealSpaceWeights.GetAsDoubleArray("OrbitalSquareWeights", ' ', TmpSquareWeights, TmpNbrOrbitals) == false)
+	{
+	  cout << "OrbitalSquareWeights is not defined or as a wrong value" << endl;
+	  return -1;
+	}
+      if (TmpNbrOrbitals > TotalNbrOrbitals)
+	{
+	  cout << "error, the number of weights (" << TmpNbrOrbitals << ") cannot exceed the number of orbitals (" << TotalNbrOrbitals << ")" << endl;
+	  return -1;
+	}
+	
+      NbrAOrbitals = TmpNbrOrbitals;
+      WeightAOrbitals = new double [NbrAOrbitals];
+      for (int i = 0; i < NbrAOrbitals; ++i)
+	{
+	  WeightAOrbitals[i] = sqrt(TmpSquareWeights[i]);
+	}
+//       NbrBOrbitals = TotalNbrOrbitals - TmpNbrOrbitals;
+//       WeightBOrbitals = new double [NbrBOrbitals];
+//       for (int i = 0; i < NbrAOrbitals; ++i)
+// 	{
+// 	  WeightBOrbitals[i] = sqrt(1.0 - TmpSquareWeights[i]);
+// 	}
+//       for (int i = NbrAOrbitals; i < NbrBOrbitals; ++i)
+// 	WeightBOrbitals[i] = 1.0;
+
+// assume that all weights are explicitly defined and equal to 0 or 1
+    NbrBOrbitals = TmpNbrOrbitals;
+    WeightBOrbitals = new double [NbrBOrbitals];
+    for (int i = 0; i < NbrBOrbitals; ++i)
+    {
+      WeightBOrbitals[i] = sqrt(1.0 -TmpSquareWeights[i]);
+    }
+      
+    int TmpA = 1;
+    int p = 0;
+    while (TmpA < NbrAOrbitals)
+      {
+	++p;
+	TmpA += (p + 1);
+       }
+    TmpMaxYA = 3*p - 2*NbrFluxQuanta;
+    
+    int TmpB = TotalNbrOrbitals;
+    p = 0;
+    while (TmpB > NbrBOrbitals)
+      {
+	TmpB -= (p + 1);
+	++p;
+       }
+    TmpMinYB = 3*p - 2*NbrFluxQuanta;
+    
+//     cout << NbrAOrbitals << " " << NbrBOrbitals << " " << TmpA << " " << TmpB <<  " "<< TmpMaxYA << " " << TmpMinYB << endl;
+    if ((TmpA != NbrAOrbitals) || (TmpB != NbrBOrbitals))
+      {
+	  cout << "error, the number of weights (" << TmpNbrOrbitals << ") should  be of the form ((p+1) (p+2) / 2)" << endl;
+	  return -1;
+	}
+    }
+
+  
+  cout << "number of orbitals in A = " << NbrAOrbitals << endl;
+  cout << "number of orbitals in B = " << NbrBOrbitals << endl;
+
+
+  
   Spaces = new FermionOnCP2* [NbrSpaces];
   
   for (int i = 0; i < NbrSpaces; ++i)
@@ -274,15 +364,20 @@ int main(int argc, char** argv)
 	}
     }
 
-
   int MaxSubsystemNbrParticles = (NbrParticles >> 1) + (NbrParticles & 1);
   if (Manager.GetInteger("max-na") > 0)
     {
       MaxSubsystemNbrParticles = Manager.GetInteger("max-na");
     }
+//   if (RealSpaceCut == true)
+//     MaxSubsystemNbrParticles = NbrParticles;
   
   int SubsystemNbrParticles = Manager.GetInteger("min-na");
-  
+  if ((RealSpaceCut == true) && (SubsystemNbrParticles == 1))
+    {
+      SubsystemNbrParticles = 0;
+    }
+    
   if (DensityMatrixFileName != 0)
     {
       ofstream DensityMatrixFile;
@@ -298,7 +393,17 @@ int main(int argc, char** argv)
     File.open(Manager.GetString("output-file"), ios::binary | ios::out);
   else
     {
-      char* TmpFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "partent");
+      char* TmpFileName = 0;
+      if (RealSpaceCut == false)
+	TmpFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "partent");
+      else
+      {
+	  char* TmpExtension = new char [512];
+	  sprintf(TmpExtension, "maxYA_%d.realent", TmpMaxYA);
+	  TmpFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", TmpExtension);
+	  delete[] TmpExtension;
+      }
+	
       if (TmpFileName == 0)
 	{
 	  cout << "no vec extension was found in " << GroundStateFiles[0] << " file name" << endl;
@@ -319,50 +424,18 @@ int main(int argc, char** argv)
       int SubsystemMaxTotalR = SubsystemNbrParticles * NbrFluxQuanta;
       int SubsystemMinTotalR = 0;
       
-//       if ((MinTza != -1) && (MinTza > SubsystemMinTotalR))
-// 	SubsystemMinTotalTz = MinTza;
-//       if ((MinJza != -1) && (MaxJza < SubsystemMaxTotalJz))
-// 	SubsystemMaxTotalJz = MaxJza;
-//       if ((MinKza != -1) && (MinKza > SubsystemMinTotalKz))
-// 	SubsystemMinTotalKz = MinKza;
-//       if ((MaxKza != -1) && (MaxKza < SubsystemMaxTotalKz))
-// 	SubsystemMaxTotalJz = MaxKza;
-//       if (LargestLSector == true)
-// 	{
-// 	  if (((LzMax * NbrParticles) & 1) == 0)
-// 	    {
-// 	      SubsystemTotalLz = 0;
-// 	      SubsystemMaxTotalLz = 0;
-// 	    }
-// 	  else
-// 	    {
-// 	      SubsystemTotalLz = 1;
-// 	      SubsystemMaxTotalLz = 1;
-// 	    }
-// 	}
-//       if (PositiveSectors == true)
-// 	{
-// 	   SubsystemMinTotalY = 0;
-// 	   
-// 	  if (((NbrFluxQuanta * NbrParticles) & 1) == 0)
-// 	    {
-// 	      SubsystemMinTotalJz = 0;
-// 	     }
-// 	  else
-// 	    {
-// 	      SubsystemMinTotalJz = 1;
-// 	    }
-// 	}
-//      
-// 	
+      if (MinYa != -1)
+	SubsystemMinTotalR = (2*NbrParticles*NbrFluxQuanta + MinYa) / 3;
+      
+      if (MaxYa != -1)
+	SubsystemMaxTotalR = (2*NbrParticles*NbrFluxQuanta + MinYa) / 3;
+      
       for (int SubsystemTotalR = SubsystemMinTotalR; SubsystemTotalR <= SubsystemMaxTotalR; SubsystemTotalR += 1)
       {
 	int SubsystemMaxTotalS = SubsystemNbrParticles * NbrFluxQuanta - SubsystemTotalR;
 	int SubsystemMinTotalS = 0;
 	for (int SubsystemTotalS = SubsystemMinTotalS; SubsystemTotalS <= SubsystemMaxTotalS ; SubsystemTotalS +=1)
 	{
-	  /*if (((SubsystemMaxTotalJz & 1) == ((SubsystemTotalJz + SubsystemTotalKz) & 1)) && 
-	      (fabs(SubsystemTotalKz) + fabs(SubsystemTotalJz) <= SubsystemMaxTotalJz))*/	  
 	  {
 	    int SubsystemTotalTz = SubsystemTotalR - SubsystemTotalS;
 	    int SubsystemTotalY = 3*(SubsystemTotalR + SubsystemTotalS) - 2*SubsystemNbrParticles*NbrFluxQuanta;
@@ -375,11 +448,25 @@ int main(int argc, char** argv)
 	      }
 	    RealSymmetricMatrix PartialDensityMatrix;
 	    RealMatrix PartialEntanglementMatrix;
-	  
-	     if (SVDFlag == false)
-	      PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalTz, SubsystemTotalY, GroundStates[0], Architecture.GetArchitecture());
+	    
+	    if (RealSpaceCut == false)
+	    {
+	      if (SVDFlag == false)
+		PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalTz, SubsystemTotalY, GroundStates[0], Architecture.GetArchitecture());
+	      else
+		PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalTz, SubsystemTotalY, GroundStates[0],false);
+	    }
 	    else
-	      PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalTz, SubsystemTotalY, GroundStates[0],false);
+	    {
+	     PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalTz, SubsystemTotalY,
+														    TmpMaxYA, TmpMinYB, GroundStates[0], true);
+	     if (PartialEntanglementMatrix.GetNbrRow() != 0)
+	     {
+		Spaces[0]->EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalTz, SubsystemTotalY, 
+															   TmpMaxYA, WeightAOrbitals, TmpMinYB, WeightBOrbitals, 
+															   PartialEntanglementMatrix);
+	      } 
+	    }
 	  
 	    if (WeightFlag == true)
 	      PartialDensityMatrix *= Weights[0];
@@ -389,10 +476,24 @@ int main(int argc, char** argv)
 		RealSymmetricMatrix TmpMatrix;
 		RealMatrix TmpEntanglementMatrix;
 	      
-		if (SVDFlag == false)
-		  TmpMatrix =  Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalTz, SubsystemTotalY,  GroundStates[i], Architecture.GetArchitecture());
+		if (RealSpaceCut ==false)
+		{
+		  if (SVDFlag == false)
+		    TmpMatrix =  Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalTz, SubsystemTotalY,  GroundStates[i], Architecture.GetArchitecture());
+		  else
+		    TmpEntanglementMatrix = Spaces[i] -> EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalTz, SubsystemTotalY, GroundStates[i],false);
+		}
 		else
-		  TmpEntanglementMatrix = Spaces[i] -> EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalTz, SubsystemTotalY, GroundStates[i],false);
+		{
+		  TmpEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalTz, SubsystemTotalY,
+														    TmpMaxYA, TmpMinYB, GroundStates[i], true);
+		  if (PartialEntanglementMatrix.GetNbrRow() != 0)
+		  {
+		    Spaces[0]->EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalTz, SubsystemTotalY, 
+															   TmpMaxYA, WeightAOrbitals, TmpMinYB, WeightBOrbitals, 
+															   TmpEntanglementMatrix);
+		  } 
+		}
 	
 		if (WeightFlag == true)
 		      TmpMatrix *= Weights[i];
@@ -609,7 +710,7 @@ int main(int argc, char** argv)
       TotalTrace += DensitySum;
     }
   File.close();
-//   if (RealSpaceCut == true)
-//     cout <<"Total Trace = "<<TotalTrace<<endl;
+  if (RealSpaceCut == true)
+    cout <<"Total Trace = "<<TotalTrace<<endl;
   return 0;
 }
