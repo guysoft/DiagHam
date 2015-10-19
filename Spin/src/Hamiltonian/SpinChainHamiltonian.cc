@@ -172,8 +172,7 @@ SpinChainHamiltonian::SpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin
     {
       this->Hz[i] = hz[i];
     }
-   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
-  this->PeriodicBoundaryConditions = false;
+  this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateDiagonalMatrixElements();
 }
 
