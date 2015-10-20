@@ -279,6 +279,20 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual int AdA (int index, int m, int n, double& coefficient);
+  
+  // apply a_n  operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad or A call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n = index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double A (int index, int n);
+  
+  // apply a^+_m operator to the state produced using the A or Ad method (without destroying it)
+  //
+  // m = first index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad (int m, double& coefficient);
 
   // print a given State
   //

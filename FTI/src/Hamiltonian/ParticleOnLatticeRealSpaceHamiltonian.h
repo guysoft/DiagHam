@@ -578,6 +578,7 @@ inline void ParticleOnLatticeRealSpaceHamiltonian::EvaluateMNOneBodyAddMultiplyC
 {
   int Index;
   double Coefficient;
+  
   if (this->OneBodyGenericInteractionFactors != 0)
     {
       for (int i = firstComponent; i < lastComponent; i += step)
@@ -632,6 +633,7 @@ inline void ParticleOnLatticeRealSpaceHamiltonian::EvaluateMNOneBodyAddMultiplyC
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient = 0.0;
   int Index;
+  
   if (this->OneBodyGenericInteractionFactors != 0) 
     {
       for (int p = 0; p < nbrVectors; ++p)

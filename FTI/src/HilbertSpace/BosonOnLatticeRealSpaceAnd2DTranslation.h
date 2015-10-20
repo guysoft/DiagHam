@@ -74,8 +74,13 @@ class BosonOnLatticeRealSpaceAnd2DTranslation : public BosonOnTorusWithMagneticT
   unsigned long YMomentumBlockMask;
   // number of independant blockse related by translations in the y direction 
   int NbrYMomentumBlocks;
+  
+  // temporary state used when applying operators
+  unsigned long* TemporaryStateOperators;
+  int TemporaryStateOperatorsKyMax;
 
- public:
+  
+  public:
 
   // default constructor		
   // 
@@ -133,6 +138,16 @@ class BosonOnLatticeRealSpaceAnd2DTranslation : public BosonOnTorusWithMagneticT
   // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state 
   virtual int AdAd (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
+  // apply a^+_m operator to the state produced using AuAu method (without destroying it)
+  //
+  // m = first index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // return value = index of the destination state 
+  virtual int Ad (int m, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
 
   // print a given State
   //
@@ -521,11 +536,16 @@ inline unsigned long BosonOnLatticeRealSpaceAnd2DTranslation::FindCanonicalForm(
     {
       this->TemporaryState[i] = 0;
     }
-  
-  this->FermionToBoson(stateDescription, this->FermionicMaxMomentum, this->ProdATemporaryState, this->ProdATemporaryStateKyMax);
-  for(int i =  this->ProdATemporaryStateKyMax + 1 ; i < this->NbrMomentum ; i++)
+    
+   for(int i =  0 ; i < this->NbrMomentum ; i++)
     {
-      this->ProdATemporaryState[i] = 0;
+      this->TemporaryStateOperators[i] = this->TemporaryState[i];
+    }
+  
+  this->FermionToBoson(stateDescription, this->FermionicMaxMomentum, this->TemporaryStateOperators, this->TemporaryStateOperatorsKyMax);
+  for(int i =  this->TemporaryStateOperatorsKyMax + 1 ; i < this->NbrMomentum ; i++)
+    {
+      this->TemporaryStateOperators[i] = 0;
     }
   
   
@@ -553,14 +573,14 @@ inline unsigned long BosonOnLatticeRealSpaceAnd2DTranslation::FindCanonicalForm(
   for (int m = 1; (m < this->MaxYMomentum) && (stateDescription != 0x0ul) ; ++m)
     {
       TmpStateDescription = stateDescriptionReference;
-      this->ApplySingleYTranslation(this->ProdATemporaryState);	 
+      this->ApplySingleYTranslation(this->TemporaryStateOperators);	 
       int ProdATmpMomentumMax =  this->NbrMomentum - 1;
-      while (this->ProdATemporaryState[ProdATmpMomentumMax] == 0x0ul)
+      while (this->TemporaryStateOperators[ProdATmpMomentumMax] == 0x0ul)
 	--ProdATmpMomentumMax;
-      stateDescriptionReference = this->BosonToFermion(this->ProdATemporaryState,ProdATmpMomentumMax); 
+      stateDescriptionReference = this->BosonToFermion(this->TemporaryStateOperators,ProdATmpMomentumMax); 
       for(int i =  0; i < this->NbrMomentum ; i++)
 	{
-	  this->TemporaryState[i] = this->ProdATemporaryState[i];
+	  this->TemporaryState[i] = this->TemporaryStateOperators[i];
  	}
       
       for (int n = 1; n < this->MaxXMomentum; ++n)

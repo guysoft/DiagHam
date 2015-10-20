@@ -289,8 +289,8 @@ HermitianMatrix TightBindingModelKagomeLattice::GetRealSpaceTightBindingHamilton
       HoppingAmplitudes[i] = new Complex[NbrConnectedOrbitals[i]];
     }
 
-  Complex Lambda1 (this->NNHopping, this->NNSpinOrbit);
-  Complex Lambda2 (this->NextNNHopping, this->NextNNSpinOrbit);
+  Complex Lambda1 (-this->NNHopping, -this->NNSpinOrbit);
+  Complex Lambda2 (-this->NextNNHopping, -this->NextNNSpinOrbit);
 
   int TmpIndex = 0;
 

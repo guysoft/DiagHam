@@ -109,7 +109,7 @@ class BosonOnTorusWithMagneticTranslationsShort :  public ParticleOnTorusWithMag
   double** RescalingFactors;
   // number of state in each orbit
   int* NbrStateInOrbit;
-
+  
 public:
 
   // default constructor
@@ -213,6 +213,15 @@ public:
   // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of the destination state 
   virtual int ProdAd (int* m, int nbrIndices, double& coefficient, int& nbrTranslation);
+  
+   // apply a_n operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next Ad call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n = index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double A (int index, int n);
+
+
 
   // return matrix representation of the annihilation operator a_i
   //

@@ -164,7 +164,8 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
   // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of the destination state 
   int AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient, int& nbrTranslation);
-
+  
+ 
   // print a given State
   //
   // Str = reference on current output stream 

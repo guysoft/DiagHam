@@ -100,7 +100,7 @@ ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::ParticleOnLatticeRealSpac
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
   this->HermitianSymmetryFlag = true;//true;
-  
+    
   this->EvaluateExponentialFactors();
   this->EvaluateOneBodyFactorsFromTightBingding(tightBinding);
   this->EvaluateInteractionFactorsFromDensityDensity(densityDensity);

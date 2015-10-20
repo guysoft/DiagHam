@@ -346,6 +346,8 @@ int BosonOnTorusWithMagneticTranslations::AdAdAA (int index, int m1, int m2, int
   return Tmp2;
 }
 
+
+
 // find state index
 //
 // state = state description

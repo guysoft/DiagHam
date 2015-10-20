@@ -551,6 +551,62 @@ int BosonOnSphereShort::AdA (int index, int m, int n, double& coefficient)
   return TmpIndex;
 }
 
+// apply a^+_m a_n operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// n = index of the annihilation operator
+// return value = double where the multiplicative factor has to be stored
+
+double BosonOnSphereShort::A (int index, int n)
+{
+  this->FermionToBoson(this->FermionBasis->StateDescription[index], this->FermionBasis->StateLzMax[index], this->ProdATemporaryState, this->ProdATemporaryStateLzMax);
+  for (int i = this->ProdATemporaryStateLzMax + 1; i <= this->LzMax ;++i)
+    this->ProdATemporaryState[i] = 0;
+  
+  double coefficient;
+  if ((this->ProdATemporaryStateLzMax < n)  || (this->ProdATemporaryState[n] == 0))
+    { 
+      coefficient = 0.0;
+      return coefficient;      
+    }
+  coefficient = (double) this->ProdATemporaryState[n];
+  --this->ProdATemporaryState[n];
+  if ((this->ProdATemporaryStateLzMax == n) && (this->ProdATemporaryState[n] == 0))
+    {
+      while ((this->ProdATemporaryState[this->ProdATemporaryStateLzMax] == 0)&&( this->ProdATemporaryStateLzMax > 0 ))
+	--this->ProdATemporaryStateLzMax;
+    }
+  
+  return coefficient;
+
+}
+
+
+// apply a^+_m operator to the state produced using the A or Ad method (without destroying it)
+//
+// m = first index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be store
+// return value = index of the destination state 
+int BosonOnSphereShort::Ad (int m, double& coefficient)
+{
+  this->TemporaryStateLzMax = this->ProdATemporaryStateLzMax;
+  for (int i = 0; i < this->NbrLzValue; ++i)
+    this->TemporaryState[i] = this->ProdATemporaryState[i];
+  if (this->TemporaryStateLzMax < m) 
+    {
+      for (int i = this->TemporaryStateLzMax + 1; i <= m; ++i)
+	this->TemporaryState[i] = 0;
+      this->TemporaryStateLzMax = m;
+    }
+  ++this->TemporaryState[m];
+  coefficient *= (double) this->TemporaryState[m];
+  coefficient = sqrt(coefficient);  
+  int TmpIndex = this->FermionBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax), this->TemporaryStateLzMax + this->NbrBosons - 1);
+  if (TmpIndex == this->HilbertSpaceDimension)
+    coefficient = 0.0;
+  return TmpIndex;
+}
+
 // print a given State
 //
 // Str = reference on current output stream 

@@ -162,6 +162,18 @@ ComplexVector ParticleOnTorusWithMagneticTranslations::ConvertFromKxKyBasis(Comp
   return ComplexVector();
 }
 
+// convert a state defined in the (Kx,Ky) basis into a state in the Ky basis
+//
+// state = reference on the state to convert
+// space = pointer to the Hilbert space where state is defined
+// oldKx = vnew value of the relative quantum number kx
+// return value = state in the (Kx,Ky) basis
+
+ComplexVector ParticleOnTorusWithMagneticTranslations::ConvertFromKxKyBasisAndModifyKx(ComplexVector& state, ParticleOnTorus* space, int oldKx)
+{
+  return ComplexVector();
+}
+
 // get the C2 symmetric state of a given state 
 //
 // index = index of the state whose symmetric counterpart has to be computed

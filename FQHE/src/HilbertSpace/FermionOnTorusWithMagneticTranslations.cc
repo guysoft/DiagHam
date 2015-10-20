@@ -1361,6 +1361,46 @@ ComplexVector FermionOnTorusWithMagneticTranslations::ConvertFromKxKyBasis(Compl
   return TmpVector;
 }
 
+// convert a state defined in the (Kx,Ky) basis into a state in the Ky basis, and change its kx quantum number
+//
+// state = reference on the state to convert
+// space = pointer to the Hilbert space where state is defined
+// oldKx = vnew value of the relative quantum number kx
+// return value = state in the (Kx,Ky) basis
+
+ComplexVector FermionOnTorusWithMagneticTranslations::ConvertFromKxKyBasisAndModifyKx(ComplexVector& state, ParticleOnTorus* space, int oldKx)
+{
+  FermionOnTorus* TmpSpace = (FermionOnTorus*) space;
+  FermionOnTorusWithMagneticTranslations* PreviousSpace = new FermionOnTorusWithMagneticTranslations (this->NbrFermions, this->MaxMomentum, oldKx, this->YMomentum);
+  ComplexVector TmpVector (TmpSpace->HilbertSpaceDimension, true);
+  Complex* FourrierCoefficients = new Complex [this->MomentumModulo];
+  for (int i = 0; i < this->MomentumModulo; ++i)
+    FourrierCoefficients[i] = Phase (-2.0 * M_PI * ((double) (i * this->XMomentum)) / ((double) this->MomentumModulo));
+  for (int i = 0; i < TmpSpace->HilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState = TmpSpace->StateDescription[i];
+      int NbrTranslation = 0;
+      int TmpMaxMomentum = TmpSpace->StateKyMax[i];
+      TmpState = this->FindCanonicalFormAndTestXMomentumConstraint(TmpState, TmpMaxMomentum, NbrTranslation);
+      if (NbrTranslation >= 0)
+	{
+	  int TmpNbrTranslation = 0;
+	  TmpState = PreviousSpace->FindCanonicalFormAndTestXMomentumConstraint(TmpState, TmpMaxMomentum, TmpNbrTranslation);
+	  if (TmpNbrTranslation >= 0)
+	  {
+	    int Pos = this->FindStateIndex(TmpState, TmpMaxMomentum);
+	    if (Pos < this->HilbertSpaceDimension)
+	      {
+		TmpVector[i] =  (state[Pos] * (1.0 - (2.0 * ((double) ((this->ReorderingSign[Pos] >> NbrTranslation) & 0x1ul)))) * 
+			       FourrierCoefficients[NbrTranslation] / sqrt((double) this->NbrStateInOrbit[Pos]));
+	      }
+	  }
+	}
+    }
+  delete[] FourrierCoefficients;
+  return TmpVector;
+}
+
 // core part of the C4 rotation
 //
 // inputState = reference on the state that has to be rotated
