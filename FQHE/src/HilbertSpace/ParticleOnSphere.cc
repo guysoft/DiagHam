@@ -484,6 +484,7 @@ int ParticleOnSphere::AdA (int index, int m, int n, double& coefficient, int& nb
 
 double ParticleOnSphere::A (int index, int nn)
 {
+  cout << "Warning: using the default operator ParticleOnSphere::A" << endl;
   return 0.0;
 }
 
@@ -495,6 +496,7 @@ double ParticleOnSphere::A (int index, int nn)
 
 double ParticleOnSphere::Ad (int index, int m)
 {
+  cout << "Warning: using the default operator ParticleOnSphere::Ad" << endl;
   return 0.0;
 }
 
@@ -506,6 +508,7 @@ double ParticleOnSphere::Ad (int index, int m)
 
 int ParticleOnSphere::A (int n, double& coefficient)
 {
+  cout << "Warning: using the default operator ParticleOnSphere::A" << endl;
   return this->HilbertSpaceDimension;
 }
 
@@ -517,6 +520,7 @@ int ParticleOnSphere::A (int n, double& coefficient)
 
 int ParticleOnSphere::Ad (int m, double& coefficient)
 {
+  cout << "Warning: using the default operator ParticleOnSphere::Ad" << endl;
   return this->HilbertSpaceDimension;
 }
  

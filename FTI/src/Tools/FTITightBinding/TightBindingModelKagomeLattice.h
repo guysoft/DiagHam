@@ -52,6 +52,9 @@ class TightBindingModelKagomeLattice : public Abstract2DTightBindingModel
   
   // four times the sublattice staggered chemical potential 
   double MuS;
+  
+  // use the Bloch form instead of the the traditional form
+  bool BlochFormFlag;
 
  public:
 
@@ -70,7 +73,7 @@ class TightBindingModelKagomeLattice : public Abstract2DTightBindingModel
   // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
   TightBindingModelKagomeLattice(int nbrSiteX, int nbrSiteY, double t1, double t2, double lambda1, double lambda2, double mus, 
 				 double gammaX, double gammaY, 
-				 AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
+				 AbstractArchitecture* architecture, bool storeOneBodyMatrices = true, bool blochFormFlag = false);
   
   // constructor for a tilted lattice
   //
@@ -93,11 +96,6 @@ class TightBindingModelKagomeLattice : public Abstract2DTightBindingModel
   // destructor
   //
   ~TightBindingModelKagomeLattice();
-
-  // get the tight binding hamiltonian in real space 
-  // 
-  // return value = tight binding hamiltonian
-  virtual HermitianMatrix GetRealSpaceTightBindingHamiltonian();
 
   // compute the Bloch hamiltonian at a point of the Brillouin zone
   //
@@ -129,6 +127,10 @@ class TightBindingModelKagomeLattice : public Abstract2DTightBindingModel
   // minStateIndex = minimum index of the state to compute
   // nbrStates = number of states to compute
   virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates);
+  
+  // find the orbitals connected to those located at the origin unit cell
+  // 
+  virtual void FindConnectedOrbitals();
 
 };
 

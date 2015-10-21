@@ -304,10 +304,12 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("singleparticle-highsymmetryspectrum") == false)
 	{
 	  bool ExportOneBody = false;
+	  bool BlochForm = false;
+// 	  BlochForm = true;
 	  if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("singleparticle-chernnumber") == true) || (Manager.GetBoolean("singleparticle-berrycurvature") == true))
 	    ExportOneBody = true;
 	  TightBindingModelKagomeLattice TightBindingModel(NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
-							   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
+							   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody, BlochForm);
 	  if (Manager.GetBoolean("singleparticle-chernnumber") == true)
 	    {
 	      cout << "Chern number = " << TightBindingModel.ComputeChernNumber(0) << endl;

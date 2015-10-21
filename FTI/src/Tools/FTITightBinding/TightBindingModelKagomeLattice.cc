@@ -61,7 +61,7 @@ using std::ofstream;
 // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
 
 TightBindingModelKagomeLattice::TightBindingModelKagomeLattice(int nbrSiteX, int nbrSiteY, double t1, double t2, double lambda1, double lambda2, double mus, 
-							       double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices)
+							       double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices, bool blochFormFlag)
 {
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
@@ -81,6 +81,7 @@ TightBindingModelKagomeLattice::TightBindingModelKagomeLattice(int nbrSiteX, int
   this->NbrBands = 3;
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
   this->Architecture = architecture;
+  this->BlochFormFlag = blochFormFlag;
   
   this->ComputeAllProjectedMomenta();
   
@@ -98,6 +99,10 @@ TightBindingModelKagomeLattice::TightBindingModelKagomeLattice(int nbrSiteX, int
     {
       this->EnergyBandStructure[i] = new double[this->NbrStatePerBand];
     }
+    
+  if (this->BlochFormFlag == true)
+    this->FindConnectedOrbitals();
+  
   this->ComputeBandStructure();
 }
 
@@ -142,6 +147,7 @@ TightBindingModelKagomeLattice::TightBindingModelKagomeLattice(int nbrSiteX, int
   this->NbrBands = 3;
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
   this->Architecture = architecture;
+  this->BlochFormFlag = false;
   
   this->ComputeAllProjectedMomenta();
   
@@ -175,6 +181,8 @@ TightBindingModelKagomeLattice::~TightBindingModelKagomeLattice()
 
 void TightBindingModelKagomeLattice::CoreComputeBandStructure(long minStateIndex, long nbrStates)
 {
+  if (this->BlochFormFlag == false)
+  {
   if (nbrStates == 0l)
     nbrStates = this->NbrStatePerBand;
   long MaxStateIndex = minStateIndex + nbrStates;
@@ -220,6 +228,11 @@ void TightBindingModelKagomeLattice::CoreComputeBandStructure(long minStateIndex
 	    }
 	}
     }
+  }
+  else
+  {
+      this->Abstract2DTightBindingModel::CoreComputeBandStructure(minStateIndex, nbrStates);
+  }
 }
 
 // compute the Bloch hamiltonian at a point of the Brillouin zone
@@ -254,140 +267,6 @@ HermitianMatrix TightBindingModelKagomeLattice::ComputeBlochHamiltonian(double k
   TmpOneBodyHamiltonian.SetMatrixElement(0, 2, HAC);
   TmpOneBodyHamiltonian.SetMatrixElement(1, 2, HBC);
   return TmpOneBodyHamiltonian;
-}
-
-
-// get the tight binding hamiltonian in real space 
-// 
-// return value = tight binding hamiltonian
-
-HermitianMatrix TightBindingModelKagomeLattice::GetRealSpaceTightBindingHamiltonian()
-{
-  cout << "warning, untested TightBindingModelKagomeLattice::GetRealSpaceTightBindingHamiltonian()" << endl;
-
-  int* NbrConnectedOrbitals = new int [this->NbrBands];
-  int** OrbitalIndices = new int* [this->NbrBands];
-  int** SpatialIndices = new int* [this->NbrBands];
-  Complex** HoppingAmplitudes = new Complex* [this->NbrBands];
-  NbrConnectedOrbitals[0] = 4; 
-  NbrConnectedOrbitals[1] = 4;      
-  NbrConnectedOrbitals[2] = 4;      
-  if ((this->NextNNHopping != 0.0) || (this->NextNNSpinOrbit != 0.0))
-    {
-      NbrConnectedOrbitals[0] += 4; 
-      NbrConnectedOrbitals[1] += 4;      
-      NbrConnectedOrbitals[2] += 4;           
-    }
-  if (this->MuS != 0.0)
-    {
-      ++NbrConnectedOrbitals[0];
-    }
-  for (int i = 0; i < this->NbrBands; ++i)
-    {
-      OrbitalIndices[i] = new int[NbrConnectedOrbitals[i]];
-      SpatialIndices[i] = new int[2 * NbrConnectedOrbitals[i]];
-      HoppingAmplitudes[i] = new Complex[NbrConnectedOrbitals[i]];
-    }
-
-  Complex Lambda1 (-this->NNHopping, -this->NNSpinOrbit);
-  Complex Lambda2 (-this->NextNNHopping, -this->NextNNSpinOrbit);
-
-  int TmpIndex = 0;
-
-  // links starting from A
-  OrbitalIndices[0][TmpIndex] = 1;
-  SpatialIndices[0][TmpIndex * 2] = 0;
-  SpatialIndices[0][(TmpIndex * 2) + 1] = 0;
-  HoppingAmplitudes[0][TmpIndex] = Lambda1;
-  ++TmpIndex;
-  OrbitalIndices[0][TmpIndex] = 2;
-  SpatialIndices[0][TmpIndex * 2] = 0;
-  SpatialIndices[0][(TmpIndex * 2) + 1] = 0;
-  HoppingAmplitudes[0][TmpIndex] = Conj(Lambda1);
-  ++TmpIndex;
-  OrbitalIndices[0][TmpIndex] = 1;
-  SpatialIndices[0][TmpIndex * 2] = -1;
-  SpatialIndices[0][(TmpIndex * 2) + 1] = 0;
-  HoppingAmplitudes[0][TmpIndex] = Lambda1;
-  ++TmpIndex;
-  OrbitalIndices[0][TmpIndex] = 2;
-  SpatialIndices[0][TmpIndex * 2] = 0;
-  SpatialIndices[0][(TmpIndex * 2) + 1] = -1;
-  HoppingAmplitudes[0][TmpIndex] = Conj(Lambda1);
-  ++TmpIndex;
-
-  TmpIndex -= 4;
-
-  // links starting from B
-  OrbitalIndices[1][TmpIndex] = 0;
-  SpatialIndices[1][TmpIndex * 2] = 0;
-  SpatialIndices[1][(TmpIndex * 2) + 1] = 0;
-  HoppingAmplitudes[1][TmpIndex] = Conj(Lambda1);
-  ++TmpIndex;
-  OrbitalIndices[1][TmpIndex] = 2;
-  SpatialIndices[1][TmpIndex * 2] = 0;
-  SpatialIndices[1][(TmpIndex * 2) + 1] = 0;
-  HoppingAmplitudes[1][TmpIndex] = Lambda1;
-  ++TmpIndex;
-  OrbitalIndices[1][TmpIndex] = 0;
-  SpatialIndices[1][TmpIndex * 2] = -1;
-  SpatialIndices[1][(TmpIndex * 2) + 1] = 0;
-  HoppingAmplitudes[1][TmpIndex] = Conj(Lambda1);
-  ++TmpIndex;
-  OrbitalIndices[1][TmpIndex] = 2;
-  SpatialIndices[1][TmpIndex * 2] = -1;
-  SpatialIndices[1][(TmpIndex * 2) + 1] =1;
-  HoppingAmplitudes[1][TmpIndex] = Lambda1;
-  ++TmpIndex;
-
-  TmpIndex -= 4;
-
-  // links starting from C
-  OrbitalIndices[2][TmpIndex] = 0;
-  SpatialIndices[2][TmpIndex * 2] = 0;
-  SpatialIndices[2][(TmpIndex * 2) + 1] = 0;
-  HoppingAmplitudes[2][TmpIndex] = Lambda1;
-  ++TmpIndex;
-  OrbitalIndices[2][TmpIndex] = 1;
-  SpatialIndices[2][TmpIndex * 2] = 0;
-  SpatialIndices[2][(TmpIndex * 2) + 1] = 0;
-  HoppingAmplitudes[2][TmpIndex] = Conj(Lambda1);
-  ++TmpIndex;
-  OrbitalIndices[2][TmpIndex] = 0;
-  SpatialIndices[2][TmpIndex * 2] = 0;
-  SpatialIndices[2][(TmpIndex * 2) + 1] = -1;
-  HoppingAmplitudes[2][TmpIndex] = Lambda1;
-  ++TmpIndex;
-  OrbitalIndices[2][TmpIndex] = 1;
-  SpatialIndices[2][TmpIndex * 2] = -1;
-  SpatialIndices[2][(TmpIndex * 2) + 1] = 1;
-  HoppingAmplitudes[2][TmpIndex] = Conj(Lambda1);
-  ++TmpIndex;
-
-  if ((this->NextNNHopping != 0.0) || (this->NextNNSpinOrbit != 0.0))
-    {
-    }
-
-  if (this->MuS != 0.0)
-    {
-      OrbitalIndices[0][TmpIndex] = 0;
-      SpatialIndices[0][TmpIndex * 2] = 0;
-      SpatialIndices[0][(TmpIndex * 2) +1] = 0;
-      HoppingAmplitudes[0][TmpIndex] = this->MuS;
-    }
-
-  HermitianMatrix TmpMatrix = this->BuildTightBindingHamiltonianRealSpace(NbrConnectedOrbitals, OrbitalIndices, SpatialIndices, HoppingAmplitudes);
-  for (int i = 0; i < this->NbrBands; ++i)
-    {
-      delete[] HoppingAmplitudes[i];
-      delete[] SpatialIndices[i];
-      delete[] OrbitalIndices[i];
-    }
-  delete[] HoppingAmplitudes;
-  delete[] SpatialIndices;
-  delete[] OrbitalIndices;
-  delete[] NbrConnectedOrbitals;
-  return TmpMatrix;
 }
 
 // get the high symmetry points 
@@ -459,4 +338,126 @@ double TightBindingModelKagomeLattice::GetDistanceReciprocalSpace(double kx1, do
   kx2 = MinKx2;
   ky2 = MinKy2;
   return MinDistance;
+}
+
+
+// find the orbitals connected to those located at the origin unit cell
+// 
+  
+void TightBindingModelKagomeLattice::FindConnectedOrbitals()
+{
+  if (this->NbrConnectedOrbitals == 0)
+  {
+    this->NbrConnectedOrbitals = new int [this->NbrBands];
+    this->ConnectedOrbitalIndices = new int* [this->NbrBands];
+    this->ConnectedOrbitalSpatialIndices = new int* [this->NbrBands];
+    this->ConnectedOrbitalHoppingAmplitudes = new Complex* [this->NbrBands];
+  
+    this->NbrConnectedOrbitals[0] = 4; 
+    this->NbrConnectedOrbitals[1] = 4;      
+    this->NbrConnectedOrbitals[2] = 4;      
+    if ((this->NextNNHopping != 0.0) || (this->NextNNSpinOrbit != 0.0))
+      {
+	this->NbrConnectedOrbitals[0] += 4; 
+	this->NbrConnectedOrbitals[1] += 4;      
+	this->NbrConnectedOrbitals[2] += 4;           
+      }
+    if (this->MuS != 0.0)
+      {
+	++this->NbrConnectedOrbitals[0];
+      }
+    for (int i = 0; i < this->NbrBands; ++i)
+      {
+	this->ConnectedOrbitalIndices[i] = new int[this->NbrConnectedOrbitals[i]];
+	this->ConnectedOrbitalSpatialIndices[i] = new int[2 * this->NbrConnectedOrbitals[i]];
+	this->ConnectedOrbitalHoppingAmplitudes[i] = new Complex[this->NbrConnectedOrbitals[i]];
+      }
+
+    Complex Lambda1 (-this->NNHopping, -this->NNSpinOrbit);
+    Complex Lambda2 (-this->NextNNHopping, -this->NextNNSpinOrbit);
+
+    int TmpIndex = 0;
+
+  // links starting from A
+    this->ConnectedOrbitalIndices[0][TmpIndex] = 1;
+    this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] = 0;
+    this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) + 1] = 0;
+    this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = Lambda1;
+    ++TmpIndex;
+    this->ConnectedOrbitalIndices[0][TmpIndex] = 2;
+    this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] = 0;
+    this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) + 1] = 0;
+    this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = Conj(Lambda1);
+    ++TmpIndex;
+    this->ConnectedOrbitalIndices[0][TmpIndex] = 1;
+    this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] = -1;
+    this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) + 1] = 0;
+    this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = Lambda1;
+    ++TmpIndex;
+    this->ConnectedOrbitalIndices[0][TmpIndex] = 2;
+    this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] = 0;
+    this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) + 1] = -1;
+    this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = Conj(Lambda1);
+    ++TmpIndex;
+
+    TmpIndex -= 4;
+
+    // links starting from B
+    this->ConnectedOrbitalIndices[1][TmpIndex] = 0;
+    this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] = 0;
+    this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) + 1] = 0;
+    this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = Conj(Lambda1);
+    ++TmpIndex;
+    this->ConnectedOrbitalIndices[1][TmpIndex] = 2;
+    this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] = 0;
+    this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) + 1] = 0;
+    this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = Lambda1;
+    ++TmpIndex;
+    this->ConnectedOrbitalIndices[1][TmpIndex] = 0;
+    this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] = -1;
+    this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) + 1] = 0;
+    this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = Conj(Lambda1);
+    ++TmpIndex;
+    this->ConnectedOrbitalIndices[1][TmpIndex] = 2;
+    this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] = -1;
+    this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) + 1] =1;
+    this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = Lambda1;
+    ++TmpIndex;
+
+    TmpIndex -= 4;
+
+    // links starting from C
+    this->ConnectedOrbitalIndices[2][TmpIndex] = 0;
+    this->ConnectedOrbitalSpatialIndices[2][TmpIndex * 2] = 0;
+    this->ConnectedOrbitalSpatialIndices[2][(TmpIndex * 2) + 1] = 0;
+    this->ConnectedOrbitalHoppingAmplitudes[2][TmpIndex] = Lambda1;
+    ++TmpIndex;
+    this->ConnectedOrbitalIndices[2][TmpIndex] = 1;
+    this->ConnectedOrbitalSpatialIndices[2][TmpIndex * 2] = 0;
+    this->ConnectedOrbitalSpatialIndices[2][(TmpIndex * 2) + 1] = 0;
+    this->ConnectedOrbitalHoppingAmplitudes[2][TmpIndex] = Conj(Lambda1);
+    ++TmpIndex;
+    this->ConnectedOrbitalIndices[2][TmpIndex] = 0;
+    this->ConnectedOrbitalSpatialIndices[2][TmpIndex * 2] = 0;
+    this->ConnectedOrbitalSpatialIndices[2][(TmpIndex * 2) + 1] = -1;
+    this->ConnectedOrbitalHoppingAmplitudes[2][TmpIndex] = Lambda1;
+    ++TmpIndex;
+    this->ConnectedOrbitalIndices[2][TmpIndex] = 1;
+    this->ConnectedOrbitalSpatialIndices[2][TmpIndex * 2] = -1;
+    this->ConnectedOrbitalSpatialIndices[2][(TmpIndex * 2) + 1] = 1;
+    this->ConnectedOrbitalHoppingAmplitudes[2][TmpIndex] = Conj(Lambda1);
+    ++TmpIndex;
+
+    if ((this->NextNNHopping != 0.0) || (this->NextNNSpinOrbit != 0.0))
+      {
+      }
+
+    if (this->MuS != 0.0)
+      {
+	this->ConnectedOrbitalIndices[0][TmpIndex] = 0;
+	this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] = 0;
+	this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) +1] = 0;
+	this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = this->MuS;
+      }
+   }
 }
