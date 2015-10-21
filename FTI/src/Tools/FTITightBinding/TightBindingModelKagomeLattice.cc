@@ -414,13 +414,13 @@ void TightBindingModelKagomeLattice::FindConnectedOrbitals()
     this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = Lambda1;
     ++TmpIndex;
     this->ConnectedOrbitalIndices[1][TmpIndex] = 0;
-    this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] = -1;
+    this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] = 1;
     this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) + 1] = 0;
     this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = Conj(Lambda1);
     ++TmpIndex;
     this->ConnectedOrbitalIndices[1][TmpIndex] = 2;
-    this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] = -1;
-    this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) + 1] =1;
+    this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] = 1;
+    this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) + 1] = -1;
     this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = Lambda1;
     ++TmpIndex;
 
@@ -439,7 +439,7 @@ void TightBindingModelKagomeLattice::FindConnectedOrbitals()
     ++TmpIndex;
     this->ConnectedOrbitalIndices[2][TmpIndex] = 0;
     this->ConnectedOrbitalSpatialIndices[2][TmpIndex * 2] = 0;
-    this->ConnectedOrbitalSpatialIndices[2][(TmpIndex * 2) + 1] = -1;
+    this->ConnectedOrbitalSpatialIndices[2][(TmpIndex * 2) + 1] = 1;
     this->ConnectedOrbitalHoppingAmplitudes[2][TmpIndex] = Lambda1;
     ++TmpIndex;
     this->ConnectedOrbitalIndices[2][TmpIndex] = 1;

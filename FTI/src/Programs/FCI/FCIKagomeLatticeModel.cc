@@ -305,7 +305,8 @@ int main(int argc, char** argv)
 	{
 	  bool ExportOneBody = false;
 	  bool BlochForm = false;
-// 	  BlochForm = true;
+	  if (Manager.GetBoolean("real-space"))
+	    BlochForm = true;
 	  if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("singleparticle-chernnumber") == true) || (Manager.GetBoolean("singleparticle-berrycurvature") == true))
 	    ExportOneBody = true;
 	  TightBindingModelKagomeLattice TightBindingModel(NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
