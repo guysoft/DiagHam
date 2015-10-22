@@ -1,4 +1,5 @@
 #include "HilbertSpace/BosonOnTorusWithSpinAndMagneticTranslations.h"
+#include "HilbertSpace/BosonOnTorusWithSpinAllSzAndMagneticTranslations.h"
 
 #include "Hamiltonian/ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian.h"
 
@@ -71,7 +72,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "full-reducedbz", "calculate all points within the reduced Brillouin zone", false);
   (*SystemGroup) += new SingleStringOption ('\n', "selected-points", "provide a two column ascii file that indicates which momentum sectors have to be computed");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
-  (*SystemGroup) += new BooleanOption  ('\n', "no-sz", "use the hilbert space with non conserved sz");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 
@@ -110,7 +110,6 @@ int main(int argc, char** argv)
   if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
     Memory = Architecture.GetArchitecture()->GetLocalMemory();
 
-  bool NoSzFlag = Manager.GetBoolean("no-sz");
   if ((TotalSpin & 1) != (NbrBosons & 1))
     {
       TotalSpin &= ~1;
@@ -161,10 +160,20 @@ int main(int argc, char** argv)
     }
     
   char* OutputFileName = new char [512];
-  if ((Manager.GetDouble("spinup-flux") == 0.0) && (Manager.GetDouble("spindown-flux") == 0.0))
-    sprintf (OutputFileName, "bosons_torus_su2_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", InteractionName, NbrBosons, MaxMomentum, TotalSpin, XRatio);
+  if (OneBodyPseudoPotentials[2] == 0)
+    {
+      if ((Manager.GetDouble("spinup-flux") == 0.0) && (Manager.GetDouble("spindown-flux") == 0.0))
+	sprintf (OutputFileName, "bosons_torus_su2_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", InteractionName, NbrBosons, MaxMomentum, TotalSpin, XRatio);
+      else
+	sprintf (OutputFileName, "bosons_torus_su2_%s_n_%d_2s_%d_sz_%d_ratio_%f_fluxup_%f_fluxdown_%f.dat", InteractionName, NbrBosons, MaxMomentum, TotalSpin, XRatio, Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"));
+    }
   else
-    sprintf (OutputFileName, "bosons_torus_su2_%s_n_%d_2s_%d_sz_%d_ratio_%f_fluxup_%f_fluxdown_%f.dat", InteractionName, NbrBosons, MaxMomentum, TotalSpin, XRatio, Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"));
+    {
+      if ((Manager.GetDouble("spinup-flux") == 0.0) && (Manager.GetDouble("spindown-flux") == 0.0))
+	sprintf (OutputFileName, "bosons_torus_su2_%s_n_%d_2s_%d_ratio_%f.dat", InteractionName, NbrBosons, MaxMomentum, XRatio);
+      else
+	sprintf (OutputFileName, "bosons_torus_su2_%s_n_%d_2s_%d_ratio_%f_fluxup_%f_fluxdown_%f.dat", InteractionName, NbrBosons, MaxMomentum, XRatio, Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"));
+    }
   ofstream File;
   File.open(OutputFileName, ios::binary | ios::out);
   File.precision(14);
@@ -279,15 +288,14 @@ int main(int argc, char** argv)
       cout << "----------------------------------------------------------------" << endl;
       cout << " Ratio = " << XRatio << endl;
       BosonOnTorusWithSpinAndMagneticTranslations* Space = 0;
-      if(NoSzFlag == false)
+      if (OneBodyPseudoPotentials[2] == 0)
 	{
 	  Space = new BosonOnTorusWithSpinAndMagneticTranslations (NbrBosons, TotalSpin, MaxMomentum, XMomentum, YMomentum);
 	}
       else
 	{
-	  Space = 0;;//new BosonOnTorusWithSpinAndMagneticTranslations (NbrBosons, MaxMomentum, XMomentum, YMomentum);
-	  cout << "BosonOnTorusWithSpinAndMagneticTranslations without Sz conservation is not implemented" << endl;
-	}
+	  Space = new BosonOnTorusWithSpinAllSzAndMagneticTranslations (NbrBosons, MaxMomentum, XMomentum, YMomentum);
+	} 
 
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian(Space, NbrBosons, MaxMomentum, XMomentum, XRatio,
@@ -296,7 +304,8 @@ int main(int argc, char** argv)
 														 NbrPseudoPotentials[2], PseudoPotentials[2],
 														 Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
 														 Architecture.GetArchitecture(), Memory, 0,
-														 OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], OneBodyPseudoPotentials[2]);
+														 OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], 
+														 OneBodyPseudoPotentials[2]);
       double Shift = -1.0;
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;

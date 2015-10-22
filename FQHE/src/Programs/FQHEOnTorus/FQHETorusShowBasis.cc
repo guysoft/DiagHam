@@ -10,6 +10,7 @@
 #include "HilbertSpace/BosonOnTorusWithSpin.h"
 #include "HilbertSpace/BosonOnTorusWithSU3Spin.h"
 #include "HilbertSpace/BosonOnTorusWithSpinAndMagneticTranslations.h"
+#include "HilbertSpace/BosonOnTorusWithSpinAllSzAndMagneticTranslations.h"
 #include "HilbertSpace/FermionOnTorusWithSpinAndMagneticTranslations.h"
 #include "HilbertSpace/FermionOnTorusWithSpinAndTimeReversalSymmetricMagneticTranslations.h"
 
@@ -69,6 +70,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-n3", "number of type 3 particles (only useful in su(3) mode)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-n4", "number of type 4 particles (only useful in su(4) mode)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "no-translation", "do not consider magnetic translation (only trivial translations along one axis)");
+  (*SystemGroup) += new  BooleanOption ('\n', "no-sz", "assume that Sz is not conserved (only useful in su(2) mode)", 0);
   (*SystemGroup) += new SingleStringOption ('\n', "state", "name of an optional vector state whose component values can be displayed behind each corresponding n-body state");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "hide-component", "hide state components (and thus the corresponding n-body state) whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
   (*SystemGroup) += new MultipleIntegerOption ('\n', "pauli", "print only states obeying a general Pauli exclusion principle",',');
@@ -666,7 +668,14 @@ int main(int argc, char** argv)
 	  ParticleOnTorusWithSpinAndMagneticTranslations* Space;
 	  if (Manager.GetBoolean("boson") == true)
 	    {
-	      Space = new BosonOnTorusWithSpinAndMagneticTranslations(NbrParticles, Manager.GetInteger("total-sz"), NbrFluxQuanta, Kx, Ky);
+	      if (Manager.GetBoolean("no-sz") == true)
+		{
+		  Space = new BosonOnTorusWithSpinAllSzAndMagneticTranslations(NbrParticles, NbrFluxQuanta, Kx, Ky);
+		}
+	      else
+		{
+		  Space = new BosonOnTorusWithSpinAndMagneticTranslations(NbrParticles, Manager.GetInteger("total-sz"), NbrFluxQuanta, Kx, Ky);
+		}
 	    }
 	  else
 	    {
@@ -721,7 +730,14 @@ int main(int argc, char** argv)
 	      ParticleOnSphereWithSpin* Space;
 	      if (Manager.GetBoolean("boson") == true)
 		{
-		  Space = new BosonOnTorusWithSpin  (NbrParticles, NbrFluxQuanta, Manager.GetInteger("total-sz"), y);
+		  if (Manager.GetBoolean("no-sz") == true)
+		    {
+		      Space = new BosonOnTorusWithSpin  (NbrParticles, NbrFluxQuanta, y);
+		    }
+		  else
+		    {
+		      Space = new BosonOnTorusWithSpin  (NbrParticles, NbrFluxQuanta, Manager.GetInteger("total-sz"), y);
+		    }
 		}
 	      else
 		{
@@ -766,7 +782,7 @@ int main(int argc, char** argv)
 	}
     }
     
-    if(Manager.GetBoolean("3-ll") == true)
+  if(Manager.GetBoolean("3-ll") == true)
     {
 	  if (Manager.GetBoolean("no-translation") == false)
 	    {

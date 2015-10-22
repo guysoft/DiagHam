@@ -914,46 +914,50 @@ inline void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Evalua
 														  int step, ComplexVector& vSource, ComplexVector& vDestination)
 {
   if (this->OneBodyInteractionFactorsupup != 0)
-    if (this->OneBodyInteractionFactorsdowndown != 0)
-      {
-	double TmpDiagonal = 0.0;
-	for (int i = firstComponent; i < lastComponent; i += step)
-	  { 
-	    TmpDiagonal = 0.0;
-	    for (int j = 0; j <= this->LzMax; ++j) 
-	      {
+    {
+      if (this->OneBodyInteractionFactorsdowndown != 0)
+	{
+	  double TmpDiagonal = 0.0;
+	  for (int i = firstComponent; i < lastComponent; i += step)
+	    { 
+	      TmpDiagonal = 0.0;
+	      for (int j = 0; j <= this->LzMax; ++j) 
+		{
+		  TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * particles->AduAu(i, j);
+		  TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * particles->AddAd(i, j);
+		}
+	      vDestination[i] += (this->HamiltonianShift + TmpDiagonal)* vSource[i];
+	    }
+	}
+      else
+	{
+	  double TmpDiagonal = 0.0;
+	  for (int i = firstComponent; i < lastComponent; i += step)
+	    { 
+	      TmpDiagonal = 0.0;
+	      for (int j = 0; j <= this->LzMax; ++j) 
 		TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * particles->AduAu(i, j);
-		TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * particles->AddAd(i, j);
-	      }
-	    vDestination[i] += (this->HamiltonianShift + TmpDiagonal)* vSource[i];
-	  }
-      }
-    else
-      {
-	double TmpDiagonal = 0.0;
-	for (int i = firstComponent; i < lastComponent; i += step)
-	  { 
-	    TmpDiagonal = 0.0;
-	    for (int j = 0; j <= this->LzMax; ++j) 
-	      TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * particles->AduAu(i, j);
-	    vDestination[i] += (this->HamiltonianShift + TmpDiagonal)* vSource[i];
-	  }
-      }
+	      vDestination[i] += (this->HamiltonianShift + TmpDiagonal)* vSource[i];
+	    }
+	}
+    }
   else
-    if (this->OneBodyInteractionFactorsdowndown != 0)
-      {
-	double TmpDiagonal = 0.0;
+    {
+      if (this->OneBodyInteractionFactorsdowndown != 0)
+	{
+	  double TmpDiagonal = 0.0;
+	  for (int i = firstComponent; i < lastComponent; i += step)
+	    { 
+	      TmpDiagonal = 0.0;
+	      for (int j = 0; j <= this->LzMax; ++j) 
+		TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * particles->AddAd(i, j);
+	      vDestination[i] += (this->HamiltonianShift + TmpDiagonal)* vSource[i];
+	    }
+	}	
+      else
 	for (int i = firstComponent; i < lastComponent; i += step)
-	  { 
-	    TmpDiagonal = 0.0;
-	    for (int j = 0; j <= this->LzMax; ++j) 
-	      TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * particles->AddAd(i, j);
-	    vDestination[i] += (this->HamiltonianShift + TmpDiagonal)* vSource[i];
-	  }
-      }	
-    else
-      for (int i = firstComponent; i < lastComponent; i += step)
-	vDestination[i] += this->HamiltonianShift * vSource[i];
+	  vDestination[i] += this->HamiltonianShift * vSource[i];
+    }
   if (this->OneBodyInteractionFactorsupdown != 0)
     {
       double Coefficient;
@@ -992,76 +996,82 @@ inline void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Evalua
 // nbrVectors = number of vectors that have to be evaluated together
 
 inline void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::EvaluateMNOneBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent,
-														  int step, ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
+														int step, ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
 {
   if (this->OneBodyInteractionFactorsupup != 0) 
-    if (this->OneBodyInteractionFactorsdowndown != 0)
-      {
-	double TmpDiagonal = 0.0;
-	for (int p = 0; p < nbrVectors; ++p)
-	  {
-	    ComplexVector& TmpSourceVector = vSources[p];
-	    ComplexVector& TmpDestinationVector = vDestinations[p];
-	    for (int i = firstComponent; i < lastComponent; i += step)
-	      { 
-		TmpDiagonal = 0.0;
-		for (int j = 0; j <= this->LzMax; ++j) 
-		  {
-		    TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * particles->AduAu(i, j);
-		    TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * particles->AddAd(i, j);
-		  }
-		TmpDestinationVector[i] += (this->HamiltonianShift + TmpDiagonal)* TmpSourceVector[i];
-	      }
-	  }
-      }
-    else
-      {
-	double TmpDiagonal = 0.0;
-	for (int p = 0; p < nbrVectors; ++p)
-	  {
-	    ComplexVector& TmpSourceVector = vSources[p];
-	    ComplexVector& TmpDestinationVector = vDestinations[p];
-	    for (int i = firstComponent; i < lastComponent; i += step)
-	      { 
-		TmpDiagonal = 0.0;
-		for (int j = 0; j <= this->LzMax; ++j) 
-		  TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * particles->AduAu(i, j);
-		TmpDestinationVector[i] += (this->HamiltonianShift + TmpDiagonal)* TmpSourceVector[i];
-	      }
-	  }
-      }
-  else
-    if (this->OneBodyInteractionFactorsdowndown != 0)
-      {
-	double TmpDiagonal = 0.0;
-	for (int p = 0; p < nbrVectors; ++p)
-	  {
-	    ComplexVector& TmpSourceVector = vSources[p];
-	    ComplexVector& TmpDestinationVector = vDestinations[p];
-	    for (int i = firstComponent; i < lastComponent; i += step)
-	      { 
-		TmpDiagonal = 0.0;
-		for (int j = 0; j <= this->LzMax; ++j) 
-		  TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * particles->AddAd(i, j);
-		TmpDestinationVector[i] += (this->HamiltonianShift + TmpDiagonal)* TmpSourceVector[i];
-	      }
-	  }
-      }	
-    else
-      for (int p = 0; p < nbrVectors; ++p)
-	{
-	  ComplexVector& TmpSourceVector = vSources[p];
-	  ComplexVector& TmpDestinationVector = vDestinations[p];
-	  for (int i = firstComponent; i < lastComponent; i += step)
-	    TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
-	}
-  for (int p = 0; p < nbrVectors; ++p)
     {
-      ComplexVector& TmpSourceVector = vSources[p];
-      ComplexVector& TmpDestinationVector = vDestinations[p];
-      for (int i = firstComponent; i < lastComponent; i += step)
-	TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+      if (this->OneBodyInteractionFactorsdowndown != 0)
+	{
+	  double TmpDiagonal = 0.0;
+	  for (int p = 0; p < nbrVectors; ++p)
+	    {
+	      ComplexVector& TmpSourceVector = vSources[p];
+	      ComplexVector& TmpDestinationVector = vDestinations[p];
+	      for (int i = firstComponent; i < lastComponent; i += step)
+		{ 
+		  TmpDiagonal = 0.0;
+		  for (int j = 0; j <= this->LzMax; ++j) 
+		    {
+		      TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * particles->AduAu(i, j);
+		      TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * particles->AddAd(i, j);
+		    }
+		  TmpDestinationVector[i] += (this->HamiltonianShift + TmpDiagonal)* TmpSourceVector[i];
+		}
+	    }
+	}
+      else
+	{
+	  double TmpDiagonal = 0.0;
+	  for (int p = 0; p < nbrVectors; ++p)
+	    {
+	      ComplexVector& TmpSourceVector = vSources[p];
+	      ComplexVector& TmpDestinationVector = vDestinations[p];
+	      for (int i = firstComponent; i < lastComponent; i += step)
+		{ 
+		  TmpDiagonal = 0.0;
+		  for (int j = 0; j <= this->LzMax; ++j) 
+		    TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * particles->AduAu(i, j);
+		TmpDestinationVector[i] += (this->HamiltonianShift + TmpDiagonal)* TmpSourceVector[i];
+		}
+	    }
+	}
     }
+  else
+    {
+      if (this->OneBodyInteractionFactorsdowndown != 0)
+	{
+	  double TmpDiagonal = 0.0;
+	  for (int p = 0; p < nbrVectors; ++p)
+	    {
+	      ComplexVector& TmpSourceVector = vSources[p];
+	      ComplexVector& TmpDestinationVector = vDestinations[p];
+	      for (int i = firstComponent; i < lastComponent; i += step)
+		{ 
+		  TmpDiagonal = 0.0;
+		  for (int j = 0; j <= this->LzMax; ++j) 
+		    TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * particles->AddAd(i, j);
+		  TmpDestinationVector[i] += (this->HamiltonianShift + TmpDiagonal)* TmpSourceVector[i];
+		}
+	    }
+	}	
+      else
+	{
+	  for (int p = 0; p < nbrVectors; ++p)
+	    {
+	      ComplexVector& TmpSourceVector = vSources[p];
+	      ComplexVector& TmpDestinationVector = vDestinations[p];
+	      for (int i = firstComponent; i < lastComponent; i += step)
+		TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+	    }
+	}
+    }
+/*   for (int p = 0; p < nbrVectors; ++p) */
+/*     { */
+/*       ComplexVector& TmpSourceVector = vSources[p]; */
+/*       ComplexVector& TmpDestinationVector = vDestinations[p]; */
+/*       for (int i = firstComponent; i < lastComponent; i += step) */
+/* 	TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i]; */
+/*     } */
   if (this->OneBodyInteractionFactorsupdown != 0)
     {
       double Coefficient;

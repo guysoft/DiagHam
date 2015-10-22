@@ -44,6 +44,7 @@ class BosonOnTorusWithSpin :  public BosonOnSphereWithSU2Spin
 
   friend class BosonOnTorusShort;
   friend class BosonOnTorusWithSpinAndMagneticTranslations;
+  friend class BosonOnTorusWithSpinAllSzAndMagneticTranslations;
 
  protected:
 

@@ -19,6 +19,7 @@
 
 #include "GeneralTools/ListIterator.h"
 #include "MathTools/IntegerAlgebraTools.h"
+#include "GeneralTools/FilenameTools.h"
 
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
@@ -69,11 +70,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the two torus lengths", 1.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "spinup-flux", "inserted flux for particles with spin up (in 2pi / N_phi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "spindown-flux", "inserted flux for particles with spin down (in 2pi / N_phi unit)", 0.0);
-  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
-  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
-  (*SystemGroup) += new  BooleanOption  ('\n', "redundant-kymomenta", "Calculate all subspaces up to Ky  = MaxMomentum-1", false);
+  (*SystemGroup) += new SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
+  (*SystemGroup) += new SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
+  (*SystemGroup) += new BooleanOption  ('\n', "redundant-kymomenta", "Calculate all subspaces up to Ky  = MaxMomentum-1", false);
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
-  (*SystemGroup) += new BooleanOption  ('\n', "no-sz", "use the hilbert space with non conserved sz");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 
@@ -108,7 +108,6 @@ int main(int argc, char** argv)
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
   char* SavePrecalculationFileName = Manager.GetString("save-precalculation");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
-  bool NoSzFlag = Manager.GetBoolean("no-sz");
   if ((TotalSpin & 1) != (NbrBosons & 1))
     {
       TotalSpin &= ~1;
@@ -117,6 +116,7 @@ int main(int argc, char** argv)
 
   double** PseudoPotentials  = new double*[3];
   int* NbrPseudoPotentials  = new int[3];
+  double** OneBodyPseudoPotentials  = new double*[3];
   double * OneBodyPotentialUpUp = 0;
   double * OneBodyPotentialDownDown = 0;
   double * OneBodyPotentialUpDown = 0;
@@ -127,19 +127,29 @@ int main(int argc, char** argv)
     }
   else
     {
-      if (FQHETorusSU2GetPseudopotentials(Manager.GetString("interaction-file"), NbrPseudoPotentials, PseudoPotentials) == false)
-	return -1;
-//       if(FQHETorusSU2GetOneBodyPseudopotentials (Manager.GetString("interaction-file"), MaxMomentum, OneBodyPotentialUpUp, OneBodyPotentialDownDown,OneBodyPotentialUpDown ) == false)
-// 	return -1;
+      if (FQHETorusSU2GetPseudopotentials(Manager.GetString("interaction-file"), MaxMomentum, NbrPseudoPotentials, PseudoPotentials, OneBodyPseudoPotentials) == false)
+	{
+	  return -1;
+	}
     }
     
-  char* OutputFileName = new char [512];
-  if ((Manager.GetDouble("spinup-flux") == 0.0) && (Manager.GetDouble("spindown-flux") == 0.0))
-    sprintf (OutputFileName, "bosons_torus_su2_kysym_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", Manager.GetString("interaction-name"), NbrBosons, MaxMomentum, TotalSpin, XRatio);
+  char* OutputName = new char [512];
+  if (OneBodyPseudoPotentials[2] == 0)
+    {
+      if ((Manager.GetDouble("spinup-flux") == 0.0) && (Manager.GetDouble("spindown-flux") == 0.0))
+	sprintf (OutputName, "bosons_torus_su2_kysym_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", Manager.GetString("interaction-name"), NbrBosons, MaxMomentum, TotalSpin, XRatio);
+      else
+	sprintf (OutputName, "bosons_torus_su2_kysym_%s_n_%d_2s_%d_sz_%d_ratio_%f_fluxup_%f_fluxdown_%f.dat", Manager.GetString("interaction-name"), NbrBosons, MaxMomentum, TotalSpin, XRatio, Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"));
+    }
   else
-    sprintf (OutputFileName, "bosons_torus_su2_kysym_%s_n_%d_2s_%d_sz_%d_ratio_%f_fluxup_%f_fluxdown_%f.dat", Manager.GetString("interaction-name"), NbrBosons, MaxMomentum, TotalSpin, XRatio, Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"));
+    {
+      if ((Manager.GetDouble("spinup-flux") == 0.0) && (Manager.GetDouble("spindown-flux") == 0.0))
+	sprintf (OutputName, "bosons_torus_su2_kysym_%s_n_%d_2s_%d_ratio_%f.dat", Manager.GetString("interaction-name"), NbrBosons, MaxMomentum, XRatio);
+      else
+	sprintf (OutputName, "bosons_torus_su2_kysym_%s_n_%d_2s_%d_ratio_%f_fluxup_%f_fluxdown_%f.dat", Manager.GetString("interaction-name"), NbrBosons, MaxMomentum, XRatio, Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"));
+    }
   ofstream File;
-  File.open(OutputFileName, ios::binary | ios::out);
+  File.open(OutputName, ios::binary | ios::out);
   File.precision(14);
 
   int MomentumModulo = FindGCD(NbrBosons, MaxMomentum);
@@ -159,31 +169,31 @@ int main(int argc, char** argv)
       cout << "----------------------------------------------------------------" << endl;
       cout << " Ratio = " << XRatio << endl;
       BosonOnTorusWithSpin * Space = 0;
-      if(NoSzFlag == false)
+      if (OneBodyPseudoPotentials[2] == 0)
 	Space = new BosonOnTorusWithSpin (NbrBosons, MaxMomentum, TotalSpin, YMomentum2);
       else
 	Space = new BosonOnTorusWithSpin (NbrBosons, MaxMomentum, YMomentum2);
 	
 
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-      cout << PseudoPotentials[0][0] << " " << PseudoPotentials[1][0] << " " << PseudoPotentials[2][0] << " " << endl;
       AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusWithSpinGenericHamiltonian(Space, NbrBosons, MaxMomentum, XRatio,
 											  NbrPseudoPotentials[0], PseudoPotentials[0],
 											  NbrPseudoPotentials[1], PseudoPotentials[1],
 											  NbrPseudoPotentials[2], PseudoPotentials[2],
 											  Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
-											  Architecture.GetArchitecture(), Memory, 0,OneBodyPotentialUpUp,OneBodyPotentialDownDown,OneBodyPotentialUpDown);
+											  Architecture.GetArchitecture(), Memory, 0, OneBodyPseudoPotentials[0], 
+											  OneBodyPseudoPotentials[1], OneBodyPseudoPotentials[2]);
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
       if ( Manager.GetBoolean("eigenstate") == true)	
 	{
 	  EigenvectorName = new char [100];
-	  sprintf (EigenvectorName, "bosons_torus_su2_kysym_%s_n_%d_2s_%d_sz_%d_ratio_%f_ky_%d", Manager.GetString("interaction-name"), NbrBosons, MaxMomentum,
-		   TotalSpin, XRatio,YMomentum2);
+	  char* TmpName = RemoveExtensionFromFileName(OutputName, ".dat");
+	  sprintf (EigenvectorName, "%s_ky_%d", TmpName, YMomentum);
 	}
       
-      FQHEOnTorusMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, YMomentum2, Shift, OutputFileName, FirstRun, EigenvectorName);
+      FQHEOnTorusMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, YMomentum2, Shift, OutputName, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       if (EigenvectorName != 0)
@@ -198,6 +208,6 @@ int main(int argc, char** argv)
       delete Space;
     }
   File.close();
-  delete[] OutputFileName;
+  delete[] OutputName;
   return 0;
 }
