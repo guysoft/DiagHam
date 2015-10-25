@@ -86,7 +86,7 @@ ParticleOnLatticeKagomeLatticeThreeBandHamiltonian::ParticleOnLatticeKagomeLatti
   this->GammaX = gammaX;
   this->GammaY = gammaY;
   this->FlatBand = flatBandFlag;
-  this->UPotential = uPotential;
+  this->UPotential = 0.5 * uPotential;
 
   this->Architecture = architecture;
   this->Memory = memory;
@@ -571,6 +571,14 @@ void ParticleOnLatticeKagomeLatticeThreeBandHamiltonian::ComputeOneBodyHamiltoni
 	TmpOneBodyHamiltonian.SetMatrixElement(0, 1, HAB);
 	TmpOneBodyHamiltonian.SetMatrixElement(0, 2, HAC);
 	TmpOneBodyHamiltonian.SetMatrixElement(1, 2, HBC);
+	
+// 	Atomic limit
+// // 	TmpOneBodyHamiltonian.SetMatrixElement(0, 1, 0.0);
+// // 	TmpOneBodyHamiltonian.SetMatrixElement(0, 2, 0.0);
+// // 	TmpOneBodyHamiltonian.SetMatrixElement(1, 2, 0.0);
+// // 	TmpOneBodyHamiltonian.SetMatrixElement(0,0,1.0);
+// // 	TmpOneBodyHamiltonian.SetMatrixElement(1,1,-1.0);
+// // 	TmpOneBodyHamiltonian.SetMatrixElement(2,2,-1.0);
 	
 	if (this->FlatBand == false)
 	  {

@@ -28,6 +28,7 @@
 
 #include "Tools/FTITightBinding/TightBindingModelKagomeLattice.h"
 #include "Tools/FTITightBinding/Generic2DTightBindingModel.h"
+#include "Tools/FTITightBinding/TightBindingModel2DAtomicLimitLattice.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -51,6 +52,20 @@ using std::cout;
 using std::endl;
 using std::ios;
 using std::ofstream;
+
+// compute the description of the density-density interaction for the unit cell at the origin
+//
+// nbrInteractingOrbitals = number of orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsOrbitalIndices = orbital indices of the orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsSpatialIndices = spatial indices (sorted as 2 consecutive integers) of the orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsPotentials = intensity of each density-density term 
+// bosonFlag = true if we are dealing with bosons
+// uPotential = nearest neighbor (for fermions) or on-site (for bosons) interaction amplitude
+// vPotential = next nearest neighbor (for fermions) or nearest neighbor (for bosons) interaction amplitude
+// tightBindingModel = tight binding model
+void FCIKagomeLatticeModelComputeInteractingOrbitals(int*& nbrInteractingOrbitals, int**& interactingOrbitalsOrbitalIndices,
+							   int**& interactingOrbitalsSpatialIndices, double**& interactingOrbitalsPotentials,
+							   bool bosonFlag, double uPotential, double vPotential, Abstract2DTightBindingModel* tightBindingModel);
 
 
 // compute the single particle tranformation matrices 
@@ -152,6 +167,9 @@ int main(int argc, char** argv)
   int NbrSitesX = Manager.GetInteger("nbr-sitex"); 
   int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
+  
+  if (Manager.GetBoolean("three-bands"))
+    cout << "Warning: untested three bands code" << endl;
 
   char* StatisticPrefix = new char [16];
   if (Manager.GetBoolean("boson") == false)
@@ -368,8 +386,7 @@ int main(int argc, char** argv)
     }
   int MinKy = 0;
   int MaxKy = NbrSitesY - 1;
-  if ((Manager.GetBoolean("redundant-ky")==false) && (fabs(Manager.GetDouble("gamma-y"))<1e-12)) // want to reduce zone, and no offset?
-    MaxKy = NbrSitesY/2;
+  
   if (Manager.GetInteger("only-ky") >= 0)
     {						
       MinKy = Manager.GetInteger("only-ky");
@@ -385,6 +402,8 @@ int main(int argc, char** argv)
     {
       TightBindingModel = new TightBindingModelKagomeLattice (NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
 							      Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
+      
+//       TightBindingModel = new TightBindingModel2DAtomicLimitLattice(NbrSitesX, NbrSitesY, 3, 2, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());  
       char* BandStructureOutputFile = new char [1024];
       sprintf (BandStructureOutputFile, "%s_%s_tightbinding.dat", FilePrefix, FileParameterString);
       TightBindingModel->WriteBandStructure(BandStructureOutputFile);
@@ -396,7 +415,10 @@ int main(int argc, char** argv)
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
-      for (int j = MinKy; j <= MaxKy; ++j)
+      int TmpMaxKy = MaxKy;
+      if ((i == 0) && (Manager.GetBoolean("redundant-ky") == false))
+	TmpMaxKy = NbrSitesY / 2;
+      for (int j = MinKy; j <= TmpMaxKy; ++j)
 	{
 	  cout << "(kx=" << i << ",ky=" << j << ") : " << endl;
 
@@ -562,9 +584,29 @@ int main(int argc, char** argv)
 	    Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 	    HermitianMatrix TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
 	    
-	    cout << "Warning, interaction is set to zero" << endl;
 	    RealSymmetricMatrix DensityDensityInteraction(TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), true);
-	    
+	    int* NbrInteractingOrbitals;
+	    int** InteractingOrbitalsOrbitalIndices;
+	    int** InteractingOrbitalsSpatialIndices;
+	    double** InteractingOrbitalsPotentials;
+	    FCIKagomeLatticeModelComputeInteractingOrbitals(NbrInteractingOrbitals, InteractingOrbitalsOrbitalIndices,
+							   InteractingOrbitalsSpatialIndices, InteractingOrbitalsPotentials,
+							   Manager.GetBoolean("boson"), Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), TightBindingModel);
+	    for (int x = 0; x < NbrSitesX; ++x)
+	    {
+	      for (int y = 0; y < NbrSitesY; ++y)
+	      {
+		for (int OrbitalIndex = 0; OrbitalIndex < TightBindingModel->GetNbrBands(); ++OrbitalIndex)
+		{
+		  for (int k = 0; k < NbrInteractingOrbitals[OrbitalIndex]; ++k)
+		  {
+		    DensityDensityInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, OrbitalIndex), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x + InteractingOrbitalsSpatialIndices[OrbitalIndex][2 * k], y + InteractingOrbitalsSpatialIndices[OrbitalIndex][(2 * k) + 1], InteractingOrbitalsOrbitalIndices[OrbitalIndex][k]), InteractingOrbitalsPotentials[OrbitalIndex][k]);
+				  
+		  }
+		}
+	      }
+	    }
+// 	    cout << DensityDensityInteraction << endl;
 	    if (Manager.GetBoolean("no-translation") == false)
 	      Hamiltonian = new ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), i, NbrSitesX, j, NbrSitesY,
 											       TightBindingMatrix, DensityDensityInteraction,
@@ -665,4 +707,147 @@ ComplexMatrix* ComputeSingleParticleTransformationMatrices(int nbrSitesX, int nb
 	}
     }
   return OneBodyBasis;
+}
+
+
+// compute the description of the density-density interaction for the unit cell at the origin
+//
+// nbrInteractingOrbitals = number of orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsOrbitalIndices = orbital indices of the orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsSpatialIndices = spatial indices (sorted as 2 consecutive integers) of the orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsPotentials = intensity of each density-density term 
+// bosonFlag = true if we are dealing with bosons
+// uPotential = nearest neighbor (for fermions) or on-site (for bosons) interaction amplitude
+// vPotential = next nearest neighbor (for fermions) or nearest neighbor (for bosons) interaction amplitude
+// tightBindingModel = tight binding model
+
+void FCIKagomeLatticeModelComputeInteractingOrbitals(int*& nbrInteractingOrbitals, int**& interactingOrbitalsOrbitalIndices,
+							   int**& interactingOrbitalsSpatialIndices, double**& interactingOrbitalsPotentials,
+							   bool bosonFlag, double uPotential, double vPotential, Abstract2DTightBindingModel* tightBindingModel)
+{
+  int nbrBands = tightBindingModel->GetNbrBands();
+  
+  nbrInteractingOrbitals = new int[nbrBands];
+  interactingOrbitalsOrbitalIndices = new int*[nbrBands];
+  interactingOrbitalsSpatialIndices = new int*[nbrBands];
+  interactingOrbitalsPotentials = new double*[nbrBands];
+  int p;
+  int q;
+  if (bosonFlag == false)
+    {
+      nbrInteractingOrbitals[0] = 2; 
+      nbrInteractingOrbitals[1] = 2;      
+      nbrInteractingOrbitals[2] = 2;      
+      if (vPotential != 0.0)
+	{
+	  nbrInteractingOrbitals[0] += 4; 
+	  nbrInteractingOrbitals[1] += 4;      
+	  nbrInteractingOrbitals[2] += 4;           
+	}
+      for (int i = 0; i < nbrBands; ++i)
+	{
+	  interactingOrbitalsOrbitalIndices[i] = new int[nbrInteractingOrbitals[i]];
+	  interactingOrbitalsSpatialIndices[i] = new int[2 * nbrInteractingOrbitals[i]];
+	  interactingOrbitalsPotentials[i] = new double[nbrInteractingOrbitals[i]];
+	}
+
+    int TmpIndex = 0;
+
+  // links starting from A
+    interactingOrbitalsOrbitalIndices[0][TmpIndex] = 1;
+    interactingOrbitalsSpatialIndices[0][TmpIndex * 2] = 0;
+    interactingOrbitalsSpatialIndices[0][(TmpIndex * 2) + 1] = 0;
+    interactingOrbitalsPotentials[0][TmpIndex] = uPotential;
+    ++TmpIndex;
+    interactingOrbitalsOrbitalIndices[0][TmpIndex] = 2;
+    interactingOrbitalsSpatialIndices[0][TmpIndex * 2] = 0;
+    interactingOrbitalsSpatialIndices[0][(TmpIndex * 2) + 1] = 0;
+    interactingOrbitalsPotentials[0][TmpIndex] = uPotential;
+    ++TmpIndex;
+    
+    TmpIndex -= 2;
+
+    // links starting from B
+    interactingOrbitalsOrbitalIndices[1][TmpIndex] = 0;
+    interactingOrbitalsSpatialIndices[1][TmpIndex * 2] = 1;
+    interactingOrbitalsSpatialIndices[1][(TmpIndex * 2) + 1] = 0;
+    interactingOrbitalsPotentials[1][TmpIndex] = uPotential;
+    ++TmpIndex;
+    interactingOrbitalsOrbitalIndices[1][TmpIndex] = 2;
+    interactingOrbitalsSpatialIndices[1][TmpIndex * 2] = 0;
+    interactingOrbitalsSpatialIndices[1][(TmpIndex * 2) + 1] = 0;
+    interactingOrbitalsPotentials[1][TmpIndex] = uPotential;
+    ++TmpIndex;
+   
+    TmpIndex -= 2;
+
+    // links starting from C
+    interactingOrbitalsOrbitalIndices[2][TmpIndex] = 0;
+    interactingOrbitalsSpatialIndices[2][TmpIndex * 2] = 0;
+    interactingOrbitalsSpatialIndices[2][(TmpIndex * 2) + 1] = 1;
+    interactingOrbitalsPotentials[2][TmpIndex] = uPotential;
+    ++TmpIndex;
+    interactingOrbitalsOrbitalIndices[2][TmpIndex] = 1;
+    interactingOrbitalsSpatialIndices[2][TmpIndex * 2] = -1;
+    interactingOrbitalsSpatialIndices[2][(TmpIndex * 2) + 1] = 1;
+    interactingOrbitalsPotentials[2][TmpIndex] = uPotential;
+    ++TmpIndex;
+
+    if (vPotential != 0.0)
+      {
+	cout << "Warning: next nearest neighbor hopping not implemented in real space" << endl;
+      }
+
+
+    }
+  else
+    {
+      nbrInteractingOrbitals[0] = 1;
+      nbrInteractingOrbitals[1] = 1;
+      nbrInteractingOrbitals[2] = 1;
+      if (vPotential != 0.0)
+	{
+	  nbrInteractingOrbitals[0] += 2;
+	  nbrInteractingOrbitals[1] += 2;
+	  nbrInteractingOrbitals[2] += 2;
+	}
+	
+      for (int j = 0; j < nbrBands; ++j)
+      {
+	interactingOrbitalsOrbitalIndices[j] = new int[nbrInteractingOrbitals[j]];
+	interactingOrbitalsSpatialIndices[j] = new int[nbrInteractingOrbitals[j] * 2];
+	interactingOrbitalsPotentials[j] = new double[nbrInteractingOrbitals[j]];
+      }
+        
+      int Index = 0;
+      interactingOrbitalsOrbitalIndices[0][Index] = 0;
+      interactingOrbitalsSpatialIndices[0][2 * Index] = 0;
+      interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = 0;
+      interactingOrbitalsPotentials[0][Index] = 0.5 * uPotential;
+      ++Index;
+
+      Index = 0;
+      interactingOrbitalsOrbitalIndices[1][Index] = 1;
+      interactingOrbitalsSpatialIndices[1][2 * Index] = 0;
+      interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = 0;
+      interactingOrbitalsPotentials[1][Index] = 0.5 * uPotential;
+      ++Index;
+      
+      Index = 0;
+      interactingOrbitalsOrbitalIndices[2][Index] = 2;
+      interactingOrbitalsSpatialIndices[2][2 * Index] = 0;
+      interactingOrbitalsSpatialIndices[2][(2 * Index) + 1] = 0;
+      interactingOrbitalsPotentials[2][Index] = 0.5 * uPotential;
+      ++Index;
+
+            if (vPotential != 0.0)
+	{
+	  cout << "Warning: next neighbor interaction is not implemented in real space" << endl;
+// 	  interactingOrbitalsOrbitalIndices[0][Index] = 1;
+// 	  tightBindingModel->GetRealSpaceIndex(0, 0, p, q);
+// 	  interactingOrbitalsSpatialIndices[0][2 * Index] = p;
+// 	  interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
+// 	  interactingOrbitalsPotentials[0][Index] = vPotential;	  
+	}
+    }
 }

@@ -450,6 +450,7 @@ void TightBindingModelKagomeLattice::FindConnectedOrbitals()
 
     if ((this->NextNNHopping != 0.0) || (this->NextNNSpinOrbit != 0.0))
       {
+	cout << "Warning: next nearest neighbor hopping not implemented in real space" << endl;
       }
 
     if (this->MuS != 0.0)
