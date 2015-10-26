@@ -12,6 +12,8 @@
 #include "HilbertSpace/FermionOnLatticeRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/BosonOnLatticeRealSpace.h"
 #include "HilbertSpace/BosonOnLatticeRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpace.h"
 
 #include "Hamiltonian/ParticleOnLatticeKagomeLatticeSingleBandHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian.h"
@@ -112,6 +114,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive nearest neighbor potential strength", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive next nearest neighbor potential strength", 0.0);
+  (*SystemGroup) += new BooleanOption  ('\n', "gutzwiller", "use hard core bosons (bosonic hilbert space will be restricted to single occupations) -- real space option needs to activated");
   (*SystemGroup) += new BooleanOption  ('\n', "three-body", "use a three body interaction instead of a two body interaction");
   (*SystemGroup) += new BooleanOption  ('\n', "four-body", "use a four body interaction instead of a two body interaction");
   (*SystemGroup) += new BooleanOption  ('\n', "five-body", "use a five body interaction instead of a two body interaction");
@@ -166,10 +169,11 @@ int main(int argc, char** argv)
   int NbrParticles = Manager.GetInteger("nbr-particles"); 
   int NbrSitesX = Manager.GetInteger("nbr-sitex"); 
   int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
+  bool GutzwillerFlag = Manager.GetBoolean("gutzwiller");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   
   if (Manager.GetBoolean("three-bands"))
-    cout << "Warning: untested three bands code" << endl;
+    cout << "Warning: three bands code is only tested for bosons with on-site interaction" << endl;
 
   char* StatisticPrefix = new char [16];
   if (Manager.GetBoolean("boson") == false)
@@ -232,11 +236,17 @@ int main(int argc, char** argv)
 	      {
 		if (Manager.GetBoolean("no-translation") == false)
 		{
-		  sprintf (FilePrefix, "%s_realspace_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+		  if (GutzwillerFlag == false)
+		    sprintf (FilePrefix, "%s_realspace_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+		  else
+		    sprintf (FilePrefix, "%s_realspace_gutzwiller_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
 		}
 		else
 		{
-		  sprintf (FilePrefix, "%s_realspace_notranslation_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+		  if (GutzwillerFlag == false)
+		    sprintf (FilePrefix, "%s_realspace_notranslation_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+		  else
+		    sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
 		}
 	      }
 	    }
@@ -280,7 +290,7 @@ int main(int argc, char** argv)
     strcpy(EigenvalueOutputFile, Manager.GetString("eigenvalue-file"));
   else
     {
-      if ((Manager.GetBoolean("flat-band") == true) && (Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
+      if (((Manager.GetBoolean("flat-band") == true) && (Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false)) || (GutzwillerFlag == true) )
 	{
 	  if (Manager.GetDouble("v-potential") == 0.0)
 	    {
@@ -563,7 +573,10 @@ int main(int argc, char** argv)
 	      }
 	      else
 	      {
-		Space = new BosonOnLatticeRealSpaceAnd2DTranslation(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), i, NbrSitesX, j, NbrSitesY);
+		if (GutzwillerFlag == false)
+		  Space = new BosonOnLatticeRealSpaceAnd2DTranslation(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), i, NbrSitesX, j, NbrSitesY);
+		else
+		  Space = new BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), i, NbrSitesX, j, NbrSitesY);
 	      }
 	    }
 	    else
@@ -574,7 +587,10 @@ int main(int argc, char** argv)
 	      }
 	      else
 	      {
-		Space = new BosonOnLatticeRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
+		if (GutzwillerFlag == false)
+		  Space = new BosonOnLatticeRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
+		else
+		  Space = new BosonOnLatticeGutzwillerProjectionRealSpace (NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
 	      }
 	    }
 		
@@ -606,7 +622,6 @@ int main(int argc, char** argv)
 		}
 	      }
 	    }
-// 	    cout << DensityDensityInteraction << endl;
 	    if (Manager.GetBoolean("no-translation") == false)
 	      Hamiltonian = new ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), i, NbrSitesX, j, NbrSitesY,
 											       TightBindingMatrix, DensityDensityInteraction,
