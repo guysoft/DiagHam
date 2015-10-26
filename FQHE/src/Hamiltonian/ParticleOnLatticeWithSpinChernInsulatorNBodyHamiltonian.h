@@ -55,7 +55,7 @@ class ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian : public ParticleO
   // indicates which n-body interaction terms are present in the Hamiltonian (only entries beyond three-body are considered!)
   bool* NBodyFlags;
   // number of spin indices - array[NbrNBody] format (annihilation1,...,annihilationNBody)(creation1,...,creationNBody)
-  int *NbrSpinSectors;
+  int* NbrSpinSectors;
   // sign in front of each n-body interaction term (including the one coming from the statistics, per spin indices
   double** NBodySign;
   // spin indices for each annihilation/creation opertor set per n-body interaction
@@ -65,14 +65,14 @@ class ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian : public ParticleO
 
 
   // number of index sum for the creation / annihilation operators for each NBody interaction and spin sector
-  int **NbrNBodySpinMomentumSectorSum;
+  int** NbrNBodySpinMomentumSectorSum;
   // number of index groups per index sum for the creation / annihilation operators for each NBody interaction and spin sector
-  int ***NbrNBodySpinMomentumSectorIndicesPerSum;
+  int*** NbrNBodySpinMomentumSectorIndicesPerSum;
   // array containing the momentum indices per sum index
-  int ****NBodySpinMomentumSectorIndicesPerSum;
+  int**** NBodySpinMomentumSectorIndicesPerSum;
 
   // array of the corresponding interaction factors for the above sectors
-  Complex ****NBodyInteractionFactors;
+  Complex**** NBodyInteractionFactors;
   
   // flag to indicate a fully defined (i.e with pseudo-potentials) two body interaction
   bool FullTwoBodyFlag;
@@ -86,7 +86,7 @@ class ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian : public ParticleO
 
   // symmetrize interaction factors to enable hermitian matrix multiplication
   // return = true upon success
-  bool HermitianSymmetrizeInteractionFactors();
+  virtual bool HermitianSymmetrizeInteractionFactors();
 
 
   // multiply a vector by the current hamiltonian for a given range of indices 
@@ -98,7 +98,7 @@ class ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian : public ParticleO
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-					  int firstComponent, int nbrComponent);
+					     int firstComponent, int nbrComponent);
 
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
@@ -110,7 +110,7 @@ class ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian : public ParticleO
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
   virtual  ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-						   int firstComponent, int nbrComponent);
+						      int firstComponent, int nbrComponent);
   
 
  protected:
@@ -195,8 +195,8 @@ class ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian : public ParticleO
   // nbrVectors = number of vectors that have to be evaluated together
   // nbodyIndex = value of n
   // tmpCoefficients = a temporary array whose size is nbrVectors
-  void EvaluateMNNBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector* vSources, 
-					   ComplexVector* vDestinations, int nbrVectors, int nbodyIndex, Complex* tmpCoefficients);
+  virtual void EvaluateMNNBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector* vSources, 
+						   ComplexVector* vDestinations, int nbrVectors, int nbodyIndex, Complex* tmpCoefficients);
 
   // core part of the AddMultiply method involving the n-body interaction
   // 
@@ -204,8 +204,7 @@ class ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian : public ParticleO
   // index = index of the component on which the Hamiltonian has to act on
   // vSource = vector to be multiplied
   // vDestination = vector at which result has to be added
-  
-  void HermitianEvaluateMNNBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector& vSource, ComplexVector& vDestination, int nbodyIndex);
+  virtual void HermitianEvaluateMNNBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector& vSource, ComplexVector& vDestination, int nbodyIndex);
 
   // core part of the AddMultiply method involving the n-body interaction for a set of vectors
   // 
@@ -215,10 +214,9 @@ class ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian : public ParticleO
   // vDestinations = array of vectors at which result has to be added
   // nbrVectors = number of vectors that have to be evaluated together
   // tmpCoefficients = a temporary array whose size is nbrVectors
-  
-  void HermitianEvaluateMNNBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector* vSources, 
-						    ComplexVector* vDestinations, int nbrVectors, int nbodyIndex,
-						    Complex* tmpCoefficients, Complex* tmpSum);
+  virtual void HermitianEvaluateMNNBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector* vSources, 
+							    ComplexVector* vDestinations, int nbrVectors, int nbodyIndex,
+							    Complex* tmpCoefficients, Complex* tmpSum);
 
 
   // core part of the FastMultiplication method involving n-body term
@@ -229,8 +227,8 @@ class ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian : public ParticleO
   // indexArray = array where indices connected to the index-th component through the Hamiltonian
   // coefficientArray = array of the numerical coefficients related to the indexArray
   // position = reference on the current position in arrays indexArray and coefficientArray
-  void EvaluateMNNBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index, int nbodyIndex, 
-						  int* indexArray, Complex* coefficientArray, long& position);
+  virtual void EvaluateMNNBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index, int nbodyIndex, 
+							  int* indexArray, Complex* coefficientArray, long& position);
 
   // core part of the PartialFastMultiplicationMemory method involving n-body term
   // 
@@ -239,7 +237,7 @@ class ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian : public ParticleO
   // lastComponent  = index of the last component that has to be precalcualted
   // nbodyIndex = value of n
   // memory = reference on the amount of memory required for precalculations
-  void EvaluateMNNBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent, int nbodyIndex, long& memory);
+  //  virtual void EvaluateMNNBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent, int nbodyIndex, long& memory);
 
   // core part of the PartialFastMultiplicationMemory method involving n-body term
   // 
@@ -248,7 +246,7 @@ class ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian : public ParticleO
   // lastComponent  = index of the last component that has to be precalcualted
   // nbodyIndex = value of n
   // memory = reference on the amount of memory required for precalculations
-  void EvaluateMNNBodyFastMultiplicationMemoryComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent, int nbodyIndex, long& memory);
+  virtual void EvaluateMNNBodyFastMultiplicationMemoryComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent, int nbodyIndex, long& memory);
 
   // compute the permutation array for the interaction indices
   // 
@@ -256,7 +254,7 @@ class ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian : public ParticleO
   // permutationSign = array with the sign of each permutation (initialized only when dealing with fermionic statistics)
   // nbodyIndex = order of interaction to consider
   // return value = number of permutations
-  int ComputePermutations(int**& permutations, double*& permutationSign, int nbodyIndex);
+  virtual int ComputePermutations(int**& permutations, double*& permutationSign, int nbodyIndex);
 
 };
 

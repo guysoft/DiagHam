@@ -288,6 +288,68 @@ FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbert
 	    }
 	}
     }  
+  if (((*options)["test-hermitian"] != 0) && (options->GetBoolean("test-hermitian") == true))
+    {
+      if (RealFlag)  
+	{	 
+	  RealMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
+	  this->Hamiltonian->GetHamiltonian(HRep);
+	  double Tmp1;
+	  double Tmp2;
+	  cout << "check hermiticity" << endl;
+	  double AverageNorm = 0.0;
+	  for (int i = 0; i < this->Hamiltonian->GetHilbertSpaceDimension(); ++i)
+	    for (int j = i; j < this->Hamiltonian->GetHilbertSpaceDimension(); ++j)
+	      {
+		HRep.GetMatrixElement(i, j, Tmp1);
+		AverageNorm += fabs(Tmp1);
+	      }
+	  AverageNorm /= 0.5 * ((double) this->Hamiltonian->GetHilbertSpaceDimension()) * ((double) (this->Hamiltonian->GetHilbertSpaceDimension() + 1));
+	  for (int i = 0; i < this->Hamiltonian->GetHilbertSpaceDimension(); ++i)
+	    for (int j = i; j < this->Hamiltonian->GetHilbertSpaceDimension(); ++j)
+	      {
+		HRep.GetMatrixElement(i, j, Tmp1);
+		HRep.GetMatrixElement(j, i, Tmp2);
+		if (fabs(Tmp1 - Tmp2) > (MACHINE_PRECISION * AverageNorm))
+		  {
+		    cout << "error at " << i << " " << j << " : " << Tmp1 << " " << Tmp2 << endl;
+		  }
+	      }
+	  cout << "check done" << endl;
+	}
+      else
+	{ 
+	  ComplexMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
+	  this->Hamiltonian->GetHamiltonian(HRep);
+	  Complex Tmp1;
+	  Complex Tmp2;
+	  cout << "check hermiticity" << endl;
+	  double AverageNorm = 0.0;
+	  double Error = MACHINE_PRECISION;
+	  if (((*options)["testhermitian-error"] != 0) && (options->GetDouble("testhermitian-error") != 0.0))
+	    {
+	      Error = options->GetDouble("testhermitian-error");
+	    }
+	  for (int i = 0; i < this->Hamiltonian->GetHilbertSpaceDimension(); ++i)
+	    for (int j = i; j < this->Hamiltonian->GetHilbertSpaceDimension(); ++j)
+	      {
+		HRep.GetMatrixElement(i, j, Tmp1);
+		AverageNorm += Norm(Tmp1);
+	      }
+	  AverageNorm /= 0.5 * ((double) this->Hamiltonian->GetHilbertSpaceDimension()) * ((double) (this->Hamiltonian->GetHilbertSpaceDimension() + 1));
+	  for (int i = 0; i < this->Hamiltonian->GetHilbertSpaceDimension(); ++i)
+	    for (int j = i; j < this->Hamiltonian->GetHilbertSpaceDimension(); ++j)
+	      {
+		HRep.GetMatrixElement(i, j, Tmp1);
+		HRep.GetMatrixElement(j, i, Tmp2);
+		if (Norm(Tmp1 - Conj(Tmp2)) > (Error * AverageNorm))
+		  {
+		    cout << "error at " << i << " " << j << " : " << Tmp1 << " " << Tmp2 << " " << Norm(Tmp1 - Conj(Tmp2)) << " (should be lower than " << (Error * AverageNorm) << ")" << endl;
+		  }
+	      }
+	  cout << "check done" << endl;
+	}
+    }
   if (((*options)["lanczos-precision"] != 0) && (((SingleDoubleOption*) (*options)["lanczos-precision"])->GetDouble() > 0))
     {
       this->LanczosPrecision = ((SingleDoubleOption*) (*options)["lanczos-precision"])->GetDouble();

@@ -60,8 +60,7 @@ using std::ios;
 
 ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian::~ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian()
 {
-  //cout << "ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian::~ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian"<<endl;
-  for (int k=0; k<=MaxNBody; ++k)
+  for (int k=0; k <= this->MaxNBody; ++k)
     {
       if (this->NBodyFlags[k])
 	{

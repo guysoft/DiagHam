@@ -865,6 +865,68 @@ int ParticleOnSphereWithSpin::ProdAd (int* m, int spinIndices, int nbrIndices, d
   return this->HilbertSpaceDimension;
 }
 
+// apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+//
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// spinIndices = array of spin indixes associated to each annihilation operators first index corresponding to the leftmost operator, 0 stands for spin down and 1 stands for spin up)
+// nbrIndices = number of creation (or annihilation) operators
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::ProdAd (int* m, int* spinIndices, int nbrIndices, double& coefficient, int& nbrTranslation)
+{
+  cout << "warning using dummy method ParticleOnSphereWithSpin::ProdAd" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+//
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// spinIndices = integer that gives the spin indices associated to each creation operators, first index corresponding to the rightmost bit (i.e. 2^0), 0 stands for spin down and 1 stands for spin up
+// nbrIndices = number of creation (or annihilation) operators
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::ProdAd (int* m, int spinIndices, int nbrIndices, double& coefficient, int& nbrTranslation)
+{
+  cout << "warning using dummy method ParticleOnSphereWithSpin::ProdAd" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+//
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// spinIndices = array of spin indixes associated to each annihilation operators first index corresponding to the leftmost operator, 0 stands for spin down and 1 stands for spin up)
+// nbrIndices = number of creation (or annihilation) operators
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::ProdAd (int* m, int* spinIndices, int nbrIndices, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  cout << "warning using dummy method ParticleOnSphereWithSpin::ProdAd" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+//
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// spinIndices = integer that gives the spin indices associated to each creation operators, first index corresponding to the rightmost bit (i.e. 2^0), 0 stands for spin down and 1 stands for spin up
+// nbrIndices = number of creation (or annihilation) operators
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::ProdAd (int* m, int spinIndices, int nbrIndices, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  cout << "warning using dummy method ParticleOnSphereWithSpin::ProdAd" << endl;
+  return this->HilbertSpaceDimension;
+}
+
 // apply a^+_m_d a_m_d operator to a given state (only spin down)
 //
 // index = index of the state on which the operator has to be applied

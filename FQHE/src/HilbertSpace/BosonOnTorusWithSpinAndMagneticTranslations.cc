@@ -688,6 +688,93 @@ int BosonOnTorusWithSpinAndMagneticTranslations::AduAdd (int m1, int m2, double&
 }
 
 
+// apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
+//
+// index = index of the state on which the operator has to be applied
+// n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+// spinIndices = array of spin indixes associated to each annihilation operators first index corresponding to the leftmost operator, 0 stands for spin down and 1 stands for spin up)
+// nbrIndices = number of creation (or annihilation) operators
+// return value =  multiplicative factor 
+
+double BosonOnTorusWithSpinAndMagneticTranslations::ProdA (int index, int* n, int* spinIndices, int nbrIndices)
+{
+  double Coefficient = 1.0;
+  this->FermionToBoson(this->StateDescriptionUp[index], this->NUpKyMax, this->ProdATemporaryStateUp);
+  this->FermionToBoson(this->StateDescriptionDown[index], this->NDownKyMax, this->ProdATemporaryStateDown);
+  this->ProdANbrStateInOrbit = this->RescalingFactors[this->NbrStateInOrbit[index]];
+  for (int i = nbrIndices - 1; i >= 0; --i)
+    {
+      if (spinIndices[i] == 0)
+	{
+	  unsigned long& Tmp = this->ProdATemporaryStateDown[n[i]];
+	  if (Tmp == 0x0ul)
+	    {
+	      return 0.0;
+	    }
+	  Coefficient *= Tmp;
+	  --Tmp;
+	}
+      else
+	{
+	  unsigned long& Tmp = this->ProdATemporaryStateUp[n[i]];
+	  if (Tmp == 0x0ul)
+	    {
+	      return 0.0;
+	    }
+	  Coefficient *= Tmp;
+	  --Tmp;
+	}
+    }
+  return sqrt(Coefficient);
+}
+
+// apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+//
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// spinIndices = array of spin indixes associated to each annihilation operators first index corresponding to the leftmost operator, 0 stands for spin down and 1 stands for spin up)
+// nbrIndices = number of creation (or annihilation) operators
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int BosonOnTorusWithSpinAndMagneticTranslations::ProdAd (int* m, int* spinIndices, int nbrIndices, double& coefficient, int& nbrTranslation)
+{
+  for (int i = 0; i < this->MaxMomentum; ++i)
+    {
+      this->TemporaryStateUp[i] = this->ProdATemporaryStateUp[i];
+      this->TemporaryStateDown[i] = this->ProdATemporaryStateDown[i];
+    }
+  coefficient = 1.0;
+  for (int i = nbrIndices - 1; i >= 0; --i)
+    {
+      if (spinIndices[i] == 0)
+	{
+	  unsigned long& Tmp = this->TemporaryStateDown[m[i]];
+	  ++Tmp;
+	  coefficient *= Tmp;
+	}
+      else
+	{
+	  unsigned long& Tmp = this->TemporaryStateUp[m[i]];
+	  ++Tmp;
+	  coefficient *= Tmp;
+	}
+    }
+  unsigned long TmpStateUp;
+  unsigned long TmpStateDown;
+  this->BosonToFermion(this->TemporaryStateUp, this->TemporaryStateDown, TmpStateUp, TmpStateDown);
+  if (this->FindCanonicalFormAndTestXMomentumConstraint(TmpStateUp, TmpStateDown, nbrTranslation) == false)
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  int TmpIndex = this->FindStateIndex(TmpStateUp, TmpStateDown);
+  coefficient = sqrt(coefficient);
+  coefficient *= this->ProdANbrStateInOrbit[this->NbrStateInOrbit[TmpIndex]];
+  nbrTranslation *= this->StateShift;
+  return TmpIndex;
+}
+
 // find state index
 //
 // stateDescriptionUp = unsigned integer describing the fermionic state for type up particles

@@ -54,6 +54,14 @@ using std::ostream;
 
 ParticleOnLatticeWithSpinChernInsulatorHamiltonian::ParticleOnLatticeWithSpinChernInsulatorHamiltonian()
 {
+  this->InteractionFactorsupup = 0;
+  this->InteractionFactorsdowndown = 0;
+  this->OneBodyInteractionFactorsupdown = 0;
+  this->OneBodyInteractionFactorsupup = 0;
+  this->OneBodyInteractionFactorsdowndown = 0;
+  this->OneBodyInteractionFactorsupdown = 0;
+  this->NbrIntraSectorSums = 0;
+  this->NbrInterSectorSums = 0;
   this->HermitianSymmetryFlag = false;
   this->S2Hamiltonian = 0;
 }
