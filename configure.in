@@ -102,82 +102,29 @@ if test X${USE_PKG_LAPACK_ONLY} = Xyes; then
 fi
 
 
-#
-# Finding GSL libraries
-#
+dnl Cheks for gsl library
 
-GSL_INCLUDES=""
-GSL_LIBS=""
+AC_ARG_ENABLE(gsl, [AC_HELP_STRING([--enable-gsl],[enable gsl support])], [HAVE_PKG_GSL=$enableval],[HAVE_PKG_GSL=no])
 
-AC_ARG_ENABLE(gsl, [AC_HELP_STRING([--enable-gsl],[enable GSL support])], [HAVE_PKG_GSL=$enableval],[HAVE_PKG_GSL=no])
-
-AC_MSG_CHECKING(whether we are using GSL)
+AC_MSG_CHECKING(whether we are using gsl library)
 AC_MSG_RESULT([${HAVE_PKG_GSL}])
 
-if test "x$HAVE_PKG_GSL" != "xno"; then
-  AC_MSG_CHECKING([for GSL libraries])	
 
-  found=no
-  gsl_dir=
-  gsl_libdir=
+USER_DEFINED_GSL=no
+AC_ARG_WITH(gsl-libs,[AC_HELP_STRING([--with-gsl-libs="LIBS"],[GSL libraries @<:@"-lgsl  -lgslcblas"@:>@])],
+[GSL_LIBS=${withval}
+USER_DEFINED_GSL=yes
+AC_MSG_CHECKING(user-defined GSL libraries)
+AC_MSG_RESULT([${GSL_LIBS}])
+])
 
-  # test if location given by user
-  
-  AC_ARG_WITH(gsl,
-    AC_HELP_STRING([--with-gsl=DIR],[Location of GSL main tree (files in DIR/lib DIR/include etc.)]),
-    [
-    if test "x$withval" != "x"; then
-      gsl_dir=`echo "$withval" | sed 's,//*,/,g' | sed 's,/$,,'`
-      if test -f "$gsl_dir/lib/libgsl.a"; then :; else
-        AC_MSG_ERROR([Libraries of Gsl main tree not found])
-      fi
-      if test -f "$gsl_dir/include/gsl/gsl_version.h"; then :; else
-        AC_MSG_ERROR([Include files of Gsl main tree not found])
-      fi
-      found=yes
-    fi
-    ]
-  )
-  
-  # if not found, try standard locations
-  
-  if test X${found} = Xno; then
-    for d in $HOME $HOME/src $prefix $prefix/src /usr /usr/local /usr/local/src
-    do
-      if test -f "$d/include/gsl/gsl_version.h"; then
-        if test -f "$d/lib/libgsl*"; then
-          gsl_libdir="$d/lib"
-          found=yes
-          break
-        fi
-	if test -f "$d/lib64/libgsl*"; then
-          gsl_libdir="$d/lib64"
-          found=yes
-          break
-        fi
-      fi
-    done
-  fi
-  
-  if test X${found} = Xno;
-  then
-  	AC_MSG_ERROR([GSL libraries not found.])
-  else
-  	AC_MSG_RESULT([found in ${gsl_dir}])
-  fi
-  
-  # define and export variables for makefile
-  
-  GSL_INCLUDES="-I$gsl_dir/include/"
-  GSL_LIBS="-L$gsl_libdir/ -lgsl -lgslcblas"
+
+
+if test X${USER_DEFINED_GSL} = Xno && test X${HAVE_PKG_GSL} = Xyes; then
+  AC_DEFINE(HAVE_GSL,,[define if we are using gsl library])
+  AC_CHECK_LIB(gsl,gsl_blas_dgemm,GSL_LIBS=-lgsl,AC_MSG_ERROR([gsl library not found]))
+  GSL_LIBS="-lgsl -lgslcblas"
 fi
-
-if test X${HAVE_PKG_GSL} = Xyes; then
-  AC_DEFINE(HAVE_GSL,,[define if we are using GSL libraries])
-fi
-  
-AC_SUBST(GSL_INCLUDES)
-AC_SUBST(GSL_LIBS)
 
 
 dnl Cheks for bz2 library
@@ -568,6 +515,7 @@ AC_SUBST(SCALAPACK_LIBDIR)
 #AC_SUBST(ARPACK_LIBS)
 AC_SUBST(FORTRAN2C_LIBS)
 AC_SUBST(BZ2_LIBS)
+AC_SUBST(GSL_LIBS)
 AC_SUBST(GMP_LIBS)
 AC_SUBST(FFTW_LIBS)
 AC_SUBST(INTELMKL_LIBS)

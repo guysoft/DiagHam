@@ -422,7 +422,9 @@ bool LevelStatisticsParseSpectrumFile(char* spectrumFileName, OptionManager* man
 	  spectrumSize[0] = TmpSize;
 	  spectrum[0] = new double [TmpSize];
 	  for (int i = 0; i < TmpSize; ++i)
-	    spectrum[0][i] =  (*densityOfStates)(TmpSpectrum[i]);
+	    {
+	      spectrum[0][i] =  (*densityOfStates)(TmpSpectrum[i]);
+	    }
 	  spectrumWeight[0] = 1;
 	}
       delete[] TmpSpectrum;

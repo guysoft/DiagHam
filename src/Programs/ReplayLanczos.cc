@@ -1,6 +1,8 @@
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithmWithDiskStorage.h"
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithGroundStateDiskStorage.h"
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage.h"
+#include "LanczosAlgorithm/BasicLanczosAlgorithmWithGroundState.h"
+
 #include "Vector/RealVector.h"
 
 #include "Architecture/AbstractArchitecture.h"
@@ -43,6 +45,7 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new BooleanOption ('r', "reorthogonalized", "indicate whether a reorthogonalized Lanczos algorithm was used");
   (*LanczosGroup) += new BooleanOption ('c', "complex-lanczos", "indicate whether a complex Lanczos algorithm was used");
   (*LanczosGroup) += new BooleanOption  ('\n', "block-lanczos", "use block Lanczos algorithm", false);
+  (*LanczosGroup) += new BooleanOption  ('\n', "fast-disk", "indicate if a fast-disk option was used", false);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -110,18 +113,38 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      BasicLanczosAlgorithmWithGroundStateDiskStorage Lanczos(Architecture.GetArchitecture(), 0, 0);
-	      Lanczos.ResumeLanczosAlgorithm();
-	      if (EigenstateFlag)
+	      if (Manager.GetBoolean("fast-disk"))
 		{
-		  char *TmpVectorName = new char[strlen(OutputName)+10];
-		  RealVector* Eigenvectors = (RealVector*) Lanczos.GetEigenstates(NbrEigenvalue);
-		  for (int i = 0; i < NbrEigenvalue; ++i)
+		  cout << "warning, can't replay from fast-disk" << endl;
+		  return 0;
+		  BasicLanczosAlgorithmWithGroundState Lanczos(Architecture.GetArchitecture(), 3000, false, true);
+		  Lanczos.ResumeLanczosAlgorithm();
+		  if (EigenstateFlag)
 		    {
-		      sprintf (TmpVectorName, "%s.%d.vec", OutputName, i);
-		      Eigenvectors[i].WriteVector(TmpVectorName);
+		      char *TmpVectorName = new char[strlen(OutputName)+10];
+		      RealVector* Eigenvectors = (RealVector*) Lanczos.GetEigenstates(NbrEigenvalue);
+		      for (int i = 0; i < NbrEigenvalue; ++i)
+			{
+			  sprintf (TmpVectorName, "%s.%d.vec", OutputName, i);
+			  Eigenvectors[i].WriteVector(TmpVectorName);
+			}
+		      delete [] TmpVectorName;		  
 		    }
-		  delete [] TmpVectorName;		  
+		}
+	      else
+		{
+		  BasicLanczosAlgorithmWithGroundStateDiskStorage Lanczos(Architecture.GetArchitecture(), 0, 0);
+		  if (EigenstateFlag)
+		    {
+		      char *TmpVectorName = new char[strlen(OutputName)+10];
+		      RealVector* Eigenvectors = (RealVector*) Lanczos.GetEigenstates(NbrEigenvalue);
+		      for (int i = 0; i < NbrEigenvalue; ++i)
+			{
+			  sprintf (TmpVectorName, "%s.%d.vec", OutputName, i);
+			  Eigenvectors[i].WriteVector(TmpVectorName);
+			}
+		      delete [] TmpVectorName;		  
+		    }
 		}
 	    }
 	}

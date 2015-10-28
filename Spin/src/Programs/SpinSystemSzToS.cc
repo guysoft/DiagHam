@@ -34,6 +34,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('s', "spectrum", "name of the file that contains the spectrum");
   (*SystemGroup) += new SingleIntegerOption ('z', "sz-column", "index of the column that contains the Sz values (0 being the first column)", 0);
   (*SystemGroup) += new SingleIntegerOption ('c', "energy-column", "index of the column that contains the energies (0 being the first column)", 1);
+  (*SystemGroup) += new SingleIntegerOption ('k', "momentum-column", "if positive, index of the column that contains the momentum (0 being the first column)", -1);
   (*OutputGroup) += new  SingleStringOption ('\n', "output-file", "use a specific for the S-sorted spectrum instead of the default name deduced from the input file name (replacing .dat with _s.dat)");  
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -57,6 +58,8 @@ int main(int argc, char** argv)
     }
   double** Spectrum;
   int* SpectrumSize;
+  int* SzValues;
+  int** Momenta;
   int NbrSzSectors = 1;
 
   int TmpSize = SpectrumFile.GetNbrLines();
@@ -68,42 +71,90 @@ int main(int argc, char** argv)
 	  ++NbrSzSectors;
 	}
     }
-  Spectrum = new double*[NbrSzSectors];
-  SpectrumSize = new int[NbrSzSectors];
-  int* SzValues = new int[NbrSzSectors];
-  NbrSzSectors = 0;
-  int CurrentIndex = 0;  
-  SzValues[0] = TmpSzValues[0];
-  for (int i = 1; i < TmpSize; ++i)
-    {
-      if (TmpSzValues[i - 1] != TmpSzValues[i])
-	{
-	  Spectrum[NbrSzSectors] = new double [i - CurrentIndex];
-	  SpectrumSize[NbrSzSectors] = i - CurrentIndex;
-	  CurrentIndex = i;
-	  ++NbrSzSectors;
-	  SzValues[NbrSzSectors] = TmpSzValues[i];
-	}
-    }
-  Spectrum[NbrSzSectors] = new double [TmpSize - CurrentIndex];
-  SpectrumSize[NbrSzSectors]= TmpSize - CurrentIndex;
-  ++NbrSzSectors;            
-  double* TmpSpectrum = SpectrumFile.GetAsDoubleArray(Manager.GetInteger("energy-column"));
-  Spectrum[0][0] = TmpSpectrum[0];
-  NbrSzSectors = 0;
-  CurrentIndex = 0;
-  for (int i = 1; i < TmpSize; ++i)
-    {
-      if (TmpSzValues[i - 1] != TmpSzValues[i])
-	{
-	  CurrentIndex = i;
-	  ++NbrSzSectors;
-	}
-      Spectrum[NbrSzSectors][i - CurrentIndex] = TmpSpectrum[i];
-    }
-  ++NbrSzSectors;            
 
-
+  if (Manager.GetInteger("momentum-column") < 0)
+    {
+      Spectrum = new double*[NbrSzSectors];
+      SpectrumSize = new int[NbrSzSectors];
+      SzValues = new int[NbrSzSectors];
+      NbrSzSectors = 0;
+      int CurrentIndex = 0;  
+      SzValues[0] = TmpSzValues[0];
+      for (int i = 1; i < TmpSize; ++i)
+	{
+	  if (TmpSzValues[i - 1] != TmpSzValues[i])
+	    {
+	      Spectrum[NbrSzSectors] = new double [i - CurrentIndex];
+	      SpectrumSize[NbrSzSectors] = i - CurrentIndex;
+	      CurrentIndex = i;
+	      ++NbrSzSectors;
+	      SzValues[NbrSzSectors] = TmpSzValues[i];
+	    }
+	}
+      Spectrum[NbrSzSectors] = new double [TmpSize - CurrentIndex];
+      SpectrumSize[NbrSzSectors]= TmpSize - CurrentIndex;
+      ++NbrSzSectors; 
+           
+      double* TmpSpectrum = SpectrumFile.GetAsDoubleArray(Manager.GetInteger("energy-column"));
+      Spectrum[0][0] = TmpSpectrum[0];
+      NbrSzSectors = 0;
+      CurrentIndex = 0;
+      for (int i = 1; i < TmpSize; ++i)
+	{
+	  if (TmpSzValues[i - 1] != TmpSzValues[i])
+	    {
+	      CurrentIndex = i;
+	      ++NbrSzSectors;
+	    }
+	  Spectrum[NbrSzSectors][i - CurrentIndex] = TmpSpectrum[i];
+	}
+      ++NbrSzSectors;            
+    }
+  else
+    {
+      Spectrum = new double*[NbrSzSectors];
+      SpectrumSize = new int[NbrSzSectors];
+      SzValues = new int[NbrSzSectors];
+      Momenta = new int*[NbrSzSectors];
+      NbrSzSectors = 0;
+      int CurrentIndex = 0;  
+      SzValues[0] = TmpSzValues[0];
+      for (int i = 1; i < TmpSize; ++i)
+	{
+	  if (TmpSzValues[i - 1] != TmpSzValues[i])
+	    {
+	      Spectrum[NbrSzSectors] = new double [i - CurrentIndex];
+	      Momenta[NbrSzSectors] = new int [i - CurrentIndex];
+	      SpectrumSize[NbrSzSectors] = i - CurrentIndex;
+	      CurrentIndex = i;
+	      ++NbrSzSectors;
+	      SzValues[NbrSzSectors] = TmpSzValues[i];
+	    }
+	}
+      Spectrum[NbrSzSectors] = new double [TmpSize - CurrentIndex];
+      Momenta[NbrSzSectors] = new int [TmpSize - CurrentIndex];
+      SpectrumSize[NbrSzSectors]= TmpSize - CurrentIndex;
+      ++NbrSzSectors; 
+           
+      double* TmpSpectrum = SpectrumFile.GetAsDoubleArray(Manager.GetInteger("energy-column"));
+      int* TmpMomenta = SpectrumFile.GetAsIntegerArray(Manager.GetInteger("momentum-column"));
+      Spectrum[0][0] = TmpSpectrum[0];
+      Momenta[0][0] = TmpMomenta[0];
+      NbrSzSectors = 0;
+      CurrentIndex = 0;
+      for (int i = 1; i < TmpSize; ++i)
+	{
+	  if (TmpSzValues[i - 1] != TmpSzValues[i])
+	    {
+	      CurrentIndex = i;
+	      ++NbrSzSectors;
+	    }
+	  Spectrum[NbrSzSectors][i - CurrentIndex] = TmpSpectrum[i];
+	  Momenta[NbrSzSectors][i - CurrentIndex] = TmpMomenta[i];
+	}
+      ++NbrSzSectors;            
+   }
+ 
   char* OutputFileName;
   if (Manager.GetString("output-file") != 0)
     {
@@ -117,49 +168,99 @@ int main(int argc, char** argv)
   ofstream File;
   File.open(OutputFileName, ios::binary | ios::out); 
   File.precision(14); 
-  File << "# 2Sz Energy deg." << endl;
+
   double MaxError = 0.0;
-  for (int i = 0; i < (NbrSzSectors - 1); ++i)
+  if (Manager.GetInteger("momentum-column") < 0)
     {
-      bool* TmpFlags = new bool[SpectrumSize[i]];
-      for (int j = 0; j <  SpectrumSize[i]; ++j)
+      File << "# 2Sz Energy deg." << endl;
+      for (int i = 0; i < (NbrSzSectors - 1); ++i)
 	{
-	  TmpFlags[j] = true;	  
-	}
-      for (int j = 0; j <  SpectrumSize[i + 1]; ++j)
-	{
-	  double MinError = 1e14;
-	  int CurrentIndex = 0;
+	  bool* TmpFlags = new bool[SpectrumSize[i]];
+	  for (int j = 0; j <  SpectrumSize[i]; ++j)
+	    {
+	      TmpFlags[j] = true;	  
+	    }
+	  for (int j = 0; j <  SpectrumSize[i + 1]; ++j)
+	    {
+	      double MinError = 1e14;
+	      int CurrentIndex = 0;
+	      for (int k = 0; k < SpectrumSize[i]; ++k)
+		{
+		  if (TmpFlags[k] == true)
+		    {
+		      double Tmp = fabs(Spectrum[i + 1][j] - Spectrum[i][k]);
+		      if (Tmp < MinError)
+			{
+			  CurrentIndex = k;
+			  MinError = Tmp;
+			}
+		    }
+		}	  
+	      if (MinError > MaxError)
+		{
+		  MaxError = MinError;
+		}
+	      TmpFlags[CurrentIndex] = false;
+	    }
 	  for (int k = 0; k < SpectrumSize[i]; ++k)
 	    {
 	      if (TmpFlags[k] == true)
 		{
-		  double Tmp = fabs(Spectrum[i + 1][j] - Spectrum[i][k]);
-		  if (Tmp < MinError)
-		    {
-		      CurrentIndex = k;
-		      MinError = Tmp;
-		    }
+		  File << SzValues[i] << " " << Spectrum[i][k] << " " << (SzValues[i] + 1) << endl;
 		}
-	    }	  
-	  if (MinError > MaxError)
-	    {
-	      MaxError = MinError;
 	    }
-	  TmpFlags[CurrentIndex] = false;
+	  delete[] TmpFlags;
 	}
-      for (int k = 0; k < SpectrumSize[i]; ++k)
+      for (int k = 0; k < SpectrumSize[NbrSzSectors - 1]; ++k)
 	{
-	  if (TmpFlags[k] == true)
-	    {
-	      File << SzValues[i] << " " << Spectrum[i][k] << " " << (SzValues[i] + 1) << endl;
-	    }
+	  File << SzValues[NbrSzSectors - 1] << " " << Spectrum[NbrSzSectors - 1][k] << " " << (SzValues[NbrSzSectors - 1] + 1) << endl;
 	}
-      delete[] TmpFlags;
     }
-  for (int k = 0; k < SpectrumSize[NbrSzSectors - 1]; ++k)
+  else
     {
-      File << SzValues[NbrSzSectors - 1] << " " << Spectrum[NbrSzSectors - 1][k] << " " << (SzValues[NbrSzSectors - 1] + 1) << endl;
+      File << "# 2Sz K Energy deg." << endl;
+      for (int i = 0; i < (NbrSzSectors - 1); ++i)
+	{
+	  bool* TmpFlags = new bool[SpectrumSize[i]];
+	  for (int j = 0; j <  SpectrumSize[i]; ++j)
+	    {
+	      TmpFlags[j] = true;	  
+	    }
+	  for (int j = 0; j <  SpectrumSize[i + 1]; ++j)
+	    {
+	      double MinError = 1e14;
+	      int CurrentIndex = 0;
+	      for (int k = 0; k < SpectrumSize[i]; ++k)
+		{
+		  if (TmpFlags[k] == true)
+		    {
+		      double Tmp = fabs(Spectrum[i + 1][j] - Spectrum[i][k]);
+		      if ((Tmp < MinError) && (Momenta[i + 1][j] == Momenta[i][k]))
+			{
+			  CurrentIndex = k;
+			  MinError = Tmp;
+			}
+		    }
+		}	  
+	      if (MinError > MaxError)
+		{
+		  MaxError = MinError;
+		}
+	      TmpFlags[CurrentIndex] = false;
+	    }
+	  for (int k = 0; k < SpectrumSize[i]; ++k)
+	    {
+	      if (TmpFlags[k] == true)
+		{
+		  File << SzValues[i] << " " << Momenta[i][k] << " " << Spectrum[i][k] << " " << (SzValues[i] + 1) << endl;
+		}
+	    }
+	  delete[] TmpFlags;
+	}
+      for (int k = 0; k < SpectrumSize[NbrSzSectors - 1]; ++k)
+	{
+	  File << SzValues[NbrSzSectors - 1] << " " << Momenta[NbrSzSectors - 1][k] << " " << Spectrum[NbrSzSectors - 1][k] << " " << (SzValues[NbrSzSectors - 1] + 1) << endl;
+	}
     }
   File.close();
   cout << "Maximum error = " << MaxError << endl;

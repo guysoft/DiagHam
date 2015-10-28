@@ -251,6 +251,30 @@ class Spin1ChainWithTranslations : public AbstractSpinChainWithTranslations
   // return value = index of resulting state
   int SmiSzj (int i, int j, int state, double& coefficient, int& nbrTranslation);
 
+  // return index of resulting state from application of S-_i1 S+_j1 S-_i2 S+_j2 operator on a given state
+  //
+  // i1 = position of leftmost S- operator
+  // j1 = position of leftmost S+ operator
+  // i2 = position of rightmost S- operator
+  // j2 = position of rightmost S+ operator
+  // state = index of the state to be applied on S-_i S+_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of resulting state (orbit index)
+  virtual int SmiSpjSmiSpj (int i1, int j1, int i2, int j2, int state, double& coefficient, int& nbrTranslation);
+
+  // return index of resulting state from application of Sz_i1 Sz_j1 S-_i2 S+_j2 operator on a given state
+  //
+  // i1 = position of first Sz operator
+  // j1 = position of second Sz operator
+  // i2 = position of S- operator
+  // j2 = position of S+ operator
+  // state = index of the state to be applied on S-_i S+_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of resulting state (orbit index)
+  virtual int SziSzjSmiSpj (int i1, int j1, int i2, int j2, int state, double& coefficient, int& nbrTranslation);
+
   // extract subspace with a fixed quantum number
   //
   // q = quantum number value

@@ -97,8 +97,11 @@ Spin1ChainWithTranslations::Spin1ChainWithTranslations (int chainLength, int mom
 
   this->CreatePrecalculationTable();
   this->HilbertSpaceDimension = this->GenerateStates (memorySlice >> 3);
-  this->CreateLookUpTable();
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
+  if (this->LargeHilbertSpaceDimension > 0l)
+    {
+      this->CreateLookUpTable();
+    }
 }
 
 // constructor for Hilbert space corresponding to a given total spin projection Sz
@@ -129,8 +132,11 @@ Spin1ChainWithTranslations::Spin1ChainWithTranslations (int chainLength, int mom
 
   this->CreatePrecalculationTable();
   this->HilbertSpaceDimension = this->GenerateStates (this->Sz, memorySlice >> 3);
-  this->CreateLookUpTable();
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
+  if (this->LargeHilbertSpaceDimension > 0l)
+    {
+      this->CreateLookUpTable();
+    }
 }
 
 // constructor from pre-constructed datas
@@ -209,15 +215,18 @@ Spin1ChainWithTranslations::~Spin1ChainWithTranslations ()
 {
   if ((this->ChainLength != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->ChainDescription;
-      delete[] this->LookUpTable;
-      delete[] this->CompatibilityWithMomentum;
-      for (int i = 1; i <= this->ChainLength; ++i)
+      if (this->LargeHilbertSpaceDimension > 0l)
 	{
-	  delete[] this->RescalingFactors[i];
-	} 
-      delete[] this->RescalingFactors;
-      delete[] this->NbrStateInOrbit;
+	  delete[] this->LookUpTable;
+	  delete[] this->ChainDescription;
+	  delete[] this->CompatibilityWithMomentum;
+	  for (int i = 1; i <= this->ChainLength; ++i)
+	    {
+	      delete[] this->RescalingFactors[i];
+	    } 
+	  delete[] this->RescalingFactors;
+	  delete[] this->NbrStateInOrbit;
+	}
     }
 }
 
@@ -230,15 +239,18 @@ Spin1ChainWithTranslations& Spin1ChainWithTranslations::operator = (const Spin1C
 {
   if ((this->ChainLength != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->ChainDescription;
-      delete[] this->LookUpTable;
-      delete[] this->CompatibilityWithMomentum;
-      for (int i = 1; i <= this->ChainLength; ++i)
+      if (this->LargeHilbertSpaceDimension > 0l)
 	{
-	  delete[] this->RescalingFactors[i];
-	} 
-      delete[] this->RescalingFactors;
-      delete[] this->NbrStateInOrbit;
+	  delete[] this->ChainDescription;
+	  delete[] this->LookUpTable;
+	  delete[] this->CompatibilityWithMomentum;
+	  for (int i = 1; i <= this->ChainLength; ++i)
+	    {
+	      delete[] this->RescalingFactors[i];
+	    } 
+	  delete[] this->RescalingFactors;
+	  delete[] this->NbrStateInOrbit;
+	}
     }  
   this->Flag = chain.Flag;
   if (chain.ChainLength != 0)
@@ -349,13 +361,13 @@ int Spin1ChainWithTranslations::TotalSz (int index)
   unsigned long TmpState;
   for (int i = 0; i < this->ChainLength; i++)
     {
-      TmpState = State & ((unsigned long) 0x3);
+      TmpState = State & 0x3ul;
       switch (TmpState)
 	{
-	case 0x3:
+	case 0x3ul:
 	  TmpSz += 2;
 	  break;
-	case 0x0:
+	case 0x0ul:
 	  TmpSz -= 2;
 	  break;
 	}
@@ -375,7 +387,7 @@ double Spin1ChainWithTranslations::TotalSzSz (int index)
   double TmpSzSz = 0.0;
   for (int i = 0; i < this->ChainLength; i++)
     {
-      if ((State & ((unsigned long) 0x3)) != ((unsigned long) 0x2))
+      if ((State & 0x3ul) != 0x2ul)
 	TmpSzSz += 1.0;
       State >>= 2;
     }
@@ -392,7 +404,7 @@ inline int Spin1ChainWithTranslations::GetTotalSz (unsigned long stateDescriptio
   int TmpSz = 0;
   for (int i = 0; i < this->ChainLength; i++)
     {
-      switch (stateDescription & ((unsigned long) 0x3))
+      switch (stateDescription & 0x3ul)
 	{
 	case 0x3:
 	  TmpSz += 2;
@@ -416,10 +428,10 @@ inline int Spin1ChainWithTranslations::GetTotalSz (unsigned long stateDescriptio
 double Spin1ChainWithTranslations::SziSzj (int i, int j, int state)
 {  
   unsigned long tmpState = this->ChainDescription[state];
-  unsigned long tmpState2 = (tmpState >> (j << 1)) & ((unsigned long) 0x3);
+  unsigned long tmpState2 = (tmpState >> (j << 1)) & 0x3ul;
   tmpState >>= (i << 1);
-  tmpState &= ((unsigned long) 0x3);
-  if ((tmpState == ((unsigned long) 0x2)) || (tmpState2 == ((unsigned long) 0x2)))
+  tmpState &= 0x3ul;
+  if ((tmpState == 0x2ul) || (tmpState2 == 0x2ul))
     return 0.0;
   if (tmpState == tmpState2)
     return 1.0;
@@ -443,44 +455,44 @@ int Spin1ChainWithTranslations::SmiSpj (int i, int j, int state, double& coeffic
   unsigned long tmpState2 = tmpState;
   i <<= 1;
   tmpState >>= i;
-  tmpState &= ((unsigned long) 0x3);
+  tmpState &= 0x3ul;
   switch (tmpState)
     {
-    case 0x3:
+    case 0x3ul:
       coefficient = M_SQRT2;
-      State &= ~(((unsigned long) 0x1) << i);
+      State &= ~(0x1ul << i);
       break;
-    case 0x2:
+    case 0x2ul:
       coefficient = M_SQRT2;
-      State&= ~(((unsigned long) 0x2) << i);
+      State&= ~(0x2ul << i);
       break;
-    case 0x0:
+    case 0x0ul:
       return this->HilbertSpaceDimension;
     }	  
   j <<= 1;
   tmpState2 >>= j;
-  tmpState2 &= ((unsigned long) 0x3);
+  tmpState2 &= 0x3ul;
   switch (tmpState2)
     {
-    case 0x3:
+    case 0x3ul:
       {
 	return this->HilbertSpaceDimension;
       }
       break;
-    case 0x2:
+    case 0x2ul:
       {
 	coefficient *= M_SQRT2;
-	State = this->FindCanonicalForm(State | (((unsigned long) 0x1) << j), nbrTranslation, i);
+	State = this->FindCanonicalForm(State | (0x1ul << j), nbrTranslation, i);
 	if (this->CompatibilityWithMomentum[i] == false)
 	  return this->HilbertSpaceDimension;
 	coefficient *= this->RescalingFactors[this->NbrStateInOrbit[state]][i];
 	return this->FindStateIndex(State);
       }
       break;
-    case 0x0:
+    case 0x0ul:
       {
 	coefficient *= M_SQRT2;
-	State = this->FindCanonicalForm(State | (((unsigned long) 0x2) << j), nbrTranslation, i);
+	State = this->FindCanonicalForm(State | (0x2ul << j), nbrTranslation, i);
 	if (this->CompatibilityWithMomentum[i] == false)
 	  return this->HilbertSpaceDimension;
 	coefficient *= this->RescalingFactors[this->NbrStateInOrbit[state]][i];
@@ -505,22 +517,22 @@ int Spin1ChainWithTranslations::Spi (int i, int state, double& coefficient, int&
   unsigned long State = tmpState;
   i <<= 1;
   tmpState >>= i;
-  tmpState &= ((unsigned long) 0x3);
+  tmpState &= 0x3ul;
   switch (tmpState)
     {
-    case 0x3:
+    case 0x3ul:
       return this->HilbertSpaceDimension;
       break;
-    case 0x2:
+    case 0x2ul:
       {
 	coefficient = M_SQRT2;
-	State |= (((unsigned long) 0x1) << i);
+	State |= (0x1ul << i);
       }
       break;
-    case 0x0:
+    case 0x0ul:
       {
 	coefficient = M_SQRT2;
-	State |= (((unsigned long) 0x2) << i);
+	State |= (0x2ul << i);
       }
       break;
     }	  
@@ -545,18 +557,18 @@ int Spin1ChainWithTranslations::Smi (int i, int state, double& coefficient, int&
   unsigned long State = tmpState;
   i <<= 1;
   tmpState >>= i;
-  tmpState &= ((unsigned long) 0x3);
+  tmpState &= 0x3ul;
   switch (tmpState)
     {
-    case 0x03:
+    case 0x03ul:
       coefficient = M_SQRT2;
-      State &= ~(((unsigned long) 0x1) << i);
+      State &= ~(0x1ul << i);
       break;
-    case 0x2:
+    case 0x2ul:
       coefficient = M_SQRT2;
-      State&= ~(((unsigned long) 0x2) << i);
+      State&= ~(0x2ul << i);
       break;
-    case 0x0:
+    case 0x0ul:
       return this->HilbertSpaceDimension;
     }	  
   State = this->FindCanonicalForm(State, nbrTranslation, i);
@@ -582,44 +594,44 @@ int Spin1ChainWithTranslations::SpiSpj (int i, int j, int state, double& coeffic
   unsigned long tmpState2 = tmpState;
   i <<= 1;
   tmpState >>= i;
-  tmpState &= ((unsigned long) 0x3);
+  tmpState &= 0x3ul;
   switch (tmpState)
     {
-    case 0x3:
+    case 0x3ul:
       return this->HilbertSpaceDimension;
       break;
-    case 0x2:
+    case 0x2ul:
       coefficient = M_SQRT2;
-      State |= (((unsigned long) 0x1) << i);
+      State |= (0x1ul << i);
       break;
-    case 0x0:
+    case 0x0ul:
       coefficient = M_SQRT2;
-      State |= (((unsigned long) 0x2) << i);
+      State |= (0x2ul << i);
       break;
     }	  
   j <<= 1;
   tmpState2 >>= j;
-  tmpState2 &= ((unsigned long) 0x3);
+  tmpState2 &= 0x3ul;
   switch (tmpState2)
     {
-    case 0x3:
+    case 0x3ul:
       {
 	return this->HilbertSpaceDimension;
       }
       break;
-    case 0x2:
+    case 0x2ul:
       {
 	coefficient *= M_SQRT2;
-	State = this->FindCanonicalForm(State | (((unsigned long) 0x1) << j), nbrTranslation, i);
+	State = this->FindCanonicalForm(State | (0x1ul << j), nbrTranslation, i);
 	if (this->CompatibilityWithMomentum[i] == false)
 	  return this->HilbertSpaceDimension;
 	coefficient *= this->RescalingFactors[this->NbrStateInOrbit[state]][i];
 	return this->FindStateIndex(State);
       }
-    case 0x0:
+    case 0x0ul:
       {
 	coefficient *= M_SQRT2;
-	State = this->FindCanonicalForm(State | (((unsigned long) 0x2) << j), nbrTranslation, i);
+	State = this->FindCanonicalForm(State | (0x2ul << j), nbrTranslation, i);
 	if (this->CompatibilityWithMomentum[i] == false)
 	  return this->HilbertSpaceDimension;
 	coefficient *= this->RescalingFactors[this->NbrStateInOrbit[state]][i];
@@ -646,46 +658,46 @@ int Spin1ChainWithTranslations::SmiSmj (int i, int j, int state, double& coeffic
   unsigned long tmpState2 = tmpState;
   i <<= 1;
   tmpState >>= i;
-  tmpState &= ((unsigned long) 0x3);
+  tmpState &= 0x3ul;
   switch (tmpState)
     {
-    case 0x03:
+    case 0x3ul:
       coefficient = M_SQRT2;
-      State &= ~(((unsigned long) 0x1) << i);
+      State &= ~(0x1ul << i);
       break;
-    case 0x02:
+    case 0x2ul:
       coefficient = M_SQRT2;
-      State&= ~(((unsigned long) 0x2) << i);
+      State&= ~(0x2ul << i);
       break;
-    case 0x0:
+    case 0x0ul:
       return this->HilbertSpaceDimension;
     }	  
   j <<= 1;
   tmpState2 >>= j;
-  tmpState2 &= ((unsigned long) 0x3);
+  tmpState2 &= 0x3ul;
   switch (tmpState2)
     {
-    case 0x3:
+    case 0x3ul:
       {
 	coefficient *= M_SQRT2;
-	State = this->FindCanonicalForm(State & ~(((unsigned long) 0x1) << j), nbrTranslation, i);
+	State = this->FindCanonicalForm(State & ~(0x1ul << j), nbrTranslation, i);
 	if (this->CompatibilityWithMomentum[i] == false)
 	  return this->HilbertSpaceDimension;
 	coefficient *= this->RescalingFactors[this->NbrStateInOrbit[state]][i];
 	return this->FindStateIndex(State);
       }
       break;
-    case 0x2:
+    case 0x2ul:
       {
 	coefficient *= M_SQRT2;
-	State = this->FindCanonicalForm(State & ~(((unsigned long) 0x2) << j), nbrTranslation, i);
+	State = this->FindCanonicalForm(State & ~(0x2ul << j), nbrTranslation, i);
 	if (this->CompatibilityWithMomentum[i] == false)
 	  return this->HilbertSpaceDimension;
 	coefficient *= this->RescalingFactors[this->NbrStateInOrbit[state]][i];
 	return this->FindStateIndex(State);
       }
       break;
-    case 0x0:
+    case 0x0ul:
       {
 	coefficient = 0;
 	return this->HilbertSpaceDimension;
@@ -706,12 +718,12 @@ int Spin1ChainWithTranslations::SmiSmj (int i, int j, int state, double& coeffic
 int Spin1ChainWithTranslations::SpiSpi (int i, int state, double& coefficient, int& nbrTranslation)
 {
   unsigned long tmpState = this->ChainDescription[state];
-  if (((tmpState >> (i << 1)) & ((unsigned long) 0x3)) !=  ((unsigned long) 0x0))
+  if (((tmpState >> (i << 1)) & 0x3ul) !=  ((unsigned long) 0x0))
     {
       return this->HilbertSpaceDimension;
     }
   coefficient = 2.0;
-  tmpState = this->FindCanonicalForm(tmpState | (((unsigned long) 0x3) << (i << 1)), nbrTranslation, i);
+  tmpState = this->FindCanonicalForm(tmpState | (0x3ul << (i << 1)), nbrTranslation, i);
   if (this->CompatibilityWithMomentum[i] == false)
     return this->HilbertSpaceDimension;
   coefficient *= this->RescalingFactors[this->NbrStateInOrbit[state]][i];
@@ -729,12 +741,12 @@ int Spin1ChainWithTranslations::SpiSpi (int i, int state, double& coefficient, i
 int Spin1ChainWithTranslations::SmiSmi (int i, int state, double& coefficient, int& nbrTranslation)
 {
   unsigned long tmpState = this->ChainDescription[state];
-  if (((tmpState >> (i << 1)) & ((unsigned long) 0x3)) !=  ((unsigned long) 0x3))
+  if (((tmpState >> (i << 1)) & 0x3ul) !=  0x3ul)
     {
       return this->HilbertSpaceDimension;
     }
   coefficient = 2.0;
-  tmpState = this->FindCanonicalForm(tmpState & ~(((unsigned long) 0x3) << (i << 1)), nbrTranslation, i);
+  tmpState = this->FindCanonicalForm(tmpState & ~(0x3ul << (i << 1)), nbrTranslation, i);
   if (this->CompatibilityWithMomentum[i] == false)
     return this->HilbertSpaceDimension;
   coefficient *= this->RescalingFactors[this->NbrStateInOrbit[state]][i];
@@ -754,13 +766,13 @@ int Spin1ChainWithTranslations::SpiSzj (int i, int j, int state, double& coeffic
 {
   unsigned long tmpState = this->ChainDescription[state];
   unsigned long State = tmpState;
-  unsigned long tmpState2 = (tmpState >> (j << 1)) & ((unsigned long) 0x3);
-  if (tmpState2 == ((unsigned long) 0x2))
+  unsigned long tmpState2 = (tmpState >> (j << 1)) & 0x3ul;
+  if (tmpState2 == 0x2ul)
     {
       coefficient = 0;
       return this->HilbertSpaceDimension;
     }
-  if (tmpState2 == ((unsigned long) 0x3))
+  if (tmpState2 == 0x3ul)
     {
       coefficient = 1.0;
     }
@@ -770,29 +782,29 @@ int Spin1ChainWithTranslations::SpiSzj (int i, int j, int state, double& coeffic
     }
   i <<= 1;
   tmpState >>= i;
-  tmpState &= ((unsigned long) 0x3);
+  tmpState &= 0x3ul;
   switch (tmpState)
     {
-    case 0x3:
+    case 0x3ul:
       {
 	coefficient = 0;
 	return this->HilbertSpaceDimension;
       }
       break;
-    case 0x2:
+    case 0x2ul:
       {
 	coefficient *= M_SQRT2;
-	State = this->FindCanonicalForm(State | (((unsigned long) 0x1) << i), nbrTranslation, i);
+	State = this->FindCanonicalForm(State | (0x1ul << i), nbrTranslation, i);
 	if (this->CompatibilityWithMomentum[i] == false)
 	  return this->HilbertSpaceDimension;
 	coefficient *= this->RescalingFactors[this->NbrStateInOrbit[state]][i];
 	return this->FindStateIndex(State);
       }
       break;
-    case 0x0:
+    case 0x0ul:
       {
 	coefficient *= M_SQRT2;
-	State = this->FindCanonicalForm(State | (((unsigned long) 0x2) << i), nbrTranslation, i);
+	State = this->FindCanonicalForm(State | (0x2ul << i), nbrTranslation, i);
 	if (this->CompatibilityWithMomentum[i] == false)
 	  return this->HilbertSpaceDimension;
 	coefficient *= this->RescalingFactors[this->NbrStateInOrbit[state]][i];
@@ -816,13 +828,13 @@ int Spin1ChainWithTranslations::SmiSzj (int i, int j, int state, double& coeffic
 {
   unsigned long tmpState = this->ChainDescription[state];
   unsigned long State = tmpState;
-  unsigned long tmpState2 = (tmpState >> (j << 1)) & ((unsigned long) 0x3);
-  if (tmpState2 == ((unsigned long) 0x2))
+  unsigned long tmpState2 = (tmpState >> (j << 1)) & 0x3ul;
+  if (tmpState2 == 0x2ul)
     {
       coefficient = 0;
       return this->HilbertSpaceDimension;
     }
-  if (tmpState2 == ((unsigned long) 0x3))
+  if (tmpState2 == 0x3ul)
     {
       coefficient = 1.0;
     }
@@ -832,30 +844,228 @@ int Spin1ChainWithTranslations::SmiSzj (int i, int j, int state, double& coeffic
     }
   i <<= 1;
   tmpState >>= i;
-  tmpState &= ((unsigned long) 0x3);
+  tmpState &= 0x3ul;
   switch (tmpState)
     {
-    case 0x3:
+    case 0x3ul:
       {
 	coefficient *= M_SQRT2;
-	State = this->FindCanonicalForm(State & ~(((unsigned long) 0x1) << i), nbrTranslation, i);
+	State = this->FindCanonicalForm(State & ~(0x1ul << i), nbrTranslation, i);
 	if (this->CompatibilityWithMomentum[i] == false)
 	  return this->HilbertSpaceDimension;
 	coefficient *= this->RescalingFactors[this->NbrStateInOrbit[state]][i];
 	return this->FindStateIndex(State);
       }
       break;
-    case 0x2:
+    case 0x2ul:
       {
 	coefficient *= M_SQRT2;
-	State = this->FindCanonicalForm(State & ~(((unsigned long) 0x2) << i), nbrTranslation, i);
+	State = this->FindCanonicalForm(State & ~(0x2ul << i), nbrTranslation, i);
 	if (this->CompatibilityWithMomentum[i] == false)
 	  return this->HilbertSpaceDimension;
 	coefficient *= this->RescalingFactors[this->NbrStateInOrbit[state]][i];
 	return this->FindStateIndex(State);
       }
       break;
-    case 0x0:
+    case 0x0ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+      break;
+    }	  
+  return this->HilbertSpaceDimension;
+}
+
+// return index of resulting state from application of S-_i1 S+_j1 S-_i2 S+_j2 operator on a given state
+//
+// i1 = position of leftmost S- operator
+// j1 = position of leftmost S+ operator
+// i2 = position of rightmost S- operator
+// j2 = position of rightmost S+ operator
+// state = index of the state to be applied on S-_i S+_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of resulting state (orbit index)
+
+int Spin1ChainWithTranslations::SmiSpjSmiSpj (int i1, int j1, int i2, int j2, int state, double& coefficient, int& nbrTranslation)
+{
+  unsigned long TmpState = this->ChainDescription[state];
+  j2 <<= 1;
+  switch ((TmpState >> j2) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient = M_SQRT2;
+	TmpState |= (0x1ul << j2);
+      }
+      break;
+    case 0x0ul:
+      {
+	coefficient = M_SQRT2;
+ 	TmpState |= (0x2ul << j2);
+      }
+      break;
+    }
+  i2 <<= 1;
+  switch ((TmpState >> i2) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	coefficient *= M_SQRT2;
+ 	TmpState &= ~(0x1ul << i2);
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient *= M_SQRT2;
+	TmpState &= ~(0x2ul << i2);
+      }
+      break;
+    case 0x0ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+      break;
+    }
+  j1 <<= 1;
+  switch ((TmpState >> j1) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient *= M_SQRT2;
+	TmpState |= (0x1ul << j1);
+      }
+      break;
+    case 0x0ul:
+      {
+	coefficient *= M_SQRT2;
+ 	TmpState |= (0x2ul << j1);
+      }
+      break;
+    }
+  i1 <<= 1;
+  switch ((TmpState >> i1) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	coefficient *= M_SQRT2;
+	TmpState = this->FindCanonicalForm(TmpState & (~(0x1ul << i1)), nbrTranslation, i2);
+	if (this->CompatibilityWithMomentum[i2] == false)
+	  return this->HilbertSpaceDimension;
+	coefficient *= this->RescalingFactors[this->NbrStateInOrbit[state]][i2];
+	return this->FindStateIndex(TmpState);
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient *= M_SQRT2;
+	TmpState = this->FindCanonicalForm(TmpState  & (~(0x2ul << i1)), nbrTranslation, i2);
+	if (this->CompatibilityWithMomentum[i2] == false)
+	  return this->HilbertSpaceDimension;
+	coefficient *= this->RescalingFactors[this->NbrStateInOrbit[state]][i2];
+	return this->FindStateIndex(TmpState);
+      }
+      break;
+    case 0x0ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+      break;
+    }	  
+  return this->HilbertSpaceDimension;
+}
+
+// return index of resulting state from application of Sz_i1 Sz_j1 S-_i2 S+_j2 operator on a given state
+//
+// i1 = position of first Sz operator
+// j1 = position of second Sz operator
+// i2 = position of S- operator
+// j2 = position of S+ operator
+// state = index of the state to be applied on S-_i S+_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of resulting state (orbit index)
+
+int Spin1ChainWithTranslations::SziSzjSmiSpj (int i1, int j1, int i2, int j2, int state, double& coefficient, int& nbrTranslation)
+{
+  unsigned long TmpState = this->ChainDescription[state];
+  j2 <<= 1;
+  switch ((TmpState >> j2) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient = M_SQRT2;
+	TmpState |= (0x1ul << j2);
+      }
+      break;
+    case 0x0ul:
+      {
+	coefficient = M_SQRT2;
+ 	TmpState |= (0x2ul << j2);
+      }
+      break;
+    }
+  i2 <<= 1;
+  switch ((TmpState >> i2) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	TmpState &= ~(0x1ul << i2);
+	unsigned long TmpState2 = (TmpState >> (i1 << 1)) & 0x3ul;
+	unsigned long TmpState3 = (TmpState >> (j1 << 1)) & 0x3ul;
+	if ((TmpState2 == 0x2ul) || (TmpState3 == 0x2ul))
+	  {
+	    coefficient = 0.0;
+	    return this->HilbertSpaceDimension;
+	  }
+	if (TmpState2 == TmpState3)
+	  coefficient *= M_SQRT2;
+	else
+	  coefficient *= -M_SQRT2;
+	TmpState = this->FindCanonicalForm(TmpState, nbrTranslation, j2);
+	if (this->CompatibilityWithMomentum[j2] == false)
+	  return this->HilbertSpaceDimension;
+	coefficient *= this->RescalingFactors[this->NbrStateInOrbit[state]][j2];
+	return this->FindStateIndex(TmpState);
+      }
+      break;
+    case 0x2ul:
+      {
+	TmpState &= ~(0x2ul << i2);
+	unsigned long TmpState2 = (TmpState >> (i1 << 1)) & 0x3ul;
+	unsigned long TmpState3 = (TmpState >> (j1 << 1)) & 0x3ul;
+	if ((TmpState2 == 0x2ul) || (TmpState3 == 0x2ul))
+	  {
+	    coefficient = 0.0;
+	    return this->HilbertSpaceDimension;
+	  }
+	if (TmpState2 == TmpState3)
+	  coefficient *= M_SQRT2;
+	else
+	  coefficient *= -M_SQRT2;
+	TmpState = this->FindCanonicalForm(TmpState, nbrTranslation, j2);
+	if (this->CompatibilityWithMomentum[j2] == false)
+	  return this->HilbertSpaceDimension;
+	coefficient *= this->RescalingFactors[this->NbrStateInOrbit[state]][j2];
+	return this->FindStateIndex(TmpState);
+      }
+      break;
+    case 0x0ul:
       {
 	return this->HilbertSpaceDimension;
       }
@@ -927,7 +1137,7 @@ inline unsigned long Spin1ChainWithTranslations::FindCanonicalForm(unsigned long
   int index = 1;  
   while (index < this->ChainLength)
     {
-      stateDescription = (stateDescription >> 2) | ((stateDescription & ((unsigned long) 0x3)) << this->ComplementaryStateShift);
+      stateDescription = (stateDescription >> 2) | ((stateDescription & 0x3ul) << this->ComplementaryStateShift);
       if (stateDescription < CanonicalState)
 	{
 	  CanonicalState = stateDescription;
@@ -951,7 +1161,7 @@ inline unsigned long Spin1ChainWithTranslations::FindCanonicalForm(unsigned long
   nbrTranslationToIdentity = 1;
   unsigned long CanonicalState = stateDescription;
   unsigned long ReferenceState = stateDescription;
-  stateDescription = (stateDescription >> 2) | ((stateDescription & ((unsigned long) 0x3)) << this->ComplementaryStateShift);
+  stateDescription = (stateDescription >> 2) | ((stateDescription & 0x3ul) << this->ComplementaryStateShift);
   while ((ReferenceState != stateDescription) && (nbrTranslationToIdentity < this->ChainLength))
     {
       if (stateDescription < CanonicalState)
@@ -959,7 +1169,7 @@ inline unsigned long Spin1ChainWithTranslations::FindCanonicalForm(unsigned long
 	  CanonicalState = stateDescription;
 	  nbrTranslation = nbrTranslationToIdentity;
 	}
-      stateDescription = (stateDescription >> 2) | ((stateDescription & ((unsigned long) 0x3)) << this->ComplementaryStateShift);
+      stateDescription = (stateDescription >> 2) | ((stateDescription & 0x3ul) << this->ComplementaryStateShift);
       ++nbrTranslationToIdentity;
     }
   return CanonicalState;
@@ -972,11 +1182,11 @@ inline unsigned long Spin1ChainWithTranslations::FindCanonicalForm(unsigned long
 
 inline int Spin1ChainWithTranslations::FindNumberTranslation(unsigned long stateDescription)
 {
-  unsigned long TmpState = (stateDescription >> 2) | ((stateDescription & ((unsigned long) 0x3)) << this->ComplementaryStateShift);
+  unsigned long TmpState = (stateDescription >> 2) | ((stateDescription & 0x3ul) << this->ComplementaryStateShift);
   int index = 1;  
   while (TmpState != stateDescription)
     {
-      TmpState = (TmpState >> 2) | ((TmpState & ((unsigned long) 0x3)) << this->ComplementaryStateShift);
+      TmpState = (TmpState >> 2) | ((TmpState & 0x3ul) << this->ComplementaryStateShift);
       ++index;
     }
   return index;
@@ -1020,11 +1230,11 @@ ostream& Spin1ChainWithTranslations::PrintState (ostream& Str, int state)
   Str << this->FindStateIndex(StateDescription) << " : ";
   for (int j = 0; j < this->ChainLength; j++)
     {
-      tmp = StateDescription & ((unsigned long) 0x3);
+      tmp = StateDescription & 0x3ul;
       if (tmp == 0)
 	Str << "-1 ";
       else
-	if (tmp == ((unsigned long) 0x2))
+	if (tmp == 0x2ul)
 	  Str << "0 ";
 	else
 	  Str << "1 ";
@@ -1066,7 +1276,7 @@ int Spin1ChainWithTranslations::GenerateStates(long memorySlice)
       while ((Pos < memorySlice) && (MaximumNbrState > 0))
 	{
 	  Shift = TwiceChainLength;	  
-	  while ((Shift >= 0) && (((TmpState >> Shift) & ((unsigned long) 0x3)) != ((unsigned long) 0x1)))
+	  while ((Shift >= 0) && (((TmpState >> Shift) & 0x3ul) != 0x1ul))
 	    {
 	      Shift -= 2;
 	    }
@@ -1074,7 +1284,7 @@ int Spin1ChainWithTranslations::GenerateStates(long memorySlice)
 	    {
 	      ++TmpState;
 	      Shift = TwiceChainLength;	  
-	      while ((Shift >= 0) && (((TmpState >> Shift) & ((unsigned long) 0x3)) != ((unsigned long) 0x1)))
+	      while ((Shift >= 0) && (((TmpState >> Shift) & 0x3ul) != 0x1ul))
 		{
 		  Shift -= 2;
 		}
@@ -1138,7 +1348,7 @@ int Spin1ChainWithTranslations::GenerateStates(int sz, long memorySlice)
       while ((Pos < memorySlice) && (MaximumNbrState > 0))
 	{
 	  Shift = TwiceChainLength;	  
-	  while ((Shift >= 0) && (((TmpState >> Shift) & ((unsigned long) 0x3)) != ((unsigned long) 0x1)))
+	  while ((Shift >= 0) && (((TmpState >> Shift) & 0x3ul) != 0x1ul))
 	    {
 	      Shift -= 2;
 	    }
@@ -1146,7 +1356,7 @@ int Spin1ChainWithTranslations::GenerateStates(int sz, long memorySlice)
 	    {
 	      ++TmpState;
 	      Shift = TwiceChainLength;	  
-	      while ((Shift >= 0) && (((TmpState >> Shift) & ((unsigned long) 0x3)) != ((unsigned long) 0x1)))
+	      while ((Shift >= 0) && (((TmpState >> Shift) & 0x3ul) != 0x1ul))
 		{
 		  Shift -= 2;
 		}

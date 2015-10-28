@@ -427,6 +427,68 @@ char* LongRational::GetString(char division)
   return TmpString; 
 }
 
+// find the closest rational to a given double with maximum value for the denominator
+//
+// x = double to compare with
+// maximumDenominator = maximum value for the denominator
+// return value = difference between the double number in the closest rational
+
+double LongRational::GetClosestRational(double x, long maximumDenominator)
+{
+  double TmpX = x;
+  bool SignFlag = false;
+  if (x < 0.0)
+    {
+      SignFlag = true;
+      x *= -1.0;
+    }
+  long IntegerPart = (long) x;
+  x -= (double) IntegerPart;
+
+  // use the Farey sequence to find the closest rational
+
+   long A = 0l;
+   long B = 1l;
+   long C = 1l;
+   long D = 1l;
+
+  while ((B <= maximumDenominator) && (D <= maximumDenominator))
+    {
+      double Tmp = (((double) (A + C)) / ((double) (B + D)));
+      if (x < Tmp)
+	{
+	  C += A;
+	  D += B;
+	}
+      else
+	{
+	  if (x > Tmp)
+	    {
+	      A += C;
+	      B += D;
+	    }
+	  else
+	    { 
+	      D = maximumDenominator + 1;
+	      A += C;
+	      B += D;	      
+	    }
+	}
+    }
+  if (B <= maximumDenominator)
+    {
+      (*this) = LongRational (A, B);
+    }
+  else
+    {
+      (*this) = LongRational (C, D);
+    }
+  (*this) += IntegerPart;
+  if (SignFlag == true)
+    (*this) *= -1l;
+  return (TmpX - this->GetNumericalValue());
+}
+
 // Output stream overload
 //
 // str = reference on output stream
@@ -943,6 +1005,71 @@ char* LongRational::GetString(char division)
     }
   return TmpString;
  
+}
+
+// find the closest rational to a given double with maximum value for the denominator
+//
+// x = double to compare with
+// maximumDenominator = maximum value for the denominator
+// return value = difference between the double number in the closest rational
+
+double LongRational::GetClosestRational(double x, long maximumDenominator)
+{
+  double TmpX = x;
+  bool SignFlag = false;
+  if (x < 0.0)
+    {
+      SignFlag = true;
+      x *= -1.0;
+    }
+  LONGLONG IntegerPart = (LONGLONG) x;
+  x -= (double) IntegerPart;
+
+  // use the Farey sequence to find the closest rational
+
+  long A = 0l;
+  long B = 1l;
+  long C = 1l;
+  long D = 1l;
+
+  while ((B <= maximumDenominator) && (D <= maximumDenominator))
+    {
+      double Tmp = (((double) (A + C)) / ((double) (B + D)));
+      if (x < Tmp)
+	{
+	  C += A;
+	  D += B;
+	}
+      else
+	{
+	  if (x > Tmp)
+	    {
+	      A += C;
+	      B += D;
+	    }
+	  else
+	    { 
+	      D = maximumDenominator + 1;
+	      A += C;
+	      B += D;	      
+	    }
+	}
+    }
+  if (B <= maximumDenominator)
+    {
+      this->Numerator = (LONGLONG) A;
+      this->Denominator = (LONGLONG) B;
+    }
+  else
+    {
+      this->Numerator = (LONGLONG) C;
+      this->Denominator = (LONGLONG) D;
+    }
+  this->Numerator += IntegerPart * this->Denominator;
+  this->Simplify();
+  if (SignFlag == true)
+    this->Numerator *= (LONGLONG) -1l;
+  return (TmpX - this->GetNumericalValue());
 }
 
 // Output stream overload

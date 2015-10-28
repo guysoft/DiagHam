@@ -49,14 +49,16 @@ using std::ostream;
 //
 // chain = reference on Hilbert space of the associated system
 // nbrSpin = number of spin
-// j = array containing coupling constants between spins
+// squareFactor = numerical factor in front of the 1/3 (S_i S_i+1)^2 term
+// periodicBoundaryConditions = true if periodic boundary conditions have to be used
 
-SpinChainAKLTHamiltonian::SpinChainAKLTHamiltonian(AbstractSpinChain* chain, int nbrSpin, double squareFactor)
+SpinChainAKLTHamiltonian::SpinChainAKLTHamiltonian(AbstractSpinChain* chain, int nbrSpin, double squareFactor, bool periodicBoundaryConditions)
 {
   this->Chain = chain;
   this->NbrSpin = nbrSpin;
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->SquareFactor = squareFactor / 3.0;
+  this->PeriodicBoundaryConditions = periodicBoundaryConditions;
   this->EvaluateDiagonalMatrixElements();
 }
 
@@ -183,6 +185,43 @@ RealVector& SpinChainAKLTHamiltonian::LowLevelAddMultiply(RealVector& vSource, R
 	      vDestination[pos] += 0.5 * coef * (this->Chain->SziSzj(j, j + 1, i) + this->Chain->SziSzj(j, j + 1, pos)) * TmpValue;
 	    }
 	}
+      if (this->PeriodicBoundaryConditions == true)
+	{
+	  pos = this->Chain->SmiSpj(MaxPos, 0, i, coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos] += 0.5 * coef * TmpValue;
+	      coef *= this->SquareFactor;
+	      pos2 =  this->Chain->SmiSpj(MaxPos, 0, pos, coef2);
+	      if (pos2 != dim)
+		{
+		  vDestination[pos2] += 0.25 * coef * coef2 * TmpValue;
+		}
+	      pos2 =  this->Chain->SmiSpj(0, MaxPos, pos, coef2);
+	      if (pos2 != dim)
+		{
+		  vDestination[pos2] += 0.25 * coef * coef2 * TmpValue;
+		}
+	      vDestination[pos] += 0.5 * coef * (this->Chain->SziSzj(MaxPos, 0, i) + this->Chain->SziSzj(MaxPos, 0, pos)) * TmpValue;
+	    }
+	  pos = this->Chain->SmiSpj(0, MaxPos, i, coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos] += 0.5 * coef * TmpValue;
+	      coef *= this->SquareFactor;
+	      pos2 =  this->Chain->SmiSpj(MaxPos, 0, pos, coef2);
+	      if (pos2 != dim)
+		{
+		  vDestination[pos2] += 0.25 * coef * coef2 * TmpValue;
+		}
+	      pos2 =  this->Chain->SmiSpj(0, MaxPos, pos, coef2);
+	      if (pos2 != dim)
+		{
+		  vDestination[pos2] += 0.25 * coef * coef2 * TmpValue;
+		}
+	      vDestination[pos] += 0.5 * coef * (this->Chain->SziSzj(MaxPos, 0, i) + this->Chain->SziSzj(MaxPos, 0, pos)) * TmpValue;
+	    }
+	}
     }
   return vDestination;
 }
@@ -196,13 +235,19 @@ void SpinChainAKLTHamiltonian::EvaluateDiagonalMatrixElements()
 
   // SzSz part
   double Tmp;
+  int MaxSite = this->NbrSpin - 1;
   for (int i = 0; i < dim; i++)
     {
       // SzSz part
       this->SzSzContributions[i] = 0.0;
-      for (int j = 0; j < (this->NbrSpin - 1); j++)
+      for (int j = 0; j < MaxSite; j++)
 	{
 	  Tmp = this->Chain->SziSzj(j, j + 1, i);
+	  this->SzSzContributions[i] += (1.0 + (this->SquareFactor * Tmp)) * Tmp;
+	}
+      if (this->PeriodicBoundaryConditions == true)
+	{
+	  Tmp = this->Chain->SziSzj(MaxSite, 0, i);
 	  this->SzSzContributions[i] += (1.0 + (this->SquareFactor * Tmp)) * Tmp;
 	}
     }

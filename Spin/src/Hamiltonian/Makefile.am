@@ -41,4 +41,5 @@ Potts3ChainNaturalBoundaryTermHamiltonian.cc \
 SpinChainPureHFieldHamiltonian.cc \
 SpinChainTripleProductHamiltonian.cc \
 SpinChainFullHamiltonian.cc \
-SpinChainRealFullHamiltonian.cc
+SpinChainRealFullHamiltonian.cc \
+SpinChainAKLTHamiltonianWithTranslations.cc

@@ -376,6 +376,13 @@ class LongRational
   // return value = numerical value associated to the coefficient
   double GetNumericalValue();
 
+  // find the closest rational to a given double with maximum value for the denominator
+  //
+  // x = double to compare with
+  // maximumDenominator = maximum value for the denominator
+  // return value = difference between the double number in the closest rational
+  double GetClosestRational(double x, long maximumDenominator);
+
   // return string associated to the coefficient
   //
   // division = character to use instead of '/'

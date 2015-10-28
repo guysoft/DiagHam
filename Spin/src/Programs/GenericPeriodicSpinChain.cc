@@ -127,7 +127,7 @@ int main(int argc, char** argv)
 
 	  if (Chain->GetHilbertSpaceDimension() > 0)
 	    {
-	      cout << "Sz = " << InitalSzValue << ", K = " << Momentum << endl; 
+	      cout << "2Sz = " << InitalSzValue << ", K = " << Momentum << endl; 
 	      SpinChainHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins, JValue);
 	      char* TmpSzString = new char[64];
 	      sprintf (TmpSzString, "%d %d", InitalSzValue, Momentum);

@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                    class of spin chain AKLT hamiltonian                    //
+//           class of spin chain AKLT hamiltonian with translations           //
 //                                                                            //
-//                        last modification : 02/04/2013                      //
+//                        last modification : 26/10/2015                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,55 +28,47 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SPINCHAINAKLTHAMILTONIAN_H
-#define SPINCHAINAKLTHAMILTONIAN_H
+#ifndef SPINCHAINAKLTHAMILTONIANWITHTRANSLATIONS_H
+#define SPINCHAINAKLTHAMILTONIANWITHTRANSLATIONS_H
 
 
 #include "config.h"
-#include "HilbertSpace/AbstractSpinChain.h"
-#include "Hamiltonian/AbstractHamiltonian.h"
-
+#include "HilbertSpace/AbstractSpinChainWithTranslations.h"
+#include "Hamiltonian/SpinChainHamiltonianWithTranslations.h"
 
 #include <iostream>
 
 
 using std::ostream;
+
+
 class MathematicaOutput;
 
 
-class SpinChainAKLTHamiltonian : public AbstractHamiltonian
+class SpinChainAKLTHamiltonianWithTranslations : public SpinChainHamiltonianWithTranslations 
 {
 
  protected:
   
-  // pointer to the Hilbert space of the system
-  AbstractSpinChain* Chain;
-
   // numerical factor in front of the 1/3 (S_i S_i+1)^2 term
   double SquareFactor;
 
-  // number of spins
-  int NbrSpin;
-
-  // flag to indicate if  periodic boundary conditions should be used
-  bool PeriodicBoundaryConditions;
-
-  // array to store the diagonal contribution of the Hamiltonian
-  double* SzSzContributions;
-
  public:
 
-  // constructor
+  // default constructor
   //
-  // chain = pointer to the Hilbert space of the system
-  // nbrSpin = number of spins
+  SpinChainAKLTHamiltonianWithTranslations();
+
+  // constructor from default datas
+  //
+  // chain = pointer to Hilbert space of the associated system
+  // nbrSpin = number of spin
   // squareFactor = numerical factor in front of the 1/3 (S_i S_i+1)^2 term
-  // periodicBoundaryConditions = true if periodic boundary conditions have to be used
-  SpinChainAKLTHamiltonian(AbstractSpinChain* chain, int nbrSpin, double squareFactor = 1.0, bool periodicBoundaryConditions = false);
+  SpinChainAKLTHamiltonianWithTranslations(AbstractSpinChainWithTranslations* chain, int nbrSpin, double squareFactor = 1.0);
 
   // destructor
   //
-  ~SpinChainAKLTHamiltonian();
+  ~SpinChainAKLTHamiltonianWithTranslations();
 
   // clone hamiltonian without duplicating datas
   //
@@ -87,7 +79,7 @@ class SpinChainAKLTHamiltonian : public AbstractHamiltonian
   // 
   // chain = pointer on Hilbert space of the associated system
   // return value = reference on current Hamiltonian
-  SpinChainAKLTHamiltonian& SetChain(AbstractSpinChain* chain);
+  SpinChainAKLTHamiltonianWithTranslations& SetChain(AbstractSpinChainWithTranslations* chain);
 
   // set Hilbert space
   //
@@ -109,6 +101,12 @@ class SpinChainAKLTHamiltonian : public AbstractHamiltonian
   // shift = shift value
   void ShiftHamiltonian (double shift);
 
+  // save precalculations in a file
+  // 
+  // fileName = pointer to a string containg the name of the file where precalculations have to be stored
+  // return value = true if no error occurs
+  bool SavePrecalculation (char* fileName);
+
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
   //
@@ -117,12 +115,16 @@ class SpinChainAKLTHamiltonian : public AbstractHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-				  int firstComponent, int nbrComponent);
-
- private:
+  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+					     int firstComponent, int nbrComponent);
  
-  // evaluate all matrix elements
+ protected:
+ 
+   // evaluate all cosinus/sinus that are needed when computing matrix elements
+  //
+  void EvaluateCosinusTable();
+
+ // evaluate all matrix elements
   //   
   void EvaluateDiagonalMatrixElements();
 
