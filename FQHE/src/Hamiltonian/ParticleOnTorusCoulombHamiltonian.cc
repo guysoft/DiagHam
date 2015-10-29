@@ -88,6 +88,11 @@ ParticleOnTorusCoulombHamiltonian::ParticleOnTorusCoulombHamiltonian(ParticleOnT
     {
       this->FormFactor=LaguerrePolynomial(this->LandauLevel);
     }
+  else
+    {
+      this->FormFactor=0.5*(LaguerrePolynomial(abs(this->LandauLevel))+LaguerrePolynomial(abs(this->LandauLevel)-1));
+    }
+  cout << "FormFactor=" << this->FormFactor << endl;
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.0;
   if (precalculationFileName == 0)

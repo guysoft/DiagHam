@@ -65,7 +65,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption ('l', "max-momentum", "maximum momentum for a single particle", 18);
   (*SystemGroup) += new SingleIntegerOption ('y', "ky-momentum", "constraint on the total momentum modulo the maximum momentum (negative if none)", -1);
   (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the two torus lengths", 1.0);
-  (*SystemGroup) += new SingleIntegerOption ('\n', "landau-level", "index of the Landau level (0 if LLL)", 0);
+  (*SystemGroup) += new SingleIntegerOption ('\n', "landau-level", "index of the Landau level (0 if LLL, negative for graphene -1, -2 etc.)", 0);
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
