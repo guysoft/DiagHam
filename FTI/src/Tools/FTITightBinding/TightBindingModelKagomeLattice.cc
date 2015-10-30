@@ -357,10 +357,10 @@ void TightBindingModelKagomeLattice::FindConnectedOrbitals()
     this->NbrConnectedOrbitals[1] = 4;      
     this->NbrConnectedOrbitals[2] = 4;      
     if ((this->NextNNHopping != 0.0) || (this->NextNNSpinOrbit != 0.0))
-      {
+      {       
 	this->NbrConnectedOrbitals[0] += 4; 
 	this->NbrConnectedOrbitals[1] += 4;      
-	this->NbrConnectedOrbitals[2] += 4;           
+	this->NbrConnectedOrbitals[2] += 4;      
       }
     if (this->MuS != 0.0)
       {
@@ -399,8 +399,31 @@ void TightBindingModelKagomeLattice::FindConnectedOrbitals()
     this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) + 1] = -1;
     this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = Conj(Lambda1);
     ++TmpIndex;
+    
+    if ((this->NextNNHopping != 0.0) || (this->NextNNSpinOrbit != 0.0))
+    {
+      this->ConnectedOrbitalIndices[0][TmpIndex] = 1;
+      this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] = -1;
+      this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) + 1] = 1;
+      this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = Conj(Lambda2);
+      ++TmpIndex;
+      this->ConnectedOrbitalIndices[0][TmpIndex] = 1;
+      this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] = 0;
+      this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) + 1] = -1;
+      this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = Conj(Lambda2);
+      ++TmpIndex;
+      this->ConnectedOrbitalIndices[0][TmpIndex] = 2;
+      this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] = 1;
+      this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) + 1] = -1;
+      this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = Lambda2;
+      ++TmpIndex;
+      this->ConnectedOrbitalIndices[0][TmpIndex] = 2;
+      this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] = -1;
+      this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) + 1] = 0;
+      this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = Lambda2;
+    }
 
-    TmpIndex -= 4;
+    TmpIndex = 0;;
 
     // links starting from B
     this->ConnectedOrbitalIndices[1][TmpIndex] = 0;
@@ -423,8 +446,32 @@ void TightBindingModelKagomeLattice::FindConnectedOrbitals()
     this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) + 1] = -1;
     this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = Lambda1;
     ++TmpIndex;
+    
+    if ((this->NextNNHopping != 0.0) || (this->NextNNSpinOrbit != 0.0))
+    {
+      this->ConnectedOrbitalIndices[1][TmpIndex] = 0;
+      this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] = 1;
+      this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) + 1] = -1;
+      this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = Lambda2;
+      ++TmpIndex;
+      this->ConnectedOrbitalIndices[1][TmpIndex] = 0;
+      this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] = 0;
+      this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) + 1] = 1;
+      this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = Lambda2;
+      ++TmpIndex;
+      this->ConnectedOrbitalIndices[1][TmpIndex] = 2;
+      this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] = 1;
+      this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) + 1] = 0;
+      this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = Conj(Lambda2);
+      ++TmpIndex;
+      this->ConnectedOrbitalIndices[1][TmpIndex] = 2;
+      this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] = 0;
+      this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) + 1] = -1;
+      this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = Conj(Lambda2);
+      ++TmpIndex;
+    }
 
-    TmpIndex -= 4;
+    TmpIndex = 0;
 
     // links starting from C
     this->ConnectedOrbitalIndices[2][TmpIndex] = 0;
@@ -447,12 +494,32 @@ void TightBindingModelKagomeLattice::FindConnectedOrbitals()
     this->ConnectedOrbitalSpatialIndices[2][(TmpIndex * 2) + 1] = 1;
     this->ConnectedOrbitalHoppingAmplitudes[2][TmpIndex] = Conj(Lambda1);
     ++TmpIndex;
-
+    
     if ((this->NextNNHopping != 0.0) || (this->NextNNSpinOrbit != 0.0))
-      {
-	cout << "Warning: next nearest neighbor hopping not implemented in real space" << endl;
-      }
+    {
+      this->ConnectedOrbitalIndices[2][TmpIndex] = 0;
+      this->ConnectedOrbitalSpatialIndices[2][TmpIndex * 2] = 1;
+      this->ConnectedOrbitalSpatialIndices[2][(TmpIndex * 2) + 1] = 0;
+      this->ConnectedOrbitalHoppingAmplitudes[2][TmpIndex] = Conj(Lambda2);
+      ++TmpIndex;
+      this->ConnectedOrbitalIndices[2][TmpIndex] = 0;
+      this->ConnectedOrbitalSpatialIndices[2][TmpIndex * 2] = -1;
+      this->ConnectedOrbitalSpatialIndices[2][(TmpIndex * 2) + 1] = 1;
+      this->ConnectedOrbitalHoppingAmplitudes[2][TmpIndex] = Conj(Lambda2);
+      ++TmpIndex;
+      this->ConnectedOrbitalIndices[2][TmpIndex] = 1;
+      this->ConnectedOrbitalSpatialIndices[2][TmpIndex * 2] = 0;
+      this->ConnectedOrbitalSpatialIndices[2][(TmpIndex * 2) + 1] = 1;
+      this->ConnectedOrbitalHoppingAmplitudes[2][TmpIndex] = Lambda2;
+      ++TmpIndex;
+      this->ConnectedOrbitalIndices[2][TmpIndex] = 1;
+      this->ConnectedOrbitalSpatialIndices[2][TmpIndex * 2] = -1;
+      this->ConnectedOrbitalSpatialIndices[2][(TmpIndex * 2) + 1] = 0;
+      this->ConnectedOrbitalHoppingAmplitudes[2][TmpIndex] = Lambda2;
+      ++TmpIndex;
+    }
 
+    
     if (this->MuS != 0.0)
       {
 	this->ConnectedOrbitalIndices[0][TmpIndex] = 0;

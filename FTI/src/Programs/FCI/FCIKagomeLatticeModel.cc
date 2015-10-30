@@ -231,7 +231,12 @@ int main(int argc, char** argv)
 	  if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
 	    { 
 	      if (Manager.GetBoolean("real-space") == false)
-		sprintf (FilePrefix, "%s_threeband_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	      {
+		if (Manager.GetBoolean("flat-band") == false)
+		  sprintf (FilePrefix, "%s_threeband_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+		else
+		  sprintf (FilePrefix, "%s_threeband_flatband_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	      }
 	      else
 	      {
 		if (Manager.GetBoolean("no-translation") == false)
@@ -410,8 +415,7 @@ int main(int argc, char** argv)
   Abstract2DTightBindingModel* TightBindingModel;
   if (Manager.GetString("import-onebody") == 0)
     {
-      TightBindingModel = new TightBindingModelKagomeLattice (NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
-							      Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
+      TightBindingModel = new TightBindingModelKagomeLattice (NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 							      Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
       
 //       TightBindingModel = new TightBindingModel2DAtomicLimitLattice(NbrSitesX, NbrSitesY, 3, 2, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());  
       char* BandStructureOutputFile = new char [1024];
@@ -616,6 +620,7 @@ int main(int argc, char** argv)
 		{
 		  for (int k = 0; k < NbrInteractingOrbitals[OrbitalIndex]; ++k)
 		  {
+// 		    cout << InteractingOrbitalsSpatialIndices[OrbitalIndex][2 * k] << " " << InteractingOrbitalsSpatialIndices[OrbitalIndex][(2 * k) + 1] << " " << InteractingOrbitalsOrbitalIndices[OrbitalIndex][k] << " " << InteractingOrbitalsPotentials[OrbitalIndex][k] << endl;
 		    DensityDensityInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, OrbitalIndex), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x + InteractingOrbitalsSpatialIndices[OrbitalIndex][2 * k], y + InteractingOrbitalsSpatialIndices[OrbitalIndex][(2 * k) + 1], InteractingOrbitalsOrbitalIndices[OrbitalIndex][k]), InteractingOrbitalsPotentials[OrbitalIndex][k]);
 				  
 		  }
@@ -855,14 +860,49 @@ void FCIKagomeLatticeModelComputeInteractingOrbitals(int*& nbrInteractingOrbital
       interactingOrbitalsPotentials[2][Index] = 0.5 * uPotential;
       ++Index;
 
-            if (vPotential != 0.0)
+      if (vPotential != 0.0)
 	{
-	  cout << "Warning: next neighbor interaction is not implemented in real space" << endl;
-// 	  interactingOrbitalsOrbitalIndices[0][Index] = 1;
-// 	  tightBindingModel->GetRealSpaceIndex(0, 0, p, q);
-// 	  interactingOrbitalsSpatialIndices[0][2 * Index] = p;
-// 	  interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
-// 	  interactingOrbitalsPotentials[0][Index] = vPotential;	  
+	  int TmpIndex = 1;
+
+	  // links starting from A
+	  interactingOrbitalsOrbitalIndices[0][TmpIndex] = 1;
+	  interactingOrbitalsSpatialIndices[0][TmpIndex * 2] = 0;
+	  interactingOrbitalsSpatialIndices[0][(TmpIndex * 2) + 1] = 0;
+	  interactingOrbitalsPotentials[0][TmpIndex] = vPotential;
+	  ++TmpIndex;
+	  interactingOrbitalsOrbitalIndices[0][TmpIndex] = 2;
+	  interactingOrbitalsSpatialIndices[0][TmpIndex * 2] = 0;
+	  interactingOrbitalsSpatialIndices[0][(TmpIndex * 2) + 1] = 0;
+	  interactingOrbitalsPotentials[0][TmpIndex] = vPotential;
+	  ++TmpIndex;
+    
+	  TmpIndex -= 2;
+
+	  // links starting from B
+	  interactingOrbitalsOrbitalIndices[1][TmpIndex] = 0;
+	  interactingOrbitalsSpatialIndices[1][TmpIndex * 2] = 1;
+	  interactingOrbitalsSpatialIndices[1][(TmpIndex * 2) + 1] = 0;
+	  interactingOrbitalsPotentials[1][TmpIndex] = vPotential;
+	  ++TmpIndex;
+	  interactingOrbitalsOrbitalIndices[1][TmpIndex] = 2;
+	  interactingOrbitalsSpatialIndices[1][TmpIndex * 2] = 0;
+	  interactingOrbitalsSpatialIndices[1][(TmpIndex * 2) + 1] = 0;
+	  interactingOrbitalsPotentials[1][TmpIndex] = vPotential;
+	  ++TmpIndex;
+   
+	  TmpIndex -= 2;
+
+	  // links starting from C
+	  interactingOrbitalsOrbitalIndices[2][TmpIndex] = 0;
+	  interactingOrbitalsSpatialIndices[2][TmpIndex * 2] = 0;
+	  interactingOrbitalsSpatialIndices[2][(TmpIndex * 2) + 1] = 1;
+	  interactingOrbitalsPotentials[2][TmpIndex] = vPotential;
+	  ++TmpIndex;
+	  interactingOrbitalsOrbitalIndices[2][TmpIndex] = 1;
+	  interactingOrbitalsSpatialIndices[2][TmpIndex * 2] = -1;
+	  interactingOrbitalsSpatialIndices[2][(TmpIndex * 2) + 1] = 1;
+	  interactingOrbitalsPotentials[2][TmpIndex] = vPotential;
+	  ++TmpIndex;
 	}
     }
 }
