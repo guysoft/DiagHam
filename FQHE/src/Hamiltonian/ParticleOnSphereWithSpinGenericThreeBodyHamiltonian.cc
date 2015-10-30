@@ -647,8 +647,7 @@ void    ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::EvaluateInteraction
 		if (this->ThreeBodyPseudoPotentials32[i] != 0.0)
 		  delete[] TmpProjectorCoefficients[i];
 	      delete[] TmpProjectorCoefficients;		
-	    }
-	  
+	    }	  
 	}
       delete[] TmpInteractionCoeffients;
 

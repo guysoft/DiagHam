@@ -70,6 +70,48 @@ bool FQHETorusGetPseudopotentials (char* fileName, int& nbrPseudoPotentials, dou
 // get pseudopototentials for particles on torus from file
 // 
 // fileName = name of the file that contains the pseudopotantial description
+// nbrFluxQuanta = number of flux quanta
+// nbrPseudoPotentials = reference on the number of pseudopotentials
+// pseudoPotentials = reference on the array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
+// oneBodyPseudoPotentials  = array with the one-body pseudo-potentials
+// return value = true if no error occured
+
+bool FQHETorusGetPseudopotentials (char* fileName, int nbrFluxQuanta, int& nbrPseudoPotentials, double*& pseudoPotentials, double*& oneBodyPotentials)
+{
+  ConfigurationParser InteractionDefinition;
+  if (InteractionDefinition.Parse(fileName) == false)
+    {
+      InteractionDefinition.DumpErrors(cout) << endl;
+      return false;
+    }
+  if (InteractionDefinition["Pseudopotentials"] != NULL)
+    {
+      if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', pseudoPotentials, nbrPseudoPotentials) == false)
+	{
+	  cout << "Pseudopotentials has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+  else
+    {
+      pseudoPotentials = 0;
+      nbrPseudoPotentials = 0;
+    }
+  int TmpNbrPseudoPotentials = 0;
+  if (InteractionDefinition.GetAsDoubleArray("OneBodyPotentials", ' ', oneBodyPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      if (TmpNbrPseudoPotentials != nbrFluxQuanta)
+	{
+	  cout << "OneBodyPotentials has a wrong number of components or has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+  return true;
+}
+
+// get pseudopototentials for particles on torus from file
+// 
+// fileName = name of the file that contains the pseudopotantial description
 // landauLevel = index of Coulomb Landau-level
 // nbrPseudoPotentials = reference on the number of pseudopotentials
 // pseudoPotentials = reference on the array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)

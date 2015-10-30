@@ -402,7 +402,15 @@ void ParticleOnTorusWithSpinAndMagneticTranslationsNBodyHardCoreHamiltonian::Eva
   long TotalNbrInteractionFactors = 0;
   long TotalNbrNonZeroInteractionFactors = 0;
 
-  this->GetIndices();
+  if (this->InterSpinNBodyInteractionStrength == 0.0)
+    {
+      this->GetIndices(true);
+    }
+  else
+    {
+      this->GetIndices(false);
+    }
+
   
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {

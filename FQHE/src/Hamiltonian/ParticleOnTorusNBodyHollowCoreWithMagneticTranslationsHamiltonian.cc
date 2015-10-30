@@ -37,6 +37,7 @@
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/Endian.h"
 #include "GeneralTools/ArrayTools.h"
+#include "Polynomial/SpecialPolynomial.h"
 
 #include <iostream>
 #include <algorithm>
@@ -57,13 +58,22 @@ ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::ParticleOnTor
 // nbrParticles = number of particles
 // lzmax = maximum Lz value reached by a particle in the state
 // nbrNBody = value of the n (i.e. the n-body interaction)
+// nBodyStrength = strength of the n-body interaction
+// nbrPseudopotentials = number of two-body pseudopotentials (can be zero for a pure n-body interaction)
+// pseudopotentials = pseudopotential coefficients for the two-body interaction 
+// oneBodyPotentials = array of additional one-body potentials
 // regenerateElementFlag = regenerate th interaction matrix elements instead of reading them from the harddrive
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum, double ratio, int nbrNBody, bool regenerateElementFlag, AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, char* precalculationFileName)
+ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, 
+																     int nbrParticles, int maxMomentum, int xMomentum, 
+																     double ratio, int nbrNBody, double nBodyStrength,
+																     bool regenerateElementFlag, int nbrPseudopotentials,
+																     double* pseudopotentials, double* oneBodyPotentials, 
+																     AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, char* precalculationFileName)
 {
   this->Particles = particles;
   this->LzMax = maxMomentum - 1;
@@ -73,11 +83,11 @@ ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::ParticleOnTor
   this->NbrParticles = nbrParticles;
   this->MomentumModulo = FindGCD(this->NbrParticles, this->MaxMomentum);
   this->NBodyValue = nbrNBody;
+  this->NBodyPrefactor = nBodyStrength;
   this->SqrNBodyValue = this->NBodyValue * this->NBodyValue;
   this->TwoBodyFlag = false;
   this->FastMultiplicationFlag = false;
   this->HermitianSymmetryFlag = true;
-  this->OneBodyInteractionFactors = 0;
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
   this->Architecture = architecture;
@@ -85,6 +95,44 @@ ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::ParticleOnTor
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;
+
+  this->OneBodyInteractionFactors = 0;
+  if (oneBodyPotentials != 0)
+    {
+      this->OneBodyInteractionFactors = new double[this->MaxMomentum];
+      for (int i = 0; i <  this->MaxMomentum; ++i)
+	this->OneBodyInteractionFactors[i] = oneBodyPotentials[i];
+    }
+  this->LaguerrePolynomials = 0;
+  this->NbrPseudopotentials = 0;
+  this->Pseudopotentials = 0;
+  if (nbrPseudopotentials > 0)
+    {
+      this->NbrPseudopotentials = nbrPseudopotentials;
+      this->Pseudopotentials = new double[this->NbrPseudopotentials];
+      this->LaguerrePolynomials = new Polynomial[this->NbrPseudopotentials];
+      for (int i = 0; i <  this->NbrPseudopotentials; ++i)
+	{
+	  this->Pseudopotentials[i] = pseudopotentials[i]; 
+	  this->LaguerrePolynomials[i] = LaguerrePolynomial(i);
+	}
+      this->TwoBodyFlag = true;
+    }
+
+  // hard-coded normalization of the n-body hollow core interaction such that the n particle spectrum has an energy scale of 1
+  switch (this->NBodyValue)
+    {
+    case 3:
+      this->NBodyPrefactor /= 0.26324014092085; //obtained from N_phi=23
+      break;
+    case 4:
+      this->NBodyPrefactor /= 0.92917064479792; //obtained from N_phi=23
+      break;
+    case 5:
+      this->NBodyPrefactor /= 85.175971374704; //obtained from N_phi=23
+      break;
+    }
+
   this->EvaluateExponentialFactors();
   
   

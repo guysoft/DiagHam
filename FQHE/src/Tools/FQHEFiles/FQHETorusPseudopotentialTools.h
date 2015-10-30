@@ -46,6 +46,17 @@ bool FQHETorusGetPseudopotentials (char* fileName, int& nbrPseudoPotentials, dou
 // get pseudopototentials for particles on torus from file
 // 
 // fileName = name of the file that contains the pseudopotantial description
+// nbrFluxQuanta = number of flux quanta
+// nbrPseudoPotentials = reference on the number of pseudopotentials
+// pseudoPotentials = reference on the array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
+// oneBodyPseudoPotentials  = array with the one-body pseudo-potentials
+// return value = true if no error occured
+bool FQHETorusGetPseudopotentials (char* fileName, int nbrFluxQuanta, int& nbrPseudoPotentials, double*& pseudoPotentials, double*& oneBodyPotentials);
+
+
+// get pseudopototentials for particles on torus from file
+// 
+// fileName = name of the file that contains the pseudopotantial description
 // haveCoulomb = flag indicating if Coulomb terms are present
 // landauLevel = index of Coulomb Landau-level
 // nbrPseudoPotentials = reference on the number of pseudopotentials

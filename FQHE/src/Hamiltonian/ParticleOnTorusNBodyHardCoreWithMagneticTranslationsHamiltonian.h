@@ -38,6 +38,8 @@
 #include "Hamiltonian/AbstractQHEOnTorusWithMagneticTranslationsNBodyHamiltonian.h"
 #include "MathTools/FactorialCoefficient.h" 
 
+#include "Polynomial/Polynomial.h"
+
 #include <iostream>
 #include <algorithm>
 
@@ -57,6 +59,16 @@ class ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian : public A
   int NbrEntryPrecalculatedInteractionCoefficients1;
   // number of columns in PrecalculatedInteractionCoefficients
   int NbrEntryPrecalculatedInteractionCoefficients2;
+
+  // numerical prefactor in front of the many-body interaction
+  double NBodyPrefactor;
+
+  // Number of Pseudopotential
+  int NbrPseudopotentials;
+  // pseudopotential coefficients
+  double* Pseudopotentials;
+  // Laguerre polynomial for the pseudopotentials
+  Polynomial* LaguerrePolynomials;
 
  public:
 
@@ -155,7 +167,12 @@ class ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian : public A
   // return value = numerical coefficient
   virtual double EvaluateTwoBodyInteractionCoefficient(int m1, int m2, int m3, int m4);
   
-  
+  // get Fourier transform of the interaction
+  //
+  // Q2_half = one half of q² value
+  // retrun value =Fourier transform of ithe nteraction
+  virtual double GetVofQ(double Q2_half);
+ 
   //evaluate the linearized index corresponding to a series of creation indices, momentum transfer, and modulo
   //
   // TmpIndices = array containing the indexes of the creation operators

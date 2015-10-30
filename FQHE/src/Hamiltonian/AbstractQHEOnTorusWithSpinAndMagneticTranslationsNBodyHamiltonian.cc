@@ -77,8 +77,9 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsNBodyHamiltonian::Evaluate
 
 // get all the indices that should appear in the annihilation/creation operators
 //
+// onlyIntraFlag = true if only the intra component indices have to be computed
 
-void AbstractQHEOnTorusWithSpinAndMagneticTranslationsNBodyHamiltonian::GetIndices()
+void AbstractQHEOnTorusWithSpinAndMagneticTranslationsNBodyHamiltonian::GetIndices(bool onlyIntraFlag)
 {
   this->NBodySign = new double* [this->MaxNBody + 1];
   this->SpinIndices = new int**[this->MaxNBody + 1];
@@ -90,57 +91,65 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsNBodyHamiltonian::GetIndic
     {
       if (this->NBodyFlags[TmpNBody] == true)
 	{
-	  this->NbrSpinSectors[TmpNBody] = TmpNBody + 1;
+	  if (onlyIntraFlag == false)
+	    this->NbrSpinSectors[TmpNBody] = TmpNBody + 1;
+	  else
+	    this->NbrSpinSectors[TmpNBody] = 2;
 	  this->NBodySign[TmpNBody] = new double [this->NbrSpinSectors[TmpNBody]];
 	  this->SpinIndices[TmpNBody] = new int*[this->NbrSpinSectors[TmpNBody]];
 	  this->SpinIndicesShort[TmpNBody] = new int[this->NbrSpinSectors[TmpNBody]];
 	  this->NbrNBodySpinMomentumSectorSum[TmpNBody] = new int[this->NbrSpinSectors[TmpNBody]];
 	  this->NbrNBodySpinMomentumSectorIndicesPerSum[TmpNBody] = new int*[this->NbrSpinSectors[TmpNBody]];
 	  this->NBodySpinMomentumSectorIndicesPerSum[TmpNBody] = new int**[this->NbrSpinSectors[TmpNBody]];
-	  for (int i = 0; i < this->NbrSpinSectors[TmpNBody]; ++i)
+	  int Index = 0;
+	  for (int i = 0; i <= TmpNBody; ++i)
 	    {
-	      this->NBodySign[TmpNBody][i] = 1.0;
-	      this->SpinIndicesShort[TmpNBody][i] = ((1 << (TmpNBody - i)) - 1);
-	      this->SpinIndicesShort[TmpNBody][i] |= this->SpinIndicesShort[TmpNBody][i] << TmpNBody;
-	      this->SpinIndices[TmpNBody][i] = new int [2 * TmpNBody];
-	      for (int j = 0; j < (TmpNBody - i); ++j)
+	      if ((onlyIntraFlag == false) || (i == 0) || (i == TmpNBody))
 		{
-		  this->SpinIndices[TmpNBody][i][j] = 1;
-		  this->SpinIndices[TmpNBody][i][j + TmpNBody] = 1;
-		}
-	      for (int j = TmpNBody - i; j < TmpNBody; ++j)
-		{
-		  this->SpinIndices[TmpNBody][i][j] = 0;     
-		  this->SpinIndices[TmpNBody][i][j + TmpNBody] = 0;     
-		}
-	      this->NbrNBodySpinMomentumSectorSum[TmpNBody][i] = this->NbrLzValue;
-	      if ((i == 0) || (i == (this->NbrSpinSectors[TmpNBody] - 1)))
-		{
-		  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+		  this->NBodySign[TmpNBody][Index] = 1.0;
+		  this->SpinIndicesShort[TmpNBody][Index] = ((1 << (TmpNBody - i)) - 1);
+		  this->SpinIndicesShort[TmpNBody][Index] |= this->SpinIndicesShort[TmpNBody][Index] << TmpNBody;
+		  this->SpinIndices[TmpNBody][Index] = new int [2 * TmpNBody];
+		  for (int j = 0; j < (TmpNBody - i); ++j)
 		    {
-		      this->GetAllSkewSymmetricIndices(this->NbrLzValue, TmpNBody, this->NbrNBodySpinMomentumSectorIndicesPerSum[TmpNBody][i],  
-						       this->NBodySpinMomentumSectorIndicesPerSum[TmpNBody][i]);
+		      this->SpinIndices[TmpNBody][Index][j] = 1;
+		      this->SpinIndices[TmpNBody][Index][j + TmpNBody] = 1;
+		    }
+		  for (int j = TmpNBody - i; j < TmpNBody; ++j)
+		    {
+		      this->SpinIndices[TmpNBody][Index][j] = 0;     
+		      this->SpinIndices[TmpNBody][Index][j + TmpNBody] = 0;     
+		    }
+		  this->NbrNBodySpinMomentumSectorSum[TmpNBody][Index] = this->NbrLzValue;
+		  if ((i == 0) || (i == TmpNBody))
+		    {
+		      if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+			{
+			  this->GetAllSkewSymmetricIndices(this->NbrLzValue, TmpNBody, this->NbrNBodySpinMomentumSectorIndicesPerSum[TmpNBody][Index],  
+							   this->NBodySpinMomentumSectorIndicesPerSum[TmpNBody][Index]);
+			}
+		      else
+			{
+			  double** TmpSymmetryFactors;
+			  this->GetAllSymmetricIndices(this->NbrLzValue, TmpNBody, this->NbrNBodySpinMomentumSectorIndicesPerSum[TmpNBody][Index],  
+						       this->NBodySpinMomentumSectorIndicesPerSum[TmpNBody][Index], TmpSymmetryFactors);
+			}
 		    }
 		  else
 		    {
-		      double** TmpSymmetryFactors;
-		      this->GetAllSymmetricIndices(this->NbrLzValue, TmpNBody, this->NbrNBodySpinMomentumSectorIndicesPerSum[TmpNBody][i],  
-						   this->NBodySpinMomentumSectorIndicesPerSum[TmpNBody][i], TmpSymmetryFactors);
+		      if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+			{
+			  this->GetAllTwoSetSkewSymmetricIndices(this->NbrLzValue, TmpNBody - i, i, this->NbrNBodySpinMomentumSectorIndicesPerSum[TmpNBody][Index],  
+								 this->NBodySpinMomentumSectorIndicesPerSum[TmpNBody][Index]);
+			}
+		      else
+			{
+			  double** TmpSymmetryFactors;
+			  this->GetAllTwoSetSymmetricIndices(this->NbrLzValue, TmpNBody - i, i, this->NbrNBodySpinMomentumSectorIndicesPerSum[TmpNBody][Index],  
+							     this->NBodySpinMomentumSectorIndicesPerSum[TmpNBody][Index], TmpSymmetryFactors);
+			}
 		    }
-		}
-	      else
-		{
-		  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
-		    {
-		      this->GetAllTwoSetSkewSymmetricIndices(this->NbrLzValue, TmpNBody - i, i, this->NbrNBodySpinMomentumSectorIndicesPerSum[TmpNBody][i],  
-							     this->NBodySpinMomentumSectorIndicesPerSum[TmpNBody][i]);
-		    }
-		  else
-		    {
-		      double** TmpSymmetryFactors;
-		      this->GetAllTwoSetSymmetricIndices(this->NbrLzValue, TmpNBody - i, i, this->NbrNBodySpinMomentumSectorIndicesPerSum[TmpNBody][i],  
-							 this->NBodySpinMomentumSectorIndicesPerSum[TmpNBody][i], TmpSymmetryFactors);
-		    }
+		  ++Index;
 		}
 	    }
 	}

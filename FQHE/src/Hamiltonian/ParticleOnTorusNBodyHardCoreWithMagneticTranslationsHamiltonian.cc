@@ -49,6 +49,10 @@
 
 ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian()
 {
+  this->NBodyPrefactor = 1.0;
+  this->NbrPseudopotentials = 0;
+  this->LaguerrePolynomials = 0;
+  this->Pseudopotentials = 0;
 }
 
 // constructor from default datas
@@ -76,6 +80,7 @@ ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::ParticleOnTorus
   this->TwoBodyFlag = false;
   this->FastMultiplicationFlag = false;
   this->HermitianSymmetryFlag = true;
+  this->NBodyPrefactor = 1.0;
   this->OneBodyInteractionFactors = 0;
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
@@ -194,6 +199,11 @@ ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::~ParticleOnToru
   for (int i = 0; i < this->NbrEntryPrecalculatedInteractionCoefficients1; ++i)
     delete[] this->PrecalculatedInteractionCoefficients[i];  
   delete[] this->PrecalculatedInteractionCoefficients;
+  if (this->NbrPseudopotentials != 0)
+    {
+      delete[] this->LaguerrePolynomials;
+      delete[] this->Pseudopotentials;
+    }
 }
   
 // set Hilbert space
@@ -349,7 +359,7 @@ void ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateIn
 		    }
  		  if (this->FindCanonicalIndices(TmpMIndices, TmpNIndices, LinearizedNBodySectorIndicesPerSum[i][j2], LinearizedNBodySectorIndicesPerSum[i][j1], i, TmpCanonicalMIndices, TmpCanonicalNIndices, TmpCanonicalSum, TmpCanonicalPermutationCoefficient) == true)
  		    {
-		      this->NBodyInteractionFactors[i][Index] = TmpMatrixElement[TmpNbrMatrixElements];
+		      this->NBodyInteractionFactors[i][Index] = this->NBodyPrefactor * TmpMatrixElement[TmpNbrMatrixElements];
 		      ++TmpNbrMatrixElements;
 		      TotalNbrInteractionFactors++;
 		      ++Index;
@@ -388,11 +398,137 @@ void ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateIn
 	      for (int j2 = 0; j2 < this->NbrNBodySectorIndicesPerSum[i]; ++j2)
 		{
 		  int* TmpMIndices = &(this->NBodySectorIndicesPerSum[i][j2 * this->NBodyValue]);
-		  this->NBodyInteractionFactors[i][Index] = this->EvaluateInteractionNIndexSymmetrizedCoefficient(TmpNIndices, TmpMIndices);
+		  this->NBodyInteractionFactors[i][Index] = this->NBodyPrefactor * this->EvaluateInteractionNIndexSymmetrizedCoefficient(TmpNIndices, TmpMIndices);
 		  TotalNbrInteractionFactors++;
 		  ++Index;
 		  
 		  
+		}
+	    }
+	}
+    }
+
+  if (this->TwoBodyFlag == true)
+    {
+      double MaxCoefficient = 0.0;
+      this->InteractionFactors = new Complex* [this->NbrSectorSums];
+      if (this->Particles->GetParticleStatistic() == ParticleOnTorus::FermionicStatistic)
+	{
+	  for (int i = 0; i < this->NbrSectorSums; ++i)
+	    {
+	      this->InteractionFactors[i] = new Complex[this->NbrSectorIndicesPerSum[i] * this->NbrSectorIndicesPerSum[i]];
+	      int Index = 0;
+	      for (int j1 = 0; j1 < this->NbrSectorIndicesPerSum[i]; ++j1)
+		{
+		  int m1 = this->SectorIndicesPerSum[i][j1 << 1];
+		  int m2 = this->SectorIndicesPerSum[i][(j1 << 1) + 1];
+		  for (int j2 = 0; j2 < this->NbrSectorIndicesPerSum[i]; ++j2)
+		    {
+		      int m3 = this->SectorIndicesPerSum[i][j2 << 1];
+		      int m4 = this->SectorIndicesPerSum[i][(j2 << 1) + 1];
+		      
+		      double TmpCoefficient   = (this->EvaluateTwoBodyInteractionCoefficient(m1, m2, m3, m4)
+						 + this->EvaluateTwoBodyInteractionCoefficient(m2, m1, m4, m3)
+						 - this->EvaluateTwoBodyInteractionCoefficient(m1, m2, m4, m3)
+						 - this->EvaluateTwoBodyInteractionCoefficient(m2, m1, m3, m4));
+		      if (fabs(TmpCoefficient) > MaxCoefficient)
+			MaxCoefficient = fabs(TmpCoefficient);
+		}
+		}
+	    }
+	  MaxCoefficient *= MACHINE_PRECISION;
+	  for (int i = 0; i < this->NbrSectorSums; ++i)
+	    {
+	      this->InteractionFactors[i] = new Complex[this->NbrSectorIndicesPerSum[i] * this->NbrSectorIndicesPerSum[i]];
+	      int Index = 0;
+	      for (int j1 = 0; j1 < this->NbrSectorIndicesPerSum[i]; ++j1)
+		{
+		  int m1 = this->SectorIndicesPerSum[i][j1 << 1];
+		  int m2 = this->SectorIndicesPerSum[i][(j1 << 1) + 1];
+		  for (int j2 = 0; j2 < this->NbrSectorIndicesPerSum[i]; ++j2)
+		    {
+		      int m3 = this->SectorIndicesPerSum[i][j2 << 1];
+		      int m4 = this->SectorIndicesPerSum[i][(j2 << 1) + 1];
+		      
+		      double TmpCoefficient = (this->EvaluateTwoBodyInteractionCoefficient(m1, m2, m3, m4)
+					       + this->EvaluateTwoBodyInteractionCoefficient(m2, m1, m4, m3)
+					       - this->EvaluateTwoBodyInteractionCoefficient(m1, m2, m4, m3)
+					       - this->EvaluateTwoBodyInteractionCoefficient(m2, m1, m3, m4));
+		      if (fabs(TmpCoefficient) > MaxCoefficient)
+			{
+			  this->InteractionFactors[i][Index] = TmpCoefficient;
+			}
+		      else
+			{
+			  this->InteractionFactors[i][Index] = 0.0;
+			}
+		      TotalNbrInteractionFactors++;
+		      ++Index;
+		    }
+		}
+	    }
+	}
+      else
+	{
+	  for (int i = 0; i < this->NbrSectorSums; ++i)
+	    {
+	      this->InteractionFactors[i] = new Complex[this->NbrSectorIndicesPerSum[i] * this->NbrSectorIndicesPerSum[i]];
+	      int Index = 0;
+	      for (int j1 = 0; j1 < this->NbrSectorIndicesPerSum[i]; ++j1)
+		{
+		  int m1 = this->SectorIndicesPerSum[i][j1 << 1];
+		  int m2 = this->SectorIndicesPerSum[i][(j1 << 1) + 1];
+		  for (int j2 = 0; j2 < this->NbrSectorIndicesPerSum[i]; ++j2)
+		    {
+		      int m3 = this->SectorIndicesPerSum[i][j2 << 1];
+		      int m4 = this->SectorIndicesPerSum[i][(j2 << 1) + 1];
+		      
+		      double TmpCoefficient = (this->EvaluateTwoBodyInteractionCoefficient(m1, m2, m3, m4)
+					       + this->EvaluateTwoBodyInteractionCoefficient(m2, m1, m4, m3)
+					       + this->EvaluateTwoBodyInteractionCoefficient(m1, m2, m4, m3)
+					       + this->EvaluateTwoBodyInteractionCoefficient(m2, m1, m3, m4));
+		      if (m3 == m4)
+			TmpCoefficient *= 0.5;
+		      if (m1 == m2)
+			TmpCoefficient *= 0.5;
+		      if (fabs(TmpCoefficient) > MaxCoefficient)
+			MaxCoefficient = fabs(TmpCoefficient);
+		    }
+		}
+	    }
+	  MaxCoefficient *= MACHINE_PRECISION;
+	  for (int i = 0; i < this->NbrSectorSums; ++i)
+	    {
+	      this->InteractionFactors[i] = new Complex[this->NbrSectorIndicesPerSum[i] * this->NbrSectorIndicesPerSum[i]];
+	      int Index = 0;
+	      for (int j1 = 0; j1 < this->NbrSectorIndicesPerSum[i]; ++j1)
+		{
+		  int m1 = this->SectorIndicesPerSum[i][j1 << 1];
+		  int m2 = this->SectorIndicesPerSum[i][(j1 << 1) + 1];
+		  for (int j2 = 0; j2 < this->NbrSectorIndicesPerSum[i]; ++j2)
+		    {
+		      int m3 = this->SectorIndicesPerSum[i][j2 << 1];
+		      int m4 = this->SectorIndicesPerSum[i][(j2 << 1) + 1];
+		      
+		      double TmpCoefficient = (this->EvaluateTwoBodyInteractionCoefficient(m1, m2, m3, m4)
+					       + this->EvaluateTwoBodyInteractionCoefficient(m2, m1, m4, m3)
+					       + this->EvaluateTwoBodyInteractionCoefficient(m1, m2, m4, m3)
+					       + this->EvaluateTwoBodyInteractionCoefficient(m2, m1, m3, m4));
+		      if (m3 == m4)
+			TmpCoefficient *= 0.5;
+		      if (m1 == m2)
+			TmpCoefficient *= 0.5;
+		      if (fabs(TmpCoefficient) > MaxCoefficient)
+			{
+			  this->InteractionFactors[i][Index] = TmpCoefficient;
+			}
+		      else
+			{
+			  this->InteractionFactors[i][Index] = 0.0;
+			}
+		      TotalNbrInteractionFactors++;
+		      ++Index;
+		    }
 		}
 	    }
 	}
@@ -687,8 +823,91 @@ double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::Evaluate
 
 double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateTwoBodyInteractionCoefficient(int m1, int m2, int m3, int m4)
 {
-  return 0.0;
+  double Coefficient = 1.0;
+  double PIOnM = M_PI / ((double) this->MaxMomentum);
+  double Factor =  - ((double) (m1-m3)) * PIOnM * 2.0;
+  double Sum = 0.0;
+  double N2 = (double) (m1 - m4);
+  double N1;
+  double Q2;
+  double Precision;
+//  cout << "new coef====================================" << m1 << " "  << m2 << " "  << m3 << " "  << m4 << endl;
+  while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
+    {
+      N1 = 1.0;
+      Q2 = this->Ratio * N2 * N2;
+      if (N2 != 0.0)
+	{
+	  Coefficient = this->GetVofQ(PIOnM*Q2);
+	  Precision = Coefficient;
+	}
+      else
+	{
+	  Coefficient = this->GetVofQ(PIOnM*Q2); // yields non-zero terms only for non-singular interactions
+	  Precision = 1.0;
+	}
+      while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
+	{
+	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
+	  Precision = 2.0 * this->GetVofQ(PIOnM*Q2);
+	  Coefficient += Precision * cos (N1 * Factor);
+	  N1 += 1.0;
+	}
+      Sum += Coefficient;
+      N2 += this->MaxMomentum;
+    }
+  N2 = (double) (m1 - m4 - this->MaxMomentum);
+  Coefficient = 1.0;
+  while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
+    {
+      N1 = 1.0;
+      Q2 = this->Ratio * N2 * N2;
+      if (N2 != 0.0)
+	{
+	  Coefficient =  this->GetVofQ(PIOnM*Q2);
+	  Precision = Coefficient;
+	}
+      else
+	{
+	  Coefficient = this->GetVofQ(PIOnM*Q2); // yields non-zero terms only for non-singular interactions
+	  Precision = 1.0;
+	}
+      while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
+	{
+	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
+	  Precision = 2.0 * this->GetVofQ(PIOnM*Q2);
+	  Coefficient += Precision * cos (N1 * Factor);
+	  N1 += 1.0;
+	}
+      Sum += Coefficient;
+      N2 -= this->MaxMomentum;
+    }
+  return (Sum / (2.0 * this->MaxMomentum));
 }
+
+// get Fourier transform of the interaction
+//
+// Q2_half = one half of q² value
+// retrun value =Fourier transform of ithe nteraction
+
+double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::GetVofQ(double Q2_half)
+{
+  double Result = 0.0;
+  double Q2 = 2.0 * Q2_half;
+//   if ((this->HaveCoulomb)&&(Q2_half!=0.0))
+//     {
+//       Result=GETSQR(this->FormFactor(Q2_half)) / sqrt(Q2);
+//     }
+//   else
+//     Result=0.0;
+  for (int i = 0; i < this->NbrPseudopotentials; ++i)
+    if (this->Pseudopotentials[i]!=0.0)
+      Result += 2.0 * this->Pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(Q2);
+  return Result * exp(-Q2_half);
+}
+
+
+
 
 // find the canonical index corresponding to a giving index
 //

@@ -11,6 +11,8 @@
 
 #include "MainTask/FQHEOnTorusMainTask.h"
 
+#include "Tools/FQHEFiles/FQHETorusPseudopotentialTools.h"
+
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/MonoProcessorArchitecture.h"
@@ -21,8 +23,10 @@
 #include "QuantumNumber/AbstractQuantumNumber.h"
 
 #include "MathTools/IntegerAlgebraTools.h"
+
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/MultiColumnASCIIFile.h"
 
 #include "Options/Options.h"
 
@@ -65,9 +69,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('x', "x-momentum", "constraint on the total momentum in the x direction (negative if none)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('y', "y-momentum", "constraint on the total momentum in the y direction (negative if none)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-nbody", "number of particle that can interact simultaneously through the n-body hollow-core interaction", 3);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "nbody-strength", "strength of the n-body interaction", 1.0);
+  (*SystemGroup) += new SingleStringOption ('\n', "interaction-file", "optional file describing the 2-body and 1-body interactions");
   (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the two torus lengths", 1.0);
   (*SystemGroup) += new BooleanOption  ('\n', "all-points", "calculate all points", false);
   (*SystemGroup) += new BooleanOption  ('\n', "full-reducedbz", "calculate all points within the full reduced Brillouin zone", false);
+  (*SystemGroup) += new SingleStringOption ('\n', "selected-points", "provide a two column ascii file that indicates which momentum sectors have to be computed");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
@@ -108,8 +115,50 @@ int main(int argc, char** argv)
   bool FirstRun = true;
   bool RegenerateElementFlag = Manager.GetBoolean("regenerate-interactionelements");
   
+  char* InteractionName = 0;
+  double* PseudoPotentials  = 0;
+  double* OneBodyPseudoPotentials  = 0;
+  int NbrPseudoPotentials  = 0;
+  if (Manager.GetString("interaction-file") == 0)
+    {
+      InteractionName = new char [512];
+      sprintf (InteractionName, "%dbody_hollowcore", NbrNBody);
+    }
+  else
+    {
+      if (FQHETorusGetPseudopotentials(Manager.GetString("interaction-file"), MaxMomentum, NbrPseudoPotentials, PseudoPotentials, OneBodyPseudoPotentials) == false)
+	{	  
+	  return -1;
+	}
+      ConfigurationParser InteractionDefinition;
+      if (InteractionDefinition.Parse(Manager.GetString("interaction-file")) == false)
+	{
+	  InteractionDefinition.DumpErrors(cout) << endl;
+	  return -1;
+	}
+       if (InteractionDefinition["Name"] == NULL)
+	 {
+	   if (Manager.GetString("interaction-name") != 0)
+	     {
+	       InteractionName = new char[strlen(Manager.GetString("interaction-name")) + 1];
+	       sprintf(InteractionName, "%s", Manager.GetString("interaction-name"));
+	     }
+	   else
+	     {
+	       cout << "Attention, using unnamed interaction! Please include a line 'Name = ...'" << endl;
+	       InteractionName = new char[10];
+	       sprintf(InteractionName, "unnamed");
+	     }
+	 }
+       else
+	 {
+	   InteractionName = new char[strlen(InteractionDefinition["Name"]) + 1];
+	   sprintf(InteractionName, "%s", InteractionDefinition["Name"]);	   
+	 }    
+    }
+
   char* OutputName = new char [256];
-  sprintf (OutputName, "fermions_torus_%dbody_hollowcore_n_%d_2s_%d_ratio_%f.dat", NbrNBody, NbrParticles, MaxMomentum, XRatio);
+  sprintf (OutputName, "fermions_torus_%s_n_%d_2s_%d_ratio_%f.dat", InteractionName, NbrParticles, MaxMomentum, XRatio);
   ofstream File;
   File.open(OutputName, ios::binary | ios::out);
   File.precision(14);
@@ -145,160 +194,175 @@ int main(int argc, char** argv)
       YMomenta[0] = YMomentum;
     }
   else
-    {
-      if ((YMomentum != 0) || (XMomentum != 0))
-      {
-	if (YMomentum != 0)
+    { 
+      if (Manager.GetString("selected-points") == 0)
 	{
-	  NbrMomenta = MomentumModulo;
-	  YMomenta = new int[NbrMomenta];
-	  XMomenta = new int[NbrMomenta];	  
-	  for (int Kx = 0; Kx < NbrMomenta; ++Kx)
-	  {
-	    YMomenta[Kx] = YMomentum;
-	    XMomenta[Kx] = Kx;
-	  }
-	}
-	if (XMomentum != 0)
-	{
-	  NbrMomenta = MomentumModulo;
-	  YMomenta = new int[NbrMomenta];
-	  XMomenta = new int[NbrMomenta];
-	  for (int Ky = 0; Ky < NbrMomenta; ++Ky)
-	  {
-	    XMomenta [Ky] = XMomentum;
-	    YMomenta[Ky] = Ky;
-	  }
-	}
-      }
-      else
-      {
-      if (Manager.GetBoolean("all-points"))
-	{
-	  int Pos=0;
-	  NbrMomenta = (XMaxMomentum - XMomentum+1) * (YMaxMomentum - YMomentum+1);
-	  XMomenta = new int[NbrMomenta];
-	  YMomenta = new int[NbrMomenta];
-	  for (; XMomentum <= XMaxMomentum; ++XMomentum)
-	    for (int YMomentum2 = YMomentum; YMomentum2<= YMaxMomentum; ++YMomentum2)
-	      {
-		XMomenta[Pos] = XMomentum;
-		YMomenta[Pos] = YMomentum2;
-		++Pos;
-	      }
-	}
-      else // determine inequivalent states in BZ
-	{
-	  if (Manager.GetBoolean("full-reducedbz"))
+	  if ((YMomentum != 0) || (XMomentum != 0))
 	    {
-	      int Pos=0;
-	      XMaxMomentum = MomentumModulo;
-	      YMaxMomentum = MomentumModulo;
-	      NbrMomenta = MomentumModulo * MomentumModulo;
-	      XMomenta = new int[NbrMomenta];
-	      YMomenta = new int[NbrMomenta];
-	      for (; XMomentum < XMaxMomentum; ++XMomentum)
-		for (int YMomentum2 = YMomentum; YMomentum2 < YMaxMomentum; ++YMomentum2)
-		  {
-		    XMomenta[Pos] = XMomentum;
-		    YMomenta[Pos] = YMomentum2;
-		    ++Pos;
-		  }
+	      if (YMomentum != 0)
+		{
+		  NbrMomenta = MomentumModulo;
+		  YMomenta = new int[NbrMomenta];
+		  XMomenta = new int[NbrMomenta];	  
+		  for (int Kx = 0; Kx < NbrMomenta; ++Kx)
+		    {
+		      YMomenta[Kx] = YMomentum;
+		      XMomenta[Kx] = Kx;
+		    }
+		}
+	      if (XMomentum != 0)
+		{
+		  NbrMomenta = MomentumModulo;
+		  YMomenta = new int[NbrMomenta];
+		  XMomenta = new int[NbrMomenta];
+		  for (int Ky = 0; Ky < NbrMomenta; ++Ky)
+		    {
+		      XMomenta [Ky] = XMomentum;
+		      YMomenta[Ky] = Ky;
+		    }
+		}
 	    }
 	  else
 	    {
-	      CenterX=0;
-	      CenterY=0;
-	      if (XRatio == 1.0)
+	      if (Manager.GetBoolean("all-points"))
 		{
-		  NbrMomenta=0;
-		  for (int Kx = CenterX; Kx <= CenterX+MomentumModulo/2; ++Kx)
-		    for (int Ky= (Kx-CenterX) + CenterY; Ky <= CenterY+MomentumModulo/2; ++Ky)
-		      {
-			++NbrMomenta;
-		      }
 		  int Pos=0;
+		  NbrMomenta = (XMaxMomentum - XMomentum+1) * (YMaxMomentum - YMomentum+1);
 		  XMomenta = new int[NbrMomenta];
 		  YMomenta = new int[NbrMomenta];
-		  Multiplicities = new int[NbrMomenta];
-		  for (int Kx = 0; Kx <= MomentumModulo/2; ++Kx)
-		    for (int Ky = Kx; Ky <= MomentumModulo/2; ++Ky, ++Pos)
+		  for (; XMomentum <= XMaxMomentum; ++XMomentum)
+		    for (int YMomentum2 = YMomentum; YMomentum2<= YMaxMomentum; ++YMomentum2)
 		      {
-			XMomenta[Pos] = CenterX + Kx;
-			YMomenta[Pos] = CenterY + Ky;
-			if (Kx==0)
-			  {
-			    if (Ky==0)
-			      Multiplicities[Pos] = 1; // BZ center
-			    else if (Ky == MomentumModulo/2)
-			      Multiplicities[Pos] = 2;
-			    else Multiplicities[Pos] = 4;
-			  }
-			else if (Kx == MomentumModulo/2)
-			  {
-			    Multiplicities[Pos] = 1; // BZ corner
-			  }
-			else
-			  {
-			    if (Ky == Kx) // diagonal ?
-			      {
-				Multiplicities[Pos] = 4; 
-			      }
-			    else
-			      {
-				if (Ky == MomentumModulo/2)
-				  Multiplicities[Pos] = 4;
-				else
-				  Multiplicities[Pos] = 8;
-			      }
-			  }
+			XMomenta[Pos] = XMomentum;
+			YMomenta[Pos] = YMomentum2;
+			++Pos;
 		      }
 		}
-	      else // rectangular torus
+	      else // determine inequivalent states in BZ
 		{
-		  NbrMomenta=(MomentumModulo/2+1) * (MomentumModulo/2+1);
-		  int Pos = 0;
-		  XMomenta = new int[NbrMomenta];
-		  YMomenta = new int[NbrMomenta];
-		  Multiplicities = new int[NbrMomenta];
-		  for (int Kx = 0; Kx<=MomentumModulo/2; ++Kx)
-		    for (int Ky= 0; Ky<=MomentumModulo/2; ++Ky, ++Pos)
-		      {
-			XMomenta[Pos] = CenterX + Kx;
-			YMomenta[Pos] = CenterY + Ky;
-			if (Kx == 0)
+		  if (Manager.GetBoolean("full-reducedbz"))
+		    {
+		      int Pos=0;
+		      XMaxMomentum = MomentumModulo;
+		      YMaxMomentum = MomentumModulo;
+		      NbrMomenta = MomentumModulo * MomentumModulo;
+		      XMomenta = new int[NbrMomenta];
+		      YMomenta = new int[NbrMomenta];
+		      for (; XMomentum < XMaxMomentum; ++XMomentum)
+			for (int YMomentum2 = YMomentum; YMomentum2 < YMaxMomentum; ++YMomentum2)
 			  {
-			    if (Ky == 0)
-			      Multiplicities[Pos] = 1; // BZ center
-			    else // on Gamma->X]
-			      Multiplicities[Pos] = 2;
+			    XMomenta[Pos] = XMomentum;
+			    YMomenta[Pos] = YMomentum2;
+			    ++Pos;
 			  }
-			else
-			  {
-			    if (Ky == 0)
-			      Multiplicities[Pos] = 2;
-			    else
+		    }
+		  else
+		    {
+		      CenterX=0;
+		      CenterY=0;
+		      if (XRatio == 1.0)
+			{
+			  NbrMomenta=0;
+			  for (int Kx = CenterX; Kx <= CenterX+MomentumModulo/2; ++Kx)
+			    for (int Ky= (Kx-CenterX) + CenterY; Ky <= CenterY+MomentumModulo/2; ++Ky)
 			      {
-				if (Kx == MomentumModulo/2)
+				++NbrMomenta;
+			      }
+			  int Pos=0;
+			  XMomenta = new int[NbrMomenta];
+			  YMomenta = new int[NbrMomenta];
+			  Multiplicities = new int[NbrMomenta];
+			  for (int Kx = 0; Kx <= MomentumModulo/2; ++Kx)
+			    for (int Ky = Kx; Ky <= MomentumModulo/2; ++Ky, ++Pos)
+			      {
+				XMomenta[Pos] = CenterX + Kx;
+				YMomenta[Pos] = CenterY + Ky;
+				if (Kx==0)
 				  {
-				    if (Ky==MomentumModulo/2) // BZ corner?
-				      Multiplicities[Pos] = 1;
+				    if (Ky==0)
+				      Multiplicities[Pos] = 1; // BZ center
+				    else if (Ky == MomentumModulo/2)
+				      Multiplicities[Pos] = 2;
+				    else Multiplicities[Pos] = 4;
+				  }
+				else if (Kx == MomentumModulo/2)
+				  {
+				    Multiplicities[Pos] = 1; // BZ corner
+				  }
+				else
+				  {
+				    if (Ky == Kx) // diagonal ?
+				      {
+					Multiplicities[Pos] = 4; 
+				      }
 				    else
+				      {
+					if (Ky == MomentumModulo/2)
+					  Multiplicities[Pos] = 4;
+					else
+					  Multiplicities[Pos] = 8;
+				      }
+				  }
+			      }
+			}
+		      else // rectangular torus
+			{
+			  NbrMomenta=(MomentumModulo/2+1) * (MomentumModulo/2+1);
+			  int Pos = 0;
+			  XMomenta = new int[NbrMomenta];
+			  YMomenta = new int[NbrMomenta];
+			  Multiplicities = new int[NbrMomenta];
+			  for (int Kx = 0; Kx<=MomentumModulo/2; ++Kx)
+			    for (int Ky= 0; Ky<=MomentumModulo/2; ++Ky, ++Pos)
+			      {
+				XMomenta[Pos] = CenterX + Kx;
+				YMomenta[Pos] = CenterY + Ky;
+				if (Kx == 0)
+				  {
+				    if (Ky == 0)
+				      Multiplicities[Pos] = 1; // BZ center
+				    else // on Gamma->X]
 				      Multiplicities[Pos] = 2;
 				  }
 				else
 				  {
-				    if (Ky == MomentumModulo/2) // on edge?
+				    if (Ky == 0)
 				      Multiplicities[Pos] = 2;
 				    else
-				      Multiplicities[Pos] = 4;
+				      {
+					if (Kx == MomentumModulo/2)
+					  {
+					    if (Ky==MomentumModulo/2) // BZ corner?
+					      Multiplicities[Pos] = 1;
+					    else
+					      Multiplicities[Pos] = 2;
+					  }
+					else
+					  {
+					    if (Ky == MomentumModulo/2) // on edge?
+					      Multiplicities[Pos] = 2;
+					    else
+					      Multiplicities[Pos] = 4;
+					  }
+				      }
 				  }
 			      }
-			  }
-		      }
-		  }
+			}
+		    }
+		}
 	    }
+	}
+      else
+	{
+	  MultiColumnASCIIFile MomentumFile;
+	  if (MomentumFile.Parse(Manager.GetString("selected-points")) == false)
+	    {
+	      MomentumFile.DumpErrors(cout);
+	      return -1;
 	    }
+	  NbrMomenta = MomentumFile.GetNbrLines();
+	  XMomenta = MomentumFile.GetAsIntegerArray(0);
+	  YMomenta = MomentumFile.GetAsIntegerArray(1);
 	}
     }
   
@@ -319,7 +383,10 @@ int main(int argc, char** argv)
       AbstractQHEHamiltonian* Hamiltonian = 0;
 //       Hamiltonian = new ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio,
 // 											    Architecture.GetArchitecture(), Memory);
-     Hamiltonian = new ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio, NbrNBody, RegenerateElementFlag, Architecture.GetArchitecture(), Memory);
+      Hamiltonian = new ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio, 
+											  NbrNBody, Manager.GetDouble("nbody-strength"), RegenerateElementFlag, 
+											  NbrPseudoPotentials, PseudoPotentials, OneBodyPseudoPotentials,
+											  Architecture.GetArchitecture(), Memory);
 
       if (Manager.GetBoolean("matrixelement-only") == true)
 	return 0;

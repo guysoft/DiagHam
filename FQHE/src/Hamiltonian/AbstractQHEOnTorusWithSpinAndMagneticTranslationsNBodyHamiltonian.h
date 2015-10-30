@@ -88,7 +88,8 @@ class AbstractQHEOnTorusWithSpinAndMagneticTranslationsNBodyHamiltonian : public
 
   // get all the indices that should appear in the annihilation/creation operators
   //
-  virtual void GetIndices();
+  // onlyIntraFlag = true if only the intra component indices have to be computed
+  virtual void GetIndices(bool onlyIntraFlag = false);
 
   // get all indices needed to characterize a completly skew symmetric tensor, ordered by the sum of the indices
   //
@@ -450,9 +451,10 @@ inline void AbstractQHEOnTorusWithSpinAndMagneticTranslationsNBodyHamiltonian::H
 		  for (int i2 = 0; i2 < Lim; i2 += nbodyIndex)
 		    {
 		      Index = particles->ProdAd(TmpIndices + i2, TmpSpinIndicesAd, nbodyIndex, Coefficient, NbrTranslations);
-		      if (Index < Dim)
+		      if (Index <= index)
 			{
-			  TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj (this->ExponentialFactors[NbrTranslations] * (*TmpInteractionFactor));
+			  if (Index < index)
+			    TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj (this->ExponentialFactors[NbrTranslations] * (*TmpInteractionFactor));
 			  vDestination[Index] += (Coefficient * this->ExponentialFactors[NbrTranslations] * (*TmpInteractionFactor)) * Coefficient4;
 			}
 		      ++TmpInteractionFactor;
@@ -512,13 +514,14 @@ inline void AbstractQHEOnTorusWithSpinAndMagneticTranslationsNBodyHamiltonian::H
 		  for (int i2 = 0; i2 < Lim; i2 += nbodyIndex)
 		    {
 		      Index = particles->ProdAd(TmpIndices + i2, TmpSpinIndicesAd, nbodyIndex, Coefficient, NbrTranslations);
-		      if (Index < Dim)
+		      if (Index <= index)
 			{
 			  Coefficient4 = this->ExponentialFactors[NbrTranslations] * Coefficient*(*TmpInteractionFactor);
 			  for (int l = 0; l < nbrVectors; ++l)
 			    {
 			      vDestinations[l][Index] += Coefficient4 * tmpCoefficients[l];
-			      tmpSum[l] += (Coefficient * Coefficient3) * Conj(this->ExponentialFactors[NbrTranslations] * (*TmpInteractionFactor)) * vSources[l][Index];
+			      if (Index < index)
+				tmpSum[l] += (Coefficient * Coefficient3) * Conj(this->ExponentialFactors[NbrTranslations] * (*TmpInteractionFactor)) * vSources[l][Index];
 			    }
 			}
 		      ++TmpInteractionFactor;
@@ -750,7 +753,7 @@ inline void AbstractQHEOnTorusWithSpinAndMagneticTranslationsNBodyHamiltonian::H
 		  if (Index <= index)
 		    {
 		      if (Index < index)
-			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
+			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(this->ExponentialFactors[NbrTranslations] * (*TmpInteractionFactor));
 		      vDestination[Index] += (Coefficient * (this->ExponentialFactors[NbrTranslations] * (*TmpInteractionFactor))) * Coefficient4;
 		    }
 		  ++TmpInteractionFactor;
@@ -776,7 +779,7 @@ inline void AbstractQHEOnTorusWithSpinAndMagneticTranslationsNBodyHamiltonian::H
 		  if (Index <= index)
 		    {
 		      if (Index < index)
-			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
+			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(this->ExponentialFactors[NbrTranslations] * (*TmpInteractionFactor));
 		      vDestination[Index] += (Coefficient * (this->ExponentialFactors[NbrTranslations] * (*TmpInteractionFactor))) * Coefficient4;
 		    }
 		  ++TmpInteractionFactor;
