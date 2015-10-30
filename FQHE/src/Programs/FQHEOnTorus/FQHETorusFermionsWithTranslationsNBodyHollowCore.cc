@@ -71,6 +71,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-nbody", "number of particle that can interact simultaneously through the n-body hollow-core interaction", 3);
   (*SystemGroup) += new SingleDoubleOption ('\n', "nbody-strength", "strength of the n-body interaction", 1.0);
   (*SystemGroup) += new SingleStringOption ('\n', "interaction-file", "optional file describing the 2-body and 1-body interactions");
+  (*SystemGroup) += new BooleanOption  ('\n', "linear-interpolation", "use a linear interpolation between the n-body interaction and the 2-body interaction provided by the interaction-file option", false);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "linear-lambda", "value of the coefficient for the linear interpolation (0 being the n-body interaction only and 1 being the 2-body interaction only)", false);
   (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the two torus lengths", 1.0);
   (*SystemGroup) += new BooleanOption  ('\n', "all-points", "calculate all points", false);
   (*SystemGroup) += new BooleanOption  ('\n', "full-reducedbz", "calculate all points within the full reduced Brillouin zone", false);
@@ -119,6 +121,7 @@ int main(int argc, char** argv)
   double* PseudoPotentials  = 0;
   double* OneBodyPseudoPotentials  = 0;
   int NbrPseudoPotentials  = 0;
+  double NBodyStrength = Manager.GetDouble("nbody-strength");
   if (Manager.GetString("interaction-file") == 0)
     {
       InteractionName = new char [512];
@@ -155,6 +158,22 @@ int main(int argc, char** argv)
 	   InteractionName = new char[strlen(InteractionDefinition["Name"]) + 1];
 	   sprintf(InteractionName, "%s", InteractionDefinition["Name"]);	   
 	 }    
+    }
+
+  if (Manager.GetBoolean("linear-interpolation") == true)
+    {
+      if (PseudoPotentials == 0)
+	{
+	  cout << "error, linear-interpolation requires two-body pseudo-potentials" << endl;
+	  return 0;
+	}
+      for (int i = 0; i < NbrPseudoPotentials; ++i)
+	PseudoPotentials[i] *= Manager.GetDouble("linear-lambda");
+      NBodyStrength *= (1.0 - Manager.GetDouble("linear-lambda"));
+      char* TmpInteractionName = new char[strlen(InteractionName) + 512];
+      sprintf (TmpInteractionName, "%dbody_hollowcore_%s_lambda_%.6f", NbrNBody, InteractionName, Manager.GetDouble("linear-lambda"));
+      delete[] InteractionName;
+      InteractionName = TmpInteractionName;
     }
 
   char* OutputName = new char [256];
@@ -384,7 +403,7 @@ int main(int argc, char** argv)
 //       Hamiltonian = new ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio,
 // 											    Architecture.GetArchitecture(), Memory);
       Hamiltonian = new ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio, 
-											  NbrNBody, Manager.GetDouble("nbody-strength"), RegenerateElementFlag, 
+											  NbrNBody, NBodyStrength, RegenerateElementFlag, 
 											  NbrPseudoPotentials, PseudoPotentials, OneBodyPseudoPotentials,
 											  Architecture.GetArchitecture(), Memory);
 
