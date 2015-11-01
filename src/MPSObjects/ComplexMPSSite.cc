@@ -328,7 +328,11 @@ void ComplexMPSSite::ComputeDensityMatrixLeft()
   }
   }
      RealDiagonalMatrix TmpDiag (TmpMatrix.GetNbrRow());
+#ifdef __LAPACK__     
      TmpMatrix.LapackDiagonalize(TmpDiag);
+#else
+     TmpMatrix.Diagonalize(TmpDiag);
+#endif
      TmpDiag.SortMatrixDownOrder();
 }
 
@@ -354,9 +358,13 @@ void ComplexMPSSite::ComputeDensityMatrixRight()
    }
   }
  }
-     RealDiagonalMatrix TmpDiag (TmpMatrix.GetNbrRow());
-     TmpMatrix.LapackDiagonalize(TmpDiag);
-     TmpDiag.SortMatrixDownOrder();
+   RealDiagonalMatrix TmpDiag (TmpMatrix.GetNbrRow());
+#ifdef __LAPACK__     
+   TmpMatrix.LapackDiagonalize(TmpDiag);
+#else
+   TmpMatrix.Diagonalize(TmpDiag);
+#endif
+   TmpDiag.SortMatrixDownOrder();
 }
 
 

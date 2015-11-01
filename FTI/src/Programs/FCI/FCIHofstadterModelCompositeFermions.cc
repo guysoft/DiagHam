@@ -247,8 +247,11 @@ else
   ComplexMatrix TmpMatrix( Lx* Ly, Lx* Ly,true);
   TmpMatrix.SetToIdentity();
   RealDiagonalMatrix TmpDiag;
+#ifdef __LAPACK__     
   TmpHam.LapackDiagonalize(TmpDiag, TmpMatrix);
-
+#else
+  TmpHam.Diagonalize(TmpDiag, TmpMatrix);
+#endif
   cout <<JastrowEigenVecs<<endl;
 
   cout <<TmpMatrix<<endl;

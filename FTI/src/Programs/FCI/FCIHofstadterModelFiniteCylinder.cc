@@ -232,28 +232,32 @@ else
     HermitianMatrix TmpHam (TightBindingModel->GetRealSpaceTightBindingHamiltonian());
     RealDiagonalMatrix TmpHam2(TmpHam.GetNbrRow());
     ComplexMatrix Q(NbrSiteX, NbrSiteY, true); 
-    TmpHam.LapackDiagonalize(TmpHam2,Q);
-  if (Manager.GetBoolean("compute-density") == true)
-{
- for(int X1 = 0; X1 <NbrSiteX ; X1++)
-{
- for(int Y1 = 0; Y1 <NbrSiteY ; Y1++)
-{
- for(int X2 = 0; X2 <NbrSiteX ; X2++)
-{
- for(int Y2 = 0; Y2 <NbrSiteY ; Y2++)
-{
- ComputeDensity(NbrParticles, Q,X1,Y1, X2,Y2,(TightBindingModelHofstadterFiniteCylinder *) TightBindingModel);
-}
-}
-}
-}
-}
-
+#ifdef __LAPACK__     
+    TmpHam.LapackDiagonalize(TmpHam2, Q);
+#else
+    TmpHam.Diagonalize(TmpHam2, Q);
+#endif
+    if (Manager.GetBoolean("compute-density") == true)
+      {
+	for(int X1 = 0; X1 <NbrSiteX ; X1++)
+	  {
+	    for(int Y1 = 0; Y1 <NbrSiteY ; Y1++)
+	      {
+		for(int X2 = 0; X2 <NbrSiteX ; X2++)
+		  {
+		    for(int Y2 = 0; Y2 <NbrSiteY ; Y2++)
+		      {
+			ComputeDensity(NbrParticles, Q,X1,Y1, X2,Y2,(TightBindingModelHofstadterFiniteCylinder *) TightBindingModel);
+		      }
+		  }
+	      }
+	  }
+      }
+    
     delete TightBindingModel;
-      return 0;
+    return 0;
     }
-
+  
 
   int MinKx = 0;
   int MaxKx = NbrSiteX - 1;
@@ -292,7 +296,11 @@ else
 
   bool FirstRunFlag = true;
  RealDiagonalMatrix TmpHam2(TightBindingMatrix.GetNbrRow());
+#ifdef __LAPACK__     
   TightBindingMatrix.LapackDiagonalize(TmpHam2);
+#else
+  TightBindingMatrix.Diagonalize(TmpHam2);
+#endif   
 /*
   for (int i = 0; i < TmpHam2.GetNbrRow(); ++i)
   {

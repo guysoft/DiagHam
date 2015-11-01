@@ -361,7 +361,11 @@ int main(int argc, char** argv)
 	  RealSymmetricMatrix HRep2 (Hamiltonian2->GetHilbertSpaceDimension(), true);
 	  RealDiagonalMatrix TmpDiag2 (Hamiltonian2->GetHilbertSpaceDimension());
 	  Hamiltonian2->GetHamiltonian(HRep2);
+#ifdef __LAPACK__     
 	  HRep2.LapackDiagonalize(TmpDiag2, Basis2);
+#else
+	  HRep2.Diagonalize(TmpDiag2, Basis2);
+#endif	  
 	  delete Hamiltonian2;
 	  RealMatrix TransposedBasis2;
 	  TransposedBasis2.Copy(Basis2);
@@ -379,7 +383,11 @@ int main(int argc, char** argv)
 	  RealMatrix Basis3(Hamiltonian3->GetHilbertSpaceDimension(), Hamiltonian3->GetHilbertSpaceDimension());
 	  RealDiagonalMatrix TmpDiag3(Hamiltonian3->GetHilbertSpaceDimension());
 	  Hamiltonian3->GetHamiltonian(HRep3);
+#ifdef __LAPACK__
 	  HRep3.LapackDiagonalize(TmpDiag3, Basis3);
+#else
+	  HRep3.Diagonalize(TmpDiag3, Basis3);
+#endif
 	  delete Hamiltonian3;
 	  RealMatrix TransposedBasis3;
 	  TransposedBasis3.Copy(Basis3);
@@ -422,7 +430,11 @@ int main(int argc, char** argv)
 	      cout << "diagonalizing unitary evolution operator" <<  endl;
 	      gettimeofday (&(TotalStartingTime), 0);
 	      TmpDiagUnitaryEvolution = ComplexDiagonalMatrix (UnitaryEvolution.GetNbrColumn());
+#ifdef __LAPACK__     
 	      UnitaryEvolution.LapackDiagonalize(TmpDiagUnitaryEvolution);
+#else
+	      UnitaryEvolution.Diagonalize(TmpDiagUnitaryEvolution);
+#endif
 	      gettimeofday (&(TotalEndingTime), 0);
 	      Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
 			     ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
