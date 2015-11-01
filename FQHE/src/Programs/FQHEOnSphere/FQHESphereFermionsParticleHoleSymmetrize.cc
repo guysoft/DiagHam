@@ -106,27 +106,29 @@ int main(int argc, char** argv)
 #else
       if (LzMax <= 31)
 #endif
-	if ((SymmetrizedBasis == false) || (TotalLz != 0))
-	  {
-	    if (BergholtzFlag == false)
-	      {
-		FermionOnSphere InputSpace (NbrParticles, TotalLz, LzMax, MemorySpace);
-		FermionOnSphere OutputSpace (NbrHoles, TotalLz, LzMax, MemorySpace);
-		HoleState = InputSpace.ParticleHoleSymmetrize(State, OutputSpace);
-	      }
-	    else
-	      {
-		FermionOnSphere InputSpace (NbrParticles, TotalLz, LzMax, MemorySpace);
-		FermionOnSphere OutputSpace (NbrHoles, TotalLz, LzMax, MemorySpace);
-		HoleState = InputSpace.ParticleHoleSymmetrize(State, OutputSpace);
-	      }	      
-	  }
-	else
-	  {
-	    FermionOnSphereSymmetricBasis InputSpace(NbrParticles, LzMax, MemorySpace);
-	    FermionOnSphereSymmetricBasis OutputSpace (NbrHoles, LzMax, MemorySpace);
-	    HoleState = InputSpace.ParticleHoleSymmetrize(State, OutputSpace);
-	  }
+	{
+	  if ((SymmetrizedBasis == false) || (TotalLz != 0))
+	    {
+	      if (BergholtzFlag == false)
+		{
+		  FermionOnSphere InputSpace (NbrParticles, TotalLz, LzMax, MemorySpace);
+		  FermionOnSphere OutputSpace (NbrHoles, TotalLz, LzMax, MemorySpace);
+		  HoleState = InputSpace.ParticleHoleSymmetrize(State, OutputSpace);
+		}
+	      else
+		{
+		  FermionOnSphere InputSpace (NbrParticles, TotalLz, LzMax, MemorySpace);
+		  FermionOnSphere OutputSpace (NbrHoles, TotalLz, LzMax, MemorySpace);
+		  HoleState = InputSpace.ParticleHoleSymmetrize(State, OutputSpace);
+		}	      
+	    }
+	  else
+	    {
+	      FermionOnSphereSymmetricBasis InputSpace(NbrParticles, LzMax, MemorySpace);
+	      FermionOnSphereSymmetricBasis OutputSpace (NbrHoles, LzMax, MemorySpace);
+	      HoleState = InputSpace.ParticleHoleSymmetrize(State, OutputSpace);
+	    }
+	}
     }
   else
     {

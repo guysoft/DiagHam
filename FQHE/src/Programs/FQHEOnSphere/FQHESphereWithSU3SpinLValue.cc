@@ -110,40 +110,42 @@ int main(int argc, char** argv)
   if (((SingleStringOption*) Manager["statistics"])->GetString() == 0)
     FermionFlag = true;
   if (NbrParticles==0)
-    if (FQHEOnSphereWithSU3SpinFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["state"])->GetString(), NbrParticles, LzMax, TotalLz, TotalTz, TotalY,
-								TzSymmetrizedBasis, TzMinusParity, Z3SymmetrizedBasis,
-								LzSymmetrizedBasis, LzMinusParity, FermionFlag) == false)
-      {
-	return -1;
-      }
-    else
-      {
-	if (((BooleanOption*) Manager["show-extracted"])->GetBoolean() == true)
-	  {
-	    cout << "N=" << NbrParticles << "  LzMax=" << LzMax << "  TotalLz=" << TotalLz << "  TotalTz=" << TotalTz;
-	    if (LzSymmetrizedBasis == true)
-	      {
-		cout << "  Lz symmetrized basis ";
-		if (LzMinusParity == true)
-		  cout << "(minus parity) ";
-		else
-		  cout << "(plus parity) ";
-	      }
-	    if (TzSymmetrizedBasis == true)
-	      {
-		cout << "  Tz symmetrized basis ";
-		if (TzMinusParity == true)
-		  cout << "(minus parity) ";
-		else
-		  cout << "(plus parity) ";
-	      }
-	    if (Z3SymmetrizedBasis == true)
-	      {
-		cout << "  Z3 symmetrized basis ";
-	      }
-	    cout << endl;
-	  }
-      }
+    {
+      if (FQHEOnSphereWithSU3SpinFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["state"])->GetString(), NbrParticles, LzMax, TotalLz, TotalTz, TotalY,
+								  TzSymmetrizedBasis, TzMinusParity, Z3SymmetrizedBasis,
+								  LzSymmetrizedBasis, LzMinusParity, FermionFlag) == false)
+	{
+	  return -1;
+	}
+      else
+	{
+	  if (((BooleanOption*) Manager["show-extracted"])->GetBoolean() == true)
+	    {
+	      cout << "N=" << NbrParticles << "  LzMax=" << LzMax << "  TotalLz=" << TotalLz << "  TotalTz=" << TotalTz;
+	      if (LzSymmetrizedBasis == true)
+		{
+		  cout << "  Lz symmetrized basis ";
+		  if (LzMinusParity == true)
+		    cout << "(minus parity) ";
+		  else
+		    cout << "(plus parity) ";
+		}
+	      if (TzSymmetrizedBasis == true)
+		{
+		  cout << "  Tz symmetrized basis ";
+		  if (TzMinusParity == true)
+		    cout << "(minus parity) ";
+		  else
+		    cout << "(plus parity) ";
+		}
+	      if (Z3SymmetrizedBasis == true)
+		{
+		  cout << "  Z3 symmetrized basis ";
+		}
+	      cout << endl;
+	    }
+	}
+    }
   if (((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean() == true)
     {
       LzSymmetrizedBasis = ((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean();
@@ -159,19 +161,21 @@ int main(int argc, char** argv)
       Z3SymmetrizedBasis = ((BooleanOption*) Manager["z3symmetrized-basis"])->GetBoolean();
     }
   if (((SingleStringOption*) Manager["statistics"])->GetString() != 0)
-    if ((strcmp ("fermions", ((SingleStringOption*) Manager["statistics"])->GetString()) == 0))
-      {
-	FermionFlag = true;
-      }
-    else
+    {
       if ((strcmp ("fermions", ((SingleStringOption*) Manager["statistics"])->GetString()) == 0))
 	{
-	  FermionFlag = false;
+	  FermionFlag = true;
 	}
       else
-	{
-	  cout << ((SingleStringOption*) Manager["statistics"])->GetString() << " is an undefined statistics" << endl;
-	}  
+	if ((strcmp ("fermions", ((SingleStringOption*) Manager["statistics"])->GetString()) == 0))
+	  {
+	    FermionFlag = false;
+	}
+	else
+	  {
+	    cout << ((SingleStringOption*) Manager["statistics"])->GetString() << " is an undefined statistics" << endl;
+	  }  
+    }
   int Parity = TotalLz & 1;
   if (Parity != ((NbrParticles * LzMax) & 1))
     {

@@ -1767,9 +1767,9 @@ Complex ParticleOnTorusThreeLandauLevelsHamiltonian::FormFactor(double Q2, doubl
 	}
     }
     
-    if ((ll1+ll2) & 0x1 != 0)
-      ff *= -1.0;
+  if (((ll1+ll2) & 0x1) != 0)
+    ff *= -1.0;
   
     
- return ff;   
+  return ff;   
 }

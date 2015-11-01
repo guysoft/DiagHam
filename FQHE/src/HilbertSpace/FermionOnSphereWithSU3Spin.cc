@@ -604,10 +604,12 @@ long FermionOnSphereWithSU3Spin::ShiftedEvaluateHilbertSpaceDimension(int nbrFer
   if ((nbrFermions == 0) && (totalLz == 0))
     return 1l;
   if (nbrFermions == 1) 
-    if (lzMax >= totalLz)
-      return 1l;
-    else
-      return 0l;
+    {
+      if (lzMax >= totalLz)
+	return 1l;
+      else
+	return 0l;
+    }
   unsigned long Tmp = 0l;
   if (nbrFermions >= 3)
     {

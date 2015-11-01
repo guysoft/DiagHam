@@ -67,7 +67,7 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix()
 // outputName = name of the theory
 // useRational = use arbitrary precision numbers for all the CFT calculations
 
-FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int pLevel, LongRational centralCharge, char* outputName, bool useRational)
+FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int pLevel, LongRational centralCharge, const char* outputName, bool useRational)
 {
     this->PLevel = pLevel;
     this->CentralCharge = centralCharge;
@@ -184,7 +184,7 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex
 // fluxInsertion = flux insertion along the tau direction
 // architecture = architecture to use for precalculation
   
-FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool bosonicVersion, bool useRational, 
+FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, const char* cftDirectory, bool bosonicVersion, bool useRational, 
 						   bool trimChargeIndices, bool cylinderFlag, double kappa, 
 						   bool torusFlag, int nbrFluxQuanta, double aspectRatio, double angle, double fluxInsertion,
 						   AbstractArchitecture* architecture)
@@ -262,7 +262,7 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex
 // fluxInsertion = flux insertion along the tau direction
 // architecture = architecture to use for precalculation
 
-FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int pLevel, int nbrBMatrices, char* fileName, bool bosonicVersion, 
+FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int pLevel, int nbrBMatrices, const char* fileName, bool bosonicVersion, 
 						   bool trimChargeIndices, bool cylinderFlag, double kappa, 
 						   bool torusFlag, int nbrFluxQuanta, double aspectRatio, double angle, double fluxInsertion,
 						   AbstractArchitecture* architecture)
@@ -370,7 +370,7 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int pLevel, int nbrBMatrices,
 // angle = angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
 // fluxInsertion = flux insertion along the tau direction
 
-FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, char* fileName, 
+FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, const char* fileName, 
 						   bool trimChargeIndices, bool cylinderFlag, double kappa, 
 						   bool torusFlag, int nbrFluxQuanta, double aspectRatio, double angle, double fluxInsertion)
 {
@@ -440,7 +440,7 @@ void FQHEMPSClustered2RMatrix::GetFillingFactor(int& numerator, int& denominator
 // cftDirectory = an optional path to the directory where all the CFT matrices are stored
 // architecture = architecture to use for precalculation
 
-void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArchitecture* architecture)
+void FQHEMPSClustered2RMatrix::CreateBMatrices (const char* cftDirectory, AbstractArchitecture* architecture)
 {
   LongRational CentralCharge12 (this->CentralCharge);
   cout << "central charge = " << CentralCharge12 << endl;
@@ -3180,7 +3180,7 @@ int FQHEMPSClustered2RMatrix::GetMatrixNaturalNbrParticles(int nbrFluxQuanta, bo
 // rationalMultiplicityFactor = array that contains the multiplicity factors
 // multiplicityFactor = double accuracy version of rationalMultiplicityFactor
 
-void FQHEMPSClustered2RMatrix::ComputeFullScalarProductMatrix(char* cftDirectory, char* scalarProductFileName, AbstractArchitecture* architecture,
+void FQHEMPSClustered2RMatrix::ComputeFullScalarProductMatrix(const char* cftDirectory, char* scalarProductFileName, AbstractArchitecture* architecture,
 							      LongRationalMatrix* rationalScalarProduct, RealSymmetricMatrix* scalarProduct,
 							      int pLevel, BosonOnDiskShort** u1BosonBasis, 
 							      LongRational& centralCharge12, double centralCharge12Numerical, 
@@ -3364,7 +3364,7 @@ void FQHEMPSClustered2RMatrix::RescaleFullScalarProductMatrix(LongRationalMatrix
 // weightPrimaryFieldMatrixElement = weight of primary field whose matrix elements are computed
 // weightPrimaryFieldMatrixElementNumerical = double accuracy version of weightPrimaryFieldMatrixElement
 
-void FQHEMPSClustered2RMatrix::ComputeFullMatrixElements(char* cftDirectory, char* matrixElementsFileName, AbstractArchitecture* architecture,
+void FQHEMPSClustered2RMatrix::ComputeFullMatrixElements(const char* cftDirectory, char* matrixElementsFileName, AbstractArchitecture* architecture,
 							 LongRationalMatrix** rationalMatrixElements, RealMatrix** matrixElements,
 							 int pLevelLeft, int pLevelRight, BosonOnDiskShort** u1BosonBasis, 
 							 LongRational& centralCharge12, double centralCharge12Numerical, 
@@ -3465,8 +3465,8 @@ void FQHEMPSClustered2RMatrix::RescaleFullMatrixElements(LongRationalMatrix** ra
 // fusion = OPE structure coefficients, invoked only when fieldWeight != 0
 // writeIntermediate = whether to output rational scalar products and matrix elements
 
-void FQHEMPSClustered2RMatrix::ComputeMatrixElements(char* cftDirectory, AbstractArchitecture* architecture,
-						     char* fieldName, LongRational fieldWeight, int nbrSectors, char** sectorNames, LongRational* weights, RealMatrix fusion, bool writeIntermediate)
+void FQHEMPSClustered2RMatrix::ComputeMatrixElements(const char* cftDirectory, AbstractArchitecture* architecture,
+						     const char* fieldName, LongRational fieldWeight, int nbrSectors, char** sectorNames, LongRational* weights, RealMatrix fusion, bool writeIntermediate)
 {
     LongRational CentralCharge12(this->CentralCharge);
     cout << "central charge = " << CentralCharge12 << endl;

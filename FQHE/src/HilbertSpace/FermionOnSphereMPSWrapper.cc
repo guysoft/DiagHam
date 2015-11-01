@@ -1149,6 +1149,7 @@ int FermionOnSphereMPSWrapper::AdA (int index, int m, int n, double& coefficient
 
 long FermionOnSphereMPSWrapper::AdA (long index, int m, int n, Complex& coefficient)
 {
+  return this->LargeHilbertSpaceDimension;
 }
 
 

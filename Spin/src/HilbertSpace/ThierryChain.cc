@@ -155,13 +155,17 @@ ThierryChain::ThierryChain (const ThierryChain& chain)
 ThierryChain::~ThierryChain () 
 {
   if (this->GarbageFlag != 0) 
-    if ((*(this->GarbageFlag)) == 1)
-      {
-	delete[] this->ChainDescription;
-	delete this->GarbageFlag;
-      }
-    else
-      (*(this->GarbageFlag))--;
+    {
+      if ((*(this->GarbageFlag)) == 1)
+	{
+	  delete[] this->ChainDescription;
+	  delete this->GarbageFlag;
+	}
+      else
+	{
+	  (*(this->GarbageFlag))--;
+	}
+    }
 }
 
 // assignement (without duplicating datas)
@@ -172,13 +176,17 @@ ThierryChain::~ThierryChain ()
 ThierryChain& ThierryChain::operator = (const ThierryChain& chain)
 {
   if (this->GarbageFlag != 0)
-    if ((*(this->GarbageFlag)) == 1)
-      {
-	delete[] this->ChainDescription;
-	delete this->GarbageFlag;
-      }  
-    else
-      (*(this->GarbageFlag))--;
+    {
+      if ((*(this->GarbageFlag)) == 1)
+	{
+	  delete[] this->ChainDescription;
+	  delete this->GarbageFlag;
+	}  
+      else
+	{
+	  (*(this->GarbageFlag))--;
+	}
+    }
   if (chain.GarbageFlag != 0)
     {
       this->GarbageFlag = chain.GarbageFlag;

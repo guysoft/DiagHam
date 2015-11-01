@@ -182,7 +182,7 @@ FQHEMPSReadRezayi3QuasiholeSectorMatrix::~FQHEMPSReadRezayi3QuasiholeSectorMatri
 char* FQHEMPSReadRezayi3QuasiholeSectorMatrix::GetName()
 {
   char* TmpName = new char[24];
-  sprintf (TmpName, "readrezayi3_qh", this->LaughlinIndex);
+  sprintf (TmpName, "readrezayi3_qh");
   return TmpName;
 }
 

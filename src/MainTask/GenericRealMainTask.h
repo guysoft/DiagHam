@@ -150,7 +150,7 @@ class GenericRealMainTask: public AbstractMainTask
   // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
   // fakeComplex = fake complex problem : read and save vectors as complex vectors
   GenericRealMainTask(OptionManager* options, AbstractHilbertSpace* space, LanczosManager* lanczos, 
-		      AbstractHamiltonian* hamiltonian, char *subspaceStr, char *subspaceLegend,
+		      AbstractHamiltonian* hamiltonian, const char *subspaceStr, const char *subspaceLegend,
 		      double shift, char* outputFileName, bool firstRun=true, char* eigenvectorFileName=0, bool fakeComplex=false);
   
   // destructor

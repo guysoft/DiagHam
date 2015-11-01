@@ -9,7 +9,7 @@
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
-#include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"1
+#include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 

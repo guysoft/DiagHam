@@ -117,6 +117,7 @@ TensorProductStructure& CompositeTensorProductStructure::GetSubspaceTensorProduc
 CompositeTensorProductStructure operator * (CompositeTensorProductStructure& structure1, 
 					    CompositeTensorProductStructure& structure2)
 {
+  return CompositeTensorProductStructure();
 }
 
 // test if two tensor product structures are equivalent

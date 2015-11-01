@@ -791,13 +791,13 @@ void EvaluateInteractionFactors(AbstractFunctionBasis* Basis, FermionOnSphereMPS
 
   for (int m1 = 0; m1 <= MaxMomentum; ++m1)
     for (int m2 = 0; m2 < m1; ++m2)
-      if ((fabs(m1 + m2 - TwiceRefPValue) <= HoppingCutoff) && (fabs(m1 - m2 - TwiceRefRValue) <= HoppingCutoff))
+      if ((abs(m1 + m2 - TwiceRefPValue) <= HoppingCutoff) && (abs(m1 - m2 - TwiceRefRValue) <= HoppingCutoff))
         {
            for (int m3 = 0; m3 <= MaxMomentum; ++m3)
              {
 	       m4 = m1 + m2 - m3;
 	       if ((m4 >= 0) && (m4 <= MaxMomentum))
-                 if ((m3 > m4) && (fabs(m3 - m4 - TwiceRefRpValue) <= HoppingCutoff))
+                 if ((m3 > m4) && (abs(m3 - m4 - TwiceRefRpValue) <= HoppingCutoff))
 		      {
 		        TmpCoefficient[Pos] = (EvaluateInteractionCoefficient(Basis, m1, m2, m3, m4, MaxMomentum, X0, Y0, X, Y)
                                             -EvaluateInteractionCoefficient(Basis, m2, m1, m3, m4, MaxMomentum, X0, Y0, X, Y)
@@ -823,13 +823,13 @@ void EvaluateInteractionFactors(AbstractFunctionBasis* Basis, FermionOnSphereMPS
 
      for (int m1 = 0; m1 <= MaxMomentum; ++m1)
        for (int m2 = 0; m2 < m1; ++m2)
-        if ((fabs(m1 + m2 - TwiceRefPValue) <= HoppingCutoff) && (fabs(m1 - m2 - TwiceRefRValue) <= HoppingCutoff))
+        if ((abs(m1 + m2 - TwiceRefPValue) <= HoppingCutoff) && (abs(m1 - m2 - TwiceRefRValue) <= HoppingCutoff))
          {
             for (int m3 = 0; m3 <= MaxMomentum; ++m3)
               {
 	        m4 = m1 + m2 - m3;
 	        if ((m4 >= 0) && (m4 <= MaxMomentum))
-                  if ((m3 > m4) && (fabs(m3 - m4 - TwiceRefRpValue) <= HoppingCutoff))
+                  if ((m3 > m4) && (abs(m3 - m4 - TwiceRefRpValue) <= HoppingCutoff))
                     {
 		      if  (Norm(TmpCoefficient[Pos]) > MaxCoefficient)
 		        {

@@ -106,22 +106,26 @@ FullTensorProductStructure::FullTensorProductStructure(const FullTensorProductSt
 FullTensorProductStructure::~FullTensorProductStructure() 
 {
   if (this->NbrSpace != 0)
-    if ((*(this->GarbageFlag)) == 1)
-      {
-	delete[] this->Increment;
-	delete[] this->SpaceDimension;  
-	delete this->GarbageFlag;
-	if (this->Indices != 0)
-	  {
-	    for (int i = 0; i < this->NbrSpace; i++)
-	      delete[] this->Indices[i];
-	    delete[] this->Indices;
-	  }
-      }
-    else
-      {
-	(*(this->GarbageFlag))--;
-      }
+    {
+      if ((*(this->GarbageFlag)) == 1)
+	{
+	  delete[] this->Increment;
+	  delete[] this->SpaceDimension;  
+	  delete this->GarbageFlag;
+	  if (this->Indices != 0)
+	    {
+	      for (int i = 0; i < this->NbrSpace; i++)
+		{
+		  delete[] this->Indices[i];
+		}
+	      delete[] this->Indices;
+	    }
+	}
+      else
+	{
+	  (*(this->GarbageFlag))--;
+	}
+    }
 }
   
 // assignement (without duplicating datas)
@@ -133,22 +137,24 @@ FullTensorProductStructure& FullTensorProductStructure::operator = (const FullTe
 								    structure) 
 {
   if (this->NbrSpace != 0)
-    if ((*(this->GarbageFlag)) == 1)
-      {
-	delete[] this->Increment;
-	delete[] this->SpaceDimension;  
-	delete this->GarbageFlag;
-	if (this->Indices != 0)
-	  {
-	    for (int i = 0; i < this->NbrSpace; i++)
+    {
+      if ((*(this->GarbageFlag)) == 1)
+	{
+	  delete[] this->Increment;
+	  delete[] this->SpaceDimension;  
+	  delete this->GarbageFlag;
+	  if (this->Indices != 0)
+	    {
+	      for (int i = 0; i < this->NbrSpace; i++)
 	      delete[] this->Indices[i];
-	    delete[] this->Indices;
-	  }
-      }
-    else
-      {
-	(*(this->GarbageFlag))--;
-      }
+	      delete[] this->Indices;
+	    }
+	}
+      else
+	{
+	  (*(this->GarbageFlag))--;
+	}
+    }
   if (structure.NbrSpace == 0)
     {
       this->NbrSpace = 0;

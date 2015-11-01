@@ -94,16 +94,18 @@ TensorProductStructure::TensorProductStructure(const TensorProductStructure& str
 TensorProductStructure::~TensorProductStructure() 
 {
   if (this->NbrSpace != 0)
-    if ((*(this->GarbageFlag)) == 1)
-      {
-	delete[] this->Increment;
-	delete[] this->SpaceDimension;  
-	delete this->GarbageFlag;
-      }
-    else
-      {
-	(*(this->GarbageFlag))--;
-      }
+    {
+      if ((*(this->GarbageFlag)) == 1)
+	{
+	  delete[] this->Increment;
+	  delete[] this->SpaceDimension;  
+	  delete this->GarbageFlag;
+	}
+      else
+	{
+	  (*(this->GarbageFlag))--;
+	}
+    }
 }
   
 // assignement (without duplicating datas)
@@ -114,16 +116,18 @@ TensorProductStructure::~TensorProductStructure()
 TensorProductStructure& TensorProductStructure::operator = (const TensorProductStructure& structure) 
 {
   if (this->NbrSpace != 0)
-    if ((*(this->GarbageFlag)) == 1)
-      {
-	delete[] this->Increment;
-	delete[] this->SpaceDimension;  
-	delete this->GarbageFlag;
-      }
-    else
-      {
-	(*(this->GarbageFlag))--;
-      }
+    {
+      if ((*(this->GarbageFlag)) == 1)
+	{
+	  delete[] this->Increment;
+	  delete[] this->SpaceDimension;  
+	  delete this->GarbageFlag;
+	}
+      else
+	{
+	  (*(this->GarbageFlag))--;
+	}
+    }
   if (structure.NbrSpace == 0)
     {
       this->NbrSpace = 0;

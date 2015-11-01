@@ -332,8 +332,8 @@ bool FQHESphereMonomialsTimesSlaterProjectionOperation::ArchitectureDependentApp
   int Step = (int) this->NbrComponent / (this->NbrStage*architecture->GetNbrThreads());
   int TmpFirstComponent = this->FirstComponent;
   int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
-  char* OutputFileName = "temporary_projection_vector.vec";
-  char* LogFile = "projection.dat";
+  const char* OutputFileName = "temporary_projection_vector.vec";
+  const char* LogFile = "projection.dat";
   FQHESphereMonomialsTimesSlaterProjectionOperation** TmpOperations = new FQHESphereMonomialsTimesSlaterProjectionOperation* [architecture->GetNbrThreads()];
   for(int i = 0 ;i < architecture->GetNbrThreads() ;i++)
     {

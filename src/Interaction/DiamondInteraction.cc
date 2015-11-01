@@ -113,8 +113,8 @@ DiamondInteraction::~DiamondInteraction()
 
 DiamondInteraction& DiamondInteraction::operator = (const DiamondInteraction& interaction) 
 {
-  this->UpperCouplingConstant = this->UpperCouplingConstant;
-  this->LowerCouplingConstant = this->LowerCouplingConstant;
+  this->UpperCouplingConstant = interaction.UpperCouplingConstant;
+  this->LowerCouplingConstant = interaction.LowerCouplingConstant;
   this->LeftSpaceIndex = interaction.LeftSpaceIndex;
   this->RightSpaceIndex = interaction.RightSpaceIndex;
   this->Structure = interaction.Structure;

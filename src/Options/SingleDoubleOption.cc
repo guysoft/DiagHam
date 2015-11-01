@@ -91,27 +91,31 @@ int SingleDoubleOption::ReadOption(char** argumentValues, int nbrArgument, int a
 {
   char* Argument = argumentValues[argumentPosition];
   if (this->OptionCode == 0)
-    if (Argument[0] != '-')
-      {
-	if (sscanf (Argument, "%lf", &(this->Double)) != 1)
-	  {	    
-	    this->ErrorCode = SingleDoubleOption::NotAnDouble;
-	    return -1;
-	  }
-	if ((this->MinValueFlag == true) && (this->MinValue > this->Double))
-	  {
-	    this->ErrorCode = SingleDoubleOption::Lower;
-	    return -1;
-	  }
-	if ((this->MaxValueFlag == true) && (this->MaxValue < this->Double))
-	  {
-	    this->ErrorCode = SingleDoubleOption::Greater;
-	    return -1;
-	  }	  
-	return 1;
-      }
-    else
-      return 0;
+    {
+      if (Argument[0] != '-')
+	{
+	  if (sscanf (Argument, "%lf", &(this->Double)) != 1)
+	    {	    
+	      this->ErrorCode = SingleDoubleOption::NotAnDouble;
+	      return -1;
+	    }
+	  if ((this->MinValueFlag == true) && (this->MinValue > this->Double))
+	    {
+	      this->ErrorCode = SingleDoubleOption::Lower;
+	      return -1;
+	    }
+	  if ((this->MaxValueFlag == true) && (this->MaxValue < this->Double))
+	    {
+	      this->ErrorCode = SingleDoubleOption::Greater;
+	      return -1;
+	    }	  
+	  return 1;
+	}
+      else
+	{
+	  return 0;
+	}
+    }
 
   if (Argument[0] != '-')
     return 0;

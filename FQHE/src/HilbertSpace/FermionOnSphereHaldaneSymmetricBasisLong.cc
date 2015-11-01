@@ -182,10 +182,12 @@ FermionOnSphereHaldaneSymmetricBasisLong::FermionOnSphereHaldaneSymmetricBasisLo
 #endif
 	{
 	  if ((TmpKeepStateFlag >> j) & 0x1ul)
-	    if (this->StateDescription[TotalIndex] == this->GetCanonicalState(this->StateDescription[TotalIndex]))
-	      ++NewHilbertSpaceDimension;
-	    else
-	      this->KeepStateFlag[i] &= ~(0x1ul << j);
+	    {
+	      if (this->StateDescription[TotalIndex] == this->GetCanonicalState(this->StateDescription[TotalIndex]))
+		++NewHilbertSpaceDimension;
+	      else
+		this->KeepStateFlag[i] &= ~(0x1ul << j);
+	    }
 	  ++TotalIndex;
 	}
     }

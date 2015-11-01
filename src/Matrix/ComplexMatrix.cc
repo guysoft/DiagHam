@@ -1562,6 +1562,7 @@ bool ComplexMatrix::TestHermitian(double error)
 	  }
       }
   cout << "check done" << endl;
+  return true;
 }
 
 

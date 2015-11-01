@@ -1074,7 +1074,7 @@ void FermionOnSphereWithSpinSqueezedBasis::GenerateDescendingStates(int highestB
   int MaxSweepsUpUp = (this->NbrFermionsUp * (this->NbrFermionsUp - 1)) >> 1;
   int MaxSweepsDownDown = (this->NbrFermionsDown * (this->NbrFermionsDown - 1)) >> 1;
   int MaxSweepsUpDown = this->NbrFermionsUp * this->NbrFermionsDown;
-  int MaxSweeps = MaxSweepsUpUp + MaxSweepsDownDown + MaxSweepsUpDown << 1;
+  int MaxSweeps = MaxSweepsUpUp + MaxSweepsDownDown + (MaxSweepsUpDown << 1);
   // assign temporary memory avoiding overwriting in recursion
   unsigned long* TmpGeneratedStates2 = this->TmpGeneratedStates + (MaxSweeps * memory);
   int* TmpHighestBit = this->TmpGeneratedStatesHighestBit  + (MaxSweeps  * memory);
@@ -1090,7 +1090,8 @@ void FermionOnSphereWithSpinSqueezedBasis::GenerateDescendingStates(int highestB
   else
     {
       TmpMaxLz = highestBit-1;
-      while ((TmpMaxLz>0) && (referenceState & (1l<<TmpMaxLz) == 0)) TmpMaxLz-=2;
+      while ((TmpMaxLz>0) && ((referenceState & (1l<<TmpMaxLz)) == 0)) 
+	TmpMaxLz-=2;
       TmpMaxLz = (highestBit>>1) - 1;
     }
   TmpMaxLzUp = TmpMaxLz;
@@ -1422,13 +1423,15 @@ long FermionOnSphereWithSpinSqueezedBasis::RawGenerateStates(int nbrFermions, in
     return pos;
     
   if (nbrFermions == 1) 
-    if (lzMax >= totalLz)
-      {
-	this->StateDescription[pos] = 0x1ul << ((totalLz << 1) + totalSpin);
-	return (pos + 1l);
-      }
-    else
-      return pos;
+    {
+      if (lzMax >= totalLz)
+	{
+	  this->StateDescription[pos] = 0x1ul << ((totalLz << 1) + totalSpin);
+	  return (pos + 1l);
+	}
+      else
+	return pos;
+    }
 
   if ((lzMax == 0)  && (totalLz != 0))
     return pos;
@@ -1708,11 +1711,12 @@ long FermionOnSphereWithSpinSqueezedBasis::ShiftedEvaluateHilbertSpaceDimension(
     return 0l;
     
   if (nbrFermions == 1) 
-    if (lzMax >= totalLz)
-      return 1l;
-    else
-      return 0l;
-
+    {
+      if (lzMax >= totalLz)
+	return 1l;
+      else
+	return 0l;
+    }
   if ((lzMax == 0)  && (totalLz != 0))
     return 0l;
 

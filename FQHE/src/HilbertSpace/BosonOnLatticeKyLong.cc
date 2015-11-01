@@ -1469,7 +1469,7 @@ HermitianMatrix BosonOnLatticeKyLong::EvaluatePartialDensityMatrixParticlePartit
   
   if (nbrParticleSector == this->NbrBosons)
     {
-      if (kySector = this->Ky)
+      if (kySector == this->Ky)
 	{
 	  HermitianMatrix TmpDensityMatrix(1, true);
 	  TmpDensityMatrix(0, 0) = 1.0;

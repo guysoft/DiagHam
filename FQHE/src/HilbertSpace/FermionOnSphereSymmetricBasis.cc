@@ -502,10 +502,12 @@ int FermionOnSphereSymmetricBasis::AdAdAA (int index, int m1, int m2, int n1, in
     --NewLzMax;
   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
   if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != Signature)
-     if (Signature != 0)
-       coefficient *= M_SQRT2;
-     else
-       coefficient *= M_SQRT1_2;
+    {
+      if (Signature != 0)
+	coefficient *= M_SQRT2;
+      else
+	coefficient *= M_SQRT1_2;
+    }
   return TmpIndex;
 }
 
@@ -591,10 +593,12 @@ int FermionOnSphereSymmetricBasis::ProdAdProdA (int index, int* m, int* n, int n
     --NewLzMax;
   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
   if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != Signature)
-     if (Signature != 0)
-       coefficient *= M_SQRT2;
-     else
-       coefficient *= M_SQRT1_2;
+    {
+      if (Signature != 0)
+	coefficient *= M_SQRT2;
+      else
+	coefficient *= M_SQRT1_2;
+    }
   return TmpIndex;
 }
 
@@ -707,10 +711,12 @@ int FermionOnSphereSymmetricBasis::ProdAd (int* m, int nbrIndices, double& coeff
     --NewLzMax;
   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
   if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != this->ProdASignature)
-     if (this->ProdASignature != 0)
-       coefficient *= M_SQRT2;
-     else
-       coefficient *= M_SQRT1_2;
+    {
+      if (this->ProdASignature != 0)
+	coefficient *= M_SQRT2;
+      else
+	coefficient *= M_SQRT1_2;
+    }
   return TmpIndex;
 }
 
@@ -748,10 +754,12 @@ int FermionOnSphereSymmetricBasis::AdAd (int m1, int m2, double& coefficient)
     --NewLzMax;
   NewLzMax = this->FindStateIndex(TmpState, NewLzMax);
   if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != this->ProdASignature)
-    if (this->ProdASignature != 0)
-       coefficient *= M_SQRT2;
-     else
-       coefficient *= M_SQRT1_2;
+    {
+      if (this->ProdASignature != 0)
+	coefficient *= M_SQRT2;
+      else
+	coefficient *= M_SQRT1_2;
+    }
    return NewLzMax;
 }
 
@@ -823,10 +831,12 @@ int FermionOnSphereSymmetricBasis::AdA (int index, int m, int n, double& coeffic
     --NewLzMax;
   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
   if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != Signature)
-     if (Signature != 0)
-       coefficient *= M_SQRT2;
-     else
-       coefficient *= M_SQRT1_2;
+    {
+      if (Signature != 0)
+	coefficient *= M_SQRT2;
+      else
+	coefficient *= M_SQRT1_2;
+    }
   return TmpIndex;
 }
 

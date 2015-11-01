@@ -273,15 +273,15 @@ ostream& BosonOn4DSphere::PrintState (ostream& Str, int state)
 //   Str << hex << this->FermionBasis->StateDescription[state] << dec << " " <<  this->FermionBasis->StateLzMax[state] << "   ";
   Str << this->FermionBasis->StateDescription[state] <<"[";
   for (int index = 0; index <= this->TemporaryStateLzMax; ++index)
-  {
-   if (this->TemporaryState[index] > 0)
     {
-	for (int i = 0; i < this->TemporaryState[index]; ++i)
+      if (this->TemporaryState[index] > 0)
 	{
-	  Str << "(" << this->quantumNumberJ[index] << "," << 2*this->quantumNumberJz[index] - this->quantumNumberJ[index]  << "," << 2*this->quantumNumberKz[index] + this->quantumNumberJ[index] - this->NbrFluxQuanta << ")";
-	  }
+	  for (int i = 0; i < this->TemporaryState[index]; ++i)
+	    {
+	      Str << "(" << this->quantumNumberJ[index] << "," << 2*this->quantumNumberJz[index] - this->quantumNumberJ[index]  << "," << 2*this->quantumNumberKz[index] + this->quantumNumberJ[index] - this->NbrFluxQuanta << ")";
+	    }
 	}
-  }
+    }
   Str << "]";
   
 //    Str << "  "  << this->FermionBasis->FindStateIndex(this->FermionBasis->StateDescription[state], this->FermionBasis->StateLzMax[state]) << " = " << state << endl;

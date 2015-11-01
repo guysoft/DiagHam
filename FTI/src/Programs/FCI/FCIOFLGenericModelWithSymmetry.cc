@@ -168,7 +168,7 @@ int main(int argc, char** argv)
 	  Offset+=sprintf (FilePrefix+Offset, "_twobands");
 	  break;
 	default:
-	  Offset+=sprintf (FilePrefix+Offset, "_%dbands",Manager.GetInteger("nbr-bands"));
+	  Offset+=sprintf (FilePrefix+Offset, "_%ldbands",Manager.GetInteger("nbr-bands"));
 	  break;
 	}
       

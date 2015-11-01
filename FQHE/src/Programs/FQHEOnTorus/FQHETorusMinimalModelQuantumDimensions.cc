@@ -124,7 +124,7 @@ double SMatrixElement (long pValue, long qValue, long rTransformedField, long sT
 {
   long Tmp = rTransformedField * sField + sTransformedField * rField + 1;
   double SMatrixElement = 1.0;
-  if (Tmp & 1l != 0l)
+  if ((Tmp & 1l) != 0l)
     SMatrixElement = 1.0;
   SMatrixElement *= sqrt (8.0 / (pValue * qValue)) * sin ((M_PI * (pValue * rTransformedField * rField)) / (qValue)) * sin ((M_PI * (qValue * sTransformedField * sField)) / (pValue));
   return SMatrixElement;

@@ -261,21 +261,22 @@ bool BosonOn4DSphereLong::WriteHilbertSpace (char* fileName)
 
 ostream& BosonOn4DSphereLong::PrintState (ostream& Str, int state)
 {
-   this->FermionToBoson(this->FermionBasis->StateDescription[state], this->FermionBasis->StateLzMax[state], this->TemporaryState, this->TemporaryStateLzMax);
-   //cout << TemporaryStateLzMax << endl;
-//   Str << hex << this->FermionBasis->StateDescription[state] << dec << " " <<  this->FermionBasis->StateLzMax[state] << "   ";
+  this->FermionToBoson(this->FermionBasis->StateDescription[state], this->FermionBasis->StateLzMax[state], this->TemporaryState, this->TemporaryStateLzMax);
+  //cout << TemporaryStateLzMax << endl;
+  //   Str << hex << this->FermionBasis->StateDescription[state] << dec << " " <<  this->FermionBasis->StateLzMax[state] << "   ";
   Str <<"[";
   for (int index = 0; index <= this->TemporaryStateLzMax; ++index)
-  {
-   if (this->TemporaryState[index] > 0)
     {
-	for (int i = 0; i < this->TemporaryState[index]; ++i)
+      if (this->TemporaryState[index] > 0)
 	{
-	  Str << "(" << this->quantumNumberJ[index] << "," << 2*this->quantumNumberJz[index] - this->quantumNumberJ[index]  << "," << 2*this->quantumNumberKz[index] + this->quantumNumberJ[index] - this->NbrFluxQuanta << ")";
-	  }
+	  for (int i = 0; i < this->TemporaryState[index]; ++i)
+	    {
+	      Str << "(" << this->quantumNumberJ[index] << "," << 2*this->quantumNumberJz[index] - this->quantumNumberJ[index]  << "," << 2*this->quantumNumberKz[index] + this->quantumNumberJ[index] - this->NbrFluxQuanta << ")";
+	    }
 	}
-  }
+    }
   Str << "]";
+  return Str;
 }
 
 // generate all states corresponding to the constraints

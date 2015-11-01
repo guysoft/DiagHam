@@ -629,6 +629,7 @@ int FermionOnCylinderMPSWrapper::AdAdAA (int index, int m1, int m2, int n1, int 
 int FermionOnCylinderMPSWrapper::ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient)
 {
   cout<<"Unimplemented"<<endl;
+  return this->HilbertSpaceDimension;
 }
 
 // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
@@ -641,6 +642,7 @@ int FermionOnCylinderMPSWrapper::ProdAdProdA (int index, int* m, int* n, int nbr
 double FermionOnCylinderMPSWrapper::ProdA (int index, int* n, int nbrIndices)
 {
   cout<<"ProdA not implemented"<<endl;
+  return 0.0;
 }
 
 // apply a_n1 a_n2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next AdAd call
@@ -653,7 +655,7 @@ double FermionOnCylinderMPSWrapper::ProdA (int index, int* n, int nbrIndices)
 double FermionOnCylinderMPSWrapper::AA (int index, int n1, int n2)
 {
   cout<<"AA not implemented"<<endl;
-
+  return 0.0;
 }
 
 // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
@@ -666,7 +668,7 @@ double FermionOnCylinderMPSWrapper::AA (int index, int n1, int n2)
 int FermionOnCylinderMPSWrapper::ProdAd (int* m, int nbrIndices, double& coefficient)
 {
   cout<<"ProdAd not implemented"<<endl;
-
+  return this->HilbertSpaceDimension;
 }
 
 // apply a^+_m1 a^+_m2 operator to the state produced using AA method (without destroying it)
@@ -679,6 +681,7 @@ int FermionOnCylinderMPSWrapper::ProdAd (int* m, int nbrIndices, double& coeffic
 int FermionOnCylinderMPSWrapper::AdAd (int m1, int m2, double& coefficient)
 {
   cout<<"AdAd not implemented"<<endl;
+  return this->HilbertSpaceDimension;
 }
 
 // apply a^+_m a_m operator to a given state 

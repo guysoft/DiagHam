@@ -114,7 +114,7 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // centralCharge = value of the central charge
   // outputName = name of the theory
   // useRational = use arbitrary precision numbers for all the CFT calculations
-  FQHEMPSClustered2RMatrix(int pLevel, LongRational centralCharge, char* outputName, bool useRational=true);
+  FQHEMPSClustered2RMatrix(int pLevel, LongRational centralCharge, const char* outputName, bool useRational=true);
 
   // constructor 
   //
@@ -156,7 +156,7 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // angle = angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
   // fluxInsertion = flux insertion along the tau direction
   // architecture = architecture to use for precalculation
-  FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool bosonicVersion = false, bool useRational = true,
+  FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, const char* cftDirectory, bool bosonicVersion = false, bool useRational = true,
 			   bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0, 
 			   bool torusFlag = false, int nbrFluxQuanta = 0, double aspectRatio = 1.0, double angle = 0.5, double fluxInsertion = 0.0,
 			   AbstractArchitecture* architecture = 0);
@@ -176,7 +176,7 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // angle = angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
   // fluxInsertion = flux insertion along the tau direction
   // architecture = architecture to use for precalculation
-  FQHEMPSClustered2RMatrix(int pLevel, int nbrBMatrices, char* fileName, bool bosonicVersion = false, bool trimChargeIndices = false, bool cylinderFlag = false, 
+  FQHEMPSClustered2RMatrix(int pLevel, int nbrBMatrices, const char* fileName, bool bosonicVersion = false, bool trimChargeIndices = false, bool cylinderFlag = false, 
 			   double kappa = 1.0 ,
 			   bool torusFlag = false, int nbrFluxQuanta = 0, double aspectRatio = 1.0, double angle = 0.5, double fluxInsertion = 0.0,
 			   AbstractArchitecture* architecture = 0);
@@ -195,7 +195,7 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // aspectRatio = aspect ratio of the torus(norm of tau)
   // angle = angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
   // fluxInsertion = flux insertion along the tau direction
-  FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, char* fileName, bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0, 
+  FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, const char* fileName, bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0, 
 			   bool torusFlag = false, int nbrFluxQuanta = 0, double aspectRatio = 1.0, double angle = 0.5, double fluxInsertion = 0.0);
 
 
@@ -223,7 +223,7 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   //
   // cftDirectory = an optional path to the directory where all the CFT matrices are stored
   // architecture = architecture to use for precalculation
-  virtual void CreateBMatrices (char* cftDirectory, AbstractArchitecture* architecture);
+  virtual void CreateBMatrices (const char* cftDirectory, AbstractArchitecture* architecture);
 
   // get the number of CFT sectors invloved on the MPS
   //
@@ -498,7 +498,7 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // orthogonalBasisRight = right transformation matrices related to the complete orthogonal basis 
   // rationalMultiplicityFactor = array that contains the multiplicity factors
   // multiplicityFactor = double accuracy version of rationalMultiplicityFactor
-  void ComputeFullScalarProductMatrix(char* cftDirectory, char* scalarProductFileName, AbstractArchitecture* architecture,
+  void ComputeFullScalarProductMatrix(const char* cftDirectory, char* scalarProductFileName, AbstractArchitecture* architecture,
 				      LongRationalMatrix* rationalScalarProduct, RealSymmetricMatrix* scalarProduct,
 				      int pLevel, BosonOnDiskShort** u1BosonBasis, 
 				      LongRational& centralCharge12, double centralCharge12Numerical, 
@@ -534,7 +534,7 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // weightRightStateNumerical = double accuracy version of weightRightState
   // weightPrimaryFieldMatrixElement = weight of primary field whose matrix elements are computed
   // weightPrimaryFieldMatrixElementNumerical = double accuracy version of weightPrimaryFieldMatrixElement
-  void ComputeFullMatrixElements(char* cftDirectory, char* matrixElementsFileName, AbstractArchitecture* architecture,
+  void ComputeFullMatrixElements(const char* cftDirectory, char* matrixElementsFileName, AbstractArchitecture* architecture,
 				 LongRationalMatrix** rationalMatrixElements, RealMatrix** matrixElements,
 				 int pLevelLeft, int pLevelRight, BosonOnDiskShort** u1BosonBasis, 
 				 LongRational& centralCharge12, double centralCharge12Numerical, 
@@ -554,6 +554,7 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
 				 double globalFactor);
 
 public:
+
     // compute the matrix elements for a primary field
     //
     // cftDirectory = an optional path to the directory where all the CFT matrices are stored
@@ -565,8 +566,8 @@ public:
     // weights = weight of each primary field in the basis states
     // fusion = OPE structure coefficients
     // writeIntermediate = whether to output rational scalar products and matrix elements
-    void ComputeMatrixElements(char* cftDirectory, AbstractArchitecture* architecture,
-            char* fieldName, LongRational fieldWeight, int nbrSectors, char** sectorNames, LongRational* weights, RealMatrix fusion, bool writeIntermediate = false);
+    void ComputeMatrixElements(const char* cftDirectory, AbstractArchitecture* architecture,
+			       const char* fieldName, LongRational fieldWeight, int nbrSectors, char** sectorNames, LongRational* weights, RealMatrix fusion, bool writeIntermediate = false);
 };
 
   

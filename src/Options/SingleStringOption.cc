@@ -85,16 +85,20 @@ int SingleStringOption::ReadOption(char** argumentValues, int nbrArgument, int a
 {
   char* Argument = argumentValues[argumentPosition];
   if (this->OptionCode == 0)
-    if (Argument[0] != '-')
-      {
-	if (this->String != 0)
-	  delete[] this->String;
-	this->String = new char [strlen (Argument) + 1];
-	strcpy (this->String, Argument);
-	return 1;
-      }
-    else
-      return 0;
+    {
+      if (Argument[0] != '-')
+	{
+	  if (this->String != 0)
+	    delete[] this->String;
+	  this->String = new char [strlen (Argument) + 1];
+	  strcpy (this->String, Argument);
+	  return 1;
+	}
+      else
+	{
+	  return 0;
+	}
+    }
   if (Argument[0] != '-')
     return 0;
   if ((Argument[1] != this->OptionCode) && (strncmp(&(Argument[1]), this->OptionName, 

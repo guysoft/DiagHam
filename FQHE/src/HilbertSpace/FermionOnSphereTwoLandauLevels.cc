@@ -3011,82 +3011,82 @@ void FermionOnSphereTwoLandauLevels::SecondLandauLevelSlaterTimesSlaterProjectio
   int LzMax2 = finalSpace->LzMax + 4 - this->LzMax;
   double Coef = 1.0;
   long PowerIn1;
-	long PowerIn2;
+  long PowerIn2;
   long PowerOut;
   long Numerator;
   long AlphaIn = this->LzMax * (this->LzMax-1);
   
-	long FinalDenominateur = (finalSpace->LzMax+4) * (finalSpace->LzMax+3);
-	long InitialDenominateur = LzMax2 * this->LzMax;
-	long BetaDenominateur = InitialDenominateur * (finalSpace->LzMax+4);
-	
-	
-	long TmpLzMaxUp = this->LzMaxUp;
+  long FinalDenominator = (finalSpace->LzMax+4) * (finalSpace->LzMax+3);
+  long InitialDenominator = LzMax2 * this->LzMax;
+  long BetaDenominator = InitialDenominator * (finalSpace->LzMax+4);
+  
+  
+  long TmpLzMaxUp = this->LzMaxUp;
   long TmpFinalLzMaxUp = 2l + finalSpace->LzMax;
   long InverseFactor = TmpFinalLzMaxUp * TmpLzMaxUp;
-	
-	
+  
+  
   for (int i = 0; (i < this->NbrFermions) && (Coef != 0.0); i++)
+    {
+      State[i] = (slater1[i]>>1) + (slater2[i]>>1);
+      
+      PowerIn1 = (slater1[i]>>1);
+      PowerIn2 = (slater2[i]>>1);
+      PowerOut = State[i];
+      if((slater1[i] & 0x1ul) != 0ul)
 	{
-    State[i] = (slater1[i]>>1) + (slater2[i]>>1);
-
-		PowerIn1 = (slater1[i]>>1);
-		PowerIn2 = (slater2[i]>>1);
-		PowerOut = State[i];
-		if(slater1[i] & 0x01 != 0)
+	  if((slater2[i] & 0x1ul) != 0ul)
+	    {
+	      long Beta = PowerIn1 * (LzMax2) * (finalSpace->LzMax + 0x4l) + PowerIn2 * (this->LzMax)  * (finalSpace->LzMax + 0x4l) - 0x2ul * PowerOut * (LzMax2) * (this->LzMax);
+	      Numerator = PowerIn1 * PowerIn2 * FinalDenominator * BetaDenominator * (finalSpace->LzMax + 2) -  (PowerOut-0x1ul)* PowerOut * InitialDenominator*BetaDenominator * (finalSpace->LzMax + 2) + Beta * (PowerOut-0x1ul) * FinalDenominator*InitialDenominator;
+	      if (Numerator == 0x0l)
+		Coef = 0.0;
+	      else
+		Coef *= ((double)Numerator/((double) FinalDenominator*InitialDenominator*(finalSpace->LzMax + 2)*BetaDenominator));
+	      
+	    }
+	  else
+	    {
+	      
+	      Numerator = -(PowerIn1 * (2l + finalSpace->LzMax)) + ((PowerOut - 1) * this->LzMaxUp);
+	      if (Numerator == 0l)
+		Coef = 0.0;
+	      else
 		{
-			if(slater2[i] & 0x01 != 0)
-			{
-				long Beta = PowerIn1 * (LzMax2) * (finalSpace->LzMax + 0x4l) + PowerIn2 * (this->LzMax)  * (finalSpace->LzMax + 0x4l) - 0x2ul * PowerOut * (LzMax2) * (this->LzMax);
-				Numerator = PowerIn1 * PowerIn2 * FinalDenominateur * BetaDenominateur * (finalSpace->LzMax + 2) -  (PowerOut-0x1ul)* PowerOut * InitialDenominateur*BetaDenominateur * (finalSpace->LzMax + 2) + Beta * (PowerOut-0x1ul) * FinalDenominateur*InitialDenominateur;
-				if(Numerator == 0x0l)
-					Coef = 0.0;
-				else
-					Coef *= ((double)Numerator/((double) FinalDenominateur*InitialDenominateur*(finalSpace->LzMax + 2)*BetaDenominateur));
-				
-			}
-			else
-			{
-				
-			Numerator = -(PowerIn1 * (2l + finalSpace->LzMax)) + ((PowerOut - 1) * this->LzMaxUp);
-      if (Numerator == 0l)
-				Coef = 0.0;
-      else
-			{
-				Coef *= ((double) Numerator);
-				Coef /= ((double) (2l + finalSpace->LzMax)* this->LzMaxUp);
-			}
-			}
+		  Coef *= ((double) Numerator);
+		  Coef /= ((double) (2l + finalSpace->LzMax)* this->LzMaxUp);
 		}
-		else
+	    }
+	}
+      else
+	{
+	  if ((slater2[i] & 0x1ul) != 0ul)
+	    {
+	      Numerator = -(PowerIn2 * (2l + finalSpace->LzMax)) + ((PowerOut - 1) * LzMax2);
+	      if (Numerator == 0l)
+		Coef = 0.0;
+	      else
 		{
-			if(slater2[i] & 0x01 != 0)
-				{
-			Numerator = -(PowerIn2 * (2l + finalSpace->LzMax)) + ((PowerOut - 1) * LzMax2);
-      if (Numerator == 0l)
-				Coef = 0.0;
-      else
-			{
-				Coef *= ((double) Numerator);
-				Coef /= ((double) (2l + finalSpace->LzMax)* LzMax2);
-			}
-			}
+		  Coef *= ((double) Numerator);
+		  Coef /= ((double) (2l + finalSpace->LzMax)* LzMax2);
 		}
-		
-		}
-	
+	    }
+	}
+      
+    }
+  
   unsigned long Mask=0ul;
   unsigned long Sign = 0ul;
   if(Coef != 0.0)
     {
-			
+      
       for (int i = 0; (i < this->NbrFermions) ; i++)
 	{
 	  State[i] -= 2;
 	}
-	for (int i = 0; (i < this->NbrFermions) ; i++)
-		
-      InsertionResult = sortingMap.insert (pair<unsigned long,double> (finalSpace->ConvertFromMonomial(State), Coef));
+      for (int i = 0; (i < this->NbrFermions) ; i++)
+	
+	InsertionResult = sortingMap.insert (pair<unsigned long,double> (finalSpace->ConvertFromMonomial(State), Coef));
       if (InsertionResult.second == false)
 	{
 	  InsertionResult.first->second += Coef;
@@ -3095,55 +3095,55 @@ void FermionOnSphereTwoLandauLevels::SecondLandauLevelSlaterTimesSlaterProjectio
   while (std::prev_permutation(slater2, slater2 + this->NbrFermions))
     {
       Coef = 1.0;
-    for (int i = 0; (i < this->NbrFermions) && (Coef != 0.0); i++)
+      for (int i = 0; (i < this->NbrFermions) && (Coef != 0.0); i++)
 	{
-    State[i] = (slater1[i]>>1) + (slater2[i]>>1);
-		PowerIn1 = (slater1[i]>>1);
-		PowerIn2 = (slater2[i]>>1);
-		PowerOut = State[i];
-		
-		if(slater1[i] & 0x01 != 0)
+	  State[i] = (slater1[i]>>1) + (slater2[i]>>1);
+	  PowerIn1 = (slater1[i]>>1);
+	  PowerIn2 = (slater2[i]>>1);
+	  PowerOut = State[i];
+	  
+	  if ((slater1[i] & 0x1ul) != 0ul)
+	    {
+	      if ((slater2[i] & 0x1ul) != 0ul)
 		{
-			if(slater2[i] & 0x01 != 0)
-			{
-				long Beta = PowerIn1 * (LzMax2) * (finalSpace->LzMax + 4) + PowerIn2 * (this->LzMax)  * (finalSpace->LzMax + 4) - 2 * PowerOut * (LzMax2) * (this->LzMax);
-					Numerator = PowerIn1 * PowerIn2 * FinalDenominateur * BetaDenominateur * (finalSpace->LzMax + 2) -  (PowerOut-0x1ul)* PowerOut * InitialDenominateur*BetaDenominateur * (finalSpace->LzMax + 2) + Beta * (PowerOut-0x1ul) * FinalDenominateur*InitialDenominateur;
+		  long Beta = PowerIn1 * (LzMax2) * (finalSpace->LzMax + 4) + PowerIn2 * (this->LzMax)  * (finalSpace->LzMax + 4) - 2 * PowerOut * (LzMax2) * (this->LzMax);
+					Numerator = PowerIn1 * PowerIn2 * FinalDenominator * BetaDenominator * (finalSpace->LzMax + 2) -  (PowerOut-0x1ul)* PowerOut * InitialDenominator*BetaDenominator * (finalSpace->LzMax + 2) + Beta * (PowerOut-0x1ul) * FinalDenominator*InitialDenominator;
 					if(Numerator == 0x0l)
-						Coef = 0.0;
+					  Coef = 0.0;
 					else
-						Coef *= ((double)Numerator/((double) FinalDenominateur*InitialDenominateur*(finalSpace->LzMax + 2)*BetaDenominateur));
-				
-			}
-			else
-			{
-				
-			Numerator = -(PowerIn1 * (2l + finalSpace->LzMax)) + ((PowerOut - 1) * this->LzMaxUp);
-      if (Numerator == 0l)
-				Coef = 0.0;
-      else
-			{
-				Coef *= ((double) Numerator);
-				Coef /= ((double) (2l + finalSpace->LzMax)* this->LzMaxUp);
-			}
-			}
+					  Coef *= ((double)Numerator/((double) FinalDenominator*InitialDenominator*(finalSpace->LzMax + 2)*BetaDenominator));
+					
 		}
-		else
+	      else
 		{
-			if(slater2[i] & 0x01 != 0)
-				{
-			Numerator = -(PowerIn2 * (2l + finalSpace->LzMax)) + ((PowerOut - 1) * LzMax2);
-      if (Numerator == 0l)
-				Coef = 0.0;
-      else
-			{
-				Coef *= ((double) Numerator);
-				Coef /= ((double) (2l + finalSpace->LzMax)* LzMax2);
-			}
-			}
+		  
+		  Numerator = -(PowerIn1 * (2l + finalSpace->LzMax)) + ((PowerOut - 1) * this->LzMaxUp);
+		  if (Numerator == 0l)
+		    Coef = 0.0;
+		  else
+		    {
+		      Coef *= ((double) Numerator);
+		      Coef /= ((double) (2l + finalSpace->LzMax)* this->LzMaxUp);
+		    }
 		}
-		
+	    }
+	  else
+	    {
+	      if ((slater2[i] & 0x1ul) != 0ul)
+		{
+		  Numerator = -(PowerIn2 * (2l + finalSpace->LzMax)) + ((PowerOut - 1) * LzMax2);
+		  if (Numerator == 0l)
+		    Coef = 0.0;
+		  else
+		    {
+		      Coef *= ((double) Numerator);
+		      Coef /= ((double) (2l + finalSpace->LzMax)* LzMax2);
+		    }
 		}
-		
+	    }
+	  
+	}
+      
       if( Coef != 0.0 )
 	{
 	  TmpState = 0ul;

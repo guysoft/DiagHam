@@ -125,7 +125,7 @@ class AbstractOption
   // str = reference on output stream to use
   // programName = string containing the program name
   // return value = true if proceeding succeded
-  friend void DisplayHelp (List<AbstractOption*>& option, ostream& str, char* programName);
+  friend void DisplayHelp (List<AbstractOption*>& option, ostream& str, const char* programName);
 
 };
 

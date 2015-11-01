@@ -84,30 +84,34 @@ int MultipleStringOption::ReadOption(char** argumentValues, int nbrArgument, int
   int StringsRead=0;
   int ArgumentPos=argumentPosition;
   if (this->OptionCode == 0)
-    if (Argument[0] != '-')
-      {
-	TmpStrings[StringsRead] = new char [strlen (Argument) + 1];
-	strcpy (TmpStrings[StringsRead], Argument);
-	++ArgumentPos;
-	++StringsRead;
-	while ((ArgumentPos<nbrArgument)&&(argumentValues[ArgumentPos][0] != '-'))
-	  {
-	    TmpStrings[StringsRead] = new char [strlen (argumentValues[ArgumentPos]) + 1];
-	    strcpy (TmpStrings[StringsRead], argumentValues[ArgumentPos]);
-	    ++ArgumentPos;
-	    ++StringsRead;
-	  }
-	char **TmpStrings2=new char*[this->NbrStrings+StringsRead];
-	for (int i=0; i<NbrStrings; ++i)
-	  TmpStrings2[i]=Strings[i];
-	if (this->NbrStrings>0) delete [] this->Strings;
-	this->Strings=TmpStrings2;
-	for (int i=0; i<StringsRead; ++i,this->NbrStrings++)
-	  this->Strings[NbrStrings]=TmpStrings[i];
-	return StringsRead;
-      }
-    else
-      return 0;
+    {
+      if (Argument[0] != '-')
+	{
+	  TmpStrings[StringsRead] = new char [strlen (Argument) + 1];
+	  strcpy (TmpStrings[StringsRead], Argument);
+	  ++ArgumentPos;
+	  ++StringsRead;
+	  while ((ArgumentPos<nbrArgument)&&(argumentValues[ArgumentPos][0] != '-'))
+	    {
+	      TmpStrings[StringsRead] = new char [strlen (argumentValues[ArgumentPos]) + 1];
+	      strcpy (TmpStrings[StringsRead], argumentValues[ArgumentPos]);
+	      ++ArgumentPos;
+	      ++StringsRead;
+	    }
+	  char **TmpStrings2=new char*[this->NbrStrings+StringsRead];
+	  for (int i=0; i<NbrStrings; ++i)
+	    TmpStrings2[i]=Strings[i];
+	  if (this->NbrStrings>0) delete [] this->Strings;
+	  this->Strings=TmpStrings2;
+	  for (int i=0; i<StringsRead; ++i,this->NbrStrings++)
+	    this->Strings[NbrStrings]=TmpStrings[i];
+	  return StringsRead;
+	}
+      else
+	{
+	  return 0;
+	}
+    }
   if (Argument[0] != '-')
     return 0;
   if ((Argument[1] != this->OptionCode) && (strncmp(&(Argument[1]), this->OptionName, 

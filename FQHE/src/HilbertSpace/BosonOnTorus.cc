@@ -369,10 +369,12 @@ AbstractHilbertSpace* BosonOnTorus::ExtractSubspace (AbstractQuantumNumber& q,
   if (q.GetQuantumNumberType() != AbstractQuantumNumber::PeriodicMomentum)
     return 0;
   if (this->MomentumConstraintFlag == true)
-    if (this->MomentumConstraint == ((PeriodicMomentumQuantumNumber&) q).GetMomentum())
-      return this;
-    else 
-      return 0;
+    {
+      if (this->MomentumConstraint == ((PeriodicMomentumQuantumNumber&) q).GetMomentum())
+	return this;
+      else 
+	return 0;
+    }
   int Momentum = ((PeriodicMomentumQuantumNumber&) q).GetMomentum();
   int* TmpConvArray = new int [this->HilbertSpaceDimension];
   int SubspaceHilbertSpaceDimension = 0;

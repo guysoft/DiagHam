@@ -53,6 +53,12 @@
 
 double dsqrarg;
 #define DSQR(a) ((dsqrarg=(a)) == 0.0 ? 0.0 : dsqrarg*dsqrarg)
+double dsqrarg1;
+#define DSQR1(a) ((dsqrarg1=(a)) == 0.0 ? 0.0 : dsqrarg1*dsqrarg1)
+double dsqrarg2;
+#define DSQR2(a) ((dsqrarg2=(a)) == 0.0 ? 0.0 : dsqrarg2*dsqrarg2)
+double dsqrarg3;
+#define DSQR3(a) ((dsqrarg3=(a)) == 0.0 ? 0.0 : dsqrarg3*dsqrarg3)
 
 using std::ios;
 using std::cout;
@@ -173,19 +179,23 @@ int main(int argc, char** argv)
       }
   cout << "N=" << NbrParticles << "  LzMax=" << LzMax << "  LzTotal=" << LzTotal << "  FermionFlag="<< FermionFlag <<endl;
   if (Manager.GetString("statistics") != 0)
-    if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
-      {
-	FermionFlag = true;
-      }
-    else
-      if ((strcmp ("bosons", Manager.GetString("statistics")) == 0))
+    {
+      if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
 	{
-	  FermionFlag = false;
+	  FermionFlag = true;
 	}
       else
 	{
-	  cout << Manager.GetString("statistics") << " is an undefined statistics" << endl;
+	  if ((strcmp ("bosons", Manager.GetString("statistics")) == 0))
+	    {
+	      FermionFlag = false;
+	    }
+	  else
+	    {
+	      cout << Manager.GetString("statistics") << " is an undefined statistics" << endl;
+	    }
 	}
+    }
 
   if (NbrParticles==0)
     {
@@ -245,16 +255,17 @@ int main(int argc, char** argv)
   if (Manager.GetInteger("history-mode")==2)
     {
       if (Manager.GetString("exact-state") != 0)
-	if (State.ReadVector (Manager.GetString("exact-state")))
-	  {
-	    cout << "Using exact state to check eventual outliers" << endl;
-	  }
-	else
-	  {
-	    cout << "can't open vector file " << Manager.GetString("exact-state") << endl;
-	    return -1;      
-	  }
-      
+	{
+	  if (State.ReadVector (Manager.GetString("exact-state")))
+	    {
+	      cout << "Using exact state to check eventual outliers" << endl;
+	    }
+	  else
+	    {
+	      cout << "can't open vector file " << Manager.GetString("exact-state") << endl;
+	      return -1;      
+	    }
+	}      
     }
   
   Abstract1DComplexFunction* TestWaveFunction = WaveFunctionManager.GetWaveFunction();
@@ -777,7 +788,7 @@ int main(int argc, char** argv)
 		       << "# step overlap.Re overlap.Im overlap2 error error2" << endl;
       for (int i = 0; i < NbrRecords; ++i)
 	OverlapRecordFile << i << " " << RecordedOverlap[i].Re << " " << RecordedOverlap[i].Im << " " << SqrNorm(RecordedOverlap[i])
-			  << " " << RecordedOverlapError[i] << " " <<  DSQR(RecordedOverlapError[i]) << endl;
+			  << " " << RecordedOverlapError[i] << " " <<  DSQR1(RecordedOverlapError[i]) << endl;
       OverlapRecordFile.close();
     }
   delete Particles;
@@ -795,7 +806,7 @@ double OverlapError(ComplexObservable &ScalarProduct, RealObservable &NormObs)
 {
   double norm = NormObs.Average();
   double prod = Norm(ScalarProduct.Average());
-  return sqrt( DSQR(ScalarProduct.ErrorEstimate())/norm + DSQR(prod*NormObs.ErrorEstimate()/2.0/norm)/norm);
+  return sqrt( DSQR1(ScalarProduct.ErrorEstimate())/norm + DSQR2(prod*NormObs.ErrorEstimate()/2.0/norm)/norm);
 }
 
 Complex OverlapValue(WeightedComplexObservable &ScalarProduct, WeightedRealObservable &NormObs1, WeightedRealObservable &NormObs2)
@@ -811,7 +822,7 @@ double OverlapError(WeightedComplexObservable &ScalarProduct, WeightedRealObserv
   double norm2 = NormObs2.Average();
   double norm = sqrt(norm1*norm2);
   double prod = Norm(ScalarProduct.Average());
-  return sqrt( DSQR(ScalarProduct.ErrorEstimate()/norm) + DSQR(prod*NormObs1.ErrorEstimate()*NormObs2.Average()/2.0/norm/norm/norm) + DSQR(prod*NormObs2.ErrorEstimate()*NormObs1.Average()/2.0/norm/norm/norm));
+  return sqrt( DSQR1(ScalarProduct.ErrorEstimate()/norm) + DSQR2(prod*NormObs1.ErrorEstimate()*NormObs2.Average()/2.0/norm/norm/norm) + DSQR3(prod*NormObs2.ErrorEstimate()*NormObs1.Average()/2.0/norm/norm/norm));
 }
 
 

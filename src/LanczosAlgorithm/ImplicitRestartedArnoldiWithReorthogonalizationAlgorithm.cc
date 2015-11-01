@@ -92,7 +92,7 @@ ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm::ImplicitRestartedArnol
 {
   this->Index = algorithm.Index;
   this->NbrEigenvectors = algorithm.NbrEigenvectors;
-  this->NbrIteration = this->NbrIteration;
+  this->NbrIteration = algorithm.NbrIteration;
   this->Hamiltonian = algorithm.Hamiltonian;
   this->LanczosVectors = algorithm.LanczosVectors;
   this->TridiagonalizedMatrix = algorithm.TridiagonalizedMatrix;

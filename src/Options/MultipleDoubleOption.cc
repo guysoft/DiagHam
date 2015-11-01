@@ -100,16 +100,20 @@ int MultipleDoubleOption::ReadOption(char** argumentValues, int nbrArgument, int
   int val;
   char *String;
   if (this->OptionCode == 0)
-    if (Argument[0] != '-')
-      {
-	String = new char [strlen (Argument) + 1];
-	strcpy (String, Argument);
-	val=this->AnalyzeString(String);
-	if (val!=0) return val;
-	return 1;
-      }
-    else
-      return 0;
+    {
+      if (Argument[0] != '-')
+	{
+	  String = new char [strlen (Argument) + 1];
+	  strcpy (String, Argument);
+	  val=this->AnalyzeString(String);
+	  if (val!=0) return val;
+	  return 1;
+	}
+      else
+	{
+	  return 0;
+	}
+    }
   if (Argument[0] != '-')
     return 0;
   if ((Argument[1] != this->OptionCode) && (strncmp(&(Argument[1]), this->OptionName, 

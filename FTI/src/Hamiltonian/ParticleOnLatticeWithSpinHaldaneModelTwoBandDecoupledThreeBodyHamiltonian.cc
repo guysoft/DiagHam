@@ -904,7 +904,7 @@ void ParticleOnLatticeWithSpinHaldaneModelTwoBandDecoupledThreeBodyHamiltonian::
 	    }
 	}
     }
-#endif DEBUG_POLSHMTBDTBH
+#endif
   delete [] OneBodyBasis[0];
   delete [] OneBodyBasis[1];
   delete [] OneBodyBasis;

@@ -125,4 +125,5 @@ bool VectorTensorMultiplicationCoreOperation::RawApplyOperation()
 							     this->ComplexVectorSource, 
 							     this->FirstComponent, this->NbrComponent);
     }
+  return true;
 }

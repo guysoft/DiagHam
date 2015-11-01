@@ -267,13 +267,13 @@ void ParticleOnCylinderDensityDensity::EvaluateInteractionFactors()
 
          for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
 	   for (int m2 = 0; m2 < m1; ++m2)
-             if ((fabs(m1 + m2 - TwiceRefPValue) <= this->HoppingCutoff) && (fabs(m1 - m2 - TwiceRefRValue) <= this->HoppingCutoff))
+             if ((abs(m1 + m2 - TwiceRefPValue) <= this->HoppingCutoff) && (abs(m1 - m2 - TwiceRefRValue) <= this->HoppingCutoff))
               {
    	       for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
 	        {
 	          m4 = m1 + m2 - m3;
 	          if ((m4 >= 0) && (m4 <= this->MaxMomentum))
-                    if ((m3 > m4) && (fabs(m3 - m4 - TwiceRefRpValue) <= this->HoppingCutoff))
+                    if ((m3 > m4) && (abs(m3 - m4 - TwiceRefRpValue) <= this->HoppingCutoff))
 		      {
 		        TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
                                             -this->EvaluateInteractionCoefficient(m2, m1, m3, m4)
@@ -301,13 +301,13 @@ void ParticleOnCylinderDensityDensity::EvaluateInteractionFactors()
 
          for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
 	   for (int m2 = 0; m2 < m1; ++m2)
-             if ((fabs(m1 + m2 - TwiceRefPValue) <= this->HoppingCutoff) && (fabs(m1 - m2 - TwiceRefRValue) <= this->HoppingCutoff))
+             if ((abs(m1 + m2 - TwiceRefPValue) <= this->HoppingCutoff) && (abs(m1 - m2 - TwiceRefRValue) <= this->HoppingCutoff))
               {
    	       for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
 	        {
 	          m4 = m1 + m2 - m3;
 	          if ((m4 >= 0) && (m4 <= this->MaxMomentum))
-                    if ((m3 > m4) && (fabs(m3 - m4 - TwiceRefRpValue) <= this->HoppingCutoff))
+                    if ((m3 > m4) && (abs(m3 - m4 - TwiceRefRpValue) <= this->HoppingCutoff))
 		      {
 		         if  (Norm(TmpCoefficient[Pos]) > MaxCoefficient)
 		           {

@@ -284,7 +284,7 @@ int main(int argc, char** argv)
   if ((Manager.GetBoolean("decoupled") == true) && (Manager.GetBoolean("fixed-sz") == true))
     {
       char* TmpExtention = new char [512];
-      sprintf (TmpExtention, "_sz_%d.dat", Manager.GetInteger("sz-value"));
+      sprintf (TmpExtention, "_sz_%ld.dat", Manager.GetInteger("sz-value"));
       char* TmpEigenvalueOutputFile = EigenvalueOutputFile;
       EigenvalueOutputFile = ReplaceExtensionToFileName(TmpEigenvalueOutputFile, ".dat", TmpExtention);
     }

@@ -89,7 +89,7 @@ int main(int argc, char** argv)
     }
   else
     {
-      sprintf (OutputFileName, "spin_%d_2_%aklt_n_%d", SpinValue, BoundaryName, NbrSpins);
+      sprintf (OutputFileName, "spin_%d_2_%saklt_n_%d", SpinValue, BoundaryName, NbrSpins);
       sprintf (CommentLine, " %s AKLT spin %d/2 chain with %d sites \n# 2Sz ", BoundaryName, SpinValue, NbrSpins);
     }
   char* FullOutputFileName = new char [strlen(OutputFileName)+ 16];

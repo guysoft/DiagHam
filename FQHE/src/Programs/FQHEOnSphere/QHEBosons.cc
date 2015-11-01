@@ -55,8 +55,8 @@ int main(int argc, char** argv)
     L = atoi (argv[2]);*/
 /*  if (argc >= 3)
     LzTotal = atoi (argv[3]);*/
-  char* OutputNameLz = "bosons_n_9_lz.dat";
-  char* OutputNameL = "bosons_l.dat";
+  const char* OutputNameLz = "bosons_n_9_lz.dat";
+  const char* OutputNameL = "bosons_l.dat";
 /*  if (argc >= 4)
     OutputName = argv[4];*/
   ofstream File;

@@ -340,10 +340,12 @@ int main(int argc, char** argv)
       GrossPitaevskiiOnLatticeState MeanFieldState(NbrSites, Manager.GetString("potential-file"), Manager.GetString("interaction-file"), Lattice, InitialParameters, RandomNumberGenerator);
       MeanFieldState.SetChemicalPotential(ChemicalPotential);
       if (InitialParameters==NULL)
-	if ((Uniform)&&(i==0))
-	  MeanFieldState.SetToUniformState();
-	else	  
-	  MeanFieldState.SetToRandomPhase(1.0,Manager.GetBoolean("random-amplitude"));
+	{
+	  if ((Uniform)&&(i==0))
+	    MeanFieldState.SetToUniformState();
+	  else	  
+	    MeanFieldState.SetToRandomPhase(1.0,Manager.GetBoolean("random-amplitude"));
+	}
       int MaxEval = 2*NbrSites*Manager.GetInteger("nbr-iter");
       double Energy;
       if (Manager.GetBoolean("gradient"))

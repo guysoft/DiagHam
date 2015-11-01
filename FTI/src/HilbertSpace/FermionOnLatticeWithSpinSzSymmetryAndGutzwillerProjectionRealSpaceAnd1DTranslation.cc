@@ -408,7 +408,7 @@ AbstractHilbertSpace* FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionR
 
 long FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd1DTranslation::RawGenerateStates(int nbrFermions, int currentSite, long pos)
 {
-  this->RawGenerateStatesWithHoleCounting(nbrFermions, currentSite, currentSite - nbrFermions + 1, pos);
+  return this->RawGenerateStatesWithHoleCounting(nbrFermions, currentSite, currentSite - nbrFermions + 1, pos);
 }
 
 // generate all states corresponding to the constraints, knowing the number of holes

@@ -173,6 +173,7 @@ RealVector ParticleOnTorus::SymmetrizeU1U1State (RealVector& leftVector, RealVec
 //   gettimeofday (&TotalStartingTime, 0);
   
   this->SymmetrizeU1U1StateCore (TmpSymmetrizedVector, TmpLeftVector, TmpRightVector,  leftSpace,  rightSpace , unnormalizedBasisFlag, firstComponent, nbrComponent);
+  return TmpSymmetrizedVector;
 }
   
 // symmetrized a product of two uncoupled states 

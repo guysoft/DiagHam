@@ -260,34 +260,38 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
 	    {
 	      m4 = m1 + m2 - m3;
 	      if ((m4 >= 0) && (m4 <= this->MaxMomentum))
- 	       if (m3 > m4)
-		 {
-		  if (m1 != m2)
+		{
+		  if (m3 > m4)
 		    {
-		      TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficientBosons(m1, m2, m3, m4)
-					     + this->EvaluateInteractionCoefficientBosons(m2, m1, m4, m3)
-					     + this->EvaluateInteractionCoefficientBosons(m1, m2, m4, m3)
-					     + this->EvaluateInteractionCoefficientBosons(m2, m1, m3, m4));
+		      if (m1 != m2)
+			{
+			  TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficientBosons(m1, m2, m3, m4)
+						 + this->EvaluateInteractionCoefficientBosons(m2, m1, m4, m3)
+						 + this->EvaluateInteractionCoefficientBosons(m1, m2, m4, m3)
+						 + this->EvaluateInteractionCoefficientBosons(m2, m1, m3, m4));
+			}
+		      else
+			TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficientBosons(m1, m2, m3, m4)
+					       + this->EvaluateInteractionCoefficientBosons(m1, m2, m4, m3));
+		      if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
+			MaxCoefficient = Norm(TmpCoefficient[Pos]);
+		      ++Pos;
 		    }
 		  else
-		    TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficientBosons(m1, m2, m3, m4)
-					   + this->EvaluateInteractionCoefficientBosons(m1, m2, m4, m3));
-		  if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
-		    MaxCoefficient = Norm(TmpCoefficient[Pos]);
-		  ++Pos;
+		    {
+		      if (m3 == m4)
+			{
+			  if (m1 != m2)
+			    TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficientBosons(m1, m2, m3, m4)
+						   + this->EvaluateInteractionCoefficientBosons(m2, m1, m3, m4));
+			  else
+			    TmpCoefficient[Pos] = this->EvaluateInteractionCoefficientBosons(m1, m2, m3, m4);
+			  if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
+			    MaxCoefficient = Norm(TmpCoefficient[Pos]);
+			  ++Pos;
+			}
+		    }
 		}
-	      else
-		if (m3 == m4)
-		  {
-		    if (m1 != m2)
-		      TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficientBosons(m1, m2, m3, m4)
-					     + this->EvaluateInteractionCoefficientBosons(m2, m1, m3, m4));
-		    else
-		      TmpCoefficient[Pos] = this->EvaluateInteractionCoefficientBosons(m1, m2, m3, m4);
-		    if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
-		      MaxCoefficient = Norm(TmpCoefficient[Pos]);
-		    ++Pos;
-		  }
 	     }
       this->NbrInteractionFactors = 0;
       this->M1Value = new int [Pos];

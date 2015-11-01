@@ -339,11 +339,11 @@ int main(int argc, char** argv)
 	{
 	  if (Statistics == false)
 	    {
-	      sprintf (OutputNamePrefix, "bosons_torus_kysym_%s_n_%d_2s_%d_ky_%d_kx_", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, ResultingYMomentum, TmpKx);
+	      sprintf (OutputNamePrefix, "bosons_torus_kysym_%s_n_%d_2s_%d_ky_%d_kx_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, ResultingYMomentum, TmpKx);
 	    }
 	  else
 	    {
-	      sprintf (OutputNamePrefix, "fermions_torus_kysym_%s_n_%d_2s_%d_ky_%d_kx_", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, ResultingYMomentum, TmpKx);
+	      sprintf (OutputNamePrefix, "fermions_torus_kysym_%s_n_%d_2s_%d_ky_%d_kx_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, ResultingYMomentum, TmpKx);
 	    }
 	  cout << "check the norm: " << endl;
 	  double TmpNorm = TmpState[TmpKx].SqrNorm();

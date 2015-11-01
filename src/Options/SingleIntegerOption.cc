@@ -88,27 +88,31 @@ int SingleIntegerOption::ReadOption(char** argumentValues, int nbrArgument, int 
 {
   char* Argument = argumentValues[argumentPosition];
   if (this->OptionCode == 0)
-    if (Argument[0] != '-')
-      {
-	if (sscanf (Argument, "%ld", &(this->Integer)) != 1)
-	  {	    
-	    this->ErrorCode = SingleIntegerOption::NotAnInteger;
-	    return -1;
-	  }
-	if ((this->MinValueFlag == true) && (this->MinValue > this->Integer))
-	  {
-	    this->ErrorCode = SingleIntegerOption::Lower;
-	    return -1;
-	  }
-	if ((this->MaxValueFlag == true) && (this->MaxValue < this->Integer))
-	  {
-	    this->ErrorCode = SingleIntegerOption::Greater;
-	    return -1;
-	  }
-	return 1;
-      }
-    else
-      return 0;
+    {
+      if (Argument[0] != '-')
+	{
+	  if (sscanf (Argument, "%ld", &(this->Integer)) != 1)
+	    {	    
+	      this->ErrorCode = SingleIntegerOption::NotAnInteger;
+	      return -1;
+	    }
+	  if ((this->MinValueFlag == true) && (this->MinValue > this->Integer))
+	    {
+	      this->ErrorCode = SingleIntegerOption::Lower;
+	      return -1;
+	    }
+	  if ((this->MaxValueFlag == true) && (this->MaxValue < this->Integer))
+	    {
+	      this->ErrorCode = SingleIntegerOption::Greater;
+	      return -1;
+	    }
+	  return 1;
+	}
+      else
+	{
+	  return 0;
+	}
+    }
 
   if (Argument[0] != '-')
     return 0;

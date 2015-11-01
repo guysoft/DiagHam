@@ -761,7 +761,7 @@ HermitianMatrix FermionOnLatticeRealSpaceAnd1DTranslation::EvaluatePartialDensit
 // groundState = reference on the total system ground state
 // densityMatrix = reference on the density matrix where result has to stored
 // return value = number of components that have been added to the density matrix
-/*
+
 long FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, 
 												   ParticleOnTorusWithMagneticTranslations* complementaryHilbertSpace,  
 												   ParticleOnTorusWithMagneticTranslations* destinationHilbertSpace,

@@ -578,7 +578,7 @@ ComplexVector& ParticleOnCylinderHaldaneRezayi::LowLevelAddMultiply(ComplexVecto
 
 	            TmpC[0] = this->M1ValueIntra[j];
 	            TmpC[1] = this->M2ValueIntra[j];
-	            TmpC[2] = this->M3ValueIntra[j];
+	            TmpA[1] = this->M3ValueIntra[j];
 	            TmpA[0] = this->M4ValueIntra[j];
 
 	            TmpSpinC[0] = 0;
@@ -606,7 +606,7 @@ ComplexVector& ParticleOnCylinderHaldaneRezayi::LowLevelAddMultiply(ComplexVecto
 
 	            TmpC[0] = this->M1ValueIntra[j];
 	            TmpC[1] = this->M2ValueIntra[j];
-	            TmpC[2] = this->M3ValueIntra[j];
+	            TmpA[1] = this->M3ValueIntra[j];
 	            TmpA[0] = this->M4ValueIntra[j];
 
 	            TmpSpinC[0] = 1;
@@ -641,7 +641,7 @@ ComplexVector& ParticleOnCylinderHaldaneRezayi::LowLevelAddMultiply(ComplexVecto
 
 	            TmpC[0] = this->M1ValueInter[j];
 	            TmpC[1] = this->M2ValueInter[j];
-	            TmpC[2] = this->M3ValueInter[j];
+	            TmpA[1] = this->M3ValueInter[j];
 	            TmpA[0] = this->M4ValueInter[j];
 
 	            TmpSpinC[0] = 1;

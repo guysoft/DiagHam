@@ -77,7 +77,7 @@ AbstractFQHEMPSMatrix::~AbstractFQHEMPSMatrix()
 // fileName = name of the file where the matrices have to be stored
 // return value = true if no error occurred  
 
-bool AbstractFQHEMPSMatrix::SaveMatrices (char* fileName)
+bool AbstractFQHEMPSMatrix::SaveMatrices (const char* fileName)
 {
   ofstream File;
   File.open(fileName, ios::binary | ios::out);
@@ -111,7 +111,7 @@ bool AbstractFQHEMPSMatrix::SaveMatrices (char* fileName)
 // fileName = name of the file where the matrices are stored
 // return value = true if no error occurred  
 
-bool AbstractFQHEMPSMatrix::LoadMatrices (char* fileName)
+bool AbstractFQHEMPSMatrix::LoadMatrices (const char* fileName)
 {
   ifstream File;
   File.open(fileName, ios::binary | ios::in);

@@ -531,7 +531,7 @@ ComplexVector* GetTrialState(OptionManager &Manager, ParticleOnLattice* Space, d
   TranslationOperator = new ParticleOnLatticeTranslationOperator(CFSpace);
   
   // corresponding Hamiltonians
-  AbstractQHEOnLatticeHamiltonian* CFHamiltonian = new ParticleOnLatticeDeltaHamiltonian(CFSpace, /*NbrParticles*/ 1, Lx, Ly, NbrFluxQuanta-AttachedFlux, /* U */ 0.0 , /*ReverseHopping*/ false, /* Delta */ 0.0, /* Random */ 0.0, Architecture.GetArchitecture(), 0, NULL);    
+  AbstractQHEOnLatticeHamiltonian* CFHamiltonian = new ParticleOnLatticeDeltaHamiltonian(CFSpace, /*NbrParticles*/ 1, Lx, Ly, NbrFluxQuanta-AttachedFlux, /* U */ 0.0 , /*ReverseHopping*/ false, /* Delta */ 0.0, /* Random */ 0.0, Architecture.GetArchitecture(), 0, 0x0ul);    
   
   HermitianMatrix HCF(CFHamiltonian->GetHilbertSpaceDimension(), true);
   ComplexMatrix CFEigenVecs(CFHamiltonian->GetHilbertSpaceDimension(), CFHamiltonian->GetHilbertSpaceDimension());
@@ -588,7 +588,7 @@ ComplexVector* GetTrialState(OptionManager &Manager, ParticleOnLattice* Space, d
   // BosonOnLattice *JastrowSpace = new BosonOnLattice(/*NbrParticles*/ 1, Lx, Ly, AttachedFlux, MemorySpace);
   FermionOnLattice *JastrowSpace = new FermionOnLattice(/*NbrParticles*/ 1, Lx, Ly, AttachedFlux, MemorySpace, SolenoidX-SolenoidCF_X, SolenoidY-SolenoidCF_Y, /*silent*/ verbose);
 
-  AbstractQHEOnLatticeHamiltonian* JastrowHamiltonian = new ParticleOnLatticeDeltaHamiltonian(JastrowSpace, /*NbrParticles*/ 1, Lx, Ly, AttachedFlux, /* U */ 0.0 , /*ReverseHopping*/ false, /* Delta */ 0.0, /* Random */ 0.0, Architecture.GetArchitecture(), 0, NULL);
+  AbstractQHEOnLatticeHamiltonian* JastrowHamiltonian = new ParticleOnLatticeDeltaHamiltonian(JastrowSpace, /*NbrParticles*/ 1, Lx, Ly, AttachedFlux, /* U */ 0.0 , /*ReverseHopping*/ false, /* Delta */ 0.0, /* Random */ 0.0, Architecture.GetArchitecture(), 0, 0x0ul);
   delete TranslationOperator;
   
   HermitianMatrix HJastrow(JastrowHamiltonian->GetHilbertSpaceDimension(), true);

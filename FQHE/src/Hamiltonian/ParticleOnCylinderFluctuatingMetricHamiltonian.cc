@@ -254,35 +254,39 @@ void ParticleOnCylinderFluctuatingMetricHamiltonian::EvaluateInteractionFactors(
 	    {
 	      m4 = m1 + m2 - m3;
 	      if ((m4 >= 0) && (m4 <= this->MaxMomentum))
- 	       if (m3 > m4)
-		 {
-		  if (m1 != m2)
+		{
+		  if (m3 > m4)
 		    {
-		      TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficientBosons(m1, m2, m3, m4)
-					     + this->EvaluateInteractionCoefficientBosons(m2, m1, m4, m3)
-					     + this->EvaluateInteractionCoefficientBosons(m1, m2, m4, m3)
-					     + this->EvaluateInteractionCoefficientBosons(m2, m1, m3, m4));
+		      if (m1 != m2)
+			{
+			  TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficientBosons(m1, m2, m3, m4)
+						 + this->EvaluateInteractionCoefficientBosons(m2, m1, m4, m3)
+						 + this->EvaluateInteractionCoefficientBosons(m1, m2, m4, m3)
+						 + this->EvaluateInteractionCoefficientBosons(m2, m1, m3, m4));
+			}
+		      else
+			TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficientBosons(m1, m2, m3, m4)
+					       + this->EvaluateInteractionCoefficientBosons(m1, m2, m4, m3));
+		      if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
+			MaxCoefficient = Norm(TmpCoefficient[Pos]);
+		      ++Pos;
 		    }
 		  else
-		    TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficientBosons(m1, m2, m3, m4)
-					   + this->EvaluateInteractionCoefficientBosons(m1, m2, m4, m3));
-		  if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
-		    MaxCoefficient = Norm(TmpCoefficient[Pos]);
-		  ++Pos;
+		    {
+		      if (m3 == m4)
+			{
+			  if (m1 != m2)
+			    TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficientBosons(m1, m2, m3, m4)
+						   + this->EvaluateInteractionCoefficientBosons(m2, m1, m3, m4));
+			  else
+			    TmpCoefficient[Pos] = this->EvaluateInteractionCoefficientBosons(m1, m2, m3, m4);
+			  if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
+			    MaxCoefficient = Norm(TmpCoefficient[Pos]);
+			  ++Pos;
+			}
+		    }
 		}
-	      else
-		if (m3 == m4)
-		  {
-		    if (m1 != m2)
-		      TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficientBosons(m1, m2, m3, m4)
-					     + this->EvaluateInteractionCoefficientBosons(m2, m1, m3, m4));
-		    else
-		      TmpCoefficient[Pos] = this->EvaluateInteractionCoefficientBosons(m1, m2, m3, m4);
-		    if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
-		      MaxCoefficient = Norm(TmpCoefficient[Pos]);
-		    ++Pos;
-		  }
-	     }
+	    }
       this->NbrInteractionFactors = 0;
       this->M1Value = new int [Pos];
       this->M2Value = new int [Pos];
@@ -356,7 +360,6 @@ Complex ParticleOnCylinderFluctuatingMetricHamiltonian::EvaluateInteractionCoeff
 
 Complex ParticleOnCylinderFluctuatingMetricHamiltonian::EvaluateInteractionCoefficientBosons(int m1, int m2, int m3, int m4)
 {
-/*
   double Length = sqrt(2.0 * M_PI * this->NbrLzValue * this->Ratio);
   double kappa = 2.0 * M_PI/Length;
   double Xm1 = kappa * m1;
@@ -365,7 +368,8 @@ Complex ParticleOnCylinderFluctuatingMetricHamiltonian::EvaluateInteractionCoeff
   double Xm4 = kappa * m4;	
 
   Complex Coefficient(0,0);
-
+  return Coefficient;
+/*
   if (this->ElectricField == 0)
    {
      Coefficient.Re = exp(-0.5*pow(Xm1-Xm3,2.0)-0.5*pow(Xm1-Xm4,2.0));

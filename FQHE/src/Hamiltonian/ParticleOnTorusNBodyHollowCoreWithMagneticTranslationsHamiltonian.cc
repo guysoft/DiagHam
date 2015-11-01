@@ -311,7 +311,7 @@ void ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::Evaluate
 		 this->PrecalculatedInteractionCoefficients[m1][TmpIndex] = sign * this->EvaluateIndividualInteractionCoefficientCreation(TmpMIndices2, TmpG, TmpMomentumTransfer);
 		 double coefficient = this->EvaluateIndividualInteractionCoefficientCreation(TmpMIndices, g, momentumTransfer);
 		 
-		 if (abs(abs(coefficient) - abs(this->PrecalculatedInteractionCoefficients[m1][TmpIndex])) > 1.0e-12)
+		 if (fabs(fabs(coefficient) - fabs(this->PrecalculatedInteractionCoefficients[m1][TmpIndex])) > 1.0e-12)
 		   {
 		     for (int i = 0; i < this->NBodyValue ; ++i)
 		       cout << TmpMIndices[i] << " " ;
@@ -462,7 +462,7 @@ double ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::Evalua
   }
   double Coefficient = normalizationCoefficient * polynomialFactor * exp(-Factor*ExpFactor);
   
-  while ((abs(Coefficient) + abs(Sum) != abs(Sum)) || (countIter[nBodyValue] < MinIter))
+  while ((fabs(Coefficient) + fabs(Sum) != fabs(Sum)) || (countIter[nBodyValue] < MinIter))
   {
     countIter[nBodyValue] += 1;
     Sum += this->EvaluateGaussianSum(nBodyValue + 1, TmpIndices, 0.0, countIter, momFactor);
@@ -521,7 +521,7 @@ double ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::Evalua
   Coefficient = normalizationCoefficient * polynomialFactor * exp(-Factor*ExpFactor);
   
   
-  while ((abs(Coefficient) + abs(Sum) != abs(Sum)) || (countIter[nBodyValue] < MinIter))
+  while ((fabs(Coefficient) + fabs(Sum) != fabs(Sum)) || (countIter[nBodyValue] < MinIter))
   {
     countIter[nBodyValue] += 1;
     Sum += this->EvaluateGaussianSum(nBodyValue + 1, TmpIndices, 0.0, countIter, momFactor);

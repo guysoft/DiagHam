@@ -266,7 +266,7 @@ int main(int argc, char** argv)
 	  double SouthNorm = SouthPoleTruncatedState.Norm();
 	  if (SouthNorm > 1e-10)
 	    {
-	      if ((NoUnnormalization == false))
+	      if (NoUnnormalization == false)
 		OutputBasis->ConvertFromUnnormalizedMonomial(SouthPoleTruncatedState, -1l);
 	      SouthNorm = SouthPoleTruncatedState.Norm();
 	      SouthPoleTruncatedState /= SouthNorm;

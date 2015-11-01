@@ -68,7 +68,7 @@ FermionOnTorus::FermionOnTorus (int nbrFermions, int maxMomentum)
   this->StateShift = this->KyMax / this->MomentumModulo;
   this->MomentumIncrement = (this->NbrFermions * this->StateShift) % this->MomentumModulo;
   this->ComplementaryStateShift = this->KyMax - this->StateShift;
-  this->MomentumMask = 0x1ul << this->StateShift - 0x1ul;
+  this->MomentumMask = (0x1ul << this->StateShift) - 0x1ul;
 
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->KyMax);
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
@@ -198,7 +198,7 @@ FermionOnTorus::FermionOnTorus (int nbrFermions, int maxMomentum, int hilbertSpa
   this->StateShift = this->KyMax / this->MomentumModulo;
   this->MomentumIncrement = (this->NbrFermions * this->StateShift) % this->MomentumModulo;
   this->ComplementaryStateShift = this->KyMax - this->StateShift;
-  this->MomentumMask = 0x1ul << this->StateShift - 0x1ul;
+  this->MomentumMask = (0x1ul << this->StateShift) - 0x1ul;
 
   this->TotalKyFlag = false;
   this->HilbertSpaceDimension = hilbertSpaceDimension;
@@ -249,7 +249,7 @@ FermionOnTorus::FermionOnTorus (int nbrFermions, int maxMomentum, int momentumCo
   this->StateShift = this->KyMax / this->MomentumModulo;
   this->MomentumIncrement = (this->NbrFermions * this->StateShift) % this->MomentumModulo;
   this->ComplementaryStateShift = this->KyMax - this->StateShift;
-  this->MomentumMask = 0x1ul << this->StateShift - 0x1ul;
+  this->MomentumMask = (0x1ul << this->StateShift) - 0x1ul;
 
   this->HilbertSpaceDimension = hilbertSpaceDimension;
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;

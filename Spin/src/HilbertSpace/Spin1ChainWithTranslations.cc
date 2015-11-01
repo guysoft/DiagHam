@@ -1091,10 +1091,12 @@ AbstractHilbertSpace* Spin1ChainWithTranslations::ExtractSubspace (AbstractQuant
   if (this->Momentum != ((PeriodicMomentumQuantumNumber*) (((VectorQuantumNumber&) q)[0]))->GetMomentum())
     return 0;
   if (this->FixedSpinProjectionFlag == true)
-    if (this->Sz != ((SzQuantumNumber*) (((VectorQuantumNumber&) q)[1]))->GetSz())
-      return 0;
-    else
-      return this;
+    {
+      if (this->Sz != ((SzQuantumNumber*) (((VectorQuantumNumber&) q)[1]))->GetSz())
+	return 0;
+      else
+	return this;
+    }
   int TmpSz = ((SzQuantumNumber*) (((VectorQuantumNumber&) q)[1]))->GetSz();
   if ((TmpSz < (-2 * this->ChainLength)) || (TmpSz > (2 * this->ChainLength)))
     return 0;

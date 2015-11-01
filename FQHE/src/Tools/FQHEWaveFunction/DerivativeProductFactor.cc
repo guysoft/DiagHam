@@ -178,29 +178,29 @@ bool DerivativeProductFactor::operator > (const DerivativeProductFactor &other)
   
 bool DerivativeProductFactor::operator ^ (const DerivativeProductFactor &other)
 {
-  if (&other==0) return false;
-  else if ((this->UDerivatives == other.UDerivatives) && (this->VDerivatives == other.VDerivatives)
+  if ((this->UDerivatives == other.UDerivatives) && (this->VDerivatives == other.VDerivatives)
       && (this->CFOrbitals == other.CFOrbitals ))
     return true;
-  else return false;
+  else 
+    return false;
 }
 
 bool DerivativeProductFactor::operator == (const DerivativeProductFactor &other)
 {
-  if (&other==0) return false;
-  else if ((this->UDerivatives == other.UDerivatives) && (this->VDerivatives == other.VDerivatives)
+  if ((this->UDerivatives == other.UDerivatives) && (this->VDerivatives == other.VDerivatives)
       && (this->Power == other.Power) && (this->CFOrbitals == other.CFOrbitals ))
     return true;
-  else return false;
+  else 
+    return false;
 }
 
 bool DerivativeProductFactor::operator != (const DerivativeProductFactor &other)
 {
-  if (&other==0) return true;
-  else if ((this->UDerivatives == other.UDerivatives) && (this->VDerivatives == other.VDerivatives)
+  if ((this->UDerivatives == other.UDerivatives) && (this->VDerivatives == other.VDerivatives)
       && (this->Power == other.Power) && (this->CFOrbitals == other.CFOrbitals ))
     return false;
-  else return true;
+  else 
+    return true;
 }
 
 /*

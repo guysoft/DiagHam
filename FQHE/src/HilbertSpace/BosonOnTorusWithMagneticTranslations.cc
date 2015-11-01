@@ -663,17 +663,23 @@ void BosonOnTorusWithMagneticTranslations::GenerateLookUpTable()
 	}
     }
   for (int i = 0; i < this->MaxMomentum; ++i)
-    if (this->NbrStateInLookUpTable[i] != 0)
-      for (unsigned long j = 0; j <= this->HashKeyMask; ++j)
-	if (this->NbrStateInLookUpTable[i][j] != 0)
-	  {
-	    this->LookUpTable[i][j] = new int [this->NbrStateInLookUpTable[i][j]];
-	    this->NbrStateInLookUpTable[i][j] = 0;
-	  }
-	else
-	  {
-	    this->LookUpTable[i][j] = 0;
-	  }
+    {
+      if (this->NbrStateInLookUpTable[i] != 0)
+	{
+	  for (unsigned long j = 0; j <= this->HashKeyMask; ++j)
+	    {
+	      if (this->NbrStateInLookUpTable[i][j] != 0)
+		{
+		  this->LookUpTable[i][j] = new int [this->NbrStateInLookUpTable[i][j]];
+		  this->NbrStateInLookUpTable[i][j] = 0;
+		}
+	      else
+		{
+		  this->LookUpTable[i][j] = 0;
+		}
+	    }
+	}
+    }
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     this->LookUpTable[this->StateMaxMomentum[i]][TmpHashTable[i]][this->NbrStateInLookUpTable[this->StateMaxMomentum[i]]
 								  [TmpHashTable[i]]++] = i;

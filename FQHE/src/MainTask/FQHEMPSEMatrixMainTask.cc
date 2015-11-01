@@ -396,4 +396,5 @@ int FQHEMPSEMatrixMainTask::ExecuteMainTask()
   delete[] TmpIndices;
   delete[] TmpEigenstates;
   delete[] TmpEigenvalues;
+  return 0;
 }

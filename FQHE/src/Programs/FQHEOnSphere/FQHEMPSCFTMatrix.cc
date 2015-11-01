@@ -62,7 +62,13 @@ int main(int argc, char** argv)
             FQHEMPSClustered2RMatrix M(pLevel, centralCharge, "pfaffian", useRational);
 
             int nbrSectors = 3;
-            char* sectorNames[3] = {"identity", "psi", "sigma"};
+            char** sectorNames = new char*[3];
+	    sectorNames[0] = new char[16];
+	    sprintf (sectorNames[0], "identity");
+	    sectorNames[1] = new char[16];
+	    sprintf (sectorNames[1], "psi");
+	    sectorNames[2] = new char[16];
+	    sprintf (sectorNames[2], "sigma");
             LongRational weights[3] = {LongRational(0l, 1l), LongRational(1l, 2l), LongRational(1l, 16l)};
 
             M.ComputeMatrixElements(cftDirectory, Architecture.GetArchitecture(), "identity", LongRational(0l, 1l), nbrSectors, sectorNames, weights, RealMatrix());
@@ -86,7 +92,15 @@ int main(int argc, char** argv)
         {
             FQHEMPSClustered2RMatrix M(pLevel, centralCharge, "gaffnian", useRational);
             int nbrSectors = 4;
-            char* sectorNames[4] = {"identity", "psi", "sigma", "phi"};
+            char** sectorNames = new char*[4];
+	    sectorNames[0] = new char[16];
+	    sprintf (sectorNames[0], "identity");
+	    sectorNames[1] = new char[16];
+	    sprintf (sectorNames[1], "psi");
+	    sectorNames[2] = new char[16];
+	    sprintf (sectorNames[2], "sigma");
+ 	    sectorNames[3] = new char[16];
+	    sprintf (sectorNames[3], "phi");
             LongRational weights[4] = {LongRational(0l, 1l), LongRational(3l, 4l), LongRational(-1l, 20l), LongRational(1l, 5l)};
 
             M.ComputeMatrixElements(cftDirectory, Architecture.GetArchitecture(), "identity", LongRational(0l, 1l), nbrSectors, sectorNames, weights, RealMatrix());
@@ -116,7 +130,19 @@ int main(int argc, char** argv)
 
         int nbrSectors = 6;
         //                          0         1     2      3          4       5
-        char* sectorNames[6] = {"identity", "psi", "w", "epsilon", "sigma", "phi"};
+	char** sectorNames = new char*[6];
+	sectorNames[0] = new char[16];
+	sprintf (sectorNames[0], "identity");
+	sectorNames[1] = new char[16];
+	sprintf (sectorNames[1], "psi");
+	sectorNames[2] = new char[16];
+	sprintf (sectorNames[2], "w");
+	sectorNames[3] = new char[16];
+	sprintf (sectorNames[3], "epsilon");
+	sectorNames[4] = new char[16];
+	sprintf (sectorNames[4], "sigma");
+	sectorNames[5] = new char[16];
+	sprintf (sectorNames[5], "phi");
         LongRational weights[6] = {LongRational(0l, 1l), LongRational(2l, 3l), LongRational(3l, 1l),
             LongRational(2l, 5l), LongRational(1l, 15l), LongRational(7l, 5l)};
 

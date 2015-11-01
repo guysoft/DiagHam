@@ -117,20 +117,23 @@ int main(int argc, char** argv)
       }
   cout << "N=" << NbrParticles << "  LzMax=" << LzMax << "  TotalLz=" << TotalLz << "  FermionFlag="<< FermionFlag <<endl;
   if (Manager.GetString("statistics") != 0)
-    if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
-      {
-	FermionFlag = true;
-      }
-    else
-      if ((strcmp ("bosons", Manager.GetString("statistics")) == 0))
+    {
+      if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
 	{
-	  FermionFlag = false;
+	  FermionFlag = true;
 	}
       else
 	{
-	  cout << Manager.GetString("statistics") << " is an undefined statistics" << endl;
+	  if ((strcmp ("bosons", Manager.GetString("statistics")) == 0))
+	    {
+	      FermionFlag = false;
+	    }
+	  else
+	    {
+	      cout << Manager.GetString("statistics") << " is an undefined statistics" << endl;
+	    }
 	}
-
+    }
   if (NbrParticles==0)
     {
       cout<<"Please provide the number of particles!"<<endl;

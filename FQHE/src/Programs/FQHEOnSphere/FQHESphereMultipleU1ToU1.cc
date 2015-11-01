@@ -575,7 +575,7 @@ int main(int argc, char** argv)
 		      if (Manager.GetBoolean("unnormalized-basis") == true)
 			{
 			  int RootPosition = 0;
-			  while (abs(OutputState[RootPosition]) < 1.0e-12)
+			  while (fabs(OutputState[RootPosition]) < 1.0e-12)
 			    {
 			      RootPosition += 1;
 			    }

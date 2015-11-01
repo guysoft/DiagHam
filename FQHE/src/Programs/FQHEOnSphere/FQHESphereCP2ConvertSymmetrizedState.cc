@@ -118,10 +118,12 @@ int main(int argc, char** argv)
       RealVector OutputState;
       BosonOnCP2TzSymmetry* InitialSpace = 0;
       if (TzSymmetrizedBasis == true) 
-	if (TzZ3SymmetrizedBasis == false)
-	  InitialSpace = new BosonOnCP2TzSymmetry(NbrParticles, NbrFluxQuanta, TotalTz, TotalY, TzMinusParity, MemorySpace);
-	else
-	  InitialSpace = new BosonOnCP2TzZ3Symmetry(NbrParticles, NbrFluxQuanta, TotalTz, TotalY, TzMinusParity, MemorySpace);
+	{
+	  if (TzZ3SymmetrizedBasis == false)
+	    InitialSpace = new BosonOnCP2TzSymmetry(NbrParticles, NbrFluxQuanta, TotalTz, TotalY, TzMinusParity, MemorySpace);
+	  else
+	    InitialSpace = new BosonOnCP2TzZ3Symmetry(NbrParticles, NbrFluxQuanta, TotalTz, TotalY, TzMinusParity, MemorySpace);
+	}
       BosonOnCP2 TargetSpace(NbrParticles, NbrFluxQuanta, TotalTz, TotalY, MemorySpace);
 //       if (SymmetrizeFlag)
 // 	{

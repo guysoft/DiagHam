@@ -149,7 +149,7 @@ class GenericComplexMainTask: public AbstractMainTask
   // firstRun = flag that indicates if it the first time the main task is used
   // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
   GenericComplexMainTask(OptionManager* options, AbstractHilbertSpace* space, LanczosManager* lanczos, 
-			 AbstractHamiltonian* hamiltonian, char *subspaceStr, char *subspaceLegend,
+			 AbstractHamiltonian* hamiltonian, const char* subspaceStr, const char* subspaceLegend,
 			 double shift, char* outputFileName, bool firstRun=true, char* eigenvectorFileName=0);
   
   // destructor

@@ -1038,25 +1038,30 @@ int BosonOnSphereWithSpinOld::GenerateStates(int nbrBosonsUp, int nbrBosonsDown,
       return pos + 1;
     }
   if ((nbrBosonsDown + nbrBosonsUp) == 1)
-    if (lzMax >= totalLz)
-      {
-	this->StateDescription[pos] = new int [lzMax + 1];
-	int* TmpState = this->StateDescription[pos];
-	for (int i = 0; i <= lzMax; ++i)
-	  TmpState[i] = 0;
-	if (nbrBosonsUp == 1)
-	  {
-	    TmpState[totalLz] = 1 << 16; // place spin up
-	    this->StateLzSzMax[pos] = (totalLz<<1)+1;
-	  }
-	else
-	  {
-	    TmpState[totalLz] = 1; // place spin down
-	    this->StateLzSzMax[pos] = totalLz<<1;
-	  }
-	return pos + 1;	
-      }
-    else return pos;
+    {
+      if (lzMax >= totalLz)
+	{
+	  this->StateDescription[pos] = new int [lzMax + 1];
+	  int* TmpState = this->StateDescription[pos];
+	  for (int i = 0; i <= lzMax; ++i)
+	    TmpState[i] = 0;
+	  if (nbrBosonsUp == 1)
+	    {
+	      TmpState[totalLz] = 1 << 16; // place spin up
+	      this->StateLzSzMax[pos] = (totalLz<<1)+1;
+	    }
+	  else
+	    {
+	      TmpState[totalLz] = 1; // place spin down
+	      this->StateLzSzMax[pos] = totalLz<<1;
+	    }
+	  return pos + 1;	
+	}
+      else
+	{
+	  return pos;
+	}
+    }
   int ReducedCurrentLzMax = currentLzMax - 1;
   int TmpPos = pos;
   int TmpLzSzMax;
@@ -1445,10 +1450,12 @@ long BosonOnSphereWithSpinOld::ShiftedEvaluateHilbertSpaceDimension(int nbrBoson
     return 0l;
     
   if (nbrBosons == 1) 
-    if (lzMax >= totalLz)
-      return 1l;
-    else
-      return 0l;
+    {
+      if (lzMax >= totalLz)
+	return 1l;
+      else
+	return 0l;
+    }
   if (totalLz == 0)
     return 1l;
 

@@ -918,6 +918,7 @@ bool FQHEMPSEvaluateCFTOperation::RawApplyOperation()
 	    }
 	}
     }
+  return true;
 }
 
 

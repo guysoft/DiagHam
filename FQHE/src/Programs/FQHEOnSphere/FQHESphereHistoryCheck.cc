@@ -174,7 +174,7 @@ int main(int argc, char** argv)
   ratio = recalculatedValue/readValue;
   if (fabs(Real(ratio)-1.0) > limit)
     {
-      if (fabs(Imag(ratio)/Real(ratio) < limit))
+      if (fabs(Imag(ratio)/Real(ratio)) < limit)
 	{
 	nextSample2:
 	  factor = Real(ratio);
@@ -183,7 +183,7 @@ int main(int argc, char** argv)
 	  Operation.ApplyOperation(Architecture.GetArchitecture());      
 	  recalculatedValue = Operation.GetScalar();
 	  ratio = recalculatedValue/readValue;
-	  if (fabs(Imag(ratio)/Real(ratio) < limit))
+	  if (fabs(Imag(ratio)/Real(ratio)) < limit)
 	    {
 	      if( fabs(Real(ratio)/factor-1.0) < limit)
 		{

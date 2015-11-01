@@ -79,7 +79,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t1r", "real part of the nearest neighbor hopping amplitude between sites belonging to different triangles", -1.2);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t1i", "imaginary part of the next nearest neighbor hopping amplitude between sites belonging to the different triangles", 2.6);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t4", "hopping amplitude along the square diagonal", -1.2);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "band-index", "index of the band that has to be partially filled, should be 0 (lower band), 1 or 2 (upper band)", -1.2);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "band-index", "index of the band that has to be partially filled, should be 0 (lower band), 1 or 2 (upper band)", 0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "sublattice chemical potential on A site", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);

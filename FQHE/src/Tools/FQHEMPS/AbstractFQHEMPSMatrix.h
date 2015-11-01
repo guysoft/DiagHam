@@ -80,13 +80,13 @@ class AbstractFQHEMPSMatrix
   // 
   // fileName = name of the file where the matrices have to be stored
   // return value = true if no error occurred  
-  virtual bool SaveMatrices (char* fileName);
+  virtual bool SaveMatrices (const char* fileName);
 
   // load the matrices 
   // 
   // fileName = name of the file where the matrices are stored
   // return value = true if no error occurred  
-  virtual bool LoadMatrices (char* fileName);
+  virtual bool LoadMatrices (const char* fileName);
 
   // get the number of B matrices
   //

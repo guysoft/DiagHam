@@ -141,7 +141,7 @@ int main(int argc, char** argv)
 		     Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	  else
 	  {
-	      sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_t_%g_a_gx_%g_gy_%g.dat", FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential") , 
+	      sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_t_%g_a_%g_gx_%g_gy_%g.dat", FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential") , 
 		       Manager.GetDouble("theta"), Manager.GetDouble("azimuthal-angle"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	  }
 	}

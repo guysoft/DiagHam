@@ -913,6 +913,7 @@ int BosonOnLatticeLong::CarefulFindStateIndex(ULONGLONG stateDescription, int hi
       
       return this->HilbertSpaceDimension;
     }
+  return this->HilbertSpaceDimension;
 }
 
 // carefully test whether state is in Hilbert-space and find corresponding state index

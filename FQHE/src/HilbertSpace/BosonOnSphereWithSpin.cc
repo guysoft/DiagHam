@@ -1300,10 +1300,12 @@ long BosonOnSphereWithSpin::ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, 
     return 0l;
     
   if (nbrBosons == 1) 
-    if (lzMax >= totalLz)
-      return 1l;
-    else
-      return 0l;
+    {
+      if (lzMax >= totalLz)
+	return 1l;
+      else
+	return 0l;
+    }
   if (totalLz == 0)
     return 1l;
 

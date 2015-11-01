@@ -387,4 +387,5 @@ int ParticleOnCylinderFourBodyDeltaHamiltonian:: NumberOfPermutations(int n1, in
     return 4; //three are equal
   else if ((n1==n2) && (n2==n3) && (n3==n4))
     return 1; //all four are equal
+  return 0;
 }

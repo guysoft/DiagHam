@@ -64,7 +64,7 @@ RealPtrVector::RealPtrVector(int size, bool zeroFlag)
   this->VectorType = Vector::RealPtrDatas;
   this->Dimension = size;
   this->TrueDimension = this->Dimension;
-  this->Components = new (double *[this->Dimension + 1]); 
+  this->Components = new double*[this->Dimension + 1]; 
   this->Flag.Initialize();
   this->VectorId = 0;
   if (zeroFlag == true)
@@ -95,7 +95,7 @@ RealPtrVector::RealPtrVector(const RealPtrVector& vector, bool duplicateFlag)
       if (vector.Dimension > 0)
 	{
 	  this->Flag.Initialize();
-	  this->Components = new (double *[this->TrueDimension + 1]); 
+	  this->Components = new double*[this->TrueDimension + 1]; 
 	  for (int i = 0; i < this->Dimension; i++)
 	    this->Components[i] = vector.Components[i];
 	}
@@ -222,7 +222,7 @@ void RealPtrVector::Resize (int dimension)
       this->Dimension = dimension;
       return;
     }
-  double** TmpVector = new (double *[dimension + 1]);
+  double** TmpVector = new double*[dimension + 1];
   for (int i = 0; i < this->Dimension; i++)
     TmpVector[i] = this->Components[i];
   if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))

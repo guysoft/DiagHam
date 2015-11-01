@@ -147,7 +147,7 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("flat-band") == true)
 	{ 
 	  if (Manager.GetDouble("v-potential") == 0.0)
-	    sprintf (EigenvalueOutputFile, "%s_t1_%g_t2_%g_t3_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	    sprintf (EigenvalueOutputFile, "%s_t1_%g_t2_%g_t3_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	  else
 	  {
 	      sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_t1_%g_t2_%g_t3_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential") , Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));

@@ -150,7 +150,7 @@ void DisplayHelp (List<AbstractOption*>& option, ostream& str)
 // programName = string containing the program name
 // return value = true if proceeding succeded
 
-void DisplayHelp (List<AbstractOption*>& option, ostream& str, char* programName)
+void DisplayHelp (List<AbstractOption*>& option, ostream& str, const char* programName)
 {
   AbstractOption** TmpOption;
   ListIterator<AbstractOption*> OptionIter(option);

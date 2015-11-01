@@ -577,8 +577,13 @@ double Spin1_2Chain::SziSzj (int i, int j, int state)
 
 int Spin1_2Chain::ProdSzj (int indexMin, int indexMax, int state)
 {
-  unsigned long TmpState = (this->StateDescription[state] & 
-			    (((0x1ul << indexMax) - 0x1ul) ^ ((0x1ul << indexMin) - 0x1ul)));
+  int TmpSz = 0;
+  unsigned long TmpState = this->StateDescription[state];
+  for (int i = indexMin; i <= indexMax; i++)
+    {
+      TmpSz ^= (int) ((TmpState >> i) & 0x1ul);
+    }
+  return ((2 * TmpSz) - 1);
 }
 
 

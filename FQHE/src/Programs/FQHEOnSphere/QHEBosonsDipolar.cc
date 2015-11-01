@@ -112,7 +112,7 @@ int main(int argc, char** argv)
   char* OutputNameLz = new char [256];
   sprintf (OutputNameLz, "bosons_dipolar_n_%d_2s_%d_lz.dat", NbrBosons, LzMax);
 
-  char* OutputNameL = "bosons_l.dat";
+  const char* OutputNameL = "bosons_l.dat";
   ofstream File;
   File.open(OutputNameLz, ios::binary | ios::out);
   File.precision(14);

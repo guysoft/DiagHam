@@ -184,10 +184,12 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis (int 
 #endif
 	{
 	  if ((TmpKeepStateFlag >> j) & 0x1ul)
-	    if (this->StateDescription[TotalIndex] == this->GetCanonicalState(this->StateDescription[TotalIndex]))
-	      ++NewHilbertSpaceDimension;
-	    else
-	      this->KeepStateFlag[i] &= ~(0x1ul << j);
+	    {
+	      if (this->StateDescription[TotalIndex] == this->GetCanonicalState(this->StateDescription[TotalIndex]))
+		++NewHilbertSpaceDimension;
+	      else
+		this->KeepStateFlag[i] &= ~(0x1ul << j);
+	    }
 	  ++TotalIndex;
 	}
     }
@@ -654,10 +656,12 @@ int FermionOnSphereHaldaneSymmetricBasis::AdAdAA (int index, int m1, int m2, int
     --NewLzMax;
   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
   if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != Signature)
-     if (Signature != 0)
-       coefficient *= M_SQRT2;
-     else
-       coefficient *= M_SQRT1_2;
+    {
+      if (Signature != 0)
+	coefficient *= M_SQRT2;
+      else
+	coefficient *= M_SQRT1_2;
+    }
   return TmpIndex;
 }
 
@@ -745,10 +749,12 @@ int FermionOnSphereHaldaneSymmetricBasis::ProdAdProdA (int index, int* m, int* n
     --NewLzMax;
   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
   if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != Signature)
-     if (Signature != 0)
-       coefficient *= M_SQRT2;
-     else
-       coefficient *= M_SQRT1_2;
+    {
+      if (Signature != 0)
+	coefficient *= M_SQRT2;
+      else
+	coefficient *= M_SQRT1_2;
+    }
   return TmpIndex;
 }
 
@@ -869,10 +875,12 @@ int FermionOnSphereHaldaneSymmetricBasis::ProdAd (int* m, int nbrIndices, double
     --NewLzMax;
   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
   if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != this->ProdASignature)
-     if (this->ProdASignature != 0)
-       coefficient *= M_SQRT2;
-     else
-       coefficient *= M_SQRT1_2;
+    {
+      if (this->ProdASignature != 0)
+	coefficient *= M_SQRT2;
+      else
+	coefficient *= M_SQRT1_2;
+    }
   return TmpIndex;
 }
 
@@ -932,10 +940,12 @@ int FermionOnSphereHaldaneSymmetricBasis::AdAd (int m1, int m2, double& coeffici
     --NewLzMax;
   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
   if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != this->ProdASignature)
-     if (this->ProdASignature != 0)
-       coefficient *= M_SQRT2;
-     else
-       coefficient *= M_SQRT1_2;
+    {
+      if (this->ProdASignature != 0)
+	coefficient *= M_SQRT2;
+      else
+	coefficient *= M_SQRT1_2;
+    }
   return TmpIndex;
 }
 
@@ -1006,10 +1016,12 @@ int FermionOnSphereHaldaneSymmetricBasis::AdA (int index, int m, int n, double& 
   TmpState = this->GetSignedCanonicalState(TmpState);
   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
   if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != Signature)
-     if (Signature != 0)
-       coefficient *= M_SQRT2;
-     else
-       coefficient *= M_SQRT1_2;
+    {
+      if (Signature != 0)
+	coefficient *= M_SQRT2;
+      else
+	coefficient *= M_SQRT1_2;
+    }
   return TmpIndex;
 }
 
@@ -1193,19 +1205,23 @@ RealVector& FermionOnSphereHaldaneSymmetricBasis::GenerateSymmetrizedJackPolynom
 		    TmpState = this->ConvertFromMonomial(TmpMonomial2);
 		    unsigned long TmpSymState = this->GetSymmetricState(TmpState);
 		    if (TmpSymState > TmpState)
-		      if ((TmpSymState <= MaxRoot) && (TmpSymState > CurrentPartition))
-			{			  
-			  long TmpIndex = this->FindStateIndex(TmpSymState, this->LzMax - TmpMonomial2[ReducedNbrFermions]);
-			  if (TmpIndex < this->HilbertSpaceDimension)
-			    Coefficient += SymSign * Sign * Diff * jack[TmpIndex];
-			}
-		      else
-			if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
-			  {
-			    long TmpIndex = this->FindStateIndex(TmpState, TmpMonomial2[0]);
+		      {
+			if ((TmpSymState <= MaxRoot) && (TmpSymState > CurrentPartition))
+			  {			  
+			    long TmpIndex = this->FindStateIndex(TmpSymState, this->LzMax - TmpMonomial2[ReducedNbrFermions]);
 			    if (TmpIndex < this->HilbertSpaceDimension)
-			      Coefficient += Sign * Diff * jack[TmpIndex];
+			      Coefficient += SymSign * Sign * Diff * jack[TmpIndex];
 			  }
+			else
+			  {
+			    if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
+			      {
+				long TmpIndex = this->FindStateIndex(TmpState, TmpMonomial2[0]);
+				if (TmpIndex < this->HilbertSpaceDimension)
+				  Coefficient += Sign * Diff * jack[TmpIndex];
+			      }
+			  }
+		      }
 		  }
 	      }
 	  }

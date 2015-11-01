@@ -292,12 +292,14 @@ int main(int argc, char** argv)
 #else
 	if (LzMax[0]  < 31)	
 #endif
-      if (Manager.GetBoolean("p-truncated") == true)
-	{
-	  Space = new BosonOnSpherePTruncated(NbrParticles[0], TotalLz[0], LzMax[0], Manager.GetBoolean("p-truncation"), (int) Manager.GetInteger("boson-truncation"), ReferenceState);	  
-	}
-      else
-	Space = new BosonOnSphereHaldaneBasisShort(NbrParticles[0], TotalLz[0], LzMax[0], ReferenceState);
+	  {
+	    if (Manager.GetBoolean("p-truncated") == true)
+	      {
+		Space = new BosonOnSpherePTruncated(NbrParticles[0], TotalLz[0], LzMax[0], Manager.GetBoolean("p-truncation"), (int) Manager.GetInteger("boson-truncation"), ReferenceState);	  
+	      }
+	    else
+	      Space = new BosonOnSphereHaldaneBasisShort(NbrParticles[0], TotalLz[0], LzMax[0], ReferenceState);
+	  }
     }
   
   for(int i = 0; i < NbrVectors; i++)

@@ -187,7 +187,7 @@ FQHEMPSReadRezayi3Matrix::~FQHEMPSReadRezayi3Matrix()
 char* FQHEMPSReadRezayi3Matrix::GetName()
 {
   char* TmpName = new char[16];
-  sprintf (TmpName, "readrezayi3", this->LaughlinIndex);
+  sprintf (TmpName, "readrezayi3");
   return TmpName;
 }
 

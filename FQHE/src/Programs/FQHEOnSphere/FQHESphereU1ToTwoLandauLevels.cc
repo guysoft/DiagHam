@@ -116,19 +116,24 @@ int main(int argc, char** argv)
       
     }
   if (Manager.GetBoolean("statistics") != 0)
-    if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
-      {
-	FermionFlag = true;
-      }
-    else
+    {
       if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
 	{
-	  FermionFlag = false;
+	  FermionFlag = true;
 	}
       else
 	{
-	  cout << Manager.GetString("statistics") << " is an undefined statistics" << endl;
-	}  
+	  if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
+	    {
+	      FermionFlag = false;
+	    }
+	  else
+	    {
+	      cout << Manager.GetString("statistics") << " is an undefined statistics" << endl;
+	    }  
+	}
+    }
+
   int UpParity = UpTotalLz & 1;
   if (UpParity != ((UpNbrParticles * LzMaxUp) & 1))
     {

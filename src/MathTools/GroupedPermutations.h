@@ -37,7 +37,7 @@
 #include "GeneralTools/OrderedList.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
 
-#include "PermutationElement.h";
+#include "PermutationElement.h"
 
 
 class GroupedPermutations

@@ -142,9 +142,9 @@ int main(int argc, char** argv)
 
   char* StateFilePrefix = new char [256];
   if (Manager.GetBoolean("two-bands") == false)
-      sprintf (StateFilePrefix, "%s_singleband_oflnorbitaltriangularlattice_s_%ld_c_%d_nq_%ld_n_%d_x_%d_y_%d_las_%g", StatisticPrefix,  NbrSpin, ChernNumber,Manager.GetInteger("cutOFF") , NbrParticles, NbrSitesX, NbrSitesY, LaserStrength);
+      sprintf (StateFilePrefix, "%s_singleband_oflnorbitaltriangularlattice_s_%d_c_%d_nq_%ld_n_%d_x_%d_y_%d_las_%g", StatisticPrefix,  NbrSpin, ChernNumber,Manager.GetInteger("cutOFF") , NbrParticles, NbrSitesX, NbrSitesY, LaserStrength);
    else
-      sprintf (StateFilePrefix, "%s_twobands_oflnorbitaltriangularlattice_s_%ld_c_%d_nq_%ld_n_%d_x_%d_y_%d_las_%g", StatisticPrefix,  NbrSpin, ChernNumber,Manager.GetInteger("cutOFF") , NbrParticles, NbrSitesX, NbrSitesY, LaserStrength);
+      sprintf (StateFilePrefix, "%s_twobands_oflnorbitaltriangularlattice_s_%d_c_%d_nq_%ld_n_%d_x_%d_y_%d_las_%g", StatisticPrefix,  NbrSpin, ChernNumber,Manager.GetInteger("cutOFF") , NbrParticles, NbrSitesX, NbrSitesY, LaserStrength);
 
   ParticleOnSphere * Space =0;
   if (Manager.GetBoolean("two-bands") == false)

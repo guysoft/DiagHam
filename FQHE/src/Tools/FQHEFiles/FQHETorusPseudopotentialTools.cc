@@ -706,11 +706,13 @@ bool FQHETorusSU4GetPseudopotentials (char* fileName, int* nbrPseudoPotentials, 
 	pseudoPotentials[9][j] = TmpPseudoPotentials[j];
     }
   else
-    if (InteractionDefinition["PseudopotentialsDownMinusDownMinus"] != 0)
-      {
-	cout << "PseudopotentialsDownMinusDownMinus has a wrong value in " << fileName << endl;
-	return false;
-      }
-
+    {
+      if (InteractionDefinition["PseudopotentialsDownMinusDownMinus"] != 0)
+	{
+	  cout << "PseudopotentialsDownMinusDownMinus has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+  return true;
 }
 

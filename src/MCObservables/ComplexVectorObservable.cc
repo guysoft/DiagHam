@@ -392,7 +392,7 @@ double* ComplexVectorObservable::VarianceOfBins()
 double ComplexVectorObservable::VarianceOfBins(int f)
 {
   if ((Values[0].empty())||(Values[0].size()<2))
-    return NULL;
+    return 0.0;
     //cerr<<"Variance of empty observable not defined!\n";    
   double sum2=0.0;
   int BinNum=Values[0].size();
@@ -501,7 +501,7 @@ double* ComplexVectorObservable::VarianceOfBinsRe()
 double ComplexVectorObservable::VarianceOfBinsRe(int f)
 {
   if ((Values[0].empty())||(Values[0].size()<2))
-    return NULL;
+    return 0.0;
     //cerr<<"Variance of empty observable not defined!\n";    
   double sum2=0.0;
   int BinNum=Values[0].size();
@@ -618,7 +618,7 @@ double* ComplexVectorObservable::VarianceOfBinsIm()
 double ComplexVectorObservable::VarianceOfBinsIm(int f)
 {
   if ((Values[0].empty())||(Values[0].size()<2))
-    return NULL;
+    return 0.0;
     //cerr<<"Variance of empty observable not defined!\n";    
   double sum2=0.0;
   int BinNum=Values[0].size();

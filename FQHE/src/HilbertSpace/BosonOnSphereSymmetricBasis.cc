@@ -323,10 +323,12 @@ int BosonOnSphereSymmetricBasis::AdAdAA (int index, int m1, int m2, int n1, int 
     --NewLzMax;
   this->GetSignedCanonicalState(this->TemporaryState, NewLzMax);
   if ((NewLzMax & BOSON_SPHERE_SYMMETRIC_BIT) != TmpSignature)
-    if (TmpSignature != 0)
-      coefficient *= M_SQRT2;
-    else
-      coefficient *= M_SQRT1_2;
+    {
+      if (TmpSignature != 0)
+	coefficient *= M_SQRT2;
+      else
+	coefficient *= M_SQRT1_2;
+    }
   return this->FindStateIndex(this->TemporaryState, NewLzMax);
 }
 
@@ -382,10 +384,12 @@ int BosonOnSphereSymmetricBasis::ProdAdProdA (int index, int* m, int* n, int nbr
     --NewLzMax;
   this->GetSignedCanonicalState(this->TemporaryState, NewLzMax);
   if ((NewLzMax & BOSON_SPHERE_SYMMETRIC_BIT) != TmpSignature)
-    if (TmpSignature != 0)
-      coefficient *= M_SQRT2;
-    else
-      coefficient *= M_SQRT1_2;
+    {
+      if (TmpSignature != 0)
+	coefficient *= M_SQRT2;
+      else
+	coefficient *= M_SQRT1_2;
+    }
   return this->FindStateIndex(this->TemporaryState, NewLzMax);
 }
 
@@ -478,10 +482,12 @@ int BosonOnSphereSymmetricBasis::AdAd (int m1, int m2, double& coefficient)
     --NewLzMax;
   this->GetSignedCanonicalState(this->TemporaryState, NewLzMax);
   if ((NewLzMax & BOSON_SPHERE_SYMMETRIC_BIT) != this->ProdASignature)
-    if (this->ProdASignature != 0)
-      coefficient *= M_SQRT2;
-    else
-      coefficient *= M_SQRT1_2;
+    {
+      if (this->ProdASignature != 0)
+	coefficient *= M_SQRT2;
+      else
+	coefficient *= M_SQRT1_2;
+    }
   return this->FindStateIndex(this->TemporaryState, NewLzMax);
 }
 
@@ -508,10 +514,12 @@ int BosonOnSphereSymmetricBasis::ProdAd (int* m, int nbrIndices, double& coeffic
     --NewLzMax;
   this->GetSignedCanonicalState(this->TemporaryState, NewLzMax);
   if ((NewLzMax & BOSON_SPHERE_SYMMETRIC_BIT) != this->ProdASignature)
-    if (this->ProdASignature != 0)
-      coefficient *= M_SQRT2;
-    else
-      coefficient *= M_SQRT1_2;
+    {
+      if (this->ProdASignature != 0)
+	coefficient *= M_SQRT2;
+      else
+	coefficient *= M_SQRT1_2;
+    }
   return this->FindStateIndex(this->TemporaryState, NewLzMax);
 }
 

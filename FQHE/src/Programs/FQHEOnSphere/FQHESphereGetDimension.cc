@@ -1647,10 +1647,12 @@ long BosonSU2ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int 
     return 0l;
     
   if (nbrBosons == 1) 
-    if (lzMax >= totalLz)
-      return 1l;
-    else
-      return 0l;
+    {
+      if (lzMax >= totalLz)
+	return 1l;
+      else
+	return 0l;
+    }
   if (totalLz == 0)
     return 1l;
 
@@ -1738,4 +1740,5 @@ ostream& Boson4DSphereWriteDimension(ostream& output, int nbrParticles, int nbrF
 	    }
 	 }
     }
+  return output;
 }	 

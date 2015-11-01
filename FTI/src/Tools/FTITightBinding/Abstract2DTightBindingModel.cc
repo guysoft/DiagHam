@@ -858,10 +858,10 @@ bool Abstract2DTightBindingModel::WriteAsciiDMatrixEigenValues(char* fileName, i
   
   for (int ky = 0; ky < this->NbrSiteY - 1; ++ ky)
   {
-    distancePlus = abs(Theta[ky][0] - Theta[ky + 1][0]);
-    distanceMod2PiPlus = abs(Theta[ky][0] - Theta[ky + 1][1] - 2*M_PI);
-    distanceMoins = abs(Theta[ky][1] - Theta[ky + 1][1]);
-    distanceMod2PiMoins = abs(Theta[ky][1] - Theta[ky + 1][0] + 2*M_PI);
+    distancePlus = fabs(Theta[ky][0] - Theta[ky + 1][0]);
+    distanceMod2PiPlus = fabs(Theta[ky][0] - Theta[ky + 1][1] - 2*M_PI);
+    distanceMoins = fabs(Theta[ky][1] - Theta[ky + 1][1]);
+    distanceMod2PiMoins = fabs(Theta[ky][1] - Theta[ky + 1][0] + 2*M_PI);
     
     if (distanceMod2PiPlus < distancePlus)
     {
@@ -1186,15 +1186,16 @@ double Abstract2DTightBindingModel::ComputeBerryCurvature(int band, char* fileNa
 }
 
 
-//compute the complex eigenvalues of the D(ky) matrix (in order to compute the Z2 invariant)
+// compute the complex eigenvalues of the D(ky) matrix (in order to compute the Z2 invariant)
 //
-//bandIndex = band index (corresponds to two bands that are related by time reversal symmetry)
-//nbrOccupiedBands = dimension of the D matrix
-//DMatrixEigenvalues = array of eigenvalues of the D Matrix, for all values of ky
-//kyMin = minimal value of ky for which the D matrix has to be diagonalized
-//kyMax = maximal value of ky for which the D matrix has to be diagonalized
-//nbrKy = number of ky values for which the D matrix has to be diagonalized
-//return value = array of eigenvalues of the D matrix
+// bandIndex = band index (corresponds to two bands that are related by time reversal symmetry)
+// nbrOccupiedBands = dimension of the D matrix
+// DMatrixEigenvalues = array of eigenvalues of the D Matrix, for all values of ky
+// kyMin = minimal value of ky for which the D matrix has to be diagonalized
+// kyMax = maximal value of ky for which the D matrix has to be diagonalized
+// nbrKy = number of ky values for which the D matrix has to be diagonalized
+// return value = array of eigenvalues of the D matrix
+
 Complex** Abstract2DTightBindingModel::ComputeDMatrixEigenvalues(int nbrOccupiedBands, int kyMin, int kyMax, int nbrKy)
 {
   Complex** DMatrixEigenvalues;
@@ -1301,10 +1302,11 @@ Complex** Abstract2DTightBindingModel::ComputeDMatrixEigenvalues(int nbrOccupied
   return DMatrixEigenvalues;
 }
 
-//compute the Z2 topological invariant for a system with time reversal symmetry
+// compute the Z2 topological invariant for a system with time reversal symmetry
 //
-//nbrOccupiedBands = number of occupied bands
-//return value = Z2 invariant
+// nbrOccupiedBands = number of occupied bands
+// return value = Z2 invariant
+
 int Abstract2DTightBindingModel::ComputeZ2Invariant(int nbrOccupiedBands)
 {
   int z2Invariant = 0;
@@ -1337,10 +1339,10 @@ int Abstract2DTightBindingModel::ComputeZ2Invariant(int nbrOccupiedBands)
 //   double referenceLine = 0.9267 + theta[0][0];
   for (int ky = 0; ky < this->NbrSiteY  - 1; ++ ky)
   {
-    distancePlus = abs(Theta[ky][0] - Theta[ky + 1][0]);
-    distanceMod2PiPlus = abs(Theta[ky][0] - Theta[ky + 1][1] - 2*M_PI);
-    distanceMoins = abs(Theta[ky][1] - Theta[ky + 1][1]);
-    distanceMod2PiMoins = abs(Theta[ky][1] - Theta[ky + 1][0] + 2*M_PI);
+    distancePlus = fabs(Theta[ky][0] - Theta[ky + 1][0]);
+    distanceMod2PiPlus = fabs(Theta[ky][0] - Theta[ky + 1][1] - 2*M_PI);
+    distanceMoins = fabs(Theta[ky][1] - Theta[ky + 1][1]);
+    distanceMod2PiMoins = fabs(Theta[ky][1] - Theta[ky + 1][0] + 2*M_PI);
     
     if (distanceMod2PiPlus < distancePlus)
     {

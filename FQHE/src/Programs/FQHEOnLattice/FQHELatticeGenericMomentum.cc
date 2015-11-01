@@ -326,64 +326,65 @@ int main(int argc, char** argv)
       
       //   // testing Hamiltonian:
       if (Manager.GetBoolean("test-hamiltonian"))    
-	if (Hamiltonian->GetHilbertSpaceDimension()>5000)
-	  {
-	    cout << "Attention, debug mode of FQHELatticeBosonsGeneric run for large Hilbert-space"<<endl;
-	  }
-	else
-	  {
-	    ComplexMatrix HRe(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
-	    ComplexMatrix HIm(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
-	    GetHamiltonian(Hamiltonian,HRe);
-	    GetHamiltonianIm(Hamiltonian,HIm);
-	    Complex one, two, M_I(0.0,1.0);
-	    for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
-	      for (int j=0; j<Hamiltonian->GetHilbertSpaceDimension(); ++j)
-		{
-		  HRe.GetMatrixElement(i,j,one);
-		  HIm.GetMatrixElement(i,j,two);
-		  one*=M_I;
-		  if (Norm(one-two)>1e-10)
-		    cout << "Discrepancy in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
-		}
-	    cout << "HRe="<<endl<<HRe;
-	    for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
-	      {
-		HRe.GetMatrixElement(i,i,one);
-		if (Norm(one.Im)>1e-10)
-		  cout << "Matrix not hermitian in "<<i<<", "<<i<<": "<<one << endl;
-		for (int j=0; j<i; ++j)
+	{
+	  if (Hamiltonian->GetHilbertSpaceDimension()>5000)
+	    {
+	      cout << "Attention, debug mode of FQHELatticeBosonsGeneric run for large Hilbert-space"<<endl;
+	    }
+	  else
+	    {
+	      ComplexMatrix HRe(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
+	      ComplexMatrix HIm(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
+	      GetHamiltonian(Hamiltonian,HRe);
+	      GetHamiltonianIm(Hamiltonian,HIm);
+	      Complex one, two, M_I(0.0,1.0);
+	      for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
+		for (int j=0; j<Hamiltonian->GetHilbertSpaceDimension(); ++j)
 		  {
 		    HRe.GetMatrixElement(i,j,one);
-		    HRe.GetMatrixElement(j,i,two);
-		    if (Norm(one-Conj(two))>1e-10)
-		      cout << "Matrix not hermitian in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
+		    HIm.GetMatrixElement(i,j,two);
+		    one*=M_I;
+		    if (Norm(one-two)>1e-10)
+		      cout << "Discrepancy in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
 		  }
-	      }
-	    
-	    ComplexVector TmpV1a (Hamiltonian->GetHilbertSpaceDimension(), true);
-	    ComplexVector TmpV1b (Hamiltonian->GetHilbertSpaceDimension(), true);
-	    ComplexVector TmpV2a (Hamiltonian->GetHilbertSpaceDimension(), true);
-	    ComplexVector TmpV2b (Hamiltonian->GetHilbertSpaceDimension(), true);
-	    for (int i = 0; i < Hamiltonian->GetHilbertSpaceDimension(); i++)
-	      {
-		TmpV1a.Re(i) = (rand() - 32767) * 0.5;
-		TmpV1a.Im(i) = (rand() - 32767) * 0.5;
-	      }
-	    TmpV1a /= TmpV1a.Norm();
-	    TmpV1b = TmpV1a*M_I;
-	    Hamiltonian->LowLevelMultiply(TmpV1a, TmpV2a);
-	    Hamiltonian->LowLevelMultiply(TmpV1b, TmpV2b);
-	    for (int j=0; j<Hamiltonian->GetHilbertSpaceDimension(); ++j)
-	      {
-		one = TmpV2a[j];
-		two = TmpV2b[j];
-		one = one*M_I;
-		if (Norm(one-two)>1e-10)
-		  cout << "Discrepancy in "<<j<<": "<<one << " vs " << two << endl;
-	      }
-	  }
-
+	      cout << "HRe="<<endl<<HRe;
+	      for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
+		{
+		  HRe.GetMatrixElement(i,i,one);
+		  if (Norm(one.Im)>1e-10)
+		    cout << "Matrix not hermitian in "<<i<<", "<<i<<": "<<one << endl;
+		  for (int j=0; j<i; ++j)
+		    {
+		      HRe.GetMatrixElement(i,j,one);
+		      HRe.GetMatrixElement(j,i,two);
+		      if (Norm(one-Conj(two))>1e-10)
+			cout << "Matrix not hermitian in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
+		    }
+		}
+	      
+	      ComplexVector TmpV1a (Hamiltonian->GetHilbertSpaceDimension(), true);
+	      ComplexVector TmpV1b (Hamiltonian->GetHilbertSpaceDimension(), true);
+	      ComplexVector TmpV2a (Hamiltonian->GetHilbertSpaceDimension(), true);
+	      ComplexVector TmpV2b (Hamiltonian->GetHilbertSpaceDimension(), true);
+	      for (int i = 0; i < Hamiltonian->GetHilbertSpaceDimension(); i++)
+		{
+		  TmpV1a.Re(i) = (rand() - 32767) * 0.5;
+		  TmpV1a.Im(i) = (rand() - 32767) * 0.5;
+		}
+	      TmpV1a /= TmpV1a.Norm();
+	      TmpV1b = TmpV1a*M_I;
+	      Hamiltonian->LowLevelMultiply(TmpV1a, TmpV2a);
+	      Hamiltonian->LowLevelMultiply(TmpV1b, TmpV2b);
+	      for (int j=0; j<Hamiltonian->GetHilbertSpaceDimension(); ++j)
+		{
+		  one = TmpV2a[j];
+		  two = TmpV2b[j];
+		  one = one*M_I;
+		  if (Norm(one-two)>1e-10)
+		    cout << "Discrepancy in "<<j<<": "<<one << " vs " << two << endl;
+		}
+	    }
+	}
       cout << "----------------------------------------------------------------" << endl;
       cout << "K=["<<XMomenta[Pos]<<","<<YMomenta[Pos]<<"]"<<endl;
       

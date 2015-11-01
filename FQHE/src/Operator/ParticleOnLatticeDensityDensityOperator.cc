@@ -80,10 +80,10 @@ ParticleOnLatticeDensityDensityOperator::ParticleOnLatticeDensityDensityOperator
 ParticleOnLatticeDensityDensityOperator::ParticleOnLatticeDensityDensityOperator(const ParticleOnLatticeDensityDensityOperator& oper)
 {
   this->Particle = oper.Particle;
-  this->CreationIndex1 = this->CreationIndex1;
-  this->CreationIndex2 = this->CreationIndex2;
-  this->AnnihilationIndex1 = this->AnnihilationIndex1;
-  this->AnnihilationIndex2 = this->AnnihilationIndex2;
+  this->CreationIndex1 = oper.CreationIndex1;
+  this->CreationIndex2 = oper.CreationIndex2;
+  this->AnnihilationIndex1 = oper.AnnihilationIndex1;
+  this->AnnihilationIndex2 = oper.AnnihilationIndex2;
 }
 
 

@@ -731,16 +731,19 @@ long FermionOnSphereWithSU4Spin::GenerateStates(int nbrFermions, int lzMax, int 
     return pos;
     
   if (nbrFermions == 1) 
-    if (lzMax >= totalLz)
-      {
-	this->StateDescription[pos] = 0x1ul << ((totalLz << 2) + (totalSpin << 1) + totalIsospin);
-	return (pos + 1l);
-      }
-    else
-      return pos;
-
+    {
+      if (lzMax >= totalLz)
+	{
+	  this->StateDescription[pos] = 0x1ul << ((totalLz << 2) + (totalSpin << 1) + totalIsospin);
+	  return (pos + 1l);
+	}
+      else
+	return pos;
+    }
   if ((lzMax == 0)  && (totalLz != 0))
-    return pos;
+    {
+      return pos;
+    }
 
 
   long TmpPos;
@@ -1111,10 +1114,12 @@ long FermionOnSphereWithSU4Spin::ShiftedEvaluateHilbertSpaceDimension(int nbrFer
     return 0l;
     
   if (nbrFermions == 1) 
-    if (lzMax >= totalLz)
-      return 1l;
-    else
-      return 0l;
+    {
+      if (lzMax >= totalLz)
+	return 1l;
+      else
+	return 0l;
+    }
 
   if ((lzMax == 0)  && (totalLz != 0))
     return 0l;
@@ -1211,10 +1216,12 @@ long FermionOnSphereWithSU4Spin::ShiftedEvaluateHilbertSpaceDimension(int nbrFer
   if ((nbrFermions == 0) && (totalLz == 0) && (totalSpin == 0) && (totalIsospin == 0) && (totalEntanglement == 0))
     return 1l;
   if (nbrFermions == 1) 
-    if ((lzMax >= totalLz) && (totalEntanglement != (totalSpin ^ totalIsospin)))
-      return 1l;
-    else
-      return 0l;
+    {
+      if ((lzMax >= totalLz) && (totalEntanglement != (totalSpin ^ totalIsospin)))
+	return 1l;
+      else
+	return 0l;
+    }
 
   if ((lzMax == 0)  && (totalLz != 0))
     return 0l;

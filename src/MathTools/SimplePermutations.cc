@@ -39,9 +39,9 @@ SimplePermutations::~SimplePermutations()
 // if necessary, a new copy is created
 unsigned** SimplePermutations::CheckOutPermutations()
 {
-  if (this->CleanUp=true)
+  if (this->CleanUp == true)
     {
-      this->CleanUp=false;
+      this->CleanUp = false;
       return this->Permutations;
     }
   else

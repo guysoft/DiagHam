@@ -849,8 +849,10 @@ void FermionOnSphereLong::GetOccupied(int state, int* orbitals)
   ULONGLONG TmpState = this->StateDescription[state];
   int i = 0;
   for (int l = 0; l < this->NbrLzValue; ++l)
-      if ((TmpState >> l) & ((ULONGLONG) 0x1l) == ((ULONGLONG) 0x1))
-          orbitals[i++] = l;
+    {
+      if (((TmpState >> l) & ((ULONGLONG) 0x1l)) == ((ULONGLONG) 0x1))
+	orbitals[i++] = l;
+    }
 }
 
 // print a given State

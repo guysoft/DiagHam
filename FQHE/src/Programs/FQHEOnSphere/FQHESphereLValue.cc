@@ -119,19 +119,23 @@ int main(int argc, char** argv)
 	return -1;
       }
   if (Manager.GetString("statistics") != 0)
-    if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
-      {
-	FermionFlag = true;
-      }
-    else
-      if ((strcmp ("bosons", Manager.GetString("statistics")) == 0))
+    {
+      if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
 	{
-	  FermionFlag = false;
+	  FermionFlag = true;
 	}
       else
 	{
-	  cout << Manager.GetString("statistics") << " is an undefined statistics" << endl;
-	}  
+	  if ((strcmp ("bosons", Manager.GetString("statistics")) == 0))
+	    {
+	      FermionFlag = false;
+	    }
+	  else
+	    {
+	      cout << Manager.GetString("statistics") << " is an undefined statistics" << endl;
+	    }  
+	}
+    }
   int Parity = TotalLz & 1;
   if (Parity != ((NbrParticles * LzMax) & 1))
     {

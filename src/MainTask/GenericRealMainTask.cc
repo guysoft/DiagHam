@@ -86,7 +86,7 @@ using std::ofstream;
 // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
 
 GenericRealMainTask::GenericRealMainTask(OptionManager* options, AbstractHilbertSpace* space, LanczosManager* lanczos, 
-					 AbstractHamiltonian* hamiltonian, char *subspaceStr, char *subspaceLegend,
+					 AbstractHamiltonian* hamiltonian, const char *subspaceStr, const char *subspaceLegend,
 					 double shift, char* outputFileName, bool firstRun, char* eigenvectorFileName, bool fakeComplex)
 {
   this->OutputFileName = new char [strlen(outputFileName) + 1];
@@ -630,9 +630,10 @@ int GenericRealMainTask::ExecuteMainTask()
       int CurrentTimeSecond = TotalCurrentTime.tv_sec;
       GenericSignalHandler Usr1Handler(SIGUSR1);
       while ((Lanczos->TestConvergence() == false) && (((this->DiskFlag == true) && (((this->MaximumAllowedTime == 0) && (CurrentNbrIterLanczos < this->NbrIterLanczos)) || 
-										     ((this->MaximumAllowedTime > 0) && (this->MaximumAllowedTime > (CurrentTimeSecond - StartTimeSecond))))) ||
-						       ((this->DiskFlag == false) && ((this->PartialLanczos == false) && (CurrentNbrIterLanczos < this->MaxNbrIterLanczos)) ||
-							((this->PartialLanczos == true) && (CurrentNbrIterLanczos < this->NbrIterLanczos)))))
+										     ((this->MaximumAllowedTime > 0) 
+										      && (this->MaximumAllowedTime > (CurrentTimeSecond - StartTimeSecond))))) ||
+						       ((this->DiskFlag == false) && (((this->PartialLanczos == false) && (CurrentNbrIterLanczos < this->MaxNbrIterLanczos)) ||
+										      ((this->PartialLanczos == true) && (CurrentNbrIterLanczos < this->NbrIterLanczos))))))
 	{
 	  if (this->BlockLanczosFlag == true)
 	    CurrentNbrIterLanczos += this->SizeBlockLanczos;
@@ -726,8 +727,8 @@ int GenericRealMainTask::ExecuteMainTask()
       if ((this->EvaluateEigenvectors == true) && 
 	  (((this->DiskFlag == true) && (((this->MaximumAllowedTime == 0) && (CurrentNbrIterLanczos < this->NbrIterLanczos)) || 
 					 ((this->MaximumAllowedTime > 0) && (this->MaximumAllowedTime > (CurrentTimeSecond - StartTimeSecond))))) ||
-	   ((this->DiskFlag == false) && ((this->PartialLanczos == false) && (CurrentNbrIterLanczos < this->MaxNbrIterLanczos)) ||
-	    ((this->PartialLanczos == true) && (CurrentNbrIterLanczos < this->NbrIterLanczos)))))
+	   ((this->DiskFlag == false) && (((this->PartialLanczos == false) && (CurrentNbrIterLanczos < this->MaxNbrIterLanczos)) ||
+					  ((this->PartialLanczos == true) && (CurrentNbrIterLanczos < this->NbrIterLanczos))))))
 	{
 	  RealVector* Eigenvectors = (RealVector*) Lanczos->GetEigenstates(this->NbrEigenvalue);
 	  if (Eigenvectors != 0)

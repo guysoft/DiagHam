@@ -253,7 +253,7 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      sprintf (FileBandParameters, "v_%f_w_t1_%f_t2_%f_tpp_%f_delta_%f_phi_%f_gx_%f_gy_%f_mus_%f", 
+	      sprintf (FileBandParameters, "v_%f_w_%f_t1_%f_t2_%f_tpp_%f_delta_%f_phi_%f_gx_%f_gy_%f_mus_%f", 
 		       Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), 
 		       Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), 
 		       Manager.GetDouble("mixing-norm"), Manager.GetDouble("mixing-arg"), 
@@ -271,7 +271,7 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      sprintf (FileBandParameters, "u_%f_v_%f_w_t1_%f_t2_%f_tpp_%f_delta_%f_phi_%f_gx_%f_gy_%f_mus_%f", 
+	      sprintf (FileBandParameters, "u_%f_v_%f_w_%f_t1_%f_t2_%f_tpp_%f_delta_%f_phi_%f_gx_%f_gy_%f_mus_%f", 
 		       Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), 
 		       Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), 
 		       Manager.GetDouble("mixing-norm"), Manager.GetDouble("mixing-arg"), 

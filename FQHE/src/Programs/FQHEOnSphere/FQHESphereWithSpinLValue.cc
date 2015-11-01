@@ -130,37 +130,39 @@ int main(int argc, char** argv)
   if (Manager.GetBoolean("all-sz"))
     TmpTotalSz=-1;
   if (NbrParticles==0)
-    if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("state"), NbrParticles, LzMax, TotalLz, TmpTotalSz, SzSymmetrizedBasis, SzMinusParity, 
-							     LzSymmetrizedBasis, LzMinusParity, FermionFlag) == false)
-      {
-	return -1;
-      }
-    else
-      {
-	if (!Manager.GetBoolean("all-sz"))
-	  TotalSz=TmpTotalSz;
-	if (Manager.GetBoolean("show-extracted") == true)
-	  {
-	    cout << "N=" << NbrParticles << "  LzMax=" << LzMax << "  TotalLz=" << TotalLz << "  TotalSz=" << TotalSz;
-	    if (LzSymmetrizedBasis == true)
-	      {
-		cout << "  Lz symmetrized basis ";
-		if (LzMinusParity == true)
-		  cout << "(minus parity) ";
+    {
+      if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("state"), NbrParticles, LzMax, TotalLz, TmpTotalSz, SzSymmetrizedBasis, SzMinusParity, 
+							       LzSymmetrizedBasis, LzMinusParity, FermionFlag) == false)
+	{
+	  return -1;
+	}
+      else
+	{
+	  if (!Manager.GetBoolean("all-sz"))
+	    TotalSz=TmpTotalSz;
+	  if (Manager.GetBoolean("show-extracted") == true)
+	    {
+	      cout << "N=" << NbrParticles << "  LzMax=" << LzMax << "  TotalLz=" << TotalLz << "  TotalSz=" << TotalSz;
+	      if (LzSymmetrizedBasis == true)
+		{
+		  cout << "  Lz symmetrized basis ";
+		  if (LzMinusParity == true)
+		    cout << "(minus parity) ";
+		  else
+		    cout << "(plus parity) ";
+		}
+	      if (SzSymmetrizedBasis == true)
+		{
+		  cout << "  Sz symmetrized basis ";
+		  if (SzMinusParity == true)
+		    cout << "(minus parity) ";
 		else
 		  cout << "(plus parity) ";
-	      }
-	    if (SzSymmetrizedBasis == true)
-	      {
-		cout << "  Sz symmetrized basis ";
-		if (SzMinusParity == true)
-		  cout << "(minus parity) ";
-		else
-		  cout << "(plus parity) ";
-	      }
-	    cout << endl;
-	  }
-      }
+		}
+	      cout << endl;
+	    }
+	}
+    }
   if (Manager.GetBoolean("lzsymmetrized-basis") == true)
     {
       LzSymmetrizedBasis = Manager.GetBoolean("lzsymmetrized-basis");
@@ -172,19 +174,23 @@ int main(int argc, char** argv)
       SzMinusParity = Manager.GetBoolean("minus-szparity");
     }
   if (Manager.GetString("statistics") != 0)
-    if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
-      {
-	FermionFlag = true;
-      }
-    else
-      if ((strcmp ("bosons", Manager.GetString("statistics")) == 0))
+    {
+      if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
 	{
-	  FermionFlag = false;
+	  FermionFlag = true;
 	}
       else
 	{
-	  cout << Manager.GetString("statistics") << " is an undefined statistics" << endl;
-	}  
+	  if ((strcmp ("bosons", Manager.GetString("statistics")) == 0))
+	    {
+	      FermionFlag = false;
+	    }
+	  else
+	    {
+	      cout << Manager.GetString("statistics") << " is an undefined statistics" << endl;
+	    }  
+	}
+    }
   int Parity = TotalLz & 1;
   if (Parity != ((NbrParticles * LzMax) & 1))
     {

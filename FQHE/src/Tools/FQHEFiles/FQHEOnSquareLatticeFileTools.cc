@@ -484,7 +484,7 @@ bool FQHEOnCubicLatticeFindSystemInfoFromVectorFileName(char* filename, int& nbr
       while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
 	     && (StrNbrParticles[SizeString] <= '9'))
 	++SizeString;
-      if ((StrNbrParticles[SizeString] == '.') || (StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+      if (((StrNbrParticles[SizeString] == '.') || (StrNbrParticles[SizeString] == '_')) && (SizeString != 0))
 	{
 	  char TmpChar = StrNbrParticles[SizeString];
 	  StrNbrParticles[SizeString] = '\0';
@@ -507,7 +507,7 @@ bool FQHEOnCubicLatticeFindSystemInfoFromVectorFileName(char* filename, int& nbr
       while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
 	     && (StrNbrParticles[SizeString] <= '9'))
 	++SizeString;
-      if ((StrNbrParticles[SizeString] == '.') || (StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+      if (((StrNbrParticles[SizeString] == '.') || (StrNbrParticles[SizeString] == '_')) && (SizeString != 0))
 	{
 	  char TmpChar = StrNbrParticles[SizeString];
 	  StrNbrParticles[SizeString] = '\0';

@@ -140,67 +140,67 @@ int main(int argc, char** argv)
 	}
       
       for (int kz = MinKz; kz <= MaxKz ; ++kz)
-      {
-	if ((((jz + kz) & 1) == ((NbrBosons * NbrFluxQuanta) & 1)) && (abs(kz)<=abs(jz)) && (fabs(kz)+fabs(jz)<= NbrBosons*NbrFluxQuanta))
 	{
-// 	   
-	cout << "(jz,kz) = (" << jz << "," << kz << ")" << endl; 
-      ParticleOnSphere* Space = 0;
-      if (NbrOrbitals + NbrBosons < 65)
-	Space = new BosonOn4DSphere(NbrBosons, NbrFluxQuanta, jz, kz);
-      else
-	Space = new BosonOn4DSphereLong(NbrBosons, NbrFluxQuanta, jz, kz);
-     
-      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
-	Memory = Architecture.GetArchitecture()->GetLocalMemory();
-//       for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-// 	Space->PrintState(cout, i);
-       
-      AbstractQHEHamiltonian* Hamiltonian = 0;
-           
-      if (ThreeBodyFlag == false)
-      {
-	Hamiltonian = new ParticleOn4DSphereDeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta,
-							   Architecture.GetArchitecture(), 
-							   Memory);
-      }
-      else
-      {
-	Hamiltonian = new ParticleOn4DSphereThreeBodyDeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, 0, Architecture.GetArchitecture(),  Memory, DiskCacheFlag, LoadPrecalculationFileName);
-      }
-//        double Shift = - 0.5 * ((double) (NbrBosons * NbrBosons)) / (0.5 * ((double) NbrFluxQuanta));
-//        Hamiltonian->ShiftHamiltonian(Shift);
-      char* EigenvectorName = 0;
-      if (Manager.GetBoolean("eigenstate") == true)	
-	{
-	  EigenvectorName = new char [64];
-	  if (ThreeBodyFlag == false)
-	    sprintf (EigenvectorName, "bosons_sphere4d_delta_n_%d_2s_%d_jz_%d_kz_%d", NbrBosons, NbrFluxQuanta, jz, kz);
-	  else 
-	    sprintf (EigenvectorName, "bosons_sphere4d_threebody_delta_n_%d_2s_%d_jz_%d_kz_%d", NbrBosons, NbrFluxQuanta, jz, kz);
+	  if ((((jz + kz) & 1) == ((NbrBosons * NbrFluxQuanta) & 1)) && (abs(kz)<=abs(jz)) && (abs(kz)+abs(jz)<= (NbrBosons*NbrFluxQuanta)))
+	    {
+	      // 	   
+	      cout << "(jz,kz) = (" << jz << "," << kz << ")" << endl; 
+	      ParticleOnSphere* Space = 0;
+	      if (NbrOrbitals + NbrBosons < 65)
+		Space = new BosonOn4DSphere(NbrBosons, NbrFluxQuanta, jz, kz);
+	      else
+		Space = new BosonOn4DSphereLong(NbrBosons, NbrFluxQuanta, jz, kz);
+	      
+	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+	      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+		Memory = Architecture.GetArchitecture()->GetLocalMemory();
+	      //       for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+	      // 	Space->PrintState(cout, i);
+	      
+	      AbstractQHEHamiltonian* Hamiltonian = 0;
+	      
+	      if (ThreeBodyFlag == false)
+		{
+		  Hamiltonian = new ParticleOn4DSphereDeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta,
+								       Architecture.GetArchitecture(), 
+								       Memory);
+		}
+	      else
+		{
+		  Hamiltonian = new ParticleOn4DSphereThreeBodyDeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, 0, Architecture.GetArchitecture(),  Memory, DiskCacheFlag, LoadPrecalculationFileName);
+		}
+	      //        double Shift = - 0.5 * ((double) (NbrBosons * NbrBosons)) / (0.5 * ((double) NbrFluxQuanta));
+	      //        Hamiltonian->ShiftHamiltonian(Shift);
+	      char* EigenvectorName = 0;
+	      if (Manager.GetBoolean("eigenstate") == true)	
+		{
+		  EigenvectorName = new char [64];
+		  if (ThreeBodyFlag == false)
+		    sprintf (EigenvectorName, "bosons_sphere4d_delta_n_%d_2s_%d_jz_%d_kz_%d", NbrBosons, NbrFluxQuanta, jz, kz);
+		  else 
+		    sprintf (EigenvectorName, "bosons_sphere4d_threebody_delta_n_%d_2s_%d_jz_%d_kz_%d", NbrBosons, NbrFluxQuanta, jz, kz);
+		}
+	      
+	      char* ContentPrefix = new char[256];
+	      sprintf (ContentPrefix, "%d %d", jz, kz);
+	      
+	      char* SubspaceLegend = new char[256];
+	      sprintf (SubspaceLegend, "jz kz");
+	      GenericRealMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, ContentPrefix, SubspaceLegend, 0, OutputName, FirstRun, EigenvectorName);
+	      MainTaskOperation TaskOperation (&Task);
+	      
+	      
+	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	      delete Hamiltonian;
+	      if (EigenvectorName != 0)
+		{
+		  delete[] EigenvectorName;
+		}
+	      if (FirstRun == true)
+		FirstRun = false;
+	    } 
+	  
 	}
-	
-      char* ContentPrefix = new char[256];
-      sprintf (ContentPrefix, "%d %d", jz, kz);
-      
-      char* SubspaceLegend = new char[256];
-      sprintf (SubspaceLegend, "jz kz");
-      GenericRealMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, ContentPrefix, SubspaceLegend, 0, OutputName, FirstRun, EigenvectorName);
-      MainTaskOperation TaskOperation (&Task);
- 
-  
-      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-      delete Hamiltonian;
-      if (EigenvectorName != 0)
-	{
-	  delete[] EigenvectorName;
-	}
-      if (FirstRun == true)
-	FirstRun = false;
-	} 
-	
-      }
     }
   return 0;
 }

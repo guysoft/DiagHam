@@ -25,7 +25,7 @@ ArithmeticGeometricMean::ArithmeticGeometricMean(double a0, double b0, double c0
 
   this->Length=2;
   this->Recurse(an,bn,cn);
-  while (abs(cn)>this->Precision)
+  while (fabs(cn) > this->Precision)
     {
       ++this->Length;
       this->Recurse(an,bn,cn);
@@ -49,7 +49,7 @@ ArithmeticGeometricMean::ArithmeticGeometricMean(double a0, double b0, double c0
   
   this->Length=2;
 
-  while (abs(cn)>this->Precision)
+  while (fabs(cn)>this->Precision)
     {
       this->Recurse(an,bn,cn);
       this->A[this->Length]=an;

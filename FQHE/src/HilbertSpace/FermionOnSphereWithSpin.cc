@@ -1923,16 +1923,19 @@ long FermionOnSphereWithSpin::GenerateStates(int nbrFermions, int lzMax, int tot
     return pos;
     
   if (nbrFermions == 1) 
-    if (lzMax >= totalLz)
-      {
-	this->StateDescription[pos] = 0x1ul << ((totalLz << 1) + totalSpin);
-	return (pos + 1l);
-      }
-    else
-      return pos;
-
+    {
+      if (lzMax >= totalLz)
+	{
+	  this->StateDescription[pos] = 0x1ul << ((totalLz << 1) + totalSpin);
+	  return (pos + 1l);
+	}
+      else
+	return pos;
+    }
   if ((lzMax == 0) && (totalLz != 0))
-    return pos;
+    {
+      return pos;
+    }
 
 
   long TmpPos = this->GenerateStates(nbrFermions - 2, lzMax - 1, totalLz - (lzMax << 1), totalSpin - 1,  pos);
@@ -2215,10 +2218,12 @@ long FermionOnSphereWithSpin::ShiftedEvaluateHilbertSpaceDimension(int nbrFermio
     return 0l;
     
   if (nbrFermions == 1) 
-    if (lzMax >= totalLz)
-      return 1l;
-    else
-      return 0l;
+    {
+      if (lzMax >= totalLz)
+	return 1l;
+      else
+	return 0l;
+    }
 
   if ((lzMax == 0) && (totalLz != 0))
     return 0l;

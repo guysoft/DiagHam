@@ -331,7 +331,7 @@ long FermionOnCP2Long::GenerateStates(int nbrFermions, int currentTz, int curren
   ULONGLONG Mask = (((ULONGLONG) 0x1ul << 1) - (ULONGLONG) 0x1ul) << this->GetLinearizedIndex(currentTz, currentY, 1);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
-  this->GenerateStates(nbrFermions, currentTz - 2, currentTzMax, currentY, currentTotalTz, currentTotalY, pos);
+  return this->GenerateStates(nbrFermions, currentTz - 2, currentTzMax, currentY, currentTotalTz, currentTotalY, pos);
 };
 
 
