@@ -73,6 +73,7 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matr
       this->MPSMatrix->GetFillingFactor(TmpNumerator, this->QPeriodicity);
       this->BMatrixGroupSize = this->QPeriodicity;
     }
+  this->TorusFlag = matrix->IsTorus();
   int NbrBMatricesPerOrbital = matrix->GetNbrMatrices();
   int NbrGroupBMatrices = 1;
   for (int i = 0; i < this->BMatrixGroupSize; ++i)

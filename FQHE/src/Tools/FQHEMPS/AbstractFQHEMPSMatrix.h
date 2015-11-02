@@ -66,6 +66,9 @@ class AbstractFQHEMPSMatrix
   // array where the B matrices for quasiholes are stored
   SparseRealMatrix* QuasiholeBMatrices;
 
+  // true if B matrix have to be evaluated on the torus geometry
+  bool TorusFlag;
+
  public:
   
   // default constructor 
@@ -120,6 +123,11 @@ class AbstractFQHEMPSMatrix
   // return value = pointer to the edge matrix
   virtual SparseComplexMatrix* GetQuasiholeMatrices(int nbrQuasiholes, Complex* quasiholePositions);
   
+  // test if the MPS is written for the torus geometry
+  //
+  // return value = true if the MPS is written for the torus geometry
+  virtual bool IsTorus();
+
   // get the matrix that into account the Jordan Wigner string on the torus geometry
   //
   // nbrFermions = number of fermions in the system
@@ -414,6 +422,15 @@ inline int AbstractFQHEMPSMatrix::GetNbrCFTSectors()
 inline unsigned long* AbstractFQHEMPSMatrix::GetPhysicalIndices()
 {
   return this->PhysicalIndices;
+}
+
+// test if the MPS is written for the torus geometry
+//
+// return value = true if the MPS is written for the torus geometry
+
+inline bool AbstractFQHEMPSMatrix::IsTorus()
+{
+  return this->TorusFlag;
 }
 
 #endif

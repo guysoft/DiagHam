@@ -57,6 +57,7 @@ AbstractFQHEMPSMatrix::AbstractFQHEMPSMatrix()
   this->PhysicalIndices = new unsigned long[2];
   this->PhysicalIndices[0] = 0x0ul;
   this->PhysicalIndices[1] = 0x1ul;
+  this->TorusFlag = false;
 }
 
 // destructor
@@ -421,11 +422,18 @@ int AbstractFQHEMPSMatrix::GetMatrixNaturalNbrParticles(int nbrFluxQuanta, bool 
   int Numerator;
   int Denominator;
   this->GetFillingFactor(Numerator, Denominator);
-  int NbrParticles = ((nbrFluxQuanta + 1) * Numerator);
-  if ((NbrParticles % Denominator) == 0)
-    return (NbrParticles / Denominator);
+  if (this->TorusFlag == false)
+    {
+      int NbrParticles = ((nbrFluxQuanta + 1) * Numerator);
+      if ((NbrParticles % Denominator) == 0)
+	return (NbrParticles / Denominator);
+      else
+	return ((NbrParticles / Denominator) + 1);
+    }
   else
-    return ((NbrParticles / Denominator) + 1);
+    {
+      return ((nbrFluxQuanta * Numerator) / Denominator);
+    }
 }
 
 // get the Q sector shift for a given CFT sector compared to the x=0 CFT sector

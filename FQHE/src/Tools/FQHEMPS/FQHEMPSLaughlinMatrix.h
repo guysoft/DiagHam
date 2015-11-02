@@ -74,8 +74,6 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   double Kappa;
 
 
-  // true if B matrix have to be evaluated on the torus geometry
-  bool TorusFlag;
   // true if B matrix have to be evaluated on the twisted torus geometry (requiring complex B matrices)
   bool TwistedTorusFlag;
   // number of flux quanta piercing the torus
