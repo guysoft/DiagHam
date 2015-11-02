@@ -1119,7 +1119,7 @@ long FermionOnSphere::AdA (long index, int m, int n, double& coefficient)
   TmpState |= (0x1ul << m);
   return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
 }
-
+ 
 // apply creation operator to a word, using the conventions
 // for state-coding and quantum numbers of this space
 // state = word to be acted upon
