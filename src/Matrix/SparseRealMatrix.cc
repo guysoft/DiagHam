@@ -726,6 +726,31 @@ SparseRealMatrix operator - (const SparseRealMatrix& matrix1, const SparseRealMa
   return SparseRealMatrixLinearCombination(1.0, matrix1, -1.0, matrix2);
 }
 
+// multiply a matrix by a real number (right multiplication)
+//
+// M = source matrix
+// x = real number to use
+// return value = product result
+SparseRealMatrix operator * (SparseRealMatrix& M, double x)
+{ 
+  SparseRealMatrix TmpMatrix;
+  TmpMatrix.Copy(M);
+  TmpMatrix *= x;
+  return  TmpMatrix;
+}
+
+// multiply a matrix by a real number (left multiplication)
+//
+// M = source matrix
+// x = real number to use
+// return value = product result
+SparseRealMatrix operator * (double x,SparseRealMatrix& M)
+{
+  return operator * (M,x);
+}
+
+
+
 // create the linear combination of two matrices
 //
 // x1 = prefactor of the first matrix

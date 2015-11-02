@@ -226,6 +226,20 @@ class SparseRealMatrix : public Matrix
   // return value = difference of the two matrices
   friend SparseRealMatrix operator - (const SparseRealMatrix& matrix1, const SparseRealMatrix& matrix2);
 
+  // multiply a matrix by a real number (right multiplication)
+  //
+  // M = source matrix
+  // x = real number to use
+  // return value = product result
+  friend SparseRealMatrix operator * (SparseRealMatrix& M, double x);
+
+  // multiply a matrix by a real number (left multiplication)
+  //
+  // M = source matrix
+  // x = real number to use
+  // return value = product result
+  friend SparseRealMatrix operator * (double x,SparseRealMatrix& M);
+
   // create the linear combination of two matrices
   //
   // x1 = prefactor of the first matrix
