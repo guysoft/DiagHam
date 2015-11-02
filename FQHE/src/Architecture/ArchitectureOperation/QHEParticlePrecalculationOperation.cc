@@ -40,8 +40,8 @@
 QHEParticlePrecalculationOperation::QHEParticlePrecalculationOperation (AbstractQHEHamiltonian* hamiltonian, bool firstPass)
 {
   this->FirstComponent = 0;
-  this->NbrComponent = hamiltonian->GetHilbertSpaceDimension();
   this->Hamiltonian = hamiltonian;
+  this->NbrComponent = this->Hamiltonian->GetHilbertSpaceDimension();
   this->OperationType = AbstractArchitectureOperation::QHEParticlePrecalculation;
   this->FirstPass = firstPass;
   this->RequiredMemory = 0;

@@ -231,7 +231,19 @@ int main(int argc, char** argv)
     }
 
   ComplexVector TrialState(Space.GetHilbertSpaceDimension(),true);
-  double PhaseTranslationX = 2.0*M_PI*NbrFluxQuanta/(Lx*Ly) * NxZero;
+
+  double PhaseTranslationX = -2.0*M_PI*NbrFluxQuanta/(Lx*Ly) * NxZero;
+
+  HermitianMatrix TmpHam = JastrowTightBindingModel.GetRealSpaceTightBindingHamiltonian();
+  ComplexMatrix TmpMatrix( Lx* Ly, Lx* Ly,true);
+  TmpMatrix.SetToIdentity();
+  RealDiagonalMatrix TmpDiag;
+  TmpHam.LapackDiagonalize(TmpDiag, TmpMatrix);
+
+  cout <<JastrowEigenVecs<<endl;
+
+  cout <<TmpMatrix<<endl;
+
   Space.GetCompositeFermionWavefunction(TrialState, JastrowEigenVecs, CFEigenVecs,PhaseTranslationX );
   cout <<"State Norm " << TrialState.Norm()<<endl;
   TrialState/= TrialState.Norm();

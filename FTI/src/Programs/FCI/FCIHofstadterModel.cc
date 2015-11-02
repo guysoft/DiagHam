@@ -108,6 +108,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
+  (*SystemGroup) += new BooleanOption  ('\n', "embedding", "compute the band structure witht the embedding");
 
   (*SystemGroup) += new BooleanOption  ('\n', "real-space", "use the real space representation when considering the system with all bands");
   (*SystemGroup) += new BooleanOption  ('\n', "no-translation", "use the real space representation when considering the system with all bandswithout the translations");
@@ -141,6 +142,7 @@ int main(int argc, char** argv)
 
   int MinBand = Manager.GetInteger("band-min");
   int MaxBand = Manager.GetInteger("band-max");
+  bool EmbeddingFlag = Manager.GetBoolean("embedding");
 
   char Axis ='y';
 
@@ -339,7 +341,7 @@ else
   Abstract2DTightBindingModel *TightBindingModel;
   if (Manager.GetBoolean("triangular")==false)
     TightBindingModel= new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis,
-							     Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),false,true);
+							     Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),false,EmbeddingFlag);
   else
     TightBindingModel= new TightBindingModelHofstadterTriangularQuarter(NbrCellX, NbrCellY, Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
   

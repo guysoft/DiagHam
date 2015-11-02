@@ -507,6 +507,40 @@ int TightBindingModelHofstadterSquare::EncodeSublatticeIndex(int posx, int posy,
 
 ComplexMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingEigenstates()
 {
+  double LogTranslationPhaseX= -2.0*M_PI*this->FluxDensity*this->UnitCellX;
+  ComplexMatrix EigenStates(this->NbrBands *  this->NbrStatePerBand,this->NbrBands *  this->NbrStatePerBand ,true);
+  int Kx;  int Ky;
+  int K1;  int K2;
+  int OrbitalIndex = 0;
+  int PosXUnitCell = 0;
+  int PosYUnitCell = 0;
+  for(int i = 0; i <this->NbrBands *  this->NbrStatePerBand;i++)
+     {
+        int BandNumber = i/this->NbrStatePerBand;
+        int MomentumIndex = i%this->NbrStatePerBand;
+ 
+   this->GetLinearizedMomentumIndex(MomentumIndex,Kx,Ky);
+
+   K1 = this->KxFactor*(((double) Kx) + this->GammaX);
+   K2 = this->KyFactor*(((double) Ky) + this->GammaY);
+  for(int j = 0; j <this->NbrBands *  this->NbrStatePerBand;j++) 
+  { 
+    this->GetRealSpaceTightBindingLinearizedIndex(j, PosXUnitCell, PosYUnitCell, OrbitalIndex);
+    int TotalPosY = PosYUnitCell*this->UnitCellY + OrbitalIndex/this->UnitCellX;
+    EigenStates[i][j] = this->OneBodyBasis[MomentumIndex][BandNumber][OrbitalIndex] * Phase(K1*PosXUnitCell + K2*PosYUnitCell)* Phase(PosXUnitCell* LogTranslationPhaseX*TotalPosY) ;
+  }
+  }
+  return EigenStates;
+}
+
+
+/*
+// get the eigenstates in real space, using CoreComputeBandStructureWithEmbedding
+// 
+// return value = tight binding eigenvectors
+
+ComplexMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingEigenstates()
+{
   ComplexMatrix EigenStates(this->NbrBands *  this->NbrStatePerBand,this->NbrBands *  this->NbrStatePerBand ,true);
   int Kx;  int Ky;
   int K1;  int K2;
@@ -531,6 +565,7 @@ ComplexMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingEigenst
   return EigenStates;
 }
 
+*/
 
 // get the tight binding hamiltonian in real space 
 // 

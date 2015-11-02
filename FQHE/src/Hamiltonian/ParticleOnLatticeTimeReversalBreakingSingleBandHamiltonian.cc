@@ -663,7 +663,7 @@ long ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::FastMultiplicat
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
-  cout <<"EffectiveHilbertSpaceDimension = "<<EffectiveHilbertSpaceDimension<<endl;
+//  cout <<"EffectiveHilbertSpaceDimension = "<<EffectiveHilbertSpaceDimension<<endl;
   this->NbrInteractionPerComponent = new int [EffectiveHilbertSpaceDimension];
   for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
     this->NbrInteractionPerComponent[i] = 0;
@@ -676,6 +676,7 @@ long ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::FastMultiplicat
   QHEParticlePrecalculationOperation Operation(this);
   Operation.ApplyOperation(this->Architecture);
 
+ 
   if (this->Architecture->GetOptimizedTypicalRange(this->NbrInteractionPerComponent, MinIndex, MaxIndex) == true)
     {
       this->PrecalculationShift = (int) MinIndex;
@@ -685,8 +686,10 @@ long ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::FastMultiplicat
 
   long Memory = 0;
   for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
+{
     Memory += this->NbrInteractionPerComponent[i];
-
+//    cout <<this->NbrInteractionPerComponent[i]<<endl;
+}
   cout << "nbr interaction = " << Memory << endl;
   long TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(Complex*)) * EffectiveHilbertSpaceDimension;
   if ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(Complex)))) < Memory))
@@ -752,14 +755,16 @@ long ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::FastMultiplicat
 
 long ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
 {
+//  cout <<" long ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent) "<<endl;
   long Memory = 0;
+
   ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
   int LastComponent = lastComponent + firstComponent;
   this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
   this->EvaluateMNOneBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
   
+//  cout <<" after   this->EvaluateMNOneBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);"<<endl;
   delete TmpParticles;
-
   return Memory;
 }
 
@@ -779,8 +784,9 @@ void ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::EnableFastMulti
   timeval TotalEndingTime2;
   double Dt2;
   gettimeofday (&(TotalStartingTime2), 0);
-  cout << "start" << endl;
+//  cout << "start" << endl;
   int ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+//  cout << "ReducedSpaceDimension = " << ReducedSpaceDimension<<endl;
   if ((ReducedSpaceDimension * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
     ++ReducedSpaceDimension;
   this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];

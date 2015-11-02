@@ -94,6 +94,45 @@ void ComplexMPOperatorOBC::ComputeLCore(Tensor3<Complex> & L)
   delete [] A;
 }
 
+/*
+void ComplexMPOperatorOBC::ComputeLCoreBis(Tensor3<Complex> & L)
+{
+  int BondDimensionRight = this->Site->GetBondDimensionRight();
+  int BondDimensionLeft = this->Site->GetBondDimensionLeft();
+  
+  Tensor3<Complex> & LeftL = ((ComplexMPSSite *) this->Site)->GetPreviousL();  
+  Tensor3<Complex> * B =  new  Tensor3<Complex> [this->PhysicalDimension];
+  RealMatrix * M = ((ComplexMPSSite *) this->Site)->GetM();
+
+  for (int i = 0; i < this->PhysicalDimension; i++)
+    {
+     B[i] = Tensor3<Complex>(BondDimensionRight,this->MPOBondDimension,BondDimensionLeft,true);
+     TensorMatrixContractionOperation<Complex,0,0> Operation (&LeftL, &B[i],&M[i],0,0);
+     Operation.SetIndicesRange(0,BondDimensionRight);
+     Operation.ApplyOperation(this->Architecture);
+    }
+
+  
+  Tensor3<Complex> * A = new Tensor3<Complex>[this->PhysicalDimension];
+
+  for (int i = 0; i < this->PhysicalDimension; i++)
+    {
+  A[i] = Tensor3<Complex>(BondDimensionRight,this->MPOBondDimension,BondDimensionLeft,true);
+    }
+
+  MPOApplyOnTensorOperation<Complex> Operation (A, B,this,false);
+  Operation.SetIndicesRange(0,BondDimensionRight);
+  Operation.ApplyOperation(this->Architecture);
+  delete [] B;
+  for (int i = 0; i < this->PhysicalDimension; i++)
+  {
+     TensorMatrixContractionOperation<Complex,0,0> Operation (&A[i], &L,&M[i],2,0);
+     Operation.SetIndicesRange(0,BondDimensionRight);
+     Operation.ApplyOperation(this->Architecture);
+  }
+  delete [] A;
+}*/
+
 
 void ComplexMPOperatorOBC::ComputeRCore(Tensor3<Complex> & R)
 {
