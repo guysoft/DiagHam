@@ -137,7 +137,7 @@ double Newlamba = 100.0;
   TmpMatrix2.Copy(TmpMatrix);
   for (int i = 1; i< NbrParticles - 1; i++)
   {
-      TmpMatrix2 =  TmpMatrix2.Multiply(TmpMatrix);
+      TmpMatrix2.Multiply(TmpMatrix);
   }
 
   for (int i = 0; i < NbrBMatrices; i++)
@@ -163,9 +163,9 @@ double Newlamba = 100.0;
 
   SparseRealMatrix TmpMatrix2;
   TmpMatrix2.Copy(TmpMatrix);
-  for (int i = 1; i< NbrParticles ; i++)
+  for (int i = 1; i < NbrParticles ; i++)
   {
-      TmpMatrix2 =  TmpMatrix2.Multiply(TmpMatrix);
+     TmpMatrix2.Multiply(TmpMatrix);
   }
 
  double FinalResult = TmpMatrix2.Tr();
