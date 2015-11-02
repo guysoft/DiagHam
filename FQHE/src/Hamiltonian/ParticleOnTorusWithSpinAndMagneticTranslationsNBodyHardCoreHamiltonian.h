@@ -433,111 +433,30 @@ inline double ParticleOnTorusWithSpinAndMagneticTranslationsNBodyHardCoreHamilto
 inline double ParticleOnTorusWithSpinAndMagneticTranslationsNBodyHardCoreHamiltonian::EvaluateInteractionNIndexTwoSetSymmetrizedCoefficient(int* mIndices, int* nIndices, 
 																	    int nbrSpinUp, int nbrSpinDown)
 {  
-  double DoubleNbrLzValue = (double) this->NbrLzValue;
-  FactorialCoefficient FactorialNBody;
-  FactorialNBody.SetToOne();
-  FactorialNBody.FactorialMultiply((nbrSpinUp + nbrSpinDown));
-  double FinalFactor = FactorialNBody.GetNumericalValue();
-  for (int i = 0; i < (nbrSpinUp + nbrSpinDown); ++i)
-    FinalFactor *= (M_PI * DoubleNbrLzValue);
-  
-  
-  int* mIndices2 = new int[(nbrSpinUp + nbrSpinDown)];
-  int* nIndices2 = new int[(nbrSpinUp + nbrSpinDown)];
+  int TmpNbrNBody = nbrSpinUp + nbrSpinDown;
+  double FinalFactor = 1.0;
+  for (int i = 0; i < TmpNbrNBody; ++i)
+    FinalFactor *= M_PI *  ((double) ((i + 1) * this->NbrLzValue));
   
   int momentumTransfer = 0;
-  for (int i = 0; i < (nbrSpinUp + nbrSpinDown); ++i)
+  for (int i = 0; i < TmpNbrNBody; ++i)
     momentumTransfer += (nIndices[i] - mIndices[i]);
   momentumTransfer /= this->NbrLzValue;
-  int shiftedMomentumTransfer = momentumTransfer + (nbrSpinUp + nbrSpinDown) - 1;
-  int shift =  ((nbrSpinUp + nbrSpinDown) - 1)*(nbrSpinUp + nbrSpinDown);
+  int shiftedMomentumTransfer = momentumTransfer + TmpNbrNBody - 1;
+  int shift =  (TmpNbrNBody - 1) * TmpNbrNBody;
   
-  double TmpInteraction; 
+  double TmpInteraction = 0.0; 
   int m1 = mIndices[0];
   int m2 = nIndices[0];
-  
-  int Factor = this->NbrLzValue;
-  for (int k = 1; k < (nbrSpinUp + nbrSpinDown); ++k)
+  for (int k = 1; k < TmpNbrNBody; ++k)
     {
-      m1 += mIndices[k]*Factor;
-      m2 += nIndices[k]*Factor;
-      Factor *= this->NbrLzValue;
+      m1 *= this->NbrLzValue;
+      m2 *= this->NbrLzValue;
+      m1 += mIndices[k];
+      m2 += nIndices[k];
     }
-  int m2Initial = m2;
-  
-  TmpInteraction = 0.0;
-  for (int g = 0; g < (nbrSpinUp + nbrSpinDown); ++g)
-    {
-      TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*(nbrSpinUp + nbrSpinDown) + g];
-    }
-  
-  for (int k = 0 ; k < (nbrSpinUp + nbrSpinDown); ++k)
-    nIndices2[k] = nIndices[k];
-  while (std::prev_permutation(nIndices2, nIndices2 + nbrSpinUp))
-    {
-      for (int k = nbrSpinUp; k < (nbrSpinUp + nbrSpinDown); ++k)
-	nIndices2[k] = nIndices[k];
-      while (std::prev_permutation(nIndices2 + nbrSpinUp, nIndices2 + (nbrSpinUp + nbrSpinDown)))
-	{
-	  m2 = nIndices2[0];
-	  Factor = this->NbrLzValue;
-	  for (int k = 1 ; k < (nbrSpinUp + nbrSpinDown); ++k)
-	    {
-	      m2 += nIndices2[k]*Factor;
-	      Factor *= this->NbrLzValue;
-	    }
-	  
-	  for (int g = 0; g < (nbrSpinUp + nbrSpinDown); ++g)
-	    TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*(nbrSpinUp + nbrSpinDown) + g];
-	}
-    }
-  
-  
-  for (int k = 0 ; k < (nbrSpinUp + nbrSpinDown); ++k)
-    mIndices2[k] = mIndices[k];
-  while (std::prev_permutation(mIndices2, mIndices2 + nbrSpinUp))
-    {
-      for (int k = nbrSpinUp; k < (nbrSpinUp + nbrSpinDown); ++k)
-	mIndices2[k] = mIndices[k];
-      while (std::prev_permutation(mIndices2 + nbrSpinUp, mIndices2 + (nbrSpinUp + nbrSpinDown)))
-	{
-	  m1 = mIndices2[0];
-	  Factor = this->NbrLzValue;
-	  for (int k = 1 ; k < (nbrSpinUp + nbrSpinDown); ++k)
-	    {
-	      m1 += mIndices2[k]*Factor;
-	      Factor *= this->NbrLzValue;
-	    }
-	  for (int g = 0; g < (nbrSpinUp + nbrSpinDown); ++g)
-	    TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*(nbrSpinUp + nbrSpinDown) + g];
-	  
-	  for (int k = 0 ; k < (nbrSpinUp + nbrSpinDown); ++k)
-	    nIndices2[k] = nIndices[k];
-	  while (std::prev_permutation(nIndices2, nIndices2 + nbrSpinUp))
-	    {
-	      for (int k = nbrSpinUp; k < (nbrSpinUp + nbrSpinDown); ++k)
-		nIndices2[k] = nIndices[k];
-	      while (std::prev_permutation(nIndices2 + nbrSpinUp, nIndices2 + (nbrSpinUp + nbrSpinDown)))
-		{
-		  m2 = nIndices2[0];
-		  Factor = this->NbrLzValue;
-		  for (int k = 1 ; k < (nbrSpinUp + nbrSpinDown); ++k)
-		    {
-		      m2 += nIndices2[k]*Factor;
-		      Factor *= this->NbrLzValue;
-		    }
-		  
-		  for (int g = 0; g < (nbrSpinUp + nbrSpinDown); ++g)
-		    TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*(nbrSpinUp + nbrSpinDown) + g];
-		}
-	    }
-	}
-    }    
-  
-  delete[] mIndices2;
-  delete[] nIndices2;
-  
-  
+  for (int g = 0; g < TmpNbrNBody; ++g)
+    TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*TmpNbrNBody + g];
   TmpInteraction /= FinalFactor;
   return TmpInteraction;
 }

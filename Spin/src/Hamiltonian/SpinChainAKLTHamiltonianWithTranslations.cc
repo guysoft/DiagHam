@@ -286,6 +286,192 @@ ComplexVector& SpinChainAKLTHamiltonianWithTranslations::LowLevelAddMultiply(Com
   return vDestination;
 }
  
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and store result in another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* SpinChainAKLTHamiltonianWithTranslations::LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+										  int firstComponent, int nbrComponent)
+{
+  double Coef;
+  double Coef3;
+  int NbrTranslation;
+  int NbrTranslation2;
+  int pos;
+  int pos2;
+  int MaxPos = this->NbrSpin - 1;
+  int Last = firstComponent + nbrComponent;
+  int dim = this->Chain->GetHilbertSpaceDimension();
+  Complex* TmpValues = new Complex[nbrVectors];
+  Complex TmpCoef;
+  for (int i = firstComponent; i < Last; i++)
+    {
+      for (int k = 0; k < nbrVectors; ++k)
+	{
+	  TmpValues[k] = vSources[k][i];
+	  vDestinations[k][i] += this->SzSzContributions[i] * TmpValues[k];
+	}
+      for (int j = 0; j < MaxPos; j++)
+	{
+	  pos = this->Chain->SmiSpj(j, j + 1, i, Coef, NbrTranslation);
+	  if (pos != dim)
+	    {
+	      TmpCoef = 0.5 * Coef * this->ExponentialTable[NbrTranslation] * (1.0 + (this->SquareFactor * this->Chain->SziSzj(j, j + 1, i)));
+	      for (int k = 0; k < nbrVectors; ++k)
+		{
+		  vDestinations[k][pos] += TmpCoef * TmpValues[k];
+		}
+	    }
+	  pos = this->Chain->SmiSpjSmiSpj(j, j + 1, j, j+1, i, Coef, NbrTranslation);
+	  if (pos != dim)
+	    {
+	      TmpCoef = (0.25 * this->SquareFactor * Coef) * this->ExponentialTable[NbrTranslation];
+	      for (int k = 0; k < nbrVectors; ++k)
+		{
+		  vDestinations[k][pos] += TmpCoef * TmpValues[k];	      
+		}
+	    }	  
+	  pos = this->Chain->SmiSpjSmiSpj(j + 1, j, j, j+1, i, Coef, NbrTranslation);
+	  if (pos != dim)
+	    {
+	      TmpCoef = (0.25 * this->SquareFactor * Coef) * this->ExponentialTable[NbrTranslation];
+	      for (int k = 0; k < nbrVectors; ++k)
+		{
+		  vDestinations[k][pos] += TmpCoef * TmpValues[k];	      
+		}
+	    }	  
+	  pos = this->Chain->SziSzjSmiSpj(j, j + 1, j, j+1, i, Coef, NbrTranslation);
+	  if (pos != dim)
+	    {
+	      TmpCoef = (0.5 * this->SquareFactor * Coef) * this->ExponentialTable[NbrTranslation];
+	      for (int k = 0; k < nbrVectors; ++k)
+		{
+		  vDestinations[k][pos] += TmpCoef * TmpValues[k];	      
+		}
+	    }	  
+
+	  pos = this->Chain->SmiSpj(j + 1, j, i, Coef, NbrTranslation);
+	  if (pos != dim)
+	    { 
+	      TmpCoef = 0.5 * Coef * this->ExponentialTable[NbrTranslation] * (1.0 + (this->SquareFactor * this->Chain->SziSzj(j, j + 1, i)));
+	      for (int k = 0; k < nbrVectors; ++k)
+		{
+		  vDestinations[k][pos] += TmpCoef * TmpValues[k];
+		}
+	    }
+	  pos = this->Chain->SmiSpjSmiSpj(j, j + 1, j + 1, j, i, Coef, NbrTranslation);
+	  if (pos != dim)
+	    {
+	      TmpCoef = (0.25 * this->SquareFactor * Coef) * this->ExponentialTable[NbrTranslation];
+	      for (int k = 0; k < nbrVectors; ++k)
+		{
+		  vDestinations[k][pos] += TmpCoef * TmpValues[k];	      
+		}
+	    }	  
+	  pos = this->Chain->SmiSpjSmiSpj(j + 1, j, j + 1, j, i, Coef, NbrTranslation);
+	  if (pos != dim)
+	    {
+	      TmpCoef = (0.25 * this->SquareFactor * Coef) * this->ExponentialTable[NbrTranslation];
+	      for (int k = 0; k < nbrVectors; ++k)
+		{
+		  vDestinations[k][pos] += TmpCoef * TmpValues[k];	      
+		}
+	    }	  
+	  pos = this->Chain->SziSzjSmiSpj(j, j + 1, j + 1, j, i, Coef, NbrTranslation);
+	  if (pos != dim)
+	    {
+	      TmpCoef = (0.5 * this->SquareFactor * Coef) * this->ExponentialTable[NbrTranslation];
+	      for (int k = 0; k < nbrVectors; ++k)
+		{
+		  vDestinations[k][pos] += TmpCoef * TmpValues[k];	      
+		}
+	    }	  
+	}    
+
+      pos = this->Chain->SmiSpj(MaxPos, 0, i, Coef, NbrTranslation);
+      if (pos != dim)
+	{
+	  TmpCoef = 0.5 * Coef * this->ExponentialTable[NbrTranslation] * (1.0 + (this->SquareFactor * this->Chain->SziSzj(MaxPos, 0, i)));
+	  for (int k = 0; k < nbrVectors; ++k)
+	    {
+	      vDestinations[k][pos] += TmpCoef * TmpValues[k];
+	    }
+	}
+      pos = this->Chain->SmiSpjSmiSpj(MaxPos, 0, MaxPos, 0, i, Coef, NbrTranslation);
+      if (pos != dim)
+	{
+	  TmpCoef = (0.25 * this->SquareFactor * Coef) * this->ExponentialTable[NbrTranslation];
+	  for (int k = 0; k < nbrVectors; ++k)
+	    {
+	      vDestinations[k][pos] += TmpCoef * TmpValues[k];	      
+	    }
+	}	  
+      pos = this->Chain->SmiSpjSmiSpj(0, MaxPos, MaxPos, 0, i, Coef, NbrTranslation);
+      if (pos != dim)
+	{
+	  TmpCoef = (0.25 * this->SquareFactor * Coef) * this->ExponentialTable[NbrTranslation];
+	  for (int k = 0; k < nbrVectors; ++k)
+	    {
+	      vDestinations[k][pos] += TmpCoef * TmpValues[k];	      
+	    }
+	}	  
+      pos = this->Chain->SziSzjSmiSpj(0, MaxPos, MaxPos, 0, i, Coef, NbrTranslation);
+      if (pos != dim)
+	{
+	  TmpCoef = (0.5 * this->SquareFactor * Coef) * this->ExponentialTable[NbrTranslation];
+	  for (int k = 0; k < nbrVectors; ++k)
+	    {
+	      vDestinations[k][pos] += TmpCoef * TmpValues[k];	      
+	    }
+	}	  
+
+      pos = this->Chain->SmiSpj(0, MaxPos, i, Coef, NbrTranslation);
+      if (pos != dim)
+	{
+	  TmpCoef = 0.5 * Coef * this->ExponentialTable[NbrTranslation] * (1.0 + this->SquareFactor * this->Chain->SziSzj(MaxPos, 0, i));
+	  for (int k = 0; k < nbrVectors; ++k)
+	    {
+	      vDestinations[k][pos] += TmpCoef * TmpValues[k];
+	    }
+	}
+      pos = this->Chain->SmiSpjSmiSpj(MaxPos, 0, 0, MaxPos, i, Coef, NbrTranslation);
+      if (pos != dim)
+	{
+	  TmpCoef = (0.25 * this->SquareFactor * Coef) * this->ExponentialTable[NbrTranslation];
+	  for (int k = 0; k < nbrVectors; ++k)
+	    {
+	      vDestinations[k][pos] += TmpCoef * TmpValues[k];	      
+	    }
+	}	  
+      pos = this->Chain->SmiSpjSmiSpj(0, MaxPos, 0, MaxPos, i, Coef, NbrTranslation);
+      if (pos != dim)
+	{
+	  TmpCoef = (0.25 * this->SquareFactor * Coef) * this->ExponentialTable[NbrTranslation];
+	  for (int k = 0; k < nbrVectors; ++k)
+	    {
+	      vDestinations[k][pos] += TmpCoef * TmpValues[k];	      
+	    }
+	}	  
+      pos = this->Chain->SziSzjSmiSpj(MaxPos, 0, 0, MaxPos, i, Coef, NbrTranslation);
+      if (pos != dim)
+	{
+	  TmpCoef = (0.5 * this->SquareFactor * Coef) * this->ExponentialTable[NbrTranslation];
+	  for (int k = 0; k < nbrVectors; ++k)
+	    {
+	      vDestinations[k][pos] += TmpCoef * TmpValues[k];	      
+	    }
+	}	  
+    }
+  delete[] TmpValues;
+  return vDestinations;
+}
+ 
 // evaluate diagonal matrix elements
 // 
 

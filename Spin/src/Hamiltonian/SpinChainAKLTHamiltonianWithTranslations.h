@@ -117,6 +117,19 @@ class SpinChainAKLTHamiltonianWithTranslations : public SpinChainHamiltonianWith
   // return value = reference on vector where result has been stored
   virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 					     int firstComponent, int nbrComponent);
+
+  // multiply a set of vectors by the current hamiltonian for a given range of indices 
+  // and store result in another set of vectors, low level function (no architecture optimization)
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors where result has to be stored
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual ComplexVector* LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+						  int firstComponent, int nbrComponent);
+
  
  protected:
  

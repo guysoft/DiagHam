@@ -144,9 +144,11 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsNBodyHamiltonian::GetIndic
 			}
 		      else
 			{
-			  double** TmpSymmetryFactors;
-			  this->GetAllTwoSetSymmetricIndices(this->NbrLzValue, TmpNBody - i, i, this->NbrNBodySpinMomentumSectorIndicesPerSum[TmpNBody][Index],  
-							     this->NBodySpinMomentumSectorIndicesPerSum[TmpNBody][Index], TmpSymmetryFactors);
+//			  double** TmpSymmetryFactors;
+// 			  this->GetAllTwoSetSymmetricIndices(this->NbrLzValue, TmpNBody - i, i, this->NbrNBodySpinMomentumSectorIndicesPerSum[TmpNBody][Index],  
+// 							     this->NBodySpinMomentumSectorIndicesPerSum[TmpNBody][Index], TmpSymmetryFactors);
+			  this->GetAllIndices(this->NbrLzValue, TmpNBody, this->NbrNBodySpinMomentumSectorIndicesPerSum[TmpNBody][Index],  
+					      this->NBodySpinMomentumSectorIndicesPerSum[TmpNBody][Index]);
 			}
 		    }
 		  ++Index;
@@ -633,6 +635,78 @@ long AbstractQHEOnTorusWithSpinAndMagneticTranslationsNBodyHamiltonian::GetAllTw
     delete[] TmpSortedIndicesPerSumUp[i];
   delete[] TmpNbrSortedIndicesPerSumUp;
   delete[] TmpSortedIndicesPerSumUp;
+  return NbrElements;
+}
+
+// get all indices (without assuming any symmetry), sorted by the sum of the indices
+//
+// nbrValues = number of different values an index can have
+// nbrIndices = number of indices 
+// nbrSortedIndicesPerSum = reference on a array where the number of group of indices per each index sum value is stored
+// sortedIndicesPerSum = reference on a array where group of indices are stored (first array dimension corresponding to sum of the indices)
+// return value = total number of index groups
+
+long AbstractQHEOnTorusWithSpinAndMagneticTranslationsNBodyHamiltonian::GetAllIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, int**& sortedIndicesPerSum)
+{
+  long NbrElements = nbrValues;
+  for (int i = 1; i < nbrIndices; ++i)
+    NbrElements *= (long) nbrValues;
+  int** Indices = new int* [NbrElements];
+  int* Sum = new int [NbrElements];
+  int Max;
+  int Step;
+  int Pos = 0;
+  int TmpNbrIndices;
+  for (long i = 0l; i < NbrElements; ++i)
+    {
+      Indices[Pos] = new int [nbrIndices];
+      Sum[Pos] = 0;
+      long TmpIndex = i;
+      for (int j = 0; j < nbrIndices; ++j)
+	{	  
+	  Indices[Pos][j] = (int) (TmpIndex % nbrValues);
+	  TmpIndex /= (long) nbrValues;
+	  Sum[Pos] += Indices[Pos][j];
+	}      
+      ++Pos;
+    }
+  for (int i = 0; i < NbrElements; ++i)
+    {
+      Sum[i] = (Sum[i] % nbrValues);
+    }
+  int MaxSum = nbrValues - 1;
+  long* TmpPos = new long [MaxSum + 1];
+  nbrSortedIndicesPerSum = new int [MaxSum + 1];
+  sortedIndicesPerSum = new int* [MaxSum + 1];
+  for (int i = 0; i <= MaxSum; ++i)
+    nbrSortedIndicesPerSum[i] = 0;
+  for (int i = 0; i < NbrElements; ++i)
+    {
+      ++nbrSortedIndicesPerSum[Sum[i]];
+    }
+  for (int i = 0; i <= MaxSum; ++i)
+    {
+      TmpPos[i] = 0l;
+      sortedIndicesPerSum[i] = new int [nbrSortedIndicesPerSum[i] * nbrIndices];
+      nbrSortedIndicesPerSum[i] = 0;
+    }
+  for (long i = 0l; i < NbrElements; ++i)
+    {   
+      Pos = Sum[i];
+      Max = nbrSortedIndicesPerSum[Pos];
+      int* TmpIndices = Indices[i];
+      for (int j = 0; j < nbrIndices; ++j)
+	{
+	  sortedIndicesPerSum[Pos][TmpPos[Pos]] = TmpIndices[j];
+	  ++TmpPos[Pos];
+	}
+      delete[] TmpIndices;
+      ++nbrSortedIndicesPerSum[Pos];
+    }
+
+  delete[] TmpPos;
+  delete[] Sum;
+  delete[] Indices;
   return NbrElements;
 }
 

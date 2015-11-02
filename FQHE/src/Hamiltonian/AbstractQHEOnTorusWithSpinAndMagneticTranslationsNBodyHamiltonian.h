@@ -135,6 +135,15 @@ class AbstractQHEOnTorusWithSpinAndMagneticTranslationsNBodyHamiltonian : public
   virtual long GetAllTwoSetSymmetricIndices (int nbrValues, int nbrIndicesUp, int nbrIndicesDown, int*& nbrSortedIndicesPerSum, int**& sortedIndicesPerSum,
 					     double**& sortedIndicesPerSumSymmetryFactor);
 
+  // get all indices (without assuming any symmetry), sorted by the sum of the indices
+  //
+  // nbrValues = number of different values an index can have
+  // nbrIndices = number of indices 
+  // nbrSortedIndicesPerSum = reference on a array where the number of group of indices per each index sum value is stored
+  // sortedIndicesPerSum = reference on a array where group of indices are stored (first array dimension corresponding to sum of the indices)
+  // return value = total number of index groups
+  virtual long GetAllIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, int**& sortedIndicesPerSum);
+
   // core part of the AddMultiply method involving n-body term
   // 
   // particles = pointer to the Hilbert space
