@@ -125,7 +125,7 @@ int main(int argc, char** argv)
      DimensionPhysicalHilbertSpace *= NbrStatesPerOrbital;
 
   cout << "handling " << NbrBMatrices << " B matrices" << endl;
-  cout << Nbr of particles = " << NbrParticles << " " << ", Nbr of flux quanta=" << NbrFluxQuanta << endl;
+  cout <<" Nbr of particles = " << NbrParticles << " " << ", Nbr of flux quanta=" << NbrFluxQuanta << endl;
   cout <<"Size block = "<< SizeBlock<< " , Nbr blocks = " << NbrBlock<<endl;
   cout <<"Dimension of the physical Hilbert space = " << DimensionPhysicalHilbertSpace <<endl;
 
