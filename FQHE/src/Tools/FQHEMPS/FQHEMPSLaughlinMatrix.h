@@ -154,6 +154,11 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   // return value = truncation level
   virtual int GetTruncationLevel();
 
+  // get the maximum occupation per orbital
+  //
+  // return value = aximum occupation per orbital
+  virtual int GetMaximumOccupation();
+
   // create the B matrices for the laughlin state
   //
   virtual void CreateBMatrices ();
@@ -310,6 +315,15 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
 inline int FQHEMPSLaughlinMatrix::GetTransferMatrixLargestEigenvalueDegeneracy()
 {
   return this->LaughlinIndex;
+}
+
+// get the maximum occupation per orbital
+//
+// return value = aximum occupation per orbital
+
+inline int FQHEMPSLaughlinMatrix::GetMaximumOccupation()
+{
+  return (this->NbrBMatrices - 1);
 }
 
 // compute the linearized index of the B matrix for the Laughlin states
