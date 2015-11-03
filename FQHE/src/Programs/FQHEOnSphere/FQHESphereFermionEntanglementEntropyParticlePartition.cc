@@ -314,6 +314,7 @@ int main(int argc, char** argv)
   double* WeightBOrbitals = 0;
   int NbrAOrbitals = LzMax + 1;
   int NbrBOrbitals = LzMax + 1;
+  char* CutName = 0;
   if (Manager.GetString("realspace-generic") != 0)
     {
       ConfigurationParser RealSpaceWeights;
@@ -321,6 +322,16 @@ int main(int argc, char** argv)
 	{
 	  RealSpaceWeights.DumpErrors(cout) << endl;
 	  return -1;
+	}
+      if (RealSpaceWeights["Name"] != 0)
+	{
+	  CutName = new char [strlen(RealSpaceWeights["Name"]) + 1];
+	  strcpy (CutName, RealSpaceWeights["Name"]);
+	}
+      else
+	{
+	  CutName = new char [32];
+	  sprintf (CutName, "genericcut");
 	}
       double* TmpSquareWeights = 0;
       int TmpNbrOrbitals = 0;
@@ -386,14 +397,21 @@ int main(int argc, char** argv)
       else
 	{
 	  char* TmpExtension = new char [512];
-	  if (RealSpaceCutCylinder == false)
+	  if (CutName != 0)
 	    {
-	      sprintf(TmpExtension, "_thetabot_%.6f_thetabot_%.6f.realent", Manager.GetDouble("realspace-theta-top"), 
-		      Manager.GetDouble("realspace-theta-bot"));
+	      sprintf(TmpExtension, "%s.realent", CutName);
 	    }
 	  else
 	    {
-	      sprintf(TmpExtension, "_x_%.6f.realent", Manager.GetDouble("realspace-cylindercut"));
+	      if (RealSpaceCutCylinder == false)
+		{
+		  sprintf(TmpExtension, "_thetabot_%.6f_thetabot_%.6f.realent", Manager.GetDouble("realspace-theta-top"), 
+			  Manager.GetDouble("realspace-theta-bot"));
+		}
+	      else
+		{
+		  sprintf(TmpExtension, "_x_%.6f.realent", Manager.GetDouble("realspace-cylindercut"));
+		}
 	    }
 	  TmpFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", TmpExtension);
 	  if (TmpFileName == 0)

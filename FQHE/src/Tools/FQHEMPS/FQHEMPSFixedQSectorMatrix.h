@@ -97,6 +97,11 @@ class FQHEMPSFixedQSectorMatrix : public AbstractFQHEMPSMatrix
   // return value = number oforbitals
   virtual int GetNbrOrbitals();
 
+  // get the maximum occupation per orbital
+  //
+  // return value = aximum occupation per orbital
+  virtual int GetMaximumOccupation();
+
   // create the B matrices for the block state
   //
   virtual void CreateBMatrices ();
@@ -227,6 +232,15 @@ inline int FQHEMPSFixedQSectorMatrix::GetTruncationLevel()
 inline int FQHEMPSFixedQSectorMatrix::GetNbrCFTSectors()
 {
   return this->NbrCFTSectors;
+}
+
+// get the maximum occupation per orbital
+//
+// return value = aximum occupation per orbital
+
+inline int FQHEMPSFixedQSectorMatrix::GetMaximumOccupation()
+{ 
+  return this->MPSMatrix->GetMaximumOccupation();
 }
 
 #endif
