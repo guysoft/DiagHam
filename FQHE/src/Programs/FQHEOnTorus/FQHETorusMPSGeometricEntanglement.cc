@@ -128,7 +128,7 @@ int main(int argc, char** argv)
   for (int i = 0; i < NbrOrbitals ; i++)
      NbrStatesPerBlock *= NbrStatesPerOrbital;
   cout << "handling " << NbrBMatrices << " B matrices" << endl;
-  cout <<" Nbr of particles = " << NbrParticles << " " << ", Nbr of flux quanta=" << NbrFluxQuanta << endl;
+  cout << "Nbr of particles = " << NbrParticles << " " << ", Nbr of flux quanta=" << NbrFluxQuanta << endl;
   cout <<"Size block = "<< SizeBlock<< " , Nbr blocks = " << NbrBlock<<endl;
   cout <<"Dimension of the physical Hilbert space = " << DimensionPhysicalHilbertSpace <<endl;
 
@@ -182,8 +182,8 @@ else
 
 
 
-  NormMatrix.Multiply(TensorProduct(StringMatrix, StringMatrix));
-  for (int i = 0; i < NbrFluxQuanta / NbrOrbitals; ++i)
+  //  NormMatrix.Multiply(TensorProduct(StringMatrix, StringMatrix));
+  for (int i = 0; i < (NbrFluxQuanta / NbrOrbitals); ++i)
     {
       NormMatrix.Multiply(TransferMatrix);
     }

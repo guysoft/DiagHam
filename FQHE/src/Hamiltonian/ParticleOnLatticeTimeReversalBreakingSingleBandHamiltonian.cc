@@ -789,6 +789,7 @@ void ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::EnableFastMulti
 //  cout << "ReducedSpaceDimension = " << ReducedSpaceDimension<<endl;
   if ((ReducedSpaceDimension * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
     ++ReducedSpaceDimension;
+  cout << MinIndex << " " << MaxIndex << " " << ReducedSpaceDimension << " " << this->FastMultiplicationStep << endl;
   this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
   this->InteractionPerComponentCoefficient = new Complex* [ReducedSpaceDimension];
 

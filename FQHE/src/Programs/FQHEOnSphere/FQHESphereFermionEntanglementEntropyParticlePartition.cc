@@ -453,6 +453,7 @@ int main(int argc, char** argv)
     }
 
   double TotalTrace = 0.0;
+  double TotalEntanglementEntropy = 0.0;
   for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
     {
       double EntanglementEntropy = 0.0;
@@ -462,9 +463,11 @@ int main(int argc, char** argv)
       int SubsystemMaxTotalLz = SubsystemNbrParticles * (NbrAOrbitals - 1) - (SubsystemNbrParticles * (SubsystemNbrParticles - 1));
       int ComplementaryMaxTotalLz = ComplementarySubsystemNbrParticles * (NbrBOrbitals - 1) - (ComplementarySubsystemNbrParticles * (ComplementarySubsystemNbrParticles - 1));
       cout << "SubsystemMaxTotalLz = " << SubsystemMaxTotalLz << "    ComplementaryMaxTotalLz = " << ComplementaryMaxTotalLz << endl;
-      while (SubsystemMaxTotalLz > ComplementaryMaxTotalLz)
-	SubsystemMaxTotalLz -= 2;
       int SubsystemTotalLz = -SubsystemMaxTotalLz;
+      while ((SubsystemMaxTotalLz - ComplementaryMaxTotalLz) > TotalLz[0])
+	SubsystemMaxTotalLz -= 2;
+      while ((SubsystemTotalLz + ComplementaryMaxTotalLz) < TotalLz[0])
+	SubsystemTotalLz += 2;
 	
       if ((MinLzA != -1) && (MinLzA > SubsystemTotalLz))
 	SubsystemTotalLz = MinLzA;
@@ -820,11 +823,17 @@ int main(int argc, char** argv)
 	}
       File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
       cout << "trace = " << DensitySum << endl;
+      TotalEntanglementEntropy += (-EntanglementEntropy);
       TotalTrace += DensitySum;
     }
-  File.close();
   if (RealSpaceCut == true)
-    cout <<"Total Trace = "<<TotalTrace<<endl;
+    {
+      cout << "Entanglement entropy = " << TotalEntanglementEntropy << endl;
+      cout << "Total trace = " << TotalTrace << endl;
+      File << "# Entanglement entropy = " << TotalEntanglementEntropy << endl;
+      File << "# Total trace = " << TotalTrace << endl;
+   }
+  File.close();
   return 0;
 }
 

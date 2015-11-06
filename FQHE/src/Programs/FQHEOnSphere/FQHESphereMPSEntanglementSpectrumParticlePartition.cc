@@ -196,7 +196,14 @@ int main(int argc, char** argv)
     }
   else
     {
-      sprintf (Extension, "parent");
+      if (Manager.GetBoolean("realspace-cut"))
+	{
+	  sprintf (Extension, "rsent");
+	}
+      else
+	{
+	  sprintf (Extension, "parent");
+	}
     }
   char* EigenstateOutputNamePrefix = 0;
   if (Manager.GetString("output-file") != 0)
@@ -687,25 +694,24 @@ int main(int argc, char** argv)
 	  return -1;
 	}
       int NbrAOrbitals = (NbrFluxQuanta + 1 + TmpNbrOrbitals) / 2;
+      int NbrBOrbitals = (NbrFluxQuanta + 1 + TmpNbrOrbitals) / 2;
       WeightAOrbitals = new double [NbrAOrbitals];
+      cout << NbrAOrbitals << " " <<  TmpNbrOrbitals << " " << NbrBOrbitals << endl;
       for (int i = 0; i < (NbrAOrbitals - TmpNbrOrbitals); ++i)
 	WeightAOrbitals[i] = 1.0;
       for (int i = NbrAOrbitals - TmpNbrOrbitals; i < NbrAOrbitals; ++i)
 	{
-	  WeightAOrbitals[i] = 1.0;//sqrt(TmpSquareWeights[i - NbrAOrbitals + TmpNbrOrbitals]);
+	  WeightAOrbitals[i] = sqrt(TmpSquareWeights[i - NbrAOrbitals + TmpNbrOrbitals]);
 	}
-      int NbrBOrbitals = (NbrFluxQuanta + 1 + TmpNbrOrbitals) / 2;
       WeightBOrbitals = new double [NbrBOrbitals];
       for (int i = 0; i < TmpNbrOrbitals; ++i)
 	{
-	  WeightBOrbitals[i] = 1.0;//sqrt(1.0 - TmpSquareWeights[i]);
+	  WeightBOrbitals[i] = sqrt(1.0 - TmpSquareWeights[i]);
 	}
       for (int i = TmpNbrOrbitals; i < NbrBOrbitals; ++i)
 	{
 	  WeightBOrbitals[i] = 1.0;
 	}     
-      NbrAOrbitals = 14;
-      NbrBOrbitals = 14;
       MaxNbrFluxQuantaA = NbrAOrbitals - 1;
       MaxNbrFluxQuantaB = NbrBOrbitals - 1;
     }

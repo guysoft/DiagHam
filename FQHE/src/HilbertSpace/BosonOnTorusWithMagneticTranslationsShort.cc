@@ -88,7 +88,6 @@ BosonOnTorusWithMagneticTranslationsShort::BosonOnTorusWithMagneticTranslationsS
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->MaxMomentum - 1, 0);
   if (this->LargeHilbertSpaceDimension != 0l)
     {
-      this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
       long TmpLargeHilbertSpaceDimension = this->GenerateStates();
       if (TmpLargeHilbertSpaceDimension != 0l)
 	{
@@ -546,40 +545,46 @@ long BosonOnTorusWithMagneticTranslationsShort::GenerateStates()
 	   << this->LargeHilbertSpaceDimension << ")" << endl;
       return 0l;
     }
-//   for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
-//     {
-//       int NbrTranslation = 0;
-//       cout << hex << this->StateDescription[i] << " " << this->FindCanonicalForm(this->StateDescription[i], NbrTranslation) << dec << endl;
-//     }
-  unsigned long* TmpStateDescription = new unsigned long[this->LargeHilbertSpaceDimension];
-  long TmpDimension = 0l;
+
+  TmpLargeHilbertSpaceDimension = 0l;
   for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
     {
       int NbrTranslation = 0;
       unsigned long TmpState = this->FindCanonicalFormAndTestXMomentumConstraint(this->StateDescription[i], NbrTranslation);
       if (NbrTranslation == 0)
 	{
-	  TmpStateDescription[TmpDimension++] = this->StateDescription[i];
+	  ++TmpLargeHilbertSpaceDimension;
+	}
+      else
+	{
+	  this->StateDescription[i] = 0x0ul;
 	}
     }
-  delete[] this->StateDescription;
-  this->StateDescription = TmpStateDescription;  
-  this->LargeHilbertSpaceDimension = TmpDimension;
-  this->NbrStateInOrbit = new int[this->LargeHilbertSpaceDimension];
-  for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
+
+  unsigned long* TmpStateDescription = new unsigned long [TmpLargeHilbertSpaceDimension];  
+  this->NbrStateInOrbit = new int [TmpLargeHilbertSpaceDimension];
+  TmpLargeHilbertSpaceDimension = 0l;
+  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
     {
-      unsigned long TmpState = this->StateDescription[i];
-      unsigned long TmpReferenceState = TmpState;
-      int TmpOrbitSize = 1;
-      this->ApplySingleTranslation(TmpState);
-      while (TmpState != TmpReferenceState)
+      if (this->StateDescription[i] != 0x0ul)
 	{
+	  TmpStateDescription[TmpLargeHilbertSpaceDimension] = this->StateDescription[i];
+	  unsigned long TmpState = this->StateDescription[i];
+	  unsigned long TmpReferenceState = TmpState;
+	  int TmpOrbitSize = 1;
 	  this->ApplySingleTranslation(TmpState);
-	  ++TmpOrbitSize;
-	}
-      this->NbrStateInOrbit[i] = TmpOrbitSize;
-    } 
-  return TmpDimension;
+	  while (TmpState != TmpReferenceState)
+	    {
+	      this->ApplySingleTranslation(TmpState);
+	      ++TmpOrbitSize;
+	    }
+	  this->NbrStateInOrbit[TmpLargeHilbertSpaceDimension] = TmpOrbitSize;
+	  ++TmpLargeHilbertSpaceDimension;
+	}	
+    }
+  delete[] this->StateDescription;
+  this->StateDescription = TmpStateDescription;
+  return TmpLargeHilbertSpaceDimension;
 }
 
 // generate all states corresponding to the ky constraint  without taking care of the kx constraint
