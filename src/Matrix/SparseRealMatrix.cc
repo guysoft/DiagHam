@@ -1977,12 +1977,38 @@ double SparseRealMatrix::Tr ()
   double Trace = 0.0;
   long TmpIndex;
   for (long i = 0; i < this->NbrRow; ++i)
-    if (this->RowPointers[i] >= 0l)
-      {
-	TmpIndex = this->FindColumnIndexPosition(i, this->RowPointers[i], this->RowLastPointers[i]);
-	if (TmpIndex >= 0l)
-	  Trace += this->MatrixElements[TmpIndex];
-      }
+    {
+      if (this->RowPointers[i] >= 0l)
+	{
+	  TmpIndex = this->FindColumnIndexPosition(i, this->RowPointers[i], this->RowLastPointers[i]);
+	  if (TmpIndex >= 0l)
+	    Trace += this->MatrixElements[TmpIndex];
+	}
+    }
+  return Trace;
+}
+
+// evaluate the real part of the matrix partial trace 
+//
+// indices = array of indices that describes the partial trace 
+// nbrIndices = number of indices
+// return value = real part of the matrix partial trace 
+
+double SparseRealMatrix::PartialTr(int* indices, int nbrIndices)
+{
+  double Trace = 0.0;
+  long TmpIndex;
+  int TmpIndex2;
+  for (long i = 0; i < nbrIndices; ++i)
+    {
+      TmpIndex2 = indices[i];
+      if (this->RowPointers[TmpIndex2] >= 0l)
+	{
+	  TmpIndex = this->FindColumnIndexPosition(TmpIndex2, this->RowPointers[TmpIndex2], this->RowLastPointers[TmpIndex2]);
+	  if (TmpIndex >= 0l)
+	    Trace += this->MatrixElements[TmpIndex];
+	}
+    }
   return Trace;
 }
 

@@ -180,21 +180,20 @@ int main(int argc, char** argv)
     }  
   delete[] TmpNbrElementPerRow;
   
-  cout << "NbrMPSSumIndices = " << NbrMPSSumIndices << endl;
-  for (int i = 0; i < NbrMPSSumIndices; ++i)
-    {
-      cout << i << " " << MPSSumIndices[i] << endl;
-    }
+//   cout << "NbrMPSSumIndices = " << NbrMPSSumIndices << endl;
+//   for (int i = 0; i < NbrMPSSumIndices; ++i)
+//     {
+//       cout << i << " " << MPSSumIndices[i] << endl;
+//     }
   
-  NormMatrix.PrintNonZero(cout) << endl;
+//  NormMatrix.PrintNonZero(cout) << endl;
   NormMatrix.Multiply(TensorProduct(StringMatrix, StringMatrix));
-  //  NormMatrix = TensorProduct(StringMatrix, StringMatrix);
   for (int i = 0; i < (NbrFluxQuanta / NbrOrbitals); ++i)
     {
       NormMatrix.Multiply(TransferMatrix);
     }
-  TransferMatrix.PrintNonZero(cout) << endl;
-  NormMatrix.PrintNonZero(cout) << endl;
+//  TransferMatrix.PrintNonZero(cout) << endl;
+//  NormMatrix.PrintNonZero(cout) << endl;
   
   double Norm = 0.0;
   for (int i = 0; i < NbrMPSSumIndices; ++i)
@@ -278,7 +277,7 @@ int main(int argc, char** argv)
       for (int i = 0; i < DimensionPhysicalHilbertSpace; i++)
 	{
 	  SparseRealMatrix TmpMatrix3 = Multiply(FusedBMatrices[i],TmpMatrix2);
-	  CoefficientVector[i] = TmpMatrix3.Tr()*Normalisation;
+	  CoefficientVector[i] = TmpMatrix3.PartialTr(MPSSumIndices, NbrMPSSumIndices) * Normalisation;
 	}
       lamba = Newlamba ;
       Newlamba = CoefficientVector.Norm();
@@ -303,7 +302,7 @@ int main(int argc, char** argv)
       TmpMatrix2.Multiply(TmpMatrix);
     }
   
-  double FinalResult = TmpMatrix2.Tr()*Normalisation;
+  double FinalResult = TmpMatrix2.PartialTr(MPSSumIndices, NbrMPSSumIndices) * Normalisation;
   
   cout <<" FinalResult = "<<FinalResult <<endl;
   

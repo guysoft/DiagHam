@@ -450,6 +450,13 @@ class SparseRealMatrix : public Matrix
   // return value = real part of the matrix trace 
   double Tr ();
 
+  // evaluate the real part of the matrix partial trace 
+  //
+  // indices = array of indices that describes the partial trace 
+  // nbrIndices = number of indices
+  // return value = real part of the matrix partial trace 
+  double PartialTr(int* indices, int nbrIndices);
+
   // compute the tensor product of two sparse matrices (matrix1 x matrix2), and store the result in a sparse matrix
   //
   // matrix1 = reference on the left matrix
