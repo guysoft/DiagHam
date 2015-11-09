@@ -155,6 +155,13 @@ ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulom
 	      this->EnableFastMultiplication();
 	    }
 	}
+      else
+	{
+	  if (this->Architecture->HasAutoLoadBalancing())
+	    {
+	      this->FastMultiplicationMemory(0l);
+	    }
+	}
     }
   else
     this->LoadPrecalculation(precalculationFileName);

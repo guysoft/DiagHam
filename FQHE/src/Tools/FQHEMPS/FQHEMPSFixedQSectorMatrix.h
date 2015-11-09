@@ -75,6 +75,12 @@ class FQHEMPSFixedQSectorMatrix : public AbstractFQHEMPSMatrix
 
   int**** GlobalIndexMapper;
 
+  // indices to keep when performing a trace for the torus geometry
+  int* TopologicalSectorIndices;
+  // number of indices to keep when performing a trace for the torus geometry
+  int TopologicalSectorNbrIndices;
+
+
  public:
   
   // default constructor 
@@ -111,6 +117,13 @@ class FQHEMPSFixedQSectorMatrix : public AbstractFQHEMPSMatrix
   // return value = number of CFT sectors
   virtual int GetNbrCFTSectors();
 
+  // get the auxiliary space indices that are related to a given topological scetor
+  //
+  // topologicalSector = index of the topological sector to select
+  // nbrIndices = reference on the integer that will be set to the number of indices
+  // return value = array that contains the auxiliary space indices related to the selected topological sector
+  virtual int* GetTopologicalSectorIndices(int topologicalSector, int& nbrIndices);
+  
   // get the name describing the B matrices 
   // 
   // return value = name 
@@ -234,6 +247,23 @@ inline int FQHEMPSFixedQSectorMatrix::GetNbrCFTSectors()
   return this->NbrCFTSectors;
 }
 
+// get the auxiliary space indices that are related to a given topological scetor
+//
+// topologicalSector = index of the topological sector to select
+// nbrIndices = reference on the integer that will be set to the number of indices
+// return value = array that contains the auxiliary space indices related to the selected topological sector
+
+inline int* FQHEMPSFixedQSectorMatrix::GetTopologicalSectorIndices(int topologicalSector, int& nbrIndices)
+{
+  nbrIndices = this->TopologicalSectorNbrIndices;
+  int* TmpIndices = new int[this->TopologicalSectorNbrIndices];
+  for (int i = 0; i < this->TopologicalSectorNbrIndices; ++i)
+    {
+      TmpIndices[i] = this->TopologicalSectorIndices[i];
+    }
+  return TmpIndices;
+}
+  
 // get the maximum occupation per orbital
 //
 // return value = aximum occupation per orbital

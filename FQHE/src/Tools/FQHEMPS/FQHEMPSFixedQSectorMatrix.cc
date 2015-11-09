@@ -33,6 +33,7 @@
 #include "Matrix/SparseRealMatrix.h"
 #include "MathTools/IntegerAlgebraTools.h"
 #include "HilbertSpace/BosonOnDiskShort.h"
+#include "GeneralTools/ArrayTools.h"
 
 #include "GeneralTools/Endian.h"
 
@@ -201,6 +202,45 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matr
  	++this->NbrBMatrices;
     }
 
+  if (this->TorusFlag == true)
+    {
+      this->TopologicalSectorIndices = 0;
+      this->TopologicalSectorNbrIndices = 0;
+      for (int t = 0; t < 2; ++t)
+	{
+	  int TmpTopologicalSectorNbrIndices = 0;
+	  int* TmpTopologicalSectorIndices = this->MPSMatrix->GetTopologicalSectorIndices(t, TmpTopologicalSectorNbrIndices);
+	  if (TmpTopologicalSectorNbrIndices > 0)
+	    {
+	      this->TopologicalSectorNbrIndices = 0;
+	      this->TopologicalSectorIndices = new int[TmpTopologicalSectorNbrIndices];
+	      for (int i = 0; i < TmpTopologicalSectorNbrIndices; ++i)
+		{
+		  int TmpPos = SearchInArray(TmpTopologicalSectorIndices[i], GlobalIndices, GroupBMatrixDimension);
+		  if (TmpPos >= 0)
+		    {
+		      this->TopologicalSectorIndices[this->TopologicalSectorNbrIndices] = TmpPos;
+		      ++this->TopologicalSectorNbrIndices;
+		    }
+		}
+	      if (this->TopologicalSectorNbrIndices == 0)
+		{
+		  delete[] this->TopologicalSectorIndices;
+		  this->TopologicalSectorIndices = 0;
+		}
+	      else
+		{
+		  t =2;
+		}
+	      delete[] TmpTopologicalSectorIndices;
+	    }
+	}
+    }
+  else
+    {
+      this->TopologicalSectorIndices = 0;
+      this->TopologicalSectorNbrIndices = 0;
+    }
   cout  << this->NbrBMatrices << " non zero B matrices" << endl;
   delete[] TmpSparseGroupBMatrices;
   delete[] GlobalIndices;
@@ -220,6 +260,17 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matr
 	{
 	  cout << "throwing away B matrix " << i << endl;
 	}
+    }
+}
+
+  // destructor
+  //
+
+FQHEMPSFixedQSectorMatrix::~FQHEMPSFixedQSectorMatrix()
+{
+  if ((this->TorusFlag == true) && (this->TopologicalSectorIndices != 0))
+    {
+      delete[] this->TopologicalSectorIndices;
     }
 }
 

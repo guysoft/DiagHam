@@ -258,8 +258,8 @@ bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex
 #endif
       for (int i = 1; i < this->NbrMPINodes; ++i)
 	{
-	  this->SendToSlaves(i - 1, TmpNbrOperationPerIndex + this->MinimumIndices[i], 
-			     this->MaximumIndices[i] - this->MinimumIndices[i] + 1l);      
+	  this->SendToSlaves(i - 1, (int*) (TmpNbrOperationPerIndex + this->MinimumIndices[i]), 
+			     (int) (this->MaximumIndices[i] - this->MinimumIndices[i] + 1l));      
 	}
       delete[] nbrOperationPerIndex;
       nbrOperationPerIndex = new int [this->MaximumIndices[0] - this->MinimumIndices[0] + 1l];      
@@ -277,8 +277,8 @@ bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex
       MPI::COMM_WORLD.Bcast(this->MinimumIndices, 2 * this->NbrMPINodes, MPI::INT, 0);
       MPI::COMM_WORLD.Bcast(this->MaximumIndices, 2 * this->NbrMPINodes, MPI::INT, 0);
 #endif
-      nbrOperationPerIndex = new int [this->MaximumIndex - this->MinimumIndex + 1l];
-      long TmpNbrElements = this->MaximumIndices[this->MPIRank] - this->MinimumIndices[this->MPIRank] + 1l;
+      int TmpNbrElements = (int) (this->MaximumIndices[this->MPIRank] - this->MinimumIndices[this->MPIRank] + 1l);
+      nbrOperationPerIndex = new int [TmpNbrElements];
       this->ReceiveFromMaster(nbrOperationPerIndex, TmpNbrElements);      
     }
   this->MinimumIndex = this->MinimumIndices[this->MPIRank];

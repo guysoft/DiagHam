@@ -663,7 +663,6 @@ long ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::FastMultiplicat
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
-//  cout <<"EffectiveHilbertSpaceDimension = "<<EffectiveHilbertSpaceDimension<<endl;
   this->NbrInteractionPerComponent = new int [EffectiveHilbertSpaceDimension];
   for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
     this->NbrInteractionPerComponent[i] = 0;
@@ -683,7 +682,12 @@ long ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::FastMultiplicat
       EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
       cout << "distributed calculations have been reoptimized" << endl;
     }  
-
+  if (allowedMemory == 0l)
+    {
+      delete[] this->NbrInteractionPerComponent;
+      this->NbrInteractionPerComponent = 0;
+      return 0l;
+    }
   long Memory = 0;
   for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
 {

@@ -118,6 +118,11 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   //            architecture doesn't support this feature)
   virtual void GetTypicalRange (long& minIndex, long& maxIndex);
   
+  //  test if the architecture has auto load balancing features
+  //
+  // return value = true if auto load balancing features are available
+  virtual bool HasAutoLoadBalancing();
+
   // get typical range of indices on which the local architecture acts, providing the number of calculations that have to be performed per index
   //
   // mbrOperationPerIndex = reference on the number of calculations per index. If the return value is true, a new array will be allocated
@@ -544,6 +549,13 @@ inline int SimpleMPIArchitecture::GetNodeNbr()
   return this->MPIRank;
 }
 
+//  test if the architecture has auto load balancing features
+//
+// return value = true if auto load balancing features are available
 
+inline bool SimpleMPIArchitecture::HasAutoLoadBalancing()
+{
+  return this->AutomaticLoadBalancing;
+}
 
 #endif

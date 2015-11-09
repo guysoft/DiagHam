@@ -124,9 +124,9 @@ int main(int argc, char** argv)
   
   for (int i = 0; i < NbrOrbitals * SizeBlock; i++)
      DimensionPhysicalHilbertSpace *= NbrStatesPerOrbital;
-
+  
   for (int i = 0; i < NbrOrbitals ; i++)
-     NbrStatesPerBlock *= NbrStatesPerOrbital;
+    NbrStatesPerBlock *= NbrStatesPerOrbital;
   cout << "handling " << NbrBMatrices << " B matrices" << endl;
   cout << "Nbr of particles = " << NbrParticles << " " << ", Nbr of flux quanta=" << NbrFluxQuanta << endl;
   cout <<"Size block = "<< SizeBlock<< " , Nbr blocks = " << NbrBlock<<endl;
@@ -143,18 +143,18 @@ int main(int argc, char** argv)
     {
       StringMatrix = MPSMatrix->GetTorusStringMatrix(0);
     }
-else
-{
+  else
+    {
       StringMatrix = MPSMatrix->GetTorusStringMatrix(NbrParticles);
-}
+    }
+  
 
-
-
+  
   int NbrMPSSumIndices = 0;
   int* MPSSumIndices = MPSMatrix->GetTopologicalSectorIndices(Manager.GetInteger("topologicalsector"), NbrMPSSumIndices);
   SparseRealMatrix TransferMatrix = TensorProduct(BMatrices[0], ConjugateBMatrices[0]);
   for(int i= 1; i < NbrStatesPerOrbital; i++)
-     TransferMatrix =  TransferMatrix + TensorProduct(BMatrices[i], ConjugateBMatrices[i]);
+    TransferMatrix =  TransferMatrix + TensorProduct(BMatrices[i], ConjugateBMatrices[i]);
 
   int TmpNbrRow = BMatrices[0].GetNbrRow() * BMatrices[0].GetNbrRow();
   int* TmpNbrElementPerRow = new int [TmpNbrRow];
@@ -179,15 +179,23 @@ else
 	}
     }  
   delete[] TmpNbrElementPerRow;
-
-
-
-  //  NormMatrix.Multiply(TensorProduct(StringMatrix, StringMatrix));
+  
+  cout << "NbrMPSSumIndices = " << NbrMPSSumIndices << endl;
+  for (int i = 0; i < NbrMPSSumIndices; ++i)
+    {
+      cout << i << " " << MPSSumIndices[i] << endl;
+    }
+  
+  NormMatrix.PrintNonZero(cout) << endl;
+  NormMatrix.Multiply(TensorProduct(StringMatrix, StringMatrix));
+  //  NormMatrix = TensorProduct(StringMatrix, StringMatrix);
   for (int i = 0; i < (NbrFluxQuanta / NbrOrbitals); ++i)
     {
       NormMatrix.Multiply(TransferMatrix);
     }
-
+  TransferMatrix.PrintNonZero(cout) << endl;
+  NormMatrix.PrintNonZero(cout) << endl;
+  
   double Norm = 0.0;
   for (int i = 0; i < NbrMPSSumIndices; ++i)
     {
@@ -197,111 +205,111 @@ else
 	  NormMatrix.GetMatrixElement(TmpIndex, TmpIndex, TmpElement);
 	  Norm += TmpElement;	  
 	}
-   }
-
+    }
+  
   double Normalisation = 1.0/sqrt(Norm);
-
+  
   cout << "B matrix size = " << BMatrices[0].GetNbrRow() << "x" << BMatrices[0].GetNbrColumn() << endl;
   cout <<"Norm = " <<Norm<<endl;
   unsigned long * ArrayPhysicalIndice = MPSMatrix->GetPhysicalIndices();
-   
+  
   SparseRealMatrix* FusedBMatrices = new SparseRealMatrix [DimensionPhysicalHilbertSpace];
-
+  
   int TmpI;
   for(int i =0 ; i <DimensionPhysicalHilbertSpace; i++)
-  { 
-     TmpI = i;			
-     int Index = SearchInArray( (unsigned long)( TmpI %   NbrStatesPerBlock) , ArrayPhysicalIndice,  NbrBMatrices);
-     if (Index <0)
-     {
-       FusedBMatrices[i] = SparseRealMatrix(BMatrices[0].GetNbrRow(),BMatrices[0].GetNbrColumn());
-     }
-     else
-     {
-      FusedBMatrices[i].Copy(BMatrices[Index]);
-     }
-     TmpI /= NbrStatesPerBlock;
-     for(int p = 1; p < SizeBlock ; p++)
+    { 
+      TmpI = i;			
+      int Index = SearchInArray( (unsigned long)( TmpI %   NbrStatesPerBlock) , ArrayPhysicalIndice,  NbrBMatrices);
+      if (Index <0)
 	{
-     int Index = SearchInArray( (unsigned long)( TmpI %   NbrStatesPerBlock) , ArrayPhysicalIndice,  NbrBMatrices);
-     if (Index <0)
-     {
-       FusedBMatrices[i].ClearMatrix ();
-     }
-     else
-     {
-        FusedBMatrices[i].Multiply(BMatrices[Index]);
-     }
-           TmpI /=NbrStatesPerBlock;
+	  FusedBMatrices[i] = SparseRealMatrix(BMatrices[0].GetNbrRow(),BMatrices[0].GetNbrColumn());
 	}
-  }
-
-
-
-
-
-   RealVector CoefficientVector (DimensionPhysicalHilbertSpace,true);
- 
-   for (int i = 0; i <DimensionPhysicalHilbertSpace; i++)
-   {
+      else
+	{
+	  FusedBMatrices[i].Copy(BMatrices[Index]);
+	}
+      TmpI /= NbrStatesPerBlock;
+      for(int p = 1; p < SizeBlock ; p++)
+	{
+	  int Index = SearchInArray( (unsigned long)( TmpI %   NbrStatesPerBlock) , ArrayPhysicalIndice,  NbrBMatrices);
+	  if (Index <0)
+	    {
+	      FusedBMatrices[i].ClearMatrix ();
+	    }
+	  else
+	    {
+	      FusedBMatrices[i].Multiply(BMatrices[Index]);
+	    }
+	  TmpI /=NbrStatesPerBlock;
+	}
+    }
+  
+  
+  
+  
+  
+  RealVector CoefficientVector (DimensionPhysicalHilbertSpace,true);
+  
+  for (int i = 0; i <DimensionPhysicalHilbertSpace; i++)
+    {
       CoefficientVector[i] = ((double) rand() / (RAND_MAX) - 0.5);
-   }
-   CoefficientVector.Normalize();
-
-double lamba = 0.0;
-double Newlamba = 100.0;
-
- cout <<"Start algorithm"<<endl;
- while ( fabs(lamba - Newlamba) > 1e-8  ) 
-{
-  SparseRealMatrix TmpMatrix =  FusedBMatrices[0] * CoefficientVector[0];
-  for (int i = 1; i<DimensionPhysicalHilbertSpace; i++)
-  {
-      TmpMatrix = TmpMatrix + (FusedBMatrices[i] * CoefficientVector[i]);
-  }
-
-  SparseRealMatrix TmpMatrix2;
-  TmpMatrix2.Copy(TmpMatrix);
-  for (int i = 1; i< NbrBlock - 1; i++)
-  {
-      TmpMatrix2.Multiply(TmpMatrix);
-  }
-
-  for (int i = 0; i < DimensionPhysicalHilbertSpace; i++)
- {
-   SparseRealMatrix TmpMatrix3 = Multiply(FusedBMatrices[i],TmpMatrix2);
-   CoefficientVector[i] = TmpMatrix3.Tr()*Normalisation;
- }
-  lamba = Newlamba ;
-  Newlamba = CoefficientVector.Norm();
+    }
   CoefficientVector.Normalize();
-
-  cout <<Newlamba << " "<<lamba<<endl;
-}
-
-
+  
+  double lamba = 0.0;
+  double Newlamba = 100.0;
+  
+  cout <<"Start algorithm"<<endl;
+  while ( fabs(lamba - Newlamba) > 1e-8  ) 
+    {
+      SparseRealMatrix TmpMatrix =  FusedBMatrices[0] * CoefficientVector[0];
+      for (int i = 1; i<DimensionPhysicalHilbertSpace; i++)
+	{
+	  TmpMatrix = TmpMatrix + (FusedBMatrices[i] * CoefficientVector[i]);
+	}
+      
+      SparseRealMatrix TmpMatrix2;
+      TmpMatrix2.Copy(TmpMatrix);
+      for (int i = 1; i< NbrBlock - 1; i++)
+	{
+	  TmpMatrix2.Multiply(TmpMatrix);
+	}
+      
+      for (int i = 0; i < DimensionPhysicalHilbertSpace; i++)
+	{
+	  SparseRealMatrix TmpMatrix3 = Multiply(FusedBMatrices[i],TmpMatrix2);
+	  CoefficientVector[i] = TmpMatrix3.Tr()*Normalisation;
+	}
+      lamba = Newlamba ;
+      Newlamba = CoefficientVector.Norm();
+      CoefficientVector.Normalize();
+      
+      cout <<Newlamba << " "<<lamba<<endl;
+    }
+  
+  
   SparseRealMatrix TmpMatrix =  FusedBMatrices[0] * CoefficientVector[0];
-
+  
   for (int i = 1; i<DimensionPhysicalHilbertSpace; i++)
-  {
+    {
       TmpMatrix = TmpMatrix + (FusedBMatrices[i] * CoefficientVector[i]);
-  }
- 
+    }
+  
 
   SparseRealMatrix TmpMatrix2;
   TmpMatrix2.Copy(TmpMatrix);
   for (int i = 1; i < NbrBlock ; i++)
-  {
-     TmpMatrix2.Multiply(TmpMatrix);
-  }
-
- double FinalResult = TmpMatrix2.Tr()*Normalisation;
-
- cout <<" FinalResult = "<<FinalResult <<endl;
-
- for (int i = 0; i < DimensionPhysicalHilbertSpace;  i++)
-   cout << i <<" " <<CoefficientVector[i]<<endl;
-
+    {
+      TmpMatrix2.Multiply(TmpMatrix);
+    }
+  
+  double FinalResult = TmpMatrix2.Tr()*Normalisation;
+  
+  cout <<" FinalResult = "<<FinalResult <<endl;
+  
+  for (int i = 0; i < DimensionPhysicalHilbertSpace;  i++)
+    cout << i <<" " <<CoefficientVector[i]<<endl;
+  
   return 0;
 }
 
