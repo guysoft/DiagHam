@@ -81,6 +81,9 @@ ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::ParticleOnTorus
   this->FastMultiplicationFlag = false;
   this->HermitianSymmetryFlag = true;
   this->NBodyPrefactor = 1.0;
+  this->NbrPseudopotentials = 0;
+  this->LaguerrePolynomials = 0;
+  this->Pseudopotentials = 0;
   this->OneBodyInteractionFactors = 0;
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
