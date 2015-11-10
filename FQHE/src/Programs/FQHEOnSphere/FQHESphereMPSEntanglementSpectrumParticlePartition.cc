@@ -701,12 +701,12 @@ int main(int argc, char** argv)
 	WeightAOrbitals[i] = 1.0;
       for (int i = NbrAOrbitals - TmpNbrOrbitals; i < NbrAOrbitals; ++i)
 	{
-	  WeightAOrbitals[i] = sqrt(TmpSquareWeights[i - NbrAOrbitals + TmpNbrOrbitals]);
+	  WeightAOrbitals[i] = 1.0 / sqrt(TmpSquareWeights[i - NbrAOrbitals + TmpNbrOrbitals]);
 	}
       WeightBOrbitals = new double [NbrBOrbitals];
       for (int i = 0; i < TmpNbrOrbitals; ++i)
 	{
-	  WeightBOrbitals[i] = sqrt(1.0 - TmpSquareWeights[i]);
+	  WeightBOrbitals[i] = 1.0 /  sqrt(1.0 - TmpSquareWeights[i]);
 	}
       for (int i = TmpNbrOrbitals; i < NbrBOrbitals; ++i)
 	{
