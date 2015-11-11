@@ -94,7 +94,8 @@ class AbstractArchitectureOperation
       FTIComputeBandStructureOperation = 0x30001,
       FQHEMPSCreateStateOperation = 0x30002,
       FQHEMPSEvaluateCFTOperation = 0x30003,
-      FQHETorusComputeMatrixElementOperation = 0x30004
+      FQHETorusComputeMatrixElementOperation = 0x30004,
+      FQHETorusSymmetrizeU1U1StateOperation = 0x30005
     };
   
   // destructor

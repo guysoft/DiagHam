@@ -406,6 +406,16 @@ LongRational& LongRational::Power2Multiply (long x)
   return *this;
 }
 
+// divide the current rational by 2^x
+// 
+// x = 2 power exponent
+// return value = referencce on the current rational
+
+LongRational& LongRational::Power2Divide (long x)
+{
+  return this->Power2Multiply(-x);
+}
+
 // return string associated to the coefficient
 //
 // division = character to use instead of '/'
@@ -979,6 +989,16 @@ LongRational& LongRational::Power2Multiply (long x)
 	}
     }
   return *this;
+}
+
+// divide the current rational by 2^x
+// 
+// x = 2 power exponent
+// return value = referencce on the current rational
+
+LongRational& LongRational::Power2Divide (long x)
+{
+  return this->Power2Multiply(-x);
 }
 
 // return string associated to the coefficient

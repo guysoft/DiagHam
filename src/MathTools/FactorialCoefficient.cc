@@ -199,6 +199,42 @@ FactorialCoefficient& FactorialCoefficient::operator /= (long y)
   return *this;
 }
 
+// multiply by a factorial coefficient
+//
+// x = factorial coefficient to use
+// return value = reference on current coefficient
+
+FactorialCoefficient& FactorialCoefficient::operator *= (FactorialCoefficient& x)
+{
+  for (int i = 0; i <= x.NumeratorPosition; ++i)
+    {
+      (*this) *= x.Numerator[i];
+    }
+  for (int i = 0; i <= x.DenominatorPosition; ++i)
+    {
+      (*this) /= x.Denominator[i];
+    }
+  return *this;
+}
+
+// divide by a factorial coefficient
+//
+// y = factorial coefficient to use
+// return value = reference on current coefficient
+
+FactorialCoefficient& FactorialCoefficient::operator /= (FactorialCoefficient& y)
+{
+  for (int i = 0; i <= y.NumeratorPosition; ++i)
+    {
+      (*this) /= y.Numerator[i];
+    }
+  for (int i = 0; i <= y.DenominatorPosition; ++i)
+    {
+      (*this) *= y.Denominator[i];
+    }
+  return *this;
+}
+
 // multiply the coefficient by a power of 2
 // 
 // power = power exponent (must be greater than 0)

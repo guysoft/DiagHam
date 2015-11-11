@@ -2526,19 +2526,19 @@ RealVector BosonOnTorusShort::TruncateStateWithPatternConstraint(RealVector& inp
 
 void BosonOnTorusShort::SymmetrizeU1U1StateCore (RealVector& symmetrizedVector, RealVector& leftVector, RealVector& rightVector, ParticleOnTorus* leftSpace, ParticleOnTorus* rightSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents)
 {
-  unsigned long LastComponent = firstComponent + nbrComponents;
-  
-  FactorialCoefficient Factorial1;
-  FactorialCoefficient Factorial2;
   if (unnormalizedBasisFlag == true)
     {
       cout << "Unnormalized basis not implemented" << endl;
     }
   else
     {
+      long LastComponent = (long) (firstComponent + nbrComponents);
       BosonOnTorusShort* TmpLeftSpace = (BosonOnTorusShort*) leftSpace;
       BosonOnTorusShort* TmpRightSpace = (BosonOnTorusShort*) rightSpace;
-      for (long i = (long) firstComponent; i < (long) LastComponent; ++i)
+     
+      FactorialCoefficient Factorial1;
+      FactorialCoefficient Factorial2;
+      for (long i = (long) firstComponent; i < LastComponent; ++i)
 	{
 	  this->FermionToBoson(TmpLeftSpace->StateDescription[i], TmpLeftSpace->StateKyMax[i] + TmpLeftSpace->NbrBosons - 1, 
 			       TmpLeftSpace->TemporaryState, TmpLeftSpace->TemporaryStateKyMax);
@@ -2558,16 +2558,16 @@ void BosonOnTorusShort::SymmetrizeU1U1StateCore (RealVector& symmetrizedVector, 
 				   TmpRightSpace->TemporaryState, TmpRightSpace->TemporaryStateKyMax);
 	      int k = 0;
 	      for (; k <= TmpRightSpace->TemporaryStateKyMax; ++k)
-	      {
-		this->TemporaryState[k] = TmpLeftSpace->TemporaryState[k] + TmpRightSpace->TemporaryState[k];
-	      }
+		{
+		  this->TemporaryState[k] = TmpLeftSpace->TemporaryState[k] + TmpRightSpace->TemporaryState[k];
+		}
 	      this->TemporaryStateKyMax = TmpRightSpace->TemporaryStateKyMax;
 	      if (TmpLeftSpace->TemporaryStateKyMax > TmpRightSpace->TemporaryStateKyMax)
 		{
 		  for (; k <= TmpLeftSpace->TemporaryStateKyMax; ++k)
-		  {
-		    this->TemporaryState[k] = TmpLeftSpace->TemporaryState[k];
-		  }
+		    {
+		      this->TemporaryState[k] = TmpLeftSpace->TemporaryState[k];
+		    }
 		  this->TemporaryStateKyMax = TmpLeftSpace->TemporaryStateKyMax;
 		}
 
@@ -2575,16 +2575,15 @@ void BosonOnTorusShort::SymmetrizeU1U1StateCore (RealVector& symmetrizedVector, 
 	      if (TmpPos < this->HilbertSpaceDimension)
 		{
 		  Factorial2 = Factorial1;
-		  for (k = 0; k <= TmpRightSpace->TemporaryStateKyMax; ++k)
-		    if (TmpRightSpace->TemporaryState[k] > 1)
-		      Factorial2.FactorialDivide(TmpRightSpace->TemporaryState[k]);
+ 		  for (k = 0; k <= TmpRightSpace->TemporaryStateKyMax; ++k)
+ 		    if (TmpRightSpace->TemporaryState[k] > 1)
+ 		      Factorial2.FactorialDivide(TmpRightSpace->TemporaryState[k]);
 		  for (k = 0; k <= this->TemporaryStateKyMax; ++k)
 		    if (this->TemporaryState[k] > 1)
 		      Factorial2.FactorialMultiply(this->TemporaryState[k]);	
 		    
 		  symmetrizedVector[TmpPos] += sqrt(Factorial2.GetNumericalValue()) * TmpCoefficient * rightVector[j];
-		}
-		
+		}		
 	    }
 	}  
     }

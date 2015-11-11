@@ -54,6 +54,7 @@ class ParticleOnTorus :  public ParticleOnSphere
  protected:
 
   friend class FQHETorusApplyCNRotationOperation;
+  friend class FQHETorusSymmetrizeU1U1StateOperation;
 
  public:
 
@@ -315,6 +316,17 @@ class ParticleOnTorus :  public ParticleOnSphere
   virtual ComplexVector& CoreC4Rotation (ComplexVector& inputState, ParticleOnTorus* inputSpace, ComplexVector& outputState, int minIndex, int nbrIndices, bool clockwise);
 
   // symmetrized a product of two uncoupled states 
+  //
+  // outputVector = reference on the vector which will contain the symmetrozed state
+  // leftVector = reference on the vector associated to the first color
+  // rightVector = reference on the vector associated to the second color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // rightSpace = pointer to the Hilbert space of the second color
+  // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+  // return value = symmetrized state
+  virtual void SymmetrizeU1U1StateCore (RealVector& symmetrizedVector, RealVector& leftVector, RealVector& rightVector, ParticleOnTorus* leftSpace, ParticleOnTorus* rightSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents);
+
+ // symmetrized a product of two uncoupled states 
   //
   // outputVector = reference on the vector which will contain the symmetrized state
   // leftVector = reference on the vector associated to the first color

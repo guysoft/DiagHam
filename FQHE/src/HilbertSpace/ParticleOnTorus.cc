@@ -32,6 +32,7 @@
 #include "HilbertSpace/ParticleOnTorus.h"
 #include "Vector/ComplexVector.h"
 #include "Architecture/ArchitectureOperation/FQHETorusApplyCNRotationOperation.h"
+#include "Architecture/ArchitectureOperation/FQHETorusSymmetrizeU1U1StateOperation.h"
 
 
 // virtual destructor
@@ -161,19 +162,14 @@ ComplexVector& ParticleOnTorus::CoreC4Rotation (ComplexVector& inputState, Parti
 
 RealVector ParticleOnTorus::SymmetrizeU1U1State (RealVector& leftVector, RealVector& rightVector, ParticleOnTorus* leftSpace, ParticleOnTorus* rightSpace, bool unnormalizedBasisFlag, AbstractArchitecture* architecture)
 {
-  ComplexVector TmpSymmetrizedVector (this->LargeHilbertSpaceDimension,true);
-  ComplexVector TmpLeftVector (leftVector);
-  ComplexVector TmpRightVector (rightVector);
-
-//   FQHETorusSymmetrizeU1U1StateOperation Operation (this, leftSpace, rightSpace, &SymmetrizedVector, &leftVector, &rightVector, unnormalizedBasisFlag);
-//   Operation.ApplyOperation(architecture);
-  unsigned long firstComponent = 0ul;
-  unsigned long nbrComponent = leftSpace->GetLargeHilbertSpaceDimension();
-//   timeval TotalStartingTime;
-//   gettimeofday (&TotalStartingTime, 0);
-  
-  this->SymmetrizeU1U1StateCore (TmpSymmetrizedVector, TmpLeftVector, TmpRightVector,  leftSpace,  rightSpace , unnormalizedBasisFlag, firstComponent, nbrComponent);
-  return TmpSymmetrizedVector;
+  RealVector SymmetrizedVector (this->LargeHilbertSpaceDimension,true);
+  cout << "toto1" << endl;
+  FQHETorusSymmetrizeU1U1StateOperation Operation (this, leftSpace, rightSpace, &SymmetrizedVector, &leftVector, &rightVector);
+  Operation.ApplyOperation(architecture);
+//    unsigned long firstComponent = 0ul;
+//    unsigned long nbrComponent = leftSpace->GetLargeHilbertSpaceDimension();
+//  this->SymmetrizeU1U1StateCore (TmpSymmetrizedVector, TmpLeftVector, TmpRightVector,  leftSpace,  rightSpace , unnormalizedBasisFlag, firstComponent, nbrComponent);
+  return SymmetrizedVector;
 }
   
 // symmetrized a product of two uncoupled states 
@@ -191,18 +187,19 @@ ComplexVector ParticleOnTorus::SymmetrizeU1U1State (ComplexVector& leftVector, C
   ComplexVector SymmetrizedVector(this->LargeHilbertSpaceDimension, true);
 //   timeval TotalStartingTime;
 //   gettimeofday (&TotalStartingTime, 0);
-//   FQHETorusSymmetrizeU1U1StateOperation Operation (this, leftSpace, rightSpace, &SymmetrizedVector, &leftVector, &rightVector, unnormalizedBasisFlag);
-//   Operation.ApplyOperation(architecture);
-  unsigned long firstComponent = 0ul;
-  unsigned long nbrComponent = leftSpace->GetLargeHilbertSpaceDimension();
-  this->SymmetrizeU1U1StateCore (SymmetrizedVector, leftVector, rightVector,  leftSpace,  rightSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
+  cout << "toto2" << endl;
+  FQHETorusSymmetrizeU1U1StateOperation Operation (this, leftSpace, rightSpace, &SymmetrizedVector, &leftVector, &rightVector);
+  Operation.ApplyOperation(architecture);
+//   unsigned long firstComponent = 0ul;
+//   unsigned long nbrComponent = leftSpace->GetLargeHilbertSpaceDimension();
+//   this->SymmetrizeU1U1StateCore (SymmetrizedVector, leftVector, rightVector,  leftSpace,  rightSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
 //   timeval TotalEndingTime;
 //   gettimeofday (&TotalEndingTime, 0);
 //   double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 		(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
 //   cout << this->FirstComponent << " " <<  this->NbrComponent << " : " << Dt << "s" << endl;
 //   cout << SymmetrizedVector.Norm() << endl;
-  if (unnormalizedBasisFlag == false)
-    SymmetrizedVector /= SymmetrizedVector.Norm();
+//   if (unnormalizedBasisFlag == false)
+//     SymmetrizedVector /= SymmetrizedVector.Norm();
   return SymmetrizedVector;
 }
   
@@ -626,6 +623,20 @@ int ParticleOnTorus::SymmetrizeSingleStatePeriodicSubsetOrbitals (ComplexVector&
 	}
     }  
   return NbrGeneratedSectors;
+}
+
+// symmetrized a product of two uncoupled states 
+//
+// outputVector = reference on the vector which will contain the symmetrozed state
+// leftVector = reference on the vector associated to the first color
+// rightVector = reference on the vector associated to the second color
+// leftSpace = pointer to the Hilbert space of the first color
+// rightSpace = pointer to the Hilbert space of the second color
+// unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+// return value = symmetrized state
+
+void ParticleOnTorus::SymmetrizeU1U1StateCore (RealVector& symmetrizedVector, RealVector& leftVector, RealVector& rightVector, ParticleOnTorus* leftSpace, ParticleOnTorus* rightSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents)
+{
 }
 
 // symmetrized a product of two uncoupled states 

@@ -303,7 +303,11 @@ int main(int argc, char** argv)
 		}
 	    }
 	  
-      	  RealVector OutputState = TargetSpace->SymmetrizeU1U1State (States, InputSpaces, NbrStates, Precision, Architecture.GetArchitecture());
+      	  RealVector OutputState;
+	  if (NbrStates == 2)
+	    OutputState = TargetSpace->SymmetrizeU1U1State (States[0], States[1], InputSpaces[0], InputSpaces[1], false, Architecture.GetArchitecture());	    
+	  else
+	    OutputState = TargetSpace->SymmetrizeU1U1State (States, InputSpaces, NbrStates, Precision, Architecture.GetArchitecture());
 	  if (OutputState.Norm() > Precision)
 	  {
 	    OutputState /= OutputState.Norm();

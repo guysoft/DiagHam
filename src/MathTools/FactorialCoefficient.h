@@ -97,6 +97,18 @@ class FactorialCoefficient
   // return value = reference on current coefficient
   FactorialCoefficient& operator /= (long y);
 
+  // multiply by a factorial coefficient
+  //
+  // x = factorial coefficient to use
+  // return value = reference on current coefficient
+  FactorialCoefficient& operator *= (FactorialCoefficient& x);
+
+  // divide by a factorial coefficient
+  //
+  // y = factorial coefficient to use
+  // return value = reference on current coefficient
+  FactorialCoefficient& operator /= (FactorialCoefficient& y);
+
   // multiply the coefficient by a power of 2
   // 
   // power = power exponent (must be greater than 0)
