@@ -261,6 +261,7 @@ BosonOnTorusShort::BosonOnTorusShort(const BosonOnTorusShort& bosons)
   this->LookUpTableMemorySize = bosons.LookUpTableMemorySize;
   this->LookUpTableShift = bosons.LookUpTableShift;
   this->LookUpTable = bosons.LookUpTable;
+  this->LargeLookUpTable = bosons.LargeLookUpTable;
 }
 
 // destructor
@@ -328,6 +329,7 @@ BosonOnTorusShort& BosonOnTorusShort::operator = (const BosonOnTorusShort& boson
   this->LookUpTableMemorySize = bosons.LookUpTableMemorySize;
   this->LookUpTableShift = bosons.LookUpTableShift;
   this->LookUpTable = bosons.LookUpTable;
+  this->LargeLookUpTable = bosons.LargeLookUpTable;
   this->Flag = bosons.Flag;
   return *this;
 }

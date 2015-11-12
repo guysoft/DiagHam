@@ -163,12 +163,8 @@ ComplexVector& ParticleOnTorus::CoreC4Rotation (ComplexVector& inputState, Parti
 RealVector ParticleOnTorus::SymmetrizeU1U1State (RealVector& leftVector, RealVector& rightVector, ParticleOnTorus* leftSpace, ParticleOnTorus* rightSpace, bool unnormalizedBasisFlag, AbstractArchitecture* architecture)
 {
   RealVector SymmetrizedVector (this->LargeHilbertSpaceDimension,true);
-  cout << "toto1" << endl;
   FQHETorusSymmetrizeU1U1StateOperation Operation (this, leftSpace, rightSpace, &SymmetrizedVector, &leftVector, &rightVector);
   Operation.ApplyOperation(architecture);
-//    unsigned long firstComponent = 0ul;
-//    unsigned long nbrComponent = leftSpace->GetLargeHilbertSpaceDimension();
-//  this->SymmetrizeU1U1StateCore (TmpSymmetrizedVector, TmpLeftVector, TmpRightVector,  leftSpace,  rightSpace , unnormalizedBasisFlag, firstComponent, nbrComponent);
   return SymmetrizedVector;
 }
   
@@ -187,7 +183,6 @@ ComplexVector ParticleOnTorus::SymmetrizeU1U1State (ComplexVector& leftVector, C
   ComplexVector SymmetrizedVector(this->LargeHilbertSpaceDimension, true);
 //   timeval TotalStartingTime;
 //   gettimeofday (&TotalStartingTime, 0);
-  cout << "toto2" << endl;
   FQHETorusSymmetrizeU1U1StateOperation Operation (this, leftSpace, rightSpace, &SymmetrizedVector, &leftVector, &rightVector);
   Operation.ApplyOperation(architecture);
 //   unsigned long firstComponent = 0ul;
