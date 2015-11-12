@@ -89,6 +89,8 @@ class BosonOnTorusShort :  public ParticleOnTorus
   int* LookUpTableShift;
   // look-up table with two entries : the first one used lzmax value of the state an the second 
   int** LookUpTable;
+  // look-up table for Hilbert spaces larger than 2^31
+  long** LargeLookUpTable;
 
   // temporary state used when applying operators
   unsigned long* TemporaryState;
@@ -419,6 +421,13 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // return value = corresponding index
   int FindStateIndex(unsigned long stateDescription, int lzmax);
 
+  // find state index when the Hilbert space is larger than 2^31
+  //
+  // stateDescription = array describing the state
+  // lzmax = maximum Lz value reached by a boson in the state
+  // return value = corresponding index
+  long FindStateLargeIndex(unsigned long stateDescription, int lzmax);
+
   // evaluate Hilbert space dimension
   //
   // nbrBosons = number of bosons
@@ -456,7 +465,7 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // currentKyMax = momentum maximum value for bosons that are still to be placed
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  int GenerateStates(int nbrBosons, int maxMomentum, int currentKyMax, int pos);
+  long GenerateStates(int nbrBosons, int maxMomentum, int currentKyMax,long  pos);
 
   // generate all states corresponding to the constraints
   // 
@@ -466,7 +475,7 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // pos = position in StateDescription array where to store states
   // currentMomentum = current value of the momentum
   // return value = position from which new states have to be stored
-  int GenerateStates(int nbrBosons, int maxMomentum, int currentKyMax, int pos, int currentMomentum);
+  long GenerateStates(int nbrBosons, int maxMomentum, int currentKyMax, long pos, int currentMomentum);
 
   // generate all states corresponding to the constraints, including a truncation on the occupation numbers
   // 
@@ -476,7 +485,7 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // pos = position in StateDescription array where to store states
   // currentMomentum = current value of the momentum
   // return value = position from which new states have to be stored
-  int GenerateStatesTruncatedOccupation(int nbrBosons, int maxMomentum, int currentKyMax, int pos, int currentMomentum);
+  long GenerateStatesTruncatedOccupation(int nbrBosons, int maxMomentum, int currentKyMax, long pos, int currentMomentum);
 
   // convert a bosonic state to its monomial representation
   //
