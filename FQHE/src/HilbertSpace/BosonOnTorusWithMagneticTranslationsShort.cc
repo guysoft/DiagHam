@@ -1108,11 +1108,11 @@ ComplexVector BosonOnTorusWithMagneticTranslationsShort::ConvertToKxKyBasis(Comp
 ComplexVector BosonOnTorusWithMagneticTranslationsShort::ConvertFromKxKyBasis(ComplexVector& state, ParticleOnTorus* space)
 {
   BosonOnTorusShort* TmpSpace = (BosonOnTorusShort*) space;
-  ComplexVector TmpVector (TmpSpace->HilbertSpaceDimension, true);
+  ComplexVector TmpVector (TmpSpace->LargeHilbertSpaceDimension, true);
   Complex* FourrierCoefficients = new Complex [this->MomentumModulo];
   for (int i = 0; i < this->MomentumModulo; ++i)
     FourrierCoefficients[i] = Phase (-2.0 * M_PI * ((double) (i * this->KxMomentum)) / ((double) this->MomentumModulo));
-  for (int i = 0; i < TmpSpace->HilbertSpaceDimension; ++i)
+  for (long i = 0l; i < TmpSpace->LargeHilbertSpaceDimension; ++i)
     {
       unsigned long TmpState = TmpSpace->StateDescription[i];
       int NbrTranslation = 0;

@@ -649,10 +649,10 @@ int InvertU1KxKyStates(OptionManager* manager)
       TargetSpace = new FermionOnTorusWithMagneticTranslations(NbrParticles, MaxMomentum, XMomentum, YMomentum);
     }
   
-  if (InputStates[0].GetVectorDimension() != TargetSpace->GetHilbertSpaceDimension())
+  if (InputStates[0].GetLargeVectorDimension() != TargetSpace->GetLargeHilbertSpaceDimension())
     {
-      cout << "error: vector and Hilbert-space have unequal dimensions " << InputStates[0].GetVectorDimension() 
-	   << " "<< TargetSpace->GetHilbertSpaceDimension() << endl;
+      cout << "error: vector and Hilbert-space have unequal dimensions " << InputStates[0].GetLargeVectorDimension() 
+	   << " "<< TargetSpace->GetLargeHilbertSpaceDimension() << endl;
       return -1;
     }
   for (int i = 0; i < NbrInputStates; ++i)
