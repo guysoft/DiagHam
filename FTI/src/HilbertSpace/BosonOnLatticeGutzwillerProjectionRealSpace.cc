@@ -598,8 +598,8 @@ void BosonOnLatticeGutzwillerProjectionRealSpace::GetCompositeFermionWavefunctio
     cout <<TemporaryState[p]<<" ";
     for (int q = 0; q < NbrBosons; ++q)
     {
-    	  SlaterCF.SetMatrixElement(p,q,cFEigenVecs[p][TemporaryState[q]]);
- 	  SlaterJastrow.SetMatrixElement(p,q,jastrowEigenVecs[p][TemporaryState[q]]);
+    	  SlaterCF.SetMatrixElement(p,q,cFEigenVecs[p][(int) TemporaryState[q]]);
+ 	  SlaterJastrow.SetMatrixElement(p,q,jastrowEigenVecs[p][(int) TemporaryState[q]]);
     }	      
     }
     trialState[i] +=  SlaterCF.Determinant() * SlaterJastrow.Determinant();

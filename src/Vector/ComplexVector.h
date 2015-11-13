@@ -671,15 +671,30 @@ class ComplexVector : public Vector
   // i = coordinate position
   virtual Complex& operator [] (int i);
   
+  // return reference on vector i-th coordinate
+  //
+  // i = coordinate position
+  virtual Complex& operator [] (long i);
+  
   // return reference on real part of vector i-th coordinate
   //
   // i = coordinate position
   virtual double& Re (int i);
   
+  // return reference on real part of vector i-th coordinate
+  //
+  // i = coordinate position
+  virtual double& Re (long i);
+  
   // return reference on imaginary part of vector i-th coordinate
   //
   // i = coordinate position
   virtual double& Im (int i);
+  
+  // return reference on imaginary part of vector i-th coordinate
+  //
+  // i = coordinate position
+  virtual double& Im (long i);
   
   // get vector norm
   //
@@ -899,6 +914,15 @@ inline Complex& ComplexVector::operator [] (int i)
   return this->Components[i];
 }
   
+// return reference on vector i-th coordinate
+//
+// i = coordinate position
+
+inline Complex& ComplexVector::operator [] (long i) 
+{
+  return this->Components[i];
+}
+  
 // return reference on real part of vector i-th coordinate
 //
 // i = coordinate position
@@ -908,11 +932,29 @@ inline double& ComplexVector::Re (int i)
   return (this->Components[i].Re);
 }
 
+// return reference on real part of vector i-th coordinate
+//
+// i = coordinate position
+
+inline double& ComplexVector::Re (long i)
+{
+  return (this->Components[i].Re);
+}
+
 // return reference on imaginary part of vector i-th coordinate
 //
 // i = coordinate position
 
 inline double& ComplexVector::Im (int i)
+{
+  return (this->Components[i].Im);
+}
+  
+// return reference on imaginary part of vector i-th coordinate
+//
+// i = coordinate position
+
+inline double& ComplexVector::Im (long i)
 {
   return (this->Components[i].Im);
 }

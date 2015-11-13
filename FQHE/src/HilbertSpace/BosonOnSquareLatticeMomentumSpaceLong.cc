@@ -879,7 +879,7 @@ void BosonOnSquareLatticeMomentumSpaceLong::SymmetrizeU1U1StateCore (ComplexVect
   FactorialCoefficient Factorial2;
   if (unnormalizedBasisFlag == true)
     {
-      for (unsigned long i = firstComponent; i < LastComponent; ++i)
+      for (long i = firstComponent; i < LastComponent; ++i)
 	{
 	  this->FermionToBoson(leftSpace->FermionBasis->StateDescription[i], leftSpace->FermionBasis->StateLzMax[i], 
 			       leftSpace->TemporaryState, leftSpace->TemporaryStateLzMax);
@@ -923,7 +923,7 @@ void BosonOnSquareLatticeMomentumSpaceLong::SymmetrizeU1U1StateCore (ComplexVect
     }
   else
     {
-      for (unsigned long i = firstComponent; i < LastComponent; ++i)
+      for (long i = firstComponent; i < LastComponent; ++i)
 	{
 	  this->FermionToBoson(leftSpace->FermionBasis->StateDescription[i], leftSpace->FermionBasis->StateLzMax[i], 
 			       leftSpace->TemporaryState, leftSpace->TemporaryStateLzMax);

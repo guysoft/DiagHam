@@ -3257,7 +3257,7 @@ ComplexVector& BosonOnTorusShort::CoreC4Rotation (ComplexVector& inputState, Par
 	  TmpInputSpace->ConvertToMonomial(TmpInputSpace->StateDescription[j], TmpInputSpace->StateKyMax[j] + this->NbrBosons - 1, TmpInputMonomial);
 	  for (int k = 0; k < this->NbrBosons; ++k)
 	    for (int l = 0; l < this->NbrBosons; ++l)
-	      DeterminantMatrix[k][l] = PhaseMatrix[TmpInputMonomial[k]][TmpOutputMonomial[l]];
+	      DeterminantMatrix[k][l] = PhaseMatrix[(int) TmpInputMonomial[k]][(int) TmpOutputMonomial[l]];
 	  TmpLogCoefficient2 = 0.0;
 	  for (int k = 0; k <= TmpInputSpace->TemporaryStateKyMax; ++k)
 	    {

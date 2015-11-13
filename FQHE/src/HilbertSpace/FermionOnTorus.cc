@@ -2332,7 +2332,7 @@ ComplexVector& FermionOnTorus::CoreC4Rotation (ComplexVector& inputState, Partic
 	  unsigned long TmpPhase = 0ul;
 	  for (int k = 0; k < this->NbrFermions; ++k)
 	    for (int l = 0; l < this->NbrFermions; ++l)
-	      DeterminantMatrix[k][l] = PhaseMatrix[TmpInputMonomial[k]][TmpOutputMonomial[l]];
+	      DeterminantMatrix[k][l] = PhaseMatrix[(int) TmpInputMonomial[k]][(int) TmpOutputMonomial[l]];
 #ifdef __LAPACK__
 	  Tmp += inputState[j] * TmpCoefficient * DeterminantMatrix.LapackDeterminant();	  
 #else

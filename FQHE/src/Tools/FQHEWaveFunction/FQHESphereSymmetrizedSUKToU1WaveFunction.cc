@@ -181,12 +181,12 @@ Complex FQHESphereSymmetrizedSUKToU1WaveFunction::CalculateFromSpinorVariables(C
       for (int k = 0; k < this->NbrParticles; ++k)
 	{
 	  unsigned long TmpIndex = ((Tmp >> (k << 2)) & 0xful) << 1;
-	  this->TemporaryUV.Re(TmpIndex2) = uv.Re(TmpIndex);
-	  this->TemporaryUV.Im(TmpIndex2) = uv.Im(TmpIndex);
+	  this->TemporaryUV.Re(TmpIndex2) = uv.Re((int) TmpIndex);
+	  this->TemporaryUV.Im(TmpIndex2) = uv.Im((int) TmpIndex);
 	  ++TmpIndex2;
 	  ++TmpIndex;
-	  this->TemporaryUV.Re(TmpIndex2) = uv.Re(TmpIndex);
-	  this->TemporaryUV.Im(TmpIndex2) = uv.Im(TmpIndex);
+	  this->TemporaryUV.Re(TmpIndex2) = uv.Re((int) TmpIndex);
+	  this->TemporaryUV.Im(TmpIndex2) = uv.Im((int) TmpIndex);
 	  ++TmpIndex2;
 	}
       TotalValue += this->LocalCalculateFromSpinorVariables(this->TemporaryUV);

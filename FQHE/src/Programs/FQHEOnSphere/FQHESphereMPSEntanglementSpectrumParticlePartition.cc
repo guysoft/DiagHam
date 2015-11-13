@@ -180,6 +180,7 @@ int main(int argc, char** argv)
   int MaxQ;
   MPSMatrix->GetChargeIndexRange(0, MinQ, MaxQ);
   MPSMatrix->GetMatrixBoundaryIndices(MPSRowIndex, MPSColumnIndex, Manager.GetBoolean("use-padding"));
+  cout << "using boundary conditions : row index = " << MPSRowIndex << " column index = " << MPSColumnIndex << endl;
   NbrParticles = MPSMatrix->GetMatrixNaturalNbrParticles(NbrFluxQuanta, Manager.GetBoolean("use-padding"));
   NbrEigenstates = MPSMatrix->GetTransferMatrixLargestEigenvalueDegeneracy();
   int PLevel = MPSMatrix->GetTruncationLevel();
@@ -696,7 +697,6 @@ int main(int argc, char** argv)
       int NbrAOrbitals = (NbrFluxQuanta + 1 + TmpNbrOrbitals) / 2;
       int NbrBOrbitals = (NbrFluxQuanta + 1 + TmpNbrOrbitals) / 2;
       WeightAOrbitals = new double [NbrAOrbitals];
-      cout << NbrAOrbitals << " " <<  TmpNbrOrbitals << " " << NbrBOrbitals << endl;
       for (int i = 0; i < (NbrAOrbitals - TmpNbrOrbitals); ++i)
 	WeightAOrbitals[i] = 1.0;
       for (int i = NbrAOrbitals - TmpNbrOrbitals; i < NbrAOrbitals; ++i)
@@ -783,6 +783,7 @@ int main(int argc, char** argv)
 	}
       delete[] TmpMatrices;
     }
+  FullLeftOverlapMatrix.PrintNonZero(cout) << endl;
 
   FullRightOverlapMatrix.SetMatrixElement(MPSColumnIndex, MPSColumnIndex, 1.0);  
   cout << "keeping " << (MaxNbrFluxQuantaB + 1) << " orbitals in B" << endl; 
@@ -797,7 +798,7 @@ int main(int argc, char** argv)
 	    {
 	      cout << "WeightBOrbitals[" << i << "]=" << WeightBOrbitals[i] << endl;
 	      for (int k = 1; k <= j; ++k)
-		TmpMatrices[j] *= WeightBOrbitals[i] * WeightBOrbitals[i];
+		TmpMatrices[j] *= WeightBOrbitals[MaxNbrFluxQuantaB - i] * WeightBOrbitals[MaxNbrFluxQuantaB - i];
 	    }	    
 	}
       FullRightOverlapMatrix = TmpMatrices[0];
@@ -807,6 +808,7 @@ int main(int argc, char** argv)
 	}
       delete[] TmpMatrices;
     }
+  FullRightOverlapMatrix.PrintNonZero(cout) << endl;
 
   
   SparseRealMatrix NormalizationMatrix(BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow());
