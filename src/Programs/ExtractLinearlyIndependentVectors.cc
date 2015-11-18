@@ -182,7 +182,7 @@ int main(int argc, char** argv)
 	  HRep.Diagonalize(TmpDiag, TmpEigenvector);
 #endif
 	  char* OutputVectorFileName = new char [strlen(VectorPrefix) + 32];
-	  int TmpDimension = Basis[0].GetVectorDimension();
+	  long TmpDimension = Basis[0].GetLargeVectorDimension();
 	  int Count = 0;
 	  for (int i = 0; i < NbrVectors; ++i)
 	    {
@@ -191,7 +191,7 @@ int main(int argc, char** argv)
 		{
 		  ComplexVector TmpVector (TmpDimension, true);
 		  for (int j = 0; j < NbrVectors; ++j)
-		    for (int k = 0; k < TmpDimension; ++k)
+		    for (long k = 0l; k < TmpDimension; ++k)
 		      {
 			TmpVector[k] += TmpEigenvector[i][j] * Basis[j][k];
 		      }
@@ -393,7 +393,7 @@ int main(int argc, char** argv)
 	  HRep.Diagonalize(TmpDiag, TmpEigenvector);
 #endif
 	  char* OutputVectorFileName = new char [strlen(VectorPrefix) + 32];
-	  int TmpDimension = Basis[0].GetVectorDimension();
+	  long TmpDimension = Basis[0].GetLargeVectorDimension();
 	  int Count = 0;
 	  for (int i = 0; i < NbrVectors; ++i)
 	    {
@@ -402,7 +402,7 @@ int main(int argc, char** argv)
 		{
 		  RealVector TmpVector (TmpDimension, true);
 		  for (int j = 0; j < NbrVectors; ++j)
-		    for (int k = 0; k < TmpDimension; ++k)
+		    for (long k = 0l; k < TmpDimension; ++k)
 		      {
 			TmpVector[k] += TmpEigenvector[i][j] * Basis[j][k];
 		      }
