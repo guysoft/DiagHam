@@ -337,10 +337,10 @@ int main(int argc, char** argv)
 	      MaxNbrFluxQuantaB = TmpNbrOrbitals - 1;
 	      WeightAOrbitals = new double[MaxNbrFluxQuantaA + 1];
 	      WeightBOrbitals = new double[MaxNbrFluxQuantaB + 1];
-	      for (int i = 0; i < MaxNbrFluxQuantaA ; ++i)
+	      for (int i = 0; i <= MaxNbrFluxQuantaA ; ++i)
 		{
 		  WeightAOrbitals[i]= sqrt(TmpSquareWeights[i]);
-		  WeightBOrbitals[i]= sqrt(1.0 - TmpSquareWeights[i]);
+		  WeightBOrbitals[i]= sqrt(TmpSquareWeights[i]);
 		}
 	    }
 	  else
@@ -357,10 +357,11 @@ int main(int argc, char** argv)
 	    }
 	}
       
-      int QSectorShift = (MaxNbrFluxQuantaA + 1 + MaxNbrFluxQuantaB + 1) / MPSMatrix->GetNbrOrbitals();
+      int TmpDimension = BMatrices[0].GetNbrRow();
+      int QSectorShift = (MaxNbrFluxQuantaA + 1) / MPSMatrix->GetNbrOrbitals();
+      cout << "QSectorShift = " << QSectorShift << endl;
       Complex Factor = EuclidianScalarProduct(LeftEigenstate, RightEigenstate);
       double InvFactor = 1.0 / Factor.Re;
-      int TmpDimension = BMatrices[0].GetNbrRow();
       RealMatrix TmpFullLeftOverlapMatrix(TmpDimension, TmpDimension, true);
       RealMatrix TmpFullRightOverlapMatrix(TmpDimension, TmpDimension, true);
       SparseRealMatrix NormalizationMatrix(BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow());
@@ -369,84 +370,149 @@ int main(int argc, char** argv)
 	{
 	  QSectorShift = 0;
 	}
+
       for (int i = 0; i < QSectorShift; ++i)
 	{
 	  NormalizationMatrix.Multiply(BMatrices[0]);
 	}
-      if ((Manager.GetBoolean("diagonal-block") == false) && 
-	  ((strstr(Manager.GetString("left-eigenstate"), "_diagblock_") == 0) || (strstr(Manager.GetString("right-eigenstate"), "_diagblock_") == 0)))
+      if (Manager.GetBoolean("orbital-es") == false)
 	{
-	  if (LeftEigenstate.GetVectorDimension() != (TmpDimension * TmpDimension))
+	  if ((Manager.GetBoolean("diagonal-block") == true) || 
+	      ((strstr(Manager.GetString("left-eigenstate"), "_diagblock_") != 0) && (strstr(Manager.GetString("right-eigenstate"), "_diagblock_") != 0)))
 	    {
-	      cout << "error, left eigenstate does not have the expected dimension" << endl;
-	      return 0;
-	    }
-	  if (RightEigenstate.GetVectorDimension() != (TmpDimension * TmpDimension))
-	    {
-	      cout << "error, right eigenstate does not have the expected dimension" << endl;
-	      return 0;
-	    }
-	  if (Manager.GetBoolean("orbital-es") == false)
-	    {
-	      ComplexVector TmpEigenstate (RightEigenstate.GetVectorDimension());
-	      double* Coefficients = new double[NbrBMatrices];
-	      int TmpOrbitalIndex = 0;
-	      int NbrEMatrixEvolution = ((MaxNbrFluxQuantaB + 1) / MPSMatrix->GetNbrOrbitals());
-	      cout << "evolving right eigenstate with " << NbrEMatrixEvolution << " (covering " << (MaxNbrFluxQuantaB + 1) << " orbitals)" << endl;
-	      for (int i = 0; i < NbrEMatrixEvolution; ++i)
-		{		  
-		  for (int j = 0; j < NbrBMatrices; ++j)
-		    {
-		      double Tmp = 1.0;
-		      for (int k = 0; k < MPSMatrix->GetNbrOrbitals(); ++k)
-			{
-			  if ((MPSMatrix->GetPhysicalIndices()[j] & (0x1ul << k)) != 0x0ul)
-			    {
-			      Tmp *= 0.5;//WeightBOrbitals[TmpOrbitalIndex + k] * WeightBOrbitals[TmpOrbitalIndex + k];
-			    }
-			}
-		      Coefficients[j] = 0.0;//Tmp;
-		    }
-		  Coefficients[0] = 1.0;
-		  TmpOrbitalIndex += MPSMatrix->GetNbrOrbitals();
-		  TensorProductSparseMatrixHamiltonian* ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, BMatrices, BMatrices, Coefficients,
-															 Architecture.GetArchitecture()); 
-		  VectorHamiltonianMultiplyOperation Operation1 (ETransposeHamiltonian, &RightEigenstate, &TmpEigenstate);
-		  Operation1.ApplyOperation(Architecture.GetArchitecture());
-		  ComplexVector TmpVector = RightEigenstate;		  
-		  RightEigenstate = TmpEigenstate;
-		  TmpEigenstate = TmpVector;
-		  delete ETransposeHamiltonian;
-		}
-	      NbrEMatrixEvolution = ((MaxNbrFluxQuantaA + 1) / MPSMatrix->GetNbrOrbitals());
-	      cout << "evolving right eigenstate with " << NbrEMatrixEvolution <<  " (covering " << (MaxNbrFluxQuantaA + 1) << " orbitals)" << endl;
-	      TmpOrbitalIndex = 0;
-	      for (int i = 0; i < NbrEMatrixEvolution; ++i)
+	      ComplexVector TmpLeftEigenstate (TmpDimension * TmpDimension, true);
+	      ComplexVector TmpRightEigenstate (TmpDimension * TmpDimension, true);
+	      int TmpBlockDimension = 0;
+	      for (int CurrentPLevel = 0; CurrentPLevel <= PLevel; ++CurrentPLevel)
 		{
-		  for (int j = 0; j < NbrBMatrices; ++j)
+		  for (int CurrentCFTSector = 0; CurrentCFTSector < NbrCFTSectors; ++CurrentCFTSector)
 		    {
-		      double Tmp = 1.0;
-		      for (int k = 0; k <  MPSMatrix->GetNbrOrbitals(); ++k)
+		      int MinQValue = 0;
+		      int MaxQValue = 0;
+		      MPSMatrix->GetChargeIndexRange(CurrentPLevel, CurrentCFTSector, MinQValue, MaxQValue);
+		      for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
 			{
-			  if ((MPSMatrix->GetPhysicalIndices()[j] & (0x1ul << k)) != 0x0ul)
+			  int TmpLocalDimension = MPSMatrix->GetBondIndexRange(CurrentPLevel, QValue, CurrentCFTSector);
+			  TmpBlockDimension += TmpLocalDimension * TmpLocalDimension;
+			}
+		    }
+		}
+	      if (LeftEigenstate.GetVectorDimension() != TmpBlockDimension)
+		{
+		  cout << "error, left eigenstate does not have the expected dimension" << endl;
+		  return 0;
+		}
+	      if (RightEigenstate.GetVectorDimension() != TmpBlockDimension)
+		{
+		  cout << "error, right eigenstate does not have the expected dimension" << endl;
+		  return 0;
+		}
+	      int TmpBlockPosition = 0;
+	      for (int CurrentPLevel = 0; CurrentPLevel <= PLevel; ++CurrentPLevel)
+		{
+		  for (int CurrentCFTSector = 0; CurrentCFTSector < NbrCFTSectors; ++CurrentCFTSector)
+		    {
+		      int MinQValue = 0;
+		      int MaxQValue = 0;
+		      MPSMatrix->GetChargeIndexRange(CurrentPLevel, CurrentCFTSector, MinQValue, MaxQValue);
+		      for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
+			{
+			  int TmpLocalDimension = MPSMatrix->GetBondIndexRange(CurrentPLevel, QValue, CurrentCFTSector);
+			  for (int i = 0; i < TmpLocalDimension; ++i)
 			    {
-			      Tmp *= 0.5;//WeightAOrbitals[TmpOrbitalIndex + k] * WeightAOrbitals[TmpOrbitalIndex + k];
+			      int Tmp1 = MPSMatrix->GetBondIndexWithFixedChargePLevelCFTSector(i, CurrentPLevel, QValue, CurrentCFTSector);
+			      for (int j = 0; j < TmpLocalDimension; ++j)
+				{
+				  int Tmp2 = MPSMatrix->GetBondIndexWithFixedChargePLevelCFTSector(j, CurrentPLevel, QValue, CurrentCFTSector);
+				  TmpLeftEigenstate[(Tmp1 * TmpDimension) + Tmp2] = LeftEigenstate[TmpBlockPosition]; 
+				  TmpRightEigenstate[(Tmp1 * TmpDimension) + Tmp2] = RightEigenstate[TmpBlockPosition]; 
+				  ++TmpBlockPosition;
+				}
 			    }
 			}
-		      Coefficients[j] = 0.0;//Tmp;
 		    }
-		  Coefficients[0] = 1.0;
-		  TensorProductSparseMatrixHamiltonian* EHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, ConjugateBMatrices, ConjugateBMatrices, 
-														Coefficients, Architecture.GetArchitecture()); 
-		  VectorHamiltonianMultiplyOperation Operation1 (EHamiltonian, &LeftEigenstate, &TmpEigenstate);
-		  Operation1.ApplyOperation(Architecture.GetArchitecture());
-		  ComplexVector TmpVector = LeftEigenstate;		  
-		  LeftEigenstate = TmpEigenstate;
-		  TmpEigenstate = TmpVector;
-		  delete EHamiltonian;
 		}
-	      delete[] Coefficients;
+	      
+	      LeftEigenstate = TmpLeftEigenstate;
+	      RightEigenstate = TmpRightEigenstate;
 	    }
+	  else
+	    {
+	      if (LeftEigenstate.GetVectorDimension() != (TmpDimension * TmpDimension))
+		{
+		  cout << "error, left eigenstate does not have the expected dimension" << endl;
+		  return 0;
+		}
+	      if (RightEigenstate.GetVectorDimension() != (TmpDimension * TmpDimension))
+		{
+		  cout << "error, right eigenstate does not have the expected dimension" << endl;
+		  return 0;
+		}
+	    }
+	  ComplexVector TmpEigenstate (RightEigenstate.GetVectorDimension());
+	  double* Coefficients = new double[NbrBMatrices];
+	  int TmpOrbitalIndex = 0;
+	  int NbrEMatrixEvolution = ((MaxNbrFluxQuantaB + 1) / MPSMatrix->GetNbrOrbitals());
+	  cout << "evolving right eigenstate with " << NbrEMatrixEvolution << " (covering " << (MaxNbrFluxQuantaB + 1) << " orbitals)" << endl;
+	  for (int i = 0; i < NbrEMatrixEvolution; ++i)
+	    {		  
+	      for (int j = 0; j < NbrBMatrices; ++j)
+		{
+		  double Tmp = 1.0;
+		  for (int k = 0; k < MPSMatrix->GetNbrOrbitals(); ++k)
+		    {
+		      if ((MPSMatrix->GetPhysicalIndices()[j] & (0x1ul << k)) != 0x0ul)
+			{
+			  Tmp *= WeightBOrbitals[(TmpOrbitalIndex + k)] * WeightBOrbitals[(TmpOrbitalIndex + k)];
+			}
+		    }
+		  Coefficients[j] = Tmp;
+		}
+	      TmpOrbitalIndex += MPSMatrix->GetNbrOrbitals();
+	      TensorProductSparseMatrixHamiltonian* ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, BMatrices, BMatrices, Coefficients,
+														     Architecture.GetArchitecture()); 
+	      
+	      //		  VectorHamiltonianMultiplyOperation Operation1 (ETransposeHamiltonian, &RightEigenstate, &TmpEigenstate);
+	      //		  Operation1.ApplyOperation(Architecture.GetArchitecture());
+	      ETransposeHamiltonian->LowLevelMultiply(RightEigenstate, TmpEigenstate);
+	      ComplexVector TmpVector = RightEigenstate;		  
+	      RightEigenstate = TmpEigenstate;
+	      TmpEigenstate = TmpVector;
+	      delete ETransposeHamiltonian;
+	    }
+	  NbrEMatrixEvolution = ((MaxNbrFluxQuantaA + 1) / MPSMatrix->GetNbrOrbitals());
+	  cout << "evolving left eigenstate with " << NbrEMatrixEvolution <<  " (covering " << (MaxNbrFluxQuantaA + 1) << " orbitals)" << endl;
+	  TmpOrbitalIndex = 0;
+	  for (int i = 0; i < NbrEMatrixEvolution; ++i)
+	    {
+	      for (int j = 0; j < NbrBMatrices; ++j)
+		{
+		  double Tmp = 1.0;
+		  for (int k = 0; k <  MPSMatrix->GetNbrOrbitals(); ++k)
+		    {
+		      if ((MPSMatrix->GetPhysicalIndices()[j] & (0x1ul << k)) != 0x0ul)
+			{
+			  Tmp *= WeightAOrbitals[(TmpOrbitalIndex + (MPSMatrix->GetNbrOrbitals() - 1 - k))] * WeightAOrbitals[(TmpOrbitalIndex + (MPSMatrix->GetNbrOrbitals() - 1 - k))];
+			}
+		    }
+		  Coefficients[j] = Tmp;
+		}
+	      TmpOrbitalIndex += MPSMatrix->GetNbrOrbitals();
+	      TensorProductSparseMatrixHamiltonian* EHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, ConjugateBMatrices, ConjugateBMatrices, 
+													    Coefficients, Architecture.GetArchitecture()); 
+	      // 		  VectorHamiltonianMultiplyOperation Operation1 (EHamiltonian, &LeftEigenstate, &TmpEigenstate);
+	      // 		  Operation1.ApplyOperation(Architecture.GetArchitecture());
+	      EHamiltonian->LowLevelMultiply(LeftEigenstate, TmpEigenstate);
+	      ComplexVector TmpVector = LeftEigenstate;		  
+	      LeftEigenstate = TmpEigenstate;
+	      TmpEigenstate = TmpVector;
+	      delete EHamiltonian;
+	    }
+	  delete[] Coefficients;
+
+// 	  LeftEigenstate.PrintNonZero(cout) << endl;
+// 	  cout << LeftEigenstate << endl;
+// 	  RightEigenstate.PrintNonZero(cout) << endl;
 	  for (int i = 0; i < TmpDimension; ++i)
 	    for (int j = 0; j < TmpDimension; ++j)
 	      {
@@ -456,58 +522,74 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  int TmpBlockDimension = 0;
-	  for (int CurrentPLevel = 0; CurrentPLevel <= PLevel; ++CurrentPLevel)
+	  if ((Manager.GetBoolean("diagonal-block") == false) && 
+	      ((strstr(Manager.GetString("left-eigenstate"), "_diagblock_") == 0) || (strstr(Manager.GetString("right-eigenstate"), "_diagblock_") == 0)))
 	    {
-	      for (int CurrentCFTSector = 0; CurrentCFTSector < NbrCFTSectors; ++CurrentCFTSector)
+	      for (int i = 0; i < TmpDimension; ++i)
+		for (int j = 0; j < TmpDimension; ++j)
+		  {
+		    TmpFullLeftOverlapMatrix.SetMatrixElement(i, j, InvFactor * LeftEigenstate[i * TmpDimension + j].Re); 
+		    TmpFullRightOverlapMatrix.SetMatrixElement(i, j, InvFactor * RightEigenstate[i * TmpDimension + j].Re); 
+		  }
+	    }
+	  else
+	    {
+	      int TmpBlockDimension = 0;
+	      for (int CurrentPLevel = 0; CurrentPLevel <= PLevel; ++CurrentPLevel)
 		{
-		  int MinQValue = 0;
-		  int MaxQValue = 0;
-		  MPSMatrix->GetChargeIndexRange(CurrentPLevel, CurrentCFTSector, MinQValue, MaxQValue);
-		  for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
+		  for (int CurrentCFTSector = 0; CurrentCFTSector < NbrCFTSectors; ++CurrentCFTSector)
 		    {
-		      int TmpLocalDimension = MPSMatrix->GetBondIndexRange(CurrentPLevel, QValue, CurrentCFTSector);
-		      TmpBlockDimension += TmpLocalDimension * TmpLocalDimension;
+		      int MinQValue = 0;
+		      int MaxQValue = 0;
+		      MPSMatrix->GetChargeIndexRange(CurrentPLevel, CurrentCFTSector, MinQValue, MaxQValue);
+		      for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
+			{
+			  int TmpLocalDimension = MPSMatrix->GetBondIndexRange(CurrentPLevel, QValue, CurrentCFTSector);
+			  TmpBlockDimension += TmpLocalDimension * TmpLocalDimension;
+			}
 		    }
 		}
-	    }
-	  if (LeftEigenstate.GetVectorDimension() != TmpBlockDimension)
-	    {
-	      cout << "error, left eigenstate does not have the expected dimension" << endl;
-	      return 0;
-	    }
-	  if (RightEigenstate.GetVectorDimension() != TmpBlockDimension)
-	    {
-	      cout << "error, right eigenstate does not have the expected dimension" << endl;
-	      return 0;
-	    }
-
-	  int TmpBlockPosition = 0;
-	  for (int CurrentPLevel = 0; CurrentPLevel <= PLevel; ++CurrentPLevel)
-	    {
-	      for (int CurrentCFTSector = 0; CurrentCFTSector < NbrCFTSectors; ++CurrentCFTSector)
+	      if (LeftEigenstate.GetVectorDimension() != TmpBlockDimension)
 		{
-		  int MinQValue = 0;
-		  int MaxQValue = 0;
-		  MPSMatrix->GetChargeIndexRange(CurrentPLevel, CurrentCFTSector, MinQValue, MaxQValue);
-		  for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
+		  cout << "error, left eigenstate does not have the expected dimension" << endl;
+		  return 0;
+		}
+	      if (RightEigenstate.GetVectorDimension() != TmpBlockDimension)
+		{
+		  cout << "error, right eigenstate does not have the expected dimension" << endl;
+		  return 0;
+		}
+	      
+	      int TmpBlockPosition = 0;
+	      for (int CurrentPLevel = 0; CurrentPLevel <= PLevel; ++CurrentPLevel)
+		{
+		  for (int CurrentCFTSector = 0; CurrentCFTSector < NbrCFTSectors; ++CurrentCFTSector)
 		    {
-		      int TmpLocalDimension = MPSMatrix->GetBondIndexRange(CurrentPLevel, QValue, CurrentCFTSector);
-		      for (int i = 0; i < TmpLocalDimension; ++i)
+		      int MinQValue = 0;
+		      int MaxQValue = 0;
+		      MPSMatrix->GetChargeIndexRange(CurrentPLevel, CurrentCFTSector, MinQValue, MaxQValue);
+		      for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
 			{
-			  int Tmp1 = MPSMatrix->GetBondIndexWithFixedChargePLevelCFTSector(i, CurrentPLevel, QValue, CurrentCFTSector);
-			  for (int j = 0; j < TmpLocalDimension; ++j)
+			  int TmpLocalDimension = MPSMatrix->GetBondIndexRange(CurrentPLevel, QValue, CurrentCFTSector);
+			  for (int i = 0; i < TmpLocalDimension; ++i)
 			    {
-			      int Tmp2 = MPSMatrix->GetBondIndexWithFixedChargePLevelCFTSector(j, CurrentPLevel, QValue, CurrentCFTSector);
-			      TmpFullLeftOverlapMatrix.SetMatrixElement(Tmp1, Tmp2, InvFactor * LeftEigenstate[TmpBlockPosition].Re); 
-			      TmpFullRightOverlapMatrix.SetMatrixElement(Tmp1, Tmp2, InvFactor * RightEigenstate[TmpBlockPosition].Re); 
-			      ++TmpBlockPosition;
+			      int Tmp1 = MPSMatrix->GetBondIndexWithFixedChargePLevelCFTSector(i, CurrentPLevel, QValue, CurrentCFTSector);
+			      for (int j = 0; j < TmpLocalDimension; ++j)
+				{
+				  int Tmp2 = MPSMatrix->GetBondIndexWithFixedChargePLevelCFTSector(j, CurrentPLevel, QValue, CurrentCFTSector);
+				  TmpFullLeftOverlapMatrix.SetMatrixElement(Tmp1, Tmp2, InvFactor * LeftEigenstate[TmpBlockPosition].Re); 
+				  TmpFullRightOverlapMatrix.SetMatrixElement(Tmp1, Tmp2, InvFactor * RightEigenstate[TmpBlockPosition].Re); 
+				  ++TmpBlockPosition;
+				}
 			    }
 			}
 		    }
 		}
 	    }
 	}
+      //       cout << TmpFullLeftOverlapMatrix.Tr() << " " << TmpFullRightOverlapMatrix.Tr() << endl;
+      //       TmpFullLeftOverlapMatrix.PrintNonZero(cout) << endl;
+      //       TmpFullRightOverlapMatrix.PrintNonZero(cout) << endl;
       if (TmpFullLeftOverlapMatrix.Tr() < 0.0)
 	TmpFullLeftOverlapMatrix *= -1.0;
       if (TmpFullRightOverlapMatrix.Tr() < 0.0)
@@ -522,6 +604,8 @@ int main(int argc, char** argv)
 	}
       SparseRealMatrix FullLeftOverlapMatrix (TmpFullLeftOverlapMatrix);
       SparseRealMatrix FullRightOverlapMatrix (TmpFullRightOverlapMatrix);
+
+      
       double Error = 1e-13;
       double LeftEigenvalueError = 0.0;
       double RightEigenvalueError = 0.0;
@@ -783,7 +867,6 @@ int main(int argc, char** argv)
 	}
       delete[] TmpMatrices;
     }
-  FullLeftOverlapMatrix.PrintNonZero(cout) << endl;
 
   FullRightOverlapMatrix.SetMatrixElement(MPSColumnIndex, MPSColumnIndex, 1.0);  
   cout << "keeping " << (MaxNbrFluxQuantaB + 1) << " orbitals in B" << endl; 
@@ -808,9 +891,7 @@ int main(int argc, char** argv)
 	}
       delete[] TmpMatrices;
     }
-  FullRightOverlapMatrix.PrintNonZero(cout) << endl;
 
-  
   SparseRealMatrix NormalizationMatrix(BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow());
   NormalizationMatrix.SetToIdentity();
   int QSectorShift = MaxNbrFluxQuantaA + 1 + MaxNbrFluxQuantaB + 1 - NbrFluxQuanta - 1;
