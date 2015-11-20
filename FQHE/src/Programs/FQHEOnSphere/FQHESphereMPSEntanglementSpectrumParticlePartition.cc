@@ -190,7 +190,7 @@ int main(int argc, char** argv)
   ofstream File2;
   File2.precision(14);
   
-  char* Extension = new char[8];  
+  char* Extension = new char[32];  
   if (Manager.GetBoolean("orbital-es"))
     {
       sprintf (Extension, "ent");
@@ -199,7 +199,20 @@ int main(int argc, char** argv)
     {
       if (Manager.GetBoolean("realspace-cut"))
 	{
-	  sprintf (Extension, "rsent");
+	  ConfigurationParser RealSpaceWeights;
+	  if (RealSpaceWeights.Parse(Manager.GetString("realspace-partition")) == false)
+	    {
+	      RealSpaceWeights.DumpErrors(cout) << endl;
+	      return -1;
+	    }
+	  double* TmpSquareWeights = 0;
+	  int TmpNbrOrbitals = 0;
+	  if (RealSpaceWeights.GetAsDoubleArray("OrbitalSquareWeights", ' ', TmpSquareWeights, TmpNbrOrbitals) == false)
+	    {
+	      cout << "OrbitalSquareWeights is not defined or as a wrong value" << endl;
+	      return -1;
+	    }
+	  sprintf (Extension, "norb_%d.rsent", TmpNbrOrbitals);
 	}
       else
 	{
