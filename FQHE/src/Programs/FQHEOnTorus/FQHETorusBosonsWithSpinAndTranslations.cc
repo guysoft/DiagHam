@@ -73,6 +73,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('\n', "selected-points", "provide a two column ascii file that indicates which momentum sectors have to be computed");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
+  (*SystemGroup) += new SingleDoubleOption ('\n', "energy-shift", "apply a temporary energy shift used during the diagonalization", -1.0);
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 
 						      500);
@@ -306,7 +307,7 @@ int main(int argc, char** argv)
 														 Architecture.GetArchitecture(), Memory, 0,
 														 OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], 
 														 OneBodyPseudoPotentials[2]);
-      double Shift = -1.0;
+      double Shift = Manager.GetDouble("energy-shift");
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
       if (Manager.GetBoolean("eigenstate"))	

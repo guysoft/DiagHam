@@ -1070,8 +1070,8 @@ double ParticleOnTorusWithSpinAndMagneticTranslationsNBodyHardCoreHamiltonian::E
     return 0.0;
   
   double DoubleNbrLzValue = (double) this->NbrLzValue;
-  double normalizationCoefficient = pow(DoubleNbrLzValue,((double) (this->NBodyValue + 1)) / 4.0);
-  normalizationCoefficient = 1.0;
+  double NormalizationCoefficient = pow(((double) this->NBodyValue) * M_PI * DoubleNbrLzValue,((double) (this->NBodyValue + 1)) / 4.0);
+//  NormalizationCoefficient = 1.0;
   double PIOnM = M_PI / DoubleNbrLzValue ;
   double Factor = 2.0*M_PI*this->Ratio / (DoubleNbrLzValue * ((double)(this->NBodyValue))* ((double)(this->NBodyValue)));
   int MinIter = 3;
@@ -1088,7 +1088,7 @@ double ParticleOnTorusWithSpinAndMagneticTranslationsNBodyHardCoreHamiltonian::E
   for (int j = 0; j < this->NBodyValue - 1; ++j)
     for (int k = j; k < this->NBodyValue - 1; ++k)
       ExpFactor += (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue)*(((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue);
-  double Coefficient = normalizationCoefficient * exp(-Factor*ExpFactor);
+  double Coefficient = NormalizationCoefficient * exp(-Factor*ExpFactor);
   
   while ((Coefficient + Sum != Sum) || (countIter[nBodyValue] < MinIter))
   {
@@ -1103,7 +1103,7 @@ double ParticleOnTorusWithSpinAndMagneticTranslationsNBodyHardCoreHamiltonian::E
     for (int j = 0; j < this->NBodyValue - 1; ++j)
       for (int k = j; k < this->NBodyValue - 1; ++k)
 	ExpFactor += (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue)*(((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue);
-    Coefficient = normalizationCoefficient * exp(-Factor*ExpFactor);
+    Coefficient = NormalizationCoefficient * exp(-Factor*ExpFactor);
     
   }
   
@@ -1119,7 +1119,7 @@ double ParticleOnTorusWithSpinAndMagneticTranslationsNBodyHardCoreHamiltonian::E
   for (int j = 0; j < this->NBodyValue - 1; ++j)
     for (int k = j; k < this->NBodyValue - 1; ++k)
       ExpFactor += (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue)*(((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue);
-  Coefficient = normalizationCoefficient * exp(-Factor*ExpFactor);
+  Coefficient = NormalizationCoefficient * exp(-Factor*ExpFactor);
   
   
   while ((Coefficient + Sum != Sum) || (countIter[nBodyValue] < MinIter))
@@ -1135,7 +1135,7 @@ double ParticleOnTorusWithSpinAndMagneticTranslationsNBodyHardCoreHamiltonian::E
     for (int j = 0; j < this->NBodyValue - 1; ++j)
       for (int k = j; k < this->NBodyValue - 1; ++k)
 	ExpFactor += (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue)*(((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue);
-    Coefficient = normalizationCoefficient * exp(-Factor*ExpFactor);    
+    Coefficient = NormalizationCoefficient * exp(-Factor*ExpFactor);    
   }
   
   return Sum;
