@@ -38,6 +38,7 @@
 #include "MathTools/FactorialCoefficient.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 #include "Matrix/Matrix.h"
+#include "Matrix/ComplexMatrix.h"
 #include "MathTools/IntegerAlgebraTools.h"
 #include "GeneralTools/ArrayTools.h"
 
@@ -722,5 +723,154 @@ long BosonOnTorusWithSpinAllSzAndMagneticTranslations::EvaluateHilbertSpaceDimen
   for (int i = nbrBosons; i >= 0; --i)
     Count += (((long) i) + 1l) * this->EvaluateHilbertSpaceDimension(nbrBosons - i, currentKy - 1, currentTotalKy + (i * currentKy));
   return Count;
+}
+
+// convert state of a SU(2) Hilbert space with fixed Sz to a SU(2) space with all sz sectors
+//
+// state = state that needs to be projected
+// su2space = SU(2) space with fixed sz of the input state
+// return value = input state expression in the SU(2) basis
+
+ComplexVector BosonOnTorusWithSpinAllSzAndMagneticTranslations::SU2ToSU2AllSz(ComplexVector& state, ParticleOnSphereWithSpin* su2space)
+{
+  ComplexVector TmpVector (this->LargeHilbertSpaceDimension, true);
+  BosonOnTorusWithSpinAndMagneticTranslations* InputSpace = (BosonOnTorusWithSpinAndMagneticTranslations*) su2space;
+  unsigned long TmpStateUp;
+  unsigned long TmpStateDown;
+  for (long i = 0; i < InputSpace->LargeHilbertSpaceDimension; ++i)
+    {
+      this->FermionToBoson(InputSpace->StateDescriptionUp[i], InputSpace->NUpKyMax, this->ProdATemporaryStateUp);
+      this->FermionToBoson(InputSpace->StateDescriptionDown[i], InputSpace->NDownKyMax, this->ProdATemporaryStateDown);
+      this->TargetSpace->BosonToFermion(this->ProdATemporaryStateUp, this->ProdATemporaryStateDown, TmpStateUp, TmpStateDown);
+      int TmpIndex = this->TargetSpace->FindStateIndex(TmpStateUp, TmpStateDown);
+      if (TmpIndex < this->HilbertSpaceDimension)
+	{
+	  TmpVector[TmpIndex] = state[i];
+	}
+    }
+  return TmpVector;
+}
+
+// convert a state from one SU(2) basis to another, transforming the one body basis in each momentum sector
+//
+// initialState = state to transform  
+// targetState = vector where the transformed state has to be stored
+// oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+// firstComponent = index of the first component to compute in initialState
+// nbrComponents = number of consecutive components to compute
+
+void BosonOnTorusWithSpinAllSzAndMagneticTranslations::TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis, 
+									     long firstComponent, long nbrComponents)
+{
+  int* TmpMomentumIndices = new int [this->NbrBosons];
+  int* TmpSU2Indices = new int [this->NbrBosons];
+  int* TmpSU2Indices2 = new int [this->NbrBosons];
+  double* OccupationCoefficientArray = new double [this->NbrBosons + 1];
+  OccupationCoefficientArray[0] = 0.0;
+  for (int i = 1; i <= this->NbrBosons; ++i)
+    OccupationCoefficientArray[i] = OccupationCoefficientArray[i - 1] + 0.5 * log((double) i);
+  targetState.ClearVector();
+  Complex* FourrierCoefficients = new Complex [this->MomentumModulo];
+  for (int i = 0; i < this->MomentumModulo; ++i)
+    FourrierCoefficients[i] = Phase (2.0 * M_PI * ((double) (i * this->KxMomentum)) / ((double) this->MomentumModulo));
+  long LastComponent = firstComponent + nbrComponents;
+  if (nbrComponents == 0)
+    LastComponent = this->LargeHilbertSpaceDimension;
+  for (long i = firstComponent; i < LastComponent; ++i)
+    {
+      this->FermionToBoson(this->StateDescriptionUp[i], this->StateDescriptionDown[i],
+			   this->TemporaryStateUp, this->TemporaryStateDown); 
+      this->ProdANbrStateInOrbit = this->RescalingFactors[this->NbrStateInOrbit[i]];
+      double OccupationCoefficient = 0.0;
+      int TmpIndex = 0;
+      for (int j = this->KyMax; j >= 0; --j)
+	{
+	  for (int l = 0; l < this->TemporaryStateDown[j]; ++l)
+	    {
+	      TmpMomentumIndices[TmpIndex] = j;
+	      TmpSU2Indices[TmpIndex] = 1;
+	      ++TmpIndex;	      
+	    }
+	  for (int l = 0; l < this->TemporaryStateUp[j]; ++l)
+	    {
+	      TmpMomentumIndices[TmpIndex] = j;
+	      TmpSU2Indices[TmpIndex] = 0;
+	      ++TmpIndex;	      
+	    }
+	  OccupationCoefficient -= OccupationCoefficientArray[this->TemporaryStateUp[j]];
+	  OccupationCoefficient -= OccupationCoefficientArray[this->TemporaryStateDown[j]];
+	}
+      this->TransformOneBodyBasisRecursive(targetState, initialState[i], 0, TmpMomentumIndices, TmpSU2Indices, TmpSU2Indices2, oneBodyBasis, OccupationCoefficient, OccupationCoefficientArray, FourrierCoefficients);
+    }
+  delete[] OccupationCoefficientArray;
+  delete[] TmpMomentumIndices;
+  delete[] TmpSU2Indices;
+  delete[] TmpSU2Indices2;
+}
+
+// recursive part of the convertion from a state from one SU(2) basis to another, transforming the one body basis in each momentum sector
+//
+// targetState = vector where the transformed state has to be stored
+// coefficient = current coefficient to assign
+// position = current particle consider in the n-body state
+// momentumIndices = array that gives the momentum partition of the initial n-body state
+// initialSU2Indices = array that gives the spin dressing the initial n-body state
+// currentSU2Indices = array that gives the spin dressing the current transformed n-body state
+// oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+// occupationCoefficient = invert of the coefficient that comes from the initial state occupation number 
+// occupationCoefficientArray = array that provides 1/2 ln (N!)
+// fourrierCoefficients = array of Fourrier coefficients for the kx momentum
+
+void BosonOnTorusWithSpinAllSzAndMagneticTranslations::TransformOneBodyBasisRecursive(ComplexVector& targetState, Complex coefficient,
+										      int position, int* momentumIndices, int* initialSU2Indices, 
+										      int* currentSU2Indices, ComplexMatrix* oneBodyBasis,
+										      double occupationCoefficient, double* occupationCoefficientArray,
+										      Complex* fourrierCoefficients) 
+{
+  if (position == this->NbrBosons)
+    {
+      for (int i = 0; i <= this->KyMax; ++i)
+	{
+	  this->TemporaryStateUp[i] = 0ul;
+	  this->TemporaryStateDown[i] = 0ul;
+	}
+      for (int i = 0; i < this->NbrBosons; ++i)
+	{
+	  switch (currentSU2Indices[i])
+	    {
+	    case 0:
+	      this->TemporaryStateUp[momentumIndices[i]]++;
+	      break;
+	    case 1:
+	      this->TemporaryStateDown[momentumIndices[i]]++;
+	      break;
+	    }
+	}
+      int TmpNbrTranslation = 0;
+      for (int i = 0; i <= this->KyMax; ++i)
+	{
+	  occupationCoefficient += occupationCoefficientArray[this->TemporaryStateUp[i]];
+	  occupationCoefficient += occupationCoefficientArray[this->TemporaryStateDown[i]];
+	}
+      unsigned long TmpStateUp;
+      unsigned long TmpStateDown;
+      this->BosonToFermion(this->TemporaryStateUp, this->TemporaryStateDown, TmpStateUp, TmpStateDown);
+      if (this->TargetSpace->FindCanonicalFormAndTestXMomentumConstraint(TmpStateUp, TmpStateDown, TmpNbrTranslation) == true)
+	{
+	  int Index = this->TargetSpace->FindStateIndex(TmpStateUp, TmpStateDown);
+	  if (Index < this->HilbertSpaceDimension)
+	    {
+	      targetState[Index] += (coefficient * this->ProdANbrStateInOrbit[this->TargetSpace->NbrStateInOrbit[Index]] * exp (occupationCoefficient)) * fourrierCoefficients[TmpNbrTranslation];
+	    }
+	}
+      return;      
+    }
+  else
+    {
+      currentSU2Indices[position] = 0;
+      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][1 - initialSU2Indices[position]][1]), position + 1, momentumIndices, initialSU2Indices, currentSU2Indices, oneBodyBasis, occupationCoefficient, occupationCoefficientArray, fourrierCoefficients);
+      currentSU2Indices[position] = 1;
+      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][1 - initialSU2Indices[position]][0]), position + 1, momentumIndices, initialSU2Indices, currentSU2Indices, oneBodyBasis, occupationCoefficient, occupationCoefficientArray, fourrierCoefficients);
+    }
 }
 

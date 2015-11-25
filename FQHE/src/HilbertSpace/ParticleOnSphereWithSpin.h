@@ -814,10 +814,26 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // return value = converted vector
   virtual ComplexVector ConvertFromNbodyBasis(ComplexVector& state, ParticleOnSphereWithSpin& basis);
   
+  // convert state of a SU(2) Hilbert space with fixed Sz to a SU(2) space with all sz sectors
+  //
+  // state = state that needs to be projected
+  // su2space = SU(2) space with fixed sz of the input state
+  // return value = input state expression in the SU(2) basis
+  virtual ComplexVector SU2ToSU2AllSz(ComplexVector& state, ParticleOnSphereWithSpin* su2space);
+
   // get the total spin
   //
   //return value: total spin of the Hilbert space
   virtual int GetTotalSpin();
+
+  // convert a state from one SU(2) basis to another, transforming the one body basis in each momentum sector
+  //
+  // initialState = state to transform  
+  // targetState = vector where the transformed state has to be stored
+  // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+  // firstComponent = index of the first component to compute in initialState
+  // nbrComponents = number of consecutive components to compute
+  virtual void TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis, long firstComponent = 0l, long nbrComponents = 0l);
 
 };
 

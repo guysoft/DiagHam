@@ -1182,6 +1182,7 @@ int ParticleOnSphereWithSpin::SzToMinusSz (int index, double& coefficient)
 
 ComplexVector ParticleOnSphereWithSpin::ConvertFromNbodyBasis(ComplexVector& state, ParticleOnSphereWithSpin& basis)
 {
+  cout << "using dummy ParticleOnSphereWithSpin::ConvertFromNbodyBasis" << endl;
   ComplexVector TmpVector;
   return TmpVector;
 }
@@ -1192,5 +1193,33 @@ ComplexVector ParticleOnSphereWithSpin::ConvertFromNbodyBasis(ComplexVector& sta
 //return value: total spin of the Hilbert space
 int ParticleOnSphereWithSpin::GetTotalSpin()
 {
- return 0; 
+  cout << "using dummy ParticleOnSphereWithSpin::GetTotalSpin" << endl;
+  return 0; 
 }
+
+// convert state of a SU(2) Hilbert space with fixed Sz to a SU(2) space with all sz sectors
+//
+// state = state that needs to be projected
+// su2space = SU(2) space with fixed sz of the input state
+// return value = input state expression in the SU(2) basis
+
+ComplexVector ParticleOnSphereWithSpin::SU2ToSU2AllSz(ComplexVector& state, ParticleOnSphereWithSpin* su2space)
+{
+  cout << "using dummy ParticleOnSphereWithSpin::SU2ToSU2AllSz" << endl;
+  ComplexVector Dummy;
+  return Dummy;
+}
+
+// convert a state from one SU(2) basis to another, transforming the one body basis in each momentum sector
+//
+// initialState = state to transform  
+// targetState = vector where the transformed state has to be stored
+// oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+// firstComponent = index of the first component to compute in initialState
+// nbrComponents = number of consecutive components to compute
+
+void ParticleOnSphereWithSpin::TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis, long firstComponent, long nbrComponents)
+{
+  cout << "using dummy ParticleOnSphereWithSpin::TransformOneBodyBasis" << endl;
+}
+

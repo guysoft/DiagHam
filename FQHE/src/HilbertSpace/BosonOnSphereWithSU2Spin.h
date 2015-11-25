@@ -345,7 +345,9 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // initialState = state to transform  
   // targetState = vector where the transformed state has to be stored
   // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
-  virtual void TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis);
+  // firstComponent = index of the first component to compute in initialState
+  // nbrComponents = number of consecutive components to compute
+  virtual void TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis, long firstComponent = 0l, long nbrComponents = 0l);
 
   // compute the transformation matrix from one SU(2) basis to another, transforming the one body basis in each momentum sector
   //

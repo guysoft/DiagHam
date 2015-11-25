@@ -1675,8 +1675,11 @@ int BosonOnSphereWithSU4Spin::AddmAddm (int m1, int m2, double& coefficient)
 // initialState = state to transform  
 // targetState = vector where the transformed state has to be stored
 // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+// firstComponent = index of the first component to compute in initialState
+// nbrComponents = number of consecutive components to compute
 
-void BosonOnSphereWithSU4Spin::TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis)
+void BosonOnSphereWithSU4Spin::TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis, 
+						     long firstComponent, long nbrComponents)
 {
   int* TmpMomentumIndices = new int [this->NbrBosons];
   int* TmpSU4Indices = new int [this->NbrBosons];
@@ -1686,7 +1689,10 @@ void BosonOnSphereWithSU4Spin::TransformOneBodyBasis(ComplexVector& initialState
   for (int i = 1; i <= this->NbrBosons; ++i)
     OccupationCoefficientArray[i] = OccupationCoefficientArray[i - 1] + 0.5 * log((double) i);
   targetState.ClearVector();
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+  long LastComponent = firstComponent + nbrComponents;
+  if (nbrComponents == 0)
+    LastComponent = this->LargeHilbertSpaceDimension;
+  for (long i = firstComponent; i < LastComponent; ++i)
     {
       this->FermionToBoson(this->StateDescriptionUpPlus[i], this->StateDescriptionUpMinus[i], 
 			   this->StateDescriptionDownPlus[i], this->StateDescriptionDownMinus[i],

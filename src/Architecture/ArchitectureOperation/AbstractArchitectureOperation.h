@@ -95,7 +95,8 @@ class AbstractArchitectureOperation
       FQHEMPSCreateStateOperation = 0x30002,
       FQHEMPSEvaluateCFTOperation = 0x30003,
       FQHETorusComputeMatrixElementOperation = 0x30004,
-      FQHETorusSymmetrizeU1U1StateOperation = 0x30005
+      FQHETorusSymmetrizeU1U1StateOperation = 0x30005,
+      FQHESphereWithSpinApplyOneBodyTransformationOperation = 0x30006
     };
   
   // destructor

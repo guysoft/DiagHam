@@ -199,6 +199,22 @@ class BosonOnTorusWithSpinAllSzAndMagneticTranslations :  public BosonOnTorusWit
   // return value = index of the destination state 
   virtual int AduAd (int index, int m, int n, double& coefficient, int& nbrTranslation);
 
+  // convert state of a SU(2) Hilbert space with fixed Sz to a SU(2) space with all sz sectors
+  //
+  // state = state that needs to be projected
+  // su2space = SU(2) space with fixed sz of the input state
+  // return value = input state expression in the SU(2) basis
+  virtual ComplexVector SU2ToSU2AllSz(ComplexVector& state, ParticleOnSphereWithSpin* su2space);
+
+  // convert a state from one SU(2) basis to another, transforming the one body basis in each momentum sector
+  //
+  // initialState = state to transform  
+  // targetState = vector where the transformed state has to be stored
+  // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+  // firstComponent = index of the first component to compute in initialState
+  // nbrComponents = number of consecutive components to compute
+  virtual void TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis, long firstComponent = 0l, long nbrComponents = 0l);
+
  protected:
 
   // convert a fermionic state into its bosonic  counterpart
@@ -277,6 +293,22 @@ class BosonOnTorusWithSpinAllSzAndMagneticTranslations :  public BosonOnTorusWit
   // stateDescription = unsigned integer describing the state
   // return value = number of particles
   virtual int ComputeNbrParticles(unsigned long stateDescription);
+
+  // recursive part of the convertion from a state from one SU(2) basis to another, transforming the one body basis in each momentum sector
+  //
+  // targetState = vector where the transformed state has to be stored
+  // coefficient = current coefficient to assign
+  // position = current particle consider in the n-body state
+  // momentumIndices = array that gives the momentum partition of the initial n-body state
+  // initialSU2Indices = array that gives the spin dressing the initial n-body state
+  // currentSU2Indices = array that gives the spin dressing the current transformed n-body state
+  // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+  // occupationCoefficient = invert of the coefficient that comes from the initial state occupation number 
+  // occupationCoefficientArray = array that provides 1/2 ln (N!)
+  // fourrierCoefficients = array of Fourrier coefficients for the kx momentum
+  virtual void TransformOneBodyBasisRecursive(ComplexVector& targetState, Complex coefficient,
+					      int position, int* momentumIndices, int* initialSU2Indices, int* currentSU2Indices, ComplexMatrix* oneBodyBasis, 
+					      double occupationCoefficient, double* occupationCoefficientArray, Complex* fourrierCoefficients);
 
 };
 

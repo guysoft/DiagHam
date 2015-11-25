@@ -155,7 +155,9 @@ class FermionOnSphereWithSpinAllSz :  public FermionOnSphereWithSpin
   // initialState = state to transform  
   // targetState = vector where the transformed state has to be stored
   // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
-  void TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis);
+  // firstComponent = index of the first component to compute in initialState
+  // nbrComponents = number of consecutive components to compute
+  void TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis, long firstComponent = 0l, long nbrComponents = 0l);
 
   // recursive part of the convertion from a SU(2) basis to another one, transforming the one body basis in each momentum sector
   //
@@ -167,7 +169,7 @@ class FermionOnSphereWithSpinAllSz :  public FermionOnSphereWithSpin
   // currentSU2Indices = array that gives the spin dressing the current transformed n-body state
   // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
   void TransformOneBodyBasisRecursive(ComplexVector& targetState, Complex coefficient,
-								  int position, int* momentumIndices, int* initialSU2Indices, int* currentSU2Indices, ComplexMatrix* oneBodyBasis);
+				      int position, int* momentumIndices, int* initialSU2Indices, int* currentSU2Indices, ComplexMatrix* oneBodyBasis);
 
 
  protected:

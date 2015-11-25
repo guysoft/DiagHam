@@ -24,4 +24,5 @@ FQHEMPSCreateStateOperation.cc \
 FQHEMPSEvaluateCFTOperation.cc \
 FQHETorusApplyCNRotationOperation.cc \
 FQHETorusComputeMatrixElementOperation.cc \
-FQHETorusSymmetrizeU1U1StateOperation.cc
+FQHETorusSymmetrizeU1U1StateOperation.cc \
+FQHESphereWithSpinApplyOneBodyTransformationOperation.cc

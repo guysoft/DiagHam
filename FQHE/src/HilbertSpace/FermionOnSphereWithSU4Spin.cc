@@ -2334,14 +2334,19 @@ RealVector FermionOnSphereWithSU4Spin::ForgeSU2FromSU4(RealVector& state, Fermio
 // initialState = state to transform  
 // targetState = vector where the transformed state has to be stored
 // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+// firstComponent = index of the first component to compute in initialState
+// nbrComponents = number of consecutive components to compute
 
-void FermionOnSphereWithSU4Spin::TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis)
+void FermionOnSphereWithSU4Spin::TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis, long firstComponent, long nbrComponents)
 {
   int* TmpMomentumIndices = new int [this->NbrFermions];
   int* TmpSU4Indices = new int [this->NbrFermions];
   int* TmpSU4Indices2 = new int [this->NbrFermions];
   targetState.ClearVector();
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+  long LastComponent = firstComponent + nbrComponents;
+  if (nbrComponents == 0)
+    LastComponent = this->LargeHilbertSpaceDimension;
+  for (long i = firstComponent; i < LastComponent; ++i)
     {
       unsigned long TmpState = this->StateDescription[i];
       unsigned long Tmp;

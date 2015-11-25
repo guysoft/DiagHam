@@ -696,17 +696,20 @@ ComplexVector FermionOnSphereWithSpinAllSz::SU2ToSU2AllSz(ComplexVector& state, 
 // initialState = state to transform  
 // targetState = vector where the transformed state has to be stored
 // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+// firstComponent = index of the first component to compute in initialState
+// nbrComponents = number of consecutive components to compute
 
-void FermionOnSphereWithSpinAllSz::TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis)
+void FermionOnSphereWithSpinAllSz::TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis, 
+							 long firstComponent, long nbrComponents)
 {
   int* TmpMomentumIndices = new int [this->NbrFermions];
   int* TmpSpinIndices = new int [this->NbrFermions];
   int* TmpSpinIndices2 = new int [this->NbrFermions];
   targetState.ClearVector();
-//  int Dim = initialState.GetVectorDimension();
-  // ith state of the basis
-//  for (int i = 0; i < 1; ++i)
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+  long LastComponent = firstComponent + nbrComponents;
+  if (nbrComponents == 0)
+    LastComponent = this->LargeHilbertSpaceDimension;
+  for (long i = firstComponent; i < LastComponent; ++i)
     {
       unsigned long TmpState = this->StateDescription[i];
       unsigned long Tmp;
