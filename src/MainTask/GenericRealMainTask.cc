@@ -139,6 +139,14 @@ GenericRealMainTask::GenericRealMainTask(OptionManager* options, AbstractHilbert
     this->SavePrecalculationFileName = 0;
   this->FullReorthogonalizationFlag = options->GetBoolean("force-reorthogonalize");
   this->EvaluateEigenvectors = options->GetBoolean("eigenstate");
+  if ((*options)["all-eigenstates"] != 0)
+    {
+      this->EvaluateAllEigenvectors = options->GetBoolean("all-eigenstates");
+    }
+  else
+    {
+      this->EvaluateAllEigenvectors = false;
+    }
   this->EigenvectorConvergence = options->GetBoolean("eigenstate-convergence");
   if ((*options)["show-itertime"] != 0)
     {
@@ -359,11 +367,15 @@ int GenericRealMainTask::ExecuteMainTask()
 	      return 1;
 	    }	  
 	  int TmpNbrEigenstates = this->NbrEigenvalue;
-	  bool TmpEvaluateEigenvectors = this->EvaluateEigenvectors;
+	  bool TmpEvaluateEigenvectors = this->EvaluateEigenvectors | this->EvaluateAllEigenvectors;
 	  if (this->ComputeEnergyFlag == true)
 	    {
 	      TmpNbrEigenstates = 0;
 	      TmpEvaluateEigenvectors = true;
+	    }
+	  if (this->EvaluateAllEigenvectors == true)
+	    {
+	      TmpNbrEigenstates = this->Hamiltonian->GetHilbertSpaceDimension();	      
 	    }
 	  HamiltonianFullDiagonalizeOperation Operation1 (this->Hamiltonian, false, this->EvaluateEigenvectors);
 	  Operation1.ApplyOperation(this->Architecture);
@@ -377,17 +389,27 @@ int GenericRealMainTask::ExecuteMainTask()
 	    {
 	      RealMatrix Eigenstates;
 	      Operation1.GetHamiltonianEigenstates(Eigenstates);
-	      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
-	      RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
-	      for (int j = 0; j < this->NbrEigenvalue; ++j)
+	      if (this->EvaluateAllEigenvectors == true)
 		{
-		  this->Hamiltonian->LowLevelMultiply(Eigenstates[j], TmpEigenvector);
-		  sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
-		  Eigenstates[j].WriteVector(TmpVectorName);
-		  cout << ((TmpEigenvector * Eigenstates[j]) - this->EnergyShift) << " " << endl;		  
+		  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+		  sprintf (TmpVectorName, "%s.eigenvec.mat", this->EigenvectorFileName);
+		  Eigenstates.WriteMatrix(TmpVectorName);
+		  delete[] TmpVectorName;
 		}
-	      cout << endl;			  
-	      delete[] TmpVectorName;
+	      else
+		{
+		  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+		  RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
+		  for (int j = 0; j < this->NbrEigenvalue; ++j)
+		    {
+		      this->Hamiltonian->LowLevelMultiply(Eigenstates[j], TmpEigenvector);
+		      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
+		      Eigenstates[j].WriteVector(TmpVectorName);
+		      cout << ((TmpEigenvector * Eigenstates[j]) - this->EnergyShift) << " " << endl;		  
+		    }
+		  cout << endl;			  
+		  delete[] TmpVectorName;
+		}
 	      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
 		{
 		  this->WriteResult(File,TmpDiag[j] - this->EnergyShift, false);
@@ -412,7 +434,7 @@ int GenericRealMainTask::ExecuteMainTask()
 	      if (this->LapackFlag == true)
 		{
 		  RealDiagonalMatrix TmpDiag (this->Hamiltonian->GetHilbertSpaceDimension());
-		  if (this->EvaluateEigenvectors == false)
+		  if ((this->EvaluateEigenvectors == false) && (this->EvaluateAllEigenvectors == false))
 		    {
 		      HRep.LapackDiagonalize(TmpDiag);
 		      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
@@ -422,6 +444,13 @@ int GenericRealMainTask::ExecuteMainTask()
 		    {
 		      RealMatrix Q(this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
 		      HRep.LapackDiagonalize(TmpDiag, Q);
+		      if (this->EvaluateAllEigenvectors == true)
+			{
+			  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+			  sprintf (TmpVectorName, "%s.eigenvec.mat", this->EigenvectorFileName);
+			  Q.WriteMatrix(TmpVectorName);
+			  delete[] TmpVectorName;
+			}
 		      if (this->EvaluateEigenvectors == true)
 			{
 			  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
@@ -460,7 +489,7 @@ int GenericRealMainTask::ExecuteMainTask()
 		{
 #endif
 		  RealTriDiagonalSymmetricMatrix TmpTriDiag (this->Hamiltonian->GetHilbertSpaceDimension());
-		  if (this->EvaluateEigenvectors == false)
+		  if ((this->EvaluateEigenvectors == false) && (this->EvaluateAllEigenvectors == false))
 		    {
 		      HRep.Householder(TmpTriDiag, 1e-7);
 		      TmpTriDiag.Diagonalize();
@@ -474,6 +503,13 @@ int GenericRealMainTask::ExecuteMainTask()
 		      HRep.Householder(TmpTriDiag, 1e-7, Q);
 		      TmpTriDiag.Diagonalize(Q);
 		      TmpTriDiag.SortMatrixUpOrder(Q);
+		      if (this->EvaluateAllEigenvectors == true)
+			{
+			  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+			  sprintf (TmpVectorName, "%s.eigenvec.mat", this->EigenvectorFileName);
+			  Q.WriteMatrix(TmpVectorName);
+			  delete[] TmpVectorName;
+			}
 		      if (this->EvaluateEigenvectors == true)
 			{
 			  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];

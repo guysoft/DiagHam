@@ -99,6 +99,8 @@ class GenericRealMainTask: public AbstractMainTask
   bool FullReorthogonalizationFlag;
   // evaluate eigenstates
   bool EvaluateEigenvectors;
+  // evaluate all eigenstates
+  bool EvaluateAllEigenvectors;
   // prefix to add to the name of each file that will contain an eigenvector
   char* EigenvectorFileName;
   // evaluate expectation value of energy for each trial state
