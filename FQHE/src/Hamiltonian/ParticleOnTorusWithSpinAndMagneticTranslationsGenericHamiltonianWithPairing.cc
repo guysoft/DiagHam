@@ -132,7 +132,7 @@ ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonianWithPairing::Par
   this->NbrParticles = nbrParticles;
   this->MomentumModulo = FindGCD(this->NbrParticles, this->MaxMomentum);
   this->FastMultiplicationFlag = false;
-  this->HermitianSymmetryFlag = false;//true;
+  this->HermitianSymmetryFlag = true;
   this->Ratio = ratio;  
   this->InvRatio = 1.0 / ratio;
   this->SpinFluxUp = spinFluxUp;
