@@ -211,9 +211,10 @@ int main(int argc, char** argv)
 	  return -1;
 	}
       else
-	if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles,LzMax, ReferenceState) == false)
-	  return -1;
-
+	{
+	  if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles,LzMax, ReferenceState) == false)
+	    return -1;
+	}
       if (Manager.GetBoolean("p-truncated") == true)
 	{
 	    Space = new FermionOnSpherePTruncated(NbrParticles, TotalLz, LzMax, Manager.GetInteger("p-truncation"), ReferenceState);

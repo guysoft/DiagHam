@@ -63,12 +63,15 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new  SingleIntegerOption ('s', "spin", "twice the spin value", 1);
   (*SystemGroup) += new SingleStringOption  ('\0', "ground-file", "name of the file corresponding to the ground state of the whole system");
-  (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
+  (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");  
+  (*SystemGroup) += new SingleStringOption  ('\n', "multiple-states", "provide as a matrix a series of states whose entanglement spectrum/entropy have to be computed");  
+  (*SystemGroup) += new SingleIntegerOption ('\n', "min-multiplestates", "index of the first state to consider in the matrix provided by the --multiple-groundstate option", 0);  
+  (*SystemGroup) += new SingleIntegerOption ('\n', "max-multiplestates", "index of the last state to consider in the matrix provided by the --multiple-groundstate option (negative if this is the last available state)", -1);  
   (*SystemGroup) += new BooleanOption  ('c', "complex", "consider complex wave function");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-la", "minimum size of the subsystem whose entropy has to be evaluated", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-la", "maximum size of the subsystem whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
-  (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the reduced density matrices in the a given file");
+  (*OutputGroup) += new BooleanOption ('\n', "density-matrix", "store the eigenvalues of the reduced density matrices");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
   (*ToolsGroup) += new BooleanOption  ('\n', "use-svd", "use singular value decomposition instead of diagonalization to compute the entropy");
@@ -99,7 +102,7 @@ int main(int argc, char** argv)
   bool LapackFlag = Manager.GetBoolean("use-lapack");
 #endif
   bool SVDFlag = Manager.GetBoolean("use-svd");
-  char* DensityMatrixFileName = Manager.GetString("density-matrix");
+  char* DensityMatrixFileName = 0;
   
   if (Manager.GetBoolean("complex") == false)
     {
@@ -200,8 +203,13 @@ int main(int argc, char** argv)
 	      return 0;
 	    }
 	  File.open(TmpFileName, ios::binary | ios::out);
+	  if (Manager.GetBoolean("density-matrix") == true)
+	    {
+	      DensityMatrixFileName = ReplaceExtensionToFileName(TmpFileName, "ent", "full.ent");
+	    }
 	  delete[] TmpFileName;
 	}
+ 
       File.precision(14);
       cout.precision(14);
       
