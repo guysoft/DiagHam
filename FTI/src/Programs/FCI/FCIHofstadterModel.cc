@@ -89,6 +89,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "triangular", "use the Hofstadter model for a triangular lattice");
     
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive onsite(boson) or NN (fermion) potential strength", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive NN(boson) or NNN (fermion) potential strength", 0.0);
+
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "tunnelling along a selected direction (t=1 along others)", 1.0);
 
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
@@ -252,11 +254,16 @@ else
     }
   else
     {
-      if ((Manager.GetBoolean("flat-band") == false)&&(Manager.GetBoolean("hardcore") == false ))
+      if (((Manager.GetBoolean("flat-band") == false)&&(Manager.GetBoolean("hardcore") == false ))||(Manager.GetDouble("v-potential")!=0.0))
 	lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_u_%g",Manager.GetDouble("u-potential"));
+      if (Manager.GetDouble("v-potential")!=0.0)
+	lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_v_%g",Manager.GetDouble("v-potential"));
 
       lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_gx_%g_gy_%g", Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
       
+      if (EmbeddingFlag)
+	lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_emb");
+
       sprintf (EigenvalueOutputFile,"%s.dat",FilePrefix);
     }
   
@@ -268,7 +275,7 @@ else
 
       Abstract2DTightBindingModel *TightBindingModel;
       if (Manager.GetBoolean("triangular")==false)
-	TightBindingModel= new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody,true);
+	TightBindingModel= new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody, EmbeddingFlag);
       else
 	TightBindingModel= new TightBindingModelHofstadterTriangularQuarter(NbrCellX, NbrCellY, Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
       
@@ -341,7 +348,7 @@ else
   Abstract2DTightBindingModel *TightBindingModel;
   if (Manager.GetBoolean("triangular")==false)
     TightBindingModel= new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis,
-							     Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),false,EmbeddingFlag);
+							     Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true, EmbeddingFlag);
   else
     TightBindingModel= new TightBindingModelHofstadterTriangularQuarter(NbrCellX, NbrCellY, Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
   
@@ -391,7 +398,7 @@ else
 		Memory = Architecture.GetArchitecture()->GetLocalMemory();
  	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
 	      // assign Hamiltonian:
-	      Hamiltonian = new ParticleOnLatticeHofstadterSingleBandHamiltonian(Space, NbrParticles, NbrCellX, NbrCellY, MaxBand, Manager.GetDouble("u-potential"), 0.0 /*Manager.GetDouble("v-potential")*/, TightBindingModel, 
+	      Hamiltonian = new ParticleOnLatticeHofstadterSingleBandHamiltonian(Space, NbrParticles, NbrCellX, NbrCellY, MaxBand, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), TightBindingModel, 
 										 Manager.GetBoolean("flat-band"),
 										 Architecture.GetArchitecture(), Memory);
 	    }
@@ -420,7 +427,7 @@ else
 		    Memory = Architecture.GetArchitecture()->GetLocalMemory();
 		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
 		  // assign Hamiltonian:
-		  Hamiltonian = new ParticleOnLatticeTwoBandHofstadterHamiltonian((ParticleOnSphereWithSpin*)Space, NbrParticles, NbrCellX, NbrCellY, MinBand, Manager.GetDouble("u-potential"), 0.0 /*Manager.GetDouble("v-potential")*/, TightBindingModel, 
+		  Hamiltonian = new ParticleOnLatticeTwoBandHofstadterHamiltonian((ParticleOnSphereWithSpin*)Space, NbrParticles, NbrCellX, NbrCellY, MinBand, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), TightBindingModel, 
 										  Manager.GetBoolean("flat-band"),
 										  Architecture.GetArchitecture(), Memory);
 		}
@@ -454,7 +461,7 @@ else
 			Memory = Architecture.GetArchitecture()->GetLocalMemory();
 		      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
 		      // assign Hamiltonian:
-		      Hamiltonian = new ParticleOnLatticeFourBandHofstadterHamiltonian((ParticleOnSphereWithSU4Spin*)Space, NbrParticles, NbrCellX, NbrCellY, MinBand, Manager.GetDouble("u-potential"), 0.0 /*Manager.GetDouble("v-potential")*/, TightBindingModel, 
+		      Hamiltonian = new ParticleOnLatticeFourBandHofstadterHamiltonian((ParticleOnSphereWithSU4Spin*)Space, NbrParticles, NbrCellX, NbrCellY, MinBand, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), TightBindingModel, 
 										       Manager.GetBoolean("flat-band"),
 										       Architecture.GetArchitecture(), Memory);
 		    }

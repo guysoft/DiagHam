@@ -329,19 +329,42 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   //get the value of the embedding vectors
   //
   virtual void GetEmbedding(RealVector& embeddingX, RealVector& embeddingY);
+
+  //get the value of the embedding for a given sublattice
+  //
+  virtual void GetEmbedding(int sublattice, double &embeddingX, double &embeddingY);
+
+  // get phase for embedding a given sublattice for the given momenta
+  double GetEmbeddingPhase(int subl, double K1, double K2) {return K1*this->EmbeddingX[subl] + K2*this->EmbeddingY[subl];}
   
   //set the value of the embedding vectors
   //
   virtual void SetEmbedding(RealVector embeddingX, RealVector embeddingY);
+
+  //set the value of the embedding vectors to zero
+  //
+  void SetNoEmbedding();
   
-   //set the value of the embedding vectors from an external ascii file
+  //set the value of the embedding vectors from an external ascii file
   //
   //embeddingFileName = name of the ascii file that defines the embedding
   //
   bool SetEmbeddingFromAsciiFile(char* embeddingFileName);
 
+  // code set of quantum numbers posx, posy into a single integer
+  // posx = position along x-direction
+  // posy = position along y-direction
+  // numXTranslations = number of translation in the x direction to get back to the unit cell 
+  // numXTranslations = number of translation in the y direction to get back to the unit cell
+  //
+  virtual int EncodeSublatticeIndex(int posx, int posy, int & numXTranslations, int &numYTranslations, Complex &translationPhase);
 
-  virtual int  EncodeSublatticeIndex(int posx, int posy,int & numXTranslations,int &numYTranslations, Complex &translationPhase);
+  // decode single integer for sublattice index into set of quantum numbers/positions posx, posy
+  // index = sublattice index
+  // [out] posx = position along x-direction
+  // [out] posy = position along y-direction
+  //
+  virtual void DecodeSublatticeIndex(int index, int &posx, int &posy);
   
    // compute the index in real space lattice starting from the cartesian coordinates
   //
@@ -638,13 +661,29 @@ inline double Abstract2DTightBindingModel::GetProjectedMomentum(int kx, int ky, 
    embeddingX = this->EmbeddingX;
    embeddingY = this->EmbeddingY;
  }
+
+//get the value of the embedding for a given sublattice
+//
+inline void Abstract2DTightBindingModel::GetEmbedding(int sublattice, double &embeddingX, double &embeddingY)
+{
+  embeddingX = this->EmbeddingX[sublattice];
+  embeddingY = this->EmbeddingY[sublattice];
+}
  
- //get the value of the embedding vectors
+ //set the value of the embedding vectors
  //
  inline void Abstract2DTightBindingModel::SetEmbedding(RealVector embeddingX, RealVector embeddingY)
  {
    this->EmbeddingX = embeddingX;
    this->EmbeddingY = embeddingY;
+ }
+
+ //set no/trivial embedding, i.e. all sublattices at the origin
+ //
+ inline void Abstract2DTightBindingModel::SetNoEmbedding()
+ {
+   this->EmbeddingX.ResizeAndClean(NbrBands);
+   this->EmbeddingY.ResizeAndClean(NbrBands);
  }
 
  
@@ -670,6 +709,19 @@ inline int  Abstract2DTightBindingModel::EncodeSublatticeIndex(int posx, int pos
 {
   std::cout <<"using dummy Abstract2DTightBindingModel::EncodeSublatticeIndex(int posx, int posy,int & numXTranslations,int &numYTranslations, Complex &translationPhase)"<<std::endl;
 return -1;
+}
+
+
+// decode single integer for sublattice index into set of quantum numbers/positions posx, posy
+// index = sublattice index
+// [out] posx = position along x-direction
+// [out] posy = position along y-direction
+//
+inline void Abstract2DTightBindingModel::DecodeSublatticeIndex(int index, int &posx, int &posy)
+{
+  std::cout <<"using dummy Abstract2DTightBindingModel::DecodeSublatticeIndex(int index, int &posx, int &posy)"<<std::endl;
+  posx=0;
+  posy=0;
 }
 
 

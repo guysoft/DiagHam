@@ -42,7 +42,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("FQHESphereFermionsCorrelation" , "0.01");
+  OptionManager Manager ("FQHELatticeBosonsCorrelation" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");

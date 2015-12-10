@@ -1472,7 +1472,7 @@ ComplexVector& FermionOnTorusWithMagneticTranslations::CoreC4Rotation (ComplexVe
 #else
 	  for (int k = 0; k < this->NbrFermions; ++k)
 	    for (int l = 0; l < this->NbrFermions; ++l)
-	      DeterminantMatrix[k][l] = PhaseMatrix[TmpInputMonomial[k]][TmpOutputMonomial[l]];
+	      DeterminantMatrix[k][l] = PhaseMatrix[TmpInputMonomial[k]][(long)TmpOutputMonomial[l]];
 	  Tmp += inputState[j] * TmpCoefficient * DeterminantMatrix.Determinant() * sqrt((double) TmpInputSpace->NbrStateInOrbit[j]);
 #endif
 	}

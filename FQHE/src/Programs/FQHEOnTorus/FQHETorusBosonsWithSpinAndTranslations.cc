@@ -308,6 +308,11 @@ int main(int argc, char** argv)
       if ((OneBodyPseudoPotentials[2] == 0) && (Manager.GetDouble("pairing") == 0.0))
 	{
 	  Space = new BosonOnTorusWithSpinAndMagneticTranslations (NbrBosons, TotalSpin, MaxMomentum, XMomentum, YMomentum);
+	  if (Manager.GetString("save-hilbert") != 0)
+	    {	     
+	      ((BosonOnTorusWithSpinAndMagneticTranslations*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+	      return 0;
+	    }
 	}
       else
 	{

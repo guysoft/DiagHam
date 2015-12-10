@@ -5,12 +5,12 @@
 //                                                                            //
 //                  Copyright (C) 2001-2007 Nicolas Regnault                  //
 //                                                                            //
-//                        class author: Nicolas Regnault                      //
+//                          class author: Gunnar Möller                       //
 //                                                                            //
-//      class of checkerboard lattice model with interacting particles        //
+//      class for a square Hofstadter model with interacting particles        //
 //                       in the single band approximation                     // 
 //                                                                            //
-//                        last modification : 08/09/2011                      //
+//                        last modification : 10/12/2015                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -308,11 +308,11 @@ void ParticleOnLatticeHofstadterSingleBandHamiltonian::EvaluateInteractionFactor
 
 		  for (int s=0; s<NbrSublattices; ++s)
 		    {
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 0, 0, 0, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx2, ky2, kx3, ky3);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 0, 0, 0, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx2, ky2, kx4, ky4);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 0, 0, 0, 0, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx1, ky1, kx3, ky3);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 0, 0, 0, 0, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx1, ky1, kx4, ky4);		  
-		    }		 		  
+		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 0, 0, 0, s, s, s, s) * this->ComputeEmbeddingOnSite(s, kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 0, 0, 0, s, s, s, s) * this->ComputeEmbeddingOnSite(s, kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
+		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 0, 0, 0, 0, s, s, s, s) * this->ComputeEmbeddingOnSite(s, kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
+		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 0, 0, 0, 0, s, s, s, s) * this->ComputeEmbeddingOnSite(s, kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
+		    }	  
                   	  
 		  if (Index3 == Index4)
 		    Tmp *= 0.5;
@@ -365,85 +365,8 @@ void ParticleOnLatticeHofstadterSingleBandHamiltonian::EvaluateInteractionFactor
 }
 
 
-/*
-// conventions adopted for matrix elements:
-// modified with respect to Tang, Mei, Wen:
-// unit cell is triangle standing on base. bottom left corner site A and bottom right corner B, tip is site C.
 
-
-// compute the matrix element for the two body interaction between two sites A and B 
-//
-// k1a = creation momentum along x for the B site
-// k1b = creation momentum along y for the B site
-// k2a = annihilation momentum along x for the B site
-// k2b = annihilation momentum along y for the B site
-// return value = corresponding matrix element
-
-Complex ParticleOnLatticeHofstadterSingleBandHamiltonian::ComputeTwoBodyMatrixElementAB(int k1a, int k1b, int k2a, int k2b)
-{
-  Complex Tmp = 2.0 * cos (0.5 * (this->KxFactor * ((double) (k2a - k1a))));
-  //Complex Tmp = Phase (0.5 * (this->KxFactor * ((double) (k2a - k1a))));
-  return Tmp;
-}
-
-// compute the matrix element for the two body interaction between two sites A and C 
-//
-// k1a = creation momentum along x for the C site
-// k1b = creation momentum along y for the C site
-// k2a = annihilation momentum along x for the C site
-// k2b = annihilation momentum along y for the C site
-// return value = corresponding matrix element
-
-Complex ParticleOnLatticeHofstadterSingleBandHamiltonian::ComputeTwoBodyMatrixElementAC(int k1a, int k1b, int k2a, int k2b)
-{
-  Complex Tmp = 2.0 * cos (0.5 * (this->KyFactor * ((double) (k2b - k1b))));
-  //Complex Tmp = Phase (0.5 * (this->KyFactor * ((double) (k2b - k1b))));
-  return Tmp;
-}
-
-// compute the matrix element for the two body interaction between two sites B and C 
-//
-// k1a = creation momentum along x for the B site
-// k1b = creation momentum along y for the B site
-// k2a = creation momentum along x for the C site
-// k2b = creation momentum along y for the C site
-// k3a = annihilation momentum along x for the B site
-// k3b = annihilation momentum along y for the B site
-// k4a = annihilation momentum along x for the C site
-// k4b = annihilation momentum along y for the C site
-// return value = corresponding matrix element
-
-Complex ParticleOnLatticeHofstadterSingleBandHamiltonian::ComputeTwoBodyMatrixElementBC(int k1a, int k1b, int k2a, int k2b, int k3a, int k3b, int k4a, int k4b)
-{
-  Complex Tmp = 2.0 * cos (0.5 * ((this->KxFactor * ((double) (k3a - k1a))) + (this->KyFactor * ((double) (k4b - k2b)))));
-  //Complex Tmp = Phase(0.5 * ((this->KxFactor * ((double) (k3a - k1a))) + (this->KyFactor * ((double) (k4b - k2b)))));
-  return Tmp;
-}
-
-*/
-
-// compute the matrix element for the two body interaction between two sites B and C 
-//
-// subA = sublattice index of the first site
-// subB = sublattice index of the second site
-// kx1 = first creation momentum along x for the B site
-// ky1 = first creation momentum along y for the B site
-// kx2 = second creation momentum along x for the B site
-// ky2 = second creation momentum along y for the B site
-// kx3 = first annihilation momentum along x for the B site
-// ky3 = first annihilation momentum along y for the B site
-// kx4 = second annihilation momentum along x for the B site
-// ky4 = second annihilation momentum along y for the B site
-// return value = corresponding matrix element
-Complex ParticleOnLatticeHofstadterSingleBandHamiltonian::ComputeTwoBodyMatrixElementGenericAB(int subA, int subB, int k1a, int k1b, int k2a, int k2b, int k3a, int k3b, int k4a, int k4b)
-{
-  return 1.0;
-}
-
-
-
-
-// compute the matrix element for on-site two body interaction involving sites on generic sublattic 
+// compute the phase factor for the embedding of four operators of an on-site two body interaction involving sites on a generic sublattic 
 //
 // subl = sublattice index
 // kx1 = first creation momentum along x for the B site
@@ -456,53 +379,36 @@ Complex ParticleOnLatticeHofstadterSingleBandHamiltonian::ComputeTwoBodyMatrixEl
 // ky4 = second annihilation momentum along y for the B site
 //
 // return value = corresponding matrix element
-Complex ParticleOnLatticeHofstadterSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSite(int subl, int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
+Complex ParticleOnLatticeHofstadterSingleBandHamiltonian::ComputeEmbeddingOnSite(int subl, int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
-  return 1.0;
+  double embeddingX, embeddingY;
+  this->TightBindingModel->GetEmbedding(subl, embeddingX, embeddingY);
+  double phase = (this->KxFactor * (kx3 + kx4 - kx1 - kx2) * embeddingX + this->KyFactor * (ky3 + ky4 - ky1 - ky2) * embeddingY);
+  return Polar(phase);
 }
 
 
-
-// compute the matrix element for on-site two body interaction involving A sites
+// compute the matrix element for on-site two body interaction involving sites on generic sublattic 
+//
+// s1 = sublattice index for the first creation operator
+// s2 = sublattice index for the second annihilation operator
+// kx1 = first creation momentum along x on the first sublattice
+// ky1 = first creation momentum along y on the first sublattice
+// kx2 = second creation momentum along x on the second sublattice
+// ky2 = second creation momentum along y on the second sublattice
+// kx3 = first annihilation momentum along x on the second sublattice
+// ky3 = first annihilation momentum along y on the second sublattice
+// kx4 = second annihilation momentum along x on the first sublattice
+// ky4 = second annihilation momentum along y on the first sublattice
 //
 // return value = corresponding matrix element
+ Complex ParticleOnLatticeHofstadterSingleBandHamiltonian::ComputeEmbeddingForTwoBodyOperator(int s1, int s2, int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
+{
+  double phase = this->TightBindingModel->GetEmbeddingPhase(s2, this->KxFactor * kx3, this->KyFactor * ky3);
+  phase += this->TightBindingModel->GetEmbeddingPhase(s1, this->KxFactor * kx4, this->KyFactor * ky4);
+  phase -= this->TightBindingModel->GetEmbeddingPhase(s1, this->KxFactor * kx1, this->KyFactor * ky1);
+  phase -= this->TightBindingModel->GetEmbeddingPhase(s2, this->KxFactor * kx2, this->KyFactor * ky2);
+  return Polar(phase);
+}
 
-// Complex ParticleOnLatticeHofstadterSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSiteAA()
-// {
-//   return 1.0;
-// }
-
-// compute the matrix element for on-site two body interaction involving B sites
-//
-// kx1 = first creation momentum along x for the B site
-// ky1 = first creation momentum along y for the B site
-// kx2 = second creation momentum along x for the B site
-// ky2 = second creation momentum along y for the B site
-// kx3 = first annihilation momentum along x for the B site
-// ky3 = first annihilation momentum along y for the B site
-// kx4 = second annihilation momentum along x for the B site
-// ky4 = second annihilation momentum along y for the B site
-// return value = corresponding matrix element
-
-// Complex ParticleOnLatticeHofstadterSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSiteBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
-// {
-//   return Phase(0.5 * this->KxFactor * ((double) (kx4 + kx3 - kx2 -kx1)));
-// }
-
-// compute the matrix element for on-site two body interaction involving C sites
-//
-// kx1 = first creation momentum along x for the C site
-// ky1 = first creation momentum along y for the C site
-// kx2 = second creation momentum along x for the C site
-// ky2 = second creation momentum along y for the C site
-// kx3 = first annihilation momentum along x for the C site
-// ky3 = first annihilation momentum along y for the C site
-// kx4 = second annihilation momentum along x for the C site
-// ky4 = second annihilation momentum along y for the C site
-// return value = corresponding matrix element
-
-// Complex ParticleOnLatticeHofstadterSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSiteCC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
-// {
-//   return Phase(0.5 * this->KyFactor * ((double) (ky4 + ky3 - ky2 -ky1)));
-// }
 

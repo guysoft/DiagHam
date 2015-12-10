@@ -19,6 +19,13 @@ dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS(sys/time.h)
 
+dnl allow for some environment variables to be cached
+AC_ARG_VAR(LDFLAGS, "linker flags, e.g. -L<lib dir> if you have libraries in a nonstandard directory <lib dir> (cached"))
+AC_ARG_VAR(LIBS, "libraries to pass to the linker, e.g. -l<library> (cached)")
+AC_ARG_VAR(CPPFLAGS,"(Objective) C/C++ preprocessor flags, e.g. -I<include dir> if you have headers in a nonstandard directory <include dir> (cached)")
+AC_ARG_VAR(CXX,"C++ compiler command (cached)")
+AC_ARG_VAR(CXXFLAGS,"C++ compiler flags, help-string (cached)") 
+
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 

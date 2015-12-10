@@ -98,21 +98,6 @@ class ParticleOnLatticeHofstadterSingleBandHamiltonian : public ParticleOnLattic
   //   
   virtual void EvaluateInteractionFactors();
 
-  // compute the matrix element for the two body interaction between two sites B and C 
-  //
-  // subA = sublattice index of the first site
-  // subB = sublattice index of the second site
-  // kx1 = first creation momentum along x for the B site
-  // ky1 = first creation momentum along y for the B site
-  // kx2 = second creation momentum along x for the B site
-  // ky2 = second creation momentum along y for the B site
-  // kx3 = first annihilation momentum along x for the B site
-  // ky3 = first annihilation momentum along y for the B site
-  // kx4 = second annihilation momentum along x for the B site
-  // ky4 = second annihilation momentum along y for the B site
-  // return value = corresponding matrix element
-  virtual Complex ComputeTwoBodyMatrixElementGenericAB(int subA, int subB, int k1a, int k1b, int k2a, int k2b, int k3a, int k3b, int k4a, int k4b);
-
   // compute the matrix element for on-site two body interaction involving sites on generic sublattic 
   //
   // subl = sublattice index
@@ -126,7 +111,23 @@ class ParticleOnLatticeHofstadterSingleBandHamiltonian : public ParticleOnLattic
   // ky4 = second annihilation momentum along y for the B site
   //
   // return value = corresponding matrix element
-  virtual Complex ComputeTwoBodyMatrixElementOnSite(int subl, int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+  Complex ComputeEmbeddingOnSite(int subl, int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+
+  // compute the matrix element for on-site two body interaction involving sites on generic sublattic 
+  //
+  // kx1 = first creation momentum along x for the B site
+  // ky1 = first creation momentum along y for the B site
+  // kx2 = second creation momentum along x for the B site
+  // ky2 = second creation momentum along y for the B site
+  // kx3 = first annihilation momentum along x for the B site
+  // ky3 = first annihilation momentum along y for the B site
+  // kx4 = second annihilation momentum along x for the B site
+  // ky4 = second annihilation momentum along y for the B site
+  // s1 = sublattice index for the first creation operator
+  // s2 = sublattice index for the second annihilation operator
+  //
+  // return value = corresponding matrix element
+  Complex ComputeEmbeddingForTwoBodyOperator(int s1, int s2, int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
 
   // compute the transformation basis contribution to the interaction matrix element
   // 

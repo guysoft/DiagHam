@@ -105,11 +105,15 @@ class TightBindingModelHofstadterSquare : public Abstract2DTightBindingModel
   virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates);
 
   // version with real-space embedding of the wavefunctions
-  virtual void CoreComputeBandStructureWithEmbedding(long minStateIndex, long nbrStates);
+  void CoreComputeBandStructureWithEmbedding(long minStateIndex, long nbrStates);
 
   // initialize number of flux quanta
   // nbrFluxQuanta = number of quanta of flux piercing the unit cell
   void SetNbrFluxQuanta(int nbrFluxQuanta);
+
+  // set natural embedding, i.e., at positions of a uniform lattice
+  //
+  void SetNaturalEmbedding();
 
   // code set of quantum numbers posx, posy into a single integer
   // posx = position along x-direction
@@ -128,9 +132,16 @@ class TightBindingModelHofstadterSquare : public Abstract2DTightBindingModel
   // numXTranslations = number of translation in the y direction to get back to the unit cell
   //
   int  EncodeSublatticeIndex(int posx, int posy,int & numXTranslations,int &numYTranslations, Complex &translationPhase);
-  
 
- int  GetRealSpaceTightBindingLinearizedIndexSafe(int x, int y, int orbitalIndex, int & numXTranslations, int &numYTranslations);
+
+  // decode single integer for sublattice index into set of quantum numbers/positions posx, posy
+  // index = sublattice index
+  // [out] posx = position along x-direction
+  // [out] posy = position along y-direction
+  //
+  void DecodeSublatticeIndex(int index, int &posx, int &posy);  
+
+  int  GetRealSpaceTightBindingLinearizedIndexSafe(int x, int y, int orbitalIndex, int & numXTranslations, int &numYTranslations);
 
 };
 
@@ -138,10 +149,9 @@ class TightBindingModelHofstadterSquare : public Abstract2DTightBindingModel
 // code set of quantum numbers posx, posy into a single integer
 // posx = position along x-direction
 // posy = position along y-direction
- // numXTranslations = number of translation in the x direction to get back to the unit cell 
+// numXTranslations = number of translation in the x direction to get back to the unit cell 
 // numXTranslations = number of translation in the y direction to get back to the unit cell
- //
-
+//
 inline int TightBindingModelHofstadterSquare::EncodeSublatticeIndex(int posx, int posy,int & numXTranslations,int &numYTranslations, Complex &translationPhase) 
 {
   numXTranslations=0;
@@ -185,7 +195,18 @@ inline int TightBindingModelHofstadterSquare::EncodeSublatticeIndex(int posx, in
     tmpPhase*=tmpPhase2;
   return posx + this->UnitCellX*posy;
 }
-  
+
+
+// decode single integer for sublattice index into set of quantum numbers/positions posx, posy
+// index = sublattice index
+// [out] posx = position along x-direction
+// [out] posy = position along y-direction
+//
+inline void TightBindingModelHofstadterSquare::DecodeSublatticeIndex(int index, int &posx, int &posy)
+{
+  posx = index % this->UnitCellX;
+  posy = index / this->UnitCellX;
+}
 
 
 // get the index of the real space tight binding model from the real space coordinates, without assumption on the coordinates
@@ -194,7 +215,7 @@ inline int TightBindingModelHofstadterSquare::EncodeSublatticeIndex(int posx, in
 // y = y coordinate of the unit cell
 // orbitalIndex = index of the orbital / site within the unit cell
 // return value = linearized index  
-
+//
 inline int  TightBindingModelHofstadterSquare::GetRealSpaceTightBindingLinearizedIndexSafe(int x, int y, int orbitalIndex, int & numXTranslations, int &numYTranslations)
 {
   numXTranslations=0;
@@ -213,7 +234,7 @@ inline int  TightBindingModelHofstadterSquare::GetRealSpaceTightBindingLinearize
     x +=  this->NbrSiteX;
     numXTranslations++;
   }
-    if(y >= this->NbrSiteY)
+  if(y >= this->NbrSiteY)
   {
     y -=  this->NbrSiteY;
     numYTranslations--;
