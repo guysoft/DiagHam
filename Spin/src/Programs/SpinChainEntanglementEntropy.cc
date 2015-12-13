@@ -9,6 +9,7 @@
 #include "Hamiltonian/SpinChainHamiltonian.h"
 
 #include "HilbertSpace/Spin1_2Chain.h"
+#include "HilbertSpace/Spin1_2ChainFull.h"
 #include "HilbertSpace/Spin1Chain.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -64,9 +65,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('s', "spin", "twice the spin value", 1);
   (*SystemGroup) += new SingleStringOption  ('\0', "ground-file", "name of the file corresponding to the ground state of the whole system");
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");  
-  (*SystemGroup) += new SingleStringOption  ('\n', "multiple-states", "provide as a matrix a series of states whose entanglement spectrum/entropy have to be computed");  
-  (*SystemGroup) += new SingleIntegerOption ('\n', "min-multiplestates", "index of the first state to consider in the matrix provided by the --multiple-groundstate option", 0);  
-  (*SystemGroup) += new SingleIntegerOption ('\n', "max-multiplestates", "index of the last state to consider in the matrix provided by the --multiple-groundstate option (negative if this is the last available state)", -1);  
   (*SystemGroup) += new BooleanOption  ('c', "complex", "consider complex wave function");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-la", "minimum size of the subsystem whose entropy has to be evaluated", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-la", "maximum size of the subsystem whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
@@ -106,7 +104,6 @@ int main(int argc, char** argv)
   
   if (Manager.GetBoolean("complex") == false)
     {
-      cout << "Real problem "<<endl;
       RealVector* GroundStates = 0;
       double* Weights =0;
       bool WeightFlag = false;
@@ -441,13 +438,18 @@ int main(int argc, char** argv)
 	   }
        }
      
+     bool SzFlag = true;
      for (int i = 0; i < NbrSpaces; ++i)
        {
 	 TotalSz[i] = 0;
 	 if (SpinFindSystemInfoFromVectorFileName(GroundStateFiles[i], NbrSpins, TotalSz[i], SpinValue) == false)
 	   {
-	     cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
-	     return -1;
+	     SzFlag = false;
+	     if (SpinFindSystemInfoFromFileName(GroundStateFiles[i], NbrSpins, SpinValue) == false)
+	       {	     
+		 cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
+		 return -1;
+	       }
 	   }
        }
      
@@ -464,9 +466,19 @@ int main(int argc, char** argv)
      
      SpinValue = Manager.GetInteger("spin");
      
-     for (int i = 0; i < NbrSpaces; ++i)
+     if (SzFlag == true)
        {
-	 cout << "Filename: " << GroundStateFiles[i] << " N= " << NbrSpins << " Sz= " << TotalSz[i] << " spin= " << SpinValue << endl;
+	 for (int i = 0; i < NbrSpaces; ++i)
+	   {
+	     cout << "Filename: " << GroundStateFiles[i] << " N= " << NbrSpins << " Sz= " << TotalSz[i] << " spin= " << SpinValue << endl;
+	   }
+       }
+     else
+       {
+	 for (int i = 0; i < NbrSpaces; ++i)
+	   {
+	     cout << "Filename: " << GroundStateFiles[i] << " N= " << NbrSpins << " spin= " << SpinValue << endl;
+	   }
        }
      
      
@@ -476,7 +488,14 @@ int main(int argc, char** argv)
        {
 	 ofstream DensityMatrixFile;
 	 DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out); 
-	 DensityMatrixFile << "# l_a    Sz    lambda" << endl;
+	 if (SzFlag == true)
+	   {
+	     DensityMatrixFile << "# l_a    Sz    lambda" << endl;
+	   }
+	 else
+	   {
+	     DensityMatrixFile << "# l_a    lambda" << endl;
+	   }
 	 DensityMatrixFile.close();
        }
      
@@ -498,27 +517,41 @@ int main(int argc, char** argv)
      File.precision(14);
      cout.precision(14);
      
-     for (int i = 0; i < NbrSpaces; ++i)
-       {
-	 switch (SpinValue)
-	   {
-	   case 1 :
-	     Spaces[i] = new Spin1_2Chain (NbrSpins, TotalSz[i], 1000000);
-	     break;
-	   case 2 :
-	     Spaces[i] = new Spin1Chain (NbrSpins, TotalSz[i], 1000000);
-	     break;
-	   default :
-	     {
-	       if ((SpinValue & 1) == 0)
-		 cout << "spin " << (SpinValue / 2) << " are not available" << endl;
-	       else 
-		 cout << "spin " << SpinValue << "/2 are not available" << endl;
-	       return -1;
-	     }
-	   }
-       }
-     
+      if (SzFlag == true)
+	{
+	  for (int i = 0; i < NbrSpaces; ++i)
+	    {
+	      switch (SpinValue)
+		{
+		case 1 :
+		  Spaces[i] = new Spin1_2Chain (NbrSpins, TotalSz[i], 1000000);
+		  break;
+		case 2 :
+		  Spaces[i] = new Spin1Chain (NbrSpins, TotalSz[i], 1000000);
+		  break;
+		default :
+		  {
+		    if ((SpinValue & 1) == 0)
+		      cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+		    else 
+		      cout << "spin " << SpinValue << "/2 are not available" << endl;
+		    return -1;
+		  }
+		}
+	    }
+	}
+      else
+	{
+	  for (int i = 0; i < NbrSpaces; ++i)
+	    {
+	      switch (SpinValue)
+		{
+		case 1 :
+		  Spaces[i] = new Spin1_2ChainFull (NbrSpins);
+		  break;
+		}
+	    }
+	}
      int SubsystemSize = Manager.GetInteger("min-la");
      if (SubsystemSize < 1)
        SubsystemSize = 1;
@@ -537,6 +570,14 @@ int main(int argc, char** argv)
 	 int MinSzA = -MaxSzA;
 	 int MaxSzB = ((NbrSpins - SubsystemSize) * SpinValue);
 	 int MinSzB = -MaxSzB;
+	 if (SzFlag == false)
+	   {
+	     MaxSzA = 0;
+	     MinSzA = 0;
+	     MaxSzB = 0;
+	     MinSzB = 0;
+	     SzValue = 0;
+	   }
 	 for (; MinSzA <= MaxSzA; MinSzA += 2)
 	   {
 	     HermitianMatrix PartialDensityMatrix;
@@ -546,7 +587,14 @@ int main(int argc, char** argv)
 		 int SzB = SzValue - MinSzA;
 		 if ((SzB <= MaxSzB) && (SzB >= MinSzB))
 		   {
-		     cout << "processing subsytem size " << SubsystemSize << " SzA=" << MinSzA << endl;
+		     if (SzFlag == true)
+		       {
+			 cout << "processing subsytem size " << SubsystemSize << " SzA=" << MinSzA << endl;
+		       }
+		     else
+		       {
+			 cout << "processing subsytem size " << SubsystemSize << endl;
+		       }
 		     if (SVDFlag == false)
 		       {
 			 cout<<"Use SVD "<<endl;
@@ -657,8 +705,16 @@ int main(int argc, char** argv)
 		     ofstream DensityMatrixFile;
 		     DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
 		      DensityMatrixFile.precision(14);
-		      for (int i = 0; i <TmpDiag.GetNbrRow(); ++i)
-			DensityMatrixFile << SubsystemSize << " " << MinSzA << " " << TmpDiag[i] << endl;
+		      if (SzFlag == true)
+			{
+			  for (int i = 0; i <TmpDiag.GetNbrRow(); ++i)
+			    DensityMatrixFile << SubsystemSize << " " << MinSzA << " " << TmpDiag[i] << endl;
+			}
+		      else
+			{
+			  for (int i = 0; i <TmpDiag.GetNbrRow(); ++i)
+			    DensityMatrixFile << SubsystemSize << " " << TmpDiag[i] << endl;
+			}
 		      DensityMatrixFile.close();
 		   }
 	       }

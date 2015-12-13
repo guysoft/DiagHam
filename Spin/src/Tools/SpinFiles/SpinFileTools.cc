@@ -122,7 +122,7 @@ bool SpinFindSystemInfoFromFileName(char* filename, int& nbrSpins, int& spin)
 	  spin = atoi(StrNbrSpins);
 	  StrNbrSpins[SizeString] = '_';
 	  StrNbrSpins += SizeString;
-	  if (strstr((StrNbrSpins + SizeString), "_2_") != (StrNbrSpins + SizeString))
+	  if (strstr(StrNbrSpins, "_2_") != StrNbrSpins)
 	    {
 	      spin *= 2;
 	    }
