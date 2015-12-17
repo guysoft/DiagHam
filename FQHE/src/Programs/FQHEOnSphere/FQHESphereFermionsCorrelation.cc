@@ -609,7 +609,7 @@ int main(int argc, char** argv)
 	  cout << "can't open vector file " << Manager.GetString("eigenstate") << endl;
 	  return -1;      
 	}
-      if (Space->GetLargeHilbertSpaceDimension()!=State.GetLargeVectorDimension())
+      if (Space->GetLargeHilbertSpaceDimension()!= ComplexState.GetLargeVectorDimension())
 	  {
 	    cout << "Dimension mismatch between state and Hilbert space!"<<endl;
 	    return -1;

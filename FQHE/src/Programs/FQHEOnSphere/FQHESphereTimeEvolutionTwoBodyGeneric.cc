@@ -212,12 +212,12 @@ int main(int argc, char** argv)
 	  {
 	    Space = new BosonOnSphere(NbrParticles, TotalLz, LzMax);
 	  }
-      sprintf (OutputNamePrefix, "bosons_sphere_%s_n_%d_2s_%d_lz_%d_t", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalLz);
+      sprintf (OutputNamePrefix, "bosons_sphere_%s_n_%d_2s_%d_t", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalLz);
     }
   else
     {
       Space = new FermionOnSphere (NbrParticles, TotalLz, LzMax);
-      sprintf (OutputNamePrefix, "fermions_sphere_%s_n_%d_2s_%d_lz_%d_t", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalLz);
+      sprintf (OutputNamePrefix, "fermions_sphere_%s_n_%d_2s_%d_t", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalLz);
     }
 
 
@@ -294,7 +294,7 @@ int main(int argc, char** argv)
     }
     cout << endl;
     char* OutputName = new char [strlen(OutputNamePrefix)+ 16];
-    sprintf (OutputName, "%s_%g.vec", OutputNamePrefix, TimeShift + i*TmpTime);
+    sprintf (OutputName, "%s_%g_lz_%d.vec", OutputNamePrefix, TimeShift + (i + 1)*TmpTime, TotalLz);
     TmpInitialState.WriteVector(OutputName);
     delete[] OutputName;
   }
