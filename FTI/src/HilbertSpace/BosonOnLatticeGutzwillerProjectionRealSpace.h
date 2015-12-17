@@ -163,6 +163,21 @@ class BosonOnLatticeGutzwillerProjectionRealSpace : public FermionOnLatticeRealS
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual int Ad (int m, double& coefficient);
+  
+  // apply a_n  operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad or A call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = index for first annihilation operator
+  // n2 = index for first annihilation operator
+  // return value =  multiplicative factor 
+  virtual double AA (int index, int n1, int n2);
+  
+  // apply a^+_m operator to the state produced using the A or Ad method (without destroying it)
+  //
+  // m = index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AdAd (int m1, int m2, double& coefficient);
 
 
   // get the particle statistic 

@@ -240,6 +240,50 @@ int main(int argc, char** argv)
 	  cout << "not enough vectors in " << Manager.GetString("description-file") << endl;
 	  return -1;
 	}
+	
+      if ((Manager.GetBoolean("complex") == false) && (Description.GetNbrColumns() == 3))
+	{
+	  RealVector Source;
+	  if (Source.ReadVector(Description(0, 0)) == false)
+	    {
+	      cout << "can't open file " << Description(0, 0) << endl;
+	      return -1;	      
+	    }
+	  double* CoefficientsRe = Description.GetAsDoubleArray(1);
+	  double* CoefficientsIm = Description.GetAsDoubleArray(2);
+	  Complex* Coefficients = new Complex[Description.GetNbrLines()];
+	  if (CoefficientsIm!=NULL)
+	    {
+	      for (int i = 0; i < Description.GetNbrLines(); ++i)
+		Coefficients[i]=Complex(CoefficientsRe[i],CoefficientsIm[i]);
+	    }
+	  else
+	    {
+	      for (int i = 0; i < Description.GetNbrLines(); ++i)
+		Coefficients[i]=Complex(CoefficientsRe[i]);
+	    }
+	    
+	  ComplexVector Result(Source.GetVectorDimension());
+	  Result.AddLinearCombination(Coefficients[0], Source);
+// 	  cout << "d*Vector1 = "<<Result<<endl;
+ 	  for (int i = 1; i < Description.GetNbrLines(); ++i)
+	    {
+	      RealVector TmpVector;
+	      if (TmpVector.ReadVector(Description(0, i)) == false)
+		{
+		  cout << "can't open file " << Description(0, i) << endl;
+		  return -1;	      	    
+		}
+	      Result.AddLinearCombination(Coefficients[i], TmpVector);
+// 	      cout << "+d*Vector"<<i<<" = "<<Result<<endl;
+	    }
+	  if (!Manager.GetBoolean("no-normalize"))
+	    Result /= Result.Norm();
+	  Result.WriteVector(Manager.GetString("output"));
+	  delete [] Coefficients;
+	  return 0;
+	}
+	
       if (Manager.GetBoolean("complex"))
 	{
 	  ComplexVector Result;

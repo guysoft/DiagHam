@@ -41,6 +41,8 @@
 
 
 using std::ostream;
+using std::cout;
+using std::endl;
 
 
 class AbstractArchitecture;
@@ -212,6 +214,14 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   // return value = pointer to the array of vectors where result has been stored
   virtual RealVector* LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
                                                   int firstComponent, int nbrComponent);
+  
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  // return value = reference on vectorwhere result has been stored
+  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
 
 
   // multiply a vector by the current hamiltonian for a given range of indices 
@@ -290,6 +300,18 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   // return value = reference on vector where result has been stored
   virtual RealVector& LowLevelAddMultiplyPartialFastMultiply(RealVector& vSource, RealVector& vDestination, 
                                                              int firstComponent, int nbrComponent);
+  
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  // using partial fast multiply option
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual ComplexVector& LowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+                                                             int firstComponent, int nbrComponent);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
@@ -301,6 +323,18 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   virtual RealVector& LowLevelAddMultiplyDiskStorage(RealVector& vSource, RealVector& vDestination, 
+                                                     int firstComponent, int nbrComponent);
+  
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  // using disk storage option
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual ComplexVector& LowLevelAddMultiplyDiskStorage(ComplexVector& vSource, ComplexVector& vDestination, 
                                                      int firstComponent, int nbrComponent);
 
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
@@ -566,6 +600,7 @@ inline void AbstractQHEOnSphereHamiltonian::EvaluateMNTwoBodyFastMultiplicationC
 		    {
 		      indexArray[Pos] = Index;
 		      coefficientArray[Pos] = Coefficient * Coefficient2 * this->InteractionFactors[ReducedNbrInteractionFactors];
+// 		      cout << (this->M1Value[m1]*2 - this->LzMax) << " " << (this->M2Value[m1]*2 - this->LzMax) << " " << (m3*2 - this->LzMax) << " " << (this->M1Value[m1] + this->M2Value[m1] - m3) << " " << coefficientArray[Pos] << endl;
 		      ++Pos;
 		    }		      
 		  ++ReducedNbrInteractionFactors;

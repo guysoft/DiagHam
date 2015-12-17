@@ -855,7 +855,7 @@ bool Abstract2DTightBindingModel::WriteAsciiDMatrixEigenValues(char* fileName, i
      Theta[ky][1] = min(theta1, theta2); 
    }
   }
-  
+  cout << "test" << endl;
   for (int ky = 0; ky < this->NbrSiteY - 1; ++ ky)
   {
     distancePlus = fabs(Theta[ky][0] - Theta[ky + 1][0]);

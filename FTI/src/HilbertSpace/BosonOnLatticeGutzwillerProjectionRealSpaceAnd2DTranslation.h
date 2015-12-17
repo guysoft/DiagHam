@@ -126,6 +126,13 @@ class BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation : public  Ferm
   // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state 
   virtual int Ad (int m, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
+  // apply a_n operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdAd call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n = first index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double AA (int index, int n1, int n2) ;
 
 
   // print a given State

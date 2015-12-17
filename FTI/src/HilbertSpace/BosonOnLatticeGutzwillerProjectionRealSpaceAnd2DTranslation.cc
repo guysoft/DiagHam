@@ -154,6 +154,7 @@ BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::BosonOnLatticeGutzw
 		--CurrentMaxMomentum;
 	      this->StateMaxMomentum[i] = CurrentMaxMomentum;
 	    }
+	    
 	  this->GenerateLookUpTable(memory);
 	  
 #ifdef __DEBUG__
@@ -430,6 +431,7 @@ int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::AdAd (int m1, i
       return this->HilbertSpaceDimension;
     }
   coefficient = 1.0;
+  TmpState |= (0x1ul << m2);
   TmpState |= (0x1ul << m1);
   return this->SymmetrizeAdAdResult(TmpState, coefficient, nbrTranslationX, nbrTranslationY);
 }
@@ -508,3 +510,36 @@ int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::Ad (int m, doub
   return this->SymmetrizeAdAdResult(TmpState, coefficient, nbrTranslationX, nbrTranslationY);
 }
 
+
+// apply a_n operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdAd call
+//
+// index = index of the state on which the operator has to be applied
+// n = first index for annihilation operator
+// return value =  multiplicative factor 
+
+double BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::AA (int index, int n1, int n2)
+{
+//  cout <<"using BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::A "<<endl;
+  this->ProdATemporaryStateMaxMomentum = this->StateMaxMomentum[index];
+  this->ProdATemporaryState = this->StateDescription[index];
+  if ((n1 >  this->ProdATemporaryStateMaxMomentum) || (n2 >  this->ProdATemporaryStateMaxMomentum) || ((this->ProdATemporaryState & (0x1ul << n1)) == 0x0ul) || ((this->ProdATemporaryState & (0x1ul << n2)) == 0x0ul))
+    {
+      return 0.0;
+    }
+  this->ProdATemporaryNbrStateInOrbit = this->NbrStateInOrbit[index];
+  double Coefficient = 1.0;
+  this->ProdATemporaryState &= ~(0x1ul << n2);
+  this->ProdATemporaryState &= ~(0x1ul << n1);
+  
+  if (this->ProdATemporaryState == 0x0ul)
+    {
+      this->ProdATemporaryStateMaxMomentum = 0;
+    }
+  else
+    {
+      if (this->ProdATemporaryStateMaxMomentum == n1)
+	while ((this->ProdATemporaryState >> this->ProdATemporaryStateMaxMomentum) == 0x0ul)
+	  --this->ProdATemporaryStateMaxMomentum;
+    }
+  return Coefficient;
+}

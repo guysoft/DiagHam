@@ -606,3 +606,65 @@ void BosonOnLatticeGutzwillerProjectionRealSpace::GetCompositeFermionWavefunctio
     cout <<endl;
  }
 }
+
+
+// apply a_n  operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad or A call
+//
+// index = index of the state on which the operator has to be applied
+// n = first index for annihilation operator
+// return value =  multiplicative factor 
+
+double BosonOnLatticeGutzwillerProjectionRealSpace::AA (int index, int n1, int n2)
+{
+  this->ProdATemporaryState = this->StateDescription[index];
+  int StateLzMax = this->StateLzMax[index];
+
+  if ((n1 > StateLzMax) || (n2 > StateLzMax) || ((this->ProdATemporaryState & (0x1ul << n1)) == 0x0ul) || ((this->ProdATemporaryState & (0x1ul << n2)) == 0x0ul))
+    return 0.0;
+
+  this->ProdALzMax = this->StateLzMax[index];
+
+  double Coefficient = 1.0;
+  
+  this->ProdATemporaryState &= ~(0x1ul << n2);
+  this->ProdATemporaryState &= ~(0x1ul << n1);
+
+  if (this->ProdATemporaryState == 0x0ul)
+    {
+      this->ProdALzMax = 0;
+      return Coefficient;      
+    }
+  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0x0ul)
+    --this->ProdALzMax;
+  return Coefficient;
+}
+
+// apply a^+_m operator to the state produced using the A or Ad method (without destroying it)
+//
+// m1 = index for creation operator
+// m2 = index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnLatticeGutzwillerProjectionRealSpace::AdAd (int m1, int m2, double& coefficient)
+{
+  unsigned long TmpState = this->ProdATemporaryState;
+    
+  if ( ((TmpState & (0x1ul << m1))!= 0x0ul) || ((TmpState & (0x1ul << m2))!= 0x0ul) || (m1 == m2))
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  coefficient = 1.0;
+  int NewLzMax = this->ProdALzMax;
+  if (m1 > NewLzMax)
+    NewLzMax = m1;
+  
+  if (m2 > NewLzMax)
+    NewLzMax = m2;
+
+  
+  TmpState |= (0x1ul << m2);
+  TmpState |= (0x1ul << m1);
+  return this->FindStateIndex(TmpState, NewLzMax);
+}

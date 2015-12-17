@@ -376,7 +376,10 @@ void ParticleOnSphereGenericHamiltonian::EvaluateInteractionFactors()
 		while (Clebsch.Iterate(J, ClebschCoef))
 		  {
 		    if (((J >> 1) & 1) == Sign)
+		    {
 		      TmpCoefficient[Pos] += this->PseudoPotential[J >> 1] * ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
+// 		      cout << m1 << " " << m2 << " " << m3 << " " << m4 << " " << (this->LzMax - (J >> 1)) << " " << TmpCoefficient[Pos] << endl;
+		    }
 		  }
 		if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
 		  MaxCoefficient = TmpCoefficient[Pos];
