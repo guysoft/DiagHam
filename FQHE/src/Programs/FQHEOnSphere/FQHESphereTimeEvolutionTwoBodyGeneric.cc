@@ -95,6 +95,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-steps", "number of points to evaluate", 1);
   
   (*SystemGroup) += new SingleDoubleOption ('\n', "precision", "convergence precision", 1.0e-14);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "iter-max", "maximal number of iterations", 1);
   
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
@@ -279,7 +280,7 @@ int main(int argc, char** argv)
     TmpExpansionOrder = 0;
     TmpCoefficient = 1.0;
     cout << "Computing state " << (i + 1) << "/" << NbrTimeSteps << " at t = " << (TmpTime * i) << endl;
-    while ((fabs(Norm - 1.0) > Manager.GetDouble("precision")) || (TmpExpansionOrder < 1))
+    while (((fabs(Norm - 1.0) > Manager.GetDouble("precision")) || (TmpExpansionOrder < 1)) && (TmpExpansionOrder <= Manager.GetInteger("iter-max")))
     {
       TmpExpansionOrder += 1;
       TmpCoefficient = -TmpCoefficient * TmpTime * Complex(0.0, 1.0) / ((double) TmpExpansionOrder);
