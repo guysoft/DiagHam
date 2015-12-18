@@ -42,4 +42,5 @@ SpinChainPureHFieldHamiltonian.cc \
 SpinChainTripleProductHamiltonian.cc \
 SpinChainFullHamiltonian.cc \
 SpinChainRealFullHamiltonian.cc \
-SpinChainAKLTHamiltonianWithTranslations.cc
+SpinChainAKLTHamiltonianWithTranslations.cc \
+TwoDimensionalTransverseFieldIsingHamiltonian.cc

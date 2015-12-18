@@ -129,6 +129,7 @@ int main(int argc, char** argv)
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "name of the output file where the density of states will be stored (if none, try to deduce it from either --spectrum or --multiple-spectra replacing the dat extension with dos)");
   (*OutputGroup) += new SingleIntegerOption ('\n', "nbr-bins", "number of bins for the density of states", 100);
   (*OutputGroup) += new SingleDoubleOption ('\n', "bin-spacing", "spacing range for each bin for the level statistics", 0.1);
+  (*OutputGroup) += new BooleanOption ('\n', "discard-outputfiles", "do not save any results on disk, just display the summary using the standard output");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   
@@ -148,20 +149,6 @@ int main(int argc, char** argv)
       cout << "error, no entanglement spectrum was provided" << endl;
       return 0;
     }
-  
-  char* DensityOfStateOutputFileName = 0;
-  char* LevelStatisticOutputFileName = 0;
-  if (Manager.GetString("output-file") == 0)
-    {
-      DensityOfStateOutputFileName = ReplaceExtensionToFileName(Manager.GetString("spectra"), "ent", "ent.dos");
-      LevelStatisticOutputFileName = ReplaceExtensionToFileName(Manager.GetString("spectra"), "ent", "ent.levelstat");
-    }
-  else
-    {
-      LevelStatisticOutputFileName = new char [strlen (Manager.GetString("output-file")) + 1];
-      strcpy (LevelStatisticOutputFileName, Manager.GetString("output-file"));
-    }
-
   
   
   double MaxEnergy = 0.0;
@@ -242,6 +229,26 @@ int main(int argc, char** argv)
     }
   File.close();
 
+  char* DensityOfStateOutputFileName = 0;
+  char* LevelStatisticOutputFileName = 0;
+  if (Manager.GetString("output-file") == 0)
+    {
+      char* DensityOfStateExtension = new char[128];
+      sprintf (DensityOfStateExtension, "range_%d_%d.ent.dos", MinEntanglementSpectrumIndex, MaxEntanglementSpectrumIndex);
+      DensityOfStateOutputFileName = ReplaceExtensionToFileName(Manager.GetString("spectra"), "ent", DensityOfStateExtension);
+      delete[] DensityOfStateExtension;
+      char*  LevelStatisticExtension = new char[128];
+      sprintf (LevelStatisticExtension, "range_%d_%d.ent.levelstat", MinEntanglementSpectrumIndex, MaxEntanglementSpectrumIndex);
+      LevelStatisticOutputFileName = ReplaceExtensionToFileName(Manager.GetString("spectra"), "ent", LevelStatisticExtension);
+      delete[] LevelStatisticExtension;
+    }
+  else
+    {
+      LevelStatisticOutputFileName = new char [strlen (Manager.GetString("output-file")) + 1];
+      strcpy (LevelStatisticOutputFileName, Manager.GetString("output-file"));
+    }
+
+  
   int NbrBins = Manager.GetInteger("nbr-bins");
   MaxEnergy +=  0.001 * (MaxEnergy - MinEnergy) / ((double) NbrBins);
   double BinSize = (MaxEnergy - MinEnergy) / ((double) NbrBins);
@@ -284,13 +291,17 @@ int main(int argc, char** argv)
     }
   
   double Sum = 0.0;
+  double* DensityOfStateEnergies =  new double[NbrBins];
+  double* DensityOfStateValues =  new double[NbrBins];
   for (int i = 0 ; i < NbrBins; ++i)
     {
       double DOS = (((double) NbrStatePerBin[i]) / ((double) NbrLevels));
+      DensityOfStateEnergies[i] = (MinEnergy + (BinSize * ((double) i)));
+      DensityOfStateValues[i] = (DOS / BinSize);
       Sum += DOS;
     }
 
-  if (DensityOfStateOutputFileName != 0)
+  if ((DensityOfStateOutputFileName != 0) && (Manager.GetBoolean("discard-outputfiles") == false))
     {
       ofstream File;
       File.open(DensityOfStateOutputFileName, ios::binary | ios::out);
@@ -323,22 +334,9 @@ int main(int argc, char** argv)
 
   Abstract1DRealFunction* DensityOfStates = 0;
   double DensityOfStatesThreshold = 1e-5;
-  if (DensityOfStateOutputFileName != 0)
-    {
-      MultiColumnASCIIFile DensityOfStateFile;
-      if (DensityOfStateFile.Parse(DensityOfStateOutputFileName) == false)
-	{
-	  DensityOfStateFile.DumpErrors(cout);
-	  return false;
-	}
-      Tabulated1DRealFunction TmpFunction(DensityOfStateFile.GetAsDoubleArray(0), DensityOfStateFile.GetAsDoubleArray(1), 
-					  DensityOfStateFile.GetNbrLines());
-      DensityOfStates = TmpFunction.GetPrimitive();
-    }
-  else
-    {
-      DensityOfStates = new Linear1DRealFunction(1.0);
-    }
+  Tabulated1DRealFunction TmpFunction(DensityOfStateEnergies, DensityOfStateValues, NbrBins);
+  DensityOfStates = TmpFunction.GetPrimitive();
+  //      DensityOfStates = new Linear1DRealFunction(1.0);
 
   double AverageSpacing = 0.0;
   double MinAverageSpacing = 1.0e300;
@@ -448,25 +446,30 @@ int main(int argc, char** argv)
 	}
     }
 
-  ofstream File2;
-  File2.open(LevelStatisticOutputFileName, ios::binary | ios::out);
-  File2.precision(14);
-  File2 << "# Min spacing " << MinAverageSpacing << endl;
-  File2 << "# Max spacing " << MaxAverageSpacing << endl;
-  File2 << "# Average spacing = " << AverageSpacing << endl;
-  File2 << "# Nbr points = " << NbrSpacings << endl;
-  File2 << "# Nbr rejected points = " << NbrRejectedSpacings << endl;
-  File2 << "# int ds P(s) = " << Sum << endl;
-  File2 << "# Min nbr spacings per bin " << MinNbrSpacingPerBin << endl;
-  File2 << "# Max nbr spacings per bin " << MaxNbrSpacingPerBin << endl;
-  File2 << "# Max spacing " << MaxAverageSpacing << endl;
-  File2 << "# s P(s)" << endl;
-  for (int i = 0 ; i < SpacingNbrBins; ++i)
+  if (Manager.GetBoolean("discard-outputfiles") == false)
     {
-      double PSpacing = (((double) NbrSpacingPerBin[i]) / ((double) NbrSpacings));
-      File2 << (SpacingBinSize * (((double) i) + 0.5)) << " " << (PSpacing / SpacingBinSize) << endl;
-    }  
-  File2.close();
+      ofstream File2;
+      File2.open(LevelStatisticOutputFileName, ios::binary | ios::out);
+      File2.precision(14);
+      File2 << "# Min spacing " << MinAverageSpacing << endl;
+      File2 << "# Max spacing " << MaxAverageSpacing << endl;
+      File2 << "# Average spacing = " << AverageSpacing << endl;
+      File2 << "# Nbr points = " << NbrSpacings << endl;
+      File2 << "# Nbr rejected points = " << NbrRejectedSpacings << endl;
+      File2 << "# int ds P(s) = " << Sum << endl;
+      File2 << "# Min nbr spacings per bin " << MinNbrSpacingPerBin << endl;
+      File2 << "# Max nbr spacings per bin " << MaxNbrSpacingPerBin << endl;
+      File2 << "# Max spacing " << MaxAverageSpacing << endl;
+      File2 << "# s P(s)" << endl;
+      File2 << "# <r>=" << (AverageR / TotalNbrEntanglementSpectra) << " " 
+	    << sqrt (((VarianceAverageR / TotalNbrEntanglementSpectra) - ((AverageR / TotalNbrEntanglementSpectra) * (AverageR / TotalNbrEntanglementSpectra))) / (TotalNbrEntanglementSpectra - 1)) << endl;
+      for (int i = 0 ; i < SpacingNbrBins; ++i)
+	{
+	  double PSpacing = (((double) NbrSpacingPerBin[i]) / ((double) NbrSpacings));
+	  File2 << (SpacingBinSize * (((double) i) + 0.5)) << " " << (PSpacing / SpacingBinSize) << endl;
+	}  
+      File2.close();
+    }
 
   cout << "Min spacing " << MinAverageSpacing << endl;
   cout << "Max spacing " << MaxAverageSpacing << endl;
@@ -476,6 +479,8 @@ int main(int argc, char** argv)
   cout << "int ds P(s) = " << Sum << endl;
   cout << "Min nbr spacings per bin " << MinNbrSpacingPerBin << endl;
   cout << "Max nbr spacings per bin " << MaxNbrSpacingPerBin << endl;
+  cout << "<r>=" << (AverageR / TotalNbrEntanglementSpectra) << " " 
+       << sqrt (((VarianceAverageR / TotalNbrEntanglementSpectra) - ((AverageR / TotalNbrEntanglementSpectra) * (AverageR / TotalNbrEntanglementSpectra))) / (TotalNbrEntanglementSpectra - 1)) << endl;
   delete[] NbrSpacingPerBin;
   delete[] NbrStatePerBin;
 
@@ -792,8 +797,8 @@ void DensityOfStatesParseSpectrumFile(ifstream& inputFile, double*& spectrum, in
   nbrStates += (long) spectrumSize;
   for (int i = 0; i < spectrumSize; ++i)
     {     
-      if (spectrum[i] < MACHINE_PRECISION)
-	spectrum[i] = MACHINE_PRECISION;
+//       if (spectrum[i] < 0.0MACHINE_PRECISION)
+// 	spectrum[i] = MACHINE_PRECISION;
       spectrum[i] = -log(spectrum[i]);
       if (spectrum[i] < minEnergy)
 	minEnergy = spectrum[i];
