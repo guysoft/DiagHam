@@ -64,6 +64,7 @@ int main(int argc, char** argv)
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of trying to replace .txt extension with .vec or appending .vec extension");
   (*SystemGroup) += new BooleanOption  ('\n', "no-normalization", "do not normalize the final state");
   (*SystemGroup) += new BooleanOption  ('\n', "rational", "use rational numbers instead of double precision floating point numbers");
+  (*SystemGroup) += new BooleanOption  ('c', "complex", "create a vector with complex components");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -233,7 +234,7 @@ int main(int argc, char** argv)
       if (OutputFile == 0)
 	OutputFile = AddExtensionToFileName(Manager.GetString("ascii-state"), "vec");
     }
-  if (Manager.GetBoolean("rational") == false)
+  if ((Manager.GetBoolean("rational") == false) && (Manager.GetBoolean("complex") == false))
   {
     RealVector State (Space->GetHilbertSpaceDimension(), true);
 
@@ -257,28 +258,70 @@ int main(int argc, char** argv)
   }
   else
   {
-    LongRationalVector State (Space->GetHilbertSpaceDimension(), true);
-    LongRational* Coefficients = InputFile.GetAsLongRationalArray(1);
-    if (Coefficients == 0)
-      {
-	InputFile.DumpErrors(cout) << endl;
-	return -1;
-      }
-    for (int i = 0; i < InputFile.GetNbrLines(); ++i)
-      {
-	char* TmpString =  InputFile(0, i);
-	CleanLine(TmpString);
-	int TmpIndex = Space->FindStateIndex(TmpString);
-	if (TmpIndex != -1)
-	  {
-	    State[TmpIndex] = Coefficients[i];
-	  }
-	else
-	  {
-	    cout << "warning , invalid state |" <<  TmpString << ">" << endl;
-	  }
-      }
-    State.WriteVector(OutputFile);
+    if (Manager.GetBoolean("complex") == false)
+    {
+      LongRationalVector State (Space->GetHilbertSpaceDimension(), true);
+      LongRational* Coefficients = InputFile.GetAsLongRationalArray(1);
+      if (Coefficients == 0)
+	{
+	  InputFile.DumpErrors(cout) << endl;
+	  return -1;
+	}
+      for (int i = 0; i < InputFile.GetNbrLines(); ++i)
+	{
+	  char* TmpString =  InputFile(0, i);
+	  CleanLine(TmpString);
+	  int TmpIndex = Space->FindStateIndex(TmpString);
+	  if (TmpIndex != -1)
+	    {
+	      State[TmpIndex] = Coefficients[i];
+	    }
+	  else
+	    {
+	      cout << "warning , invalid state |" <<  TmpString << ">" << endl;
+	    }
+	}
+      State.WriteVector(OutputFile);
+    }
+    else
+    {
+      ComplexVector State (Space->GetHilbertSpaceDimension(), true);
+      double* CoefficientsRe = InputFile.GetAsDoubleArray(1);
+      double* CoefficientsIm = InputFile.GetAsDoubleArray(2);
+      Complex* Coefficients = new Complex[InputFile.GetNbrLines()];
+      if (CoefficientsIm!=NULL)
+	{
+	  for (int i = 0; i < InputFile.GetNbrLines(); ++i)
+	    Coefficients[i]=Complex(CoefficientsRe[i],CoefficientsIm[i]);
+	}
+      else
+	{
+	  for (int i = 0; i < InputFile.GetNbrLines(); ++i)
+	    Coefficients[i]=Complex(CoefficientsRe[i]);
+	 }
+      delete[] CoefficientsRe;
+      delete[] CoefficientsIm;
+      if (Coefficients == 0)
+	{
+	  InputFile.DumpErrors(cout) << endl;
+	  return -1;
+	}
+      for (int i = 0; i < InputFile.GetNbrLines(); ++i)
+	{
+	  char* TmpString =  InputFile(0, i);
+	  CleanLine(TmpString);
+	  int TmpIndex = Space->FindStateIndex(TmpString);
+	  if (TmpIndex != -1)
+	    {
+	      State[TmpIndex] = Coefficients[i];
+	    }
+	  else
+	    {
+	      cout << "warning , invalid state |" <<  TmpString << ">" << endl;
+	    }
+	}
+      State.WriteVector(OutputFile);      
+    }
   }
 
   return 0;

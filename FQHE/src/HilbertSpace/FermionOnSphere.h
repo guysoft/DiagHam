@@ -637,6 +637,44 @@ class FermionOnSphere :  public ParticleOnSphere
   virtual RealMatrix EvaluatePartialEntanglementMatrixParticlePartition(int nbrFermionSector, int lzSector, int nbrOrbitalA, int nbrOrbitalB, 
 									RealVector& groundState, bool removeBinomialCoefficient);
 
+  
+    // core part of the evaluation entanglement matrix particle partition calculation
+  // 
+  // minIndex = first index to consider in complementary Hilbert space
+  // nbrIndex = number of indices to consider in complementary Hilbert space
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e part B)
+  // destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+  // groundState = reference on the total system ground state
+  // entanglementMatrix = reference on the entanglement matrix where result has to stored
+  // removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+  // return value = number of components that have been added to the entanglement matrix
+  virtual long EvaluatePartialEntanglementMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  
+								       ParticleOnSphere* destinationHilbertSpace,
+								       ComplexVector& groundState,  ComplexMatrix* entanglementMatrix, 
+								       bool removeBinomialCoefficient);
+  
+  // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. The entanglement matrix is only evaluated in a given Lz sector.
+  // 
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated
+  // groundState = reference on the total system ground state
+  // removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+  // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
+  virtual ComplexMatrix EvaluatePartialEntanglementMatrixParticlePartition (int nbrFermionSector, int lzSector, ComplexVector& groundState, bool removeBinomialCoefficient = false);
+  
+  // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. 
+  // The entanglement matrix is only evaluated in a given Lz sector and both A and B are resticted to a given number of orbitals
+  // 
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated
+  // nbrOrbitalA = number of orbitals that have to be kept for the A part (starting from the leftmost orbital)
+  // nbrOrbitalA = number of orbitals that have to be kept for the B part (starting from the rightmost orbital)
+  // groundState = reference on the total system ground state
+  // removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+  // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
+  virtual ComplexMatrix EvaluatePartialEntanglementMatrixParticlePartition(int nbrFermionSector, int lzSector, int nbrOrbitalA, int nbrOrbitalB, 
+									ComplexVector& groundState, bool removeBinomialCoefficient);
+  
   // compute part of the Schmidt decomposition for the particle partition, allowing cut in the reduced denisty matrix eigenvalue space
   // 
   // nbrFermionSector = number of particles that belong to the subsytem 
@@ -716,6 +754,20 @@ class FermionOnSphere :  public ParticleOnSphere
 											  double thetaTop, double thetaBottom, 
 											  double phiRange, RealMatrix& entanglementMatrix);
   
+  // evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using real space partition. The entanglement matrix is only evaluated in a given Lz sector.
+  // and computed from precalculated particle entanglement matrix
+  // 
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // phiRange = The angle traced in the \hat{phi} direction between the 2 longitudes defining the cut in degrees
+  // thetaTop =  inclination angle defining one edge of the cut in degrees
+  // thetaBottom = inclination angle defining the bottom edge of the cut. thetaBottom>thetaTop in degrees
+  // entanglementMatrix = reference on the entanglement matrix (will be overwritten)
+  // return value = reference on the entanglement matrix
+  ComplexMatrix& EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix (int nbrFermionSector, int lzSector, 
+											  double thetaTop, double thetaBottom, 
+											  double phiRange, ComplexMatrix& entanglementMatrix);
+  
   // evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using real space partition on a cylinder. 
   // The entanglement matrix is only evaluated in a given Lz sector and computed from precalculated particle entanglement matrix
   // 
@@ -743,6 +795,21 @@ class FermionOnSphere :  public ParticleOnSphere
   virtual RealMatrix& EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix (int nbrFermionSector, int lzSector, 
 													 int nbrOrbitalA, double* weightOrbitalA, 
 													 int nbrOrbitalB, double* weightOrbitalB, RealMatrix& entanglementMatrix);
+  
+  // evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using a generic real space partition. 
+  // The entanglement matrix is only evaluated in a given Lz sector and computed from precalculated particle entanglement matrix
+  // 
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // nbrOrbitalA = number of orbitals that have to be kept for the A part
+  // weightOrbitalA = weight of each orbital in the A part (starting from the leftmost orbital)
+  // nbrOrbitalB = number of orbitals that have to be kept for the B part
+  // weightOrbitalB = weight of each orbital in the B part (starting from the leftmost orbital)
+  // entanglementMatrix = reference on the entanglement matrix (will be overwritten)
+  // return value = reference on the entanglement matrix
+  virtual ComplexMatrix& EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix (int nbrFermionSector, int lzSector, 
+													 int nbrOrbitalA, double* weightOrbitalA, 
+													 int nbrOrbitalB, double* weightOrbitalB, ComplexMatrix& entanglementMatrix);
 
   // compute particule-hole symmetric state from a given state
   //

@@ -34,6 +34,7 @@
 #include "Vector/LongRationalVector.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/LongRationalMatrix.h"
+#include "Matrix/ComplexMatrix.h"
 #include "Vector/ComplexVector.h"
 
 #include <iostream>
@@ -880,7 +881,25 @@ RealMatrix& ParticleOnSphere::EvaluateEntanglementMatrixGenericRealSpacePartitio
   return entanglementMatrix;
 }
 													 
+// evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using a generic real space partition. 
+// The entanglement matrix is only evaluated in a given Lz sector and computed from precalculated particle entanglement matrix
+// 
+// nbrFermionSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// nbrOrbitalA = number of orbitals that have to be kept for the A part
+// weightOrbitalA = weight of each orbital in the A part (starting from the leftmost orbital)
+// nbrOrbitalB = number of orbitals that have to be kept for the B part
+// weightOrbitalB = weight of each orbital in the B part (starting from the leftmost orbital)
+// entanglementMatrix = reference on the entanglement matrix (will be overwritten)
+// return value = reference on the entanglement matrix
 
+ComplexMatrix& ParticleOnSphere::EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix (int nbrFermionSector, int lzSector, 
+														 int nbrOrbitalA, double* weightOrbitalA, 
+														 int nbrOrbitalB, double* weightOrbitalB, ComplexMatrix& entanglementMatrix)
+{
+  cout << "warning, EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix not implemented" << endl;
+  return entanglementMatrix;
+}
 // core part of the evaluation density matrix real space partition calculation
 // 
 // minIndex = first index to consider in complementary Hilbert space
@@ -934,6 +953,40 @@ RealMatrix ParticleOnSphere::EvaluatePartialEntanglementMatrixParticlePartition(
   return PartialEntanglementMatrix;  
 }
 
+// evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. The entanglement matrix is only evaluated in a given Lz sector.
+// 
+// nbrBosonSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+// return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
+
+ComplexMatrix ParticleOnSphere::EvaluatePartialEntanglementMatrixParticlePartition (int nbrBosonSector, int lzSector, ComplexVector& groundState, bool removeBinomialCoefficient)
+{
+  cout << "calling non defined function ParticleOnSphere::EvaluatePartialEntanglementMatrixParticlePartition" << endl;
+  ComplexMatrix PartialEntanglementMatrix;
+  return PartialEntanglementMatrix;  
+}
+
+// evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. 
+// The entanglement matrix is only evaluated in a given Lz sector and both A and B are resticted to a given number of orbitals
+// 
+// nbrFermionSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated
+// nbrOrbitalA = number of orbitals that have to be kept for the A part (starting from the leftmost orbital)
+// nbrOrbitalA = number of orbitals that have to be kept for the B part (starting from the rightmost orbital)
+// groundState = reference on the total system ground state
+// removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+// return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
+
+ComplexMatrix ParticleOnSphere::EvaluatePartialEntanglementMatrixParticlePartition(int nbrFermionSector, int lzSector, int nbrOrbitalA, int nbrOrbitalB,
+										ComplexVector& groundState, bool removeBinomialCoefficient)
+{
+  cout << "calling non defined function ParticleOnSphere::EvaluatePartialEntanglementMatrixParticlePartition" << endl;
+  ComplexMatrix PartialEntanglementMatrix;
+  return PartialEntanglementMatrix;  
+}
+
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector
 // and computed from precalculated entanglement matrix
 // 
@@ -971,6 +1024,23 @@ RealSymmetricMatrix ParticleOnSphere::EvaluatePartialDensityMatrixParticlePartit
 
 RealMatrix& ParticleOnSphere::EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix (int nbrBosonSector, int lzSector, double thetaTop, double thetaBottom, double phiRange, RealMatrix& entanglementMatrix)
 {
+  return entanglementMatrix;
+}
+
+// evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using real space partition. The entanglement matrix is only evaluated in a given Lz sector.
+// and computed from precalculated particle entanglement matrix
+// 
+// nbrBosonSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// phiRange = The angle traced in the \hat{phi} direction between the 2 longitudes defining the cut in degrees
+// thetaTop =  inclination angle defining one edge of the cut in degrees
+// thetaBottom = inclination angle defining the bottom edge of the cut. thetaBottom>thetaTop in degrees
+// entanglementMatrix = reference on the entanglement matrix (will be overwritten)
+// return value = reference on the entanglement matrix
+
+ComplexMatrix& ParticleOnSphere::EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix (int nbrBosonSector, int lzSector, double thetaTop, double thetaBottom, double phiRange, ComplexMatrix& entanglementMatrix)
+{
+  cout << "calling non defined function ParticleOnSphere::EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix" << endl;
   return entanglementMatrix;
 }
 
