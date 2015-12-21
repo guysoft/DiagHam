@@ -5329,9 +5329,7 @@ ComplexMatrix& FermionOnSphere::EvaluateEntanglementMatrixGenericRealSpacePartit
       for (int j = 0; j < TmpHilbertSpace.HilbertSpaceDimension; ++j)    
       {
 	entanglementMatrix.GetMatrixElement(i, j, TmpMatrixElement);
-	cout << TmpMatrixElement << " x " << Tmp << " : ";
 	TmpMatrixElement *= Tmp;
-	cout << TmpMatrixElement << endl;
 	entanglementMatrix.SetMatrixElement(i, j, TmpMatrixElement);
       }
     }

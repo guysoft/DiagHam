@@ -816,7 +816,7 @@ int main(int argc, char** argv)
 // 		      TmpDiag2.SortMatrixDownOrder();
 
 
-		      double* TmpValues;
+		      double* TmpValues = 0;
 		      int TmpDimension;
 		      if (Manager.GetBoolean("complex") == false)
 		      {
@@ -841,7 +841,6 @@ int main(int argc, char** argv)
 		      {
 			cout << "TmpValues[i] = " <<  TmpValues[i] << endl;
 			TmpValues[i] *= TmpValues[i];
-			cout << "TmpValues[i] = " <<  TmpValues[i] << endl;
 		      }
 		      TmpDiag = RealDiagonalMatrix(TmpValues, TmpDimension);
 		    }
