@@ -2240,23 +2240,19 @@ double* ComplexMatrix::SingularValueDecomposition()
   if ((this->NbrColumn == 1) || (this->NbrRow == 1))
     {
       double* SigmaMatrix = new double[1];
-      Complex Tmp(0.0, 0.0);
       SigmaMatrix[0] = 0.0;
       if (this->NbrColumn == 1)
 	{
 	  for (int i = 0; i < this->NbrRow; ++i)
            { 
-             Tmp = this->Columns[0][i] * this->Columns[0][i];
-	     SigmaMatrix[0] += Tmp.Re;
+	     SigmaMatrix[0] += SqrNorm(this->Columns[0][i]);
            }
 	}
       else
 	{
-          Complex Tmp(0.0, 0.0);
 	  for (int i = 0; i < this->NbrColumn; ++i)
            {
-             Tmp = this->Columns[i][0] * this->Columns[i][0];
-	     SigmaMatrix[0] += Tmp.Re;
+	     SigmaMatrix[0] += SqrNorm(this->Columns[i][0]);
            }
 	}
       SigmaMatrix[0] = sqrt(SigmaMatrix[0]);
