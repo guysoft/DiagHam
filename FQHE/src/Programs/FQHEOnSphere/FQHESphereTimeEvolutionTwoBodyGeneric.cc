@@ -277,21 +277,23 @@ int main(int argc, char** argv)
   {
     TmpState.Copy(TmpInitialState);
     Norm = TmpState.Norm();
+    double TmpNorm = 1.0;
     TmpExpansionOrder = 0;
     TmpCoefficient = 1.0;
     cout << "Computing state " << (i + 1) << "/" << NbrTimeSteps << " at t = " << (TmpTime * i) << endl;
-    while (((fabs(Norm - 1.0) > Manager.GetDouble("precision")) || (TmpExpansionOrder < 1)) && (TmpExpansionOrder <= Manager.GetInteger("iter-max")))
+    while (((fabs(TmpNorm) > Manager.GetDouble("precision")) || (TmpExpansionOrder < 1)) && (TmpExpansionOrder <= Manager.GetInteger("iter-max")))
     {
       TmpExpansionOrder += 1;
       TmpCoefficient = -TmpCoefficient * TmpTime * Complex(0.0, 1.0) / ((double) TmpExpansionOrder);
       VectorHamiltonianMultiplyOperation Operation (Hamiltonian, (&TmpState), (&TmpState1));
       Operation.ApplyOperation(Architecture.GetArchitecture());
       TmpState.Copy(TmpState1);
+      TmpNorm = sqrt(TmpCoefficient.Re*TmpCoefficient.Re + TmpCoefficient.Im*TmpCoefficient.Im) * TmpState.Norm();
       AddComplexLinearCombinationOperation Operation1 (&TmpInitialState, &TmpState1, 1, &TmpCoefficient);
       Operation1.ApplyOperation(Architecture.GetArchitecture());
       Norm = TmpInitialState.Norm();
       
-      cout << "Norm = " << Norm << " for step " << TmpExpansionOrder << endl;
+      cout << "Norm = " << Norm << " +/- " << TmpNorm << " for step " << TmpExpansionOrder << endl;
     }
     cout << endl;
     char* OutputName = new char [strlen(OutputNamePrefix)+ 16];
