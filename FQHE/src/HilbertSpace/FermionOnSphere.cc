@@ -3906,7 +3906,7 @@ ComplexMatrix FermionOnSphere::EvaluatePartialEntanglementMatrixParticlePartitio
       if (lzSector == this->TotalLz)
 	{
 	  FermionOnSphere TmpDestinationHilbertSpace(nbrFermionSector, lzSector, nbrOrbitalA - 1);
-	  RealMatrix TmpEntanglementMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, 1,true);
+	  ComplexMatrix TmpEntanglementMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, 1,true);
 	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 	    {
 	      int TmpLzMax = this->LzMax;

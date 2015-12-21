@@ -95,7 +95,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-steps", "number of points to evaluate", 1);
   
   (*SystemGroup) += new SingleDoubleOption ('\n', "precision", "convergence precision", 1.0e-14);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "iter-max", "maximal number of iterations", 1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "iter-max", "maximal number of iterations", 100);
   
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);

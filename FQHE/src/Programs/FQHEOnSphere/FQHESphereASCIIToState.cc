@@ -320,6 +320,8 @@ int main(int argc, char** argv)
 	      cout << "warning , invalid state |" <<  TmpString << ">" << endl;
 	    }
 	}
+      if (Manager.GetBoolean("no-normalization") == false)
+	State /= State.Norm();
       State.WriteVector(OutputFile);      
     }
   }

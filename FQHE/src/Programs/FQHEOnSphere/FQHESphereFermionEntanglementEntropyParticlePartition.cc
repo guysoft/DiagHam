@@ -104,7 +104,7 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "use-svd", "use singular value decomposition instead of diagonalization to compute the entropy");
-  (*OutputGroup) += new BooleanOption ('\n', "complex", "compute the entanglement spectrum of a complex state");
+  (*OutputGroup) += new BooleanOption ('c', "complex", "compute the entanglement spectrum of a complex state");
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
@@ -239,7 +239,7 @@ int main(int argc, char** argv)
 	  cout << "can't open vector file " << GroundStateFiles[i] << endl;
 	  return -1;      
 	}
-	cout << ComplexGroundStates[i].Norm() << endl;
+// 	cout << ComplexGroundStates[i].Norm() << endl;
     }
   }
 
@@ -613,7 +613,7 @@ int main(int argc, char** argv)
 			  if (Manager.GetBoolean("complex") == false)
 			  {
 			    PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz,     NbrAOrbitals, NbrBOrbitals, GroundStates[0], true);
-			    cout << PartialEntanglementMatrix << endl;
+// 			    cout << PartialEntanglementMatrix << endl;
 			    if(PartialEntanglementMatrix.GetNbrRow() != 0)
 			      {
 				Spaces[0]->EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz, 
@@ -625,11 +625,11 @@ int main(int argc, char** argv)
 			  else
 			  {
 			    ComplexPartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, 	    NbrAOrbitals, NbrBOrbitals, ComplexGroundStates[0], true);
-			    cout << ComplexPartialEntanglementMatrix << endl;
+// 			    cout << ComplexPartialEntanglementMatrix << endl;
 			    if(ComplexPartialEntanglementMatrix.GetNbrRow() != 0)
 			      {
 				Spaces[0]->EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz, NbrAOrbitals, WeightAOrbitals, NbrBOrbitals, WeightBOrbitals, ComplexPartialEntanglementMatrix);
-				cout << ComplexPartialEntanglementMatrix << endl;
+// 				cout << ComplexPartialEntanglementMatrix << endl;
 			      }
 			  }
 			}
@@ -839,7 +839,7 @@ int main(int argc, char** argv)
 		      
 		      for (int i = 0; i < TmpDimension; ++i)
 		      {
-			cout << "TmpValues[i] = " <<  TmpValues[i] << endl;
+// 			cout << "TmpValues[i] = " <<  TmpValues[i] << endl;
 			TmpValues[i] *= TmpValues[i];
 		      }
 		      TmpDiag = RealDiagonalMatrix(TmpValues, TmpDimension);
