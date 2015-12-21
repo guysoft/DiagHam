@@ -224,6 +224,169 @@ bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz
   return true;
 }
 
+// try to guess system information from file name for a 2d spin system with translations
+//
+// filename = file name
+// nbrSpins = reference to the number of spins 
+// sz = reference to twice the Sz value
+// spin = reference to twice the spin value per site
+// xMomentum = reference on the momentum along the x direction
+// xPeriodicity = reference on the number of sites along the x direction
+// yMomentum = reference on the momentum along the y direction
+// yPeriodicity = reference on the number of sites along the y direction
+// return value = true if no error occured
+
+bool SpinWith2DTranslationFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int& spin, int& xMomentum, int& xPeriodicity,
+							   int& yMomentum, int& yPeriodicity)
+{
+  if (SpinWith2DTranslationFindSystemInfoFromVectorFileName(filename, nbrSpins, spin, xMomentum, xPeriodicity, yMomentum, yPeriodicity) == false)
+    return false;
+  char* StrNbrSpins;
+
+  StrNbrSpins = strstr(filename, "_sz_");
+  if (StrNbrSpins != 0)
+    {
+      StrNbrSpins += 4;
+      int SizeString = 0;
+      if (StrNbrSpins[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrSpins[SizeString] != '\0') && (StrNbrSpins[SizeString] != '.') && 
+	     (StrNbrSpins[SizeString] >= '0') && (StrNbrSpins[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrSpins[SizeString] == '.') && (SizeString != 0))
+	{
+	  StrNbrSpins[SizeString] = '\0';
+	  sz = atoi(StrNbrSpins);
+	  StrNbrSpins[SizeString] = '.';
+	  StrNbrSpins += SizeString;
+	}
+      else
+	StrNbrSpins = 0;
+    }
+  if (StrNbrSpins == 0)
+    {
+      cout << "can't guess total Sz projection from file name " << filename << endl;
+      return false;            
+    }
+  return true;
+}
+
+// try to guess system information from file name for a 2d spin system with translations
+//
+// filename = file name
+// nbrSpins = reference to the number of spins 
+// sz = reference to twice the Sz value
+// spin = reference to twice the spin value per site
+// xMomentum = reference on the momentum along the x direction
+// xPeriodicity = reference on the number of sites along the x direction
+// yMomentum = reference on the momentum along the y direction
+// yPeriodicity = reference on the number of sites along the y direction
+// return value = true if no error occured
+
+bool SpinWith2DTranslationFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& spin, int& xMomentum, int& xPeriodicity,
+							   int& yMomentum, int& yPeriodicity)
+{
+  if (SpinFindSystemInfoFromFileName(filename, nbrSpins, spin) == false)
+    return false;
+  char* StrNbrParticles;
+  StrNbrParticles = strstr(filename, "_kx_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  xMomentum = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess x-momentum sector from file name " << filename << endl;
+      return false;            
+    }
+  StrNbrParticles = strstr(filename, "_x_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 3;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  xPeriodicity = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess x-periodicity from file name " << filename << endl;
+      return false;            
+    }
+  StrNbrParticles = strstr(filename, "_ky_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  yMomentum = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess y-momentum sector from file name " << filename << endl;
+      return false;            
+    }
+  StrNbrParticles = strstr(filename, "_y_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 3;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  yPeriodicity = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess y-periodicity from file name " << filename << endl;
+      return false;            
+    }
+}
+
 // try to guess system information from file name
 //
 // filename = file name

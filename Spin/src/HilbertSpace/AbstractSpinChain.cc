@@ -98,13 +98,91 @@ int AbstractSpinChain::SpiSmjSzk (int i, int j, int k, int state, double& coeffi
   return this->HilbertSpaceDimension;
 }
 
+// return index of resulting state from application of S+_i operator on a given state
+//
+// i = position of S+ operator
+// state = index of the state to be applied on S+_i operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of resulting state
+
+int AbstractSpinChain::Spi (int i, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  cout << "warning : Spi with 2d translations is not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// return index of resulting state from application of S-_i operator on a given state
+//
+// i = position of S- operator
+// state = index of the state to be applied on S-_i operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of resulting state
+
+int AbstractSpinChain::Smi (int i, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  cout << "warning : Smi with 2d translations is not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// return index of resulting state from application of S-_i S+_j operator on a given state
+//
+// i = position of S- operator
+// j = position of S+ operator
+// state = index of the state to be applied on S-_i S+_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of resulting state
+
+int AbstractSpinChain::SmiSpj (int i, int j, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  cout << "warning : SmiSpj with 2d translations is not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// return index of resulting state from application of S+_i S+_j operator on a given state
+//
+// i = position of first S+ operator
+// j = position of second S+ operator
+// state = index of the state to be applied on S+_i S+_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of resulting state
+
+int AbstractSpinChain::SpiSpj (int i, int j, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  cout << "warning : SpiSpj with 2d translations is not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// return index of resulting state from application of S-_i S-_j operator on a given state
+//
+// i = position of first S- operator
+// j = position of second S- operator
+// state = index of the state to be applied on S-_i S-_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of resulting state
+
+int AbstractSpinChain::SmiSmj (int i, int j, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  cout << "warning : SmiSmj with 2d translations is not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Sz sector.
 // 
-// nbrSites = number of sites that are part of the A subsytem 
+// nbrSites = number of sites that are part of the A subsystem 
 // szSector = Sz sector in which the density matrix has to be evaluated 
 // groundState = reference on the total system ground state
 // architecture = pointer to the architecture to use parallelized algorithm 
-// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+// return value = density matrix of the subsystem (return a wero dimension matrix if the density matrix is equal to zero)
 
 RealSymmetricMatrix AbstractSpinChain::EvaluatePartialDensityMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture)
 {
@@ -113,11 +191,11 @@ RealSymmetricMatrix AbstractSpinChain::EvaluatePartialDensityMatrix (int nbrSite
 
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Sz sector.
 // 
-// nbrSites = number of sites that are part of the A subsytem 
+// nbrSites = number of sites that are part of the A subsystem 
 // szSector = Sz sector in which the density matrix has to be evaluated 
 // groundState = reference on the total system ground state
 // architecture = pointer to the architecture to use parallelized algorithm 
-// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+// return value = density matrix of the subsystem (return a wero dimension matrix if the density matrix is equal to zero)
 
 HermitianMatrix AbstractSpinChain::EvaluatePartialDensityMatrix (int nbrSites, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture)
 {
@@ -126,11 +204,11 @@ HermitianMatrix AbstractSpinChain::EvaluatePartialDensityMatrix (int nbrSites, i
 
 // evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
 // 
-// nbrSites = number of sites that are part of the A subsytem 
+// nbrSites = number of sites that are part of the A subsystem 
 // szSector = Sz sector in which the density matrix has to be evaluated 
 // groundState = reference on the total system ground state
 // architecture = pointer to the architecture to use parallelized algorithm 
-// return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+// return value = entanglement matrix of the subsystem (return a zero dimension matrix if the entanglement matrix is equal to zero)
 
 RealMatrix AbstractSpinChain::EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture)
 {
@@ -139,11 +217,11 @@ RealMatrix AbstractSpinChain::EvaluatePartialEntanglementMatrix (int nbrSites, i
 
 // evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
 // 
-// nbrSites = number of sites that are part of the A subsytem 
+// nbrSites = number of sites that are part of the A subsystem 
 // szSector = Sz sector in which the density matrix has to be evaluated 
 // groundState = reference on the total system ground state
 // architecture = pointer to the architecture to use parallelized algorithm 
-// return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+// return value = entanglement matrix of the subsystem (return a zero dimension matrix if the entanglement matrix is equal to zero)
 
 ComplexMatrix AbstractSpinChain::EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture)
 {
@@ -152,12 +230,12 @@ ComplexMatrix AbstractSpinChain::EvaluatePartialEntanglementMatrix (int nbrSites
 
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Sz sector.
 // 
-// nbrSites = number of sites that are part of the A subsytem 
+// nbrSites = number of sites that are part of the A subsystem 
 // szSector = Sz sector in which the density matrix has to be evaluated 
 // shift = position of the A part leftmost site within the full system
 // groundState = reference on the total system ground state
 // architecture = pointer to the architecture to use parallelized algorithm 
-// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+// return value = density matrix of the subsystem (return a wero dimension matrix if the density matrix is equal to zero)
 
 RealSymmetricMatrix AbstractSpinChain::EvaluatePartialDensityMatrix (int nbrSites, int szSector, int shift, RealVector& groundState, AbstractArchitecture* architecture)
 {
@@ -166,12 +244,12 @@ RealSymmetricMatrix AbstractSpinChain::EvaluatePartialDensityMatrix (int nbrSite
 
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Sz sector.
 // 
-// nbrSites = number of sites that are part of the A subsytem 
+// nbrSites = number of sites that are part of the A subsystem 
 // szSector = Sz sector in which the density matrix has to be evaluated 
 // shift = position of the A part leftmost site within the full system
 // groundState = reference on the total system ground state
 // architecture = pointer to the architecture to use parallelized algorithm 
-// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+// return value = density matrix of the subsystem (return a wero dimension matrix if the density matrix is equal to zero)
 
 HermitianMatrix AbstractSpinChain::EvaluatePartialDensityMatrix (int nbrSites, int szSector, int shift, ComplexVector& groundState, AbstractArchitecture* architecture)
 {
@@ -180,29 +258,85 @@ HermitianMatrix AbstractSpinChain::EvaluatePartialDensityMatrix (int nbrSites, i
 
 // evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
 // 
-// nbrSites = number of sites that are part of the A subsytem 
+// nbrSites = number of sites that are part of the A subsystem 
 // szSector = Sz sector in which the density matrix has to be evaluated 
 // shift = position of the A part leftmost site within the full system
 // groundState = reference on the total system ground state
 // architecture = pointer to the architecture to use parallelized algorithm 
-// return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+// return value = entanglement matrix of the subsystem (return a zero dimension matrix if the entanglement matrix is equal to zero)
 
 RealMatrix AbstractSpinChain::EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, int shift, RealVector& groundState, AbstractArchitecture* architecture)
 {
+  cout << "warning, EvaluatePartialEntanglementMatrix is not defined" << endl;
   return RealMatrix();
 }
 
 // evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
 // 
-// nbrSites = number of sites that are part of the A subsytem 
+// nbrSites = number of sites that are part of the A subsystem 
 // szSector = Sz sector in which the density matrix has to be evaluated 
 // shift = position of the A part leftmost site within the full system
 // groundState = reference on the total system ground state
 // architecture = pointer to the architecture to use parallelized algorithm 
-// return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+// return value = entanglement matrix of the subsystem (return a zero dimension matrix if the entanglement matrix is equal to zero)
 
 ComplexMatrix AbstractSpinChain::EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, int shift, ComplexVector& groundState, AbstractArchitecture* architecture)
 {
+  cout << "warning, EvaluatePartialEntanglementMatrix is not defined" << endl;
   return ComplexMatrix();
 }
 	
+// evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. 
+// 
+// sites = list of sites that define the A subsystem 
+// nbrSites = number of sites that are part of the A subsystem 
+// szSector = Sz sector in which the density matrix has to be evaluated (disregarded here)
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = entanglement matrix of the subsystem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+
+RealMatrix AbstractSpinChain::EvaluatePartialEntanglementMatrix (int* sites, int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture)
+{
+  cout << "warning, EvaluatePartialEntanglementMatrix is not defined" << endl;
+  return RealMatrix();
+}
+
+// evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. 
+// 
+// sites = list of sites that define the A subsystem 
+// nbrSites = number of sites that are part of the A subsystem 
+// szSector = Sz sector in which the density matrix has to be evaluated (disregarded here)
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = entanglement matrix of the subsystem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+
+ComplexMatrix AbstractSpinChain::EvaluatePartialEntanglementMatrix (int* sites, int nbrSites, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture)
+{
+  cout << "warning, EvaluatePartialEntanglementMatrix is not defined" << endl;
+  return ComplexMatrix();
+}
+
+// convert a state defined in the real space basis into a state in the (Kx,Ky) basis
+//
+// state = reference on the state to convert
+// space = pointer to the Hilbert space where state is defined
+// return value = state in the (Kx,Ky) basis
+
+ComplexVector AbstractSpinChain::ConvertToKxKyBasis(ComplexVector& state, AbstractSpinChain* space)
+{
+  cout << "warning, ConvertToKxKyBasis is not defined" << endl;
+  return ComplexVector();
+}
+
+// convert a state defined in the (Kx,Ky) basis into a state in the real space basis
+//
+// state = reference on the state to convert
+// space = pointer to the Hilbert space where state is defined
+// return value = state in the (Kx,Ky) basis
+
+ComplexVector AbstractSpinChain::ConvertFromKxKyBasis(ComplexVector& state, AbstractSpinChain* space)
+{
+  cout << "warning, ConvertFromKxKyBasis is not defined" << endl;
+  return ComplexVector();
+}
+  

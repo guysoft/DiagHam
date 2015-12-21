@@ -11,6 +11,7 @@
 #include "HilbertSpace/Spin1_2Chain.h"
 #include "HilbertSpace/Spin1Chain.h"
 #include "HilbertSpace/Spin1_2ChainFull.h"
+#include "HilbertSpace/Spin1_2ChainFullAnd2DTranslation.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -45,18 +46,31 @@ using std::ifstream;
 using std::ios;
 
 
+
+// get a linearized position index from the 2d coordinates
+//
+// xPosition = position along the x direction
+// xPeriodicity = system size in the x direction
+// yPosition = position along the y direction
+// yPeriodicity = system size in the y direction
+// return value = linearized index
+int SpinChainMultipleEntanglementSpectraGetLinearizedIndex(int xPosition, int xPeriodicity, int yPosition, int yPeriodicity);
+
+
 int main(int argc, char** argv)
 {
-  cout.precision(4); 
+  cout.precision(14); 
 
   // some running options and help
   OptionManager Manager ("SpinChainMultipleEntanglementSpectra" , "0.01");
+  OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
 
   ArchitectureManager Architecture;
 
   Manager += SystemGroup;
+  Manager += OutputGroup;
   Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
 
@@ -65,7 +79,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption ('\n', "min-multiplestates", "index of the first state to consider in the matrix provided by the --multiple-groundstate option", 0);  
   (*SystemGroup) += new SingleIntegerOption ('\n', "max-multiplestates", "index of the last state to consider in the matrix provided by the --multiple-groundstate option (negative if this is the last available state)", -1);  
   (*SystemGroup) += new BooleanOption  ('c', "complex", "consider complex wave function");
+  (*SystemGroup) += new SingleStringOption  ('\n', "generic-cut", "provide a list of sites that define the subsystem instead of the default cut");  
   (*SystemGroup) += new SingleIntegerOption  ('\n', "la", "subsystem size (negative if half of the system has to be considered)", -1);
+  (*OutputGroup) += new BooleanOption ('\n', "show-entropies", "show the entangelement entropy and trace of the reduced density matrix for each state");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -89,23 +105,83 @@ int main(int argc, char** argv)
   int TotalSz = 0;
   int SubsystemSize = Manager.GetInteger("la");
   bool SzFlag = true;
-  if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue) == false)
+  bool Momentum2DFlag = false;
+  int XMomentum = 0;
+  int XPeriodicity = 0;
+  int YMomentum = 0;
+  int YPeriodicity = 0;
+  bool GenericCutFlag = false;
+  int* SubsystemSites = 0;
+
+  if (SpinWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue, XMomentum, XPeriodicity,
+							    YMomentum, YPeriodicity) == false)
     {
-      SzFlag = false;
-      if (SpinFindSystemInfoFromFileName(Manager.GetString("multiple-states"), NbrSpins, SpinValue) == false)
+      if (SpinWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, SpinValue, XMomentum, XPeriodicity, 
+								YMomentum, YPeriodicity) == false)
 	{
-	  cout << "error while retrieving system parameters from file name " << Manager.GetString("multiple-states") << endl;
-	  return -1;
+	  if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue) == false)
+	    {
+	      SzFlag = false;
+	      if (SpinFindSystemInfoFromFileName(Manager.GetString("multiple-states"), NbrSpins, SpinValue) == false)
+		{
+		  cout << "error while retrieving system parameters from file name " << Manager.GetString("multiple-states") << endl;
+		  return -1;
+		}
+	    }
+	}
+      else
+	{
+	  Momentum2DFlag = true;
+	  SzFlag = false;
 	}
     }
-  if (SzFlag == true)
-    cout << "N=" << NbrSpins << " Sz=" <<  TotalSz << " 2s=" << SpinValue << endl;
   else
-    cout << "N=" << NbrSpins << " 2s=" << SpinValue << endl;
-
+    {
+      Momentum2DFlag = true;
+    }
+  if (Momentum2DFlag == false)
+    {
+      if (SzFlag == true)
+	cout << "N=" << NbrSpins << " Sz=" <<  TotalSz << " 2s=" << SpinValue << endl;
+      else
+	cout << "N=" << NbrSpins << " 2s=" << SpinValue << endl;
+    }
+  else
+    {
+       if (SzFlag == true)
+	cout << "N=" << NbrSpins << "=" << XPeriodicity << "x" << YPeriodicity << " Sz=" <<  TotalSz << " 2s=" << SpinValue << endl;
+      else
+	cout << "N=" << NbrSpins << "=" << XPeriodicity << "x" << YPeriodicity << " 2s=" << SpinValue << endl;
+   }
   if (SubsystemSize < 0)
     {
       SubsystemSize = NbrSpins / 2;
+    }
+
+  if (Manager.GetString("generic-cut") != 0)
+    {
+      GenericCutFlag = true;
+      MultiColumnASCIIFile GenericCutFile;
+      if (GenericCutFile.Parse(Manager.GetString("generic-cut")) == false)
+	{
+	  GenericCutFile.DumpErrors(cout);
+	  return -1;
+	}
+      SubsystemSize = GenericCutFile.GetNbrLines();
+      if (GenericCutFile.GetNbrColumns() == 1)
+	{
+	  SubsystemSites = GenericCutFile.GetAsIntegerArray(0);
+	}
+      else
+	{
+	  SubsystemSites =  new int [SubsystemSize];
+	  int* TmpXPositions = GenericCutFile.GetAsIntegerArray(0);
+	  int* TmpYPositions = GenericCutFile.GetAsIntegerArray(1);
+	  for (int i = 0; i < SubsystemSize; ++i)
+	    {
+	      SubsystemSites[i] = SpinChainMultipleEntanglementSpectraGetLinearizedIndex(TmpXPositions[i], XPeriodicity, TmpYPositions[i], YPeriodicity);
+	    }
+	}
     }
   char* TmpExtenstion = new char[32];
   sprintf(TmpExtenstion, "_la_%d.full.ent", SubsystemSize);
@@ -116,7 +192,7 @@ int main(int argc, char** argv)
   RealMatrix RealEigenstates;
   ComplexMatrix ComplexEigenstates;
 
-  if (Manager.GetBoolean("complex") == false)
+  if ((Manager.GetBoolean("complex") == false) && (Momentum2DFlag == false))
     {
       if (RealEigenstates.ReadMatrix(Manager.GetString("multiple-states")) == false)
 	{
@@ -176,6 +252,52 @@ int main(int argc, char** argv)
 	}
     }
  
+  if (Momentum2DFlag == true)
+    {
+      AbstractSpinChain* TmpSpace;
+      
+      if (SzFlag == true)
+	{
+	  switch (SpinValue)
+	    {
+	    default :
+	      {
+		if ((SpinValue & 1) == 0)
+		  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+		else 
+		  cout << "spin " << SpinValue << "/2 are not available" << endl;
+		return -1;
+	      }
+	    }
+	}
+      else
+	{
+	  switch (SpinValue)
+	    {
+	    case 1 :
+	      TmpSpace = new Spin1_2ChainFullAnd2DTranslation (XMomentum, XPeriodicity, YMomentum, YPeriodicity);
+	      break;
+	    default :
+	      {
+		if ((SpinValue & 1) == 0)
+		  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+		else 
+		  cout << "spin " << SpinValue << "/2 are not available" << endl;
+		return -1;
+	      }
+	    }
+	}
+      ComplexMatrix TmpComplexEigenstates(Space->GetHilbertSpaceDimension(), NbrStates);
+      for (int i = MinIndex; i <= MaxIndex; ++i)
+	{
+	  TmpComplexEigenstates[i - MinIndex] = TmpSpace->ConvertFromKxKyBasis(ComplexEigenstates[i], Space);
+	}
+      ComplexEigenstates = TmpComplexEigenstates;
+      MinIndex = 0;
+      MaxIndex = NbrStates - 1;
+      delete TmpSpace;
+    }
+  
   int MaxSzA = (SubsystemSize * SpinValue);
   int MinSzA = -MaxSzA;
   int MaxSzB = ((NbrSpins - SubsystemSize) * SpinValue);
@@ -195,7 +317,7 @@ int main(int argc, char** argv)
     }
   int* EntanglementSpectrumDimension = new int[((MaxSzA - MinSzA) / 2) + 1];
   
-  if (Manager.GetBoolean("complex") == false)
+  if ((Manager.GetBoolean("complex") == false) && (Momentum2DFlag == false))
     {
       for (int TmpSzA = MinSzA; TmpSzA <= MaxSzA; TmpSzA += 2)
 	{
@@ -212,7 +334,11 @@ int main(int argc, char** argv)
 		}
 	      for (int Index = MinIndex; Index <= MaxIndex; ++Index)
 		{
-		  RealMatrix PartialEntanglementMatrix = Space->EvaluatePartialEntanglementMatrix(SubsystemSize, TmpSzA, RealEigenstates[Index]);
+		  RealMatrix PartialEntanglementMatrix;
+		  if (GenericCutFlag == false)
+		    PartialEntanglementMatrix = Space->EvaluatePartialEntanglementMatrix(SubsystemSize, TmpSzA, RealEigenstates[Index]);
+		  else
+		    PartialEntanglementMatrix = Space->EvaluatePartialEntanglementMatrix(SubsystemSites, SubsystemSize, TmpSzA, RealEigenstates[Index]);
 		  if ((PartialEntanglementMatrix.GetNbrRow() > 1) && (PartialEntanglementMatrix.GetNbrColumn() > 1))
 		    {
 		      double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition();
@@ -269,7 +395,11 @@ int main(int argc, char** argv)
 		}
 	      for (int Index = MinIndex; Index <= MaxIndex; ++Index)
 		{
-		  ComplexMatrix PartialEntanglementMatrix = Space->EvaluatePartialEntanglementMatrix(SubsystemSize, TmpSzA, ComplexEigenstates[Index]);
+		  ComplexMatrix PartialEntanglementMatrix;
+		  if (GenericCutFlag == false)
+		    PartialEntanglementMatrix = Space->EvaluatePartialEntanglementMatrix(SubsystemSize, TmpSzA, ComplexEigenstates[Index]);
+		  else
+		    PartialEntanglementMatrix = Space->EvaluatePartialEntanglementMatrix(SubsystemSites, SubsystemSize, TmpSzA, ComplexEigenstates[Index]);
 		  if ((PartialEntanglementMatrix.GetNbrRow() > 1) && (PartialEntanglementMatrix.GetNbrColumn() > 1))
 		    {
 		      double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition();
@@ -332,17 +462,48 @@ int main(int argc, char** argv)
 	}
     }
   
+  if (Manager.GetBoolean("show-entropies"))
+    {
+      cout << "# state_index entropy trace" << endl;
+    }
   for (int Index = MinIndex; Index <= MaxIndex; ++Index)
     {
+      double TmpEntanglementEntropy = 0.0;
+      double TmpTrace = 0.0;
       for (int TmpSzA = MinSzA;  TmpSzA <= MaxSzA; TmpSzA += 2)
 	{
 	  if (EntanglementSpectrumDimension[(TmpSzA - MinSzA) / 2] > 0)
 	    {
 	      WriteLittleEndian(File, EntanglementSpectrumDimension[(TmpSzA - MinSzA) / 2]);
 	      WriteBlockLittleEndian(File, EntanglementSpectra[(TmpSzA - MinSzA) / 2][Index - MinIndex], EntanglementSpectrumDimension[(TmpSzA - MinSzA) / 2]);
+	      for (int i = 0; i < EntanglementSpectrumDimension[(TmpSzA - MinSzA) / 2]; ++i)
+		{
+		  double Tmp = EntanglementSpectra[(TmpSzA - MinSzA) / 2][Index - MinIndex][i];
+		  if (Tmp > 0.0)
+		    TmpEntanglementEntropy -= Tmp * log(Tmp);
+		  TmpTrace +=  Tmp;
+		}
 	    }
 	}
+      if (Manager.GetBoolean("show-entropies"))
+	cout << Index << " " << TmpEntanglementEntropy << " " << TmpTrace << endl;
     }
   File.close();
   return 0;
 }
+
+
+// get a linearized position index from the 2d coordinates
+//
+// xPosition = position along the x direction
+// xPeriodicity = system size in the x direction
+// yPosition = position along the y direction
+// yPeriodicity = system size in the y direction
+// return value = linearized index
+
+inline int SpinChainMultipleEntanglementSpectraGetLinearizedIndex(int xPosition, int xPeriodicity, int yPosition, int yPeriodicity)
+{
+  return ((xPosition * yPeriodicity) + yPosition);
+  
+}
+

@@ -389,3 +389,137 @@ ComplexMatrix Spin1_2ChainFull::EvaluatePartialEntanglementMatrix (int nbrSites,
     }
    return TmpEntanglementMatrix;
 }
+
+// evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. 
+// 
+// sites = list of sites that define the A subsystem 
+// nbrSites = number of sites that are part of the A subsystem 
+// szSector = Sz sector in which the density matrix has to be evaluated (disregarded here)
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = entanglement matrix of the subsystem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+
+RealMatrix Spin1_2ChainFull::EvaluatePartialEntanglementMatrix (int* sites, int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture)
+{
+  if (nbrSites == 0)
+    {
+      RealMatrix TmpEntanglementMatrix(1, 1);
+      TmpEntanglementMatrix.SetMatrixElement(0, 0, 1.0);
+      return TmpEntanglementMatrix;
+    }
+  if (nbrSites == this->ChainLength)
+    {
+      RealMatrix TmpEntanglementMatrix(1, 1);
+      TmpEntanglementMatrix.SetMatrixElement(0, 0, 1.0);
+      return TmpEntanglementMatrix;
+    }
+  Spin1_2ChainFull TmpDestinationHilbertSpace(nbrSites);
+  Spin1_2ChainFull TmpHilbertSpace(this->ChainLength - nbrSites);
+
+  RealMatrix TmpEntanglementMatrix(TmpHilbertSpace.HilbertSpaceDimension, TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
+
+  int NbrBSites = this->ChainLength - nbrSites;
+  int* BSites = new int [NbrBSites];
+  NbrBSites = 0;
+  for (int i = 0; i < this->ChainLength; ++i)
+    {
+      int j = 0;
+      while ((j < nbrSites) && (sites[j] != i))
+	++j;
+      if (j == nbrSites)
+	{
+	  BSites[NbrBSites] = i;
+	  ++NbrBSites;
+	}
+    }
+
+  int MinIndex = 0;
+  int MaxIndex = TmpHilbertSpace.HilbertSpaceDimension;
+
+  for (; MinIndex < MaxIndex; ++MinIndex)    
+    {
+      unsigned long TmpState3 = TmpHilbertSpace.StateDescription[MinIndex];
+      unsigned long TmpState = 0x0ul;
+      for (int i = 0; i < NbrBSites; ++i)
+	TmpState |= ((TmpState3 >> i) & 0x1ul) << BSites[i];
+      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpState4 = TmpDestinationHilbertSpace.StateDescription[j];
+	  unsigned long TmpState2 = 0x0ul;
+	  for (int i = 0; i < nbrSites; ++i)
+	    TmpState2 |= ((TmpState4 >> i) & 0x1ul) << sites[i];	  
+	  TmpState2 |= TmpState;
+	  TmpEntanglementMatrix.AddToMatrixElement(MinIndex, j, groundState[(int) TmpState2]);
+	}
+    }
+  delete[] BSites;
+  return TmpEntanglementMatrix;
+}
+
+// evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. 
+// 
+// sites = list of sites that define the A subsystem 
+// nbrSites = number of sites that are part of the A subsystem 
+// szSector = Sz sector in which the density matrix has to be evaluated (disregarded here)
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = entanglement matrix of the subsystem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+
+ComplexMatrix Spin1_2ChainFull::EvaluatePartialEntanglementMatrix (int* sites, int nbrSites, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture)
+{
+  if (nbrSites == 0)
+    {
+      ComplexMatrix TmpEntanglementMatrix(1, 1);
+      Complex Tmp(1.0, 0.0);
+      TmpEntanglementMatrix.SetMatrixElement(0, 0, Tmp);
+      return TmpEntanglementMatrix;
+    }
+  if (nbrSites == this->ChainLength)
+    {
+      ComplexMatrix TmpEntanglementMatrix(1, 1);
+      Complex Tmp(1.0, 0.0);
+      TmpEntanglementMatrix.SetMatrixElement(0, 0, Tmp);
+      return TmpEntanglementMatrix;
+    }
+  Spin1_2ChainFull TmpDestinationHilbertSpace(nbrSites);
+  Spin1_2ChainFull TmpHilbertSpace(this->ChainLength - nbrSites);
+
+  ComplexMatrix TmpEntanglementMatrix(TmpHilbertSpace.HilbertSpaceDimension, TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
+
+  int NbrBSites = this->ChainLength - nbrSites;
+  int* BSites = new int [NbrBSites];
+  NbrBSites = 0;
+  for (int i = 0; i < this->ChainLength; ++i)
+    {
+      int j = 0;
+      while ((j < nbrSites) && (sites[j] != i))
+	++j;
+      if (j == nbrSites)
+	{
+	  BSites[NbrBSites] = i;
+	  ++NbrBSites;
+	}
+    }
+
+  int MinIndex = 0;
+  int MaxIndex = TmpHilbertSpace.HilbertSpaceDimension;
+
+  for (; MinIndex < MaxIndex; ++MinIndex)    
+    {
+      unsigned long TmpState3 = TmpHilbertSpace.StateDescription[MinIndex];
+      unsigned long TmpState = 0x0ul;
+      for (int i = 0; i < NbrBSites; ++i)
+	TmpState |= ((TmpState3 >> i) & 0x1ul) << BSites[i];
+      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpState4 = TmpDestinationHilbertSpace.StateDescription[j];
+	  unsigned long TmpState2 = 0x0ul;
+	  for (int i = 0; i < nbrSites; ++i)
+	    TmpState2 |= ((TmpState4 >> i) & 0x1ul) << sites[i];	  
+	  TmpState2 |= TmpState;
+	  TmpEntanglementMatrix.AddToMatrixElement(MinIndex, j, groundState[(int) TmpState2]);
+	}
+    }
+  return TmpEntanglementMatrix;
+}
+

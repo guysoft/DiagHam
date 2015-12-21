@@ -7,8 +7,9 @@
 //                                                                            //
 //                                                                            //
 //         class of two dimension Ising hamiltonian with transverse field     //
+//                             and 2d translations                            //
 //                                                                            //
-//                        last modification : 17/12/2015                      //
+//                        last modification : 18/12/2015                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,8 +29,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef TWODIMENSIONALTRANSVERSEFIELDISINGHAMILTONIAN_H
-#define TWODIMENSIONALTRANSVERSEFIELDISINGHAMILTONIAN_H
+#ifndef TWODIMENSIONALTRANSVERSEFIELDAND2DTRANSLATIONISINGHAMILTONIAN_H
+#define TWODIMENSIONALTRANSVERSEFIELDAND2DTRANSLATIONISINGHAMILTONIAN_H
 
 
 #include "config.h"
@@ -44,7 +45,7 @@ using std::ostream;
 class MathematicaOutput;
 
 
-class TwoDimensionalTransverseFieldIsingHamiltonian : public AbstractHamiltonian
+class TwoDimensionalTransverseFieldAnd2DTranslationIsingHamiltonian : public AbstractHamiltonian
 {
 
  protected:
@@ -62,34 +63,40 @@ class TwoDimensionalTransverseFieldIsingHamiltonian : public AbstractHamiltonian
   // amplitude of the Ising term
   double JFactor;
 
-  // half amplitudes of the Zeeman term along x
-  double** HxFactors;
-  // amplitudes of the Zeeman term along z
-  double** HzFactors;
-
-  // true if periodic boundary conditions have to be used
-  bool PeriodicBoundaryConditions;
+  // half amplitude of the Zeeman term along x
+  double HxFactor;
+  // amplitude of the Zeeman term along z
+  double HzFactor;
 
   // array to store the diagonal contribution of the Hamiltonian
   double* SzSzContributions;
+
+  // momentum along the x direction
+  int XMomentum;
+  // momentum along the y direction
+  int YMomentum;
+
+  //array containing all the phase factors that are needed when computing matrix elements
+  Complex** ExponentialFactors;
 
  public:
 
   // constructor from default data
   //
   // chain = pointer to Hilbert space of the associated system
+  // xMomentum = momentum along the x direction
   // nbrSpinX = number of spin along the x direction
+  // yMomentum = momentum along the y direction
   // nbrSpinY = number of spin along the y direction
   // jFactor = amplitude of the Ising term
-  // hxFactor = amplitudes of the Zeeman term along x
-  // hzFactor = amplitudes of the Zeeman term along z
-  // periodicBoundaryConditions = true if periodic boundary conditions have to be used
-  TwoDimensionalTransverseFieldIsingHamiltonian(AbstractSpinChain* chain, int nbrSpinX, int nbrSpinY, double jFactor,
-						double** hxFactor, double** hzFactor, bool periodicBoundaryConditions = false);
+  // hxFactor = amplitude of the Zeeman term along x
+  // hzFactor = amplitude of the Zeeman term along z
+  TwoDimensionalTransverseFieldAnd2DTranslationIsingHamiltonian(AbstractSpinChain* chain, int xMomentum, int nbrSpinX, int yMomentum, int nbrSpinY, double jFactor,
+								double hxFactor, double hzFactor);
 
   // destructor
   //
-  ~TwoDimensionalTransverseFieldIsingHamiltonian();
+  ~TwoDimensionalTransverseFieldAnd2DTranslationIsingHamiltonian();
 
   // clone hamiltonian without duplicating datas
   //
@@ -124,8 +131,8 @@ class TwoDimensionalTransverseFieldIsingHamiltonian : public AbstractHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-					  int firstComponent, int nbrComponent);
+  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+					     int firstComponent, int nbrComponent);
 
   // multiply a set of vectors by the current hamiltonian for a given range of indices 
   // and add result to another set of vectors, low level function (no architecture optimization)
@@ -136,14 +143,18 @@ class TwoDimensionalTransverseFieldIsingHamiltonian : public AbstractHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-  virtual RealVector* LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-						  int firstComponent, int nbrComponent);
+  virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+						     int firstComponent, int nbrComponent);
 
  protected:
  
   // evaluate all matrix elements
   //   
   void EvaluateDiagonalMatrixElements();
+
+  // evaluate all exponential factors
+  //   
+  virtual void EvaluateExponentialFactors();
 
   // get a linearized position index from the 2d coordinates
   //
@@ -160,7 +171,7 @@ class TwoDimensionalTransverseFieldIsingHamiltonian : public AbstractHamiltonian
 // yPosition = position along the y direction
 // return value = linearized index
 
-inline int TwoDimensionalTransverseFieldIsingHamiltonian::GetLinearizedIndex(int xPosition, int yPosition)
+inline int TwoDimensionalTransverseFieldAnd2DTranslationIsingHamiltonian::GetLinearizedIndex(int xPosition, int yPosition)
 {
   return ((xPosition * this->NbrSpinY) + yPosition);
 }

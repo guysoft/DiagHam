@@ -45,6 +45,9 @@ using std::ostream;
 class Spin1_2ChainFull : public Spin1_2Chain
 {
 
+  friend class Spin1_2ChainFullAnd2DTranslation;
+  friend class Spin1_2ChainFullInversionAnd2DTranslation;
+
  protected:
 
 
@@ -109,21 +112,41 @@ class Spin1_2ChainFull : public Spin1_2Chain
 
   // evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. 
   // 
-  // nbrSites = number of sites that are part of the A subsytem 
+  // nbrSites = number of sites that are part of the A subsystem 
   // szSector = Sz sector in which the density matrix has to be evaluated (disregarded here)
   // groundState = reference on the total system ground state
   // architecture = pointer to the architecture to use parallelized algorithm 
-  // return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+  // return value = entanglement matrix of the subsystem (return a zero dimension matrix if the entanglement matrix is equal to zero)
   virtual RealMatrix EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture = 0);
 	
   // evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. 
   // 
-  // nbrSites = number of sites that are part of the A subsytem 
+  // nbrSites = number of sites that are part of the A subsystem 
   // szSector = Sz sector in which the density matrix has to be evaluated (disregarded here)
   // groundState = reference on the total system ground state
   // architecture = pointer to the architecture to use parallelized algorithm 
-  // return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+  // return value = entanglement matrix of the subsystem (return a zero dimension matrix if the entanglement matrix is equal to zero)
   virtual ComplexMatrix EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
+	
+  // evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. 
+  // 
+  // sites = list of sites that define the A subsystem 
+  // nbrSites = number of sites that are part of the A subsystem 
+  // szSector = Sz sector in which the density matrix has to be evaluated (disregarded here)
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = entanglement matrix of the subsystem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+  virtual RealMatrix EvaluatePartialEntanglementMatrix (int* sites, int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture = 0);
+
+  // evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. 
+  // 
+  // sites = list of sites that define the A subsystem 
+  // nbrSites = number of sites that are part of the A subsystem 
+  // szSector = Sz sector in which the density matrix has to be evaluated (disregarded here)
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = entanglement matrix of the subsystem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+  virtual ComplexMatrix EvaluatePartialEntanglementMatrix (int* sites, int nbrSites, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
 
  protected:
 

@@ -7,8 +7,9 @@
 //                                                                            //
 //                                                                            //
 //         class of two dimension Ising hamiltonian with transverse field     //
+//                             and 2d translations                            //
 //                                                                            //
-//                        last modification : 17/12/2015                      //
+//                        last modification : 18/12/2015                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "Hamiltonian/TwoDimensionalTransverseFieldIsingHamiltonian.h"
+#include "Hamiltonian/TwoDimensionalTransverseFieldAnd2DTranslationIsingHamiltonian.h"
 #include "Vector/RealVector.h"
 #include "Vector/RealVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
@@ -48,52 +49,44 @@ using std::ostream;
 // constructor from default data
 //
 // chain = pointer to Hilbert space of the associated system
+// xMomentum = momentum along the x direction
 // nbrSpinX = number of spin along the x direction
+// yMomentum = momentum along the y direction
 // nbrSpinY = number of spin along the y direction
 // jFactor = amplitude of the Ising term
-// hxFactor = amplitudes of the Zeeman term along x
-// hzFactor = amplitudes of the Zeeman term along z
-// periodicBoundaryConditions = true if periodic boundary conditions have to be used
+// hxFactor = amplitude of the Zeeman term along x
+// hzFactor = amplitude of the Zeeman term along z
 
-TwoDimensionalTransverseFieldIsingHamiltonian::TwoDimensionalTransverseFieldIsingHamiltonian(AbstractSpinChain* chain, int nbrSpinX, int nbrSpinY, double jFactor,
-											     double** hxFactor, double** hzFactor, bool periodicBoundaryConditions)
+TwoDimensionalTransverseFieldAnd2DTranslationIsingHamiltonian::TwoDimensionalTransverseFieldAnd2DTranslationIsingHamiltonian(AbstractSpinChain* chain, int xMomentum, int nbrSpinX, 
+															     int yMomentum, int nbrSpinY, double jFactor,
+															     double hxFactor, double hzFactor)
 {
   this->Chain = chain;
+  this->XMomentum = xMomentum;
+  this->YMomentum = yMomentum;
   this->NbrSpinX = nbrSpinX;
   this->NbrSpinY = nbrSpinY;
   this->NbrSpin = this->NbrSpinX * this->NbrSpinY;
-  this->PeriodicBoundaryConditions = periodicBoundaryConditions;
   this->JFactor = jFactor;
-  this->HxFactors = new double* [this->NbrSpinX];
-  this->HzFactors = new double* [this->NbrSpinX];
-  for (int i = 0; i < this->NbrSpinX; i++)
-    {
-      this->HxFactors[i] = new double [this->NbrSpinY];
-      this->HzFactors[i] = new double [this->NbrSpinY];     
-      for (int j = 0; j < this->NbrSpinY; j++)
-	{
-	  this->HxFactors[i][j] = 0.5 * hxFactor[i][j];
-	  this->HzFactors[i][j] = hzFactor[i][j];
-	}
-    }
+  this->HxFactor = 0.5 * hxFactor;
+  this->HzFactor = hzFactor;
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
+  this->EvaluateExponentialFactors();
   this->EvaluateDiagonalMatrixElements();
 }
 
 // destructor
 //
 
-TwoDimensionalTransverseFieldIsingHamiltonian::~TwoDimensionalTransverseFieldIsingHamiltonian() 
+TwoDimensionalTransverseFieldAnd2DTranslationIsingHamiltonian::~TwoDimensionalTransverseFieldAnd2DTranslationIsingHamiltonian() 
 {
-  delete[] this->HxFactors;  
-  delete[] this->HzFactors;  
 }
 
 // set Hilbert space
 //
 // hilbertSpace = pointer to Hilbert space to use
 
-void TwoDimensionalTransverseFieldIsingHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+void TwoDimensionalTransverseFieldAnd2DTranslationIsingHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
   delete[] this->SzSzContributions;
   this->Chain = (AbstractSpinChain*) hilbertSpace;
@@ -105,7 +98,7 @@ void TwoDimensionalTransverseFieldIsingHamiltonian::SetHilbertSpace (AbstractHil
 //
 // return value = pointer to used Hilbert space
 
-AbstractHilbertSpace* TwoDimensionalTransverseFieldIsingHamiltonian::GetHilbertSpace ()
+AbstractHilbertSpace* TwoDimensionalTransverseFieldAnd2DTranslationIsingHamiltonian::GetHilbertSpace ()
 {
   return this->Chain;
 }
@@ -114,7 +107,7 @@ AbstractHilbertSpace* TwoDimensionalTransverseFieldIsingHamiltonian::GetHilbertS
 //
 // return value = corresponding matrix elementdimension
 
-int TwoDimensionalTransverseFieldIsingHamiltonian::GetHilbertSpaceDimension ()
+int TwoDimensionalTransverseFieldAnd2DTranslationIsingHamiltonian::GetHilbertSpaceDimension ()
 {
   return this->Chain->GetHilbertSpaceDimension();
 }
@@ -123,7 +116,7 @@ int TwoDimensionalTransverseFieldIsingHamiltonian::GetHilbertSpaceDimension ()
 //
 // shift = shift value
 
-void TwoDimensionalTransverseFieldIsingHamiltonian::ShiftHamiltonian (double shift)
+void TwoDimensionalTransverseFieldAnd2DTranslationIsingHamiltonian::ShiftHamiltonian (double shift)
 {
   for (int i = 0; i < this->Chain->GetHilbertSpaceDimension(); i ++)
     this->SzSzContributions[i] += shift;
@@ -138,7 +131,7 @@ void TwoDimensionalTransverseFieldIsingHamiltonian::ShiftHamiltonian (double shi
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& TwoDimensionalTransverseFieldIsingHamiltonian::TwoDimensionalTransverseFieldIsingHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+ComplexVector& TwoDimensionalTransverseFieldAnd2DTranslationIsingHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 															      int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
@@ -148,23 +141,25 @@ RealVector& TwoDimensionalTransverseFieldIsingHamiltonian::TwoDimensionalTransve
   int pos;
   int pos2;
   int MaxPos = this->NbrSpin - 1;
+  int NbrTranslationsX;
+  int NbrTranslationsY;
   for (int i = firstComponent; i < LastComponent; ++i)
     {
       vDestination[i] += this->SzSzContributions[i] * vSource[i];
-      double& TmpValue = vSource[i];
+      Complex& TmpValue = vSource[i];
       for (int j = 0; j < this->NbrSpinX; j++)
 	{
 	  for (int k = 0; k < this->NbrSpinY; k++)
 	    {
-	      pos = this->Chain->Spi(this->GetLinearizedIndex(j, k), i, coef);
+	      pos = this->Chain->Spi(this->GetLinearizedIndex(j, k), i, coef, NbrTranslationsX, NbrTranslationsY);
 	      if (pos != dim)
 		{
-		  vDestination[pos] += coef * this->HxFactors[j][k] * TmpValue;
+		  vDestination[pos] += (coef * this->HxFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpValue;
 		}
-	      pos = this->Chain->Smi(this->GetLinearizedIndex(j, k), i, coef);
+	      pos = this->Chain->Smi(this->GetLinearizedIndex(j, k), i, coef, NbrTranslationsX, NbrTranslationsY);
 	      if (pos != dim)
 		{
-		  vDestination[pos] += coef * this->HxFactors[j][k] * TmpValue;
+		  vDestination[pos] += (coef * this->HxFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpValue;
 		}
 	    }
 	}
@@ -182,8 +177,8 @@ RealVector& TwoDimensionalTransverseFieldIsingHamiltonian::TwoDimensionalTransve
 // nbrComponent = number of components to evaluate
 // return value = pointer to the array of vectors where result has been stored
 
-RealVector* TwoDimensionalTransverseFieldIsingHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-										       int firstComponent, int nbrComponent)
+ComplexVector* TwoDimensionalTransverseFieldAnd2DTranslationIsingHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+													  int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   int dim = this->Chain->GetHilbertSpaceDimension();
@@ -192,11 +187,13 @@ RealVector* TwoDimensionalTransverseFieldIsingHamiltonian::LowLevelMultipleAddMu
   int pos;
   int pos2;
   int MaxPos = this->NbrSpin - 1;
-  double* TmpValues = new double[nbrVectors];
+  Complex* TmpValues = new Complex[nbrVectors];
+  int NbrTranslationsX;
+  int NbrTranslationsY;
   for (int k = 0; k < nbrVectors; ++k)
     {
-      RealVector& TmpSource = vSources[k];
-      RealVector& TmpDestination = vDestinations[k];
+      ComplexVector& TmpSource = vSources[k];
+      ComplexVector& TmpDestination = vDestinations[k];
       for (int i = firstComponent; i < LastComponent; ++i)
 	{
 	  TmpDestination[i] += this->SzSzContributions[i] * TmpSource[i];
@@ -212,17 +209,17 @@ RealVector* TwoDimensionalTransverseFieldIsingHamiltonian::LowLevelMultipleAddMu
 	{
 	  for (int k = 0; k < this->NbrSpinY; k++)
 	    {
-	      pos = this->Chain->Spi(this->GetLinearizedIndex(j, k), i, coef);
+	      pos = this->Chain->Spi(this->GetLinearizedIndex(j, k), i, coef, NbrTranslationsX, NbrTranslationsY);
 	      if (pos != dim)
 		{
 		  for (int l = 0; l < nbrVectors; ++l)
-		    vDestinations[l][pos] += coef * this->HxFactors[j][k] * TmpValues[l];
+		    vDestinations[l][pos] += (coef * this->HxFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpValues[l];
 		}
-	      pos = this->Chain->Smi(this->GetLinearizedIndex(j, k), i, coef);
+	      pos = this->Chain->Smi(this->GetLinearizedIndex(j, k), i, coef, NbrTranslationsX, NbrTranslationsY);
 	      if (pos != dim)
 		{
 		  for (int l = 0; l < nbrVectors; ++l)
-		    vDestinations[l][pos] += coef * this->HxFactors[j][k] * TmpValues[l];
+		    vDestinations[l][pos] += (coef * this->HxFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpValues[l];
 		}
 	    }
 	}
@@ -234,7 +231,7 @@ RealVector* TwoDimensionalTransverseFieldIsingHamiltonian::LowLevelMultipleAddMu
 // evaluate diagonal matrix elements
 // 
 
-void TwoDimensionalTransverseFieldIsingHamiltonian::EvaluateDiagonalMatrixElements()
+void TwoDimensionalTransverseFieldAnd2DTranslationIsingHamiltonian::EvaluateDiagonalMatrixElements()
 {
   int dim = this->Chain->GetHilbertSpaceDimension();
   // SzSz part
@@ -273,20 +270,33 @@ void TwoDimensionalTransverseFieldIsingHamiltonian::EvaluateDiagonalMatrixElemen
     {
       this->SzSzContributions[i] *= this->JFactor;
     }
-  if (this->HzFactors != 0)
+  double Coefficient;
+  for (int i = 0; i < dim; i++)
     {
-      double Coefficient;
-      for (int i = 0; i < dim; i++)
+      for (int j = 0; j < this->NbrSpinX; j++)
 	{
-	  for (int j = 0; j < this->NbrSpinX; j++)
+	  for (int k = 0; k < this->NbrSpinY; k++)
 	    {
-	      for (int k = 0; k < this->NbrSpinY; k++)
-		{
-		  this->Chain->Szi(this->GetLinearizedIndex(j, k), i, Coefficient);
-		  this->SzSzContributions[i] += this->HzFactors[j][k] * Coefficient;
-		}
+	      this->Chain->Szi(this->GetLinearizedIndex(j, k), i, Coefficient);
+	      this->SzSzContributions[i] += this->HzFactor * Coefficient;
 	    }
 	}      
     }
 }
 
+// evaluate all exponential factors
+//   
+
+void TwoDimensionalTransverseFieldAnd2DTranslationIsingHamiltonian::EvaluateExponentialFactors()
+{
+  this->ExponentialFactors = new Complex*[this->NbrSpinX];
+  for (int i = 0; i < this->NbrSpinX; ++i)
+    { 
+      this->ExponentialFactors[i] = new Complex[this->NbrSpinY];
+      for (int j = 0; j < this->NbrSpinY; ++j)
+	{ 
+	  this->ExponentialFactors[i][j] = Phase(2.0 * M_PI * ((this->XMomentum * ((double) i) / ((double) this->NbrSpinX))
+							       + (this->YMomentum * ((double) j) / ((double) this->NbrSpinY))));
+	}
+    }
+}
