@@ -92,9 +92,39 @@ bool SpinWith2DTranslationFindSystemInfoFromVectorFileName(char* filename, int& 
 // xPeriodicity = reference on the number of sites along the x direction
 // yMomentum = reference on the momentum along the y direction
 // yPeriodicity = reference on the number of sites along the y direction
+// inversion =  reference on the inversion parity
+// return value = true if no error occured
+bool SpinWith2DTranslationInversionFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int& spin, int& xMomentum, int& xPeriodicity,
+							   int& yMomentum, int& yPeriodicity, int& inversion);
+
+// try to guess system information from file name for a 2d spin system with translations
+//
+// filename = file name
+// nbrSpins = reference to the number of spins 
+// sz = reference to twice the Sz value
+// spin = reference to twice the spin value per site
+// xMomentum = reference on the momentum along the x direction
+// xPeriodicity = reference on the number of sites along the x direction
+// yMomentum = reference on the momentum along the y direction
+// yPeriodicity = reference on the number of sites along the y direction
 // return value = true if no error occured
 bool SpinWith2DTranslationFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& spin, int& xMomentum, int& xPeriodicity,
 							   int& yMomentum, int& yPeriodicity);
+
+// try to guess system information from file name for a 2d spin system with translations
+//
+// filename = file name
+// nbrSpins = reference to the number of spins 
+// sz = reference to twice the Sz value
+// spin = reference to twice the spin value per site
+// xMomentum = reference on the momentum along the x direction
+// xPeriodicity = reference on the number of sites along the x direction
+// yMomentum = reference on the momentum along the y direction
+// yPeriodicity = reference on the number of sites along the y direction
+// inversion =  reference on the inversion parity
+// return value = true if no error occured
+bool SpinWith2DTranslationInversionFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& spin, int& xMomentum, int& xPeriodicity,
+							   int& yMomentum, int& yPeriodicity, int& inversion);
 
 // try to guess system information from file name
 //

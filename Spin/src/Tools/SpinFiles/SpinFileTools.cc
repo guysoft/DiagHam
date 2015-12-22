@@ -281,6 +281,51 @@ bool SpinWith2DTranslationFindSystemInfoFromVectorFileName(char* filename, int& 
 // xPeriodicity = reference on the number of sites along the x direction
 // yMomentum = reference on the momentum along the y direction
 // yPeriodicity = reference on the number of sites along the y direction
+// inversion =  reference on the inversion parity
+// return value = true if no error occured
+
+bool SpinWith2DTranslationInversionFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int& spin, int& xMomentum, int& xPeriodicity,
+							   int& yMomentum, int& yPeriodicity, int& inversion)
+{
+  if (SpinWith2DTranslationFindSystemInfoFromVectorFileName(filename, nbrSpins, sz, spin, xMomentum, xPeriodicity, yMomentum, yPeriodicity) == false)
+    return false;
+  char* StrNbrParticles = strstr(filename, "_i_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 3;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && 
+	     (((StrNbrParticles[SizeString] >= '0') && (StrNbrParticles[SizeString] <= '9')) || (StrNbrParticles[SizeString] == '-')))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  inversion = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess inversion sector from file name " << filename << endl;
+      return false;            
+    }
+  return true;
+}
+
+// try to guess system information from file name for a 2d spin system with translations
+//
+// filename = file name
+// nbrSpins = reference to the number of spins 
+// sz = reference to twice the Sz value
+// spin = reference to twice the spin value per site
+// xMomentum = reference on the momentum along the x direction
+// xPeriodicity = reference on the number of sites along the x direction
+// yMomentum = reference on the momentum along the y direction
+// yPeriodicity = reference on the number of sites along the y direction
 // return value = true if no error occured
 
 bool SpinWith2DTranslationFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& spin, int& xMomentum, int& xPeriodicity,
@@ -385,6 +430,50 @@ bool SpinWith2DTranslationFindSystemInfoFromVectorFileName(char* filename, int& 
       cout << "can't guess y-periodicity from file name " << filename << endl;
       return false;            
     }
+}
+
+// try to guess system information from file name for a 2d spin system with translations
+//
+// filename = file name
+// nbrSpins = reference to the number of spins 
+// sz = reference to twice the Sz value
+// spin = reference to twice the spin value per site
+// xMomentum = reference on the momentum along the x direction
+// xPeriodicity = reference on the number of sites along the x direction
+// yMomentum = reference on the momentum along the y direction
+// yPeriodicity = reference on the number of sites along the y direction
+// inversion =  reference on the inversion parity
+// return value = true if no error occured
+bool SpinWith2DTranslationInversionFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& spin, int& xMomentum, int& xPeriodicity,
+							   int& yMomentum, int& yPeriodicity, int& inversion)
+{
+  if (SpinWith2DTranslationFindSystemInfoFromVectorFileName(filename, nbrSpins, spin, xMomentum, xPeriodicity, yMomentum, yPeriodicity) == false)
+    return false;
+  char* StrNbrParticles = strstr(filename, "_i_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 3;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && 
+	     (((StrNbrParticles[SizeString] >= '0') && (StrNbrParticles[SizeString] <= '9')) || (StrNbrParticles[SizeString] == '-')))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  inversion = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess inversion sector from file name " << filename << endl;
+      return false;            
+    }
+  return true;
 }
 
 // try to guess system information from file name

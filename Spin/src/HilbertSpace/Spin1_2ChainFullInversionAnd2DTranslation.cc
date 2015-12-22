@@ -56,6 +56,8 @@ using std::endl;
 Spin1_2ChainFullInversionAnd2DTranslation::Spin1_2ChainFullInversionAnd2DTranslation ()
 {
   this->InversionSector = 1.0;
+  this->InversionShift = 0;
+  this->InversionUnshift = 0;
 }
 
 // constructor for complete Hilbert space with no restriction on total spin projection Sz
@@ -105,6 +107,16 @@ Spin1_2ChainFullInversionAnd2DTranslation::Spin1_2ChainFullInversionAnd2DTransla
     }
   this->ComplementaryYMomentumFullMask = ~this->YMomentumFullMask; 
 
+#ifdef __64_BITS__
+  this->InversionShift = 32 - ((this->YMomentumBlockSize - 1) >> 1) -1;
+#else
+  this->InversionUnshift = 16 - ((this->YMomentumBlockSize - 1) >> 1) -1;
+#endif
+  if ((this->YMomentumBlockSize & 1) == 0)
+    this->InversionUnshift = this->InversionShift - 1;
+  else
+    this->InversionUnshift = this->InversionShift;
+  
   this->LargeHilbertSpaceDimension = this->GenerateStates();
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
   if (this->LargeHilbertSpaceDimension > 0)
@@ -165,6 +177,8 @@ Spin1_2ChainFullInversionAnd2DTranslation::Spin1_2ChainFullInversionAnd2DTransla
       this->YMomentumBlockMask = chain.YMomentumBlockMask;  
       this->YMomentumFullMask = chain.YMomentumFullMask;
       this->ComplementaryYMomentumFullMask = chain.ComplementaryYMomentumFullMask; 
+      this->InversionShift = chain.InversionShift;
+      this->InversionUnshift = chain.InversionUnshift;
 
       this->Sz = chain.Sz;
       this->InversionSector = chain.InversionSector;
@@ -192,6 +206,8 @@ Spin1_2ChainFullInversionAnd2DTranslation::Spin1_2ChainFullInversionAnd2DTransla
       this->LookUpPosition = 0;
       this->LookUpTableSize = 0;
       this->InversionSector = 0.0;
+      this->InversionShift = 0;
+      this->InversionUnshift = 0;
     }
 }
 
@@ -236,6 +252,8 @@ Spin1_2ChainFullInversionAnd2DTranslation& Spin1_2ChainFullInversionAnd2DTransla
       this->YMomentumBlockMask = chain.YMomentumBlockMask;  
       this->YMomentumFullMask = chain.YMomentumFullMask;
       this->ComplementaryYMomentumFullMask = chain.ComplementaryYMomentumFullMask; 
+      this->InversionShift = chain.InversionShift;
+      this->InversionUnshift = chain.InversionUnshift;
 
       this->Sz = chain.Sz;
       this->InversionSector = chain.InversionSector;
@@ -261,7 +279,9 @@ Spin1_2ChainFullInversionAnd2DTranslation& Spin1_2ChainFullInversionAnd2DTransla
       this->LookUpTableMask = 0;
       this->LookUpPosition = 0;
       this->InversionSector = 0.0;
-    }
+      this->InversionShift = 0;
+      this->InversionUnshift = 0;
+   }
   return *this;
 }
 
@@ -294,10 +314,39 @@ long Spin1_2ChainFullInversionAnd2DTranslation::GenerateStates()
 #endif
   for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
     {
+// 	  unsigned long Tmp = this->StateDescription[i];
+// 	  cout << "| ";
+// 	  for (int j = 0; j < this->MaxXMomentum; ++j)
+// 	    {
+// 	      for (int k = 0; k < this->MaxYMomentum; ++k)
+// 		{
+// 		  if (((Tmp >> (k + (j * this->MaxYMomentum))) & 0x1ul) == 0x0ul)
+// 		    cout << "+ ";
+// 		  else
+// 		    cout << "- ";
+// 		}
+// 	      cout << "| ";
+// 	    }
+// 	  cout << " -> ";
+// 	  cout << "| ";
+// 	  Tmp = this->FindCanonicalForm(this->StateDescription[i], NbrTranslationX, NbrTranslationY, TmpSign);
+// 	  for (int j = 0; j < this->MaxXMomentum; ++j)
+// 	    {
+// 	      for (int k = 0; k < this->MaxYMomentum; ++k)
+// 		{
+// 		  if (((Tmp >> (k + (j * this->MaxYMomentum))) & 0x1ul) == 0x0ul)
+// 		    cout << "+ ";
+// 		  else
+// 		    cout << "- ";
+// 		}
+// 	      cout << "| ";
+// 	    }
+// 	  cout << endl;
       if ((this->FindCanonicalForm(this->StateDescription[i], NbrTranslationX, NbrTranslationY, TmpSign) == this->StateDescription[i]))
 	{
 	  if (this->TestMomentumConstraint(this->StateDescription[i]) == true)
 	    {
+//	      cout << "check" << endl;
 	      ++TmpLargeHilbertSpaceDimension;
 	    }
 	  else
@@ -321,6 +370,20 @@ long Spin1_2ChainFullInversionAnd2DTranslation::GenerateStates()
 	    {
 	      TmpStateDescription[TmpLargeHilbertSpaceDimension] = this->StateDescription[i];
 	      this->NbrStateInOrbit[TmpLargeHilbertSpaceDimension] = this->FindOrbitSize(this->StateDescription[i]);
+
+// 	      cout << "| ";
+// 	      for (int j = 0; j < this->MaxXMomentum; ++j)
+// 		{
+// 		  for (int k = 0; k < this->MaxYMomentum; ++k)
+// 		    {
+// 		      if (((TmpStateDescription[TmpLargeHilbertSpaceDimension] >> (k + (j * this->MaxYMomentum))) & 0x1ul) == 0x0ul)
+// 			cout << "+ ";
+// 		      else
+// 			cout << "- ";
+// 		    }
+// 		  cout << "| ";
+// 		}
+// 	      cout << " orb=" << this->NbrStateInOrbit[TmpLargeHilbertSpaceDimension] << endl;
 	      ++TmpLargeHilbertSpaceDimension;
 	    }
 	}
@@ -378,3 +441,20 @@ ComplexVector Spin1_2ChainFullInversionAnd2DTranslation::ConvertFromKxKyBasis(Co
   return TmpVector;
 }
   
+// compute the rescaling factors
+//
+
+void Spin1_2ChainFullInversionAnd2DTranslation::ComputeRescalingFactors()
+{
+  int Tmp = 2 * this->NbrSite;
+  this->RescalingFactors = new double* [Tmp + 1];
+  for (int i = 1; i <= Tmp; ++i)
+    {
+      this->RescalingFactors[i] = new double [Tmp + 1];
+      for (int j = 1; j <= Tmp; ++j)
+	{
+	  this->RescalingFactors[i][j] = sqrt (((double) i) / ((double) j));
+	}
+    }
+}
+

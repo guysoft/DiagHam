@@ -11,6 +11,7 @@
 #include "HilbertSpace/Spin1Chain.h"
 #include "HilbertSpace/Spin1_2ChainFull.h"
 #include "HilbertSpace/Spin1_2ChainFullAnd2DTranslation.h"
+#include "HilbertSpace/Spin1_2ChainFullInversionAnd2DTranslation.h"
 
 
 #include "Options/Options.h"
@@ -60,8 +61,10 @@ int main(int argc, char** argv)
   int NbrSites = 0;
   int* XMomentum = 0;
   int* YMomentum = 0;
+  int* InversionSector = 0;
   int* SzValue = 0;
-  bool TotalSpinConservedFlag;
+  bool TotalSpinConservedFlag = false;
+  bool InversionFlag = false;
   int XPeriodicity = 0;
   int YPeriodicity = 0;
   bool Statistics = true;
@@ -79,12 +82,14 @@ int main(int argc, char** argv)
       NbrInputStates = 1;
       XMomentum = new int[1];
       YMomentum = new int[1];
+      InversionSector = new int[1];
+      InversionSector[0] = 0;
       SzValue = new int [1];
       if (IsFile(Manager.GetString("input-state")) == false)
 	{
 	  cout << "can't open file " << Manager.GetString("input-state") << endl;
 	  return -1;
-	}
+	}      
       if (SpinWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrSites, SzValue[0], SpinValue, XMomentum[0], XPeriodicity,
 								YMomentum[0], YPeriodicity) == false)
 	{
@@ -95,6 +100,17 @@ int main(int argc, char** argv)
 	      cout << "error while retrieving system parameters from file name " <<Manager.GetString("input-state")  << endl;
 	      return -1;
 	    }
+	  InversionFlag = SpinWith2DTranslationInversionFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrSites, SpinValue, XMomentum[0], XPeriodicity, 
+											 YMomentum[0], YPeriodicity, InversionSector[0]);
+	  if (InversionFlag == false)
+	    cout << "error" << endl;
+	  else
+	    cout << "OK" << " " << InversionSector[0] << endl;
+	}
+      else
+	{
+	  InversionFlag = SpinWith2DTranslationInversionFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrSites, SzValue[0], SpinValue, XMomentum[0], XPeriodicity,
+											 YMomentum[0], YPeriodicity, InversionSector[0]);
 	}
     }
   else
@@ -108,9 +124,11 @@ int main(int argc, char** argv)
       NbrInputStates = DegenerateFile.GetNbrLines();
       XMomentum = new int [NbrInputStates];
       YMomentum = new int [NbrInputStates];
+      InversionSector = new int[NbrInputStates];
       SzValue = new int [NbrInputStates];
       for (int i = 0; i < NbrInputStates; ++i)
 	{
+	  InversionSector[i] = 0;
 	  // 	if ((FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(DegenerateFile(0,i), NbrParticles, NbrSites, XMomentum[i], YMomentum[i],  XPeriodicity, YPeriodicity, Statistics, GutzwillerFlag) == false) && (FTIHubbardModelWith1DTranslationFindSystemInfoFromVectorFileName(DegenerateFile(0,i), NbrParticles, NbrSites, XMomentum[i], XPeriodicity, Statistics, GutzwillerFlag) == false))
 	  // 	  {
 	  // 	    cout << "error while retrieving system parameters from file name " << DegenerateFile(0, i) << endl;
@@ -131,7 +149,16 @@ int main(int argc, char** argv)
     {
       cout << "Convert from (kx,ky) basis to real space basis" << endl;
       for (int i = 0; i < NbrInputStates; ++i)
-	cout << " Nbr sites=" << NbrSites << "=" << XPeriodicity << "x" << YPeriodicity << " Kx=" << XMomentum[i] << " Ky=" << YMomentum[i] << endl;
+	{
+	  if ((InversionFlag == false) || (InversionSector[i] == 0))
+	    {
+	      cout << " Nbr sites=" << NbrSites << "=" << XPeriodicity << "x" << YPeriodicity << " Kx=" << XMomentum[i] << " Ky=" << YMomentum[i] << endl;
+	    }
+	  else
+	    {
+	      cout << " Nbr sites=" << NbrSites << "=" << XPeriodicity << "x" << YPeriodicity << " Kx=" << XMomentum[i] << " Ky=" << YMomentum[i] << " I=" << InversionSector[i] << endl;
+	    }
+	}
     }
 
   ComplexVector* InputStates = new ComplexVector[NbrInputStates];
@@ -217,19 +244,39 @@ int main(int argc, char** argv)
 	{
 	  if (TotalSpinConservedFlag == false)
 	    {
-	      switch (SpinValue)
+	      if ((InversionFlag == false) || (InversionSector[i] == 0))
 		{
-		case 1 :
-		  InputSpace[i] = new Spin1_2ChainFullAnd2DTranslation (XMomentum[i], XPeriodicity, YMomentum[i], YPeriodicity);
-		  break;
-		default :
-		  {
-		    if ((SpinValue & 1) == 0)
-		      cout << "spin " << (SpinValue / 2) << " are not available" << endl;
-		    else 
-		      cout << "spin " << SpinValue << "/2 are not available" << endl;
-		    return -1;
-		  }
+		  switch (SpinValue)
+		    {
+		    case 1 :
+		      InputSpace[i] = new Spin1_2ChainFullAnd2DTranslation (XMomentum[i], XPeriodicity, YMomentum[i], YPeriodicity);
+		      break;
+		    default :
+		      {
+			if ((SpinValue & 1) == 0)
+			  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+			else 
+			  cout << "spin " << SpinValue << "/2 are not available" << endl;
+			return -1;
+		      }
+		    }
+		}
+	      else
+		{
+		  switch (SpinValue)
+		    {
+		    case 1 :
+		      InputSpace[i] = new Spin1_2ChainFullInversionAnd2DTranslation (InversionSector[i], XMomentum[i], XPeriodicity, YMomentum[i], YPeriodicity);
+		      break;
+		    default :
+		      {
+			if ((SpinValue & 1) == 0)
+			  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+			else 
+			  cout << "spin " << SpinValue << "/2 are not available" << endl;
+			return -1;
+		      }
+		    }
 		}
 	    }
 	  else

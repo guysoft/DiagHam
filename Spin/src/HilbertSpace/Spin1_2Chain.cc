@@ -210,10 +210,10 @@ Spin1_2Chain::Spin1_2Chain (const Spin1_2Chain& chain)
 
 Spin1_2Chain::~Spin1_2Chain () 
 {
-  if ((this->Flag.Shared() == false) && (this->Flag.Used() == true) && (this->ChainLength != 0))
+  if ((this->Flag.Shared() == false) && (this->Flag.Used() == true) && (this->ChainLength != 0) && (this->LargeHilbertSpaceDimension > 0))
     {
-      delete[] this->StateDescription;
-      delete[] this->LookUpTable;
+//      delete[] this->StateDescription;
+//      delete[] this->LookUpTable;
     }
 }
 

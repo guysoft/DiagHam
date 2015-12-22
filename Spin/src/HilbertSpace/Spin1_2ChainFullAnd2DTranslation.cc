@@ -606,6 +606,14 @@ void Spin1_2ChainFullAnd2DTranslation::GenerateLookUpTable(unsigned long memory)
       --CurrentLookUpTableValue;
     }
   TmpLookUpTable[0] = this->HilbertSpaceDimension - 1;
+  this->ComputeRescalingFactors();
+}
+
+// compute the rescaling factors
+//
+
+void Spin1_2ChainFullAnd2DTranslation::ComputeRescalingFactors()
+{
   this->RescalingFactors = new double* [this->NbrSite + 1];
   for (int i = 1; i <= this->NbrSite; ++i)
     {

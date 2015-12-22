@@ -261,8 +261,12 @@ class Spin1_2ChainFullAnd2DTranslation : public Spin1_2ChainFull
   // generate look-up table associated to current Hilbert space
   // 
   // memory = memory size that can be allocated for the look-up table
-  void GenerateLookUpTable(unsigned long memory);
+  virtual void GenerateLookUpTable(unsigned long memory);
   
+  // compute the rescaling factors
+  //
+  virtual void ComputeRescalingFactors();
+
 };
 
 // factorized code that is used to symmetrize the result of any operator action

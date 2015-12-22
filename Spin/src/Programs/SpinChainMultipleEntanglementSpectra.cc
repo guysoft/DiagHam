@@ -12,6 +12,7 @@
 #include "HilbertSpace/Spin1Chain.h"
 #include "HilbertSpace/Spin1_2ChainFull.h"
 #include "HilbertSpace/Spin1_2ChainFullAnd2DTranslation.h"
+#include "HilbertSpace/Spin1_2ChainFullInversionAnd2DTranslation.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -106,10 +107,12 @@ int main(int argc, char** argv)
   int SubsystemSize = Manager.GetInteger("la");
   bool SzFlag = true;
   bool Momentum2DFlag = false;
+  bool InversionFlag = false;  
   int XMomentum = 0;
   int XPeriodicity = 0;
   int YMomentum = 0;
   int YPeriodicity = 0;
+  int InversionSector = 0;
   bool GenericCutFlag = false;
   int* SubsystemSites = 0;
 
@@ -133,10 +136,15 @@ int main(int argc, char** argv)
 	{
 	  Momentum2DFlag = true;
 	  SzFlag = false;
+	  InversionFlag = SpinWith2DTranslationInversionFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, SpinValue, XMomentum, XPeriodicity, 
+											 YMomentum, YPeriodicity, InversionSector);
 	}
     }
   else
     {
+      InversionFlag = SpinWith2DTranslationInversionFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue, XMomentum, XPeriodicity,
+										     YMomentum, YPeriodicity, InversionSector);
+      SzFlag = true;
       Momentum2DFlag = true;
     }
   if (Momentum2DFlag == false)
@@ -149,9 +157,27 @@ int main(int argc, char** argv)
   else
     {
        if (SzFlag == true)
-	cout << "N=" << NbrSpins << "=" << XPeriodicity << "x" << YPeriodicity << " Sz=" <<  TotalSz << " 2s=" << SpinValue << endl;
-      else
-	cout << "N=" << NbrSpins << "=" << XPeriodicity << "x" << YPeriodicity << " 2s=" << SpinValue << endl;
+	 {
+	   if ((InversionFlag == false) || (InversionSector == 0))
+	     {
+	       cout << "N=" << NbrSpins << "=" << XPeriodicity << "x" << YPeriodicity << " Sz=" <<  TotalSz << " 2s=" << SpinValue << endl;
+	     }
+	   else
+	     {
+	       cout << "N=" << NbrSpins << "=" << XPeriodicity << "x" << YPeriodicity << " Sz=" <<  TotalSz << " 2s=" << SpinValue << " I=" << InversionSector << endl;
+	     }
+	 }
+       else
+	 {
+	   if ((InversionFlag == false) || (InversionSector == 0))
+	     {
+	       cout << "N=" << NbrSpins << "=" << XPeriodicity << "x" << YPeriodicity << " 2s=" << SpinValue << endl;
+	     }
+	   else
+	     {
+	       cout << "N=" << NbrSpins << "=" << XPeriodicity << "x" << YPeriodicity << " 2s=" << SpinValue << " I=" << InversionSector << endl;
+	     }
+	 }
    }
   if (SubsystemSize < 0)
     {
@@ -256,35 +282,72 @@ int main(int argc, char** argv)
     {
       AbstractSpinChain* TmpSpace;
       
-      if (SzFlag == true)
+      if ((InversionFlag == false) || (InversionSector == 0))
 	{
-	  switch (SpinValue)
+	  if (SzFlag == true)
 	    {
-	    default :
-	      {
-		if ((SpinValue & 1) == 0)
-		  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
-		else 
-		  cout << "spin " << SpinValue << "/2 are not available" << endl;
-		return -1;
-	      }
+	      switch (SpinValue)
+		{
+		default :
+		  {
+		    if ((SpinValue & 1) == 0)
+		      cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+		    else 
+		      cout << "spin " << SpinValue << "/2 are not available" << endl;
+		    return -1;
+		  }
+		}
+	    }
+	  else
+	    {
+	      switch (SpinValue)
+		{
+		case 1 :
+		  TmpSpace = new Spin1_2ChainFullAnd2DTranslation (XMomentum, XPeriodicity, YMomentum, YPeriodicity);
+		  break;
+		default :
+		  {
+		    if ((SpinValue & 1) == 0)
+		      cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+		    else 
+		      cout << "spin " << SpinValue << "/2 are not available" << endl;
+		    return -1;
+		  }
+		}
 	    }
 	}
       else
 	{
-	  switch (SpinValue)
+	  if (SzFlag == true)
 	    {
-	    case 1 :
-	      TmpSpace = new Spin1_2ChainFullAnd2DTranslation (XMomentum, XPeriodicity, YMomentum, YPeriodicity);
-	      break;
-	    default :
-	      {
-		if ((SpinValue & 1) == 0)
-		  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
-		else 
-		  cout << "spin " << SpinValue << "/2 are not available" << endl;
-		return -1;
-	      }
+	      switch (SpinValue)
+		{
+		default :
+		  {
+		    if ((SpinValue & 1) == 0)
+		      cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+		    else 
+		      cout << "spin " << SpinValue << "/2 are not available" << endl;
+		    return -1;
+		  }
+		}
+	    }
+	  else
+	    {
+	      switch (SpinValue)
+		{
+		case 1 :
+		  TmpSpace = new Spin1_2ChainFullInversionAnd2DTranslation (InversionSector, XMomentum, XPeriodicity, YMomentum, YPeriodicity);
+		  break;
+		default :
+		  {
+		    if ((SpinValue & 1) == 0)
+		      cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+		    else 
+		      cout << "spin " << SpinValue << "/2 are not available" << endl;
+		    return -1;
+		  }
+		}
 	    }
 	}
       ComplexMatrix TmpComplexEigenstates(Space->GetHilbertSpaceDimension(), NbrStates);
