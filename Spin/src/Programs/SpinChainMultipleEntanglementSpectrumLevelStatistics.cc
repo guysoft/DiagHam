@@ -92,6 +92,20 @@ void DensityOfStatesParseSpectrumFile(ifstream& inputFile, double*& spectrum, in
 				      double& minEnergy, double& maxEnergy, long& nbrStates);
 
 
+// perform the density of states on a parsed spectrum with a cut-off on the entanglement energies
+//
+// spectrum = two dimensional array where the spectrum is stored
+// spectrumSize = number of levels per quantum number sector
+// spectrumWeight = degeneracy associated to each quantum number sector
+// nbrSectors = number of quantum number sectors
+// minEnergy = minimum level spacing 
+// maxEnergy = maximum level spacing 
+// nbrStates = number of states
+// minEnergyCutOff = mininum entanglement energy cut-off
+// minEnergyCutOff = maxinum entanglement energy cut-off
+void DensityOfStatesParseSpectrumFile(ifstream& inputFile, double*& spectrum, int& spectrumSize,
+				      double& minEnergy, double& maxEnergy, long& nbrStates, double minEnergyCutOff, double maxEnergyCutOff);
+
 // parse the information contained in a single spectrum file
 //
 // spectrumFileName = specrtum file name
@@ -108,6 +122,7 @@ void DensityOfStatesParseSpectrumFile(ifstream& inputFile, double*& spectrum, in
 bool LevelStatisticsParseSpectrumFile(double* spectrum, int spectrumSize,
 				      double& minAverageSpacing, double& maxAverageSpacing, double& averageSpacing,
 				      long& nbrSpacings, Abstract1DRealFunction* densityOfStates);
+
 
 int main(int argc, char** argv)
 {
@@ -126,10 +141,13 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('s', "spectra", "name of the file that contains the binary entanglement spectra");
   (*SystemGroup) += new SingleIntegerOption('\n', "window-min", "set the index of the first entanglement spectrum to consider", 0);
   (*SystemGroup) += new SingleIntegerOption('\n', "window-max", " set the index of the last entanglement spectrum to consider (negative if up to the last available entanglement spectrum)", -1);
-  (*OutputGroup) += new SingleStringOption ('o', "output-file", "name of the output file where the density of states will be stored (if none, try to deduce it from either --spectrum or --multiple-spectra replacing the dat extension with dos)");
+  (*SystemGroup) += new SingleDoubleOption('\n', "min-entenergy", "reject all entanglement energies below a given energy", 0.0);
+  (*SystemGroup) += new SingleDoubleOption('\n', "max-entenergy", " reject all entanglement energies above a given energy (negative if no cut-off should be applied)", -1.0);
+  (*OutputGroup) += new SingleStringOption ('o', "output-file", "name of the output file where the density of states will be stored (if none, try to deduce it from either --spectra replacing the dat extension with dos/levelstat)");
   (*OutputGroup) += new SingleIntegerOption ('\n', "nbr-bins", "number of bins for the density of states", 100);
   (*OutputGroup) += new SingleDoubleOption ('\n', "bin-spacing", "spacing range for each bin for the level statistics", 0.1);
   (*OutputGroup) += new BooleanOption ('\n', "discard-outputfiles", "do not save any results on disk, just display the summary using the standard output");
+  (*OutputGroup) += new SingleIntegerOption ('\n', "extract-singlespectrum", "extract a single entanglement spectrum from --spectra instead of computing level statistics", -1);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   
@@ -153,6 +171,18 @@ int main(int argc, char** argv)
   
   double MaxEnergy = 0.0;
   double MinEnergy = 1e300;
+  double MinEnergyCutOff = 0.0;
+  double MaxEnergyCutOff = 1e300;
+  bool CutOffFlag = false;
+  if ((Manager.GetDouble("min-entenergy") > 0.0) || (Manager.GetDouble("max-entenergy") > 0.0))
+    {
+      CutOffFlag  = true;
+      MinEnergyCutOff = Manager.GetDouble("min-entenergy");
+      if (Manager.GetDouble("max-entenergy") > 0.0)
+	{
+	  MaxEnergyCutOff = Manager.GetDouble("max-entenergy");
+	}
+    }
   long NbrLevels = 0l;
   int* SpectrumSize;
   double** Spectrum;
@@ -181,6 +211,11 @@ int main(int argc, char** argv)
     }
   int TotalNbrEntanglementSpectra = (MaxEntanglementSpectrumIndex - MinEntanglementSpectrumIndex + 1);
 //  int TotalNbrEntanglementSpectra = NbrSzASectors * (MaxEntanglementSpectrumIndex - MinEntanglementSpectrumIndex + 1);
+  if (Manager.GetInteger("extract-singlespectrum") >= 0)
+    {
+      MaxEntanglementSpectrumIndex = Manager.GetInteger("extract-singlespectrum");
+      MinEntanglementSpectrumIndex = MaxEntanglementSpectrumIndex;
+    }
   cout << "number of entanglement spectra = " << NbrEntanglementSpectra << endl;
   cout << "will process the entanglement spectra between " << MinEntanglementSpectrumIndex << " and " << MaxEntanglementSpectrumIndex << endl;
   Spectrum = new double*[TotalNbrEntanglementSpectra];
@@ -196,6 +231,29 @@ int main(int argc, char** argv)
 	  File.seekg (TmpSize * sizeof(double), ios::cur);
 	}
     }
+  if (Manager.GetInteger("extract-singlespectrum") >= 0)
+    {
+      char* SingleSpectrumExtension = new char[128];
+      sprintf (SingleSpectrumExtension, "spec_%d.ent", MaxEntanglementSpectrumIndex);
+      char* SingleSpectrumOutputFileName = ReplaceExtensionToFileName(Manager.GetString("spectra"), "ent", SingleSpectrumExtension);
+      delete[] SingleSpectrumExtension;
+      ofstream File2;
+      File2.open(SingleSpectrumOutputFileName, ios::binary | ios::out);
+      File2.precision(14);
+      for (int j = 0; j < NbrSzASectors; ++j)
+	{
+	  int TmpSize = 0;
+	  ReadLittleEndian(File, TmpSize);
+	  double* TmpArray = new double[TmpSize];
+	  ReadBlockLittleEndian(File, TmpArray, TmpSize); 
+	  for (int k = 0; k <  TmpSize; ++k)
+	    File2 << SzaSectors[j] << " " << TmpArray[k] << " " << (-log(TmpArray[k])) << endl;
+	  delete[] TmpArray;
+	}      
+      File2.close();
+      File.close();
+      return 0;
+    }
   if (true)
     {
        for (int i = MinEntanglementSpectrumIndex; i <= MaxEntanglementSpectrumIndex; ++i)
@@ -204,7 +262,10 @@ int main(int argc, char** argv)
 	    {
 	      if (SzaSectors[j] == 0)
 		{
-		  DensityOfStatesParseSpectrumFile(File, Spectrum[Index], SpectrumSize[Index], MinEnergy, MaxEnergy, NbrLevels);
+		  if (CutOffFlag == false)
+		    DensityOfStatesParseSpectrumFile(File, Spectrum[Index], SpectrumSize[Index], MinEnergy, MaxEnergy, NbrLevels);
+		  else
+		    DensityOfStatesParseSpectrumFile(File, Spectrum[Index], SpectrumSize[Index], MinEnergy, MaxEnergy, NbrLevels, MinEnergyCutOff, MaxEnergyCutOff);
 		  ++Index;
 		}
 	      else
@@ -420,8 +481,11 @@ int main(int argc, char** argv)
 	    {
 	      ++NbrRejectedSpacings;
 	    }
-	  AverageR += (TmpAverageR / TmpNbrRatios);
-	  VarianceAverageR +=  (TmpAverageR / TmpNbrRatios) * (TmpAverageR / TmpNbrRatios);
+	  if (TmpNbrRatios > 0.0)
+	    {
+	      AverageR += (TmpAverageR / TmpNbrRatios);
+	      VarianceAverageR += (TmpAverageR / TmpNbrRatios) * (TmpAverageR / TmpNbrRatios);
+	    }
 	}
     }
 
@@ -782,11 +846,6 @@ void DensityOfStatesParseSpectrumFile(ifstream& inputFile, double*& spectrum, in
 // minEnergy = minimum level spacing 
 // maxEnergy = maximum level spacing 
 // nbrStates = number of states
-// nbrBins = number of bins for the density of states
-// binSize = density of states range for each bin
-// nbrStatePerBin = array that contains the number of level spacing per bin
-// nbrRejectedStates = reference on the number of states (i.e. that cannot be stored in any bin)
-// nbrAcceptedStates = reference on the number of states (i.e. that can be stored in a bin)
 
 void DensityOfStatesParseSpectrumFile(ifstream& inputFile, double*& spectrum, int& spectrumSize,
 				      double& minEnergy, double& maxEnergy, long& nbrStates)
@@ -797,14 +856,56 @@ void DensityOfStatesParseSpectrumFile(ifstream& inputFile, double*& spectrum, in
   nbrStates += (long) spectrumSize;
   for (int i = 0; i < spectrumSize; ++i)
     {     
-//       if (spectrum[i] < 0.0MACHINE_PRECISION)
-// 	spectrum[i] = MACHINE_PRECISION;
       spectrum[i] = -log(spectrum[i]);
       if (spectrum[i] < minEnergy)
 	minEnergy = spectrum[i];
       if (spectrum[i] > maxEnergy)
 	maxEnergy = spectrum[i];
      }  
+}
+
+// perform the density of states on a parsed spectrum with a cut-off on the entanglement energies
+//
+// spectrum = two dimensional array where the spectrum is stored
+// spectrumSize = number of levels per quantum number sector
+// spectrumWeight = degeneracy associated to each quantum number sector
+// nbrSectors = number of quantum number sectors
+// minEnergy = minimum level spacing 
+// maxEnergy = maximum level spacing 
+// nbrStates = number of states
+// minEnergyCutOff = mininum entanglement energy cut-off
+// minEnergyCutOff = maxinum entanglement energy cut-off
+
+void DensityOfStatesParseSpectrumFile(ifstream& inputFile, double*& spectrum, int& spectrumSize,
+				      double& minEnergy, double& maxEnergy, long& nbrStates, double minEnergyCutOff, double maxEnergyCutOff)
+{
+  int TmpSpectrumSize = 0;
+  ReadLittleEndian(inputFile, TmpSpectrumSize);
+  double* TmpSpectrum = new double[TmpSpectrumSize];
+  ReadBlockLittleEndian(inputFile, TmpSpectrum, TmpSpectrumSize);  
+  spectrumSize = 0;
+  for (int i = 0; i < TmpSpectrumSize; ++i)
+    {     
+      TmpSpectrum[i] = -log(TmpSpectrum[i]);
+      if ((TmpSpectrum[i] >= minEnergyCutOff) && (TmpSpectrum[i] <= maxEnergyCutOff))
+	++spectrumSize;
+    }
+  spectrum = new double[spectrumSize];
+  nbrStates += (long) spectrumSize;
+  spectrumSize = 0;
+   for (int i = 0; i < TmpSpectrumSize; ++i)
+    {     
+      if ((TmpSpectrum[i] >= minEnergyCutOff) && (TmpSpectrum[i] <= maxEnergyCutOff))
+	{
+	  if (TmpSpectrum[i] < minEnergy)
+	    minEnergy = TmpSpectrum[i];
+	  if (TmpSpectrum[i] > maxEnergy)
+	    maxEnergy = TmpSpectrum[i];
+	  spectrum[spectrumSize] = TmpSpectrum[i];
+	  ++spectrumSize;
+	}  
+    }
+   delete[] TmpSpectrum;
 }
 
 // parse the information contained in a single spectrum file

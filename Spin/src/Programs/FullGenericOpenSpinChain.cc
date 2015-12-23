@@ -82,6 +82,9 @@ int main(int argc, char** argv)
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
+#ifdef __SCALAPACK__
+  (*ToolsGroup) += new BooleanOption  ('\n', "use-scalapack", "use SCALAPACK libraries instead of DiagHam or LAPACK libraries");
+#endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
@@ -286,6 +289,7 @@ int main(int argc, char** argv)
     }
   if (Chain->GetHilbertSpaceDimension() > 0)
     {
+      Architecture.GetArchitecture()->SetDimension(Chain->GetHilbertSpaceDimension());	
       SpinChainFullHamiltonian* Hamiltonian = 0;
       Hamiltonian = new SpinChainFullHamiltonian(Chain, NbrSpins, JxValues, JyValues, JzValues, 
 						 HxValues, HyValues, HzValues, 

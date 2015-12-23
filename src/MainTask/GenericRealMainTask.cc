@@ -380,7 +380,7 @@ int GenericRealMainTask::ExecuteMainTask()
 	  HamiltonianFullDiagonalizeOperation Operation1 (this->Hamiltonian, false, this->EvaluateEigenvectors);
 	  Operation1.ApplyOperation(this->Architecture);
 	  RealDiagonalMatrix TmpDiag = Operation1.GetDiagonalizedHamiltonian();
-	  if (this->EvaluateEigenvectors == false)
+	  if ((this->EvaluateEigenvectors == false) && (this->EvaluateAllEigenvectors == false))
 	    {
 	      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
 		this->WriteResult(File, TmpDiag[j] - this->EnergyShift);

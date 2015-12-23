@@ -80,6 +80,9 @@ int main(int argc, char** argv)
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
+#ifdef __SCALAPACK__
+  (*ToolsGroup) += new BooleanOption  ('\n', "use-scalapack", "use SCALAPACK libraries instead of DiagHam or LAPACK libraries");
+#endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
@@ -316,6 +319,7 @@ int main(int argc, char** argv)
 		Chain = new Spin1_2ChainFullInversionAnd2DTranslation (InversionSector, XMomenta[MomentumSector], NbrSitesX, YMomenta[MomentumSector], NbrSitesY);
 	      if (Chain->GetHilbertSpaceDimension() > 0)
 		{
+		  Architecture.GetArchitecture()->SetDimension(Chain->GetHilbertSpaceDimension());	
 		  // 	      for (int i = 0; i < Chain->GetHilbertSpaceDimension(); ++i)
 		  // 		Chain->PrintState(cout, i) << endl;
 		  TwoDimensionalTransverseFieldAnd2DTranslationIsingHamiltonian* Hamiltonian = 0;
@@ -364,6 +368,7 @@ int main(int argc, char** argv)
       AbstractSpinChain* Chain = new Spin1_2ChainFull (NbrSpins);
       if (Chain->GetHilbertSpaceDimension() > 0)
 	{
+	  Architecture.GetArchitecture()->SetDimension(Chain->GetHilbertSpaceDimension());	
 	  TwoDimensionalTransverseFieldIsingHamiltonian* Hamiltonian = 0;
 	  Hamiltonian = new TwoDimensionalTransverseFieldIsingHamiltonian(Chain, NbrSitesX, NbrSitesY, JzValue, HxValues, HzValues, Manager.GetBoolean("use-periodic"));
 	  char* TmpEigenstateString = new char[strlen(OutputFileName) + strlen(OutputParameterFileName) + 64];
