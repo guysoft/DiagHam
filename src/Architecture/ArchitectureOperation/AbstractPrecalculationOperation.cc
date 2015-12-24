@@ -75,6 +75,7 @@ void AbstractPrecalculationOperation::SetIndicesRange (const long& firstComponen
 // apply operation for SMP architecture
 //
 // architecture = pointer to the architecture
+// mpiNodeNbr = provide the additional MPI node ID
 // return value = true if no error occurs
 
 bool AbstractPrecalculationOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture, int mpiNodeNbr)
@@ -114,9 +115,19 @@ bool AbstractPrecalculationOperation::ArchitectureDependentApplyOperation(Simple
   architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
   this->SetIndicesRange(TmpMinimumIndex, (TmpMaximumIndex - TmpMinimumIndex + 1));
   if (architecture->GetLocalArchitecture()->GetArchitectureID() == AbstractArchitecture::SMP)
-    this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture(), architecture->GetNodeNbr());
+    this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture());
   else
     this->RawApplyOperation();
   return true;
 }
   
+// apply operation for SMP architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool AbstractPrecalculationOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture) 
+{
+  return this->ArchitectureDependentApplyOperation(architecture, -1);
+}
+

@@ -95,12 +95,7 @@ class QHEParticlePrecalculationOperation: public AbstractPrecalculationOperation
   // apply operation for SMP architecture
   //
   // architecture = pointer to the architecture
-  // return value = true if no error occurs
-  bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture) {return this->ArchitectureDependentApplyOperation(architecture, -1);}
-
-  // apply operation for SMP architecture
-  //
-  // architecture = pointer to the architecture
+  // mpiNodeNbr = provide the additional MPI node ID
   // return value = true if no error occurs
   bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture, int mpiNodeNbr);
 

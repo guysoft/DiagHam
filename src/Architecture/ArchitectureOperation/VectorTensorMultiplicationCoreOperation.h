@@ -88,17 +88,17 @@ class VectorTensorMultiplicationCoreOperation: public AbstractPrecalculationOper
   // get hilbert space dimension
   // 
   // return value = hilbert space dimension  
-  int GetHilbertSpaceDimension ();
+  virtual int GetHilbertSpaceDimension ();
 
   // clone operation
   //
   // return value = pointer to cloned operation
-  AbstractArchitectureOperation* Clone();
+  virtual AbstractArchitectureOperation* Clone();
   
   // apply operation (architecture independent)
   //
   // return value = true if no error occurs
-  bool RawApplyOperation();
+  virtual bool RawApplyOperation();
 
   
 };

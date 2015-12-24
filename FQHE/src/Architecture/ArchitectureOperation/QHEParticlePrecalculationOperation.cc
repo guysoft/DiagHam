@@ -109,6 +109,7 @@ bool QHEParticlePrecalculationOperation::RawApplyOperation()
 // apply operation for SMP architecture
 //
 // architecture = pointer to the architecture
+// mpiNodeNbr = provide the additional MPI node ID
 // return value = true if no error occurs
 
 bool QHEParticlePrecalculationOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture, int mpiNodeNbr)

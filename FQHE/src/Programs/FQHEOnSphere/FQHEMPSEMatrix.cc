@@ -366,8 +366,8 @@ int main(int argc, char** argv)
 	  cout << "E matrix dimension = " << (((long) TmpBMatrixDimension) * ((long) TmpRightBMatrixDimension)) << ")" << endl;
 	  return 0;
 	}
-     Architecture.GetArchitecture()->SetDimension(((long) TmpBMatrixDimension) * ((long) TmpRightBMatrixDimension));
-      if ((Manager.GetBoolean("right-eigenstates") == true) || (Manager.GetBoolean("left-eigenstates") == false))
+       Architecture.GetArchitecture()->SetDimension(((long) TmpBMatrixDimension) * ((long) TmpRightBMatrixDimension));
+       if ((Manager.GetBoolean("right-eigenstates") == true) || (Manager.GetBoolean("left-eigenstates") == false))
 	ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, SparseBMatrices, SparseRightBMatrices, Coefficients,
 									 Architecture.GetArchitecture()); 
       if (Manager.GetBoolean("left-eigenstates") == true)
