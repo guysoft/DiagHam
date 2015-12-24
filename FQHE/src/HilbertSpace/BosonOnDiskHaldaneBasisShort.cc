@@ -480,7 +480,6 @@ RealMatrix& BosonOnDiskHaldaneBasisShort::EvaluateEntanglementMatrixRealSpacePar
   return entanglementMatrix;
   
 #else
-  RealMatrix TmpEntanglementMatrix;
-  return TmpEntanglementMatrix;
+  return entanglementMatrix;
 #endif
 }

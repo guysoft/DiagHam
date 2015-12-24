@@ -1100,7 +1100,6 @@ RealMatrix& FermionOnDiskHaldaneBasis::EvaluateEntanglementMatrixRealSpacePartit
   return entanglementMatrix;
   
 #else
-  RealMatrix TmpEntanglementMatrix;
-  return TmpEntanglementMatrix;
+  return entanglementMatrix;
 #endif
 }

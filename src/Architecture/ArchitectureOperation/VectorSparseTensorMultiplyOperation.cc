@@ -128,9 +128,18 @@ bool VectorSparseTensorMultiplyOperation::RawApplyOperation()
   timeval TotalStartingTime2;
   timeval TotalEndingTime2;
   gettimeofday (&(TotalStartingTime2), 0);
-  this->TensorHamiltonian->LowLevelAddMultiplyTensorCoreDestination(this->TensorIndex, this->TensorHamiltonian->TemporaryArray, 
-								    *((RealVector*) this->DestinationVector), 
-								    this->FirstComponent, this->NbrComponent);
+  if ((this->DestinationVector->GetVectorType() & Vector::RealDatas) != 0)
+    {
+      this->TensorHamiltonian->LowLevelAddMultiplyTensorCoreDestination(this->TensorIndex, this->TensorHamiltonian->TemporaryArray, 
+									*((RealVector*) this->DestinationVector), 
+									this->FirstComponent, this->NbrComponent);
+    }
+  else
+    {
+      this->TensorHamiltonian->LowLevelAddMultiplyTensorCoreDestination(this->TensorIndex, this->TensorHamiltonian->ComplexTemporaryArray, 
+									*((ComplexVector*) this->DestinationVector), 
+									this->FirstComponent, this->NbrComponent);
+    }
 
   gettimeofday (&(TotalEndingTime2), 0);
   this->ExecutionTime = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 

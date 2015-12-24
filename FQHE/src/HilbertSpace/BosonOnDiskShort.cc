@@ -449,7 +449,6 @@ RealMatrix& BosonOnDiskShort::EvaluateEntanglementMatrixRealSpacePartitionFromPa
   return entanglementMatrix;
   
 #else
-  RealMatrix TmpEntanglementMatrix;
-  return TmpEntanglementMatrix;
+  return entanglementMatrix;
 #endif
 }
