@@ -256,16 +256,26 @@ int main(int argc, char** argv)
       if ((Manager.GetDouble("random-hxvalue") != 0.0) || (Manager.GetDouble("random-hyvalue") != 0.0) || (Manager.GetDouble("random-hzvalue") != 0.0) ||
 	  (Manager.GetDouble("random-gaussianhxvalue") != 0.0) || (Manager.GetDouble("random-gaussianhyvalue") != 0.0) || (Manager.GetDouble("random-gaussianhzvalue") != 0.0))
 	{
-	  char* HOutputFileName = new char [strlen(OutputFileName) + strlen(OutputParameterFileName) + 64];
-	  sprintf (HOutputFileName, "%s_%s.hvalues", OutputFileName, OutputParameterFileName);
-	  ofstream File;
-	  File.open(HOutputFileName, ios::binary | ios::out); 
-	  File.precision(14); 
-	  for (int i = 0; i < NbrSpins; ++i)
+	  if (Architecture.GetArchitecture()->CanWriteOnDisk())
 	    {
-	      File << HxValues[i] << " " << HyValues[i] << " " << HzValues[i] << endl;
+	      char* HOutputFileName = new char [strlen(OutputFileName) + strlen(OutputParameterFileName) + 64];
+	      sprintf (HOutputFileName, "%s_%s.hvalues", OutputFileName, OutputParameterFileName);
+	      ofstream File;
+	      File.open(HOutputFileName, ios::binary | ios::out); 
+	      File.precision(14); 
+	      for (int i = 0; i < NbrSpins; ++i)
+		{
+		  File << HxValues[i] << " " << HyValues[i] << " " << HzValues[i] << endl;
+		}
+	      File.close();	      
 	    }
-	  File.close();	      
+	}
+      if ((Architecture.GetArchitecture()->GetArchitectureID() & AbstractArchitecture::SimpleMPI) != 0)
+	{
+	  SimpleMPIArchitecture* TmpArchitecture = (SimpleMPIArchitecture*) Architecture.GetArchitecture();
+	  TmpArchitecture->BroadcastToSlaves(HxValues, NbrSpins);
+	  TmpArchitecture->BroadcastToSlaves(HyValues, NbrSpins);
+	  TmpArchitecture->BroadcastToSlaves(HzValues, NbrSpins);
 	}
     }
 

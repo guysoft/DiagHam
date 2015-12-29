@@ -235,19 +235,31 @@ int main(int argc, char** argv)
       if ((Manager.GetDouble("random-hxvalue") != 0.0) || (Manager.GetDouble("random-hzvalue") != 0.0) ||
 	  (Manager.GetDouble("random-gaussianhxvalue") != 0.0) || (Manager.GetDouble("random-gaussianhzvalue") != 0.0))
 	{
-	  char* HOutputFileName = new char [strlen(OutputFileName) + strlen(OutputParameterFileName) + 64];
-	  sprintf (HOutputFileName, "%s_%s.hvalues", OutputFileName, OutputParameterFileName);
-	  ofstream File;
-	  File.open(HOutputFileName, ios::binary | ios::out); 
-	  File.precision(14); 
+	  if (Architecture.GetArchitecture()->CanWriteOnDisk())
+	    {
+	      char* HOutputFileName = new char [strlen(OutputFileName) + strlen(OutputParameterFileName) + 64];
+	      sprintf (HOutputFileName, "%s_%s.hvalues", OutputFileName, OutputParameterFileName);
+	      ofstream File;
+	      File.open(HOutputFileName, ios::binary | ios::out); 
+	      File.precision(14); 
+	      for (int i = 0; i < NbrSitesX; ++i)
+		{
+		  for (int j = 0; j < NbrSitesY; ++j)
+		    {
+		      File << i << " " << j << " " << HxValues[i][j] << " " << HzValues[i][j] << endl;
+		    }
+		}
+	      File.close();	      
+	    }
+	}
+      if ((Architecture.GetArchitecture()->GetArchitectureID() & AbstractArchitecture::SimpleMPI) != 0)
+	{
+	  SimpleMPIArchitecture* TmpArchitecture = (SimpleMPIArchitecture*) Architecture.GetArchitecture();
 	  for (int i = 0; i < NbrSitesX; ++i)
 	    {
-	      for (int j = 0; j < NbrSitesY; ++j)
-		{
-		  File << i << " " << j << " " << HxValues[i][j] << " " << HzValues[i][j] << endl;
-		}
+	      TmpArchitecture->BroadcastToSlaves(HxValues[i], NbrSitesY);
+	      TmpArchitecture->BroadcastToSlaves(HzValues[i], NbrSitesY);
 	    }
-	  File.close();	      
 	}
     }
 
