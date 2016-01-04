@@ -101,6 +101,8 @@ class GenericRealMainTask: public AbstractMainTask
   bool EvaluateEigenvectors;
   // evaluate all eigenstates
   bool EvaluateAllEigenvectors;
+  // index of the first eigenstate to compute
+  int FirstEigenstateIndex;
   // prefix to add to the name of each file that will contain an eigenvector
   char* EigenvectorFileName;
   // evaluate expectation value of energy for each trial state

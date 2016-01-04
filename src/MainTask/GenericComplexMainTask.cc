@@ -141,6 +141,14 @@ GenericComplexMainTask::GenericComplexMainTask(OptionManager* options, AbstractH
     {
       this->EvaluateAllEigenvectors = false;
     }
+  if ((*options)["first-eigenstate"] != 0)
+    {
+      this->FirstEigenstateIndex = options->GetInteger("first-eigenstate");
+    }
+  else
+    {
+      this->FirstEigenstateIndex = 0;
+    }
   this->EigenvectorConvergence = options->GetBoolean("eigenstate-convergence");
   if ((*options)["show-itertime"] != 0)
     {
@@ -425,7 +433,10 @@ int GenericComplexMainTask::ExecuteMainTask()
 		{
 		  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
 		  ComplexVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
-		  for (int j = 0; j < this->NbrEigenvalue; ++j)
+		  int LastEigenstateIndex = this->FirstEigenstateIndex + this->NbrEigenvalue;
+		  if (LastEigenstateIndex > this->Hamiltonian->GetHilbertSpaceDimension())
+		    LastEigenstateIndex = this->Hamiltonian->GetHilbertSpaceDimension();
+		  for (int j = this->FirstEigenstateIndex; j < LastEigenstateIndex; ++j)
 		    {
 		      this->Hamiltonian->LowLevelMultiply(Eigenstates[j], TmpEigenvector);
 		      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
@@ -480,7 +491,10 @@ int GenericComplexMainTask::ExecuteMainTask()
 			{
 			  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
 			  ComplexVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
-			  for (int j = 0; j < this->NbrEigenvalue; ++j)
+			  int LastEigenstateIndex = this->FirstEigenstateIndex + this->NbrEigenvalue;
+			  if (LastEigenstateIndex > this->Hamiltonian->GetHilbertSpaceDimension())
+			    LastEigenstateIndex = this->Hamiltonian->GetHilbertSpaceDimension();
+			  for (int j = this->FirstEigenstateIndex; j < LastEigenstateIndex; ++j)
 			    {
 			      this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
 			      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
@@ -530,7 +544,10 @@ int GenericComplexMainTask::ExecuteMainTask()
 			{
 			  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
 			  ComplexVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
-			  for (int j = 0; j < this->NbrEigenvalue; ++j)
+			  int LastEigenstateIndex = this->FirstEigenstateIndex + this->NbrEigenvalue;
+			  if (LastEigenstateIndex > this->Hamiltonian->GetHilbertSpaceDimension())
+			    LastEigenstateIndex = this->Hamiltonian->GetHilbertSpaceDimension();
+			  for (int j = this->FirstEigenstateIndex; j < LastEigenstateIndex; ++j)
 			    {
 			      this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
 			      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);

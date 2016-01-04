@@ -126,6 +126,7 @@ void LanczosManager::AddOptionGroup(OptionManager* manager)
        					  "force reorthogonalization with a set of vectors describe in the name of file passed through this option");
       (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate", "evaluate eigenstates", false);  
       (*LanczosGroup) += new BooleanOption  ('\n', "all-eigenstates", "evaluate all eigenstates when performing a full diagonalization", false);  
+      (*LanczosGroup) += new  SingleIntegerOption ('\n', "first-eigenstate", "index of the first eigenstate to evaluate", 0);  
       (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate-convergence", "evaluate Lanczos convergence from eigenstate convergence", false);
       (*LanczosGroup) += new SingleIntegerOption  ('\n', "partial-eigenstate", "evaluate eigenstates every given number of iterations (0 to discard this option)", 0);  
       (*LanczosGroup) += new BooleanOption  ('\n', "show-itertime", "show time spent for each Lanczos iteration", false); 

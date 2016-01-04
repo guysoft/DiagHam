@@ -1458,3 +1458,45 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::EvaluatePartialDensityMa
   delete TmpDestinationFullHilbertSpace;
   return TmpNbrNonZeroElements;
 }
+
+// generate an eta pairing state
+// 
+// return value = vector corresponding to the  eta pairing state
+
+ComplexVector FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GenerateEtaPairingState()
+{
+  ComplexVector TmpVector (this->LargeHilbertSpaceDimension, true);
+  double* TmpFactors = new double[this->NbrSite];
+  for (int i = 0; i < this->NbrSite; ++i)
+    {
+      int TmpX;
+      int TmpY;
+      int TmpOrbitalIndex;
+      this->GetLinearizedIndex(i, TmpX, TmpY, TmpOrbitalIndex);
+      TmpFactors[i] = (double) (1 - (((TmpX ^ TmpY) & 1) << 1));
+    }
+  for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
+    {
+      double TmpFactor = 1.0;
+      unsigned long TmpState = this->StateDescription[i];
+      for (int j = 0; (j < this->NbrSite) && (TmpFactor != 0.0); ++j)
+	{	  
+	  if ((TmpState & 0x3ul) == 0x3ul)
+	    {
+	      TmpFactor *= TmpFactors[j];
+	    }
+	  else
+	    {
+	      if ((TmpState & 0x3ul) != 0x0ul)
+		TmpFactor = 0.0;
+	    }
+	  TmpState >>= 2;
+	}
+      if (TmpFactor != 0.0)
+	TmpVector[i] = TmpFactor * sqrt((double) this->NbrStateInOrbit[i]);
+    }
+  delete[] TmpFactors;
+  TmpVector /= TmpVector.Norm();
+  return TmpVector;
+}
+

@@ -136,6 +136,7 @@ int main(int argc, char** argv)
       return 0;
     }
 
+  bool ShowTimeFlag = true;
   int NbrParticles = 0; 
   int NbrFluxQuanta = 0;
   int TotalLz = 0;
@@ -467,6 +468,12 @@ int main(int argc, char** argv)
 	  int TmpOrbitalIndex = 0;
 	  int NbrEMatrixEvolution = ((MaxNbrFluxQuantaB + 1) / MPSMatrix->GetNbrOrbitals());
 	  cout << "evolving right eigenstate with " << NbrEMatrixEvolution << " (covering " << (MaxNbrFluxQuantaB + 1) << " orbitals)" << endl;
+	  timeval TotalStartingTime;
+	  timeval TotalEndingTime;
+	  if (ShowTimeFlag == true)
+	    {
+	      gettimeofday (&(TotalStartingTime), 0);
+	    }
 	  for (int i = 0; i < NbrEMatrixEvolution; ++i)
 	    {		  
 	      for (int j = 0; j < NbrBMatrices; ++j)
@@ -493,9 +500,20 @@ int main(int argc, char** argv)
 	      TmpEigenstate = TmpVector;
 	      delete ETransposeHamiltonian;
 	    }
+	  if (ShowTimeFlag == true)
+	    {
+	      gettimeofday (&(TotalEndingTime), 0);
+	      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+				    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+	      cout << "evolution done in " << Dt << "s" << endl;
+	    }
 	  NbrEMatrixEvolution = ((MaxNbrFluxQuantaA + 1) / MPSMatrix->GetNbrOrbitals());
 	  cout << "evolving left eigenstate with " << NbrEMatrixEvolution <<  " (covering " << (MaxNbrFluxQuantaA + 1) << " orbitals)" << endl;
 	  TmpOrbitalIndex = 0;
+	  if (ShowTimeFlag == true)
+	    {
+	      gettimeofday (&(TotalStartingTime), 0);
+	    }
 	  for (int i = 0; i < NbrEMatrixEvolution; ++i)
 	    {
 	      for (int j = 0; j < NbrBMatrices; ++j)
@@ -532,6 +550,13 @@ int main(int argc, char** argv)
 		TmpFullLeftOverlapMatrix.SetMatrixElement(i, j, InvFactor * LeftEigenstate[i * TmpDimension + j].Re); 
 		TmpFullRightOverlapMatrix.SetMatrixElement(i, j, InvFactor * RightEigenstate[i * TmpDimension + j].Re); 
 	      }
+	  if (ShowTimeFlag == true)
+	    {
+	      gettimeofday (&(TotalEndingTime), 0);
+	      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+				    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+	      cout << "evolution done in " << Dt << "s" << endl;
+	    }
 	}
       else
 	{

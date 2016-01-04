@@ -52,4 +52,5 @@ TightBindingModel2DAtomicLimitLattice.cc \
 TightBindingModelCoupledWires.cc \
 TightBindingModelPWaveSuperconductor.cc \
 TightBindingModelHofstadterFiniteCylinder.cc \
-TightBindingModelKitaevHeisenbergHoneycombLattice.cc
+TightBindingModelKitaevHeisenbergHoneycombLattice.cc \
+TightBindingModelSimpleSquareLattice.cc

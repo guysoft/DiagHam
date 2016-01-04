@@ -376,7 +376,12 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // 
   // return avlue = maximum momentum along the y axis
   virtual int GetMaxYMomentum();
-  
+
+  // generate an eta pairing state
+  // 
+  // return value = vector corresponding to the  eta pairing state
+  virtual ComplexVector GenerateEtaPairingState();
+
  protected:
 
   // find state index
