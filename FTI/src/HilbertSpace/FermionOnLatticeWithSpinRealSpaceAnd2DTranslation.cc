@@ -1500,3 +1500,104 @@ ComplexVector FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GenerateEtaPair
   return TmpVector;
 }
 
+// generate a state near the eta pairing state (with out broken pair)
+// 
+// xDistance = distance along x between the two particles of the broken pair
+// yDistance = distance along y between the two particles of the broken pair
+// return value = vector corresponding to the  eta pairing state
+
+ComplexVector FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GenerateEtaPairingNearbyState(int xDistance, int yDistance)
+{
+//   if ((2 * xDistance) > this->MaxXMomentum)
+//     xDistance = this->MaxXMomentum - xDistance;
+//   if ((2 * yDistance) > this->MaxYMomentum)
+//     yDistance = this->MaxYMomentum - yDistance;
+  if ((xDistance == 0) && (yDistance == 0))
+    {
+      return this->GenerateEtaPairingState();
+    }
+  ComplexVector TmpVector (this->LargeHilbertSpaceDimension, true);
+  double* TmpFactors = new double[this->NbrSite];
+  int TmpX1;
+  int TmpY1;
+  int TmpOrbitalIndex1; 
+  for (int i = 0; i < this->NbrSite; ++i)
+    {
+      this->GetLinearizedIndex(i, TmpX1, TmpY1, TmpOrbitalIndex1);
+      TmpFactors[i] = (double) (1 - (((TmpX1 ^ TmpY1) & 1) << 1));
+    }
+  int TmpX2;
+  int TmpY2;
+  int TmpOrbitalIndex2;
+  for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
+    {
+      double TmpFactor = 1.0;
+      unsigned long TmpState = this->StateDescription[i];
+      int TwiceNbrBrokenPairs = 0;
+      int BrokenPairCoordinates[3];
+      for (int j = 0; (j < this->NbrSite) && (TwiceNbrBrokenPairs <= 2); ++j)
+	{	  
+	  if ((TmpState & 0x3ul) == 0x3ul)
+	    {
+	      TmpFactor *= TmpFactors[j];
+	    }
+	  else
+	    {
+	      if ((TmpState & 0x3ul) != 0x0ul)
+		{
+		  BrokenPairCoordinates[TwiceNbrBrokenPairs] = j;
+		  ++TwiceNbrBrokenPairs;
+		}
+	    }
+	  TmpState >>= 2;
+	}
+      if (TwiceNbrBrokenPairs == 2)
+	{
+	  this->GetLinearizedIndex(BrokenPairCoordinates[0], TmpX1, TmpY1, TmpOrbitalIndex1);
+	  this->GetLinearizedIndex(BrokenPairCoordinates[1], TmpX2, TmpY2, TmpOrbitalIndex2);
+	  if (((this->StateDescription[i] >> (BrokenPairCoordinates[0] << 1)) & 0x3ul) == 0x1ul)
+	    {
+	      TmpX1 += xDistance;
+	      TmpY1 += yDistance;
+	      TmpX1 %= this->MaxXMomentum;
+	      TmpY1 %= this->MaxYMomentum;
+	      if ((TmpX1 == TmpX2) && (TmpY1 == TmpY2))
+		{
+		  TmpVector[i] = TmpFactor * TmpFactors[BrokenPairCoordinates[0]] * sqrt((double) this->NbrStateInOrbit[i]);
+		}
+	    }
+	  else
+	    {
+	      TmpX2 += xDistance;
+	      TmpY2 += yDistance;
+	      TmpX2 %= this->MaxXMomentum;
+	      TmpY2 %= this->MaxYMomentum;
+	      if ((TmpX1 == TmpX2) && (TmpY1 == TmpY2))
+		{
+		  TmpVector[i] = -TmpFactor * TmpFactors[BrokenPairCoordinates[1]] * sqrt((double) this->NbrStateInOrbit[i]);
+		}
+	    }
+// 	  TmpX1 = abs(TmpX1 - TmpX2);
+// 	  TmpY1 = abs(TmpY1 - TmpY2);
+// 	  if ((2 * TmpX1) > this->MaxXMomentum)
+// 	    TmpX1 = this->MaxXMomentum - TmpX1;
+// 	  if ((2 * TmpY1) > this->MaxYMomentum)
+// 	    TmpY1 = this->MaxYMomentum - TmpY1;
+// 	  if ((TmpX1 == xDistance) && (TmpY1 == yDistance))
+// 	    {
+// 	      if (((this->StateDescription[i] >> (BrokenPairCoordinates[0] << 1)) & 0x3ul) == 0x1ul)
+// 		{
+// 		  TmpVector[i] = TmpFactor * TmpFactors[BrokenPairCoordinates[0]] * sqrt((double) this->NbrStateInOrbit[i]);
+// 		}
+// 	      else
+// 		{
+// 		  TmpVector[i] = TmpFactor * TmpFactors[BrokenPairCoordinates[1]] * sqrt((double) this->NbrStateInOrbit[i]);
+// 		}
+// 	    }	  
+	}
+    }
+  delete[] TmpFactors;
+  TmpVector /= TmpVector.Norm();
+  return TmpVector;
+}
+

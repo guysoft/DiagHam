@@ -85,8 +85,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive on-site (Hubbard) potential strength", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "nn-t", "nearest neighbor hopping amplitude", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "nnn-t", "next nearest neighbor hopping amplitude", 0.0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1); 
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nearbyeta-x", "x distance of the broken pair when generating a nearby eta pairing state", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nearbyeta-y", "y distance of the broken pair when generating a nearby eta pairing state", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "no-evolution", "do not perform any time evolution and just store the eta pairing state");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
@@ -156,8 +156,15 @@ int main(int argc, char** argv)
   
 
   char* FilePrefix = new char [256];
-  sprintf (FilePrefix, "%s_square_etapairing_x_%d_y_%d_n_%d_ns_%d", StatisticPrefix, NbrSitesX, NbrSitesY, NbrParticles, NbrSites);
-  
+  if ((Manager.GetInteger("nearbyeta-x") == 0) && (Manager.GetInteger("nearbyeta-y") == 0))
+    {
+      sprintf (FilePrefix, "%s_square_etapairing_x_%d_y_%d_n_%d_ns_%d", StatisticPrefix, NbrSitesX, NbrSitesY, NbrParticles, NbrSites);
+    }
+  else
+    {
+      sprintf (FilePrefix, "%s_square_nearbyetapairing_alphax_%ld_alphay_%ld_x_%d_y_%d_n_%d_ns_%d", StatisticPrefix, Manager.GetInteger("nearbyeta-x"), 
+	       Manager.GetInteger("nearbyeta-y"), NbrSitesX, NbrSitesY, NbrParticles, NbrSites);
+    }
   char* FileParameterString = new char [256];
   sprintf (FileParameterString, "t_%.6f_tp_%.6f", Manager.GetDouble("nn-t"), Manager.GetDouble("nnn-t"));
 
@@ -201,7 +208,7 @@ int main(int argc, char** argv)
     Memory = Architecture.GetArchitecture()->GetLocalMemory();
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 
-  ComplexVector EtaPairingState = Space->GenerateEtaPairingState();
+  ComplexVector EtaPairingState = Space->GenerateEtaPairingNearbyState(Manager.GetInteger("nearbyeta-x"), Manager.GetInteger("nearbyeta-y"));
 
   HermitianMatrix TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
   Hamiltonian = new ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian(Space, NbrParticles, NbrSites,XMomentum, NbrSitesX,
