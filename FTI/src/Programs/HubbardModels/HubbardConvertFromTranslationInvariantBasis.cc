@@ -196,42 +196,42 @@ int main(int argc, char** argv)
   if (Statistics == true)
     {
       if (GutzwillerFlag == false)
-      {
-	if (YPeriodicity == 0)
 	{
-	  if (TotalSpinConservedFlag == false)
-	    InputSpace[i] = new FermionOnLatticeWithSpinRealSpaceAnd1DTranslation (NbrParticles, NbrSites, XMomentum[i], XPeriodicity);
+	  if (YPeriodicity == 0)
+	    {
+	      if (TotalSpinConservedFlag == false)
+		InputSpace[i] = new FermionOnLatticeWithSpinRealSpaceAnd1DTranslation (NbrParticles, NbrSites, XMomentum[i], XPeriodicity);
+	      else
+		InputSpace[i] = new FermionOnLatticeWithSpinRealSpaceAnd1DTranslation (NbrParticles, SzValue[i], NbrSites, XMomentum[i], XPeriodicity, 10000000);
+	    }
 	  else
-	    InputSpace[i] = new FermionOnLatticeWithSpinRealSpaceAnd1DTranslation (NbrParticles, SzValue[i], NbrSites, XMomentum[i], XPeriodicity, 10000000);
+	    {
+	      if (TotalSpinConservedFlag == false)
+		if (SU2SpinFlag == true)
+		  InputSpace[i] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum[i], XPeriodicity, YMomentum[i], YPeriodicity);
+		else
+		  InputSpace[i] = new FermionOnLatticeRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum[i], XPeriodicity, YMomentum[i], YPeriodicity);
+	      else
+		InputSpace[i] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, SzValue[i], NbrSites, XMomentum[i], XPeriodicity, YMomentum[i], YPeriodicity, 10000000);
+	    }
 	}
-	else
-	{
-	  if (TotalSpinConservedFlag == false)
-	    if (SU2SpinFlag == true)
-	      InputSpace[i] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum[i], XPeriodicity, YMomentum[i], YPeriodicity);
-	    else
-	      InputSpace[i] = new FermionOnLatticeRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum[i], XPeriodicity, YMomentum[i], YPeriodicity);
-	  else
-	    InputSpace[i] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, SzValue[i], NbrSites, XMomentum[i], XPeriodicity, YMomentum[i], YPeriodicity, 10000000);
-	}
-      }
       else
-      {
-	if (YPeriodicity == 0)
 	{
-	  if (TotalSpinConservedFlag == false)
-	    InputSpace[i] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation (NbrParticles, NbrSites, XMomentum[i], XPeriodicity);
+	  if (YPeriodicity == 0)
+	    {
+	      if (TotalSpinConservedFlag == false)
+		InputSpace[i] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation (NbrParticles, NbrSites, XMomentum[i], XPeriodicity);
+	      else
+		InputSpace[i] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation (NbrParticles, SzValue[i], NbrSites, XMomentum[i], XPeriodicity);
+	    }
 	  else
-	    InputSpace[i] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation (NbrParticles, SzValue[i], NbrSites, XMomentum[i], XPeriodicity);
+	    {
+	      if (TotalSpinConservedFlag == false)
+		InputSpace[i] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum[i], XPeriodicity, YMomentum[i], YPeriodicity);
+	      else
+		InputSpace[i] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, SzValue[i], NbrSites, XMomentum[i], XPeriodicity, YMomentum[i], YPeriodicity, 10000000);
+	    }
 	}
-	else
-	{
-	  if (TotalSpinConservedFlag == false)
-	    InputSpace[i] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum[i], XPeriodicity, YMomentum[i], YPeriodicity);
-	  else
-	    InputSpace[i] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, SzValue[i], NbrSites, XMomentum[i], XPeriodicity, YMomentum[i], YPeriodicity, 10000000);
-	}
-      }
     }
   else
     {

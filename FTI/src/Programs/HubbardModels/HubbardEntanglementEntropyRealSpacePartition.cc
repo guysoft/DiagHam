@@ -22,6 +22,8 @@
 
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
 
 
 #include <iostream>
@@ -89,6 +91,13 @@ int main(int argc, char** argv)
   bool GutzwillerFlag = false;
   double* Coefficients = 0;
   bool ShowTimeFlag = Manager.GetBoolean("show-time");
+  bool FixedTotalSzFlag = false;
+  bool TwoDimensionTranslationFlag = false;
+  int TotalSz = 0;
+  int XMomentum = 0;
+  int YMomentum = 0;
+  int XPeriodicity = 0;
+  int YPeriodicity = 0;
 
   if ((Manager.GetString("ground-file") == 0) && (Manager.GetString("degenerated-groundstate") == 0))
     {
@@ -121,6 +130,7 @@ int main(int argc, char** argv)
     }
   int NbrKeptOrtbitals = KeptOrbitalFile.GetNbrLines();
   int* KeptOrbitals = KeptOrbitalFile.GetAsIntegerArray(0);
+  cout << "number of kept sites = " << NbrKeptOrtbitals << endl;
   SortArrayUpOrdering(KeptOrbitals, NbrKeptOrtbitals);
 
   if (Manager.GetString("degenerated-groundstate") == 0)
@@ -166,11 +176,35 @@ int main(int argc, char** argv)
 
   for (int i = 0; i < NbrSpaces; ++i)
     {
-      if (FTIHubbardModelFindSystemInfoFromVectorFileName(GroundStateFiles[i], NbrParticles, NbrSites, Statistics, GutzwillerFlag) == false)
- 	{
- 	  cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
- 	  return -1;
- 	}
+      if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(GroundStateFiles[i], NbrParticles, NbrSites, TotalSz, 
+									    XMomentum, YMomentum, XPeriodicity, YPeriodicity, Statistics, GutzwillerFlag) == false)
+	{
+	  if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(GroundStateFiles[i], NbrParticles, NbrSites,
+										XMomentum, YMomentum, XPeriodicity, YPeriodicity, Statistics, GutzwillerFlag) == false)
+	    {
+	      if (FTIHubbardModelFindSystemInfoFromVectorFileName(GroundStateFiles[i], NbrParticles, NbrSites, TotalSz, Statistics, GutzwillerFlag) == false)
+		{
+		  if (FTIHubbardModelFindSystemInfoFromVectorFileName(GroundStateFiles[i], NbrParticles, NbrSites, Statistics, GutzwillerFlag) == false)
+		    {
+		      cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
+		      return -1;
+		    }
+		}
+	      else
+		{
+		  FixedTotalSzFlag = true;
+		}
+	    }
+	  else
+	    {
+	      TwoDimensionTranslationFlag = true;
+	    }
+	}
+      else
+	{
+	  TwoDimensionTranslationFlag = true;
+	  FixedTotalSzFlag = true;
+	}
     }
 
   GroundStates = new ComplexVector [NbrSpaces];  
@@ -187,7 +221,14 @@ int main(int argc, char** argv)
     {
       ofstream DensityMatrixFile;
       DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out); 
-      DensityMatrixFile << "#  N    lambda";
+      if (FixedTotalSzFlag == false)
+	{
+	  DensityMatrixFile << "#  N    lambda";
+	}
+      else
+	{
+	  DensityMatrixFile << "#  N    Sz    lambda";
+	}
       DensityMatrixFile << endl;
       DensityMatrixFile.close();
     }
@@ -195,15 +236,65 @@ int main(int argc, char** argv)
   ParticleOnSphere* Space = 0;
   if (Statistics == true)
     {
-      if (GutzwillerFlag == false)
-	Space = new FermionOnLatticeWithSpinRealSpace (NbrParticles, NbrSites);
+      if (FixedTotalSzFlag == false)
+	{
+	  if (GutzwillerFlag == false)
+	    Space = new FermionOnLatticeWithSpinRealSpace (NbrParticles, NbrSites);
+	  else
+	    Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (NbrParticles, NbrSites);
+	}
       else
-	Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (NbrParticles, NbrSites);
+	{
+	  if (GutzwillerFlag == false)
+	    Space = new FermionOnLatticeWithSpinRealSpace (NbrParticles, TotalSz, NbrSites);
+	  else
+	    Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (NbrParticles, TotalSz, NbrSites);
+	}
+      if (TwoDimensionTranslationFlag == true)
+	{
+	  ParticleOnSphere* TmpSpace = 0;
+	  if (FixedTotalSzFlag == false)
+	    {
+	      if (GutzwillerFlag == false)
+		TmpSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum, XPeriodicity, YMomentum, YPeriodicity);
+	      else
+		TmpSpace = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum, XPeriodicity, YMomentum, YPeriodicity);
+	    }
+	  else
+	    {
+	      if (GutzwillerFlag == false)
+		TmpSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, TotalSz, NbrSites, XMomentum, XPeriodicity, YMomentum, YPeriodicity);
+	      else
+		TmpSpace = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, TotalSz, NbrSites, XMomentum, XPeriodicity, YMomentum, YPeriodicity);
+	    }	  
+	  for (int i = 0; i < NbrSpaces; ++i)
+	    {
+	      if (GroundStates[i].GetLargeVectorDimension() != TmpSpace->GetLargeHilbertSpaceDimension())
+		{
+		  cout << "error, " << GroundStateFiles[i] << " dimension does not match the Hilbert space dimension (" 
+		       << GroundStates[i].GetLargeVectorDimension() << " vs (" << Space->GetLargeHilbertSpaceDimension() << ")" << endl;
+		  return 0;
+		}
+	      ComplexVector TmpVector = TmpSpace->ConvertFromKxKyBasis(GroundStates[i], Space);
+	      GroundStates[i] = TmpVector;
+	      GroundStates[i] /= GroundStates[i].Norm();
+	    }
+	  delete TmpSpace;
+	}
     }
   else
     {
       cout << "not available for bosons" << endl;
       return -1;
+    }
+  for (int i = 0; i < NbrSpaces; ++i)
+    {
+      if (GroundStates[i].GetLargeVectorDimension() != Space->GetLargeHilbertSpaceDimension())
+	{
+	  cout << "error, " << GroundStateFiles[i] << " dimension does not match the Hilbert space dimension (" 
+	       << GroundStates[i].GetLargeVectorDimension() << " vs (" << Space->GetLargeHilbertSpaceDimension() << ")" << endl;
+	  return 0;
+	}
     }
   ofstream File;
   if (Manager.GetString("output-file") != 0)
@@ -228,78 +319,171 @@ int main(int argc, char** argv)
     {
       MaxSubsystemNbrParticles = NbrKeptOrtbitals;
     }
+  if (MaxSubsystemNbrParticles > NbrParticles)
+    MaxSubsystemNbrParticles = NbrParticles;
   int SubsystemNbrParticles = 0;
-  for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
+  int NbrRemovedOrtbitals = NbrSites - NbrKeptOrtbitals;
+
+  double EntanglementEntropy = 0.0;
+  double DensitySum = 0.0;
+  timeval TotalStartingTime;
+  timeval TotalEndingTime;
+  if (FixedTotalSzFlag == false)
     {
-      double EntanglementEntropy = 0.0;
-      double DensitySum = 0.0;
-      cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << endl;      
-      timeval TotalStartingTime;
-      timeval TotalEndingTime;
-      if (ShowTimeFlag == true)
+      for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
 	{
-	  gettimeofday (&(TotalStartingTime), 0);
-	}
-      ComplexMatrix PartialEntanglementMatrix;
-      PartialEntanglementMatrix = ((FermionOnLatticeWithSpinRealSpace*) Space)->EvaluatePartialEntanglementMatrix(SubsystemNbrParticles, NbrKeptOrtbitals, KeptOrbitals, GroundStates[0], Architecture.GetArchitecture());
-      PartialEntanglementMatrix *= Coefficients[0];
-      for (int i = 1; i < NbrSpaces; ++i)
-	{
-	  ComplexMatrix TmpMatrix = ((FermionOnLatticeWithSpinRealSpace*) Space)->EvaluatePartialEntanglementMatrix(SubsystemNbrParticles, NbrKeptOrtbitals, KeptOrbitals, GroundStates[i], Architecture.GetArchitecture());
-	  TmpMatrix *= Coefficients[i];
-	  PartialEntanglementMatrix += TmpMatrix;
-	}
-      if (ShowTimeFlag == true)
-	{
-	  gettimeofday (&(TotalEndingTime), 0);
-	  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
-				((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
-	  cout << "reduced density matrix evaluated in " << Dt << "s" << endl;
-	}
-      if ((PartialEntanglementMatrix.GetNbrColumn() > 0) && (PartialEntanglementMatrix.GetNbrRow() > 0))
-	{
-	  if (ShowTimeFlag == true)
+	  int NbrRemovedParticles = NbrParticles - SubsystemNbrParticles;
+	  if ((NbrRemovedParticles >= 0) && (NbrRemovedParticles <= (2 * NbrRemovedOrtbitals)))
 	    {
-	      gettimeofday (&(TotalStartingTime), 0);
-	    }
-	  double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition();
-	  int TmpDimension = PartialEntanglementMatrix.GetNbrColumn();
-	  if (TmpDimension > PartialEntanglementMatrix.GetNbrRow())
-	    {
-	      TmpDimension = PartialEntanglementMatrix.GetNbrRow();
-	    }
-	  for (int i = 0; i < TmpDimension; ++i)
-	    TmpValues[i] *= TmpValues[i];
-	  RealDiagonalMatrix TmpDiag = RealDiagonalMatrix(TmpValues, TmpDimension);
-	  TmpDiag.SortMatrixDownOrder();
-	  if (DensityMatrixFileName != 0)
-	    {
-	      ofstream DensityMatrixFile;
-	      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
-	      DensityMatrixFile.precision(14);
-	      for (int i = 0; i < TmpDimension; ++i)
-		DensityMatrixFile << SubsystemNbrParticles << " " << TmpDiag[i] << endl;
-	      DensityMatrixFile.close();
-	    }
-	  for (int i = 0; i < TmpDimension; ++i)
-	    {
-	      if (TmpDiag[i] > 1e-14)
+	      cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << endl;      
+	      if (ShowTimeFlag == true)
 		{
-		  EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
-		  DensitySum +=TmpDiag[i];
+		  gettimeofday (&(TotalStartingTime), 0);
+		}
+	      ComplexMatrix PartialEntanglementMatrix;
+	      PartialEntanglementMatrix = ((FermionOnLatticeWithSpinRealSpace*) Space)->EvaluatePartialEntanglementMatrix(SubsystemNbrParticles, NbrKeptOrtbitals, KeptOrbitals, GroundStates[0], Architecture.GetArchitecture());
+	      PartialEntanglementMatrix *= Coefficients[0];
+	      for (int i = 1; i < NbrSpaces; ++i)
+		{
+		  ComplexMatrix TmpMatrix = ((FermionOnLatticeWithSpinRealSpace*) Space)->EvaluatePartialEntanglementMatrix(SubsystemNbrParticles, NbrKeptOrtbitals, KeptOrbitals, GroundStates[i], Architecture.GetArchitecture());
+		  TmpMatrix *= Coefficients[i];
+		  PartialEntanglementMatrix += TmpMatrix;
+		}
+	      if (ShowTimeFlag == true)
+		{
+		  gettimeofday (&(TotalEndingTime), 0);
+		  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+					((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+		  cout << "reduced density matrix evaluated in " << Dt << "s" << endl;
+		}
+	      PartialEntanglementMatrix.RemoveZeroColumns();
+	      PartialEntanglementMatrix.RemoveZeroRows();
+	      if ((PartialEntanglementMatrix.GetNbrColumn() > 0) && (PartialEntanglementMatrix.GetNbrRow() > 0))
+		{
+		  if (ShowTimeFlag == true)
+		    {
+		      gettimeofday (&(TotalStartingTime), 0);
+		    }
+		  double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition();
+		  int TmpDimension = PartialEntanglementMatrix.GetNbrColumn();
+		  if (TmpDimension > PartialEntanglementMatrix.GetNbrRow())
+		    {
+		      TmpDimension = PartialEntanglementMatrix.GetNbrRow();
+		    }
+		  for (int i = 0; i < TmpDimension; ++i)
+		    TmpValues[i] *= TmpValues[i];
+		  RealDiagonalMatrix TmpDiag = RealDiagonalMatrix(TmpValues, TmpDimension);
+		  TmpDiag.SortMatrixDownOrder();
+		  if (DensityMatrixFileName != 0)
+		    {
+		      ofstream DensityMatrixFile;
+		      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+		      DensityMatrixFile.precision(14);
+		      for (int i = 0; i < TmpDimension; ++i)
+			DensityMatrixFile << SubsystemNbrParticles << " " << TmpDiag[i] << endl;
+		      DensityMatrixFile.close();
+		    }
+		  for (int i = 0; i < TmpDimension; ++i)
+		    {
+		      EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
+		      DensitySum +=TmpDiag[i];
+		    }
+		  if (ShowTimeFlag == true)
+		    {
+		      gettimeofday (&(TotalEndingTime), 0);
+		      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+					    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+		      cout << "diagonalization done in " << Dt << "s" << endl;
+		    }
 		}
 	    }
-	  if (ShowTimeFlag == true)
-	    {
-	      gettimeofday (&(TotalEndingTime), 0);
-	      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
-				    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
-	      cout << "diagonalization done in " << Dt << "s" << endl;
-	    }
-	  File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
 	}
     }
+  else
+    {
+      for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
+	{
+	  int MaxSubsystemTotalSz = SubsystemNbrParticles;
+	  if (MaxSubsystemTotalSz > NbrKeptOrtbitals)
+	    {
+	      MaxSubsystemTotalSz = (2 * NbrKeptOrtbitals) - SubsystemNbrParticles;
+	    }
+	  for (int SubsystemTotalSz = -MaxSubsystemTotalSz; SubsystemTotalSz <= MaxSubsystemTotalSz; SubsystemTotalSz += 2)
+	    {
+	      int NbrRemovedParticles = NbrParticles - SubsystemNbrParticles;
+	      int RemovedParticleTotalSz = TotalSz - SubsystemTotalSz;
+ 	      if ((NbrRemovedParticles >= 0) && (NbrRemovedParticles <= (2 * NbrRemovedOrtbitals)) 
+ 		  && (RemovedParticleTotalSz >= -NbrRemovedParticles) && (RemovedParticleTotalSz <= NbrRemovedParticles))
+		{
+		  cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " SzA=" << SubsystemTotalSz << endl;      
+		  if (ShowTimeFlag == true)
+		    {
+		      gettimeofday (&(TotalStartingTime), 0);
+		    }
+		  ComplexMatrix PartialEntanglementMatrix;
+		  PartialEntanglementMatrix = ((FermionOnLatticeWithSpinRealSpace*) Space)->EvaluatePartialEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalSz, NbrKeptOrtbitals, KeptOrbitals, GroundStates[0], Architecture.GetArchitecture());
+		  PartialEntanglementMatrix *= Coefficients[0];
+		  for (int i = 1; i < NbrSpaces; ++i)
+		    {
+		      ComplexMatrix TmpMatrix = ((FermionOnLatticeWithSpinRealSpace*) Space)->EvaluatePartialEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalSz, NbrKeptOrtbitals, KeptOrbitals, GroundStates[i], Architecture.GetArchitecture());
+		      TmpMatrix *= Coefficients[i];
+		      PartialEntanglementMatrix += TmpMatrix;
+		    }
+		  if (ShowTimeFlag == true)
+		    {
+		      gettimeofday (&(TotalEndingTime), 0);
+		      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+					    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+		      cout << "reduced density matrix evaluated in " << Dt << "s" << endl;
+		    }
+		  PartialEntanglementMatrix.RemoveZeroColumns();
+		  PartialEntanglementMatrix.RemoveZeroRows();
+		  if ((PartialEntanglementMatrix.GetNbrColumn() > 0) && (PartialEntanglementMatrix.GetNbrRow() > 0))
+		    {
+		      if (ShowTimeFlag == true)
+			{
+			  gettimeofday (&(TotalStartingTime), 0);
+			}
+		      double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition();
+		      int TmpDimension = PartialEntanglementMatrix.GetNbrColumn();
+		      if (TmpDimension > PartialEntanglementMatrix.GetNbrRow())
+			{
+			  TmpDimension = PartialEntanglementMatrix.GetNbrRow();
+			}
+		      for (int i = 0; i < TmpDimension; ++i)
+			TmpValues[i] *= TmpValues[i];
+		      RealDiagonalMatrix TmpDiag = RealDiagonalMatrix(TmpValues, TmpDimension);
+		      TmpDiag.SortMatrixDownOrder();
+		      if (DensityMatrixFileName != 0)
+			{
+			  ofstream DensityMatrixFile;
+			  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+			  DensityMatrixFile.precision(14);
+			  for (int i = 0; i < TmpDimension; ++i)
+			    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalSz << " " << TmpDiag[i] << endl;
+			  DensityMatrixFile.close();
+			}
+		      for (int i = 0; i < TmpDimension; ++i)
+			{
+			  if (TmpDiag[i] > 0.0)
+			    {
+			      EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
+			      DensitySum += TmpDiag[i];
+			    }
+			}
+		      if (ShowTimeFlag == true)
+			{
+			  gettimeofday (&(TotalEndingTime), 0);
+			  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+						((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+			  cout << "diagonalization done in " << Dt << "s" << endl;
+			}
+		    }
+		}
+	    }
+	}
+    }
+  File << NbrKeptOrtbitals << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
   File.close();
-
   return 0;
 }

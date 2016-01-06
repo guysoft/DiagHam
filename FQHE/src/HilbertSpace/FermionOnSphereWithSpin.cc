@@ -1968,7 +1968,7 @@ void FermionOnSphereWithSpin::GenerateLookUpTable(unsigned long memory)
 #else
   int CurrentHighestBit = 31;
 #endif
-  while ((TmpPosition & (0x1ul << CurrentHighestBit)) == 0x0ul)
+  while (((TmpPosition & (0x1ul << CurrentHighestBit)) == 0x0ul) && (CurrentHighestBit > 0))
     --CurrentHighestBit;  
 
   if (this->StateHighestBit != 0)
@@ -2019,7 +2019,7 @@ void FermionOnSphereWithSpin::GenerateLookUpTable(unsigned long memory)
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     {     
       TmpPosition = this->StateDescription[i];
-      while ((TmpPosition & (0x1ul << CurrentHighestBit)) == 0x0ul)
+      while (((TmpPosition & (0x1ul << CurrentHighestBit)) == 0x0ul) && (CurrentHighestBit > 0))
 	--CurrentHighestBit;  
       if (CurrentLargestBit != CurrentHighestBit)
 	{

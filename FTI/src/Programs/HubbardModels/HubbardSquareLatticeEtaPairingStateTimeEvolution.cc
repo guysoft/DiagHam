@@ -24,6 +24,7 @@
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
+#include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
@@ -37,11 +38,25 @@
 #include <stdlib.h>
 #include <math.h>
 #include <fstream>
+#include <sys/time.h>
 
 using std::cout;
 using std::endl;
 using std::ios;
 using std::ofstream;
+
+
+// apply the time evolution operator to a state
+//
+// tau = amount of time to evolve
+// hamiltonian = pointer to the Hamiltonian
+// inputVector = reference on the input state
+// outputVector = reference on the output state (allocation should be done outside this method)
+// architecture = pointer to the architecture
+// convergenceError = error below which the nom of the time evolved state should be considered equal to one
+// return value = error on the time evolved state norm (the outputVector state is normalized to one)
+double ApplyTimeEvolution(double tau, AbstractHamiltonian* hamiltonian, ComplexVector& inputVector, ComplexVector& outputVector, 
+			  AbstractArchitecture* architecture, double convergenceError = MACHINE_PRECISION);
 
 
 int main(int argc, char** argv)
@@ -72,6 +87,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "nnn-t", "next nearest neighbor hopping amplitude", 0.0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1); 
+  (*SystemGroup) += new BooleanOption  ('\n', "no-evolution", "do not perform any time evolution and just store the eta pairing state");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -193,38 +209,89 @@ int main(int argc, char** argv)
 										  DensityDensityInteractionupup, DensityDensityInteractiondowndown, 
 										  DensityDensityInteractionupdown, 
 										  Architecture.GetArchitecture(), Memory);
-  
-  char* EigenstateOutputFile;
-  char* TmpExtention = new char [512];
-  if (SzSymmetryFlag == false)
+  if (Manager.GetBoolean("no-evolution"))  
     {
-      sprintf (TmpExtention, "_kx_%d_ky_%d_sz_%d", XMomentum, YMomentum, TotalSz);
+      char* EigenstateOutputFile = new char [512];
+      if (SzSymmetryFlag == false)
+	{
+	  sprintf (EigenstateOutputFile, "%s_kx_%d_ky_%d_sz_%d.0.vec", FilePrefix, XMomentum, YMomentum, TotalSz);
+	}
+      else
+	{
+	  sprintf (EigenstateOutputFile, "%s_szp_%d_kx_%d_ky_%d_sz_%d.0.vec", FilePrefix, SzParitySector, XMomentum, YMomentum, TotalSz);
+	}
+      ComplexVector TmpVector (EtaPairingState.GetVectorDimension(), true);
+      VectorHamiltonianMultiplyOperation Operation1 (Hamiltonian, &EtaPairingState, &TmpVector);
+      Operation1.ApplyOperation(Architecture.GetArchitecture());
+      cout << "check eta pairing state E=" << (TmpVector * EtaPairingState) 
+	   << " var(E)" << ((TmpVector * TmpVector) -  ((TmpVector * EtaPairingState) * (TmpVector * EtaPairingState))) << endl;
+      if (EtaPairingState.WriteVector(EigenstateOutputFile) == false)
+	{
+	  cout << "error while writing " << EigenstateOutputFile << endl;
+	}
+      delete[] EigenstateOutputFile;
     }
   else
     {
-      sprintf (TmpExtention, "_szp_%d_kx_%d_ky_%d_sz_%d", SzParitySector, XMomentum, YMomentum, TotalSz);
+      ComplexVector TmpVector (EtaPairingState.GetVectorDimension(), true);
+      double Tau = 1.0;
+      double EvolutionError = ApplyTimeEvolution(Tau, Hamiltonian, EtaPairingState, TmpVector, Architecture.GetArchitecture());
     }
-  char* TmpExtentionSpectrum = new char [32];
-  sprintf (TmpExtentionSpectrum, "_sz_%d.dat", TotalSz);
-  EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, TmpExtentionSpectrum, TmpExtention);
 
-//   for (int i = 0 ; i < EtaPairingState.GetVectorDimension(); ++i)
-//     {
-//       Space->PrintState (cout, i) << " : " << EtaPairingState[i] << endl;
-//     }
-  ComplexVector TmpVector (EtaPairingState.GetVectorDimension(), true);
-  Hamiltonian->Multiply(EtaPairingState, TmpVector);
-
-//   cout << "------------------------------------" << endl;
-//   for (int i = 0 ; i < TmpVector.GetVectorDimension(); ++i)
-//     {
-//       Space->PrintState (cout, i) << " : " << TmpVector[i] << endl;
-//     }
-
-  cout << "check eta pairing state E=" << (TmpVector * EtaPairingState) 
-       << " var(E)" << ((TmpVector * TmpVector) -  ((TmpVector * EtaPairingState) * (TmpVector * EtaPairingState))) << endl;
   delete Hamiltonian;
   delete Space;
-  delete[] EigenstateOutputFile;
   return 0;
+}
+
+// apply the time evolution operator to a state
+//
+// tau = amount of time to evolve
+// hamiltonian = pointer to the Hamiltonian
+// inputVector = reference on the input state
+// outputVector = reference on the output state (allocation should be done outside this method)
+// architecture = pointer to the architecture
+// convergenceError = error below which the nom of the time evolved state should be considered equal to one
+// return value = error on the time evolved state norm (the outputVector state is normalized to one)
+
+double ApplyTimeEvolution(double tau, AbstractHamiltonian* hamiltonian, ComplexVector& inputVector, ComplexVector& outputVector, 
+			  AbstractArchitecture* architecture, double convergenceError)
+{  
+  Complex TmpFactor (0.0, -tau);
+  outputVector.Copy(inputVector);
+  ComplexVector TmpVector (inputVector.GetLargeVectorDimension());
+  ComplexVector TmpVector2 (inputVector.GetLargeVectorDimension());
+  VectorHamiltonianMultiplyOperation Operation1 (hamiltonian, &inputVector, &TmpVector);
+  Operation1.ApplyOperation(architecture);
+  outputVector.AddLinearCombination(TmpFactor, TmpVector);
+  double TmpNorm = outputVector.Norm();
+  int Index = 2;
+  timeval TotalStartingTime;
+  timeval TotalEndingTime;
+  timeval TmpStartingTime;
+  timeval TmpEndingTime;
+  gettimeofday (&(TotalStartingTime), 0);
+  while (fabs(1.0 - TmpNorm) > convergenceError)
+    {
+      TmpFactor *= Complex(0.0 , -tau / ((double) Index));
+      timeval TmpStartingTime;
+      gettimeofday (&(TmpStartingTime), 0);
+      VectorHamiltonianMultiplyOperation Operation2 (hamiltonian, &TmpVector, &TmpVector2);
+      Operation2.ApplyOperation(architecture);
+      outputVector.AddLinearCombination(TmpFactor, TmpVector2);
+      ComplexVector TmpVector3 = TmpVector;
+      TmpVector = TmpVector2;
+      TmpVector2 = TmpVector3;
+      TmpNorm = outputVector.Norm();
+      gettimeofday (&(TmpEndingTime), 0);
+      double Dt = (double) ((TmpEndingTime.tv_sec - TmpStartingTime.tv_sec) + 
+			    ((TmpEndingTime.tv_usec - TmpStartingTime.tv_usec) / 1000000.0));	
+      cout << Index << " " << TmpNorm << " " << fabs(1.0 - TmpNorm) << " (" <<  Dt << "s)" << endl;
+      ++Index;
+    }
+   gettimeofday (&(TotalEndingTime), 0);
+   double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+			 ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));	
+   cout << "time evolution of tau=" << tau << " done in " << Dt << "s" << endl;
+   outputVector /= TmpNorm;
+  return fabs(1.0 - TmpNorm);
 }

@@ -694,8 +694,8 @@ ComplexMatrix FermionOnLatticeWithSpinRealSpace::EvaluatePartialEntanglementMatr
   this->KeptOrbitals = new int [nbrKeptOrbitals];
   for (int i = 0 ; i < nbrKeptOrbitals; ++i)
     this->KeptOrbitals[i] = keptOrbitals[i];
-  FermionOnLatticeWithSpinRealSpace SubsytemSpace (nbrParticleSector, nbrKeptOrbitals, szSector);
-  FermionOnLatticeWithSpinRealSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSite - nbrKeptOrbitals, ComplementarySzSector);
+  FermionOnLatticeWithSpinRealSpace SubsytemSpace (nbrParticleSector, szSector, nbrKeptOrbitals);
+  FermionOnLatticeWithSpinRealSpace ComplementarySpace (ComplementaryNbrParticles, ComplementarySzSector, this->NbrSite - nbrKeptOrbitals);
   ComplexMatrix TmpEntanglementMatrix (SubsytemSpace.GetHilbertSpaceDimension(), ComplementarySpace.HilbertSpaceDimension, true);
   cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
 
@@ -734,7 +734,9 @@ long FermionOnLatticeWithSpinRealSpace::EvaluatePartialEntanglementMatrixCore (i
   for (int i = 0; i < this->LzMax; ++i)
     {
       if (SearchInArray<int>(i, this->KeptOrbitals, TmpDestinationHilbertSpace->LzMax) < 0)
-	TraceOutOrbitals[TmpIndex++] = i;
+	{
+	  TraceOutOrbitals[TmpIndex++] = i;
+	}
     }
   for (; minIndex < MaxIndex; ++minIndex)    
     {
@@ -754,11 +756,11 @@ long FermionOnLatticeWithSpinRealSpace::EvaluatePartialEntanglementMatrixCore (i
 	  while ((TmpState3 >> TmpLzMax) == 0x0ul)
 	    --TmpLzMax;
 	  int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
-	  if (TmpPos != this->HilbertSpaceDimension)
+	  if ((TmpPos != this->HilbertSpaceDimension) && ((groundState[TmpPos].Re != 0.0) || (groundState[TmpPos].Im != 0.0)))
 	    {
 	      double Coefficient = 1.0;
 	      unsigned long Sign = 0x0ul;
-	      int Pos2 = (TmpDestinationHilbertSpace->LzMax << 1) + 1;
+	      int Pos2 = (this->LzMax << 1) + 1;
 	      while ((Pos2 > 0) && (TmpState2 != 0x0ul))
 		{
 		  while (((TmpState2 >> Pos2) & 0x1ul) == 0x0ul)
@@ -780,7 +782,6 @@ long FermionOnLatticeWithSpinRealSpace::EvaluatePartialEntanglementMatrixCore (i
 		Coefficient *= 1.0;
 	      else
 		Coefficient *= -1.0;
-	      
 	      entanglementMatrix->AddToMatrixElement(j, minIndex, Coefficient * groundState[TmpPos]);
 	      ++TmpNbrNonZeroElements;
 	    }

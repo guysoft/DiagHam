@@ -478,6 +478,14 @@ class ComplexMatrix : public Matrix
   // return value = reference on the current matrix
   ComplexMatrix& ComplexConjugate ();
 
+  // discard the columns that are strictly zero
+  //
+  void RemoveZeroColumns();
+
+  // discard the rows that are strictly zero
+  //
+  void RemoveZeroRows();
+
   // compute the number of non-zero matrix elements (zero having strictly zero square norm)
   //
   // return value = number of non-zero matrix elements

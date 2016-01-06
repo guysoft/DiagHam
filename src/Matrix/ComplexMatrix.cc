@@ -1565,6 +1565,96 @@ bool ComplexMatrix::TestHermitian(double error)
   return true;
 }
 
+// discard the columns that are strictly zero
+//
+
+void ComplexMatrix::RemoveZeroColumns()
+{
+  if ((this->NbrRow > 0) && (this->NbrColumn > 0))
+    {
+      bool* TmpTestZero = new bool[this->NbrColumn];
+      int TmpNbrColumn = 0;
+      for (int i = 0; i < this->NbrColumn; ++i)
+	{
+	  if (this->Columns[i].SqrNorm() == 0.0)
+	    {
+	      TmpTestZero[i] = true;
+	    }
+	  else
+	    {
+	      TmpTestZero[i] = false;
+	      ++TmpNbrColumn;	      
+	    }
+	}
+      if (TmpNbrColumn == 0)
+	{
+	  (*this) = ComplexMatrix();
+	}
+      else
+	{
+	  ComplexVector* TmpVectors = new ComplexVector[TmpNbrColumn];
+	  TmpNbrColumn = 0;
+	  for (int i = 0; i < this->NbrColumn; ++i)
+	    {
+	      if (TmpTestZero[i] == false)
+		{
+		  TmpVectors[TmpNbrColumn] = this->Columns[i];
+		  ++TmpNbrColumn;
+		}	      
+	    }
+	  (*this) = ComplexMatrix(TmpVectors, TmpNbrColumn);
+	}
+      delete[] TmpTestZero;
+    }
+}
+
+
+// discard the rows that are strictly zero
+//
+
+void ComplexMatrix::RemoveZeroRows()
+{
+  if ((this->NbrRow > 0) && (this->NbrColumn > 0))
+    {
+      bool* TmpTestZero = new bool[this->NbrRow];
+      int TmpNbrRow = 0;
+      for (int i = 0; i < this->NbrRow; ++i)
+	{
+	  TmpTestZero[i] = true;
+	  for (int j = 0; (j < this->NbrColumn) && (TmpTestZero[i] == true); ++j)
+	    {
+	      if ((this->Columns[j][i].Re != 0.0) || (this->Columns[j][i].Im != 0.0))
+		{
+		  TmpTestZero[i] = false;
+		  ++TmpNbrRow;
+		}	      
+	    }
+	}
+      if (TmpNbrRow == 0)
+	{
+	  (*this) = ComplexMatrix();
+	}
+      else
+	{
+	  ComplexVector* TmpVectors = new ComplexVector[this->NbrColumn];
+	  for (int j = 0; j < this->NbrColumn; ++j)
+	    TmpVectors[j] = ComplexVector(TmpNbrRow);
+	  TmpNbrRow = 0;
+	  for (int i = 0; i < this->NbrRow; ++i)
+	    {
+	      if (TmpTestZero[i] == false)
+		{
+		  for (int j = 0; j < this->NbrColumn; ++j)
+		    TmpVectors[j][TmpNbrRow] = this->Columns[j][i];
+		  ++TmpNbrRow;
+		}
+	    }
+	  (*this) = ComplexMatrix(TmpVectors, this->NbrColumn);
+	}
+      delete[] TmpTestZero;
+    }
+}
+
 
 // evaluate the real part of the matrix trace
 //

@@ -176,7 +176,7 @@ void TightBindingModelSimpleSquareLattice::FindConnectedOrbitals()
       this->ConnectedOrbitalHoppingAmplitudes = new Complex* [this->NbrBands];
       if (this->NextNNHoping != 0.0)
 	{
-	  this->NbrConnectedOrbitals[0] = 4; 
+	  this->NbrConnectedOrbitals[0] = 8; 
 	} 
       else
 	{
@@ -223,7 +223,19 @@ void TightBindingModelSimpleSquareLattice::FindConnectedOrbitals()
 	  this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) + 1] = q;
 	  this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = this->NextNNHoping ;
 	  ++TmpIndex;
-	  this->GetRealSpaceIndex(1, -1, p , q);
+	  this->GetRealSpaceIndex(1, this->NbrSiteY - 1, p , q);
+	  this->ConnectedOrbitalIndices[0][TmpIndex] = 0;
+	  this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] = p;
+	  this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) + 1] = q;
+	  this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = this->NextNNHoping ;
+	  ++TmpIndex;
+	  this->GetRealSpaceIndex(this->NbrSiteX - 1, this->NbrSiteY - 1, p , q);
+	  this->ConnectedOrbitalIndices[0][TmpIndex] = 0;
+	  this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] = p;
+	  this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) + 1] = q;
+	  this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = this->NextNNHoping ;
+	  ++TmpIndex;
+	  this->GetRealSpaceIndex(this->NbrSiteX - 1, 1, p , q);
 	  this->ConnectedOrbitalIndices[0][TmpIndex] = 0;
 	  this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] = p;
 	  this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) + 1] = q;
