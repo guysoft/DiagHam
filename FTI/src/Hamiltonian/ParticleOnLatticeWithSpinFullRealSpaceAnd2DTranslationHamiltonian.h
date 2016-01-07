@@ -39,6 +39,7 @@
 #include "Vector/ComplexVector.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
+#include "Matrix/RealAntisymmetricMatrix.h"
 
 #include <iostream>
 
@@ -100,6 +101,33 @@ class ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian : public
 								    RealSymmetricMatrix& densityDensityupup, RealSymmetricMatrix& densityDensitydowndown, 
 								    RealSymmetricMatrix& densityDensityupdown, RealSymmetricMatrix& sxSx,
 								    RealSymmetricMatrix& sySy, RealSymmetricMatrix& szSz,
+								    AbstractArchitecture* architecture, long memory = -1);
+  
+  // constructor
+  //
+  // particles = Hilbert space associated to the system
+  // nbrParticles = number of particles
+  // nbrSites = number of sites
+  // xMomentum = momentum sector in the x direction
+  // maxXMomentum = number of momentum sectors in the x direction
+  // yMomentum = momentum sector in the x direction
+  // maxYMomentum = number of momentum sectors in the x direction
+  // tightBinding = hamiltonian corresponding to the tight-binding model in real space, orbitals with even indices (resp. odd indices) are considered as spin up (resp. spin down)
+  // densityDensityupup = matrix that gives the amplitude of each density-density interaction term between particles with spin up
+  // densityDensitydowndown = matrix that gives the amplitude of each density-density interaction term between particles with spin down
+  // densityDensityupdown = matrix that gives the amplitude of each density-density interaction term between particles with spin up and down
+  // sxSx = matrix that gives the amplitude of each Sx_i Sx_j term
+  // sySy = matrix that gives the amplitude of each Sy_i Sy_j term
+  // szSz = matrix that gives the amplitude of each Sz_i Sz_j term
+  // sxSy = matrix that gives the amplitude of each Sx_i Sy_j term
+  // architecture = architecture to use for precalculation
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSites, 
+								    int xMomentum, int maxXMomentum, int yMomentum, int maxYMomentum, 
+								    HermitianMatrix& tightBinding,
+								    RealSymmetricMatrix& densityDensityupup, RealSymmetricMatrix& densityDensitydowndown, 
+								    RealSymmetricMatrix& densityDensityupdown, RealSymmetricMatrix& sxSx,
+								    RealSymmetricMatrix& sySy, RealSymmetricMatrix& szSz, RealAntisymmetricMatrix& sxSy,
 								    AbstractArchitecture* architecture, long memory = -1);
 
   // destructor

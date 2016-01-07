@@ -153,6 +153,96 @@ ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::ParticleOnLat
 }
 
 
+// constructor
+//
+// particles = Hilbert space associated to the system
+// nbrParticles = number of particles
+// nbrSites = number of sites
+// xMomentum = momentum sector in the x direction
+// maxXMomentum = number of momentum sectors in the x direction
+// yMomentum = momentum sector in the x direction
+// maxYMomentum = number of momentum sectors in the x direction
+// tightBinding = hamiltonian corresponding to the tight-binding model in real space, orbitals with even indices (resp. odd indices) are considered as spin up (resp. spin down)
+// densityDensityupup = matrix that gives the amplitude of each density-density interaction term between particles with spin up
+// densityDensitydowndown = matrix that gives the amplitude of each density-density interaction term between particles with spin down
+// densityDensityupdown = matrix that gives the amplitude of each density-density interaction term between particles with spin up and down
+// sxSx = matrix that gives the amplitude of each Sx_i Sx_j term
+// sySy = matrix that gives the amplitude of each Sy_i Sy_j term
+// szSz = matrix that gives the amplitude of each Sz_i Sz_j term
+// sxSy = matrix that gives the amplitude of each Sx_i Sy_j term
+// architecture = architecture to use for precalculation
+// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+
+ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSites, 
+																     int xMomentum, int maxXMomentum, int yMomentum, int maxYMomentum, 
+																     HermitianMatrix& tightBinding, 
+																     RealSymmetricMatrix& densityDensityupup, 
+																     RealSymmetricMatrix& densityDensitydowndown, 
+																     RealSymmetricMatrix& densityDensityupdown, 
+																     RealSymmetricMatrix& sxSx,
+																     RealSymmetricMatrix& sySy, RealSymmetricMatrix& szSz, RealAntisymmetricMatrix& sxSy,
+																     AbstractArchitecture* architecture, long memory)
+{
+  this->Particles = particles;
+  this->NbrParticles = nbrParticles;
+  this->NbrSites = nbrSites;
+  this->XMomentum = xMomentum;
+  this->MaxXMomentum = maxXMomentum;
+  this->YMomentum = yMomentum;
+  this->MaxYMomentum = maxYMomentum;
+    
+  this->LzMax = this->NbrSites - 1;
+  this->HamiltonianShift = 0.0;
+  this->DiagonalElements = 0;
+  this->Architecture = architecture;
+  this->Memory = memory;
+  this->OneBodyInteractionFactorsupup = 0;
+  this->OneBodyInteractionFactorsdowndown = 0;
+  this->OneBodyInteractionFactorsupdown = 0;
+  
+  this->InteractionFactorsupup = 0;
+  this->InteractionFactorsdowndown = 0;
+  this->InteractionFactorsupdown = 0;
+  
+  this->FastMultiplicationFlag = false;
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
+  this->HermitianSymmetryFlag = true;//true;
+  
+  this->EvaluateExponentialFactors();
+  this->EvaluateOneBodyFactorsFromTightBingding(tightBinding);
+  this->EvaluateInteractionFactorsFromDensityDensityAndHeisenberg(densityDensityupup, densityDensitydowndown, densityDensityupdown, sxSx, sySy, szSz, sxSy);
+  
+//   cout << this->InteractionFactorsupup[0][0] << endl;
+    
+  if (memory > 0)
+    {
+      long TmpMemory = this->FastMultiplicationMemory(memory);
+      cout << TmpMemory << endl;
+      if (TmpMemory < 1024)
+	cout  << "fast = " <<  TmpMemory << "b ";
+      else
+	if (TmpMemory < (1 << 20))
+	  cout  << "fast = " << (TmpMemory >> 10) << "kb ";
+	else
+	  if (TmpMemory < (1 << 30))
+	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
+	  else
+	    {
+	      cout  << "fast = " << (TmpMemory >> 30) << ".";
+	      TmpMemory -= ((TmpMemory >> 30) << 30);
+	      TmpMemory *= 100l;
+	      TmpMemory >>= 30;
+	      if (TmpMemory < 10l)
+		cout << "0";
+	      cout  << TmpMemory << " Gb ";
+	    }
+      this->EnableFastMultiplication();
+    }
+}
+
 // destructor
 //
 
