@@ -88,6 +88,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nearbyeta-x", "x distance of the broken pair when generating a nearby eta pairing state", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nearbyeta-y", "y distance of the broken pair when generating a nearby eta pairing state", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "no-evolution", "do not perform any time evolution and just store the eta pairing state");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-tau", "number of tau values to evaluate", 10);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "tau-step", "tau step", 0.1);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -166,13 +168,13 @@ int main(int argc, char** argv)
 	       Manager.GetInteger("nearbyeta-y"), NbrSitesX, NbrSitesY, NbrParticles, NbrSites);
     }
   char* FileParameterString = new char [256];
-  sprintf (FileParameterString, "t_%.6f_tp_%.6f", Manager.GetDouble("nn-t"), Manager.GetDouble("nnn-t"));
+  sprintf (FileParameterString, "t_%.6f_tp_%.6f_u_%.6f", Manager.GetDouble("nn-t"), Manager.GetDouble("nnn-t"), Manager.GetDouble("u-potential"));
 
   char* EigenvalueOutputFile = new char [512];
   if (Manager.GetDouble("u-potential") == 0.0)
     sprintf(EigenvalueOutputFile, "%s_%s_sz_%d.dat", FilePrefix, FileParameterString, TotalSz);
   else
-    sprintf(EigenvalueOutputFile, "%s_%s_u_%f_sz_%d.dat", FilePrefix, FileParameterString, Manager.GetDouble("u-potential"), TotalSz);
+    sprintf(EigenvalueOutputFile, "%s_%s_sz_%d.dat", FilePrefix, FileParameterString, TotalSz);
 
   Abstract2DTightBindingModel* TightBindingModel;
   TightBindingModel = new TightBindingModelSimpleSquareLattice (NbrSitesX, NbrSitesY, Manager.GetDouble("nn-t"), Manager.GetDouble("nnn-t"), 0.0, 0.0,
@@ -241,8 +243,49 @@ int main(int argc, char** argv)
   else
     {
       ComplexVector TmpVector (EtaPairingState.GetVectorDimension(), true);
-      double Tau = 1.0;
-      double EvolutionError = ApplyTimeEvolution(Tau, Hamiltonian, EtaPairingState, TmpVector, Architecture.GetArchitecture());
+      int NbrTauValues = Manager.GetInteger("nbr-tau");
+      double TauStep = Manager.GetDouble("tau-step");
+      double* TauValues =  new double[NbrTauValues];
+      TauValues[0] = 0.0;
+      for (int i = 1; i < NbrTauValues; ++i)
+	{
+	  TauValues[i] = TauValues[i - 1] + TauStep;
+	}
+      char* EigenstateOutputFile = new char [512];
+      if (SzSymmetryFlag == false)
+	{
+	  sprintf(EigenstateOutputFile, "%s_%s_tau_%.6f_kx_%d_ky_%d_sz_%d.0.vec", FilePrefix, FileParameterString, TauValues[0], XMomentum, YMomentum, TotalSz);
+	}
+      else
+	{
+	  sprintf(EigenstateOutputFile, "%s_%s_tau_%.6f_szp_%d_kx_%d_ky_%d_sz_%d.0.vec", FilePrefix, FileParameterString, TauValues[0], SzParitySector, XMomentum, YMomentum, TotalSz);
+	}
+       if (EtaPairingState.WriteVector(EigenstateOutputFile) == false)
+	{
+	  cout << "error while writing " << EigenstateOutputFile << endl;
+	}
+     for (int i = 1; i < NbrTauValues; ++i)
+	{
+	  cout << "-------------------------------" << endl;
+	  cout << "step=" << i << "  total tau=" << TauValues[i] << endl;
+	  double EvolutionError = ApplyTimeEvolution(TauValues[i] - TauValues[i - 1], Hamiltonian, EtaPairingState, TmpVector, Architecture.GetArchitecture());
+	  ComplexVector TmpVector2 = EtaPairingState;
+	  EtaPairingState = TmpVector;
+	  TmpVector = TmpVector2;
+	  if (SzSymmetryFlag == false)
+	    {
+	      sprintf(EigenstateOutputFile, "%s_%s_tau_%.6f_kx_%d_ky_%d_sz_%d.0.vec", FilePrefix, FileParameterString, TauValues[i], XMomentum, YMomentum, TotalSz);
+	    }
+	  else
+	    {
+	      sprintf(EigenstateOutputFile, "%s_%s_tau_%.6f_szp_%d_kx_%d_ky_%d_sz_%d.0.vec", FilePrefix, FileParameterString, TauValues[i], SzParitySector, XMomentum, YMomentum, TotalSz);
+	    }
+	  if (EtaPairingState.WriteVector(EigenstateOutputFile) == false)
+	    {
+	      cout << "error while writing " << EigenstateOutputFile << endl;
+	    }
+	}
+     cout << "-------------------------------" << endl;
     }
 
   delete Hamiltonian;
@@ -271,13 +314,14 @@ double ApplyTimeEvolution(double tau, AbstractHamiltonian* hamiltonian, ComplexV
   Operation1.ApplyOperation(architecture);
   outputVector.AddLinearCombination(TmpFactor, TmpVector);
   double TmpNorm = outputVector.Norm();
+  double TmpPreviousNorm = 0.0;
   int Index = 2;
   timeval TotalStartingTime;
   timeval TotalEndingTime;
   timeval TmpStartingTime;
   timeval TmpEndingTime;
   gettimeofday (&(TotalStartingTime), 0);
-  while (fabs(1.0 - TmpNorm) > convergenceError)
+  while ((fabs(1.0 - TmpNorm) > convergenceError) && (fabs(TmpPreviousNorm - TmpNorm) > convergenceError))
     {
       TmpFactor *= Complex(0.0 , -tau / ((double) Index));
       timeval TmpStartingTime;
@@ -288,11 +332,12 @@ double ApplyTimeEvolution(double tau, AbstractHamiltonian* hamiltonian, ComplexV
       ComplexVector TmpVector3 = TmpVector;
       TmpVector = TmpVector2;
       TmpVector2 = TmpVector3;
+      TmpPreviousNorm = TmpNorm;
       TmpNorm = outputVector.Norm();
       gettimeofday (&(TmpEndingTime), 0);
       double Dt = (double) ((TmpEndingTime.tv_sec - TmpStartingTime.tv_sec) + 
 			    ((TmpEndingTime.tv_usec - TmpStartingTime.tv_usec) / 1000000.0));	
-      cout << Index << " " << TmpNorm << " " << fabs(1.0 - TmpNorm) << " (" <<  Dt << "s)" << endl;
+      cout << Index << " " << TmpNorm << " " << fabs(1.0 - TmpNorm) << " " << fabs(TmpPreviousNorm - TmpNorm) << " (" <<  Dt << "s)" << endl;
       ++Index;
     }
    gettimeofday (&(TotalEndingTime), 0);
@@ -300,5 +345,5 @@ double ApplyTimeEvolution(double tau, AbstractHamiltonian* hamiltonian, ComplexV
 			 ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));	
    cout << "time evolution of tau=" << tau << " done in " << Dt << "s" << endl;
    outputVector /= TmpNorm;
-  return fabs(1.0 - TmpNorm);
+   return fabs(1.0 - TmpNorm);
 }

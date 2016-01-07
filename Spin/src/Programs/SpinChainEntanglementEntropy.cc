@@ -69,7 +69,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-la", "minimum size of the subsystem whose entropy has to be evaluated", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-la", "maximum size of the subsystem whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
-  (*OutputGroup) += new BooleanOption ('\n', "density-matrix", "store the eigenvalues of the reduced density matrices");
+  (*OutputGroup) += new BooleanOption ('\n', "disable-densitymatrix", "do not save the eigenvalues of the reduced density matrix");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
   (*ToolsGroup) += new BooleanOption  ('\n', "use-svd", "use singular value decomposition instead of diagonalization to compute the entropy");
@@ -101,63 +101,121 @@ int main(int argc, char** argv)
 #endif
   bool SVDFlag = Manager.GetBoolean("use-svd");
   char* DensityMatrixFileName = 0;
+  double* Weights =0;
+  bool WeightFlag = false;
+  int NbrSpaces = 1;
+  char** GroundStateFiles = 0;
+  AbstractSpinChain** Spaces = 0;
+  int* TotalSz = 0;
   
-  if (Manager.GetBoolean("complex") == false)
+  if (Manager.GetString("degenerated-groundstate") == 0)
     {
-      RealVector* GroundStates = 0;
-      double* Weights =0;
-      bool WeightFlag = false;
-      int NbrSpaces = 1;
-      char** GroundStateFiles = 0;
-      AbstractSpinChain** Spaces = 0;
-      int* TotalSz = 0;
-      if (Manager.GetString("degenerated-groundstate") == 0)
+      GroundStateFiles = new char* [1];
+      TotalSz = new int[1];
+      Weights = new double[1];
+      Weights[0] = 1.0;
+      GroundStateFiles[0] = new char [strlen(Manager.GetString("ground-file")) + 1];
+      strcpy (GroundStateFiles[0], Manager.GetString("ground-file"));      
+    }
+  else
+    {
+      MultiColumnASCIIFile DegeneratedFile;
+      if (DegeneratedFile.Parse(Manager.GetString("degenerated-groundstate")) == false)
 	{
-	  GroundStateFiles = new char* [1];
-	  TotalSz = new int[1];
-	  Weights = new double[1];
-	  Weights[0] = 1.0;
-	  GroundStateFiles[0] = new char [strlen(Manager.GetString("ground-file")) + 1];
-	  strcpy (GroundStateFiles[0], Manager.GetString("ground-file"));      
+	  DegeneratedFile.DumpErrors(cout);
+	  return -1;
+	}
+      NbrSpaces = DegeneratedFile.GetNbrLines();
+      GroundStateFiles = new char* [NbrSpaces];
+      TotalSz = new int[NbrSpaces];
+      for (int i = 0; i < NbrSpaces; ++i)
+	{
+	  GroundStateFiles[i] = new char [strlen(DegeneratedFile(0, i)) + 1];
+	  strcpy (GroundStateFiles[i], DegeneratedFile(0, i));      	   
+	}
+      if (DegeneratedFile.GetNbrColumns() > 1)
+	{
+	  Weights = DegeneratedFile.GetAsDoubleArray(1);
+	  WeightFlag = true;
 	}
       else
 	{
-	  MultiColumnASCIIFile DegeneratedFile;
-	  if (DegeneratedFile.Parse(Manager.GetString("degenerated-groundstate")) == false)
-	    {
-	      DegeneratedFile.DumpErrors(cout);
-	      return -1;
-	    }
-	  NbrSpaces = DegeneratedFile.GetNbrLines();
-	  GroundStateFiles = new char* [NbrSpaces];
-	  TotalSz = new int[NbrSpaces];
+	  Weights = new double[NbrSpaces];
 	  for (int i = 0; i < NbrSpaces; ++i)
-	    {
-	      GroundStateFiles[i] = new char [strlen(DegeneratedFile(0, i)) + 1];
-	      strcpy (GroundStateFiles[i], DegeneratedFile(0, i));      	   
-	    }
-	  if (DegeneratedFile.GetNbrColumns() > 1)
-	    {
-	      Weights = DegeneratedFile.GetAsDoubleArray(1);
-	      WeightFlag = true;
-	    }
-	  else
-	    {
-	      Weights = new double[NbrSpaces];
-	      for (int i = 0; i < NbrSpaces; ++i)
-		Weights[i] = 1.0;
-	    }
+	    Weights[i] = 1.0;
 	}
-      
-      for (int i = 0; i < NbrSpaces; ++i)
+    }
+
+
+  bool SzFlag = true;
+  for (int i = 0; i < NbrSpaces; ++i)
+    {
+      TotalSz[i] = 0;
+      if (SpinFindSystemInfoFromVectorFileName(GroundStateFiles[i], NbrSpins, TotalSz[i], SpinValue) == false)
 	{
-	  TotalSz[i] = 0;
-	  if (SpinFindSystemInfoFromVectorFileName(GroundStateFiles[i], NbrSpins, TotalSz[i], SpinValue) == false)
-	    {
+	  SzFlag = false;
+	  if (SpinFindSystemInfoFromFileName(GroundStateFiles[i], NbrSpins, SpinValue) == false)
+	    {	     
 	      cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
 	      return -1;
 	    }
 	}
+    }
+     
+
+  ofstream File;
+  if (Manager.GetString("output-file") != 0)
+    {
+      File.open(Manager.GetString("output-file"), ios::binary | ios::out);
+      if (Manager.GetBoolean("disable-densitymatrix") == false)
+	{
+	  DensityMatrixFileName  = ReplaceExtensionToFileName(Manager.GetString("output-file"), "ent", "full.ent");
+	  if (DensityMatrixFileName == 0)
+	    {
+	      cout << "no ent extension was find in " << Manager.GetString("output-file") << " file name" << endl;
+	      return 0;
+	    }
+	}
+    }
+  else
+    {
+      char* TmpFileName;
+      TmpFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "ent");
+      if (TmpFileName == 0)
+	{
+	  cout << "no vec extension was find in " << GroundStateFiles[0] << " file name" << endl;
+	  return 0;
+	}
+      File.open(TmpFileName, ios::binary | ios::out);
+      if (Manager.GetBoolean("disable-densitymatrix") == false)
+	{
+	  DensityMatrixFileName  = ReplaceExtensionToFileName(TmpFileName, "ent", "full.ent");
+	  if (DensityMatrixFileName == 0)
+	    {
+	      cout << "no ent extension was find in " <<  TmpFileName << " file name" << endl;
+	      return 0;
+	    }
+	}
+      delete[] TmpFileName;
+    }
+  
+  if (DensityMatrixFileName != 0)
+    {
+      ofstream DensityMatrixFile;
+      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out); 
+      if (SzFlag == true)
+	DensityMatrixFile << "# l_a    Sz    lambda" << endl;
+      else
+	DensityMatrixFile << "# l_a    lambda" << endl;
+      DensityMatrixFile.close();
+    }
+  
+  File.precision(14);
+  cout.precision(14);
+      
+  if (Manager.GetBoolean("complex") == false)
+    {
+      RealVector* GroundStates = 0;
       
       GroundStates = new RealVector [NbrSpaces];  
       for (int i = 0; i < NbrSpaces; ++i)
@@ -178,37 +236,6 @@ int main(int argc, char** argv)
 	}
       
       Spaces = new AbstractSpinChain* [NbrSpaces];
-      
-      if (DensityMatrixFileName != 0)
-	{
-	  ofstream DensityMatrixFile;
-	  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out); 
-	  DensityMatrixFile << "# l_a    Sz    lambda" << endl;
-	  DensityMatrixFile.close();
-	}
-      
-      ofstream File;
-      if (Manager.GetString("output-file") != 0)
-	File.open(Manager.GetString("output-file"), ios::binary | ios::out);
-      else
-	{
-	  char* TmpFileName;
-	  TmpFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "ent");
-	  if (TmpFileName == 0)
-	    {
-	      cout << "no vec extension was find in " << GroundStateFiles[0] << " file name" << endl;
-	      return 0;
-	    }
-	  File.open(TmpFileName, ios::binary | ios::out);
-	  if (Manager.GetBoolean("density-matrix") == true)
-	    {
-	      DensityMatrixFileName = ReplaceExtensionToFileName(TmpFileName, "ent", "full.ent");
-	    }
-	  delete[] TmpFileName;
-	}
- 
-      File.precision(14);
-      cout.precision(14);
       
       for (int i = 0; i < NbrSpaces; ++i)
 	{
@@ -394,64 +421,6 @@ int main(int argc, char** argv)
     {
      cout << "Complex problem "<<endl;
      ComplexVector* GroundStates = 0;
-     double* Weights =0;
-     bool WeightFlag = false;
-     int NbrSpaces = 1;
-     char** GroundStateFiles = 0;
-     AbstractSpinChain** Spaces = 0;
-     int* TotalSz = 0;
-     if (Manager.GetString("degenerated-groundstate") == 0)
-       {
-	 GroundStateFiles = new char* [1];
-	 TotalSz = new int[1];
-	 Weights = new double[1];
-	 Weights[0] = 1.0;
-	 GroundStateFiles[0] = new char [strlen(Manager.GetString("ground-file")) + 1];
-	 strcpy (GroundStateFiles[0], Manager.GetString("ground-file"));      
-       }
-     else
-       {
-	 MultiColumnASCIIFile DegeneratedFile;
-	 if (DegeneratedFile.Parse(Manager.GetString("degenerated-groundstate")) == false)
-	   {
-	     DegeneratedFile.DumpErrors(cout);
-	     return -1;
-	   }
-	 NbrSpaces = DegeneratedFile.GetNbrLines();
-	 GroundStateFiles = new char* [NbrSpaces];
-	 TotalSz = new int[NbrSpaces];
-	 for (int i = 0; i < NbrSpaces; ++i)
-	   {
-	     GroundStateFiles[i] = new char [strlen(DegeneratedFile(0, i)) + 1];
-	     strcpy (GroundStateFiles[i], DegeneratedFile(0, i));      	   
-	   }
-	 if (DegeneratedFile.GetNbrColumns() > 1)
-	   {
-	     Weights = DegeneratedFile.GetAsDoubleArray(1);
-	     WeightFlag = true;
-	   }
-	 else
-	   {
-	     Weights = new double[NbrSpaces];
-	     for (int i = 0; i < NbrSpaces; ++i)
-	       Weights[i] = 1.0;
-	   }
-       }
-     
-     bool SzFlag = true;
-     for (int i = 0; i < NbrSpaces; ++i)
-       {
-	 TotalSz[i] = 0;
-	 if (SpinFindSystemInfoFromVectorFileName(GroundStateFiles[i], NbrSpins, TotalSz[i], SpinValue) == false)
-	   {
-	     SzFlag = false;
-	     if (SpinFindSystemInfoFromFileName(GroundStateFiles[i], NbrSpins, SpinValue) == false)
-	       {	     
-		 cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
-		 return -1;
-	       }
-	   }
-       }
      
      GroundStates = new ComplexVector [NbrSpaces];  
      for (int i = 0; i < NbrSpaces; ++i)
@@ -484,40 +453,7 @@ int main(int argc, char** argv)
      
      Spaces = new AbstractSpinChain* [NbrSpaces];
      
-     if (DensityMatrixFileName != 0)
-       {
-	 ofstream DensityMatrixFile;
-	 DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out); 
-	 if (SzFlag == true)
-	   {
-	     DensityMatrixFile << "# l_a    Sz    lambda" << endl;
-	   }
-	 else
-	   {
-	     DensityMatrixFile << "# l_a    lambda" << endl;
-	   }
-	 DensityMatrixFile.close();
-       }
-     
-     ofstream File;
-     if (Manager.GetString("output-file") != 0)
-       File.open(Manager.GetString("output-file"), ios::binary | ios::out);
-     else
-       {
-	 char* TmpFileName;
-	 TmpFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "ent");
-	 if (TmpFileName == 0)
-	   {
-	     cout << "no vec extension was find in " << GroundStateFiles[0] << " file name" << endl;
-	     return 0;
-	   }
-	 File.open(TmpFileName, ios::binary | ios::out);
-	 delete[] TmpFileName;
-       }
-     File.precision(14);
-     cout.precision(14);
-     
-      if (SzFlag == true)
+     if (SzFlag == true)
 	{
 	  for (int i = 0; i < NbrSpaces; ++i)
 	    {

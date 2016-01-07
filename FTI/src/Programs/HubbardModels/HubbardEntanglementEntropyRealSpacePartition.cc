@@ -59,7 +59,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "kept-sites", "column-based tesxt file that list sites that have to be kept");
   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
-  (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
+  (*OutputGroup) += new BooleanOption ('\n', "disable-densitymatrix", "do not save the eigenvalues of the reduced density matrix");
   (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
   (*OutputGroup) += new SingleIntegerOption  ('\n', "nbr-eigenstates", "number of reduced density matrix eigenstates to compute (0 if all)", 0);
 #ifdef __LAPACK__
@@ -82,7 +82,9 @@ int main(int argc, char** argv)
 #ifdef __LAPACK__
   bool LapackFlag = Manager.GetBoolean("use-lapack");
 #endif
-  char* DensityMatrixFileName = Manager.GetString("density-matrix");
+  char* EntropyFileName = 0;
+  char* DensityMatrixFileName = 0;
+
   ComplexVector* GroundStates = 0;
   char** GroundStateFiles = 0;
   int NbrParticles = 0;
@@ -217,6 +219,29 @@ int main(int argc, char** argv)
 	}
     }
 
+  if (Manager.GetString("output-file") != 0)
+    {
+      EntropyFileName = new char[strlen(Manager.GetString("output-file")) + 1];
+      strcpy(Manager.GetString("output-file"), EntropyFileName);
+    }
+  else
+    {
+      EntropyFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "ent");
+      if (EntropyFileName == 0)
+	{
+	  cout << "no vec extension was find in " << GroundStateFiles[0] << " file name" << endl;
+	  return 0;
+	}
+    }
+  if (Manager.GetBoolean("disable-densitymatrix") == false)
+    {
+      DensityMatrixFileName  = ReplaceExtensionToFileName(EntropyFileName, "ent", "full.ent");
+      if (DensityMatrixFileName == 0)
+	{
+	  cout << "no ent extension was find in " << EntropyFileName << " file name" << endl;
+	  return 0;
+	}
+    }
   if (DensityMatrixFileName != 0)
     {
       ofstream DensityMatrixFile;
@@ -297,19 +322,7 @@ int main(int argc, char** argv)
 	}
     }
   ofstream File;
-  if (Manager.GetString("output-file") != 0)
-    File.open(Manager.GetString("output-file"), ios::binary | ios::out);
-  else
-    {
-      char* TmpFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "ent");
-      if (TmpFileName == 0)
-	{
-	  cout << "no vec extension was find in " << GroundStateFiles[0] << " file name" << endl;
-	  return 0;
-	}
-      File.open(TmpFileName, ios::binary | ios::out);
-      delete[] TmpFileName;
-    }
+  File.open(EntropyFileName, ios::binary | ios::out);
   File.precision(14);
   cout.precision(14);
   

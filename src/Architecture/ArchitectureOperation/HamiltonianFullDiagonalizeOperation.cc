@@ -349,15 +349,19 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 	    }
 	}
 
-      if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+      if (architecture->IsMasterNode())
 	{
 	  timeval TotalEndingTime;
 	  gettimeofday (&TotalEndingTime, 0);
 	  double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
-			(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
-	  char TmpString[256];
-	  sprintf (TmpString, "HamiltonianFullDiagonalizeOperation fill matrix operation done in %.3f seconds", Dt);
-	  architecture->AddToLog(TmpString, true);
+			(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));	
+	  if (architecture->VerboseMode())
+	    {
+	      char TmpString[256];
+	      sprintf (TmpString, "HamiltonianFullDiagonalizeOperation fill matrix operation done in %.3f seconds", Dt);
+	      architecture->AddToLog(TmpString, true);
+	    }
+	  cout << "HamiltonianFullDiagonalizeOperation fill matrix operation done in " << Dt << " seconds" << endl;
 	  gettimeofday (&TotalStartingTime, 0);
 	}
       
@@ -416,15 +420,19 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 			   ScalapackRWorkingArea, &ScalapackRWorkingAreaSize, 
 			   &Information);  
 
-      if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+      if (architecture->IsMasterNode())
 	{
 	  timeval TotalEndingTime;
 	  gettimeofday (&TotalEndingTime, 0);
-	  double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
+	  double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 			
 			(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
-	  char TmpString[256];
-	  sprintf (TmpString, "HamiltonianFullDiagonalizeOperation diagonalization operation done in %.3f seconds", Dt);
-	  architecture->AddToLog(TmpString, true);
+	  cout << "HamiltonianFullDiagonalizeOperation diagonalization operation done in " << Dt << "  seconds" << endl;
+	  if (architecture->VerboseMode())
+	    {
+	      char TmpString[256];
+	      sprintf (TmpString, "HamiltonianFullDiagonalizeOperation diagonalization operation done in %.3f seconds", Dt);
+	      architecture->AddToLog(TmpString, true);
+	    }
 	}
       
       
@@ -447,7 +455,7 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 		  architecture->ReceiveFromSlave(SlaveID, &TmpLocalNodeColumn, TmpNbr);
 		  architecture->ReceiveFromSlave(SlaveID, &TmpLocalLeadingDimensionRow, TmpNbr);
 		  architecture->ReceiveFromSlave(SlaveID, &TmpLocalLeadingDimensionColumn, TmpNbr);
-		  int TmpSize = TmpLocalLeadingDimensionRow * TmpLocalLeadingDimensionColumn;
+		  long TmpSize = ((long) TmpLocalLeadingDimensionRow) * ((long) TmpLocalLeadingDimensionColumn);
 		  doublecomplex* TmpEigenstates = new doublecomplex [TmpSize];
 		  architecture->ReceiveFromSlave(SlaveID, TmpEigenstates, TmpSize);
 		  int TmpNbrBlockPerRow = TmpLocalLeadingDimensionRow / NbrRowPerBlock;
@@ -538,15 +546,19 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 			}
 		    }
 		}
-	      if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+	      if (architecture->IsMasterNode())
 		{
 		  timeval TotalEndingTime;
 		  gettimeofday (&TotalEndingTime, 0);
 		  double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
 				(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
-		  char TmpString[256];
-		  sprintf (TmpString, "HamiltonianFullDiagonalizeOperation reassembling eigenstates done in %.3f seconds", Dt);
-		  architecture->AddToLog(TmpString, true);
+		  if (architecture->VerboseMode())
+		    {
+		      char TmpString[256];
+		      sprintf (TmpString, "HamiltonianFullDiagonalizeOperation reassembling eigenstates done in %.3f seconds", Dt);
+		      architecture->AddToLog(TmpString, true);
+		    }
+		  cout << "HamiltonianFullDiagonalizeOperation reassembling eigenstates done in " << Dt << " seconds" << endl;
 		}      
 	    }
  	}
@@ -554,7 +566,7 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 	{
 	  if (this->EigenstateFlag == true)
 	    {
-	      int TmpSize = LocalLeadingDimensionRow * LocalLeadingDimensionColumn;
+	      long TmpSize = ((long) LocalLeadingDimensionRow) * ((long) LocalLeadingDimensionColumn);
 	      int TmpNbrElement = 1;
 	      architecture->SendToMaster(&LocalNodeRow, TmpNbrElement);
 	      architecture->SendToMaster(&LocalNodeColumn, TmpNbrElement);
@@ -596,15 +608,19 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 	    }
 	}
       
-      if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+      if (architecture->IsMasterNode())
 	{
 	  timeval TotalEndingTime;
 	  gettimeofday (&TotalEndingTime, 0);
 	  double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
 			(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
-	  char TmpString[256];
-	  sprintf (TmpString, "HamiltonianFullDiagonalizeOperation fill matrix operation done in %.3f seconds", Dt);
-	  architecture->AddToLog(TmpString, true);
+	  if (architecture->VerboseMode())
+	    {
+	      char TmpString[256];
+	      sprintf (TmpString, "HamiltonianFullDiagonalizeOperation fill matrix operation done in %.3f seconds", Dt);
+	      architecture->AddToLog(TmpString, true);
+	    }
+	  cout << "HamiltonianFullDiagonalizeOperation fill matrix operation done in " << Dt << " seconds" << endl;
 	  gettimeofday (&TotalStartingTime, 0);
 	}
 
@@ -652,15 +668,19 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 			   ScalapackWorkingArea, &ScalapackWorkingAreaSize, 
 			   &Information); 
 
-      if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+      if (architecture->IsMasterNode())
 	{
 	  timeval TotalEndingTime;
 	  gettimeofday (&TotalEndingTime, 0);
 	  double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
 			(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
-	  char TmpString[256];
-	  sprintf (TmpString, "HamiltonianFullDiagonalizeOperation diagonalization operation done in %.3f seconds", Dt);
-	  architecture->AddToLog(TmpString, true);
+	  if (architecture->VerboseMode())
+	    {
+	      char TmpString[256];
+	      sprintf (TmpString, "HamiltonianFullDiagonalizeOperation diagonalization operation done in %.3f seconds", Dt);
+	      architecture->AddToLog(TmpString, true);
+	    }
+	  cout << "HamiltonianFullDiagonalizeOperation diagonalization operation done in " << Dt << " seconds" << endl;
 	}
 
       if (architecture->IsMasterNode())
@@ -767,15 +787,19 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 			}
 		    }
 		}
-	      if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+	      if (architecture->IsMasterNode())
 		{
 		  timeval TotalEndingTime;
 		  gettimeofday (&TotalEndingTime, 0);
 		  double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
 				(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
-		  char TmpString[256];
-		  sprintf (TmpString, "HamiltonianFullDiagonalizeOperation reassembling eigenstates done in %.3f seconds", Dt);
-		  architecture->AddToLog(TmpString, true);
+		  if (architecture->VerboseMode())
+		    {
+		      char TmpString[256];
+		      sprintf (TmpString, "HamiltonianFullDiagonalizeOperation reassembling eigenstates done in %.3f seconds", Dt);
+		      architecture->AddToLog(TmpString, true);
+		    }
+		  cout <<  "HamiltonianFullDiagonalizeOperation reassembling eigenstates done in " << Dt << " seconds" << endl;
 		}      
 	    }
  	}
