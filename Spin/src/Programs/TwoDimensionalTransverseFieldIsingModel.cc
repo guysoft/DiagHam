@@ -70,7 +70,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('\n', "selected-points", "provide a two column ascii file that indicates which momentum sectors have to be computed");
   (*SystemGroup) += new  BooleanOption ('\n', "disable-momentum", "disable momentum quantum numbers even if the system is translation invariant");
   (*SystemGroup) += new  BooleanOption ('\n', "disable-inversion", "disable the inversion symmetry quantum number");
-//  (*SystemGroup) += new  BooleanOption ('\n', "use-mirror", "use the mirror symmetry");
   (*SystemGroup) += new  SingleDoubleOption ('\n', "random-hxvalue", "amplitude of the random Zeeman term along the x direction on each site", 0.0);
   (*SystemGroup) += new  SingleDoubleOption ('\n', "random-gaussianhxvalue", "amplitude of the random Zeeman term along the x direction on each site, using a gaussian disrtibution with zero mean value and a given standard deviation", 0.0);
   (*SystemGroup) += new  SingleDoubleOption ('\n', "random-hzvalue", "amplitude of the random Zeeman term along the z direction on each site", 0.0);

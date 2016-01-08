@@ -316,7 +316,7 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
       doublecomplex* LocalScalapackMatrix = new doublecomplex[((long) LocalLeadingDimensionRow) * ((long) LocalLeadingDimensionColumn)];
       
       timeval TotalStartingTime;
-      if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+      if (architecture->IsMasterNode())
 	gettimeofday (&TotalStartingTime, 0);
       
       Complex Tmp;
@@ -433,6 +433,7 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 	      sprintf (TmpString, "HamiltonianFullDiagonalizeOperation diagonalization operation done in %.3f seconds", Dt);
 	      architecture->AddToLog(TmpString, true);
 	    }
+	  gettimeofday (&TotalStartingTime, 0);
 	}
       
       
@@ -585,7 +586,7 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
   else
     {
       timeval TotalStartingTime;
-      if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+      if (architecture->IsMasterNode())
 	gettimeofday (&TotalStartingTime, 0);
       
       double* LocalScalapackMatrix = new double[((long) LocalLeadingDimensionRow) * ((long) LocalLeadingDimensionColumn)];
@@ -681,6 +682,7 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 	      architecture->AddToLog(TmpString, true);
 	    }
 	  cout << "HamiltonianFullDiagonalizeOperation diagonalization operation done in " << Dt << " seconds" << endl;
+	  gettimeofday (&TotalStartingTime, 0);
 	}
 
       if (architecture->IsMasterNode())

@@ -90,6 +90,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "no-evolution", "do not perform any time evolution and just store the eta pairing state");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-tau", "number of tau values to evaluate", 10);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "tau-step", "tau step", 0.1);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "initial-tau", "first tau value to compute", 0.0);
+  (*SystemGroup) += new SingleStringOption  ('\n', "use-initialstate", "provide the vector at time initial-tau instead of computing it");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -245,12 +247,49 @@ int main(int argc, char** argv)
       ComplexVector TmpVector (EtaPairingState.GetVectorDimension(), true);
       int NbrTauValues = Manager.GetInteger("nbr-tau");
       double TauStep = Manager.GetDouble("tau-step");
-      double* TauValues =  new double[NbrTauValues];
-      TauValues[0] = 0.0;
-      for (int i = 1; i < NbrTauValues; ++i)
+      double* TauValues = 0;
+      if (Manager.GetDouble("initial-tau") != 0.0)
 	{
-	  TauValues[i] = TauValues[i - 1] + TauStep;
+	  if (Manager.GetString("use-initialstate") == 0)
+	    {
+	      ++NbrTauValues;
+	      TauValues =  new double[NbrTauValues];
+	      TauValues[0] = 0.0;
+	      TauValues[1] = Manager.GetDouble("initial-tau");
+	      for (int i = 2; i < NbrTauValues; ++i)
+		{
+		  TauValues[i] = TauValues[i - 1] + TauStep;
+		}
+	    }
+	  else
+	    {
+	      TauValues =  new double[NbrTauValues];
+	      TauValues[0] = Manager.GetDouble("initial-tau");
+	      for (int i = 1; i < NbrTauValues; ++i)
+		{
+		  TauValues[i] = TauValues[i - 1] + TauStep;
+		}
+	      if (EtaPairingState.ReadVector(Manager.GetString("use-initialstate")) == false)
+		{
+		  cout << "error while writing " << Manager.GetString("use-initialstate") << endl;
+		}	      
+	      if (EtaPairingState.GetVectorDimension() != Space->GetHilbertSpaceDimension())
+		{
+		  cout << "error, " << Manager.GetString("use-initialstate") << " does not have match the Hilbert space dimension (" 
+		       << EtaPairingState.GetVectorDimension() << " vs " << Space->GetHilbertSpaceDimension() << ")" << endl;
+		  return 0; 
+		}
+	    }
 	}
+      else
+	{
+	  TauValues =  new double[NbrTauValues];
+	  TauValues[0] = 0.0;
+	  for (int i = 1; i < NbrTauValues; ++i)
+	    {
+	      TauValues[i] = TauValues[i - 1] + TauStep;
+	    }	  
+	} 
       char* EigenstateOutputFile = new char [512];
       if (SzSymmetryFlag == false)
 	{
@@ -260,14 +299,17 @@ int main(int argc, char** argv)
 	{
 	  sprintf(EigenstateOutputFile, "%s_%s_tau_%.6f_szp_%d_kx_%d_ky_%d_sz_%d.0.vec", FilePrefix, FileParameterString, TauValues[0], SzParitySector, XMomentum, YMomentum, TotalSz);
 	}
-       if (EtaPairingState.WriteVector(EigenstateOutputFile) == false)
+      if (Manager.GetString("use-initialstate") == 0)
 	{
-	  cout << "error while writing " << EigenstateOutputFile << endl;
+	  if (EtaPairingState.WriteVector(EigenstateOutputFile) == false)
+	    {
+	      cout << "error while writing " << EigenstateOutputFile << endl;
+	    }
 	}
-     for (int i = 1; i < NbrTauValues; ++i)
+      for (int i = 1; i < NbrTauValues; ++i)
 	{
 	  cout << "-------------------------------" << endl;
-	  cout << "step=" << i << "  total tau=" << TauValues[i] << endl;
+	  cout << "step=" << i << "  total tau=" << TauValues[i] << "  tau step=" << (TauValues[i] - TauValues[i - 1]) << endl;
 	  double EvolutionError = ApplyTimeEvolution(TauValues[i] - TauValues[i - 1], Hamiltonian, EtaPairingState, TmpVector, Architecture.GetArchitecture());
 	  ComplexVector TmpVector2 = EtaPairingState;
 	  EtaPairingState = TmpVector;
