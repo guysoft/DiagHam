@@ -647,6 +647,11 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
       for (int i = 0; i < TmpGlobalNbrRow; ++i)
 	Eigenvalues[i] = 0.0;
       
+      if (architecture->IsMasterNode())
+	{
+	  cout << "starting diagonalization" << endl;
+	}
+
       FORTRAN_NAME(pdsyev)(JobZ, UpperLower, 
 			   &TmpGlobalNbrRow, LocalScalapackMatrix, 
 			   &LocalStartingRowIndex, &LocalStartingColumnIndex, Desc, 
