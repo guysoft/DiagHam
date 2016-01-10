@@ -83,6 +83,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption('\n', "initial-state", "name of the file containing the initial vector upon which e^{-iHt} acts");
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistics (default value))");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
+  (*SystemGroup) += new BooleanOption  ('\n', "complex", "initial vector is a complex vector");
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total lz value of the system (0 if it has to be guessed from file name)", 0);
@@ -231,17 +232,39 @@ int main(int argc, char** argv)
       return -1;           
     }
 
-  RealVector InputState;
-  if (InputState.ReadVector(StateFileName) == false)
+  ComplexVector TmpInitialState (Space->GetHilbertSpaceDimension());
+  if (Manager.GetBoolean("complex") == false)
+  {
+    RealVector InputState;
+    if (InputState.ReadVector(StateFileName) == false)
     {
       cout << "error while reading " << StateFileName << endl;
       return -1;
     }
-  if (InputState.GetVectorDimension() != Space->GetHilbertSpaceDimension())
+    if (InputState.GetVectorDimension() != Space->GetHilbertSpaceDimension())
     {
       cout << "error: vector and Hilbert-space have unequal dimensions " << InputState.GetVectorDimension() << " "<< Space->GetHilbertSpaceDimension() << endl;
       return -1;
     }
+    TmpInitialState = InputState;
+  }
+  else
+    {
+    ComplexVector InputState;
+    if (InputState.ReadVector(StateFileName) == false)
+    {
+      cout << "error while reading " << StateFileName << endl;
+      return -1;
+    }
+    if (InputState.GetVectorDimension() != Space->GetHilbertSpaceDimension())
+    {
+      cout << "error: vector and Hilbert-space have unequal dimensions " << InputState.GetVectorDimension() << " "<< Space->GetHilbertSpaceDimension() << endl;
+      return -1;
+    }
+    TmpInitialState = InputState;
+  }
+  
+  
     
   cout << " Initial state Hilbert space dimension = " << Space->GetHilbertSpaceDimension() << endl;
   
@@ -270,8 +293,7 @@ int main(int argc, char** argv)
   int TmpExpansionOrder;
   ComplexVector TmpState (Space->GetHilbertSpaceDimension()) ;
   ComplexVector TmpState1 (Space->GetHilbertSpaceDimension()) ;
-  ComplexVector TmpInitialState (Space->GetHilbertSpaceDimension());
-  TmpInitialState = InputState;
+  
   Complex TmpCoefficient;
   for (int i = 0; i < NbrTimeSteps; ++i)
   {
