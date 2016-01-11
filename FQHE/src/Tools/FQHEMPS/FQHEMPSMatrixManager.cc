@@ -72,6 +72,7 @@ FQHEMPSMatrixManager::FQHEMPSMatrixManager(bool eMatrixFlag, bool torusFlag)
   this->RightBMatrix = 0;
   this->LeftBMatrix = 0;
   this->TorusFlag = torusFlag;
+  this->DiscardFixedQSectorFlag = false;
 }
 
 // destructor
@@ -578,7 +579,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 		}
 	    }
 	}
-      if (this->Options->GetBoolean("fixed-qsector") == true)
+      if ((this->Options->GetBoolean("fixed-qsector") == true) && (this->DiscardFixedQSectorFlag == false))
 	{
 	  AbstractFQHEMPSMatrix* MPSMatrix2 = new FQHEMPSFixedQSectorMatrix(MPSMatrix, topologicalSectorValue);
 	  MPSMatrix = MPSMatrix2;	  
@@ -758,4 +759,14 @@ void  FQHEMPSMatrixManager::ShowBMatrices(const char* bMatrixSymbol, AbstractFQH
 	}
       delete[] TmpIndexString;
     }
+}
+
+// explicitly override the fixed Q sector option by turning it off
+//
+
+void FQHEMPSMatrixManager::DiscardFixedQSector()
+{
+  this->DiscardFixedQSectorFlag = true;
+  this->RightBMatrix = 0;
+  this->LeftBMatrix = 0;
 }

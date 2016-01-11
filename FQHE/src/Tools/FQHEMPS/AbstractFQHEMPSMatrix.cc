@@ -483,3 +483,21 @@ ostream& AbstractFQHEMPSMatrix::PrintAuxiliarySpaceState(ostream& str, int index
   return str;
 }
 
+// get the parent MPS matrices if the current MPS matrices have ones
+//
+// return value = pointer to the parent MPS matrices
+
+AbstractFQHEMPSMatrix* AbstractFQHEMPSMatrix::GetParentMPSMatrices()
+{
+  return 0;
+}
+
+// get the array that gives the index of each entry of the current B matrix within its parent B matrix
+//
+// return value = index mapping array
+
+int* AbstractFQHEMPSMatrix::GetIndexMappingArray()
+{
+  return 0;
+}
+

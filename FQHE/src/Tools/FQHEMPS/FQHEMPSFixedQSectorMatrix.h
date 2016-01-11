@@ -74,6 +74,8 @@ class FQHEMPSFixedQSectorMatrix : public AbstractFQHEMPSMatrix
   int*** NbrIndexPerPLevelCFTSectorQValue;
 
   int**** GlobalIndexMapper;
+  // array that gives the index of each entry of the fixed Q B matrix within the original B matrix
+  int* GlobalIndices;
 
   // indices to keep when performing a trace for the torus geometry
   int* TopologicalSectorIndices;
@@ -199,6 +201,16 @@ class FQHEMPSFixedQSectorMatrix : public AbstractFQHEMPSMatrix
   // padding = assume that the state has the estra padding
   virtual void GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding = false);
 
+  // get the parent MPS matrices if the current MPS matrices have ones
+  //
+  // return value = pointer to the parent MPS matrices
+  virtual AbstractFQHEMPSMatrix* GetParentMPSMatrices();
+
+  // get the array that gives the index of each entry of the current B matrix within its parent B matrix
+  //
+  // return value = index mapping array
+  virtual int* GetIndexMappingArray();
+
 };
 
 // get the number of orbitals that associated to a set of B matrices
@@ -271,6 +283,24 @@ inline int* FQHEMPSFixedQSectorMatrix::GetTopologicalSectorIndices(int topologic
 inline int FQHEMPSFixedQSectorMatrix::GetMaximumOccupation()
 { 
   return this->MPSMatrix->GetMaximumOccupation();
+}
+
+// get the parent MPS matrices if the current MPS matrices have ones
+//
+// return value = pointer to the parent MPS matrices
+
+inline AbstractFQHEMPSMatrix* FQHEMPSFixedQSectorMatrix::GetParentMPSMatrices()
+{
+  return this->MPSMatrix;
+}
+
+// get the array that gives the index of each entry of the current B matrix within its parent B matrix
+//
+// return value = index mapping array
+
+inline int* FQHEMPSFixedQSectorMatrix::GetIndexMappingArray()
+{
+  return this->GlobalIndices;
 }
 
 #endif

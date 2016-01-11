@@ -292,6 +292,16 @@ class AbstractFQHEMPSMatrix
   // padding = assume that the state has the extra padding
   virtual void GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding = false);
 
+  // get the parent MPS matrices if the current MPS matrices have ones
+  //
+  // return value = pointer to the parent MPS matrices
+  virtual AbstractFQHEMPSMatrix* GetParentMPSMatrices();
+
+  // get the array that gives the index of each entry of the current B matrix within its parent B matrix
+  //
+  // return value = index mapping array
+  virtual int* GetIndexMappingArray();
+
   // get the array of physical indices
   //
   // return value  = array of physical indices

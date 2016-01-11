@@ -151,9 +151,9 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matr
     }
   int TmpBMatrixDimension = this->MPSMatrix->GetMatrices()[0].GetNbrRow();
   
-  int* GlobalIndices = new int [TmpBMatrixDimension];
+  this->GlobalIndices = new int [TmpBMatrixDimension];
   for (int i = 0; i < TmpBMatrixDimension; ++i)
-    GlobalIndices[i] = -1;
+    this->GlobalIndices[i] = -1;
   GroupBMatrixDimension = 0;
   this->NbrIndexPerPLevelCFTSectorQValue = new int**[this->PLevel + 1];
   this->StartingIndexPerPLevelCFTSectorQValue = new int**[this->PLevel + 1];
@@ -185,7 +185,7 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matr
 	      this->StartingIndexPerPLevelCFTSectorQValue[p][currentCFTSector][LocalQSector] = GroupBMatrixDimension;
 	      for (int i = 0; i < MaxLocalIndex; ++i)
 		{
-		  GlobalIndices[GroupBMatrixDimension] = this->MPSMatrix->GetBondIndexWithFixedChargePLevelCFTSector(i, p, QValue, currentCFTSector);
+		  this->GlobalIndices[GroupBMatrixDimension] = this->MPSMatrix->GetBondIndexWithFixedChargePLevelCFTSector(i, p, QValue, currentCFTSector);
 		  this->GlobalIndexMapper[p][currentCFTSector][LocalQSector][i] = GroupBMatrixDimension;      
 		  ++GroupBMatrixDimension;
 		}
@@ -197,7 +197,7 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matr
   this->NbrBMatrices = 0;
   for (int i = 0; i < NbrGroupBMatrices; ++i)
     {
-      TmpSparseGroupBMatrices2[i] = TmpSparseGroupBMatrices[i].ExtractMatrix(GroupBMatrixDimension, GroupBMatrixDimension, GlobalIndices, GlobalIndices);
+      TmpSparseGroupBMatrices2[i] = TmpSparseGroupBMatrices[i].ExtractMatrix(GroupBMatrixDimension, GroupBMatrixDimension, this->GlobalIndices, this->GlobalIndices);
       if (TmpSparseGroupBMatrices2[i].GetNbrRow() > 0)
  	++this->NbrBMatrices;
     }
@@ -216,7 +216,7 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matr
 	      this->TopologicalSectorIndices = new int[TmpTopologicalSectorNbrIndices];
 	      for (int i = 0; i < TmpTopologicalSectorNbrIndices; ++i)
 		{
-		  int TmpPos = SearchInArray(TmpTopologicalSectorIndices[i], GlobalIndices, GroupBMatrixDimension);
+		  int TmpPos = SearchInArray(TmpTopologicalSectorIndices[i], this->GlobalIndices, GroupBMatrixDimension);
 		  if (TmpPos >= 0)
 		    {
 		      this->TopologicalSectorIndices[this->TopologicalSectorNbrIndices] = TmpPos;
@@ -243,7 +243,6 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matr
     }
   cout  << this->NbrBMatrices << " non zero B matrices" << endl;
   delete[] TmpSparseGroupBMatrices;
-  delete[] GlobalIndices;
   this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
   this->PhysicalIndices = new unsigned long[this->NbrBMatrices];
   this->NbrBMatrices = 0;
@@ -271,6 +270,8 @@ FQHEMPSFixedQSectorMatrix::~FQHEMPSFixedQSectorMatrix()
   if ((this->TorusFlag == true) && (this->TopologicalSectorIndices != 0))
     {
       delete[] this->TopologicalSectorIndices;
+      if (this->GlobalIndices != 0)
+	delete[] this->GlobalIndices;
     }
 }
 

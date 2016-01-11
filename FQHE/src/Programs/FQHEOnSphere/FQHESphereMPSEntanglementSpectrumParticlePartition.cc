@@ -354,7 +354,7 @@ int main(int argc, char** argv)
 	      for (int i = 0; i <= MaxNbrFluxQuantaA ; ++i)
 		{
 		  WeightAOrbitals[i]= sqrt(TmpSquareWeights[i]);
-		  WeightBOrbitals[i]= sqrt(TmpSquareWeights[i]);
+		  WeightBOrbitals[i]= sqrt(1.0 - TmpSquareWeights[MaxNbrFluxQuantaA - i]);
 		}
 	    }
 	  else

@@ -58,6 +58,9 @@ class FQHEMPSMatrixManager
   AbstractFQHEMPSMatrix* RightBMatrix;
   AbstractFQHEMPSMatrix* LeftBMatrix;
 
+  // override the fixed Q sector option
+  bool DiscardFixedQSectorFlag;
+
  public:
   
   // default constructor 
@@ -102,6 +105,10 @@ class FQHEMPSMatrixManager
   // nbrFluxQuanta = number of flux quanta
   // return value = cylinder perimeter (negative if another geometry is used)
   double GetCylinderPerimeter(int nbrFluxQuanta = 0);
+
+  // explicitly override the fixed Q sector option by turning it off
+  //
+  void DiscardFixedQSector();
 
  protected:
 
