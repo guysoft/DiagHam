@@ -84,6 +84,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistics (default value))");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "complex", "initial vector is a complex vector");
+  (*SystemGroup) += new BooleanOption  ('\n', "compute-energy", "compute the energy of each time-evolved vector");
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total lz value of the system (0 if it has to be guessed from file name)", 0);
@@ -198,6 +199,8 @@ int main(int argc, char** argv)
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
  
   char* OutputNamePrefix = new char [512];
+  char* NormName = new char[512];
+  char* EnergyName;
   ParticleOnSphere* Space = 0;
   
   if (Statistics == false)
@@ -215,11 +218,24 @@ int main(int argc, char** argv)
 	    Space = new BosonOnSphere(NbrParticles, TotalLz, LzMax);
 	  }
       sprintf (OutputNamePrefix, "bosons_sphere_%s_n_%d_2s_%d_t", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalLz);
+      sprintf (NormName, "bosons_sphere_%s_n_%d_2s_%d_dt_%g_t0_%g_nbrsteps_%d_norm.dat", Manager.GetString("interaction-name"), NbrParticles, LzMax, TmpTime, TimeShift, NbrTimeSteps);
+      if (Manager.GetBoolean("compute-energy"))
+      {
+	EnergyName = new char[512];
+	sprintf (EnergyName, "bosons_sphere_%s_n_%d_2s_%d_dt_%g_t0_%g_nbrsteps_%d_energy.dat", Manager.GetString("interaction-name"), NbrParticles, LzMax, TmpTime, TimeShift, NbrTimeSteps);
+      }
+      
     }
   else
     {
       Space = new FermionOnSphere (NbrParticles, TotalLz, LzMax);
       sprintf (OutputNamePrefix, "fermions_sphere_%s_n_%d_2s_%d_t", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalLz);
+      sprintf (NormName, "fermions_sphere_%s_n_%d_2s_%d_dt_%g_t0_%g_nbrsteps_%d_norm.dat", Manager.GetString("interaction-name"), NbrParticles, LzMax, TmpTime, TimeShift, NbrTimeSteps);
+      if (Manager.GetBoolean("compute-energy"))
+      {
+	EnergyName = new char[512];
+	sprintf (EnergyName, "fermions_sphere_%s_n_%d_2s_%d_dt_%g_t0_%g_nbrsteps_%d_energy.dat", Manager.GetString("interaction-name"), NbrParticles, LzMax, TmpTime, TimeShift, NbrTimeSteps);
+      }
     }
 
 
@@ -289,11 +305,23 @@ int main(int argc, char** argv)
 	
 	
 
+  ofstream File;
+  File.open(NormName, ios::binary | ios::out);
+  File.precision(14);
+  File << "# t Norm dNorm" << endl;
+  
+  ofstream FileEnergy;
+  if (Manager.GetBoolean("compute-energy"))
+  {
+    FileEnergy.open(EnergyName, ios::binary | ios::out);
+    FileEnergy.precision(14);
+    FileEnergy << "# t E "<< endl;
+  }
+  
   double Norm;
   int TmpExpansionOrder;
   ComplexVector TmpState (Space->GetHilbertSpaceDimension()) ;
   ComplexVector TmpState1 (Space->GetHilbertSpaceDimension()) ;
-  
   Complex TmpCoefficient;
   for (int i = 0; i < NbrTimeSteps; ++i)
   {
@@ -315,17 +343,34 @@ int main(int argc, char** argv)
       Operation1.ApplyOperation(Architecture.GetArchitecture());
       Norm = TmpInitialState.Norm();
       
-      cout << "Norm = " << Norm << " +/- " << TmpNorm << " for step " << TmpExpansionOrder << endl;
+      cout << "Norm = " << Norm << " +/- " << TmpNorm << " for step " << TmpExpansionOrder << endl;      
     }
-    cout << endl;
+    File << (TimeShift + (i + 1)*TmpTime) << " " << Norm << " " << TmpNorm << endl;
+    cout << endl;  
+    
     char* OutputName = new char [strlen(OutputNamePrefix)+ 16];
     sprintf (OutputName, "%s_%g_lz_%d.vec", OutputNamePrefix, TimeShift + (i + 1)*TmpTime, TotalLz);
     TmpInitialState.WriteVector(OutputName);
     delete[] OutputName;
+    
+    if (Manager.GetBoolean("compute-energy"))
+    {
+      VectorHamiltonianMultiplyOperation Operation (Hamiltonian, (&TmpInitialState), (&TmpState));
+      Operation.ApplyOperation(Architecture.GetArchitecture());
+      Complex Energy = (TmpInitialState) * (TmpState);
+      FileEnergy << (TimeShift + (i + 1)*TmpTime) << " " << Energy.Re << endl;
+    }
   }
   
+  File.close();
+  if (Manager.GetBoolean("compute-energy"))
+  {
+    FileEnergy.close();
+    delete[] EnergyName;
+  }
   delete Hamiltonian;
   delete[] OutputNamePrefix;
+  delete[] NormName;
   
  
   return 0;
