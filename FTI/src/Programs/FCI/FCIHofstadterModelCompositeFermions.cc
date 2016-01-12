@@ -181,7 +181,7 @@ int main(int argc, char** argv)
       FluxPerCellCF = TotalFluxCF;
       MaxMomentumXCF = 1;
       MaxMomentumYCF = 1;
-      EmbeddingFlag = false;
+      EmbeddingFlag = false;  
     }
   
   TightBindingModelHofstadterSquare TightBindingModelCF2 (MaxMomentumXCF, MaxMomentumYCF, NxZeroCF, NyZeroCF, FluxPerCellCF, Axis, SolenoidCF_X, SolenoidCF_Y, Architecture.GetArchitecture(),true, EmbeddingFlag);
@@ -194,7 +194,6 @@ int main(int argc, char** argv)
   
   HermitianMatrix TmpHamCF =   TightBindingModelCF2.GetRealSpaceTightBindingHamiltonian();
 
-  cout <<TmpHamCF<<endl;
   ComplexMatrix CFEigenVecs(Lx* Ly, Lx* Ly,true);
   CFEigenVecs.SetToIdentity();
   RealDiagonalMatrix TmpDiagCF;
@@ -202,24 +201,25 @@ int main(int argc, char** argv)
   
   if (verbose) cout << "* LLL states for Jastrow-factor contribute "<<AttachedFlux<<" flux"<<endl;  
   
-  if(NoTranslationFlag == true)
+  
+if(NoTranslationFlag == true)
     {
       NxZeroJastrow *= MaxMomentumXJastrow;
       NyZeroJastrow *= MaxMomentumYJastrow;
-      FluxPerCellJastrow =  TotalFluxJastrow;
+      FluxPerCellJastrow = TotalFluxJastrow;
       MaxMomentumXJastrow= 1;
       MaxMomentumYJastrow= 1;
       EmbeddingFlag =  false;
     }
+ 
+ 
+ TightBindingModelHofstadterSquare  JastrowTightBindingModel (MaxMomentumXJastrow, MaxMomentumYJastrow, NxZeroJastrow, NyZeroJastrow, FluxPerCellJastrow, Axis, SolenoidCF_X, SolenoidCF_Y, Architecture.GetArchitecture(),true,EmbeddingFlag);
   
+ //  ComplexMatrix JastrowEigenVecs =  JastrowTightBindingModel.GetRealSpaceTightBindingEigenstates();
+ 
+ cout <<"Building Jastrow factor with MaxMomentumXJastrow =" << MaxMomentumXJastrow << "  MaxMomentumYJastrow =" << MaxMomentumYJastrow << " NxZeroJastrow  = "<<  NxZeroJastrow<< " NyZeroJastrow = " <<NyZeroJastrow <<" FluxPerCellJastrow = "<< FluxPerCellJastrow <<endl;
   
-  TightBindingModelHofstadterSquare  JastrowTightBindingModel (MaxMomentumXJastrow, MaxMomentumYJastrow, NxZeroJastrow, NyZeroJastrow, FluxPerCellJastrow, Axis, SolenoidCF_X, SolenoidCF_Y, Architecture.GetArchitecture(),true,EmbeddingFlag);
-  
-  //  ComplexMatrix JastrowEigenVecs =  JastrowTightBindingModel.GetRealSpaceTightBindingEigenstates();
-  
-  cout <<"Building Jastrow factor with MaxMomentumXJastrow =" << MaxMomentumXJastrow << "  MaxMomentumYJastrow =" << MaxMomentumYJastrow << " NxZeroJastrow  = "<<  NxZeroJastrow<< " NyZeroJastrow = " <<NyZeroJastrow <<" FluxPerCellJastrow = "<< FluxPerCellJastrow <<endl;
-  
-  HermitianMatrix TmpHamJastrow = JastrowTightBindingModel.GetRealSpaceTightBindingHamiltonian();
+ HermitianMatrix TmpHamJastrow = JastrowTightBindingModel.GetRealSpaceTightBindingHamiltonian();
   ComplexMatrix JastrowEigenVecs( Lx* Ly, Lx* Ly,true);
   JastrowEigenVecs.SetToIdentity();
   RealDiagonalMatrix TmpDiagJastrow;
@@ -289,10 +289,12 @@ void  FindMagneticCell(const int nbrFluxQuanta,const int lx, const int ly, int &
 	{
            int TmpNxZero;
 	   int TmpNyZero;
+           bool ChangeFlag = false;
            if(( lx%i==0 ) && ( ly% (q/i) == 0))
 	   {	
 	     TmpNxZero = i;	
 	     TmpNyZero = q/i;
+	     ChangeFlag=true;
             }
 	    else
 	   {
@@ -300,20 +302,23 @@ void  FindMagneticCell(const int nbrFluxQuanta,const int lx, const int ly, int &
 		 {
 	            TmpNxZero = q/i;	
          	    TmpNyZero = i;
+		    ChangeFlag=true;
 		 }
 	   }
-
-            double TmpAspectRatio =  ((double) TmpNyZero)/ ((double) TmpNxZero);
-             if(  TmpAspectRatio > 1  ) 
+	   if (ChangeFlag)
 	     {
-                TmpAspectRatio = 1.0/TmpAspectRatio;
-             }
-             if ( TmpAspectRatio > OptimizeAspectRatio)
-             {
-                OptimizeAspectRatio = TmpAspectRatio;
-		nxZero = TmpNxZero;
-		nyZero = TmpNyZero;
-             }
+	       double TmpAspectRatio =  ((double) TmpNyZero)/ ((double) TmpNxZero);
+	       if(  TmpAspectRatio > 1  ) 
+		 {
+		   TmpAspectRatio = 1.0/TmpAspectRatio;
+		 }
+	       if ( TmpAspectRatio > OptimizeAspectRatio)
+		 {
+		   OptimizeAspectRatio = TmpAspectRatio;
+		   nxZero = TmpNxZero;
+		   nyZero = TmpNyZero;
+		 }
+	     }
 	}
   }
 }

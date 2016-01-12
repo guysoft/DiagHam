@@ -511,7 +511,7 @@ int main(int argc, char** argv)
 		  else
 		    {
 		      Hamiltonian = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), TightBindingMatrix, DensityDensityInteraction, Architecture.GetArchitecture(), Memory);
-		      cout <<  TightBindingMatrix <<endl;
+		      //		      cout <<  TightBindingMatrix <<endl;
 		    }
 		}
 	      else 
