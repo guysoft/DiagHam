@@ -109,6 +109,7 @@ class BosonOnLatticeGutzwillerProjectionRealSpace : public FermionOnLatticeRealS
   ostream& PrintState (ostream& Str, int state);
 
   virtual void GetCompositeFermionWavefunction(ComplexVector & trialState, ComplexMatrix & jastrowEigenVecs,ComplexMatrix & cFEigenVecs);
+
  protected:
 
   // core part of the evaluation orbital cut entanglement matrix calculation
@@ -120,8 +121,7 @@ class BosonOnLatticeGutzwillerProjectionRealSpace : public FermionOnLatticeRealS
   // groundState = reference on the total system ground state
   // densityMatrix = reference on the density matrix where result has to stored
   // return value = number of components that have been added to the density matrix
-  virtual long EvaluatePartialEntanglementMatrixCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
-						      ComplexVector& groundState, ComplexMatrix* entanglementMatrix);
+  virtual long EvaluatePartialEntanglementMatrixCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace, ComplexVector& groundState, ComplexMatrix* entanglementMatrix);
 
   // apply a_n  operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad or A call
   //
@@ -136,7 +136,6 @@ class BosonOnLatticeGutzwillerProjectionRealSpace : public FermionOnLatticeRealS
   // n = index for annihilation operator
   // return value =  multiplicative factor 
   virtual double Ad (int index, int n);
-
 
   // apply a^+_m a_n operator to a given state 
   //
@@ -184,8 +183,6 @@ class BosonOnLatticeGutzwillerProjectionRealSpace : public FermionOnLatticeRealS
   //
   // return value = particle statistic
   virtual int GetParticleStatistic();
-
-
 };
 
 // get the particle statistic 

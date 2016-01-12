@@ -3,7 +3,7 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2008 Gunnar Moeller                    //
+//                  Copyright (C) 2001-2008 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
 //             class of bosons on sphere for system size such that            //

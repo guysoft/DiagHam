@@ -39,7 +39,7 @@
 using std::cout;
 using std::endl;
 
-#define DEBUG_OUTPUT
+// #define DEBUG_OUTPUT
 
 
 // default constructor
@@ -145,7 +145,6 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIn
 
 		      for (int j=0; j<UnitCellY; ++j)
 			{
-			  
 			  int InitialIndex = this->EncodeSublatticeIndex(i, j, K1, K2, TranslationPhase); // initial TranlationPhase always one, so can be discarded
 			  double InitialEmbeddingPhase=this->GetEmbeddingPhase(InitialIndex, K1, K2);
 			  int FinalIndex = this->EncodeSublatticeIndex(i+1, j, K1, K2, TranslationPhase);
@@ -557,21 +556,23 @@ ComplexMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingEigenst
   int PosXUnitCell = 0;
   int PosYUnitCell = 0;
   for(int i = 0; i <this->NbrBands *  this->NbrStatePerBand;i++)
-     {
-        int BandNumber = i/this->NbrStatePerBand;
-        int MomentumIndex = i%this->NbrStatePerBand;
- 
-   this->GetLinearizedMomentumIndex(MomentumIndex,Kx,Ky);
+    {
+      int BandNumber = i/this->NbrStatePerBand;
+      int MomentumIndex = i%this->NbrStatePerBand;
+      
+      this->GetLinearizedMomentumIndex(MomentumIndex,Kx,Ky);
+      
+      K1 = this->KxFactor*(((double) Kx) + this->GammaX);
+      K2 = this->KyFactor*(((double) Ky) + this->GammaY);
+      for(int j = 0; j <this->NbrBands *  this->NbrStatePerBand;j++) 
+	{ 
+	  this->GetRealSpaceTightBindingLinearizedIndex(j, PosXUnitCell, PosYUnitCell, OrbitalIndex);
 
-   K1 = this->KxFactor*(((double) Kx) + this->GammaX);
-   K2 = this->KyFactor*(((double) Ky) + this->GammaY);
-  for(int j = 0; j <this->NbrBands *  this->NbrStatePerBand;j++) 
-  { 
-    this->GetRealSpaceTightBindingLinearizedIndex(j, PosXUnitCell, PosYUnitCell, OrbitalIndex);
-    int TotalPosY = PosYUnitCell*this->UnitCellY + OrbitalIndex/this->UnitCellX;
-    EigenStates[i][j] = this->OneBodyBasis[MomentumIndex][BandNumber][OrbitalIndex] * Phase(K1*PosXUnitCell + K2*PosYUnitCell)* Phase(PosXUnitCell* LogTranslationPhaseX*TotalPosY) ;
-  }
-  }
+	  int TotalPosY = PosYUnitCell*this->UnitCellY + OrbitalIndex/this->UnitCellX;
+
+	  EigenStates[i][j] = this->OneBodyBasis[MomentumIndex][BandNumber][OrbitalIndex] * Phase(K1*PosXUnitCell + K2*PosYUnitCell)* Phase(PosXUnitCell* LogTranslationPhaseX*TotalPosY) ;
+	}
+    }
   return EigenStates;
 }
 
@@ -633,112 +634,109 @@ int   NumXTranslations;
 int   NumYTranslations;
 
 Complex translationPhase=1.0;
-Complex tmpPhase, tmpPhase2;
-	      switch (this->LandauGaugeAxis)
-		{
-	case 'y': {
+ Complex tmpPhase, tmpPhase2;
+ switch (this->LandauGaugeAxis)
+   {
+   case 'y': {
 #ifdef DEBUG_OUTPUT
-cout <<" this->LxTranslationPhase  = " << this->LxTranslationPhase<<endl;
+     cout <<" this->LxTranslationPhase  = " << this->LxTranslationPhase<<endl;
 #endif
-
- for (int PosX = 0; PosX <this->UnitCellX; PosX++)
-{
-      Complex PhaseY = Phase(2.0*M_PI*this->FluxDensity*(double)PosX);
-
-	for (int PosY = 0; PosY <this->UnitCellY; PosY++)
-	{
-        int TmpPosition =  this->EncodeSublatticeIndex(PosX, PosY,NumXTranslations,NumYTranslations,translationPhase);
-        int TmpIndex = 0;
-        OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX+1, PosY,NumXTranslations,NumYTranslations,translationPhase);
-        SpatialIndices[TmpPosition][TmpIndex * 2] = -1*NumXTranslations;
-        SpatialIndices[TmpPosition][(TmpIndex * 2) +1] =  -1*NumYTranslations;
-        HoppingAmplitudes[TmpPosition][TmpIndex] = -1.0* translationPhase;
+     
+     for (int PosX = 0; PosX <this->UnitCellX; PosX++)
+       {
+	 Complex PhaseY = Phase(2.0*M_PI*this->FluxDensity*(double)PosX);
+	 
+	 for (int PosY = 0; PosY <this->UnitCellY; PosY++)
+	   {
+	     int TmpPosition =  this->EncodeSublatticeIndex(PosX, PosY,NumXTranslations,NumYTranslations,translationPhase);
+	     int TmpIndex = 0;
+	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX+1, PosY,NumXTranslations,NumYTranslations,translationPhase);
+	     SpatialIndices[TmpPosition][TmpIndex * 2] = -1*NumXTranslations;
+	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] =  -1*NumYTranslations;
+	     HoppingAmplitudes[TmpPosition][TmpIndex] = -1.0* translationPhase;
 #ifdef DEBUG_OUTPUT
-        cout <<TmpPosition<< " " << OrbitalIndices[TmpPosition][TmpIndex]<< " " << SpatialIndices[TmpPosition][TmpIndex * 2]<< " " <<SpatialIndices[TmpPosition][(TmpIndex * 2)+1]<<" "<<HoppingAmplitudes[TmpPosition][TmpIndex]<<endl;
+	     cout <<TmpPosition<< " " << OrbitalIndices[TmpPosition][TmpIndex]<< " " << SpatialIndices[TmpPosition][TmpIndex * 2]<< " " <<SpatialIndices[TmpPosition][(TmpIndex * 2)+1]<<" "<<HoppingAmplitudes[TmpPosition][TmpIndex]<<endl;
 #endif
-        ++TmpIndex;
-        OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX, PosY+1,NumXTranslations,NumYTranslations,translationPhase);
-        SpatialIndices[TmpPosition][TmpIndex * 2] = -1*NumXTranslations;
-        SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = -1*NumYTranslations;
-        HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0*Conj(PhaseY)*translationPhase;
+	     ++TmpIndex;
+	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX, PosY+1,NumXTranslations,NumYTranslations,translationPhase);
+	     SpatialIndices[TmpPosition][TmpIndex * 2] = -1*NumXTranslations;
+	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = -1*NumYTranslations;
+	     HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0*Conj(PhaseY)*translationPhase;
 #ifdef DEBUG_OUTPUT
-        cout <<TmpPosition<< " " << OrbitalIndices[TmpPosition][TmpIndex]<< " " << SpatialIndices[TmpPosition][TmpIndex * 2]<< " " <<SpatialIndices[TmpPosition][(TmpIndex * 2)+1]<<" "<<HoppingAmplitudes[TmpPosition][TmpIndex]<<endl;
+	     cout <<TmpPosition<< " " << OrbitalIndices[TmpPosition][TmpIndex]<< " " << SpatialIndices[TmpPosition][TmpIndex * 2]<< " " <<SpatialIndices[TmpPosition][(TmpIndex * 2)+1]<<" "<<HoppingAmplitudes[TmpPosition][TmpIndex]<<endl;
 #endif
-
-        ++TmpIndex;
-        OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX-1, PosY,NumXTranslations,NumYTranslations, translationPhase);
-        SpatialIndices[TmpPosition][TmpIndex * 2] = -1*NumXTranslations;
-        SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = -1*NumYTranslations;
-        HoppingAmplitudes[TmpPosition][TmpIndex] = -1.0* translationPhase;
+	     
+	     ++TmpIndex;
+	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX-1, PosY,NumXTranslations,NumYTranslations, translationPhase);
+	     SpatialIndices[TmpPosition][TmpIndex * 2] = -1*NumXTranslations;
+	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = -1*NumYTranslations;
+	     HoppingAmplitudes[TmpPosition][TmpIndex] = -1.0* translationPhase;
 #ifdef DEBUG_OUTPUT
-        cout <<TmpPosition<< " " << OrbitalIndices[TmpPosition][TmpIndex]<< " " << SpatialIndices[TmpPosition][TmpIndex * 2]<< " " <<SpatialIndices[TmpPosition][(TmpIndex * 2)+1]<<" "<<HoppingAmplitudes[TmpPosition][TmpIndex]<<endl;
+	     cout <<TmpPosition<< " " << OrbitalIndices[TmpPosition][TmpIndex]<< " " << SpatialIndices[TmpPosition][TmpIndex * 2]<< " " <<SpatialIndices[TmpPosition][(TmpIndex * 2)+1]<<" "<<HoppingAmplitudes[TmpPosition][TmpIndex]<<endl;
 #endif
-        ++TmpIndex;
-        OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX, PosY-1,NumXTranslations,NumYTranslations, translationPhase);
-        SpatialIndices[TmpPosition][TmpIndex * 2] = -1*NumXTranslations;
-        SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = -1*NumYTranslations;
-        HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0 * PhaseY* translationPhase;
+	     ++TmpIndex;
+	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX, PosY-1,NumXTranslations,NumYTranslations, translationPhase);
+	     SpatialIndices[TmpPosition][TmpIndex * 2] = -1*NumXTranslations;
+	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = -1*NumYTranslations;
+	     HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0 * PhaseY* translationPhase;
 #ifdef DEBUG_OUTPUT
-        cout <<TmpPosition<< " " << OrbitalIndices[TmpPosition][TmpIndex]<< " " << SpatialIndices[TmpPosition][TmpIndex * 2]<< " " <<SpatialIndices[TmpPosition][(TmpIndex * 2)+1]<<" "<<HoppingAmplitudes[TmpPosition][TmpIndex]<<endl;
+	     cout <<TmpPosition<< " " << OrbitalIndices[TmpPosition][TmpIndex]<< " " << SpatialIndices[TmpPosition][TmpIndex * 2]<< " " <<SpatialIndices[TmpPosition][(TmpIndex * 2)+1]<<" "<<HoppingAmplitudes[TmpPosition][TmpIndex]<<endl;
 #endif
-	}
-}
-		  break;
-		}
-
-
-		case 'x': {
-		  for (int PosY=0; PosY<this->UnitCellY; ++PosY)
-		    {
-                       Complex PhaseX = Phase(-2.0*M_PI*this->FluxDensity*(double)PosY);
-		  for (int PosX=0; PosX<this->UnitCellX; ++PosX)
-		    {
-
-        int TmpPosition =  this->EncodeSublatticeIndex(PosX, PosY,NumXTranslations,NumYTranslations,translationPhase);
-        int TmpIndex = 0;
-        OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX+1, PosY,NumXTranslations,NumYTranslations, translationPhase);
-        SpatialIndices[TmpPosition][TmpIndex * 2] = NumXTranslations;
-        SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = NumYTranslations;
-        HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0*Conj(PhaseX);
-        ++TmpIndex;
-        OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX, PosY+1,NumXTranslations,NumYTranslations, translationPhase);
-        SpatialIndices[TmpPosition][TmpIndex * 2] = NumXTranslations;
-        SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = NumYTranslations;
-        HoppingAmplitudes[TmpPosition][TmpIndex] = -1.0;
-        ++TmpIndex;
-        OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX-1, PosY,NumXTranslations,NumYTranslations, translationPhase);
-        SpatialIndices[TmpPosition][TmpIndex * 2] = NumXTranslations;
-        SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = NumYTranslations;
-        HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0*PhaseX;
-        ++TmpIndex;
-        OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX, PosY-1,NumXTranslations,NumYTranslations, translationPhase);
-        SpatialIndices[TmpPosition][TmpIndex * 2] = NumXTranslations;
-        SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = NumYTranslations;
-        HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0;
-
-	}
-}
-break;
-}
-
-		default:
-		  cout << "Invalid Landau quantization axis encountered in TightBindingModelHofstadterSquare."<<endl;
-		  exit(1);
-		  break;
-		}
-
+	   }
+       }
+     break;
+   }
+   case 'x': {
+     for (int PosY=0; PosY<this->UnitCellY; ++PosY)
+       {
+	 Complex PhaseX = Phase(-2.0*M_PI*this->FluxDensity*(double)PosY);
+	 for (int PosX=0; PosX<this->UnitCellX; ++PosX)
+	   {
+	     int TmpPosition =  this->EncodeSublatticeIndex(PosX, PosY,NumXTranslations,NumYTranslations,translationPhase);
+	     int TmpIndex = 0;
+	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX+1, PosY,NumXTranslations,NumYTranslations, translationPhase);
+	     SpatialIndices[TmpPosition][TmpIndex * 2] = NumXTranslations;
+	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = NumYTranslations;
+	     HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0*Conj(PhaseX);
+	     ++TmpIndex;
+	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX, PosY+1,NumXTranslations,NumYTranslations, translationPhase);
+	     SpatialIndices[TmpPosition][TmpIndex * 2] = NumXTranslations;
+	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = NumYTranslations;
+	     HoppingAmplitudes[TmpPosition][TmpIndex] = -1.0;
+	     ++TmpIndex;
+	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX-1, PosY,NumXTranslations,NumYTranslations, translationPhase);
+	     SpatialIndices[TmpPosition][TmpIndex * 2] = NumXTranslations;
+	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = NumYTranslations;
+	     HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0*PhaseX;
+	     ++TmpIndex;
+	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX, PosY-1,NumXTranslations,NumYTranslations, translationPhase);
+	     SpatialIndices[TmpPosition][TmpIndex * 2] = NumXTranslations;
+	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = NumYTranslations;
+	     HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0;
+	     
+	   }
+       }
+     break;
+   }
+     
+   default:
+     cout << "Invalid Landau quantization axis encountered in TightBindingModelHofstadterSquare."<<endl;
+     exit(1);
+     break;
+   }
+ 
  HermitianMatrix TmpMatrix = this->BuildTightBindingHamiltonianRealSpace(NbrConnectedOrbitals, OrbitalIndices, SpatialIndices, HoppingAmplitudes);
-  for (int i = 0; i < this->NbrBands; ++i)
-    {
-      delete[] HoppingAmplitudes[i];
-      delete[] SpatialIndices[i];
-      delete[] OrbitalIndices[i];
-    }
-  delete[] HoppingAmplitudes;
-  delete[] SpatialIndices;
-  delete[] OrbitalIndices;
-  delete[] NbrConnectedOrbitals;
-  return TmpMatrix;
+ for (int i = 0; i < this->NbrBands; ++i)
+   {
+     delete[] HoppingAmplitudes[i];
+     delete[] SpatialIndices[i];
+     delete[] OrbitalIndices[i];
+   }
+ delete[] HoppingAmplitudes;
+ delete[] SpatialIndices;
+ delete[] OrbitalIndices;
+ delete[] NbrConnectedOrbitals;
+ return TmpMatrix;
 }
 
 
@@ -770,51 +768,32 @@ HermitianMatrix  TightBindingModelHofstadterSquare::BuildTightBindingHamiltonian
 	      for (int l = 0; l < nbrConnectedOrbitals[k]; ++l)
 		{
 		  int FinalIndex = this->GetRealSpaceTightBindingLinearizedIndexSafe(spatialIndices[k][l << 1] + i, spatialIndices[k][(l << 1) + 1] + j, orbitalIndices[k][l],NumXTranslations,NumYTranslations);                 
-			  if (InitialIndex>=FinalIndex)
-		  {
-                  tmpPhase = 1.0;
-                  int Tmp = orbitalIndices[k][l] - k;
-                  if( ( (orbitalIndices[k][l]%this->UnitCellX - k%this->UnitCellX) ==0  ) && (spatialIndices[k][l << 1]==0 ) )
-		  {
-		       if( spatialIndices[k][(l << 1) + 1] >= 0)
-                          for (int p=0; p < i; p++)
-           			tmpPhase*=Conj(this->LxTranslationPhase);
-			else
-                        {
-                             for (int p=0; p < i; p++)
-				  tmpPhase*=this->LxTranslationPhase;
-                        }
-               	   }
-
-/*                  if( ( (orbitalIndices[k][l]%this->UnitCellX - k%this->UnitCellX) ==0  ) && (spatialIndices[k][l << 1]==0 ) )
-		  {
-		       if( spatialIndices[k][(l << 1) + 1] >= 0)
-                          for (int p=0; p < i; p++)
-           			  tmpPhase*=this->LxTranslationPhase;
-			else
-                        {
-                             for (int p=0; p < i; p++)
-           			tmpPhase*=Conj(this->LxTranslationPhase);
-                        }
-               	   }
-
-*/
-
-                  if( NumXTranslations>0)
-                     tmpPhase*= Phase(-2.0*M_PI*this->FluxDensity*this->NbrSiteX*this->UnitCellX*(orbitalIndices[k][l]/this->UnitCellX));
-                  if( NumXTranslations<0)
-                     tmpPhase*= Phase(2.0*M_PI*this->FluxDensity*this->NbrSiteX*this->UnitCellX*(orbitalIndices[k][l]/this->UnitCellX));
-
-      
-                  int TmpX = spatialIndices[k][l << 1] + i;
-                  int TmpY = spatialIndices[k][(l << 1)+1] + j;
-		  TmpHamiltonian.AddToMatrixElement(InitialIndex, FinalIndex, hoppingAmplitudes[k][l]*tmpPhase);
-
-
-#ifdef DEBUG_OUTPUT
-		  cout <<"x = " <<i<< " y = " <<j <<" k = " <<k<< " going to X = " <<  TmpX  << " Y = "<<TmpY<<" index "<< orbitalIndices[k][l]<<" Coefficient" << hoppingAmplitudes[k][l]*tmpPhase<<"NumTranslation X = "<<NumXTranslations <<endl;
-#endif
+		  if (InitialIndex>=FinalIndex)
+		    {
+		      tmpPhase = 1.0;
+		      int Tmp = orbitalIndices[k][l] - k;
+		      if( ( (orbitalIndices[k][l]%this->UnitCellX - k%this->UnitCellX) ==0  ) && (spatialIndices[k][l << 1]==0 ) )
+			{
+			  if( spatialIndices[k][(l << 1) + 1] >= 0)
+			    for (int p=0; p < i; p++)
+			      tmpPhase*=Conj(this->LxTranslationPhase);
+			  else
+			    {
+			      for (int p=0; p < i; p++)
+				tmpPhase*=this->LxTranslationPhase;
+			    }
 			}
+		      if( NumXTranslations>0)
+			tmpPhase*= Phase(-2.0*M_PI*this->FluxDensity*this->NbrSiteX*this->UnitCellX*(orbitalIndices[k][l]/this->UnitCellX));
+		      if( NumXTranslations<0)
+			tmpPhase*= Phase(2.0*M_PI*this->FluxDensity*this->NbrSiteX*this->UnitCellX*(orbitalIndices[k][l]/this->UnitCellX));
+		      int TmpX = spatialIndices[k][l << 1] + i;
+		      int TmpY = spatialIndices[k][(l << 1)+1] + j;
+		      TmpHamiltonian.AddToMatrixElement(InitialIndex, FinalIndex, hoppingAmplitudes[k][l]*tmpPhase);
+#ifdef DEBUG_OUTPUT
+		      cout <<"x = " <<i<< " y = " <<j <<" k = " <<k<< " going to X = " <<  TmpX  << " Y = "<<TmpY<<" index "<< orbitalIndices[k][l]<<" Coefficient" << hoppingAmplitudes[k][l]*tmpPhase<<"NumTranslation X = "<<NumXTranslations <<endl;
+#endif
+		    }
 		}
 	    }
 	}      

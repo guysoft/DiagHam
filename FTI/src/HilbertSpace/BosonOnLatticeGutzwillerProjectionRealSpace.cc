@@ -586,25 +586,27 @@ void BosonOnLatticeGutzwillerProjectionRealSpace::GetCompositeFermionWavefunctio
   ComplexMatrix SlaterCF(NbrBosons, NbrBosons);
   ComplexMatrix SlaterJastrow(NbrBosons, NbrBosons);
 #endif
-
- unsigned long * TemporaryState = new unsigned long [this->NbrBosons];
-
+  
+  unsigned long * TemporaryState = new unsigned long [this->NbrBosons];
+  
  for(int i = 0; i < this->HilbertSpaceDimension ; i++)
  {
    this->ConvertToMonomial(this->StateDescription[i],TemporaryState);
-
- for (int p = 0; p < NbrBosons; ++p)
-    {
-    cout <<TemporaryState[p]<<" ";
-    for (int q = 0; q < NbrBosons; ++q)
-    {
-    	  SlaterCF.SetMatrixElement(p,q,cFEigenVecs[p][(int) TemporaryState[q]]);
- 	  SlaterJastrow.SetMatrixElement(p,q,jastrowEigenVecs[p][(int) TemporaryState[q]]);
-    }	      
-    }
-    trialState[i] +=  SlaterCF.Determinant() * SlaterJastrow.Determinant();
-    cout <<endl;
+   
+   for (int p = 0; p < NbrBosons; ++p)
+     {
+       for (int q = 0; q < NbrBosons; ++q)
+	 {
+	   SlaterCF.SetMatrixElement(p,q,cFEigenVecs[p][(int) TemporaryState[q]]);
+	   SlaterJastrow.SetMatrixElement(p,q,jastrowEigenVecs[p][(int) TemporaryState[q]]);
+	   
+	   //   SlaterCF.SetMatrixElement(p,q,Conj(cFEigenVecs[p][(int) TemporaryState[q]]));
+	   //   SlaterJastrow.SetMatrixElement(p,q,Conj(jastrowEigenVecs[p][(int) TemporaryState[q]]));
+	 }	      
+     }
+   trialState[i] +=  SlaterCF.Determinant() * SlaterJastrow.Determinant();
  }
+ delete [] TemporaryState;
 }
 
 

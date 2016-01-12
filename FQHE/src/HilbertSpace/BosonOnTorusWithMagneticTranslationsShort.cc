@@ -139,7 +139,7 @@ BosonOnTorusWithMagneticTranslationsShort::BosonOnTorusWithMagneticTranslationsS
   this->LookUpTableShift = bosons.LookUpTableShift;
   this->LookUpTable = bosons.LookUpTable;
   this->RescalingFactors = bosons.RescalingFactors;
-  this->NbrStateInOrbit = bosons .NbrStateInOrbit;
+  this->NbrStateInOrbit = bosons.NbrStateInOrbit;
 
 }
 

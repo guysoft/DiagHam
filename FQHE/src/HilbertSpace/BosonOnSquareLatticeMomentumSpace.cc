@@ -1058,7 +1058,6 @@ void BosonOnSquareLatticeMomentumSpace::SymmetrizeU1U1StateCore (ComplexVector& 
 
 Complex BosonOnSquareLatticeMomentumSpace::ComputeOverlapWaveFunctionsWithDifferentGamma (ComplexVector& firstVector, ComplexVector& secondVector, Complex * overlapMatrix)
 {
-
    Complex Result (0,0);
    unsigned long * TmpState = new unsigned long [this->NbrBosons];
    for (int i = 0; i < this->HilbertSpaceDimension; i++)
@@ -1072,7 +1071,6 @@ Complex BosonOnSquareLatticeMomentumSpace::ComputeOverlapWaveFunctionsWithDiffer
       Result += Conj(secondVector[i]) *  firstVector[i] * Tmp; 
     } 
  delete []  TmpState;
-
  return Result;
 }
 

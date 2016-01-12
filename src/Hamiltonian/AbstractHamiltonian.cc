@@ -92,9 +92,13 @@ HermitianMatrix& AbstractHamiltonian::GetHamiltonian (HermitianMatrix& M)
     {
       TmpV1[i] = 1.0;
       if (this->IsHermitian())
+	{
 	this->HermitianLowLevelMultiply(TmpV1, TmpV2);
+	}
       else
-	this->LowLevelMultiply(TmpV1, TmpV2, i, 1);
+	{
+	  this->LowLevelMultiply(TmpV1, TmpV2, i, 1);
+	}
       if (this->LeftHamiltonianVectorMultiplicationFlag == false)
 	{
 	  for (int j = i; j < this->GetHilbertSpaceDimension(); j++)

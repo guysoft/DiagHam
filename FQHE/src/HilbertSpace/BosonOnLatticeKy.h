@@ -427,6 +427,7 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // return value = number of components that have been added to the density matrix
   virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnLattice* complementaryHilbertSpace,  ParticleOnLattice* destinationHilbertSpace, ComplexVector& groundState,  HermitianMatrix* densityMatrix);
   
+  inline int GetIndexFromQuantumNumber(int q);
  protected:
 
   // find state index
@@ -599,6 +600,17 @@ inline void BosonOnLatticeKy::FermionToBoson(unsigned long initialState, int ini
       initialStateLzMax -= TmpPower;
     }
   --finalStateLzMax;
+}
+
+inline int BosonOnLatticeKy::GetIndexFromQuantumNumber(int q)
+{
+  this->TemporaryStateHighestBit = q;
+  for(int i = 0; i <q ; i++)
+    this->TemporaryState[i] = 0;
+  this->TemporaryState[q] = 1;
+  int TmpIndex = this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateHighestBit), this->TemporaryStateHighestBit + this->NbrBosons - 1); 
+  cout <<q<<" "<<TmpIndex<<endl;
+  return TmpIndex;
 }
 
 #endif

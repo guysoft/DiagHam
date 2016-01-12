@@ -85,7 +85,7 @@ ParticleOnLatticeRealSpaceHamiltonian::ParticleOnLatticeRealSpaceHamiltonian(Par
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
-  this->HermitianSymmetryFlag = true;
+  this->HermitianSymmetryFlag = false;
   
   this->EvaluateOneBodyFactorsFromTightBingding(tightBinding);
   this->EvaluateInteractionFactorsFromDensityDensity(densityDensity);
