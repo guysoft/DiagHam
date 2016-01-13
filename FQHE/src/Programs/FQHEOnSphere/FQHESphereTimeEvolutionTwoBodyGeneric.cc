@@ -359,6 +359,7 @@ int main(int argc, char** argv)
       Operation.ApplyOperation(Architecture.GetArchitecture());
       Complex Energy = (TmpInitialState) * (TmpState);
       FileEnergy << (TimeShift + (i + 1)*TmpTime) << " " << Energy.Re << endl;
+      cout << "E = " << Energy.Re << endl;
     }
   }
   

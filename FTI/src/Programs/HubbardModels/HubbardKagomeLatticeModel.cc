@@ -92,6 +92,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "NNNjx", "strength of the next neareast neighbor SxSx interaction", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "NNNjy", "strength of the next neareast neighbor SySy interaction", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "NNNjz", "strength of the next neareast neighbor SzSz interaction", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "jD", "strength of the third neareast neighbor SzSz interaction", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "DM", "strength of the neareast neighbor Dzyaloshinskii-Moriya interaction", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "cylinder", "use periodic boundary conditions in one direction (y) only");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
@@ -198,7 +199,7 @@ int main(int argc, char** argv)
     sprintf (FilePrefix, "%s_cylinder_x_%d_y_%d_n_%d_ns_%d", StatisticPrefix, NbrSitesX, NbrSitesY, NbrParticles, NbrSites);
   
   char* FileParameterString = new char [256];
-  sprintf (FileParameterString, "jx_%.6f_jy_%.6f_jz_%.6f_NNNjx_%.6f_NNNjy_%.6f_NNNjz_%.6f_DM_%.6f", Manager.GetDouble("jx"), Manager.GetDouble("jy"), Manager.GetDouble("jz"), Manager.GetDouble("NNNjx"), Manager.GetDouble("NNNjy"), Manager.GetDouble("NNNjz"), Manager.GetDouble("DM"));
+  sprintf (FileParameterString, "jx_%.6f_jy_%.6f_jz_%.6f_NNNjx_%.6f_NNNjy_%.6f_NNNjz_%.6f_jD_%.6f_DM_%.6f", Manager.GetDouble("jx"), Manager.GetDouble("jy"), Manager.GetDouble("jz"), Manager.GetDouble("NNNjx"), Manager.GetDouble("NNNjy"), Manager.GetDouble("NNNjz"), Manager.GetDouble("jD"), Manager.GetDouble("DM"));
 
   char* CommentLine = new char [256];
   if (SzSymmetryFlag == false)
@@ -281,6 +282,7 @@ int main(int argc, char** argv)
   double TmpNNNJx = Manager.GetDouble("NNNjx");
   double TmpNNNJy = Manager.GetDouble("NNNjy");
   double TmpNNNJz = Manager.GetDouble("NNNjz");
+  double TmpJD = Manager.GetDouble("jD");
   
   
 /*  
@@ -426,9 +428,20 @@ int main(int argc, char** argv)
 	      SzSzInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0, NbrSitesX, NbrSitesY),
 					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j - 1, 2, NbrSitesX, NbrSitesY),  TmpNNNJz);
 	    }	    
-	    
 	  }
-	  
+	 if (TmpJD != 0.0)
+	  {
+	     SzSzInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 1, NbrSitesX, NbrSitesY),
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j + 1, 1, NbrSitesX, NbrSitesY),  TmpJD);
+	     if ((CylinderFlag == false) || (i < NbrSitesX - 1))
+	     {
+	      SzSzInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0, NbrSitesX, NbrSitesY),
+				     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j - 1, 0, NbrSitesX, NbrSitesY),  TmpJD);
+		  
+	      SzSzInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),
+				     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j, 2, NbrSitesX, NbrSitesY),  TmpJD);
+	      }
+	    }	  
 	}
     }
   bool FirstRunFlag = true;
