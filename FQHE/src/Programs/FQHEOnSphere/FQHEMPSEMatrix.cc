@@ -52,7 +52,6 @@ using std::ofstream;
 
 
 
-
 int main(int argc, char** argv)
 {
   cout.precision(14); 
@@ -165,7 +164,7 @@ int main(int argc, char** argv)
     {
       NbrEigenstates = Manager.GetInteger("nbr-eigenstates");
     }
-
+  
   double EnergyShift = 0.0;
   if (Manager.GetBoolean("power-method") == true)
     {
@@ -343,10 +342,7 @@ int main(int argc, char** argv)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
       if ((Manager.GetBoolean("right-eigenstates") == true) || (Manager.GetBoolean("left-eigenstates") == false))
 	{
-	  ETransposeHamiltonian = new TensorProductSparseMatrixSelectedBlockHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients, 
-											EffectiveDimension, EffectiveBlockIndices, 
-											BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 
-											Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);    
+	  ETransposeHamiltonian = new TensorProductSparseMatrixSelectedBlockHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients, EffectiveDimension, EffectiveBlockIndices, BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);    
 	}
       if (Manager.GetBoolean("left-eigenstates") == true)
 	{
