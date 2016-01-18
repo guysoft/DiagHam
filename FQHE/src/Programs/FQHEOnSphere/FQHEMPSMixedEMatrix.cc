@@ -160,7 +160,7 @@ int main(int argc, char** argv)
       sprintf (StateName, "%s_%s", MPSLeftMatrix->GetName(), MPSRightMatrix->GetName());
     }
 
-  int NbrEigenstates = MPSLeftMatrix->GetTransferMatrixLargestEigenvalueDegeneracy();
+  int NbrEigenstates = MPSLeftMatrix->GetTransferMatrixLargestEigenvalueDegeneracy()*2;
   NbrEigenstates += Manager.GetInteger("nbr-excited");
   if (Manager.GetInteger("nbr-eigenstates") > 0)
     {
@@ -269,8 +269,65 @@ int main(int argc, char** argv)
     }
   RightMatrices[0].SetMatrixElement(0,0,sin(Theta));
   RightMatrices[1].SetMatrixElement(0,0,cos(Theta));
+
+  int NbrOrbitals = MPSLeftMatrix->GetNbrOrbitals();
+  int NbrStatesPerOrbital = MPSLeftMatrix->GetMaximumOccupation() + 1;
+  int NbrStatesPerBlock =  1;
+  int NbrRMatrices = 2;
+  for (int i = 0; i < NbrOrbitals ; i++)
+    NbrStatesPerBlock *= NbrStatesPerOrbital;
+
+
+  cout << "NbrOrbitals = " << NbrOrbitals << " NbrStatesPerOrbital = " <<NbrStatesPerOrbital<<" NbrStatesPerBlock =" <<NbrStatesPerBlock<<endl; 
+  unsigned long * ArrayPhysicalIndice = MPSLeftMatrix->GetPhysicalIndices();
+  
+  /*  for (int i = 0; i < NbrStatesPerBlock ; i++)
+    {
+      cout <<" i = " << i << " " << ArrayPhysicalIndice[i]<<endl;
+      }*/
+  SparseRealMatrix* FusedRMatrices = new SparseRealMatrix [NbrStatesPerBlock];
+  
+  int TmpI;
+  for(int i =0 ; i < NbrStatesPerBlock; i++)
+    { 
+      //      cout <<"i = "<<i <<endl;
+      TmpI = i;
+      //      cout <<"TmpI = "<<TmpI <<endl;
+      int Index = SearchInArray( (unsigned long)( TmpI %  NbrStatesPerOrbital) , ArrayPhysicalIndice,  NbrRMatrices);
+      if (Index <0)
+	{
+	  FusedRMatrices[i] = SparseRealMatrix(RightMatrices[0].GetNbrRow(),RightMatrices[0].GetNbrColumn());
+	}
+      else
+	{
+	  FusedRMatrices[i].Copy(RightMatrices[Index]);
+	}
+      TmpI /= NbrStatesPerOrbital;
+      //      cout <<"TmpI = "<<TmpI <<endl;
+      for(int p = 1; p < NbrOrbitals ; p++)
+	{
+	  int Index = SearchInArray( (unsigned long)( TmpI %   NbrStatesPerOrbital) , ArrayPhysicalIndice,  NbrRMatrices);
+	  if (Index <0)
+	    {
+	      FusedRMatrices[i].ClearMatrix ();
+	    }
+	  else
+	    {
+	      FusedRMatrices[i].Multiply(RightMatrices[Index]);
+	    }
+	  TmpI /= NbrStatesPerOrbital;
+	  // cout <<"TmpI = "<<TmpI <<endl;
+	}
+    }
+  
+  /*  for(int i =0 ; i < NbrStatesPerBlock; i++)
+    { 
+      cout << "i = " << i << " "<<FusedRMatrices[i]<<endl;
+      }*/
+
+
   TensorProductSparseMatrixHamiltonian  * ETransposeHamiltonian =0;
-  ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, SparseBMatrices, RightMatrices, Coefficients, Architecture.GetArchitecture());
+  ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, SparseBMatrices, FusedRMatrices, Coefficients, Architecture.GetArchitecture());
   Architecture.GetArchitecture()->SetDimension(SparseBMatrices[0].GetNbrRow());
 
   FQHEMPSEMatrixMainTask TaskLeft(&Manager, ETransposeHamiltonian, NbrEigenstates, false, true, 1e-10, EnergyShift, OutputFileName);
