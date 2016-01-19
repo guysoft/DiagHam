@@ -38,6 +38,10 @@
 #include <math.h>
 #include <fstream>
 
+#ifndef M_PI
+#    define M_PI 3.14159265358979323846
+#endif
+
 using std::cout;
 using std::endl;
 using std::ios;
@@ -94,6 +98,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "NNNjz", "strength of the next neareast neighbor SzSz interaction", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "jD", "strength of the third neareast neighbor SzSz interaction", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "DM", "strength of the neareast neighbor Dzyaloshinskii-Moriya interaction", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "inserted flux in the y direction", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "cylinder", "use periodic boundary conditions in one direction (y) only");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1); 
@@ -199,7 +204,7 @@ int main(int argc, char** argv)
     sprintf (FilePrefix, "%s_cylinder_x_%d_y_%d_n_%d_ns_%d", StatisticPrefix, NbrSitesX, NbrSitesY, NbrParticles, NbrSites);
   
   char* FileParameterString = new char [256];
-  sprintf (FileParameterString, "jx_%.6f_jy_%.6f_jz_%.6f_NNNjx_%.6f_NNNjy_%.6f_NNNjz_%.6f_jD_%.6f_DM_%.6f", Manager.GetDouble("jx"), Manager.GetDouble("jy"), Manager.GetDouble("jz"), Manager.GetDouble("NNNjx"), Manager.GetDouble("NNNjy"), Manager.GetDouble("NNNjz"), Manager.GetDouble("jD"), Manager.GetDouble("DM"));
+  sprintf (FileParameterString, "jx_%.6f_jy_%.6f_jz_%.6f_NNNjx_%.6f_NNNjy_%.6f_NNNjz_%.6f_jD_%.6f_DM_%.6f_gammay_%.6f", Manager.GetDouble("jx"), Manager.GetDouble("jy"), Manager.GetDouble("jz"), Manager.GetDouble("NNNjx"), Manager.GetDouble("NNNjy"), Manager.GetDouble("NNNjz"), Manager.GetDouble("jD"), Manager.GetDouble("DM"), Manager.GetDouble("gamma-y"));
 
   char* CommentLine = new char [256];
   if (SzSymmetryFlag == false)
@@ -278,7 +283,8 @@ int main(int argc, char** argv)
   double TmpJy = Manager.GetDouble("jy");
   double TmpJz = Manager.GetDouble("jz");
   double TmpDM = Manager.GetDouble("DM");  
-  cout << "DM = " << TmpDM << endl;
+  double GammaY = 2.0 * M_PI * Manager.GetDouble("gamma-y") / ((double) NbrSitesY);  
+//   cout << "DM = " << TmpDM << endl;
   double TmpNNNJx = Manager.GetDouble("NNNjx");
   double TmpNNNJy = Manager.GetDouble("NNNjy");
   double TmpNNNJz = Manager.GetDouble("NNNjz");
@@ -331,31 +337,31 @@ int main(int argc, char** argv)
 	  
 	  
 	  SxSxInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),  TmpJx);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),  TmpJx * cos(0.5 * GammaY));
 	  SySyInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),  TmpJy);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),  TmpJy * cos(0.5 * GammaY));
 	  SzSzInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0, NbrSitesX, NbrSitesY),
 					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),  TmpJz);
 	  SxSyInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),  -TmpDM);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),  -TmpDM + 0.5 * (TmpJx + TmpJy) * sin(0.5 * GammaY));
 	  
 	  SxSxInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 1, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),  TmpJx);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),  TmpJx * cos(0.5 * GammaY));
 	  SySyInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 1, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),  TmpJy);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),  TmpJy * cos(0.5 * GammaY));
 	  SzSzInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 1, NbrSitesX, NbrSitesY),
 					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),  TmpJz);
 	  SxSyInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 1, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),  TmpDM);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),  TmpDM + 0.5 * (TmpJx + TmpJy) * sin(0.5 * GammaY));
 	  
 	  SxSxInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j + 1, 0, NbrSitesX, NbrSitesY),  TmpJx);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j + 1, 0, NbrSitesX, NbrSitesY),  TmpJx * cos(0.5 * GammaY));
 	  SySyInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j + 1, 0, NbrSitesX, NbrSitesY),  TmpJy);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j + 1, 0, NbrSitesX, NbrSitesY),  TmpJy * cos(0.5 * GammaY));
 	  SzSzInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),
 					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j + 1, 0, NbrSitesX, NbrSitesY),  TmpJz);
 	  SxSyInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j + 1, 0, NbrSitesX, NbrSitesY),  TmpDM);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j + 1, 0, NbrSitesX, NbrSitesY),  TmpDM + 0.5 * (TmpJx + TmpJy) * sin(0.5 * GammaY));
 	  
 	  if ((CylinderFlag == false) || (i < NbrSitesX - 1))
 	  {
@@ -369,64 +375,85 @@ int main(int argc, char** argv)
 					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j, 0, NbrSitesX, NbrSitesY),  -TmpDM);
 	  
 	    SxSxInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 1, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j - 1, 2, NbrSitesX, NbrSitesY),  TmpJx);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j - 1, 2, NbrSitesX, NbrSitesY),  TmpJx * cos(-0.5 * GammaY));
 	    SySyInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 1, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j - 1, 2, NbrSitesX, NbrSitesY),  TmpJy);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j - 1, 2, NbrSitesX, NbrSitesY),  TmpJy* cos(-0.5 * GammaY));
 	    SzSzInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 1, NbrSitesX, NbrSitesY),
 					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j - 1, 2, NbrSitesX, NbrSitesY),  TmpJz);
 	    SxSyInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 1, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j - 1, 2, NbrSitesX, NbrSitesY),  TmpDM);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j - 1, 2, NbrSitesX, NbrSitesY),  TmpDM + 0.5 * (TmpJx + TmpJy) * sin(-0.5 * GammaY));
 	  }
 	  
 	  // NNN interaction terms
 	  if ((TmpNNNJx != 0.0) || (TmpNNNJy != 0.0) || (TmpNNNJz != 0.0))
 	  {
-	    cout << TmpNNNJx << " " << TmpNNNJy << " " << TmpNNNJz << endl;
+// 	    cout << TmpNNNJx << " " << TmpNNNJy << " " << TmpNNNJz << endl;
 	    SxSxInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j - 1, 1, NbrSitesX, NbrSitesY),  TmpNNNJx);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j - 1, 1, NbrSitesX, NbrSitesY),  TmpNNNJx * cos(-GammaY));
 	    SySyInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j - 1, 1, NbrSitesX, NbrSitesY),  TmpNNNJy);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j - 1, 1, NbrSitesX, NbrSitesY),  TmpNNNJy * cos(-GammaY));
 	    SzSzInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0, NbrSitesX, NbrSitesY),
 					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j - 1, 1, NbrSitesX, NbrSitesY),  TmpNNNJz);
 	  
 	    SxSxInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 1, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j - 1, 2, NbrSitesX, NbrSitesY),  TmpNNNJx);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j - 1, 2, NbrSitesX, NbrSitesY),  TmpNNNJx * cos(-0.5 * GammaY));
 	    SySyInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 1, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j - 1, 2, NbrSitesX, NbrSitesY),  TmpNNNJy);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j - 1, 2, NbrSitesX, NbrSitesY),  TmpNNNJy * cos(-0.5 * GammaY));
 	    SzSzInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 1, NbrSitesX, NbrSitesY),
 					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j - 1, 2, NbrSitesX, NbrSitesY),  TmpNNNJz);
+	    
+	    if (((TmpNNNJx + TmpNNNJy) != 0.0) && (GammaY != 0.0))
+	      {
+		SxSyInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0, NbrSitesX, NbrSitesY),
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j - 1, 1, NbrSitesX, NbrSitesY), 0.5 * (TmpNNNJx + TmpNNNJy) * sin( -GammaY));
+		SxSyInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 1, NbrSitesX, NbrSitesY),
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i, j - 1, 2, NbrSitesX, NbrSitesY),  0.5 * (TmpNNNJx + TmpNNNJy) * sin(-0.5 * GammaY));
+		
+	      }
 	    
 	    
 	    if ((CylinderFlag == false) || (i < NbrSitesX - 1))
 	    {
 	      SxSxInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 1, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j - 1, 0, NbrSitesX, NbrSitesY),  TmpNNNJx);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j - 1, 0, NbrSitesX, NbrSitesY),  TmpNNNJx * cos(GammaY));
 	      SySyInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 1, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j - 1, 0, NbrSitesX, NbrSitesY),  TmpNNNJy);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j - 1, 0, NbrSitesX, NbrSitesY),  TmpNNNJy * cos(GammaY));
 	      SzSzInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 1, NbrSitesX, NbrSitesY),
 					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j - 1, 0, NbrSitesX, NbrSitesY),  TmpNNNJz);
 	    
 	      SxSxInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j, 0, NbrSitesX, NbrSitesY),  TmpNNNJx);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j, 0, NbrSitesX, NbrSitesY),  TmpNNNJx * cos(-0.5 * GammaY));
 	      SySyInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j, 0, NbrSitesX, NbrSitesY),  TmpNNNJy);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j, 0, NbrSitesX, NbrSitesY),  TmpNNNJy * cos(-0.5 * GammaY));
 	      SzSzInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),
 					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j, 0, NbrSitesX, NbrSitesY),  TmpNNNJz);
 	      
 	      SxSxInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 1, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j, 2, NbrSitesX, NbrSitesY),  TmpNNNJx);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j, 2, NbrSitesX, NbrSitesY),  TmpNNNJx * cos(0.5 * GammaY));
 	      SySyInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 1, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j, 2, NbrSitesX, NbrSitesY),  TmpNNNJy);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j, 2, NbrSitesX, NbrSitesY),  TmpNNNJy * cos(0.5 * GammaY));
 	      SzSzInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 1, NbrSitesX, NbrSitesY),
 					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j, 2, NbrSitesX, NbrSitesY),  TmpNNNJz);
 	      
 	        
 	      SxSxInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j - 1, 2, NbrSitesX, NbrSitesY),  TmpNNNJx);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j - 1, 2, NbrSitesX, NbrSitesY),  TmpNNNJx * cos(-0.5 * GammaY));
 	      SySyInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0, NbrSitesX, NbrSitesY),
-					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j - 1, 2, NbrSitesX, NbrSitesY),  TmpNNNJy);
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j - 1, 2, NbrSitesX, NbrSitesY),  TmpNNNJy * cos(-0.5 * GammaY));
 	      SzSzInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0, NbrSitesX, NbrSitesY),
 					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j - 1, 2, NbrSitesX, NbrSitesY),  TmpNNNJz);
+	      
+	      if (((TmpNNNJx + TmpNNNJy) != 0.0) && (GammaY != 0.0))
+	      {
+		SxSyInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 1, NbrSitesX, NbrSitesY),
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j - 1, 0, NbrSitesX, NbrSitesY), 0.5 * (TmpNNNJx + TmpNNNJy) * sin(-GammaY));
+		SxSyInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2, NbrSitesX, NbrSitesY),
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j, 0, NbrSitesX, NbrSitesY), 0.5 * (TmpNNNJx + TmpNNNJy) * sin(-0.5 * GammaY));
+		SxSyInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 1, NbrSitesX, NbrSitesY),
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j, 2, NbrSitesX, NbrSitesY), 0.5 * (TmpNNNJx + TmpNNNJy) * sin(0.5 * GammaY));
+		SxSyInteraction.AddToMatrixElement(GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0, NbrSitesX, NbrSitesY),
+					     GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j - 1, 2, NbrSitesX, NbrSitesY), 0.5 * (TmpNNNJx + TmpNNNJy) * sin(-0.5 * GammaY));
+	      }
 	    }	    
 	  }
 	 if (TmpJD != 0.0)
@@ -524,7 +551,7 @@ int main(int argc, char** argv)
 	      HermitianMatrix TightBindingMatrix (2 * NbrSites, true);
 	      if (NoTranslationFlag)
 	      {
-		if (Manager.GetDouble("DM") == 0.0)
+		if ((Manager.GetDouble("DM") == 0.0) && (GammaY == 0))
 		  Hamiltonian = new ParticleOnLatticeWithSpinFullRealSpaceHamiltonian(Space, NbrParticles, NbrSites,
 												   TightBindingMatrix,
 												  DensityDensityInteractionupup, DensityDensityInteractiondowndown, 
@@ -541,7 +568,7 @@ int main(int argc, char** argv)
 	      }
 	      else
 	      {
-		if (Manager.GetDouble("DM") == 0.0)
+		if ((Manager.GetDouble("DM") == 0.0) && (GammaY == 0))
 		  Hamiltonian = new ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian(Space, NbrParticles, NbrSites, XMomentum, NbrSitesX, YMomentum, NbrSitesY,TightBindingMatrix,
 												  DensityDensityInteractionupup, DensityDensityInteractiondowndown, 
 												  DensityDensityInteractionupdown, SxSxInteraction,

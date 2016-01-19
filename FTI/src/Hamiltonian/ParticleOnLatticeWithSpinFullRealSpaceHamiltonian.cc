@@ -674,7 +674,7 @@ void ParticleOnLatticeWithSpinFullRealSpaceHamiltonian::EvaluateInteractionFacto
 		      this->InteractionFactorsupupupdown[this->NbrInterSectorSums][1] = 0.0;
 		      this->InteractionFactorsdowndownupdown[this->NbrInterSectorSums][1] = 0.0;
 		      this->InteractionFactorsupdownupdown[this->NbrInterSectorSums][2] =  Complex (-0.25 * Sign * (TmpSxSx + TmpSySy), -0.5 * Sign * TmpSxSy);
-		      cout << this->InteractionFactorsupdownupdown[this->NbrInterSectorSums][2] << endl;
+// 		      cout << this->InteractionFactorsupdownupdown[this->NbrInterSectorSums][2] << endl;
 		      this->InteractionFactorsupdownupdown[this->NbrInterSectorSums][3] =  Sign * (-0.25 * TmpSzSz);
 // 		    }
 		  ++this->NbrInterSectorSums;
