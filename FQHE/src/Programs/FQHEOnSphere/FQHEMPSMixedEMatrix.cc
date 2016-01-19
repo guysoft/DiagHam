@@ -75,6 +75,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "right-eigenstates", "compute the right eigenstates");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "theta", "angle between the components");
   (*SystemGroup) += new BooleanOption  ('\n', "left-eigenstates", "compute the left eigenstates");
+  (*SystemGroup) += new BooleanOption  ('\n', "fixed-parity", "compute the left eigenstates");
+
   
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "memory", "amount of memory that can used for precalculations (in Mb)", 500);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "ematrix-memory", "amount of memory that can used for precalculations of the E matrix (in Mb)", 500);
@@ -110,7 +112,7 @@ int main(int argc, char** argv)
   int NbrFluxQuanta = 1;
   int TotalLz = 0;
   double Theta =  Manager.GetDouble("theta");
-
+  bool ParityFlag = Manager.GetBoolean("fixed-parity");
   bool CylinderFlag = Manager.GetBoolean("normalize-cylinder");
 
   int LandauLevel = 0;
@@ -178,6 +180,15 @@ int main(int argc, char** argv)
   char* OutputFileName = 0;
   char * AngleString = new char [50];
   sprintf(AngleString,"theta_%f",Theta);
+  char * ParityString = new char [50];
+  if (ParityFlag)
+    {
+      sprintf(ParityString,"%s","fixedparity_");
+    }
+  else
+    sprintf(ParityString,"%s","");
+
+
   if (Manager.GetString("output-file") != 0)
     {
       OutputFileName = new char [strlen(Manager.GetString("output-file")) + 1];
@@ -199,26 +210,25 @@ int main(int argc, char** argv)
 	    {
 	      if (Manager.GetBoolean("boson") == true)
 		{
-		  sprintf(PrefixOutputFileName, "ematrix_diagblock_cylinder_%s_%s_perimeter_%f_plevel_%ld_maxocc_%ld", StateName,AngleString,  MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"), 
+		  sprintf(PrefixOutputFileName, "ematrix_diagblock_cylinder_%s_%s%s_perimeter_%f_plevel_%ld_maxocc_%ld", StateName,ParityString,AngleString,  MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"), 
 			  Manager.GetInteger("boson-truncation"));
 		}
 	      else
 		{
-		  sprintf(PrefixOutputFileName, "ematrix_diagblock_cylinder_%s_%s_perimeter_%f_plevel_%ld", StateName,AngleString,
-			  MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"));
+		  sprintf(PrefixOutputFileName, "ematrix_diagblock_cylinder_%s_%s%s_perimeter_%f_plevel_%ld", StateName,ParityString,AngleString,  MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"));
 		}
 	    }
 	  else
 	    {
 	      if (Manager.GetBoolean("boson") == true)
 		{
-		  sprintf(PrefixOutputFileName, "ematrix_cylinder_%s_%s_perimeter_%f_plevel_%ld_maxocc_%ld", StateName,AngleString,
+		  sprintf(PrefixOutputFileName, "ematrix_cylinder_%s_%s%s_perimeter_%f_plevel_%ld_maxocc_%ld", StateName,ParityString,AngleString,
 			  MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"), 
 			  Manager.GetInteger("boson-truncation"));
 		}
 	      else
 		{
-		  sprintf(PrefixOutputFileName, "ematrix_cylinder_%s_%s_perimeter_%f_plevel_%ld", StateName,AngleString,
+		  sprintf(PrefixOutputFileName, "ematrix_cylinder_%s_%s%s_perimeter_%f_plevel_%ld", StateName,ParityString,AngleString,
 			  MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"));
 		}
 	    }
@@ -229,12 +239,12 @@ int main(int argc, char** argv)
 	    {
 	      if (Manager.GetBoolean("boson") == true)
 		{
-		  sprintf(PrefixOutputFileName, "ematrix_diagblock_%s_%s_plevel_%ld_maxocc_%ld", StateName,AngleString,
+		  sprintf(PrefixOutputFileName, "ematrix_diagblock_%s_%s%s_plevel_%ld_maxocc_%ld", StateName,ParityString,AngleString,
 			  Manager.GetInteger("p-truncation"), Manager.GetInteger("boson-truncation"));
 		}
 	      else
 		{
-		  sprintf(PrefixOutputFileName, "ematrix_diagblock_%s_%s_plevel_%ld", StateName,AngleString,
+		  sprintf(PrefixOutputFileName, "ematrix_diagblock_%s_%s%s_plevel_%ld", StateName,ParityString,AngleString,
 			  Manager.GetInteger("p-truncation"));
 		}
 	    }
@@ -242,12 +252,12 @@ int main(int argc, char** argv)
 	    {
 	      if (Manager.GetBoolean("boson") == true)
 		{
-		  sprintf(PrefixOutputFileName, "ematrix_%s_%s_plevel_%ld_maxocc_%ld", StateName,AngleString,
+		  sprintf(PrefixOutputFileName, "ematrix_%s_%s%s_plevel_%ld_maxocc_%ld", StateName,ParityString,AngleString,
 			  Manager.GetInteger("p-truncation"), Manager.GetInteger("boson-truncation"));
 		}
 	      else
 		{
-		  sprintf(PrefixOutputFileName, "ematrix_%s_%s_plevel_%ld", StateName,AngleString,
+		  sprintf(PrefixOutputFileName, "ematrix_%s_%s%s_plevel_%ld", StateName,ParityString,AngleString,
 			  Manager.GetInteger("p-truncation"));
 		}
 	    }
@@ -262,11 +272,13 @@ int main(int argc, char** argv)
   SparseRealMatrix MixedEMatrix;
   SparseRealMatrix*  RightMatrices = new SparseRealMatrix[NbrBMatrices];
   double * Coefficients= new double[NbrBMatrices];
+
   for (int i =0;i <NbrBMatrices;i++)
     {
       Coefficients[i] = 1;
       RightMatrices[i] = SparseRealMatrix(1,1);
     }
+
   RightMatrices[0].SetMatrixElement(0,0,sin(Theta));
   RightMatrices[1].SetMatrixElement(0,0,cos(Theta));
 
@@ -281,18 +293,15 @@ int main(int argc, char** argv)
   cout << "NbrOrbitals = " << NbrOrbitals << " NbrStatesPerOrbital = " <<NbrStatesPerOrbital<<" NbrStatesPerBlock =" <<NbrStatesPerBlock<<endl; 
   unsigned long * ArrayPhysicalIndice = MPSLeftMatrix->GetPhysicalIndices();
   
-  /*  for (int i = 0; i < NbrStatesPerBlock ; i++)
-    {
-      cout <<" i = " << i << " " << ArrayPhysicalIndice[i]<<endl;
-      }*/
+
   SparseRealMatrix* FusedRMatrices = new SparseRealMatrix [NbrStatesPerBlock];
   
+  int NbrUn =0 ;
   int TmpI;
   for(int i =0 ; i < NbrStatesPerBlock; i++)
     { 
-      //      cout <<"i = "<<i <<endl;
+      int NbrUn =0 ;
       TmpI = i;
-      //      cout <<"TmpI = "<<TmpI <<endl;
       int Index = SearchInArray( (unsigned long)( TmpI %  NbrStatesPerOrbital) , ArrayPhysicalIndice,  NbrRMatrices);
       if (Index <0)
 	{
@@ -302,8 +311,8 @@ int main(int argc, char** argv)
 	{
 	  FusedRMatrices[i].Copy(RightMatrices[Index]);
 	}
+      NbrUn+=TmpI %  NbrStatesPerOrbital;
       TmpI /= NbrStatesPerOrbital;
-      //      cout <<"TmpI = "<<TmpI <<endl;
       for(int p = 1; p < NbrOrbitals ; p++)
 	{
 	  int Index = SearchInArray( (unsigned long)( TmpI %   NbrStatesPerOrbital) , ArrayPhysicalIndice,  NbrRMatrices);
@@ -315,21 +324,17 @@ int main(int argc, char** argv)
 	    {
 	      FusedRMatrices[i].Multiply(RightMatrices[Index]);
 	    }
+          NbrUn+=TmpI %  NbrStatesPerOrbital;
 	  TmpI /= NbrStatesPerOrbital;
-	  // cout <<"TmpI = "<<TmpI <<endl;
 	}
+      if (( NbrUn %2 ==0)&&(ParityFlag))
+	Coefficients[i] =0;	
     }
-  
-  /*  for(int i =0 ; i < NbrStatesPerBlock; i++)
-    { 
-      cout << "i = " << i << " "<<FusedRMatrices[i]<<endl;
-      }*/
-
 
   TensorProductSparseMatrixHamiltonian  * ETransposeHamiltonian =0;
   ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, SparseBMatrices, FusedRMatrices, Coefficients, Architecture.GetArchitecture());
   Architecture.GetArchitecture()->SetDimension(SparseBMatrices[0].GetNbrRow());
-
+  
   FQHEMPSEMatrixMainTask TaskLeft(&Manager, ETransposeHamiltonian, NbrEigenstates, false, true, 1e-10, EnergyShift, OutputFileName);
   MainTaskOperation TaskOperationLeft (&TaskLeft);
   TaskOperationLeft.ApplyOperation(Architecture.GetArchitecture());

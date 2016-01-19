@@ -346,14 +346,14 @@ int main(int argc, char** argv)
     }
   
   Abstract2DTightBindingModel *TightBindingModel;
-  if (Manager.GetBoolean("triangular")==false)
+  if (Manager.GetBoolean("triangular") == false)
     TightBindingModel= new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true, EmbeddingFlag);
   else
     TightBindingModel= new TightBindingModelHofstadterTriangularQuarter(NbrCellX, NbrCellY, Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
   
   if (Manager.GetBoolean("boson") == false)
     {
-      int FilledNbrBands=-1;
+      int FilledNbrBands = -1;
       double E=TightBindingModel->ComputeGroundstateEnergy(NbrParticles,FilledNbrBands, true);
       cout << "Total energy of groundstate: "<<E<<" ("<<FilledNbrBands<<" filled bands)"<<endl;
     }
@@ -367,12 +367,10 @@ int main(int argc, char** argv)
 	  ParticleOnSphere* Space = 0;
 	  AbstractQHEHamiltonian* Hamiltonian = 0;
 	  
-	  
 	  if (Manager.GetBoolean("real-space") == false)
 	    {
 	      if (NbrBands==1)
 		{
-		  
 		  if (Manager.GetBoolean("boson") == false)
 		    {
 		      if ((NbrCellX * NbrCellY) <= 63)

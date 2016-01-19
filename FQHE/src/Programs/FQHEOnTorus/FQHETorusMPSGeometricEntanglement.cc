@@ -244,9 +244,6 @@ int main(int argc, char** argv)
     }
   
   
-  
-  
-  
   RealVector CoefficientVector (DimensionPhysicalHilbertSpace,true);
   
   for (int i = 0; i <DimensionPhysicalHilbertSpace; i++)

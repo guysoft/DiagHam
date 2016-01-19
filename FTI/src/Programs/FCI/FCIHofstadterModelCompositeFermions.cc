@@ -191,13 +191,17 @@ int main(int argc, char** argv)
   sprintf (OutputNameCFEnergy, "HoftadterModel_bandstructureWithEmbedding_X_%d_Y_%d_x_%d_y_%d_q_%d.dat", NxZeroCF, NyZeroCF, MaxMomentumXCF,MaxMomentumYCF, FluxPerCellCF);
   TightBindingModelCF2.WriteAsciiSpectrum(OutputNameCFEnergy);
   
-  
+ 
+
+  ComplexMatrix CFEigenVecs =  TightBindingModelCF2.GetRealSpaceTightBindingEigenstates();
+
+  /*
   HermitianMatrix TmpHamCF =   TightBindingModelCF2.GetRealSpaceTightBindingHamiltonian();
 
   ComplexMatrix CFEigenVecs(Lx* Ly, Lx* Ly,true);
   CFEigenVecs.SetToIdentity();
   RealDiagonalMatrix TmpDiagCF;
-  TmpHamCF.LapackDiagonalize(TmpDiagCF, CFEigenVecs);
+  TmpHamCF.LapackDiagonalize(TmpDiagCF, CFEigenVecs);*/
   
   if (verbose) cout << "* LLL states for Jastrow-factor contribute "<<AttachedFlux<<" flux"<<endl;  
   
@@ -214,17 +218,17 @@ if(NoTranslationFlag == true)
  
  
  TightBindingModelHofstadterSquare  JastrowTightBindingModel (MaxMomentumXJastrow, MaxMomentumYJastrow, NxZeroJastrow, NyZeroJastrow, FluxPerCellJastrow, Axis, SolenoidCF_X, SolenoidCF_Y, Architecture.GetArchitecture(),true,EmbeddingFlag);
-  
- //  ComplexMatrix JastrowEigenVecs =  JastrowTightBindingModel.GetRealSpaceTightBindingEigenstates();
+ 
+ ComplexMatrix JastrowEigenVecs =  JastrowTightBindingModel.GetRealSpaceTightBindingEigenstates();
  
  cout <<"Building Jastrow factor with MaxMomentumXJastrow =" << MaxMomentumXJastrow << "  MaxMomentumYJastrow =" << MaxMomentumYJastrow << " NxZeroJastrow  = "<<  NxZeroJastrow<< " NyZeroJastrow = " <<NyZeroJastrow <<" FluxPerCellJastrow = "<< FluxPerCellJastrow <<endl;
   
- HermitianMatrix TmpHamJastrow = JastrowTightBindingModel.GetRealSpaceTightBindingHamiltonian();
-  ComplexMatrix JastrowEigenVecs( Lx* Ly, Lx* Ly,true);
-  JastrowEigenVecs.SetToIdentity();
-  RealDiagonalMatrix TmpDiagJastrow;
-  TmpHamJastrow.LapackDiagonalize(TmpDiagJastrow, JastrowEigenVecs);
-  
+ /*HermitianMatrix TmpHamJastrow = JastrowTightBindingModel.GetRealSpaceTightBindingHamiltonian();
+ ComplexMatrix JastrowEigenVecs( Lx* Ly, Lx* Ly,true);
+ JastrowEigenVecs.SetToIdentity();
+ RealDiagonalMatrix TmpDiagJastrow;
+ TmpHamJastrow.LapackDiagonalize(TmpDiagJastrow, JastrowEigenVecs);*/
+ 
   
   
   if(NoTranslationFlag == false)

@@ -728,6 +728,10 @@ inline void ParticleOnLatticeRealSpaceHamiltonian::EvaluateMNOneBodyFastMultipli
 		  {
 		    indexArray[position] = Index;
 		    coefficientArray[position] = TmpCoefficient * TmpInteractionFactors[k];
+		    
+		    //		    cout <<"j = " <<j <<" ; TmpConnectedSites[k] = " << TmpConnectedSites[k]<<" index " << index <<" Index = " << Index<<" coefficientArray[position] = "<<coefficientArray[position] <<endl;
+		    //		    cout <<"Coefficient = " <<  TmpCoefficient << " TmpInteractionFactors[k] = "<< TmpInteractionFactors[k]<<endl;
+
 		    ++position;
 		  }
 	      }
