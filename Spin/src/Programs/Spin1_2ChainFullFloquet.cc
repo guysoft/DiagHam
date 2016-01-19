@@ -526,7 +526,17 @@ int main(int argc, char** argv)
       cout << "diagonalizing unitary evolution operator" <<  endl;
       gettimeofday (&(TotalStartingTime), 0);
       TmpDiagUnitaryEvolution = ComplexDiagonalMatrix (UnitaryEvolution.GetNbrColumn());
-      UnitaryEvolution.LapackDiagonalize(TmpDiagUnitaryEvolution);
+      ComplexMatrix TmpUnitaryEvolutionEigenstates;
+      if (((Manager["all-eigenstates"] != 0) && (Manager.GetBoolean("all-eigenstates") == true)) ||
+	  ((Manager["eigenstate"] != 0) && (Manager.GetBoolean("eigenstate") == true)))
+	{
+	  TmpUnitaryEvolutionEigenstates = ComplexMatrix(UnitaryEvolution.GetNbrColumn(), UnitaryEvolution.GetNbrColumn());
+	  UnitaryEvolution.LapackDiagonalize(TmpDiagUnitaryEvolution, TmpUnitaryEvolutionEigenstates);
+	}
+      else
+	{
+	  UnitaryEvolution.LapackDiagonalize(TmpDiagUnitaryEvolution);
+	}
       gettimeofday (&(TotalEndingTime), 0);
       Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
 		     ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
@@ -537,7 +547,55 @@ int main(int argc, char** argv)
 	{
 	  TmpPhases[i] = Arg(TmpDiagUnitaryEvolution[i]);
 	}
-      SortArrayUpOrdering<Complex>(TmpPhases, TmpDiagUnitaryEvolution.GetDiagonalElements(), Lim);
+      if (TmpUnitaryEvolutionEigenstates.GetNbrRow() == 0)
+	{
+	  SortArrayUpOrdering<Complex>(TmpPhases, TmpDiagUnitaryEvolution.GetDiagonalElements(), Lim);
+	}
+      else
+	{
+	  int* TmpArray = new int[Lim];
+	  for  (int i = 0; i < Lim; ++i)
+	    {
+	      TmpArray[i] = i;
+	    }
+	  SortArrayUpOrdering<int>(TmpPhases, TmpArray, Lim);
+	  ComplexVector* TmpVectors = new ComplexVector[Lim];
+	  for  (int i = 0; i < Lim; ++i)
+	    {
+	      TmpVectors[i] = TmpUnitaryEvolutionEigenstates[TmpArray[i]];		  
+	    }
+	  ComplexDiagonalMatrix TmpDiagUnitaryEvolution2(Lim);
+	  for  (int i = 0; i < Lim; ++i)
+	    {
+	      TmpDiagUnitaryEvolution2[i] = TmpDiagUnitaryEvolution[TmpArray[i]];
+	    }
+	  TmpDiagUnitaryEvolution = TmpDiagUnitaryEvolution2;
+	  ComplexMatrix TmpUnitaryEvolutionEigenstates2(TmpVectors, Lim);
+	  if ((Manager["all-eigenstates"] != 0) && (Manager.GetBoolean("all-eigenstates") == true))
+	    {
+	      char* TmpVectorName = ReplaceExtensionToFileName (TauOutputFileNames[j], "dat", "eigenvec.mat");
+	      TmpUnitaryEvolutionEigenstates2.WriteMatrix(TmpVectorName );
+	      delete[] TmpVectorName;
+	    }
+	  else
+	    {
+	      int FirstEigenstateIndex = 0;
+	      if (Manager["first-eigenstate"] != 0)
+		FirstEigenstateIndex = Manager.GetInteger("first-eigenstate");
+	      int NbrEigenvalues = Manager.GetInteger("nbr-eigen");
+	      int LastEigenstateIndex = FirstEigenstateIndex + NbrEigenvalues;
+	      for (; FirstEigenstateIndex < LastEigenstateIndex; ++FirstEigenstateIndex)
+		{
+		  char* TmpExtension = new char [16];
+		  sprintf (TmpExtension, "%d.vec", FirstEigenstateIndex);
+		  char* TmpVectorName = ReplaceExtensionToFileName (TauOutputFileNames[j], "dat", TmpExtension);
+		  TmpUnitaryEvolutionEigenstates2[FirstEigenstateIndex].WriteVector(TmpVectorName);
+		  delete[] TmpExtension;
+		  delete[] TmpVectorName;
+		}
+	    }
+	}
+
       ofstream File;
       File.open(TauOutputFileNames[j], ios::out | ios::app);
       File.precision(14);  
@@ -546,6 +604,7 @@ int main(int argc, char** argv)
 	  File << i << " " << TmpDiagUnitaryEvolution[i] << " " << Norm(TmpDiagUnitaryEvolution[i]) << " " << TmpPhases[i] << endl;
 	}	  
       File.close();
+      
       delete[] TmpPhases;
     }    
   delete Space;	  
