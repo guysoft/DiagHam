@@ -133,6 +133,11 @@ int main(int argc, char** argv)
   int NbrTimeSteps = Manager.GetInteger("nbr-steps");
   double TimeShift = Manager.GetDouble("time-shift");
   
+  if (Manager.GetString("initial-state") == 0)
+  {
+    cout << " Error: an initial state must be provided" << endl;
+    return -1;
+  }
   if (Manager.GetBoolean("boson") == true)
     {
       Statistics = false;
