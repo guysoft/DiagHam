@@ -255,6 +255,12 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   // return value = reference on the output stream
   virtual ostream& PrintAuxiliarySpaceState(ostream& str, int index);
 
+  // get a given physical indiex
+  //
+  // index = index to retrieve
+  // configuration = array where the description of the physical index will be stored
+  virtual void GetPhysicalIndex(int index, unsigned long* configuration);
+
  protected:
 
   // load the specific informations from the file header

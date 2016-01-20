@@ -501,3 +501,34 @@ int* AbstractFQHEMPSMatrix::GetIndexMappingArray()
   return 0;
 }
 
+// get a given physical indiex
+//
+// index = index to retrieve
+//  configuration = array where the description of the physical index will be stored
+
+void AbstractFQHEMPSMatrix::GetPhysicalIndex(int index, unsigned long* configuration)
+{  
+  for (int i = 0; i < this->GetNbrOrbitals(); ++i)
+    {
+      configuration[i] = (this->PhysicalIndices[index] >> i) & 0x1ul;
+    }
+}
+
+// print a given physical index
+//
+// str = reference on the output stream
+// index = integer associated to the  physical index 
+// return value = reference on the output stream
+
+ostream& AbstractFQHEMPSMatrix::PrintPhysicalIndex(ostream& str, int index)
+{
+  unsigned long* TmpConfiguration = new unsigned long[this->GetNbrOrbitals()];
+  this->GetPhysicalIndex(index, TmpConfiguration);
+  str << TmpConfiguration[0];
+  for (int i = 1; i < this->GetNbrOrbitals(); ++i)
+    {
+      str << " " << TmpConfiguration[i];
+    }
+  delete[] TmpConfiguration;
+}
+

@@ -58,6 +58,8 @@
 
 using std::cout;
 using std::endl;
+using std::hex;
+using std::dec;
 
 
 // default constructor 
@@ -174,6 +176,7 @@ void FQHEMPSMatrixManager::AddOptionGroup(OptionManager* manager, const char* co
       (*OutputGroup) += new SingleDoubleOption  ('\n', "flux-insertion", "flux insertion along the tau direction", 0.0);
     }
   (*OutputGroup) += new BooleanOption  ('\n', "show-bmatrices", "show the B matrices");
+  (*OutputGroup) += new BooleanOption  ('\n', "show-fullphysical", "show the physical indices of the B matrices");
   (*OutputGroup) += new BooleanOption  ('\n', "show-fulllabel", "when displaying an auxiliary space index, show its full description (i.e. including its quantum numbers)");
   (*OutputGroup) += new BooleanOption  ('\n', "show-auxiliaryspace", "show the auxiliary space");
 }
@@ -721,7 +724,17 @@ void  FQHEMPSMatrixManager::ShowBMatrices(const char* bMatrixSymbol, AbstractFQH
 	  cout << "----------------------------------" << endl;
 	  for (int i = 0; i < bMatrix->GetNbrMatrices(); ++i)
 	    {
-	      cout << bMatrixSymbol << "^[" << i << "]" << endl;
+	      if (this->Options->GetBoolean("show-fullphysical") == true)
+		{		  
+		  cout << bMatrixSymbol << "^[";
+		  cout << i << " : ";
+		  bMatrix->PrintPhysicalIndex(cout, i);
+		  cout << "]" << endl;
+		}
+	      else
+		{
+		  cout << bMatrixSymbol << "^[" << i << "]" << endl;
+		}
 	      if (this->Options->GetBoolean("show-fulllabel"))
 		{	      
 		  (bMatrix->GetMatrices())[i].PrintNonZero(cout, TmpIndexString, TmpIndexString);

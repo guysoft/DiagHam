@@ -99,8 +99,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption ('\n', "realspace-theta-top", "inclination angle that defines the top of the real space parition (in degrees)", 0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "realspace-theta-bot", "inclination angle that defines the bottom of the real space parition (in degrees)", 90);
   (*SystemGroup) += new SingleDoubleOption ('\n', "realspace-phi-range", "angle between the 2 longitudes that defines the real space parition (in degrees)", 360);
+  (*SystemGroup) += new SingleStringOption  ('\n', "realspace-generic", "use a generic real space partition instead of particle partition (geometrical weight has to be provided through this external file)");
   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
-  (*SystemGroup) += new BooleanOption  ('\n', "use-svd", "use singular value decomposition instead of diagonalization to compute the entropy");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
   (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
@@ -111,6 +111,7 @@ int main(int argc, char** argv)
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
+  (*ToolsGroup) += new BooleanOption  ('\n', "use-svd", "use singular value decomposition instead of diagonalization to compute the entropy");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -328,6 +329,64 @@ int main(int argc, char** argv)
       SubsystemNbrParticles = 0;
     }
 
+  double* WeightAOrbitals = 0;
+  double* WeightBOrbitals = 0;
+  int NbrAOrbitals = LzMax + 1;
+  int NbrBOrbitals = LzMax + 1;
+  char* CutName = 0;
+  if (Manager.GetString("realspace-generic") != 0)
+    {
+      ConfigurationParser RealSpaceWeights;
+      if (RealSpaceWeights.Parse(Manager.GetString("realspace-generic")) == false)
+	{
+	  RealSpaceWeights.DumpErrors(cout) << endl;
+	  return -1;
+	}
+      if (RealSpaceWeights["Name"] != 0)
+	{
+	  CutName = new char [strlen(RealSpaceWeights["Name"]) + 1];
+	  strcpy (CutName, RealSpaceWeights["Name"]);
+	}
+      else
+	{
+	  CutName = new char [32];
+	  sprintf (CutName, "genericcut");
+	}
+      double* TmpSquareWeights = 0;
+      int TmpNbrOrbitals = 0;
+      if (RealSpaceWeights.GetAsDoubleArray("OrbitalSquareWeights", ' ', TmpSquareWeights, TmpNbrOrbitals) == false)
+	{
+	  cout << "OrbitalSquareWeights is not defined or as a wrong value" << endl;
+	  return -1;
+	}
+      if (TmpNbrOrbitals > (LzMax + 1))
+	{
+	  cout << "error, the number of weights (" << TmpNbrOrbitals << ") cannot exceed the number of orbitals (" << (LzMax + 1) << ")" << endl;
+	  return -1;
+	}
+      NbrAOrbitals = (LzMax + 1 + TmpNbrOrbitals) / 2;
+      WeightAOrbitals = new double [NbrAOrbitals];
+      for (int i = 0; i < (NbrAOrbitals - TmpNbrOrbitals); ++i)
+	WeightAOrbitals[i] = 1.0;
+      for (int i = NbrAOrbitals - TmpNbrOrbitals; i < NbrAOrbitals; ++i)
+	{
+	  WeightAOrbitals[i] = sqrt(TmpSquareWeights[i - NbrAOrbitals + TmpNbrOrbitals]);
+	}
+      NbrBOrbitals = (LzMax + 1 + TmpNbrOrbitals) / 2;
+      WeightBOrbitals = new double [NbrBOrbitals];
+      for (int i = 0; i < TmpNbrOrbitals; ++i)
+	{
+	  WeightBOrbitals[i] = sqrt(1.0 - TmpSquareWeights[i]);
+	}
+      for (int i = TmpNbrOrbitals; i < NbrBOrbitals; ++i)
+	{
+	  WeightBOrbitals[i] = 1.0;
+	}      
+    }
+
+  cout << "number of orbitals in A = " << NbrAOrbitals << endl;
+  cout << "number of orbitals in B = " << NbrBOrbitals << endl;
+
   if (DensityMatrixFileName != 0)
     {
       ofstream DensityMatrixFile;
@@ -422,51 +481,73 @@ int main(int argc, char** argv)
 	    {
 	      if (SVDFlag == false)
 		{
-		  if ((2 * SubsystemNbrParticles) <= NbrParticles)
+		  if (WeightAOrbitals == 0)
 		    {
-		      PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), GroundStates[0], Architecture.GetArchitecture());		      
-		    }
-		  else
-		    {
-		      if (Manager.GetDouble("realspace-theta-top") != 0.0)
+		      if ((2 * SubsystemNbrParticles) <= NbrParticles)
 			{
-			  PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), GroundStates[0], Architecture.GetArchitecture());
+			  PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), GroundStates[0], Architecture.GetArchitecture());		      
 			}
 		      else
 			{
-			  PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartition(NbrParticles - SubsystemNbrParticles, TotalLz[0] - SubsystemTotalLz, Manager.GetDouble("realspace-theta-bot"), 180.0, Manager.GetDouble("realspace-phi-range"), GroundStates[0], Architecture.GetArchitecture());		    
-			}
-		    }		 
-		}
-	      else
-		{
-		  if ((2 * SubsystemNbrParticles) <= NbrParticles)
-		    {
-		      PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0], true);
-		      if (PartialEntanglementMatrix.GetNbrRow() != 0)
-			{
-		      Spaces[0]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), PartialEntanglementMatrix);
-			}	
+			  if (Manager.GetDouble("realspace-theta-top") != 0.0)
+			    {
+			      PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), GroundStates[0], Architecture.GetArchitecture());
+			    }
+			  else
+			    {
+			      PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartition(NbrParticles - SubsystemNbrParticles, TotalLz[0] - SubsystemTotalLz, Manager.GetDouble("realspace-theta-bot"), 180.0, Manager.GetDouble("realspace-phi-range"), GroundStates[0], Architecture.GetArchitecture());		    
+			    }
+			}		
 		    }
 		  else
 		    {
-		      if (Manager.GetDouble("realspace-theta-top") != 0.0)
+		      PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixGenericRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz,
+													      NbrAOrbitals, WeightAOrbitals, NbrBOrbitals, WeightBOrbitals,
+													      GroundStates[0]);
+		    } 
+		}
+	      else
+		{
+		  if (WeightAOrbitals == 0)
+		    {
+		      if ((2 * SubsystemNbrParticles) <= NbrParticles)
 			{
 			  PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0], true);
 			  if (PartialEntanglementMatrix.GetNbrRow() != 0)
 			    {
 			      Spaces[0]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), PartialEntanglementMatrix);
-			    }
+			    }	
 			}
 		      else
 			{
-			  PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(NbrParticles - SubsystemNbrParticles, TotalLz[0] - SubsystemTotalLz, GroundStates[0], true);
-			  if (PartialEntanglementMatrix.GetNbrRow() != 0)
+			  if (Manager.GetDouble("realspace-theta-top") != 0.0)
 			    {
-			      Spaces[0]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(NbrParticles - SubsystemNbrParticles, TotalLz[0] - SubsystemTotalLz, Manager.GetDouble("realspace-theta-bot"), 180.0, Manager.GetDouble("realspace-phi-range"), PartialEntanglementMatrix);
+			      PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0], true);
+			      if (PartialEntanglementMatrix.GetNbrRow() != 0)
+				{
+				  Spaces[0]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), PartialEntanglementMatrix);
+				}
 			    }
+			  else
+			    {
+			      PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(NbrParticles - SubsystemNbrParticles, TotalLz[0] - SubsystemTotalLz, GroundStates[0], true);
+			      if (PartialEntanglementMatrix.GetNbrRow() != 0)
+				{
+				  Spaces[0]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(NbrParticles - SubsystemNbrParticles, TotalLz[0] - SubsystemTotalLz, Manager.GetDouble("realspace-theta-bot"), 180.0, Manager.GetDouble("realspace-phi-range"), PartialEntanglementMatrix);
+				}
+			    }
+			}		
+		    }
+		  else
+		    {
+		      PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(NbrParticles - SubsystemNbrParticles, TotalLz[0] - SubsystemTotalLz, GroundStates[0], true);
+		      if(PartialEntanglementMatrix.GetNbrRow() != 0)
+			{
+			  Spaces[0]->EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz, 
+														       NbrAOrbitals, WeightAOrbitals, NbrBOrbitals, WeightBOrbitals, 
+														       PartialEntanglementMatrix);
 			}
-		    }		 
+		    } 
 		}
 	    }
 	  for (int i = 1; i < NbrSpaces; ++i)

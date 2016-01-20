@@ -211,6 +211,12 @@ class FQHEMPSFixedQSectorMatrix : public AbstractFQHEMPSMatrix
   // return value = index mapping array
   virtual int* GetIndexMappingArray();
 
+  // get a given physical indiex
+  //
+  // index = index to retrieve
+  // configuration = array where the description of the physical index will be stored
+  virtual void GetPhysicalIndex(int index, unsigned long* configuration);
+
 };
 
 // get the number of orbitals that associated to a set of B matrices

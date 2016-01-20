@@ -476,24 +476,24 @@ int main(int argc, char** argv)
 	    }
 	  for (int i = 0; i < NbrEMatrixEvolution; ++i)
 	    {		  
+	      unsigned long* TmpPhysicalIndex = new unsigned long[MPSMatrix->GetNbrOrbitals()];
 	      for (int j = 0; j < NbrBMatrices; ++j)
 		{
 		  double Tmp = 1.0;
+		  MPSMatrix->GetPhysicalIndex(j, TmpPhysicalIndex);
 		  for (int k = 0; k < MPSMatrix->GetNbrOrbitals(); ++k)
 		    {
-		      if ((MPSMatrix->GetPhysicalIndices()[j] & (0x1ul << k)) != 0x0ul)
+		      for (int l = 1; l <= TmpPhysicalIndex[k]; ++l)
 			{
 			  Tmp *= WeightBOrbitals[(TmpOrbitalIndex + k)] * WeightBOrbitals[(TmpOrbitalIndex + k)];
 			}
 		    }
 		  Coefficients[j] = Tmp;
 		}
+	      delete[] TmpPhysicalIndex;
 	      TmpOrbitalIndex += MPSMatrix->GetNbrOrbitals();
 	      TensorProductSparseMatrixHamiltonian* ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, BMatrices, BMatrices, Coefficients,
 														     Architecture.GetArchitecture()); 
-	      
-	      //		  VectorHamiltonianMultiplyOperation Operation1 (ETransposeHamiltonian, &RightEigenstate, &TmpEigenstate);
-	      //		  Operation1.ApplyOperation(Architecture.GetArchitecture());
 	      ETransposeHamiltonian->LowLevelMultiply(RightEigenstate, TmpEigenstate);
 	      ComplexVector TmpVector = RightEigenstate;		  
 	      RightEigenstate = TmpEigenstate;
@@ -516,23 +516,24 @@ int main(int argc, char** argv)
 	    }
 	  for (int i = 0; i < NbrEMatrixEvolution; ++i)
 	    {
+	      unsigned long* TmpPhysicalIndex = new unsigned long[MPSMatrix->GetNbrOrbitals()];
 	      for (int j = 0; j < NbrBMatrices; ++j)
 		{
 		  double Tmp = 1.0;
+		  MPSMatrix->GetPhysicalIndex(j, TmpPhysicalIndex);
 		  for (int k = 0; k <  MPSMatrix->GetNbrOrbitals(); ++k)
 		    {
-		      if ((MPSMatrix->GetPhysicalIndices()[j] & (0x1ul << k)) != 0x0ul)
+		      for (int l = 1; l <= TmpPhysicalIndex[k]; ++l)
 			{
 			  Tmp *= WeightAOrbitals[(TmpOrbitalIndex + (MPSMatrix->GetNbrOrbitals() - 1 - k))] * WeightAOrbitals[(TmpOrbitalIndex + (MPSMatrix->GetNbrOrbitals() - 1 - k))];
 			}
 		    }
 		  Coefficients[j] = Tmp;
 		}
+	      delete[] TmpPhysicalIndex;
 	      TmpOrbitalIndex += MPSMatrix->GetNbrOrbitals();
 	      TensorProductSparseMatrixHamiltonian* EHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, ConjugateBMatrices, ConjugateBMatrices, 
 													    Coefficients, Architecture.GetArchitecture()); 
-	      // 		  VectorHamiltonianMultiplyOperation Operation1 (EHamiltonian, &LeftEigenstate, &TmpEigenstate);
-	      // 		  Operation1.ApplyOperation(Architecture.GetArchitecture());
 	      EHamiltonian->LowLevelMultiply(LeftEigenstate, TmpEigenstate);
 	      ComplexVector TmpVector = LeftEigenstate;		  
 	      LeftEigenstate = TmpEigenstate;
@@ -893,9 +894,10 @@ int main(int argc, char** argv)
 				     TmpMatrixElements, TmpColumnIndices, MaxTmpMatrixElements, Architecture.GetArchitecture()); 
 	  if ((WeightAOrbitals != 0) && (j > 0))
 	    {
-	      cout << "WeightAOrbitals[" << i << "]=" << WeightAOrbitals[i] << endl;
+	      double TmpWeight = 1.0;
 	      for (int k = 1; k <= j; ++k)
-		TmpMatrices[j] *= WeightAOrbitals[i] * WeightAOrbitals[i];
+		TmpWeight *= WeightAOrbitals[i] * WeightAOrbitals[i];
+	      TmpMatrices[j] *= TmpWeight;
 	    }
 	}
       FullLeftOverlapMatrix = TmpMatrices[0];
@@ -917,9 +919,10 @@ int main(int argc, char** argv)
 				     TmpMatrixElements, TmpColumnIndices, MaxTmpMatrixElements, Architecture.GetArchitecture()); 
 	  if ((WeightBOrbitals != 0) && (j > 0))
 	    {
-	      cout << "WeightBOrbitals[" << i << "]=" << WeightBOrbitals[i] << endl;
+	      double TmpWeight = 1.0;
 	      for (int k = 1; k <= j; ++k)
-		TmpMatrices[j] *= WeightBOrbitals[MaxNbrFluxQuantaB - i] * WeightBOrbitals[MaxNbrFluxQuantaB - i];
+		TmpWeight *= WeightBOrbitals[MaxNbrFluxQuantaB - i] * WeightBOrbitals[MaxNbrFluxQuantaB - i];
+	      TmpMatrices[j] *= TmpWeight;
 	    }	    
 	}
       FullRightOverlapMatrix = TmpMatrices[0];

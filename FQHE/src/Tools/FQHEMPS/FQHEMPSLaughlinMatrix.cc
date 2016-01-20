@@ -1070,3 +1070,12 @@ ostream& FQHEMPSLaughlinMatrix::PrintAuxiliarySpaceState(ostream& str, int index
   return str;
 }
 
+// get a given physical indiex
+//
+// index = index to retrieve
+// configuration = array where the description of the physical index will be stored
+
+void FQHEMPSLaughlinMatrix::GetPhysicalIndex(int index, unsigned long* configuration)
+{  
+  configuration[0] = this->PhysicalIndices[index];
+}

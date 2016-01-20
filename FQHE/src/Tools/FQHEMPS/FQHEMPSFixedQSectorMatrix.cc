@@ -80,11 +80,21 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matr
   for (int i = 0; i < this->BMatrixGroupSize; ++i)
     NbrGroupBMatrices *= NbrBMatricesPerOrbital;
   SparseRealMatrix* TmpSparseGroupBMatrices = new SparseRealMatrix[NbrGroupBMatrices];
+  unsigned long** TmpPhysicalIndices = new unsigned long*[NbrGroupBMatrices];
+  for (int i = 0; i < NbrGroupBMatrices; ++i)
+    TmpPhysicalIndices[i] = new unsigned long [this->BMatrixGroupSize];
   cout << "grouping " << this->BMatrixGroupSize << " B matrices (" << NbrGroupBMatrices << " matrices)" << endl;
   
   int Step = NbrGroupBMatrices / NbrBMatricesPerOrbital;
+  int TmpOrbitalIndex = this->BMatrixGroupSize - 1;
+  unsigned long* TmpPhysicalIndex = new unsigned long[this->MPSMatrix->GetNbrOrbitals()];
   for (int i = 0; i < NbrGroupBMatrices; i += Step)
-    TmpSparseGroupBMatrices[i].Copy(this->MPSMatrix->GetMatrices()[i / Step]);
+    {
+      TmpSparseGroupBMatrices[i].Copy(this->MPSMatrix->GetMatrices()[i / Step]);
+      this->MPSMatrix->GetPhysicalIndex(i / Step, TmpPhysicalIndex);
+      TmpPhysicalIndices[i][TmpOrbitalIndex] = TmpPhysicalIndex[0];
+    }
+  --TmpOrbitalIndex;
   while (Step > 1)
     {
       int TmpStep = Step / NbrBMatricesPerOrbital;
@@ -93,14 +103,21 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matr
 	  for (int j = 1; j < NbrBMatricesPerOrbital; ++j)
 	    {
 	      TmpSparseGroupBMatrices[i + j * TmpStep].Copy(TmpSparseGroupBMatrices[i]);
+	      for (int k = this->BMatrixGroupSize - 1; k > TmpOrbitalIndex; --k)
+		TmpPhysicalIndices[i + j * TmpStep][k] = TmpPhysicalIndices[i][k];
 	    }
-	  for (int j = 0; j < NbrBMatricesPerOrbital; ++j)
+ 	  for (int j = 0; j < NbrBMatricesPerOrbital; ++j)
 	    {
 	      TmpSparseGroupBMatrices[i + j * TmpStep].Multiply(this->MPSMatrix->GetMatrices()[j]);
+	      this->MPSMatrix->GetPhysicalIndex(j, TmpPhysicalIndex);
+	      TmpPhysicalIndices[i + j * TmpStep][TmpOrbitalIndex] =  TmpPhysicalIndex[0];
 	    }	  
 	}
       Step = TmpStep;
+      --TmpOrbitalIndex;
     }
+  delete[] TmpPhysicalIndex;
+
   int GroupBMatrixDimension = 0l;
   int MinQ;
   int MaxQ;
@@ -252,7 +269,23 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matr
       if (TmpSparseGroupBMatrices2[i].GetNbrRow() > 0)
 	{
 	  this->RealBMatrices[this->NbrBMatrices] = TmpSparseGroupBMatrices2[i];
-	  this->PhysicalIndices[this->NbrBMatrices] = (unsigned long) i;
+	  this->PhysicalIndices[this->NbrBMatrices] = 0x0ul;
+	  if (this->GetMaximumOccupation() == 1)
+	    {
+	      for (int j = 0; j < this->BMatrixGroupSize; ++j)
+		this->PhysicalIndices[this->NbrBMatrices] |= TmpPhysicalIndices[i][j] << j;
+	    }
+	  else
+	    {
+	      int TmpPos = 0;
+	      for (int j = 0; j < this->BMatrixGroupSize; ++j)
+		{
+		  this->PhysicalIndices[this->NbrBMatrices] |= ((0x1ul << TmpPhysicalIndices[i][j]) - 0x1ul) << TmpPos;
+		  TmpPos += TmpPhysicalIndices[i][j];
+		  TmpPos++;
+		}
+	      
+	    }
 	  ++this->NbrBMatrices;
 	}
       else
@@ -260,6 +293,9 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matr
 	  cout << "throwing away B matrix " << i << endl;
 	}
     }
+  for (int i = 0; i < NbrGroupBMatrices; ++i)
+    delete[] TmpPhysicalIndices[i];
+  delete[] TmpPhysicalIndices;
 }
 
   // destructor
@@ -403,5 +439,47 @@ void FQHEMPSFixedQSectorMatrix::GetMatrixBoundaryIndices(int& rowIndex, int& col
   columnIndex -= MinQ;
   rowIndex = 1;
   columnIndex = 1;
+}
+
+// get a given physical indiex
+//
+// index = index to retrieve
+// configuration = array where the description of the physical index will be stored
+
+void FQHEMPSFixedQSectorMatrix::GetPhysicalIndex(int index, unsigned long* configuration)
+{
+  if (this->GetMaximumOccupation() == 1)
+    {
+      for (int i = 0; i < this->GetNbrOrbitals(); ++i)
+	{
+	  configuration[i] = (this->PhysicalIndices[index] >> i) & 0x1ul;
+	}
+    }
+  else
+    {
+      unsigned long InitialState = this->PhysicalIndices[index];
+      for (int i = 0; i < this->GetNbrOrbitals(); ++i)
+	{
+	  unsigned long TmpState = (~InitialState - 1ul) ^ (~InitialState);
+	  TmpState &= ~(TmpState >> 1);
+#ifdef  __64_BITS__
+	  unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
+	  TmpPower |= ((TmpState & 0xccccccccccccccccul) != 0) << 1;
+	  TmpPower |= ((TmpState & 0xf0f0f0f0f0f0f0f0ul) != 0) << 2;
+	  TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;      
+	  TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;      
+	  TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;      
+#else
+	  unsigned int TmpPower = ((TmpState & 0xaaaaaaaaul) != 0);
+	  TmpPower |= ((TmpState & 0xccccccccul) != 0) << 1;
+	  TmpPower |= ((TmpState & 0xf0f0f0f0ul) != 0) << 2;
+	  TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
+	  TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
+#endif
+	  configuration[i] = (unsigned long) TmpPower;
+	  ++TmpPower;
+	  InitialState >>= TmpPower;
+	}
+    }
 }
 
