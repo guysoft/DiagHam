@@ -191,6 +191,11 @@ int main(int argc, char** argv)
     cout << "--states option only supported for SVD method" << endl;
     return -1;
   }
+  if ((Manager.GetString("realspace-generic") == 0) && (Manager.GetString("states") != 0))
+  {
+    cout << "--states option only supported for real space generic cut" << endl;
+    return -1;
+  }
   if ((Manager.GetString("degenerated-groundstate") == 0) && (Manager.GetString("states") == 0))
     {
       GroundStateFiles = new char* [1];
@@ -734,46 +739,18 @@ int main(int argc, char** argv)
 			{
 			  if (Manager.GetBoolean("complex") == false)
 			    {
-			      if (TmpNbrEntanglementMatrices == 1)
+			      PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0],true);
+			      if(PartialEntanglementMatrix.GetNbrRow() != 0)
 				{
-				  PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0],true);
-				  if(PartialEntanglementMatrix.GetNbrRow() != 0)
-				    {
-				      Spaces[0]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), PartialEntanglementMatrix);
-				    }
-				}
-			      else
-				{
-				  cout << "Warning: using untested method RealMatrix* FermionOnSphere::EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix" << endl;
-				  MultiplePartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz,     NbrAOrbitals, NbrBOrbitals, GroundStates, TmpNbrEntanglementMatrices, true);
-				  if(MultiplePartialEntanglementMatrix[0].GetNbrRow() != 0)
-				    {
-				      MultiplePartialEntanglementMatrix = Spaces[0]->EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz, 
-																				       NbrAOrbitals, WeightAOrbitals, NbrBOrbitals, WeightBOrbitals, 
-																				       MultiplePartialEntanglementMatrix, TmpNbrEntanglementMatrices);
-				    }			     
+				  Spaces[0]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), PartialEntanglementMatrix);
 				}
 			    }
 			  else
 			    {
-			      if (TmpNbrEntanglementMatrices == 1)
+			      ComplexPartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, ComplexGroundStates[0],true);
+			      if(ComplexPartialEntanglementMatrix.GetNbrRow() != 0)
 				{
-				  ComplexPartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, ComplexGroundStates[0],true);
-				  if(ComplexPartialEntanglementMatrix.GetNbrRow() != 0)
-				    {
-				      Spaces[0]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), ComplexPartialEntanglementMatrix);
-				    }
-				}
-			      else
-				{
-				  cout << "Warning: using untested method ComplexMatrix* FermionOnSphere::EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix" << endl;
-				  MultipleComplexPartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz,     NbrAOrbitals, NbrBOrbitals, ComplexGroundStates, TmpNbrEntanglementMatrices, true);
-				  if(MultipleComplexPartialEntanglementMatrix[0].GetNbrRow() != 0)
-				    {
-				      MultipleComplexPartialEntanglementMatrix = Spaces[0]->EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz, 
-																					      NbrAOrbitals, WeightAOrbitals, NbrBOrbitals, WeightBOrbitals, 
-																					      MultipleComplexPartialEntanglementMatrix, TmpNbrEntanglementMatrices);
-				    }
+				  Spaces[0]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), ComplexPartialEntanglementMatrix);
 				}
 			    }			    
 			}
