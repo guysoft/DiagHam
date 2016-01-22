@@ -126,7 +126,7 @@ int main(int argc, char** argv)
 
   for (int i = 0; i < MPSLeftMatrix->GetNbrMatrices(); ++i)
     {
-      if (SearchInArray<unsigned long>(MPSLeftMatrix->GetPhysicalIndices()[i], MPSRightMatrix->GetPhysicalIndices(), MPSRightMatrix->GetNbrMatrices()) >= 0)
+      if (SearchInUnsortedArray<unsigned long>(MPSLeftMatrix->GetPhysicalIndices()[i], MPSRightMatrix->GetPhysicalIndices(), MPSRightMatrix->GetNbrMatrices()) >= 0)
 	++NbrBMatrices;
     }
   SparseRealMatrix* SparseBMatrices = new SparseRealMatrix[NbrBMatrices];
@@ -134,7 +134,7 @@ int main(int argc, char** argv)
   NbrBMatrices = 0;
   for (int i = 0; i < MPSLeftMatrix->GetNbrMatrices(); ++i)
     {
-      int TmpIndex = SearchInArray<unsigned long>(MPSLeftMatrix->GetPhysicalIndices()[i], MPSRightMatrix->GetPhysicalIndices(), MPSRightMatrix->GetNbrMatrices());
+      int TmpIndex = SearchInUnsortedArray<unsigned long>(MPSLeftMatrix->GetPhysicalIndices()[i], MPSRightMatrix->GetPhysicalIndices(), MPSRightMatrix->GetNbrMatrices());
       if (TmpIndex >= 0)
 	{
 	  SparseBMatrices[NbrBMatrices] = TmpSparseBMatrices[i];

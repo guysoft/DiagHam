@@ -398,23 +398,40 @@ int main(int argc, char** argv)
       DensityMatrixFile.close();
     }
   ofstream File;
+  char* EntanglementEntropyFileName;
   if (Manager.GetString("output-file") != 0)
-    File.open(Manager.GetString("output-file"), ios::binary | ios::out);
+    {
+      File.open(Manager.GetString("output-file"), ios::binary | ios::out);
+      EntanglementEntropyFileName = new char [strlen(Manager.GetString("output-file")) + 1];
+      strcpy (EntanglementEntropyFileName, Manager.GetString("output-file"));
+    }
   else
     {
-      char* TmpFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "partent");
-      if (TmpFileName == 0)
+      if (RealSpaceCut == false)
 	{
-	  cout << "no vec extension was find in " << GroundStateFiles[0] << " file name" << endl;
-	  return 0;
+	  EntanglementEntropyFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "partent");
+	  if (EntanglementEntropyFileName == 0)
+	    {
+	      cout << "no vec extension was find in " << GroundStateFiles[0] << " file name" << endl;
+	      return 0;
+	    }
 	}
-      File.open(TmpFileName, ios::binary | ios::out);
-      delete[] TmpFileName;
+      else
+	{
+	  EntanglementEntropyFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "realent");
+	  if (EntanglementEntropyFileName == 0)
+	    {
+	      cout << "no vec extension was find in " << GroundStateFiles[0] << " file name" << endl;
+	      return 0;
+	    }
+	}
+      File.open(EntanglementEntropyFileName, ios::binary | ios::out);
     }
   File.precision(14);
   cout.precision(14);
   
   double TotalTrace = 0.0;
+  double TotalEntanglementEntropy = 0.0;
   for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
     {
       double EntanglementEntropy = 0.0;
@@ -540,7 +557,8 @@ int main(int argc, char** argv)
 		    }
 		  else
 		    {
-		      PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(NbrParticles - SubsystemNbrParticles, TotalLz[0] - SubsystemTotalLz, GroundStates[0], true);
+		      PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, 
+														NbrAOrbitals, NbrBOrbitals, GroundStates[0], true);
 		      if(PartialEntanglementMatrix.GetNbrRow() != 0)
 			{
 			  Spaces[0]->EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz, 
@@ -812,11 +830,20 @@ int main(int argc, char** argv)
 	}
       File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
       cout << "trace = " << DensitySum << endl;
+      TotalEntanglementEntropy += (-EntanglementEntropy);
       TotalTrace += DensitySum;
     }
   File.close();
   if (RealSpaceCut == true)
-    cout <<"Total Trace = "<<TotalTrace<<endl;
+      {
+	cout << "Entanglement entropy = " << TotalEntanglementEntropy << endl;
+	cout << "Total trace = " << TotalTrace << endl;
+	File.open(EntanglementEntropyFileName, ios::binary | ios::out | ios::app);	  
+	File.precision(14);
+	File << "# Entanglement entropy = " << TotalEntanglementEntropy << endl;
+	File << "# Total trace = " << TotalTrace << endl;
+	File.close();
+      }
   return 0;
 }
 

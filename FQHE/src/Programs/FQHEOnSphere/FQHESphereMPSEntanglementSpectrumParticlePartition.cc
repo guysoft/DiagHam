@@ -104,6 +104,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption ('\n', "nbr-fluxquanta", "set the total number of flux quanta and deduce the root partition instead of using the reference-file", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "left-eigenstate", "file containing the transfer matrix left eigenstate");
   (*SystemGroup) += new SingleStringOption  ('\n', "right-eigenstate", "file containing the transfer matrix right eigenstate");
+  (*SystemGroup) += new BooleanOption ('\n', "boundary-lefteigenstate", "use the left eigenstate initialized from the boundary conditions instead of the one provided by --left-eigenstate");
+  (*SystemGroup) += new BooleanOption ('\n', "boundary-righteigenstate", "use the right eigenstate initialized from the boundary conditions instead of the one provided by --right-eigenstate");
   (*SystemGroup) += new BooleanOption  ('\n', "diagonal-block", "transfer matrix eigenstates are computed only from the block diagonal in P, CFT sector and Q (override autodetect from eigenvector file names)");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "memory", "amount of memory that can used for precalculations (in Mb)", 0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "ematrix-memory", "amount of memory that can used for precalculations of the E matrix (in Mb)", 500);
@@ -303,29 +305,44 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("infinite-cylinder"))
     {
-      if (Manager.GetString("left-eigenstate") == 0)
+      if ((Manager.GetString("left-eigenstate") == 0) && (Manager.GetBoolean("boundary-lefteigenstate") == false))
 	{
 	  cout << "The transfer matrix left eigenstate has to be provided in infinite-cylinder mode" << endl;
 	  return 0;
 	}
-      if (Manager.GetString("right-eigenstate") == 0)
+      if ((Manager.GetString("right-eigenstate") == 0) && (Manager.GetBoolean("boundary-righteigenstate") == false))
 	{
 	  cout << "The transfer matrix right eigenstate has to be provided in infinite-cylinder mode" << endl;
 	  return 0;
 	}
       ComplexVector LeftEigenstate;
       ComplexVector RightEigenstate;
-      if (LeftEigenstate.ReadVector(Manager.GetString("left-eigenstate")) == false)
+      if (Manager.GetBoolean("boundary-lefteigenstate") == false)
 	{
-	  cout << "can't read " << Manager.GetString("left-eigenstate") << endl;
-	  return 0;
-	}      
-      if (RightEigenstate.ReadVector(Manager.GetString("right-eigenstate")) == false)
-	{
-	  cout << "can't read " << Manager.GetString("right-eigenstate") << endl;
-	  return 0;
+	  if (LeftEigenstate.ReadVector(Manager.GetString("left-eigenstate")) == false)
+	    {
+	      cout << "can't read " << Manager.GetString("left-eigenstate") << endl;
+	      return 0;
+	    }      
 	}
-
+      else
+	{
+	  LeftEigenstate = ComplexVector(BMatrices[0].GetNbrRow() * BMatrices[0].GetNbrRow(), true);
+	  LeftEigenstate[(BMatrices[0].GetNbrRow() * MPSColumnIndex) + MPSColumnIndex] = 1.0;
+	}
+      if (Manager.GetBoolean("boundary-righteigenstate") == false)
+	{
+	  if (RightEigenstate.ReadVector(Manager.GetString("right-eigenstate")) == false)
+	    {
+	      cout << "can't read " << Manager.GetString("right-eigenstate") << endl;
+	      return 0;
+	    }
+	}
+      else
+	{
+	  RightEigenstate = ComplexVector(BMatrices[0].GetNbrRow() * BMatrices[0].GetNbrRow(), true);
+	  RightEigenstate[(BMatrices[0].GetNbrRow() * MPSRowIndex) + MPSRowIndex] = 1.0;
+	}
       int MaxNbrFluxQuantaA = 0;
       int MaxNbrFluxQuantaB = 0;
       double* WeightAOrbitals = 0;
@@ -373,6 +390,10 @@ int main(int argc, char** argv)
       
       int TmpDimension = BMatrices[0].GetNbrRow();
       int QSectorShift = (MaxNbrFluxQuantaA + 1) / MPSMatrix->GetNbrOrbitals();
+      if (Manager.GetBoolean("orbital-es") == true)
+	{
+	  QSectorShift = 0;
+	}
       cout << "QSectorShift = " << QSectorShift << endl;
       Complex Factor = EuclidianScalarProduct(LeftEigenstate, RightEigenstate);
       double InvFactor = 1.0 / Factor.Re;
@@ -380,10 +401,6 @@ int main(int argc, char** argv)
       RealMatrix TmpFullRightOverlapMatrix(TmpDimension, TmpDimension, true);
       SparseRealMatrix NormalizationMatrix(BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow());
       NormalizationMatrix.SetToIdentity();
-      if (Manager.GetBoolean("orbital-es") == true)
-	{
-	  QSectorShift = 0;
-	}
 
       for (int i = 0; i < QSectorShift; ++i)
 	{
@@ -392,7 +409,9 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("orbital-es") == false)
 	{
 	  if ((Manager.GetBoolean("diagonal-block") == true) || 
-	      ((strstr(Manager.GetString("left-eigenstate"), "_diagblock_") != 0) && (strstr(Manager.GetString("right-eigenstate"), "_diagblock_") != 0)))
+	      ((Manager.GetString("left-eigenstate") != 0) && (Manager.GetString("right-eigenstate") != 0)
+	       && (strstr(Manager.GetString("left-eigenstate"), "_diagblock_") != 0) 
+	       && (strstr(Manager.GetString("right-eigenstate"), "_diagblock_") != 0)))
 	    {
 	      ComplexVector TmpLeftEigenstate (TmpDimension * TmpDimension, true);
 	      ComplexVector TmpRightEigenstate (TmpDimension * TmpDimension, true);
@@ -413,12 +432,12 @@ int main(int argc, char** argv)
 		}
 	      if (LeftEigenstate.GetVectorDimension() != TmpBlockDimension)
 		{
-		  cout << "error, left eigenstate does not have the expected dimension" << endl;
+		  cout << "error, left eigenstate does not have the expected dimension (" << LeftEigenstate.GetVectorDimension() << " vs " << TmpBlockDimension << ") " << endl;
 		  return 0;
 		}
 	      if (RightEigenstate.GetVectorDimension() != TmpBlockDimension)
 		{
-		  cout << "error, right eigenstate does not have the expected dimension" << endl;
+		  cout << "error, right eigenstate does not have the expected dimension (" << RightEigenstate.GetVectorDimension() << " vs " << TmpBlockDimension << ") " << endl;
 		  return 0;
 		}
 	      int TmpBlockPosition = 0;
@@ -454,12 +473,12 @@ int main(int argc, char** argv)
 	    {
 	      if (LeftEigenstate.GetVectorDimension() != (TmpDimension * TmpDimension))
 		{
-		  cout << "error, left eigenstate does not have the expected dimension" << endl;
+		  cout << "error, left eigenstate does not have the expected dimension (" << LeftEigenstate.GetVectorDimension() << " vs " << TmpDimension << ") " << endl;
 		  return 0;
 		}
 	      if (RightEigenstate.GetVectorDimension() != (TmpDimension * TmpDimension))
 		{
-		  cout << "error, right eigenstate does not have the expected dimension" << endl;
+		  cout << "error, right eigenstate does not have the expected dimension (" << RightEigenstate.GetVectorDimension() << " vs " << TmpDimension << ") " << endl;
 		  return 0;
 		}
 	    }
@@ -561,17 +580,10 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  if ((Manager.GetBoolean("diagonal-block") == false) && 
-	      ((strstr(Manager.GetString("left-eigenstate"), "_diagblock_") == 0) || (strstr(Manager.GetString("right-eigenstate"), "_diagblock_") == 0)))
-	    {
-	      for (int i = 0; i < TmpDimension; ++i)
-		for (int j = 0; j < TmpDimension; ++j)
-		  {
-		    TmpFullLeftOverlapMatrix.SetMatrixElement(i, j, InvFactor * LeftEigenstate[i * TmpDimension + j].Re); 
-		    TmpFullRightOverlapMatrix.SetMatrixElement(i, j, InvFactor * RightEigenstate[i * TmpDimension + j].Re); 
-		  }
-	    }
-	  else
+	  if ((Manager.GetBoolean("diagonal-block") == true) || 
+	      ((Manager.GetString("left-eigenstate") != 0) && (Manager.GetString("right-eigenstate") != 0)
+	       && (strstr(Manager.GetString("left-eigenstate"), "_diagblock_") != 0) 
+	       && (strstr(Manager.GetString("right-eigenstate"), "_diagblock_") != 0)))
 	    {
 	      int TmpBlockDimension = 0;
 	      for (int CurrentPLevel = 0; CurrentPLevel <= PLevel; ++CurrentPLevel)
@@ -590,12 +602,12 @@ int main(int argc, char** argv)
 		}
 	      if (LeftEigenstate.GetVectorDimension() != TmpBlockDimension)
 		{
-		  cout << "error, left eigenstate does not have the expected dimension" << endl;
+		  cout << "error, left eigenstate does not have the expected dimension (" << LeftEigenstate.GetVectorDimension() << " vs " << TmpBlockDimension << ") " << endl;
 		  return 0;
 		}
 	      if (RightEigenstate.GetVectorDimension() != TmpBlockDimension)
 		{
-		  cout << "error, right eigenstate does not have the expected dimension" << endl;
+		  cout << "error, right eigenstate does not have the expected dimension (" << RightEigenstate.GetVectorDimension() << " vs " << TmpBlockDimension << ") " << endl;
 		  return 0;
 		}
 	      
@@ -625,6 +637,15 @@ int main(int argc, char** argv)
 		    }
 		}
 	    }
+	  else
+	    {
+	      for (int i = 0; i < TmpDimension; ++i)
+		for (int j = 0; j < TmpDimension; ++j)
+		  {
+		    TmpFullLeftOverlapMatrix.SetMatrixElement(i, j, InvFactor * LeftEigenstate[i * TmpDimension + j].Re); 
+		    TmpFullRightOverlapMatrix.SetMatrixElement(i, j, InvFactor * RightEigenstate[i * TmpDimension + j].Re); 
+		  }
+	    }
 	}
       //       cout << TmpFullLeftOverlapMatrix.Tr() << " " << TmpFullRightOverlapMatrix.Tr() << endl;
       //       TmpFullLeftOverlapMatrix.PrintNonZero(cout) << endl;
@@ -637,9 +658,18 @@ int main(int argc, char** argv)
 	{
 	  cout << "FullLeftOverlapMatrix is symmetric" << endl;
 	}
+      else
+	{
+	  cout << "error : FullLeftOverlapMatrix is not symmetric" << endl;
+	  
+	}
       if (TmpFullRightOverlapMatrix.IsSymmetric())
 	{
 	  cout << "FullRightOverlapMatrix is symmetric" << endl;
+	}
+      else
+	{
+	  cout << "error : FullRightOverlapMatrix is symmetric" << endl;
 	}
       SparseRealMatrix FullLeftOverlapMatrix (TmpFullLeftOverlapMatrix);
       SparseRealMatrix FullRightOverlapMatrix (TmpFullRightOverlapMatrix);
