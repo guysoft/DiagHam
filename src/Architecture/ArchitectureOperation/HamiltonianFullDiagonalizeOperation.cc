@@ -287,7 +287,12 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
   while ((NbrNodePerRow > 1) && ((NbrNodePerColumn % NbrNodePerRow) != 0))
     --NbrNodePerRow;
   NbrNodePerColumn /= NbrNodePerRow;
-  FORTRAN_NAME(sl_init) (&Context, &NbrNodePerRow, &NbrNodePerColumn);
+  if (architecture->IsMasterNode())
+    {
+      cout << "nbr of nodes per row = " << NbrNodePerRow << endl;
+      cout << "nbr of nodes per column = " << NbrNodePerColumn << endl;
+    }
+ FORTRAN_NAME(sl_init) (&Context, &NbrNodePerRow, &NbrNodePerColumn);
   
   int LocalNodeRow;
   int LocalNodeColumn;
@@ -466,6 +471,10 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 		  if ((TmpNbrBlockPerColumn * NbrColumnPerBlock) !=  TmpLocalLeadingDimensionColumn)
 		    ++TmpNbrBlockPerColumn;
 		  Complex Tmp;
+		  cout << "SlaveID = " << SlaveID << " TmpLocalNodeRow = " << TmpLocalNodeRow
+		       << " TmpLocalNodeColumn = " << TmpLocalNodeColumn << " TmpLocalLeadingDimensionRow = " << TmpLocalLeadingDimensionRow
+		       << " TmpLocalLeadingDimensionColumn = " << TmpLocalLeadingDimensionColumn << endl;
+		  cout << TmpNbrBlockPerColumn << " " <<  NbrColumnPerBlock  << " " << TmpLocalLeadingDimensionColumn << endl;
 		  for (int j = 0; j < TmpNbrBlockPerColumn; ++j)
 		    {
 		      int TmpGlobalColumnIndex = (TmpLocalNodeColumn + j * NbrNodePerColumn) * NbrColumnPerBlock;
@@ -504,6 +513,7 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 		    }
 		  delete[] TmpEigenstates;	      
 		}
+	      cout << "done with slaves" << endl;
 
 	      int TmpNbrBlockPerRow = LocalLeadingDimensionRow / NbrRowPerBlock;
 	      if ((TmpNbrBlockPerRow * NbrRowPerBlock) !=  LocalLeadingDimensionRow)
