@@ -60,7 +60,7 @@ int main(int argc, char** argv)
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
 
   ArchitectureManager Architecture;
-  FQHEMPSMatrixManager MPSMatrixManager (false, true);
+  FQHEMPSMatrixManager MPSMatrixManager (false, false);
 
   MPSMatrixManager.AddOptionGroup(&Manager);
   OptionGroup* SystemGroup = Manager.GetOptionGroup("system options");
@@ -105,7 +105,7 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  int NbrParticles = MPSMatrix->GetMatrixNaturalNbrParticles(NbrFluxQuanta, true);
+  int NbrParticles = MPSMatrix->GetMatrixNaturalNbrParticles(NbrFluxQuanta, Manager.GetBoolean("use-padding"));
   int NbrBlock =  NbrParticles/SizeBlock;
   if ( (NbrParticles  % NbrBlock) != 0)
     {
@@ -143,23 +143,21 @@ int main(int argc, char** argv)
   int MPSColumnIndex = 0;
   MPSMatrix->GetMatrixBoundaryIndices(MPSRowIndex, MPSColumnIndex, Manager.GetBoolean("use-padding"));
   
-  cout <<"MPSRowIndex = "<< MPSRowIndex <<" ; MPSColumnIndex = "<<MPSColumnIndex<<endl;
   int NbrMPSSumIndices = 0;
   int* MPSSumIndices = MPSMatrix->GetTopologicalSectorIndices(Manager.GetInteger("topologicalsector"), NbrMPSSumIndices);
 
-  SparseRealMatrix TransferMatrix = TensorProduct(BMatrices[0], ConjugateBMatrices[0]);
-  for(int i= 1; i < NbrStatesPerOrbital; i++)
-    TransferMatrix =  TransferMatrix + TensorProduct(BMatrices[i], ConjugateBMatrices[i]);
+  SparseRealMatrix TransferMatrix = TensorProduct(BMatrices[0], BMatrices[0]);
+  for(int i= 1; i < NbrBMatrices; i++)
+    TransferMatrix = TransferMatrix + TensorProduct(BMatrices[i], BMatrices[i]);
 
   SparseRealMatrix TmpMatrix;
   TmpMatrix.Copy(TransferMatrix);
-  cout <<TransferMatrix<<endl;
-  for (int p = 0; p < NbrBlock - 1;p++)
+  for (int p = 1; p < ((NbrFluxQuanta  + 1) / NbrOrbitals);p++)
     {
       TmpMatrix.Multiply(TransferMatrix);
     }
   double Norm = 0.0; 
-  
+
   TmpMatrix.GetMatrixElement(MPSRowIndex+BMatrices[0].GetNbrRow()*MPSRowIndex,MPSColumnIndex+BMatrices[0].GetNbrColumn()*MPSColumnIndex, Norm);
   
   double Normalisation = 1.0/sqrt(Norm);
@@ -232,23 +230,30 @@ int main(int argc, char** argv)
       
       for (int i = 0; i < DimensionPhysicalHilbertSpace; i++)
 	{
-	  SparseRealMatrix TmpMatrix3 = Multiply(FusedBMatrices[i], TmpMatrix2[NbrBlock - 2]);
+	  SparseRealMatrix TmpMatrix3 = Multiply(FusedBMatrices[i], TmpMatrix2[NbrBlock - 1 - 1]);
 	  TmpMatrix3.GetMatrixElement(MPSRowIndex,MPSColumnIndex ,Tmp);
 	  CoefficientVector[i] = Tmp;
-	  for(int p = 0; p <NbrBlock - 1 ;p++)
+	  for(int p = 1; p < (NbrBlock - 1);p++)
 	    {
-	      SparseRealMatrix TmpMatrix3 = Multiply(Multiply(TmpMatrix2[p], FusedBMatrices[i]), TmpMatrix2[NbrBlock - 2 - p]);
-	      TmpMatrix3.GetMatrixElement(MPSRowIndex,MPSColumnIndex,Tmp);
+	      SparseRealMatrix TmpMatrix4 = Multiply(Multiply(TmpMatrix2[p - 1], FusedBMatrices[i]), TmpMatrix2[(NbrBlock - 1) - p - 1]);
+	      TmpMatrix4.GetMatrixElement(MPSRowIndex,MPSColumnIndex,Tmp);
 	      CoefficientVector[i] += Tmp;
 	    }
-	  CoefficientVector[i]*= Normalisation;
-	  CoefficientVector[i]/=NbrBlock;
+	  SparseRealMatrix TmpMatrix5 = Multiply(TmpMatrix2[NbrBlock - 1 - 1], FusedBMatrices[i]);
+	  TmpMatrix5.GetMatrixElement(MPSRowIndex,MPSColumnIndex ,Tmp);
+	  CoefficientVector[i] += Tmp;
+	  CoefficientVector[i] *= Normalisation;
+	  CoefficientVector[i] /= (double) NbrBlock;
 	}
       lamba = Newlamba ;
       Newlamba = CoefficientVector.Norm();
       CoefficientVector.Normalize();
       
-      cout <<Newlamba << " "<<lamba<<endl;
+      cout <<Newlamba << " "<< lamba << " : ";
+
+      for (int i = 0; i < DimensionPhysicalHilbertSpace;  i++)
+	  cout << " " <<CoefficientVector[i];
+      cout << endl;
     }
   
   /*

@@ -263,7 +263,6 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matr
   this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
   this->PhysicalIndices = new unsigned long[this->NbrBMatrices];
   this->NbrBMatrices = 0;
-  this->PhysicalIndices[1] = 0x1ul;
   for (int i = 0; i < NbrGroupBMatrices; ++i)
     {
       if (TmpSparseGroupBMatrices2[i].GetNbrRow() > 0)
@@ -425,20 +424,19 @@ void FQHEMPSFixedQSectorMatrix::GetChargeIndexRange (int pLevel, int cftSector, 
 
 void FQHEMPSFixedQSectorMatrix::GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding)
 {
-  int MinQ;
-  int MaxQ;
-  this->MPSMatrix->GetChargeIndexRange(0, MinQ, MaxQ);
   this->MPSMatrix->GetMatrixBoundaryIndices(rowIndex, columnIndex, padding);
-  rowIndex += MinQ;
-  columnIndex += MinQ;
-  rowIndex /= this->QPeriodicity;
-  columnIndex /= this->QPeriodicity;
-  this->GetChargeIndexRange(0, MinQ, MaxQ);
-  cout << MinQ << " " << MaxQ << endl;
-  rowIndex -= MinQ;
-  columnIndex -= MinQ;
-  rowIndex = 1;
-  columnIndex = 1;
+  rowIndex = SearchInUnsortedArray<int>(rowIndex, this->GlobalIndices, this->RealBMatrices[0].GetNbrRow());
+  columnIndex = SearchInUnsortedArray<int>(columnIndex, this->GlobalIndices, this->RealBMatrices[0].GetNbrRow());
+  if ((rowIndex == -1) || (columnIndex == -1))
+    {
+      this->MPSMatrix->GetMatrixBoundaryIndices(rowIndex, columnIndex, !padding);
+      rowIndex = SearchInUnsortedArray<int>(rowIndex, this->GlobalIndices, this->RealBMatrices[0].GetNbrRow());
+      columnIndex = SearchInUnsortedArray<int>(columnIndex, this->GlobalIndices, this->RealBMatrices[0].GetNbrRow());
+      if ((rowIndex == -1) || (columnIndex == -1))
+	{
+	  cout << "error, cannot find the boundary indices for the current fixed Q sector" << endl;
+	}
+    }
 }
 
 // get a given physical indiex
