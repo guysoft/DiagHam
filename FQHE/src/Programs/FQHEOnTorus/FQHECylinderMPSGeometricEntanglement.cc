@@ -56,7 +56,7 @@ int main(int argc, char** argv)
 {
   cout.precision(14); 
 
-  OptionManager Manager ("FQHETorusMPSGeometricEntanglement" , "0.01");
+  OptionManager Manager ("FQHECylinderMPSGeometricEntanglement" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
 
   ArchitectureManager Architecture;
@@ -80,7 +80,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHETorusMPSOverlap -h" << endl;
+      cout << "see man page for option syntax or type FQHECylinderMPSGeometricEntanglement -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -106,7 +106,9 @@ int main(int argc, char** argv)
     }
 
   int NbrParticles = MPSMatrix->GetMatrixNaturalNbrParticles(NbrFluxQuanta, Manager.GetBoolean("use-padding"));
-  int NbrBlock =  NbrParticles/SizeBlock;
+
+  int NbrOrbitals = MPSMatrix->GetNbrOrbitals();
+  int NbrBlock =   ((NbrFluxQuanta  + 1) / NbrOrbitals);
   if ( (NbrParticles  % NbrBlock) != 0)
     {
       cout << "invalid number of flux quanta" << endl;
@@ -115,7 +117,6 @@ int main(int argc, char** argv)
 
   int NbrBMatrices = MPSMatrix->GetNbrMatrices();
 
-  int NbrOrbitals = MPSMatrix->GetNbrOrbitals();
   int NbrStatesPerOrbital = MPSMatrix->GetMaximumOccupation() + 1;
   int NbrStatesPerBlock =  1;
   cout << "MPSMatrix->GetMaximumOccupation()  = "<< MPSMatrix->GetMaximumOccupation()<<endl;
@@ -208,13 +209,13 @@ int main(int argc, char** argv)
   double lamba = 0.0;
   double Newlamba = 100.0;
   
-  SparseRealMatrix * TmpMatrix2 = new SparseRealMatrix[NbrBlock-1];
+  SparseRealMatrix * TmpMatrix2 = new SparseRealMatrix[NbrBlock];
 
   cout <<"Start algorithm"<<endl;
-  double Tmp;
+
   while ( fabs(lamba - Newlamba) > 1e-8  ) 
     {
-      SparseRealMatrix TmpMatrix =  FusedBMatrices[0] * CoefficientVector[0];
+      SparseRealMatrix TmpMatrix = FusedBMatrices[0] * CoefficientVector[0];
       for (int i = 1; i<DimensionPhysicalHilbertSpace; i++)
 	{
 	  TmpMatrix = TmpMatrix + (FusedBMatrices[i] * CoefficientVector[i]);
@@ -223,14 +224,19 @@ int main(int argc, char** argv)
 
       TmpMatrix2[0].Copy(TmpMatrix);
 
-      for (int i = 1; i< NbrBlock - 1; i++)
+      for (int i = 1; i< NbrBlock; i++)
 	{
 	  TmpMatrix2[i] = Multiply(TmpMatrix2[i-1], TmpMatrix);
 	}
       
+      double Overlap;
+      TmpMatrix2[NbrBlock-1].GetMatrixElement(MPSRowIndex,MPSColumnIndex,Overlap);
+      Overlap*=Normalisation;
+      cout <<" Previous Overlap =  "<<Overlap <<endl;
       for (int i = 0; i < DimensionPhysicalHilbertSpace; i++)
 	{
 	  SparseRealMatrix TmpMatrix3 = Multiply(FusedBMatrices[i], TmpMatrix2[NbrBlock - 1 - 1]);
+	  double Tmp;
 	  TmpMatrix3.GetMatrixElement(MPSRowIndex,MPSColumnIndex ,Tmp);
 	  CoefficientVector[i] = Tmp;
 	  for(int p = 1; p < (NbrBlock - 1);p++)
@@ -243,7 +249,7 @@ int main(int argc, char** argv)
 	  TmpMatrix5.GetMatrixElement(MPSRowIndex,MPSColumnIndex ,Tmp);
 	  CoefficientVector[i] += Tmp;
 	  CoefficientVector[i] *= Normalisation;
-	  CoefficientVector[i] /= (double) NbrBlock;
+	  CoefficientVector[i] /= (2.0 * (double) NbrBlock);
 	}
       lamba = Newlamba ;
       Newlamba = CoefficientVector.Norm();
