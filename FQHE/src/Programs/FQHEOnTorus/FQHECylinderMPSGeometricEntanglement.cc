@@ -274,7 +274,7 @@ int main(int argc, char** argv)
   double Lambda = 1.0;
   double TotalCoefficientVectorSqrNorm =  pow(CoefficientVector.SqrNorm(), (double) NbrBlock);
   long Iteration = 0;
-  while (fabs(PreviousOverlap - (CurrentOverlap / TotalCoefficientVectorSqrNorm)) > 1e-14) 
+  while (fabs(PreviousOverlap - (CurrentOverlap / TotalCoefficientVectorSqrNorm * Normalisation * Normalisation)) > 1e-14) 
     {
       SparseRealMatrix TmpMatrix = FusedBMatrices[0] * CoefficientVector[0];
       for (int i = 1; i<DimensionPhysicalHilbertSpace; i++)
@@ -289,7 +289,7 @@ int main(int argc, char** argv)
 	{
 	  TmpMatrix2[i] = Multiply(TmpMatrix2[i-1], TmpMatrix);
 	}
-      PreviousOverlap = CurrentOverlap / TotalCoefficientVectorSqrNorm;
+      PreviousOverlap = CurrentOverlap / TotalCoefficientVectorSqrNorm * Normalisation * Normalisation;
       cout << Iteration << " : " << PreviousOverlap << " " << (-log(PreviousOverlap) / ((double) NbrBlock)) << endl;
       TmpMatrix2[NbrBlock-1].GetMatrixElement(MPSRowIndex,MPSColumnIndex, CurrentOverlap);
       CurrentOverlap *= Normalisation;
@@ -312,17 +312,17 @@ int main(int argc, char** argv)
 	  Derivative[i] += Tmp;
 	}
 
-      Derivative *= 2.0 * CurrentOverlap * Normalisation / TotalCoefficientVectorSqrNorm;
-//       for (int i = 0; i < DimensionPhysicalHilbertSpace; i++)
-// 	{
-// 	  Derivative[i] -= 2.0 * NbrBlock * CurrentOverlap * CurrentOverlap * CoefficientVector[i] / (pow(CoefficientVector.SqrNorm(), NbrBlock + 1));  
-// 	}
+      Derivative *= 2.0 / CurrentOverlap;
+       for (int i = 0; i < DimensionPhysicalHilbertSpace; i++)
+ 	{
+ 	  Derivative[i] -= 2.0 * NbrBlock * CoefficientVector[i] / CoefficientVector.SqrNorm();  
+ 	}
       double Epsilon = 0.01;
 //       if (Derivative.Norm() < Epsilon)
 //  	Epsilon = 1.0;
       for (int i = 0; i < DimensionPhysicalHilbertSpace; i++)
 	{
-	  CoefficientVector[i] += Epsilon * Derivative[i] / Derivative.Norm();
+	  CoefficientVector[i] += Epsilon * Derivative[i];
 	}
       //      Lambda -= 0.1 * (CoefficientVector.SqrNorm()  - 1.0);
 
