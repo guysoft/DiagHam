@@ -55,10 +55,10 @@ using std::ofstream;
 int main(int argc, char** argv)
 {
   cout.precision(14); 
-
+  
   OptionManager Manager ("FQHECylinderMPSGeometricEntanglement" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
-
+  
   ArchitectureManager Architecture;
   FQHEMPSMatrixManager MPSMatrixManager (false, false);
 
@@ -109,7 +109,12 @@ int main(int argc, char** argv)
 
   int NbrOrbitals = MPSMatrix->GetNbrOrbitals();
   int NbrBlock =   ((NbrFluxQuanta  + 1) / NbrOrbitals);
-  if ( (NbrParticles  % NbrBlock) != 0)
+  cout << "MPSMatrix->GetMaximumOccupation()  = "<< MPSMatrix->GetMaximumOccupation()<<endl;
+  cout <<"NbrOrbitals = "<< NbrOrbitals<<endl;
+  cout <<" NbrBlock = " << NbrBlock<<endl;
+  cout <<"NbrParticles = "<<NbrParticles<<endl;
+
+  if ( ( NbrBlock   % NbrParticles) != 0)
     {
       cout << "invalid number of flux quanta" << endl;
       return -1;
@@ -119,8 +124,7 @@ int main(int argc, char** argv)
 
   int NbrStatesPerOrbital = MPSMatrix->GetMaximumOccupation() + 1;
   int NbrStatesPerBlock =  1;
-  cout << "MPSMatrix->GetMaximumOccupation()  = "<< MPSMatrix->GetMaximumOccupation()<<endl;
-  cout <<"NbrOrbitals = "<< NbrOrbitals<<endl;
+
   int DimensionPhysicalHilbertSpace = 1;
   
   for (int i = 0; i < NbrOrbitals * SizeBlock; i++)
@@ -142,16 +146,18 @@ int main(int argc, char** argv)
   for(int i= 1; i < NbrBMatrices; i++)
     TransferMatrix = TransferMatrix + TensorProduct(BMatrices[i], BMatrices[i]);
 
+
   SparseRealMatrix TmpMatrix;
   TmpMatrix.Copy(TransferMatrix);
-  for (int p = 1; p < ((NbrFluxQuanta  + 1) / NbrOrbitals);p++)
+  for (int p = 1; p <  NbrBlock ;p++)
     {
       TmpMatrix.Multiply(TransferMatrix);
     }
   double Norm = 0.0; 
-
+  
   TmpMatrix.GetMatrixElement(MPSRowIndex + (BMatrices[0].GetNbrRow() * MPSRowIndex),
 			     MPSColumnIndex + (BMatrices[0].GetNbrColumn() * MPSColumnIndex), Norm);
+
   
   double Normalisation = 1.0/ sqrt(Norm);
   
@@ -215,6 +221,7 @@ int main(int argc, char** argv)
   
   SparseRealMatrix * TmpMatrix2 = new SparseRealMatrix[NbrBlock];
 
+  int NbrStep=0;
   cout <<"Start algorithm"<<endl;
 
 //   while ( fabs(lamba - Newlamba) > 1e-14  ) 
@@ -274,7 +281,11 @@ int main(int argc, char** argv)
   double Lambda = 1.0;
   double TotalCoefficientVectorSqrNorm =  pow(CoefficientVector.SqrNorm(), (double) NbrBlock);
   long Iteration = 0;
-  while (fabs(PreviousOverlap - (CurrentOverlap / TotalCoefficientVectorSqrNorm * Normalisation * Normalisation)) > 1e-14) 
+  double LogPrevious = -log (PreviousOverlap);
+  double LogCurrent = -log (CurrentOverlap);
+
+  //  while (fabs(PreviousOverlap - (CurrentOverlap / TotalCoefficientVectorSqrNorm * Normalisation * Normalisation)) > 1e-14) 
+    while(fabs(LogPrevious - LogCurrent ) > 1e-14)
     {
       SparseRealMatrix TmpMatrix = FusedBMatrices[0] * CoefficientVector[0];
       for (int i = 1; i<DimensionPhysicalHilbertSpace; i++)
@@ -290,6 +301,7 @@ int main(int argc, char** argv)
 	  TmpMatrix2[i] = Multiply(TmpMatrix2[i-1], TmpMatrix);
 	}
       PreviousOverlap = CurrentOverlap / TotalCoefficientVectorSqrNorm * Normalisation * Normalisation;
+      LogPrevious = -log(PreviousOverlap) / ((double) NbrBlock) ;
       cout << Iteration << " : " << PreviousOverlap << " " << (-log(PreviousOverlap) / ((double) NbrBlock)) << endl;
       TmpMatrix2[NbrBlock-1].GetMatrixElement(MPSRowIndex,MPSColumnIndex, CurrentOverlap);
       CurrentOverlap *= Normalisation;
@@ -329,6 +341,8 @@ int main(int argc, char** argv)
       CoefficientVector.Normalize();
       cout << Derivative.Norm() << " " << CoefficientVector.Norm() << endl;
       CurrentOverlap *= CurrentOverlap;
+      cout << (CurrentOverlap / TotalCoefficientVectorSqrNorm * Normalisation * Normalisation) << " "<<PreviousOverlap<<endl;
+      LogCurrent = -log (CurrentOverlap / TotalCoefficientVectorSqrNorm * Normalisation * Normalisation) / ((double) NbrBlock);
       ++Iteration;
       //      cout << Derivative.Norm() << endl;
  //      for (int i = 0; i < DimensionPhysicalHilbertSpace;  i++)
@@ -336,28 +350,8 @@ int main(int argc, char** argv)
 //      cout << endl;
     }
 
-  /*
-  SparseRealMatrix TmpMatrix =  FusedBMatrices[0] * CoefficientVector[0];
   
-  for (int i = 1; i<DimensionPhysicalHilbertSpace; i++)
-    {
-      TmpMatrix = TmpMatrix + (FusedBMatrices[i] * CoefficientVector[i]);
-    }
   
-
-  SparseRealMatrix TmpMatrix2;
-  TmpMatrix2.Copy(TmpMatrix);
-  for (int i = 1; i < NbrBlock ; i++)
-    {
-      TmpMatrix2.Multiply(TmpMatrix);
-    }
-  
-  double FinalResult = TmpMatrix2.PartialTr(MPSSumIndices, NbrMPSSumIndices) * Normalisation;
-  
-  cout <<" FinalResult = "<<FinalResult <<endl;
-  
-  */
-
   CoefficientVector.Normalize();
   for (int i = 0; i < DimensionPhysicalHilbertSpace;  i++)
     cout << i <<" " <<CoefficientVector[i]<<endl;
