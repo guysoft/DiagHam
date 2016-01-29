@@ -134,19 +134,10 @@ int main(int argc, char** argv)
   cout <<"Dimension of the physical Hilbert space = " << DimensionPhysicalHilbertSpace <<endl;
 
   SparseRealMatrix* BMatrices = MPSMatrix->GetMatrices();
-  SparseRealMatrix* ConjugateBMatrices = new SparseRealMatrix[NbrBMatrices];
-  for (int i = 0; i < NbrBMatrices; ++i)
-    {
-      ConjugateBMatrices[i] = BMatrices[i];//.Transpose();
-    } 
-
   int MPSRowIndex = 0;
   int MPSColumnIndex = 0;
   MPSMatrix->GetMatrixBoundaryIndices(MPSRowIndex, MPSColumnIndex, Manager.GetBoolean("use-padding"));
   
-  int NbrMPSSumIndices = 0;
-  int* MPSSumIndices = MPSMatrix->GetTopologicalSectorIndices(Manager.GetInteger("topologicalsector"), NbrMPSSumIndices);
-
   SparseRealMatrix TransferMatrix = TensorProduct(BMatrices[0], BMatrices[0]);
   for(int i= 1; i < NbrBMatrices; i++)
     TransferMatrix = TransferMatrix + TensorProduct(BMatrices[i], BMatrices[i]);
@@ -159,16 +150,17 @@ int main(int argc, char** argv)
     }
   double Norm = 0.0; 
 
-  TmpMatrix.GetMatrixElement(MPSRowIndex+BMatrices[0].GetNbrRow()*MPSRowIndex,MPSColumnIndex+BMatrices[0].GetNbrColumn()*MPSColumnIndex, Norm);
+  TmpMatrix.GetMatrixElement(MPSRowIndex + (BMatrices[0].GetNbrRow() * MPSRowIndex),
+			     MPSColumnIndex + (BMatrices[0].GetNbrColumn() * MPSColumnIndex), Norm);
   
-  double Normalisation = 1.0/sqrt(Norm);
+  double Normalisation = 1.0/ sqrt(Norm);
   
   cout << "B matrix size = " << BMatrices[0].GetNbrRow() << "x" << BMatrices[0].GetNbrColumn() << endl;
   cout <<"Norm = " <<Norm<<endl;
   unsigned long * ArrayPhysicalIndice = MPSMatrix->GetPhysicalIndices();
   
   SparseRealMatrix* FusedBMatrices = new SparseRealMatrix [DimensionPhysicalHilbertSpace];
-  
+
   int TmpI;
   for(int i =0 ; i <DimensionPhysicalHilbertSpace; i++)
     { 
@@ -203,8 +195,20 @@ int main(int argc, char** argv)
   for (int i = 0; i <DimensionPhysicalHilbertSpace; i++)
     {
       CoefficientVector[i] = ((double) rand() / (RAND_MAX) - 0.5);
+      CoefficientVector[0] += CoefficientVector[i] * CoefficientVector[i];
     }
+  for (int i = 0; i < DimensionPhysicalHilbertSpace;  i++)
+    cout << i <<" " <<CoefficientVector[i]<<endl;
+  cout << CoefficientVector.Norm() << endl;
   CoefficientVector.Normalize();
+
+
+//    CoefficientVector *= 0.1;
+//   CoefficientVector[0] = sqrt(2.0 / 3.0);
+//   CoefficientVector[7] = sqrt(1.0 / 3.0);
+//   CoefficientVector[2] = 1.0;
+//   CoefficientVector.Normalize();
+
   
   double lamba = 0.0;
   double Newlamba = 100.0;
@@ -213,7 +217,64 @@ int main(int argc, char** argv)
 
   cout <<"Start algorithm"<<endl;
 
-  while ( fabs(lamba - Newlamba) > 1e-8  ) 
+//   while ( fabs(lamba - Newlamba) > 1e-14  ) 
+//     {
+//       SparseRealMatrix TmpMatrix = FusedBMatrices[0] * CoefficientVector[0];
+//       for (int i = 1; i<DimensionPhysicalHilbertSpace; i++)
+// 	{
+// 	  TmpMatrix = TmpMatrix + (FusedBMatrices[i] * CoefficientVector[i]);
+// 	}
+      
+
+//       TmpMatrix2[0].Copy(TmpMatrix);
+
+//       for (int i = 1; i< NbrBlock; i++)
+// 	{
+// 	  TmpMatrix2[i] = Multiply(TmpMatrix2[i-1], TmpMatrix);
+// 	}
+      
+//       double Overlap;
+//       TmpMatrix2[NbrBlock-1].GetMatrixElement(MPSRowIndex,MPSColumnIndex,Overlap);
+//       Overlap *= Normalisation;
+//       cout <<" Previous Overlap =  "<< Overlap  <<endl;
+
+
+// //       for (int i = 0; i < DimensionPhysicalHilbertSpace; i++)
+// // 	{
+// // 	  SparseRealMatrix TmpMatrix3 = Multiply(FusedBMatrices[i], TmpMatrix2[NbrBlock - 1 - 1]);
+// // 	  double Tmp;
+// // 	  TmpMatrix3.GetMatrixElement(MPSRowIndex,MPSColumnIndex ,Tmp);
+// // 	  CoefficientVector[i] = Tmp;
+// // 	  for(int p = 1; p < (NbrBlock - 1);p++)
+// // 	    {
+// // 	      SparseRealMatrix TmpMatrix4 = Multiply(Multiply(TmpMatrix2[p - 1], FusedBMatrices[i]), TmpMatrix2[(NbrBlock - 1) - p - 1]);
+// // 	      TmpMatrix4.GetMatrixElement(MPSRowIndex,MPSColumnIndex,Tmp);
+// // 	      CoefficientVector[i] += Tmp;
+// // 	    }
+// // 	  SparseRealMatrix TmpMatrix5 = Multiply(TmpMatrix2[NbrBlock - 1 - 1], FusedBMatrices[i]);
+// // 	  TmpMatrix5.GetMatrixElement(MPSRowIndex,MPSColumnIndex ,Tmp);
+// // 	  CoefficientVector[i] += Tmp;
+// // 	  CoefficientVector[i] *= Normalisation;
+// // 	  CoefficientVector[i] /= (2.0 * (double) NbrBlock);
+// // 	  CoefficientVector[i] *= 2.0 * Overlap;
+// // 	}
+//       lamba = Newlamba ;
+//       Newlamba = CoefficientVector.Norm();
+//       CoefficientVector.Normalize();
+      
+//       cout << Newlamba << " " << lamba << " : ";
+
+//       for (int i = 0; i < DimensionPhysicalHilbertSpace;  i++)
+// 	  cout << " " <<CoefficientVector[i];
+//       cout << endl;
+//     }
+
+  double PreviousOverlap = 10.0;
+  double CurrentOverlap = 0.0;
+  double Lambda = 1.0;
+  double TotalCoefficientVectorSqrNorm =  pow(CoefficientVector.SqrNorm(), (double) NbrBlock);
+  long Iteration = 0;
+  while (fabs(PreviousOverlap - (CurrentOverlap / TotalCoefficientVectorSqrNorm)) > 1e-14) 
     {
       SparseRealMatrix TmpMatrix = FusedBMatrices[0] * CoefficientVector[0];
       for (int i = 1; i<DimensionPhysicalHilbertSpace; i++)
@@ -228,40 +289,53 @@ int main(int argc, char** argv)
 	{
 	  TmpMatrix2[i] = Multiply(TmpMatrix2[i-1], TmpMatrix);
 	}
-      
-      double Overlap;
-      TmpMatrix2[NbrBlock-1].GetMatrixElement(MPSRowIndex,MPSColumnIndex,Overlap);
-      Overlap*=Normalisation;
-      cout <<" Previous Overlap =  "<<Overlap <<endl;
+      PreviousOverlap = CurrentOverlap / TotalCoefficientVectorSqrNorm;
+      cout << Iteration << " : " << PreviousOverlap << " " << (-log(PreviousOverlap) / ((double) NbrBlock)) << endl;
+      TmpMatrix2[NbrBlock-1].GetMatrixElement(MPSRowIndex,MPSColumnIndex, CurrentOverlap);
+      CurrentOverlap *= Normalisation;
+
+      RealVector Derivative(DimensionPhysicalHilbertSpace, true);
       for (int i = 0; i < DimensionPhysicalHilbertSpace; i++)
 	{
 	  SparseRealMatrix TmpMatrix3 = Multiply(FusedBMatrices[i], TmpMatrix2[NbrBlock - 1 - 1]);
 	  double Tmp;
 	  TmpMatrix3.GetMatrixElement(MPSRowIndex,MPSColumnIndex ,Tmp);
-	  CoefficientVector[i] = Tmp;
+	  Derivative[i] = Tmp;
 	  for(int p = 1; p < (NbrBlock - 1);p++)
 	    {
 	      SparseRealMatrix TmpMatrix4 = Multiply(Multiply(TmpMatrix2[p - 1], FusedBMatrices[i]), TmpMatrix2[(NbrBlock - 1) - p - 1]);
 	      TmpMatrix4.GetMatrixElement(MPSRowIndex,MPSColumnIndex,Tmp);
-	      CoefficientVector[i] += Tmp;
+	      Derivative[i] += Tmp;
 	    }
 	  SparseRealMatrix TmpMatrix5 = Multiply(TmpMatrix2[NbrBlock - 1 - 1], FusedBMatrices[i]);
 	  TmpMatrix5.GetMatrixElement(MPSRowIndex,MPSColumnIndex ,Tmp);
-	  CoefficientVector[i] += Tmp;
-	  CoefficientVector[i] *= Normalisation;
-	  CoefficientVector[i] /= (2.0 * (double) NbrBlock);
+	  Derivative[i] += Tmp;
 	}
-      lamba = Newlamba ;
-      Newlamba = CoefficientVector.Norm();
-      CoefficientVector.Normalize();
-      
-      cout <<Newlamba << " "<< lamba << " : ";
 
-      for (int i = 0; i < DimensionPhysicalHilbertSpace;  i++)
-	  cout << " " <<CoefficientVector[i];
-      cout << endl;
+      Derivative *= 2.0 * CurrentOverlap * Normalisation / TotalCoefficientVectorSqrNorm;
+//       for (int i = 0; i < DimensionPhysicalHilbertSpace; i++)
+// 	{
+// 	  Derivative[i] -= 2.0 * NbrBlock * CurrentOverlap * CurrentOverlap * CoefficientVector[i] / (pow(CoefficientVector.SqrNorm(), NbrBlock + 1));  
+// 	}
+      double Epsilon = 0.01;
+//       if (Derivative.Norm() < Epsilon)
+//  	Epsilon = 1.0;
+      for (int i = 0; i < DimensionPhysicalHilbertSpace; i++)
+	{
+	  CoefficientVector[i] += Epsilon * Derivative[i] / Derivative.Norm();
+	}
+      //      Lambda -= 0.1 * (CoefficientVector.SqrNorm()  - 1.0);
+
+      CoefficientVector.Normalize();
+      cout << Derivative.Norm() << " " << CoefficientVector.Norm() << endl;
+      CurrentOverlap *= CurrentOverlap;
+      ++Iteration;
+      //      cout << Derivative.Norm() << endl;
+ //      for (int i = 0; i < DimensionPhysicalHilbertSpace;  i++)
+// 	  cout << " " <<CoefficientVector[i];
+//      cout << endl;
     }
-  
+
   /*
   SparseRealMatrix TmpMatrix =  FusedBMatrices[0] * CoefficientVector[0];
   
@@ -284,6 +358,7 @@ int main(int argc, char** argv)
   
   */
 
+  CoefficientVector.Normalize();
   for (int i = 0; i < DimensionPhysicalHilbertSpace;  i++)
     cout << i <<" " <<CoefficientVector[i]<<endl;
   
