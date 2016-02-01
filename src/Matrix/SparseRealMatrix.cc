@@ -1651,6 +1651,120 @@ SparseRealMatrix Conjugate (SparseRealMatrix* matrix1, SparseRealMatrix* matrix2
   return TmpMatrix;
 }
 
+// matrix-vector multiplication action to the right (i.e. v^t M)
+//
+// inputVector = vector that will be multiplied
+// outputVector = vector where the result will be stored
+
+void SparseRealMatrix::RightMultiply (RealVector& inputVector, RealVector& outputVector)
+{
+  if ((this->NbrRow != inputVector.GetVectorDimension()) || (outputVector.GetVectorDimension() != this->NbrColumn))
+    {
+      cout << "error, cannot conjugate the matrices" << endl;
+      return; 
+    }
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      double& Tmp = outputVector[i];
+      Tmp = 0.0;
+      long MinPos =  this->RowPointers[i];
+      if (MinPos >= 0l)
+	{
+	  long MaxPos = this->RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      Tmp += this->MatrixElements[MinPos] * inputVector[this->ColumnIndices[MinPos]];
+	    }	    
+	}
+    }
+}
+
+// matrix-vector multiplication action to the right including a global scaling factor (i.e. alpha v^t M)
+//
+// coefficient = global multiplicative coefficient 
+// inputVector = vector that will be multiplied
+// outputVector = vector where the result will be stored
+
+void SparseRealMatrix::RightMultiply (double coefficient, RealVector& inputVector, RealVector& outputVector)
+{
+  if ((this->NbrRow != inputVector.GetVectorDimension()) || (outputVector.GetVectorDimension() != this->NbrColumn))
+    {
+      cout << "error, cannot conjugate the matrices" << endl;
+      return; 
+    }
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      double& Tmp = outputVector[i];
+      Tmp = 0.0;
+      long MinPos =  this->RowPointers[i];
+      if (MinPos >= 0l)
+	{
+	  long MaxPos = this->RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      Tmp += this->MatrixElements[MinPos] * inputVector[this->ColumnIndices[MinPos]];
+	    }	    
+	}
+      Tmp *= coefficient;
+    }
+}
+
+// matrix-vector multiplication action to the right (i.e. v^t M), adding the result to another vector
+//
+// inputVector = vector that will be multiplied
+// outputVector = vector where the result will be added
+
+void SparseRealMatrix::RightAddMultiply (RealVector& inputVector, RealVector& outputVector)
+{
+  if ((this->NbrRow != inputVector.GetVectorDimension()) || (outputVector.GetVectorDimension() != this->NbrColumn))
+    {
+      cout << "error, cannot conjugate the matrices" << endl;
+      return; 
+    }
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      double& Tmp = outputVector[i];
+      long MinPos =  this->RowPointers[i];
+      if (MinPos >= 0l)
+	{
+	  long MaxPos = this->RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      Tmp += this->MatrixElements[MinPos] * inputVector[this->ColumnIndices[MinPos]];
+	    }	    
+	}
+    }
+}
+
+// matrix-vector multiplication action to the right including a global scaling factor (i.e. alpha v^t M), adding the result to another vector
+//
+// coefficient = global multiplicative coefficient 
+// inputVector = vector that will be multiplied
+// outputVector = vector where the result will be added
+
+void SparseRealMatrix::RightAddMultiply (double coefficient, RealVector& inputVector, RealVector& outputVector)
+{
+  if ((this->NbrRow != inputVector.GetVectorDimension()) || (outputVector.GetVectorDimension() != this->NbrColumn))
+    {
+      cout << "error, cannot conjugate the matrices" << endl;
+      return; 
+    }
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      double& Tmp = outputVector[i];
+      long MinPos =  this->RowPointers[i];
+      if (MinPos >= 0l)
+	{
+	  long MaxPos = this->RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      Tmp += coefficient * this->MatrixElements[MinPos] * inputVector[this->ColumnIndices[MinPos]];
+	    }	    
+	}
+    }
+}
+
+
 // compute the transpose of the current matrix
 //
 // return value = hermitian transposed matrix

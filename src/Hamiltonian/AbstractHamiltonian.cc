@@ -36,6 +36,8 @@
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealMatrix.h"
 #include "Matrix/ComplexMatrix.h"
+#include "Matrix/SparseRealMatrix.h"
+#include "Matrix/SparseComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "MathTools/Complex.h"
 #include "BitmapTools/BitmapPicture/AbstractBitmapPicture.h"
@@ -153,6 +155,83 @@ ComplexMatrix& AbstractHamiltonian::GetHamiltonian (ComplexMatrix& M)
   return M;  
 }
   
+// store Hamiltonian into a complex sparse matrix
+//
+// M = reference on matrix where Hamiltonian has to be stored
+// return value = reference on  corresponding complex matrix
+
+SparseComplexMatrix& AbstractHamiltonian::GetHamiltonian (SparseComplexMatrix& M)
+{
+  ComplexVector TmpV1 (this->GetHilbertSpaceDimension(), true);
+  ComplexVector TmpV2 (this->GetHilbertSpaceDimension(), true);
+  int* TmpNbrNonZeroMatrixElements = new int [this->GetHilbertSpaceDimension()];
+  for (int i = 0; i < this->GetHilbertSpaceDimension(); i++)
+    {
+      TmpNbrNonZeroMatrixElements[i] = 0;
+    }
+  for (int i = 0; i < this->GetHilbertSpaceDimension(); i++)
+    {
+      TmpV1[i] = 1.0;
+      if (this->IsHermitian())
+	this->HermitianLowLevelMultiply(TmpV1, TmpV2);
+      else
+	this->LowLevelMultiply(TmpV1, TmpV2);
+      if (this->LeftHamiltonianVectorMultiplicationFlag == false)
+	{
+	  for (int j = 0; j < this->GetHilbertSpaceDimension(); j++)
+	    {
+	      if ((TmpV2[j].Re != 0.0) || (TmpV2[j].Im != 0.0))
+		{
+		  ++TmpNbrNonZeroMatrixElements[j];
+		}
+	    }
+	}
+      else
+	{
+	  for (int j = 0; j < this->GetHilbertSpaceDimension(); j++)
+	    {
+	      if ((TmpV2[j].Re != 0.0) || (TmpV2[j].Im != 0.0))
+		{
+		  ++TmpNbrNonZeroMatrixElements[i];
+		}
+	    }
+	}
+      TmpV1[i] = 0.0;	
+    }
+  M = SparseComplexMatrix(this->GetHilbertSpaceDimension(), this->GetHilbertSpaceDimension(), TmpNbrNonZeroMatrixElements);
+  delete[] TmpNbrNonZeroMatrixElements;
+  for (int i = 0; i < this->GetHilbertSpaceDimension(); i++)
+    {
+      TmpV1[i] = 1.0;
+      if (this->IsHermitian())
+	this->HermitianLowLevelMultiply(TmpV1, TmpV2);
+      else
+	this->LowLevelMultiply(TmpV1, TmpV2);
+      if (this->LeftHamiltonianVectorMultiplicationFlag == false)
+	{
+	  for (int j = 0; j < this->GetHilbertSpaceDimension(); j++)
+	    {
+	      if ((TmpV2[j].Re != 0.0) || (TmpV2[j].Im != 0.0))
+		{
+		  M.SetMatrixElement(j, i, TmpV2[j]);
+		}
+	    }
+	}
+      else
+	{
+	  for (int j = 0; j < this->GetHilbertSpaceDimension(); j++)
+	    {
+	      if ((TmpV2[j].Re != 0.0) || (TmpV2[j].Im != 0.0))
+		{
+		  M.SetMatrixElement(i, j, TmpV2[j]);
+		}
+	    }
+	}
+      TmpV1[i] = 0.0;
+    }
+  return M;  
+}
+  
 // store real part of Hamiltonian into a real symmetric matrix
 //
 // M = reference on matrix where Hamiltonian has to be stored
@@ -212,6 +291,83 @@ RealMatrix& AbstractHamiltonian::GetHamiltonian (RealMatrix& M)
 	}
       TmpV1[i] = 0.0;	
     }
+  return M;
+}
+  
+// store real part of Hamiltonian into a real sparse matrix
+//
+// M = reference on matrix where Hamiltonian has to be stored
+// return value = reference on  corresponding real matrix 
+
+SparseRealMatrix& AbstractHamiltonian::GetHamiltonian (SparseRealMatrix& M)
+{
+  RealVector TmpV1 (this->GetHilbertSpaceDimension(), true);
+  RealVector TmpV2 (this->GetHilbertSpaceDimension(), true);
+  int* TmpNbrNonZeroMatrixElements = new int [this->GetHilbertSpaceDimension()];
+  for (int i = 0; i < this->GetHilbertSpaceDimension(); i++)
+    {
+      TmpNbrNonZeroMatrixElements[i] = 0;
+    }
+  for (int i = 0; i < this->GetHilbertSpaceDimension(); i++)
+    {
+      TmpV1[i] = 1.0;
+      if (this->IsHermitian())
+	this->HermitianLowLevelMultiply(TmpV1, TmpV2);
+      else
+	this->LowLevelMultiply(TmpV1, TmpV2);
+      if (this->LeftHamiltonianVectorMultiplicationFlag == false)
+	{
+	  for (int j = 0; j < this->GetHilbertSpaceDimension(); j++)
+	    {
+	      if (TmpV2[j] != 0.0)
+		{
+		  ++TmpNbrNonZeroMatrixElements[j];
+		}
+	    }
+	}
+      else
+	{
+	  for (int j = 0; j < this->GetHilbertSpaceDimension(); j++)
+	    {
+	      if (TmpV2[j] != 0.0)
+		{
+		  ++TmpNbrNonZeroMatrixElements[i];
+		}
+	    }
+	}
+      TmpV1[i] = 0.0;	
+    }
+  M = SparseRealMatrix(this->GetHilbertSpaceDimension(), this->GetHilbertSpaceDimension(), TmpNbrNonZeroMatrixElements);
+  delete[] TmpNbrNonZeroMatrixElements;
+  for (int i = 0; i < this->GetHilbertSpaceDimension(); i++)
+    {
+      TmpV1[i] = 1.0;
+      if (this->IsHermitian())
+	this->HermitianLowLevelMultiply(TmpV1, TmpV2);
+      else
+	this->LowLevelMultiply(TmpV1, TmpV2);
+      if (this->LeftHamiltonianVectorMultiplicationFlag == false)
+	{
+	  for (int j = 0; j < this->GetHilbertSpaceDimension(); j++)
+	    {
+	      if (TmpV2[j] != 0.0)
+		{
+		  M.SetMatrixElement(j, i, TmpV2[j]);
+		}
+	    }
+	}
+      else
+	{
+	  for (int j = 0; j < this->GetHilbertSpaceDimension(); j++)
+	    {
+	      if (TmpV2[j] != 0.0)
+		{
+		  M.SetMatrixElement(i, j, TmpV2[j]);
+		}
+	    }
+	}
+      TmpV1[i] = 0.0;	
+    }  
   return M;
 }
   

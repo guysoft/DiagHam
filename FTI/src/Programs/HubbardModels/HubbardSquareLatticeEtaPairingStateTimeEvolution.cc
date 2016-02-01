@@ -30,6 +30,9 @@
 #include "Matrix/RealDiagonalMatrix.h"
 
 #include "MainTask/GenericComplexMainTask.h"
+
+#include "Tools/FTIFiles/FTIHubbardModelFileTools.h"
+
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
 
@@ -87,6 +90,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "nnn-t", "next nearest neighbor hopping amplitude", 0.0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nearbyeta-x", "x distance of the broken pair when generating a nearby eta pairing state", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nearbyeta-y", "y distance of the broken pair when generating a nearby eta pairing state", 0);
+  (*SystemGroup) += new SingleStringOption  ('\n', "use-nonvacuum", "apply the eta^+ operators to a given state instead of the vacuum");
   (*SystemGroup) += new BooleanOption  ('\n', "no-evolution", "do not perform any time evolution and just store the eta pairing state");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-tau", "number of tau values to evaluate", 10);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "tau-step", "tau step", 0.1);
@@ -117,12 +121,58 @@ int main(int argc, char** argv)
     }
 
   int NbrParticles = Manager.GetInteger("nbr-particles"); 
-  int NbrSitesX = Manager.GetInteger("nbr-sitex"); 
-  int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
   if ((NbrParticles & 1) != 0)
     {
       cout << "error, eta pairing states require an even number of particles" << endl;
       return 0;
+    }
+  bool SzSymmetryFlag = Manager.GetBoolean("szsymmetrized-basis");
+  long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
+  int XMomentum = 0;
+  int YMomentum = 0;
+  int NbrSitesX = 0;
+  int NbrSitesY = 0;
+  int NbrSites = 0; 
+  int TotalSz = 0;
+  int SzParitySector = 1;
+  bool GutzwillerFlag = false;
+  bool Statistics = true;
+
+  int VacuumNbrParticles = 0; 
+  int VacuumXMomentum = 0;
+  int VacuumYMomentum = 0;
+  int VacuumTotalSz = 0;
+
+  FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* VacuumSpace = 0;
+  if (Manager.GetString("use-nonvacuum") != 0)
+    {
+      bool VacuumSzSymmetryFlag = false;
+      
+      if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("use-nonvacuum"), VacuumNbrParticles, NbrSites, VacuumTotalSz, 
+									   VacuumXMomentum, VacuumYMomentum, NbrSitesX, NbrSitesY, 
+									   Statistics, GutzwillerFlag) == false)
+	{
+	  cout << "error, can't extract system information from file name " << Manager.GetString("use-nonvacuum") << endl;
+	  return 0;
+	}
+      if (VacuumSzSymmetryFlag == false)
+	{
+	  VacuumSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (VacuumNbrParticles, VacuumTotalSz, NbrSites, VacuumXMomentum, NbrSitesX,
+									       VacuumYMomentum, NbrSitesY);
+	}
+      else
+	{
+	  bool MinusParitySector = true;
+	  VacuumSpace = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (VacuumNbrParticles, VacuumTotalSz, NbrSites, MinusParitySector, 
+											 VacuumXMomentum, NbrSitesX,
+											 VacuumYMomentum, NbrSitesY);
+	}
+    }
+  else
+    {
+      NbrSitesX = Manager.GetInteger("nbr-sitex"); 
+      NbrSitesY = Manager.GetInteger("nbr-sitey"); 
+      NbrSites = NbrSitesX * NbrSitesY; 
     }
   if ((NbrSitesX & 1) != 0)
     {
@@ -134,19 +184,22 @@ int main(int argc, char** argv)
       cout << "error, eta pairing states require an even number of sites in the y direction" << endl;
       return 0;
     }
-  int NbrSites = NbrSitesX * NbrSitesY; 
-  bool SzSymmetryFlag = Manager.GetBoolean("szsymmetrized-basis");
-  long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
-  int XMomentum = 0;
-  int YMomentum = 0;
+
   if ((NbrParticles & 2) != 0)
     {
       XMomentum = NbrSitesX >> 1;
-      YMomentum = NbrSitesY >> 1;      
+      YMomentum = NbrSitesY >> 1;          
     }
-  int TotalSz = 0;
-  int SzParitySector = 1;
-
+  if (Manager.GetString("use-nonvacuum") != 0)
+    {
+      NbrParticles += VacuumNbrParticles;
+      TotalSz += VacuumTotalSz;
+      XMomentum += VacuumXMomentum;
+      YMomentum += VacuumYMomentum;      
+      XMomentum %= NbrSitesX;
+      YMomentum %= NbrSitesY;
+    }
+  
   char* StatisticPrefix = new char [64];
   if (SzSymmetryFlag == false)
     {
@@ -156,9 +209,6 @@ int main(int argc, char** argv)
     {
       sprintf (StatisticPrefix, "fermions_hubbard_szsym");
     }
-    
-  
-
   char* FilePrefix = new char [256];
   if ((Manager.GetInteger("nearbyeta-x") == 0) && (Manager.GetInteger("nearbyeta-y") == 0))
     {
@@ -194,17 +244,19 @@ int main(int argc, char** argv)
 	}
     }
 
+  FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* NonVacuumSpace = 0;
+
   FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* Space = 0;
   AbstractHamiltonian* Hamiltonian = 0;
   if (SzSymmetryFlag == false)
     {
-      Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, 0, NbrSites, XMomentum, NbrSitesX,
+      Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, TotalSz, NbrSites, XMomentum, NbrSitesX,
 								     YMomentum, NbrSitesY);
     }
   else
     {
       bool MinusParitySector = true;
-      Space = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles, 0, NbrSites, MinusParitySector, 
+      Space = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles, TotalSz, NbrSites, MinusParitySector, 
 									       XMomentum, NbrSitesX,
 									       YMomentum, NbrSitesY);
     }
@@ -212,7 +264,21 @@ int main(int argc, char** argv)
     Memory = Architecture.GetArchitecture()->GetLocalMemory();
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 
-  ComplexVector EtaPairingState = Space->GenerateEtaPairingNearbyState(Manager.GetInteger("nearbyeta-x"), Manager.GetInteger("nearbyeta-y"));
+  ComplexVector EtaPairingState;
+  if (Manager.GetString("use-nonvacuum") == 0)
+    {
+      EtaPairingState = Space->GenerateEtaPairingNearbyState(Manager.GetInteger("nearbyeta-x"), Manager.GetInteger("nearbyeta-y"));
+    }
+  else
+    {
+      ComplexVector VacuumState;
+      if (VacuumState.ReadVector(Manager.GetString("use-nonvacuum")) == false)
+	{
+	  cout << "can't read " << Manager.GetString("use-nonvacuum") << endl;
+	  return 0;
+	}
+      EtaPairingState = Space->GenerateEtaPairingState(VacuumSpace, VacuumState);
+    }
 
   HermitianMatrix TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
   Hamiltonian = new ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian(Space, NbrParticles, NbrSites,XMomentum, NbrSitesX,

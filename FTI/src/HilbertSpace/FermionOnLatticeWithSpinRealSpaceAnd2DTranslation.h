@@ -389,6 +389,13 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // return value = vector corresponding to the  eta pairing state
   virtual ComplexVector GenerateEtaPairingNearbyState(int xDistance, int yDistance);
 
+  // generate an eta pairing state, using a generic state instead of the vacuum
+  // 
+  // initialSpace = space where the generic state is defined
+  // initialState = generic state
+  // return value = vector corresponding to the eta pairing state built on top on the generic state
+  virtual ComplexVector GenerateEtaPairingState(FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* initialSpace, ComplexVector& initialState);
+
  protected:
 
   // find state index

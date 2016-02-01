@@ -70,6 +70,7 @@ class RealVector : public Vector
   friend class RealDiagonalMatrix;
   friend class RealAntisymmetricMatrix;
   friend class RealTriDiagonalSymmetricMatrix;
+  friend class SparseRealMatrix;
 
 
   friend Complex operator * (const ComplexVector& V1, const RealVector& V2);

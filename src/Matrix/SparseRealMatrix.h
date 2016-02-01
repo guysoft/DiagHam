@@ -416,6 +416,32 @@ class SparseRealMatrix : public Matrix
   friend SparseComplexMatrix Conjugate (const SparseComplexMatrix& matrix1, const SparseRealMatrix& matrix2, const SparseComplexMatrix& matrix3, 
 					Complex* tmpMatrixElements, int* tmpColumnIndices, Complex* tmpElements);
 
+  // matrix-vector multiplication action to the right (i.e. v^t M)
+  //
+  // inputVector = vector that will be multiplied
+  // outputVector = vector where the result will be stored
+  void RightMultiply (RealVector& inputVector, RealVector& outputVector);
+
+  // matrix-vector multiplication action to the right including a global scaling factor (i.e. alpha v^t M)
+  //
+  // coefficient = global multiplicative coefficient 
+  // inputVector = vector that will be multiplied
+  // outputVector = vector where the result will be stored
+  void RightMultiply (double coefficient, RealVector& inputVector, RealVector& outputVector);
+
+  // matrix-vector multiplication action to the right (i.e. v^t M), adding the result to another vector
+  //
+  // inputVector = vector that will be multiplied
+  // outputVector = vector where the result will be added
+  void RightAddMultiply (RealVector& inputVector, RealVector& outputVector);
+
+  // matrix-vector multiplication action to the right including a global scaling factor (i.e. alpha v^t M), adding the result to another vector
+  //
+  // coefficient = global multiplicative coefficient 
+  // inputVector = vector that will be multiplied
+  // outputVector = vector where the result will be added
+  void RightAddMultiply (double coefficient, RealVector& inputVector, RealVector& outputVector);
+
   // compute the number of non-zero matrix elements (zero having strictly zero square norm)
   //
   // return value = number of non-zero matrix elements

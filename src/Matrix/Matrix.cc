@@ -399,6 +399,15 @@ bool Matrix::ReadMatrix (ifstream& file)
   if (((this->MatrixType & TmpType & Matrix::RealElements) == 0) && ((this->MatrixType & TmpType & Matrix::ComplexElements) == 0))
     {
       file.close();
+      cout << "error, trying to load the wrong type of matrix ";
+      if ((this->MatrixType & Matrix::RealElements) == Matrix::RealElements)
+	{
+	  cout << "(complex data for real matrix)" << endl;
+	}
+      else
+	{
+	  cout << "(real data for complex matrix)" << endl;
+	}
       return false;
     }
   if ((this->MatrixType & Matrix::RealElements) == Matrix::RealElements)

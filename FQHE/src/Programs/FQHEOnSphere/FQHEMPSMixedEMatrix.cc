@@ -74,6 +74,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "diagonal-block", "consider only the block diagonal in P, CFT sector and Q");
   (*SystemGroup) += new BooleanOption  ('\n', "right-eigenstates", "compute the right eigenstates");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "theta", "angle between the components");
+  (*SystemGroup) += new BooleanOption  ('\n', "use-fillingfactor", "use the filling factor to set the angle between the components");
+  (*SystemGroup) += new BooleanOption  ('\n', "no-normalization", "do not compute the MPS model state normalization");
   (*SystemGroup) += new BooleanOption  ('\n', "left-eigenstates", "compute the left eigenstates");
   (*SystemGroup) += new BooleanOption  ('\n', "fixed-parity", "compute the left eigenstates");
 
@@ -111,7 +113,6 @@ int main(int argc, char** argv)
   int NbrParticles = 0; 
   int NbrFluxQuanta = 1;
   int TotalLz = 0;
-  double Theta =  Manager.GetDouble("theta");
   bool ParityFlag = Manager.GetBoolean("fixed-parity");
   bool CylinderFlag = Manager.GetBoolean("normalize-cylinder");
 
@@ -162,7 +163,7 @@ int main(int argc, char** argv)
       sprintf (StateName, "%s_%s", MPSLeftMatrix->GetName(), MPSRightMatrix->GetName());
     }
 
-  int NbrEigenstates = MPSLeftMatrix->GetTransferMatrixLargestEigenvalueDegeneracy()*2;
+  int NbrEigenstates = MPSLeftMatrix->GetTransferMatrixLargestEigenvalueDegeneracy();
   NbrEigenstates += Manager.GetInteger("nbr-excited");
   if (Manager.GetInteger("nbr-eigenstates") > 0)
     {
@@ -178,6 +179,14 @@ int main(int argc, char** argv)
 
   char* PrefixOutputFileName = 0;
   char* OutputFileName = 0;
+  double Theta =  Manager.GetDouble("theta");
+  if (Manager.GetBoolean("use-fillingfactor") == true)
+    {
+      int Numerator;
+      int Denominator;
+      MPSLeftMatrix->GetFillingFactor(Numerator, Denominator);
+      Theta = acos(sqrt(((double) Numerator) / ((double) Denominator)));
+    }
   char * AngleString = new char [50];
   sprintf(AngleString,"theta_%f",Theta);
   char * ParityString = new char [50];
@@ -331,13 +340,58 @@ int main(int argc, char** argv)
 	Coefficients[i] =0;	
     }
 
-  TensorProductSparseMatrixHamiltonian  * ETransposeHamiltonian =0;
-  ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, SparseBMatrices, FusedRMatrices, Coefficients, Architecture.GetArchitecture());
+  TensorProductSparseMatrixHamiltonian* MixedETransposeHamiltonian =0;
+  MixedETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, SparseBMatrices, FusedRMatrices, Coefficients, Architecture.GetArchitecture());
   Architecture.GetArchitecture()->SetDimension(SparseBMatrices[0].GetNbrRow());
   
-  FQHEMPSEMatrixMainTask TaskLeft(&Manager, ETransposeHamiltonian, NbrEigenstates, false, true, 1e-10, EnergyShift, OutputFileName);
-  MainTaskOperation TaskOperationLeft (&TaskLeft);
-  TaskOperationLeft.ApplyOperation(Architecture.GetArchitecture());
+
+
+  cout << "Computing the mixed transfer matrix" << endl;
+  FQHEMPSEMatrixMainTask TaskMixedLeft(&Manager, MixedETransposeHamiltonian, 2 * NbrEigenstates, false, true, 1e-10, EnergyShift, OutputFileName);
+  MainTaskOperation TaskOperationMixedLeft (&TaskMixedLeft);
+  TaskOperationMixedLeft.ApplyOperation(Architecture.GetArchitecture());
+
+  if (Manager.GetBoolean("no-normalization") == false)
+    {
+      Complex* MixedEigenvalues = TaskMixedLeft.GetEigenvalues();
+      
+      cout << "Computing the model state transfer matrix" << endl;
+      TensorProductSparseMatrixHamiltonian* ETransposeHamiltonian =0;
+      ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients, Architecture.GetArchitecture());
+      Architecture.GetArchitecture()->SetDimension(SparseBMatrices[0].GetNbrRow());
+      
+      FQHEMPSEMatrixMainTask TaskLeft(&Manager, ETransposeHamiltonian, NbrEigenstates, false, true, 1e-10, EnergyShift, OutputFileName);
+      MainTaskOperation TaskOperationLeft (&TaskLeft);
+      TaskOperationLeft.ApplyOperation(Architecture.GetArchitecture());
+      
+      Complex* Eigenvalues = TaskLeft.GetEigenvalues();
+      
+      char* StatisticPrefix = new char[16];
+      char* TruncationName = new char[32];
+      if (Manager.GetBoolean("boson") == true)
+	{
+	  sprintf(StatisticPrefix, "bosons");
+	  sprintf(TruncationName, "plevel_%ld_maxocc_%ld", Manager.GetInteger("p-truncation"), Manager.GetInteger("boson-truncation"));
+	}
+      else
+	{
+	  sprintf(StatisticPrefix, "fermions");
+	  sprintf(TruncationName, "plevel_%ld", Manager.GetInteger("p-truncation"));
+	}
+      char* TmpFileName = new char [512];
+      char* StateName = new char [256];      
+      strcpy(StateName, MPSLeftMatrix->GetName());
+      sprintf(TmpFileName, "%s_infinite_cylinder_%s_perimeter_%f_%s_n_0_2s_0_lz_0.0.geoent", StatisticPrefix, StateName,
+	      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), TruncationName);
+      ofstream File;
+      File.open(TmpFileName, ios::binary | ios::out);
+      File.precision(14);
+      double GeometricalEntropy = -(log(SqrNorm(MixedEigenvalues[0]) / Norm(Eigenvalues[0])) / ((double) NbrOrbitals)) * (MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta) / (2.0 * M_PI));
+      cout << "Geometrical entropy = " << GeometricalEntropy << endl;
+      File << "# Geo.Ent. Norm(Mixed Eigenvalue)  SqrNorm(Mixed Eigenvalue)" << endl;
+      File << GeometricalEntropy << " " << MixedEigenvalues[0] << " " << Eigenvalues[0] << endl;
+      File.close();
+    }
 
   return 0;
 }

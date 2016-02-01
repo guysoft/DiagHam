@@ -48,6 +48,7 @@
 using std::ostream;
 
 
+class ComplexLowerTriangularMatrix;
 class ComplexUpperTriangularMatrix;
 
 
@@ -320,7 +321,21 @@ class ComplexMatrix : public Matrix
   // m1 = complex matrix
   // m2 = complex upper triangular matrix
   // return value = product result
-  friend ComplexMatrix operator * (ComplexMatrix& m1, const ComplexUpperTriangularMatrix& m2);
+  friend ComplexMatrix operator * (ComplexMatrix& m1, ComplexUpperTriangularMatrix& m2);
+
+  // multiply a complex lower triangular matrix with a complex upper triangular matrix
+  //
+  // m1 = complex lower triangular matrix
+  // m2 = complex upper triangular matrix
+  // return value = product result
+  friend ComplexMatrix operator * (ComplexLowerTriangularMatrix& m1, ComplexUpperTriangularMatrix& m2);
+
+  // multiply a complex upper triangular matrix with a complex lower triangular matrix
+  //
+  // m1 = complex upper triangular matrix
+  // m2 = complex lower triangular matrix
+  // return value = product result
+  friend ComplexMatrix operator * (ComplexUpperTriangularMatrix& m1, const ComplexLowerTriangularMatrix& m2);
 
   // multiply a matrix by a real number (right multiplication)
   //
@@ -491,6 +506,13 @@ class ComplexMatrix : public Matrix
   // return value = number of non-zero matrix elements
   long ComputeNbrNonZeroMatrixElements();
 
+  // apply a sequence of row permutations
+  //
+  // permutations = array that list all the permutations. Each permutation is given at a pair corresponding to an index i and the i-th entry in the array (i.e. i <-> permutations[i])
+  //                The sequence is performed from the latest entry of permutations to the first one
+  // nbrPermutations = number of permutations to apply
+  void ApplyRowPermutations(int* permutations, int nbrPermutations);
+
   // check if a complex matrix is hermitian
   //
   // error = maximum relative error allowed
@@ -544,6 +566,22 @@ class ComplexMatrix : public Matrix
   // changeBitSign = reference on array with -1 if the changed bit is from 1 to 0, +1 either
   // minor = flag that indicated if precalculation will be used for minor development
   void EvaluateFastPermanentPrecalculationArray(int*& changeBit, int*& changeBitSign, bool minor = false);
+
+  // compute the LU decompostion of the matrix 
+  // 
+  // lowerMatrix = reference on the matrix where the lower triangular matrix will be stored
+  // upperMatrix = reference on the matrix where the upper triangular matrix will be stored
+  // return value = array that  describe the additional row permutation
+  int* LUDecomposition(ComplexLowerTriangularMatrix& lowerMatrix, ComplexUpperTriangularMatrix& upperMatrix);
+
+  // compute the invert of a matrix from its PLU decomposition
+  // 
+  // lowerMatrix = reference on the matrix where the lower triangular matrix
+  // upperMatrix = reference on the matrix where the upper triangular matrix
+  // permutations = array that list all the permutations defining P. Each permutation is given at a pair corresponding to an index i and 
+  //                the i-th entry in the array (i.e. i <-> permutations[i]). The sequence is performed from the latest entry of permutations to the first one
+  // return value = inverted matrix
+  friend ComplexMatrix InvertMatrixFromLUDecomposition(ComplexLowerTriangularMatrix& lowerMatrix, ComplexUpperTriangularMatrix& upperMatrix, int* permutations);
 
   // build a random unitary matrix
   //
@@ -684,6 +722,18 @@ class ComplexMatrix : public Matrix
   // S = matrix where Schur form of matrix has to be stored
   // return value = reference on real matrix consisting of eigenvalues
   ComplexDiagonalMatrix& LapackSchurForm (ComplexDiagonalMatrix& M, ComplexMatrix& Q, ComplexMatrix &S);
+
+  // compute the LU decompostion of the matrix using the LAPACK library (conserving current matrix)
+  // 
+  // lowerMatrix = reference on the matrix where the lower triangular matrix will be stored
+  // upperMatrix = reference on the matrix where the upper triangular matrix will be stored
+  // return value = array that  describe the additional row permutation
+  int* LapackLUDecomposition(ComplexLowerTriangularMatrix& lowerMatrix, ComplexUpperTriangularMatrix& upperMatrix);
+
+  // invert the current matrix using the LAPACK library
+  // 
+  void LapackInvert();
+ 
 
  private:
 

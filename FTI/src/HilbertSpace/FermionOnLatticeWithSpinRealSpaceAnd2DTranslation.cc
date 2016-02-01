@@ -34,6 +34,7 @@
 #include "config.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpace.h"
+#include "HilbertSpace/FermionOnLatticeRealSpace.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
@@ -1601,3 +1602,88 @@ ComplexVector FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GenerateEtaPair
   return TmpVector;
 }
 
+// generate an eta pairing state, using a generic state instead of the vacuum
+// 
+// initialSpace = space where the generic state is defined
+// initialState = generic state
+// return value = vector corresponding to the eta pairing state built on top on the generic state
+
+ComplexVector FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GenerateEtaPairingState(FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* initialSpace, ComplexVector& initialState)
+{
+  int NbrPairs = (this->NbrFermions - initialSpace->NbrFermions) >> 1;
+  FermionOnLatticeRealSpace PairSpace (NbrPairs, this->NbrSite);
+
+  ComplexVector TmpVector (this->LargeHilbertSpaceDimension, true);
+  double* TmpFactors = new double[this->NbrSite];
+  for (int i = 0; i < this->NbrSite; ++i)
+    {
+      int TmpX;
+      int TmpY;
+      int TmpOrbitalIndex;
+      this->GetLinearizedIndex(i, TmpX, TmpY, TmpOrbitalIndex);
+      TmpFactors[i] = (double) (1 - (((TmpX ^ TmpY) & 1) << 1));
+    }
+  Complex** FourrierCoefficients = new Complex* [this->MomentumModulo];
+  for (int i = 0; i < this->MaxXMomentum; ++i)
+    {
+      FourrierCoefficients[i] = new Complex [this->MaxYMomentum];
+      for (int j = 0; j < this->MaxYMomentum; ++j)
+	{
+	  FourrierCoefficients[i][j] = Phase (-2.0 * M_PI * ((double) (i * this->XMomentum) / ((double) this->MaxXMomentum) + (double) (j * this->YMomentum) / ((double) this->MaxYMomentum)));
+	}
+    }
+  unsigned long* ExpendedStateDescription = new unsigned long[PairSpace.LargeHilbertSpaceDimension];
+  double* ExpendedFactors = new double[PairSpace.LargeHilbertSpaceDimension];
+  for (long j = 0; j < PairSpace.LargeHilbertSpaceDimension; ++j)
+    {
+      unsigned long TmpState = 0x0ul;
+      double TmpFactor = 1.0;
+      unsigned long TmpState2 = PairSpace.StateDescription[j];
+      for (int i = 0; i < this->NbrSite; ++i)
+	{
+	  if (((TmpState2 >> i) & 0x1ul) != 0x0ul)
+	    {
+	      TmpFactor *= TmpFactors[i];
+	      TmpState |= 0x3ul << (i << 1);
+	    }
+	}
+      ExpendedStateDescription[j] = TmpState;
+      ExpendedFactors[j] = TmpFactor;
+    }
+
+  for (long i = 0l; i < initialSpace->LargeHilbertSpaceDimension; ++i)
+    {
+      double TmpFactor = 1.0;
+      unsigned long TmpState = initialSpace->StateDescription[i];
+      for (long j = 0; j < PairSpace.LargeHilbertSpaceDimension; ++j)
+	{
+	  if ((ExpendedStateDescription[j] & TmpState) == 0x0ul)
+	    {
+	      int TmpNbrTranslationX;
+	      int TmpNbrTranslationY;
+	      unsigned long TmpCanonicalState = this->FindCanonicalForm(ExpendedStateDescription[j] | TmpState, TmpNbrTranslationX, TmpNbrTranslationY);
+	      int TmpLzMax = 2 * this->NbrSite - 1;
+	      while ((TmpCanonicalState >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      int TmpIndex = this->FindStateIndex(TmpCanonicalState, TmpLzMax);
+	      if (TmpIndex < this->LargeHilbertSpaceDimension)
+		{
+  		  TmpVector[TmpIndex] = ((ExpendedFactors[j] * sqrt(((double) this->NbrStateInOrbit[TmpIndex]) / ((double) initialSpace->NbrStateInOrbit[i]))) 
+  					 * FourrierCoefficients[TmpNbrTranslationX][TmpNbrTranslationY] * initialState[i]);
+//  		  TmpVector[TmpIndex] = ((ExpendedFactors[j] * sqrt(((double) initialSpace->NbrStateInOrbit[i]) / ((double) this->NbrStateInOrbit[TmpIndex])))
+//  					 * FourrierCoefficients[TmpNbrTranslationX][TmpNbrTranslationY] * initialState[i]);
+		  TmpNbrTranslationX = (this->MaxXMomentum - TmpNbrTranslationX) % this->MaxXMomentum;
+		  TmpNbrTranslationY = (this->MaxYMomentum - TmpNbrTranslationY) % this->MaxYMomentum;
+		  TmpVector[TmpIndex] *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> ((TmpNbrTranslationY * this->MaxXMomentum) + TmpNbrTranslationX)) & 0x1ul))); 
+		}
+	    }
+	}
+    }
+
+  delete[] ExpendedStateDescription;
+  delete[] ExpendedFactors;
+  delete[] FourrierCoefficients;
+  delete[] TmpFactors;
+  TmpVector /= TmpVector.Norm();
+  return TmpVector;  
+}

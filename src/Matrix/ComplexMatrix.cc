@@ -32,6 +32,8 @@
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealDiagonalMatrix.h"
 #include "Matrix/RealMatrix.h"
+#include "Matrix/ComplexLowerTriangularMatrix.h"
+#include "Matrix/ComplexUpperTriangularMatrix.h"
 #include <iostream>
 #include <cstdlib>
 
@@ -56,6 +58,12 @@ extern "C" void FORTRAN_NAME(zgetrf)(const int* dimensionM, const int* dimension
 extern "C" void FORTRAN_NAME(zgetrs)(const char* transpose, const int* dimensionN, const int* numRHS,
 				     const doublecomplex* matrixA, const int* leadingDimensionA, const int *ipiv,
 				     const doublecomplex* matrixB, const int* leadingDimensionB, const int *info);
+
+// binding to the LAPACK zgetri routine for matrix inversion using LU decomposition
+//
+extern "C" void FORTRAN_NAME(zgetri)(const int* dimensionM, const doublecomplex* matrixA, 
+				     const int* leadingDimensionA, const int *ipiv, const doublecomplex* workingArea, 
+				     const int* workingAreaSize, const int *info);
 
 // sequence of routines to be called for diagonalization via Hessenberg matrix QR decomposition
 // balance (optional)
@@ -1469,8 +1477,8 @@ ComplexMatrix& ComplexMatrix::Transpose ()
 	  for (int j = i + 1; j < this->NbrColumn; j++)
 	    {
 	      tmp = this->Columns[i].Components[j];
-	      this->Columns[i].Components[j] = Conj(this->Columns[j].Components[i]);
-	      this->Columns[j].Components[i] = Conj(tmp);
+	      this->Columns[i].Components[j] = this->Columns[j].Components[i];
+	      this->Columns[j].Components[i] = tmp;
 	    }
 	  this->Columns[i].Components[i] = this->Columns[i].Components[i];
 	}
@@ -1655,6 +1663,30 @@ void ComplexMatrix::RemoveZeroRows()
     }
 }
 
+
+// apply a sequence of row permutations
+//
+// permutations = array that list all the permutations. Each permutation is given at a pair corresponding to an index i and the i-th entry in the array (i.e. i <-> permutations[i]). 
+//                The sequence is performed from the latest entry of permutations to the first one
+// nbrPermutations = number of permutations to apply
+
+void ComplexMatrix::ApplyRowPermutations(int* permutations, int nbrPermutations)
+{
+  Complex Tmp;
+  for (int i = nbrPermutations - 1; i >= 0; --i)
+    {
+      if (i != permutations[i])
+	{
+	  int TmpIndex = permutations[i];
+	  for (int j = 0; j < this->NbrColumn; ++j)
+	    {
+	      Tmp = this->Columns[j][i];
+	      this->Columns[j][i] = this->Columns[j][TmpIndex];
+	      this->Columns[j][TmpIndex] = Tmp;
+	    }
+	}
+    }
+}
 
 // evaluate the real part of the matrix trace
 //
@@ -2093,6 +2125,77 @@ ostream& operator << (ostream& Str, const ComplexMatrix& P)
       Str << endl;
     }
   return Str;
+}
+
+// compute the LU decompostion of the matrix 
+// 
+// lowerMatrix = reference on the matrix where the lower triangular matrix will be stored
+// upperMatrix = reference on the matrix where the upper triangular matrix will be stored
+// return value = array that  describe the additional row permutation
+
+int* ComplexMatrix::LUDecomposition(ComplexLowerTriangularMatrix& lowerMatrix, ComplexUpperTriangularMatrix& upperMatrix)
+{
+#ifdef __LAPACKONLY__
+  return this->LUDecomposition();
+#endif
+  if (this->NbrRow != this->NbrColumn)
+    {
+      cout << "LU decomposition is only performed for square matrices" << endl;
+      return 0; 
+    }
+  cout << "warning, ComplexMatrix::LUDecomposition requires Lapack" << endl;
+  return 0;
+}
+  
+// compute the invert of a matrix from its PLU decomposition
+// 
+// lowerMatrix = reference on the matrix where the lower triangular matrix
+// upperMatrix = reference on the matrix where the upper triangular matrix
+// permutations = array that list all the permutations defining P. Each permutation is given at a pair corresponding to an index i and 
+//                the i-th entry in the array (i.e. i <-> permutations[i]). The sequence is performed from the latest entry of permutations to the first one
+// return value = inverted matrix
+
+ComplexMatrix InvertMatrixFromLUDecomposition(ComplexLowerTriangularMatrix& lowerMatrix, ComplexUpperTriangularMatrix& upperMatrix, int* permutations)
+{
+  ComplexMatrix TmpM (lowerMatrix.GetNbrRow(), upperMatrix.GetNbrColumn());
+  ComplexVector TmpV (lowerMatrix.GetNbrRow(), true);
+  Complex Tmp;
+  int TmpIndex = 0;
+  for (int i = 0; i < TmpM.NbrColumn; ++i)
+    {
+      TmpV.ClearVector();
+      TmpIndex = i;
+      for (int j = 0; j < TmpM.NbrRow; ++j)
+	{
+	  if (j != permutations[j])
+	    {
+	      if (j == TmpIndex)
+		{
+		  TmpIndex = permutations[j];
+		}
+	      else
+		{
+		  if (permutations[j] == TmpIndex)
+		    {
+		      TmpIndex = j;
+		    }
+		}
+	    }
+	}
+      TmpV[TmpIndex] = 1.0;
+      if (lowerMatrix.SolveLinearEquation(TmpM.Columns[i], TmpV) == false)
+	{
+	  return ComplexMatrix();
+	}
+      ComplexVector TmpV2 = TmpV;
+      TmpV = TmpM.Columns[i];
+      TmpM.Columns[i] = TmpV2;
+      if (upperMatrix.SolveLinearEquation(TmpM.Columns[i], TmpV) == false)
+	{
+	  return ComplexMatrix();
+	}      
+    }
+  return TmpM;
 }
 
 #ifdef USE_OUTPUT
@@ -2556,41 +2659,72 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& 
     M.Resize(this->NbrColumn, this->NbrColumn);
   if (Q.GetNbrColumn() != this->NbrColumn)
     Q.Resize(this->NbrColumn, this->NbrColumn);
-  doublecomplex* matrixA = new doublecomplex [this->NbrRow * this->NbrRow];
-  double* scale = new double [this->NbrRow];
-  double *reciCondVal = new double [this->NbrRow];
-  double *reciCondVec = new double [this->NbrRow];
-  doublecomplex* TransQ = new doublecomplex [this->NbrRow * this->NbrRow];
-  doublecomplex* Eigenvalues = new doublecomplex [this->NbrRow];
-  doublecomplex* EigenvectorsR = new doublecomplex [this->NbrRow * this->NbrRow];
-  doublecomplex* EigenvectorsL = NULL;
-  Complex *TmpColumn;
-  for (int j=0;j<NbrRow;++j)
+  char JobVL;
+  char JobVR;
+  if (leftFlag == true)
     {
-      TmpColumn=this->Columns[j].Components;
-      for (int i=0; i<NbrRow;++i)
+      JobVL = 'V';
+      JobVR = 'N';
+    }
+  else
+    {
+      JobVL = 'N';
+      JobVR = 'V';
+    }
+  doublecomplex* matrixA = new doublecomplex [((long) this->NbrColumn) * this->NbrRow];
+  double* scale = new double [this->NbrRow];
+  double* reciCondVal = new double [this->NbrRow];
+  double* reciCondVec = new double [this->NbrRow];
+  doublecomplex* Eigenvalues = new doublecomplex [2 * this->NbrRow];
+  int TmpLeadingLeftDimension;
+  int TmpLeadingRightDimension;
+  if (leftFlag == true)
+    {
+      TmpLeadingLeftDimension = this->NbrColumn;
+      TmpLeadingRightDimension = 1;
+    }
+  else
+    {
+      TmpLeadingRightDimension = this->NbrColumn;
+      TmpLeadingLeftDimension = 1;
+    }
+  doublecomplex* EigenvectorsR = new doublecomplex [((long) this->NbrColumn) * this->NbrRow];
+  doublecomplex* EigenvectorsL = new doublecomplex [((long) this->NbrColumn) * this->NbrRow];
+  Complex* TmpColumn;
+  for (int j = 0; j < this->NbrRow; ++j)
+    {
+      TmpColumn = this->Columns[j].Components;
+      for (int i = 0; i < this->NbrRow; ++i)
 	{
-	  matrixA[i+j*NbrRow].r=TmpColumn[i].Re;
-	  matrixA[i+j*NbrRow].i=TmpColumn[i].Im;
+	  matrixA[i + (j * this->NbrRow)].r = TmpColumn[i].Re;
+	  matrixA[i + (j * this->NbrRow)].i = TmpColumn[i].Im;
 	}
     }  
   int Information = 0;
   int Dim = this->NbrRow;
-  int iLow=1, iHigh=this->NbrRow;
-  doublecomplex *complexWork = new doublecomplex[1];
-  double *realWork = new double[2*NbrRow];
+  int iLow = 1;
+  int iHigh = this->NbrRow;
+  doublecomplex* complexWork = new doublecomplex[1];
+  double* realWork = new double[2 * this->NbrRow];
   double absNorm;
-  int lComplexWork=-1;
+  int lComplexWork = -1;
   // workspace query
-  FORTRAN_NAME(zgeevx)("Balance","No left eigenvectors","Vectors on right", "No condition numbers",
-		       &Dim, matrixA, &Dim, Eigenvalues, EigenvectorsL, &Dim, EigenvectorsR, &Dim,
+  FORTRAN_NAME(zgeevx)("Balance", &JobVL, &JobVR, "No condition numbers",
+		       &Dim, matrixA, &Dim, Eigenvalues, EigenvectorsL, &TmpLeadingLeftDimension, 
+		       EigenvectorsR, &TmpLeadingRightDimension,
 		       &iLow, &iHigh, scale, &absNorm, reciCondVal, reciCondVec, 
-		       complexWork, &lComplexWork, realWork, &Information);  
+		       complexWork, &lComplexWork, realWork, &Information); 
+  if (Information < 0)
+    {
+      cout << "Illegal argument " << -Information << " in LAPACK function call to zgeevx in ComplexMatrix.cc in LapackDiagonalize, line "<< __LINE__<<endl;
+      exit(1);
+    }
   lComplexWork=(int)(complexWork[0].r);
-  delete [] complexWork;
+  delete[] complexWork;
   complexWork = new doublecomplex[lComplexWork];
-  FORTRAN_NAME(zgeevx)("Balance","No left eigenvectors","Vectors on right", "No condition numbers",
-		       &Dim, matrixA, &Dim, Eigenvalues, EigenvectorsL, &Dim, EigenvectorsR, &Dim,
+  FORTRAN_NAME(zgeevx)("Balance", &JobVL, &JobVR, "No condition numbers",
+		       &Dim, matrixA, &Dim, Eigenvalues, EigenvectorsL, &TmpLeadingLeftDimension, 
+		       EigenvectorsR, &TmpLeadingRightDimension,
 		       &iLow, &iHigh, scale, &absNorm, reciCondVal, reciCondVec, 
 		       complexWork, &lComplexWork, realWork, &Information);
   if (Information < 0)
@@ -2598,23 +2732,34 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& 
       cout << "Illegal argument " << -Information << " in LAPACK function call to zgeevx in ComplexMatrix.cc in LapackDiagonalize, line "<< __LINE__<<endl;
       exit(1);
     }
-  else if (Information > 0)
+  if (Information > 0)
     {
       cout << "Attention: Only part of eigenvalues converged in LAPACK function call to zgeevx in ComplexMatrix.cc in LapackDiagonalize, line "<< __LINE__<<endl;
     }
     
   // recover values of eigenvalues and eigenvectors
-  for (int j=0;j<NbrRow;++j)
+  if (leftFlag == true)
     {
-      M.SetMatrixElement(j, j, Eigenvalues[j].r, Eigenvalues[j].i);
-      for (int i=0; i<NbrRow;++i)
-	Q.SetMatrixElement(i, j, EigenvectorsR[i+j*NbrRow].r, EigenvectorsR[i+j*NbrRow].i);
+      for (int j = 0;j < this->NbrRow; ++j)
+	{
+	  M.SetMatrixElement(j, j, Eigenvalues[j].r, Eigenvalues[j].i);
+	  for (int i = 0; i < this->NbrRow; ++i)
+	    Q.SetMatrixElement(i, j, EigenvectorsL[i + (j * NbrRow)].r, EigenvectorsL[i + (j * NbrRow)].i);
+	}
+    }
+  else
+    {
+      for (int j = 0; j < this->NbrRow; ++j)
+	{
+	  M.SetMatrixElement(j, j, Eigenvalues[j].r, Eigenvalues[j].i);
+	  for (int i = 0; i < this->NbrRow; ++i)
+	    Q.SetMatrixElement(i, j, EigenvectorsR[i + (j * NbrRow)].r, EigenvectorsR[i + (j * NbrRow)].i);
+	}
     }
   
   delete [] matrixA;
   delete [] Eigenvalues;
   delete [] EigenvectorsR;
-  delete [] TransQ;
   delete [] reciCondVal;
   delete [] reciCondVec;
   delete [] scale;
@@ -2755,6 +2900,130 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackSchurForm (ComplexDiagonalMatrix& M,
   return M;
 }
 
+// compute the LU decompostion of the matrix using the LAPACK library (conserving current matrix)
+// 
+// lowerMatrix = reference on the matrix where the lower triangular matrix will be stored
+// upperMatrix = reference on the matrix where the upper triangular matrix will be stored
+// return value = array that  describe the additional row permutation
+
+int* ComplexMatrix::LapackLUDecomposition(ComplexLowerTriangularMatrix& lowerMatrix, ComplexUpperTriangularMatrix& upperMatrix)
+{
+  if (this->NbrRow != this->NbrColumn)
+    {
+      cout << "LU decomposition is only performed for square matrices" << endl;
+      return 0; 
+    }
+  int* PermutationArray = new int [this->NbrRow];
+  doublecomplex* TmpMatrix = new doublecomplex [((long) this->NbrRow) * ((long) this->NbrColumn)];
+  long Pos = 0l;
+  for (int j = 0; j < this->NbrColumn;++j)
+    {
+      for (int i = 0; i < this->NbrRow; ++i)
+	{
+	  TmpMatrix[Pos].r = this->Columns[j][i].Re;
+	  TmpMatrix[Pos].i = this->Columns[j][i].Im;
+	  ++Pos;
+	}
+    }
+  int Information = 0;
+  int DimensionM = NbrRow;
+  FORTRAN_NAME(zgetrf)(&DimensionM, &DimensionM, TmpMatrix, &DimensionM , PermutationArray, &Information);
+
+  if (Information < 0)
+    {
+      cout << "Illegal argument " << -Information << " in LAPACK function call in ComplexMatrix.cc, line "<< __LINE__<<endl;
+      exit(1);
+    }
+
+  
+  lowerMatrix = ComplexLowerTriangularMatrix(this->NbrColumn, true);
+  upperMatrix = ComplexUpperTriangularMatrix(this->NbrColumn, true);
+
+  Complex Tmp;
+  Pos = 0;
+  for (int j = 0; j < this->NbrColumn;++j)
+    {
+      for (int i = 0; i < j; ++i)
+	{
+	  Tmp.Re = TmpMatrix[Pos].r;
+	  Tmp.Im = TmpMatrix[Pos].i;
+	  upperMatrix.SetMatrixElement(i ,j, Tmp);
+	  ++Pos;
+ 	}
+      lowerMatrix.SetMatrixElement(j ,j, 1.0);
+      Tmp.Re = TmpMatrix[Pos].r;
+      Tmp.Im = TmpMatrix[Pos].i;
+      upperMatrix.SetMatrixElement(j ,j, Tmp);
+      ++Pos;
+     for (int i = j + 1 ; i < this->NbrRow; ++i)
+	{
+	  Tmp.Re = TmpMatrix[Pos].r;
+	  Tmp.Im = TmpMatrix[Pos].i;
+	  lowerMatrix.SetMatrixElement(i ,j, Tmp);
+	  ++Pos;
+	}
+    }
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      PermutationArray[i]--;
+    }
+  delete [] TmpMatrix;
+  return PermutationArray;
+}
+  
+// invert the current matrix using the LAPACK library
+// 
+
+void ComplexMatrix::LapackInvert()
+{
+  if (this->NbrRow != this->NbrColumn)
+    {
+      cout << "Matrix inversion is only performed for square matrices" << endl;
+      return ; 
+    }
+  int* PermutationArray = new int [this->NbrRow];
+  doublecomplex* TmpMatrix = new doublecomplex [((long) this->NbrRow) * ((long) this->NbrColumn)];
+  long Pos = 0l;
+  for (int j = 0; j < this->NbrColumn;++j)
+    {
+      for (int i = 0; i < this->NbrRow; ++i)
+	{
+	  TmpMatrix[Pos].r = this->Columns[j][i].Re;
+	  TmpMatrix[Pos].i = this->Columns[j][i].Im;
+	  ++Pos;
+	}
+    }
+  int Information = 0;
+  int DimensionM = NbrRow;
+  FORTRAN_NAME(zgetrf)(&DimensionM, &DimensionM, TmpMatrix, &DimensionM , PermutationArray, &Information);
+
+  if (Information < 0)
+    {
+      cout << "Illegal argument " << -Information << " in LAPACK function call in ComplexMatrix.cc, line "<< __LINE__<<endl;
+      exit(1);
+    }
+
+  int WorkingAreaSize = -1;
+  doublecomplex TmpWorkingArea;
+  FORTRAN_NAME(zgetri)(&DimensionM, TmpMatrix, &DimensionM , PermutationArray, &TmpWorkingArea, &WorkingAreaSize, &Information);
+  WorkingAreaSize = (int) TmpWorkingArea.r;
+  doublecomplex* WorkingArea = new doublecomplex [WorkingAreaSize];
+  FORTRAN_NAME(zgetri)(&DimensionM, TmpMatrix, &DimensionM , PermutationArray, WorkingArea, &WorkingAreaSize, &Information); 
+
+  Pos = 0l;
+  for (int j = 0; j < this->NbrColumn;++j)
+    {
+      for (int i = 0; i < this->NbrRow; ++i)
+	{
+	  this->Columns[j][i].Re = TmpMatrix[Pos].r;
+	  this->Columns[j][i].Im = TmpMatrix[Pos].i;
+	  ++Pos;
+	}
+    }
+  delete [] TmpMatrix;
+  delete [] PermutationArray;
+}
+  
 #endif
 
 // build a random unitary matrix

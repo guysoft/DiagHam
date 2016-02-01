@@ -59,6 +59,7 @@ class ComplexVector : public Vector
   friend class HermitianMatrix;
   friend class ComplexSkewSymmetricMatrix;
   friend class ComplexUpperTriangularMatrix;
+  friend class ComplexLowerTriangularMatrix;
   friend class RealTriDiagonalSymmetricMatrix;
   friend class ComplexTriDiagonalHermitianMatrix;
   friend class ComplexDiagonalMatrix;

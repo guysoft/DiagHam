@@ -2,6 +2,8 @@
 #include "Vector/ComplexVector.h"
 
 #include "Matrix/ComplexMatrix.h"
+#include "Matrix/ComplexUpperTriangularMatrix.h"
+#include "Matrix/ComplexLowerTriangularMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
@@ -79,6 +81,7 @@ int main(int argc, char** argv)
   Manager += ToolsGroup;
   Manager += MiscGroup;
 
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "test", "name of the file that the matrix product description", 2);
   (*SystemGroup) += new  SingleStringOption ('\0', "product", "name of the file that the matrix product description");
   (*SystemGroup) += new  SingleStringOption ('\n', "export-transformation", "optional file name to export the transformation matrix that convert th original basis into the new one");
   (*SystemGroup) += new  SingleStringOption ('\n', "export-bintransformation", "optional file name to export the transformation matrix that convert th original basis into the new one");
@@ -101,6 +104,68 @@ int main(int argc, char** argv)
       Manager.DisplayHelp (cout);
       return 0;
     }
+
+//   int TmpDim = Manager.GetInteger("test");
+//   ComplexMatrix TestMatrix (TmpDim, TmpDim, true);
+//   Complex Tmp = 1.0;
+//   for (int i = 0; i < TmpDim; ++i)
+//     {
+//       for (int j = 0; j < TmpDim; ++j)
+// 	{
+// 	  Tmp = Complex(((double) i), ((double) j) * drand48());
+// 	  TestMatrix.SetMatrixElement(i, j, Tmp);
+// 	}
+//     }
+//   ComplexUpperTriangularMatrix UpperMatrix;
+//   ComplexLowerTriangularMatrix LowerMatrix;
+
+//   cout << TestMatrix << endl;
+//   cout << "---------------------" << endl;
+
+//   int* PermutationArray = TestMatrix.LapackLUDecomposition(LowerMatrix, UpperMatrix);
+
+//   cout << UpperMatrix << endl;
+//   cout << "---------------------" << endl;
+//   cout << LowerMatrix << endl;
+//   cout << "---------------------" << endl;
+//   cout << "Permutations : " << endl;
+//   for (int i = 0; i < LowerMatrix.GetNbrRow(); ++i)
+//     cout << i << " -> " << PermutationArray[i] << endl;
+//   cout << "---------------------" << endl;
+//   ComplexMatrix TestMatrix2 = LowerMatrix * UpperMatrix;
+//   cout << TestMatrix2 << endl;
+//   cout << "---------------------" << endl;
+//   TestMatrix2.ApplyRowPermutations(PermutationArray, TestMatrix2.GetNbrRow());
+//   cout << TestMatrix2 << endl;
+//   cout << "---------------------" << endl;
+//   ComplexMatrix TestMatrix3 = InvertMatrixFromLUDecomposition(LowerMatrix, UpperMatrix, PermutationArray);
+//   cout << TestMatrix3 << endl;
+//   cout << "---------------------" << endl;
+//   ComplexMatrix TestMatrix4 = TestMatrix3 * TestMatrix;
+// //  cout << TestMatrix4 << endl;
+//   TestMatrix4.PrintNonZero(cout, 1e-13);
+//   cout << "---------------------" << endl;
+//   ComplexMatrix TestMatrix5;
+//   TestMatrix5.Copy(TestMatrix);
+//   TestMatrix5.LapackInvert();
+// //  cout << TestMatrix4 << endl;
+//   ComplexMatrix TestMatrix6 = TestMatrix5 * TestMatrix;
+//   TestMatrix6.PrintNonZero(cout, 1e-13);
+//   cout << "---------------------" << endl;
+  
+//   ComplexUpperTriangularMatrix UpperMatrix2;
+//   ComplexLowerTriangularMatrix LowerMatrix2;
+//   UpperMatrix2.Copy(UpperMatrix);
+//   LowerMatrix2.Copy(LowerMatrix);
+//   LowerMatrix.Invert();
+//   UpperMatrix.Invert();
+//   ComplexMatrix TestMatrix7 = ComplexMatrix(UpperMatrix2) * ComplexMatrix(LowerMatrix2);
+//   TestMatrix7.ApplyRowPermutations(PermutationArray, TestMatrix7.GetNbrRow());
+//   cout << TestMatrix7 << endl;
+//   cout << "---------------------" << endl;
+ 
+
+//   return 0;
 
   if (Manager.GetString("product") == 0)
     {

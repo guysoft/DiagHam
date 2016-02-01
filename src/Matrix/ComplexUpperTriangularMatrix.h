@@ -39,6 +39,7 @@
 #include "Output/MathematicaOutput.h"
 #endif
 #include "GeneralTools/GarbageFlag.h"
+#include "MathTools/Complex.h"
 
 #include <iostream>
 #include <fstream>
@@ -50,6 +51,7 @@ using std::ifstream;
 
 
 class ComplexMatrix;
+class ComplexLowerTriangularMatrix;
 
 
 class ComplexUpperTriangularMatrix : public Matrix
@@ -62,24 +64,17 @@ class ComplexUpperTriangularMatrix : public Matrix
  protected:
 
   // real part of the upper off diagonal elements
-  double* RealOffDiagonalElements;
-  // imaginary part of the upper off diagonal elements
-  double* ImaginaryOffDiagonalElements;
+  Complex* OffDiagonalElements;
   // garbage flag used for the matrix upper off diagonal elements
   GarbageFlag OffDiagonalFlag;
 
   // real part of the diagonal elements
-  double* RealDiagonalElements;
-  // imaginary part of the diagonal elements
-  double* ImaginaryDiagonalElements;
+  Complex* DiagonalElements;
   // garbage flag used for the matrix diagonal elements
   GarbageFlag DiagonalFlag;
 
-  // increment to add to the end of each line to go to the next line minus 1
-  int Increment;
-
   // dummy variable whose reference is send when an element of the lower part of the matrix is asked (initialize to 0)
-  double Dummy;
+  Complex Dummy;
 
  public:
 
@@ -95,13 +90,10 @@ class ComplexUpperTriangularMatrix : public Matrix
 
   // constructor from matrix elements (without duplicating datas)
   //
-  // realDiagonal = pointer to real part of the diagonal elements
-  // imaginaryDiagonal = pointer to imaginary part of the diagonal elements
-  // realOffDiagonal = pointer to real part of the off-diagonal elements
-  // imaginaryOffDiagonal = pointer to imaginary part of the off-diagonal elements
+  // diagonal = pointer to the diagonal elements
+  // offDiagonal = pointer to the off-diagonal elements
   // dimension = matrix dimension
-  ComplexUpperTriangularMatrix(double* realDiagonal, double* imaginaryDiagonal, 
-			       double* realOffDiagonal, double* imaginaryOffDiagonal, int dimension);
+  ComplexUpperTriangularMatrix(Complex* diagonal, Complex* offDiagonal, int dimension);
 
   // copy constructor (without duplicating datas)
   //
@@ -122,6 +114,26 @@ class ComplexUpperTriangularMatrix : public Matrix
   //
   // retrun value = pointer on new matrix 
   Matrix* Clone ();
+
+  // copy a matrix into another (duplicating data)
+  //
+  // matrix = matrix to copy
+  // return value = reference on current matrix
+  ComplexUpperTriangularMatrix& Copy (ComplexUpperTriangularMatrix& matrix);
+
+  // get a matrix element (real part if complex)
+  //
+  // i = line position
+  // j = column position
+  // x = reference on the variable where to store the requested matrix element
+  void GetMatrixElement(int i, int j, double& x) const;
+
+  // get a matrix element
+  //
+  // i = line position
+  // j = column position
+  // x = reference on the variable where to store the requested matrix element
+  void GetMatrixElement(int i, int j, Complex& x) const;
 
   // set a matrix element
   //
@@ -178,6 +190,20 @@ class ComplexUpperTriangularMatrix : public Matrix
   // return value = difference of the two matrices
   friend ComplexUpperTriangularMatrix operator - (const ComplexUpperTriangularMatrix& M1, 
 						  const ComplexUpperTriangularMatrix& M2);
+
+  // multiply a complex lower triangular matrix with a complex upper triangular matrix
+  //
+  // m1 = complex lower triangular matrix
+  // m2 = complex upper triangular matrix
+  // return value = product result
+  friend ComplexMatrix operator * (ComplexLowerTriangularMatrix& m1, ComplexUpperTriangularMatrix& m2);
+
+  // multiply a complex upper triangular matrix with a complex lower triangular matrix
+  //
+  // m1 = complex upper triangular matrix
+  // m2 = complex lower triangular matrix
+  // return value = product result
+  friend ComplexMatrix operator * (ComplexUpperTriangularMatrix& m1, ComplexLowerTriangularMatrix& m2);
 
   // multiply a complex matrix with a complex upper triangular matrix
   //
@@ -238,6 +264,27 @@ class ComplexUpperTriangularMatrix : public Matrix
   // return value = corresponding matrix element
   Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
 
+  // Solve the linear equation M x = y
+  //
+  // x = vector where the solution will be stored
+  // y = vector that gives the right hand side of the equation
+  // return value = true if no error occured
+  bool SolveLinearEquation (ComplexVector& x, ComplexVector& y);
+
+  // invert the current matrix
+  //
+  // return value = true if no error occured
+  bool Invert ();
+
+  // compute the invert of a matrix from its PLU decomposition
+  // 
+  // lowerMatrix = reference on the matrix where the lower triangular matrix
+  // upperMatrix = reference on the matrix where the upper triangular matrix
+  // permutations = array that list all the permutations defining P. Each permutation is given at a pair corresponding to an index i and 
+  //                the i-th entry in the array (i.e. i <-> permutations[i]). The sequence is performed from the latest entry of permutations to the first one
+  // return value = inverted matrix
+  friend ComplexMatrix InvertMatrixFromLUDecomposition(ComplexLowerTriangularMatrix& lowerMatrix, ComplexUpperTriangularMatrix& upperMatrix, int* permutations);
+
   // evaluate matrix trace
   //
   // return value = matrix trace 
@@ -266,6 +313,83 @@ class ComplexUpperTriangularMatrix : public Matrix
 
 #endif
 
+ protected:
+
+  // get the linearized index to access an off-diagonal matrix element
+  //
+  // i = row index
+  // j = column index
+  // return value = linearized index
+  long GetLinearizedOffDiagonalIndex(int i, int j) const;
+
+
 };
+
+// get the linearized index to access an off-diagonal matrix element
+//
+// i = row index
+// j = column index
+// return value = linearized index
+
+inline long ComplexUpperTriangularMatrix::GetLinearizedOffDiagonalIndex(int i, int j) const 
+{
+  return (i + (j * (j - 1l)) / 2l);
+}
+
+// get a matrix element (real part if complex)
+//
+// i = line position
+// j = column position
+// x = reference on the variable where to store the requested matrix element
+
+inline void ComplexUpperTriangularMatrix::GetMatrixElement(int i, int j, double& x) const
+{
+  if ((i >= this->NbrRow) || (j >= this->NbrColumn))
+    return;
+  if (i == j)
+    {
+      x= this->DiagonalElements[i].Re;
+    }
+  else
+    {
+      if (i < j)
+	{
+	  x = this->OffDiagonalElements[this->GetLinearizedOffDiagonalIndex(i, j)].Re;
+	}
+      else
+	{
+	  x = 0.0;
+	}
+    }      
+  return;
+}
+
+// get a matrix element (real part if complex)
+//
+// i = line position
+// j = column position
+// x = reference on the variable where to store the requested matrix element
+
+inline void ComplexUpperTriangularMatrix::GetMatrixElement(int i, int j, Complex& x) const
+{
+  if ((i >= this->NbrRow) || (j >= this->NbrColumn))
+    return;
+  if (i == j)
+    {
+      x = this->DiagonalElements[i];
+    }
+  else
+    {
+      if (i < j)
+	{
+	  x = this->OffDiagonalElements[this->GetLinearizedOffDiagonalIndex(i, j)];
+	}
+      else
+	{
+	  x = 0.0;
+	}
+    }      
+  return;
+}
 
 #endif

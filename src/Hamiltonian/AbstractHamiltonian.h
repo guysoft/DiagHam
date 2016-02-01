@@ -49,6 +49,8 @@ class Complex;
 class Matrix;
 class AbstractHilbertSpace;
 class AbstractBitmapPicture;
+class SparseRealMatrix;
+class SparseComplexMatrix;
 
 
 class AbstractHamiltonian
@@ -116,6 +118,12 @@ class AbstractHamiltonian
   // return value = reference on  corresponding complex matrix
   virtual ComplexMatrix& GetHamiltonian (ComplexMatrix& M);
   
+  // store Hamiltonian into a sparse complex sparse matrix
+  //
+  // M = reference on matrix where Hamiltonian has to be stored
+  // return value = reference on  corresponding complex matrix
+  virtual SparseComplexMatrix& GetHamiltonian (SparseComplexMatrix& M);
+  
   // store real part of Hamiltonian into a real symmetric matrix
   //
   // M = reference on matrix where Hamiltonian has to be stored
@@ -127,6 +135,12 @@ class AbstractHamiltonian
   // M = reference on matrix where Hamiltonian has to be stored
   // return value = reference on  corresponding real matrix 
   virtual RealMatrix& GetHamiltonian (RealMatrix& M);
+
+  // store real part of Hamiltonian into a real sparse matrix
+  //
+  // M = reference on matrix where Hamiltonian has to be stored
+  // return value = reference on  corresponding real matrix 
+  virtual SparseRealMatrix& GetHamiltonian (SparseRealMatrix& M);
 
   // store real part of Hamiltonian into a matrix
   //
