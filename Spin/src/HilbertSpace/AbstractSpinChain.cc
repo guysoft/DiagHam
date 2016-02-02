@@ -340,3 +340,15 @@ ComplexVector AbstractSpinChain::ConvertFromKxKyBasis(ComplexVector& state, Abst
   return ComplexVector();
 }
   
+
+// return the Bosonic Occupation of a given state in the basis
+//
+// index = index of the state in the basis
+// return value bosonic occupation 
+int * AbstractSpinChain::GetBosonicOccupation (unsigned int index)
+{
+  cout << "warning, using undefined function AbstractSpinChain::GetBosonicOccupation" << endl;
+  return 0;
+}
+
+

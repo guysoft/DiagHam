@@ -58,9 +58,6 @@ class Potts3Chain : public AbstractSpinChain
 
  protected:
 
-  // number of sites on th chain
-  int ChainLength;
-
   // total quantum number for the chain (i.e. either 0, 1 or 2)
   int Sz;
   // flag to indicate if Sz is fixed 
@@ -280,7 +277,7 @@ class Potts3Chain : public AbstractSpinChain
   virtual ComplexMatrix EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
 
  protected:
-
+  
   // constructor from pre-constructed datas
   //
   // largeHilbertSpaceDimension = Hilbert space dimension
@@ -317,7 +314,7 @@ class Potts3Chain : public AbstractSpinChain
   // return value = number of generated states
   long GenerateStates(int currentSite, int currentSzValue, long currentPosition);
 
-
+  
 };
 
 // return index of resulting state from application of Sz_i operator on a given state

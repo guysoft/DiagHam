@@ -65,11 +65,9 @@ BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation::Bo
 // maxYMomentum = maximum momentum in the y direction 
 // memory = amount of memory granted for precalculations
 
-BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation::BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation (int nbrBosons,  int lx, int ly, int xMomentum, int  maxXMomentum,
-										      int yMomentum, int maxYMomentum, unsigned long memory):
- BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation (nbrBosons,lx*ly,xMomentum,maxXMomentum,yMomentum,maxYMomentum,memory), Lx(lx),Ly(ly)
+BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation::BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation (int nbrBosons,  int lx, int ly, int xMomentum, int  maxXMomentum, int yMomentum, int maxYMomentum, unsigned long memory):
+  BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation (nbrBosons,lx*ly,xMomentum,maxXMomentum,yMomentum,maxYMomentum,memory), Lx(lx),Ly(ly)
 {  
-//cout <<"using BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation"<<endl;
 }
 
 // copy constructor (without duplicating datas)
@@ -78,8 +76,8 @@ BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation::Bo
 
 BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation::BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation(const BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation & bosons) :  BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation(bosons)
 {
-this->Lx = bosons.Lx;
-this->Ly = bosons.Ly;
+  this->Lx = bosons.Lx;
+  this->Ly = bosons.Ly;
 }
 
 // destructor
@@ -142,56 +140,56 @@ void BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslatio
 
  int NbrTranslation;
  unsigned long * TemporaryState = new unsigned long [this->NbrBosons];
-
+ 
  for(int i = 0; i < this->HilbertSpaceDimension ; i++)
- {
-    unsigned long * TranslationOfRepresentant = new unsigned long [this->NbrStateInOrbit[i]];
-    long * MomentumTable = new long [this->NbrStateInOrbit[i]];
-    unsigned long NbrRepresentant = 0;
-    unsigned long TmpStateDescription = this->StateDescription[i];
-   
-for(int p = 0 ; p < this->MaxYMomentum ;p++)
-{
-  for(int q = 0 ; q < this->MaxXMomentum ;q++)
-  {
-        NbrRepresentant += SearchInArrayAndDefinedWeight(TmpStateDescription,TranslationOfRepresentant,MomentumTable, NbrRepresentant, q* this->MaxYMomentum+p);
-        this->ApplySingleXTranslation(TmpStateDescription);
-  }
-  this->ApplySingleYTranslation(TmpStateDescription);
-}
-
-
-  if(NbrRepresentant != this->NbrStateInOrbit[i])
    {
-	cout <<"Wrong Number of Translation for state !"  << i <<endl;
-        cout <<NbrRepresentant<< " " << this->NbrStateInOrbit[i]<<endl;
+     unsigned long * TranslationOfRepresentant = new unsigned long [this->NbrStateInOrbit[i]];
+     long * MomentumTable = new long [this->NbrStateInOrbit[i]];
+     unsigned long NbrRepresentant = 0;
+     unsigned long TmpStateDescription = this->StateDescription[i];
+     
+     for(int p = 0 ; p < this->MaxYMomentum ;p++)
+       {
+	 for(int q = 0 ; q < this->MaxXMomentum ;q++)
+	   {
+	     NbrRepresentant += SearchInArrayAndDefinedWeight(TmpStateDescription,TranslationOfRepresentant,MomentumTable, NbrRepresentant, q* this->MaxYMomentum+p);
+	     this->ApplySingleXTranslation(TmpStateDescription);
+	   }
+	 this->ApplySingleYTranslation(TmpStateDescription);
+       }
+     
+     
+     if(NbrRepresentant != this->NbrStateInOrbit[i])
+       {
+	 cout <<"Wrong Number of Translation for state !"  << i <<endl;
+	 cout <<NbrRepresentant<< " " << this->NbrStateInOrbit[i]<<endl;
+       }
+     
+     for(int k =0 ;k <NbrRepresentant; k++)
+       {
+	 //   cout <<TranslationOfRepresentant[k]<<" "<<MomentumTable[k]<<endl;
+	 this->ConvertToMonomial(TranslationOfRepresentant[k],TemporaryState);
+	 this->GetPositionSum(TemporaryState, PositionX, PositionY);
+	 for (int p = 0; p < NbrBosons; ++p)
+	   {
+	     for (int q = 0; q < NbrBosons; ++q)
+	       {
+		 SlaterCF.SetMatrixElement(p,q,cFEigenVecs[p][(int) TemporaryState[q]]);
+		 SlaterJastrow.SetMatrixElement(p,q,jastrowEigenVecs[p][(int) TemporaryState[q]]);
+	       }	      
+	   }
+	 //    trialState[i] +=  Conj(ExponentialFactors[MomentumTable[k]/this->MaxYMomentum][MomentumTable[k]%this->MaxYMomentum]) * SlaterCF.Determinant() * SlaterJastrow.Determinant() * Phase(-1.0*PositionY*(MomentumTable[k]/this->MaxYMomentum)*phaseTranslationX);
+	 trialState[i] +=  ExponentialFactors[MomentumTable[k]/this->MaxYMomentum][MomentumTable[k]%this->MaxYMomentum] * SlaterCF.Determinant() * SlaterJastrow.Determinant() * Phase(1.0*PositionY*(MomentumTable[k]/this->MaxYMomentum)*phaseTranslationX);
+	 
+       }
+     trialState[i] /= sqrt(this->NbrStateInOrbit[i]);
+     delete [] TranslationOfRepresentant;
    }
-
-for(int k =0 ;k <NbrRepresentant; k++)
-{
-//   cout <<TranslationOfRepresentant[k]<<" "<<MomentumTable[k]<<endl;
-   this->ConvertToMonomial(TranslationOfRepresentant[k],TemporaryState);
-   this->GetPositionSum(TemporaryState, PositionX, PositionY);
- for (int p = 0; p < NbrBosons; ++p)
-    {
-    for (int q = 0; q < NbrBosons; ++q)
-    {
-    	  SlaterCF.SetMatrixElement(p,q,cFEigenVecs[p][(int) TemporaryState[q]]);
- 	  SlaterJastrow.SetMatrixElement(p,q,jastrowEigenVecs[p][(int) TemporaryState[q]]);
-    }	      
-    }
-//    trialState[i] +=  Conj(ExponentialFactors[MomentumTable[k]/this->MaxYMomentum][MomentumTable[k]%this->MaxYMomentum]) * SlaterCF.Determinant() * SlaterJastrow.Determinant() * Phase(-1.0*PositionY*(MomentumTable[k]/this->MaxYMomentum)*phaseTranslationX);
-    trialState[i] +=  ExponentialFactors[MomentumTable[k]/this->MaxYMomentum][MomentumTable[k]%this->MaxYMomentum] * SlaterCF.Determinant() * SlaterJastrow.Determinant() * Phase(1.0*PositionY*(MomentumTable[k]/this->MaxYMomentum)*phaseTranslationX);
-
-}
- trialState[i] /= sqrt(this->NbrStateInOrbit[i]);
- delete [] TranslationOfRepresentant;
-  }
-   for (int i = 0; i < this->MaxXMomentum; ++i)
-    { 
-      delete [] ExponentialFactors[i];
-    }
-   delete []  ExponentialFactors;
+ for (int i = 0; i < this->MaxXMomentum; ++i)
+   { 
+     delete [] ExponentialFactors[i];
+   }
+ delete []  ExponentialFactors;
 }
 
 

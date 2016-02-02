@@ -53,9 +53,6 @@ class Spin1AKLTChain : public AbstractSpinChain
 
  protected:
 
-  int ChainLength;
-  int HilbertSpaceDimension;
-
   int Sz;
   bool FixedQuantumNumberFlag;
   

@@ -53,9 +53,6 @@ class Spin1ChainWithTranslations : public AbstractSpinChainWithTranslations
 
  protected:
 
-  // length of the spin chain
-  int ChainLength;
-
   // momentum 
   int Momentum;
   // array containing flag indicating if a state belonging to an orbit with a given number of member is compatible with momentum constraint

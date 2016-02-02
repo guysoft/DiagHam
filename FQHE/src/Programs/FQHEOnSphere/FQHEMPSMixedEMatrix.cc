@@ -280,16 +280,21 @@ int main(int argc, char** argv)
 
   double Error = 1e-13;
   cout <<"NbrBMatrices = "<< NbrBMatrices << endl;
-  SparseRealMatrix MixedEMatrix;
+  SparseRealMatrix  MixedEMatrix;
   SparseRealMatrix*  RightMatrices = new SparseRealMatrix[NbrBMatrices];
+
+   //SparseComplexMatrix  MixedEMatrix;
+   //SparseComplexMatrix*  RightMatrices = new SparseComplexMatrix[NbrBMatrices];
+
   double * Coefficients= new double[NbrBMatrices];
 
   for (int i = 0; i < NbrBMatrices;i++)
     {
       Coefficients[i] = 1;
       RightMatrices[i] = SparseRealMatrix(1,1);
+      //RightMatrices[i] = SparseComplexMatrix(1,1);
     }
-
+  
   if (Manager.GetString("use-productstate") == 0)
     {
       RightMatrices[0].SetMatrixElement(0, 0, sin(Theta));
@@ -320,14 +325,15 @@ int main(int argc, char** argv)
   int NbrRMatrices = 2;
   for (int i = 0; i < NbrOrbitals ; i++)
     NbrStatesPerBlock *= NbrStatesPerOrbital;
-
-
+  
+  
   cout << "NbrOrbitals = " << NbrOrbitals << " NbrStatesPerOrbital = " <<NbrStatesPerOrbital<<" NbrStatesPerBlock =" <<NbrStatesPerBlock<<endl; 
   unsigned long * ArrayPhysicalIndice = MPSLeftMatrix->GetPhysicalIndices();
   
-
-  SparseRealMatrix* FusedRMatrices = new SparseRealMatrix [NbrStatesPerBlock];
   
+  SparseRealMatrix* FusedRMatrices = new SparseRealMatrix [NbrStatesPerBlock];
+  //SparseComplexMatrix* FusedRMatrices = new SparseComplexMatrix [NbrStatesPerBlock];
+
   if (Manager.GetString("use-productstate") == 0)
     {
       int NbrUn =0 ;
@@ -377,7 +383,7 @@ int main(int argc, char** argv)
   MixedETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, SparseBMatrices, FusedRMatrices, Coefficients, Architecture.GetArchitecture());
   Architecture.GetArchitecture()->SetDimension(SparseBMatrices[0].GetNbrRow());
   
-
+  
 
   cout << "Computing the mixed transfer matrix" << endl;
   FQHEMPSEMatrixMainTask TaskMixedLeft(&Manager, MixedETransposeHamiltonian, 2 * NbrEigenstates, false, true, 1e-10, EnergyShift, OutputFileName);

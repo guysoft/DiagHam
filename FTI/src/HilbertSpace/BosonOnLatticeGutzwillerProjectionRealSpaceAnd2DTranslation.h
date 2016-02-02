@@ -191,13 +191,13 @@ class BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation : public  Ferm
 // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
 // return value = index of the destination state  
 
-inline int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient, 
-										   int& nbrTranslationX, int& nbrTranslationY)
+inline int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
 {
-//  cout <<"in inline int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient,   int& nbrTranslationX, int& nbrTranslationY)"<<endl;
-//  cout <<state <<" "<< nbrTranslationX<< " " <<nbrTranslationY<<endl;
+  
+ cout <<"in inline int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient,   int& nbrTranslationX, int& nbrTranslationY)"<<endl;
+  cout <<state <<" "<< nbrTranslationX<< " " <<nbrTranslationY<<endl;
   state = this->FindCanonicalFormAndTestMomentumConstraint(state, nbrTranslationX, nbrTranslationY);
-//  cout <<state <<" "<< nbrTranslationX<< " " <<nbrTranslationY<<endl;
+  cout <<state <<" "<< nbrTranslationX<< " " <<nbrTranslationY<<endl;
   if (nbrTranslationX < 0)
     {
       coefficient = 0.0;
@@ -207,12 +207,13 @@ inline int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::Symmetri
   while ((state >> TmpMaxMomentum) == 0x0ul)
     --TmpMaxMomentum;
   int TmpIndex = this->FindStateIndex(state, TmpMaxMomentum);
-//  cout <<" TmpIndex = " << TmpIndex<<endl;
+  cout <<" TmpIndex = " << TmpIndex<<endl;
   if (TmpIndex < this->HilbertSpaceDimension)
     {
       coefficient *= this->RescalingFactors[this->ProdATemporaryNbrStateInOrbit][this->NbrStateInOrbit[TmpIndex]];
+      cout << this->RescalingFactors[this->ProdATemporaryNbrStateInOrbit][this->NbrStateInOrbit[TmpIndex]]<<endl;
     }
-//  cout <<"coefficient " <<coefficient<<endl;
+  //  cout <<"coefficient " <<coefficient<<endl;
   return TmpIndex;
 }
 

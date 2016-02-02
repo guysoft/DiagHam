@@ -60,9 +60,9 @@ void RealMPOPeratorDefinedByFiles::InitializeTensorsElements(MultiColumnASCIIFil
   this->MPOBondDimension =  TmpMPODimension+1;
 
   for(int i = 0 ; i < this->NbrNonZeroElements; i++)
- {
-  this->IndexValues[i] = this->GetTensorIndexFromAllIndices(IndexDown[i],IndexUp[i], IndexLeft[i] ,IndexRight[i]);
-}
+    {
+      this->IndexValues[i] = this->GetTensorIndexFromAllIndices(IndexDown[i],IndexUp[i], IndexLeft[i] ,IndexRight[i]);
+    }
   cout <<" Physical Dimension = " <<  this->PhysicalDimension<<endl;;
   cout <<" MPO Dimension = " <<  this->MPOBondDimension <<endl;;
   delete [] IndexDown;

@@ -47,8 +47,6 @@ class Spin1_2ChainNew : public AbstractSpinChain
 
  protected:
 
-  // number of sites
-  int ChainLength;
   // twice the Sz value
   int Sz;
   // true if Sz is set for the Hilbert space

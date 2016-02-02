@@ -47,8 +47,6 @@ class Spin1_2Chain : public AbstractSpinChain
 
  protected:
 
-  int ChainLength;
-
   int Sz;
   bool FixedQuantumNumberFlag;
   

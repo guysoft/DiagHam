@@ -4,6 +4,7 @@
 #include "HilbertSpace/Spin1Chain.h"
 #include "HilbertSpace/Spin1_2ChainWithTranslations.h"
 #include "HilbertSpace/Spin1ChainWithTranslations.h"
+#include "HilbertSpace/DoubledSpin0_1_2_chainWithTranslations.h"
 
 #include "GeneralTools/FilenameTools.h"
 
@@ -43,6 +44,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('p', "nbr-spin", "number of spins", 10);
   (*SystemGroup) += new  SingleIntegerOption ('z', "sz-value", "twice the value of sz", 0);
   (*SystemGroup) += new  BooleanOption ('\n', "fixed-parity", "the spin chain has a fixed total parity");
+  (*SystemGroup) += new  BooleanOption ('\n', "doubled-spinchain", "use the double spin chain HilbertSpace");
   (*SystemGroup) += new  SingleIntegerOption ('\n', "parity", "parity of the spin chain", 0);
   (*SystemGroup) += new  BooleanOption ('\n', "periodic-chain", "consider periodic instead of open chain", false);
   (*SystemGroup) += new  SingleIntegerOption ('k', "momentum", "momentum sector (for periodic chain)", 0);
@@ -69,6 +71,30 @@ int main(int argc, char** argv)
   int Momentum = Manager.GetInteger("momentum");
   double Error = Manager.GetDouble("hide-component");
 
+
+  if (Manager.GetBoolean("doubled-spinchain"))
+    {
+      DoubledSpin0_1_2_chainWithTranslations Space ( NbrSpins, SzValue,  1000000, 1000000);
+
+      if (Manager.GetString("state") == 0)
+        {
+	  for (int i = 0; i <  Space.GetHilbertSpaceDimension(); ++i)
+	    Space.PrintState(cout, i) << endl;
+	}
+      else
+       {
+          RealVector State;
+	  if (State.ReadVector(Manager.GetString("state")) == false)
+	    {
+	      cout << "error while reading " << Manager.GetString("state") << endl;
+	      return -1;
+	    }
+          for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
+	     if (fabs(State[i]) > Error)
+	        Space.PrintState(cout, i) << " : "  << State[i] << endl;
+       }
+      return 0;
+    }
 
   if (Manager.GetBoolean("periodic-chain") == false)
     {

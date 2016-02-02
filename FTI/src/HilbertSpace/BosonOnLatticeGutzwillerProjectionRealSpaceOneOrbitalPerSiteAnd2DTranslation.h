@@ -65,8 +65,8 @@ class BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslati
   // maxYMomentum = maximum momentum in the y direction 
   // memory = amount of memory granted for precalculations
   BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation (int nbrBosons, int lx, int ly, int xMomentum, int maxXMomentum,
-						 int yMomentum, int maxYMomentum, unsigned long memory = 10000000);
-
+										int yMomentum, int maxYMomentum, unsigned long memory = 10000000);
+  
   // copy constructor (without duplicating datas)
   //
   // bosons = reference on the hilbert space to copy to copy
@@ -81,7 +81,7 @@ class BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslati
   // bosons = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
   BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation & operator = (const BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation & bosons);
-
+  
   // clone Hilbert space (without duplicating datas)
   //
   // return value = pointer to cloned Hilbert space
@@ -106,22 +106,24 @@ class BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslati
 
 inline void BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation::GetPositionSum(int index, int & positionX, int & positionY)
 {
-//  cout <<"inside inline void BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation::GetPositionSum(int index, int & positionX, int & positionY)"<<endl;
+  //  cout <<"inside inline void BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation::GetPositionSum(int index, int & positionX, int & positionY)"<<endl;
   positionX =0;
   positionY =0;
   int Nx = this->Lx / this->MaxXMomentum;
   int Ny = this->Ly / this->MaxYMomentum;
+  
 //cout <<"Nx = "<<Nx << endl;
 //  cout <<"Ny = "<<Ny << endl;
 //  cout <<"this->StateXShift = "<<this->StateXShift<<endl;
 //  cout <<"this->StateYShift = "<<this->StateYShift<<endl;
 //  cout <<"this->StateDescription[index] = "<<this->StateDescription[index]<<endl;
+  
   for (int i = 0; i < this->NbrSite; i++)
     { 	
       if ( ((this->StateDescription[index]>> i) & 1ul ) == 1 )
 	{
 	  positionX +=  (i/this->StateXShift) *  Nx;
-//          cout <<"positionX = "<<positionX <<endl;
+	  //          cout <<"positionX = "<<positionX <<endl;
 	  positionY += ((i%this->StateXShift)/this->StateYShift) * Ny;
 //          cout <<"positionY = "<<positionY <<endl;
 	  positionX += (i % Nx); 

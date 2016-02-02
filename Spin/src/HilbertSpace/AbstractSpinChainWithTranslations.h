@@ -33,26 +33,22 @@
 
 
 #include "config.h"
-#include "HilbertSpace/AbstractHilbertSpace.h"
+#include "HilbertSpace/AbstractSpinChain.h"
 
 
 class Matrix;
 
 
-class AbstractSpinChainWithTranslations : public AbstractHilbertSpace
+class AbstractSpinChainWithTranslations : public AbstractSpinChain
 {
+
+ protected:
 
  public:
 
   // virtual destructor
   //
   virtual ~AbstractSpinChainWithTranslations ();
-
-  // return value of spin projection on (Oz) for a given state
-  //
-  // Str = reference on current output stream 
-  // return value = spin projection on (Oz)
-  virtual int TotalSz (int state) = 0;
 
   // return value of the value of the sum of the square of spin projection on (Oz) 
   //
@@ -182,13 +178,76 @@ class AbstractSpinChainWithTranslations : public AbstractHilbertSpace
   // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of resulting state
   virtual int Smi (int i, int state, double& coefficient, int& nbrTranslation) = 0;
-    
-  // find state index
-  //
-  // state = state description
-  // return value = corresponding index
-  virtual int FindStateIndex(unsigned long state) = 0;
 
+  // return index of resulting state from application of S-_i operator on a given state
+  //
+  // i = position of S- operator
+  // state = index of the state to be applied on S-_i operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of resulting state
+  virtual int Smi (int i, int state, double& coefficient);
+  
+  // return index of resulting state from application of Sz_i operator on a given state
+  //
+  // i = position of Sz operator
+  // state = index of the state to be applied on Sz_i operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of resulting state 
+  virtual int Szi (int i, int state, double& coefficient);
+  
+  // return index of resulting state from application of S+_i S+_j operator on a given state
+  //
+  // i = position of first S+ operator
+  // j = position of second S+ operator
+  // state = index of the state to be applied on S+_i S+_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of resulting state
+  virtual int SpiSpj (int i, int j, int state, double& coefficient);
+ 
+  // return index of resulting state from application of S-_i S-_j operator on a given state
+  //
+  // i = position of first S- operator
+  // j = position of second S- operator
+  // state = index of the state to be applied on S-_i S-_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of resulting state
+  virtual int SmiSmj (int i, int j, int state, double& coefficient);
+  
+  // return index of resulting state from application of S+_i Sz_j operator on a given state
+  //
+  // i = position of S+ operator
+  // j = position of Sz operator
+  // state = index of the state to be applied on S+_i Sz_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of resulting state
+  virtual int SpiSzj (int i, int j, int state, double& coefficient);
+  
+  // return index of resulting state from application of S-_i Sz_j operator on a given state
+  //
+  // i = position of S- operator
+  // j = position of Sz operator
+  // state = index of the state to be applied on S-_i Sz_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of resulting state
+  virtual int SmiSzj (int i, int j, int state, double& coefficient);
+  
+  // return index of resulting state from application of S-_i S+_j operator on a given state
+  //
+  // i = position of S- operator
+  // j = position of S+ operator
+  // state = index of the state to be applied on S-_i S+_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of resulting state 
+  virtual int SmiSpj (int i, int j, int state, double& coefficient);
+  
+  // return index of resulting state from application of S+_i operator on a given state
+  //
+  // i = position of S+ operator
+  // state = index of the state to be applied on S+_i operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of resulting state
+  virtual int Spi (int i, int state, double& coefficient);
+  
 };
 
 #endif

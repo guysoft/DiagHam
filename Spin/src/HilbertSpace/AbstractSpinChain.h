@@ -44,14 +44,24 @@ class RealSymmetricMatrix;
 class HermitianMatrix;
 class ComplexMatrix;
 
+using std::cout;
+using std::endl;
 class AbstractSpinChain : public AbstractHilbertSpace
 {
 
+ protected:
+
+  int ChainLength;
+  
  public:
 
   // virtual destructor
   //
   virtual ~AbstractSpinChain ();
+
+  //return value length of the spin chain
+  //
+  virtual int GetSpinChainLength() const {return this->ChainLength;}
 
   // return value of spin projection on (Oz) for a given state
   //
@@ -154,9 +164,9 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // j = position of S+ operator
   // state = index of the state to be applied on S-_i S+_j operator
   // coefficient = reference on double where numerical coefficient has to be stored
-  // return value = index of resulting state
+  // return value = index of resulting state 
   virtual int SmiSpj (int i, int j, int state, double& coefficient) = 0;
-
+ 
   // return index of resulting state from application of S+_i S-_j operator on a given state
   //
   // i = position of S+ operator
@@ -344,7 +354,22 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // space = pointer to the Hilbert space where state is defined
   // return value = state in the (Kx,Ky) basis
   virtual ComplexVector ConvertFromKxKyBasis(ComplexVector& state, AbstractSpinChain* space);
-  
+
+  // return the Bosonic Occupation of a given state in the basis
+  //
+  // index = index of the state in the basis
+  // return value bosonic occupation 
+  virtual int * GetBosonicOccupation (unsigned int index);
+
+  // convert the state on the site to its binary representation
+  //
+  // state = state to be stored
+  // sitePosition = position on the chain of the state
+  // return integer that code the state
+  virtual inline unsigned long EncodeSiteState(int physicalState, int sitePosition);
+
+
+
 };
 
 // return index of resulting state from application of S+_i S-_j operator on a given state
@@ -358,6 +383,18 @@ class AbstractSpinChain : public AbstractHilbertSpace
 inline int AbstractSpinChain::SpiSmj (int i, int j, int state, double& coefficient)
 {
   return this->SmiSpj(j, i, state, coefficient);
+}
+
+// convert the state on the site to its binary representation
+//
+// state = state to be stored
+// sitePosition = position on the chain of the state
+// return integer that code the state
+
+inline unsigned long AbstractSpinChain::EncodeSiteState(int physicalState, int sitePosition)
+{
+  cout << "warning, using undefined function AbstractSpinChain::EncodeSiteState(int state, int sitePosition)" << endl;
+  return - 1;
 }
 
 #endif

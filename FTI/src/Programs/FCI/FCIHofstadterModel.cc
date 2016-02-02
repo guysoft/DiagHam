@@ -503,13 +503,13 @@ int main(int argc, char** argv)
 		      
 		      double PhaseTranslationX = 2.0* M_PI * FluxDensity * UnitCellX;
 		      double PhaseTranslationY = 0.0;
-		      
+		      cout <<"TightBindingMatrix = "<<TightBindingMatrix<<endl;		  
 		      Hamiltonian = new ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), i,  NbrCellX, j,  NbrCellY, PhaseTranslationX, PhaseTranslationY,TightBindingMatrix, DensityDensityInteraction, Architecture.GetArchitecture(), Memory);
 		    }
 		  else
 		    {
+		      cout <<"TightBindingMatrix = "<<TightBindingMatrix<<endl;
 		      Hamiltonian = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), TightBindingMatrix, DensityDensityInteraction, Architecture.GetArchitecture(), Memory);
-		      //		      cout <<  TightBindingMatrix <<endl;
 		    }
 		}
 	      else 
@@ -551,7 +551,7 @@ int main(int argc, char** argv)
 		      cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 		      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 		      HermitianMatrix TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
-		      
+		      cout <<"TightBindingMatrix = "<<TightBindingMatrix<<endl;
 		      Hamiltonian = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), TightBindingMatrix, DensityDensityInteraction,Architecture.GetArchitecture(), Memory);
 		    }
 		}

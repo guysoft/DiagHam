@@ -80,3 +80,111 @@ int AbstractSpinChainWithTranslations::SziSzjSmiSpj (int i1, int j1, int i2, int
   return this->HilbertSpaceDimension;
 }
 
+// return index of resulting state from application of S-_i operator on a given state
+//
+// i = position of S- operator
+// state = index of the state to be applied on S-_i operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
+
+int AbstractSpinChainWithTranslations::Smi (int i, int state, double& coefficient)
+{
+  cout << "warning, using dummy method AbstractSpinChainWithTranslations::Smi" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// return index of resulting state from application of Sz_i operator on a given state
+//
+// i = position of Sz operator
+// state = index of the state to be applied on Sz_i operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state 
+
+int AbstractSpinChainWithTranslations::Szi (int i, int state, double& coefficient)
+{
+  cout << "warning, using dummy method AbstractSpinChainWithTranslations::Szi" << endl;
+  return this->HilbertSpaceDimension;
+}
+  
+// return index of resulting state from application of S+_i S+_j operator on a given state
+//
+// i = position of first S+ operator
+// j = position of second S+ operator
+// state = index of the state to be applied on S+_i S+_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
+
+int AbstractSpinChainWithTranslations::SpiSpj (int i, int j, int state, double& coefficient)
+{
+  cout << "warning, using dummy method AbstractSpinChainWithTranslations::SpiSpj" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// return index of resulting state from application of S-_i S-_j operator on a given state
+//
+// i = position of first S- operator
+// j = position of second S- operator
+// state = index of the state to be applied on S-_i S-_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
+
+int AbstractSpinChainWithTranslations::SmiSmj (int i, int j, int state, double& coefficient)
+{
+  cout << "warning, using dummy method AbstractSpinChainWithTranslations::SmiSmj" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// return index of resulting state from application of S+_i Sz_j operator on a given state
+//
+// i = position of S+ operator
+// j = position of Sz operator
+// state = index of the state to be applied on S+_i Sz_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
+
+int AbstractSpinChainWithTranslations::SpiSzj (int i, int j, int state, double& coefficient)
+{
+  cout << "warning, using dummy method AbstractSpinChainWithTranslations::SpiSzj" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// return index of resulting state from application of S-_i Sz_j operator on a given state
+//
+// i = position of S- operator
+// j = position of Sz operator
+// state = index of the state to be applied on S-_i Sz_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
+
+int AbstractSpinChainWithTranslations::SmiSzj (int i, int j, int state, double& coefficient)
+{
+  cout << "warning, using dummy method AbstractSpinChainWithTranslations::SmiSzj" << endl;
+  return this->HilbertSpaceDimension;
+}
+  
+// return index of resulting state from application of S-_i S+_j operator on a given state
+//
+// i = position of S- operator
+// j = position of S+ operator
+// state = index of the state to be applied on S-_i S+_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state 
+
+int AbstractSpinChainWithTranslations::SmiSpj (int i, int j, int state, double& coefficient)
+{
+  cout << "warning, using dummy method AbstractSpinChainWithTranslations::SmiSpj" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// return index of resulting state from application of S+_i operator on a given state
+//
+// i = position of S+ operator
+// state = index of the state to be applied on S+_i operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
+
+int AbstractSpinChainWithTranslations::Spi (int i, int state, double& coefficient)
+{
+  cout << "warning, using dummy method AbstractSpinChainWithTranslations::Spi" << endl;
+  return this->HilbertSpaceDimension;
+}

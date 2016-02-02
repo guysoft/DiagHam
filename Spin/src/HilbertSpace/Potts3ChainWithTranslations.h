@@ -53,9 +53,6 @@ class Potts3ChainWithTranslations : public AbstractSpinChainWithTranslations
 
  protected:
 
-  // number of sites on th chain
-  int ChainLength;
-
   // momentum 
   int Momentum;
 

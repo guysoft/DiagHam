@@ -101,7 +101,7 @@ BosonOnSphereWithSU2Spin::BosonOnSphereWithSU2Spin (int nbrBosons, int totalLz, 
       cout << TmpHilbertSpaceDimension << " " << this->LargeHilbertSpaceDimension << endl;
       cout << "Mismatch in State-count and State Generation in BosonOnSphereWithSU2Spin!" << endl;
       exit(1);
-    }
+    } 
   this->LargeHilbertSpaceDimension = TmpHilbertSpaceDimension;
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
   this->TargetSpace = this;
@@ -206,12 +206,12 @@ BosonOnSphereWithSU2Spin::BosonOnSphereWithSU2Spin (int nbrBosons, int totalLz, 
 // 	 }
 //        cout << endl;
 //     }
-
+  
 #ifdef __DEBUG__
-   int UsedMemory = 0;
-   UsedMemory += this->HilbertSpaceDimension * (4 * sizeof(unsigned long));
-   cout << "memory requested for Hilbert space = ";
-   if (UsedMemory >= 1024)
+  int UsedMemory = 0;
+  UsedMemory += this->HilbertSpaceDimension * (4 * sizeof(unsigned long));
+  cout << "memory requested for Hilbert space = ";
+  if (UsedMemory >= 1024)
     if (UsedMemory >= 1048576)
       cout << (UsedMemory >> 20) << "Mo" << endl;
     else
