@@ -35,6 +35,7 @@
 
 #include "GeneralTools/ArrayTools.h"
 #include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/MultiColumnASCIIFile.h"
 
 #include "Options/Options.h"
 
@@ -75,6 +76,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "right-eigenstates", "compute the right eigenstates");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "theta", "angle between the components");
   (*SystemGroup) += new BooleanOption  ('\n', "use-fillingfactor", "use the filling factor to set the angle between the components");
+  (*SystemGroup) += new SingleStringOption ('\n', "use-productstate", "use a prefined product state defined through a single column formatted ASCII file, instead of finding the optimal one");
   (*SystemGroup) += new BooleanOption  ('\n', "no-normalization", "do not compute the MPS model state normalization");
   (*SystemGroup) += new BooleanOption  ('\n', "left-eigenstates", "compute the left eigenstates");
   (*SystemGroup) += new BooleanOption  ('\n', "fixed-parity", "compute the left eigenstates");
@@ -277,20 +279,41 @@ int main(int argc, char** argv)
 
 
   double Error = 1e-13;
-  cout <<"NbrBMatrices = "<<NbrBMatrices<<endl;
+  cout <<"NbrBMatrices = "<< NbrBMatrices << endl;
   SparseRealMatrix MixedEMatrix;
   SparseRealMatrix*  RightMatrices = new SparseRealMatrix[NbrBMatrices];
   double * Coefficients= new double[NbrBMatrices];
 
-  for (int i =0;i <NbrBMatrices;i++)
+  for (int i = 0; i < NbrBMatrices;i++)
     {
       Coefficients[i] = 1;
       RightMatrices[i] = SparseRealMatrix(1,1);
     }
 
-  RightMatrices[0].SetMatrixElement(0,0,sin(Theta));
-  RightMatrices[1].SetMatrixElement(0,0,cos(Theta));
-
+  if (Manager.GetString("use-productstate") == 0)
+    {
+      RightMatrices[0].SetMatrixElement(0, 0, sin(Theta));
+      RightMatrices[1].SetMatrixElement(0, 0, cos(Theta));
+    }
+  else
+    {
+      MultiColumnASCIIFile ProductStateFile;
+      if (ProductStateFile.Parse(Manager.GetString("use-productstate")) == false)
+	{
+	  ProductStateFile.DumpErrors(cout);
+	  return -1;
+	}
+      if (ProductStateFile.GetNbrLines() != NbrBMatrices)
+	{
+	  cout << "error, " << Manager.GetString("use-productstate") << " does not have the proper number of components (" << NbrBMatrices << " vs " << ProductStateFile.GetNbrLines() << ")" << endl;
+	  return -1;
+	}
+      double* TmpCoefficients = ProductStateFile.GetAsDoubleArray(0);
+      for (int i = 0; i < NbrBMatrices;i++)
+	{
+	  RightMatrices[i].SetMatrixElement(0, 0, TmpCoefficients[i]);
+	}
+    }
   int NbrOrbitals = MPSLeftMatrix->GetNbrOrbitals();
   int NbrStatesPerOrbital = MPSLeftMatrix->GetMaximumOccupation() + 1;
   int NbrStatesPerBlock =  1;
@@ -305,39 +328,49 @@ int main(int argc, char** argv)
 
   SparseRealMatrix* FusedRMatrices = new SparseRealMatrix [NbrStatesPerBlock];
   
-  int NbrUn =0 ;
-  int TmpI;
-  for(int i =0 ; i < NbrStatesPerBlock; i++)
-    { 
+  if (Manager.GetString("use-productstate") == 0)
+    {
       int NbrUn =0 ;
-      TmpI = i;
-      int Index = SearchInUnsortedArray( (unsigned long)( TmpI %  NbrStatesPerOrbital) , ArrayPhysicalIndice,  NbrRMatrices);
-      if (Index <0)
-	{
-	  FusedRMatrices[i] = SparseRealMatrix(RightMatrices[0].GetNbrRow(),RightMatrices[0].GetNbrColumn());
-	}
-      else
-	{
-	  FusedRMatrices[i].Copy(RightMatrices[Index]);
-	}
-      NbrUn+=TmpI %  NbrStatesPerOrbital;
-      TmpI /= NbrStatesPerOrbital;
-      for(int p = 1; p < NbrOrbitals ; p++)
-	{
-	  int Index = SearchInUnsortedArray( (unsigned long)( TmpI %   NbrStatesPerOrbital) , ArrayPhysicalIndice,  NbrRMatrices);
+      int TmpI;
+      for(int i =0 ; i < NbrStatesPerBlock; i++)
+	{ 
+	  int NbrUn =0 ;
+	  TmpI = i;
+	  int Index = SearchInUnsortedArray( (unsigned long)( TmpI %  NbrStatesPerOrbital) , ArrayPhysicalIndice,  NbrRMatrices);
 	  if (Index <0)
 	    {
-	      FusedRMatrices[i].ClearMatrix ();
+	      FusedRMatrices[i] = SparseRealMatrix(RightMatrices[0].GetNbrRow(),RightMatrices[0].GetNbrColumn());
 	    }
 	  else
 	    {
-	      FusedRMatrices[i].Multiply(RightMatrices[Index]);
+	      FusedRMatrices[i].Copy(RightMatrices[Index]);
 	    }
-          NbrUn+=TmpI %  NbrStatesPerOrbital;
+	  NbrUn+=TmpI %  NbrStatesPerOrbital;
 	  TmpI /= NbrStatesPerOrbital;
+	  for(int p = 1; p < NbrOrbitals ; p++)
+	    {
+	      int Index = SearchInUnsortedArray( (unsigned long)( TmpI %   NbrStatesPerOrbital) , ArrayPhysicalIndice,  NbrRMatrices);
+	      if (Index <0)
+		{
+		  FusedRMatrices[i].ClearMatrix ();
+		}
+	      else
+		{
+		  FusedRMatrices[i].Multiply(RightMatrices[Index]);
+		}
+	      NbrUn+=TmpI %  NbrStatesPerOrbital;
+	      TmpI /= NbrStatesPerOrbital;
+	    }
+	  if (( NbrUn %2 ==0)&&(ParityFlag))
+	    Coefficients[i] =0;	
 	}
-      if (( NbrUn %2 ==0)&&(ParityFlag))
-	Coefficients[i] =0;	
+    }
+  else
+    {
+      for (int i = 0; i < NbrBMatrices; ++i)
+	{
+	  FusedRMatrices[i] = RightMatrices[i];
+	}
     }
 
   TensorProductSparseMatrixHamiltonian* MixedETransposeHamiltonian =0;
