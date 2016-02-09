@@ -31,6 +31,7 @@
 #include "config.h"
 #include "Tools/FTITightBinding/Abstract1DTightBindingModel.h"
 #include "GeneralTools/Endian.h"
+#include "GeneralTools/ArrayTools.h"
 
 #include <fstream>
 
@@ -146,5 +147,23 @@ void Abstract1DTightBindingModel::FlattenBands(double flatteningFactor, double b
 	}
     }
   delete[] TmpAverageEnergies;
+}
+
+// get all the energies of a band, sorted from the smallest to the largest
+//
+// energies = reference to the array where the energies will be stored (the allocation is done by the method)
+// momenta = reference to the array where the linearized momenta associated to each energy will be stored (the allocation is done by the method)
+// bandIndex = index of the band to consider
+
+void Abstract1DTightBindingModel::GetEnergies(double*& energies, int*& momenta, int bandIndex)
+{
+  energies = new double[this->NbrStatePerBand];
+  momenta = new int[this->NbrStatePerBand];
+  for (int i = 0; i < this->NbrStatePerBand; ++i)
+    {
+      energies[i] = this->EnergyBandStructure[bandIndex][i];
+      momenta[i] = i;
+    }
+  SortArrayUpOrdering<int>(energies, momenta, this->NbrStatePerBand);
 }
 

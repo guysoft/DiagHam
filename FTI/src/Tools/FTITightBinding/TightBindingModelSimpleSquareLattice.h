@@ -84,6 +84,26 @@ class TightBindingModelSimpleSquareLattice : public Abstract2DTightBindingModel
   //
   ~TightBindingModelSimpleSquareLattice();
 
+  // evaluate the two point correlation function 
+  //
+  // x = linearized position index of the first point
+  // y = linearized position index of the second point
+  // occupiedMomenta = array that gives all the occupied momenta (as linearized indices)
+  // nbrOccupiedMomenta = number of occupied momenta
+  // bandIndex = index of the band to consider
+  // return value = value of the two point correlation function 
+  virtual Complex EvaluateTwoPointCorrelationFunction(int x, int y, int* occupiedMomenta, int nbrOccupiedMomenta, int bandIndex);
+
+  // evaluate the two point correlation function in a given region
+  //
+  // maxX = x coordinate of the region upper right corner 
+  // maxY = y coordinate of the region upper right corner 
+  // occupiedMomenta = array that gives all the occupied momenta (as linearized indices)
+  // nbrOccupiedMomenta = number of occupied momenta
+  // bandIndex = index of the band to consider
+  // return value = matrix where the values of the two point correlation function will be stored (using the linearized position index as entry)
+  virtual HermitianMatrix EvaluateFullTwoPointCorrelationFunction(int maxX, int maxY, int* occupiedMomenta, int nbrOccupiedMomenta, int bandIndex);
+
  protected :
 
   // find the orbitals connected to those located at the origin unit cell

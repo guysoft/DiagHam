@@ -247,3 +247,107 @@ void TightBindingModelSimpleSquareLattice::FindConnectedOrbitals()
    delete[] EmbeddingY;
 }
 
+// evaluate the two point correlation function 
+//
+// x = linearized position index of the first point
+// y = linearized position index of the second point
+// occupiedMomenta = array that gives all the occupied momenta (as linearized indices)
+// nbrOccupiedMomenta = number of occupied momenta
+// bandIndex = index of the band to consider
+// return value = value of the two point correlation function 
+
+Complex TightBindingModelSimpleSquareLattice::EvaluateTwoPointCorrelationFunction(int x, int y, int* occupiedMomenta, int nbrOccupiedMomenta, int bandIndex)
+{
+  int TmpXx;
+  int TmpXy;
+  int TmpXOrbital;
+  this->GetRealSpaceTightBindingLinearizedIndex(x, TmpXx, TmpXy, TmpXOrbital);
+  int TmpYx;
+  int TmpYy;
+  int TmpYOrbital;
+  this->GetRealSpaceTightBindingLinearizedIndex(y, TmpYx, TmpYy, TmpYOrbital);
+  Complex Tmp = 0.0;
+  int TmpMomentumX;
+  int TmpMomentumY;
+  for (int i = 0; i < nbrOccupiedMomenta; ++i)
+    {
+      this->GetLinearizedMomentumIndex(occupiedMomenta[i], TmpMomentumX, TmpMomentumY);
+      Tmp += Phase((this->KxFactor * ((double) (TmpMomentumX * (TmpXx - TmpYx))))
+		   + (this->KyFactor * ((double) (TmpMomentumY * (TmpXy - TmpYy)))));
+    }
+  Tmp /= ((double) (this->NbrSiteX * this->NbrSiteY));
+  return Tmp;
+}
+
+// evaluate the two point correlation function in a given region
+//
+// maxX = x coordinate of the region upper right corner 
+// maxY = y coordinate of the region upper right corner 
+// occupiedMomenta = array that gives all the occupied momenta (as linearized indices)
+// nbrOccupiedMomenta = number of occupied momenta
+// bandIndex = index of the band to consider
+// return value = matrix where the values of the two point correlation function will be stored (using the linearized position index as entry)
+
+HermitianMatrix TightBindingModelSimpleSquareLattice::EvaluateFullTwoPointCorrelationFunction(int maxX, int maxY, int* occupiedMomenta, int nbrOccupiedMomenta, int bandIndex)
+{
+  int TotalNbrSites = maxX * maxY;
+  int TmpMomentumX;
+  int TmpMomentumY;
+  HermitianMatrix EntanglementHamiltonian(TotalNbrSites, true);
+  int TmpMaxX2 = 2 * maxX + 1;
+  Complex** TmpPhaseFactorX = new Complex*[TmpMaxX2];
+  for (int i = 0; i < TmpMaxX2; ++i)
+    {
+      TmpPhaseFactorX[i] = new Complex[nbrOccupiedMomenta];
+      for (int j = 0; j < nbrOccupiedMomenta; ++j)
+	{
+	  this->GetLinearizedMomentumIndex(occupiedMomenta[j], TmpMomentumX, TmpMomentumY);
+	  TmpPhaseFactorX[i][j] = Phase(this->KxFactor * ((double) (TmpMomentumX * (maxX - i))));
+	}
+    }
+  int TmpMaxY2 = 2 * maxY + 1;
+  Complex** TmpPhaseFactorY = new Complex*[TmpMaxY2];
+  for (int i = 0; i < TmpMaxY2; ++i)
+    {
+      TmpPhaseFactorY[i] = new Complex[nbrOccupiedMomenta];
+      for (int j = 0; j < nbrOccupiedMomenta; ++j)
+	{
+	  this->GetLinearizedMomentumIndex(occupiedMomenta[j], TmpMomentumX, TmpMomentumY);
+	  TmpPhaseFactorY[i][j] = Phase(this->KyFactor * ((double) (TmpMomentumY * (maxY - i))));
+	}
+    }
+
+  for (int TmpReducedLinearizedIndex1 = 0; TmpReducedLinearizedIndex1 < TotalNbrSites; ++TmpReducedLinearizedIndex1)
+    {
+      int TmpX1 = TmpReducedLinearizedIndex1 / maxY;
+      int TmpY1 = TmpReducedLinearizedIndex1 % maxY;
+      int TmpLinearizedIndex1 = this->GetRealSpaceTightBindingLinearizedIndex(TmpX1, TmpY1, 0);
+      for (int TmpReducedLinearizedIndex2 = TmpReducedLinearizedIndex1; TmpReducedLinearizedIndex2 < TotalNbrSites; ++TmpReducedLinearizedIndex2)
+	{	  
+	  int TmpX2 = TmpReducedLinearizedIndex2 / maxY;
+	  int TmpY2 = TmpReducedLinearizedIndex2 % maxY;
+	  int TmpLinearizedIndex2 = this->GetRealSpaceTightBindingLinearizedIndex(TmpX2, TmpY2, 0);
+	  TmpX2 -= TmpX1;
+	  TmpY2 -= TmpY1;
+	  TmpX2 += maxX;
+	  TmpY2 += maxY;
+	  Complex Tmp = 0.0;
+	  for (int i = 0; i < nbrOccupiedMomenta; ++i)
+	    {
+	      Tmp += TmpPhaseFactorX[TmpX2][i] * TmpPhaseFactorY[TmpY2][i];
+	    }
+	  EntanglementHamiltonian.SetMatrixElement(TmpReducedLinearizedIndex1, TmpReducedLinearizedIndex2, Tmp);
+	}
+    }
+  EntanglementHamiltonian /= ((double) (this->NbrSiteX * this->NbrSiteY));
+
+  for (int i = 0; i < TmpMaxX2; ++i)
+    delete[] TmpPhaseFactorX[i];
+  delete[] TmpPhaseFactorX;
+  for (int i = 0; i < TmpMaxY2; ++i)
+    delete[] TmpPhaseFactorY[i];
+  delete[] TmpPhaseFactorY;
+
+  return EntanglementHamiltonian;
+}
+

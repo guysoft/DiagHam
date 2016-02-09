@@ -124,16 +124,6 @@ int main(int argc, char** argv)
       cout << "error, a file describing the sites to keep has to be provided" << endl;
       return -1;     
     }
-  MultiColumnASCIIFile KeptOrbitalFile;
-  if (KeptOrbitalFile.Parse(Manager.GetString("kept-sites")) == false)
-    {
-      KeptOrbitalFile.DumpErrors(cout);
-      return -1;
-    }
-  int NbrKeptOrtbitals = KeptOrbitalFile.GetNbrLines();
-  int* KeptOrbitals = KeptOrbitalFile.GetAsIntegerArray(0);
-  cout << "number of kept sites = " << NbrKeptOrtbitals << endl;
-  SortArrayUpOrdering(KeptOrbitals, NbrKeptOrtbitals);
 
   if (Manager.GetString("degenerated-groundstate") == 0)
     {
@@ -208,6 +198,32 @@ int main(int argc, char** argv)
 	  FixedTotalSzFlag = true;
 	}
     }
+
+  MultiColumnASCIIFile KeptOrbitalFile;
+  if (KeptOrbitalFile.Parse(Manager.GetString("kept-sites")) == false)
+    {
+      KeptOrbitalFile.DumpErrors(cout);
+      return -1;
+    }
+  int NbrKeptOrtbitals = KeptOrbitalFile.GetNbrLines();
+  int* KeptOrbitals = 0;
+  if (KeptOrbitalFile.GetNbrColumns() == 1)
+    {
+      KeptOrbitals = KeptOrbitalFile.GetAsIntegerArray(0);
+    }
+  else
+    {
+      int* TmpKeptOrbitalX = KeptOrbitalFile.GetAsIntegerArray(0);
+      int* TmpKeptOrbitalY = KeptOrbitalFile.GetAsIntegerArray(1);
+      KeptOrbitals = new int[NbrKeptOrtbitals];
+      for (int i = 0; i < NbrKeptOrtbitals; ++i)
+	{
+	  KeptOrbitals[i] = (TmpKeptOrbitalX[i] * YPeriodicity) + TmpKeptOrbitalY[i];
+	}
+    }
+  cout << "number of kept sites = " << NbrKeptOrtbitals << endl;
+  SortArrayUpOrdering(KeptOrbitals, NbrKeptOrtbitals);
+
 
   GroundStates = new ComplexVector [NbrSpaces];  
   for (int i = 0; i < NbrSpaces; ++i)
@@ -321,6 +337,7 @@ int main(int argc, char** argv)
 	  return 0;
 	}
     }
+
   ofstream File;
   File.open(EntropyFileName, ios::binary | ios::out);
   File.precision(14);

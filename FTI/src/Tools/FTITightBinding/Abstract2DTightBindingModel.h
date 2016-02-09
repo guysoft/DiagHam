@@ -404,6 +404,26 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // return value = distance between the two points
   virtual double GetDistanceReciprocalSpace(double kx1, double ky1, double& kx2, double& ky2);
 
+  // evaluate the two point correlation function 
+  //
+  // x = linearized position index of the first point
+  // y = linearized position index of the second point
+  // occupiedMomenta = array that gives all the occupied momenta (as linearized indices)
+  // nbrOccupiedMomenta = number of occupied momenta
+  // bandIndex = index of the band to consider
+  // return value = value of the two point correlation function 
+  virtual Complex EvaluateTwoPointCorrelationFunction(int x, int y, int* occupiedMomenta, int nbrOccupiedMomenta, int bandIndex);
+
+  // evaluate the two point correlation function in a given region
+  //
+  // maxX = x coordinate of the region upper right corner 
+  // maxY = y coordinate of the region upper right corner 
+  // occupiedMomenta = array that gives all the occupied momenta (as linearized indices)
+  // nbrOccupiedMomenta = number of occupied momenta
+  // bandIndex = index of the band to consider
+  // return value = matrix where the values of the two point correlation function will be stored (using the linearized position index as entry)
+  virtual HermitianMatrix EvaluateFullTwoPointCorrelationFunction(int maxX, int maxY, int* occupiedMomenta, int nbrOccupiedMomenta, int bandIndex);
+
  protected:
 
   // write an header that describes the tight binding model

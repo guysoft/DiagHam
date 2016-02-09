@@ -440,7 +440,7 @@ FactorialCoefficient& FactorialCoefficient::PartialFactorialDivide (long start, 
 // y = binomial minor index
 // return value = reference on current coefficient
 
-FactorialCoefficient& FactorialCoefficient::MultiplyDivide (long x, long y)
+FactorialCoefficient& FactorialCoefficient::BinomialMultiply (long x, long y)
 {
   this->PartialFactorialMultiply(x - y + 1, x);
   this->FactorialDivide(y);  

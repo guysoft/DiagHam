@@ -76,6 +76,13 @@ class Abstract1DTightBindingModel : public AbstractTightBindingModel
   // return value = energy
   virtual double GetEnergy(int bandIndex, int momentumIndex);
 
+  // get all the energies of a band, sorted from the smallest to the largest
+  //
+  // energies = reference to the array where the energies will be stored (the allocation is done by the method)
+  // momenta = reference to the array where the linearized momenta associated to each energy will be stored (the allocation is done by the method)
+  // bandIndex = index of the band to consider
+  virtual void GetEnergies(double*& energies, int*& momenta, int bandIndex);
+
   // ask if the one body transformation matrices are available
   //
   // return value = true if the one body transformation matrices are available

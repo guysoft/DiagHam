@@ -166,7 +166,7 @@ class FactorialCoefficient
   // x = binomial major index
   // y = binomial minor index
   // return value = reference on current coefficient
-  FactorialCoefficient& MultiplyDivide (long x, long y);
+  FactorialCoefficient& BinomialMultiply (long x, long y);
 
   // divide the coefficient by a binomial coefficient
   // 
