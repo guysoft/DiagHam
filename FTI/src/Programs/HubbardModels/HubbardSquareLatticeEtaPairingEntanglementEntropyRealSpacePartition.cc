@@ -455,8 +455,8 @@ int main(int argc, char** argv)
       else
 	{
 	  int MaxNbrParticlesA = VacuumNbrParticles;
-	  if (MaxNbrParticlesA > NbrSitesA)
-	    MaxNbrParticlesA = NbrSitesA;
+	  if (MaxNbrParticlesA > TotalNbrSitesA)
+	    MaxNbrParticlesA = TotalNbrSitesA;
 	  FactorialCoefficient TmpCoefficient;
 	  double CurrentEntanglementEntropyContribution = 1.0;
 	  for (int TmpNbrParticlesA = 0; ((TmpNbrParticlesA <= MaxNbrParticlesA) && 
