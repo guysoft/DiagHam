@@ -39,6 +39,8 @@
 #include "GeneralTools/MultiColumnASCIIFile.h"
 
 #include "MathTools/FactorialCoefficient.h"
+#include "MathTools/BinomialCoefficients.h"
+
 
 #include <iostream>
 #include <cstring>
@@ -63,6 +65,10 @@ using std::ofstream;
 // targetNbrSitesY = number of sites along y for the smaller region
 HermitianMatrix EtaPairaingEntanglementEntropyExtractCorrelationMatrix(HermitianMatrix& correlationMatrix, int sourceNbrSitesX, int sourceNbrSitesY, 
 								       int targetNbrSitesX, int targetNbrSitesY);
+
+
+void GetEntanglementEntropyPerNbrParticlesA(double* oneBodyEntanglementTrimmedEnergies, int nbrOneBodyEntanglementTrimmedEnergies, 
+					    int nbrParticlesA, int currentOrbitalIndex, double currentFactor, double& entropy, double& alpha);
 
 
 int main(int argc, char** argv)
@@ -90,6 +96,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrsitey-a", "number of unit cells along the y direction for the part A", 2);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-nbrsitexa", "maximum number of unit cells along the x direction for the part A (equal to --nbrsitex-a if negative)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-nbrsiteya", "maximum number of unit cells along the y direction for the part A (equal to --nbrsitey-a if negative)", -1);
+  (*SystemGroup) += new SingleStringOption  ('\n', "cuts", "provide the description of all cuts as a two column formatted text file");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nearbyeta-x", "x distance of the broken pair when generating a nearby eta pairing state", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nearbyeta-y", "y distance of the broken pair when generating a nearby eta pairing state", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "use-nonvacuum", "apply the eta^+ operators to a non-vacuum state");
@@ -97,10 +104,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "use-fermisea", "apply the eta^+ operators to the Fermi sea");
   (*SystemGroup) += new SingleStringOption  ('\n', "nonvacuum-file", "provide the description of the non-vacuum state as a two-column ASCII file");
   (*SystemGroup) += new BooleanOption ('\n', "use-random", "generate a random non-vacuum state");
-  (*SystemGroup) += new  SingleIntegerOption ('\n', "run-id", "add an additional run id to the file name when using the --use-random option", 0);
-  
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "run-id", "add an additional run id to the file name when using the --use-random option", 0);  
   (*SystemGroup) += new BooleanOption  ('\n', "show-nonvacuum", "show the non-vacuum state in the momentum basis");
-  (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
+  (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");  
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -152,19 +158,46 @@ int main(int argc, char** argv)
   int NbrSitesXA = Manager.GetInteger("nbrsitex-a"); 
   int NbrSitesYA = Manager.GetInteger("nbrsitey-a"); 
   int NbrSitesA = NbrSitesXA * NbrSitesYA;
-  int MaxNbrSitesXA = Manager.GetInteger("max-nbrsitexa"); 
-  if (MaxNbrSitesXA < NbrSitesXA)
+  int NbrCuts = 1;
+  int* CutX = 0;
+  int* CutY = 0;
+  if (Manager.GetString("cuts") == 0)
     {
-      MaxNbrSitesXA = NbrSitesXA;
+      if ((Manager.GetInteger("max-nbrsitexa") > NbrSitesXA) || (Manager.GetInteger("max-nbrsiteya") > NbrSitesYA))
+	{
+	  NbrCuts = Manager.GetInteger("max-nbrsitexa") - NbrSitesXA + 1;
+	  CutX = new int [NbrCuts];
+	  CutY = new int [NbrCuts];
+	  for (int i = 0; i < NbrCuts; ++i)
+	    {
+	      CutX[i] = NbrSitesXA + i;
+	      CutY[i] = NbrSitesXA + i;	      
+	    }	  
+	}
+      else
+	{
+	  CutX = new int [NbrCuts];
+	  CutY = new int [NbrCuts];
+	  CutX[0] = NbrSitesXA;
+	  CutY[0] = NbrSitesYA;
+	}
     }
-  int MaxNbrSitesYA = Manager.GetInteger("max-nbrsiteya"); 
-  if (MaxNbrSitesYA < NbrSitesYA)
+  else
     {
-      MaxNbrSitesYA = NbrSitesYA;
+      MultiColumnASCIIFile CutFile;
+      if (CutFile.Parse(Manager.GetString("cuts")) == false)
+	{
+	  CutFile.DumpErrors(cout);
+	  return -1;
+	}
+      NbrCuts = CutFile.GetNbrLines();
+      CutX = CutFile.GetAsIntegerArray(0);
+      CutY = CutFile.GetAsIntegerArray(1);
     }
+  int MaxNbrSitesXA = CutX[NbrCuts - 1];
+  int MaxNbrSitesYA = CutY[NbrCuts - 1];
   int MaxNbrSitesA = MaxNbrSitesXA * MaxNbrSitesYA;
-
-  
+ 
   Abstract2DTightBindingModel* TightBindingModel;
   TightBindingModel = new TightBindingModelSimpleSquareLattice (NbrSitesX, NbrSitesY, 1.0, 0.0, 0.0, 0.0,
 								Architecture.GetArchitecture(), true);
@@ -287,6 +320,42 @@ int main(int argc, char** argv)
     {
       sprintf(EntropyFileName, "%s_sz_%d_xa_%d_ya_%d.ent", FilePrefix, TotalSz, MaxNbrSitesXA, MaxNbrSitesYA);
     }
+
+  ofstream File;
+  File.open(EntropyFileName, ios::binary | ios::out);
+  File.precision(14);
+
+  if (Manager.GetBoolean("use-nonvacuum") == false)
+    {
+      FactorialCoefficient TmpCoefficient;
+      for (; NbrSitesXA <= MaxNbrSitesXA; ++NbrSitesXA)
+	{
+	  if ((Manager.GetInteger("max-nbrsitexa") > 0) && (Manager.GetInteger("max-nbrsiteya") > 0))
+	    NbrSitesYA = NbrSitesXA;
+	  cout << "computing entropy of a " << NbrSitesXA << "x" << NbrSitesYA << " patch" << endl;
+	  int TotalNbrSitesA = NbrSitesXA * NbrSitesYA;
+	  int MaxSumIndex = TotalNbrSitesA;
+	  if (MaxSumIndex > NbrPairs)
+	    MaxSumIndex = NbrPairs;
+	  double Tmp = 0.0;
+	  double EntanglementEntropy = 0.0;
+	  for (int j = 0; j <= MaxSumIndex; ++j)
+	    {
+	      TmpCoefficient.SetToOne();
+	      TmpCoefficient.BinomialMultiply(TotalNbrSitesA, j);
+	      TmpCoefficient.BinomialMultiply(NbrSites - TotalNbrSitesA, NbrPairs - j);
+	      TmpCoefficient.BinomialDivide(NbrSites, NbrPairs);
+	      double Tmp2 = TmpCoefficient.GetNumericalValue();
+	      cout << TotalNbrSitesA << " " << NbrSites << " " << j << " " << NbrPairs << " : " << Tmp2 << endl;
+	      EntanglementEntropy -= Tmp2 * log (Tmp2);
+	    }
+	  File << NbrSitesXA << " " << NbrSitesYA << " " << EntanglementEntropy << endl;
+	}
+      File.close();
+      return 0;
+    }
+
+
   if (Manager.GetString("nonvacuum-file") == 0)
     {
       char* NonVacuumFileName = new char [512];
@@ -312,10 +381,6 @@ int main(int argc, char** argv)
       NonVacuumFile.close();
     }
 
-  ofstream File;
-  File.open(EntropyFileName, ios::binary | ios::out);
-  File.precision(14);
-
   File << "# Non-vacuum state total momentum along x = " << VacuumXMomentum << endl;
   File << "# Non-vacuum state total momentum along y = " << VacuumYMomentum << endl;
   File << "# Non-vacuum state total energy = " << VacuumTotalEnergy << endl;
@@ -337,9 +402,10 @@ int main(int argc, char** argv)
 			    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
       cout << "correlation matrix evaluated in " << Dt << "s" << endl;
     }
-  for (; NbrSitesXA <= MaxNbrSitesXA; ++NbrSitesXA)
+  for (int CurrentCutIndex = 0; CurrentCutIndex < NbrCuts ; ++CurrentCutIndex)
     {
-      NbrSitesYA = NbrSitesXA;
+      NbrSitesXA = CutX[CurrentCutIndex];
+      NbrSitesYA = CutY[CurrentCutIndex];
       cout << "computing entropy of a " << NbrSitesXA << "x" << NbrSitesYA << " patch" << endl;
       int TotalNbrSitesA = NbrSitesXA * NbrSitesYA;
       if (ShowTimeFlag == true)
@@ -369,6 +435,7 @@ int main(int argc, char** argv)
 	}
       
       double EntanglementEntropy = 0.0;
+      double NonVacuumEntanglementEntropy = 0.0;
       int NbrVacuumOneBodyEntanglementTrimmedEnergies = MaxOneBodyEntanglementEnergyIndex - MinOneBodyEntanglementEnergyIndex + 1;
       int NbrRejectedOneBodyEntropies = VacuumOneBodyEntanglementEnergies.GetNbrRow() - NbrVacuumOneBodyEntanglementTrimmedEnergies;
       double* VacuumOneBodyEntanglementTrimmedEnergies = new double[NbrVacuumOneBodyEntanglementTrimmedEnergies];
@@ -383,37 +450,58 @@ int main(int argc, char** argv)
 	      EntanglementEntropy -= VacuumOneBodyEntanglementTrimmedEnergies[i] * log (VacuumOneBodyEntanglementTrimmedEnergies[i]);
 	      EntanglementEntropy -= (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i]) * log (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i]);
 	    }
+	  NonVacuumEntanglementEntropy = EntanglementEntropy;
 	}
       else
 	{
-	  int MaxNbrParticlesA = NbrSitesA;
-	  if (MaxNbrParticlesA > NbrParticles)
-	    MaxNbrParticlesA = NbrParticles;
+	  int MaxNbrParticlesA = VacuumNbrParticles;
+	  if (MaxNbrParticlesA > NbrSitesA)
+	    MaxNbrParticlesA = NbrSitesA;
 	  FactorialCoefficient TmpCoefficient;
-	  
-	  for (int i = 0; i <= MaxNbrParticlesA; ++i)
+	  double CurrentEntanglementEntropyContribution = 1.0;
+	  for (int TmpNbrParticlesA = 0; ((TmpNbrParticlesA <= MaxNbrParticlesA) && 
+					  ((EntanglementEntropy + CurrentEntanglementEntropyContribution) != EntanglementEntropy)); ++TmpNbrParticlesA)
 	    {
-	      //GetEntanglementEntropyPerNbrParticlesA(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies);
-	      int MaxSumIndex = NbrSitesA - i;
+	      if (ShowTimeFlag == true)
+		{
+		  gettimeofday (&(TotalStartingTime), 0);
+		}
+	      double AlphaFactor = 0.0;
+	      double TmpEntanglementEntropy = 0.0;
+	      GetEntanglementEntropyPerNbrParticlesA(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA, 
+						     0, 1.0, TmpEntanglementEntropy, AlphaFactor);
+	      int MaxSumIndex = TotalNbrSitesA - TmpNbrParticlesA;
 	      if (MaxSumIndex > NbrPairs)
 		MaxSumIndex = NbrPairs;
 	      double Tmp = 0.0;
-	      for (int j = 0; j < MaxSumIndex; ++j)
+	      for (int j = 0; j <= MaxSumIndex; ++j)
 		{
 		  TmpCoefficient.SetToOne();
-		  TmpCoefficient.BinomialMultiply(NbrSitesA - i, j);
-		  TmpCoefficient.BinomialMultiply(NbrSites - NbrSitesA - VacuumNbrParticles + i, NbrPairs - j);
+		  TmpCoefficient.BinomialMultiply(TotalNbrSitesA - TmpNbrParticlesA, j);
+		  TmpCoefficient.BinomialMultiply(NbrSites - TotalNbrSitesA - VacuumNbrParticles + TmpNbrParticlesA, NbrPairs - j);
 		  TmpCoefficient.BinomialDivide(NbrSites - VacuumNbrParticles, NbrPairs);
 		  double Tmp2 = TmpCoefficient.GetNumericalValue();
-		  Tmp -= Tmp2 * log (Tmp2);
+		  Tmp -= Tmp2 * log(Tmp2);
 		}
-	      cout << i << " " << Tmp << endl;
+	      CurrentEntanglementEntropyContribution = (AlphaFactor * Tmp) + TmpEntanglementEntropy;
+	      EntanglementEntropy += CurrentEntanglementEntropyContribution;
+	      NonVacuumEntanglementEntropy += TmpEntanglementEntropy;
+	      if (ShowTimeFlag == true)
+		{
+		  gettimeofday (&(TotalEndingTime), 0);
+		  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+					((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+		  cout << TmpNbrParticlesA << " : " << EntanglementEntropy << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << " " << "(" << Dt << "s)" << endl;
+		}
+	      else
+		{
+		  cout << TmpNbrParticlesA << " : " << EntanglementEntropy << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << endl;
+		}	  
 	    }
-	  
 	}
       cout << "Entanglement entropy = " << EntanglementEntropy << endl;
       cout << "Nbr Rejected one-body entanglement energies = " << NbrRejectedOneBodyEntropies << " / " << TotalNbrSitesA << endl;
-      File << NbrSitesXA << " " << NbrSitesYA << " " << EntanglementEntropy << endl;
+      File << NbrSitesXA << " " << NbrSitesYA << " " << EntanglementEntropy << " " << NonVacuumEntanglementEntropy << endl;
       delete[] VacuumOneBodyEntanglementTrimmedEnergies;
     }
   File.close();
@@ -452,7 +540,27 @@ HermitianMatrix EtaPairaingEntanglementEntropyExtractCorrelationMatrix(Hermitian
   return TmpMatrix;
 }
 
-// double GetEntanglementEntropyPerNbrParticlesA(double* oneBodyEntanglementTrimmedEnergies, int nbrOneBodyEntanglementTrimmedEnergies, int nbrParticlesA)
-// {
-  
-// }
+
+void GetEntanglementEntropyPerNbrParticlesA(double* oneBodyEntanglementTrimmedEnergies, int nbrOneBodyEntanglementTrimmedEnergies, 
+					    int nbrParticlesA, int currentOrbitalIndex, double currentFactor, double& entropy, double& alpha)
+{
+  if (currentOrbitalIndex > nbrOneBodyEntanglementTrimmedEnergies)
+    return;
+  if (nbrParticlesA == 0)
+    {      
+      for (; currentOrbitalIndex < nbrOneBodyEntanglementTrimmedEnergies; ++currentOrbitalIndex)
+	{
+	  currentFactor *= (1.0 - oneBodyEntanglementTrimmedEnergies[currentOrbitalIndex]);
+	}
+      entropy -= currentFactor * log(currentFactor);
+      alpha += currentFactor;
+      return;
+    }
+  if (currentOrbitalIndex == nbrOneBodyEntanglementTrimmedEnergies)
+    return;
+  GetEntanglementEntropyPerNbrParticlesA(oneBodyEntanglementTrimmedEnergies, nbrOneBodyEntanglementTrimmedEnergies, nbrParticlesA, currentOrbitalIndex + 1, currentFactor * (1.0 - oneBodyEntanglementTrimmedEnergies[currentOrbitalIndex]), entropy, alpha);
+  GetEntanglementEntropyPerNbrParticlesA(oneBodyEntanglementTrimmedEnergies, nbrOneBodyEntanglementTrimmedEnergies, nbrParticlesA - 1, currentOrbitalIndex + 1, currentFactor * oneBodyEntanglementTrimmedEnergies[currentOrbitalIndex], entropy, alpha);
+  return;
+}
+
+
