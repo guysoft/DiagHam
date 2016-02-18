@@ -501,15 +501,19 @@ int main(int argc, char** argv)
 		{
 		  double TmpZ0 = GetZ0Value(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA);
 		  AlphaFactor = pow (TmpZ0, -((double) (TmpNbrParticlesA + 1))) / sqrt (2.0 * M_PI);
+		  double LogAlphaFactor = (-((double) (TmpNbrParticlesA + 1)) * log(TmpZ0)) - (0.5 * log (2.0 * M_PI));
 		  double TmpSum = ((double) (TmpNbrParticlesA + 1)) / (TmpZ0 * TmpZ0);
 		  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
 		    {
-		      AlphaFactor *= (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
-				      (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]));
+// 		      AlphaFactor *= (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
+// 				      (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]));
+		      LogAlphaFactor += log((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
+					     (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])));
 		      TmpSum -= ((VacuumOneBodyEntanglementTrimmedEnergies[i] * VacuumOneBodyEntanglementTrimmedEnergies[i]) 
 				 / ((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])) 
 				    * (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]))));
 		    }
+		  AlphaFactor = exp(LogAlphaFactor);
 		  AlphaFactor /= sqrt(TmpSum);
 		  SumAlphaFactor += AlphaFactor;
 		}
@@ -520,14 +524,18 @@ int main(int argc, char** argv)
 		  double TmpZ0 = GetZ0Value(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA);
 		  AlphaFactor = pow (TmpZ0, -((double) (TmpNbrParticlesA + 1))) / sqrt (2.0 * M_PI);
 		  double TmpSum = ((double) (TmpNbrParticlesA + 1)) / (TmpZ0 * TmpZ0);
+		  double LogAlphaFactor = (-((double) (TmpNbrParticlesA + 1)) * log(TmpZ0)) - (0.5 * log (2.0 * M_PI));
 		  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
 		    {
-		      AlphaFactor *= (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
-				      (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]));
+// 		      AlphaFactor *= (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
+// 				      (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]));
+		      LogAlphaFactor += log(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
+					    (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]));
 		      TmpSum -= ((VacuumOneBodyEntanglementTrimmedEnergies[i] * VacuumOneBodyEntanglementTrimmedEnergies[i]) 
 				 / ((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])) 
 				    * (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]))));
 		    }
+		  AlphaFactor = exp(LogAlphaFactor);
 		  AlphaFactor /= sqrt(TmpSum);
 		  SumAlphaFactor += AlphaFactor;
 		}
@@ -552,14 +560,18 @@ int main(int argc, char** argv)
 		  double TmpZ0 = GetZ0Value(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA);
 		  AlphaFactor = pow (TmpZ0, -((double) (TmpNbrParticlesA + 1))) / sqrt (2.0 * M_PI);
 		  double TmpSum = ((double) (TmpNbrParticlesA + 1)) / (TmpZ0 * TmpZ0);
+		  double LogAlphaFactor = (-((double) (TmpNbrParticlesA + 1)) * log(TmpZ0)) - (0.5 * log (2.0 * M_PI));
 		  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
 		    {
-		      AlphaFactor *= (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
-				      (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]));
+// 		      AlphaFactor *= (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
+// 				      (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]));
+		      LogAlphaFactor += log((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
+					     (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])));
 		      TmpSum -= ((VacuumOneBodyEntanglementTrimmedEnergies[i] * VacuumOneBodyEntanglementTrimmedEnergies[i]) 
 				 / ((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])) 
 				    * (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]))));
 		    }
+		  AlphaFactor = exp(LogAlphaFactor);
 		  AlphaFactor /= sqrt(TmpSum) * SumAlphaFactor;
 		}
 	      int MaxSumIndex = TotalNbrSitesA - TmpNbrParticlesA;
@@ -582,11 +594,6 @@ int main(int argc, char** argv)
 		      Tmp2 = ((Binomial.GetNumericalCoefficient(TotalNbrSitesA - TmpNbrParticlesA, j) / Binomial.GetNumericalCoefficient(NbrSites - VacuumNbrParticles, NbrPairs))
 			      * Binomial.GetNumericalCoefficient(NbrSites - TotalNbrSitesA - VacuumNbrParticles + TmpNbrParticlesA, NbrPairs - j));
 		    }
-// 		  TmpCoefficient.SetToOne();
-// 		  TmpCoefficient.BinomialMultiply(TotalNbrSitesA - TmpNbrParticlesA, j);
-// 		  TmpCoefficient.BinomialMultiply(NbrSites - TotalNbrSitesA - VacuumNbrParticles + TmpNbrParticlesA, NbrPairs - j);
-// 		  TmpCoefficient.BinomialDivide(NbrSites - VacuumNbrParticles, NbrPairs);
-// 		  double Tmp2 = TmpCoefficient.GetNumericalValue();
 		  if (Tmp2 > 0.0)
 		    Tmp -= Tmp2 * log(Tmp2);
 		}
@@ -625,14 +632,18 @@ int main(int argc, char** argv)
 		  double TmpZ0 = GetZ0Value(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA);
 		  AlphaFactor = pow (TmpZ0, -((double) (TmpNbrParticlesA + 1))) / sqrt (2.0 * M_PI);
 		  double TmpSum = ((double) (TmpNbrParticlesA + 1)) / (TmpZ0 * TmpZ0);
+		  double LogAlphaFactor = (-((double) (TmpNbrParticlesA + 1)) * log(TmpZ0)) - (0.5 * log (2.0 * M_PI));
 		  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
 		    {
-		      AlphaFactor *= (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
-				      (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]));
+// 		      AlphaFactor *= (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
+// 				      (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]));
+		      LogAlphaFactor += log((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
+					     (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])));
 		      TmpSum -= ((VacuumOneBodyEntanglementTrimmedEnergies[i] * VacuumOneBodyEntanglementTrimmedEnergies[i]) 
 				 / ((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])) 
 				    * (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]))));
 		    }
+		  AlphaFactor = exp(LogAlphaFactor);
 		  AlphaFactor /= sqrt(TmpSum) * SumAlphaFactor;
 		}
 	      int MaxSumIndex = TotalNbrSitesA - TmpNbrParticlesA;
@@ -655,11 +666,6 @@ int main(int argc, char** argv)
 		      Tmp2 = ((Binomial.GetNumericalCoefficient(TotalNbrSitesA - TmpNbrParticlesA, j) / Binomial.GetNumericalCoefficient(NbrSites - VacuumNbrParticles, NbrPairs))
 			      * Binomial.GetNumericalCoefficient(NbrSites - TotalNbrSitesA - VacuumNbrParticles + TmpNbrParticlesA, NbrPairs - j));
 		    }
-// 		  TmpCoefficient.SetToOne();
-// 		  TmpCoefficient.BinomialMultiply(TotalNbrSitesA - TmpNbrParticlesA, j);
-// 		  TmpCoefficient.BinomialMultiply(NbrSites - TotalNbrSitesA - VacuumNbrParticles + TmpNbrParticlesA, NbrPairs - j);
-// 		  TmpCoefficient.BinomialDivide(NbrSites - VacuumNbrParticles, NbrPairs);
-// 		  double Tmp2 = TmpCoefficient.GetNumericalValue();
 		  if (Tmp2 > 0.0)
 		    Tmp -= Tmp2 * log(Tmp2);
 		}
