@@ -266,6 +266,20 @@ class LongRational
   // return value = reference on current coefficient
   LongRational& FactorialDivide (long x);
 
+  // multiply by a binomial factor
+  //
+  // m = major index
+  // n = minor index
+  // return value = reference on current coefficient  
+  LongRational& BinomialMultiply (long m, long n);
+
+  // divide by a binomial factor
+  //
+  // m = major index
+  // n = minor index
+  // return value = reference on current coefficient
+  LongRational& BinomialDivide (long m, long n);
+
   // multiply the current rational by 2^x
   // 
   // x = 2 power exponent

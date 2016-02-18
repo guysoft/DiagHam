@@ -1168,3 +1168,33 @@ LongRational& LongRational::FactorialDivide (long x)
   return *this;
 }
 
+// multiply by a binomial factor
+//
+// m = major index
+// n = minor index
+// return value = reference on current coefficient
+
+LongRational& LongRational::BinomialMultiply (long m, long n)
+{
+  for (int i = m - n + 1; i <= m; ++i) 
+    (*this) *= i;
+  for (; n > 1; --n) 
+    (*this) /= n;
+  return *this;
+}
+
+// divide by a binomial factor
+//
+// m = major index
+// n = minor index
+// return value = reference on current coefficient
+
+LongRational& LongRational::BinomialDivide (long m, long n)
+{
+  for (int i = m - n + 1; i <= m; ++i) 
+    (*this) /= i;
+  for (; n > 1; --n) 
+    (*this) *= n;
+  return *this;
+}
+

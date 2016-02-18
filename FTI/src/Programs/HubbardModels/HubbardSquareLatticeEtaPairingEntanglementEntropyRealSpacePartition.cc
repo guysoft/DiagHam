@@ -40,6 +40,7 @@
 
 #include "MathTools/FactorialCoefficient.h"
 #include "MathTools/BinomialCoefficients.h"
+#include "MathTools/LongRational.h"
 
 
 #include <iostream>
@@ -114,6 +115,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "show-nonvacuum", "show the non-vacuum state in the momentum basis");
   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");  
   (*SystemGroup) += new BooleanOption ('\n', "use-approximation", "use a saddle appoximation to evaluate the entanglement entropy");
+  (*SystemGroup) += new BooleanOption ('\n', "use-rational", "use rational number to overcome accuracy issues");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -482,7 +484,8 @@ int main(int argc, char** argv)
 	  int MaxNbrParticlesA = VacuumNbrParticles;
 	  if (MaxNbrParticlesA > TotalNbrSitesA)
 	    MaxNbrParticlesA = TotalNbrSitesA;
-	  FactorialCoefficient TmpCoefficient;
+	  LongRational TmpCoefficient;
+	  BinomialCoefficients  Binomial(NbrSites);
 	  double CurrentEntanglementEntropyContribution = 1.0;
 	  if (Manager.GetBoolean("use-approximation") == true)
 	    {
@@ -560,11 +563,25 @@ int main(int argc, char** argv)
 	      double Tmp = 0.0;
 	      for (int j = 0; j <= MaxSumIndex; ++j)
 		{
-		  TmpCoefficient.SetToOne();
-		  TmpCoefficient.BinomialMultiply(TotalNbrSitesA - TmpNbrParticlesA, j);
-		  TmpCoefficient.BinomialMultiply(NbrSites - TotalNbrSitesA - VacuumNbrParticles + TmpNbrParticlesA, NbrPairs - j);
-		  TmpCoefficient.BinomialDivide(NbrSites - VacuumNbrParticles, NbrPairs);
-		  double Tmp2 = TmpCoefficient.GetNumericalValue();
+		  double Tmp2;
+		  if (Manager.GetBoolean("use-rational") == true)
+		    {
+		      TmpCoefficient.SetToOne();
+		      TmpCoefficient.BinomialMultiply(TotalNbrSitesA - TmpNbrParticlesA, j);
+		      TmpCoefficient.BinomialMultiply(NbrSites - TotalNbrSitesA - VacuumNbrParticles + TmpNbrParticlesA, NbrPairs - j);
+		      TmpCoefficient.BinomialDivide(NbrSites - VacuumNbrParticles, NbrPairs);
+		      Tmp2 = TmpCoefficient.GetNumericalValue();
+		    }
+		  else
+		    {
+		      Tmp2 = ((Binomial.GetNumericalCoefficient(TotalNbrSitesA - TmpNbrParticlesA, j) / Binomial.GetNumericalCoefficient(NbrSites - VacuumNbrParticles, NbrPairs))
+			      * Binomial.GetNumericalCoefficient(NbrSites - TotalNbrSitesA - VacuumNbrParticles + TmpNbrParticlesA, NbrPairs - j));
+		    }
+// 		  TmpCoefficient.SetToOne();
+// 		  TmpCoefficient.BinomialMultiply(TotalNbrSitesA - TmpNbrParticlesA, j);
+// 		  TmpCoefficient.BinomialMultiply(NbrSites - TotalNbrSitesA - VacuumNbrParticles + TmpNbrParticlesA, NbrPairs - j);
+// 		  TmpCoefficient.BinomialDivide(NbrSites - VacuumNbrParticles, NbrPairs);
+// 		  double Tmp2 = TmpCoefficient.GetNumericalValue();
 		  Tmp -= Tmp2 * log(Tmp2);
 		}
 	      CurrentEntanglementEntropyContribution = (AlphaFactor * Tmp) + TmpEntanglementEntropy;
@@ -618,11 +635,25 @@ int main(int argc, char** argv)
 	      double Tmp = 0.0;
 	      for (int j = 0; j <= MaxSumIndex; ++j)
 		{
-		  TmpCoefficient.SetToOne();
-		  TmpCoefficient.BinomialMultiply(TotalNbrSitesA - TmpNbrParticlesA, j);
-		  TmpCoefficient.BinomialMultiply(NbrSites - TotalNbrSitesA - VacuumNbrParticles + TmpNbrParticlesA, NbrPairs - j);
-		  TmpCoefficient.BinomialDivide(NbrSites - VacuumNbrParticles, NbrPairs);
-		  double Tmp2 = TmpCoefficient.GetNumericalValue();
+		  double Tmp2;
+		  if (Manager.GetBoolean("use-rational") == true)
+		    {
+		      TmpCoefficient.SetToOne();
+		      TmpCoefficient.BinomialMultiply(TotalNbrSitesA - TmpNbrParticlesA, j);
+		      TmpCoefficient.BinomialMultiply(NbrSites - TotalNbrSitesA - VacuumNbrParticles + TmpNbrParticlesA, NbrPairs - j);
+		      TmpCoefficient.BinomialDivide(NbrSites - VacuumNbrParticles, NbrPairs);
+		      Tmp2 = TmpCoefficient.GetNumericalValue();
+		    }
+		  else
+		    {
+		      Tmp2 = ((Binomial.GetNumericalCoefficient(TotalNbrSitesA - TmpNbrParticlesA, j) / Binomial.GetNumericalCoefficient(NbrSites - VacuumNbrParticles, NbrPairs))
+			      * Binomial.GetNumericalCoefficient(NbrSites - TotalNbrSitesA - VacuumNbrParticles + TmpNbrParticlesA, NbrPairs - j));
+		    }
+// 		  TmpCoefficient.SetToOne();
+// 		  TmpCoefficient.BinomialMultiply(TotalNbrSitesA - TmpNbrParticlesA, j);
+// 		  TmpCoefficient.BinomialMultiply(NbrSites - TotalNbrSitesA - VacuumNbrParticles + TmpNbrParticlesA, NbrPairs - j);
+// 		  TmpCoefficient.BinomialDivide(NbrSites - VacuumNbrParticles, NbrPairs);
+// 		  double Tmp2 = TmpCoefficient.GetNumericalValue();
 		  Tmp -= Tmp2 * log(Tmp2);
 		}
 	      CurrentEntanglementEntropyContribution = (AlphaFactor * Tmp) + TmpEntanglementEntropy;
