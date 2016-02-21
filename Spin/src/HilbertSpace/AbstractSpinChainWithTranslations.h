@@ -43,6 +43,9 @@ class AbstractSpinChainWithTranslations : public AbstractSpinChain
 {
 
  protected:
+  
+  // momentum 
+  int Momentum;
 
  public:
 
@@ -59,7 +62,7 @@ class AbstractSpinChainWithTranslations : public AbstractSpinChain
   // get the momentum of each state in the current Hilbert space
   //
   // return value = momentum value
-  virtual int GetMomentum() = 0;
+  virtual int GetMomentum() {return this->Momentum;};
 
   // return eigenvalue of Sz_i Sz_j associated to a given state
   //
@@ -247,7 +250,17 @@ class AbstractSpinChainWithTranslations : public AbstractSpinChain
   // coefficient = reference on double where numerical coefficient has to be stored
   // return value = index of resulting state
   virtual int Spi (int i, int state, double& coefficient);
+
+  // find the canonical form of a state
+  //
+  // state = state description
+  // nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
+  // return value = canonical form of the state
+  virtual unsigned long FindCanonicalForm(unsigned long state, int& nbrTranslation) = 0;
+
   
+  //return the scaling factor when going from state i to state j
+  virtual double GetRescalingFactor(int i,int j) const {return 0;};
 };
 
 #endif

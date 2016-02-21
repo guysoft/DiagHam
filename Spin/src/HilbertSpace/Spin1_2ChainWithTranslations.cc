@@ -153,7 +153,7 @@ Spin1_2ChainWithTranslations::Spin1_2ChainWithTranslations (int chainLength, int
 
 // constructor for Hilbert space corresponding to a given total spin projection Sz
 //
-// chainLength = number of spin 1
+// chainLength = number of spin 1/2
 // momemtum = total momentum of each state
 // translationStep = indicates the step for an elementary translation
 // sz = twice the value of total Sz component
@@ -211,6 +211,7 @@ Spin1_2ChainWithTranslations::Spin1_2ChainWithTranslations (int chainLength, int
 	  this->StateDescription[i] = DicardFlag;
 	}
     }
+  
   unsigned long* TmpStateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
   this->NbrStateInOrbit = new int [this->LargeHilbertSpaceDimension];
   
@@ -225,11 +226,12 @@ Spin1_2ChainWithTranslations::Spin1_2ChainWithTranslations (int chainLength, int
 	  ++this->LargeHilbertSpaceDimension;
 	}
     }
+  
   delete[] this->StateDescription;
   this->StateDescription = TmpStateDescription;
-
+  
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;  
-
+  this->LookUpTable =0;
   if (this->HilbertSpaceDimension > 0)
     this->CreateLookUpTable();
 }
@@ -312,7 +314,7 @@ Spin1_2ChainWithTranslations::Spin1_2ChainWithTranslations (const Spin1_2ChainWi
 
 Spin1_2ChainWithTranslations::~Spin1_2ChainWithTranslations () 
 {
-  if ((this->ChainLength != 0) && (this->HilbertSpaceDimension > 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+  if ((this->ChainLength != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->StateDescription;
       delete[] this->LookUpTable;
@@ -394,15 +396,6 @@ Spin1_2ChainWithTranslations& Spin1_2ChainWithTranslations::operator = (const Sp
 AbstractHilbertSpace* Spin1_2ChainWithTranslations::Clone()
 {
   return new Spin1_2ChainWithTranslations (*this);
-}
-
-// return Hilbert space dimension
-//
-// return value = Hilbert space dimension
-
-int Spin1_2ChainWithTranslations::GetHilbertSpaceDimension()
-{
-  return this->HilbertSpaceDimension;
 }
 
 // return a list of all possible quantum numbers 
@@ -842,7 +835,7 @@ inline int Spin1_2ChainWithTranslations::FindStateIndex(unsigned long state)
   unsigned long MidPos = state >> this->LookUpTableShift;
   unsigned long LowPos = this->LookUpTable[MidPos];
   unsigned long HighPos = this->LookUpTable[MidPos + 1];
-  while (this->StateDescription[HighPos] != state)
+  while ( ( HighPos - LowPos ) > 1)
     {
       MidPos = (HighPos + LowPos) >> 1;
       if (this->StateDescription[MidPos] >= state)
@@ -850,7 +843,12 @@ inline int Spin1_2ChainWithTranslations::FindStateIndex(unsigned long state)
       else
 	LowPos = MidPos;
     }
-  return HighPos;   
+
+  if (this->StateDescription[LowPos] == state ) 
+    return LowPos;
+  if (this->StateDescription[HighPos] == state ) 
+    return HighPos;   
+  return this->HilbertSpaceDimension;
 }
 
 
@@ -928,7 +926,6 @@ void Spin1_2ChainWithTranslations::CreatePrecalculationTable()
 	  this->RescalingFactors[i][j] = sqrt (((double) i) / ((double) j));
 	}
     }
-
 }
 
 
@@ -1096,5 +1093,30 @@ HermitianMatrix Spin1_2ChainWithTranslations::EvaluatePartialDensityMatrixPartic
       HermitianMatrix TmpDensityMatrixZero;
       return TmpDensityMatrixZero;
     }  
+}
+
+
+// return the Bosonic Occupation of a given state in the basis
+//
+// index = index of the state in the basis
+// finalState = reference on the array where the monomial representation has to be stored
+
+void Spin1_2ChainWithTranslations::GetBosonicOccupation (unsigned int index, int * finalState)
+{
+  for (int i = 0; i < this->ChainLength; i++)
+    {
+      finalState[i] = (this->StateDescription[index] >> ((unsigned long) i) )& 0x1ul;
+    }
+}
+
+// convert the state on the site to its binary representation
+//
+// state = state to be stored
+// sitePosition = position on the chain of the state
+// return integer that code the state
+
+unsigned long Spin1_2ChainWithTranslations::EncodeSiteState(int physicalState, int sitePosition)
+{
+  return  physicalState << sitePosition;
 }
 

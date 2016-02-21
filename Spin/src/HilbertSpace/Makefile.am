@@ -24,4 +24,8 @@ Spin1_2ChainNew.cc \
 Spin1_2ChainParitySymmetry.cc \
 Spin1_2ChainFullAnd2DTranslation.cc \
 Spin1_2ChainFullInversionAnd2DTranslation.cc \
-DoubledSpin0_1_2_chainWithTranslations.cc
+AbstractDoubledSpinChain.cc \
+DoubledSpin0_1_2_chainWithTranslations.cc \
+AbstractDoubledSpinChainWithTranslations.cc \
+DoubledSpin1_2_chain.cc \
+DoubledSpin1_2_chainWithTranslations.cc

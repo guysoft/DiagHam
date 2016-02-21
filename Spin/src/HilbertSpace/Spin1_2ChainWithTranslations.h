@@ -47,8 +47,6 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
 
  protected: 
 
-  // momentum 
-  int Momentum;
   // array containing falg indicating if a state beloging to an orbit with a given number of member is compatible with momentum constraint
   bool* CompatibilityWithMomentum;
 
@@ -89,7 +87,7 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // momemtum = total momentum of each state
   // translationStep = indicates the step for an elementary translation
   // memorySize = memory size in bytes allowed for look-up table
-  // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
+  // memorySlice = maximum amount of memory that can be allocated to partially evaluate the states
   Spin1_2ChainWithTranslations (int chainLength, int momentum, int translationStep, int memorySize, int memorySlice);
 
   // constructor for complete Hilbert space corresponding to a given total spin projection Sz
@@ -121,11 +119,6 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
-  // return Hilbert space dimension
-  //
-  // return value = Hilbert space dimension
-  int GetHilbertSpaceDimension();
-
   // return a list of all possible quantum numbers 
   //
   // return value = pointer to corresponding quantum number
@@ -143,10 +136,6 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // return value = twice spin projection on (Oz)
   double TotalSzSz (int index);
 
-  // get the momentum of each state in the current Hilbert space
-  //
-  // return value = momentum value
-  int GetMomentum();
 
   // return value of spin projection on (Oz) for a given state
   //
@@ -357,16 +346,32 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // return value = Hilbert space dimension
   long EvaluateHilbertSpaceDimension(int nbrSpins, int szMax);
 
+  // convert the state on the site to its binary representation
+  //
+  // state = state to be stored
+  // sitePosition = position on the chain of the state
+  // return integer that code the state
+  virtual unsigned long EncodeSiteState(int physicalState, int sitePosition);
+
+
+  // return the Bosonic Occupation of a given state in the basis
+  //
+  // index = index of the state in the basis
+  // finalState = reference on the array where the monomial representation has to be stored
+  virtual void GetBosonicOccupation (unsigned int index, int * finalState);
+  
+  //return the scaling factor when going from state i to state j
+  inline double GetRescalingFactor(int i,int j) const {return this->RescalingFactors[this->NbrStateInOrbit[i]][this->NbrStateInOrbit[j]];};
 };
 
-// get the momentum of each state in the current Hilbert space
+/*// get the momentum of each state in the current Hilbert space
 //
 // return value = momentum value
 
 inline int Spin1_2ChainWithTranslations::GetMomentum()
 {
   return this->Momentum;
-}
+}*/
 
 // find the canonical form of a state
 //

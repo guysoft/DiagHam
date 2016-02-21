@@ -263,6 +263,21 @@ class Spin1_2ChainNew : public AbstractSpinChain
   virtual void GenerateLookUpTable(unsigned long memory, unsigned long stateMask = 0xfffffffful);
 #endif
 
+
+  // convert the state on the site to its binary representation
+  //
+  // state = state to be stored
+  // sitePosition = position on the chain of the state
+  // return integer that code the state
+  virtual unsigned long EncodeSiteState(int physicalState, int sitePosition);
+
+
+  // return the Bosonic Occupation of a given state in the basis
+  //
+  // index = index of the state in the basis
+  // finalState = reference on the array where the monomial representation has to be stored
+  virtual void GetBosonicOccupation (unsigned int index, int * finalState);
+  
 };
 
 #endif

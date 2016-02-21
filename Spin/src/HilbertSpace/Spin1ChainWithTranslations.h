@@ -53,8 +53,6 @@ class Spin1ChainWithTranslations : public AbstractSpinChainWithTranslations
 
  protected:
 
-  // momentum 
-  int Momentum;
   // array containing flag indicating if a state belonging to an orbit with a given number of member is compatible with momentum constraint
   bool* CompatibilityWithMomentum;
 
@@ -300,7 +298,7 @@ class Spin1ChainWithTranslations : public AbstractSpinChainWithTranslations
   // return value = twice spin projection on (Oz)
   int GetTotalSz (unsigned long stateDescription);
 
- // find the canonical form of a state
+  // find the canonical form of a state
   //
   // state = state description
   // nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored

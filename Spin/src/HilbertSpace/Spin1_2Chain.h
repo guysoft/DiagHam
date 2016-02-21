@@ -119,11 +119,6 @@ class Spin1_2Chain : public AbstractSpinChain
   // return value = reference on current chain  
   virtual Spin1_2Chain& Reinitialize(int sz);
 
-  // return Hilbert space dimension
-  //
-  // return value = Hilbert space dimension
-  virtual int GetHilbertSpaceDimension() {return this->HilbertSpaceDimension;};
-
   // return a list of all possible quantum numbers 
   //
   // return value = pointer to corresponding quantum number
@@ -341,8 +336,22 @@ class Spin1_2Chain : public AbstractSpinChain
   // groundState = reference on the total system ground state
   // architecture = pointer to the architecture to use parallelized algorithm 
   // return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
-
   virtual ComplexMatrix EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
+
+  // convert the state on the site to its binary representation
+  //
+  // state = state to be stored
+  // sitePosition = position on the chain of the state
+  // return integer that code the state
+  virtual unsigned long EncodeSiteState(int physicalState, int sitePosition);
+
+
+  // return the Bosonic Occupation of a given state in the basis
+  //
+  // index = index of the state in the basis
+  // finalState = reference on the array where the monomial representation has to be stored
+  virtual void GetBosonicOccupation (unsigned int index, int * finalState);
+
 
  protected:
 
@@ -371,7 +380,7 @@ class Spin1_2Chain : public AbstractSpinChain
   virtual int EvaluateHilbertSpaceDimension(int nbrSpins, int szMax);
 
 };
-
+ 
 #endif
 
 

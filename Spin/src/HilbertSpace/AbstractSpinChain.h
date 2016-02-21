@@ -46,6 +46,7 @@ class ComplexMatrix;
 
 using std::cout;
 using std::endl;
+
 class AbstractSpinChain : public AbstractHilbertSpace
 {
 
@@ -243,7 +244,7 @@ class AbstractSpinChain : public AbstractHilbertSpace
   //
   // state = state description
   // return value = corresponding index
-  virtual int FindStateIndex(unsigned long state) = 0;
+  virtual int FindStateIndex(unsigned long state){cout <<"using non defined function FindStateIndex in AbstractSpinChain" <<endl; return -1;};
 
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Sz sector.
   // 
@@ -358,8 +359,8 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // return the Bosonic Occupation of a given state in the basis
   //
   // index = index of the state in the basis
-  // return value bosonic occupation 
-  virtual int * GetBosonicOccupation (unsigned int index);
+  // finalState = reference on the array where the monomial representation has to be stored
+  virtual void GetBosonicOccupation (unsigned int index, int * finalState);
 
   // convert the state on the site to its binary representation
   //
@@ -367,8 +368,6 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // sitePosition = position on the chain of the state
   // return integer that code the state
   virtual inline unsigned long EncodeSiteState(int physicalState, int sitePosition);
-
-
 
 };
 

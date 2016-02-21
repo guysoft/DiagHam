@@ -8,7 +8,7 @@
 //                                                                            //
 //          class of doubled spin 0 +1/2 chain with translations              //
 //                                                                            //
-//                        last modification : 21/01/2016                      //
+//                        last modification : 10/02/2016                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,36 +28,31 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef DOUBLEDSPIN0_1_2_CHAINWITHTRANSLATIONS_H
-#define DOUBLEDSPIN0_1_2_CHAINWITHTRANSLATIONS_H
+#ifndef DOUBLEDSPIN1_2_CHAINWITHTRANSLATIONS_H
+#define DOUBLEDSPIN1_2_CHAINWITHTRANSLATIONS_H
 
 
 #include "config.h"
 #include "HilbertSpace/AbstractDoubledSpinChainWithTranslations.h"
-
 
 #include <iostream>
 
 
 using std::ostream;
 
-class DoubledSpin0_1_2_chainWithTranslations : public AbstractDoubledSpinChainWithTranslations
+
+class DoubledSpin1_2_chainWithTranslations : public AbstractDoubledSpinChainWithTranslations
 {
   
+  friend class ComplexPEPSTransfertMatrixPBCWithTranslations;
+  
  protected:
+
  public:
 
   // default constructor
   //
-  DoubledSpin0_1_2_chainWithTranslations ();
-
-  // constructor for complete Hilbert space with no restriction on momentum
-  //
-  // chainLength = number of spin
-  // momemtum = total momentum of each state
-  // memorySize = memory size in bytes allowed for look-up table
-  // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
-  DoubledSpin0_1_2_chainWithTranslations (int chainLength,  int diffSz, int memorySize, int memorySlice);
+  DoubledSpin1_2_chainWithTranslations ();
 
   // constructor for complete Hilbert space corresponding to a given total spin projection Sz
   //
@@ -65,22 +60,22 @@ class DoubledSpin0_1_2_chainWithTranslations : public AbstractDoubledSpinChainWi
   // momemtum = total momentum of each state
   // sz = twice the value of total Sz component
   // memorySize = memory size in bytes allowed for look-up table
-  DoubledSpin0_1_2_chainWithTranslations (int chainLength, int momentum, int sz, int memorySize, int memorySlice);
+  DoubledSpin1_2_chainWithTranslations (int chainLength, int momentum, int sz, int memorySize, int memorySlice);
 
   // copy constructor (without duplicating datas)
   //
   // chain = reference on chain to copy
-  DoubledSpin0_1_2_chainWithTranslations (const DoubledSpin0_1_2_chainWithTranslations & chain);
+  DoubledSpin1_2_chainWithTranslations (const DoubledSpin1_2_chainWithTranslations & chain);
 
   // destructor
   //
-  ~DoubledSpin0_1_2_chainWithTranslations ();
+  ~DoubledSpin1_2_chainWithTranslations ();
 
   // assignement (without duplicating datas)
   //
   // chain = reference on chain to copy
   // return value = reference on current chain
-  DoubledSpin0_1_2_chainWithTranslations& operator = (const DoubledSpin0_1_2_chainWithTranslations & chain);
+  DoubledSpin1_2_chainWithTranslations& operator = (const DoubledSpin1_2_chainWithTranslations & chain);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -151,22 +146,23 @@ class DoubledSpin0_1_2_chainWithTranslations : public AbstractDoubledSpinChainWi
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
   long GenerateStates(int lengthBra, int lengthKet, int diffSz, long pos);
-  
+    
   long ShiftedEvaluateHilbertSpaceDimension(int lengthBra, int lengthKet, int diffSz);
 
 };
+
 
 // return the Bosonic Occupation of a given state in the basis
 //
 // index = index of the state in the basis
 // finalState = reference on the array where the monomial representation has to be stored
 
-inline void DoubledSpin0_1_2_chainWithTranslations::GetBosonicOccupation (unsigned int index, int * finalStateBra,int * finalStateKet)
+inline void DoubledSpin1_2_chainWithTranslations::GetBosonicOccupation (unsigned int index, int * finalStateBra,int * finalStateKet)
 {
   for (unsigned long i = 0; i < this->ChainLength; i++)
     {
-      finalStateBra[i] = ((this->ChainDescriptionBra[index] >> ((unsigned long) 2*i) )& 0x3ul);
-      finalStateKet[i] = ((this->ChainDescriptionKet[index] >> ((unsigned long) 2*i) )& 0x3ul);
+      finalStateBra[i] = (this->ChainDescriptionBra[index] >> i ) & 0x1ul;
+      finalStateKet[i] = (this->ChainDescriptionKet[index] >> i ) & 0x1ul;
     }
 }
 
@@ -176,9 +172,9 @@ inline void DoubledSpin0_1_2_chainWithTranslations::GetBosonicOccupation (unsign
 // sitePosition = position on the chain of the state
 // return integer that code the state
 
-inline unsigned long DoubledSpin0_1_2_chainWithTranslations::EncodeSiteStateBra(int physicalState, int sitePosition)
+inline unsigned long DoubledSpin1_2_chainWithTranslations::EncodeSiteStateBra(int physicalState, int sitePosition)
 {
-  return  physicalState << (2*sitePosition);
+  return  physicalState << sitePosition;
 }
 
 // convert the state on the site to its binary representation
@@ -187,11 +183,70 @@ inline unsigned long DoubledSpin0_1_2_chainWithTranslations::EncodeSiteStateBra(
 // sitePosition = position on the chain of the state
 // return integer that code the state
 
-inline unsigned long DoubledSpin0_1_2_chainWithTranslations::EncodeSiteStateKet(int physicalState, int sitePosition)
+inline unsigned long DoubledSpin1_2_chainWithTranslations::EncodeSiteStateKet(int physicalState, int sitePosition)
 {
-  return  physicalState << (2*sitePosition);
+  return  physicalState << sitePosition;
 }
 
+// find the canonical form of a state
+//
+// stateDescription = state description
+// nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
+// return value = canonical form of the state
+
+inline void DoubledSpin1_2_chainWithTranslations::FindCanonicalForm(unsigned long stateDescriptionBra,unsigned long stateDescriptionKet,unsigned long & canonicalStateBra , unsigned long & canonicalStateKet, int& nbrTranslation)
+{
+  nbrTranslation = 0;
+  canonicalStateBra = stateDescriptionBra;
+  canonicalStateKet = stateDescriptionKet;
+  int index = 1;  
+  while (index < this->ChainLength)
+    {
+      stateDescriptionBra = (stateDescriptionBra >> 1) | ((stateDescriptionBra & 0x1ul) << this->ComplementaryStateShift);
+      stateDescriptionKet = (stateDescriptionKet >> 1) | ((stateDescriptionKet & 0x1ul) << this->ComplementaryStateShift);
+      if ((stateDescriptionBra < canonicalStateBra)||((stateDescriptionBra == canonicalStateBra)&&(stateDescriptionKet < canonicalStateKet))  )
+	{
+	  canonicalStateBra = stateDescriptionBra;
+	  canonicalStateKet = stateDescriptionKet;
+	  nbrTranslation = index;
+	}
+      ++index;
+    }
+}
+
+// find the canonical form of a state and find how many translations are needed to obtain the same state
+//
+// stateDescription = state description
+// nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
+// nbrTranslationToIdentity = reference on the number of translation needed to obtain the same state
+// return value = canonical form of the state
+
+inline void DoubledSpin1_2_chainWithTranslations::FindCanonicalForm(unsigned long stateDescriptionBra,unsigned long stateDescriptionKet, unsigned long & canonicalStateBra , unsigned long & canonicalStateKet, int& nbrTranslation, int& nbrTranslationToIdentity)
+{
+  nbrTranslation = 0;
+  nbrTranslationToIdentity = 1;
+  canonicalStateBra = stateDescriptionBra;
+  canonicalStateKet = stateDescriptionKet;
+  unsigned long ReferenceStateBra = stateDescriptionBra;
+  unsigned long ReferenceStateKet = stateDescriptionKet;
+
+  stateDescriptionBra = (stateDescriptionBra >> 1) | ((stateDescriptionBra & 0x1ul) << this->ComplementaryStateShift);
+  stateDescriptionKet = (stateDescriptionKet >> 1) | ((stateDescriptionKet & 0x1ul) << this->ComplementaryStateShift);
+
+  while ((ReferenceStateBra != stateDescriptionBra) && (ReferenceStateKet != stateDescriptionKet) && (nbrTranslationToIdentity < this->ChainLength))
+    {
+      if ((stateDescriptionBra < canonicalStateBra)||((stateDescriptionBra == canonicalStateBra)&&(stateDescriptionKet < canonicalStateKet))  )
+	{
+	  canonicalStateBra = stateDescriptionBra;
+	  canonicalStateKet = stateDescriptionKet;
+	  nbrTranslation = nbrTranslationToIdentity;
+	}
+      
+      stateDescriptionBra = (stateDescriptionBra >> 1) | ((stateDescriptionBra & 0x1ul) << this->ComplementaryStateShift);
+      stateDescriptionKet = (stateDescriptionKet >> 1) | ((stateDescriptionKet & 0x1ul) << this->ComplementaryStateShift);
+      ++nbrTranslationToIdentity;
+    }
+}
 
 #endif
 

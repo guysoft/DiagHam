@@ -53,9 +53,6 @@ class Potts3ChainWithTranslations : public AbstractSpinChainWithTranslations
 
  protected:
 
-  // momentum 
-  int Momentum;
-
   // shift to apply to move the spin from one end to the other one
   int ComplementaryStateShift;
 

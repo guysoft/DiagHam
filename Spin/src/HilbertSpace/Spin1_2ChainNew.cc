@@ -791,3 +791,29 @@ void Spin1_2ChainNew::GenerateLookUpTable(unsigned long memory, unsigned long st
     }
   TmpLookUpTable[0] = this->HilbertSpaceDimension - 1;
 }
+
+
+
+// return the Bosonic Occupation of a given state in the basis
+//
+// index = index of the state in the basis
+// finalState = reference on the array where the monomial representation has to be stored
+
+void Spin1_2ChainNew::GetBosonicOccupation (unsigned int index, int * finalState)
+{
+  for (int i = 0; i < this->ChainLength; i++)
+    {
+      finalState[i] = (this->StateDescription[index] >> ((unsigned long) i) )& 0x1ul;
+    }
+}
+
+// convert the state on the site to its binary representation
+//
+// state = state to be stored
+// sitePosition = position on the chain of the state
+// return integer that code the state
+
+unsigned long Spin1_2ChainNew::EncodeSiteState(int physicalState, int sitePosition)
+{
+  return  physicalState << sitePosition;
+}

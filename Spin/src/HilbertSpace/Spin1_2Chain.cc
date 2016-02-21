@@ -102,6 +102,8 @@ Spin1_2Chain::Spin1_2Chain (int chainLength, int memorySize)
   this->StateDescription[0] = 0xffffffff; 
   this->LargeHilbertSpaceDimension = this->GenerateStates (0, 0, this->StateDescription[0]);
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  for(int i=0; i <   this->HilbertSpaceDimension; i++)
+    cout <<i<<" " <<   this->StateDescription[i]<<endl;
 }
 
 // constructor for complete Hilbert space with a given total spin projection Sz
@@ -1001,8 +1003,11 @@ AbstractHilbertSpace* Spin1_2Chain::ExtractSubspace (AbstractQuantumNumber& q, S
 
 int Spin1_2Chain::FindStateIndex(unsigned long state)
 {
+  cout<<"state "<< state;
   int index = this->LookUpTable[state & this->LookUpTableMask];
+  cout<<"index = "<<index<<endl;
   unsigned long* tmpState = &(this->StateDescription[index]);
+  cout<<"this->StateDescription[index] = "<<this->StateDescription[index]<<endl;
   while ((index < this->HilbertSpaceDimension) && (state != *(tmpState++)))
     index++;
   return index;    
@@ -1350,4 +1355,29 @@ ComplexMatrix Spin1_2Chain::EvaluatePartialEntanglementMatrix (int nbrSites, int
     }
 
    return TmpEntanglementMatrix;
+}
+
+
+// return the Bosonic Occupation of a given state in the basis
+//
+// index = index of the state in the basis
+// finalState = reference on the array where the monomial representation has to be stored
+
+void Spin1_2Chain::GetBosonicOccupation (unsigned int index, int * finalState)
+{
+  for (int i = 0; i < this->ChainLength; i++)
+    {
+      finalState[i] = (this->StateDescription[index] >> ((unsigned long) i) )& 0x1ul;
+    }
+}
+
+// convert the state on the site to its binary representation
+//
+// state = state to be stored
+// sitePosition = position on the chain of the state
+// return integer that code the state
+
+unsigned long Spin1_2Chain::EncodeSiteState(int physicalState, int sitePosition)
+{
+  return  physicalState << sitePosition;
 }
