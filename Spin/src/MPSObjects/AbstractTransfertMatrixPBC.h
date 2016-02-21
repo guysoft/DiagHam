@@ -16,10 +16,8 @@ class AbstractTransfertMatrixPBC : public AbstractHamiltonian
  protected:
 
   unsigned int NbrNonZeroElements;
-  unsigned int * IndexValues;
   unsigned int PhysicalDimension;
   unsigned int MPOBondDimension;
-  unsigned int NbrSites;
   AbstractSpinChain * HilbertSpace;
 
   /*  bool IDMRGFlag;
@@ -27,36 +25,37 @@ class AbstractTransfertMatrixPBC : public AbstractHamiltonian
     AbstractMPSSite * Site;
   AbstractMPSSite * SiteLeft;
   AbstractMPSSite * SiteRight;*/
-
+  
   AbstractArchitecture * Architecture;
-  AbstractTransfertMatrixPBC ();
-  ~AbstractTransfertMatrixPBC ();
+  
   
   double *** ValuesNonZeroTensorElementTopLeft;
   int ** NbrNonZeroTensorElementTopLeft;
   int *** IndiceRightNonZeroTensorElementTopLeft;
   int *** IndiceBottomNonZeroTensorElementTopLeft;
-
-  virtual void InitializeTensorsElements(){ cout <<"using  not defined AbstractMPOperatorOBC::InitializeTensorsElements()"<<endl;}
-
+  
   // global shift to apply to the diagonal matrix elements
   double HamiltonianShift;
-
- 
+  
+  
  public:
   
-  virtual void PrintTensorElements() = 0;
-
+  AbstractTransfertMatrixPBC ();
+  AbstractTransfertMatrixPBC(MultiColumnASCIIFile & tensorElementsFile,AbstractArchitecture * architecture);
+  ~AbstractTransfertMatrixPBC ();  
+  
+  virtual void PrintTensorElements();
+  
   // set Hilbert space
   //
   // hilbertSpace = pointer to Hilbert space to use
-  void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
-
+  virtual void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
+  
   // set site to be acted on
   //
   // site = pointer to the siteto use 
   //void SetSite (AbstractMPSSite* site);
-
+  
   // set site to be acted on
   //
   // site = pointer to the siteto use 
@@ -67,7 +66,7 @@ class AbstractTransfertMatrixPBC : public AbstractHamiltonian
   // site = pointer to the siteto use 
   //  void SetDMRGFlag (bool newFlag){this->DMRGFlag=newFlag;};
   
-// set site to be acted on
+  // set site to be acted on
   //
   // site = pointer to the siteto use 
   //  void SetIDMRGFlag (bool newFlag){this->IDMRGFlag=newFlag;};
@@ -76,30 +75,31 @@ class AbstractTransfertMatrixPBC : public AbstractHamiltonian
   // get Hilbert space on which Hamiltonian acts
   //
   // return value = pointer to used Hilbert space
-  AbstractHilbertSpace* GetHilbertSpace ();
+  virtual AbstractHilbertSpace* GetHilbertSpace ();
   
   // return dimension of Hilbert space where Hamiltonian acts
   //
   // return value = corresponding matrix elementdimension
-  int GetHilbertSpaceDimension ();
+  virtual int GetHilbertSpaceDimension ();
   int GetTwoSitesHilbertSpaceDimension ();  
-
+  
   // shift Hamiltonian from a given energy
   //
   // shift = shift value
   void ShiftHamiltonian (double shift);
   
-  inline int GetMPODimension() const {return  MPOBondDimension;};
-  inline int GetPhysicalDimension() const {return  PhysicalDimension;};
-
+  inline int GetMPODimension() const {return  this->MPOBondDimension;};
+  inline int GetBondDimension() const {return  this->MPOBondDimension;};
+  inline int GetPhysicalDimension() const {return  this->PhysicalDimension;};
+  
   // multiply a vector by the current hamiltonian and store result in another vector
   // low level function (no architecture optimization)
   //
   // vSource = vector to be multiplied
   // vDestination = vector where result has to be stored
   // return value = reference on vectorwhere result has been stored
-  virtual RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination);
-  virtual ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination);
+  virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination);
+  //  virtual ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination);
 
   // multiply a vector by the current hamiltonian and store result in another vector
   // low level function (no architecture optimization)
@@ -109,7 +109,7 @@ class AbstractTransfertMatrixPBC : public AbstractHamiltonian
   // return value = reference on vectorwhere result has been stored
   //  virtual RealVector& LowLevelMultiplyTwoSites(RealVector& vSource, RealVector& vDestination);
   //  virtual ComplexVector& LowLevelMultiplyTwoSites(ComplexVector& vSource, ComplexVector& vDestination);
-
+  
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and store result in another vector, low level function (no architecture optimization)
@@ -119,8 +119,8 @@ class AbstractTransfertMatrixPBC : public AbstractHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent);
-  virtual ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
+  virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent);
+  //  virtual ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
 
 
   //  virtual RealVector& LowLevelMultiplyTwoSites(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent);
@@ -142,22 +142,22 @@ class AbstractTransfertMatrixPBC : public AbstractHamiltonian
 
   
   virtual void LowLevelMultiplyCoreFirst(Tensor3<Complex> * result, Tensor3<Complex> * source , ComplexVector & vSource, int firstComponent, int nbrComponent)
-{cout <<"using undefined function"<<endl; };
+  {cout <<"using undefined function"<<endl; };
   virtual void LowLevelMultiplyCoreFirst(Tensor3<double> * result, Tensor3<double> * source , RealVector & vSource, int firstComponent, int nbrComponent)
-{cout <<"using undefined function"<<endl; };
+  {cout <<"using undefined function"<<endl; };
   virtual void LowLevelMultiplyCoreTwoSitesFirst(Tensor3<double> * result, Tensor3<double> * source , RealVector & vSource, int firstComponent, int nbrComponent)
-{cout <<"using undefined function"<<endl; };
+  {cout <<"using undefined function"<<endl; };
   virtual void LowLevelMultiplyCoreTwoSitesFirst(Tensor3<Complex> * result, Tensor3<Complex> * source , ComplexVector & vSource, int firstComponent, int nbrComponent)
-{cout <<"using undefined function"<<endl; };
-
+  {cout <<"using undefined function"<<endl; };
+  
   virtual void LowLevelMultiplyCoreSecond(Tensor3<Complex> * result, Tensor3<Complex> * source , ComplexVector & vSource, int firstComponent, int nbrComponent)
-{cout <<"using undefined function"<<endl; };
+  {cout <<"using undefined function"<<endl; };
   virtual void LowLevelMultiplyCoreSecond(Tensor3<double> * result, Tensor3<double> * source , RealVector & vSource, int firstComponent, int nbrComponent)
-{cout <<"using undefined function"<<endl; };
+  {cout <<"using undefined function"<<endl; };
   virtual void LowLevelMultiplyCoreTwoSitesSecond(Tensor3<Complex> * result, Tensor3<Complex> * source , ComplexVector & vSource, int firstComponent, int nbrComponent)
-{cout <<"using undefined function"<<endl; };
+  {cout <<"using undefined function"<<endl; };
   virtual void LowLevelMultiplyCoreTwoSitesSecond(Tensor3<double> * result, Tensor3<double> * source , RealVector & vSource, int firstComponent, int nbrComponent)
-{cout <<"using undefined function"<<endl; };
+  {cout <<"using undefined function"<<endl; };
   
   
   virtual int GenerateResultingStateAndCoefficient(int indiceTop, int * indiceLeft, int chainSize, int lastIndice, double * coefArray, unsigned long * stateArray, unsigned long pos);
@@ -178,9 +178,8 @@ class AbstractTransfertMatrixPBC : public AbstractHamiltonian
   inline unsigned int GetTensorIndexFromAllIndices(unsigned int indexDown, unsigned int indexUp, unsigned int indexLeft, unsigned int indexRight);
 
   inline void GetAllIndicesFromTensorIndex(unsigned int tensorIndex, unsigned int & indexDown, unsigned int & indexUp, unsigned int & indexLeft, unsigned int & indexRight);
-
-
-  void InitializeTensorsElements(MultiColumnASCIIFile & tensorElementsFile);
+  
+  virtual void InitializeTensorsElements(MultiColumnASCIIFile & tensorElementsFile);
   
 };
 
