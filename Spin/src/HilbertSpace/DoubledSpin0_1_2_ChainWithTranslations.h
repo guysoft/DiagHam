@@ -41,7 +41,7 @@
 
 using std::ostream;
 
-class DoubledSpin0_1_2_chainWithTranslations : public AbstractDoubledSpinChainWithTranslations
+class DoubledSpin0_1_2_ChainWithTranslations : public AbstractDoubledSpinChainWithTranslations
 {
   
  protected:
@@ -49,7 +49,7 @@ class DoubledSpin0_1_2_chainWithTranslations : public AbstractDoubledSpinChainWi
 
   // default constructor
   //
-  DoubledSpin0_1_2_chainWithTranslations ();
+  DoubledSpin0_1_2_ChainWithTranslations ();
 
   // constructor for complete Hilbert space with no restriction on momentum
   //
@@ -57,7 +57,7 @@ class DoubledSpin0_1_2_chainWithTranslations : public AbstractDoubledSpinChainWi
   // momemtum = total momentum of each state
   // memorySize = memory size in bytes allowed for look-up table
   // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
-  DoubledSpin0_1_2_chainWithTranslations (int chainLength,  int diffSz, int memorySize, int memorySlice);
+  DoubledSpin0_1_2_ChainWithTranslations (int chainLength,  int diffSz, int memorySize, int memorySlice);
 
   // constructor for complete Hilbert space corresponding to a given total spin projection Sz
   //
@@ -65,22 +65,22 @@ class DoubledSpin0_1_2_chainWithTranslations : public AbstractDoubledSpinChainWi
   // momemtum = total momentum of each state
   // sz = twice the value of total Sz component
   // memorySize = memory size in bytes allowed for look-up table
-  DoubledSpin0_1_2_chainWithTranslations (int chainLength, int momentum, int sz, int memorySize, int memorySlice);
+  DoubledSpin0_1_2_ChainWithTranslations (int chainLength, int momentum, int sz, int memorySize, int memorySlice);
 
   // copy constructor (without duplicating datas)
   //
   // chain = reference on chain to copy
-  DoubledSpin0_1_2_chainWithTranslations (const DoubledSpin0_1_2_chainWithTranslations & chain);
+  DoubledSpin0_1_2_ChainWithTranslations (const DoubledSpin0_1_2_ChainWithTranslations & chain);
 
   // destructor
   //
-  ~DoubledSpin0_1_2_chainWithTranslations ();
+  ~DoubledSpin0_1_2_ChainWithTranslations ();
 
   // assignement (without duplicating datas)
   //
   // chain = reference on chain to copy
   // return value = reference on current chain
-  DoubledSpin0_1_2_chainWithTranslations& operator = (const DoubledSpin0_1_2_chainWithTranslations & chain);
+  DoubledSpin0_1_2_ChainWithTranslations& operator = (const DoubledSpin0_1_2_ChainWithTranslations & chain);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -161,7 +161,7 @@ class DoubledSpin0_1_2_chainWithTranslations : public AbstractDoubledSpinChainWi
 // index = index of the state in the basis
 // finalState = reference on the array where the monomial representation has to be stored
 
-inline void DoubledSpin0_1_2_chainWithTranslations::GetBosonicOccupation (unsigned int index, int * finalStateBra,int * finalStateKet)
+inline void DoubledSpin0_1_2_ChainWithTranslations::GetBosonicOccupation (unsigned int index, int * finalStateBra,int * finalStateKet)
 {
   for (unsigned long i = 0; i < this->ChainLength; i++)
     {
@@ -176,7 +176,7 @@ inline void DoubledSpin0_1_2_chainWithTranslations::GetBosonicOccupation (unsign
 // sitePosition = position on the chain of the state
 // return integer that code the state
 
-inline unsigned long DoubledSpin0_1_2_chainWithTranslations::EncodeSiteStateBra(int physicalState, int sitePosition)
+inline unsigned long DoubledSpin0_1_2_ChainWithTranslations::EncodeSiteStateBra(int physicalState, int sitePosition)
 {
   return  physicalState << (2*sitePosition);
 }
@@ -187,7 +187,7 @@ inline unsigned long DoubledSpin0_1_2_chainWithTranslations::EncodeSiteStateBra(
 // sitePosition = position on the chain of the state
 // return integer that code the state
 
-inline unsigned long DoubledSpin0_1_2_chainWithTranslations::EncodeSiteStateKet(int physicalState, int sitePosition)
+inline unsigned long DoubledSpin0_1_2_ChainWithTranslations::EncodeSiteStateKet(int physicalState, int sitePosition)
 {
   return  physicalState << (2*sitePosition);
 }

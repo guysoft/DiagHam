@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "HilbertSpace/DoubledSpin1_2_chain.h"
+#include "HilbertSpace/DoubledSpin1_2_Chain.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealMatrix.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
@@ -53,7 +53,7 @@ using std::endl;
 // default constructor
 //
 
-DoubledSpin1_2_chain::DoubledSpin1_2_chain () 
+DoubledSpin1_2_Chain::DoubledSpin1_2_Chain () 
 {
   this->Flag.Initialize();
   this->LookUpTable = 0;
@@ -78,7 +78,7 @@ DoubledSpin1_2_chain::DoubledSpin1_2_chain ()
 // memorySize = memory size in bytes allowed for look-up table
 // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
 
-DoubledSpin1_2_chain::DoubledSpin1_2_chain (int chainLength, int diffSz, int memorySize, int memorySlice) 
+DoubledSpin1_2_Chain::DoubledSpin1_2_Chain (int chainLength, int diffSz, int memorySize, int memorySlice) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
@@ -121,7 +121,7 @@ DoubledSpin1_2_chain::DoubledSpin1_2_chain (int chainLength, int diffSz, int mem
 //
 // chain = reference on chain to copy
 
-DoubledSpin1_2_chain::DoubledSpin1_2_chain (const DoubledSpin1_2_chain & chain)
+DoubledSpin1_2_Chain::DoubledSpin1_2_Chain (const DoubledSpin1_2_Chain & chain)
 {
   this->Flag = chain.Flag;
   if (chain.ChainLength != 0)
@@ -159,7 +159,7 @@ DoubledSpin1_2_chain::DoubledSpin1_2_chain (const DoubledSpin1_2_chain & chain)
 // destructor
 //
 
-DoubledSpin1_2_chain::~DoubledSpin1_2_chain () 
+DoubledSpin1_2_Chain::~DoubledSpin1_2_Chain () 
 {
   if ((this->ChainLength != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -179,7 +179,7 @@ DoubledSpin1_2_chain::~DoubledSpin1_2_chain ()
 // chain = reference on chain to copy
 // return value = reference on current chain
 
-DoubledSpin1_2_chain & DoubledSpin1_2_chain::operator = (const DoubledSpin1_2_chain & chain)
+DoubledSpin1_2_Chain & DoubledSpin1_2_Chain::operator = (const DoubledSpin1_2_Chain & chain)
 {
   if ((this->ChainLength != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -225,9 +225,9 @@ DoubledSpin1_2_chain & DoubledSpin1_2_chain::operator = (const DoubledSpin1_2_ch
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* DoubledSpin1_2_chain::Clone()
+AbstractHilbertSpace* DoubledSpin1_2_Chain::Clone()
 {
-  return new DoubledSpin1_2_chain (*this);
+  return new DoubledSpin1_2_Chain (*this);
 }
 
 // return value of twice spin projection of the Bra - the one of the ket for a given state
@@ -235,7 +235,7 @@ AbstractHilbertSpace* DoubledSpin1_2_chain::Clone()
 // index = index of the state to test
 // return value = twice spin projection on (Oz)
 
-int DoubledSpin1_2_chain::TotalSz (int index)
+int DoubledSpin1_2_Chain::TotalSz (int index)
 {
   if (this->FixedSpinProjectionFlag == true)
     return this->DiffSz;
@@ -247,7 +247,7 @@ int DoubledSpin1_2_chain::TotalSz (int index)
 // stateDescription = state to which the spin projection has to be evaluated
 // return value = twice spin projection on (Oz)
 
-inline int DoubledSpin1_2_chain::GetTotalSz (unsigned long stateDescriptionBra,unsigned long stateDescriptionKet)
+inline int DoubledSpin1_2_Chain::GetTotalSz (unsigned long stateDescriptionBra,unsigned long stateDescriptionKet)
 {
   int TmpSz = 0;
   for (int i = 0; i < this->ChainLength; i++)
@@ -281,7 +281,7 @@ inline int DoubledSpin1_2_chain::GetTotalSz (unsigned long stateDescriptionBra,u
 // state = state description
 // return value = corresponding index
 
-int DoubledSpin1_2_chain::FindStateIndex(unsigned long stateBra,unsigned long stateKet) 
+int DoubledSpin1_2_Chain::FindStateIndex(unsigned long stateBra,unsigned long stateKet) 
 {
   int PosMin = 0;
   int PosMax = this->NbrUniqueStateDescriptionBra - 1;
@@ -335,7 +335,7 @@ int DoubledSpin1_2_chain::FindStateIndex(unsigned long stateBra,unsigned long st
 // 
 // memory = memory size that can be allocated for the look-up table
 
-void DoubledSpin1_2_chain::GenerateLookUpTable(unsigned long memory)
+void DoubledSpin1_2_Chain::GenerateLookUpTable(unsigned long memory)
 {  
   long TmpUniquePartition = 1l;
   for (long i = 1l; i < this->LargeHilbertSpaceDimension; ++i)
@@ -380,7 +380,7 @@ void DoubledSpin1_2_chain::GenerateLookUpTable(unsigned long memory)
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& DoubledSpin1_2_chain::PrintState (ostream& Str, int state)
+ostream& DoubledSpin1_2_Chain::PrintState (ostream& Str, int state)
 {
   if (state >= this->HilbertSpaceDimension)    
     return Str;
@@ -416,7 +416,7 @@ ostream& DoubledSpin1_2_chain::PrintState (ostream& Str, int state)
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-long DoubledSpin1_2_chain::GenerateStates(int lengthBra, int lengthKet, int diffSz, long pos)
+long DoubledSpin1_2_Chain::GenerateStates(int lengthBra, int lengthKet, int diffSz, long pos)
 {
   if (lengthKet == 0)
     {
@@ -478,13 +478,13 @@ long DoubledSpin1_2_chain::GenerateStates(int lengthBra, int lengthKet, int diff
 }
 
 
-double DoubledSpin1_2_chain::TotalSzSz (int index)
+double DoubledSpin1_2_Chain::TotalSzSz (int index)
 {
   cout <<"Calling undefined function double DoubledSpin1_2_chain::TotalSzSz (int index)"<<endl;
   return 0.0;
 }
 
-double DoubledSpin1_2_chain::SziSzj (int i, int j, int state)
+double DoubledSpin1_2_Chain::SziSzj (int i, int j, int state)
 {
   cout <<"Calling undefined function double DoubledSpin1_2_chain::SziSzj (int i, int j, int state)"<<endl;
   return 0.0;
@@ -499,7 +499,7 @@ double DoubledSpin1_2_chain::SziSzj (int i, int j, int state)
 // nbrNDown = number of particles with quantum number down
 // return value = Hilbert space dimension
 
-long DoubledSpin1_2_chain::ShiftedEvaluateHilbertSpaceDimension(int lengthBra, int lengthKet, int diffSz)
+long DoubledSpin1_2_Chain::ShiftedEvaluateHilbertSpaceDimension(int lengthBra, int lengthKet, int diffSz)
 {
   if ((lengthBra < 0) || (lengthKet < 0))
     return 0;
@@ -544,7 +544,7 @@ long DoubledSpin1_2_chain::ShiftedEvaluateHilbertSpaceDimension(int lengthBra, i
 // coefficient = reference on double where numerical coefficient has to be stored
 // return value = index of resulting state
 
-int DoubledSpin1_2_chain::Smi (int i, int state, double& coefficient)
+int DoubledSpin1_2_Chain::Smi (int i, int state, double& coefficient)
 {
   cout << "warning, using dummy method DoubledSpin1_2_chain::Smi" << endl;
   return this->HilbertSpaceDimension;
@@ -557,7 +557,7 @@ int DoubledSpin1_2_chain::Smi (int i, int state, double& coefficient)
 // coefficient = reference on double where numerical coefficient has to be stored
 // return value = index of resulting state 
 
-int DoubledSpin1_2_chain::Szi (int i, int state, double& coefficient)
+int DoubledSpin1_2_Chain::Szi (int i, int state, double& coefficient)
 {
   cout << "warning, using dummy method DoubledSpin1_2_chain::Szi" << endl;
   return this->HilbertSpaceDimension;
@@ -571,7 +571,7 @@ int DoubledSpin1_2_chain::Szi (int i, int state, double& coefficient)
 // coefficient = reference on double where numerical coefficient has to be stored
 // return value = index of resulting state
 
-int DoubledSpin1_2_chain::SpiSpj (int i, int j, int state, double& coefficient)
+int DoubledSpin1_2_Chain::SpiSpj (int i, int j, int state, double& coefficient)
 {
   cout << "warning, using dummy method DoubledSpin1_2_chain::SpiSpj" << endl;
   return this->HilbertSpaceDimension;
@@ -585,7 +585,7 @@ int DoubledSpin1_2_chain::SpiSpj (int i, int j, int state, double& coefficient)
 // coefficient = reference on double where numerical coefficient has to be stored
 // return value = index of resulting state
 
-int DoubledSpin1_2_chain::SmiSmj (int i, int j, int state, double& coefficient)
+int DoubledSpin1_2_Chain::SmiSmj (int i, int j, int state, double& coefficient)
 {
   cout << "warning, using dummy method DoubledSpin1_2_chain::SmiSmj" << endl;
   return this->HilbertSpaceDimension;
@@ -599,7 +599,7 @@ int DoubledSpin1_2_chain::SmiSmj (int i, int j, int state, double& coefficient)
 // coefficient = reference on double where numerical coefficient has to be stored
 // return value = index of resulting state
 
-int DoubledSpin1_2_chain::SpiSzj (int i, int j, int state, double& coefficient)
+int DoubledSpin1_2_Chain::SpiSzj (int i, int j, int state, double& coefficient)
 {
   cout << "warning, using dummy method DoubledSpin1_2_chain::SpiSzj" << endl;
   return this->HilbertSpaceDimension;
@@ -613,7 +613,7 @@ int DoubledSpin1_2_chain::SpiSzj (int i, int j, int state, double& coefficient)
 // coefficient = reference on double where numerical coefficient has to be stored
 // return value = index of resulting state
 
-int DoubledSpin1_2_chain::SmiSzj (int i, int j, int state, double& coefficient)
+int DoubledSpin1_2_Chain::SmiSzj (int i, int j, int state, double& coefficient)
 {
   cout << "warning, using dummy method DoubledSpin1_2_chain::SmiSzj" << endl;
   return this->HilbertSpaceDimension;
@@ -627,7 +627,7 @@ int DoubledSpin1_2_chain::SmiSzj (int i, int j, int state, double& coefficient)
 // coefficient = reference on double where numerical coefficient has to be stored
 // return value = index of resulting state 
 
-int DoubledSpin1_2_chain::SmiSpj (int i, int j, int state, double& coefficient)
+int DoubledSpin1_2_Chain::SmiSpj (int i, int j, int state, double& coefficient)
 {
   cout << "warning, using dummy method DoubledSpin1_2_chain::SmiSpj" << endl;
   return this->HilbertSpaceDimension;
@@ -640,7 +640,7 @@ int DoubledSpin1_2_chain::SmiSpj (int i, int j, int state, double& coefficient)
 // coefficient = reference on double where numerical coefficient has to be stored
 // return value = index of resulting state
 
-int DoubledSpin1_2_chain::Spi (int i, int state, double& coefficient)
+int DoubledSpin1_2_Chain::Spi (int i, int state, double& coefficient)
 {
   cout << "warning, using dummy method DoubledSpin1_2_chain::Spi" << endl;
   return this->HilbertSpaceDimension;

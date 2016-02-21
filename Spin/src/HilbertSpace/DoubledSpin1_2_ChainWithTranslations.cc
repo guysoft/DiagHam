@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "HilbertSpace/DoubledSpin1_2_chainWithTranslations.h"
+#include "HilbertSpace/DoubledSpin1_2_ChainWithTranslations.h"
 
 
 
@@ -42,7 +42,7 @@ using std::endl;
 // default constructor
 //
 
-DoubledSpin1_2_chainWithTranslations::DoubledSpin1_2_chainWithTranslations () 
+DoubledSpin1_2_ChainWithTranslations::DoubledSpin1_2_ChainWithTranslations () 
 {
   this->Flag.Initialize();
   this->LookUpTable = 0;
@@ -62,7 +62,7 @@ DoubledSpin1_2_chainWithTranslations::DoubledSpin1_2_chainWithTranslations ()
 }
 
 
-DoubledSpin1_2_chainWithTranslations::DoubledSpin1_2_chainWithTranslations (int chainLength, int momentum, int  diffSz, int memorySize, int memorySlice)
+DoubledSpin1_2_ChainWithTranslations::DoubledSpin1_2_ChainWithTranslations (int chainLength, int momentum, int  diffSz, int memorySize, int memorySlice)
 {
   
   this->Flag.Initialize();
@@ -160,7 +160,7 @@ DoubledSpin1_2_chainWithTranslations::DoubledSpin1_2_chainWithTranslations (int 
 //
 // chain = reference on chain to copy
 
-DoubledSpin1_2_chainWithTranslations::DoubledSpin1_2_chainWithTranslations (const DoubledSpin1_2_chainWithTranslations & chain)
+DoubledSpin1_2_ChainWithTranslations::DoubledSpin1_2_ChainWithTranslations (const DoubledSpin1_2_ChainWithTranslations & chain)
 {
   this->Flag = chain.Flag;
   if (chain.ChainLength != 0)
@@ -205,7 +205,7 @@ DoubledSpin1_2_chainWithTranslations::DoubledSpin1_2_chainWithTranslations (cons
 // destructor
 //
 
-DoubledSpin1_2_chainWithTranslations::~DoubledSpin1_2_chainWithTranslations () 
+DoubledSpin1_2_ChainWithTranslations::~DoubledSpin1_2_ChainWithTranslations () 
 {
 }
 
@@ -214,62 +214,10 @@ DoubledSpin1_2_chainWithTranslations::~DoubledSpin1_2_chainWithTranslations ()
 // chain = reference on chain to copy
 // return value = reference on current chain
 
-DoubledSpin1_2_chainWithTranslations & DoubledSpin1_2_chainWithTranslations::operator = (const DoubledSpin1_2_chainWithTranslations & chain)
+DoubledSpin1_2_ChainWithTranslations & DoubledSpin1_2_ChainWithTranslations::operator = (const DoubledSpin1_2_ChainWithTranslations & chain)
 {
   AbstractDoubledSpinChainWithTranslations::operator =(chain);
 
-/*  if ((this->ChainLength != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
-    {
-      if (this->LargeHilbertSpaceDimension > 0l)
-	{
- 	  delete[] this->ChainDescriptionBra;
-	  delete[] this->ChainDescriptionKet;
-	  delete[] this->UniqueStateDescriptionBra;
-	  delete[] this->UniqueStateDescriptionSubArraySizeBra;
-	  delete[] this->FirstIndexUniqueStateDescriptionBra;
-	  delete[] this->CompatibilityWithMomentum;
-	  for (int i = 1; i <= this->ChainLength; ++i)
-	    {
-	      delete[] this->RescalingFactors[i];
-	    } 
-	  delete[] this->RescalingFactors;
-	  delete[] this->NbrStateInOrbit;
-	}
-    }  
-  this->Flag = chain.Flag;
-  if (chain.ChainLength != 0)
-    {
-      this->ChainLength = chain.ChainLength;
-      this->HilbertSpaceDimension = chain.HilbertSpaceDimension;
-      this->ComplementaryStateShift = chain.ComplementaryStateShift;
-      this->LookUpTable = chain.LookUpTable;
-      this->LookUpTableShift = chain.LookUpTableShift;
-      this->ChainDescriptionBra = chain.ChainDescriptionBra;
-      this->ChainDescriptionKet = chain.ChainDescriptionKet;
-      this->DiffSz = chain.DiffSz;
-      this->Momentum = chain.Momentum;
-      this->FixedSpinProjectionFlag = chain.FixedSpinProjectionFlag;
-      this->CompatibilityWithMomentum = chain.CompatibilityWithMomentum;
-      this->RescalingFactors = chain.RescalingFactors;
-      this->NbrStateInOrbit = chain.NbrStateInOrbit;
-   }
-  else
-    {
-      this->LookUpTable = 0;
-      this->LookUpTableShift = 0;
-      this->ComplementaryStateShift = 0;
-      this->HilbertSpaceDimension = 0;
-      this->ChainDescriptionBra = 0;
-      this->ChainDescriptionKet = 0;
-      this->ChainLength = 0;
-      this->Momentum = 0;
-      this->DiffSz = 0;
-      this->FixedSpinProjectionFlag = false;
-      this->CompatibilityWithMomentum = 0;
-      this->RescalingFactors = 0;
-      this->NbrStateInOrbit = 0;
-    }
-  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;*/
   return *this;
 }
 
@@ -277,9 +225,9 @@ DoubledSpin1_2_chainWithTranslations & DoubledSpin1_2_chainWithTranslations::ope
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* DoubledSpin1_2_chainWithTranslations::Clone()
+AbstractHilbertSpace* DoubledSpin1_2_ChainWithTranslations::Clone()
 {
-  return new DoubledSpin1_2_chainWithTranslations (*this);
+  return new DoubledSpin1_2_ChainWithTranslations (*this);
 }
 
 // return value of twice spin projection on (Oz) for a given state
@@ -287,7 +235,7 @@ AbstractHilbertSpace* DoubledSpin1_2_chainWithTranslations::Clone()
 // stateDescription = state to which the spin projection has to be evaluated
 // return value = twice spin projection on (Oz)
 
-inline int DoubledSpin1_2_chainWithTranslations::GetTotalSz (unsigned long stateDescriptionBra,unsigned long stateDescriptionKet)
+inline int DoubledSpin1_2_ChainWithTranslations::GetTotalSz (unsigned long stateDescriptionBra,unsigned long stateDescriptionKet)
 {
   int TmpSz = 0;
   for (int i = 0; i < this->ChainLength; i++)
@@ -322,7 +270,7 @@ inline int DoubledSpin1_2_chainWithTranslations::GetTotalSz (unsigned long state
 // stateDescription = unsigned integer describing the state
 // return value = number of translation needed to obtain the same state
 
-inline int DoubledSpin1_2_chainWithTranslations::FindNumberTranslation(unsigned long stateDescriptionBra,unsigned long stateDescriptionKet)
+inline int DoubledSpin1_2_ChainWithTranslations::FindNumberTranslation(unsigned long stateDescriptionBra,unsigned long stateDescriptionKet)
 {
   unsigned long TmpStateBra = (stateDescriptionBra >> 1) | ((stateDescriptionBra & 0x1ul) << this->ComplementaryStateShift);
   unsigned long TmpStateKet = (stateDescriptionKet >> 1) | ((stateDescriptionKet & 0x1ul) << this->ComplementaryStateShift);
@@ -342,7 +290,7 @@ inline int DoubledSpin1_2_chainWithTranslations::FindNumberTranslation(unsigned 
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& DoubledSpin1_2_chainWithTranslations::PrintState (ostream& Str, int state)
+ostream& DoubledSpin1_2_ChainWithTranslations::PrintState (ostream& Str, int state)
 {
  if (state >= this->HilbertSpaceDimension)    
     return Str;
@@ -379,7 +327,7 @@ ostream& DoubledSpin1_2_chainWithTranslations::PrintState (ostream& Str, int sta
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-long DoubledSpin1_2_chainWithTranslations::GenerateStates(int lengthBra, int lengthKet, int diffSz, long pos)
+long DoubledSpin1_2_ChainWithTranslations::GenerateStates(int lengthBra, int lengthKet, int diffSz, long pos)
 {
   if (lengthKet == 0)
     {
@@ -449,7 +397,7 @@ long DoubledSpin1_2_chainWithTranslations::GenerateStates(int lengthBra, int len
 // nbrNDown = number of particles with quantum number down
 // return value = Hilbert space dimension
 
-long DoubledSpin1_2_chainWithTranslations::ShiftedEvaluateHilbertSpaceDimension(int lengthBra, int lengthKet, int diffSz)
+long DoubledSpin1_2_ChainWithTranslations::ShiftedEvaluateHilbertSpaceDimension(int lengthBra, int lengthKet, int diffSz)
 {
   if ((lengthBra < 0) || (lengthKet < 0))
     return 0;

@@ -48,7 +48,7 @@ class SubspaceSpaceConverter;
 class AbstractQuantumNumber;
 
 
-class DoubledSpin1_2_chain : public AbstractSpinChain
+class DoubledSpin1_2_Chain : public AbstractSpinChain
 {
 
  protected:
@@ -86,7 +86,7 @@ class DoubledSpin1_2_chain : public AbstractSpinChain
 
   // default constructor
   //
-  DoubledSpin1_2_chain ();
+  DoubledSpin1_2_Chain ();
 
   // constructor for complete Hilbert space with no restriction on momentum
   //
@@ -94,23 +94,23 @@ class DoubledSpin1_2_chain : public AbstractSpinChain
   // momemtum = total momentum of each state
   // memorySize = memory size in bytes allowed for look-up table
   // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
-  DoubledSpin1_2_chain (int chainLength,  int diffSz, int memorySize, int memorySlice);
+  DoubledSpin1_2_Chain (int chainLength,  int diffSz, int memorySize, int memorySlice);
 
 
   // copy constructor (without duplicating datas)
   //
   // chain = reference on chain to copy
-   DoubledSpin1_2_chain (const  DoubledSpin1_2_chain & chain);
+   DoubledSpin1_2_Chain (const  DoubledSpin1_2_Chain & chain);
 
   // destructor
   //
-  ~DoubledSpin1_2_chain ();
+  ~DoubledSpin1_2_Chain ();
 
   // assignement (without duplicating datas)
   //
   // chain = reference on chain to copy
   // return value = reference on current chain
-  DoubledSpin1_2_chain & operator = (const  DoubledSpin1_2_chain & chain);
+  DoubledSpin1_2_Chain & operator = (const  DoubledSpin1_2_Chain & chain);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -258,7 +258,7 @@ class DoubledSpin1_2_chain : public AbstractSpinChain
 // index = index of the state in the basis
 // finalState = reference on the array where the monomial representation has to be stored
 
-inline void DoubledSpin1_2_chain::GetBosonicOccupation (unsigned int index, int * finalStateBra,int * finalStateKet)
+inline void DoubledSpin1_2_Chain::GetBosonicOccupation (unsigned int index, int * finalStateBra,int * finalStateKet)
 {
   for (unsigned long i = 0; i < this->ChainLength; i++)
     {
@@ -273,7 +273,7 @@ inline void DoubledSpin1_2_chain::GetBosonicOccupation (unsigned int index, int 
 // sitePosition = position on the chain of the state
 // return integer that code the state
 
-inline unsigned long DoubledSpin1_2_chain::EncodeSiteStateBra(int physicalState, int sitePosition)
+inline unsigned long DoubledSpin1_2_Chain::EncodeSiteStateBra(int physicalState, int sitePosition)
 {
   return  physicalState << sitePosition;
 }
@@ -284,7 +284,7 @@ inline unsigned long DoubledSpin1_2_chain::EncodeSiteStateBra(int physicalState,
 // sitePosition = position on the chain of the state
 // return integer that code the state
 
-inline unsigned long DoubledSpin1_2_chain::EncodeSiteStateKet(int physicalState, int sitePosition)
+inline unsigned long DoubledSpin1_2_Chain::EncodeSiteStateKet(int physicalState, int sitePosition)
 {
   return  physicalState << sitePosition;
 }
