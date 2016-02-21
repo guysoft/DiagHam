@@ -2,9 +2,11 @@
 #include "HilbertSpace/Spin1_2ChainFull.h"
 #include "HilbertSpace/Spin1_2ChainFixedParity.h"
 #include "HilbertSpace/Spin1Chain.h"
+#include "HilbertSpace/DoubledSpin1_2_Chain.h"
 #include "HilbertSpace/Spin1_2ChainWithTranslations.h"
 #include "HilbertSpace/Spin1ChainWithTranslations.h"
-#include "HilbertSpace/DoubledSpin0_1_2_chainWithTranslations.h"
+#include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslations.h"
+#include "HilbertSpace/DoubledSpin1_2_ChainWithTranslations.h"
 
 #include "GeneralTools/FilenameTools.h"
 
@@ -71,28 +73,103 @@ int main(int argc, char** argv)
   int Momentum = Manager.GetInteger("momentum");
   double Error = Manager.GetDouble("hide-component");
 
-
+  
   if (Manager.GetBoolean("doubled-spinchain"))
     {
-      DoubledSpin0_1_2_chainWithTranslations Space ( NbrSpins, SzValue,  1000000, 1000000);
-
-      if (Manager.GetString("state") == 0)
-        {
-	  for (int i = 0; i <  Space.GetHilbertSpaceDimension(); ++i)
-	    Space.PrintState(cout, i) << endl;
+      if (SpinValue==1 )
+	{
+	  if (Manager.GetBoolean("periodic-chain") == false)
+	    {
+	      DoubledSpin1_2_Chain Space (NbrSpins, SzValue,  1000000, 1000000);
+	      
+	      if (Manager.GetString("state") == 0)
+		{
+		  for (int i = 0; i <  Space.GetHilbertSpaceDimension(); ++i)
+		    Space.PrintState(cout, i) << endl;
+		}
+	      else
+		{
+		  RealVector State;
+		  if (State.ReadVector(Manager.GetString("state")) == false)
+		    {
+		      cout << "error while reading " << Manager.GetString("state") << endl;
+		      return -1;
+		    }
+		  for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
+		    if (fabs(State[i]) > Error)
+		      Space.PrintState(cout, i) << " : "  << State[i] << endl;
+		}
+	    }
+	  else
+	    {
+	      DoubledSpin1_2_ChainWithTranslations  Space (NbrSpins,  Momentum,  SzValue,  1000000, 1000000);
+	      if (Manager.GetString("state") == 0)
+		{
+		  for (int i = 0; i <  Space.GetHilbertSpaceDimension(); ++i)
+		    Space.PrintState(cout, i) << endl;
+		}
+	      else
+		{
+		  RealVector State;
+		  if (State.ReadVector(Manager.GetString("state")) == false)
+		    {
+		      cout << "error while reading " << Manager.GetString("state") << endl;
+		      return -1;
+		    }
+		  for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
+		    if (fabs(State[i]) > Error)
+		      Space.PrintState(cout, i) << " : "  << State[i] << endl;
+		  
+		}
+	    }
 	}
       else
-       {
-          RealVector State;
-	  if (State.ReadVector(Manager.GetString("state")) == false)
+	{
+	  if (Manager.GetBoolean("periodic-chain") == false)
 	    {
-	      cout << "error while reading " << Manager.GetString("state") << endl;
-	      return -1;
+	      DoubledSpin0_1_2_ChainWithTranslations Space ( NbrSpins, SzValue,  1000000, 1000000);
+	      
+	      if (Manager.GetString("state") == 0)
+		{
+		  for (int i = 0; i <  Space.GetHilbertSpaceDimension(); ++i)
+		    Space.PrintState(cout, i) << endl;
+		}
+	      else
+		{
+		  RealVector State;
+		  if (State.ReadVector(Manager.GetString("state")) == false)
+		    {
+		      cout << "error while reading " << Manager.GetString("state") << endl;
+		      return -1;
+		    }
+		  for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
+		    if (fabs(State[i]) > Error)
+		      Space.PrintState(cout, i) << " : "  << State[i] << endl;
+		}
 	    }
-          for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
-	     if (fabs(State[i]) > Error)
-	        Space.PrintState(cout, i) << " : "  << State[i] << endl;
-       }
+	  else
+	    {
+	      DoubledSpin0_1_2_ChainWithTranslations Space (NbrSpins, Momentum,SzValue,  1000000, 1000000);
+	      
+	      if (Manager.GetString("state") == 0)
+		{
+		  for (int i = 0; i <  Space.GetHilbertSpaceDimension(); ++i)
+		    Space.PrintState(cout, i) << endl;
+		}
+	      else
+		{
+		  RealVector State;
+		  if (State.ReadVector(Manager.GetString("state")) == false)
+		    {
+		      cout << "error while reading " << Manager.GetString("state") << endl;
+		      return -1;
+		    }
+		  for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
+		    if (fabs(State[i]) > Error)
+		      Space.PrintState(cout, i) << " : "  << State[i] << endl;
+		}
+	    }
+	}
       return 0;
     }
 
