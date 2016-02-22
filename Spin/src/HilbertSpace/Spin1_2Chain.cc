@@ -102,8 +102,6 @@ Spin1_2Chain::Spin1_2Chain (int chainLength, int memorySize)
   this->StateDescription[0] = 0xffffffff; 
   this->LargeHilbertSpaceDimension = this->GenerateStates (0, 0, this->StateDescription[0]);
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
-  for(int i=0; i <   this->HilbertSpaceDimension; i++)
-    cout <<i<<" " <<   this->StateDescription[i]<<endl;
 }
 
 // constructor for complete Hilbert space with a given total spin projection Sz
