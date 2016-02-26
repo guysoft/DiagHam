@@ -20,9 +20,11 @@ class AbstractTransfertMatrixPBC : public AbstractHamiltonian
   unsigned int MPOBondDimension;
   AbstractSpinChain * HilbertSpace;
 
+  int * TemporaryArray;
+  int ChainLength;
   /*  bool IDMRGFlag;
   bool DMRGFlag;
-    AbstractMPSSite * Site;
+  AbstractMPSSite * Site;
   AbstractMPSSite * SiteLeft;
   AbstractMPSSite * SiteRight;*/
   
@@ -125,7 +127,7 @@ class AbstractTransfertMatrixPBC : public AbstractHamiltonian
 
   //  virtual RealVector& LowLevelMultiplyTwoSites(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent);
   //  virtual ComplexVector& LowLevelMultiplyTwoSites(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
-
+  
   //  virtual RealSymmetricMatrix& GetTwoSitesHamiltonian (RealSymmetricMatrix & M);
   //  virtual HermitianMatrix & GetTwoSitesHamiltonian (HermitianMatrix & M);
 
@@ -160,10 +162,9 @@ class AbstractTransfertMatrixPBC : public AbstractHamiltonian
   {cout <<"using undefined function"<<endl; };
   
   
-  virtual int GenerateResultingStateAndCoefficient(int indiceTop, int * indiceLeft, int chainSize, int lastIndice, double * coefArray, unsigned long * stateArray, unsigned long pos);
+  virtual int GenerateResultingStateAndCoefficient(int indiceTop, int chainSize, int lastIndice, double * coefArray, unsigned long * stateArray, unsigned long pos);
   
-  
-  virtual int EvaluateNbrResultingState(int indiceTop,int * indiceLeft,int chainSize, int lastIndice);
+  virtual int EvaluateNbrResultingState(int indiceTop, int chainSize, int lastIndice);
   
  protected:
   

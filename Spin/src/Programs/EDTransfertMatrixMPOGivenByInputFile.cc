@@ -1,0 +1,345 @@
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
+#include "Architecture/ArchitectureOperation/MainTaskOperation.h"
+
+#include "HilbertSpace/UndescribedHilbertSpace.h"
+
+#include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslations.h"
+#include "HilbertSpace/Spin1_2ChainNew.h"
+#include "HilbertSpace/Spin1_2ChainWithTranslations.h"
+#include "HilbertSpace/DoubledSpin1_2_Chain.h"
+#include "HilbertSpace/DoubledSpin1_2_ChainWithTranslations.h"
+#include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry.h"
+
+#include "MPSObjects/AbstractTransfertMatrixPBC.h"
+#include "MPSObjects/TransfertMatrixPBCWithTranslationsFromFile.h"
+#include "MPSObjects/AbstractPEPSTransfertMatrixPBC.h"
+#include "MPSObjects/ComplexPEPSTransfertMatrixPBC.h"
+#include "MPSObjects/ComplexPEPSTransfertMatrixPBCWithTranslations.h"
+
+#include "MainTask/GenericNonSymmetricMainTask.h"
+#include "MainTask/GenericRealMainTask.h"
+#include "MainTask/GenericComplexMainTask.h"
+
+#include "Options/Options.h"
+
+#include "GeneralTools/MultiColumnASCIIFile.h"
+
+#include "LanczosAlgorithm/LanczosManager.h"
+
+#include "LanczosAlgorithm/BasicArnoldiAlgorithm.h"
+#include "LanczosAlgorithm/BasicArnoldiAlgorithmWithDiskStorage.h"
+
+
+#include <iostream>
+#include <stdlib.h>
+#include <math.h>
+#include <sys/time.h>
+#include <stdio.h>
+
+using std::cout;
+using std::endl;
+
+
+int main(int argc, char** argv)
+{
+  cout.precision(14);
+  
+  // some running options and help
+  OptionManager Manager ("EDTransfertMatrixMPOGivenByInputFile" , "0.01");
+  OptionGroup* MiscGroup = new OptionGroup ("misc options");
+  OptionGroup* SystemGroup = new OptionGroup ("system options");
+  OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
+  OptionGroup* ArnoldiGroup  = new OptionGroup ("Arnoldi options");
+  LanczosManager Lanczos(false);
+  
+  Manager += ArnoldiGroup;
+  ArchitectureManager Architecture;
+  Lanczos.AddOptionGroup(&Manager);
+  Architecture.AddOptionGroup(&Manager);
+  Manager += SystemGroup;
+  Manager += MiscGroup;
+  Manager += ToolsGroup;
+
+  (*SystemGroup) += new  SingleIntegerOption ('L', "length", "length of the spin chain", 4);
+  (*SystemGroup) += new SingleStringOption  ('\n', "tensor-file", "name of the file containing the eigenstate to be displayed");
+  (*SystemGroup) += new BooleanOption ('\n', "six-vertex", "use the simple version (i.e. not doubled haha) code on the six vertex model to test the code");
+  (*SystemGroup) += new BooleanOption ('c', "complex", "use complex version of the code");
+  (*SystemGroup) += new BooleanOption ('\n', "doubled", "use double version of the code");
+  (*SystemGroup) += new BooleanOption ('\n', "translation", "use translation symmetry");
+  (*SystemGroup) += new BooleanOption ('\n', "zz-symmetry", "use the ZZ symmetry");
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "sz", "consider a specific value of sz", -1);
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "k", "consider a specific value of k", -1);
+
+#ifdef __LAPACK__
+  (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
+#endif
+  (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
+  (*ToolsGroup) += new BooleanOption  ('\n', "test-hermitian", "test if the hamiltonian is hermitian");
+
+  (*MiscGroup) += new  BooleanOption ('\n', "print-tensor", "print the tensor elements", false);
+
+  (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
+
+  if (Manager.ProceedOptions(argv, argc, cout) == false)
+    {
+      cout << "see man page for option syntax or type GenericOverlap -h" << endl;
+      return -1;
+    }
+
+  if (Manager.GetBoolean("help") == true)
+    {
+      Manager.DisplayHelp (cout);
+      return 0;
+    }
+  
+  bool ComplexFlag = Manager.GetBoolean("complex");
+  bool DoubledFlag = Manager.GetBoolean("doubled");
+  bool TranslationFlag = Manager.GetBoolean("translation");
+  bool SymmetryFlag = Manager.GetBoolean("zz-symmetry");
+  MultiColumnASCIIFile TensorsElementsDefinition;
+  if (TensorsElementsDefinition.Parse(Manager.GetString("tensor-file")) == false)
+    {
+      TensorsElementsDefinition.DumpErrors(cout) << endl;
+      return -1;
+    } 
+  
+  if (DoubledFlag)
+    {
+      if (TensorsElementsDefinition.GetNbrColumns() != 6)
+	{
+	  cout <<" The tensor file should have 6 columnns"<<endl;
+	}
+    }
+  else
+    {
+      if (TensorsElementsDefinition.GetNbrColumns() != 5)
+	{
+	  cout <<" The tensor file should have 5 columnns"<<endl;
+	}
+    }
+
+  bool FirstRunFlag = true;   
+  AbstractHilbertSpace *  Space = 0;  
+//  AbstractTransfertMatrixPBC * TransferMatrix = 0;
+  int NbrSites = Manager.GetInteger("length");
+  
+  
+  AbstractTransfertMatrixPBC *  TransferMatrix =0;
+  if(TranslationFlag == true)
+    {
+      if(ComplexFlag == true)
+	{
+	  if (DoubledFlag)
+	    {
+	      TransferMatrix = new  ComplexPEPSTransfertMatrixPBCWithTranslations(TensorsElementsDefinition,Architecture.GetArchitecture());
+	    }
+	  else
+	    {
+	      cout <<" Complex transfert Matrix with translations not yet implemented"<<endl;
+	      exit(-1);
+	    }
+	}
+      else
+	TransferMatrix = new TransfertMatrixPBCWithTranslationsFromFile(TensorsElementsDefinition,Architecture.GetArchitecture());
+    }
+  else
+    {
+      if (ComplexFlag)
+	{
+	  if (DoubledFlag)
+	    {
+	      TransferMatrix = new ComplexPEPSTransfertMatrixPBC(TensorsElementsDefinition,Architecture.GetArchitecture()); 
+	    }
+	  else
+	    {
+	      cout <<" Complex transfert Matrix not yet implemented"<<endl;
+	      exit(-1);
+	    }
+	}
+      else
+	{
+	  if (DoubledFlag)
+	    { 
+	      TransferMatrix = new AbstractPEPSTransfertMatrixPBC(TensorsElementsDefinition,Architecture.GetArchitecture()); 
+	    }
+	  else
+	    TransferMatrix = new AbstractTransfertMatrixPBC(TensorsElementsDefinition,Architecture.GetArchitecture());
+	}
+    }
+  
+  if(Manager.GetBoolean("print-tensor") == true)
+    {
+      TransferMatrix->PrintTensorElements();
+      return 0;
+    }            
+  int MinKx = 0;
+  int MaxKx = NbrSites - 1;
+  
+  if (Manager.GetInteger("k") != -1 )
+    {
+      MinKx = Manager.GetInteger("k");
+      MaxKx = MinKx;
+    }
+  
+  int SzMin = 0;
+  int SzMax = NbrSites;
+  if (DoubledFlag)
+    SzMax*=2;
+  char * SubspaceLegend = new char [50];
+  char * TmpSzString = new char [30];
+  if (Manager.GetInteger("sz") != -1 )
+    {
+      SzMin = Manager.GetInteger("sz");
+      SzMax = SzMin;
+    }
+  int ZvalueMax = 0;
+  if(SymmetryFlag == true)
+    ZvalueMax = 1;
+  
+  if (TranslationFlag == false) 
+    { 
+      MaxKx=0;
+    }
+  
+  if (TranslationFlag)
+    {
+      if(SymmetryFlag)
+	sprintf(SubspaceLegend,"Sz Kx ZBra ZKet"); 
+      else
+	sprintf(SubspaceLegend,"Sz Kx"); 
+    }
+  else
+    {
+      if(SymmetryFlag)
+	sprintf(SubspaceLegend,"Sz ZBra ZKet"); 
+      else
+	sprintf(SubspaceLegend,"Sz");
+    }
+  
+  
+  for(int Sz = SzMin; Sz<= SzMax ;Sz+=1)
+    {
+      cout <<"Sz = "<<Sz<<endl;
+      for (int i = MinKx; i <= MaxKx; ++i)
+	{
+	  cout <<" K = "<<i<<endl;
+	  for(int ZvalueBra = 0 ; ZvalueBra <= ZvalueMax;ZvalueBra++)
+	    {
+	      for(int ZvalueKet = 0 ; ZvalueKet <= ZvalueMax;ZvalueKet++)
+		{
+		  if(Manager.GetBoolean("six-vertex") == true)
+		    {
+		      if (DoubledFlag)
+			{
+			  if (TranslationFlag) 
+			    {
+			      Space = new DoubledSpin1_2_ChainWithTranslations (NbrSites,i,Sz,100000,100000);
+			    }
+			  else
+			    Space =  new DoubledSpin1_2_Chain(NbrSites,Sz,100000,100000);
+			}
+		      else
+			{
+			  if (TranslationFlag) 
+			    {
+			      Space = new  Spin1_2ChainWithTranslations (NbrSites,i,1,Sz,1000000,1000000);
+			    }
+			  else
+			    Space = new  Spin1_2ChainNew (NbrSites,Sz,100000);
+			}
+		    }
+		  else
+		    {
+		      if (TranslationFlag) 
+			{
+			  if (SymmetryFlag)
+			    Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry (NbrSites,i,Sz, ZvalueBra, ZvalueKet,100000,100000);
+			  else
+			    Space = new DoubledSpin0_1_2_ChainWithTranslations (NbrSites,i,Sz,100000,100000);
+			}
+		      else
+			{
+			  if (SymmetryFlag)
+			    Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry (NbrSites,Sz, ZvalueBra, ZvalueKet,100000,100000);
+			  else
+			    Space = new DoubledSpin0_1_2_ChainWithTranslations (NbrSites,Sz, 100000,100000);
+			}
+		    }
+		  if (SymmetryFlag)
+		    {
+		      cout <<"Symmetry sector = "<< ZvalueBra<<" "<< ZvalueKet<<endl;
+		    }
+		  TransferMatrix->SetHilbertSpace(Space);	  
+		  
+		  char * FullOutputFileName ="blabla.dat";
+		  char * TmpEigenstateString = "blabla.vec";
+		  if ( (TranslationFlag) || (ComplexFlag) )
+		    { 
+		      ComplexVector TestVector(Space->GetHilbertSpaceDimension(),true);
+		      ComplexVector DestinationVector(Space->GetHilbertSpaceDimension(),true);
+		      for (int p = 0; p < Space->GetHilbertSpaceDimension(); p++)
+			{
+			  TestVector.Re(p) = (rand() - 32767) * 0.5;
+			  TestVector.Im(p) = (rand() - 32767) * 0.5;
+			}
+		      TestVector /=  TestVector.Norm();
+		      TransferMatrix->Multiply(TestVector,DestinationVector);
+		      if ( fabs(DestinationVector.Norm()) > 1e-14 )
+			{ 
+			  if (TranslationFlag)
+			    {
+			      if(SymmetryFlag)
+				sprintf(TmpSzString,"%d %d %d %d",Sz,i, ZvalueBra, ZvalueKet);
+			      else
+				sprintf(TmpSzString,"%d %d",Sz,i);
+			    }
+			  else
+			    {
+			      if(SymmetryFlag)
+				sprintf(TmpSzString,"%d %d %d",Sz, ZvalueBra, ZvalueKet);
+			      else
+				sprintf(TmpSzString,"%d",Sz);			  
+			    }
+			  
+			  Lanczos.SetComplexAlgorithms();
+			  GenericComplexMainTask Task(&Manager, Space, &Lanczos, TransferMatrix, TmpSzString, SubspaceLegend, 0.0,  FullOutputFileName, FirstRunFlag, TmpEigenstateString);
+			  FirstRunFlag = false;
+			  MainTaskOperation TaskOperation (&Task);
+			  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+			  
+			  cout << "------------------------------------" << endl;
+			}
+		    }
+		  else
+		    {
+		      RealVector TestVector(Space->GetHilbertSpaceDimension(),true);
+		      RealVector DestinationVector(Space->GetHilbertSpaceDimension(),true);
+		      for (int p = 0; p < Space->GetHilbertSpaceDimension(); p++)
+			{
+			  TestVector[p] = (rand() - 32767) * 0.5;
+			}
+		      TestVector /=  TestVector.Norm();
+		      
+		      TransferMatrix->Multiply(TestVector,DestinationVector);
+		      if ( fabs(DestinationVector.Norm()) > 1e-14 )
+			{ 
+			  
+			  sprintf(TmpSzString,"%d",Sz);
+			  GenericRealMainTask Task(&Manager, Space, &Lanczos, TransferMatrix, TmpSzString, SubspaceLegend, 0.0,  FullOutputFileName, FirstRunFlag, TmpEigenstateString);
+			  MainTaskOperation TaskOperation (&Task);
+			  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+			  FirstRunFlag = false;
+			}
+		    }
+		  delete Space;
+		}
+	    }
+	}
+    }
+  
+  delete TransferMatrix;
+  delete []  TmpSzString;
+  delete [] SubspaceLegend;
+  return 0;
+}

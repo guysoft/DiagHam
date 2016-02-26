@@ -361,7 +361,7 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // index = index of the state in the basis
   // finalState = reference on the array where the monomial representation has to be stored
   virtual void GetBosonicOccupation (unsigned int index, int * finalState);
-
+  
   // convert the state on the site to its binary representation
   //
   // state = state to be stored

@@ -364,14 +364,7 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   inline double GetRescalingFactor(int i,int j) const {return this->RescalingFactors[this->NbrStateInOrbit[i]][this->NbrStateInOrbit[j]];};
 };
 
-/*// get the momentum of each state in the current Hilbert space
-//
-// return value = momentum value
 
-inline int Spin1_2ChainWithTranslations::GetMomentum()
-{
-  return this->Momentum;
-}*/
 
 // find the canonical form of a state
 //

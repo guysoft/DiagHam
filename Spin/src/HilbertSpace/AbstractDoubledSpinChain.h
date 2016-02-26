@@ -100,7 +100,7 @@ class AbstractDoubledSpinChain : public AbstractSpinChain
   //
   // state = state description
   // return value = corresponding index
-  int FindStateIndex(unsigned long stateBra, unsigned long stateKet);
+  virtual int FindStateIndex(unsigned long stateBra, unsigned long stateKet);
 
   // return the Bosonic Occupation of a given state in the basis
   //

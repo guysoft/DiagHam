@@ -28,4 +28,6 @@ AbstractDoubledSpinChain.cc \
 DoubledSpin0_1_2_ChainWithTranslations.cc \
 AbstractDoubledSpinChainWithTranslations.cc \
 DoubledSpin1_2_Chain.cc \
-DoubledSpin1_2_ChainWithTranslations.cc
+DoubledSpin1_2_ChainWithTranslations.cc \
+DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry.cc\
+Spin0_1_2_ChainWithTranslations.cc

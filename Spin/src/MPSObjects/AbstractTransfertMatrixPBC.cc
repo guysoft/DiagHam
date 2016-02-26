@@ -16,6 +16,7 @@ AbstractTransfertMatrixPBC::AbstractTransfertMatrixPBC()
   this->IndiceRightNonZeroTensorElementTopLeft = 0;
   this->NbrNonZeroTensorElementTopLeft = 0;
   this->ValuesNonZeroTensorElementTopLeft = 0;
+  this->TemporaryArray = 0;
 }
 
 
@@ -23,6 +24,7 @@ AbstractTransfertMatrixPBC::AbstractTransfertMatrixPBC()
 AbstractTransfertMatrixPBC::AbstractTransfertMatrixPBC(MultiColumnASCIIFile & tensorElementsFile,AbstractArchitecture * architecture)
 {
   this->InitializeTensorsElements(tensorElementsFile);
+  this->TemporaryArray = 0;
   this->Architecture = architecture;
 }
 
@@ -48,6 +50,7 @@ AbstractTransfertMatrixPBC::~AbstractTransfertMatrixPBC()
       delete [] this->ValuesNonZeroTensorElementTopLeft;
       delete [] this->NbrNonZeroTensorElementTopLeft;
     }
+  delete [] this->TemporaryArray; 
 }
 
 
@@ -58,7 +61,11 @@ AbstractTransfertMatrixPBC::~AbstractTransfertMatrixPBC()
 void AbstractTransfertMatrixPBC::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
   this->HilbertSpace = (AbstractSpinChain * )hilbertSpace;
+  delete [] this->TemporaryArray;
+  this->ChainLength =  this->HilbertSpace ->GetSpinChainLength();
+  this->TemporaryArray = new int[this->ChainLength];
 }
+
 
 // get Hilbert space on which Hamiltonian acts
 //
@@ -114,15 +121,14 @@ RealVector& AbstractTransfertMatrixPBC::LowLevelAddMultiply(RealVector& vSource,
 RealVector& AbstractTransfertMatrixPBC::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent +  nbrComponent;
-  int * IndiceLeft = new int[this->HilbertSpace->GetSpinChainLength()];
   for (int i = firstComponent ; i  <  LastComponent; i++)
     {
       int Dim = 0;
-      this->HilbertSpace->GetBosonicOccupation(i,IndiceLeft);
+      this->HilbertSpace->GetBosonicOccupation(i,this->TemporaryArray);
       
       for (int  IndiceTop = 0 ;  IndiceTop < this->MPOBondDimension;  IndiceTop++)
 	{	  
-	  Dim += this->EvaluateNbrResultingState(IndiceTop,IndiceLeft,this->HilbertSpace->GetSpinChainLength()-1,IndiceTop);
+	  Dim += this->EvaluateNbrResultingState(IndiceTop,this->ChainLength-1,IndiceTop);
 	}
 
       double * ResultingCoefficient = new double [Dim];
@@ -130,7 +136,7 @@ RealVector& AbstractTransfertMatrixPBC::LowLevelAddMultiply(RealVector& vSource,
       unsigned long Tmp=0;
       for (int  IndiceTop = 0 ;  IndiceTop < this->MPOBondDimension;  IndiceTop++)
 	{	  
-	  Tmp=this->GenerateResultingStateAndCoefficient(IndiceTop,IndiceLeft,this->HilbertSpace->GetSpinChainLength()-1,IndiceTop,ResultingCoefficient,ResultingIndex,Tmp);
+	  Tmp=this->GenerateResultingStateAndCoefficient(IndiceTop,this->ChainLength-1,IndiceTop,ResultingCoefficient,ResultingIndex,Tmp);
 	}
 
       for (int p = 0; p < Dim; p++)
@@ -139,27 +145,26 @@ RealVector& AbstractTransfertMatrixPBC::LowLevelAddMultiply(RealVector& vSource,
 	}
       delete [] ResultingCoefficient; delete [] ResultingIndex;
     }
-  delete [] IndiceLeft;
   return vDestination;
 }
 
 
-int AbstractTransfertMatrixPBC::EvaluateNbrResultingState(int indiceTop,int * indiceLeft,int chainSize, int lastIndice)
+int AbstractTransfertMatrixPBC::EvaluateNbrResultingState(int indiceTop,int chainSize, int lastIndice)
 {
   int Tmp = 0;
   if(chainSize==0)
     {
-      for (int i = 0; i < this->NbrNonZeroTensorElementTopLeft[indiceTop][indiceLeft[0]]; i++)
+      for (int i = 0; i < this->NbrNonZeroTensorElementTopLeft[indiceTop][this->TemporaryArray[0]]; i++)
 	{
-	  if(this->IndiceBottomNonZeroTensorElementTopLeft[indiceTop][indiceLeft[0]][i] ==  lastIndice ) 
+	  if(this->IndiceBottomNonZeroTensorElementTopLeft[indiceTop][this->TemporaryArray[0]][i] ==  lastIndice ) 
 	    Tmp++;
 	}
       return Tmp;
     }
   
-  for (int i = 0; i < this->NbrNonZeroTensorElementTopLeft[indiceTop][indiceLeft[chainSize]]; i++)
+  for (int i = 0; i < this->NbrNonZeroTensorElementTopLeft[indiceTop][this->TemporaryArray[chainSize]]; i++)
     {
-      Tmp+=this->EvaluateNbrResultingState(IndiceBottomNonZeroTensorElementTopLeft[indiceTop][indiceLeft[chainSize]][i],indiceLeft,chainSize-1,lastIndice);
+      Tmp+=this->EvaluateNbrResultingState(IndiceBottomNonZeroTensorElementTopLeft[indiceTop][this->TemporaryArray[chainSize]][i],chainSize-1,lastIndice);
     }
   return Tmp;
 }
@@ -168,10 +173,10 @@ int AbstractTransfertMatrixPBC::EvaluateNbrResultingState(int indiceTop,int * in
 void AbstractTransfertMatrixPBC::InitializeTensorsElements(MultiColumnASCIIFile & tensorElementsFile)
 {
   this->NbrNonZeroElements = tensorElementsFile.GetNbrLines();
-  int* IndexDown  = tensorElementsFile.GetAsIntegerArray (0);
+  int* IndexLeft = tensorElementsFile.GetAsIntegerArray (0);
   int* IndexUp = tensorElementsFile.GetAsIntegerArray (1);
-  int* IndexLeft = tensorElementsFile.GetAsIntegerArray (2);
-  int* IndexRight = tensorElementsFile.GetAsIntegerArray (3);
+  int* IndexRight = tensorElementsFile.GetAsIntegerArray (2);
+  int* IndexDown  = tensorElementsFile.GetAsIntegerArray (3);
   double * ElementsValues = tensorElementsFile.GetAsDoubleArray (4);
   int TmpPhysicalDimension = 0;
   int TmpMPODimension = 0;
@@ -241,16 +246,16 @@ void AbstractTransfertMatrixPBC::InitializeTensorsElements(MultiColumnASCIIFile 
 }
 
 
-int AbstractTransfertMatrixPBC::GenerateResultingStateAndCoefficient(int indiceTop, int * indiceLeft, int chainSize, int lastIndice, double * coefArray, unsigned long * stateArray, unsigned long pos)
+int AbstractTransfertMatrixPBC::GenerateResultingStateAndCoefficient(int indiceTop,int chainSize, int lastIndice, double * coefArray, unsigned long * stateArray, unsigned long pos)
 {
   if(chainSize==0)
     {
-      for (int i = 0; i < this->NbrNonZeroTensorElementTopLeft[indiceTop][indiceLeft[0]]; i++)
+      for (int i = 0; i < this->NbrNonZeroTensorElementTopLeft[indiceTop][this->TemporaryArray[0]]; i++)
 	{
-	  if(this->IndiceBottomNonZeroTensorElementTopLeft[indiceTop][indiceLeft[0]][i] ==  lastIndice ) 
+	  if(this->IndiceBottomNonZeroTensorElementTopLeft[indiceTop][this->TemporaryArray[0]][i] ==  lastIndice ) 
 	    {
-	      stateArray[pos] = this->HilbertSpace->EncodeSiteState(this->IndiceRightNonZeroTensorElementTopLeft[indiceTop][indiceLeft[0]][i],0);
-	      coefArray[pos]  = this->ValuesNonZeroTensorElementTopLeft[indiceTop][indiceLeft[0]][i];
+	      stateArray[pos] = this->HilbertSpace->EncodeSiteState(this->IndiceRightNonZeroTensorElementTopLeft[indiceTop][this->TemporaryArray[0]][i],0);
+	      coefArray[pos]  = this->ValuesNonZeroTensorElementTopLeft[indiceTop][this->TemporaryArray[0]][i];
 	      pos++;
 	    }
 	}
@@ -258,13 +263,13 @@ int AbstractTransfertMatrixPBC::GenerateResultingStateAndCoefficient(int indiceT
     }
   int TmpPos = pos;
   
-  for (int i = 0; i < this->NbrNonZeroTensorElementTopLeft[indiceTop][indiceLeft[chainSize]]; i++)
+  for (int i = 0; i < this->NbrNonZeroTensorElementTopLeft[indiceTop][this->TemporaryArray[chainSize]]; i++)
     {
-      TmpPos =this->GenerateResultingStateAndCoefficient(this->IndiceBottomNonZeroTensorElementTopLeft[indiceTop][indiceLeft[chainSize]][i],indiceLeft, chainSize-1, lastIndice, coefArray, stateArray, pos);
+      TmpPos =this->GenerateResultingStateAndCoefficient(this->IndiceBottomNonZeroTensorElementTopLeft[indiceTop][this->TemporaryArray[chainSize]][i],chainSize-1, lastIndice, coefArray, stateArray, pos);
       for(;pos <TmpPos;++pos)
 	{
-	  stateArray[pos] |= this->HilbertSpace->EncodeSiteState(this->IndiceRightNonZeroTensorElementTopLeft[indiceTop][indiceLeft[chainSize]][i],chainSize);
-	  coefArray[pos] *= this->ValuesNonZeroTensorElementTopLeft[indiceTop][indiceLeft[chainSize]][i];
+	  stateArray[pos] |= this->HilbertSpace->EncodeSiteState(this->IndiceRightNonZeroTensorElementTopLeft[indiceTop][this->TemporaryArray[chainSize]][i],chainSize);
+	  coefArray[pos] *= this->ValuesNonZeroTensorElementTopLeft[indiceTop][this->TemporaryArray[chainSize]][i];
 	}
     }
   return pos;
