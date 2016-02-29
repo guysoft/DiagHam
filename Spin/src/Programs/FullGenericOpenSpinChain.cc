@@ -4,6 +4,7 @@
 
 #include "Hamiltonian/SpinChainHamiltonian.h"
 #include "Hamiltonian/SpinChainFullHamiltonian.h"
+#include "Hamiltonian/SpinChainRealFullHamiltonian.h"
 
 #include "HilbertSpace/Spin1_2Chain.h"
 #include "HilbertSpace/Spin1_2ChainNew.h"
@@ -17,6 +18,7 @@
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
+#include "MainTask/GenericRealMainTask.h"
 #include "MainTask/GenericComplexMainTask.h"
 
 #include "GeneralTools/FilenameTools.h"
@@ -300,20 +302,37 @@ int main(int argc, char** argv)
   if (Chain->GetHilbertSpaceDimension() > 0)
     {
       Architecture.GetArchitecture()->SetDimension(Chain->GetHilbertSpaceDimension());	
-      SpinChainFullHamiltonian* Hamiltonian = 0;
-      Hamiltonian = new SpinChainFullHamiltonian(Chain, NbrSpins, JxValues, JyValues, JzValues, 
-						 HxValues, HyValues, HzValues, 
-						 Manager.GetBoolean("use-periodic"));
       char* TmpEigenstateString = new char[strlen(OutputFileName) + strlen(OutputParameterFileName) + 64];
       sprintf (TmpEigenstateString, "%s_%s", OutputFileName, OutputParameterFileName);
       char* TmpString = new char[1];
       TmpString[0] = '\0';
-      GenericComplexMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpString, CommentLine, 0.0,  FullOutputFileName,
-			       FirstRun, TmpEigenstateString);
-      MainTaskOperation TaskOperation (&Task);
-      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-      FirstRun = false;
-      delete Hamiltonian;
+      double TestHyValues = 0.0;
+      for (int i = 0; i < NbrSpins; ++i)
+	TestHyValues += fabs(HyValues[i]);
+      if (TestHyValues == 0.0)
+	{
+	  Lanczos.SetRealAlgorithms();
+	  SpinChainRealFullHamiltonian* Hamiltonian = new SpinChainRealFullHamiltonian(Chain, NbrSpins, JxValues, JyValues, JzValues, 
+										       HxValues, HzValues, Manager.GetBoolean("use-periodic"));
+	  GenericRealMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpString, CommentLine, 0.0,  FullOutputFileName,
+				   FirstRun, TmpEigenstateString);
+	  MainTaskOperation TaskOperation (&Task);
+	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	  delete Hamiltonian;
+	}
+      else
+	{
+	  SpinChainFullHamiltonian* Hamiltonian = 0;
+	  Hamiltonian = new SpinChainFullHamiltonian(Chain, NbrSpins, JxValues, JyValues, JzValues, 
+						     HxValues, HyValues, HzValues, 
+						     Manager.GetBoolean("use-periodic"));
+	  GenericComplexMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpString, CommentLine, 0.0,  FullOutputFileName,
+				      FirstRun, TmpEigenstateString);
+	  MainTaskOperation TaskOperation (&Task);
+	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	  delete Hamiltonian;
+	  FirstRun = false;
+	}
       delete[] TmpString;
       delete[] TmpEigenstateString;
     }
