@@ -385,7 +385,7 @@ int GenericRealMainTask::ExecuteMainTask()
 	    {
 	      TmpNbrEigenstates = this->Hamiltonian->GetHilbertSpaceDimension();	      
 	    }
-	  HamiltonianFullDiagonalizeOperation Operation1 (this->Hamiltonian, false, this->EvaluateEigenvectors);
+	  HamiltonianFullDiagonalizeOperation Operation1 (this->Hamiltonian, false, TmpEvaluateEigenvectors, TmpNbrEigenstates);
 	  Operation1.ApplyOperation(this->Architecture);
 	  RealDiagonalMatrix TmpDiag = Operation1.GetDiagonalizedHamiltonian();
 	  if ((this->EvaluateEigenvectors == false) && (this->EvaluateAllEigenvectors == false))

@@ -116,6 +116,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");  
   (*SystemGroup) += new BooleanOption ('\n', "use-approximation", "use a saddle appoximation to evaluate the entanglement entropy");
   (*SystemGroup) += new BooleanOption ('\n', "use-rational", "use rational number to overcome accuracy issues");
+  (*SystemGroup) += new BooleanOption ('\n', "test-thermal", "check if the state satisfies the ETH");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -224,6 +225,7 @@ int main(int argc, char** argv)
   int VacuumNbrParticles = Manager.GetInteger("nbr-particles"); 
   int VacuumTotalSz = VacuumNbrParticles;
 
+
   if (Manager.GetBoolean("use-fermisea") == true)
     { 
       VacuumOneBodyLinearizedMomenta = new int[VacuumNbrParticles];
@@ -303,6 +305,107 @@ int main(int argc, char** argv)
   VacuumYMomentum %= NbrSitesY;
   XMomentum %= NbrSitesX;
   YMomentum %= NbrSitesY;
+
+  if (Manager.GetBoolean("test-thermal") == true)
+    {
+      double MinBeta = 0.0001;
+      double BetaStep = 1.0;
+      int NbrBetaSteps = 100;
+      double MinMu = TightBindingModelEnergies[0] - fabs(TightBindingModelEnergies[0] * 2);
+      double MaxMu = TightBindingModelEnergies[NbrSites - 1] + fabs(TightBindingModelEnergies[NbrSites - 1] * 2);
+      int NbrMuSteps = 100;
+      double MuStep = (MaxMu - MinMu) / ((double) NbrMuSteps);
+      double* EnergyExponentials = new double[NbrSites];
+      double** ThermalEnergies = new double*[NbrBetaSteps];
+      double** ThermalNbrParticules = new double*[NbrBetaSteps];
+      double** ThermalEntropy = new double*[NbrBetaSteps];
+      for (int j = 0; j < NbrBetaSteps; ++j)
+	{
+	  ThermalEnergies[j] = new double[NbrMuSteps];
+	  ThermalNbrParticules[j] = new double[NbrMuSteps];
+	  ThermalEntropy[j] = new double[NbrMuSteps];
+	}
+      double MinErrorNbrParticules = (double) VacuumNbrParticles;
+      double CurrentBeta = MinBeta;
+      for (int j = 0; j < NbrBetaSteps; ++j)
+	{
+	  for (int k = 0 ; k < NbrSites; ++k)
+	    {
+	      EnergyExponentials[k] = exp(CurrentBeta * TightBindingModelEnergies[k]);
+	    }
+	  double CurrentMu = MinMu;
+	  for (int i = 0; i < NbrMuSteps; ++i)
+	    {
+	      double MuFactor = exp(-CurrentBeta * CurrentMu);
+	      double TmpEnergy = 0.0;
+	      double TmpNbrParticules = 0.0;
+	      double TmpThermalEntropy = 0.0;
+	      for (int k = 0 ; k < NbrSites; ++k)
+		{
+		  double Tmp = 1.0 / (1.0 + (EnergyExponentials[k] * MuFactor));
+		  double Tmp2 = EnergyExponentials[k] * MuFactor * Tmp;
+		  TmpNbrParticules += Tmp;
+		  TmpEnergy += Tmp * TightBindingModelEnergies[k];
+		  TmpThermalEntropy -= (Tmp * log (Tmp)) + (Tmp2 * log (Tmp2));
+		}
+	      ThermalEnergies[j][i] = TmpEnergy;
+	      ThermalNbrParticules[j][i] = TmpNbrParticules;
+	      ThermalEntropy[j][i] = TmpThermalEntropy;
+	      if (abs(TmpNbrParticules - VacuumNbrParticles) < MinErrorNbrParticules)
+		{
+		  MinErrorNbrParticules = abs(TmpNbrParticules - VacuumNbrParticles);
+		}
+	      if (ThermalEnergies[j][i] > -100.0)
+		cout << CurrentBeta << " " << CurrentMu << " " << ThermalNbrParticules[j][i] << " " << ThermalEnergies[j][i] << " " << ThermalEntropy[j][i] << endl;
+	      CurrentMu += MuStep;
+	    }
+	  CurrentBeta += BetaStep;
+	}
+
+
+      CurrentBeta = MinBeta;
+      MinErrorNbrParticules += ((double) VacuumNbrParticles) * 0.05;
+      cout << MinErrorNbrParticules << endl; 
+      int NbrAcceptedValues = 0;
+      double MinErrorEnergy = fabs(VacuumTotalEnergy);
+      for (int j = 0; j < NbrBetaSteps; ++j)
+	{
+	  double CurrentMu = MinMu;
+	  for (int i = 0; i < NbrMuSteps; ++i)
+	    {
+	      if (abs(ThermalNbrParticules[j][i] - VacuumNbrParticles) < MinErrorNbrParticules)
+		{
+		  if (fabs(ThermalEnergies[j][i] - VacuumTotalEnergy) < MinErrorEnergy)
+		    {
+		      MinErrorEnergy = fabs(ThermalEnergies[j][i] - VacuumTotalEnergy);
+		    }
+		  //		  cout << CurrentBeta << " " << CurrentMu << " " << ThermalNbrParticules[j][i] << " " << ThermalEnergies[j][i] << " " << ThermalEntropy[j][i] << endl;
+		  ++NbrAcceptedValues;
+		}
+	      CurrentMu += MuStep;
+	    }
+	  CurrentBeta += BetaStep;
+	}
+      
+      CurrentBeta = MinBeta;
+      MinErrorEnergy += fabs(((double) VacuumTotalEnergy) * 0.1);
+      cout << "best thermal energy approximations : " << endl;
+      for (int j = 0; j < NbrBetaSteps; ++j)
+	{
+	  double CurrentMu = MinMu;
+	  for (int i = 0; i < NbrMuSteps; ++i)
+	    {
+	      if ((abs(ThermalNbrParticules[j][i] - VacuumNbrParticles) < MinErrorNbrParticules) && (fabs(ThermalEnergies[j][i] - VacuumTotalEnergy) < MinErrorEnergy))
+		{
+		  cout << CurrentBeta << " " << CurrentMu << " " << ThermalNbrParticules[j][i] << " " << ThermalEnergies[j][i] << " " << ThermalEntropy[j][i] << endl;
+		  ++NbrAcceptedValues;
+		}
+	      CurrentMu += MuStep;
+	    }
+	  CurrentBeta += BetaStep;
+	}
+    }
+
 
   int NbrParticles = VacuumNbrParticles; 
   NbrParticles += 2 * NbrPairs;
