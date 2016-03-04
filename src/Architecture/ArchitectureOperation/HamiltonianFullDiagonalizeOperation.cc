@@ -670,11 +670,12 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 			   &LocalRowEigenstateIndex, &LocalColumnEigenstateIndex, DescEingenstateMatrix,
 			   ScalapackWorkingArea, &ScalapackWorkingAreaSize, 
 			   &Information); 
-      
+
+      long ScalapackWorkingAreaSizeLong = (long) ScalapackWorkingArea[0];
       ScalapackWorkingAreaSize = (int) ScalapackWorkingArea[0];
       delete[] ScalapackWorkingArea;
-      ScalapackWorkingArea = new double[ScalapackWorkingAreaSize];
-      
+      ScalapackWorkingArea = new double[ScalapackWorkingAreaSizeLong];
+      cout << "Scalapack working area size = " << ScalapackWorkingAreaSizeLong << "(long), " << ScalapackWorkingAreaSize << "(int)" << endl;  
       FORTRAN_NAME(pdsyev)(JobZ, UpperLower, 
 			   &TmpGlobalNbrRow, LocalScalapackMatrix, 
 			   &LocalStartingRowIndex, &LocalStartingColumnIndex, Desc, 
