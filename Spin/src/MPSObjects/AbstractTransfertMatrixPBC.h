@@ -22,6 +22,8 @@ class AbstractTransfertMatrixPBC : public AbstractHamiltonian
 
   int * TemporaryArray;
   int ChainLength;
+  int * PowerD;
+  
   /*  bool IDMRGFlag;
   bool DMRGFlag;
   AbstractMPSSite * Site;

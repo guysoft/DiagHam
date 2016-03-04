@@ -47,6 +47,8 @@ class DoubledSpin0_1_2_ChainWithTranslations : public AbstractDoubledSpinChainWi
  protected:
   int ShiftNegativeDiffSz;
   int BraShiftNegativeSz;
+  int * PowerD;
+  unsigned long * ChainDescription;
  public:
 
   // default constructor
@@ -118,6 +120,24 @@ class DoubledSpin0_1_2_ChainWithTranslations : public AbstractDoubledSpinChainWi
 
   virtual int FindStateIndex(unsigned long stateBra,unsigned long stateKet);
 
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector.
+  // 
+  // szSector = Sz sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int szSector, RealVector& groundState);
+
+  virtual HermitianMatrix EvaluatePartialDensityMatrix (int szSector, ComplexVector& groundState);
+
+  virtual void GetChainDescriptionInCondensedForm(unsigned long * OldHilbertSpace);
+  virtual int FindStateIndexFromLinearizedIndex(unsigned long linearizedState);
+  virtual void AddConvertFromGeneralSpace(ComplexVector vSource,ComplexVector & vDestination);
+  virtual void ConvertToGeneralSpace(ComplexVector vSource,ComplexVector & vDestination);
+  
+  virtual void AddConvertFromGeneralSpaceWithMomentum(ComplexVector vSource,ComplexVector & vDestination);
+  virtual void ConvertToGeneralSpaceWithMomentum(ComplexVector vSource,ComplexVector & vDestination);
+  
  protected:
 
   // return value of twice spin projection on (Oz) for a given state
@@ -131,7 +151,7 @@ class DoubledSpin0_1_2_ChainWithTranslations : public AbstractDoubledSpinChainWi
   // state = state description
   // nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
   // return value = canonical form of the state
-  inline void FindCanonicalForm ( unsigned long stateDescriptionBra, unsigned long stateDescriptionKet, unsigned long & canonicalStateBra, unsigned long & canonicalStateKet, int& nbrTranslation);
+  inline void FindCanonicalForm ( unsigned long stateDescription, unsigned long & canonicalState, int& nbrTranslation);
 
   // find the canonical form of a state and find how many translations are needed to obtain the same state
   //
@@ -139,13 +159,13 @@ class DoubledSpin0_1_2_ChainWithTranslations : public AbstractDoubledSpinChainWi
   // nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
   // nbrTranslationToIdentity = reference on the number of translation needed to obtain the same state
   // return value = canonical form of the state
-  inline void FindCanonicalForm ( unsigned long stateDescriptionBra, unsigned long stateDescriptionKet, unsigned long & canonicalStateBra, unsigned long & canonicalStateKet, int& nbrTranslation, int& nbrTranslationToIdentity);
+  inline void FindCanonicalForm ( unsigned long stateDescription, unsigned long & canonicalState, int& nbrTranslation, int& nbrTranslationToIdentity);
   
   // find how many translations are needed to obtain the same state
   //
   // stateDescription = unsigned integer describing the state
   // return value = number of translation needed to obtain the same state
-  int FindNumberTranslation(unsigned long stateDescriptionBra, unsigned long stateDescriptionKet);
+  int FindNumberTranslation(unsigned long stateDescription);
 
   // generate all states corresponding to the constraints
   // 
@@ -158,7 +178,9 @@ class DoubledSpin0_1_2_ChainWithTranslations : public AbstractDoubledSpinChainWi
   
   long ShiftedEvaluateHilbertSpaceDimension(int lengthBra, int lengthKet, int diffSz);
 
-
+  inline unsigned int GetCommonIndexFromBraAndKetIndices(unsigned int braIndex, unsigned int ketIndex );
+  inline void GetBraAndKetIndicesFromCommonIndex(unsigned int & braIndex, unsigned int & ketIndex, unsigned long commonIndex);
+  
   void GenerateLookUpTable(unsigned long memory);
 };
 
@@ -206,20 +228,18 @@ inline unsigned long DoubledSpin0_1_2_ChainWithTranslations::EncodeSiteStateKet(
 // nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
 // return value = canonical form of the state
 
-inline void DoubledSpin0_1_2_ChainWithTranslations::FindCanonicalForm(unsigned long stateDescriptionBra,unsigned long stateDescriptionKet,unsigned long & canonicalStateBra , unsigned long & canonicalStateKet, int& nbrTranslation)
+inline void DoubledSpin0_1_2_ChainWithTranslations::FindCanonicalForm(unsigned long stateDescription, unsigned long & canonicalState, int& nbrTranslation)
 {
   nbrTranslation = 0;
-  canonicalStateBra = stateDescriptionBra;
-  canonicalStateKet = stateDescriptionKet;
+  canonicalState = stateDescription;
   int index = 1;  
   while (index < this->ChainLength)
     {
-      stateDescriptionBra = (stateDescriptionBra >> 2) | ((stateDescriptionBra & 0x3ul) << this->ComplementaryStateShift);
-      stateDescriptionKet = (stateDescriptionKet >> 2) | ((stateDescriptionKet & 0x3ul) << this->ComplementaryStateShift);
-      if ((stateDescriptionBra < canonicalStateBra)||((stateDescriptionBra == canonicalStateBra)&&(stateDescriptionKet < canonicalStateKet))  )
+      stateDescription = (stateDescription/9) + (stateDescription%9)*this->PowerD[this->ChainLength-1];
+      
+      if (stateDescription < canonicalState)
 	{
-	  canonicalStateBra = stateDescriptionBra;
-	  canonicalStateKet = stateDescriptionKet;
+	  canonicalState = stateDescription;
 	  nbrTranslation = index;
 	}
       ++index;
@@ -233,29 +253,26 @@ inline void DoubledSpin0_1_2_ChainWithTranslations::FindCanonicalForm(unsigned l
 // nbrTranslationToIdentity = reference on the number of translation needed to obtain the same state
 // return value = canonical form of the state
 
-inline void DoubledSpin0_1_2_ChainWithTranslations::FindCanonicalForm(unsigned long stateDescriptionBra, unsigned long stateDescriptionKet, unsigned long & canonicalStateBra , unsigned long & canonicalStateKet, int& nbrTranslation, int& nbrTranslationToIdentity)
+inline void DoubledSpin0_1_2_ChainWithTranslations::FindCanonicalForm(unsigned long stateDescription, unsigned long & canonicalState, int& nbrTranslation, int& nbrTranslationToIdentity)
 {
   nbrTranslation = 0;
   nbrTranslationToIdentity = 1;
-  canonicalStateBra = stateDescriptionBra;
-  canonicalStateKet = stateDescriptionKet;
-  unsigned long ReferenceStateBra = stateDescriptionBra;
-  unsigned long ReferenceStateKet = stateDescriptionKet;
+  canonicalState = stateDescription;
 
-  stateDescriptionBra = (stateDescriptionBra >> 2) | ((stateDescriptionBra & 0x3ul) << this->ComplementaryStateShift);
-  stateDescriptionKet = (stateDescriptionKet >> 2) | ((stateDescriptionKet & 0x3ul) << this->ComplementaryStateShift);
+  unsigned long ReferenceState = stateDescription;
 
-  while ((ReferenceStateBra != stateDescriptionBra) && (ReferenceStateKet != stateDescriptionKet) && (nbrTranslationToIdentity < this->ChainLength))
+   stateDescription = (stateDescription/9) + (stateDescription%9)*this->PowerD[this->ChainLength-1];
+  
+
+  while ((ReferenceState != stateDescription) && (nbrTranslationToIdentity < this->ChainLength))
     {
-      if ((stateDescriptionBra < canonicalStateBra)||((stateDescriptionBra == canonicalStateBra)&&(stateDescriptionKet < canonicalStateKet))  )
+      if (stateDescription < canonicalState)
 	{
-	  canonicalStateBra = stateDescriptionBra;
-	  canonicalStateKet = stateDescriptionKet;
+	  canonicalState = stateDescription;
 	  nbrTranslation = nbrTranslationToIdentity;
 	}
       
-      stateDescriptionBra = (stateDescriptionBra >> 2) | ((stateDescriptionBra & 0x3ul) << this->ComplementaryStateShift);
-      stateDescriptionKet = (stateDescriptionKet >> 2) | ((stateDescriptionKet & 0x3ul) << this->ComplementaryStateShift);
+      stateDescription = (stateDescription/9) + (stateDescription%9)*this->PowerD[this->ChainLength-1];
       ++nbrTranslationToIdentity;
     }
 }
@@ -265,18 +282,30 @@ inline void DoubledSpin0_1_2_ChainWithTranslations::FindCanonicalForm(unsigned l
 // stateDescription = unsigned integer describing the state
 // return value = number of translation needed to obtain the same state
 
-inline int DoubledSpin0_1_2_ChainWithTranslations::FindNumberTranslation(unsigned long stateDescriptionBra,unsigned long stateDescriptionKet)
+inline int DoubledSpin0_1_2_ChainWithTranslations::FindNumberTranslation(unsigned long stateDescription)
 {
-  unsigned long TmpStateBra = (stateDescriptionBra >> 2) | ((stateDescriptionBra & 0x3ul) << this->ComplementaryStateShift);
-  unsigned long TmpStateKet = (stateDescriptionKet >> 2) | ((stateDescriptionKet & 0x3ul) << this->ComplementaryStateShift);
-  int index = 1;  
-  while ((TmpStateBra != stateDescriptionBra)||(TmpStateKet != stateDescriptionKet ))
+  int index = 1;
+  unsigned long TmpState = (stateDescription/9) + (stateDescription%9)*this->PowerD[this->ChainLength-1];
+  while (TmpState !=  stateDescription)
     {     
-      TmpStateBra = (TmpStateBra >> 2) | ((TmpStateBra & 0x3ul) << this->ComplementaryStateShift);
-      TmpStateKet = (TmpStateKet >> 2) | ((TmpStateKet & 0x3ul) << this->ComplementaryStateShift);
+      TmpState = (TmpState/9) + (TmpState%9)*this->PowerD[this->ChainLength-1];
       ++index;
     }
   return index;
+}
+
+
+
+inline unsigned int DoubledSpin0_1_2_ChainWithTranslations::GetCommonIndexFromBraAndKetIndices(unsigned int braIndex, unsigned int ketIndex )
+{
+  return ketIndex  * 3 + braIndex;
+}
+
+
+inline void DoubledSpin0_1_2_ChainWithTranslations::GetBraAndKetIndicesFromCommonIndex(unsigned int & braIndex, unsigned int & ketIndex, unsigned long commonIndex)
+{
+  braIndex = commonIndex%3;
+  ketIndex = commonIndex/3;
 }
 
 #endif

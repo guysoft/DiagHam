@@ -15,6 +15,16 @@ class ComplexPEPSTransfertMatrixPBC : public  AbstractTransfertMatrixPBC
  protected:
   
   Complex *** ValuesNonZeroTensorElementTopLeft;
+
+  Complex * Weigth1;
+  Complex * Weigth2;
+  unsigned long * NewHilbertSpace1;
+  unsigned long * NewHilbertSpace2;
+  unsigned long * OldHilbertSpace;
+  ComplexVector * TmpVector1;
+  ComplexVector * TmpVector2;
+  ComplexVector * StartVector;
+  ComplexVector * EndVector;
   
  public:
 
@@ -32,7 +42,8 @@ class ComplexPEPSTransfertMatrixPBC : public  AbstractTransfertMatrixPBC
   // return value = reference on vector where result has been stored
   //  virtual RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent);
   virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
-
+//  virtual ComplexVector& LowLevelAddMultiply(ComplexVector & vSource, ComplexVector& vDestination);
+    
   // multiply a set of vectors by the current hamiltonian for a given range of indices 
   // and add result to another set of vectors, low level function (no architecture optimization)
   //
@@ -42,7 +53,7 @@ class ComplexPEPSTransfertMatrixPBC : public  AbstractTransfertMatrixPBC
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-  virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent);
+//  virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent);
    
   virtual int GenerateResultingStateAndCoefficient(int indiceTop, int chainSize, int lastIndice, Complex * coefArray, unsigned long * stateArrayBra,  unsigned long * stateArrayKet, unsigned long pos);
   
@@ -50,12 +61,21 @@ class ComplexPEPSTransfertMatrixPBC : public  AbstractTransfertMatrixPBC
   
   inline  int GetBondDimension() const {return this->MPOBondDimension; }; 
 
+  virtual void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
+
  protected:
   
   inline void GetBraAndKetIndexFromCommonIndex(unsigned int communIndex,unsigned int & braIndex ,unsigned int & ketIndex);
   inline unsigned int GetCommonIndexFromBraAndKetIndices(unsigned int braIndex, unsigned int ketIndex );
+//  virtual ComplexVector & LowLevelAddMultiplyOnLastSite(unsigned long * oldHilbertSpace, Complex * oldWeigth, ComplexVector & vDestination, int oldHilbertSpaceDimension, int topValue);
+//  virtual int LowLevelAddMultiplyOnAnySite(unsigned long * oldHilbertSpace, Complex * oldWeigth, unsigned long * newHilbertSpace, Complex * newWeigth, int oldHilbertSpaceDimension, int position);
+// virtual int LowLevelAddMultiplyOnFirstSite(ComplexVector & vSource, unsigned long * oldHilbertSpace, unsigned long * newHilbertSpace, Complex * newWeigth, int oldHilbertSpaceDimension, int topIndice);
 
-
+  void LowLevelAddMultiplyOnLastSite(int topValue);
+  void LowLevelAddMultiplyOnAnySite(int position);
+  void LowLevelAddMultiplyOnFirstSite(int topIndice);
+    
+  virtual inline long GetNewIndexFromOldIndex(unsigned long oldIndex, int oldPhysicalSpin, int newPhysicalSpin, int oldVirtualSpin, int newVirtualSpin, int position);
   virtual void InitializeTensorsElements(MultiColumnASCIIFile & tensorElementsFile);
 };
 
@@ -71,6 +91,13 @@ inline unsigned int  ComplexPEPSTransfertMatrixPBC::GetCommonIndexFromBraAndKetI
 {
   return ketIndex  * this->MPOBondDimension + braIndex;
 }
+
+
+inline long ComplexPEPSTransfertMatrixPBC::GetNewIndexFromOldIndex(unsigned long oldIndex, int oldPhysicalSpin, int newPhysicalSpin, int oldVirtualSpin, int newVirtualSpin, int position)
+{ 
+  return  oldIndex + (newPhysicalSpin - oldPhysicalSpin) *this->PowerD[position] + newVirtualSpin - oldVirtualSpin;
+}
+
 
 #endif
 

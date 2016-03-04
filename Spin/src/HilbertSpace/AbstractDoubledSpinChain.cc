@@ -301,7 +301,11 @@ int AbstractDoubledSpinChainWithTranslations::Smi (int i, int state, double& coe
 }
 */
 
-
+int AbstractDoubledSpinChain::FindStateIndexFromLinearizedIndex(unsigned long linearizedState)
+{
+  cout <<"Calling undefined function int  AbstractDoubledSpinChainWithTranslations::FindStateIndexFindStateIndexFromLinearizedIndex(unsigned long linearizedState)"<<endl;
+  return 0;
+}
 
 // return index of resulting state from application of S-_i operator on a given state
 //
@@ -416,4 +420,10 @@ double AbstractDoubledSpinChain::SziSzj (int i, int j, int state)
 {
   cout <<"Calling undefined function double AbstractDoubledSpinChainWithTranslations::SziSzj (int i, int j, int state)"<<endl;
   return 0.0;
+}
+
+
+void AbstractDoubledSpinChain::GetChainDescriptionInCondensedForm(unsigned long * OldHilbertSpace)
+{
+  cout <<"Calling undefined function void AbstractDoubledSpinChain::GetChainDescriptionInCondensedForm(unsigned long * OldHilbertSpace)"<<endl;
 }

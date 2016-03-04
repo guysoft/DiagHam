@@ -74,6 +74,9 @@ class AbstractDoubledSpinChainWithTranslations : public AbstractDoubledSpinChain
   // return value = reference on current chain
   AbstractDoubledSpinChainWithTranslations& operator = (const AbstractDoubledSpinChainWithTranslations & chain);
 
+  virtual void AddConvertFromGeneralSpaceWithMomentum(ComplexVector vSource,ComplexVector & vDestination){};
+  virtual void ConvertToGeneralSpaceWithMomentum(ComplexVector vSource,ComplexVector & vDestination){};
+
  protected:
 
   // find the canonical form of a state
@@ -81,7 +84,7 @@ class AbstractDoubledSpinChainWithTranslations : public AbstractDoubledSpinChain
   // state = state description
   // nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
   // return value = canonical form of the state
-  virtual void FindCanonicalForm ( unsigned long stateDescriptionBra, unsigned long stateDescriptionKet, unsigned long & canonicalStateBra, unsigned long & canonicalStateKet, int& nbrTranslation) = 0;
+  virtual void FindCanonicalForm ( unsigned long stateDescriptionBra, unsigned long stateDescriptionKet, unsigned long & canonicalStateBra, unsigned long & canonicalStateKet, int& nbrTranslation){};
 
   // find the canonical form of a state and find how many translations are needed to obtain the same state
   //
@@ -89,13 +92,13 @@ class AbstractDoubledSpinChainWithTranslations : public AbstractDoubledSpinChain
   // nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
   // nbrTranslationToIdentity = reference on the number of translation needed to obtain the same state
   // return value = canonical form of the state
-  virtual void FindCanonicalForm ( unsigned long stateDescriptionBra, unsigned long stateDescriptionKet, unsigned long & canonicalStateBra, unsigned long & canonicalStateKet, int& nbrTranslation, int& nbrTranslationToIdentity) = 0;
+  virtual void FindCanonicalForm ( unsigned long stateDescriptionBra, unsigned long stateDescriptionKet, unsigned long & canonicalStateBra, unsigned long & canonicalStateKet, int& nbrTranslation, int& nbrTranslationToIdentity){};
   
   // find how many translations are needed to obtain the same state
   //
   // stateDescription = unsigned integer describing the state
   // return value = number of translation needed to obtain the same state
-  virtual int FindNumberTranslation(unsigned long stateDescriptionBra, unsigned long stateDescriptionKet) = 0;
+  virtual int FindNumberTranslation(unsigned long stateDescriptionBra, unsigned long stateDescriptionKet){};
 
   // create precalculation tables
   //

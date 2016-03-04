@@ -40,9 +40,11 @@
 
 
 using std::ostream;
+class DoubledSpin0_1_2_ChainWithTranslations;
 
 class Spin0_1_2_ChainWithTranslations : public AbstractSpinChainWithTranslations
 {
+  friend class DoubledSpin0_1_2_ChainWithTranslations;
    
  protected:
 
@@ -213,7 +215,8 @@ class Spin0_1_2_ChainWithTranslations : public AbstractSpinChainWithTranslations
   int Smi (int i, int state, double& coefficient, int& nbrTranslation);
 
   virtual inline unsigned long FindCanonicalForm(unsigned long state, int& nbrTranslation);
-
+  inline void ApplySingleXTranslation(unsigned long& stateDescription);
+  
   virtual void GenerateLookUpTable();
 };
 
@@ -267,6 +270,8 @@ inline unsigned long Spin0_1_2_ChainWithTranslations::FindCanonicalForm(unsigned
   this->FindCanonicalForm(state,CanonicalForm, nbrTranslation);
   return CanonicalForm;
 }
+
+/*
 
 // find the canonical form of a state
 //
@@ -334,6 +339,139 @@ inline int Spin0_1_2_ChainWithTranslations::FindNumberTranslation(unsigned long 
     }
   return index;
 }
+
+*/
+
+// apply a single translation in the x direction for a state description
+//
+// stateDescription = reference on the state description
+
+inline void Spin0_1_2_ChainWithTranslations::ApplySingleXTranslation(unsigned long& stateDescription)
+{
+  int Tmp = stateDescription & 0x3ul;
+  
+  for (int i = 1; i < this->ChainLength; i++)
+    {
+      switch ((stateDescription >> (2*i))& 0x3ul)
+	{
+	case 0x2:
+	  stateDescription &= (~(0x3ul << 2*(i-1)));
+	  break;
+	case 0x1:
+	  stateDescription &= (~(0x1ul << (2*(i-1)+1) ));
+	  stateDescription |= (0x1ul << 2*(i-1));
+	  break;
+	case 0x0:
+	  stateDescription &= (~(0x1ul << 2*(i-1)));
+	  stateDescription |= (0x1ul << (2*(i-1)+1));
+	  break;
+	}
+    }
+
+  if (this->ChainLength%2 ==0 )   
+    {
+      switch (Tmp)
+	{
+	case 0x2:
+	  stateDescription &= (~(0x3ul << 2*(this->ChainLength-1)));
+	  break;
+	case 0x1:
+	  stateDescription &= (~(0x1ul << (2*(this->ChainLength-1)+1) ));
+	  stateDescription |= (0x1ul << 2*(this->ChainLength-1));
+	  break;
+	case 0x0:
+	  stateDescription &= (~(0x1ul << 2*(this->ChainLength-1)));
+	  stateDescription |= (0x1ul << (2*(this->ChainLength-1)+1));
+	  break;
+	}
+    }
+  else
+    {
+      switch (Tmp)
+	{
+	case 0x2:
+	  stateDescription &= (~(0x1ul << 2*(this->ChainLength-1)));
+	  stateDescription |= (0x1ul << (2*(this->ChainLength-1)+1));
+	  break;
+	case 0x1:
+	  stateDescription &= (~(0x1ul << (2*(this->ChainLength-1)+1) ));
+	  stateDescription |= (0x1ul << 2*(this->ChainLength-1));
+	  break;
+	case 0x0:
+	  stateDescription &= (~(0x3ul << 2*(this->ChainLength-1)));
+	  break;
+	}
+    }
+}
+
+
+// find the canonical form of a state
+//
+// stateDescription = state description
+// nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
+// return value = canonical form of the state
+
+inline void Spin0_1_2_ChainWithTranslations::FindCanonicalForm(unsigned long stateDescription,unsigned long & canonicalState, int& nbrTranslation)
+{
+  nbrTranslation = 0;
+  canonicalState = stateDescription;
+  int index = 1;  
+  while (index < this->ChainLength)
+    {
+      this->ApplySingleXTranslation(stateDescription);
+      if (stateDescription < canonicalState)
+	{
+	  canonicalState = stateDescription;
+	  nbrTranslation = index;
+	}
+      ++index;
+    }
+}
+
+// find the canonical form of a state and find how many translations are needed to obtain the same state
+//
+// stateDescription = state description
+// nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
+// nbrTranslationToIdentity = reference on the number of translation needed to obtain the same state
+// return value = canonical form of the state
+
+inline void Spin0_1_2_ChainWithTranslations::FindCanonicalForm(unsigned long stateDescription, unsigned long & canonicalState, int& nbrTranslation, int& nbrTranslationToIdentity)
+{
+  nbrTranslation = 0;
+  nbrTranslationToIdentity = 1;
+  canonicalState = stateDescription;
+  unsigned long ReferenceState = stateDescription;
+  this->ApplySingleXTranslation(stateDescription);
+  while ((ReferenceState != stateDescription)  && (nbrTranslationToIdentity < this->ChainLength))
+    {
+      if (stateDescription < canonicalState)
+	{
+	  canonicalState = stateDescription;
+	  nbrTranslation = nbrTranslationToIdentity;
+	}
+      this->ApplySingleXTranslation(stateDescription);
+      ++nbrTranslationToIdentity;
+    }
+}
+
+// find how many translations are needed to obtain the same state
+//
+// stateDescription = unsigned integer describing the state
+// return value = number of translation needed to obtain the same state
+
+inline int Spin0_1_2_ChainWithTranslations::FindNumberTranslation(unsigned long stateDescription)
+{
+  unsigned long TmpState = stateDescription;
+  this->ApplySingleXTranslation(TmpState);
+  int index = 1;  
+  while (TmpState != stateDescription)
+    {     
+      this->ApplySingleXTranslation(TmpState);
+      ++index;
+    }
+  return index;
+}
+
 
 #endif
 

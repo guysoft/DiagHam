@@ -91,20 +91,38 @@ class DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry : public DoubledSpin0_
 
  protected:
 
-  int ComputeZValue(unsigned long stateDescription);
+  int ComputeZValueBra(unsigned long stateDescription);
+  int ComputeZValueKet(unsigned long stateDescription);
 };
 
 
-inline int DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::ComputeZValue(unsigned long stateDescription)
+inline int DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::ComputeZValueBra(unsigned long stateDescription) 
 {
+  unsigned int BraOnSite, KetOnSite;
   int TmpZ = 0;
   for (int i = 0; i < this->ChainLength; i++)
     {
-      TmpZ+= (stateDescription & 0x1ul);
-      stateDescription >>= 2;
+      this->GetBraAndKetIndicesFromCommonIndex(BraOnSite,KetOnSite,  stateDescription%9);
+      TmpZ+= (BraOnSite & 0x1ul);
+      stateDescription/=9;
     }
   return (TmpZ%2);
 }
+
+
+inline int DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::ComputeZValueKet(unsigned long stateDescription) 
+{
+  unsigned int BraOnSite, KetOnSite;
+  int TmpZ = 0;
+  for (int i = 0; i < this->ChainLength; i++)
+    {
+      this->GetBraAndKetIndicesFromCommonIndex(BraOnSite,KetOnSite,  stateDescription%9);
+      TmpZ+= (KetOnSite & 0x1ul);
+      stateDescription/=9;
+    }
+  return (TmpZ%2);
+}
+
 
 
 #endif

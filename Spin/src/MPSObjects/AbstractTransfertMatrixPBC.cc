@@ -17,6 +17,7 @@ AbstractTransfertMatrixPBC::AbstractTransfertMatrixPBC()
   this->NbrNonZeroTensorElementTopLeft = 0;
   this->ValuesNonZeroTensorElementTopLeft = 0;
   this->TemporaryArray = 0;
+  this->PowerD = 0;
 }
 
 
@@ -25,6 +26,7 @@ AbstractTransfertMatrixPBC::AbstractTransfertMatrixPBC(MultiColumnASCIIFile & te
 {
   this->InitializeTensorsElements(tensorElementsFile);
   this->TemporaryArray = 0;
+  this->PowerD = 0;
   this->Architecture = architecture;
 }
 
@@ -51,6 +53,7 @@ AbstractTransfertMatrixPBC::~AbstractTransfertMatrixPBC()
       delete [] this->NbrNonZeroTensorElementTopLeft;
     }
   delete [] this->TemporaryArray; 
+  delete [] this->PowerD ;
 }
 
 
@@ -62,8 +65,13 @@ void AbstractTransfertMatrixPBC::SetHilbertSpace (AbstractHilbertSpace* hilbertS
 {
   this->HilbertSpace = (AbstractSpinChain * )hilbertSpace;
   delete [] this->TemporaryArray;
+  delete [] this->PowerD;
   this->ChainLength =  this->HilbertSpace ->GetSpinChainLength();
   this->TemporaryArray = new int[this->ChainLength];
+  this->PowerD = new int[this->ChainLength+1];
+  this->PowerD[0] = 1;
+  for(int i =1; i <=this->ChainLength; i++)
+    this->PowerD[i] = this->PowerD[i-1] * (this->MPOBondDimension * this->MPOBondDimension);
 }
 
 

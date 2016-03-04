@@ -102,6 +102,8 @@ class AbstractDoubledSpinChain : public AbstractSpinChain
   // return value = corresponding index
   virtual int FindStateIndex(unsigned long stateBra, unsigned long stateKet);
 
+  virtual int FindStateIndexFromLinearizedIndex(unsigned long linearizedState);
+  
   // return the Bosonic Occupation of a given state in the basis
   //
   // index = index of the state in the basis
@@ -121,6 +123,12 @@ class AbstractDoubledSpinChain : public AbstractSpinChain
   // sitePosition = position on the chain of the state
   // return integer that code the state
   virtual unsigned long EncodeSiteStateKet(int physicalState, int sitePosition)=0;
+
+  virtual void GetChainDescriptionInCondensedForm(unsigned long * HilbertSpaceDescription);
+
+  virtual void AddConvertFromGeneralSpace(ComplexVector vSource,ComplexVector & vDestination){cout<<"using undefined   virtual void AddConvertFromGeneralSpace(ComplexVector vSource,ComplexVector & vDestination) in AbstractDoubledSpinChain"<<endl;}
+  virtual void ConvertToGeneralSpace(ComplexVector vSource,ComplexVector & vDestination){cout<<"using undefined   virtual void ConvertToGeneralSpace(ComplexVector vSource,ComplexVector & vDestination) in AbstractDoubledSpinChain"<<endl;};
+  
 
  protected:
 

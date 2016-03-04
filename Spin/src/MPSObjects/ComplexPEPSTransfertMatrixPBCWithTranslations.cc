@@ -21,9 +21,10 @@ ComplexPEPSTransfertMatrixPBCWithTranslations::~ComplexPEPSTransfertMatrixPBCWit
   delete [] this->ExponentialFactors;
 }
 
-
+/*
 ComplexVector& ComplexPEPSTransfertMatrixPBCWithTranslations::LowLevelAddMultiply(ComplexVector & vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
 {
+  cout <<"inside ComplexVector& ComplexPEPSTransfertMatrixPBCWithTranslations::LowLevelAddMultiply(ComplexVector & vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)"<<endl;
   int LastComponent = firstComponent +  nbrComponent;
   int * IndiceLeftBra = new int[this->ChainLength];
   int * IndiceLeftKet = new int[this->ChainLength];
@@ -69,7 +70,7 @@ ComplexVector& ComplexPEPSTransfertMatrixPBCWithTranslations::LowLevelAddMultipl
   delete [] IndiceLeftKet;
   return vDestination;
 }
-
+*/
 
 
 // evaluate all exponential factors
@@ -146,4 +147,126 @@ ComplexVector* ComplexPEPSTransfertMatrixPBCWithTranslations::LowLevelMultipleAd
   delete [] IndiceLeftBra;
   delete [] IndiceLeftKet;
   return vDestinations;
+}
+
+/*
+inline unsigned long ComplexPEPSTransfertMatrixPBCWithTranslations::GetNewIndexFromOldIndex(unsigned long oldIndex, int oldPhysicalSpin, int newPhysicalSpin, int oldVirtualSpin, int newVirtualSpin, int position)
+{ 
+  return  oldIndex + (oldPhysicalSpin -  newPhysicalSpin) *this->PowerD[position] + newVirtualSpin - oldVirtualSpin;
+}
+
+
+int ComplexPEPSTransfertMatrixPBCWithTranslations::LowLevelAddMultiplyOnFirstSite(ComplexVector & vSource, unsigned long * oldHilbertSpace, unsigned long * newHilbertSpace, Complex * newWeigth, int oldHilbertSpaceDimension, int topIndice)
+{
+  int NbrElement =0;
+  for(int i = 0; i< oldHilbertSpaceDimension;i++)
+    {
+      for (int p = 0; p < this->NbrNonZeroTensorElementTopLeft[topIndice][oldHilbertSpaceElement[i]%this->PowedD[1]]; p++)
+	{
+	  NbrElement+=SearchInArrayAndSetWeight(this->PowedD[1]*this->GetNewIndexFromOldIndex(oldHilbertSpace[i], oldHilbertSpace[i]%this->PowedD[1], this->IndiceRightNonZeroTensorElementTopLeft[indiceTop][oldHilbertSpace[i]%this->PowedD[1]][p],0,this->IndiceBottomNonZeroTensorElementTopLeft[indiceTop][oldHilbertSpace[i]%this->PowedD[1]][p],1),newHilbertSpace,newWeigth, NbrElement,this->ValuesNonZeroTensorElementTopLeft[indiceTop][oldHilbertSpace[i]%this->PowedD[1]][p]* vSource[i]);
+	}
+    }
+  return NbrElement; 
+}
+
+
+
+int ComplexPEPSTransfertMatrixPBCWithTranslations::LowLevelAddMultiplyOnAnySite(unsigned long * oldHilbertSpace, Complex * oldWeigth, unsigned long * newHilbertSpace, Complex * newWeigth, int oldHilbertSpaceDimension, int position)
+{
+  int NbrElement =0;
+  for(int i = 0; i< oldHilbertSpaceDimension;i++)
+    {
+      for (int p = 0; p < this->NbrNonZeroTensorElementTopLeft[oldHilbertSpaceElement[i]%this->PowedD[1]][(oldHilbertSpaceElement[i]/this->PowedD[position+1])%this->PowedD[1]] ; p++)
+	{
+	  NbrElement+=SearchInArrayAndSetWeight(this->GetNewIndexFromOldIndex(oldHilbertSpace[i], (oldHilbertSpaceElement[i]/this->PowedD[position+1])%this->PowedD[1], this->IndiceRightNonZeroTensorElementTopLeft[oldHilbertSpaceElement[i]%this->PowedD[1]][(oldHilbertSpaceElement[i]/this->PowedD[position+1])%this->PowedD[1]][p], oldHilbertSpaceElement[i]%this->PowedD[1], this->IndiceBottomNonZeroTensorElementTopLeft[oldHilbertSpaceElement[i]%this->PowedD[1]][(oldHilbertSpaceElement[i]/this->PowedD[position+1])%this->PowedD[1]][p],position),newHilbertSpace,newWeigth, NbrElement,this->ValuesNonZeroTensorElementTopLeft[oldHilbertSpaceElement[i]%this->PowedD[1]][(oldHilbertSpaceElement[i]/this->PowedD[position+1])%this->PowedD[1]][p] *  oldWeigth[i]);
+	}
+    }
+  return NbrElement;
+}
+
+
+ComplexVector & ComplexPEPSTransfertMatrixPBCWithTranslations::LowLevelAddMultiplyOnLastSite(unsigned long * oldHilbertSpace, Complex * oldWeigth, ComplexVector & vDestination, int oldHilbertSpaceDimension, int topValue)
+{
+
+  int NbrTranslation;
+  for(int i = 0; i< oldHilbertSpaceDimension;i++)
+    {
+      for (int p = 0; p < this->NbrNonZeroTensorElementTopLeft[oldHilbertSpaceElement[i]%this->PowedD[1]][oldHilbertSpaceElement[i]/this->PowedD[this->ChainLength]] ; p++)
+	{
+	  if (this->IndiceBottomNonZeroTensorElementTopLeft[[oldHilbertSpaceElement[i]%this->PowedD[1]][oldHilbertSpaceElement[i]/this->PowedD[this->ChainLength]][p] == topValue)
+	    {
+	      NbrTranslation = 0;
+	      int Index = ((AbstractDoubledSpinChainWithTranslations * )this->HilbertSpace)->FindStateIndexFromLinearizedIndexAndNumberTranslation(this->GetNewIndexFromOldIndex(oldHilbertSpace[i],oldHilbertSpaceElement[i]/this->PowedD[this->ChainLength], this->IndiceRightNonZeroTensorElementTopLeft[oldHilbertSpaceElement[i]%this->PowedD[1]][oldHilbertSpaceElement[i]/this->PowedD[this->ChainLength]], oldHilbertSpaceElement[i]%this->PowedD[1],0,this->ChainLength)/this->PowedD[1]),NbrTranslation);
+	      
+	      if ( Index < ((AbstractDoubledSpinChainWithTranslations * )this->HilbertSpace)->GetHilbertSpaceDimension() )
+		{
+		  vDestination[Index] +=  oldWeigth[i] * this->ValuesNonZeroTensorElementTopLeft[oldHilbertSpaceElement[i]%this->PowedD[1]][oldHilbertSpaceElement[i]/this->PowedD[this->ChainLength])][p]*this->ExponentialFactors[NbrTranslation] *  ((AbstractDoubledSpinChainWithTranslations *) this->HilbertSpace)->GetRescalingFactor(i,Index);
+	      }
+	}
+    }
+  return vDestination;
+}
+
+
+
+ComplexVector& ComplexPEPSTransfertMatrixPBCWithTranslations::LowLevelAddMultiply(ComplexVector & vSource, ComplexVector& vDestination)
+{
+  int TmpDimension = 1;
+
+  for(int i=0; i <=this->ChainLength;i++)
+    TmpDimension *= this->MPOBondDimension * this->MPOBondDimension;
+
+  unsigned long * OldHilbertSpace = new unsigned long [  ((AbstractDoubledSpinChainWithTranslations * )this->HilbertSpace)->GetHilbertSpaceDimension()];
+  ((AbstractDoubledSpinChain * )this->HilbertSpace)->GetChainDescriptionInCondensedForm(OldHilbertSpace);
+  Complex * Weigth1 = new Complex [TmpDimension];
+  Complex * Weigth2 = new Complex [TmpDimension];
+  unsigned long * NewHilbertSpace1 = new Complex [TmpDimension];
+  unsigned long * NewHilbertSpace2 = new Complex [TmpDimension];
+  Complex * TmpPointorWeigth;
+  unsigned long * TmpPointorHilbertSpace;
+  int WorkingDimension = 0;
+  for (int  IndiceTop = 0 ;  IndiceTop < this->MPOBondDimension *  this->MPOBondDimension;  IndiceTop++)
+    {	  
+      WorkingDimension = this->LowLevelAddMultiplyOnFirstSite(vSource,OldHilbertSpace, NewHilbertSpace1, Weigth1, ((AbstractDoubledSpinChainWithTranslations * )this->HilbertSpace)->GetHilbertSpaceDimension(),  IndiceTop);
+      for(int Position = 1; Position <this->ChainLength - 1;Position++)
+	{
+	  WorkingDimension = this->LowLevelAddMultiplyOnAnySite(NewHilbertSpace1, Weigth1,  NewHilbertSpace2, Weigth2, WorkingDimension, Position);
+	  TmpPointorHilbertSpace = NewHilbertSpace2;
+	  NewHilbertSpace2 = NewHilbertSpace1;
+	  NewHilbertSpace1 = TmpPointorHilbertSpace;
+	  TmpPointorWeigth = Weigth1;
+	  Weigth1 =  Weigth2;
+	  Weigth2 =  TmpPointorWeigth;
+	}
+      this->LowLevelAddMultiplyOnLastSite(NewHilbertSpace1, Weigth1, vDestination, WorkingDimension, IndiceTop);
+    }
+  
+  delete [ ] Weigth1, Weigth2,NewHilbertSpace1,NewHilbertSpace2;
+  return vDestination;
+}
+
+*/
+
+
+ComplexVector& ComplexPEPSTransfertMatrixPBCWithTranslations::LowLevelAddMultiply(ComplexVector & vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
+{
+  ComplexVector * TmpPointorVector;
+  this->EndVector->ClearVector();
+  ((AbstractDoubledSpinChainWithTranslations * )this->HilbertSpace)->ConvertToGeneralSpaceWithMomentum(vSource,(*this->StartVector));
+  for (int  IndiceTop = 0 ;  IndiceTop < this->MPOBondDimension *  this->MPOBondDimension;  IndiceTop++)
+    {	  
+      this->LowLevelAddMultiplyOnFirstSite(IndiceTop);
+      for(int Position = 1; Position <this->ChainLength - 1;Position++)
+	{
+	  this->LowLevelAddMultiplyOnAnySite(Position);
+	  TmpPointorVector = this->TmpVector1;
+	  this->TmpVector1 = this->TmpVector2;
+	  this->TmpVector2 = TmpPointorVector;
+	  this->TmpVector2->ClearVector();
+	}
+      this->LowLevelAddMultiplyOnLastSite(IndiceTop);
+      this->TmpVector1->ClearVector();
+    }
+  ((AbstractDoubledSpinChainWithTranslations * )this->HilbertSpace)->AddConvertFromGeneralSpaceWithMomentum((*this->EndVector),vDestination);
+  return vDestination;
 }

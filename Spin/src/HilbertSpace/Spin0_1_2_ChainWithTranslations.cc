@@ -108,8 +108,8 @@ Spin0_1_2_ChainWithTranslations::Spin0_1_2_ChainWithTranslations (int chainLengt
   
   this->LargeHilbertSpaceDimension = TmpHilbertSpaceDimension;
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
-  
   cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
+
   if (this->LargeHilbertSpaceDimension > 0l)
     {
       this->GenerateLookUpTable();
@@ -210,13 +210,14 @@ Spin0_1_2_ChainWithTranslations::Spin0_1_2_ChainWithTranslations (int chainLengt
 	  CurrentNbrStateInOrbit = this->FindNumberTranslation(this->ChainDescription[i]);
 	  this->NbrStateInOrbit[this->LargeHilbertSpaceDimension] = CurrentNbrStateInOrbit;
 	  if(this->GetTotalSz(this->ChainDescription[i]) >=0 )
-	    this->ShiftNegativeDiffSz=i;
+	    this->ShiftNegativeDiffSz=this->LargeHilbertSpaceDimension;
 	  ++this->LargeHilbertSpaceDimension;
 	}
     }
   this->ShiftNegativeDiffSz++;
   delete[]  this->ChainDescription;
   this->ChainDescription = TmpStateDescription;
+
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;  
   this->LookUpTable =0;
 
@@ -331,7 +332,6 @@ inline int Spin0_1_2_ChainWithTranslations::GetTotalSz (unsigned long stateDescr
       
       switch (stateDescription & 0x3ul)
 	{
-	  
 	case 0x2:
 	  TmpSz += Sign;
 	  break;

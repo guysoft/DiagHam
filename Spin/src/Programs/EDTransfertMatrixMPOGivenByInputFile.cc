@@ -63,6 +63,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new  SingleIntegerOption ('L', "length", "length of the spin chain", 4);
   (*SystemGroup) += new SingleStringOption  ('\n', "tensor-file", "name of the file containing the eigenstate to be displayed");
+  (*SystemGroup) += new SingleStringOption  ('\n', "peps-name", "name of the peps used to form the output file name");
   (*SystemGroup) += new BooleanOption ('\n', "six-vertex", "use the simple version (i.e. not doubled haha) code on the six vertex model to test the code");
   (*SystemGroup) += new BooleanOption ('c', "complex", "use complex version of the code");
   (*SystemGroup) += new BooleanOption ('\n', "doubled", "use double version of the code");
@@ -217,6 +218,8 @@ int main(int argc, char** argv)
 	sprintf(SubspaceLegend,"Sz");
     }
   
+  char * FullOutputFileName = new char [50];
+  sprintf(FullOutputFileName,"TransfertMatrix_%s_l_%d.dat",Manager.GetString("peps-name"),NbrSites); 
   
   for(int Sz = SzMin; Sz<= SzMax ;Sz+=1)
     {
@@ -272,11 +275,12 @@ int main(int argc, char** argv)
 		    }
 		  TransferMatrix->SetHilbertSpace(Space);	  
 		  
-		  char * FullOutputFileName ="blabla.dat";
-		  char * TmpEigenstateString = "blabla.vec";
+		  char * TmpEigenstateString = new char [50] ;
 		  if ( (TranslationFlag) || (ComplexFlag) )
 		    { 
-		      ComplexVector TestVector(Space->GetHilbertSpaceDimension(),true);
+		      cout <<"inside here"<<endl;
+		      cout <<"Hilbert Space dimension = "<<Space->GetHilbertSpaceDimension()<<endl;
+/*		      ComplexVector TestVector(Space->GetHilbertSpaceDimension(),true);
 		      ComplexVector DestinationVector(Space->GetHilbertSpaceDimension(),true);
 		      for (int p = 0; p < Space->GetHilbertSpaceDimension(); p++)
 			{
@@ -286,22 +290,35 @@ int main(int argc, char** argv)
 		      TestVector /=  TestVector.Norm();
 		      TransferMatrix->Multiply(TestVector,DestinationVector);
 		      if ( fabs(DestinationVector.Norm()) > 1e-14 )
-			{ 
+ 			{ */
+			  cout <<"Hilbert Space dimension = "<<Space->GetHilbertSpaceDimension()<<endl;
 			  if (TranslationFlag)
 			    {
 			      if(SymmetryFlag)
-				sprintf(TmpSzString,"%d %d %d %d",Sz,i, ZvalueBra, ZvalueKet);
+				{
+				  sprintf(TmpSzString,"%d %d %d %d",Sz,i, ZvalueBra, ZvalueKet);
+				  sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_sz_%d_k_%d_zbra_%d_zket_%d",Manager.GetString("peps-name"),NbrSites,Sz,i, ZvalueBra, ZvalueKet);
+				}
 			      else
-				sprintf(TmpSzString,"%d %d",Sz,i);
+				{
+				  sprintf(TmpSzString,"%d %d",Sz,i);
+				  sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_sz_%d_k_%d",Manager.GetString("peps-name"),NbrSites,Sz,i);
+				}
 			    }
 			  else
 			    {
 			      if(SymmetryFlag)
-				sprintf(TmpSzString,"%d %d %d",Sz, ZvalueBra, ZvalueKet);
+				{
+				  sprintf(TmpSzString,"%d %d %d",Sz, ZvalueBra, ZvalueKet);
+ 				  sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_sz_%d_zbra_%d_zket_%d",Manager.GetString("peps-name"),NbrSites,Sz, ZvalueBra, ZvalueKet);
+				}
 			      else
-				sprintf(TmpSzString,"%d",Sz);			  
+				{
+				  sprintf(TmpSzString,"%d",Sz);			  
+				  sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_sz_%d",Manager.GetString("peps-name"),NbrSites,Sz);
+				}
 			    }
-			  
+			  cout <<"after multiplication before Lanczos"<<endl;
 			  Lanczos.SetComplexAlgorithms();
 			  GenericComplexMainTask Task(&Manager, Space, &Lanczos, TransferMatrix, TmpSzString, SubspaceLegend, 0.0,  FullOutputFileName, FirstRunFlag, TmpEigenstateString);
 			  FirstRunFlag = false;
@@ -309,7 +326,7 @@ int main(int argc, char** argv)
 			  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 			  
 			  cout << "------------------------------------" << endl;
-			}
+	//		}
 		    }
 		  else
 		    {
@@ -333,6 +350,7 @@ int main(int argc, char** argv)
 			}
 		    }
 		  delete Space;
+		  delete [] TmpEigenstateString;
 		}
 	    }
 	}
@@ -341,5 +359,6 @@ int main(int argc, char** argv)
   delete TransferMatrix;
   delete []  TmpSzString;
   delete [] SubspaceLegend;
+  delete [] FullOutputFileName;
   return 0;
 }

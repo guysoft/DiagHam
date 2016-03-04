@@ -47,7 +47,7 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
   this->ZEigenvalueKet = 0;
 }
 
-
+ 
 
 // constructor for Hilbert space corresponding to a given total spin projection Sz no contraint on Momentum
 //
@@ -74,14 +74,20 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
     this->LookUpTableShift = (this->ChainLength << 1) - this->LookUpTableShift + 1;
   else
     this->LookUpTableShift = 0;
+
+  this->PowerD = new int [this->ChainLength];
+  this->PowerD[0]=1;
+  for(int i = 1 ; i <this->ChainLength;i++)
+    this->PowerD[i]=this->PowerD[i-1]*9;
   
   this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->ChainLength-1, this->ChainLength-1, this->DiffSz);
   this->ShiftNegativeDiffSz =   this->LargeHilbertSpaceDimension;
   if (this->DiffSz !=0 )
     this->LargeHilbertSpaceDimension += this->ShiftedEvaluateHilbertSpaceDimension(this->ChainLength-1, this->ChainLength-1, -this->DiffSz);
   
-  this->ChainDescriptionBra = new unsigned long [this->LargeHilbertSpaceDimension];
-  this->ChainDescriptionKet = new unsigned long [this->LargeHilbertSpaceDimension];
+  this->ChainDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+//  this->ChainDescriptionBra = new unsigned long [this->LargeHilbertSpaceDimension];
+// this->ChainDescriptionKet = new unsigned long [this->LargeHilbertSpaceDimension];
   
   long TmpHilbertSpaceDimension = GenerateStates(this->ChainLength-1, this->ChainLength-1, this->DiffSz, 0l);
   if (this->DiffSz != 0)
@@ -101,44 +107,44 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
   
   for (long i = 0l; i < TmpHilbertSpaceDimension; ++i)
     {
-      if ((this->ComputeZValue(this->ChainDescriptionBra[i]) == this->ZEigenvalueBra) &&(this->ComputeZValue(this->ChainDescriptionKet[i]) == this->ZEigenvalueKet) )
+      if ((this->ComputeZValueBra(this->ChainDescription[i]) == this->ZEigenvalueBra) &&(this->ComputeZValueKet(this->ChainDescription[i]) == this->ZEigenvalueKet) )
 	{
 	  ++this->LargeHilbertSpaceDimension;
 	}
       else
 	{
-	  this->ChainDescriptionBra[i] = DicardFlag;
+	  this->ChainDescription[i] = DicardFlag;
 	}
     }
   
   
-  unsigned long* TmpStateDescriptionBra = new unsigned long [this->LargeHilbertSpaceDimension];
-  unsigned long* TmpStateDescriptionKet = new unsigned long [this->LargeHilbertSpaceDimension];
+  unsigned long* TmpStateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+
   
   this->LargeHilbertSpaceDimension = 0l;
   for (long i = 0l; i < TmpHilbertSpaceDimension; ++i)
     {
-      if ( this->ChainDescriptionBra[i] != DicardFlag)
+      if ( this->ChainDescription[i] != DicardFlag)
 	{
-	  TmpStateDescriptionBra[this->LargeHilbertSpaceDimension] = this->ChainDescriptionBra[i];
-	  TmpStateDescriptionKet[this->LargeHilbertSpaceDimension] = this->ChainDescriptionKet[i];
+	  TmpStateDescription[this->LargeHilbertSpaceDimension] = this->ChainDescription[i];
 	  ++this->LargeHilbertSpaceDimension;
 	}
     }
   
-  delete[]  this->ChainDescriptionBra;
-  delete[]  this->ChainDescriptionKet;
-  this->ChainDescriptionBra = TmpStateDescriptionBra;
-  this->ChainDescriptionKet = TmpStateDescriptionKet;
+  delete[]  this->ChainDescription;
+
+  this->ChainDescription = TmpStateDescription;
   
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;  
   this->LookUpTable =0;
   
-  if (this->LargeHilbertSpaceDimension > 0l)
+/*  if (this->LargeHilbertSpaceDimension > 0l)
     {
       this->GenerateLookUpTable(memorySize);
     }
+ */ 
   this->RescalingFactors = 0;
+
 }
  
 
@@ -175,9 +181,12 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
   if (this->DiffSz !=0 )
     this->LargeHilbertSpaceDimension += this->ShiftedEvaluateHilbertSpaceDimension(this->ChainLength-1, this->ChainLength-1, -this->DiffSz);
 
-  this->ChainDescriptionBra = new unsigned long [this->LargeHilbertSpaceDimension];
-  this->ChainDescriptionKet = new unsigned long [this->LargeHilbertSpaceDimension];
-
+  this->ChainDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+  
+  int * PowerD = new int [this->ChainLength];
+  PowerD[0]=1;
+  for(int i = 1 ; i <this->ChainLength;i++)
+    PowerD[i]=PowerD[i-1]*9;
   
   long TmpHilbertSpaceDimension = GenerateStates(this->ChainLength-1, this->ChainLength-1, this->DiffSz, 0l);
   if (this->DiffSz != 0)
@@ -190,65 +199,64 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
       exit(1);
     } 
   this->LargeHilbertSpaceDimension = 0l;
-  unsigned long TmpCanonicalStateBra;
-  unsigned long TmpCanonicalStateKet;
+  unsigned long TmpCanonicalState;
+
   int NbrTranslation;
   int CurrentNbrStateInOrbit;
   unsigned long DicardFlag = ~0x0ul;
-  unsigned long TmpStateBra, TmpStateKet;
+  unsigned long TmpState;
+  
   this->CreatePrecalculationTable();
 
   for (long i = 0l; i < TmpHilbertSpaceDimension; ++i)
     {
-      TmpStateBra = this->ChainDescriptionBra[i];
-      TmpStateKet = this->ChainDescriptionKet[i];
-      this->FindCanonicalForm(TmpStateBra, TmpStateKet,TmpCanonicalStateBra, TmpCanonicalStateKet,NbrTranslation);
+      TmpState = this->ChainDescription[i];
+      this->FindCanonicalForm(TmpState,TmpCanonicalState, NbrTranslation);
 
-      if ((TmpStateBra  == TmpCanonicalStateBra) && (TmpStateKet  == TmpCanonicalStateKet ) )
+      if (TmpState  == TmpCanonicalState)
 	{
-	  CurrentNbrStateInOrbit = this->FindNumberTranslation(TmpCanonicalStateBra,TmpCanonicalStateKet);
-	  if ((this->CompatibilityWithMomentum[CurrentNbrStateInOrbit] == true)&&(this->ComputeZValue(TmpCanonicalStateBra) == this->ZEigenvalueBra) &&(this->ComputeZValue(TmpCanonicalStateKet) == this->ZEigenvalueKet) )
+	  CurrentNbrStateInOrbit = this->FindNumberTranslation(TmpCanonicalState);
+	  if ((this->CompatibilityWithMomentum[CurrentNbrStateInOrbit] == true)&&(this->ComputeZValueBra(TmpCanonicalState) == this->ZEigenvalueBra) &&(this->ComputeZValueKet(TmpCanonicalState) == this->ZEigenvalueKet) )
 	    {
 	      ++this->LargeHilbertSpaceDimension;
 	    }
 	  else
 	    {
-	      this->ChainDescriptionBra[i] = DicardFlag;
+	      this->ChainDescription[i] = DicardFlag;
 	    }
 	}
       else
 	{
-	  this->ChainDescriptionBra[i] = DicardFlag;
+	  this->ChainDescription[i] = DicardFlag;
 	}
     }
   
-  unsigned long* TmpStateDescriptionBra = new unsigned long [this->LargeHilbertSpaceDimension];
-  unsigned long* TmpStateDescriptionKet = new unsigned long [this->LargeHilbertSpaceDimension];
+  unsigned long* TmpStateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+  
   this->NbrStateInOrbit = new int [this->LargeHilbertSpaceDimension];
 
   this->LargeHilbertSpaceDimension = 0l;
   for (long i = 0l; i < TmpHilbertSpaceDimension; ++i)
     {
-      if ( this->ChainDescriptionBra[i] != DicardFlag)
+      if ( this->ChainDescription[i] != DicardFlag)
 	{
-	  TmpStateDescriptionBra[this->LargeHilbertSpaceDimension] = this->ChainDescriptionBra[i];
-	  TmpStateDescriptionKet[this->LargeHilbertSpaceDimension] = this->ChainDescriptionKet[i];
-	  CurrentNbrStateInOrbit = this->FindNumberTranslation(this->ChainDescriptionBra[i],this->ChainDescriptionKet[i]);
+	  TmpStateDescription[this->LargeHilbertSpaceDimension] = this->ChainDescription[i];
+	  CurrentNbrStateInOrbit = this->FindNumberTranslation(this->ChainDescription[i]);
 	  this->NbrStateInOrbit[this->LargeHilbertSpaceDimension] = CurrentNbrStateInOrbit;
 	  ++this->LargeHilbertSpaceDimension;
 	}
     }
   
-  delete[]  this->ChainDescriptionBra;
-  delete[]  this->ChainDescriptionKet;
-  this->ChainDescriptionBra = TmpStateDescriptionBra;
-  this->ChainDescriptionKet = TmpStateDescriptionKet;
+  delete[]  this->ChainDescription;
+  this->ChainDescription = TmpStateDescription;
+  
   
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;  
   this->LookUpTable =0;
 
   if (this->HilbertSpaceDimension > 0)
     this->GenerateLookUpTable(memorySize);
+  
 }
 
 
@@ -266,8 +274,7 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
       this->ComplementaryStateShift = chain.ComplementaryStateShift;
       this->LookUpTable = chain.LookUpTable;
       this->LookUpTableShift = chain.LookUpTableShift;
-      this->ChainDescriptionBra = chain.ChainDescriptionBra;
-      this->ChainDescriptionKet = chain.ChainDescriptionKet;
+      this->ChainDescription = chain.ChainDescription;
       this->DiffSz = chain.DiffSz;
       this->Momentum = chain.Momentum;
       this->FixedSpinProjectionFlag = chain.FixedSpinProjectionFlag;
@@ -280,6 +287,7 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
       this->FirstIndexUniqueStateDescriptionBra = chain.FirstIndexUniqueStateDescriptionBra;
       this->ShiftNegativeDiffSz = chain.ShiftNegativeDiffSz;
       this->BraShiftNegativeSz =  chain.BraShiftNegativeSz;
+      this->PowerD = chain.PowerD;
     }
   else
     {
@@ -287,6 +295,7 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
       this->LookUpTableShift = 0;
       this->ComplementaryStateShift = 0;
       this->HilbertSpaceDimension = 0;
+      this->ChainDescription = 0;
       this->ChainDescriptionBra = 0;
       this->ChainDescriptionKet = 0;
       this->ChainLength = 0;
@@ -298,6 +307,7 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
       this->NbrStateInOrbit = 0;
       this->ShiftNegativeDiffSz =0;
       this->BraShiftNegativeSz =0;
+      this->PowerD = 0;
     }
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
@@ -330,4 +340,5 @@ AbstractHilbertSpace* DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::Clone
 {
   return new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry (*this);
 }
+
 
