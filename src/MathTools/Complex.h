@@ -721,7 +721,7 @@ inline ostream& operator << (ostream& Str, const Complex& z)
   return Str;
 }
 
-// convert a string to comples
+// convert a string to complex
 // 
 // str = input string
 // return value = complex value

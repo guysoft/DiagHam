@@ -80,6 +80,8 @@ GenericNonSymmetricMainTask::GenericNonSymmetricMainTask(OptionManager* options,
 {
   this->Hamiltonian = hamiltonian;
   this->NbrEigenvalues = nbrEigenvalues;
+  cout<<this->NbrEigenvalues<<endl;
+  cout <<this->Hamiltonian->GetHilbertSpace()->GetHilbertSpaceDimension()<<endl;
   if (this->NbrEigenvalues > this->Hamiltonian->GetHilbertSpace()->GetHilbertSpaceDimension())
     {
       this->NbrEigenvalues = this->Hamiltonian->GetHilbertSpace()->GetHilbertSpaceDimension();

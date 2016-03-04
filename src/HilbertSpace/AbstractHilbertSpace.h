@@ -39,9 +39,7 @@
 
 #include <iostream>
 
-
 using std::ostream;
-
 
 class AbstractQuantumNumber;
 class SubspaceSpaceConverter;
