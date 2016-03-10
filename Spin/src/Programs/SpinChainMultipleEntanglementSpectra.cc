@@ -82,6 +82,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('c', "complex", "consider complex wave function");
   (*SystemGroup) += new SingleStringOption  ('\n', "generic-cut", "provide a list of sites that define the subsystem instead of the default cut");  
   (*SystemGroup) += new SingleIntegerOption  ('\n', "la", "subsystem size (negative if half of the system has to be considered)", -1);
+  (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");  
   (*OutputGroup) += new BooleanOption ('\n', "show-entropies", "show the entangelement entropy and trace of the reduced density matrix for each state");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
@@ -115,6 +116,7 @@ int main(int argc, char** argv)
   int InversionSector = 0;
   bool GenericCutFlag = false;
   int* SubsystemSites = 0;
+  bool ShowTimeFlag = Manager.GetBoolean("show-time");
 
   if (SpinWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue, XMomentum, XPeriodicity,
 							    YMomentum, YPeriodicity) == false)
@@ -380,6 +382,8 @@ int main(int argc, char** argv)
     }
   int* EntanglementSpectrumDimension = new int[((MaxSzA - MinSzA) / 2) + 1];
   
+  timeval TotalStartingTime;
+  timeval TotalEndingTime;
   if ((Manager.GetBoolean("complex") == false) && (Momentum2DFlag == false))
     {
       for (int TmpSzA = MinSzA; TmpSzA <= MaxSzA; TmpSzA += 2)
@@ -397,6 +401,10 @@ int main(int argc, char** argv)
 		}
 	      for (int Index = MinIndex; Index <= MaxIndex; ++Index)
 		{
+		  if (ShowTimeFlag == true)
+		    {
+		      gettimeofday (&(TotalStartingTime), 0);
+		    }
 		  RealMatrix PartialEntanglementMatrix;
 		  if (GenericCutFlag == false)
 		    PartialEntanglementMatrix = Space->EvaluatePartialEntanglementMatrix(SubsystemSize, TmpSzA, RealEigenstates[Index]);
@@ -433,6 +441,13 @@ int main(int argc, char** argv)
 		      EntanglementSpectrumDimension[(TmpSzA - MinSzA) / 2] = 1;
 		      EntanglementSpectra[(TmpSzA - MinSzA) / 2][Index - MinIndex] = TmpValues;
 		    }
+		  if (ShowTimeFlag == true)
+		    {
+		      gettimeofday (&(TotalEndingTime), 0);
+		      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+					    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+		      cout << "entanglement spectrum of state " << Index << " done in " << Dt << "s" << endl;
+		    }
 		}
 	    }
 	  else
@@ -458,6 +473,10 @@ int main(int argc, char** argv)
 		}
 	      for (int Index = MinIndex; Index <= MaxIndex; ++Index)
 		{
+		  if (ShowTimeFlag == true)
+		    {
+		      gettimeofday (&(TotalStartingTime), 0);
+		    }
 		  ComplexMatrix PartialEntanglementMatrix;
 		  if (GenericCutFlag == false)
 		    PartialEntanglementMatrix = Space->EvaluatePartialEntanglementMatrix(SubsystemSize, TmpSzA, ComplexEigenstates[Index]);
@@ -494,6 +513,13 @@ int main(int argc, char** argv)
 		      EntanglementSpectrumDimension[(TmpSzA - MinSzA) / 2] = 1;
 		      EntanglementSpectra[(TmpSzA - MinSzA) / 2][Index - MinIndex] = TmpValues;
 		    }
+		  if (ShowTimeFlag == true)
+		    {
+		      gettimeofday (&(TotalEndingTime), 0);
+		      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+					    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+		      cout << "entanglement spectrum of state " << Index << " done in " << Dt << "s" << endl;
+		    }		  
 		}
 	    }
 	  else
