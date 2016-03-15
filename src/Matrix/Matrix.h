@@ -288,8 +288,9 @@ class Matrix
   // write matrix in a file in ascii mode
   //
   // fileName = name of the file where the matrix has to be stored
+  // gnuplotFlag = if true, write the matrix in a format compatible with gnuplot
   // return value = true if no error occurs
-  virtual bool WriteAsciiMatrix (char* fileName);
+  virtual bool WriteAsciiMatrix (char* fileName, bool gnuplotFlag = false);
 
   // write matrix in a file in ascii mode, storing only its non zero elements, 
   // first column being the row index, second being the column index, the third is the matrix element real part and the fourth column the matrix element imaginary part

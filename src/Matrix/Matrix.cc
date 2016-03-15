@@ -346,9 +346,10 @@ bool Matrix::WriteMatrix (char* fileName)
 // write matrix in a file in ascii mode
 //
 // fileName = name of the file where the matrix has to be stored
+// gnuplotFlag = if true, write the matrix in a format compatible with gnuplot
 // return value = true if no error occurs
 
-bool Matrix::WriteAsciiMatrix (char* fileName)
+bool Matrix::WriteAsciiMatrix (char* fileName, bool gnuplotFlag)
 {
   ofstream File;
   File.precision(14);
@@ -356,32 +357,62 @@ bool Matrix::WriteAsciiMatrix (char* fileName)
   if ((this->MatrixType & Matrix::RealElements) == Matrix::RealElements)
     {
       double Tmp;
-      int ReducedNbrColumn = this->NbrColumn - 1;
-      for (int i = 0; i < this->NbrRow; ++i)
+      if (gnuplotFlag == false)
 	{
-	  for (int j = 0; j < ReducedNbrColumn; ++j)
+	  int ReducedNbrColumn = this->NbrColumn - 1;
+	  for (int i = 0; i < this->NbrRow; ++i)
 	    {
-	      this->GetMatrixElement(i, j, Tmp);
-	      File << Tmp << " ";
+	      for (int j = 0; j < ReducedNbrColumn; ++j)
+		{
+		  this->GetMatrixElement(i, j, Tmp);
+		  File << Tmp << " ";
+		}
+	      this->GetMatrixElement(i, ReducedNbrColumn, Tmp);
+	      File << Tmp << endl;
+	    }      
+	}
+      else
+	{
+	  for (int i = 0; i < this->NbrRow; ++i)
+	    {
+	      for (int j = 0; j < this->NbrColumn; ++j)
+		{
+		  this->GetMatrixElement(i, j, Tmp);
+		  File << i << " " << j << " " << Tmp << endl;
+		}
+	      File << endl;
 	    }
-	  this->GetMatrixElement(i, ReducedNbrColumn, Tmp);
-	  File << Tmp << endl;
-	}      
+	}
     }
   else
     {
       Complex Tmp;
-      int ReducedNbrColumn = this->NbrColumn - 1;
-      for (int i = 0; i < this->NbrRow; ++i)
+      if (gnuplotFlag == false)
 	{
-	  for (int j = 0; j < ReducedNbrColumn; ++j)
+	  int ReducedNbrColumn = this->NbrColumn - 1;
+	  for (int i = 0; i < this->NbrRow; ++i)
 	    {
-	      this->GetMatrixElement(i, j, Tmp);
-	      File << Tmp.Re << " " << Tmp.Im << " ";
+	      for (int j = 0; j < ReducedNbrColumn; ++j)
+		{
+		  this->GetMatrixElement(i, j, Tmp);
+		  File << Tmp.Re << " " << Tmp.Im << " ";
+		}
+	      this->GetMatrixElement(i, ReducedNbrColumn, Tmp);
+	      File << Tmp.Re << " " << Tmp.Im << endl;
+	    }      
+	}
+      else
+	{
+	  for (int i = 0; i < this->NbrRow; ++i)
+	    {
+	      for (int j = 0; j < this->NbrColumn; ++j)
+		{
+		  this->GetMatrixElement(i, j, Tmp);
+		  File << i << " " << j << " " << Tmp.Re << " " << Tmp.Im << endl;
+		}
+	      File << endl;
 	    }
-	  this->GetMatrixElement(i, ReducedNbrColumn, Tmp);
-	  File << Tmp.Re << " " << Tmp.Im << endl;
-	}      
+	}
     }
   File.close();
   return true;
