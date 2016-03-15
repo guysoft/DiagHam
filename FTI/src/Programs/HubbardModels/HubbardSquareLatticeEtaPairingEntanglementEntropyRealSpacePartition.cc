@@ -36,6 +36,7 @@
 #include "Tools/FTIFiles/FTIHubbardModelFileTools.h"
 
 #include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/ArrayTools.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
 
 #include "MathTools/FactorialCoefficient.h"
@@ -78,6 +79,11 @@ void GetEntanglementEntropyPerNbrParticlesA(double* oneBodyEntanglementTrimmedEn
 					    int nbrParticlesA, int currentOrbitalIndex, double currentFactor, double& entropy, double& alpha);
 
 
+void ComputeThermalQuantities (double beta, double mu, int nbrStates, double* stateEnergies, double& thermalNbrParticles, double& thermalEnergy,
+			       double& thermalNbrParticlesMuDerivative, double& thermalNbrParticlesBetaDerivative, 
+			       double& thermalEnergyMuDerivative, double& thermalEnergyBetaDerivative);
+
+
 int main(int argc, char** argv)
 {
   cout.precision(14);
@@ -111,12 +117,19 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "use-fermisea", "apply the eta^+ operators to the Fermi sea");
   (*SystemGroup) += new SingleStringOption  ('\n', "nonvacuum-file", "provide the description of the non-vacuum state as a two-column ASCII file");
   (*SystemGroup) += new BooleanOption ('\n', "use-random", "generate a random non-vacuum state");
-  (*SystemGroup) += new  SingleIntegerOption ('\n', "run-id", "add an additional run id to the file name when using the --use-random option", 0);  
+  (*SystemGroup) += new SingleIntegerOption ('\n', "run-id", "add an additional run id to the file name when using the --use-random option", 0);  
+  (*SystemGroup) += new BooleanOption ('\n', "randomize-nonvacuumfile", "randomize the non-vacuum state file by randomly changing occupied states while preserving the total energy");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "randomize-nbrmoves", "number of particles that should be moved before testing is the total energy has changed within the error bar", 10);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "randomize-energyerror", "acceptable error on the total energy when randomizing the non-vacuum state file by a given number of moves", 0.001);
+  (*SystemGroup) += new SingleIntegerOption ('\n', "randomize-maxnbrgroupmoves", "maximum number of moves of --randomize-nbrmoves particles", 10);
   (*SystemGroup) += new BooleanOption  ('\n', "show-nonvacuum", "show the non-vacuum state in the momentum basis");
   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");  
   (*SystemGroup) += new BooleanOption ('\n', "use-approximation", "use a saddle appoximation to evaluate the entanglement entropy");
   (*SystemGroup) += new BooleanOption ('\n', "use-rational", "use rational number to overcome accuracy issues");
-  (*SystemGroup) += new BooleanOption ('\n', "test-thermal", "check if the state satisfies the ETH");
+  (*SystemGroup) += new BooleanOption ('\n', "test-thermalentropy", "check if the state satisfies the ETH comparing the entropies");
+  (*SystemGroup) += new BooleanOption ('\n', "test-thermalcorrelation", "check if the state satisfies the ETH comparing the correlation matrices");
+  (*SystemGroup) += new SingleDoubleOption ('\n', "thermal-beta", "inverse temperature value to use for thermal calculations", -0.0020268);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "thermal-mu", "chemical potential value to use for thermal calculations", 542.045);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -260,6 +273,97 @@ int main(int argc, char** argv)
 	     VacuumXMomentum += TmpXMomenta[i];
 	     VacuumYMomentum += TmpYMomenta[i];	     
 	   }
+	 if (Manager.GetBoolean("randomize-nonvacuumfile") == true)
+	   {
+	     double VacuumEnergyError = Manager.GetDouble("randomize-energyerror");
+	     int NbrMoves = Manager.GetInteger("randomize-nbrmoves");
+	     int NbrDiscardedTightBindingModelEnergies = NbrSites - VacuumNbrParticles;
+	     int* DiscardedLinearizedMomenta = new int[NbrDiscardedTightBindingModelEnergies];
+	     NbrDiscardedTightBindingModelEnergies = 0;
+	     int* ReferenceVacuumOneBodyLinearizedMomenta = new int [VacuumNbrParticles];
+	     for (int i = 0; i < VacuumNbrParticles; ++i)
+	       {
+		 ReferenceVacuumOneBodyLinearizedMomenta[i] = VacuumOneBodyLinearizedMomenta[i];
+	       }
+	     for (int i = 0; i < NbrSites; ++i)
+	       {
+		 if (SearchInUnsortedArray(TightBindingModelLinearizedMomenta[i], VacuumOneBodyLinearizedMomenta, VacuumNbrParticles) == -1)
+		   {
+		     DiscardedLinearizedMomenta[NbrDiscardedTightBindingModelEnergies] = TightBindingModelLinearizedMomenta[i]; 
+		     ++NbrDiscardedTightBindingModelEnergies;
+		   }
+	       }
+	     AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (0);
+	     RandomNumber->UseTimeSeed();
+	     int* SourceStates = new int [NbrMoves];
+	     int* DestinationStates = new int [NbrMoves];
+	     double TmpEnergyDifference = 0.0;
+	     int MaxNbrGroupMoves = (int) (RandomNumber->GetRealRandomNumber() * ((double) Manager.GetInteger("randomize-maxnbrgroupmoves")));
+	     if (MaxNbrGroupMoves <= 0)
+	       MaxNbrGroupMoves = 1;
+	     long NbrRejetedMoves = 0;
+	     long NbrAcceptedMoves = 0;
+	     while (MaxNbrGroupMoves > 0)
+	       {
+		 for (int i = 0; i < NbrMoves; ++i)
+		   {
+		     SourceStates[i] = (int) (RandomNumber->GetRealRandomNumber() * ((double) VacuumNbrParticles));
+		     DestinationStates[i] = (int) (RandomNumber->GetRealRandomNumber() * ((double) NbrDiscardedTightBindingModelEnergies));
+		   }
+		 double TmpCurrentEnergyDifference = 0.0;
+		 for (int i = 0; i < NbrMoves; ++i)
+		   {
+		     TmpCurrentEnergyDifference += (TightBindingModel->GetEnergy(0, DiscardedLinearizedMomenta[DestinationStates[i]]) 
+						    - TightBindingModel->GetEnergy(0, VacuumOneBodyLinearizedMomenta[SourceStates[i]]));
+		     int TmpMomentum = VacuumOneBodyLinearizedMomenta[SourceStates[i]];
+		     VacuumOneBodyLinearizedMomenta[SourceStates[i]] = DiscardedLinearizedMomenta[DestinationStates[i]];
+		     DiscardedLinearizedMomenta[DestinationStates[i]] = TmpMomentum;
+		   }
+		 if (fabs(TmpEnergyDifference + TmpCurrentEnergyDifference) < VacuumEnergyError)
+		   {
+		     TmpEnergyDifference += TmpCurrentEnergyDifference;
+		     --MaxNbrGroupMoves;
+		     VacuumXMomentum = 0;
+		     VacuumYMomentum = 0;
+		     VacuumTotalEnergy = 0.0;
+		     int TmpXMomentum;
+		     int TmpYMomentum;
+		     for (int i = 0; i < VacuumNbrParticles; ++i)
+		       {
+			 TightBindingModel->GetLinearizedMomentumIndex(VacuumOneBodyLinearizedMomenta[i], TmpXMomentum, TmpYMomentum);
+			 VacuumTotalEnergy += TightBindingModel->GetEnergy(0, VacuumOneBodyLinearizedMomenta[i]);
+			 VacuumXMomentum += TmpXMomentum;
+			 VacuumYMomentum += TmpYMomentum;	     
+		       }
+		     ++NbrAcceptedMoves;
+		   }
+		 else
+		   {
+		     for (int i = NbrMoves - 1; i >= 0; --i)
+		       {
+			 int TmpMomentum = VacuumOneBodyLinearizedMomenta[SourceStates[i]];
+			 VacuumOneBodyLinearizedMomenta[SourceStates[i]] = DiscardedLinearizedMomenta[DestinationStates[i]];
+			 DiscardedLinearizedMomenta[DestinationStates[i]] = TmpMomentum;
+		       }
+		     ++NbrRejetedMoves;
+		   }
+	       }
+	     int NbrNewStates = 0;
+	     SortArrayUpOrdering(ReferenceVacuumOneBodyLinearizedMomenta, VacuumNbrParticles);
+	     for (int i = 0; i < VacuumNbrParticles; ++i)
+	       {
+		 if (SearchInArray(VacuumOneBodyLinearizedMomenta[i], ReferenceVacuumOneBodyLinearizedMomenta, VacuumNbrParticles) == -1)
+		   {
+		     ++NbrNewStates;
+		   }
+	       }
+	     cout << "difference of energy for the randomized states = " << TmpEnergyDifference << endl;
+	     cout << "number of accepted moves = " << NbrAcceptedMoves << endl;
+	     cout << "number of rejected moves = " << NbrRejetedMoves << endl;
+	     cout << "number of updated occupied one-body states = " << NbrNewStates << endl;
+	     delete[] ReferenceVacuumOneBodyLinearizedMomenta;
+	     delete[] DiscardedLinearizedMomenta;
+	   }
        }
      else
        {
@@ -306,15 +410,31 @@ int main(int argc, char** argv)
   XMomentum %= NbrSitesX;
   YMomentum %= NbrSitesY;
 
-  if (Manager.GetBoolean("test-thermal") == true)
+  int NbrParticles = VacuumNbrParticles; 
+  NbrParticles += 2 * NbrPairs;
+  TotalSz += VacuumTotalSz;
+  char* StatisticPrefix = new char [64];
+  sprintf (StatisticPrefix, "fermions_hubbard");
+  char* FilePrefix = new char [256];
+  if ((Manager.GetInteger("nearbyeta-x") == 0) && (Manager.GetInteger("nearbyeta-y") == 0))
     {
-      double MinBeta = 0.0001;
-      double BetaStep = 1.0;
-      int NbrBetaSteps = 100;
-      double MinMu = TightBindingModelEnergies[0] - fabs(TightBindingModelEnergies[0] * 2);
+      sprintf (FilePrefix, "%s_square_etapairing_nbrpairs_%ld_x_%d_y_%d_n_%d_ns_%d", StatisticPrefix, Manager.GetInteger("nbr-pairs"), NbrSitesX, NbrSitesY, NbrParticles, NbrSites);
+    }
+  else
+    {
+      sprintf (FilePrefix, "%s_square_nearbyetapairing_nbrpairs_%ld_alphax_%ld_alphay_%ld_x_%d_y_%d_n_%d_ns_%d", StatisticPrefix, Manager.GetInteger("nbr-pairs"), Manager.GetInteger("nearbyeta-x"), 
+	       Manager.GetInteger("nearbyeta-y"), NbrSitesX, NbrSitesY, NbrParticles, NbrSites);
+    }
+
+  if (Manager.GetBoolean("test-thermalentropy") == true)
+    {
+      double MinBeta = -0.002;
+      double BetaStep = 0.0001;
+      int NbrBetaSteps = 20;
+      double MinMu = 500;//TightBindingModelEnergies[0] - fabs(TightBindingModelEnergies[0] * 2);
       double MaxMu = TightBindingModelEnergies[NbrSites - 1] + fabs(TightBindingModelEnergies[NbrSites - 1] * 2);
-      int NbrMuSteps = 100;
-      double MuStep = (MaxMu - MinMu) / ((double) NbrMuSteps);
+      int NbrMuSteps = 5;
+      double MuStep = 20;//(MaxMu - MinMu) / ((double) NbrMuSteps);
       double* EnergyExponentials = new double[NbrSites];
       double** ThermalEnergies = new double*[NbrBetaSteps];
       double** ThermalNbrParticules = new double*[NbrBetaSteps];
@@ -326,6 +446,7 @@ int main(int argc, char** argv)
 	  ThermalEntropy[j] = new double[NbrMuSteps];
 	}
       double MinErrorNbrParticules = (double) VacuumNbrParticles;
+      double MinErrorEnergy = ((double) VacuumNbrParticles) * TightBindingModelEnergies[NbrSites - 1];
       double CurrentBeta = MinBeta;
       for (int j = 0; j < NbrBetaSteps; ++j)
 	{
@@ -355,19 +476,23 @@ int main(int argc, char** argv)
 		{
 		  MinErrorNbrParticules = abs(TmpNbrParticules - VacuumNbrParticles);
 		}
-	      if (ThermalEnergies[j][i] > -100.0)
-		cout << CurrentBeta << " " << CurrentMu << " " << ThermalNbrParticules[j][i] << " " << ThermalEnergies[j][i] << " " << ThermalEntropy[j][i] << endl;
+	      if (fabs(ThermalEnergies[j][i] - VacuumTotalEnergy) < MinErrorEnergy)
+		{
+		  MinErrorEnergy = fabs(ThermalEnergies[j][i] - VacuumTotalEnergy);
+		}
+//  	      if (ThermalEnergies[j][i] > 0.0)
+// 		cout << CurrentBeta << " " << CurrentMu << " " << ThermalNbrParticules[j][i] << " " << ThermalEnergies[j][i] << " " << ThermalEntropy[j][i] << endl;
 	      CurrentMu += MuStep;
 	    }
 	  CurrentBeta += BetaStep;
 	}
-
-
+      cout << "min energy error = " << MinErrorEnergy << endl;
+      cout << "min nbr particle error = " << MinErrorNbrParticules << endl;
       CurrentBeta = MinBeta;
       MinErrorNbrParticules += ((double) VacuumNbrParticles) * 0.05;
-      cout << MinErrorNbrParticules << endl; 
+      cout << "best thermal nbr of particle approximations : " << endl;
       int NbrAcceptedValues = 0;
-      double MinErrorEnergy = fabs(VacuumTotalEnergy);
+      MinErrorEnergy = ((double) VacuumNbrParticles) * TightBindingModelEnergies[NbrSites - 1];
       for (int j = 0; j < NbrBetaSteps; ++j)
 	{
 	  double CurrentMu = MinMu;
@@ -375,12 +500,11 @@ int main(int argc, char** argv)
 	    {
 	      if (abs(ThermalNbrParticules[j][i] - VacuumNbrParticles) < MinErrorNbrParticules)
 		{
-		  if (fabs(ThermalEnergies[j][i] - VacuumTotalEnergy) < MinErrorEnergy)
-		    {
-		      MinErrorEnergy = fabs(ThermalEnergies[j][i] - VacuumTotalEnergy);
-		    }
+ 		  if (fabs(ThermalEnergies[j][i] - VacuumTotalEnergy) < MinErrorEnergy)
+ 		    {
+ 		      MinErrorEnergy = fabs(ThermalEnergies[j][i] - VacuumTotalEnergy);
+ 		    }
 		  //		  cout << CurrentBeta << " " << CurrentMu << " " << ThermalNbrParticules[j][i] << " " << ThermalEnergies[j][i] << " " << ThermalEntropy[j][i] << endl;
-		  ++NbrAcceptedValues;
 		}
 	      CurrentMu += MuStep;
 	    }
@@ -396,6 +520,7 @@ int main(int argc, char** argv)
 	  for (int i = 0; i < NbrMuSteps; ++i)
 	    {
 	      if ((abs(ThermalNbrParticules[j][i] - VacuumNbrParticles) < MinErrorNbrParticules) && (fabs(ThermalEnergies[j][i] - VacuumTotalEnergy) < MinErrorEnergy))
+		//	      if (fabs(ThermalEnergies[j][i] - VacuumTotalEnergy) < MinErrorEnergy)
 		{
 		  cout << CurrentBeta << " " << CurrentMu << " " << ThermalNbrParticules[j][i] << " " << ThermalEnergies[j][i] << " " << ThermalEntropy[j][i] << endl;
 		  ++NbrAcceptedValues;
@@ -404,28 +529,99 @@ int main(int argc, char** argv)
 	    }
 	  CurrentBeta += BetaStep;
 	}
+      cout << "nbr of best thermal energy approximations = " << NbrAcceptedValues << endl;
+    }
+  HermitianMatrix ThermalCorrelationMatrix;
+  if (Manager.GetBoolean("test-thermalcorrelation") == true)
+    {
+      double Mu = Manager.GetDouble("thermal-mu");
+      double Beta = Manager.GetDouble("thermal-beta");
+      double ThermalNbrParticles;
+      double ThermalEnergy;
+      double ThermalNbrParticlesMuDerivative;
+      double ThermalNbrParticlesBetaDerivative;
+      double ThermalEnergyMuDerivative;
+      double ThermalEnergyBetaDerivative;
+      ComputeThermalQuantities (Beta, Mu, NbrSites, TightBindingModelEnergies, 
+				ThermalNbrParticles, ThermalEnergy,
+				ThermalNbrParticlesMuDerivative, ThermalNbrParticlesBetaDerivative, 
+				ThermalEnergyMuDerivative, ThermalEnergyBetaDerivative);
+      cout << "thermal nbr of particles = " << ThermalNbrParticles << endl;
+      cout << "thermal energy = " << ThermalEnergy << endl;
+
+      double* FermiFactors = new double[NbrSites];
+      double Tmp = 0.0;
+      for (int k = 0 ; k < NbrSites; ++k)
+	{
+	  FermiFactors[k] = 1.0 / (1.0 + exp(Beta * (TightBindingModelEnergies[k] - Mu)));
+	  Tmp += FermiFactors[k];
+	}
+      Tmp /= ((double) NbrSites);
+      int TmpNbrSitesA = NbrSitesXA * NbrSitesYA;
+      int TmpMomentumX;
+      int TmpMomentumY;
+      ThermalCorrelationMatrix = HermitianMatrix(TmpNbrSitesA, true);
+      Complex** PhaseFactors = new Complex*[2 * NbrSitesXA + 1];
+      for (int i = 0; i <= (2 * NbrSitesXA); ++i)
+	{
+	  PhaseFactors[i] = new Complex[2 * NbrSitesYA + 1];
+	  double TmpXFactor = 2.0 * M_PI * ((double) (i - NbrSitesXA)) / ((double) NbrSitesX);
+	  for (int j = 0; j <= (2 * NbrSitesYA); ++j)
+	    {
+	      double TmpYFactor = 2.0 * M_PI * ((double) (j - NbrSitesYA)) / ((double) NbrSitesY);
+	      Complex Tmp2 = 0.0;
+	      for (int k = 0 ; k < NbrSites; ++k)
+		{
+		  TightBindingModel->GetLinearizedMomentumIndex(TightBindingModelLinearizedMomenta[k], TmpMomentumX, TmpMomentumY);
+		  Tmp2 += Phase((((double) TmpMomentumX) * TmpXFactor) + (((double) TmpMomentumY) * TmpYFactor)) * FermiFactors[k];
+		}
+	      PhaseFactors[i][j] = Tmp2 / ((double) NbrSites);
+	    }
+	}
+      for (int i = 0 ; i < TmpNbrSitesA; ++i)
+	{
+	  ThermalCorrelationMatrix.SetMatrixElement(i, i, Tmp);
+	  int TmpXA1 = i / NbrSitesYA;
+	  int TmpYA1 = i % NbrSitesYA;
+	  for (int j = i + 1 ; j < TmpNbrSitesA; ++j)
+	    {
+	      int TmpXA2 = j / NbrSitesYA;
+	      int TmpYA2 = j % NbrSitesYA;
+	      ThermalCorrelationMatrix.SetMatrixElement(i, j, PhaseFactors[(TmpXA1 - TmpXA2) + NbrSitesXA][(TmpYA1 - TmpYA2) + NbrSitesYA]);
+	    }
+	}
+      delete[] FermiFactors;
+      for (int i = 0; i <= (2 * NbrSitesXA); ++i)
+	{
+	  delete[] PhaseFactors[i];
+	}
+      delete[] PhaseFactors;
+      char* TmpMatrixFileName = new char[512];
+      if ((Manager.GetBoolean("use-random") == true) || (Manager.GetBoolean("randomize-nonvacuumfile") == true))
+	{
+	  sprintf(TmpMatrixFileName, "%s_sz_%d_xa_%d_ya_%d_runid_%ld.thermal.mat.txt", FilePrefix, TotalSz, 
+		  NbrSitesXA, NbrSitesYA, Manager.GetInteger("run-id"));
+	}
+      else
+	{
+	  sprintf(TmpMatrixFileName, "%s_sz_%d_xa_%d_ya_%d.thermal.mat.txt", FilePrefix, TotalSz, 
+		  NbrSitesXA, NbrSitesYA);
+	}
+      ThermalCorrelationMatrix.WriteAsciiMatrix(TmpMatrixFileName, true);
+//       RealDiagonalMatrix ThermalCorrelationMatrixEigenvalues(ThermalCorrelationMatrix.GetNbrRow(), true);
+// #ifdef __LAPACK__
+//       ThermalCorrelationMatrix.LapackDiagonalize(ThermalCorrelationMatrixEigenvalues);
+// #else
+//       ThermalCorrelationMatrix.Diagonalize(ThermalCorrelationMatrixEigenvalues);
+// #endif
+//       for (int i = 0; i < ThermalCorrelationMatrixEigenvalues.GetNbrRow(); ++i)
+// 	cout << ThermalCorrelationMatrixEigenvalues[i] << endl;
     }
 
-
-  int NbrParticles = VacuumNbrParticles; 
-  NbrParticles += 2 * NbrPairs;
-  TotalSz += VacuumTotalSz;
-  char* StatisticPrefix = new char [64];
-  sprintf (StatisticPrefix, "fermions_hubbard");
-  char* FilePrefix = new char [256];
-  if ((Manager.GetInteger("nearbyeta-x") == 0) && (Manager.GetInteger("nearbyeta-y") == 0))
-    {
-      sprintf (FilePrefix, "%s_square_etapairing_nbrpairs_%ld_x_%d_y_%d_n_%d_ns_%d", StatisticPrefix, Manager.GetInteger("nbr-pairs"), NbrSitesX, NbrSitesY, NbrParticles, NbrSites);
-    }
-  else
-    {
-      sprintf (FilePrefix, "%s_square_nearbyetapairing_nbrpairs_%ld_alphax_%ld_alphay_%ld_x_%d_y_%d_n_%d_ns_%d", StatisticPrefix, Manager.GetInteger("nbr-pairs"), Manager.GetInteger("nearbyeta-x"), 
-	       Manager.GetInteger("nearbyeta-y"), NbrSitesX, NbrSitesY, NbrParticles, NbrSites);
-    }
   char* EntropyFileName = new char [512];
-  if (Manager.GetBoolean("use-random") == true)
+  if ((Manager.GetBoolean("use-random") == true) || (Manager.GetBoolean("randomize-nonvacuumfile") == true))
     {
-      sprintf(EntropyFileName, "%s_sz_%d_runid_%ld_dxa_%d_ya_%d.ent", FilePrefix, TotalSz, Manager.GetInteger("run-id"), 
+      sprintf(EntropyFileName, "%s_sz_%d_runid_%ld_xa_%d_ya_%d.ent", FilePrefix, TotalSz, Manager.GetInteger("run-id"), 
 	      MaxNbrSitesXA, MaxNbrSitesYA);
     }
   else
@@ -434,9 +630,9 @@ int main(int argc, char** argv)
     }
 
   char* OneBodyEntropyFileName = new char [512];
-  if (Manager.GetBoolean("use-random") == true)
+  if ((Manager.GetBoolean("use-random") == true) || (Manager.GetBoolean("randomize-nonvacuumfile") == true))
     {
-      sprintf(OneBodyEntropyFileName, "%s_sz_%d_runid_%ld_dxa_%d_ya_%d.onebody.ent", FilePrefix, TotalSz, Manager.GetInteger("run-id"), 
+      sprintf(OneBodyEntropyFileName, "%s_sz_%d_runid_%ld_xa_%d_ya_%d.onebody.ent", FilePrefix, TotalSz, Manager.GetInteger("run-id"), 
 	      MaxNbrSitesXA, MaxNbrSitesYA);
     }
   else
@@ -486,7 +682,7 @@ int main(int argc, char** argv)
   if (Manager.GetString("nonvacuum-file") == 0)
     {
       char* NonVacuumFileName = new char [512];
-      if (Manager.GetBoolean("use-random") == true)
+      if ((Manager.GetBoolean("use-random") == true) || (Manager.GetBoolean("randomize-nonvacuumfile") == true))
 	{
 	  sprintf(NonVacuumFileName, "%s_sz_%d_runid_%ld_nonvacuum.dat", FilePrefix, TotalSz, Manager.GetInteger("run-id"));
 	}
@@ -541,6 +737,27 @@ int main(int argc, char** argv)
 	}
       RealDiagonalMatrix VacuumOneBodyEntanglementEnergies(TotalNbrSitesA, true);
       HermitianMatrix TmpEntanglementHamiltonian = EtaPairaingEntanglementEntropyExtractCorrelationMatrix(EntanglementHamiltonian, MaxNbrSitesXA, MaxNbrSitesYA, NbrSitesXA, NbrSitesYA);
+       if (Manager.GetBoolean("test-thermalcorrelation") == true)
+ 	{
+	  char* TmpMatrixFileName = new char[512];
+	  if ((Manager.GetBoolean("use-random") == true) || (Manager.GetBoolean("randomize-nonvacuumfile") == true))
+	    {
+	      sprintf(TmpMatrixFileName, "%s_sz_%d_xa_%d_ya_%d_runid_%ld.corr.mat.txt", FilePrefix, TotalSz, 
+		      NbrSitesXA, NbrSitesYA, Manager.GetInteger("run-id"));
+	    }
+	  else
+	    {
+	      sprintf(TmpMatrixFileName, "%s_sz_%d_xa_%d_ya_%d.corr.mat.txt", FilePrefix, TotalSz, 
+		      NbrSitesXA, NbrSitesYA);
+	    }
+ 	  TmpEntanglementHamiltonian.WriteAsciiMatrix(TmpMatrixFileName, true);
+// 	  ComplexMatrix TmpMatrix1(TmpEntanglementHamiltonian);
+// 	  ComplexMatrix TmpMatrix2(ThermalCorrelationMatrix);
+// 	  ComplexMatrix TmpMatrix3 = HermitianMultiply(TmpMatrix1, TmpMatrix2);
+// 	  ComplexMatrix TmpMatrix4 = HermitianMultiply(TmpMatrix1, TmpMatrix1);
+// 	  ComplexMatrix TmpMatrix5 = HermitianMultiply(TmpMatrix2, TmpMatrix2);
+// 	  cout << "scalar = " << (TmpMatrix3.ComplexTr() / (sqrt(TmpMatrix4.Tr() * TmpMatrix5.Tr()))) << endl;
+ 	}
 #ifdef __LAPACK__
       TmpEntanglementHamiltonian.LapackDiagonalize(VacuumOneBodyEntanglementEnergies);
 #else
@@ -896,4 +1113,29 @@ double GetZ0DefintionSum (double* oneBodyEntanglementTrimmedEnergies, int nbrOne
     }
   TmpSum *= z0;
   return (TmpSum - ((double) (nbrParticlesA + 1)));
+}
+
+void ComputeThermalQuantities (double beta, double mu, int nbrStates, double* stateEnergies, double& thermalNbrParticles, double& thermalEnergy,
+			       double& thermalNbrParticlesMuDerivative, double& thermalNbrParticlesBetaDerivative, 
+			       double& thermalEnergyMuDerivative, double& thermalEnergyBetaDerivative)
+{
+  thermalEnergy = 0.0;
+  thermalNbrParticles = 0.0;
+  thermalEnergyMuDerivative = 0.0;
+  thermalEnergyBetaDerivative = 0.0;
+  thermalNbrParticlesMuDerivative = 0.0;
+  thermalNbrParticlesBetaDerivative = 0.0;
+  for (int k = 0 ; k < nbrStates; ++k)
+    {
+      double TmpExp = exp (beta * (stateEnergies[k] - mu));
+      double Tmp = 1.0 / (1.0 + TmpExp);
+      thermalNbrParticles += Tmp;
+      thermalEnergy += Tmp * stateEnergies[k];
+      Tmp *= Tmp;
+      Tmp *= TmpExp;
+      thermalEnergyMuDerivative += Tmp * beta * stateEnergies[k];
+      thermalEnergyBetaDerivative -= Tmp * stateEnergies[k] * (stateEnergies[k] - mu);
+      thermalNbrParticlesMuDerivative += Tmp * beta;
+      thermalNbrParticlesBetaDerivative -= Tmp * (stateEnergies[k] - mu);
+    }
 }

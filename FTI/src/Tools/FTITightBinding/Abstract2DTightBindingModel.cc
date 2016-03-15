@@ -1712,7 +1712,7 @@ Complex Abstract2DTightBindingModel::EvaluateTwoPointCorrelationFunction(int x, 
 
 HermitianMatrix Abstract2DTightBindingModel::EvaluateFullTwoPointCorrelationFunction(int maxX, int maxY, int* occupiedMomenta, int nbrOccupiedMomenta, int bandIndex)
 {
-  int TotalNbrSites = maxX * maxY;
+  int TotalNbrSites = maxX * maxY * this->NbrBands;
   int TmpMomentumX;
   int TmpMomentumY;
   HermitianMatrix EntanglementHamiltonian(TotalNbrSites, true);
@@ -1739,6 +1739,21 @@ HermitianMatrix Abstract2DTightBindingModel::EvaluateFullTwoPointCorrelationFunc
 	  TmpPhaseFactorY[i][j] = Phase(this->KyFactor * ((double) (TmpMomentumY * (maxY - i))));
 	}
     }
+  
+  Complex*** TmpFormFactors = new Complex** [nbrOccupiedMomenta];
+  for (int i = 0; i < nbrOccupiedMomenta; ++i)
+    {
+      TmpFormFactors[i] = new Complex*[this->NbrBands];
+      for (int j = 0; j < this->NbrBands; ++j)
+	{
+	  TmpFormFactors[i][j] = new Complex[this->NbrBands];
+	  for (int k = 0; k < this->NbrBands; ++k)
+	    {	      
+	      TmpFormFactors[i][j][k] = (Conj(this->OneBodyBasis[occupiedMomenta[i]][bandIndex][j])
+					 * this->OneBodyBasis[occupiedMomenta[i]][bandIndex][k]);
+	    }
+	}
+    }
 
   for (int TmpX1 = 0; TmpX1 < maxX; ++TmpX1)
     {
@@ -1763,8 +1778,7 @@ HermitianMatrix Abstract2DTightBindingModel::EvaluateFullTwoPointCorrelationFunc
 			      Complex* DiffY = TmpPhaseFactorY[TmpY2 - TmpY1 + maxY];
 			      for (int i = 0; i < nbrOccupiedMomenta; ++i)
 				{
-				  Tmp += (DiffX[i] * DiffY[i] * Conj(this->OneBodyBasis[occupiedMomenta[i]][bandIndex][TmpOrbital1])
-					  * this->OneBodyBasis[occupiedMomenta[i]][bandIndex][TmpOrbital2]);
+				  Tmp += (DiffX[i] * DiffY[i] * TmpFormFactors[i][TmpOrbital1][TmpOrbital2]);
 				}
 			      EntanglementHamiltonian.SetMatrixElement(TmpReducedLinearizedIndex1, TmpReducedLinearizedIndex2, Tmp);
 			    }
@@ -1781,8 +1795,122 @@ HermitianMatrix Abstract2DTightBindingModel::EvaluateFullTwoPointCorrelationFunc
   for (int i = 0; i < TmpMaxY2; ++i)
     delete[] TmpPhaseFactorY[i];
   delete[] TmpPhaseFactorY;
-
+  for (int i = 0; i < nbrOccupiedMomenta; ++i)
+    {
+      for (int j = 0; j < this->NbrBands; ++j)
+	delete[] TmpFormFactors[i][j];
+      delete[] TmpFormFactors[i];
+    }
+  delete[] TmpFormFactors;
   EntanglementHamiltonian /= ((double) (this->NbrSiteX * this->NbrSiteY));
   return EntanglementHamiltonian;
 }
 
+// evaluate the mixed two point correlation function in a given region, assuming translation invariance along the y direction
+//
+// maxX = length along the x direction of the region 
+// ky = momentum along the y direction
+// occupiedMomenta = array that gives all the occupied momenta (as linearized indices)
+// nbrOccupiedMomenta = number of occupied momenta
+// bandIndex = index of the band to consider
+// return value = matrix where the values of the two point correlation function will be stored (using the linearized position index as entry)
+
+HermitianMatrix Abstract2DTightBindingModel::EvaluateFullMixedTwoPointCorrelationFunctionWithKy(int maxX, int ky, int* occupiedMomenta, int nbrOccupiedMomenta, int bandIndex)
+{
+  int TotalNbrSites = maxX * this->NbrBands;
+  int TmpMomentumX;
+  int TmpMomentumY;
+  HermitianMatrix EntanglementHamiltonian(TotalNbrSites, true);
+
+  int TmpNbrKeptStates = 0;
+  for (int j = 0; j < nbrOccupiedMomenta; ++j)
+    {
+      this->GetLinearizedMomentumIndex(occupiedMomenta[j], TmpMomentumX, TmpMomentumY);
+      if (TmpMomentumY == ky)
+	{
+	  ++TmpNbrKeptStates;
+	}
+    }
+  if (TmpNbrKeptStates == 0)
+    {
+      return EntanglementHamiltonian;
+    }
+  int* TmpKeptStates = new int[TmpNbrKeptStates];
+  TmpNbrKeptStates = 0;
+  for (int j = 0; j < nbrOccupiedMomenta; ++j)
+   {
+     this->GetLinearizedMomentumIndex(occupiedMomenta[j], TmpMomentumX, TmpMomentumY);
+     if (TmpMomentumY == ky)
+	{
+	  TmpKeptStates[TmpNbrKeptStates] = j;
+	  ++TmpNbrKeptStates;
+	}
+   }
+
+  int TmpMaxX2 = 2 * maxX + 1;
+  Complex** TmpPhaseFactorX = new Complex*[TmpMaxX2];
+  for (int i = 0; i < TmpMaxX2; ++i)
+    {
+      TmpPhaseFactorX[i] = new Complex[TmpNbrKeptStates];
+      for (int j = 0; j < TmpNbrKeptStates; ++j)
+	{
+	  this->GetLinearizedMomentumIndex(occupiedMomenta[TmpKeptStates[j]], TmpMomentumX, TmpMomentumY);
+	  TmpPhaseFactorX[i][j] = Phase(this->KxFactor * ((double) (TmpMomentumX * (maxX - i))));
+	}
+    }
+  
+  
+  Complex*** TmpFormFactors = new Complex** [TmpNbrKeptStates];
+  for (int i = 0; i < TmpNbrKeptStates; ++i)
+    {
+      TmpFormFactors[i] = new Complex*[this->NbrBands];
+      for (int j = 0; j < this->NbrBands; ++j)
+	{
+	  TmpFormFactors[i][j] = new Complex[this->NbrBands];
+	  for (int k = 0; k < this->NbrBands; ++k)
+	    {	      
+	      TmpFormFactors[i][j][k] = (Conj(this->OneBodyBasis[occupiedMomenta[TmpKeptStates[i]]][bandIndex][j])
+					 * this->OneBodyBasis[occupiedMomenta[TmpKeptStates[i]]][bandIndex][k]);
+	    }
+	}
+    }
+
+
+  for (int TmpX1 = 0; TmpX1 < maxX; ++TmpX1)
+    {
+      for (int TmpOrbital1 = 0; TmpOrbital1 < this->NbrBands; ++TmpOrbital1)
+	{
+	  int TmpReducedLinearizedIndex1 = TmpOrbital1 + (TmpX1 * this->NbrBands);
+	  for (int TmpX2 = 0; TmpX2 < maxX; ++TmpX2)
+	    {
+	      for (int TmpOrbital2 = 0; TmpOrbital2 < this->NbrBands; ++TmpOrbital2)
+		{
+		  int TmpReducedLinearizedIndex2 = TmpOrbital2 + (TmpX2 * this->NbrBands);
+		  if (TmpReducedLinearizedIndex1 <= TmpReducedLinearizedIndex2)		  
+		    {
+		      Complex Tmp = 0.0;
+		      Complex* DiffX = TmpPhaseFactorX[TmpX2 - TmpX1 + maxX];
+		      for (int i = 0; i < TmpNbrKeptStates; ++i)
+			{
+			  Tmp += (DiffX[i] * TmpFormFactors[i][TmpOrbital1][TmpOrbital2]);
+			}
+		      EntanglementHamiltonian.SetMatrixElement(TmpReducedLinearizedIndex1, TmpReducedLinearizedIndex2, Tmp);
+		    }
+		}
+	    }
+	}
+    }
+
+  for (int i = 0; i < TmpMaxX2; ++i)
+    delete[] TmpPhaseFactorX[i];
+  delete[] TmpPhaseFactorX;
+  for (int i = 0; i < TmpNbrKeptStates; ++i)
+    {
+      for (int j = 0; j < this->NbrBands; ++j)
+	delete[] TmpFormFactors[i][j];
+      delete[] TmpFormFactors[i];
+    }
+  delete[] TmpFormFactors;
+  EntanglementHamiltonian /= ((double) (this->NbrSiteX));
+  return EntanglementHamiltonian;
+}

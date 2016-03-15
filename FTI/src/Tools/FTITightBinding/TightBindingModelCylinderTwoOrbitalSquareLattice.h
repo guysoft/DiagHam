@@ -57,51 +57,61 @@ class TightBindingModelCylinderTwoOrbitalSquareLattice : public Abstract1DTightB
   // four times the sublattice staggered chemical potential 
   double MuS;
 
-public:
-
-    // default constructor
-    //
-    // nbrSiteX = number of sites in the x direction
-    // nbrSiteY = number of sites in the y direction
-    // t1 = imag part of the inter-orbital hopping amplitude between nearest neighbors along the x direction
-    // t2 = the inter-orbital hopping amplitude between nearest neighbors along the y direction
-    // t3 = the intra-orbital hopping amplitude between nearest neighbors
-    // foldingFactor = folding factor for the momenta along sigma_x and sigma_y
-    // mus = sublattice chemical potential on A sites
-    // gammaX = boundary condition twisting angle along x
-    // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
-    TightBindingModelCylinderTwoOrbitalSquareLattice(int nbrSiteX, int nbrSiteY, int t1, int t2, int t3, int foldingFactor, 
-						     double mus, double gammaX, 
-						     AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
-
-    // destructor
-    //
-    ~TightBindingModelCylinderTwoOrbitalSquareLattice();
-
-    // compute the one-body real space entanglement spectrum of a full band
-    // 
-    // outputFile = name of the output file where the spectrum has to be stored
-    // minEnergy = lowest energy of the full band
-    // maxEnergy = highest energy of the full band
-    // nbrSiteYA = number of site to keep for the A part along the y direction    
-    virtual void ComputeOneBodyRealSpaceEntanglementSpectrum(char* outputFile, double minEnergy, double maxEnergy, int nbrSiteYA);
-
-    // compute the many-body real space entanglement spectrum of a full band
-    // 
-    // outputFile = name of the output file where the spectrum has to be stored
-    // minEnergy = lowest energy of the full band
-    // maxEnergy = highest energy of the full band
-    // nbrSiteYA = number of site to keep for the A part along the y direction    
-    virtual void ComputeManyBodyRealSpaceEntanglementSpectrum(char* outputFile, double minEnergy, double maxEnergy, int nbrSiteYA);
-
-protected :
-
-    // compute the band structure
-    //
-    // minStateIndex = minimum index of the state to compute
-    // nbrStates = number of states to compute
-    virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates);
-
+ public:
+  
+  // default constructor
+  //
+  // nbrSiteX = number of sites in the x direction
+  // nbrSiteY = number of sites in the y direction
+  // t1 = imag part of the inter-orbital hopping amplitude between nearest neighbors along the x direction
+  // t2 = the inter-orbital hopping amplitude between nearest neighbors along the y direction
+  // t3 = the intra-orbital hopping amplitude between nearest neighbors
+  // foldingFactor = folding factor for the momenta along sigma_x and sigma_y
+  // mus = sublattice chemical potential on A sites
+  // gammaX = boundary condition twisting angle along x
+  // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
+  TightBindingModelCylinderTwoOrbitalSquareLattice(int nbrSiteX, int nbrSiteY, int t1, int t2, int t3, int foldingFactor, 
+						   double mus, double gammaX, 
+						   AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
+  
+  // destructor
+  //
+  ~TightBindingModelCylinderTwoOrbitalSquareLattice();
+  
+  // compute the one-body real space entanglement spectrum of a full band
+  // 
+  // outputFile = name of the output file where the spectrum has to be stored
+  // minEnergy = lowest energy of the full band
+  // maxEnergy = highest energy of the full band
+  // nbrSiteYA = number of site to keep for the A part along the y direction    
+  virtual void ComputeOneBodyRealSpaceEntanglementSpectrum(char* outputFile, double minEnergy, double maxEnergy, int nbrSiteYA);
+  
+  // compute the many-body real space entanglement spectrum of a full band
+  // 
+  // outputFile = name of the output file where the spectrum has to be stored
+  // minEnergy = lowest energy of the full band
+  // maxEnergy = highest energy of the full band
+  // nbrSiteYA = number of site to keep for the A part along the y direction    
+  virtual void ComputeManyBodyRealSpaceEntanglementSpectrum(char* outputFile, double minEnergy, double maxEnergy, int nbrSiteYA);
+  
+  // evaluate the mixed two point correlation function in a given region, assuming translation invariance along the x direction
+  //
+  // maxY = length along the y direction of the region 
+  // kx = momentum along the x direction
+  // occupiedMomenta = array that gives all the occupied momenta (as linearized indices)
+  // nbrOccupiedMomenta = number of occupied momenta
+  // bandIndex = index of the band to consider
+  // return value = matrix where the values of the two point correlation function will be stored (using the linearized position index as entry)
+  virtual HermitianMatrix EvaluateFullMixedTwoPointCorrelationFunctionWithKy(int maxY, int kx, int* occupiedMomenta, int nbrOccupiedMomenta, int bandIndex);
+  
+ protected :
+  
+  // compute the band structure
+  //
+  // minStateIndex = minimum index of the state to compute
+  // nbrStates = number of states to compute
+  virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates);
+  
 };
 
 

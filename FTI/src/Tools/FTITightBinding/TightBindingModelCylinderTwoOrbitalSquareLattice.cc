@@ -342,3 +342,37 @@ void TightBindingModelCylinderTwoOrbitalSquareLattice::ComputeOneBodyRealSpaceEn
     }
   File.close();
 }
+
+// evaluate the mixed two point correlation function in a given region, assuming translation invariance along the x direction
+//
+// maxY = length along the y direction of the region 
+// kx = momentum along the x direction
+// occupiedMomenta = array that gives all the occupied momenta (as linearized indices)
+// nbrOccupiedMomenta = number of occupied momenta
+// bandIndex = index of the band to consider
+// return value = matrix where the values of the two point correlation function will be stored (using the linearized position index as entry)
+
+HermitianMatrix TightBindingModelCylinderTwoOrbitalSquareLattice::EvaluateFullMixedTwoPointCorrelationFunctionWithKy(int maxY, int kx, int* occupiedMomenta, int nbrOccupiedMomenta, int bandIndex)
+{
+  int TmpNbrOrbitalPerUnitCell = this->NbrBands / this->NbrSiteY;
+  int TotalNbrSites = maxY * TmpNbrOrbitalPerUnitCell;
+  int TmpMomentumX;
+  int TmpMomentumY;
+  HermitianMatrix EntanglementHamiltonian(TotalNbrSites, true);
+  int TmpPos = -1;
+  for (int i = 0; (i < nbrOccupiedMomenta) && (TmpPos == -1); ++i)
+    {
+      if (occupiedMomenta[i] == kx)
+	{
+	  TmpPos = i;
+	}
+    }
+  if (TmpPos == -1)
+    {
+      return EntanglementHamiltonian;
+    }
+
+
+  return EntanglementHamiltonian;
+}
+  
