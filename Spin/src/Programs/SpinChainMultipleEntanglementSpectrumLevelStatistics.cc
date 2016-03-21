@@ -148,6 +148,7 @@ int main(int argc, char** argv)
   (*OutputGroup) += new SingleDoubleOption ('\n', "bin-spacing", "spacing range for each bin for the level statistics", 0.1);
   (*OutputGroup) += new BooleanOption ('\n', "discard-outputfiles", "do not save any results on disk, just display the summary using the standard output");
   (*OutputGroup) += new SingleIntegerOption ('\n', "extract-singlespectrum", "extract a single entanglement spectrum from --spectra instead of computing level statistics", -1);
+  (*OutputGroup) += new BooleanOption ('\n', "only-rvalues", "only compute the average ratio of adjacent gaps for each entanglement spectrum");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   
@@ -292,6 +293,7 @@ int main(int argc, char** argv)
 
   char* DensityOfStateOutputFileName = 0;
   char* LevelStatisticOutputFileName = 0;
+  char* ROutputFileName = 0;
   if (Manager.GetString("output-file") == 0)
     {
       char* DensityOfStateExtension = new char[128];
@@ -302,6 +304,10 @@ int main(int argc, char** argv)
       sprintf (LevelStatisticExtension, "range_%d_%d.ent.levelstat", MinEntanglementSpectrumIndex, MaxEntanglementSpectrumIndex);
       LevelStatisticOutputFileName = ReplaceExtensionToFileName(Manager.GetString("spectra"), "ent", LevelStatisticExtension);
       delete[] LevelStatisticExtension;
+      char* ROutputExtension = new char[128];
+      sprintf (ROutputExtension, "range_%d_%d.ent.rvalues", MinEntanglementSpectrumIndex, MaxEntanglementSpectrumIndex);
+      ROutputFileName = ReplaceExtensionToFileName(Manager.GetString("spectra"), "ent", LevelStatisticExtension);
+     delete[] ROutputExtension;
     }
   else
     {
@@ -362,7 +368,8 @@ int main(int argc, char** argv)
       Sum += DOS;
     }
 
-  if ((DensityOfStateOutputFileName != 0) && (Manager.GetBoolean("discard-outputfiles") == false))
+  if ((DensityOfStateOutputFileName != 0) && (Manager.GetBoolean("discard-outputfiles") == false) 
+      && (Manager.GetBoolean("only-rvalues") == false))
     {
       ofstream File;
       File.open(DensityOfStateOutputFileName, ios::binary | ios::out);
@@ -395,10 +402,15 @@ int main(int argc, char** argv)
 
   Abstract1DRealFunction* DensityOfStates = 0;
   double DensityOfStatesThreshold = 1e-5;
-  Tabulated1DRealFunction TmpFunction(DensityOfStateEnergies, DensityOfStateValues, NbrBins);
-  DensityOfStates = TmpFunction.GetPrimitive();
-  //      DensityOfStates = new Linear1DRealFunction(1.0);
-
+  if (Manager.GetBoolean("only-rvalues") == false)
+    {
+      Tabulated1DRealFunction TmpFunction(DensityOfStateEnergies, DensityOfStateValues, NbrBins);
+      DensityOfStates = TmpFunction.GetPrimitive();
+    }
+  else
+    {
+      DensityOfStates = new Linear1DRealFunction(1.0);
+    }
   double AverageSpacing = 0.0;
   double MinAverageSpacing = 1.0e300;
   double MaxAverageSpacing = 0.0;
@@ -407,6 +419,66 @@ int main(int argc, char** argv)
     {
       LevelStatisticsParseSpectrumFile(Spectrum[i], SpectrumSize[i],
 				       MinAverageSpacing, MaxAverageSpacing, AverageSpacing, NbrSpacings, DensityOfStates);
+    }
+
+  if (Manager.GetBoolean("only-rvalues") == true)
+    {
+      double* AverageRValues =  new double[TotalNbrEntanglementSpectra];
+      double* VarianceAverageRValues =  new double[TotalNbrEntanglementSpectra];
+      for (int i = 0; i < TotalNbrEntanglementSpectra; ++i)
+	{
+	  if (SpectrumSize[i] > 1)
+	    {
+	      double TmpAverageR = 0.0;
+	      double TmpNbrRatios = 0.0;
+	      double TmpVarianceAverageR = 0.0;
+	      int Lim = SpectrumSize[i] - 1;	  
+	      double TmpInfDiff;
+	      double TmpSupDiff;
+	      for (int j = 1; j < Lim; ++j)
+		{
+		  double TmpDiff = (Spectrum[i][j] - Spectrum[i][j - 1]) / AverageSpacing;
+		  double TmpDiff2 = (Spectrum[i][j + 1] - Spectrum[i][j]) / AverageSpacing;
+		  if (TmpDiff2 > TmpDiff)
+		    {
+		      if (TmpDiff2 > MACHINE_PRECISION)
+			{
+			  double Tmp = TmpDiff / TmpDiff2;
+			  TmpAverageR += Tmp;	
+			  TmpVarianceAverageR += Tmp * Tmp;	      
+			  TmpNbrRatios += 1.0;
+			}
+		    }
+		  else
+		    {
+		      if (TmpDiff > MACHINE_PRECISION)
+			{
+			  double Tmp =  TmpDiff2 / TmpDiff;
+			  TmpAverageR += Tmp;	
+			  TmpVarianceAverageR += Tmp * Tmp;	      
+			  TmpNbrRatios += 1.0;
+			}
+		    }
+		}
+	      AverageRValues[i] = (TmpAverageR / TmpNbrRatios);
+	      VarianceAverageRValues[i] = sqrt (((TmpVarianceAverageR / TmpNbrRatios) - ((TmpAverageR / TmpNbrRatios) * (TmpAverageR / TmpNbrRatios))) / (TmpNbrRatios - 1));
+	    }
+	}
+      ofstream File2;
+      File2.open(ROutputFileName, ios::binary | ios::out);
+      File2.precision(14);
+      File2 << "# state_index <r> D<r>" << endl;
+      for (int i = 0 ; i < TotalNbrEntanglementSpectra; ++i)
+	{
+	  if (SpectrumSize[i] > 1)
+	    {
+	      File2 << i << " " << AverageRValues[i] << " " <<  VarianceAverageRValues[i] << endl;
+	    }  
+	}
+      delete[] AverageRValues;
+      delete[] VarianceAverageRValues;
+      File2.close();
+      return 0;
     }
 
 

@@ -275,8 +275,6 @@ int main(int argc, char** argv)
 	   }
 	 if (Manager.GetBoolean("randomize-nonvacuumfile") == true)
 	   {
-	     double VacuumEnergyError = Manager.GetDouble("randomize-energyerror");
-	     int NbrMoves = Manager.GetInteger("randomize-nbrmoves");
 	     int NbrDiscardedTightBindingModelEnergies = NbrSites - VacuumNbrParticles;
 	     int* DiscardedLinearizedMomenta = new int[NbrDiscardedTightBindingModelEnergies];
 	     NbrDiscardedTightBindingModelEnergies = 0;
@@ -295,59 +293,144 @@ int main(int argc, char** argv)
 	       }
 	     AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (0);
 	     RandomNumber->UseTimeSeed();
-	     int* SourceStates = new int [NbrMoves];
-	     int* DestinationStates = new int [NbrMoves];
-	     double TmpEnergyDifference = 0.0;
-	     int MaxNbrGroupMoves = (int) (RandomNumber->GetRealRandomNumber() * ((double) Manager.GetInteger("randomize-maxnbrgroupmoves")));
-	     if (MaxNbrGroupMoves <= 0)
-	       MaxNbrGroupMoves = 1;
+
+	     int NbrMoves = Manager.GetInteger("randomize-maxnbrgroupmoves");
+
 	     long NbrRejetedMoves = 0;
 	     long NbrAcceptedMoves = 0;
-	     while (MaxNbrGroupMoves > 0)
+	     double DemonEnergy = 0.0;
+	     while (NbrMoves > 0)
 	       {
-		 for (int i = 0; i < NbrMoves; ++i)
+		 NbrRejetedMoves = 0;
+		 NbrAcceptedMoves = 0;
+		 for (int i = 0; i < VacuumNbrParticles; ++i)
 		   {
-		     SourceStates[i] = (int) (RandomNumber->GetRealRandomNumber() * ((double) VacuumNbrParticles));
-		     DestinationStates[i] = (int) (RandomNumber->GetRealRandomNumber() * ((double) NbrDiscardedTightBindingModelEnergies));
-		   }
-		 double TmpCurrentEnergyDifference = 0.0;
-		 for (int i = 0; i < NbrMoves; ++i)
-		   {
-		     TmpCurrentEnergyDifference += (TightBindingModel->GetEnergy(0, DiscardedLinearizedMomenta[DestinationStates[i]]) 
-						    - TightBindingModel->GetEnergy(0, VacuumOneBodyLinearizedMomenta[SourceStates[i]]));
-		     int TmpMomentum = VacuumOneBodyLinearizedMomenta[SourceStates[i]];
-		     VacuumOneBodyLinearizedMomenta[SourceStates[i]] = DiscardedLinearizedMomenta[DestinationStates[i]];
-		     DiscardedLinearizedMomenta[DestinationStates[i]] = TmpMomentum;
-		   }
-		 if (fabs(TmpEnergyDifference + TmpCurrentEnergyDifference) < VacuumEnergyError)
-		   {
-		     TmpEnergyDifference += TmpCurrentEnergyDifference;
-		     --MaxNbrGroupMoves;
-		     VacuumXMomentum = 0;
-		     VacuumYMomentum = 0;
-		     VacuumTotalEnergy = 0.0;
-		     int TmpXMomentum;
-		     int TmpYMomentum;
-		     for (int i = 0; i < VacuumNbrParticles; ++i)
+		     int DestinationIndex = (int) (RandomNumber->GetRealRandomNumber() * ((double) NbrDiscardedTightBindingModelEnergies));
+		     double TmpEnergyDifference = (TightBindingModel->GetEnergy(0, DiscardedLinearizedMomenta[DestinationIndex]) 
+						   - TightBindingModel->GetEnergy(0, VacuumOneBodyLinearizedMomenta[i]));
+		     if (TmpEnergyDifference < DemonEnergy)
 		       {
-			 TightBindingModel->GetLinearizedMomentumIndex(VacuumOneBodyLinearizedMomenta[i], TmpXMomentum, TmpYMomentum);
-			 VacuumTotalEnergy += TightBindingModel->GetEnergy(0, VacuumOneBodyLinearizedMomenta[i]);
-			 VacuumXMomentum += TmpXMomentum;
-			 VacuumYMomentum += TmpYMomentum;	     
+			 DemonEnergy -= TmpEnergyDifference;
+			 int TmpMomentum = VacuumOneBodyLinearizedMomenta[i];
+			 VacuumOneBodyLinearizedMomenta[i] = DiscardedLinearizedMomenta[DestinationIndex];
+			 DiscardedLinearizedMomenta[DestinationIndex] = TmpMomentum;
+			 ++NbrAcceptedMoves;
 		       }
-		     ++NbrAcceptedMoves;
-		   }
-		 else
-		   {
-		     for (int i = NbrMoves - 1; i >= 0; --i)
+		     else
 		       {
-			 int TmpMomentum = VacuumOneBodyLinearizedMomenta[SourceStates[i]];
-			 VacuumOneBodyLinearizedMomenta[SourceStates[i]] = DiscardedLinearizedMomenta[DestinationStates[i]];
-			 DiscardedLinearizedMomenta[DestinationStates[i]] = TmpMomentum;
-		       }
-		     ++NbrRejetedMoves;
+			 ++NbrRejetedMoves;
+		       }	
 		   }
+		 HermitianMatrix EntanglementHamiltonian = TightBindingModel->EvaluateFullTwoPointCorrelationFunction(MaxNbrSitesXA, MaxNbrSitesYA, VacuumOneBodyLinearizedMomenta, VacuumNbrParticles, 0);
+		 Complex Tmp;
+		 EntanglementHamiltonian.GetMatrixElement(1, 0, Tmp);
+		 cout << Tmp.Re << " " << Tmp.Im << " " << DemonEnergy << endl;		 
+// 		 for (int i = 0; i < VacuumNbrParticles; ++i)
+// 		   {
+// 		     VacuumOneBodyLinearizedMomenta[i] = ReferenceVacuumOneBodyLinearizedMomenta[i];
+// 		   }
 	       }
+// 	     while (NbrAcceptedMoves < NbrMoves)
+// 	       {
+// 		 int SourceIndex = (int) (RandomNumber->GetRealRandomNumber() * ((double) VacuumNbrParticles));
+// 		 int DestinationIndex = (int) (RandomNumber->GetRealRandomNumber() * ((double) NbrDiscardedTightBindingModelEnergies));
+// 		 double TmpEnergyDifference = (TightBindingModel->GetEnergy(0, DiscardedLinearizedMomenta[DestinationIndex]) 
+// 					       - TightBindingModel->GetEnergy(0, VacuumOneBodyLinearizedMomenta[SourceIndex]));
+// 		 if (TmpEnergyDifference < DemonEnergy)
+// 		   {
+// 		     DemonEnergy -= TmpEnergyDifference;
+//  		     int TmpMomentum = VacuumOneBodyLinearizedMomenta[SourceIndex];
+//  		     VacuumOneBodyLinearizedMomenta[SourceIndex] = DiscardedLinearizedMomenta[DestinationIndex];
+//  		     DiscardedLinearizedMomenta[DestinationIndex] = TmpMomentum;
+// 		     ++NbrAcceptedMoves;
+// 		     HermitianMatrix EntanglementHamiltonian = TightBindingModel->EvaluateFullTwoPointCorrelationFunction(MaxNbrSitesXA, MaxNbrSitesYA, VacuumOneBodyLinearizedMomenta, VacuumNbrParticles, 0);
+// 		   }
+// 		 else
+// 		   {
+// 		     ++NbrRejetedMoves;
+// 		   }
+// 	       }
+// 	     NbrAcceptedMoves = 0l;
+// 	     NbrRejetedMoves = 0l;
+// 	     while (NbrAcceptedMoves < (NbrMoves * 4) )
+// 	       {
+// 		 int SourceIndex = (int) (RandomNumber->GetRealRandomNumber() * ((double) VacuumNbrParticles));
+// 		 int DestinationIndex = (int) (RandomNumber->GetRealRandomNumber() * ((double) NbrDiscardedTightBindingModelEnergies));
+// 		 double TmpEnergyDifference = (TightBindingModel->GetEnergy(0, DiscardedLinearizedMomenta[DestinationIndex]) 
+// 					       - TightBindingModel->GetEnergy(0, VacuumOneBodyLinearizedMomenta[SourceIndex]));
+// 		 if (TmpEnergyDifference < DemonEnergy)
+// 		   {
+// 		     DemonEnergy -= TmpEnergyDifference;
+//  		     int TmpMomentum = VacuumOneBodyLinearizedMomenta[SourceIndex];
+//  		     VacuumOneBodyLinearizedMomenta[SourceIndex] = DiscardedLinearizedMomenta[DestinationIndex];
+//  		     DiscardedLinearizedMomenta[DestinationIndex] = TmpMomentum;
+// 		     ++NbrAcceptedMoves;
+// 		     HermitianMatrix EntanglementHamiltonian = TightBindingModel->EvaluateFullTwoPointCorrelationFunction(MaxNbrSitesXA, MaxNbrSitesYA, VacuumOneBodyLinearizedMomenta, VacuumNbrParticles, 0);
+// 		     Complex Tmp;
+// 		     EntanglementHamiltonian.GetMatrixElement(0, 1, Tmp);
+// 		     cout << Tmp.Re << " " << Tmp.Im << " " << DemonEnergy << " " << TmpEnergyDifference << endl;
+// 		   }
+// 		 else
+// 		   {
+// 		     ++NbrRejetedMoves;
+// 		   }
+//	       }
+	     
+//	     double VacuumEnergyError = Manager.GetDouble("randomize-energyerror");
+//	     int NbrMoves = Manager.GetInteger("randomize-nbrmoves");
+// 	     int* SourceStates = new int [NbrMoves];
+// 	     int* DestinationStates = new int [NbrMoves];
+// 	     double TmpEnergyDifference = 0.0;
+// 	     int MaxNbrGroupMoves = (int) (RandomNumber->GetRealRandomNumber() * ((double) Manager.GetInteger("randomize-maxnbrgroupmoves")));
+// 	     if (MaxNbrGroupMoves <= 0)
+// 	       MaxNbrGroupMoves = 1;
+// 	     long NbrRejetedMoves = 0;
+// 	     long NbrAcceptedMoves = 0;
+// 	     while (MaxNbrGroupMoves > 0)
+// 	       {
+// 		 for (int i = 0; i < NbrMoves; ++i)
+// 		   {
+// 		     SourceStates[i] = (int) (RandomNumber->GetRealRandomNumber() * ((double) VacuumNbrParticles));
+// 		     DestinationStates[i] = (int) (RandomNumber->GetRealRandomNumber() * ((double) NbrDiscardedTightBindingModelEnergies));
+// 		   }
+// 		 double TmpCurrentEnergyDifference = 0.0;
+// 		 for (int i = 0; i < NbrMoves; ++i)
+// 		   {
+// 		     TmpCurrentEnergyDifference += (TightBindingModel->GetEnergy(0, DiscardedLinearizedMomenta[DestinationStates[i]]) 
+// 						    - TightBindingModel->GetEnergy(0, VacuumOneBodyLinearizedMomenta[SourceStates[i]]));
+// 		     int TmpMomentum = VacuumOneBodyLinearizedMomenta[SourceStates[i]];
+// 		     VacuumOneBodyLinearizedMomenta[SourceStates[i]] = DiscardedLinearizedMomenta[DestinationStates[i]];
+// 		     DiscardedLinearizedMomenta[DestinationStates[i]] = TmpMomentum;
+// 		   }
+// 		 if (fabs(TmpEnergyDifference + TmpCurrentEnergyDifference) < VacuumEnergyError)
+// 		   {
+// 		     TmpEnergyDifference += TmpCurrentEnergyDifference;
+// 		     --MaxNbrGroupMoves;
+// 		     VacuumXMomentum = 0;
+// 		     VacuumYMomentum = 0;
+// 		     VacuumTotalEnergy = 0.0;
+// 		     int TmpXMomentum;
+// 		     int TmpYMomentum;
+// 		     for (int i = 0; i < VacuumNbrParticles; ++i)
+// 		       {
+// 			 TightBindingModel->GetLinearizedMomentumIndex(VacuumOneBodyLinearizedMomenta[i], TmpXMomentum, TmpYMomentum);
+// 			 VacuumTotalEnergy += TightBindingModel->GetEnergy(0, VacuumOneBodyLinearizedMomenta[i]);
+// 			 VacuumXMomentum += TmpXMomentum;
+// 			 VacuumYMomentum += TmpYMomentum;	     
+// 		       }
+// 		     ++NbrAcceptedMoves;
+// 		   }
+// 		 else
+// 		   {
+// 		     for (int i = NbrMoves - 1; i >= 0; --i)
+// 		       {
+// 			 int TmpMomentum = VacuumOneBodyLinearizedMomenta[SourceStates[i]];
+// 			 VacuumOneBodyLinearizedMomenta[SourceStates[i]] = DiscardedLinearizedMomenta[DestinationStates[i]];
+// 			 DiscardedLinearizedMomenta[DestinationStates[i]] = TmpMomentum;
+// 		       }
+// 		     ++NbrRejetedMoves;
+// 		   }
+// 	       }
 	     int NbrNewStates = 0;
 	     SortArrayUpOrdering(ReferenceVacuumOneBodyLinearizedMomenta, VacuumNbrParticles);
 	     for (int i = 0; i < VacuumNbrParticles; ++i)
@@ -357,13 +440,13 @@ int main(int argc, char** argv)
 		     ++NbrNewStates;
 		   }
 	       }
-	     cout << "difference of energy for the randomized states = " << TmpEnergyDifference << endl;
+//	     cout << "difference of energy for the randomized states = " << TmpEnergyDifference << endl;
 	     cout << "number of accepted moves = " << NbrAcceptedMoves << endl;
 	     cout << "number of rejected moves = " << NbrRejetedMoves << endl;
 	     cout << "number of updated occupied one-body states = " << NbrNewStates << endl;
 	     delete[] ReferenceVacuumOneBodyLinearizedMomenta;
 	     delete[] DiscardedLinearizedMomenta;
-	   }
+       }
        }
      else
        {

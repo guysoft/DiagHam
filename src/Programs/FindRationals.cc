@@ -40,6 +40,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('n', "max-denominator", "maximum denominator allowed for a rational number", 1000l);
   (*SystemGroup) += new SingleDoubleOption ('f', "filter-error", "if non zero, only shows lines of the input file for which the error between the double number and the closest rational is lower than a give threshold", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "shift-numbers", "shift all the double numbers by a given amount", 0.0);
+  (*SystemGroup) += new BooleanOption  ('\n', "add-index", "add an index to each output line");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
 
@@ -65,6 +66,7 @@ int main(int argc, char** argv)
       return 0;
     }
 
+  bool AddIndexFlag = Manager.GetBoolean("add-index");
   MultiColumnASCIIFile InputFile;
   if (InputFile.Parse(Manager.GetString("input-file")) == false)
     {
@@ -89,6 +91,10 @@ int main(int argc, char** argv)
 	  double Error = TmpRational.GetClosestRational(TmpNumbers[i] + Shift, MaxDenominator);
 	  if ((MaxError == 0.0) || (fabs(Error) < MaxError))
 	    {
+	      if (AddIndexFlag == true)
+		{
+		  cout << i << " ";
+		}
 	      for (int j = 0; j < NbrColumns; ++j)
 		{
 		  File << InputFile(j, i) << " ";
@@ -105,6 +111,10 @@ int main(int argc, char** argv)
 	  double Error = TmpRational.GetClosestRational(TmpNumbers[i] + Shift, MaxDenominator);
 	  if ((MaxError == 0.0) || (fabs(Error) < MaxError))
 	    {
+	      if (AddIndexFlag == true)
+		{
+		  cout << i << " : ";
+		}
 	      for (int j = 0; j < NbrColumns; ++j)
 		{
 		  cout << InputFile(j, i) << " ";
