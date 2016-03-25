@@ -49,6 +49,15 @@ AbstractSpinChain::~AbstractSpinChain ()
 {
 }
 
+// get the value of the spin (i.e. S) at a given site
+// 
+// site = site index
+// return value = twice the spin
+
+int AbstractSpinChain::GetLocalSpin(int site)
+{
+  return -1;
+}
 
 // return matrix representation of Sx
 //

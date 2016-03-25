@@ -74,6 +74,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
   (*SystemGroup) += new SingleStringOption ('\n', "interaction-name", "name of the interaction (for the output files)", "hollowcore");
+  (*SystemGroup) += new SingleDoubleOption ('\n', "energy-shift", "apply a temporary energy shift used during the diagonalization", -1.0);
 
   (*PrecalculationGroup) += new BooleanOption ('\n', "regenerate-interactionelements", "regenerate the interaction matrix elements, overwriting them", false);
   (*PrecalculationGroup) += new BooleanOption ('\n', "matrixelement-only", "only evaluate the interaction matrix elements", false);
@@ -386,7 +387,7 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("matrixelement-only") == true)
 	return 0;
       RegenerateElementFlag = false;
-      double Shift = -1.0;
+      double Shift = Manager.GetDouble("energy-shift");
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
       if (Manager.GetBoolean("eigenstate") == true)	

@@ -55,11 +55,12 @@ using std::endl;
 // foldingFactor = folding factor for the momenta along sigma_x and sigma_y
 // mus = sublattice chemical potential on A sites
 // gammaX = boundary condition twisting angle along x
+// periodicBoundaryConditionY = use periodic boundaya conditions along the cylinder axis (i.e. use a trous geometry)
 // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
 
 TightBindingModelCylinderTwoOrbitalSquareLattice::TightBindingModelCylinderTwoOrbitalSquareLattice(int nbrSiteX, int nbrSiteY, 
 												   int t1, int t2, int t3, int foldingFactor, 
-												   double mus, double gammaX,
+												   double mus, double gammaX, bool periodicBoundaryConditionY,
 												   AbstractArchitecture* architecture, bool storeOneBodyMatrices)
 {
     this->NbrSiteX = nbrSiteX;
@@ -73,6 +74,7 @@ TightBindingModelCylinderTwoOrbitalSquareLattice::TightBindingModelCylinderTwoOr
     this->GammaX = gammaX;
     this->NbrBands = 2 * this->NbrSiteY;
     this->NbrStatePerBand = this->NbrSiteX;
+    this->PeriodicBoundaryConditionYFlag = periodicBoundaryConditionY;
 
     this->EmbeddingX = RealVector(this->NbrBands, true);
 
@@ -128,21 +130,23 @@ void TightBindingModelCylinderTwoOrbitalSquareLattice::CoreComputeBandStructure(
 	      TmpOneBodyHamiltonian.SetMatrixElement(2 * (y - 1), 2 * y + 1, this->NNHoppingInterY);
 	      TmpOneBodyHamiltonian.SetMatrixElement(2 * (y - 1) + 1, 2 * y, -this->NNHoppingInterY);
 	    }
-//     turn on periodic boundary conditions
-// 	  if (this->NbrSiteY > 2)
-// 	    {
-// 	      TmpOneBodyHamiltonian.SetMatrixElement(2 * (this->NbrSiteY - 1), 0, - this->NNHoppingIntra);
-// 	      TmpOneBodyHamiltonian.SetMatrixElement(2 * (this->NbrSiteY - 1) + 1, 1,  this->NNHoppingIntra);
-// 	      TmpOneBodyHamiltonian.SetMatrixElement(2 * (this->NbrSiteY - 1), 1, this->NNHoppingInterY);
-// 	      TmpOneBodyHamiltonian.SetMatrixElement(2 * (this->NbrSiteY - 1) + 1, 0, -this->NNHoppingInterY);
-// 	    }
-// 	  else
-// 	    {
-// 	      TmpOneBodyHamiltonian.AddToMatrixElement(2 * (this->NbrSiteY - 1), 0, -this->NNHoppingIntra);
-// 	      TmpOneBodyHamiltonian.AddToMatrixElement(2 * (this->NbrSiteY - 1) + 1, 1, this->NNHoppingIntra);
-// 	      TmpOneBodyHamiltonian.AddToMatrixElement(2 * (this->NbrSiteY - 1), 1, this->NNHoppingInterY);
-// 	      TmpOneBodyHamiltonian.AddToMatrixElement(2 * (this->NbrSiteY - 1) + 1, 0, this->NNHoppingInterY);
-// 	    }
+	  if (this->PeriodicBoundaryConditionYFlag == true)
+	    {
+	      if (this->NbrSiteY > 2)
+		{
+		  TmpOneBodyHamiltonian.SetMatrixElement(2 * (this->NbrSiteY - 1), 0, - this->NNHoppingIntra);
+		  TmpOneBodyHamiltonian.SetMatrixElement(2 * (this->NbrSiteY - 1) + 1, 1,  this->NNHoppingIntra);
+		  TmpOneBodyHamiltonian.SetMatrixElement(2 * (this->NbrSiteY - 1), 1, this->NNHoppingInterY);
+		  TmpOneBodyHamiltonian.SetMatrixElement(2 * (this->NbrSiteY - 1) + 1, 0, -this->NNHoppingInterY);
+		}
+	      else
+		{
+		  TmpOneBodyHamiltonian.AddToMatrixElement(2 * (this->NbrSiteY - 1), 0, -this->NNHoppingIntra);
+		  TmpOneBodyHamiltonian.AddToMatrixElement(2 * (this->NbrSiteY - 1) + 1, 1, this->NNHoppingIntra);
+		  TmpOneBodyHamiltonian.AddToMatrixElement(2 * (this->NbrSiteY - 1), 1, this->NNHoppingInterY);
+		  TmpOneBodyHamiltonian.AddToMatrixElement(2 * (this->NbrSiteY - 1) + 1, 0, this->NNHoppingInterY);
+		}
+	    }
 	  if (this->OneBodyBasis != 0)
 	    {
 	      ComplexMatrix TmpMatrix(this->NbrBands, this->NbrBands, true);
@@ -359,19 +363,50 @@ HermitianMatrix TightBindingModelCylinderTwoOrbitalSquareLattice::EvaluateFullMi
   int TmpMomentumX;
   int TmpMomentumY;
   HermitianMatrix EntanglementHamiltonian(TotalNbrSites, true);
-  int TmpPos = -1;
-  for (int i = 0; (i < nbrOccupiedMomenta) && (TmpPos == -1); ++i)
+  int TmpNbrStates = 0;
+  for (int i = 0; i < nbrOccupiedMomenta; ++i)
     {
-      if (occupiedMomenta[i] == kx)
+      if ((occupiedMomenta[i] / this->NbrBands) == kx)
 	{
-	  TmpPos = i;
+	  ++TmpNbrStates;
 	}
     }
-  if (TmpPos == -1)
+  if (TmpNbrStates == 0)
     {
       return EntanglementHamiltonian;
     }
 
+  int* TmpOccupiedMomenta = new int [TmpNbrStates];
+  TmpNbrStates = 0;
+  for (int i = 0; i < nbrOccupiedMomenta; ++i)
+    {
+      if ((occupiedMomenta[i] / this->NbrBands) == kx)
+	{
+	  TmpOccupiedMomenta[TmpNbrStates] = occupiedMomenta[i] % this->NbrBands;
+	  ++TmpNbrStates;
+	}
+    }
+  for (int TmpY1 = 0; TmpY1 < maxY; ++TmpY1)
+    {	  
+      for (int TmpOrbital1 = 0; TmpOrbital1 < TmpNbrOrbitalPerUnitCell; ++TmpOrbital1)
+	{
+	  int TmpReducedLinearizedIndex1 = TmpOrbital1 + (TmpY1 * TmpNbrOrbitalPerUnitCell);
+	  for (int TmpY2 = 0; TmpY2 < maxY; ++TmpY2)
+	    {	  
+	      for (int TmpOrbital2 = 0; TmpOrbital2 < TmpNbrOrbitalPerUnitCell; ++TmpOrbital2)
+		{
+		  int TmpReducedLinearizedIndex2 = TmpOrbital2 + (TmpY2 * TmpNbrOrbitalPerUnitCell);
+		  Complex Tmp = 0.0;
+		  for (int i = 0; i < TmpNbrStates; ++i)
+		    {
+		      Tmp +=  Conj(this->OneBodyBasis[kx][TmpOccupiedMomenta[i]][TmpReducedLinearizedIndex1]) * this->OneBodyBasis[kx][TmpOccupiedMomenta[i]][TmpReducedLinearizedIndex2];
+		    }		  
+		  EntanglementHamiltonian.SetMatrixElement(TmpReducedLinearizedIndex1, TmpReducedLinearizedIndex2, Tmp);
+		}
+	    }
+	}
+    }
+  delete[] TmpOccupiedMomenta;
 
   return EntanglementHamiltonian;
 }

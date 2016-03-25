@@ -306,8 +306,8 @@ int main(int argc, char** argv)
       delete[] LevelStatisticExtension;
       char* ROutputExtension = new char[128];
       sprintf (ROutputExtension, "range_%d_%d.ent.rvalues", MinEntanglementSpectrumIndex, MaxEntanglementSpectrumIndex);
-      ROutputFileName = ReplaceExtensionToFileName(Manager.GetString("spectra"), "ent", LevelStatisticExtension);
-     delete[] ROutputExtension;
+      ROutputFileName = ReplaceExtensionToFileName(Manager.GetString("spectra"), "ent", ROutputExtension);
+      delete[] ROutputExtension;
     }
   else
     {
@@ -330,7 +330,7 @@ int main(int argc, char** argv)
       for (int j = 0; j < SpectrumSize[i]; ++j)
 	{
 	  int TmpIndex = int ((Spectrum[i][j] - MinEnergy) / BinSize);
-	  if (TmpIndex < NbrBins)
+	  if ((TmpIndex < NbrBins) && (TmpIndex >= 0))
 	    {
 	      NbrStatePerBin[TmpIndex]++;
 	      ++NbrAcceptedStates;

@@ -108,6 +108,12 @@ class Spin1Chain : public AbstractSpinChain
   // return value = Hilbert space dimension
   int GetHilbertSpaceDimension();
 
+  // get the value of the spin (i.e. S) at a given site
+  // 
+  // site = site index
+  // return value = twice the spin
+  virtual int GetLocalSpin(int site);
+
   // return a list of all possible quantum numbers 
   //
   // return value = pointer to corresponding quantum number
@@ -294,6 +300,16 @@ class Spin1Chain : public AbstractSpinChain
   int GenerateStates(int statePosition,int sitePosition, unsigned long currentStateDescription, int currentSz);
 
 };
+
+// get the value of the spin (i.e. S) at a given site
+// 
+// site = site index
+// return value = twice the spin
+
+inline int Spin1Chain::GetLocalSpin(int site)
+{
+  return 2;
+}
 
 #endif
 

@@ -160,7 +160,7 @@ bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz
       int SizeString = 0;
       if (StrNbrSpins[SizeString] == '-')
 	++SizeString;
-      while ((StrNbrSpins[SizeString] != '\0') && (StrNbrSpins[SizeString] != '.') && 
+      while ((StrNbrSpins[SizeString] != '\0') && (StrNbrSpins[SizeString] != '.') && (StrNbrSpins[SizeString] != '_') && 
 	     (StrNbrSpins[SizeString] >= '0') && (StrNbrSpins[SizeString] <= '9'))
 	++SizeString;
       if ((StrNbrSpins[SizeString] == '.') && (SizeString != 0))
@@ -171,7 +171,19 @@ bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz
 	  StrNbrSpins += SizeString;
 	}
       else
-	StrNbrSpins = 0;
+	{
+	  if ((StrNbrSpins[SizeString] == '_') && (SizeString != 0))
+	    {
+	      StrNbrSpins[SizeString] = '\0';
+	      sz = atoi(StrNbrSpins);
+	      StrNbrSpins[SizeString] = '_';
+	  StrNbrSpins += SizeString;
+	    }
+	  else
+	    {
+	      StrNbrSpins = 0;
+	    }
+	}
     }
   if (StrNbrSpins == 0)
     {
@@ -199,11 +211,11 @@ bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz
   StrMomentum = strstr(filename, "_k_");
   if (StrMomentum != 0)
     {
-      StrMomentum += 4;
+      StrMomentum += 3;
       int SizeString = 0;
       if (StrMomentum[SizeString] == '-')
 	++SizeString;
-      while ((StrMomentum[SizeString] != '\0') && (StrMomentum[SizeString] != '_') && (StrMomentum[SizeString] >= '0') 
+      while ((StrMomentum[SizeString] != '\0') && (StrMomentum[SizeString] != '_') && (StrMomentum[SizeString] != '.') && (StrMomentum[SizeString] >= '0') 
 	     && (StrMomentum[SizeString] <= '9'))
 	++SizeString;
       if ((StrMomentum[SizeString] == '_') && (SizeString != 0))
@@ -214,7 +226,19 @@ bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz
 	  StrMomentum += SizeString;
 	}
       else
-	StrMomentum = 0;
+	{
+	  if ((StrMomentum[SizeString] == '.') && (SizeString != 0))
+	    {
+	      StrMomentum[SizeString] = '\0';
+	      momentum = atoi(StrMomentum);
+	      StrMomentum[SizeString] = '.';
+	      StrMomentum += SizeString;
+	    }
+	  else
+	    {
+	      StrMomentum = 0;
+	    }
+	}
     }
   if (StrMomentum == 0)
     {

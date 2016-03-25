@@ -12,13 +12,9 @@
 
 #include "MainTask/QHEOnSphereMainTask.h"
 
-#include "Options/OptionManager.h"
-#include "Options/OptionGroup.h"
-#include "Options/AbstractOption.h"
-#include "Options/BooleanOption.h"
-#include "Options/SingleIntegerOption.h"
-#include "Options/SingleDoubleOption.h"
-#include "Options/SingleStringOption.h"
+#include "Options/Options.h"
+
+#include "LanczosAlgorithm/LanczosManager.h"
 
 #include "GeneralTools/ConfigurationParser.h"
 
@@ -45,42 +41,20 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   OptionManager Manager ("FQHESphereFermionsWithSU3Spin" , "0.01");
-  OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
- OptionGroup* SystemGroup = new OptionGroup ("system options");
+  OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
   ArchitectureManager Architecture;
+  LanczosManager Lanczos(false);  
 
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
-  Manager += LanczosGroup;
+  Lanczos.AddOptionGroup(&Manager);
   Manager += ToolsGroup;
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
-  (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
-  (*LanczosGroup)  += new SingleIntegerOption  ('\n', "full-diag", 
-						"maximum Hilbert space dimension for which full diagonalization is applied", 
-						500, true, 100);
-  (*LanczosGroup) += new SingleIntegerOption  ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
-  (*LanczosGroup)  += new BooleanOption  ('\n', "block-lanczos", "use block Lanczos algorithm", false);
-  (*LanczosGroup)  += new SingleIntegerOption  ('\n', "block-size", "size of the block used in the block Lanczos algorithm", 2);
-  (*LanczosGroup) += new SingleIntegerOption  ('\n', "limit-time", "use limit in time instead of a number of lanczos iteration (0 if none, time in seconds)", 0);
-  (*LanczosGroup)  += new BooleanOption  ('d', "disk", "enable disk resume capabilities", false);
-  (*LanczosGroup) += new BooleanOption  ('r', "resume", "resume from disk datas", false);
-  (*LanczosGroup) += new SingleIntegerOption  ('\n', "nbr-iter", "number of lanczos iteration (for the current run)", 10);
-  (*LanczosGroup) += new SingleIntegerOption  ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 10);
-  (*LanczosGroup) += new BooleanOption  ('\n', "force-reorthogonalize", 
-					 "force to use Lanczos algorithm with reorthogonalizion even if the number of eigenvalues to evaluate is 1", false);
-  (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate", "evaluate eigenstates", false);  
-  (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate-convergence", "evaluate Lanczos convergence from eigenstate convergence", false);
-  (*LanczosGroup) += new BooleanOption  ('\n', "show-itertime", "show time spent for each Lanczos iteration", false); 
-  (*LanczosGroup) += new SingleStringOption  ('\n', "initial-vector", "use file as the initial vector for the Lanczos algorithm" , 0);
-  (*LanczosGroup) += new  BooleanOption ('\n', "partial-lanczos", "only run a given number of Lanczos iterations" , false);
-  (*LanczosGroup) += new SingleDoubleOption ('\n', "lanczos-precision", "define Lanczos precision for eigenvalues (0 if automatically defined by the program)", 0);
-  (*LanczosGroup) += new  BooleanOption ('\n', "fast-disk", "use disk storage to increase speed of ground state calculation and decrease memory footprint when using Lanczos algorithm");
-  (*LanczosGroup) += new  BooleanOption ('\n', "resume-fastdisk", "resume the fast-disk mode Lanczos algorithm from a stopped one (for example due to computer crash)");
   
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 6);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 15);
@@ -116,27 +90,27 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHESphereFermionsWithSU3Spin -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
   
-  int NbrFermions = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
-  int TotalTz = ((SingleIntegerOption*) Manager["total-tz"])->GetInteger();
-  int TotalY = ((SingleIntegerOption*) Manager["total-y"])->GetInteger();
-  bool LzSymmetrizedBasis = ((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean();
-  bool TzSymmetrizedBasis = ((BooleanOption*) Manager["tzsymmetrized-basis"])->GetBoolean();
-  bool Z3SymmetrizedBasis = ((BooleanOption*) Manager["z3symmetrized-basis"])->GetBoolean();
+  int NbrFermions = Manager.GetInteger("nbr-particles");
+  int LzMax = Manager.GetInteger("lzmax");
+  int TotalTz = Manager.GetInteger("total-tz");
+  int TotalY = Manager.GetInteger("total-y");
+  bool LzSymmetrizedBasis = Manager.GetBoolean("lzsymmetrized-basis");
+  bool TzSymmetrizedBasis = Manager.GetBoolean("tzsymmetrized-basis");
+  bool Z3SymmetrizedBasis = Manager.GetBoolean("z3symmetrized-basis");
 
-  long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
-  unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) Manager["fast-search"])->GetInteger()) << 20;
-  int InitialLz = ((SingleIntegerOption*) Manager["initial-lz"])->GetInteger();
-  int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
-  char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();
-  char* SavePrecalculationFileName = ((SingleStringOption*) Manager["save-precalculation"])->GetString();
-  bool onDiskCacheFlag = ((BooleanOption*) Manager["allow-disk-storage"])->GetBoolean();
+  long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
+  unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
+  int InitialLz = Manager.GetInteger("initial-lz");
+  int NbrLz = Manager.GetInteger("nbr-lz");
+  char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
+  char* SavePrecalculationFileName = Manager.GetString("save-precalculation");
+  bool onDiskCacheFlag = Manager.GetBoolean("allow-disk-storage");
   bool FirstRun = true;
   double** PseudoPotentials  = new double*[6];
   for (int i = 0; i < 6; ++i)
@@ -161,7 +135,7 @@ int main(int argc, char** argv)
   NbrN2 /= 6;
   NbrN3 /= 3;
 
-  if (((SingleStringOption*) Manager["interaction-file"])->GetString() == 0)
+  if (Manager.GetString("interaction-file") == 0)
     {
       cout << "an interaction file has to be provided" << endl;
       return -1;
@@ -169,7 +143,7 @@ int main(int argc, char** argv)
   else
     {
       ConfigurationParser InteractionDefinition;
-      if (InteractionDefinition.Parse(((SingleStringOption*) Manager["interaction-file"])->GetString()) == false)
+      if (InteractionDefinition.Parse(Manager.GetString("interaction-file")) == false)
 	{
 	  InteractionDefinition.DumpErrors(cout) << endl;
 	  return -1;
@@ -192,7 +166,7 @@ int main(int argc, char** argv)
       else
 	if (InteractionDefinition["Pseudopotentials"] != 0)
 	  {
-	    cout << "Pseudopotentials has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	    cout << "Pseudopotentials has a wrong value in " << Manager.GetString("interaction-file") << endl;
 	    return -1;
 	  }
       if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials11", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
@@ -209,7 +183,7 @@ int main(int argc, char** argv)
       else
 	if (InteractionDefinition["Pseudopotentials11"] != 0)
 	  {
-	    cout << "Pseudopotentials11 has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	    cout << "Pseudopotentials11 has a wrong value in " << Manager.GetString("interaction-file") << endl;
 	    return -1;
 	  }
       if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials22", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
@@ -226,7 +200,7 @@ int main(int argc, char** argv)
       else
 	if (InteractionDefinition["Pseudopotentials22"] != 0)
 	  {
-	    cout << "Pseudopotentials22 has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	    cout << "Pseudopotentials22 has a wrong value in " << Manager.GetString("interaction-file") << endl;
 	    return -1;
 	  }
       if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials33", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
@@ -243,7 +217,7 @@ int main(int argc, char** argv)
       else
 	if (InteractionDefinition["Pseudopotentials33"] != 0)
 	  {
-	    cout << "Pseudopotentials33 has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	    cout << "Pseudopotentials33 has a wrong value in " << Manager.GetString("interaction-file") << endl;
 	    return -1;
 	  }
       if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials12", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
@@ -260,7 +234,7 @@ int main(int argc, char** argv)
       else
 	if (InteractionDefinition["Pseudopotentials12"] != 0)
 	  {
-	    cout << "Pseudopotentials12 has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	    cout << "Pseudopotentials12 has a wrong value in " << Manager.GetString("interaction-file") << endl;
 	    return -1;
 	  }
       if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials13", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
@@ -277,7 +251,7 @@ int main(int argc, char** argv)
       else
 	if (InteractionDefinition["Pseudopotentials13"] != 0)
 	  {
-	    cout << "Pseudopotentials13 has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	    cout << "Pseudopotentials13 has a wrong value in " << Manager.GetString("interaction-file") << endl;
 	    return -1;
 	  }
       if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials23", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
@@ -294,14 +268,14 @@ int main(int argc, char** argv)
       else
 	if (InteractionDefinition["Pseudopotentials23"] != 0)
 	  {
-	    cout << "Pseudopotentials23 has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	    cout << "Pseudopotentials23 has a wrong value in " << Manager.GetString("interaction-file") << endl;
 	    return -1;
 	  }
       if (InteractionDefinition.GetAsDoubleArray("OneBodyPotential11", ' ', OneBodyPotential11, TmpNbrPseudoPotentials) == true)
 	{
 	  if (TmpNbrPseudoPotentials != (LzMax + 1))
 	    {
-	      cout << "OneBodyPotential11 has a wrong number of components or has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	      cout << "OneBodyPotential11 has a wrong number of components or has a wrong value in " << Manager.GetString("interaction-file") << endl;
 	      return -1;
 	    }
 	}
@@ -309,7 +283,7 @@ int main(int argc, char** argv)
 	{
 	  if (TmpNbrPseudoPotentials != (LzMax + 1))
 	    {
-	      cout << "OneBodyPotential22 has a wrong number of components or has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	      cout << "OneBodyPotential22 has a wrong number of components or has a wrong value in " << Manager.GetString("interaction-file") << endl;
 	      return -1;
 	    }
 	}
@@ -317,7 +291,7 @@ int main(int argc, char** argv)
 	{
 	  if (TmpNbrPseudoPotentials != (LzMax + 1))
 	    {
-	      cout << "OneBodyPotential33 has a wrong number of components or has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	      cout << "OneBodyPotential33 has a wrong number of components or has a wrong value in " << Manager.GetString("interaction-file") << endl;
 	      return -1;
 	    }
 	}
@@ -328,12 +302,12 @@ int main(int argc, char** argv)
 #endif
 
 
-  char* OutputNameLz = new char [512 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
+  char* OutputNameLz = new char [512 + strlen(Manager.GetString("interaction-name"))];
   sprintf (OutputNameLz, "fermions_sphere_su3_%s_n_%d_2s_%d_tz_%d_y_%d_lz.dat", 
-	   ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
+	   Manager.GetString("interaction-name"), 
 	   NbrFermions, LzMax, TotalTz, TotalY);
 
-  int Max = (((LzMax - NbrN1 + 1) * NbrN1) + (((LzMax - NbrN3 + 1) * NbrN3)) + (((LzMax - NbrN3 + 1) * NbrN3)));
+  int Max = (((LzMax - NbrN1 + 1) * NbrN1) + (((LzMax - NbrN2 + 1) * NbrN2)) + (((LzMax - NbrN3 + 1) * NbrN3)));
   cout << "maximum Lz value = " << Max << endl;
 
   int  L = 0;
@@ -385,52 +359,52 @@ int main(int argc, char** argv)
 	      }	
 	  if ((TzSymmetrizedBasis == true) && (Z3SymmetrizedBasis == false))
 	    {
-	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+	      if (Manager.GetString("load-hilbert") == 0)
 		{
-		  Space = new FermionOnSphereWithSU3SpinTzSymmetry(NbrFermions, L, LzMax, TotalY, ((BooleanOption*) Manager["minus-tzparity"])->GetBoolean(), MemorySpace);
-		  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		  Space = new FermionOnSphereWithSU3SpinTzSymmetry(NbrFermions, L, LzMax, TotalY, Manager.GetBoolean("minus-tzparity"), MemorySpace);
+		  if (Manager.GetString("save-hilbert") != 0)
 		    {
-		      ((FermionOnSphereWithSU3SpinTzSymmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+		      ((FermionOnSphereWithSU3SpinTzSymmetry*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 		      return 0;
 		    }
 		}
 	      else
 		{
-		  Space = new FermionOnSphereWithSU3SpinTzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		  Space = new FermionOnSphereWithSU3SpinTzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
 		}
 	    }
 	  else
 	    if ((TzSymmetrizedBasis == false) && (Z3SymmetrizedBasis == true))
 	      {
-		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+		if (Manager.GetString("load-hilbert") == 0)
 		  {
 		    Space = new FermionOnSphereWithSU3SpinZ3Symmetry(NbrFermions, L, LzMax, TotalTz, MemorySpace);
-		    if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		    if (Manager.GetString("save-hilbert") != 0)
 		      {
-			((FermionOnSphereWithSU3SpinZ3Symmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+			((FermionOnSphereWithSU3SpinZ3Symmetry*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 			return 0;
 		      }
 		  }
 		else
 		  {
-		    Space = new FermionOnSphereWithSU3SpinZ3Symmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		    Space = new FermionOnSphereWithSU3SpinZ3Symmetry(Manager.GetString("load-hilbert"), MemorySpace);
 		  }
 	      }
 	    else
 	      if ((TzSymmetrizedBasis == true) && (Z3SymmetrizedBasis == true))
 		{
-		  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+		  if (Manager.GetString("load-hilbert") == 0)
 		    {
-		      Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(NbrFermions, L, LzMax, ((BooleanOption*) Manager["minus-tzparity"])->GetBoolean(), MemorySpace);
-		      if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		      Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(NbrFermions, L, LzMax, Manager.GetBoolean("minus-tzparity"), MemorySpace);
+		      if (Manager.GetString("save-hilbert") != 0)
 			{
-			  ((FermionOnSphereWithSU3SpinTzZ3Symmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+			  ((FermionOnSphereWithSU3SpinTzZ3Symmetry*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 			  return 0;
 			}
 		    }
 		  else
 		    {
-		      Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		      Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(Manager.GetString("load-hilbert"), MemorySpace);
 		    }
 		}
 	}
@@ -451,11 +425,11 @@ int main(int argc, char** argv)
 	  Hamiltonian->SavePrecalculation(SavePrecalculationFileName);
 	}
       char* EigenvectorName = 0;
-      if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
+      if (Manager.GetBoolean("eigenstate") == true)	
 	{
 	  EigenvectorName = new char [120];
 	  sprintf (EigenvectorName, "fermions_sphere_su3_%s_n_%d_2s_%d_tz_%d_y_%d_lz_%d",
-		   ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
+		   Manager.GetString("interaction-name"), 
 		   NbrFermions, LzMax, TotalTz, TotalY, L);
 	}
       QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);

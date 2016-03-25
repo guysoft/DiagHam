@@ -32,7 +32,7 @@ int main(int argc, char** argv)
   cout.precision(14); 
 
   // some running options and help
-  OptionManager Manager ("GenericOpenSpinChain" , "0.01");
+  OptionManager Manager ("GenericSpinChainShowBasis" , "0.01");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
@@ -60,7 +60,7 @@ int main(int argc, char** argv)
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type GenericOpenSpinChain -h" << endl;
+      cout << "see man page for option syntax or type GenericSpinChainShowBasis -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)

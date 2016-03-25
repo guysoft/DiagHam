@@ -64,6 +64,12 @@ class AbstractSpinChain : public AbstractHilbertSpace
   //
   virtual int GetSpinChainLength() const {return this->ChainLength;}
 
+  // get the value of the spin (i.e. S) at a given site
+  // 
+  // site = site index
+  // return value = twice the spin
+  virtual int GetLocalSpin(int site);
+
   // return value of spin projection on (Oz) for a given state
   //
   // Str = reference on current output stream 

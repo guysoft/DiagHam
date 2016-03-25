@@ -95,7 +95,7 @@ bool SpinWith2DTranslationFindSystemInfoFromVectorFileName(char* filename, int& 
 // inversion =  reference on the inversion parity
 // return value = true if no error occured
 bool SpinWith2DTranslationInversionFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int& spin, int& xMomentum, int& xPeriodicity,
-							   int& yMomentum, int& yPeriodicity, int& inversion);
+								    int& yMomentum, int& yPeriodicity, int& inversion);
 
 // try to guess system information from file name for a 2d spin system with translations
 //

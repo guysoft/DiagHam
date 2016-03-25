@@ -1,6 +1,7 @@
 #include "Options/Options.h"
 
 #include "Tools/FTITightBinding/TightBindingModelTwoOrbitalSquareLattice.h"
+#include "Tools/FTITightBinding/TightBindingModelCylinderTwoOrbitalSquareLattice.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -63,6 +64,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "sublattice staggered chemical potential", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
+  (*SystemGroup) += new BooleanOption  ('\n', "use-cylinder", "use a cylinder geometry instead of a torus geometry (open boundary conditions along the x axis)");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrsitex-a", "number of unit cells along the x direction for the part A", 2);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrsitey-a", "number of unit cells along the y direction for the part A", 2);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-nbrsitexa", "maximum number of unit cells along the x direction for the part A (equal to --nbrsitex-a if negative)", -1);
@@ -101,6 +103,8 @@ int main(int argc, char** argv)
   int* CutX = 0;
   int* CutY = 0;
   bool PreserveYTranslation = false;
+  bool CylinderFlag = Manager.GetBoolean("use-cylinder");
+
   if (Manager.GetString("cuts") == 0)
     {
       if ((Manager.GetInteger("max-nbrsitexa") > NbrSitesXA) || (Manager.GetInteger("max-nbrsiteya") > NbrSitesYA))
@@ -120,7 +124,7 @@ int main(int argc, char** argv)
 	  CutY = new int [NbrCuts];
 	  CutX[0] = NbrSitesXA;
 	  CutY[0] = NbrSitesYA;
-	  if ((NbrSitesYA == NbrSitesY) && (Manager.GetBoolean("disable-ytranslation") == false))
+	  if ((NbrSitesXA == NbrSitesX) && (Manager.GetBoolean("disable-ytranslation") == false))
 	    {
 	      PreserveYTranslation = true;
 	    }
@@ -143,9 +147,18 @@ int main(int argc, char** argv)
   int MaxNbrSitesA = MaxNbrSitesXA * MaxNbrSitesYA;
 
   char* FilePrefix = new char [512];
-  sprintf(FilePrefix, "fermions_twoorbitals_n_%d_x_%d_y_%d_t1_%f_t2_%f_t3_%f_mus_%f_gx_%f_gy_%f", (NbrSitesX * NbrSitesY), NbrSitesX, NbrSitesY,
-	  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetDouble("mu-s"), 
-	  Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+  if (CylinderFlag == false)
+    {
+      sprintf(FilePrefix, "fermions_twoorbitals_n_%d_x_%d_y_%d_t1_%f_t2_%f_t3_%f_mus_%f_gx_%f_gy_%f", (NbrSitesX * NbrSitesY), NbrSitesX, NbrSitesY,
+	      Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetDouble("mu-s"), 
+	      Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+    }
+  else
+    {
+      sprintf(FilePrefix, "fermions_cylinder_twoorbitals_n_%d_x_%d_y_%d_t1_%f_t2_%f_t3_%f_mus_%f_gx_%f_gy_%f", (NbrSitesX * NbrSitesY), NbrSitesX, NbrSitesY,
+	      Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetDouble("mu-s"), 
+	      Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+    }
 
   Abstract2DTightBindingModel* TightBindingModel;
   TightBindingModel = new TightBindingModelTwoOrbitalSquareLattice (NbrSitesX, NbrSitesY, 
@@ -383,7 +396,12 @@ int main(int argc, char** argv)
 	   {
 	     TmpLargestEigenvalue *= (1.0 - TotalVacuumOneBodyEntanglementTrimmedEnergies[j]);
 	   }	 
-	 cout << i << " " << TmpLargestEigenvalue << " " << -(TmpLargestEigenvalueMomentum % NbrSitesY) << endl;
+// 	 int TmpKyMomentum = -(TmpLargestEigenvalueMomentum % NbrSitesY);
+// 	 if (TmpKyMomentum < (- NbrSitesY / 2))
+// 	   {
+// 	     TmpKyMomentum = 
+// 	   }
+//	 cout << i << " " << TmpLargestEigenvalue << " " <<  << endl;
 	 if (TmpLargestEigenvalue < 1e-50)
 	   {
 	     TmpZeroFlag = true;

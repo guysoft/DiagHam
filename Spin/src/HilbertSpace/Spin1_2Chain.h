@@ -119,6 +119,12 @@ class Spin1_2Chain : public AbstractSpinChain
   // return value = reference on current chain  
   virtual Spin1_2Chain& Reinitialize(int sz);
 
+  // get the value of the spin (i.e. S) at a given site
+  // 
+  // site = site index
+  // return value = twice the spin
+  virtual int GetLocalSpin(int site);
+
   // return a list of all possible quantum numbers 
   //
   // return value = pointer to corresponding quantum number
@@ -381,6 +387,16 @@ class Spin1_2Chain : public AbstractSpinChain
 
 };
  
+// get the value of the spin (i.e. S) at a given site
+// 
+// site = site index
+// return value = twice the spin
+
+inline int Spin1_2Chain::GetLocalSpin(int site)
+{
+  return 1;
+}
+
 #endif
 
 

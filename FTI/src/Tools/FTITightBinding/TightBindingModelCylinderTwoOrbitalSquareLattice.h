@@ -57,6 +57,9 @@ class TightBindingModelCylinderTwoOrbitalSquareLattice : public Abstract1DTightB
   // four times the sublattice staggered chemical potential 
   double MuS;
 
+  // use periodic boundaya conditions along the cylinder axis (i.e. use a trous geometry)
+  bool PeriodicBoundaryConditionYFlag;
+
  public:
   
   // default constructor
@@ -69,9 +72,10 @@ class TightBindingModelCylinderTwoOrbitalSquareLattice : public Abstract1DTightB
   // foldingFactor = folding factor for the momenta along sigma_x and sigma_y
   // mus = sublattice chemical potential on A sites
   // gammaX = boundary condition twisting angle along x
+  // periodicBoundaryConditionY = use periodic boundaya conditions along the cylinder axis (i.e. use a trous geometry)
   // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
   TightBindingModelCylinderTwoOrbitalSquareLattice(int nbrSiteX, int nbrSiteY, int t1, int t2, int t3, int foldingFactor, 
-						   double mus, double gammaX, 
+						   double mus, double gammaX, bool periodicBoundaryConditionY, 
 						   AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
   
   // destructor

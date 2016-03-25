@@ -220,7 +220,7 @@ int main(int argc, char** argv)
 	    }
 	  TightBindingModelCylinderTwoOrbitalSquareLattice TightBindingModel(NbrSiteX, NbrSiteY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), 
 									     Manager.GetInteger("folding"), Manager.GetDouble("mu-s"), 
-									     Manager.GetDouble("gamma-x"), Architecture.GetArchitecture(), ExportOneBody);
+									     Manager.GetDouble("gamma-x"), false, Architecture.GetArchitecture(), ExportOneBody);
 	  TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);
 	  if (Manager.GetBoolean("singleparticle-entspectrum") == true)
 	    {

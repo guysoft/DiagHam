@@ -288,3 +288,16 @@ bool FQHESphereTwoLandauLevelGetPseudopotentials (char* fileName, int lzMax, dou
   
   return true;
 }
+
+// get pseudopototentials for particles on sphere with SU(4) spin from file
+// 
+// fileName = name of the file that contains the pseudopotantial description
+// lzMax = twice the maximum Lz value of the LLL
+// pseudoPotentials = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
+//                   first index refered to the spin sector (sorted as pplus-upplus, upplus-upminus, upplus-downplus, upplus-downminus, 
+//                                                                     upminus-upminus, upminus-downplus, upminus-downminus, downplus-downplus, downplus-downminus, downminus-downminus)
+// return value = true if no error occured
+
+bool FQHESphereSU4GetPseudopotentials (char* fileName, int lzMax, double** pseudoPotentials)
+{
+}
