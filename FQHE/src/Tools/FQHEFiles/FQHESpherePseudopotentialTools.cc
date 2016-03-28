@@ -300,4 +300,280 @@ bool FQHESphereTwoLandauLevelGetPseudopotentials (char* fileName, int lzMax, dou
 
 bool FQHESphereSU4GetPseudopotentials (char* fileName, int lzMax, double** pseudoPotentials)
 {
+  ConfigurationParser InteractionDefinition;
+  if (InteractionDefinition.Parse(fileName) == false)
+    {
+      InteractionDefinition.DumpErrors(cout) << endl;
+      return false;
+    }
+  int TmpNbrPseudoPotentials;
+  double* TmpPseudoPotentials;
+  bool Flag = false;
+  if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      int TmpMax = TmpNbrPseudoPotentials;
+      if (TmpMax > (lzMax + 1))
+	{
+	  TmpMax = lzMax + 1;
+	  cout << "warning, Pseudopotentials has more entries than the number of orbitals and will be truncated" << endl;
+	}
+      for (int i = 0; i < 10; ++i)
+	{
+	  pseudoPotentials[i] = new double[lzMax + 1];
+	  for (int j = 0; j < TmpMax; ++j)
+	    pseudoPotentials[i][j] = TmpPseudoPotentials[j];
+	  for (int j = TmpMax; j <= lzMax; ++j)
+	    pseudoPotentials[i][j] = 0.0;	  
+	}
+    }
+  else
+    {
+      if (InteractionDefinition["Pseudopotentials"] != 0)
+	{
+	  cout << "Pseudopotentials has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+
+  if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsUpPlusUpPlus", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      int TmpMax = TmpNbrPseudoPotentials;
+      if (TmpMax > (lzMax + 1))
+	{
+	  TmpMax = lzMax + 1;
+	  cout << "warning, PseudopotentialsUpPlusUpPlus has more entries than the number of orbitals and will be truncated" << endl;
+	}
+      pseudoPotentials[0] = new double[lzMax + 1];
+      for (int j = 0; j < TmpMax; ++j)
+	pseudoPotentials[0][j] = TmpPseudoPotentials[j];
+      for (int j = TmpMax; j <= lzMax; ++j)
+	pseudoPotentials[0][j] = 0.0;	  
+    }
+  else
+    {
+      if (InteractionDefinition["PseudopotentialsUpPlusUpPlus"] != 0)
+	{
+	  cout << "PseudopotentialsUpPlusUpPlus has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+
+  if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsUpPlusUpMinus", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      int TmpMax = TmpNbrPseudoPotentials;
+      if (TmpMax > (lzMax + 1))
+	{
+	  TmpMax = lzMax + 1;
+	  cout << "warning, PseudopotentialsUpPlusUpMinus has more entries than the number of orbitals and will be truncated" << endl;
+	}
+      pseudoPotentials[1] = new double[lzMax + 1];
+      for (int j = 0; j < TmpMax; ++j)
+	pseudoPotentials[1][j] = TmpPseudoPotentials[j];
+      for (int j = TmpMax; j <= lzMax; ++j)
+	pseudoPotentials[1][j] = 0.0;	  
+    }
+  else
+    {
+      if (InteractionDefinition["PseudopotentialsUpPlusUpMinus"] != 0)
+	{
+	  cout << "PseudopotentialsUpPlusUpMinus has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+
+  if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsUpPlusDownPlus", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      int TmpMax = TmpNbrPseudoPotentials;
+      if (TmpMax > (lzMax + 1))
+	{
+	  TmpMax = lzMax + 1;
+	  cout << "warning, PseudopotentialsUpPlusDownPlus has more entries than the number of orbitals and will be truncated" << endl;
+	}
+      pseudoPotentials[2] = new double[lzMax + 1];
+      for (int j = 0; j < TmpMax; ++j)
+	pseudoPotentials[2][j] = TmpPseudoPotentials[j];
+      for (int j = TmpMax; j <= lzMax; ++j)
+	pseudoPotentials[2][j] = 0.0;	  
+    }
+  else
+    {
+      if (InteractionDefinition["PseudopotentialsUpPlusDownPlus"] != 0)
+	{
+	  cout << "PseudopotentialsUpPlusDownPlus has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+
+  if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsUpPlusDownMinus", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      int TmpMax = TmpNbrPseudoPotentials;
+      if (TmpMax > (lzMax + 1))
+	{
+	  TmpMax = lzMax + 1;
+	  cout << "warning, PseudopotentialsUpPlusDownMinus has more entries than the number of orbitals and will be truncated" << endl;
+	}
+      pseudoPotentials[3] = new double[lzMax + 1];
+      for (int j = 0; j < TmpMax; ++j)
+	pseudoPotentials[3][j] = TmpPseudoPotentials[j];
+      for (int j = TmpMax; j <= lzMax; ++j)
+	pseudoPotentials[3][j] = 0.0;	  
+    }
+  else
+    {
+      if (InteractionDefinition["PseudopotentialsUpPlusDownMinus"] != 0)
+	{
+	  cout << "PseudopotentialsUpPlusDownMinus has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+
+  if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsUpMinusUpMinus", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      int TmpMax = TmpNbrPseudoPotentials;
+      if (TmpMax > (lzMax + 1))
+	{
+	  TmpMax = lzMax + 1;
+	  cout << "warning, PseudopotentialsUpMinusUpMinus has more entries than the number of orbitals and will be truncated" << endl;
+	}
+      pseudoPotentials[4] = new double[lzMax + 1];
+      for (int j = 0; j < TmpMax; ++j)
+	pseudoPotentials[4][j] = TmpPseudoPotentials[j];
+      for (int j = TmpMax; j <= lzMax; ++j)
+	pseudoPotentials[4][j] = 0.0;	  
+    }
+  else
+    {
+      if (InteractionDefinition["PseudopotentialsUpMinusUpMinus"] != 0)
+	{
+	  cout << "PseudopotentialsUpMinusUpMinus has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+
+  if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsUpMinusDownPlus", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      int TmpMax = TmpNbrPseudoPotentials;
+      if (TmpMax > (lzMax + 1))
+	{
+	  TmpMax = lzMax + 1;
+	  cout << "warning, PseudopotentialsUpMinusDownPlus has more entries than the number of orbitals and will be truncated" << endl;
+	}
+      pseudoPotentials[5] = new double[lzMax + 1];
+      for (int j = 0; j < TmpMax; ++j)
+	pseudoPotentials[5][j] = TmpPseudoPotentials[j];
+      for (int j = TmpMax; j <= lzMax; ++j)
+	pseudoPotentials[5][j] = 0.0;	  
+    }
+  else
+    {
+      if (InteractionDefinition["PseudopotentialsUpMinusDownPlus"] != 0)
+	{
+	  cout << "PseudopotentialsUpMinusDownPlus has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+
+  if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsUpMinusDownMinus", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      int TmpMax = TmpNbrPseudoPotentials;
+      if (TmpMax > (lzMax + 1))
+	{
+	  TmpMax = lzMax + 1;
+	  cout << "warning, PseudopotentialsUpMinusDownMinus has more entries than the number of orbitals and will be truncated" << endl;
+	}
+      pseudoPotentials[6] = new double[lzMax + 1];
+      for (int j = 0; j < TmpMax; ++j)
+	pseudoPotentials[6][j] = TmpPseudoPotentials[j];
+      for (int j = TmpMax; j <= lzMax; ++j)
+	pseudoPotentials[6][j] = 0.0;	  
+    }
+  else
+    {
+      if (InteractionDefinition["PseudopotentialsUpMinusDownMinus"] != 0)
+	{
+	  cout << "PseudopotentialsUpMinusDownMinus has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+
+  if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsDownPlusDownPlus", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      int TmpMax = TmpNbrPseudoPotentials;
+      if (TmpMax > (lzMax + 1))
+	{
+	  TmpMax = lzMax + 1;
+	  cout << "warning, PseudopotentialsDownPlusDownPlus has more entries than the number of orbitals and will be truncated" << endl;
+	}
+      pseudoPotentials[7] = new double[lzMax + 1];
+      for (int j = 0; j < TmpMax; ++j)
+	pseudoPotentials[7][j] = TmpPseudoPotentials[j];
+      for (int j = TmpMax; j <= lzMax; ++j)
+	pseudoPotentials[7][j] = 0.0;	  
+    }
+  else
+    {
+      if (InteractionDefinition["PseudopotentialsDownPlusDownPlus"] != 0)
+	{
+	  cout << "PseudopotentialsDownPlusDownPlus has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+
+  if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsDownPlusDownMinus", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      int TmpMax = TmpNbrPseudoPotentials;
+      if (TmpMax > (lzMax + 1))
+	{
+	  TmpMax = lzMax + 1;
+	  cout << "warning, PseudopotentialsDownPlusDownMinus has more entries than the number of orbitals and will be truncated" << endl;
+	}
+      pseudoPotentials[8] = new double[lzMax + 1];
+      for (int j = 0; j < TmpMax; ++j)
+	pseudoPotentials[8][j] = TmpPseudoPotentials[j];
+      for (int j = TmpMax; j <= lzMax; ++j)
+	pseudoPotentials[8][j] = 0.0;	  
+    }
+  else
+    {
+      if (InteractionDefinition["PseudopotentialsDownPlusDownMinus"] != 0)
+	{
+	  cout << "PseudopotentialsDownPlusDownMinus has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+
+  if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsDownMinusDownMinus", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      int TmpMax = TmpNbrPseudoPotentials;
+      if (TmpMax > (lzMax + 1))
+	{
+	  TmpMax = lzMax + 1;
+	  cout << "warning, PseudopotentialsDownMinusDownMinus has more entries than the number of orbitals and will be truncated" << endl;
+	}
+      pseudoPotentials[9] = new double[lzMax + 1];
+      for (int j = 0; j < TmpMax; ++j)
+	pseudoPotentials[9][j] = TmpPseudoPotentials[j];
+      for (int j = TmpMax; j <= lzMax; ++j)
+	pseudoPotentials[9][j] = 0.0;	  
+    }
+  else
+    {
+      if (InteractionDefinition["PseudopotentialsDownMinusDownMinus"] != 0)
+	{
+	  cout << "PseudopotentialsDownMinusDownMinus has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+  return true;
 }

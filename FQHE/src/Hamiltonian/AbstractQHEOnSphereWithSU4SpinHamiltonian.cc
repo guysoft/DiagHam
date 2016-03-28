@@ -1461,6 +1461,7 @@ void AbstractQHEOnSphereWithSU4SpinHamiltonian::EnableFastMultiplication()
 			  TmpIndexArray[Pos] = Index;
 			  TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
 			  ++Pos;
+
                         }
 		      ++TmpInteractionFactor;
 		    }

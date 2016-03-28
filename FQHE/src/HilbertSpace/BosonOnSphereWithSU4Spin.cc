@@ -40,6 +40,7 @@
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "MathTools/BinomialCoefficients.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
+#include "GeneralTools/ArrayTools.h"
 
 #include <math.h>
 #include <cstdlib>
@@ -113,7 +114,9 @@ BosonOnSphereWithSU4Spin::BosonOnSphereWithSU4Spin (int nbrBosons, int totalLz, 
     this->FermionicLzMax = this->NDownMinusLzMax;
   if ((NUpPlus < 0) || ((NUpPlus & 0x3) != 0) || (NUpMinus < 0) || ((NUpMinus & 0x3) != 0) ||
       (NDownPlus < 0) || ((NDownPlus & 0x3) != 0) || (NDownMinus < 0) || ((NDownMinus & 0x3) != 0))
-    this->LargeHilbertSpaceDimension = 0l;
+    {
+      this->LargeHilbertSpaceDimension = 0l;
+    }
   else
     {
       NUpPlus >>= 2;
@@ -144,8 +147,8 @@ BosonOnSphereWithSU4Spin::BosonOnSphereWithSU4Spin (int nbrBosons, int totalLz, 
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
   cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
 
-
-
+  
+  SortQuadElementArrayDownOrdering<unsigned long>(this->StateDescriptionUpPlus, this->StateDescriptionUpMinus, this->StateDescriptionDownPlus, this->StateDescriptionDownMinus, this->LargeHilbertSpaceDimension);
   this->GenerateLookUpTable(memory);
 //   for (int i = 0; i < this->HilbertSpaceDimension; ++i)	
 //     {
@@ -179,41 +182,29 @@ BosonOnSphereWithSU4Spin::BosonOnSphereWithSU4Spin(const BosonOnSphereWithSU4Spi
   this->NbrBosons = bosons.NbrBosons;
   this->IncNbrBosons = bosons.IncNbrBosons;
   this->TotalLz = bosons.TotalLz;
-  this->LzMax = bosons.LzMax;
-  this->NbrLzValue = bosons.NbrLzValue;
-  this->NUpPlusLzMax = bosons.LzMax;
-  this->NUpMinusLzMax = bosons.LzMax;
-  this->NDownPlusLzMax = bosons.LzMax;
-  this->NDownMinusLzMax = bosons.LzMax;
-  this->FermionicLzMax = bosons.FermionicLzMax;
   this->TotalSpin = bosons.TotalSpin;
   this->TotalIsospin = bosons.TotalIsospin;
   this->TotalEntanglement = bosons.TotalEntanglement;
+  this->LzMax = bosons.LzMax;
+  this->NbrLzValue = bosons.NbrLzValue;
+  this->NUpPlusLzMax = bosons.NUpPlusLzMax;
+  this->NUpMinusLzMax = bosons.NUpMinusLzMax;
+  this->NDownPlusLzMax = bosons.NDownPlusLzMax;
+  this->NDownMinusLzMax = bosons.NDownMinusLzMax;
+  this->FermionicLzMax = bosons.FermionicLzMax;
   this->LargeHilbertSpaceDimension = bosons.LargeHilbertSpaceDimension;
   this->TemporaryStateUpPlus = new unsigned long[this->NbrLzValue];
   this->TemporaryStateUpMinus = new unsigned long[this->NbrLzValue];
   this->TemporaryStateDownPlus = new unsigned long[this->NbrLzValue];
   this->TemporaryStateDownMinus = new unsigned long[this->NbrLzValue];
-  this->TemporaryStateSigma[0] = this->TemporaryStateUpPlus;
-  this->TemporaryStateSigma[1] = this->TemporaryStateUpMinus;
-  this->TemporaryStateSigma[2] = this->TemporaryStateDownPlus;
-  this->TemporaryStateSigma[3] = this->TemporaryStateDownMinus;
   this->ProdATemporaryStateUpPlus = new unsigned long[this->NbrLzValue];
   this->ProdATemporaryStateUpMinus = new unsigned long[this->NbrLzValue];
   this->ProdATemporaryStateDownPlus = new unsigned long[this->NbrLzValue];
   this->ProdATemporaryStateDownMinus = new unsigned long[this->NbrLzValue];
-  this->ProdATemporaryStateSigma[0] = this->ProdATemporaryStateUpPlus;
-  this->ProdATemporaryStateSigma[1] = this->ProdATemporaryStateUpMinus;
-  this->ProdATemporaryStateSigma[2] = this->ProdATemporaryStateDownPlus;
-  this->ProdATemporaryStateSigma[3] = this->ProdATemporaryStateDownMinus;
   this->StateDescriptionUpPlus = bosons.StateDescriptionUpPlus;
   this->StateDescriptionUpMinus = bosons.StateDescriptionUpMinus;
   this->StateDescriptionDownPlus = bosons.StateDescriptionDownPlus;
   this->StateDescriptionDownMinus = bosons.StateDescriptionDownMinus;
-  this->StateDescriptionSigma[0] = this->StateDescriptionUpPlus;
-  this->StateDescriptionSigma[1] = this->StateDescriptionUpMinus;
-  this->StateDescriptionSigma[2] = this->StateDescriptionDownPlus;
-  this->StateDescriptionSigma[3] = this->StateDescriptionDownMinus;
   this->NbrUniqueStateDescriptionUpPlus = bosons.NbrUniqueStateDescriptionUpPlus;
   this->UniqueStateDescriptionUpPlus = bosons.UniqueStateDescriptionUpPlus;
   this->UniqueStateDescriptionSubArraySizeUpPlus = bosons.UniqueStateDescriptionSubArraySizeUpPlus;
@@ -225,6 +216,18 @@ BosonOnSphereWithSU4Spin::BosonOnSphereWithSU4Spin(const BosonOnSphereWithSU4Spi
   this->UniqueStateDescriptionDownPlus = bosons.UniqueStateDescriptionDownPlus;
   this->UniqueStateDescriptionSubArraySizeDownPlus = bosons.UniqueStateDescriptionSubArraySizeDownPlus;
   this->FirstIndexUniqueStateDescriptionDownPlus = bosons.FirstIndexUniqueStateDescriptionDownPlus;
+  this->TemporaryStateSigma[0] = this->TemporaryStateUpPlus;
+  this->TemporaryStateSigma[1] = this->TemporaryStateUpMinus;
+  this->TemporaryStateSigma[2] = this->TemporaryStateDownPlus;
+  this->TemporaryStateSigma[3] = this->TemporaryStateDownMinus;
+  this->ProdATemporaryStateSigma[0] = this->ProdATemporaryStateUpPlus;
+  this->ProdATemporaryStateSigma[1] = this->ProdATemporaryStateUpMinus;
+  this->ProdATemporaryStateSigma[2] = this->ProdATemporaryStateDownPlus;
+  this->ProdATemporaryStateSigma[3] = this->ProdATemporaryStateDownMinus;
+  this->StateDescriptionSigma[0] = this->StateDescriptionUpPlus;
+  this->StateDescriptionSigma[1] = this->StateDescriptionUpMinus;
+  this->StateDescriptionSigma[2] = this->StateDescriptionDownPlus;
+  this->StateDescriptionSigma[3] = this->StateDescriptionDownMinus;
 }
 
 // destructor
@@ -320,10 +323,10 @@ BosonOnSphereWithSU4Spin& BosonOnSphereWithSU4Spin::operator = (const BosonOnSph
   this->TotalEntanglement = bosons.TotalEntanglement;
   this->LzMax = bosons.LzMax;
   this->NbrLzValue = bosons.NbrLzValue;
-  this->NUpPlusLzMax = bosons.LzMax;
-  this->NUpMinusLzMax = bosons.LzMax;
-  this->NDownPlusLzMax = bosons.LzMax;
-  this->NDownMinusLzMax = bosons.LzMax;
+  this->NUpPlusLzMax = bosons.NUpPlusLzMax;
+  this->NUpMinusLzMax = bosons.NUpMinusLzMax;
+  this->NDownPlusLzMax = bosons.NDownPlusLzMax;
+  this->NDownMinusLzMax = bosons.NDownMinusLzMax;
   this->FermionicLzMax = bosons.FermionicLzMax;
   this->LargeHilbertSpaceDimension = bosons.LargeHilbertSpaceDimension;
   this->TemporaryStateUpPlus = new unsigned long[this->NbrLzValue];
@@ -595,103 +598,51 @@ long BosonOnSphereWithSU4Spin::GenerateStates(int nbrBosons, int lzMax1, int lzM
 {
   if ((nbrBosons < 0) || (totalLz < 0) || (nbrNUpPlus < 0) || (nbrNUpMinus < 0) || (nbrNDownPlus < 0) || (nbrNDownMinus < 0))
     return pos;
-  if ((nbrBosons == 0) && (totalLz == 0))
+  if (nbrBosons == 0)
     {
-      this->StateDescriptionUpPlus[pos] = 0x0ul;
-      this->StateDescriptionUpMinus[pos] = 0x0ul;
-      this->StateDescriptionDownPlus[pos] = 0x0ul;
-      this->StateDescriptionDownMinus[pos] = 0x0ul;
-      return (pos + 1l);
-    }
-  if ((lzMax1 < 0) || (lzMax2 < 0) || (lzMax3 < 0) || (lzMax4 < 0))
-    return pos;
-
-  if (nbrBosons == 1) 
-    {
-      if ((nbrNDownMinus == 1) && (lzMax4 >= totalLz))
+      if (totalLz == 0)
 	{
 	  this->StateDescriptionUpPlus[pos] = 0x0ul;
 	  this->StateDescriptionUpMinus[pos] = 0x0ul;
 	  this->StateDescriptionDownPlus[pos] = 0x0ul;
-	  this->StateDescriptionDownMinus[pos] = 0x1ul << totalLz;
+	  this->StateDescriptionDownMinus[pos] = 0x0ul;
 	  return (pos + 1l);
 	}
-      return pos;
-    }
-
-  long TmpPos;
-  unsigned long Mask1;
-  unsigned long Mask2;
-  unsigned long Mask3;
-  unsigned long Mask4;
-
-  if (nbrNUpPlus == 0)
-    {
-      if (nbrNUpMinus == 0)
+      else
 	{
-	  if (nbrNDownPlus == 0)
-	    {
-	      for (int l = nbrNDownMinus; l > 0; --l)
-		{
-		  TmpPos = this->GenerateStates(nbrBosons - l, 0, 0, 0, lzMax4 - 1, totalLz - (lzMax4 * l), 
-						0, 0, 0, nbrNDownMinus - l, pos); 
-		  Mask4 = ((0x1ul << l) - 1ul) << (lzMax4 + nbrNDownMinus - l);
-		  for (; pos < TmpPos; ++pos)
-		    {
-		      this->StateDescriptionDownMinus[pos] |= Mask4;
-		    }
-		}
-	      pos = this->GenerateStates(nbrBosons, 0, 0, 0, lzMax4 - 1, totalLz, 0, 0, 0, nbrNDownMinus, pos);
-	      return pos;
-	    }
-	  for (int k = nbrNDownPlus; k > 0; --k)
-	    {
-	      TmpPos = this->GenerateStates(nbrBosons - k, 0, 0, lzMax3 - 1, lzMax4, totalLz - (lzMax3 * k), 
-					    0, 0, nbrNDownPlus - k, nbrNDownMinus, pos); 
-	      Mask3 = ((0x1ul << k) - 1ul) << (lzMax3 + nbrNDownPlus - k);
-	      for (; pos < TmpPos; ++pos)
-		{
-		  this->StateDescriptionDownPlus[pos] |= Mask3;
-		}
-	    }
-	  pos = this->GenerateStates(nbrBosons, 0, 0, lzMax3 - 1, lzMax4, totalLz, 0, 0, nbrNDownPlus, nbrNDownMinus, pos);
 	  return pos;
 	}
-      TmpPos = this->GenerateStates(nbrBosons - nbrNUpMinus, 0, 0, lzMax3, lzMax4, totalLz - (lzMax2 * nbrNUpMinus), 
-				    0, 0, nbrNDownPlus, nbrNDownMinus, pos); 
-      Mask2 = ((0x1ul << nbrNUpMinus) - 1ul) << lzMax2;
-      for (; pos < TmpPos; ++pos)
-	this->StateDescriptionUpMinus[pos] |= Mask2;
-      for (int j = nbrNUpMinus - 1; j > 0; --j)
-	{
-	  TmpPos = this->GenerateStates(nbrBosons - j, 0, lzMax2 - 1, lzMax3, lzMax4, totalLz - (lzMax2 * j), 
-					0, nbrNUpMinus - j, nbrNDownPlus, nbrNDownMinus, pos); 
-	  Mask2 = ((0x1ul << j) - 1ul) << (lzMax2 + nbrNUpMinus - j);
-	  for (; pos < TmpPos; ++pos)
-	    this->StateDescriptionUpMinus[pos] |= Mask2;
-	}
-      pos = this->GenerateStates(nbrBosons, 0, lzMax2 - 1, lzMax3, lzMax4, totalLz, 
-				 0, nbrNUpMinus, nbrNDownPlus, nbrNDownMinus, pos);
-      return pos;
     }
-  
-  TmpPos = this->GenerateStates(nbrBosons - nbrNUpPlus, 0, lzMax2, lzMax3, lzMax4, totalLz - (lzMax1 * nbrNUpPlus), 
-				0, nbrNUpMinus, nbrNDownPlus, nbrNDownMinus, pos); 
-  Mask1 = ((0x1ul << nbrNUpPlus) - 1ul) << lzMax1;
-  for (; pos < TmpPos; ++pos)
-    this->StateDescriptionUpPlus[pos] |= Mask1;
-  for (int i = nbrNUpPlus - 1; i > 0; --i)
+  if ((lzMax1 < 0) || (lzMax2 < 0) || (lzMax3 < 0) || (lzMax4 < 0))
+    return pos;
+
+  long TmpPos;
+  for (int i = nbrNUpPlus; i >= 0; --i)
     {
-      TmpPos = this->GenerateStates(nbrBosons - i, lzMax1 - 1, lzMax2, lzMax3, lzMax4, totalLz - (lzMax1 * i), 
-				    nbrNUpPlus - i, nbrNUpMinus, nbrNDownPlus, nbrNDownMinus, pos); 
-      Mask1 = ((0x1ul << i) - 1ul) << (lzMax1 + nbrNUpPlus - i);
-      for (; pos < TmpPos; ++pos)
+      unsigned long MaskUpPlus = ((0x1ul << i) - 1ul) << (lzMax1 + nbrNUpPlus - i);
+      for (int j = nbrNUpMinus; j >= 0; --j)
 	{
-	  this->StateDescriptionUpPlus[pos] |= Mask1;
+    	  unsigned long MaskUpMinus = ((0x1ul << j) - 1ul) << (lzMax2 + nbrNUpMinus - j);	  
+	  for (int k = nbrNDownPlus; k >= 0; --k)
+	    {
+	      unsigned long MaskDownPlus = ((0x1ul << k) - 1ul) << (lzMax3 + nbrNDownPlus - k);	  
+	      for (int l = nbrNDownMinus; l >= 0; --l)
+		{
+		  unsigned long MaskDownMinus = ((0x1ul << l) - 1ul) << (lzMax4 + nbrNDownMinus - l);	  
+		  TmpPos = this->GenerateStates(nbrBosons - (i + j + k + l), lzMax1 - 1, lzMax2 - 1, lzMax3 - 1, lzMax4 - 1, 
+						totalLz - (lzMax1 * i) - (lzMax2 * j) - (lzMax3 * k)  - (lzMax4 * l), 
+						nbrNUpPlus - i, nbrNUpMinus - j, nbrNDownPlus - k, nbrNDownMinus - l, pos);
+		  for (; pos < TmpPos; ++pos)
+		    {
+		      this->StateDescriptionUpPlus[pos] |= MaskUpPlus;
+		      this->StateDescriptionUpMinus[pos] |= MaskUpMinus;
+		      this->StateDescriptionDownPlus[pos] |= MaskDownPlus;
+		      this->StateDescriptionDownMinus[pos] |= MaskDownMinus;
+		    }
+		}
+	    }
 	}
     }
-  pos = this->GenerateStates(nbrBosons, lzMax1 - 1, lzMax2, lzMax3, lzMax4, totalLz, 
-			     nbrNUpPlus, nbrNUpMinus, nbrNDownPlus, nbrNDownMinus, pos);
   return pos;
 };
 
@@ -874,8 +825,13 @@ long BosonOnSphereWithSU4Spin::ShiftedEvaluateHilbertSpaceDimension(int nbrBoson
 {
   if ((nbrBosons < 0) || (totalLz < 0) || (nbrNUpPlus < 0) || (nbrNUpMinus < 0) || (nbrNDownPlus < 0) || (nbrNDownMinus < 0))
     return 0l;
-  if ((nbrBosons == 0) && (totalLz == 0))
-    return 1l;
+  if (nbrBosons == 0)
+    {
+      if (totalLz == 0)
+	return 1l;
+      else
+	return 0l;
+    }
   if (lzMax < 0)
     return 0l;
   if (nbrBosons == 1)

@@ -14,6 +14,7 @@
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
 #include "HilbertSpace/BosonOnSphereWithSU3Spin.h"
+#include "HilbertSpace/BosonOnSphereWithSU4Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSpinAllSz.h"
 #include "HilbertSpace/FermionOnSphereTwoLandauLevels.h"
 #include "HilbertSpace/FermionOnSphereThreeLandauLevels.h"
@@ -280,7 +281,14 @@ int main(int argc, char** argv)
 	      else
 		{
 		  if (SU3SpinFlag == true)
-		    Space = new BosonOnSphereWithSU3Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalTz, TotalY);
+		    {
+		      Space = new BosonOnSphereWithSU3Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalTz, TotalY);
+		    }
+		  else
+		    {
+		      if (SU4SpinFlag == true)
+			Space = new BosonOnSphereWithSU4Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, TotalIz, TotalPz);
+		    }
 		}
 	    }
 	}

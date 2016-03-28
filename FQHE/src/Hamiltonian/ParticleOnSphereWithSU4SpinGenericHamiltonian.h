@@ -36,6 +36,7 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphereWithSU4Spin.h"
 #include "Hamiltonian/AbstractQHEOnSphereWithSU4SpinHamiltonian.h"
+#include "MathTools/ClebschGordanCoefficients.h"
 
 #include <iostream>
 
@@ -56,7 +57,7 @@ class ParticleOnSphereWithSU4SpinGenericHamiltonian : public AbstractQHEOnSphere
 
   // array with the pseudo-potentials (ordered such that the last element corresponds to the delta interaction)
   // first index refered to the spin/isospin sector (sorted as up-up, up-um, up-dp, up-dm, um-um, um-dp, um-dm, dp-dp, dp-dm and dm-dm)
-  double** PseudoPotentials;
+  double** Pseudopotentials;
 
  public:
 
@@ -89,52 +90,22 @@ class ParticleOnSphereWithSU4SpinGenericHamiltonian : public AbstractQHEOnSphere
   // hilbertSpace = pointer to Hilbert space to use
   void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
 
-  // get Hilbert space on which Hamiltonian acts
-  //
-  // return value = pointer to used Hilbert space
-  AbstractHilbertSpace* GetHilbertSpace ();
-
-  // return dimension of Hilbert space where Hamiltonian acts
-  //
-  // return value = corresponding matrix elementdimension
-  int GetHilbertSpaceDimension ();
-  
-  // shift Hamiltonian from a given energy
-  //
-  // shift = shift value
-  void ShiftHamiltonian (double shift);
-
-  // evaluate matrix element
-  //
-  // V1 = vector to left multiply with current matrix
-  // V2 = vector to right multiply with current matrix
-  // return value = corresponding matrix element
-  Complex MatrixElement (RealVector& V1, RealVector& V2);
-  
-  // evaluate matrix element
-  //
-  // V1 = vector to left multiply with current matrix
-  // V2 = vector to right multiply with current matrix
-  // return value = corresponding matrix element
-  Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
-
-  // return a list of left interaction operators
-  //
-  // return value = list of left interaction operators
-  List<Matrix*> LeftInteractionOperators();  
-
-  // return a list of right interaction operators 
-  //
-  // return value = list of right interaction operators
-  List<Matrix*> RightInteractionOperators();  
-
-
  protected:
  
   // evaluate all interaction factors
   //   
-  void EvaluateInteractionFactors();
+  virtual void EvaluateInteractionFactors();
 
+  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
+  //
+  // m1 = first index
+  // m2 = second index
+  // m3 = third index
+  // m4 = fourth index
+  // clebsch = reference to the Clebsch-Gordan coefficients
+  // pseudopotentials = pseudopotential coefficients
+  // return value = numerical coefficient  
+  virtual double EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, ClebschGordanCoefficients& clebsch, double* pseudopotentials);
 
 };
 
