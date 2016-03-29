@@ -33,11 +33,13 @@
 #include "GeneralTools/Endian.h"
 #include "GeneralTools/ArrayTools.h"
 
+#include <iostream>
 #include <fstream>
 
 
 using std::ofstream;
 using std::endl;
+using std::cout;
 
 
 // default constructor
@@ -165,5 +167,113 @@ void Abstract1DTightBindingModel::GetEnergies(double*& energies, int*& momenta, 
       momenta[i] = i;
     }
   SortArrayUpOrdering<int>(energies, momenta, this->NbrStatePerBand);
+}
+
+// get all the energies, sorted from the smallest to the largest
+//
+// energies = reference to the array where the energies will be stored (the allocation is done by the method)
+// momenta = reference to the array where the linearized momentum associated to each energy will be stored (the allocation is done by the method)
+// bandIndices = reference to the array where the band index associated to each energy will be stored (the allocation is done by the method)
+
+void Abstract1DTightBindingModel::GetAllEnergies(double*& energies, int*& momenta, int*& bandIndices)
+{
+  int TotalNbrStates = this->NbrStatePerBand * this->NbrBands;
+  energies = new double[TotalNbrStates];
+  momenta = new int[TotalNbrStates];
+  bandIndices = new int[TotalNbrStates];
+  TotalNbrStates= 0;
+  for (int i = 0; i < this->NbrStatePerBand; ++i)
+    {
+      for (int j = 0; j < this->NbrBands; ++j)
+	{
+	  energies[TotalNbrStates] = this->EnergyBandStructure[j][i];
+	  momenta[TotalNbrStates] = i;
+	  bandIndices[TotalNbrStates] = j;
+	  ++TotalNbrStates;
+	}
+    }
+  SortArrayUpOrdering<int>(energies, momenta, bandIndices, TotalNbrStates);
+}
+
+// evaluate the two point correlation function in a given region
+//
+// maxX = x coordinate of the region upper right corner 
+// maxY = y coordinate of the region upper right corner 
+// occupiedMomenta = array that gives all the occupied momenta (as linearized indices)
+// nbrOccupiedMomenta = number of occupied momenta
+// bandIndex = index of the band to consider
+// return value = matrix where the values of the two point correlation function will be stored (using the linearized position index as entry)
+
+HermitianMatrix Abstract1DTightBindingModel::EvaluateFullTwoPointCorrelationFunction(int maxX, int maxY, int* occupiedMomenta, int nbrOccupiedMomenta, int bandIndex)
+{
+  int TotalNbrSites = maxX * this->NbrBands;
+  int TmpMomentumX;
+  HermitianMatrix EntanglementHamiltonian(TotalNbrSites, true);
+  cout << "warning, Abstract1DTightBindingModel::EvaluateFullTwoPointCorrelationFunction is not implemented" << endl;
+  return EntanglementHamiltonian;
+}
+
+// evaluate the mixed two point correlation function in a given region, assuming translation invariance along one direction
+//
+// maxX = length along the borken translation direction of the region 
+// ky = momentum along the translation invariant direction
+// occupiedMomenta = array that gives all the occupied momenta (as linearized indices)
+// bandIndices = array that gives the band index of each occupied state
+// nbrOccupiedMomenta = number of occupied momenta
+// return value = matrix where the values of the two point correlation function will be stored (using the linearized position index as entry)
+
+HermitianMatrix Abstract1DTightBindingModel::EvaluateFullMixedTwoPointCorrelationFunctionWithK(int maxX, int ky, int* occupiedMomenta, int* bandIndices, int nbrOccupiedMomenta)
+{
+  int TmpNbrOrbitalPerUnitCell = this->NbrBands;
+  int TotalNbrSites = maxX * TmpNbrOrbitalPerUnitCell;
+  int TmpMomentumX;
+  int TmpMomentumY;
+  HermitianMatrix EntanglementHamiltonian(TotalNbrSites, true);
+  int TmpNbrStates = 0;
+  for (int i = 0; i < nbrOccupiedMomenta; ++i)
+    {
+      if (occupiedMomenta[i] == ky)
+	{
+	  ++TmpNbrStates;
+	}
+    }
+  if (TmpNbrStates == 0)
+    {
+      return EntanglementHamiltonian;
+    }
+
+  int* TmpOccupiedMomenta = new int [TmpNbrStates];
+  TmpNbrStates = 0;
+  for (int i = 0; i < nbrOccupiedMomenta; ++i)
+    {
+      if (occupiedMomenta[i] == ky)
+	{
+	  TmpOccupiedMomenta[TmpNbrStates] = bandIndices[i];
+	  ++TmpNbrStates;
+	}
+    }
+  for (int TmpY1 = 0; TmpY1 < maxX; ++TmpY1)
+    {	  
+      for (int TmpOrbital1 = 0; TmpOrbital1 < TmpNbrOrbitalPerUnitCell; ++TmpOrbital1)
+	{
+	  int TmpReducedLinearizedIndex1 = TmpOrbital1 + (TmpY1 * TmpNbrOrbitalPerUnitCell);
+	  for (int TmpY2 = 0; TmpY2 < maxX; ++TmpY2)
+	    {	  
+	      for (int TmpOrbital2 = 0; TmpOrbital2 < TmpNbrOrbitalPerUnitCell; ++TmpOrbital2)
+		{
+		  int TmpReducedLinearizedIndex2 = TmpOrbital2 + (TmpY2 * TmpNbrOrbitalPerUnitCell);
+		  Complex Tmp = 0.0;
+		  for (int i = 0; i < TmpNbrStates; ++i)
+		    {
+		      Tmp +=  Conj(this->OneBodyBasis[ky][TmpOccupiedMomenta[i]][TmpReducedLinearizedIndex1]) * this->OneBodyBasis[ky][TmpOccupiedMomenta[i]][TmpReducedLinearizedIndex2];
+		    }		  
+		  EntanglementHamiltonian.SetMatrixElement(TmpReducedLinearizedIndex1, TmpReducedLinearizedIndex2, Tmp);
+		}
+	    }
+	}
+    }
+  delete[] TmpOccupiedMomenta;
+
+  return EntanglementHamiltonian;
 }
 

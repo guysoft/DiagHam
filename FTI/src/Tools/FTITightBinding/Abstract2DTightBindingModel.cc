@@ -1806,16 +1806,16 @@ HermitianMatrix Abstract2DTightBindingModel::EvaluateFullTwoPointCorrelationFunc
   return EntanglementHamiltonian;
 }
 
-// evaluate the mixed two point correlation function in a given region, assuming translation invariance along the y direction
+// evaluate the mixed two point correlation function in a given region, assuming translation invariance along one direction
 //
-// maxX = length along the x direction of the region 
-// ky = momentum along the y direction
+// maxX = length along the borken translation direction of the region 
+// ky = momentum along the translation invariant direction
 // occupiedMomenta = array that gives all the occupied momenta (as linearized indices)
+// bandIndices = array that gives the band index of each occupied state
 // nbrOccupiedMomenta = number of occupied momenta
-// bandIndex = index of the band to consider
 // return value = matrix where the values of the two point correlation function will be stored (using the linearized position index as entry)
 
-HermitianMatrix Abstract2DTightBindingModel::EvaluateFullMixedTwoPointCorrelationFunctionWithKy(int maxX, int ky, int* occupiedMomenta, int nbrOccupiedMomenta, int bandIndex)
+HermitianMatrix Abstract2DTightBindingModel::EvaluateFullMixedTwoPointCorrelationFunctionWithK(int maxX, int ky, int* occupiedMomenta, int* bandIndices, int nbrOccupiedMomenta)
 {
   int TotalNbrSites = maxX * this->NbrBands;
   int TmpMomentumX;
@@ -1869,8 +1869,8 @@ HermitianMatrix Abstract2DTightBindingModel::EvaluateFullMixedTwoPointCorrelatio
 	  TmpFormFactors[i][j] = new Complex[this->NbrBands];
 	  for (int k = 0; k < this->NbrBands; ++k)
 	    {	      
-	      TmpFormFactors[i][j][k] = (Conj(this->OneBodyBasis[occupiedMomenta[TmpKeptStates[i]]][bandIndex][j])
-					 * this->OneBodyBasis[occupiedMomenta[TmpKeptStates[i]]][bandIndex][k]);
+	      TmpFormFactors[i][j][k] = (Conj(this->OneBodyBasis[occupiedMomenta[TmpKeptStates[i]]][bandIndices[TmpKeptStates[i]]][j])
+					 * this->OneBodyBasis[occupiedMomenta[TmpKeptStates[i]]][bandIndices[TmpKeptStates[i]]][k]);
 	    }
 	}
     }

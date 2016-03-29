@@ -98,16 +98,16 @@ class TightBindingModelCylinderTwoOrbitalSquareLattice : public Abstract1DTightB
   // nbrSiteYA = number of site to keep for the A part along the y direction    
   virtual void ComputeManyBodyRealSpaceEntanglementSpectrum(char* outputFile, double minEnergy, double maxEnergy, int nbrSiteYA);
   
-  // evaluate the mixed two point correlation function in a given region, assuming translation invariance along the x direction
+  // evaluate the mixed two point correlation function in a given region, assuming translation invariance along one direction
   //
-  // maxY = length along the y direction of the region 
-  // kx = momentum along the x direction
+  // maxX = length along the borken translation direction of the region 
+  // ky = momentum along the translation invariant direction
   // occupiedMomenta = array that gives all the occupied momenta (as linearized indices)
+  // bandIndices = array that gives the band index of each occupied state
   // nbrOccupiedMomenta = number of occupied momenta
-  // bandIndex = index of the band to consider
   // return value = matrix where the values of the two point correlation function will be stored (using the linearized position index as entry)
-  virtual HermitianMatrix EvaluateFullMixedTwoPointCorrelationFunctionWithKy(int maxY, int kx, int* occupiedMomenta, int nbrOccupiedMomenta, int bandIndex);
-  
+  virtual HermitianMatrix EvaluateFullMixedTwoPointCorrelationFunctionWithK(int maxX, int ky, int* occupiedMomenta, int* bandIndices, int nbrOccupiedMomenta);
+
  protected :
   
   // compute the band structure

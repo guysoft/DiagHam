@@ -347,26 +347,26 @@ void TightBindingModelCylinderTwoOrbitalSquareLattice::ComputeOneBodyRealSpaceEn
   File.close();
 }
 
-// evaluate the mixed two point correlation function in a given region, assuming translation invariance along the x direction
+// evaluate the mixed two point correlation function in a given region, assuming translation invariance along one direction
 //
-// maxY = length along the y direction of the region 
-// kx = momentum along the x direction
+// maxX = length along the borken translation direction of the region 
+// ky = momentum along the translation invariant direction
 // occupiedMomenta = array that gives all the occupied momenta (as linearized indices)
+// bandIndices = array that gives the band index of each occupied state
 // nbrOccupiedMomenta = number of occupied momenta
-// bandIndex = index of the band to consider
 // return value = matrix where the values of the two point correlation function will be stored (using the linearized position index as entry)
 
-HermitianMatrix TightBindingModelCylinderTwoOrbitalSquareLattice::EvaluateFullMixedTwoPointCorrelationFunctionWithKy(int maxY, int kx, int* occupiedMomenta, int nbrOccupiedMomenta, int bandIndex)
+HermitianMatrix TightBindingModelCylinderTwoOrbitalSquareLattice::EvaluateFullMixedTwoPointCorrelationFunctionWithK(int maxX, int ky, int* occupiedMomenta, int* bandIndices, int nbrOccupiedMomenta)
 {
   int TmpNbrOrbitalPerUnitCell = this->NbrBands / this->NbrSiteY;
-  int TotalNbrSites = maxY * TmpNbrOrbitalPerUnitCell;
+  int TotalNbrSites = maxX * TmpNbrOrbitalPerUnitCell;
   int TmpMomentumX;
   int TmpMomentumY;
   HermitianMatrix EntanglementHamiltonian(TotalNbrSites, true);
   int TmpNbrStates = 0;
   for (int i = 0; i < nbrOccupiedMomenta; ++i)
     {
-      if ((occupiedMomenta[i] / this->NbrBands) == kx)
+      if (occupiedMomenta[i] == ky)
 	{
 	  ++TmpNbrStates;
 	}
@@ -380,18 +380,18 @@ HermitianMatrix TightBindingModelCylinderTwoOrbitalSquareLattice::EvaluateFullMi
   TmpNbrStates = 0;
   for (int i = 0; i < nbrOccupiedMomenta; ++i)
     {
-      if ((occupiedMomenta[i] / this->NbrBands) == kx)
+      if (occupiedMomenta[i] == ky)
 	{
-	  TmpOccupiedMomenta[TmpNbrStates] = occupiedMomenta[i] % this->NbrBands;
+	  TmpOccupiedMomenta[TmpNbrStates] = bandIndices[i];
 	  ++TmpNbrStates;
 	}
     }
-  for (int TmpY1 = 0; TmpY1 < maxY; ++TmpY1)
+  for (int TmpY1 = 0; TmpY1 < maxX; ++TmpY1)
     {	  
       for (int TmpOrbital1 = 0; TmpOrbital1 < TmpNbrOrbitalPerUnitCell; ++TmpOrbital1)
 	{
 	  int TmpReducedLinearizedIndex1 = TmpOrbital1 + (TmpY1 * TmpNbrOrbitalPerUnitCell);
-	  for (int TmpY2 = 0; TmpY2 < maxY; ++TmpY2)
+	  for (int TmpY2 = 0; TmpY2 < maxX; ++TmpY2)
 	    {	  
 	      for (int TmpOrbital2 = 0; TmpOrbital2 < TmpNbrOrbitalPerUnitCell; ++TmpOrbital2)
 		{
@@ -399,7 +399,7 @@ HermitianMatrix TightBindingModelCylinderTwoOrbitalSquareLattice::EvaluateFullMi
 		  Complex Tmp = 0.0;
 		  for (int i = 0; i < TmpNbrStates; ++i)
 		    {
-		      Tmp +=  Conj(this->OneBodyBasis[kx][TmpOccupiedMomenta[i]][TmpReducedLinearizedIndex1]) * this->OneBodyBasis[kx][TmpOccupiedMomenta[i]][TmpReducedLinearizedIndex2];
+		      Tmp +=  Conj(this->OneBodyBasis[ky][TmpOccupiedMomenta[i]][TmpReducedLinearizedIndex1]) * this->OneBodyBasis[ky][TmpOccupiedMomenta[i]][TmpReducedLinearizedIndex2];
 		    }		  
 		  EntanglementHamiltonian.SetMatrixElement(TmpReducedLinearizedIndex1, TmpReducedLinearizedIndex2, Tmp);
 		}

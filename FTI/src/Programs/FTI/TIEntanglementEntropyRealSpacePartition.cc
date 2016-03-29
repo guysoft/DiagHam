@@ -124,7 +124,7 @@ int main(int argc, char** argv)
 	  CutY = new int [NbrCuts];
 	  CutX[0] = NbrSitesXA;
 	  CutY[0] = NbrSitesYA;
-	  if ((NbrSitesXA == NbrSitesX) && (Manager.GetBoolean("disable-ytranslation") == false))
+	  if ((NbrSitesYA == NbrSitesY) && (Manager.GetBoolean("disable-ytranslation") == false))
 	    {
 	      PreserveYTranslation = true;
 	    }
@@ -160,37 +160,59 @@ int main(int argc, char** argv)
 	      Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
     }
 
-  Abstract2DTightBindingModel* TightBindingModel;
-  TightBindingModel = new TightBindingModelTwoOrbitalSquareLattice (NbrSitesX, NbrSitesY, 
-								    Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), 
-								    Manager.GetInteger("folding"), Manager.GetDouble("mu-s"), 
-								    Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), 
-								    true);
-
+  Abstract1DTightBindingModel* TightBindingModel;
+  if (CylinderFlag == false)
+    {
+      TightBindingModel = new TightBindingModelTwoOrbitalSquareLattice (NbrSitesX, NbrSitesY, 
+									Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), 
+									Manager.GetInteger("folding"), Manager.GetDouble("mu-s"), 
+									Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), 
+									true);
+    }
+  else
+    {
+      TightBindingModel = new TightBindingModelCylinderTwoOrbitalSquareLattice (NbrSitesY, NbrSitesX, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), 
+										Manager.GetInteger("folding"), Manager.GetDouble("mu-s"), 
+										Manager.GetDouble("gamma-x"), false,  Architecture.GetArchitecture(), true);
+    }      
   double* TightBindingModelEnergies = 0;
   int* TightBindingModelLinearizedMomenta = 0;
-  TightBindingModel->GetEnergies(TightBindingModelEnergies, TightBindingModelLinearizedMomenta, 0);
+  int* TightBindingModelBandIndices = 0;
+  if (CylinderFlag == false)
+    {
+      TightBindingModel->GetEnergies(TightBindingModelEnergies, TightBindingModelLinearizedMomenta, 0);
+      TightBindingModelBandIndices = new int [TightBindingModel->GetNbrStatePerBand()];
+      for (int i = 0; i < TightBindingModel->GetNbrStatePerBand(); ++i)
+	TightBindingModelBandIndices[i] = 0;
+    }
+  else
+    {
+      TightBindingModel->GetAllEnergies(TightBindingModelEnergies, TightBindingModelLinearizedMomenta, TightBindingModelBandIndices);
+    }
 
   int* VacuumOneBodyLinearizedMomenta = 0; 
+  int* VacuumOneBodyLinearizedBandIndices = 0;
   double VacuumTotalEnergy = 0.0;
   int VacuumXMomentum = 0;
   int VacuumYMomentum = 0;
   int TmpMomentumX;
   int TmpMomentumY;
-  int VacuumNbrParticles = TightBindingModel->GetNbrStatePerBand(); 
+  int VacuumNbrParticles = (TightBindingModel->GetNbrStatePerBand() * TightBindingModel->GetNbrBands()) / 2; 
   VacuumOneBodyLinearizedMomenta = new int[VacuumNbrParticles];
+  VacuumOneBodyLinearizedBandIndices = new int[VacuumNbrParticles];
   for (int i = 0; i < VacuumNbrParticles; ++i)
     {
       TightBindingModel->GetLinearizedMomentumIndex(TightBindingModelLinearizedMomenta[i], TmpMomentumX, TmpMomentumY);
       VacuumXMomentum += TmpMomentumX;
       VacuumYMomentum += TmpMomentumY;
       VacuumOneBodyLinearizedMomenta[i] = TightBindingModel->GetLinearizedMomentumIndex(TmpMomentumX, TmpMomentumY);
-      VacuumTotalEnergy += TightBindingModel->GetEnergy(0, VacuumOneBodyLinearizedMomenta[i]);
+      VacuumOneBodyLinearizedBandIndices[i] = TightBindingModelBandIndices[i];
+      VacuumTotalEnergy += TightBindingModel->GetEnergy(VacuumOneBodyLinearizedBandIndices[i], VacuumOneBodyLinearizedMomenta[i]);
     }
-
+  
   timeval TotalStartingTime;
   timeval TotalEndingTime;
-
+  
   char* EntropyFileName = new char [512];
   sprintf(EntropyFileName, "%s_xa_%d_ya_%d.ent", FilePrefix, MaxNbrSitesXA, MaxNbrSitesYA);
   ofstream File;
@@ -293,7 +315,9 @@ int main(int argc, char** argv)
 	    {
 	      gettimeofday (&(TotalStartingTime), 0);
 	    }
-	  HermitianMatrix TmpEntanglementHamiltonian = TightBindingModel->EvaluateFullMixedTwoPointCorrelationFunctionWithKy(MaxNbrSitesXA, TmpKy, VacuumOneBodyLinearizedMomenta, VacuumNbrParticles, 0);
+	  HermitianMatrix TmpEntanglementHamiltonian;
+	  TmpEntanglementHamiltonian = TightBindingModel->EvaluateFullMixedTwoPointCorrelationFunctionWithK(MaxNbrSitesXA, TmpKy, VacuumOneBodyLinearizedMomenta, 
+													    VacuumOneBodyLinearizedBandIndices, VacuumNbrParticles);
 	  if (ShowTimeFlag == true)
 	    {
 	      gettimeofday (&(TotalEndingTime), 0);
@@ -361,11 +385,14 @@ int main(int argc, char** argv)
      SortArrayDownOrdering<int>(TotalVacuumOneBodyEntanglementTrimmedEnergies, TotalVacuumOneBodyEntanglementTrimmedMomenta, TotalNbrVacuumOneBodyEntanglementTrimmedEnergies);
      int NaturalNbrParticles = NbrSitesXA * NbrSitesYA;
      int InitialNbrParticlesA = NaturalNbrParticles - TotalNbrRejectedOneValues + 1;
+     int NaturalMomentumA = 0;
+//      for (int i = 0; i < InitialNbrParticlesA; ++i)
+//        NaturalMomentumA  += TotalVacuumOneBodyEntanglementTrimmedMomenta[i];
      bool TmpZeroFlag = false;
      for (int i = InitialNbrParticlesA; (i < TotalNbrVacuumOneBodyEntanglementTrimmedEnergies) && (TmpZeroFlag == false); ++i)
        {
 	 double TmpLargestEigenvalue = 1.0;
-	 int TmpLargestEigenvalueMomentum = 0.0;
+	 int TmpLargestEigenvalueMomentum = -NaturalMomentumA;
 	 for (int j = InitialNbrParticlesA; j <= i; ++j)
 	   {
 	     TmpLargestEigenvalue *= TotalVacuumOneBodyEntanglementTrimmedEnergies[j];
@@ -386,22 +413,17 @@ int main(int argc, char** argv)
      for (int i = InitialNbrParticlesA; (i >= 0 ) && (TmpZeroFlag == false); --i)
        {
 	 double TmpLargestEigenvalue = 1.0;
-	 int TmpLargestEigenvalueMomentum = 0.0;
+	 int TmpLargestEigenvalueMomentum = -NaturalMomentumA;
 	 for (int j = i; j <= InitialNbrParticlesA; ++j)
 	   {
 	     TmpLargestEigenvalue /= TotalVacuumOneBodyEntanglementTrimmedEnergies[j];
-	     TmpLargestEigenvalueMomentum += TotalVacuumOneBodyEntanglementTrimmedMomenta[j];
+	     TmpLargestEigenvalueMomentum -= TotalVacuumOneBodyEntanglementTrimmedMomenta[j];
 	   }
 	 for (int j = i; j <= InitialNbrParticlesA; ++j)
 	   {
 	     TmpLargestEigenvalue *= (1.0 - TotalVacuumOneBodyEntanglementTrimmedEnergies[j]);
 	   }	 
-// 	 int TmpKyMomentum = -(TmpLargestEigenvalueMomentum % NbrSitesY);
-// 	 if (TmpKyMomentum < (- NbrSitesY / 2))
-// 	   {
-// 	     TmpKyMomentum = 
-// 	   }
-//	 cout << i << " " << TmpLargestEigenvalue << " " <<  << endl;
+	 cout << i << " " << TmpLargestEigenvalue << " " << (TmpLargestEigenvalueMomentum % NbrSitesY) << endl;
 	 if (TmpLargestEigenvalue < 1e-50)
 	   {
 	     TmpZeroFlag = true;
