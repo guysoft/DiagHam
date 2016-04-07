@@ -11,6 +11,8 @@
 #include "HilbertSpace/Spin1_2Chain.h"
 #include "HilbertSpace/Spin1_2ChainFull.h"
 #include "HilbertSpace/Spin1Chain.h"
+#include "HilbertSpace/Spin1_2ChainWithTranslations.h"
+#include "HilbertSpace/Spin1ChainWithTranslations.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -107,11 +109,13 @@ int main(int argc, char** argv)
   char** GroundStateFiles = 0;
   AbstractSpinChain** Spaces = 0;
   int* TotalSz = 0;
+  int* Momenta = 0;
   
   if (Manager.GetString("degenerated-groundstate") == 0)
     {
       GroundStateFiles = new char* [1];
       TotalSz = new int[1];
+      Momenta = new int[1];
       Weights = new double[1];
       Weights[0] = 1.0;
       GroundStateFiles[0] = new char [strlen(Manager.GetString("ground-file")) + 1];
@@ -128,6 +132,7 @@ int main(int argc, char** argv)
       NbrSpaces = DegeneratedFile.GetNbrLines();
       GroundStateFiles = new char* [NbrSpaces];
       TotalSz = new int[NbrSpaces];
+      Momenta = new int[NbrSpaces];
       for (int i = 0; i < NbrSpaces; ++i)
 	{
 	  GroundStateFiles[i] = new char [strlen(DegeneratedFile(0, i)) + 1];
@@ -148,21 +153,27 @@ int main(int argc, char** argv)
 
 
   bool SzFlag = true;
+  bool MomentumFlag = true;
   for (int i = 0; i < NbrSpaces; ++i)
     {
       TotalSz[i] = 0;
-      if (SpinFindSystemInfoFromVectorFileName(GroundStateFiles[i], NbrSpins, TotalSz[i], SpinValue) == false)
+      Momenta[i] = 0;
+      if (SpinFindSystemInfoFromVectorFileName(GroundStateFiles[i], NbrSpins, TotalSz[i], SpinValue, Momenta[i]) == false)
 	{
-	  SzFlag = false;
-	  if (SpinFindSystemInfoFromFileName(GroundStateFiles[i], NbrSpins, SpinValue) == false)
-	    {	     
-	      cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
-	      return -1;
+	  MomentumFlag = false;
+	  if (SpinFindSystemInfoFromVectorFileName(GroundStateFiles[i], NbrSpins, TotalSz[i], SpinValue) == false)
+	    {
+	      SzFlag = false;
+	      if (SpinFindSystemInfoFromFileName(GroundStateFiles[i], NbrSpins, SpinValue) == false)
+		{	     
+		  cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
+		  return -1;
+		}
 	    }
 	}
     }
-     
-
+  
+  
   ofstream File;
   if (Manager.GetString("output-file") != 0)
     {
@@ -236,7 +247,6 @@ int main(int argc, char** argv)
 	}
       
       Spaces = new AbstractSpinChain* [NbrSpaces];
-      
       for (int i = 0; i < NbrSpaces; ++i)
 	{
 	  switch (SpinValue)
@@ -453,26 +463,41 @@ int main(int argc, char** argv)
      
      Spaces = new AbstractSpinChain* [NbrSpaces];
      
-     if (SzFlag == true)
+      if (MomentumFlag == false)
 	{
-	  for (int i = 0; i < NbrSpaces; ++i)
+	  if (SzFlag == true)
 	    {
-	      switch (SpinValue)
+	      for (int i = 0; i < NbrSpaces; ++i)
 		{
-		case 1 :
-		  Spaces[i] = new Spin1_2Chain (NbrSpins, TotalSz[i], 1000000);
-		  break;
-		case 2 :
-		  Spaces[i] = new Spin1Chain (NbrSpins, TotalSz[i], 1000000);
-		  break;
-		default :
-		  {
-		    if ((SpinValue & 1) == 0)
-		      cout << "spin " << (SpinValue / 2) << " are not available" << endl;
-		    else 
-		      cout << "spin " << SpinValue << "/2 are not available" << endl;
-		    return -1;
-		  }
+		  switch (SpinValue)
+		    {
+		    case 1 :
+		      Spaces[i] = new Spin1_2Chain (NbrSpins, TotalSz[i], 1000000);
+		      break;
+		    case 2 :
+		      Spaces[i] = new Spin1Chain (NbrSpins, TotalSz[i], 1000000);
+		      break;
+		    default :
+		      {
+			if ((SpinValue & 1) == 0)
+			  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+			else 
+			  cout << "spin " << SpinValue << "/2 are not available" << endl;
+			return -1;
+		      }
+		    }
+		}
+	    }
+	  else
+	    {
+	      for (int i = 0; i < NbrSpaces; ++i)
+		{
+		  switch (SpinValue)
+		    {
+		    case 1 :
+		      Spaces[i] = new Spin1_2ChainFull (NbrSpins);
+		      break;
+		    }
 		}
 	    }
 	}
@@ -483,8 +508,19 @@ int main(int argc, char** argv)
 	      switch (SpinValue)
 		{
 		case 1 :
-		  Spaces[i] = new Spin1_2ChainFull (NbrSpins);
+		  Spaces[i] = new Spin1_2ChainWithTranslations (NbrSpins, Momenta[i], 1, TotalSz[i], 1000000, 1000000);
 		  break;
+		case 2 :
+		  Spaces[i] = new Spin1ChainWithTranslations (NbrSpins, Momenta[i], TotalSz[i], 1000000, 1000000);
+		  break;
+		default :
+		  {
+		    if ((SpinValue & 1) == 0)
+		      cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+		    else 
+		      cout << "spin " << SpinValue << "/2 are not available" << endl;
+		    return -1;
+		  }
 		}
 	    }
 	}
@@ -590,6 +626,8 @@ int main(int argc, char** argv)
 		   }
 		 else //SVD...
 		   {
+		     PartialEntanglementMatrix.RemoveZeroColumns();
+		     PartialEntanglementMatrix.RemoveZeroRows();
 		     if ((PartialEntanglementMatrix.GetNbrRow() > 1) && (PartialEntanglementMatrix.GetNbrColumn() > 1))
 		       {
 			 cout << "PartialEntanglementMatrix = " << PartialEntanglementMatrix.GetNbrRow() << " x " << PartialEntanglementMatrix.GetNbrColumn() << endl;
@@ -640,18 +678,18 @@ int main(int argc, char** argv)
 		   {
 		     ofstream DensityMatrixFile;
 		     DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
-		      DensityMatrixFile.precision(14);
-		      if (SzFlag == true)
-			{
-			  for (int i = 0; i <TmpDiag.GetNbrRow(); ++i)
-			    DensityMatrixFile << SubsystemSize << " " << MinSzA << " " << TmpDiag[i] << endl;
-			}
-		      else
-			{
-			  for (int i = 0; i <TmpDiag.GetNbrRow(); ++i)
-			    DensityMatrixFile << SubsystemSize << " " << TmpDiag[i] << endl;
-			}
-		      DensityMatrixFile.close();
+		     DensityMatrixFile.precision(14);
+		     if (SzFlag == true)
+		       {
+			 for (int i = 0; i <TmpDiag.GetNbrRow(); ++i)
+			   DensityMatrixFile << SubsystemSize << " " << MinSzA << " " << TmpDiag[i] << endl;
+		       }
+		     else
+		       {
+			 for (int i = 0; i <TmpDiag.GetNbrRow(); ++i)
+			   DensityMatrixFile << SubsystemSize << " " << TmpDiag[i] << endl;
+		       }
+		     DensityMatrixFile.close();
 		   }
 	       }
 	     else

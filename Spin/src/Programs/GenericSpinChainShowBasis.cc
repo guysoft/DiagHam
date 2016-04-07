@@ -313,16 +313,31 @@ int main(int argc, char** argv)
 	}
       else
        {
-          RealVector State;
-	  if (State.ReadVector(Manager.GetString("state")) == false)
-	    {
+ 	 if (Manager.GetBoolean("complex-vector") == false)
+	   {
+	     RealVector State;
+	     if (State.ReadVector(Manager.GetString("state")) == false)
+	       {
+		 cout << "error while reading " << Manager.GetString("state") << endl;
+		 return -1;
+	       }
+	     for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+	       if (fabs(State[i]) > Error)
+		 Space->PrintState(cout, i) << " : "  << State[i] << endl;
+	   }
+	 else
+	   {
+	     ComplexVector State;
+	     if (State.ReadVector(Manager.GetString("state")) == false)
+	       {
 	      cout << "error while reading " << Manager.GetString("state") << endl;
 	      return -1;
-	    }
-          for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-	     if (fabs(State[i]) > Error)
-	        Space->PrintState(cout, i) << " : "  << State[i] << endl;
-        }
+	       }
+	     for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+	       if (Norm(State[i]) > Error)
+		 Space->PrintState(cout, i) << " : "  << State[i] << endl;
+	   }
+       }
 
 
     }

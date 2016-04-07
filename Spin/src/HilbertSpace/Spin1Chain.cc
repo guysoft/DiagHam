@@ -112,9 +112,9 @@ Spin1Chain::Spin1Chain (int chainLength, int sz, int memorySize)
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
-  this->HilbertSpaceDimension = MAX_HILBERTSPACE_DIMENSION;
   this->Sz = sz;
   this->FixedQuantumNumberFlag = true;
+  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->Sz, this->ChainLength);
 
   this->LookUpPosition = 0;
   this->LookUpTableSize = 4;
@@ -260,6 +260,31 @@ AbstractHilbertSpace* Spin1Chain::Clone()
   return new Spin1Chain (*this);
 }
 
+// evaluate Hilbert space dimension
+//
+// sz = twice the Sz value
+// nbrSites = number of sites
+// return value = Hilbert space dimension
+
+long Spin1Chain::EvaluateHilbertSpaceDimension(int sz, int nbrSites)
+{
+  if (nbrSites == 0)
+    {
+      if (sz == 0)
+	{
+	  return 1l;	  
+	}
+      else
+	{
+	  return 0l;	  
+	}
+    }
+  long TmpDimension = this->EvaluateHilbertSpaceDimension(sz - 2, nbrSites - 1);
+  TmpDimension += this->EvaluateHilbertSpaceDimension(sz, nbrSites - 1);
+  TmpDimension += this->EvaluateHilbertSpaceDimension(sz + 2, nbrSites - 1);
+  return TmpDimension;
+}
+
 // generate all states with no constraint on total Sz
 //
 // statePosition = position for the new states
@@ -280,12 +305,12 @@ int Spin1Chain::GenerateStates(int statePosition,int sitePosition, unsigned long
 	this->LookUpTable[currentStateDescription & this->LookUpTableMask] = statePosition;
       statePosition += this->GenerateStates(statePosition, NextSitePosition, currentStateDescription);
       
-      mask = ~(0x00000001 << sitePosition);
+      mask = ~(0x1ul << sitePosition);
       if (NextSitePosition == this->LookUpPosition)
 	this->LookUpTable[(currentStateDescription & mask) & this->LookUpTableMask] = statePosition;
       statePosition += this->GenerateStates(statePosition, NextSitePosition, currentStateDescription & mask);
       
-      mask = ~(0x00000003 << sitePosition);
+      mask = ~(0x3ul << sitePosition);
       if (NextSitePosition == this->LookUpPosition)
 	this->LookUpTable[(currentStateDescription & mask) & this->LookUpTableMask] = statePosition;
       statePosition += this->GenerateStates(statePosition, NextSitePosition, currentStateDescription & mask);
@@ -297,13 +322,13 @@ int Spin1Chain::GenerateStates(int statePosition,int sitePosition, unsigned long
       this->ChainDescription[statePosition] = currentStateDescription;
       statePosition++;
       
-      mask = ~(0x00000001 << sitePosition);
+      mask = ~(0x1ul << sitePosition);
       if (NextSitePosition == this->LookUpPosition)
 	this->LookUpTable[(currentStateDescription & mask) & this->LookUpTableMask] = statePosition;
       this->ChainDescription[statePosition] = (currentStateDescription & mask);
       statePosition++;
       
-      mask = ~(0x00000003 << sitePosition);
+      mask = ~(0x3ul << sitePosition);
       if (NextSitePosition == this->LookUpPosition)
 	this->LookUpTable[(currentStateDescription & mask) & this->LookUpTableMask] = statePosition;
       this->ChainDescription[statePosition] = (currentStateDescription & mask);
@@ -337,12 +362,12 @@ int Spin1Chain::GenerateStates(int statePosition,int sitePosition, unsigned long
 	this->LookUpTable[currentStateDescription & this->LookUpTableMask] = statePosition;
       statePosition += this->GenerateStates(statePosition, NextSitePosition, currentStateDescription, currentSz);
       
-      mask = ~(0x00000001 << sitePosition);
+      mask = ~(0x1ul << sitePosition);
       if (NextSitePosition == this->LookUpPosition)
 	this->LookUpTable[(currentStateDescription & mask) & this->LookUpTableMask] = statePosition;
       statePosition += this->GenerateStates(statePosition, NextSitePosition, currentStateDescription & mask, currentSz - 2);
       
-      mask = ~(0x00000003 << sitePosition);
+      mask = ~(0x3ul << sitePosition);
       if (NextSitePosition == this->LookUpPosition)
 	this->LookUpTable[(currentStateDescription & mask) & this->LookUpTableMask] = statePosition;
       statePosition += this->GenerateStates(statePosition, NextSitePosition, currentStateDescription & mask, currentSz - 4);
@@ -361,7 +386,7 @@ int Spin1Chain::GenerateStates(int statePosition,int sitePosition, unsigned long
 	  currentSz -= 2;
 	  if (currentSz == this->Sz)
 	    {
-	      mask = ~(0x00000001 << sitePosition);
+	      mask = ~(0x1ul << sitePosition);
 	      if (NextSitePosition == this->LookUpPosition)
 		this->LookUpTable[(currentStateDescription & mask) & this->LookUpTableMask] = statePosition;
 	      this->ChainDescription[statePosition] = (currentStateDescription & mask);
@@ -372,7 +397,7 @@ int Spin1Chain::GenerateStates(int statePosition,int sitePosition, unsigned long
 	      currentSz -= 2;
 	      if (currentSz == this->Sz)
 		{
-		  mask = ~(0x00000003 << sitePosition);
+		  mask = ~(0x3ul << sitePosition);
 		  if (NextSitePosition == this->LookUpPosition)
 		    this->LookUpTable[(currentStateDescription & mask) & this->LookUpTableMask] = statePosition;
 		  this->ChainDescription[statePosition] = (currentStateDescription & mask);
@@ -441,13 +466,13 @@ int Spin1Chain::TotalSz (int index)
   unsigned long TmpState;
   for (int i = 0; i < this->ChainLength; i++)
     {
-      TmpState = State & 0x00000003;
+      TmpState = State & 0x3ul;
       switch (TmpState)
 	{
-	case 0x00000003:
+	case 0x3ul:
 	  TmpSz += 2;
 	  break;
-	case 0x00000000:
+	case 0x0ul:
 	  TmpSz -= 2;
 	  break;
 	}
@@ -475,18 +500,18 @@ Matrix& Spin1Chain::Sxi (int i, Matrix& M)
       tmpState = this->ChainDescription[j];
       State = tmpState;
       tmpState >>= i;
-      tmpState &= 0x00000003;
+      tmpState &= 0x3ul;
       switch (tmpState)
 	{
-	case 0x00000003:
-	  M(this->FindStateIndex((State & ~(0x00000001 << i))), j) = Factor;
+	case 0x3ul:
+	  M(this->FindStateIndex((State & ~(0x1ul << i))), j) = Factor;
 	  break;
-	case 0x00000002:
-	  M(this->FindStateIndex((State | (0x00000001 << i))), j) = Factor;
-	  M(this->FindStateIndex((State & ~(0x00000002 << i))), j) = Factor;
+	case 0x2ul:
+	  M(this->FindStateIndex((State | (0x1ul << i))), j) = Factor;
+	  M(this->FindStateIndex((State & ~(0x2ul << i))), j) = Factor;
 	  break;
-	case 0x00000000:
-	  M(this->FindStateIndex((State | (0x00000002 << i))), j) = Factor;
+	case 0x0ul:
+	  M(this->FindStateIndex((State | (0x2ul << i))), j) = Factor;
 	  break;
 	}
     }
@@ -512,18 +537,18 @@ Matrix& Spin1Chain::Syi (int i, Matrix& M)
       tmpState = this->ChainDescription[j];
       State = tmpState;
       tmpState >>= i;
-      tmpState &= 0x00000003;
+      tmpState &= 0x3ul;
       switch (tmpState)
 	{
-	case 0x00000003:
-	  M(this->FindStateIndex((State & ~(0x00000001 << i))), j) = -Factor;
+	case 0x3ul:
+	  M(this->FindStateIndex((State & ~(0x1ul << i))), j) = -Factor;
 	  break;
-	case 0x00000002:
-	  M(this->FindStateIndex((State | (0x00000001 << i))), j) = Factor;
-	  M(this->FindStateIndex((State & ~(0x00000002 << i))), j) = -Factor;
+	case 0x2ul:
+	  M(this->FindStateIndex((State | (0x1ul << i))), j) = Factor;
+	  M(this->FindStateIndex((State & ~(0x2ul << i))), j) = -Factor;
 	  break;
-	case 0x00000000:
-	  M(this->FindStateIndex((State | (0x00000002 << i))), j) = Factor;
+	case 0x0ul:
+	  M(this->FindStateIndex((State | (0x2ul << i))), j) = Factor;
 	  break;
 	}
     }
@@ -548,13 +573,13 @@ Matrix& Spin1Chain::Szi (int i, Matrix& M)
       tmpState = this->ChainDescription[j];
       State = tmpState;
       tmpState >>= i;
-      tmpState &= 0x00000003;
+      tmpState &= 0x3ul;
       switch (tmpState)
 	{
-	case 0x00000003:
+	case 0x3ul:
 	  M(j, j) = 1.0;
 	  break;
-	case 0x00000000:
+	case 0x0ul:
 	  M(j, j) = -1.0;
 	  break;
 	}
@@ -573,22 +598,22 @@ int Spin1Chain::Spi (int i, int state, double& coefficient)
 {
   unsigned long State = (this->ChainDescription[state] >> (i << 1));
   unsigned long tmpState = State;
-  tmpState &= 0x00000003;
+  tmpState &= 0x3ul;
   switch (tmpState)
     {
-    case 0x00000002:
+    case 0x2ul:
       {
 	coefficient = M_SQRT2;
-	return this->FindStateIndex(State | (0x00000001 << (i << 1)));
+	return this->FindStateIndex(State | (0x1ul << (i << 1)));
       }
       break;
-    case 0x00000000:
+    case 0x0ul:
       {
 	coefficient = M_SQRT2;
-	return this->FindStateIndex(State | (0x00000002 << (i << 1)));
+	return this->FindStateIndex(State | (0x2ul << (i << 1)));
       }
       break;
-    case 0x00000003:
+    case 0x3ul:
       {
 	coefficient = 0.0;
 	return this->HilbertSpaceDimension;
@@ -609,25 +634,25 @@ int Spin1Chain::Smi (int i, int state, double& coefficient)
 {
   unsigned long State = (this->ChainDescription[state] >> (i << 1));
   unsigned long tmpState = State;
-  tmpState &= 0x00000003;
+  tmpState &= 0x3ul;
   switch (tmpState)
     {
-    case 0x00000002:
+    case 0x2ul:
       {
 	coefficient = M_SQRT2;
-	return this->FindStateIndex(State & ~(0x00000002 << (i << 1)));
+	return this->FindStateIndex(State & ~(0x2ul << (i << 1)));
       }
       break;
-    case 0x00000000:
+    case 0x0ul:
       {
 	coefficient = 0.0;
 	return this->HilbertSpaceDimension;
       }
       break;
-    case 0x00000003:
+    case 0x3ul:
       {
 	coefficient = M_SQRT2;
-	return this->FindStateIndex(State & ~(0x00000001 << (i << 1)));
+	return this->FindStateIndex(State & ~(0x1ul << (i << 1)));
       }
       break;
     }
@@ -644,16 +669,16 @@ int Spin1Chain::Smi (int i, int state, double& coefficient)
 int Spin1Chain::Szi (int i, int state, double& coefficient)
 {
   unsigned long tmpState = (this->ChainDescription[state] >> (i << 1));
-  tmpState &= 0x00000003;
+  tmpState &= 0x3ul;
   switch (tmpState)
     {
-    case 0x00000002:
+    case 0x2ul:
       coefficient = 0.0;
       break;
-    case 0x00000000:
+    case 0x0ul:
       coefficient = -1.0;
       break;
-    case 0x00000003:
+    case 0x3ul:
       coefficient = 1.0;
       break;
     }
@@ -670,10 +695,10 @@ int Spin1Chain::Szi (int i, int state, double& coefficient)
 double Spin1Chain::SziSzj (int i, int j, int state)
 {  
   unsigned long tmpState = this->ChainDescription[state];
-  unsigned long tmpState2 = (tmpState >> (j << 1)) & 0x00000003;
+  unsigned long tmpState2 = (tmpState >> (j << 1)) & 0x3ul;
   tmpState >>= (i << 1);
-  tmpState &= 0x00000003;
-  if ((tmpState == 0x00000002) || (tmpState2 == 0x00000002))
+  tmpState &= 0x3ul;
+  if ((tmpState == 0x2ul) || (tmpState2 == 0x2ul))
     return 0.0;
   if (tmpState == tmpState2)
     return 1.0;
@@ -696,33 +721,33 @@ int Spin1Chain::SmiSpj (int i, int j, int state, double& coefficient)
   unsigned long tmpState2 = tmpState;
   i <<= 1;
   tmpState >>= i;
-  tmpState &= 0x00000003;
+  tmpState &= 0x3ul;
   switch (tmpState)
     {
-    case 0x00000003:
+    case 0x3ul:
       coefficient = M_SQRT2;
-      State &= ~(0x00000001 << i);
+      State &= ~(0x1ul << i);
       break;
-    case 0x00000002:
+    case 0x2ul:
       coefficient = M_SQRT2;
-      State&= ~(0x00000002 << i);
+      State&= ~(0x2ul << i);
       break;
-    case 0x00000000:
+    case 0x0ul:
       return this->HilbertSpaceDimension;
     }	  
   j <<= 1;
   tmpState2 >>= j;
-  tmpState2 &= 0x00000003;
+  tmpState2 &= 0x3ul;
   switch (tmpState2)
     {
-    case 0x00000003:
+    case 0x3ul:
       return this->HilbertSpaceDimension;
-    case 0x00000002:
+    case 0x2ul:
       coefficient *= M_SQRT2;
-      return this->FindStateIndex(State | (0x00000001 << j));
-    case 0x00000000:
+      return this->FindStateIndex(State | (0x1ul << j));
+    case 0x0ul:
       coefficient *= M_SQRT2;
-      return this->FindStateIndex(State | (0x00000002 << j));
+      return this->FindStateIndex(State | (0x2ul << j));
     }	  
   return this->HilbertSpaceDimension;
 }
@@ -742,34 +767,34 @@ int Spin1Chain::SpiSpj (int i, int j, int state, double& coefficient)
   unsigned long tmpState2 = tmpState;
   i <<= 1;
   tmpState >>= i;
-  tmpState &= 0x00000003;
+  tmpState &= 0x3ul;
   switch (tmpState)
     {
-    case 0x00000003:
+    case 0x3ul:
       return this->HilbertSpaceDimension;
       break;
-    case 0x00000002:
+    case 0x2ul:
       coefficient = M_SQRT2;
-      State |= (0x00000001 << i);
+      State |= (0x1ul << i);
       break;
-    case 0x00000000:
+    case 0x0ul:
       coefficient = M_SQRT2;
-      State |= (0x00000002 << i);
+      State |= (0x2ul << i);
       break;
     }	  
   j <<= 1;
   tmpState2 >>= j;
-  tmpState2 &= 0x00000003;
+  tmpState2 &= 0x3ul;
   switch (tmpState2)
     {
-    case 0x00000003:
+    case 0x3ul:
       return this->HilbertSpaceDimension;
-    case 0x00000002:
+    case 0x2ul:
       coefficient *= M_SQRT2;
-      return this->FindStateIndex(State | (0x00000001 << j));
-    case 0x00000000:
+      return this->FindStateIndex(State | (0x1ul << j));
+    case 0x0ul:
       coefficient *= M_SQRT2;
-      return this->FindStateIndex(State | (0x00000002 << j));
+      return this->FindStateIndex(State | (0x2ul << j));
     }	  
   return this->HilbertSpaceDimension;
 }
@@ -789,38 +814,38 @@ int Spin1Chain::SmiSmj (int i, int j, int state, double& coefficient)
   unsigned long tmpState2 = tmpState;
   i <<= 1;
   tmpState >>= i;
-  tmpState &= 0x00000003;
+  tmpState &= 0x3ul;
   switch (tmpState)
     {
-    case 0x00000003:
+    case 0x3ul:
       coefficient = M_SQRT2;
-      State &= ~(0x00000001 << i);
+      State &= ~(0x1ul << i);
       break;
-    case 0x00000002:
+    case 0x2ul:
       coefficient = M_SQRT2;
-      State&= ~(0x00000002 << i);
+      State&= ~(0x2ul << i);
       break;
-    case 0x00000000:
+    case 0x0ul:
       return this->HilbertSpaceDimension;
     }	  
   j <<= 1;
   tmpState2 >>= j;
-  tmpState2 &= 0x00000003;
+  tmpState2 &= 0x3ul;
   switch (tmpState2)
     {
-    case 0x00000003:
+    case 0x3ul:
       {
 	coefficient *= M_SQRT2;
-	return this->FindStateIndex(State & ~(0x00000001 << j));
+	return this->FindStateIndex(State & ~(0x1ul << j));
       }
       break;
-    case 0x00000002:
+    case 0x2ul:
       {
 	coefficient *= M_SQRT2;
-	return this->FindStateIndex(State & ~(0x00000002 << j));
+	return this->FindStateIndex(State & ~(0x2ul << j));
       }
       break;
-    case 0x00000000:
+    case 0x0ul:
       {
 	coefficient = 0;
 	return this->HilbertSpaceDimension;
@@ -842,13 +867,13 @@ int Spin1Chain::SpiSzj (int i, int j, int state, double& coefficient)
 {
   unsigned long tmpState = this->ChainDescription[state];
   unsigned long State = tmpState;
-  unsigned long tmpState2 = (tmpState >> (j << 1)) & 0x00000003;
-  if (tmpState2 == 0x00000002)
+  unsigned long tmpState2 = (tmpState >> (j << 1)) & 0x3ul;
+  if (tmpState2 == 0x2ul)
     {
       coefficient = 0;
       return this->HilbertSpaceDimension;
     }
-  if (tmpState2 == 0x00000003)
+  if (tmpState2 == 0x3ul)
     {
       coefficient = 1.0;
     }
@@ -858,25 +883,25 @@ int Spin1Chain::SpiSzj (int i, int j, int state, double& coefficient)
     }
   i <<= 1;
   tmpState >>= i;
-  tmpState &= 0x00000003;
+  tmpState &= 0x3ul;
   switch (tmpState)
     {
-    case 0x00000003:
+    case 0x3ul:
       {
 	coefficient = 0;
 	return this->HilbertSpaceDimension;
       }
       break;
-    case 0x00000002:
+    case 0x2ul:
       {
 	coefficient *= M_SQRT2;
-	return this->FindStateIndex(State | (0x00000001 << i));
+	return this->FindStateIndex(State | (0x1ul << i));
       }
       break;
-    case 0x00000000:
+    case 0x0ul:
       {
 	coefficient *= M_SQRT2;
-	return this->FindStateIndex(State | (0x00000002 << i));
+	return this->FindStateIndex(State | (0x2ul << i));
       }
       break;
     }	  
@@ -895,13 +920,13 @@ int Spin1Chain::SmiSzj (int i, int j, int state, double& coefficient)
 {
   unsigned long tmpState = this->ChainDescription[state];
   unsigned long State = tmpState;
-  unsigned long tmpState2 = (tmpState >> (j << 1)) & 0x00000003;
-  if (tmpState2 == 0x00000002)
+  unsigned long tmpState2 = (tmpState >> (j << 1)) & 0x3ul;
+  if (tmpState2 == 0x2ul)
     {
       coefficient = 0;
       return this->HilbertSpaceDimension;
     }
-  if (tmpState2 == 0x00000003)
+  if (tmpState2 == 0x3ul)
     {
       coefficient = 1.0;
     }
@@ -911,22 +936,22 @@ int Spin1Chain::SmiSzj (int i, int j, int state, double& coefficient)
     }
   i <<= 1;
   tmpState >>= i;
-  tmpState &= 0x00000003;
+  tmpState &= 0x3ul;
   switch (tmpState)
     {
-    case 0x00000003:
+    case 0x3ul:
       {
 	coefficient *= M_SQRT2;
-	return this->FindStateIndex(State & ~(0x00000001 << i));
+	return this->FindStateIndex(State & ~(0x1ul << i));
       }
       break;
-    case 0x00000002:
+    case 0x2ul:
       {
 	coefficient *= M_SQRT2;
-	return this->FindStateIndex(State & ~(0x00000001 << i));
+	return this->FindStateIndex(State & ~(0x1ul << i));
       }
       break;
-    case 0x00000000:
+    case 0x0ul:
       {
 	coefficient *= 0;
 	return this->HilbertSpaceDimension;
@@ -1024,11 +1049,11 @@ ostream& Spin1Chain::PrintState (ostream& Str, int state)
   //Str << this->FindStateIndex(StateDescription) << " : ";
   for (int j = 0; j < this->ChainLength; j++)
     {
-      tmp = StateDescription & 0x00000003;
-      if (tmp == 0x00000000)
+      tmp = StateDescription & 0x3ul;
+      if (tmp == 0x0ul)
 	Str << "-1 ";
       else
-	if (tmp == 0x00000002)
+	if (tmp == 0x2ul)
 	  Str << "0 ";
 	else
 	  Str << "1 ";
@@ -1124,3 +1149,132 @@ RealSymmetricMatrix Spin1Chain::EvaluatePartialDensityMatrix (int nbrSites, int 
   return TmpDensityMatrix;
 }
 	
+// evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
+// 
+// nbrSites = number of sites that are part of the A subsytem 
+// szSector = Sz sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+
+RealMatrix Spin1Chain::EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture)
+{
+  if (nbrSites == 0)
+    {
+      if (szSector == 0)
+	{
+	  RealMatrix TmpEntanglementMatrix(1, 1);
+	  TmpEntanglementMatrix.SetMatrixElement(0, 0, 1.0);
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  RealMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;	  
+	}
+      
+    }
+  if (nbrSites == this->ChainLength)
+    {
+      if (szSector == this->Sz)
+	{
+	  RealMatrix TmpEntanglementMatrix(1, 1);
+	  TmpEntanglementMatrix.SetMatrixElement(0, 0, 1.0);
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  RealMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;	  
+	}      
+    }
+  Spin1Chain TmpDestinationHilbertSpace(nbrSites, szSector, 1000000);
+  Spin1Chain TmpHilbertSpace(this->ChainLength - nbrSites, this->Sz - szSector, 1000000);
+  RealMatrix TmpEntanglementMatrix(TmpHilbertSpace.HilbertSpaceDimension, TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
+
+  int Shift = 2 * nbrSites;
+  int MinIndex = 0;
+  int MaxIndex = TmpHilbertSpace.HilbertSpaceDimension;
+
+  for (; MinIndex < MaxIndex; ++MinIndex)    
+    {
+      unsigned long TmpState = TmpHilbertSpace.ChainDescription[MinIndex] << Shift;
+      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpState2 = TmpState | TmpDestinationHilbertSpace.ChainDescription[j];
+	  int TmpPos = this->FindStateIndex(TmpState2);
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+	       TmpEntanglementMatrix.AddToMatrixElement(MinIndex, j, groundState[TmpPos]);
+	    }
+	}
+    }
+
+   return TmpEntanglementMatrix;
+}
+	
+// evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
+// 
+// nbrSites = number of sites that are part of the A subsytem 
+// szSector = Sz sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+
+ComplexMatrix Spin1Chain::EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture)
+{
+  if (nbrSites == 0)
+    {
+      if (szSector == 0)
+	{
+	  ComplexMatrix TmpEntanglementMatrix(1, 1);
+          Complex Tmp(1.0, 0.0);
+	  TmpEntanglementMatrix.SetMatrixElement(0, 0, Tmp);
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  ComplexMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;	  
+	}
+      
+    }
+  if (nbrSites == this->ChainLength)
+    {
+      if (szSector == this->Sz)
+	{
+	  ComplexMatrix TmpEntanglementMatrix(1, 1);
+          Complex Tmp(1.0, 0.0);
+	  TmpEntanglementMatrix.SetMatrixElement(0, 0, Tmp);
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  ComplexMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;	  
+	}      
+    }
+  Spin1Chain TmpDestinationHilbertSpace(nbrSites, szSector, 1000000);
+  Spin1Chain TmpHilbertSpace(this->ChainLength - nbrSites, this->Sz - szSector, 1000000);
+
+  ComplexMatrix TmpEntanglementMatrix(TmpHilbertSpace.HilbertSpaceDimension, TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
+  int Shift = 2 * nbrSites;
+  int MinIndex = 0;
+  int MaxIndex = TmpHilbertSpace.HilbertSpaceDimension;
+
+  for (; MinIndex < MaxIndex; ++MinIndex)    
+    {
+      unsigned long TmpState = TmpHilbertSpace.ChainDescription[MinIndex] << Shift;
+      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpState2 = TmpState | TmpDestinationHilbertSpace.ChainDescription[j];
+	  int TmpPos = this->FindStateIndex(TmpState2);
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+	       TmpEntanglementMatrix.AddToMatrixElement(MinIndex, j, groundState[TmpPos]);
+	    }
+	}
+    }
+
+   return TmpEntanglementMatrix;
+}

@@ -44,6 +44,7 @@ using std::ostream;
 
 class HermitianMatrix;
 class RealMatrix;
+class ComplexMatrix;
 class Matrix;
 class SubspaceSpaceConverter;
 class AbstractQuantumNumber;
@@ -51,6 +52,8 @@ class AbstractQuantumNumber;
 
 class Spin1Chain : public AbstractSpinChain
 {
+
+  friend class Spin1ChainWithTranslations;
 
  protected:
 
@@ -265,6 +268,25 @@ class Spin1Chain : public AbstractSpinChain
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture = 0);
 
+  // evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
+  // 
+  // nbrSites = number of sites that are part of the A subsytem 
+  // szSector = Sz sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+  virtual RealMatrix EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture = 0);
+	
+  // evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
+  // 
+  // nbrSites = number of sites that are part of the A subsytem 
+  // szSector = Sz sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+  virtual ComplexMatrix EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
+
+
  private:
 
   // constructor from pre-constructed datas
@@ -282,6 +304,13 @@ class Spin1Chain : public AbstractSpinChain
 	      int sz, bool fixedQuantumNumberFlag, int* lookUpTable, int lookUpTableSize, 
 	      int lookUpPosition, unsigned long lookUpTableMask);
   
+  // evaluate Hilbert space dimension
+  //
+  // sz = twice the Sz value
+  // nbrSites = number of sites
+  // return value = Hilbert space dimension
+  long EvaluateHilbertSpaceDimension(int sz, int nbrSites);
+
   // generate all states
   //
   // statePosition = position for the new states
