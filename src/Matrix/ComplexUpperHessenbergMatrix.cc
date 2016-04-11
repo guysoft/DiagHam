@@ -67,7 +67,7 @@ extern "C" void FORTRAN_NAME(zhsein)(const char* side, const char* eigenstateSou
 				     const double* eigenvectorLeftMatrix, const int* leadingDimensionEigenvectorLeftMatrix,
 				     const double* eigenvectorRightMatrix, const int* leadingDimensionEigenvectorRightMatrix,
 				     const int* nbrColumEigenvectorMatrix, const int* nbrUsedColumEigenvectorMatrix,
-				     const double* workingArea, const int* failedLeftEigenvectors, const int* failedRightEigenvectors,
+				     const double* workingArea, const double* rWorkingArea, const int* failedLeftEigenvectors, const int* failedRightEigenvectors,
 				     const int* information);
 
 // binding to the LAPACK function ZGEQRF
@@ -1006,7 +1006,8 @@ ComplexDiagonalMatrix& ComplexUpperHessenbergMatrix::LapackDiagonalize (ComplexD
   int* SelectEigenvectors = new int[this->NbrColumn];
   int* FailedLeftEigenvectors = new int [this->NbrColumn];
   double* TmpLeftEigenstates = new double [2l * ((long) this->NbrColumn) * this->NbrRow];
-  WorkingArea = new double [this->NbrColumn * (this->NbrColumn + 2l)];
+  WorkingArea = new double [2*this->NbrColumn * this->NbrColumn];
+  double * RWorkingArea = new double [this->NbrColumn];
   for (int j = 0; j < this->NbrColumn; ++j)
     SelectEigenvectors[j] = 1;
   int TmpLeadingLeftDimension;
@@ -1052,14 +1053,14 @@ ComplexDiagonalMatrix& ComplexUpperHessenbergMatrix::LapackDiagonalize (ComplexD
 	  ++TotalIndex;
 	}
     }
-  
+
   if (leftFlag == true)
     {
       FORTRAN_NAME(zhsein)(&Side, &EigenvalueSource, &InitialEigenvectors, SelectEigenvectors,
 			   &this->NbrRow, TmpMatrix, &this->NbrColumn, 
 			   TmpEigenvalues,
 			   TmpLeftEigenstates, &TmpLeadingLeftDimension, Dummy, &TmpLeadingRightDimension, 
-			   &this->NbrRow, &NbrRequiredColumns, WorkingArea,
+			   &this->NbrRow, &NbrRequiredColumns, WorkingArea, RWorkingArea,
 			   FailedLeftEigenvectors, FailedLeftEigenvectors, &Information);
     }
   else
@@ -1068,7 +1069,7 @@ ComplexDiagonalMatrix& ComplexUpperHessenbergMatrix::LapackDiagonalize (ComplexD
 			   &this->NbrRow, TmpMatrix, &this->NbrColumn, 
 			   TmpEigenvalues,
 			   Dummy, &TmpLeadingLeftDimension, TmpLeftEigenstates, &TmpLeadingRightDimension, 
-			   &this->NbrRow, &NbrRequiredColumns, WorkingArea,
+			   &this->NbrRow, &NbrRequiredColumns, WorkingArea, RWorkingArea,
 			   FailedLeftEigenvectors, FailedLeftEigenvectors, &Information);
     }
   for (int i = 0; i < this->NbrRow; ++i)

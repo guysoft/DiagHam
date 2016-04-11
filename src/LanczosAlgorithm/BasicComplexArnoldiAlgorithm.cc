@@ -215,6 +215,7 @@ Vector* BasicComplexArnoldiAlgorithm::GetEigenstates(int nbrEigenstates)
   this->TemporaryReducedMatrix.Copy(this->ReducedMatrix);
 #ifdef __LAPACK__
   ComplexDiagonalMatrix TmpDiag (SortedDiagonalizedMatrix.GetNbrColumn(), true);
+
   this->TemporaryReducedMatrix.LapackDiagonalize(TmpDiag, TmpEigenvector, this->LeftFlag);
   for (int i = 0; i < SortedDiagonalizedMatrix.GetNbrColumn(); ++i)
     SortedDiagonalizedMatrix[i] = TmpDiag[i];

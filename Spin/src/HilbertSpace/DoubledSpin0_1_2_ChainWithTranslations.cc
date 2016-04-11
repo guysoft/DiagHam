@@ -600,8 +600,6 @@ void DoubledSpin0_1_2_ChainWithTranslations::GenerateLookUpTable(unsigned long m
 
 int DoubledSpin0_1_2_ChainWithTranslations::FindStateIndex(unsigned long stateDescription)
 {
-  
-  cout <<" In FindStateIndex(unsigned long stateDescription) = " << stateDescription/this->PowerD[this->ChainLength-2]<<endl;
   int PosMax = this->LookUpTable[stateDescription/this->PowerD[this->ChainLength-2]];
   int PosMin = this->LookUpTable[stateDescription/this->PowerD[this->ChainLength-2]+1];
   int PosMid = (PosMin + PosMax) >>1;
