@@ -34,7 +34,8 @@
 
 #include "config.h"
 #include "HilbertSpace/AbstractSpinChain.h"
-
+#include "Matrix/RealSymmetricMatrix.h"
+#include "Matrix/HermitianMatrix.h"
 #include <iostream>
 
 
@@ -104,30 +105,22 @@ class AbstractDoubledSpinChain : public AbstractSpinChain
 
   virtual int FindStateIndexFromLinearizedIndex(unsigned long linearizedState);
   
-  // return the Bosonic Occupation of a given state in the basis
-  //
-  // index = index of the state in the basis
-  // return value bosonic occupation 
-  virtual void GetBosonicOccupation (unsigned int index, int * finalStateBra,int * finalStateKet)=0;
-
-  // convert the state on the site to its binary representation
-  //
-  // state = state to be stored
-  // sitePosition = position on the chain of the state
-  // return integer that code the state
-  virtual unsigned long EncodeSiteStateBra(int physicalState, int sitePosition)=0;
-
-  // convert the state on the site to its binary representation
-  //
-  // state = state to be stored
-  // sitePosition = position on the chain of the state
-  // return integer that code the state
-  virtual unsigned long EncodeSiteStateKet(int physicalState, int sitePosition)=0;
-
   virtual void GetChainDescriptionInCondensedForm(unsigned long * HilbertSpaceDescription);
 
   virtual void AddConvertFromGeneralSpace(ComplexVector vSource,ComplexVector & vDestination){cout<<"using undefined   virtual void AddConvertFromGeneralSpace(ComplexVector vSource,ComplexVector & vDestination) in AbstractDoubledSpinChain"<<endl;}
   virtual void ConvertToGeneralSpace(ComplexVector vSource,ComplexVector & vDestination){cout<<"using undefined   virtual void ConvertToGeneralSpace(ComplexVector vSource,ComplexVector & vDestination) in AbstractDoubledSpinChain"<<endl;};
+
+
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector.
+  // 
+  // szSector = Sz sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int szSector, RealVector& groundState){ return RealSymmetricMatrix(); };
+  virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int szSector, int momentumSector, RealVector& groundState){ return RealSymmetricMatrix(); };
+  virtual HermitianMatrix EvaluatePartialDensityMatrix (int szSector, ComplexVector& groundState){return HermitianMatrix(); } ;
+  virtual HermitianMatrix EvaluatePartialDensityMatrix (int szSector, int momentumSector, ComplexVector& groundState){return HermitianMatrix(); } ;
   
 
  protected:

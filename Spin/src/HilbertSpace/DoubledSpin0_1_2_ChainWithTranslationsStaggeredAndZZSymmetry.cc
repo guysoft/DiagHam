@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry.h"
+#include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry.h"
 #include "GeneralTools/ArrayTools.h"
 
 #include <iostream>
@@ -41,7 +41,7 @@ using std::endl;
 // default constructor
 //
 
-DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry () 
+DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry::DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry () 
 {
   this->ZEigenvalueBra = 0;
   this->ZEigenvalueKet = 0;
@@ -57,7 +57,7 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
 // memorySize = memory size in bytes allowed for look-up table
 // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
 
-DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry (int chainLength, int diffSz,  int zEigenvalueBra, int zEigenvalueKet, int memorySize, int memorySlice) 
+DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry::DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry (int chainLength, int diffSz,  int zEigenvalueBra, int zEigenvalueKet, int memorySize, int memorySlice) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
@@ -143,7 +143,6 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
     }
   
   this->RescalingFactors = 0;
-  cout <<"Hilbert Space dimension = "<< this->GetHilbertSpaceDimension()<<endl;  
 
 }
  
@@ -157,7 +156,7 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
 // memorySize = memory size in bytes allowed for look-up table
 // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
 
-DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry (int chainLength, int momentum, int diffSz, int zEigenvalueBra, int zEigenvalueKet, int memorySize, int memorySlice) 
+DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry::DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry (int chainLength, int momentum, int diffSz, int zEigenvalueBra, int zEigenvalueKet, int memorySize, int memorySlice) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
@@ -257,8 +256,7 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
   if (this->HilbertSpaceDimension > 0)
     this->GenerateLookUpTable(memorySize);
   this->EvaluateExponentialFactors();
-
-   cout <<"Hilbert Space dimension = "<< this->GetHilbertSpaceDimension()<<endl;  
+  
 }
 
 
@@ -266,7 +264,7 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
 //
 // chain = reference on chain to copy
 
-DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry (const DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry & chain)
+DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry::DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry (const DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry & chain)
 {
   this->Flag = chain.Flag;
   if (chain.ChainLength != 0)
@@ -319,7 +317,7 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
 // destructor
 //
 
-DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::~DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry () 
+DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry::~DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry () 
 {
 }
 
@@ -328,9 +326,9 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::~DoubledSpin0_1_2_ChainWith
 // chain = reference on chain to copy
 // return value = reference on current chain
 
-DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry & DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::operator = (const DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry & chain)
+DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry & DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry::operator = (const DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry & chain)
 {
-  DoubledSpin0_1_2_ChainWithTranslations::operator =(chain);
+  DoubledSpin0_1_2_ChainWithTranslationsStaggered::operator =(chain);
   this->ZEigenvalueBra=chain.ZEigenvalueBra;
   this->ZEigenvalueKet=chain.ZEigenvalueKet;
   return *this;
@@ -340,9 +338,9 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry & DoubledSpin0_1_2_ChainWith
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::Clone()
+AbstractHilbertSpace* DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry::Clone()
 {
-  return new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry (*this);
+  return new DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry (*this);
 }
 
 

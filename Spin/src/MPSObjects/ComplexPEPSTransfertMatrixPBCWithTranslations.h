@@ -19,9 +19,6 @@ class ComplexPEPSTransfertMatrixPBCWithTranslations : public  ComplexPEPSTransfe
   // periodicity in the x direction
   int MaxXMomentum;
 
-  //array containing all the phase factors that are needed when computing matrix elements
-  Complex* ExponentialFactors;
-  
  public:
 
   ComplexPEPSTransfertMatrixPBCWithTranslations ();
@@ -38,16 +35,12 @@ class ComplexPEPSTransfertMatrixPBCWithTranslations : public  ComplexPEPSTransfe
   // return value = reference on vector where result has been stored
   //  virtual RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent);
   virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
-  virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent);
+//  virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent);
 
   virtual void SetHilbertSpace(AbstractHilbertSpace * hilbertSpace);
   
  protected:
 
-
-  // evaluate all exponential factors
-  //   
-  virtual void EvaluateExponentialFactors();
     
 };
 

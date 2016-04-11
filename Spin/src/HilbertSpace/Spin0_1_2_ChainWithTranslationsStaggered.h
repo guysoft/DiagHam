@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SPIN0_1_2_CHAINWITHTRANSLATIONS_H
-#define SPIN0_1_2_CHAINWITHTRANSLATIONS_H
+#ifndef SPIN0_1_2_CHAINWITHTRANSLATIONSSTAGGERED_H
+#define SPIN0_1_2_CHAINWITHTRANSLATIONSSTAGGERED_H
 
 
 #include "config.h"
@@ -43,7 +43,7 @@ using std::ostream;
 class DoubledSpin0_1_2_ChainWithTranslations;
 class DoubledSpin0_1_2_ChainWithTranslationsStaggered;
 
-class Spin0_1_2_ChainWithTranslations : public AbstractSpinChainWithTranslations
+class Spin0_1_2_ChainWithTranslationsStaggered : public AbstractSpinChainWithTranslations
 {
   friend class DoubledSpin0_1_2_ChainWithTranslations;
   friend class DoubledSpin0_1_2_ChainWithTranslationsStaggered;
@@ -91,7 +91,7 @@ class Spin0_1_2_ChainWithTranslations : public AbstractSpinChainWithTranslations
 
   // default constructor
   //
-  Spin0_1_2_ChainWithTranslations ();
+  Spin0_1_2_ChainWithTranslationsStaggered ();
 
   // constructor for complete Hilbert space with no restriction on momentum
   //
@@ -99,7 +99,7 @@ class Spin0_1_2_ChainWithTranslations : public AbstractSpinChainWithTranslations
   // momemtum = total momentum of each state
   // memorySize = memory size in bytes allowed for look-up table
   // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
-  Spin0_1_2_ChainWithTranslations (int chainLength,  int diffSz, int memorySize, int memorySlice);
+  Spin0_1_2_ChainWithTranslationsStaggered (int chainLength,  int diffSz, int memorySize, int memorySlice);
 
   // constructor for complete Hilbert space corresponding to a given total spin projection Sz
   //
@@ -107,22 +107,22 @@ class Spin0_1_2_ChainWithTranslations : public AbstractSpinChainWithTranslations
   // momemtum = total momentum of each state
   // sz = twice the value of total Sz component
   // memorySize = memory size in bytes allowed for look-up table
-  Spin0_1_2_ChainWithTranslations (int chainLength, int momentum, int sz, int memorySize, int memorySlice);
+  Spin0_1_2_ChainWithTranslationsStaggered (int chainLength, int momentum, int sz, int memorySize, int memorySlice);
 
   // copy constructor (without duplicating datas)
   //
   // chain = reference on chain to copy
-  Spin0_1_2_ChainWithTranslations (const Spin0_1_2_ChainWithTranslations & chain);
+  Spin0_1_2_ChainWithTranslationsStaggered (const Spin0_1_2_ChainWithTranslationsStaggered & chain);
 
   // destructor
   //
-  ~Spin0_1_2_ChainWithTranslations ();
+  ~Spin0_1_2_ChainWithTranslationsStaggered ();
 
   // assignement (without duplicating datas)
   //
   // chain = reference on chain to copy
   // return value = reference on current chain
-  Spin0_1_2_ChainWithTranslations & operator = (const Spin0_1_2_ChainWithTranslations & chain);
+  Spin0_1_2_ChainWithTranslationsStaggered& operator = (const Spin0_1_2_ChainWithTranslationsStaggered & chain);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -203,12 +203,12 @@ class Spin0_1_2_ChainWithTranslations : public AbstractSpinChainWithTranslations
 
 
 
-inline int Spin0_1_2_ChainWithTranslations::TotalSz(int index)
+inline int Spin0_1_2_ChainWithTranslationsStaggered::TotalSz(int index)
 {
   return this->GetTotalSz(this->ChainDescription[index]);
 }
 
-inline unsigned long Spin0_1_2_ChainWithTranslations::FindCanonicalForm(unsigned long state, int& nbrTranslation)
+inline unsigned long Spin0_1_2_ChainWithTranslationsStaggered::FindCanonicalForm(unsigned long state, int& nbrTranslation)
 {
   unsigned long CanonicalForm;
   this->FindCanonicalForm(state,CanonicalForm, nbrTranslation);
@@ -219,7 +219,7 @@ inline unsigned long Spin0_1_2_ChainWithTranslations::FindCanonicalForm(unsigned
 //
 // stateDescription = reference on the state description
 
-inline void Spin0_1_2_ChainWithTranslations::ApplySingleXTranslation(unsigned long& stateDescription)
+inline void Spin0_1_2_ChainWithTranslationsStaggered::ApplySingleXTranslation(unsigned long& stateDescription)
 {
   int Tmp = stateDescription & 0x3ul;
   
@@ -284,7 +284,7 @@ inline void Spin0_1_2_ChainWithTranslations::ApplySingleXTranslation(unsigned lo
 // nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
 // return value = canonical form of the state
 
-inline void Spin0_1_2_ChainWithTranslations::FindCanonicalForm(unsigned long stateDescription,unsigned long & canonicalState, int& nbrTranslation)
+inline void Spin0_1_2_ChainWithTranslationsStaggered::FindCanonicalForm(unsigned long stateDescription,unsigned long & canonicalState, int& nbrTranslation)
 {
   nbrTranslation = 0;
   canonicalState = stateDescription;
@@ -308,7 +308,7 @@ inline void Spin0_1_2_ChainWithTranslations::FindCanonicalForm(unsigned long sta
 // nbrTranslationToIdentity = reference on the number of translation needed to obtain the same state
 // return value = canonical form of the state
 
-inline void Spin0_1_2_ChainWithTranslations::FindCanonicalForm(unsigned long stateDescription, unsigned long & canonicalState, int& nbrTranslation, int& nbrTranslationToIdentity)
+inline void Spin0_1_2_ChainWithTranslationsStaggered::FindCanonicalForm(unsigned long stateDescription, unsigned long & canonicalState, int& nbrTranslation, int& nbrTranslationToIdentity)
 {
   nbrTranslation = 0;
   nbrTranslationToIdentity = 1;
@@ -332,7 +332,7 @@ inline void Spin0_1_2_ChainWithTranslations::FindCanonicalForm(unsigned long sta
 // stateDescription = unsigned integer describing the state
 // return value = number of translation needed to obtain the same state
 
-inline int Spin0_1_2_ChainWithTranslations::FindNumberTranslation(unsigned long stateDescription)
+inline int Spin0_1_2_ChainWithTranslationsStaggered::FindNumberTranslation(unsigned long stateDescription)
 {
   unsigned long TmpState = stateDescription;
   this->ApplySingleXTranslation(TmpState);

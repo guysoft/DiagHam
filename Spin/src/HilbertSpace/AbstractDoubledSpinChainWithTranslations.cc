@@ -57,18 +57,15 @@ AbstractDoubledSpinChainWithTranslations::~AbstractDoubledSpinChainWithTranslati
 {
   if ((this->ChainLength != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      if (this->LargeHilbertSpaceDimension > 0l)
-	{
-	  if(this->RescalingFactors != 0 )
-	    { 
-	      for (int i = 1; i <= this->ChainLength; ++i)
-		{
-		  delete[] this->RescalingFactors[i];
-		} 
-	      delete[] this->RescalingFactors;
-	      delete[] this->NbrStateInOrbit;
-	      delete[] this->CompatibilityWithMomentum;
-	    }
+      if(this->RescalingFactors != 0 )
+	{ 
+	  for (int i = 1; i <= this->ChainLength; ++i)
+	    {
+	      delete[] this->RescalingFactors[i];
+	    } 
+	  delete[] this->RescalingFactors;
+	  delete[] this->NbrStateInOrbit;
+	  delete[] this->CompatibilityWithMomentum;
 	}
     }
 }
@@ -80,7 +77,7 @@ AbstractDoubledSpinChainWithTranslations::~AbstractDoubledSpinChainWithTranslati
 
 AbstractDoubledSpinChainWithTranslations & AbstractDoubledSpinChainWithTranslations::operator = (const AbstractDoubledSpinChainWithTranslations & chain)
 {
-  AbstractDoubledSpinChain::operator = (chain);
+//  AbstractDoubledSpinChain::operator = (chain);
 
   if ((this->ChainLength != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -97,6 +94,16 @@ AbstractDoubledSpinChainWithTranslations & AbstractDoubledSpinChainWithTranslati
     }  
   if (chain.ChainLength != 0)
     {
+  
+      this->ChainLength = chain.ChainLength;
+      this->HilbertSpaceDimension = chain.HilbertSpaceDimension;
+      this->LookUpTable = chain.LookUpTable;
+      this->LookUpTableShift = chain.LookUpTableShift;
+      this->ChainDescriptionBra = chain.ChainDescriptionBra;
+      this->ChainDescriptionKet = chain.ChainDescriptionKet;
+      this->DiffSz = chain.DiffSz;
+      this->FixedSpinProjectionFlag = chain.FixedSpinProjectionFlag;
+      
       this->ComplementaryStateShift = chain.ComplementaryStateShift;
       this->Momentum = chain.Momentum;
       this->CompatibilityWithMomentum = chain.CompatibilityWithMomentum;

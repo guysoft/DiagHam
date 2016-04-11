@@ -34,6 +34,7 @@ ComplexPEPSTransfertMatrixPBC::ComplexPEPSTransfertMatrixPBC(MultiColumnASCIIFil
   this->TmpVector2 = 0;
   this->StartVector = 0;
   this->EndVector = 0;
+  this->ChainLength = 0;
 }
 
 
@@ -57,57 +58,32 @@ ComplexPEPSTransfertMatrixPBC::~ComplexPEPSTransfertMatrixPBC()
   delete [] this->IndiceRightNonZeroTensorElementTopLeft;
   delete [] this->ValuesNonZeroTensorElementTopLeft;
   delete [] this->NbrNonZeroTensorElementTopLeft;
+  delete this->TmpVector1; delete  this->TmpVector2; delete  this->StartVector; delete this->EndVector;
   this->NbrNonZeroTensorElementTopLeft = 0;
 }
 
-// set Hilbert space
-//
-// hilbertSpace = pointer to Hilbert space to use
-
-/*
-void ComplexPEPSTransfertMatrixPBC::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
-{
-  this->HilbertSpace = (AbstractSpinChain * )hilbertSpace;
-  delete [] this->PowerD;
-  delete [] this->Weigth1;
-  delete [] this->Weigth2;
-  delete [] this->NewHilbertSpace1;
-  delete [] this->NewHilbertSpace2;
-  delete [] this->OldHilbertSpace;
-  this->ChainLength =  this->HilbertSpace ->GetSpinChainLength();
-  
-  this->PowerD = new int[this->ChainLength+2];
-  this->PowerD[0] = 1;
-  for(int i =1; i <=this->ChainLength+1; i++)
-    this->PowerD[i] = this->PowerD[i-1] * (this->MPOBondDimension * this->MPOBondDimension);
-  
-  this->Weigth1 = new Complex [this->PowerD[this->ChainLength+1]];
-  this->Weigth2 = new Complex [this->PowerD[this->ChainLength+1]];
-  this->NewHilbertSpace1 = new unsigned long [this->PowerD[this->ChainLength+1]];
-  this->NewHilbertSpace2 = new unsigned long [this->PowerD[this->ChainLength+1]];
-  this->OldHilbertSpace = new unsigned long [((AbstractDoubledSpinChain * )this->HilbertSpace)->GetHilbertSpaceDimension()];
-  ((AbstractDoubledSpinChain * )this->HilbertSpace)->GetChainDescriptionInCondensedForm(this->OldHilbertSpace);  
-}
-
-
-*/
 
 void ComplexPEPSTransfertMatrixPBC::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
-  this->HilbertSpace = (AbstractSpinChain * )hilbertSpace;
-  delete [] this->PowerD;
 
-  this->ChainLength =  this->HilbertSpace ->GetSpinChainLength();
+  this->HilbertSpace = (AbstractSpinChain * )hilbertSpace;
+  if ( this->ChainLength != this->HilbertSpace ->GetSpinChainLength() )
+    {
+      this->ChainLength =  this->HilbertSpace ->GetSpinChainLength();
   
-  this->PowerD = new int[this->ChainLength+2];
-  this->PowerD[0] = 1;
-  for(int i =1; i <=this->ChainLength+1; i++)
-    this->PowerD[i] = this->PowerD[i-1] * (this->MPOBondDimension * this->MPOBondDimension);
-  
-  this->TmpVector1 = new ComplexVector (this->PowerD[this->ChainLength+1],true);
-  this->TmpVector2 = new ComplexVector (this->PowerD[this->ChainLength+1],true);
-  this->EndVector =  new ComplexVector (this->PowerD[this->ChainLength],true);
-  this->StartVector =  new ComplexVector (this->PowerD[this->ChainLength],true);
+      delete this->TmpVector1,   this->TmpVector2,   this->StartVector,   this->EndVector;
+      delete [] this->PowerD;
+
+      this->PowerD = new int[this->ChainLength+2];
+      this->PowerD[0] = 1;
+      for(int i =1; i <=this->ChainLength+1; i++)
+	this->PowerD[i] = this->PowerD[i-1] * (this->MPOBondDimension * this->MPOBondDimension);
+
+      this->TmpVector1 = new ComplexVector (this->PowerD[this->ChainLength+1],true);
+      this->TmpVector2 = new ComplexVector (this->PowerD[this->ChainLength+1],true);
+      this->EndVector =  new ComplexVector (this->PowerD[this->ChainLength],true);
+      this->StartVector =  new ComplexVector (this->PowerD[this->ChainLength],true);
+    }
 }
 
 
@@ -252,7 +228,7 @@ void ComplexPEPSTransfertMatrixPBC::InitializeTensorsElements(MultiColumnASCIIFi
   delete [] ElementsValues;
 }
  
-
+/*
 int ComplexPEPSTransfertMatrixPBC::GenerateResultingStateAndCoefficient(int indiceTop, int chainSize, int lastIndice, Complex * coefArray, unsigned long * stateArrayBra, unsigned long * stateArrayKet, unsigned long pos)
 {
   unsigned int IndexBra, IndexKet;
@@ -286,7 +262,7 @@ int ComplexPEPSTransfertMatrixPBC::GenerateResultingStateAndCoefficient(int indi
     }
   return pos;
 }
-
+*/
 /*
 
 // multiply a set of vectors by the current hamiltonian for a given range of indices 

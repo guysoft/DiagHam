@@ -9,7 +9,9 @@
 #include "HilbertSpace/Spin1_2ChainWithTranslations.h"
 #include "HilbertSpace/DoubledSpin1_2_Chain.h"
 #include "HilbertSpace/DoubledSpin1_2_ChainWithTranslations.h"
+#include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsStaggered.h"
 #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry.h"
+#include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry.h"
 
 #include "MPSObjects/AbstractTransfertMatrixPBC.h"
 #include "MPSObjects/TransfertMatrixPBCWithTranslationsFromFile.h"
@@ -18,6 +20,7 @@
 #include "MPSObjects/ComplexPEPSTransfertMatrixPBCWithTranslations.h"
 
 #include "MainTask/GenericNonSymmetricMainTask.h"
+#include "MainTask/GenericNonHermitianMainTask.h"
 #include "MainTask/GenericRealMainTask.h"
 #include "MainTask/GenericComplexMainTask.h"
 
@@ -69,6 +72,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "doubled", "use double version of the code");
   (*SystemGroup) += new BooleanOption ('\n', "translation", "use translation symmetry");
   (*SystemGroup) += new BooleanOption ('\n', "zz-symmetry", "use the ZZ symmetry");
+  (*SystemGroup) += new BooleanOption ('\n', "staggered", "use the stagerred Hilbert Space");
+  (*SystemGroup) += new BooleanOption ('\n', "left", "compute left eigenvalue");
   (*SystemGroup) += new  SingleIntegerOption ('\n', "sz", "consider a specific value of sz", -1);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "k", "consider a specific value of k", -1);
 
@@ -94,10 +99,12 @@ int main(int argc, char** argv)
       return 0;
     }
   
+  bool StaggeredFlag = Manager.GetBoolean("staggered");
   bool ComplexFlag = Manager.GetBoolean("complex");
   bool DoubledFlag = Manager.GetBoolean("doubled");
   bool TranslationFlag = Manager.GetBoolean("translation");
   bool SymmetryFlag = Manager.GetBoolean("zz-symmetry");
+  bool LeftFlag = Manager.GetBoolean("left");
   MultiColumnASCIIFile TensorsElementsDefinition;
   if (TensorsElementsDefinition.Parse(Manager.GetString("tensor-file")) == false)
     {
@@ -218,7 +225,7 @@ int main(int argc, char** argv)
 	sprintf(SubspaceLegend,"Sz");
     }
   
-  char * FullOutputFileName = new char [50];
+  char * FullOutputFileName = new char [200];
   sprintf(FullOutputFileName,"TransfertMatrix_%s_l_%d.dat",Manager.GetString("peps-name"),NbrSites); 
   
   for(int Sz = SzMin; Sz<= SzMax ;Sz+=1)
@@ -257,16 +264,36 @@ int main(int argc, char** argv)
 		      if (TranslationFlag) 
 			{
 			  if (SymmetryFlag)
-			    Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry (NbrSites,i,Sz, ZvalueBra, ZvalueKet,100000,100000);
+			    {
+			      if(StaggeredFlag)
+				Space = new DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry (NbrSites,i,Sz, ZvalueBra, ZvalueKet,100000,100000);
+			      else
+				Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry (NbrSites,i,Sz, ZvalueBra, ZvalueKet,100000,100000);
+			    }
 			  else
-			    Space = new DoubledSpin0_1_2_ChainWithTranslations (NbrSites,i,Sz,100000,100000);
+			    {
+			      if(StaggeredFlag)
+				Space = new DoubledSpin0_1_2_ChainWithTranslationsStaggered (NbrSites,i,Sz,100000,100000);
+			      else
+				Space = new DoubledSpin0_1_2_ChainWithTranslations (NbrSites,i,Sz,100000,100000);
+			    }
 			}
 		      else
 			{
 			  if (SymmetryFlag)
-			    Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry (NbrSites,Sz, ZvalueBra, ZvalueKet,100000,100000);
+			    {
+			      if(StaggeredFlag)
+				Space = new DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry (NbrSites,Sz, ZvalueBra, ZvalueKet,100000,100000);
+			      else
+				Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry (NbrSites,Sz, ZvalueBra, ZvalueKet,100000,100000);
+			    }
 			  else
-			    Space = new DoubledSpin0_1_2_ChainWithTranslations (NbrSites,Sz, 100000,100000);
+			    {
+			      if(StaggeredFlag)
+				Space = new DoubledSpin0_1_2_ChainWithTranslationsStaggered (NbrSites,Sz, 100000,100000);
+			      else
+				Space = new DoubledSpin0_1_2_ChainWithTranslations (NbrSites,Sz, 100000,100000);
+			    }
 			}
 		    }
 		  if (SymmetryFlag)
@@ -275,14 +302,15 @@ int main(int argc, char** argv)
 		    }
 		  TransferMatrix->SetHilbertSpace(Space);	  
 		  
-		  char * TmpEigenstateString = new char [50] ;
+		  char * TmpEigenstateString = new char [200] ;
 		  if ( (TranslationFlag) || (ComplexFlag) )
 		    { 
-		      cout <<"inside here"<<endl;
-		      cout <<"Hilbert Space dimension = "<<Space->GetHilbertSpaceDimension()<<endl;
-/*		      ComplexVector TestVector(Space->GetHilbertSpaceDimension(),true);
-		      ComplexVector DestinationVector(Space->GetHilbertSpaceDimension(),true);
-		      for (int p = 0; p < Space->GetHilbertSpaceDimension(); p++)
+
+		      if (Space->GetHilbertSpaceDimension() > 0 ) 
+			{
+			  /*		      ComplexVector TestVector(Space->GetHilbertSpaceDimension(),true);
+			    ComplexVector DestinationVector(Space->GetHilbertSpaceDimension(),true);
+			    for (int p = 0; p < Space->GetHilbertSpaceDimension(); p++)
 			{
 			  TestVector.Re(p) = (rand() - 32767) * 0.5;
 			  TestVector.Im(p) = (rand() - 32767) * 0.5;
@@ -318,15 +346,24 @@ int main(int argc, char** argv)
 				  sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_sz_%d",Manager.GetString("peps-name"),NbrSites,Sz);
 				}
 			    }
-			  cout <<"after multiplication before Lanczos"<<endl;
 			  Lanczos.SetComplexAlgorithms();
-			  GenericComplexMainTask Task(&Manager, Space, &Lanczos, TransferMatrix, TmpSzString, SubspaceLegend, 0.0,  FullOutputFileName, FirstRunFlag, TmpEigenstateString);
+			  
+			  
+			  /*			  GenericComplexMainTask Task(&Manager, Space, &Lanczos, TransferMatrix, TmpSzString, SubspaceLegend, 0.0,  FullOutputFileName, FirstRunFlag, TmpEigenstateString);
+			  FirstRunFlag = false;
+			  MainTaskOperation TaskOperation (&Task);
+			  TaskOperation.ApplyOperation(Architecture.GetArchitecture());*/
+
+			  int NbrEigenvalues = 1;
+			  GenericNonHermitianMainTask Task (&Manager,  TransferMatrix, NbrEigenvalues, Manager.GetBoolean("eigenstate"), LeftFlag, 1e-12, TmpSzString, SubspaceLegend,0.0,FirstRunFlag, FullOutputFileName,TmpEigenstateString);
 			  FirstRunFlag = false;
 			  MainTaskOperation TaskOperation (&Task);
 			  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+
 			  
 			  cout << "------------------------------------" << endl;
 	//		}
+			}
 		    }
 		  else
 		    {

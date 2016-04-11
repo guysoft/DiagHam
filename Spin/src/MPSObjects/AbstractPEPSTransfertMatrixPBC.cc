@@ -32,7 +32,7 @@ RealVector& AbstractPEPSTransfertMatrixPBC::LowLevelAddMultiply(RealVector& vSou
   for (int i = firstComponent ; i  <  LastComponent; i++)
     {
       int Dim = 0;
-      ((AbstractDoubledSpinChain * )this->HilbertSpace)->GetBosonicOccupation(i,IndiceLeftBra,IndiceLeftKet);
+//      ((AbstractDoubledSpinChain * )this->HilbertSpace)->GetBosonicOccupation(i,IndiceLeftBra,IndiceLeftKet);
       for (int k =0; k < this->ChainLength;k++)
 	{
 	  this->TemporaryArray[k]= this->GetCommonIndexFromBraAndKetIndices(IndiceLeftBra[k],IndiceLeftKet[k]);
@@ -174,8 +174,8 @@ int AbstractPEPSTransfertMatrixPBC::GenerateResultingStateAndCoefficient(int ind
 	  if(this->IndiceBottomNonZeroTensorElementTopLeft[indiceTop][this->TemporaryArray[0]][i] ==  lastIndice ) 
 	    {
 	      this->GetBraAndKetIndexFromCommonIndex(this->IndiceRightNonZeroTensorElementTopLeft[indiceTop][this->TemporaryArray[0]][i], IndexBra, IndexKet);
-	      stateArrayBra[pos] = ((AbstractDoubledSpinChain * )this->HilbertSpace)->EncodeSiteStateBra(IndexBra,0);
-	      stateArrayKet[pos] = ((AbstractDoubledSpinChain * )this->HilbertSpace)->EncodeSiteStateKet(IndexKet,0);
+//	      stateArrayBra[pos] = ((AbstractDoubledSpinChain * )this->HilbertSpace)->EncodeSiteStateBra(IndexBra,0);
+	//      stateArrayKet[pos] = ((AbstractDoubledSpinChain * )this->HilbertSpace)->EncodeSiteStateKet(IndexKet,0);
 	      coefArray[pos]  = this->ValuesNonZeroTensorElementTopLeft[indiceTop][this->TemporaryArray[0]][i];
 	      pos++;
 	    }
@@ -190,9 +190,9 @@ int AbstractPEPSTransfertMatrixPBC::GenerateResultingStateAndCoefficient(int ind
       for(;pos <TmpPos;++pos)
 	{
 	  this->GetBraAndKetIndexFromCommonIndex(this->IndiceRightNonZeroTensorElementTopLeft[indiceTop][this->TemporaryArray[chainSize]][i], IndexBra, IndexKet);
-	  stateArrayBra[pos] |= ((AbstractDoubledSpinChain * )this->HilbertSpace)->EncodeSiteStateBra(IndexBra,chainSize);
-	  stateArrayKet[pos] |= ((AbstractDoubledSpinChain * )this->HilbertSpace)->EncodeSiteStateKet(IndexKet,chainSize);
-	  coefArray[pos] *= this->ValuesNonZeroTensorElementTopLeft[indiceTop][this->TemporaryArray[chainSize]][i];
+//	  stateArrayBra[pos] |= ((AbstractDoubledSpinChain * )this->HilbertSpace)->EncodeSiteStateBra(IndexBra,chainSize);
+//	  stateArrayKet[pos] |= ((AbstractDoubledSpinChain * )this->HilbertSpace)->EncodeSiteStateKet(IndexKet,chainSize);
+//	  coefArray[pos] *= this->ValuesNonZeroTensorElementTopLeft[indiceTop][this->TemporaryArray[chainSize]][i];
 	}
     }
   return pos;
@@ -216,7 +216,7 @@ RealVector * AbstractPEPSTransfertMatrixPBC::LowLevelMultipleAddMultiply(RealVec
   for (int i = firstComponent ; i  <  LastComponent; i++)
     {
       int Dim = 0;
-      ((AbstractDoubledSpinChain * )this->HilbertSpace)->GetBosonicOccupation(i,IndiceLeftBra,IndiceLeftKet);
+//    ((AbstractDoubledSpinChain * )this->HilbertSpace)->GetBosonicOccupation(i,IndiceLeftBra,IndiceLeftKet);
       for (int k =0; k < this->ChainLength;k++)
 	{
 	  this->TemporaryArray[k]= this->GetCommonIndexFromBraAndKetIndices(IndiceLeftBra[k],IndiceLeftKet[k]);

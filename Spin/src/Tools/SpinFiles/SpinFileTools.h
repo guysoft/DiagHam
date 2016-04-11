@@ -134,4 +134,15 @@ bool SpinWith2DTranslationInversionFindSystemInfoFromVectorFileName(char* filena
 // return value = true if no error occured
 bool PottsFindSystemInfoFromVectorFileName(char* filename, int& nbrSites, int& qValue);
 
+
+bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz);
+
+
+bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int & momentum);
+
+bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int & valueOfZBra, int & valueOfZKet);
+
+bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int & momentum, int & valueOfZBra, int & valueOfZKet);
+
+
 #endif

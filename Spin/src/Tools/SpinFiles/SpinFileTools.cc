@@ -207,7 +207,7 @@ bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz
   if (SpinFindSystemInfoFromVectorFileName(filename, nbrSpins, sz, spin) == false)
     return false;
   char* StrMomentum;
-
+ 
   StrMomentum = strstr(filename, "_k_");
   if (StrMomentum != 0)
     {
@@ -540,3 +540,233 @@ bool PottsFindSystemInfoFromVectorFileName(char* filename, int& nbrSites, int& q
   return true; 
 }
 
+bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz)
+{
+  char* StrNbrSpins;
+  StrNbrSpins = strstr(filename, "_l_");
+  if (StrNbrSpins != 0)
+    {
+      StrNbrSpins += 3;
+      int SizeString = 0;
+      while ((StrNbrSpins[SizeString] != '\0') && (StrNbrSpins[SizeString] >= '0') && (StrNbrSpins[SizeString] <= '9'))
+	++SizeString;
+      if (SizeString != 0)
+	{
+	  char Tmp = StrNbrSpins[SizeString];
+	  StrNbrSpins[SizeString] = '\0';
+	  nbrSpins = atoi(StrNbrSpins);
+	  StrNbrSpins[SizeString] = Tmp;
+	  StrNbrSpins += SizeString;
+	}
+      else
+	StrNbrSpins = 0;
+    }
+  if (StrNbrSpins == 0)
+    {
+      cout << "can't guess number of spins from file name " << filename << endl;
+      return false;            
+    }
+  
+  
+  StrNbrSpins = strstr(filename, "_sz_");
+  if (StrNbrSpins != 0)
+    {
+      StrNbrSpins += 4;
+      int SizeString = 0;
+      if (StrNbrSpins[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrSpins[SizeString] != '\0') && (StrNbrSpins[SizeString] != '.') && 
+	     (StrNbrSpins[SizeString] >= '0') && (StrNbrSpins[SizeString] <= '9'))
+	++SizeString;
+      if ((SizeString != 0))
+	{
+	  StrNbrSpins[SizeString] = '\0';
+	  sz = atoi(StrNbrSpins);
+	  StrNbrSpins[SizeString] = '_';
+	  StrNbrSpins += SizeString;
+	}
+      else
+	StrNbrSpins = 0;
+    }
+  if (StrNbrSpins == 0)
+    {
+      cout << "can't guess total Sz projection from file name " << filename << endl;
+      return false;            
+    }
+  return true;
+}
+
+
+bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int & momentum)
+{
+  if (PEPSFindSystemInfoFromVectorFileName(filename, nbrSpins, sz) == false)
+    return false;
+
+  char* StrMomentum;
+ 
+  StrMomentum = strstr(filename, "_k_");
+  if (StrMomentum != 0)
+    {
+      StrMomentum += 3;
+      int SizeString = 0;
+      if (StrMomentum[SizeString] == '-')
+	++SizeString;
+      while ((StrMomentum[SizeString] != '\0') && (StrMomentum[SizeString] != '_') && (StrMomentum[SizeString] != '.') && (StrMomentum[SizeString] >= '0') 
+	     && (StrMomentum[SizeString] <= '9'))
+	++SizeString;
+      if ((StrMomentum[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrMomentum[SizeString] = '\0';
+	  momentum = atoi(StrMomentum);
+	  StrMomentum[SizeString] = '_';
+	  StrMomentum += SizeString;
+	}
+      else
+	{
+	  if ((StrMomentum[SizeString] == '.') && (SizeString != 0))
+	    {
+	      StrMomentum[SizeString] = '\0';
+	      momentum = atoi(StrMomentum);
+	      StrMomentum[SizeString] = '.';
+	      StrMomentum += SizeString;
+	    }
+	  else
+	    {
+	      StrMomentum = 0;
+	    }
+	}
+    }
+  if (StrMomentum == 0)
+    {
+      cout << "can't guess momentum from file name " << filename << endl;
+      return false;            
+    }
+  return true;
+}
+
+
+
+bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int & valueOfZBra, int & valueOfZKet)
+{
+  if (PEPSFindSystemInfoFromVectorFileName(filename, nbrSpins, sz) == false)
+    return false;
+  
+  char* StrNbrSpins;
+  StrNbrSpins = strstr(filename, "_zbra_");
+  if (StrNbrSpins != 0)
+    {
+      StrNbrSpins += 6;
+      int SizeString = 0;
+      if (StrNbrSpins[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrSpins[SizeString] != '\0') && 
+	     (StrNbrSpins[SizeString] >= '0') && (StrNbrSpins[SizeString] <= '9'))
+	++SizeString;
+      if ((SizeString > 1) || ((SizeString == 1) && (StrNbrSpins[0] != '-')))
+	{
+	  StrNbrSpins[SizeString] = '\0';
+	  valueOfZBra = atoi(StrNbrSpins);
+	  StrNbrSpins[SizeString] = '_';
+	  StrNbrSpins += SizeString;
+	}
+      else
+	StrNbrSpins = 0;
+    }
+  if (StrNbrSpins == 0)
+    {
+      cout << "can't guess the value of Z symmetry bra  from file name " << filename << endl;
+      return false;            
+    }
+
+  StrNbrSpins = strstr(filename, "_zket_");
+  if (StrNbrSpins != 0)
+    {
+      StrNbrSpins += 6;
+      int SizeString = 0;
+      if (StrNbrSpins[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrSpins[SizeString] != '\0') && 
+	     (StrNbrSpins[SizeString] >= '0') && (StrNbrSpins[SizeString] <= '9'))
+	++SizeString;
+      if ((SizeString > 1) || ((SizeString == 1) && (StrNbrSpins[0] != '-')))
+	{
+	  char tmp = StrNbrSpins[SizeString];
+	  StrNbrSpins[SizeString] = '\0';
+	  valueOfZKet = atoi(StrNbrSpins);
+	  StrNbrSpins[SizeString] = tmp;
+	  StrNbrSpins += SizeString;
+	}
+      else
+	StrNbrSpins = 0;
+    }
+  if (StrNbrSpins == 0)
+    {
+      cout << "can't guess the value of Z symmetry ket  from file name " << filename << endl;
+      return false;            
+    }
+  
+  return true;
+}
+
+bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int & momentum, int & valueOfZBra, int & valueOfZKet)
+{
+  if (PEPSFindSystemInfoFromVectorFileName(filename, nbrSpins, sz, momentum) == false)
+    return false;
+
+  char* StrNbrSpins;
+  StrNbrSpins = strstr(filename, "_zbra_");
+  if (StrNbrSpins != 0)
+    {
+      StrNbrSpins += 6;
+      int SizeString = 0;
+      if (StrNbrSpins[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrSpins[SizeString] != '\0') && 
+	     (StrNbrSpins[SizeString] >= '0') && (StrNbrSpins[SizeString] <= '9'))
+	++SizeString;
+      if ((SizeString > 1) || ((SizeString == 1) && (StrNbrSpins[0] != '-')))
+	{
+	  StrNbrSpins[SizeString] = '\0';
+	  valueOfZBra = atoi(StrNbrSpins);
+	  StrNbrSpins[SizeString] = '_';
+	  StrNbrSpins += SizeString;
+	}
+      else
+	StrNbrSpins = 0;
+    }
+  if (StrNbrSpins == 0)
+    {
+      cout << "can't guess the value of Z symmetry bra  from file name " << filename << endl;
+      return false;            
+    }
+
+  StrNbrSpins = strstr(filename, "_zket_");
+  if (StrNbrSpins != 0)
+    {
+      StrNbrSpins += 6;
+      int SizeString = 0;
+      if (StrNbrSpins[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrSpins[SizeString] != '\0') && 
+	     (StrNbrSpins[SizeString] >= '0') && (StrNbrSpins[SizeString] <= '9'))
+	++SizeString;
+      if ((SizeString > 1) || ((SizeString == 1) && (StrNbrSpins[0] != '-')))
+	{
+	  char tmp = StrNbrSpins[SizeString];
+	  StrNbrSpins[SizeString] = '\0';
+	  valueOfZKet = atoi(StrNbrSpins);
+	  StrNbrSpins[SizeString] = tmp;
+	  StrNbrSpins += SizeString;
+	}
+      else
+	StrNbrSpins = 0;
+    }
+  if (StrNbrSpins == 0)
+    {
+      cout << "can't guess the value of Z symmetry ket  from file name " << filename << endl;
+      return false;            
+    }
+  
+  return true;
+
+}

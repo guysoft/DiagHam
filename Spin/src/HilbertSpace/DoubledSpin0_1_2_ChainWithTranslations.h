@@ -49,6 +49,8 @@ class DoubledSpin0_1_2_ChainWithTranslations : public AbstractDoubledSpinChainWi
   int BraShiftNegativeSz;
   int * PowerD;
   unsigned long * ChainDescription;
+  Complex * TranslationPhase;
+  
  public:
 
   // default constructor
@@ -84,7 +86,7 @@ class DoubledSpin0_1_2_ChainWithTranslations : public AbstractDoubledSpinChainWi
   //
   // chain = reference on chain to copy
   // return value = reference on current chain
-  DoubledSpin0_1_2_ChainWithTranslations& operator = (const DoubledSpin0_1_2_ChainWithTranslations & chain);
+  DoubledSpin0_1_2_ChainWithTranslations & operator = (const DoubledSpin0_1_2_ChainWithTranslations & chain);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -98,27 +100,7 @@ class DoubledSpin0_1_2_ChainWithTranslations : public AbstractDoubledSpinChainWi
   // return value = reference on current output stream 
   ostream& PrintState (ostream& Str, int state);
 
-  // return the Bosonic Occupation of a given state in the basis
-  //
-  // index = index of the state in the basis
-  // return value bosonic occupation 
-  inline void GetBosonicOccupation (unsigned int index, int * finalStateBra,int * finalStateKet);
-
-  // convert the state on the site to its binary representation
-  //
-  // state = state to be stored
-  // sitePosition = position on the chain of the state
-  // return integer that code the state
-  inline unsigned long EncodeSiteStateBra(int physicalState, int sitePosition);
-
-  // convert the state on the site to its binary representation
-  //
-  // state = state to be stored
-  // sitePosition = position on the chain of the state
-  // return integer that code the state
-  inline unsigned long EncodeSiteStateKet(int physicalState, int sitePosition);
-
-  virtual int FindStateIndex(unsigned long stateBra,unsigned long stateKet);
+  virtual int FindStateIndex(unsigned long stateDescription);
 
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector.
   // 
@@ -127,11 +109,9 @@ class DoubledSpin0_1_2_ChainWithTranslations : public AbstractDoubledSpinChainWi
   // architecture = pointer to the architecture to use parallelized algorithm 
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int szSector, RealVector& groundState);
-
   virtual HermitianMatrix EvaluatePartialDensityMatrix (int szSector, ComplexVector& groundState);
+  virtual HermitianMatrix EvaluatePartialDensityMatrix (int szSector, int momentumSector, ComplexVector& groundState);
 
-  virtual void GetChainDescriptionInCondensedForm(unsigned long * OldHilbertSpace);
-  virtual int FindStateIndexFromLinearizedIndex(unsigned long linearizedState);
   virtual void AddConvertFromGeneralSpace(ComplexVector vSource,ComplexVector & vDestination);
   virtual void ConvertToGeneralSpace(ComplexVector vSource,ComplexVector & vDestination);
   
@@ -182,44 +162,13 @@ class DoubledSpin0_1_2_ChainWithTranslations : public AbstractDoubledSpinChainWi
   inline void GetBraAndKetIndicesFromCommonIndex(unsigned int & braIndex, unsigned int & ketIndex, unsigned long commonIndex);
   
   void GenerateLookUpTable(unsigned long memory);
+
+
+  // evaluate all exponential factors
+  //   
+  virtual void EvaluateExponentialFactors();
+  
 };
-
-// return the Bosonic Occupation of a given state in the basis
-//
-// index = index of the state in the basis
-// finalState = reference on the array where the monomial representation has to be stored
-
-inline void DoubledSpin0_1_2_ChainWithTranslations::GetBosonicOccupation (unsigned int index, int * finalStateBra,int * finalStateKet)
-{
-  for (unsigned long i = 0; i < this->ChainLength; i++)
-    {
-      finalStateBra[i] = ((this->ChainDescriptionBra[index] >> ((unsigned long) 2*i) )& 0x3ul);
-      finalStateKet[i] = ((this->ChainDescriptionKet[index] >> ((unsigned long) 2*i) )& 0x3ul);
-    }
-}
-
-// convert the state on the site to its binary representation
-//
-// state = state to be stored
-// sitePosition = position on the chain of the state
-// return integer that code the state
-
-inline unsigned long DoubledSpin0_1_2_ChainWithTranslations::EncodeSiteStateBra(int physicalState, int sitePosition)
-{
-  return  physicalState << (2*sitePosition);
-}
-
-// convert the state on the site to its binary representation
-//
-// state = state to be stored
-// sitePosition = position on the chain of the state
-// return integer that code the state
-
-inline unsigned long DoubledSpin0_1_2_ChainWithTranslations::EncodeSiteStateKet(int physicalState, int sitePosition)
-{
-  return  physicalState << (2*sitePosition);
-}
-
 
 
 // find the canonical form of a state
@@ -261,9 +210,7 @@ inline void DoubledSpin0_1_2_ChainWithTranslations::FindCanonicalForm(unsigned l
 
   unsigned long ReferenceState = stateDescription;
 
-   stateDescription = (stateDescription/9) + (stateDescription%9)*this->PowerD[this->ChainLength-1];
-  
-
+  stateDescription = (stateDescription/9) + (stateDescription%9)*this->PowerD[this->ChainLength-1];
   while ((ReferenceState != stateDescription) && (nbrTranslationToIdentity < this->ChainLength))
     {
       if (stateDescription < canonicalState)
@@ -298,7 +245,7 @@ inline int DoubledSpin0_1_2_ChainWithTranslations::FindNumberTranslation(unsigne
 
 inline unsigned int DoubledSpin0_1_2_ChainWithTranslations::GetCommonIndexFromBraAndKetIndices(unsigned int braIndex, unsigned int ketIndex )
 {
-  return ketIndex  * 3 + braIndex;
+  return ketIndex * 3+ braIndex;
 }
 
 

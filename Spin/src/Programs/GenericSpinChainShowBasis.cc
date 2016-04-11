@@ -6,6 +6,7 @@
 #include "HilbertSpace/Spin1_2ChainWithTranslations.h"
 #include "HilbertSpace/Spin1ChainWithTranslations.h"
 #include "HilbertSpace/Spin0_1_2_ChainWithTranslations.h"
+#include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsStaggered.h"
 #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslations.h"
 #include "HilbertSpace/DoubledSpin1_2_ChainWithTranslations.h"
 
@@ -131,8 +132,8 @@ int main(int argc, char** argv)
 	    {
 	      if (Manager.GetBoolean("periodic-chain") == false)
 		{
+//		  DoubledSpin0_1_2_ChainWithTranslationsStaggered Space ( NbrSpins, SzValue,  1000000, 1000000);
 		  DoubledSpin0_1_2_ChainWithTranslations Space ( NbrSpins, SzValue,  1000000, 1000000);
-		  
 		  if (Manager.GetString("state") == 0)
 		    {
 		      for (int i = 0; i <  Space.GetHilbertSpaceDimension(); ++i)
@@ -153,6 +154,7 @@ int main(int argc, char** argv)
 		}
 	      else
 		{
+//		  DoubledSpin0_1_2_ChainWithTranslationsStaggered Space (NbrSpins, Momentum,SzValue,  1000000, 1000000);
 		  DoubledSpin0_1_2_ChainWithTranslations Space (NbrSpins, Momentum,SzValue,  1000000, 1000000);
 		  
 		  if (Manager.GetString("state") == 0)

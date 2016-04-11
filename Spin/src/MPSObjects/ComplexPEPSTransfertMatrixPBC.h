@@ -55,7 +55,7 @@ class ComplexPEPSTransfertMatrixPBC : public  AbstractTransfertMatrixPBC
   // return value = pointer to the array of vectors where result has been stored
 //  virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent);
    
-  virtual int GenerateResultingStateAndCoefficient(int indiceTop, int chainSize, int lastIndice, Complex * coefArray, unsigned long * stateArrayBra,  unsigned long * stateArrayKet, unsigned long pos);
+//  virtual int GenerateResultingStateAndCoefficient(int indiceTop, int chainSize, int lastIndice, Complex * coefArray, unsigned long * stateArrayBra,  unsigned long * stateArrayKet, unsigned long pos);
   
   virtual void PrintTensorElements();
   

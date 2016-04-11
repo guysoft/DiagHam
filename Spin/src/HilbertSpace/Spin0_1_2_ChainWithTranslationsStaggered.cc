@@ -28,12 +28,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "HilbertSpace/Spin0_1_2_ChainWithTranslations.h"
-#include "GeneralTools/ArrayTools.h"
+#include "HilbertSpace/Spin0_1_2_ChainWithTranslationsStaggered.h"
+
 
 #include <iostream>
 #include <math.h>
-
 
 using std::cout;
 using std::endl;
@@ -42,7 +41,7 @@ using std::endl;
 // default constructor
 //
 
-Spin0_1_2_ChainWithTranslations::Spin0_1_2_ChainWithTranslations () 
+Spin0_1_2_ChainWithTranslationsStaggered::Spin0_1_2_ChainWithTranslationsStaggered () 
 {
   this->Flag.Initialize();
   this->LookUpTable = 0;
@@ -73,7 +72,7 @@ Spin0_1_2_ChainWithTranslations::Spin0_1_2_ChainWithTranslations ()
 // memorySize = memory size in bytes allowed for look-up table
 // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
 
-Spin0_1_2_ChainWithTranslations::Spin0_1_2_ChainWithTranslations (int chainLength, int diffSz, int memorySize, int memorySlice) 
+Spin0_1_2_ChainWithTranslationsStaggered::Spin0_1_2_ChainWithTranslationsStaggered (int chainLength, int diffSz, int memorySize, int memorySlice) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
@@ -100,9 +99,6 @@ Spin0_1_2_ChainWithTranslations::Spin0_1_2_ChainWithTranslations (int chainLengt
   long TmpHilbertSpaceDimension = GenerateStates(this->ChainLength-1, this->DiffSz, 0l);
   if (this->DiffSz != 0)
     TmpHilbertSpaceDimension = GenerateStates(this->ChainLength-1,-this->DiffSz, TmpHilbertSpaceDimension);
-
-  SortArrayDownOrdering(this->ChainDescription ,TmpHilbertSpaceDimension);
-  
   if (TmpHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
     {
       cout << TmpHilbertSpaceDimension << " " << this->LargeHilbertSpaceDimension << endl;
@@ -138,7 +134,7 @@ Spin0_1_2_ChainWithTranslations::Spin0_1_2_ChainWithTranslations (int chainLengt
 // memorySize = memory size in bytes allowed for look-up table
 // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
 
-Spin0_1_2_ChainWithTranslations::Spin0_1_2_ChainWithTranslations (int chainLength, int momentum, int diffSz, int memorySize, int memorySlice) 
+Spin0_1_2_ChainWithTranslationsStaggered::Spin0_1_2_ChainWithTranslationsStaggered (int chainLength, int momentum, int diffSz, int memorySize, int memorySlice) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
@@ -234,7 +230,7 @@ Spin0_1_2_ChainWithTranslations::Spin0_1_2_ChainWithTranslations (int chainLengt
 //
 // chain = reference on chain to copy
 
-Spin0_1_2_ChainWithTranslations::Spin0_1_2_ChainWithTranslations (const Spin0_1_2_ChainWithTranslations & chain)
+Spin0_1_2_ChainWithTranslationsStaggered::Spin0_1_2_ChainWithTranslationsStaggered (const Spin0_1_2_ChainWithTranslationsStaggered & chain)
 {
   this->Flag = chain.Flag;
   if (chain.ChainLength != 0)
@@ -279,7 +275,7 @@ Spin0_1_2_ChainWithTranslations::Spin0_1_2_ChainWithTranslations (const Spin0_1_
 // destructor
 //
 
-Spin0_1_2_ChainWithTranslations::~Spin0_1_2_ChainWithTranslations () 
+Spin0_1_2_ChainWithTranslationsStaggered::~Spin0_1_2_ChainWithTranslationsStaggered () 
 {
 }
 
@@ -288,7 +284,7 @@ Spin0_1_2_ChainWithTranslations::~Spin0_1_2_ChainWithTranslations ()
 // chain = reference on chain to copy
 // return value = reference on current chain
 
-Spin0_1_2_ChainWithTranslations & Spin0_1_2_ChainWithTranslations::operator = (const Spin0_1_2_ChainWithTranslations & chain)
+Spin0_1_2_ChainWithTranslationsStaggered & Spin0_1_2_ChainWithTranslationsStaggered::operator = (const Spin0_1_2_ChainWithTranslationsStaggered & chain)
 {
   this->Flag = chain.Flag;
   this->ChainLength = chain.ChainLength;
@@ -313,9 +309,9 @@ Spin0_1_2_ChainWithTranslations & Spin0_1_2_ChainWithTranslations::operator = (c
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* Spin0_1_2_ChainWithTranslations::Clone()
+AbstractHilbertSpace* Spin0_1_2_ChainWithTranslationsStaggered::Clone()
 {
-  return new Spin0_1_2_ChainWithTranslations (*this);
+  return new Spin0_1_2_ChainWithTranslationsStaggered (*this);
 }
 
 // return value of twice spin projection on (Oz) for a given state
@@ -323,19 +319,24 @@ AbstractHilbertSpace* Spin0_1_2_ChainWithTranslations::Clone()
 // stateDescription = state to which the spin projection has to be evaluated
 // return value = twice spin projection on (Oz)
 
-inline int Spin0_1_2_ChainWithTranslations::GetTotalSz (unsigned long stateDescription)
+inline int Spin0_1_2_ChainWithTranslationsStaggered::GetTotalSz (unsigned long stateDescription)
 {
   int TmpSz = 0;
-
+  int Sign;
   for (int i = 0; i < this->ChainLength; i++)
     {
+      if (i % 2==0 ) 
+	Sign = 1;
+      else
+	Sign = -1;
+      
       switch (stateDescription & 0x3ul)
 	{
 	case 0x2:
-	  TmpSz += 1;
+	  TmpSz += Sign;
 	  break;
 	case 0x0:
-	  TmpSz -= 1;
+	  TmpSz -= Sign;
 	  break;
 	}
       stateDescription >>= 2;
@@ -350,7 +351,7 @@ inline int Spin0_1_2_ChainWithTranslations::GetTotalSz (unsigned long stateDescr
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& Spin0_1_2_ChainWithTranslations::PrintState (ostream& Str, int state)
+ostream& Spin0_1_2_ChainWithTranslationsStaggered::PrintState (ostream& Str, int state)
 {
   if (state >= this->HilbertSpaceDimension)    
     return Str;
@@ -379,8 +380,9 @@ ostream& Spin0_1_2_ChainWithTranslations::PrintState (ostream& Str, int state)
 // diffSz = difference of spin projection between bra and ket chain
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
-long Spin0_1_2_ChainWithTranslations::GenerateStates(int length, int diffSz, long pos)
+long Spin0_1_2_ChainWithTranslationsStaggered::GenerateStates(int length, int diffSz, long pos)
 {
+
   if (length == 0)
     {
       if (diffSz == 0) 
@@ -409,7 +411,16 @@ long Spin0_1_2_ChainWithTranslations::GenerateStates(int length, int diffSz, lon
   
   if(length > 0)
     { 
-      TmpPos = this->GenerateStates(length-1, diffSz+1, pos); 
+      int Sign;
+      
+      if (length%2 == 0)
+	Sign = -1;
+      else
+	{
+	  Sign = 1;
+	}
+
+      TmpPos = this->GenerateStates(length-1, diffSz+Sign, pos); 
       Mask = (((0x1ul << 1)) << ((length<<1)));
       for (; pos < TmpPos; ++pos)
 	{
@@ -419,7 +430,7 @@ long Spin0_1_2_ChainWithTranslations::GenerateStates(int length, int diffSz, lon
       Mask = (((0x1ul)) << ((length<<1)));
       for (; pos < TmpPos; ++pos)
 	this->ChainDescription[pos] |= Mask;
-      TmpPos = this->GenerateStates(length-1, diffSz-1, pos); 
+      TmpPos = this->GenerateStates(length-1, diffSz-Sign, pos); 
       Mask = (((0x0ul)) << ((length<<1)));
       for (; pos < TmpPos; ++pos)
 	this->ChainDescription[pos] |= Mask;
@@ -437,7 +448,7 @@ long Spin0_1_2_ChainWithTranslations::GenerateStates(int length, int diffSz, lon
 // nbrNDown = number of particles with quantum number down
 // return value = Hilbert space dimension
 
-long Spin0_1_2_ChainWithTranslations::ShiftedEvaluateHilbertSpaceDimension(int length, int diffSz)
+long Spin0_1_2_ChainWithTranslationsStaggered::ShiftedEvaluateHilbertSpaceDimension(int length, int diffSz)
 {
 
   if (length == 0)
@@ -458,73 +469,169 @@ long Spin0_1_2_ChainWithTranslations::ShiftedEvaluateHilbertSpaceDimension(int l
 }
 
 
-double Spin0_1_2_ChainWithTranslations::TotalSzSz (int index)
+
+// find state index
+//
+// state = state description
+// return value = corresponding index
+
+int Spin0_1_2_ChainWithTranslationsStaggered::FindStateIndex(unsigned long  state) 
 {
-  cout <<"Calling undefined function double Spin0_1_2_ChainWithTranslations::TotalSzSz (int index) "<<endl;
+  unsigned long MidPos = (state >> this->LookUpTableShift)-this->ShiftLookUpTable;  
+  if (this->GetTotalSz(state)<0 ) 
+    {  
+      MidPos=this->ShiftLookUpTableNegativeSz + (state >> this->LookUpTableShift);
+    }
+
+  unsigned long LowPos = this->LookUpTable[MidPos+1];
+  unsigned long HighPos = this->LookUpTable[MidPos];
+  while ( ( HighPos - LowPos ) > 1)
+    {
+      MidPos = (HighPos + LowPos) >> 1;
+      if (this->ChainDescription[MidPos] <= state)
+	HighPos = MidPos;
+      else
+	LowPos = MidPos;
+    }
+
+  if (this->ChainDescription[LowPos] == state ) 
+    return LowPos;
+  if (this->ChainDescription[HighPos] == state ) 
+    return HighPos;   
+  return this->HilbertSpaceDimension;
+}
+
+// generate look-up table associated to current Hilbert space
+// 
+// memory = memory size that can be allocated for the look-up table
+
+void Spin0_1_2_ChainWithTranslationsStaggered::GenerateLookUpTable()
+{  
+  // create the look-up table
+  
+  long LowPos;
+  long MidPos;
+  long HighPos;
+  unsigned long Max2 = (this->ChainDescription[0]) >> this->LookUpTableShift;
+  unsigned long Max3 = (this->ChainDescription[this->ShiftNegativeDiffSz-1]) >> this->LookUpTableShift;
+  unsigned long Max4=0;
+  unsigned long Max5=0;
+  if(this->DiffSz != 0 ) 
+    {
+      Max4 = (this->ChainDescription[this->ShiftNegativeDiffSz]) >> this->LookUpTableShift;
+      Max5 = (this->ChainDescription[this->HilbertSpaceDimension-1]) >> this->LookUpTableShift;
+    }
+  
+  this->LookUpTable = new long [Max2 - Max3 +2 + Max4 - Max5 +2];
+  this->ShiftLookUpTable = Max3;
+    
+  for (long i = Max3; i <=Max2 ; i++)
+    {
+      LowPos = 0;
+      HighPos = this->ShiftNegativeDiffSz - 1;
+      while ((HighPos - LowPos) > 1)
+	{
+	  MidPos = (HighPos + LowPos) >> 1;
+	  if (this->ChainDescription[MidPos] <= (i << this->LookUpTableShift))
+	    HighPos = MidPos;
+	  else
+	    LowPos = MidPos;
+	}      
+      this->LookUpTable[i-this->ShiftLookUpTable] = HighPos;
+    }
+  this->LookUpTable[Max2 - Max3 +1] =0;
+  
+  
+  if(this->DiffSz != 0 ) 
+    {
+      this->ShiftLookUpTableNegativeSz = Max2 - Max3 +2 - Max5;
+      
+      for (long i = Max5; i <=Max4 ; i++)
+	{ 
+	  LowPos = this->ShiftNegativeDiffSz;
+	  HighPos = this->HilbertSpaceDimension - 1;
+      	  while ((HighPos - LowPos) > 1)
+	    {
+	      MidPos = (HighPos + LowPos) >> 1;
+	      if (this->ChainDescription[MidPos] <= (i << this->LookUpTableShift))
+		HighPos = MidPos;
+	      else
+		LowPos = MidPos;
+	    }      
+	  this->LookUpTable[i+this->ShiftLookUpTableNegativeSz] = HighPos;
+	}
+      this->LookUpTable[Max2 - Max3 +2 + Max4 - Max5 +1] = this->ShiftNegativeDiffSz;
+    }
+}
+
+double Spin0_1_2_ChainWithTranslationsStaggered::TotalSzSz (int index)
+{
+  cout <<"Calling undefined function double Spin0_1_2_ChainWithTranslationsStaggered::TotalSzSz (int index) "<<endl;
   return 0.0;
 }
 
-double Spin0_1_2_ChainWithTranslations::SziSzj (int i, int j, int state)
+double Spin0_1_2_ChainWithTranslationsStaggered::SziSzj (int i, int j, int state)
 {
-  cout <<"Calling undefined function double Spin0_1_2_ChainWithTranslations::SziSzj (int i, int j, int state)"<<endl;
+  cout <<"Calling undefined function double Spin0_1_2_ChainWithTranslationsStaggered::SziSzj (int i, int j, int state)"<<endl;
   return 0.0;
 }
 
-int Spin0_1_2_ChainWithTranslations::SpiSpj (int i, int j, int state, double& coefficient, int& nbrTranslation)
+int Spin0_1_2_ChainWithTranslationsStaggered::SpiSpj (int i, int j, int state, double& coefficient, int& nbrTranslation)
 {
-  cout <<"Calling undefined function int Spin0_1_2_ChainWithTranslations::SpiSpj (int i, int j, int state, double& coefficient, int& nbrTranslation)"<<endl;
+  cout <<"Calling undefined function int Spin0_1_2_ChainWithTranslationsStaggered::SpiSpj (int i, int j, int state, double& coefficient, int& nbrTranslation)"<<endl;
   return 0;
 }
 
-int Spin0_1_2_ChainWithTranslations::SmiSmj (int i, int j, int state, double& coefficient, int& nbrTranslation)
+int Spin0_1_2_ChainWithTranslationsStaggered::SmiSmj (int i, int j, int state, double& coefficient, int& nbrTranslation)
 {
-  cout <<"Calling undefined function int Spin0_1_2_ChainWithTranslations::SmiSmj (int i, int j, int state, double& coefficient, int& nbrTranslation) "<<endl;
+  cout <<"Calling undefined function int Spin0_1_2_ChainWithTranslationsStaggered::SmiSmj (int i, int j, int state, double& coefficient, int& nbrTranslation) "<<endl;
   return 0;
 }
 
-int Spin0_1_2_ChainWithTranslations::SpiSpi (int i, int state, double& coefficient, int& nbrTranslation)
+int Spin0_1_2_ChainWithTranslationsStaggered::SpiSpi (int i, int state, double& coefficient, int& nbrTranslation)
 {
-  cout <<"Calling undefined function int Spin0_1_2_ChainWithTranslations::SpiSpi (int i, int state, double& coefficient, int& nbrTranslation) "<<endl;
+  cout <<"Calling undefined function int Spin0_1_2_ChainWithTranslationsStaggered::SpiSpi (int i, int state, double& coefficient, int& nbrTranslation) "<<endl;
   return 0;
 }
 
-int Spin0_1_2_ChainWithTranslations::SmiSmi (int i, int state, double& coefficient, int& nbrTranslation) 
+int Spin0_1_2_ChainWithTranslationsStaggered::SmiSmi (int i, int state, double& coefficient, int& nbrTranslation) 
 {
-  cout <<"Calling undefined function int Spin0_1_2_ChainWithTranslations::SmiSmi (int i, int state, double& coefficient, int& nbrTranslation)"<<endl;
+  cout <<"Calling undefined function int Spin0_1_2_ChainWithTranslationsStaggered::SmiSmi (int i, int state, double& coefficient, int& nbrTranslation)"<<endl;
   return 0;
 }
 
-int Spin0_1_2_ChainWithTranslations::SpiSzj (int i, int j, int state, double& coefficient, int& nbrTranslation)
+int Spin0_1_2_ChainWithTranslationsStaggered::SpiSzj (int i, int j, int state, double& coefficient, int& nbrTranslation)
 {
-  cout <<"Calling undefined function int Spin0_1_2_ChainWithTranslations::SpiSzj (int i, int j, int state, double& coefficient, int& nbrTranslation)"<<endl;
+  cout <<"Calling undefined function int Spin0_1_2_ChainWithTranslationsStaggered::SpiSzj (int i, int j, int state, double& coefficient, int& nbrTranslation)"<<endl;
   return 0;
 }
 
-int Spin0_1_2_ChainWithTranslations::SmiSzj (int i, int j, int state, double& coefficient, int& nbrTranslation)
+
+int Spin0_1_2_ChainWithTranslationsStaggered::SmiSzj (int i, int j, int state, double& coefficient, int& nbrTranslation)
 {
-  cout <<"Calling undefined function int Spin0_1_2_ChainWithTranslations::SmiSzj (int i, int j, int state, double& coefficient, int& nbrTranslation)"<<endl;
+  cout <<"Calling undefined function int Spin0_1_2_ChainWithTranslationsStaggered::SmiSzj (int i, int j, int state, double& coefficient, int& nbrTranslation)"<<endl;
   return 0;
 }
 
-int Spin0_1_2_ChainWithTranslations::SmiSpj (int i, int j, int state, double& coefficient, int& nbrTranslation)
+int Spin0_1_2_ChainWithTranslationsStaggered::SmiSpj (int i, int j, int state, double& coefficient, int& nbrTranslation)
 {
-  cout <<"Calling undefined function int Spin0_1_2_ChainWithTranslations::SmiSpj (int i, int j, int state, double& coefficient, int& nbrTranslation)"<<endl;
+  cout <<"Calling undefined function int Spin0_1_2_ChainWithTranslationsStaggered::SmiSpj (int i, int j, int state, double& coefficient, int& nbrTranslation)"<<endl;
   return 0;
 }
 
-int Spin0_1_2_ChainWithTranslations::Spi (int i, int state, double& coefficient, int& nbrTranslation)
+int Spin0_1_2_ChainWithTranslationsStaggered::Spi (int i, int state, double& coefficient, int& nbrTranslation)
 {
-  cout <<"Calling undefined function int Spin0_1_2_ChainWithTranslations::Spi (int i, int state, double& coefficient, int& nbrTranslation)"<<endl;
+  cout <<"Calling undefined function int Spin0_1_2_ChainWithTranslationsStaggered::Spi (int i, int state, double& coefficient, int& nbrTranslation)"<<endl;
   return 0;
 }
 
-int Spin0_1_2_ChainWithTranslations::Smi (int i, int state, double& coefficient, int& nbrTranslation)
+int Spin0_1_2_ChainWithTranslationsStaggered::Smi (int i, int state, double& coefficient, int& nbrTranslation)
 {
-  cout <<"Calling undefined function int  Spin0_1_2_ChainWithTranslations::Smi (int i, int state, double& coefficient, int& nbrTranslation)"<<endl;
+  cout <<"Calling undefined function int Spin0_1_2_ChainWithTranslationsStaggered::Smi (int i, int state, double& coefficient, int& nbrTranslation)"<<endl;
   return 0;
 }
 
-void Spin0_1_2_ChainWithTranslations::CreatePrecalculationTable()
+void Spin0_1_2_ChainWithTranslationsStaggered::CreatePrecalculationTable()
 {
   int TmpPeriodicity = this->ChainLength;
   this->CompatibilityWithMomentum = new bool [TmpPeriodicity + 1];
@@ -543,61 +650,4 @@ void Spin0_1_2_ChainWithTranslations::CreatePrecalculationTable()
 	  this->RescalingFactors[i][j] = sqrt (((double) i) / ((double) j));
 	}
     }
-}
-
-
-// generate look-up table associated to current Hilbert space
-// 
-// memory = memory size that can be allocated for the look-up table
-
-void Spin0_1_2_ChainWithTranslations::GenerateLookUpTable()
-{  
-  long LowPos;
-  long MidPos;
-  long HighPos;
-  unsigned long Max2 = (this->ChainDescription[0]) >> this->LookUpTableShift;
-  unsigned long Max3 = (this->ChainDescription[this->HilbertSpaceDimension-1]) >> this->LookUpTableShift;
-  
-  this->LookUpTable = new long [Max2 - Max3 +2];
-  this->ShiftLookUpTable = Max3;
-  
-  for (long i = Max3; i <=Max2 ; i++)
-    {
-      LowPos = 0;
-      HighPos = this->HilbertSpaceDimension - 1;
-      while ((HighPos - LowPos) > 1)
-	{
-	  MidPos = (HighPos + LowPos) >> 1;
-	  if (this->ChainDescription[MidPos] <= (i << this->LookUpTableShift))
-	    HighPos = MidPos;
-	  else
-	    LowPos = MidPos;
-	}      
-      this->LookUpTable[i-this->ShiftLookUpTable] = HighPos;
-    }
-  
-  this->LookUpTable[Max2 - Max3 +1] = 0;
-}
- 
-
-int Spin0_1_2_ChainWithTranslations::FindStateIndex(unsigned long state)
-{
-  unsigned long MidPos = (state >> this->LookUpTableShift)-this->ShiftLookUpTable;  
-  
-  unsigned long LowPos = this->LookUpTable[MidPos+1];
-  unsigned long HighPos = this->LookUpTable[MidPos];
-  while ( ( HighPos - LowPos ) > 1)
-    {
-      MidPos = (HighPos + LowPos) >> 1;
-      if (this->ChainDescription[MidPos] <= state)
-	HighPos = MidPos;
-      else
-	LowPos = MidPos;
-    }
-
-  if (this->ChainDescription[LowPos] == state ) 
-    return LowPos;
-  if (this->ChainDescription[HighPos] == state ) 
-    return HighPos;   
-  return this->HilbertSpaceDimension;
 }
