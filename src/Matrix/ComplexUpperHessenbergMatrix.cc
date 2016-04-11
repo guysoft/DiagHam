@@ -908,32 +908,23 @@ ComplexDiagonalMatrix& ComplexUpperHessenbergMatrix::LapackDiagonalize (ComplexD
    int TmpLeadingDimension = 1;
    double* Dummy = 0;
    double TmpWorkingArea;
-   cout << "check1" << endl;
-   cout << TriangularLowerIndex << endl;
-   cout << TriangularHigherIndex << endl;
-   cout << this->NbrRow << endl;
 
    char JobBal = 'P';
    double* Scale = new double [this->NbrRow];
    FORTRAN_NAME(zgebal)(&JobBal, &this->NbrRow, TmpMatrix, &this->NbrColumn, &TriangularLowerIndex, &TriangularHigherIndex, 
 			Scale, &Information);
 
-   cout << "check1bis" << endl;
-   cout << TriangularLowerIndex << endl;
-   cout << TriangularHigherIndex << endl;
-   cout << this->NbrRow << endl;
-
    FORTRAN_NAME(zhseqr)(&Job, &computeZFlag, &this->NbrRow, &TriangularLowerIndex, &TriangularHigherIndex, 
 			TmpMatrix, &this->NbrColumn, TmpEigenvalues,
 			Dummy, &TmpLeadingDimension, &TmpWorkingArea, &WorkingAreaSize, &Information);
-   cout << Information << endl;
+
    WorkingAreaSize = (int) TmpWorkingArea;
    double* WorkingArea = new double [2 * WorkingAreaSize];
-   cout << "check2" << endl;
+
    FORTRAN_NAME(zhseqr)(&Job, &computeZFlag, &this->NbrRow, &TriangularLowerIndex, &TriangularHigherIndex, TmpMatrix, &this->NbrRow, 
 			TmpEigenvalues,
 			Dummy, &TmpLeadingDimension, WorkingArea, &WorkingAreaSize, &Information);
-   cout << "check3" << endl;
+
    for (int i = 0; i < this->NbrRow; ++i)
      {
        M[i].Re = TmpEigenvalues[2 * i];

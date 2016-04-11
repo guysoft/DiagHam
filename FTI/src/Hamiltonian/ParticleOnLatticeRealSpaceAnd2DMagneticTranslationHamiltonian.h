@@ -717,7 +717,7 @@ inline void  ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian::Eval
 		  
  		  coefficientArray[position] = Coefficient * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) *  Phase((NbrTranslationsX*PositionY*PhaseTranslationX + NbrTranslationsY * PositionX * PhaseTranslationY)) * TmpInteractionFactors[k]; 
 
- 		  ///coefficientArray[position] = Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactors[k]; 
+ 		  //coefficientArray[position] = Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactors[k]; 
                   
 		  cout <<"j = " <<j <<" ; TmpConnectedSites[k] = " << TmpConnectedSites[k]<<" index " << index <<" Index = " << Index<<" coefficientArray[position] = "<<coefficientArray[position] <<endl;
 		  cout <<"Coefficient = " <<  Coefficient <<" this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] = "<<this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]<< " Phase((NbrTranslationsX*PositionY*PhaseTranslationX + NbrTranslationsY * PositionX * PhaseTranslationY)) = "<< Phase((NbrTranslationsX*PositionY*PhaseTranslationX + NbrTranslationsY * PositionX * PhaseTranslationY))<< " TmpInteractionFactors[k] = "<< TmpInteractionFactors[k]<<endl;

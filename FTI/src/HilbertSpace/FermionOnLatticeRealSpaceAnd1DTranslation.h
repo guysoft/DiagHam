@@ -108,7 +108,6 @@ class  FermionOnLatticeRealSpaceAnd1DTranslation : public FermionOnTorusWithMagn
   // n = index of the annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
-  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state 
   virtual int AdA (int index, int m, int n, double& coefficient, int& nbrTranslationX);
   
@@ -118,7 +117,6 @@ class  FermionOnLatticeRealSpaceAnd1DTranslation : public FermionOnTorusWithMagn
   // m2 = second index for creation operator (spin up)
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
-  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state 
   virtual int AdAd (int m1, int m2, double& coefficient, int& nbrTranslationX);
   
@@ -127,7 +125,6 @@ class  FermionOnLatticeRealSpaceAnd1DTranslation : public FermionOnTorusWithMagn
   // m = first index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
-  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state 
   virtual int Ad (int m, double& coefficient, int& nbrTranslationX);
 
@@ -140,17 +137,17 @@ class  FermionOnLatticeRealSpaceAnd1DTranslation : public FermionOnTorusWithMagn
   // get the momentum along the x axis
   // 
   // return avlue = momentum along the x axis
-  virtual int GetKxMomentum();
+  virtual int GetKxMomentum() const;
 
   // get the maximum momentum along the x axis (i.e. the number of momentum sectors)
   // 
   // return avlue = maximum momentum along the x axis
-  virtual int GetMaxXMomentum();
+  virtual int GetMaxXMomentum() const;
 
   // get the maximum momentum along the x axis (i.e. the number of momentum sectors)
   // 
   // return avlue = maximum momentum along the x axis
-  virtual int GetNbrSites();
+  virtual int GetNbrSites() const;
   
   
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given momentum sector.
@@ -220,7 +217,6 @@ class  FermionOnLatticeRealSpaceAnd1DTranslation : public FermionOnTorusWithMagn
   // state = reference on the state that has been produced with the operator action
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
-  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state  
   virtual int SymmetrizeAdAdResult(unsigned long& state, double& coefficient, int& nbrTranslationX);
 
@@ -229,7 +225,6 @@ class  FermionOnLatticeRealSpaceAnd1DTranslation : public FermionOnTorusWithMagn
   //
   // stateDescription = unsigned integer describing the state
   // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
-  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
   virtual unsigned long FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX);
 
@@ -270,7 +265,7 @@ class  FermionOnLatticeRealSpaceAnd1DTranslation : public FermionOnTorusWithMagn
   // densityMatrix = reference on the density matrix where result has to stored
   // return value = number of components that have been added to the density matrix
   //  virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnTorusWithMagneticTranslations* complementaryHilbertSpace,  		  								  ParticleOnTorusWithMagneticTranslations* destinationHilbertSpace, ComplexVector& groundState,  HermitianMatrix* densityMatrix);
-
+  
 };
 
 
@@ -281,8 +276,7 @@ class  FermionOnLatticeRealSpaceAnd1DTranslation : public FermionOnTorusWithMagn
 // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
 // return value = index of the destination state  
 
-inline int FermionOnLatticeRealSpaceAnd1DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient, 
-									   int& nbrTranslationX)
+inline int FermionOnLatticeRealSpaceAnd1DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient, int& nbrTranslationX)
 {
   state = this->FindCanonicalForm(state, nbrTranslationX);
   int TmpMaxMomentum = this->NbrSite;
@@ -399,7 +393,7 @@ inline unsigned long FermionOnLatticeRealSpaceAnd1DTranslation::GetSignAndApplyS
 // 
 // return avlue = momentum along the x axis
 
-inline int FermionOnLatticeRealSpaceAnd1DTranslation::GetKxMomentum()
+inline int FermionOnLatticeRealSpaceAnd1DTranslation::GetKxMomentum() const
 {
   return this->XMomentum;
 }
@@ -408,7 +402,7 @@ inline int FermionOnLatticeRealSpaceAnd1DTranslation::GetKxMomentum()
 // 
 // return value = maximum momentum along the x axis
 
-inline int FermionOnLatticeRealSpaceAnd1DTranslation::GetMaxXMomentum()
+inline int FermionOnLatticeRealSpaceAnd1DTranslation::GetMaxXMomentum() const
 {
   return this->MaxXMomentum;
 }
@@ -417,7 +411,7 @@ inline int FermionOnLatticeRealSpaceAnd1DTranslation::GetMaxXMomentum()
 // 
 // return value = number of sites
 
-inline int FermionOnLatticeRealSpaceAnd1DTranslation::GetNbrSites()
+inline int FermionOnLatticeRealSpaceAnd1DTranslation::GetNbrSites() const
 {
   return this->NbrSite;
 }

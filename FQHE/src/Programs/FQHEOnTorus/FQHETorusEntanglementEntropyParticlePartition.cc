@@ -139,8 +139,7 @@ int main(int argc, char** argv)
   for (int i = 0; i < NbrSpaces; ++i)
     {
       TotalKy[i] = 0;
-      if (FQHEOnTorusFindSystemInfoFromVectorFileName(GroundStateFiles[i],
-						      NbrParticles, KyMax, TotalKy[i], Statistics) == false)
+      if (FQHEOnTorusFindSystemInfoFromVectorFileName(GroundStateFiles[i],NbrParticles, KyMax, TotalKy[i], Statistics) == false)
 	{
 	  cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
 	  return -1;

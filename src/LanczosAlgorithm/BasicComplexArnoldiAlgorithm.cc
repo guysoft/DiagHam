@@ -59,7 +59,7 @@ using std::endl;
 // strongConvergence = flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
 
 BasicComplexArnoldiAlgorithm::BasicComplexArnoldiAlgorithm(AbstractArchitecture* architecture, int nbrEigenvalue, int maxIter, 
-							   bool highEnergy, bool leftFlag, bool strongConvergence) 
+							   bool highEnergy, bool leftFlag, bool strongConvergence, bool sortRealFlag)  
 {
   this->Index = 0;
   this->Hamiltonian = 0;
@@ -82,6 +82,7 @@ BasicComplexArnoldiAlgorithm::BasicComplexArnoldiAlgorithm(AbstractArchitecture*
   this->Architecture = architecture;
   this->Flag.Initialize();
   this->StrongConvergenceFlag = strongConvergence;
+  this->SortEigenvalueRealPartFlag = sortRealFlag;
   this->PreviousLastWantedEigenvalue = 0.0;
   this->ComplexPreviousWantedEigenvalues = new Complex [this->NbrEigenvalue];
   for (int i = 0; i < this->NbrEigenvalue; ++i)
@@ -220,16 +221,27 @@ Vector* BasicComplexArnoldiAlgorithm::GetEigenstates(int nbrEigenstates)
 #else
   cout << "lapack is required for BasicComplexArnoldiAlgorithm" << endl;
 #endif
-  if (this->HighEnergyFlag == false)
-    SortedDiagonalizedMatrix.SortMatrixUpOrder(TmpEigenvector, true);
+  if (this->SortEigenvalueRealPartFlag == false)
+    {
+      if (this->HighEnergyFlag == false)
+	SortedDiagonalizedMatrix.SortMatrixUpOrder(TmpEigenvector, true, 1e-10);
+      else
+	SortedDiagonalizedMatrix.SortMatrixDownOrder(TmpEigenvector, true, 1e-10);
+    }
   else
-    SortedDiagonalizedMatrix.SortMatrixDownOrder(TmpEigenvector, true);
+    {
+      if (this->HighEnergyFlag == false)
+	SortedDiagonalizedMatrix.SortMatrixUpOrder(TmpEigenvector, false, 1e-10);
+      else
+	SortedDiagonalizedMatrix.SortMatrixDownOrder(TmpEigenvector, false, 1e-10);
+    }
 
   Complex* TmpCoefficents = new Complex [SortedDiagonalizedMatrix.GetNbrColumn()];
   for (int i = 0; i < nbrEigenstates; ++i)
     {
+      double TmpNorm = 1.0 / TmpEigenvector[i].Norm();
       for (int j = 0; j < SortedDiagonalizedMatrix.GetNbrColumn(); ++j)
-	TmpCoefficents[j] = TmpEigenvector[i][j];
+	TmpCoefficents[j] = TmpEigenvector[i][j]*TmpNorm;
       Eigenstates[i] = ComplexVector(this->ArnoldiVectors[0].GetVectorDimension(), true);
       AddComplexLinearCombinationOperation Operation (&(Eigenstates[i]), this->ArnoldiVectors, 
 						      SortedDiagonalizedMatrix.GetNbrColumn(),  TmpCoefficents);
@@ -248,8 +260,8 @@ void BasicComplexArnoldiAlgorithm::RunLanczosAlgorithm (int nbrIter)
   int Dimension;
   if (this->Index == 0)
     {
-      if (nbrIter < 2)
-	nbrIter = 2;
+      if (nbrIter < 3)
+	nbrIter = 3;
       Dimension = nbrIter;
       this->ReducedMatrix.Resize(Dimension, Dimension);
 
@@ -292,8 +304,7 @@ void BasicComplexArnoldiAlgorithm::RunLanczosAlgorithm (int nbrIter)
       this->ArnoldiVectors[i + 1] = ComplexVector(this->Hamiltonian->GetHilbertSpaceDimension());
       VectorHamiltonianMultiplyOperation Operation (this->Hamiltonian, &(this->ArnoldiVectors[i]), &(this->ArnoldiVectors[i + 1]));
       Operation.ApplyOperation(this->Architecture);
-      MultipleComplexScalarProductOperation Operation3 (&(this->ArnoldiVectors[i + 1]), this->ArnoldiVectors,
-							i + 1, this->TemporaryCoefficients);
+      MultipleComplexScalarProductOperation Operation3 (&(this->ArnoldiVectors[i + 1]), this->ArnoldiVectors, i + 1, this->TemporaryCoefficients);
       Operation3.ApplyOperation(this->Architecture);
       for (int j = 0; j <= i; ++j)
 	{
@@ -306,10 +317,20 @@ void BasicComplexArnoldiAlgorithm::RunLanczosAlgorithm (int nbrIter)
       for (int i = 0; i < this->NbrEigenvalue; ++i)
 	this->ComplexPreviousWantedEigenvalues[i] = this->ComplexDiagonalizedMatrix[i];
       this->Diagonalize();
-      if (this->HighEnergyFlag == false)
-	this->ComplexDiagonalizedMatrix.SortMatrixUpOrder(true, 1e-10);
+      if (this->SortEigenvalueRealPartFlag == false)
+	{
+	  if (this->HighEnergyFlag == false)
+	    this->ComplexDiagonalizedMatrix.SortMatrixUpOrder(true, 1e-10);
+	  else
+	    this->ComplexDiagonalizedMatrix.SortMatrixDownOrder(true, 1e-10);
+	}
       else
-	this->ComplexDiagonalizedMatrix.SortMatrixDownOrder(true, 1e-10);
+	{
+	  if (this->HighEnergyFlag == false)
+	    this->ComplexDiagonalizedMatrix.SortMatrixUpOrder();
+	  else
+	    this->ComplexDiagonalizedMatrix.SortMatrixDownOrder();
+	}
     }
   else
     {
