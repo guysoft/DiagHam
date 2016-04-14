@@ -127,25 +127,25 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHESphereFermionsWithSpin -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
   
-  int NbrFermions = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
-  int SzTotal = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
+  int NbrFermions = Manager.GetInteger("nbr-particles");
+  int LzMax = Manager.GetInteger("lzmax");
+  int SzTotal = Manager.GetInteger("total-sz");
   bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
   if (LONG_MAX>>20 < Manager.GetInteger("memory"))
     cout << "Warning: integer overflow in memory request - you might want to use 64 bit code."<<endl;
   long Memory = (Manager.GetInteger("memory")) << 20;  
   if (Manager.GetString("energy-expectation") != 0 ) Memory = 0x0l;
-  int InitialLz = ((SingleIntegerOption*) Manager["initial-lz"])->GetInteger();
-  int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
-  char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();
-  char* SavePrecalculationFileName = ((SingleStringOption*) Manager["save-precalculation"])->GetString();
-  bool onDiskCacheFlag = ((BooleanOption*) Manager["allow-disk-storage"])->GetBoolean();
+  int InitialLz = Manager.GetInteger("initial-lz");
+  int NbrLz = Manager.GetInteger("nbr-lz");
+  char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
+  char* SavePrecalculationFileName = Manager.GetString("save-precalculation");
+  bool onDiskCacheFlag = Manager.GetBoolean("allow-disk-storage");
   bool FirstRun = true;
   double** PseudoPotentials  = new double*[10];
   for (int i = 0; i < 3; ++i)
@@ -165,7 +165,7 @@ int main(int argc, char** argv)
       return -1;
     }
 
-  if (((SingleStringOption*) Manager["interaction-file"])->GetString() == 0)
+  if (Manager.GetString("interaction-file") == 0)
     {
       cout << "an interaction file has to be provided" << endl;
       return -1;
@@ -173,7 +173,7 @@ int main(int argc, char** argv)
   else
     {
       ConfigurationParser InteractionDefinition;
-      if (InteractionDefinition.Parse(((SingleStringOption*) Manager["interaction-file"])->GetString()) == false)
+      if (InteractionDefinition.Parse(Manager.GetString("interaction-file")) == false)
 	{
 	  InteractionDefinition.DumpErrors(cout) << endl;
 	  return -1;
@@ -197,7 +197,7 @@ int main(int argc, char** argv)
       else
 	if (InteractionDefinition["Pseudopotentials"] != 0)
 	  {
-	    cout << "Pseudopotentials has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	    cout << "Pseudopotentials has a wrong value in " << Manager.GetString("interaction-file") << endl;
 	    return -1;
 	  }
       if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsUpUp", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
@@ -215,7 +215,7 @@ int main(int argc, char** argv)
       else
 	if (InteractionDefinition["PseudopotentialsUpUp"] != 0)
 	  {
-	    cout << "PseudopotentialsUpUp has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	    cout << "PseudopotentialsUpUp has a wrong value in " << Manager.GetString("interaction-file") << endl;
 	    return -1;
 	  }
       if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsDownDown", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
@@ -233,7 +233,7 @@ int main(int argc, char** argv)
       else
 	if (InteractionDefinition["PseudopotentialsDownDown"] != 0)
 	  {
-	    cout << "PseudopotentialsDownDown has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	    cout << "PseudopotentialsDownDown has a wrong value in " << Manager.GetString("interaction-file") << endl;
 	    return -1;
 	  }
       if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsUpDown", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
@@ -251,14 +251,14 @@ int main(int argc, char** argv)
       else
 	if (InteractionDefinition["PseudopotentialsUpDown"] != 0)
 	  {
-	    cout << "PseudopotentialsUpDown has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	    cout << "PseudopotentialsUpDown has a wrong value in " << Manager.GetString("interaction-file") << endl;
 	    return -1;
 	  }
       if (InteractionDefinition.GetAsDoubleArray("OneBodyPotentialUpUp", ' ', OneBodyPotentialUpUp, TmpNbrPseudoPotentials) == true)
 	{
 	  if (TmpNbrPseudoPotentials != (LzMax + 1))
 	    {
-	      cout << "OneBodyPotentialUpUp has a wrong number of components or has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	      cout << "OneBodyPotentialUpUp has a wrong number of components or has a wrong value in " << Manager.GetString("interaction-file") << endl;
 	      return -1;
 	    }
 	}
@@ -266,7 +266,7 @@ int main(int argc, char** argv)
 	{
 	  if (TmpNbrPseudoPotentials != (LzMax + 1))
 	    {
-	      cout << "OneBodyPotentialDownDown has a wrong number of components or has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	      cout << "OneBodyPotentialDownDown has a wrong number of components or has a wrong value in " << Manager.GetString("interaction-file") << endl;
 	      return -1;
 	    }
 	}
@@ -275,7 +275,7 @@ int main(int argc, char** argv)
 	{
 	  if (TmpNbrPseudoPotentials != (LzMax + 1))
 	    {
-	      cout << "Onebodypotentials has a wrong number of components or has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	      cout << "Onebodypotentials has a wrong number of components or has a wrong value in " << Manager.GetString("interaction-file") << endl;
 	      return -1;
 	    }
 	  if (OneBodyPotentialUpUp==NULL)
@@ -359,10 +359,10 @@ int main(int argc, char** argv)
       Hamiltonian = new ParticleOnSphereWithSpinGenericHamiltonian(Space, NbrFermions, LzMax, PseudoPotentials, OneBodyPotentialUpUp, OneBodyPotentialDownDown, NULL, 
 								   Architecture.GetArchitecture(), Memory, onDiskCacheFlag, LoadPrecalculationFileName);
 
-      if (((SingleDoubleOption*) Manager["s2-factor"])->GetDouble() != 0.0)
-	Hamiltonian->AddS2(L, SzTotal, ((SingleDoubleOption*) Manager["s2-factor"])->GetDouble(), ((unsigned long)Manager.GetInteger("s2-memory")) << 20);
-      if (((SingleDoubleOption*) Manager["l2-factor"])->GetDouble() != 0.0)
-	Hamiltonian->AddL2(L, SzTotal, ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), ((unsigned long)Manager.GetInteger("l2-memory")) << 20);
+      if (Manager.GetDouble("s2-factor") != 0.0)
+	Hamiltonian->AddS2(L, SzTotal, Manager.GetDouble("s2-factor"), ((unsigned long)Manager.GetInteger("s2-memory")) << 20);
+      if (Manager.GetDouble("l2-factor") != 0.0)
+	Hamiltonian->AddL2(L, SzTotal, Manager.GetDouble("l2-factor"), ((unsigned long)Manager.GetInteger("l2-memory")) << 20);
 
       if (Manager.GetString("energy-expectation") != 0 )
 	{
@@ -438,11 +438,11 @@ int main(int argc, char** argv)
 	  Hamiltonian->SavePrecalculation(SavePrecalculationFileName);
 	}
       char* EigenvectorName = 0;
-      if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
+      if (Manager.GetBoolean("eigenstate") == true)	
 	{
 	  EigenvectorName = new char [512];
 	  sprintf (EigenvectorName, "fermions_sphere_su2_%s%s_n_%d_2s_%d_sz_%d_lz_%d",
-		   ((SingleStringOption*) Manager["interaction-name"])->GetString(), ExtraTerms,
+		   Manager.GetString("interaction-name"), ExtraTerms,
 		   NbrFermions, LzMax, SzTotal, L);
 	}
       QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax, Projectors, NbrProjectors);

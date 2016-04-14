@@ -368,6 +368,10 @@ class ParticleOnLattice :  public AbstractQHEParticle
   
   virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, ComplexVector& groundState, AbstractArchitecture* architecture);
 
+
+  virtual int GetNbrSublattices();
+
+
  protected:
   
   // core part of the evaluation density matrix particle partition calculation
@@ -384,6 +388,11 @@ class ParticleOnLattice :  public AbstractQHEParticle
   
   
 };
+
+int ParticleOnLattice::GetNbrSublattices()
+{
+  return 1;
+}
 
 #endif
 

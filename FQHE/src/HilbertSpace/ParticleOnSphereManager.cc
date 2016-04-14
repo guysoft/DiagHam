@@ -44,6 +44,7 @@
 #include "HilbertSpace/FermionOnSphereSymmetricBasisLong.h"
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasisLong.h"
 #include "HilbertSpace/FermionOnSphereHaldaneHugeBasis.h"
+#include "HilbertSpace/FermionOnSphereWithSpinAndPairing.h"
 
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "HilbertSpace/FermionOnSphereWithSpinLong.h"

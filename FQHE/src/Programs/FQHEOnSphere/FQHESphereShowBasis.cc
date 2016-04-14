@@ -9,6 +9,7 @@
 #include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetry.h"
 #include "HilbertSpace/FermionOnSphereWithSpinSzSymmetry.h"
 #include "HilbertSpace/FermionOnSphereWithSpinLzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSpinAndPairing.h"
 #include "HilbertSpace/FermionOnSphereWithSU4Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSU3Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
@@ -84,6 +85,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "all-sz", "consider particles with SU(2) spin all Sz components");
   (*SystemGroup) += new BooleanOption  ('\n', "add-index", "add index of the Hilbert space vectors");
   (*SystemGroup) += new BooleanOption  ('\n', "add-szvalue", "add Sz value to each Hilbert space vector (valid only for all-sz)");
+  (*SystemGroup) += new BooleanOption  ('\n', "use-pairing", "only fix Sz and not the number of particles");
   (*SystemGroup) += new BooleanOption  ('\n', "su3-spin", "consider particles with SU(3) spin");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "total-tz", "twice the quantum number of the system associated to the Tz generator (only useful in su(3) mode)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "total-y", "three time the quantum number of the system associated to the Y generator (only useful in su(3) mode)", 0);
@@ -334,23 +336,31 @@ int main(int argc, char** argv)
 	  {
 	    if (HaldaneBasisFlag == false)
 	      {                 
-                if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
-		    Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
-                else //either Lz or Sz symmetrized basis
-                 {
-	           if ((SzSymmetrizedBasis == true)  && (TotalSz == 0) && (LzSymmetrizedBasis == true) && (TotalLz == 0))
-		     {
-		        Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrParticles, NbrFluxQuanta, Manager.GetBoolean("minus-szparity"),
-								    Manager.GetBoolean("minus-lzparity"));
-		     }
-		   else 
-                     if ((SzSymmetrizedBasis == true)  && (TotalSz == 0))
-                       {
-		           Space = new FermionOnSphereWithSpinSzSymmetry(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetBoolean("minus-szparity"));
-                       }
-		     else
-			   Space = new FermionOnSphereWithSpinLzSymmetry(NbrParticles, NbrFluxQuanta, TotalSz, Manager.GetBoolean("minus-lzparity"));
-                 }
+		if (Manager.GetBoolean("use-pairing") == false)
+		  {
+		    if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
+		      Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+		    else //either Lz or Sz symmetrized basis
+		      {
+			if ((SzSymmetrizedBasis == true)  && (TotalSz == 0) && (LzSymmetrizedBasis == true) && (TotalLz == 0))
+			  {
+			    Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrParticles, NbrFluxQuanta, Manager.GetBoolean("minus-szparity"),
+									    Manager.GetBoolean("minus-lzparity"));
+			  }
+			else 
+			  if ((SzSymmetrizedBasis == true)  && (TotalSz == 0))
+			    {
+			      Space = new FermionOnSphereWithSpinSzSymmetry(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetBoolean("minus-szparity"));
+			    }
+			  else
+			    Space = new FermionOnSphereWithSpinLzSymmetry(NbrParticles, NbrFluxQuanta, TotalSz, Manager.GetBoolean("minus-lzparity"));
+		      }
+		  }
+		else
+		  {
+		    if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
+		      Space = new FermionOnSphereWithSpinAndPairing(TotalLz, NbrFluxQuanta, TotalSz);
+		  }
 	      }
 	    else
 	      {
@@ -496,7 +506,7 @@ int main(int argc, char** argv)
 			if (CP2Flag == true)
 			  sprintf(OutputFileName, "fermions_spherecp2_n_%d_2s_%d_tz_%d_y_%d.basis", NbrParticles, NbrFluxQuanta, TzValue, YValue);
 			else
-			sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d_lz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz);
+			  sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d_lz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz);
 	}
       else
 	{

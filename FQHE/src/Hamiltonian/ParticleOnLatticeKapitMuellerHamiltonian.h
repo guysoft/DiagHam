@@ -51,6 +51,9 @@ class MathematicaOutput;
 class ParticleOnLatticeKapitMuellerHamiltonian : public AbstractQHEOnLatticeHamiltonian
 {
  protected:
+
+  int NbrSublattices;
+
   // strength of on-site delta-interaction
   double ContactInteractionU;
 

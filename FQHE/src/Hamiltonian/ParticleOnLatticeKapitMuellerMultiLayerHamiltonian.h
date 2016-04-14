@@ -53,6 +53,10 @@ class KMBranchCut;
 class ParticleOnLatticeKapitMuellerMultiLayerHamiltonian : public AbstractQHEOnLatticeHamiltonian
 {
  protected:
+
+
+  int NbrSublattices;
+
   // strength of on-site delta-interaction
   double ContactInteractionU;
 
