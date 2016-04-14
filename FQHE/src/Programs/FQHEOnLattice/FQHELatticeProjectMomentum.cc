@@ -65,6 +65,24 @@ void SymmetrizeVectors(ParticleOnLatticeTranslationOperator *Operator, int NbrVe
 }
 
 
+void TranslateVectors(ParticleOnLatticeTranslationOperator *Operator, int NbrVectors,
+		       ComplexVector *Vectors, ArchitectureManager &Architecture)
+{
+  Complex Tmp;
+  for (int i=0; i<NbrVectors; ++i)
+    {
+      ComplexVector TmpState(Vectors[i].GetVectorDimension(), true);
+      VectorOperatorMultiplyOperation Operation (Operator, &Vectors[i], &TmpState);      
+      Operation.ApplyOperation(Architecture.GetArchitecture());
+      if (fabs(TmpState.SqrNorm()-1.0)>1e-8)
+	{
+	  cout<<"Attention, norm for vector "<<i<<" not conserved."<<endl;	  
+	}
+      Vectors[i].Copy(TmpState);
+    }
+}
+
+
 int main(int argc, char** argv)
 {
   cout.precision(14);
@@ -94,6 +112,8 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleIntegerOption  ('k', "target-kx", "target momentum in x-direction", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "target-ky", "target momentum in y-direction", 0);
+
+  (*SystemGroup) += new BooleanOption  ('t', "translate", "translate input vector by lattice vectors given by -k -l instead of producing momentum eigenstates");
   
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   (*OutputGroup) += new SingleStringOption ('o', "output", "write resulting vector to this file",NULL);
@@ -166,110 +186,172 @@ int main(int argc, char** argv)
 
   ParticleOnLatticeTranslationOperator *TranslationOperator= new ParticleOnLatticeTranslationOperator(Space);
 
-  cout<< "====== Constructing momentum eigenvector ====="<<endl;
-
-  int Degeneracy=1;
-  int n1=1, n2=1;
-  int FluxModulo = FindGCD(NbrFluxQuanta, Lx*Ly);
-  int r=NbrFluxQuanta/FluxModulo;
-  int t=Lx*Ly/FluxModulo;
-
-  while ((((Ly*n1)%t)!=0) && (n1<Lx)) ++n1;
-  while ((((Lx*n2)%t)!=0) && (n2<Ly)) ++n2;
-
-  if ((Lx%n1)!=0)
-    cout << "Extending range of n1 to Lx"<<endl;
-  if ((Ly%n2)!=0)
-    cout << "Extending range of n2 to Ly"<<endl;
-
-  if (((n1*n2*NbrFluxQuanta)%t) != 0)
+  if (Manager.GetBoolean("translate")==false)
     {
-      cout << "Cannot resolve translations: Brillouin zone trivial?"<<endl;
-      n1=Lx;
-      n2=Ly;
-    }
 
-  while ((r*NbrBosons*n1*n2*Degeneracy)%t != 0) ++Degeneracy;
-  
-  cout << "N_phi = "<<r<<"/"<<t<<endl;
-  cout << "n1="<<n1<<", n2="<<n2<<", global degeneracy: "<<Degeneracy<<endl;
+      cout<< "====== Constructing momentum eigenvector ====="<<endl;
 
-  int RemainingDegeneracy=Degeneracy;
+      int Degeneracy=1;
+      int n1=1, n2=1;
+      int FluxModulo = FindGCD(NbrFluxQuanta, Lx*Ly);
+      int r=NbrFluxQuanta/FluxModulo;
+      int t=Lx*Ly/FluxModulo;
 
-  if ((Ly/n2)<Degeneracy)
-    {
-      int GCD = FindGCD(Lx/n1, Degeneracy);
-      RemainingDegeneracy/=GCD;
-      if (GCD!=1) cout << "Multiplying factor "<<GCD<<" of degeneracy onto n1"<<endl;
-      n1*=GCD;      
-    }
+      while ((((Ly*n1)%t)!=0) && (n1<Lx)) ++n1;
+      while ((((Lx*n2)%t)!=0) && (n2<Ly)) ++n2;
 
-  if ((Ly/n2)%RemainingDegeneracy!=0)
-    {
-      cout<<"Did not treat degeneracy properly -> need to put onto n1?"<<endl;
-      exit(1);      
-    }
-  else
-    {
-      if (RemainingDegeneracy!=1)
-	cout << "Multiplying factor "<<RemainingDegeneracy<<" of degeneracy onto n2"<<endl;
-      n2*=RemainingDegeneracy;
-      RemainingDegeneracy=1;
-    }
-  
-  int kx=Manager.GetInteger("target-kx");
-  int ky=Manager.GetInteger("target-ky");
-  
-  TranslationOperator->SetTranslationComponents(n1,0);
-  SymmetrizeVectors(TranslationOperator, NbrVectors, Vectors, kx, Lx/n1, Architecture);
-  
-  TranslationOperator->SetTranslationComponents(0,n2);
-  SymmetrizeVectors(TranslationOperator, NbrVectors, Vectors, ky, Ly/n2, Architecture);
-  
+      if ((Lx%n1)!=0)
+	cout << "Extending range of n1 to Lx"<<endl;
+      if ((Ly%n2)!=0)
+	cout << "Extending range of n2 to Ly"<<endl;
 
-  if (NbrVectors>1)
-    {
-      char *NewExtension=new char[20];
-      sprintf(NewExtension,"kx_%d_ky_%d.vec",kx,ky);
-      char *OldExtension=GetExtensionFromFileName(VectorFiles[0]);
-      for (int i=0; i<NbrVectors; ++i)
+      if (((n1*n2*NbrFluxQuanta)%t) != 0)
 	{
-	  char *OutputName=0;
-	  if ((OldExtension==0) || (strcmp(OldExtension,".vec")!=0))
-	    OutputName = AddExtensionToFileName(VectorFiles[i], NewExtension);
-	  else
-	    {
-	      OutputName = ReplaceExtensionToFileName(VectorFiles[i], "vec", NewExtension);
-	      if (OutputName==NULL)
-		OutputName = AddExtensionToFileName(VectorFiles[i], NewExtension);
-	    }
-	  Vectors[i].WriteVector(OutputName);
-	  delete [] OutputName;
+	  cout << "Cannot resolve translations: Brillouin zone trivial?"<<endl;
+	  n1=Lx;
+	  n2=Ly;
 	}
-      delete [] NewExtension;
-      delete [] OldExtension;
-    }
-  else
-    {
-      char *OutputName=Manager.GetString("output");
-      if (OutputName==NULL)
+
+      while ((r*NbrBosons*n1*n2*Degeneracy)%t != 0) ++Degeneracy;
+  
+      cout << "N_phi = "<<r<<"/"<<t<<endl;
+      cout << "n1="<<n1<<", n2="<<n2<<", global degeneracy: "<<Degeneracy<<endl;
+
+      int RemainingDegeneracy=Degeneracy;
+
+      if ((Ly/n2)<Degeneracy)
+	{
+	  int GCD = FindGCD(Lx/n1, Degeneracy);
+	  RemainingDegeneracy/=GCD;
+	  if (GCD!=1) cout << "Multiplying factor "<<GCD<<" of degeneracy onto n1"<<endl;
+	  n1*=GCD;      
+	}
+
+      if ((Ly/n2)%RemainingDegeneracy!=0)
+	{
+	  cout<<"Did not treat degeneracy properly -> need to put onto n1?"<<endl;
+	  exit(1);      
+	}
+      else
+	{
+	  if (RemainingDegeneracy!=1)
+	    cout << "Multiplying factor "<<RemainingDegeneracy<<" of degeneracy onto n2"<<endl;
+	  n2*=RemainingDegeneracy;
+	  RemainingDegeneracy=1;
+	}
+  
+      int kx=Manager.GetInteger("target-kx");
+      int ky=Manager.GetInteger("target-ky");
+  
+      TranslationOperator->SetTranslationComponents(n1,0);
+      SymmetrizeVectors(TranslationOperator, NbrVectors, Vectors, kx, Lx/n1, Architecture);
+  
+      TranslationOperator->SetTranslationComponents(0,n2);
+      SymmetrizeVectors(TranslationOperator, NbrVectors, Vectors, ky, Ly/n2, Architecture);
+  
+
+      if (NbrVectors>1)
 	{
 	  char *NewExtension=new char[20];
 	  sprintf(NewExtension,"kx_%d_ky_%d.vec",kx,ky);
 	  char *OldExtension=GetExtensionFromFileName(VectorFiles[0]);
-	  if ((OldExtension==0) || (strcmp(OldExtension,".vec")!=0))
-	    OutputName = AddExtensionToFileName(VectorFiles[0], NewExtension);
-	  else
+	  for (int i=0; i<NbrVectors; ++i)
 	    {
-	      OutputName = ReplaceExtensionToFileName(VectorFiles[0], "vec", NewExtension);
-	      if (OutputName==NULL)
-		OutputName = AddExtensionToFileName(VectorFiles[0], NewExtension);
+	      char *OutputName=0;
+	      if ((OldExtension==0) || (strcmp(OldExtension,".vec")!=0))
+		OutputName = AddExtensionToFileName(VectorFiles[i], NewExtension);
+	      else
+		{
+		  OutputName = ReplaceExtensionToFileName(VectorFiles[i], "vec", NewExtension);
+		  if (OutputName==NULL)
+		    OutputName = AddExtensionToFileName(VectorFiles[i], NewExtension);
+		}
+	      Vectors[i].WriteVector(OutputName);
+	      delete [] OutputName;
 	    }
 	  delete [] NewExtension;
 	  delete [] OldExtension;
 	}
-      Vectors[0].WriteVector(OutputName);
-      delete [] OutputName;
+      else
+	{
+	  char *OutputName=Manager.GetString("output");
+	  if (OutputName==NULL)
+	    {
+	      char *NewExtension=new char[20];
+	      sprintf(NewExtension,"kx_%d_ky_%d.vec",kx,ky);
+	      char *OldExtension=GetExtensionFromFileName(VectorFiles[0]);
+	      if ((OldExtension==0) || (strcmp(OldExtension,".vec")!=0))
+		OutputName = AddExtensionToFileName(VectorFiles[0], NewExtension);
+	      else
+		{
+		  OutputName = ReplaceExtensionToFileName(VectorFiles[0], "vec", NewExtension);
+		  if (OutputName==NULL)
+		    OutputName = AddExtensionToFileName(VectorFiles[0], NewExtension);
+		}
+	      delete [] NewExtension;
+	      delete [] OldExtension;
+	    }
+	  Vectors[0].WriteVector(OutputName);
+	  delete [] OutputName;
+	}
+    }
+  else
+    {
+      cout<< "====== Translating vectors ====="<<endl;
+
+      int n1=Manager.GetInteger("target-kx");
+      int n2=Manager.GetInteger("target-ky");
+
+      cout << "Translation by dr=("<<n1<<", "<<n2<<")"<<endl;
+  
+      TranslationOperator->SetTranslationComponents(n1,n2);
+      TranslateVectors(TranslationOperator, NbrVectors, Vectors, Architecture);
+  
+      if (NbrVectors>1)
+	{
+	  char *NewExtension=new char[20];
+	  sprintf(NewExtension,"n1_%d_n2_%d.vec",n1,n2);
+	  char *OldExtension=GetExtensionFromFileName(VectorFiles[0]);
+	  for (int i=0; i<NbrVectors; ++i)
+	    {
+	      char *OutputName=0;
+	      if ((OldExtension==0) || (strcmp(OldExtension,".vec")!=0))
+		OutputName = AddExtensionToFileName(VectorFiles[i], NewExtension);
+	      else
+		{
+		  OutputName = ReplaceExtensionToFileName(VectorFiles[i], "vec", NewExtension);
+		  if (OutputName==NULL)
+		    OutputName = AddExtensionToFileName(VectorFiles[i], NewExtension);
+		}
+	      Vectors[i].WriteVector(OutputName);
+	      delete [] OutputName;
+	    }
+	  delete [] NewExtension;
+	  delete [] OldExtension;
+	}
+      else
+	{
+	  char *OutputName=Manager.GetString("output");
+	  if (OutputName==NULL)
+	    {
+	      char *NewExtension=new char[20];
+	      sprintf(NewExtension,"n1_%d_n2_%d.vec",n1,n2);
+	      char *OldExtension=GetExtensionFromFileName(VectorFiles[0]);
+	      if ((OldExtension==0) || (strcmp(OldExtension,".vec")!=0))
+		OutputName = AddExtensionToFileName(VectorFiles[0], NewExtension);
+	      else
+		{
+		  OutputName = ReplaceExtensionToFileName(VectorFiles[0], "vec", NewExtension);
+		  if (OutputName==NULL)
+		    OutputName = AddExtensionToFileName(VectorFiles[0], NewExtension);
+		}
+	      delete [] NewExtension;
+	      delete [] OldExtension;
+	    }
+	  Vectors[0].WriteVector(OutputName);
+	  delete [] OutputName;
+	}
+
     }
   
   delete Space;  

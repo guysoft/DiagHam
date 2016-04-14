@@ -1,6 +1,8 @@
 #include "HilbertSpace/BosonOnLattice.h"
 #include "HilbertSpace/HardCoreBosonOnLattice.h"
 #include "Hamiltonian/ParticleOnLatticeDeltaHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeKapitMuellerHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeKapitMuellerMultiLayerHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -113,6 +115,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('R', "randomPotential", "Introduce a random potential at all sites", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "positive-hopping", "choose positive sign of hopping terms", false);
   (*SystemGroup) += new BooleanOption  ('\n', "all-flux", "calculate all values of the flux to test symmetry under n_phi->1-n_phi", false);
+  (*SystemGroup) += new SingleDoubleOption  ('K', "Kapit-Mueller", "Use the Kapit-Mueller hoppings with the argument being the maximum range", -1.0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-layers", "number of layers for the Kapit-Mueller case", 1);
+  (*SystemGroup) += new MultipleDoubleOption  ('\n', "branch-cuts", "branch cuts with 4 arguments (xi1,yi1,xj1,yj1) for each branch cut", ',', '_');
+  (*SystemGroup) += new MultipleIntegerOption  ('\n', "branch-shift", "shifts for the individual branch-cuts s1,s2,... ", ',', '_');
+  
   
   (*PrecalculationGroup) += new BooleanOption ('\n', "no-hermitian", "do not use hermitian symmetry of the hamiltonian");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
@@ -165,6 +172,23 @@ int main(int argc, char** argv)
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
   bool FirstRun = true;
 
+  int length;
+  double *branchCuts = Manager.GetDoubles("branch-cuts",length);
+  if (branchCuts!=NULL && length % 4 !=0)
+    {
+      std::cerr<<"error: need to have a multiple of four coordinates for --branch-cuts"<<endl;
+      exit(1);
+    }
+  int NbrCuts = length / 4;
+  int *branchShift = Manager.GetIntegers("branch-shift",length);
+  if (branchShift!=NULL && length != NbrCuts)
+    {
+      std::cerr<<"error: number of arguments for --branch-shift needs to match number of branch cuts"<<endl;
+      exit(1);
+    }
+
+  int NbrLayers = Manager.GetInteger("nbr-layers");
+
   if (Manager.GetString("energy-expectation") != 0 ) Memory = 0x0l;
 
   int NbrFluxValues = 1;
@@ -178,14 +202,45 @@ int main(int argc, char** argv)
     }
 
   char* OutputName;
-  char reverseHoppingString[4]="";
+  char auxArguments[128]="";
   char deltaString[20]="";
   char interactionStr[100]="";
+  int offset=0;
   if ( (OutputName = Manager.GetString("output-file")) == NULL)
     {
       OutputName = new char [256];      
+      if (Manager.GetDouble("Kapit-Mueller")>0.0)
+	{
+	  offset+=sprintf(auxArguments,"KM_%g_", Manager.GetDouble("Kapit-Mueller"));
+	  
+	  if (NbrLayers>1)
+	    offset+=sprintf(auxArguments+offset,"l_%d_", NbrLayers);
+
+	  if (NbrCuts>0)
+	    {
+	      MultipleDoubleOption* option = (MultipleDoubleOption*)Manager["branch-cuts"];
+	      char * coords = option->GetAsAString();
+	      offset+=sprintf(auxArguments+offset,"cuts_%s_", coords);
+	      delete [] coords;
+	      if (branchShift!=0)
+		{
+		  bool nonTrivial=false;
+		  for (int i=0; i<NbrCuts; ++i)
+		    if (branchShift[i]!=1) nonTrivial=true;
+		  
+		  if (nonTrivial)
+		    {
+		      MultipleIntegerOption* option = (MultipleIntegerOption*)Manager["branch-cuts"];
+		      
+		      char * shift = option->GetAsAString();
+		      offset+=sprintf(auxArguments+offset,"sh_%s_", shift);
+		      delete [] shift;
+		    }
+		}
+	    }
+	}
       if (ReverseHopping)
-	sprintf(reverseHoppingString,"rh_");
+	offset+=sprintf(auxArguments+offset,"rh_");
       if (Delta!=0.0)
 	sprintf(deltaString,"d_%g_",Delta);
       if (Random!=0.0)
@@ -213,21 +268,34 @@ int main(int argc, char** argv)
 	      sprintf(interactionStr,"%s_s_%g_%g",interactionStr,SolenoidX,SolenoidY);
 	    }
       if (NbrFluxValues == 1)
-	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq_%d.dat", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, deltaString, NbrFluxQuanta);
+	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq_%d.dat", NbrBosons, Lx, Ly, interactionStr, auxArguments, deltaString, NbrFluxQuanta);
       else
-	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq.dat", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, deltaString);
+	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq.dat", NbrBosons, Lx, Ly, interactionStr, auxArguments, deltaString);
     }
   ParticleOnLattice* Space;
   if (HardCore)
-    Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY);
-  else Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY, LandauQuantization);
+    Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY, NbrLayers);
+  else Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY, LandauQuantization, NbrLayers);
   
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   
   AbstractQHEOnLatticeHamiltonian* Hamiltonian;
-  Hamiltonian = new ParticleOnLatticeDeltaHamiltonian(Space, NbrBosons, Lx, Ly, NbrFluxQuanta, ContactU, ReverseHopping, Delta,
-						      Random, Architecture.GetArchitecture(),NbrBody, Memory, LoadPrecalculationFileName,
-						      !Manager.GetBoolean("no-hermitian"));
+  if (Manager.GetDouble("Kapit-Mueller")<=0.0)
+    Hamiltonian = new ParticleOnLatticeDeltaHamiltonian(Space, NbrBosons, Lx, Ly, NbrFluxQuanta, ContactU, ReverseHopping, Delta,
+							Random, Architecture.GetArchitecture(), NbrBody, Memory, LoadPrecalculationFileName,
+							!Manager.GetBoolean("no-hermitian"));
+  
+  else
+    {
+      if (NbrLayers>1)
+	Hamiltonian = new ParticleOnLatticeKapitMuellerMultiLayerHamiltonian(Space, NbrBosons, Lx, Ly, NbrFluxQuanta, ContactU, ReverseHopping, Delta,
+									     Random, Manager.GetDouble("Kapit-Mueller"), NbrCuts, branchCuts, branchShift, Architecture.GetArchitecture(), NbrBody, Memory, LoadPrecalculationFileName,
+								 !Manager.GetBoolean("no-hermitian"));
+      else
+	Hamiltonian = new ParticleOnLatticeKapitMuellerHamiltonian(Space, NbrBosons, Lx, Ly, NbrFluxQuanta, ContactU, ReverseHopping, Delta,
+								   Random, Manager.GetDouble("Kapit-Mueller"), Architecture.GetArchitecture(), NbrBody, Memory, LoadPrecalculationFileName,
+								   !Manager.GetBoolean("no-hermitian"));
+    }
 
 
 	/*int NbrDiagonalInteractionFactors = NbrSites;
@@ -332,7 +400,7 @@ int main(int argc, char** argv)
       if ((Manager.GetBoolean("eigenstate")||(Manager.GetBoolean("optimize-condensate"))))
 	{
 	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq_%d", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, deltaString, NbrFluxQuanta);
+	  sprintf (EigenvectorName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq_%d", NbrBosons, Lx, Ly, interactionStr, auxArguments, deltaString, NbrFluxQuanta);
 	}
       if (Manager.GetBoolean("optimize-condensate"))
 	{
