@@ -115,7 +115,7 @@ class HardCoreBosonOnLattice :  public ParticleOnLattice
   // memory = memory that can be allocated for precalculations
   // solenoidX = solenoid flux through lattice in x-direction (in units of pi)
   // solenoidY = solenoid flux through lattice in y-direction (in units of pi)
-  HardCoreBosonOnLattice (int nbrBosons, int lx, int ly, int nbrFluxQuanta, unsigned long memory = 10000000, double solenoidX=0.0, double solenoidY=0.0);  
+  HardCoreBosonOnLattice (int nbrBosons, int lx, int ly, int nbrFluxQuanta, unsigned long memory = 10000000, double solenoidX=0.0, double solenoidY=0.0, int nbrSublattices=1);  
 
   // copy constructor (without duplicating datas)
   //
@@ -151,6 +151,11 @@ class HardCoreBosonOnLattice :  public ParticleOnLattice
   //
   // return value = number of sites
   virtual int GetNbrSites();
+
+  // get the number of sublattices
+  //
+  // return value = number of sublattices
+  virtual int GetNbrSublattices(){return this->NbrSublattices;}
 
   // get information about any additional symmetry of the Hilbert space
   //

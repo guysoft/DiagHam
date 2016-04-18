@@ -81,8 +81,8 @@ ParticleOnLatticeWithKyNBodyDeltaHamiltonian::ParticleOnLatticeWithKyNBodyDeltaH
   this->Ly = ly;
   this->KyMax = kyMax;  
   this->NbrCells = lx*ly;
-  this->SubLattices = 1;
-  this->NbrSites = NbrCells*this->SubLattices;
+  this->NbrSublattices = 1;
+  this->NbrSites = NbrCells*this->NbrSublattices;
   this->HamiltonianShift = 0.0;//4.0 * uPotential;
   this->NBodyValue = nbrBody;
   this->SqrNBodyValue = this->NBodyValue * this->NBodyValue;

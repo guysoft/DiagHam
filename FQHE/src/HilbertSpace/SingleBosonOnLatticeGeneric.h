@@ -143,6 +143,11 @@ class SingleBosonOnLatticeGeneric :  public ParticleOnLattice
   // return value = number of sites
   virtual int GetNbrSites();
 
+  // get the number of sublattices
+  //
+  // return value = number of sublattices
+  virtual int GetNbrSublattices(){return this->NbrSublattices;}
+
   // get information about any additional symmetry of the Hilbert space
   //
   // return value = symmetry id

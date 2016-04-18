@@ -61,13 +61,13 @@ HardCoreBosonOnLattice::HardCoreBosonOnLattice()
 // memory = memory that can be allocated for precalculations
 // solenoidX = solenoid flux through lattice in x-direction (in units of pi)
 // solenoidY = solenoid flux through lattice in y-direction (in units of pi)
-HardCoreBosonOnLattice::HardCoreBosonOnLattice (int nbrBosons, int lx, int ly, int nbrFluxQuanta, unsigned long memory, double solenoidX, double solenoidY)
+HardCoreBosonOnLattice::HardCoreBosonOnLattice (int nbrBosons, int lx, int ly, int nbrFluxQuanta, unsigned long memory, double solenoidX, double solenoidY, int nbrSublattices)
 {
   this->NbrBosons = nbrBosons;
   this->Lx = lx;
   this->Ly = ly;
-  this->NbrSublattices = 1;  
-  this->NbrStates = Lx*Ly;
+  this->NbrSublattices = nbrSublattices;
+  this->NbrStates = Lx*Ly*nbrSublattices;
 
 #ifdef __64_BITS__  
   if (this->NbrStates>64)    
@@ -82,7 +82,7 @@ HardCoreBosonOnLattice::HardCoreBosonOnLattice (int nbrBosons, int lx, int ly, i
   this->SetNbrFluxQuanta(nbrFluxQuanta, solenoidX, solenoidY);
   this->Flag.Initialize();
 
-  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(nbrBosons,NbrStates);
+  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(nbrBosons, NbrStates);
   
   this->StateDescription=new unsigned long[this->HilbertSpaceDimension];
   this->StateHighestBit=new int[this->HilbertSpaceDimension];
@@ -305,7 +305,7 @@ AbstractHilbertSpace* HardCoreBosonOnLattice::ExtractSubspace (AbstractQuantumNu
 // return value = number of sites
 int HardCoreBosonOnLattice::GetNbrSites()
 {
-  return this->NbrStates;
+  return this->Lx * this->Ly;
 }
 
 // it is possible to change the flux through the simulation cell
@@ -314,7 +314,7 @@ int HardCoreBosonOnLattice::GetNbrSites()
 void HardCoreBosonOnLattice::SetNbrFluxQuanta(int nbrFluxQuanta)
 {
   this->NbrFluxQuanta = nbrFluxQuanta;
-  this->FluxDensity = ((double)NbrFluxQuanta)/this->NbrStates;
+  this->FluxDensity = ((double)NbrFluxQuanta)/this->GetNbrSites();
   //cout << "FluxDensity="<<this->FluxDensity<<endl;
   this->LxTranslationPhase = Polar(1.0, -2.0*M_PI*FluxDensity*this->Lx);
   //cout << "LxTranslationPhase= exp(I*"<<2.0*M_PI*FluxDensity*this->Lx<<")="<<LxTranslationPhase<<endl;

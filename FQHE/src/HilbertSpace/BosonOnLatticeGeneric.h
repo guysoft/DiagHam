@@ -163,6 +163,11 @@ class BosonOnLatticeGeneric : public ParticleOnLattice
   // return value = number of sites
   virtual int GetNbrSites();
 
+  // get the number of sublattices
+  //
+  // return value = number of sublattices
+  virtual int GetNbrSublattices(){return this->NbrSublattices;}
+
   // check whether HilbertSpace implements ordering of operators
   //
   virtual bool HaveOrder ();

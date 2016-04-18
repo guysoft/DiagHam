@@ -74,13 +74,14 @@ BosonOnLattice::BosonOnLattice ()
 // solenoidX = solenoid flux through lattice in x-direction (in units of pi)
 // solenoidY = solenoid flux through lattice in y-direction (in units of pi)
 // landauGaugeAxis = direction of Landau-gauge
-BosonOnLattice::BosonOnLattice (int nbrBosons, int lx, int ly, int nbrFluxQuanta, unsigned long memory, double solenoidX, double solenoidY, char landauGaugeAxis)
+// nbrSublattices = number of sublattices to create
+BosonOnLattice::BosonOnLattice (int nbrBosons, int lx, int ly, int nbrFluxQuanta, unsigned long memory, double solenoidX, double solenoidY, char landauGaugeAxis, int nbrSublattices)
 {
   this->NbrBosons = nbrBosons;
   this->Lx = lx;
   this->Ly = ly;
-  this->NbrSublattices = 1;  
-  this->NbrStates = Lx*Ly;
+  this->NbrSublattices = nbrSublattices;  
+  this->NbrStates = Lx*Ly*nbrSublattices;
   this->LandauGaugeAxis=landauGaugeAxis;
   
   this->SetNbrFluxQuanta(nbrFluxQuanta, solenoidX, solenoidY);
@@ -256,7 +257,7 @@ AbstractHilbertSpace* BosonOnLattice::ExtractSubspace (AbstractQuantumNumber& q,
 // return value = number of sites
 int BosonOnLattice::GetNbrSites()
 {
-  return this->NbrStates;
+  return this->Lx * this->Ly;
 }
 
 
@@ -266,7 +267,7 @@ int BosonOnLattice::GetNbrSites()
 void BosonOnLattice::SetNbrFluxQuanta(int nbrFluxQuanta)
 {
   this->NbrFluxQuanta = nbrFluxQuanta;
-  this->FluxDensity = ((double)NbrFluxQuanta)/this->NbrStates;
+  this->FluxDensity = ((double)NbrFluxQuanta)/this->GetNbrSites();
   switch (this->LandauGaugeAxis)
     {
     case 'x':

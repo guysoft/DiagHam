@@ -80,11 +80,11 @@ ParticleOnLatticeWithKyDeltaHamiltonian::ParticleOnLatticeWithKyDeltaHamiltonian
   this->NbrParticles=nbrParticles;
   this->Lx=lx;
   this->Ly=ly;
-  this->SubLattices=1;
+  this->NbrSublattices=1;
   this->HaveKySymmetry=true;
   this->KyMax=kyMax;  
   this->NbrCells=lx*ly;
-  this->NbrSites=NbrCells*SubLattices;
+  this->NbrSites=NbrCells*NbrSublattices;
   this->NbrFluxQuanta=nbrFluxQuanta;
   this->HamiltonianShift=0.0;
   this->FluxDensity=((double)nbrFluxQuanta)/NbrCells;

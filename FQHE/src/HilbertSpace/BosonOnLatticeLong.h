@@ -151,6 +151,11 @@ class BosonOnLatticeLong : public ParticleOnLattice
   // return value = number of sites
   virtual int GetNbrSites();
 
+  // get the number of sublattices
+  //
+  // return value = number of sublattices
+  virtual int GetNbrSublattices(){return this->NbrSublattices;}
+
   //  virtual void print_array2(int length, long unsigned int*array);
 
   

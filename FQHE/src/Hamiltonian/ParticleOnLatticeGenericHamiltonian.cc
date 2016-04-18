@@ -66,7 +66,7 @@ ParticleOnLatticeGenericHamiltonian::ParticleOnLatticeGenericHamiltonian(Particl
   this->NbrParticles=nbrParticles;
   this->LatticeGeometry = latticeGeometry;
   this->LatticeDimension = LatticeGeometry->GetLatticeDimension();
-  this->SubLattices = LatticeGeometry->GetNbrSubLattices();
+  this->NbrSublattices = LatticeGeometry->GetNbrSubLattices();
   this->NbrCells=LatticeGeometry->GetNbrCells();
   this->Length = new int[LatticeDimension];
   for (int i=0; i<LatticeDimension; ++i)

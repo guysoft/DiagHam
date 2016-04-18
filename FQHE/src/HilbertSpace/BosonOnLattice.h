@@ -113,7 +113,8 @@ class BosonOnLattice : public ParticleOnLattice
   // solenoidX = solenoid flux through lattice in x-direction (in units of pi)
   // solenoidY = solenoid flux through lattice in y-direction (in units of pi)
   // landauGaugeAxis = direction of Landau-gauge
-  BosonOnLattice (int nbrBosons, int lx, int ly, int nbrFluxQuanta, unsigned long memory = 10000000, double solenoidX=0.0, double solenoidY=0.0, char landauGaugeAxis='y');
+  // nbrSublattices = number of sublattices to create
+  BosonOnLattice (int nbrBosons, int lx, int ly, int nbrFluxQuanta, unsigned long memory = 10000000, double solenoidX=0.0, double solenoidY=0.0, char landauGaugeAxis='y', int nbrSublattices=1);
 
 
   // copy constructor (without duplicating datas)
@@ -151,6 +152,10 @@ class BosonOnLattice : public ParticleOnLattice
   // return value = number of sites
   virtual int GetNbrSites();
 
+  // get the number of sublattices
+  //
+  // return value = number of sublattices
+  virtual int GetNbrSublattices(){return this->NbrSublattices;}
   
   // return a list of all possible quantum numbers 
   //
