@@ -403,6 +403,7 @@ int main(int argc, char** argv)
 	     TmpLargestEigenvalue /= (1.0 - TotalVacuumOneBodyEntanglementTrimmedEnergies[j]);
 	   }	 
 	 cout << i << " " << TmpLargestEigenvalue << " " << (TmpLargestEigenvalueMomentum % NbrSitesY) << endl;
+// 	 remove % NbrSitesY?
 	 if (TmpLargestEigenvalue < 1e-50)
 	   {
 	     TmpZeroFlag = true;
