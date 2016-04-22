@@ -31,8 +31,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SINGLEBOSONONLATTICEGENERIC_H
-#define SINGLEBOSONONLATTICEGENERIC_H
+#ifndef SINGLEPARTICLEONLATTICEGENERIC_H
+#define SINGLEPARTICLEONLATTICEGENERIC_H
 
 #include "config.h"
 #include "MathTools/Complex.h"
@@ -41,7 +41,7 @@
 #include "GeneralTools/GarbageFlag.h"
 #include "Tools/FQHESpectrum/LatticePhases.h"
 
-class SingleBosonOnLatticeGeneric :  public ParticleOnLattice
+class SingleParticleOnLatticeGeneric :  public ParticleOnLattice
 {
 
  protected:
@@ -83,7 +83,7 @@ class SingleBosonOnLatticeGeneric :  public ParticleOnLattice
 
   
   // pointer to the target space when an index is require after applying basic operation
-  SingleBosonOnLatticeGeneric* TargetSpace;
+  SingleParticleOnLatticeGeneric* TargetSpace;
 
   // internal storage for coordinates/translations for access to LatticePhases
   int* TmpCoordinates;
@@ -98,7 +98,7 @@ class SingleBosonOnLatticeGeneric :  public ParticleOnLattice
     };
 
   // default constructor
-  SingleBosonOnLatticeGeneric();
+  SingleParticleOnLatticeGeneric();
 
   // basic constructor -> yields a square lattice in Landau gauge
   // 
@@ -106,22 +106,22 @@ class SingleBosonOnLatticeGeneric :  public ParticleOnLattice
   // nbrFluxQuanta = number of flux quanta piercing the simulation cell
   // solenoidX = solenoid flux through lattice in x-direction (in units of pi)
   // solenoidY = solenoid flux through lattice in y-direction (in units of pi)
-  SingleBosonOnLatticeGeneric (LatticePhases *latticeGeometry, int nbrFluxQuanta, double solenoidX=0.0, double solenoidY=0.0);  
+  SingleParticleOnLatticeGeneric (LatticePhases *latticeGeometry, int nbrFluxQuanta, double solenoidX=0.0, double solenoidY=0.0);  
 
   // copy constructor (without duplicating datas)
   //
   // bosons = reference on the hilbert space to copy to copy
-  SingleBosonOnLatticeGeneric(const SingleBosonOnLatticeGeneric& bosons);
+  SingleParticleOnLatticeGeneric(const SingleParticleOnLatticeGeneric& bosons);
 
   // virtual destructor
   //
-  virtual ~SingleBosonOnLatticeGeneric ();
+  virtual ~SingleParticleOnLatticeGeneric ();
 
   // assignment (without duplicating datas)
   //
   // bosons = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  SingleBosonOnLatticeGeneric& operator = (const SingleBosonOnLatticeGeneric& bosons);
+  SingleParticleOnLatticeGeneric& operator = (const SingleParticleOnLatticeGeneric& bosons);
 
   // clone Hilbert space (without duplicating datas)
   //

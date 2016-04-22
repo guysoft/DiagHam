@@ -29,7 +29,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/SingleBosonOnLatticeGeneric.h"
+#include "HilbertSpace/SingleParticleOnLatticeGeneric.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "QuantumNumber/NumberParticleQuantumNumber.h"
@@ -46,9 +46,9 @@ using std::endl;
 //#define DEBUG_OUTPUT
 
 // default constructor
-SingleBosonOnLatticeGeneric::SingleBosonOnLatticeGeneric()
+SingleParticleOnLatticeGeneric::SingleParticleOnLatticeGeneric()
 {
-  this->NbrBosons=0;
+  this->NbrBosons=1;
   this->HilbertSpaceDimension=0;
 }
 
@@ -59,7 +59,7 @@ SingleBosonOnLatticeGeneric::SingleBosonOnLatticeGeneric()
 // nbrFluxQuanta = number of flux quanta piercing the simulation cell
 // solenoidX = solenoid flux through lattice in x-direction (in units of pi)
 // solenoidY = solenoid flux through lattice in y-direction (in units of pi)
-SingleBosonOnLatticeGeneric::SingleBosonOnLatticeGeneric (LatticePhases *latticeGeometry, int nbrFluxQuanta, double solenoidX, double solenoidY)
+SingleParticleOnLatticeGeneric::SingleParticleOnLatticeGeneric (LatticePhases *latticeGeometry, int nbrFluxQuanta, double solenoidX, double solenoidY)
 {
   this->NbrBosons = 1;
   this->LatticeGeometry = latticeGeometry;
@@ -103,7 +103,7 @@ SingleBosonOnLatticeGeneric::SingleBosonOnLatticeGeneric (LatticePhases *lattice
 // copy constructor (without duplicating datas)
 //
 // bosons = reference on the hilbert space to copy to copy
-SingleBosonOnLatticeGeneric::SingleBosonOnLatticeGeneric(const SingleBosonOnLatticeGeneric& bosons)
+SingleParticleOnLatticeGeneric::SingleParticleOnLatticeGeneric(const SingleParticleOnLatticeGeneric& bosons)
 {
   if (bosons.TargetSpace != &bosons)
     this->TargetSpace = bosons.TargetSpace;
@@ -138,7 +138,7 @@ SingleBosonOnLatticeGeneric::SingleBosonOnLatticeGeneric(const SingleBosonOnLatt
 // virtual destructor
 //
 
-SingleBosonOnLatticeGeneric::~SingleBosonOnLatticeGeneric ()
+SingleParticleOnLatticeGeneric::~SingleParticleOnLatticeGeneric ()
 {
   delete[] this->TmpTranslations;
   delete[] this->TmpCoordinates;
@@ -153,7 +153,7 @@ SingleBosonOnLatticeGeneric::~SingleBosonOnLatticeGeneric ()
 //
 // bosons = reference on the hilbert space to copy to copy
 // return value = reference on current hilbert space
-SingleBosonOnLatticeGeneric& SingleBosonOnLatticeGeneric::operator = (const SingleBosonOnLatticeGeneric& bosons)
+SingleParticleOnLatticeGeneric& SingleParticleOnLatticeGeneric::operator = (const SingleParticleOnLatticeGeneric& bosons)
 {
   delete[] this->TmpTranslations;
   delete[] this->TmpCoordinates;
@@ -196,25 +196,25 @@ SingleBosonOnLatticeGeneric& SingleBosonOnLatticeGeneric::operator = (const Sing
 // clone Hilbert space (without duplicating datas)
 //
 // return value = pointer to cloned Hilbert space
-AbstractHilbertSpace* SingleBosonOnLatticeGeneric::Clone()
+AbstractHilbertSpace* SingleParticleOnLatticeGeneric::Clone()
 {
-  return new SingleBosonOnLatticeGeneric(*this);
+  return new SingleParticleOnLatticeGeneric(*this);
 }
 
 // set a different target space (for all basic operations)
 //
 // targetSpace = pointer to the target space
 
-void SingleBosonOnLatticeGeneric::SetTargetSpace(ParticleOnLattice* targetSpace)
+void SingleParticleOnLatticeGeneric::SetTargetSpace(ParticleOnLattice* targetSpace)
 {
-  this->TargetSpace=(SingleBosonOnLatticeGeneric*)targetSpace;
+  this->TargetSpace=(SingleParticleOnLatticeGeneric*)targetSpace;
 }
 
 // return Hilbert space dimension of the target space
 //
 // return value = Hilbert space dimension
 
-int SingleBosonOnLatticeGeneric::GetTargetHilbertSpaceDimension()
+int SingleParticleOnLatticeGeneric::GetTargetHilbertSpaceDimension()
 {
   return this->TargetSpace->GetHilbertSpaceDimension();
 }
@@ -222,7 +222,7 @@ int SingleBosonOnLatticeGeneric::GetTargetHilbertSpaceDimension()
 // get the particle statistic 
 //
 // return value = particle statistic
-int SingleBosonOnLatticeGeneric::GetParticleStatistic()
+int SingleParticleOnLatticeGeneric::GetParticleStatistic()
 {
   return AbstractQHEParticle::BosonicStatistic;
 }
@@ -230,7 +230,7 @@ int SingleBosonOnLatticeGeneric::GetParticleStatistic()
 // get the quantization axis 
 //
 // return value = particle statistic
-char SingleBosonOnLatticeGeneric::GetLandauGaugeAxis()
+char SingleParticleOnLatticeGeneric::GetLandauGaugeAxis()
 {
   return 'y';
 }
@@ -240,9 +240,9 @@ char SingleBosonOnLatticeGeneric::GetLandauGaugeAxis()
 //
 // return value = symmetry id
 
-int SingleBosonOnLatticeGeneric::GetHilbertSpaceAdditionalSymmetry()
+int SingleParticleOnLatticeGeneric::GetHilbertSpaceAdditionalSymmetry()
 {
-  return SingleBosonOnLatticeGeneric::NoSymmetry;
+  return SingleParticleOnLatticeGeneric::NoSymmetry;
 }
 
 
@@ -250,7 +250,7 @@ int SingleBosonOnLatticeGeneric::GetHilbertSpaceAdditionalSymmetry()
 // return a list of all possible quantum numbers 
 //
 // return value = pointer to corresponding quantum number
-List<AbstractQuantumNumber*> SingleBosonOnLatticeGeneric::GetQuantumNumbers ()
+List<AbstractQuantumNumber*> SingleParticleOnLatticeGeneric::GetQuantumNumbers ()
 {
   List<AbstractQuantumNumber*> TmpList;
   TmpList += new NumberParticleQuantumNumber(this->NbrBosons);
@@ -261,7 +261,7 @@ List<AbstractQuantumNumber*> SingleBosonOnLatticeGeneric::GetQuantumNumbers ()
 //
 // index = index of the state
 // return value = pointer to corresponding quantum number
-AbstractQuantumNumber* SingleBosonOnLatticeGeneric::GetQuantumNumber (int index)
+AbstractQuantumNumber* SingleParticleOnLatticeGeneric::GetQuantumNumber (int index)
 {
   return new NumberParticleQuantumNumber(this->NbrBosons);
 }
@@ -271,7 +271,7 @@ AbstractQuantumNumber* SingleBosonOnLatticeGeneric::GetQuantumNumber (int index)
 // q = quantum number value
 // converter = reference on subspace-space converter to use
 // return value = pointer to the new subspace
-AbstractHilbertSpace* SingleBosonOnLatticeGeneric::ExtractSubspace (AbstractQuantumNumber& q, 
+AbstractHilbertSpace* SingleParticleOnLatticeGeneric::ExtractSubspace (AbstractQuantumNumber& q, 
 						      SubspaceSpaceConverter& converter)
 {
   return 0;
@@ -280,7 +280,7 @@ AbstractHilbertSpace* SingleBosonOnLatticeGeneric::ExtractSubspace (AbstractQuan
 // get the number of sites
 //
 // return value = number of sites
-int SingleBosonOnLatticeGeneric::GetNbrSites()
+int SingleParticleOnLatticeGeneric::GetNbrSites()
 {
   return this->NbrStates;
 }
@@ -288,7 +288,7 @@ int SingleBosonOnLatticeGeneric::GetNbrSites()
 // it is possible to change the flux through the simulation cell
 // Attention: this does require the Hamiltonian to be recalculated!!
 // nbrFluxQuanta = number of quanta of flux piercing the simulation cell
-void SingleBosonOnLatticeGeneric::SetNbrFluxQuanta(int nbrFluxQuanta)
+void SingleParticleOnLatticeGeneric::SetNbrFluxQuanta(int nbrFluxQuanta)
 {
   this->NbrFluxQuanta = nbrFluxQuanta;
   this->FluxDensity = ((double)NbrFluxQuanta)/this->NbrStates;
@@ -304,7 +304,7 @@ void SingleBosonOnLatticeGeneric::SetNbrFluxQuanta(int nbrFluxQuanta)
 // nbrFluxQuanta = number of quanta of flux piercing the simulation cell
 // solenoidX = new solenoid flux through torus in x-direction
 // solenoidY = new solenoid flux through torus in y-direction
-void SingleBosonOnLatticeGeneric::SetNbrFluxQuanta(int nbrFluxQuanta, double solenoidX, double solenoidY)
+void SingleParticleOnLatticeGeneric::SetNbrFluxQuanta(int nbrFluxQuanta, double solenoidX, double solenoidY)
 {
   this->SolenoidX = M_PI*solenoidX;
   this->SolenoidY = M_PI*solenoidY;
@@ -315,7 +315,7 @@ void SingleBosonOnLatticeGeneric::SetNbrFluxQuanta(int nbrFluxQuanta, double sol
 // solenoidX = new solenoid flux through torus in x-direction
 // solenoidY = new solenoid flux through torus in y-direction
 //
-void SingleBosonOnLatticeGeneric::GetSolenoidFluxes(double &solenoidX, double &solenoidY)
+void SingleParticleOnLatticeGeneric::GetSolenoidFluxes(double &solenoidX, double &solenoidY)
 {
   solenoidX=this->SolenoidX;
   solenoidY=this->SolenoidY;
@@ -324,7 +324,7 @@ void SingleBosonOnLatticeGeneric::GetSolenoidFluxes(double &solenoidX, double &s
 
 
 // obtain the current setting of the flux piercing this lattice
-int SingleBosonOnLatticeGeneric::GetNbrFluxQuanta()
+int SingleParticleOnLatticeGeneric::GetNbrFluxQuanta()
 {
   return this->NbrFluxQuanta;
 }
@@ -335,7 +335,7 @@ int SingleBosonOnLatticeGeneric::GetNbrFluxQuanta()
 // for state-coding and quantum numbers of this space
 // state = word to be acted upon
 // q = quantum number of boson to be added
-unsigned long SingleBosonOnLatticeGeneric::Ad (unsigned long state, int q, double& coefficient)
+unsigned long SingleParticleOnLatticeGeneric::Ad (unsigned long state, int q, double& coefficient)
 {
   coefficient = 0.0;
   return 0;
@@ -352,7 +352,7 @@ unsigned long SingleBosonOnLatticeGeneric::Ad (unsigned long state, int q, doubl
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int SingleBosonOnLatticeGeneric::AdAdAA (int index, int m1, int m2, int n1, int n2, double &coefficient)
+int SingleParticleOnLatticeGeneric::AdAdAA (int index, int m1, int m2, int n1, int n2, double &coefficient)
 {
   return this->HilbertSpaceDimension;
 }
@@ -365,7 +365,7 @@ int SingleBosonOnLatticeGeneric::AdAdAA (int index, int m1, int m2, int n1, int 
 // n2 = second index for annihilation operator
 // return value =  multiplicative factor
 
-double SingleBosonOnLatticeGeneric::AA (int index, int n1, int n2)
+double SingleParticleOnLatticeGeneric::AA (int index, int n1, int n2)
 {
   return 0.0;
 }
@@ -378,7 +378,7 @@ double SingleBosonOnLatticeGeneric::AA (int index, int n1, int n2)
 // coefficient = reference on a multiplicative, trivially one here (unreferenced)
 // return value = index of the destination state 
 
-int SingleBosonOnLatticeGeneric::AdAd (int m1, int m2, double& coefficient)
+int SingleParticleOnLatticeGeneric::AdAd (int m1, int m2, double& coefficient)
 {
   return this->HilbertSpaceDimension;
 }
@@ -392,7 +392,7 @@ int SingleBosonOnLatticeGeneric::AdAd (int m1, int m2, double& coefficient)
 // coefficient = reference on the double where the multiplicative factor has to be stored (always 1.0)
 // return value = index of the destination state 
 
-int SingleBosonOnLatticeGeneric::AdA (int index, int m, int n, double &coefficient)
+int SingleParticleOnLatticeGeneric::AdA (int index, int m, int n, double &coefficient)
 {
   int State = this->StateDescription[index];
   if (n!=State)
@@ -408,7 +408,7 @@ int SingleBosonOnLatticeGeneric::AdA (int index, int m, int n, double &coefficie
 // index = index of the state on which the operator has to be applied
 // m = index of the creation and annihilation operator
 // return value = coefficient obtained when applying a^+_m a_m
-double SingleBosonOnLatticeGeneric::AdA (int index, int m)
+double SingleParticleOnLatticeGeneric::AdA (int index, int m)
 {
   int State = this->StateDescription[index];
   if (m==State)
@@ -425,7 +425,7 @@ double SingleBosonOnLatticeGeneric::AdA (int index, int m)
 //
 // no diagonal interaction present, derelict function from inheritance
 //
-double SingleBosonOnLatticeGeneric::AdAdAADiagonal(int index, int nbrInteraction, double *interactionPerQ, int *qValues)
+double SingleParticleOnLatticeGeneric::AdAdAADiagonal(int index, int nbrInteraction, double *interactionPerQ, int *qValues)
 {
   return 0.0;
 }
@@ -435,7 +435,7 @@ double SingleBosonOnLatticeGeneric::AdAdAADiagonal(int index, int nbrInteraction
 // posy = position along y-direction
 // sublattice = sublattice index
 // 
-int SingleBosonOnLatticeGeneric::EncodeQuantumNumber(int posx, int posy, int sublattice, Complex &translationPhase)
+int SingleParticleOnLatticeGeneric::EncodeQuantumNumber(int posx, int posy, int sublattice, Complex &translationPhase)
 {
   TmpCoordinates[0]=posx;
   TmpCoordinates[1]=posy;
@@ -448,7 +448,7 @@ int SingleBosonOnLatticeGeneric::EncodeQuantumNumber(int posx, int posy, int sub
 // decode a single encoded quantum number q to the set of quantum numbers posx, posy
 // posx = position along x-direction
 // posy = position along y-direction
-void SingleBosonOnLatticeGeneric::DecodeQuantumNumber(int q, int &posx, int &posy, int &sublattice)
+void SingleParticleOnLatticeGeneric::DecodeQuantumNumber(int q, int &posx, int &posy, int &sublattice)
 {
   LatticeGeometry->GetSiteCoordinates(q, TmpCoordinates, sublattice);
   posx=TmpCoordinates[0];
@@ -459,7 +459,7 @@ void SingleBosonOnLatticeGeneric::DecodeQuantumNumber(int q, int &posx, int &pos
 // index = index of many-body state to be considered
 // quantumNumbers = integer array of length NbrParticles, to be written with quantum numbers of individual particles
 // normalization = indicating the multiplicity of the state for bosonic spaces
-void SingleBosonOnLatticeGeneric::ListQuantumNumbers(int index, int *quantumNumbers, double &normalization)
+void SingleParticleOnLatticeGeneric::ListQuantumNumbers(int index, int *quantumNumbers, double &normalization)
 {
   normalization=1.0;
   this->ListQuantumNumbers(index, quantumNumbers);
@@ -467,7 +467,7 @@ void SingleBosonOnLatticeGeneric::ListQuantumNumbers(int index, int *quantumNumb
 
 // obtain a list of quantum numbers in state
 // quantumNumbers = integer array of length NbrParticles, to be written with quantum numbers of individual particles
-void SingleBosonOnLatticeGeneric::ListQuantumNumbers(int index, int *quantumNumbers)
+void SingleParticleOnLatticeGeneric::ListQuantumNumbers(int index, int *quantumNumbers)
 {
   int State = this->StateDescription[index];
   int NbrQ=0;
@@ -479,7 +479,7 @@ void SingleBosonOnLatticeGeneric::ListQuantumNumbers(int index, int *quantumNumb
 // shiftY = length of translation in y-direction
 // translationPhase = returns phase inccurred by translation
 // return value = index of translated state
-int SingleBosonOnLatticeGeneric::TranslateState(int index, int shiftX, int shiftY, Complex &translationPhase)
+int SingleParticleOnLatticeGeneric::TranslateState(int index, int shiftX, int shiftY, Complex &translationPhase)
 {
   cout << "Need to implement BosonOnLatticeGeneric::TranslateState"<<endl;
   return 0;
@@ -536,7 +536,7 @@ int SingleBosonOnLatticeGeneric::TranslateState(int index, int shiftX, int shift
 // shiftX = length of translation in x-direction
 // shiftY = length of translation in y-direction
 // return value = final state can be reached by translation
-bool SingleBosonOnLatticeGeneric::IsTranslation(int i, int f, int &shiftX, int &shiftY)
+bool SingleParticleOnLatticeGeneric::IsTranslation(int i, int f, int &shiftX, int &shiftY)
 {  
 //   int TemporaryStateHighestBit = this->StateHighestBit[i];
 //   unsigned long TemporaryState = this->StateDescription[i];
@@ -544,7 +544,7 @@ bool SingleBosonOnLatticeGeneric::IsTranslation(int i, int f, int &shiftX, int &
 //   unsigned long ShiftedState = this->StateDescription[f];
   
   // implementation needed...
-  cout << "Implementation of SingleBosonOnLatticeGeneric::IsTranslation required"<<endl;
+  cout << "Implementation of SingleParticleOnLatticeGeneric::IsTranslation required"<<endl;
   
   return true;
 }
@@ -557,7 +557,7 @@ bool SingleBosonOnLatticeGeneric::IsTranslation(int i, int f, int &shiftX, int &
 // basis = one body real space basis to use
 // return value = wave function evaluated at the given location
 
-Complex SingleBosonOnLatticeGeneric::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis)
+Complex SingleParticleOnLatticeGeneric::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis)
 {
   return this->EvaluateWaveFunction(state, position, basis, 0, this->HilbertSpaceDimension);
 }
@@ -570,7 +570,7 @@ Complex SingleBosonOnLatticeGeneric::EvaluateWaveFunction (RealVector& state, Re
 // nextCoordinates = index of the coordinate that will be changed during the next time iteration
 // return value = wave function evaluated at the given location
 
-Complex SingleBosonOnLatticeGeneric::EvaluateWaveFunctionWithTimeCoherence (RealVector& state, RealVector& position, 
+Complex SingleParticleOnLatticeGeneric::EvaluateWaveFunctionWithTimeCoherence (RealVector& state, RealVector& position, 
 								 AbstractFunctionBasis& basis, int nextCoordinates)
 {
   return this->EvaluateWaveFunctionWithTimeCoherence(state, position, basis, nextCoordinates, 0, 
@@ -585,7 +585,7 @@ Complex SingleBosonOnLatticeGeneric::EvaluateWaveFunctionWithTimeCoherence (Real
 // firstComponent = index of the first component to evaluate
 // nbrComponent = number of components to evaluate
 // return value = wave function evaluated at the given location
-Complex SingleBosonOnLatticeGeneric::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
+Complex SingleParticleOnLatticeGeneric::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
 						int firstComponent, int nbrComponent)
 {
   return Complex(0.0, 0.0);
@@ -602,7 +602,7 @@ Complex SingleBosonOnLatticeGeneric::EvaluateWaveFunction (RealVector& state, Re
 // nbrComponent = number of components to evaluate
 // return value = wave function evaluated at the given location
 
-Complex SingleBosonOnLatticeGeneric::EvaluateWaveFunctionWithTimeCoherence (RealVector& state, RealVector& position, 
+Complex SingleParticleOnLatticeGeneric::EvaluateWaveFunctionWithTimeCoherence (RealVector& state, RealVector& position, 
 								 AbstractFunctionBasis& basis, 
 								 int nextCoordinates, int firstComponent, 
 								 int nbrComponent)
@@ -614,7 +614,7 @@ Complex SingleBosonOnLatticeGeneric::EvaluateWaveFunctionWithTimeCoherence (Real
 //
 // timeCoherence = true if time coherence has to be used
 
-void SingleBosonOnLatticeGeneric::InitializeWaveFunctionEvaluation (bool timeCoherence)
+void SingleParticleOnLatticeGeneric::InitializeWaveFunctionEvaluation (bool timeCoherence)
 {
 }
 
@@ -625,7 +625,7 @@ void SingleBosonOnLatticeGeneric::InitializeWaveFunctionEvaluation (bool timeCoh
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& SingleBosonOnLatticeGeneric::PrintState (ostream& Str, int state)
+ostream& SingleParticleOnLatticeGeneric::PrintState (ostream& Str, int state)
 {
   int TmpState = this->StateDescription[state];
   for (int i = 0; i < this->NbrStates; ++i)
@@ -640,7 +640,7 @@ ostream& SingleBosonOnLatticeGeneric::PrintState (ostream& Str, int state)
 // highestBit = maximum Lz value reached by a fermion in the state
 // return value = corresponding index
 
-int SingleBosonOnLatticeGeneric::FindStateIndex(int stateDescription)
+int SingleParticleOnLatticeGeneric::FindStateIndex(int stateDescription)
 {
   return this->HilbertSpaceDimension-1-stateDescription;
 }
@@ -650,7 +650,7 @@ int SingleBosonOnLatticeGeneric::FindStateIndex(int stateDescription)
 // stateDescription = unsigned integer describing the state
 // highestBit = maximum nonzero bit reached by a particle in the state (can be given negative, if not known)
 // return value = corresponding index, or dimension of space, if not found
-int SingleBosonOnLatticeGeneric::CarefulFindStateIndex(unsigned long stateDescription, int highestBit)
+int SingleParticleOnLatticeGeneric::CarefulFindStateIndex(unsigned long stateDescription, int highestBit)
 {
   return this->CarefulFindStateIndex((int)stateDescription);
 }
@@ -660,7 +660,7 @@ int SingleBosonOnLatticeGeneric::CarefulFindStateIndex(unsigned long stateDescri
 // stateDescription = unsigned integer describing the state
 // highestBit = maximum nonzero bit reached by a particle in the state (can be given negative, if not known)
 // return value = corresponding index, or dimension of space, if not found
-int SingleBosonOnLatticeGeneric::CarefulFindStateIndex(int stateDescription)
+int SingleParticleOnLatticeGeneric::CarefulFindStateIndex(int stateDescription)
 {
   if ((stateDescription >=0)&&(stateDescription<this->HilbertSpaceDimension))
     {

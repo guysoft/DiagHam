@@ -1,5 +1,6 @@
 #include "HilbertSpace/BosonOnLattice.h"
 #include "HilbertSpace/HardCoreBosonOnLattice.h"
+#include "HilbertSpace/SingleParticleOnLattice.h"
 #include "Hamiltonian/ParticleOnLatticeDeltaHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeKapitMuellerHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeKapitMuellerMultiLayerHamiltonian.h"
@@ -139,6 +140,7 @@ int main(int argc, char** argv)
 #ifdef HAVE_ARPACK
   (*MiscGroup) += new  BooleanOption ('\n',"use-arpack","use ARPACK routines for Lanczos algorithm");
 #endif
+  (*MiscGroup) += new  BooleanOption ('\n',"no-single-particle-basis", "do not use the single-particle basis when -p 1 (for testing)");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   Manager.StandardProceedings(argv, argc, cout);
@@ -273,10 +275,20 @@ int main(int argc, char** argv)
 	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq.dat", NbrBosons, Lx, Ly, interactionStr, auxArguments, deltaString);
     }
   ParticleOnLattice* Space;
-  if (HardCore)
-    Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY, NbrLayers);
-  else Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY, LandauQuantization, NbrLayers);
-  
+  if (NbrBosons>1)
+    {
+      if (HardCore)
+	Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY, NbrLayers);
+      else Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY, LandauQuantization, NbrLayers);
+    }
+  else
+    {
+      if (!Manager.GetBoolean("no-single-particle-basis"))	
+	Space = new SingleParticleOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY, LandauQuantization, NbrLayers);      
+      else
+       Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY, LandauQuantization, NbrLayers);
+    }
+      
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   
   AbstractQHEOnLatticeHamiltonian* Hamiltonian;

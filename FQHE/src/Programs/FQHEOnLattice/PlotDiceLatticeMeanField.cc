@@ -1,7 +1,7 @@
 #include "Vector/ComplexVector.h"
 
 #include "Tools/FQHESpectrum/LatticePhases.h"
-#include "HilbertSpace/SingleBosonOnLatticeGeneric.h"
+#include "HilbertSpace/SingleParticleOnLatticeGeneric.h"
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/FilenameTools.h"
 
@@ -156,7 +156,7 @@ int main(int argc, char** argv)
     }
   
 
-  SingleBosonOnLatticeGeneric *Space = new SingleBosonOnLatticeGeneric(Lattice, 0, 0.0, 0.0);
+  SingleParticleOnLatticeGeneric *Space = new SingleParticleOnLatticeGeneric(Lattice, 0, 0.0, 0.0);
 
   ComplexVector ActualWaveFunction;
   ActualWaveFunction.ResizeAndClean(6*Lx*Ly);

@@ -266,7 +266,7 @@ void ParticleOnLatticeKapitMuellerHamiltonian::EvaluateInteractionFactors()
 		  KineticQi[TmpNumberTerms] = qi;
 
 		  HoppingTerms[TmpNumberTerms] = this->SumImagesForHoppings(k,l,i,j,images);
-#ifdef DEBUG_OUTPUT		     
+#ifdef DEBUG_OUTPUT
 		  if (Norm(HoppingTerms[TmpNumberTerms])>1e-15)
 		    cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
 #endif

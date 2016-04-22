@@ -1,6 +1,6 @@
 #include "HilbertSpace/BosonOnLatticeGeneric.h"
 #include "HilbertSpace/HardCoreBosonOnLatticeGeneric.h"
-#include "HilbertSpace/SingleBosonOnLatticeGeneric.h"
+#include "HilbertSpace/SingleParticleOnLatticeGeneric.h"
 #include "Hamiltonian/ParticleOnLatticeGenericHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeExternalHamiltonian.h"
 #include "Operator/ParticleOnLatticeVacancyOperator.h"
@@ -183,7 +183,7 @@ int main(int argc, char** argv)
   ParticleOnLattice* Space, *TargetSpace;
   if (NbrBosons==1)
     {
-      Space = new SingleBosonOnLatticeGeneric(Lattice, NbrFluxQuanta, SolenoidX, SolenoidY);
+      Space = new SingleParticleOnLatticeGeneric(Lattice, NbrFluxQuanta, SolenoidX, SolenoidY);
     }
   else
     {
@@ -193,7 +193,7 @@ int main(int argc, char** argv)
     }
   if (TargetNbrBosons==1)
       {
-      TargetSpace = new SingleBosonOnLatticeGeneric(Lattice, NbrFluxQuanta, SolenoidX, SolenoidY);
+      TargetSpace = new SingleParticleOnLatticeGeneric(Lattice, NbrFluxQuanta, SolenoidX, SolenoidY);
     }
   else
     {
