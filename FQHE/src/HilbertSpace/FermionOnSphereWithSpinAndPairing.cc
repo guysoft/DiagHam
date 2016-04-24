@@ -92,9 +92,10 @@ FermionOnSphereWithSpinAndPairing::FermionOnSphereWithSpinAndPairing (int totalL
   this->StateHighestBit = new int [this->LargeHilbertSpaceDimension];  
 
   this->LargeHilbertSpaceDimension = this->GenerateStates(this->LzMax, 0, 0, 0l);
+
   this->GenerateLookUpTable(memory);
 
-   
+
 #ifdef __DEBUG__
   long UsedMemory = 0;
   UsedMemory += this->LargeHilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
@@ -232,15 +233,15 @@ long FermionOnSphereWithSpinAndPairing::GenerateStates(int lzMax, int totalLz, i
     }
   long TmpPos;
   unsigned long Mask;
-  TmpPos = this->GenerateStates(lzMax - 1, totalLz - 2 * (2 * lzMax - this->LzMax), totalSpin,  pos);
+  TmpPos = this->GenerateStates(lzMax - 1, totalLz + 2 * (2 * lzMax - this->LzMax), totalSpin,  pos);
   Mask = 0x3ul << (lzMax << 1);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
-  TmpPos = this->GenerateStates(lzMax - 1, totalLz - (2 * lzMax - this->LzMax), totalSpin + 1,  pos);
+  TmpPos = this->GenerateStates(lzMax - 1, totalLz + (2 * lzMax - this->LzMax), totalSpin + 1,  pos);
   Mask = 0x2ul << (lzMax << 1);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
-  TmpPos = this->GenerateStates(lzMax - 1, totalLz - (2 * lzMax - this->LzMax), totalSpin - 1,  pos);
+  TmpPos = this->GenerateStates(lzMax - 1, totalLz + (2 * lzMax - this->LzMax), totalSpin - 1,  pos);
   Mask = 0x1ul << (lzMax << 1);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
@@ -264,9 +265,9 @@ long FermionOnSphereWithSpinAndPairing::EvaluateHilbertSpaceDimension(int lzMax,
       else
 	return 0l;
     }
-  return  (this->EvaluateHilbertSpaceDimension(lzMax - 1, totalLz - 2 * (2 * lzMax - this->LzMax), totalSpin)
-           + this->EvaluateHilbertSpaceDimension(lzMax - 1, totalLz - (2 * lzMax - this->LzMax), totalSpin + 1)
-	   + this->EvaluateHilbertSpaceDimension(lzMax - 1, totalLz - (2 * lzMax - this->LzMax), totalSpin - 1)
+  return  (this->EvaluateHilbertSpaceDimension(lzMax - 1, totalLz + 2 * (2 * lzMax - this->LzMax), totalSpin)
+           + this->EvaluateHilbertSpaceDimension(lzMax - 1, totalLz + (2 * lzMax - this->LzMax), totalSpin + 1)
+	   + this->EvaluateHilbertSpaceDimension(lzMax - 1, totalLz + (2 * lzMax - this->LzMax), totalSpin - 1)
 	   + this->EvaluateHilbertSpaceDimension(lzMax - 1, totalLz, totalSpin));
 }
 

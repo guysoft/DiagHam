@@ -4,9 +4,9 @@
 #include "Matrix/HermitianMatrix.h"
 #include "Vector/RealVector.h"
 
-#include "HilbertSpace/BosonOnSphereWithSU4Spin.h"
+#include "HilbertSpace/BosonOnSphereWithSU3Spin.h"
 
-#include "Hamiltonian/ParticleOnSphereWithSU4SpinGenericHamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereWithSU3SpinGenericHamiltonian.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -46,7 +46,7 @@ int main(int argc, char** argv)
   cout.precision(14);
     
   // some running options and help
-  OptionManager Manager ("FQHESphereBosonsWithSU4Spin" , "0.01");
+  OptionManager Manager ("FQHESphereBosonsWithSU3Spin" , "0.01");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
@@ -63,17 +63,20 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 6);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 15);
-  (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('i', "total-isosz", "twice the z component of the total isospin (i.e valley SU(2) degeneracy) of the system", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('e', "total-entanglement", "twice the projection of the total spin-isopsin entanglement of the system", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-n1", "number of up-plus particles", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-n2", "number of up-minus particles", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-n3", "number of down-plus particles", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-n4", "number of down-minus particles", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "total-tz", "twice the quantum number of the system associated to the Tz generator", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "total-y", "three time the quantum number of the system associated to the Y generator", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-n1", "number of type 1 particles", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-n2", "number of type 2 particles", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-n3", "number of type 3 particles", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "spin1-flux", "inserted flux for particles with spin 1 (in 2pi / N_phi unit)", 0.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "spin2-flux", "inserted flux for particles with spin 2 (in 2pi / N_phi unit)", 0.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "spin3-flux", "inserted flux for particles with spin 3 (in 2pi / N_phi unit)", 0.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "spin4-flux", "inserted flux for particles with spin 4 (in 2pi / N_phi unit)", 0.0);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
+  (*SystemGroup) += new  BooleanOption  ('\n', "redundant-kymomenta", "Calculate all subspaces up to Ky  = MaxMomentum-1", false);
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
 
@@ -91,7 +94,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHESphereBosonsWithSU4Spin -h" << endl;
+      cout << "see man page for option syntax or type FQHESphereBosonsWithSU3Spin -h" << endl;
       return -1;
     }
   if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
@@ -101,9 +104,8 @@ int main(int argc, char** argv)
     }
 
 
-  int TotalSz = Manager.GetInteger("total-sz");
-  int TotalIz = Manager.GetInteger("total-isosz");
-  int TotalPz = Manager.GetInteger("total-entanglement");
+  int TotalTz = Manager.GetInteger("total-tz");
+  int TotalY = Manager.GetInteger("total-y");
   int NbrBosons = Manager.GetInteger("nbr-particles");
   int LzMax = Manager.GetInteger("lzmax");
   int InitialLz = Manager.GetInteger("initial-lz");
@@ -112,31 +114,27 @@ int main(int argc, char** argv)
   char* SavePrecalculationFileName = Manager.GetString("save-precalculation");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
-  if ((Manager.GetInteger("nbr-n1") + Manager.GetInteger("nbr-n2") + Manager.GetInteger("nbr-n3") + Manager.GetInteger("nbr-n4")) == NbrBosons)
+  if ((Manager.GetInteger("nbr-n1") + Manager.GetInteger("nbr-n2") + Manager.GetInteger("nbr-n3")) == NbrBosons)
     {
-      TotalSz = (Manager.GetInteger("nbr-n1") + Manager.GetInteger("nbr-n2")) - (Manager.GetInteger("nbr-n3") + Manager.GetInteger("nbr-n4"));
-      TotalIz = (Manager.GetInteger("nbr-n1") + Manager.GetInteger("nbr-n3")) - (Manager.GetInteger("nbr-n2") + Manager.GetInteger("nbr-n4"));
-      TotalPz = (Manager.GetInteger("nbr-n1") + Manager.GetInteger("nbr-n4")) - (Manager.GetInteger("nbr-n2") + Manager.GetInteger("nbr-n3"));
+      TotalTz = (Manager.GetInteger("nbr-n1") - Manager.GetInteger("nbr-n2"));
+      TotalY = (Manager.GetInteger("nbr-n1") + Manager.GetInteger("nbr-n2") - (2 * Manager.GetInteger("nbr-n3")));
     }
   else
     {
-      int NbrNUpPlus = (NbrBosons + TotalSz + TotalIz + TotalPz);
-      int NbrNUpMinus = (NbrBosons + TotalSz - TotalIz - TotalPz);
-      int NbrNDownPlus = (NbrBosons - TotalSz + TotalIz - TotalPz);
-      int NbrNDownMinus = (NbrBosons - TotalSz - TotalIz + TotalPz);
-      if ((NbrNUpPlus < 0 ) || (NbrNUpMinus < 0 ) || (NbrNDownPlus < 0) || (NbrNDownMinus < 0) || 
-	  ((NbrNUpPlus & 3) != 0) || ((NbrNUpMinus & 3) != 0) || ((NbrNDownPlus & 3) != 0) || ((NbrNDownMinus & 3) != 0))
+      int NbrN1 = (2 * NbrBosons) + TotalY + (3 * TotalTz);
+      int NbrN2 = (2 * NbrBosons) + TotalY - (3 * TotalTz);
+      int NbrN3 = NbrBosons - TotalY;
+      if ((NbrN1 < 0 ) || (NbrN2 < 0 ) || (NbrN3 < 0) || ((NbrN1 % 6) != 0) || ((NbrN2 % 6) != 0) || ((NbrN3 % 3) != 0))
 	{
-	  cout << "These values of Sz, Iz and Pz cannot be achieved with this particle number!" << endl;
+	  cout << "These values of Tz and Y cannot be achieved with this particle number!" << endl;
 	  return -1;
 	}
-      NbrNUpPlus >>= 2;
-      NbrNUpMinus >>= 2;
-      NbrNDownPlus >>= 2;
-      NbrNDownMinus >>= 2;
+      NbrN1 /= 6;
+      NbrN2 /= 6;
+      NbrN3 /= 3;
     }
 
-  double** PseudoPotentials  = new double*[10];
+  double** PseudoPotentials  = new double*[6];
   if (Manager.GetString("interaction-file") == 0)
     {
       cout << "an interaction file has to be provided" << endl;
@@ -144,12 +142,12 @@ int main(int argc, char** argv)
     }
   else
     {
-      if (FQHESphereSU4GetPseudopotentials(Manager.GetString("interaction-file"), LzMax, PseudoPotentials) == false)
+      if (FQHESphereSU3GetPseudopotentials(Manager.GetString("interaction-file"), LzMax, PseudoPotentials) == false)
 	return -1;
     }
 
   char* OutputFileName = new char [512];
-  sprintf (OutputFileName, "bosons_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_pz_%d.dat", Manager.GetString("interaction-name"), NbrBosons, LzMax, TotalSz, TotalIz, TotalPz);
+  sprintf (OutputFileName, "bosons_sphere_su3_%s_n_%d_2s_%d_tz_%d_y_%d.dat", Manager.GetString("interaction-name"), NbrBosons, LzMax, TotalTz, TotalY);
   ofstream File;
   File.open(OutputFileName, ios::binary | ios::out);
   File.precision(14);
@@ -176,18 +174,18 @@ int main(int argc, char** argv)
   for (; L <= Max; L += 2)
     {
       cout << "----------------------------------------------------------------" << endl;
-      BosonOnSphereWithSU4Spin Space (NbrBosons, L, LzMax,  TotalSz, TotalIz, TotalPz);	
+      BosonOnSphereWithSU3Spin Space (NbrBosons, L, LzMax,  TotalTz, TotalY);	
 
       Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
-      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnSphereWithSU4SpinGenericHamiltonian(&Space, NbrBosons, LzMax, PseudoPotentials, 0.0, Architecture.GetArchitecture(), Memory);
+      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnSphereWithSU3SpinGenericHamiltonian(&Space, NbrBosons, LzMax, PseudoPotentials, 0, 0, 0, Architecture.GetArchitecture(), Memory);
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
       if ( Manager.GetBoolean("eigenstate") == true)	
 	{
 	  EigenvectorName = new char [100];
-	  sprintf (EigenvectorName, "bosons_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_pz_%d_lz_%d", Manager.GetString("interaction-name"), NbrBosons, LzMax,
-		   TotalSz, TotalIz, TotalPz, L);
+	  sprintf (EigenvectorName, "bosons_sphere_su3_%s_n_%d_2s_%d_tz_%d_y_%d_lz_%d", Manager.GetString("interaction-name"), NbrBosons, LzMax,
+		   TotalTz, TotalY, L);
 	}
       
       QHEOnSphereMainTask Task (&Manager, &Space, Hamiltonian, L, Shift, OutputFileName, FirstRun, EigenvectorName, LzMax);

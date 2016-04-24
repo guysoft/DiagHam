@@ -59,6 +59,11 @@ class ParticleOnSphereWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing 
   // first index refered to the spin sector (sorted as up-up, down-down, up-down)
   double** PseudoPotentials;
 
+  // factor in front of the charging energy (i.e 1/(2C))
+  double ChargingEnergy;
+  // avearge number of particles in the system
+  double AverageNumberParticles;
+
  public:
 
   ParticleOnSphereWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing();
@@ -72,13 +77,15 @@ class ParticleOnSphereWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing 
   //                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
   // onebodyPotentialUpUp =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin up, null pointer if none
   // onebodyPotentialDownDown =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin down, null pointer if none
-  // onebodyPotentialUpDown =  one-body tunnelling potential (sorted from component on the lowest Lz state to component on the highest Lz state), on site, symmetric spin up / spin down
+  // onebodyPotentialPairing =  one-body pairing term (sorted from component on the lowest Lz state to component on the highest Lz state), on site, symmetric spin up / spin down
+  // chargingEnergy = factor in front of the charging energy (i.e 1/(2C))
+  // averageNumberParticles = average number of particles in the system
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnSphereWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing(ParticleOnSphereWithSpin* particles, int lzmax, double** pseudoPotential,
 									    double* onebodyPotentialUpUp, double* onebodyPotentialDownDown,
-									    double* onebodyPotentialUpDown, 
+									    double* onebodyPotentialPairing, double chargingEnergy, double averageNumberParticles,
 									    AbstractArchitecture* architecture, long memory = -1, 
 									    bool onDiskCacheFlag = false, char* precalculationFileName = 0);
 

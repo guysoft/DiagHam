@@ -125,6 +125,7 @@ BosonOnSphereWithSU4Spin::BosonOnSphereWithSU4Spin (int nbrBosons, int totalLz, 
       NDownMinus >>= 2;
       this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrBosons, this->LzMax, (this->TotalLz + (this->NbrBosons * this->LzMax)) >> 1, NUpPlus, NUpMinus, NDownPlus, NDownMinus);
     }
+  cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;  
   this->StateDescriptionUpPlus = new unsigned long [this->LargeHilbertSpaceDimension];
   this->StateDescriptionUpMinus = new unsigned long [this->LargeHilbertSpaceDimension];
   this->StateDescriptionDownPlus = new unsigned long [this->LargeHilbertSpaceDimension];
@@ -145,7 +146,6 @@ BosonOnSphereWithSU4Spin::BosonOnSphereWithSU4Spin (int nbrBosons, int totalLz, 
     }
   this->LargeHilbertSpaceDimension = TmpHilbertSpaceDimension;
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
-  cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
 
   
   SortQuadElementArrayDownOrdering<unsigned long>(this->StateDescriptionUpPlus, this->StateDescriptionUpMinus, this->StateDescriptionDownPlus, this->StateDescriptionDownMinus, this->LargeHilbertSpaceDimension);

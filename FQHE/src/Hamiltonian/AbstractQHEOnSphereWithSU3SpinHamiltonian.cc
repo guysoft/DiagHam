@@ -1597,7 +1597,7 @@ long AbstractQHEOnSphereWithSU3SpinHamiltonian::PartialFastMultiplicationMemory(
 			  if (Index < Dim)
 			    {
 			      ++Memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 			    }
 			}
 		    }

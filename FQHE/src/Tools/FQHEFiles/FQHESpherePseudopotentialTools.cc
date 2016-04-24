@@ -75,6 +75,7 @@ bool FQHESphereSU2GetPseudopotentials (char* fileName, int lzMax, double** pseud
 // onebodyPotentialDownDown =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin down, null pointer if none
 // onebodyPotentialUpDown =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin down, null pointer if none
 // return value = true if no error occured
+
 bool FQHESphereSU2GetPseudopotentials (char* fileName, int lzMax, double** pseudoPotentials,
 				       double*& oneBodyPseudopotentialUpUp, double*& oneBodyPseudopotentialDownDown, double*& oneBodyPseudopotentialUpDown)
 {
@@ -233,6 +234,45 @@ bool FQHESphereSU2GetPseudopotentials (char* fileName, int lzMax, double** pseud
   return true;
 }
 
+// get pseudopototentials for particles on sphere with SU(2) spin from file, including a tunneling term and pairing
+// 
+// fileName = name of the file that contains the pseudopotantial description
+// lzMax = reference on twice the maximum Lz value
+// pseudoPotentials = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
+//                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
+// onebodyPotentialUpUp =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin up, null pointer if none
+// onebodyPotentialDownDown =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin down, null pointer if none
+// onebodyPotentialUpDown =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin down, null pointer if none
+// onebodyPotentialUpDown = reference on the one body potential for the pairing term (sorted from component on the lowest Lz state to component on the highest Lz state), null pointer if none
+// return value = true if no error occured
+
+bool FQHESphereSU2GetPseudopotentialsWithPairing (char* fileName, int lzMax, double** pseudoPotentials,
+						  double*& oneBodyPseudopotentialUpUp, double*& oneBodyPseudopotentialDownDown, double*& oneBodyPseudopotentialUpDown,
+						  double*& oneBodyPseudopotentialPairing)
+{
+  if (FQHESphereSU2GetPseudopotentials(fileName, lzMax, pseudoPotentials,
+				       oneBodyPseudopotentialUpUp, oneBodyPseudopotentialDownDown, oneBodyPseudopotentialUpDown) == false)
+    {
+      return false;
+    }
+  ConfigurationParser InteractionDefinition;
+  if (InteractionDefinition.Parse(fileName) == false)
+    {
+      InteractionDefinition.DumpErrors(cout) << endl;
+      return false;
+    }
+  int TmpNbrPseudoPotentials = 0;
+  if (InteractionDefinition.GetAsDoubleArray("OneBodyPotentialPairing", ' ', oneBodyPseudopotentialPairing, TmpNbrPseudoPotentials) == true)
+    {
+      if (TmpNbrPseudoPotentials != (lzMax + 1))
+	{
+	  cout << "OneBodyPotentialPairing has a wrong number of components or has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+  return true;
+}
+
 // get pseudopototentials for particles on sphere with two landau levels
 // 
 // fileName = name of the file that contains the pseudopotantial description
@@ -286,6 +326,199 @@ bool FQHESphereTwoLandauLevelGetPseudopotentials (char* fileName, int lzMax, dou
       }
     }
   
+  return true;
+}
+
+// get pseudopototentials for particles on sphere with SU(4) spin from file
+// 
+// fileName = name of the file that contains the pseudopotantial description
+// lzMax = twice the maximum Lz value of the LLL
+// pseudoPotentials = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
+//                    first index refered to the spin sector (sorted as 1-1, 1-2, 1-3, 2-2, 2-3, 3-3)
+// return value = true if no error occured
+
+bool FQHESphereSU3GetPseudopotentials (char* fileName, int lzMax, double** pseudoPotentials)
+{
+  ConfigurationParser InteractionDefinition;
+  if (InteractionDefinition.Parse(fileName) == false)
+    {
+      InteractionDefinition.DumpErrors(cout) << endl;
+      return false;
+    }
+  int TmpNbrPseudoPotentials;
+  double* TmpPseudoPotentials;
+  bool Flag = false;
+  if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      int TmpMax = TmpNbrPseudoPotentials;
+      if (TmpMax > (lzMax + 1))
+	{
+	  TmpMax = lzMax + 1;
+	  cout << "warning, Pseudopotentials has more entries than the number of orbitals and will be truncated" << endl;
+	}
+      for (int i = 0; i < 6; ++i)
+	{
+	  pseudoPotentials[i] = new double[lzMax + 1];
+	  for (int j = 0; j < TmpMax; ++j)
+	    pseudoPotentials[i][j] = TmpPseudoPotentials[j];
+	  for (int j = TmpMax; j <= lzMax; ++j)
+	    pseudoPotentials[i][j] = 0.0;	  
+	}
+    }
+  else
+    {
+      if (InteractionDefinition["Pseudopotentials"] != 0)
+	{
+	  cout << "Pseudopotentials has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+
+  if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials11", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      int TmpMax = TmpNbrPseudoPotentials;
+      if (TmpMax > (lzMax + 1))
+	{
+	  TmpMax = lzMax + 1;
+	  cout << "warning, Pseudopotentials11 has more entries than the number of orbitals and will be truncated" << endl;
+	}
+      pseudoPotentials[0] = new double[lzMax + 1];
+      for (int j = 0; j < TmpMax; ++j)
+	pseudoPotentials[0][j] = TmpPseudoPotentials[j];
+      for (int j = TmpMax; j <= lzMax; ++j)
+	pseudoPotentials[0][j] = 0.0;	  
+    }
+  else
+    {
+      if (InteractionDefinition["Pseudopotentials11"] != 0)
+	{
+	  cout << "Pseudopotentials11 has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+
+  if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials12", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      int TmpMax = TmpNbrPseudoPotentials;
+      if (TmpMax > (lzMax + 1))
+	{
+	  TmpMax = lzMax + 1;
+	  cout << "warning, Pseudopotentials12 has more entries than the number of orbitals and will be truncated" << endl;
+	}
+      pseudoPotentials[1] = new double[lzMax + 1];
+      for (int j = 0; j < TmpMax; ++j)
+	pseudoPotentials[1][j] = TmpPseudoPotentials[j];
+      for (int j = TmpMax; j <= lzMax; ++j)
+	pseudoPotentials[1][j] = 0.0;	  
+    }
+  else
+    {
+      if (InteractionDefinition["Pseudopotentials12"] != 0)
+	{
+	  cout << "Pseudopotentials12 has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+
+  if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials13", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      int TmpMax = TmpNbrPseudoPotentials;
+      if (TmpMax > (lzMax + 1))
+	{
+	  TmpMax = lzMax + 1;
+	  cout << "warning, Pseudopotentials13 has more entries than the number of orbitals and will be truncated" << endl;
+	}
+      pseudoPotentials[2] = new double[lzMax + 1];
+      for (int j = 0; j < TmpMax; ++j)
+	pseudoPotentials[2][j] = TmpPseudoPotentials[j];
+      for (int j = TmpMax; j <= lzMax; ++j)
+	pseudoPotentials[2][j] = 0.0;	  
+    }
+  else
+    {
+      if (InteractionDefinition["Pseudopotentials13"] != 0)
+	{
+	  cout << "Pseudopotentials13 has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+
+  if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials22", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      int TmpMax = TmpNbrPseudoPotentials;
+      if (TmpMax > (lzMax + 1))
+	{
+	  TmpMax = lzMax + 1;
+	  cout << "warning, Pseudopotentials22 has more entries than the number of orbitals and will be truncated" << endl;
+	}
+      pseudoPotentials[3] = new double[lzMax + 1];
+      for (int j = 0; j < TmpMax; ++j)
+	pseudoPotentials[3][j] = TmpPseudoPotentials[j];
+      for (int j = TmpMax; j <= lzMax; ++j)
+	pseudoPotentials[3][j] = 0.0;	  
+    }
+  else
+    {
+      if (InteractionDefinition["Pseudopotentials22"] != 0)
+	{
+	  cout << "Pseudopotentials22 has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+
+  if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials23", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      int TmpMax = TmpNbrPseudoPotentials;
+      if (TmpMax > (lzMax + 1))
+	{
+	  TmpMax = lzMax + 1;
+	  cout << "warning, Pseudopotentials23 has more entries than the number of orbitals and will be truncated" << endl;
+	}
+      pseudoPotentials[4] = new double[lzMax + 1];
+      for (int j = 0; j < TmpMax; ++j)
+	pseudoPotentials[4][j] = TmpPseudoPotentials[j];
+      for (int j = TmpMax; j <= lzMax; ++j)
+	pseudoPotentials[4][j] = 0.0;	  
+    }
+  else
+    {
+      if (InteractionDefinition["Pseudopotentials23"] != 0)
+	{
+	  cout << "Pseudopotentials23 has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+
+  if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials33", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      int TmpMax = TmpNbrPseudoPotentials;
+      if (TmpMax > (lzMax + 1))
+	{
+	  TmpMax = lzMax + 1;
+	  cout << "warning, Pseudopotentials33 has more entries than the number of orbitals and will be truncated" << endl;
+	}
+      pseudoPotentials[5] = new double[lzMax + 1];
+      for (int j = 0; j < TmpMax; ++j)
+	pseudoPotentials[5][j] = TmpPseudoPotentials[j];
+      for (int j = TmpMax; j <= lzMax; ++j)
+	pseudoPotentials[5][j] = 0.0;	  
+    }
+  else
+    {
+      if (InteractionDefinition["Pseudopotentials33"] != 0)
+	{
+	  cout << "Pseudopotentials33 has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+
   return true;
 }
 

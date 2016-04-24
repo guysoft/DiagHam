@@ -624,6 +624,20 @@ int ParticleOnSphereWithSpin::AduAdd (int index, int m1, int m2, double& coeffic
 {
   return this->HilbertSpaceDimension;
 }
+
+// apply a_n1_u a_n2_d operator to a state, assuming a different target space
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator (spin up)
+// n2 = second index for annihilation operator (spin down)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::AuAd (int index, int n1, int n2, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+  
   
 // apply a^+_m1_u a^+_m2_u operator to the state, assuming a different target space
 //

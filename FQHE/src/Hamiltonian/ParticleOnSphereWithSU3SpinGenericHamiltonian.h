@@ -36,6 +36,7 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphereWithSU3Spin.h"
 #include "Hamiltonian/AbstractQHEOnSphereWithSU3SpinHamiltonian.h"
+#include "MathTools/ClebschGordanCoefficients.h"
 
 #include <iostream>
 
@@ -56,7 +57,7 @@ class ParticleOnSphereWithSU3SpinGenericHamiltonian : public AbstractQHEOnSphere
 
   // array with the pseudo-potentials (ordered such that the last element corresponds to the delta interaction)
   // first index refered to the spin sector (sorted as up-up, down-down, up-down)
-  double** PseudoPotentials;
+  double** Pseudopotentials;
 
  public:
 
@@ -108,37 +109,22 @@ class ParticleOnSphereWithSU3SpinGenericHamiltonian : public AbstractQHEOnSphere
   // shift = shift value
   void ShiftHamiltonian (double shift);
 
-  // evaluate matrix element
-  //
-  // V1 = vector to left multiply with current matrix
-  // V2 = vector to right multiply with current matrix
-  // return value = corresponding matrix element
-  Complex MatrixElement (RealVector& V1, RealVector& V2);
-  
-  // evaluate matrix element
-  //
-  // V1 = vector to left multiply with current matrix
-  // V2 = vector to right multiply with current matrix
-  // return value = corresponding matrix element
-  Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
-
-  // return a list of left interaction operators
-  //
-  // return value = list of left interaction operators
-  List<Matrix*> LeftInteractionOperators();  
-
-  // return a list of right interaction operators 
-  //
-  // return value = list of right interaction operators
-  List<Matrix*> RightInteractionOperators();  
-
-
  protected:
  
   // evaluate all interaction factors
   //   
   void EvaluateInteractionFactors();
 
+  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
+  //
+  // m1 = first index
+  // m2 = second index
+  // m3 = third index
+  // m4 = fourth index
+  // clebsch = reference to the Clebsch-Gordan coefficients
+  // pseudopotentials = pseudopotential coefficients
+  // return value = numerical coefficient  
+  virtual double EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, ClebschGordanCoefficients& clebsch, double* pseudopotentials);
 
 };
 

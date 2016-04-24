@@ -67,13 +67,16 @@ ParticleOnSphereWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing::Parti
 //                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
 // onebodyPotentialUpUp =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin up, null pointer if none
 // onebodyPotentialDownDown =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin down, null pointer if none
-// onebodyPotentialUpDown =  one-body tunnelling potential (sorted from component on the lowest Lz state to component on the highest Lz state), on site, symmetric spin up / spin down
+// onebodyPotentialPairing =  one-body pairing term (sorted from component on the lowest Lz state to component on the highest Lz state), on site, symmetric spin up / spin down
+// chargingEnergy = factor in front of the charging energy (i.e 1/(2C))
+// averageNumberParticles = average number of particles in the system
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnSphereWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing::ParticleOnSphereWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing(ParticleOnSphereWithSpin* particles, int lzmax, 
-																		     double** pseudoPotential, double* onebodyPotentialUpUp, double* onebodyPotentialDownDown, double* onebodyPotentialUpDown,
+																		     double** pseudoPotential, double* onebodyPotentialUpUp, double* onebodyPotentialDownDown, 
+																		     double* onebodyPotentialPairing, double chargingEnergy, double averageNumberParticles,
 																		     AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
 																		     char* precalculationFileName)
 {
@@ -91,36 +94,45 @@ ParticleOnSphereWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing::Parti
     {
       this->PseudoPotentials[j] = new double [this->NbrLzValue];
       for (int i = 0; i < this->NbrLzValue; ++i)
-	this->PseudoPotentials[j][i] = pseudoPotential[j][this->LzMax - i];
+	{
+	  this->PseudoPotentials[j][i] = pseudoPotential[j][this->LzMax - i];
+	}
     }
+  this->ChargingEnergy = chargingEnergy;
   this->EvaluateInteractionFactors();
-  this->HamiltonianShift = 0.0;
+  this->AverageNumberParticles = averageNumberParticles;
+  this->HamiltonianShift =  this->ChargingEnergy * this->AverageNumberParticles * this->AverageNumberParticles;
   long MinIndex;
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
   this->DiskStorageFlag = onDiskCacheFlag;
   this->Memory = memory;
-  this->OneBodyInteractionFactorsupup = 0;
+  this->OneBodyInteractionFactorsupup = new double [this->NbrLzValue];
+  for (int i = 0; i <= this->LzMax; ++i)
+    this->OneBodyInteractionFactorsupup[i] = this->ChargingEnergy * (1.0 - (2.0 * this->AverageNumberParticles));
   if (onebodyPotentialUpUp != 0)
     {
-      this->OneBodyInteractionFactorsupup = new double [this->NbrLzValue];
       for (int i = 0; i <= this->LzMax; ++i)
-	this->OneBodyInteractionFactorsupup[i] = onebodyPotentialUpUp[i];
+	this->OneBodyInteractionFactorsupup[i] += onebodyPotentialUpUp[i];
     }
-  this->OneBodyInteractionFactorsdowndown = 0;
+  this->OneBodyInteractionFactorsdowndown = new double [this->NbrLzValue];
+  for (int i = 0; i <= this->LzMax; ++i)
+    this->OneBodyInteractionFactorsdowndown[i] = this->ChargingEnergy * (1.0 - (2.0 * this->AverageNumberParticles));
   if (onebodyPotentialDownDown != 0)
     {
-      this->OneBodyInteractionFactorsdowndown = new double [this->NbrLzValue];
       for (int i = 0; i <= this->LzMax; ++i)
-	this->OneBodyInteractionFactorsdowndown[i] = onebodyPotentialDownDown[i];
+	this->OneBodyInteractionFactorsdowndown[i] += onebodyPotentialDownDown[i];
     }
   this->OneBodyInteractionFactorsupdown = 0;
-  if (onebodyPotentialUpDown != 0)
+  this->OneBodyInteractionFactorsPairing = 0;
+  if (onebodyPotentialPairing != 0)
     {
-      this->OneBodyInteractionFactorsupdown = new double [this->NbrLzValue];
+      this->OneBodyInteractionFactorsPairing = new double [this->NbrLzValue];
       for (int i = 0; i <= this->LzMax; ++i)
-	this->OneBodyInteractionFactorsupdown[i] = onebodyPotentialUpDown[i];
+	{
+	  this->OneBodyInteractionFactorsPairing[i] = onebodyPotentialPairing[i];
+	}
     }
   if (precalculationFileName == 0)
     {
@@ -188,7 +200,7 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing::
 
 void ParticleOnSphereWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing::ShiftHamiltonian (double shift)
 {
-  this->HamiltonianShift = shift;
+  this->HamiltonianShift += shift;
 }
   
 // evaluate all interaction factors
@@ -286,8 +298,13 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing::
 			  this->InteractionFactorsdowndown[i][Index] += this->PseudoPotentials[1][J >> 1] * TmpCoefficient;
 			}
 		    }
-		  this->InteractionFactorsupup[i][Index] *= -4.0;
-		  this->InteractionFactorsdowndown[i][Index] *= -4.0;
+		  this->InteractionFactorsupup[i][Index] *= -2.0;
+		  this->InteractionFactorsdowndown[i][Index] *= -2.0;
+		  if ((m1 == m3) && (m2 == m4))
+		    {
+		      this->InteractionFactorsupup[i][Index] -= 2.0 * this->ChargingEnergy;
+		      this->InteractionFactorsdowndown[i][Index] -= 2.0 * this->ChargingEnergy;		      
+		    }
 		  TotalNbrInteractionFactors += 2;
 		  ++Index;
 		}
@@ -301,7 +318,7 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing::
 	  int Index = 0;
 	  for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
 	    {
-	      double Factor = 2.0;
+	      double Factor = 1.0;
 	      int m1 = (this->InterSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMax;
 	      int m2 = (this->InterSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMax;
 	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
@@ -316,6 +333,10 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing::
 		      this->InteractionFactorsupdown[i][Index] += this->PseudoPotentials[2][J >> 1] * TmpCoefficient;
 		    }
 		  this->InteractionFactorsupdown[i][Index] *= -Factor;
+ 		  if ((m1 == m3) && (m2 == m4))
+ 		    {
+ 		      this->InteractionFactorsupdown[i][Index] -= 2.0 * this->ChargingEnergy;
+ 		    }
 		  ++TotalNbrInteractionFactors;
 		  ++Index;
 		}
@@ -382,6 +403,11 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing::
 		      this->InteractionFactorsupup[i][Index] *= 2.0;
 		      this->InteractionFactorsdowndown[i][Index] *= 2.0;
 		    }
+		  if ((m1 == m3) && (m2 == m4))
+		    {
+		      this->InteractionFactorsupup[i][Index] -= 2.0 * this->ChargingEnergy;
+		      this->InteractionFactorsdowndown[i][Index] -= 2.0 * this->ChargingEnergy;		      
+		    }
 		  TotalNbrInteractionFactors += 2;
 		  ++Index;
 		}
@@ -410,6 +436,10 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing::
 		      this->InteractionFactorsupdown[i][Index] += this->PseudoPotentials[2][J >> 1] * TmpCoefficient;
 		    }
 		  this->InteractionFactorsupdown[i][Index] *= Factor;
+		  if ((m1 == m3) && (m2 == m4))
+		    {
+		      this->InteractionFactorsupdown[i][Index] -= 2.0 * this->ChargingEnergy;
+		    }
 		  ++TotalNbrInteractionFactors;
 		  ++Index;
 		}

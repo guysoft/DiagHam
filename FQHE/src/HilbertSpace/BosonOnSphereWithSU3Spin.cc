@@ -39,6 +39,7 @@
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "MathTools/BinomialCoefficients.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
+#include "GeneralTools/ArrayTools.h"
 
 #include <math.h>
 #include <cstdlib>
@@ -109,48 +110,47 @@ BosonOnSphereWithSU3Spin::BosonOnSphereWithSU3Spin (int nbrBosons, int totalLz, 
       N3 /= 3;
       this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrBosons, this->LzMax, (this->TotalLz + (this->NbrBosons * this->LzMax)) >> 1, N1, N2, N3);
     }
-  this->StateDescription1 = new unsigned long [this->LargeHilbertSpaceDimension];
-  this->StateDescription2 = new unsigned long [this->LargeHilbertSpaceDimension];
-  this->StateDescription3 = new unsigned long [this->LargeHilbertSpaceDimension];
-  this->StateDescriptionSigma[0] = this->StateDescription1;
-  this->StateDescriptionSigma[1] = this->StateDescription2;
-  this->StateDescriptionSigma[2] = this->StateDescription3;
-  long TmpHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->LzMax, this->LzMax, this->LzMax, (this->TotalLz + (this->NbrBosons * this->LzMax)) >> 1, 
-						       N1, N2, N3, 0l);
-//   for (int i = 0; i < TmpHilbertSpaceDimension; ++i)
-//     cout << i << " : " << hex << this->StateDescription1[i] << " " << this->StateDescription2[i] << " " << this->StateDescription3[i] << dec << endl;
-  if (TmpHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
+
+  if ( this->LargeHilbertSpaceDimension > 0l)
     {
-      cout << TmpHilbertSpaceDimension << " " << this->LargeHilbertSpaceDimension << endl;
-      cout << "Mismatch in State-count and State Generation in BosonOnSphereWithSU3Spin!" << endl;
-      exit(1);
-    }
-  this->LargeHilbertSpaceDimension = TmpHilbertSpaceDimension;
-  this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
-  cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
-
-
-
-  this->GenerateLookUpTable(memory);
-//   for (int i = 0; i < this->HilbertSpaceDimension; ++i)	
-//     {
-//       cout << i << " : ";
-//       this->PrintState(cout, i);
-//       cout << this->FindStateIndex(this->StateDescription1[i], this->StateDescription2[i], this->StateDescription3[i]);
-//       cout << endl;
-//     }
+      this->StateDescription1 = new unsigned long [this->LargeHilbertSpaceDimension];
+      this->StateDescription2 = new unsigned long [this->LargeHilbertSpaceDimension];
+      this->StateDescription3 = new unsigned long [this->LargeHilbertSpaceDimension];
+      this->StateDescriptionSigma[0] = this->StateDescription1;
+      this->StateDescriptionSigma[1] = this->StateDescription2;
+      this->StateDescriptionSigma[2] = this->StateDescription3;
+      long TmpHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->LzMax, this->LzMax, this->LzMax, (this->TotalLz + (this->NbrBosons * this->LzMax)) >> 1, 
+							   N1, N2, N3, 0l);
+      if (TmpHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
+	{
+	  cout << TmpHilbertSpaceDimension << " " << this->LargeHilbertSpaceDimension << endl;
+	  cout << "Mismatch in State-count and State Generation in BosonOnSphereWithSU3Spin!" << endl;
+	  exit(1);
+	}
+      this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+      cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;  
+     SortTripleElementArrayDownOrdering<unsigned long>(this->StateDescription1, this->StateDescription2, this->StateDescription3, this->LargeHilbertSpaceDimension);
+     this->GenerateLookUpTable(memory);
+//      for (int i = 0; i < this->HilbertSpaceDimension; ++i)	
+//        {
+// 	 cout << i << " : ";
+// 	 this->PrintState(cout, i);
+// 	 cout << this->FindStateIndex(this->StateDescription1[i], this->StateDescription2[i], this->StateDescription3[i]);
+// 	 cout << endl;
+//        }
 #ifdef __DEBUG__
-   int UsedMemory = 0;
-   UsedMemory += this->HilbertSpaceDimension * (3 * sizeof(unsigned long));
-   cout << "memory requested for Hilbert space = ";
-   if (UsedMemory >= 1024)
-    if (UsedMemory >= 1048576)
-      cout << (UsedMemory >> 20) << "Mo" << endl;
-    else
-      cout << (UsedMemory >> 10) << "ko" <<  endl;
-  else
-    cout << UsedMemory << endl;
+      int UsedMemory = 0;
+      UsedMemory += this->HilbertSpaceDimension * (3 * sizeof(unsigned long));
+      cout << "memory requested for Hilbert space = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
 #endif
+    }
 }
 
 // copy constructor (without duplicating datas)
@@ -166,9 +166,9 @@ BosonOnSphereWithSU3Spin::BosonOnSphereWithSU3Spin(const BosonOnSphereWithSU3Spi
   this->TotalLz = bosons.TotalLz;
   this->LzMax = bosons.LzMax;
   this->NbrLzValue = bosons.NbrLzValue;
-  this->N1LzMax = bosons.LzMax;
-  this->N2LzMax = bosons.LzMax;
-  this->N3LzMax = bosons.LzMax;
+  this->N1LzMax = bosons.N1LzMax;
+  this->N2LzMax = bosons.N2LzMax;
+  this->N3LzMax = bosons.N3LzMax;
   this->FermionicLzMax = bosons.FermionicLzMax;
   this->TotalTz = bosons.TotalTz;
   this->TotalY = bosons.TotalY;
@@ -271,9 +271,9 @@ BosonOnSphereWithSU3Spin& BosonOnSphereWithSU3Spin::operator = (const BosonOnSph
   this->TotalY = bosons.TotalY;
   this->LzMax = bosons.LzMax;
   this->NbrLzValue = bosons.NbrLzValue;
-  this->N1LzMax = bosons.LzMax;
-  this->N2LzMax = bosons.LzMax;
-  this->N3LzMax = bosons.LzMax;
+  this->N1LzMax = bosons.N1LzMax;
+  this->N2LzMax = bosons.N2LzMax;
+  this->N3LzMax = bosons.N3LzMax;
   this->FermionicLzMax = bosons.FermionicLzMax;
   this->LargeHilbertSpaceDimension = bosons.LargeHilbertSpaceDimension;
   this->TemporaryState1 = new unsigned long[this->NbrLzValue];

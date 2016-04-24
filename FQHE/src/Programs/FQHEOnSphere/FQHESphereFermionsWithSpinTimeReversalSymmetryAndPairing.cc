@@ -60,6 +60,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
+  (*SystemGroup) += new SingleDoubleOption ('\n', "charging-energy", "factor in front of the charging energy (i.e 1/(2C))", 0.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "average-nbrparticles", "average number of particles", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "s2-factor", "multiplicative factor in front of an optional S^2 operator than can be added to the Hamiltonian", 0.0);
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
@@ -76,6 +78,7 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
+  (*ToolsGroup) += new BooleanOption  ('\n', "test-hermitian", "test if the hamiltonian is hermitian");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -102,6 +105,7 @@ int main(int argc, char** argv)
   double* OneBodyPotentialUpUp = 0;
   double* OneBodyPotentialDownDown = 0;
   double* OneBodyPotentialUpDown = 0;
+  double* OneBodyPotentialPairing = 0;
   double** PseudoPotentials  = new double*[3];
   for (int i = 0; i < 3; ++i)
     {
@@ -115,15 +119,19 @@ int main(int argc, char** argv)
     }
   else
     {
-      if (FQHESphereSU2GetPseudopotentials(Manager.GetString("interaction-file"), LzMax, PseudoPotentials, 
-					   OneBodyPotentialUpUp, OneBodyPotentialDownDown, OneBodyPotentialUpDown) == false)
+      if (FQHESphereSU2GetPseudopotentialsWithPairing(Manager.GetString("interaction-file"), LzMax, PseudoPotentials, 
+						      OneBodyPotentialUpUp, OneBodyPotentialDownDown, OneBodyPotentialUpDown, OneBodyPotentialPairing) == false)
 	{
 	  return -1;
 	}
     }
-
+  if (OneBodyPotentialUpDown != 0)
+    {
+      cout << "warning, OneBodyPotentialUpDown is not supported" << endl;
+    }
   char* OutputNameLz = new char [256 + strlen(Manager.GetString("interaction-name"))];
-  sprintf (OutputNameLz, "fermions_sphere_su2_%s_pairing_n_0_2s_%d_sz_%d_lz.dat", Manager.GetString("interaction-name"), LzMax, TotalSz);
+  sprintf (OutputNameLz, "fermions_sphere_su2_%s_cenergy_%.6f_n0_%.6f_pairing_n_0_2s_%d_sz_%d_lz.dat", Manager.GetString("interaction-name"), 
+	   Manager.GetDouble("charging-energy"), Manager.GetDouble("average-nbrparticles"), LzMax, TotalSz);
 
   int MinNbrParticles = abs(TotalSz);
   int MaxNbrParticles = (2 * (LzMax + 1)) - abs(TotalSz);
@@ -166,7 +174,9 @@ int main(int argc, char** argv)
       Hamiltonian = new ParticleOnSphereWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing (Space, LzMax, 
 												   PseudoPotentials, OneBodyPotentialUpUp, 
 												   OneBodyPotentialDownDown,
-												   OneBodyPotentialUpDown,
+												   OneBodyPotentialPairing,
+												   Manager.GetDouble("charging-energy"), 
+												   Manager.GetDouble("average-nbrparticles"),
 												   Architecture.GetArchitecture(), 
 												   Memory, DiskCacheFlag,
 												   LoadPrecalculationFileName);
@@ -180,7 +190,8 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("eigenstate") == true)	
 	{
 	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "fermions_sphere_su2_%s_pairing_n_0_2s_%d_sz_%d_lz_%d", Manager.GetString("interaction-name"), LzMax, TotalSz, L);
+	  sprintf (EigenvectorName, "fermions_sphere_su2_%s_cenergy_%.6f_n0_%.6f_pairing_n_0_2s_%d_sz_%d_lz_%d", Manager.GetString("interaction-name"), 
+		   Manager.GetDouble("charging-energy"), Manager.GetDouble("average-nbrparticles"), LzMax, TotalSz, L);
 	}
       
       QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);

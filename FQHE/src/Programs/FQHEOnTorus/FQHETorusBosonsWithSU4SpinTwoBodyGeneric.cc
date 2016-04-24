@@ -67,8 +67,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system", 0);
   (*SystemGroup) += new SingleIntegerOption  ('i', "total-isosz", "twice the z component of the total isospin (i.e valley SU(2) degeneracy) of the system", 0);
   (*SystemGroup) += new SingleIntegerOption  ('e', "total-entanglement", "twice the projection of the total spin-isopsin entanglement of the system", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "total-tz", "twice the quantum number of the system associated to the Tz generator", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "total-y", "three time the quantum number of the system associated to the Y generator", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-n1", "number of up-plus particles", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-n2", "number of up-minus particles", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-n3", "number of down-plus particles", 0);

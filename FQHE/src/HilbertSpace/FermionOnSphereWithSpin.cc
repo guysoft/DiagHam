@@ -115,8 +115,8 @@ FermionOnSphereWithSpin::FermionOnSphereWithSpin (int nbrFermions, int totalLz, 
 
   this->Flag.Initialize();
   this->TargetSpace = this;
-  this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
-  this->StateHighestBit = new int [this->HilbertSpaceDimension];  
+  this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+  this->StateHighestBit = new int [this->LargeHilbertSpaceDimension];  
 //   if (this->GenerateStates(this->NbrFermions, this->LzMax, this->TotalLz, this->TotalSpin) != this->HilbertSpaceDimension)
 //     {
 //       cout << "Mismatch in State-count and State Generation in FermionOnSphereWithSpin!" << endl;
@@ -357,7 +357,7 @@ bool FermionOnSphereWithSpin::WriteHilbertSpace (char* fileName)
 unsigned long FermionOnSphereWithSpin::Ad (unsigned long state, int m, int s, double& coefficient)
 {
   m = (m<<1) + (s&1);
-  if ((state & (0x1ul << m)) != 0)
+  if ((state & (0x1ul << m)) != 0x0ul)
     {
       coefficient=0.0;
       return 0x0l;
@@ -427,7 +427,7 @@ int FermionOnSphereWithSpin::AduAduAuAu (int index, int m1, int m2, int n1, int 
   cout << "signs:     " << tmpB << endl;*/
   
   // test if possible to create particles at m1, m2:
-  if (((State & (0x1l << m2))!= 0)|| ((State & (0x1l << m1)) != 0))
+  if (((State & (0x1l << m2))!= 0x0ul)|| ((State & (0x1l << m1)) != 0x0ul))
     {
       //cout << "Third exit" << endl;
       coefficient = 0.0;
@@ -505,7 +505,7 @@ int FermionOnSphereWithSpin::AddAddAdAd (int index, int m1, int m2, int n1, int 
   State &= ~(0x1l << n1);
 
   // test if possible to create particles at m1, m2:
-  if (((State & (0x1l << m2))!= 0)|| ((State & (0x1l << m1)) != 0))
+  if (((State & (0x1l << m2))!= 0x0ul)|| ((State & (0x1l << m1)) != 0x0ul))
     {
       coefficient = 0.0;
       return this->TargetSpace->HilbertSpaceDimension;
@@ -575,7 +575,7 @@ int FermionOnSphereWithSpin::AddAduAdAu (int index, int m1, int m2, int n1, int 
   State &= ~(0x1l << n1);
 
   // test if possible to create particles at m1, m2:
-  if (((State & (0x1l << m2))!= 0)|| ((State & (0x1l << m1)) != 0))
+  if (((State & (0x1l << m2))!= 0x0ul)|| ((State & (0x1l << m1)) != 0x0ul))
     {
       coefficient = 0.0;
       return this->TargetSpace->HilbertSpaceDimension;
@@ -617,7 +617,7 @@ int FermionOnSphereWithSpin::AddAduAdAu (int index, int m1, int m2, int n1, int 
 
 double FermionOnSphereWithSpin::AduAu (int index, int m)
 {
-  if ((this->StateDescription[index] & (0x2l << (m << 1))) != 0)
+  if ((this->StateDescription[index] & (0x2l << (m << 1))) != 0x0ul)
     return 1.0;
   else
     return 0.0;
@@ -631,7 +631,7 @@ double FermionOnSphereWithSpin::AduAu (int index, int m)
 
 double FermionOnSphereWithSpin::AddAd (int index, int m)
 {
-  if ((this->StateDescription[index] & (0x1l << (m << 1))) != 0)
+  if ((this->StateDescription[index] & (0x1l << (m << 1))) != 0x0ul)
     return 1.0;
   else
     return 0.0;
@@ -670,7 +670,7 @@ int FermionOnSphereWithSpin::AduAu (int index, int m, int n, double& coefficient
     while ((State >> NewLargestBit) == 0)
       --NewLargestBit;
 
-  if ((State & (0x1ul << m))!= 0)
+  if ((State & (0x1ul << m))!= 0x0ul)
     {
       coefficient = 0.0;
       return this->TargetSpace->HilbertSpaceDimension;
@@ -722,7 +722,7 @@ int FermionOnSphereWithSpin::AddAd (int index, int m, int n, double& coefficient
     while ((State >> NewLargestBit) == 0)
       --NewLargestBit;
 
-  if ((State & (0x1ul << m))!= 0)
+  if ((State & (0x1ul << m))!= 0x0ul)
     {
       coefficient = 0.0;
       return this->TargetSpace->HilbertSpaceDimension;
@@ -775,7 +775,7 @@ int FermionOnSphereWithSpin::AduAd (int index, int m, int n, double& coefficient
     while ((State >> NewLargestBit) == 0)
       --NewLargestBit;
 
-  if ((State & (0x1ul << m))!= 0)
+  if ((State & (0x1ul << m))!= 0x0ul)
     {
       coefficient = 0.0;
       return this->TargetSpace->HilbertSpaceDimension;
@@ -829,7 +829,7 @@ int FermionOnSphereWithSpin::AddAu (int index, int m, int n, double& coefficient
     while ((State >> NewLargestBit) == 0)
       --NewLargestBit;
 
-  if ((State & (0x1ul << m))!= 0)
+  if ((State & (0x1ul << m))!= 0x0ul)
     {
       coefficient = 0.0;
       return this->TargetSpace->HilbertSpaceDimension;
@@ -986,7 +986,7 @@ int FermionOnSphereWithSpin::AduAdu (int m1, int m2, double& coefficient)
   ++m1;
   m2 <<= 1;
   ++m2;
-  if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
+  if (((TmpState & (0x1ul << m1)) != 0x0ul) || ((TmpState & (0x1ul << m2)) != 0x0ul) || (m1 == m2))
     return this->TargetSpace->HilbertSpaceDimension;
   int NewLzMax = this->ProdALzMax;
   coefficient = 1.0;
@@ -1030,7 +1030,7 @@ int FermionOnSphereWithSpin::AddAdd (int m1, int m2, double& coefficient)
   unsigned long TmpState = this->ProdATemporaryState;
   m1 <<= 1;
   m2 <<= 1;
-  if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
+  if (((TmpState & (0x1ul << m1)) != 0x0ul) || ((TmpState & (0x1ul << m2)) != 0x0ul) || (m1 == m2))
     return this->TargetSpace->HilbertSpaceDimension;
   int NewLzMax = this->ProdALzMax;
   coefficient = 1.0;
@@ -1075,7 +1075,7 @@ int FermionOnSphereWithSpin::AduAdd (int m1, int m2, double& coefficient)
   m1 <<= 1;
   ++m1;
   m2 <<= 1;
-  if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0))
+  if (((TmpState & (0x1ul << m1)) != 0x0ul) || ((TmpState & (0x1ul << m2)) != 0x0ul))
     return this->TargetSpace->HilbertSpaceDimension;
   int NewLzMax = this->ProdALzMax;
   coefficient = 1.0;
@@ -1121,7 +1121,7 @@ int FermionOnSphereWithSpin::AduAdu (int index, int m1, int m2, double& coeffici
   ++m1;
   m2 <<= 1;
   ++m2;
-  if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
+  if (((TmpState & (0x1ul << m1)) != 0x0ul) || ((TmpState & (0x1ul << m2)) != 0x0ul) || (m1 == m2))
     return this->TargetSpace->HilbertSpaceDimension;
   int NewLzMax = this->StateHighestBit[index];
   coefficient = 1.0;
@@ -1165,7 +1165,7 @@ int FermionOnSphereWithSpin::AddAdd (int index, int m1, int m2, double& coeffici
   unsigned long TmpState = this->StateDescription[index];
   m1 <<= 1;
   m2 <<= 1;
-  if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
+  if (((TmpState & (0x1ul << m1)) != 0x0ul) || ((TmpState & (0x1ul << m2)) != 0x0ul) || (m1 == m2))
     return this->TargetSpace->HilbertSpaceDimension;
   int NewLzMax = this->StateHighestBit[index];
   coefficient = 1.0;
@@ -1210,7 +1210,7 @@ int FermionOnSphereWithSpin::AduAdd (int index, int m1, int m2, double& coeffici
   m1 <<= 1;
   ++m1;
   m2 <<= 1;
-  if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0))
+  if (((TmpState & (0x1ul << m1)) != 0x0ul) || ((TmpState & (0x1ul << m2)) != 0x0l))
     return this->TargetSpace->HilbertSpaceDimension;
   int NewLzMax = this->StateHighestBit[index];
   coefficient = 1.0;
@@ -1242,6 +1242,48 @@ int FermionOnSphereWithSpin::AduAdd (int index, int m1, int m2, double& coeffici
 }
 
 
+// apply a_n1_u a_n2_d operator to a state, assuming a different target space
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator (spin up)
+// n2 = second index for annihilation operator (spin down)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSpin::AuAd (int index, int n1, int n2, double& coefficient)
+{
+  unsigned long TmpState = this->StateDescription[index];
+  n1 <<= 1;
+  ++n1;
+  n2 <<= 1;
+  if (((TmpState & (0x1ul << n1)) == 0x0ul) || ((TmpState & (0x1ul << n2)) == 0x0ul))
+    return this->TargetSpace->HilbertSpaceDimension;
+  this->ProdALzMax = this->StateHighestBit[index];
+  coefficient = this->SignLookUpTable[(TmpState >> n2) & this->SignLookUpTableMask[n2]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 16)) & this->SignLookUpTableMask[n2 + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
+#endif
+  TmpState &= ~(0x1ul << n2);
+  coefficient *= this->SignLookUpTable[(TmpState >> n1) & this->SignLookUpTableMask[n1]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 16)) & this->SignLookUpTableMask[n1 + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
+#endif
+  TmpState &= ~(0x1ul << n1);
+  int NewLzMax = this->StateHighestBit[index];
+  if (TmpState != 0x0ul)
+    {
+      while ((TmpState >> NewLzMax) == 0)
+	--NewLzMax;
+    }
+  else
+    NewLzMax = 0;
+  return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
+}
+  
 // apply a_n_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
 //
 // index = index of the state on which the operator has to be applied
@@ -1318,7 +1360,7 @@ int FermionOnSphereWithSpin::Adu (int m, double& coefficient)
   m <<= 1;
   ++m;
   
-  if ((TmpState & (0x1ul << m)) != 0)
+  if ((TmpState & (0x1ul << m)) != 0x0ul)
     return this->TargetSpace->HilbertSpaceDimension;
   int NewLzMax = this->ProdALzMax;
   
@@ -1348,7 +1390,7 @@ int FermionOnSphereWithSpin::Add (int m, double& coefficient)
   unsigned long TmpState = this->ProdATemporaryState;
   m <<= 1;
   
-  if ((TmpState & (0x1ul << m)) != 0)
+  if ((TmpState & (0x1ul << m)) != 0x0ul)
     return this->TargetSpace->HilbertSpaceDimension;
   int NewLzMax = this->ProdALzMax;
   
@@ -1460,7 +1502,7 @@ int FermionOnSphereWithSpin::ProdAd (int* m, int* spinIndices, int nbrIndices, d
   for (int i = nbrIndices - 1; i >= 0; --i)
     {
       Index = (m[i] << 1) + spinIndices[i];
-      if ((TmpState & (0x1l << Index)) != 0)
+      if ((TmpState & (0x1l << Index)) != 0x0ul)
 	{
 	  coefficient = 0.0;
 	  return this->TargetSpace->HilbertSpaceDimension;
@@ -1500,7 +1542,7 @@ int FermionOnSphereWithSpin::ProdAd (int* m, int spinIndices, int nbrIndices, do
   for (int i = nbrIndices - 1; i >= 0; --i)
     {
       Index = (m[i] << 1) + ((spinIndices >> i) & 0x1);
-      if ((TmpState & (0x1l << Index)) != 0)
+      if ((TmpState & (0x1l << Index)) != 0x0ul)
 	{
 	  coefficient = 0.0;
 	  return this->TargetSpace->HilbertSpaceDimension;
@@ -4050,7 +4092,7 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlater(unsigned long * slat
 	      for (int i = 0; (i < HalfNbrParticles )&& (Bool); i++)
 		{
 		  Mask = (1ul << ((State[i]<<1) +1));
-		  if((TmpState & Mask) != 0)
+		  if((TmpState & Mask) != 0x0ul)
 		    Bool = false;
 		  unsigned long TmpState2 = TmpState & (Mask - 1ul);
 #ifdef  __64_BITS__
@@ -4068,7 +4110,7 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlater(unsigned long * slat
 	      for (int i = HalfNbrParticles; (i < this->NbrFermions)&& (Bool); i++)
 		{
 		  Mask = (1ul << ((State[i]<<1)));
-		  if((TmpState & Mask) != 0)
+		  if((TmpState & Mask) != 0x0ul)
 		    Bool = false;
 		  unsigned long TmpState2 = TmpState & (Mask - 1ul);
 #ifdef  __64_BITS__
@@ -4200,7 +4242,7 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(unsigned l
 		      for (int i = 0; i < HalfNbrParticles ; i++)
 			{
 			  Mask = (1ul << ((State[i]<<1) +1));
-			  if((TmpState & Mask) != 0)
+			  if((TmpState & Mask) != 0x0ul)
 			    {
 			      Bool = false;
 			      break;
@@ -4223,7 +4265,7 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(unsigned l
 			  for (int i = HalfNbrParticles; i < this->NbrFermions ; i++)
 			    {
 			      Mask = (1ul << ((State[i]<<1)));
-			      if((TmpState & Mask) != 0)
+			      if((TmpState & Mask) != 0x0ul)
 				{
 				  Bool = false;
 				  break;
@@ -4399,7 +4441,7 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(unsigned l
 		      for (int i = 0; i < HalfNbrParticles ; i++)
 			{
 			  Mask = (1ul << ((State[i]<<1) +1));
-			  if((TmpState & Mask) != 0)
+			  if((TmpState & Mask) != 0x0ul)
 			    {
 			      Bool = false;
 			      break;
@@ -4422,7 +4464,7 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(unsigned l
 			  for (int i = HalfNbrParticles; i < this->NbrFermions ; i++)
 			    {
 			      Mask = (1ul << ((State[i]<<1)));
-			      if((TmpState & Mask) != 0)
+			      if((TmpState & Mask) != 0x0ul)
 				{
 				  Bool = false;
 				  break;
@@ -4569,7 +4611,7 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(unsigned l
 		     for (int i = 0; i < HalfNbrParticles ; i++)
 			{
 			  Mask = (1ul << ((State[i]<<1) +1));
-			  if((TmpState & Mask) != 0)
+			  if((TmpState & Mask) != 0x0ul)
 			    {
 			      Bool = false;
 			      break;
@@ -4592,7 +4634,7 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(unsigned l
 			  for (int i = HalfNbrParticles; i < this->NbrFermions ; i++)
 			    {
 			      Mask = (1ul << ((State[i]<<1)));
-			      if((TmpState & Mask) != 0)
+			      if((TmpState & Mask) != 0x0ul)
 				{
 				  Bool = false;
 				  break;
@@ -4735,7 +4777,7 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlater(unsigned long * slat
 		      for (int i = 0; (i < this->NbrFermionsUp )&& (Bool); i++)
 			{
 			  Mask = (1ul << ((State[i]<<1) +1));
-			  if((TmpState & Mask) != 0)
+			  if((TmpState & Mask) != 0x0ul)
 			    Bool = false;
 		  unsigned long TmpState2 = TmpState & (Mask - 1ul);
 #ifdef  __64_BITS__
@@ -4753,7 +4795,7 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlater(unsigned long * slat
 	      for (int i = this->NbrFermionsUp; (i < this->NbrFermions)&& (Bool); i++)
 		{
 		  Mask = (1ul << ((State[i]<<1)));
-		  if((TmpState & Mask) != 0)
+		  if((TmpState & Mask) != 0x0ul)
 		    Bool = false;
 		  unsigned long TmpState2 = TmpState & (Mask - 1ul);
 #ifdef  __64_BITS__

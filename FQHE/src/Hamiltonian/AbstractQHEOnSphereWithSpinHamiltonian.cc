@@ -56,6 +56,17 @@ using std::ifstream;
 using std::ios;
 
 
+// default constructor
+//
+
+AbstractQHEOnSphereWithSpinHamiltonian::AbstractQHEOnSphereWithSpinHamiltonian()
+{
+  this->OneBodyInteractionFactorsupup = 0;
+  this->OneBodyInteractionFactorsdowndown = 0;
+  this->OneBodyInteractionFactorsupdown = 0;
+  this->OneBodyInteractionFactorsPairing = 0;
+}
+
 // destructor
 //
 
@@ -109,6 +120,8 @@ AbstractQHEOnSphereWithSpinHamiltonian::~AbstractQHEOnSphereWithSpinHamiltonian(
     delete[] this->OneBodyInteractionFactorsdowndown;
   if (this->OneBodyInteractionFactorsupdown != 0)
     delete [] this->OneBodyInteractionFactorsupdown;
+  if (this->OneBodyInteractionFactorsPairing != 0)
+    delete [] this->OneBodyInteractionFactorsPairing;
   
   if (this->S2Hamiltonian != 0)
     delete this->S2Hamiltonian;
@@ -542,7 +555,7 @@ long AbstractQHEOnSphereWithSpinHamiltonian::PartialFastMultiplicationMemory(int
     {
       for (int i = firstComponent; i < LastComponent; ++i)
 	{
-	  for (int j=0; j<= this->LzMax; ++j)
+	  for (int j = 0; j<= this->LzMax; ++j)
 	    {
 	      Index = TmpParticles->AddAu(i, j, j, Coefficient);
 	      if (Index < Dim)
@@ -551,6 +564,27 @@ long AbstractQHEOnSphereWithSpinHamiltonian::PartialFastMultiplicationMemory(int
 		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 		}
 	      Index = TmpParticles->AduAd(i, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  ++Memory;
+		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		}
+	    }
+	}
+    }
+  if (this->OneBodyInteractionFactorsPairing != 0)
+    {
+      for (int i = firstComponent; i < LastComponent; ++i)
+	{
+	  for (int j = 0; j <= this->LzMax; ++j)
+	    {
+	      Index = TmpParticles->AduAdd(i, j, this->LzMax - j, Coefficient);
+	      if (Index < Dim)
+		{
+		  ++Memory;
+		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		}
+	      Index = TmpParticles->AuAd(i, j, this->LzMax - j, Coefficient);
 	      if (Index < Dim)
 		{
 		  ++Memory;

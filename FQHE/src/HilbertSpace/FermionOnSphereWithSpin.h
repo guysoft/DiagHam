@@ -393,6 +393,15 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // return value = index of the destination state 
   virtual int AduAdd (int index, int m1, int m2, double& coefficient);
   
+  // apply a_n1_u a_n2_d operator to a state, assuming a different target space
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator (spin up)
+  // n2 = second index for annihilation operator (spin down)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AuAd (int index, int n1, int n2, double& coefficient);
+  
   // apply a_n_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
   //
   // index = index of the state on which the operator has to be applied

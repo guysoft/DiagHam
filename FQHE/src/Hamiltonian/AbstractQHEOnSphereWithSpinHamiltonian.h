@@ -111,7 +111,9 @@ class AbstractQHEOnSphereWithSpinHamiltonian : public AbstractQHEOnSphereHamilto
   double* OneBodyInteractionFactorsdowndown;
   // array that contains all one-body interaction factors for tunnelling terms for particles with different spin
   double* OneBodyInteractionFactorsupdown;
-  
+  // array that contains all one-body interaction factors for the pairing term
+  double* OneBodyInteractionFactorsPairing;  
+
   // pointer to an optional L^2 operator in the Hamiltonian 
   ParticleOnSphereWithSpinL2Hamiltonian* L2Hamiltonian;
   // pointer to an optional S^2 operator in the Hamiltonian 
@@ -119,11 +121,15 @@ class AbstractQHEOnSphereWithSpinHamiltonian : public AbstractQHEOnSphereHamilto
 
  public:
 
+  // default constructor
+  //
+  AbstractQHEOnSphereWithSpinHamiltonian();
+
   // destructor
   //
-  virtual ~AbstractQHEOnSphereWithSpinHamiltonian() = 0;
+  virtual ~AbstractQHEOnSphereWithSpinHamiltonian();
 
-    // ask if Hamiltonian implements methods using hermitian symmetry 
+  // ask if Hamiltonian implements methods using hermitian symmetry 
   //
   virtual bool IsHermitian();
 
@@ -822,20 +828,24 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNOneBodyAddMultiply
 	  }
       }
   else
-    if (this->OneBodyInteractionFactorsdowndown != 0)
-      {
-	double TmpDiagonal = 0.0;
-	for (int i = firstComponent; i < lastComponent; i += step)
-	  { 
-	    TmpDiagonal = 0.0;
-	    for (int j = 0; j <= this->LzMax; ++j) 
-	      TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * particles->AddAd(i, j);
-	    vDestination[i] += (this->HamiltonianShift + TmpDiagonal)* vSource[i];
-	  }
-      }	
-    else
-      for (int i = firstComponent; i < lastComponent; i += step)
-	vDestination[i] += this->HamiltonianShift * vSource[i];
+    {
+      if (this->OneBodyInteractionFactorsdowndown != 0)
+	{
+	  double TmpDiagonal = 0.0;
+	  for (int i = firstComponent; i < lastComponent; i += step)
+	    { 
+	      TmpDiagonal = 0.0;
+	      for (int j = 0; j <= this->LzMax; ++j) 
+		TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * particles->AddAd(i, j);
+	      vDestination[i] += (this->HamiltonianShift + TmpDiagonal)* vSource[i];
+	    }
+	}	
+      else
+	{
+	  for (int i = firstComponent; i < lastComponent; i += step)
+	    vDestination[i] += this->HamiltonianShift * vSource[i];
+	}
+    }
   if (this->OneBodyInteractionFactorsupdown != 0)
     {
       double Coefficient;
@@ -856,6 +866,30 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNOneBodyAddMultiply
 	      if (Index < Dim)
 		{
 		  vDestination[Index] += Coefficient * OneBodyInteractionFactorsupdown[j] * Source;
+		}
+	    }
+	}
+    }
+  if (this->OneBodyInteractionFactorsPairing != 0)
+    {
+      double Coefficient;
+      double Source;
+      int Dim = particles->GetHilbertSpaceDimension();
+      int Index;
+      for (int i = firstComponent; i < lastComponent; i += step)
+	{
+	  Source = vSource[i];
+	  for (int j = 0; j <= this->LzMax; ++j)
+	    {
+	      Index = particles->AduAdd(i, j, this->LzMax - j, Coefficient);
+	      if (Index < Dim)
+		{
+		  vDestination[Index] += Coefficient * OneBodyInteractionFactorsPairing[j] * Source;
+		}
+	      Index = particles->AuAd(i, j, this->LzMax - j, Coefficient);
+	      if (Index < Dim)
+		{
+		  vDestination[Index] -= Coefficient * OneBodyInteractionFactorsPairing[j] * Source;
 		}
 	    }
 	}
@@ -956,18 +990,41 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNOneBodyAddMultiply
 	      if (Index < Dim)
 		{
 		  for (int p = 0; p < nbrVectors; ++p)
-		    vDestinations[p][Index] += Coefficient * OneBodyInteractionFactorsupdown[j] * vSources[p][i];
+		    vDestinations[p][Index] += Coefficient * this->OneBodyInteractionFactorsupdown[j] * vSources[p][i];
 		}
 	      Index = particles->AduAd(i, j, j, Coefficient);
 	      if (Index < Dim)
 		{
 		  for (int p = 0; p < nbrVectors; ++p)
-		    vDestinations[p][Index] += Coefficient * OneBodyInteractionFactorsupdown[j] * vSources[p][i];
+		    vDestinations[p][Index] += Coefficient * this->OneBodyInteractionFactorsupdown[j] * vSources[p][i];
 		}
 	    }
 	}
     }
-
+  if (this->OneBodyInteractionFactorsPairing != 0)
+    {
+      double Coefficient;
+      int Dim = particles->GetHilbertSpaceDimension();
+      int Index;
+      for (int i = firstComponent; i < lastComponent; i += step)
+	{
+	  for (int j = 0; j <= this->LzMax; ++j)
+	    {
+	      Index = particles->AduAdd(i, j, this->LzMax - j, Coefficient);
+	      if (Index < Dim)
+		{
+		  for (int p = 0; p < nbrVectors; ++p)
+		    vDestinations[p][Index] += Coefficient * this->OneBodyInteractionFactorsPairing[j] * vSources[p][i];
+		}
+	      Index = particles->AuAd(i, j, this->LzMax - j, Coefficient);
+	      if (Index < Dim)
+		{
+		  for (int p = 0; p < nbrVectors; ++p)
+		    vDestinations[p][Index] -= Coefficient * this->OneBodyInteractionFactorsPairing[j] * vSources[p][i];
+		}
+	    }
+	}
+    }
 }
 
 // core part of the FastMultiplication method involving the one-body interaction
@@ -1007,14 +1064,37 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNOneBodyFastMultipl
 	  if (Index < Dim)
 	    {
 	      indexArray[position] = Index;
-	      coefficientArray[position] = Coefficient * OneBodyInteractionFactorsupdown[j];
+	      coefficientArray[position] = Coefficient * this->OneBodyInteractionFactorsupdown[j];
 	      ++position;
 	    }
 	  Index = particles->AduAd(index + this->PrecalculationShift, j, j, Coefficient);
 	  if (Index < Dim)
 	    {
 	      indexArray[position] = Index;
-	      coefficientArray[position] = Coefficient * OneBodyInteractionFactorsupdown[j];
+	      coefficientArray[position] = Coefficient * this->OneBodyInteractionFactorsupdown[j];
+	      ++position;
+	    }
+	}
+    }    
+  if (this->OneBodyInteractionFactorsPairing != 0)
+    {
+      int Dim = particles->GetHilbertSpaceDimension();
+      double Coefficient;
+      int Index;
+      for (int j = 0; j <= this->LzMax; ++j)
+	{
+	  Index = particles->AduAdd(index + this->PrecalculationShift, j, this->LzMax - j, Coefficient);
+	  if (Index < Dim)
+	    {
+	      indexArray[position] = Index;
+	      coefficientArray[position] = Coefficient * this->OneBodyInteractionFactorsPairing[j];
+	      ++position;
+	    }
+	  Index = particles->AuAd(index + this->PrecalculationShift, j, this->LzMax - j, Coefficient);
+	  if (Index < Dim)
+	    {
+	      indexArray[position] = Index;
+	      coefficientArray[position] = -Coefficient * this->OneBodyInteractionFactorsPairing[j];
 	      ++position;
 	    }
 	}
@@ -1192,6 +1272,27 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNOneBodyFastMultipl
 		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 		}
 	      Index = particles->AduAd(i, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  ++memory;
+		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		}
+	    }
+	}
+    }
+  if (this->OneBodyInteractionFactorsPairing != 0)
+    {
+      for (int i = firstComponent; i < lastComponent; ++i)
+	{
+	  for (int j=0; j<= this->LzMax; ++j)
+	    {
+	      Index = particles->AduAdd(i, j, this->LzMax - j, Coefficient);
+	      if (Index < Dim)
+		{
+		  ++memory;
+		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		}
+	      Index = particles->AuAd(i, j, this->LzMax - j, Coefficient);
 	      if (Index < Dim)
 		{
 		  ++memory;
