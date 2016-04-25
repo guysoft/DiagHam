@@ -3,6 +3,7 @@
 
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/StringTools.h"
 
 #include "Options/Options.h"
 
@@ -31,6 +32,7 @@ int main(int argc, char** argv)
   // some running options and help
   OptionManager Manager ("FQHETorusBosonsFilterOccupation" , "0.01");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
+  OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
@@ -40,11 +42,13 @@ int main(int argc, char** argv)
   Manager += SystemGroup;
   //  Architecture.AddOptionGroup(&Manager);
 //  Manager += PrecalculationGroup;
+  Manager += OutputGroup;
   Manager += MiscGroup;
 //  Manager += ToolsGroup;
 
   (*SystemGroup) += new SingleStringOption  ('i', "input-state", "vector file that corresponds to the input state");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-occ", "maximum occupation per obital", 1);
+  (*OutputGroup) += new BooleanOption  ('\n', "discard-vector", "do not store the filtered state");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -89,6 +93,35 @@ int main(int argc, char** argv)
       cout << "error: vector and Hilbert-space have unequal dimensions " << InputStateWithTranslations.GetVectorDimension() 
 	   << " " << SpaceWithTranslations->GetHilbertSpaceDimension() << endl;
       return -1;
+    }
+  unsigned long* TmpState = new unsigned long [NbrFluxQuanta];
+  ComplexVector OutputStateWithTranslations (SpaceWithTranslations->GetLargeHilbertSpaceDimension(), true);
+  double TotalWeight = 0.0;
+  unsigned long MaxOccupation = (unsigned long) Manager.GetInteger("max-occ");
+  for (long i = 0l; i < SpaceWithTranslations->GetLargeHilbertSpaceDimension(); ++i)
+    {
+      SpaceWithTranslations->GetOccupationNumber(i, TmpState);
+      int Pos = 0;
+      while ((Pos < NbrFluxQuanta) && (TmpState[Pos] <= MaxOccupation))
+	++Pos;
+      if (Pos == NbrFluxQuanta)
+	{
+	  OutputStateWithTranslations[i] = InputStateWithTranslations[i];
+	  TotalWeight += SqrNorm(InputStateWithTranslations[i]);
+	}
+    }
+  cout << "total weight with occupation <= " << MaxOccupation << " : " <<  TotalWeight << endl;
+  if (Manager.GetBoolean("discard-vector") == false)
+    {
+      OutputStateWithTranslations /= OutputStateWithTranslations.Norm();
+      char* TmpString = new char [32];
+      sprintf (TmpString, "torus_maxocc_%ld_", Manager.GetInteger("max-occ"));  
+      char* OutputFileName = ReplaceString(Manager.GetString("input-state"), "torus_", TmpString);
+      if (OutputStateWithTranslations.WriteVector(OutputFileName) == false)
+	{
+	  cout << "error while writing " << OutputFileName << endl;
+	  return -1;
+	}  
     }
   return 0;
 }

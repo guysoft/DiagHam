@@ -221,7 +221,11 @@ public:
   // return value =  multiplicative factor 
   virtual double A (int index, int n);
 
-
+  // convert a state to its occupation number representation
+  //
+  // index = index of the state
+  // finalState = reference on the array where the occupation number representation has to be stored
+  virtual void GetOccupationNumber(long index, unsigned long*& finalState);
 
   // return matrix representation of the annihilation operator a_i
   //
@@ -364,27 +368,27 @@ public:
   // initialState = initial  bosonic state
   // initialStateLzMax = initial bosonic state maximum Ky value
   // finalState = reference on the array where the monomial representation has to be stored
-  void ConvertToMonomial(unsigned long* initialState, int initialStateKyMax, unsigned long*& finalState);
+  virtual void ConvertToMonomial(unsigned long* initialState, int initialStateKyMax, unsigned long*& finalState);
 
   // convert a bosonic state to its monomial representation
   //
   // initialState = initial bosonic state in its fermionic representation
   // initialStateLzMax = initial bosonic state maximum Lz value
   // finalState = reference on the array where the monomial representation has to be stored
-  void ConvertToMonomial(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState);
+  virtual void ConvertToMonomial(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState);
 
   // convert a bosonic state from its monomial representation
   //
   // initialState = array where the monomial representation is stored
   // finalState = bosonic state
   // return value = maximum Ky value reached by a particle
-  int ConvertFromMonomial(unsigned long* initialState, unsigned long*& finalState);
+  virtual int ConvertFromMonomial(unsigned long* initialState, unsigned long*& finalState);
 
   // convert a bosonic state from its monomial representation
   //
   // initialState = array where the monomial representation is stored
   // return value = bosonic state in its fermionic representation
-  unsigned long ConvertFromMonomial(unsigned long* initialState);
+  virtual unsigned long ConvertFromMonomial(unsigned long* initialState);
 
   // convert a state defined in the Ky basis into a state in the (Kx,Ky) basis
   //
@@ -518,6 +522,25 @@ inline void BosonOnTorusWithMagneticTranslationsShort::ConvertToMonomial(unsigne
 	  --initialStateKyMax;
 	}
     }
+}
+
+// convert a state to its occupation number representation
+//
+// index = index of the state
+// finalState = reference on the array where the occupation number representation has to be stored
+
+inline void BosonOnTorusWithMagneticTranslationsShort::GetOccupationNumber(long index, unsigned long*& finalState)
+{
+  int FinalStateLzMax;
+  unsigned long InitialState = this->StateDescription[index];
+  int InitialStateLzMax = this->FermionicMaxMomentum;
+  while ((InitialState >> InitialStateLzMax) == 0x0ul)
+    {
+      --InitialStateLzMax;
+    }
+  this->FermionToBoson(InitialState, InitialStateLzMax, finalState, FinalStateLzMax);
+  for (++FinalStateLzMax; FinalStateLzMax < this->MaxMomentum; ++FinalStateLzMax)
+    finalState[FinalStateLzMax] = 0x0ul;
 }
 
 // find how many translations on the x direction are needed to obtain the same state
