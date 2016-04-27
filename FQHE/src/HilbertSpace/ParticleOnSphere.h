@@ -387,6 +387,13 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value = index of the destination state 
   virtual int Ad (int m, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
     
+  // apply a_n  operator to a given state. 
+  //
+  // index = index of the state on which the operator has to be applied
+  // n = index for annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value =  index of the resulting state 
+  virtual int A (int index, int n, double& coefficient);
 
   // check whether HilbertSpace implements ordering of operators
   //
@@ -842,6 +849,12 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // bVectors = transposed matrix than contains the singular vectors of the part B
   virtual void RebuildStateFromSchmidtDecompositionParticlePartition(int nbrParticleSector, int lzSector, RealVector& schmidtDecomposedState, 
 									     int nbrSingularValues, double* singularValues, RealMatrix& aVectors, RealMatrix& bVectors);
+
+  // convert a state to its occupation number representation
+  //
+  // index = index of the state
+  // finalState = reference on the array where the occupation number representation has to be stored
+  virtual void GetOccupationNumber(long index, unsigned long*& finalState);
 
   // get the list of occupied orbitals in a given state
   //

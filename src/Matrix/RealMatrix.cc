@@ -1048,6 +1048,58 @@ RealMatrix& RealMatrix::NormalizeColumns ()
   return *this;
 }
 
+// orthonormalize matrix column vectors
+//
+// return value = reference on current matrix
+
+RealMatrix& RealMatrix::OrthoNormalizeColumns ()
+{
+  double* tmp = new double [this->NbrColumn];
+  for (int i = 0; i < this->NbrColumn; i++)
+    {
+      for (int j = 0; j < i; j++)
+	{
+	  tmp[j] = this->Columns[j] * this->Columns[i];
+	}
+      for (int j = 0; j < i; j++)
+	{
+	  this->Columns[i].AddLinearCombination(-tmp[j], this->Columns[j]);
+	}
+      this->Columns[i].Normalize();
+    }      
+  delete[] tmp;
+  return *this;
+}
+
+// orthonormalize matrix column vectors, computing the transformation matrix to the new orthonormal basis
+//
+// transformation= reference on the transformation matrix
+// return value = reference on current matrix
+
+RealMatrix& RealMatrix::OrthoNormalizeColumns (RealMatrix& transformation)
+{
+  double* tmp = new double [this->NbrColumn];
+  transformation = RealMatrix (this->NbrColumn, this->NbrColumn, true);
+  transformation.SetToIdentity();
+  for (int i = 0; i < this->NbrColumn; i++)
+    {
+      for (int j = 0; j < i; j++)
+	{
+	  tmp[j] = this->Columns[j] * this->Columns[i];
+	}
+      for (int j = 0; j < i; j++)
+	{
+	  this->Columns[i].AddLinearCombination(-tmp[j], this->Columns[j]);
+	  transformation[i].AddLinearCombination(-tmp[j], transformation[j]);
+	}
+      double TmpNorm = 1.0 / this->Columns[i].Norm();
+      this->Columns[i] *= TmpNorm;
+      transformation[i] *= TmpNorm;
+    }
+  delete[] tmp;
+  return *this;
+}
+
 // transpose matrix
 //
 // return value = reference on current matrix

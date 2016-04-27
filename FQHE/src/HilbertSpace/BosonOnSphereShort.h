@@ -294,6 +294,14 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = index of the destination state 
   virtual int Ad (int m, double& coefficient);
 
+  // apply a_n  operator to a given state. 
+  //
+  // index = index of the state on which the operator has to be applied
+  // n = index for annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value =  index of the resulting state 
+  virtual int A (int index, int n, double& coefficient);
+
   // print a given State
   //
   // Str = reference on current output stream 

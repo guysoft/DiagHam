@@ -407,6 +407,14 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value =  multiplicative factor 
   virtual double A (int index, int n);
 
+  // apply a_n  operator to a given state. 
+  //
+  // index = index of the state on which the operator has to be applied
+  // n = index for annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value =  index of the resulting state 
+  virtual int A (int index, int n, double& coefficient);
+
   // apply a^+_n  operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad or A call
   //
   // index = index of the state on which the operator has to be applied
@@ -450,6 +458,12 @@ class FermionOnSphere :  public ParticleOnSphere
   // fileName = name of the file where the Hilbert space description has to be saved
   // return value = true if no error occured
   virtual bool WriteHilbertSpace (char* fileName);
+
+  // convert a state to its occupation number representation
+  //
+  // index = index of the state
+  // finalState = reference on the array where the occupation number representation has to be stored
+  virtual void GetOccupationNumber(long index, unsigned long*& finalState);
 
   // get the list of occupied orbitals in a given state
   //
@@ -1308,6 +1322,18 @@ inline ostream& FermionOnSphere::PrintCompactState (ostream& Str, long state)
 {
   Str << this->StateDescription[state];
   return Str;
+}
+
+// convert a state to its occupation number representation
+//
+// index = index of the state
+// finalState = reference on the array where the occupation number representation has to be stored
+
+inline void FermionOnSphere::GetOccupationNumber(long index, unsigned long*& finalState)
+{
+  unsigned long TmpState = this->StateDescription[index];
+  for (int l = 0; l < this->NbrLzValue; ++l)
+    finalState[l] = (TmpState >> l) & 0x1ul;
 }
 
 #endif

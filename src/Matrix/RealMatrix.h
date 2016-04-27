@@ -359,6 +359,17 @@ class RealMatrix : public Matrix
   // return value = reference on current matrix
   RealMatrix& NormalizeColumns ();
 
+  // orthonormalize matrix column vectors
+  //
+  // return value = reference on current matrix
+  RealMatrix& OrthoNormalizeColumns ();
+
+  // orthonormalize matrix column vectors, computing the transformation matrix to the new orthonormal basis
+  //
+  // transformation= reference on the transformation matrix
+  // return value = reference on current matrix
+  RealMatrix& OrthoNormalizeColumns (RealMatrix& transformation);
+
   // transpose matrix
   //
   // return value = reference on current matrix

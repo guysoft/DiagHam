@@ -1279,6 +1279,43 @@ int FermionOnSphere::Ad (int m, double& coefficient)
   return this->FindStateIndex(TmpState, NewLzMax);
 }
 
+// apply a_n  operator to a given state. 
+//
+// index = index of the state on which the operator has to be applied
+// n = index for annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value =  index of the resulting state 
+
+int FermionOnSphere::A (int index, int n, double& coefficient)
+{
+  unsigned long TmpState = this->StateDescription[index];
+  if ((TmpState & (0x1ul << n))== 0x0ul)
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  int NewLzMax = this->StateLzMax[index];
+  coefficient = this->SignLookUpTable[(TmpState >> n) & this->SignLookUpTableMask[n]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n + 16)) & this->SignLookUpTableMask[n + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(TmpState >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#endif
+  TmpState &= ~(0x1ul << n);
+
+  if (TmpState == 0x0ul)
+    {
+      NewLzMax = 0;
+    }
+  else
+    {
+      while ((TmpState >> NewLzMax) == 0x0ul)
+	--NewLzMax;
+    }
+  return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
+}
+
+
 
 // check whether HilbertSpace implements ordering of operators
 //
@@ -6849,11 +6886,12 @@ int FermionOnSphere::GetLzValue(int j)
 // index = state index
 // pauliK = number of particles allowed in consecutive orbitals
 // pauliR = number of consecutive orbitals
+
 bool FermionOnSphere::HasPauliExclusions(int index, int pauliK, int pauliR)
 {
   unsigned long TmpState = this->StateDescription[index];
   int TmpLzMax = this->StateLzMax[index];
-  unsigned long Mask = (0x1ul << pauliR) - 1;
+  unsigned long Mask = (0x1ul << pauliR) - 0x1ul;
   unsigned long Sequence;
   int Max = TmpLzMax + 2 - pauliR;
   if (Max < 1)

@@ -553,6 +553,19 @@ int ParticleOnSphere::Ad (int m, double& coefficient, int& nbrTranslationX, int&
   return this->HilbertSpaceDimension;
 }
 
+// apply a_n  operator to a given state. 
+//
+// index = index of the state on which the operator has to be applied
+// n = index for annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value =  index of the resulting state 
+
+int ParticleOnSphere::A (int index, int n, double& coefficient)
+{
+  cout << "Warning: using the default operator ParticleOnSphere::A" << endl;
+  return this->HilbertSpaceDimension;
+}
+
 
 // check whether HilbertSpace implements ordering of operators
 //
@@ -1298,6 +1311,15 @@ RealVector& ParticleOnSphere::EvaluatePartialSchmidtDecompositionParticlePartiti
 
 void ParticleOnSphere::RebuildStateFromSchmidtDecompositionParticlePartition(int nbrParticleSector, int lzSector, RealVector& schmidtDecomposedState, 
 									     int nbrSingularValues, double* singularValues, RealMatrix& aVectors, RealMatrix& bVectors)
+{
+}
+
+// convert a state to its occupation number representation
+//
+// index = index of the state
+// finalState = reference on the array where the occupation number representation has to be stored
+
+void ParticleOnSphere::GetOccupationNumber(long index, unsigned long*& finalState)
 {
 }
 

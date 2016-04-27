@@ -576,7 +576,6 @@ double BosonOnSphereShort::A (int index, int n)
       while ((this->ProdATemporaryState[this->ProdATemporaryStateLzMax] == 0)&&( this->ProdATemporaryStateLzMax > 0 ))
 	--this->ProdATemporaryStateLzMax;
     }
-  
   return coefficient;
 
 }
@@ -605,6 +604,35 @@ int BosonOnSphereShort::Ad (int m, double& coefficient)
   if (TmpIndex == this->HilbertSpaceDimension)
     coefficient = 0.0;
   return TmpIndex;
+}
+
+// apply a_n  operator to a given state. 
+//
+// index = index of the state on which the operator has to be applied
+// n = index for annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value =  index of the resulting state 
+
+int BosonOnSphereShort::A (int index, int n, double& coefficient)
+{
+  this->FermionToBoson(this->FermionBasis->StateDescription[index], this->FermionBasis->StateLzMax[index], this->TemporaryState, this->TemporaryStateLzMax);
+  for (int i = this->TemporaryStateLzMax + 1; i <= this->LzMax ;++i)
+    this->TemporaryState[i] = 0;
+  
+  if ((this->TemporaryStateLzMax < n)  || (this->TemporaryState[n] == 0))
+    { 
+      coefficient = 0.0;
+      return coefficient;      
+    }
+  coefficient = sqrt((double) this->TemporaryState[n]);
+  --this->TemporaryState[n];
+  if ((this->TemporaryStateLzMax == n) && (this->TemporaryState[n] == 0))
+    {
+      while ((this->TemporaryState[this->TemporaryStateLzMax] == 0)&&( this->TemporaryStateLzMax > 0 ))
+	--this->TemporaryStateLzMax;
+    }
+  return this->TargetSpace->FermionBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax), 
+							 this->TemporaryStateLzMax + this->TargetSpace->NbrBosons - 1);
 }
 
 // print a given State
