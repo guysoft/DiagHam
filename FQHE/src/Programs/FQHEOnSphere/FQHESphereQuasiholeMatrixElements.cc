@@ -221,11 +221,11 @@ int main(int argc, char** argv)
 			  char* TmpOutputFileName = new char[256];
 			  if (Statistics == true)
 			    {
-			      sprintf (TmpOutputFileName, "fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
+			      sprintf (TmpOutputFileName, "fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat.txt", KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
 			    }
 			  else
 			    {
-			      sprintf (TmpOutputFileName, "bosons_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
+			      sprintf (TmpOutputFileName, "bosons_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat.txt", KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
 			    }
 			  TmpOutputMatrix.WriteAsciiMatrix(TmpOutputFileName, true);
 			}
