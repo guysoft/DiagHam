@@ -1001,11 +1001,8 @@ AbstractHilbertSpace* Spin1_2Chain::ExtractSubspace (AbstractQuantumNumber& q, S
 
 int Spin1_2Chain::FindStateIndex(unsigned long state)
 {
-  cout<<"state "<< state;
   int index = this->LookUpTable[state & this->LookUpTableMask];
-  cout<<"index = "<<index<<endl;
   unsigned long* tmpState = &(this->StateDescription[index]);
-  cout<<"this->StateDescription[index] = "<<this->StateDescription[index]<<endl;
   while ((index < this->HilbertSpaceDimension) && (state != *(tmpState++)))
     index++;
   return index;    

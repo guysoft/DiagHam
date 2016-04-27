@@ -75,6 +75,9 @@ int main(int argc, char** argv)
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
+#ifdef __SCALAPACK__
+  (*ToolsGroup) += new BooleanOption  ('\n', "use-scalapack", "use SCALAPACK libraries instead of DiagHam or LAPACK libraries");
+#endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
@@ -293,9 +296,7 @@ int main(int argc, char** argv)
 		}
 	      if (Chain->GetHilbertSpaceDimension() > 0)
 		{
-// 		  for (int i = 0; i < Chain->GetHilbertSpaceDimension(); ++i)
-// 		    Chain->PrintState(cout, i) << endl;
-		  
+		  Architecture.GetArchitecture()->SetDimension(Chain->GetHilbertSpaceDimension());	
 		  SpinChainHamiltonian* Hamiltonian = 0;
 		  if (HzValues == 0)
 		    Hamiltonian = new SpinChainHamiltonian(Chain, NbrSpins, JValues, JzValues, Manager.GetBoolean("use-periodic"));
@@ -343,7 +344,7 @@ int main(int argc, char** argv)
 		return -1;
 	      }
 	    }
-	  
+	  Architecture.GetArchitecture()->SetDimension(Chain->GetHilbertSpaceDimension());		  
 	  SpinChainHamiltonian* Hamiltonian = 0;
 	  if (HzValues == 0)
 	    Hamiltonian = new SpinChainHamiltonian(Chain, NbrSpins, JValues, JzValues, Manager.GetBoolean("use-periodic"));
