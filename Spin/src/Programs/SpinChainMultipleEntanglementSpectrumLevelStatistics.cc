@@ -28,57 +28,6 @@ using std::ifstream;
 using std::ios;
 
 
-// parse the information contained in a single spectrum file
-//
-// spectrumFileName = specrtum file name
-// manager = pointer to the option manager
-// spectrum = reference on the two dimensional array where the spectrum will be stored
-// spectrumSize = number of sattes per quantum number sector
-// spectrumWeight = degeneracy associated to each quantum number sector
-// nbrSectors = number of quantum number sectors
-// minEnergy = reference on the minimum energy
-// maxEnergy = reference on the maximum energy
-// nbrStates = reference on the number of states
-// return value = true if no error occured
-bool DensityOfStatesParseSpectrumFile(char* spectrumFileName, OptionManager* manager, double**& spectrum, int*& spectrumSize, 
-				      int*& spectrumWeight, int& nbrSectors, double& minEnergy, double& maxEnergy, long& nbrStates, Abstract1DRealFunction* densityOfStates);
-
-
-// perform the density of states on a parsed spectrum
-//
-// spectrum = two dimensional array where the spectrum is stored
-// spectrumSize = number of levels per quantum number sector
-// spectrumWeight = degeneracy associated to each quantum number sector
-// nbrSectors = number of quantum number sectors
-// minEnergy = minimum level spacing 
-// maxEnergy = maximum level spacing 
-// nbrStates = number of states
-// nbrBins = number of bins for the density of states
-// binSize = density of states range for each bin
-// nbrStatePerBin = array that contains the number of level spacing per bin
-// nbrRejectedStates = reference on the number of states (i.e. that cannot be stored in any bin)
-// nbrAcceptedStates = reference on the number of states (i.e. that can be stored in a bin)
-void DensityOfStatesPerformDensityOfStates(double** spectrum, int* spectrumSize, int* spectrumWeight, int nbrSectors, 
-					   double minEnergy, double maxEnergy, long nbrStates,
-					   int nbrBins, double binSize, long* nbrStatePerBin, long& nbrRejectedStates, long& nbrAcceptedStates);
-
-
-// perform the density of states on a parsed spectrum
-//
-// spectrum = two dimensional array where the spectrum is stored
-// spectrumSize = number of levels per quantum number sector
-// minEnergy = minimum level spacing 
-// maxEnergy = maximum level spacing 
-// nbrStates = number of states
-// nbrBins = number of bins for the density of states
-// binSize = density of states range for each bin
-// nbrStatePerBin = array that contains the number of level spacing per bin
-// nbrRejectedStates = reference on the number of states (i.e. that cannot be stored in any bin)
-// nbrAcceptedStates = reference on the number of states (i.e. that can be stored in a bin)
-void DensityOfStatesParseSpectrumFile(ifstream& inputFile, double*& spectrum, int& spectrumSize,
-				      double& minEnergy, double& maxEnergy, long& nbrStates,
-				      int nbrBins, double binSize, long* nbrStatePerBin, long& nbrRejectedStates, long& nbrAcceptedStates);
-
 // perform the density of states on a parsed spectrum
 //
 // spectrum = two dimensional array where the spectrum is stored
@@ -143,6 +92,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption('\n', "window-max", " set the index of the last entanglement spectrum to consider (negative if up to the last available entanglement spectrum)", -1);
   (*SystemGroup) += new SingleDoubleOption('\n', "min-entenergy", "reject all entanglement energies below a given energy", 0.0);
   (*SystemGroup) += new SingleDoubleOption('\n', "max-entenergy", " reject all entanglement energies above a given energy (negative if no cut-off should be applied)", -1.0);
+  (*SystemGroup) += new BooleanOption('\n', "fixed-sza", "focus on a single SzA sector");
+  (*SystemGroup) += new SingleIntegerOption('\n', "sza-value", "if the option --fixed-sza is turned on, indicate which SzA sector should be considered", 0);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "name of the output file where the density of states will be stored (if none, try to deduce it from either --spectra replacing the dat extension with dos/levelstat)");
   (*OutputGroup) += new SingleIntegerOption ('\n', "nbr-bins", "number of bins for the density of states", 100);
   (*OutputGroup) += new SingleDoubleOption ('\n', "bin-spacing", "spacing range for each bin for the level statistics", 0.1);
@@ -210,14 +161,19 @@ int main(int argc, char** argv)
     {
       MaxEntanglementSpectrumIndex = NbrEntanglementSpectra - 1;
     }
-  int TotalNbrEntanglementSpectra = (MaxEntanglementSpectrumIndex - MinEntanglementSpectrumIndex + 1);
-//  int TotalNbrEntanglementSpectra = NbrSzASectors * (MaxEntanglementSpectrumIndex - MinEntanglementSpectrumIndex + 1);
+//  int TotalNbrEntanglementSpectra = (MaxEntanglementSpectrumIndex - MinEntanglementSpectrumIndex + 1);
+  int TotalNbrEntanglementSpectra = NbrSzASectors * (MaxEntanglementSpectrumIndex - MinEntanglementSpectrumIndex + 1);
+  if ((NbrSzASectors > 1) && (Manager.GetBoolean("fixed-sza") == true))
+    {
+      TotalNbrEntanglementSpectra = (MaxEntanglementSpectrumIndex - MinEntanglementSpectrumIndex + 1);
+    }
   if (Manager.GetInteger("extract-singlespectrum") >= 0)
     {
       MaxEntanglementSpectrumIndex = Manager.GetInteger("extract-singlespectrum");
       MinEntanglementSpectrumIndex = MaxEntanglementSpectrumIndex;
     }
   cout << "number of entanglement spectra = " << NbrEntanglementSpectra << endl;
+  cout << "number of SzA sectors = " << NbrSzASectors << endl;
   cout << "will process the entanglement spectra between " << MinEntanglementSpectrumIndex << " and " << MaxEntanglementSpectrumIndex << endl;
   Spectrum = new double*[TotalNbrEntanglementSpectra];
   SpectrumSize = new int[TotalNbrEntanglementSpectra];
@@ -255,13 +211,16 @@ int main(int argc, char** argv)
       File.close();
       return 0;
     }
-  if (true)
+  if ((NbrSzASectors == 1) || (Manager.GetBoolean("fixed-sza") == true))
     {
+      int FixedSzSector = Manager.GetInteger("sza-value");
+      if (Manager.GetBoolean("fixed-sza") == false)
+	FixedSzSector = SzaSectors[0];
        for (int i = MinEntanglementSpectrumIndex; i <= MaxEntanglementSpectrumIndex; ++i)
 	{
 	  for (int j = 0; j < NbrSzASectors; ++j)
 	    {
-	      if (SzaSectors[j] == 0)
+	      if (SzaSectors[j] == FixedSzSector)
 		{
 		  if (CutOffFlag == false)
 		    DensityOfStatesParseSpectrumFile(File, Spectrum[Index], SpectrumSize[Index], MinEnergy, MaxEnergy, NbrLevels);
@@ -284,7 +243,10 @@ int main(int argc, char** argv)
 	{
 	  for (int j = 0; j < NbrSzASectors; ++j)
 	    {
-	      DensityOfStatesParseSpectrumFile(File, Spectrum[Index], SpectrumSize[Index], MinEnergy, MaxEnergy, NbrLevels);
+	      if (CutOffFlag == false)
+		DensityOfStatesParseSpectrumFile(File, Spectrum[Index], SpectrumSize[Index], MinEnergy, MaxEnergy, NbrLevels);
+	      else
+		DensityOfStatesParseSpectrumFile(File, Spectrum[Index], SpectrumSize[Index], MinEnergy, MaxEnergy, NbrLevels, MinEnergyCutOff, MaxEnergyCutOff);
 	      ++Index;
 	    }
 	}
@@ -621,292 +583,6 @@ int main(int argc, char** argv)
   delete[] NbrStatePerBin;
 
   return 0;
-}
-
-// parse the information contained in a single spectrum file
-//
-// spectrumFileName = specrtum file name
-// manager = pointer to the option manager
-// spectrum = reference on the two dimensional array where the spectrum will be stored
-// spectrumSize = number of sattes per quantum number sector
-// spectrumWeight = degeneracy associated to each quantum number sector
-// nbrSectors = number of quantum number sectors
-// minEnergy = reference on the minimum energy
-// maxEnergy = reference on the maximum energy
-// nbrStates = reference on the number of states
-// return value = true if no error occured
-
-bool DensityOfStatesParseSpectrumFile(char* spectrumFileName, OptionManager* manager, double**& spectrum, int*& spectrumSize, 
-				      int*& spectrumWeight, int& nbrSectors, double& minEnergy, double& maxEnergy, long& nbrStates, Abstract1DRealFunction* densityOfStates)
-{
-  MultiColumnASCIIFile SpectrumFile;
-  if (SpectrumFile.Parse(spectrumFileName) == false)
-    {
-      SpectrumFile.DumpErrors(cout);
-      return false;
-    }
-  nbrSectors = 1;
-  if ((manager->GetInteger("energy-column") == 0) || (manager->GetBoolean("discard-quantumnumbers") == true))
-    {
-      spectrumSize = new int [1];
-      spectrum = new double*[1];
-      spectrumWeight = new int[1]; 
-      double* TmpSpectrum = SpectrumFile.GetAsDoubleArray(manager->GetInteger("energy-column"));
-      int TmpSize = SpectrumFile.GetNbrLines();
-      if (manager->GetBoolean("discard-quantumnumbers") == true)
-	{
-	  SortArrayUpOrdering<double>(TmpSpectrum, TmpSize);
-	}
-      if ((manager->GetInteger("window-min") > 0) || (manager->GetInteger("window-max") >= 0))
-	{
-	  int MaxIndex = manager->GetInteger("window-max");
-	  if (MaxIndex < 0)
-	    MaxIndex = TmpSize - 1;
-	  int MinIndex = manager->GetInteger("window-min");
-	  spectrumSize[0] = MaxIndex - MinIndex + 1;
-	  spectrumWeight[0] = 1;
-	  spectrum[0] = new double[spectrumSize[0]];
-	  for (int i = MinIndex; i <= MaxIndex; ++i)
-	    spectrum[0][i - MinIndex] = TmpSpectrum[i];
-	  delete[] TmpSpectrum;
-	}
-      else
-	{
-	  spectrum[0] = TmpSpectrum;
-	  spectrumSize[0] = TmpSize;
-	  spectrumWeight[0] = 1;
-	}
-   }
-  else
-    {
-      int TmpSize = SpectrumFile.GetNbrLines();
-      int NbrQuantumNumber = manager->GetInteger("energy-column");
-      int** QuantumNumbers =  new int*[NbrQuantumNumber];
-      double* TmpSpectrum = 0;
-      int* TmpDegeneracy = 0;
-      if (manager->GetInteger("filter-column") >= 0)
-	{
-	  int FilterColumn = manager->GetInteger("filter-column");
-	  int FilterValue = manager->GetInteger("filter-value");
-	  int TmpActualSize = 0;
-	  int* TmpFilterArray = SpectrumFile.GetAsIntegerArray(FilterColumn);
-	  for (int i = 0; i < TmpSize; ++i)
-	    if (TmpFilterArray[i] == FilterValue)
-	      ++TmpActualSize;
-	  if (TmpActualSize == 0)
-	    {
-	      cout << "error, applying filter leads to an empty spectrum" << endl;
-	      return false;
-	    }
-	  for (int i = 0; i < NbrQuantumNumber; ++i)
-	    {
-	      QuantumNumbers[i] = new int [TmpActualSize];	  
-	      int* TmpArray = SpectrumFile.GetAsIntegerArray(i);
-	      TmpActualSize = 0;
-	      for (int j = 0; j < TmpSize; ++j)
-		{
-		  if (TmpFilterArray[j] == FilterValue)
-		    {
-		      QuantumNumbers[i][TmpActualSize] = TmpArray[j];
-		      ++TmpActualSize;
-		    }
-		}
-	      delete[] TmpArray;
-	    }
-	  double* TmpSpectrum2 = SpectrumFile.GetAsDoubleArray(manager->GetInteger("energy-column"));
-	  TmpSpectrum = new double[TmpActualSize];
-	  TmpActualSize = 0;
-	  for (int j = 0; j < TmpSize; ++j)
-	    {
-	      if (TmpFilterArray[j] == FilterValue)
-		{
-		  TmpSpectrum[TmpActualSize] = TmpSpectrum2[j];
-		  ++TmpActualSize;
-		}
-	    }	  
-	  if (manager->GetInteger("degeneracy-column") >= 0)
-	    {
-	      TmpDegeneracy = new int[TmpActualSize];
-	      int* TmpDegeneracy2 = SpectrumFile.GetAsIntegerArray(manager->GetInteger("degeneracy-column"));
-	      TmpActualSize = 0;
-	      for (int j = 0; j < TmpSize; ++j)
-		{
-		  if (TmpFilterArray[j] == FilterValue)
-		    {
-		      TmpDegeneracy[TmpActualSize] = TmpDegeneracy2[j];
-		      ++TmpActualSize;
-		    }
-		}	  
-	      delete[] TmpDegeneracy2;
-	    }
-	  delete[] TmpSpectrum2;
-	  delete[] TmpFilterArray;
-	  TmpSize = TmpActualSize;
-	}     
-      else
-	{
-	  for (int i = 0; i < NbrQuantumNumber; ++i)
-	    QuantumNumbers[i] = SpectrumFile.GetAsIntegerArray(i);
-	  TmpSpectrum = SpectrumFile.GetAsDoubleArray(manager->GetInteger("energy-column"));
-	  if (manager->GetInteger("degeneracy-column") >= 0)
-	    {
-	      TmpDegeneracy = SpectrumFile.GetAsIntegerArray(manager->GetInteger("degeneracy-column"));
-	    }
-	}
-      for (int i = 1; i < TmpSize; ++i)
-	{
-	  for (int j = 0; j < NbrQuantumNumber; ++j)
-	    {
-	      if (QuantumNumbers[j][i - 1] != QuantumNumbers[j][i])
-		{
-		  j = NbrQuantumNumber;
-		  ++nbrSectors;
-		}
-	    }
-	}
-      spectrum = new double*[nbrSectors];
-      spectrumSize = new int[nbrSectors];
-      spectrumWeight = new int[nbrSectors];
-      nbrSectors = 0;
-      int CurrentIndex = 0;
-      spectrumWeight[0] = 1;
-      if (manager->GetBoolean("z2-symmetry"))
-	{
-	  for (int j = 0; j < NbrQuantumNumber; ++j)
-	    {
-	      if (QuantumNumbers[j][0] > 0)
-		{
-		  spectrumWeight[0] *= 2;
-		}
-	    }
-	}
-      else
-	{
-	  if (TmpDegeneracy != 0)
-	    {
-	      spectrumWeight[0] = TmpDegeneracy[0];
-	    }
-	}
-      for (int i = 1; i < TmpSize; ++i)
-	{
-	  for (int j = 0; j < NbrQuantumNumber; ++j)
-	    {
-	      if (QuantumNumbers[j][i - 1] != QuantumNumbers[j][i])
-		{
-		  spectrum[nbrSectors] = new double [i - CurrentIndex];
-		  spectrumSize[nbrSectors] = i - CurrentIndex;
-		  CurrentIndex = i;
-		  j = NbrQuantumNumber;
-		  ++nbrSectors;
-		  spectrumWeight[nbrSectors] = 1;
-		  if (manager->GetBoolean("z2-symmetry"))
-		    {
-		      for (int k = 0; k < NbrQuantumNumber; ++k)
-			{
-			  if (QuantumNumbers[k][i] > 0)
-			    {
-			      spectrumWeight[nbrSectors] *= 2;
-			    }
-			}
-		    }
-		  else
-		    {
-		      if (TmpDegeneracy != 0)
-			{
-			  spectrumWeight[nbrSectors] = TmpDegeneracy[i];
-			}
-		    }
-		}
-	    }
-	}
-      spectrum[nbrSectors] = new double [TmpSize - CurrentIndex];
-      spectrumSize[nbrSectors]= TmpSize - CurrentIndex;
-      ++nbrSectors;            
-      spectrum[0][0] = (*densityOfStates)(TmpSpectrum[0]);
-      nbrSectors = 0;
-      CurrentIndex = 0;
-      for (int i = 1; i < TmpSize; ++i)
-	{
-	  for (int j = 0; j < NbrQuantumNumber; ++j)
-	    {
-	      if (QuantumNumbers[j][i - 1] != QuantumNumbers[j][i])
-		{
-		  CurrentIndex = i;
-		  j = NbrQuantumNumber;
-		  ++nbrSectors;
-		}
-	    }
-	  spectrum[nbrSectors][i - CurrentIndex] = (*densityOfStates)(TmpSpectrum[i]);
-	}
-      ++nbrSectors;            
-      for (int i = 0; i < NbrQuantumNumber; ++i)
-	delete[] QuantumNumbers[i];
-      delete[] QuantumNumbers;
-    }
-
-  for (int i = 0; i < nbrSectors; ++i)
-    {     
-      if (spectrumSize[i] > 0)
-	{
-	  nbrStates += spectrumSize[i];
-	  int Lim = spectrumSize[i];	  
-	  for (int j = 0; j < Lim; ++j)
-	    {
-	      double TmpEnergy =  spectrum[i][j];
-	      if (TmpEnergy > maxEnergy)
-		{
-		  maxEnergy = TmpEnergy;
-		}
-	      if (TmpEnergy < minEnergy)
-		{
-		  minEnergy = TmpEnergy;
-		}
-	    }
-	}
-    }
-  return true;
-}
-
-// perform the density of states on a parsed spectrum
-//
-// spectrum = two dimensional array where the spectrum is stored
-// spectrumSize = number of levels per quantum number sector
-// spectrumWeight = degeneracy associated to each quantum number sector
-// nbrSectors = number of quantum number sectors
-// minEnergy = minimum level spacing 
-// maxEnergy = maximum level spacing 
-// nbrStates = number of states
-// nbrBins = number of bins for the density of states
-// binSize = density of states range for each bin
-// nbrStatePerBin = array that contains the number of level spacing per bin
-// nbrRejectedStates = reference on the number of states (i.e. that cannot be stored in any bin)
-// nbrAcceptedStates = reference on the number of states (i.e. that can be stored in a bin)
-
-void DensityOfStatesParseSpectrumFile(ifstream& inputFile, double*& spectrum, int& spectrumSize,
-				      double& minEnergy, double& maxEnergy, long& nbrStates,
-				      int nbrBins, double binSize, long* nbrStatePerBin, long& nbrRejectedStates, long& nbrAcceptedStates)
-{
-  ReadLittleEndian(inputFile, spectrumSize);
-  spectrum = new double[spectrumSize];
-  ReadBlockLittleEndian(inputFile, spectrum, spectrumSize);  
-  nbrStates += (long) spectrumSize;
-  for (int i = 0; i < spectrumSize; ++i)
-    {     
-      if (spectrum[i] < minEnergy)
-	minEnergy = spectrum[i];
-      if (spectrum[i] > maxEnergy)
-	maxEnergy = spectrum[i];
-      int TmpIndex = int (spectrum[i] / binSize);
-      if (TmpIndex < nbrBins)
-	{
-	  nbrStatePerBin[TmpIndex]++;
-	  ++nbrAcceptedStates;
-	}
-      else
-	{
-	  ++ nbrRejectedStates;
-	}      
-    }  
 }
 
 // perform the density of states on a parsed spectrum

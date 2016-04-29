@@ -150,10 +150,10 @@ int main(int argc, char** argv)
 												RightStateNbrParticles, LzMax, RightTotalLz);
 	      for (int OperatorLzValue = -LzMax; OperatorLzValue <= LzMax; OperatorLzValue += 2)
 		{
+		  int ShiftedOperatorLzValue = (OperatorLzValue + LzMax) >> 1;
 		  int LeftTotalLz = RightTotalLz - OperatorLzValue;
 		  if ((LeftTotalLz >= -LeftStateMaxTotalLz) && (LeftTotalLz <= LeftStateMaxTotalLz))
 		    {
-		      int ShiftedOperatorLzValue = (OperatorLzValue + LzMax) >> 1;
 		      ParticleOnSphere* LeftSpace = 0;
 		      if (Statistics == true)
 			{
@@ -228,9 +228,31 @@ int main(int argc, char** argv)
 			      sprintf (TmpOutputFileName, "bosons_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat.txt", KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
 			    }
 			  TmpOutputMatrix.WriteAsciiMatrix(TmpOutputFileName, true);
+			  delete[] TmpOutputFileName;
 			}
 		      delete LeftSpace;		      
 		    }
+		  RealMatrix TmpOutputMatrix(RightNbrQuasiholeStates, RightNbrQuasiholeStates, true);
+		  for (int i = 0; i < RightNbrQuasiholeStates; ++i)
+		    {
+		      double TmpCoefficient = 0.0;
+		      for (int j = 0; j < RightSpace->GetHilbertSpaceDimension(); ++j)
+			{
+			  TmpCoefficient += RightSpace->AdA(j, ShiftedOperatorLzValue) * RightVectors[i][j] * RightVectors[i][j];
+			}
+		      TmpOutputMatrix.SetMatrixElement(i, i, TmpCoefficient);
+		    }
+		  char* TmpOutputFileName = new char[256];
+		  if (Statistics == true)
+		    {
+		      sprintf (TmpOutputFileName, "fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d.mat.txt", KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
+		    }
+		  else
+		    {
+		      sprintf (TmpOutputFileName, "bosons_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d.mat.txt", KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
+		    }
+		  TmpOutputMatrix.WriteAsciiMatrix(TmpOutputFileName, true);
+		  delete[] TmpOutputFileName;
 		}
 	      delete[] RightRootConfigurations;
 	    }
