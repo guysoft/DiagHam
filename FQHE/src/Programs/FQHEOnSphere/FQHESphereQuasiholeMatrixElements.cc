@@ -232,15 +232,18 @@ int main(int argc, char** argv)
 			}
 		      delete LeftSpace;		      
 		    }
-		  RealMatrix TmpOutputMatrix(RightNbrQuasiholeStates, RightNbrQuasiholeStates, true);
+		  RealSymmetricMatrix TmpOutputMatrix(RightNbrQuasiholeStates, true);
 		  for (int i = 0; i < RightNbrQuasiholeStates; ++i)
 		    {
-		      double TmpCoefficient = 0.0;
-		      for (int j = 0; j < RightSpace->GetHilbertSpaceDimension(); ++j)
+		      for (int k = i; k < RightNbrQuasiholeStates; ++k)
 			{
-			  TmpCoefficient += RightSpace->AdA(j, ShiftedOperatorLzValue) * RightVectors[i][j] * RightVectors[i][j];
+			  double TmpCoefficient = 0.0;
+			  for (int j = 0; j < RightSpace->GetHilbertSpaceDimension(); ++j)
+			    {
+			      TmpCoefficient += RightSpace->AdA(j, ShiftedOperatorLzValue) * RightVectors[k][j] * RightVectors[i][j];
+			    }
+			  TmpOutputMatrix.SetMatrixElement(i, k, TmpCoefficient);
 			}
-		      TmpOutputMatrix.SetMatrixElement(i, i, TmpCoefficient);
 		    }
 		  char* TmpOutputFileName = new char[256];
 		  if (Statistics == true)
