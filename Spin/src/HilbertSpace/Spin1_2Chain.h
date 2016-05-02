@@ -44,6 +44,8 @@ using std::ostream;
 
 class Spin1_2Chain : public AbstractSpinChain
 {
+  
+  friend class DoubledSpin1_2_ChainWithTranslations_alternative;
 
  protected:
 

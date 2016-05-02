@@ -44,6 +44,7 @@ using std::ostream;
 
 class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
 {
+  friend class DoubledSpin1_2_ChainWithTranslations_alternative;
 
  protected: 
 
@@ -279,6 +280,7 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // groundState = reference on the total system ground state
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrSpinUpSector, int kSector, RealVector& groundState);
+  
 
  protected:
 
@@ -362,6 +364,12 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   
   //return the scaling factor when going from state i to state j
   inline double GetRescalingFactor(int i,int j) const {return this->RescalingFactors[this->NbrStateInOrbit[i]][this->NbrStateInOrbit[j]];};
+  
+    
+  // apply a single translation in the x direction for a state description
+  //
+  // stateDescription = reference on the state description
+  void ApplySingleXTranslation(unsigned long& stateDescription);
 };
 
 
@@ -432,6 +440,16 @@ inline int Spin1_2ChainWithTranslations::FindNumberTranslation(unsigned long sta
       ++index;
     }
   return index;
+}
+
+
+// apply a single translation in the x direction for a state description
+//
+// stateDescription = reference on the state description
+
+inline void Spin1_2ChainWithTranslations::ApplySingleXTranslation(unsigned long& stateDescription)
+{
+  stateDescription = (stateDescription >> this->StateShift) | ((stateDescription & this->StateMask) << this->ComplementaryStateShift);
 }
 
 #endif
