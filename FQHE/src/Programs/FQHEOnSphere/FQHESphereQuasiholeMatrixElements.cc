@@ -58,8 +58,8 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption  ('l', "nbr-flux", "number of flux quanta", 9);
-  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "largest number of particles to consider. If zero, consider all the possible number of particles compatible with the number of flux quanta and the clustering properties ", 0);
-
+  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "largest number of particles to consider. If zero, consider all the possible number of particles compatible with the number of flux quanta and the clustering properties ", -1);
+  (*OutputGroup) += new BooleanOption  ('\n', "disable-ascii", "only store the binary files");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -84,9 +84,9 @@ int main(int argc, char** argv)
   
   int MaxRightStateNbrParticles = Manager.GetInteger("nbr-particles");
   int MinRightStateNbrParticles = MaxRightStateNbrParticles;
-  if (MaxRightStateNbrParticles <= 0)
+  if (MaxRightStateNbrParticles < 0)
     {
-      MinRightStateNbrParticles = 1;
+      MinRightStateNbrParticles = 0;
       if (Statistics == true)
 	{
 	  MaxRightStateNbrParticles = (KValue * (LzMax + 1 + RValue)) / (RValue + (KValue * FermionFactor));
@@ -221,13 +221,17 @@ int main(int argc, char** argv)
 			  char* TmpOutputFileName = new char[256];
 			  if (Statistics == true)
 			    {
-			      sprintf (TmpOutputFileName, "fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat.txt", KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
+			      sprintf (TmpOutputFileName, "fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
 			    }
 			  else
 			    {
-			      sprintf (TmpOutputFileName, "bosons_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat.txt", KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
+			      sprintf (TmpOutputFileName, "bosons_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
 			    }
-			  TmpOutputMatrix.WriteAsciiMatrix(TmpOutputFileName, true);
+			  char* AsciiTmpOutputFileName = new char[256];
+			  sprintf (AsciiTmpOutputFileName, "%s.txt", TmpOutputFileName);
+			  if (Manager.GetBoolean("disable-ascii") == false)
+			    TmpOutputMatrix.WriteAsciiMatrix(AsciiTmpOutputFileName, true);
+			  TmpOutputMatrix.WriteMatrix(TmpOutputFileName);			  
 			  delete[] TmpOutputFileName;
 			}
 		      delete LeftSpace;		      
@@ -248,13 +252,17 @@ int main(int argc, char** argv)
 		  char* TmpOutputFileName = new char[256];
 		  if (Statistics == true)
 		    {
-		      sprintf (TmpOutputFileName, "fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d.mat.txt", KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
+		      sprintf (TmpOutputFileName, "fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d.mat", KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
 		    }
 		  else
 		    {
-		      sprintf (TmpOutputFileName, "bosons_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d.mat.txt", KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
+		      sprintf (TmpOutputFileName, "bosons_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d.mat", KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
 		    }
-		  TmpOutputMatrix.WriteAsciiMatrix(TmpOutputFileName, true);
+		  char* AsciiTmpOutputFileName = new char[256];
+		  sprintf (AsciiTmpOutputFileName, "%s.txt", TmpOutputFileName);
+		  if (Manager.GetBoolean("disable-ascii") == false)
+		    TmpOutputMatrix.WriteAsciiMatrix(AsciiTmpOutputFileName, true);
+		  TmpOutputMatrix.WriteMatrix(TmpOutputFileName);
 		  delete[] TmpOutputFileName;
 		}
 	      delete[] RightRootConfigurations;
@@ -348,6 +356,30 @@ RealMatrix FQHESphereQuasiholeMatrixElementsComputeQuasiholeStates(ParticleOnSph
 	}
     }
   delete[] ReferenceState;
+  char* QuasiholeDimensionFileName = new char[256];
+  if (space->GetParticleStatistic() == AbstractQHEParticle::BosonicStatistic)
+    {
+      sprintf (QuasiholeDimensionFileName, "bosons_qh_states_k_%d_r_%d_nphi_%d.dat", kValue, rValue, lzMax);
+    }
+  else
+    {
+      sprintf (QuasiholeDimensionFileName, "fermions_qh_states_k_%d_r_%d_nphi_%d.dat", kValue, rValue, lzMax);
+    }
+  if (IsFile(QuasiholeDimensionFileName) == true)
+    {
+      ofstream File;
+      File.open(QuasiholeDimensionFileName, ios::out | ios::app);
+      File << lzMax << " " << nbrParticles << " " << totalLz << " " << nbrQuasiholeStates << endl;
+      File.close();
+   }
+  else
+    {
+      ofstream File;
+      File.open(QuasiholeDimensionFileName, ios::out);
+      File << "# N_Phi N Lz dim" << endl; 
+      File << lzMax << " " << nbrParticles << " " << totalLz << " " << nbrQuasiholeStates << endl;
+      File.close();
+    }
   RealMatrix QuasiholeVectors2(QuasiholeVectors, nbrQuasiholeStates);
   QuasiholeVectors2.OrthoNormalizeColumns();
   if (QuasiholeVectors2.WriteMatrix(QuasiholeVectorFileName) == false)

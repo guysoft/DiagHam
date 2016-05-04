@@ -79,7 +79,7 @@ void GetEntanglementEntropyPerNbrParticlesA(double* oneBodyEntanglementTrimmedEn
 					    int nbrParticlesA, int currentOrbitalIndex, double currentFactor, double& entropy, double& alpha);
 
 
-void ComputeThermalQuantities (double beta, double mu, int nbrStates, double* stateEnergies, double& thermalNbrParticles, double& thermalEnergy,
+void ComputeThermalQuantities (double beta, double mu, int nbrStates, double* stateEnergies, double& thermalNbrParticles, double& thermalEnergy, double* thermalEntropy, int maxRenyiEntropy,
 			       double& thermalNbrParticlesMuDerivative, double& thermalNbrParticlesBetaDerivative, 
 			       double& thermalEnergyMuDerivative, double& thermalEnergyBetaDerivative);
 
@@ -126,6 +126,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");  
   (*SystemGroup) += new BooleanOption ('\n', "use-approximation", "use a saddle appoximation to evaluate the entanglement entropy");
   (*SystemGroup) += new BooleanOption ('\n', "use-rational", "use rational number to overcome accuracy issues");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-renyi", "maximum Renyi entropy to compute", 1);
   (*SystemGroup) += new BooleanOption ('\n', "test-thermalentropy", "check if the state satisfies the ETH comparing the entropies");
   (*SystemGroup) += new BooleanOption ('\n', "test-thermalcorrelation", "check if the state satisfies the ETH comparing the correlation matrices");
   (*SystemGroup) += new SingleDoubleOption ('\n', "thermal-beta", "inverse temperature value to use for thermal calculations", -0.0020268);
@@ -156,7 +157,7 @@ int main(int argc, char** argv)
   int NbrSites = 0; 
   int TotalSz = 0;
   bool Statistics = true;
-
+  int NbrRenyiEntropies = Manager.GetInteger("max-renyi"); 
 
   NbrSitesX = Manager.GetInteger("nbr-sitex"); 
   NbrSitesY = Manager.GetInteger("nbr-sitey"); 
@@ -621,17 +622,27 @@ int main(int argc, char** argv)
       double Beta = Manager.GetDouble("thermal-beta");
       double ThermalNbrParticles;
       double ThermalEnergy;
+      double* ThermalEntropy = new double[NbrRenyiEntropies];
       double ThermalNbrParticlesMuDerivative;
       double ThermalNbrParticlesBetaDerivative;
       double ThermalEnergyMuDerivative;
       double ThermalEnergyBetaDerivative;
       ComputeThermalQuantities (Beta, Mu, NbrSites, TightBindingModelEnergies, 
-				ThermalNbrParticles, ThermalEnergy,
+				ThermalNbrParticles, ThermalEnergy, ThermalEntropy, NbrRenyiEntropies,
 				ThermalNbrParticlesMuDerivative, ThermalNbrParticlesBetaDerivative, 
 				ThermalEnergyMuDerivative, ThermalEnergyBetaDerivative);
       cout << "thermal nbr of particles = " << ThermalNbrParticles << endl;
       cout << "thermal energy = " << ThermalEnergy << endl;
-
+      cout << "thermal entropy = " << ThermalEntropy[0] << endl;
+      cout << "thermal entropy per volume = " << (ThermalEntropy[0] / (((double) NbrSitesX) * ((double) NbrSitesY)))<< endl;
+      if (NbrRenyiEntropies > 1)
+	{
+	  for (int i = 1; i < NbrRenyiEntropies; ++i)
+	    {
+	      cout << "thermal Renyi entropy (n=" << (i + 1) << ") = " << ThermalEntropy[i] << endl;
+	      cout << "thermal Renyi entropy (n=" << (i + 1) << ") per volume = " << (ThermalEntropy[i] / (((double) NbrSitesX) * ((double) NbrSitesY)))<< endl;
+	    }
+	}
       double* FermiFactors = new double[NbrSites];
       double Tmp = 0.0;
       for (int k = 0 ; k < NbrSites; ++k)
@@ -861,8 +872,13 @@ int main(int argc, char** argv)
 	  cout << "diagonalization done in " << Dt << "s" << endl;
 	}
       
-      double EntanglementEntropy = 0.0;
-      double NonVacuumEntanglementEntropy = 0.0;
+      double* EntanglementEntropies = new double[NbrRenyiEntropies];
+      double* NonVacuumEntanglementEntropies = new double[NbrRenyiEntropies];
+      for (int i = 0; i < NbrRenyiEntropies; ++i)
+	{
+	  EntanglementEntropies[i] = 0.0;
+	  NonVacuumEntanglementEntropies[i] = 0.0;
+	}
       int NbrVacuumOneBodyEntanglementTrimmedEnergies = MaxOneBodyEntanglementEnergyIndex - MinOneBodyEntanglementEnergyIndex + 1;
       int NbrRejectedOneBodyEntropies = VacuumOneBodyEntanglementEnergies.GetNbrRow() - NbrVacuumOneBodyEntanglementTrimmedEnergies;
       double* VacuumOneBodyEntanglementTrimmedEnergies = new double[NbrVacuumOneBodyEntanglementTrimmedEnergies];
@@ -876,10 +892,18 @@ int main(int argc, char** argv)
 	{
 	  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
 	    {
-	      EntanglementEntropy -= VacuumOneBodyEntanglementTrimmedEnergies[i] * log (VacuumOneBodyEntanglementTrimmedEnergies[i]);
-	      EntanglementEntropy -= (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i]) * log (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i]);
+	      EntanglementEntropies[0] -= VacuumOneBodyEntanglementTrimmedEnergies[i] * log (VacuumOneBodyEntanglementTrimmedEnergies[i]);
+	      EntanglementEntropies[0] -= (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i]) * log (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i]);
 	    }
-	  NonVacuumEntanglementEntropy = EntanglementEntropy;
+	  NonVacuumEntanglementEntropies[0] = EntanglementEntropies[0];	
+	  for (int j = 1; j < NbrRenyiEntropies; ++j)
+	    {
+	      for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
+		{
+		  EntanglementEntropies[j] -= 1.0 / ((double) j) * log(powl(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) (j + 1)) + powl(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], (double) (j + 1)));
+									    }
+	      NonVacuumEntanglementEntropies[j] = EntanglementEntropies[j];
+	    }
 	  SumAlphaFactor = 1.0;
 	}
       else
@@ -945,7 +969,7 @@ int main(int argc, char** argv)
 	    }
 	  int OptimalNbrParticlesA = (TotalNbrSitesA * VacuumNbrParticles) / NbrSites;
 	  for (int TmpNbrParticlesA = OptimalNbrParticlesA; ((TmpNbrParticlesA <= MaxNbrParticlesA) && 
-					  ((EntanglementEntropy + CurrentEntanglementEntropyContribution) != EntanglementEntropy)); ++TmpNbrParticlesA)
+					  ((EntanglementEntropies[0] + CurrentEntanglementEntropyContribution) != EntanglementEntropies[0])); ++TmpNbrParticlesA)
 	    {
 	      if (ShowTimeFlag == true)
 		{
@@ -1001,23 +1025,23 @@ int main(int argc, char** argv)
 		    Tmp -= Tmp2 * log(Tmp2);
 		}
 	      CurrentEntanglementEntropyContribution = (AlphaFactor * Tmp) + TmpEntanglementEntropy;
-	      EntanglementEntropy += CurrentEntanglementEntropyContribution;
-	      NonVacuumEntanglementEntropy += TmpEntanglementEntropy;
+	      EntanglementEntropies[0] += CurrentEntanglementEntropyContribution;
+	      NonVacuumEntanglementEntropies[0] += TmpEntanglementEntropy;
 	      if (ShowTimeFlag == true)
 		{
 		  gettimeofday (&(TotalEndingTime), 0);
 		  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
 					((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
-		  cout << TmpNbrParticlesA << " : " << EntanglementEntropy << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << " " << "(" << Dt << "s)" << endl;
+		  cout << TmpNbrParticlesA << " : " << EntanglementEntropies[0] << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << " " << "(" << Dt << "s)" << endl;
 		}
 	      else
 		{
-		  cout << TmpNbrParticlesA << " : " << EntanglementEntropy << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << endl;
+		  cout << TmpNbrParticlesA << " : " << EntanglementEntropies[0] << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << endl;
 		}	  
 	    }
-	  CurrentEntanglementEntropyContribution = EntanglementEntropy;
+	  CurrentEntanglementEntropyContribution = EntanglementEntropies[0];
 	  for (int TmpNbrParticlesA = OptimalNbrParticlesA - 1; ((TmpNbrParticlesA >= 0) && 
-					  ((EntanglementEntropy + CurrentEntanglementEntropyContribution) != EntanglementEntropy)); --TmpNbrParticlesA)
+					  ((EntanglementEntropies[0] + CurrentEntanglementEntropyContribution) != EntanglementEntropies[0])); --TmpNbrParticlesA)
 	    {
 	      if (ShowTimeFlag == true)
 		{
@@ -1073,35 +1097,41 @@ int main(int argc, char** argv)
 		    Tmp -= Tmp2 * log(Tmp2);
 		}
 	      CurrentEntanglementEntropyContribution = (AlphaFactor * Tmp) + TmpEntanglementEntropy;
-	      EntanglementEntropy += CurrentEntanglementEntropyContribution;
-	      NonVacuumEntanglementEntropy += TmpEntanglementEntropy;
+	      EntanglementEntropies[0] += CurrentEntanglementEntropyContribution;
+	      NonVacuumEntanglementEntropies[0] += TmpEntanglementEntropy;
 	      if (ShowTimeFlag == true)
 		{
 		  gettimeofday (&(TotalEndingTime), 0);
 		  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
 					((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
-		  cout << TmpNbrParticlesA << " : " << EntanglementEntropy << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << " " << "(" << Dt << "s)" << endl;
+		  cout << TmpNbrParticlesA << " : " << EntanglementEntropies[0] << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << " " << "(" << Dt << "s)" << endl;
 		}
 	      else
 		{
-		  cout << TmpNbrParticlesA << " : " << EntanglementEntropy << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << endl;
+		  cout << TmpNbrParticlesA << " : " << EntanglementEntropies[0] << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << endl;
 		}	  
 	    }
 	  if (Manager.GetBoolean("use-approximation") == true)
 	    {
-	      NonVacuumEntanglementEntropy = 0;
+	      NonVacuumEntanglementEntropies[0] = 0;
 	      for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
 		{
-		  NonVacuumEntanglementEntropy -= VacuumOneBodyEntanglementTrimmedEnergies[i] * log (VacuumOneBodyEntanglementTrimmedEnergies[i]);
-		  NonVacuumEntanglementEntropy -= (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i]) * log (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i]);
+		  NonVacuumEntanglementEntropies[0] -= VacuumOneBodyEntanglementTrimmedEnergies[i] * log (VacuumOneBodyEntanglementTrimmedEnergies[i]);
+		  NonVacuumEntanglementEntropies[0] -= (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i]) * log (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i]);
 		}
-	      EntanglementEntropy += NonVacuumEntanglementEntropy;
+	      EntanglementEntropies[0] += NonVacuumEntanglementEntropies[0];
 	    }
 	}
       cout << "Normalization = " << SumAlphaFactor << endl;
-      cout << "Entanglement entropy = " << EntanglementEntropy << endl;
+      cout << "Entanglement entropy = " << EntanglementEntropies[0] << endl;
       cout << "Nbr Rejected one-body entanglement energies = " << NbrRejectedOneBodyEntropies << " / " << TotalNbrSitesA << endl;
-      File << NbrSitesXA << " " << NbrSitesYA << " " << EntanglementEntropy << " " << NonVacuumEntanglementEntropy << endl;
+      File << NbrSitesXA << " " << NbrSitesYA << " " << EntanglementEntropies[0] << " " << NonVacuumEntanglementEntropies[0];
+      if ((NbrPairs == 0) && (NbrRenyiEntropies > 1))
+	{
+	  for (int i = 1; i < NbrRenyiEntropies; ++i)
+	    File << " " << EntanglementEntropies[i] << " " << NonVacuumEntanglementEntropies[i];
+	}
+      File << endl;
       delete[] VacuumOneBodyEntanglementTrimmedEnergies;
     }
   File.close();
@@ -1198,7 +1228,7 @@ double GetZ0DefintionSum (double* oneBodyEntanglementTrimmedEnergies, int nbrOne
   return (TmpSum - ((double) (nbrParticlesA + 1)));
 }
 
-void ComputeThermalQuantities (double beta, double mu, int nbrStates, double* stateEnergies, double& thermalNbrParticles, double& thermalEnergy,
+void ComputeThermalQuantities (double beta, double mu, int nbrStates, double* stateEnergies, double& thermalNbrParticles, double& thermalEnergy, double* thermalEntropy, int maxRenyiEntropy, 
 			       double& thermalNbrParticlesMuDerivative, double& thermalNbrParticlesBetaDerivative, 
 			       double& thermalEnergyMuDerivative, double& thermalEnergyBetaDerivative)
 {
@@ -1208,12 +1238,17 @@ void ComputeThermalQuantities (double beta, double mu, int nbrStates, double* st
   thermalEnergyBetaDerivative = 0.0;
   thermalNbrParticlesMuDerivative = 0.0;
   thermalNbrParticlesBetaDerivative = 0.0;
+  for (int i = 0; i < maxRenyiEntropy; ++i)    
+    thermalEntropy[i] = 0.0;
   for (int k = 0 ; k < nbrStates; ++k)
     {
       double TmpExp = exp (beta * (stateEnergies[k] - mu));
       double Tmp = 1.0 / (1.0 + TmpExp);
       thermalNbrParticles += Tmp;
       thermalEnergy += Tmp * stateEnergies[k];
+      thermalEntropy[0] -= (Tmp * log (Tmp)) + ((1.0 - Tmp) * log (1.0 - Tmp));
+      for (int i = 1; i < maxRenyiEntropy; ++i)    
+	thermalEntropy[i] += -1.0 / ((double) i) * log(powl(Tmp, (double) (i + 1)) + powl(1.0 - Tmp, (double) (i + 1)));
       Tmp *= Tmp;
       Tmp *= TmpExp;
       thermalEnergyMuDerivative += Tmp * beta * stateEnergies[k];
