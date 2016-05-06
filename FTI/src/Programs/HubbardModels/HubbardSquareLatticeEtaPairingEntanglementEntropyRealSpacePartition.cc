@@ -76,7 +76,7 @@ HermitianMatrix EtaPairaingEntanglementEntropyExtractCorrelationMatrix(Hermitian
 
 
 void GetEntanglementEntropyPerNbrParticlesA(double* oneBodyEntanglementTrimmedEnergies, int nbrOneBodyEntanglementTrimmedEnergies, 
-					    int nbrParticlesA, int currentOrbitalIndex, double currentFactor, double& entropy, double& alpha);
+					    int nbrParticlesA, int currentOrbitalIndex, double currentFactor, double* entropies, int maxRenyiEntropy, double& alpha);
 
 
 void ComputeThermalQuantities (double beta, double mu, int nbrStates, double* stateEnergies, double& thermalNbrParticles, double& thermalEnergy, double* thermalEntropy, int maxRenyiEntropy,
@@ -976,11 +976,15 @@ int main(int argc, char** argv)
 		  gettimeofday (&(TotalStartingTime), 0);
 		}
 	      double AlphaFactor = 0.0;
-	      double TmpEntanglementEntropy = 0.0;
+	      double* TmpEntanglementEntropies = new double[NbrRenyiEntropies];
+	      for (int i = 0; i < NbrRenyiEntropies; ++i)
+		TmpEntanglementEntropies[i] = 0.0;
 	      if (Manager.GetBoolean("use-approximation") == false)
 		{
 		  GetEntanglementEntropyPerNbrParticlesA(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA, 
-							 0, 1.0, TmpEntanglementEntropy, AlphaFactor);
+							 0, 1.0, TmpEntanglementEntropies, NbrRenyiEntropies, AlphaFactor);
+		  for (int i = 1; i < NbrRenyiEntropies; ++i)
+		    TmpEntanglementEntropies[i] = - log(TmpEntanglementEntropies[i]) / ((double) i);
 		}
 	      else
 		{
@@ -1024,9 +1028,9 @@ int main(int argc, char** argv)
 		  if (Tmp2 > 0.0)
 		    Tmp -= Tmp2 * log(Tmp2);
 		}
-	      CurrentEntanglementEntropyContribution = (AlphaFactor * Tmp) + TmpEntanglementEntropy;
+	      CurrentEntanglementEntropyContribution = (AlphaFactor * Tmp) + TmpEntanglementEntropies[0];
 	      EntanglementEntropies[0] += CurrentEntanglementEntropyContribution;
-	      NonVacuumEntanglementEntropies[0] += TmpEntanglementEntropy;
+	      NonVacuumEntanglementEntropies[0] += TmpEntanglementEntropies[0];
 	      if (ShowTimeFlag == true)
 		{
 		  gettimeofday (&(TotalEndingTime), 0);
@@ -1038,6 +1042,7 @@ int main(int argc, char** argv)
 		{
 		  cout << TmpNbrParticlesA << " : " << EntanglementEntropies[0] << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << endl;
 		}	  
+	      delete[] TmpEntanglementEntropies;
 	    }
 	  CurrentEntanglementEntropyContribution = EntanglementEntropies[0];
 	  for (int TmpNbrParticlesA = OptimalNbrParticlesA - 1; ((TmpNbrParticlesA >= 0) && 
@@ -1048,11 +1053,15 @@ int main(int argc, char** argv)
 		  gettimeofday (&(TotalStartingTime), 0);
 		}
 	      double AlphaFactor = 0.0;
-	      double TmpEntanglementEntropy = 0.0;
+	      double* TmpEntanglementEntropies = new double[NbrRenyiEntropies];
+	      for (int i = 0; i < NbrRenyiEntropies; ++i)
+		TmpEntanglementEntropies[i] = 0.0;
 	      if (Manager.GetBoolean("use-approximation") == false)
 		{
 		  GetEntanglementEntropyPerNbrParticlesA(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA, 
-							 0, 1.0, TmpEntanglementEntropy, AlphaFactor);
+							 0, 1.0, TmpEntanglementEntropies, NbrRenyiEntropies, AlphaFactor);
+		  for (int i = 1; i < NbrRenyiEntropies; ++i)
+		    TmpEntanglementEntropies[i] = - log(TmpEntanglementEntropies[i]) / ((double) i);
 		}
 	      else
 		{
@@ -1096,9 +1105,9 @@ int main(int argc, char** argv)
 		  if (Tmp2 > 0.0)
 		    Tmp -= Tmp2 * log(Tmp2);
 		}
-	      CurrentEntanglementEntropyContribution = (AlphaFactor * Tmp) + TmpEntanglementEntropy;
+	      CurrentEntanglementEntropyContribution = (AlphaFactor * Tmp) + TmpEntanglementEntropies[0];
 	      EntanglementEntropies[0] += CurrentEntanglementEntropyContribution;
-	      NonVacuumEntanglementEntropies[0] += TmpEntanglementEntropy;
+	      NonVacuumEntanglementEntropies[0] += TmpEntanglementEntropies[0];
 	      if (ShowTimeFlag == true)
 		{
 		  gettimeofday (&(TotalEndingTime), 0);
@@ -1110,16 +1119,25 @@ int main(int argc, char** argv)
 		{
 		  cout << TmpNbrParticlesA << " : " << EntanglementEntropies[0] << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << endl;
 		}	  
+	      delete[] TmpEntanglementEntropies;
 	    }
 	  if (Manager.GetBoolean("use-approximation") == true)
 	    {
-	      NonVacuumEntanglementEntropies[0] = 0;
+	      NonVacuumEntanglementEntropies[0] = 0.0;
 	      for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
 		{
 		  NonVacuumEntanglementEntropies[0] -= VacuumOneBodyEntanglementTrimmedEnergies[i] * log (VacuumOneBodyEntanglementTrimmedEnergies[i]);
 		  NonVacuumEntanglementEntropies[0] -= (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i]) * log (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i]);
 		}
 	      EntanglementEntropies[0] += NonVacuumEntanglementEntropies[0];
+	      for (int j = 1; j < NbrRenyiEntropies; ++j)
+		{
+		  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
+		    {
+		      NonVacuumEntanglementEntropies[j] -= 1.0 / ((double) j) * log(powl(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) (j + 1)) + powl(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], (double) (j + 1)));
+		    }
+		  EntanglementEntropies[j] += NonVacuumEntanglementEntropies[j];
+		}
 	    }
 	}
       cout << "Normalization = " << SumAlphaFactor << endl;
@@ -1173,7 +1191,7 @@ HermitianMatrix EtaPairaingEntanglementEntropyExtractCorrelationMatrix(Hermitian
 
 
 void GetEntanglementEntropyPerNbrParticlesA(double* oneBodyEntanglementTrimmedEnergies, int nbrOneBodyEntanglementTrimmedEnergies, 
-					    int nbrParticlesA, int currentOrbitalIndex, double currentFactor, double& entropy, double& alpha)
+					    int nbrParticlesA, int currentOrbitalIndex, double currentFactor, double* entropies, int maxRenyiEntropy, double& alpha)
 {
   if (currentOrbitalIndex > nbrOneBodyEntanglementTrimmedEnergies)
     return;
@@ -1183,14 +1201,18 @@ void GetEntanglementEntropyPerNbrParticlesA(double* oneBodyEntanglementTrimmedEn
 	{
 	  currentFactor *= (1.0 - oneBodyEntanglementTrimmedEnergies[currentOrbitalIndex]);
 	}
-      entropy -= currentFactor * log(currentFactor);
+      entropies[0] -= currentFactor * log(currentFactor);
+      for (int i = 1; i < maxRenyiEntropy; ++i)
+	{
+	  entropies[i] += pow(currentFactor, (double) (i + 1));
+	}
       alpha += currentFactor;
       return;
     }
   if (currentOrbitalIndex == nbrOneBodyEntanglementTrimmedEnergies)
     return;
-  GetEntanglementEntropyPerNbrParticlesA(oneBodyEntanglementTrimmedEnergies, nbrOneBodyEntanglementTrimmedEnergies, nbrParticlesA, currentOrbitalIndex + 1, currentFactor * (1.0 - oneBodyEntanglementTrimmedEnergies[currentOrbitalIndex]), entropy, alpha);
-  GetEntanglementEntropyPerNbrParticlesA(oneBodyEntanglementTrimmedEnergies, nbrOneBodyEntanglementTrimmedEnergies, nbrParticlesA - 1, currentOrbitalIndex + 1, currentFactor * oneBodyEntanglementTrimmedEnergies[currentOrbitalIndex], entropy, alpha);
+  GetEntanglementEntropyPerNbrParticlesA(oneBodyEntanglementTrimmedEnergies, nbrOneBodyEntanglementTrimmedEnergies, nbrParticlesA, currentOrbitalIndex + 1, currentFactor * (1.0 - oneBodyEntanglementTrimmedEnergies[currentOrbitalIndex]), entropies, maxRenyiEntropy, alpha);
+  GetEntanglementEntropyPerNbrParticlesA(oneBodyEntanglementTrimmedEnergies, nbrOneBodyEntanglementTrimmedEnergies, nbrParticlesA - 1, currentOrbitalIndex + 1, currentFactor * oneBodyEntanglementTrimmedEnergies[currentOrbitalIndex], entropies, maxRenyiEntropy, alpha);
   return;
 }
 
