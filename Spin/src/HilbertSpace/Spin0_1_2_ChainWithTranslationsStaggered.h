@@ -56,6 +56,7 @@ class Spin0_1_2_ChainWithTranslationsStaggered : public AbstractSpinChainWithTra
 
   int DiffSz;
   bool FixedSpinProjectionFlag;
+  bool Shift;
   
   // shift to apply to a state to obtain an index to the look-up table 
   int LookUpTableShift;
@@ -99,7 +100,7 @@ class Spin0_1_2_ChainWithTranslationsStaggered : public AbstractSpinChainWithTra
   // momemtum = total momentum of each state
   // memorySize = memory size in bytes allowed for look-up table
   // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
-  Spin0_1_2_ChainWithTranslationsStaggered (int chainLength,  int diffSz, int memorySize, int memorySlice);
+  Spin0_1_2_ChainWithTranslationsStaggered (int chainLength,  int diffSz, int memorySize, int memorySlice, bool shift=false);
 
   // constructor for complete Hilbert space corresponding to a given total spin projection Sz
   //
@@ -107,7 +108,7 @@ class Spin0_1_2_ChainWithTranslationsStaggered : public AbstractSpinChainWithTra
   // momemtum = total momentum of each state
   // sz = twice the value of total Sz component
   // memorySize = memory size in bytes allowed for look-up table
-  Spin0_1_2_ChainWithTranslationsStaggered (int chainLength, int momentum, int sz, int memorySize, int memorySlice);
+  Spin0_1_2_ChainWithTranslationsStaggered (int chainLength, int momentum, int sz, int memorySize, int memorySlice, bool shift=false);
 
   // copy constructor (without duplicating datas)
   //

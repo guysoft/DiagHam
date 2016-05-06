@@ -110,6 +110,7 @@ class DoubledSpin0_1_2_ChainWithTranslationsStaggered : public AbstractDoubledSp
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int szSector, RealVector& groundState);
   virtual HermitianMatrix EvaluatePartialDensityMatrix (int szSector, ComplexVector& groundState);
+  virtual HermitianMatrix EvaluatePartialDensityMatrix (int szSector, int momentumSector, ComplexVector& groundState);
 
   virtual void AddConvertFromGeneralSpace(ComplexVector vSource,ComplexVector & vDestination);
   virtual void ConvertToGeneralSpace(ComplexVector vSource,ComplexVector & vDestination);

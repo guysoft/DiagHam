@@ -5,7 +5,7 @@
 //                                                                            //
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
-//                                                                            //
+//                                                                            /
 //             class of doubled spin 0 +1/2 chain with translations           //
 //                                                                            //
 //                        last modification : 21/01/2016                      //
@@ -183,7 +183,8 @@ DoubledSpin0_1_2_ChainWithTranslations::DoubledSpin0_1_2_ChainWithTranslations (
   unsigned long DicardFlag = ~0x0ul;
   unsigned long TmpState;
   this->CreatePrecalculationTable();
-
+  SortArrayDownOrdering(this->ChainDescription ,TmpHilbertSpaceDimension);
+  
   for (long i = 0l; i < TmpHilbertSpaceDimension; ++i)
     {
       TmpState = this->ChainDescription[i];
@@ -228,7 +229,8 @@ DoubledSpin0_1_2_ChainWithTranslations::DoubledSpin0_1_2_ChainWithTranslations (
   
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;  
   this->LookUpTable =0;
-
+  
+  
   if (this->HilbertSpaceDimension > 0)
     this->GenerateLookUpTable(memorySize);  
   this->EvaluateExponentialFactors();
@@ -338,28 +340,23 @@ inline int DoubledSpin0_1_2_ChainWithTranslations::GetTotalSz (unsigned long sta
   int Sign;
   for (int i = 0; i < this->ChainLength; i++)
     {
-      if (i % 2==0 ) 
-	Sign = 1;
-      else
-	Sign = -1;
-      
       switch (stateDescriptionBra & 0x3ul)
 	{
-	  	case 0x2:
-	  TmpSz += Sign;
+	case 0x2:
+	  TmpSz += 1;
 	  break;
 	case 0x0:
-	  TmpSz -= Sign;
+	  TmpSz -= 1;
 	  break;
 	}
       stateDescriptionBra >>= 2;
       switch (stateDescriptionKet & 0x3ul)
 	{
 	case 0x2:
-	  TmpSz -= Sign;
+	  TmpSz -= 1;
 	  break;
 	case 0x0:
-	  TmpSz += Sign;
+	  TmpSz += 1;
 	  break;
 	}
       stateDescriptionKet >>= 2;
@@ -680,10 +677,10 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
   Spin0_1_2_ChainWithTranslations TmpDestinationHilbertSpace(this->ChainLength, szSector,10000,10000);
   HermitianMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
 
-  ComplexMatrix HRep(TmpDestinationHilbertSpace.HilbertSpaceDimension,TmpDestinationHilbertSpace.HilbertSpaceDimension,true);
-
   unsigned long TmpBra,TmpKet,TmpState;
 
+
+  ComplexMatrix HRep(TmpDestinationHilbertSpace.HilbertSpaceDimension,TmpDestinationHilbertSpace.HilbertSpaceDimension,true);
   for(int i=0;i < TmpDestinationHilbertSpace.HilbertSpaceDimension;i++)
     {
       for(int j=0;j < TmpDestinationHilbertSpace.HilbertSpaceDimension;j++)
@@ -697,19 +694,25 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
 	      TmpBra>>=2;
 	      TmpKet>>=2;
 	    }
-//	  cout<<i<< " "<<j<<" "<<TmpState <<endl;
 	  int Index = this->FindStateIndex (TmpState);
 	  if (Index < this->HilbertSpaceDimension ) 
 	    HRep.SetMatrixElement(i,j,groundState[Index]);
 	}
     }
-  
+  Complex Trace = 0.0;
+  Complex Tmp = 0.0;
+  for (int i = 0; i <TmpDestinationHilbertSpace.HilbertSpaceDimension;i++)
+    {
+      HRep.GetMatrixElement(i,i,Tmp);
+      Trace+=Tmp;
+    }
+  cout <<"Trace "<< Trace<<endl;
+  HRep/= Phase(Arg(Trace));
   Complex Tmp1;
   Complex Tmp2;
   cout << "check hermiticity" << endl;
-  double AverageNorm = 0.1;
-  double Error = MACHINE_PRECISION;
-  
+
+  double Error = 5e-8;
   
   for (int i = 0; i <  TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
     for (int j = i; j <  TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
@@ -718,12 +721,15 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
 	HRep.GetMatrixElement(j, i, Tmp2);
 	if (Norm(Tmp1 - Conj(Tmp2)) > Error )
 	  {
-	    cout << "error at " << i << " " << j << " : " << Tmp1 << " " << Tmp2 << " " << Norm(Tmp1 - Conj(Tmp2)) << " (should be lower than " << (Error * AverageNorm) << ")" << endl;
+	    cout << "error at " << i << " " << j << " : " << Tmp1 << " " << Tmp2 << " " << Norm(Tmp1 - Conj(Tmp2)) << " (should be lower than " << (Error ) << ")" << endl;
 	  }
+	HRep.GetMatrixElement(i,j,Tmp);
+	TmpDensityMatrix.SetMatrixElement(i,j,Tmp);
       }  
   
   return TmpDensityMatrix;
 }
+
 
 
 void DoubledSpin0_1_2_ChainWithTranslations::ConvertToGeneralSpace(ComplexVector vSource,ComplexVector & vDestination)
@@ -777,7 +783,7 @@ void  DoubledSpin0_1_2_ChainWithTranslations::EvaluateExponentialFactors()
     }
 }
 
-
+/*
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector.
 // 
 // szSector = Sz sector in which the density matrix has to be evaluated 
@@ -828,42 +834,101 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
     }
   return TmpDensityMatrix;
 }
+*/
 
 
-/*
-HermitianMatrix DoubledSpin0_1_2_ChainWithTranslationsBis::EvaluatePartialDensityMatrix (int szSector, int momentumSector, ComplexVector& groundState)
+HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMatrix (int szSector, int momentumSector, ComplexVector& groundState)
 {
-  Spin0_1_2_ChainWithTranslationsBis TmpDestinationHilbertSpace(this->ChainLength, momentumSector ,szSector,10000,10000);
+  Spin0_1_2_ChainWithTranslations TmpDestinationHilbertSpace(this->ChainLength, momentumSector ,szSector,10000,10000);
+  int ComplementaryKSector = this->Momentum - momentumSector;
+  if (ComplementaryKSector < 0)
+    ComplementaryKSector += (this->ChainLength);
   
-  HermitianMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
-  unsigned long TmpState,TmpBra,TmpKet,TmpCanonical;
+  Spin0_1_2_ChainWithTranslations TmpHilbertSpace(this->ChainLength,ComplementaryKSector,szSector,10000,10000);
+ 
+ int MaxDimension = TmpDestinationHilbertSpace.HilbertSpaceDimension;
+  
+  if ( MaxDimension < TmpHilbertSpace.HilbertSpaceDimension )
+    {
+      MaxDimension = TmpHilbertSpace.HilbertSpaceDimension;
+    }
+  
+  HermitianMatrix TmpDensityMatrix(MaxDimension, true);
+  unsigned long TmpState,TmpBra,TmpKet,TmpCanonicalState,ReferenceBra,ReferenceKet; 
   int NbrTranslation;
+
+  ComplexMatrix HRep( MaxDimension, MaxDimension,true);
+  
   for(int i=0;i < TmpDestinationHilbertSpace.HilbertSpaceDimension;i++)
     {
-      for(int j=i;j < TmpDestinationHilbertSpace.HilbertSpaceDimension;j++)
+      for(int j=0;j < TmpHilbertSpace.HilbertSpaceDimension;j++)
 	{
-	  TmpState=0;
-	  TmpBra = TmpDestinationHilbertSpace.ChainDescription[i];
-	  TmpKet = TmpDestinationHilbertSpace.ChainDescription[j];
-	  cout << TmpBra<<" "<<	  TmpKet<<endl;
-	  for (int p = 0 ; p <this->ChainLength ; p++)
-	    {
-	      TmpState+= this->PowerD[p] * this->GetCommonIndexFromBraAndKetIndices(TmpBra &0x3ul, TmpKet &0x3ul);
-	      TmpBra>>=2;
-	      TmpKet>>=2;
-	    }
+
+	  ReferenceBra = TmpDestinationHilbertSpace.ChainDescription[i];
+	  ReferenceKet = TmpHilbertSpace.ChainDescription[j];
 	  
-	  cout <<TmpState<<endl;
-	  int Index = this->FindStateIndex (TmpState);
-	  if (Index < this->HilbertSpaceDimension ) 
+	  for(int t = 0; t < TmpDestinationHilbertSpace.NbrStateInOrbit[i]; t++)
 	    {
-	      //double TmpFactor=sqrt( (double) (TmpDestinationHilbertSpace.NbrStateInOrbit[i] * TmpDestinationHilbertSpace.NbrStateInOrbit[j])  /( double) this->NbrStateInOrbit[Index]); 
-	      double TmpFactor=1.0;
-	      TmpDensityMatrix.SetMatrixElement(i,j,groundState[Index]*TmpFactor);
+	      for(int k = 0; k < TmpHilbertSpace.NbrStateInOrbit[j]; k++)
+		{
+		  
+		  TmpState=0;
+		  TmpBra = ReferenceBra;
+		  TmpKet = ReferenceKet;
+		  for (int p = 0 ; p <this->ChainLength ; p++)
+		    {
+		      TmpState+= this->PowerD[p] * this->GetCommonIndexFromBraAndKetIndices(TmpBra &0x3ul, TmpKet &0x3ul);
+		      TmpBra>>=2;
+		      TmpKet>>=2;
+		    }
+		  
+		  this->FindCanonicalForm(TmpState,TmpCanonicalState, NbrTranslation);
+		  
+		  int Index = this->FindStateIndex (TmpCanonicalState);
+		  if (Index < this->HilbertSpaceDimension ) 
+		    {
+		      double TmpFactor=sqrt( (double) (TmpDestinationHilbertSpace.NbrStateInOrbit[i] * TmpHilbertSpace.NbrStateInOrbit[j] * ( double) this->NbrStateInOrbit[Index])); 
+		      //	      double TmpFactor=1.0;
+		      double Argument =  2.0 * M_PI * (NbrTranslation *  this->Momentum - t * momentumSector  - k * ComplementaryKSector) /this->ChainLength ;
+		      HRep.AddToMatrixElement(i,j,groundState[Index]/TmpFactor*Phase(Argument));
+		    }
+		  TmpHilbertSpace.ApplySingleXTranslation(ReferenceKet);
+		}
+	      TmpDestinationHilbertSpace.ApplySingleXTranslation(ReferenceBra);
 	    }
 	}
     }
+
+
+
+  Complex Trace = 0.0;
+  Complex Tmp = 0.0;
+  for (int i = 0; i < MaxDimension;i++)
+    {
+      HRep.GetMatrixElement(i,i,Tmp);
+      Trace+=Tmp;
+    }
+  cout <<"Trace "<< Trace<<endl;
+  HRep/= Phase(Arg(Trace));
+  Complex Tmp1;
+  Complex Tmp2;
+  cout << "check hermiticity" << endl;
+
+  double Error = 5e-8;
+  
+  for (int i = 0; i <   MaxDimension; ++i)
+    for (int j = i; j <  MaxDimension; ++j)
+      {
+	HRep.GetMatrixElement(i, j, Tmp1);
+	HRep.GetMatrixElement(j, i, Tmp2);
+	if (Norm(Tmp1 - Conj(Tmp2)) > Error )
+	  {
+	    cout << "error at " << i << " " << j << " : " << Tmp1 << " " << Tmp2 << " " << Norm(Tmp1 - Conj(Tmp2)) << " (should be lower than " << (Error ) << ")" << endl;
+	  }
+	HRep.GetMatrixElement(i,j,Tmp);
+	TmpDensityMatrix.SetMatrixElement(i,j,Tmp);
+      }  
+  
   return TmpDensityMatrix;
 }
 
-*/

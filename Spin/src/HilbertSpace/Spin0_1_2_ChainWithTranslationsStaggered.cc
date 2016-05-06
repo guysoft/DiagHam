@@ -60,6 +60,7 @@ Spin0_1_2_ChainWithTranslationsStaggered::Spin0_1_2_ChainWithTranslationsStagger
   this->ShiftLookUpTableNegativeSz=0;
   this->ShiftNegativeSz = 0;
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
+  this->Shift = false;
 }
 
 
@@ -72,13 +73,14 @@ Spin0_1_2_ChainWithTranslationsStaggered::Spin0_1_2_ChainWithTranslationsStagger
 // memorySize = memory size in bytes allowed for look-up table
 // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
 
-Spin0_1_2_ChainWithTranslationsStaggered::Spin0_1_2_ChainWithTranslationsStaggered (int chainLength, int diffSz, int memorySize, int memorySlice) 
+Spin0_1_2_ChainWithTranslationsStaggered::Spin0_1_2_ChainWithTranslationsStaggered (int chainLength, int diffSz, int memorySize, int memorySlice,bool shift) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
   this->DiffSz = diffSz;
   this->FixedSpinProjectionFlag = true;
   this->ComplementaryStateShift = 2*(this->ChainLength - 1);
+  this->Shift = shift;
   memorySize /= sizeof(long);
   this->LookUpTableShift = 1;
   memorySize/=8;
@@ -134,7 +136,7 @@ Spin0_1_2_ChainWithTranslationsStaggered::Spin0_1_2_ChainWithTranslationsStagger
 // memorySize = memory size in bytes allowed for look-up table
 // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
 
-Spin0_1_2_ChainWithTranslationsStaggered::Spin0_1_2_ChainWithTranslationsStaggered (int chainLength, int momentum, int diffSz, int memorySize, int memorySlice) 
+Spin0_1_2_ChainWithTranslationsStaggered::Spin0_1_2_ChainWithTranslationsStaggered (int chainLength, int momentum, int diffSz, int memorySize, int memorySlice, bool shift) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
@@ -142,6 +144,7 @@ Spin0_1_2_ChainWithTranslationsStaggered::Spin0_1_2_ChainWithTranslationsStagger
   this->FixedSpinProjectionFlag = true;
   this->Momentum = momentum;
   this->ComplementaryStateShift = 2*(this->ChainLength - 1);
+  this->Shift= shift;
   memorySize /= sizeof(long);
   this->LookUpTableShift = 1;
   while ((1 << this->LookUpTableShift) <= memorySize)
@@ -250,6 +253,7 @@ Spin0_1_2_ChainWithTranslationsStaggered::Spin0_1_2_ChainWithTranslationsStagger
       this->ShiftNegativeDiffSz = chain.ShiftNegativeDiffSz;
       this->ShiftNegativeSz =  chain.ShiftNegativeSz;
       this->ShiftLookUpTableNegativeSz = chain.ShiftLookUpTableNegativeSz;
+      this->Shift = chain.Shift;
     }
   else
     {
@@ -302,6 +306,7 @@ Spin0_1_2_ChainWithTranslationsStaggered & Spin0_1_2_ChainWithTranslationsStagge
   this->ShiftNegativeDiffSz = chain.ShiftNegativeDiffSz;
   this->ShiftNegativeSz = chain.ShiftNegativeSz;
   this->ShiftLookUpTableNegativeSz = chain.ShiftLookUpTableNegativeSz;
+  this->Shift = chain.Shift;
   return *this;
 }
 
@@ -323,12 +328,23 @@ inline int Spin0_1_2_ChainWithTranslationsStaggered::GetTotalSz (unsigned long s
 {
   int TmpSz = 0;
   int Sign;
+
   for (int i = 0; i < this->ChainLength; i++)
     {
-      if (i % 2==0 ) 
-	Sign = 1;
+      if(Shift == false)
+	{
+	  if (i % 2==0 ) 
+	    Sign = 1;
+	  else
+	    Sign = -1;
+	}
       else
-	Sign = -1;
+	{
+	  if (i % 2==1 ) 
+	    Sign = 1;
+	  else
+	    Sign = -1;	  
+	}
       
       switch (stateDescription & 0x3ul)
 	{
@@ -393,13 +409,19 @@ long Spin0_1_2_ChainWithTranslationsStaggered::GenerateStates(int length, int di
 	}
       if (diffSz == 1) 
 	{
-	  this->ChainDescription[pos] = 0x1ul<<1;
+	  if (Shift==false )
+	    this->ChainDescription[pos] = 0x1ul<<1;
+	  else
+	    this->ChainDescription[pos] = 0x0ul;
 	  pos ++;
 	  return pos;
 	}
       if (diffSz == -1) 
 	{
-	  this->ChainDescription[pos] = 0x0ul;
+	  if (Shift==false )
+	    this->ChainDescription[pos] = 0x0ul;
+	  else
+	    this->ChainDescription[pos] = 0x1ul<<1;
 	  pos ++;
 	  return pos;
 	}
@@ -413,14 +435,30 @@ long Spin0_1_2_ChainWithTranslationsStaggered::GenerateStates(int length, int di
     { 
       int Sign;
       
-      if (length%2 == 0)
-	Sign = -1;
+      if (Shift==false )
+	{
+	  if (length%2 == 0)
+	    {
+	      Sign = 1;
+	    }
+	  else
+	    {
+	      Sign = -1;
+	    }
+	}
       else
 	{
-	  Sign = 1;
+	  if (length%2 == 1)
+	    {
+	      Sign = 1;
+	    }
+	  else
+	    {
+	      Sign = -1;
+	    }
 	}
-
-      TmpPos = this->GenerateStates(length-1, diffSz+Sign, pos); 
+      
+      TmpPos = this->GenerateStates(length-1, diffSz-Sign, pos); 
       Mask = (((0x1ul << 1)) << ((length<<1)));
       for (; pos < TmpPos; ++pos)
 	{
@@ -430,7 +468,7 @@ long Spin0_1_2_ChainWithTranslationsStaggered::GenerateStates(int length, int di
       Mask = (((0x1ul)) << ((length<<1)));
       for (; pos < TmpPos; ++pos)
 	this->ChainDescription[pos] |= Mask;
-      TmpPos = this->GenerateStates(length-1, diffSz-Sign, pos); 
+      TmpPos = this->GenerateStates(length-1, diffSz+Sign, pos); 
       Mask = (((0x0ul)) << ((length<<1)));
       for (; pos < TmpPos; ++pos)
 	this->ChainDescription[pos] |= Mask;

@@ -53,7 +53,6 @@ class Spin0_1_2_ChainWithTranslations : public AbstractSpinChainWithTranslations
   // array containing falg indicating if a state beloging to an orbit with a given number of member is compatible with momentum constraint
   bool* CompatibilityWithMomentum;
 
-
   int DiffSz;
   bool FixedSpinProjectionFlag;
   
@@ -228,54 +227,35 @@ inline void Spin0_1_2_ChainWithTranslations::ApplySingleXTranslation(unsigned lo
       switch ((stateDescription >> (2*i))& 0x3ul)
 	{
 	case 0x2:
-	  stateDescription &= (~(0x3ul << 2*(i-1)));
+	  stateDescription &= (~(0x1ul << 2*(i-1)));
+	  stateDescription |= (0x1ul << (2*(i-1)+1));
 	  break;
 	case 0x1:
 	  stateDescription &= (~(0x1ul << (2*(i-1)+1) ));
 	  stateDescription |= (0x1ul << 2*(i-1));
 	  break;
 	case 0x0:
-	  stateDescription &= (~(0x1ul << 2*(i-1)));
-	  stateDescription |= (0x1ul << (2*(i-1)+1));
+	  stateDescription &= (~(0x3ul << 2*(i-1)));
 	  break;
 	}
     }
 
-  if (this->ChainLength%2 ==0 )   
+  switch (Tmp)
     {
-      switch (Tmp)
-	{
-	case 0x2:
-	  stateDescription &= (~(0x3ul << 2*(this->ChainLength-1)));
-	  break;
-	case 0x1:
-	  stateDescription &= (~(0x1ul << (2*(this->ChainLength-1)+1) ));
-	  stateDescription |= (0x1ul << 2*(this->ChainLength-1));
-	  break;
-	case 0x0:
-	  stateDescription &= (~(0x1ul << 2*(this->ChainLength-1)));
-	  stateDescription |= (0x1ul << (2*(this->ChainLength-1)+1));
-	  break;
-	}
-    }
-  else
-    {
-      switch (Tmp)
-	{
-	case 0x2:
-	  stateDescription &= (~(0x1ul << 2*(this->ChainLength-1)));
-	  stateDescription |= (0x1ul << (2*(this->ChainLength-1)+1));
-	  break;
-	case 0x1:
-	  stateDescription &= (~(0x1ul << (2*(this->ChainLength-1)+1) ));
-	  stateDescription |= (0x1ul << 2*(this->ChainLength-1));
-	  break;
-	case 0x0:
-	  stateDescription &= (~(0x3ul << 2*(this->ChainLength-1)));
-	  break;
-	}
+    case 0x2:
+      stateDescription &= (~(0x1ul << 2*(this->ChainLength-1)));
+      stateDescription |= (0x1ul << (2*(this->ChainLength-1)+1));     
+      break;
+    case 0x1:
+      stateDescription &= (~(0x1ul << (2*(this->ChainLength-1)+1) ));
+      stateDescription |= (0x1ul << 2*(this->ChainLength-1));
+      break;
+    case 0x0:
+      stateDescription &= (~(0x3ul << 2*(this->ChainLength-1)));
+      break;
     }
 }
+
 
 
 // find the canonical form of a state

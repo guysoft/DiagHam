@@ -90,6 +90,9 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
   long TmpHilbertSpaceDimension = GenerateStates(this->ChainLength-1, this->ChainLength-1, this->DiffSz, 0l);
   if (this->DiffSz != 0)
     TmpHilbertSpaceDimension = GenerateStates(this->ChainLength-1, this->ChainLength-1, -this->DiffSz, TmpHilbertSpaceDimension);
+
+  SortArrayDownOrdering(this->ChainDescription,TmpHilbertSpaceDimension);
+  
   if (TmpHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
     {
       cout << TmpHilbertSpaceDimension << " " << this->LargeHilbertSpaceDimension << endl;
@@ -130,13 +133,12 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
     }
   
   delete[]  this->ChainDescription;
-
+  
   this->ChainDescription = TmpStateDescription;
   
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;  
   this->LookUpTable =0;
-  SortArrayDownOrdering(this->ChainDescription ,this->HilbertSpaceDimension);
-  
+ 
   if (this->LargeHilbertSpaceDimension > 0l)
     {
       this->GenerateLookUpTable(memorySize);
@@ -191,6 +193,8 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
   long TmpHilbertSpaceDimension = GenerateStates(this->ChainLength-1, this->ChainLength-1, this->DiffSz, 0l);
   if (this->DiffSz != 0)
     TmpHilbertSpaceDimension = GenerateStates(this->ChainLength-1, this->ChainLength-1, -this->DiffSz, TmpHilbertSpaceDimension);
+
+  SortArrayDownOrdering(this->ChainDescription,TmpHilbertSpaceDimension);
   
   if (TmpHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
     {

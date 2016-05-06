@@ -164,6 +164,8 @@ Spin0_1_2_ChainWithTranslations::Spin0_1_2_ChainWithTranslations (int chainLengt
   long TmpHilbertSpaceDimension = GenerateStates(this->ChainLength-1, this->DiffSz, 0l);
   if (this->DiffSz != 0)
     TmpHilbertSpaceDimension = GenerateStates(this->ChainLength-1, -this->DiffSz, TmpHilbertSpaceDimension);
+
+  SortArrayDownOrdering(this->ChainDescription ,TmpHilbertSpaceDimension);
   
   if (TmpHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
     {
@@ -409,7 +411,7 @@ long Spin0_1_2_ChainWithTranslations::GenerateStates(int length, int diffSz, lon
   
   if(length > 0)
     { 
-      TmpPos = this->GenerateStates(length-1, diffSz+1, pos); 
+      TmpPos = this->GenerateStates(length-1, diffSz-1, pos); 
       Mask = (((0x1ul << 1)) << ((length<<1)));
       for (; pos < TmpPos; ++pos)
 	{
@@ -419,7 +421,7 @@ long Spin0_1_2_ChainWithTranslations::GenerateStates(int length, int diffSz, lon
       Mask = (((0x1ul)) << ((length<<1)));
       for (; pos < TmpPos; ++pos)
 	this->ChainDescription[pos] |= Mask;
-      TmpPos = this->GenerateStates(length-1, diffSz-1, pos); 
+      TmpPos = this->GenerateStates(length-1, diffSz+1, pos); 
       Mask = (((0x0ul)) << ((length<<1)));
       for (; pos < TmpPos; ++pos)
 	this->ChainDescription[pos] |= Mask;
