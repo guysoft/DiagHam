@@ -165,7 +165,7 @@ class Spin1_2ChainFullInversionAnd2DTranslation : public Spin1_2ChainFullAnd2DTr
   // find the size of the orbit for a given state
   //
   // return value = orbit size
-  inline int FindOrbitSize(unsigned long stateDescription);
+  virtual int FindOrbitSize(unsigned long stateDescription);
 
   // apply the inversion symmetry to a state description
   //

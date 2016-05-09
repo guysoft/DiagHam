@@ -511,7 +511,7 @@ int main(int argc, char** argv)
 		  Spaces[i] = new Spin1_2ChainWithTranslations (NbrSpins, Momenta[i], 1, TotalSz[i], 1000000, 1000000);
 		  break;
 		case 2 :
-		  Spaces[i] = new Spin1ChainWithTranslations (NbrSpins, Momenta[i], TotalSz[i], 1000000, 1000000);
+		  Spaces[i] = new Spin1ChainWithTranslations (NbrSpins, Momenta[i], TotalSz[i]);
 		  break;
 		default :
 		  {

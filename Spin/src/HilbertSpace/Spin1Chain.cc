@@ -62,7 +62,7 @@ Spin1Chain::Spin1Chain ()
   this->LookUpTableMask = 0;
   this->LookUpPosition = 0;
   this->HilbertSpaceDimension = 0;
-  this->ChainDescription = 0;
+  this->StateDescription = 0;
   this->ChainLength = 0;
   this->Sz = 0;
   this->FixedQuantumNumberFlag = false;
@@ -97,7 +97,7 @@ Spin1Chain::Spin1Chain (int chainLength, int memorySize)
   this->LookUpTableMask = ~this->LookUpTableMask;
   this->LookUpTable = new int [this->LookUpTableSize];
 
-  this->ChainDescription = new unsigned long [this->HilbertSpaceDimension];
+  this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->GenerateStates (0, 0, 0xffffffff);
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
@@ -130,7 +130,7 @@ Spin1Chain::Spin1Chain (int chainLength, int sz, int memorySize)
   this->LookUpTableMask = ~this->LookUpTableMask;
   this->LookUpTable = new int [this->LookUpTableSize];
 
-  this->ChainDescription = new unsigned long [this->HilbertSpaceDimension];
+  this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->HilbertSpaceDimension = this->GenerateStates (0, 0, 0xffffffff, this->ChainLength * 2);
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
@@ -157,7 +157,7 @@ Spin1Chain::Spin1Chain (int hilbertSpaceDimension, unsigned long* chainDescripti
   this->LookUpPosition = lookUpPosition;
   this->LookUpTableSize = lookUpTableSize;
   this->HilbertSpaceDimension = hilbertSpaceDimension;
-  this->ChainDescription = chainDescription;
+  this->StateDescription = chainDescription;
   this->Sz = sz;
   this->FixedQuantumNumberFlag = fixedQuantumNumberFlag;
   this->ChainLength = chainLength;
@@ -179,7 +179,7 @@ Spin1Chain::Spin1Chain (const Spin1Chain& chain)
       this->LookUpTableMask = chain.LookUpTableMask;
       this->LookUpPosition = chain.LookUpPosition;
       this->LookUpTableSize = chain.LookUpTableSize;
-      this->ChainDescription = chain.ChainDescription;
+      this->StateDescription = chain.StateDescription;
       this->Sz = chain.Sz;
       this->FixedQuantumNumberFlag = chain.FixedQuantumNumberFlag;
     }
@@ -190,7 +190,7 @@ Spin1Chain::Spin1Chain (const Spin1Chain& chain)
       this->LookUpTableMask = 0;
       this->LookUpPosition = 0;
       this->HilbertSpaceDimension = 0;
-      this->ChainDescription = 0;
+      this->StateDescription = 0;
       this->ChainLength = 0;
       this->Sz = 0;
       this->FixedQuantumNumberFlag = false;
@@ -205,7 +205,7 @@ Spin1Chain::~Spin1Chain ()
 {
   if ((this->ChainLength != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->ChainDescription;
+      delete[] this->StateDescription;
       delete[] this->LookUpTable;
     }
 }
@@ -219,13 +219,13 @@ Spin1Chain& Spin1Chain::operator = (const Spin1Chain& chain)
 {
   if ((this->ChainLength != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->ChainDescription;
+      delete[] this->StateDescription;
       delete[] this->LookUpTable;
     }  
   this->Flag = chain.Flag;
   if (chain.ChainLength != 0)
     {
-      this->ChainDescription = chain.ChainDescription;
+      this->StateDescription = chain.StateDescription;
       this->ChainLength = chain.ChainLength;
       this->HilbertSpaceDimension = chain.HilbertSpaceDimension;
       this->LookUpTable = chain.LookUpTable;
@@ -242,7 +242,7 @@ Spin1Chain& Spin1Chain::operator = (const Spin1Chain& chain)
       this->LookUpTableMask = 0;
       this->LookUpPosition = 0;
       this->HilbertSpaceDimension = 0;
-      this->ChainDescription = 0;
+      this->StateDescription = 0;
       this->ChainLength = 0;
       this->Sz = 0;
       this->FixedQuantumNumberFlag = false;
@@ -319,19 +319,19 @@ int Spin1Chain::GenerateStates(int statePosition,int sitePosition, unsigned long
     {
       if (NextSitePosition == this->LookUpPosition)
 	this->LookUpTable[currentStateDescription & this->LookUpTableMask] = statePosition;
-      this->ChainDescription[statePosition] = currentStateDescription;
+      this->StateDescription[statePosition] = currentStateDescription;
       statePosition++;
       
       mask = ~(0x1ul << sitePosition);
       if (NextSitePosition == this->LookUpPosition)
 	this->LookUpTable[(currentStateDescription & mask) & this->LookUpTableMask] = statePosition;
-      this->ChainDescription[statePosition] = (currentStateDescription & mask);
+      this->StateDescription[statePosition] = (currentStateDescription & mask);
       statePosition++;
       
       mask = ~(0x3ul << sitePosition);
       if (NextSitePosition == this->LookUpPosition)
 	this->LookUpTable[(currentStateDescription & mask) & this->LookUpTableMask] = statePosition;
-      this->ChainDescription[statePosition] = (currentStateDescription & mask);
+      this->StateDescription[statePosition] = (currentStateDescription & mask);
       statePosition++;
     }
   NbrGeneratedState += statePosition;
@@ -378,7 +378,7 @@ int Spin1Chain::GenerateStates(int statePosition,int sitePosition, unsigned long
 	{
 	  if (NextSitePosition == this->LookUpPosition)
 	    this->LookUpTable[currentStateDescription & this->LookUpTableMask] = statePosition;
-	  this->ChainDescription[statePosition] = currentStateDescription;
+	  this->StateDescription[statePosition] = currentStateDescription;
 	  statePosition++;
 	}
       else
@@ -389,7 +389,7 @@ int Spin1Chain::GenerateStates(int statePosition,int sitePosition, unsigned long
 	      mask = ~(0x1ul << sitePosition);
 	      if (NextSitePosition == this->LookUpPosition)
 		this->LookUpTable[(currentStateDescription & mask) & this->LookUpTableMask] = statePosition;
-	      this->ChainDescription[statePosition] = (currentStateDescription & mask);
+	      this->StateDescription[statePosition] = (currentStateDescription & mask);
 	      statePosition++;
 	    }
 	  else
@@ -400,7 +400,7 @@ int Spin1Chain::GenerateStates(int statePosition,int sitePosition, unsigned long
 		  mask = ~(0x3ul << sitePosition);
 		  if (NextSitePosition == this->LookUpPosition)
 		    this->LookUpTable[(currentStateDescription & mask) & this->LookUpTableMask] = statePosition;
-		  this->ChainDescription[statePosition] = (currentStateDescription & mask);
+		  this->StateDescription[statePosition] = (currentStateDescription & mask);
 		  statePosition++;
 		}
 	    }
@@ -461,7 +461,7 @@ int Spin1Chain::TotalSz (int index)
 {
   if (this->FixedQuantumNumberFlag == true)
     return this->Sz;
-  unsigned long State = this->ChainDescription[index];
+  unsigned long State = this->StateDescription[index];
   int TmpSz = 0;
   unsigned long TmpState;
   for (int i = 0; i < this->ChainLength; i++)
@@ -497,7 +497,7 @@ Matrix& Spin1Chain::Sxi (int i, Matrix& M)
   double Factor = M_SQRT2 * 0.5;
   for (int j = 0; j < this->HilbertSpaceDimension; j++)
     {
-      tmpState = this->ChainDescription[j];
+      tmpState = this->StateDescription[j];
       State = tmpState;
       tmpState >>= i;
       tmpState &= 0x3ul;
@@ -534,7 +534,7 @@ Matrix& Spin1Chain::Syi (int i, Matrix& M)
   double Factor = M_SQRT2 * 0.5;
   for (int j = 0; j < this->HilbertSpaceDimension; j++)
     {
-      tmpState = this->ChainDescription[j];
+      tmpState = this->StateDescription[j];
       State = tmpState;
       tmpState >>= i;
       tmpState &= 0x3ul;
@@ -570,7 +570,7 @@ Matrix& Spin1Chain::Szi (int i, Matrix& M)
   unsigned long State;
   for (int j = 0; j < this->HilbertSpaceDimension; j++)
     {
-      tmpState = this->ChainDescription[j];
+      tmpState = this->StateDescription[j];
       State = tmpState;
       tmpState >>= i;
       tmpState &= 0x3ul;
@@ -596,7 +596,7 @@ Matrix& Spin1Chain::Szi (int i, Matrix& M)
 
 int Spin1Chain::Spi (int i, int state, double& coefficient)
 {
-  unsigned long State = (this->ChainDescription[state] >> (i << 1));
+  unsigned long State = (this->StateDescription[state] >> (i << 1));
   unsigned long tmpState = State;
   tmpState &= 0x3ul;
   switch (tmpState)
@@ -632,7 +632,7 @@ int Spin1Chain::Spi (int i, int state, double& coefficient)
 
 int Spin1Chain::Smi (int i, int state, double& coefficient)
 {
-  unsigned long State = (this->ChainDescription[state] >> (i << 1));
+  unsigned long State = (this->StateDescription[state] >> (i << 1));
   unsigned long tmpState = State;
   tmpState &= 0x3ul;
   switch (tmpState)
@@ -668,7 +668,7 @@ int Spin1Chain::Smi (int i, int state, double& coefficient)
 
 int Spin1Chain::Szi (int i, int state, double& coefficient)
 {
-  unsigned long tmpState = (this->ChainDescription[state] >> (i << 1));
+  unsigned long tmpState = (this->StateDescription[state] >> (i << 1));
   tmpState &= 0x3ul;
   switch (tmpState)
     {
@@ -694,7 +694,7 @@ int Spin1Chain::Szi (int i, int state, double& coefficient)
 
 double Spin1Chain::SziSzj (int i, int j, int state)
 {  
-  unsigned long tmpState = this->ChainDescription[state];
+  unsigned long tmpState = this->StateDescription[state];
   unsigned long tmpState2 = (tmpState >> (j << 1)) & 0x3ul;
   tmpState >>= (i << 1);
   tmpState &= 0x3ul;
@@ -716,7 +716,7 @@ double Spin1Chain::SziSzj (int i, int j, int state)
 
 int Spin1Chain::SmiSpj (int i, int j, int state, double& coefficient)
 {  
-  unsigned long tmpState = this->ChainDescription[state];
+  unsigned long tmpState = this->StateDescription[state];
   unsigned long State = tmpState;
   unsigned long tmpState2 = tmpState;
   i <<= 1;
@@ -762,7 +762,7 @@ int Spin1Chain::SmiSpj (int i, int j, int state, double& coefficient)
 
 int Spin1Chain::SpiSpj (int i, int j, int state, double& coefficient)
 {
-  unsigned long tmpState = this->ChainDescription[state];
+  unsigned long tmpState = this->StateDescription[state];
   unsigned long State = tmpState;
   unsigned long tmpState2 = tmpState;
   i <<= 1;
@@ -809,7 +809,7 @@ int Spin1Chain::SpiSpj (int i, int j, int state, double& coefficient)
 
 int Spin1Chain::SmiSmj (int i, int j, int state, double& coefficient)
 {
-  unsigned long tmpState = this->ChainDescription[state];
+  unsigned long tmpState = this->StateDescription[state];
   unsigned long State = tmpState;
   unsigned long tmpState2 = tmpState;
   i <<= 1;
@@ -865,7 +865,7 @@ int Spin1Chain::SmiSmj (int i, int j, int state, double& coefficient)
 
 int Spin1Chain::SpiSzj (int i, int j, int state, double& coefficient)
 {
-  unsigned long tmpState = this->ChainDescription[state];
+  unsigned long tmpState = this->StateDescription[state];
   unsigned long State = tmpState;
   unsigned long tmpState2 = (tmpState >> (j << 1)) & 0x3ul;
   if (tmpState2 == 0x2ul)
@@ -918,7 +918,7 @@ int Spin1Chain::SpiSzj (int i, int j, int state, double& coefficient)
 
 int Spin1Chain::SmiSzj (int i, int j, int state, double& coefficient)
 {
-  unsigned long tmpState = this->ChainDescription[state];
+  unsigned long tmpState = this->StateDescription[state];
   unsigned long State = tmpState;
   unsigned long tmpState2 = (tmpState >> (j << 1)) & 0x3ul;
   if (tmpState2 == 0x2ul)
@@ -969,7 +969,7 @@ int Spin1Chain::SmiSzj (int i, int j, int state, double& coefficient)
 
 int Spin1Chain::TranslateState (int nbrTranslations, int state)
 {
-  unsigned long TmpState = this->ChainDescription[state];
+  unsigned long TmpState = this->StateDescription[state];
   TmpState = (((TmpState & (0x3ul << ((this->ChainLength - nbrTranslations) - 1ul)) << 1) << nbrTranslations)
 	      | (TmpState >> ((this->ChainLength - nbrTranslations) << 1)));
   return this->FindStateIndex(TmpState);
@@ -999,19 +999,19 @@ AbstractHilbertSpace* Spin1Chain::ExtractSubspace (AbstractQuantumNumber& q, Sub
   int* ConvArray = new int [HilbertSubspaceDimension];
   unsigned long* SubspaceDescription = new unsigned long [HilbertSubspaceDimension];
   int* SubspaceLookUpTable = new int [this->LookUpTableSize];
-  unsigned long TestMask = this->ChainDescription[TmpConvArray[0]] & this->LookUpTableMask;
+  unsigned long TestMask = this->StateDescription[TmpConvArray[0]] & this->LookUpTableMask;
   SubspaceLookUpTable[TestMask] = 0;
-  SubspaceDescription[0] = this->ChainDescription[TmpConvArray[0]];
+  SubspaceDescription[0] = this->StateDescription[TmpConvArray[0]];
   ConvArray[0] = TmpConvArray[0];
 //  unsigned long TestMask = this->LookUpTableMask;
   for (int i = 1; i < HilbertSubspaceDimension; i++)
     {
-      if ((this->ChainDescription[TmpConvArray[i]] & this->LookUpTableMask) != TestMask)
+      if ((this->StateDescription[TmpConvArray[i]] & this->LookUpTableMask) != TestMask)
 	{
-	  TestMask = this->ChainDescription[TmpConvArray[i]] & this->LookUpTableMask;
+	  TestMask = this->StateDescription[TmpConvArray[i]] & this->LookUpTableMask;
 	  SubspaceLookUpTable[TestMask] = i;
 	}
-      SubspaceDescription[i] = this->ChainDescription[TmpConvArray[i]];
+      SubspaceDescription[i] = this->StateDescription[TmpConvArray[i]];
       ConvArray[i] = TmpConvArray[i];
     }
   converter = SubspaceSpaceConverter (this->HilbertSpaceDimension, HilbertSubspaceDimension, ConvArray);
@@ -1028,7 +1028,7 @@ AbstractHilbertSpace* Spin1Chain::ExtractSubspace (AbstractQuantumNumber& q, Sub
 int Spin1Chain::FindStateIndex(unsigned long state)
 {
   int index = this->LookUpTable[state & this->LookUpTableMask];
-  unsigned long* tmpState = &(this->ChainDescription[index]);
+  unsigned long* tmpState = &(this->StateDescription[index]);
   while ((index < this->HilbertSpaceDimension) && (state != *(tmpState++)))
     index++;
   return index;   
@@ -1045,7 +1045,7 @@ ostream& Spin1Chain::PrintState (ostream& Str, int state)
   if (state >= this->HilbertSpaceDimension)    
     return Str;
   unsigned long tmp;
-  unsigned long StateDescription = this->ChainDescription[state];  
+  unsigned long StateDescription = this->StateDescription[state];  
   //Str << this->FindStateIndex(StateDescription) << " : ";
   for (int j = 0; j < this->ChainLength; j++)
     {
@@ -1115,10 +1115,10 @@ RealSymmetricMatrix Spin1Chain::EvaluatePartialDensityMatrix (int nbrSites, int 
   for (; MinIndex < MaxIndex; ++MinIndex)    
     {
       int Pos = 0;
-      unsigned long TmpState = (TmpHilbertSpace.ChainDescription[MinIndex] << Shift) & 0xfffffffful;
+      unsigned long TmpState = (TmpHilbertSpace.StateDescription[MinIndex] << Shift) & 0xfffffffful;
       for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
 	{
-	  unsigned long TmpState2 = TmpState | (TmpDestinationHilbertSpace.ChainDescription[j] & Mask);
+	  unsigned long TmpState2 = TmpState | (TmpDestinationHilbertSpace.StateDescription[j] & Mask);
 	  int TmpPos = this->FindStateIndex(TmpState2);
 	  if (TmpPos != this->HilbertSpaceDimension)
 	    {
@@ -1198,10 +1198,10 @@ RealMatrix Spin1Chain::EvaluatePartialEntanglementMatrix (int nbrSites, int szSe
 
   for (; MinIndex < MaxIndex; ++MinIndex)    
     {
-      unsigned long TmpState = TmpHilbertSpace.ChainDescription[MinIndex] << Shift;
+      unsigned long TmpState = TmpHilbertSpace.StateDescription[MinIndex] << Shift;
       for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
 	{
-	  unsigned long TmpState2 = TmpState | TmpDestinationHilbertSpace.ChainDescription[j];
+	  unsigned long TmpState2 = TmpState | TmpDestinationHilbertSpace.StateDescription[j];
 	  int TmpPos = this->FindStateIndex(TmpState2);
 	  if (TmpPos != this->HilbertSpaceDimension)
 	    {
@@ -1264,10 +1264,10 @@ ComplexMatrix Spin1Chain::EvaluatePartialEntanglementMatrix (int nbrSites, int s
 
   for (; MinIndex < MaxIndex; ++MinIndex)    
     {
-      unsigned long TmpState = TmpHilbertSpace.ChainDescription[MinIndex] << Shift;
+      unsigned long TmpState = TmpHilbertSpace.StateDescription[MinIndex] << Shift;
       for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
 	{
-	  unsigned long TmpState2 = TmpState | TmpDestinationHilbertSpace.ChainDescription[j];
+	  unsigned long TmpState2 = TmpState | TmpDestinationHilbertSpace.StateDescription[j];
 	  int TmpPos = this->FindStateIndex(TmpState2);
 	  if (TmpPos != this->HilbertSpaceDimension)
 	    {

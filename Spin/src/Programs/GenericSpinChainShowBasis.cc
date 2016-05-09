@@ -297,7 +297,7 @@ int main(int argc, char** argv)
 	    Space = new Spin1_2ChainWithTranslations (NbrSpins, Momentum, 1, SzValue, 1000000, 1000000);
 	    break;
 	  case 2 :
-	    Space = new Spin1ChainWithTranslations (NbrSpins, Momentum, SzValue, 1000000, 1000000);
+	    Space = new Spin1ChainWithTranslations (NbrSpins, Momentum, SzValue);
 	    break;
 	  default :
 	    {

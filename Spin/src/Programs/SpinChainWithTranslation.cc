@@ -62,7 +62,7 @@ int main(int argc, char** argv)
   for (int k = 0; k < NbrSpin; ++k)
     {
       cout << "momentum = " << k << endl;
-      Spin1ChainWithTranslations Space(NbrSpin, k, 0, 10000000, 10000000);
+      Spin1ChainWithTranslations Space(NbrSpin, k, 0);
       AbstractArchitecture* Architecture = 0;
       if (SMPFlag == false)
 	Architecture = new MonoProcessorArchitecture;

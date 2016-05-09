@@ -54,6 +54,7 @@ class Spin1Chain : public AbstractSpinChain
 {
 
   friend class Spin1ChainWithTranslations;
+  friend class Spin1ChainWithTranslationsAndSzSymmetry;
 
  protected:
 
@@ -67,7 +68,7 @@ class Spin1Chain : public AbstractSpinChain
 
  public:
 
-  unsigned long* ChainDescription;
+  unsigned long* StateDescription;
 
   // default constructor
   //
@@ -304,6 +305,7 @@ class Spin1Chain : public AbstractSpinChain
 	      int sz, bool fixedQuantumNumberFlag, int* lookUpTable, int lookUpTableSize, 
 	      int lookUpPosition, unsigned long lookUpTableMask);
   
+
   // evaluate Hilbert space dimension
   //
   // sz = twice the Sz value

@@ -34,4 +34,5 @@ Spin0_1_2_ChainWithTranslations.cc \
 Spin0_1_2_ChainWithTranslationsStaggered.cc \
 DoubledSpin0_1_2_ChainWithTranslationsStaggered.cc \
 DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry.cc \
-DoubledSpin1_2_ChainWithTranslations_alternative.cc
+DoubledSpin1_2_ChainWithTranslations_alternative.cc \
+Spin1ChainWithTranslationsAndSzSymmetry.cc

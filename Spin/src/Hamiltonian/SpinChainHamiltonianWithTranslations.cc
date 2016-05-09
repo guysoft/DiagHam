@@ -315,8 +315,6 @@ void SpinChainHamiltonianWithTranslations::EvaluateCosinusTable()
   this->SinusTable = new double [this->NbrSpin];
   this->ExponentialTable = new Complex [this->NbrSpin];
   double Coef = 2.0 * M_PI / ((double) this->NbrSpin) * ((double) this->Chain->GetMomentum());
-  cout<<  "this->Chain->GetMomentum() "<< this->Chain->GetMomentum()<<endl;
-  cout<<" Coef  "<<Coef<<endl;
   for (int i = 0; i < this->NbrSpin ; ++i)
     {
       this->CosinusTable[i] = cos(Coef * ((double) i));

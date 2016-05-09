@@ -116,7 +116,7 @@ int main(int argc, char** argv)
 	      Chain = new Spin1_2ChainWithTranslations (NbrSpins, Momentum, 1, InitalSzValue, 1000000, 1000000);
 	      break;
 	    case 2 :
-	      Chain = new Spin1ChainWithTranslations (NbrSpins, Momentum, InitalSzValue, 1000000, 1000000);
+	      Chain = new Spin1ChainWithTranslations (NbrSpins, Momentum, InitalSzValue);
 	      break;
 	    default :
 	      {
