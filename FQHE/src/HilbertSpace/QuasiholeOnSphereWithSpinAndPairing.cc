@@ -354,6 +354,10 @@ QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing(const Q
 
 QuasiholeOnSphereWithSpinAndPairing::~QuasiholeOnSphereWithSpinAndPairing ()
 {
+  delete[] SingleLayerIndices;
+  delete[] NbrFermionUpFullSpace;
+  delete[] LzValueUpFullSpace;
+  delete[] AdAElementsOneLayer;
 }
 
 // assignement (without duplicating datas)
