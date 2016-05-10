@@ -175,7 +175,7 @@ ComplexVector& SpinWith1DTranslationS2Operator::LowLevelMultiply(ComplexVector& 
   for (int j = 0; j < this->NbrSpin; ++j)
     {      
       int TmpLocalSpin = this->Chain->GetLocalSpin(j);
-      TmpDiagonal += 0.5 * ((double) this->Chain->GetLocalSpin(j)) * ((double) (this->Chain->GetLocalSpin(j) + 1));
+      TmpDiagonal += 0.25 * ((double) this->Chain->GetLocalSpin(j)) * ((double) (this->Chain->GetLocalSpin(j) + 2));
     }
   for (int i = (int) firstComponent; i < dim; ++i)
     {	 

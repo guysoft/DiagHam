@@ -49,6 +49,18 @@ AbstractSpinChain::~AbstractSpinChain ()
 {
 }
 
+
+// return value of spin projection on (Oz) for a given state
+//
+// Str = reference on current output stream 
+// return value = spin projection on (Oz)
+
+int AbstractSpinChain::TotalSz (int state)
+{
+  cout << "warning : TotalSz is not implemented" << endl;
+  return 0;
+}
+
 // get the value of the spin (i.e. S) at a given site
 // 
 // site = site index
@@ -91,6 +103,139 @@ Matrix& AbstractSpinChain::Szi (int i, Matrix& M)
 {
   return M;
 }
+
+
+// return index of resulting state from application of S+_i operator on a given state
+//
+// i = position of S+ operator
+// state = index of the state to be applied on S+_i operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
+
+int AbstractSpinChain::Spi (int i, int state, double& coefficient)
+{
+  cout << "warning : Spi is not implemented" << endl;
+  coefficient = 0.0;
+  return this->HilbertSpaceDimension;
+}
+
+// return index of resulting state from application of S-_i operator on a given state
+//
+// i = position of S- operator
+// state = index of the state to be applied on S-_i operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
+
+int AbstractSpinChain::Smi (int i, int state, double& coefficient)
+{
+  cout << "warning : Smi is not implemented" << endl;
+  coefficient = 0.0;
+  return this->HilbertSpaceDimension;
+}
+
+// return index of resulting state from application of Sz_i operator on a given state
+//
+// i = position of Sz operator
+// state = index of the state to be applied on Sz_i operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
+
+int AbstractSpinChain::Szi (int i, int state, double& coefficient)
+{
+  cout << "warning : Szi is not implemented" << endl;
+  coefficient = 0.0;
+  return this->HilbertSpaceDimension;
+}
+
+// return eigenvalue of Sz_i Sz_j associated to a given state
+//
+// i = first position
+// j = second position
+// state = index of the state to consider
+// return value = corresponding eigenvalue
+
+double AbstractSpinChain::SziSzj (int i, int j, int state)
+{
+  cout << "warning : SziSzj is not implemented" << endl;
+  return 0.0;
+}
+
+// return index of resulting state from application of S+_i S+_j operator on a given state
+//
+// i = position of first S+ operator
+// j = position of second S+ operator
+// state = index of the state to be applied on S+_i S+_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
+
+int AbstractSpinChain::SpiSpj (int i, int j, int state, double& coefficient)
+{
+  cout << "warning : SpiSpj is not implemented" << endl;
+  coefficient = 0.0;
+  return this->HilbertSpaceDimension;
+}
+
+// return index of resulting state from application of S-_i S-_j operator on a given state
+//
+// i = position of first S- operator
+// j = position of second S- operator
+// state = index of the state to be applied on S-_i S-_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
+
+int AbstractSpinChain::SmiSmj (int i, int j, int state, double& coefficient)
+{
+  cout << "warning : SmiSmj is not implemented" << endl;
+  coefficient = 0.0;
+  return this->HilbertSpaceDimension;
+}
+
+// return index of resulting state from application of S+_i Sz_j operator on a given state
+//
+// i = position of S+ operator
+// j = position of Sz operator
+// state = index of the state to be applied on S+_i Sz_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
+
+int AbstractSpinChain::SpiSzj (int i, int j, int state, double& coefficient)
+{
+  cout << "warning : SpiSpj is not implemented" << endl;
+  coefficient = 0.0;
+  return this->HilbertSpaceDimension;
+}
+
+// return index of resulting state from application of S-_i Sz_j operator on a given state
+//
+// i = position of S- operator
+// j = position of Sz operator
+// state = index of the state to be applied on S-_i Sz_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
+
+int AbstractSpinChain::SmiSzj (int i, int j, int state, double& coefficient)
+{
+  cout << "warning : SmiSzj is not implemented" << endl;
+  coefficient = 0.0;
+  return this->HilbertSpaceDimension;
+}
+
+// return index of resulting state from application of S-_i S+_j operator on a given state
+//
+// i = position of S- operator
+// j = position of S+ operator
+// state = index of the state to be applied on S-_i S+_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state 
+
+int AbstractSpinChain::SmiSpj (int i, int j, int state, double& coefficient)
+{
+  cout << "warning : SmiSpj is not implemented" << endl;
+  coefficient = 0.0;
+  return this->HilbertSpaceDimension;
+}
+ 
+
 
 // return index of resulting state from application of S+_i S-_j Sz_k operator on a given state
 //

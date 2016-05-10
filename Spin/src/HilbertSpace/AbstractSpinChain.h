@@ -74,7 +74,7 @@ class AbstractSpinChain : public AbstractHilbertSpace
   //
   // Str = reference on current output stream 
   // return value = spin projection on (Oz)
-  virtual int TotalSz (int state) = 0;
+  virtual int TotalSz (int state);
 
   // return matrix representation of Sx
   //
@@ -103,7 +103,7 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // state = index of the state to be applied on S+_i operator
   // coefficient = reference on double where numerical coefficient has to be stored
   // return value = index of resulting state
-  virtual int Spi (int i, int state, double& coefficient) = 0;
+  virtual int Spi (int i, int state, double& coefficient);
 
   // return index of resulting state from application of S-_i operator on a given state
   //
@@ -111,7 +111,7 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // state = index of the state to be applied on S-_i operator
   // coefficient = reference on double where numerical coefficient has to be stored
   // return value = index of resulting state
-  virtual int Smi (int i, int state, double& coefficient) = 0;
+  virtual int Smi (int i, int state, double& coefficient);
 
   // return index of resulting state from application of Sz_i operator on a given state
   //
@@ -119,7 +119,7 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // state = index of the state to be applied on Sz_i operator
   // coefficient = reference on double where numerical coefficient has to be stored
   // return value = index of resulting state
-  virtual int Szi (int i, int state, double& coefficient) = 0;
+  virtual int Szi (int i, int state, double& coefficient);
 
   // return eigenvalue of Sz_i Sz_j associated to a given state
   //
@@ -127,7 +127,7 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // j = second position
   // state = index of the state to consider
   // return value = corresponding eigenvalue
-  virtual double SziSzj (int i, int j, int state) = 0;
+  virtual double SziSzj (int i, int j, int state);
 
   // return index of resulting state from application of S+_i S+_j operator on a given state
   //
@@ -136,7 +136,7 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // state = index of the state to be applied on S+_i S+_j operator
   // coefficient = reference on double where numerical coefficient has to be stored
   // return value = index of resulting state
-  virtual int SpiSpj (int i, int j, int state, double& coefficient) = 0;
+  virtual int SpiSpj (int i, int j, int state, double& coefficient);
 
   // return index of resulting state from application of S-_i S-_j operator on a given state
   //
@@ -145,7 +145,7 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // state = index of the state to be applied on S-_i S-_j operator
   // coefficient = reference on double where numerical coefficient has to be stored
   // return value = index of resulting state
-  virtual int SmiSmj (int i, int j, int state, double& coefficient) = 0;
+  virtual int SmiSmj (int i, int j, int state, double& coefficient);
 
   // return index of resulting state from application of S+_i Sz_j operator on a given state
   //
@@ -154,7 +154,7 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // state = index of the state to be applied on S+_i Sz_j operator
   // coefficient = reference on double where numerical coefficient has to be stored
   // return value = index of resulting state
-  virtual int SpiSzj (int i, int j, int state, double& coefficient) = 0;
+  virtual int SpiSzj (int i, int j, int state, double& coefficient);
 
   // return index of resulting state from application of S-_i Sz_j operator on a given state
   //
@@ -163,7 +163,7 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // state = index of the state to be applied on S-_i Sz_j operator
   // coefficient = reference on double where numerical coefficient has to be stored
   // return value = index of resulting state
-  virtual int SmiSzj (int i, int j, int state, double& coefficient) = 0;
+  virtual int SmiSzj (int i, int j, int state, double& coefficient);
 
   // return index of resulting state from application of S-_i S+_j operator on a given state
   //
@@ -172,7 +172,7 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // state = index of the state to be applied on S-_i S+_j operator
   // coefficient = reference on double where numerical coefficient has to be stored
   // return value = index of resulting state 
-  virtual int SmiSpj (int i, int j, int state, double& coefficient) = 0;
+  virtual int SmiSpj (int i, int j, int state, double& coefficient);
  
   // return index of resulting state from application of S+_i S-_j operator on a given state
   //
