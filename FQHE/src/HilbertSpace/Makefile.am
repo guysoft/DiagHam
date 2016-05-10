@@ -165,4 +165,5 @@ FermionOnCP2Long.cc \
 FermionOnTorusWithSpinSzSymmetryAndMagneticTranslations.cc \
 FermionOnTorusWithSpinAndTimeReversalSymmetricMagneticTranslations.cc \
 BosonOnTorusWithSpinAllSzAndMagneticTranslations.cc \
-FermionOnSphereWithSpinAndPairing.cc
+FermionOnSphereWithSpinAndPairing.cc \
+QuasiholeOnSphereWithSpinAndPairing.cc
