@@ -84,34 +84,34 @@ int main(int argc, char** argv)
       return -1;
     }
   
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
-  if(((SingleStringOption*) Manager["state"])->GetString() == 0)
+  if(Manager.GetString("state") == 0)
     {
       cout << "no input state" << endl << "see man page for option syntax or type FQHESphereWithSU3SpinLValue -h" << endl;
       return -1;
     }
 
-  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
-  int TotalLz = ((SingleIntegerOption*) Manager["total-lz"])->GetInteger();
-  int TotalTz = ((SingleIntegerOption*) Manager["total-tz"])->GetInteger();
-  int TotalY = ((SingleIntegerOption*) Manager["total-y"])->GetInteger();
-  bool LzSymmetrizedBasis = ((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean();
-  bool TzSymmetrizedBasis = ((BooleanOption*) Manager["tzsymmetrized-basis"])->GetBoolean();
-  bool Z3SymmetrizedBasis = ((BooleanOption*) Manager["z3symmetrized-basis"])->GetBoolean();
-  bool TzMinusParity = ((BooleanOption*) Manager["minus-tzparity"])->GetBoolean();
-  bool LzMinusParity = ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean();
+  int NbrParticles = Manager.GetInteger("nbr-particles");
+  int LzMax = Manager.GetInteger("lzmax");
+  int TotalLz = Manager.GetInteger("total-lz");
+  int TotalTz = Manager.GetInteger("total-tz");
+  int TotalY = Manager.GetInteger("total-y");
+  bool LzSymmetrizedBasis = Manager.GetBoolean("lzsymmetrized-basis");
+  bool TzSymmetrizedBasis = Manager.GetBoolean("tzsymmetrized-basis");
+  bool Z3SymmetrizedBasis = Manager.GetBoolean("z3symmetrized-basis");
+  bool TzMinusParity = Manager.GetBoolean("minus-tzparity");
+  bool LzMinusParity = Manager.GetBoolean("minus-lzparity");
   bool FermionFlag = false;
-  if (((SingleStringOption*) Manager["statistics"])->GetString() == 0)
+  if (Manager.GetString("statistics") == 0)
     FermionFlag = true;
   if (NbrParticles==0)
     {
-      if (FQHEOnSphereWithSU3SpinFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["state"])->GetString(), NbrParticles, LzMax, TotalLz, TotalTz, TotalY,
+      if (FQHEOnSphereWithSU3SpinFindSystemInfoFromVectorFileName(Manager.GetString("state"), NbrParticles, LzMax, TotalLz, TotalTz, TotalY,
 								  TzSymmetrizedBasis, TzMinusParity, Z3SymmetrizedBasis,
 								  LzSymmetrizedBasis, LzMinusParity, FermionFlag) == false)
 	{
@@ -119,7 +119,7 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  if (((BooleanOption*) Manager["show-extracted"])->GetBoolean() == true)
+	  if (Manager.GetBoolean("show-extracted") == true)
 	    {
 	      cout << "N=" << NbrParticles << "  LzMax=" << LzMax << "  TotalLz=" << TotalLz << "  TotalTz=" << TotalTz;
 	      if (LzSymmetrizedBasis == true)
@@ -146,34 +146,34 @@ int main(int argc, char** argv)
 	    }
 	}
     }
-  if (((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean() == true)
+  if (Manager.GetBoolean("lzsymmetrized-basis") == true)
     {
-      LzSymmetrizedBasis = ((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean();
-      LzMinusParity = ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean();      
+      LzSymmetrizedBasis = Manager.GetBoolean("lzsymmetrized-basis");
+      LzMinusParity = Manager.GetBoolean("minus-lzparity");      
     }
-  if (((BooleanOption*) Manager["tzsymmetrized-basis"])->GetBoolean() == true)
+  if (Manager.GetBoolean("tzsymmetrized-basis") == true)
     {
-      TzSymmetrizedBasis = ((BooleanOption*) Manager["tzsymmetrized-basis"])->GetBoolean();
-      TzMinusParity = ((BooleanOption*) Manager["minus-tzparity"])->GetBoolean();
+      TzSymmetrizedBasis = Manager.GetBoolean("tzsymmetrized-basis");
+      TzMinusParity = Manager.GetBoolean("minus-tzparity");
     }
-  if (((BooleanOption*) Manager["z3symmetrized-basis"])->GetBoolean() == true)
+  if (Manager.GetBoolean("z3symmetrized-basis") == true)
     {
-      Z3SymmetrizedBasis = ((BooleanOption*) Manager["z3symmetrized-basis"])->GetBoolean();
+      Z3SymmetrizedBasis = Manager.GetBoolean("z3symmetrized-basis");
     }
-  if (((SingleStringOption*) Manager["statistics"])->GetString() != 0)
+  if (Manager.GetString("statistics") != 0)
     {
-      if ((strcmp ("fermions", ((SingleStringOption*) Manager["statistics"])->GetString()) == 0))
+      if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
 	{
 	  FermionFlag = true;
 	}
       else
-	if ((strcmp ("fermions", ((SingleStringOption*) Manager["statistics"])->GetString()) == 0))
+	if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
 	  {
 	    FermionFlag = false;
 	}
 	else
 	  {
-	    cout << ((SingleStringOption*) Manager["statistics"])->GetString() << " is an undefined statistics" << endl;
+	    cout << Manager.GetString("statistics") << " is an undefined statistics" << endl;
 	  }  
     }
   int Parity = TotalLz & 1;
@@ -183,7 +183,7 @@ int main(int argc, char** argv)
       return -1;           
     }
 
-  char* StateFileName = ((SingleStringOption*) Manager["state"])->GetString();
+  char* StateFileName = Manager.GetString("state");
   if (IsFile(StateFileName) == false)
     {
       cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
@@ -230,52 +230,52 @@ int main(int argc, char** argv)
 	      }	
 	  if ((TzSymmetrizedBasis == true) && (Z3SymmetrizedBasis == false))
 	    {
-	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+	      if (Manager.GetString("load-hilbert") == 0)
 		{
-		  Space = new FermionOnSphereWithSU3SpinTzSymmetry(NbrParticles, TotalLz, LzMax, TotalY, ((BooleanOption*) Manager["minus-tzparity"])->GetBoolean(), MemorySpace);
-		  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		  Space = new FermionOnSphereWithSU3SpinTzSymmetry(NbrParticles, TotalLz, LzMax, TotalY, Manager.GetBoolean("minus-tzparity"), MemorySpace);
+		  if (Manager.GetString("save-hilbert") != 0)
 		    {
-		      ((FermionOnSphereWithSU3SpinTzSymmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+		      ((FermionOnSphereWithSU3SpinTzSymmetry*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 		      return 0;
 		    }
 		}
 	      else
 		{
-		  Space = new FermionOnSphereWithSU3SpinTzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		  Space = new FermionOnSphereWithSU3SpinTzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
 		}
 	    }
 	  else
 	    if ((TzSymmetrizedBasis == false) && (Z3SymmetrizedBasis == true))
 	      {
-		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+		if (Manager.GetString("load-hilbert") == 0)
 		  {
 		    Space = new FermionOnSphereWithSU3SpinZ3Symmetry(NbrParticles, TotalLz, LzMax, TotalTz, MemorySpace);
-		    if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		    if (Manager.GetString("save-hilbert") != 0)
 		      {
-			((FermionOnSphereWithSU3SpinZ3Symmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+			((FermionOnSphereWithSU3SpinZ3Symmetry*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 			return 0;
 		      }
 		  }
 		else
 		  {
-		    Space = new FermionOnSphereWithSU3SpinZ3Symmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		    Space = new FermionOnSphereWithSU3SpinZ3Symmetry(Manager.GetString("load-hilbert"), MemorySpace);
 		  }
 	      }
 	    else
 	      if ((TzSymmetrizedBasis == true) && (Z3SymmetrizedBasis == true))
 		{
-		  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+		  if (Manager.GetString("load-hilbert") == 0)
 		    {
-		      Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(NbrParticles, TotalLz, LzMax, ((BooleanOption*) Manager["minus-tzparity"])->GetBoolean(), MemorySpace);
-		      if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		      Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(NbrParticles, TotalLz, LzMax, Manager.GetBoolean("minus-tzparity"), MemorySpace);
+		      if (Manager.GetString("save-hilbert") != 0)
 			{
-			  ((FermionOnSphereWithSU3SpinTzZ3Symmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+			  ((FermionOnSphereWithSU3SpinTzZ3Symmetry*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 			  return 0;
 			}
 		    }
 		  else
 		    {
-		      Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		      Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(Manager.GetString("load-hilbert"), MemorySpace);
 		    }
 		}
 	}

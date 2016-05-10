@@ -109,34 +109,34 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHESphereWithSU3SpinL2Diagonalize -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
 
-  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
-  int TotalLz  = ((SingleIntegerOption*) Manager["total-lz"])->GetInteger();
-  int TotalTz = ((SingleIntegerOption*) Manager["total-tz"])->GetInteger();
-  int TotalY = ((SingleIntegerOption*) Manager["total-y"])->GetInteger();
-  bool LzSymmetrizedBasis = ((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean();
-  bool TzSymmetrizedBasis = ((BooleanOption*) Manager["tzsymmetrized-basis"])->GetBoolean();
-  bool Z3SymmetrizedBasis = ((BooleanOption*) Manager["z3symmetrized-basis"])->GetBoolean();
-  bool TzMinusParity = ((BooleanOption*) Manager["minus-tzparity"])->GetBoolean();
-  long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
-  unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) Manager["fast-search"])->GetInteger()) << 20;
-  char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();  
-  bool DiskCacheFlag = ((BooleanOption*) Manager["disk-cache"])->GetBoolean();
+  int NbrParticles = Manager.GetInteger("nbr-particles");
+  int LzMax = Manager.GetInteger("lzmax");
+  int TotalLz  = Manager.GetInteger("total-lz");
+  int TotalTz = Manager.GetInteger("total-tz");
+  int TotalY = Manager.GetInteger("total-y");
+  bool LzSymmetrizedBasis = Manager.GetBoolean("lzsymmetrized-basis");
+  bool TzSymmetrizedBasis = Manager.GetBoolean("tzsymmetrized-basis");
+  bool Z3SymmetrizedBasis = Manager.GetBoolean("z3symmetrized-basis");
+  bool TzMinusParity = Manager.GetBoolean("minus-tzparity");
+  long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
+  unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
+  char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");  
+  bool DiskCacheFlag = Manager.GetBoolean("disk-cache");
   bool FirstRun = true;
-  char* OutputNameLz = new char [256 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
-  sprintf (OutputNameLz, "fermions_sphere_su3_%s_n_%d_2s_%d_tz_%d_y_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
+  char* OutputNameLz = new char [256 + strlen(Manager.GetString("interaction-name"))];
+  sprintf (OutputNameLz, "fermions_sphere_su3_%s_n_%d_2s_%d_tz_%d_y_%d_lz.dat", Manager.GetString("interaction-name"), 
 	   NbrParticles, LzMax, TotalTz, TotalY);
 
 
   ParticleOnSphereWithSU3Spin* Space=0;
-  if (((BooleanOption*) Manager["boson"])->GetBoolean() == false)
+  if (Manager.GetBoolean("boson") == false)
     {
       if ((TzSymmetrizedBasis == false) && (Z3SymmetrizedBasis == false))
 	{
@@ -167,52 +167,52 @@ int main(int argc, char** argv)
 	      }	
 	  if ((TzSymmetrizedBasis == true) && (Z3SymmetrizedBasis == false))
 	    {
-	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+	      if (Manager.GetString("load-hilbert") == 0)
 		{
-		  Space = new FermionOnSphereWithSU3SpinTzSymmetry(NbrParticles, TotalLz, LzMax, TotalY, ((BooleanOption*) Manager["minus-tzparity"])->GetBoolean(), MemorySpace);
-		  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		  Space = new FermionOnSphereWithSU3SpinTzSymmetry(NbrParticles, TotalLz, LzMax, TotalY, Manager.GetBoolean("minus-tzparity"), MemorySpace);
+		  if (Manager.GetString("save-hilbert") != 0)
 		    {
-		      ((FermionOnSphereWithSU3SpinTzSymmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+		      ((FermionOnSphereWithSU3SpinTzSymmetry*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 		      return 0;
 		    }
 		}
 	      else
 		{
-		  Space = new FermionOnSphereWithSU3SpinTzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		  Space = new FermionOnSphereWithSU3SpinTzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
 		}
 	    }
 	  else
 	    if ((TzSymmetrizedBasis == false) && (Z3SymmetrizedBasis == true))
 	      {
-		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+		if (Manager.GetString("load-hilbert") == 0)
 		  {
 		    Space = new FermionOnSphereWithSU3SpinZ3Symmetry(NbrParticles, TotalLz, LzMax, TotalTz, MemorySpace);
-		    if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		    if (Manager.GetString("save-hilbert") != 0)
 		      {
-			((FermionOnSphereWithSU3SpinZ3Symmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+			((FermionOnSphereWithSU3SpinZ3Symmetry*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 			return 0;
 		      }
 		  }
 		else
 		  {
-		    Space = new FermionOnSphereWithSU3SpinZ3Symmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		    Space = new FermionOnSphereWithSU3SpinZ3Symmetry(Manager.GetString("load-hilbert"), MemorySpace);
 		  }
 	      }
 	    else
 	      if ((TzSymmetrizedBasis == true) && (Z3SymmetrizedBasis == true))
 		{
-		  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+		  if (Manager.GetString("load-hilbert") == 0)
 		    {
-		      Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(NbrParticles, TotalLz, LzMax, ((BooleanOption*) Manager["minus-tzparity"])->GetBoolean(), MemorySpace);
-		      if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		      Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(NbrParticles, TotalLz, LzMax, Manager.GetBoolean("minus-tzparity"), MemorySpace);
+		      if (Manager.GetString("save-hilbert") != 0)
 			{
-			  ((FermionOnSphereWithSU3SpinTzZ3Symmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+			  ((FermionOnSphereWithSU3SpinTzZ3Symmetry*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 			  return 0;
 			}
 		    }
 		  else
 		    {
-		      Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		      Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(Manager.GetString("load-hilbert"), MemorySpace);
 		    }
 		}
 	}
@@ -227,17 +227,17 @@ int main(int argc, char** argv)
     Memory = Architecture.GetArchitecture()->GetLocalMemory();
   AbstractQHEOnSphereHamiltonian* Hamiltonian = new ParticleOnSphereWithSU3SpinL2Hamiltonian(Space, NbrParticles, LzMax, TotalLz,
 											     Architecture.GetArchitecture(), 
-											     ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
+											     Manager.GetDouble("l2-factor"),
 											     Memory, DiskCacheFlag,
 											     LoadPrecalculationFileName);
 
-  double Shift = ((SingleDoubleOption*) Manager["energy-shift"])->GetDouble();
+  double Shift = Manager.GetDouble("energy-shift");
   Hamiltonian->ShiftHamiltonian(Shift);
   char* EigenvectorName = 0;
-  if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
+  if (Manager.GetBoolean("eigenstate") == true)	
     {
-      EigenvectorName = new char [128 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
-      sprintf (EigenvectorName, "fermions_sphere_su3_%s_n_%d_2s_%d_tz_%d_y_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
+      EigenvectorName = new char [128 + strlen(Manager.GetString("interaction-name"))];
+      sprintf (EigenvectorName, "fermions_sphere_su3_%s_n_%d_2s_%d_tz_%d_y_%d_lz_%d", Manager.GetString("interaction-name"), 
 	       NbrParticles, LzMax, TotalTz, TotalY, TotalLz);
     }
   QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, TotalLz, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);

@@ -57,56 +57,56 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHESphereWithSU3SpinConvertSymmetrizedState -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
-  if (((SingleStringOption*) Manager["input-file"])->GetString() == 0)
+  if (Manager.GetString("input-file") == 0)
     {
       cout << "error, one input file should be provided. See man page for option syntax or type FQHESphereWithSU3SpinConvertSymmetrizedState -h" << endl;
       return -1;
     }
-  if (IsFile(((SingleStringOption*) Manager["input-file"])->GetString()) == false)
+  if (IsFile(Manager.GetString("input-file")) == false)
     {
-      cout << "can't open file " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
+      cout << "can't open file " << Manager.GetString("input-file") << endl;
     }
 
-  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger(); 
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger(); 
-  int TotalLz = ((SingleIntegerOption*) Manager["total-lz"])->GetInteger();
-  int TotalTz = ((SingleIntegerOption*) Manager["total-tz"])->GetInteger();
-  int TotalY = ((SingleIntegerOption*) Manager["total-y"])->GetInteger();
-  bool SymmetrizeFlag = ((BooleanOption*) Manager["symmetrize"])->GetBoolean();
-  bool TzSymmetrizedBasis = ((BooleanOption*) Manager["tzsymmetrized-basis"])->GetBoolean();
-  bool Z3SymmetrizedBasis = ((BooleanOption*) Manager["z3symmetrized-basis"])->GetBoolean();
-  bool TzMinusParity = ((BooleanOption*) Manager["minus-tzparity"])->GetBoolean();
+  int NbrParticles = Manager.GetInteger("nbr-particles"); 
+  int LzMax = Manager.GetInteger("lzmax"); 
+  int TotalLz = Manager.GetInteger("total-lz");
+  int TotalTz = Manager.GetInteger("total-tz");
+  int TotalY = Manager.GetInteger("total-y");
+  bool SymmetrizeFlag = Manager.GetBoolean("symmetrize");
+  bool TzSymmetrizedBasis = Manager.GetBoolean("tzsymmetrized-basis");
+  bool Z3SymmetrizedBasis = Manager.GetBoolean("z3symmetrized-basis");
+  bool TzMinusParity = Manager.GetBoolean("minus-tzparity");
   bool Statistics = true;
   bool LzSymmetrizedBasis = false;
   bool LzMinusParity = false;
   long MemorySpace = 9l << 20;
-  if (FQHEOnSphereWithSU3SpinFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["input-file"])->GetString(), 
+  if (FQHEOnSphereWithSU3SpinFindSystemInfoFromVectorFileName(Manager.GetString("input-file"), 
 							      NbrParticles, LzMax, TotalLz, TotalTz, TotalY,
 							      TzSymmetrizedBasis, TzMinusParity, Z3SymmetrizedBasis,
 							      LzSymmetrizedBasis, LzMinusParity, Statistics) == false)
     {
-      cout << "error while retrieving system parameters from file name " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
+      cout << "error while retrieving system parameters from file name " << Manager.GetString("input-file") << endl;
       return -1;
     }
       
-  if (((BooleanOption*) Manager["z3symmetrized-basis"])->GetBoolean() == true)
+  if (Manager.GetBoolean("z3symmetrized-basis") == true)
     {
-      Z3SymmetrizedBasis = ((BooleanOption*) Manager["z3symmetrized-basis"])->GetBoolean();
+      Z3SymmetrizedBasis = Manager.GetBoolean("z3symmetrized-basis");
     }
-  if (((BooleanOption*) Manager["tzsymmetrized-basis"])->GetBoolean() == true)
+  if (Manager.GetBoolean("tzsymmetrized-basis") == true)
     {
-      TzSymmetrizedBasis = ((BooleanOption*) Manager["tzsymmetrized-basis"])->GetBoolean();
-      TzMinusParity = ((BooleanOption*) Manager["minustszparity"])->GetBoolean();
+      TzSymmetrizedBasis = Manager.GetBoolean("tzsymmetrized-basis");
+      TzMinusParity = Manager.GetBoolean("minustszparity");
     }
-  if ((((BooleanOption*) Manager["boson"])->GetBoolean() == true) || (((BooleanOption*) Manager["fermion"])->GetBoolean() == true))
+  if ((Manager.GetBoolean("boson") == true) || (Manager.GetBoolean("fermion") == true))
     {
-      if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+      if (Manager.GetBoolean("boson") == true)
 	Statistics = false;
       else
 	Statistics = true;
@@ -118,9 +118,9 @@ int main(int argc, char** argv)
     }
 
   RealVector State;
-  if (State.ReadVector (((SingleStringOption*) Manager["input-file"])->GetString()) == false)
+  if (State.ReadVector (Manager.GetString("input-file")) == false)
     {
-      cout << "can't open vector file " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
+      cout << "can't open vector file " << Manager.GetString("input-file") << endl;
       return -1;      
     }
 
@@ -156,9 +156,9 @@ int main(int argc, char** argv)
 	  OutputState = InitialSpace->ConvertToNbodyBasis(State, TargetSpace);
 	  delete InitialSpace;
 	}
-      if (OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
+      if (OutputState.WriteVector(Manager.GetString("output-file")) == false)
 	{
-	  cout << "error while writing output state " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;
+	  cout << "error while writing output state " << Manager.GetString("output-file") << endl;
 	  return -1;
 	}
     }
