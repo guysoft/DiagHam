@@ -35,6 +35,15 @@
 
 
 
+// get pseudopototentials for spinless particles on sphere from file
+// 
+// fileName = name of the file that contains the pseudopotantial description
+// lzMax = reference on twice the maximum Lz value
+// pseudoPotentials = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
+// onebodyPotential =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state), null pointer if none
+// return value = true if no error occured
+bool FQHESphereGetPseudopotentials (char* fileName, int lzMax, double* pseudoPotentials, double*& oneBodyPotential);
+
 // get pseudopototentials for particles on sphere with SU(2) spin from file
 // 
 // fileName = name of the file that contains the pseudopotantial description

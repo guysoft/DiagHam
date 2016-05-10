@@ -6,6 +6,8 @@
 
 #include "Hamiltonian/ParticleOnSphereGenericHamiltonian.h"
 
+#include "Tools/FQHEFiles/FQHESpherePseudopotentialTools.h"
+
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
@@ -104,8 +106,10 @@ int main(int argc, char** argv)
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");  
   bool DiskCacheFlag = Manager.GetBoolean("disk-cache");
   bool FirstRun = true;
-  double* PseudoPotentials = 0;
+  double* PseudoPotentials = new double[LzMax + 1];
   double* OneBodyPotentials = 0; 
+
+
   if (Manager.GetString("interaction-file") == 0)
     {
       cout << "an interaction file has to be provided" << endl;
@@ -113,35 +117,29 @@ int main(int argc, char** argv)
     }
   else
     {
-      ConfigurationParser InteractionDefinition;
-      if (InteractionDefinition.Parse(Manager.GetString("interaction-file")) == false)
-	{
-	  InteractionDefinition.DumpErrors(cout) << endl;
-	  return -1;
-	}
-      int TmpNbrPseudoPotentials;
-      if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', PseudoPotentials, TmpNbrPseudoPotentials) == false)
-	{
-	  cout << "Weights is not defined or as a wrong value in " << Manager.GetString("interaction-file") << endl;
-	  return -1;
-	}
-      if (TmpNbrPseudoPotentials != (LzMax +1))
-	{
-	  cout << "Invalid number of pseudo-potentials" << endl;
-	  return -1;	  
-	}
-      if (InteractionDefinition.GetAsDoubleArray("Onebodypotentials", ' ', OneBodyPotentials, TmpNbrPseudoPotentials) == true)
-	{
-	  if (TmpNbrPseudoPotentials != (LzMax +1))
-	    {
-	      cout << "Invalid number of pseudo-potentials" << endl;
-	      return -1;	  
-	    }
-	}
+      if (FQHESphereGetPseudopotentials(Manager.GetString("interaction-file"), LzMax, PseudoPotentials, OneBodyPotentials) == false)
+	return -1;
+    }
+  char* InteractionName = 0;
+  ConfigurationParser InteractionDefinition;
+  if (InteractionDefinition.Parse(Manager.GetString("interaction-file")) == false)
+    {
+      InteractionDefinition.DumpErrors(cout) << endl;
+      exit(-1);
+    }
+  if (InteractionDefinition["Name"] != 0)
+    {
+      InteractionName = new char[strlen(InteractionDefinition["Name"]) + 1];
+      strcpy(InteractionName, InteractionDefinition["Name"]);
+    }
+  else
+    {
+      InteractionName = new char[strlen(Manager.GetString("interaction-name")) + 1];
+      strcpy(InteractionName, Manager.GetString("interaction-name"));
     }
 
-  char* OutputNameLz = new char [256 + strlen(Manager.GetString("interaction-name"))];
-  sprintf (OutputNameLz, "bosons_%s_n_%d_2s_%d_lz.dat", Manager.GetString("interaction-name"), NbrBosons, LzMax);
+  char* OutputNameLz = new char [256 + strlen(InteractionName)];
+  sprintf (OutputNameLz, "bosons_%s_n_%d_2s_%d_lz.dat", InteractionName, NbrBosons, LzMax);
   int Max = (LzMax * NbrBosons);
   int  L = InitialLz;
 
@@ -214,7 +212,7 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("eigenstate") == true)	
 	{
 	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "bosons_%s_n_%d_2s_%d_lz_%d", Manager.GetString("interaction-name"), NbrBosons, LzMax, L);
+	  sprintf (EigenvectorName, "bosons_%s_n_%d_2s_%d_lz_%d", InteractionName, NbrBosons, LzMax, L);
 	}
       QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
       MainTaskOperation TaskOperation (&Task);

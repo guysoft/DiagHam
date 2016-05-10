@@ -42,6 +42,64 @@ using std::endl;
 using std::string;
 
 
+// get pseudopototentials for spinless particles on sphere from file
+// 
+// fileName = name of the file that contains the pseudopotantial description
+// lzMax = reference on twice the maximum Lz value
+// pseudoPotentials = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
+// onebodyPotential =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state), null pointer if none
+// return value = true if no error occured
+
+bool FQHESphereGetPseudopotentials (char* fileName, int lzMax, double* pseudoPotentials, double*& oneBodyPotential)
+{
+  ConfigurationParser InteractionDefinition;
+  if (InteractionDefinition.Parse(fileName) == false)
+    {
+      InteractionDefinition.DumpErrors(cout) << endl;
+      return false;
+    }
+  if (InteractionDefinition["Pseudopotentials"] == 0)
+    {
+      cout << "Pseudopotentials are not defined in " << fileName << endl;
+      return false;
+    }  
+  int TmpNbrPseudoPotentials;
+  double* TmpPseudoPotentials;
+  if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      int TmpMax = TmpNbrPseudoPotentials;
+      if (TmpMax < (lzMax + 1))
+	{
+	  cout << "warning, Pseudopotentials has less entries than the number of orbitals, padding with zeroes" << endl;
+	  for (int j = 0; j < TmpMax; ++j)
+	    pseudoPotentials[j] = TmpPseudoPotentials[j];
+ 	  for (int j = TmpMax; j <= lzMax; ++j)
+	    pseudoPotentials[j] = 0.0; 
+	}      
+      else
+	{
+	  TmpMax = lzMax + 1;
+	  cout << "warning, Pseudopotentials has more entries than the number of orbitals and will be truncated" << endl;
+	  for (int j = 0; j <= lzMax; ++j)
+	    pseudoPotentials[j] = TmpPseudoPotentials[j];
+	}
+    }
+  else
+    {
+      cout << "Pseudopotentials has a wrong value in " << fileName << endl;
+      return false;
+    }
+  oneBodyPotential = 0;
+  if (InteractionDefinition.GetAsDoubleArray("Onebodypotentials", ' ', oneBodyPotential, TmpNbrPseudoPotentials) == true)
+    {
+      if (TmpNbrPseudoPotentials != (lzMax + 1))
+	{
+	  cout << "OneBodyPotential has a wrong number of components or has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+}
+
 // get pseudopototentials for particles on sphere with SU(2) spin from file
 // 
 // fileName = name of the file that contains the pseudopotantial description

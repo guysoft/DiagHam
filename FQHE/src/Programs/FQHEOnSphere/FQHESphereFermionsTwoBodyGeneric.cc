@@ -17,6 +17,8 @@
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 
+#include "Tools/FQHEFiles/FQHESpherePseudopotentialTools.h"
+
 #include "LanczosAlgorithm/LanczosManager.h"
 
 #include "MainTask/QHEOnSphereMainTask.h"
@@ -120,47 +122,20 @@ int main(int argc, char** argv)
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
   bool DiskCacheFlag = Manager.GetBoolean("disk-cache");
   bool FirstRun = true;
-  double* PseudoPotentials = 0;
+  double* PseudoPotentials = new double[LzMax + 1];
   double* OneBodyPotentials = 0;
   if (Manager.GetString("interaction-file") == 0)
     {
-      if (!Manager.GetBoolean("l2-only"))
-	{
-	  cout << "an interaction file has to be provided" << endl;
-	  return -1;
-	}
+      cout << "an interaction file has to be provided" << endl;
+      return -1;
     }
   else
     {
-      ConfigurationParser InteractionDefinition;
-      if (InteractionDefinition.Parse(Manager.GetString("interaction-file")) == false)
-	{
-	  InteractionDefinition.DumpErrors(cout) << endl;
-	  return -1;
-	}
-      int TmpNbrPseudoPotentials;
-      if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', PseudoPotentials, TmpNbrPseudoPotentials) == false)
-	{
-	  cout << "Weights is not defined or has a wrong value in " << Manager.GetString("interaction-file") << endl;
-	  return -1;
-	}
-      cout << "LzMax= " << TmpNbrPseudoPotentials << " " << LzMax << endl;
-      if (TmpNbrPseudoPotentials != (LzMax +1))
-	{
-	  cout << "Invalid number of pseudo-potentials" << endl;
-	  return -1;	  
-	}
-      if (InteractionDefinition.GetAsDoubleArray("Onebodypotentials", ' ', OneBodyPotentials, TmpNbrPseudoPotentials) == true)
-	{
-	  if (TmpNbrPseudoPotentials != (LzMax +1))
-	    {
-	      cout << "Invalid number of pseudo-potentials" << endl;
-	      return -1;	  
-	    }
-	}
+      if (FQHESphereGetPseudopotentials(Manager.GetString("interaction-file"), LzMax, PseudoPotentials, OneBodyPotentials) == false)
+	return -1;
     }
+  char* InteractionName = 0;
 
-  char* InteractionName;
   if (Manager.GetBoolean("l2-only"))
     {      
       InteractionName=new char[3];
@@ -168,13 +143,30 @@ int main(int argc, char** argv)
     }
   else
     {
-      InteractionName=new char[15 + strlen(Manager.GetString("interaction-name"))];
-      if (Manager.GetDouble("l2-factor")!=0.0)
-	sprintf (InteractionName, "%s_l2_%g",Manager.GetString("interaction-name"),Manager.GetDouble("l2-factor"));
+      ConfigurationParser InteractionDefinition;
+      if (InteractionDefinition.Parse(Manager.GetString("interaction-file")) == false)
+	{
+	  InteractionDefinition.DumpErrors(cout) << endl;
+	  exit(-1);
+	}
+      if (InteractionDefinition["Name"] != 0)
+	{
+	  InteractionName = new char[strlen(InteractionDefinition["Name"]) + 1];
+	  strcpy(InteractionName, InteractionDefinition["Name"]);
+	}
       else
-	strcpy (InteractionName, Manager.GetString("interaction-name"));
-      
+	{
+	  InteractionName = new char[32 + strlen(Manager.GetString("interaction-name"))];
+	  strcpy(InteractionName, Manager.GetString("interaction-name"));
+	  InteractionName=new char[15 + strlen(Manager.GetString("interaction-name"))];
+	  if (Manager.GetDouble("l2-factor") != 0.0)
+	    sprintf (InteractionName, "%s_l2_%g",Manager.GetString("interaction-name"), Manager.GetDouble("l2-factor"));
+	  else
+	    strcpy (InteractionName, Manager.GetString("interaction-name"));
+	}
     }
+
+
   char* OutputNameLz = new char [256 + strlen(InteractionName)];
   char* ExtraTerms = new char[50];
   ExtraTerms[0]='\0';
