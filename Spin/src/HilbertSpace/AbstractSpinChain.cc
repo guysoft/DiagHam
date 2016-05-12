@@ -71,6 +71,21 @@ int AbstractSpinChain::GetLocalSpin(int site)
   return -1;
 }
 
+
+
+// get the value of the spin (i.e. S) at a given site for a give state
+// 
+// site = site index
+// state = state index in Chain Description
+// return value = twice the spin
+
+int  AbstractSpinChain::GetLocalSpin(int site, int state)
+{
+  return this->GetLocalSpin(site);
+}
+
+
+
 // return matrix representation of Sx
 //
 // i = operator position

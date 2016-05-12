@@ -580,9 +580,10 @@ bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz
 	++SizeString;
       if ((SizeString != 0))
 	{
+	  char Tmp = StrNbrSpins[SizeString];
 	  StrNbrSpins[SizeString] = '\0';
 	  sz = atoi(StrNbrSpins);
-	  StrNbrSpins[SizeString] = '_';
+	  StrNbrSpins[SizeString] = Tmp;
 	  StrNbrSpins += SizeString;
 	}
       else

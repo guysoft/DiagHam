@@ -354,7 +354,7 @@ int main(int argc, char** argv)
 			  MainTaskOperation TaskOperation (&Task);
 			  TaskOperation.ApplyOperation(Architecture.GetArchitecture());*/
 
-			  int NbrEigenvalues = 1;
+			  int NbrEigenvalues = Manager.GetInteger("nbr-eigen" );
 			  GenericNonHermitianMainTask Task (&Manager,  TransferMatrix, NbrEigenvalues, Manager.GetBoolean("eigenstate"), LeftFlag, 1e-12, TmpSzString, SubspaceLegend,0.0,FirstRunFlag, FullOutputFileName,TmpEigenstateString);
 			  FirstRunFlag = false;
 			  MainTaskOperation TaskOperation (&Task);

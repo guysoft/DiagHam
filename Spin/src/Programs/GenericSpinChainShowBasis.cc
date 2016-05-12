@@ -6,6 +6,7 @@
 #include "HilbertSpace/Spin1_2ChainWithTranslations.h"
 #include "HilbertSpace/Spin1ChainWithTranslations.h"
 #include "HilbertSpace/Spin0_1_2_ChainWithTranslations.h"
+#include "HilbertSpace/Spin0_1_2_ChainWithTranslationsStaggered.h"
 #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsStaggered.h"
 #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslations.h"
 #include "HilbertSpace/DoubledSpin1_2_ChainWithTranslations.h"
@@ -49,6 +50,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('z', "sz-value", "twice the value of sz", 0);
   (*SystemGroup) += new  BooleanOption ('\n', "fixed-parity", "the spin chain has a fixed total parity");
   (*SystemGroup) += new  BooleanOption ('\n', "doubled-spinchain", "use the double spin chain HilbertSpace");
+  (*SystemGroup) += new  BooleanOption ('\n', "staggered", "use the double spin chain HilbertSpace");
   (*SystemGroup) += new  SingleIntegerOption ('\n', "parity", "parity of the spin chain", 0);
   (*SystemGroup) += new  BooleanOption ('\n', "periodic-chain", "consider periodic instead of open chain", false);
   (*SystemGroup) += new  BooleanOption ('\n', "zero-half", "consider the 0 +1/2 spin chain", false);
@@ -132,103 +134,200 @@ int main(int argc, char** argv)
 	    {
 	      if (Manager.GetBoolean("periodic-chain") == false)
 		{
-//		  DoubledSpin0_1_2_ChainWithTranslationsStaggered Space ( NbrSpins, SzValue,  1000000, 1000000);
-		  DoubledSpin0_1_2_ChainWithTranslations Space ( NbrSpins, SzValue,  1000000, 1000000);
-		  if (Manager.GetString("state") == 0)
+		  AbstractSpinChain* Space = 0;
+		  if (Manager.GetBoolean( "staggered") == true)
 		    {
-		      for (int i = 0; i <  Space.GetHilbertSpaceDimension(); ++i)
-			Space.PrintState(cout, i) << endl;
+		      Space = new  DoubledSpin0_1_2_ChainWithTranslationsStaggered ( NbrSpins, SzValue,  1000000, 1000000);
 		    }
 		  else
 		    {
-		      RealVector State;
-		      if (State.ReadVector(Manager.GetString("state")) == false)
+		 
+		      Space = new DoubledSpin0_1_2_ChainWithTranslations ( NbrSpins, SzValue,  1000000, 1000000);
+		
+		    }
+		  
+		  if (Manager.GetString("state") == 0)
+		    {
+		      for (int i = 0; i <  Space->GetHilbertSpaceDimension(); ++i)
+			Space->PrintState(cout, i) << endl;
+		    }
+		  else
+		    {
+		      if (Manager.GetBoolean("complex-vector") == false)
 			{
-			  cout << "error while reading " << Manager.GetString("state") << endl;
-			  return -1;
+			  RealVector State;
+			  if (State.ReadVector(Manager.GetString("state")) == false)
+			    {
+			      cout << "error while reading " << Manager.GetString("state") << endl;
+			      return -1;
+			    }
+			  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+			    if (fabs(State[i]) > Error)
+			      Space->PrintState(cout, i) << " : "  << State[i] << endl;
 			}
-		      for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
-			if (fabs(State[i]) > Error)
-			  Space.PrintState(cout, i) << " : "  << State[i] << endl;
+		      else
+			{
+			  ComplexVector State;
+			  if (State.ReadVector(Manager.GetString("state")) == false)
+			    {
+			      cout << "error while reading " << Manager.GetString("state") << endl;
+			      return -1;
+			    }
+			  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+			    if (Norm(State[i]) > Error)
+			      Space->PrintState(cout, i) << " : "  << State[i] << endl;
+			}
 		    }
 		}
 	      else
 		{
-//		  DoubledSpin0_1_2_ChainWithTranslationsStaggered Space (NbrSpins, Momentum,SzValue,  1000000, 1000000);
-		  DoubledSpin0_1_2_ChainWithTranslations Space (NbrSpins, Momentum,SzValue,  1000000, 1000000);
-		  
-		  if (Manager.GetString("state") == 0)
+		  AbstractSpinChain* Space = 0;
+		  if (Manager.GetBoolean( "staggered") == true)
 		    {
-		      for (int i = 0; i <  Space.GetHilbertSpaceDimension(); ++i)
-			Space.PrintState(cout, i) << endl;
+		      Space = new  DoubledSpin0_1_2_ChainWithTranslationsStaggered (NbrSpins,Momentum, SzValue,  1000000, 1000000);
 		    }
 		  else
 		    {
-		      RealVector State;
-		      if (State.ReadVector(Manager.GetString("state")) == false)
+		      Space = new DoubledSpin0_1_2_ChainWithTranslations (NbrSpins, Momentum,SzValue,  1000000, 1000000);
+		    }
+		  
+		  
+		  if (Manager.GetString("state") == 0)
+		    {
+		      for (int i = 0; i <  Space->GetHilbertSpaceDimension(); ++i)
+			Space->PrintState(cout, i) << endl;
+		    }
+		  else
+		    {
+		      if (Manager.GetBoolean("complex-vector") == false)
 			{
-			  cout << "error while reading " << Manager.GetString("state") << endl;
-			  return -1;
+			  RealVector State;
+			  if (State.ReadVector(Manager.GetString("state")) == false)
+			    {
+			      cout << "error while reading " << Manager.GetString("state") << endl;
+			      return -1;
+			    }
+			  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+			    if (fabs(State[i]) > Error)
+			      Space->PrintState(cout, i) << " : "  << State[i] << endl;
 			}
-		      for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
-			if (fabs(State[i]) > Error)
-			  Space.PrintState(cout, i) << " : "  << State[i] << endl;
+		      else
+			{
+			  ComplexVector State;
+			  if (State.ReadVector(Manager.GetString("state")) == false)
+			    {
+			      cout << "error while reading " << Manager.GetString("state") << endl;
+			      return -1;
+			    }
+			  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+			    if (Norm(State[i]) > Error)
+			      Space->PrintState(cout, i) << " : "  << State[i] << endl;
+			}
 		    }
 		}
+	      return 0;
 	    }
 	}
-      return 0;
     }
   
   if (Manager.GetBoolean("zero-half") == true)
     {
       if (Manager.GetBoolean("periodic-chain") == false)
 	{
-	  Spin0_1_2_ChainWithTranslations Space ( NbrSpins, SzValue,  1000000, 1000000);
-	  
-	  if (Manager.GetString("state") == 0)
+	  AbstractSpinChain* Space = 0;
+	  if (Manager.GetBoolean( "staggered") == true)
 	    {
-	      for (int i = 0; i <  Space.GetHilbertSpaceDimension(); ++i)
-		Space.PrintState(cout, i) << endl;
+	      Space = new Spin0_1_2_ChainWithTranslationsStaggered ( NbrSpins, SzValue,  1000000, 1000000);
 	    }
 	  else
 	    {
-	      RealVector State;
-	      if (State.ReadVector(Manager.GetString("state")) == false)
+	      Space = new Spin0_1_2_ChainWithTranslations ( NbrSpins, SzValue,  1000000, 1000000);
+	    }
+	  
+	  if (Manager.GetString("state") == 0)
+	    {
+	      for (int i = 0; i <  Space->GetHilbertSpaceDimension(); ++i)
+		Space->PrintState(cout, i) << endl;
+	    }
+	  else
+	    {
+	      if (Manager.GetBoolean("complex-vector") == false)
 		{
-		  cout << "error while reading " << Manager.GetString("state") << endl;
-		  return -1;
+		  RealVector State;
+		  if (State.ReadVector(Manager.GetString("state")) == false)
+		    {
+		      cout << "error while reading " << Manager.GetString("state") << endl;
+		      return -1;
+		    }
+		  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		    if (fabs(State[i]) > Error)
+		      Space->PrintState(cout, i) << " : "  << State[i] << endl;
 		}
-	      for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
-		if (fabs(State[i]) > Error)
-		  Space.PrintState(cout, i) << " : "  << State[i] << endl;
+	      else
+		{
+		  ComplexVector State;
+		  if (State.ReadVector(Manager.GetString("state")) == false)
+		    {
+		      cout << "error while reading " << Manager.GetString("state") << endl;
+		      return -1;
+		    }
+		  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		    if (Norm(State[i]) > Error)
+		      Space->PrintState(cout, i) << " : "  << State[i] << endl;
+		}
 	    }
 	  return 0;
 	}
       else
 	{
-	  Spin0_1_2_ChainWithTranslations Space (NbrSpins, Momentum,SzValue,  1000000, 1000000);
-	  if (Manager.GetString("state") == 0)
+	  AbstractSpinChain* Space = 0;
+	  if (Manager.GetBoolean( "staggered") == true)
 	    {
-	      for (int i = 0; i <  Space.GetHilbertSpaceDimension(); ++i)
-		Space.PrintState(cout, i) << endl;
+	      Space = new Spin0_1_2_ChainWithTranslationsStaggered ( NbrSpins,  Momentum, SzValue,  1000000, 1000000);
 	    }
 	  else
 	    {
-	      RealVector State;
-	      if (State.ReadVector(Manager.GetString("state")) == false)
-		{
-		  cout << "error while reading " << Manager.GetString("state") << endl;
-		  return -1;
-		}
-	      for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
-		if (fabs(State[i]) > Error)
-		  Space.PrintState(cout, i) << " : "  << State[i] << endl;
+	      Space = new Spin0_1_2_ChainWithTranslations ( NbrSpins,  Momentum, SzValue,  1000000, 1000000);
 	    }
-	  return 0;
+	  
+	  
+	  if (Manager.GetString("state") == 0)
+	    {
+	      for (int i = 0; i <  Space->GetHilbertSpaceDimension(); ++i)
+		Space->PrintState(cout, i) << endl;
+	    }
+	  else
+	    {
+	      if (Manager.GetBoolean("complex-vector") == false)
+		{
+		  RealVector State;
+		  if (State.ReadVector(Manager.GetString("state")) == false)
+		    {
+		      cout << "error while reading " << Manager.GetString("state") << endl;
+		      return -1;
+		    }
+		  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		    if (fabs(State[i]) > Error)
+		      Space->PrintState(cout, i) << " : "  << State[i] << endl;
+		}
+	      else
+		{
+		  ComplexVector State;
+		  if (State.ReadVector(Manager.GetString("state")) == false)
+		    {
+		      cout << "error while reading " << Manager.GetString("state") << endl;
+		      return -1;
+		    }
+		  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		    if (Norm(State[i]) > Error)
+		      Space->PrintState(cout, i) << " : "  << State[i] << endl;
+		}
+	    }
 	}
+      return 0;
     }
-      
+  
+  
   if (Manager.GetBoolean("periodic-chain") == false)
     {
       AbstractSpinChain* Space = 0;

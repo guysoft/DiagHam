@@ -70,6 +70,13 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // return value = twice the spin
   virtual int GetLocalSpin(int site);
 
+  // get the value of the spin (i.e. S) at a given site for a give state
+  // 
+  // site = site index
+  // state = state index in Chain Description
+  // return value = twice the spin
+  virtual int GetLocalSpin(int site, int state);
+
   // return value of spin projection on (Oz) for a given state
   //
   // Str = reference on current output stream 

@@ -109,15 +109,14 @@ Complex SpinS2Operator::PartialMatrixElement (RealVector& V1, RealVector& V2,
   int TmpPos;
   double TmpCoef;
   double TmpDiagonal = 0.0;
-  for (int j = 0; j < this->NbrSpin; ++j)
-    {      
-      int TmpLocalSpin = this->Chain->GetLocalSpin(j);
-      TmpDiagonal += 0.25 * ((double) this->Chain->GetLocalSpin(j)) * ((double) (this->Chain->GetLocalSpin(j) + 2));
-    }
   for (int i = (int) firstComponent; i < dim; ++i)
-    {	 
+    {	
+      TmpDiagonal = 0.0; 
       for (int j = 0; j < this->NbrSpin; ++j)
 	{
+	  int TmpLocalSpin = this->Chain->GetLocalSpin(j,i);
+	  TmpDiagonal += 0.25 * ((double) TmpLocalSpin) * ((double) (TmpLocalSpin + 2));
+//	  cout <<i<< " "<<j<< " "<< TmpLocalSpin<<endl;
 	  for (int k = 0; k < j; ++k)
 	    {
 	      TmpPos = this->Chain->SmiSpj(j, k, i, TmpCoef);
@@ -125,7 +124,8 @@ Complex SpinS2Operator::PartialMatrixElement (RealVector& V1, RealVector& V2,
 		{
 		  Tmp += V1[TmpPos] * V2[i] * TmpCoef;
 		}
-	       Tmp += 2.0 * V1[i] * V2[i] * this->Chain->SziSzj(j, k, i);
+//	      cout <<j<<" " <<k<<" "<<i<< " "<<this->Chain->SziSzj(j, k, i)<<endl;
+	      Tmp += 2.0 * V1[i] * V2[i] * this->Chain->SziSzj(j, k, i);
 	    }
 	  for (int k = j + 1; k < this->NbrSpin; ++k)
 	    {
@@ -157,15 +157,15 @@ Complex SpinS2Operator::PartialMatrixElement (ComplexVector& V1, ComplexVector& 
   int TmpPos;
   double TmpCoef;
   double TmpDiagonal = 0.0;
-  for (int j = 0; j < this->NbrSpin; ++j)
-    {      
-      int TmpLocalSpin = this->Chain->GetLocalSpin(j);
-      TmpDiagonal += 0.25 * ((double) this->Chain->GetLocalSpin(j)) * ((double) (this->Chain->GetLocalSpin(j) + 2));
-    }
+
   for (int i = (int) firstComponent; i < dim; ++i)
     {	 
+      TmpDiagonal = 0.0;
       for (int j = 0; j < this->NbrSpin; ++j)
 	{
+	  int TmpLocalSpin = this->Chain->GetLocalSpin(j,i);
+	  TmpDiagonal += 0.25 * ((double) TmpLocalSpin) * ((double) (TmpLocalSpin + 2));
+//	  cout <<i<< " "<<j<< " "<< TmpLocalSpin<<endl;
 	  for (int k = 0; k < j; ++k)
 	    {
 	      TmpPos = this->Chain->SmiSpj(j, k, i, TmpCoef);
@@ -174,6 +174,7 @@ Complex SpinS2Operator::PartialMatrixElement (ComplexVector& V1, ComplexVector& 
 		  Tmp += Conj(V1[TmpPos]) * V2[i] * TmpCoef;
 		}
 	      Tmp += 2.0 * Conj(V1[i]) * V2[i] * this->Chain->SziSzj(j, k, i);
+//	      cout <<j<<" " <<k<<" "<<i<< " "<<this->Chain->SziSzj(j, k, i)<<endl;
 	    }
 	  for (int k = j + 1; k < this->NbrSpin; ++k)
 	    {
@@ -205,15 +206,16 @@ RealVector& SpinS2Operator::LowLevelMultiply(RealVector& vSource, RealVector& vD
   int TmpPos;
   double TmpCoef;
   double TmpDiagonal = 0.0;
-  for (int j = 0; j < this->NbrSpin; ++j)
-    {      
-      int TmpLocalSpin = this->Chain->GetLocalSpin(j);
-      TmpDiagonal += 0.5 * ((double) this->Chain->GetLocalSpin(j)) * ((double) (this->Chain->GetLocalSpin(j) + 1));
-    }
+  
   for (int i = (int) firstComponent; i < dim; ++i)
     {	 
+      TmpDiagonal = 0.0;
       for (int j = 0; j < this->NbrSpin; ++j)
 	{
+	  int TmpLocalSpin = this->Chain->GetLocalSpin(j,i);
+//	  cout <<i<< " "<<j<< " "<< TmpLocalSpin<<endl;
+	  TmpDiagonal += 0.25 * ((double) TmpLocalSpin) * ((double) (TmpLocalSpin + 2));
+	  
 	  for (int k = 0; k < j; ++k)
 	    {
 	      TmpPos = this->Chain->SmiSpj(j, k, i, TmpCoef);
@@ -222,6 +224,7 @@ RealVector& SpinS2Operator::LowLevelMultiply(RealVector& vSource, RealVector& vD
 		  vDestination[TmpPos] += vSource[i] * TmpCoef;
 		}
 	      vDestination[i] += 2.0 * vSource[i] * this->Chain->SziSzj(j, k, i);
+//	      cout <<j<<" " <<k<<" "<<i<< " "<<this->Chain->SziSzj(j, k, i)<<endl;
 	    }
 	  for (int k = j + 1; k < this->NbrSpin; ++k)
 	    {
@@ -253,15 +256,16 @@ ComplexVector& SpinS2Operator::LowLevelMultiply(ComplexVector& vSource, ComplexV
   int TmpPos;
   double TmpCoef;
   double TmpDiagonal = 0.0;
-  for (int j = 0; j < this->NbrSpin; ++j)
-    {      
-      int TmpLocalSpin = this->Chain->GetLocalSpin(j);
-      TmpDiagonal += 0.5 * ((double) this->Chain->GetLocalSpin(j)) * ((double) (this->Chain->GetLocalSpin(j) + 1));
-    }
+// cout << vSource<<endl;
+  vDestination.ClearVector();
   for (int i = (int) firstComponent; i < dim; ++i)
     {	 
+      TmpDiagonal = 0.0;
       for (int j = 0; j < this->NbrSpin; ++j)
 	{
+	  int TmpLocalSpin = this->Chain->GetLocalSpin(j,i);
+	  TmpDiagonal += 0.25 * ((double) TmpLocalSpin) * ((double) (TmpLocalSpin + 2));
+//	  cout <<i<< " "<<j<< " "<< TmpLocalSpin<<endl;
 	  for (int k = 0; k < j; ++k)
 	    {
 	      TmpPos = this->Chain->SmiSpj(j, k, i, TmpCoef);
@@ -270,6 +274,7 @@ ComplexVector& SpinS2Operator::LowLevelMultiply(ComplexVector& vSource, ComplexV
 		  vDestination[TmpPos] += vSource[i] * TmpCoef;
 		}
 	      vDestination[i] += 2.0 * vSource[i] * this->Chain->SziSzj(j, k, i);
+//	      cout <<j<<" " <<k<<" "<<i<< " "<<this->Chain->SziSzj(j, k, i)<<endl;
 	    }
 	  for (int k = j + 1; k < this->NbrSpin; ++k)
 	    {
@@ -280,8 +285,9 @@ ComplexVector& SpinS2Operator::LowLevelMultiply(ComplexVector& vSource, ComplexV
 		}
 	    }
 	}
-      vDestination[i] = vSource[i] * TmpDiagonal;
+      vDestination[i] += vSource[i] * TmpDiagonal;
     }
+//  cout << vDestination<<endl;
   return vDestination;
 }
 
