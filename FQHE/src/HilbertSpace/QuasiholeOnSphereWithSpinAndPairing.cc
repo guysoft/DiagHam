@@ -238,52 +238,13 @@ QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing (int kV
   
   cout.precision(14);
   
-//   for (int TmpRightNbrParticles = 0; TmpRightNbrParticles <= this->NbrFermionsUpMax; ++TmpRightNbrParticles)
-//   {
-//     int MaxRightTotalLz = this->GetMaximalLzSingleLayer(TmpRightNbrParticles);
-//     for (int TmpRightLz = -MaxRightTotalLz; TmpRightLz <= MaxRightTotalLz; TmpRightLz += 2)
-//     {
-//       TmpIndexRight1 = this->GetLinearIndexSingleLayer(TmpRightNbrParticles, TmpRightLz);
-//       cout << TmpRightNbrParticles << " " << TmpRightLz << " " << this->SingleLayerIndices[TmpIndexRight1] << endl;
-//       
-//     }
-//   }
-//   cout << SingleLayerDimension << endl;
-//   double Tmp;
-//   for (int i = 0; i < SingleLayerDimension; ++i)
-//   {
-//     this->AdAElementsOneLayer[0].GetMatrixElement(i, i, Tmp);
-//     cout << Tmp << " " ;
-//     cout << endl;
-//   }
-  
+
   
   this->StateDescription = 0;
   this->StateHighestBit = 0;
   
   this->Flag.Initialize();
   this->TargetSpace = this;
-  
-
-  
-//   int* LeftIndices;
-//   double* InteractionElements;
-//   int NbrElements;
-//   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-//   {
-//     for (int OperatorLzValue = -this->LzMax; OperatorLzValue <= this->LzMax; OperatorLzValue += 2)
-//     {
-//       NbrElements = this->AduAu(i, OperatorLzValue, LeftIndices, InteractionElements);
-//       cout  << " cd" << OperatorLzValue << "c" << OperatorLzValue << " |" << i << "> : (" << NbrElements << ") " ; 
-//       for (int j = 0; j < NbrElements; ++j)
-//       {
-// // 	cout << j << " " ;
-// 	cout << LeftIndices[j] << "/" << InteractionElements[j] << " ";  
-//       }
-//       cout << endl;
-//     }
-//   }
-  
   
   
 
@@ -392,7 +353,17 @@ QuasiholeOnSphereWithSpinAndPairing& QuasiholeOnSphereWithSpinAndPairing::operat
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
   this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
   this->LookUpTableShift = fermions.LookUpTableShift;
-  this->LookUpTable = fermions.LookUpTable;  
+  this->LookUpTable = fermions.LookUpTable;
+  this->KValue = fermions.KValue;
+  this->RValue = fermions.RValue;
+  this->FermionFactor = fermions.FermionFactor;
+  this->NbrQuasiholeEntriesSingleLayer = fermions.NbrQuasiholeEntriesSingleLayer;
+  this->NbrQuasiholesPerNPerLzSingleLayer = fermions.NbrQuasiholesPerNPerLzSingleLayer;
+  this->SingleLayerIndices = fermions.SingleLayerIndices;
+  this->NbrFermionUpFullSpace = fermions.NbrFermionUpFullSpace;
+  this->LzValueUpFullSpace = fermions.LzValueUpFullSpace;
+  this->AnnihilationElementsOneLayer = fermions.AnnihilationElementsOneLayer;
+  this->AdAElementsOneLayer = fermions.AdAElementsOneLayer;
   return *this;
 }
 
@@ -560,7 +531,6 @@ void QuasiholeOnSphereWithSpinAndPairing::FindBetaIndices(int index, int& alpha,
   
   while ((TmpMinIndex > 0) && (this->NbrFermionUpFullSpace[TmpMinIndex - 1] == nbrParticlesUp) && (this->LzValueUpFullSpace[TmpMinIndex - 1] == lzValueUp))
     --TmpMinIndex;
-//   cout << TmpMaxIndex << " " << this->LargeHilbertSpaceDimension << " " << this->NbrFermionUpFullSpace[TmpMaxIndex + 1] << " " << this->LzValueUpFullSpace[TmpMaxIndex + 1] <<  " " << nbrParticlesUp << " " << lzValueUp << endl;
   
  int TmpNbr = this->NbrQuasiholesPerNPerLzSingleLayer[this->GetLinearIndexSingleLayer(nbrParticlesUp, lzValueUp)];
  if (TmpNbr != 0)
@@ -573,7 +543,6 @@ void QuasiholeOnSphereWithSpinAndPairing::FindBetaIndices(int index, int& alpha,
     alpha = 0;
     beta = 0;
   }
-//   cout << index << " " << TmpMinIndex << " " << TmpMaxIndex << " " << alpha << " " << beta << endl;
 }
 
 // apply a_u_m a_d_m to a given state
@@ -623,7 +592,6 @@ int QuasiholeOnSphereWithSpinAndPairing::AuAd (int index, int m, int*& leftIndic
     {
       int TmpIndex = i * this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexDownLeft] + j;
       leftIndices[TmpIndex] = this->FindStateIndex(NbrParticlesUp, LzUp, i, j);
-//       cout << NumberCouplingElements << " " << i << " " << j << " " << TmpIndex << " " << this->FindStateIndex(NbrParticlesUp, LzUp, i, j) << " " endl;
       this->AnnihilationElementsOneLayer.GetMatrixElement((this->SingleLayerIndices[TmpIndexUpLeft] + i), (this->SingleLayerIndices[TmpIndexUpRight] + BetaUp), interactionElements[TmpIndex]);
       
       
@@ -711,4 +679,27 @@ int QuasiholeOnSphereWithSpinAndPairing::AduAu (int index, int m, int*& leftIndi
   }
     
   return NumberCouplingElements;    
+}
+
+
+// print a given State
+//
+// Str = reference on current output stream 
+// state = ID of the state to print
+// return value = reference on current output stream 
+ostream& QuasiholeOnSphereWithSpinAndPairing::PrintState (ostream& Str, int state)
+{
+  int NbrFermionsUp = this->NbrFermionUpFullSpace[state];
+  int NbrFermionsDown = NbrFermionsUp - this->TotalSpin;
+  
+  int lzValueUp = this->LzValueUpFullSpace[state];
+  int lzValueDown = lzValueUp - this->TotalLz;
+  
+  int alpha;
+  int beta;
+  this->FindBetaIndices(state, alpha, beta);
+   
+  Str << "(N=" << NbrFermionsUp << ", lz=" << lzValueUp << ", " << alpha << ") (N=" << NbrFermionsDown << ", lz=" << lzValueDown << ", " << beta << ")";
+  
+  return Str;
 }

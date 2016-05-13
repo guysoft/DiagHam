@@ -104,6 +104,13 @@ class QuasiholeOnSphereWithSpinAndPairing :  public FermionOnSphereWithSpin
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
   
+  // print a given State
+  //
+  // Str = reference on current output stream 
+  // state = ID of the state to print
+  // return value = reference on current output stream 
+  virtual ostream& PrintState (ostream& Str, int state);
+  
   // apply a_u_m a_d_m to a given state
   //
   // index = index of the state on which the operator has to be applied
@@ -130,6 +137,12 @@ class QuasiholeOnSphereWithSpinAndPairing :  public FermionOnSphereWithSpin
   // interactionElements = reference to an array containing the matrix elements 
   // return value = number of left states that are connected to the initial state
   virtual int AddAd (int index, int m, int*& leftIndices, double*& interactionElements);
+  
+  // get the number of particles in a given state
+  //
+  // index =index of the state whose number of particles has to be returned
+  // return value = number of particles
+  virtual int GetTotalNumberOfParticles (int index);
 
 
  protected:
@@ -211,4 +224,13 @@ class QuasiholeOnSphereWithSpinAndPairing :  public FermionOnSphereWithSpin
         
   }
 
+  
+  // get the number of particles in a given state
+  //
+  // index =index of the state whose number of particles has to be returned
+  // return value = number of particles
+  inline int QuasiholeOnSphereWithSpinAndPairing::GetTotalNumberOfParticles (int index)
+  {
+    return (2 * this->NbrFermionUpFullSpace[index] - this->TotalSpin);
+  }
 #endif
