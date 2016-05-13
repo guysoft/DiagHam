@@ -78,8 +78,11 @@ bool FQHESphereGetPseudopotentials (char* fileName, int lzMax, double* pseudoPot
 	}      
       else
 	{
-	  TmpMax = lzMax + 1;
-	  cout << "warning, Pseudopotentials has more entries than the number of orbitals and will be truncated" << endl;
+	  if (TmpMax > (lzMax + 1))
+	    {
+	      TmpMax = lzMax + 1;
+	      cout << "warning, Pseudopotentials has more entries than the number of orbitals and will be truncated" << endl;
+	    }
 	  for (int j = 0; j <= lzMax; ++j)
 	    pseudoPotentials[j] = TmpPseudoPotentials[j];
 	}
