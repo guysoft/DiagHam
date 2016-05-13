@@ -514,7 +514,7 @@ int QuasiholeOnSphereWithSpinAndPairing::FindStateIndex(int nbrParticlesUp, int 
   
   while ((TmpStateIndex > 0) && (TmpStateIndex > TmpMinIndex1) && (this->LzValueUpFullSpace[TmpStateIndex - 1] == lzValueUp))
     --TmpStateIndex;
-  TmpStateIndex += (alpha * (this->NbrQuasiholesPerNPerLzSingleLayer[this->GetLinearIndexSingleLayer(nbrParticlesUp, lzValueUp)]) + beta);
+  TmpStateIndex += (beta * (this->NbrQuasiholesPerNPerLzSingleLayer[this->GetLinearIndexSingleLayer(nbrParticlesUp, lzValueUp)]) + alpha);
   return TmpStateIndex;
 }
 
@@ -531,17 +531,17 @@ void QuasiholeOnSphereWithSpinAndPairing::FindBetaIndices(int index, int& alpha,
   
   while ((TmpMinIndex > 0) && (this->NbrFermionUpFullSpace[TmpMinIndex - 1] == nbrParticlesUp) && (this->LzValueUpFullSpace[TmpMinIndex - 1] == lzValueUp))
     --TmpMinIndex;
-  
+ 
  int TmpNbr = this->NbrQuasiholesPerNPerLzSingleLayer[this->GetLinearIndexSingleLayer(nbrParticlesUp, lzValueUp)];
  if (TmpNbr != 0)
  {
-    alpha = (index - TmpMinIndex) / TmpNbr;
-    beta = (index - TmpMinIndex) % TmpNbr;
+    alpha = (index - TmpMinIndex) % TmpNbr;
+    beta = (index - TmpMinIndex) / TmpNbr;
   }
   else
   {
     alpha = 0;
-    beta = 0;
+    beta = index - TmpMinIndex;
   }
 }
 
@@ -616,9 +616,11 @@ int QuasiholeOnSphereWithSpinAndPairing::AddAd (int index, int m, int*& leftIndi
   int NumberCouplingElements = 0;
   int ShiftedOperatorLzValue = (m + this->LzMax)/  2;
   
-  int NbrParticlesDown = this->NbrFermionUpFullSpace[index] - this->TotalSpin;
-  int LzDown = this->LzValueUpFullSpace[index] - this->TotalLz;
-  int TmpIndexDown = this->GetLinearIndexSingleLayer(NbrParticlesDown, LzDown);  
+  int NbrParticlesUp = this->NbrFermionUpFullSpace[index];
+  int NbrParticlesDown = NbrParticlesUp - this->TotalSpin;
+  int LzUp = this->LzValueUpFullSpace[index];
+  int LzDown = LzUp - this->TotalLz;
+  int TmpIndexDown = this->GetLinearIndexSingleLayer(NbrParticlesDown, LzDown); 
   
   int BetaUp;
   int BetaDown;  
@@ -634,7 +636,7 @@ int QuasiholeOnSphereWithSpinAndPairing::AddAd (int index, int m, int*& leftIndi
  
   for (int i = 0; i < this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexDown]; ++i)
   {
-    leftIndices[i] = this->FindStateIndex(NbrParticlesDown, LzDown, i, BetaDown);
+    leftIndices[i] = this->FindStateIndex(NbrParticlesUp, LzUp, BetaUp, i);
     this->AdAElementsOneLayer[ShiftedOperatorLzValue].GetMatrixElement((this->SingleLayerIndices[TmpIndexDown] + i), (this->SingleLayerIndices[TmpIndexDown] + BetaDown), interactionElements[i]);
     
   }
@@ -673,7 +675,7 @@ int QuasiholeOnSphereWithSpinAndPairing::AduAu (int index, int m, int*& leftIndi
  
   for (int i = 0; i < this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexUp]; ++i)
   {
-    leftIndices[i] = this->FindStateIndex(NbrParticlesUp, LzUp, BetaUp, i);
+    leftIndices[i] = this->FindStateIndex(NbrParticlesUp, LzUp, i, BetaDown);
     this->AdAElementsOneLayer[ShiftedOperatorLzValue].GetMatrixElement((this->SingleLayerIndices[TmpIndexUp] + i), (this->SingleLayerIndices[TmpIndexUp] + BetaUp), interactionElements[i]);
     
   }
