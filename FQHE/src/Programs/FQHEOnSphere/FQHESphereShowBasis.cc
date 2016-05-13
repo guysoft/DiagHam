@@ -28,6 +28,7 @@
 #include "HilbertSpace/BosonOnCP2TzZ3Symmetry.h"
 #include "HilbertSpace/FermionOnCP2.h"
 #include "HilbertSpace/FermionOnCP2Long.h"
+#include "HilbertSpace/QuasiholeOnSphereWithSpinAndPairing.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
@@ -87,6 +88,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "add-szvalue", "add Sz value to each Hilbert space vector (valid only for all-sz)");
   (*SystemGroup) += new BooleanOption  ('\n', "use-pairing", "only fix Sz and not the number of particles");
   (*SystemGroup) += new BooleanOption  ('\n', "su3-spin", "consider particles with SU(3) spin");
+  (*SystemGroup) += new BooleanOption  ('\n', "quasiholes", "consider fermions with spin, where only the (k, r) partitions are admitted for each spin -- only available in use-pairing fermionic mode");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "total-tz", "twice the quantum number of the system associated to the Tz generator (only useful in su(3) mode)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "total-y", "three time the quantum number of the system associated to the Y generator (only useful in su(3) mode)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "su4-spin", "consider particles with SU(4) spin");
@@ -358,8 +360,20 @@ int main(int argc, char** argv)
 		  }
 		else
 		  {
-		    if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
+		    if (Manager.GetBoolean("quasiholes") == false)
+		    {
+		      if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
 		      Space = new FermionOnSphereWithSpinAndPairing(TotalLz, NbrFluxQuanta, TotalSz);
+		    }
+		    else
+		    {
+		      if (PauliK == 0 or PauliR == 0)
+		      {
+			PauliK = 1;
+			PauliR = 2;
+		      }
+			Space = new QuasiholeOnSphereWithSpinAndPairing(PauliK, PauliR, TotalLz, NbrFluxQuanta, TotalSz);
+		    }
 		  }
 	      }
 	    else
@@ -543,7 +557,7 @@ int main(int argc, char** argv)
 	{
 	  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 	    {
-	      if ((PauliK==0)||(Space->HasPauliExclusions(i,PauliK,PauliR)))
+	      if ((PauliK==0)||(Space->HasPauliExclusions(i,PauliK,PauliR)) || (Manager.GetBoolean("quasiholes")))
 		{
 		  if (AddIndex == true) 
 		    cout << i <<" ";
