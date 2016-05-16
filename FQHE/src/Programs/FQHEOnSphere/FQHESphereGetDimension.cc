@@ -278,6 +278,7 @@ int main(int argc, char** argv)
   int LzMin = 0;
   int JzMin = 0;
   int KzMin = 0;
+  
   if (((NbrParticles * NbrFluxQuanta) & 1) != 0) //if odd then lzmin is 1/2
     {
     LzMin = 1;
