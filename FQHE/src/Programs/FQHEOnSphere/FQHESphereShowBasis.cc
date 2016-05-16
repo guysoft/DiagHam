@@ -710,7 +710,7 @@ int main(int argc, char** argv)
 		      else
 			{
 			  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-			    if (Space->HasPauliExclusions(i,PauliK,PauliR))
+			    if ((Space->HasPauliExclusions(i,PauliK,PauliR)) || Manager.GetBoolean("quasiholes"))
 			      Space->PrintState(cout, i) << " : " << State[i] << endl;	   
 			}
 		    }

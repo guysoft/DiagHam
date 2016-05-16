@@ -190,7 +190,7 @@ int main(int argc, char** argv)
       char* EigenvectorName = 0;
       if (Manager.GetBoolean("eigenstate") == true)	
 	{
-	  EigenvectorName = new char [64];
+	  EigenvectorName = new char [128];
 	  sprintf (EigenvectorName, "fermions_sphere_su2_quasiholes_%s_cenergy_%.6f_n0_%.6f_pairing_n_0_2s_%d_sz_%d_lz_%d", Manager.GetString("interaction-name"), 
 		   Manager.GetDouble("charging-energy"), Manager.GetDouble("average-nbrparticles"), LzMax, TotalSz, L);
 	}
