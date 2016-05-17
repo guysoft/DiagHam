@@ -69,7 +69,7 @@ class PEPSLocalPhysicalAndVirtualSpin : public AbstractSpinChain
   
   // virtual destructor
   //
-   PEPSLocalPhysicalAndVirtualSpin (int physicalSpinValue, int nbrVirtualSpinRepresentation, int * tableOfVirtualSpinRepresentations,int sz);
+  PEPSLocalPhysicalAndVirtualSpin (int physicalSpinValue, int nbrVirtualSpinRepresentation, int * tableOfVirtualSpinRepresentations,int sz);
   
   
   //  virtual destructor

@@ -103,7 +103,7 @@ inline int DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::ComputeZValueBra
   for (int i = 0; i < this->ChainLength; i++)
     {
       this->GetBraAndKetIndicesFromCommonIndex(BraOnSite,KetOnSite,  stateDescription%9);
-      TmpZ+= (BraOnSite & 0x1ul);
+      TmpZ+= (BraOnSite & 0x2ul);
       stateDescription/=9;
     }
   return (TmpZ%2);
@@ -117,7 +117,7 @@ inline int DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::ComputeZValueKet
   for (int i = 0; i < this->ChainLength; i++)
     {
       this->GetBraAndKetIndicesFromCommonIndex(BraOnSite,KetOnSite,  stateDescription%9);
-      TmpZ+= (KetOnSite & 0x1ul);
+      TmpZ+= (KetOnSite & 0x2ul);
       stateDescription/=9;
     }
   return (TmpZ%2);

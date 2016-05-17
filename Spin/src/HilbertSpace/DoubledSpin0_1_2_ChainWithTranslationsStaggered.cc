@@ -345,7 +345,7 @@ inline int DoubledSpin0_1_2_ChainWithTranslationsStaggered::GetTotalSz (unsigned
       
       switch (stateDescriptionBra & 0x3ul)
 	{
-	  	case 0x2:
+	case 0x1:
 	  TmpSz += Sign;
 	  break;
 	case 0x0:
@@ -355,7 +355,7 @@ inline int DoubledSpin0_1_2_ChainWithTranslationsStaggered::GetTotalSz (unsigned
       stateDescriptionBra >>= 2;
       switch (stateDescriptionKet & 0x3ul)
 	{
-	case 0x2:
+	case 0x1:
 	  TmpSz -= Sign;
 	  break;
 	case 0x0:
@@ -391,17 +391,17 @@ ostream& DoubledSpin0_1_2_ChainWithTranslationsStaggered::PrintState (ostream& S
 	Str << "d ";
       else
 	if (tmpBra == 1)
-	  Str << "0 ";
-	else
 	  Str << "u ";
+	else
+	  Str << "0 ";
       Str << ",";
       if (tmpKet == 0)
 	Str << "d ";
       else
 	if (tmpKet == 1)
-	  Str << "0 ";
-	else
 	  Str << "u ";
+	else
+	  Str << "0 ";
       Str << ") ";
     }
   return Str;
@@ -431,30 +431,30 @@ long DoubledSpin0_1_2_ChainWithTranslationsStaggered::GenerateStates(int lengthB
 	}
       if (diffSz == 1) 
 	{
-	  this->ChainDescription[pos] = GetCommonIndexFromBraAndKetIndices(2,1);
+	  this->ChainDescription[pos] = GetCommonIndexFromBraAndKetIndices(1,2);
 	  pos++;
-	  this->ChainDescription[pos] = GetCommonIndexFromBraAndKetIndices(1,0);
+	  this->ChainDescription[pos] = GetCommonIndexFromBraAndKetIndices(2,0);
 	  pos++;
 	  return pos;
 	}
       if (diffSz == -1) 
 	{
-	  this->ChainDescription[pos] = GetCommonIndexFromBraAndKetIndices(1,2);
+	  this->ChainDescription[pos] = GetCommonIndexFromBraAndKetIndices(2,1);
 	  pos++;
-	  this->ChainDescription[pos] = GetCommonIndexFromBraAndKetIndices(0,1);
+	  this->ChainDescription[pos] = GetCommonIndexFromBraAndKetIndices(0,2);
 	  pos++;
 	  return pos;
 	}
 
       if (diffSz == 2) 
 	{
-	  this->ChainDescription[pos] = GetCommonIndexFromBraAndKetIndices(2,0);
+	  this->ChainDescription[pos] = GetCommonIndexFromBraAndKetIndices(1,0);
 	  pos++;
 	  return pos;
 	}
       if (diffSz == -2) 
 	{
-	  this->ChainDescription[pos] = GetCommonIndexFromBraAndKetIndices(0,2);
+	  this->ChainDescription[pos] = GetCommonIndexFromBraAndKetIndices(0,1);
 	  pos++;
 	  return pos;
 	}
@@ -479,12 +479,12 @@ long DoubledSpin0_1_2_ChainWithTranslationsStaggered::GenerateStates(int lengthB
       TmpPos = this->GenerateStates(lengthBra,lengthKet-1, diffSz-Sign, pos); 
       for (; pos < TmpPos; ++pos)
 	{
-	  this->ChainDescription[pos] += (GetCommonIndexFromBraAndKetIndices(0,2)*this->PowerD[lengthKet]);
+	  this->ChainDescription[pos] += (GetCommonIndexFromBraAndKetIndices(0,1)*this->PowerD[lengthKet]);
 	}
       TmpPos = this->GenerateStates(lengthBra,lengthKet-1, diffSz, pos); 
       for (; pos < TmpPos; ++pos)
 	{
-	  this->ChainDescription[pos] += GetCommonIndexFromBraAndKetIndices(0,1)*this->PowerD[lengthKet];
+	  this->ChainDescription[pos] += GetCommonIndexFromBraAndKetIndices(0,2)*this->PowerD[lengthKet];
 	}
       TmpPos = this->GenerateStates(lengthBra,lengthKet-1, diffSz+Sign, pos); 
       for (; pos < TmpPos; ++pos)
@@ -508,12 +508,12 @@ long DoubledSpin0_1_2_ChainWithTranslationsStaggered::GenerateStates(int lengthB
       TmpPos = this->GenerateStates(lengthBra-1,lengthKet, diffSz+Sign, pos); 
       for (; pos < TmpPos; ++pos)
 	{
-	  this->ChainDescription[pos] += GetCommonIndexFromBraAndKetIndices(2,0)*this->PowerD[lengthBra];
+	  this->ChainDescription[pos] += GetCommonIndexFromBraAndKetIndices(1,0)*this->PowerD[lengthBra];
 	}
       TmpPos = this->GenerateStates(lengthBra-1,lengthKet, diffSz, pos); 
       for (; pos < TmpPos; ++pos)
 	{
-	  this->ChainDescription[pos] += GetCommonIndexFromBraAndKetIndices(1,0)*this->PowerD[lengthBra];
+	  this->ChainDescription[pos] += GetCommonIndexFromBraAndKetIndices(2,0)*this->PowerD[lengthBra];
 	} 
       TmpPos = this->GenerateStates(lengthBra-1,lengthKet, diffSz-Sign, pos); 
       for (; pos < TmpPos; ++pos)

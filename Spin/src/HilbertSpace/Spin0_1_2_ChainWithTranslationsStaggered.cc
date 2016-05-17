@@ -348,7 +348,7 @@ inline int Spin0_1_2_ChainWithTranslationsStaggered::GetTotalSz (unsigned long s
       
       switch (stateDescription & 0x3ul)
 	{
-	case 0x2:
+	case 0x1:
 	  TmpSz += Sign;
 	  break;
 	case 0x0:
@@ -382,9 +382,9 @@ ostream& Spin0_1_2_ChainWithTranslationsStaggered::PrintState (ostream& Str, int
 	Str << "d";
       else
 	if (tmpState == 0x1ul)
-	  Str << "0";
-	else
 	  Str << "u";
+	else
+	  Str << "0";
       Str << " ";
     }
   return Str;
@@ -403,14 +403,14 @@ long Spin0_1_2_ChainWithTranslationsStaggered::GenerateStates(int length, int di
     {
       if (diffSz == 0) 
 	{
-	  this->ChainDescription[pos] = 0x1ul;
+	  this->ChainDescription[pos] = 0x1ul<<1;
 	  pos ++;
 	  return pos;
 	}
       if (diffSz == 1) 
 	{
 	  if (Shift==false )
-	    this->ChainDescription[pos] = 0x1ul<<1;
+	    this->ChainDescription[pos] = 0x1ul;
 	  else
 	    this->ChainDescription[pos] = 0x0ul;
 	  pos ++;
@@ -421,7 +421,7 @@ long Spin0_1_2_ChainWithTranslationsStaggered::GenerateStates(int length, int di
 	  if (Shift==false )
 	    this->ChainDescription[pos] = 0x0ul;
 	  else
-	    this->ChainDescription[pos] = 0x1ul<<1;
+	    this->ChainDescription[pos] = 0x1ul;
 	  pos ++;
 	  return pos;
 	}
@@ -459,13 +459,14 @@ long Spin0_1_2_ChainWithTranslationsStaggered::GenerateStates(int length, int di
 	}
       
       TmpPos = this->GenerateStates(length-1, diffSz-Sign, pos); 
-      Mask = (((0x1ul << 1)) << ((length<<1)));
+      Mask = (((0x1ul)) << ((length<<1)));
+
       for (; pos < TmpPos; ++pos)
 	{
 	  this->ChainDescription[pos] |= Mask;
 	}
       TmpPos = this->GenerateStates(length-1,diffSz, pos); 
-      Mask = (((0x1ul)) << ((length<<1)));
+      Mask = (((0x1ul << 1)) << ((length<<1)));
       for (; pos < TmpPos; ++pos)
 	this->ChainDescription[pos] |= Mask;
       TmpPos = this->GenerateStates(length-1, diffSz+Sign, pos); 
