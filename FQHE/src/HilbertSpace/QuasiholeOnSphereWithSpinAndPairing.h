@@ -120,6 +120,15 @@ class QuasiholeOnSphereWithSpinAndPairing :  public FermionOnSphereWithSpin
   // return value = number of left states that are connected to the initial state
   virtual int AuAd (int index, int m, int*& leftIndices, double*& interactionElements);
   
+  // apply a^\dagger_u_m a^\dagger_d_m to a given state
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index for creation operators
+  // leftIndices = reference to an array containing the indices of the resulting states
+  // interactionElements = reference to an array containing the matrix elements 
+  // return value = number of left states that are connected to the initial state
+  virtual int AduAdd (int index, int m, int*& leftIndices, double*& interactionElements);
+  
   // apply a^\dagger_u_m a_u_m to a given state
   //
   // index = index of the state on which the operator has to be applied
