@@ -155,14 +155,12 @@ int main(int argc, char** argv)
     }
 
   int  L = 0;
-  if (InitialLz >= 0)
-    {
-      L = InitialLz;
-      if ((abs(MaxL) & 1) != 0)
-	L |= 1;
-      else
-	L &= ~0x1;
-    }
+  L = InitialLz;
+  if ((abs(MaxL) & 1) != 0)
+    L |= 1;
+  else
+    L &= ~0x1;
+
   if (NbrLz > 0)
     {
       if (L + (2 * (NbrLz - 1)) < MaxL)
