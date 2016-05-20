@@ -296,7 +296,7 @@ GenericComplexMainTask::GenericComplexMainTask(OptionManager* options, AbstractH
 	  }
       cout << "check done" << endl;
     }
-  if (((*options)["compute-sparcity"] != 0) && (options->GetBoolean("compute-sparcity") == true))
+  if (((*options)["compute-sparsity"] != 0) && (options->GetBoolean("compute-sparsity") == true))
     {
       HermitianMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension());
       this->Hamiltonian->GetHamiltonian(HRep);
