@@ -445,7 +445,7 @@ class SparseRealMatrix : public Matrix
   // compute the number of non-zero matrix elements (zero having strictly zero square norm)
   //
   // return value = number of non-zero matrix elements
-  long ComputeNbrNonZeroMatrixElements();
+  virtual long ComputeNbrNonZeroMatrixElements();
 
   // compute the total amount of memory needed to store the sparse matrix
   //

@@ -726,10 +726,6 @@ bool ComplexUpperTriangularMatrix::SolveLinearEquation (ComplexVector& x, Comple
 	{
 	  Tmp -= this->OffDiagonalElements[this->GetLinearizedOffDiagonalIndex(i, j)] * x[j];	  
 	}
-      doublecomplex test;
-      test.r =  this->DiagonalElements[i].Re;
-      test.i =  this->DiagonalElements[i].Im;
-      cout << (1.0 / this->DiagonalElements[i]) << " " << test.r << " " << test.i  << endl;
       x[i] = Tmp / this->DiagonalElements[i];
     }
   return true;

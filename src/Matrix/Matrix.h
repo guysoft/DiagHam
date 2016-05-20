@@ -266,6 +266,11 @@ class Matrix
   // return value = true if the matrix is real
   virtual bool IsReal(double accuracy = MACHINE_PRECISION);
 
+  // compute the number of non-zero matrix elements (zero having strictly zero square norm)
+  //
+  // return value = number of non-zero matrix elements
+  virtual long ComputeNbrNonZeroMatrixElements();
+
   // Output Stream overload
   //
   // str = reference on output stream

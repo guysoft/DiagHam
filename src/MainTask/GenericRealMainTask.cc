@@ -270,6 +270,15 @@ GenericRealMainTask::GenericRealMainTask(OptionManager* options, AbstractHilbert
 	  }
       cout << "check done" << endl;
     }
+  if (((*options)["compute-sparcity"] != 0) && (options->GetBoolean("compute-sparcity") == true))
+    {
+      RealSymmetricMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension());
+      this->Hamiltonian->GetHamiltonian(HRep);
+      long Tmp = HRep.ComputeNbrNonZeroMatrixElements();
+      cout << "nbr of non zero matrix elements = " << Tmp << " (" 
+	   << (100.0 * ((double) Tmp) / 
+	       (((double) this->Hamiltonian->GetHilbertSpaceDimension()) * ((double) this->Hamiltonian->GetHilbertSpaceDimension()))) << "%)" << endl;
+    }
   if (((*options)["lanczos-precision"] != 0) && (options->GetDouble("lanczos-precision") > 0))
     {
       this->LanczosPrecision = options->GetDouble("lanczos-precision");

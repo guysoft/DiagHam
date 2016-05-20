@@ -504,7 +504,7 @@ class ComplexMatrix : public Matrix
   // compute the number of non-zero matrix elements (zero having strictly zero square norm)
   //
   // return value = number of non-zero matrix elements
-  long ComputeNbrNonZeroMatrixElements();
+  virtual long ComputeNbrNonZeroMatrixElements();
 
   // apply a sequence of row permutations
   //

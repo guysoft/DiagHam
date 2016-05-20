@@ -677,6 +677,42 @@ bool Matrix::IsReal(double accuracy)
   return true;
 }
 
+// compute the number of non-zero matrix elements (zero having strictly zero square norm)
+//
+// return value = number of non-zero matrix elements
+
+long Matrix::ComputeNbrNonZeroMatrixElements()
+{
+  long TmpCount = 0l;
+  if ((this->MatrixType & Matrix::RealElements) == Matrix::RealElements)
+    {
+      double Tmp;
+      for (int i = 0; i < this->NbrRow; ++i)
+	{
+	  for (int j = 0; j < this->NbrColumn; ++j)
+	    {
+	      this->GetMatrixElement(i, j, Tmp);
+	      if (Tmp == 0.0)
+	        ++TmpCount;
+	    }      
+	}
+    }
+  else
+    {
+      Complex Tmp;
+      for (int i = 0; i < this->NbrRow; ++i)
+	{
+	  for (int j = 0; j < this->NbrColumn; ++j)
+	    {
+	      this->GetMatrixElement(i, j, Tmp);
+	      if ((Tmp.Re == 0.0) && (Tmp.Im == 0.0))
+	        ++TmpCount;
+	    }      
+	}
+    }
+  return TmpCount;
+}
+
 // write matrix in a file in ascii mode, storing only its non zero elements, 
 // first column being the row index, second being the column index, the third is the matrix element real part and the fourth column the matrix element imaginary part
 //
