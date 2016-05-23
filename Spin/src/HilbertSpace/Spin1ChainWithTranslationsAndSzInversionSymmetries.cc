@@ -7,9 +7,9 @@
 //                                                                            //
 //                                                                            //
 //                   class of spin 1 chain with translations                  //
-//                           and the Sz<->-Sz symmetry                        //
+//                  and the inversion and Sz<->-Sz symmetries                 //
 //                                                                            //
-//                        last modification : 07/05/2016                      //
+//                        last modification : 23/05/2016                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "HilbertSpace/Spin1ChainWithTranslationsAndSzSymmetry.h"
+#include "HilbertSpace/Spin1ChainWithTranslationsAndSzInversionSymmetries.h"
 #include "HilbertSpace/Spin1Chain.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealMatrix.h"
@@ -52,19 +52,20 @@ using std::hex;
 // default constructor
 //
 
-Spin1ChainWithTranslationsAndSzSymmetry::Spin1ChainWithTranslationsAndSzSymmetry () 
+Spin1ChainWithTranslationsAndSzInversionSymmetries::Spin1ChainWithTranslationsAndSzInversionSymmetries () 
 {
-  this->SzSymmetrySector = 1.0;
 }
 
 // constructor for Hilbert space with no restriction on total spin projection Sz
 //
 // chainLength = number of spin 1
 // momemtum = total momentum of each state
+// inversionSector = inversion symmetry sector (can be either +1 or -1)
 // szSymmetrySector = Sz<->-Sz symmetry sector (can be either +1 or -1)
 // memory = amount of memory granted for precalculations
 
-Spin1ChainWithTranslationsAndSzSymmetry::Spin1ChainWithTranslationsAndSzSymmetry (int chainLength, int momentum, int szSymmetrySector, unsigned long memory) 
+Spin1ChainWithTranslationsAndSzInversionSymmetries::Spin1ChainWithTranslationsAndSzInversionSymmetries (int chainLength, int momentum, int inversionSector, int szSymmetrySector, 
+													unsigned long memory) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
@@ -78,6 +79,23 @@ Spin1ChainWithTranslationsAndSzSymmetry::Spin1ChainWithTranslationsAndSzSymmetry
     {
       this->SzSymmetrySector = -1.0;
     }
+  if (inversionSector == 1)
+    {
+      this->InversionSector = 1.0;
+    }
+  else
+    {
+      this->InversionSector = -1.0;
+    }
+#ifdef __64_BITS__
+  this->InversionShift = 32 - ((((this->ChainLength - 1) >> 1) - 1) << 1);
+#else
+  this->InversionUnshift = 16 - ((((this->ChainLength - 1) >> 1) - 1) << 1);
+#endif
+  if ((this->ChainLength & 1) == 0)
+    this->InversionUnshift = this->InversionShift - 2;
+  else
+    this->InversionUnshift = this->InversionShift;
 
   this->MaxXMomentum = this->ChainLength;
   this->StateXShift = 2 * (this->ChainLength / this->MaxXMomentum);
@@ -123,10 +141,12 @@ Spin1ChainWithTranslationsAndSzSymmetry::Spin1ChainWithTranslationsAndSzSymmetry
 // chainLength = number of spin 1
 // momemtum = total momentum of each state
 // sz = twice the value of total Sz component (should be equal to zero)
+// inversionSector = inversion symmetry sector (can be either +1 or -1)
 // szSymmetrySector = Sz<->-Sz symmetry sector (can be either +1 or -1)
 // memory = amount of memory granted for precalculations
 
-Spin1ChainWithTranslationsAndSzSymmetry::Spin1ChainWithTranslationsAndSzSymmetry (int chainLength, int momentum, int szSymmetrySector, int sz, unsigned long memory) 
+Spin1ChainWithTranslationsAndSzInversionSymmetries::Spin1ChainWithTranslationsAndSzInversionSymmetries (int chainLength, int momentum, int inversionSector, int szSymmetrySector, 
+													int sz, unsigned long memory) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
@@ -141,6 +161,23 @@ Spin1ChainWithTranslationsAndSzSymmetry::Spin1ChainWithTranslationsAndSzSymmetry
     {
       this->SzSymmetrySector = -1.0;
     }
+  if (inversionSector == 1)
+    {
+      this->InversionSector = 1.0;
+    }
+  else
+    {
+      this->InversionSector = -1.0;
+    }
+#ifdef __64_BITS__
+  this->InversionShift = 32 - ((((this->ChainLength + 1) >> 1)) << 1);
+#else
+  this->InversionUnshift = 16 - ((((this->ChainLength + 1) >> 1) - 1) << 1);
+#endif
+  if ((this->ChainLength & 1) == 0)
+    this->InversionUnshift = this->InversionShift - 2;
+  else
+    this->InversionUnshift = this->InversionShift;
   this->SzSymmetryMask = (0x1ul << (2 * this-> ChainLength)) - 0x1ul;
 
   this->MaxXMomentum = this->ChainLength;
@@ -185,7 +222,7 @@ Spin1ChainWithTranslationsAndSzSymmetry::Spin1ChainWithTranslationsAndSzSymmetry
 //
 // chain = reference on chain to copy
 
-Spin1ChainWithTranslationsAndSzSymmetry::Spin1ChainWithTranslationsAndSzSymmetry (const Spin1ChainWithTranslationsAndSzSymmetry& chain) 
+Spin1ChainWithTranslationsAndSzInversionSymmetries::Spin1ChainWithTranslationsAndSzInversionSymmetries (const Spin1ChainWithTranslationsAndSzInversionSymmetries& chain) 
 {
   this->Flag = chain.Flag;
   if (chain.ChainLength != 0)
@@ -208,6 +245,9 @@ Spin1ChainWithTranslationsAndSzSymmetry::Spin1ChainWithTranslationsAndSzSymmetry
 
       this->SzSymmetryMask = chain.SzSymmetryMask;
       this->SzSymmetrySector = chain.SzSymmetrySector;
+      this->InversionSector = chain.InversionSector;
+      this->InversionShift = chain.InversionShift;
+      this->InversionUnshift = chain.InversionUnshift;
 
       this->LookUpTable = chain.LookUpTable;
       this->MaximumLookUpShift = chain.MaximumLookUpShift;
@@ -230,9 +270,12 @@ Spin1ChainWithTranslationsAndSzSymmetry::Spin1ChainWithTranslationsAndSzSymmetry
       this->StateXShift = 0;
       this->ComplementaryStateXShift = 0;
       this->XMomentumMask = 0x0ul;
-
+ 
       this->SzSymmetryMask = 0x0ul;
       this->SzSymmetrySector = 0.0;
+      this->InversionSector = 0.0;
+      this->InversionShift = 0;
+      this->InversionUnshift = 0;
 
       this->LookUpTable = 0;
       this->MaximumLookUpShift = 0;
@@ -245,7 +288,7 @@ Spin1ChainWithTranslationsAndSzSymmetry::Spin1ChainWithTranslationsAndSzSymmetry
 // destructor
 //
 
-Spin1ChainWithTranslationsAndSzSymmetry::~Spin1ChainWithTranslationsAndSzSymmetry () 
+Spin1ChainWithTranslationsAndSzInversionSymmetries::~Spin1ChainWithTranslationsAndSzInversionSymmetries () 
 {
 }
 
@@ -254,7 +297,7 @@ Spin1ChainWithTranslationsAndSzSymmetry::~Spin1ChainWithTranslationsAndSzSymmetr
 // chain = reference on chain to copy
 // return value = reference on current chain
 
-Spin1ChainWithTranslationsAndSzSymmetry& Spin1ChainWithTranslationsAndSzSymmetry::operator = (const Spin1ChainWithTranslationsAndSzSymmetry& chain)
+Spin1ChainWithTranslationsAndSzInversionSymmetries& Spin1ChainWithTranslationsAndSzInversionSymmetries::operator = (const Spin1ChainWithTranslationsAndSzInversionSymmetries& chain)
 {
   if ((this->ChainLength != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -291,6 +334,9 @@ Spin1ChainWithTranslationsAndSzSymmetry& Spin1ChainWithTranslationsAndSzSymmetry
 
       this->SzSymmetryMask = chain.SzSymmetryMask;
       this->SzSymmetrySector = chain.SzSymmetrySector;
+      this->InversionSector = chain.InversionSector;
+      this->InversionShift = chain.InversionShift;
+      this->InversionUnshift = chain.InversionUnshift;
 
       this->LookUpTable = chain.LookUpTable;
       this->MaximumLookUpShift = chain.MaximumLookUpShift;
@@ -316,7 +362,10 @@ Spin1ChainWithTranslationsAndSzSymmetry& Spin1ChainWithTranslationsAndSzSymmetry
 
       this->SzSymmetryMask = 0x0ul;
       this->SzSymmetrySector = 0.0;
-
+      this->InversionSector = 0.0;
+      this->InversionShift = 0;
+      this->InversionUnshift = 0;
+     
       this->LookUpTable = 0;
       this->MaximumLookUpShift = 0;
       this->LookUpTableMemorySize = 0;
@@ -330,17 +379,17 @@ Spin1ChainWithTranslationsAndSzSymmetry& Spin1ChainWithTranslationsAndSzSymmetry
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* Spin1ChainWithTranslationsAndSzSymmetry::Clone()
+AbstractHilbertSpace* Spin1ChainWithTranslationsAndSzInversionSymmetries::Clone()
 {
-  return new Spin1ChainWithTranslationsAndSzSymmetry (*this);
+  return new Spin1ChainWithTranslationsAndSzInversionSymmetries (*this);
 }
 
 // compute the rescaling factors
 //
 
-void Spin1ChainWithTranslationsAndSzSymmetry::ComputeRescalingFactors()
+void Spin1ChainWithTranslationsAndSzInversionSymmetries::ComputeRescalingFactors()
 {
-  int Tmp = 2 * this->ChainLength;
+  int Tmp = 4 * this->ChainLength;
   this->RescalingFactors = new double* [Tmp + 1];
   for (int i = 1; i <= Tmp; ++i)
     {
@@ -350,138 +399,5 @@ void Spin1ChainWithTranslationsAndSzSymmetry::ComputeRescalingFactors()
 	  this->RescalingFactors[i][j] = sqrt (((double) i) / ((double) j));
 	}
     }
-}
-
-// generate all states corresponding to the constraints
-//
-// return value = Hilbert space dimension
-
-long Spin1ChainWithTranslationsAndSzSymmetry::GenerateStates()
-{
-  long TmpLargeHilbertSpaceDimension = 0l;
-  int NbrTranslationX;
-#ifdef  __64_BITS__
-  unsigned long Discard = 0xfffffffffffffffful;
-#else
-  unsigned long Discard = 0xfffffffful;
-#endif
-  double TmpSign;
-  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
-    {
-      if ((this->FindCanonicalForm(this->StateDescription[i], NbrTranslationX, TmpSign) == this->StateDescription[i]))
-	{
-	  if (this->TestMomentumConstraint(this->StateDescription[i]) == true)
-	    {
-	      ++TmpLargeHilbertSpaceDimension;
-	    }
-	  else
-	    {
-	      this->StateDescription[i] = Discard;
-	    }
-	}
-      else
-	{
-	  this->StateDescription[i] = Discard;
-	}
-    }
-  if (TmpLargeHilbertSpaceDimension > 0)
-    {
-      unsigned long* TmpStateDescription = new unsigned long [TmpLargeHilbertSpaceDimension];  
-      this->NbrStateInOrbit = new int [TmpLargeHilbertSpaceDimension];
-      TmpLargeHilbertSpaceDimension = 0l;
-      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
-	{
-	  if (this->StateDescription[i] != Discard)
-	    {
-	      TmpStateDescription[TmpLargeHilbertSpaceDimension] = this->StateDescription[i];
-	      this->NbrStateInOrbit[TmpLargeHilbertSpaceDimension] = this->FindOrbitSize(this->StateDescription[i]);
-	      ++TmpLargeHilbertSpaceDimension;
-	    }
-	}
-      delete[] this->StateDescription;
-      this->StateDescription = TmpStateDescription;
-    }
-  else
-    {
-      delete[] this->StateDescription;
-    }
-  return TmpLargeHilbertSpaceDimension;
-}
-
-// evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
-// 
-// nbrSites = number of sites that are part of the A subsytem 
-// szSector = Sz sector in which the density matrix has to be evaluated 
-// groundState = reference on the total system ground state
-// architecture = pointer to the architecture to use parallelized algorithm 
-// return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
-
-ComplexMatrix Spin1ChainWithTranslationsAndSzSymmetry::EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture)
-{
-  if (nbrSites == 0)
-    {
-      if (szSector == 0)
-	{
-	  ComplexMatrix TmpEntanglementMatrix(1, 1);
-          Complex Tmp(1.0, 0.0);
-	  TmpEntanglementMatrix.SetMatrixElement(0, 0, Tmp);
-	  return TmpEntanglementMatrix;
-	}
-      else
-	{
-	  ComplexMatrix TmpEntanglementMatrix;
-	  return TmpEntanglementMatrix;	  
-	}
-      
-    }
-  if (nbrSites == this->ChainLength)
-    {
-      if (szSector == this->Sz)
-	{
-	  ComplexMatrix TmpEntanglementMatrix(1, 1);
-          Complex Tmp(1.0, 0.0);
-	  TmpEntanglementMatrix.SetMatrixElement(0, 0, Tmp);
-	  return TmpEntanglementMatrix;
-	}
-      else
-	{
-	  ComplexMatrix TmpEntanglementMatrix;
-	  return TmpEntanglementMatrix;	  
-	}      
-    }
-  Spin1Chain TmpDestinationHilbertSpace(nbrSites, szSector, 1000000);
-  Spin1Chain TmpHilbertSpace(this->ChainLength - nbrSites, this->Sz - szSector, 1000000);
-
-  ComplexMatrix TmpEntanglementMatrix(TmpHilbertSpace.HilbertSpaceDimension, TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
-  int Shift = 2 * nbrSites;
-  int MinIndex = 0;
-  int MaxIndex = TmpHilbertSpace.HilbertSpaceDimension;
-  int TmpNbrTranslation;
-  int TmpNbrTranslationToIdentity;
-  Complex* TmpPhases = new Complex [2 * this->ChainLength];
-  double Coef = 2.0 * M_PI * ((double) this->Momentum) / ((double) this->ChainLength);
-  for (int i = 0; i < (2 * this->ChainLength); ++i)
-    {
-      TmpPhases[i] = Phase(Coef * ((double) i));
-    }
-
-  unsigned long Mask1 = (0x1ul << Shift) - 0x1ul;
-  unsigned long Mask2 = (0x1ul << (2 * this->ChainLength)) - 0x1ul;
-  for (; MinIndex < MaxIndex; ++MinIndex)    
-    {
-      unsigned long TmpState = TmpHilbertSpace.StateDescription[MinIndex] << Shift;
-      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
-	{
-	  unsigned long TmpState2 = (TmpState | (TmpDestinationHilbertSpace.StateDescription[j] & Mask1)) & Mask2;
-	  double Coefficient = 1.0;
-	  int TmpPos = this->SymmetrizeResult(TmpState2, 1, Coefficient, TmpNbrTranslation);
-	  if (TmpPos != this->HilbertSpaceDimension)
-	    {
-	      TmpEntanglementMatrix.AddToMatrixElement(MinIndex, j, groundState[TmpPos] * TmpPhases[TmpNbrTranslation] / sqrt((double) this->NbrStateInOrbit[TmpPos]));
-	    }
-	}
-    }
-  delete[] TmpPhases;
-  return TmpEntanglementMatrix;
 }
 
