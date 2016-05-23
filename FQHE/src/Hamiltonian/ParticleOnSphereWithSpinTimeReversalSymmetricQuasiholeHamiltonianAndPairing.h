@@ -74,6 +74,10 @@ class ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairin
   double AverageNumberParticles;
   // global shift to apply to the diagonal matrix elements
   double HamiltonianShift;
+  // array where the states coupled to a given state can be temporarily stored
+  int* TmpLeftIndices;
+  // array where the interaction elements coupling a given state to a group of other states can be temporarily stored
+  double* TmpInteractionElements;
 
  public:
 

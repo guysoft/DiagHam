@@ -14,4 +14,5 @@ FQHEMPSN1SuperconformalMatrix.cc \
 FQHEMPSFixedQSectorMatrix.cc \
 FQHEMPSClustered2ROptimizedMatrix.cc \
 FQHEMPSSymmetrizedStateMatrix.cc \
-FQHEMPSTwistedSymmetrizedStateMatrix.cc
+FQHEMPSTwistedSymmetrizedStateMatrix.cc \
+FQHEMPSFixedBondDimensionMatrix.cc

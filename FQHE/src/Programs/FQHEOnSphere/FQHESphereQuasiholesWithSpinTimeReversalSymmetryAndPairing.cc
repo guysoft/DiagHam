@@ -171,6 +171,8 @@ int main(int argc, char** argv)
     {
       QuasiholeOnSphereWithSpinAndPairing* Space = new QuasiholeOnSphereWithSpinAndPairing (KValue, RValue, L, LzMax, TotalSz);
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+      if (Space->GetHilbertSpaceDimension() == 0)
+	return 0;
       AbstractHamiltonian* Hamiltonian = 0;
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();

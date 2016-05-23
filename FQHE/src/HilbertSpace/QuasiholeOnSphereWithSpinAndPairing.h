@@ -62,12 +62,16 @@ class QuasiholeOnSphereWithSpinAndPairing :  public FermionOnSphereWithSpin
    int* NbrFermionUpFullSpace;
    // array containing the value of Lz in the up layer for each Hilbert space index
    int* LzValueUpFullSpace;
+   // array containing the value of the lowest Hilbert space index with given quantum numbers N and Lz
+   int* FirstIndexWithNbrParticlesUpLzValueUp;
    // Hamiltonian matrix elements for quasiholes without spin
    SparseRealMatrix AnnihilationElementsOneLayer;
    // array of a^\dagger_m a_m matrix elements for quasiholes without spin
    SparseRealMatrix* AdAElementsOneLayer;
    // maximal number of fermions per layer
    int NbrFermionsUpMax;
+   // maximal number of states that any state can be coupled to
+   int MaximalNumberCouplingElements;
 
 
  public:
@@ -152,6 +156,11 @@ class QuasiholeOnSphereWithSpinAndPairing :  public FermionOnSphereWithSpin
   // index =index of the state whose number of particles has to be returned
   // return value = number of particles
   virtual int GetTotalNumberOfParticles (int index);
+  
+  //get the maximal number of states that any state can be coupled to
+  //
+  //return value = number of coupling elements
+  virtual int GetMaximalNumberCouplingElements();
 
 
  protected:
@@ -241,5 +250,13 @@ class QuasiholeOnSphereWithSpinAndPairing :  public FermionOnSphereWithSpin
   inline int QuasiholeOnSphereWithSpinAndPairing::GetTotalNumberOfParticles (int index)
   {
     return (2 * this->NbrFermionUpFullSpace[index] - this->TotalSpin);
+  }
+  
+    //get the maximal number of states that any state can be coupled to
+  //
+  //return value = number of coupling elements
+  inline int QuasiholeOnSphereWithSpinAndPairing::GetMaximalNumberCouplingElements()
+  {
+    return this->MaximalNumberCouplingElements;
   }
 #endif

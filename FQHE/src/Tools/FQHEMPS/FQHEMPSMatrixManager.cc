@@ -46,6 +46,7 @@
 #include "Tools/FQHEMPS/FQHEMPSFixedQSectorMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSSymmetrizedStateMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSTwistedSymmetrizedStateMatrix.h"
+#include "Tools/FQHEMPS/FQHEMPSFixedBondDimensionMatrix.h"
 
 #include "Matrix/SparseRealMatrix.h"
 #include "Matrix/SparseComplexMatrix.h"
@@ -75,6 +76,7 @@ FQHEMPSMatrixManager::FQHEMPSMatrixManager(bool eMatrixFlag, bool torusFlag)
   this->LeftBMatrix = 0;
   this->TorusFlag = torusFlag;
   this->DiscardFixedQSectorFlag = false;
+  this->TruncateFlag = false;
 }
 
 // destructor
@@ -139,6 +141,8 @@ void FQHEMPSMatrixManager::AddOptionGroup(OptionManager* manager, const char* co
   (*SystemGroup) += new BooleanOption  ('\n', "trim-qsector", " trim the charge indices, assuming an iMPS");
   (*SystemGroup) += new BooleanOption  ('\n', "fixed-qsector", "use a group of B matrices to fix the charge sector");
   (*SystemGroup) += new BooleanOption  ('\n', "unnormalized-b", "use the unnormalized B matrix");
+  (*SystemGroup) += new BooleanOption  ('\n', "truncate", "use a set of matrices to write MPS in canonical form and project onto the highest weight Schmidt states");
+  
   if (this->EMatrixFlag == false)
     {
       (*SystemGroup) += new SingleIntegerOption ('\n', "qsector-value", "charge sector to consider when using the --fixed-qsector option");
@@ -588,6 +592,12 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 	  MPSMatrix = MPSMatrix2;	  
 	  NbrBMatrices = MPSMatrix->GetNbrMatrices();
 	}
+      if (this->Options->GetBoolean("truncate") && (this->TruncateFlag))
+      {
+	AbstractFQHEMPSMatrix* MPSMatrix2 = new FQHEMPSFixedBondDimensionMatrix(MPSMatrix, this->LeftAuxiliaryBasisRotation, this->RightAuxiliaryBasisRotation);
+	MPSMatrix = MPSMatrix2;	  
+	NbrBMatrices = MPSMatrix->GetNbrMatrices();
+      }
     }
   else
     {
@@ -782,4 +792,15 @@ void FQHEMPSMatrixManager::DiscardFixedQSector()
   this->DiscardFixedQSectorFlag = true;
   this->RightBMatrix = 0;
   this->LeftBMatrix = 0;
+}
+
+
+// Load the basis change matrices for truncation of the MPS matrices
+//
+//
+void FQHEMPSMatrixManager::LoadSchmidtMatrices(RealMatrix*** leftAuxiliaryBasisRotation, RealMatrix*** rightAuxiliaryBasisRotation)
+{
+  this->TruncateFlag = true;
+  this->LeftAuxiliaryBasisRotation = leftAuxiliaryBasisRotation;
+  this->RightAuxiliaryBasisRotation = rightAuxiliaryBasisRotation;  
 }

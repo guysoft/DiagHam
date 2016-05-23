@@ -33,7 +33,7 @@
 
 
 #include "config.h"
-
+#include "Matrix/RealMatrix.h"
 
 class OptionManager;
 class AbstractFQHEMPSMatrix;
@@ -60,6 +60,12 @@ class FQHEMPSMatrixManager
 
   // override the fixed Q sector option
   bool DiscardFixedQSectorFlag;
+  // flag if the basis change matrices LeftAuxiliaryBasisRotation and RightAuxiliaryBasisRotation have been defined
+  bool TruncateFlag;
+  // LeftAuxiliaryBasisRotation = set of matrices converting the auxiliary space from the CFT to the Schmidt basis (to multiply on the left of the original matrix (three indices correspond to PLevel, CFTSector and QValue, respectively)
+  RealMatrix*** LeftAuxiliaryBasisRotation;
+  // RightAuxiliaryBasisRotation = set of matrices converting the auxiliary space from the CFT to the Schmidt basis (to multiply on the right of the original matrix (three indices correspond to PLevel, CFTSector and QValue, respectively)
+  RealMatrix*** RightAuxiliaryBasisRotation;
 
  public:
   
@@ -109,6 +115,12 @@ class FQHEMPSMatrixManager
   // explicitly override the fixed Q sector option by turning it off
   //
   void DiscardFixedQSector();
+  
+  
+  // Load the basis change matrices for truncation of the MPS matrices
+  //
+  //
+  void LoadSchmidtMatrices(RealMatrix*** leftAuxiliaryBasisRotation, RealMatrix*** rightAuxiliaryBasisRotation);
 
  protected:
 

@@ -77,19 +77,18 @@ ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::Par
   this->Particles = particles;
   this->LzMax = lzmax;
   this->NbrLzValue = this->LzMax + 1;
-//   this->NbrParticles = 0;
-//   this->FastMultiplicationFlag = false;
-//   this->OneBodyTermFlag = false;
-//   this->Architecture = architecture;
-//   this->L2Hamiltonian = 0;
-//   this->S2Hamiltonian = 0;
   
   this->ChargingEnergy = chargingEnergy;
-//   this->EvaluateInteractionFactors();
   this->AverageNumberParticles = averageNumberParticles;
   this->HamiltonianShift =  0.0;
   long MinIndex;
   long MaxIndex;
+  
+  int MaximalNumberCouplingElements = this->Particles->GetMaximalNumberCouplingElements();
+  this->TmpLeftIndices = new int [MaximalNumberCouplingElements];
+  this->TmpInteractionElements = new double [MaximalNumberCouplingElements];
+  
+  
 //   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
 //   this->PrecalculationShift = (int) MinIndex;  
 //   this->DiskStorageFlag = onDiskCacheFlag;
@@ -166,6 +165,11 @@ ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::~Pa
     delete[] this->OneBodyInteractionFactorsdowndown;
   if (this->OneBodyInteractionFactorsPairing != 0)
     delete [] this->OneBodyInteractionFactorsPairing;
+  
+  if (this->TmpLeftIndices != 0)
+    delete[] this->TmpLeftIndices;
+  if (this->TmpInteractionElements != 0)
+    delete[] this->TmpInteractionElements;
 }
 
 // set Hilbert space
@@ -201,41 +205,53 @@ RealVector& ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAnd
   int index = firstComponent;
   int LastComponent = firstComponent + nbrComponent;
   int NbrElements;
-  int* LeftIndices = 0;
-  double* Coefficients = 0;
   double ChargeContribution;
+  double TmpCoefficient;
+  double TmpCoef;
+  
   for (int i = 0; i < nbrComponent; ++i)
   {
-    double TmpCoef = vSource[index];
-    for (int lz = -this->LzMax; lz <= this->LzMax; lz += 2)
+    TmpCoef = vSource[index];
+    if (this->OneBodyInteractionFactorsPairing != 0)
     {
-      int shiftedLz = (lz + this->LzMax) / 2;
-      if (this->OneBodyInteractionFactorsPairing != 0)
+      for (int lz = 0; lz <= this->LzMax; ++lz)
       {
-	NbrElements = this->Particles->AuAd(index, lz, LeftIndices, Coefficients);
-	for (int j = 0; j < NbrElements; ++j)
+	TmpCoefficient = this->OneBodyInteractionFactorsPairing[lz];
+	if (TmpCoefficient != 0.0)
 	{
-	  vDestination[LeftIndices[j]] += (TmpCoef * Coefficients[j] * this->OneBodyInteractionFactorsPairing[shiftedLz]);
-	}
-	NbrElements = this->Particles->AduAdd(index, lz, LeftIndices, Coefficients);
-	for (int j = 0; j < NbrElements; ++j)
-	{
-	  vDestination[LeftIndices[j]] += (TmpCoef * Coefficients[j] * this->OneBodyInteractionFactorsPairing[shiftedLz]);
-	}
+	  NbrElements = this->Particles->AuAd(index, lz, this->TmpLeftIndices, this->TmpInteractionElements);
+	  for (int j = 0; j < NbrElements; ++j)
+	    vDestination[this->TmpLeftIndices[j]] += (TmpCoef * this->TmpInteractionElements[j] * TmpCoefficient);
+	  NbrElements = this->Particles->AduAdd(index, lz, this->TmpLeftIndices, this->TmpInteractionElements);
+	  for (int j = 0; j < NbrElements; ++j)
+	    vDestination[this->TmpLeftIndices[j]] += (TmpCoef * this->TmpInteractionElements[j] * TmpCoefficient);
+	}	
       }
       
       if (this->OneBodyInteractionFactorsupup != 0)
       {
-	NbrElements = this->Particles->AduAu(index, lz, LeftIndices, Coefficients);
-	for (int j = 0; j < NbrElements; ++j)
-	  vDestination[LeftIndices[j]] += (TmpCoef * Coefficients[j] * this->OneBodyInteractionFactorsupup[shiftedLz]);
+	for (int lz = 0; lz <= this->LzMax; ++lz)
+	{
+	  if (this->OneBodyInteractionFactorsupup[lz] != 0.0)
+	  {
+	    NbrElements = this->Particles->AduAu(index, lz, this->TmpLeftIndices, this->TmpInteractionElements);
+	    for (int j = 0; j < NbrElements; ++j)
+	      vDestination[this->TmpLeftIndices[j]] += (TmpCoef * this->TmpInteractionElements[j] * this->OneBodyInteractionFactorsupup[lz]);
+	  }
+	}
       }
       
       if (this->OneBodyInteractionFactorsdowndown != 0)
       {
-	NbrElements = this->Particles->AddAd(index, lz, LeftIndices, Coefficients);
-	for (int j = 0; j < NbrElements; ++j)
-	  vDestination[LeftIndices[j]] += (TmpCoef * Coefficients[j] * this->OneBodyInteractionFactorsdowndown[shiftedLz]);
+	for (int lz = 0; lz <= this->LzMax; ++lz)
+	{
+	  if (this->OneBodyInteractionFactorsdowndown[lz] != 0.0)
+	  {
+	    NbrElements = this->Particles->AddAd(index, lz, this->TmpLeftIndices, this->TmpInteractionElements);
+	    for (int j = 0; j < NbrElements; ++j)
+	      vDestination[this->TmpLeftIndices[j]] += (TmpCoef * this->TmpInteractionElements[j] * this->OneBodyInteractionFactorsdowndown[lz]);
+	  }
+	}
       }
     }
     
@@ -247,10 +263,7 @@ RealVector& ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAnd
     ++index;
   }
   
-  if (LeftIndices != 0)
-    delete[] LeftIndices;
-  if (Coefficients != 0)
-    delete[] Coefficients;
+  
   if (this->HamiltonianShift != 0.0)
     {
       for (int i = firstComponent; i < LastComponent; ++i)
@@ -274,44 +287,50 @@ RealVector* ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAnd
   int index = firstComponent;
   int LastComponent = firstComponent + nbrComponent;
   int NbrElements;
-  int* LeftIndices = 0;
-  double* Coefficients = 0;
   double ChargeContribution;
   double TmpOneBodyInteraction;
   for (int i = 0; i < nbrComponent; ++i)
   {
-    for (int lz = -this->LzMax; lz <= this->LzMax; lz += 2)
+    for (int lz = 0; lz <= this->LzMax; ++lz)
     {
-      int shiftedLz = (lz + this->LzMax) / 2;  
       if (this->OneBodyInteractionFactorsPairing != 0)
       {
-	TmpOneBodyInteraction = this->OneBodyInteractionFactorsPairing[shiftedLz];    
-	NbrElements = this->Particles->AuAd(index, lz, LeftIndices, Coefficients);
-	for (int j = 0; j < NbrElements; ++j)
-	  for (int k = 0; k < nbrVectors; ++k)
-	    vDestinations[k][LeftIndices[j]] += (vSources[k][index] * Coefficients[j] * TmpOneBodyInteraction);
-	NbrElements = this->Particles->AduAdd(index, lz, LeftIndices, Coefficients);
-	for (int j = 0; j < NbrElements; ++j)
-	  for (int k = 0; k < nbrVectors; ++k)
-	    vDestinations[k][LeftIndices[j]] += (vSources[k][index] * Coefficients[j] * TmpOneBodyInteraction);
+	TmpOneBodyInteraction = this->OneBodyInteractionFactorsPairing[lz];    
+	if (TmpOneBodyInteraction != 0.0)
+	{
+	  NbrElements = this->Particles->AuAd(index, lz, this->TmpLeftIndices, this->TmpInteractionElements);
+	  for (int j = 0; j < NbrElements; ++j)
+	    for (int k = 0; k < nbrVectors; ++k)
+	      vDestinations[k][this->TmpLeftIndices[j]] += (vSources[k][index] * this->TmpInteractionElements[j] * TmpOneBodyInteraction);
+	  NbrElements = this->Particles->AduAdd(index, lz, this->TmpLeftIndices, this->TmpInteractionElements);
+	  for (int j = 0; j < NbrElements; ++j)
+	    for (int k = 0; k < nbrVectors; ++k)
+	      vDestinations[k][this->TmpLeftIndices[j]] += (vSources[k][index] * this->TmpInteractionElements[j] * TmpOneBodyInteraction);
+	}
       }
       
       if (this->OneBodyInteractionFactorsupup != 0)
       {
-	TmpOneBodyInteraction = this->OneBodyInteractionFactorsupup[shiftedLz];
-	NbrElements = this->Particles->AduAu(index, lz, LeftIndices, Coefficients);
-	for (int j = 0; j < NbrElements; ++j)
-	  for (int k = 0; k < nbrVectors; ++k)
-	    vDestinations[k][LeftIndices[j]] += (vSources[k][index] * Coefficients[j] * TmpOneBodyInteraction);
+	TmpOneBodyInteraction = this->OneBodyInteractionFactorsupup[lz];
+	if (TmpOneBodyInteraction != 0.0)
+	{
+	  NbrElements = this->Particles->AduAu(index, lz, this->TmpLeftIndices, this->TmpInteractionElements);
+	  for (int j = 0; j < NbrElements; ++j)
+	    for (int k = 0; k < nbrVectors; ++k)
+	      vDestinations[k][this->TmpLeftIndices[j]] += (vSources[k][index] * this->TmpInteractionElements[j] * TmpOneBodyInteraction);
+	}
       }
       
       if (this->OneBodyInteractionFactorsdowndown != 0)
       {
-	TmpOneBodyInteraction = this->OneBodyInteractionFactorsdowndown[shiftedLz];
-	NbrElements = this->Particles->AddAd(index, lz, LeftIndices, Coefficients);
-	for (int j = 0; j < NbrElements; ++j)
-	  for (int k = 0; k < nbrVectors; ++k)
-	    vDestinations[k][LeftIndices[j]] += (vSources[k][index] * Coefficients[j] * TmpOneBodyInteraction);
+	TmpOneBodyInteraction = this->OneBodyInteractionFactorsdowndown[lz];
+	if (TmpOneBodyInteraction != 0.0)
+	{
+	  NbrElements = this->Particles->AddAd(index, lz, this->TmpLeftIndices, this->TmpInteractionElements);
+	  for (int j = 0; j < NbrElements; ++j)
+	    for (int k = 0; k < nbrVectors; ++k)
+	      vDestinations[k][this->TmpLeftIndices[j]] += (vSources[k][index] * this->TmpInteractionElements[j] * TmpOneBodyInteraction);
+	}
       }
     }
     ChargeContribution = this->Particles->GetTotalNumberOfParticles(index) - this->AverageNumberParticles;
@@ -322,11 +341,6 @@ RealVector* ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAnd
     
     ++index;
   }
-  
-  if (LeftIndices != 0)
-    delete[] LeftIndices;
-  if (Coefficients != 0)
-    delete[] Coefficients;
   
   if (this->HamiltonianShift != 0.0)
     {
