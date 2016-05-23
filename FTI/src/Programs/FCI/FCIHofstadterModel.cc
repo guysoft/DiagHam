@@ -1,5 +1,6 @@
 #include "Options/Options.h"
 
+#include "HilbertSpace/FermionOnLatticeWithSpinRealSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
@@ -23,7 +24,7 @@
 #include "Hamiltonian/ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeRealSpaceHamiltonian.h"
-
+#include "Hamiltonian/ParticleOnLatticeWithSpinRealSpaceHamiltonian.h"
 
 #include "Tools/FTITightBinding/TightBindingModelHofstadterSquare.h"
 #include "Tools/FTITightBinding/TightBindingModelHofstadterTriangularQuarter.h"
@@ -86,6 +87,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  BooleanOption  ('\n', "redundant-ky", "Calculate all ky subspaces", false);
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
+  (*SystemGroup) += new BooleanOption  ('\n', "spin", "use fermions with spin");
   (*SystemGroup) += new BooleanOption  ('\n', "triangular", "use the Hofstadter model for a triangular lattice");
   
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive onsite(boson) or NN (fermion) potential strength", 1.0);
@@ -520,41 +522,74 @@ int main(int argc, char** argv)
 		    }
 		  else
 		    {
-		      Space =  new FermionOnLatticeRealSpace (NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
-		      double UPotential = Manager.GetDouble("u-potential");
-		      int  NbrTranslationX;
-		      int  NbrTranslationY;
-		      int  NbrTranslation2X;
-		      int  NbrTranslation2Y;
-		      Complex TranslationPhase = 0.0;
-		      for (int x = 0; x <  NbrCellX; ++x)
+		      if(Manager.GetBoolean("spin") == false) 
 			{
-			  for (int y = 0; y <  NbrCellY; ++y)
+			  Space =  new FermionOnLatticeRealSpace (NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
+			  double UPotential = Manager.GetDouble("u-potential");
+			  int  NbrTranslationX;
+			  int  NbrTranslationY;
+			  int  NbrTranslation2X;
+			  int  NbrTranslation2Y;
+			  Complex TranslationPhase = 0.0;
+			  for (int x = 0; x <  NbrCellX; ++x)
 			    {
-			      for (int X = 0; X <  UnitCellX; X++)
+			      for (int y = 0; y <  NbrCellY; ++y)
 				{
-				  for (int Y = 0; Y <  UnitCellY; Y++)
+				  for (int X = 0; X <  UnitCellX; X++)
 				    {
-				      int OrbitalIndex =  TightBindingModel->EncodeSublatticeIndex(X,Y,NbrTranslationX,NbrTranslationY,TranslationPhase);
-				      int OrbitalIndex2 =  TightBindingModel->EncodeSublatticeIndex(X+1,Y,NbrTranslation2X,NbrTranslation2Y,TranslationPhase);
-				      DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x-NbrTranslationX, y-NbrTranslationY,OrbitalIndex),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x-NbrTranslation2X, y-NbrTranslation2Y, OrbitalIndex2), UPotential);
-				      OrbitalIndex2 =  TightBindingModel->EncodeSublatticeIndex(X-1,Y,NbrTranslation2X,NbrTranslation2Y,TranslationPhase);
-				      DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x-NbrTranslationX, y-NbrTranslationY,OrbitalIndex),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x-NbrTranslation2X, y-NbrTranslation2Y, OrbitalIndex2), UPotential);
-				      OrbitalIndex2 =  TightBindingModel->EncodeSublatticeIndex(X,Y+1,NbrTranslation2X,NbrTranslation2Y,TranslationPhase);
-				      DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x-NbrTranslationX, y-NbrTranslationY,OrbitalIndex),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x-NbrTranslation2X, y-NbrTranslation2Y, OrbitalIndex2), UPotential);
-				      OrbitalIndex2 =  TightBindingModel->EncodeSublatticeIndex(X,Y-1,NbrTranslation2X,NbrTranslation2Y,TranslationPhase);
-				      DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x-NbrTranslationX, y-NbrTranslationY,OrbitalIndex),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x-NbrTranslation2X, y-NbrTranslation2Y, OrbitalIndex2), UPotential);
+				      for (int Y = 0; Y <  UnitCellY; Y++)
+					{
+					  int OrbitalIndex =  TightBindingModel->EncodeSublatticeIndex(X,Y,NbrTranslationX,NbrTranslationY,TranslationPhase);
+					  int OrbitalIndex2 =  TightBindingModel->EncodeSublatticeIndex(X+1,Y,NbrTranslation2X,NbrTranslation2Y,TranslationPhase);
+					  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x-NbrTranslationX, y-NbrTranslationY,OrbitalIndex),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x-NbrTranslation2X, y-NbrTranslation2Y, OrbitalIndex2), UPotential);
+					  OrbitalIndex2 =  TightBindingModel->EncodeSublatticeIndex(X-1,Y,NbrTranslation2X,NbrTranslation2Y,TranslationPhase);
+					  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x-NbrTranslationX, y-NbrTranslationY,OrbitalIndex),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x-NbrTranslation2X, y-NbrTranslation2Y, OrbitalIndex2), UPotential);
+					  OrbitalIndex2 =  TightBindingModel->EncodeSublatticeIndex(X,Y+1,NbrTranslation2X,NbrTranslation2Y,TranslationPhase);
+					  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x-NbrTranslationX, y-NbrTranslationY,OrbitalIndex),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x-NbrTranslation2X, y-NbrTranslation2Y, OrbitalIndex2), UPotential);
+					  OrbitalIndex2 =  TightBindingModel->EncodeSublatticeIndex(X,Y-1,NbrTranslation2X,NbrTranslation2Y,TranslationPhase);
+					  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x-NbrTranslationX, y-NbrTranslationY,OrbitalIndex),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x-NbrTranslation2X, y-NbrTranslation2Y, OrbitalIndex2), UPotential);
+					}
 				    }
 				}
 			    }
-       			}
-		      cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
-		      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-		      HermitianMatrix TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
-		      cout <<"TightBindingMatrix = "<<TightBindingMatrix<<endl;
-		      Hamiltonian = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), TightBindingMatrix, DensityDensityInteraction,Architecture.GetArchitecture(), Memory);
+			  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
+			  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+			  HermitianMatrix TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
+			  cout <<"TightBindingMatrix = "<<TightBindingMatrix<<endl;
+			  Hamiltonian = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), TightBindingMatrix, DensityDensityInteraction,Architecture.GetArchitecture(), Memory);
+			}
+		      else
+			{
+			  int TotalSz =0;
+			  Space = new FermionOnLatticeWithSpinRealSpace (NbrParticles, TotalSz, ( (int )  TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand()),10000000 );	  
+
+			  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+			    Memory = Architecture.GetArchitecture()->GetLocalMemory();
+			  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+			  
+			  HermitianMatrix TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
+			  int NbrSites =   TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand();
+			  RealSymmetricMatrix DensityDensityInteractionupup(NbrSites, true);
+			  RealSymmetricMatrix DensityDensityInteractiondowndown(NbrSites, true);
+			  RealSymmetricMatrix DensityDensityInteractionupdown(NbrSites, true);
+			  if (Manager.GetDouble("u-potential") != 0.0)
+			    {
+			      double UPotential = Manager.GetDouble("u-potential");
+			      for (int i = 0; i < NbrSites; ++i)
+				{
+				  DensityDensityInteractionupdown.SetMatrixElement(i, i, UPotential);
+				}
+			    }
+			  
+			  Hamiltonian = new ParticleOnLatticeWithSpinRealSpaceHamiltonian((ParticleOnSphereWithSpin  *)  Space, NbrParticles, NbrSites,
+											  TightBindingMatrix, TightBindingMatrix,
+											  DensityDensityInteractionupup, DensityDensityInteractiondowndown, 
+											  DensityDensityInteractionupdown, 
+											  Architecture.GetArchitecture(), Memory);
+			}
 		    }
 		}
+	      
 	    }
 	  
 	  double Shift = 0.0;
