@@ -44,4 +44,6 @@ SpinChainFullHamiltonian.cc \
 SpinChainRealFullHamiltonian.cc \
 SpinChainAKLTHamiltonianWithTranslations.cc \
 TwoDimensionalTransverseFieldIsingHamiltonian.cc \
-TwoDimensionalTransverseFieldAnd2DTranslationIsingHamiltonian.cc
+TwoDimensionalTransverseFieldAnd2DTranslationIsingHamiltonian.cc \
+SpinChainRealHamiltonianWithTranslations.cc \
+SpinChainAKLTRealHamiltonianWithTranslations.cc

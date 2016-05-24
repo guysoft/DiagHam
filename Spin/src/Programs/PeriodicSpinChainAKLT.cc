@@ -1,4 +1,5 @@
 #include "Hamiltonian/SpinChainAKLTHamiltonianWithTranslations.h"
+#include "Hamiltonian/SpinChainAKLTRealHamiltonianWithTranslations.h"
 
 #include "HilbertSpace/Spin1_2ChainWithTranslations.h"
 #include "HilbertSpace/Spin1ChainWithTranslations.h"
@@ -12,6 +13,7 @@
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
+#include "MainTask/GenericRealMainTask.h"
 #include "MainTask/GenericComplexMainTask.h"
 
 #include "GeneralTools/FilenameTools.h"
@@ -60,6 +62,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('\n', "momentum", "if non negative, only consider a given momentum sector", -1);
   (*SystemGroup) += new  BooleanOption ('\n', "disable-szsymmetry", "disable the Sz<->-Sz symmetry");
   (*SystemGroup) += new  BooleanOption ('\n', "disable-inversionsymmetry", "disable the inversion symmetry");
+  (*SystemGroup) += new  BooleanOption ('\n', "disable-realhamiltonian", "do not use a real Hamiltonian at the inversion symmetric points");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -188,15 +191,28 @@ int main(int argc, char** argv)
 			{
 			  Architecture.GetArchitecture()->SetDimension(Chain->GetHilbertSpaceDimension());	
 			  cout << "2Sz = " << InitalSzValue << ", Sz<->-Sz sector=" << SzSymmetrySector << ",   inversion sector=" << InversionSymmetrySector << ",  K = " << Momentum << endl; 
-			  SpinChainAKLTHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins);
 			  char* TmpSzString = new char[64];
 			  sprintf (TmpSzString, "%d %d %d %d ", InitalSzValue, Momentum, SzSymmetrySector, InversionSymmetrySector);
 			  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
 			  sprintf (TmpEigenstateString, "%s_sz_%d_invsym_%d_szsym_%d_k_%d", OutputFileName, InitalSzValue, InversionSymmetrySector, SzSymmetrySector, Momentum);
-			  GenericComplexMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
-						      FirstRun, TmpEigenstateString);
-			  MainTaskOperation TaskOperation (&Task);
-			  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+			  if (Manager.GetBoolean("disable-realhamiltonian") == false)
+			    {
+			      Lanczos.SetRealAlgorithms();
+			      SpinChainAKLTRealHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins);
+			      GenericRealMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+							  FirstRun, TmpEigenstateString);
+			      MainTaskOperation TaskOperation (&Task);
+			      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+			      Lanczos.SetComplexAlgorithms();
+			    }
+			  else
+			    {
+			      SpinChainAKLTHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins);
+			      GenericComplexMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+							  FirstRun, TmpEigenstateString);
+			      MainTaskOperation TaskOperation (&Task);
+			      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+			    }
 			  FirstRun = false;
 			  delete[] TmpSzString;
 			}
@@ -224,7 +240,6 @@ int main(int argc, char** argv)
 		    {
 		      Architecture.GetArchitecture()->SetDimension(Chain->GetHilbertSpaceDimension());	
 		      cout << "2Sz = " << InitalSzValue << ", Sz<->-Sz sector=" << SzSymmetrySector << ",  K = " << Momentum << endl; 
-		      SpinChainAKLTHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins);
 		      char* TmpSzString = new char[64];
 		      if (Manager.GetBoolean("disable-inversionsymmetry") == false)
 			{
@@ -236,6 +251,7 @@ int main(int argc, char** argv)
 			}
 		      char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
 		      sprintf (TmpEigenstateString, "%s_sz_%d_szsym_%d_k_%d", OutputFileName, InitalSzValue, SzSymmetrySector, Momentum);
+		      SpinChainAKLTHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins);
 		      GenericComplexMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
 						  FirstRun, TmpEigenstateString);
 		      MainTaskOperation TaskOperation (&Task);
@@ -276,7 +292,6 @@ int main(int argc, char** argv)
 		    {
 		      Architecture.GetArchitecture()->SetDimension(Chain->GetHilbertSpaceDimension());	
 		      cout << "2Sz = " << InitalSzValue << ", inversion sector=" << InversionSymmetrySector << ",  K = " << Momentum << endl; 
-		      SpinChainAKLTHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins);
 		      char* TmpSzString = new char[64];
 		      if (Manager.GetBoolean("disable-szsymmetry") == false)
 			{
@@ -288,10 +303,24 @@ int main(int argc, char** argv)
 			}
 		      char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
 		      sprintf (TmpEigenstateString, "%s_sz_%d_invsym_%d_k_%d", OutputFileName, InitalSzValue, InversionSymmetrySector, Momentum);
-		      GenericComplexMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
-						  FirstRun, TmpEigenstateString);
-		      MainTaskOperation TaskOperation (&Task);
-		      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+		      if (Manager.GetBoolean("disable-realhamiltonian") == false)
+			{
+			  Lanczos.SetRealAlgorithms();
+			  SpinChainAKLTRealHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins);
+			  GenericRealMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+						   FirstRun, TmpEigenstateString);
+			  MainTaskOperation TaskOperation (&Task);
+			  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+			  Lanczos.SetComplexAlgorithms();
+			}
+		      else
+			{
+			  SpinChainAKLTHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins);
+			  GenericComplexMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+						      FirstRun, TmpEigenstateString);
+			  MainTaskOperation TaskOperation (&Task);
+			  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+			}
 		      FirstRun = false;
 		      delete[] TmpSzString;
 		    }
