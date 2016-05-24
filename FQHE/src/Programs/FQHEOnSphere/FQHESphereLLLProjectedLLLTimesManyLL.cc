@@ -96,7 +96,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "symmetric", "Lz->-Lz symmetry used");
   (*SystemGroup) += new SingleIntegerOption ('\n',"index", "create a temporary vector whose index component is put to 1, others to 0. No need of an input file in this case",-1);
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (override autodetection from input file name if non zero)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "energy-value", "value of the total effective cyclotron energy of the states that will be computed", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "1ll-nbrparticles", "constrain the number of particles in the lowest LL", -1);
@@ -146,7 +146,7 @@ int main(int argc, char** argv)
     NbrLL = 3;
   if (Manager.GetBoolean("4-ll") == true)
     NbrLL = 4;
-  cout <<"Number of Landau levels considered: "<<NbrLL<<endl;
+  cout <<"Number of Lambda Landau level = "<<NbrLL<<endl;
   
   bool Constraint = false;
   bool LLLFermionFlag = true;
@@ -165,7 +165,7 @@ int main(int argc, char** argv)
   if((EnergyValue != -1)||(ParticleNumberConstrains[0] != -1)||(ParticleNumberConstrains[1] != -1)||(ParticleNumberConstrains[2] != -1)||(ParticleNumberConstrains[3] != -1))
     Constraint = true;
   
-  if ((Constraint == true)&&((NbrFermion == 0)||(LzMaxFermion == -1)))
+  if ((Constraint == true) && ((NbrFermion == 0) || (LzMaxFermion == -1)))
     {
       cout <<"In the contraint mode, the particle number and the LzMax value must be given in option. See man page for option syntax or type FQHESphereLLLProjectedLLLTimesManyLL -h" <<endl;
       return -1; 
@@ -183,15 +183,14 @@ int main(int argc, char** argv)
       return -1;
     }
   
-  if((Index == -1)&&(Constraint == false))
+  if((Index == -1) && (Constraint == false))
     {
       if (FermionFileName == 0)
 	{
 	  cout << "error, a fermionic state file should be provided. See man page for option syntax or type FQHESphereLLLProjectedLLLTimesManyLL -h" << endl;
 	  return -1;
 	}
-      
-      if (FQHEOnSphereFindSystemInfoFromVectorFileName(FermionFileName, NbrFermion,LzMaxFermion,TotalLzFermion, FermionFlag) == false)
+      if (FQHEOnSphereFindSystemInfoFromVectorFileName(FermionFileName, NbrFermion, LzMaxFermion, TotalLzFermion, FermionFlag) == false)
 	{
 	  return -1;
 	}
@@ -340,7 +339,9 @@ int main(int argc, char** argv)
   switch (NbrLL)
     {
     case 2:
-      SpaceLL = new FermionOnSphereTwoLandauLevels (LLLNbrParticles, TotalLzFermion, LzMaxUp, LzMaxDown);
+      {
+	SpaceLL = new FermionOnSphereTwoLandauLevels (LLLNbrParticles, TotalLzFermion, LzMaxUp, LzMaxDown);
+      }
       break;
     case 3:
       SpaceLL = new FermionOnSphereThreeLandauLevels (LLLNbrParticles, TotalLzFermion, LzMaxFermion);
@@ -625,7 +626,8 @@ int main(int argc, char** argv)
       
       if (LLLSpace->GetHilbertSpaceDimension() != LLLState.GetVectorDimension())
 	{
-	  cout << "Number of rows of the LLL vector is not equal to the Hilbert space dimension!"<<endl;;
+	  cout << "Error, the dimension of the LLL vector (" << LLLState.GetVectorDimension() 
+	       << ") is not equal to the Hilbert space dimension (" << LLLSpace->GetHilbertSpaceDimension() << ")" << endl;;
 	  return -1;
 	}
       if (Step > LLLSpace->GetHilbertSpaceDimension())
@@ -637,9 +639,9 @@ int main(int argc, char** argv)
       RealVector * FermionState = 0;
       RealVector * OutputVector = 0;
       
-      if(Constraint == false)
+      if (Constraint == false)
 	{
-	  if(Index == -1)
+	  if (Index == -1)
 	    {
 	      FermionState = new RealVector;
 	      if (IsFile(FermionFileName) == false)
@@ -652,9 +654,11 @@ int main(int argc, char** argv)
 		  cout << "can't open vector file " << FermionFileName << endl;
 		  return -1;
 		}
-	      if(SpaceLL->GetHilbertSpaceDimension() != FermionState->GetVectorDimension())
+	      if (SpaceLL->GetHilbertSpaceDimension() != FermionState->GetVectorDimension())
 		{
-		  cout <<"Number of rows of the fermionic vector is not equal to the Hilbert space dimension!" <<endl;
+		  cout << "Error, the dimension of the fermionic vector " << FermionFileName << " (" 
+		       << FermionState->GetVectorDimension() << ") is not equal to the Hilbert space dimension (" 
+		       << SpaceLL->GetHilbertSpaceDimension() << ")" << endl;
 		  return -1;
 		}
 	    }
@@ -696,9 +700,11 @@ int main(int argc, char** argv)
 		  cout << "can't open vector file " << ResumeVectorName << endl;
 		  return -1;
 		}
-	      if(FinalSpace->GetHilbertSpaceDimension() != OutputVector->GetVectorDimension())
+	      if (FinalSpace->GetHilbertSpaceDimension() != OutputVector->GetVectorDimension())
 		{
-		  cout <<"Number of rows of the resume vector is not equal to the Hilbert space dimension!" <<endl;
+		  cout << "Error, the dimension of the output vector " << ResumeVectorName << " (" 
+		       << OutputVector->GetVectorDimension() << ") is not equal to the Hilbert space dimension (" 
+		       << FinalSpace->GetHilbertSpaceDimension() << ")" << endl;
 		  return -1;
 		}
 	    }
@@ -761,7 +767,8 @@ int main(int argc, char** argv)
       
       if (LLLSpace->GetHilbertSpaceDimension() != LLLState.GetVectorDimension())
 	{
-	  cout << "Number of rows of the LLL vector is not equal to the Hilbert space dimension!"<<endl;;
+	  cout << "Error, the dimension of the LLL vector (" << LLLState.GetVectorDimension() 
+	       << ") is not equal to the Hilbert space dimension (" << LLLSpace->GetHilbertSpaceDimension() << ")" << endl;;
 	  return -1;
 	}
       if (Step > LLLSpace->GetHilbertSpaceDimension())
@@ -790,7 +797,9 @@ int main(int argc, char** argv)
 		}
 	      if(SpaceLL->GetHilbertSpaceDimension() != FermionState->GetVectorDimension())
 		{
-		  cout <<"Number of rows of the fermionic vector is not equal to the Hilbert space dimension!" <<endl;
+		  cout << "Error, the dimension of the fermionic vector " << FermionFileName << " (" 
+		       << FermionState->GetVectorDimension() << ") is not equal to the Hilbert space dimension (" 
+		       << SpaceLL->GetHilbertSpaceDimension() << ")" << endl;
 		  return -1;
 		}
 	    }

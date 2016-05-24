@@ -62,6 +62,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new SingleDoubleOption ('\n', "charging-energy", "factor in front of the charging energy (i.e 1/(2C))", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "average-nbrparticles", "average number of particles", 0.0);
+  (*SystemGroup) += new SingleStringOption ('\n', "directory", "use a specific directory for the input data instead of the current one");
   
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
@@ -74,6 +75,9 @@ int main(int argc, char** argv)
 
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
+#endif
+#ifdef __SCALAPACK__
+  (*ToolsGroup) += new BooleanOption  ('\n', "use-scalapack", "use SCALAPACK libraries instead of DiagHam or LAPACK libraries");
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
   (*ToolsGroup) += new BooleanOption  ('\n', "test-hermitian", "test if the hamiltonian is hermitian");
@@ -169,7 +173,7 @@ int main(int argc, char** argv)
 
   for (; L <= MaxL; L += 2)
     {
-      QuasiholeOnSphereWithSpinAndPairing* Space = new QuasiholeOnSphereWithSpinAndPairing (KValue, RValue, L, LzMax, TotalSz);
+      QuasiholeOnSphereWithSpinAndPairing* Space = new QuasiholeOnSphereWithSpinAndPairing (KValue, RValue, L, LzMax, TotalSz, Manager.GetString("directory"));
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       if (Space->GetHilbertSpaceDimension() == 0)
 	return 0;

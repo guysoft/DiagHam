@@ -70,7 +70,8 @@ QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing()
 // totalSpin = twice the total spin value
 // memory = amount of memory granted for precalculations
 
-QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing (int kValue, int rValue, int totalLz, int lzMax, int totalSpin, unsigned long memory)
+QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing (int kValue, int rValue, int totalLz, int lzMax, int totalSpin, 
+									  const char* directory, unsigned long memory)
 {
   this->NbrFermions = 0;
   this->IncNbrFermions = this->NbrFermions + 1;
@@ -94,18 +95,27 @@ QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing (int kV
   
   int TmpIndex = 0;
   for (int TmpNbrParticles = 0; TmpNbrParticles <= this->NbrFermionsUpMax; ++TmpNbrParticles)
-  {
-    MaxTotalLz = this->GetMaximalLzSingleLayer(TmpNbrParticles);
-    for (int TmpLz = -MaxTotalLz; TmpLz <= MaxTotalLz; TmpLz += 2)
     {
-      this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndex] = 0;
-      this->SingleLayerIndices[TmpIndex] = 0;
-      ++TmpIndex;  
+      MaxTotalLz = this->GetMaximalLzSingleLayer(TmpNbrParticles);
+      for (int TmpLz = -MaxTotalLz; TmpLz <= MaxTotalLz; TmpLz += 2)
+	{
+	  this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndex] = 0;
+	  this->SingleLayerIndices[TmpIndex] = 0;
+	  ++TmpIndex;  
+	}
     }
-  }
-
-  char* TmpFileName = new char [512];
-  sprintf (TmpFileName, "fermions_qh_states_k_%d_r_%d_nphi_%d.dat", this->KValue, this->RValue, this->LzMax);
+  
+  char* TmpFileName;
+  if (directory != 0)
+    { 
+      TmpFileName = new char [512 + strlen(directory)];
+      sprintf (TmpFileName, "%s/fermions_qh_states_k_%d_r_%d_nphi_%d.dat", directory, this->KValue, this->RValue, this->LzMax);
+    }
+  else
+    {
+      TmpFileName = new char [512 + strlen(directory)];
+      sprintf (TmpFileName, "fermions_qh_states_k_%d_r_%d_nphi_%d.dat", this->KValue, this->RValue, this->LzMax);
+    }
   MultiColumnASCIIFile DimensionQuasiholeSubspaces;
   if (DimensionQuasiholeSubspaces.Parse(TmpFileName) == false)
     {
@@ -173,58 +183,70 @@ QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing (int kV
 	  if ((TmpLeftNbrParticles >= 0) && (TmpLeftLz >= -MaxLeftTotalLz) && (TmpLeftLz <= MaxLeftTotalLz))
 	    {
 	      TmpIndexLeft1 = this->GetLinearIndexSingleLayer(TmpLeftNbrParticles, TmpLeftLz);
-	      sprintf (TmpFileName, "fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", this->KValue, this->RValue, TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
-	      if (TmpSingleLayerInteraction.ReadMatrix(TmpFileName) == false)
-	      {
-	      } 
-	      else
-	      {
-		if (abs(this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexLeft1] - TmpSingleLayerInteraction.GetNbrRow()) > 0)
-		  cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexLeft1] << " " << TmpSingleLayerInteraction.GetNbrRow() << endl;
-		if (abs(this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] - TmpSingleLayerInteraction.GetNbrColumn()) > 0)
-		  cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] << " " << TmpSingleLayerInteraction.GetNbrColumn() << endl;
-		
-		for (int i = 0; i < TmpSingleLayerInteraction.GetNbrRow(); ++i)
+	      if (directory != 0)
 		{
-		  for (int j = i; j < TmpSingleLayerInteraction.GetNbrColumn(); ++j)
-		  {
-		    TmpIndexLeft = this->SingleLayerIndices[TmpIndexLeft1] + i;
-		    TmpIndexRight = this->SingleLayerIndices[TmpIndexRight1] + j;
-		    TmpSingleLayerInteraction.GetMatrixElement(i, j, TmpInteraction);
-		    SingleLayerAnnihilationMatrix.AddToMatrixElement(TmpIndexLeft, TmpIndexRight, TmpInteraction);
-		  }
+		  sprintf (TmpFileName, "%s/fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", directory, this->KValue, this->RValue, 
+			   TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
 		}
-	      }
+	      else
+		{ 
+		  sprintf (TmpFileName, "fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", this->KValue, this->RValue, TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
+		}
+	      if (TmpSingleLayerInteraction.ReadMatrix(TmpFileName) == false)
+		{
+		} 
+	      else
+		{
+		  if (abs(this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexLeft1] - TmpSingleLayerInteraction.GetNbrRow()) > 0)
+		    cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexLeft1] << " " << TmpSingleLayerInteraction.GetNbrRow() << endl;
+		  if (abs(this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] - TmpSingleLayerInteraction.GetNbrColumn()) > 0)
+		    cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] << " " << TmpSingleLayerInteraction.GetNbrColumn() << endl;
+		  
+		  for (int i = 0; i < TmpSingleLayerInteraction.GetNbrRow(); ++i)
+		    {
+		      for (int j = i; j < TmpSingleLayerInteraction.GetNbrColumn(); ++j)
+			{
+			  TmpIndexLeft = this->SingleLayerIndices[TmpIndexLeft1] + i;
+			  TmpIndexRight = this->SingleLayerIndices[TmpIndexRight1] + j;
+			  TmpSingleLayerInteraction.GetMatrixElement(i, j, TmpInteraction);
+			  SingleLayerAnnihilationMatrix.AddToMatrixElement(TmpIndexLeft, TmpIndexRight, TmpInteraction);
+			}
+		    }
+		}
 	    }
-	    
+	  
 	  
 	  int ShiftedOperatorLzValue = (OperatorLzValue + this->LzMax) / 2;	  
-	  sprintf (TmpFileName, "fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d.mat", this->KValue, this->RValue, TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
-	  
+	  if (directory != 0)
+	    {
+	      sprintf (TmpFileName, "%s/fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d.mat", directory, this->KValue, this->RValue, 
+		       TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
+	    }
+	  else
+	    {
+	      sprintf (TmpFileName, "fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d.mat", this->KValue, this->RValue, TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
+	    }
 	  if (TmpSingleLayerInteraction.ReadMatrix(TmpFileName) == false)
-	  {
-	  } 
+	    {
+	    } 
 	  else
 	  {
 // 	    cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] << " " << TmpSingleLayerInteraction.GetNbrRow() << endl;
 // 	    cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] << " " << TmpSingleLayerInteraction.GetNbrColumn() << endl;
 		
 	    for (int i = 0; i < TmpSingleLayerInteraction.GetNbrRow(); ++i)
-	    {
-	      for (int j = i; j < TmpSingleLayerInteraction.GetNbrColumn(); ++j)
 	      {
-		TmpIndexLeft = this->SingleLayerIndices[TmpIndexRight1] + i;
-		TmpIndexRight = this->SingleLayerIndices[TmpIndexRight1] + j;
-		TmpSingleLayerInteraction.GetMatrixElement(i, j, TmpInteraction);
-// 		cout << TmpIndexLeft << " " << TmpIndexRight << " " << ShiftedOperatorLzValue << " " << TmpInteraction << endl;
-		SingleLayerAdAMatrix[ShiftedOperatorLzValue].AddToMatrixElement(TmpIndexLeft, TmpIndexRight, TmpInteraction);
+		for (int j = i; j < TmpSingleLayerInteraction.GetNbrColumn(); ++j)
+		  {
+		    TmpIndexLeft = this->SingleLayerIndices[TmpIndexRight1] + i;
+		    TmpIndexRight = this->SingleLayerIndices[TmpIndexRight1] + j;
+		    TmpSingleLayerInteraction.GetMatrixElement(i, j, TmpInteraction);
+		    // 		cout << TmpIndexLeft << " " << TmpIndexRight << " " << ShiftedOperatorLzValue << " " << TmpInteraction << endl;
+		    SingleLayerAdAMatrix[ShiftedOperatorLzValue].AddToMatrixElement(TmpIndexLeft, TmpIndexRight, TmpInteraction);
+		  }
 	      }
-	    }
-	   }
-	  
-	  
-	}
-  
+	  }	  
+	}      
     }
   }
 
@@ -403,35 +425,35 @@ long QuasiholeOnSphereWithSpinAndPairing::GenerateStates()
   
   int TmpIndex1 = 0;
   for (int TmpNbrParticles = 0; TmpNbrParticles <= this->NbrFermionsUpMax; ++TmpNbrParticles)
-  {
-    int MaxTotalLz = this->GetMaximalLzSingleLayer(TmpNbrParticles);
-    TmpComplementaryNbrParticles = TmpNbrParticles - this->TotalSpin;
-    if ((TmpComplementaryNbrParticles >= 0) && (TmpComplementaryNbrParticles <= this->NbrFermionsUpMax))
     {
-      int MaxComplementaryLz = this->GetMaximalLzSingleLayer(TmpComplementaryNbrParticles);
-      for (int TmpLz = -MaxTotalLz; TmpLz <= MaxTotalLz; TmpLz += 2)
-      {
-	TmpComplementaryLz = TmpLz - this->TotalLz;
-	if (abs(TmpComplementaryLz) <= MaxComplementaryLz)
+      int MaxTotalLz = this->GetMaximalLzSingleLayer(TmpNbrParticles);
+      TmpComplementaryNbrParticles = TmpNbrParticles - this->TotalSpin;
+      if ((TmpComplementaryNbrParticles >= 0) && (TmpComplementaryNbrParticles <= this->NbrFermionsUpMax))
 	{
-	  TmpIndex = this->GetLinearIndexSingleLayer(TmpNbrParticles, TmpLz);
-	  TmpComplementaryIndex = this->GetLinearIndexSingleLayer(TmpComplementaryNbrParticles, TmpComplementaryLz);
-	  TmpDimensionSector = this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndex] * this->NbrQuasiholesPerNPerLzSingleLayer[ TmpComplementaryIndex];
-	  if (TmpDimensionSector > this->MaximalNumberCouplingElements)
-	    this->MaximalNumberCouplingElements = TmpDimensionSector;
-	  this->FirstIndexWithNbrParticlesUpLzValueUp[TmpIndex] = TmpDimension;
-	  TmpDimension += TmpDimensionSector; 
-	  for (int i = 0; i < TmpDimensionSector; ++i)
-	  {
-	    this->NbrFermionUpFullSpace[TmpIndex1] = TmpNbrParticles;
-	    this->LzValueUpFullSpace[TmpIndex1] = TmpLz;
-	    ++TmpIndex1;
-	  
-	  }
+	  int MaxComplementaryLz = this->GetMaximalLzSingleLayer(TmpComplementaryNbrParticles);
+	  for (int TmpLz = -MaxTotalLz; TmpLz <= MaxTotalLz; TmpLz += 2)
+	    {
+	      TmpComplementaryLz = TmpLz - this->TotalLz;
+	      if (abs(TmpComplementaryLz) <= MaxComplementaryLz)
+		{
+		  TmpIndex = this->GetLinearIndexSingleLayer(TmpNbrParticles, TmpLz);
+		  TmpComplementaryIndex = this->GetLinearIndexSingleLayer(TmpComplementaryNbrParticles, TmpComplementaryLz);
+		  TmpDimensionSector = this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndex] * this->NbrQuasiholesPerNPerLzSingleLayer[ TmpComplementaryIndex];
+		  if (TmpDimensionSector > this->MaximalNumberCouplingElements)
+		    this->MaximalNumberCouplingElements = TmpDimensionSector;
+		  this->FirstIndexWithNbrParticlesUpLzValueUp[TmpIndex] = TmpDimension;
+		  TmpDimension += TmpDimensionSector; 
+		  for (int i = 0; i < TmpDimensionSector; ++i)
+		    {
+		      this->NbrFermionUpFullSpace[TmpIndex1] = TmpNbrParticles;
+		      this->LzValueUpFullSpace[TmpIndex1] = TmpLz;
+		      ++TmpIndex1;
+		      
+		    }
+		}
+	    }
 	}
-      }
     }
-  }
   this->MaximalNumberCouplingElements *= this->MaximalNumberCouplingElements;
   return TmpDimension;      
 }
@@ -454,24 +476,24 @@ long QuasiholeOnSphereWithSpinAndPairing::EvaluateHilbertSpaceDimension()
   int TmpComplementaryNbrParticles;
   int TmpComplementaryLz;
   for (int TmpNbrParticles = 0; TmpNbrParticles <= this->NbrFermionsUpMax; ++TmpNbrParticles)
-  {
-    int MaxTotalLz = this->GetMaximalLzSingleLayer(TmpNbrParticles);
-    TmpComplementaryNbrParticles = TmpNbrParticles - this->TotalSpin;
-    if ((TmpComplementaryNbrParticles >= 0) && (TmpComplementaryNbrParticles <= this->NbrFermionsUpMax))
     {
-      int MaxComplementaryLz = this->GetMaximalLzSingleLayer(TmpComplementaryNbrParticles);
-      for (int TmpLz = -MaxTotalLz; TmpLz <= MaxTotalLz; TmpLz += 2)
-      {
-	TmpComplementaryLz = TmpLz - this->TotalLz;
-	if (abs(TmpComplementaryLz) <= MaxComplementaryLz)
+      int MaxTotalLz = this->GetMaximalLzSingleLayer(TmpNbrParticles);
+      TmpComplementaryNbrParticles = TmpNbrParticles - this->TotalSpin;
+      if ((TmpComplementaryNbrParticles >= 0) && (TmpComplementaryNbrParticles <= this->NbrFermionsUpMax))
 	{
-	  TmpComplementaryIndex = this->GetLinearIndexSingleLayer(TmpComplementaryNbrParticles, TmpComplementaryLz);
-	  TmpIndex = this->GetLinearIndexSingleLayer(TmpNbrParticles, TmpLz);
-	  TmpDimension += this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndex] * this->NbrQuasiholesPerNPerLzSingleLayer[ TmpComplementaryIndex];  
+	  int MaxComplementaryLz = this->GetMaximalLzSingleLayer(TmpComplementaryNbrParticles);
+	  for (int TmpLz = -MaxTotalLz; TmpLz <= MaxTotalLz; TmpLz += 2)
+	    {
+	      TmpComplementaryLz = TmpLz - this->TotalLz;
+	      if (abs(TmpComplementaryLz) <= MaxComplementaryLz)
+		{
+		  TmpComplementaryIndex = this->GetLinearIndexSingleLayer(TmpComplementaryNbrParticles, TmpComplementaryLz);
+		  TmpIndex = this->GetLinearIndexSingleLayer(TmpNbrParticles, TmpLz);
+		  TmpDimension += this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndex] * this->NbrQuasiholesPerNPerLzSingleLayer[ TmpComplementaryIndex];  
+		}
+	    }
 	}
-      }
     }
-  }
   return TmpDimension; 
 }
 
@@ -503,15 +525,15 @@ void QuasiholeOnSphereWithSpinAndPairing::FindBetaIndices(int index, int& alpha,
   int TmpMinIndex = this->FirstIndexWithNbrParticlesUpLzValueUp[this->GetLinearIndexSingleLayer(nbrParticlesUp, lzValueUp)];
   int TmpNbr = this->NbrQuasiholesPerNPerLzSingleLayer[this->GetLinearIndexSingleLayer(nbrParticlesUp, lzValueUp)];
   if (TmpNbr != 0)
-  {
-    alpha = (index - TmpMinIndex) % TmpNbr;
-    beta = (index - TmpMinIndex) / TmpNbr;
+    {
+      alpha = (index - TmpMinIndex) % TmpNbr;
+      beta = (index - TmpMinIndex) / TmpNbr;
     }
   else
-  {
-    alpha = 0;
-    beta = index - TmpMinIndex;
-  }
+    {
+      alpha = 0;
+      beta = index - TmpMinIndex;
+    }
 }
 
 // apply a_u_m a_d_m to a given state
@@ -558,22 +580,21 @@ int QuasiholeOnSphereWithSpinAndPairing::AuAd (int index, int m, int*& leftIndic
     return 0;
     
   for (int i = 0; i < NumberCouplingElements; ++i)
-  {
-    TmpBetaLeftUp = i / this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexDownLeft];
-    TmpBetaLeftDown = i % (this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexDownLeft]);
-    this->AnnihilationElementsOneLayer.GetMatrixElement((this->SingleLayerIndices[TmpIndexUpLeft] + TmpBetaLeftUp), (this->SingleLayerIndices[TmpIndexUpRight] + BetaUp),  Tmp);
-    if (Tmp != 0.0)
     {
-      this->AnnihilationElementsOneLayer.GetMatrixElement((this->SingleLayerIndices[TmpIndexDownLeft] + TmpBetaLeftDown), (this->SingleLayerIndices[TmpIndexDownRight] + BetaDown), Tmp1);
-      if (Tmp1 != 0.0)
-      {
-	interactionElements[TmpNbrCouplingElements] = Tmp * Tmp1;
-	leftIndices[TmpNbrCouplingElements] = this->FindStateIndex(NbrParticlesUp, LzUp, TmpBetaLeftUp, TmpBetaLeftDown);
-	++TmpNbrCouplingElements;
-      }
-      
-    } 
-  }
+      TmpBetaLeftUp = i / this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexDownLeft];
+      TmpBetaLeftDown = i % (this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexDownLeft]);
+      this->AnnihilationElementsOneLayer.GetMatrixElement((this->SingleLayerIndices[TmpIndexUpLeft] + TmpBetaLeftUp), (this->SingleLayerIndices[TmpIndexUpRight] + BetaUp),  Tmp);
+      if (Tmp != 0.0)
+	{
+	  this->AnnihilationElementsOneLayer.GetMatrixElement((this->SingleLayerIndices[TmpIndexDownLeft] + TmpBetaLeftDown), (this->SingleLayerIndices[TmpIndexDownRight] + BetaDown), Tmp1);
+	  if (Tmp1 != 0.0)
+	    {
+	      interactionElements[TmpNbrCouplingElements] = Tmp * Tmp1;
+	      leftIndices[TmpNbrCouplingElements] = this->FindStateIndex(NbrParticlesUp, LzUp, TmpBetaLeftUp, TmpBetaLeftDown);
+	      ++TmpNbrCouplingElements;
+	    }	  
+	} 
+    }
   return TmpNbrCouplingElements;    
 }
 
@@ -622,22 +643,21 @@ int QuasiholeOnSphereWithSpinAndPairing::AduAdd (int index, int m, int*& leftInd
     return 0;
   
   for (int i = 0; i < NumberCouplingElements; ++i)
-  {
-    TmpBetaLeftUp = i / this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexDownLeft];
-    TmpBetaLeftDown = i % (this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexDownLeft]);
-    this->AnnihilationElementsOneLayer.GetMatrixElement((this->SingleLayerIndices[TmpIndexUpRight] + BetaUp), (this->SingleLayerIndices[TmpIndexUpLeft] + TmpBetaLeftUp),  Tmp);
-    if (Tmp != 0.0)
     {
-      this->AnnihilationElementsOneLayer.GetMatrixElement((this->SingleLayerIndices[TmpIndexDownRight] + BetaDown), (this->SingleLayerIndices[TmpIndexDownLeft] + TmpBetaLeftDown), Tmp1);
-      if (Tmp1 != 0.0)
-      {
-	interactionElements[TmpNbrCouplingElements] = Tmp * Tmp1;
-	leftIndices[TmpNbrCouplingElements] = this->FindStateIndex(NbrParticlesUp, LzUp, TmpBetaLeftUp, TmpBetaLeftDown);
-	++TmpNbrCouplingElements;
-      }
-      
+      TmpBetaLeftUp = i / this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexDownLeft];
+      TmpBetaLeftDown = i % (this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexDownLeft]);
+      this->AnnihilationElementsOneLayer.GetMatrixElement((this->SingleLayerIndices[TmpIndexUpRight] + BetaUp), (this->SingleLayerIndices[TmpIndexUpLeft] + TmpBetaLeftUp),  Tmp);
+      if (Tmp != 0.0)
+	{
+	  this->AnnihilationElementsOneLayer.GetMatrixElement((this->SingleLayerIndices[TmpIndexDownRight] + BetaDown), (this->SingleLayerIndices[TmpIndexDownLeft] + TmpBetaLeftDown), Tmp1);
+	  if (Tmp1 != 0.0)
+	    {
+	      interactionElements[TmpNbrCouplingElements] = Tmp * Tmp1;
+	      leftIndices[TmpNbrCouplingElements] = this->FindStateIndex(NbrParticlesUp, LzUp, TmpBetaLeftUp, TmpBetaLeftDown);
+	      ++TmpNbrCouplingElements;
+	    }	  
+	}
     }
-  }
 
   return TmpNbrCouplingElements;    
 }
@@ -710,16 +730,16 @@ int QuasiholeOnSphereWithSpinAndPairing::AduAu (int index, int m, int*& leftIndi
   int TmpIndex = this->FindStateIndex(NbrParticlesUp, LzUp, 0, BetaDown);  
   NumberCouplingElements = 0;
   for (int i = 0; i < this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexUp]; ++i)
-  {
-    this->AdAElementsOneLayer[ShiftedOperatorLzValue].GetMatrixElement((this->SingleLayerIndices[TmpIndexUp] + i), (this->SingleLayerIndices[TmpIndexUp] + BetaUp), Tmp);
-    if (Tmp != 0.0)
     {
-      interactionElements[NumberCouplingElements] = Tmp;
-      leftIndices[NumberCouplingElements] = TmpIndex;
-      ++NumberCouplingElements;
+      this->AdAElementsOneLayer[ShiftedOperatorLzValue].GetMatrixElement((this->SingleLayerIndices[TmpIndexUp] + i), (this->SingleLayerIndices[TmpIndexUp] + BetaUp), Tmp);
+      if (Tmp != 0.0)
+	{
+	  interactionElements[NumberCouplingElements] = Tmp;
+	  leftIndices[NumberCouplingElements] = TmpIndex;
+	  ++NumberCouplingElements;
+	}    
+      ++TmpIndex;
     }    
-    ++TmpIndex;
-  }    
   return NumberCouplingElements;    
 }
 

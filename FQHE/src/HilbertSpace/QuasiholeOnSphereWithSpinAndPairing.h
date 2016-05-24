@@ -85,8 +85,10 @@ class QuasiholeOnSphereWithSpinAndPairing :  public FermionOnSphereWithSpin
   // totalLz = twice the momentum total value
   // lzMax = twice the maximum Lz value reached by a fermion
   // totalSpin = twice the total spin value
+  // directory = optional path to data files
   // memory = amount of memory granted for precalculations
-  QuasiholeOnSphereWithSpinAndPairing (int kExclusionPrinciple, int rExclusionPrinciple, int totalLz, int lzMax, int totalSpin, unsigned long memory = 10000000);
+  QuasiholeOnSphereWithSpinAndPairing (int kExclusionPrinciple, int rExclusionPrinciple, int totalLz, int lzMax, int totalSpin, 
+				       const char* directory, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
