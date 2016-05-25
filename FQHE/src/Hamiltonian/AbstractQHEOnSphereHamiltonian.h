@@ -54,6 +54,7 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
 
   friend class QHEParticlePrecalculationOperation;
   friend class LinearlySuperposedQHEOnSphereHamiltonian;
+
  protected:
   
   // Hilbert space associated to the system
@@ -467,7 +468,7 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   
   // evaluate all interaction factors
   //   
-  virtual void EvaluateInteractionFactors() = 0;
+  virtual void EvaluateInteractionFactors();
 
   // get the preferred distribution over parallel execution in N tasks for parallel Hamiltonian-Vector multiplication
   // nbrThreads = number of threads requested

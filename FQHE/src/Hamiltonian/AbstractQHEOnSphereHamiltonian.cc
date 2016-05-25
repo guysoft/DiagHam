@@ -4092,3 +4092,18 @@ bool AbstractQHEOnSphereHamiltonian::LoadPrecalculation (char* fileName)
   return true;
 }
 
+// evaluate all interaction factors
+//   
+
+void AbstractQHEOnSphereHamiltonian::EvaluateInteractionFactors()
+{
+  this->InteractionFactors = 0;
+  this->NbrInteractionFactors = 0;
+  this->M1Value = 0;
+  this->M2Value = 0;
+  this->M3Value = 0;
+  this->NbrM12Indices = 0;
+  this->NbrM3Values = 0;
+  this->M3Values = 0;
+}
+

@@ -37,7 +37,7 @@
 
 #include "config.h"
 #include "HilbertSpace/QuasiholeOnSphereWithSpinAndPairing.h"
-#include "Hamiltonian/AbstractHamiltonian.h"
+#include "Hamiltonian/AbstractQHEOnSphereHamiltonian.h"
 
 #include <iostream>
 
@@ -49,19 +49,13 @@ class MathematicaOutput;
 class AbstractArchitecture;
 
 
-class ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing : public AbstractHamiltonian
+class ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing : public AbstractQHEOnSphereHamiltonian
 {
 
-//   friend class QHEParticlePrecalculationOperation;
+   friend class QHEParticlePrecalculationOperation;
 
  protected:
 
-  // Hilbert space assocaited to the Hamiltonian 
-  QuasiholeOnSphereWithSpinAndPairing* Particles;
-  // number of flux quanta
-  int LzMax;
-  // number of single particle lz values
-  int NbrLzValue;
   // array that contains all one-body interaction factors for particles with spin up
   double* OneBodyInteractionFactorsupup;
   // array that contains all one-body interaction factors for particles with spin down
@@ -158,6 +152,17 @@ class ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairin
   virtual RealVector* LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
 						  int firstComponent, int nbrComponent);
 
+  // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
+  //
+  // firstComponent = index of the first component that has to be precalcualted
+  // nbrComponent  = number of components that has to be precalcualted
+  // return value = number of non-zero matrix element
+  virtual long PartialFastMultiplicationMemory(int firstComponent, int nbrComponent);
+
+  // firstComponent = index of the first component that has to be precalcualted
+  // nbrComponent  = number of components that has to be precalcualted
+  virtual void PartialEnableFastMultiplication(int firstComponent, int nbrComponent);
+  
 };
 
 // return dimension of Hilbert space where Hamiltonian acts

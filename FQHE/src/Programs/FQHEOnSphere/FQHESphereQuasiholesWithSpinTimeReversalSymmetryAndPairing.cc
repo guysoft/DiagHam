@@ -58,10 +58,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "if positive, fix the total number of particles", -1);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new SingleDoubleOption ('\n', "charging-energy", "factor in front of the charging energy (i.e 1/(2C))", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "average-nbrparticles", "average number of particles", 0.0);
+  (*SystemGroup) += new BooleanOption  ('\n', "force-negativelz", "manually force to compute the negative lz sectors");
   (*SystemGroup) += new SingleStringOption ('\n', "directory", "use a specific directory for the input data instead of the current one");
   
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
@@ -135,26 +137,38 @@ int main(int argc, char** argv)
       cout << "warning, OneBodyPotentialUpDown is not supported" << endl;
     }
   if (PseudoPotentials != 0)
-  {
-    cout << "warning, there should be no two-body pseudopotentials. Two-body interactions are implemented through the restriction to the quasihole Hilbert space" << endl;
-  }
+    {
+      cout << "warning, there should be no two-body pseudopotentials. Two-body interactions are implemented through the restriction to the quasihole Hilbert space" << endl;
+    }
+
   char* OutputNameLz = new char [256 + strlen(Manager.GetString("interaction-name"))];
   sprintf (OutputNameLz, "fermions_sphere_su2_quasiholes_%s_cenergy_%.6f_n0_%.6f_pairing_n_0_2s_%d_sz_%d_lz.dat", Manager.GetString("interaction-name"), 
 	   Manager.GetDouble("charging-energy"), Manager.GetDouble("average-nbrparticles"), LzMax, TotalSz);
 
   int MinNbrParticles = abs(TotalSz);
   int MaxNbrParticles = (2 * (LzMax + 1)) - abs(TotalSz);
-  int MaxL = 0;
+  if (Manager.GetInteger("nbr-particles") >= 0)
+    {
+      MinNbrParticles = Manager.GetInteger("nbr-particles");
+      MaxNbrParticles = MinNbrParticles;
+    }
 
+  int MaxL = 0;
   for (int TmpNbrParticles = MinNbrParticles; TmpNbrParticles <= MaxNbrParticles; TmpNbrParticles += 2)
     {
       int NbrUp = (TmpNbrParticles + TotalSz) / 2;
       int NbrDown = (TmpNbrParticles - TotalSz) / 2;
       if ((NbrUp <= (LzMax + 1)) && (NbrUp >= 0) && (NbrDown <= (LzMax + 1)) && (NbrDown >= 0))
 	{
-	  int TmpMaxL = (((LzMax - NbrUp + 1) * NbrUp) + ((LzMax - NbrDown + 1) * NbrDown));
-	  if (TmpMaxL > MaxL)
-	    MaxL = TmpMaxL;
+	  // warning, this should not work for k > 1
+	  if (KValue > 1)
+	    cout << "please fix your code for k>1" << endl;
+	  int MaxTotalLzUp = (LzMax * NbrUp) - ((KValue + RValue) * ((NbrUp - 1) * NbrUp) / KValue);
+	  int MaxTotalLzDown = (LzMax * NbrDown) - ((KValue + RValue) * ((NbrDown - 1) * NbrDown) / KValue);
+	  if ((MaxTotalLzUp + MaxTotalLzDown) > MaxL)
+	    {
+	      MaxL = (MaxTotalLzUp + MaxTotalLzDown);
+	    }
 	}
     }
 
@@ -171,52 +185,57 @@ int main(int argc, char** argv)
 	MaxL = L + (2 * (NbrLz - 1));
     }
 
+  if (Manager.GetBoolean("force-negativelz"))
+    L = -MaxL;
+
   for (; L <= MaxL; L += 2)
     {
-      QuasiholeOnSphereWithSpinAndPairing* Space = new QuasiholeOnSphereWithSpinAndPairing (KValue, RValue, L, LzMax, TotalSz, Manager.GetString("directory"));
-      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-      if (Space->GetHilbertSpaceDimension() == 0)
-	return 0;
-      AbstractHamiltonian* Hamiltonian = 0;
-      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
-	Memory = Architecture.GetArchitecture()->GetLocalMemory();
-      Hamiltonian = new ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing (Space, LzMax, OneBodyPotentialUpUp, 
-												   OneBodyPotentialDownDown,
-												   OneBodyPotentialPairing,
-												   Manager.GetDouble("charging-energy"), 
-												   Manager.GetDouble("average-nbrparticles"),
-												   Architecture.GetArchitecture(), 
-												   Memory, DiskCacheFlag,
-												   LoadPrecalculationFileName);
-      
-      double Shift = 0.0;
-      Hamiltonian->ShiftHamiltonian(Shift);
-      char* EigenvectorName = 0;
-      if (Manager.GetBoolean("eigenstate") == true)	
+      QuasiholeOnSphereWithSpinAndPairing* Space = new QuasiholeOnSphereWithSpinAndPairing (KValue, RValue, L, LzMax, TotalSz, Manager.GetString("directory"),
+											    Manager.GetInteger("nbr-particles"));
+      if (Space->GetLargeHilbertSpaceDimension() > 0l)
 	{
-	  EigenvectorName = new char [128];
-	  sprintf (EigenvectorName, "fermions_sphere_su2_quasiholes_%s_cenergy_%.6f_n0_%.6f_pairing_n_0_2s_%d_sz_%d_lz_%d", Manager.GetString("interaction-name"), 
-		   Manager.GetDouble("charging-energy"), Manager.GetDouble("average-nbrparticles"), LzMax, TotalSz, L);
+	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+	  AbstractHamiltonian* Hamiltonian = 0;
+	  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+	    Memory = Architecture.GetArchitecture()->GetLocalMemory();
+	  Hamiltonian = new ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing (Space, LzMax, OneBodyPotentialUpUp, 
+													 OneBodyPotentialDownDown,
+													 OneBodyPotentialPairing,
+													 Manager.GetDouble("charging-energy"), 
+													 Manager.GetDouble("average-nbrparticles"),
+													 Architecture.GetArchitecture(), 
+													 Memory, DiskCacheFlag,
+													 LoadPrecalculationFileName);
+	  
+	  double Shift = 0.0;
+	  Hamiltonian->ShiftHamiltonian(Shift);
+	  char* EigenvectorName = 0;
+	  if (Manager.GetBoolean("eigenstate") == true)	
+	    {
+	      EigenvectorName = new char [128];
+	      sprintf (EigenvectorName, "fermions_sphere_su2_quasiholes_%s_cenergy_%.6f_n0_%.6f_pairing_n_0_2s_%d_sz_%d_lz_%d", 
+		       Manager.GetString("interaction-name"), 
+		       Manager.GetDouble("charging-energy"), Manager.GetDouble("average-nbrparticles"), LzMax, TotalSz, L);
+	    }
+	  
+	  char* ContentPrefix = new char[256];
+	  sprintf (ContentPrefix, "%d", L);
+	  
+	  char* SubspaceLegend = new char[256];
+	  sprintf (SubspaceLegend, "lz");
+	  
+	  GenericRealMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, ContentPrefix, SubspaceLegend, Shift, OutputNameLz, FirstRun, EigenvectorName);
+	  MainTaskOperation TaskOperation (&Task);
+	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	  if (EigenvectorName != 0)
+	    {
+	      delete[] EigenvectorName;
+	    }
+	  delete Hamiltonian;
+	  if (FirstRun == true)
+	    FirstRun = false;
 	}
-            
-      char* ContentPrefix = new char[256];
-      sprintf (ContentPrefix, "%d", L);
-      
-      char* SubspaceLegend = new char[256];
-      sprintf (SubspaceLegend, "lz");
-      
-      GenericRealMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, ContentPrefix, SubspaceLegend, Shift, OutputNameLz, FirstRun, EigenvectorName);
-      MainTaskOperation TaskOperation (&Task);
-      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-      if (EigenvectorName != 0)
-	{
-	  delete[] EigenvectorName;
-	}
-      delete Hamiltonian;
-      if (FirstRun == true)
-	FirstRun = false;
       delete Space;
     }
-
   return 0;
 }

@@ -35,17 +35,33 @@
 
 
 #include "config.h"
-#include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/ParticleOnSphereWithSpin.h"
 #include "Matrix/SparseRealMatrix.h"
 
 #include <iostream>
 
 
-class QuasiholeOnSphereWithSpinAndPairing :  public FermionOnSphereWithSpin
+class QuasiholeOnSphereWithSpinAndPairing :  public ParticleOnSphereWithSpin
 {
 
 
  protected:
+
+  // number of fermions
+  int NbrFermions;
+  // momentum total value
+  int TotalLz;
+  // maximum Lz value reached by a fermion
+  int LzMax;
+  // number of fermions with spin up / down
+  int NbrFermionsUp;
+  int NbrFermionsDown;
+  // number of Lz values in a stat
+  int NbrLzValue;
+  // twice the total spin value
+  int TotalSpin;
+  
+
    // first index of the (k, r) exclusion principle in one layer
    int KValue;
    // second index of the (k, r) exclusion principle in one layer
@@ -70,6 +86,8 @@ class QuasiholeOnSphereWithSpinAndPairing :  public FermionOnSphereWithSpin
    SparseRealMatrix* AdAElementsOneLayer;
    // maximal number of fermions per layer
    int NbrFermionsUpMax;
+   // minimal number of fermions per layer
+   int NbrFermionsUpMin;
    // maximal number of states that any state can be coupled to
    int MaximalNumberCouplingElements;
 
@@ -86,9 +104,10 @@ class QuasiholeOnSphereWithSpinAndPairing :  public FermionOnSphereWithSpin
   // lzMax = twice the maximum Lz value reached by a fermion
   // totalSpin = twice the total spin value
   // directory = optional path to data files
+  // totalNbrParticles = if positive, fix the total number of particles
   // memory = amount of memory granted for precalculations
   QuasiholeOnSphereWithSpinAndPairing (int kExclusionPrinciple, int rExclusionPrinciple, int totalLz, int lzMax, int totalSpin, 
-				       const char* directory, unsigned long memory = 10000000);
+				       const char* directory, int totalNbrParticles = -1, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -117,6 +136,11 @@ class QuasiholeOnSphereWithSpinAndPairing :  public FermionOnSphereWithSpin
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state);
   
+  // get the particle statistic 
+  //
+  // return value = particle statistic
+  virtual int GetParticleStatistic();
+
   // apply a_u_m a_d_m to a given state
   //
   // index = index of the state on which the operator has to be applied
@@ -169,21 +193,13 @@ class QuasiholeOnSphereWithSpinAndPairing :  public FermionOnSphereWithSpin
 
   // evaluate Hilbert space dimension
   //
-  // lzMax = momentum maximum value for a fermion
-  // totalLz = momentum total value
-  // totalSpin = twice the total spin
   // return value = Hilbert space dimension      
   virtual long EvaluateHilbertSpaceDimension();
 
 
   // generate all states corresponding to the constraints
   // 
-  // nbrFermions = number of fermions
-  // lzMax = momentum maximum value for a fermion in the state
-  // totalLz = momentum total value
-  // totalSpin = twice the total spin
-  // pos = position in StateDescription array where to store states
-  // return value = position from which new states have to be stored
+  // return value = Hilbert space dimension   
   virtual long GenerateStates();
   
   
@@ -219,46 +235,59 @@ class QuasiholeOnSphereWithSpinAndPairing :  public FermionOnSphereWithSpin
 };
 
 
-  // get the linear index corresponding to a set of number of fermions and momentum
-  //
-  // NbrParticles = number of fermions
-  // totalLz = value of the angular momentum
-  // return value = linearized index
-  inline int QuasiholeOnSphereWithSpinAndPairing::GetLinearIndexSingleLayer(int nbrParticles, int totalLz)
-  {
-    int MaxTotalLz = this->GetMaximalLzSingleLayer(nbrParticles);
+// get the particle statistic 
+//
+// return value = particle statistic
 
-    int TmpIndex = nbrParticles + this->LzMax * (nbrParticles - 1) * nbrParticles / 2 - (this->RValue + this->KValue * this->FermionFactor) * nbrParticles * (nbrParticles - 1) * (nbrParticles - 2) / 3 + (totalLz + MaxTotalLz) / 2;
-    return TmpIndex;
-  }
+inline int QuasiholeOnSphereWithSpinAndPairing::GetParticleStatistic()
+{
+  return ParticleOnSphereWithSpin::FermionicStatistic;
+}
+
+// get the linear index corresponding to a set of number of fermions and momentum
+//
+// NbrParticles = number of fermions
+// totalLz = value of the angular momentum
+// return value = linearized index
+
+inline int QuasiholeOnSphereWithSpinAndPairing::GetLinearIndexSingleLayer(int nbrParticles, int totalLz)
+{
+  int MaxTotalLz = this->GetMaximalLzSingleLayer(nbrParticles);
   
+  int TmpIndex = nbrParticles + this->LzMax * (nbrParticles - 1) * nbrParticles / 2 - (this->RValue + this->KValue * this->FermionFactor) * nbrParticles * (nbrParticles - 1) * (nbrParticles - 2) / 3 + (totalLz + MaxTotalLz) / 2;
+  return TmpIndex;
+}
   
-  // get the maximal value of Lz in one layer for a given number of particles in this layer
-  //
-  // nbrParticles = number of particles
-  // return value = maximal Lz
-  inline int QuasiholeOnSphereWithSpinAndPairing::GetMaximalLzSingleLayer(int nbrParticles)
-  {
-    int maxTotalLz = nbrParticles * this->LzMax - (((this->RValue + (this->KValue * this->FermionFactor)) * nbrParticles * (nbrParticles - 1)));
-    return maxTotalLz;
-        
-  }
+
+// get the maximal value of Lz in one layer for a given number of particles in this layer
+//
+// nbrParticles = number of particles
+// return value = maximal Lz
+
+inline int QuasiholeOnSphereWithSpinAndPairing::GetMaximalLzSingleLayer(int nbrParticles)
+{
+  int maxTotalLz = nbrParticles * this->LzMax - (((this->RValue + (this->KValue * this->FermionFactor)) * nbrParticles * (nbrParticles - 1)));
+  return maxTotalLz;  
+}
 
   
-  // get the number of particles in a given state
-  //
-  // index =index of the state whose number of particles has to be returned
-  // return value = number of particles
-  inline int QuasiholeOnSphereWithSpinAndPairing::GetTotalNumberOfParticles (int index)
-  {
-    return (2 * this->NbrFermionUpFullSpace[index] - this->TotalSpin);
-  }
+// get the number of particles in a given state
+//
+// index =index of the state whose number of particles has to be returned
+// return value = number of particles
+
+inline int QuasiholeOnSphereWithSpinAndPairing::GetTotalNumberOfParticles (int index)
+{
+  return (2 * this->NbrFermionUpFullSpace[index] - this->TotalSpin);
+}
   
-    //get the maximal number of states that any state can be coupled to
-  //
-  //return value = number of coupling elements
-  inline int QuasiholeOnSphereWithSpinAndPairing::GetMaximalNumberCouplingElements()
-  {
-    return this->MaximalNumberCouplingElements;
-  }
+// get the maximal number of states that any state can be coupled to
+//
+// return value = number of coupling elements
+
+inline int QuasiholeOnSphereWithSpinAndPairing::GetMaximalNumberCouplingElements()
+{
+  return this->MaximalNumberCouplingElements;
+}
+
 #endif

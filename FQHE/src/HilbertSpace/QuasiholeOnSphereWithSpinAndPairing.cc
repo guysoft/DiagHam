@@ -68,25 +68,35 @@ QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing()
 // totalLz = twice the momentum total value
 // lzMax = twice the maximum Lz value reached by a fermion
 // totalSpin = twice the total spin value
+// directory = optional path to data files
+// totalNbrParticles = if positive, fix the total number of particles
 // memory = amount of memory granted for precalculations
 
 QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing (int kValue, int rValue, int totalLz, int lzMax, int totalSpin, 
-									  const char* directory, unsigned long memory)
+									  const char* directory, int totalNbrParticles, unsigned long memory)
 {
   this->NbrFermions = 0;
-  this->IncNbrFermions = this->NbrFermions + 1;
+  if (totalNbrParticles >= 0)
+    {
+      this->NbrFermions = totalNbrParticles;
+    }
   this->TotalLz = totalLz;
   this->TotalSpin = totalSpin;
-  this->NbrFermionsUp = (this->NbrFermions + this->TotalSpin)/2;
-  this->NbrFermionsDown = (this->NbrFermions - this->TotalSpin)/2;
+  this->NbrFermionsUp = (this->NbrFermions + this->TotalSpin) / 2;
+  this->NbrFermionsDown = (this->NbrFermions - this->TotalSpin) / 2;
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
-  this->MaximumSignLookUp = 16;
   
   this->KValue = kValue;
   this->RValue = rValue;
   this->FermionFactor = 1;
+  this->NbrFermionsUpMin = 0;
   this->NbrFermionsUpMax = (this->KValue * (this->LzMax + 1 + this->RValue)) / (this->RValue + (this->KValue * this->FermionFactor)); 
+  if (totalNbrParticles >= 0)
+    {
+      this->NbrFermionsUpMin = this->NbrFermionsUp;
+      this->NbrFermionsUpMax = this->NbrFermionsUp;      
+    }
   int MaxTotalLz = this->GetMaximalLzSingleLayer(this->NbrFermionsUpMax);
   this->NbrQuasiholeEntriesSingleLayer = this->GetLinearIndexSingleLayer(this->NbrFermionsUpMax, MaxTotalLz) + 1;
   this->NbrQuasiholesPerNPerLzSingleLayer = new int [this->NbrQuasiholeEntriesSingleLayer];
@@ -131,10 +141,14 @@ QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing (int kV
   
   
   for (int i = 0; i < NbrNonZeroElements; ++i)
-  {
-    TmpIndex = this->GetLinearIndexSingleLayer(NbrFermionsSingleLayer[i], LzSingleLayer[i]);
-    this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndex] = DimensionsSingleLayer[i];
-  }
+    {
+//       if ((NbrFermionsSingleLayer[i] >= this->NbrFermionsUpMin) && 
+// 	  (NbrFermionsSingleLayer[i] <= this->NbrFermionsUpMax))
+	{
+	  TmpIndex = this->GetLinearIndexSingleLayer(NbrFermionsSingleLayer[i], LzSingleLayer[i]);
+	  this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndex] = DimensionsSingleLayer[i];
+	}
+    }
   delete[] NbrFermionsSingleLayer;
   delete[] LzSingleLayer;
   delete[] DimensionsSingleLayer;
@@ -142,10 +156,10 @@ QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing (int kV
   TmpIndex = 0;
   int SingleLayerDimension = 0 ;
   for (; TmpIndex < this->NbrQuasiholeEntriesSingleLayer; ++ TmpIndex)
-  {
-    this->SingleLayerIndices[TmpIndex] = SingleLayerDimension;
-    SingleLayerDimension += this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndex];
-  }
+    {
+      this->SingleLayerIndices[TmpIndex] = SingleLayerDimension;
+      SingleLayerDimension += this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndex];
+    }
   
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension();
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
@@ -158,6 +172,12 @@ QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing (int kV
   this->LzValueUpFullSpace = new int [this->LargeHilbertSpaceDimension];
   
   this->LargeHilbertSpaceDimension = this->GenerateStates();
+
+//   for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
+//     {
+//       this->PrintState(cout, i) << endl;
+//     }
+
    
   RealSymmetricMatrix SingleLayerAnnihilationMatrix(SingleLayerDimension, true);
   RealSymmetricMatrix* SingleLayerAdAMatrix = new RealSymmetricMatrix[this->LzMax + 1];
@@ -169,86 +189,86 @@ QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing (int kV
   int TmpIndexRight1;
   int TmpIndexLeft1;
   double TmpInteraction;
-  for (int TmpRightNbrParticles = 0; TmpRightNbrParticles <= this->NbrFermionsUpMax; ++TmpRightNbrParticles)
-  {
-    int MaxRightTotalLz = this->GetMaximalLzSingleLayer(TmpRightNbrParticles);
-    for (int TmpRightLz = -MaxRightTotalLz; TmpRightLz <= MaxRightTotalLz; TmpRightLz += 2)
+  for (int TmpRightNbrParticles = this->NbrFermionsUpMin; TmpRightNbrParticles <= this->NbrFermionsUpMax; ++TmpRightNbrParticles)
     {
-      TmpIndexRight1 = this->GetLinearIndexSingleLayer(TmpRightNbrParticles, TmpRightLz);
-      for (int OperatorLzValue = -this->LzMax; OperatorLzValue <= this->LzMax; OperatorLzValue += 2)
+      int MaxRightTotalLz = this->GetMaximalLzSingleLayer(TmpRightNbrParticles);
+      for (int TmpRightLz = -MaxRightTotalLz; TmpRightLz <= MaxRightTotalLz; TmpRightLz += 2)
 	{
-	  int TmpLeftNbrParticles = TmpRightNbrParticles - 1;
-	  int MaxLeftTotalLz = this->GetMaximalLzSingleLayer(TmpLeftNbrParticles);
-	  int TmpLeftLz = TmpRightLz - OperatorLzValue;
-	  if ((TmpLeftNbrParticles >= 0) && (TmpLeftLz >= -MaxLeftTotalLz) && (TmpLeftLz <= MaxLeftTotalLz))
+	  TmpIndexRight1 = this->GetLinearIndexSingleLayer(TmpRightNbrParticles, TmpRightLz);
+	  for (int OperatorLzValue = -this->LzMax; OperatorLzValue <= this->LzMax; OperatorLzValue += 2)
 	    {
-	      TmpIndexLeft1 = this->GetLinearIndexSingleLayer(TmpLeftNbrParticles, TmpLeftLz);
+	      int TmpLeftNbrParticles = TmpRightNbrParticles - 1;
+	      int MaxLeftTotalLz = this->GetMaximalLzSingleLayer(TmpLeftNbrParticles);
+	      int TmpLeftLz = TmpRightLz - OperatorLzValue;
+	      if ((TmpLeftNbrParticles >= 0) && (TmpLeftLz >= -MaxLeftTotalLz) && (TmpLeftLz <= MaxLeftTotalLz))
+		{
+		  TmpIndexLeft1 = this->GetLinearIndexSingleLayer(TmpLeftNbrParticles, TmpLeftLz);
+		  if (directory != 0)
+		    {
+		      sprintf (TmpFileName, "%s/fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", directory, this->KValue, this->RValue, 
+			       TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
+		    }
+		  else
+		    { 
+		      sprintf (TmpFileName, "fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", this->KValue, this->RValue, TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
+		    }
+		  if (TmpSingleLayerInteraction.ReadMatrix(TmpFileName) == false)
+		    {
+		    } 
+		  else
+		    {
+		      if (abs(this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexLeft1] - TmpSingleLayerInteraction.GetNbrRow()) > 0)
+			cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexLeft1] << " " << TmpSingleLayerInteraction.GetNbrRow() << endl;
+		      if (abs(this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] - TmpSingleLayerInteraction.GetNbrColumn()) > 0)
+			cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] << " " << TmpSingleLayerInteraction.GetNbrColumn() << endl;
+		      
+		      for (int i = 0; i < TmpSingleLayerInteraction.GetNbrRow(); ++i)
+			{
+			  for (int j = i; j < TmpSingleLayerInteraction.GetNbrColumn(); ++j)
+			    {
+			      TmpIndexLeft = this->SingleLayerIndices[TmpIndexLeft1] + i;
+			      TmpIndexRight = this->SingleLayerIndices[TmpIndexRight1] + j;
+			      TmpSingleLayerInteraction.GetMatrixElement(i, j, TmpInteraction);
+			      SingleLayerAnnihilationMatrix.AddToMatrixElement(TmpIndexLeft, TmpIndexRight, TmpInteraction);
+			    }
+			}
+		    }
+		}
+	      
+	      
+	      int ShiftedOperatorLzValue = (OperatorLzValue + this->LzMax) / 2;	  
 	      if (directory != 0)
 		{
-		  sprintf (TmpFileName, "%s/fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", directory, this->KValue, this->RValue, 
+		  sprintf (TmpFileName, "%s/fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d.mat", directory, this->KValue, this->RValue, 
 			   TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
 		}
 	      else
-		{ 
-		  sprintf (TmpFileName, "fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", this->KValue, this->RValue, TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
+		{
+		  sprintf (TmpFileName, "fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d.mat", this->KValue, this->RValue, TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
 		}
 	      if (TmpSingleLayerInteraction.ReadMatrix(TmpFileName) == false)
 		{
 		} 
 	      else
 		{
-		  if (abs(this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexLeft1] - TmpSingleLayerInteraction.GetNbrRow()) > 0)
-		    cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexLeft1] << " " << TmpSingleLayerInteraction.GetNbrRow() << endl;
-		  if (abs(this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] - TmpSingleLayerInteraction.GetNbrColumn()) > 0)
-		    cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] << " " << TmpSingleLayerInteraction.GetNbrColumn() << endl;
+		  // 	    cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] << " " << TmpSingleLayerInteraction.GetNbrRow() << endl;
+		  // 	    cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] << " " << TmpSingleLayerInteraction.GetNbrColumn() << endl;
 		  
 		  for (int i = 0; i < TmpSingleLayerInteraction.GetNbrRow(); ++i)
 		    {
 		      for (int j = i; j < TmpSingleLayerInteraction.GetNbrColumn(); ++j)
 			{
-			  TmpIndexLeft = this->SingleLayerIndices[TmpIndexLeft1] + i;
+			  TmpIndexLeft = this->SingleLayerIndices[TmpIndexRight1] + i;
 			  TmpIndexRight = this->SingleLayerIndices[TmpIndexRight1] + j;
 			  TmpSingleLayerInteraction.GetMatrixElement(i, j, TmpInteraction);
-			  SingleLayerAnnihilationMatrix.AddToMatrixElement(TmpIndexLeft, TmpIndexRight, TmpInteraction);
+			  // 		cout << TmpIndexLeft << " " << TmpIndexRight << " " << ShiftedOperatorLzValue << " " << TmpInteraction << endl;
+			  SingleLayerAdAMatrix[ShiftedOperatorLzValue].AddToMatrixElement(TmpIndexLeft, TmpIndexRight, TmpInteraction);
 			}
 		    }
-		}
-	    }
-	  
-	  
-	  int ShiftedOperatorLzValue = (OperatorLzValue + this->LzMax) / 2;	  
-	  if (directory != 0)
-	    {
-	      sprintf (TmpFileName, "%s/fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d.mat", directory, this->KValue, this->RValue, 
-		       TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
-	    }
-	  else
-	    {
-	      sprintf (TmpFileName, "fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d.mat", this->KValue, this->RValue, TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
-	    }
-	  if (TmpSingleLayerInteraction.ReadMatrix(TmpFileName) == false)
-	    {
-	    } 
-	  else
-	  {
-// 	    cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] << " " << TmpSingleLayerInteraction.GetNbrRow() << endl;
-// 	    cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] << " " << TmpSingleLayerInteraction.GetNbrColumn() << endl;
-		
-	    for (int i = 0; i < TmpSingleLayerInteraction.GetNbrRow(); ++i)
-	      {
-		for (int j = i; j < TmpSingleLayerInteraction.GetNbrColumn(); ++j)
-		  {
-		    TmpIndexLeft = this->SingleLayerIndices[TmpIndexRight1] + i;
-		    TmpIndexRight = this->SingleLayerIndices[TmpIndexRight1] + j;
-		    TmpSingleLayerInteraction.GetMatrixElement(i, j, TmpInteraction);
-		    // 		cout << TmpIndexLeft << " " << TmpIndexRight << " " << ShiftedOperatorLzValue << " " << TmpInteraction << endl;
-		    SingleLayerAdAMatrix[ShiftedOperatorLzValue].AddToMatrixElement(TmpIndexLeft, TmpIndexRight, TmpInteraction);
-		  }
-	      }
-	  }	  
-	}      
+		}	  
+	    }      
+	}
     }
-  }
 
   
   delete[] TmpFileName;
@@ -259,23 +279,9 @@ QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing (int kV
     this->AdAElementsOneLayer[i] = SparseRealMatrix (SingleLayerAdAMatrix[i], 1.0e-13);
   delete[] SingleLayerAdAMatrix;
   
-  
-  
-  cout.precision(14);
-  
-
-  
-  this->StateDescription = 0;
-  this->StateHighestBit = 0;
-  
   this->Flag.Initialize();
-  this->TargetSpace = this;
-  
-  
 
-//   this->GenerateLookUpTable(memory);
-
-
+ 
 #ifdef __DEBUG__
 //   long UsedMemory = 0;
 //   UsedMemory += this->LargeHilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
@@ -312,74 +318,12 @@ QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing(const Q
   this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
   this->Flag = fermions.Flag;
   this->NbrFermions = fermions.NbrFermions;
-  this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
   this->TotalSpin = fermions.TotalSpin;
   this->NbrFermionsUp = fermions.NbrFermionsUp;
   this->NbrFermionsDown = fermions.NbrFermionsDown;
-  this->StateDescription = fermions.StateDescription;
-  this->StateHighestBit = fermions.StateHighestBit;
-  this->HighestBit = fermions.HighestBit;
-  this->MaximumLookUpShift = fermions.MaximumLookUpShift;
-  this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
-  this->LookUpTableShift = fermions.LookUpTableShift;
-  this->LookUpTable = fermions.LookUpTable;  
-  this->SignLookUpTable = fermions.SignLookUpTable;
-  this->SignLookUpTableMask = fermions.SignLookUpTableMask;
-  this->MaximumSignLookUp = fermions.MaximumSignLookUp;
-  if (fermions.TargetSpace != &fermions)
-    this->TargetSpace = fermions.TargetSpace;
-  else
-    this->TargetSpace = this;
-}
-
-// destructor
-//
-
-QuasiholeOnSphereWithSpinAndPairing::~QuasiholeOnSphereWithSpinAndPairing ()
-{
-  delete[] SingleLayerIndices;
-  delete[] NbrFermionUpFullSpace;
-  delete[] LzValueUpFullSpace;
-  delete[] AdAElementsOneLayer;
-  delete[] FirstIndexWithNbrParticlesUpLzValueUp;
-}
-
-// assignement (without duplicating datas)
-//
-// fermions = reference on the hilbert space to copy to copy
-// return value = reference on current hilbert space
-
-QuasiholeOnSphereWithSpinAndPairing& QuasiholeOnSphereWithSpinAndPairing::operator = (const QuasiholeOnSphereWithSpinAndPairing& fermions)
-{
-  if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
-    {
-      delete[] this->StateDescription;
-      delete[] this->StateHighestBit;
-    }
-  if (fermions.TargetSpace != &fermions)
-    this->TargetSpace = fermions.TargetSpace;
-  else
-    this->TargetSpace = this;
-  this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
-  this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
-  this->Flag = fermions.Flag;
-  this->NbrFermions = fermions.NbrFermions;
-  this->IncNbrFermions = fermions.IncNbrFermions;
-  this->TotalLz = fermions.TotalLz;
-  this->LzMax = fermions.LzMax;
-  this->NbrLzValue = fermions.NbrLzValue;
-  this->TotalSpin = fermions.TotalSpin;
-  this->NbrFermionsUp = fermions.NbrFermionsUp;
-  this->NbrFermionsDown = fermions.NbrFermionsDown;
-  this->StateDescription = fermions.StateDescription;
-  this->StateHighestBit = fermions.StateHighestBit;
-  this->MaximumLookUpShift = fermions.MaximumLookUpShift;
-  this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
-  this->LookUpTableShift = fermions.LookUpTableShift;
-  this->LookUpTable = fermions.LookUpTable;
   this->KValue = fermions.KValue;
   this->RValue = fermions.RValue;
   this->FermionFactor = fermions.FermionFactor;
@@ -390,6 +334,58 @@ QuasiholeOnSphereWithSpinAndPairing& QuasiholeOnSphereWithSpinAndPairing::operat
   this->LzValueUpFullSpace = fermions.LzValueUpFullSpace;
   this->AnnihilationElementsOneLayer = fermions.AnnihilationElementsOneLayer;
   this->AdAElementsOneLayer = fermions.AdAElementsOneLayer;
+  this->NbrFermionsUpMin = fermions.NbrFermionsUpMin;
+  this->NbrFermionsUpMax = fermions.NbrFermionsUpMax; 
+  this->FirstIndexWithNbrParticlesUpLzValueUp = fermions.FirstIndexWithNbrParticlesUpLzValueUp;
+  this->MaximalNumberCouplingElements = fermions.MaximalNumberCouplingElements;
+}
+
+// destructor
+//
+
+QuasiholeOnSphereWithSpinAndPairing::~QuasiholeOnSphereWithSpinAndPairing ()
+{
+  if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+    {
+      delete[] SingleLayerIndices;
+      delete[] NbrFermionUpFullSpace;
+      delete[] LzValueUpFullSpace;
+      delete[] AdAElementsOneLayer;
+      delete[] FirstIndexWithNbrParticlesUpLzValueUp;
+    }
+}
+
+// assignement (without duplicating datas)
+//
+// fermions = reference on the hilbert space to copy to copy
+// return value = reference on current hilbert space
+
+QuasiholeOnSphereWithSpinAndPairing& QuasiholeOnSphereWithSpinAndPairing::operator = (const QuasiholeOnSphereWithSpinAndPairing& fermions)
+{
+  this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
+  this->Flag = fermions.Flag;
+  this->NbrFermions = fermions.NbrFermions;
+  this->TotalLz = fermions.TotalLz;
+  this->LzMax = fermions.LzMax;
+  this->NbrLzValue = fermions.NbrLzValue;
+  this->TotalSpin = fermions.TotalSpin;
+  this->NbrFermionsUp = fermions.NbrFermionsUp;
+  this->NbrFermionsDown = fermions.NbrFermionsDown;
+  this->KValue = fermions.KValue;
+  this->RValue = fermions.RValue;
+  this->FermionFactor = fermions.FermionFactor;
+  this->NbrQuasiholeEntriesSingleLayer = fermions.NbrQuasiholeEntriesSingleLayer;
+  this->NbrQuasiholesPerNPerLzSingleLayer = fermions.NbrQuasiholesPerNPerLzSingleLayer;
+  this->SingleLayerIndices = fermions.SingleLayerIndices;
+  this->NbrFermionUpFullSpace = fermions.NbrFermionUpFullSpace;
+  this->LzValueUpFullSpace = fermions.LzValueUpFullSpace;
+  this->AnnihilationElementsOneLayer = fermions.AnnihilationElementsOneLayer;
+  this->AdAElementsOneLayer = fermions.AdAElementsOneLayer;
+  this->NbrFermionsUpMin = fermions.NbrFermionsUpMin;
+  this->NbrFermionsUpMax = fermions.NbrFermionsUpMax; 
+  this->FirstIndexWithNbrParticlesUpLzValueUp = fermions.FirstIndexWithNbrParticlesUpLzValueUp;
+  this->MaximalNumberCouplingElements = fermions.MaximalNumberCouplingElements;
   return *this;
 }
 
@@ -406,11 +402,7 @@ AbstractHilbertSpace* QuasiholeOnSphereWithSpinAndPairing::Clone()
   
 // generate all states corresponding to the constraints
 // 
-// lzMax = momentum maximum value for a fermion in the state
-// totalLz = momentum total value
-// totalSpin = twice the total spin
-// pos = position in StateDescription array where to store states
-// return value = position from which new states have to be stored
+// return value = Hilbert space dimension      
 
 long QuasiholeOnSphereWithSpinAndPairing::GenerateStates()
 {
@@ -424,7 +416,7 @@ long QuasiholeOnSphereWithSpinAndPairing::GenerateStates()
   int TmpComplementaryLz;
   
   int TmpIndex1 = 0;
-  for (int TmpNbrParticles = 0; TmpNbrParticles <= this->NbrFermionsUpMax; ++TmpNbrParticles)
+  for (int TmpNbrParticles = this->NbrFermionsUpMin; TmpNbrParticles <= this->NbrFermionsUpMax; ++TmpNbrParticles)
     {
       int MaxTotalLz = this->GetMaximalLzSingleLayer(TmpNbrParticles);
       TmpComplementaryNbrParticles = TmpNbrParticles - this->TotalSpin;
@@ -462,9 +454,6 @@ long QuasiholeOnSphereWithSpinAndPairing::GenerateStates()
 
 // evaluate Hilbert space dimension
 //
-// posMax = highest position for next particle to be placed
-// totalLz = momentum total value
-// totalSpin = twice the total spin
 // return value = Hilbert space dimension
 
 long QuasiholeOnSphereWithSpinAndPairing::EvaluateHilbertSpaceDimension()
@@ -475,7 +464,7 @@ long QuasiholeOnSphereWithSpinAndPairing::EvaluateHilbertSpaceDimension()
   
   int TmpComplementaryNbrParticles;
   int TmpComplementaryLz;
-  for (int TmpNbrParticles = 0; TmpNbrParticles <= this->NbrFermionsUpMax; ++TmpNbrParticles)
+  for (int TmpNbrParticles = this->NbrFermionsUpMin; TmpNbrParticles <= this->NbrFermionsUpMax; ++TmpNbrParticles)
     {
       int MaxTotalLz = this->GetMaximalLzSingleLayer(TmpNbrParticles);
       TmpComplementaryNbrParticles = TmpNbrParticles - this->TotalSpin;
@@ -489,7 +478,7 @@ long QuasiholeOnSphereWithSpinAndPairing::EvaluateHilbertSpaceDimension()
 		{
 		  TmpComplementaryIndex = this->GetLinearIndexSingleLayer(TmpComplementaryNbrParticles, TmpComplementaryLz);
 		  TmpIndex = this->GetLinearIndexSingleLayer(TmpNbrParticles, TmpLz);
-		  TmpDimension += this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndex] * this->NbrQuasiholesPerNPerLzSingleLayer[ TmpComplementaryIndex];  
+		  TmpDimension += this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndex] * this->NbrQuasiholesPerNPerLzSingleLayer[TmpComplementaryIndex];  
 		}
 	    }
 	}
@@ -550,7 +539,7 @@ int QuasiholeOnSphereWithSpinAndPairing::AuAd (int index, int m, int*& leftIndic
   
   int NbrParticlesUp = this->NbrFermionUpFullSpace[index] - 1;
   int LzUp = this->LzValueUpFullSpace[index] - lz;  
-  if ((NbrParticlesUp < 0) || (abs(LzUp) > this->GetMaximalLzSingleLayer(NbrParticlesUp)))
+  if ((NbrParticlesUp < this->NbrFermionsUpMin) || (abs(LzUp) > this->GetMaximalLzSingleLayer(NbrParticlesUp)))
     return 0;
   
   int TmpIndexUpLeft = this->GetLinearIndexSingleLayer(NbrParticlesUp, LzUp);
@@ -613,7 +602,7 @@ int QuasiholeOnSphereWithSpinAndPairing::AduAdd (int index, int m, int*& leftInd
   
   int NbrParticlesUp = this->NbrFermionUpFullSpace[index] + 1;
   int LzUp = this->LzValueUpFullSpace[index] + lz;  
-  if ((NbrParticlesUp < 0) || (abs(LzUp) > this->GetMaximalLzSingleLayer(NbrParticlesUp)))
+  if ((NbrParticlesUp > this->NbrFermionsUpMax) || (abs(LzUp) > this->GetMaximalLzSingleLayer(NbrParticlesUp)))
     return 0;
   
   int TmpIndexUpLeft = this->GetLinearIndexSingleLayer(NbrParticlesUp, LzUp);
