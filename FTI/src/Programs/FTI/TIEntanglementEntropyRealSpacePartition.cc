@@ -275,6 +275,7 @@ int main(int argc, char** argv)
 	  
 	  double EntanglementEntropy = 0.0;
 	  double NonVacuumEntanglementEntropy = 0.0;
+	  double NbrParticleFluctuation = 0.0;
 	  int NbrVacuumOneBodyEntanglementTrimmedEnergies = MaxOneBodyEntanglementEnergyIndex - MinOneBodyEntanglementEnergyIndex + 1;
 	  int NbrRejectedOneBodyEntropies = VacuumOneBodyEntanglementEnergies.GetNbrRow() - NbrVacuumOneBodyEntanglementTrimmedEnergies;
 	  double* VacuumOneBodyEntanglementTrimmedEnergies = new double[NbrVacuumOneBodyEntanglementTrimmedEnergies];
@@ -288,13 +289,15 @@ int main(int argc, char** argv)
 	    {
 	      EntanglementEntropy -= VacuumOneBodyEntanglementTrimmedEnergies[i] * log (VacuumOneBodyEntanglementTrimmedEnergies[i]);
 	      EntanglementEntropy -= (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i]) * log (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i]);
+	      NbrParticleFluctuation += VacuumOneBodyEntanglementTrimmedEnergies[i] * (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i]);
 	    }
 	  NonVacuumEntanglementEntropy = EntanglementEntropy;
 	  SumAlphaFactor = 1.0;
 	  cout << "Normalization = " << SumAlphaFactor << endl;
 	  cout << "Entanglement entropy = " << EntanglementEntropy << endl;
 	  cout << "Nbr Rejected one-body entanglement energies = " << NbrRejectedOneBodyEntropies << " / " << TotalNbrSitesA << endl;
-	  File << NbrSitesXA << " " << NbrSitesYA << " " << EntanglementEntropy << " " << NonVacuumEntanglementEntropy << endl;
+	  cout << "Fluctuation of the number of particles = " << NbrParticleFluctuation << endl;
+	  File << NbrSitesXA << " " << NbrSitesYA << " " << EntanglementEntropy << " " << NonVacuumEntanglementEntropy << " " << NbrParticleFluctuation << endl;
 	  delete[] VacuumOneBodyEntanglementTrimmedEnergies;
 	}
     }
@@ -305,6 +308,7 @@ int main(int argc, char** argv)
       cout << "computing entropy of a " << NbrSitesXA << "x" << NbrSitesYA << " patch" << endl;
       int TotalNbrSitesA = NbrSitesXA * TightBindingModel->GetNbrBands();
       double EntanglementEntropy = 0.0;
+      double NbrParticleFluctuation = 0.0;
       double** VacuumOneBodyEntanglementTrimmedEnergies = new double*[NbrSitesY];
       int* NbrVacuumOneBodyEntanglementTrimmedEnergies = new int[NbrSitesY];
       int TotalNbrRejectedOneValues = 0;
@@ -360,11 +364,13 @@ int main(int argc, char** argv)
 	    {
 	      EntanglementEntropy -= VacuumOneBodyEntanglementTrimmedEnergies[TmpKy][i] * log (VacuumOneBodyEntanglementTrimmedEnergies[TmpKy][i]);
 	      EntanglementEntropy -= (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[TmpKy][i]) * log (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[TmpKy][i]);
+	      NbrParticleFluctuation += VacuumOneBodyEntanglementTrimmedEnergies[TmpKy][i] * (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[TmpKy][i]);
 	    }
 	  cout << "Nbr Rejected one-body entanglement energies = " << NbrRejectedOneBodyEntropies << " / " << TotalNbrSitesA << endl;
 	}
-      File << NbrSitesXA << " " << NbrSitesYA << " " << EntanglementEntropy << endl;
+      File << NbrSitesXA << " " << NbrSitesYA << " " << EntanglementEntropy << " " << NbrParticleFluctuation << endl;
      cout << "Entanglement entropy = " << EntanglementEntropy << endl;
+     cout << "Fluctuation of the number of particles = " << NbrParticleFluctuation << endl;
      int TotalNbrVacuumOneBodyEntanglementTrimmedEnergies = 0;
      for (int TmpKy = 0; TmpKy < NbrSitesY; ++TmpKy)
        {
