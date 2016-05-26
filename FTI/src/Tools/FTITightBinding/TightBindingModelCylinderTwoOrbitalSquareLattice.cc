@@ -347,6 +347,200 @@ void TightBindingModelCylinderTwoOrbitalSquareLattice::ComputeOneBodyRealSpaceEn
   File.close();
 }
 
+// evaluate the two point correlation function in a given region
+//
+// maxX = x coordinate of the region upper right corner 
+// maxY = y coordinate of the region upper right corner 
+// occupiedMomenta = array that gives all the occupied momenta (as linearized indices)
+// nbrOccupiedMomenta = number of occupied momenta
+// bandIndex = index of the band to consider
+// return value = matrix where the values of the two point correlation function will be stored (using the linearized position index as entry)
+
+HermitianMatrix TightBindingModelCylinderTwoOrbitalSquareLattice::EvaluateFullTwoPointCorrelationFunction(int maxX, int maxY, int* occupiedMomenta, int nbrOccupiedMomenta, int bandIndex)
+{
+  int TmpNbrOrbitalPerUnitCell = this->NbrBands / this->NbrSiteY;
+  int TotalNbrSites = maxX * maxY * TmpNbrOrbitalPerUnitCell; 
+  HermitianMatrix EntanglementHamiltonian(TotalNbrSites, true);
+
+
+  int TmpMaxY2 = 2 * maxY + 1;
+  Complex** TmpPhaseFactorY = new Complex*[TmpMaxY2];
+  int TmpMomentumY;
+   for (int i = 0; i < TmpMaxY2; ++i)
+    {
+      TmpPhaseFactorY[i] = new Complex[nbrOccupiedMomenta];
+      for (int j = 0; j < nbrOccupiedMomenta; ++j)
+	{
+	  this->GetLinearizedMomentumIndex(occupiedMomenta[j], TmpMomentumY);
+	  TmpPhaseFactorY[i][j] = Phase(this->KxFactor * ((double) (TmpMomentumY * (maxY - i))));
+	}
+    }
+
+
+  Complex*** TmpFormFactors = new Complex** [nbrOccupiedMomenta];
+  for (int i = 0; i < nbrOccupiedMomenta; ++i)
+    {
+      TmpFormFactors[i] = new Complex*[this->NbrBands];
+      for (int j = 0; j < this->NbrBands; ++j)
+	{
+	  TmpFormFactors[i][j] = new Complex[this->NbrBands];
+	  for (int k = 0; k < this->NbrBands; ++k)
+	    {	      
+	      TmpFormFactors[i][j][k] = (Conj(this->OneBodyBasis[occupiedMomenta[i]][bandIndex][j])
+					 * this->OneBodyBasis[occupiedMomenta[i]][bandIndex][k]);
+	    }
+	}
+    }
+
+  for (int TmpX1 = 0; TmpX1 < maxX; ++TmpX1)
+    {
+      for (int TmpY1 = 0; TmpY1 < maxY; ++TmpY1)
+	{	  
+	  for (int TmpOrbital1 = 0; TmpOrbital1 < this->NbrBands; ++TmpOrbital1)
+	    {
+	      int TmpLinearizedIndex1 = this->GetRealSpaceTightBindingLinearizedIndex(TmpX1, TmpY1, TmpOrbital1);
+	      int TmpReducedLinearizedIndex1 = TmpOrbital1 + ((TmpY1  + TmpX1 * maxY) * this->NbrBands);
+	      for (int TmpX2 = 0; TmpX2 < maxX; ++TmpX2)
+		{
+		  for (int TmpY2 = 0; TmpY2 < maxY; ++TmpY2)
+		    {	  
+		      for (int TmpOrbital2 = 0; TmpOrbital2 < this->NbrBands; ++TmpOrbital2)
+			{
+			  int TmpLinearizedIndex2 = this->GetRealSpaceTightBindingLinearizedIndex(TmpX2, TmpY2, TmpOrbital2);
+			  int TmpReducedLinearizedIndex2 = TmpOrbital2 + ((TmpY2  + TmpX2 * maxY) * this->NbrBands);
+			  if (TmpReducedLinearizedIndex1 <= TmpReducedLinearizedIndex2)		  
+			    {
+			      Complex Tmp = 0.0;
+			      Complex* DiffY = TmpPhaseFactorY[TmpY2 - TmpY1 + maxY];
+			      for (int i = 0; i < nbrOccupiedMomenta; ++i)
+				{
+				  Tmp += (DiffY[i] * TmpFormFactors[i][TmpOrbital1][TmpOrbital2]);
+				}
+			      EntanglementHamiltonian.SetMatrixElement(TmpReducedLinearizedIndex1, TmpReducedLinearizedIndex2, Tmp);
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+  EntanglementHamiltonian /= ((double) (this->NbrSiteX * this->NbrSiteY));
+
+  for (int i = 0; i < TmpMaxY2; ++i)
+    delete[] TmpPhaseFactorY[i];
+  delete[] TmpPhaseFactorY;
+  for (int i = 0; i < nbrOccupiedMomenta; ++i)
+    {
+      for (int j = 0; j < this->NbrBands; ++j)
+	delete[] TmpFormFactors[i][j];
+      delete[] TmpFormFactors[i];
+    }
+  delete[] TmpFormFactors;
+
+  return EntanglementHamiltonian;
+}
+
+
+// evaluate the two point correlation function in a given region
+//
+// maxX = x coordinate of the region upper right corner 
+// maxY = y coordinate of the region upper right corner 
+// occupiedMomenta = array that gives all the occupied momenta (as linearized indices)
+// bandIndices = array that gives the band index of each occupied state
+// nbrOccupiedMomenta = number of occupied momenta
+// return value = matrix where the values of the two point correlation function will be stored (using the linearized position index as entry)
+
+HermitianMatrix TightBindingModelCylinderTwoOrbitalSquareLattice::EvaluateFullTwoPointCorrelationFunction(int maxX, int maxY, int* occupiedMomenta,
+													  int* bandIndices, int nbrOccupiedMomenta)
+{
+  int TmpNbrOrbitalPerUnitCell = this->NbrBands / this->NbrSiteY;
+  int TotalNbrSites = maxX * maxY * TmpNbrOrbitalPerUnitCell; 
+  HermitianMatrix EntanglementHamiltonian(TotalNbrSites, true);
+
+
+  int TmpMaxY2 = 2 * maxY + 1;
+  Complex** TmpPhaseFactorY = new Complex*[TmpMaxY2];
+  int TmpMomentumY;
+   for (int i = 0; i < TmpMaxY2; ++i)
+    {
+      TmpPhaseFactorY[i] = new Complex[nbrOccupiedMomenta];
+      for (int j = 0; j < nbrOccupiedMomenta; ++j)
+	{
+	  this->GetLinearizedMomentumIndex(occupiedMomenta[j], TmpMomentumY);
+	  TmpPhaseFactorY[i][j] = Phase(this->KxFactor * ((double) (TmpMomentumY * (maxY - i))));
+	}
+    }
+
+
+  Complex*** TmpFormFactors = new Complex** [nbrOccupiedMomenta];
+  for (int i = 0; i < nbrOccupiedMomenta; ++i)
+    {
+      TmpFormFactors[i] = new Complex*[this->NbrBands];
+      for (int j = 0; j < this->NbrBands; ++j)
+	{
+	  TmpFormFactors[i][j] = new Complex[this->NbrBands];
+	  for (int k = 0; k < this->NbrBands; ++k)
+	    {	      
+	      TmpFormFactors[i][j][k] = (Conj(this->OneBodyBasis[occupiedMomenta[i]][bandIndices[i]][j])
+					 * this->OneBodyBasis[occupiedMomenta[i]][bandIndices[i]][k]);
+	    }
+	}
+    }
+
+  for (int TmpX1 = 0; TmpX1 < maxX; ++TmpX1)
+    {
+      for (int TmpY1 = 0; TmpY1 < maxY; ++TmpY1)
+	{	  
+	  for (int TmpOrbital1 = 0; TmpOrbital1 < TmpNbrOrbitalPerUnitCell; ++TmpOrbital1)
+	    {
+	      int TmpLinearizedIndex1 = (TmpX1 * this->NbrSiteY) +  TmpOrbital1;
+	      int TmpReducedLinearizedIndex1 = TmpOrbital1 + ((TmpY1  + TmpX1 * maxY) * TmpNbrOrbitalPerUnitCell);
+	      for (int TmpX2 = 0; TmpX2 < maxX; ++TmpX2)
+		{
+		  for (int TmpY2 = 0; TmpY2 < maxY; ++TmpY2)
+		    {	  
+		      for (int TmpOrbital2 = 0; TmpOrbital2 < TmpNbrOrbitalPerUnitCell; ++TmpOrbital2)
+			{
+			  int TmpLinearizedIndex2 = (TmpX2 * this->NbrSiteY) +  TmpOrbital2;
+			  int TmpReducedLinearizedIndex2 = TmpOrbital2 + ((TmpY2  + TmpX2 * maxY) * TmpNbrOrbitalPerUnitCell);
+			  if (TmpReducedLinearizedIndex1 <= TmpReducedLinearizedIndex2)		  
+			    {
+			      Complex Tmp = 0.0;
+			      Complex* DiffY = TmpPhaseFactorY[TmpY2 - TmpY1 + maxY];
+			      for (int i = 0; i < nbrOccupiedMomenta; ++i)
+				{
+				  Tmp += (DiffY[i] * TmpFormFactors[i][TmpLinearizedIndex1][TmpLinearizedIndex2]);
+				}
+			      EntanglementHamiltonian.SetMatrixElement(TmpReducedLinearizedIndex1, TmpReducedLinearizedIndex2, Tmp);
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+
+  EntanglementHamiltonian /= ((double) this->NbrSiteX);
+//   cout << "test 1" << endl;
+//   cout << EntanglementHamiltonian << endl;
+
+  for (int i = 0; i < TmpMaxY2; ++i)
+    delete[] TmpPhaseFactorY[i];
+  delete[] TmpPhaseFactorY;
+  for (int i = 0; i < nbrOccupiedMomenta; ++i)
+    {
+      for (int j = 0; j < this->NbrBands; ++j)
+	delete[] TmpFormFactors[i][j];
+      delete[] TmpFormFactors[i];
+    }
+  delete[] TmpFormFactors;
+
+  return EntanglementHamiltonian;
+}
+
+
 // evaluate the mixed two point correlation function in a given region, assuming translation invariance along one direction
 //
 // maxX = length along the borken translation direction of the region 
@@ -407,6 +601,8 @@ HermitianMatrix TightBindingModelCylinderTwoOrbitalSquareLattice::EvaluateFullMi
 	}
     }
   delete[] TmpOccupiedMomenta;
+//   cout << "test 2" << endl;
+//   cout << EntanglementHamiltonian << endl;
 
   return EntanglementHamiltonian;
 }

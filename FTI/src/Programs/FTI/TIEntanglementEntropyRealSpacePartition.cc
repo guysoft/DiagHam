@@ -232,7 +232,7 @@ int main(int argc, char** argv)
 	{
 	  gettimeofday (&(TotalStartingTime), 0);
 	}
-      HermitianMatrix EntanglementHamiltonian = TightBindingModel->EvaluateFullTwoPointCorrelationFunction(MaxNbrSitesXA, MaxNbrSitesYA, VacuumOneBodyLinearizedMomenta, VacuumNbrParticles, 0);
+      HermitianMatrix EntanglementHamiltonian = TightBindingModel->EvaluateFullTwoPointCorrelationFunction(MaxNbrSitesXA, MaxNbrSitesYA, VacuumOneBodyLinearizedMomenta, VacuumOneBodyLinearizedBandIndices, VacuumNbrParticles);
       if (ShowTimeFlag == true)
 	{
 	  gettimeofday (&(TotalEndingTime), 0);
@@ -245,14 +245,30 @@ int main(int argc, char** argv)
 	  NbrSitesXA = CutX[CurrentCutIndex];
 	  NbrSitesYA = CutY[CurrentCutIndex];
 	  cout << "computing entropy of a " << NbrSitesXA << "x" << NbrSitesYA << " patch" << endl;
-	  int TotalNbrSitesA = NbrSitesXA * NbrSitesYA * TightBindingModel->GetNbrBands();
+	  int TotalNbrSitesA = 0;
+	  if (CylinderFlag == false)
+	    {
+	      TotalNbrSitesA = NbrSitesXA * NbrSitesYA * TightBindingModel->GetNbrBands();
+	    }
+	  else
+	    {
+	      TotalNbrSitesA = NbrSitesXA * NbrSitesYA * 2;
+	    }
 	  if (ShowTimeFlag == true)
 	    {
 	      gettimeofday (&(TotalStartingTime), 0);
 	    }
 	  RealDiagonalMatrix VacuumOneBodyEntanglementEnergies(TotalNbrSitesA, true);
-	  HermitianMatrix TmpEntanglementHamiltonian = TIEntanglementEntropyExtractCorrelationMatrix(EntanglementHamiltonian, MaxNbrSitesXA, MaxNbrSitesYA, NbrSitesXA, NbrSitesYA, 
-												     TightBindingModel->GetNbrBands());
+	  HermitianMatrix TmpEntanglementHamiltonian;
+	  if (CylinderFlag == false)
+	    {
+	      TmpEntanglementHamiltonian = TIEntanglementEntropyExtractCorrelationMatrix(EntanglementHamiltonian, MaxNbrSitesXA, MaxNbrSitesYA, NbrSitesXA, NbrSitesYA, 
+											 TightBindingModel->GetNbrBands());
+	    }
+	  else
+	    {
+	      TmpEntanglementHamiltonian = TIEntanglementEntropyExtractCorrelationMatrix(EntanglementHamiltonian, MaxNbrSitesXA, MaxNbrSitesYA, NbrSitesXA, NbrSitesYA, 2);
+	    }
 #ifdef __LAPACK__
 	  TmpEntanglementHamiltonian.LapackDiagonalize(VacuumOneBodyEntanglementEnergies);
 #else
@@ -358,7 +374,7 @@ int main(int argc, char** argv)
 	  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies[TmpKy]; ++i)
 	    {
 	      VacuumOneBodyEntanglementTrimmedEnergies[TmpKy][i] = VacuumOneBodyEntanglementEnergies[i + MinOneBodyEntanglementEnergyIndex];	
-	      OneBodyFile << TmpKy << " " << VacuumOneBodyEntanglementTrimmedEnergies[TmpKy][i] << endl;
+	      OneBodyFile << NbrSitesXA << " " << NbrSitesYA << " " << TmpKy << " " << VacuumOneBodyEntanglementTrimmedEnergies[TmpKy][i] << endl;
 	    }
 	  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies[TmpKy]; ++i)
 	    {
@@ -369,73 +385,73 @@ int main(int argc, char** argv)
 	  cout << "Nbr Rejected one-body entanglement energies = " << NbrRejectedOneBodyEntropies << " / " << TotalNbrSitesA << endl;
 	}
       File << NbrSitesXA << " " << NbrSitesYA << " " << EntanglementEntropy << " " << NbrParticleFluctuation << endl;
-     cout << "Entanglement entropy = " << EntanglementEntropy << endl;
-     cout << "Fluctuation of the number of particles = " << NbrParticleFluctuation << endl;
-     int TotalNbrVacuumOneBodyEntanglementTrimmedEnergies = 0;
-     for (int TmpKy = 0; TmpKy < NbrSitesY; ++TmpKy)
-       {
-	 TotalNbrVacuumOneBodyEntanglementTrimmedEnergies += NbrVacuumOneBodyEntanglementTrimmedEnergies[TmpKy];
-       }
-     double* TotalVacuumOneBodyEntanglementTrimmedEnergies = new double[TotalNbrVacuumOneBodyEntanglementTrimmedEnergies];
-     int* TotalVacuumOneBodyEntanglementTrimmedMomenta  = new int[TotalNbrVacuumOneBodyEntanglementTrimmedEnergies];
-     TotalNbrVacuumOneBodyEntanglementTrimmedEnergies = 0;
-     for (int TmpKy = 0; TmpKy < NbrSitesY; ++TmpKy)
-       {
-	 for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies[TmpKy]; ++i)
-	   {
-	     TotalVacuumOneBodyEntanglementTrimmedEnergies[TotalNbrVacuumOneBodyEntanglementTrimmedEnergies] = VacuumOneBodyEntanglementTrimmedEnergies[TmpKy][i];
-	     TotalVacuumOneBodyEntanglementTrimmedMomenta[TotalNbrVacuumOneBodyEntanglementTrimmedEnergies] = TmpKy;
-	     ++TotalNbrVacuumOneBodyEntanglementTrimmedEnergies;
-	   }
-       }
-     SortArrayDownOrdering<int>(TotalVacuumOneBodyEntanglementTrimmedEnergies, TotalVacuumOneBodyEntanglementTrimmedMomenta, TotalNbrVacuumOneBodyEntanglementTrimmedEnergies);
-     int NaturalNbrParticles = NbrSitesXA * NbrSitesYA;
-     int InitialNbrParticlesA = NaturalNbrParticles - TotalNbrRejectedOneValues + 1;
-     int NaturalMomentumA = 0;
-//      for (int i = 0; i < InitialNbrParticlesA; ++i)
-//        NaturalMomentumA  += TotalVacuumOneBodyEntanglementTrimmedMomenta[i];
-     bool TmpZeroFlag = false;
-     for (int i = InitialNbrParticlesA; (i < TotalNbrVacuumOneBodyEntanglementTrimmedEnergies) && (TmpZeroFlag == false); ++i)
-       {
-	 double TmpLargestEigenvalue = 1.0;
-	 int TmpLargestEigenvalueMomentum = -NaturalMomentumA;
-	 for (int j = InitialNbrParticlesA; j <= i; ++j)
-	   {
-	     TmpLargestEigenvalue *= TotalVacuumOneBodyEntanglementTrimmedEnergies[j];
-	     TmpLargestEigenvalueMomentum += TotalVacuumOneBodyEntanglementTrimmedMomenta[j];
-	   }
-	 for (int j = InitialNbrParticlesA; j <= i; ++j)
-	   {
-	     TmpLargestEigenvalue /= (1.0 - TotalVacuumOneBodyEntanglementTrimmedEnergies[j]);
-	   }	 
-	 cout << i << " " << TmpLargestEigenvalue << " " << (TmpLargestEigenvalueMomentum % NbrSitesY) << endl;
-// 	 remove % NbrSitesY?
-	 if (TmpLargestEigenvalue < 1e-50)
-	   {
-	     TmpZeroFlag = true;
-	   }
-       }
-     InitialNbrParticlesA = NaturalNbrParticles - TotalNbrRejectedOneValues - 1;
-     TmpZeroFlag = false;
-     for (int i = InitialNbrParticlesA; (i >= 0 ) && (TmpZeroFlag == false); --i)
-       {
-	 double TmpLargestEigenvalue = 1.0;
-	 int TmpLargestEigenvalueMomentum = -NaturalMomentumA;
-	 for (int j = i; j <= InitialNbrParticlesA; ++j)
-	   {
-	     TmpLargestEigenvalue /= TotalVacuumOneBodyEntanglementTrimmedEnergies[j];
-	     TmpLargestEigenvalueMomentum -= TotalVacuumOneBodyEntanglementTrimmedMomenta[j];
-	   }
-	 for (int j = i; j <= InitialNbrParticlesA; ++j)
-	   {
-	     TmpLargestEigenvalue *= (1.0 - TotalVacuumOneBodyEntanglementTrimmedEnergies[j]);
-	   }	 
-	 cout << i << " " << TmpLargestEigenvalue << " " << (TmpLargestEigenvalueMomentum % NbrSitesY) << endl;
-	 if (TmpLargestEigenvalue < 1e-50)
-	   {
-	     TmpZeroFlag = true;
-	   }
-       }
+      cout << "Entanglement entropy = " << EntanglementEntropy << endl;
+      cout << "Fluctuation of the number of particles = " << NbrParticleFluctuation << endl;
+//      int TotalNbrVacuumOneBodyEntanglementTrimmedEnergies = 0;
+//      for (int TmpKy = 0; TmpKy < NbrSitesY; ++TmpKy)
+//        {
+// 	 TotalNbrVacuumOneBodyEntanglementTrimmedEnergies += NbrVacuumOneBodyEntanglementTrimmedEnergies[TmpKy];
+//        }
+//      double* TotalVacuumOneBodyEntanglementTrimmedEnergies = new double[TotalNbrVacuumOneBodyEntanglementTrimmedEnergies];
+//      int* TotalVacuumOneBodyEntanglementTrimmedMomenta  = new int[TotalNbrVacuumOneBodyEntanglementTrimmedEnergies];
+//      TotalNbrVacuumOneBodyEntanglementTrimmedEnergies = 0;
+//      for (int TmpKy = 0; TmpKy < NbrSitesY; ++TmpKy)
+//        {
+// 	 for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies[TmpKy]; ++i)
+// 	   {
+// 	     TotalVacuumOneBodyEntanglementTrimmedEnergies[TotalNbrVacuumOneBodyEntanglementTrimmedEnergies] = VacuumOneBodyEntanglementTrimmedEnergies[TmpKy][i];
+// 	     TotalVacuumOneBodyEntanglementTrimmedMomenta[TotalNbrVacuumOneBodyEntanglementTrimmedEnergies] = TmpKy;
+// 	     ++TotalNbrVacuumOneBodyEntanglementTrimmedEnergies;
+// 	   }
+//        }
+//      SortArrayDownOrdering<int>(TotalVacuumOneBodyEntanglementTrimmedEnergies, TotalVacuumOneBodyEntanglementTrimmedMomenta, TotalNbrVacuumOneBodyEntanglementTrimmedEnergies);
+//      int NaturalNbrParticles = NbrSitesXA * NbrSitesYA;
+//      int InitialNbrParticlesA = NaturalNbrParticles - TotalNbrRejectedOneValues + 1;
+//      int NaturalMomentumA = 0;
+// //      for (int i = 0; i < InitialNbrParticlesA; ++i)
+// //        NaturalMomentumA  += TotalVacuumOneBodyEntanglementTrimmedMomenta[i];
+//      bool TmpZeroFlag = false;
+//      for (int i = InitialNbrParticlesA; (i < TotalNbrVacuumOneBodyEntanglementTrimmedEnergies) && (TmpZeroFlag == false); ++i)
+//        {
+// 	 double TmpLargestEigenvalue = 1.0;
+// 	 int TmpLargestEigenvalueMomentum = -NaturalMomentumA;
+// 	 for (int j = InitialNbrParticlesA; j <= i; ++j)
+// 	   {
+// 	     TmpLargestEigenvalue *= TotalVacuumOneBodyEntanglementTrimmedEnergies[j];
+// 	     TmpLargestEigenvalueMomentum += TotalVacuumOneBodyEntanglementTrimmedMomenta[j];
+// 	   }
+// 	 for (int j = InitialNbrParticlesA; j <= i; ++j)
+// 	   {
+// 	     TmpLargestEigenvalue /= (1.0 - TotalVacuumOneBodyEntanglementTrimmedEnergies[j]);
+// 	   }	 
+// 	 cout << i << " " << TmpLargestEigenvalue << " " << (TmpLargestEigenvalueMomentum % NbrSitesY) << endl;
+// // 	 remove % NbrSitesY?
+// 	 if (TmpLargestEigenvalue < 1e-50)
+// 	   {
+// 	     TmpZeroFlag = true;
+// 	   }
+//        }
+//      InitialNbrParticlesA = NaturalNbrParticles - TotalNbrRejectedOneValues - 1;
+//      TmpZeroFlag = false;
+//      for (int i = InitialNbrParticlesA; (i >= 0 ) && (TmpZeroFlag == false); --i)
+//        {
+// 	 double TmpLargestEigenvalue = 1.0;
+// 	 int TmpLargestEigenvalueMomentum = -NaturalMomentumA;
+// 	 for (int j = i; j <= InitialNbrParticlesA; ++j)
+// 	   {
+// 	     TmpLargestEigenvalue /= TotalVacuumOneBodyEntanglementTrimmedEnergies[j];
+// 	     TmpLargestEigenvalueMomentum -= TotalVacuumOneBodyEntanglementTrimmedMomenta[j];
+// 	   }
+// 	 for (int j = i; j <= InitialNbrParticlesA; ++j)
+// 	   {
+// 	     TmpLargestEigenvalue *= (1.0 - TotalVacuumOneBodyEntanglementTrimmedEnergies[j]);
+// 	   }	 
+// 	 cout << i << " " << TmpLargestEigenvalue << " " << (TmpLargestEigenvalueMomentum % NbrSitesY) << endl;
+// 	 if (TmpLargestEigenvalue < 1e-50)
+// 	   {
+// 	     TmpZeroFlag = true;
+// 	   }
+//        }
     }
   File.close();
   OneBodyFile.close();

@@ -213,6 +213,25 @@ HermitianMatrix Abstract1DTightBindingModel::EvaluateFullTwoPointCorrelationFunc
   return EntanglementHamiltonian;
 }
 
+// evaluate the two point correlation function in a given region
+//
+// maxX = x coordinate of the region upper right corner 
+// maxY = y coordinate of the region upper right corner 
+// occupiedMomenta = array that gives all the occupied momenta (as linearized indices)
+// bandIndices = array that gives the band index of each occupied state
+// nbrOccupiedMomenta = number of occupied momenta
+// return value = matrix where the values of the two point correlation function will be stored (using the linearized position index as entry)
+
+HermitianMatrix Abstract1DTightBindingModel::EvaluateFullTwoPointCorrelationFunction(int maxX, int maxY, int* occupiedMomenta, int* bandIndices, int nbrOccupiedMomenta)
+{
+  int TotalNbrSites = maxX * this->NbrBands;
+  int TmpMomentumX;
+  HermitianMatrix EntanglementHamiltonian(TotalNbrSites, true);
+  cout << "warning, Abstract1DTightBindingModel::EvaluateFullTwoPointCorrelationFunction is not implemented" << endl;
+  return EntanglementHamiltonian;
+}
+
+
 // evaluate the mixed two point correlation function in a given region, assuming translation invariance along one direction
 //
 // maxX = length along the borken translation direction of the region 

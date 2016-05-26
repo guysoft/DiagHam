@@ -82,6 +82,14 @@ class TightBindingModelCylinderTwoOrbitalSquareLattice : public Abstract1DTightB
   //
   ~TightBindingModelCylinderTwoOrbitalSquareLattice();
   
+  // get the index of the real space tight binding model from the real space coordinates
+  //
+  // x = x coordinate of the unit cell
+  // y = y coordinate of the unit cell
+  // orbitalIndex = index of the orbital / site within the unit cell
+  // return value = linearized index  
+  virtual int GetRealSpaceTightBindingLinearizedIndex(int x, int y, int orbitalIndex);
+  
   // compute the one-body real space entanglement spectrum of a full band
   // 
   // outputFile = name of the output file where the spectrum has to be stored
@@ -98,6 +106,26 @@ class TightBindingModelCylinderTwoOrbitalSquareLattice : public Abstract1DTightB
   // nbrSiteYA = number of site to keep for the A part along the y direction    
   virtual void ComputeManyBodyRealSpaceEntanglementSpectrum(char* outputFile, double minEnergy, double maxEnergy, int nbrSiteYA);
   
+  // evaluate the two point correlation function in a given region
+  //
+  // maxX = x coordinate of the region upper right corner 
+  // maxY = y coordinate of the region upper right corner 
+  // occupiedMomenta = array that gives all the occupied momenta (as linearized indices)
+  // nbrOccupiedMomenta = number of occupied momenta
+  // bandIndex = index of the band to consider
+  // return value = matrix where the values of the two point correlation function will be stored (using the linearized position index as entry)
+  virtual HermitianMatrix EvaluateFullTwoPointCorrelationFunction(int maxX, int maxY, int* occupiedMomenta, int nbrOccupiedMomenta, int bandIndex);
+
+  // evaluate the two point correlation function in a given region
+  //
+  // maxX = x coordinate of the region upper right corner 
+  // maxY = y coordinate of the region upper right corner 
+  // occupiedMomenta = array that gives all the occupied momenta (as linearized indices)
+  // bandIndices = array that gives the band index of each occupied state
+  // nbrOccupiedMomenta = number of occupied momenta
+  // return value = matrix where the values of the two point correlation function will be stored (using the linearized position index as entry)
+  virtual HermitianMatrix EvaluateFullTwoPointCorrelationFunction(int maxX, int maxY, int* occupiedMomenta, int* bandIndices, int nbrOccupiedMomenta);
+
   // evaluate the mixed two point correlation function in a given region, assuming translation invariance along one direction
   //
   // maxX = length along the borken translation direction of the region 
@@ -118,6 +146,18 @@ class TightBindingModelCylinderTwoOrbitalSquareLattice : public Abstract1DTightB
   
 };
 
+
+// get the index of the real space tight binding model from the real space coordinates
+//
+// x = x coordinate of the unit cell
+// y = y coordinate of the unit cell
+// orbitalIndex = index of the orbital / site within the unit cell
+// return value = linearized index  
+
+inline int TightBindingModelCylinderTwoOrbitalSquareLattice::GetRealSpaceTightBindingLinearizedIndex(int x, int y, int orbitalIndex)
+{
+  return (orbitalIndex + ((y  + x * this->NbrSiteY) * this->NbrBands)); 
+}
 
 #endif
 

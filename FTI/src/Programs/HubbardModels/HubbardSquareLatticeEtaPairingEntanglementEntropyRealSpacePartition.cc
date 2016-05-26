@@ -58,11 +58,29 @@ using std::ofstream;
 
 
 
+// compute the z_0 value obtained from the saddle point approximation
+//
+// oneBodyEntanglementTrimmedEnergies= array containing the one-body entanglement energies
+// nbrOneBodyEntanglementTrimmedEnergies = number of one-body entanglement energies
+// nbrParticlesA = number of particles in the subsystem A
 double GetZ0Value (double* oneBodyEntanglementTrimmedEnergies, int nbrOneBodyEntanglementTrimmedEnergies, 
 		   int nbrParticlesA);
 
+// compute the z_0 value obtained from the saddle point approximation for a generic Renyi entropy
+//
+// oneBodyEntanglementTrimmedEnergies= array containing the one-body entanglement energies
+// nbrOneBodyEntanglementTrimmedEnergies = number of one-body entanglement energies
+// nbrParticlesA = number of particles in the subsystem A
+// renyiIndex = Renyi index
+double GetZ0Value (double* oneBodyEntanglementTrimmedEnergies, int nbrOneBodyEntanglementTrimmedEnergies, 
+		   int nbrParticlesA, double renyiIndex);
+
 double GetZ0DefintionSum (double* oneBodyEntanglementTrimmedEnergies, int nbrOneBodyEntanglementTrimmedEnergies, 
 			  int nbrParticlesA, double z0);
+
+double GetZ0DefintionSum (double* oneBodyEntanglementTrimmedEnergies, int nbrOneBodyEntanglementTrimmedEnergies, 
+			  int nbrParticlesA, double z0, double renyiIndex);
+
 
 // extract the correlation matrix for a given region out of the correlation matrix for a bigger region
 //
@@ -755,7 +773,9 @@ int main(int argc, char** argv)
 	  if (MaxSumIndex > NbrPairs)
 	    MaxSumIndex = NbrPairs;
 	  double Tmp = 0.0;
-	  double EntanglementEntropy = 0.0;
+	  double* EntanglementEntropies = new double [NbrRenyiEntropies];
+	  for (int k = 0; k < NbrRenyiEntropies; ++k)
+	    EntanglementEntropies[k] = 0.0;
 	  for (int j = 0; j <= MaxSumIndex; ++j)
 	    {
 	      TmpCoefficient.SetToOne();
@@ -764,9 +784,17 @@ int main(int argc, char** argv)
 	      TmpCoefficient.BinomialDivide(NbrSites, NbrPairs);
 	      double Tmp2 = TmpCoefficient.GetNumericalValue();
 	      cout << TotalNbrSitesA << " " << NbrSites << " " << j << " " << NbrPairs << " : " << Tmp2 << endl;
-	      EntanglementEntropy -= Tmp2 * log (Tmp2);
+	      EntanglementEntropies[0] -= Tmp2 * log (Tmp2);
+	      for (int k = 1; k < NbrRenyiEntropies; ++k)
+		EntanglementEntropies[k] += pow(Tmp2, (double) (k + 1));
 	    }
-	  File << NbrSitesXA << " " << NbrSitesYA << " " << EntanglementEntropy << endl;
+	  File << NbrSitesXA << " " << NbrSitesYA << " " << EntanglementEntropies[0];
+	  for (int k = 1; k < NbrRenyiEntropies; ++k)
+	    {
+	      EntanglementEntropies[k] = -log(EntanglementEntropies[k]) / ((double) k);	  
+	      File << " " << EntanglementEntropies[k];
+	    }
+	  File << endl;
 	}
       File.close();
       return 0;
@@ -887,7 +915,11 @@ int main(int argc, char** argv)
 	  VacuumOneBodyEntanglementTrimmedEnergies[i] = VacuumOneBodyEntanglementEnergies[i + MinOneBodyEntanglementEnergyIndex];	
 	  OneBodyFile << NbrSitesXA << " " << NbrSitesYA << " " << VacuumOneBodyEntanglementTrimmedEnergies[i] << endl;
 	}
-      double SumAlphaFactor = 0.0;      
+      double* SumAlphaFactors = new double[NbrRenyiEntropies];      
+      for (int i = 0; i < NbrRenyiEntropies; ++i)
+	{
+	  SumAlphaFactors[i] = 0.0;
+	}
       if (NbrPairs == 0)
 	{
 	  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
@@ -904,7 +936,10 @@ int main(int argc, char** argv)
 									    }
 	      NonVacuumEntanglementEntropies[j] = EntanglementEntropies[j];
 	    }
-	  SumAlphaFactor = 1.0;
+	  for (int i = 0; i < NbrRenyiEntropies; ++i)
+	    {
+	      SumAlphaFactors[i] = 1.0;
+	    }
 	}
       else
 	{
@@ -921,55 +956,109 @@ int main(int argc, char** argv)
 	  double CurrentEntanglementEntropyContribution = 1.0;
 	  if (Manager.GetBoolean("use-approximation") == true)
 	    {
-	      double AlphaFactor = 1.0;
-	      int OptimalNbrParticlesA = (TotalNbrSitesA * VacuumNbrParticles) / NbrSites;
-	      for (int TmpNbrParticlesA = OptimalNbrParticlesA; ((TmpNbrParticlesA <= MaxNbrParticlesA) && 
-								 ((SumAlphaFactor + AlphaFactor) != SumAlphaFactor)); ++TmpNbrParticlesA)
+	      for (int RenyiIndex = 1; RenyiIndex <= NbrRenyiEntropies; ++RenyiIndex)
 		{
-		  double TmpZ0 = GetZ0Value(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA);
-		  AlphaFactor = pow (TmpZ0, -((double) (TmpNbrParticlesA + 1))) / sqrt (2.0 * M_PI);
-		  double LogAlphaFactor = (-((double) (TmpNbrParticlesA + 1)) * log(TmpZ0)) - (0.5 * log (2.0 * M_PI));
-		  double TmpSum = ((double) (TmpNbrParticlesA + 1)) / (TmpZ0 * TmpZ0);
-		  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
+		  double AlphaFactor = 1.0;
+		  int OptimalNbrParticlesA = (TotalNbrSitesA * VacuumNbrParticles) / NbrSites;
+		  for (int TmpNbrParticlesA = OptimalNbrParticlesA; ((TmpNbrParticlesA <= MaxNbrParticlesA) && 
+								     ((SumAlphaFactors[RenyiIndex - 1] + AlphaFactor) != SumAlphaFactors[RenyiIndex - 1])); ++TmpNbrParticlesA)
 		    {
-// 		      AlphaFactor *= (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
-// 				      (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]));
-		      LogAlphaFactor += log((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
-					     (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])));
-		      TmpSum -= ((VacuumOneBodyEntanglementTrimmedEnergies[i] * VacuumOneBodyEntanglementTrimmedEnergies[i]) 
-				 / ((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])) 
-				    * (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]))));
+		      double TmpZ0 = 0.0;
+		      if (RenyiIndex == 1)
+			{
+			  TmpZ0 = GetZ0Value(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA);
+			}
+		      else
+			{
+			  TmpZ0 = 0.0;//GetZ0Value(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA, (double) RenyiIndex);
+			}
+		      cout << RenyiIndex << " " << TmpNbrParticlesA << " " << TmpZ0 << " " << SumAlphaFactors[RenyiIndex - 1] << " " << AlphaFactor << endl;
+		      double LogAlphaFactor = (-((double) (TmpNbrParticlesA + 1)) * log(TmpZ0)) - (0.5 * log (2.0 * M_PI));
+		      double TmpSum = ((double) (TmpNbrParticlesA + 1)) / (TmpZ0 * TmpZ0);
+		      if (RenyiIndex == 1)
+			{
+			  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
+			    {
+			      LogAlphaFactor += log((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
+						     (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])));
+			      TmpSum -= ((VacuumOneBodyEntanglementTrimmedEnergies[i] * VacuumOneBodyEntanglementTrimmedEnergies[i]) 
+					 / ((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])) 
+					    * (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]))));
+			    }
+			  AlphaFactor = exp(LogAlphaFactor);
+			  AlphaFactor /= sqrt(TmpSum);
+			  SumAlphaFactors[RenyiIndex - 1] += AlphaFactor;
+			}
+		      else
+			{
+			  LogAlphaFactor = 0.0;
+			  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
+			    {
+			      LogAlphaFactor -= 1.0 / ((double) (RenyiIndex - 1)) * log(powl(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex) + powl(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex));
+// 			      LogAlphaFactor += log(pow(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex) + 
+// 						    (TmpZ0 * pow(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex)));
+// 			      TmpSum -= ((pow(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) (2 * RenyiIndex))
+// 					  / pow((pow(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex) + (TmpZ0 * pow(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex))), 2.0)));
+			    }
+			  AlphaFactor = LogAlphaFactor;
+			  SumAlphaFactors[RenyiIndex - 1] += AlphaFactor;
+// 			  AlphaFactor = exp(LogAlphaFactor);
+// 			  AlphaFactor /= sqrt(TmpSum);
+// 			  SumAlphaFactors[RenyiIndex - 1] += AlphaFactor;
+			}
 		    }
-		  AlphaFactor = exp(LogAlphaFactor);
-		  AlphaFactor /= sqrt(TmpSum);
-		  SumAlphaFactor += AlphaFactor;
-		}
-	      AlphaFactor = SumAlphaFactor;
-	      for (int TmpNbrParticlesA = OptimalNbrParticlesA - 1; ((TmpNbrParticlesA >= 0) && 
-								 ((SumAlphaFactor + AlphaFactor) != SumAlphaFactor)); --TmpNbrParticlesA)
-		{
-		  double TmpZ0 = GetZ0Value(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA);
-		  AlphaFactor = pow (TmpZ0, -((double) (TmpNbrParticlesA + 1))) / sqrt (2.0 * M_PI);
-		  double TmpSum = ((double) (TmpNbrParticlesA + 1)) / (TmpZ0 * TmpZ0);
-		  double LogAlphaFactor = (-((double) (TmpNbrParticlesA + 1)) * log(TmpZ0)) - (0.5 * log (2.0 * M_PI));
-		  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
+		  AlphaFactor = SumAlphaFactors[RenyiIndex - 1];
+		  for (int TmpNbrParticlesA = OptimalNbrParticlesA - 1; ((TmpNbrParticlesA >= 0) && 
+									 ((SumAlphaFactors[RenyiIndex - 1] + AlphaFactor) != SumAlphaFactors[RenyiIndex - 1])); --TmpNbrParticlesA)
 		    {
-// 		      AlphaFactor *= (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
-// 				      (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]));
-		      LogAlphaFactor += log(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
-					    (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]));
-		      TmpSum -= ((VacuumOneBodyEntanglementTrimmedEnergies[i] * VacuumOneBodyEntanglementTrimmedEnergies[i]) 
-				 / ((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])) 
-				    * (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]))));
+		      double TmpZ0 = 0.0;
+		      if (RenyiIndex == 1)
+			{
+			  TmpZ0 = GetZ0Value(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA);
+			}
+		      else
+			{
+			  TmpZ0 = 0.0;//GetZ0Value(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA, (double) RenyiIndex);
+			}
+		      double TmpSum = ((double) (TmpNbrParticlesA + 1)) / (TmpZ0 * TmpZ0);
+		      double LogAlphaFactor = (-((double) (TmpNbrParticlesA + 1)) * log(TmpZ0)) - (0.5 * log (2.0 * M_PI));
+		      if (RenyiIndex == 1)
+			{
+			  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
+			    {
+			      LogAlphaFactor += log(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
+						    (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]));
+			      TmpSum -= ((VacuumOneBodyEntanglementTrimmedEnergies[i] * VacuumOneBodyEntanglementTrimmedEnergies[i]) 
+					 / ((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])) 
+					    * (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]))));
+			    }
+			  AlphaFactor = exp(LogAlphaFactor);
+			  AlphaFactor /= sqrt(TmpSum);
+			  SumAlphaFactors[RenyiIndex - 1] += AlphaFactor;
+			}
+		      else
+			{
+			  LogAlphaFactor = 0.0;
+			  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
+			    {
+			      LogAlphaFactor -= 1.0 / ((double) (RenyiIndex - 1)) * log(powl(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex) + powl(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex));
+// 			      LogAlphaFactor += log(pow(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex) + 
+// 						    (TmpZ0 * pow(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex)));
+// 			      TmpSum -= ((pow(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) (2 * RenyiIndex))
+// 					  / pow((pow(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex) + (TmpZ0 * pow(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex))), 2.0)));
+			    }
+			  AlphaFactor = LogAlphaFactor;
+			  SumAlphaFactors[RenyiIndex - 1] += AlphaFactor;
+// 			  AlphaFactor = exp(LogAlphaFactor);
+// 			  AlphaFactor /= sqrt(TmpSum);
+// 			  SumAlphaFactors[RenyiIndex - 1] += AlphaFactor;
+			}
 		    }
-		  AlphaFactor = exp(LogAlphaFactor);
-		  AlphaFactor /= sqrt(TmpSum);
-		  SumAlphaFactor += AlphaFactor;
 		}
 	    }
 	  int OptimalNbrParticlesA = (TotalNbrSitesA * VacuumNbrParticles) / NbrSites;
 	  for (int TmpNbrParticlesA = OptimalNbrParticlesA; ((TmpNbrParticlesA <= MaxNbrParticlesA) && 
-					  ((EntanglementEntropies[0] + CurrentEntanglementEntropyContribution) != EntanglementEntropies[0])); ++TmpNbrParticlesA)
+							     ((EntanglementEntropies[0] + CurrentEntanglementEntropyContribution) != EntanglementEntropies[0])); ++TmpNbrParticlesA)
 	    {
 	      if (ShowTimeFlag == true)
 		{
@@ -983,8 +1072,6 @@ int main(int argc, char** argv)
 		{
 		  GetEntanglementEntropyPerNbrParticlesA(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA, 
 							 0, 1.0, TmpEntanglementEntropies, NbrRenyiEntropies, AlphaFactor);
-		  for (int i = 1; i < NbrRenyiEntropies; ++i)
-		    TmpEntanglementEntropies[i] = - log(TmpEntanglementEntropies[i]) / ((double) i);
 		}
 	      else
 		{
@@ -994,8 +1081,6 @@ int main(int argc, char** argv)
 		  double LogAlphaFactor = (-((double) (TmpNbrParticlesA + 1)) * log(TmpZ0)) - (0.5 * log (2.0 * M_PI));
 		  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
 		    {
-// 		      AlphaFactor *= (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
-// 				      (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]));
 		      LogAlphaFactor += log((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
 					     (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])));
 		      TmpSum -= ((VacuumOneBodyEntanglementTrimmedEnergies[i] * VacuumOneBodyEntanglementTrimmedEnergies[i]) 
@@ -1003,12 +1088,34 @@ int main(int argc, char** argv)
 				    * (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]))));
 		    }
 		  AlphaFactor = exp(LogAlphaFactor);
-		  AlphaFactor /= sqrt(TmpSum) * SumAlphaFactor;
+		  AlphaFactor /= sqrt(TmpSum) * SumAlphaFactors[0];
+		  for (int j = 2; j <= NbrRenyiEntropies; ++j)
+		    {
+		      TmpZ0 = 0.0;//GetZ0Value(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA, (double) j);
+		      double TmpSum = ((double) (TmpNbrParticlesA + 1)) / (TmpZ0 * TmpZ0);
+		      double LogAlphaFactor = (-((double) (TmpNbrParticlesA + 1)) * log(TmpZ0)) - (0.5 * log (2.0 * M_PI));
+		      LogAlphaFactor = 0.0;
+		      for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
+			{
+			  LogAlphaFactor -= 1.0 / ((double) (j - 1)) * log(powl(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) j) + powl(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], (double) j));
+// 			      LogAlphaFactor += log(pow(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex) + 
+// 						    (TmpZ0 * pow(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex)));
+// 			      TmpSum -= ((pow(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) (2 * RenyiIndex))
+// 					  / pow((pow(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex) + (TmpZ0 * pow(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex))), 2.0)));
+			}
+		      TmpEntanglementEntropies[j - 1] = LogAlphaFactor;
+// 		      TmpEntanglementEntropies[j - 1] = exp(LogAlphaFactor);
+// 		      TmpEntanglementEntropies[j - 1] /= sqrt(TmpSum) * pow(SumAlphaFactors[0], (double) j);
+		    }
 		}
 	      int MaxSumIndex = TotalNbrSitesA - TmpNbrParticlesA;
 	      if (MaxSumIndex > NbrPairs)
 		MaxSumIndex = NbrPairs;
-	      double Tmp = 0.0;
+	      double* Tmp = new double[NbrRenyiEntropies];
+	      for (int j = 0; j < NbrRenyiEntropies; ++j)
+		{
+		  Tmp[j] = 0.0;
+		}
 	      for (int j = 0; j <= MaxSumIndex; ++j)
 		{
 		  double Tmp2;
@@ -1026,11 +1133,24 @@ int main(int argc, char** argv)
 			      * Binomial.GetNumericalCoefficient(NbrSites - TotalNbrSitesA - VacuumNbrParticles + TmpNbrParticlesA, NbrPairs - j));
 		    }
 		  if (Tmp2 > 0.0)
-		    Tmp -= Tmp2 * log(Tmp2);
+		    {
+		      Tmp[0] -= Tmp2 * log(Tmp2);
+		      for (int k = 1; k < NbrRenyiEntropies; ++k)
+			{
+			  Tmp[k] += pow(Tmp2, (double) (k + 1));
+			}
+		    }
 		}
-	      CurrentEntanglementEntropyContribution = (AlphaFactor * Tmp) + TmpEntanglementEntropies[0];
+	      CurrentEntanglementEntropyContribution = (AlphaFactor * Tmp[0]) + TmpEntanglementEntropies[0];
 	      EntanglementEntropies[0] += CurrentEntanglementEntropyContribution;
 	      NonVacuumEntanglementEntropies[0] += TmpEntanglementEntropies[0];
+	      for (int j = 1; j < NbrRenyiEntropies; ++j)
+		{
+		  double TmpCurrentEntanglementEntropyContribution = TmpEntanglementEntropies[j] * Tmp[j];
+		  EntanglementEntropies[j] += TmpCurrentEntanglementEntropyContribution;
+		  NonVacuumEntanglementEntropies[j] += TmpEntanglementEntropies[j];
+		}
+	      delete[] Tmp;
 	      if (ShowTimeFlag == true)
 		{
 		  gettimeofday (&(TotalEndingTime), 0);
@@ -1055,13 +1175,13 @@ int main(int argc, char** argv)
 	      double AlphaFactor = 0.0;
 	      double* TmpEntanglementEntropies = new double[NbrRenyiEntropies];
 	      for (int i = 0; i < NbrRenyiEntropies; ++i)
-		TmpEntanglementEntropies[i] = 0.0;
+		{
+		  TmpEntanglementEntropies[i] = 0.0;
+		}
 	      if (Manager.GetBoolean("use-approximation") == false)
 		{
 		  GetEntanglementEntropyPerNbrParticlesA(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA, 
 							 0, 1.0, TmpEntanglementEntropies, NbrRenyiEntropies, AlphaFactor);
-		  for (int i = 1; i < NbrRenyiEntropies; ++i)
-		    TmpEntanglementEntropies[i] = - log(TmpEntanglementEntropies[i]) / ((double) i);
 		}
 	      else
 		{
@@ -1071,8 +1191,6 @@ int main(int argc, char** argv)
 		  double LogAlphaFactor = (-((double) (TmpNbrParticlesA + 1)) * log(TmpZ0)) - (0.5 * log (2.0 * M_PI));
 		  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
 		    {
-// 		      AlphaFactor *= (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
-// 				      (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]));
 		      LogAlphaFactor += log((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
 					     (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])));
 		      TmpSum -= ((VacuumOneBodyEntanglementTrimmedEnergies[i] * VacuumOneBodyEntanglementTrimmedEnergies[i]) 
@@ -1080,12 +1198,34 @@ int main(int argc, char** argv)
 				    * (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]))));
 		    }
 		  AlphaFactor = exp(LogAlphaFactor);
-		  AlphaFactor /= sqrt(TmpSum) * SumAlphaFactor;
+		  AlphaFactor /= sqrt(TmpSum) * SumAlphaFactors[0];
+		  for (int j = 2; j <= NbrRenyiEntropies; ++j)
+		    {
+		      TmpZ0 = 0.0;//GetZ0Value(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA, (double) j);
+		      double TmpSum = ((double) (TmpNbrParticlesA + 1)) / (TmpZ0 * TmpZ0);
+		      double LogAlphaFactor = (-((double) (TmpNbrParticlesA + 1)) * log(TmpZ0)) - (0.5 * log (2.0 * M_PI));
+		      LogAlphaFactor = 0.0;
+		      for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
+			{
+			  LogAlphaFactor -= 1.0 / ((double) (j - 1)) * log(powl(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) j) + powl(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], (double) j));
+// 			      LogAlphaFactor += log(pow(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex) + 
+// 						    (TmpZ0 * pow(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex)));
+// 			      TmpSum -= ((pow(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) (2 * RenyiIndex))
+// 					  / pow((pow(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex) + (TmpZ0 * pow(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex))), 2.0)));
+			}
+		      TmpEntanglementEntropies[j - 1] = LogAlphaFactor;
+// 		      TmpEntanglementEntropies[j - 1] = exp(LogAlphaFactor);
+// 		      TmpEntanglementEntropies[j - 1] /= sqrt(TmpSum) * pow(SumAlphaFactors[0], (double) j);
+		    }
 		}
 	      int MaxSumIndex = TotalNbrSitesA - TmpNbrParticlesA;
 	      if (MaxSumIndex > NbrPairs)
 		MaxSumIndex = NbrPairs;
-	      double Tmp = 0.0;
+	      double* Tmp = new double[NbrRenyiEntropies];
+	      for (int j = 0; j < NbrRenyiEntropies; ++j)
+		{
+		  Tmp[j] = 0.0;
+		}
 	      for (int j = 0; j <= MaxSumIndex; ++j)
 		{
 		  double Tmp2;
@@ -1103,11 +1243,24 @@ int main(int argc, char** argv)
 			      * Binomial.GetNumericalCoefficient(NbrSites - TotalNbrSitesA - VacuumNbrParticles + TmpNbrParticlesA, NbrPairs - j));
 		    }
 		  if (Tmp2 > 0.0)
-		    Tmp -= Tmp2 * log(Tmp2);
+		    {
+		      Tmp[0] -= Tmp2 * log(Tmp2);
+		      for (int k = 1; k < NbrRenyiEntropies; ++k)
+			{
+			  Tmp[k] += pow(Tmp2, (double) (k + 1));
+			}
+		    }
 		}
-	      CurrentEntanglementEntropyContribution = (AlphaFactor * Tmp) + TmpEntanglementEntropies[0];
+	      CurrentEntanglementEntropyContribution = (AlphaFactor * Tmp[0]) + TmpEntanglementEntropies[0];
 	      EntanglementEntropies[0] += CurrentEntanglementEntropyContribution;
 	      NonVacuumEntanglementEntropies[0] += TmpEntanglementEntropies[0];
+	      for (int j = 1; j < NbrRenyiEntropies; ++j)
+		{
+		  double TmpCurrentEntanglementEntropyContribution = TmpEntanglementEntropies[j] * Tmp[j];
+		  EntanglementEntropies[j] += TmpCurrentEntanglementEntropyContribution;
+		  NonVacuumEntanglementEntropies[j] += TmpEntanglementEntropies[j];
+		}
+	      delete[] Tmp;
 	      if (ShowTimeFlag == true)
 		{
 		  gettimeofday (&(TotalEndingTime), 0);
@@ -1130,21 +1283,23 @@ int main(int argc, char** argv)
 		  NonVacuumEntanglementEntropies[0] -= (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i]) * log (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i]);
 		}
 	      EntanglementEntropies[0] += NonVacuumEntanglementEntropies[0];
-	      for (int j = 1; j < NbrRenyiEntropies; ++j)
-		{
-		  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
-		    {
-		      NonVacuumEntanglementEntropies[j] -= 1.0 / ((double) j) * log(powl(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) (j + 1)) + powl(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], (double) (j + 1)));
-		    }
-		  EntanglementEntropies[j] += NonVacuumEntanglementEntropies[j];
-		}
 	    }
 	}
-      cout << "Normalization = " << SumAlphaFactor << endl;
+      if (NbrPairs != 0)
+	{
+	  for (int j = 1; j < NbrRenyiEntropies; ++j)
+	    {
+	      EntanglementEntropies[j] = -1.0 / ((double) j) * log(EntanglementEntropies[j]);
+	      NonVacuumEntanglementEntropies[j] = -1.0 / ((double) j) * log(NonVacuumEntanglementEntropies[j]);
+	    }
+	}
+      cout << "Normalization = " << SumAlphaFactors[0] << endl;
       cout << "Entanglement entropy = " << EntanglementEntropies[0] << endl;
+      for (int i = 1; i < NbrRenyiEntropies; ++i)
+	cout << "Renyi entropy " << (i + 1) << " = " << EntanglementEntropies[i] << " " << NonVacuumEntanglementEntropies[i] << endl;
       cout << "Nbr Rejected one-body entanglement energies = " << NbrRejectedOneBodyEntropies << " / " << TotalNbrSitesA << endl;
       File << NbrSitesXA << " " << NbrSitesYA << " " << EntanglementEntropies[0] << " " << NonVacuumEntanglementEntropies[0];
-      if ((NbrPairs == 0) && (NbrRenyiEntropies > 1))
+      if (NbrRenyiEntropies > 1)
 	{
 	  for (int i = 1; i < NbrRenyiEntropies; ++i)
 	    File << " " << EntanglementEntropies[i] << " " << NonVacuumEntanglementEntropies[i];
@@ -1217,8 +1372,13 @@ void GetEntanglementEntropyPerNbrParticlesA(double* oneBodyEntanglementTrimmedEn
 }
 
 
-double GetZ0Value (double* oneBodyEntanglementTrimmedEnergies, int nbrOneBodyEntanglementTrimmedEnergies, 
-		   int nbrParticlesA)
+// compute the z_0 value obtained from the saddle point approximation
+//
+// oneBodyEntanglementTrimmedEnergies= array containing the one-body entanglement energies
+// nbrOneBodyEntanglementTrimmedEnergies = number of one-body entanglement energies
+// nbrParticlesA = number of particles in the subsystem A
+
+double GetZ0Value (double* oneBodyEntanglementTrimmedEnergies, int nbrOneBodyEntanglementTrimmedEnergies, int nbrParticlesA)
 {
   double MinZ0 = 0.0;
   double MaxZ0 = 10000.0;
@@ -1238,6 +1398,33 @@ double GetZ0Value (double* oneBodyEntanglementTrimmedEnergies, int nbrOneBodyEnt
   return MaxZ0;
 }
 
+// compute the z_0 value obtained from the saddle point approximation for a generic Renyi entropy
+//
+// oneBodyEntanglementTrimmedEnergies= array containing the one-body entanglement energies
+// nbrOneBodyEntanglementTrimmedEnergies = number of one-body entanglement energies
+// nbrParticlesA = number of particles in the subsystem A
+// renyiIndex = Renyi index
+
+double GetZ0Value (double* oneBodyEntanglementTrimmedEnergies, int nbrOneBodyEntanglementTrimmedEnergies, int nbrParticlesA, double renyiIndex)
+{
+  double MinZ0 = 0.0;
+  double MaxZ0 = 10000.0;
+  while (GetZ0DefintionSum(oneBodyEntanglementTrimmedEnergies, nbrOneBodyEntanglementTrimmedEnergies, nbrParticlesA, MaxZ0, renyiIndex) < 0.0)
+    {
+      MaxZ0 *= 10.0;
+    }
+  while (fabs(MinZ0 - MaxZ0) > (MACHINE_PRECISION * fabs(MaxZ0)))
+    {
+      double TmpZ0 = 0.5 * (MaxZ0 + MinZ0);
+      double TmpSum =  GetZ0DefintionSum(oneBodyEntanglementTrimmedEnergies, nbrOneBodyEntanglementTrimmedEnergies, nbrParticlesA, TmpZ0, renyiIndex);
+      if (TmpSum > 0.0)
+	MaxZ0 = TmpZ0;
+      else
+	MinZ0 = TmpZ0;
+    }
+  return MaxZ0;
+}
+
 double GetZ0DefintionSum (double* oneBodyEntanglementTrimmedEnergies, int nbrOneBodyEntanglementTrimmedEnergies, 
 			  int nbrParticlesA, double z0)
 {
@@ -1245,6 +1432,19 @@ double GetZ0DefintionSum (double* oneBodyEntanglementTrimmedEnergies, int nbrOne
   for (int i = 0; i < nbrOneBodyEntanglementTrimmedEnergies; ++i)
     {
       TmpSum += oneBodyEntanglementTrimmedEnergies[i]  / ((1.0 - oneBodyEntanglementTrimmedEnergies[i]) + (z0 * oneBodyEntanglementTrimmedEnergies[i]));
+    }
+  TmpSum *= z0;
+  return (TmpSum - ((double) (nbrParticlesA + 1)));
+}
+
+double GetZ0DefintionSum (double* oneBodyEntanglementTrimmedEnergies, int nbrOneBodyEntanglementTrimmedEnergies, 
+			  int nbrParticlesA, double z0, double renyiIndex)
+{
+  double TmpSum = 0.0;
+  for (int i = 0; i < nbrOneBodyEntanglementTrimmedEnergies; ++i)
+    {
+      TmpSum += pow(oneBodyEntanglementTrimmedEnergies[i], renyiIndex)  / (pow(1.0 - oneBodyEntanglementTrimmedEnergies[i], renyiIndex) 
+									   + (z0 * pow(oneBodyEntanglementTrimmedEnergies[i], renyiIndex)));
     }
   TmpSum *= z0;
   return (TmpSum - ((double) (nbrParticlesA + 1)));
