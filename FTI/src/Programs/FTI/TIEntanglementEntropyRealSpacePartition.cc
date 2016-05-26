@@ -233,6 +233,7 @@ int main(int argc, char** argv)
 	  gettimeofday (&(TotalStartingTime), 0);
 	}
       HermitianMatrix EntanglementHamiltonian = TightBindingModel->EvaluateFullTwoPointCorrelationFunction(MaxNbrSitesXA, MaxNbrSitesYA, VacuumOneBodyLinearizedMomenta, VacuumOneBodyLinearizedBandIndices, VacuumNbrParticles);
+      cout << EntanglementHamiltonian << endl;
       if (ShowTimeFlag == true)
 	{
 	  gettimeofday (&(TotalEndingTime), 0);
@@ -322,7 +323,15 @@ int main(int argc, char** argv)
       NbrSitesXA = CutX[0];
       NbrSitesYA = CutY[0];
       cout << "computing entropy of a " << NbrSitesXA << "x" << NbrSitesYA << " patch" << endl;
-      int TotalNbrSitesA = NbrSitesXA * TightBindingModel->GetNbrBands();
+      int TotalNbrSitesA = 0;
+      if (CylinderFlag == false)
+	{
+	  TotalNbrSitesA = NbrSitesXA * TightBindingModel->GetNbrBands();
+	}
+      else
+	{
+	  TotalNbrSitesA = NbrSitesXA * 2;
+	}
       double EntanglementEntropy = 0.0;
       double NbrParticleFluctuation = 0.0;
       double** VacuumOneBodyEntanglementTrimmedEnergies = new double*[NbrSitesY];
@@ -338,6 +347,7 @@ int main(int argc, char** argv)
 	  HermitianMatrix TmpEntanglementHamiltonian;
 	  TmpEntanglementHamiltonian = TightBindingModel->EvaluateFullMixedTwoPointCorrelationFunctionWithK(MaxNbrSitesXA, TmpKy, VacuumOneBodyLinearizedMomenta, 
 													    VacuumOneBodyLinearizedBandIndices, VacuumNbrParticles);
+	  cout << TmpEntanglementHamiltonian << endl;
 	  if (ShowTimeFlag == true)
 	    {
 	      gettimeofday (&(TotalEndingTime), 0);

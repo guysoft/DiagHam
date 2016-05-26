@@ -454,6 +454,7 @@ HermitianMatrix TightBindingModelCylinderTwoOrbitalSquareLattice::EvaluateFullTw
 HermitianMatrix TightBindingModelCylinderTwoOrbitalSquareLattice::EvaluateFullTwoPointCorrelationFunction(int maxX, int maxY, int* occupiedMomenta,
 													  int* bandIndices, int nbrOccupiedMomenta)
 {
+  cout <<  maxX << " " <<  maxY << endl;
   int TmpNbrOrbitalPerUnitCell = this->NbrBands / this->NbrSiteY;
   int TotalNbrSites = maxX * maxY * TmpNbrOrbitalPerUnitCell; 
   HermitianMatrix EntanglementHamiltonian(TotalNbrSites, true);
@@ -476,6 +477,7 @@ HermitianMatrix TightBindingModelCylinderTwoOrbitalSquareLattice::EvaluateFullTw
   Complex*** TmpFormFactors = new Complex** [nbrOccupiedMomenta];
   for (int i = 0; i < nbrOccupiedMomenta; ++i)
     {
+      cout << occupiedMomenta[i] << " " << bandIndices[i] << endl;
       TmpFormFactors[i] = new Complex*[this->NbrBands];
       for (int j = 0; j < this->NbrBands; ++j)
 	{
@@ -494,7 +496,7 @@ HermitianMatrix TightBindingModelCylinderTwoOrbitalSquareLattice::EvaluateFullTw
 	{	  
 	  for (int TmpOrbital1 = 0; TmpOrbital1 < TmpNbrOrbitalPerUnitCell; ++TmpOrbital1)
 	    {
-	      int TmpLinearizedIndex1 = (TmpX1 * this->NbrSiteY) +  TmpOrbital1;
+	      int TmpLinearizedIndex1 = (TmpX1 * TmpNbrOrbitalPerUnitCell) +  TmpOrbital1;
 	      int TmpReducedLinearizedIndex1 = TmpOrbital1 + ((TmpY1  + TmpX1 * maxY) * TmpNbrOrbitalPerUnitCell);
 	      for (int TmpX2 = 0; TmpX2 < maxX; ++TmpX2)
 		{
@@ -502,7 +504,7 @@ HermitianMatrix TightBindingModelCylinderTwoOrbitalSquareLattice::EvaluateFullTw
 		    {	  
 		      for (int TmpOrbital2 = 0; TmpOrbital2 < TmpNbrOrbitalPerUnitCell; ++TmpOrbital2)
 			{
-			  int TmpLinearizedIndex2 = (TmpX2 * this->NbrSiteY) +  TmpOrbital2;
+			  int TmpLinearizedIndex2 = (TmpX2 * TmpNbrOrbitalPerUnitCell) +  TmpOrbital2;
 			  int TmpReducedLinearizedIndex2 = TmpOrbital2 + ((TmpY2  + TmpX2 * maxY) * TmpNbrOrbitalPerUnitCell);
 			  if (TmpReducedLinearizedIndex1 <= TmpReducedLinearizedIndex2)		  
 			    {
@@ -523,8 +525,6 @@ HermitianMatrix TightBindingModelCylinderTwoOrbitalSquareLattice::EvaluateFullTw
 
 
   EntanglementHamiltonian /= ((double) this->NbrSiteX);
-//   cout << "test 1" << endl;
-//   cout << EntanglementHamiltonian << endl;
 
   for (int i = 0; i < TmpMaxY2; ++i)
     delete[] TmpPhaseFactorY[i];
@@ -601,8 +601,6 @@ HermitianMatrix TightBindingModelCylinderTwoOrbitalSquareLattice::EvaluateFullMi
 	}
     }
   delete[] TmpOccupiedMomenta;
-//   cout << "test 2" << endl;
-//   cout << EntanglementHamiltonian << endl;
 
   return EntanglementHamiltonian;
 }
