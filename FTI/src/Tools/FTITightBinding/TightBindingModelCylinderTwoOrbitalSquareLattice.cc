@@ -468,7 +468,7 @@ HermitianMatrix TightBindingModelCylinderTwoOrbitalSquareLattice::EvaluateFullTw
       TmpPhaseFactorY[i] = new Complex[nbrOccupiedMomenta];
       for (int j = 0; j < nbrOccupiedMomenta; ++j)
 	{
-	  this->GetLinearizedMomentumIndex(occupiedMomenta[j], TmpMomentumY);
+	  TmpMomentumY = occupiedMomenta[j];
 	  TmpPhaseFactorY[i][j] = Phase(this->KxFactor * ((double) (TmpMomentumY * (maxY - i))));
 	}
     }
@@ -477,7 +477,6 @@ HermitianMatrix TightBindingModelCylinderTwoOrbitalSquareLattice::EvaluateFullTw
   Complex*** TmpFormFactors = new Complex** [nbrOccupiedMomenta];
   for (int i = 0; i < nbrOccupiedMomenta; ++i)
     {
-      cout << occupiedMomenta[i] << " " << bandIndices[i] << endl;
       TmpFormFactors[i] = new Complex*[this->NbrBands];
       for (int j = 0; j < this->NbrBands; ++j)
 	{
