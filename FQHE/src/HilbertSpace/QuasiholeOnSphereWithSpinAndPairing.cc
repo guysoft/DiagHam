@@ -104,7 +104,7 @@ QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing (int kV
   this->FirstIndexWithNbrParticlesUpLzValueUp = new int[this->NbrQuasiholeEntriesSingleLayer];
   
   int TmpIndex = 0;
-  for (int TmpNbrParticles = 0; TmpNbrParticles <= this->NbrFermionsUpMax; ++TmpNbrParticles)
+  for (int TmpNbrParticles = this->NbrFermionsUpMin; TmpNbrParticles <= this->NbrFermionsUpMax; ++TmpNbrParticles)
     {
       MaxTotalLz = this->GetMaximalLzSingleLayer(TmpNbrParticles);
       for (int TmpLz = -MaxTotalLz; TmpLz <= MaxTotalLz; TmpLz += 2)
@@ -142,8 +142,8 @@ QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing (int kV
   
   for (int i = 0; i < NbrNonZeroElements; ++i)
     {
-//       if ((NbrFermionsSingleLayer[i] >= this->NbrFermionsUpMin) && 
-// 	  (NbrFermionsSingleLayer[i] <= this->NbrFermionsUpMax))
+//        if ((NbrFermionsSingleLayer[i] >= this->NbrFermionsUpMin) && 
+//  	  (NbrFermionsSingleLayer[i] <= this->NbrFermionsUpMax))
 	{
 	  TmpIndex = this->GetLinearIndexSingleLayer(NbrFermionsSingleLayer[i], LzSingleLayer[i]);
 	  this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndex] = DimensionsSingleLayer[i];
@@ -178,106 +178,106 @@ QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing (int kV
 //       this->PrintState(cout, i) << endl;
 //     }
 
-   
-  RealSymmetricMatrix SingleLayerAnnihilationMatrix(SingleLayerDimension, true);
-  RealSymmetricMatrix* SingleLayerAdAMatrix = new RealSymmetricMatrix[this->LzMax + 1];
-  for (int i = 0; i < this->LzMax + 1; ++i)
-    SingleLayerAdAMatrix[i] = RealSymmetricMatrix (SingleLayerDimension, true);
-  RealMatrix TmpSingleLayerInteraction;
-  int TmpIndexRight;
-  int TmpIndexLeft;
-  int TmpIndexRight1;
-  int TmpIndexLeft1;
-  double TmpInteraction;
-  for (int TmpRightNbrParticles = this->NbrFermionsUpMin; TmpRightNbrParticles <= this->NbrFermionsUpMax; ++TmpRightNbrParticles)
-    {
-      int MaxRightTotalLz = this->GetMaximalLzSingleLayer(TmpRightNbrParticles);
-      for (int TmpRightLz = -MaxRightTotalLz; TmpRightLz <= MaxRightTotalLz; TmpRightLz += 2)
+  if (this->LargeHilbertSpaceDimension > 0l)
+    {   
+      RealSymmetricMatrix SingleLayerAnnihilationMatrix(SingleLayerDimension, true);
+      RealSymmetricMatrix* SingleLayerAdAMatrix = new RealSymmetricMatrix[this->LzMax + 1];
+      for (int i = 0; i < this->LzMax + 1; ++i)
+	SingleLayerAdAMatrix[i] = RealSymmetricMatrix (SingleLayerDimension, true);
+      RealMatrix TmpSingleLayerInteraction;
+      int TmpIndexRight;
+      int TmpIndexLeft;
+      int TmpIndexRight1;
+      int TmpIndexLeft1;
+      double TmpInteraction;
+      for (int TmpRightNbrParticles = this->NbrFermionsUpMin; TmpRightNbrParticles <= this->NbrFermionsUpMax; ++TmpRightNbrParticles)
 	{
-	  TmpIndexRight1 = this->GetLinearIndexSingleLayer(TmpRightNbrParticles, TmpRightLz);
-	  for (int OperatorLzValue = -this->LzMax; OperatorLzValue <= this->LzMax; OperatorLzValue += 2)
+	  int MaxRightTotalLz = this->GetMaximalLzSingleLayer(TmpRightNbrParticles);
+	  for (int TmpRightLz = -MaxRightTotalLz; TmpRightLz <= MaxRightTotalLz; TmpRightLz += 2)
 	    {
-	      int TmpLeftNbrParticles = TmpRightNbrParticles - 1;
-	      int MaxLeftTotalLz = this->GetMaximalLzSingleLayer(TmpLeftNbrParticles);
-	      int TmpLeftLz = TmpRightLz - OperatorLzValue;
-	      if ((TmpLeftNbrParticles >= 0) && (TmpLeftLz >= -MaxLeftTotalLz) && (TmpLeftLz <= MaxLeftTotalLz))
+	      TmpIndexRight1 = this->GetLinearIndexSingleLayer(TmpRightNbrParticles, TmpRightLz);
+	      for (int OperatorLzValue = -this->LzMax; OperatorLzValue <= this->LzMax; OperatorLzValue += 2)
 		{
-		  TmpIndexLeft1 = this->GetLinearIndexSingleLayer(TmpLeftNbrParticles, TmpLeftLz);
+		  int TmpLeftNbrParticles = TmpRightNbrParticles - 1;
+		  int MaxLeftTotalLz = this->GetMaximalLzSingleLayer(TmpLeftNbrParticles);
+		  int TmpLeftLz = TmpRightLz - OperatorLzValue;
+		  if ((TmpLeftNbrParticles >= 0) && (TmpLeftLz >= -MaxLeftTotalLz) && (TmpLeftLz <= MaxLeftTotalLz))
+		    {
+		      TmpIndexLeft1 = this->GetLinearIndexSingleLayer(TmpLeftNbrParticles, TmpLeftLz);
+		      if (directory != 0)
+			{
+			  sprintf (TmpFileName, "%s/fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", directory, this->KValue, this->RValue, 
+				   TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
+			}
+		      else
+			{ 
+			  sprintf (TmpFileName, "fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", this->KValue, this->RValue, TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
+			}
+		      if (TmpSingleLayerInteraction.ReadMatrix(TmpFileName) == false)
+			{
+			} 
+		      else
+			{
+			  if (abs(this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexLeft1] - TmpSingleLayerInteraction.GetNbrRow()) > 0)
+			    cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexLeft1] << " " << TmpSingleLayerInteraction.GetNbrRow() << endl;
+			  if (abs(this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] - TmpSingleLayerInteraction.GetNbrColumn()) > 0)
+			    cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] << " " << TmpSingleLayerInteraction.GetNbrColumn() << endl;
+			  
+			  for (int i = 0; i < TmpSingleLayerInteraction.GetNbrRow(); ++i)
+			    {
+			      for (int j = i; j < TmpSingleLayerInteraction.GetNbrColumn(); ++j)
+				{
+				  TmpIndexLeft = this->SingleLayerIndices[TmpIndexLeft1] + i;
+				  TmpIndexRight = this->SingleLayerIndices[TmpIndexRight1] + j;
+				  TmpSingleLayerInteraction.GetMatrixElement(i, j, TmpInteraction);
+				  SingleLayerAnnihilationMatrix.AddToMatrixElement(TmpIndexLeft, TmpIndexRight, TmpInteraction);
+				}
+			    }
+			}
+		    }
+		  
+		  
+		  int ShiftedOperatorLzValue = (OperatorLzValue + this->LzMax) / 2;	  
 		  if (directory != 0)
 		    {
-		      sprintf (TmpFileName, "%s/fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", directory, this->KValue, this->RValue, 
+		      sprintf (TmpFileName, "%s/fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d.mat", directory, this->KValue, this->RValue, 
 			       TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
 		    }
 		  else
-		    { 
-		      sprintf (TmpFileName, "fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", this->KValue, this->RValue, TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
+		    {
+		      sprintf (TmpFileName, "fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d.mat", this->KValue, this->RValue, TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
 		    }
 		  if (TmpSingleLayerInteraction.ReadMatrix(TmpFileName) == false)
 		    {
 		    } 
 		  else
 		    {
-		      if (abs(this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexLeft1] - TmpSingleLayerInteraction.GetNbrRow()) > 0)
-			cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexLeft1] << " " << TmpSingleLayerInteraction.GetNbrRow() << endl;
-		      if (abs(this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] - TmpSingleLayerInteraction.GetNbrColumn()) > 0)
-			cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] << " " << TmpSingleLayerInteraction.GetNbrColumn() << endl;
+		      // 	    cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] << " " << TmpSingleLayerInteraction.GetNbrRow() << endl;
+		      // 	    cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] << " " << TmpSingleLayerInteraction.GetNbrColumn() << endl;
 		      
 		      for (int i = 0; i < TmpSingleLayerInteraction.GetNbrRow(); ++i)
 			{
 			  for (int j = i; j < TmpSingleLayerInteraction.GetNbrColumn(); ++j)
 			    {
-			      TmpIndexLeft = this->SingleLayerIndices[TmpIndexLeft1] + i;
+			      TmpIndexLeft = this->SingleLayerIndices[TmpIndexRight1] + i;
 			      TmpIndexRight = this->SingleLayerIndices[TmpIndexRight1] + j;
 			      TmpSingleLayerInteraction.GetMatrixElement(i, j, TmpInteraction);
-			      SingleLayerAnnihilationMatrix.AddToMatrixElement(TmpIndexLeft, TmpIndexRight, TmpInteraction);
+			      // 		cout << TmpIndexLeft << " " << TmpIndexRight << " " << ShiftedOperatorLzValue << " " << TmpInteraction << endl;
+			      SingleLayerAdAMatrix[ShiftedOperatorLzValue].AddToMatrixElement(TmpIndexLeft, TmpIndexRight, TmpInteraction);
 			    }
 			}
-		    }
-		}
-	      
-	      
-	      int ShiftedOperatorLzValue = (OperatorLzValue + this->LzMax) / 2;	  
-	      if (directory != 0)
-		{
-		  sprintf (TmpFileName, "%s/fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d.mat", directory, this->KValue, this->RValue, 
-			   TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
-		}
-	      else
-		{
-		  sprintf (TmpFileName, "fermions_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d.mat", this->KValue, this->RValue, TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
-		}
-	      if (TmpSingleLayerInteraction.ReadMatrix(TmpFileName) == false)
-		{
-		} 
-	      else
-		{
-		  // 	    cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] << " " << TmpSingleLayerInteraction.GetNbrRow() << endl;
-		  // 	    cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] << " " << TmpSingleLayerInteraction.GetNbrColumn() << endl;
-		  
-		  for (int i = 0; i < TmpSingleLayerInteraction.GetNbrRow(); ++i)
-		    {
-		      for (int j = i; j < TmpSingleLayerInteraction.GetNbrColumn(); ++j)
-			{
-			  TmpIndexLeft = this->SingleLayerIndices[TmpIndexRight1] + i;
-			  TmpIndexRight = this->SingleLayerIndices[TmpIndexRight1] + j;
-			  TmpSingleLayerInteraction.GetMatrixElement(i, j, TmpInteraction);
-			  // 		cout << TmpIndexLeft << " " << TmpIndexRight << " " << ShiftedOperatorLzValue << " " << TmpInteraction << endl;
-			  SingleLayerAdAMatrix[ShiftedOperatorLzValue].AddToMatrixElement(TmpIndexLeft, TmpIndexRight, TmpInteraction);
-			}
-		    }
-		}	  
-	    }      
+		    }	  
+		}      
+	    }
 	}
+      this->AnnihilationElementsOneLayer = SparseRealMatrix ((SingleLayerAnnihilationMatrix), 1.0e-13);
+      this->AdAElementsOneLayer = new SparseRealMatrix[this->LzMax + 1];
+      for (int i = 0; i <= this->LzMax; ++i)
+	this->AdAElementsOneLayer[i] = SparseRealMatrix (SingleLayerAdAMatrix[i], 1.0e-13);
+      delete[] SingleLayerAdAMatrix;
     }
 
-  
   delete[] TmpFileName;
-  
-  this->AnnihilationElementsOneLayer = SparseRealMatrix ((SingleLayerAnnihilationMatrix), 1.0e-13);
-  this->AdAElementsOneLayer = new SparseRealMatrix[this->LzMax + 1];
-  for (int i = 0; i <= this->LzMax; ++i)
-    this->AdAElementsOneLayer[i] = SparseRealMatrix (SingleLayerAdAMatrix[i], 1.0e-13);
-  delete[] SingleLayerAdAMatrix;
   
   this->Flag.Initialize();
 

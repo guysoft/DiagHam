@@ -253,7 +253,6 @@ inline int QuasiholeOnSphereWithSpinAndPairing::GetParticleStatistic()
 inline int QuasiholeOnSphereWithSpinAndPairing::GetLinearIndexSingleLayer(int nbrParticles, int totalLz)
 {
   int MaxTotalLz = this->GetMaximalLzSingleLayer(nbrParticles);
-  
   int TmpIndex = nbrParticles + this->LzMax * (nbrParticles - 1) * nbrParticles / 2 - (this->RValue + this->KValue * this->FermionFactor) * nbrParticles * (nbrParticles - 1) * (nbrParticles - 2) / 3 + (totalLz + MaxTotalLz) / 2;
   return TmpIndex;
 }

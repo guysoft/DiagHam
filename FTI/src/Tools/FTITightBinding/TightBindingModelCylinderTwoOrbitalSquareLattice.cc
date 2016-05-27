@@ -454,7 +454,6 @@ HermitianMatrix TightBindingModelCylinderTwoOrbitalSquareLattice::EvaluateFullTw
 HermitianMatrix TightBindingModelCylinderTwoOrbitalSquareLattice::EvaluateFullTwoPointCorrelationFunction(int maxX, int maxY, int* occupiedMomenta,
 													  int* bandIndices, int nbrOccupiedMomenta)
 {
-  cout <<  maxX << " " <<  maxY << endl;
   int TmpNbrOrbitalPerUnitCell = this->NbrBands / this->NbrSiteY;
   int TotalNbrSites = maxX * maxY * TmpNbrOrbitalPerUnitCell; 
   HermitianMatrix EntanglementHamiltonian(TotalNbrSites, true);
@@ -488,7 +487,6 @@ HermitianMatrix TightBindingModelCylinderTwoOrbitalSquareLattice::EvaluateFullTw
 	    }
 	}
     }
-
   for (int TmpX1 = 0; TmpX1 < maxX; ++TmpX1)
     {
       for (int TmpY1 = 0; TmpY1 < maxY; ++TmpY1)

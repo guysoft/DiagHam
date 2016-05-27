@@ -421,7 +421,14 @@ int main(int argc, char** argv)
 	{
 	  if (Manager.GetBoolean("projected-haldane") == false)
 	    {
-	      FinalSpace = new BosonOnSphereShort (LLLNbrParticles, TotalLzFermion, LzMaxDown + LLLLzMax);
+	      if (ReverseFluxFlag == false)
+		{
+		  FinalSpace = new BosonOnSphereShort (LLLNbrParticles, TotalLzFermion, LzMaxDown + LLLLzMax);
+		}
+	      else
+		{
+		  FinalSpace = new BosonOnSphereShort (LLLNbrParticles, TotalLzFermion, LLLLzMax - LzMaxDown);
+		}
 	    }
 	  else
 	    {
@@ -565,7 +572,7 @@ int main(int argc, char** argv)
   int * MatchingConditionsIndex = 0;
   int NbrMatchingConditionsIndex = 0;
   
-  if(Constraint == true)
+  if (Constraint == true)
     {
       MatchingConditionsIndex = new int [SpaceLL->GetHilbertSpaceDimension()];
       int * LLConfiguration = new int [NbrLL];

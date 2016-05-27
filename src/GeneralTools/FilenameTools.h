@@ -146,5 +146,10 @@ char* GetLineFromFile (char* fileName, int nbrLine);
 // return value = file name with inserted string
 char* AddSegmentInFileName(char* inputName, const char* insertion, const char* element, bool HaveIntValue=false);
 
+// create a directory if it does not exist
+//
+// directory = name of the directory to create
+// return value = true if the directory has been created wothout error
+bool CreateDirectory (const char* directory);
 
 #endif

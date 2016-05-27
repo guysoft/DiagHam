@@ -38,6 +38,9 @@
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 
 using std::cout;
 using std::endl;
@@ -583,3 +586,23 @@ char* AddSegmentInFileName(char* inputName, const char* insertion, const char* e
     sprintf(Result,"%s%s",inputName,insertion);
   return Result;
 }
+
+// create a directory if it does not exist
+//
+// directory = name of the directory to create
+// return value = true if the directory has been created wothout error
+
+bool CreateDirectory (const char* directory)
+{
+  struct stat Tmp = {0};
+  if (stat(directory, &Tmp) != -1)
+    {
+      return true;
+    }
+  if (mkdir(directory, 0700) < 0)
+    {
+      return false;
+    }
+  return true;
+}
+

@@ -40,15 +40,17 @@ using std::ofstream;
 // nbrParticles = number of particles
 // lzMax = number of flux quantum
 // totalLz = total angular momentum along the z direction
+// ratio = cylinder aspect ratio
 // filePrefix = output file prefix
 // return value = orthonomalized basis of quasihole states
-RealMatrix FQHESphereQuasiholeMatrixElementsComputeQuasiholeStates(ParticleOnSphere* space, unsigned long** rootConfigurations, int nbrQuasiholeStates, int kValue, int rValue, int nbrParticles, int lzMax, int totalLz, char* filePrefix);
+RealMatrix FQHECylinderQuasiholeMatrixElementsComputeQuasiholeStates(ParticleOnSphere* space, unsigned long** rootConfigurations, int nbrQuasiholeStates,
+								     int kValue, int rValue, int nbrParticles, int lzMax, int totalLz, double ratio, char* filePrefix);
 
 
 int main(int argc, char** argv)
 {
   cout.precision(14);
-  OptionManager Manager ("FQHESphereQuasiholeMatrixElements" , "0.01");
+  OptionManager Manager ("FQHECylinderQuasiholeMatrixElements" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
@@ -59,14 +61,17 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption  ('l', "nbr-flux", "number of flux quanta", 9);
-  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "largest number of particles to consider. If zero, consider all the possible number of particles compatible with the number of flux quanta and the clustering properties ", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "largest number of particles to consider. If negative, consider all the possible number of particles compatible with the number of flux quanta and the clustering properties ", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "fix-nbrparticles", "if positive, only consider a given number of particles", -1);
+  (*SystemGroup) += new SingleDoubleOption  ('r', "aspect-ratio", "aspect ratio of the cylinder", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "cylinder-perimeter", "if non zero, fix the cylinder perimeter (in magnetic length unit) instead of the aspect ratio", 0);
   (*OutputGroup) += new BooleanOption  ('\n', "disable-ascii", "only store the binary files");
   (*OutputGroup) += new BooleanOption  ('\n', "disable-directory", "do not create a directory to store the data");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHESphereQuasiholeMatrixElements -h" << endl;
+      cout << "see man page for option syntax or type FQHECylinderQuasiholeMatrixElements -h" << endl;
       return -1;
     }
   if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
@@ -81,8 +86,14 @@ int main(int argc, char** argv)
   int FermionFactor = 1;
   if (Statistics == false)
     FermionFactor = 0;
-  
   int LzMax = Manager.GetInteger("nbr-flux");
+  double Ratio = Manager.GetDouble("aspect-ratio");
+  double Perimeter = Manager.GetDouble("cylinder-perimeter");
+  if (Perimeter > 0.0)
+    {
+      Ratio = (Perimeter * Perimeter) / (2.0 * M_PI * (LzMax + 1));
+    }  
+  cout << "Cylinder geometry : Length=" << (Perimeter / Ratio) <<  ", Perimeter=" << Perimeter << ", aspect ratio=" << Ratio << endl;
   
   int MaxRightStateNbrParticles = Manager.GetInteger("nbr-particles");
   int MinRightStateNbrParticles = MaxRightStateNbrParticles;
@@ -98,37 +109,83 @@ int main(int argc, char** argv)
 	  MaxRightStateNbrParticles = (KValue * (LzMax + RValue)) / RValue;
 	}
     }
+  if (Manager.GetInteger("fix-nbrparticles") > 0)
+    {
+      MinRightStateNbrParticles = Manager.GetInteger("fix-nbrparticles");
+      MaxRightStateNbrParticles = Manager.GetInteger("fix-nbrparticles");
+    }
 
   char* TmpDirectory = 0;
   if (Manager.GetBoolean("disable-directory") == false)
     {
       TmpDirectory = new char[512];
-      sprintf (TmpDirectory, "nphi_%d_sphere", LzMax); 
+      if (Manager.GetInteger("fix-nbrparticles") > 0)
+	{
+	  if (Perimeter > 0.0)	
+	    {
+	      sprintf (TmpDirectory, "nphi_%d_n_%d_cylinder_perimeter_%.6f", LzMax, MinRightStateNbrParticles, Perimeter); 
+	    }
+	  else
+	    {
+	      sprintf (TmpDirectory, "nphi_%d_n_%d_cylinder_ratio_%.6f", LzMax, MinRightStateNbrParticles, Ratio); 
+	    }
+	}  
+      else
+	{
+	  if (Perimeter > 0.0)	
+	    {
+	      sprintf (TmpDirectory, "nphi_%d_cylinder_perimeter_%.6f", LzMax, Perimeter); 
+	    }
+	  else
+	    {
+	      sprintf (TmpDirectory, "nphi_%d_cylinder_ratio_%.6f", LzMax, Ratio); 
+	    }
+	}
       CreateDirectory(TmpDirectory);
     }
 
   char* FilePrefix = new char[512];
-  if (Statistics == true)
+  if (Perimeter > 0.0)	
     {
-      if (TmpDirectory != 0)
-	sprintf (FilePrefix, "%s/fermions", TmpDirectory);
+      if (Statistics == true)
+	{
+	  if (TmpDirectory != 0)
+	    sprintf (FilePrefix, "%s/fermions_cylinder_perimeter%.6f", TmpDirectory, Perimeter);
+	  else
+	    sprintf (FilePrefix, "fermions_cylinder_perimeter%.6f", Perimeter);
+	}
       else
-	sprintf (FilePrefix, "fermions");
+	{
+	  if (TmpDirectory != 0)
+	    sprintf (FilePrefix, "%s/bosons_cylinder_perimeter%.6f", TmpDirectory, Perimeter);
+	  else
+	    sprintf (FilePrefix, "bosons_cylinder_perimeter%.6f", Perimeter);
+	}
     }
   else
     {
-      if (TmpDirectory != 0)
-	sprintf (FilePrefix, "%s/boson", TmpDirectory);
+      if (Statistics == true)
+	{
+	  if (TmpDirectory != 0)
+	    sprintf (FilePrefix, "%s/fermions_cylinder_ratio%.6f", TmpDirectory, Ratio);
+	  else
+	    sprintf (FilePrefix, "fermions_cylinder_ratio%.6f", Ratio);
+	}
       else
-	sprintf (FilePrefix, "bosons");
+	{
+	  if (TmpDirectory != 0)
+	    sprintf (FilePrefix, "%s/bosons_cylinder_ratio%.6f", TmpDirectory, Ratio);
+	  else
+	    sprintf (FilePrefix, "bosons_cylinder_ratio%.6f", Ratio);
+	}      
     }
-
 
   for (int RightStateNbrParticles = MinRightStateNbrParticles; RightStateNbrParticles <= MaxRightStateNbrParticles; ++RightStateNbrParticles)
     {
-      int LeftStateNbrParticles = RightStateNbrParticles - 1;
       int RightStateMaxTotalLz = RightStateNbrParticles * LzMax - (((RValue + (KValue * FermionFactor)) * RightStateNbrParticles * (RightStateNbrParticles - 1)));
+      int LeftStateNbrParticles = RightStateNbrParticles - 1;
       int LeftStateMaxTotalLz = LeftStateNbrParticles * LzMax - (((RValue + (KValue * FermionFactor)) * LeftStateNbrParticles * (LeftStateNbrParticles - 1)));
+
       
       for (int RightTotalLz = -RightStateMaxTotalLz; RightTotalLz <= RightStateMaxTotalLz; RightTotalLz += 2)
 	{
@@ -172,14 +229,14 @@ int main(int argc, char** argv)
 		      ++RightNbrQuasiholeStates;
 		    }
 		}
-	      RealMatrix RightVectors = FQHESphereQuasiholeMatrixElementsComputeQuasiholeStates(RightSpace, RightRootConfigurations, 
-												RightNbrQuasiholeStates, KValue, RValue,
-												RightStateNbrParticles, LzMax, RightTotalLz, FilePrefix);
+	      RealMatrix RightVectors = FQHECylinderQuasiholeMatrixElementsComputeQuasiholeStates(RightSpace, RightRootConfigurations, 
+												  RightNbrQuasiholeStates, KValue, RValue,
+												  RightStateNbrParticles, LzMax, RightTotalLz, Ratio, FilePrefix);
 	      for (int OperatorLzValue = -LzMax; OperatorLzValue <= LzMax; OperatorLzValue += 2)
 		{
 		  int ShiftedOperatorLzValue = (OperatorLzValue + LzMax) >> 1;
 		  int LeftTotalLz = RightTotalLz - OperatorLzValue;
-		  if ((LeftTotalLz >= -LeftStateMaxTotalLz) && (LeftTotalLz <= LeftStateMaxTotalLz))
+		  if ((MinRightStateNbrParticles != MaxRightStateNbrParticles) && (LeftTotalLz >= -LeftStateMaxTotalLz) && (LeftTotalLz <= LeftStateMaxTotalLz))
 		    {
 		      ParticleOnSphere* LeftSpace = 0;
 		      if (Statistics == true)
@@ -220,9 +277,9 @@ int main(int argc, char** argv)
 				  ++LeftNbrQuasiholeStates;
 				}
 			    }
-			  RealMatrix LeftVectors = FQHESphereQuasiholeMatrixElementsComputeQuasiholeStates(LeftSpace, LeftRootConfigurations, 
-													   LeftNbrQuasiholeStates, KValue, RValue,
-													   LeftStateNbrParticles, LzMax, LeftTotalLz, FilePrefix);
+			  RealMatrix LeftVectors = FQHECylinderQuasiholeMatrixElementsComputeQuasiholeStates(LeftSpace, LeftRootConfigurations, 
+													     LeftNbrQuasiholeStates, KValue, RValue,
+													     LeftStateNbrParticles, LzMax, LeftTotalLz, Ratio, FilePrefix);
 			  RightSpace->SetTargetSpace(LeftSpace);
 			  RealMatrix TmpOutputMatrix(LeftNbrQuasiholeStates, RightNbrQuasiholeStates, true);
 			  for (int i = 0; i < RightNbrQuasiholeStates; ++i)
@@ -246,16 +303,7 @@ int main(int argc, char** argv)
 			    }
 			  delete[] LeftRootConfigurations;
 			  char* TmpOutputFileName = new char[256 + strlen(FilePrefix)];
-			  if (Statistics == true)
-			    {
-			      sprintf (TmpOutputFileName, "%s_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", FilePrefix, KValue, RValue, RightStateNbrParticles, 
-				       LzMax, RightTotalLz, OperatorLzValue);
-			    }
-			  else
-			    {
-			      sprintf (TmpOutputFileName, "%s_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", FilePrefix, KValue, RValue, RightStateNbrParticles, 
-				       LzMax, RightTotalLz, OperatorLzValue);
-			    }
+			  sprintf (TmpOutputFileName, "%s_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", FilePrefix, KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
 			  char* AsciiTmpOutputFileName = new char[16 + strlen(TmpOutputFileName)];
 			  sprintf (AsciiTmpOutputFileName, "%s.txt", TmpOutputFileName);
 			  if (Manager.GetBoolean("disable-ascii") == false)
@@ -279,14 +327,7 @@ int main(int argc, char** argv)
 			}
 		    }
 		  char* TmpOutputFileName = new char[256 + strlen(FilePrefix)];
-		  if (Statistics == true)
-		    {
-		      sprintf (TmpOutputFileName, "%s_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d.mat", FilePrefix, KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
-		    }
-		  else
-		    {
-		      sprintf (TmpOutputFileName, "%s_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d.mat", FilePrefix, KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
-		    }
+		  sprintf (TmpOutputFileName, "%s_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d.mat", FilePrefix, KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
 		  char* AsciiTmpOutputFileName = new char[16 + strlen(TmpOutputFileName)];
 		  sprintf (AsciiTmpOutputFileName, "%s.txt", TmpOutputFileName);
 		  if (Manager.GetBoolean("disable-ascii") == false)
@@ -312,10 +353,12 @@ int main(int argc, char** argv)
 // nbrParticles = number of particles
 // lzMax = number of flux quantum
 // totalLz = total angular momentum along the z direction
+// ratio = cylinder aspect ratio
 // filePrefix = output file prefix
 // return value = orthonomalized basis of quasihole states
 
-RealMatrix FQHESphereQuasiholeMatrixElementsComputeQuasiholeStates(ParticleOnSphere* space, unsigned long** rootConfigurations, int nbrQuasiholeStates, int kValue, int rValue, int nbrParticles, int lzMax, int totalLz, char* filePrefix)
+RealMatrix FQHECylinderQuasiholeMatrixElementsComputeQuasiholeStates(ParticleOnSphere* space, unsigned long** rootConfigurations, int nbrQuasiholeStates, 
+								     int kValue, int rValue, int nbrParticles, int lzMax, int totalLz, double ratio, char* filePrefix)
 {
   char* QuasiholeVectorFileName = new char[256 + strlen(filePrefix)];
   sprintf (QuasiholeVectorFileName, "%s_qh_states_k_%d_r_%d_n_%d_nphi_%d_lz_%d.mat", filePrefix, kValue, rValue, nbrParticles, lzMax, totalLz);
@@ -345,7 +388,7 @@ RealMatrix FQHESphereQuasiholeMatrixElementsComputeQuasiholeStates(ParticleOnSph
 	      BosonOnSphereHaldaneBasisShort SqueezedSpace (nbrParticles, totalLz, lzMax, ReferenceState);
 	      RealVector TmpState(SqueezedSpace.GetLargeHilbertSpaceDimension(), true);
 	      SqueezedSpace.GenerateJackPolynomial(TmpState, Alpha);
-	      SqueezedSpace.ConvertFromUnnormalizedMonomial(TmpState);
+	      SqueezedSpace.NormalizeJackToCylinder(TmpState, ratio);
 	      QuasiholeVectors[i] = SqueezedSpace.ConvertToNbodyBasis(TmpState, *((BosonOnSphereShort*) space));
 	    }
 	  else
@@ -368,7 +411,7 @@ RealMatrix FQHESphereQuasiholeMatrixElementsComputeQuasiholeStates(ParticleOnSph
 	      FermionOnSphereHaldaneBasis SqueezedSpace (nbrParticles, totalLz, lzMax, ReferenceState);
 	      RealVector TmpState(SqueezedSpace.GetLargeHilbertSpaceDimension(), true);
 	      SqueezedSpace.GenerateJackPolynomial(TmpState, Alpha);
-	      SqueezedSpace.ConvertFromUnnormalizedMonomial(TmpState);
+	      SqueezedSpace.NormalizeJackToCylinder(TmpState, ratio);
 	      QuasiholeVectors[i] = SqueezedSpace.ConvertToNbodyBasis(TmpState, *((FermionOnSphere*) space));
 	    }
 	  else
@@ -379,7 +422,7 @@ RealMatrix FQHESphereQuasiholeMatrixElementsComputeQuasiholeStates(ParticleOnSph
 	}
     }
   delete[] ReferenceState;
-  char* QuasiholeDimensionFileName = new char[256 + strlen(filePrefix)];
+  char* QuasiholeDimensionFileName = new char[256];
   sprintf (QuasiholeDimensionFileName, "%s_qh_states_k_%d_r_%d_nphi_%d.dat", filePrefix, kValue, rValue, lzMax);
   if (IsFile(QuasiholeDimensionFileName) == true)
     {

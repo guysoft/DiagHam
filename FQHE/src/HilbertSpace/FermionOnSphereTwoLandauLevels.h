@@ -338,7 +338,8 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // finalSpace = pointer to the final Hilbert space
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed
-  virtual void LLLFermionicStateTimeFermionicState(RealVector& lllFermionState, RealVector& fermionState, RealVector& outputVector, FermionOnSphere* lllFermionSpace, BosonOnSphereShort* finalSpace, int firstComponent, int nbrComponent);
+  // reverseFluxFlag = true if it a reverse flux attachment
+  virtual void LLLFermionicStateTimeFermionicState(RealVector& lllFermionState, RealVector& fermionState, RealVector& outputVector, FermionOnSphere* lllFermionSpace, BosonOnSphereShort* finalSpace, int firstComponent, int nbrComponent, bool reverseFluxFlag = false);
 	
   // compute the projection of the product of a fermionic state in the lowest Landau level and a fermionic state in the two lowest Landau levels
   //
@@ -349,7 +350,8 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // finalSpace = pointer to the final Hilbert space
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed
-  virtual void LLLFermionicStateTimeFermionicState(LongRationalVector& lllFermionState, LongRationalVector& fermionState, LongRationalVector& outputVector, FermionOnSphere* lllFermionSpace, BosonOnSphereShort* finalSpace, int firstComponent, int nbrComponent);
+  // reverseFluxFlag = true if it a reverse flux attachment
+  virtual void LLLFermionicStateTimeFermionicState(LongRationalVector& lllFermionState, LongRationalVector& fermionState, LongRationalVector& outputVector, FermionOnSphere* lllFermionSpace, BosonOnSphereShort* finalSpace, int firstComponent, int nbrComponent, bool reverseFluxFlag = false);
   
   // compute the projection of the product of a fermionic state in the lowest Landau level and a fermionic state in the two lowest Landau levels using lz->-lz symmetry
   //
@@ -360,7 +362,8 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // finalSpace = pointer to the final Hilbert space
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed
-  virtual void LLLFermionicStateTimeFermionicStateSymmetric(RealVector& lllFermionState, RealVector& fermionState, RealVector& outputVector, FermionOnSphere* lllFermionSpace, BosonOnSphereShort* finalSpace, int firstComponent, int nbrComponent);
+  // reverseFluxFlag = true if it a reverse flux attachment
+  virtual void LLLFermionicStateTimeFermionicStateSymmetric(RealVector& lllFermionState, RealVector& fermionState, RealVector& outputVector, FermionOnSphere* lllFermionSpace, BosonOnSphereShort* finalSpace, int firstComponent, int nbrComponent, bool reverseFluxFlag = false);
   
   // compute the projection of the product of a fermionic state in the lowest Landau level and a fermionic state in the two lowest Landau levels using lz->-lz symmetry
   //
@@ -371,7 +374,8 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // finalSpace = pointer to the final Hilbert space
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed
-  virtual void LLLFermionicStateTimeFermionicStateSymmetric(LongRationalVector& lllFermionState, LongRationalVector& fermionState, LongRationalVector& outputVector, FermionOnSphere* lllFermionSpace, BosonOnSphereShort* finalSpace, int firstComponent, int nbrComponent);
+  // reverseFluxFlag = true if it a reverse flux attachment
+  virtual void LLLFermionicStateTimeFermionicStateSymmetric(LongRationalVector& lllFermionState, LongRationalVector& fermionState, LongRationalVector& outputVector, FermionOnSphere* lllFermionSpace, BosonOnSphereShort* finalSpace, int firstComponent, int nbrComponent, bool reverseFluxFlag = false);
 	
   // compute the product of a fermionic state in the lowest Landau level and a fermionic state in the two lowest Landau levels
   // lllFermionState = real vector where the lowest Landau level fermionic state is stored
@@ -520,6 +524,16 @@ protected:
   // sortingMap = map in which the generated states and their coefficient will be stored
   virtual void SlaterTimesSlaterProjection(unsigned long* slater, unsigned long* lllslater, unsigned long * variable, int nbrVariable, map <unsigned long, double> & sortingMap, BosonOnSphereShort* finalSpace);
 	
+  // compute the product and the projection of a Slater determinant in the LLL and a Slater determinant in two Landau levels with reverse flux attachment
+  //
+  // slater = array where the slater determinant in the two landau levels is stored in its monomial representation
+  // lllslater = array where the slater determinant in the LLL is stored in its monomial representation
+  // variable = reference on the array where the indice of fermions in the second Landau level is stored
+  // nbrVariable = number of fermions in the second Landau level
+  // sortingMap = map in which the generated states and their coefficient will be stored
+  // finalSpace = pointer to the final HilbertSpace
+  void SlaterTimesSlaterProjectionReverse(unsigned long* slater, unsigned long* lllslater, unsigned long * variable, int nbrVariable, map <unsigned long, double> & sortingMap, BosonOnSphereShort* finalSpace);
+
   // compute the product and the projection of a Slater determinant in the LLL and a Slater determinant in two Landau levels
   //
   // slater = array where the slater determinant in the two landau levels is stored in its monomial representation
@@ -529,6 +543,16 @@ protected:
   // sortingMap = map in which the generated states and their coefficient will be stored
   // finalSpace = pointer to the final HilbertSpace
   virtual void SlaterTimesSlaterProjection(unsigned long* slater, unsigned long* lllslater, unsigned long * variable, int nbrVariable, map <unsigned long, LongRational> & sortingMap, BosonOnSphereShort* finalSpace);
+  
+  // compute the product and the projection of a Slater determinant in the LLL and a Slater determinant in two Landau levels with reverse flux attachment
+  //
+  // slater = array where the slater determinant in the two landau levels is stored in its monomial representation
+  // lllslater = array where the slater determinant in the LLL is stored in its monomial representation
+  // variable = reference on the array where the indice of fermions in the second Landau level is stored
+  // nbrVariable = number of fermions in the second Landau level
+  // sortingMap = map in which the generated states and their coefficient will be stored
+  // finalSpace = pointer to the final HilbertSpace
+  virtual void SlaterTimesSlaterProjectionReverse(unsigned long* slater, unsigned long* lllslater, unsigned long * variable, int nbrVariable, map <unsigned long, LongRational> & sortingMap, BosonOnSphereShort* finalSpace);
   
   // convert to standard fermionic representation
   //
