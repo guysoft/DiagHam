@@ -123,7 +123,7 @@ QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing (int kV
     }
   else
     {
-      TmpFileName = new char [512 + strlen(directory)];
+      TmpFileName = new char [512];
       sprintf (TmpFileName, "fermions_qh_states_k_%d_r_%d_nphi_%d.dat", this->KValue, this->RValue, this->LzMax);
     }
   MultiColumnASCIIFile DimensionQuasiholeSubspaces;
