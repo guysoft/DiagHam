@@ -1,4 +1,5 @@
 #include "HilbertSpace/QuasiholeOnSphereWithSpinAndPairing.h"
+#include "HilbertSpace/QuasiholeOnSphereWithSpin.h"
 
 #include "Hamiltonian/ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing.h"
 
@@ -65,7 +66,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption ('\n', "average-nbrparticles", "average number of particles", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "force-negativelz", "manually force to compute the negative lz sectors");
   (*SystemGroup) += new SingleStringOption ('\n', "directory", "use a specific directory for the input data instead of the current one");
-  
+  (*SystemGroup) += new BooleanOption  ('\n', "use-cylinder", "use the cylinder geometry intead of the sphere geometry");
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "aspect-ratio", "aspect ratio of the cylinder", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "cylinder-perimeter", "if non zero, fix the cylinder perimeter (in magnetic length unit) instead of the aspect ratio", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "use-bosons", "use bosons instead of fermions");
+
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
 
@@ -105,9 +110,57 @@ int main(int argc, char** argv)
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");  
   bool DiskCacheFlag = Manager.GetBoolean("disk-cache");
   bool FirstRun = true;
+  bool Statistics = !Manager.GetBoolean("use-bosons");
   
   int KValue = 1;
   int RValue = 2;
+
+  bool USeCylinderFlag = Manager.GetBoolean("use-cylinder");
+  double Ratio = Manager.GetDouble("aspect-ratio");
+  double Perimeter = Manager.GetDouble("cylinder-perimeter");
+  if (Perimeter > 0.0)
+    {
+      Ratio = (Perimeter * Perimeter) / (2.0 * M_PI * (LzMax + 1));
+    }  
+
+  char* FilePrefix = new char[512];
+
+  if (USeCylinderFlag == true)
+    {
+      if (Perimeter > 0.0)	
+	{
+	  if (Statistics == true)
+	    {
+	      sprintf (FilePrefix, "fermions_cylinder_perimeter%.6f", Perimeter);
+	    }
+	  else
+	    {
+	      sprintf (FilePrefix, "bosons_cylinder_perimeter%.6f", Perimeter);
+	    }
+	}
+      else
+	{
+	  if (Statistics == true)
+	    {
+	      sprintf (FilePrefix, "fermions_cylinder_ratio%.6f", Ratio);
+	    }
+	  else
+	    {
+	      sprintf (FilePrefix, "bosons_cylinder_ratio%.6f", Ratio);
+	    }      
+	}
+    }
+  else
+    {
+      if (Statistics == true)
+	{
+	  sprintf (FilePrefix, "fermions");
+	}
+      else
+	{
+	  sprintf (FilePrefix, "bosons");
+	}
+    }
 
   double* OneBodyPotentialUpUp = 0;
   double* OneBodyPotentialDownDown = 0;
@@ -142,8 +195,11 @@ int main(int argc, char** argv)
     }
 
   char* OutputNameLz = new char [256 + strlen(Manager.GetString("interaction-name"))];
-  sprintf (OutputNameLz, "fermions_sphere_su2_quasiholes_%s_cenergy_%.6f_n0_%.6f_pairing_n_0_2s_%d_sz_%d_lz.dat", Manager.GetString("interaction-name"), 
-	   Manager.GetDouble("charging-energy"), Manager.GetDouble("average-nbrparticles"), LzMax, TotalSz);
+  int TmpFixedNbrParticles = 0;
+  if (Manager.GetInteger("nbr-particles") >= 0)
+    TmpFixedNbrParticles = Manager.GetInteger("nbr-particles");
+  sprintf (OutputNameLz, "%s_su2_quasiholes_%s_cenergy_%.6f_n0_%.6f_pairing_n_%d_2s_%d_sz_%d_lz.dat", FilePrefix, Manager.GetString("interaction-name"), 
+	   Manager.GetDouble("charging-energy"), Manager.GetDouble("average-nbrparticles"), TmpFixedNbrParticles, LzMax, TotalSz);
 
   int MinNbrParticles = abs(TotalSz);
   int MaxNbrParticles = (2 * (LzMax + 1)) - abs(TotalSz);
@@ -151,6 +207,14 @@ int main(int argc, char** argv)
     {
       MinNbrParticles = Manager.GetInteger("nbr-particles");
       MaxNbrParticles = MinNbrParticles;
+      if (OneBodyPotentialPairing != 0)
+	{
+	  cout << "discarding superconducting coupling" << endl;
+	  for (int i = 0; i <= LzMax; ++i)
+	    {
+	      OneBodyPotentialPairing[i] = 0.0;
+	    }
+	}
     }
 
   int MaxL = 0;
@@ -190,8 +254,15 @@ int main(int argc, char** argv)
 
   for (; L <= MaxL; L += 2)
     {
-      QuasiholeOnSphereWithSpinAndPairing* Space = new QuasiholeOnSphereWithSpinAndPairing (KValue, RValue, L, LzMax, TotalSz, Manager.GetString("directory"),
-											    Manager.GetInteger("nbr-particles"));
+      QuasiholeOnSphereWithSpinAndPairing* Space = 0;
+      if (Manager.GetInteger("nbr-particles") >= 0)
+	{
+	  Space = new QuasiholeOnSphereWithSpin (KValue, RValue, L, LzMax, Manager.GetInteger("nbr-particles"), TotalSz, Manager.GetString("directory"), FilePrefix);
+	}
+      else
+	{
+	  Space = new QuasiholeOnSphereWithSpinAndPairing (KValue, RValue, L, LzMax, TotalSz, Manager.GetString("directory"), FilePrefix);
+	}
       if (Space->GetLargeHilbertSpaceDimension() > 0l)
 	{
 	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());

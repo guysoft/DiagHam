@@ -6961,8 +6961,13 @@ RealVector& FermionOnSphere::NormalizeJackToCylinder(RealVector& state, double a
   cout<<"L= "<<Length<<" r= "<<aspect<<endl;
   long double kappa = (long double)2.0 * Pi_L/Length;
   long double Norm = (long double)0.0;
-
-  for (int i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+  long double Sum2MSquareReference = (long double)0.0;
+  TmpState = this->StateDescription[0];
+  for (int j = this->LzMax; j >= 0; --j)
+    if (((TmpState >> j) & 1ul) != 0ul)
+      Sum2MSquareReference += (j - 0.5*LzMax) * (j - 0.5*LzMax);
+ 
+  for (int i = 1; i < this->LargeHilbertSpaceDimension; ++i)
    {
       TmpState = this->StateDescription[i];
       long double Sum2MSquare = (long double)0.0;
@@ -6970,7 +6975,7 @@ RealVector& FermionOnSphere::NormalizeJackToCylinder(RealVector& state, double a
         if (((TmpState >> j) & 1ul) != 0ul)
            Sum2MSquare += (j - 0.5*LzMax) * (j - 0.5*LzMax);
 
-      state[i] *= expl((long double)0.5 * kappa * kappa * Sum2MSquare); 
+      state[i] *= expl((long double)0.5 * kappa * kappa * (Sum2MSquare - Sum2MSquareReference)); 
      
       Norm += state[i] * state[i];
    }

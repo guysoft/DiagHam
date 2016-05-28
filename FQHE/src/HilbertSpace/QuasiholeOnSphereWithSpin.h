@@ -7,10 +7,10 @@
 //                        Class author Cecile Repellin                        //
 //                                                                            //
 //                                                                            //
-//              class of quasiholes on sphere with spin and pairing           //
-//      (i.e. Sz conservation but no conservation of the particle number)     //
+//                    class of quasiholes on sphere with spin                 //
+//               (i.e. both  Sz and the particle number conservation)         //
 //                                                                            //
-//                        last modification : 05/05/2016                      //
+//                        last modification : 28/05/2016                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,121 +30,70 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef QUASIHOLEONSPHEREWITHSPINANDPAIRING_H
-#define QUASIHOLEONSPHEREWITHSPINANDPAIRING_H
+#ifndef QUASIHOLEONSPHEREWITHSPIN_H
+#define QUASIHOLEONSPHEREWITHSPIN_H
 
 
 #include "config.h"
-#include "HilbertSpace/ParticleOnSphereWithSpin.h"
+#include "HilbertSpace/QuasiholeOnSphereWithSpinAndPairing.h"
 #include "Matrix/SparseRealMatrix.h"
 
 #include <iostream>
 
 
-class QuasiholeOnSphereWithSpinAndPairing :  public ParticleOnSphereWithSpin
+using std::cout;
+using std::endl;
+
+
+class QuasiholeOnSphereWithSpin :  public QuasiholeOnSphereWithSpinAndPairing
 {
 
 
  protected:
 
-  // number of fermions
-  int NbrFermions;
-  // momentum total value
-  int TotalLz;
-  // maximum Lz value reached by a fermion
-  int LzMax;
-  // number of fermions with spin up / down
-  int NbrFermionsUp;
-  int NbrFermionsDown;
-  // number of Lz values in a stat
-  int NbrLzValue;
-  // twice the total spin value
-  int TotalSpin;
-  
-
-   // first index of the (k, r) exclusion principle in one layer
-   int KValue;
-   // second index of the (k, r) exclusion principle in one layer
-   int RValue;
-   // fermion factor (0 if boson, 1 if fermion)
-   int FermionFactor;
-   // number of admissible (NbrParticles, Lz) in one layer
-   int NbrQuasiholeEntriesSingleLayer;
-   // array containing the dimension of each quasihole subspace for a single layer
-   int* NbrQuasiholesPerNPerLzSingleLayer;
-   // array containing the first single layer index for each value of N and Lz
-   int* SingleLayerIndices;
-   // array containing the number of fermions in the up layer for each Hilbert space index
-   int* NbrFermionUpFullSpace;
-   // array containing the value of Lz in the up layer for each Hilbert space index
-   int* LzValueUpFullSpace;
-   // array containing the value of the lowest Hilbert space index with given quantum numbers N and Lz
-   int* FirstIndexWithNbrParticlesUpLzValueUp;
-   // Hamiltonian matrix elements for quasiholes without spin
-   SparseRealMatrix AnnihilationElementsOneLayer;
-   // array of a^\dagger_m a_m matrix elements for quasiholes without spin
-   SparseRealMatrix* AdAElementsOneLayer;
-   // maximal number of fermions in the upper layer
-   int NbrFermionsUpMax;
-   // minimal number of fermions in the upper layer
-   int NbrFermionsUpMin;
-   // maximal number of fermions in the lower layer
-   int NbrFermionsDownMax;
-   // minimal number of fermions in the lower layer
-   int NbrFermionsDownMin;
-   // maximal number of states that any state can be coupled to
-   int MaximalNumberCouplingElements;
-
+  // maximal total Lz value that can be reached in a single layer for a given number of particles
+  int* MaximalLzSingleLayer;
+  // linearized indices for a single layer
+  int** SingleLayerLinearIndices;
 
  public:
 
   // default constructor
   //
-  QuasiholeOnSphereWithSpinAndPairing();
+  QuasiholeOnSphereWithSpin();
 
   // basic constructor
   // 
   // totalLz = twice the momentum total value
   // lzMax = twice the maximum Lz value reached by a fermion
+  // nbrParticles = number of particles
   // totalSpin = twice the total spin value
   // directory = optional path to data files
   // filePrefix = prefix for all input file (should include everything related to the statistics and the geometry)
   // memory = amount of memory granted for precalculations
-  QuasiholeOnSphereWithSpinAndPairing (int kExclusionPrinciple, int rExclusionPrinciple, int totalLz, int lzMax, int totalSpin, 
-				       const char* directory, const char* filePrefix, unsigned long memory = 10000000);
+  QuasiholeOnSphereWithSpin (int kExclusionPrinciple, int rExclusionPrinciple, int totalLz, int lzMax, int nbrParticles, int totalSpin, 
+			     const char* directory, const char* filePrefix, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
   // quasiholes = reference on the hilbert space to copy to copy
-  QuasiholeOnSphereWithSpinAndPairing(const QuasiholeOnSphereWithSpinAndPairing& quasiholes);
+  QuasiholeOnSphereWithSpin(const QuasiholeOnSphereWithSpin& quasiholes);
 
   // destructor
   //
-  ~QuasiholeOnSphereWithSpinAndPairing ();
+  ~QuasiholeOnSphereWithSpin ();
 
   // assignement (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  QuasiholeOnSphereWithSpinAndPairing& operator = (const QuasiholeOnSphereWithSpinAndPairing& fermions);
+  QuasiholeOnSphereWithSpin& operator = (const QuasiholeOnSphereWithSpin& fermions);
 
   // clone Hilbert space (without duplicating datas)
   //
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
   
-  // print a given State
-  //
-  // Str = reference on current output stream 
-  // state = ID of the state to print
-  // return value = reference on current output stream 
-  virtual ostream& PrintState (ostream& Str, int state);
-  
-  // get the particle statistic 
-  //
-  // return value = particle statistic
-  virtual int GetParticleStatistic();
-
   // apply a_u_m a_d_m to a given state
   //
   // index = index of the state on which the operator has to be applied
@@ -187,11 +136,6 @@ class QuasiholeOnSphereWithSpinAndPairing :  public ParticleOnSphereWithSpin
   // return value = number of particles
   virtual int GetTotalNumberOfParticles (int index);
   
-  //get the maximal number of states that any state can be coupled to
-  //
-  //return value = number of coupling elements
-  virtual int GetMaximalNumberCouplingElements();
-
 
  protected:
 
@@ -239,26 +183,15 @@ class QuasiholeOnSphereWithSpinAndPairing :  public ParticleOnSphereWithSpin
 };
 
 
-// get the particle statistic 
-//
-// return value = particle statistic
-
-inline int QuasiholeOnSphereWithSpinAndPairing::GetParticleStatistic()
-{
-  return ParticleOnSphereWithSpin::FermionicStatistic;
-}
-
 // get the linear index corresponding to a set of number of fermions and momentum
 //
 // NbrParticles = number of fermions
 // totalLz = value of the angular momentum
 // return value = linearized index
 
-inline int QuasiholeOnSphereWithSpinAndPairing::GetLinearIndexSingleLayer(int nbrParticles, int totalLz)
+inline int QuasiholeOnSphereWithSpin::GetLinearIndexSingleLayer(int nbrParticles, int totalLz)
 {
-  int MaxTotalLz = this->GetMaximalLzSingleLayer(nbrParticles);
-  int TmpIndex = nbrParticles + this->LzMax * (nbrParticles - 1) * nbrParticles / 2 - (this->RValue + this->KValue * this->FermionFactor) * nbrParticles * (nbrParticles - 1) * (nbrParticles - 2) / 3 + (totalLz + MaxTotalLz) / 2;
-  return TmpIndex;
+  return this->SingleLayerLinearIndices[nbrParticles][(totalLz + this->GetMaximalLzSingleLayer(nbrParticles)) / 2];
 }
   
 
@@ -267,10 +200,9 @@ inline int QuasiholeOnSphereWithSpinAndPairing::GetLinearIndexSingleLayer(int nb
 // nbrParticles = number of particles
 // return value = maximal Lz
 
-inline int QuasiholeOnSphereWithSpinAndPairing::GetMaximalLzSingleLayer(int nbrParticles)
+inline int QuasiholeOnSphereWithSpin::GetMaximalLzSingleLayer(int nbrParticles)
 {
-  int maxTotalLz = nbrParticles * this->LzMax - (((this->RValue + (this->KValue * this->FermionFactor)) * nbrParticles * (nbrParticles - 1)));
-  return maxTotalLz;  
+  return this->MaximalLzSingleLayer[nbrParticles];
 }
 
   
@@ -279,18 +211,36 @@ inline int QuasiholeOnSphereWithSpinAndPairing::GetMaximalLzSingleLayer(int nbrP
 // index =index of the state whose number of particles has to be returned
 // return value = number of particles
 
-inline int QuasiholeOnSphereWithSpinAndPairing::GetTotalNumberOfParticles (int index)
+inline int QuasiholeOnSphereWithSpin::GetTotalNumberOfParticles (int index)
 {
-  return (2 * this->NbrFermionUpFullSpace[index] - this->TotalSpin);
+  return this->NbrFermions;
 }
   
-// get the maximal number of states that any state can be coupled to
+// apply a_u_m a_d_m to a given state
 //
-// return value = number of coupling elements
+// index = index of the state on which the operator has to be applied
+// m = index for destruction operators
+// leftIndices = reference to an array containing the indices of the resulting states
+// interactionElements = reference to an array containing the matrix elements 
+// return value = number of left states that are connected to the initial state
 
-inline int QuasiholeOnSphereWithSpinAndPairing::GetMaximalNumberCouplingElements()
+inline int QuasiholeOnSphereWithSpin::AuAd (int index, int m, int*& leftIndices, double*& interactionElements)
 {
-  return this->MaximalNumberCouplingElements;
+  return 0;
+}
+
+
+// apply a_u_m a_d_m to a given state
+//
+// index = index of the state on which the operator has to be applied
+// m = index for destruction operators
+// leftIndices = reference to an array containing the indices of the resulting states
+// interactionElements = reference to an array containing the matrix elements 
+// return value = number of left states that are connected to the initial state
+
+inline int QuasiholeOnSphereWithSpin::AduAdd (int index, int m, int*& leftIndices, double*& interactionElements)
+{
+  return 0;    
 }
 
 #endif

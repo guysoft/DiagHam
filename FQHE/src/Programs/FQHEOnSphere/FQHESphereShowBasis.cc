@@ -372,7 +372,7 @@ int main(int argc, char** argv)
 			PauliK = 1;
 			PauliR = 2;
 		      }
-		      Space = new QuasiholeOnSphereWithSpinAndPairing(PauliK, PauliR, TotalLz, NbrFluxQuanta, TotalSz, 0);
+		      Space = new QuasiholeOnSphereWithSpinAndPairing(PauliK, PauliR, TotalLz, NbrFluxQuanta, TotalSz, 0, "fermions");
 		    }
 		  }
 	      }
