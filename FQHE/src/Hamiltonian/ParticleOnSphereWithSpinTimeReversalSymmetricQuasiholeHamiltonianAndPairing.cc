@@ -794,7 +794,6 @@ RealVector* ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAnd
   
   double Coefficient;
   double TmpCoefficient;
-  double TmpCoef;
   double ChargeContribution;
   int NbrElements;
   int TmpTotalNbrParticles;
@@ -905,9 +904,9 @@ RealVector* ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAnd
 	    {
 	      ChargeContribution = (double) (TmpTotalNbrParticles - this->AverageNumberParticles);
 	      ChargeContribution *= ChargeContribution;
-	      ChargeContribution *= (TmpCoef * this->ChargingEnergy);
+	      ChargeContribution *= (this->ChargingEnergy);
 	      for (int l = 0; l < nbrVectors; ++l)
-		vDestinations[l][i] += ChargeContribution;
+		vDestinations[l][i] += ChargeContribution * vSources[l][i];
 	    }
 	  }
       }
