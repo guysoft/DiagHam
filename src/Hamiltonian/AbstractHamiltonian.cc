@@ -604,7 +604,7 @@ RealVector* AbstractHamiltonian::LowLevelMultipleMultiply(RealVector* vSources, 
 #endif
   for (int i = 0; i < nbrVectors; ++i)
     vDestinations[i].ClearVector();
-  return LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
+  return this->LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
 }
 
 // multiply a set of vector by the current hamiltonian for a given range of indices 

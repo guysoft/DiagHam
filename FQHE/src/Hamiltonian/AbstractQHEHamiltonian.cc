@@ -33,6 +33,12 @@
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 
+#include <iostream>
+
+
+using std::cout;
+using std::endl;
+
 
 // destructor
 //
@@ -50,10 +56,12 @@ AbstractQHEHamiltonian::~AbstractQHEHamiltonian()
 // return value = pointer to the array of vectors where result has been stored
 
 RealVector* AbstractQHEHamiltonian::LowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors)
-{
+{  
   for (int i = 0; i < nbrVectors; ++i)
-    this->LowLevelMultiply(vSources[i], vDestinations[i]);
-  return vDestinations;
+    {
+      vDestinations[i].ClearVector();
+    }
+  return this->LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors);
 }
 
 // multiply a set of vectors by the current hamiltonian for a given range of indices 
@@ -70,8 +78,10 @@ RealVector* AbstractQHEHamiltonian::LowLevelMultipleMultiply(RealVector* vSource
 							     int firstComponent, int nbrComponent)
 {
   for (int i = 0; i < nbrVectors; ++i)
-    this->LowLevelMultiply(vSources[i], vDestinations[i], firstComponent, nbrComponent);
-  return vDestinations;
+    {
+      vDestinations[i].ClearVector();
+    }
+  return this->LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
 }
 
 // multiply a set of vectors by the current hamiltonian for a given range of indices 

@@ -135,7 +135,7 @@ class ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairin
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-				  int firstComponent, int nbrComponent);
+					  int firstComponent, int nbrComponent);
 
   // multiply a set of vectors by the current hamiltonian for a given range of indices 
   // and add result to another set of vectors, low level function (no architecture optimization)
@@ -158,8 +158,8 @@ class ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairin
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  RealVector& LowLevelAddMultiplyPartialFastMultiply(RealVector& vSource, RealVector& vDestination, 
-										   int firstComponent, int nbrComponent);
+  virtual RealVector& LowLevelAddMultiplyPartialFastMultiply(RealVector& vSource, RealVector& vDestination, 
+							     int firstComponent, int nbrComponent);
   
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)

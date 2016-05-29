@@ -169,11 +169,11 @@ int main(int argc, char** argv)
 	  for (NbrCoefficients = 0; NbrCoefficients <= NbrFluxQuanta; ++NbrCoefficients)
 	    {
 	      double TmpCoefficient;
-// 	      if (RightAlpha == 0)
-// 		{
-// 		  TmpCoefficient = RightV0 * (1.0 - FQHECylinderComputeStepPotentialCoefficients(((double) NbrCoefficients) - 0.5 * ((double) NbrFluxQuanta), Perimeter, RightShift));
-// 		}
-// 	      else
+ 	      if (RightAlpha == 0)
+ 		{
+ 		  TmpCoefficient = RightV0 * (1.0 - FQHECylinderComputeStepPotentialCoefficients(((double) NbrCoefficients) - 0.5 * ((double) NbrFluxQuanta), Perimeter, RightShift));
+ 		}
+ 	      else
 		{
 		  TmpCoefficient = RightV0 * FQHECylinderComputePolynomialPotentialCoefficients(((double) NbrCoefficients) - 0.5 * ((double) NbrFluxQuanta), 
 												Perimeter, RightAlpha, RightShift, TmpBinomialCoefficients);
@@ -189,14 +189,14 @@ int main(int argc, char** argv)
 	  for (NbrCoefficients = 0; NbrCoefficients <= NbrFluxQuanta; ++NbrCoefficients)
 	    {
 	      double TmpCoefficient;
-	      if (LeftAlpha == 0)
+// 	      if (LeftAlpha == 0)
+// 		{
+// 		  TmpCoefficient = LeftV0 * FQHECylinderComputeStepPotentialCoefficients(((double) NbrCoefficients) - 0.5 * ((double) NbrFluxQuanta), Perimeter, LeftShift);
+// 		}
+// 	      else
 		{
-		  TmpCoefficient = LeftV0 * FQHECylinderComputeStepPotentialCoefficients(((double) NbrCoefficients) - 0.5 * ((double) NbrFluxQuanta), Perimeter, LeftShift);
-		}
-	      else
-		{
-		  TmpCoefficient = LeftV0 * FQHECylinderComputePolynomialPotentialCoefficients(((double) NbrCoefficients) - 0.5 * ((double) NbrFluxQuanta), 
-											       Perimeter, LeftAlpha, LeftShift, TmpBinomialCoefficients);
+		  TmpCoefficient = LeftV0 * FQHECylinderComputePolynomialPotentialCoefficients(((double) -NbrCoefficients) - 0.5 * ((double) NbrFluxQuanta), 
+											       Perimeter, LeftAlpha, -LeftShift, TmpBinomialCoefficients);
 		}
 	      if (TmpCoefficient > Error)
 		{
@@ -271,7 +271,7 @@ double FQHECylinderComputePolynomialPotentialCoefficients (double orbitalIndex, 
       for (int i = 0; i <= alpha; i += 2)
 	{
 #ifdef __GSL__
-	  Tmp += (binomials(alpha, i) * pow(cutPosition, (double) (alpha - i)) * 
+	  Tmp += (binomials(alpha, i) * pow(-cutPosition, (double) (alpha - i)) * 
 		  ((2.0 * gsl_sf_hyperg_U(-0.5 * (((double) i) - 1.0), -0.5 * (((double) i) - 1.0), 0.0))
 		   - (exp(-cutPosition * cutPosition) * 
 		      gsl_sf_hyperg_U(-0.5 * (((double) i) - 1.0), -0.5 * (((double) i) - 1.0), cutPosition * cutPosition))));
@@ -282,7 +282,7 @@ double FQHECylinderComputePolynomialPotentialCoefficients (double orbitalIndex, 
       for (int i = 1; i <= alpha; i += 2)
 	{
 #ifdef __GSL__
-	  Tmp += (binomials(alpha, i) * pow(cutPosition, (double) (alpha - i)) * 
+	  Tmp += (binomials(alpha, i) * pow(-cutPosition, (double) (alpha - i)) * 
 		  (exp(-cutPosition * cutPosition) * gsl_sf_hyperg_U(-0.5 * (((double) i) - 1.0), -0.5 * (((double) i) - 1.0), cutPosition * cutPosition)));
 #else
 	  cout << "error, GSL library is needed" << endl;
