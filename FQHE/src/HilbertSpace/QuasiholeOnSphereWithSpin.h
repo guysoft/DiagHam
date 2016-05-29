@@ -56,6 +56,8 @@ class QuasiholeOnSphereWithSpin :  public QuasiholeOnSphereWithSpinAndPairing
   // linearized indices for a single layer
   int** SingleLayerLinearIndices;
 
+  SparseRealMatrix*** SingleLayerAdAMatrices;
+
  public:
 
   // default constructor
