@@ -106,6 +106,7 @@ inline int DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::ComputeZValueBra
       TmpZ+= (BraOnSite & 0x2ul);
       stateDescription/=9;
     }
+  TmpZ/=2;
   return (TmpZ%2);
 }
 
@@ -120,6 +121,7 @@ inline int DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::ComputeZValueKet
       TmpZ+= (KetOnSite & 0x2ul);
       stateDescription/=9;
     }
+  TmpZ/=2;
   return (TmpZ%2);
 }
 
