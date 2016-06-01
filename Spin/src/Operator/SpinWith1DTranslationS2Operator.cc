@@ -101,6 +101,74 @@ int SpinWith1DTranslationS2Operator::GetHilbertSpaceDimension ()
 // nbrComponent = number of components to evaluate
 // return value = corresponding matrix element
 
+Complex SpinWith1DTranslationS2Operator::PartialMatrixElement (RealVector& V1, RealVector& V2, 
+							       long firstComponent, long nbrComponent)
+{
+  int dim = (int) (firstComponent + nbrComponent);
+  double Tmp = 0.0;
+  int TmpPos;
+  int NbrTranslation;
+  double TmpCoef;
+  double TmpDiagonal = 0.0;
+  double Coef = 2.0 * M_PI * ((double) this->Chain->GetMomentum()) / ((double) this->NbrSpin);
+  double* ExponentialTable = new double[2 * this->NbrSpin];
+  if (this->Chain->GetMomentum() == 0)
+    {
+      for (int i = 0; i < (2 * this->NbrSpin); ++i)
+	{
+	  ExponentialTable[i] = 1.0;
+	}
+    }
+  else
+    {
+      ExponentialTable[0] = 1.0;
+      for (int i = 1; i < (2 * this->NbrSpin); ++i)
+	{
+	  ExponentialTable[i] = -ExponentialTable[i - 1];
+	}
+    }
+  for (int j = 0; j < this->NbrSpin; ++j)
+    {      
+      int TmpLocalSpin = this->Chain->GetLocalSpin(j);
+      TmpDiagonal += 0.25 * ((double) this->Chain->GetLocalSpin(j)) * ((double) (this->Chain->GetLocalSpin(j) + 2));
+    }
+
+  for (int i = (int) firstComponent; i < dim; ++i)
+    {	 
+      for (int j = 0; j < this->NbrSpin; ++j)
+	{
+	  for (int k = 0; k < j; ++k)
+	    {
+	      TmpPos = this->Chain->SmiSpj(j, k, i, TmpCoef, NbrTranslation);
+	      if (TmpPos < this->Chain->GetHilbertSpaceDimension())
+		{
+		  Tmp += ExponentialTable[NbrTranslation] * V1[TmpPos] * V2[i] * TmpCoef;
+		}
+	      Tmp += 2.0 * V1[i] * V2[i] * this->Chain->SziSzj(j, k, i);
+	    }
+	  for (int k = j + 1; k < this->NbrSpin; ++k)
+	    {
+	      TmpPos = this->Chain->SmiSpj(j, k, i, TmpCoef, NbrTranslation);
+	      if (TmpPos < this->Chain->GetHilbertSpaceDimension())
+		{
+		  Tmp += ExponentialTable[NbrTranslation] * V1[TmpPos] * V2[i] * TmpCoef;
+		}
+	    }
+	}
+      Tmp += V1[i] * V2[i] * TmpDiagonal;
+    }
+  delete[] ExponentialTable;
+  return Complex(Tmp);
+}
+
+// evaluate part of the matrix element, within a given of indices
+//
+// V1 = vector to left multiply with current matrix
+// V2 = vector to right multiply with current matrix
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = corresponding matrix element
+
 Complex SpinWith1DTranslationS2Operator::PartialMatrixElement (ComplexVector& V1, ComplexVector& V2, 
 							       long firstComponent, long nbrComponent)
 {
@@ -147,6 +215,72 @@ Complex SpinWith1DTranslationS2Operator::PartialMatrixElement (ComplexVector& V1
     }
   delete[] ExponentialTable;
   return Complex(Tmp);
+}
+
+// multiply a vector by the current operator for a given range of indices 
+// and store result in another vector
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+RealVector& SpinWith1DTranslationS2Operator::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+							      int firstComponent, int nbrComponent)
+{
+  int dim = (int) (firstComponent + nbrComponent);
+  int TmpPos;
+  int NbrTranslation;
+  double TmpCoef;
+  double TmpDiagonal = 0.0;
+  double* ExponentialTable = new double[2 * this->NbrSpin];
+  if (this->Chain->GetMomentum() == 0)
+    {
+      for (int i = 0; i < (2 * this->NbrSpin); ++i)
+	{
+	  ExponentialTable[i] = 1.0;
+	}
+    }
+  else
+    {
+      ExponentialTable[0] = 1.0;
+      for (int i = 1; i < (2 * this->NbrSpin); ++i)
+	{
+	  ExponentialTable[i] = -ExponentialTable[i - 1];
+	}
+    }
+  for (int j = 0; j < this->NbrSpin; ++j)
+    {      
+      int TmpLocalSpin = this->Chain->GetLocalSpin(j);
+      TmpDiagonal += 0.25 * ((double) this->Chain->GetLocalSpin(j)) * ((double) (this->Chain->GetLocalSpin(j) + 2));
+    }
+  for (int i = (int) firstComponent; i < dim; ++i)
+    {	 
+      for (int j = 0; j < this->NbrSpin; ++j)
+	{
+	  for (int k = 0; k < j; ++k)
+	    {
+	      TmpPos = this->Chain->SmiSpj(j, k, i, TmpCoef, NbrTranslation);
+	      if (TmpPos < this->Chain->GetHilbertSpaceDimension())
+		{
+		  vDestination[TmpPos] += ExponentialTable[NbrTranslation] * vSource[i] * TmpCoef;
+		}
+	      vDestination[i] += 2.0 * vSource[i] * this->Chain->SziSzj(j, k, i);
+	    }
+	  for (int k = j + 1; k < this->NbrSpin; ++k)
+	    {
+	      TmpPos = this->Chain->SmiSpj(j, k, i, TmpCoef, NbrTranslation);
+	      if (TmpPos < this->Chain->GetHilbertSpaceDimension())
+		{
+		  vDestination[TmpPos] += ExponentialTable[NbrTranslation] * vSource[i] * TmpCoef;
+		}
+	    }
+	}
+      vDestination[i] = vSource[i] * TmpDiagonal;
+    }
+  delete[] ExponentialTable;
+  return vDestination;
 }
 
 // multiply a vector by the current operator for a given range of indices 

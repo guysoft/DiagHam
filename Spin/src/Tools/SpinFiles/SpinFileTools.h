@@ -68,6 +68,18 @@ bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz
 // return value = true if no error occured
 bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int& spin, int& momentum);
 
+// try to guess system information from file name
+//
+// filename = file name
+// nbrSpins = reference to the number of spins 
+// sz = reference to twice the Sz value
+// spin = reference to twice the spin value per site
+// momentum = reference on the momentum
+// inversion =  reference on the inversion parity
+// szSymmetry =  reference on the Sz<->-Sz parity
+// return value = true if no error occured
+bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int& spin, int& momentum, int& inversion, int& szSymmetry);
+
 // try to guess system information from file name for a 2d spin system with translations
 //
 // filename = file name

@@ -24,7 +24,7 @@ using std::ofstream;
 // return value = one-body matrix element
 double FQHECylinderComputeStepPotentialCoefficients (double orbitalIndex, double perimeter, double cutPosition);
 
-// compute the one-body matrix element for a polynomial confining potential
+// compute the one-body matrix element for a polynomial right confining potential
 //
 // orbitalIndex = index of the orbital (can be negative, zero-th orbital being centered at x=0)
 // perimeter = cylinder perimeter
@@ -32,7 +32,35 @@ double FQHECylinderComputeStepPotentialCoefficients (double orbitalIndex, double
 // cutPosition = x position below which the potential should be set to zero 
 // binomials = reference to the binomial coefficients
 // return value = one-body matrix element
-double FQHECylinderComputePolynomialPotentialCoefficients (double orbitalIndex, double perimeter, int alpha, double cutPosition, BinomialCoefficients& binomials);
+double FQHECylinderComputePolynomialRightPotentialCoefficients (double orbitalIndex, double perimeter, int alpha, double cutPosition, BinomialCoefficients& binomials);
+
+// compute the one-body matrix element for a polynomial left confining potential
+//
+// orbitalIndex = index of the orbital (can be negative, zero-th orbital being centered at x=0)
+// perimeter = cylinder perimeter
+// alpha = exponent of the polynomial
+// cutPosition = x position above which the potential should be set to zero 
+// binomials = reference to the binomial coefficients
+// return value = one-body matrix element
+double FQHECylinderComputePolynomialLeftPotentialCoefficients (double orbitalIndex, double perimeter, int alpha, double cutPosition, BinomialCoefficients& binomials);
+
+// compute the one-body matrix element for a polynomial right confining potential defined in momentum space
+//
+// orbitalIndex = index of the orbital (can be negative, zero-th orbital being centered at x=0)
+// perimeter = cylinder perimeter
+// alpha = exponent of the polynomial
+// cutPosition = x position below which the potential should be set to zero 
+// return value = one-body matrix element
+double FQHECylinderComputePolynomialRightMomentumPotentialCoefficients (double orbitalIndex, double perimeter, int alpha, double cutPosition);
+
+// compute the one-body matrix element for a polynomial left confining potential
+//
+// orbitalIndex = index of the orbital (can be negative, zero-th orbital being centered at x=0)
+// perimeter = cylinder perimeter
+// alpha = exponent of the polynomial
+// cutPosition = x position above which the potential should be set to zero 
+// return value = one-body matrix element
+double FQHECylinderComputePolynomialLeftMomentumPotentialCoefficients (double orbitalIndex, double perimeter, int alpha, double cutPosition);
 
 
 int main(int argc, char** argv)
@@ -54,6 +82,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "confining-leftpower", "integer exponent of the left confining potential", 2);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "confining-leftstrength", "strength of the left confining potential", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "confining-leftoffset", "position (with respect to half of the cylinder) above which the left confining potential is equal to zero", 0.0);
+  (*SystemGroup) += new  BooleanOption ('\n', "confining-momentum", "if set, the confining potential is defined in the momentum space");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "optional output file name instead of the default one");
   (*OutputGroup) += new BooleanOption ('\n', "spinful", "the output file will be used for a spinful system, assuming the same confining potential for all species");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -107,8 +136,16 @@ int main(int argc, char** argv)
   if (Manager.GetString("output-file") == 0)
     {
       OutputFile = new char[512];
-      sprintf (OutputFile, "confining_cylinder_perimeter_%.6f_2s_%d_alphar_%d_x0r_%.6f_v0r_%.6f_alphal_%d_x0l_%.6f_v0l_%.6f.dat", 
-	       Perimeter, NbrFluxQuanta, RightAlpha, RightShift, RightV0, LeftAlpha, LeftShift, LeftV0);
+      if (Manager.GetBoolean("confining-momentum") == true)
+	{
+	  sprintf (OutputFile, "confining_momentum_cylinder_perimeter_%.6f_2s_%d_alphar_%d_x0r_%.6f_v0r_%.6f_alphal_%d_x0l_%.6f_v0l_%.6f.dat", 
+		   Perimeter, NbrFluxQuanta, RightAlpha, RightShift, RightV0, LeftAlpha, LeftShift, LeftV0);
+	}
+      else
+	{
+	  sprintf (OutputFile, "confining_cylinder_perimeter_%.6f_2s_%d_alphar_%d_x0r_%.6f_v0r_%.6f_alphal_%d_x0l_%.6f_v0l_%.6f.dat", 
+		   Perimeter, NbrFluxQuanta, RightAlpha, RightShift, RightV0, LeftAlpha, LeftShift, LeftV0);
+	}
     }
   else
     {
@@ -118,7 +155,14 @@ int main(int argc, char** argv)
   ofstream File;
   File.open(OutputFile, ios::binary | ios::out);
   File.precision(14);
-  File << "# confining potential defined by :" << endl;
+  if (Manager.GetBoolean("confining-momentum") == true)
+    {
+      File << "# confining potential in momentum space defined by :" << endl;
+    }
+  else
+    {
+      File << "# confining potential defined by :" << endl;
+    }
   File << "# right alpha = " << RightAlpha << ", right V0 = " << RightV0 << ", right shift = " << RightShift << endl;
   File << "# left alpha = " << LeftAlpha << ", left V0 = " << LeftV0 << ", left shift = " << LeftShift << endl;
   if (NbrFluxQuanta == 0)
@@ -169,14 +213,22 @@ int main(int argc, char** argv)
 	  for (NbrCoefficients = 0; NbrCoefficients <= NbrFluxQuanta; ++NbrCoefficients)
 	    {
 	      double TmpCoefficient;
- 	      if (RightAlpha == 0)
- 		{
- 		  TmpCoefficient = RightV0 * (1.0 - FQHECylinderComputeStepPotentialCoefficients(((double) NbrCoefficients) - 0.5 * ((double) NbrFluxQuanta), Perimeter, RightShift));
- 		}
- 	      else
+	      if (Manager.GetBoolean("confining-momentum") == true)
 		{
-		  TmpCoefficient = RightV0 * FQHECylinderComputePolynomialPotentialCoefficients(((double) NbrCoefficients) - 0.5 * ((double) NbrFluxQuanta), 
-												Perimeter, RightAlpha, RightShift, TmpBinomialCoefficients);
+		  TmpCoefficient = RightV0 * FQHECylinderComputePolynomialRightMomentumPotentialCoefficients(((double) NbrCoefficients) - 0.5 * ((double) NbrFluxQuanta), 
+													     Perimeter, RightAlpha, RightShift);
+		}
+	      else
+		{
+		  if (RightAlpha == 0)
+		    {
+		      TmpCoefficient = RightV0 * (1.0 - FQHECylinderComputeStepPotentialCoefficients(((double) NbrCoefficients) - 0.5 * ((double) NbrFluxQuanta), Perimeter, RightShift));
+		    }
+		  else
+		    {
+		      TmpCoefficient = RightV0 * FQHECylinderComputePolynomialRightPotentialCoefficients(((double) NbrCoefficients) - 0.5 * ((double) NbrFluxQuanta), 
+													 Perimeter, RightAlpha, RightShift, TmpBinomialCoefficients);
+		    }
 		}
 	      if (TmpCoefficient > Error)
 		{
@@ -189,17 +241,25 @@ int main(int argc, char** argv)
 	  for (NbrCoefficients = 0; NbrCoefficients <= NbrFluxQuanta; ++NbrCoefficients)
 	    {
 	      double TmpCoefficient;
-// 	      if (LeftAlpha == 0)
-// 		{
-// 		  TmpCoefficient = LeftV0 * FQHECylinderComputeStepPotentialCoefficients(((double) NbrCoefficients) - 0.5 * ((double) NbrFluxQuanta), Perimeter, LeftShift);
-// 		}
-// 	      else
+	      if (Manager.GetBoolean("confining-momentum") == true)
 		{
-		  TmpCoefficient = LeftV0 * FQHECylinderComputePolynomialPotentialCoefficients(((double) -NbrCoefficients) - 0.5 * ((double) NbrFluxQuanta), 
-											       Perimeter, LeftAlpha, -LeftShift, TmpBinomialCoefficients);
+		  TmpCoefficient = LeftV0 * FQHECylinderComputePolynomialLeftMomentumPotentialCoefficients(((double) NbrCoefficients) - 0.5 * ((double) NbrFluxQuanta), 
+													     Perimeter, LeftAlpha, LeftShift);
 		}
-	      if (TmpCoefficient > Error)
+	      else
 		{
+		  // 	      if (LeftAlpha == 0)
+		  // 		{
+		  // 		  TmpCoefficient = LeftV0 * FQHECylinderComputeStepPotentialCoefficients(((double) NbrCoefficients) - 0.5 * ((double) NbrFluxQuanta), Perimeter, LeftShift);
+		  // 		}
+		  // 	      else
+		  {
+		    TmpCoefficient = LeftV0 * FQHECylinderComputePolynomialLeftPotentialCoefficients(((double) NbrCoefficients) - 0.5 * ((double) NbrFluxQuanta), 
+												     Perimeter, LeftAlpha, LeftShift, TmpBinomialCoefficients);
+		  }
+		}
+	      // 	      if (TmpCoefficient > Error)
+	      {
 		  Coefficients[NbrCoefficients] += TmpCoefficient;
 		}
 	    }
@@ -241,7 +301,7 @@ double FQHECylinderComputeStepPotentialCoefficients (double orbitalIndex, double
   return (0.5 * (1.0 + erf(cutPosition - (orbitalIndex * 2.0 * M_PI / perimeter))));
 }
 
-// compute the one-body matrix element for a polynomial confining potential
+// compute the one-body matrix element for a polynomial right confining potential
 //
 // orbitalIndex = index of the orbital (can be negative, zero-th orbital being centered at x=0)
 // perimeter = cylinder perimeter
@@ -250,7 +310,7 @@ double FQHECylinderComputeStepPotentialCoefficients (double orbitalIndex, double
 // binomials = reference to the binomial coefficients
 // return value = one-body matrix element
 
-double FQHECylinderComputePolynomialPotentialCoefficients (double orbitalIndex, double perimeter, int alpha, double cutPosition, BinomialCoefficients& binomials)
+double FQHECylinderComputePolynomialRightPotentialCoefficients (double orbitalIndex, double perimeter, int alpha, double cutPosition, BinomialCoefficients& binomials)
 {  
   cutPosition -= (orbitalIndex * 2.0 * M_PI / perimeter);
   double Tmp = 0.0;
@@ -293,3 +353,97 @@ double FQHECylinderComputePolynomialPotentialCoefficients (double orbitalIndex, 
   return Tmp;
 }
 
+// compute the one-body matrix element for a polynomial left confining potential
+//
+// orbitalIndex = index of the orbital (can be negative, zero-th orbital being centered at x=0)
+// perimeter = cylinder perimeter
+// alpha = exponent of the polynomial
+// cutPosition = x position above which the potential should be set to zero 
+// binomials = reference to the binomial coefficients
+// return value = one-body matrix element
+
+double FQHECylinderComputePolynomialLeftPotentialCoefficients (double orbitalIndex, double perimeter, int alpha, double cutPosition, BinomialCoefficients& binomials)
+{  
+  cutPosition -= (orbitalIndex * 2.0 * M_PI / perimeter);
+  double Tmp = 0.0;
+  if (cutPosition >= 0.0)
+    {
+      for (int i = 0; i <= alpha; ++i)
+	{
+#ifdef __GSL__
+	  Tmp += binomials(alpha, i) * pow(cutPosition, (double) (alpha - i)) * gsl_sf_hyperg_U(-0.5 * (((double) i) - 1.0), -0.5 * (((double) i) - 1.0), cutPosition * cutPosition);
+#else
+	  cout << "error, GSL library is needed" << endl;
+#endif
+	}
+      Tmp *= (0.5 * exp(- cutPosition * cutPosition) / sqrt(M_PI));
+    }
+  else
+    {
+      for (int i = 0; i <= alpha; i += 2)
+	{
+#ifdef __GSL__
+	  Tmp += (binomials(alpha, i) * pow(-cutPosition, (double) (alpha - i)) * 
+		  ((2.0 * gsl_sf_hyperg_U(-0.5 * (((double) i) - 1.0), -0.5 * (((double) i) - 1.0), 0.0))
+		   - (exp(-cutPosition * cutPosition) * 
+		      gsl_sf_hyperg_U(-0.5 * (((double) i) - 1.0), -0.5 * (((double) i) - 1.0), cutPosition * cutPosition))));
+#else
+	  cout << "error, GSL library is needed" << endl;
+#endif
+	}
+      for (int i = 1; i <= alpha; i += 2)
+	{
+#ifdef __GSL__
+	  Tmp += (binomials(alpha, i) * pow(-cutPosition, (double) (alpha - i)) * 
+		  (exp(-cutPosition * cutPosition) * gsl_sf_hyperg_U(-0.5 * (((double) i) - 1.0), -0.5 * (((double) i) - 1.0), cutPosition * cutPosition)));
+#else
+	  cout << "error, GSL library is needed" << endl;
+#endif
+	}
+      Tmp *= (0.5  / sqrt(M_PI));
+    }
+  return Tmp;
+}
+
+// compute the one-body matrix element for a polynomial right confining potential defined in momentum space
+//
+// orbitalIndex = index of the orbital (can be negative, zero-th orbital being centered at x=0)
+// perimeter = cylinder perimeter
+// alpha = exponent of the polynomial
+// cutPosition = x position below which the potential should be set to zero 
+// return value = one-body matrix element
+
+double FQHECylinderComputePolynomialRightMomentumPotentialCoefficients (double orbitalIndex, double perimeter, int alpha, double cutPosition)
+{
+  orbitalIndex -= cutPosition * perimeter / (2.0 * M_PI);
+  if (orbitalIndex >= 0.0)
+    {
+      return pow(orbitalIndex, alpha);
+    }
+  else
+    {
+      return 0.0;
+    }
+}
+
+// compute the one-body matrix element for a polynomial left confining potential
+//
+// orbitalIndex = index of the orbital (can be negative, zero-th orbital being centered at x=0)
+// perimeter = cylinder perimeter
+// alpha = exponent of the polynomial
+// cutPosition = x position above which the potential should be set to zero 
+// return value = one-body matrix element
+
+double FQHECylinderComputePolynomialLeftMomentumPotentialCoefficients (double orbitalIndex, double perimeter, int alpha, double cutPosition)
+{
+  orbitalIndex -= cutPosition * perimeter / (2.0 * M_PI);
+  orbitalIndex *= -1.0;
+  if (orbitalIndex >= 0.0)
+    {
+      return pow(orbitalIndex, alpha);
+    }
+  else
+    {
+      return 0.0;
+    }
+}

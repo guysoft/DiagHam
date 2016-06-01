@@ -132,22 +132,22 @@ int main(int argc, char** argv)
 	{
 	  if (Statistics == true)
 	    {
-	      sprintf (FilePrefix, "fermions_cylinder_perimeter%.6f", Perimeter);
+	      sprintf (FilePrefix, "fermions_cylinder_perimeter_%.6f", Perimeter);
 	    }
 	  else
 	    {
-	      sprintf (FilePrefix, "bosons_cylinder_perimeter%.6f", Perimeter);
+	      sprintf (FilePrefix, "bosons_cylinder_perimeter_%.6f", Perimeter);
 	    }
 	}
       else
 	{
 	  if (Statistics == true)
 	    {
-	      sprintf (FilePrefix, "fermions_cylinder_ratio%.6f", Ratio);
+	      sprintf (FilePrefix, "fermions_cylinder_ratio_%.6f", Ratio);
 	    }
 	  else
 	    {
-	      sprintf (FilePrefix, "bosons_cylinder_ratio%.6f", Ratio);
+	      sprintf (FilePrefix, "bosons_cylinder_ratio_%.6f", Ratio);
 	    }      
 	}
     }

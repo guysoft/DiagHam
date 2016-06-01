@@ -210,7 +210,10 @@ QuasiholeOnSphereWithSpin::QuasiholeOnSphereWithSpin (int kValue, int rValue, in
 	  this->SingleLayerAdAMatrices[OperatorLzValue] = new SparseRealMatrix*[TmpMaxNbrFermionsPerLayer + 1];
 	  for (int i = 0; i <= TmpMaxNbrFermionsPerLayer; ++i)
 	    {	      
-	      this->SingleLayerAdAMatrices[OperatorLzValue][i] = new SparseRealMatrix[(2 *  this->GetMaximalLzSingleLayer(i)) + 1];
+	      if (((i >= this->NbrFermionsUpMin) && (i <= this->NbrFermionsUpMax)) || ((i >= this->NbrFermionsDownMin) && (i <= this->NbrFermionsDownMax)))
+		this->SingleLayerAdAMatrices[OperatorLzValue][i] = new SparseRealMatrix[(2 *  this->GetMaximalLzSingleLayer(i)) + 1];
+	      else
+		this->SingleLayerAdAMatrices[OperatorLzValue][i] = 0;
 	    }
 	}
       RealMatrix TmpSingleLayerInteraction;
@@ -371,7 +374,8 @@ QuasiholeOnSphereWithSpin::~QuasiholeOnSphereWithSpin ()
 	{
 	  for (int i = 0; i <= TmpMaxNbrFermionsPerLayer; ++i)
 	    {	      
-	      delete[] this->SingleLayerAdAMatrices[OperatorLzValue][i];
+	      if ( this->SingleLayerAdAMatrices[OperatorLzValue][i] != 0)
+		delete[] this->SingleLayerAdAMatrices[OperatorLzValue][i];
 	    }	
 	  delete[] this->SingleLayerAdAMatrices[OperatorLzValue];
 	}
