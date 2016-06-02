@@ -135,8 +135,10 @@ QuasiholeOnSphereWithSpin::QuasiholeOnSphereWithSpin (int kValue, int rValue, in
     }
   for (int i = 0; i < NbrNonZeroElements; ++i)
     {
-      if ((NbrFermionsSingleLayer[i] <= TmpMaxNbrFermionsPerLayer) && (this->MaximalLzSingleLayer[NbrFermionsSingleLayer[i]] < LzSingleLayer[i]))     
-	this->MaximalLzSingleLayer[NbrFermionsSingleLayer[i]] = LzSingleLayer[i];
+      if ((NbrFermionsSingleLayer[i] <= TmpMaxNbrFermionsPerLayer) && (this->MaximalLzSingleLayer[NbrFermionsSingleLayer[i]] < LzSingleLayer[i])) 
+	{    
+	  this->MaximalLzSingleLayer[NbrFermionsSingleLayer[i]] = LzSingleLayer[i];
+	}
     }
   
   int TmpIndex = 0;
@@ -196,11 +198,6 @@ QuasiholeOnSphereWithSpin::QuasiholeOnSphereWithSpin (int kValue, int rValue, in
   this->LzValueUpFullSpace = new int [this->LargeHilbertSpaceDimension];
   
   this->LargeHilbertSpaceDimension = this->GenerateStates();
-
-//   for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
-//     {
-//       this->PrintState(cout, i) << endl;
-//     }
 
   if (this->LargeHilbertSpaceDimension > 0l)
     {   
@@ -370,23 +367,12 @@ QuasiholeOnSphereWithSpin::~QuasiholeOnSphereWithSpin ()
 	{
 	  TmpMaxNbrFermionsPerLayer = this->NbrFermionsDownMax;
 	}
-      for (int OperatorLzValue = 0; OperatorLzValue <= this->LzMax; ++OperatorLzValue)
-	{
-	  for (int i = 0; i <= TmpMaxNbrFermionsPerLayer; ++i)
-	    {	      
-	      if ( this->SingleLayerAdAMatrices[OperatorLzValue][i] != 0)
-		delete[] this->SingleLayerAdAMatrices[OperatorLzValue][i];
-	    }	
-	  delete[] this->SingleLayerAdAMatrices[OperatorLzValue];
-	}
-      delete[] this->SingleLayerAdAMatrices;
       for (int i = 0; i <= TmpMaxNbrFermionsPerLayer; ++i)
 	{
 	  if (this->SingleLayerLinearIndices[i] != 0)
 	    delete[] this->SingleLayerLinearIndices[i];
 	}
       delete[] this->SingleLayerLinearIndices;
-      delete[] this->MaximalLzSingleLayer;
     }
 }
 

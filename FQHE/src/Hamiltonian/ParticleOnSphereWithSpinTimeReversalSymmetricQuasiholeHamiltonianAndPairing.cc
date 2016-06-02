@@ -482,6 +482,7 @@ long ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
   
   QuasiholeOnSphereWithSpinAndPairing* TmpParticles = (QuasiholeOnSphereWithSpinAndPairing*) this->Particles->Clone();
   int MaximalNumberCouplingElements = TmpParticles->GetMaximalNumberCouplingElements();
+  cout << "MaximalNumberCouplingElements = " << MaximalNumberCouplingElements << endl;
   int* TmpLeftIndices = new int [MaximalNumberCouplingElements];
   double* TmpInteractionElements = new double[MaximalNumberCouplingElements];
   

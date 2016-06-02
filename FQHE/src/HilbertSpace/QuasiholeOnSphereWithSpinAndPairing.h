@@ -95,6 +95,11 @@ class QuasiholeOnSphereWithSpinAndPairing :  public ParticleOnSphereWithSpin
    // maximal number of states that any state can be coupled to
    int MaximalNumberCouplingElements;
 
+   // maximal total Lz value that can be reached in a single layer for a given number of particles
+   int* MaximalLzSingleLayer;
+
+   // array where the all the a^+a matrix elements are stored
+   SparseRealMatrix*** SingleLayerAdAMatrices;
 
  public:
 

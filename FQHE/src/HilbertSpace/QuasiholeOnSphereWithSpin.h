@@ -51,12 +51,9 @@ class QuasiholeOnSphereWithSpin :  public QuasiholeOnSphereWithSpinAndPairing
 
  protected:
 
-  // maximal total Lz value that can be reached in a single layer for a given number of particles
-  int* MaximalLzSingleLayer;
   // linearized indices for a single layer
   int** SingleLayerLinearIndices;
 
-  SparseRealMatrix*** SingleLayerAdAMatrices;
 
  public:
 
