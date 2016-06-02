@@ -150,16 +150,16 @@ int main(int argc, char** argv)
       if (Statistics == true)
 	{
 	  if (TmpDirectory != 0)
-	    sprintf (FilePrefix, "%s/fermions_cylinder_perimeter%.6f", TmpDirectory, Perimeter);
+	    sprintf (FilePrefix, "%s/fermions_cylinder_perimeter_%.6f", TmpDirectory, Perimeter);
 	  else
-	    sprintf (FilePrefix, "fermions_cylinder_perimeter%.6f", Perimeter);
+	    sprintf (FilePrefix, "fermions_cylinder_perimeter_%.6f", Perimeter);
 	}
       else
 	{
 	  if (TmpDirectory != 0)
-	    sprintf (FilePrefix, "%s/bosons_cylinder_perimeter%.6f", TmpDirectory, Perimeter);
+	    sprintf (FilePrefix, "%s/bosons_cylinder_perimeter_%.6f", TmpDirectory, Perimeter);
 	  else
-	    sprintf (FilePrefix, "bosons_cylinder_perimeter%.6f", Perimeter);
+	    sprintf (FilePrefix, "bosons_cylinder_perimeter_%.6f", Perimeter);
 	}
     }
   else
@@ -167,16 +167,16 @@ int main(int argc, char** argv)
       if (Statistics == true)
 	{
 	  if (TmpDirectory != 0)
-	    sprintf (FilePrefix, "%s/fermions_cylinder_ratio%.6f", TmpDirectory, Ratio);
+	    sprintf (FilePrefix, "%s/fermions_cylinder_ratio_%.6f", TmpDirectory, Ratio);
 	  else
-	    sprintf (FilePrefix, "fermions_cylinder_ratio%.6f", Ratio);
+	    sprintf (FilePrefix, "fermions_cylinder_ratio_%.6f", Ratio);
 	}
       else
 	{
 	  if (TmpDirectory != 0)
-	    sprintf (FilePrefix, "%s/bosons_cylinder_ratio%.6f", TmpDirectory, Ratio);
+	    sprintf (FilePrefix, "%s/bosons_cylinder_ratio_%.6f", TmpDirectory, Ratio);
 	  else
-	    sprintf (FilePrefix, "bosons_cylinder_ratio%.6f", Ratio);
+	    sprintf (FilePrefix, "bosons_cylinder_ratio_%.6f", Ratio);
 	}      
     }
 

@@ -197,10 +197,10 @@ QuasiholeOnSphereWithSpin::QuasiholeOnSphereWithSpin (int kValue, int rValue, in
   
   this->LargeHilbertSpaceDimension = this->GenerateStates();
 
-  for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
-    {
-      this->PrintState(cout, i) << endl;
-    }
+//   for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
+//     {
+//       this->PrintState(cout, i) << endl;
+//     }
 
   if (this->LargeHilbertSpaceDimension > 0l)
     {   
