@@ -22,6 +22,7 @@
 #include <math.h>
 #include <fstream>
 #include <string.h>
+#include <sys/time.h>
 
 
 using std::cout;
@@ -336,6 +337,8 @@ int main(int argc, char** argv)
 			      ++LeftNbrQuasiholeStates;
 			    }
 			}
+		      timeval TotalStartingTime;
+		      gettimeofday (&(TotalStartingTime), 0);
 		      if (LeftNbrQuasiholeStates > 0)
 			{
 			  cout << "  computing <Psi_{N-1}|c_{" << OperatorLzValue << "}|Psi_{N}>" << endl;
@@ -378,7 +381,6 @@ int main(int argc, char** argv)
 			      for (int j = 0; j < LeftNbrQuasiholeStates; ++j)
 				{
 				  double Tmp = -(LeftVectors[j] * TmpVector);
-				  cout << "    <" << j << "|c_{" << OperatorLzValue << "}|" << i << ">=" << Tmp << endl;
 				  TmpOutputMatrix.SetMatrixElement(j, i, Tmp);
 				}			  
 			    }
@@ -393,18 +395,31 @@ int main(int argc, char** argv)
 			  delete[] TmpOutputFileName;
 			}
 		      delete LeftSpace;		      
+		      timeval TotalEndingTime;
+		      gettimeofday (&(TotalEndingTime), 0);
+		      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+					    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));               
+		      cout << "computing c matrix elements done in " << Dt << "s" << endl;
 		    }
+		  timeval TotalStartingTime;
+		  gettimeofday (&(TotalStartingTime), 0);
+		  TotalStartingTime;
+		  gettimeofday (&(TotalStartingTime), 0);
 		  RealSymmetricMatrix TmpOutputMatrix(RightNbrQuasiholeStates, true);
-		  for (int i = 0; i < RightNbrQuasiholeStates; ++i)
+		  RealMatrix TmpMatrix (RightSpace->GetHilbertSpaceDimension(), RightNbrQuasiholeStates);
+		  for (int j = 0; j < RightSpace->GetHilbertSpaceDimension(); ++j)
 		    {
-		      for (int k = i; k < RightNbrQuasiholeStates; ++k)
+		      double TmpCoefficient = RightSpace->AdA(j, ShiftedOperatorLzValue);
+		      for (int i = 0; i < RightNbrQuasiholeStates; ++i)
 			{
-			  double TmpCoefficient = 0.0;
-			  for (int j = 0; j < RightSpace->GetHilbertSpaceDimension(); ++j)
-			    {
-			      TmpCoefficient += RightSpace->AdA(j, ShiftedOperatorLzValue) * RightVectors[k][j] * RightVectors[i][j];
-			    }
-			  TmpOutputMatrix.SetMatrixElement(i, k, TmpCoefficient);
+			  TmpMatrix[i][j] = TmpCoefficient * RightVectors[i][j];
+			}
+		    }
+ 		  for (int i = 0; i < RightNbrQuasiholeStates; ++i)
+ 		    {
+ 		      for (int k = i; k < RightNbrQuasiholeStates; ++k)
+			{ 
+			  TmpOutputMatrix.SetMatrixElement(i, k, RightVectors[k] * TmpMatrix[i]);
 			}
 		    }
 		  char* TmpOutputFileName = new char[256 + strlen(FilePrefix)];
@@ -415,6 +430,11 @@ int main(int argc, char** argv)
 		    TmpOutputMatrix.WriteAsciiMatrix(AsciiTmpOutputFileName, true);
 		  TmpOutputMatrix.WriteMatrix(TmpOutputFileName);
 		  delete[] TmpOutputFileName;
+		  timeval TotalEndingTime;
+		  gettimeofday (&(TotalEndingTime), 0);
+		  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+					((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));               
+		  cout << "computing c^+c matrix elements done in " << Dt << "s" << endl;
 		}
 	      delete[] RightRootConfigurations;
 	    }
@@ -452,6 +472,8 @@ RealMatrix FQHECylinderQuasiholeMatrixElementsComputeQuasiholeStates(ParticleOnS
 	}
       return QuasiholeVectors;
     }
+  timeval TotalStartingTime;
+  gettimeofday (&(TotalStartingTime), 0);
   RealVector* QuasiholeVectors = new RealVector[nbrQuasiholeStates];
   int* ReferenceState = new int[lzMax + 1];
   double Alpha = ((double) -(kValue + 1)) / ((double) (rValue - 1));
@@ -526,5 +548,10 @@ RealMatrix FQHECylinderQuasiholeMatrixElementsComputeQuasiholeStates(ParticleOnS
     {
       cout << "error while writing " << QuasiholeVectorFileName << endl;
     }
+  timeval TotalEndingTime;
+  gettimeofday (&(TotalEndingTime), 0);
+  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+			((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));               
+  cout << "subspace generation done in " << Dt << "s" << endl;
   return QuasiholeVectors2;
 }
