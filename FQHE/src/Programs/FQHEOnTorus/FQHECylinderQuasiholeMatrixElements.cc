@@ -366,24 +366,43 @@ int main(int argc, char** argv)
 													     LeftStateNbrParticles, LzMax, LeftTotalLz, Ratio, FilePrefix);
 			  RightSpace->SetTargetSpace(LeftSpace);
 			  RealMatrix TmpOutputMatrix(LeftNbrQuasiholeStates, RightNbrQuasiholeStates, true);
+			  RealMatrix TmpVectors(LeftSpace->GetLargeHilbertSpaceDimension(), RightNbrQuasiholeStates, true);
+			  for (int j = 0; j < RightSpace->GetHilbertSpaceDimension(); ++j)
+			    {
+			      double TmpCoefficient = 0.0;
+			      int TmpIndex = RightSpace->A(j, ShiftedOperatorLzValue, TmpCoefficient);
+			      if (TmpIndex < LeftSpace->GetHilbertSpaceDimension())
+				{
+				  for (int i = 0; i < RightNbrQuasiholeStates; ++i)
+				    TmpVectors[i][TmpIndex] += TmpCoefficient * RightVectors[i][j];
+				}
+			    }
 			  for (int i = 0; i < RightNbrQuasiholeStates; ++i)
 			    {
-			      RealVector TmpVector (LeftSpace->GetLargeHilbertSpaceDimension(), true);
-			      for (int j = 0; j < RightSpace->GetHilbertSpaceDimension(); ++j)
-				{
-				  double TmpCoefficient = 0.0;
-				  int TmpIndex = RightSpace->A(j, ShiftedOperatorLzValue, TmpCoefficient);
-				  if (TmpIndex < LeftSpace->GetHilbertSpaceDimension())
-				    {
-				      TmpVector[TmpIndex] += TmpCoefficient * RightVectors[i][j];
-				    }
-				}
-			      for (int j = 0; j < LeftNbrQuasiholeStates; ++j)
-				{
-				  double Tmp = -(LeftVectors[j] * TmpVector);
-				  TmpOutputMatrix.SetMatrixElement(j, i, Tmp);
-				}			  
+ 			      for (int j = 0; j < LeftNbrQuasiholeStates; ++j)
+ 				{
+ 				  double Tmp = -(LeftVectors[j] * TmpVectors[i]);
+ 				  TmpOutputMatrix.SetMatrixElement(j, i, Tmp);
+ 				}			  
 			    }
+// 			  for (int i = 0; i < RightNbrQuasiholeStates; ++i)
+// 			    {
+// 			      RealVector TmpVector (LeftSpace->GetLargeHilbertSpaceDimension(), true);
+// 			      for (int j = 0; j < RightSpace->GetHilbertSpaceDimension(); ++j)
+// 				{
+// 				  double TmpCoefficient = 0.0;
+// 				  int TmpIndex = RightSpace->A(j, ShiftedOperatorLzValue, TmpCoefficient);
+// 				  if (TmpIndex < LeftSpace->GetHilbertSpaceDimension())
+// 				    {
+// 				      TmpVector[TmpIndex] += TmpCoefficient * RightVectors[i][j];
+// 				    }
+// 				}
+// 			      for (int j = 0; j < LeftNbrQuasiholeStates; ++j)
+// 				{
+// 				  double Tmp = -(LeftVectors[j] * TmpVector);
+// 				  TmpOutputMatrix.SetMatrixElement(j, i, Tmp);
+// 				}			  
+// 			    }
 			  delete[] LeftRootConfigurations;
 			  char* TmpOutputFileName = new char[256 + strlen(FilePrefix)];
 			  sprintf (TmpOutputFileName, "%s_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", FilePrefix, KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
