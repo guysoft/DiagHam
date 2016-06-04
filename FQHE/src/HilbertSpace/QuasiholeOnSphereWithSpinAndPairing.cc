@@ -234,43 +234,46 @@ QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing (int kV
 	      for (int OperatorLzValue = -this->LzMax; OperatorLzValue <= this->LzMax; OperatorLzValue += 2)
 		{
 		  int TmpLeftNbrParticles = TmpRightNbrParticles - 1;
-		  int MaxLeftTotalLz = this->GetMaximalLzSingleLayer(TmpLeftNbrParticles);
-		  int TmpLeftLz = TmpRightLz - OperatorLzValue;
-		  if ((TmpLeftNbrParticles >= 0) && (TmpLeftLz >= -MaxLeftTotalLz) && (TmpLeftLz <= MaxLeftTotalLz))
-		    {
-		      TmpIndexLeft1 = this->GetLinearIndexSingleLayer(TmpLeftNbrParticles, TmpLeftLz);
-		      if (directory != 0)
-			{
-			  sprintf (TmpFileName, "%s/%s_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", directory, filePrefix, this->KValue, this->RValue, 
+		  if (TmpLeftNbrParticles >= 0)
+		  {
+		    int MaxLeftTotalLz = this->GetMaximalLzSingleLayer(TmpLeftNbrParticles);
+		    int TmpLeftLz = TmpRightLz - OperatorLzValue;
+		    if ((TmpLeftLz >= -MaxLeftTotalLz) && (TmpLeftLz <= MaxLeftTotalLz))
+		      {
+			TmpIndexLeft1 = this->GetLinearIndexSingleLayer(TmpLeftNbrParticles, TmpLeftLz);
+			if (directory != 0)
+			  {
+			    sprintf (TmpFileName, "%s/%s_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", directory, filePrefix, this->KValue, this->RValue, 
 				   TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
-			}
-		      else
-			{ 
-			  sprintf (TmpFileName, "%s_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", filePrefix, this->KValue, this->RValue, TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
-			}
-		      if (TmpSingleLayerInteraction.ReadMatrix(TmpFileName) == false)
-			{
-			  cout << "error, can't read " << TmpFileName << endl;
-			  return;
-			} 
-		      else
-			{
-			  if (abs(this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexLeft1] - TmpSingleLayerInteraction.GetNbrRow()) > 0)
-			    cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexLeft1] << " " << TmpSingleLayerInteraction.GetNbrRow() << endl;
-			  if (abs(this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] - TmpSingleLayerInteraction.GetNbrColumn()) > 0)
-			    cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] << " " << TmpSingleLayerInteraction.GetNbrColumn() << endl;
+			  }
+			else
+			  { 
+			    sprintf (TmpFileName, "%s_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", filePrefix, this->KValue, this->RValue, TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
+			  }
+			if (TmpSingleLayerInteraction.ReadMatrix(TmpFileName) == false)
+			  {
+			    cout << "error, can't read " << TmpFileName << endl;
+			    return;
+			  } 
+			else
+			  {
+			    if (abs(this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexLeft1] - TmpSingleLayerInteraction.GetNbrRow()) > 0)
+			      cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexLeft1] << " " << TmpSingleLayerInteraction.GetNbrRow() << endl;
+			    if (abs(this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] - TmpSingleLayerInteraction.GetNbrColumn()) > 0)
+			      cout << this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexRight1] << " " << TmpSingleLayerInteraction.GetNbrColumn() << endl;
 			  
-			  for (int i = 0; i < TmpSingleLayerInteraction.GetNbrRow(); ++i)
-			    {
-			      for (int j = i; j < TmpSingleLayerInteraction.GetNbrColumn(); ++j)
-				{
-				  TmpIndexLeft = this->SingleLayerIndices[TmpIndexLeft1] + i;
-				  TmpIndexRight = this->SingleLayerIndices[TmpIndexRight1] + j;
-				  TmpSingleLayerInteraction.GetMatrixElement(i, j, TmpInteraction);
-				  SingleLayerAnnihilationMatrix.AddToMatrixElement(TmpIndexLeft, TmpIndexRight, TmpInteraction);
-				}
-			    }
-			}
+			    for (int i = 0; i < TmpSingleLayerInteraction.GetNbrRow(); ++i)
+			      {
+				for (int j = i; j < TmpSingleLayerInteraction.GetNbrColumn(); ++j)
+				  {
+				    TmpIndexLeft = this->SingleLayerIndices[TmpIndexLeft1] + i;
+				    TmpIndexRight = this->SingleLayerIndices[TmpIndexRight1] + j;
+				    TmpSingleLayerInteraction.GetMatrixElement(i, j, TmpInteraction);
+				    SingleLayerAnnihilationMatrix.AddToMatrixElement(TmpIndexLeft, TmpIndexRight, TmpInteraction);
+				  }
+			      }
+			  }
+		      }
 		    }
 		  
 		  
