@@ -55,7 +55,7 @@ using std::endl;
 using std::ostream;
 
 //default constructor
-ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingSort::ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingSort()
+ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing()
 {
 }
 
@@ -73,7 +73,7 @@ ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingSort:
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingSort::ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingSort(QuasiholeOnSphereWithSpinAndPairing* particles, int lzmax, double* onebodyPotentialUpUp, double* onebodyPotentialDownDown, double* onebodyPotentialPairing, double chargingEnergy, double averageNumberParticles, AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, char* precalculationFileName)
+ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing(QuasiholeOnSphereWithSpinAndPairing* particles, int lzmax, double* onebodyPotentialUpUp, double* onebodyPotentialDownDown, double* onebodyPotentialPairing, double chargingEnergy, double averageNumberParticles, AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, char* precalculationFileName)
 {
   cout << "New" << endl;
   this->Particles = particles;
@@ -139,7 +139,7 @@ ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingSort:
 // destructor
 //
 
-ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingSort::~ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingSort() 
+ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::~ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing() 
 {
   if (this->OneBodyInteractionFactorsupup != 0)
     delete[] this->OneBodyInteractionFactorsupup;
@@ -156,7 +156,7 @@ ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingSort:
 //
 // hilbertSpace = pointer to Hilbert space to use
 
-void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingSort::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
   this->Particles = (QuasiholeOnSphereWithSpinAndPairing*) hilbertSpace;
 }
@@ -165,7 +165,7 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 //
 // shift = shift value
 
-void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingSort::ShiftHamiltonian (double shift)
+void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::ShiftHamiltonian (double shift)
 {
   this->HamiltonianShift += shift;
 }
@@ -179,7 +179,7 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingSort::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+RealVector& ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
 													     int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
@@ -297,7 +297,7 @@ RealVector& ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAnd
 	    }
 	  else
 	    {
-	      cout << "Error: ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingSort::LowLevelAddMultiplyDiskStorage not implemented" << endl;
+	      cout << "Error: ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::LowLevelAddMultiplyDiskStorage not implemented" << endl;
 // 	      this->LowLevelAddMultiplyDiskStorage(vSource, vDestination, firstComponent, nbrComponent);
 	    }
 	}
@@ -318,7 +318,7 @@ RealVector& ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAnd
 // nbrComponent = number of components to evaluate
 // return value = pointer to the array of vectors where result has been stored
 
-RealVector* ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingSort::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent)
+RealVector* ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   int MaximalNumberCouplingElements = ((QuasiholeOnSphereWithSpinAndPairing*) (this->Particles))->GetMaximalNumberCouplingElements();
@@ -448,7 +448,7 @@ RealVector* ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAnd
 	    }
 	  else
 	    {
-	      cout << "Error: ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingSort::LowLevelMultipleAddMultiplyDiskStorage not implemented" << endl;
+	      cout << "Error: ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::LowLevelMultipleAddMultiplyDiskStorage not implemented" << endl;
 // 	      this->LowLevelMultipleAddMultiplyDiskStorage(vSource, vDestination, nbrVectors, firstComponent, nbrComponent);
 	    }
 	}
@@ -464,7 +464,7 @@ RealVector* ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAnd
 //
 // return value = pointer to used Hilbert space
 
-AbstractHilbertSpace* ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingSort::GetHilbertSpace ()
+AbstractHilbertSpace* ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::GetHilbertSpace ()
 {
   return this->Particles;
 }
@@ -476,7 +476,7 @@ AbstractHilbertSpace* ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHami
 // nbrComponent  = number of components that has to be precalcualted
 // return value = number of non-zero matrix element
 
-long ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingSort::PartialFastMultiplicationMemory(int firstComponent, int nbrComponent)
+long ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::PartialFastMultiplicationMemory(int firstComponent, int nbrComponent)
 {
   int NbrElements;
   double TmpCoefficient;
@@ -581,7 +581,7 @@ long ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 // firstComponent = index of the first component that has to be precalcualted
 // nbrComponent  = index of the last component that has to be precalcualted
 
-void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingSort::PartialEnableFastMultiplication(int firstComponent, int nbrComponent)
+void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::PartialEnableFastMultiplication(int firstComponent, int nbrComponent)
 {  
   double TmpCoefficient;
   double ChargeContribution;
@@ -719,7 +719,7 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingSort::LowLevelAddMultiplyPartialFastMultiply(RealVector& vSource, RealVector& vDestination, 
+RealVector& ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::LowLevelAddMultiplyPartialFastMultiply(RealVector& vSource, RealVector& vDestination, 
 										   int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
@@ -847,7 +847,7 @@ RealVector& ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAnd
 // nbrComponent = number of components to evaluate
 // return value = pointer to the array of vectors where result has been stored
 
-RealVector* ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingSort::LowLevelMultipleAddMultiplyPartialFastMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+RealVector* ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::LowLevelMultipleAddMultiplyPartialFastMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
 											   int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
