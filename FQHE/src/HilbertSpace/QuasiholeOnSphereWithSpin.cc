@@ -362,7 +362,6 @@ QuasiholeOnSphereWithSpin::~QuasiholeOnSphereWithSpin ()
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->SingleLayerLinearIndices;
     }
 }
 
