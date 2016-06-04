@@ -100,6 +100,10 @@ class QuasiholeOnSphereWithSpinAndPairing :  public ParticleOnSphereWithSpin
 
    // array where the all the a^+a matrix elements are stored
    SparseRealMatrix*** SingleLayerAdAMatrices;
+   
+   
+    // linearized indices for a single layer
+    int** SingleLayerLinearIndices;
 
  public:
 
@@ -260,10 +264,8 @@ inline int QuasiholeOnSphereWithSpinAndPairing::GetParticleStatistic()
 // return value = linearized index
 
 inline int QuasiholeOnSphereWithSpinAndPairing::GetLinearIndexSingleLayer(int nbrParticles, int totalLz)
-{
-  int MaxTotalLz = this->GetMaximalLzSingleLayer(nbrParticles);
-  int TmpIndex = nbrParticles + this->LzMax * (nbrParticles - 1) * nbrParticles / 2 - (this->RValue + this->KValue * this->FermionFactor) * nbrParticles * (nbrParticles - 1) * (nbrParticles - 2) / 3 + (totalLz + MaxTotalLz) / 2;
-  return TmpIndex;
+{  
+  return this->SingleLayerLinearIndices[nbrParticles][(totalLz + this->GetMaximalLzSingleLayer(nbrParticles)) / 2];
 }
   
 
@@ -274,8 +276,7 @@ inline int QuasiholeOnSphereWithSpinAndPairing::GetLinearIndexSingleLayer(int nb
 
 inline int QuasiholeOnSphereWithSpinAndPairing::GetMaximalLzSingleLayer(int nbrParticles)
 {
-  int maxTotalLz = nbrParticles * this->LzMax - (((this->RValue + (this->KValue * this->FermionFactor)) * nbrParticles * (nbrParticles - 1)));
-  return maxTotalLz;  
+  return this->MaximalLzSingleLayer[nbrParticles];
 }
 
   

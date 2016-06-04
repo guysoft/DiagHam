@@ -362,16 +362,6 @@ QuasiholeOnSphereWithSpin::~QuasiholeOnSphereWithSpin ()
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      int TmpMaxNbrFermionsPerLayer = this->NbrFermionsUpMax;
-      if (TmpMaxNbrFermionsPerLayer < this->NbrFermionsDownMax)
-	{
-	  TmpMaxNbrFermionsPerLayer = this->NbrFermionsDownMax;
-	}
-      for (int i = 0; i <= TmpMaxNbrFermionsPerLayer; ++i)
-	{
-	  if (this->SingleLayerLinearIndices[i] != 0)
-	    delete[] this->SingleLayerLinearIndices[i];
-	}
       delete[] this->SingleLayerLinearIndices;
     }
 }

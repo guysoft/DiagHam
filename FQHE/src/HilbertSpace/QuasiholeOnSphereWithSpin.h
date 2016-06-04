@@ -48,13 +48,6 @@ using std::endl;
 class QuasiholeOnSphereWithSpin :  public QuasiholeOnSphereWithSpinAndPairing
 {
 
-
- protected:
-
-  // linearized indices for a single layer
-  int** SingleLayerLinearIndices;
-
-
  public:
 
   // default constructor
