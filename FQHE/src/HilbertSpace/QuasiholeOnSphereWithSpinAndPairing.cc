@@ -729,37 +729,6 @@ int QuasiholeOnSphereWithSpinAndPairing::AddAd (int index, int m, int*& leftIndi
     }
   
   return NumberCouplingElements;    
-//   int NumberCouplingElements = 0;
-//   int ShiftedOperatorLzValue = m;
-  
-//   int NbrParticlesUp = this->NbrFermionUpFullSpace[index];
-//   int NbrParticlesDown = NbrParticlesUp - this->TotalSpin;
-//   int LzUp = this->LzValueUpFullSpace[index];
-//   int LzDown = LzUp - this->TotalLz;
-//   int TmpIndexDown = this->GetLinearIndexSingleLayer(NbrParticlesDown, LzDown); 
-//   int NbrStatesUp = this->NbrQuasiholesPerNPerLzSingleLayer [this->GetLinearIndexSingleLayer(NbrParticlesUp, LzUp)];
-  
-//   int BetaUp;
-//   int BetaDown;  
-//   this->FindBetaIndices(index, BetaUp, BetaDown);
-  
-//   double Tmp;
-//   int TmpIndex = this->FindStateIndex(NbrParticlesUp, LzUp, BetaUp, 0);  
-//   NumberCouplingElements = 0;
-   
-//   for (int i = 0; i < this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndexDown]; ++i)
-//   {
-//     this->AdAElementsOneLayer[ShiftedOperatorLzValue].GetMatrixElement((this->SingleLayerIndices[TmpIndexDown] + i), (this->SingleLayerIndices[TmpIndexDown] + BetaDown), Tmp);
-//     if (Tmp != 0.0)
-//     {
-//       interactionElements[NumberCouplingElements] = Tmp;
-//       leftIndices[NumberCouplingElements] = TmpIndex;
-//       ++NumberCouplingElements;
-//     }
-//     TmpIndex += NbrStatesUp;    
-//   }
-    
-//   return NumberCouplingElements;    
 }
 
 

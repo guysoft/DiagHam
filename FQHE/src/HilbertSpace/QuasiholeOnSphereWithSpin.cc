@@ -222,10 +222,10 @@ QuasiholeOnSphereWithSpin::QuasiholeOnSphereWithSpin (int kValue, int rValue, in
       for (int TmpRightNbrParticles = this->NbrFermionsUpMin; TmpRightNbrParticles <= this->NbrFermionsUpMax; ++TmpRightNbrParticles)
 	{
 	  int MaxRightTotalLz = this->GetMaximalLzSingleLayer(TmpRightNbrParticles);
-	  int MaxRightTotalLzDown = this->GetMaximalLzSingleLayer(this->TotalSpin - TmpRightNbrParticles);	  
+	  int MaxRightTotalLzDown = this->GetMaximalLzSingleLayer(TmpRightNbrParticles - this->TotalSpin);	  
 	  for (int TmpRightLz = -MaxRightTotalLz; TmpRightLz <= MaxRightTotalLz; TmpRightLz += 2)
 	    {
-	      if (abs(this->TotalLz - TmpRightLz)  <= MaxRightTotalLzDown)
+	      if (abs(TmpRightLz - this->TotalLz)  <= MaxRightTotalLzDown)
 		{
 		  TmpIndexRight1 = this->GetLinearIndexSingleLayer(TmpRightNbrParticles, TmpRightLz);
 		  for (int OperatorLzValue = -this->LzMax; OperatorLzValue <= this->LzMax; OperatorLzValue += 2)
@@ -256,7 +256,7 @@ QuasiholeOnSphereWithSpin::QuasiholeOnSphereWithSpin (int kValue, int rValue, in
 	  int MaxRightTotalLzUp = this->GetMaximalLzSingleLayer(this->TotalSpin + TmpRightNbrParticles);	  
 	  for (int TmpRightLz = -MaxRightTotalLz; TmpRightLz <= MaxRightTotalLz; TmpRightLz += 2)
 	    {
-	      if (abs(this->TotalLz - TmpRightLz)  <= MaxRightTotalLzUp)
+	      if (abs(this->TotalLz + TmpRightLz)  <= MaxRightTotalLzUp)
 		{
 		  TmpIndexRight1 = this->GetLinearIndexSingleLayer(TmpRightNbrParticles, TmpRightLz);
 		  for (int OperatorLzValue = -this->LzMax; OperatorLzValue <= this->LzMax; OperatorLzValue += 2)
@@ -473,6 +473,8 @@ long QuasiholeOnSphereWithSpin::GenerateStates()
 	}
     }
   this->MaximalNumberCouplingElements *= this->MaximalNumberCouplingElements;
+  if (this->MaximalNumberCouplingElements > TmpDimension)
+    this->MaximalNumberCouplingElements = TmpDimension;
   return TmpDimension;      
 }
 
