@@ -75,7 +75,6 @@ ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::Par
 
 ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing(QuasiholeOnSphereWithSpinAndPairing* particles, int lzmax, double* onebodyPotentialUpUp, double* onebodyPotentialDownDown, double* onebodyPotentialPairing, double chargingEnergy, double averageNumberParticles, AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, char* precalculationFileName)
 {
-  cout << "New" << endl;
   this->Particles = particles;
   this->LzMax = lzmax;
   this->NbrLzValue = this->LzMax + 1;
@@ -191,7 +190,6 @@ RealVector& ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAnd
   
   if (this->FastMultiplicationFlag == false)
     {
-      cout << "recomputing hamiltonian elements at each step" << endl;
       QuasiholeOnSphereWithSpinAndPairing* TmpParticles = (QuasiholeOnSphereWithSpinAndPairing*) this->Particles->Clone();
       int index = firstComponent;
       int NbrElements;
@@ -506,17 +504,13 @@ long ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 		{
 		  NbrElements = TmpParticles->AuAd(i, lz, TmpLeftIndices, TmpInteractionElements);
 		  for (int k = 0; k < NbrElements; ++k)
-		    {
 		      CurrentNbrCounting += SearchInSortedArrayAndInsert<int>(TmpLeftIndices[k], TmpCounting, CurrentNbrCounting);
-		    }
 // 		  Memory += NbrElements;
 // 		  this->NbrInteractionPerComponent[i - this->PrecalculationShift] += NbrElements;
 		  
 		  NbrElements = TmpParticles->AduAdd(i, lz, TmpLeftIndices, TmpInteractionElements);
 		  for (int k = 0; k < NbrElements; ++k)
-		    {
 		      CurrentNbrCounting += SearchInSortedArrayAndInsert<int>(TmpLeftIndices[k], TmpCounting, CurrentNbrCounting);
-		    }
 // 		  Memory += NbrElements;
 // 		  this->NbrInteractionPerComponent[i - this->PrecalculationShift] += NbrElements;
 		}	
@@ -567,7 +561,6 @@ long ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
       this->NbrInteractionPerComponent[i - this->PrecalculationShift] += CurrentNbrCounting;
     }
   
-
 //  cout << Memory << " " << TmpTotal << endl;
   delete[] TmpLeftIndices;
   delete[] TmpInteractionElements;

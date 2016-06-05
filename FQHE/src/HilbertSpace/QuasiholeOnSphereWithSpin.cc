@@ -284,7 +284,7 @@ QuasiholeOnSphereWithSpin::QuasiholeOnSphereWithSpin (int kValue, int rValue, in
 		}
 	    }
 	}
-      this->AdAElementsOneLayer = new SparseRealMatrix[this->LzMax + 1];
+//       this->AdAElementsOneLayer = new SparseRealMatrix[this->LzMax + 1];
     }
 
   delete[] TmpFileName;
@@ -342,8 +342,8 @@ QuasiholeOnSphereWithSpin::QuasiholeOnSphereWithSpin(const QuasiholeOnSphereWith
   this->SingleLayerIndices = fermions.SingleLayerIndices;
   this->NbrFermionUpFullSpace = fermions.NbrFermionUpFullSpace;
   this->LzValueUpFullSpace = fermions.LzValueUpFullSpace;
-  this->AnnihilationElementsOneLayer = fermions.AnnihilationElementsOneLayer;
-  this->AdAElementsOneLayer = fermions.AdAElementsOneLayer;
+//   this->AnnihilationElementsOneLayer = fermions.AnnihilationElementsOneLayer;
+//   this->AdAElementsOneLayer = fermions.AdAElementsOneLayer;
   this->NbrFermionsUpMin = fermions.NbrFermionsUpMin;
   this->NbrFermionsUpMax = fermions.NbrFermionsUpMax; 
   this->NbrFermionsDownMin = fermions.NbrFermionsDownMin;
@@ -390,8 +390,8 @@ QuasiholeOnSphereWithSpin& QuasiholeOnSphereWithSpin::operator = (const Quasihol
   this->SingleLayerIndices = fermions.SingleLayerIndices;
   this->NbrFermionUpFullSpace = fermions.NbrFermionUpFullSpace;
   this->LzValueUpFullSpace = fermions.LzValueUpFullSpace;
-  this->AnnihilationElementsOneLayer = fermions.AnnihilationElementsOneLayer;
-  this->AdAElementsOneLayer = fermions.AdAElementsOneLayer;
+//   this->AnnihilationElementsOneLayer = fermions.AnnihilationElementsOneLayer;
+//   this->AdAElementsOneLayer = fermions.AdAElementsOneLayer;
   this->NbrFermionsUpMin = fermions.NbrFermionsUpMin;
   this->NbrFermionsUpMax = fermions.NbrFermionsUpMax; 
   this->NbrFermionsDownMin = fermions.NbrFermionsDownMin;
