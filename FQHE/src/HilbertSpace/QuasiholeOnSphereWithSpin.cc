@@ -461,9 +461,6 @@ long QuasiholeOnSphereWithSpin::GenerateStates()
 	    }
 	}
     }
-  this->MaximalNumberCouplingElements *= this->MaximalNumberCouplingElements;
-  if (this->MaximalNumberCouplingElements > TmpDimension)
-    this->MaximalNumberCouplingElements = TmpDimension;
   return TmpDimension;      
 }
 

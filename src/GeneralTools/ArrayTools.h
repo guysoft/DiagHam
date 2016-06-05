@@ -2694,13 +2694,11 @@ int SearchInArrayAndSetWeight(ClassName element, ClassName*& array, Complex *& w
 }
 
 
-// find an element in an array, if found add c to the corresponding weight in weight array, if not found insert the element and set the weight to c
+// find an element in an array, if not found insert the element such that the array is still sorted
 //
 // element = element to find
 // array = array where to search 
-// weight = weight array
 // nbrValue = number of values in array
-// c = weight to add
 // return value = number of inserted value
 
 template <class ClassName>
@@ -2712,9 +2710,9 @@ int SearchInSortedArrayAndInsert(ClassName element, ClassName*& array, unsigned 
       return 1;
     }
   
-  int StartIndex = 0;
-  int EndIndex = nbrValue;
-  int MidIndex;
+  unsigned long StartIndex = 0l;
+  unsigned long EndIndex = nbrValue;
+  unsigned long MidIndex;
   
   while((EndIndex - StartIndex) > 1)
     {
@@ -2740,13 +2738,13 @@ int SearchInSortedArrayAndInsert(ClassName element, ClassName*& array, unsigned 
   ClassName TmpElement;
   ClassName TmpElement1;
   
-  if(array[StartIndex]<element)
+  if(array[StartIndex] < element)
     StartIndex++;
   
   TmpElement = array[StartIndex];
   array[StartIndex] = element;
 
-  for (unsigned int i = StartIndex + 1; i < nbrValue; ++i)
+  for (unsigned long i = StartIndex + 1; i < nbrValue; ++i)
     {
       TmpElement1 = array[i];
       array[i] = TmpElement;
@@ -2754,7 +2752,6 @@ int SearchInSortedArrayAndInsert(ClassName element, ClassName*& array, unsigned 
     }
   return 1;
 }
-
 
 
 // compute the product of occupation number factorial of an array

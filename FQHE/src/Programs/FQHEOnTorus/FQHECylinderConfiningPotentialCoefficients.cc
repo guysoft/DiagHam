@@ -85,6 +85,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  BooleanOption ('\n', "confining-momentum", "if set, the confining potential is defined in the momentum space");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "optional output file name instead of the default one");
   (*OutputGroup) += new BooleanOption ('\n', "spinful", "the output file will be used for a spinful system, assuming the same confining potential for all species");
+  (*OutputGroup) += new BooleanOption ('\n', "time-reversal", "the output file will be used for a spinful system with time reversal symmetry, assuming the same confining potential for all species");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -267,10 +268,24 @@ int main(int argc, char** argv)
     }
   if (Manager.GetBoolean("spinful") == false)
     {
-      File << "OneBodyPotentials =";
-      for (int i = 0; i < NbrCoefficients; ++i)
-	File << " " << Coefficients[i];
-      File << endl;
+      if (Manager.GetBoolean("time-reversal") == false)
+	{
+	  File << "OneBodyPotentials =";
+	  for (int i = 0; i < NbrCoefficients; ++i)
+	    File << " " << Coefficients[i];
+	  File << endl;
+	}
+      else
+	{
+	  File << "OneBodyPotentialUpUp     =";
+	  for (int i = 0; i < NbrCoefficients; ++i)
+	    File << " " << Coefficients[i];
+	  File << endl;
+	  File << "OneBodyPotentialDownDown =";
+	  for (int i = 0; i < NbrCoefficients; ++i)
+	    File << " " << Coefficients[NbrCoefficients - i - 1];
+	  File << endl;
+	}
     }
   else
     {
