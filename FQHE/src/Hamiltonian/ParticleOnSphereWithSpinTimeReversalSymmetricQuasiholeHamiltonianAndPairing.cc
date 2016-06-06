@@ -493,9 +493,6 @@ long ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
   int Tmp = 0;
   for (int i = firstComponent; i < LastComponent; ++i)
     {
-      for (int k = 0; k < CurrentNbrCounting; ++k)
-	TmpCounting[k] = 0;
-      CurrentNbrCounting = 0;
       if (this->OneBodyInteractionFactorsPairing != 0)
 	{
 	  for (int lz = 0; lz <= this->LzMax; ++lz)
@@ -504,17 +501,20 @@ long ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 	      if (TmpCoefficient != 0.0)
 		{
 		  NbrElements = TmpParticles->AuAd(i, lz, TmpLeftIndices, TmpInteractionElements);
-		  CurrentNbrCounting += NbrElements;
-// 		  Memory += NbrElements;
-// 		  this->NbrInteractionPerComponent[i - this->PrecalculationShift] += NbrElements;
+		  Memory += NbrElements;
+		  TmpTotal += NbrElements;
+		  this->NbrInteractionPerComponent[i - this->PrecalculationShift] += NbrElements;
 		  
 		  NbrElements = TmpParticles->AduAdd(i, lz, TmpLeftIndices, TmpInteractionElements);
-		  CurrentNbrCounting += NbrElements;
-// 		  Memory += NbrElements;
-// 		  this->NbrInteractionPerComponent[i - this->PrecalculationShift] += NbrElements;
+		  Memory += NbrElements;
+		  TmpTotal += NbrElements;
+		  this->NbrInteractionPerComponent[i - this->PrecalculationShift] += NbrElements;
 		}	
 	    }
 	}
+      for (int k = 0; k < CurrentNbrCounting; ++k)
+	TmpCounting[k] = 0;
+      CurrentNbrCounting = 0;
       if (this->OneBodyInteractionFactorsupup != 0)
 	{
 	  for (int lz = 0; lz <= this->LzMax; ++lz)
@@ -526,8 +526,6 @@ long ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 		    {
 		      CurrentNbrCounting += SearchInSortedArrayAndInsert<int>(TmpLeftIndices[k], TmpCounting, CurrentNbrCounting);
 		    }
-// 		  Memory += NbrElements;
-// 		  this->NbrInteractionPerComponent[i - this->PrecalculationShift] += NbrElements;
 		}
 	    }
 	}      
@@ -542,8 +540,6 @@ long ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 		    {
 		      CurrentNbrCounting += SearchInSortedArrayAndInsert<int>(TmpLeftIndices[k], TmpCounting, CurrentNbrCounting);
 		    }
-// 		  Memory += NbrElements;
-// 		  this->NbrInteractionPerComponent[i - this->PrecalculationShift] += NbrElements;
 		}
 	    }
 	}
@@ -552,8 +548,6 @@ long ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
       if ((this->ChargingEnergy != 0.0) && (TmpTotalNbrParticles != this->AverageNumberParticles))
 	{
 	  CurrentNbrCounting += SearchInSortedArrayAndInsert<int>(i, TmpCounting, CurrentNbrCounting);
-// 	  ++Memory;
-// 	  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 	}  
       TmpTotal += CurrentNbrCounting;
       Memory += CurrentNbrCounting;
