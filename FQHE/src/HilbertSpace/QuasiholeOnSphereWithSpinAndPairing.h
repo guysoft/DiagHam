@@ -97,10 +97,14 @@ class QuasiholeOnSphereWithSpinAndPairing :  public ParticleOnSphereWithSpin
 
    // maximal total Lz value that can be reached in a single layer for a given number of particles
    int* MaximalLzSingleLayer;
+   // minimal amplitude to consider for the Jack coupling elements
+   double Error;
 
    // array where the all the a^+a matrix elements are stored
    SparseRealMatrix*** SingleLayerAdAMatrices;
-   SparseRealMatrix*** SingleLayerAnnihilationMatrices;
+   // array where all the auad matrix elements are stored
+   RealMatrix*** SingleLayerAnnihilationMatrices;
+//    SparseRealMatrix*** SingleLayerAnnihilationMatrices;
 
    
     // linearized indices for a single layer

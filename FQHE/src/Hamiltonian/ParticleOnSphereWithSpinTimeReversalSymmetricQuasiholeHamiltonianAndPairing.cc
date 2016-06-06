@@ -490,6 +490,7 @@ long ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
   int* TmpCounting = new int [TmpParticles->GetHilbertSpaceDimension()];
   long TmpTotal = 0l;
   int CurrentNbrCounting = 0;
+  int Tmp = 0;
   for (int i = firstComponent; i < LastComponent; ++i)
     {
       for (int k = 0; k < CurrentNbrCounting; ++k)
@@ -561,6 +562,7 @@ long ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
       this->NbrInteractionPerComponent[i - this->PrecalculationShift] += CurrentNbrCounting;
     }
   
+  cout << Tmp << " " << (2 * Tmp) << endl;
 //  cout << Memory << " " << TmpTotal << endl;
   delete[] TmpLeftIndices;
   delete[] TmpInteractionElements;
