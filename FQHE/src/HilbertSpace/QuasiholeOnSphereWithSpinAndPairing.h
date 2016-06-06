@@ -100,11 +100,11 @@ class QuasiholeOnSphereWithSpinAndPairing :  public ParticleOnSphereWithSpin
    // minimal amplitude to consider for the Jack coupling elements
    double Error;
 
+   
    // array where the all the a^+a matrix elements are stored
-   SparseRealMatrix*** SingleLayerAdAMatrices;
+   RealMatrix*** SingleLayerAdAMatrices;
    // array where all the auad matrix elements are stored
    RealMatrix*** SingleLayerAnnihilationMatrices;
-//    SparseRealMatrix*** SingleLayerAnnihilationMatrices;
 
    
     // linearized indices for a single layer
