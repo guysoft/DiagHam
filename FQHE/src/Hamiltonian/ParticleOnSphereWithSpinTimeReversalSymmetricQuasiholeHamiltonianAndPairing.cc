@@ -504,14 +504,12 @@ long ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 	      if (TmpCoefficient != 0.0)
 		{
 		  NbrElements = TmpParticles->AuAd(i, lz, TmpLeftIndices, TmpInteractionElements);
-		  for (int k = 0; k < NbrElements; ++k)
-		      CurrentNbrCounting += SearchInSortedArrayAndInsert<int>(TmpLeftIndices[k], TmpCounting, CurrentNbrCounting);
+		  CurrentNbrCounting += NbrElements;
 // 		  Memory += NbrElements;
 // 		  this->NbrInteractionPerComponent[i - this->PrecalculationShift] += NbrElements;
 		  
 		  NbrElements = TmpParticles->AduAdd(i, lz, TmpLeftIndices, TmpInteractionElements);
-		  for (int k = 0; k < NbrElements; ++k)
-		      CurrentNbrCounting += SearchInSortedArrayAndInsert<int>(TmpLeftIndices[k], TmpCounting, CurrentNbrCounting);
+		  CurrentNbrCounting += NbrElements;
 // 		  Memory += NbrElements;
 // 		  this->NbrInteractionPerComponent[i - this->PrecalculationShift] += NbrElements;
 		}	
@@ -562,7 +560,6 @@ long ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
       this->NbrInteractionPerComponent[i - this->PrecalculationShift] += CurrentNbrCounting;
     }
   
-  cout << Tmp << " " << (2 * Tmp) << endl;
 //  cout << Memory << " " << TmpTotal << endl;
   delete[] TmpLeftIndices;
   delete[] TmpInteractionElements;
