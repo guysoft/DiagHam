@@ -159,13 +159,13 @@ QuasiholeOnSphereWithSpin::QuasiholeOnSphereWithSpin (int kValue, int rValue, in
 
   this->NbrQuasiholeEntriesSingleLayer = TmpIndex;
   this->NbrQuasiholesPerNPerLzSingleLayer = new int [this->NbrQuasiholeEntriesSingleLayer];
-  this->SingleLayerIndices = new int [this->NbrQuasiholeEntriesSingleLayer];
+//   this->SingleLayerIndices = new int [this->NbrQuasiholeEntriesSingleLayer];
   this->FirstIndexWithNbrParticlesUpLzValueUp = new int[this->NbrQuasiholeEntriesSingleLayer];
 
   for (int i = 0; i < this->NbrQuasiholeEntriesSingleLayer; ++i)
     {
       this->NbrQuasiholesPerNPerLzSingleLayer[i] = 0;
-      this->SingleLayerIndices[i] = 0;
+//       this->SingleLayerIndices[i] = 0;
     }
   
   for (int i = 0; i < NbrNonZeroElements; ++i)
@@ -185,7 +185,7 @@ QuasiholeOnSphereWithSpin::QuasiholeOnSphereWithSpin (int kValue, int rValue, in
   int SingleLayerDimension = 0 ;
   for (; TmpIndex < this->NbrQuasiholeEntriesSingleLayer; ++ TmpIndex)
     {
-      this->SingleLayerIndices[TmpIndex] = SingleLayerDimension;
+//       this->SingleLayerIndices[TmpIndex] = SingleLayerDimension;
       SingleLayerDimension += this->NbrQuasiholesPerNPerLzSingleLayer[TmpIndex];
     }
   
@@ -337,7 +337,7 @@ QuasiholeOnSphereWithSpin::QuasiholeOnSphereWithSpin(const QuasiholeOnSphereWith
   this->FermionFactor = fermions.FermionFactor;
   this->NbrQuasiholeEntriesSingleLayer = fermions.NbrQuasiholeEntriesSingleLayer;
   this->NbrQuasiholesPerNPerLzSingleLayer = fermions.NbrQuasiholesPerNPerLzSingleLayer;
-  this->SingleLayerIndices = fermions.SingleLayerIndices;
+//   this->SingleLayerIndices = fermions.SingleLayerIndices;
   this->NbrFermionUpFullSpace = fermions.NbrFermionUpFullSpace;
   this->LzValueUpFullSpace = fermions.LzValueUpFullSpace;
   this->NbrFermionsUpMin = fermions.NbrFermionsUpMin;
@@ -384,7 +384,7 @@ QuasiholeOnSphereWithSpin& QuasiholeOnSphereWithSpin::operator = (const Quasihol
   this->FermionFactor = fermions.FermionFactor;
   this->NbrQuasiholeEntriesSingleLayer = fermions.NbrQuasiholeEntriesSingleLayer;
   this->NbrQuasiholesPerNPerLzSingleLayer = fermions.NbrQuasiholesPerNPerLzSingleLayer;
-  this->SingleLayerIndices = fermions.SingleLayerIndices;
+//   this->SingleLayerIndices = fermions.SingleLayerIndices;
   this->NbrFermionUpFullSpace = fermions.NbrFermionUpFullSpace;
   this->LzValueUpFullSpace = fermions.LzValueUpFullSpace;
   this->NbrFermionsUpMin = fermions.NbrFermionsUpMin;

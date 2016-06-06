@@ -552,9 +552,10 @@ long ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
       TmpTotal += CurrentNbrCounting;
       Memory += CurrentNbrCounting;
       this->NbrInteractionPerComponent[i - this->PrecalculationShift] += CurrentNbrCounting;
+//       cout << i << " " << (this->NbrInteractionPerComponent[i - this->PrecalculationShift]) << endl;
     }
   
-//  cout << Memory << " " << TmpTotal << endl;
+ cout << Memory << endl;
   delete[] TmpLeftIndices;
   delete[] TmpInteractionElements;
   delete[] TmpCounting;
@@ -609,24 +610,22 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 		  NbrElements = TmpParticles->AuAd(i, lz, TmpLeftIndices, TmpInteractionElements);
 		  for (int j = 0; j < NbrElements; ++j)
 		    {
-		      CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, 
-									   TmpCoefficient * TmpInteractionElements[j]);
-// 		      this->InteractionPerComponentIndex[Pos][position] = TmpLeftIndices[j];
-// 		      this->InteractionPerComponentCoefficient[Pos][position] = TmpCoefficient * TmpInteractionElements[j];
-// 		      ++position;
+		      TmpCounting[CurrentNbrCounting] = TmpLeftIndices[j];
+		      TmpCoefficients[CurrentNbrCounting] = TmpCoefficient * TmpInteractionElements[j];
+		      ++CurrentNbrCounting;
 		    }
 		  NbrElements = TmpParticles->AduAdd(i, lz, TmpLeftIndices, TmpInteractionElements);
 		  for (int j = 0; j < NbrElements; ++j)
 		    {
-		      CurrentNbrCounting +=  SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, 
-									    TmpCoefficient * TmpInteractionElements[j]);
-// 		      this->InteractionPerComponentIndex[Pos][position] = TmpLeftIndices[j];
-// 		      this->InteractionPerComponentCoefficient[Pos][position] = TmpCoefficient * TmpInteractionElements[j];
-// 		      ++position;
+		      TmpCounting[CurrentNbrCounting] = TmpLeftIndices[j];
+		      TmpCoefficients[CurrentNbrCounting] = TmpCoefficient * TmpInteractionElements[j];
+		      ++CurrentNbrCounting;
 		    }
 		}
 	    }
 	}
+      
+      SortArrayUpOrdering (TmpCounting, TmpCoefficients, CurrentNbrCounting);
       if (this->OneBodyInteractionFactorsupup != 0)
 	{
 	  for (int lz = 0; lz <= this->LzMax; ++lz)
@@ -638,9 +637,6 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 		    {
 		      CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, 
 									   this->OneBodyInteractionFactorsupup[lz] * TmpInteractionElements[j]);
-// 		      this->InteractionPerComponentIndex[Pos][position] = TmpLeftIndices[j];
-// 		      this->InteractionPerComponentCoefficient[Pos][position] = this->OneBodyInteractionFactorsupup[lz] * TmpInteractionElements[j];
-// 		      ++position;
 		    }
 		}
 	    }
@@ -656,9 +652,6 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 		    {
 		      CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, 
 									   this->OneBodyInteractionFactorsdowndown[lz] * TmpInteractionElements[j]);
-// 		      this->InteractionPerComponentIndex[Pos][position] = TmpLeftIndices[j];
-// 		      this->InteractionPerComponentCoefficient[Pos][position] = this->OneBodyInteractionFactorsdowndown[lz] * TmpInteractionElements[j];
-// 		      ++position;
 		    }
 		}
 	    }
@@ -673,9 +666,6 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 	      ChargeContribution *= ChargeContribution;
 	      ChargeContribution *= this->ChargingEnergy;
 	      CurrentNbrCounting += SearchInArrayAndSetWeight<int>(i, TmpCounting, TmpCoefficients, CurrentNbrCounting, ChargeContribution);
-// 	      this->InteractionPerComponentIndex[Pos][position] = i;
-// 	      this->InteractionPerComponentCoefficient[Pos][position] = ChargeContribution;
-// 	      ++position;
 	    }
 	}
       for (int j = 0; j < CurrentNbrCounting; ++j)

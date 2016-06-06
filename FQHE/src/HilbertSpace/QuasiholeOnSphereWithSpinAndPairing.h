@@ -72,18 +72,12 @@ class QuasiholeOnSphereWithSpinAndPairing :  public ParticleOnSphereWithSpin
    int NbrQuasiholeEntriesSingleLayer;
    // array containing the dimension of each quasihole subspace for a single layer
    int* NbrQuasiholesPerNPerLzSingleLayer;
-   // array containing the first single layer index for each value of N and Lz
-   int* SingleLayerIndices;
    // array containing the number of fermions in the up layer for each Hilbert space index
    int* NbrFermionUpFullSpace;
    // array containing the value of Lz in the up layer for each Hilbert space index
    int* LzValueUpFullSpace;
    // array containing the value of the lowest Hilbert space index with given quantum numbers N and Lz
    int* FirstIndexWithNbrParticlesUpLzValueUp;
-   // Hamiltonian matrix elements for quasiholes without spin
-//    SparseRealMatrix AnnihilationElementsOneLayer;
-   // array of a^\dagger_m a_m matrix elements for quasiholes without spin
-//    SparseRealMatrix* AdAElementsOneLayer;
    // maximal number of fermions in the upper layer
    int NbrFermionsUpMax;
    // minimal number of fermions in the upper layer
