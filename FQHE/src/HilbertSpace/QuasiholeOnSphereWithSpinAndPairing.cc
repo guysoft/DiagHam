@@ -85,7 +85,7 @@ QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing (int kV
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
   
-  this->Error = 1.0e-13;
+  this->Error = 1.0e-15;
   this->KValue = kValue;
   this->RValue = rValue;
   this->FermionFactor = 1;

@@ -512,6 +512,8 @@ inline void ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::Hermitia
   int* TmpIndices;
   Complex* TmpInteractionFactor;
   Complex* TmpSum = new Complex[nbrVectors];
+  for (int l = 0; l < nbrVectors; ++l)
+    TmpSum[l] = 0.0;
   for (int j = 0; j < this->NbrSectorSums; ++j)
     {
       int Lim = 2 * this->NbrSectorIndicesPerSum[j];
