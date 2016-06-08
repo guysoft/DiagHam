@@ -1205,6 +1205,48 @@ ComplexVector FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::ConvertFromKxKy
   return TmpVector;
 }
 
+// convert a given state from a given  n-body basis basis to another one
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis where state is defined
+// return value = converted vector
+
+ComplexVector FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::ConvertToNbodyBasis(ComplexVector& state, FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* nbodyBasis)
+{
+  ComplexVector TmpVector (this->LargeHilbertSpaceDimension, true);
+  if (nbodyBasis->LargeHilbertSpaceDimension < this->LargeHilbertSpaceDimension)
+    {
+      for (long i= 0l; i < nbodyBasis->LargeHilbertSpaceDimension; ++i)
+	{
+	  int TmpLzMax = 2 * nbodyBasis->NbrSite - 1;
+	  unsigned long TmpState = nbodyBasis->StateDescription[i];
+	  while ((TmpState >> TmpLzMax) == 0x0ul)
+	    --TmpLzMax;
+	  int TmpIndex = this->FindStateIndex(TmpState, TmpLzMax);
+	  if (TmpIndex < this->HilbertSpaceDimension)
+	    {
+	      TmpVector[TmpIndex] = state[i];
+	    }
+	}
+    }
+  else
+    {
+      for (long i= 0l; i < this->LargeHilbertSpaceDimension; ++i)
+	{
+	  int TmpLzMax = 2 * this->NbrSite - 1;
+	  unsigned long TmpState = this->StateDescription[i];
+	  while ((TmpState >> TmpLzMax) == 0x0ul)
+	    --TmpLzMax;
+	  int TmpIndex = nbodyBasis->FindStateIndex(TmpState, TmpLzMax);
+	  if (TmpIndex < nbodyBasis->HilbertSpaceDimension)
+	    {
+	      TmpVector[i] = state[TmpIndex];
+	    }
+	}
+    }
+  return TmpVector;
+}
+
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given momentum sector.
 // 
 // nbrParticleSector = number of particles that belong to the subsytem 
@@ -1687,3 +1729,4 @@ ComplexVector FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GenerateEtaPair
   TmpVector /= TmpVector.Norm();
   return TmpVector;  
 }
+

@@ -312,6 +312,13 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // return value = state in the (Kx,Ky) basis
   virtual ComplexVector ConvertFromKxKyBasis(ComplexVector& state, ParticleOnSphere* space);
 
+  // convert a given state from a given  n-body basis basis to another one
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis where state is defined
+  // return value = converted vector
+  virtual ComplexVector ConvertToNbodyBasis(ComplexVector& state, FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* nbodyBasis);
+
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given momentum sector.
   // 
   // nbrParticleSector = number of particles that belong to the subsytem 

@@ -93,6 +93,16 @@ HermitianMatrix EtaPairaingEntanglementEntropyExtractCorrelationMatrix(Hermitian
 								       int targetNbrSitesX, int targetNbrSitesY);
 
 
+// compute the contribution to the Renyi entropy for a given number of particles in the subregion A, using the exact evaluation of the partitions
+//
+// oneBodyEntanglementTrimmedEnergies= array containing the one-body entanglement energies
+// nbrOneBodyEntanglementTrimmedEnergies = number of one-body entanglement energies
+// nbrParticlesA = number of particles in the subsystem A
+// currentOrbitalIndex = current orbital that is considered
+// currentFactor = current factor for a single partition
+// entropies = array that contains the Renyi entropies
+// maxRenyiEntropy = maximum Renyi entropy that has to be evaluated
+// alpha = reference total weight of the reduced density matrix for the sector with nbrParticlesA particles
 void GetEntanglementEntropyPerNbrParticlesA(double* oneBodyEntanglementTrimmedEnergies, int nbrOneBodyEntanglementTrimmedEnergies, 
 					    int nbrParticlesA, int currentOrbitalIndex, double currentFactor, double* entropies, int maxRenyiEntropy, double& alpha);
 
@@ -100,6 +110,22 @@ void GetEntanglementEntropyPerNbrParticlesA(double* oneBodyEntanglementTrimmedEn
 void ComputeThermalQuantities (double beta, double mu, int nbrStates, double* stateEnergies, double& thermalNbrParticles, double& thermalEnergy, double* thermalEntropy, int maxRenyiEntropy,
 			       double& thermalNbrParticlesMuDerivative, double& thermalNbrParticlesBetaDerivative, 
 			       double& thermalEnergyMuDerivative, double& thermalEnergyBetaDerivative);
+
+// evaluate the contribution of the eta pairing to the Renyi entropies
+// 
+// nbrRenyiEntropies = number of Renyi Entropies to evaluate
+// nbrSites = total number of sites 
+// nbrPairs = number of eta pairing pairs
+// vacuumNbrParticles = number of particles for the vacuum states 
+// totalNbrSitesA = otal number of sites in the region A
+// nbrParticlesA = number of particles in the region A
+// useRational = true if rational numbers have to be used for intermediate calculations
+// rationalCoefficient = reference on the temporary rational coefficient
+// binomial = reference on the binomial coefficients
+// return value = array containing the eta pairing contribution for each Renyi entropy
+double* EvaluateEtaPairingContribution(int nbrRenyiEntropies, int nbrSites, int nbrPairs, int vacuumNbrParticles, int totalNbrSitesA, int nbrParticlesA,
+				       bool useRational, LongRational& rationalCoefficient, BinomialCoefficients& binomial);
+
 
 
 int main(int argc, char** argv)
@@ -933,7 +959,7 @@ int main(int argc, char** argv)
 	      for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
 		{
 		  EntanglementEntropies[j] -= 1.0 / ((double) j) * log(powl(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) (j + 1)) + powl(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], (double) (j + 1)));
-									    }
+		}
 	      NonVacuumEntanglementEntropies[j] = EntanglementEntropies[j];
 	    }
 	  for (int i = 0; i < NbrRenyiEntropies; ++i)
@@ -954,10 +980,284 @@ int main(int argc, char** argv)
 	    }
 	  BinomialCoefficients  Binomial(MaxBinomial);
 	  double CurrentEntanglementEntropyContribution = 1.0;
-	  if (Manager.GetBoolean("use-approximation") == true)
+
+
+	  if (Manager.GetBoolean("use-approximation") == false)
 	    {
-	      for (int RenyiIndex = 1; RenyiIndex <= NbrRenyiEntropies; ++RenyiIndex)
+	      int OptimalNbrParticlesA = (TotalNbrSitesA * VacuumNbrParticles) / NbrSites;
+	      for (int TmpNbrParticlesA = OptimalNbrParticlesA; ((TmpNbrParticlesA <= MaxNbrParticlesA) && 
+								 ((EntanglementEntropies[0] + CurrentEntanglementEntropyContribution) != EntanglementEntropies[0])); ++TmpNbrParticlesA)
 		{
+		  if (ShowTimeFlag == true)
+		    {
+		      gettimeofday (&(TotalStartingTime), 0);
+		    }
+		  double AlphaFactor = 0.0;
+		  double* TmpEntanglementEntropies = new double[NbrRenyiEntropies];
+		  for (int i = 0; i < NbrRenyiEntropies; ++i)
+		    TmpEntanglementEntropies[i] = 0.0;
+		  GetEntanglementEntropyPerNbrParticlesA(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA, 
+							 0, 1.0, TmpEntanglementEntropies, NbrRenyiEntropies, AlphaFactor);
+		  int MaxSumIndex = TotalNbrSitesA - TmpNbrParticlesA;
+		  if (MaxSumIndex > NbrPairs)
+		    MaxSumIndex = NbrPairs;
+		  double* Tmp = EvaluateEtaPairingContribution(NbrRenyiEntropies, NbrSites, NbrPairs, VacuumNbrParticles, TotalNbrSitesA, TmpNbrParticlesA,
+							       Manager.GetBoolean("use-rational"), TmpCoefficient, Binomial);
+		  CurrentEntanglementEntropyContribution = (AlphaFactor * Tmp[0]) + TmpEntanglementEntropies[0];
+		  EntanglementEntropies[0] += CurrentEntanglementEntropyContribution;
+		  NonVacuumEntanglementEntropies[0] += TmpEntanglementEntropies[0];
+		  for (int j = 1; j < NbrRenyiEntropies; ++j)
+		    {
+		      double TmpCurrentEntanglementEntropyContribution = TmpEntanglementEntropies[j] * Tmp[j];
+		      EntanglementEntropies[j] += TmpCurrentEntanglementEntropyContribution;
+		      NonVacuumEntanglementEntropies[j] += TmpEntanglementEntropies[j];
+		    }
+		  delete[] Tmp;
+		  if (ShowTimeFlag == true)
+		    {
+		      gettimeofday (&(TotalEndingTime), 0);
+		      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+					    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+		      cout << TmpNbrParticlesA << " : " << EntanglementEntropies[0] << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << " " << "(" << Dt << "s)" << endl;
+		    }
+		  else
+		    {
+		      cout << TmpNbrParticlesA << " : " << EntanglementEntropies[0] << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << endl;
+		    }	  
+		  if (NbrRenyiEntropies > 1)
+		    {
+		      cout << "Renyi alphas : ";
+		      for (int j = 1; j < NbrRenyiEntropies; ++j)
+			{
+			  cout << " " << TmpEntanglementEntropies[j];
+			}
+		      cout << endl;	      
+		    }
+		  delete[] TmpEntanglementEntropies;
+		}
+	      CurrentEntanglementEntropyContribution = EntanglementEntropies[0];
+	      for (int TmpNbrParticlesA = OptimalNbrParticlesA - 1; ((TmpNbrParticlesA >= 0) && 
+								     ((EntanglementEntropies[0] + CurrentEntanglementEntropyContribution) != EntanglementEntropies[0])); --TmpNbrParticlesA)
+		{
+		  if (ShowTimeFlag == true)
+		    {
+		      gettimeofday (&(TotalStartingTime), 0);
+		    }
+		  double AlphaFactor = 0.0;
+		  double* TmpEntanglementEntropies = new double[NbrRenyiEntropies];
+		  for (int i = 0; i < NbrRenyiEntropies; ++i)
+		    {
+		      TmpEntanglementEntropies[i] = 0.0;
+		    }
+		  GetEntanglementEntropyPerNbrParticlesA(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA, 
+							 0, 1.0, TmpEntanglementEntropies, NbrRenyiEntropies, AlphaFactor);
+		  int MaxSumIndex = TotalNbrSitesA - TmpNbrParticlesA;
+		  if (MaxSumIndex > NbrPairs)
+		    MaxSumIndex = NbrPairs;
+		  double* Tmp = EvaluateEtaPairingContribution(NbrRenyiEntropies, NbrSites, NbrPairs, VacuumNbrParticles, TotalNbrSitesA, TmpNbrParticlesA,
+							       Manager.GetBoolean("use-rational"), TmpCoefficient, Binomial);
+		  CurrentEntanglementEntropyContribution = (AlphaFactor * Tmp[0]) + TmpEntanglementEntropies[0];
+		  EntanglementEntropies[0] += CurrentEntanglementEntropyContribution;
+		  NonVacuumEntanglementEntropies[0] += TmpEntanglementEntropies[0];
+		  for (int j = 1; j < NbrRenyiEntropies; ++j)
+		    {
+		      double TmpCurrentEntanglementEntropyContribution = TmpEntanglementEntropies[j] * Tmp[j];
+		      EntanglementEntropies[j] += TmpCurrentEntanglementEntropyContribution;
+		      NonVacuumEntanglementEntropies[j] += TmpEntanglementEntropies[j];
+		    }
+		  delete[] Tmp;
+		  if (ShowTimeFlag == true)
+		    {
+		      gettimeofday (&(TotalEndingTime), 0);
+		      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+					    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+		      cout << TmpNbrParticlesA << " : " << EntanglementEntropies[0] << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << " " << "(" << Dt << "s)" << endl;
+		    }
+		  else
+		    {
+		      cout << TmpNbrParticlesA << " : " << EntanglementEntropies[0] << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << endl;
+		    }	  
+		  if (NbrRenyiEntropies > 1)
+		    {
+		      cout << "Renyi alphas : ";
+		      for (int j = 1; j < NbrRenyiEntropies; ++j)
+			{
+			  cout << " " << TmpEntanglementEntropies[j];
+			}
+		      cout << endl;	      
+		    }
+		  delete[] TmpEntanglementEntropies;
+		}
+	    }
+	  else
+	    {	  
+
+	      // use the approximated formula
+
+	      int* OptimalNbrParticlesAPerRenyiEntropy = new int [NbrRenyiEntropies];
+	      OptimalNbrParticlesAPerRenyiEntropy[0] = (TotalNbrSitesA * VacuumNbrParticles) / NbrSites;
+	      cout << "optimal number of particles for the Von Neumann entropy  = " << OptimalNbrParticlesAPerRenyiEntropy[0] << endl;
+	      for (int j = 1; j < NbrRenyiEntropies; ++j)
+		{
+		  double Tmp = 0.0;
+		  double Sigma = 0.0;
+		  double TmpRenyiIndex = (double) (j + 1);
+		  double TmpEntanglementEntropy = 0.0;
+		  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
+		    {
+		      double Tmp2 = (powl(VacuumOneBodyEntanglementTrimmedEnergies[i], TmpRenyiIndex) / 
+				     (powl(VacuumOneBodyEntanglementTrimmedEnergies[i], TmpRenyiIndex) + 
+				      powl(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], TmpRenyiIndex)));
+		      Tmp += Tmp2;
+		      Sigma += Tmp2 * Tmp2 * powl((1.0 / VacuumOneBodyEntanglementTrimmedEnergies[i]) - 1.0, TmpRenyiIndex);
+		      TmpEntanglementEntropy -= (log(powl(VacuumOneBodyEntanglementTrimmedEnergies[i], TmpRenyiIndex) + 
+						     powl(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], TmpRenyiIndex)));
+		    }
+		  TmpEntanglementEntropy /= (double) j;
+		  OptimalNbrParticlesAPerRenyiEntropy[j] = (int) Tmp;
+		  cout << "optimal number of particles for the Renyi entropy " << (j + 1) << "  = " << OptimalNbrParticlesAPerRenyiEntropy[j] << " (" << Tmp << ")" << ", sigma=" << Sigma << " " << TmpEntanglementEntropy << endl;		  
+		}
+
+	      // Von Neumann entropy
+
+	      double AlphaFactor = 1.0;
+	      int OptimalNbrParticlesA = (TotalNbrSitesA * VacuumNbrParticles) / NbrSites;
+	      for (int TmpNbrParticlesA = OptimalNbrParticlesA; ((TmpNbrParticlesA <= MaxNbrParticlesA) && 
+								 ((SumAlphaFactors[0] + AlphaFactor) != SumAlphaFactors[0])); ++TmpNbrParticlesA)
+		{
+		  double TmpZ0 = GetZ0Value(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA);
+		  double LogAlphaFactor = (-((double) (TmpNbrParticlesA + 1)) * log(TmpZ0)) - (0.5 * log (2.0 * M_PI));
+		  double TmpSum = ((double) (TmpNbrParticlesA + 1)) / (TmpZ0 * TmpZ0);
+		  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
+		    {
+		      LogAlphaFactor += log((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
+					     (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])));
+		      TmpSum -= ((VacuumOneBodyEntanglementTrimmedEnergies[i] * VacuumOneBodyEntanglementTrimmedEnergies[i]) 
+				 / ((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])) 
+				    * (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]))));
+		    }
+		  AlphaFactor = exp(LogAlphaFactor);
+		  AlphaFactor /= sqrt(TmpSum);
+		  SumAlphaFactors[0] += AlphaFactor;
+		  cout << "SumAlphaFactors[0] = " << SumAlphaFactors[0] << " "  << TmpNbrParticlesA << endl;
+		}
+	      cout << "SumAlphaFactors[0] = " << SumAlphaFactors[0] << endl;
+	      AlphaFactor = SumAlphaFactors[0];
+	      for (int TmpNbrParticlesA = OptimalNbrParticlesA - 1; ((TmpNbrParticlesA >= 0) && 
+								     ((SumAlphaFactors[0] + AlphaFactor) != SumAlphaFactors[0])); --TmpNbrParticlesA)
+		{
+		  double TmpZ0 = GetZ0Value(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA);
+		  double TmpSum = ((double) (TmpNbrParticlesA + 1)) / (TmpZ0 * TmpZ0);
+		  double LogAlphaFactor = (-((double) (TmpNbrParticlesA + 1)) * log(TmpZ0)) - (0.5 * log (2.0 * M_PI));
+		  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
+		    {
+		      LogAlphaFactor += log(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
+					    (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]));
+		      TmpSum -= ((VacuumOneBodyEntanglementTrimmedEnergies[i] * VacuumOneBodyEntanglementTrimmedEnergies[i]) 
+				 / ((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])) 
+				    * (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]))));
+		    }
+		  AlphaFactor = exp(LogAlphaFactor);
+		  AlphaFactor /= sqrt(TmpSum);
+		  SumAlphaFactors[0] += AlphaFactor;
+		}
+	      cout << "SumAlphaFactors[0] = " << SumAlphaFactors[0] << endl;
+	      for (int TmpNbrParticlesA = OptimalNbrParticlesA; ((TmpNbrParticlesA <= MaxNbrParticlesA) && 
+								 ((EntanglementEntropies[0] + CurrentEntanglementEntropyContribution) != EntanglementEntropies[0])); ++TmpNbrParticlesA)
+		{
+		  if (ShowTimeFlag == true)
+		    {
+		      gettimeofday (&(TotalStartingTime), 0);
+		    }
+		  double AlphaFactor = 0.0;
+		  double TmpEntanglementEntropy = 0.0;
+		  double TmpZ0 = GetZ0Value(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA);
+		  AlphaFactor = pow (TmpZ0, -((double) (TmpNbrParticlesA + 1))) / sqrt (2.0 * M_PI);
+		  double TmpSum = ((double) (TmpNbrParticlesA + 1)) / (TmpZ0 * TmpZ0);
+		  double LogAlphaFactor = (-((double) (TmpNbrParticlesA + 1)) * log(TmpZ0)) - (0.5 * log (2.0 * M_PI));
+		  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
+		    {
+		      LogAlphaFactor += log((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
+					     (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])));
+		      TmpSum -= ((VacuumOneBodyEntanglementTrimmedEnergies[i] * VacuumOneBodyEntanglementTrimmedEnergies[i]) 
+				 / ((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])) 
+				    * (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]))));
+		    }
+		  AlphaFactor = exp(LogAlphaFactor);
+		  AlphaFactor /= sqrt(TmpSum) * SumAlphaFactors[0];
+		  int MaxSumIndex = TotalNbrSitesA - TmpNbrParticlesA;
+		  if (MaxSumIndex > NbrPairs)
+		    MaxSumIndex = NbrPairs;
+		  double* Tmp = EvaluateEtaPairingContribution(1, NbrSites, NbrPairs, VacuumNbrParticles, TotalNbrSitesA, TmpNbrParticlesA,
+							       Manager.GetBoolean("use-rational"), TmpCoefficient, Binomial);
+		  CurrentEntanglementEntropyContribution = (AlphaFactor * Tmp[0]) + TmpEntanglementEntropy;
+		  EntanglementEntropies[0] += CurrentEntanglementEntropyContribution;
+		  NonVacuumEntanglementEntropies[0] += TmpEntanglementEntropy;
+		  delete[] Tmp;
+		  if (ShowTimeFlag == true)
+		    {
+		      gettimeofday (&(TotalEndingTime), 0);
+		      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+					    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+		      cout << TmpNbrParticlesA << " : " << EntanglementEntropies[0] << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << " " << "(" << Dt << "s)" << endl;
+		    }
+		  else
+		    {
+		      cout << TmpNbrParticlesA << " : " << EntanglementEntropies[0] << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << endl;
+		    }	  
+		}
+	      CurrentEntanglementEntropyContribution = EntanglementEntropies[0];
+	      for (int TmpNbrParticlesA = OptimalNbrParticlesA - 1; ((TmpNbrParticlesA >= 0) && 
+								     ((EntanglementEntropies[0] + CurrentEntanglementEntropyContribution) != EntanglementEntropies[0])); --TmpNbrParticlesA)
+		{
+		  if (ShowTimeFlag == true)
+		    {
+		      gettimeofday (&(TotalStartingTime), 0);
+		    }
+		  double AlphaFactor = 0.0;
+		  double TmpEntanglementEntropy = 0.0;
+		  double TmpZ0 = GetZ0Value(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA);
+		  AlphaFactor = pow (TmpZ0, -((double) (TmpNbrParticlesA + 1))) / sqrt (2.0 * M_PI);
+		  double TmpSum = ((double) (TmpNbrParticlesA + 1)) / (TmpZ0 * TmpZ0);
+		  double LogAlphaFactor = (-((double) (TmpNbrParticlesA + 1)) * log(TmpZ0)) - (0.5 * log (2.0 * M_PI));
+		  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
+		    {
+		      LogAlphaFactor += log((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
+					     (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])));
+		      TmpSum -= ((VacuumOneBodyEntanglementTrimmedEnergies[i] * VacuumOneBodyEntanglementTrimmedEnergies[i]) 
+				 / ((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])) 
+				    * (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]))));
+		    }
+		  AlphaFactor = exp(LogAlphaFactor);
+		  AlphaFactor /= sqrt(TmpSum) * SumAlphaFactors[0];
+		
+		  int MaxSumIndex = TotalNbrSitesA - TmpNbrParticlesA;
+		  if (MaxSumIndex > NbrPairs)
+		    MaxSumIndex = NbrPairs;
+		  double* Tmp = EvaluateEtaPairingContribution(1, NbrSites, NbrPairs, VacuumNbrParticles, TotalNbrSitesA, TmpNbrParticlesA,
+							       Manager.GetBoolean("use-rational"), TmpCoefficient, Binomial);
+		  CurrentEntanglementEntropyContribution = (AlphaFactor * Tmp[0]) + TmpEntanglementEntropy;
+		  EntanglementEntropies[0] += CurrentEntanglementEntropyContribution;
+		  NonVacuumEntanglementEntropies[0] += TmpEntanglementEntropy;
+		  delete[] Tmp;
+		  if (ShowTimeFlag == true)
+		    {
+		      gettimeofday (&(TotalEndingTime), 0);
+		      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+					    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+		      cout << TmpNbrParticlesA << " : " << EntanglementEntropies[0] << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << " " << "(" << Dt << "s)" << endl;
+		    }
+		  else
+		    {
+		      cout << TmpNbrParticlesA << " : " << EntanglementEntropies[0] << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << endl;
+		    }	  
+		}
+
+
+	      // Renyi entropies
+	      for (int RenyiIndex = 2; RenyiIndex <= NbrRenyiEntropies; ++RenyiIndex)
+		{
+		  cout << "Warning, --use-approximation is not working for the Renyi entropies" << endl;
 		  double AlphaFactor = 1.0;
 		  int OptimalNbrParticlesA = (TotalNbrSitesA * VacuumNbrParticles) / NbrSites;
 		  for (int TmpNbrParticlesA = OptimalNbrParticlesA; ((TmpNbrParticlesA <= MaxNbrParticlesA) && 
@@ -1055,26 +1355,92 @@ int main(int argc, char** argv)
 			}
 		    }
 		}
-	    }
-	  int OptimalNbrParticlesA = (TotalNbrSitesA * VacuumNbrParticles) / NbrSites;
-	  for (int TmpNbrParticlesA = OptimalNbrParticlesA; ((TmpNbrParticlesA <= MaxNbrParticlesA) && 
-							     ((EntanglementEntropies[0] + CurrentEntanglementEntropyContribution) != EntanglementEntropies[0])); ++TmpNbrParticlesA)
-	    {
-	      if (ShowTimeFlag == true)
+	      
+	      for (int TmpNbrParticlesA = OptimalNbrParticlesA; ((TmpNbrParticlesA <= MaxNbrParticlesA) && 
+								 ((EntanglementEntropies[0] + CurrentEntanglementEntropyContribution) != EntanglementEntropies[0])); ++TmpNbrParticlesA)
 		{
-		  gettimeofday (&(TotalStartingTime), 0);
+		  if (ShowTimeFlag == true)
+		    {
+		      gettimeofday (&(TotalStartingTime), 0);
+		    }
+		  double AlphaFactor = 0.0;
+		  double* TmpEntanglementEntropies = new double[NbrRenyiEntropies];
+		  for (int i = 0; i < NbrRenyiEntropies; ++i)
+		    TmpEntanglementEntropies[i] = 0.0;
+		  double TmpZ0 = GetZ0Value(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA);
+		  AlphaFactor = pow (TmpZ0, -((double) (TmpNbrParticlesA + 1))) / sqrt (2.0 * M_PI);
+		  double TmpSum = ((double) (TmpNbrParticlesA + 1)) / (TmpZ0 * TmpZ0);
+		  double LogAlphaFactor = (-((double) (TmpNbrParticlesA + 1)) * log(TmpZ0)) - (0.5 * log (2.0 * M_PI));
+		  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
+		    {
+		      LogAlphaFactor += log((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
+					     (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])));
+		      TmpSum -= ((VacuumOneBodyEntanglementTrimmedEnergies[i] * VacuumOneBodyEntanglementTrimmedEnergies[i]) 
+				 / ((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])) 
+				    * (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]))));
+		    }
+		  AlphaFactor = exp(LogAlphaFactor);
+		  AlphaFactor /= sqrt(TmpSum) * SumAlphaFactors[0];
+		  for (int j = 2; j <= NbrRenyiEntropies; ++j)
+		    {
+		      TmpZ0 = 0.0;//GetZ0Value(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA, (double) j);
+		      double TmpSum = ((double) (TmpNbrParticlesA + 1)) / (TmpZ0 * TmpZ0);
+		      double LogAlphaFactor = (-((double) (TmpNbrParticlesA + 1)) * log(TmpZ0)) - (0.5 * log (2.0 * M_PI));
+		      LogAlphaFactor = 0.0;
+		      for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
+			{
+			  LogAlphaFactor -= 1.0 / ((double) (j - 1)) * log(powl(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) j) + powl(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], (double) j));
+// 			      LogAlphaFactor += log(pow(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex) + 
+// 						    (TmpZ0 * pow(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex)));
+// 			      TmpSum -= ((pow(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) (2 * RenyiIndex))
+// 					  / pow((pow(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex) + (TmpZ0 * pow(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex))), 2.0)));
+			}
+		      TmpEntanglementEntropies[j - 1] = LogAlphaFactor;
+// 		      TmpEntanglementEntropies[j - 1] = exp(LogAlphaFactor);
+// 		      TmpEntanglementEntropies[j - 1] /= sqrt(TmpSum) * pow(SumAlphaFactors[0], (double) j);
+		    }		
+		  int MaxSumIndex = TotalNbrSitesA - TmpNbrParticlesA;
+		  if (MaxSumIndex > NbrPairs)
+		    MaxSumIndex = NbrPairs;
+		  double* Tmp = EvaluateEtaPairingContribution(NbrRenyiEntropies, NbrSites, NbrPairs, VacuumNbrParticles, TotalNbrSitesA, TmpNbrParticlesA,
+							       Manager.GetBoolean("use-rational"), TmpCoefficient, Binomial);
+		  CurrentEntanglementEntropyContribution = (AlphaFactor * Tmp[0]) + TmpEntanglementEntropies[0];
+		  EntanglementEntropies[0] += CurrentEntanglementEntropyContribution;
+		  NonVacuumEntanglementEntropies[0] += TmpEntanglementEntropies[0];
+		  for (int j = 1; j < NbrRenyiEntropies; ++j)
+		    {
+		      double TmpCurrentEntanglementEntropyContribution = TmpEntanglementEntropies[j] * Tmp[j];
+		      EntanglementEntropies[j] += TmpCurrentEntanglementEntropyContribution;
+		      NonVacuumEntanglementEntropies[j] += TmpEntanglementEntropies[j];
+		    }
+		  delete[] Tmp;
+		  if (ShowTimeFlag == true)
+		    {
+		      gettimeofday (&(TotalEndingTime), 0);
+		      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+					    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+		      cout << TmpNbrParticlesA << " : " << EntanglementEntropies[0] << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << " " << "(" << Dt << "s)" << endl;
+		    }
+		  else
+		    {
+		      cout << TmpNbrParticlesA << " : " << EntanglementEntropies[0] << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << endl;
+		    }	  
+		  delete[] TmpEntanglementEntropies;
 		}
-	      double AlphaFactor = 0.0;
-	      double* TmpEntanglementEntropies = new double[NbrRenyiEntropies];
-	      for (int i = 0; i < NbrRenyiEntropies; ++i)
-		TmpEntanglementEntropies[i] = 0.0;
-	      if (Manager.GetBoolean("use-approximation") == false)
+	      CurrentEntanglementEntropyContribution = EntanglementEntropies[0];
+	      for (int TmpNbrParticlesA = OptimalNbrParticlesA - 1; ((TmpNbrParticlesA >= 0) && 
+								     ((EntanglementEntropies[0] + CurrentEntanglementEntropyContribution) != EntanglementEntropies[0])); --TmpNbrParticlesA)
 		{
-		  GetEntanglementEntropyPerNbrParticlesA(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA, 
-							 0, 1.0, TmpEntanglementEntropies, NbrRenyiEntropies, AlphaFactor);
-		}
-	      else
-		{
+		  if (ShowTimeFlag == true)
+		    {
+		      gettimeofday (&(TotalStartingTime), 0);
+		    }
+		  double AlphaFactor = 0.0;
+		  double* TmpEntanglementEntropies = new double[NbrRenyiEntropies];
+		  for (int i = 0; i < NbrRenyiEntropies; ++i)
+		    {
+		      TmpEntanglementEntropies[i] = 0.0;
+		    }
 		  double TmpZ0 = GetZ0Value(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA);
 		  AlphaFactor = pow (TmpZ0, -((double) (TmpNbrParticlesA + 1))) / sqrt (2.0 * M_PI);
 		  double TmpSum = ((double) (TmpNbrParticlesA + 1)) / (TmpZ0 * TmpZ0);
@@ -1107,175 +1473,35 @@ int main(int argc, char** argv)
 // 		      TmpEntanglementEntropies[j - 1] = exp(LogAlphaFactor);
 // 		      TmpEntanglementEntropies[j - 1] /= sqrt(TmpSum) * pow(SumAlphaFactors[0], (double) j);
 		    }
-		}
-	      int MaxSumIndex = TotalNbrSitesA - TmpNbrParticlesA;
-	      if (MaxSumIndex > NbrPairs)
-		MaxSumIndex = NbrPairs;
-	      double* Tmp = new double[NbrRenyiEntropies];
-	      for (int j = 0; j < NbrRenyiEntropies; ++j)
-		{
-		  Tmp[j] = 0.0;
-		}
-	      for (int j = 0; j <= MaxSumIndex; ++j)
-		{
-		  double Tmp2;
-		  if (Manager.GetBoolean("use-rational") == true)
+		
+		  int MaxSumIndex = TotalNbrSitesA - TmpNbrParticlesA;
+		  if (MaxSumIndex > NbrPairs)
+		    MaxSumIndex = NbrPairs;
+		  double* Tmp = EvaluateEtaPairingContribution(NbrRenyiEntropies, NbrSites, NbrPairs, VacuumNbrParticles, TotalNbrSitesA, TmpNbrParticlesA,
+							       Manager.GetBoolean("use-rational"), TmpCoefficient, Binomial);
+		  CurrentEntanglementEntropyContribution = (AlphaFactor * Tmp[0]) + TmpEntanglementEntropies[0];
+		  EntanglementEntropies[0] += CurrentEntanglementEntropyContribution;
+		  NonVacuumEntanglementEntropies[0] += TmpEntanglementEntropies[0];
+		  for (int j = 1; j < NbrRenyiEntropies; ++j)
 		    {
-		      TmpCoefficient.SetToOne();
-		      TmpCoefficient.BinomialMultiply(TotalNbrSitesA - TmpNbrParticlesA, j);
-		      TmpCoefficient.BinomialMultiply(NbrSites - TotalNbrSitesA - VacuumNbrParticles + TmpNbrParticlesA, NbrPairs - j);
-		      TmpCoefficient.BinomialDivide(NbrSites - VacuumNbrParticles, NbrPairs);
-		      Tmp2 = TmpCoefficient.GetNumericalValue();
+		      double TmpCurrentEntanglementEntropyContribution = TmpEntanglementEntropies[j] * Tmp[j];
+		      EntanglementEntropies[j] += TmpCurrentEntanglementEntropyContribution;
+		      NonVacuumEntanglementEntropies[j] += TmpEntanglementEntropies[j];
+		    }
+		  delete[] Tmp;
+		  if (ShowTimeFlag == true)
+		    {
+		      gettimeofday (&(TotalEndingTime), 0);
+		      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+					    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+		      cout << TmpNbrParticlesA << " : " << EntanglementEntropies[0] << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << " " << "(" << Dt << "s)" << endl;
 		    }
 		  else
 		    {
-		      Tmp2 = ((Binomial.GetNumericalCoefficient(TotalNbrSitesA - TmpNbrParticlesA, j) / Binomial.GetNumericalCoefficient(NbrSites - VacuumNbrParticles, NbrPairs))
-			      * Binomial.GetNumericalCoefficient(NbrSites - TotalNbrSitesA - VacuumNbrParticles + TmpNbrParticlesA, NbrPairs - j));
-		    }
-		  if (Tmp2 > 0.0)
-		    {
-		      Tmp[0] -= Tmp2 * log(Tmp2);
-		      for (int k = 1; k < NbrRenyiEntropies; ++k)
-			{
-			  Tmp[k] += pow(Tmp2, (double) (k + 1));
-			}
-		    }
+		      cout << TmpNbrParticlesA << " : " << EntanglementEntropies[0] << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << endl;
+		    }	  
+		  delete[] TmpEntanglementEntropies;
 		}
-	      CurrentEntanglementEntropyContribution = (AlphaFactor * Tmp[0]) + TmpEntanglementEntropies[0];
-	      EntanglementEntropies[0] += CurrentEntanglementEntropyContribution;
-	      NonVacuumEntanglementEntropies[0] += TmpEntanglementEntropies[0];
-	      for (int j = 1; j < NbrRenyiEntropies; ++j)
-		{
-		  double TmpCurrentEntanglementEntropyContribution = TmpEntanglementEntropies[j] * Tmp[j];
-		  EntanglementEntropies[j] += TmpCurrentEntanglementEntropyContribution;
-		  NonVacuumEntanglementEntropies[j] += TmpEntanglementEntropies[j];
-		}
-	      delete[] Tmp;
-	      if (ShowTimeFlag == true)
-		{
-		  gettimeofday (&(TotalEndingTime), 0);
-		  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
-					((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
-		  cout << TmpNbrParticlesA << " : " << EntanglementEntropies[0] << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << " " << "(" << Dt << "s)" << endl;
-		}
-	      else
-		{
-		  cout << TmpNbrParticlesA << " : " << EntanglementEntropies[0] << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << endl;
-		}	  
-	      delete[] TmpEntanglementEntropies;
-	    }
-	  CurrentEntanglementEntropyContribution = EntanglementEntropies[0];
-	  for (int TmpNbrParticlesA = OptimalNbrParticlesA - 1; ((TmpNbrParticlesA >= 0) && 
-					  ((EntanglementEntropies[0] + CurrentEntanglementEntropyContribution) != EntanglementEntropies[0])); --TmpNbrParticlesA)
-	    {
-	      if (ShowTimeFlag == true)
-		{
-		  gettimeofday (&(TotalStartingTime), 0);
-		}
-	      double AlphaFactor = 0.0;
-	      double* TmpEntanglementEntropies = new double[NbrRenyiEntropies];
-	      for (int i = 0; i < NbrRenyiEntropies; ++i)
-		{
-		  TmpEntanglementEntropies[i] = 0.0;
-		}
-	      if (Manager.GetBoolean("use-approximation") == false)
-		{
-		  GetEntanglementEntropyPerNbrParticlesA(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA, 
-							 0, 1.0, TmpEntanglementEntropies, NbrRenyiEntropies, AlphaFactor);
-		}
-	      else
-		{
-		  double TmpZ0 = GetZ0Value(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA);
-		  AlphaFactor = pow (TmpZ0, -((double) (TmpNbrParticlesA + 1))) / sqrt (2.0 * M_PI);
-		  double TmpSum = ((double) (TmpNbrParticlesA + 1)) / (TmpZ0 * TmpZ0);
-		  double LogAlphaFactor = (-((double) (TmpNbrParticlesA + 1)) * log(TmpZ0)) - (0.5 * log (2.0 * M_PI));
-		  for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
-		    {
-		      LogAlphaFactor += log((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + 
-					     (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])));
-		      TmpSum -= ((VacuumOneBodyEntanglementTrimmedEnergies[i] * VacuumOneBodyEntanglementTrimmedEnergies[i]) 
-				 / ((1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i])) 
-				    * (1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i] + (TmpZ0 * VacuumOneBodyEntanglementTrimmedEnergies[i]))));
-		    }
-		  AlphaFactor = exp(LogAlphaFactor);
-		  AlphaFactor /= sqrt(TmpSum) * SumAlphaFactors[0];
-		  for (int j = 2; j <= NbrRenyiEntropies; ++j)
-		    {
-		      TmpZ0 = 0.0;//GetZ0Value(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA, (double) j);
-		      double TmpSum = ((double) (TmpNbrParticlesA + 1)) / (TmpZ0 * TmpZ0);
-		      double LogAlphaFactor = (-((double) (TmpNbrParticlesA + 1)) * log(TmpZ0)) - (0.5 * log (2.0 * M_PI));
-		      LogAlphaFactor = 0.0;
-		      for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
-			{
-			  LogAlphaFactor -= 1.0 / ((double) (j - 1)) * log(powl(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) j) + powl(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], (double) j));
-// 			      LogAlphaFactor += log(pow(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex) + 
-// 						    (TmpZ0 * pow(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex)));
-// 			      TmpSum -= ((pow(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) (2 * RenyiIndex))
-// 					  / pow((pow(1.0 - VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex) + (TmpZ0 * pow(VacuumOneBodyEntanglementTrimmedEnergies[i], (double) RenyiIndex))), 2.0)));
-			}
-		      TmpEntanglementEntropies[j - 1] = LogAlphaFactor;
-// 		      TmpEntanglementEntropies[j - 1] = exp(LogAlphaFactor);
-// 		      TmpEntanglementEntropies[j - 1] /= sqrt(TmpSum) * pow(SumAlphaFactors[0], (double) j);
-		    }
-		}
-	      int MaxSumIndex = TotalNbrSitesA - TmpNbrParticlesA;
-	      if (MaxSumIndex > NbrPairs)
-		MaxSumIndex = NbrPairs;
-	      double* Tmp = new double[NbrRenyiEntropies];
-	      for (int j = 0; j < NbrRenyiEntropies; ++j)
-		{
-		  Tmp[j] = 0.0;
-		}
-	      for (int j = 0; j <= MaxSumIndex; ++j)
-		{
-		  double Tmp2;
-		  if (Manager.GetBoolean("use-rational") == true)
-		    {
-		      TmpCoefficient.SetToOne();
-		      TmpCoefficient.BinomialMultiply(TotalNbrSitesA - TmpNbrParticlesA, j);
-		      TmpCoefficient.BinomialMultiply(NbrSites - TotalNbrSitesA - VacuumNbrParticles + TmpNbrParticlesA, NbrPairs - j);
-		      TmpCoefficient.BinomialDivide(NbrSites - VacuumNbrParticles, NbrPairs);
-		      Tmp2 = TmpCoefficient.GetNumericalValue();
-		    }
-		  else
-		    {
-		      Tmp2 = ((Binomial.GetNumericalCoefficient(TotalNbrSitesA - TmpNbrParticlesA, j) / Binomial.GetNumericalCoefficient(NbrSites - VacuumNbrParticles, NbrPairs))
-			      * Binomial.GetNumericalCoefficient(NbrSites - TotalNbrSitesA - VacuumNbrParticles + TmpNbrParticlesA, NbrPairs - j));
-		    }
-		  if (Tmp2 > 0.0)
-		    {
-		      Tmp[0] -= Tmp2 * log(Tmp2);
-		      for (int k = 1; k < NbrRenyiEntropies; ++k)
-			{
-			  Tmp[k] += pow(Tmp2, (double) (k + 1));
-			}
-		    }
-		}
-	      CurrentEntanglementEntropyContribution = (AlphaFactor * Tmp[0]) + TmpEntanglementEntropies[0];
-	      EntanglementEntropies[0] += CurrentEntanglementEntropyContribution;
-	      NonVacuumEntanglementEntropies[0] += TmpEntanglementEntropies[0];
-	      for (int j = 1; j < NbrRenyiEntropies; ++j)
-		{
-		  double TmpCurrentEntanglementEntropyContribution = TmpEntanglementEntropies[j] * Tmp[j];
-		  EntanglementEntropies[j] += TmpCurrentEntanglementEntropyContribution;
-		  NonVacuumEntanglementEntropies[j] += TmpEntanglementEntropies[j];
-		}
-	      delete[] Tmp;
-	      if (ShowTimeFlag == true)
-		{
-		  gettimeofday (&(TotalEndingTime), 0);
-		  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
-					((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
-		  cout << TmpNbrParticlesA << " : " << EntanglementEntropies[0] << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << " " << "(" << Dt << "s)" << endl;
-		}
-	      else
-		{
-		  cout << TmpNbrParticlesA << " : " << EntanglementEntropies[0] << " " << CurrentEntanglementEntropyContribution << " " << AlphaFactor << endl;
-		}	  
-	      delete[] TmpEntanglementEntropies;
-	    }
-	  if (Manager.GetBoolean("use-approximation") == true)
-	    {
 	      NonVacuumEntanglementEntropies[0] = 0.0;
 	      for (int i = 0; i < NbrVacuumOneBodyEntanglementTrimmedEnergies; ++i)
 		{
@@ -1345,6 +1571,17 @@ HermitianMatrix EtaPairaingEntanglementEntropyExtractCorrelationMatrix(Hermitian
 }
 
 
+// compute the contribution to the Renyi entropy for a given number of particles in the subregion A, using the exact evaluation of the partitions
+//
+// oneBodyEntanglementTrimmedEnergies= array containing the one-body entanglement energies
+// nbrOneBodyEntanglementTrimmedEnergies = number of one-body entanglement energies
+// nbrParticlesA = number of particles in the subsystem A
+// currentOrbitalIndex = current orbital that is considered
+// currentFactor = current factor for a single partition
+// entropies = array that contains the Renyi entropies
+// maxRenyiEntropy = maximum Renyi entropy that has to be evaluated
+// alpha = reference total weight of the reduced density matrix for the sector with nbrParticlesA particles
+
 void GetEntanglementEntropyPerNbrParticlesA(double* oneBodyEntanglementTrimmedEnergies, int nbrOneBodyEntanglementTrimmedEnergies, 
 					    int nbrParticlesA, int currentOrbitalIndex, double currentFactor, double* entropies, int maxRenyiEntropy, double& alpha)
 {
@@ -1370,7 +1607,6 @@ void GetEntanglementEntropyPerNbrParticlesA(double* oneBodyEntanglementTrimmedEn
   GetEntanglementEntropyPerNbrParticlesA(oneBodyEntanglementTrimmedEnergies, nbrOneBodyEntanglementTrimmedEnergies, nbrParticlesA - 1, currentOrbitalIndex + 1, currentFactor * oneBodyEntanglementTrimmedEnergies[currentOrbitalIndex], entropies, maxRenyiEntropy, alpha);
   return;
 }
-
 
 // compute the z_0 value obtained from the saddle point approximation
 //
@@ -1478,4 +1714,56 @@ void ComputeThermalQuantities (double beta, double mu, int nbrStates, double* st
       thermalNbrParticlesMuDerivative += Tmp * beta;
       thermalNbrParticlesBetaDerivative -= Tmp * (stateEnergies[k] - mu);
     }
+}
+
+// evaluate the contribution of the eta pairing to the Renyi entropies
+// 
+// nbrRenyiEntropies = number of Renyi Entropies to evaluate
+// nbrSites = total number of sites 
+// nbrPairs = number of eta pairing pairs
+// vacuumNbrParticles = number of particles for the vacuum states 
+// totalNbrSitesA = otal number of sites in the region A
+// nbrParticlesA = number of particles in the region A
+// useRational = true if rational numbers have to be used for intermediate calculations
+// rationalCoefficient = reference on the temporary rational coefficient
+// binomial = reference on the binomial coefficients
+// return value = array containing the eta pairing contribution for each Renyi entropy
+
+double* EvaluateEtaPairingContribution(int nbrRenyiEntropies, int nbrSites, int nbrPairs, int vacuumNbrParticles, int totalNbrSitesA, int nbrParticlesA,
+				       bool useRational, LongRational& rationalCoefficient, BinomialCoefficients& binomial)
+{
+  double* Tmp = new double[nbrRenyiEntropies];
+  for (int j = 0; j < nbrRenyiEntropies; ++j)
+    {
+      Tmp[j] = 0.0;
+    }
+  int MaxSumIndex = totalNbrSitesA;
+  if (MaxSumIndex > nbrPairs)
+    MaxSumIndex = nbrPairs;
+  for (int j = 0; j <= MaxSumIndex; ++j)
+    {
+      double Tmp2;
+      if (useRational == true)
+	{
+	  rationalCoefficient.SetToOne();
+	  rationalCoefficient.BinomialMultiply(totalNbrSitesA - nbrParticlesA, j);
+	  rationalCoefficient.BinomialMultiply(nbrSites - totalNbrSitesA - vacuumNbrParticles + nbrParticlesA, nbrPairs - j);
+	  rationalCoefficient.BinomialDivide(nbrSites - vacuumNbrParticles, nbrPairs);
+	  Tmp2 = rationalCoefficient.GetNumericalValue();
+	}
+      else
+	{
+	  Tmp2 = ((binomial.GetNumericalCoefficient(totalNbrSitesA - nbrParticlesA, j) / binomial.GetNumericalCoefficient(nbrSites - vacuumNbrParticles, nbrPairs))
+		  * binomial.GetNumericalCoefficient(nbrSites - totalNbrSitesA - vacuumNbrParticles + nbrParticlesA, nbrPairs - j));
+	}
+      if (Tmp2 > 0.0)
+	{
+	  Tmp[0] -= Tmp2 * log(Tmp2);
+	  for (int k = 1; k < nbrRenyiEntropies; ++k)
+	    {
+	      Tmp[k] += pow(Tmp2, (double) (k + 1));
+	    }
+	}
+    }
+  return Tmp;
 }
