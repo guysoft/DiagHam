@@ -78,8 +78,8 @@ BosonOnLatticeRealSpaceOneOrbitalPerSiteAnd2DTranslation::BosonOnLatticeRealSpac
 // memory = amount of memory granted for precalculations
 
 BosonOnLatticeRealSpaceOneOrbitalPerSiteAnd2DTranslation::BosonOnLatticeRealSpaceOneOrbitalPerSiteAnd2DTranslation(int nbrBosons,  int lx, int ly, int xMomentum, int  maxXMomentum,
-										      int yMomentum, int maxYMomentum, unsigned long memory):
- BosonOnLatticeRealSpaceAnd2DTranslation (nbrBosons,lx*ly,xMomentum,maxXMomentum,yMomentum,maxYMomentum,memory), Lx(lx),Ly(ly)
+														   int yMomentum, int maxYMomentum, unsigned long memory):
+  BosonOnLatticeRealSpaceAnd2DTranslation (nbrBosons,lx*ly,xMomentum,maxXMomentum,yMomentum,maxYMomentum,memory), Lx(lx),Ly(ly)
 {  
 }
 
@@ -89,8 +89,8 @@ BosonOnLatticeRealSpaceOneOrbitalPerSiteAnd2DTranslation::BosonOnLatticeRealSpac
 
 BosonOnLatticeRealSpaceOneOrbitalPerSiteAnd2DTranslation::BosonOnLatticeRealSpaceOneOrbitalPerSiteAnd2DTranslation(const BosonOnLatticeRealSpaceOneOrbitalPerSiteAnd2DTranslation & bosons) :  BosonOnLatticeRealSpaceAnd2DTranslation(bosons)
 {
-this->Lx = bosons.Lx;
-this->Ly = bosons.Ly;
+  this->Lx = bosons.Lx;
+  this->Ly = bosons.Ly;
 }
 
 // destructor
