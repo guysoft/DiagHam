@@ -1139,9 +1139,7 @@ int main(int argc, char** argv)
 		  AlphaFactor = exp(LogAlphaFactor);
 		  AlphaFactor /= sqrt(TmpSum);
 		  SumAlphaFactors[0] += AlphaFactor;
-		  cout << "SumAlphaFactors[0] = " << SumAlphaFactors[0] << " "  << TmpNbrParticlesA << endl;
 		}
-	      cout << "SumAlphaFactors[0] = " << SumAlphaFactors[0] << endl;
 	      AlphaFactor = SumAlphaFactors[0];
 	      for (int TmpNbrParticlesA = OptimalNbrParticlesA - 1; ((TmpNbrParticlesA >= 0) && 
 								     ((SumAlphaFactors[0] + AlphaFactor) != SumAlphaFactors[0])); --TmpNbrParticlesA)
@@ -1161,7 +1159,6 @@ int main(int argc, char** argv)
 		  AlphaFactor /= sqrt(TmpSum);
 		  SumAlphaFactors[0] += AlphaFactor;
 		}
-	      cout << "SumAlphaFactors[0] = " << SumAlphaFactors[0] << endl;
 	      for (int TmpNbrParticlesA = OptimalNbrParticlesA; ((TmpNbrParticlesA <= MaxNbrParticlesA) && 
 								 ((EntanglementEntropies[0] + CurrentEntanglementEntropyContribution) != EntanglementEntropies[0])); ++TmpNbrParticlesA)
 		{
