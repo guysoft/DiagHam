@@ -121,14 +121,14 @@ int main(int argc, char** argv)
       YMomentum = new int [NbrInputStates];
       SzValue = new int [NbrInputStates];
       for (int i = 0; i < NbrInputStates; ++i)
-      {
-	if ((FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(DegenerateFile(0,i), NbrParticles, NbrSites, XMomentum[i], YMomentum[i],  XPeriodicity, YPeriodicity, Statistics, GutzwillerFlag) == false) && (FTIHubbardModelWith1DTranslationFindSystemInfoFromVectorFileName(DegenerateFile(0,i), NbrParticles, NbrSites, XMomentum[i], XPeriodicity, Statistics, GutzwillerFlag) == false))
-	  {
-	    cout << "error while retrieving system parameters from file name " << DegenerateFile(0, i) << endl;
-	    return -1;
-	  }
+	{
+	  if ((FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(DegenerateFile(0,i), NbrParticles, NbrSites, XMomentum[i], YMomentum[i],  XPeriodicity, YPeriodicity, Statistics, GutzwillerFlag) == false) && (FTIHubbardModelWith1DTranslationFindSystemInfoFromVectorFileName(DegenerateFile(0,i), NbrParticles, NbrSites, XMomentum[i], XPeriodicity, Statistics, GutzwillerFlag) == false))
+	    {
+	      cout << "error while retrieving system parameters from file name " << DegenerateFile(0, i) << endl;
+	      return -1;
+	    }
 	  TotalSpinConservedFlag = FTIHubbardModelWithSzFindSystemInfoFromVectorFileName (DegenerateFile(0, i), NbrParticles, NbrSites, SzValue[i], Statistics, GutzwillerFlag);
-      }
+	}
       
     }
   if (YPeriodicity == 0)
@@ -177,7 +177,8 @@ int main(int argc, char** argv)
 	    }	  
 	  if (InputStates[0].GetVectorDimension() != InputStates[i].GetVectorDimension())
 	    {
-	      cout << "error, " << DegenerateFile(0, 0) << " and " <<  DegenerateFile(0, i) << "don't have the same  dimension (" << InputStates[0].GetVectorDimension() << " and " << InputStates[i].GetVectorDimension()<< ")" << endl;
+	      cout << "error, " << DegenerateFile(0, 0) << " and " <<  DegenerateFile(0, i) << " don't have the same  dimension (" 
+		   << InputStates[0].GetVectorDimension() << " and " << InputStates[i].GetVectorDimension()<< ")" << endl;
 	      return -1;
 	    }
 	  InputStateNames[i] = new char [strlen(DegenerateFile(0, i)) + 1];

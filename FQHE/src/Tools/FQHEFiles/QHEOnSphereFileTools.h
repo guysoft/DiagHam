@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef QHEONSPHEREFILETOOLS_H
-#define QHEONSPHEREFILETOOLS_H
+#ifndef FQHEONSPHEREFILETOOLS_H
+#define FQHEONSPHEREFILETOOLS_H
 
 #include "config.h"
 

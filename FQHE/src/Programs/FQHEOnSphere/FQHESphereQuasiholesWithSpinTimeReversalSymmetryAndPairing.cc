@@ -89,11 +89,12 @@ int main(int argc, char** argv)
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
   (*ToolsGroup) += new BooleanOption  ('\n', "test-hermitian", "test if the hamiltonian is hermitian");
+  (*ToolsGroup) += new SingleStringOption  ('\n', "export-binhamiltonian", "export the hamiltonian as a binary file");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHESphereFermionsWithSpinTimeReversalSymmetryAndPairing -h" << endl;
+      cout << "see man page for option syntax or type FQHESphereQuasiholesWithSpinTimeReversalSymmetryAndPairing -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -116,7 +117,7 @@ int main(int argc, char** argv)
   int KValue = 1;
   int RValue = 2;
 
-  bool USeCylinderFlag = Manager.GetBoolean("use-cylinder");
+  bool UseCylinderFlag = Manager.GetBoolean("use-cylinder");
   double Ratio = Manager.GetDouble("aspect-ratio");
   double Perimeter = Manager.GetDouble("cylinder-perimeter");
   if (Perimeter > 0.0)
@@ -126,7 +127,7 @@ int main(int argc, char** argv)
 
   char* FilePrefix = new char[512];
 
-  if (USeCylinderFlag == true)
+  if (UseCylinderFlag == true)
     {
       if (Perimeter > 0.0)	
 	{
@@ -282,12 +283,12 @@ int main(int argc, char** argv)
 	  double Shift = 0.0;
 	  Hamiltonian->ShiftHamiltonian(Shift);
 	  char* EigenvectorName = 0;
-	  if (Manager.GetBoolean("eigenstate") == true)	
+	  if ((Manager.GetBoolean("eigenstate") == true) || (Manager.GetBoolean("all-eigenstates") == true))
 	    {
-	      EigenvectorName = new char [128];
-	      sprintf (EigenvectorName, "fermions_sphere_su2_quasiholes_%s_cenergy_%.6f_n0_%.6f_pairing_n_0_2s_%d_sz_%d_lz_%d", 
-		       Manager.GetString("interaction-name"), 
-		       Manager.GetDouble("charging-energy"), Manager.GetDouble("average-nbrparticles"), LzMax, TotalSz, L);
+	      EigenvectorName = new char [256 + strlen(FilePrefix) + strlen(Manager.GetString("interaction-name"))];
+	      sprintf (EigenvectorName, "%s_su2_quasiholes_%s_cenergy_%.6f_n0_%.6f_pairing_n_%d_2s_%d_sz_%d_lz_%d", 
+		       FilePrefix, Manager.GetString("interaction-name"), 
+		       Manager.GetDouble("charging-energy"), Manager.GetDouble("average-nbrparticles"), TmpFixedNbrParticles, LzMax, TotalSz, L);
 	    }
 	  
 	  char* ContentPrefix = new char[256];

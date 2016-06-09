@@ -137,6 +137,8 @@ class GenericRealMainTask: public AbstractMainTask
   int PartialEigenstateFlag;
   // flag that indicates if to fake complex vectors
   bool FakeComplex;
+  //  if non-zero, store the Hamiltonian as a binary file
+  char* ExportBinaryHamiltonian;
 
  public:
 

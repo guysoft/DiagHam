@@ -258,6 +258,21 @@ GenericComplexMainTask::GenericComplexMainTask(OptionManager* options, AbstractH
 	    }
 	}
     }  
+  this->ExportBinaryHamiltonian = 0;
+  if (((*options)["export-binhamiltonian"] != 0) && (options->GetString("export-binhamiltonian") != 0)) 
+    {
+      if (this->ReducedHilbertSpaceDescription == 0)
+	{
+	  HermitianMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), true);
+	  this->Hamiltonian->GetHamiltonian(HRep);
+	  HRep.WriteMatrix(options->GetString("export-binhamiltonian"));	  
+	}
+      else
+	{
+	  this->ExportBinaryHamiltonian = new char [strlen(options->GetString("export-binhamiltonian")) + 1];
+	  strcpy (this->ExportBinaryHamiltonian, options->GetString("export-binhamiltonian"));
+	}
+    }
   if (((*options)["export-hamiltonian"] != 0) && (options->GetString("export-hamiltonian") != 0))
     {
       HermitianMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), true);
@@ -949,6 +964,10 @@ void GenericComplexMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescript
 	  Complex Tmp = Basis[j] * TmpVector;
 	  HRep.SetMatrixElement(i ,j, Tmp);
 	}
+    }
+  if (this->ExportBinaryHamiltonian != 0)
+    {
+      HRep.WriteMatrix(this->ExportBinaryHamiltonian);	        
     }
   if (this->ShowHamiltonian == true)
     cout << HRep << endl;

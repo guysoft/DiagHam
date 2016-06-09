@@ -137,6 +137,8 @@ class GenericComplexMainTask: public AbstractMainTask
   bool FirstRun;
   // flag that indicate if eigenstates have to be computed and saved at a given frequency
   int PartialEigenstateFlag;
+  //  if non-zero, store the Hamiltonian as a binary file
+  char* ExportBinaryHamiltonian;
 
  public:
 

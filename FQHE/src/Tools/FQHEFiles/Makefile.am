@@ -9,4 +9,5 @@ FQHESqueezedBasisTools.cc \
 FQHESpherePseudopotentialTools.cc \
 FQHEOnTorusFileTools.cc \
 FQHEOnSquareLatticeFileTools.cc \
-FQHETorusPseudopotentialTools.cc
+FQHETorusPseudopotentialTools.cc \
+FQHEOnCylinderFileTools.cc

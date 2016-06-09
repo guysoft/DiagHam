@@ -200,6 +200,12 @@ class QuasiholeOnSphereWithSpinAndPairing :  public ParticleOnSphereWithSpin
   //return value = number of coupling elements
   virtual int GetMaximalNumberCouplingElements();
 
+  // convert a given state from a given  n-body basis basis to another one
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis where state is defined
+  // return value = converted vector
+  virtual RealVector ConvertToNbodyBasis(RealVector& state, QuasiholeOnSphereWithSpinAndPairing* nbodyBasis);
 
  protected:
 

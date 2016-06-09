@@ -804,3 +804,48 @@ ostream& QuasiholeOnSphereWithSpinAndPairing::PrintState (ostream& Str, int stat
   
   return Str;
 }
+
+// convert a given state from a given  n-body basis basis to another one
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis where state is defined
+// return value = converted vector
+
+RealVector QuasiholeOnSphereWithSpinAndPairing::ConvertToNbodyBasis(RealVector& state, QuasiholeOnSphereWithSpinAndPairing* nbodyBasis)
+{
+  RealVector TmpVector (this->LargeHilbertSpaceDimension, true);
+  int NbrParticlesUp;
+  int LzUp;
+  int BetaUp;
+  int BetaDown;  
+  if (nbodyBasis->LargeHilbertSpaceDimension < this->LargeHilbertSpaceDimension)
+    {
+      for (int i= 0; i < nbodyBasis->HilbertSpaceDimension; ++i)
+	{
+	  NbrParticlesUp = nbodyBasis->NbrFermionUpFullSpace[i];
+	  LzUp = nbodyBasis->LzValueUpFullSpace[i];
+	  nbodyBasis->FindBetaIndices(i, BetaUp, BetaDown);  
+	  int TmpIndex = this->FindStateIndex(NbrParticlesUp, LzUp, BetaUp, BetaDown);
+	  if (TmpIndex < this->HilbertSpaceDimension)
+	    {
+	      TmpVector[TmpIndex] = state[i];
+	    }
+	}
+    }
+  else
+    {
+      for (int i= 0; i < this->HilbertSpaceDimension; ++i)
+	{
+	  NbrParticlesUp = this->NbrFermionUpFullSpace[i];
+	  LzUp = this->LzValueUpFullSpace[i];
+	  this->FindBetaIndices(i, BetaUp, BetaDown);  	  
+	  int TmpIndex = nbodyBasis->FindStateIndex(NbrParticlesUp, LzUp, BetaUp, BetaDown);
+	  if (TmpIndex < nbodyBasis->HilbertSpaceDimension)
+	    {
+	      TmpVector[i] = state[TmpIndex];
+	    }
+	}
+    }
+  return TmpVector;
+}
+
