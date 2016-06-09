@@ -196,9 +196,9 @@ int main(int argc, char** argv)
       double FourthCumulant = MomentOrderNbrParticles[l][3][p] - 4 * MomentOrderNbrParticles[l][2][p] * MomentOrderNbrParticles[l][0][p] - 3 * MomentOrderNbrParticles[l][1][p] * MomentOrderNbrParticles[l][1][p] + 12 * MomentOrderNbrParticles[l][1][p] * SquareAverage - 6 * FourthAverage;
        File << MomentOrderNbrParticles[l][0][p] << " " << Variance[l][p] << " " <<  ThirdCumulant << " " << FourthCumulant << " ";
     }
-    if (p > NbrSampleSizes / 2)
+    if ((p >= NbrSampleSizes / 2) && (p < NbrSampleSizes - 1))
     {
-      double RescaledFluctuations = (Variance[0][p] + Variance[0][NbrSampleSizes - 1 - p]) - (Variance[1][p] + Variance[1][NbrSampleSizes - 1 - p]);
+      double RescaledFluctuations = (Variance[0][p] + Variance[0][NbrSampleSizes - 2 - p]) - (Variance[1][p] + Variance[1][NbrSampleSizes - 2 - p]);
       File << (RescaledFluctuations / 2.0);
     }
     File << endl;
