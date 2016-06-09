@@ -31,6 +31,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption ('\n', "measure-frequency", "number of steps between measures", 100);
   (*SystemGroup) += new SingleIntegerOption ('q', "laughlin-q", "invert of the Laughlin filling fraction", 1);
   (*SystemGroup) += new SingleIntegerOption ('\n', "discretize-disk", "measure fluctuation of number of particles in all sections of angle theta = i / (p 2pi), i < p", 100);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "ellipse-t", "number of particles", 0.0);
    (*SystemGroup) += new SingleStringOption ('\n', "file-name", "string of character to characterize the run", "0");
    (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
    
@@ -55,6 +56,7 @@ int main(int argc, char** argv)
   double SampleSize = 2.0 * M_PI / ((double) NbrSampleSizes);
   int Tmp;
   long NumberSamples = Manager.GetInteger("nbr-samples");
+  double EllipseParameter = Manager.GetDouble("ellipse-t");
   
   
   double*** MomentOrderNbrParticles = new double** [2];
@@ -124,7 +126,7 @@ int main(int argc, char** argv)
       }
     }
    
-    TmpRatio = pow(TmpRatio, LaughlinInvertFillingFraction) * exp(-(TmpNextX*TmpNextX + TmpNextY*TmpNextY - ParticleCoordinateX[TmpParticleIndex]*ParticleCoordinateX[TmpParticleIndex] - ParticleCoordinateY[TmpParticleIndex]*ParticleCoordinateY[TmpParticleIndex]));
+    TmpRatio = pow(TmpRatio, LaughlinInvertFillingFraction) * exp(-((1.0 + EllipseParameter) * (TmpNextX*TmpNextX - ParticleCoordinateX[TmpParticleIndex]*ParticleCoordinateX[TmpParticleIndex]) + (1.0 - EllipseParameter) * (TmpNextY*TmpNextY  - ParticleCoordinateY[TmpParticleIndex]*ParticleCoordinateY[TmpParticleIndex])));
     
     //Metropolis algorithm: decide or not to accept move
     if (RandomNumberGenerator->GetRealRandomNumber() < TmpRatio)
@@ -173,7 +175,10 @@ int main(int argc, char** argv)
 	MomentOrderNbrParticles[l][order][p] /= ((double) (Manager.GetInteger("nbr-samples") / MeasurementPeriod));
     
   char* FileName = new char[512];
-  sprintf(FileName, "fluctuation_nbr_particles_laughlin_%d_disk_n_%d_MCsamples_%.0e_period_%d_%s.dat", LaughlinInvertFillingFraction, NbrParticles, ((double) Manager.GetInteger("nbr-samples")), ((int) Manager.GetInteger("discretize-disk")), Manager.GetString("file-name"));
+  if (EllipseParameter == 0.0)
+    sprintf(FileName, "fluctuation_nbr_particles_laughlin_%d_disk_n_%d_MCsamples_%.0e_period_%d_%s.dat", LaughlinInvertFillingFraction, NbrParticles, ((double) Manager.GetInteger("nbr-samples")), ((int) Manager.GetInteger("discretize-disk")), Manager.GetString("file-name"));
+  else
+    sprintf(FileName, "fluctuation_nbr_particles_laughlin_%d_ellipse_%.6f_n_%d_MCsamples_%.0e_period_%d_%s.dat", LaughlinInvertFillingFraction, EllipseParameter, NbrParticles, ((double) Manager.GetInteger("nbr-samples")), ((int) Manager.GetInteger("discretize-disk")), Manager.GetString("file-name"));
   
   double** Variance = new double* [2];
   for (int l = 0; l < 2; ++l)
