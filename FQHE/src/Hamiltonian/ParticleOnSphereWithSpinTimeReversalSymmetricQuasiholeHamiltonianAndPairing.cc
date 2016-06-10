@@ -96,6 +96,7 @@ ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::Par
   this->FastMultiplicationFlag = false;
   this->DiskStorageFlag = onDiskCacheFlag;
 
+  this->OneBodyInteractionFactorsupup = 0;
   if (onebodyPotentialUpUp != 0)
     {
       this->OneBodyInteractionFactorsupup = new double [this->NbrLzValue];
@@ -103,6 +104,7 @@ ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::Par
 	this->OneBodyInteractionFactorsupup[i] = onebodyPotentialUpUp[i];
     }
   
+  this->OneBodyInteractionFactorsdowndown = 0;
   if (onebodyPotentialDownDown != 0)
     {
       this->OneBodyInteractionFactorsdowndown = new double [this->NbrLzValue];
