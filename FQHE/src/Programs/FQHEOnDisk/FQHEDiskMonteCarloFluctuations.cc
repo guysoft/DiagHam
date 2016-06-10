@@ -57,6 +57,7 @@ int main(int argc, char** argv)
   int Tmp;
   long NumberSamples = Manager.GetInteger("nbr-samples");
   double EllipseParameter = Manager.GetDouble("ellipse-t");
+  double RadiusSquareInsideDroplet = (NbrParticles * LaughlinInvertFillingFraction * (1.0 - EllipseParameter))/ (2.0 * (1.0 + EllipseParameter));
   
   
   double*** MomentOrderNbrParticles = new double** [2];
@@ -150,7 +151,7 @@ int main(int argc, char** argv)
 	for (int p = Tmp - 1; p < NbrSampleSizes; ++p)
 	{
 	  ++CurrentRunNumberParticles[0][p];
-	  if (RadiusSquare < NbrParticles / 2)
+	  if (RadiusSquare < RadiusSquareInsideDroplet)
 	    ++CurrentRunNumberParticles[1][p];
 	}
       }
