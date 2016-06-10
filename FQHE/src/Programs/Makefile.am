@@ -1,4 +1,4 @@
-SUBDIRS=FQHEOnSphere FQHEOnDisk FQHEOnTorus FQHEOnLattice
+SUBDIRS=FQHEOnSphere FQHEOnDisk FQHEOnTorus FQHEOnCylinder FQHEOnLattice
 
 bin_PROGRAMS=
 
