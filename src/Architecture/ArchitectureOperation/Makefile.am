@@ -25,4 +25,5 @@ VectorTensorMultiplicationCoreOperation.cc \
 VectorSparseTensorMultiplyOperation.cc \
 TensorMatrixContractionOperation.cc \
 MPOApplyOnTensorOperation.cc \
-TensorVectorContractionOperation.h
+TensorVectorContractionOperation.cc \
+OperatorMultipleMatrixElementOperation.cc

@@ -72,6 +72,7 @@ class AbstractArchitectureOperation
       ScalarSum = 0x800,
       OperatorMatrixElement = 0x801,
       MultipleOperatorMatrixElement = 0x802,
+      OperatorMultipleMatrixElement = 0x803,
       QHEParticleWaveFunction = 0x10800,
       MainTask = 0x1000,
       VectorOperatorMultiply=0x2000,
