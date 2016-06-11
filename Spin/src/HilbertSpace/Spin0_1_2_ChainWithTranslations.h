@@ -47,6 +47,7 @@ class Spin0_1_2_ChainWithTranslations : public AbstractSpinChainWithTranslations
 {
   friend class DoubledSpin0_1_2_ChainWithTranslations;
   friend class DoubledSpin0_1_2_ChainWithTranslationsStaggered;
+  friend class DoubledSpin1_ChainWithTranslations;
    
  protected:
 
