@@ -116,5 +116,39 @@ bool FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(char* filename, int& 
 // return value = true if no error occured
 bool FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrSites, int& szValue, int& xMomentum, int& yMomentum, int& xPeriodicity, int& yPeriodicity, bool& statistics, bool& gutzwiller);
 
+// try to guess system information from file name
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles 
+// nbrUnitCellX = reference on the number of unit cell  in the x direction
+// nbrUnitCellY = reference on the number of unit cell  in the y direction
+// nbrSiteInUnitCellX  = reference on the number of site in each unit cell  in the x direction
+// nbrSiteInUnitCellY  = reference on the number of site in each unit cell  in the y direction
+// statistics = reference on flag for fermionic statistics (true for fermion, false for bosons)
+// gutzwiller = reference on flag  that indicated if the Gutzwiller projection was implemented within the Hilbert space
+// return value = true if no error occured
+bool FTIHofstadterdModelFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrUnitCellX, int& nbrUnitCellY, int& nbrSiteInUnitCellX,int& nbrSiteInUnitCellY, bool& statistics, bool& gutzwiller);
+
+// try to guess system information from file name
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles 
+// xMomentum = reference on the momentum sector in the x direction
+// yMomentum = reference on the momentum sector in the y direction
+// nbrUnitCellX = reference on the number of unit cell  in the x direction
+// nbrUnitCellY = reference on the number of unit cell  in the y direction
+// nbrSiteInUnitCellX  = reference on the number of site in each unit cell  in the x direction
+// nbrSiteInUnitCellY  = reference on the number of site in each unit cell  in the y direction
+// statistics = reference on flag for fermionic statistics (true for fermion, false for bosons)
+// gutzwiller = reference on flag  that indicated if the Gutzwiller projection was implemented within the Hilbert space
+// return value = true if no error occured
+bool FTIHofstadterdModelWith2DTranslationFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& xMomentum, int& yMomentum,  int& nbrUnitCellX, int& nbrUnitCellY, int& nbrSiteInUnitCellX, int& nbrSiteInUnitCellY, bool& statistics, bool& gutzwiller);
+
+// try to guess system information from file name
+//
+// filename = vector file name
+// szValue = reference on the value of the total spin
+// return value = true if no error occured
+bool FTIHofstadterModelWithSzFindSystemInfoFromVectorFileName(char* filename,int & szValue);
 
 #endif

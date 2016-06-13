@@ -427,3 +427,292 @@ bool FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(char* file
     }
   return true;
 }
+
+// try to guess system information from file name
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles 
+// nbrUnitCellX = reference on the number of unit cell  in the x direction
+// nbrUnitCellY = reference on the number of unit cell  in the y direction
+// nbrSiteInUnitCellX  = reference on the number of site in each unit cell  in the x direction
+// nbrSiteInUnitCellY  = reference on the number of site in each unit cell  in the y direction
+// statistics = reference on flag for fermionic statistics (true for fermion, false for bosons)
+// gutzwiller = reference on flag  that indicated if the Gutzwiller projection was implemented within the Hilbert space
+// return value = true if no error occured
+
+bool FTIHofstadterdModelFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrUnitCellX, int& nbrUnitCellY, int& nbrSiteInUnitCellX,int& nbrSiteInUnitCellY, bool& statistics, bool& gutzwiller)
+{
+  char* StrNbrParticles;
+  StrNbrParticles = strstr(filename, "_n_");
+  if (StrNbrParticles == 0)
+    StrNbrParticles = strstr(filename, "_p_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 3;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  nbrParticles = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess number of particles from file name " << filename << endl;
+      return false;            
+    }
+
+
+
+  StrNbrParticles = strstr(filename, "_x_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 3;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  nbrUnitCellX = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess the number of unit cell in x direction " << filename << endl;
+      return false;            
+    }
+
+  StrNbrParticles = strstr(filename, "_y_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 3;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  nbrUnitCellY = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess the number of unit cell in y direction " << filename << endl;
+      return false;            
+    }
+
+
+
+  StrNbrParticles = strstr(filename, "_X_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 3;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  nbrSiteInUnitCellX = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess number of site in the magnetic cell in x direction  from file name " << filename << endl;
+      return false;            
+    }
+
+  StrNbrParticles = strstr(filename, "_Y_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 3;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  nbrSiteInUnitCellY = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess number of site in the magnetic cell in y direction  from file name " << filename << endl;
+      return false;            
+    }
+  
+  if (strstr(filename, "fermion") == 0)
+    {
+      if (strstr(filename, "boson") == 0)
+	{
+	  cout << "can't guess particle statistics from file name " << filename << endl;
+	  return false;	  
+	}
+      else
+	{
+	  statistics = false;
+	}
+    }
+  else
+    {
+      statistics = true;
+    }
+  
+  char* GutzwillerFlag = strstr(filename, "_gutzwiller_");
+  if (GutzwillerFlag != 0)
+    gutzwiller = true;
+  else
+    gutzwiller = false;
+  return true;
+  
+}
+
+
+
+
+// try to guess system information from file name
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles 
+// xMomentum = reference on the momentum sector in the x direction
+// yMomentum = reference on the momentum sector in the y direction
+// nbrUnitCellX = reference on the number of unit cell  in the x direction
+// nbrUnitCellY = reference on the number of unit cell  in the y direction
+// nbrSiteInUnitCellX  = reference on the number of site in each unit cell  in the x direction
+// nbrSiteInUnitCellY  = reference on the number of site in each unit cell  in the y direction
+// statistics = reference on flag for fermionic statistics (true for fermion, false for bosons)
+// gutzwiller = reference on flag  that indicated if the Gutzwiller projection was implemented within the Hilbert space
+// return value = true if no error occured
+
+bool FTIHofstadterdModelWith2DTranslationFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& xMomentum, int& yMomentum,  int& nbrUnitCellX, int& nbrUnitCellY, int& nbrSiteInUnitCellX,int& nbrSiteInUnitCellY, bool& statistics, bool& gutzwiller)
+{
+  if (FTIHofstadterdModelFindSystemInfoFromVectorFileName(filename, nbrParticles, nbrUnitCellX, nbrUnitCellY, nbrSiteInUnitCellX, nbrSiteInUnitCellY, statistics, gutzwiller) == false) 
+    {
+      return false;
+    }
+
+  char* StrNbrParticles;
+  int SizeString;
+    
+  StrNbrParticles = strstr(filename, "_kx_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  xMomentum = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess x momentum sector from file name " << filename << endl;
+      return false;            
+    }
+
+  StrNbrParticles = strstr(filename, "_ky_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  yMomentum = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess y momentum sector from file name " << filename << endl;
+      return false;            
+    }
+  return true;
+}
+
+
+// try to guess system information from file name
+//
+// filename = vector file name
+// szValue = reference on the value of the total spin
+// return value = true if no error occured
+bool FTIHofstadterModelWithSzFindSystemInfoFromVectorFileName(char* filename,int & szValue)
+{    
+  char* StrNbrParticles;
+  int SizeString;
+  StrNbrParticles = strstr(filename, "_sz_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && (((StrNbrParticles[SizeString] >= '0') 
+																	&& (StrNbrParticles[SizeString] <= '9')) || (StrNbrParticles[SizeString] != '-')))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  szValue = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+    
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess sz value sector from file name " << filename << endl;
+      return false;            
+    }
+  return true;
+}

@@ -57,6 +57,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-na", "maximum size of the particles whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
   (*SystemGroup) += new BooleanOption  ('\n', "decoupled", "assume that the total spin is a good quantum number of the problem");
+  (*SystemGroup) += new BooleanOption  ('\n', "hofstadter", "the file name uses Hofstadter model convention");
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "particles have a SU(2) spin");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
@@ -90,6 +91,8 @@ int main(int argc, char** argv)
   int NbrSites = 0;
   int NbrSiteX = 0;
   int NbrSiteY = 0;
+  int UnitCellX = 0;
+  int UnitCellY = 0;
   bool Statistics = true;
   double* Coefficients = 0;
   bool ShowTimeFlag = Manager.GetBoolean("show-time");
@@ -97,6 +100,7 @@ int main(int argc, char** argv)
   bool TwoDTranslationFlag = false;
   bool SU2SpinFlag = Manager.GetBoolean("su2-spin");
   bool GutzwillerFlag = false;
+  bool HofstadterFlag = Manager.GetBoolean("hofstadter");
 
   if ((Manager.GetString("ground-file") == 0) && (Manager.GetString("degenerated-groundstate") == 0))
     {
@@ -160,32 +164,70 @@ int main(int argc, char** argv)
 	     Coefficients[i] *= TmpSum;
 	 }
     }
+  bool TotalSpinConservedFlag;
+  if (HofstadterFlag == false )
+    {     
+      if (FTIHubbardModelFindSystemInfoFromVectorFileName(GroundStateFiles[0], NbrParticles, NbrSites, Statistics, GutzwillerFlag) == false)
+	{
+	  cout << "error while retrieving system parameters from file name " << GroundStateFiles[0] << endl;
+	  return -1;
+	  
+	}
+      TwoDTranslationFlag = FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(GroundStateFiles[0],
+											     NbrParticles, NbrSites, TotalKx[0], TotalKy[0], NbrSiteX, NbrSiteY, Statistics, GutzwillerFlag);
     
-    if (FTIHubbardModelFindSystemInfoFromVectorFileName(GroundStateFiles[0], NbrParticles, NbrSites, Statistics, GutzwillerFlag) == false)
-      {
-	cout << "error while retrieving system parameters from file name " << GroundStateFiles[0] << endl;
-	return -1;
 	
-      }
-    TwoDTranslationFlag = FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(GroundStateFiles[0],
-											   NbrParticles, NbrSites, TotalKx[0], TotalKy[0], NbrSiteX, NbrSiteY, Statistics, GutzwillerFlag);
-    bool TotalSpinConservedFlag = FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(GroundStateFiles[0], NbrParticles, NbrSites, TotalSpin, Statistics, GutzwillerFlag);
-    
-    if (TwoDTranslationFlag == true)
-      { 
-	for (int i = 0; i < NbrSpaces; ++i)
-	  {
-	    TotalKx[i] = 0;
-	    TotalKy[i] = 0;
-	    if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(GroundStateFiles[i],
-										 NbrParticles, NbrSites, TotalKx[i], TotalKy[i], NbrSiteX, NbrSiteY, Statistics, GutzwillerFlag) == false)
-	      {
-		cout << "error while retrieving 2D translation parameters from file name " << GroundStateFiles[i] << endl;
-		return -1;
-	      }
-	  } 
-      }
+      TotalSpinConservedFlag = FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(GroundStateFiles[0], NbrParticles, NbrSites, TotalSpin, Statistics, GutzwillerFlag);
 
+
+
+      if (TwoDTranslationFlag == true)
+	{ 
+	  for (int i = 0; i < NbrSpaces; ++i)
+	    {
+	      TotalKx[i] = 0;
+	      TotalKy[i] = 0;
+	      if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(GroundStateFiles[i],
+										   NbrParticles, NbrSites, TotalKx[i], TotalKy[i], NbrSiteX, NbrSiteY, Statistics, GutzwillerFlag) == false)
+		{
+		  cout << "error while retrieving 2D translation parameters from file name " << GroundStateFiles[i] << endl;
+		  return -1;
+		}
+	  } 
+	}
+    }
+  else
+    {
+      if (FTIHofstadterdModelFindSystemInfoFromVectorFileName(GroundStateFiles[0],NbrParticles, NbrSiteX, NbrSiteY, UnitCellX, UnitCellY, Statistics, GutzwillerFlag) == false) 
+	{
+	  cout << "error while retrieving system parameters from file name " << GroundStateFiles[0] << endl;
+	  return -1;
+	}
+      NbrSites = NbrSiteX* NbrSiteY* UnitCellX* UnitCellY;
+      TwoDTranslationFlag = FTIHofstadterdModelWith2DTranslationFindSystemInfoFromVectorFileName(GroundStateFiles[0], NbrParticles, TotalKx[0], TotalKy[0],NbrSiteX, NbrSiteY, UnitCellX, UnitCellY, Statistics, GutzwillerFlag);
+      TotalSpinConservedFlag = FTIHofstadterModelWithSzFindSystemInfoFromVectorFileName(GroundStateFiles[0], TotalSpin);
+
+      if (      TotalSpinConservedFlag == true ) 
+	cout <<"Detecting spin"<<endl;
+      cout << TotalSpin<<endl;
+	
+      if (TwoDTranslationFlag == true)
+	{ 
+	  cout <<"Hofstadter with translation"<<endl;
+	  for (int i = 0; i < NbrSpaces; ++i)
+	    {
+	      TotalKx[i] = 0;
+	      TotalKy[i] = 0;
+	      if (FTIHofstadterdModelWith2DTranslationFindSystemInfoFromVectorFileName(GroundStateFiles[i], NbrParticles, TotalKx[i], TotalKy[i],NbrSiteX, NbrSiteY, UnitCellX, UnitCellY, Statistics, GutzwillerFlag) == false)
+		{
+		  cout << "error while retrieving 2D translation parameters from file name " << GroundStateFiles[i] << endl;
+		  return -1;
+		}
+	    } 
+	}
+    }
+
+  
   GroundStates = new ComplexVector [NbrSpaces];  
   for (int i = 0; i < NbrSpaces; ++i)
     {
@@ -325,7 +367,10 @@ int main(int argc, char** argv)
 			  if (TwoDTranslationFlag == false)
 			    Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpace (NbrParticles, TotalSpin, NbrSites, 10000000);
 			  else
-			    Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, TotalSpin, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY, 10000000);
+			    {
+			      cout <<" I should be here"<<endl;
+			      Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, TotalSpin, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY, 10000000);
+			    }
 			}
 		    }
 		  else

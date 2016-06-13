@@ -699,7 +699,7 @@ inline void  ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian::Eval
   int PositionY;
   if (this->HermitianSymmetryFlag == false)
     {
-      cout <<" in inline void  ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 															       int* indexArray, Complex* coefficientArray, long& position) using   if (this->HermitianSymmetryFlag == false)"<<endl;
+//      cout <<" in inline void  ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 															       int* indexArray, Complex* coefficientArray, long& position) using   if (this->HermitianSymmetryFlag == false)"<<endl;
 
       for (int j = 0; j < this->NbrSites; ++j)
 	{
@@ -719,9 +719,9 @@ inline void  ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian::Eval
 
  		  //coefficientArray[position] = Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactors[k]; 
                   
-		  cout <<"j = " <<j <<" ; TmpConnectedSites[k] = " << TmpConnectedSites[k]<<" index " << index <<" Index = " << Index<<" coefficientArray[position] = "<<coefficientArray[position] <<endl;
-		  cout <<"Coefficient = " <<  Coefficient <<" this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] = "<<this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]<< " Phase((NbrTranslationsX*PositionY*PhaseTranslationX + NbrTranslationsY * PositionX * PhaseTranslationY)) = "<< Phase((NbrTranslationsX*PositionY*PhaseTranslationX + NbrTranslationsY * PositionX * PhaseTranslationY))<< " TmpInteractionFactors[k] = "<< TmpInteractionFactors[k]<<endl;
-		   cout <<"NbrTranslationsX = "<< NbrTranslationsX <<" PositionY = "<<PositionY<<endl;
+//		  cout <<"j = " <<j <<" ; TmpConnectedSites[k] = " << TmpConnectedSites[k]<<" index " << index <<" Index = " << Index<<" coefficientArray[position] = "<<coefficientArray[position] <<endl;
+//		  cout <<"Coefficient = " <<  Coefficient <<" this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] = "<<this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]<< " Phase((NbrTranslationsX*PositionY*PhaseTranslationX + NbrTranslationsY * PositionX * PhaseTranslationY)) = "<< Phase((NbrTranslationsX*PositionY*PhaseTranslationX + NbrTranslationsY * PositionX * PhaseTranslationY))<< " TmpInteractionFactors[k] = "<< TmpInteractionFactors[k]<<endl;
+//		   cout <<"NbrTranslationsX = "<< NbrTranslationsX <<" PositionY = "<<PositionY<<endl;
 
 	 	  ++position;
 		}
@@ -731,7 +731,7 @@ inline void  ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian::Eval
   else
     {
 
-      cout <<" in inline void  ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 															       int* indexArray, Complex* coefficientArray, long& position) using   if (this->HermitianSymmetryFlag == true)"<<endl;
+//    cout <<" in inline void  ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 															       int* indexArray, Complex* coefficientArray, long& position) using   if (this->HermitianSymmetryFlag == true)"<<endl;
       
       for (int j = 0; j < this->NbrSites; ++j)
 	{
