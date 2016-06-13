@@ -4,11 +4,13 @@
 //                            DiagHam  version 0.01                           //
 //                                                                            //
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
+//                    class author: Cecile Repellin                           //
 //                                                                            //
 //                                                                            //
 //               class of spin 1/2 chain with a fixed Sz value                //
+//               and a pseudospin 1/2 (not a conserved quantity)              //
 //                                                                            //
-//                        last modification : 29/06/2015                      //
+//                        last modification : 11/06/2016                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -86,7 +88,49 @@ class Spin1_2ChainWithPseudospin : public Spin1_2ChainNew
   // index = index of the state to test
   // return value = spin projection on (Oz)
   virtual int TotalSz (int index);
+  
+  // return eigenvalue of Sz_i Sz_j associated to a given state (acts only on spin part of many-body state)
+  //
+  // i = first position
+  // j = second position
+  // state = index of the state to consider
+  // return value = corresponding eigenvalue
+  virtual double SziSzj (int i, int j, int state);
+  
+   // return index of resulting state from application of S-_i S+_j operator on a given state
+  //
+  // i = position of S- operator
+  // j = position of S+ operator
+  // state = index of the state to be applied on S-_i S+_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of resulting state
+  virtual int SmiSpj (int i, int j, int state, double& coefficient);
 
+  // return index of resulting state from application of S+_i S-_j operator on a given state
+  //
+  // i = position of S+ operator
+  // j = position of S- operator
+  // state = index of the state to be applied on S+_i S-_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of resulting state
+  virtual int SpiSmj (int i, int j, int state, double& coefficient);
+  
+  // operator acting on pseudospin on site i (off-diagonal part)
+  //
+  // i = position of pseudospin operator
+  // state = index of the state to be applied on JAi operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of the resulting state
+  virtual int JOffDiagonali (int i, int state, double& coefficient);
+  
+  // operator acting on pseudospin on site i (diagonal part)
+  //
+  // i = position of pseudospin operator
+  // state = index of the state to be applied on JAi operator
+  // coupling = array where the coupling coefficients are stored
+  // return value = numerical coefficient
+  virtual double JDiagonali (int i, int state, double* coupling);
+    
   // compute the parity (prod_i Sz_i) for a given state
   //
   // state = index of the state to be applied on Sz_i operator

@@ -1,16 +1,16 @@
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //                                                                            //
-//                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
+//                    class author: Cecile Repellin                           //
 //                                                                            //
 //                                                                            //
+//               class of spin 1/2 chain with a fixed Sz value                //
+//               and a pseudospin 1/2 (not a conserved quantity)              //
 //                                                                            //
-//               class of spin 1/2 chain with a pseudospin 1/2                //
-//                                                                            //
-//                        last modification : 10/06/2016                      //
+//                        last modification : 11/06/2016                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -86,12 +86,16 @@ Spin1_2ChainWithPseudospin::Spin1_2ChainWithPseudospin (int chainLength, int sz,
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
   this->GenerateLookUpTable(memorySize);
   
+//   double TmpCoef;
 //   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 //   {
-//     this->PrintState(cout,i) << endl ;
-//     cout << i << " " << this->FindStateIndex(this->StateDescription[i]) << endl;
+//     this->PrintState(cout,i) << " " ;
+//     cout << (this->JOffDiagonali(1, i, TmpCoef)) << " ";
+// //     if ((this->SmiSpj(0, 1, i, TmpCoef)) < this->HilbertSpaceDimension)
+// //       cout << TmpCoef;
+//     cout << endl;
 //   }
-  cout << endl;
+//   cout << endl;
   this->Flag.Initialize();
 }
 
@@ -515,4 +519,133 @@ void Spin1_2ChainWithPseudospin::GetBosonicOccupation (unsigned int index, int *
     {
       finalState[i] = (this->StateDescription[index] >> ((unsigned long) (2 * i)) )& 0x1ul;
     }
+}
+
+
+// return eigenvalue of Sz_i Sz_j associated to a given state (acts only on spin part of many-body state)
+//
+// i = first position
+// j = second position
+// state = index of the state to consider
+// return value = corresponding eigenvalue
+
+double Spin1_2ChainWithPseudospin::SziSzj (int i, int j, int state)
+{  
+  unsigned long Mask = ((0x1ul << (2*i + 1)) | (0x1ul << (2*j + 1)));
+  unsigned long tmpState = this->StateDescription[state] & Mask;
+  if ((tmpState == 0x0ul) || (tmpState == Mask))
+    return 0.25;
+  else
+    return -0.25;
+}
+
+// return index of resulting state from application of S-_i S+_j operator on a given state
+//
+// i = position of S- operator
+// j = position of S+ operator
+// state = index of the state to be applied on S-_i S+_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
+
+int Spin1_2ChainWithPseudospin::SmiSpj (int i, int j, int state, double& coefficient)
+{  
+  unsigned long tmpState = this->StateDescription[state];
+  unsigned long State = tmpState;
+  unsigned long tmpState2 = tmpState;
+  tmpState >>= (2*i + 1);
+  tmpState &= 0x1ul;
+  if (i != j)
+    {
+      tmpState2 >>= (2*j + 1); 
+      tmpState2 &= 0x1ul;
+      tmpState2 <<= 1;
+      tmpState2 |= tmpState;
+      if (tmpState2 == 0x1ul)
+	{
+	  coefficient = 1.0;
+	  return this->FindStateIndex((State | (0x1ul << (2*j + 1))) & ~(0x1ul << (2*i + 1)));
+	}
+      else
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension;
+	}
+    }
+  if (tmpState == 0x0ul)
+    {
+      coefficient = -0.25;
+      return state;
+    }
+  return this->HilbertSpaceDimension;
+}
+
+// return index of resulting state from application of S+_i S-_j operator on a given state
+//
+// i = position of S+ operator
+// j = position of S- operator
+// state = index of the state to be applied on S+_i S-_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
+
+int Spin1_2ChainWithPseudospin::SpiSmj (int i, int j, int state, double& coefficient)
+{
+  unsigned long tmpState = this->StateDescription[state];
+  unsigned long State = tmpState;
+  unsigned long tmpState2 = tmpState;
+  tmpState >>= (2*j + 1);
+  tmpState &= 0x1ul;
+  if (i != j)
+    {
+      tmpState2 >>= (2*i + 1); 
+      tmpState2 &= 0x1ul;
+      tmpState2 <<= 1;
+      tmpState2 |= tmpState;
+      if (tmpState2 == 0x1ul)
+	{
+	  coefficient = 1.0;
+	  return this->FindStateIndex((State | (0x1ul << (2*i + 1))) & ~(0x1ul << (2*j + 1)));
+	}
+      else
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension;
+	}
+    }
+  if (tmpState == 0x1ul)
+    {
+      coefficient = -0.25;
+      return state;
+    }
+  return this->HilbertSpaceDimension;
+}
+
+// operator acting on pseudospin on site i (off-diagonal part)
+//
+// i = position of pseudospin operator
+// state = index of the state to be applied on JAi operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of the resulting state
+
+int Spin1_2ChainWithPseudospin::JOffDiagonali (int i, int state, double& coefficient)
+{
+  unsigned long State = this->StateDescription[state];
+  coefficient = 1.0;
+  unsigned long Tmp = (State >> (2*i)) & 0x1ul;
+  if (Tmp == 0x0ul)
+    return this->FindStateIndex(State | (0x1ul << (2*i)));
+  else
+    return this->FindStateIndex(State & ~(0x1ul << (2*i)));
+}
+
+// operator acting on pseudospin on site i (off-diagonal part)
+//
+// i = position of pseudospin operator
+// state = index of the state to be applied on JAi operator
+// coupling = array where the coupling coefficients are stored
+// return value = numerical coefficient
+
+double Spin1_2ChainWithPseudospin::JDiagonali (int i, int state, double* coupling)
+{
+  int Tmp = (int) ((this->StateDescription[state] >> (2*i)) & 0x1ul);
+  return coupling[Tmp];
 }

@@ -10,6 +10,7 @@
 #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsStaggered.h"
 #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslations.h"
 #include "HilbertSpace/DoubledSpin1_2_ChainWithTranslations.h"
+#include "HilbertSpace/DoubledSpin1_2_ChainWithTranslations_alternative.h"
 
 #include "GeneralTools/FilenameTools.h"
 
@@ -108,10 +109,17 @@ int main(int argc, char** argv)
 	  else
 	    {
 	      DoubledSpin1_2_ChainWithTranslations  Space (NbrSpins,  Momentum,  SzValue,  1000000, 1000000);
+	      DoubledSpin1_2_ChainWithTranslations_alternative  Space1 (NbrSpins,  Momentum,  SzValue,  1000000, 1000000);
+	      cout << "dim = " <<  Space1.GetHilbertSpaceDimension() << endl ;
 	      if (Manager.GetString("state") == 0)
 		{
 		  for (int i = 0; i <  Space.GetHilbertSpaceDimension(); ++i)
+		  {
 		    Space.PrintState(cout, i) << endl;
+// 		    cout << i << " " ;
+		    Space1.PrintState(cout, i) << endl;
+		    cout << endl;
+		  }
 		}
 	      else
 		{

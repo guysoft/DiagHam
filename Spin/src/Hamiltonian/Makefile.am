@@ -46,4 +46,5 @@ SpinChainAKLTHamiltonianWithTranslations.cc \
 TwoDimensionalTransverseFieldIsingHamiltonian.cc \
 TwoDimensionalTransverseFieldAnd2DTranslationIsingHamiltonian.cc \
 SpinChainRealHamiltonianWithTranslations.cc \
-SpinChainAKLTRealHamiltonianWithTranslations.cc
+SpinChainAKLTRealHamiltonianWithTranslations.cc \
+TwoDimensionalTriangularLatticeWithPseudospinHamiltonian.cc
