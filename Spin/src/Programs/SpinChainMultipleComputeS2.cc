@@ -192,7 +192,6 @@ int main(int argc, char** argv)
 	  SpectrumFile.DumpErrors(cout);
 	  return -1;
 	}      
-      
       Spectrum = new double[NbrStates];
       int TotalNbrEnergies = SpectrumFile.GetNbrLines();
       if (Momentum1DFlag == false)
@@ -214,6 +213,12 @@ int main(int argc, char** argv)
 	      ++TmpIndex2;
 	      ++TmpIndex;
 	    }
+	  if (TmpIndex2 < NbrStates)
+	    {
+	      cout << "error, the spectrum has less eigenvalues corresponding to the required quantum numbers (" 
+		   << TmpIndex2 << " vs " << NbrStates << ")" << endl;
+	      return 0;
+	    }
 	}
       else
 	{
@@ -223,8 +228,8 @@ int main(int argc, char** argv)
 		{
 		  int* TmpSzValues = SpectrumFile.GetAsIntegerArray(0);
 		  int* TmpKValues = SpectrumFile.GetAsIntegerArray(1);
-		  int* TmpInvValues = SpectrumFile.GetAsIntegerArray(2);
-		  int* TmpSzSymValues = SpectrumFile.GetAsIntegerArray(3);
+		  int* TmpInvValues = SpectrumFile.GetAsIntegerArray(3);
+		  int* TmpSzSymValues = SpectrumFile.GetAsIntegerArray(2);
 		  double* TmpEnergies = SpectrumFile.GetAsDoubleArray(4);
 		  int TmpIndex = 0; 
 		  while ((TmpIndex < TotalNbrEnergies) && 
@@ -244,6 +249,12 @@ int main(int argc, char** argv)
 		      Spectrum[TmpIndex2] = TmpEnergies[TmpIndex];
 		      ++TmpIndex2;
 		      ++TmpIndex;
+		    }
+		  if (TmpIndex2 < NbrStates)
+		    {
+		      cout << "error, the spectrum has less eigenvalues corresponding to the required quantum numbers (" 
+			   << TmpIndex2 << " vs " << NbrStates << ")" << endl;
+		      return 0;
 		    }
 		}
 	      else
@@ -270,6 +281,12 @@ int main(int argc, char** argv)
 		      Spectrum[TmpIndex2] = TmpEnergies[TmpIndex];
 		      ++TmpIndex2;
 		      ++TmpIndex;
+		    }
+		  if (TmpIndex2 < NbrStates)
+		    {
+		      cout << "error, the spectrum has less eigenvalues corresponding to the required quantum numbers (" 
+			   << TmpIndex2 << " vs " << NbrStates << ")" << endl;
+		      return 0;
 		    }
 		}
 	    }
@@ -300,6 +317,12 @@ int main(int argc, char** argv)
 		      ++TmpIndex2;
 		      ++TmpIndex;
 		    }
+		  if (TmpIndex2 < NbrStates)
+		    {
+		      cout << "error, the spectrum has less eigenvalues corresponding to the required quantum numbers (" 
+			   << TmpIndex2 << " vs " << NbrStates << ")" << endl;
+		      return 0;
+		    }
 		}
 	      else
 		{
@@ -322,6 +345,12 @@ int main(int argc, char** argv)
 		      Spectrum[TmpIndex2] = TmpEnergies[TmpIndex];
 		      ++TmpIndex2;
 		      ++TmpIndex;
+		    }
+		  if (TmpIndex2 < NbrStates)
+		    {
+		      cout << "error, the spectrum has less eigenvalues corresponding to the required quantum numbers (" 
+			   << TmpIndex2 << " vs " << NbrStates << ")" << endl;
+		      return 0;
 		    }
 		}
 	    }
@@ -529,10 +558,6 @@ int main(int argc, char** argv)
 	    {
 	      TmpNonDegenerateS2Values[k] = TmpOperation.GetMatrixElement(k);
 	    }
-// 	  for (int k = 0; k < NbrNonDegenerateStates; ++k)
-// 	    {
-// 	      TmpNonDegenerateS2Values[k] = TmpOperator.MatrixElement(TmpNonDegenerateRealEigenstates[k], TmpNonDegenerateRealEigenstates[k]);
-// 	    }
 	}
       else
 	{
@@ -541,10 +566,6 @@ int main(int argc, char** argv)
 	  for (int k = 0; k < NbrNonDegenerateStates; ++k)
 	    {
 	      TmpNonDegenerateS2Values[k] = TmpOperation.GetMatrixElement(k);
-	    }
-	  for (int k = 0; k < NbrNonDegenerateStates; ++k)
-	    {
-	      TmpNonDegenerateS2Values[k] = TmpOperator.MatrixElement(TmpNonDegenerateComplexEigenstates[k], TmpNonDegenerateComplexEigenstates[k]);
 	    }
 	}
 
