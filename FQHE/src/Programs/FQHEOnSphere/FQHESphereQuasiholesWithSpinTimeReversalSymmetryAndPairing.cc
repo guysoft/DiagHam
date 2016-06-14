@@ -60,8 +60,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "if positive, fix the total number of particles", -1);
-  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
-  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
+  (*SystemGroup) += new BooleanOption ('\n', "all-fixednbrparticles", "do the calculation for all the fixed particle number sector from 0 to --nbr-particles");
+  (*SystemGroup) += new SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
+  (*SystemGroup) += new SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new SingleDoubleOption ('\n', "charging-energy", "factor in front of the charging energy (i.e 1/(2C))", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "average-nbrparticles", "average number of particles", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "force-negativelz", "manually force to compute the negative lz sectors");
@@ -254,61 +255,113 @@ int main(int argc, char** argv)
   if (Manager.GetBoolean("force-negativelz"))
     L = -MaxL;
 
+
   for (; L <= MaxL; L += 2)
     {
-      QuasiholeOnSphereWithSpinAndPairing* Space = 0;
+      int LocalNbrParticles = -1;
+      int MaxLocalNbrParticles = -1;
       if (Manager.GetInteger("nbr-particles") >= 0)
 	{
-	  Space = new QuasiholeOnSphereWithSpin (KValue, RValue, L, LzMax, Manager.GetInteger("nbr-particles"), TotalSz, Manager.GetString("directory"), FilePrefix);
-	}
-      else
-	{
-	  Space = new QuasiholeOnSphereWithSpinAndPairing (KValue, RValue, L, LzMax, TotalSz, Manager.GetString("directory"), FilePrefix);
-	}
-      if (Space->GetLargeHilbertSpaceDimension() > 0l)
-	{
-	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-	  AbstractHamiltonian* Hamiltonian = 0;
-	  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
-	    Memory = Architecture.GetArchitecture()->GetLocalMemory();
-	  Hamiltonian = new ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing (Space, LzMax, OneBodyPotentialUpUp, 
-													 OneBodyPotentialDownDown,
-													 OneBodyPotentialPairing,
-													 Manager.GetDouble("charging-energy"), 
-													 Manager.GetDouble("average-nbrparticles"),
-													 Architecture.GetArchitecture(), 
-													 Memory, DiskCacheFlag,
-													 LoadPrecalculationFileName);
-	  
-	  double Shift = 0.0;
-	  Hamiltonian->ShiftHamiltonian(Shift);
-	  char* EigenvectorName = 0;
-	  if ((Manager.GetBoolean("eigenstate") == true) || (Manager.GetBoolean("all-eigenstates") == true))
+	  LocalNbrParticles = Manager.GetInteger("nbr-particles");
+	  MaxLocalNbrParticles = LocalNbrParticles;
+	  if (Manager.GetBoolean("all-fixednbrparticles") == true)
 	    {
-	      EigenvectorName = new char [256 + strlen(FilePrefix) + strlen(Manager.GetString("interaction-name"))];
-	      sprintf (EigenvectorName, "%s_su2_quasiholes_%s_cenergy_%.6f_n0_%.6f_pairing_n_%d_2s_%d_sz_%d_lz_%d", 
-		       FilePrefix, Manager.GetString("interaction-name"), 
-		       Manager.GetDouble("charging-energy"), Manager.GetDouble("average-nbrparticles"), TmpFixedNbrParticles, LzMax, TotalSz, L);
+	      if ((TotalSz & 1) == 0)
+		LocalNbrParticles = 0;
+	      else
+		LocalNbrParticles = 1;
 	    }
-	  
-	  char* ContentPrefix = new char[256];
-	  sprintf (ContentPrefix, "%d", L);
-	  
-	  char* SubspaceLegend = new char[256];
-	  sprintf (SubspaceLegend, "lz");
-	  
-	  GenericRealMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, ContentPrefix, SubspaceLegend, Shift, OutputNameLz, FirstRun, EigenvectorName);
-	  MainTaskOperation TaskOperation (&Task);
-	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-	  if (EigenvectorName != 0)
-	    {
-	      delete[] EigenvectorName;
-	    }
-	  delete Hamiltonian;
-	  if (FirstRun == true)
-	    FirstRun = false;
 	}
-      delete Space;
+      for (; LocalNbrParticles <= MaxLocalNbrParticles; LocalNbrParticles += 2)
+	{
+	  QuasiholeOnSphereWithSpinAndPairing* Space = 0;
+	  if (LocalNbrParticles >= 0)
+	    {
+	      Space = new QuasiholeOnSphereWithSpin (KValue, RValue, L, LzMax, LocalNbrParticles, TotalSz, Manager.GetString("directory"), FilePrefix);
+	    }
+	  else
+	    {
+	      Space = new QuasiholeOnSphereWithSpinAndPairing (KValue, RValue, L, LzMax, TotalSz, Manager.GetString("directory"), FilePrefix);
+	    }
+	  if (Space->GetLargeHilbertSpaceDimension() > 0l)
+	    {
+	      if (UseCylinderFlag == true)
+		{
+		  cout << "Ky=" << L;
+		}
+	      else
+		{
+		  cout << "Lz=" << L;
+		}
+	      if (Manager.GetInteger("nbr-particles") >= 0)
+		cout << ", N=" << LocalNbrParticles;
+	      cout << endl;
+
+	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+	      AbstractHamiltonian* Hamiltonian = 0;
+	      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+		Memory = Architecture.GetArchitecture()->GetLocalMemory();
+	      Hamiltonian = new ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing (Space, LzMax, OneBodyPotentialUpUp, 
+													     OneBodyPotentialDownDown,
+													     OneBodyPotentialPairing,
+													     Manager.GetDouble("charging-energy"), 
+													     Manager.GetDouble("average-nbrparticles"),
+													     Architecture.GetArchitecture(), 
+													     Memory, DiskCacheFlag,
+													     LoadPrecalculationFileName);
+	      
+	      double Shift = 0.0;
+	      Hamiltonian->ShiftHamiltonian(Shift);
+	      char* EigenvectorName = 0;
+	      if ((Manager.GetBoolean("eigenstate") == true) || (Manager.GetBoolean("all-eigenstates") == true))
+		{
+		  EigenvectorName = new char [256 + strlen(FilePrefix) + strlen(Manager.GetString("interaction-name"))];
+		  if (LocalNbrParticles >= 0)
+		    {
+		      sprintf (EigenvectorName, "%s_su2_quasiholes_%s_cenergy_%.6f_n0_%.6f_pairing_n_%d_2s_%d_sz_%d_lz_%d", 
+			       FilePrefix, Manager.GetString("interaction-name"), 
+			       Manager.GetDouble("charging-energy"), Manager.GetDouble("average-nbrparticles"), LocalNbrParticles, LzMax, TotalSz, L);
+		    }
+		  else
+		    {
+		      sprintf (EigenvectorName, "%s_su2_quasiholes_%s_cenergy_%.6f_n0_%.6f_pairing_n_0_2s_%d_sz_%d_lz_%d", 
+			       FilePrefix, Manager.GetString("interaction-name"), 
+			       Manager.GetDouble("charging-energy"), Manager.GetDouble("average-nbrparticles"), LzMax, TotalSz, L);
+		    }
+		}
+	      
+	      char* ContentPrefix = new char[256];
+	      if (Manager.GetBoolean("all-fixednbrparticles") == true)
+		{
+		  sprintf (ContentPrefix, "%d %d", LocalNbrParticles, L);
+		}
+	      else
+		{
+		  sprintf (ContentPrefix, "%d", L);
+		}
+	      char* SubspaceLegend = new char[256];
+	      if (Manager.GetBoolean("all-fixednbrparticles") == true)
+		{
+		  sprintf (SubspaceLegend, "N lz");
+		}
+	      else
+		{
+		  sprintf (SubspaceLegend, "lz");
+		}
+
+	      GenericRealMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, ContentPrefix, SubspaceLegend, Shift, OutputNameLz, FirstRun, EigenvectorName);
+	      MainTaskOperation TaskOperation (&Task);
+	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	      if (EigenvectorName != 0)
+		{
+		  delete[] EigenvectorName;
+		}
+	      delete Hamiltonian;
+	      if (FirstRun == true)
+		FirstRun = false;
+	    }
+	  delete Space;
+	}
     }
   return 0;
 }
