@@ -94,7 +94,7 @@ class HermitianMatrix : public Matrix
   //
   // M = matrix to copy
   HermitianMatrix(const HermitianMatrix& M);
-
+  
   // copy constructor from a real tridiagonal symmetric matrix (without duplicating diagonal elements)
   //
   // M = matrix to copy
@@ -104,6 +104,12 @@ class HermitianMatrix : public Matrix
   //
   // M = matrix to copy
   HermitianMatrix(const ComplexMatrix& M);
+  
+  // copy constructor from a real symmetric matrix, multiplying the upper triangular part by a complex phase  (duplicating all data)
+  //
+  // M = matrix to copy
+  // phase = phase (in unit of 2pi) to multiply upper triangular part
+  HermitianMatrix(const RealSymmetricMatrix& M, double phase = 0.0);
 
   // destructor
   //

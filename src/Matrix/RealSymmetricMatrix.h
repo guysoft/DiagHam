@@ -58,6 +58,7 @@ class RealSymmetricMatrix : public Matrix
 
   friend class RealVector;
   friend class ComplexVector;
+  friend class HermitianMatrix;
 
  protected:
 

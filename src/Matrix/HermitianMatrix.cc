@@ -227,6 +227,60 @@ HermitianMatrix::HermitianMatrix(const ComplexMatrix& M)
 #endif
 }
 
+
+// copy constructor from a real symmetric matrix, multiplying the upper triangular part by a complex phase  (duplicating all data)
+//
+// M = matrix to copy
+// phase = phase (in unit of 2pi) to multiply upper triangular part
+
+HermitianMatrix::HermitianMatrix(const RealSymmetricMatrix& M, double phase)
+{
+  if (M.NbrRow >= M.NbrColumn)
+    {
+      this->NbrRow = M.NbrColumn;
+    }
+  else
+    {
+      this->NbrRow = M.NbrRow;
+    }
+  this->NbrColumn = this->NbrRow;
+  this->TrueNbrRow = this->NbrRow;
+  this->TrueNbrColumn = this->NbrColumn;
+  this->Increment = (this->TrueNbrRow - this->NbrRow);
+  this->Flag.Initialize();
+  this->MatrixType = Matrix::ComplexElements | Matrix::Hermitian;
+  this->DiagonalElements = new double [this->NbrRow];
+  this->RealOffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l];
+  this->ImaginaryOffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l];
+  double Tmp;
+  long Index = 0l;
+  double PhaseFactorRealPart = 1.0;
+  double PhaseFactorImPart = 1.0;
+  if (phase != 0.0)
+  {
+    PhaseFactorRealPart = cos(2.0 * M_PI * phase);
+    PhaseFactorImPart = sin(2.0 * M_PI * phase);
+  }
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      M.GetMatrixElement(i, i, Tmp);
+      this->DiagonalElements[i] = Tmp;
+      for (int j = i + 1; j < this->NbrRow; ++j)
+	{
+	  M.GetMatrixElement(i, j, Tmp);
+	  this->RealOffDiagonalElements[Index] = Tmp * PhaseFactorRealPart;
+	  this->ImaginaryOffDiagonalElements[Index] = Tmp * PhaseFactorImPart;
+	  ++Index;
+	}
+    }
+#ifdef __LAPACK__
+  this->LapackWorkAreaDimension=0;
+  this->LapackEVsRequested=0;
+  this->LapackEVMatrix=NULL;
+  this->LapackWorkAreaForPartialDiag=false;
+#endif
+}
+
 // destructor
 //
 

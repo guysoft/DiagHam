@@ -1,5 +1,6 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
+#include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealMatrix.h"
 
 #include "Hamiltonian/ExplicitHamiltonian.h"
@@ -67,6 +68,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('c', "complex", "indicate that the Hamiltonian is complex");
   (*SystemGroup) += new SingleDoubleOption ('\n', "shift-spectrum", "shift the spectrum by a constant value during the diagonalization", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "rescaling-factor", "apply a rescaling factor to the hamiltonian", 1.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "complex-rescaling", "phase of the complex rescaling of the hamiltonian, in units of 2pi", 0.0);
   (*SystemGroup) += new SingleStringOption ('\n', "add-diagonal", "add a diagonal contribution to the hamiltonian");
   (*SystemGroup) += new SingleIntegerOption ('\n', "column-diagonal", "indicates which column has to be used in --add-diagonal", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");  
@@ -153,6 +155,7 @@ int main(int argc, char** argv)
     {
       UndescribedHilbertSpace* DummyHilbertSpace = 0;
       RealSymmetricMatrix HRepReal;
+      bool ComplexFlag = Manager.GetBoolean("complex");
       if (Manager.GetBoolean("complex") == false)
 	{
 	  if (Manager.GetString("bin-hamiltonian") != 0)
@@ -230,7 +233,14 @@ int main(int argc, char** argv)
 		}
 	    }
 	  DummyHilbertSpace = new UndescribedHilbertSpace(HRepReal.GetNbrRow());
-	  Hamiltonian  = new ExplicitHamiltonian(DummyHilbertSpace, &HRepReal);
+	  if (Manager.GetDouble("complex-rescaling") == 0.0)
+	    Hamiltonian  = new ExplicitHamiltonian(DummyHilbertSpace, &HRepReal);
+	  else
+	  {
+	    HermitianMatrix HRep (HRepReal, Manager.GetDouble("complex-rescaling"));
+	    Hamiltonian  = new ExplicitHamiltonian(DummyHilbertSpace, &HRep);
+	    ComplexFlag = true;
+	  }
 	}
       else
 	{
@@ -251,7 +261,7 @@ int main(int argc, char** argv)
       
       char* EigenvectorFileName = Manager.GetString("eigenstate-file");
 
-      if (Manager.GetBoolean("complex") == false)
+      if (ComplexFlag == false)
 	{
 	  GenericRealMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, "", CommentLine, Manager.GetDouble("shift-spectrum"),  Manager.GetString("output-file"), true, EigenvectorFileName);
 	  MainTaskOperation TaskOperation (&Task);
