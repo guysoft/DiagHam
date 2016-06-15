@@ -53,6 +53,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sitex", "number of sites along the x direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
   (*SystemGroup) += new BooleanOption  ('\n', "cylinder", "use periodic boundary in the y direction only");
+  (*SystemGroup) += new BooleanOption  ('\n', "force-negativesz", "compute negative Sz sectors");
   (*SystemGroup) += new  SingleIntegerOption ('\n', "initial-sz", "twice the initial sz sector that has to computed", 0);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "nbr-sz", "number of sz value to evaluate (0 for all sz sectors)", 0);
   (*SystemGroup) += new  SingleDoubleOption ('j', "j-value", "coupling constant value", 1.0);
@@ -100,7 +101,9 @@ int main(int argc, char** argv)
   Spin1_2ChainWithPseudospin* Space = 0;
   
   int MaxSzValue = NbrSpins * SpinValue;
-  int InitalSzValue = -MaxSzValue;
+  int InitalSzValue = 0;
+  if (Manager.GetBoolean("force-negativesz"))
+    InitalSzValue = -MaxSzValue;
   if (Manager.GetInteger("initial-sz") > 1)
     {
       InitalSzValue += (Manager.GetInteger("initial-sz") & ~1);

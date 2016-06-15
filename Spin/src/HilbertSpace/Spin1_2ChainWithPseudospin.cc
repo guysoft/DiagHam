@@ -80,16 +80,14 @@ Spin1_2ChainWithPseudospin::Spin1_2ChainWithPseudospin (int chainLength, int sz,
 
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->Sz, this->ChainLength);
   this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
-  cout << this->Sz << " " <<  this->LargeHilbertSpaceDimension << " " ;
   this->LargeHilbertSpaceDimension = this->GenerateStates ((this->Sz + this->ChainLength) >> 1, this->ChainLength - 1, 0l);
-  cout << this->LargeHilbertSpaceDimension << endl;
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
   this->GenerateLookUpTable(memorySize);
   
 //   double TmpCoef;
 //   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 //   {
-//     this->PrintState(cout,i) << " " ;
+//     this->PrintState(cout,i) << endl ;
 //     cout << (this->JOffDiagonali(1, i, TmpCoef)) << " ";
 // //     if ((this->SmiSpj(0, 1, i, TmpCoef)) < this->HilbertSpaceDimension)
 // //       cout << TmpCoef;

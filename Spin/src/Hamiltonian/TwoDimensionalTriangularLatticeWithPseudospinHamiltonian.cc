@@ -66,40 +66,40 @@ TwoDimensionalTriangularLatticeWithPseudospinHamiltonian::TwoDimensionalTriangul
   this->JFactor = jFactor;
   
   // projection of kagome onto the s = 1/2 states on each triangle
-//   this->PseudospinCouplingElements = new double[3];    
-//   this->PseudospinCouplingElements[0] = 0.0;
-//   this->PseudospinCouplingElements[1] = 1.0/sqrt(3.0);
-//   this->PseudospinCouplingElements[2] = -1.0/sqrt(3.0);
-//   
-//   this-> PseudospinDiagCouplingElements = new double*[3];
-//   for (int i = 0; i < 3; ++i)
-//     this->PseudospinDiagCouplingElements[i] = new double[2];
-//   this->PseudospinDiagCouplingElements[0][0] = 1.0;
-//   this->PseudospinDiagCouplingElements[0][1] = -1.0/3.0;
-//   
-//   this->PseudospinDiagCouplingElements[1][0] = 0.0;
-//   this->PseudospinDiagCouplingElements[1][1] = 2.0/3.0;
-//   
-//   this->PseudospinDiagCouplingElements[2][0] = 0.0;
-//   this->PseudospinDiagCouplingElements[2][1] = 2.0/3.0;
-  
-  //test: trivial coupling, Heisenberg model
   this->PseudospinCouplingElements = new double[3];    
   this->PseudospinCouplingElements[0] = 0.0;
-  this->PseudospinCouplingElements[1] = 0.0;
-  this->PseudospinCouplingElements[2] = 0.0;
+  this->PseudospinCouplingElements[1] = 1.0/sqrt(3.0);
+  this->PseudospinCouplingElements[2] = -1.0/sqrt(3.0);
   
   this-> PseudospinDiagCouplingElements = new double*[3];
   for (int i = 0; i < 3; ++i)
     this->PseudospinDiagCouplingElements[i] = new double[2];
   this->PseudospinDiagCouplingElements[0][0] = 1.0;
-  this->PseudospinDiagCouplingElements[0][1] = 1.0;
+  this->PseudospinDiagCouplingElements[0][1] = -1.0/3.0;
   
-  this->PseudospinDiagCouplingElements[1][0] = 1.0;
-  this->PseudospinDiagCouplingElements[1][1] = 1.0;
+  this->PseudospinDiagCouplingElements[1][0] = 0.0;
+  this->PseudospinDiagCouplingElements[1][1] = 2.0/3.0;
   
-  this->PseudospinDiagCouplingElements[2][0] = 1.0;
-  this->PseudospinDiagCouplingElements[2][1] = 1.0;
+  this->PseudospinDiagCouplingElements[2][0] = 0.0;
+  this->PseudospinDiagCouplingElements[2][1] = 2.0/3.0;
+  
+//   //test: trivial coupling, Heisenberg model
+//   this->PseudospinCouplingElements = new double[3];    
+//   this->PseudospinCouplingElements[0] = 0.0;
+//   this->PseudospinCouplingElements[1] = 0.0;
+//   this->PseudospinCouplingElements[2] = 0.0;
+//   
+//   this-> PseudospinDiagCouplingElements = new double*[3];
+//   for (int i = 0; i < 3; ++i)
+//     this->PseudospinDiagCouplingElements[i] = new double[2];
+//   this->PseudospinDiagCouplingElements[0][0] = 1.0;
+//   this->PseudospinDiagCouplingElements[0][1] = 1.0;
+//   
+//   this->PseudospinDiagCouplingElements[1][0] = 1.0;
+//   this->PseudospinDiagCouplingElements[1][1] = 1.0;
+//   
+//   this->PseudospinDiagCouplingElements[2][0] = 1.0;
+//   this->PseudospinDiagCouplingElements[2][1] = 1.0;
   
   
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
@@ -198,37 +198,66 @@ RealVector& TwoDimensionalTriangularLatticeWithPseudospinHamiltonian::TwoDimensi
 		pos = this->Chain->SpiSmj(TmpIndex1, TmpIndex2, i, coef);
 		if (pos != dim)
 		{
-		  TmpCoefficient = coef * this->Chain->JDiagonali(TmpIndex1, pos, this->PseudospinDiagCouplingElements[2]);
-		  TmpCoefficient *= this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[0]);
-		  vDestination[pos] += TmpValue * TmpCoefficient;
+		  TmpCoefficient = coef * this->Chain->JDiagonali(TmpIndex1, pos, this->PseudospinDiagCouplingElements[2]);		  
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[0]);
+		    vDestination[pos] += TmpValue * TmpCoefficient * coef2;
+		  
+		    pos2 = this->Chain->JOffDiagonali(TmpIndex2, pos, coef2);
+		    vDestination[pos2] += TmpValue * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];
+		  }
 		
-		  TmpCoefficient = coef;
 		  pos2 = this->Chain->JOffDiagonali(TmpIndex1, pos, coef2);
-		  TmpCoefficient *= coef2;
-		  pos3 = this->Chain->JOffDiagonali(TmpIndex1, pos2, coef2);
-		  TmpCoefficient *= coef2 * this->PseudospinCouplingElements[2] * this->PseudospinCouplingElements[0];
-		  vDestination[pos3] += TmpValue * TmpCoefficient;
+		  TmpCoefficient = coef * coef2 * this->PseudospinCouplingElements[2];
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos2, this->PseudospinDiagCouplingElements[0]);
+		    vDestination[pos2] += TmpValue * TmpCoefficient * coef2;
+		    
+		    pos3 = this->Chain->JOffDiagonali(TmpIndex2, pos2, coef2);
+		    vDestination[pos3] += TmpValue * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];
+		  }
 		}
 		pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, coef);
 		if (pos != dim)
 		{
-		  TmpCoefficient = coef * this->Chain->JDiagonali(TmpIndex1, pos, this->PseudospinDiagCouplingElements[2]);
-		  TmpCoefficient *= this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[0]);
-		  vDestination[pos] += TmpValue * TmpCoefficient;
+		  TmpCoefficient = coef * this->Chain->JDiagonali(TmpIndex1, pos, this->PseudospinDiagCouplingElements[2]);		  
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[0]);
+		    vDestination[pos] += TmpValue * TmpCoefficient * coef2;
+		  
+		    pos2 = this->Chain->JOffDiagonali(TmpIndex2, pos, coef2);
+		    vDestination[pos2] += TmpValue * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];
+		  }
 		
-		  TmpCoefficient = coef;
 		  pos2 = this->Chain->JOffDiagonali(TmpIndex1, pos, coef2);
-		  TmpCoefficient *= coef2;
-		  pos3 = this->Chain->JOffDiagonali(TmpIndex1, pos2, coef2);
-		  TmpCoefficient *= coef2 * this->PseudospinCouplingElements[2] * this->PseudospinCouplingElements[0];
-		  vDestination[pos3] += TmpValue * TmpCoefficient;
+		  TmpCoefficient = coef * coef2 * this->PseudospinCouplingElements[2];
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos2, this->PseudospinDiagCouplingElements[0]);
+		    vDestination[pos2] += TmpValue * TmpCoefficient * coef2;
+		    
+		    pos3 = this->Chain->JOffDiagonali(TmpIndex2, pos2, coef2);
+		    vDestination[pos3] += TmpValue * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];
+		  }
+		}	      
+		coef = this->Chain->SziSzj(TmpIndex1, TmpIndex2, i);
+		pos = this->Chain->JOffDiagonali(TmpIndex1, i, coef2);
+		TmpCoefficient = coef * coef2 * this->PseudospinCouplingElements[2];
+		if (TmpCoefficient != 0.0)
+		{
+		  coef2 *= this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[0]);
+		  vDestination[pos] += 2.0 * TmpValue * TmpCoefficient * coef2;
+		  
+		  pos2 = this->Chain->JOffDiagonali(TmpIndex2, pos, coef2);
+		  vDestination[pos2] += 2.0 * TmpValue * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];		  
 		}
-	      
-		TmpCoefficient = this->Chain->SziSzj(TmpIndex1, TmpIndex2, i);
-		pos = this->Chain->JOffDiagonali(TmpIndex1, i, coef);
-		pos2 = this->Chain->JOffDiagonali(TmpIndex1, pos, coef2);
-		TmpCoefficient *= coef * coef2 * this->PseudospinCouplingElements[2] * this->PseudospinCouplingElements[0];
-		vDestination[pos2] += TmpValue * TmpCoefficient;
+		
+		TmpCoefficient = coef *  this->Chain->JDiagonali(TmpIndex1, i, this->PseudospinDiagCouplingElements[2]);
+		pos2 = this->Chain->JOffDiagonali(TmpIndex2, i, coef2);
+		vDestination[pos2] += 2.0 * TmpValue * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];
 	     }
 	      
 
@@ -241,38 +270,70 @@ RealVector& TwoDimensionalTriangularLatticeWithPseudospinHamiltonian::TwoDimensi
 		if (pos != dim)
 		{
 		  TmpCoefficient = coef * this->Chain->JDiagonali(TmpIndex1, pos, this->PseudospinDiagCouplingElements[1]);
-		  TmpCoefficient *= this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[0]);
-		  vDestination[pos] += TmpValue * TmpCoefficient;
+		  
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[0]);
+		    vDestination[pos] += TmpValue * TmpCoefficient * coef2;
+		  
+		    pos2 = this->Chain->JOffDiagonali(TmpIndex2, pos, coef2);
+		    vDestination[pos2] += TmpValue * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];
+		  }
 		
-		  TmpCoefficient = coef;
 		  pos2 = this->Chain->JOffDiagonali(TmpIndex1, pos, coef2);
-		  TmpCoefficient *= coef2;
-		  pos3 = this->Chain->JOffDiagonali(TmpIndex1, pos2, coef2);
-		  TmpCoefficient *= coef2 * this->PseudospinCouplingElements[1] * this->PseudospinCouplingElements[0];
-		  vDestination[pos3] += TmpValue * TmpCoefficient;
+		  TmpCoefficient = coef * coef2 * this->PseudospinCouplingElements[1];
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos2, this->PseudospinDiagCouplingElements[0]);
+		    vDestination[pos2] += TmpValue * TmpCoefficient * coef2;
+		    
+		    pos3 = this->Chain->JOffDiagonali(TmpIndex2, pos2, coef2);
+		    vDestination[pos3] += TmpValue * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];
+		  }
 		}
 		pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, coef);
 		if (pos != dim)
 		{
 		  TmpCoefficient = coef * this->Chain->JDiagonali(TmpIndex1, pos, this->PseudospinDiagCouplingElements[1]);
-		  TmpCoefficient *= this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[0]);
-		  vDestination[pos] += TmpValue * TmpCoefficient;
+		  
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[0]);
+		    vDestination[pos] += TmpValue * TmpCoefficient * coef2;
+		  
+		    pos2 = this->Chain->JOffDiagonali(TmpIndex2, pos, coef2);
+		    vDestination[pos2] += TmpValue * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];
+		  }
 		
-		  TmpCoefficient = coef;
 		  pos2 = this->Chain->JOffDiagonali(TmpIndex1, pos, coef2);
-		  TmpCoefficient *= coef2;
-		  pos3 = this->Chain->JOffDiagonali(TmpIndex1, pos2, coef2);
-		  TmpCoefficient *= coef2 * this->PseudospinCouplingElements[1] * this->PseudospinCouplingElements[0];
-		  vDestination[pos3] += TmpValue * TmpCoefficient;
+		  TmpCoefficient = coef * coef2 * this->PseudospinCouplingElements[1];
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos2, this->PseudospinDiagCouplingElements[0]);
+		    vDestination[pos2] += TmpValue * TmpCoefficient * coef2;
+		    
+		    pos3 = this->Chain->JOffDiagonali(TmpIndex2, pos2, coef2);
+		    vDestination[pos3] += TmpValue * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];
+		  }
 		}
 	      
-		TmpCoefficient = this->Chain->SziSzj(TmpIndex1, TmpIndex2, i);
-		pos = this->Chain->JOffDiagonali(TmpIndex1, i, coef);
-		pos2 = this->Chain->JOffDiagonali(TmpIndex1, pos, coef2);
-		TmpCoefficient *= coef * coef2 * this->PseudospinCouplingElements[1] * this->PseudospinCouplingElements[0];
-		vDestination[pos2] += TmpValue * TmpCoefficient;
+		coef = this->Chain->SziSzj(TmpIndex1, TmpIndex2, i);
+		pos = this->Chain->JOffDiagonali(TmpIndex1, i, coef2);
+		TmpCoefficient = coef * coef2 * this->PseudospinCouplingElements[1];
+		if (TmpCoefficient != 0.0)
+		{
+		  coef2 *= this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[0]);
+		  vDestination[pos] += 2.0 * TmpValue * TmpCoefficient * coef2;
+		  
+		  pos2 = this->Chain->JOffDiagonali(TmpIndex2, pos, coef2);
+		  vDestination[pos2] += 2.0 * TmpValue * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];		  
+		}
+		
+		TmpCoefficient = coef *  this->Chain->JDiagonali(TmpIndex1, i, this->PseudospinDiagCouplingElements[1]);
+		pos2 = this->Chain->JOffDiagonali(TmpIndex2, i, coef2);
+		vDestination[pos2] += 2.0 * TmpValue * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];
 	      }
-	      
+// 	      
 	      //CB part
 	      if ((this->NbrSpinX > 1) && (this->NbrSpinY > 1) && (this->PeriodicBoundaryConditions || (j > 0)))
 	      {
@@ -280,37 +341,69 @@ RealVector& TwoDimensionalTriangularLatticeWithPseudospinHamiltonian::TwoDimensi
 		TmpIndex2 = this->GetLinearizedIndex(j, k - 1);
 		pos = this->Chain->SpiSmj(TmpIndex1, TmpIndex2, i, coef);
 		if (pos != dim)
+		if (pos != dim)
 		{
 		  TmpCoefficient = coef * this->Chain->JDiagonali(TmpIndex1, pos, this->PseudospinDiagCouplingElements[1]);
-		  TmpCoefficient *= this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[2]);
-		  vDestination[pos] += TmpValue * TmpCoefficient;
+		  
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[2]);
+		    vDestination[pos] += TmpValue * TmpCoefficient * coef2;
+		  
+		    pos2 = this->Chain->JOffDiagonali(TmpIndex2, pos, coef2);
+		    vDestination[pos2] += TmpValue * TmpCoefficient * coef2 * this->PseudospinCouplingElements[2];
+		  }
 		
-		  TmpCoefficient = coef;
 		  pos2 = this->Chain->JOffDiagonali(TmpIndex1, pos, coef2);
-		  TmpCoefficient *= coef2;
-		  pos3 = this->Chain->JOffDiagonali(TmpIndex1, pos2, coef2);
-		  TmpCoefficient *= coef2 * this->PseudospinCouplingElements[1] * this->PseudospinCouplingElements[2];
-		  vDestination[pos3] += TmpValue * TmpCoefficient;
+		  TmpCoefficient = coef * coef2 * this->PseudospinCouplingElements[1];
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos2, this->PseudospinDiagCouplingElements[2]);
+		    vDestination[pos2] += TmpValue * TmpCoefficient * coef2;
+		    
+		    pos3 = this->Chain->JOffDiagonali(TmpIndex2, pos2, coef2);
+		    vDestination[pos3] += TmpValue * TmpCoefficient * coef2 * this->PseudospinCouplingElements[2];
+		  }
 		}
 		pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, coef);
 		if (pos != dim)
 		{
 		  TmpCoefficient = coef * this->Chain->JDiagonali(TmpIndex1, pos, this->PseudospinDiagCouplingElements[1]);
-		  TmpCoefficient *= this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[2]);
-		  vDestination[pos] += TmpValue * TmpCoefficient;
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[2]);
+		    vDestination[pos] += TmpValue * TmpCoefficient * coef2;
+		  
+		    pos2 = this->Chain->JOffDiagonali(TmpIndex2, pos, coef2);
+		    vDestination[pos2] += TmpValue * TmpCoefficient * coef2 * this->PseudospinCouplingElements[2];
+		  }
 		
-		  TmpCoefficient = coef;
 		  pos2 = this->Chain->JOffDiagonali(TmpIndex1, pos, coef2);
-		  TmpCoefficient *= coef2;
-		  pos3 = this->Chain->JOffDiagonali(TmpIndex1, pos2, coef2);
-		  TmpCoefficient *= coef2 * this->PseudospinCouplingElements[1] * this->PseudospinCouplingElements[2];
-		  vDestination[pos3] += TmpValue * TmpCoefficient;
+		  TmpCoefficient = coef * coef2 * this->PseudospinCouplingElements[1];
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos2, this->PseudospinDiagCouplingElements[2]);
+		    vDestination[pos2] += TmpValue * TmpCoefficient * coef2;
+		    
+		    pos3 = this->Chain->JOffDiagonali(TmpIndex2, pos2, coef2);
+		    vDestination[pos3] += TmpValue * TmpCoefficient * coef2 * this->PseudospinCouplingElements[2];
+		  }
 		}
-		TmpCoefficient = this->Chain->SziSzj(TmpIndex1, TmpIndex2, i);
-		pos = this->Chain->JOffDiagonali(TmpIndex1, i, coef);
-		pos2 = this->Chain->JOffDiagonali(TmpIndex1, pos, coef2);
-		TmpCoefficient *= coef * coef2 * this->PseudospinCouplingElements[1] * this->PseudospinCouplingElements[2];
-		vDestination[pos2] += TmpValue * TmpCoefficient;
+		coef = this->Chain->SziSzj(TmpIndex1, TmpIndex2, i);
+		pos = this->Chain->JOffDiagonali(TmpIndex1, i, coef2);
+		TmpCoefficient = coef * coef2 * this->PseudospinCouplingElements[1];
+		if (TmpCoefficient != 0.0)
+		{
+		  coef2 *= this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[2]);
+		  vDestination[pos] += 2.0 * TmpValue * TmpCoefficient * coef2;
+		  
+		  pos2 = this->Chain->JOffDiagonali(TmpIndex2, pos, coef2);
+		  vDestination[pos2] += 2.0 * TmpValue * TmpCoefficient * coef2 * this->PseudospinCouplingElements[2];		  
+		}
+		
+		TmpCoefficient = coef *  this->Chain->JDiagonali(TmpIndex1, i, this->PseudospinDiagCouplingElements[1]);
+		pos2 = this->Chain->JOffDiagonali(TmpIndex2, i, coef2);
+		vDestination[pos2] += 2.0 * TmpValue * TmpCoefficient * coef2 * this->PseudospinCouplingElements[2];
 	      }
 	    }
 	}
@@ -422,7 +515,7 @@ void TwoDimensionalTriangularLatticeWithPseudospinHamiltonian::EvaluateDiagonalM
 		this->SzSzContributions[i] += TmpCoefficient;
 	      }
 
-	      //CB part
+// 	      CB part
 	      if ((this->NbrSpinX > 1) && (this->NbrSpinY > 1) && (this->PeriodicBoundaryConditions || (j > 0)))
 	      {
 		TmpIndex1 = this->GetLinearizedIndex(j - 1, k);
