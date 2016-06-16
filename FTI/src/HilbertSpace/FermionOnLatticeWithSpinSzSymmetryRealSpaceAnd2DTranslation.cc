@@ -520,7 +520,7 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::GenerateStates
 	    }
 	  TmpState =  this->StateDescription[i];
 	  
-TmpSign |= (this->GetSignAndApplySzSymmetry(TmpState3) << Index)
+//TmpSign |= (this->GetSignAndApplySzSymmetry(TmpState3) << Index)
 
 
 // 	  for (int m = 0; m < this->MaxYMomentum; ++m)
