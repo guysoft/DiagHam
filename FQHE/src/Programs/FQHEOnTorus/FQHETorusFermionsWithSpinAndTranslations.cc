@@ -6,6 +6,7 @@
 
 #include "HilbertSpace/FermionOnTorus.h"
 #include "HilbertSpace/FermionOnTorusWithSpinAndMagneticTranslations.h"
+#include "HilbertSpace/FermionOnTorusWithSpinAndMagneticTranslationsLong.h"
 #include "HilbertSpace/FermionOnTorusWithSpinAndTimeReversalSymmetricMagneticTranslations.h"
 #include "Hamiltonian/ParticleOnTorusCoulombHamiltonian.h"
 #include "Hamiltonian/ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian.h"
@@ -231,18 +232,36 @@ int main(int argc, char** argv)
       {     
 	cout << "----------------------------------------------------------------" << endl;
 	cout << " Ratio = " << XRatio << endl;
-	FermionOnTorusWithSpinAndMagneticTranslations* TotalSpace = 0;
+	ParticleOnTorusWithSpinAndMagneticTranslations* TotalSpace = 0;
 	if (Manager.GetBoolean("time-reversal") == false)
-	{
-	  if (OneBodyPseudoPotentials[2] == 0)
-	    {
-	      TotalSpace = new FermionOnTorusWithSpinAndMagneticTranslations (NbrFermions, TotalSpin, MaxMomentum, XMomentum, YMomentum2);	
-	    }
-	  else
-	    {
-	      TotalSpace = new FermionOnTorusWithSpinAndMagneticTranslations (NbrFermions, MaxMomentum, XMomentum, YMomentum2);	
-	    }
-	}
+	  {
+#ifdef __64_BITS__
+	    if (MaxMomentum < 31)
+#else
+	    if (MaxMomentum < 15)
+#endif
+	      {
+		if (OneBodyPseudoPotentials[2] == 0)
+		  {
+		    TotalSpace = new FermionOnTorusWithSpinAndMagneticTranslations (NbrFermions, TotalSpin, MaxMomentum, XMomentum, YMomentum2);	
+		  }
+		else
+		  {
+		    TotalSpace = new FermionOnTorusWithSpinAndMagneticTranslations (NbrFermions, MaxMomentum, XMomentum, YMomentum2);	
+		  }
+	      }
+	    else
+	      {
+		if (OneBodyPseudoPotentials[2] == 0)
+		  {
+		    TotalSpace = new FermionOnTorusWithSpinAndMagneticTranslationsLong (NbrFermions, TotalSpin, MaxMomentum, XMomentum, YMomentum2);	
+		  }
+		else
+		  {
+		    TotalSpace = new FermionOnTorusWithSpinAndMagneticTranslationsLong (NbrFermions, MaxMomentum, XMomentum, YMomentum2);	
+		  }
+	      }
+	  }
 	else
 	  TotalSpace = new FermionOnTorusWithSpinAndTimeReversalSymmetricMagneticTranslations (NbrFermions, TotalSpin, MaxMomentum, XMomentum, YMomentum2);
 	cout << " Total Hilbert space dimension = " << TotalSpace->GetHilbertSpaceDimension() << endl;

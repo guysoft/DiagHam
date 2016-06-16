@@ -167,4 +167,5 @@ FermionOnTorusWithSpinAndTimeReversalSymmetricMagneticTranslations.cc \
 BosonOnTorusWithSpinAllSzAndMagneticTranslations.cc \
 FermionOnSphereWithSpinAndPairing.cc \
 QuasiholeOnSphereWithSpinAndPairing.cc \
-QuasiholeOnSphereWithSpin.cc
+QuasiholeOnSphereWithSpin.cc \
+FermionOnTorusWithSpinAndMagneticTranslationsLong.cc

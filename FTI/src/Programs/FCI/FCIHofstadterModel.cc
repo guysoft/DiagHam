@@ -15,6 +15,7 @@
 #include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/BosonOnLatticeRealSpace.h"
 #include "HilbertSpace/BosonOnLatticeRealSpaceOneOrbitalPerSiteAnd2DTranslation.h"
@@ -190,6 +191,7 @@ int main(int argc, char** argv)
 	  cout << "warning, Sz<->-Sz is not implemented for bosons" << endl;	  
 	}	
     }
+  // disable
   SzSymmetryFlag = false;
 
   char* StatisticPrefix = new char [16];
@@ -606,9 +608,22 @@ int main(int argc, char** argv)
 				    }
 				  else
 				    {
-				      Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, Sz, 
-												     ((int) TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand()),
-												     i, NbrCellX, j,  NbrCellY);	  
+#ifdef __64_BITS__
+				      if (((int) TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand()) < 31)
+#else
+					if (((int) TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand()) < 15)
+#endif
+					  {
+					    Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, Sz, 
+													   ((int) TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand()),
+													   i, NbrCellX, j,  NbrCellY);	  
+					  }
+					else
+					  {
+					    Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong (NbrParticles, Sz, 
+													       ((int) TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand()),
+													       i, NbrCellX, j,  NbrCellY);	  
+					  }
 				    }
 				  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 				    Memory = Architecture.GetArchitecture()->GetLocalMemory();
