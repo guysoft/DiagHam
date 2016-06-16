@@ -61,14 +61,13 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new  SingleStringOption ('\n', "hamiltonian", "text file where the hamiltonian matrix elements are stored");
   (*SystemGroup) += new  SingleStringOption ('\n', "bin-hamiltonian", "use a binary encoded hamiltonian");
-  (*SystemGroup) += new  SingleStringOption ('\n', "multiple-binhamiltonians", "use a series of binary encoded hamiltonians with weights");
+  (*SystemGroup) += new  SingleStringOption ('\n', "multiple-binhamiltonians", "use a series of binary encoded hamiltonians with weights (if defined, the third column is a complex phase)");
   (*SystemGroup) += new  BooleanOption ('\n', "fortran", "assume indices are 1-based instead of 0-based (i.e. fortran index convention)");
   (*SystemGroup) += new  SingleIntegerOption ('\n', "skip-lines", "skip the first n-tf lines of the input file", 0);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "data-column", "index of the column that contains the matrix elements (or their real part)", 0);
   (*SystemGroup) += new BooleanOption  ('c', "complex", "indicate that the Hamiltonian is complex");
   (*SystemGroup) += new SingleDoubleOption ('\n', "shift-spectrum", "shift the spectrum by a constant value during the diagonalization", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "rescaling-factor", "apply a rescaling factor to the hamiltonian", 1.0);
-  (*SystemGroup) += new SingleDoubleOption ('\n', "complex-rescaling", "phase of the complex rescaling of the hamiltonian, in units of 2pi", 0.0);
   (*SystemGroup) += new SingleStringOption ('\n', "add-diagonal", "add a diagonal contribution to the hamiltonian");
   (*SystemGroup) += new SingleIntegerOption ('\n', "column-diagonal", "indicates which column has to be used in --add-diagonal", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");  
@@ -155,6 +154,7 @@ int main(int argc, char** argv)
     {
       UndescribedHilbertSpace* DummyHilbertSpace = 0;
       RealSymmetricMatrix HRepReal;
+      HermitianMatrix HRep;
       bool ComplexFlag = Manager.GetBoolean("complex");
       if (Manager.GetBoolean("complex") == false)
 	{
@@ -190,8 +190,15 @@ int main(int argc, char** argv)
 		    {
 		      TmpWeigths[i] = 1.0;
 		    }
-		}
+		}	      
 	      HRepReal *= TmpWeigths[0];
+	      double* TmpPhases = 0;
+	      if (HamiltonianFile.GetNbrColumns() > 2)
+	      {
+		  TmpPhases = HamiltonianFile.GetAsDoubleArray(2);
+		  HRep = HermitianMatrix (HRepReal, TmpPhases[0]);		  
+		  ComplexFlag = true;
+	      }
 	      for (int i = 1; i < HamiltonianFile.GetNbrLines(); ++i)
 		{
 		   RealSymmetricMatrix TmpH;
@@ -206,12 +213,21 @@ int main(int argc, char** argv)
 			    << " do not have the same size" << endl;
 		     }
 		   TmpH *= TmpWeigths[i];
-		   HRepReal += TmpH;
+		   if (TmpPhases == 0)
+		     HRepReal += TmpH;
+		   else
+		   {
+		     HermitianMatrix TmpHermitianH (TmpH, TmpPhases[i]);
+		     HRep += TmpHermitianH;
+		   }
 		}
 	    }
 	  if (Manager.GetDouble("rescaling-factor") != 1.0)
 	    {
-	      HRepReal *= Manager.GetDouble("rescaling-factor");
+	      if (ComplexFlag == false)
+		HRepReal *= Manager.GetDouble("rescaling-factor");
+	      else
+		HRep *= Manager.GetDouble("rescaling-factor");
 	    }
 	  if (Manager.GetString("add-diagonal") != 0)
 	    {
@@ -229,18 +245,17 @@ int main(int argc, char** argv)
 	      double* TmpDiagonalElements = DiagonalFile.GetAsDoubleArray(Manager.GetInteger("column-diagonal"));
 	      for (int i = 0; i < HRepReal.GetNbrRow(); ++i)
 		{
-		  HRepReal.AddToMatrixElement(i, i, TmpDiagonalElements[i]);
+		  if (ComplexFlag == false)
+		    HRepReal.AddToMatrixElement(i, i, TmpDiagonalElements[i]);
+		  else
+		    HRep.AddToMatrixElement(i, i, TmpDiagonalElements[i]);
 		}
 	    }
 	  DummyHilbertSpace = new UndescribedHilbertSpace(HRepReal.GetNbrRow());
-	  if (Manager.GetDouble("complex-rescaling") == 0.0)
+	  if (ComplexFlag == false)
 	    Hamiltonian  = new ExplicitHamiltonian(DummyHilbertSpace, &HRepReal);
 	  else
-	  {
-	    HermitianMatrix HRep (HRepReal, Manager.GetDouble("complex-rescaling"));
-	    Hamiltonian  = new ExplicitHamiltonian(DummyHilbertSpace, &HRep);
-	    ComplexFlag = true;
-	  }
+	    Hamiltonian = new ExplicitHamiltonian(DummyHilbertSpace, &HRep);
 	}
       else
 	{

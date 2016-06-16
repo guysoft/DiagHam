@@ -255,7 +255,7 @@ HermitianMatrix::HermitianMatrix(const RealSymmetricMatrix& M, double phase)
   double Tmp;
   long Index = 0l;
   double PhaseFactorRealPart = 1.0;
-  double PhaseFactorImPart = 1.0;
+  double PhaseFactorImPart = 0.0;
   if (phase != 0.0)
   {
     PhaseFactorRealPart = cos(2.0 * M_PI * phase);
