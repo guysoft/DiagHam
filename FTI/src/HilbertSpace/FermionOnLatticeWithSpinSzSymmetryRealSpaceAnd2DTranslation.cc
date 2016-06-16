@@ -468,10 +468,11 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::GenerateStates
   long TmpLargeHilbertSpaceDimension = 0l;
   int NbrTranslationX;
   int NbrTranslationY;
-  int NbrSpinFlip;
+  int NbrSzSymmetry;
+  double AdditionalSign;
   for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
     {
-      if ((this->FindCanonicalForm(this->StateDescription[i], NbrTranslationX, NbrTranslationY, NbrSpinFlip) == this->StateDescription[i]))
+      if ((this->FindCanonicalForm(this->StateDescription[i], NbrTranslationX, NbrTranslationY, NbrSzSymmetry) == this->StateDescription[i]))
 	{
 	  if (this->TestMomentumConstraint(this->StateDescription[i]) == true)
 	    {
@@ -509,13 +510,15 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::GenerateStates
 	      for (int n = 1; n < this->MaxXMomentum; ++n)
 		{
 		  unsigned long TmpState3 = TmpState2;
-		  TmpSign |= (this->GetSignAndApplySzSymmetry(TmpState3) << Index) ^ ((TmpSign & (0x1ul << (Index - 1))) << 1);
-		  ++Index;
+ 		  TmpSign |= (this->GetSignAndApplySzSymmetry(TmpState3) << Index) ^ ((TmpSign & (0x1ul << (Index - 1))) << 1);
+ 		  ++Index;
 		  TmpSign |= (this->GetSignAndApplySingleXTranslation(TmpState2) << Index) ^ ((TmpSign & (0x1ul << (Index - 1))) << 1);
 		  ++Index;
 		}
+	      TmpSign |= (this->GetSignAndApplySzSymmetry(TmpState2) << Index) ^ ((TmpSign & (0x1ul << (Index - 1))) << 1);
+	      ++Index;
 	      TmpSign |= ((this->GetSignAndApplySingleYTranslation(TmpState) << Index) 
-			  ^ ((TmpSign & (0x1ul << (Index - this->MaxXMomentum))) << this->MaxXMomentum));
+			  ^ ((TmpSign & (0x1ul << (Index - (2 * this->MaxXMomentum)))) << (2 * this->MaxXMomentum)));
 	      ++Index;
 	    }
 	  ++TmpLargeHilbertSpaceDimension;
@@ -535,6 +538,8 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::GenerateStates
 	--CurrentMaxMomentum;
       this->StateHighestBit[i] = CurrentMaxMomentum;
     }
+//   for (long i = 0; i < TmpLargeHilbertSpaceDimension; ++i)
+//     this->PrintState(cout, i) <<  " : " << this->NbrStateInOrbit[i] << endl;
   return TmpLargeHilbertSpaceDimension;
 }
 

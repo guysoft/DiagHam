@@ -30,6 +30,10 @@
 
 #include "config.h"
 #include "Tools/FTITightBinding/Abstract1DTightBindingModel.h"
+#include "Matrix/ComplexMatrix.h"
+#include "Matrix/ComplexDiagonalMatrix.h"
+#include "Matrix/RealDiagonalMatrix.h"
+#include "Matrix/RealMatrix.h"
 #include "GeneralTools/Endian.h"
 #include "GeneralTools/ArrayTools.h"
 
@@ -294,5 +298,171 @@ HermitianMatrix Abstract1DTightBindingModel::EvaluateFullMixedTwoPointCorrelatio
   delete[] TmpOccupiedMomenta;
 
   return EntanglementHamiltonian;
+}
+
+// build the tight binding hamiltonian in real space from the hopping parameters of the unit cell located at the origin, assuming periodic boundary conditions 
+//
+// nbrConnectedOrbitals = array that gives the number of connected orbitals for each orbital within the unit cell located at the origin
+// orbitalIndices = array that gives the orbital indices of the connected orbitals
+// spatialIndices = array that gives the coordinates of the connected orbitals (each coordinate being a consecutive series of d integers where d is the space dimension)
+// hoppingAmplitudes = array that gives the hopping amplitudes for each pair of connected orbitals
+// return value = tight binding hamiltonian in real space 
+
+HermitianMatrix Abstract1DTightBindingModel::BuildTightBindingHamiltonianRealSpace(int* nbrConnectedOrbitals, int** orbitalIndices, int** spatialIndices, Complex** hoppingAmplitudes)
+{
+  HermitianMatrix TmpHamiltonian(this->NbrBands * this->NbrSiteX, true);
+  for (int i = 0; i < this->NbrSiteX; ++i)
+    {
+      for (int k = 0; k < this->NbrBands; ++k)
+	{
+	  int Index2 = this->GetRealSpaceTightBindingLinearizedIndexSafe(i, k);
+	  for (int l = 0; l < nbrConnectedOrbitals[k]; ++l)
+	    {
+	      int Index1 = this->GetRealSpaceTightBindingLinearizedIndexSafe(spatialIndices[k][l] + i, orbitalIndices[k][l]);
+	      if(Index1 >= Index2)
+		TmpHamiltonian.AddToMatrixElement(Index1, Index2, hoppingAmplitudes[k][l]);
+	    }
+	}
+    }
+  return TmpHamiltonian;
+}
+
+// build the tight binding hamiltonian in real space from the hopping parameters of the unit cell located at the origin, assuming periodic boundary conditions but without assuming its hermiticiy
+//
+// nbrConnectedOrbitals = array that gives the number of connected orbitals for each orbital within the unit cell located at the origin
+// orbitalIndices = array that gives the orbital indices of the connected orbitals
+// spatialIndices = array that gives the coordinates of the connected orbitals (each coordinate being a consecutive series of d integers where d is the space dimension)
+// hoppingAmplitudes = array that gives the hopping amplitudes for each pair of connected orbitals
+// return value = tight binding hamiltonian in real space 
+
+ComplexMatrix Abstract1DTightBindingModel::BuildTightBindingNonHermitianHamiltonianRealSpace(int* nbrConnectedOrbitals, int** orbitalIndices, int** spatialIndices, Complex** hoppingAmplitudes)
+{
+  ComplexMatrix TmpHamiltonian(this->NbrBands * this->NbrSiteX , this->NbrBands * this->NbrSiteX , true);
+  for (int i = 0; i < this->NbrSiteX; ++i)
+    {
+      for (int k = 0; k < this->NbrBands; ++k)
+	{
+	  int Index2 = this->GetRealSpaceTightBindingLinearizedIndexSafe(i, k);
+	  for (int l = 0; l < nbrConnectedOrbitals[k]; ++l)
+	    {
+	      int Index1 = this->GetRealSpaceTightBindingLinearizedIndexSafe(spatialIndices[k][l] + i, orbitalIndices[k][l]);
+	      TmpHamiltonian.AddToMatrixElement(Index1, Index2, hoppingAmplitudes[k][l]);
+	    }
+	}      
+    }
+  return TmpHamiltonian;
+}
+
+// build the tight binding hamiltonian in recirpocal space from the hopping parameters of the unit cell located at the origin, assuming periodic boundary conditions 
+//
+// kx = momentum along the x direction (in 2pi /N_x unit) for which the hamiltonian in recirpocal space has to be computed
+// nbrConnectedOrbitals = array that gives the number of connected orbitals for each orbital within the unit cell located at the origin
+// orbitalIndices = array that gives the orbital indices of the connected orbitals
+// spatialIndices = array that gives the coordinates of the connected orbitals (each coordinate being a consecutive series of d integers where d is the space dimension)
+// hoppingAmplitudes = array that gives the hopping amplitudes for each pair of connected orbitals
+// return value = tight binding hamiltonian in real space 
+
+HermitianMatrix Abstract1DTightBindingModel::BuildTightBindingHamiltonianReciprocalSpace(int kx, int* nbrConnectedOrbitals, int** orbitalIndices, 
+											 int** spatialIndices, Complex** hoppingAmplitudes)
+{
+   HermitianMatrix TmpHamiltonian(this->NbrBands, true);
+   double TmpKx = this->GetProjectedMomentum(kx);
+   int p;
+   for (int k = 0; k < this->NbrBands; ++k)
+     {
+       for (int l = 0; l < nbrConnectedOrbitals[k]; ++l)
+	 {
+	   this->GetRealSpaceIndex(spatialIndices[k][l], p);
+	   double TmpPhase = (TmpKx * ((double) p));
+	   if (k >= orbitalIndices[k][l])
+	     TmpHamiltonian.AddToMatrixElement(k, orbitalIndices[k][l], Conj(hoppingAmplitudes[k][l]) * Phase(TmpPhase));
+	 }
+     }
+  return TmpHamiltonian;
+ 
+}
+
+// core part that compute the band structure
+//
+// minStateIndex = minimum index of the state to compute
+// nbrStates = number of states to compute
+
+void Abstract1DTightBindingModel::CoreComputeBandStructure(long minStateIndex, long nbrStates)
+{
+  this->FindConnectedOrbitals();
+  if (this->NbrConnectedOrbitals != 0)
+    {
+      if (nbrStates == 0l)
+	nbrStates = this->NbrStatePerBand;
+      long MaxStateIndex = minStateIndex + nbrStates;
+      double KX;
+      double KY;
+      for (int kx = 0; kx < this->NbrSiteX; ++kx)
+	{
+	  int Index = this->GetLinearizedMomentumIndex(kx);
+	  if ((Index >= minStateIndex) && (Index < MaxStateIndex))
+	    {
+	      HermitianMatrix TmpOneBodyHamiltonian = this->BuildTightBindingHamiltonianReciprocalSpace(kx, this->NbrConnectedOrbitals, this->ConnectedOrbitalIndices,
+													this->ConnectedOrbitalSpatialIndices, this->ConnectedOrbitalHoppingAmplitudes);
+	      if (this->OneBodyBasis != 0)
+		{
+		  ComplexMatrix TmpMatrix(this->NbrBands, this->NbrBands, true);
+		  TmpMatrix.SetToIdentity();
+		  RealDiagonalMatrix TmpDiag;
+#ifdef __LAPACK__
+		  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
+#else
+		  TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
+#endif
+		  this->OneBodyBasis[Index] = TmpMatrix;
+		  for (int i = 0; i < this->NbrBands; ++i)
+		    {
+		      this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
+		    }
+		}
+	      else
+		{
+		  RealDiagonalMatrix TmpDiag;
+#ifdef __LAPACK__
+		  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
+#else
+		  TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
+#endif
+		  for (int i = 0; i < this->NbrBands; ++i)
+		    this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
+		}
+	    }
+	}
+    }
+}
+
+// compute the band structure at a single point of the Brillouin zone
+//
+// kx = momentum along the x axis
+// energies = array where the energies will be stored
+
+void Abstract1DTightBindingModel::ComputeBandStructureSinglePoint(double kx, double* energies)
+{
+  HermitianMatrix TmpOneBodyHamiltonian = this->ComputeBlochHamiltonian(kx);
+  RealDiagonalMatrix TmpDiag;
+#ifdef __LAPACK__
+  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
+#else
+  TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
+#endif
+  for (int i = 0; i < this->NbrBands; ++i)
+    energies[i] = TmpDiag(i, i);
+}
+
+
+// compute the Bloch hamiltonian at a point of the Brillouin zone
+//
+// kx = momentum along the x axis
+// return value = Bloch hamiltonian
+
+HermitianMatrix Abstract1DTightBindingModel::ComputeBlochHamiltonian(double kx)
+{
+  HermitianMatrix TmpOneBodyHamiltonian;
+  return TmpOneBodyHamiltonian;
 }
 

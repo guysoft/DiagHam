@@ -6,6 +6,7 @@
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd1DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
 
 
@@ -82,7 +83,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
   (*SystemGroup) += new BooleanOption ('\n', "fixed-sz", "fix the Sz value");
   (*SystemGroup) += new SingleIntegerOption ('\n', "sz-value", "twice the fixed Sz value", 0);
-  (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use the Sz <-> -Sz symmetry");
+  (*SystemGroup) += new  BooleanOption ('\n', "disable-szsymmetry", "disable the Sz<->-Sz symmetry");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "sz-parity", "select the  Sz <-> -Sz parity (can be 1 or -1, 0 if both sectors have to be computed", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nx1", "first coordinate of the first spanning vector of the tilted lattice", 0);
@@ -137,6 +138,7 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "use-scalapack", "use SCALAPACK libraries instead of DiagHam or LAPACK libraries");
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
+  (*ToolsGroup) += new BooleanOption  ('\n', "friendlyshow-hamiltonian", "show matrix representation of the hamiltonian, displaying only non-zero matrix elements");
   (*ToolsGroup) += new BooleanOption  ('\n', "test-hermitian", "test if the hamiltonian is hermitian");
   (*ToolsGroup) += new SingleDoubleOption  ('\n',"testhermitian-error", "precision of the hermeticity test",0);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -161,6 +163,7 @@ int main(int argc, char** argv)
   long S2Memory = ((long) Manager.GetInteger("s2-memory")) << 20;
   bool CheckerboardFlag = Manager.GetBoolean("checkerboard");
   
+
   int nx1 = Manager.GetInteger("nx1");
   int ny1 = Manager.GetInteger("ny1");
   int nx2 = Manager.GetInteger("nx2");
@@ -268,8 +271,6 @@ int main(int argc, char** argv)
       return -1;
     }
     
-  char* CommentLine = new char [256];
-  sprintf (CommentLine, "eigenvalues\n# kx ky ");
   char* FileParameterString = new char [256];
 //   if ((Manager.GetDouble("gamma-x") == 0.0) && (Manager.GetDouble("gamma-y") == 0.0))
 //     sprintf (FileParameterString, "t1_%f_t2_%f_tpp_%f", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"));
@@ -433,13 +434,47 @@ int main(int argc, char** argv)
       MaxKx = 0;
       MaxKy = 0;
     }
-  bool SzParity = false;
+  bool SzSymmetryFlag = false;
   int MaxParity = 0;
   int MinParity = 0;
-  if ((Manager.GetBoolean("szsymmetrized-basis") == true) && (Manager.GetInteger("sz-parity") <= 0))
-    MaxParity = 1;
-  if (Manager.GetInteger("sz-parity") == -1)
-    MinParity = 1;
+  if ((Manager.GetBoolean("disable-szsymmetry") == false) && (SzValue == 0))
+    {
+      SzSymmetryFlag = true;
+      MaxParity = 1;
+    }
+  if (Manager.GetInteger("sz-parity") != 0)
+    {
+      MinParity = (1 - Manager.GetInteger("sz-parity")) / 2;
+      MaxParity = MinParity;
+    }
+  SzSymmetryFlag = false;
+
+  char* CommentLine = new char [256];
+  if (Manager.GetBoolean("fixed-sz") == false)
+    {
+      if (SzSymmetryFlag == false)
+	{
+	  sprintf (CommentLine, " kx ky");
+	}
+      else
+	{
+	  sprintf (CommentLine, " kx ky szsym");
+	}
+    }
+  else
+    {
+      if (SzSymmetryFlag == false)
+	{
+	  sprintf (CommentLine, " Sz kx ky");
+	}
+      else
+	{
+	  sprintf (CommentLine, " Sz kx ky szsym");
+	}
+    }
+
+
+
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
@@ -451,10 +486,8 @@ int main(int argc, char** argv)
 	  for (int parity = MinParity; parity <= MaxParity; ++parity)
 	    {
 	      cout << "(kx=" << i << ",ky=" << j << ") : " << endl;
-	      if (Manager.GetBoolean("szsymmetrized-basis"))
+	      if (SzSymmetryFlag == true)
 		cout << "Sz Parity = " << (1 - 2*parity) << endl;
-	      if (parity == 1)
-		SzParity = true;
 	      if (Manager.GetBoolean("single-band") == false)
 		{	      
 		  ParticleOnSphereWithSpin* Space = 0;
@@ -559,11 +592,13 @@ int main(int argc, char** argv)
 				{
 				  if (Manager.GetBoolean("gutzwiller") == false)
 				    {
-				      if (Manager.GetBoolean("szsymmetrized-basis") == false) 
-					Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, SzValue, NbrSites, 10000000);
+				      if (SzSymmetryFlag == false) 
+					{
+					  Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, SzValue, NbrSites, 10000000);
+					}
 				      else
 					{
-					  Space = new FermionOnLatticeWithSpinSzSymmetryRealSpace(NbrParticles, SzValue, NbrSites, SzParity);
+					  Space = new FermionOnLatticeWithSpinSzSymmetryRealSpace(NbrParticles, SzValue, NbrSites, (parity == 1));
 					}
 				    }
 				  else
@@ -573,31 +608,75 @@ int main(int argc, char** argv)
 				{
 				  if (Manager.GetBoolean("gutzwiller") == false)
 				    {
-				      if (Manager.GetBoolean("szsymmetrized-basis") == false)
-					Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, NbrSites);
+				      if (SzSymmetryFlag == false) 
+					{
+					  Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, NbrSites);
+					}
 				      else
-					Space = new FermionOnLatticeWithSpinSzSymmetryRealSpace(NbrParticles, NbrSites, SzParity);
+					{
+					  Space = new FermionOnLatticeWithSpinSzSymmetryRealSpace(NbrParticles, NbrSites, (parity == 1));
+					}
 				    }
 				  else
-				    Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (NbrParticles, NbrSites);
+				    {
+				      Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (NbrParticles, NbrSites);
+				    }
 				}
-			    }
-			  
+			    }			  
 			  else
 			    {
 			      if (Manager.GetBoolean("fixed-sz"))
 				{
 				  if (Manager.GetBoolean("gutzwiller") == false)
-				    Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, i, NbrSitesX, j, NbrSitesY, 10000000);
+				    {				      
+				      if (SzSymmetryFlag == false) 
+					{
+					  Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, i, NbrSitesX, j, NbrSitesY, 10000000);
+					}
+				      else
+					{
+					  Space = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, (parity == 1), 
+														   i, NbrSitesX, j, NbrSitesY, 10000000);
+					}
+				    }
 				  else
-				    Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, i, NbrSitesX, j, NbrSitesY, 10000000);
+				    {
+				      if (SzSymmetryFlag == false) 
+					{
+					  Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, i, NbrSitesX, j, NbrSitesY, 10000000);
+					}
+				      else
+					{
+					  cout <<  "FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd2DTranslation is not implemented" << endl;
+					  return 0;
+					}
+				    }
 				}
 			      else
 				{
 				  if (Manager.GetBoolean("gutzwiller") == false)
-				    Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, i, NbrSitesX, j, NbrSitesY); 
+				    {
+				      if (SzSymmetryFlag == false) 
+					{
+					  Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, i, NbrSitesX, j, NbrSitesY); 
+					}
+				      else
+					{
+					  Space = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles, NbrSites, (parity == 1), i, NbrSitesX, j, NbrSitesY);
+					}
+				    }
 				  else
-				    Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, NbrSites, i, NbrSitesX, j, NbrSitesY);
+				    {
+				      if (SzSymmetryFlag == false) 
+					{
+					  Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, NbrSites, i, NbrSitesX, j, NbrSitesY);
+					}
+				      else
+					{
+					  cout <<  "FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd2DTranslation is not implemented" << endl;
+					  return 0;
+					}
+				    }
 				}
 			    }
 			  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
@@ -628,37 +707,58 @@ int main(int argc, char** argv)
 		      Hamiltonian->AddS2(Manager.GetDouble("s2-factor"), Manager.GetBoolean("fixed-sz"), S2Memory);
 		    }
 		  char* ContentPrefix = new char[256];
-		  sprintf (ContentPrefix, "%d %d", i, j);
+		  if (Manager.GetBoolean("fixed-sz") == false)
+		    {
+		      if (SzSymmetryFlag == false)
+			{
+			  sprintf (ContentPrefix, "%d %d", i, j);
+			}
+		      else
+			{
+			  sprintf (ContentPrefix, "%d %d %d", i, j, (1 - 2*parity));
+			}
+		    }
+		  else
+		    {
+		      if (SzSymmetryFlag == false)
+			{
+			  sprintf (ContentPrefix, "%d %d %d", SzValue, i, j);
+			}
+		      else
+			{
+			  sprintf (ContentPrefix, "%d %d %d %d", SzValue, i, j, (1 - 2*parity));
+			}
+		    }
 		  char* EigenstateOutputFile = new char [256 + strlen(FileFullPrefix) + strlen(FileParameterString)];
 		  if (Manager.GetBoolean("no-translation") == false)
 		    {
 		      if (Manager.GetBoolean("fixed-sz") == false)
 			{
-			  if (Manager.GetBoolean("szsymmetrized-basis") == false)
+			  if (SzSymmetryFlag == false)
 			    sprintf (EigenstateOutputFile, "%s_kx_%d_ky_%d", FileFullPrefix, i, j);
 			  else
-			    sprintf (EigenstateOutputFile, "%s_kx_%d_ky_%d_szparity_%d", FileFullPrefix, i, j, (1 - 2*parity));
+			    sprintf (EigenstateOutputFile, "%s_kx_%d_ky_%d_szsym_%d", FileFullPrefix, i, j, (1 - 2*parity));
 			}
 		      else
 			{
-			  if (Manager.GetBoolean("szsymmetrized-basis") == false)
+			  if (SzSymmetryFlag == false)
 			    sprintf (EigenstateOutputFile, "%s_kx_%d_ky_%d_sz_%d", FileFullPrefix, i, j, SzValue);
 			  else
-			    sprintf (EigenstateOutputFile, "%s_kx_%d_ky_%d_sz_%d_szparity_%d", FileFullPrefix, i, j, SzValue, (1 - 2*parity));
+			    sprintf (EigenstateOutputFile, "%s_kx_%d_ky_%d_sz_%d_szsym_%d", FileFullPrefix, i, j, SzValue, (1 - 2*parity));
 			}
 		    }
 		  else
 		    {
 		      if (Manager.GetBoolean("fixed-sz") == false)
 			{
-			  if (Manager.GetBoolean("szsymmetrized-basis") == false)
+			  if (SzSymmetryFlag == false)
 			    sprintf (EigenstateOutputFile, "%s", FileFullPrefix);
 			  else
 			    sprintf (EigenstateOutputFile, "%s_szparity_%d", FileFullPrefix, (1 - 2*parity));
 			}
 		      else
 			{
-			  if (Manager.GetBoolean("szsymmetrized-basis") == false)
+			  if (SzSymmetryFlag == false)
 			    sprintf (EigenstateOutputFile, "%s_sz_%d", FileFullPrefix, SzValue);
 			  else
 			    sprintf (EigenstateOutputFile, "%s_sz_%d_szparity_%d", FileFullPrefix, SzValue, (1 - 2*parity));
@@ -680,7 +780,7 @@ int main(int argc, char** argv)
     }
   
   return 0;   
-    }
+}
 
 // compute the description of the density-density interaction for the unit cell at the origin
 //

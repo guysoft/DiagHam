@@ -91,6 +91,18 @@ class FermionOnLatticeRealSpaceFixedParity : public FermionOnLatticeRealSpace
   // return value = corresponding index, -1 if an error occured
   // virtual int FindStateIndex(char* stateDescription);
 
+  // evaluate the tensor product of three states and apply a Gutzwiller projection
+  //
+  // state1 = reference on the first state 
+  // space1 = Hilbert space associated to the first space
+  // state2 = reference on the second state 
+  // space2 = Hilbert space associated to the second space
+  // state3 = reference on the third state 
+  // space3 = Hilbert space associated to the third space
+  virtual void TripleTensorProductAndGutzwillerProjection (ComplexVector& state1, FermionOnLatticeRealSpaceFixedParity* space1,
+							   ComplexVector& state2, FermionOnLatticeRealSpaceFixedParity* space2,
+							   ComplexVector& state3, FermionOnLatticeRealSpaceFixedParity* space3);
+
  protected:
 
   // find state index

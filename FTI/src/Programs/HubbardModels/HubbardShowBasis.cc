@@ -7,6 +7,7 @@
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeRealSpace.h"
+#include "HilbertSpace/FermionOnLatticeRealSpaceFixedParity.h"
 #include "HilbertSpace/FermionOnLatticeRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeRealSpaceAnd1DTranslation.h"
 #include "HilbertSpace/BosonOnLatticeRealSpace.h"
@@ -50,6 +51,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistic");
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "gutzwiller", "use the Gutzwiller projection");
+  (*SystemGroup) += new BooleanOption  ('\n', "fixed-parity", "only fix the parity of the number of particles");
+  (*SystemGroup) += new SingleIntegerOption ('\n', "parity", "parity of the number of particles when using --fixed-parity (can be 0 or 1)", 0);
   (*SystemGroup) += new SingleStringOption ('\n', "get-index", "find the index of a given n-body state");
   (*SystemGroup) += new BooleanOption  ('\n', "xperiodic-boundary", "use periodic boundary conditions in the x direction");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "x-periodicity", "periodicity in the number of site index that implements the periodic boundary condition in the x direction (use only for 1d)", 4);
@@ -85,16 +88,16 @@ int main(int argc, char** argv)
   int NbrParticles = Manager.GetInteger("nbr-particles"); 
   int TotalSz = Manager.GetInteger("total-spin");
   if ((Manager.GetBoolean("conserve-sz")) && ((TotalSz % 2) != (NbrParticles % 2)))
-  {
-   cout << "Number of particles and total spin should have the same parity" << endl;
-   return 0;
-  }   
+    {
+      cout << "Number of particles and total spin should have the same parity" << endl;
+      return 0;
+    }   
   int NbrSpinUp = (TotalSz + NbrParticles) >> 1;
   if ((Manager.GetBoolean("conserve-sz")) && (NbrSpinUp < 0))
-  {
-   cout << "Number of up spins is negative" << endl;
-   return 0;
-  }
+    {
+      cout << "Number of up spins is negative" << endl;
+      return 0;
+    }
   int NbrSites = Manager.GetInteger("nbr-sites"); 
   bool AddIndex = Manager.GetBoolean("add-index");
   bool ComplexFlag = Manager.GetBoolean("complex-vector");
@@ -176,7 +179,14 @@ int main(int argc, char** argv)
 	    {
 	      if (Manager.GetBoolean("su2-spin") == false)
 		{
-		  Space = new FermionOnLatticeRealSpace(NbrParticles, NbrSites);
+		  if (Manager.GetBoolean("fixed-parity") == false)
+		    {
+		      Space = new FermionOnLatticeRealSpace(NbrParticles, NbrSites);
+		    }
+		  else
+		    {
+		      Space = new FermionOnLatticeRealSpaceFixedParity(NbrSites, Manager.GetInteger("parity"));
+		    }
 		}
 	      else
 		{

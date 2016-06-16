@@ -190,6 +190,83 @@ bool FTIHubbardModelFindSystemInfoFromVectorFileName(char* filename, int& nbrPar
 // try to guess system information from file name
 //
 // filename = vector file name
+// nbrSites = reference to the number sites
+// statistics = reference to flag for fermionic statistics (true for fermion, false for bosons)
+// parity = reference to the particle number parity
+// return value = true if no error occured
+
+bool FTIHubbardModelFindSystemInfoFromVectorFileName(char* filename, int& nbrSites, bool& statistics, int& parity)
+{
+  char* StrNbrParticles;
+  StrNbrParticles = strstr(filename, "_par_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 5;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.'))&& (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  parity = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess particle number parity from file name " << filename << endl;
+      return false;            
+    }
+  StrNbrParticles = strstr(filename, "_ns_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  nbrSites = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      nbrSites = 0;
+    }
+  if (strstr(filename, "fermion") == 0)
+    {
+      if (strstr(filename, "boson") == 0)
+	{
+	  cout << "can't guess particle statistics from file name " << filename << endl;
+	  return false;	  
+	}
+      else
+	{
+	  statistics = false;
+	}
+    }
+  else
+    {
+      statistics = true;
+    }
+  return true;
+}
+
+// try to guess system information from file name
+//
+// filename = vector file name
 // nbrParticles = reference to the number of particles 
 // nbrSites = reference on the number sites
 // xMomentum = reference on the momentum sector in the x direction

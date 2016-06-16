@@ -129,8 +129,8 @@ class ParticleOnLatticeRealSpaceHamiltonian : public ParticleOnLatticeTimeRevers
   // vDestinations = array of vectors at which result has to be added
   // nbrVectors = number of vectors that have to be evaluated together
   // tmpCoefficients = a temporary array whose size is nbrVectors
-  inline void HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
-							     ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients);
+  virtual void HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
+							      ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients);
 
   // core part of the FastMultiplication method involving the two-body interaction
   // 

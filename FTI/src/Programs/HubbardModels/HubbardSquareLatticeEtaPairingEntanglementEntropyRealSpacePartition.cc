@@ -1269,7 +1269,7 @@ int main(int argc, char** argv)
 			{
 			  TmpZ0 = 0.0;//GetZ0Value(VacuumOneBodyEntanglementTrimmedEnergies, NbrVacuumOneBodyEntanglementTrimmedEnergies, TmpNbrParticlesA, (double) RenyiIndex);
 			}
-		      cout << RenyiIndex << " " << TmpNbrParticlesA << " " << TmpZ0 << " " << SumAlphaFactors[RenyiIndex - 1] << " " << AlphaFactor << endl;
+//		      cout << RenyiIndex << " " << TmpNbrParticlesA << " " << TmpZ0 << " " << SumAlphaFactors[RenyiIndex - 1] << " " << AlphaFactor << endl;
 		      double LogAlphaFactor = (-((double) (TmpNbrParticlesA + 1)) * log(TmpZ0)) - (0.5 * log (2.0 * M_PI));
 		      double TmpSum = ((double) (TmpNbrParticlesA + 1)) / (TmpZ0 * TmpZ0);
 		      if (RenyiIndex == 1)
@@ -1747,6 +1747,7 @@ double* EvaluateEtaPairingContribution(int nbrRenyiEntropies, int nbrSites, int 
 	  rationalCoefficient.BinomialMultiply(nbrSites - totalNbrSitesA - vacuumNbrParticles + nbrParticlesA, nbrPairs - j);
 	  rationalCoefficient.BinomialDivide(nbrSites - vacuumNbrParticles, nbrPairs);
 	  Tmp2 = rationalCoefficient.GetNumericalValue();
+//	  cout << Tmp2 << endl;
 	}
       else
 	{

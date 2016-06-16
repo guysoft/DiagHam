@@ -84,6 +84,59 @@ class Abstract1DTightBindingModel : public AbstractTightBindingModel
   // return value = linearized momentum index
   virtual void GetLinearizedMomentumIndex(int index, int& kx, int& ky);
 
+  // get the linearized momentum index
+  //
+  // kx = momentum along the x direction
+  // return value = linearized momentum index
+  virtual int GetLinearizedMomentumIndex(int kx);
+
+  // get momentum value from a linearized momentum index
+  //
+  // index = linearized momentum index
+  // kx = reference on the momentum along the x direction
+  // return value = linearized momentum index
+  virtual void GetMomentumFromLinearizedIndex(int index, int& kx);
+
+  // get the linearized momentum index, without assuming k to be in the first BZ
+  //
+  // kx = momentum along the x direction
+  // return value = linearized momentum index
+  virtual int GetLinearizedMomentumIndexSafe(int kx);
+
+  // get momentum value from a linearized momentum index, without assuming k to be in the first BZ
+  //
+  // index = linearized momentum index
+  // kx = reference on the momentum along the x direction
+  // return value = inearized momentum index
+  virtual void GetMomentumFromLinearizedIndexSafe(int index, int& kx);
+
+  // get the index of the real space tight binding model from the real space coordinates
+  //
+  // x = x coordinate of the unit cell
+  // orbitalIndex = index of the orbital / site within the unit cell
+  // return value = linearized index  
+  virtual int GetRealSpaceTightBindingLinearizedIndex(int x, int orbitalIndex);
+  
+  // get the index of the real space tight binding model from the real space coordinates, without assumption on the coordinates
+  //
+  // x = x coordinate of the unit cell
+  // orbitalIndex = index of the orbital / site within the unit cell
+  // return value = linearized index  
+  virtual int GetRealSpaceTightBindingLinearizedIndexSafe(int x, int orbitalIndex);
+
+  // get the real space coordinates from the index of the real space tight binding model
+  //
+  // index = linearized index of the real space tight binding model
+  // x = reference on the x coordinate of the unit cell
+  // orbitalIndex = reference on the index of the orbital / site within the unit cell
+  virtual void GetRealSpaceTightBindingLinearizedIndex(int index, int& x, int& orbitalIndex);
+
+  // compute the index in real space lattice starting from the cartesian coordinates
+  //
+  // i = cartesian coordinate in the x direction of the Bravais lattice
+  // p = reference on the first lattice index
+  virtual void GetRealSpaceIndex (int i, int& p);
+  
   // get the energy at a given momentum of the band structure
   //
   // bandIndex = index of the band to consider
@@ -105,6 +158,12 @@ class Abstract1DTightBindingModel : public AbstractTightBindingModel
   // bandIndices = reference to the array where the band index associated to each energy will be stored (the allocation is done by the method)
   virtual void GetAllEnergies(double*& energies, int*& momenta, int*& bandIndices);
 
+  // Computes value of projected momentum along the lattice directions
+  //
+  // kx = first coordinate of the given point in the Brillouin zone
+  // return value = projected momentum
+  virtual double GetProjectedMomentum(int kx);
+  
   // ask if the one body transformation matrices are available
   //
   // return value = true if the one body transformation matrices are available
@@ -163,6 +222,18 @@ class Abstract1DTightBindingModel : public AbstractTightBindingModel
   // return value = matrix where the values of the two point correlation function will be stored (using the linearized position index as entry)
   virtual HermitianMatrix EvaluateFullMixedTwoPointCorrelationFunctionWithK(int maxX, int ky, int* occupiedMomenta, int* bandIndices, int nbrOccupiedMomenta);
 
+  // compute the band structure at a single point of the Brillouin zone
+  //
+  // kx = momentum along the x axis
+  // energies = array where the energies will be stored
+  virtual void ComputeBandStructureSinglePoint(double kx, double* energies);
+
+  // compute the Bloch hamiltonian at a point of the Brillouin zone
+  //
+  // kx = momentum along the x axis
+  // return value = Bloch hamiltonian
+  virtual HermitianMatrix ComputeBlochHamiltonian(double kx);
+
  protected:
 
   // write an header that describes the tight binding model
@@ -170,6 +241,42 @@ class Abstract1DTightBindingModel : public AbstractTightBindingModel
   // output = reference on the output stream
   // return value  = reference on the output stream
   virtual ofstream& WriteHeader(ofstream& output);
+
+  // build the tight binding hamiltonian in real space from the hopping parameters of the unit cell located at the origin, assuming periodic boundary conditions 
+  //
+  // nbrConnectedOrbitals = array that gives the number of connected orbitals for each orbital within the unit cell located at the origin
+  // orbitalIndices = array that gives the orbital indices of the connected orbitals
+  // spatialIndices = array that gives the coordinates of the connected orbitals (each coordinate being a consecutive series of d integers where d is the space dimension)
+  // hoppingAmplitudes = array that gives the hopping amplitudes for each pair of connected orbitals
+  // return value = tight binding hamiltonian in real space 
+  virtual HermitianMatrix BuildTightBindingHamiltonianRealSpace(int* nbrConnectedOrbitals, int** orbitalIndices, int** spatialIndices, Complex** hoppingAmplitudes);
+  
+  // build the tight binding hamiltonian in real space from the hopping parameters of the unit cell located at the origin, assuming periodic boundary conditions but without assuming its hermiticiy
+  //
+  // nbrConnectedOrbitals = array that gives the number of connected orbitals for each orbital within the unit cell located at the origin
+  // orbitalIndices = array that gives the orbital indices of the connected orbitals
+  // spatialIndices = array that gives the coordinates of the connected orbitals (each coordinate being a consecutive series of d integers where d is the space dimension)
+  // hoppingAmplitudes = array that gives the hopping amplitudes for each pair of connected orbitals
+  // return value = tight binding hamiltonian in real space   
+  virtual ComplexMatrix BuildTightBindingNonHermitianHamiltonianRealSpace(int* nbrConnectedOrbitals, int** orbitalIndices, int** spatialIndices, 
+									  Complex** hoppingAmplitudes);
+
+  // build the tight binding hamiltonian in recirpocal space from the hopping parameters of the unit cell located at the origin, assuming periodic boundary conditions 
+  //
+  // kx = momentum along the x direction (in 2pi /N_x unit) for which the hamiltonian in recirpocal space has to be computed
+  // nbrConnectedOrbitals = array that gives the number of connected orbitals for each orbital within the unit cell located at the origin
+  // orbitalIndices = array that gives the orbital indices of the connected orbitals
+  // spatialIndices = array that gives the coordinates of the connected orbitals (each coordinate being a consecutive series of d integers where d is the space dimension)
+  // hoppingAmplitudes = array that gives the hopping amplitudes for each pair of connected orbitals
+  // return value = tight binding hamiltonian in real space 
+  virtual HermitianMatrix BuildTightBindingHamiltonianReciprocalSpace(int kx, int* nbrConnectedOrbitals, int** orbitalIndices, 
+								      int** spatialIndices, Complex** hoppingAmplitudes);
+
+  // core part that compute the band structure
+  //
+  // minStateIndex = minimum index of the state to compute
+  // nbrStates = number of states to compute
+  virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates);
 
 };
 
@@ -236,4 +343,110 @@ inline void Abstract1DTightBindingModel::GetLinearizedMomentumIndex(int index, i
   ky = 0;
 }
 
+// get the linearized momentum index
+//
+// kx = momentum along the x direction
+// return value = linearized momentum index
+
+inline int Abstract1DTightBindingModel::GetLinearizedMomentumIndex(int kx)
+{
+  return kx;
+}
+
+// get the linearized momentum index, without assuming k to be in the first BZ
+//
+// kx = momentum along the x direction
+// return value = linearized momentum index
+
+inline int Abstract1DTightBindingModel::GetLinearizedMomentumIndexSafe(int kx)
+{
+  return kx;
+}
+
+// get momentum value from a linearized momentum index, without assuming k to be in the first BZ
+//
+// index = linearized momentum index
+// kx = reference on the momentum along the x direction
+// return value = inearized momentum index
+
+inline void  Abstract1DTightBindingModel::GetMomentumFromLinearizedIndex(int index, int& kx)
+{
+  kx = index; 
+}
+
+// get momentum value from a linearized momentum index, without assuming k to be in the first BZ
+//
+// index = linearized momentum index
+// kx = reference on the momentum along the x direction
+// return value = inearized momentum index
+
+inline void Abstract1DTightBindingModel::GetMomentumFromLinearizedIndexSafe(int index, int& kx)
+{
+  index %= this->NbrSiteX;
+  if (index < 0)
+    index +=  this->NbrSiteX;
+  kx = index; 
+}
+
+// get the index of the real space tight binding model from the real space coordinates
+//
+// x = x coordinate of the unit cell
+// orbitalIndex = index of the orbital / site within the unit cell
+// return value = linearized index  
+
+inline int  Abstract1DTightBindingModel::GetRealSpaceTightBindingLinearizedIndex(int x, int orbitalIndex)
+{
+  return (orbitalIndex + (x * this->NbrBands)); 
+}
+  
+// get the index of the real space tight binding model from the real space coordinates, without assumption on the coordinates
+//
+// x = x coordinate of the unit cell
+// orbitalIndex = index of the orbital / site within the unit cell
+// return value = linearized index  
+
+inline int Abstract1DTightBindingModel::GetRealSpaceTightBindingLinearizedIndexSafe(int x, int orbitalIndex)
+{
+  orbitalIndex %= this->NbrBands;
+  if (orbitalIndex < 0)
+    orbitalIndex +=  this->NbrBands;
+  x %= this->NbrSiteX;
+  if (x < 0)
+    x +=  this->NbrSiteX;
+  return (orbitalIndex + (x * this->NbrBands)); 
+}
+
+// get the real space coordinates from the index of the real space tight binding model
+//
+// index = linearized index of the real space tight binding model
+// x = reference on the x coordinate of the unit cell
+// orbitalIndex = reference on the index of the orbital / site within the unit cell
+
+inline void Abstract1DTightBindingModel::GetRealSpaceTightBindingLinearizedIndex(int index, int& x, int& orbitalIndex)
+{
+  orbitalIndex = index % this->NbrBands;
+  index /= this->NbrBands;
+  x = index;
+}
+
+// Computes value of projected momentum along the lattice directions
+//
+// kx = first coordinate of the given point in the Brillouin zone
+// return value = projected momentum
+
+inline double Abstract1DTightBindingModel::GetProjectedMomentum(int kx)
+{
+  return (this->KxFactor * ((double) kx));
+}
+  
+// compute the index in real space lattice starting from the cartesian coordinates
+//
+// i = cartesian coordinate in the x direction of the Bravais lattice
+// p = reference on the first lattice index
+
+inline void Abstract1DTightBindingModel::GetRealSpaceIndex (int i, int& p)
+{
+  p = i;
+}
+  
 #endif

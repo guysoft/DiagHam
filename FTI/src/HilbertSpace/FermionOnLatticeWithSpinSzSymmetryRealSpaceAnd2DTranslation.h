@@ -133,9 +133,9 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation : public Fermi
   // stateDescription = unsigned integer describing the state
   // nbrTranslationX = reference on the number of translations to apply in the x direction to the resulting state to obtain the return orbit describing state
   // nbrTranslationY = reference on the number of translations to apply in the y direction to the resulting state to obtain the return orbit describing state
-  // nbrSpinFlip = reference on the number of full spin flip to apply to the resulting state to obtain the return orbit describing state
+  // additionalSign = reference on the additional sign coming from symmetries beyond translation
   // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
-  virtual unsigned long FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY, int& nbrSpinFlip);
+  virtual unsigned long FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY, int& nbrSzSymmetry);//double& additionalSign);
 
   //  test if the state and its translated version can be used to create a state corresponding to the momentum constraint
   //
@@ -174,8 +174,11 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation : public Fermi
 inline int FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient, 
 											     int& nbrTranslationX, int& nbrTranslationY)
 {
-  int NbrSpinFlip;
-  state = this->FindCanonicalForm(state, nbrTranslationX, nbrTranslationY, NbrSpinFlip);
+//  double AdditionalSign;
+  int NbrSzSymmetry;
+//  cout << "in  : " << hex << state << endl;
+  state = this->FindCanonicalForm(state, nbrTranslationX, nbrTranslationY, NbrSzSymmetry); //AdditionalSign);
+//  cout << "out : " << hex << state << endl;
   int TmpMaxMomentum = 2 * this->NbrSite + 1;
   while ((state >> TmpMaxMomentum) == 0x0ul)
     --TmpMaxMomentum;
@@ -185,7 +188,10 @@ inline int FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::Symmetri
       coefficient *= this->RescalingFactors[this->ProdATemporaryNbrStateInOrbit][this->NbrStateInOrbit[TmpIndex]];
       nbrTranslationX = (this->MaxXMomentum - nbrTranslationX) % this->MaxXMomentum;
       nbrTranslationY = (this->MaxYMomentum - nbrTranslationY) % this->MaxYMomentum;
-      coefficient *= 1.0 - (2.0 * ((double) (((this->ReorderingSign[TmpIndex] >> ((((nbrTranslationY * this->MaxXMomentum) + nbrTranslationX) * 2) + NbrSpinFlip)) & 0x1u)))); 
+      coefficient *= 1.0 - (2.0 * ((double) (((this->ReorderingSign[TmpIndex] >> ((((nbrTranslationY * this->MaxXMomentum) + nbrTranslationX) * 2) + NbrSzSymmetry)) & 0x1u))));  
+//      cout << nbrTranslationX << " " << nbrTranslationY << " " << NbrSzSymmetry << " " << coefficient << endl;
+      if (NbrSzSymmetry == 1) 
+	coefficient *= this->SzParitySign;  
     }
   return TmpIndex;
 }
@@ -197,17 +203,18 @@ inline int FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::Symmetri
 // nbrTranslationX = reference on the number of translations toapply  in the x direction to the resulting state to obtain the return orbit describing state
 // nbrTranslationY = reference on the number of translations to apply in the y direction to the resulting state to obtain the return orbit describing state
 // nbrSpinFlip = reference on the number of full spin flip to apply to the resulting state to obtain the return orbit describing state
+// additionalSign = reference on the additional sign coming from symmetries beyond translation
 // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
 
 inline unsigned long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY,
-												    int& nbrSpinFlip)
+												    int& nbrSzSymmetry)
 {
   unsigned long CanonicalState = stateDescription;
   unsigned long stateDescriptionReference = stateDescription;  
   unsigned long TmpStateDescription;  
   nbrTranslationX = 0;
   nbrTranslationY = 0;
-  nbrSpinFlip = 0;
+  nbrSzSymmetry = 0;
   TmpStateDescription = stateDescription;
   for (int n = 1; n < this->MaxXMomentum; ++n)
     {
@@ -241,15 +248,15 @@ inline unsigned long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation
 	}
     }
   stateDescription = stateDescriptionReference;
-  this->ApplySzSymmetry(stateDescription);
   TmpStateDescription = stateDescription;
+  this->ApplySzSymmetry(TmpStateDescription);
   if (TmpStateDescription < CanonicalState)
     {
       CanonicalState = TmpStateDescription;
       nbrTranslationX = 0;	      
       nbrTranslationY = 0;	      
-      nbrSpinFlip = 1;
-    } 
+      nbrSzSymmetry = 1;
+    }
   for (int n = 1; n < this->MaxXMomentum; ++n)
     {
       this->ApplySingleXTranslation(TmpStateDescription);      
@@ -258,9 +265,10 @@ inline unsigned long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation
 	  CanonicalState = TmpStateDescription;
 	  nbrTranslationX = n;	      
 	  nbrTranslationY = 0;	      
-	  nbrSpinFlip = 1;
+	  nbrSzSymmetry = 1;
 	}
     }
+  this->ApplySzSymmetry(stateDescription);
   for (int m = 1; m < this->MaxYMomentum; ++m)
     {
       this->ApplySingleYTranslation(stateDescription);      
@@ -269,7 +277,7 @@ inline unsigned long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation
 	  CanonicalState = stateDescription;
 	  nbrTranslationX = 0;	      
 	  nbrTranslationY = m;	      
-	  nbrSpinFlip = 1;
+	  nbrSzSymmetry = 1;
 	}
       TmpStateDescription = stateDescription;
       for (int n = 1; n < this->MaxXMomentum; ++n)
@@ -280,10 +288,10 @@ inline unsigned long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation
 	      CanonicalState = TmpStateDescription;
 	      nbrTranslationX = n;	      
 	      nbrTranslationY = m;	      
-	      nbrSpinFlip = 1;
+	      nbrSzSymmetry = 1;
 	    }
 	}
-    }  
+    }
   return CanonicalState;
 }
 
@@ -296,200 +304,146 @@ inline bool FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::TestMom
 {
   unsigned long TmpStateDescription = stateDescription;
   unsigned long TmpStateDescription2 = stateDescription;
+  unsigned long TmpStateDescription3 = stateDescription;
   int XSize = 1;
-  this->ApplySingleXTranslation(TmpStateDescription);      
+  unsigned long TmpSign = this->GetSignAndApplySingleXTranslation(TmpStateDescription);   
   while (stateDescription != TmpStateDescription)
     {
       ++XSize;
-      this->ApplySingleXTranslation(TmpStateDescription);      
+      TmpSign ^= this->GetSignAndApplySingleXTranslation(TmpStateDescription);      
+    }
+  if (TmpSign == 0x0ul)
+    {
+      if (((this->XMomentum * XSize) % this->MaxXMomentum) != 0)
+	return false;
+    }
+  else
+    {
+      if ((((this->XMomentum * XSize) + this->MaxXMomentum) % (2 * this->MaxXMomentum)) != 0)
+	return false;
     }
   int YSize = this->MaxYMomentum;
+  int TmpXSize = 0;
+  TmpStateDescription2 = stateDescription;
+  TmpSign = 0x0ul;
   for (int m = 1; m < YSize; ++m)
     {
-      this->ApplySingleYTranslation(stateDescription); 
+      TmpSign ^= this->GetSignAndApplySingleYTranslation(TmpStateDescription2); 
       TmpStateDescription = TmpStateDescription2;
-      int TmpXSize = 0;
+      TmpXSize = 0;
+      unsigned long TmpSign2 = TmpSign;
       while ((TmpXSize < XSize) && (stateDescription != TmpStateDescription))
 	{	  
 	  ++TmpXSize;
-	  this->ApplySingleXTranslation(TmpStateDescription);      
+	  TmpSign2 ^= this->GetSignAndApplySingleXTranslation(TmpStateDescription);      
 	}
       if (TmpXSize < XSize)
 	{
 	  YSize = m;
+	  TmpSign = TmpSign2;
 	}
-    }
-  
-  unsigned long TmpStateDescription3 = TmpStateDescription2;
-  this->ApplySzSymmetry(TmpStateDescription3);
-  if (TmpStateDescription3 == TmpStateDescription2)
-    {
-      TmpStateDescription = TmpStateDescription2;
-      unsigned long TmpSign = this->GetSignAndApplySzSymmetry(TmpStateDescription) ^ this->SzParity;
-      if (TmpSign != 0x0ul)
-	{
-	  return false;
-	}
-      for (int m = 0; m < XSize; ++m)
-	TmpSign ^= this->GetSignAndApplySingleXTranslation(TmpStateDescription);
-      for (int m = 0; m < YSize; ++m)
-	TmpSign ^= this->GetSignAndApplySingleYTranslation(TmpStateDescription);
-      if ((((2 * this->YMomentum * YSize * this->MaxXMomentum)
-	    + (2 * this->XMomentum * XSize * this->MaxYMomentum)
-	    + (((int) TmpSign) * this->MaxXMomentum * this->MaxYMomentum)) % (2 * this->MaxXMomentum * this->MaxYMomentum)) != 0)
-	return false;
       else
+	{
+	  TmpXSize = -1;
+	}
+    } 
+  if (TmpXSize < 0)
+    {
+      TmpXSize = 0;
+      TmpSign ^= this->GetSignAndApplySingleYTranslation(TmpStateDescription2); 
+    }
+   if (TmpSign == 0x0ul)
+    {
+      if ((((this->YMomentum * YSize * this->MaxXMomentum)
+	    + (this->XMomentum * TmpXSize * this->MaxYMomentum)) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)
+	return false;
+    }
+   else
+     {
+       if (((((this->YMomentum * YSize * this->MaxXMomentum)
+	      + (this->XMomentum * TmpXSize * this->MaxYMomentum)) + (this->MaxXMomentum * this->MaxYMomentum)) % (2 * this->MaxXMomentum * this->MaxYMomentum)) != 0)
+	return false;
+     }
+
+  TmpStateDescription2 = stateDescription;
+  TmpSign = this->GetSignAndApplySzSymmetry(TmpStateDescription2);
+  if (stateDescription == TmpStateDescription2)
+    {
+      if ((this->SzParity ^ TmpSign) == 0x0ul)
 	return true;
+      else
+	return false;
     }
 
   int XSize2 = 1;
   TmpStateDescription = TmpStateDescription2;
-  this->ApplySingleXTranslation(TmpStateDescription);      
-  while ((TmpStateDescription3 != TmpStateDescription) && (TmpStateDescription2 != TmpStateDescription))
+  unsigned long TmpSign2 = TmpSign;
+  TmpSign2 ^= this->GetSignAndApplySingleXTranslation(TmpStateDescription);      
+  while ((stateDescription != TmpStateDescription) && (XSize2 < XSize))
     {
       ++XSize2;
-      this->ApplySingleXTranslation(TmpStateDescription);      
+      TmpSign2 ^= this->GetSignAndApplySingleXTranslation(TmpStateDescription);      
     }  
-  stateDescription = TmpStateDescription2;
-  YSize = this->MaxYMomentum;
-  for (int m = 1; m < YSize; ++m)
+  if (XSize2 < XSize)
     {
-      this->ApplySingleYTranslation(stateDescription); 
+      if ((this->SzParity ^ TmpSign2) != 0x0ul)
+	{
+	  if ((((this->XMomentum * XSize2 * 2 * this->MaxYMomentum) + (this->MaxXMomentum * this->MaxYMomentum)) % (2 * this->MaxXMomentum * this->MaxYMomentum)) != 0)
+	    return false;
+	  else
+	    return true;
+	}
+      else
+	{
+	  if ((((this->XMomentum * XSize2 * this->MaxYMomentum)) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)
+	    return false;
+	  else
+	    return true;  
+	}
+   }
+  int YSize2 = YSize;
+  TmpXSize = 0;
+  TmpStateDescription2 = stateDescription;
+  TmpSign = this->GetSignAndApplySzSymmetry(TmpStateDescription2);
+  for (int m = 1; m < YSize2; ++m)
+    {      
+      TmpSign ^= this->GetSignAndApplySingleYTranslation(TmpStateDescription2); 
       TmpStateDescription = TmpStateDescription2;
-      int TmpXSize = 0;
-      while ((TmpXSize < XSize2) && (stateDescription != TmpStateDescription) && (stateDescription != TmpStateDescription3))
+      TmpXSize = 0; 
+      TmpSign2 = TmpSign;
+      while ((TmpXSize < XSize2) && (stateDescription != TmpStateDescription))
 	{	  
 	  ++TmpXSize;
-	  this->ApplySingleXTranslation(TmpStateDescription);      
+	  TmpSign2 ^= this->GetSignAndApplySingleXTranslation(TmpStateDescription);      
 	}
       if (TmpXSize < XSize2)
 	{
-/* 	  XSize = TmpXSize; */
-	  YSize = m;
+	  YSize2 = m;
+	  TmpSign = TmpSign2;
 	}
-    }
+      else
+	{
+	  TmpXSize = 0;
+	}
+    } 
 
-  TmpStateDescription = TmpStateDescription2;
-  unsigned long TmpSign = 0x0ul;
-  if ((YSize != this->MaxYMomentum) || (XSize2 != XSize))
+  if (YSize == YSize2)
+    return true;
+
+  if ((this->SzParity ^ TmpSign) != 0x0ul)
     {
-      TmpSign = this->GetSignAndApplySzSymmetry(TmpStateDescription) ^ this->SzParity;
+      if ((((this->YMomentum * YSize2 * 2 * this->MaxXMomentum)
+	    + (this->XMomentum * TmpXSize * 2 * this->MaxYMomentum) + (this->MaxXMomentum * this->MaxYMomentum)) % (2 * this->MaxXMomentum * this->MaxYMomentum)) != 0)
+	return false;
+      else
+	return true;
     }
-  cout << hex << TmpStateDescription2 << dec << " " << XSize << " " << YSize << " " << TmpSign << endl;
-  for (int m = 0; m < XSize; ++m)
-    TmpSign ^= this->GetSignAndApplySingleXTranslation(TmpStateDescription);
-  for (int m = 0; m < YSize; ++m)
-    TmpSign ^= this->GetSignAndApplySingleYTranslation(TmpStateDescription);
-  if ((((2 * this->YMomentum * YSize * this->MaxXMomentum)
-	+ (2 * this->XMomentum * XSize * this->MaxYMomentum)
-	+ (((int) TmpSign) * this->MaxXMomentum * this->MaxYMomentum)) % (2 * this->MaxXMomentum * this->MaxYMomentum)) != 0)
+  if ((((this->YMomentum * YSize2 * this->MaxXMomentum)
+	+ (this->XMomentum * TmpXSize * this->MaxYMomentum)) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)
     return false;
   else
-    return true;
-/*   unsigned long TmpStateDescription = stateDescription; */
-/*   unsigned long TmpStateDescription2 = stateDescription; */
-/*   int XSize = 1; */
-/*   unsigned long TmpSign = this->GetSignAndApplySingleXTranslation(TmpStateDescription);    */
-/*   unsigned long TmpSign2 = 0x0ul; */
-/*   while (stateDescription != TmpStateDescription) */
-/*     { */
-/*       ++XSize; */
-/*       TmpSign ^= this->GetSignAndApplySingleXTranslation(TmpStateDescription);       */
-/*     } */
-/*   if ((((this->XMomentum * XSize) + ((((int) TmpSign) * this->MaxXMomentum) >> 1)) % this->MaxXMomentum) != 0) */
-/*     return false; */
-/*   int YSize = this->MaxYMomentum; */
-/*   int TmpXSize = 0; */
-/*   TmpSign = 0x0ul; */
-/*   for (int m = 1; m < YSize; ++m) */
-/*     { */
-/*       TmpSign ^= this->GetSignAndApplySingleYTranslation(stateDescription);  */
-/*       TmpSign2 = TmpSign; */
-/*       TmpStateDescription = TmpStateDescription2; */
-/*       TmpXSize = 0; */
-/*       while ((TmpXSize < XSize) && (stateDescription != TmpStateDescription)) */
-/* 	{	   */
-/* 	  ++TmpXSize; */
-/* 	  TmpSign2 ^= this->GetSignAndApplySingleXTranslation(TmpStateDescription);       */
-/* 	} */
-/*       if (TmpXSize < XSize) */
-/* 	{ */
-/* 	  YSize = m; */
-/* 	} */
-/*       else */
-/* 	{ */
-/* 	  TmpXSize = 0; */
-/* 	} */
-/*     }  */
-/*   if (YSize == this->MaxYMomentum) */
-/*     { */
-/*       TmpSign ^= this->GetSignAndApplySingleYTranslation(stateDescription);  */
-/*       TmpSign2 = TmpSign; */
-/*     } */
-/*   if ((((2 * this->YMomentum * YSize * this->MaxXMomentum) */
-/* 	+ (2 * this->XMomentum * TmpXSize * this->MaxYMomentum) */
-/* 	+ (((int) TmpSign2) * this->MaxXMomentum * this->MaxYMomentum)) % (2 * this->MaxXMomentum * this->MaxYMomentum)) != 0) */
-/*     return false; */
-
-/*   unsigned long TmpStateDescription3 = TmpStateDescription2; */
-/*   TmpSign = this->GetSignAndApplySzSymmetry(TmpStateDescription3) ^ this->SzParity; */
-/*   if (TmpStateDescription3 == TmpStateDescription2) */
-/*     { */
-/*       if (TmpSign != 0x0ul) */
-/* 	{ */
-/* 	  return false; */
-/* 	} */
-/*       else */
-/* 	{ */
-/* 	  return true; */
-/* 	} */
-/*     } */
-/*   TmpStateDescription = TmpStateDescription2; */
-/*   TmpSign2 = this->GetSignAndApplySingleXTranslation(TmpStateDescription) ^ TmpSign;    */
-/*   XSize = 1; */
-/*   while ((TmpStateDescription != TmpStateDescription2) && (TmpStateDescription != TmpStateDescription3)) */
-/*     { */
-/*       ++XSize; */
-/*       TmpSign2 ^= this->GetSignAndApplySingleXTranslation(TmpStateDescription);       */
-/*     } */
-/*   cout << "check 1 " << endl; */
-/*   if ((TmpStateDescription == TmpStateDescription3) && ((((2 * this->XMomentum * XSize) + (((int) TmpSign2) * this->MaxXMomentum)) % (2 * this->MaxXMomentum)) != 0)) */
-/*     return false; */
-/*   cout << "check 2" << endl; */
-/*   stateDescription = TmpStateDescription2; */
-/*   TmpXSize = 0; */
-/*   for (int m = 1; m < YSize; ++m) */
-/*     { */
-/*       TmpSign ^= this->GetSignAndApplySingleYTranslation(stateDescription);  */
-/*       TmpSign2 = TmpSign; */
-/*       TmpStateDescription = TmpStateDescription2; */
-/*       TmpXSize = 0; */
-/*       while ((TmpXSize < XSize) && (stateDescription != TmpStateDescription) && (stateDescription != TmpStateDescription3)) */
-/* 	{	   */
-/* 	  ++TmpXSize; */
-/* 	  TmpSign2 ^= this->GetSignAndApplySingleXTranslation(TmpStateDescription);       */
-/* 	} */
-/*       if (TmpXSize < XSize) */
-/* 	{ */
-/* 	  YSize = m; */
-/* 	} */
-/*       else */
-/* 	{ */
-/* 	  TmpXSize = 0; */
-/* 	} */
-/*     }  */
-/*   if (YSize == this->MaxYMomentum) */
-/*     { */
-/*       TmpSign ^= this->GetSignAndApplySingleYTranslation(TmpStateDescription2);  */
-/*       TmpSign2 = TmpSign; */
-/*     } */
-/*   cout << YSize << " " << TmpXSize << " " << TmpSign2 << endl; */
-/*   if ((((2 * this->YMomentum * YSize * this->MaxXMomentum) */
-/* 	+ (2 * this->XMomentum * TmpXSize * this->MaxYMomentum) */
-/* 	+ (((int) TmpSign2) * this->MaxXMomentum * this->MaxYMomentum)) % (2 * this->MaxXMomentum * this->MaxYMomentum)) != 0) */
-/*     return false; */
-/*   cout << "ok " << endl; */
-/*   return true; */
+    return true;  
+  return true;
 }
 
 // find the size of the orbit for a given state
@@ -508,9 +462,10 @@ inline int FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FindOrbi
       this->ApplySingleXTranslation(TmpStateDescription);      
     }
   int YSize = this->MaxYMomentum;
+  TmpStateDescription2 = stateDescription;
   for (int m = 1; m < YSize; ++m)
     {
-      this->ApplySingleYTranslation(stateDescription); 
+      this->ApplySingleYTranslation(TmpStateDescription2); 
       TmpStateDescription = TmpStateDescription2;
       int TmpXSize = 0;
       while ((TmpXSize < XSize) && (stateDescription != TmpStateDescription))
@@ -523,34 +478,41 @@ inline int FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FindOrbi
 	  YSize = m;
 	}
     }
-  
-  unsigned long TmpStateDescription3 = TmpStateDescription2;
-  this->ApplySzSymmetry(TmpStateDescription3);
-  if (TmpStateDescription3 == TmpStateDescription2)
+
+  TmpStateDescription2 = stateDescription;
+  this->ApplySzSymmetry(TmpStateDescription2);
+  if (stateDescription == TmpStateDescription2)
     return (XSize * YSize);  
 
-  XSize = 1;
+  int XSize2 = 1;
   TmpStateDescription = TmpStateDescription2;
   this->ApplySingleXTranslation(TmpStateDescription);      
-  while ((TmpStateDescription3 != TmpStateDescription) && (TmpStateDescription2 != TmpStateDescription))
+  while ((stateDescription != TmpStateDescription) && (XSize2 < XSize))
     {
-      ++XSize;
+      ++XSize2;
       this->ApplySingleXTranslation(TmpStateDescription);      
     }  
-  stateDescription = TmpStateDescription2;
-  for (int m = 1; m < YSize; ++m)
+  if (XSize2 != XSize)
     {
-      this->ApplySingleYTranslation(stateDescription); 
+      return (XSize * YSize);
+    }
+  TmpStateDescription2 = stateDescription;
+  this->ApplySzSymmetry(TmpStateDescription2);
+  int YSize2 = YSize;
+  int TmpXSize;
+  for (int m = 1; m < YSize2; ++m)
+    {
+      this->ApplySingleYTranslation(TmpStateDescription2); 
       TmpStateDescription = TmpStateDescription2;
       int TmpXSize = 0;
-      while ((TmpXSize < XSize) && (stateDescription != TmpStateDescription) && (stateDescription != TmpStateDescription3))
+      while ((TmpXSize < XSize2) && (stateDescription != TmpStateDescription))
 	{	  
 	  ++TmpXSize;
 	  this->ApplySingleXTranslation(TmpStateDescription);      
 	}
-      if (TmpXSize < XSize)
+      if (TmpXSize < XSize2)
 	{
-	  YSize = m;
+	  return (XSize * YSize);
 	}
     }
   return (2 * XSize * YSize);

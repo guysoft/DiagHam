@@ -56,6 +56,15 @@ bool FTIHubbardModelFindSystemInfoFromVectorFileName(char* filename, int& nbrPar
 // try to guess system information from file name
 //
 // filename = vector file name
+// nbrSites = reference to the number sites
+// statistics = reference to flag for fermionic statistics (true for fermion, false for bosons)
+// parity = reference to the particle number parity
+// return value = true if no error occured
+bool FTIHubbardModelFindSystemInfoFromVectorFileName(char* filename, int& nbrSites, bool& statistics, int& parity);
+
+// try to guess system information from file name
+//
+// filename = vector file name
 // nbrParticles = reference to the number of particles 
 // nbrSites = reference to the number sites
 // szValue = reference on the value of the total spin

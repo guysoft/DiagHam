@@ -242,3 +242,40 @@ AbstractHilbertSpace* FermionOnLatticeRealSpaceFixedParity::Clone()
   return new FermionOnLatticeRealSpaceFixedParity(*this);
 }
 
+// evaluate the tensor product of three states and apply a Gutzwiller projection
+//
+// state1 = reference on the first state 
+// space1 = Hilbert space associated to the first space
+// state2 = reference on the second state 
+// space2 = Hilbert space associated to the second space
+// state3 = reference on the third state 
+// space3 = Hilbert space associated to the third space
+
+void FermionOnLatticeRealSpaceFixedParity::TripleTensorProductAndGutzwillerProjection (ComplexVector& state1, FermionOnLatticeRealSpaceFixedParity* space1,
+										       ComplexVector& state2, FermionOnLatticeRealSpaceFixedParity* space2,
+										       ComplexVector& state3, FermionOnLatticeRealSpaceFixedParity* space3)
+{
+  unsigned long TmpMask = (0x1ul  << this->NbrSite) - 0x1ul;
+  for (int i = 0; i < space1->HilbertSpaceDimension; ++i)
+    {
+      for (int j = 0; j < space2->HilbertSpaceDimension; ++j)
+	{
+	  if ((space1->StateDescription[i] & space2->StateDescription[j]) == 0x0ul)
+	    {
+	      for (int k = 0; k < space3->HilbertSpaceDimension; ++k)
+		{
+		  if (((space1->StateDescription[i] | space2->StateDescription[j]) & space3->StateDescription[k]) == 0x0ul)
+		    {		      
+		      if (((space1->StateDescription[i] | space2->StateDescription[j]) | space3->StateDescription[k]) == TmpMask)
+			{		      
+			  cout << (state1[i] * state2[j] * state3[k]) << " : ";
+			  space1->PrintState(cout, i) << " ";
+			  space2->PrintState(cout, j) << " ";
+			  space3->PrintState(cout, k) << endl;
+			}
+		    }
+		}
+	    }
+	}
+    }
+}
