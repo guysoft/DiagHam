@@ -514,36 +514,32 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::GenerateStates
  		  TmpSign |= (this->GetSignAndApplySingleXTranslation(TmpState2) << Index) ^ ((TmpSign & (0x1ul << (Index - 1))) << 1);
 		  ++Index;
 		}
-	      TmpSign |= ((this->GetSignAndApplySingleYTranslation(TmpState) << Index) 
-			  ^ ((TmpSign & (0x1ul << (Index - this->MaxXMomentum))) <<  this->MaxXMomentum));
-	      ++Index;
+	      if (m != (this->MaxYMomentum - 1))
+		{
+		  TmpSign |= ((this->GetSignAndApplySingleYTranslation(TmpState) << Index) 
+			      ^ ((TmpSign & (0x1ul << (Index - this->MaxXMomentum))) <<  this->MaxXMomentum));
+		  ++Index;
+		}
 	    }
 	  TmpState =  this->StateDescription[i];
-	  
-//TmpSign |= (this->GetSignAndApplySzSymmetry(TmpState3) << Index)
-
-
-// 	  for (int m = 0; m < this->MaxYMomentum; ++m)
-// 	    {
-// 	      unsigned long TmpState2 = TmpState;
-// 	      for (int n = 1; n < this->MaxXMomentum; ++n)
-// 		{
-// 		  unsigned long TmpState3 = TmpState2;
-//  		  TmpSign |= (this->GetSignAndApplySzSymmetry(TmpState3) << Index) ^ ((TmpSign & (0x1ul << (Index - 1))) << 1);
-//  		  ++Index;
-// 		  TmpSign |= (this->GetSignAndApplySingleXTranslation(TmpState2) << Index) ^ ((TmpSign & (0x1ul << (Index - 1))) << 1);
-// 		  ++Index;
-// 		}
-// 	      TmpSign |= (this->GetSignAndApplySzSymmetry(TmpState2) << Index) ^ ((TmpSign & (0x1ul << (Index - 1))) << 1);
-// 	      ++Index;
-// 	      TmpSign |= ((this->GetSignAndApplySingleYTranslation(TmpState) << Index) 
-// 			  ^ ((TmpSign & (0x1ul << (Index - (2 * this->MaxXMomentum)))) << (2 * this->MaxXMomentum)));
-// 	      ++Index;
-// 	    }
-
-
-
-
+	  TmpSign |= (this->GetSignAndApplySzSymmetry(TmpState) << Index);
+	  ++Index;
+	  for (int m = 0; m < this->MaxYMomentum; ++m)
+	    {
+	      unsigned long TmpState2 = TmpState;
+	      for (int n = 1; n < this->MaxXMomentum; ++n)
+		{
+		  unsigned long TmpState3 = TmpState2;
+ 		  TmpSign |= (this->GetSignAndApplySingleXTranslation(TmpState2) << Index) ^ ((TmpSign & (0x1ul << (Index - 1))) << 1);
+		  ++Index;
+		}
+	      if (m != (this->MaxXMomentum - 1))
+		{
+		  TmpSign |= ((this->GetSignAndApplySingleYTranslation(TmpState) << Index) 
+			      ^ ((TmpSign & (0x1ul << (Index - this->MaxXMomentum))) <<  this->MaxXMomentum));
+		  ++Index;
+		}
+	    }
 	  ++TmpLargeHilbertSpaceDimension;
 	}
     }
@@ -561,8 +557,6 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::GenerateStates
 	--CurrentMaxMomentum;
       this->StateHighestBit[i] = CurrentMaxMomentum;
     }
-//   for (long i = 0; i < TmpLargeHilbertSpaceDimension; ++i)
-//     this->PrintState(cout, i) <<  " : " << this->NbrStateInOrbit[i] << endl;
   return TmpLargeHilbertSpaceDimension;
 }
 

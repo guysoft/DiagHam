@@ -8,6 +8,8 @@
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
 
 
 #include "Hamiltonian/ParticleOnLatticeWithSpinRealSpaceHamiltonian.h"
@@ -447,6 +449,7 @@ int main(int argc, char** argv)
       MinParity = (1 - Manager.GetInteger("sz-parity")) / 2;
       MaxParity = MinParity;
     }
+  // disable
   SzSymmetryFlag = false;
 
   char* CommentLine = new char [256];
@@ -647,8 +650,9 @@ int main(int argc, char** argv)
 					}
 				      else
 					{
-					  cout <<  "FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd2DTranslation is not implemented" << endl;
-					  return 0;
+					  Space = new FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, 
+																	  (parity == 1), i, NbrSitesX, j, 
+																	  NbrSitesY, 10000000);
 					}
 				    }
 				}
@@ -673,8 +677,8 @@ int main(int argc, char** argv)
 					}
 				      else
 					{
-					  cout <<  "FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd2DTranslation is not implemented" << endl;
-					  return 0;
+					  Space = new FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, NbrSites, (parity == 1), 
+																	  i, NbrSitesX, j, NbrSitesY);
 					}
 				    }
 				}

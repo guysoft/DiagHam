@@ -174,11 +174,8 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation : public Fermi
 inline int FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient, 
 											     int& nbrTranslationX, int& nbrTranslationY)
 {
-//  double AdditionalSign;
   int NbrSzSymmetry;
-//  cout << "in  : " << hex << state << endl;
-  state = this->FindCanonicalForm(state, nbrTranslationX, nbrTranslationY, NbrSzSymmetry); //AdditionalSign);
-//  cout << "out : " << hex << state << endl;
+  state = this->FindCanonicalForm(state, nbrTranslationX, nbrTranslationY, NbrSzSymmetry);
   int TmpMaxMomentum = 2 * this->NbrSite + 1;
   while ((state >> TmpMaxMomentum) == 0x0ul)
     --TmpMaxMomentum;
@@ -188,8 +185,8 @@ inline int FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::Symmetri
       coefficient *= this->RescalingFactors[this->ProdATemporaryNbrStateInOrbit][this->NbrStateInOrbit[TmpIndex]];
       nbrTranslationX = (this->MaxXMomentum - nbrTranslationX) % this->MaxXMomentum;
       nbrTranslationY = (this->MaxYMomentum - nbrTranslationY) % this->MaxYMomentum;
-      coefficient *= 1.0 - (2.0 * ((double) (((this->ReorderingSign[TmpIndex] >> ((((nbrTranslationY * this->MaxXMomentum) + nbrTranslationX) * 2) + NbrSzSymmetry)) & 0x1u))));  
-//      cout << nbrTranslationX << " " << nbrTranslationY << " " << NbrSzSymmetry << " " << coefficient << endl;
+      coefficient *= 1.0 - (2.0 * ((double) (((this->ReorderingSign[TmpIndex] >> (((nbrTranslationY * this->MaxXMomentum) + nbrTranslationX) 
+										  + (NbrSzSymmetry * this->MaxXMomentum * this->MaxYMomentum))) & 0x1u))));  
       if (NbrSzSymmetry == 1) 
 	coefficient *= this->SzParitySign;  
     }
