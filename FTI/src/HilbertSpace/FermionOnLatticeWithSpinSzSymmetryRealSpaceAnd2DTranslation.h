@@ -322,7 +322,6 @@ inline bool FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::TestMom
   int YSize = this->MaxYMomentum;
   int TmpXSize = 0;
   TmpStateDescription2 = stateDescription;
-  TmpSign = 0x0ul;
   for (int m = 1; m < YSize; ++m)
     {
       TmpSign ^= this->GetSignAndApplySingleYTranslation(TmpStateDescription2); 
