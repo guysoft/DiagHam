@@ -83,7 +83,7 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong : public FermionOnTo
   int NbrYMomentumBlocks;
 
   // parity of the number of fermions, 0x1ul if even, 0x0ul if odd
-  unsigned long NbrFermionsParity;
+  ULONGLONG NbrFermionsParity;
 
  protected:
     

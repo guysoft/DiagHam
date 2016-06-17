@@ -172,7 +172,7 @@ int main(int argc, char** argv)
   double MaxError = 0.0;
   if (Manager.GetInteger("momentum-column") < 0)
     {
-      File << "# 2Sz Energy deg." << endl;
+      File << "# 2S Energy deg." << endl;
       for (int i = 0; i < (NbrSzSectors - 1); ++i)
 	{
 	  bool* TmpFlags = new bool[SpectrumSize[i]];
@@ -218,7 +218,7 @@ int main(int argc, char** argv)
     }
   else
     {
-      File << "# 2Sz K Energy deg." << endl;
+      File << "# 2S K Energy deg." << endl;
       for (int i = 0; i < (NbrSzSectors - 1); ++i)
 	{
 	  bool* TmpFlags = new bool[SpectrumSize[i]];

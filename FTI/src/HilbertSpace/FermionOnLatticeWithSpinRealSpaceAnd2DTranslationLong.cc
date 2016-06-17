@@ -146,7 +146,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong::FermionOnLatticeWithSpinR
     }
   this->ComplementaryYMomentumFullMask = ~this->YMomentumFullMask; 
 
-  this->NbrFermionsParity = (~((unsigned long) this->NbrFermions)) & 0x1ul;
+  this->NbrFermionsParity = (ULONGLONG) ((~((unsigned long) this->NbrFermions)) & 0x1ul);
 
 
   this->MaximumSignLookUp = 16;
@@ -247,7 +247,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong::FermionOnLatticeWithSpinR
     }
   this->ComplementaryYMomentumFullMask = ~this->YMomentumFullMask; 
 
-  this->NbrFermionsParity = (~((unsigned long) this->NbrFermions)) & ((ULONGLONG) 0x1ul);
+  this->NbrFermionsParity = (ULONGLONG) ((~((unsigned long) this->NbrFermions)) & 0x1ul);
   this->TargetSpace = this;
 
   this->MaximumSignLookUp = 16;
@@ -308,6 +308,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong::FermionOnLatticeWithSpinR
   this->TotalSpin = fermions.TotalSpin;
   this->SzFlag = fermions.SzFlag;
   this->NbrSite = fermions.NbrSite;
+  this->NbrFermionsParity = fermions.NbrFermionsParity;
 
   this->NbrSitePerUnitCell = fermions.NbrSitePerUnitCell;
   this->MaxXMomentum = fermions.MaxXMomentum;
@@ -405,6 +406,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong& FermionOnLatticeWithSpinR
   this->TotalSpin = fermions.TotalSpin;
   this->SzFlag = fermions.SzFlag;
   this->NbrSite = fermions.NbrSite;
+  this->NbrFermionsParity = fermions.NbrFermionsParity;
 
   this->NbrSitePerUnitCell = fermions.NbrSitePerUnitCell;
   this->MaxXMomentum = fermions.MaxXMomentum;

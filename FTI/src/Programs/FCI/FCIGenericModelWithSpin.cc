@@ -225,45 +225,37 @@ int main(int argc, char** argv)
          if ( Manager.GetBoolean("no-translation") == false)
 	   {
 	     if ( Manager.GetBoolean ("gutzwiller") == false)
-	     {
-	       if (TiltedFlag == false)
-		  sprintf (FilePrefix, "%s_realspace_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
-	       else
-		  sprintf (FilePrefix, "%s_realspace_checkerboardlatticetiltedwithspin_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+	       {
+		 if (TiltedFlag == false)
+		   sprintf (FilePrefix, "%s_realspace_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+		 else
+		   sprintf (FilePrefix, "%s_realspace_checkerboardlatticetiltedwithspin_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
 		 
-	     }
+	       }
 	     else
-	     {
-	       if (TiltedFlag == false)
-		  sprintf (FilePrefix, "%s_realspace_gutzwiller_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
-	       else
-		  sprintf (FilePrefix, "%s_realspace_gutzwiller_checkerboardlatticetiltedwithspin_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
-	     }
+	       {
+		 if (TiltedFlag == false)
+		   sprintf (FilePrefix, "%s_realspace_gutzwiller_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+		 else
+		   sprintf (FilePrefix, "%s_realspace_gutzwiller_checkerboardlatticetiltedwithspin_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+	       }
 	   }
 	 else
 	   {
 	     if ( Manager.GetBoolean ("gutzwiller") == false)
-	       if (Manager.GetBoolean ("szsymmetrized-basis") == false)
 	       {
 		 if (TiltedFlag == false)
-		    sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+		   sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 		 else
 		   sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlatticetiltedwithspin_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
 	       }
-	       else
+	     else
 	       {
 		 if (TiltedFlag == false)
-		    sprintf (FilePrefix, "%s_realspace_notranslation_szsymmetrized_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+		   sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 		 else
-		   sprintf (FilePrefix, "%s_realspace_notranslation_szsymmetrized_checkerboardlatticetiltedwithspin_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+		   sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_checkerboardlatticetiltedwithspin_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
 	       }
-	     else
-	     {
-	       if (TiltedFlag == false)
-		  sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
-	       else
-		  sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_checkerboardlatticetiltedwithspin_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
-	     }
 	   }
 	}
     }
@@ -443,14 +435,14 @@ int main(int argc, char** argv)
     {
       SzSymmetryFlag = true;
       MaxParity = 1;
-    }
-  if (Manager.GetInteger("sz-parity") != 0)
-    {
-      MinParity = (1 - Manager.GetInteger("sz-parity")) / 2;
-      MaxParity = MinParity;
+      if (Manager.GetInteger("sz-parity") != 0)
+	{
+	  MinParity = (1 - Manager.GetInteger("sz-parity")) / 2;
+	  MaxParity = MinParity;
+	}
     }
   // disable
-  SzSymmetryFlag = false;
+//  SzSymmetryFlag = false;
 
   char* CommentLine = new char [256];
   if (Manager.GetBoolean("fixed-sz") == false)
@@ -484,6 +476,7 @@ int main(int argc, char** argv)
       int TmpMaxKy = MaxKy;
       if ((i == 0) && (Manager.GetBoolean("all-points") == false))
 	TmpMaxKy = NbrSitesY / 2;
+      TmpMaxKy = MaxKy;
       for (int j = MinKy; j <= TmpMaxKy; ++j)
 	{
 	  for (int parity = MinParity; parity <= MaxParity; ++parity)

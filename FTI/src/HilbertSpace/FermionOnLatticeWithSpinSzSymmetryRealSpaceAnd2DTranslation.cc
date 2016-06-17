@@ -194,7 +194,6 @@ FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FermionOnLatticeWit
 															  int xMomentum, int maxXMomentum,
 															  int yMomentum, int  maxYMomentum, unsigned long memory)
 {  
-  cout << maxYMomentum << endl;
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->SzFlag = true;
@@ -319,6 +318,7 @@ FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FermionOnLatticeWit
   this->YMomentumBlockMask = fermions.YMomentumBlockMask;  
   this->YMomentumFullMask = fermions.YMomentumFullMask;
   this->ComplementaryYMomentumFullMask = fermions.ComplementaryYMomentumFullMask; 
+  this->NbrFermionsParity = fermions.NbrFermionsParity;
 
   this->NbrFermionStates = fermions.NbrFermionStates;
   this->MaxMomentum = fermions.MaxMomentum;
@@ -410,6 +410,7 @@ FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation& FermionOnLatticeWit
   this->YMomentumBlockMask = fermions.YMomentumBlockMask;  
   this->YMomentumFullMask = fermions.YMomentumFullMask;
   this->ComplementaryYMomentumFullMask = fermions.ComplementaryYMomentumFullMask; 
+  this->NbrFermionsParity = fermions.NbrFermionsParity;
 
   this->NbrFermionStates = fermions.NbrFermionStates;
   this->MaxMomentum = fermions.MaxMomentum;

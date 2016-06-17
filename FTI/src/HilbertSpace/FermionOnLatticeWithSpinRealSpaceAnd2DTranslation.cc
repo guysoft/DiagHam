@@ -309,6 +309,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FermionOnLatticeWithSpinRealS
   this->TotalSpin = fermions.TotalSpin;
   this->SzFlag = fermions.SzFlag;
   this->NbrSite = fermions.NbrSite;
+  this->NbrFermionsParity = fermions.NbrFermionsParity;
 
   this->NbrSitePerUnitCell = fermions.NbrSitePerUnitCell;
   this->MaxXMomentum = fermions.MaxXMomentum;
@@ -406,6 +407,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslation& FermionOnLatticeWithSpinRealS
   this->TotalSpin = fermions.TotalSpin;
   this->SzFlag = fermions.SzFlag;
   this->NbrSite = fermions.NbrSite;
+  this->NbrFermionsParity = fermions.NbrFermionsParity;
 
   this->NbrSitePerUnitCell = fermions.NbrSitePerUnitCell;
   this->MaxXMomentum = fermions.MaxXMomentum;

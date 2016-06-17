@@ -148,6 +148,15 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation : public Fermi
   // return value = orbit size
   virtual int FindOrbitSize(unsigned long stateDescription);
 
+  // find the reordering sign when applying a sequence of discrete symmetries
+  //
+  // stateDescription = unsigned integer describing the state
+  // nbrTranslationX = number of translations to apply  in the x direction
+  // nbrTranslationY = number of translations to apply in the y direction to
+  // nbrSpinFlip = number of full spin flip to apply
+  // return value = reordering sign (0 for +1, 1 for -1)
+  virtual unsigned long FindReorderingSign(unsigned long stateDescription, int nbrTranslationX, int nbrTranslationY, int nbrSzSymmetry);
+
   // Apply the Sz operator to flip all the spins
   //
   // stateDescription = reference on state description
@@ -174,6 +183,7 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation : public Fermi
 inline int FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient, 
 											     int& nbrTranslationX, int& nbrTranslationY)
 {
+  unsigned long TmpState = state;
   int NbrSzSymmetry;
   state = this->FindCanonicalForm(state, nbrTranslationX, nbrTranslationY, NbrSzSymmetry);
   int TmpMaxMomentum = 2 * this->NbrSite + 1;
@@ -183,10 +193,23 @@ inline int FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::Symmetri
   if (TmpIndex < this->HilbertSpaceDimension)
     {
       coefficient *= this->RescalingFactors[this->ProdATemporaryNbrStateInOrbit][this->NbrStateInOrbit[TmpIndex]];
-      nbrTranslationX = (this->MaxXMomentum - nbrTranslationX) % this->MaxXMomentum;
-      nbrTranslationY = (this->MaxYMomentum - nbrTranslationY) % this->MaxYMomentum;
-      coefficient *= 1.0 - (2.0 * ((double) (((this->ReorderingSign[TmpIndex] >> (((nbrTranslationY * this->MaxXMomentum) + nbrTranslationX) 
-										  + (NbrSzSymmetry * this->MaxXMomentum * this->MaxYMomentum))) & 0x1u))));  
+      unsigned long Tmp =  this->FindReorderingSign(TmpState, nbrTranslationX, nbrTranslationY, NbrSzSymmetry);
+      coefficient *= 1.0 - (2.0 * ((double) FindReorderingSign(TmpState, nbrTranslationX, nbrTranslationY, NbrSzSymmetry)));
+/*       int OldnbrTranslationX = nbrTranslationX; */
+/*       int OldnbrTranslationY = nbrTranslationY;       */
+/*       nbrTranslationX = (this->MaxXMomentum - nbrTranslationX) % this->MaxXMomentum;  */
+/*       nbrTranslationY = (this->MaxYMomentum - nbrTranslationY) % this->MaxYMomentum; */
+/*       coefficient *= 1.0 - (2.0 * ((double) (((this->ReorderingSign[TmpIndex] >> (((nbrTranslationY * this->MaxXMomentum) + nbrTranslationX)   */ 
+/* 										  + (NbrSzSymmetry * this->MaxXMomentum * this->MaxYMomentum))) & 0x1u))));  */
+/*       if (((this->ReorderingSign[TmpIndex] >> (((nbrTranslationY * this->MaxXMomentum) + nbrTranslationX)   */
+/* 						   + (NbrSzSymmetry * this->MaxXMomentum * this->MaxYMomentum))) & 0x1u) != Tmp)   */
+/* 	{ */
+/* 	  this->FindReorderingSignVerbose(TmpState, OldnbrTranslationX, OldnbrTranslationY, NbrSzSymmetry); */
+/* 	  cout << ((this->ReorderingSign[TmpIndex] >> (((nbrTranslationY * this->MaxXMomentum) + nbrTranslationX)   */
+/* 						       + (NbrSzSymmetry * this->MaxXMomentum * this->MaxYMomentum))) & 0x1u) */
+/* 	       << " " << Tmp << " : " << OldnbrTranslationX << " " << OldnbrTranslationY <<  " " << NbrSzSymmetry << " | " << hex << TmpState << " " << state << " | " << dec; */
+/* 	  this->PrintState(cout, TmpIndex) << endl; */
+/* 	} */
       if (NbrSzSymmetry == 1) 
 	coefficient *= this->SzParitySign;  
     }
@@ -512,6 +535,33 @@ inline int FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FindOrbi
 	}
     }
   return (2 * XSize * YSize);
+}
+
+// find the reordering sign when applying a sequence of discrete symmetries
+//
+// stateDescription = unsigned integer describing the state
+// nbrTranslationX = number of translations to apply  in the x direction
+// nbrTranslationY = number of translations to apply in the y direction to
+// nbrSpinFlip = number of full spin flip to apply
+// return value = reordering sign (0 for +1, 1 for -1)
+
+inline unsigned long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FindReorderingSign(unsigned long stateDescription, int nbrTranslationX, int nbrTranslationY,
+												     int nbrSzSymmetry)
+{
+  unsigned long TmpSign = 0x0ul;
+  if (nbrSzSymmetry == 1)
+    {
+      TmpSign ^= this->GetSignAndApplySzSymmetry(stateDescription);
+    }
+  for (int m = 0; m < nbrTranslationY; ++m)
+    {
+      TmpSign ^=  this->GetSignAndApplySingleYTranslation(stateDescription); 
+    }
+  for (int n = 0; n < nbrTranslationX; ++n)
+    {
+      TmpSign ^=  this->GetSignAndApplySingleXTranslation(stateDescription); 
+    }
+  return TmpSign;
 }
 
 // Apply the Sz operator to flip all the spins
