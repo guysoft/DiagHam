@@ -183,7 +183,6 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation : public Fermi
 inline int FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient, 
 											     int& nbrTranslationX, int& nbrTranslationY)
 {
-  unsigned long TmpState = state;
   int NbrSzSymmetry;
   state = this->FindCanonicalForm(state, nbrTranslationX, nbrTranslationY, NbrSzSymmetry);
   int TmpMaxMomentum = 2 * this->NbrSite + 1;
@@ -193,23 +192,7 @@ inline int FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::Symmetri
   if (TmpIndex < this->HilbertSpaceDimension)
     {
       coefficient *= this->RescalingFactors[this->ProdATemporaryNbrStateInOrbit][this->NbrStateInOrbit[TmpIndex]];
-      unsigned long Tmp =  this->FindReorderingSign(TmpState, nbrTranslationX, nbrTranslationY, NbrSzSymmetry);
-      coefficient *= 1.0 - (2.0 * ((double) FindReorderingSign(TmpState, nbrTranslationX, nbrTranslationY, NbrSzSymmetry)));
-/*       int OldnbrTranslationX = nbrTranslationX; */
-/*       int OldnbrTranslationY = nbrTranslationY;       */
-/*       nbrTranslationX = (this->MaxXMomentum - nbrTranslationX) % this->MaxXMomentum;  */
-/*       nbrTranslationY = (this->MaxYMomentum - nbrTranslationY) % this->MaxYMomentum; */
-/*       coefficient *= 1.0 - (2.0 * ((double) (((this->ReorderingSign[TmpIndex] >> (((nbrTranslationY * this->MaxXMomentum) + nbrTranslationX)   */ 
-/* 										  + (NbrSzSymmetry * this->MaxXMomentum * this->MaxYMomentum))) & 0x1u))));  */
-/*       if (((this->ReorderingSign[TmpIndex] >> (((nbrTranslationY * this->MaxXMomentum) + nbrTranslationX)   */
-/* 						   + (NbrSzSymmetry * this->MaxXMomentum * this->MaxYMomentum))) & 0x1u) != Tmp)   */
-/* 	{ */
-/* 	  this->FindReorderingSignVerbose(TmpState, OldnbrTranslationX, OldnbrTranslationY, NbrSzSymmetry); */
-/* 	  cout << ((this->ReorderingSign[TmpIndex] >> (((nbrTranslationY * this->MaxXMomentum) + nbrTranslationX)   */
-/* 						       + (NbrSzSymmetry * this->MaxXMomentum * this->MaxYMomentum))) & 0x1u) */
-/* 	       << " " << Tmp << " : " << OldnbrTranslationX << " " << OldnbrTranslationY <<  " " << NbrSzSymmetry << " | " << hex << TmpState << " " << state << " | " << dec; */
-/* 	  this->PrintState(cout, TmpIndex) << endl; */
-/* 	} */
+      coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> ((((nbrTranslationY * this->MaxXMomentum) + nbrTranslationX) * 2) + NbrSzSymmetry)) & 0x1u)));
       if (NbrSzSymmetry == 1) 
 	coefficient *= this->SzParitySign;  
     }

@@ -502,43 +502,28 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::GenerateStates
 	  TmpStateDescription[TmpLargeHilbertSpaceDimension] = this->StateDescription[i];
 	  this->NbrStateInOrbit[TmpLargeHilbertSpaceDimension] = this->FindOrbitSize(this->StateDescription[i]);
 	  unsigned long& TmpSign = this->ReorderingSign[TmpLargeHilbertSpaceDimension];
-	  TmpSign = 0x0ul;	  
-	  int Index = 1;
-	  int TmpIndexShift = this->MaxXMomentum * this->MaxYMomentum;
-	  unsigned long TmpState =  this->StateDescription[i];
+	  TmpSign = 0x0ul;
+	  int Index = 0;
 	  for (int m = 0; m < this->MaxYMomentum; ++m)
 	    {
-	      unsigned long TmpState2 = TmpState;
-	      for (int n = 1; n < this->MaxXMomentum; ++n)
+	      int TmpNbrTranslationY = (this->MaxYMomentum - m) % this->MaxYMomentum;
+	      for (int n = 0; n < this->MaxXMomentum; ++n)
 		{
-		  unsigned long TmpState3 = TmpState2;
- 		  TmpSign |= (this->GetSignAndApplySingleXTranslation(TmpState2) << Index) ^ ((TmpSign & (0x1ul << (Index - 1))) << 1);
+		  unsigned long TmpState =  this->StateDescription[i];
+		  int TmpNbrTranslationX = (this->MaxXMomentum - n) % this->MaxXMomentum;
+		  for (int n2 = 0; n2 < TmpNbrTranslationX; ++n2)
+		    {
+		      this->ApplySingleXTranslation(TmpState); 
+		    }
+		  for (int m2 = 0; m2 < TmpNbrTranslationY; ++m2)
+		    {
+		      this->ApplySingleYTranslation(TmpState); 
+		    }		  
+		  TmpSign |=  this->FindReorderingSign(TmpState, n, m, 0) << Index;
 		  ++Index;
-		}
-	      if (m != (this->MaxYMomentum - 1))
-		{
-		  TmpSign |= ((this->GetSignAndApplySingleYTranslation(TmpState) << Index) 
-			      ^ ((TmpSign & (0x1ul << (Index - this->MaxXMomentum))) <<  this->MaxXMomentum));
-		  ++Index;
-		}
-	    }
-	  TmpState =  this->StateDescription[i];
-	  TmpSign |= (this->GetSignAndApplySzSymmetry(TmpState) << Index);
-	  ++Index;
-	  for (int m = 0; m < this->MaxYMomentum; ++m)
-	    {
-	      unsigned long TmpState2 = TmpState;
-	      for (int n = 1; n < this->MaxXMomentum; ++n)
-		{
-		  unsigned long TmpState3 = TmpState2;
- 		  TmpSign |= (this->GetSignAndApplySingleXTranslation(TmpState2) << Index) ^ ((TmpSign & (0x1ul << (Index - 1))) << 1);
-		  ++Index;
-		}
-	      if (m != (this->MaxXMomentum - 1))
-		{
-		  TmpSign |= ((this->GetSignAndApplySingleYTranslation(TmpState) << Index) 
-			      ^ ((TmpSign & (0x1ul << (Index - this->MaxXMomentum))) <<  this->MaxXMomentum));
-		  ++Index;
+		  this->ApplySzSymmetry(TmpState);
+		  TmpSign |=  this->FindReorderingSign(TmpState, n, m, 1) << Index;
+		  ++Index;		  
 		}
 	    }
 	  ++TmpLargeHilbertSpaceDimension;
