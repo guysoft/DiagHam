@@ -112,14 +112,16 @@ class QuasiholeOnSphereWithSpinAndPairing :  public ParticleOnSphereWithSpin
 
   // basic constructor
   // 
+  // kExclusionPrinciple = k value of the exclusion principle
+  // rExclusionPrinciple = r value of the exclusion principle
   // totalLz = twice the momentum total value
   // lzMax = twice the maximum Lz value reached by a fermion
   // totalSpin = twice the total spin value
   // directory = optional path to data files
   // filePrefix = prefix for all input file (should include everything related to the statistics and the geometry)
-  // memory = amount of memory granted for precalculations
+  // discardPairing = if true, do not load the matrix element required to compute the pairing term
   QuasiholeOnSphereWithSpinAndPairing (int kExclusionPrinciple, int rExclusionPrinciple, int totalLz, int lzMax, int totalSpin, 
-				       const char* directory, const char* filePrefix, unsigned long memory = 10000000);
+				       const char* directory, const char* filePrefix, bool discardPairing = false);
 
   // copy constructor (without duplicating datas)
   //

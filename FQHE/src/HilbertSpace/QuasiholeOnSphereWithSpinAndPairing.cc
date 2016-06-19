@@ -67,15 +67,17 @@ QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing()
 
 // basic constructor
 // 
+// kExclusionPrinciple = k value of the exclusion principle
+// rExclusionPrinciple = r value of the exclusion principle
 // totalLz = twice the momentum total value
 // lzMax = twice the maximum Lz value reached by a fermion
 // totalSpin = twice the total spin value
 // directory = optional path to data files
 // filePrefix = prefix for all input file (should include everything related to the statistics and the geometry)
-// memory = amount of memory granted for precalculations
+// discardPairing = if true, do not load the matrix element required to compute the pairing term
 
 QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing (int kValue, int rValue, int totalLz, int lzMax, int totalSpin, 
-									  const char* directory, const char* filePrefix, unsigned long memory)
+									  const char* directory, const char* filePrefix, bool discardPairing)
 {
   this->NbrFermions = 0;
   this->TotalLz = totalLz;
@@ -234,31 +236,29 @@ QuasiholeOnSphereWithSpinAndPairing::QuasiholeOnSphereWithSpinAndPairing (int kV
 		{
 		  int ShiftedOperatorLzValue = (OperatorLzValue + this->LzMax) / 2;
 		  int TmpLeftNbrParticles = TmpRightNbrParticles - 1;
-		  if (TmpLeftNbrParticles >= 0)
-		  {
-		    int MaxLeftTotalLz = this->GetMaximalLzSingleLayer(TmpLeftNbrParticles);
-		    int TmpLeftLz = TmpRightLz - OperatorLzValue;
-		    if ((TmpLeftLz >= -MaxLeftTotalLz) && (TmpLeftLz <= MaxLeftTotalLz))
-		      {
-			if (directory != 0)
-			  {
-			    sprintf (TmpFileName, "%s/%s_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", directory, filePrefix, this->KValue, this->RValue, 
-				   TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
-			  }
-			else
-			  { 
-			    sprintf (TmpFileName, "%s_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", filePrefix, this->KValue, this->RValue, TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
-			  }
-			if (this->SingleLayerAnnihilationMatrices[ShiftedOperatorLzValue][TmpRightNbrParticles][(TmpRightLz + MaxRightTotalLz) / 2].ReadMatrix(TmpFileName) == false)
-			  {
-			    cout << "error, can't read " << TmpFileName << endl;
-			    return;
-			  } 
-		      }
+		  if ((TmpLeftNbrParticles >= 0) && (discardPairing == false))
+		    {
+		      int MaxLeftTotalLz = this->GetMaximalLzSingleLayer(TmpLeftNbrParticles);
+		      int TmpLeftLz = TmpRightLz - OperatorLzValue;
+		      if ((TmpLeftLz >= -MaxLeftTotalLz) && (TmpLeftLz <= MaxLeftTotalLz))
+			{
+			  if (directory != 0)
+			    {
+			      sprintf (TmpFileName, "%s/%s_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", directory, filePrefix, this->KValue, this->RValue, 
+				       TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
+			    }
+			  else
+			    { 
+			      sprintf (TmpFileName, "%s_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", filePrefix, this->KValue, this->RValue, TmpRightNbrParticles, this->LzMax, TmpRightLz, OperatorLzValue);
+			    }
+			  if (this->SingleLayerAnnihilationMatrices[ShiftedOperatorLzValue][TmpRightNbrParticles][(TmpRightLz + MaxRightTotalLz) / 2].ReadMatrix(TmpFileName) == false)
+			    {
+			      cout << "error, can't read " << TmpFileName << endl;
+			      return;
+			    } 
+			}
 		    }
-		  
-		  
-		  	  
+		  		  		  	  
 		  if (directory != 0)
 		    {
 		      sprintf (TmpFileName, "%s/%s_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d.mat", directory, filePrefix, this->KValue, this->RValue, 

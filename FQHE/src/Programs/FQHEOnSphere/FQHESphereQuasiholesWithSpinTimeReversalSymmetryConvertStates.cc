@@ -76,7 +76,7 @@ int main(int argc, char** argv)
 
   if ((Manager.GetString("input-state") == 0) && (Manager.GetString("degenerate-states") == 0))
     {
-      cout << "error, an input file has to be provided. See man page for option syntax or type HubbardApplyGutzwillerProjection -h" << endl;
+      cout << "error, an input file has to be provided. See man page for option syntax or type FQHESphereQuasiholesWithSpinTimeReversalSymmetryDensity -h" << endl;
       return -1;
     }
 
