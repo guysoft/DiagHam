@@ -45,6 +45,16 @@ using std::endl;
 using std::ostream;
 
 
+// default constructor
+//
+
+TwoDimensionalTransverseFieldIsingHamiltonian::TwoDimensionalTransverseFieldIsingHamiltonian()
+{
+  this->HxFactors = 0;
+  this->HzFactors = 0;
+}
+
+
 // constructor from default data
 //
 // chain = pointer to Hilbert space of the associated system
@@ -85,8 +95,10 @@ TwoDimensionalTransverseFieldIsingHamiltonian::TwoDimensionalTransverseFieldIsin
 
 TwoDimensionalTransverseFieldIsingHamiltonian::~TwoDimensionalTransverseFieldIsingHamiltonian() 
 {
-  delete[] this->HxFactors;  
-  delete[] this->HzFactors;  
+  if (this->HxFactors != 0)
+    delete[] this->HxFactors; 
+  if (this->HzFactors != 0)
+    delete[] this->HzFactors;  
 }
 
 // set Hilbert space
