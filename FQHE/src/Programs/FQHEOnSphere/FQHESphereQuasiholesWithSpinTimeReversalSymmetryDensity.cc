@@ -422,7 +422,7 @@ int main(int argc, char** argv)
 	  OccupationMatrixListFile.DumpErrors(cout);
 	  return -1;
 	}
-      LzMax = OccupationMatrixListFile.GetNbrLines() / 2;
+      LzMax = (OccupationMatrixListFile.GetNbrLines() / 2) - 1;
       for (int LayerIndex = 0; LayerIndex <= 1; ++LayerIndex)
 	{
 	  OneBodyMatrixElements[LayerIndex] = new RealSymmetricMatrix[LzMax + 1];
@@ -431,7 +431,6 @@ int main(int argc, char** argv)
 	      RealSymmetricMatrix TmpMatrix;
 	      if (TmpMatrix.ReadMatrix(OccupationMatrixListFile(0, MomentumIndex + (LayerIndex * (LzMax + 1)))) == false)
 		{
-		  cout << "can't read " << OccupationMatrixListFile(0, MomentumIndex + (LayerIndex * (LzMax + 1))) << endl;
 		  return -1;
 		}
 	      RealSymmetricMatrix* TmpMatrix2 = (RealSymmetricMatrix*) TmpMatrix.Conjugate(InputVectors);
