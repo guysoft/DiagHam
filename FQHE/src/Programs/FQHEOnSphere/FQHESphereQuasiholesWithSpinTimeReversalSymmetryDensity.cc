@@ -429,7 +429,7 @@ int main(int argc, char** argv)
 	  for (int MomentumIndex = 0; MomentumIndex <= LzMax; ++MomentumIndex)
 	    {      
 	      RealSymmetricMatrix TmpMatrix;
-	      if (TmpMatrix.WriteMatrix(OccupationMatrixListFile(0, MomentumIndex + (LayerIndex * (LzMax + 1)))) == false)
+	      if (TmpMatrix.ReadMatrix(OccupationMatrixListFile(0, MomentumIndex + (LayerIndex * (LzMax + 1)))) == false)
 		{
 		  cout << "can't read " << OccupationMatrixListFile(0, MomentumIndex + (LayerIndex * (LzMax + 1))) << endl;
 		  return -1;
