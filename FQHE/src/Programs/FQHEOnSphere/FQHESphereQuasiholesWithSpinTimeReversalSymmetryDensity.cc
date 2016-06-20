@@ -453,7 +453,7 @@ int main(int argc, char** argv)
       RealSymmetricMatrix TotalChargeDownLayer (NbrInputStates, true);
       for (int MomentumIndex2 = 0; MomentumIndex2 <= MomentumIndex; ++MomentumIndex2)
 	{      
-	   TotalChargeDownLayer += OneBodyMatrixElements[1][MomentumIndex - MomentumIndex2];
+	   TotalChargeDownLayer += OneBodyMatrixElements[1][LzMax - MomentumIndex2];
 	}
       RealDiagonalMatrix TmpDownEigenvalues(NbrInputStates);
       TotalChargeDownLayer.LapackDiagonalize(TmpDownEigenvalues);
