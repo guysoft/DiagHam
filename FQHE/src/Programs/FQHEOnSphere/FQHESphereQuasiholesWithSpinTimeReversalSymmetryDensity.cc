@@ -444,22 +444,27 @@ int main(int argc, char** argv)
   for (int MomentumIndex = 0; MomentumIndex <= LzMax; ++MomentumIndex)
     {      
       RealSymmetricMatrix TotalChargeUpLayer (NbrInputStates, true);
+      RealSymmetricMatrix TotalCharge (NbrInputStates, true);
       for (int MomentumIndex2 = 0; MomentumIndex2 <= MomentumIndex; ++MomentumIndex2)
 	{      
 	  TotalChargeUpLayer += OneBodyMatrixElements[0][MomentumIndex2];
+	  TotalCharge += OneBodyMatrixElements[0][MomentumIndex2];
 	}
       RealDiagonalMatrix TmpUpEigenvalues(NbrInputStates);
       TotalChargeUpLayer.LapackDiagonalize(TmpUpEigenvalues);
       RealSymmetricMatrix TotalChargeDownLayer (NbrInputStates, true);
       for (int MomentumIndex2 = 0; MomentumIndex2 <= MomentumIndex; ++MomentumIndex2)
 	{      
-	   TotalChargeDownLayer += OneBodyMatrixElements[1][LzMax - MomentumIndex2];
+	  TotalChargeDownLayer += OneBodyMatrixElements[1][LzMax - MomentumIndex2];
+	  TotalCharge += OneBodyMatrixElements[1][LzMax - MomentumIndex2];
 	}
       RealDiagonalMatrix TmpDownEigenvalues(NbrInputStates);
       TotalChargeDownLayer.LapackDiagonalize(TmpDownEigenvalues);
+      RealDiagonalMatrix TmpEigenvalues(NbrInputStates);
+      TotalCharge.LapackDiagonalize(TmpEigenvalues);
       cout << MomentumIndex;
       for (int i = 0; i < NbrInputStates; ++i)
-	cout << " " << TmpUpEigenvalues[i] << " " << TmpDownEigenvalues[i];
+	cout << " " << TmpUpEigenvalues[i] << " " << TmpDownEigenvalues[i] << " " << TmpEigenvalues[i];
       cout << endl;
     }
 
