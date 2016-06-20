@@ -48,6 +48,14 @@ using std::min;
 using std::max;
 
 
+
+// default constructor
+//
+
+TwoDimensionalKagomeLatticeHamiltonian::TwoDimensionalKagomeLatticeHamiltonian()
+{
+}
+
 // constructor from default data
 //
 // chain = pointer to Hilbert space of the associated system
@@ -71,7 +79,6 @@ TwoDimensionalKagomeLatticeHamiltonian::TwoDimensionalKagomeLatticeHamiltonian (
   this->JDownEasyPlaneFactor = jDownEasyPlaneFactor;
   
   this->HermitianSymmetryFlag = true;
-  this->HermitianSymmetryFlag = false;
   
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateDiagonalMatrixElements();
@@ -82,6 +89,46 @@ TwoDimensionalKagomeLatticeHamiltonian::TwoDimensionalKagomeLatticeHamiltonian (
 
 TwoDimensionalKagomeLatticeHamiltonian::~TwoDimensionalKagomeLatticeHamiltonian() 
 {
+}
+
+// set Hilbert space
+//
+// hilbertSpace = pointer to Hilbert space to use
+
+void TwoDimensionalKagomeLatticeHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+{
+  delete[] this->SzSzContributions;
+  this->Chain = (AbstractSpinChain*) hilbertSpace;
+  this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
+  this->EvaluateDiagonalMatrixElements();
+}
+
+// get Hilbert space on which Hamiltonian acts
+//
+// return value = pointer to used Hilbert space
+
+AbstractHilbertSpace* TwoDimensionalKagomeLatticeHamiltonian::GetHilbertSpace ()
+{
+  return this->Chain;
+}
+
+// return dimension of Hilbert space where Hamiltonian acts
+//
+// return value = corresponding matrix elementdimension
+
+int TwoDimensionalKagomeLatticeHamiltonian::GetHilbertSpaceDimension ()
+{
+  return this->Chain->GetHilbertSpaceDimension();
+}
+
+// shift Hamiltonian from a given energy
+//
+// shift = shift value
+
+void TwoDimensionalKagomeLatticeHamiltonian::ShiftHamiltonian (double shift)
+{
+  for (int i = 0; i < this->Chain->GetHilbertSpaceDimension(); i ++)
+    this->SzSzContributions[i] += shift;
 }
   
 // multiply a vector by the current hamiltonian for a given range of indices 

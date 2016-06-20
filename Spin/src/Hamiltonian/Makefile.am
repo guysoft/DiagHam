@@ -48,4 +48,5 @@ TwoDimensionalTransverseFieldAnd2DTranslationIsingHamiltonian.cc \
 SpinChainRealHamiltonianWithTranslations.cc \
 SpinChainAKLTRealHamiltonianWithTranslations.cc \
 TwoDimensionalTriangularLatticeWithPseudospinHamiltonian.cc \
-TwoDimensionalKagomeLatticeHamiltonian.cc
+TwoDimensionalKagomeLatticeHamiltonian.cc \
+TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian.cc

@@ -29,13 +29,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef TWODIMENSIONALKAGOMELATTICEHAMILTONIAN_H
-#define TWODIMENSIONALKAGOMELATTICEHAMILTONIAN_H
+#ifndef TWODIMENSIONALKAGOMELATTICEAND2DTRANSLATIONHAMILTONIAN_H
+#define TWODIMENSIONALKAGOMELATTICEAND2DTRANSLATIONHAMILTONIAN_H
 
 
 #include "config.h"
 #include "HilbertSpace/AbstractSpinChain.h"
-#include "Hamiltonian/TwoDimensionalTransverseFieldIsingHamiltonian.h"
+#include "Hamiltonian/TwoDimensionalKagomeLatticeHamiltonian.h"
 
 
 #include <iostream>
@@ -45,27 +45,20 @@ using std::ostream;
 class MathematicaOutput;
 
 
-class TwoDimensionalKagomeLatticeHamiltonian : public TwoDimensionalTransverseFieldIsingHamiltonian
+class TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian : public TwoDimensionalKagomeLatticeHamiltonian
 {
 
  protected:
-  
-  // amplitude of the SzSz term for downward triangles
-  double JDownFactor;
-  // amplitude of the SxSx + SySy term
-  double JEasyPlaneFactor;
-  // amplitude of the SxSx + SySy term
-  double JDownEasyPlaneFactor;
-  
-   // flag for implementation of hermitian symmetry
-  bool HermitianSymmetryFlag;
+  // momentum along the x direction
+  int XMomentum;
+  // momentum along the y direction
+  int YMomentum;
+
+  //array containing all the phase factors that are needed when computing matrix elements
+  Complex** ExponentialFactors;
   
  public:
 
-   // default constructor
-   //
-   TwoDimensionalKagomeLatticeHamiltonian();
-   
   // constructor from default data
   //
   // chain = pointer to Hilbert space of the associated system
@@ -75,11 +68,11 @@ class TwoDimensionalKagomeLatticeHamiltonian : public TwoDimensionalTransverseFi
   // hxFactor = amplitudes of the Zeeman term along x
   // hzFactor = amplitudes of the Zeeman term along z
   // periodicBoundaryConditions = true if periodic boundary conditions have to be used
-  TwoDimensionalKagomeLatticeHamiltonian(AbstractSpinChain* chain, int nbrSpinX, int nbrSpinY, double jFactor, double jDownFactor, double jEasyPlaneFactor, double jDownEasyPlaneFactor, bool periodicBoundaryConditions = true);
+  TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian (AbstractSpinChain* chain, int xMomentum, int nbrSpinX, int yMomentum, int nbrSpinY, double jFactor, double jDownFactor, double jEasyPlaneFactor, double jDownEasyPlaneFactor);
 
   // destructor
   //
-  ~TwoDimensionalKagomeLatticeHamiltonian();
+  ~TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian();
 
   // clone hamiltonian without duplicating datas
   //
@@ -114,7 +107,7 @@ class TwoDimensionalKagomeLatticeHamiltonian : public TwoDimensionalTransverseFi
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 					  int firstComponent, int nbrComponent);
   
   // multiply a vector by the current hamiltonian for a given range of indices 
@@ -125,7 +118,7 @@ class TwoDimensionalKagomeLatticeHamiltonian : public TwoDimensionalTransverseFi
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual RealVector& HermitianLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+  virtual ComplexVector& HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 					  int firstComponent, int nbrComponent);
 
   // multiply a set of vectors by the current hamiltonian for a given range of indices 
@@ -137,7 +130,7 @@ class TwoDimensionalKagomeLatticeHamiltonian : public TwoDimensionalTransverseFi
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-  virtual RealVector* LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+  virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 						  int firstComponent, int nbrComponent);
   
   // multiply a set of vectors by the current hamiltonian for a given range of indices 
@@ -149,10 +142,10 @@ class TwoDimensionalKagomeLatticeHamiltonian : public TwoDimensionalTransverseFi
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-  virtual RealVector* HermitianLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+  virtual ComplexVector* HermitianLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 						  int firstComponent, int nbrComponent);
 
-     // ask if Hamiltonian implements hermitian symmetry operations
+  // ask if Hamiltonian implements hermitian symmetry operations
   //
   virtual bool IsHermitian();
   
@@ -161,30 +154,14 @@ class TwoDimensionalKagomeLatticeHamiltonian : public TwoDimensionalTransverseFi
   // evaluate all matrix elements
   //   
   void EvaluateDiagonalMatrixElements();
+  
+  // evaluate all exponential factors
+  //   
+  virtual void EvaluateExponentialFactors();
 
-  // get a linearized position index from the 2d coordinates
-  //
-  // xPosition = position along the x direction
-  // yPosition = position along the y direction
-  // atomicIndex = position in the unit cell
-  // return value = linearized index
-  virtual int GetLinearizedIndex(int xPosition, int yPosition, int atomicIndex);
+  
+
 
 };
-
-// get a linearized position index from the 2d coordinates
-//
-// xPosition = position along the x direction
-// yPosition = position along the y direction
-// return value = linearized index
-
-inline int TwoDimensionalKagomeLatticeHamiltonian::GetLinearizedIndex(int xPosition, int yPosition, int atomicIndex)
-{
-  if (xPosition < 0)
-    xPosition += this->NbrSpinX;
-  if (yPosition < 0)
-    yPosition += this->NbrSpinY;
-  return (3 * ((xPosition * this->NbrSpinY) + yPosition) + atomicIndex);
-}
 
 #endif
