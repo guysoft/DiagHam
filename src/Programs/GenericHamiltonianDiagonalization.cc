@@ -80,6 +80,7 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "use-scalapack", "use SCALAPACK libraries instead of DiagHam or LAPACK libraries");
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
+  (*ToolsGroup) += new BooleanOption  ('\n', "friendlyshow-hamiltonian", "show matrix representation of the hamiltonian, displaying only non-zero matrix elements");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -194,32 +195,32 @@ int main(int argc, char** argv)
 	      HRepReal *= TmpWeigths[0];
 	      double* TmpPhases = 0;
 	      if (HamiltonianFile.GetNbrColumns() > 2)
-	      {
+		{
 		  TmpPhases = HamiltonianFile.GetAsDoubleArray(2);
 		  HRep = HermitianMatrix (HRepReal, TmpPhases[0]);		  
 		  ComplexFlag = true;
-	      }
+		}
 	      for (int i = 1; i < HamiltonianFile.GetNbrLines(); ++i)
 		{
-		   RealSymmetricMatrix TmpH;
-		   if (TmpH.ReadMatrix(HamiltonianFile(0, i)) == false)
-		     {
-		       cout << "can't read " << HamiltonianFile(0, i) << endl;
-		       return -1;
-		     }
-		   if (TmpH.GetNbrRow() != HRepReal.GetNbrRow())
-		     {
-		       cout << "error, " << HamiltonianFile(0, i) << " and " << HamiltonianFile(0, 0) 
-			    << " do not have the same size" << endl;
-		     }
-		   TmpH *= TmpWeigths[i];
-		   if (TmpPhases == 0)
-		     HRepReal += TmpH;
-		   else
-		   {
-		     HermitianMatrix TmpHermitianH (TmpH, TmpPhases[i]);
-		     HRep += TmpHermitianH;
-		   }
+		  RealSymmetricMatrix TmpH;
+		  if (TmpH.ReadMatrix(HamiltonianFile(0, i)) == false)
+		    {
+		      cout << "can't read " << HamiltonianFile(0, i) << endl;
+		      return -1;
+		    }
+		  if (TmpH.GetNbrRow() != HRepReal.GetNbrRow())
+		    {
+		      cout << "error, " << HamiltonianFile(0, i) << " and " << HamiltonianFile(0, 0) 
+			   << " do not have the same size" << endl;
+		    }
+		  TmpH *= TmpWeigths[i];
+		  if (TmpPhases == 0)
+		    HRepReal += TmpH;
+		  else
+		    {
+		      HermitianMatrix TmpHermitianH (TmpH, TmpPhases[i]);
+		      HRep += TmpHermitianH;
+		    }
 		}
 	    }
 	  if (Manager.GetDouble("rescaling-factor") != 1.0)
