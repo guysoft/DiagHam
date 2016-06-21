@@ -127,6 +127,8 @@ class GenericComplexMainTask: public AbstractMainTask
   bool ShowHamiltonian;
   // show the hamiltonian in a friendly way, showing only non-zero matrix elements
   bool FriendlyShowHamiltonian;
+  // when showing the hamiltonian in a friendly way, error below which a matrix is considered to be equal to zero
+  double FriendlyShowHamiltonianError;  
   // define Lanczos precision for eigenvalues (0 if automatically defined by the program)
   double LanczosPrecision;
   // use disk storage to increase speed of ground state calculation and decrease memory footprint when using Lanczos algorithm to get the ground state

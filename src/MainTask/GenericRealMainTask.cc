@@ -237,6 +237,37 @@ GenericRealMainTask::GenericRealMainTask(OptionManager* options, AbstractHilbert
 	  cout << HRep << endl;
 	}
     }  
+  this->FriendlyShowHamiltonian = false;
+  if (((*options)["friendlyshow-hamiltonian"] != 0) && (options->GetBoolean("friendlyshow-hamiltonian") == true))
+    {
+      this->FriendlyShowHamiltonian = true;
+      this->FriendlyShowHamiltonianError = 0.0;
+      if ((*options)["friendlyshowhamiltonian-error"] != 0)
+	{ 
+	  this->FriendlyShowHamiltonianError  = options->GetDouble("friendlyshowhamiltonian-error");
+	}
+      if (this->ReducedHilbertSpaceDescription == 0)
+	{
+	  RealMatrix HRep (this->Space->GetHilbertSpaceDimension(), this->Space->GetHilbertSpaceDimension());
+	  this->Hamiltonian->GetHamiltonian(HRep);
+	  for (int i = 0; i < this->Space->GetHilbertSpaceDimension(); ++i)
+	    {
+	      if (HRep[i].Norm() > this->FriendlyShowHamiltonianError)
+		{
+		  cout << i << " : ";
+		  this->Space->PrintState(cout, i) << endl;
+		  for (int j = 0; j < this->Space->GetHilbertSpaceDimension(); ++j)
+		    {
+		      if (fabs(HRep[i][j]) > this->FriendlyShowHamiltonianError)
+			{
+			  cout << "    " << j << " : ";
+			  this->Space->PrintState(cout, j) << " : " << HRep[i][j] << endl;
+			}
+		    }
+		}
+	    }
+	}
+    }  
   this->ExportBinaryHamiltonian = 0;
   if (((*options)["export-binhamiltonian"] != 0) && (options->GetString("export-binhamiltonian") != 0)) 
     {
