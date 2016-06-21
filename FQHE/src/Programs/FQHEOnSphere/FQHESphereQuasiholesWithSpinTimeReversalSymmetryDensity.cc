@@ -270,9 +270,9 @@ int main(int argc, char** argv)
 	  OneBodyMatrixElements[LayerIndex] = new RealSymmetricMatrix[LzMax + 1];
 	  for (int MomentumIndex = 0; MomentumIndex <= LzMax; ++MomentumIndex)
 	    {      
-	      if (MomentumIndex > 0)
+	      for (int i = 0; i <= LzMax; ++i)
 		{
-		  OneBodyPotentials[MomentumIndex - 1] = 0.0;
+		  OneBodyPotentials[i] = 0.0;
 		}
 	      OneBodyPotentials[MomentumIndex] = 1.0;
 	      AbstractHamiltonian* Hamiltonian = 0;
