@@ -653,7 +653,7 @@ HermitianMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingHamil
 	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX+1, PosY,NumXTranslations,NumYTranslations,translationPhase);
 	     SpatialIndices[TmpPosition][TmpIndex * 2] = -1*NumXTranslations;
 	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] =  -1*NumYTranslations;
-	     HoppingAmplitudes[TmpPosition][TmpIndex] = -1.0;
+	     HoppingAmplitudes[TmpPosition][TmpIndex] = -1.0*  Phase(-this->KxFactor * this->GammaX);
 #ifdef DEBUG_OUTPUT
 	     cout <<TmpPosition<< " " << OrbitalIndices[TmpPosition][TmpIndex]<< " " << SpatialIndices[TmpPosition][TmpIndex * 2]<< " " <<SpatialIndices[TmpPosition][(TmpIndex * 2)+1]<<" "<<HoppingAmplitudes[TmpPosition][TmpIndex]<<endl;
 #endif
@@ -661,7 +661,7 @@ HermitianMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingHamil
 	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX, PosY+1,NumXTranslations,NumYTranslations,translationPhase);
 	     SpatialIndices[TmpPosition][TmpIndex * 2] = -1*NumXTranslations;
 	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = -1*NumYTranslations;
-	     HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0*PhaseY;
+	     HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0*PhaseY*  Phase(-this->KyFactor * this->GammaY);
 #ifdef DEBUG_OUTPUT
 	     cout <<TmpPosition<< " " << OrbitalIndices[TmpPosition][TmpIndex]<< " " << SpatialIndices[TmpPosition][TmpIndex * 2]<< " " <<SpatialIndices[TmpPosition][(TmpIndex * 2)+1]<<" "<<HoppingAmplitudes[TmpPosition][TmpIndex]<<endl;
 #endif
@@ -670,7 +670,7 @@ HermitianMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingHamil
 	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX-1, PosY,NumXTranslations,NumYTranslations, translationPhase);
 	     SpatialIndices[TmpPosition][TmpIndex * 2] = -1*NumXTranslations;
 	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = -1*NumYTranslations;
-	     HoppingAmplitudes[TmpPosition][TmpIndex] = -1.0;
+	     HoppingAmplitudes[TmpPosition][TmpIndex] = -1.0 *  Phase(this->KxFactor * this->GammaX);;
 #ifdef DEBUG_OUTPUT
 	     cout <<TmpPosition<< " " << OrbitalIndices[TmpPosition][TmpIndex]<< " " << SpatialIndices[TmpPosition][TmpIndex * 2]<< " " <<SpatialIndices[TmpPosition][(TmpIndex * 2)+1]<<" "<<HoppingAmplitudes[TmpPosition][TmpIndex]<<endl;
 #endif
@@ -678,7 +678,7 @@ HermitianMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingHamil
 	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX, PosY-1,NumXTranslations,NumYTranslations, translationPhase);
 	     SpatialIndices[TmpPosition][TmpIndex * 2] = -1*NumXTranslations;
 	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = -1*NumYTranslations;
-	     HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0 * Conj(PhaseY);
+	     HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0 * Conj(PhaseY)*  Phase(this->KyFactor * this->GammaY);
 #ifdef DEBUG_OUTPUT
 	     cout <<TmpPosition<< " " << OrbitalIndices[TmpPosition][TmpIndex]<< " " << SpatialIndices[TmpPosition][TmpIndex * 2]<< " " <<SpatialIndices[TmpPosition][(TmpIndex * 2)+1]<<" "<<HoppingAmplitudes[TmpPosition][TmpIndex]<<endl;
 #endif
@@ -697,22 +697,22 @@ HermitianMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingHamil
 	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX+1, PosY,NumXTranslations,NumYTranslations, translationPhase);
 	     SpatialIndices[TmpPosition][TmpIndex * 2] = NumXTranslations;
 	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = NumYTranslations;
-	     HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0*Conj(PhaseX);
+	     HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0*Conj(PhaseX)*  Phase(-this->KxFactor * this->GammaX);
 	     ++TmpIndex;
 	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX, PosY+1,NumXTranslations,NumYTranslations, translationPhase);
 	     SpatialIndices[TmpPosition][TmpIndex * 2] = NumXTranslations;
 	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = NumYTranslations;
-	     HoppingAmplitudes[TmpPosition][TmpIndex] = -1.0;
+	     HoppingAmplitudes[TmpPosition][TmpIndex] = -1.0 *  Phase(-this->KyFactor * this->GammaY);
 	     ++TmpIndex;
 	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX-1, PosY,NumXTranslations,NumYTranslations, translationPhase);
 	     SpatialIndices[TmpPosition][TmpIndex * 2] = NumXTranslations;
 	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = NumYTranslations;
-	     HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0*PhaseX;
+	     HoppingAmplitudes[TmpPosition][TmpIndex] = -1.0 * PhaseX * Phase(this->KxFactor * this->GammaX); ;
 	     ++TmpIndex;
 	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX, PosY-1,NumXTranslations,NumYTranslations, translationPhase);
 	     SpatialIndices[TmpPosition][TmpIndex * 2] = NumXTranslations;
 	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = NumYTranslations;
-	     HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0;
+	     HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0 *  Phase(-this->KyFactor * this->GammaY);
 	     
 	   }
        }
@@ -771,6 +771,7 @@ HermitianMatrix  TightBindingModelHofstadterSquare::BuildTightBindingHamiltonian
 		  if (InitialIndex>=FinalIndex)
 		    {
 		      tmpPhase = 1.0;
+
 /*		      int Tmp = orbitalIndices[k][l] - k;
 		      if( ( (orbitalIndices[k][l]%this->UnitCellX - k%this->UnitCellX) ==0  ) && (spatialIndices[k][l << 1]==0 ) )
 			{
