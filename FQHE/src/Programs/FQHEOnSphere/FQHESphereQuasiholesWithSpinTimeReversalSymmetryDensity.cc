@@ -59,6 +59,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption('\n', "use-hilbert", "similar to --degenerate-states using a single line text file (starting with Basis=) instead of a single column text file");
   (*SystemGroup) += new SingleStringOption ('\n', "directory", "use a specific directory for the input data instead of the current one");
   (*SystemGroup) += new SingleStringOption ('\n', "occupation-matrices", "use precomputed occupation matrices to evaluate the integrated charge");
+  (*OutputGroup) += new BooleanOption ('\n', "realspace-density", "plot the density in real space");
+  (*OutputGroup) += new SingleIntegerOption  ('\n', "nbr-points", "number of points along the cylinder axis", 400);  
+  (*OutputGroup) += new SingleDoubleOption  ('\n', "offset", "additional length along the cylinder axis on each side of the [-Lx/2,Lx/2] region where the density should be computed", 5.0);
   (*OutputGroup) += new BooleanOption ('\n', "disable-binary", "do not export the orbital occupation matrices in binary format");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 0);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -468,7 +471,84 @@ int main(int argc, char** argv)
       cout << endl;
     }
 
+  if (Manager.GetBoolean("realspace-density") == true)
+    {
+      char* OutputFileName = 0;
+      OutputFileName = ReplaceExtensionToFileName(InputStateNames[0], "vec", "rho.dat");
+      ofstream File;
+      File.precision(14);
+      File.open(OutputFileName, ios::binary | ios::out);
 
+      if (Perimeter == 0.0)
+	{
+	  Perimeter = sqrt(2.0 * M_PI * (LzMax + 1) * Ratio);
+	}
+      else
+	{
+	  Ratio = (Perimeter * Perimeter) / (2.0 * M_PI * (LzMax + 1));
+	}
+      double CylinderLength = Perimeter / Ratio;
+      int NbrPoints = Manager.GetInteger("nbr-points");
+
+      RealSymmetricMatrix TmpMatrixUpLayer (NbrInputStates, true);
+      RealSymmetricMatrix TmpMatrixUpLayerIntegratedCharge (NbrInputStates, true);
+      RealSymmetricMatrix TmpMatrixDownLayer (NbrInputStates, true);
+      RealSymmetricMatrix TmpMatrixDownLayerIntegratedCharge (NbrInputStates, true);
+      RealSymmetricMatrix TmpMatrixTotal (NbrInputStates, true);
+      RealSymmetricMatrix TmpMatrixTotalIntegratedCharge (NbrInputStates, true);
+      RealDiagonalMatrix TmpEigenvaluesUpLayer(NbrInputStates);
+      RealDiagonalMatrix TmpEigenvaluesUpLayerIntegratedCharge(NbrInputStates);
+      RealDiagonalMatrix TmpEigenvaluesDownLayer(NbrInputStates);
+      RealDiagonalMatrix TmpEigenvaluesDownLayerIntegratedCharge(NbrInputStates);
+      RealDiagonalMatrix TmpEigenvaluesTotal(NbrInputStates);
+      RealDiagonalMatrix TmpEigenvaluesTotalIntegratedCharge(NbrInputStates);
+      double Offset = Manager.GetDouble("offset");
+      double XPosition = -(0.5 * CylinderLength) - Offset;
+      double XStep = -2.0 * XPosition / ((double) (NbrPoints + 1));
+      double TmpPrefactor1 =  1.0 / sqrt(M_PI);
+      double TmpPrefactor2 =  2.0 * M_PI / Perimeter;
+      double TmpShift = 0.5 * ((double) LzMax) * TmpPrefactor2;
+      for (int TmpX = 0; TmpX <= NbrPoints; ++TmpX)
+	{ 
+	  TmpMatrixUpLayer.ClearMatrix();
+	  TmpMatrixUpLayerIntegratedCharge.ClearMatrix();
+	  TmpMatrixDownLayer.ClearMatrix();
+	  TmpMatrixDownLayerIntegratedCharge.ClearMatrix();
+	  TmpMatrixTotal.ClearMatrix();
+	  TmpMatrixTotalIntegratedCharge.ClearMatrix();
+	  for (int i = 0; i <= LzMax; ++i)
+	    {
+	      double TmpFactor = TmpPrefactor1 * exp(-(XPosition + TmpShift - (TmpPrefactor2 * ((double) i))) * (XPosition + TmpShift - (TmpPrefactor2 * ((double) i))));
+	      TmpMatrixUpLayer.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[0][i]);
+	      TmpMatrixTotal.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[0][i]);
+	      TmpFactor = 0.5 * (1.0 + erf(XPosition + TmpShift - (TmpPrefactor2 * ((double) i))));
+	      TmpMatrixUpLayerIntegratedCharge.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[0][i]);
+	      TmpMatrixTotalIntegratedCharge.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[0][i]);
+	      TmpFactor = TmpPrefactor1 * exp(-(XPosition - TmpShift + (TmpPrefactor2 * ((double) i))) * (XPosition - TmpShift + (TmpPrefactor2 * ((double) i))));
+	      TmpMatrixDownLayer.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][i]);
+	      TmpMatrixTotal.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][i]);
+	      TmpFactor = 0.5 * (1.0 + erf(XPosition - TmpShift + (TmpPrefactor2 * ((double) i))));
+	      TmpMatrixDownLayerIntegratedCharge.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][i]);
+	      TmpMatrixTotalIntegratedCharge.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][i]);
+	    }
+	  TmpMatrixUpLayer.LapackDiagonalize(TmpEigenvaluesUpLayer);
+	  TmpMatrixUpLayerIntegratedCharge.LapackDiagonalize(TmpEigenvaluesUpLayerIntegratedCharge);
+	  TmpMatrixDownLayer.LapackDiagonalize(TmpEigenvaluesDownLayer);
+	  TmpMatrixDownLayerIntegratedCharge.LapackDiagonalize(TmpEigenvaluesDownLayerIntegratedCharge);
+	  TmpMatrixTotal.LapackDiagonalize(TmpEigenvaluesTotal);
+	  TmpMatrixTotalIntegratedCharge.LapackDiagonalize(TmpEigenvaluesTotalIntegratedCharge);
+	  File << XPosition;
+	  for (int i = 0; i < NbrInputStates; ++i)
+	    {   
+	      File << " " << TmpEigenvaluesUpLayer[i] << " " << TmpEigenvaluesUpLayerIntegratedCharge[i]
+		   << " " << TmpEigenvaluesDownLayer[i] << " " << TmpEigenvaluesDownLayerIntegratedCharge[i]
+		   << " " << TmpEigenvaluesTotal[i] << " " << TmpEigenvaluesTotalIntegratedCharge[i];
+	    }      
+	  File << endl;
+	  XPosition += XStep;
+	}
+      File.close();
+    }
   return 0;
 
 }
