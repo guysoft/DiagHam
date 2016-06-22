@@ -1006,6 +1006,29 @@ HermitianMatrix& HermitianMatrix::operator += (const HermitianMatrix& M)
   return *this;
 }
 
+// add a linear combination of another hermitian matrix
+//
+// x = prefactor for added terms
+// M = added matrix
+// return value = reference on the current matrix
+
+HermitianMatrix& HermitianMatrix::AddLinearCombination(double x, const  HermitianMatrix&M)
+{
+  if (this->NbrRow == 0)
+    return *this;
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      this->DiagonalElements[i] += x * M.DiagonalElements[i];
+    }
+  long max = (((long) (this->NbrRow - 1)) * ((long) this->NbrRow)) >> 1;
+  for (long i = 0l; i < max; ++i)
+    {
+      this->RealOffDiagonalElements[i] += x * M.RealOffDiagonalElements[i];
+      this->ImaginaryOffDiagonalElements[i] += x * M.ImaginaryOffDiagonalElements[i]; 
+    }
+  return *this;
+}
+
 // add two matrices where the right one is a real tridiagonal symmetric matrix
 //
 // M = matrix to add to current matrix

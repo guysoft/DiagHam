@@ -290,6 +290,13 @@ class HermitianMatrix : public Matrix
   // return value = reference on current matrix
   HermitianMatrix& operator += (const RealTriDiagonalSymmetricMatrix& M);
 
+  // add a linear combination of another hermitian matrix
+  //
+  // x = prefactor for added terms
+  // M = added matrix
+  // return value = reference on the current matrix
+  HermitianMatrix& AddLinearCombination(double x, const  HermitianMatrix&M);
+
   // substract two matrices
   //
   // M = matrix to substract to current matrix

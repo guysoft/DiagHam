@@ -194,13 +194,17 @@ class ComplexMatrix : public Matrix
   void AddToMatrixElement(int i, int j, const Complex& x);
 
   // add a linear combination of another complex matrix
+  //
   // x = prefactor for added terms
   // M = added matrix
+  // return value = reference on the current matrix
   ComplexMatrix& AddLinearCombination(double x, const ComplexMatrix &M);
 
   // add a linear combination of another complex matrix
+  //
   // x = prefactor for added terms
   // M = added matrix
+  // return value = reference on the current matrix
   ComplexMatrix& AddLinearCombination(double x, const HermitianMatrix &M);
 
   // add a linear combination of another complex matrix
