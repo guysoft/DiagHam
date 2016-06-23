@@ -761,8 +761,9 @@ bool FTIHofstadterdModelWith2DTranslationFindSystemInfoFromVectorFileName(char* 
 //
 // filename = vector file name
 // szValue = reference on the value of the total spin
+// szSymmetry =  reference on the Sz<->-Sz parity, will be non-zero only if the vector is encoded with the Sz<->-Sz symmetry
 // return value = true if no error occured
-bool FTIHofstadterModelWithSzFindSystemInfoFromVectorFileName(char* filename,int & szValue)
+bool FTIHofstadterModelWithSzFindSystemInfoFromVectorFileName(char* filename,int & szValue, int& szSymmetry)
 {    
   char* StrNbrParticles;
   int SizeString;
@@ -790,6 +791,29 @@ bool FTIHofstadterModelWithSzFindSystemInfoFromVectorFileName(char* filename,int
     {
       cout << "can't guess sz value sector from file name " << filename << endl;
       return false;            
+    }
+  szSymmetry = 0;
+  StrNbrParticles = strstr(filename, "_szsym_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 7;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && 
+	     (((StrNbrParticles[SizeString] >= '0') && (StrNbrParticles[SizeString] <= '9')) || (StrNbrParticles[SizeString] == '-')))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  szSymmetry = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	{
+	  cout << "error while retrieving the Sz<->-Sz parity" << endl;
+	  return false;
+	}
     }
   return true;
 }

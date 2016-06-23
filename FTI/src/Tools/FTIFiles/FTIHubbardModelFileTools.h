@@ -157,7 +157,8 @@ bool FTIHofstadterdModelWith2DTranslationFindSystemInfoFromVectorFileName(char* 
 //
 // filename = vector file name
 // szValue = reference on the value of the total spin
+// szSymmetry =  reference on the Sz<->-Sz parity, will be non-zero only if the vector is encoded with the Sz<->-Sz symmetry
 // return value = true if no error occured
-bool FTIHofstadterModelWithSzFindSystemInfoFromVectorFileName(char* filename,int & szValue);
+bool FTIHofstadterModelWithSzFindSystemInfoFromVectorFileName(char* filename, int& szValue, int& szSymmetry);
 
 #endif
