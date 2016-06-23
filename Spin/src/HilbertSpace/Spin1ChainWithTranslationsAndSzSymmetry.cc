@@ -464,7 +464,6 @@ ComplexMatrix Spin1ChainWithTranslationsAndSzSymmetry::EvaluatePartialEntangleme
     {
       TmpPhases[i] = Phase(Coef * ((double) i));
     }
-
   unsigned long Mask1 = (0x1ul << Shift) - 0x1ul;
   unsigned long Mask2 = (0x1ul << (2 * this->ChainLength)) - 0x1ul;
   for (; MinIndex < MaxIndex; ++MinIndex)    
@@ -477,7 +476,7 @@ ComplexMatrix Spin1ChainWithTranslationsAndSzSymmetry::EvaluatePartialEntangleme
 	  int TmpPos = this->SymmetrizeResult(TmpState2, 1, Coefficient, TmpNbrTranslation);
 	  if (TmpPos != this->HilbertSpaceDimension)
 	    {
-	      TmpEntanglementMatrix.AddToMatrixElement(MinIndex, j, groundState[TmpPos] * TmpPhases[TmpNbrTranslation] / sqrt((double) this->NbrStateInOrbit[TmpPos]));
+	      TmpEntanglementMatrix.AddToMatrixElement(MinIndex, j, groundState[TmpPos] * TmpPhases[TmpNbrTranslation] * Coefficient);
 	    }
 	}
     }

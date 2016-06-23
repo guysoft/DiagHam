@@ -14,6 +14,9 @@
 #include "HilbertSpace/Spin1_2ChainFull.h"
 #include "HilbertSpace/Spin1_2ChainWithTranslations.h"
 #include "HilbertSpace/Spin1ChainWithTranslations.h"
+#include "HilbertSpace/Spin1ChainWithTranslationsAndSzSymmetry.h"
+#include "HilbertSpace/Spin1ChainWithTranslationsAndInversionSymmetry.h"
+#include "HilbertSpace/Spin1ChainWithTranslationsAndSzInversionSymmetries.h"
 #include "HilbertSpace/Spin1_2ChainFullAnd2DTranslation.h"
 #include "HilbertSpace/Spin1_2ChainFullInversionAnd2DTranslation.h"
 
@@ -98,12 +101,14 @@ int main(int argc, char** argv)
   bool SzFlag = true;
   bool Momentum2DFlag = false;
   bool Momentum1DFlag = false;
+  bool SzSymmetryFlag = false;  
   bool InversionFlag = false;  
   int XMomentum = 0;
   int XPeriodicity = 0;
   int YMomentum = 0;
   int YPeriodicity = 0;
   int InversionSector = 0;
+  int SzSymmetrySector = 0;
   
   int NbrStates = 1;
   char** InputStateNames = 0;
@@ -135,22 +140,34 @@ int main(int argc, char** argv)
       if (SpinWith2DTranslationFindSystemInfoFromVectorFileName(InputStateNames[0], NbrSpins, SpinValue, XMomentum, XPeriodicity, 
 								YMomentum, YPeriodicity) == false)
 	{
-	  if (SpinFindSystemInfoFromVectorFileName(InputStateNames[0], NbrSpins, TotalSz, SpinValue, XMomentum) == false)
+	  if (SpinFindSystemInfoFromVectorFileName(InputStateNames[0], NbrSpins, TotalSz, SpinValue, XMomentum, InversionSector, SzSymmetrySector) == false)
 	    {
-	      if (SpinFindSystemInfoFromVectorFileName(InputStateNames[0], NbrSpins, TotalSz, SpinValue) == false)
+	      if (SpinFindSystemInfoFromVectorFileName(InputStateNames[0], NbrSpins, TotalSz, SpinValue, XMomentum) == false)
 		{
-		  SzFlag = false;
-		  if (SpinFindSystemInfoFromFileName(InputStateNames[0], NbrSpins, SpinValue) == false)
+		  if (SpinFindSystemInfoFromVectorFileName(InputStateNames[0], NbrSpins, TotalSz, SpinValue) == false)
 		    {
-		      cout << "error while retrieving system parameters from file name " << InputStateNames[0] << endl;
-		      return -1;
+		      SzFlag = false;
+		      if (SpinFindSystemInfoFromFileName(InputStateNames[0], NbrSpins, SpinValue) == false)
+			{
+			  cout << "error while retrieving system parameters from file name " << InputStateNames[0] << endl;
+			  return -1;
+			}
 		    }
+		}
+	      else
+		{
+		  XPeriodicity = NbrSpins;
+		  Momentum1DFlag = true;	      
 		}
 	    }
 	  else
 	    {
 	      XPeriodicity = NbrSpins;
 	      Momentum1DFlag = true;	      
+	      if (InversionSector != 0)
+		InversionFlag = true;
+	      if (SzSymmetrySector != 0)
+		SzSymmetryFlag = true;
 	    }
 	}
       else
@@ -365,7 +382,30 @@ int main(int argc, char** argv)
 		  Space = new Spin1_2ChainWithTranslations (NbrSpins, XMomentum, 1, TotalSz, 1000000, 1000000);
 		  break;
 		case 2 :
-		  Space = new Spin1ChainWithTranslations (NbrSpins, XMomentum, TotalSz);
+		  {
+		    if (InversionFlag == true)
+		      {
+			if (SzSymmetryFlag == true)
+			  {
+			    Space = new Spin1ChainWithTranslationsAndSzInversionSymmetries (NbrSpins, XMomentum, InversionSector, SzSymmetrySector, TotalSz);
+			  }
+			else
+			  {
+			    Space = new Spin1ChainWithTranslationsAndInversionSymmetry (NbrSpins, XMomentum, InversionSector, TotalSz);
+			  }
+		      }
+		    else
+		      {
+			if (SzSymmetryFlag == true)
+			  {
+			    Space = new Spin1ChainWithTranslationsAndSzSymmetry (NbrSpins, XMomentum, SzSymmetrySector, TotalSz);
+			  }
+			else
+			  {
+			    Space = new Spin1ChainWithTranslations (NbrSpins, XMomentum, TotalSz);
+			  }
+		      }
+		  }
 		  break;
 		default :
 		  {

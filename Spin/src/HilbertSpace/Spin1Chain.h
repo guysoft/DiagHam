@@ -55,6 +55,7 @@ class Spin1Chain : public AbstractSpinChain
 
   friend class Spin1ChainWithTranslations;
   friend class Spin1ChainWithTranslationsAndSzSymmetry;
+  friend class Spin1ChainWithTranslationsAndInversionSymmetry;
 
  protected:
 

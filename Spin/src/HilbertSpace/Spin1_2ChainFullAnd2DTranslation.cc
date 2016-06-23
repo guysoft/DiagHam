@@ -335,7 +335,7 @@ int Spin1_2ChainFullAnd2DTranslation::SmiSpj (int i, int j, int state, double& c
 	  return this->HilbertSpaceDimension;
 	}
       State ^= 0x1ul << j;
-      State &= 0x1ul << i;
+      State |= 0x1ul << i;
       coefficient = 1.0;
       return this->SymmetrizeResult(State, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
     }

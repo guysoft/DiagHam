@@ -250,6 +250,7 @@ RealVector& SpinWith1DTranslationS2Operator::LowLevelMultiply(RealVector& vSourc
 	  ExponentialTable[i] = -ExponentialTable[i - 1];
 	}
     }
+  vDestination.ClearVector();
   for (int j = 0; j < this->NbrSpin; ++j)
     {      
       int TmpLocalSpin = this->Chain->GetLocalSpin(j);
@@ -277,7 +278,7 @@ RealVector& SpinWith1DTranslationS2Operator::LowLevelMultiply(RealVector& vSourc
 		}
 	    }
 	}
-      vDestination[i] = vSource[i] * TmpDiagonal;
+      vDestination[i] += vSource[i] * TmpDiagonal;
     }
   delete[] ExponentialTable;
   return vDestination;
@@ -302,6 +303,7 @@ ComplexVector& SpinWith1DTranslationS2Operator::LowLevelMultiply(ComplexVector& 
   double TmpDiagonal = 0.0;
   Complex* ExponentialTable = new Complex[2 * this->NbrSpin];
   double Coef = 2.0 * M_PI * ((double) this->Chain->GetMomentum()) / ((double) this->NbrSpin);
+  vDestination.ClearVector();
   for (int i = 0; i < (2 * this->NbrSpin); ++i)
     {
       ExponentialTable[i] = Phase(Coef * ((double) i));
@@ -333,7 +335,7 @@ ComplexVector& SpinWith1DTranslationS2Operator::LowLevelMultiply(ComplexVector& 
 		}
 	    }
 	}
-      vDestination[i] = vSource[i] * TmpDiagonal;
+      vDestination[i] += vSource[i] * TmpDiagonal;
     }
   delete[] ExponentialTable;
   return vDestination;

@@ -256,7 +256,7 @@ bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz
 // spin = reference to twice the spin value per site
 // momentum = reference on the momentum
 // inversion =  reference on the inversion parity, will be non-zero only if the vector is encoded with the inversion symmetry
-// szSymmetry =  reference on the Sz<->-Sz parity, will be non-zero only if the vector is encoded with the Sz<->-S symmetry
+// szSymmetry =  reference on the Sz<->-Sz parity, will be non-zero only if the vector is encoded with the Sz<->-Sz symmetry
 // return value = true if no error occured
 
 bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int& spin, int& momentum, int& inversion, int& szSymmetry)

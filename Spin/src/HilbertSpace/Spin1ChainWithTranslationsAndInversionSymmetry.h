@@ -123,6 +123,15 @@ class Spin1ChainWithTranslationsAndInversionSymmetry : public Spin1ChainWithTran
   // return value = pointer to cloned Hilbert space
   virtual AbstractHilbertSpace* Clone();
 
+  // evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
+  // 
+  // nbrSites = number of sites that are part of the A subsytem 
+  // szSector = Sz sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+  virtual RealMatrix EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture = 0);
+
  protected:
 
   // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint

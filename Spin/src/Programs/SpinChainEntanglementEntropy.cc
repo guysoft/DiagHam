@@ -13,6 +13,9 @@
 #include "HilbertSpace/Spin1Chain.h"
 #include "HilbertSpace/Spin1_2ChainWithTranslations.h"
 #include "HilbertSpace/Spin1ChainWithTranslations.h"
+#include "HilbertSpace/Spin1ChainWithTranslationsAndSzSymmetry.h"
+#include "HilbertSpace/Spin1ChainWithTranslationsAndInversionSymmetry.h"
+#include "HilbertSpace/Spin1ChainWithTranslationsAndSzInversionSymmetries.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -110,12 +113,16 @@ int main(int argc, char** argv)
   AbstractSpinChain** Spaces = 0;
   int* TotalSz = 0;
   int* Momenta = 0;
+  int* InversionSectors = 0;
+  int* SzSymmetrySectors = 0;
   
   if (Manager.GetString("degenerated-groundstate") == 0)
     {
       GroundStateFiles = new char* [1];
       TotalSz = new int[1];
       Momenta = new int[1];
+      InversionSectors = new int[1];
+      SzSymmetrySectors = new int[1];
       Weights = new double[1];
       Weights[0] = 1.0;
       GroundStateFiles[0] = new char [strlen(Manager.GetString("ground-file")) + 1];
@@ -133,6 +140,8 @@ int main(int argc, char** argv)
       GroundStateFiles = new char* [NbrSpaces];
       TotalSz = new int[NbrSpaces];
       Momenta = new int[NbrSpaces];
+      InversionSectors = new int[NbrSpaces];
+      SzSymmetrySectors = new int[NbrSpaces];
       for (int i = 0; i < NbrSpaces; ++i)
 	{
 	  GroundStateFiles[i] = new char [strlen(DegeneratedFile(0, i)) + 1];
@@ -158,7 +167,10 @@ int main(int argc, char** argv)
     {
       TotalSz[i] = 0;
       Momenta[i] = 0;
-      if (SpinFindSystemInfoFromVectorFileName(GroundStateFiles[i], NbrSpins, TotalSz[i], SpinValue, Momenta[i]) == false)
+      InversionSectors[i] = 0;
+      SzSymmetrySectors[i] = 0;
+      if (SpinFindSystemInfoFromVectorFileName(GroundStateFiles[i], NbrSpins, TotalSz[i], SpinValue, Momenta[i],
+					       InversionSectors[i], SzSymmetrySectors[i]) == false)
 	{
 	  MomentumFlag = false;
 	  if (SpinFindSystemInfoFromVectorFileName(GroundStateFiles[i], NbrSpins, TotalSz[i], SpinValue) == false)
@@ -172,7 +184,6 @@ int main(int argc, char** argv)
 	    }
 	}
     }
-  
   
   ofstream File;
   if (Manager.GetString("output-file") != 0)
@@ -239,8 +250,6 @@ int main(int argc, char** argv)
 	}
       
       
-      SpinValue = Manager.GetInteger("spin");
-      
       for (int i = 0; i < NbrSpaces; ++i)
 	{
 	  cout << "Filename: " << GroundStateFiles[i] << " N= " << NbrSpins << " Sz= " << TotalSz[i] << " spin= " << SpinValue << endl;
@@ -267,7 +276,15 @@ int main(int argc, char** argv)
 	      }
 	    }
 	}
-      
+      for (int i = 0; i < NbrSpaces; ++i)
+	{
+	  if (Spaces[i]->GetHilbertSpaceDimension() != GroundStates[i].GetVectorDimension())
+	    {
+	      cout << "error, dimension mismatch for " << GroundStateFiles[i] << " (dimnension is " << GroundStates[i].GetVectorDimension() 
+		   << ", should be " << Spaces[i]->GetHilbertSpaceDimension() << ")" << endl;
+	      return -1;
+	    }
+	}
       int SubsystemSize = Manager.GetInteger("min-la");
       if (SubsystemSize < 1)
 	SubsystemSize = 1;
@@ -443,8 +460,6 @@ int main(int argc, char** argv)
        }
      
      
-     SpinValue = Manager.GetInteger("spin");
-     
      if (SzFlag == true)
        {
 	 for (int i = 0; i < NbrSpaces; ++i)
@@ -511,7 +526,30 @@ int main(int argc, char** argv)
 		  Spaces[i] = new Spin1_2ChainWithTranslations (NbrSpins, Momenta[i], 1, TotalSz[i], 1000000, 1000000);
 		  break;
 		case 2 :
-		  Spaces[i] = new Spin1ChainWithTranslations (NbrSpins, Momenta[i], TotalSz[i]);
+		  {
+		    if (InversionSectors[i] != 0)
+		      {
+			if (SzSymmetrySectors[i] != 0)
+			  {
+			    Spaces[i] = new Spin1ChainWithTranslationsAndSzInversionSymmetries (NbrSpins, Momenta[i], InversionSectors[i], SzSymmetrySectors[i], TotalSz[i]);
+			  }
+			else
+			  {
+			    Spaces[i] = new Spin1ChainWithTranslationsAndInversionSymmetry (NbrSpins, Momenta[i], InversionSectors[i], TotalSz[i]);
+			  }
+		      }
+		    else
+		      {
+			if (SzSymmetrySectors[i] != 0)
+			  {
+			    Spaces[i] = new Spin1ChainWithTranslationsAndSzSymmetry (NbrSpins, Momenta[i], SzSymmetrySectors[i], TotalSz[i]);
+			  }
+			else
+			  {
+			    Spaces[i] = new Spin1ChainWithTranslations (NbrSpins, Momenta[i], TotalSz[i]);
+			  }
+		      }
+		  }
 		  break;
 		default :
 		  {
@@ -524,6 +562,17 @@ int main(int argc, char** argv)
 		}
 	    }
 	}
+      for (int i = 0; i < NbrSpaces; ++i)
+	{
+	  if (Spaces[i]->GetHilbertSpaceDimension() != GroundStates[i].GetVectorDimension())
+	    {
+	      cout << "error, dimension mismatch for " << GroundStateFiles[i] << " (dimnension is " << GroundStates[i].GetVectorDimension() 
+		   << ", should be " << Spaces[i]->GetHilbertSpaceDimension() << ")" << endl;
+	      return -1;
+	    }
+	}
+
+
      int SubsystemSize = Manager.GetInteger("min-la");
      if (SubsystemSize < 1)
        SubsystemSize = 1;

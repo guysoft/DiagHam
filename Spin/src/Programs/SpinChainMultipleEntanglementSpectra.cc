@@ -13,6 +13,11 @@
 #include "HilbertSpace/Spin1_2ChainFull.h"
 #include "HilbertSpace/Spin1_2ChainFullAnd2DTranslation.h"
 #include "HilbertSpace/Spin1_2ChainFullInversionAnd2DTranslation.h"
+#include "HilbertSpace/Spin1_2ChainWithTranslations.h"
+#include "HilbertSpace/Spin1ChainWithTranslations.h"
+#include "HilbertSpace/Spin1ChainWithTranslationsAndSzSymmetry.h"
+#include "HilbertSpace/Spin1ChainWithTranslationsAndInversionSymmetry.h"
+#include "HilbertSpace/Spin1ChainWithTranslationsAndSzInversionSymmetries.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -84,6 +89,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "la", "subsystem size (negative if half of the system has to be considered)", -1);
   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");  
   (*OutputGroup) += new BooleanOption ('\n', "show-entropies", "show the entangelement entropy and trace of the reduced density matrix for each state");
+  (*OutputGroup) += new BooleanOption ('\n', "counting", "count the number of non zero eigenvalues for each entanglement spectrum");
+  (*OutputGroup) += new SingleDoubleOption ('\n', "counting-error", "error below which an eigenvalue is consideredto be eual to zero", 1e-28);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -108,12 +115,14 @@ int main(int argc, char** argv)
   int SubsystemSize = Manager.GetInteger("la");
   bool SzFlag = true;
   bool Momentum2DFlag = false;
+  bool Momentum1DFlag = false;
   bool InversionFlag = false;  
   int XMomentum = 0;
   int XPeriodicity = 0;
   int YMomentum = 0;
   int YPeriodicity = 0;
   int InversionSector = 0;
+  int SzSymmetrySector = 0;
   bool GenericCutFlag = false;
   int* SubsystemSites = 0;
   bool ShowTimeFlag = Manager.GetBoolean("show-time");
@@ -124,14 +133,22 @@ int main(int argc, char** argv)
       if (SpinWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, SpinValue, XMomentum, XPeriodicity, 
 								YMomentum, YPeriodicity) == false)
 	{
-	  if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue) == false)
+	  if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue, 
+						   XMomentum, InversionSector, SzSymmetrySector) == false)
 	    {
-	      SzFlag = false;
-	      if (SpinFindSystemInfoFromFileName(Manager.GetString("multiple-states"), NbrSpins, SpinValue) == false)
+	      if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue) == false)
 		{
-		  cout << "error while retrieving system parameters from file name " << Manager.GetString("multiple-states") << endl;
-		  return -1;
+		  SzFlag = false;
+		  if (SpinFindSystemInfoFromFileName(Manager.GetString("multiple-states"), NbrSpins, SpinValue) == false)
+		    {
+		      cout << "error while retrieving system parameters from file name " << Manager.GetString("multiple-states") << endl;
+		      return -1;
+		    }
 		}
+	    }
+	  else
+	    {
+	      Momentum1DFlag = true;
 	    }
 	}
       else
@@ -152,9 +169,14 @@ int main(int argc, char** argv)
   if (Momentum2DFlag == false)
     {
       if (SzFlag == true)
-	cout << "N=" << NbrSpins << " Sz=" <<  TotalSz << " 2s=" << SpinValue << endl;
+	cout << "N=" << NbrSpins << " Sz=" <<  TotalSz << " 2s=" << SpinValue;
       else
-	cout << "N=" << NbrSpins << " 2s=" << SpinValue << endl;
+	cout << "N=" << NbrSpins << " 2s=" << SpinValue;
+      if (InversionSector != 0)
+	cout << " I=" << InversionSector;
+      if (SzSymmetrySector != 0)
+	cout << " P=" << SzSymmetrySector;
+      cout << endl;
     }
   else
     {
@@ -225,6 +247,7 @@ int main(int argc, char** argv)
       if (RealEigenstates.ReadMatrix(Manager.GetString("multiple-states")) == false)
 	{
 	  cout << "can't read " << Manager.GetString("multiple-states") << endl;
+	  return -1;
 	}
       if (MaxIndex < 0)
 	MaxIndex = RealEigenstates.GetNbrColumn() - 1;
@@ -234,6 +257,7 @@ int main(int argc, char** argv)
       if (ComplexEigenstates.ReadMatrix(Manager.GetString("multiple-states")) == false)
 	{
 	  cout << "can't read " << Manager.GetString("multiple-states") << endl;
+	  return -1;
 	}
       if (MaxIndex < 0)
 	MaxIndex = ComplexEigenstates.GetNbrColumn() - 1;
@@ -244,22 +268,70 @@ int main(int argc, char** argv)
 
   if (SzFlag == true)
     {
-      switch (SpinValue)
+      if (Momentum1DFlag == false)
 	{
-	case 1 :
-	  Space = new Spin1_2Chain (NbrSpins, TotalSz, 1000000);
-	  break;
-	case 2 :
-	  Space = new Spin1Chain (NbrSpins, TotalSz, 1000000);
-	  break;
-	default :
-	  {
-	    if ((SpinValue & 1) == 0)
-	      cout << "spin " << (SpinValue / 2) << " are not available" << endl;
-	    else 
-	  cout << "spin " << SpinValue << "/2 are not available" << endl;
-	    return -1;
-	  }
+	  switch (SpinValue)
+	    {
+	    case 1 :
+	      Space = new Spin1_2Chain (NbrSpins, TotalSz, 1000000);
+	      break;
+	    case 2 :
+	      {
+		Space = new Spin1Chain (NbrSpins, TotalSz, 1000000);
+	      }
+	      break;
+	    default :
+	      {
+		if ((SpinValue & 1) == 0)
+		  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+		else 
+		  cout << "spin " << SpinValue << "/2 are not available" << endl;
+		return -1;
+	      }
+	    }
+	}
+      else
+	{
+	  switch (SpinValue)
+	    {
+	    case 1 :
+	      Space = new Spin1_2ChainWithTranslations (NbrSpins, XMomentum, 1, TotalSz, 1000000, 1000000);
+	      break;
+	    case 2 :
+	      {
+		if (InversionSector != 0)
+		  {
+		    if (SzSymmetrySector != 0)
+		      {
+			Space = new Spin1ChainWithTranslationsAndSzInversionSymmetries (NbrSpins, XMomentum, InversionSector, SzSymmetrySector, TotalSz);
+		      }
+		    else
+		      {
+			Space = new Spin1ChainWithTranslationsAndInversionSymmetry (NbrSpins, XMomentum, InversionSector, TotalSz);
+		      }
+		  }
+		else
+		  {
+		    if (SzSymmetrySector != 0)
+		      {
+			Space = new Spin1ChainWithTranslationsAndSzSymmetry (NbrSpins, XMomentum, SzSymmetrySector, TotalSz);
+		      }
+		    else
+		      {
+			Space = new Spin1ChainWithTranslations (NbrSpins, XMomentum, TotalSz);
+		      }
+		  }
+	      }
+	      break;
+	    default :
+	      {
+		if ((SpinValue & 1) == 0)
+		  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+		else 
+		  cout << "spin " << SpinValue << "/2 are not available" << endl;
+		return -1;
+	      }
+	    }
 	}
     }
   else
@@ -578,6 +650,48 @@ int main(int argc, char** argv)
 	cout << Index << " " << TmpEntanglementEntropy << " " << TmpTrace << endl;
     }
   File.close();
+
+  if (Manager.GetBoolean("counting"))
+    {
+      char* DensityMatrixCountingFileName = new char[strlen(DensityMatrixFileName) + 32];
+      sprintf (DensityMatrixCountingFileName, "%s.counting", DensityMatrixFileName);
+      ofstream File;
+      File.open(DensityMatrixCountingFileName, ios::binary | ios::out);
+      File << "# index total_counting total_nbr";
+      for (int TmpSzA = MinSzA;  TmpSzA <= MaxSzA; TmpSzA += 2)
+	{
+	  File << " counting(Sza=" << TmpSzA << ")";
+	}
+      File << endl;
+      int* TmpCounting = new int [((MaxSzA - MinSzA) / 2) + 1];
+      double CountingError = Manager.GetDouble("counting-error");
+      for (int Index = MinIndex; Index <= MaxIndex; ++Index)
+	{
+	  long TotalNbr = 0;
+	  for (int TmpSzA = MinSzA;  TmpSzA <= MaxSzA; TmpSzA += 2)
+	    {
+	      TmpCounting[(TmpSzA - MinSzA) / 2] = 0;
+	      for (int i = 0; i < EntanglementSpectrumDimension[(TmpSzA - MinSzA) / 2]; ++i)
+		{
+		  ++TotalNbr;
+		  if (EntanglementSpectra[(TmpSzA - MinSzA) / 2][Index - MinIndex][i] > CountingError)
+		    ++TmpCounting[(TmpSzA - MinSzA) / 2];
+		}
+	    }		  
+	  int TmpTotalCounting = 0;
+	  for (int TmpSzA = MinSzA;  TmpSzA <= MaxSzA; TmpSzA += 2)
+	    {
+	      TmpTotalCounting += TmpCounting[(TmpSzA - MinSzA) / 2];
+	    }
+	  File << Index << " " << TmpTotalCounting << " " << TotalNbr;
+	  for (int TmpSzA = MinSzA;  TmpSzA <= MaxSzA; TmpSzA += 2)
+	    {
+	      File << " " << TmpCounting[(TmpSzA - MinSzA) / 2];
+	    }	  
+	  File << endl;
+	}
+      File.close();
+    }
   return 0;
 }
 

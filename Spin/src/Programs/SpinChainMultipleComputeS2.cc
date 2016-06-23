@@ -106,7 +106,7 @@ int main(int argc, char** argv)
   int XPeriodicity = 0;
   int InversionSector = 0;
   int SzSymmetrySector = 0;
-  double Error = 1e-13;
+  double Error = 1e-12;
  
   if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue, XMomentum, InversionSector, SzSymmetrySector) == false)
     {
@@ -465,7 +465,7 @@ int main(int argc, char** argv)
 		      }
 		    else
 		      {
-			Space = new Spin1ChainWithTranslationsAndInversionSymmetry (NbrSpins, XMomentum, SzSymmetrySector, TotalSz);
+			Space = new Spin1ChainWithTranslationsAndInversionSymmetry (NbrSpins, XMomentum, InversionSector, TotalSz);
 		      }
 		  }
 		else
@@ -580,6 +580,7 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
+	      cout << "degeneracy at " << TmpIndex << "(" << Degeneracies[k] << " states)" << endl;
 	      HermitianMatrix S2Matrix(Degeneracies[k], true);
 	      RealVector TmpRealVector;
 	      ComplexVector TmpComplexVector;
@@ -610,7 +611,6 @@ int main(int argc, char** argv)
 		    }
 		}	    
 	      RealDiagonalMatrix TmpS2Eigenvalues(Degeneracies[k]);
-	      ComplexMatrix TmpBasis (Degeneracies[k], Degeneracies[k]);
 	      S2Matrix.LapackDiagonalize(TmpS2Eigenvalues);
 	      for (int i = 0; i < Degeneracies[k]; ++i)
 		{
@@ -630,6 +630,11 @@ int main(int argc, char** argv)
     }
   else
     {
+      char* OutputFileName = new char[strlen(Manager.GetString("multiple-states")) + 32];
+      sprintf (OutputFileName, "%s.s", Manager.GetString("multiple-states"));
+      ofstream File;
+      File.open(OutputFileName, ios::out);
+      File.precision(14);
       char* LinePrefix = new char[512];
       if (Momentum1DFlag == false)
 	{
@@ -663,8 +668,9 @@ int main(int argc, char** argv)
       for (int i = 0; i < NbrStates; ++i)
 	{
 	  double TmpS2 = S2Values[i];
-	  cout << LinePrefix << Spectrum[i] << " " << TmpS2 << " " << (0.5 * (sqrt((4.0 * TmpS2) + 1.0) - 1.0)) <<  " " <<  round(sqrt((4.0 * TmpS2) + 1.0) - 1.0) << endl; 
+	  File << LinePrefix << Spectrum[i] << " " << TmpS2 << " " << (0.5 * (sqrt((4.0 * TmpS2) + 1.0) - 1.0)) <<  " " <<  round(sqrt((4.0 * TmpS2) + 1.0) - 1.0) << endl; 
 	}
+      File.close();
     }
   return 0;
 }
