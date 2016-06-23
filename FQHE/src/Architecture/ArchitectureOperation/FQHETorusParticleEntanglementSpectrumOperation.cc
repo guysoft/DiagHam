@@ -171,7 +171,6 @@ AbstractArchitectureOperation* FQHETorusParticleEntanglementSpectrumOperation::C
 
 bool FQHETorusParticleEntanglementSpectrumOperation::RawApplyOperation()
 {
-//   cout << "this->LargeNbrComponent = " << this->LargeNbrComponent <<  endl;
   if (this->SpinfulFullSpace == 0)
     {
       this->NbrNonZeroElements = this->FullSpace->EvaluatePartialDensityMatrixParticlePartitionCore(this->LargeFirstComponent, this->LargeNbrComponent, this->ComplementaryHilbertSpace, this->DestinationHilbertSpace, this->ComplexGroundState, &this->ComplexDensityMatrix);
@@ -223,3 +222,76 @@ bool FQHETorusParticleEntanglementSpectrumOperation::ArchitectureDependentApplyO
   return true;
 }
   
+// apply operation for SimpleMPI architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool FQHETorusParticleEntanglementSpectrumOperation::ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture)
+{
+#ifdef __MPI__
+  long TmpMinimumIndex = 0;
+  long TmpMaximumIndex = 0;
+  architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
+  this->LargeFirstComponent = TmpMinimumIndex;  
+  this->LargeNbrComponent = (TmpMaximumIndex - TmpMinimumIndex + 1l);  
+  this->FirstComponent = (int) TmpMinimumIndex;  
+  this->NbrComponent = (int) (TmpMaximumIndex - TmpMinimumIndex + 1l);
+  timeval TotalStartingTime;
+  if (architecture->VerboseMode())
+    gettimeofday (&TotalStartingTime, 0);
+  if (architecture->GetLocalArchitecture()->GetArchitectureID() == AbstractArchitecture::SMP)
+    {
+      this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture());
+    }
+  else
+    this->RawApplyOperation();
+  if (architecture->VerboseMode())
+    {
+      timeval TotalEndingTime;
+      gettimeofday (&TotalEndingTime, 0);
+      double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
+		    (((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
+      char TmpString[256];
+      sprintf (TmpString, "FQHETorusParticleEntanglementSpectrumOperation core operation done in %.3f seconds", Dt);
+      architecture->AddToLog(TmpString);
+    }
+  if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+    gettimeofday (&TotalStartingTime, 0);
+  architecture->SumMatrix(this->ComplexDensityMatrix);
+  architecture->BroadcastMatrix(this->ComplexDensityMatrix);
+  if (architecture->IsMasterNode())
+    {
+      int TmpValues;;
+      int TmpNbrValues = 1 ;
+      for (int i = 0; i < architecture->GetNbrSlaveNodes(); ++i)
+	{
+	  architecture->ReceiveFromSlave(i, &TmpValues, TmpNbrValues);
+	  this->NbrNonZeroElements += (long) TmpValues;
+	}
+      TmpValues = (int) this->NbrNonZeroElements;      
+      architecture->BroadcastToSlaves(&TmpValues, TmpNbrValues);
+    }
+  else
+    {
+      int TmpValues = (int) this->NbrNonZeroElements;
+      int TmpNbrValues = 1 ;     
+      architecture->SendToMaster(&TmpValues, TmpNbrValues);
+      architecture->BroadcastToSlaves(&TmpValues, TmpNbrValues);
+      this->NbrNonZeroElements = (long) TmpValues;
+   }
+  if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+    {
+      timeval TotalEndingTime;
+      gettimeofday (&TotalEndingTime, 0);
+      double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
+		    (((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
+      char TmpString[256];
+      sprintf (TmpString, "FQHETorusParticleEntanglementSpectrumOperation sum operation done in %.3f seconds", Dt);
+      architecture->AddToLog(TmpString, true);
+    }
+  return true;
+#else
+  return this->RawApplyOperation();
+#endif
+}

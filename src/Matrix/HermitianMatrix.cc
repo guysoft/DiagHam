@@ -144,6 +144,74 @@ HermitianMatrix::HermitianMatrix(double* diagonal, double* realOffDiagonal, doub
 #endif
 }
 
+#ifdef __MPI__
+
+// constructor from informations sent using MPI
+//
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts or sends the vector
+// broadcast = true if the vector is broadcasted
+
+HermitianMatrix::HermitianMatrix(MPI::Intracomm& communicator, int id, bool broadcast)
+{
+  int TmpArray[4];
+  if (broadcast == true)
+    communicator.Bcast(TmpArray, 3, MPI::INT, id);      
+  else
+    communicator.Recv(TmpArray, 3, MPI::INT, id, 1);   
+  this->NbrRow = TmpArray[0];
+  this->NbrColumn = TmpArray[1];
+  this->TrueNbrRow = this->NbrRow;
+  this->TrueNbrColumn = this->NbrColumn;
+  this->Increment = (this->TrueNbrRow - this->NbrRow);
+  this->Flag.Initialize();
+  this->MatrixType = Matrix::ComplexElements | Matrix::Hermitian;
+  this->DiagonalElements = new double [this->NbrRow];
+  this->RealOffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l];
+  this->ImaginaryOffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l];
+  if (TmpArray[2] == 1)
+    {
+      int pos = 0;
+      for (int i = 0; i < this->NbrRow; i++)
+	{
+	  this->DiagonalElements[i] = 0.0;
+	  for (int j = i + 1; j < this->NbrRow; j++)
+	    {
+	      this->RealOffDiagonalElements[pos] = 0.0;
+	      this->ImaginaryOffDiagonalElements[pos] = 0.0;
+	      pos++;
+	    }
+	}
+    }
+  else
+    {
+      if (TmpArray[2] == 2)
+	{
+	  long NbrOffDiagonalElements = (((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l;
+	  if (broadcast == true)
+	    {
+	      communicator.Bcast(this->DiagonalElements, this->NbrRow, MPI::DOUBLE, id);    
+	      communicator.Bcast(this->RealOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id);      
+	      communicator.Bcast(this->ImaginaryOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id);     
+	    }
+	  else
+	    {
+	      communicator.Recv(this->DiagonalElements, this->NbrRow, MPI::DOUBLE, id, 1);   
+	      communicator.Recv(this->RealOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id, 1);   
+	      communicator.Recv(this->ImaginaryOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id, 1);   
+	    }
+	}
+    }
+#ifdef __LAPACK__
+  this->LapackWorkAreaDimension=0;
+  this->LapackEVsRequested=0;
+  this->LapackEVMatrix=NULL;
+  this->LapackWorkAreaForPartialDiag=false;
+#endif
+}
+
+#endif
+
 // copy constructor (without duplicating datas)
 //
 // M = matrix to copy
@@ -2136,6 +2204,271 @@ RealDiagonalMatrix& HermitianMatrix::LapackPartialDiagonalize (RealDiagonalMatri
 
   
   return M;
+}
+
+#endif
+
+#ifdef __MPI__
+
+// send a matrix to a given MPI process
+// 
+// communicator = reference on the communicator to use
+// id = id of the destination MPI process
+// return value = reference on the current matrix
+
+Matrix& HermitianMatrix::SendMatrix(MPI::Intracomm& communicator, int id)
+{
+  communicator.Send(&this->MatrixType, 1, MPI::INT, id, 1);
+  communicator.Send(&this->NbrRow, 1, MPI::INT, id, 1); 
+  communicator.Send(&this->NbrColumn, 1, MPI::INT, id, 1); 
+  int Acknowledge = 0;
+  communicator.Recv(&Acknowledge, 1, MPI::INT, id, 1);
+  if (Acknowledge != 0)
+    return *this;
+  long NbrOffDiagonalElements = (((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l;
+  communicator.Send(this->DiagonalElements, this->NbrRow, MPI::DOUBLE, id, 1);    
+  communicator.Send(this->RealOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id, 1);    
+  communicator.Send(this->ImaginaryOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id, 1);    
+  return *this;
+}
+
+// broadcast a matrix to all MPI processes associated to the same communicator
+// 
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts the matrix
+// return value = reference on the current matrix
+
+Matrix& HermitianMatrix::BroadcastMatrix(MPI::Intracomm& communicator,  int id)
+{
+  int TmpMatrixType = this->MatrixType;
+  int TmpNbrRow = this->NbrRow;
+  int TmpNbrColumn = this->NbrColumn;
+  int Acknowledge = 0;
+  communicator.Bcast(&TmpMatrixType, 1, MPI::INT, id);
+  communicator.Bcast(&TmpNbrRow, 1, MPI::INT, id);
+  communicator.Bcast(&TmpNbrColumn, 1, MPI::INT, id);
+  if (this->MatrixType != TmpMatrixType)
+    {
+      Acknowledge = 1;
+    }
+  if (id != communicator.Get_rank())
+    communicator.Send(&Acknowledge, 1, MPI::INT, id, 1);      
+  else
+    {
+      int NbrMPINodes = communicator.Get_size();
+      bool Flag = false;
+      for (int i = 0; i < NbrMPINodes; ++i)
+	if (id != i)
+	  {
+	    communicator.Recv(&Acknowledge, 1, MPI::INT, i, 1);      
+	    if (Acknowledge == 1)
+	      Flag = true;
+	  }
+      if (Flag == true)
+	Acknowledge = 1;
+    }
+  communicator.Bcast(&Acknowledge, 1, MPI::INT, id);
+  if (Acknowledge != 0)
+    return *this;
+  if ((TmpNbrRow != this->NbrRow) || (TmpNbrColumn != this->NbrColumn))
+    {
+      this->Resize(TmpNbrRow, TmpNbrColumn);      
+    }
+  long NbrOffDiagonalElements = (((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l;
+  communicator.Bcast(this->DiagonalElements, this->NbrRow, MPI::DOUBLE, id);    
+  communicator.Bcast(this->RealOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id);    
+  communicator.Bcast(this->ImaginaryOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id);    
+  return *this;
+}
+
+// receive a matrix from a MPI process
+// 
+// communicator = reference on the communicator to use 
+// id = id of the source MPI process
+// return value = reference on the current matrix
+
+Matrix& HermitianMatrix::ReceiveMatrix(MPI::Intracomm& communicator, int id)
+{
+  int TmpMatrixType = 0;
+  int TmpNbrRow = 0;
+  int TmpNbrColumn = 0;
+  communicator.Recv(&TmpMatrixType, 1, MPI::INT, id, 1);
+  communicator.Recv(&TmpNbrRow, 1, MPI::INT, id, 1); 
+  communicator.Recv(&TmpNbrColumn, 1, MPI::INT, id, 1); 
+  if (TmpMatrixType != this->MatrixType)
+    {
+      TmpNbrRow = 1;
+      communicator.Send(&TmpNbrRow, 1, MPI::INT, id, 1);
+      return *this;
+    }
+  else
+    {
+      if ((TmpNbrRow != this->NbrRow) || (TmpNbrColumn != this->NbrColumn))
+	{
+	  this->Resize(TmpNbrRow, TmpNbrColumn);      
+	}
+      TmpNbrRow = 0;
+      communicator.Send(&TmpNbrRow, 1, MPI::INT, id, 1);
+    }
+  long NbrOffDiagonalElements = (((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l;
+  communicator.Recv(this->DiagonalElements, this->NbrRow, MPI::DOUBLE, id, 1);    
+  communicator.Recv(this->RealOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id, 1);    
+  communicator.Recv(this->ImaginaryOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id, 1);    
+  return *this;
+}
+
+// add current matrix to the current matrix of a given MPI process
+// 
+// communicator = reference on the communicator to use 
+// id = id of the destination MPI process
+// return value = reference on the current matrix
+
+Matrix& HermitianMatrix::SumMatrix(MPI::Intracomm& communicator, int id)
+{
+  int TmpMatrixType = this->MatrixType;
+  int TmpNbrRow = this->NbrRow;
+  int TmpNbrColumn = this->NbrColumn;
+  int Acknowledge = 0;
+  communicator.Bcast(&TmpMatrixType, 1, MPI::INT, id);
+  communicator.Bcast(&TmpNbrRow, 1, MPI::INT, id);
+  communicator.Bcast(&TmpNbrColumn, 1, MPI::INT, id);
+  if ((this->MatrixType != TmpMatrixType) || (TmpNbrRow != this->NbrRow) || (TmpNbrColumn != this->NbrColumn))
+    {
+      Acknowledge = 1;
+    }
+  if (id != communicator.Get_rank())
+    communicator.Send(&Acknowledge, 1, MPI::INT, id, 1);      
+  else
+    {
+      int NbrMPINodes = communicator.Get_size();
+      bool Flag = false;
+      for (int i = 0; i < NbrMPINodes; ++i)
+	if (id != i)
+	  {
+	    communicator.Recv(&Acknowledge, 1, MPI::INT, i, 1);      
+	    if (Acknowledge == 1)
+	      Flag = true;
+	  }
+      if (Flag == true)
+	Acknowledge = 1;
+    }
+  communicator.Bcast(&Acknowledge, 1, MPI::INT, id);
+  if (Acknowledge != 0)
+    {
+      return *this;
+    }
+  long NbrOffDiagonalElements = (((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l;
+  double* TmpComponents = 0;
+  if (id == communicator.Get_rank())
+    {
+      if (NbrOffDiagonalElements > 1l)
+	TmpComponents = new double [NbrOffDiagonalElements];
+      else
+	TmpComponents = new double [1l];
+    }
+  try
+    {
+      communicator.Reduce(this->DiagonalElements, TmpComponents, this->NbrRow, MPI::DOUBLE, MPI::SUM, id);
+    } 
+  catch ( MPI::Exception e)
+    {
+      cout << "MPI ERROR: " << e.Get_error_code() << " -" << e.Get_error_string()  << endl;
+    }  
+  if (id == communicator.Get_rank())
+    {
+      for (int i = 0; i < this->NbrRow; ++i)
+	this->DiagonalElements[i] = TmpComponents[i];
+    }
+  try
+    {
+      communicator.Reduce(this->RealOffDiagonalElements, TmpComponents, NbrOffDiagonalElements, MPI::DOUBLE, MPI::SUM, id);
+    } 
+  catch ( MPI::Exception e)
+    {
+      cout << "MPI ERROR: " << e.Get_error_code() << " -" << e.Get_error_string()  << endl;
+    }  
+  if (id == communicator.Get_rank())
+    {
+      for (long i = 0l; i < NbrOffDiagonalElements; ++i)
+	this->RealOffDiagonalElements[i] = TmpComponents[i];
+    }
+  try
+    {
+      communicator.Reduce(this->ImaginaryOffDiagonalElements, TmpComponents, NbrOffDiagonalElements, MPI::DOUBLE, MPI::SUM, id);
+    } 
+  catch ( MPI::Exception e)
+    {
+      cout << "MPI ERROR: " << e.Get_error_code() << " -" << e.Get_error_string()  << endl;
+    }  
+  if (id == communicator.Get_rank())
+    {
+      for (long i = 0l; i < NbrOffDiagonalElements; ++i)
+	this->ImaginaryOffDiagonalElements[i] = TmpComponents[i];
+      delete[] TmpComponents;
+    }
+  return *this;
+}
+
+// create a new matrix on each MPI node which is an exact clone of the broadcasted one
+//
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts the matrix
+// zeroFlag = true if all coordinates have to be set to zero
+// return value = pointer to new matrix 
+
+Matrix* HermitianMatrix::BroadcastClone(MPI::Intracomm& communicator, int id)
+{
+  if (id == communicator.Get_rank())
+    {
+      communicator.Bcast(&this->MatrixType, 1, MPI::INT, id);
+      int TmpArray[3];
+      TmpArray[0] = this->NbrRow;
+      TmpArray[1] = this->NbrColumn;
+      TmpArray[2] = 2;
+      communicator.Bcast(TmpArray, 3, MPI::INT, id);      
+      long NbrOffDiagonalElements = (((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l;
+      communicator.Bcast(this->DiagonalElements, this->NbrRow, MPI::DOUBLE, id);    
+      communicator.Bcast(this->RealOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id);    
+      communicator.Bcast(this->ImaginaryOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id);    
+    }
+  else
+    {
+      int Type = 0;
+      communicator.Bcast(&Type, 1, MPI::INT, id);  
+      return new HermitianMatrix(communicator, id);
+    }
+  return 0;
+}
+
+// create a new matrix on each MPI node with same size and same type but non-initialized components
+//
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts the matrix
+// zeroFlag = true if all coordinates have to be set to zero
+// return value = pointer to new matrix 
+
+Matrix* HermitianMatrix::BroadcastEmptyClone(MPI::Intracomm& communicator, int id, bool zeroFlag)
+{
+  if (id == communicator.Get_rank())
+    {
+      communicator.Bcast(&this->MatrixType, 1, MPI::INT, id);
+      int TmpArray[3];
+      TmpArray[0] = this->NbrRow;
+      TmpArray[1] = this->NbrColumn;
+      TmpArray[2] = 0;
+      if (zeroFlag == true)
+	{
+	  TmpArray[2] = 1;
+	}
+      communicator.Bcast(TmpArray, 3, MPI::INT, id);      
+    }
+  else
+    {
+      int Type = 0;
+      communicator.Bcast(&Type, 1, MPI::INT, id);  
+      return new HermitianMatrix(communicator, id);
+    }
+  return 0;
 }
 
 #endif

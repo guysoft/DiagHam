@@ -398,11 +398,22 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // return value = reference on the vector
   virtual Vector& SumVector(Vector& vector);
 
+  // add current matrix to the one of the master nide
+  // 
+  // matrix = reference on the matrix to add (or the destination matrix of the master node)
+  // return value = reference on the matrix
+  virtual Matrix& SumMatrix(Matrix& matrix);
+
   // reassemble current vector into the one of the master node
   // 
   // vector = reference on the vector to add (or the destination vector of the master node)
   // return value = reference on the vector
   virtual Vector& ReassembleVector(Vector& vector);
+
+  // broadcast a matrix on each slave node
+  //
+  // matrix = atrix to broadcast or to the matrix where the content will be stored
+  virtual void BroadcastMatrix(Matrix& matrix);
 
   // broadcast a matrix on each slave node
   //
@@ -505,6 +516,20 @@ inline Vector& SimpleMPIArchitecture::SumVector(Vector& vector)
   return vector.SumVector(MPI::COMM_WORLD, 0);
 #else
   return vector;
+#endif
+}
+
+// add current matrix to the one of the master nide
+// 
+// matrix = reference on the matrix to add (or the destination matrix of the master node)
+// return value = reference on the matrix
+
+inline Matrix& SimpleMPIArchitecture::SumMatrix(Matrix& matrix)
+{
+#ifdef __MPI__
+  return matrix.SumMatrix(MPI::COMM_WORLD, 0);
+#else
+  return matrix;
 #endif
 }
 

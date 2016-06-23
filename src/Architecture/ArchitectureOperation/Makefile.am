@@ -26,4 +26,5 @@ VectorSparseTensorMultiplyOperation.cc \
 TensorMatrixContractionOperation.cc \
 MPOApplyOnTensorOperation.cc \
 TensorVectorContractionOperation.cc \
-OperatorMultipleMatrixElementOperation.cc
+OperatorMultipleMatrixElementOperation.cc \
+MatrixFullDiagonalizeOperation.cc

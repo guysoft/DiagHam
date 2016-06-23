@@ -1036,6 +1036,17 @@ Vector** SimpleMPIArchitecture::ScatterVectorArray(int& nbrVectors, Vector* vect
 
 // broadcast a matrix on each slave node
 //
+// matrix = atrix to broadcast or to the matrix where the content will be stored
+
+void SimpleMPIArchitecture::BroadcastMatrix(Matrix& matrix)
+{
+#ifdef __MPI__
+  matrix.BroadcastMatrix(MPI::COMM_WORLD, 0);
+#endif  
+}
+
+// broadcast a matrix on each slave node
+//
 // matrix = pointer to the matrix tobroadcast  (only usefull for the master node)
 // return value = pointer to the broadcasted matrix or null pointer if an error occured
 

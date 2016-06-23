@@ -525,11 +525,11 @@ int main(int argc, char** argv)
 	      TmpMatrixUpLayerIntegratedCharge.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[0][i]);
 	      TmpMatrixTotalIntegratedCharge.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[0][i]);
 	      TmpFactor = TmpPrefactor1 * exp(-(XPosition - TmpShift + (TmpPrefactor2 * ((double) i))) * (XPosition - TmpShift + (TmpPrefactor2 * ((double) i))));
-	      TmpMatrixDownLayer.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][i]);
-	      TmpMatrixTotal.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][i]);
+	      TmpMatrixDownLayer.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][LzMax - i]);
+	      TmpMatrixTotal.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][LzMax - i]);
 	      TmpFactor = 0.5 * (1.0 + erf(XPosition - TmpShift + (TmpPrefactor2 * ((double) i))));
-	      TmpMatrixDownLayerIntegratedCharge.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][i]);
-	      TmpMatrixTotalIntegratedCharge.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][i]);
+	      TmpMatrixDownLayerIntegratedCharge.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][LzMax - i]);
+	      TmpMatrixTotalIntegratedCharge.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][LzMax - i]);
 	    }
 	  TmpMatrixUpLayer.LapackDiagonalize(TmpEigenvaluesUpLayer);
 	  TmpMatrixUpLayerIntegratedCharge.LapackDiagonalize(TmpEigenvaluesUpLayerIntegratedCharge);

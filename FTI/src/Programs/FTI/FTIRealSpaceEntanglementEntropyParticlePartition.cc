@@ -12,6 +12,7 @@
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
+#include "Architecture/ArchitectureOperation/MatrixFullDiagonalizeOperation.h"
 
 #include "Tools/FQHEFiles/FQHEOnSquareLatticeFileTools.h"
 #include "Tools/FTIFiles/FTIHubbardModelFileTools.h"
@@ -64,6 +65,9 @@ int main(int argc, char** argv)
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
+#endif
+#ifdef __SCALAPACK__
+  (*ToolsGroup) += new BooleanOption  ('\n', "use-scalapack", "use SCALAPACK libraries instead of DiagHam or LAPACK libraries");
 #endif
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -240,7 +244,7 @@ int main(int argc, char** argv)
 	}
     }
     
-    if (DensityMatrixFileName != 0)
+  if ((DensityMatrixFileName != 0) && (Architecture.GetArchitecture()->CanWriteOnDisk()))
     {
       ofstream DensityMatrixFile;
       DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out); 
@@ -427,22 +431,30 @@ int main(int argc, char** argv)
 	  return 0;
 	}
     }
-  
-  ofstream File;
+
+  char* OutputFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "partent");
   if (Manager.GetString("output-file") != 0)
-    File.open(Manager.GetString("output-file"), ios::binary | ios::out);
+    {
+      OutputFileName = new char [strlen(Manager.GetString("output-file")) + 1];
+      strcpy(OutputFileName, Manager.GetString("output-file"));
+    }
   else
     {
-      char* TmpFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "partent");
-      if (TmpFileName == 0)
+      OutputFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "partent");
+      if (OutputFileName == 0)
 	{
 	  cout << "no vec extension was find in " << GroundStateFiles[0] << " file name" << endl;
 	  return 0;
 	}
-      File.open(TmpFileName, ios::binary | ios::out);
-      delete[] TmpFileName;
     }
-  File.precision(14);
+
+  if (Architecture.GetArchitecture()->CanWriteOnDisk())  
+    {
+      ofstream File;
+      File.open(OutputFileName, ios::binary | ios::out);
+      File.precision(14);
+      File.close();
+    }
   cout.precision(14);
   
   int MaxSubsystemNbrParticles = (NbrParticles >> 1) + (NbrParticles & 1);
@@ -795,6 +807,21 @@ int main(int argc, char** argv)
 			  
 			}
 		      RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
+#ifdef __SCALAPACK__
+		      if (Manager.GetBoolean("use-scalapack") == true)
+			{
+			  if ((Architecture.GetArchitecture()->GetArchitectureID() & AbstractArchitecture::WithCommunicator) == 0)
+			    {
+			      cout << "error : SCALAPACK requires a MPI enable architecture" << endl;
+			      return 1;
+			    }	  
+			  MatrixFullDiagonalizeOperation TmpOperation(&PartialDensityMatrix);
+			  TmpOperation.ApplyOperation(Architecture.GetArchitecture());
+			  TmpDiag = TmpOperation.GetDiagonalizedMatrix();
+			}
+		      else
+			{
+#endif		  
 #ifdef __LAPACK__
 		      if (LapackFlag == true)
 			{
@@ -807,12 +834,16 @@ int main(int argc, char** argv)
 #else
 		      PartialDensityMatrix.Diagonalize(TmpDiag);
 #endif		  
+#ifdef __SCALAPACK__
+			}
+#endif		  
 		      TmpDiag.SortMatrixDownOrder();
 		      
-		      if (DensityMatrixFileName != 0)
+		      if ((DensityMatrixFileName != 0) &&(Architecture.GetArchitecture()->CanWriteOnDisk()))
 			{ 
 			  ofstream DensityMatrixFile;
-			  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 		      DensityMatrixFile.precision(14);
+			  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 		      
+			  DensityMatrixFile.precision(14);
 			  double Trace = 0.0;
 			  if (TwoDTranslationFlag == false)
 			    {
@@ -870,7 +901,7 @@ int main(int argc, char** argv)
 		    if (PartialDensityMatrix.GetNbrRow() == 1)
 		      {
 			double TmpValue = PartialDensityMatrix(0,0);
-			if (DensityMatrixFileName != 0)
+			if ((DensityMatrixFileName != 0) &&(Architecture.GetArchitecture()->CanWriteOnDisk()))
 			  {
 			    ofstream DensityMatrixFile;
 			    DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 		DensityMatrixFile.precision(14);
@@ -912,9 +943,15 @@ int main(int argc, char** argv)
 		}
 	    }
 	}
-      File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
+      if (Architecture.GetArchitecture()->CanWriteOnDisk())  
+	{
+	  ofstream File;
+	  File.open(OutputFileName, ios::binary | ios::out | ios::app);
+	  File.precision(14);
+	  File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
+	  File.close();
+	}
     }
-  File.close();
   
   return 0;
 }

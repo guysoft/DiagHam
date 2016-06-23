@@ -127,6 +127,13 @@ class FQHETorusParticleEntanglementSpectrumOperation: public AbstractPrecalculat
   // return value = true if no error occurs
   virtual bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture);
   
+  
+  // apply operation for SimpleMPI architecture
+  //
+  // architecture = pointer to the architecture
+  // return value = true if no error occurs
+  bool ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture);
+  
   // apply operation (architecture independent)
   //
   // return value = true if no error occurs

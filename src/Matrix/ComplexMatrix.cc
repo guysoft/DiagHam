@@ -260,11 +260,13 @@ ComplexMatrix::ComplexMatrix(MPI::Intracomm& communicator, int id, bool broadcas
 	this->Columns[i] = ComplexVector (this->NbrRow, true);
     }
   else
-    if (TmpArray[2] == 2)
-      {
-	for (int i = 0; i < this->NbrColumn; i++)
-	  this->Columns[i] = ComplexVector (communicator, id, broadcast);
-      }
+    {
+      if (TmpArray[2] == 2)
+	{
+	  for (int i = 0; i < this->NbrColumn; i++)
+	    this->Columns[i] = ComplexVector (communicator, id, broadcast);
+	}
+    }
   this->Flag.Initialize();
 }
 
