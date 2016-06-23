@@ -547,126 +547,6 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::GenerateStates
   return TmpLargeHilbertSpaceDimension;
 }
 
-// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given momentum sector.
-// 
-// nbrParticleSector = number of particles that belong to the subsytem 
-// kxSector = subsystem momentum along the x direction
-// kySector = subsystem momentum along the x direction
-// szSymmetrySector = subsystem Sz symmetry sector
-// groundState = reference on the total system ground state
-// architecture = pointer to the architecture to use parallelized algorithm 
-// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
-
-HermitianMatrix FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, int szSymmetrySector, 
-															    ComplexVector& groundState, AbstractArchitecture* architecture)
-{
-  if (nbrParticleSector == 0)
-    {
-      if ((kxSector == 0) && (kySector == 0) && (szSymmetrySector == 1))
-	{
-	  HermitianMatrix TmpDensityMatrix(1, true);
-	  TmpDensityMatrix(0, 0) = 1.0;
-	  return TmpDensityMatrix;
-	}
-    }
-  if (nbrParticleSector == this->NbrFermions)
-    {
-      if ((kxSector == this->XMomentum) && (kySector == this->YMomentum) && 
-	  ((((double) szSymmetrySector) * this->SzParitySign) > 0.0))
-	{
-	  HermitianMatrix TmpDensityMatrix(1, true);
-	  TmpDensityMatrix(0, 0) = 1.0;
-	  return TmpDensityMatrix;
-	}
-    }
-  int ComplementaryNbrParticles = this->NbrFermions - nbrParticleSector;
-  int ComplementaryKxMomentum = (this->XMomentum - kxSector);
-  if (ComplementaryKxMomentum < 0)
-    ComplementaryKxMomentum += this->MaxXMomentum;
-  int ComplementaryKyMomentum = (this->YMomentum - kySector);
-  if (ComplementaryKyMomentum < 0)
-    ComplementaryKyMomentum += this->MaxYMomentum;
-  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation SubsytemSpace (nbrParticleSector, this->NbrSite, (szSymmetrySector == -1),
-									     kxSector, this->MaxXMomentum, kySector, this->MaxYMomentum);
-  HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
-  FermionOnLatticeWithSpinRealSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSite);
-  cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
-  FQHETorusParticleEntanglementSpectrumOperation Operation(this, &SubsytemSpace, (ParticleOnTorusWithSpinAndMagneticTranslations*) &ComplementarySpace, groundState, TmpDensityMatrix);
-  Operation.ApplyOperation(architecture);
-  cout << "nbr matrix elements non zero = " << Operation.GetNbrNonZeroMatrixElements() << endl;
-  if (Operation.GetNbrNonZeroMatrixElements() > 0)	
-    return TmpDensityMatrix;
-  else
-    {
-      HermitianMatrix TmpDensityMatrixZero;
-      return TmpDensityMatrixZero;
-    }
-}
-  
-// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in given momentum and Sz sectors.
-//
-// nbrParticleSector = number of particles that belong to the subsytem
-// szSector  = twice the total Sz value of the subsytem
-// kxSector = subsystem momentum along the x direction
-// kySector = subsystem momentum along the x direction
-// szSymmetrySector = subsystem Sz symmetry sector
-// groundState = reference on the total system ground state
-// architecture = pointer to the architecture to use parallelized algorithm
-// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
-
-HermitianMatrix FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int szSector, int kxSector, int kySector, int szSymmetrySector, 
-															    ComplexVector& groundState, AbstractArchitecture* architecture)
-{
-  if (nbrParticleSector == 0)
-    {
-      if ((kxSector == 0) && (kySector == 0) && (szSector == 0) && (szSymmetrySector == 1))
-	{
-	  HermitianMatrix TmpDensityMatrix(1, true);
-	  TmpDensityMatrix(0, 0) = 1.0;
-	  return TmpDensityMatrix;
-	}
-    }
-  if (nbrParticleSector == this->NbrFermions)
-    {
-      if ((kxSector == this->XMomentum) && (kySector == this->YMomentum) && (this->TotalSpin == szSector) && 
-	  ((((double) szSymmetrySector) * this->SzParitySign) > 0.0))
-	{
-	  HermitianMatrix TmpDensityMatrix(1, true);
-	  TmpDensityMatrix(0, 0) = 1.0;
-	  return TmpDensityMatrix;
-	}
-    }
-  int ComplementaryNbrParticles = this->NbrFermions - nbrParticleSector;
-  int ComplementarySzSector = this->TotalSpin - szSector;
-  if (abs(ComplementarySzSector) > ComplementaryNbrParticles)
-    {
-      HermitianMatrix TmpDensityMatrixZero;
-      return TmpDensityMatrixZero;
-    }
-
-  int ComplementaryKxMomentum = (this->XMomentum - kxSector);
-  if (ComplementaryKxMomentum < 0)
-    ComplementaryKxMomentum += this->MaxXMomentum;
-  int ComplementaryKyMomentum = (this->YMomentum - kySector);
-  if (ComplementaryKyMomentum < 0)
-    ComplementaryKyMomentum += this->MaxYMomentum;
-  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation SubsytemSpace (nbrParticleSector, szSector, this->NbrSite, (szSymmetrySector == -1), 
-									     kxSector, this->MaxXMomentum, kySector, this->MaxYMomentum);
-  HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
-  FermionOnLatticeWithSpinRealSpace ComplementarySpace (ComplementaryNbrParticles, ComplementarySzSector, this->NbrSite);
-  cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
-  FQHETorusParticleEntanglementSpectrumOperation Operation(this, &SubsytemSpace, (ParticleOnTorusWithSpinAndMagneticTranslations*) &ComplementarySpace, groundState, TmpDensityMatrix);
-  Operation.ApplyOperation(architecture);
-  cout << "nbr matrix elements non zero = " << Operation.GetNbrNonZeroMatrixElements() << endl;
-  if (Operation.GetNbrNonZeroMatrixElements() > 0)	
-    return TmpDensityMatrix;
-  else
-    {
-      HermitianMatrix TmpDensityMatrixZero;
-      return TmpDensityMatrixZero;
-    }
-}
-  
 // core part of the evaluation density matrix particle partition calculation
 // 
 // minIndex = first index to consider in source Hilbert space
@@ -682,7 +562,7 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
 														     ParticleOnTorusWithSpinAndMagneticTranslations* destinationHilbertSpace,
 														     ComplexVector& groundState, HermitianMatrix* densityMatrix)
 {
-  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation* TmpDestinationHilbertSpace =  (FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation*) destinationHilbertSpace;
+  FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* TmpDestinationHilbertSpace =  (FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*) destinationHilbertSpace;
   FermionOnLatticeWithSpinRealSpace* TmpHilbertSpace = (FermionOnLatticeWithSpinRealSpace*) complementaryHilbertSpace;
   FermionOnLatticeWithSpinRealSpace* TmpDestinationFullHilbertSpace = 0;
   if (TmpDestinationHilbertSpace->SzFlag == false)
@@ -716,6 +596,7 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
   long TmpNbrNonZeroElements = 0l;
   BinomialCoefficients TmpBinomial (this->NbrFermions);
   double TmpInvBinomial = 1.0 / sqrt(TmpBinomial(this->NbrFermions, TmpDestinationHilbertSpace->NbrFermions));
+  this->ProdATemporaryNbrStateInOrbit = 1;
   for (; minIndex < MaxIndex; ++minIndex)    
     {
       int Pos = 0;
@@ -727,21 +608,21 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
 	    {
 	      int TmpDestinationNbrTranslationX;
 	      int TmpDestinationNbrTranslationY;
-	      double TmpDestinationCoefficient;
-	      unsigned long TmpCanonicalState2 = TmpState2;
-	      int RealDestinationIndex = TmpDestinationHilbertSpace->SymmetrizeAdAdResult(TmpCanonicalState2, TmpDestinationCoefficient,
-											  TmpDestinationNbrTranslationX, TmpDestinationNbrTranslationY);
-// 	      unsigned long TmpCanonicalState2 = TmpDestinationHilbertSpace->FindCanonicalForm(TmpState2, TmpDestinationNbrTranslationX, TmpDestinationNbrTranslationY);
-// 	      int TmpDestinationLzMax = 2 * TmpDestinationHilbertSpace->NbrSite - 1;
-// 	      while ((TmpCanonicalState2 >> TmpDestinationLzMax) == 0x0ul)
-// 		--TmpDestinationLzMax;
-// 	      int RealDestinationIndex = TmpDestinationHilbertSpace->FindStateIndex(TmpCanonicalState2, TmpDestinationLzMax);
+//	      double TmpDestinationCoefficient;
+//	      unsigned long TmpCanonicalState2 = TmpState2;
+// 	      int RealDestinationIndex = TmpDestinationHilbertSpace->SymmetrizeAdAdResult(TmpCanonicalState2, TmpDestinationCoefficient,
+// 											  TmpDestinationNbrTranslationX, TmpDestinationNbrTranslationY);
+ 	      unsigned long TmpCanonicalState2 = TmpDestinationHilbertSpace->FindCanonicalForm(TmpState2, TmpDestinationNbrTranslationX, TmpDestinationNbrTranslationY);
+ 	      int TmpDestinationLzMax = 2 * TmpDestinationHilbertSpace->NbrSite - 1;
+ 	      while ((TmpCanonicalState2 >> TmpDestinationLzMax) == 0x0ul)
+ 		--TmpDestinationLzMax;
+ 	      int RealDestinationIndex = TmpDestinationHilbertSpace->FindStateIndex(TmpCanonicalState2, TmpDestinationLzMax);
 	      if (RealDestinationIndex < TmpDestinationHilbertSpace->GetHilbertSpaceDimension())
 		{
 		  int TmpLzMax = 2 * this->NbrSite - 1;
 		  int TmpNbrTranslationX;
 		  int TmpNbrTranslationY;
-		  double TmpCoefficient;
+		  double TmpCoefficient = 1.0;
 // 		  unsigned long TmpState3 = this->FindCanonicalForm((TmpState | TmpState2), TmpNbrTranslationX, TmpNbrTranslationY);
 // 		  while ((TmpState3 >> TmpLzMax) == 0x0ul)
 // 		    --TmpLzMax;
@@ -755,9 +636,8 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
 		      int NbrTranslationY = (this->MaxYMomentum - TmpNbrTranslationY) % this->MaxYMomentum;
 		      int DestinationNbrTranslationX = (this->MaxXMomentum - TmpDestinationNbrTranslationX) % this->MaxXMomentum;
 		      int DestinationNbrTranslationY = (this->MaxYMomentum - TmpDestinationNbrTranslationY) % this->MaxYMomentum;
-		      Complex Coefficient = (TmpCoefficient * TmpDestinationCoefficient * TmpInvBinomial) * FourrierCoefficients[TmpNbrTranslationX][TmpNbrTranslationY] * FourrierCoefficientsDestination[TmpDestinationNbrTranslationX][TmpDestinationNbrTranslationY] / sqrt ((double) (this->NbrStateInOrbit[TmpPos] * TmpDestinationHilbertSpace->NbrStateInOrbit[RealDestinationIndex]));
-		      unsigned long Sign =  ((this->ReorderingSign[TmpPos] >> ((NbrTranslationY * this->MaxXMomentum) + NbrTranslationX))
-					     ^ (TmpDestinationHilbertSpace->ReorderingSign[RealDestinationIndex] >> (DestinationNbrTranslationY * TmpDestinationHilbertSpace->MaxXMomentum + DestinationNbrTranslationX))) & 0x1ul;
+		      Complex Coefficient = (TmpCoefficient * TmpInvBinomial) * FourrierCoefficients[TmpNbrTranslationX][TmpNbrTranslationY] * FourrierCoefficientsDestination[TmpDestinationNbrTranslationX][TmpDestinationNbrTranslationY] / sqrt ((double) (TmpDestinationHilbertSpace->NbrStateInOrbit[RealDestinationIndex]));
+		      unsigned long Sign =  ((TmpDestinationHilbertSpace->ReorderingSign[RealDestinationIndex] >> (DestinationNbrTranslationY * TmpDestinationHilbertSpace->MaxXMomentum + DestinationNbrTranslationX))) & 0x1ul;
 		      int Pos2 = 2 * TmpDestinationHilbertSpace->NbrSite - 1;
 		      unsigned long TmpState22 = TmpState2;
 		      while ((Pos2 > 0) && (TmpState22 != 0x0ul))

@@ -21,6 +21,7 @@
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
 
 #include <iostream>
@@ -97,6 +98,7 @@ int main(int argc, char** argv)
   double* Coefficients = 0;
   bool ShowTimeFlag = Manager.GetBoolean("show-time");
   int TotalSpin = 0;
+  int SzSymmetrySector = 0;
   bool TwoDTranslationFlag = false;
   bool SU2SpinFlag = Manager.GetBoolean("su2-spin");
   bool GutzwillerFlag = false;
@@ -165,7 +167,7 @@ int main(int argc, char** argv)
 	 }
     }
   bool TotalSpinConservedFlag;
-  if (HofstadterFlag == false )
+  if (HofstadterFlag == false)
     {     
       if (FTIHubbardModelFindSystemInfoFromVectorFileName(GroundStateFiles[0], NbrParticles, NbrSites, Statistics, GutzwillerFlag) == false)
 	{
@@ -198,18 +200,18 @@ int main(int argc, char** argv)
     }
   else
     {
-      if (FTIHofstadterdModelFindSystemInfoFromVectorFileName(GroundStateFiles[0],NbrParticles, NbrSiteX, NbrSiteY, UnitCellX, UnitCellY, Statistics, GutzwillerFlag) == false) 
+      if (FTIHofstadterdModelFindSystemInfoFromVectorFileName(GroundStateFiles[0], NbrParticles, NbrSiteX, NbrSiteY, UnitCellX, UnitCellY, Statistics, GutzwillerFlag) == false) 
 	{
 	  cout << "error while retrieving system parameters from file name " << GroundStateFiles[0] << endl;
 	  return -1;
 	}
-      NbrSites = NbrSiteX* NbrSiteY* UnitCellX* UnitCellY;
+      NbrSites = NbrSiteX * NbrSiteY * UnitCellX * UnitCellY;
       TwoDTranslationFlag = FTIHofstadterdModelWith2DTranslationFindSystemInfoFromVectorFileName(GroundStateFiles[0], NbrParticles, TotalKx[0], TotalKy[0],NbrSiteX, NbrSiteY, UnitCellX, UnitCellY, Statistics, GutzwillerFlag);
-      TotalSpinConservedFlag = FTIHofstadterModelWithSzFindSystemInfoFromVectorFileName(GroundStateFiles[0], TotalSpin);
+      TotalSpinConservedFlag = FTIHofstadterModelWithSzFindSystemInfoFromVectorFileName(GroundStateFiles[0], TotalSpin, SzSymmetrySector);
 
-      if (      TotalSpinConservedFlag == true ) 
-	cout <<"Detecting spin"<<endl;
-      cout << TotalSpin<<endl;
+      if (TotalSpinConservedFlag == true) 
+	cout << "Detecting spin" << endl;
+      cout << TotalSpin <<endl;
 	
       if (TwoDTranslationFlag == true)
 	{ 
@@ -360,16 +362,35 @@ int main(int argc, char** argv)
 			      Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpace (NbrParticles, NbrSites);
 			    }
 			  else
-			    Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+			    {
+			      if (SzSymmetrySector != 0)
+				{
+				  Spaces[TmpIndex] = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles, NbrSites, (SzSymmetrySector == -1), 
+														      TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+				}
+			      else
+				{
+				  Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+				}
+			    }
 			}
 		      else
 			{
 			  if (TwoDTranslationFlag == false)
-			    Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpace (NbrParticles, TotalSpin, NbrSites, 10000000);
+			    {
+			      Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpace (NbrParticles, TotalSpin, NbrSites, 10000000);
+			    }
 			  else
 			    {
-			      cout <<" I should be here"<<endl;
-			      Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, TotalSpin, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY, 10000000);
+			      if (SzSymmetrySector != 0)
+				{
+				  Spaces[TmpIndex] = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles, TotalSpin, NbrSites, (SzSymmetrySector == -1),
+														      TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY, 10000000);
+				}
+			      else
+				{
+				  Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, TotalSpin, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY, 10000000);
+				}
 			    }
 			}
 		    }

@@ -47,6 +47,7 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   friend class FermionOnSquareLatticeWithSU4SpinMomentumSpace;
   friend class ParticleOnLatticeRealSpaceWithSpinAnd2DTranslationSuperconductorOrderParameterOperator;
   friend class ParticleOnLatticeRealSpaceWithSpinSuperconductorMomentumSpaceOrderParameterOperator;
+  friend class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation;
 
  protected:
 
