@@ -540,13 +540,7 @@ ComplexVector* TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::Hermitian
 		//BA
 		TmpIndex1 = this->GetLinearizedIndex(j - 1, k, 1);
 		TmpIndex2 = this->GetLinearizedIndex(j, k, 0);
-		if (j == 0)
-		{
-		  TmpIndex3 = TmpIndex2;
-		  TmpIndex2 = TmpIndex1;
-		  TmpIndex1 = TmpIndex3;
-		}
-		pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		pos = this->Chain->SmiSpj(min(TmpIndex1, TmpIndex2), max(TmpIndex1, TmpIndex2), i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
 		if (pos < i)
 		{
 		  for (int l = 0; l < nbrVectors; ++l)
@@ -562,13 +556,7 @@ ComplexVector* TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::Hermitian
 		//CA
 		TmpIndex1 = this->GetLinearizedIndex(j, k, 0);
 		TmpIndex2 = this->GetLinearizedIndex(j, k - 1, 2);
-		if (k == 0)
-		{
-		  TmpIndex3 = TmpIndex2;
-		  TmpIndex2 = TmpIndex1;
-		  TmpIndex1 = TmpIndex3;
-		}
-		pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		pos = this->Chain->SmiSpj(min(TmpIndex1, TmpIndex2), max(TmpIndex1, TmpIndex2), i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
 		if (pos < i)
 		{
 		  for (int l = 0; l < nbrVectors; ++l)

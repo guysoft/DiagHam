@@ -364,7 +364,10 @@ int Spin1_2ChainNewAnd2DTranslation::FindStateIndex(unsigned long stateDescripti
 
 long Spin1_2ChainNewAnd2DTranslation::GenerateStates()
 {
+  
+  cout << (this->LargeHilbertSpaceDimension) << endl;
   this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+  cout << "here" << endl;
   this->RawGenerateStates((this->Sz + this->ChainLength) >> 1, this->ChainLength - 1, 0l);
   long TmpLargeHilbertSpaceDimension = 0l;
   int NbrTranslationX;
