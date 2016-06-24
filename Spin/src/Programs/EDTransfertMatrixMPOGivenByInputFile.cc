@@ -67,7 +67,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('L', "length", "length of the spin chain", 4);
   (*SystemGroup) += new SingleStringOption  ('\n', "tensor-file", "name of the file containing the eigenstate to be displayed");
   (*SystemGroup) += new SingleStringOption  ('\n', "peps-name", "name of the peps used to form the output file name");
-  (*SystemGroup) += new BooleanOption ('\n', "six-vertex", "use the simple version (i.e. not doubled haha) code on the six vertex model to test the code");
+  (*SystemGroup) += new BooleanOption ('\n', "spin-half", "use spin-half virtual space");
   (*SystemGroup) += new BooleanOption ('c', "complex", "use complex version of the code");
   (*SystemGroup) += new BooleanOption ('\n', "doubled", "use double version of the code");
   (*SystemGroup) += new BooleanOption ('\n', "translation", "use translation symmetry");
@@ -238,7 +238,7 @@ int main(int argc, char** argv)
 	    {
 	      for(int ZvalueKet = 0 ; ZvalueKet <= ZvalueMax;ZvalueKet++)
 		{
-		  if(Manager.GetBoolean("six-vertex") == true)
+		  if(Manager.GetBoolean("spin-half") == true)
 		    {
 		      if (DoubledFlag)
 			{
