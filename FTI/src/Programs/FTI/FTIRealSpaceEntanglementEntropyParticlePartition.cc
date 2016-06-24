@@ -63,6 +63,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "particles have a SU(2) spin");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
+  (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
+
+  (*OutputGroup) += new SingleIntegerOption  ('\n', "na-eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with a fixed total Na value", 0);
+  (*OutputGroup) += new SingleIntegerOption  ('\n', "sza-eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with a fixed total Sza value", 0);
+  (*OutputGroup) += new SingleIntegerOption  ('\n', "nbr-eigenstates", "number of reduced density matrix eigenstates to compute (0 if all)", 0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -108,6 +113,11 @@ int main(int argc, char** argv)
   bool GutzwillerFlag = false;
   bool HofstadterFlag = Manager.GetBoolean("hofstadter");
 
+  bool EigenstateFlag = Manager.GetBoolean("density-eigenstate");
+  int FilterNa = Manager.GetInteger("na-eigenstate");
+  int NbrEigenstates = Manager.GetInteger("nbr-eigenstates");
+  int FilterSza  = Manager.GetInteger("sza-eigenstate");
+  
   if ((Manager.GetString("ground-file") == 0) && (Manager.GetString("degenerated-groundstate") == 0))
     {
       cout << "error, a ground state file should be provided. See man page for option syntax or type FTIEntanglementEntropyParticlePartition -h" << endl;
@@ -825,7 +835,37 @@ int main(int argc, char** argv)
 #ifdef __LAPACK__
 		      if (LapackFlag == true)
 			{
-			  PartialDensityMatrix.LapackDiagonalize(TmpDiag);
+			  if (((EigenstateFlag == true) && (FilterNa ==  SubsystemNbrParticles) )&& (((SU2SpinFlag == false) || (Manager.GetBoolean("decoupled") == false)) || (FilterSza ==  SubsystemTotalSz)  ))
+			    {
+			      ComplexMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(), PartialDensityMatrix.GetNbrRow(), true);
+			      TmpEigenstates.SetToIdentity();
+			      PartialDensityMatrix.LapackDiagonalize(TmpDiag, TmpEigenstates);
+			      TmpDiag.SortMatrixDownOrder(TmpEigenstates);
+			      char* TmpEigenstateName;
+			      char* TmpSuffix = new char [512];
+			      int MaxNbrEigenstates = NbrEigenstates;
+			      if (NbrEigenstates == 0)
+				MaxNbrEigenstates = PartialDensityMatrix.GetNbrRow();
+			      for (int i = 0; i < MaxNbrEigenstates; ++i)
+				{
+				  if (TmpDiag[i] > 1e-14)
+				    {
+				      if ((SU2SpinFlag == false) || (Manager.GetBoolean("decoupled") == false))
+					{				  
+					  sprintf(TmpSuffix, "partent_na_%d_kxa_%d_kya_%d.%d.vec", SubsystemNbrParticles, SubsystemTotalKx,SubsystemTotalKy, i);
+					}
+				      else
+					sprintf(TmpSuffix, "partent_na_%d_sza_%d_kxa_%d_kya_%d.%d.vec", SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalKx,SubsystemTotalKy, i);
+				      
+				      TmpEigenstateName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", TmpSuffix);
+				      TmpEigenstates[i].WriteVector(TmpEigenstateName);
+				    }
+				}
+			      delete[] TmpEigenstateName;
+			      delete[] TmpSuffix;
+			    }
+			  else
+			    PartialDensityMatrix.LapackDiagonalize(TmpDiag);
 			}
 		      else
 			{
