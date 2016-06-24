@@ -587,21 +587,13 @@ bool MatrixFullDiagonalizeOperation::ArchitectureDependentApplyOperation(SimpleM
       double* LocalScalapackMatrix = new double[((long) LocalLeadingDimensionRow) * ((long) LocalLeadingDimensionColumn)];
       
       double Tmp;
-//       RealVector InputVector (this->Hamiltonian->GetHilbertSpaceDimension());
-//       RealVector OutputVector (this->Hamiltonian->GetHilbertSpaceDimension());
       for (int j = 1; j <= TmpGlobalNbrRow; ++j)
 	{
-// 	  int TmpNode = architecture->GetNodeIDFromIndex(j - 1);
-// 	  if (TmpNode ==  architecture->GetNodeNbr())
-// 	    {
-// 	      InputVector[j - 1] = 1.0;
-// 	      this->Hamiltonian->Multiply(InputVector, OutputVector, j - 1, 1);
-// 	    }
-// 	  architecture->BroadcastVector(TmpNode, OutputVector);
-//   	  for (int i = 1; i <= TmpGlobalNbrRow; ++i)
-// 	    {
-// 	      FORTRAN_NAME(pdelset) (LocalScalapackMatrix, &i, &j, Desc, &(OutputVector[i - 1]));
-// 	    }
+	  for (int i = 1; i <= TmpGlobalNbrRow; ++i)
+	    {
+	      this->InitialRealMatrix->GetMatrixElement(i - 1, j - 1, Tmp);
+	      FORTRAN_NAME(pdelset) (LocalScalapackMatrix, &i, &j, Desc, &Tmp);
+	    }
 	}
       
       if (architecture->IsMasterNode())
@@ -686,9 +678,10 @@ bool MatrixFullDiagonalizeOperation::ArchitectureDependentApplyOperation(SimpleM
 	  gettimeofday (&TotalStartingTime, 0);
 	}
 
+      this->DiagonalizedMatrix = RealDiagonalMatrix (Eigenvalues, TmpGlobalNbrRow);
+
       if (architecture->IsMasterNode())
  	{
- 	  this->DiagonalizedMatrix = RealDiagonalMatrix (Eigenvalues, TmpGlobalNbrRow);
 	  if (this->EigenstateFlag == true)
 	    {
 	      if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
@@ -818,7 +811,6 @@ bool MatrixFullDiagonalizeOperation::ArchitectureDependentApplyOperation(SimpleM
 	      architecture->SendToMaster(&LocalLeadingDimensionColumn, TmpNbrElement);
 	      architecture->SendToMaster(Eigenstates, TmpSize);
 	    }
-	  delete[] Eigenvalues;
 	}
       if (this->EigenstateFlag == true)
 	delete[] Eigenstates;

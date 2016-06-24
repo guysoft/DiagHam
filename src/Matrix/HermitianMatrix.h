@@ -40,6 +40,7 @@
 #include "Output/MathematicaOutput.h"
 #endif
 #include "GeneralTools/GarbageFlag.h"
+#include "MathTools/Complex.h"
 
 #include <iostream>
 
@@ -188,6 +189,20 @@ class HermitianMatrix : public Matrix
   // j = column position
   // x = value to add to matrix element
   void AddToMatrixElement(int i, int j, const Complex& x);
+
+  // add a value to a matrix element without performing any test on i and j, and assuming i <=j
+  //
+  // i = line position
+  // j = column position
+  // x = value to add to matrix element
+  void UnsafeAddToMatrixElement(int i, int j, double x);
+
+  // add a value  a matrix element without performing any test on i and j, and assuming i <=j 
+  //
+  // i = line position
+  // j = column position
+  // x = value to add to matrix element
+  void UnsafeAddToMatrixElement(int i, int j, const Complex& x);
 
   // Resize matrix
   //
@@ -542,5 +557,171 @@ class HermitianMatrix : public Matrix
   friend MathematicaOutput& operator << (MathematicaOutput& Str, const HermitianMatrix& P);
 
 };
+
+// get a matrix element (real part if complex)
+//
+// i = line position
+// j = column position
+// x = reference on the variable where to store the requested matrix element
+
+inline void HermitianMatrix::GetMatrixElement(int i, int j, double& x) const
+{
+  if ((i >= this->NbrRow) || (j >= this->NbrColumn))
+    return;
+  if (i == j)
+    {
+      x = this->DiagonalElements[i];
+    }
+  else
+    {
+      if (i > j)
+	{
+	  int tmp = j;
+	  j = i;
+	  i = tmp;
+	}
+      long Tmp = (long) j;
+      Tmp -= ((long) i) * ((long) (i - 2 * (this->NbrRow + this->Increment) + 3)) / 2l + 1l;
+      x = this->RealOffDiagonalElements[Tmp];
+    }
+}
+
+// get a matrix element
+//
+// i = line position
+// j = column position
+// x = reference on the variable where to store the requested matrix element
+
+inline void HermitianMatrix::GetMatrixElement(int i, int j, Complex& x) const
+{
+  if ((i >= this->NbrRow) || (j >= this->NbrColumn))
+    return;
+  if (i == j)
+    {
+      x = this->DiagonalElements[i];
+    }
+  else
+    {
+      if (i > j)
+	{
+	  long Tmp = (long) i;
+	  Tmp -= ((long) j) * ((long) (j - 2 * (this->NbrRow + this->Increment) + 3)) / 2l + 1l;
+	  x.Re = this->RealOffDiagonalElements[Tmp];
+	  x.Im = -this->ImaginaryOffDiagonalElements[Tmp];
+	}
+      else
+	{
+	  long Tmp = (long) j;
+	  Tmp -= ((long) i) * ((long) (i - 2 * (this->NbrRow + this->Increment) + 3)) / 2l + 1l;
+	  x.Re = this->RealOffDiagonalElements[Tmp];
+	  x.Im = this->ImaginaryOffDiagonalElements[Tmp];
+	}
+    }
+}
+
+// add a value to a matrix element
+//
+// i = line position
+// j = column position
+// x = value to add to matrix element
+
+inline void HermitianMatrix::AddToMatrixElement(int i, int j, double x)
+{
+  if ((i >= this->NbrRow) || (j >= this->NbrColumn))
+    return;
+  if (i == j)
+    {
+      this->DiagonalElements[i] += x;
+    }
+  else
+    {
+      if (i > j)
+	{
+	  int tmp = j;
+	  j = i;
+	  i = tmp;
+	}
+      long Tmp = (long) j;
+      Tmp -= ((long) i) * ((long) (i - 2 * (this->NbrRow + this->Increment) + 3)) / 2l + 1l;
+      this->RealOffDiagonalElements[Tmp] += x;
+    }
+}
+
+// add a value  a matrix element
+//
+// i = line position
+// j = column position
+// x = value to add to matrix element
+
+inline void HermitianMatrix::AddToMatrixElement(int i, int j, const Complex& x)
+{
+  if ((i >= this->NbrRow) || (j >= this->NbrColumn))
+    return;
+  else
+    {
+      if (i == j)
+	{
+	  this->DiagonalElements[i] += x.Re;
+	}
+      else
+	{
+	  if (i > j)
+	    {
+	      long Tmp = (long) i;
+	      Tmp -= ((long) j) * ((long) (j - 2 * (this->NbrRow + this->Increment) + 3)) / 2l + 1l;
+	      this->RealOffDiagonalElements[Tmp] += x.Re;
+	      this->ImaginaryOffDiagonalElements[Tmp] -= x.Im;	        
+	    }
+	  else
+	    {
+	      long Tmp = (long) j;
+	      Tmp -= ((long) i) * ((long) (i - 2 * (this->NbrRow + this->Increment) + 3)) / 2l + 1l;
+	      this->RealOffDiagonalElements[Tmp] += x.Re;
+	      this->ImaginaryOffDiagonalElements[Tmp] += x.Im;	        
+	    }
+	}
+    }
+}
+
+
+// add a value to a matrix element without performing any test on i and j, and assuming i <=j
+//
+// i = line position
+// j = column position
+// x = value to add to matrix element
+
+inline void HermitianMatrix::UnsafeAddToMatrixElement(int i, int j, double x)
+{
+  if (i == j)
+    {
+      this->DiagonalElements[i] += x;
+    }
+  else
+    {
+      long Tmp = (long) j;
+      Tmp -= ((long) i) * ((long) (i - 2 * (this->NbrRow + this->Increment) + 3)) / 2l + 1l;
+      this->RealOffDiagonalElements[Tmp] += x;
+    }
+}
+// add a value  a matrix element without performing any test on i and j, and assuming i <=j 
+//
+// i = line position
+// j = column position
+// x = value to add to matrix element
+  
+inline void HermitianMatrix::UnsafeAddToMatrixElement(int i, int j, const Complex& x)
+{
+  if (i == j)
+    {
+      this->DiagonalElements[i] += x.Re;
+    }
+  else
+    {
+      long Tmp = (long) j;
+      Tmp -= ((long) i) * ((long) (i - 2 * (this->NbrRow + this->Increment) + 3)) / 2l + 1l;
+      this->RealOffDiagonalElements[Tmp] += x.Re;
+      this->ImaginaryOffDiagonalElements[Tmp] += x.Im;	        
+    }
+}
 
 #endif
