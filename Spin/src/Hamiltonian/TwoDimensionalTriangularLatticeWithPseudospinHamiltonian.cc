@@ -427,50 +427,290 @@ RealVector& TwoDimensionalTriangularLatticeWithPseudospinHamiltonian::TwoDimensi
 RealVector* TwoDimensionalTriangularLatticeWithPseudospinHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
 										       int firstComponent, int nbrComponent)
 {
-  cout << "Error: TwoDimensionalTriangularLatticeWithPseudospinHamiltonian::LowLevelMultipleAddMultiply is not implemented" << endl;
-//   int LastComponent = firstComponent + nbrComponent;
-//   int dim = this->Chain->GetHilbertSpaceDimension();
-//   double coef;
-//   double coef2;
-//   int pos;
-//   int pos2;
-//   int MaxPos = this->NbrSpin - 1;
-//   double* TmpValues = new double[nbrVectors];
-//   for (int k = 0; k < nbrVectors; ++k)
-//     {
-//       RealVector& TmpSource = vSources[k];
-//       RealVector& TmpDestination = vDestinations[k];
-//       for (int i = firstComponent; i < LastComponent; ++i)
-// 	{
-// 	  TmpDestination[i] += this->SzSzContributions[i] * TmpSource[i];
-// 	}
-//     }
-//   for (int i = firstComponent; i < LastComponent; ++i)
-//     {
-//       for (int k = 0; k < nbrVectors; ++k)
-// 	{
-// 	  TmpValues[k] = vSources[k][i];
-// 	}
-//       for (int j = 0; j < this->NbrSpinX; j++)
-// 	{
-// 	  for (int k = 0; k < this->NbrSpinY; k++)
-// 	    {
-// 	      pos = this->Chain->Spi(this->GetLinearizedIndex(j, k), i, coef);
-// 	      if (pos != dim)
-// 		{
-// 		  for (int l = 0; l < nbrVectors; ++l)
-// 		    vDestinations[l][pos] += coef * this->HxFactors[j][k] * TmpValues[l];
-// 		}
-// 	      pos = this->Chain->Smi(this->GetLinearizedIndex(j, k), i, coef);
-// 	      if (pos != dim)
-// 		{
-// 		  for (int l = 0; l < nbrVectors; ++l)
-// 		    vDestinations[l][pos] += coef * this->HxFactors[j][k] * TmpValues[l];
-// 		}
-// 	    }
-// 	}
-//     }
-//   delete[] TmpValues;
+//   cout << "Error: TwoDimensionalTriangularLatticeWithPseudospinHamiltonian::LowLevelMultipleAddMultiply is not implemented" << endl;
+  int dim = this->Chain->GetHilbertSpaceDimension();
+  int LastComponent = firstComponent + nbrComponent;
+  double coef;
+  double coef2;
+  int pos;
+  int pos2;
+  int pos3;
+  double TmpCoefficient;
+  int TmpIndex1;
+  int TmpIndex2;
+  int MaxPos = this->NbrSpin - 1;
+  double* TmpValues = new double[nbrVectors];
+  for (int k = 0; k < nbrVectors; ++k)
+    {
+      RealVector& TmpSource = vSources[k];
+      RealVector& TmpDestination = vDestinations[k];
+      for (int i = firstComponent; i < LastComponent; ++i)
+	{
+	  TmpDestination[i] += this->SzSzContributions[i] * TmpSource[i];
+	}
+    }
+  for (int i = firstComponent; i < LastComponent; ++i)
+    {
+      for (int k = 0; k < nbrVectors; ++k)
+	{
+	  TmpValues[k] = vSources[k][i] * this->JFactor * 0.5;
+	}
+      for (int j = 0; j < this->NbrSpinX; j++)
+	{
+	  for (int k = 0; k < this->NbrSpinY; k++)
+	    {
+	      //AC part
+	     if (this->NbrSpinY > 1)
+	     {
+		TmpIndex1 = this->GetLinearizedIndex(j, k - 1);
+		TmpIndex2 = this->GetLinearizedIndex(j, k);
+		pos = this->Chain->SpiSmj(TmpIndex1, TmpIndex2, i, coef);
+		if (pos != dim)
+		{
+		  TmpCoefficient = coef * this->Chain->JDiagonali(TmpIndex1, pos, this->PseudospinDiagCouplingElements[2]);		  
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[0]);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos] += TmpValues[l] * TmpCoefficient * coef2;
+		  
+		    pos2 = this->Chain->JOffDiagonali(TmpIndex2, pos, coef2);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos] += TmpValues[l] * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];
+		  }
+		
+		  pos2 = this->Chain->JOffDiagonali(TmpIndex1, pos, coef2);
+		  TmpCoefficient = coef * coef2 * this->PseudospinCouplingElements[2];
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos2, this->PseudospinDiagCouplingElements[0]);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos2] += TmpValues[l] * TmpCoefficient * coef2;
+		    
+		    pos3 = this->Chain->JOffDiagonali(TmpIndex2, pos2, coef2);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos3] += TmpValues[l] * coef2 * this->PseudospinCouplingElements[0];
+		  }
+		}
+		pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, coef);
+		if (pos != dim)
+		{
+		  TmpCoefficient = coef * this->Chain->JDiagonali(TmpIndex1, pos, this->PseudospinDiagCouplingElements[2]);		  
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[0]);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos] += TmpValues[l] * TmpCoefficient * coef2;
+		  
+		    pos2 = this->Chain->JOffDiagonali(TmpIndex2, pos, coef2);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos2] += TmpValues[l] * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];
+		  }
+		
+		  pos2 = this->Chain->JOffDiagonali(TmpIndex1, pos, coef2);
+		  TmpCoefficient = coef * coef2 * this->PseudospinCouplingElements[2];
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos2, this->PseudospinDiagCouplingElements[0]);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos2] += TmpValues[l] * TmpCoefficient * coef2;
+		    
+		    pos3 = this->Chain->JOffDiagonali(TmpIndex2, pos2, coef2);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos3] += TmpValues[l] * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];
+		  }
+		}	      
+		coef = this->Chain->SziSzj(TmpIndex1, TmpIndex2, i);
+		pos = this->Chain->JOffDiagonali(TmpIndex1, i, coef2);
+		TmpCoefficient = coef * coef2 * this->PseudospinCouplingElements[2];
+		if (TmpCoefficient != 0.0)
+		{
+		  coef2 *= this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[0]);
+		  for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos] += 2.0 * TmpValues[l] * TmpCoefficient * coef2;
+		  
+		  pos2 = this->Chain->JOffDiagonali(TmpIndex2, pos, coef2);
+		  for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos2] += 2.0 * TmpValues[l] * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];		  
+		}
+		
+		TmpCoefficient = coef *  this->Chain->JDiagonali(TmpIndex1, i, this->PseudospinDiagCouplingElements[2]);
+		pos2 = this->Chain->JOffDiagonali(TmpIndex2, i, coef2);
+		for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos2] += 2.0 * TmpValues[l] * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];
+	     }
+	      
+
+	      //AB part
+	      if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || (j > 0)))
+	      {
+		TmpIndex1 = this->GetLinearizedIndex(j - 1, k);
+		TmpIndex2 = this->GetLinearizedIndex(j, k);
+		pos = this->Chain->SpiSmj(TmpIndex1, TmpIndex2, i, coef);
+		if (pos != dim)
+		{
+		  TmpCoefficient = coef * this->Chain->JDiagonali(TmpIndex1, pos, this->PseudospinDiagCouplingElements[1]);
+		  
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[0]);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos] += TmpValues[l] * TmpCoefficient * coef2;
+		  
+		    pos2 = this->Chain->JOffDiagonali(TmpIndex2, pos, coef2);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos2] += TmpValues[l] * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];
+		  }
+		
+		  pos2 = this->Chain->JOffDiagonali(TmpIndex1, pos, coef2);
+		  TmpCoefficient = coef * coef2 * this->PseudospinCouplingElements[1];
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos2, this->PseudospinDiagCouplingElements[0]);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos2] += TmpValues[l] * TmpCoefficient * coef2;
+		    
+		    pos3 = this->Chain->JOffDiagonali(TmpIndex2, pos2, coef2);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos3] += TmpValues[l] * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];
+		  }
+		}
+		pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, coef);
+		if (pos != dim)
+		{
+		  TmpCoefficient = coef * this->Chain->JDiagonali(TmpIndex1, pos, this->PseudospinDiagCouplingElements[1]);
+		  
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[0]);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos] += TmpValues[l] * TmpCoefficient * coef2;
+		  
+		    pos2 = this->Chain->JOffDiagonali(TmpIndex2, pos, coef2);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos2] += TmpValues[l] * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];
+		  }
+		
+		  pos2 = this->Chain->JOffDiagonali(TmpIndex1, pos, coef2);
+		  TmpCoefficient = coef * coef2 * this->PseudospinCouplingElements[1];
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos2, this->PseudospinDiagCouplingElements[0]);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos2] += TmpValues[l] * TmpCoefficient * coef2;
+		    
+		    pos3 = this->Chain->JOffDiagonali(TmpIndex2, pos2, coef2);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos3] += TmpValues[l] * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];
+		  }
+		}
+	      
+		coef = this->Chain->SziSzj(TmpIndex1, TmpIndex2, i);
+		pos = this->Chain->JOffDiagonali(TmpIndex1, i, coef2);
+		TmpCoefficient = coef * coef2 * this->PseudospinCouplingElements[1];
+		if (TmpCoefficient != 0.0)
+		{
+		  coef2 *= this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[0]);
+		  for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos] += 2.0 * TmpValues[l] * TmpCoefficient * coef2;
+		  
+		  pos2 = this->Chain->JOffDiagonali(TmpIndex2, pos, coef2);
+		  for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos2] += 2.0 * TmpValues[l] * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];		  
+		}
+		
+		TmpCoefficient = coef *  this->Chain->JDiagonali(TmpIndex1, i, this->PseudospinDiagCouplingElements[1]);
+		pos2 = this->Chain->JOffDiagonali(TmpIndex2, i, coef2);
+		for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos2] += 2.0 * TmpValues[l] * TmpCoefficient * coef2 * this->PseudospinCouplingElements[0];
+	      }
+// 	      
+	      //CB part
+	      if ((this->NbrSpinX > 1) && (this->NbrSpinY > 1) && (this->PeriodicBoundaryConditions || (j > 0)))
+	      {
+		TmpIndex1 = this->GetLinearizedIndex(j - 1, k);
+		TmpIndex2 = this->GetLinearizedIndex(j, k - 1);
+		pos = this->Chain->SpiSmj(TmpIndex1, TmpIndex2, i, coef);
+		if (pos != dim)
+		if (pos != dim)
+		{
+		  TmpCoefficient = coef * this->Chain->JDiagonali(TmpIndex1, pos, this->PseudospinDiagCouplingElements[1]);
+		  
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[2]);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos] += TmpValues[l] * TmpCoefficient * coef2;
+		  
+		    pos2 = this->Chain->JOffDiagonali(TmpIndex2, pos, coef2);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos2] += TmpValues[l] * TmpCoefficient * coef2 * this->PseudospinCouplingElements[2];
+		  }
+		
+		  pos2 = this->Chain->JOffDiagonali(TmpIndex1, pos, coef2);
+		  TmpCoefficient = coef * coef2 * this->PseudospinCouplingElements[1];
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos2, this->PseudospinDiagCouplingElements[2]);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos2] += TmpValues[l] * TmpCoefficient * coef2;
+		    
+		    pos3 = this->Chain->JOffDiagonali(TmpIndex2, pos2, coef2);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos3] += TmpValues[l] * TmpCoefficient * coef2 * this->PseudospinCouplingElements[2];
+		  }
+		}
+		pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, coef);
+		if (pos != dim)
+		{
+		  TmpCoefficient = coef * this->Chain->JDiagonali(TmpIndex1, pos, this->PseudospinDiagCouplingElements[1]);
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[2]);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos] += TmpValues[l] * TmpCoefficient * coef2;
+		  
+		    pos2 = this->Chain->JOffDiagonali(TmpIndex2, pos, coef2);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos2] += TmpValues[l] * TmpCoefficient * coef2 * this->PseudospinCouplingElements[2];
+		  }
+		
+		  pos2 = this->Chain->JOffDiagonali(TmpIndex1, pos, coef2);
+		  TmpCoefficient = coef * coef2 * this->PseudospinCouplingElements[1];
+		  if (TmpCoefficient != 0.0)
+		  {
+		    coef2 = this->Chain->JDiagonali(TmpIndex2, pos2, this->PseudospinDiagCouplingElements[2]);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos2] += TmpValues[l] * TmpCoefficient * coef2;
+		    
+		    pos3 = this->Chain->JOffDiagonali(TmpIndex2, pos2, coef2);
+		    for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos3] += TmpValues[l] * TmpCoefficient * coef2 * this->PseudospinCouplingElements[2];
+		  }
+		}
+		coef = this->Chain->SziSzj(TmpIndex1, TmpIndex2, i);
+		pos = this->Chain->JOffDiagonali(TmpIndex1, i, coef2);
+		TmpCoefficient = coef * coef2 * this->PseudospinCouplingElements[1];
+		if (TmpCoefficient != 0.0)
+		{
+		  coef2 *= this->Chain->JDiagonali(TmpIndex2, pos, this->PseudospinDiagCouplingElements[2]);
+		  for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos] += 2.0 * TmpValues[l] * TmpCoefficient * coef2;
+		  
+		  pos2 = this->Chain->JOffDiagonali(TmpIndex2, pos, coef2);
+		  for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos2] += 2.0 * TmpValues[l] * TmpCoefficient * coef2 * this->PseudospinCouplingElements[2];		  
+		}
+		
+		TmpCoefficient = coef *  this->Chain->JDiagonali(TmpIndex1, i, this->PseudospinDiagCouplingElements[1]);
+		pos2 = this->Chain->JOffDiagonali(TmpIndex2, i, coef2);
+		for (int l = 0; l < nbrVectors; ++l)
+		      vDestinations[l][pos2] += 2.0 * TmpValues[l] * TmpCoefficient * coef2 * this->PseudospinCouplingElements[2];
+	      }
+	    }
+	  }
+	}
+  delete[] TmpValues;
   return vDestinations;
 }
 
