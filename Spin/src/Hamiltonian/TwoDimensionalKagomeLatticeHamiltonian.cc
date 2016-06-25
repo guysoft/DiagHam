@@ -189,7 +189,7 @@ RealVector& TwoDimensionalKagomeLatticeHamiltonian::LowLevelAddMultiply(RealVect
 		vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JEasyPlaneFactor;
 	      
 	      //downward triangles
-	      if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 1))
+	      if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 0))
 	      {
 		//BA
 		pos = this->Chain->SpiSmj(this->GetLinearizedIndex(j - 1, k, 1), this->GetLinearizedIndex(j, k, 0), i, TmpCoefficient);
@@ -208,7 +208,7 @@ RealVector& TwoDimensionalKagomeLatticeHamiltonian::LowLevelAddMultiply(RealVect
 		pos = this->Chain->SmiSpj(this->GetLinearizedIndex(j, k, 0), this->GetLinearizedIndex(j, k - 1, 2), i, TmpCoefficient);
 		if (pos != dim)
 		  vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JDownEasyPlaneFactor;
-		if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 1))
+		if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 0))
 		{
 		  //BC
 		  pos = this->Chain->SpiSmj(this->GetLinearizedIndex(j - 1, k, 1), this->GetLinearizedIndex(j, k - 1, 2), i, TmpCoefficient);
@@ -288,7 +288,7 @@ RealVector& TwoDimensionalKagomeLatticeHamiltonian::HermitianLowLevelAddMultiply
 	      }
 	      
 	      //downward triangles
-	      if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 1))
+	      if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 0))
 	      {
 		//BA
 		TmpIndex1 = this->GetLinearizedIndex(j - 1, k, 1);
@@ -324,7 +324,7 @@ RealVector& TwoDimensionalKagomeLatticeHamiltonian::HermitianLowLevelAddMultiply
 		  vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JDownEasyPlaneFactor;
 		  TmpSum += 0.5 * vSource[pos] * TmpCoefficient * this->JDownEasyPlaneFactor;
 		}
-		if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 1))
+		if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 0))
 		{
 		  //BC
 		  TmpIndex1 = this->GetLinearizedIndex(j - 1, k, 1);
@@ -423,7 +423,7 @@ RealVector* TwoDimensionalKagomeLatticeHamiltonian::LowLevelMultipleAddMultiply(
 		  vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JEasyPlaneFactor;
 	      
 	      //downward triangles
-	      if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 1))
+	      if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 0))
 	      {
 		//BA
 		pos = this->Chain->SpiSmj(this->GetLinearizedIndex(j - 1, k, 1), this->GetLinearizedIndex(j, k, 0), i, TmpCoefficient);
@@ -446,7 +446,7 @@ RealVector* TwoDimensionalKagomeLatticeHamiltonian::LowLevelMultipleAddMultiply(
 		if (pos != dim)
 		  for (int l = 0; l < nbrVectors; ++l)
 		  vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JDownEasyPlaneFactor;
-		if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 1))
+		if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 0))
 		{
 		  //BC
 		  pos = this->Chain->SpiSmj(this->GetLinearizedIndex(j - 1, k, 1), this->GetLinearizedIndex(j, k - 1, 2), i, TmpCoefficient);
@@ -550,7 +550,7 @@ RealVector* TwoDimensionalKagomeLatticeHamiltonian::HermitianLowLevelMultipleAdd
 	      }
 	      
 	      //downward triangles
-	      if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 1))
+	      if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 0))
 	      {
 		//BA
 		TmpIndex1 = this->GetLinearizedIndex(j - 1, k, 1);
@@ -592,7 +592,7 @@ RealVector* TwoDimensionalKagomeLatticeHamiltonian::HermitianLowLevelMultipleAdd
 		    TmpSums[l] += 0.5 * vSources[l][pos] * TmpCoefficient * this->JDownEasyPlaneFactor;
 		  }
 		}
-		if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 1))
+		if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 0))
 		{
 		  //BC
 		  TmpIndex1 = this->GetLinearizedIndex(j - 1, k, 1);
@@ -652,7 +652,7 @@ void TwoDimensionalKagomeLatticeHamiltonian::EvaluateDiagonalMatrixElements()
 	      this->SzSzContributions[i] += this->JFactor * TmpCoefficient;
 	      
 	      //downward triangles
-	      if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 1))
+	      if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 0))
 	      {
 		//BA
 		TmpCoefficient = this->Chain->SziSzj(this->GetLinearizedIndex(j - 1, k, 1), this->GetLinearizedIndex(j, k, 0), i);
@@ -663,7 +663,7 @@ void TwoDimensionalKagomeLatticeHamiltonian::EvaluateDiagonalMatrixElements()
 		//CA
 		TmpCoefficient = this->Chain->SziSzj(this->GetLinearizedIndex(j, k, 0), this->GetLinearizedIndex(j, k - 1, 2), i);
 		this->SzSzContributions[i] += this->JDownFactor * TmpCoefficient;
-		if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 1))
+		if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 0))
 		{
 		  //BC
 		  TmpCoefficient = this->Chain->SziSzj(this->GetLinearizedIndex(j - 1, k, 1), this->GetLinearizedIndex(j, k - 1, 2), i);
