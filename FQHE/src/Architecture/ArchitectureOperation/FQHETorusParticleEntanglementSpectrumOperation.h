@@ -69,6 +69,12 @@ class FQHETorusParticleEntanglementSpectrumOperation: public AbstractPrecalculat
   HermitianMatrix ComplexDensityMatrix;
   // upper bound on the number of non zero matrix element in the reduced density matrix
   long NbrNonZeroElements;
+  // number of projectors
+  int NbrGroundStates;
+  // array of degenerate groundstates associated to each projector
+  ComplexVector* ComplexGroundStates;
+  // array of weights in front of each projector
+  double* GroundStateWeights;
 
   // a temporary array to store copies of operations in SMP mode
   FQHETorusParticleEntanglementSpectrumOperation** LocalOperations;
@@ -84,7 +90,8 @@ class FQHETorusParticleEntanglementSpectrumOperation: public AbstractPrecalculat
   // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
   // groundState = reference on the total system ground state
   // densityMatrix = reference on the density matrix where result has to stored
-  FQHETorusParticleEntanglementSpectrumOperation(ParticleOnTorusWithMagneticTranslations* fullSpace, ParticleOnTorusWithMagneticTranslations* destinationSpace, ParticleOnTorusWithMagneticTranslations* complementarySpace, ComplexVector& groundState, HermitianMatrix& densityMatrix);
+  FQHETorusParticleEntanglementSpectrumOperation(ParticleOnTorusWithMagneticTranslations* fullSpace, ParticleOnTorusWithMagneticTranslations* destinationSpace, 
+						 ParticleOnTorusWithMagneticTranslations* complementarySpace, ComplexVector& groundState, HermitianMatrix& densityMatrix);
 
   // constructor for the spinful case
   //
@@ -93,7 +100,34 @@ class FQHETorusParticleEntanglementSpectrumOperation: public AbstractPrecalculat
   // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
   // groundState = reference on the total system ground state
   // densityMatrix = reference on the density matrix where result has to stored
-  FQHETorusParticleEntanglementSpectrumOperation(ParticleOnTorusWithSpinAndMagneticTranslations* fullSpace, ParticleOnTorusWithSpinAndMagneticTranslations* destinationSpace, ParticleOnTorusWithSpinAndMagneticTranslations* complementarySpace, ComplexVector& groundState, HermitianMatrix& densityMatrix);
+  FQHETorusParticleEntanglementSpectrumOperation(ParticleOnTorusWithSpinAndMagneticTranslations* fullSpace, ParticleOnTorusWithSpinAndMagneticTranslations* destinationSpace, 
+						 ParticleOnTorusWithSpinAndMagneticTranslations* complementarySpace, ComplexVector& groundState, HermitianMatrix& densityMatrix);
+
+  // constructor  when using a sum of projectors
+  //
+  // fullSpace = pointer to the full Hilbert space to use
+  // destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+  // nbrGroundStates = number of projectors
+  // groundStates = array of degenerate groundstates associated to each projector
+  // weights = array of weights in front of each projector
+  // densityMatrix = reference on the density matrix where result has to stored
+  FQHETorusParticleEntanglementSpectrumOperation(ParticleOnTorusWithMagneticTranslations* fullSpace, ParticleOnTorusWithMagneticTranslations* destinationSpace, 
+						 ParticleOnTorusWithMagneticTranslations* complementarySpace, 
+						 int nbrGroundStates, ComplexVector* groundStates, double* weights, HermitianMatrix& densityMatrix);
+
+  // constructor for the spinful case when using a sum of projectors
+  //
+  // fullSpace = pointer to the full Hilbert space to use
+  // destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+  // nbrGroundStates = number of projectors
+  // groundStates = array of degenerate groundstates associated to each projector
+  // weights = array of weights in front of each projector
+  // densityMatrix = reference on the density matrix where result has to stored
+  FQHETorusParticleEntanglementSpectrumOperation(ParticleOnTorusWithSpinAndMagneticTranslations* fullSpace, ParticleOnTorusWithSpinAndMagneticTranslations* destinationSpace, 
+						 ParticleOnTorusWithSpinAndMagneticTranslations* complementarySpace, 
+						 int nbrGroundStates, ComplexVector* groundStates, double* weights, HermitianMatrix& densityMatrix);
 
   // copy constructor 
   //

@@ -751,7 +751,7 @@ long FermionOnSquareLatticeMomentumSpace::EvaluatePartialDensityMatrixParticlePa
 	      for (int k = 0; k < Pos; ++k)
 		if (TmpStatePosition2[k] >= Pos2)
 		  {
-		    densityMatrix->AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[k]);
+		    densityMatrix->UnsafeAddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[k]);
 		  }
 	    }
 	}
@@ -917,9 +917,10 @@ long FermionOnSquareLatticeMomentumSpace::EvaluatePartialDensityMatrixParticlePa
 	      for (int k = 0; k < Pos; ++k)
 		if (TmpStatePosition2[k] >= Pos2)
 		  {
+		    Complex Tmp = 0.0;
 		    for (int l = 0; l < nbrGroundStates; ++l)
-		      densityMatrix->AddToMatrixElement(Pos2, TmpStatePosition2[k], 
-							TmpValues[l] * groundStates[l][TmpStatePosition[k]] * TmpStateCoefficient[k]);
+		      Tmp += TmpValues[l] * groundStates[l][TmpStatePosition[k]] * TmpStateCoefficient[k];
+		    densityMatrix->UnsafeAddToMatrixElement(Pos2, TmpStatePosition2[k], Tmp);							      ;
 		  }
 	    }
 	}

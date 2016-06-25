@@ -220,6 +220,26 @@ long ParticleOnTorusWithSpinAndMagneticTranslations::EvaluatePartialDensityMatri
   return 0l; 
 }
 
+// core part of the evaluation density matrix particle partition calculation involving a sum of projectors
+// 
+// minIndex = first index to consider in source Hilbert space
+// nbrIndex = number of indices to consider in source Hilbert space
+// complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+// destinationHilbertSpace = pointer to the destination Hilbert space  (i.e. part A)
+// nbrGroundStates = number of projectors
+// groundStates = array of degenerate groundstates associated to each projector
+// weights = array of weights in front of each projector
+// densityMatrix = reference on the density matrix where result has to stored
+// return value = number of components that have been added to the density matrix
+
+long ParticleOnTorusWithSpinAndMagneticTranslations::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnTorusWithSpinAndMagneticTranslations* complementaryHilbertSpace,  
+													ParticleOnTorusWithSpinAndMagneticTranslations* destinationHilbertSpace,
+													int nbrGroundStates, ComplexVector* groundStates, double* weights, HermitianMatrix* densityMatrix)
+{
+  cout << "warning : EvaluatePartialDensityMatrixParticlePartitionCore not implemented" << endl; 
+  return 0l; 
+}
+
 // get the momentum along the x axis
 // 
 // return avlue = momentum along the x axis
