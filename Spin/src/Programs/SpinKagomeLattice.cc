@@ -98,6 +98,12 @@ int main(int argc, char** argv)
   double JDownEasyPlane = JEasyPlane * Manager.GetDouble("anisotropy");
   bool NoTranslationFlag = Manager.GetBoolean("no-translation");
   
+  if ((NoTranslationFlag == false) && (Manager.GetBoolean("cylinder")))
+  {
+    cout << "Warning: 2d translations cannot be used for the cylinder geometry" << endl;
+    NoTranslationFlag = true;
+  }
+  
   if (Manager.GetDouble("easy-plane") != 1.0)
     cout << "Warning: easy-plane anisotropy is not tested in this code" << endl;
   

@@ -73,7 +73,7 @@ TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::TwoDimensionalKagomeLatt
   this->YMomentum = yMomentum;
   
   this->HermitianSymmetryFlag = true;
-  this->HermitianSymmetryFlag = false;
+//   this->HermitianSymmetryFlag = false;
   
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateExponentialFactors();
