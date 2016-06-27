@@ -893,9 +893,9 @@ long FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixPart
 	  FourrierCoefficients[i][j] = Phase (2.0 * M_PI * ((double) (i * this->XMomentum) / ((double) this->MaxXMomentum) + (double) (j * this->YMomentum) / ((double) this->MaxYMomentum)));
 	}
     }
-  
-  //  ComplexMatrix TmpEntanglementMatrix (TmpHilbertSpace->GetHilbertSpaceDimension(), TmpDestinationHilbertSpace->GetHilbertSpaceDimension(), true);
+  //  ComplexMatrix TmpEntanglementMatrix (nbrIndex, TmpDestinationHilbertSpace->GetHilbertSpaceDimension(), true);
 
+  //  int TmpMinIndex = minIndex;
   int MaxIndex = minIndex + nbrIndex;
   long TmpNbrNonZeroElements = 0l;
   BinomialCoefficients TmpBinomial (this->NbrFermions);
@@ -959,7 +959,7 @@ long FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixPart
 		      TmpStatePosition2[Pos] = RealDestinationIndex;
 		      TmpStateCoefficient[Pos] = Coefficient;
 		      ++Pos;
-// 		      TmpEntanglementMatrix[RealDestinationIndex][minIndex] += groundState[TmpPos] * Coefficient;
+		      // 		      TmpEntanglementMatrix[RealDestinationIndex][minIndex - TmpMinIndex] += groundState[TmpPos] * Coefficient;
 		    }
 		}
 	    }
