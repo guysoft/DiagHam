@@ -25,6 +25,10 @@
 #include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
 
+#include "HilbertSpace/BosonOnLatticeRealSpace.h"
+#include "HilbertSpace/BosonOnLatticeRealSpaceAnd2DTranslation.h"
+
+
 #include <iostream>
 #include <cstring>
 #include <stdlib.h>
@@ -36,6 +40,7 @@ using std::cout;
 using std::endl;
 using std::ios;
 using std::ofstream;
+
 
 int main(int argc, char** argv)
 {
@@ -694,8 +699,36 @@ int main(int argc, char** argv)
 		    }
 		  else
 		    {
-		      cout << "Error: Bosonic statistics not implemented" << endl;
-		      return -1;
+		      if (SU2SpinFlag == false)
+			{      
+			  if (TwoDTranslationFlag == false)
+			    {
+			      PartialDensityMatrix = ((BosonOnLatticeRealSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
+			      PartialDensityMatrix *= CoefficientPerMomentumSector[TmpIndex][0];
+			      for (int i = 1; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+				{
+				  HermitianMatrix TmpMatrix = ((BosonOnLatticeRealSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+				  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+				  PartialDensityMatrix += TmpMatrix;
+				}
+			    }
+			  else
+			    {
+			      PartialDensityMatrix = ((BosonOnLatticeRealSpaceAnd2DTranslation*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
+			      PartialDensityMatrix *= CoefficientPerMomentumSector[TmpIndex][0];
+			      for (int i = 1; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+				{
+				  HermitianMatrix TmpMatrix = ((BosonOnLatticeRealSpaceAnd2DTranslation*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+				  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+				  PartialDensityMatrix += TmpMatrix;
+				}
+			    }
+			}
+		      else
+			{
+			  cout << "Error: Bosonic statistics not implemented" << endl;
+			  return -1;
+			}
 		    }
 		  ++TmpIndex;
 		  

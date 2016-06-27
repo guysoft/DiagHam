@@ -43,6 +43,7 @@
 #include "GeneralTools/Endian.h"
 #include "GeneralTools/ArrayTools.h"
 #include "GeneralTools/StringTools.h"
+#include "Architecture/ArchitectureOperation/FQHESphereParticleEntanglementSpectrumOperation.h"
 
 #include <math.h>
 #include <cstdlib>
@@ -188,3 +189,44 @@ AbstractHilbertSpace* BosonOnLatticeRealSpace::Clone()
   long dimension = binomials(this->NbrSite+this->NbrBosons - 1, this->NbrBosons);
   return dimension;
 }
+
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given momentum sector.
+// 
+// nbrParticleSector = number of particles that belong to the subsytem 
+// kxSector = kx sector in which the density matrix has to be evaluated 
+// kySector = kx sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+HermitianMatrix BosonOnLatticeRealSpace::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, ComplexVector& groundState, AbstractArchitecture* architecture)
+{
+  if (nbrParticleSector == 0)
+    {
+      HermitianMatrix TmpDensityMatrix(1, true);
+      TmpDensityMatrix(0, 0) = 1.0;
+      return TmpDensityMatrix;
+    }
+  if (nbrParticleSector == this->NbrBosons)
+    {
+      HermitianMatrix TmpDensityMatrix(1, true);
+      TmpDensityMatrix(0, 0) = 1.0;
+      return TmpDensityMatrix;
+    }
+  int ComplementaryNbrParticles = this->NbrBosons - nbrParticleSector;
+  BosonOnLatticeRealSpace SubsytemSpace (nbrParticleSector, this->NbrSite);
+  HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
+  BosonOnLatticeRealSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSite);
+  cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
+
+  FQHESphereParticleEntanglementSpectrumOperation Operation(this, &SubsytemSpace, &ComplementarySpace, groundState, TmpDensityMatrix);
+  Operation.ApplyOperation(architecture);
+  if (Operation.GetNbrNonZeroMatrixElements() > 0)	
+    return TmpDensityMatrix;
+  else
+    {
+      HermitianMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
+}
+
