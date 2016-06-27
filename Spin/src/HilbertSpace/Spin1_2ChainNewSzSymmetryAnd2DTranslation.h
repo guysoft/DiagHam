@@ -4,13 +4,13 @@
 //                            DiagHam  version 0.01                           //
 //                                                                            //
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
-//                        Class author Cecile Repellin                        //
+//                      class author: Cecile Repellin                         //
 //                                                                            //
 //                                                                            //
-//                class of spin 1/2 chain with Sz contraint                   //
-//                               and 2d translations                          //
+//                   class of spin 1/2 chain with Sz contraint                //
+//                  and 2d translations plus Sz->-Sz symmetry                 //
 //                                                                            //
-//                        last modification : 19/06/2016                      //
+//                        last modification : 26/06/2016                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,132 +30,69 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SPIN1_2CHAINNEWAND2DTRANSLATION_H
-#define SPIN1_2CHAINNEWAND2DTRANSLATION_H
+#ifndef SPIN1_2CHAINNEWSZSYMMETRYAND2DTRANSLATION_H
+#define SPIN1_2CHAINNEWSZSYMMETRYAND2DTRANSLATION_H
 
 
 #include "config.h"
-#include "HilbertSpace/Spin1_2ChainNew.h"
+#include "HilbertSpace/Spin1_2ChainNewAnd2DTranslation.h"
 #include "Matrix/RealSymmetricMatrix.h"
 
 #include <iostream>
 
 
 using std::ostream;
+using std::cout;
+using std::endl;
+using std::hex;
+using std::dec;
 
 
-class Spin1_2ChainNewAnd2DTranslation : public Spin1_2ChainNew
+class Spin1_2ChainNewSzSymmetryAnd2DTranslation : public Spin1_2ChainNewAnd2DTranslation
 {
 
  protected:
   
-  // total number of sites
-  int NbrSite;
-  // number of sites in the x direction
-  int MaxXMomentum;
-  // number of sites in the y direction
-  int MaxYMomentum;
-  // momentum in the x direction
-  int XMomentum;
-  // momentum in the y direction
-  int YMomentum;
-  
-  // bit shift that has to applied to perform a translation in the x direction 
-  int StateXShift;
-  // binary mask for the StateXShift first bits 
-  unsigned long XMomentumMask;
-  // bit shift to apply to move the first StateXShift bits at the end of a state description
-  int ComplementaryStateXShift;
-
-  // bit shift that has to applied to perform a translation in the y direction 
-  int StateYShift;
- // binary mask for the StateYShift first bits 
-  unsigned long YMomentumMask;
-   // binary mask for the StateYShift first bits of each group
-  unsigned long YMomentumFullMask;
-  // binary mask for the ~YMomentumFullMask
-  unsigned long ComplementaryYMomentumFullMask;
-  // bit shift to apply to move the first StateYShift bits at the end of a state description
-  int ComplementaryStateYShift;
-  // number of bits that are related by a translation along the y direction 
-  int YMomentumBlockSize;
-  // binary mask corresponding to YMomentumBlockSize
-  unsigned long YMomentumBlockMask;
-  // number of independant blocks related by translations in the y direction 
-  int NbrYMomentumBlocks;
-
-  // array containing rescaling factors when passing from one orbit to another
-  double** RescalingFactors;
-  // number of state in each orbit
-  int* NbrStateInOrbit;
-
-  // maximum shift used for searching a position in the look-up table
-  int MaximumLookUpShift;
-  // memory used for the look-up table in a given maxMomentum sector
-  int LookUpTableMemorySize;
-  // shift used in each maxMomentum sector
-  int* LookUpTableShift;
-  // look-up table with two entries : the first one used maxMomentum value of the state an the second 
-  int** LookUpTable;
-  
-  unsigned long LookUpTableMask;
-  int LookUpPosition;
-  int LookUpTableSize;
+  // sign of the inversion sector
+  double SzSymmetrySector;
 
  public:
 
   // default constructor
   //
-  Spin1_2ChainNewAnd2DTranslation ();
+  Spin1_2ChainNewSzSymmetryAnd2DTranslation ();
 
   // constructor for complete Hilbert space with no restriction on total spin projection Sz
   //
   // nbrSite = total number or spins
   // sz = value of the total magnetization
+  // szSymmetrySectorSector = sz symmetry sector (can be either +1 or -1)
   // xMomentum = momentum along the x direction
   // maxXMomentum = number of sites in the x direction
   // yMomentum = momentum along the y direction
   // maxYMomentum = number of sites in the y direction
   // memory = amount of memory granted for precalculations
-  Spin1_2ChainNewAnd2DTranslation (int nbrSite, int sz, int xMomentum, int maxXMomentum, int yMomentum, int maxYMomentum, unsigned long memory = 10000000);
+  Spin1_2ChainNewSzSymmetryAnd2DTranslation (int nbrSite, int sz, int szSymmetrySector, int xMomentum, int maxXMomentum, int yMomentum, int maxYMomentum, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
   // chain = reference on chain to copy
-  Spin1_2ChainNewAnd2DTranslation (const Spin1_2ChainNewAnd2DTranslation& chain);
+  Spin1_2ChainNewSzSymmetryAnd2DTranslation (const Spin1_2ChainNewSzSymmetryAnd2DTranslation& chain);
 
   // destructor
   //
-  ~Spin1_2ChainNewAnd2DTranslation ();
+  ~Spin1_2ChainNewSzSymmetryAnd2DTranslation ();
 
   // assignement (without duplicating datas)
   //
   // chain = reference on chain to copy
   // return value = reference on current chain
-  Spin1_2ChainNewAnd2DTranslation& operator = (const Spin1_2ChainNewAnd2DTranslation& chain);
+  Spin1_2ChainNewSzSymmetryAnd2DTranslation& operator = (const Spin1_2ChainNewSzSymmetryAnd2DTranslation& chain);
 
   // clone Hilbert space (without duplicating datas)
   //
   // return value = pointer to cloned Hilbert space
   virtual AbstractHilbertSpace* Clone();
-
-  // return index of resulting state from application of S-_i S+_j operator on a given state
-  //
-  // i = position of S- operator
-  // j = position of S+ operator
-  // state = index of the state to be applied on S-_i S+_j operator
-  // coefficient = reference on double where numerical coefficient has to be stored
-  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
-  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
-  // return value = index of resulting state
-  virtual int SmiSpj (int i, int j, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
-
-  // convert a state defined in the real space basis into a state in the (Kx,Ky) basis
-  //
-  // state = reference on the state to convert
-  // space = pointer to the Hilbert space where state is defined
-  // return value = state in the (Kx,Ky) basis
-  virtual ComplexVector ConvertToKxKyBasis(ComplexVector& state, AbstractSpinChain* space);
 
   // convert a state defined in the (Kx,Ky) basis into a state in the real space basis
   //
@@ -170,22 +107,7 @@ class Spin1_2ChainNewAnd2DTranslation : public Spin1_2ChainNew
   //
   // return value = Hilbert space dimension
   long GenerateStates();
-
-  // generate all states without the momentum constraint
-  // 
-  // nbrSpinUp = number of spin up
-  // currentPosition = current position to consider in the chain
-  // pos = position in StateDescription array where to store states
-  // return value = position from which new states have to be stored
-  long RawGenerateStates(int nbrSpinUp, int currentPosition, long pos);
-
-  // find state index
-  //
-  // stateDescription = unsigned integer describing the state
-  // maxMomentum = maximum bit set to one in stateDescription
-  // return value = corresponding index
-  virtual int FindStateIndex(unsigned long stateDescription, int maxMomentum);
-
+  
   // factorized code that is used to symmetrize the result of any operator action
   //
   // state = reference on the state that has been produced with the operator action
@@ -202,8 +124,9 @@ class Spin1_2ChainNewAnd2DTranslation : public Spin1_2ChainNew
   // stateDescription = unsigned integer describing the state
   // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
   // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // inversionSign = reference on the additional sign coming from the inversion symmetry
   // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
-  virtual unsigned long FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY);
+  virtual unsigned long FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY, double& inversionSign);
 
   //  test if the state and its translated version can be used to create a state corresponding to the momentum constraint
   //
@@ -214,23 +137,13 @@ class Spin1_2ChainNewAnd2DTranslation : public Spin1_2ChainNew
   // find the size of the orbit for a given state
   //
   // return value = orbit size
-  inline int FindOrbitSize(unsigned long stateDescription);
+  virtual int FindOrbitSize(unsigned long stateDescription);
 
-  // apply a single translation in the x direction for a state description
-  //
-  // stateDescription = reference on the state description
-  virtual void ApplySingleXTranslation(unsigned long& stateDescription);
-
-  // apply a single translation in the y direction for a state description
+  // apply the inversion symmetry to a state description
   //
   // stateDescription = reference on the state description  
-  virtual void ApplySingleYTranslation(unsigned long& stateDescription);
+  virtual void ApplySzSymmetry(unsigned long& stateDescription);
 
-  // generate look-up table associated to current Hilbert space
-  // 
-  // memory = memory size that can be allocated for the look-up table
-  virtual void GenerateLookUpTable(unsigned long memory);
-  
   // compute the rescaling factors
   //
   virtual void ComputeRescalingFactors();
@@ -246,16 +159,18 @@ class Spin1_2ChainNewAnd2DTranslation : public Spin1_2ChainNew
 // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
 // return value = index of the destination state  
 
-inline int Spin1_2ChainNewAnd2DTranslation::SymmetrizeResult(unsigned long& state, int nbrStateInOrbit, double& coefficient, 
-							      int& nbrTranslationX, int& nbrTranslationY)
+inline int Spin1_2ChainNewSzSymmetryAnd2DTranslation::SymmetrizeResult(unsigned long& state, int nbrStateInOrbit, double& coefficient, 
+								       int& nbrTranslationX, int& nbrTranslationY)
 {
-  state = this->FindCanonicalForm(state, nbrTranslationX, nbrTranslationY);
-  int TmpMaxMomentum = this->ChainLength;
+  double TmpSign;
+  state = this->FindCanonicalForm(state, nbrTranslationX, nbrTranslationY, TmpSign);
+  int TmpMaxMomentum = this->NbrSite;
   while (((state >> TmpMaxMomentum) == 0x0ul) && (TmpMaxMomentum > 0))
     --TmpMaxMomentum;
   int TmpIndex = this->FindStateIndex(state, TmpMaxMomentum);
   if (TmpIndex < this->HilbertSpaceDimension)
     {
+      coefficient *= TmpSign;
       coefficient *= this->RescalingFactors[nbrStateInOrbit][this->NbrStateInOrbit[TmpIndex]];
       nbrTranslationX = (this->MaxXMomentum - nbrTranslationX) % this->MaxXMomentum;
       nbrTranslationY = (this->MaxYMomentum - nbrTranslationY) % this->MaxYMomentum;
@@ -268,15 +183,17 @@ inline int Spin1_2ChainNewAnd2DTranslation::SymmetrizeResult(unsigned long& stat
 // stateDescription = unsigned integer describing the state
 // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
 // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+// inversionSign = reference on the additional sign coming from the inversion symmetry
 // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
 
-inline unsigned long Spin1_2ChainNewAnd2DTranslation::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)
+inline unsigned long Spin1_2ChainNewSzSymmetryAnd2DTranslation::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY, double& inversionSign)
 {
   unsigned long CanonicalState = stateDescription;
   unsigned long stateDescriptionReference = stateDescription;  
   unsigned long TmpStateDescription;  
   nbrTranslationX = 0;
   nbrTranslationY = 0;
+  inversionSign = 1.0;
   TmpStateDescription = stateDescription;
   for (int n = 1; n < this->MaxXMomentum; ++n)
     {
@@ -309,6 +226,51 @@ inline unsigned long Spin1_2ChainNewAnd2DTranslation::FindCanonicalForm(unsigned
 	    }
 	}
     }
+  stateDescription = stateDescriptionReference;
+  TmpStateDescription = stateDescription;
+  this->ApplySzSymmetry(TmpStateDescription);
+  if (TmpStateDescription < CanonicalState)
+    {
+      CanonicalState = TmpStateDescription;
+      nbrTranslationX = 0;	      
+      nbrTranslationY = 0;	      
+      inversionSign = this->SzSymmetrySector;
+    }
+  for (int n = 1; n < this->MaxXMomentum; ++n)
+    {
+      this->ApplySingleXTranslation(TmpStateDescription);      
+      if (TmpStateDescription < CanonicalState)
+	{
+	  CanonicalState = TmpStateDescription;
+	  nbrTranslationX = n;	      
+	  nbrTranslationY = 0;	      
+	  inversionSign = this->SzSymmetrySector;
+	}
+    }
+  this->ApplySzSymmetry(stateDescription);
+  for (int m = 1; m < this->MaxYMomentum; ++m)
+    {
+      this->ApplySingleYTranslation(stateDescription);      
+      if (stateDescription < CanonicalState)
+	{
+	  CanonicalState = stateDescription;
+	  nbrTranslationX = 0;	      
+	  nbrTranslationY = m;	      
+	  inversionSign = this->SzSymmetrySector;
+	}
+      TmpStateDescription = stateDescription;
+      for (int n = 1; n < this->MaxXMomentum; ++n)
+	{
+	  this->ApplySingleXTranslation(TmpStateDescription);      
+	  if (TmpStateDescription < CanonicalState)
+	    {
+	      CanonicalState = TmpStateDescription;
+	      nbrTranslationX = n;	      
+	      nbrTranslationY = m;	      
+	      inversionSign = this->SzSymmetrySector;
+	    }
+	}
+    }
   return CanonicalState;
 }
 
@@ -317,10 +279,11 @@ inline unsigned long Spin1_2ChainNewAnd2DTranslation::FindCanonicalForm(unsigned
 // stateDescription = unsigned integer describing the state
 // return value = true if the state satisfies the momentum constraint
 
-inline bool Spin1_2ChainNewAnd2DTranslation::TestMomentumConstraint(unsigned long stateDescription)
+inline bool Spin1_2ChainNewSzSymmetryAnd2DTranslation::TestMomentumConstraint(unsigned long stateDescription)
 {
   unsigned long TmpStateDescription = stateDescription;
   unsigned long TmpStateDescription2 = stateDescription;
+  unsigned long TmpStateDescription3 = stateDescription;
   int XSize = 1;
   this->ApplySingleXTranslation(TmpStateDescription);   
   while (stateDescription != TmpStateDescription)
@@ -352,13 +315,82 @@ inline bool Spin1_2ChainNewAnd2DTranslation::TestMomentumConstraint(unsigned lon
 	  TmpXSize = 0;
 	}
     } 
-  if (YSize == this->MaxYMomentum)
-    {
-      this->ApplySingleYTranslation(TmpStateDescription2); 
-    }
   if ((((this->YMomentum * YSize * this->MaxXMomentum)
 	+ (this->XMomentum * TmpXSize * this->MaxYMomentum)) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)
     return false;
+
+  TmpStateDescription2 = stateDescription;
+  this->ApplySzSymmetry(TmpStateDescription2);
+  if (stateDescription == TmpStateDescription2)
+    {
+      if (this->SzSymmetrySector < 0.0)
+	return false;
+      else
+	return true;
+    }
+
+  int XSize2 = 1;
+  TmpStateDescription = TmpStateDescription2;
+  this->ApplySingleXTranslation(TmpStateDescription);      
+  while ((stateDescription != TmpStateDescription) && (XSize2 < XSize))
+    {
+      ++XSize2;
+      this->ApplySingleXTranslation(TmpStateDescription);      
+    }  
+  if (XSize2 < XSize)
+    {
+      if (this->SzSymmetrySector < 0.0)
+	{
+	  if ((((this->XMomentum * XSize2 * 2 * this->MaxYMomentum) + (this->MaxXMomentum * this->MaxYMomentum)) % (2 * this->MaxXMomentum * this->MaxYMomentum)) != 0)
+	    return false;
+	  else
+	    return true;
+	}
+      if ((((this->XMomentum * XSize2 * this->MaxYMomentum)) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)
+	return false;
+      else
+	return true;  
+   }
+  int YSize2 = YSize;
+  TmpXSize = 0;
+  TmpStateDescription2 = stateDescription;
+  this->ApplySzSymmetry(TmpStateDescription2);
+  for (int m = 1; m < YSize2; ++m)
+    {
+      this->ApplySingleYTranslation(TmpStateDescription2); 
+      TmpStateDescription = TmpStateDescription2;
+      TmpXSize = 0;
+      while ((TmpXSize < XSize2) && (stateDescription != TmpStateDescription))
+	{	  
+	  ++TmpXSize;
+	  this->ApplySingleXTranslation(TmpStateDescription);      
+	}
+      if (TmpXSize < XSize2)
+	{
+	  YSize2 = m;
+	}
+      else
+	{
+	  TmpXSize = 0;
+	}
+    } 
+
+  if (YSize == YSize2)
+    return true;
+
+  if (this->SzSymmetrySector < 0.0)
+    {
+      if ((((this->YMomentum * YSize2 * 2 * this->MaxXMomentum)
+	    + (this->XMomentum * TmpXSize * 2 * this->MaxYMomentum) + (this->MaxXMomentum * this->MaxYMomentum)) % (2 * this->MaxXMomentum * this->MaxYMomentum)) != 0)
+	return false;
+      else
+	return true;
+    }
+  if ((((this->YMomentum * YSize2 * this->MaxXMomentum)
+	+ (this->XMomentum * TmpXSize * this->MaxYMomentum)) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)
+    return false;
+  else
+    return true;  
   return true;
 }
 
@@ -366,7 +398,7 @@ inline bool Spin1_2ChainNewAnd2DTranslation::TestMomentumConstraint(unsigned lon
 //
 // return value = orbit size
 
-inline int Spin1_2ChainNewAnd2DTranslation::FindOrbitSize(unsigned long stateDescription)
+inline int Spin1_2ChainNewSzSymmetryAnd2DTranslation::FindOrbitSize(unsigned long stateDescription)
 {
   unsigned long TmpStateDescription = stateDescription;
   unsigned long TmpStateDescription2 = stateDescription;
@@ -378,9 +410,10 @@ inline int Spin1_2ChainNewAnd2DTranslation::FindOrbitSize(unsigned long stateDes
       this->ApplySingleXTranslation(TmpStateDescription);      
     }
   int YSize = this->MaxYMomentum;
+  TmpStateDescription2 = stateDescription;
   for (int m = 1; m < YSize; ++m)
     {
-      this->ApplySingleYTranslation(stateDescription); 
+      this->ApplySingleYTranslation(TmpStateDescription2); 
       TmpStateDescription = TmpStateDescription2;
       int TmpXSize = 0;
       while ((TmpXSize < XSize) && (stateDescription != TmpStateDescription))
@@ -393,25 +426,54 @@ inline int Spin1_2ChainNewAnd2DTranslation::FindOrbitSize(unsigned long stateDes
 	  YSize = m;
 	}
     }
-  return (XSize * YSize);
+
+  TmpStateDescription2 = stateDescription;
+  this->ApplySzSymmetry(TmpStateDescription2);
+  if (stateDescription == TmpStateDescription2)
+    return (XSize * YSize);  
+
+  int XSize2 = 1;
+  TmpStateDescription = TmpStateDescription2;
+  this->ApplySingleXTranslation(TmpStateDescription);      
+  while ((stateDescription != TmpStateDescription) && (XSize2 < XSize))
+    {
+      ++XSize2;
+      this->ApplySingleXTranslation(TmpStateDescription);      
+    }  
+  if (XSize2 != XSize)
+    {
+      return (XSize * YSize);
+    }
+  TmpStateDescription2 = stateDescription;
+  this->ApplySzSymmetry(TmpStateDescription2);
+  int YSize2 = YSize;
+  int TmpXSize;
+  for (int m = 1; m < YSize2; ++m)
+    {
+      this->ApplySingleYTranslation(TmpStateDescription2); 
+      TmpStateDescription = TmpStateDescription2;
+      int TmpXSize = 0;
+      while ((TmpXSize < XSize2) && (stateDescription != TmpStateDescription))
+	{	  
+	  ++TmpXSize;
+	  this->ApplySingleXTranslation(TmpStateDescription);      
+	}
+      if (TmpXSize < XSize2)
+	{
+	  return (XSize * YSize);
+	}
+    }
+  return (2 * XSize * YSize);
 }
 
-// apply a single translation in the x direction for a state description
+// apply the inversion symmetry to a state description
 //
-// stateDescription = reference on the state description
+// stateDescription = reference on the state description  
 
-inline void Spin1_2ChainNewAnd2DTranslation::ApplySingleXTranslation(unsigned long& stateDescription)
+inline void Spin1_2ChainNewSzSymmetryAnd2DTranslation::ApplySzSymmetry(unsigned long& stateDescription)
 {
-  stateDescription = (stateDescription >> this->StateXShift) | ((stateDescription & this->XMomentumMask) << this->ComplementaryStateXShift);
-}
-
-// apply a single translation in the y direction for a state description
-//
-// stateDescription = reference on the state description
-
-inline void Spin1_2ChainNewAnd2DTranslation::ApplySingleYTranslation(unsigned long& stateDescription)
-{
-  stateDescription = (((stateDescription & this->ComplementaryYMomentumFullMask) >> this->StateYShift) | ((stateDescription & this->YMomentumFullMask) << this->ComplementaryStateYShift));
+  unsigned long Mask = (0x1ul << this->ChainLength) - 0x1ul;
+  stateDescription = (~stateDescription) & Mask;
 }
 
 #endif

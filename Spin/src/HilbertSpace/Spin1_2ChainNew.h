@@ -46,6 +46,7 @@ class Spin1_2ChainNew : public AbstractSpinChain
 {
 
  friend class Spin1_2ChainNewAnd2DTranslation;
+ friend class Spin1_2ChainNewSzSymmetryAnd2DTranslation;
  
  protected:
 
