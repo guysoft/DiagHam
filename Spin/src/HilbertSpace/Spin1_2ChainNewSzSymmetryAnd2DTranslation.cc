@@ -38,6 +38,7 @@
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "MathTools/BinomialCoefficients.h"
+#include "GeneralTools/Endian.h"
 
 #include <math.h>
 #include <iostream>
@@ -47,6 +48,7 @@ using std::cout;
 using std::dec;
 using std::hex;
 using std::endl;
+using std::ios;
 
 
 
@@ -117,6 +119,7 @@ Spin1_2ChainNewSzSymmetryAnd2DTranslation::Spin1_2ChainNewSzSymmetryAnd2DTransla
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->Sz, this->NbrSite);
   this->LargeHilbertSpaceDimension = this->GenerateStates();
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+//   cout << (this->LargeHilbertSpaceDimension) << endl;
   if (this->LargeHilbertSpaceDimension > 0)
     {
       this->GenerateLookUpTable(memory);
@@ -145,6 +148,131 @@ Spin1_2ChainNewSzSymmetryAnd2DTranslation::Spin1_2ChainNewSzSymmetryAnd2DTransla
 #endif
     }
 }
+
+
+
+// constructor from a binary file that describes the Hilbert space
+//
+// fileName = name of the binary file
+// memory = amount of memory granted for precalculations
+
+Spin1_2ChainNewSzSymmetryAnd2DTranslation::Spin1_2ChainNewSzSymmetryAnd2DTranslation (char* fileName, unsigned long memory)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      this->HilbertSpaceDimension = 0;
+      return;
+    }
+  File.seekg (0l, ios::end);
+  unsigned long FileSize = File.tellg ();
+  File.close();
+
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      this->HilbertSpaceDimension = 0;
+      return;
+    }
+ 
+  ReadLittleEndian(File, this->HilbertSpaceDimension);
+  ReadLittleEndian(File, this->LargeHilbertSpaceDimension);  
+  ReadLittleEndian(File, this->NbrSite);
+  ReadLittleEndian(File, this->ChainLength);
+  ReadLittleEndian(File, this->MaxXMomentum);
+  ReadLittleEndian(File, this->MaxYMomentum);
+  ReadLittleEndian(File, this->Sz);
+  ReadLittleEndian(File, this->XMomentum);
+  ReadLittleEndian(File, this->YMomentum);
+  ReadLittleEndian(File, this->SzSymmetrySector);
+  ReadLittleEndian(File, this->FixedQuantumNumberFlag);
+  ReadLittleEndian(File, this->StateXShift);
+  ReadLittleEndian(File, this->ComplementaryStateXShift);
+  ReadLittleEndian(File, this->XMomentumMask);
+  ReadLittleEndian(File, this->NbrYMomentumBlocks);
+  ReadLittleEndian(File, this->StateYShift);
+  ReadLittleEndian(File, this->YMomentumBlockSize);
+  ReadLittleEndian(File, this->ComplementaryStateYShift);
+  ReadLittleEndian(File, this->YMomentumMask);
+  ReadLittleEndian(File, this->YMomentumBlockMask);
+  ReadLittleEndian(File, this->YMomentumFullMask);
+  ReadLittleEndian(File, this->ComplementaryYMomentumFullMask);
+  
+  this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+  this->NbrStateInOrbit = new int [this->LargeHilbertSpaceDimension];
+  if (this->HilbertSpaceDimension != 0)
+  {
+    for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+      ReadLittleEndian(File, this->StateDescription[i]);
+    for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+      ReadLittleEndian(File, this->NbrStateInOrbit[i]);
+  }
+  else
+  {
+    for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+      ReadLittleEndian(File, this->StateDescription[i]);
+    for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+      ReadLittleEndian(File, this->NbrStateInOrbit[i]);
+  }
+//   FileSize -= this->LargeHilbertSpaceDimension * sizeof (unsigned long);
+//   if (FileSize == 0ul)
+//     {
+// 
+//       int TmpLzMax = this->LzMax;
+//       this->StateLzMax = new int [this->LargeHilbertSpaceDimension];
+//       for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+// 	{
+// 	  unsigned long TmpState = this->StateDescription[i];
+// 	  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
+// 	    --TmpLzMax;
+// 	  this->StateLzMax[i] = TmpLzMax;
+// 	}
+//    }
+//   else
+//     {
+//       this->StateLzMax = new int [this->LargeHilbertSpaceDimension];
+//       for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+// 	ReadLittleEndian(File, this->StateLzMax[i]);
+//     }
+  File.close();
+
+
+  if (this->LargeHilbertSpaceDimension >= (1l << 30))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  if (this->LargeHilbertSpaceDimension > 0)
+  {
+      this->GenerateLookUpTable(memory);
+      
+#ifdef __DEBUG__
+      long UsedMemory = 0;
+      UsedMemory +=  this->LargeHilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+      cout << "memory requested for Hilbert space = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+      UsedMemory = this->NbrSite * sizeof(int);
+      UsedMemory += this->NbrSite * this->LookUpTableMemorySize * sizeof(int);
+      cout << "memory requested for lookup table = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+#endif
+    }
+}
+
 
 // copy constructor (without duplicating datas)
 //
@@ -282,6 +410,61 @@ Spin1_2ChainNewSzSymmetryAnd2DTranslation& Spin1_2ChainNewSzSymmetryAnd2DTransla
 AbstractHilbertSpace* Spin1_2ChainNewSzSymmetryAnd2DTranslation::Clone()
 {
   return new Spin1_2ChainNewSzSymmetryAnd2DTranslation (*this);
+}
+
+// save Hilbert space description to disk
+//
+// fileName = name of the file where the Hilbert space description has to be saved
+// return value = true if no error occured
+
+bool Spin1_2ChainNewSzSymmetryAnd2DTranslation::WriteHilbertSpace (char* fileName)
+{
+  ofstream File;
+  File.open(fileName, ios::binary | ios::out);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      return false;
+    }
+  WriteLittleEndian(File, this->HilbertSpaceDimension);
+  WriteLittleEndian(File, this->LargeHilbertSpaceDimension);
+  WriteLittleEndian(File, this->NbrSite);
+  WriteLittleEndian(File, this->ChainLength);
+  WriteLittleEndian(File, this->MaxXMomentum);
+  WriteLittleEndian(File, this->MaxYMomentum);
+  WriteLittleEndian(File, this->Sz);
+  WriteLittleEndian(File, this->XMomentum);
+  WriteLittleEndian(File, this->YMomentum);
+  WriteLittleEndian(File, this->SzSymmetrySector);
+  WriteLittleEndian(File, this->FixedQuantumNumberFlag);
+  WriteLittleEndian(File, this->StateXShift);
+  WriteLittleEndian(File, this->ComplementaryStateXShift);
+  WriteLittleEndian(File, this->XMomentumMask);
+  WriteLittleEndian(File, this->NbrYMomentumBlocks);
+  WriteLittleEndian(File, this->StateYShift);
+  WriteLittleEndian(File, this->YMomentumBlockSize);
+  WriteLittleEndian(File, this->ComplementaryStateYShift);
+  WriteLittleEndian(File, this->YMomentumMask);
+  WriteLittleEndian(File, this->YMomentumBlockMask);
+  WriteLittleEndian(File, this->YMomentumFullMask);
+  WriteLittleEndian(File, this->ComplementaryYMomentumFullMask);
+    
+  if (this->HilbertSpaceDimension != 0)
+    {
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	WriteLittleEndian(File, this->StateDescription[i]);
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	WriteLittleEndian(File, this->NbrStateInOrbit[i]);
+    }
+  else
+    {
+      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+	WriteLittleEndian(File, this->StateDescription[i]);
+      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+	WriteLittleEndian(File, this->NbrStateInOrbit[i]);
+    }
+  File.close();
+  return true;
 }
 
 // generate all states corresponding to the constraints

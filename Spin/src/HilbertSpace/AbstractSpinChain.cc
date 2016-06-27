@@ -49,6 +49,16 @@ AbstractSpinChain::~AbstractSpinChain ()
 {
 }
 
+// save Hilbert space description to disk
+//
+// fileName = name of the file where the Hilbert space description has to be saved
+// return value = true if no error occured
+
+bool AbstractSpinChain::WriteHilbertSpace (char* fileName)
+{
+  cout << "Warning: using dummy method AbstractSpinChain::WriteHilbertSpace" << endl;
+  return false;
+}
 
 // return value of spin projection on (Oz) for a given state
 //

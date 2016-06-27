@@ -59,6 +59,12 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // virtual destructor
   //
   virtual ~AbstractSpinChain ();
+  
+  // save Hilbert space description to disk
+  //
+  // fileName = name of the file where the Hilbert space description has to be saved
+  // return value = true if no error occured
+  virtual bool WriteHilbertSpace (char* fileName);
 
   //return value length of the spin chain
   //

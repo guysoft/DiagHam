@@ -73,6 +73,12 @@ class Spin1_2ChainNewSzSymmetryAnd2DTranslation : public Spin1_2ChainNewAnd2DTra
   // maxYMomentum = number of sites in the y direction
   // memory = amount of memory granted for precalculations
   Spin1_2ChainNewSzSymmetryAnd2DTranslation (int nbrSite, int sz, int szSymmetrySector, int xMomentum, int maxXMomentum, int yMomentum, int maxYMomentum, unsigned long memory = 10000000);
+  
+  // constructor from a binary file that describes the Hilbert space
+  //
+  // fileName = name of the binary file
+  // memory = amount of memory granted for precalculations
+  Spin1_2ChainNewSzSymmetryAnd2DTranslation (char* fileName, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -100,6 +106,12 @@ class Spin1_2ChainNewSzSymmetryAnd2DTranslation : public Spin1_2ChainNewAnd2DTra
   // space = pointer to the Hilbert space where state is defined
   // return value = state in the (Kx,Ky) basis
   virtual ComplexVector ConvertFromKxKyBasis(ComplexVector& state, AbstractSpinChain* space);
+  
+  // save Hilbert space description to disk
+  //
+  // fileName = name of the file where the Hilbert space description has to be saved
+  // return value = true if no error occured
+  virtual bool WriteHilbertSpace (char* fileName);
   
  protected:
 

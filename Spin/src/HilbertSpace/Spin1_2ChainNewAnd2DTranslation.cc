@@ -135,15 +135,15 @@ Spin1_2ChainNewAnd2DTranslation::Spin1_2ChainNewAnd2DTranslation (int nbrSite, i
 	cout << UsedMemory << endl;
 #endif
     }
-/*    
-     for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-  {
-    unsigned long state = this->StateDescription[i];
-    int TmpMaxMomentum = this->NbrSite;
-    while (((state >> TmpMaxMomentum) == 0x0ul) && (TmpMaxMomentum > 0))
-      --TmpMaxMomentum;
-    this->PrintState(cout, i) << " " << i << " " << this->FindStateIndex(state, TmpMaxMomentum) << endl;
-  }*/
+    
+//      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+//   {
+//     unsigned long state = this->StateDescription[i];
+//     int TmpMaxMomentum = this->NbrSite;
+//     while (((state >> TmpMaxMomentum) == 0x0ul) && (TmpMaxMomentum > 0))
+//       --TmpMaxMomentum;
+//     this->PrintState(cout, i) << " " << i << " " << this->FindStateIndex(state, TmpMaxMomentum) << endl;
+//   }
 }
 
 // copy constructor (without duplicating datas)
