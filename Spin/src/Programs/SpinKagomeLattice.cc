@@ -44,6 +44,7 @@ int main(int argc, char** argv)
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
+  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
   ArchitectureManager Architecture;
   LanczosManager Lanczos(false);
@@ -54,6 +55,7 @@ int main(int argc, char** argv)
   Manager += OutputGroup;
   Manager += ToolsGroup;
   Manager += MiscGroup;
+  Manager += PrecalculationGroup;
 
   (*SystemGroup) += new  SingleIntegerOption ('s', "spin", "twice the spin value", 1);
   (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sitex", "number of sites along the x direction", 3);
@@ -70,6 +72,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1); 
   (*SystemGroup) += new  BooleanOption ('\n', "disable-szsymmetry", "disable the Sz<->-Sz symmetry");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "sz-parity", "select the  Sz <-> -Sz parity (can be 1 or -1, 0 if both sectors have to be computed", 0);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Sz symmetry)",0);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Sz symmetry)",0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -239,9 +243,21 @@ int main(int argc, char** argv)
 		}
 		else
 		{
-		  Space = new Spin1_2ChainNewSzSymmetryAnd2DTranslation(NbrSpins, InitalSzValue, parity,  XMomentum, NbrSitesX, YMomentum, NbrSitesY);
-		  cout << "2Sz = " << InitalSzValue << " kx = " << XMomentum << " ky = " << YMomentum << " Sz Parity = " << (1 - 2*parity) << endl; 
-	      
+		  if (Manager.GetString("load-hilbert") != 0)
+		  {
+		    Space = new Spin1_2ChainNewSzSymmetryAnd2DTranslation(Manager.GetString("load-hilbert"));
+		    cout << "2Sz = " << InitalSzValue << " kx = " << XMomentum << " ky = " << YMomentum << " Sz Parity = " << (1 - 2*parity) << endl; 
+		  }
+		  else
+		  {
+		    Space = new Spin1_2ChainNewSzSymmetryAnd2DTranslation(NbrSpins, InitalSzValue, parity,  XMomentum, NbrSitesX, YMomentum, NbrSitesY);  
+		    cout << "2Sz = " << InitalSzValue << " kx = " << XMomentum << " ky = " << YMomentum << " Sz Parity = " << (1 - 2*parity) << endl; 
+		    if (Manager.GetString("save-hilbert") != 0)
+		    {
+		      Space->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+		      return 0;
+		    }
+		  }
 		}
 	    }
 	    
