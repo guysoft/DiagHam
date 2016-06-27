@@ -5,6 +5,7 @@
 #include "HilbertSpace/AbstractSpinChain.h"
 #include "HilbertSpace/Spin1_2ChainNew.h"
 #include "HilbertSpace/Spin1_2ChainNewAnd2DTranslation.h"
+#include "HilbertSpace/Spin1_2ChainNewSzSymmetryAnd2DTranslation.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -61,12 +62,14 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "force-negativesz", "compute negative Sz sectors");
   (*SystemGroup) += new BooleanOption  ('\n', "no-translation", "do not use 2d translations");
   (*SystemGroup) += new  SingleIntegerOption ('\n', "initial-sz", "twice the initial sz sector that has to computed", 0);
-  (*SystemGroup) += new  SingleIntegerOption ('\n', "nbr-sz", "number of sz value to evaluate (0 for all sz sectors)", 0);
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "nbr-sz", "number of sz value to evaluate (0 for all sz sectors)", 1);
   (*SystemGroup) += new  SingleDoubleOption ('j', "j-value", "coupling constant value for nearest neighbors", 1.0);
   (*SystemGroup) += new  SingleDoubleOption ('a', "anisotropy", "anisotropy between up and down triangles", 1.0);
   (*SystemGroup) += new  SingleDoubleOption ('\n', "easy-plane", "easy plane anisotropy", 1.0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1); 
+  (*SystemGroup) += new  BooleanOption ('\n', "disable-szsymmetry", "disable the Sz<->-Sz symmetry");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "sz-parity", "select the  Sz <-> -Sz parity (can be 1 or -1, 0 if both sectors have to be computed", 0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -104,6 +107,7 @@ int main(int argc, char** argv)
     NoTranslationFlag = true;
   }
   
+    
   if (Manager.GetDouble("easy-plane") != 1.0)
     cout << "Warning: easy-plane anisotropy is not tested in this code" << endl;
   
@@ -123,6 +127,7 @@ int main(int argc, char** argv)
       sprintf(ParametersName, "jxup_%.6f_jyup_%.6f_jzup_%.6f_jxdown_%.6f_jydown_%.6f_jzdown_%.6f", JEasyPlane, JEasyPlane, JValue, JDownEasyPlane, JDownEasyPlane, JDownValue);
   }
   
+     
   char* OutputFileName = new char [512];
   if (Manager.GetBoolean("cylinder"))
     sprintf (OutputFileName, "spin_1_2_kagome_cylinder_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
@@ -133,11 +138,6 @@ int main(int argc, char** argv)
     else
       sprintf (OutputFileName, "spin_1_2_kagome_notranslation_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
   }
-  char* CommentLine = new char [512];
-  if (NoTranslationFlag)
-    sprintf (CommentLine, "spin 1/2 system with boundary conditions on the kagome lattice and %d sites in the x direction, %d sites in the y direction \n# Sz", NbrSitesX, NbrSitesY);
-  else
-    sprintf (CommentLine, "spin 1/2 system with boundary conditions on the kagome lattice and %d sites in the x direction, %d sites in the y direction and translations \n# Sz kx ky", NbrSitesX, NbrSitesY);
   
   char* FullOutputFileName = new char [strlen(OutputFileName)+ 16];
   sprintf (FullOutputFileName, "%s.dat", OutputFileName);
@@ -183,19 +183,67 @@ int main(int argc, char** argv)
     MaxYMomentum = 0;
   }
   
+  bool SzSymmetryFlag = false;
+  int MaxParity = 0;
+  int MinParity = 0;
+  if (Manager.GetBoolean("disable-szsymmetry") == false)
+  {
+    if ((InitalSzValue == 0) && (MaxSzValue == 0))
+    {
+      SzSymmetryFlag = true;
+      MaxParity = 1;
+      if (Manager.GetInteger("sz-parity") != 0)
+      {
+	MinParity = (1 - Manager.GetInteger("sz-parity")) / 2;
+	MaxParity = MinParity;
+      }
+    }
+    else
+    {
+      cout << "Work in the Sz = 0 sector to be able to use the Sz symmetry" << endl;
+    }
+  }
+  
+    
+  char* CommentLine = new char [512];
+  if (NoTranslationFlag)
+    sprintf (CommentLine, "spin 1/2 system with boundary conditions on the kagome lattice and %d sites in the x direction, %d sites in the y direction \n# Sz", NbrSitesX, NbrSitesY);
+  else
+  {
+    if (SzSymmetryFlag == false)
+      sprintf (CommentLine, "spin 1/2 system with boundary conditions on the kagome lattice and %d sites in the x direction, %d sites in the y direction and translations \n# Sz kx ky", NbrSitesX, NbrSitesY);
+    else
+      sprintf (CommentLine, "spin 1/2 system with boundary conditions on the kagome lattice and %d sites in the x direction, %d sites in the y direction, translations and Sz symmetry\n# Sz kx ky szsym", NbrSitesX, NbrSitesY);
+  }
+  
+  
   for (; InitalSzValue <= MaxSzValue; InitalSzValue +=2)
   {
     for (int XMomentum = MinXMomentum; XMomentum <= MaxXMomentum; ++XMomentum)
     {
       for (int YMomentum = MinYMomentum; YMomentum <= MaxYMomentum; ++YMomentum)
 	{
-	  if (NoTranslationFlag)
-	    Space = new Spin1_2ChainNew (NbrSpins, InitalSzValue, 1000000);
-	  else
-	  {
-	    Space = new Spin1_2ChainNewAnd2DTranslation(NbrSpins, InitalSzValue, XMomentum, NbrSitesX, YMomentum, NbrSitesY);
-	    cout << "2Sz = " << InitalSzValue << " kx = " << XMomentum << " ky = " << YMomentum << endl; 
-	  }
+	  for (int parity = MinParity; parity <= MaxParity; ++parity)
+	    {
+	      if (NoTranslationFlag)
+	      {
+		Space = new Spin1_2ChainNew (NbrSpins, InitalSzValue, 1000000);
+		cout << "2Sz = " << InitalSzValue << endl; 
+	      }
+	      else
+	      {
+		if (SzSymmetryFlag == false)
+		{
+		  Space = new Spin1_2ChainNewAnd2DTranslation(NbrSpins, InitalSzValue, XMomentum, NbrSitesX, YMomentum, NbrSitesY);
+		  cout << "2Sz = " << InitalSzValue << " kx = " << XMomentum << " ky = " << YMomentum << endl; 
+		}
+		else
+		{
+		  Space = new Spin1_2ChainNewSzSymmetryAnd2DTranslation(NbrSpins, InitalSzValue, parity,  XMomentum, NbrSitesX, YMomentum, NbrSitesY);
+		  cout << "2Sz = " << InitalSzValue << " kx = " << XMomentum << " ky = " << YMomentum << " Sz Parity = " << (1 - 2*parity) << endl; 
+	      
+		}
+	    }
 	    
 	    if (Space->GetHilbertSpaceDimension() > 0)
 	    {
@@ -217,8 +265,16 @@ int main(int argc, char** argv)
 	      else
 	      {
 		Hamiltonian = new TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian(Space, XMomentum, NbrSitesX, YMomentum, NbrSitesY, JValue, JDownValue, JEasyPlane, JDownEasyPlane);
-		sprintf (TmpEigenstateString, "%s_sz_%d_kx_%d_ky_%d", OutputFileName, InitalSzValue, XMomentum, YMomentum);
-		sprintf (TmpSzString, "%d %d %d", InitalSzValue, XMomentum, YMomentum);
+		if (SzSymmetryFlag == false)
+		{
+		  sprintf (TmpEigenstateString, "%s_sz_%d_kx_%d_ky_%d", OutputFileName, InitalSzValue, XMomentum, YMomentum);
+		  sprintf (TmpSzString, "%d %d %d", InitalSzValue, XMomentum, YMomentum);
+		}
+		else
+		  {
+		  sprintf (TmpEigenstateString, "%s_sz_%d_kx_%d_ky_%d_szparity_%d", OutputFileName, InitalSzValue, XMomentum, YMomentum, parity);
+		  sprintf (TmpSzString, "%d %d %d %d", InitalSzValue, XMomentum, YMomentum, parity);
+		  }
 		Lanczos.SetComplexAlgorithms();
 		GenericComplexMainTask Task(&Manager, Space, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
 				   FirstRun, TmpEigenstateString);
@@ -233,6 +289,7 @@ int main(int argc, char** argv)
 	    }
 	  }
 	}
+    }
     }
 
   delete[] ParametersName;
