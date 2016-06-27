@@ -57,6 +57,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-na", "minimum size of the particles whose entropy has to be evaluated", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-na", "maximum size of the particles whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "min-sza", "minimum value of sz in a subsystem", -1000);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-sza", "maximum value of sz in a subsystem", 1000);
   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
   (*SystemGroup) += new BooleanOption  ('\n', "decoupled", "assume that the total spin is a good quantum number of the problem");
   (*SystemGroup) += new BooleanOption  ('\n', "hofstadter", "the file name uses Hofstadter model convention");
@@ -478,9 +480,13 @@ int main(int argc, char** argv)
       double DensitySum = 0.0;
       int ComplementaryNbrParticles = NbrParticles - SubsystemNbrParticles;
       int MinSz = -SubsystemNbrParticles;
+      if (Manager.GetInteger("min-sza") > MinSz)
+	MinSz = Manager.GetInteger("min-sza");
       if ((TotalSpin - ComplementaryNbrParticles) > MinSz)
 	MinSz = (TotalSpin - ComplementaryNbrParticles);
       int MaxSz = SubsystemNbrParticles;
+      if (Manager.GetInteger("max-sza") < MaxSz)
+	MaxSz = Manager.GetInteger("max-sza");
       if ((TotalSpin + ComplementaryNbrParticles) < MaxSz)
 	MaxSz = (TotalSpin + ComplementaryNbrParticles);
       if ((Manager.GetBoolean("decoupled") == false) || (Manager.GetBoolean("su2-spin")) == false)
