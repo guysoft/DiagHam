@@ -894,6 +894,8 @@ long FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixPart
 	}
     }
   
+  ComplexMatrix TmpEntanglementMatrix (TmpHilbertSpace->GetHilbertSpaceDimension(), TmpDestinationHilbertSpace->GetHilbertSpaceDimension(), true);
+
   int MaxIndex = minIndex + nbrIndex;
   long TmpNbrNonZeroElements = 0l;
   BinomialCoefficients TmpBinomial (this->NbrFermions);
@@ -953,27 +955,35 @@ long FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixPart
 			}
 		      if ((Sign & 0x1ul) != 0x0ul)		  
 			Coefficient *= -1.0;
-		      TmpStatePosition[Pos] = TmpPos;
-		      TmpStatePosition2[Pos] = RealDestinationIndex;
-		      TmpStateCoefficient[Pos] = Coefficient;
-		      ++Pos;
+// 		      TmpStatePosition[Pos] = TmpPos;
+// 		      TmpStatePosition2[Pos] = RealDestinationIndex;
+// 		      TmpStateCoefficient[Pos] = Coefficient;
+// 		      ++Pos;
+		      TmpEntanglementMatrix[RealDestinationIndex][minIndex] += groundState[TmpPos] * Coefficient;
 		    }
 		}
 	    }
 	}
-      if (Pos != 0)
+//       if (Pos != 0)
+// 	{
+// 	  ++TmpNbrNonZeroElements;
+// 	  for (int j = 0; j < Pos; ++j)
+// 	    {
+// 	      int Pos2 = TmpStatePosition2[j];
+// 	      Complex TmpValue = Conj(groundState[TmpStatePosition[j]] * TmpStateCoefficient[j]);
+// 	      for (int k = 0; k < Pos; ++k)
+// 		if (TmpStatePosition2[k] >= Pos2)
+// 		  {
+// 		    densityMatrix->UnsafeAddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[k]);
+// 		  }
+// 	    }
+// 	}
+    }
+  for (int i = 0; i < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++i)
+    {
+      for (int j = i; j < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++j)
 	{
-	  ++TmpNbrNonZeroElements;
-	  for (int j = 0; j < Pos; ++j)
-	    {
-	      int Pos2 = TmpStatePosition2[j];
-	      Complex TmpValue = Conj(groundState[TmpStatePosition[j]] * TmpStateCoefficient[j]);
-	      for (int k = 0; k < Pos; ++k)
-		if (TmpStatePosition2[k] >= Pos2)
-		  {
-		    densityMatrix->UnsafeAddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[k]);
-		  }
-	    }
+	  densityMatrix->UnsafeAddToMatrixElement(i, j, TmpEntanglementMatrix[i] * TmpEntanglementMatrix[j]);
 	}
     }
   delete[] TmpStatePosition;
