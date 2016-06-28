@@ -192,7 +192,7 @@ int main(int argc, char** argv)
 	}	
     }
   // disable
-  SzSymmetryFlag = false;
+//   SzSymmetryFlag = false;
 
   char* StatisticPrefix = new char [16];
   sprintf (StatisticPrefix, "fermions");
