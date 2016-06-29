@@ -556,7 +556,7 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::GenerateStates
 
 ComplexVector FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::ConvertToNbodyBasis(ComplexVector& state, FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* targetNbodyBasis)
 {
-  ComplexVector TmpVector (this->LargeHilbertSpaceDimension, true);
+  ComplexVector TmpVector (targetNbodyBasis->LargeHilbertSpaceDimension, true);
   int TmpNbrTranslationX;
   int TmpNbrTranslationY;
   double TmpCoefficient;
@@ -572,10 +572,12 @@ ComplexVector FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::Conve
   for (long i= 0l; i < targetNbodyBasis->LargeHilbertSpaceDimension; ++i)
     {
       unsigned long TmpState = targetNbodyBasis->StateDescription[i];
+      TmpCoefficient = 1.0;
+      this->ProdATemporaryNbrStateInOrbit = targetNbodyBasis->NbrStateInOrbit[i];
       int TmpIndex = this->SymmetrizeAdAdResult(TmpState, TmpCoefficient, TmpNbrTranslationX, TmpNbrTranslationY);
       if (TmpIndex < this->HilbertSpaceDimension)
 	{
-	  TmpVector[i] = state[TmpIndex] * FourrierCoefficients[TmpNbrTranslationX][TmpNbrTranslationY] * TmpCoefficient / sqrt ((double) (this->NbrStateInOrbit[TmpIndex]));
+	  TmpVector[i] = state[TmpIndex] * FourrierCoefficients[TmpNbrTranslationX][TmpNbrTranslationY] * TmpCoefficient;
 	}
     }
   for (int i = 0; i < this->MaxXMomentum; ++i)
