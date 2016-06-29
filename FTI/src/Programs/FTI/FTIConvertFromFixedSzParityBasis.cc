@@ -103,11 +103,11 @@ int main(int argc, char** argv)
 	  cout << "can't open file " << Manager.GetString("input-state") << endl;
 	  return -1;
 	}
-      if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, SzValue, SzSymmetrySector, NbrSiteX, NbrSiteY, XMomentum, YMomentum, Statistics, GutzwillerFlag))
+      if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, SzValue, SzSymmetrySector, XMomentum, YMomentum, NbrSiteX, NbrSiteY, Statistics, GutzwillerFlag) == false)
 	{
-	  if (FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, SzValue, SzSymmetrySector, Statistics, GutzwillerFlag))
+	  if (FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, SzValue, SzSymmetrySector, Statistics, GutzwillerFlag) == false)
 	    {
-	      cout << "error while retrieving system parameters from file name " <<Manager.GetString("input-state")  << endl;
+	      cout << "error while retrieving system parameters from file name " << Manager.GetString("input-state") << endl;
 	      return -1;
 	    }
 	}
@@ -125,9 +125,9 @@ int main(int argc, char** argv)
 	  return -1;
 	}
       NbrInputStates = DegenerateFile.GetNbrLines();
-      if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(DegenerateFile(0, 0), NbrParticles, NbrSites, SzValue, SzSymmetrySector, NbrSiteX, NbrSiteY, XMomentum, YMomentum, Statistics, GutzwillerFlag))
+      if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(DegenerateFile(0, 0), NbrParticles, NbrSites, SzValue, SzSymmetrySector, XMomentum, YMomentum, NbrSiteX, NbrSiteY, Statistics, GutzwillerFlag) == false)
 	{
-	  if (FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(DegenerateFile(0, 0), NbrParticles, NbrSites, SzValue, SzSymmetrySector, Statistics, GutzwillerFlag))
+	  if (FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(DegenerateFile(0, 0), NbrParticles, NbrSites, SzValue, SzSymmetrySector, Statistics, GutzwillerFlag) == false)
 	    {
 	      cout << "error while retrieving system parameters from file name " << DegenerateFile(0, 0) << endl;
 	      return -1;
