@@ -1351,6 +1351,8 @@ HermitianMatrix FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::EvaluateParti
   FermionOnLatticeWithSpinRealSpaceAnd2DTranslation SubsytemSpace (nbrParticleSector, szSector, this->NbrSite, kxSector, this->MaxXMomentum, kySector, this->MaxYMomentum);
   HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
   FermionOnLatticeWithSpinRealSpace ComplementarySpace (ComplementaryNbrParticles, ComplementarySzSector, this->NbrSite);
+//   FermionOnLatticeWithSpinRealSpaceAnd2DTranslation ComplementarySpace (ComplementaryNbrParticles, ComplementarySzSector, this->NbrSite, 
+//  									ComplementaryKxMomentum, this->MaxXMomentum, ComplementaryKyMomentum, this->MaxYMomentum);
   cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
   architecture->SetDimension(ComplementarySpace.GetHilbertSpaceDimension());
   FQHETorusParticleEntanglementSpectrumOperation Operation(this, &SubsytemSpace, (ParticleOnTorusWithSpinAndMagneticTranslations*) &ComplementarySpace, groundState, TmpDensityMatrix);
@@ -1473,9 +1475,9 @@ HermitianMatrix FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::EvaluateParti
     ComplementaryKyMomentum += this->MaxYMomentum;
   FermionOnLatticeWithSpinRealSpaceAnd2DTranslation SubsytemSpace (nbrParticleSector, szSector, this->NbrSite, kxSector, this->MaxXMomentum, kySector, this->MaxYMomentum);
   HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
-  //  FermionOnLatticeWithSpinRealSpace ComplementarySpace (ComplementaryNbrParticles, ComplementarySzSector, this->NbrSite);
-  FermionOnLatticeWithSpinRealSpaceAnd2DTranslation ComplementarySpace (ComplementaryNbrParticles, ComplementarySzSector, this->NbrSite, 
-									ComplementaryKxMomentum, this->MaxXMomentum, ComplementaryKyMomentum, this->MaxYMomentum);
+  FermionOnLatticeWithSpinRealSpace ComplementarySpace (ComplementaryNbrParticles, ComplementarySzSector, this->NbrSite);
+//   FermionOnLatticeWithSpinRealSpaceAnd2DTranslation ComplementarySpace (ComplementaryNbrParticles, ComplementarySzSector, this->NbrSite, 
+// 									ComplementaryKxMomentum, this->MaxXMomentum, ComplementaryKyMomentum, this->MaxYMomentum);
   cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
   architecture->SetDimension(ComplementarySpace.GetHilbertSpaceDimension());
   FQHETorusParticleEntanglementSpectrumOperation Operation(this, &SubsytemSpace, (ParticleOnTorusWithSpinAndMagneticTranslations*) &ComplementarySpace, 
@@ -1520,9 +1522,9 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::EvaluatePartialDensityMa
 									     TmpDestinationHilbertSpace->TotalSpin,
 									     TmpDestinationHilbertSpace->NbrSite);
     }
-  int* TmpStatePosition = new int [TmpHilbertSpace->GetLargeHilbertSpaceDimension()];
-  int* TmpStatePosition2 = new int [TmpHilbertSpace->GetLargeHilbertSpaceDimension()];
-  Complex* TmpStateCoefficient = new Complex [TmpHilbertSpace->GetLargeHilbertSpaceDimension()];
+//   int* TmpStatePosition = new int [TmpHilbertSpace->GetLargeHilbertSpaceDimension()];
+//   int* TmpStatePosition2 = new int [TmpHilbertSpace->GetLargeHilbertSpaceDimension()];
+//   Complex* TmpStateCoefficient = new Complex [TmpHilbertSpace->GetLargeHilbertSpaceDimension()];
   Complex** FourrierCoefficientsDestination = new Complex* [this->MomentumModulo];
   Complex** FourrierCoefficients = new Complex* [this->MomentumModulo];
   for (int i = 0; i < this->MaxXMomentum; ++i)
@@ -1629,9 +1631,9 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::EvaluatePartialDensityMa
 	  densityMatrix->UnsafeAddToMatrixElement(i, j, TmpEntanglementMatrix[j] * TmpEntanglementMatrix[i]);
 	}
     }
-  delete[] TmpStatePosition;
-  delete[] TmpStatePosition2;
-  delete[] TmpStateCoefficient;
+//   delete[] TmpStatePosition;
+//   delete[] TmpStatePosition2;
+//   delete[] TmpStateCoefficient;
   for (int i = 0; i < this->MaxXMomentum; ++i)
     {
       delete[] FourrierCoefficientsDestination[i];

@@ -70,6 +70,7 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpace : public FermionOnSphereWithSp
   // basic constructor when Sz is preserved
   // 
   // nbrFermions = number of fermions
+  // totalSpin = twice the Sz projection
   // nbrSite = number of sites
   // minusSzParity = select the  Sz <-> -Sz symmetric sector with negative parity
   // memory = amount of memory granted for precalculations

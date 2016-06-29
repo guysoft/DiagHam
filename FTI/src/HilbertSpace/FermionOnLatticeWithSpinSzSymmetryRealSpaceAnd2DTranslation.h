@@ -110,6 +110,19 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation : public Fermi
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
     
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in given momentum and Sz sectors.
+  //
+  // nbrParticleSector = number of particles that belong to the subsytem
+  // szParitySector = Sz parity sector (can be either -1 or +1)
+  // kxSector = subsystem momentum along the x direction
+  // kySector = subsystem momentum along the x direction
+  // szSector  = twice the total Sz value of the subsytem
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int szSector, int szParitySector, int kxSector, int kySector, 
+									 ComplexVector& groundState, AbstractArchitecture* architecture = 0);
+  
  protected:
 
   // generate all states corresponding to the constraints

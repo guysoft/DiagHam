@@ -57,6 +57,15 @@ class FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpace : publi
   // memory = amount of memory granted for precalculations
   FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpace (int nbrFermions, int nbrSite, bool minusSzParity, unsigned long memory = 10000000);
 
+  // basic constructor
+  // 
+  // nbrFermions = number of fermions
+  // totalSpin = twice the Sz projection
+  // nbrSite = number of sites
+  // minusSzParity = select the  Sz <-> -Sz symmetric sector with negative parity
+  // memory = amount of memory granted for precalculations
+  FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpace (int nbrFermions, int totalSpin, int nbrSite, bool minusSzParity, unsigned long memory = 10000000);
+
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
@@ -86,6 +95,13 @@ class FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpace : publi
   // return value = Hilbert space dimension
   virtual long EvaluateHilbertSpaceDimension(int nbrFermions);
 
+  // evaluate Hilbert space dimension with a fixed number of fermions with spin up
+  //
+  // nbrFermions = number of fermions
+  // nbrSpinUp = number of fermions with spin up
+  // return value = Hilbert space dimension
+  virtual long EvaluateHilbertSpaceDimension(int nbrFermions, int nbrSpinUp);
+
   // generate all states corresponding to the constraints
   // 
   // nbrFermions = number of fermions
@@ -94,6 +110,16 @@ class FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpace : publi
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
   virtual long GenerateStates(int nbrFermions, int currentSite, int nbrHoles, long pos);
+  
+  // generate all states corresponding to the constraints with a fixed number of fermions with spin up
+  // 
+  // nbrFermions = number of fermions
+  // currentSite = current site index in real state
+  // nbrHoles = number of unoccupied sites
+  //nbrSpinUp = number of fermions with spin up
+  // pos = position in StateDescription array where to store states
+  // return value = position from which new states have to be stored
+  virtual long GenerateStates(int nbrFermions, int currentSite, int nbrHoles, int nbrSpinUp, long pos);
   
   // find state index (and checks state belongs to Hilbert space)
   //
