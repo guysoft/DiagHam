@@ -122,6 +122,13 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation : public Fermi
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int szSector, int szParitySector, int kxSector, int kySector, 
 									 ComplexVector& groundState, AbstractArchitecture* architecture = 0);
+
+  // convert a given state from the n-body basis basis with a fized Sz parity to the current n-body basis
+  //
+  // state = reference on the vector to convert
+  // targetNbodyBasis = reference on the nbody-basis where the final state will be expressed
+  // return value = converted vector
+  ComplexVector ConvertToNbodyBasis(ComplexVector& state, FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* targetNbodyBasis);
   
  protected:
 

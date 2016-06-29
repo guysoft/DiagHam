@@ -296,8 +296,8 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  TmpVector = ((FermionOnTorusWithSpinAndMagneticTranslations*) InputSpace)->ConvertFromNbodyBasis (InputStates[i], *((FermionOnTorusWithSpinAndMagneticTranslations*)OutputSpace));
-	  cout << "dimension = " << TmpVector.GetVectorDimension() <<  " " << ((FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*) OutputSpace)->GetHilbertSpaceDimension() << endl;
+	  TmpVector = ((FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation*) InputSpace)->ConvertFromNbodyBasis (InputStates[i], *((FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*)OutputSpace));
+	  cout << "dimension = " << TmpVector.GetVectorDimension() <<  " " << OutputSpace->GetHilbertSpaceDimension() << endl;
 	  // 	TmpVector = ((FermionOnSphereWithSpin*) InputSpace)->ConvertFromNbodyBasis (InputStates[i], *OutputSpace);
 	}
 //       {

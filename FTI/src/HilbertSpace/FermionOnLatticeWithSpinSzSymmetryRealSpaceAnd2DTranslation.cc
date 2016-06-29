@@ -547,6 +547,45 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::GenerateStates
   return TmpLargeHilbertSpaceDimension;
 }
 
+
+// convert a given state from the n-body basis basis with a fized Sz parity to the current n-body basis
+//
+// state = reference on the vector to convert
+// targetNbodyBasis = reference on the nbody-basis where the final state will be expressed
+// return value = converted vector
+
+ComplexVector FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::ConvertToNbodyBasis(ComplexVector& state, FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* targetNbodyBasis)
+{
+  ComplexVector TmpVector (this->LargeHilbertSpaceDimension, true);
+  int TmpNbrTranslationX;
+  int TmpNbrTranslationY;
+  double TmpCoefficient;
+  Complex** FourrierCoefficients = new Complex* [this->MomentumModulo];
+  for (int i = 0; i < this->MaxXMomentum; ++i)
+    {
+      FourrierCoefficients[i] = new Complex [this->MaxYMomentum];
+      for (int j = 0; j < this->MaxYMomentum; ++j)
+	{
+	  FourrierCoefficients[i][j] = Phase (2.0 * M_PI * ((double) (i * this->XMomentum) / ((double) this->MaxXMomentum) + (double) (j * this->YMomentum) / ((double) this->MaxYMomentum)));
+	}
+    }
+  for (long i= 0l; i < targetNbodyBasis->LargeHilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState = targetNbodyBasis->StateDescription[i];
+      int TmpIndex = this->SymmetrizeAdAdResult(TmpState, TmpCoefficient, TmpNbrTranslationX, TmpNbrTranslationY);
+      if (TmpIndex < this->HilbertSpaceDimension)
+	{
+	  TmpVector[i] = state[TmpIndex] * FourrierCoefficients[TmpNbrTranslationX][TmpNbrTranslationY] * TmpCoefficient / sqrt ((double) (this->NbrStateInOrbit[TmpIndex]));
+	}
+    }
+  for (int i = 0; i < this->MaxXMomentum; ++i)
+    {
+      delete[] FourrierCoefficients[i];
+    }
+  delete[] FourrierCoefficients;
+  return TmpVector;
+}
+
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in given momentum and Sz sectors.
 //
 // nbrParticleSector = number of particles that belong to the subsytem
