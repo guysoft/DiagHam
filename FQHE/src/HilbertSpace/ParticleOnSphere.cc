@@ -1756,3 +1756,17 @@ Complex ParticleOnSphere::ComputeOverlapWaveFunctionsWithDifferentGamma (Complex
   cout <<"using dummy function ParticleOnSphere::ComputeOverlapWaveFunctionsWithDifferentGamma"<<endl;
   return Complex();
 }
+
+
+// compute sum of positions in the x and y direction for lattice class
+//
+// index = index of the state in the basis whose position sums are to be computed
+// positionX = reference on the sum of positions in the x direction
+// positionY = reference on the sum of positions in the y direction
+void ParticleOnSphere::GetPositionSum(int index,int & positionX, int & positionY)
+{
+  cout <<"using dummy function ParticleOnSphere::GetPositionSum"<<endl;
+}
+
+void ParticleOnSphere::GetPositionSum(unsigned long * monomial, int & positionX, int & positionY)
+{  cout <<"using dummy function ParticleOnSphere::GetPositionSum"<<endl;}

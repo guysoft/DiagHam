@@ -20,7 +20,10 @@
 #include "HilbertSpace/BosonOnLatticeRealSpace.h"
 #include "HilbertSpace/BosonOnLatticeRealSpaceOneOrbitalPerSiteAnd2DTranslation.h"
 #include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpace.h"
+#include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslationLong.h"
 #include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation.h"
+#include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslationLong.h"
 
 #include "Hamiltonian/ParticleOnLatticeHofstadterSingleBandHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeTwoBandHofstadterHamiltonian.h"
@@ -573,7 +576,18 @@ int main(int argc, char** argv)
 				  Space = new BosonOnLatticeGutzwillerProjectionRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
 				}		      
 			      else
-				Space = new BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation(NbrParticles, UnitCellX*NbrCellX, UnitCellY*NbrCellY, i, NbrCellX, j,  NbrCellY);
+				{
+				  if (UnitCellX*NbrCellX*  UnitCellY*NbrCellY <= 63 ) 
+				    {
+				      Space = new BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation(NbrParticles, UnitCellX*NbrCellX, UnitCellY*NbrCellY, i, NbrCellX, j,  NbrCellY);
+				    }
+				  else
+				    {
+				      Space = new BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslationLong(NbrParticles, UnitCellX*NbrCellX, UnitCellY*NbrCellY, i, NbrCellX, j,  NbrCellY);
+				      
+				    }
+
+				}
 			    }
 			  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 			  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());

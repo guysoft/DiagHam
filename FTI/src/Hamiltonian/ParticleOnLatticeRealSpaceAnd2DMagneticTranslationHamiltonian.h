@@ -711,12 +711,12 @@ inline void  ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian::Eval
 	      Index = particles->AdA(index, TmpConnectedSites[k], j,Coefficient, NbrTranslationsX, NbrTranslationsY);
 	      if (Index < Dim)
 		{ 
-                  ((BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation * ) particles)->GetPositionSum(Index,PositionX,PositionY);
+                  particles->GetPositionSum(Index,PositionX,PositionY);
 		  
 		  indexArray[position] = Index;
 		  
  		  coefficientArray[position] = Coefficient * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) *  Phase((NbrTranslationsX*PositionY*PhaseTranslationX + NbrTranslationsY * PositionX * PhaseTranslationY)) * TmpInteractionFactors[k]; 
-
+		  
  		  //coefficientArray[position] = Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactors[k]; 
                   
 //		  cout <<"j = " <<j <<" ; TmpConnectedSites[k] = " << TmpConnectedSites[k]<<" index " << index <<" Index = " << Index<<" coefficientArray[position] = "<<coefficientArray[position] <<endl;
@@ -743,7 +743,7 @@ inline void  ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian::Eval
 	      Index = particles->AdA(index, TmpConnectedSites[k], j, Coefficient, NbrTranslationsX, NbrTranslationsY);
 	      if (Index <= index)
 		{
-                  ((BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation * ) particles)->GetPositionSum(Index,PositionX,PositionY);
+                   particles->GetPositionSum(Index,PositionX,PositionY);
 		  indexArray[position] = Index;
 		  if (Index == index)
 		    {

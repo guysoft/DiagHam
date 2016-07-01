@@ -1169,6 +1169,15 @@ class ParticleOnSphere :  public AbstractQHEParticle
   //  secondVector = reference on the second vector 
   // overlapMatrix = pointer to the table with the overlap between the one-body states
   virtual Complex ComputeOverlapWaveFunctionsWithDifferentGamma (ComplexVector& firstVector, ComplexVector& secondVector, Complex * overlapMatrix);
+
+  // compute sum of positions in the x and y direction for lattice class
+  //
+  // index = index of the state in the basis whose position sums are to be computed
+  // positionX = reference on the sum of positions in the x direction
+  // positionY = reference on the sum of positions in the y direction
+  virtual void GetPositionSum(int index,int & positionX, int & positionY);
+  virtual void GetPositionSum(unsigned long * monomial, int & positionX, int & positionY);
+  
 };
 
 // convert the Lz value from the sphere geometry to the disk geometry

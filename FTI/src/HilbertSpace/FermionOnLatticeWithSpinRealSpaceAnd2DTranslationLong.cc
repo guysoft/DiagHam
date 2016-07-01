@@ -956,7 +956,7 @@ int FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong::AdsigmaAsigma (int in
   coefficient *= this->SignLookUpTable[(State >> (n + 96)) & this->SignLookUpTableMask[n + 96]];
   coefficient *= this->SignLookUpTable[(State >> (n + 112)) & this->SignLookUpTableMask[n + 112]];
 #endif
-  State &= ~(((ULONGLONG) 0x1ul) << n);
+  State &= ~(((ULONGLONG) 0x1ul) << n); 
   if ((State & (((ULONGLONG) 0x1ul) << m))!= ((ULONGLONG) 0x0ul))
     {
       coefficient = 0.0;
@@ -972,7 +972,7 @@ int FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong::AdsigmaAsigma (int in
   coefficient *= this->SignLookUpTable[(State >> (m + 96)) & this->SignLookUpTableMask[m + 96]];
   coefficient *= this->SignLookUpTable[(State >> (m + 112)) & this->SignLookUpTableMask[m + 112]];
 #endif
-  State |= (((ULONGLONG) 0x1ul) << m);
+  State |= (((ULONGLONG) 0x1ul) << m); 
   this->ProdATemporaryNbrStateInOrbit =  this->NbrStateInOrbit[index];
   return this->SymmetrizeAdAdResult(State, coefficient, nbrTranslationX, nbrTranslationY);
 }
