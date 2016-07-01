@@ -444,6 +444,8 @@ int main(int argc, char** argv)
     }
 
   cout << "Integrated charge in the upper layer / lower layer:" << endl;
+  RealSymmetricMatrix TotalChargeLeft(NbrInputStates, true);
+  RealSymmetricMatrix TotalChargeRight(NbrInputStates, true);
   for (int MomentumIndex = 0; MomentumIndex <= LzMax; ++MomentumIndex)
     {      
       RealSymmetricMatrix TotalChargeUpLayer (NbrInputStates, true);
@@ -468,9 +470,19 @@ int main(int argc, char** argv)
       cout << MomentumIndex;
       for (int i = 0; i < NbrInputStates; ++i)
 	cout << " " << TmpUpEigenvalues[i] << " " << TmpDownEigenvalues[i] << " " << TmpEigenvalues[i];
+      if (MomentumIndex < (LzMax + 1) / 2)
+	TotalChargeLeft += OneBodyMatrixElements[0][MomentumIndex] + OneBodyMatrixElements[1][MomentumIndex];
+      else
+	TotalChargeRight += OneBodyMatrixElements[0][MomentumIndex] + OneBodyMatrixElements[1][MomentumIndex];	  
       cout << endl;
     }
-
+   RealDiagonalMatrix TmpLeftEigenvalues(NbrInputStates);
+   TotalChargeLeft.LapackDiagonalize(TmpLeftEigenvalues);
+   RealDiagonalMatrix TmpRightEigenvalues(NbrInputStates);
+   TotalChargeRight.LapackDiagonalize(TmpRightEigenvalues);
+   for (int i = 0; i < NbrInputStates; ++i)
+	cout << "Charge imbalance between left and right (orbital cut) " << (TmpLeftEigenvalues[i] - TmpRightEigenvalues[i]) << endl;
+   
   if (Manager.GetBoolean("realspace-density") == true)
     {
       char* OutputFileName = 0;
@@ -490,6 +502,14 @@ int main(int argc, char** argv)
       double CylinderLength = Perimeter / Ratio;
       int NbrPoints = Manager.GetInteger("nbr-points");
 
+      double* TotalChargeLeft = new double[NbrInputStates];
+      double* TotalChargeRight = new double[NbrInputStates];
+      for (int i = 0; i < NbrInputStates; ++i)
+      {
+	TotalChargeLeft[i] = 0.0;
+	TotalChargeRight[i] = 0.0;
+      }
+  
       RealSymmetricMatrix TmpMatrixUpLayer (NbrInputStates, true);
       RealSymmetricMatrix TmpMatrixUpLayerIntegratedCharge (NbrInputStates, true);
       RealSymmetricMatrix TmpMatrixDownLayer (NbrInputStates, true);
@@ -530,6 +550,7 @@ int main(int argc, char** argv)
 	      TmpFactor = 0.5 * (1.0 + erf(XPosition - TmpShift + (TmpPrefactor2 * ((double) i))));
 	      TmpMatrixDownLayerIntegratedCharge.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][LzMax - i]);
 	      TmpMatrixTotalIntegratedCharge.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][LzMax - i]);
+	      
 	    }
 	  TmpMatrixUpLayer.LapackDiagonalize(TmpEigenvaluesUpLayer);
 	  TmpMatrixUpLayerIntegratedCharge.LapackDiagonalize(TmpEigenvaluesUpLayerIntegratedCharge);
@@ -543,10 +564,18 @@ int main(int argc, char** argv)
 	      File << " " << TmpEigenvaluesUpLayer[i] << " " << TmpEigenvaluesUpLayerIntegratedCharge[i]
 		   << " " << TmpEigenvaluesDownLayer[i] << " " << TmpEigenvaluesDownLayerIntegratedCharge[i]
 		   << " " << TmpEigenvaluesTotal[i] << " " << TmpEigenvaluesTotalIntegratedCharge[i];
+		   
+	      if (TmpX <= NbrPoints / 2)
+		TotalChargeLeft[i] += TmpEigenvaluesTotal[i];
+	      else
+		TotalChargeRight[i] += TmpEigenvaluesTotal[i];
 	    }      
 	  File << endl;
 	  XPosition += XStep;
 	}
+      
+      for (int i = 0; i < NbrInputStates; ++i)
+	cout << "Charge imbalance between left and right (real space cut) " << (TotalChargeLeft[i] - TotalChargeRight[i]) * XStep << endl;
       File.close();
     }
   return 0;
