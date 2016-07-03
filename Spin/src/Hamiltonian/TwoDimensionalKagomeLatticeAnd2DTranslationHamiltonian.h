@@ -68,7 +68,7 @@ class TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian : public TwoDimensi
   // hxFactor = amplitudes of the Zeeman term along x
   // hzFactor = amplitudes of the Zeeman term along z
   // periodicBoundaryConditions = true if periodic boundary conditions have to be used
-  TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian (AbstractSpinChain* chain, int xMomentum, int nbrSpinX, int yMomentum, int nbrSpinY, double jFactor, double jDownFactor, double jEasyPlaneFactor, double jDownEasyPlaneFactor);
+  TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian (AbstractSpinChain* chain, int xMomentum, int nbrSpinX, int yMomentum, int nbrSpinY, double jFactor, double jDownFactor, double jEasyPlaneFactor, double jDownEasyPlaneFactor, int offset = 0);
 
   // destructor
   //

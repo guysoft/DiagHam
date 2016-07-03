@@ -66,7 +66,7 @@ TwoDimensionalKagomeLatticeHamiltonian::TwoDimensionalKagomeLatticeHamiltonian()
 // hzFactor = amplitudes of the Zeeman term along z
 // periodicBoundaryConditions = true if periodic boundary conditions have to be used
 
-TwoDimensionalKagomeLatticeHamiltonian::TwoDimensionalKagomeLatticeHamiltonian (AbstractSpinChain* chain, int nbrSpinX, int nbrSpinY, double jFactor, double jDownFactor, double jEasyPlaneFactor, double jDownEasyPlaneFactor, bool periodicBoundaryConditions)
+TwoDimensionalKagomeLatticeHamiltonian::TwoDimensionalKagomeLatticeHamiltonian (AbstractSpinChain* chain, int nbrSpinX, int nbrSpinY, double jFactor, double jDownFactor, double jEasyPlaneFactor, double jDownEasyPlaneFactor, bool periodicBoundaryConditions, int offset)
 {
   this->Chain = chain;
   this->NbrSpinX = nbrSpinX;
@@ -78,7 +78,10 @@ TwoDimensionalKagomeLatticeHamiltonian::TwoDimensionalKagomeLatticeHamiltonian (
   this->JEasyPlaneFactor = jEasyPlaneFactor;
   this->JDownEasyPlaneFactor = jDownEasyPlaneFactor;
   
+  this->Offset = offset;
+  
   this->HermitianSymmetryFlag = true;
+//   this->HermitianSymmetryFlag = false;
   
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateDiagonalMatrixElements();
@@ -199,22 +202,22 @@ RealVector& TwoDimensionalKagomeLatticeHamiltonian::LowLevelAddMultiply(RealVect
 		if (pos != dim)
 		  vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JDownEasyPlaneFactor;
 	      }
-	      if (this->NbrSpinY > 1)
+	      if ((this->NbrSpinY > 1) || (this->Offset != 0))
 	      {
 		//CA
-		pos = this->Chain->SpiSmj(this->GetLinearizedIndex(j, k, 0), this->GetLinearizedIndex(j, k - 1, 2), i, TmpCoefficient);
+		pos = this->Chain->SpiSmj(this->GetLinearizedIndex(j, k, 0), this->GetLinearizedIndex(j - this->Offset, k - 1, 2), i, TmpCoefficient);
 		if (pos != dim)
 		  vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JDownEasyPlaneFactor;
-		pos = this->Chain->SmiSpj(this->GetLinearizedIndex(j, k, 0), this->GetLinearizedIndex(j, k - 1, 2), i, TmpCoefficient);
+		pos = this->Chain->SmiSpj(this->GetLinearizedIndex(j, k, 0), this->GetLinearizedIndex(j - this->Offset, k - 1, 2), i, TmpCoefficient);
 		if (pos != dim)
 		  vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JDownEasyPlaneFactor;
 		if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 0))
 		{
 		  //BC
-		  pos = this->Chain->SpiSmj(this->GetLinearizedIndex(j - 1, k, 1), this->GetLinearizedIndex(j, k - 1, 2), i, TmpCoefficient);
+		  pos = this->Chain->SpiSmj(this->GetLinearizedIndex(j - 1, k, 1), this->GetLinearizedIndex(j - this->Offset, k - 1, 2), i, TmpCoefficient);
 		  if (pos != dim)
 		    vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JDownEasyPlaneFactor;
-		  pos = this->Chain->SmiSpj(this->GetLinearizedIndex(j - 1, k, 1), this->GetLinearizedIndex(j, k - 1, 2), i, TmpCoefficient);
+		  pos = this->Chain->SmiSpj(this->GetLinearizedIndex(j - 1, k, 1), this->GetLinearizedIndex(j - this->Offset, k - 1, 2), i, TmpCoefficient);
 		  if (pos != dim)
 		    vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JDownEasyPlaneFactor;
 		}
@@ -307,11 +310,11 @@ RealVector& TwoDimensionalKagomeLatticeHamiltonian::HermitianLowLevelAddMultiply
 		}
 	      }
 	      
-	      if (this->NbrSpinY > 1)
+	      if ((this->NbrSpinY > 1) || (this->Offset != 0))
 	      {
 		//CA
 		TmpIndex1 = this->GetLinearizedIndex(j, k, 0);
-		TmpIndex2 = this->GetLinearizedIndex(j, k - 1, 2);
+		TmpIndex2 = this->GetLinearizedIndex(j - this->Offset, k - 1, 2);
 		if (k == 0)
 		{
 		  TmpIndex3 = TmpIndex2;
@@ -328,7 +331,7 @@ RealVector& TwoDimensionalKagomeLatticeHamiltonian::HermitianLowLevelAddMultiply
 		{
 		  //BC
 		  TmpIndex1 = this->GetLinearizedIndex(j - 1, k, 1);
-		  TmpIndex2 = this->GetLinearizedIndex(j, k - 1, 2);
+		  TmpIndex2 = this->GetLinearizedIndex(j - this->Offset, k - 1, 2);
 		  pos = this->Chain->SmiSpj(min(TmpIndex1, TmpIndex2), max(TmpIndex1, TmpIndex2), i, TmpCoefficient);
 		  if (pos != dim)
 		  {
@@ -435,25 +438,25 @@ RealVector* TwoDimensionalKagomeLatticeHamiltonian::LowLevelMultipleAddMultiply(
 		  for (int l = 0; l < nbrVectors; ++l)
 		    vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JDownEasyPlaneFactor;
 	      }
-	      if (this->NbrSpinY > 1)
+	      if ((this->NbrSpinY > 1) || (this->Offset != 0))
 	      {
 		//CA
-		pos = this->Chain->SpiSmj(this->GetLinearizedIndex(j, k, 0), this->GetLinearizedIndex(j, k - 1, 2), i, TmpCoefficient);
+		pos = this->Chain->SpiSmj(this->GetLinearizedIndex(j, k, 0), this->GetLinearizedIndex(j - this->Offset, k - 1, 2), i, TmpCoefficient);
 		if (pos != dim)
 		  for (int l = 0; l < nbrVectors; ++l)
 		  vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JDownEasyPlaneFactor;
-		pos = this->Chain->SmiSpj(this->GetLinearizedIndex(j, k, 0), this->GetLinearizedIndex(j, k - 1, 2), i, TmpCoefficient);
+		pos = this->Chain->SmiSpj(this->GetLinearizedIndex(j, k, 0), this->GetLinearizedIndex(j - this->Offset, k - 1, 2), i, TmpCoefficient);
 		if (pos != dim)
 		  for (int l = 0; l < nbrVectors; ++l)
 		  vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JDownEasyPlaneFactor;
 		if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 0))
 		{
 		  //BC
-		  pos = this->Chain->SpiSmj(this->GetLinearizedIndex(j - 1, k, 1), this->GetLinearizedIndex(j, k - 1, 2), i, TmpCoefficient);
+		  pos = this->Chain->SpiSmj(this->GetLinearizedIndex(j - 1, k, 1), this->GetLinearizedIndex(j - this->Offset, k - 1, 2), i, TmpCoefficient);
 		  if (pos != dim)
 		    for (int l = 0; l < nbrVectors; ++l)
 		      vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JDownEasyPlaneFactor;
-		  pos = this->Chain->SmiSpj(this->GetLinearizedIndex(j - 1, k, 1), this->GetLinearizedIndex(j, k - 1, 2), i, TmpCoefficient);
+		  pos = this->Chain->SmiSpj(this->GetLinearizedIndex(j - 1, k, 1), this->GetLinearizedIndex(j - this->Offset, k - 1, 2), i, TmpCoefficient);
 		  if (pos != dim)
 		    for (int l = 0; l < nbrVectors; ++l)
 		      vDestinations[l][pos] += 0.5 * TmpValues[l] *TmpCoefficient * this->JDownEasyPlaneFactor;
@@ -572,11 +575,11 @@ RealVector* TwoDimensionalKagomeLatticeHamiltonian::HermitianLowLevelMultipleAdd
 		}
 	      }
 	      
-	      if (this->NbrSpinY > 1)
+	      if ((this->NbrSpinY > 1) || (this->Offset != 0))
 	      {
 		//CA
 		TmpIndex1 = this->GetLinearizedIndex(j, k, 0);
-		TmpIndex2 = this->GetLinearizedIndex(j, k - 1, 2);
+		TmpIndex2 = this->GetLinearizedIndex(j - this->Offset, k - 1, 2);
 		if (k == 0)
 		{
 		  TmpIndex3 = TmpIndex2;
@@ -596,7 +599,7 @@ RealVector* TwoDimensionalKagomeLatticeHamiltonian::HermitianLowLevelMultipleAdd
 		{
 		  //BC
 		  TmpIndex1 = this->GetLinearizedIndex(j - 1, k, 1);
-		  TmpIndex2 = this->GetLinearizedIndex(j, k - 1, 2);
+		  TmpIndex2 = this->GetLinearizedIndex(j - this->Offset, k - 1, 2);
 		  pos = this->Chain->SmiSpj(min(TmpIndex1, TmpIndex2), max(TmpIndex1, TmpIndex2), i, TmpCoefficient);
 		  if (pos != dim)
 		  {
@@ -658,15 +661,15 @@ void TwoDimensionalKagomeLatticeHamiltonian::EvaluateDiagonalMatrixElements()
 		TmpCoefficient = this->Chain->SziSzj(this->GetLinearizedIndex(j - 1, k, 1), this->GetLinearizedIndex(j, k, 0), i);
 		this->SzSzContributions[i] += this->JDownFactor * TmpCoefficient;
 	      }
-	      if (this->NbrSpinY > 1)
+	      if ((this->NbrSpinY > 1) || (this->Offset != 0))
 	      {
 		//CA
-		TmpCoefficient = this->Chain->SziSzj(this->GetLinearizedIndex(j, k, 0), this->GetLinearizedIndex(j, k - 1, 2), i);
+		TmpCoefficient = this->Chain->SziSzj(this->GetLinearizedIndex(j, k, 0), this->GetLinearizedIndex(j - this->Offset, k - 1, 2), i);
 		this->SzSzContributions[i] += this->JDownFactor * TmpCoefficient;
 		if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || j > 0))
 		{
 		  //BC
-		  TmpCoefficient = this->Chain->SziSzj(this->GetLinearizedIndex(j - 1, k, 1), this->GetLinearizedIndex(j, k - 1, 2), i);
+		  TmpCoefficient = this->Chain->SziSzj(this->GetLinearizedIndex(j - 1, k, 1), this->GetLinearizedIndex(j - this->Offset, k - 1, 2), i);
 		  this->SzSzContributions[i] += this->JDownFactor * TmpCoefficient;
 		}
 	      }

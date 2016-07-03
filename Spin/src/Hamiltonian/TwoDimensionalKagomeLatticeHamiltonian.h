@@ -59,6 +59,8 @@ class TwoDimensionalKagomeLatticeHamiltonian : public TwoDimensionalTransverseFi
   
    // flag for implementation of hermitian symmetry
   bool HermitianSymmetryFlag;
+  //offset for tilted lattice
+  int Offset;
   
  public:
 
@@ -75,7 +77,7 @@ class TwoDimensionalKagomeLatticeHamiltonian : public TwoDimensionalTransverseFi
   // hxFactor = amplitudes of the Zeeman term along x
   // hzFactor = amplitudes of the Zeeman term along z
   // periodicBoundaryConditions = true if periodic boundary conditions have to be used
-  TwoDimensionalKagomeLatticeHamiltonian(AbstractSpinChain* chain, int nbrSpinX, int nbrSpinY, double jFactor, double jDownFactor, double jEasyPlaneFactor, double jDownEasyPlaneFactor, bool periodicBoundaryConditions = true);
+  TwoDimensionalKagomeLatticeHamiltonian(AbstractSpinChain* chain, int nbrSpinX, int nbrSpinY, double jFactor, double jDownFactor, double jEasyPlaneFactor, double jDownEasyPlaneFactor, bool periodicBoundaryConditions = true, int offset = 0);
 
   // destructor
   //
@@ -182,6 +184,8 @@ inline int TwoDimensionalKagomeLatticeHamiltonian::GetLinearizedIndex(int xPosit
 {
   if (xPosition < 0)
     xPosition += this->NbrSpinX;
+  if (xPosition >= this->NbrSpinX)
+    xPosition -= this->NbrSpinX;
   if (yPosition < 0)
     yPosition += this->NbrSpinY;
   return (3 * ((xPosition * this->NbrSpinY) + yPosition) + atomicIndex);
