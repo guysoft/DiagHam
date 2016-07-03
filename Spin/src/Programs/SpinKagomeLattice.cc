@@ -7,6 +7,7 @@
 #include "HilbertSpace/Spin1_2ChainNewAnd2DTranslation.h"
 #include "HilbertSpace/Spin1_2ChainNewSzSymmetryAnd2DTranslation.h"
 
+
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
@@ -72,6 +73,13 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1); 
   (*SystemGroup) += new  BooleanOption ('\n', "disable-szsymmetry", "disable the Sz<->-Sz symmetry");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "sz-parity", "select the  Sz <-> -Sz parity (can be 1 or -1, 0 if both sectors have to be computed", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nx1", "first coordinate of the first spanning vector of the tilted lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "ny1", "second coordinate of the first spanning vector of the tilted lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nx2", "first coordinate of the second spanning vector of the tilted lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "ny2", "second coordinate of the second spanning vector of the tilted lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "real-offset", "second coordinate in real space of the second spanning vector of the real space lattice (0 if lattice is untilted)", 0);
+  (*SystemGroup) += new  BooleanOption ('\n', "inversion-symmetry", "activate the inversion symmetry");
+//   (*SystemGroup) += new SingleIntegerOption  ('\n', "inversion-parity", "select the  inversion parity (can be 1 or -1, 0 if both sectors have to be computed", 0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Sz symmetry)",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Sz symmetry)",0);
 #ifdef __LAPACK__
@@ -104,6 +112,33 @@ int main(int argc, char** argv)
   double JEasyPlane = JValue * Manager.GetDouble("easy-plane");
   double JDownEasyPlane = JEasyPlane * Manager.GetDouble("anisotropy");
   bool NoTranslationFlag = Manager.GetBoolean("no-translation");
+  
+  int nx1 = Manager.GetInteger("nx1");
+  int ny1 = Manager.GetInteger("ny1");
+  int nx2 = Manager.GetInteger("nx2");
+  int ny2 = Manager.GetInteger("ny2");
+  
+  int OffsetReal = Manager.GetInteger("real-offset");
+  bool TiltedFlag = true;
+  if ( ((nx1 == 0) && (ny1 == 0)) || ((nx2 == 0) && (ny2 == 0)) )
+    TiltedFlag = false;
+  else
+    {
+      if ((nx1*ny2 - nx2*ny1) != NbrSitesX * NbrSitesY)
+	{
+	  cout << "Boundary conditions define a lattice that has a number of sites different from NbrSiteX * NbrSiteY - should have (nx1*ny2 - nx2*ny1) = NbrSiteX * NbrSiteY " << endl;
+	  return 0;
+	}
+      
+      if ((((OffsetReal*ny2 + nx2) % NbrSitesX) != 0 || ((nx1 + OffsetReal*ny1) % NbrSitesX != 0)))
+      {
+	  cout << "Tilted lattice not properly defined. Should have ((offset*ny2 + nx2) % NbrSiteX) = 0 and ((nx1 + offset*ny1) % NbrSiteX = 0) to verify momentum conservation" << endl;
+	  return 0;
+      }
+	
+	
+      cout << "Using tilted boundary conditions" << endl;
+    }
   
   if ((NoTranslationFlag == false) && (Manager.GetBoolean("cylinder")))
   {
@@ -138,9 +173,15 @@ int main(int argc, char** argv)
   else
   {
     if (NoTranslationFlag == false)
-      sprintf (OutputFileName, "spin_1_2_kagome_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
+      if (TiltedFlag == false)
+	sprintf (OutputFileName, "spin_1_2_kagome_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
+      else
+	sprintf (OutputFileName, "spin_1_2_kagome_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_%s", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, ParametersName);
     else
-      sprintf (OutputFileName, "spin_1_2_kagome_notranslation_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
+      if (TiltedFlag == false)
+	sprintf (OutputFileName, "spin_1_2_kagome_notranslation_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
+      else
+	sprintf (OutputFileName, "spin_1_2_kagome_notranslation_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_%s", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, ParametersName);
   }
   
   char* FullOutputFileName = new char [strlen(OutputFileName)+ 16];
@@ -192,7 +233,7 @@ int main(int argc, char** argv)
   int MinParity = 0;
   if (Manager.GetBoolean("disable-szsymmetry") == false)
   {
-    if ((InitalSzValue == 0) && (MaxSzValue == 0))
+    if ((InitalSzValue == 0) && (MaxSzValue == 0) && (NoTranslationFlag == false))
     {
       SzSymmetryFlag = true;
       MaxParity = 1;
@@ -204,10 +245,31 @@ int main(int argc, char** argv)
     }
     else
     {
-      cout << "Work in the Sz = 0 sector to be able to use the Sz symmetry" << endl;
+      cout << "Work in the Sz = 0 sector to be able to use the Sz symmetry, and activate translation symmetry" << endl;
     }
   }
-  
+    
+  bool InversionSymmetryFlag = false;
+  int MaxInversionParity = 0;
+  int MinInversionParity = 0;
+  if (Manager.GetBoolean("inversion-symmetry"))
+  {
+    cout << "Error: inversion symmetry is not implemented" << endl;
+//     if ((MinXMomentum == 0) && (MaxXMomentum == 0) && (MinYMomentum == 0) && (MaxYMomentum == 0))
+//     {
+//       InversionSymmetryFlag = true;
+//       MaxInversionParity = 1;
+//       if (Manager.GetInteger("inversion-parity") != 0)
+//       {
+// 	MinInversionParity = (1 - Manager.GetInteger("inversion-parity")) / 2;
+// 	MaxInversionParity = MinInversionParity;
+//       }
+//     }
+//     else
+//     {
+//       cout << "Work in the Sz = 0 sector to be able to use the Sz symmetry" << endl;
+//     }
+  }
     
   char* CommentLine = new char [512];
   if (NoTranslationFlag)
@@ -229,6 +291,8 @@ int main(int argc, char** argv)
 	{
 	  for (int parity = MinParity; parity <= MaxParity; ++parity)
 	    {
+// 	      for (int inversion = MinInversionParity; inversion <= MaxInversionParity; ++inversion)
+// 		{
 	      if (NoTranslationFlag)
 	      {
 		Space = new Spin1_2ChainNew (NbrSpins, InitalSzValue, 1000000);
@@ -238,8 +302,16 @@ int main(int argc, char** argv)
 	      {
 		if (SzSymmetryFlag == false)
 		{
-		  Space = new Spin1_2ChainNewAnd2DTranslation(NbrSpins, InitalSzValue, XMomentum, NbrSitesX, YMomentum, NbrSitesY);
-		  cout << "2Sz = " << InitalSzValue << " kx = " << XMomentum << " ky = " << YMomentum << endl; 
+		  if (InversionSymmetryFlag == false)
+		  {
+		    Space = new Spin1_2ChainNewAnd2DTranslation(NbrSpins, InitalSzValue, XMomentum, NbrSitesX, YMomentum, NbrSitesY);
+		    cout << "2Sz = " << InitalSzValue << " kx = " << XMomentum << " ky = " << YMomentum << endl; 
+		  }
+		  else
+		  {
+// 		    Space = new Spin1_2ChainNewInversionAnd2DTranslation(NbrSpins, InitalSzValue, inversion,  XMomentum, NbrSitesX, YMomentum, NbrSitesY);  
+// 		    cout << "2Sz = " << InitalSzValue << " kx = " << XMomentum << " ky = " << YMomentum << " inversion Parity = " << (1 - 2*inversion) << endl; 
+		  }
 		}
 		else
 		{
@@ -250,8 +322,19 @@ int main(int argc, char** argv)
 		  }
 		  else
 		  {
-		    Space = new Spin1_2ChainNewSzSymmetryAnd2DTranslation(NbrSpins, InitalSzValue, parity,  XMomentum, NbrSitesX, YMomentum, NbrSitesY);  
-		    cout << "2Sz = " << InitalSzValue << " kx = " << XMomentum << " ky = " << YMomentum << " Sz Parity = " << (1 - 2*parity) << endl; 
+		    if (Manager.GetBoolean("inversion-symmetry"))
+		    {
+		      
+// 			cout << "2Sz = " << InitalSzValue << " kx = " << XMomentum << " ky = " << YMomentum << " Sz Parity = " << (1 - 2*parity) << " Inversion parity = " << (1 - 2*inversion) << endl; 
+// 			Space = new Spin1_2ChainNewSzSymmetryInversionAnd2DTranslation(NbrSpins, InitalSzValue, parity, inversion, XMomentum, NbrSitesX, YMomentum, NbrSitesY);  
+			
+		      
+		    }
+		    else
+		    {
+		      Space = new Spin1_2ChainNewSzSymmetryAnd2DTranslation(NbrSpins, InitalSzValue, parity,  XMomentum, NbrSitesX, YMomentum, NbrSitesY);  
+		      cout << "2Sz = " << InitalSzValue << " kx = " << XMomentum << " ky = " << YMomentum << " Sz Parity = " << (1 - 2*parity) << endl; 
+		    }
 		    if (Manager.GetString("save-hilbert") != 0)
 		    {
 		      Space->WriteHilbertSpace(Manager.GetString("save-hilbert"));
@@ -269,7 +352,7 @@ int main(int argc, char** argv)
 	      AbstractHamiltonian* Hamiltonian = 0;
 	      if (NoTranslationFlag)
 	      {
-		Hamiltonian = new TwoDimensionalKagomeLatticeHamiltonian(Space, NbrSitesX, NbrSitesY, JValue, JDownValue, JEasyPlane, JDownEasyPlane, (!Manager.GetBoolean("cylinder")));
+		Hamiltonian = new TwoDimensionalKagomeLatticeHamiltonian(Space, NbrSitesX, NbrSitesY, JValue, JDownValue, JEasyPlane, JDownEasyPlane, (!Manager.GetBoolean("cylinder")), OffsetReal);
 		sprintf (TmpEigenstateString, "%s_sz_%d", OutputFileName, InitalSzValue);
 		sprintf (TmpSzString, "%d", InitalSzValue);
 		
@@ -280,7 +363,7 @@ int main(int argc, char** argv)
 	      }
 	      else
 	      {
-		Hamiltonian = new TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian(Space, XMomentum, NbrSitesX, YMomentum, NbrSitesY, JValue, JDownValue, JEasyPlane, JDownEasyPlane);
+		Hamiltonian = new TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian(Space, XMomentum, NbrSitesX, YMomentum, NbrSitesY, JValue, JDownValue, JEasyPlane, JDownEasyPlane, OffsetReal);
 		if (SzSymmetryFlag == false)
 		{
 		  sprintf (TmpEigenstateString, "%s_sz_%d_kx_%d_ky_%d", OutputFileName, InitalSzValue, XMomentum, YMomentum);
@@ -288,8 +371,16 @@ int main(int argc, char** argv)
 		}
 		else
 		  {
-		  sprintf (TmpEigenstateString, "%s_sz_%d_kx_%d_ky_%d_szparity_%d", OutputFileName, InitalSzValue, XMomentum, YMomentum, parity);
-		  sprintf (TmpSzString, "%d %d %d %d", InitalSzValue, XMomentum, YMomentum, parity);
+		    if (InversionSymmetryFlag == false)
+		    {
+		      sprintf (TmpEigenstateString, "%s_sz_%d_kx_%d_ky_%d_szparity_%d", OutputFileName, InitalSzValue, XMomentum, YMomentum, parity);
+		      sprintf (TmpSzString, "%d %d %d %d", InitalSzValue, XMomentum, YMomentum, parity);
+		    }
+		    else
+		    {
+// 		      sprintf (TmpEigenstateString, "%s_sz_%d_kx_%d_ky_%d_szparity_%d_invparity_%d", OutputFileName, InitalSzValue, XMomentum, YMomentum, parity, inversion);
+// 		      sprintf (TmpSzString, "%d %d %d %d %d", InitalSzValue, XMomentum, YMomentum, parity, inversion);
+		    }
 		  }
 		Lanczos.SetComplexAlgorithms();
 		GenericComplexMainTask Task(&Manager, Space, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
@@ -305,6 +396,7 @@ int main(int argc, char** argv)
 	    }
 	  }
 	}
+// 	}
     }
     }
 
