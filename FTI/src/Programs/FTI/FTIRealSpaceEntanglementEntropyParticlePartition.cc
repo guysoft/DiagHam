@@ -521,11 +521,11 @@ int main(int argc, char** argv)
 	{
 	  int SubsystemSzSymmetrySector = 0;
 	  int MaxSzSymmetrySector = 0;
-// 	  if ((SubsystemTotalSz == 0) & (SzSymmetrySector != 0))
-// 	    {
-// 	      SubsystemSzSymmetrySector = -1;
-// 	      MaxSzSymmetrySector = 1;
-// 	    }
+	  if ((SubsystemTotalSz == 0) & (SzSymmetrySector != 0))
+	    {
+	      SubsystemSzSymmetrySector = -1;
+	      MaxSzSymmetrySector = 1;
+	    }
 	  for (; SubsystemSzSymmetrySector <= MaxSzSymmetrySector; SubsystemSzSymmetrySector += 2)
 	    {
 	      for (int SubsystemTotalKx = SubsystemTotalKxMin; SubsystemTotalKx < SubsystemTotalKxMax; ++SubsystemTotalKx)

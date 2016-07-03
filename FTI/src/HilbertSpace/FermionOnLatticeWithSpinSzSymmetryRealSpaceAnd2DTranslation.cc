@@ -693,9 +693,6 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
 										 TmpDestinationHilbertSpace->TotalSpin,
 										 TmpDestinationHilbertSpace->NbrSite);
 	}
-      //   int* TmpStatePosition = new int [TmpHilbertSpace->GetLargeHilbertSpaceDimension()];
-      //   int* TmpStatePosition2 = new int [TmpHilbertSpace->GetLargeHilbertSpaceDimension()];
-      //   Complex* TmpStateCoefficient = new Complex [TmpHilbertSpace->GetLargeHilbertSpaceDimension()];
       for (int i = 0; i < this->MaxXMomentum; ++i)
 	{
 	  FourrierCoefficientsDestination[i] = new Complex [this->MaxYMomentum];
@@ -731,7 +728,6 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
 		  int RealDestinationIndex = TmpDestinationHilbertSpace->FindStateIndex(TmpCanonicalState2, TmpDestinationLzMax);
 		  if (RealDestinationIndex < TmpDestinationHilbertSpace->GetHilbertSpaceDimension())
 		    {
-		      int TmpLzMax = 2 * this->NbrSite - 1;
 		      int TmpNbrTranslationX;
 		      int TmpNbrTranslationY;
 		      double TmpCoefficient = 1.0;
@@ -769,28 +765,10 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
 			    Coefficient *= -1.0;
 			  TmpEntanglementMatrix[RealDestinationIndex][minIndex - TmpMinIndex] += groundState[TmpPos] * Coefficient;
 			  ++TmpNbrNonZeroElements;
-			  // 		      TmpStatePosition[Pos] = TmpPos;
-			  // 		      TmpStatePosition2[Pos] = RealDestinationIndex;
-			  // 		      TmpStateCoefficient[Pos] = Coefficient;
-			  // 		      ++Pos;
 			}
 		    }
 		}
 	    }
-	  //       if (Pos != 0)
-	  // 	{
-	  // 	  ++TmpNbrNonZeroElements;
-	  // 	  for (int j = 0; j < Pos; ++j)
-// 	    {
-// 	      int Pos2 = TmpStatePosition2[j];
-// 	      Complex TmpValue = Conj(groundState[TmpStatePosition[j]] * TmpStateCoefficient[j]);
-// 	      for (int k = 0; k < Pos; ++k)
-// 		if (TmpStatePosition2[k] >= Pos2)
-// 		  {
-// 		    densityMatrix->UnsafeAddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[k]);
-// 		  }
-// 	    }
-// 	}
 	}
       for (int i = 0; i < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++i)
 	{
@@ -799,9 +777,6 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
 	      densityMatrix->UnsafeAddToMatrixElement(i, j, TmpEntanglementMatrix[j] * TmpEntanglementMatrix[i]);
 	    }
 	}
-      //   delete[] TmpStatePosition;
-      //   delete[] TmpStatePosition2;
-      //   delete[] TmpStateCoefficient;
       delete TmpDestinationFullHilbertSpace;
     }
   else
@@ -837,6 +812,7 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
       BinomialCoefficients TmpBinomial (this->NbrFermions);
       double TmpInvBinomial = 1.0 / sqrt(TmpBinomial(this->NbrFermions, TmpDestinationHilbertSpace->NbrFermions));
       this->ProdATemporaryNbrStateInOrbit = 1;
+      TmpDestinationHilbertSpace->ProdATemporaryNbrStateInOrbit = 1;
       for (; minIndex < MaxIndex; ++minIndex)    
 	{
 	  int Pos = 0;
@@ -849,15 +825,11 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
 		  int TmpDestinationNbrTranslationX;
 		  int TmpDestinationNbrTranslationY;
 		  int TmpDestinationNbrSzSymmetry;
-		  unsigned long TmpCanonicalState2 = TmpDestinationHilbertSpace->FindCanonicalForm(TmpState2, TmpDestinationNbrTranslationX, TmpDestinationNbrTranslationY, 
-												   TmpDestinationNbrSzSymmetry);
-		  int TmpDestinationLzMax = 2 * TmpDestinationHilbertSpace->NbrSite - 1;
-		  while ((TmpCanonicalState2 >> TmpDestinationLzMax) == 0x0ul)
-		    --TmpDestinationLzMax;
-		  int RealDestinationIndex = TmpDestinationHilbertSpace->FindStateIndex(TmpCanonicalState2, TmpDestinationLzMax);
+		  unsigned long TmpCanonicalState2 = TmpState2;
+		  double TmpDestinationCoefficient = 1.0;
+		  int RealDestinationIndex = TmpDestinationHilbertSpace->SymmetrizeAdAdResult(TmpCanonicalState2, TmpDestinationCoefficient, TmpDestinationNbrTranslationX, TmpDestinationNbrTranslationY);
 		  if (RealDestinationIndex < TmpDestinationHilbertSpace->GetHilbertSpaceDimension())
 		    {
-		      int TmpLzMax = 2 * this->NbrSite - 1;
 		      int TmpNbrTranslationX;
 		      int TmpNbrTranslationY;
 		      double TmpCoefficient = 1.0;
@@ -866,12 +838,12 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
 		      
 		      if (TmpPos < this->HilbertSpaceDimension)
 			{      
-			  int NbrTranslationX = (this->MaxXMomentum - TmpNbrTranslationX) % this->MaxXMomentum;
-			  int NbrTranslationY = (this->MaxYMomentum - TmpNbrTranslationY) % this->MaxYMomentum;
-			  int DestinationNbrTranslationX = (this->MaxXMomentum - TmpDestinationNbrTranslationX) % this->MaxXMomentum;
-			  int DestinationNbrTranslationY = (this->MaxYMomentum - TmpDestinationNbrTranslationY) % this->MaxYMomentum;
-			  Complex Coefficient = (TmpCoefficient * TmpInvBinomial) * FourrierCoefficients[TmpNbrTranslationX][TmpNbrTranslationY] * FourrierCoefficientsDestination[TmpDestinationNbrTranslationX][TmpDestinationNbrTranslationY] / sqrt ((double) (TmpDestinationHilbertSpace->NbrStateInOrbit[RealDestinationIndex]));
-			  unsigned long Sign =  ((TmpDestinationHilbertSpace->ReorderingSign[RealDestinationIndex] >> (((TmpDestinationNbrTranslationY * TmpDestinationHilbertSpace->MaxXMomentum + TmpDestinationNbrTranslationX) * 2) + TmpDestinationNbrSzSymmetry)) & 0x1ul);
+// 			  int NbrTranslationX = (this->MaxXMomentum - TmpNbrTranslationX) % this->MaxXMomentum;
+// 			  int NbrTranslationY = (this->MaxYMomentum - TmpNbrTranslationY) % this->MaxYMomentum;
+// 			  int DestinationNbrTranslationX = (this->MaxXMomentum - TmpDestinationNbrTranslationX) % this->MaxXMomentum;
+// 			  int DestinationNbrTranslationY = (this->MaxYMomentum - TmpDestinationNbrTranslationY) % this->MaxYMomentum;
+ 			  Complex Coefficient = (TmpCoefficient * TmpDestinationCoefficient * TmpInvBinomial) * FourrierCoefficients[TmpNbrTranslationX][TmpNbrTranslationY] * FourrierCoefficientsDestination[TmpDestinationNbrTranslationX][TmpDestinationNbrTranslationY];
+			  unsigned long Sign = 0x0ul;
 			  int Pos2 = 2 * TmpDestinationHilbertSpace->NbrSite - 1;
 			  unsigned long TmpState22 = TmpState2;
 			  while ((Pos2 > 0) && (TmpState22 != 0x0ul))
