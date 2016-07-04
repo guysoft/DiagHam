@@ -41,8 +41,6 @@
 #include <iostream>
 
 
-#define FERMION_LATTICE_REALSPACE_SU2_SZ_MASK 0x5555555555555555ul
-
 
 class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation : public FermionOnLatticeWithSpinRealSpaceAnd2DTranslation
 {
@@ -123,12 +121,19 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation : public Fermi
   virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int szSector, int szParitySector, int kxSector, int kySector, 
 									 ComplexVector& groundState, AbstractArchitecture* architecture = 0);
 
-  // convert a given state from the n-body basis basis with a fized Sz parity to the current n-body basis
+  // convert a given state from the n-body basis with a fized Sz parity to the full n-body basis
   //
   // state = reference on the vector to convert
   // targetNbodyBasis = reference on the nbody-basis where the final state will be expressed
   // return value = converted vector
   ComplexVector ConvertToNbodyBasis(ComplexVector& state, FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* targetNbodyBasis);
+  
+  // convert a given state from the full n-body basis to the current n-body basis with a fized Sz parity 
+  //
+  // state = reference on the vector to convert
+  // inputNbodyBasis = reference on the nbody-basis where the inital state is expressed
+  // return value = converted vector
+  ComplexVector ConvertFromNbodyBasis(ComplexVector& state, FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* inputNbodyBasis);
   
  protected:
 

@@ -40,6 +40,8 @@
 #include <iostream>
 
 
+#define FERMION_LATTICE_REALSPACE_SU2_SZ_MASK 0x5555555555555555ul
+
 
 class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusWithSpinAndMagneticTranslations
 {
@@ -430,6 +432,15 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // initialState = generic state
   // return value = vector corresponding to the eta pairing state built on top on the generic state
   virtual ComplexVector GenerateEtaPairingState(FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* initialSpace, ComplexVector& initialState);
+
+  // Apply the Sz operator to flip all the spins and compute the fermonic sign if any
+  //
+  // index = index of the initial state  on state description
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state  
+  virtual int ApplySzSymmetry (int index, double& coefficient, int nbrTranslationX, int nbrTranslationY);
 
  protected:
 
@@ -1243,6 +1254,38 @@ inline double FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AddAd (int inde
 inline double FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AduAu (int index, int m)
 {
   return this->FermionOnTorusWithSpinAndMagneticTranslations::AduAu (index, m);
+}
+
+// Apply the Sz operator to flip all the spins and compute the fermonic sign if any
+//
+// index = index of the initial state  on state description
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+// nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state  
+
+inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::ApplySzSymmetry (int index, double& coefficient, int nbrTranslationX, int nbrTranslationY)
+{
+  
+  unsigned long TmpState = this->StateDescription[index];
+  unsigned long TmpState2 = ((TmpState >> 1) ^ TmpState) & FERMION_LATTICE_REALSPACE_SU2_SZ_MASK;
+  TmpState2 |= TmpState2 << 1;
+  TmpState2 ^= TmpState; 
+
+  TmpState &= (TmpState >> 1);
+  TmpState &= FERMION_LATTICE_REALSPACE_SU2_SZ_MASK;
+#ifdef __64_BITS__
+  TmpState ^= (TmpState >> 32);
+#endif
+  TmpState ^= (TmpState >> 16);
+  TmpState ^= (TmpState >> 8);
+  TmpState ^= (TmpState >> 4);
+  TmpState ^= (TmpState >> 2);
+  coefficient = 1.0;
+  if ((TmpState & 0x01ul) != 0x0ul)
+    coefficient = -1.0;
+  this->ProdATemporaryNbrStateInOrbit = this->NbrStateInOrbit[index];
+  return this->SymmetrizeAdAdResult(TmpState2, coefficient, nbrTranslationX, nbrTranslationY);
 }
 
 #endif

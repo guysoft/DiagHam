@@ -16,6 +16,9 @@
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/VectorOperatorMultiplyOperation.h"
+#include "Architecture/ArchitectureOperation/OperatorMatrixElementOperation.h"
+
+#include "Operator/ParticleOnLatticeRealSpaceWithSpinAnd2DTranslationSzParityOperator.h"
 
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/FilenameTools.h"
@@ -63,6 +66,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleStringOption('i', "input-state", "name of the file containing the state whose Kx momentum has to be computed");
   (*SystemGroup) += new SingleStringOption('\n', "degenerate-states", "name of the file containing a list of states (override input-state)");
+  (*SystemGroup) += new SingleIntegerOption ('\n', "force-symmetrizesector", "when symmetrizing the input state (instead of unsymmetrizing it), force the symmetry sector (can be either +1 or -1, 0 of autodetection should be used)", 0);
   (*MiscGroup) += new BooleanOption ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -194,64 +198,6 @@ int main(int argc, char** argv)
     }
 
 
-  ParticleOnSphereWithSpin* InputSpace = 0;
-//   FermionOnLatticeWithSpinRealSpace* InputSpace = 0;
-//   FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* TwoDInputSpace = 0;
-  
-  if (Statistics == true)
-    {
-      if (TwoDTranslationFlag == false)
-	{
-	  if (GutzwillerFlag == false)
-	    {
-	      InputSpace = new FermionOnLatticeWithSpinSzSymmetryRealSpace (NbrParticles, SzValue, NbrSites, (SzSymmetrySector == -1), 10000000);
-	    }
-	  else
-	    {
-	      InputSpace = new FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpace (NbrParticles, SzValue, NbrSites, (SzSymmetrySector == -1), 10000000);
-	    }
-	}
-      else
-	{
-	  if (GutzwillerFlag == false)
-	    {
-	      InputSpace = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, (SzSymmetrySector == -1),
-											    XMomentum, NbrSiteX, YMomentum, NbrSiteY, 10000000);
-	    }
-	  else
-	    {
-	      InputSpace = new FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, (SzSymmetrySector == -1),
-														   XMomentum, NbrSiteX, YMomentum, NbrSiteY, 10000000);
-	    }
-	}
-    }
-  else
-    {
-      cout << "not available for bosons" << endl;
-      return -1;
-    }
-//   if (TwoDTranslationFlag == false)
-  {
-    if (InputSpace->GetHilbertSpaceDimension() != InputStates[0].GetVectorDimension())
-      {
-	cout << "error, " << Manager.GetString("input-state")  << " has a wrong dimension (" << InputStates[0].GetVectorDimension() << ", should be " << InputSpace->GetHilbertSpaceDimension() << ")" << endl;
-	return -1;
-      }
-  }
-//   else
-//   {
-//     if (GutzwillerFlag == false)
-// 	  TwoDInputSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, XMomentum, NbrSiteX, YMomentum, NbrSiteY, 10000000);
-//       else
-// 	  TwoDInputSpace = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, XMomentum, NbrSiteX, YMomentum, NbrSiteY, 10000000);
-//     if (TwoDInputSpace->GetHilbertSpaceDimension() != InputStates[0].GetVectorDimension())
-//       {
-// 	cout << "error, " << Manager.GetString("input-state")  << " has a wrong dimension (" << InputStates[0].GetVectorDimension() << ", should be " << TwoDInputSpace->GetHilbertSpaceDimension() << ")" << endl;
-// 	return -1;
-//       }
-//   }
-  
-
   ParticleOnSphereWithSpin* OutputSpace = 0;
   if (Statistics == true)
     {
@@ -284,30 +230,153 @@ int main(int argc, char** argv)
       return -1;
     }
 
-  char* SzSymmetryValueString = new char[256];
-  sprintf (SzSymmetryValueString, "_szsym_%d", SzSymmetrySector);
-  
-  for (int i = 0; i < NbrInputStates; ++i)
+  int InputSzSymmetrySector = SzSymmetrySector;
+  if (InputSzSymmetrySector == 0)
     {
-      char* VectorOutputName = ReplaceString(InputStateNames[i], SzSymmetryValueString, "");
-      ComplexVector TmpVector;
-      if (TwoDTranslationFlag == false)
+      if (Manager.GetInteger("force-symmetrizesector") == 0)
 	{
+	  if (OutputSpace->GetHilbertSpaceDimension() != InputStates[0].GetVectorDimension())
+	    {
+	      cout << "error, " << Manager.GetString("input-state")  << " has a wrong dimension (" << InputStates[0].GetVectorDimension() << ", should be " << OutputSpace->GetHilbertSpaceDimension() << ")" << endl;
+	      return -1;
+	    }
+	  Architecture.GetArchitecture()->SetDimension(OutputSpace->GetHilbertSpaceDimension());
+
+ 	  ParticleOnLatticeRealSpaceWithSpinAnd2DTranslationSzParityOperator TmpOperator((FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*) OutputSpace);
+	  OperatorMatrixElementOperation Operation(&TmpOperator, InputStates[0], InputStates[0]);
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
+//	  Complex TmpElement = TmpOperator.MatrixElement(InputStates[0], InputStates[0]);
+	  Complex TmpElement = Operation.GetScalar();
+	  cout << "Sz parity of " <<  Manager.GetString("input-state") << " = " << TmpElement << endl;
+	  if (TmpElement.Re > 0.0)
+	    {
+	      InputSzSymmetrySector = 1;
+	    }
+	  else
+	    {
+	      InputSzSymmetrySector = -1;
+	    }
 	}
       else
 	{
-	  TmpVector = ((FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation*) InputSpace)->ConvertToNbodyBasis (InputStates[i], ((FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*)OutputSpace));
-	  cout << "dimension = " << TmpVector.GetVectorDimension() <<  " " << OutputSpace->GetHilbertSpaceDimension() << endl;
-	  // 	TmpVector = ((FermionOnSphereWithSpin*) InputSpace)->ConvertFromNbodyBasis (InputStates[i], *OutputSpace);
+	  InputSzSymmetrySector = Manager.GetInteger("force-symmetrizesector");
 	}
-//       {
-// 	ComplexVector TmpVector1 = TwoDInputSpace->ConvertFromKxKyBasis(InputStates[i], InputSpace);
-// 	TmpVector = InputSpace->ConvertFromNbodyBasis (TmpVector1, *OutputSpace);
-//       }
-      if (TmpVector.WriteVector(VectorOutputName) == false)
+    }
+  else
+    {
+    }
+ 
+  ParticleOnSphereWithSpin* InputSpace = 0;
+//   FermionOnLatticeWithSpinRealSpace* InputSpace = 0;
+//   FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* TwoDInputSpace = 0;
+  if (Statistics == true)
+    {
+      if (TwoDTranslationFlag == false)
 	{
-	  cout << "error, can't write vector " << VectorOutputName << endl;
+	  if (GutzwillerFlag == false)
+	    {
+	      InputSpace = new FermionOnLatticeWithSpinSzSymmetryRealSpace (NbrParticles, SzValue, NbrSites, (InputSzSymmetrySector == -1), 10000000);
+	    }
+	  else
+	    {
+	      InputSpace = new FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpace (NbrParticles, SzValue, NbrSites, (InputSzSymmetrySector == -1), 10000000);
+	    }
 	}
-      delete[] VectorOutputName;
+      else
+	{
+	  if (GutzwillerFlag == false)
+	    {
+	      InputSpace = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, (InputSzSymmetrySector == -1),
+											    XMomentum, NbrSiteX, YMomentum, NbrSiteY, 10000000);
+	    }
+	  else
+	    {
+	      InputSpace = new FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, (InputSzSymmetrySector == -1),
+														   XMomentum, NbrSiteX, YMomentum, NbrSiteY, 10000000);
+	    }
+	}
+    }
+  else
+    {
+      cout << "not available for bosons" << endl;
+      return -1;
+    }
+//   else
+//   {
+//     if (GutzwillerFlag == false)
+// 	  TwoDInputSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, XMomentum, NbrSiteX, YMomentum, NbrSiteY, 10000000);
+//       else
+// 	  TwoDInputSpace = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, XMomentum, NbrSiteX, YMomentum, NbrSiteY, 10000000);
+//     if (TwoDInputSpace->GetHilbertSpaceDimension() != InputStates[0].GetVectorDimension())
+//       {
+// 	cout << "error, " << Manager.GetString("input-state")  << " has a wrong dimension (" << InputStates[0].GetVectorDimension() << ", should be " << TwoDInputSpace->GetHilbertSpaceDimension() << ")" << endl;
+// 	return -1;
+//       }
+//   }
+  
+
+
+//   if (TwoDTranslationFlag == false)
+  {
+    if (((SzSymmetrySector != 0) && (InputSpace->GetHilbertSpaceDimension() != InputStates[0].GetVectorDimension()))
+	|| ((SzSymmetrySector == 0) && (OutputSpace->GetHilbertSpaceDimension() != InputStates[0].GetVectorDimension())))
+      {
+	cout << "error, " << Manager.GetString("input-state")  << " has a wrong dimension (" << InputStates[0].GetVectorDimension() << ", should be " << InputSpace->GetHilbertSpaceDimension() << ")" << endl;
+	return -1;
+      }
+  }
+
+  if (SzSymmetrySector == 0)
+    {
+      char* SzSymmetryValueString = new char[256];
+      sprintf (SzSymmetryValueString, "sz_0_szsym_%d_", InputSzSymmetrySector);
+
+      for (int i = 0; i < NbrInputStates; ++i)
+	{
+	  char* VectorOutputName = ReplaceString(InputStateNames[i], "sz_0_", SzSymmetryValueString);
+	  ComplexVector TmpVector;
+	  if (TwoDTranslationFlag == false)
+	    {
+	    }
+	  else
+	    {
+	      TmpVector = ((FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation*) InputSpace)->ConvertFromNbodyBasis (InputStates[i], ((FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*)OutputSpace));
+	      cout << "dimension = " << TmpVector.GetVectorDimension() <<  " " << InputSpace->GetHilbertSpaceDimension() << endl;
+	    }
+	  if (TmpVector.WriteVector(VectorOutputName) == false)
+	    {
+	      cout << "error, can't write vector " << VectorOutputName << endl;
+	    }
+	  delete[] VectorOutputName;
+	}
+    }
+  else
+    {
+      char* SzSymmetryValueString = new char[256];
+      sprintf (SzSymmetryValueString, "_szsym_%d", SzSymmetrySector);
+      
+      for (int i = 0; i < NbrInputStates; ++i)
+	{
+	  char* VectorOutputName = ReplaceString(InputStateNames[i], SzSymmetryValueString, "");
+	  ComplexVector TmpVector;
+	  if (TwoDTranslationFlag == false)
+	    {
+	    }
+	  else
+	    {
+	      TmpVector = ((FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation*) InputSpace)->ConvertToNbodyBasis (InputStates[i], ((FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*)OutputSpace));
+	      cout << "dimension = " << TmpVector.GetVectorDimension() <<  " " << OutputSpace->GetHilbertSpaceDimension() << endl;
+	      // 	TmpVector = ((FermionOnSphereWithSpin*) InputSpace)->ConvertFromNbodyBasis (InputStates[i], *OutputSpace);
+	    }
+	  //       {
+	  // 	ComplexVector TmpVector1 = TwoDInputSpace->ConvertFromKxKyBasis(InputStates[i], InputSpace);
+	  // 	TmpVector = InputSpace->ConvertFromNbodyBasis (TmpVector1, *OutputSpace);
+	  //       }
+	  if (TmpVector.WriteVector(VectorOutputName) == false)
+	    {
+	      cout << "error, can't write vector " << VectorOutputName << endl;
+	    }
+	  delete[] VectorOutputName;
+	}
     }
 }
