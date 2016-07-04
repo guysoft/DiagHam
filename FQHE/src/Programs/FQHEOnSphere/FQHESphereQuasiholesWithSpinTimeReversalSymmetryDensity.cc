@@ -100,7 +100,6 @@ int main(int argc, char** argv)
     }
   if (Manager.GetString("occupation-matrices") == 0)
     {
-      
       if (Manager.GetString("input-state") != 0)
 	{
 	  if (FQHEOnCylinderWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, LzMax, TotalLz, TotalSz, Statistics, Ratio, Perimeter) == false)
@@ -485,6 +484,25 @@ int main(int argc, char** argv)
    
   if (Manager.GetBoolean("realspace-density") == true)
     {
+       if (Manager.GetString("input-state") != 0)
+	{
+	  if (FQHEOnCylinderWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, LzMax, TotalLz, TotalSz, Statistics, Ratio, Perimeter) == false)
+	    {
+	      if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, LzMax, TotalLz, TotalSz, Statistics) == false)
+		{
+		  cout << "error while retrieving system parameters from file name " << Manager.GetString("input-state")  << endl;
+		  return -1;
+		}
+	    }
+	  else
+	    {
+	      UseCylinderFlag = true;
+	    }
+	  NbrInputStates = 1;
+	  InputStateNames = new char*[NbrInputStates];
+	  InputStateNames[0] = new char [strlen(Manager.GetString("input-state")) + 1];
+	  strcpy (InputStateNames[0], Manager.GetString("input-state"));
+	}
       char* OutputFileName = 0;
       OutputFileName = ReplaceExtensionToFileName(InputStateNames[0], "vec", "rho.dat");
       ofstream File;
