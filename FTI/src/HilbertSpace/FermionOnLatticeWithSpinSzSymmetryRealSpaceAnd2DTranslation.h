@@ -223,7 +223,7 @@ inline int FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::Symmetri
 {
   int NbrSzSymmetry;
   state = this->FindCanonicalForm(state, nbrTranslationX, nbrTranslationY, NbrSzSymmetry);
-  int TmpMaxMomentum = 2 * this->NbrSite + 1;
+  int TmpMaxMomentum = 2 * this->NbrSite - 1;
   while ((state >> TmpMaxMomentum) == 0x0ul)
     --TmpMaxMomentum;
   int TmpIndex = this->FindStateIndex(state, TmpMaxMomentum);
