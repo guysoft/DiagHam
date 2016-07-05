@@ -209,6 +209,18 @@ class QuasiholeOnSphereWithSpinAndPairing :  public ParticleOnSphereWithSpin
   // return value = converted vector
   virtual RealVector ConvertToNbodyBasis(RealVector& state, QuasiholeOnSphereWithSpinAndPairing* nbodyBasis);
 
+  // create a state from two single eigenstates
+  //
+  // eigenstateUp = reference of the eigenstate for the up layer
+  // nbrParticlesUp = number of particles in the up layer
+  // lzUp = momentum of the up layer eigenstate
+  // eigenstateDown = reference of the eigenstate for the down layer
+  // nbrParticlesDown = number of particles in the down layer
+  // lzDown = momentum of the down layer eigenstate
+  // return value = state built from the tensor product of the two single layer eigenstates
+  RealVector BuildFromTwoSingleLayerEigenstates(RealVector& eigenstateUp, int nbrParticlesUp, int lzUp,
+						RealVector& eigenstateDown, int nbrParticlesDown, int lzDown);
+
  protected:
 
   // evaluate Hilbert space dimension

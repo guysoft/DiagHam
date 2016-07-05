@@ -849,3 +849,32 @@ RealVector QuasiholeOnSphereWithSpinAndPairing::ConvertToNbodyBasis(RealVector& 
   return TmpVector;
 }
 
+// create a state from two single eigenstates
+//
+// eigenstateUp = reference of the eigenstate for the up layer
+// nbrParticlesUp = number of particles in the up layer
+// lzUp = momentum of the up layer eigenstate
+// eigenstateDown = reference of the eigenstate for the down layer
+// nbrParticlesDown = number of particles in the down layer
+// lzDown = momentum of the down layer eigenstate
+// return value = state built from the tensor product of the two single layer eigenstates
+
+RealVector QuasiholeOnSphereWithSpinAndPairing::BuildFromTwoSingleLayerEigenstates(RealVector& eigenstateUp, int nbrParticlesUp, int lzUp,
+										   RealVector& eigenstateDown, int nbrParticlesDown, int lzDown)
+{
+  RealVector TmpVector (this->LargeHilbertSpaceDimension, true);
+  for (int i = 0; i < eigenstateUp.GetVectorDimension(); ++i)
+    {
+      for (int j = 0; j < eigenstateDown.GetVectorDimension(); ++j)
+	{
+	  int TmpIndex = this->FindStateIndex(nbrParticlesUp, lzUp, i, j);
+	  if (TmpIndex < this->HilbertSpaceDimension)
+	    {
+	      TmpVector[TmpIndex] += eigenstateUp[i] * eigenstateDown[j];
+	    }
+	  
+	}      
+    }
+  return TmpVector;
+}
+

@@ -8,6 +8,9 @@
 
 #include "Tools/FQHEFiles/FQHEOnCylinderFileTools.h"
 
+#include "HilbertSpace/QuasiholeOnSphereWithSpinAndPairing.h"
+#include "HilbertSpace/QuasiholeOnSphereWithSpin.h"
+
 #include <iostream>
 #include <cstring>
 #include <stdlib.h>
@@ -50,11 +53,15 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleStringOption ('s', "singlelayer-spectra", "name of the file containing the list of single layer spectra");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-states", "maximum number of states to generate per momentum sector", 100);  
+  (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the two layer system", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('s', "total-ky", "twice the total momentum of the two layer system", 0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "charging-energy", "factor in front of the charging energy (i.e 1/(2C))", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "average-nbrparticles", "average number of particles", 0.0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "fix-nbrparticles", "fix the number of particles for the two layer system (no restriction if negative)", -1);  
   (*SystemGroup) += new SingleDoubleOption ('\n', "degeneracy-error", "difference below which two energies are considered to be degenerate", 1.0e-12);
-
+  (*SystemGroup) += new SingleStringOption ('\n', "directory", "use a specific directory for the input data instead of the current one (only useful when building the eigenstates in the full quasihole basis)");
+  
+  (*OutputGroup) += new BooleanOption ('\n', "build-eigenstates", "build the eigenstates in the full quasihole basis");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -74,8 +81,8 @@ int main(int argc, char** argv)
       return -1;
     }
 
-  int TwoLayerSzSector = 0;
-  int TwoLayerLzSector = 0;
+  int TwoLayerSzSector = Manager.GetInteger("total-sz");
+  int TwoLayerLzSector = Manager.GetInteger("total-ky");
   int FixTotalNbrParticles = Manager.GetInteger("fix-nbrparticles");
 
   int MaxNbrParticlesPerLayer = -1;
@@ -83,6 +90,8 @@ int main(int argc, char** argv)
   bool Statistics = true;
   double Ratio = 0.0;
   double Perimeter = 0.0;
+  int KValue = 1;
+  int RValue = 2;
 
   MultiColumnASCIIFile SingleLayerSpectrumFile;
   if (SingleLayerSpectrumFile.Parse(Manager.GetString("singlelayer-spectra")) == false)
@@ -107,7 +116,7 @@ int main(int argc, char** argv)
   char** SpectrumFileNames = new char* [MaxNbrParticlesPerLayer + 1];
   char* TmpOutputFileName;
   int* NbrLzSectors = new int [MaxNbrParticlesPerLayer + 1];
-  int* MinLzs = new int [MaxNbrParticlesPerLayer + 1];
+  int* MinLzValues = new int [MaxNbrParticlesPerLayer + 1];
   int** NbrEnergies = new int* [MaxNbrParticlesPerLayer + 1];
   double*** Energies = new double** [MaxNbrParticlesPerLayer + 1];
   for (int i = 0; i <= MaxNbrParticlesPerLayer; ++i)
@@ -124,7 +133,7 @@ int main(int argc, char** argv)
 	  cout << "can't extract system information from file name " << SingleLayerSpectrumFile(0, i) << endl;
 	  return -1;
 	}
-      if (FQHECylinderQuasiholesWithSpinTimeReversalSymmetryExtractSpectrum(SingleLayerSpectrumFile(0, i), NbrLzSectors[TmpNbrParticles], MinLzs[TmpNbrParticles],
+      if (FQHECylinderQuasiholesWithSpinTimeReversalSymmetryExtractSpectrum(SingleLayerSpectrumFile(0, i), NbrLzSectors[TmpNbrParticles], MinLzValues[TmpNbrParticles],
 									    NbrEnergies[TmpNbrParticles], Energies[TmpNbrParticles]) == false)
 	{
 	  return -1;
@@ -151,7 +160,7 @@ int main(int argc, char** argv)
 	    {
 	      for (int UpLayerLzSector = 0; UpLayerLzSector < NbrLzSectors[UpLayerNbrParticles]; ++UpLayerLzSector)
 		{
-		  int DownLayerLzSector = ((((UpLayerLzSector * 2) + MinLzs[UpLayerNbrParticles]) - TwoLayerLzSector) -  MinLzs[DownLayerNbrParticles]) / 2;
+		  int DownLayerLzSector = ((((UpLayerLzSector * 2) + MinLzValues[UpLayerNbrParticles]) - TwoLayerLzSector) -  MinLzValues[DownLayerNbrParticles]) / 2;
 		  TotalNbrLevels += NbrEnergies[UpLayerNbrParticles][UpLayerLzSector] *  NbrEnergies[DownLayerNbrParticles][DownLayerLzSector];
 		}
 	    }
@@ -177,8 +186,8 @@ int main(int argc, char** argv)
 	      TmpEnergyShift *= Manager.GetDouble("charging-energy");
 	      for (int UpLayerLzSector = 0; UpLayerLzSector < NbrLzSectors[UpLayerNbrParticles]; ++UpLayerLzSector)
 		{
-		  int ShiftedUpLayerLzSector = ((UpLayerLzSector * 2) + MinLzs[UpLayerNbrParticles]);
-		  int DownLayerLzSector = ((ShiftedUpLayerLzSector - TwoLayerLzSector) - MinLzs[DownLayerNbrParticles]) / 2;
+		  int ShiftedUpLayerLzSector = ((UpLayerLzSector * 2) + MinLzValues[UpLayerNbrParticles]);
+		  int DownLayerLzSector = ((ShiftedUpLayerLzSector - TwoLayerLzSector) - MinLzValues[DownLayerNbrParticles]) / 2;
 		  for (int i = 0; i < NbrEnergies[UpLayerNbrParticles][UpLayerLzSector]; ++i)
 		    {
 		      for (int j = 0; j < NbrEnergies[DownLayerNbrParticles][DownLayerLzSector]; ++j)
@@ -210,9 +219,18 @@ int main(int argc, char** argv)
       --EffectiveSubspaceDimension;
     }
   
+  int** LargestUsedEigenstate = new int* [MaxNbrParticlesPerLayer + 1];
+  for (int i = 0; i <= MaxNbrParticlesPerLayer; ++i)
+    {
+      LargestUsedEigenstate[i] = new int [NbrLzSectors[i]];
+      for (int j = 0; j < NbrLzSectors[i]; ++j)
+	{
+	  LargestUsedEigenstate[i][j] = -1;
+	}
+    }
   char* OutputFileNameExtension = new char[128];
   sprintf (OutputFileNameExtension, "_effective_%d.basis", EffectiveSubspaceDimension);
-  char* OutputFileName = ReplaceExtensionToFileName(TmpOutputFileName, "dat", OutputFileNameExtension);
+  char* OutputFileName = ReplaceString(TmpOutputFileName, ".dat", OutputFileNameExtension);
   ofstream File;  
   File.open(OutputFileName, ios::binary | ios::out); 
   File.precision(14); 
@@ -233,10 +251,100 @@ int main(int argc, char** argv)
       char* TmpDownLayerVectorFileName = ReplaceExtensionToFileName(SpectrumFileNames[UpLayerNbrParticles], ".dat", TmpExtension);
       File << " " << TmpUpLayerVectorFileName<< " " << TmpDownLayerVectorFileName;
       File << endl;
+      if (LargestUsedEigenstate[UpLayerNbrParticles][(TwoLayerUpLzValues[TwoLayerIndices[i]] - MinLzValues[UpLayerNbrParticles]) / 2] < TwoLayerUpIndices[TwoLayerIndices[i]])
+	{
+	  LargestUsedEigenstate[UpLayerNbrParticles][(TwoLayerUpLzValues[TwoLayerIndices[i]] - MinLzValues[UpLayerNbrParticles]) / 2] = TwoLayerUpIndices[TwoLayerIndices[i]];
+	}
+      if (LargestUsedEigenstate[DownLayerNbrParticles][(DownLayerLzValue - MinLzValues[DownLayerNbrParticles]) / 2] < TwoLayerDownIndices[TwoLayerIndices[i]])
+	{
+	  LargestUsedEigenstate[DownLayerNbrParticles][(DownLayerLzValue - MinLzValues[DownLayerNbrParticles]) / 2] = TwoLayerDownIndices[TwoLayerIndices[i]];
+	}
       delete[] TmpUpLayerVectorFileName;
       delete[] TmpDownLayerVectorFileName;
     }
   File.close();
+
+  for (int i = 0; i <= MaxNbrParticlesPerLayer; ++i)
+    {
+      for (int j = 0; j < NbrLzSectors[i]; ++j)
+	{
+	  if (LargestUsedEigenstate[i][j] >= 0)
+	    {
+	      cout << "require " << (LargestUsedEigenstate[i][j] + 1) << " eigenstates for N=" << i << " and Ky=" << ((j * 2) + MinLzValues[i]) << endl;
+	    }
+	}
+    }
+
+  if (Manager.GetBoolean("build-eigenstates"))
+    {
+      char* FilePrefix = new char[512];
+      
+      if (Perimeter > 0.0)	
+	{
+	  if (Statistics == true)
+	    {
+	      sprintf (FilePrefix, "fermions_cylinder_perimeter_%.6f", Perimeter);
+	    }
+	  else
+	    {
+	      sprintf (FilePrefix, "bosons_cylinder_perimeter_%.6f", Perimeter);
+	    }
+	}
+      else
+	{
+	  if (Statistics == true)
+	    {
+	      sprintf (FilePrefix, "fermions_cylinder_ratio_%.6f", Ratio);
+	    }
+	  else
+	    {
+	      sprintf (FilePrefix, "bosons_cylinder_ratio_%.6f", Ratio);
+	    }
+	}
+      QuasiholeOnSphereWithSpinAndPairing* InputSpace;
+      InputSpace = new QuasiholeOnSphereWithSpinAndPairing (KValue, RValue, TwoLayerLzSector, NbrFluxQuanta, TwoLayerSzSector, 
+							    Manager.GetString("directory"), FilePrefix, true);
+      for (int i = 0; i < EffectiveSubspaceDimension; ++i)
+	{
+	  int UpLayerNbrParticles = (TwoLayerNbrParticles[TwoLayerIndices[i]] + TwoLayerSzSector) / 2;
+	  int DownLayerNbrParticles = (TwoLayerNbrParticles[TwoLayerIndices[i]] - TwoLayerSzSector) / 2;  
+	  int DownLayerLzValue = TwoLayerUpLzValues[TwoLayerIndices[i]] - TwoLayerLzSector;
+	  sprintf(TmpExtension, "_%d.%d.vec", TwoLayerUpLzValues[TwoLayerIndices[i]], TwoLayerUpIndices[TwoLayerIndices[i]]);
+	  char* TmpUpLayerVectorFileName = ReplaceExtensionToFileName(SpectrumFileNames[UpLayerNbrParticles], ".dat", TmpExtension);
+	  RealVector TmpUpLayerVector;
+	  if (TmpUpLayerVector.ReadVector(TmpUpLayerVectorFileName) == false)
+	    {
+	      cout << "error, can't read " << TmpUpLayerVectorFileName << endl;
+	  return -1;
+	    }
+	  sprintf(TmpExtension, "_%d.%d.vec", DownLayerLzValue, TwoLayerDownIndices[TwoLayerIndices[i]]);
+	  char* TmpDownLayerVectorFileName = ReplaceExtensionToFileName(SpectrumFileNames[UpLayerNbrParticles], ".dat", TmpExtension);
+	  RealVector TmpDownLayerVector;
+	  if (TmpDownLayerVector.ReadVector(TmpDownLayerVectorFileName) == false)
+	    {
+	      cout << "error, can't read " << TmpUpLayerVectorFileName << endl;
+	      return -1;
+	    }
+	  char* OutputVectorFileNameExtension = new char[128];
+	  sprintf (OutputVectorFileNameExtension, "_effective_%d_fixedn_%d_n_0_", EffectiveSubspaceDimension, (UpLayerNbrParticles + DownLayerNbrParticles));
+	  char* OutputVectorFileName1 = ReplaceString(TmpOutputFileName, "_n_0_", OutputVectorFileNameExtension);
+	  sprintf (OutputVectorFileNameExtension, "%d.vec", i);
+	  char* OutputVectorFileName2 = ReplaceExtensionToFileName(OutputVectorFileName1, "dat", OutputVectorFileNameExtension);
+	  RealVector TmpTwoLayerVector = InputSpace->BuildFromTwoSingleLayerEigenstates(TmpUpLayerVector, UpLayerNbrParticles, TwoLayerUpLzValues[TwoLayerIndices[i]], 
+											TmpDownLayerVector, DownLayerNbrParticles, DownLayerLzValue);
+	  if (TmpTwoLayerVector.WriteVector(OutputVectorFileName2) == false)
+	    {
+	      cout << "error, can't write " << OutputVectorFileName2 << endl;
+	      return -1;
+	    }	  
+	  cout << "generating eignestate " << OutputVectorFileName2 << endl;
+	  delete[] OutputVectorFileName1;
+	  delete[] OutputVectorFileName2;
+	  delete[] TmpUpLayerVectorFileName;
+	  delete[] TmpDownLayerVectorFileName;
+	}
+    }
+      
   delete[] TwoLayerEnergies;
   delete[] TwoLayerNbrParticles;
   delete[] TwoLayerIndices;
