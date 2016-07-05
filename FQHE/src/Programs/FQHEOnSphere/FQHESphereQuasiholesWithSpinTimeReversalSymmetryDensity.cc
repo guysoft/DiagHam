@@ -63,6 +63,7 @@ int main(int argc, char** argv)
   (*OutputGroup) += new SingleIntegerOption  ('\n', "nbr-points", "number of points along the cylinder axis", 400);  
   (*OutputGroup) += new SingleDoubleOption  ('\n', "offset", "additional length along the cylinder axis on each side of the [-Lx/2,Lx/2] region where the density should be computed", 5.0);
   (*OutputGroup) += new BooleanOption ('\n', "disable-binary", "do not export the orbital occupation matrices in binary format");
+  (*SystemGroup) += new SingleStringOption ('o', "output", "store charge imbalance eigenvalues in a file");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 0);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
@@ -90,6 +91,8 @@ int main(int argc, char** argv)
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   int NbrInputStates = 0;
   char** InputStateNames = 0;
+  char* OutputName = 0;
+  ofstream FileChargeImbalance;
   RealSymmetricMatrix** OneBodyMatrixElements = new RealSymmetricMatrix*[2];
       
   if ((Manager.GetString("input-state") == 0) && (Manager.GetString("degenerate-states") == 0) 
@@ -98,75 +101,85 @@ int main(int argc, char** argv)
       cout << "error, an input file has to be provided. See man page for option syntax or type FQHESphereQuasiholesWithSpinTimeReversalSymmetryConvertStates -h" << endl;
       return -1;
     }
+    
+  if (Manager.GetString("output"))
+  {
+    OutputName = new char[strlen(Manager.GetString("output") + 1)];
+    strcpy (OutputName, Manager.GetString("output"));
+    FileChargeImbalance.open(OutputName, ios::binary | ios::out); 
+    FileChargeImbalance.precision(14); 
+    FileChargeImbalance << "# i (Q_L-Q_R)_orb (Q_L-Q_R)_real" << endl;
+  }
+  if (Manager.GetString("input-state") != 0)
+  {
+    if (FQHEOnCylinderWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, LzMax, TotalLz, TotalSz, Statistics, Ratio, Perimeter) == false)
+    {
+      if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, LzMax, TotalLz, TotalSz, Statistics) == false)
+      {
+	cout << "error while retrieving system parameters from file name " << Manager.GetString("input-state")  << endl;
+	return -1;
+      }
+    }
+    else
+    {
+      UseCylinderFlag = true;
+    }
+    NbrInputStates = 1;
+    InputStateNames = new char*[NbrInputStates];
+    InputStateNames[0] = new char [strlen(Manager.GetString("input-state")) + 1];
+    strcpy (InputStateNames[0], Manager.GetString("input-state"));
+  }
+  else
+  {
+    if (Manager.GetString("use-hilbert") == 0)
+    {
+      MultiColumnASCIIFile DegenerateFile;
+      if (DegenerateFile.Parse(Manager.GetString("degenerate-states")) == false)
+	{
+	  DegenerateFile.DumpErrors(cout);
+	  return -1;
+	}
+      NbrInputStates = DegenerateFile.GetNbrLines();
+      InputStateNames = new char*[NbrInputStates];
+      for (int i = 0; i < NbrInputStates; ++i)
+	{
+	  InputStateNames[i] = new char [strlen(DegenerateFile(0, i)) + 1];
+	  strcpy (InputStateNames[i], DegenerateFile(0, i));
+	}
+    }
+  else
+    {
+      ConfigurationParser DegenerateFile;
+      if (DegenerateFile.Parse(Manager.GetString("use-hilbert")) == false)
+	{
+	  DegenerateFile.DumpErrors(cout);
+	  return -1;
+	}
+      if (DegenerateFile.GetAsStringArray("Basis", ' ', InputStateNames, NbrInputStates) == false)
+	{
+	  return 0;
+	}
+    }
+    for (int i = 0; i < NbrInputStates; ++i)
+    {
+      if (FQHEOnCylinderWithSpinFindSystemInfoFromVectorFileName(InputStateNames[i], NbrParticles, LzMax, TotalLz, TotalSz, Statistics, Ratio, Perimeter) == false)
+	{
+	  if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(InputStateNames[i], NbrParticles, LzMax, TotalLz, TotalSz, Statistics) == false)
+	  {
+	    cout << "error while retrieving system parameters from file name " << InputStateNames[i] << endl;
+	    return -1;
+	 }
+	}
+	else
+	{
+	  UseCylinderFlag = true;
+	}
+    }
+  }
+  RealDiagonalMatrix TmpImbalanceEigenvalues(NbrInputStates);     
   if (Manager.GetString("occupation-matrices") == 0)
     {
-      if (Manager.GetString("input-state") != 0)
-	{
-	  if (FQHEOnCylinderWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, LzMax, TotalLz, TotalSz, Statistics, Ratio, Perimeter) == false)
-	    {
-	      if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, LzMax, TotalLz, TotalSz, Statistics) == false)
-		{
-		  cout << "error while retrieving system parameters from file name " << Manager.GetString("input-state")  << endl;
-		  return -1;
-		}
-	    }
-	  else
-	    {
-	      UseCylinderFlag = true;
-	    }
-	  NbrInputStates = 1;
-	  InputStateNames = new char*[NbrInputStates];
-	  InputStateNames[0] = new char [strlen(Manager.GetString("input-state")) + 1];
-	  strcpy (InputStateNames[0], Manager.GetString("input-state"));
-	}
-      else
-	{
-	  if (Manager.GetString("use-hilbert") == 0)
-	    {
-	      MultiColumnASCIIFile DegenerateFile;
-	      if (DegenerateFile.Parse(Manager.GetString("degenerate-states")) == false)
-		{
-		  DegenerateFile.DumpErrors(cout);
-		  return -1;
-		}
-	      NbrInputStates = DegenerateFile.GetNbrLines();
-	      InputStateNames = new char*[NbrInputStates];
-	      for (int i = 0; i < NbrInputStates; ++i)
-		{
-		  InputStateNames[i] = new char [strlen(DegenerateFile(0, i)) + 1];
-		  strcpy (InputStateNames[i], DegenerateFile(0, i));
-		}
-	    }
-	  else
-	    {
-	      ConfigurationParser DegenerateFile;
-	      if (DegenerateFile.Parse(Manager.GetString("use-hilbert")) == false)
-		{
-		  DegenerateFile.DumpErrors(cout);
-		  return -1;
-		}
-	      if (DegenerateFile.GetAsStringArray("Basis", ' ', InputStateNames, NbrInputStates) == false)
-		{
-		  return 0;
-		}
-	    }
-	  for (int i = 0; i < NbrInputStates; ++i)
-	    {
-	      if (FQHEOnCylinderWithSpinFindSystemInfoFromVectorFileName(InputStateNames[i], NbrParticles, LzMax, TotalLz, TotalSz, Statistics, Ratio, Perimeter) == false)
-		{
-		  if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(InputStateNames[i], NbrParticles, LzMax, TotalLz, TotalSz, Statistics) == false)
-		    {
-		      cout << "error while retrieving system parameters from file name " << InputStateNames[i] << endl;
-		      return -1;
-		    }
-		}
-	      else
-		{
-		  UseCylinderFlag = true;
-		}
-	    }
-	}
-      
+
       
       char* FilePrefix = new char[512];
       
@@ -443,10 +456,20 @@ int main(int argc, char** argv)
     }
 
   cout << "Integrated charge in the upper layer / lower layer:" << endl;
-  RealSymmetricMatrix TotalChargeLeft(NbrInputStates, true);
-  RealSymmetricMatrix TotalChargeRight(NbrInputStates, true);
+  RealSymmetricMatrix TotalChargeImbalance(NbrInputStates, true);
   for (int MomentumIndex = 0; MomentumIndex <= LzMax; ++MomentumIndex)
     {      
+      if (MomentumIndex < (LzMax + 1) / 2)
+      {
+	TotalChargeImbalance += OneBodyMatrixElements[0][MomentumIndex];
+	TotalChargeImbalance += OneBodyMatrixElements[1][MomentumIndex];
+      }
+      else
+      {
+	TotalChargeImbalance -= OneBodyMatrixElements[0][MomentumIndex];
+	TotalChargeImbalance -= OneBodyMatrixElements[1][MomentumIndex];
+      }
+      
       RealSymmetricMatrix TotalChargeUpLayer (NbrInputStates, true);
       RealSymmetricMatrix TotalCharge (NbrInputStates, true);
       for (int MomentumIndex2 = 0; MomentumIndex2 <= MomentumIndex; ++MomentumIndex2)
@@ -469,40 +492,15 @@ int main(int argc, char** argv)
       cout << MomentumIndex;
       for (int i = 0; i < NbrInputStates; ++i)
 	cout << " " << TmpUpEigenvalues[i] << " " << TmpDownEigenvalues[i] << " " << TmpEigenvalues[i];
-      if (MomentumIndex < (LzMax + 1) / 2)
-	TotalChargeLeft += OneBodyMatrixElements[0][MomentumIndex] + OneBodyMatrixElements[1][MomentumIndex];
-      else
-	TotalChargeRight += OneBodyMatrixElements[0][MomentumIndex] + OneBodyMatrixElements[1][MomentumIndex];	  
       cout << endl;
     }
-   RealDiagonalMatrix TmpLeftEigenvalues(NbrInputStates);
-   TotalChargeLeft.LapackDiagonalize(TmpLeftEigenvalues);
-   RealDiagonalMatrix TmpRightEigenvalues(NbrInputStates);
-   TotalChargeRight.LapackDiagonalize(TmpRightEigenvalues);
+  
+   TotalChargeImbalance.LapackDiagonalize(TmpImbalanceEigenvalues);
    for (int i = 0; i < NbrInputStates; ++i)
-	cout << "Charge imbalance between left and right (orbital cut) " << (TmpLeftEigenvalues[i] - TmpRightEigenvalues[i]) << endl;
+	cout << "Charge imbalance between left and right (orbital cut) " << (TmpImbalanceEigenvalues[i]) << endl;
    
   if (Manager.GetBoolean("realspace-density") == true)
     {
-       if (Manager.GetString("input-state") != 0)
-	{
-	  if (FQHEOnCylinderWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, LzMax, TotalLz, TotalSz, Statistics, Ratio, Perimeter) == false)
-	    {
-	      if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, LzMax, TotalLz, TotalSz, Statistics) == false)
-		{
-		  cout << "error while retrieving system parameters from file name " << Manager.GetString("input-state")  << endl;
-		  return -1;
-		}
-	    }
-	  else
-	    {
-	      UseCylinderFlag = true;
-	    }
-	  NbrInputStates = 1;
-	  InputStateNames = new char*[NbrInputStates];
-	  InputStateNames[0] = new char [strlen(Manager.GetString("input-state")) + 1];
-	  strcpy (InputStateNames[0], Manager.GetString("input-state"));
-	}
       char* OutputFileName = 0;
       OutputFileName = ReplaceExtensionToFileName(InputStateNames[0], "vec", "rho.dat");
       ofstream File;
@@ -520,20 +518,14 @@ int main(int argc, char** argv)
       double CylinderLength = Perimeter / Ratio;
       int NbrPoints = Manager.GetInteger("nbr-points");
 
-      double* TotalChargeLeft = new double[NbrInputStates];
-      double* TotalChargeRight = new double[NbrInputStates];
-      for (int i = 0; i < NbrInputStates; ++i)
-      {
-	TotalChargeLeft[i] = 0.0;
-	TotalChargeRight[i] = 0.0;
-      }
-  
+      RealSymmetricMatrix TotalChargeImbalance(NbrInputStates, true);
       RealSymmetricMatrix TmpMatrixUpLayer (NbrInputStates, true);
       RealSymmetricMatrix TmpMatrixUpLayerIntegratedCharge (NbrInputStates, true);
       RealSymmetricMatrix TmpMatrixDownLayer (NbrInputStates, true);
       RealSymmetricMatrix TmpMatrixDownLayerIntegratedCharge (NbrInputStates, true);
       RealSymmetricMatrix TmpMatrixTotal (NbrInputStates, true);
       RealSymmetricMatrix TmpMatrixTotalIntegratedCharge (NbrInputStates, true);
+      RealDiagonalMatrix TmpImbalanceEigenvaluesRealSpace(NbrInputStates);
       RealDiagonalMatrix TmpEigenvaluesUpLayer(NbrInputStates);
       RealDiagonalMatrix TmpEigenvaluesUpLayerIntegratedCharge(NbrInputStates);
       RealDiagonalMatrix TmpEigenvaluesDownLayer(NbrInputStates);
@@ -577,24 +569,32 @@ int main(int argc, char** argv)
 	  TmpMatrixTotal.LapackDiagonalize(TmpEigenvaluesTotal);
 	  TmpMatrixTotalIntegratedCharge.LapackDiagonalize(TmpEigenvaluesTotalIntegratedCharge);
 	  File << XPosition;
+	  
+	  if (TmpX <= NbrPoints / 2)
+	    TotalChargeImbalance += TmpMatrixTotal;
+	  else
+	    TotalChargeImbalance -= TmpMatrixTotal;
 	  for (int i = 0; i < NbrInputStates; ++i)
 	    {   
 	      File << " " << TmpEigenvaluesUpLayer[i] << " " << TmpEigenvaluesUpLayerIntegratedCharge[i]
 		   << " " << TmpEigenvaluesDownLayer[i] << " " << TmpEigenvaluesDownLayerIntegratedCharge[i]
 		   << " " << TmpEigenvaluesTotal[i] << " " << TmpEigenvaluesTotalIntegratedCharge[i];
 		   
-	      if (TmpX <= NbrPoints / 2)
-		TotalChargeLeft[i] += TmpEigenvaluesTotal[i];
-	      else
-		TotalChargeRight[i] += TmpEigenvaluesTotal[i];
+	      
 	    }      
 	  File << endl;
 	  XPosition += XStep;
 	}
-      
+      TotalChargeImbalance.LapackDiagonalize(TmpImbalanceEigenvaluesRealSpace);
       for (int i = 0; i < NbrInputStates; ++i)
-	cout << "Charge imbalance between left and right (real space cut) " << (TotalChargeLeft[i] - TotalChargeRight[i]) * XStep << endl;
+      {
+	cout << "Charge imbalance between left and right (real space cut) " << (TmpImbalanceEigenvaluesRealSpace[i]) * XStep << endl;
+	if (OutputName != 0)
+	  FileChargeImbalance << i << " " << TmpImbalanceEigenvalues[i] << " " << TmpImbalanceEigenvaluesRealSpace[i]* XStep << endl;
+      }
       File.close();
+      if (OutputFileName != 0)
+	FileChargeImbalance.close();
     }
   return 0;
 
