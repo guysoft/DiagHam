@@ -915,7 +915,7 @@ int main(int argc, char** argv)
 				  cout << "error : SCALAPACK requires a MPI enable architecture" << endl;
 				  return 1;
 				}	  
-			      MatrixFullDiagonalizeOperation TmpOperation(&PartialDensityMatrix);
+			      MatrixFullDiagonalizeOperation TmpOperation(&PartialDensityMatrix, true);
 			      TmpOperation.ApplyOperation(Architecture.GetArchitecture());
 			      TmpDiag = TmpOperation.GetDiagonalizedMatrix();
 			    }

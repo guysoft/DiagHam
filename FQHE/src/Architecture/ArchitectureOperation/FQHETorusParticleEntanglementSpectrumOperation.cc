@@ -378,7 +378,13 @@ bool FQHETorusParticleEntanglementSpectrumOperation::ArchitectureDependentApplyO
   if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
     gettimeofday (&TotalStartingTime, 0);
   architecture->SumMatrix(this->ComplexDensityMatrix);
-  architecture->BroadcastMatrix(this->ComplexDensityMatrix);
+//  architecture->BroadcastMatrix(this->ComplexDensityMatrix);
+  if (architecture->IsMasterNode() == false)
+    {
+      this->ComplexDensityMatrix = HermitianMatrix(2, true);
+      this->ComplexDensityMatrix.SetMatrixElement(0, 0, 0.5);
+      this->ComplexDensityMatrix.SetMatrixElement(1, 1, 0.5);
+    }
   if (architecture->IsMasterNode())
     {
       long TmpValues;;

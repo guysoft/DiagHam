@@ -158,6 +158,11 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // return value = true if the local node is the master node
   virtual bool IsMasterNode();
   
+  // get the master node ID
+  // 
+  // return value = master node ID
+  virtual int GetMasterNodeID();
+  
   // indicate how many slave nodes are available
   //
   // return value = number of slave nodes
@@ -608,6 +613,15 @@ inline int SimpleMPIArchitecture::GetNbrNodes()
   return this->NbrMPINodes;
 }
 
+// get the master node ID
+// 
+// return value = master node ID
+
+inline int SimpleMPIArchitecture::GetMasterNodeID()
+{
+  return 0;
+}
+  
 // indicate number of current node
 //
 // return value = number of the current node

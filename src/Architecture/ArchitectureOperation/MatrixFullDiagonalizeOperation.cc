@@ -270,15 +270,24 @@ bool MatrixFullDiagonalizeOperation::ArchitectureDependentApplyOperation(SimpleM
 #ifdef __SCALAPACK__
   int TmpGlobalNbrRow = 0;
   int TmpGlobalNbrColumn = 0;
-  if (this->InitialRealMatrix != 0)
+  if ((this->DistributeFlag == false) || (architecture->IsMasterNode()))
     {
-      TmpGlobalNbrRow = this->InitialRealMatrix->GetNbrRow();
-      TmpGlobalNbrColumn = this->InitialRealMatrix->GetNbrColumn();
+      if (this->InitialRealMatrix != 0)
+	{
+	  TmpGlobalNbrRow = this->InitialRealMatrix->GetNbrRow();
+	  TmpGlobalNbrColumn = this->InitialRealMatrix->GetNbrColumn();
+	}
+      else
+	{
+	  TmpGlobalNbrRow = this->InitialComplexMatrix->GetNbrRow();
+	  TmpGlobalNbrColumn = this->InitialComplexMatrix->GetNbrColumn();
+	}
     }
-  else
+  if (this->DistributeFlag == true)
     {
-      TmpGlobalNbrRow = this->InitialComplexMatrix->GetNbrRow();
-      TmpGlobalNbrColumn = this->InitialComplexMatrix->GetNbrColumn();
+      int TmpNbrValues = 1 ;     
+      architecture->BroadcastToSlaves(&TmpGlobalNbrRow, TmpNbrValues);
+      architecture->BroadcastToSlaves(&TmpGlobalNbrColumn, TmpNbrValues);  
     }
   architecture->SetDimension(TmpGlobalNbrRow);
   long TmpMinimumIndex = 0;
@@ -328,15 +337,39 @@ bool MatrixFullDiagonalizeOperation::ArchitectureDependentApplyOperation(SimpleM
       
       Complex Tmp;
       doublecomplex TmpElement;
- 
-      for (int j = 1; j <= TmpGlobalNbrRow; ++j)
+      if (this->DistributeFlag == true)
 	{
-	  for (int i = 1; i <= TmpGlobalNbrRow; ++i)
+	  ComplexVector TmpVector(TmpGlobalNbrRow);
+	  for (int j = 1; j <= TmpGlobalNbrRow; ++j)
 	    {
-	      this->InitialComplexMatrix->GetMatrixElement(i - 1, j - 1, Tmp);
-	      TmpElement.r = Tmp.Re;
-	      TmpElement.i = Tmp.Im;
-	      FORTRAN_NAME(pzelset) (LocalScalapackMatrix, &i, &j, Desc, &TmpElement);
+	      if (architecture->IsMasterNode())
+		{
+		  for (int i = 1; i <= TmpGlobalNbrRow; ++i)
+		    {		  
+		      this->InitialComplexMatrix->GetMatrixElement(i - 1, j - 1, Tmp);
+		      TmpVector[i - 1] = Tmp;
+		    }
+		}
+	      architecture->BroadcastVector(architecture->GetMasterNodeID(), TmpVector);	      
+	      for (int i = 1; i <= TmpGlobalNbrRow; ++i)
+		{
+		  TmpElement.r = TmpVector[i - 1].Re;
+		  TmpElement.i = TmpVector[i - 1].Im;
+		  FORTRAN_NAME(pzelset) (LocalScalapackMatrix, &i, &j, Desc, &TmpElement);
+		}
+	    }
+	}
+      else
+	{
+	  for (int j = 1; j <= TmpGlobalNbrRow; ++j)
+	    {
+	      for (int i = 1; i <= TmpGlobalNbrRow; ++i)
+		{
+		  this->InitialComplexMatrix->GetMatrixElement(i - 1, j - 1, Tmp);
+		  TmpElement.r = Tmp.Re;
+		  TmpElement.i = Tmp.Im;
+		  FORTRAN_NAME(pzelset) (LocalScalapackMatrix, &i, &j, Desc, &TmpElement);
+		}
 	    }
 	}
 
