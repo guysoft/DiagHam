@@ -388,7 +388,7 @@ bool FQHETorusParticleEntanglementSpectrumOperation::ArchitectureDependentApplyO
 	  architecture->ReceiveFromSlave(i, &TmpValues, TmpNbrValues);
 	  this->NbrNonZeroElements += TmpValues;
 	}
-      TmpValues = (int) this->NbrNonZeroElements;      
+      TmpValues = this->NbrNonZeroElements;      
       architecture->BroadcastToSlaves(&TmpValues, TmpNbrValues);
     }
   else
