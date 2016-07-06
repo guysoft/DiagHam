@@ -381,23 +381,23 @@ bool FQHETorusParticleEntanglementSpectrumOperation::ArchitectureDependentApplyO
   architecture->BroadcastMatrix(this->ComplexDensityMatrix);
   if (architecture->IsMasterNode())
     {
-      int TmpValues;;
+      long TmpValues;;
       int TmpNbrValues = 1 ;
       for (int i = 0; i < architecture->GetNbrSlaveNodes(); ++i)
 	{
 	  architecture->ReceiveFromSlave(i, &TmpValues, TmpNbrValues);
-	  this->NbrNonZeroElements += (long) TmpValues;
+	  this->NbrNonZeroElements += TmpValues;
 	}
       TmpValues = (int) this->NbrNonZeroElements;      
       architecture->BroadcastToSlaves(&TmpValues, TmpNbrValues);
     }
   else
     {
-      int TmpValues = (int) this->NbrNonZeroElements;
+      long TmpValues = this->NbrNonZeroElements;
       int TmpNbrValues = 1 ;     
       architecture->SendToMaster(&TmpValues, TmpNbrValues);
       architecture->BroadcastToSlaves(&TmpValues, TmpNbrValues);
-      this->NbrNonZeroElements = (long) TmpValues;
+      this->NbrNonZeroElements = TmpValues;
    }
   if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
     {

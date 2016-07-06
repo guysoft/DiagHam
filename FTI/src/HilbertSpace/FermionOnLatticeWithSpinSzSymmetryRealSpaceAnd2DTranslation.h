@@ -121,6 +121,22 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation : public Fermi
   virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int szSector, int szParitySector, int kxSector, int kySector, 
 									 ComplexVector& groundState, AbstractArchitecture* architecture = 0);
 
+  // evaluate a density matrix of a subsystem of the whole system described by a given sum of projectors, using particle partition. 
+  // The density matrix is only evaluated in given momentum and Sz sectors.
+  //
+  // nbrParticleSector = number of particles that belong to the subsytem
+  // szSector  = twice the total Sz value of the subsytem
+  // szParitySector = Sz parity sector (can be either -1 or +1)
+  // kxSector = subsystem momentum along the x direction
+  // kySector = subsystem momentum along the x direction
+  // nbrGroundStates = number of projectors
+  // groundStates = array of degenerate groundstates associated to each projector
+  // weights = array of weights in front of each projector
+  // architecture = pointer to the architecture to use parallelized algorithm
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int szSector, int szParitySector, int kxSector, int kySector, 
+									 int nbrGroundStates, ComplexVector* groundStates, double* weights, AbstractArchitecture* architecture);
+
   // convert a given state from the n-body basis with a fized Sz parity to the full n-body basis
   //
   // state = reference on the vector to convert
@@ -206,6 +222,21 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation : public Fermi
   virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnTorusWithSpinAndMagneticTranslations* complementaryHilbertSpace,  
 								  ParticleOnTorusWithSpinAndMagneticTranslations* destinationHilbertSpace,
 								  ComplexVector& groundState, HermitianMatrix* densityMatrix);
+
+  // core part of the evaluation density matrix particle partition calculation involving a sum of projectors
+  // 
+  // minIndex = first index to consider in source Hilbert space
+  // nbrIndex = number of indices to consider in source Hilbert space
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+  // destinationHilbertSpace = pointer to the destination Hilbert space  (i.e. part A)
+  // nbrGroundStates = number of projectors
+  // groundStates = array of degenerate groundstates associated to each projector
+  // weights = array of weights in front of each projector
+  // densityMatrix = reference on the density matrix where result has to stored
+  // return value = number of components that have been added to the density matrix
+  virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnTorusWithSpinAndMagneticTranslations* complementaryHilbertSpace,
+								  ParticleOnTorusWithSpinAndMagneticTranslations* destinationHilbertSpace,
+								  int nbrGroundStates, ComplexVector* groundStates, double* weights, HermitianMatrix* densityMatrix);
 
 };
 

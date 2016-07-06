@@ -1350,7 +1350,6 @@ HermitianMatrix FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::EvaluateParti
     ComplementaryKyMomentum += this->MaxYMomentum;
   FermionOnLatticeWithSpinRealSpaceAnd2DTranslation SubsytemSpace (nbrParticleSector, szSector, this->NbrSite, kxSector, this->MaxXMomentum, kySector, this->MaxYMomentum);
   HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
-//  FermionOnLatticeWithSpinRealSpace ComplementarySpace (ComplementaryNbrParticles, ComplementarySzSector, this->NbrSite);
   FermionOnLatticeWithSpinRealSpaceAnd2DTranslation ComplementarySpace (ComplementaryNbrParticles, ComplementarySzSector, this->NbrSite, 
   									ComplementaryKxMomentum, this->MaxXMomentum, ComplementaryKyMomentum, this->MaxYMomentum);
   cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
@@ -1475,7 +1474,8 @@ HermitianMatrix FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::EvaluateParti
     ComplementaryKyMomentum += this->MaxYMomentum;
   FermionOnLatticeWithSpinRealSpaceAnd2DTranslation SubsytemSpace (nbrParticleSector, szSector, this->NbrSite, kxSector, this->MaxXMomentum, kySector, this->MaxYMomentum);
   HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
-  FermionOnLatticeWithSpinRealSpace ComplementarySpace (ComplementaryNbrParticles, ComplementarySzSector, this->NbrSite);
+  FermionOnLatticeWithSpinRealSpaceAnd2DTranslation ComplementarySpace (ComplementaryNbrParticles, ComplementarySzSector, this->NbrSite, 
+  									ComplementaryKxMomentum, this->MaxXMomentum, ComplementaryKyMomentum, this->MaxYMomentum);
   cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
   architecture->SetDimension(ComplementarySpace.GetHilbertSpaceDimension());
   FQHETorusParticleEntanglementSpectrumOperation Operation(this, &SubsytemSpace, (ParticleOnTorusWithSpinAndMagneticTranslations*) &ComplementarySpace, 
@@ -1637,7 +1637,7 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::EvaluatePartialDensityMa
 													   int nbrGroundStates, ComplexVector* groundStates, double* weights, HermitianMatrix* densityMatrix)
 {
   FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* TmpDestinationHilbertSpace =  (FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*) destinationHilbertSpace;
-  FermionOnLatticeWithSpinRealSpace* TmpHilbertSpace = (FermionOnLatticeWithSpinRealSpace*) complementaryHilbertSpace;
+  FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* TmpHilbertSpace = (FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*) complementaryHilbertSpace;
   FermionOnLatticeWithSpinRealSpace* TmpDestinationFullHilbertSpace = 0;
   if (TmpDestinationHilbertSpace->SzFlag == false)
     {
