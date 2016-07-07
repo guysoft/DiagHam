@@ -59,6 +59,9 @@ class TwoDimensionalTriangularLatticeWithPseudospinHamiltonian : public Abstract
   int NbrSpinX;
   // number of spin chain along the y direction
   int NbrSpinY;
+  
+  //offset for tilted lattice
+  int Offset;
 
   // amplitude of the Heisenberg term
   double JFactor;
@@ -86,7 +89,7 @@ class TwoDimensionalTriangularLatticeWithPseudospinHamiltonian : public Abstract
   // hxFactor = amplitudes of the Zeeman term along x
   // hzFactor = amplitudes of the Zeeman term along z
   // periodicBoundaryConditions = true if periodic boundary conditions have to be used
-  TwoDimensionalTriangularLatticeWithPseudospinHamiltonian(Spin1_2ChainWithPseudospin* chain, int nbrSpinX, int nbrSpinY, double jFactor, bool periodicBoundaryConditions = true);
+  TwoDimensionalTriangularLatticeWithPseudospinHamiltonian(Spin1_2ChainWithPseudospin* chain, int nbrSpinX, int nbrSpinY, double jFactor, bool periodicBoundaryConditions = true, int offset = 0);
 
   // destructor
   //
@@ -127,6 +130,17 @@ class TwoDimensionalTriangularLatticeWithPseudospinHamiltonian : public Abstract
   // return value = reference on vector where result has been stored
   virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
 					  int firstComponent, int nbrComponent);
+  
+//   // multiply a vector by the current hamiltonian for a given range of indices 
+//   // and add result to another vector, low level function (no architecture optimization)
+//   //
+//   // vSource = vector to be multiplied
+//   // vDestination = vector at which result has to be added
+//   // firstComponent = index of the first component to evaluate
+//   // nbrComponent = number of components to evaluate
+//   // return value = reference on vector where result has been stored
+//   virtual RealVector& HermitianLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+// 					  int firstComponent, int nbrComponent);
 
   // multiply a set of vectors by the current hamiltonian for a given range of indices 
   // and add result to another set of vectors, low level function (no architecture optimization)
@@ -140,6 +154,18 @@ class TwoDimensionalTriangularLatticeWithPseudospinHamiltonian : public Abstract
   virtual RealVector* LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
 						  int firstComponent, int nbrComponent);
 
+  
+//   // multiply a set of vectors by the current hamiltonian for a given range of indices 
+//   // and add result to another set of vectors, low level function (no architecture optimization)
+//   //
+//   // vSources = array of vectors to be multiplied
+//   // vDestinations = array of vectors at which result has to be added
+//   // nbrVectors = number of vectors that have to be evaluated together
+//   // firstComponent = index of the first component to evaluate
+//   // nbrComponent = number of components to evaluate
+//   // return value = pointer to the array of vectors where result has been stored
+//   virtual RealVector* HermitianLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+// 						  int firstComponent, int nbrComponent);
  protected:
  
   // evaluate all matrix elements
@@ -165,8 +191,12 @@ inline int TwoDimensionalTriangularLatticeWithPseudospinHamiltonian::GetLineariz
 {
   if (xPosition < 0)
     xPosition += this->NbrSpinX;
+  if (xPosition >= this->NbrSpinX)
+    xPosition -= this->NbrSpinX;
   if (yPosition < 0)
     yPosition += this->NbrSpinY;
+  if (yPosition >= this->NbrSpinY)
+    yPosition -= this->NbrSpinY;
   return ((xPosition * this->NbrSpinY) + yPosition);
 }
 

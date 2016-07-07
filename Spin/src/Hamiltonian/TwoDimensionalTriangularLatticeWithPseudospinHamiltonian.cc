@@ -56,7 +56,7 @@ using std::ostream;
 // hzFactor = amplitudes of the Zeeman term along z
 // periodicBoundaryConditions = true if periodic boundary conditions have to be used
 
-TwoDimensionalTriangularLatticeWithPseudospinHamiltonian::TwoDimensionalTriangularLatticeWithPseudospinHamiltonian(Spin1_2ChainWithPseudospin* chain, int nbrSpinX, int nbrSpinY, double jFactor, bool periodicBoundaryConditions)
+TwoDimensionalTriangularLatticeWithPseudospinHamiltonian::TwoDimensionalTriangularLatticeWithPseudospinHamiltonian(Spin1_2ChainWithPseudospin* chain, int nbrSpinX, int nbrSpinY, double jFactor, bool periodicBoundaryConditions, int offset)
 {
   this->Chain = chain;
   this->NbrSpinX = nbrSpinX;
@@ -64,6 +64,7 @@ TwoDimensionalTriangularLatticeWithPseudospinHamiltonian::TwoDimensionalTriangul
   this->NbrSpin = this->NbrSpinX * this->NbrSpinY;
   this->PeriodicBoundaryConditions = periodicBoundaryConditions;
   this->JFactor = jFactor;
+  this->Offset = offset;
   
   // projection of kagome onto the s = 1/2 states on each triangle
   this->PseudospinCouplingElements = new double[3];    
@@ -191,9 +192,9 @@ RealVector& TwoDimensionalTriangularLatticeWithPseudospinHamiltonian::TwoDimensi
 	  for (int k = 0; k < this->NbrSpinY; k++)
 	    {
 	     //AC part
-	     if (this->NbrSpinY > 1)
+	     if ((this->NbrSpinY > 1) || (this->Offset != 0))
 	     {
-		TmpIndex1 = this->GetLinearizedIndex(j, k - 1);
+		TmpIndex1 = this->GetLinearizedIndex(j - this->Offset, k - 1);
 		TmpIndex2 = this->GetLinearizedIndex(j, k);
 		pos = this->Chain->SpiSmj(TmpIndex1, TmpIndex2, i, coef);
 		if (pos != dim)
@@ -335,10 +336,10 @@ RealVector& TwoDimensionalTriangularLatticeWithPseudospinHamiltonian::TwoDimensi
 	      }
 // 	      
 	      //CB part
-	      if ((this->NbrSpinX > 1) && (this->NbrSpinY > 1) && (this->PeriodicBoundaryConditions || (j > 0)))
+	      if ((this->NbrSpinX > 1) && ((this->NbrSpinY > 1) || (this->Offset != 0)) && (this->PeriodicBoundaryConditions || (j > 0)))
 	      {
 		TmpIndex1 = this->GetLinearizedIndex(j - 1, k);
-		TmpIndex2 = this->GetLinearizedIndex(j, k - 1);
+		TmpIndex2 = this->GetLinearizedIndex(j - this->Offset, k - 1);
 		pos = this->Chain->SpiSmj(TmpIndex1, TmpIndex2, i, coef);
 		if (pos != dim)
 		if (pos != dim)
@@ -460,9 +461,9 @@ RealVector* TwoDimensionalTriangularLatticeWithPseudospinHamiltonian::LowLevelMu
 	  for (int k = 0; k < this->NbrSpinY; k++)
 	    {
 	      //AC part
-	     if (this->NbrSpinY > 1)
+	     if ((this->NbrSpinY > 1) || (this->Offset != 0))
 	     {
-		TmpIndex1 = this->GetLinearizedIndex(j, k - 1);
+		TmpIndex1 = this->GetLinearizedIndex(j - this->Offset, k - 1);
 		TmpIndex2 = this->GetLinearizedIndex(j, k);
 		pos = this->Chain->SpiSmj(TmpIndex1, TmpIndex2, i, coef);
 		if (pos != dim)
@@ -626,10 +627,10 @@ RealVector* TwoDimensionalTriangularLatticeWithPseudospinHamiltonian::LowLevelMu
 	      }
 // 	      
 	      //CB part
-	      if ((this->NbrSpinX > 1) && (this->NbrSpinY > 1) && (this->PeriodicBoundaryConditions || (j > 0)))
+	      if ((this->NbrSpinX > 1) && ((this->NbrSpinY > 1) || (this->Offset != 0)) && (this->PeriodicBoundaryConditions || (j > 0)))
 	      {
 		TmpIndex1 = this->GetLinearizedIndex(j - 1, k);
-		TmpIndex2 = this->GetLinearizedIndex(j, k - 1);
+		TmpIndex2 = this->GetLinearizedIndex(j - this->Offset, k - 1);
 		pos = this->Chain->SpiSmj(TmpIndex1, TmpIndex2, i, coef);
 		if (pos != dim)
 		if (pos != dim)
@@ -734,9 +735,9 @@ void TwoDimensionalTriangularLatticeWithPseudospinHamiltonian::EvaluateDiagonalM
 	  for (int k = 0; k < this->NbrSpinY; k++)
 	    {
 	      //AC part
-	      if (this->NbrSpinY > 1)
+	      if ((this->NbrSpinY > 1) || (this->Offset != 0))
 	      {
-		TmpIndex1 = this->GetLinearizedIndex(j, k - 1);
+		TmpIndex1 = this->GetLinearizedIndex(j - this->Offset, k - 1);
 		TmpIndex2 = this->GetLinearizedIndex(j, k);
 		TmpCoefficient = this->Chain->SziSzj(TmpIndex1, TmpIndex2, i);
 		TmpCoefficient *= this->Chain->JDiagonali(TmpIndex1, i, this->PseudospinDiagCouplingElements[2]);
@@ -756,10 +757,10 @@ void TwoDimensionalTriangularLatticeWithPseudospinHamiltonian::EvaluateDiagonalM
 	      }
 
 // 	      CB part
-	      if ((this->NbrSpinX > 1) && (this->NbrSpinY > 1) && (this->PeriodicBoundaryConditions || (j > 0)))
+	      if ((this->NbrSpinX > 1) && ((this->NbrSpinY > 1) || (this->Offset != 0)) && (this->PeriodicBoundaryConditions || (j > 0)))
 	      {
 		TmpIndex1 = this->GetLinearizedIndex(j - 1, k);
-		TmpIndex2 = this->GetLinearizedIndex(j, k - 1);
+		TmpIndex2 = this->GetLinearizedIndex(j - this->Offset, k - 1);
 		TmpCoefficient = this->Chain->SziSzj(TmpIndex1, TmpIndex2, i);
 		TmpCoefficient *= this->Chain->JDiagonali(TmpIndex1, i, this->PseudospinDiagCouplingElements[1]);
 		TmpCoefficient *= this->Chain->JDiagonali(TmpIndex2, i, this->PseudospinDiagCouplingElements[2]);
