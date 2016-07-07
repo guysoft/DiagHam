@@ -52,6 +52,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('s', "spin", "twice the spin value", 1);
   (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sitex", "number of sites along the x direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nx1", "first coordinate of the first spanning vector of the tilted lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "ny1", "second coordinate of the first spanning vector of the tilted lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nx2", "first coordinate of the second spanning vector of the tilted lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "ny2", "second coordinate of the second spanning vector of the tilted lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "real-offset", "second coordinate in real space of the second spanning vector of the real space lattice (0 if lattice is untilted)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "cylinder", "use periodic boundary in the y direction only");
   (*SystemGroup) += new BooleanOption  ('\n', "force-negativesz", "compute negative Sz sectors");
   (*SystemGroup) += new  SingleIntegerOption ('\n', "initial-sz", "twice the initial sz sector that has to computed", 0);
@@ -84,12 +89,51 @@ int main(int argc, char** argv)
   int NbrSpins = NbrSitesX * NbrSitesY;
   double JValue =  Manager.GetDouble("j-value");
   
+  int nx1 = Manager.GetInteger("nx1");
+  int ny1 = Manager.GetInteger("ny1");
+  int nx2 = Manager.GetInteger("nx2");
+  int ny2 = Manager.GetInteger("ny2");
+  
+  int OffsetReal = Manager.GetInteger("real-offset");
+  bool TiltedFlag = true;
+  if ( ((nx1 == 0) && (ny1 == 0)) || ((nx2 == 0) && (ny2 == 0)) )
+    TiltedFlag = false;
+  else
+    {
+      if ((nx1*ny2 - nx2*ny1) != NbrSitesX * NbrSitesY)
+	{
+	  cout << "Boundary conditions define a lattice that has a number of sites different from NbrSiteX * NbrSiteY - should have (nx1*ny2 - nx2*ny1) = NbrSiteX * NbrSiteY " << endl;
+	  return 0;
+	}
+      
+      if ((((OffsetReal*ny2 + nx2) % NbrSitesX) != 0 || ((nx1 + OffsetReal*ny1) % NbrSitesX != 0)))
+      {
+	  cout << "Tilted lattice not properly defined. Should have ((offset*ny2 + nx2) % NbrSiteX) = 0 and ((nx1 + offset*ny1) % NbrSiteX = 0) to verify momentum conservation" << endl;
+	  return 0;
+      }
+	
+	
+      cout << "Using tilted boundary conditions" << endl;
+    }
+    
+    
+  
   
   char* OutputFileName = new char [512];
   if (Manager.GetBoolean("cylinder"))
-    sprintf (OutputFileName, "spin_1_2_triangle_cylinder_pseudospin_x_%d_y_%d_j_%.6f", NbrSitesX, NbrSitesY, JValue);
+  {
+    if (TiltedFlag)
+      cout << "Error: tilted boundary conditions not supported for cylinder geometry" << endl;
+    else
+      sprintf (OutputFileName, "spin_1_2_triangle_cylinder_pseudospin_x_%d_y_%d_j_%.6f", NbrSitesX, NbrSitesY, JValue);
+  }
   else
-    sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_x_%d_y_%d_j_%.6f", NbrSitesX, NbrSitesY, JValue);
+  {
+    if (TiltedFlag)
+      sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_j_%.6f", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, JValue);
+    else
+      sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_x_%d_y_%d_j_%.6f", NbrSitesX, NbrSitesY, JValue);
+  }
   char* CommentLine = new char [512];
   sprintf (CommentLine, "spin 1/2 system with boundary conditions on the triangle lattice, pseudospin 1/2 and %d sites in the x direction, %d sites in the y direction \n# Sz", NbrSitesX, NbrSitesY);
   
@@ -122,7 +166,7 @@ int main(int argc, char** argv)
       {
 	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
 	  TwoDimensionalTriangularLatticeWithPseudospinHamiltonian* Hamiltonian = 0;
-	  Hamiltonian = new TwoDimensionalTriangularLatticeWithPseudospinHamiltonian(Space, NbrSitesX, NbrSitesY, JValue, (!Manager.GetBoolean("cylinder")));
+	  Hamiltonian = new TwoDimensionalTriangularLatticeWithPseudospinHamiltonian(Space, NbrSitesX, NbrSitesY, JValue, (!Manager.GetBoolean("cylinder")), OffsetReal);
 	  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
 	  sprintf (TmpEigenstateString, "%s_sz_%d", OutputFileName, InitalSzValue);
 	  char* TmpSzString = new char[64];
