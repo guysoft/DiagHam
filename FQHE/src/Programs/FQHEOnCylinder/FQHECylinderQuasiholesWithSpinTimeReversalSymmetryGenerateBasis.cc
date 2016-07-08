@@ -62,6 +62,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('\n', "directory", "use a specific directory for the input data instead of the current one (only useful when building the eigenstates in the full quasihole basis)");
   
   (*OutputGroup) += new BooleanOption ('\n', "build-eigenstates", "build the eigenstates in the full quasihole basis");
+  (*OutputGroup) += new BooleanOption ('\n', "write-eigenstatebasis", "write a file that describes the effective eigenstate basis");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -304,6 +305,20 @@ int main(int argc, char** argv)
       QuasiholeOnSphereWithSpinAndPairing* InputSpace;
       InputSpace = new QuasiholeOnSphereWithSpinAndPairing (KValue, RValue, TwoLayerLzSector, NbrFluxQuanta, TwoLayerSzSector, 
 							    Manager.GetString("directory"), FilePrefix, true);
+      char* TmpEigenstateBasisFile = 0;
+      if (Manager.GetBoolean("write-eigenstatebasis") == true)
+	{
+	  char* OutputVectorFileNameExtension = new char[128];
+	  sprintf (OutputVectorFileNameExtension, "_effective_%d_n_0_", EffectiveSubspaceDimension);
+	  char* OutputVectorFileName1 = ReplaceString(TmpOutputFileName, "_n_0_", OutputVectorFileNameExtension);
+	  TmpEigenstateBasisFile = ReplaceExtensionToFileName(OutputVectorFileName1, "dat", "basis");
+	  ofstream File;  
+	  File.open(TmpEigenstateBasisFile, ios::binary | ios::out); 
+	  File << "Basis=";
+	  File.close();	  
+	  delete[] OutputVectorFileNameExtension;
+	  delete[] OutputVectorFileName1;
+	}
       for (int i = 0; i < EffectiveSubspaceDimension; ++i)
 	{
 	  int UpLayerNbrParticles = (TwoLayerNbrParticles[TwoLayerIndices[i]] + TwoLayerSzSector) / 2;
@@ -337,11 +352,26 @@ int main(int argc, char** argv)
 	      cout << "error, can't write " << OutputVectorFileName2 << endl;
 	      return -1;
 	    }	  
-	  cout << "generating eignestate " << OutputVectorFileName2 << endl;
+	  cout << "generating eigenstate " << OutputVectorFileName2 << endl;
+	  if (Manager.GetBoolean("write-eigenstatebasis") == true)
+	    {
+	      ofstream File;  
+	      File.open(TmpEigenstateBasisFile, ios::binary | ios::out | ios::app); 
+	      File << " " << OutputVectorFileName2;
+	      File.close();	  
+	    }
 	  delete[] OutputVectorFileName1;
 	  delete[] OutputVectorFileName2;
 	  delete[] TmpUpLayerVectorFileName;
 	  delete[] TmpDownLayerVectorFileName;
+	}
+      if (Manager.GetBoolean("write-eigenstatebasis") == true)
+	{
+	  ofstream File;  
+	  File.open(TmpEigenstateBasisFile, ios::binary | ios::out | ios::app); 
+	  File << endl;
+	  File.close();	  
+	  delete[] TmpEigenstateBasisFile;
 	}
     }
       
