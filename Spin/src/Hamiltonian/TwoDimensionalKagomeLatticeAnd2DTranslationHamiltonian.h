@@ -57,6 +57,21 @@ class TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian : public TwoDimensi
   //array containing all the phase factors that are needed when computing matrix elements
   Complex** ExponentialFactors;
   
+//   // shift to apply to go from precalculation index to the corresponding index in the HilbertSpace
+//   int PrecalculationShift;
+//   // amount of memory (in bytes) that can be used to store precalculated matrix elements
+//   long Memory;
+//   // flag for fast multiplication algorithm
+//   bool FastMultiplicationFlag;
+//   // step between each precalculated index (main part: start at 0, FastMultiplicationStep, 2*FastMultiplicationStep, ...)
+//   int FastMultiplicationStep;
+//   // number of non-null term in the hamiltonian for each state
+//   int* NbrInteractionPerComponent;
+//   // index of the state obtained for each term of the hamiltonian when applying on a given state
+//   int** InteractionPerComponentIndex;
+//   // multiplicative coefficient obtained for each term of the hamiltonian when applying on a given state and with a given destination state
+//   Complex** InteractionPerComponentCoefficient;
+  
  public:
 
   // constructor from default data
@@ -68,7 +83,7 @@ class TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian : public TwoDimensi
   // hxFactor = amplitudes of the Zeeman term along x
   // hzFactor = amplitudes of the Zeeman term along z
   // periodicBoundaryConditions = true if periodic boundary conditions have to be used
-  TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian (AbstractSpinChain* chain, int xMomentum, int nbrSpinX, int yMomentum, int nbrSpinY, double jFactor, double jDownFactor, double jEasyPlaneFactor, double jDownEasyPlaneFactor, int offset = 0);
+  TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian (AbstractSpinChain* chain, int xMomentum, int nbrSpinX, int yMomentum, int nbrSpinY, double jFactor, double jDownFactor, double jEasyPlaneFactor, double jDownEasyPlaneFactor, int offset = 0, long memory = -1);
 
   // destructor
   //
@@ -144,6 +159,42 @@ class TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian : public TwoDimensi
   // return value = pointer to the array of vectors where result has been stored
   virtual ComplexVector* HermitianLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 						  int firstComponent, int nbrComponent);
+  
+//    // multiply a vector by the current hamiltonian for a given range of indices 
+//   // and add result to another vector, low level function (no architecture optimization)
+//   // using partial fast multiply option
+//   //
+//   // vSource = vector to be multiplied
+//   // vDestination = vector at which result has to be added
+//   // firstComponent = index of the first component to evaluate
+//   // nbrComponent = number of components to evaluate
+//   // return value = reference on vector where result has been stored
+//   virtual ComplexVector& HermitianLowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+// 							     int firstComponent, int nbrComponent);
+//   
+//   // multiply a et of vectors by the current hamiltonian for a given range of indices 
+//   // and add result to another et of vectors, low level function (no architecture optimization)
+//   // using partial fast multiply option
+//   //
+//   // vSources = array of vectors to be multiplied
+//   // vDestinations = array of vectors at which result has to be added
+//   // nbrVectors = number of vectors that have to be evaluated together
+//   // firstComponent = index of the first component to evaluate
+//   // nbrComponent = number of components to evaluate
+//   // return value = pointer to the array of vectors where result has been stored
+//   virtual ComplexVector* HermitianLowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+//                                                                      int firstComponent, int nbrComponent);
+//   
+//   // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
+//   //
+//   // firstComponent = index of the first component that has to be precalcualted
+//   // nbrComponent  = number of components that has to be precalcualted
+//   // return value = number of non-zero matrix element
+//   virtual long PartialFastMultiplicationMemory(int firstComponent, int nbrComponent);
+// 
+//   // firstComponent = index of the first component that has to be precalcualted
+//   // nbrComponent  = number of components that has to be precalcualted
+//   virtual void PartialEnableFastMultiplication(int firstComponent, int nbrComponent);
 
   // ask if Hamiltonian implements hermitian symmetry operations
   //

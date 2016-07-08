@@ -55,6 +55,8 @@ class Spin1_2ChainNewSzSymmetryAnd2DTranslation : public Spin1_2ChainNewAnd2DTra
   
   // sign of the inversion sector
   double SzSymmetrySector;
+  //mask to perform the spin flip operations
+  unsigned long SzSymmetryMask;
 
  public:
 
@@ -295,7 +297,6 @@ inline bool Spin1_2ChainNewSzSymmetryAnd2DTranslation::TestMomentumConstraint(un
 {
   unsigned long TmpStateDescription = stateDescription;
   unsigned long TmpStateDescription2 = stateDescription;
-  unsigned long TmpStateDescription3 = stateDescription;
   int XSize = 1;
   this->ApplySingleXTranslation(TmpStateDescription);   
   while (stateDescription != TmpStateDescription)
@@ -484,8 +485,7 @@ inline int Spin1_2ChainNewSzSymmetryAnd2DTranslation::FindOrbitSize(unsigned lon
 
 inline void Spin1_2ChainNewSzSymmetryAnd2DTranslation::ApplySzSymmetry(unsigned long& stateDescription)
 {
-  unsigned long Mask = (0x1ul << this->ChainLength) - 0x1ul;
-  stateDescription = (~stateDescription) & Mask;
+  stateDescription = (~stateDescription) & (this->SzSymmetryMask);
 }
 
 #endif

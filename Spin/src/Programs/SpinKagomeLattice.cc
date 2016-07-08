@@ -169,19 +169,19 @@ int main(int argc, char** argv)
      
   char* OutputFileName = new char [512];
   if (Manager.GetBoolean("cylinder"))
-    sprintf (OutputFileName, "spin_1_2_kagome_cylinder_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
+    sprintf (OutputFileName, "spin_1_2_kagome_cylinder_n_%d_x_%d_y_%d_%s", NbrSpins, NbrSitesX, NbrSitesY, ParametersName);
   else
   {
     if (NoTranslationFlag == false)
       if (TiltedFlag == false)
-	sprintf (OutputFileName, "spin_1_2_kagome_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
+	sprintf (OutputFileName, "spin_1_2_kagome_n_%d_x_%d_y_%d_%s", NbrSpins, NbrSitesX, NbrSitesY, ParametersName);
       else
-	sprintf (OutputFileName, "spin_1_2_kagome_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_%s", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, ParametersName);
+	sprintf (OutputFileName, "spin_1_2_kagome_n_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_%s", NbrSpins, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, ParametersName);
     else
       if (TiltedFlag == false)
-	sprintf (OutputFileName, "spin_1_2_kagome_notranslation_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
+	sprintf (OutputFileName, "spin_1_2_kagome_notranslation_n_%d_x_%d_y_%d_%s", NbrSpins, NbrSitesX, NbrSitesY, ParametersName);
       else
-	sprintf (OutputFileName, "spin_1_2_kagome_notranslation_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_%s", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, ParametersName);
+	sprintf (OutputFileName, "spin_1_2_kagome_notranslation_n_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_%s", NbrSpins, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, ParametersName);
   }
   
   char* FullOutputFileName = new char [strlen(OutputFileName)+ 16];
@@ -373,12 +373,12 @@ int main(int argc, char** argv)
 		  {
 		    if (InversionSymmetryFlag == false)
 		    {
-		      sprintf (TmpEigenstateString, "%s_sz_%d_kx_%d_ky_%d_szparity_%d", OutputFileName, InitalSzValue, XMomentum, YMomentum, parity);
-		      sprintf (TmpSzString, "%d %d %d %d", InitalSzValue, XMomentum, YMomentum, parity);
+		      sprintf (TmpEigenstateString, "%s_sz_%d_szsym_%d_kx_%d_ky_%d", OutputFileName, InitalSzValue, (1 - 2*parity), XMomentum, YMomentum);
+		      sprintf (TmpSzString, "%d %d %d %d", InitalSzValue, XMomentum, YMomentum, (1 - 2*parity));
 		    }
 		    else
 		    {
-// 		      sprintf (TmpEigenstateString, "%s_sz_%d_kx_%d_ky_%d_szparity_%d_invparity_%d", OutputFileName, InitalSzValue, XMomentum, YMomentum, parity, inversion);
+// 		      sprintf (TmpEigenstateString, "%s_sz_%d_kx_%d_ky_%d_szsym_%d_invparity_%d", OutputFileName, InitalSzValue, XMomentum, YMomentum, parity, inversion);
 // 		      sprintf (TmpSzString, "%d %d %d %d %d", InitalSzValue, XMomentum, YMomentum, parity, inversion);
 		    }
 		  }

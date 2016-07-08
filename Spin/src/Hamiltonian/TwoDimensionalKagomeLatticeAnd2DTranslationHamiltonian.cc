@@ -58,7 +58,7 @@ using std::max;
 // hzFactor = amplitudes of the Zeeman term along z
 // periodicBoundaryConditions = true if periodic boundary conditions have to be used
 
-TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian (AbstractSpinChain* chain, int xMomentum, int nbrSpinX, int yMomentum, int nbrSpinY, double jFactor, double jDownFactor, double jEasyPlaneFactor, double jDownEasyPlaneFactor, int offset)
+TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian (AbstractSpinChain* chain, int xMomentum, int nbrSpinX, int yMomentum, int nbrSpinY, double jFactor, double jDownFactor, double jEasyPlaneFactor, double jDownEasyPlaneFactor, int offset, long memory)
 {
   this->Chain = chain;
   this->NbrSpinX = nbrSpinX;
@@ -79,6 +79,23 @@ TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::TwoDimensionalKagomeLatt
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateExponentialFactors();
   this->EvaluateDiagonalMatrixElements();
+  /*
+  if (memory > 0)
+    {
+      long TmpMemory = this->FastMultiplicationMemory(memory);
+      if (TmpMemory < 1024l)
+	cout  << "fast = " <<  TmpMemory << "b ";
+      else
+	if (TmpMemory < (1l << 20))
+	  cout  << "fast = " << (TmpMemory >> 10) << "kb ";
+	else
+	  if (TmpMemory < (1l << 30))
+	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
+	  else
+	    cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
+      cout << endl;
+      this->EnableFastMultiplication();
+    }*/
 }
 
 // destructor
@@ -648,6 +665,502 @@ void TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::EvaluateDiagonalMat
 	}
     }
 }
+/*
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+// using partial fast multiply option
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+ComplexVector& TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::HermitianLowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+										   int firstComponent, int nbrComponent)
+{
+  int LastComponent = firstComponent + nbrComponent;
+  int Dim = this->Particles->GetHilbertSpaceDimension();
+  double Coefficient;
+  double TmpCoefficient;
+  double TmpCoef;
+  double ChargeContribution;
+  int NbrElements;
+  int TmpTotalNbrParticles;
+  AbstractSpinChain* TmpParticles = (AbstractSpinChain*) this->Particles->Clone();
+  
+  int* TmpIndexArray;
+  Complex* TmpCoefficientArray; 
+  int j;
+  int TmpNbrInteraction;
+  firstComponent -= this->PrecalculationShift;
+  LastComponent -= this->PrecalculationShift;
+  int Pos = firstComponent / this->FastMultiplicationStep; 
+  int PosMod = firstComponent % this->FastMultiplicationStep;
+  if (PosMod != 0)
+    {
+      ++Pos;
+      PosMod = this->FastMultiplicationStep - PosMod;
+    }
+  int l =  PosMod + firstComponent + this->PrecalculationShift;
+  for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+    {
+      TmpNbrInteraction = this->NbrInteractionPerComponent[Pos];
+      TmpIndexArray = this->InteractionPerComponentIndex[Pos];
+      TmpCoefficientArray = this->InteractionPerComponentCoefficient[Pos];
+      Coefficient = vSource[l];
+      for (j = 0; j < TmpNbrInteraction; ++j)
+	vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
+      vDestination[l] += this->SzSzContributions[l] * Coefficient;
+      l += this->FastMultiplicationStep;
+      ++Pos;
+    }
+
+  int Index;  
+  Complex TmpSum;
+  int ReducedNbrInteractionFactors = this->NbrInteractionFactors - 1;  
+  firstComponent += this->PrecalculationShift;
+  LastComponent += this->PrecalculationShift;
+  int TmpIndex1;
+  int TmpIndex2;
+  int TmpIndex3;
+  for (int k = 0; k < this->FastMultiplicationStep; ++k)
+    if (PosMod != k)
+      {
+	for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
+	{
+	  TmpSum = 0.0;
+	  for (int j = 0; j < this->NbrSpinX; j++)
+	  {
+	    for (int k = 0; k < this->NbrSpinY; k++)
+	      {
+		//upward triangles
+		TmpIndex1 = this->GetLinearizedIndex(j, k, 0);
+		TmpIndex2 = this->GetLinearizedIndex(j, k, 1);
+		TmpIndex3 = this->GetLinearizedIndex(j, k, 2);
+		//AB
+		pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		if (pos < i)
+		{
+		  vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		  TmpSum += 0.5 * vSource[pos] * TmpCoefficient * this->JEasyPlaneFactor * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		}
+		//AC
+		pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex3, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		if (pos < i)
+		{
+		  vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		  TmpSum += 0.5 * vSource[pos] * TmpCoefficient * this->JEasyPlaneFactor * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		}
+		//BC
+		pos = this->Chain->SmiSpj(TmpIndex2, TmpIndex3, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		if (pos < i)
+		{
+		  vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		  TmpSum += 0.5 * vSource[pos] * TmpCoefficient * this->JEasyPlaneFactor * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		}
+	      
+		//downward triangles
+		if (this->NbrSpinX > 1)
+		{
+		  //BA
+		  TmpIndex1 = this->GetLinearizedIndex(j - 1, k, 1);
+		  TmpIndex2 = this->GetLinearizedIndex(j, k, 0);
+		  pos = this->Chain->SmiSpj(min(TmpIndex1, TmpIndex2), max(TmpIndex1, TmpIndex2), i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (pos < i)
+		  {
+		    vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JDownEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		    TmpSum += 0.5 * vSource[pos] * TmpCoefficient * this->JDownEasyPlaneFactor * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		  }
+		}
+	      
+		if ((this->NbrSpinY > 1) || (this->Offset != 0))
+		{
+		  //CA
+		  TmpIndex1 = this->GetLinearizedIndex(j, k, 0);
+		  TmpIndex2 = this->GetLinearizedIndex(j - this->Offset, k - 1, 2);
+		  pos = this->Chain->SmiSpj(min(TmpIndex1, TmpIndex2), max(TmpIndex1, TmpIndex2), i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (pos < i)
+		  {
+		    vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JDownEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		    TmpSum += 0.5 * vSource[pos] * TmpCoefficient * this->JDownEasyPlaneFactor * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		  }
+		  if (this->NbrSpinX > 1)
+		  {
+		    //BC
+		    TmpIndex1 = this->GetLinearizedIndex(j - 1, k, 1);
+		    TmpIndex2 = this->GetLinearizedIndex(j - this->Offset, k - 1, 2);
+		    pos = this->Chain->SmiSpj(min(TmpIndex1, TmpIndex2), max(TmpIndex1, TmpIndex2), i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		    if (pos < i)
+		    {
+		      vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JDownEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		      TmpSum += 0.5 * vSource[pos] * TmpCoefficient * this->JDownEasyPlaneFactor * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		    }
+		  }
+		}
+	      
+	      }
+	  }
+	  vDestination[i] += (this->SzSzContributions[i] * vSource[i] + TmpSum);
+	}
+      }
+      
+}*/
+/*
+// test the amount of memory needed for fast multiplication algorithm (partial evaluation)
+//
+// firstComponent = index of the first component that has to be precalcualted
+// nbrComponent  = number of components that has to be precalcualted
+// return value = number of non-zero matrix element
+
+long TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int nbrComponent)
+{
+  double TmpCoefficient;
+  long Memory = 0l;
+  int NbrTranslationsX;
+  int NbrTranslationsY;
+  
+  AbstractSpinChain* TmpParticles = (AbstractSpinChain*) this->Particles->Clone();
+  int LastComponent = nbrComponent + firstComponent;
+  int TmpIndex1;
+  int TmpIndex2;
+  int TmpIndex3;
+  for (int i = firstComponent; i < LastComponent; ++i)
+    {
+      this->NbrInteractionPerComponent[i - this->PrecalculationShift] = 0;
+      for (int j = 0; j < this->NbrSpinX; j++)
+	{
+	  for (int k = 0; k < this->NbrSpinY; k++)
+	    {
+	      //upward triangles
+	      TmpIndex1 = this->GetLinearizedIndex(j, k, 0);
+	      TmpIndex2 = this->GetLinearizedIndex(j, k, 1);
+	      TmpIndex3 = this->GetLinearizedIndex(j, k, 2);
+	      //AB
+	      pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+	      if (pos != dim)
+	      {
+		if ((this->HermitianSymmetryFlag == false) || (pos < i))
+		{
+		  ++Memory;
+		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		}
+	      }
+	      if (this->HermitianSymmetryFlag == false)
+	      {
+		pos = this->Chain->SmiSpj(TmpIndex2, TmpIndex1, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		if (pos != dim)
+		{
+		  ++Memory;
+		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		}
+	      }
+	      //AC
+	      pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex3, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+	      if (pos != dim)
+	      {
+		if ((this->HermitianSymmetryFlag == false) || (pos < i))
+		{
+		  ++Memory;
+		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		}
+	      }
+	      if (this->HermitianSymmetryFlag == false)
+	      {
+		pos = this->Chain->SmiSpj(TmpIndex3, TmpIndex1, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		if (pos != dim)
+		{
+		  ++Memory;
+		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		}
+	      }
+	      //BC
+	      pos = this->Chain->SmiSpj(TmpIndex2, TmpIndex3, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+	      if (pos != dim)
+	      {
+		if ((this->HermitianSymmetryFlag == false) || (pos < i))
+		{
+		  ++Memory;
+		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		}
+	      }
+	      if (this->HermitianSymmetryFlag == false)
+	      {
+		pos = this->Chain->SmiSpj(TmpIndex3, TmpIndex2, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		if (pos != dim)
+		{
+		  ++Memory;
+		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		}
+	      }
+	      
+	      //downward triangles
+	      if (this->NbrSpinX > 1)
+	      {
+		//BA
+		TmpIndex1 = min(this->GetLinearizedIndex(j, k, 0), this->GetLinearizedIndex(j - 1, k, 1));
+		TmpIndex2 = max(this->GetLinearizedIndex(j, k, 0), this->GetLinearizedIndex(j - 1, k, 1));
+		pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		if (pos != dim)
+		{
+		  if ((this->HermitianSymmetryFlag == false) || (pos < i))
+		  {
+		    ++Memory;
+		    ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		  }
+		}
+		if (this->HermitianSymmetryFlag == false)
+		{
+		  pos = this->Chain->SmiSpj(TmpIndex2, TmpIndex1, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (pos != dim)
+		  {
+		    ++Memory;
+		    ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		  }
+		}
+	      }
+	      if ((this->NbrSpinY > 1) || (this->Offset != 0))
+	      {
+		//CA
+		TmpIndex1 = min(this->GetLinearizedIndex(j - this->Offset, k - 1, 2), this->GetLinearizedIndex(j, k, 0));
+		TmpIndex2 = max(this->GetLinearizedIndex(j - this->Offset, k - 1, 2), this->GetLinearizedIndex(j, k, 0));
+		pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		if (pos != dim)
+		{
+		  if ((this->HermitianSymmetryFlag == false) || (pos < i))
+		  {
+		    ++Memory;
+		    ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		  }
+		}
+		if (this->HermitianSymmetryFlag == false)
+		{
+		  pos = this->Chain->SmiSpj(TmpIndex2, TmpIndex1, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (pos != dim)
+		  {
+		    ++Memory;
+		    ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		  }
+		}
+		if (this->NbrSpinX > 1)
+		{
+		  //BC
+		  TmpIndex1 = min(this->GetLinearizedIndex(j - this->Offset, k - 1, 2), this->GetLinearizedIndex(j - 1, k, 1));
+		  TmpIndex2 = max(this->GetLinearizedIndex(j - this->Offset, k - 1, 2), this->GetLinearizedIndex(j - 1, k, 1));
+		  pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (pos != dim)
+		  {
+		    if ((this->HermitianSymmetryFlag == false) || (pos < i))
+		    {
+		      ++Memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  }
+		  if (this->HermitianSymmetryFlag == false)
+		  {
+		    pos = this->Chain->SmiSpj(TmpIndex2, TmpIndex1, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		    if (pos != dim)
+		    {
+		      ++Memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  }
+		}
+	      }
+	      
+	    }
+	}
+    }    
+  delete TmpParticles;
+  return Memory;
+}
+
+
+// enable fast multiplication algorithm (partial evaluation)
+//
+// firstComponent = index of the first component that has to be precalcualted
+// nbrComponent  = index of the last component that has to be precalcualted
+
+void TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::PartialEnableFastMultiplication(int firstComponent, int nbrComponent)
+{  
+  double TmpCoefficient;
+  double ChargeContribution;
+  int NbrElements;
+  int LastComponent = nbrComponent + firstComponent;
+  AbstractSpinChain* TmpParticles = (AbstractSpinChain*) this->Particles->Clone();
+  
+  firstComponent -= this->PrecalculationShift;
+  LastComponent -= this->PrecalculationShift;
+  
+  long Pos = firstComponent / this->FastMultiplicationStep; 
+  int PosMod = firstComponent % this->FastMultiplicationStep;
+  if (PosMod != 0)
+    {
+      ++Pos;
+      PosMod = this->FastMultiplicationStep - PosMod;
+    }
+    
+  int CurrentNbrCounting = 0;
+  for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+    {
+      for (int j = 0; j < this->NbrSpinX; j++)
+	{
+	  for (int k = 0; k < this->NbrSpinY; k++)
+	    {
+	      //upward triangles
+	      TmpIndex1 = this->GetLinearizedIndex(j, k, 0);
+	      TmpIndex2 = this->GetLinearizedIndex(j, k, 1);
+	      TmpIndex3 = this->GetLinearizedIndex(j, k, 2);
+	      //AB
+	      pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+	      if (pos != dim)
+	      {
+		if ((this->HermitianSymmetryFlag == false) || (pos < i))
+		{
+		  this->InteractionPerComponentIndex[Pos][position] = pos;
+		  this->InteractionPerComponentCoefficient[Pos][position] = TmpCoefficients * this->JEasyPlaneFactor;
+		  ++position;
+		}
+	      }
+	      if (this->HermitianSymmetryFlag == false)
+	      {
+		pos = this->Chain->SmiSpj(TmpIndex2, TmpIndex1, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		if (pos != dim)
+		{
+		  this->InteractionPerComponentIndex[Pos][position] = pos;
+		  this->InteractionPerComponentCoefficient[Pos][position] = TmpCoefficients * this->JEasyPlaneFactor;
+		  ++position;
+		}
+	      }
+	      //AC
+	      pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex3, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+	      if (pos != dim)
+	      {
+		if ((this->HermitianSymmetryFlag == false) || (pos < i))
+		{
+		  this->InteractionPerComponentIndex[Pos][position] = pos;
+		  this->InteractionPerComponentCoefficient[Pos][position] = TmpCoefficients * this->JEasyPlaneFactor;
+		  ++position;
+		}
+	      }
+	      if (this->HermitianSymmetryFlag == false)
+	      {
+		pos = this->Chain->SmiSpj(TmpIndex3, TmpIndex1, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		if (pos != dim)
+		{
+		  this->InteractionPerComponentIndex[Pos][position] = pos;
+		  this->InteractionPerComponentCoefficient[Pos][position] = TmpCoefficients * this->JEasyPlaneFactor;
+		  ++position;
+		}
+	      }
+	      //BC
+	      pos = this->Chain->SmiSpj(TmpIndex2, TmpIndex3, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+	      if (pos != dim)
+	      {
+		if ((this->HermitianSymmetryFlag == false) || (pos < i))
+		{
+		  this->InteractionPerComponentIndex[Pos][position] = pos;
+		  this->InteractionPerComponentCoefficient[Pos][position] = TmpCoefficients * this->JEasyPlaneFactor;
+		  ++position;
+		}
+	      }
+	      if (this->HermitianSymmetryFlag == false)
+	      {
+		pos = this->Chain->SmiSpj(TmpIndex3, TmpIndex2, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		if (pos != dim)
+		{
+		  this->InteractionPerComponentIndex[Pos][position] = pos;
+		  this->InteractionPerComponentCoefficient[Pos][position] = TmpCoefficients * this->JEasyPlaneFactor;
+		  ++position;
+		}
+	      }
+	      
+	      //downward triangles
+	      if (this->NbrSpinX > 1)
+	      {
+		//BA
+		TmpIndex1 = min(this->GetLinearizedIndex(j, k, 0), this->GetLinearizedIndex(j - 1, k, 1));
+		TmpIndex2 = max(this->GetLinearizedIndex(j, k, 0), this->GetLinearizedIndex(j - 1, k, 1));
+		pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		if (pos != dim)
+		{
+		  if ((this->HermitianSymmetryFlag == false) || (pos < i))
+		  {
+		    this->InteractionPerComponentIndex[Pos][position] = pos;
+		    this->InteractionPerComponentCoefficient[Pos][position] = TmpCoefficients * this->JDownEasyPlaneFactor;
+		    ++position;
+		  }
+		}
+		if (this->HermitianSymmetryFlag == false)
+		{
+		  pos = this->Chain->SmiSpj(TmpIndex2, TmpIndex1, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (pos != dim)
+		  {
+		    this->InteractionPerComponentIndex[Pos][position] = pos;
+		    this->InteractionPerComponentCoefficient[Pos][position] = TmpCoefficients * this->JDownEasyPlaneFactor;
+		    ++position;
+		  }
+		}
+	      }
+	      if ((this->NbrSpinY > 1) || (this->Offset != 0))
+	      {
+		//CA
+		TmpIndex1 = min(this->GetLinearizedIndex(j - this->Offset, k - 1, 2), this->GetLinearizedIndex(j, k, 0));
+		TmpIndex2 = max(this->GetLinearizedIndex(j - this->Offset, k - 1, 2), this->GetLinearizedIndex(j, k, 0));
+		pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		if (pos != dim)
+		{
+		  if ((this->HermitianSymmetryFlag == false) || (pos < i))
+		  {
+		    this->InteractionPerComponentIndex[Pos][position] = pos;
+		    this->InteractionPerComponentCoefficient[Pos][position] = TmpCoefficients * this->JDownEasyPlaneFactor;
+		    ++position;
+		  }
+		}
+		if (this->HermitianSymmetryFlag == false)
+		{
+		  pos = this->Chain->SmiSpj(TmpIndex2, TmpIndex1, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (pos != dim)
+		  {
+		    this->InteractionPerComponentIndex[Pos][position] = pos;
+		    this->InteractionPerComponentCoefficient[Pos][position] = TmpCoefficients * this->JDownEasyPlaneFactor;
+		    ++position;
+		  }
+		}
+		if (this->NbrSpinX > 1)
+		{
+		  //BC
+		  TmpIndex1 = min(this->GetLinearizedIndex(j - this->Offset, k - 1, 2), this->GetLinearizedIndex(j - 1, k, 1));
+		  TmpIndex2 = max(this->GetLinearizedIndex(j - this->Offset, k - 1, 2), this->GetLinearizedIndex(j - 1, k, 1));
+		  pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (pos != dim)
+		  {
+		    if ((this->HermitianSymmetryFlag == false) || (pos < i))
+		    {
+		      this->InteractionPerComponentIndex[Pos][position] = pos;
+		      this->InteractionPerComponentCoefficient[Pos][position] = TmpCoefficients * this->JDownEasyPlaneFactor;
+		      ++position;
+		    }
+		  }
+		  if (this->HermitianSymmetryFlag == false)
+		  {
+		    pos = this->Chain->SmiSpj(TmpIndex2, TmpIndex1, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		    if (pos != dim)
+		    {
+		      this->InteractionPerComponentIndex[Pos][position] = pos;
+		      this->InteractionPerComponentCoefficient[Pos][position] = TmpCoefficients * this->JDownEasyPlaneFactor;
+		      ++position;
+		    }
+		  }
+		}
+	      }
+	      
+	    }
+	}
+      ++Pos;
+    }
+}*/
 
 // ask if Hamiltonian implements hermitian symmetry operations
 //

@@ -12,6 +12,10 @@
 #include "HilbertSpace/Spin1_2ChainFull.h"
 #include "HilbertSpace/Spin1_2ChainFullAnd2DTranslation.h"
 #include "HilbertSpace/Spin1_2ChainFullInversionAnd2DTranslation.h"
+#include "HilbertSpace/Spin1_2ChainNew.h"
+#include "HilbertSpace/Spin1_2ChainNewAnd2DTranslation.h"
+#include "HilbertSpace/Spin1_2ChainNewSzSymmetryAnd2DTranslation.h"
+
 
 
 #include "Options/Options.h"
@@ -63,8 +67,10 @@ int main(int argc, char** argv)
   int* YMomentum = 0;
   int* InversionSector = 0;
   int* SzValue = 0;
-  bool TotalSpinConservedFlag = false;
+  int* SzParitySector = 0;
+  bool TotalSpinConservedFlag = true;
   bool InversionFlag = false;
+  bool SzSymmetryFlag = false;
   int XPeriodicity = 0;
   int YPeriodicity = 0;
   bool Statistics = true;
@@ -85,6 +91,8 @@ int main(int argc, char** argv)
       InversionSector = new int[1];
       InversionSector[0] = 0;
       SzValue = new int [1];
+      SzParitySector = new int[1];
+      SzParitySector[0] = 0;
       if (IsFile(Manager.GetString("input-state")) == false)
 	{
 	  cout << "can't open file " << Manager.GetString("input-state") << endl;
@@ -111,6 +119,13 @@ int main(int argc, char** argv)
 	{
 	  InversionFlag = SpinWith2DTranslationInversionFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrSites, SzValue[0], SpinValue, XMomentum[0], XPeriodicity,
 											 YMomentum[0], YPeriodicity, InversionSector[0]);
+	  if (SzValue[0] == 0)
+	  {
+	    SpinFindSystemInfoFromVectorFileName((Manager.GetString("input-state")), NbrSites, SzValue[0], SpinValue, InversionSector[0], SzParitySector[0]);
+	    cout << NbrSites << " " << SzValue[0] << " " << SpinValue << " " << XMomentum[0] << " " << XPeriodicity << " " << YMomentum[0] << " " <<  YPeriodicity << " " << SzParitySector[0] << endl;
+	    if (SzParitySector[0] != 0)
+	      SzSymmetryFlag = true;
+	  }
 	}
     }
   else
@@ -283,6 +298,17 @@ int main(int argc, char** argv)
 	    {
 	      switch (SpinValue)
 		{
+		 case 1 :
+		 {
+		   if (SzSymmetryFlag == false)
+		     InputSpace[i] = new Spin1_2ChainNewAnd2DTranslation (NbrSites, SzValue[i], XMomentum[i], XPeriodicity, YMomentum[i], YPeriodicity);
+		   else
+		   {
+		     cout << "Create HilbertSpace" << endl;
+		     InputSpace[i] = new Spin1_2ChainNewSzSymmetryAnd2DTranslation (NbrSites, SzValue[i], (1 - SzParitySector[0])/2, XMomentum[i], XPeriodicity, YMomentum[i], YPeriodicity);
+		   }
+		  break;
+		 }
 		default :
 		  {
 		    if ((SpinValue & 1) == 0)
@@ -329,7 +355,7 @@ int main(int argc, char** argv)
 	  switch (SpinValue)
 	    {
 	    case 1 :
-	      OutputSpace[i] = new Spin1_2Chain (NbrSites, SzValue[i], 1000000);
+	      OutputSpace[i] = new Spin1_2ChainNew (NbrSites, SzValue[i], 1000000);
 	      break;
 	    case 2 :
 	      OutputSpace[i] = new Spin1Chain (NbrSites, SzValue[i], 1000000);
@@ -360,7 +386,10 @@ int main(int argc, char** argv)
       else
 	{
 	  sprintf (XPeriodicityString, "_x_%d_y_%d", XPeriodicity, YPeriodicity);
-	  sprintf (XMomentumString, "_kx_%d_ky_%d", XMomentum[i], YMomentum[i]);
+	  if (SzSymmetryFlag == false)
+	    sprintf (XMomentumString, "_kx_%d_ky_%d", XMomentum[i], YMomentum[i]);
+	  else
+	    sprintf (XMomentumString, "_szsym_%d_kx_%d_ky_%d", SzParitySector[i], XMomentum[i], YMomentum[i]);
 	}
       
       char* VectorOutputName = ReplaceString(InputStateNames[i], XMomentumString, "");

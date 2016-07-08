@@ -87,6 +87,7 @@ Spin1_2ChainNewSzSymmetryAnd2DTranslation::Spin1_2ChainNewSzSymmetryAnd2DTransla
     {
       this->SzSymmetrySector = -1.0;
     }
+  this->SzSymmetryMask = (0x1ul << this->ChainLength) - 0x1ul;
   this->Sz = 0;
   this->FixedQuantumNumberFlag = false;
   
@@ -107,15 +108,6 @@ Spin1_2ChainNewSzSymmetryAnd2DTranslation::Spin1_2ChainNewSzSymmetryAnd2DTransla
     }
   this->ComplementaryYMomentumFullMask = ~this->YMomentumFullMask; 
 
-// #ifdef __64_BITS__
-//   this->InversionShift = 32 - ((this->YMomentumBlockSize - 1) >> 1) -1;
-// #else
-//   this->InversionUnshift = 16 - ((this->YMomentumBlockSize - 1) >> 1) -1;
-// #endif
-//   if ((this->YMomentumBlockSize & 1) == 0)
-//     this->InversionUnshift = this->InversionShift - 1;
-//   else
-//     this->InversionUnshift = this->InversionShift;
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->Sz, this->NbrSite);
   this->LargeHilbertSpaceDimension = this->GenerateStates();
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
@@ -147,6 +139,8 @@ Spin1_2ChainNewSzSymmetryAnd2DTranslation::Spin1_2ChainNewSzSymmetryAnd2DTransla
 	cout << UsedMemory << endl;
 #endif
     }
+//     for (int i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+//       this->PrintState(cout, i) << endl;
 }
 
 
@@ -188,6 +182,7 @@ Spin1_2ChainNewSzSymmetryAnd2DTranslation::Spin1_2ChainNewSzSymmetryAnd2DTransla
   ReadLittleEndian(File, this->XMomentum);
   ReadLittleEndian(File, this->YMomentum);
   ReadLittleEndian(File, this->SzSymmetrySector);
+  ReadLittleEndian(File, this->SzSymmetryMask);
   ReadLittleEndian(File, this->FixedQuantumNumberFlag);
   ReadLittleEndian(File, this->StateXShift);
   ReadLittleEndian(File, this->ComplementaryStateXShift);
@@ -306,6 +301,7 @@ Spin1_2ChainNewSzSymmetryAnd2DTranslation::Spin1_2ChainNewSzSymmetryAnd2DTransla
 
       this->Sz = chain.Sz;
       this->SzSymmetrySector = chain.SzSymmetrySector;
+      this->SzSymmetryMask = chain.SzSymmetryMask;
 
       this->StateDescription = chain.StateDescription;
       this->RescalingFactors = chain.RescalingFactors;
@@ -330,6 +326,7 @@ Spin1_2ChainNewSzSymmetryAnd2DTranslation::Spin1_2ChainNewSzSymmetryAnd2DTransla
       this->LookUpPosition = 0;
       this->LookUpTableSize = 0;
       this->SzSymmetrySector = 0.0;
+      this->SzSymmetryMask = 0.0;
     }
 }
 
@@ -377,6 +374,7 @@ Spin1_2ChainNewSzSymmetryAnd2DTranslation& Spin1_2ChainNewSzSymmetryAnd2DTransla
 
       this->Sz = chain.Sz;
       this->SzSymmetrySector = chain.SzSymmetrySector;
+      this->SzSymmetryMask = chain.SzSymmetryMask;
 
       this->StateDescription = chain.StateDescription;
       this->RescalingFactors = chain.RescalingFactors;
@@ -399,6 +397,7 @@ Spin1_2ChainNewSzSymmetryAnd2DTranslation& Spin1_2ChainNewSzSymmetryAnd2DTransla
       this->LookUpTableMask = 0;
       this->LookUpPosition = 0;
       this->SzSymmetrySector = 0.0;
+      this->SzSymmetryMask = 0.0;
    }
   return *this;
 }
@@ -436,6 +435,7 @@ bool Spin1_2ChainNewSzSymmetryAnd2DTranslation::WriteHilbertSpace (char* fileNam
   WriteLittleEndian(File, this->XMomentum);
   WriteLittleEndian(File, this->YMomentum);
   WriteLittleEndian(File, this->SzSymmetrySector);
+  WriteLittleEndian(File, this->SzSymmetryMask);
   WriteLittleEndian(File, this->FixedQuantumNumberFlag);
   WriteLittleEndian(File, this->StateXShift);
   WriteLittleEndian(File, this->ComplementaryStateXShift);
