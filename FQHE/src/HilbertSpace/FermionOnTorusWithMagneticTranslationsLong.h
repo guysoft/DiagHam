@@ -616,16 +616,16 @@ inline bool FermionOnTorusWithMagneticTranslationsLong::TestXMomentumConstraint(
 	  TmpSignature += (this->NbrParticleLookUpTable[TmpState2 & ((ULONGLONG) 0xfffful)] 
 			   + this->NbrParticleLookUpTable[(TmpState2 >> 16) & ((ULONGLONG) 0xfffful)]
 			   + this->NbrParticleLookUpTable[(TmpState2 >> 32) & ((ULONGLONG) 0xfffful)] 
-			   + this->NbrParticleLookUpTable[(TmpState2 >> 48) & ((ULONGLONG) 0xfffful)]) & 1;
-#else
-	  TmpSignature += (this->NbrParticleLookUpTable[TmpState2 & ((ULONGLONG) 0xfffful)] 
-			   + this->NbrParticleLookUpTable[(TmpState2 >> 16) & ((ULONGLONG) 0xfffful)]
-			   + this->NbrParticleLookUpTable[(TmpState2 >> 32) & ((ULONGLONG) 0xfffful)] 
 			   + this->NbrParticleLookUpTable[(TmpState2 >> 48) & ((ULONGLONG) 0xfffful)]
 			   + this->NbrParticleLookUpTable[(TmpState2 >> 64) & ((ULONGLONG) 0xfffful)]
 			   + this->NbrParticleLookUpTable[(TmpState2 >> 80) & ((ULONGLONG) 0xfffful)]
 			   + this->NbrParticleLookUpTable[(TmpState2 >> 96) & ((ULONGLONG) 0xfffful)] 
 			   + this->NbrParticleLookUpTable[(TmpState2 >> 112) & ((ULONGLONG) 0xfffful)]) & 1;
+#else
+	  TmpSignature += (this->NbrParticleLookUpTable[TmpState2 & ((ULONGLONG) 0xfffful)] 
+			   + this->NbrParticleLookUpTable[(TmpState2 >> 16) & ((ULONGLONG) 0xfffful)]
+			   + this->NbrParticleLookUpTable[(TmpState2 >> 32) & ((ULONGLONG) 0xfffful)] 
+			   + this->NbrParticleLookUpTable[(TmpState2 >> 48) & ((ULONGLONG) 0xfffful)]) & 1;
 #endif
 	  ++index;
 	}
@@ -678,16 +678,16 @@ inline ULONGLONG FermionOnTorusWithMagneticTranslationsLong::FindCanonicalFormAn
       TmpSignature += (this->NbrParticleLookUpTable[TmpState & ((ULONGLONG) 0xfffful)] 
 		       + this->NbrParticleLookUpTable[(TmpState >> 16) & ((ULONGLONG) 0xfffful)]
 		       + this->NbrParticleLookUpTable[(TmpState >> 32) & ((ULONGLONG) 0xfffful)] 
-		       + this->NbrParticleLookUpTable[(TmpState >> 48) & ((ULONGLONG) 0xfffful)]) & 1;
-#else
-      TmpSignature += (this->NbrParticleLookUpTable[TmpState & ((ULONGLONG) 0xfffful)] 
-		       + this->NbrParticleLookUpTable[(TmpState >> 16) & ((ULONGLONG) 0xfffful)]
-		       + this->NbrParticleLookUpTable[(TmpState >> 32) & ((ULONGLONG) 0xfffful)] 
 		       + this->NbrParticleLookUpTable[(TmpState >> 48) & ((ULONGLONG) 0xfffful)]
 		       + this->NbrParticleLookUpTable[(TmpState >> 64) & ((ULONGLONG) 0xfffful)]
 		       + this->NbrParticleLookUpTable[(TmpState >> 80) & ((ULONGLONG) 0xfffful)]
 		       + this->NbrParticleLookUpTable[(TmpState >> 96) & ((ULONGLONG) 0xfffful)] 
 		       + this->NbrParticleLookUpTable[(TmpState >> 112) & ((ULONGLONG) 0xfffful)]) & 1;
+#else
+      TmpSignature += (this->NbrParticleLookUpTable[TmpState & ((ULONGLONG) 0xfffful)] 
+		       + this->NbrParticleLookUpTable[(TmpState >> 16) & ((ULONGLONG) 0xfffful)]
+		       + this->NbrParticleLookUpTable[(TmpState >> 32) & ((ULONGLONG) 0xfffful)] 
+		       + this->NbrParticleLookUpTable[(TmpState >> 48) & ((ULONGLONG) 0xfffful)]) & 1;
 #endif
       
       while (stateDescription != stateDescriptionReference)
@@ -703,16 +703,16 @@ inline ULONGLONG FermionOnTorusWithMagneticTranslationsLong::FindCanonicalFormAn
 	  TmpSignature += (this->NbrParticleLookUpTable[TmpState & ((ULONGLONG) 0xfffful)] 
 			   + this->NbrParticleLookUpTable[(TmpState >> 16) & ((ULONGLONG) 0xfffful)]
 			   + this->NbrParticleLookUpTable[(TmpState >> 32) & ((ULONGLONG) 0xfffful)] 
-			   + this->NbrParticleLookUpTable[(TmpState >> 48) & ((ULONGLONG) 0xfffful)]) & 1;
-#else
-	  TmpSignature += (this->NbrParticleLookUpTable[TmpState & ((ULONGLONG) 0xfffful)] 
-			   + this->NbrParticleLookUpTable[(TmpState >> 16) & ((ULONGLONG) 0xfffful)]
-			   + this->NbrParticleLookUpTable[(TmpState >> 32) & ((ULONGLONG) 0xfffful)] 
 			   + this->NbrParticleLookUpTable[(TmpState >> 48) & ((ULONGLONG) 0xfffful)]
 			   + this->NbrParticleLookUpTable[(TmpState >> 64) & ((ULONGLONG) 0xfffful)]
 			   + this->NbrParticleLookUpTable[(TmpState >> 80) & ((ULONGLONG) 0xfffful)]
 			   + this->NbrParticleLookUpTable[(TmpState >> 96) & ((ULONGLONG) 0xfffful)] 
 			   + this->NbrParticleLookUpTable[(TmpState >> 112) & ((ULONGLONG) 0xfffful)]) & 1;
+#else
+	  TmpSignature += (this->NbrParticleLookUpTable[TmpState & ((ULONGLONG) 0xfffful)] 
+			   + this->NbrParticleLookUpTable[(TmpState >> 16) & ((ULONGLONG) 0xfffful)]
+			   + this->NbrParticleLookUpTable[(TmpState >> 32) & ((ULONGLONG) 0xfffful)] 
+			   + this->NbrParticleLookUpTable[(TmpState >> 48) & ((ULONGLONG) 0xfffful)]) & 1;
 #endif
 	  ++index;
 	}

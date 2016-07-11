@@ -63,6 +63,8 @@ int main(int argc, char** argv)
   
   (*OutputGroup) += new BooleanOption ('\n', "build-eigenstates", "build the eigenstates in the full quasihole basis");
   (*OutputGroup) += new BooleanOption ('\n', "write-eigenstatebasis", "write a file that describes the effective eigenstate basis");
+  (*OutputGroup) += new BooleanOption ('\n', "build-effectivehamiltonian", "compute and store all the  building blocks to generate the Hamiltonian in the effective basis");
+
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -229,29 +231,11 @@ int main(int argc, char** argv)
 	  LargestUsedEigenstate[i][j] = -1;
 	}
     }
-  char* OutputFileNameExtension = new char[128];
-  sprintf (OutputFileNameExtension, "_effective_%d.basis", EffectiveSubspaceDimension);
-  char* OutputFileName = ReplaceString(TmpOutputFileName, ".dat", OutputFileNameExtension);
-  ofstream File;  
-  File.open(OutputFileName, ios::binary | ios::out); 
-  File.precision(14); 
-  File << "# N Sz Lz N_u N_d Lz_u Lz_d E file_up file_down" << endl;
-  char* TmpExtension = new char[128];
   for (int i = 0; i < EffectiveSubspaceDimension; ++i)
     {
       int UpLayerNbrParticles = (TwoLayerNbrParticles[TwoLayerIndices[i]] + TwoLayerSzSector) / 2;
       int DownLayerNbrParticles = (TwoLayerNbrParticles[TwoLayerIndices[i]] - TwoLayerSzSector) / 2;  
       int DownLayerLzValue = TwoLayerUpLzValues[TwoLayerIndices[i]] - TwoLayerLzSector;
-      File << TwoLayerNbrParticles[TwoLayerIndices[i]] << " " << TwoLayerSzSector << " " << TwoLayerLzSector
-	   << " " << UpLayerNbrParticles << " " << DownLayerNbrParticles << " "
-	   << TwoLayerUpLzValues[TwoLayerIndices[i]] << " " << DownLayerLzValue << " " << TwoLayerEnergies[i];
-      sprintf(TmpExtension, "_%d.%d.vec", TwoLayerUpLzValues[TwoLayerIndices[i]], TwoLayerUpIndices[TwoLayerIndices[i]]);
-      char* TmpUpLayerVectorFileName = ReplaceExtensionToFileName(SpectrumFileNames[UpLayerNbrParticles], ".dat", TmpExtension);
-      File << " " << TmpUpLayerVectorFileName;
-      sprintf(TmpExtension, "_%d.%d.vec", DownLayerLzValue, TwoLayerDownIndices[TwoLayerIndices[i]]);
-      char* TmpDownLayerVectorFileName = ReplaceExtensionToFileName(SpectrumFileNames[UpLayerNbrParticles], ".dat", TmpExtension);
-      File << " " << TmpUpLayerVectorFileName<< " " << TmpDownLayerVectorFileName;
-      File << endl;
       if (LargestUsedEigenstate[UpLayerNbrParticles][(TwoLayerUpLzValues[TwoLayerIndices[i]] - MinLzValues[UpLayerNbrParticles]) / 2] < TwoLayerUpIndices[TwoLayerIndices[i]])
 	{
 	  LargestUsedEigenstate[UpLayerNbrParticles][(TwoLayerUpLzValues[TwoLayerIndices[i]] - MinLzValues[UpLayerNbrParticles]) / 2] = TwoLayerUpIndices[TwoLayerIndices[i]];
@@ -260,11 +244,7 @@ int main(int argc, char** argv)
 	{
 	  LargestUsedEigenstate[DownLayerNbrParticles][(DownLayerLzValue - MinLzValues[DownLayerNbrParticles]) / 2] = TwoLayerDownIndices[TwoLayerIndices[i]];
 	}
-      delete[] TmpUpLayerVectorFileName;
-      delete[] TmpDownLayerVectorFileName;
     }
-  File.close();
-
   for (int i = 0; i <= MaxNbrParticlesPerLayer; ++i)
     {
       for (int j = 0; j < NbrLzSectors[i]; ++j)
@@ -275,34 +255,92 @@ int main(int argc, char** argv)
 	    }
 	}
     }
-
-  if (Manager.GetBoolean("build-eigenstates"))
+  int*** UsedEigenstateGlobalIndex = new int** [MaxNbrParticlesPerLayer + 1];
+  int NbrGlobalIndices = 0;
+  for (int i = 0; i <= MaxNbrParticlesPerLayer; ++i)
     {
-      char* FilePrefix = new char[512];
-      
-      if (Perimeter > 0.0)	
+      UsedEigenstateGlobalIndex[i] = new int* [NbrLzSectors[i]];
+      for (int j = 0; j < NbrLzSectors[i]; ++j)
 	{
-	  if (Statistics == true)
+	  UsedEigenstateGlobalIndex[i][j] = new int[LargestUsedEigenstate[i][j] + 1];
+	  for (int k = 0; k <= LargestUsedEigenstate[i][j]; ++k)
 	    {
-	      sprintf (FilePrefix, "fermions_cylinder_perimeter_%.6f", Perimeter);
+	      UsedEigenstateGlobalIndex[i][j][k] = NbrGlobalIndices;
+	      ++NbrGlobalIndices;
 	    }
-	  else
+	}
+    }
+
+
+
+  char* OutputFileNameExtension = new char[128];
+  sprintf (OutputFileNameExtension, "_effective_%d.basis", EffectiveSubspaceDimension);
+  char* OutputFileName = ReplaceString(TmpOutputFileName, ".dat", OutputFileNameExtension);
+  ofstream File;  
+  File.open(OutputFileName, ios::binary | ios::out); 
+  File.precision(14); 
+  File << "# N Sz Lz N_u N_d Lz_u Lz_d E file_index_up file_index_down" << endl;
+  for (int i = 0; i < EffectiveSubspaceDimension; ++i)
+    {
+      int UpLayerNbrParticles = (TwoLayerNbrParticles[TwoLayerIndices[i]] + TwoLayerSzSector) / 2;
+      int DownLayerNbrParticles = (TwoLayerNbrParticles[TwoLayerIndices[i]] - TwoLayerSzSector) / 2;  
+      int DownLayerLzValue = TwoLayerUpLzValues[TwoLayerIndices[i]] - TwoLayerLzSector;
+      File << TwoLayerNbrParticles[TwoLayerIndices[i]] << " " << TwoLayerSzSector << " " << TwoLayerLzSector
+	   << " " << UpLayerNbrParticles << " " << DownLayerNbrParticles << " " 
+	   << TwoLayerUpLzValues[TwoLayerIndices[i]] << " " << DownLayerLzValue << " " << TwoLayerEnergies[i]
+	   << " " << UsedEigenstateGlobalIndex[UpLayerNbrParticles][(TwoLayerUpLzValues[TwoLayerIndices[i]] - MinLzValues[UpLayerNbrParticles]) / 2][TwoLayerUpIndices[TwoLayerIndices[i]]]
+	   << " " << UsedEigenstateGlobalIndex[DownLayerNbrParticles][(DownLayerLzValue - MinLzValues[DownLayerNbrParticles]) / 2][TwoLayerDownIndices[TwoLayerIndices[i]]] << endl;
+    }
+  File.close();
+
+  char* OutputFileNameVectorList = ReplaceExtensionToFileName(OutputFileName, "basis", "vectors");
+  File.open(OutputFileNameVectorList, ios::binary | ios::out); 
+  File.precision(14); 
+  char* TmpExtension = new char[128];
+  char** UsedEigenstateFileName = new char* [NbrGlobalIndices];
+  NbrGlobalIndices = 0; 
+  for (int i = 0; i <= MaxNbrParticlesPerLayer; ++i)
+    {
+      for (int j = 0; j < NbrLzSectors[i]; ++j)
+	{
+	  for (int k = 0; k <= LargestUsedEigenstate[i][j]; ++k)
 	    {
-	      sprintf (FilePrefix, "bosons_cylinder_perimeter_%.6f", Perimeter);
+	      sprintf(TmpExtension, "_%d.%d.vec", ((2 * j) + MinLzValues[i]), k);
+	      UsedEigenstateFileName[NbrGlobalIndices] = ReplaceExtensionToFileName(SpectrumFileNames[i], ".dat", TmpExtension);
+	      File << NbrGlobalIndices << " " << UsedEigenstateFileName[NbrGlobalIndices] << endl;
+	      ++NbrGlobalIndices;
 	    }
+	}
+    }
+  File.close();
+
+  QuasiholeOnSphereWithSpinAndPairing* InputSpace = 0;
+  char* FilePrefix = new char[512];      
+  if (Perimeter > 0.0)	
+    {
+      if (Statistics == true)
+	{
+	  sprintf (FilePrefix, "fermions_cylinder_perimeter_%.6f", Perimeter);
 	}
       else
 	{
-	  if (Statistics == true)
-	    {
-	      sprintf (FilePrefix, "fermions_cylinder_ratio_%.6f", Ratio);
-	    }
-	  else
-	    {
-	      sprintf (FilePrefix, "bosons_cylinder_ratio_%.6f", Ratio);
-	    }
+	  sprintf (FilePrefix, "bosons_cylinder_perimeter_%.6f", Perimeter);
 	}
-      QuasiholeOnSphereWithSpinAndPairing* InputSpace;
+    }
+  else
+    {
+      if (Statistics == true)
+	{
+	  sprintf (FilePrefix, "fermions_cylinder_ratio_%.6f", Ratio);
+	}
+      else
+	{
+	  sprintf (FilePrefix, "bosons_cylinder_ratio_%.6f", Ratio);
+	}
+    }
+
+  if (Manager.GetBoolean("build-eigenstates"))
+    {
       InputSpace = new QuasiholeOnSphereWithSpinAndPairing (KValue, RValue, TwoLayerLzSector, NbrFluxQuanta, TwoLayerSzSector, 
 							    Manager.GetString("directory"), FilePrefix, true);
       char* TmpEigenstateBasisFile = 0;
@@ -375,6 +413,78 @@ int main(int argc, char** argv)
 	}
     }
       
+  if (Manager.GetBoolean("build-effectivehamiltonian"))
+    {
+      if (InputSpace == 0)
+	{
+	  InputSpace = new QuasiholeOnSphereWithSpinAndPairing (KValue, RValue, TwoLayerLzSector, NbrFluxQuanta, TwoLayerSzSector, 
+								Manager.GetString("directory"), FilePrefix, true);
+	}
+      RealVector* SingleLayerVectors = new RealVector[NbrGlobalIndices];
+      for (int i = 0; i < NbrGlobalIndices; ++i)
+	{
+	  if (SingleLayerVectors[i].ReadVector(UsedEigenstateFileName[i]) == false)
+	    {
+	      cout << "can't open " << UsedEigenstateFileName[i] << endl;
+	    }
+	}  
+      delete[]  SingleLayerVectors;   
+    }
+
+  for (int OrbitalIndex = 0; OrbitalIndex <= NbrFluxQuanta; ++OrbitalIndex)
+    {
+      RealSymmetricMatrix TmpAdAd(EffectiveSubspaceDimension, true);
+      int TmpMomentumShift = (2 * OrbitalIndex) - NbrFluxQuanta;
+      for (int i = 0; i < EffectiveSubspaceDimension; ++i)
+	{
+	  int UpLayerNbrParticlesRight = (TwoLayerNbrParticles[TwoLayerIndices[i]] + TwoLayerSzSector) / 2;
+	  int DownLayerNbrParticlesRight  = (TwoLayerNbrParticles[TwoLayerIndices[i]] - TwoLayerSzSector) / 2;  
+	  int UpLayerLzValueRight  = TwoLayerUpLzValues[TwoLayerIndices[i]];
+	  int DownLayerLzValueRight  = TwoLayerUpLzValues[TwoLayerIndices[i]] - TwoLayerLzSector;
+	  for (int j = i + 1; j < EffectiveSubspaceDimension; ++j)
+	    {
+	      int UpLayerNbrParticlesLeft = (TwoLayerNbrParticles[TwoLayerIndices[j]] + TwoLayerSzSector) / 2;
+	      int DownLayerNbrParticlesLeft  = (TwoLayerNbrParticles[TwoLayerIndices[j]] - TwoLayerSzSector) / 2;  
+	      int UpLayerLzValueLeft  = TwoLayerUpLzValues[TwoLayerIndices[j]];
+	      int DownLayerLzValueLeft  = TwoLayerUpLzValues[TwoLayerIndices[j]] - TwoLayerLzSector;
+	      if (((UpLayerNbrParticlesRight + 1) == UpLayerNbrParticlesLeft) && ((UpLayerLzValueRight + TmpMomentumShift ) == UpLayerLzValueLeft) &&
+		  ((DownLayerNbrParticlesRight + 1) == DownLayerNbrParticlesLeft) && ((DownLayerLzValueRight - TmpMomentumShift ) == DownLayerLzValueLeft))
+		{
+		  
+		}
+	      if (((UpLayerNbrParticlesRight - 1) == UpLayerNbrParticlesLeft) && ((UpLayerLzValueRight - TmpMomentumShift ) == UpLayerLzValueLeft) &&
+		  ((DownLayerNbrParticlesRight - 1) == DownLayerNbrParticlesLeft) && ((DownLayerLzValueRight + TmpMomentumShift ) == DownLayerLzValueLeft))
+		{
+		  
+		}
+	      
+	    }
+	}
+   }
+  for (int OrbitalIndex = 0; OrbitalIndex <= NbrFluxQuanta; ++OrbitalIndex)
+    {
+      RealSymmetricMatrix TmpAduAu(EffectiveSubspaceDimension, true);
+      RealSymmetricMatrix TmpAddAd(EffectiveSubspaceDimension, true);
+       for (int i = 0; i < EffectiveSubspaceDimension; ++i)
+	{
+	  int UpLayerNbrParticlesRight = (TwoLayerNbrParticles[TwoLayerIndices[i]] + TwoLayerSzSector) / 2;
+	  int DownLayerNbrParticlesRight  = (TwoLayerNbrParticles[TwoLayerIndices[i]] - TwoLayerSzSector) / 2;  
+	  int UpLayerLzValueRight  = TwoLayerUpLzValues[TwoLayerIndices[i]];
+	  int DownLayerLzValueRight  = TwoLayerUpLzValues[TwoLayerIndices[i]] - TwoLayerLzSector;
+	  for (int j = i; j < EffectiveSubspaceDimension; ++j)
+	    {
+	      int UpLayerNbrParticlesLeft = (TwoLayerNbrParticles[TwoLayerIndices[j]] + TwoLayerSzSector) / 2;
+	      int DownLayerNbrParticlesLeft  = (TwoLayerNbrParticles[TwoLayerIndices[j]] - TwoLayerSzSector) / 2;  
+	      int UpLayerLzValueLeft  = TwoLayerUpLzValues[TwoLayerIndices[j]];
+	      int DownLayerLzValueLeft  = TwoLayerUpLzValues[TwoLayerIndices[j]] - TwoLayerLzSector;
+	      if ((UpLayerNbrParticlesRight == UpLayerNbrParticlesLeft) && (UpLayerLzValueRight == UpLayerLzValueLeft) &&
+		  (DownLayerNbrParticlesRight == DownLayerNbrParticlesLeft) && (DownLayerLzValueRight == DownLayerLzValueLeft))
+		{		  
+		}      
+	    }
+	}
+    }
+
   delete[] TwoLayerEnergies;
   delete[] TwoLayerNbrParticles;
   delete[] TwoLayerIndices;

@@ -49,4 +49,5 @@ SpinChainRealHamiltonianWithTranslations.cc \
 SpinChainAKLTRealHamiltonianWithTranslations.cc \
 TwoDimensionalTriangularLatticeWithPseudospinHamiltonian.cc \
 TwoDimensionalKagomeLatticeHamiltonian.cc \
-TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian.cc
+TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian.cc \
+SpinChainJ1J2HamiltonianWithTranslations.cc

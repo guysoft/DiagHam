@@ -222,7 +222,7 @@ int main(int argc, char** argv)
 	  {
 	    Space = new BosonOnSphere(NbrParticles, TotalLz, LzMax);
 	  }
-      sprintf (OutputNamePrefix, "bosons_sphere_%s_n_%d_2s_%d_t", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalLz);
+      sprintf (OutputNamePrefix, "bosons_sphere_%s_n_%d_2s_%d_t", Manager.GetString("interaction-name"), NbrParticles, LzMax);
       sprintf (NormName, "bosons_sphere_%s_n_%d_2s_%d_dt_%g_t0_%g_nbrsteps_%d_norm.dat", Manager.GetString("interaction-name"), NbrParticles, LzMax, TmpTime, TimeShift, NbrTimeSteps);
       if (Manager.GetBoolean("compute-energy"))
       {
@@ -234,7 +234,7 @@ int main(int argc, char** argv)
   else
     {
       Space = new FermionOnSphere (NbrParticles, TotalLz, LzMax);
-      sprintf (OutputNamePrefix, "fermions_sphere_%s_n_%d_2s_%d_t", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalLz);
+      sprintf (OutputNamePrefix, "fermions_sphere_%s_n_%d_2s_%d_t", Manager.GetString("interaction-name"), NbrParticles, LzMax);
       sprintf (NormName, "fermions_sphere_%s_n_%d_2s_%d_dt_%g_t0_%g_nbrsteps_%d_norm.dat", Manager.GetString("interaction-name"), NbrParticles, LzMax, TmpTime, TimeShift, NbrTimeSteps);
       if (Manager.GetBoolean("compute-energy"))
       {
