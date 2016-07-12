@@ -479,9 +479,9 @@ double LongRational::GetClosestRational(double x, long maximumDenominator)
 	    }
 	  else
 	    { 
-	      D = maximumDenominator + 1;
 	      A += C;
 	      B += D;	      
+	      D = maximumDenominator + 1;
 	    }
 	}
     }
