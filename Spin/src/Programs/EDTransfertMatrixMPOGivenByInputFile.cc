@@ -146,9 +146,9 @@ int main(int argc, char** argv)
 	  Tmp[0] = -1.0;Tmp[1] = -1.0;Tmp[2] = 1.0;
 	  BoundaryConditions.SetMatrixElement(i,i,Tmp[i%3] *Tmp[i/3] ); 
       	}
-      cout << BoundaryConditions<<endl;
     }
-
+  
+  cout << BoundaryConditions<<endl;
   AbstractTransfertMatrixPBC *  TransferMatrix =0;
   if(TranslationFlag == true)
     {
@@ -156,6 +156,7 @@ int main(int argc, char** argv)
 	{
 	  if (DoubledFlag)
 	    {
+	      cout << "  	      TransferMatrix = new  ComplexPEPSTransfertMatrixPBCWithTranslations(TensorsElementsDefinition,Architecture.GetArchitecture());"<<endl;
 	      TransferMatrix = new  ComplexPEPSTransfertMatrixPBCWithTranslations(TensorsElementsDefinition,Architecture.GetArchitecture());
 	    }
 	  else
@@ -173,6 +174,7 @@ int main(int argc, char** argv)
 	{
 	  if (DoubledFlag)
 	    {
+	      cout <<"  TransferMatrix = new ComplexPEPSTransfertMatrixPBC(TensorsElementsDefinition,&BoundaryConditions,Architecture.GetArchitecture()); "<<endl;
 	      TransferMatrix = new ComplexPEPSTransfertMatrixPBC(TensorsElementsDefinition,&BoundaryConditions,Architecture.GetArchitecture()); 
 	    }
 	  else
@@ -206,10 +208,13 @@ int main(int argc, char** argv)
       MaxKx = MinKx;
     }
   
-  int SzMin = 0;
+  int SzMin = -NbrSites;
   int SzMax = NbrSites;
   if (DoubledFlag)
-    SzMax*=2;
+    {
+      SzMax*=2;
+      SzMin*=2;
+    }
   char * SubspaceLegend = new char [50];
   char * TmpSzString = new char [30];
   if (Manager.GetInteger("sz") != -1 )
@@ -308,7 +313,10 @@ int main(int argc, char** argv)
 			      if(StaggeredFlag)
 				Space = new DoubledSpin0_1_2_ChainWithTranslationsStaggered (NbrSites,Sz, 100000,100000);
 			      else
-				Space = new DoubledSpin0_1_2_ChainWithTranslations (NbrSites,Sz, 100000,100000);
+				{
+				  cout <<" Space = new DoubledSpin0_1_2_ChainWithTranslations (NbrSites,Sz, 100000,100000);" <<endl;
+				  Space = new DoubledSpin0_1_2_ChainWithTranslations (NbrSites,Sz, 100000,100000);
+				}
 			    }
 			}
 		    }

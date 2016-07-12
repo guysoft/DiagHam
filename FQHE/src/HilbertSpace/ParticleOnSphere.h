@@ -48,7 +48,7 @@ class SparseRealMatrix;
 class SparseComplexMatrix;
 
 
-class ParticleOnSphere :  public AbstractQHEParticle
+class ParticleOnSphere :  public AbstractQHEParticle 
 {
 
  public:

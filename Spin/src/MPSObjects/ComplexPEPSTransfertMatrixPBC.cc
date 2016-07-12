@@ -40,7 +40,7 @@ ComplexPEPSTransfertMatrixPBC::ComplexPEPSTransfertMatrixPBC(MultiColumnASCIIFil
   this->StartVector = 0;
   this->EndVector = 0;
   this->ChainLength = 0;
-  this->BoundaryMatrix = boundaryMatrix; 
+  this->BoundaryMatrix = (RealDiagonalMatrix  *) boundaryMatrix->Clone(); 
 }
 
 
@@ -105,8 +105,9 @@ void ComplexPEPSTransfertMatrixPBC::SetHilbertSpace (AbstractHilbertSpace* hilbe
       this->EndVector =  new ComplexVector (this->PowerD[this->ChainLength],true);
       this->StartVector =  new ComplexVector (this->PowerD[this->ChainLength],true);
     }
-  if(  this->BoundaryMatrix == 0)
+  if( this->BoundaryMatrix == 0)
     {
+      cout <<"inside   if( this->BoundaryMatrix == 0)"<<endl;
       this->BoundaryMatrix = new RealDiagonalMatrix( this->PowerD[1] ,true);
       this->BoundaryMatrix->SetToIdentity();
     }
@@ -496,14 +497,21 @@ ComplexVector & ComplexPEPSTransfertMatrixPBC::LowLevelAddMultiplyOnLastSite(uns
 }
 */
 
+
+
 ComplexVector& ComplexPEPSTransfertMatrixPBC::LowLevelAddMultiply(ComplexVector & vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
 {
   ComplexVector * TmpPointorVector;
   this->EndVector->ClearVector();
   ((AbstractDoubledSpinChain * )this->HilbertSpace)->ConvertToGeneralSpace(vSource,(*this->StartVector));
   for (int  IndiceTop = 0 ;  IndiceTop < this->MPOBondDimension *  this->MPOBondDimension;  IndiceTop++)
-    {	  
+    { 
+      double BoundaryValue= (*this->BoundaryMatrix)(IndiceTop, IndiceTop);
+      this->BoundaryMatrix->GetMatrixElement(IndiceTop, IndiceTop,BoundaryValue);
       this->LowLevelAddMultiplyOnFirstSite(IndiceTop);
+//      cout <<"BoundaryValue =  "<<BoundaryValue<<endl;
+      (*this->TmpVector1)*=BoundaryValue;
+      //cout <<" "<<(*this->TmpVector1)<<endl;
       for(int Position = 1; Position <this->ChainLength - 1;Position++)
 	{
 	  this->LowLevelAddMultiplyOnAnySite(Position);
@@ -551,8 +559,6 @@ void ComplexPEPSTransfertMatrixPBC::LowLevelAddMultiplyOnAnySite(int position)
 
 void ComplexPEPSTransfertMatrixPBC::LowLevelAddMultiplyOnLastSite(int topValue)
 {
-  double BoundaryValue;
-  this->BoundaryMatrix->GetMatrixElement(topValue,topValue,BoundaryValue);
   for(int i = 0; i< this->TmpVector1->GetVectorDimension();i++) 
     {
       if ( Norm((*this->TmpVector1)[i]) > 1e-13 )
@@ -561,7 +567,7 @@ void ComplexPEPSTransfertMatrixPBC::LowLevelAddMultiplyOnLastSite(int topValue)
 	    {
 	      if (this->IndiceBottomNonZeroTensorElementTopLeft[i%this->PowerD[1]][i/this->PowerD[this->ChainLength]][p] == topValue)
 		{
-		  (*this->EndVector)[this->GetNewIndexFromOldIndex(i,i/this->PowerD[this->ChainLength], this->IndiceRightNonZeroTensorElementTopLeft[i%this->PowerD[1]][i/this->PowerD[this->ChainLength]][p],i%this->PowerD[1],0,this->ChainLength)/this->PowerD[1]] +=  (*this->TmpVector1)[i] * this->ValuesNonZeroTensorElementTopLeft[i%this->PowerD[1]][i/this->PowerD[this->ChainLength]][p] * BoundaryValue;
+		  (*this->EndVector)[this->GetNewIndexFromOldIndex(i,i/this->PowerD[this->ChainLength], this->IndiceRightNonZeroTensorElementTopLeft[i%this->PowerD[1]][i/this->PowerD[this->ChainLength]][p],i%this->PowerD[1],0,this->ChainLength)/this->PowerD[1]] +=  (*this->TmpVector1)[i] * this->ValuesNonZeroTensorElementTopLeft[i%this->PowerD[1]][i/this->PowerD[this->ChainLength]][p];
 		  
 		}
 	    }

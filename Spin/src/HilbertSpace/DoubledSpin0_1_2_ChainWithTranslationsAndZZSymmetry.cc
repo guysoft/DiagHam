@@ -82,14 +82,16 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
   
   this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->ChainLength-1, this->ChainLength-1, this->DiffSz);
   this->ShiftNegativeDiffSz =   this->LargeHilbertSpaceDimension;
-  if (this->DiffSz !=0 )
-    this->LargeHilbertSpaceDimension += this->ShiftedEvaluateHilbertSpaceDimension(this->ChainLength-1, this->ChainLength-1, -this->DiffSz);
+
+/*  if (this->DiffSz !=0 )
+    this->LargeHilbertSpaceDimension += this->ShiftedEvaluateHilbertSpaceDimension(this->ChainLength-1, this->ChainLength-1, -this->DiffSz);*/
   
   this->ChainDescription = new unsigned long [this->LargeHilbertSpaceDimension];
   
   long TmpHilbertSpaceDimension = GenerateStates(this->ChainLength-1, this->ChainLength-1, this->DiffSz, 0l);
-  if (this->DiffSz != 0)
-    TmpHilbertSpaceDimension = GenerateStates(this->ChainLength-1, this->ChainLength-1, -this->DiffSz, TmpHilbertSpaceDimension);
+
+/*  if (this->DiffSz != 0)
+    TmpHilbertSpaceDimension = GenerateStates(this->ChainLength-1, this->ChainLength-1, -this->DiffSz, TmpHilbertSpaceDimension);*/
 
   SortArrayDownOrdering(this->ChainDescription,TmpHilbertSpaceDimension);
   
@@ -118,8 +120,7 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
 	}
     }
   
-  
-  unsigned long* TmpStateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+    unsigned long* TmpStateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
 
   
   this->LargeHilbertSpaceDimension = 0l;
@@ -185,14 +186,15 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
   
   this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->ChainLength-1, this->ChainLength-1, this->DiffSz);
   this->ShiftNegativeDiffSz =   this->LargeHilbertSpaceDimension;
-  if (this->DiffSz !=0 )
-    this->LargeHilbertSpaceDimension += this->ShiftedEvaluateHilbertSpaceDimension(this->ChainLength-1, this->ChainLength-1, -this->DiffSz);
+
+/*  if (this->DiffSz !=0 )
+    this->LargeHilbertSpaceDimension += this->ShiftedEvaluateHilbertSpaceDimension(this->ChainLength-1, this->ChainLength-1, -this->DiffSz);*/
 
   this->ChainDescription = new unsigned long [this->LargeHilbertSpaceDimension];
     
   long TmpHilbertSpaceDimension = GenerateStates(this->ChainLength-1, this->ChainLength-1, this->DiffSz, 0l);
-  if (this->DiffSz != 0)
-    TmpHilbertSpaceDimension = GenerateStates(this->ChainLength-1, this->ChainLength-1, -this->DiffSz, TmpHilbertSpaceDimension);
+/*  if (this->DiffSz != 0)
+    TmpHilbertSpaceDimension = GenerateStates(this->ChainLength-1, this->ChainLength-1, -this->DiffSz, TmpHilbertSpaceDimension);*/
 
   SortArrayDownOrdering(this->ChainDescription,TmpHilbertSpaceDimension);
   

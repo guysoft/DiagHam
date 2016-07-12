@@ -347,7 +347,7 @@ AC_MSG_RESULT([${HAVE_PKG_INTELMKL}])
   ])
  
 if test X${HAVE_PKG_INTELMKL} = Xyes; then
-  AC_CHECK_LIB([mkl_intel_ilp64],fftw_execute,INTELMKL_LIBS="-L${INTELMKL_LIBDIR} -lmkl_intel_thread -lmkl_core -openmp -lmkl_intel_ilp64",
+  AC_CHECK_LIB([mkl_intel_ilp64],fftw_execute,INTELMKL_LIBS="-L${INTELMKL_LIBDIR} -lmkl_intel_thread -lmkl_core -lmkl_intel_ilp64 -lpthread -lm -ldl ",
   AC_MSG_ERROR([Cannot find Intel Math Kernel Library >= 6.0]),[-L${INTELMKL_LIBDIR} -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -openmp -liomp5  --lpthread])
   AC_DEFINE(HAVE_LAPACK,,[define if we are using LAPACK])
 fi
@@ -405,9 +405,14 @@ dnl check for debugging/profiling mode
 AC_ARG_ENABLE(debug, [AC_HELP_STRING([--enable-debug],[enable debug mode])], [HAVE_DEBUG=$enableval
 CXXFLAGS="${CXXFLAGS} -g -fPIC"
 ],[HAVE_DEBUG=no])
+
 AC_ARG_ENABLE(profile, [AC_HELP_STRING([--enable-profile],[enable profile mode])], [HAVE_PROFILE=$enableval
 CXXFLAGS="${CXXFLAGS} -g -pg"
 ],[HAVE_PROFILE=no])
+
+if test X${HAVE_PKG_INTELMKL} = Xyes; then
+CXXFLAGS="${CXXFLAGS} -DMKL_ILP64 -qopenmp -I${MKLROOT}/include"
+fi
 
 AC_MSG_CHECKING(whether we are using debug mode)
 AC_MSG_RESULT([${HAVE_DEBUG}])
