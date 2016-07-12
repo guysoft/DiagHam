@@ -4,11 +4,15 @@
 #include <sys/time.h>
 #include "GeneralTools/ArrayTools.h"
 
+#include "Matrix/RealDiagonalMatrix.h"
+
+
 using std::cout;
 using std::endl;
 
 ComplexPEPSTransfertMatrixPBC::ComplexPEPSTransfertMatrixPBC ()
 {
+  this->BoundaryMatrix = 0; 
 }
 
 /*
@@ -25,6 +29,21 @@ ComplexPEPSTransfertMatrixPBC::ComplexPEPSTransfertMatrixPBC(MultiColumnASCIIFil
 }
 */
 
+
+ComplexPEPSTransfertMatrixPBC::ComplexPEPSTransfertMatrixPBC(MultiColumnASCIIFile & tensorElementsFile, RealDiagonalMatrix * boundaryMatrix, AbstractArchitecture * architecture)
+{
+  this->InitializeTensorsElements(tensorElementsFile);
+  this->Architecture = architecture;
+  this->TemporaryArray = 0;
+  this->TmpVector1 = 0;
+  this->TmpVector2 = 0;
+  this->StartVector = 0;
+  this->EndVector = 0;
+  this->ChainLength = 0;
+  this->BoundaryMatrix = boundaryMatrix; 
+}
+
+
 ComplexPEPSTransfertMatrixPBC::ComplexPEPSTransfertMatrixPBC(MultiColumnASCIIFile & tensorElementsFile, AbstractArchitecture * architecture)
 {
   this->InitializeTensorsElements(tensorElementsFile);
@@ -35,12 +54,14 @@ ComplexPEPSTransfertMatrixPBC::ComplexPEPSTransfertMatrixPBC(MultiColumnASCIIFil
   this->StartVector = 0;
   this->EndVector = 0;
   this->ChainLength = 0;
+  this->BoundaryMatrix = 0; 
 }
 
 
 
 ComplexPEPSTransfertMatrixPBC::~ComplexPEPSTransfertMatrixPBC()
 {
+  delete this->BoundaryMatrix;
   for (int i = 0; i < this->MPOBondDimension *  this->MPOBondDimension; i++)
     {
       for(int j = 0; j < this->PhysicalDimension * this->PhysicalDimension; j++)
@@ -83,6 +104,11 @@ void ComplexPEPSTransfertMatrixPBC::SetHilbertSpace (AbstractHilbertSpace* hilbe
       this->TmpVector2 = new ComplexVector (this->PowerD[this->ChainLength+1],true);
       this->EndVector =  new ComplexVector (this->PowerD[this->ChainLength],true);
       this->StartVector =  new ComplexVector (this->PowerD[this->ChainLength],true);
+    }
+  if(  this->BoundaryMatrix == 0)
+    {
+      this->BoundaryMatrix = new RealDiagonalMatrix( this->PowerD[1] ,true);
+      this->BoundaryMatrix->SetToIdentity();
     }
 }
 
@@ -164,7 +190,7 @@ void ComplexPEPSTransfertMatrixPBC::InitializeTensorsElements(MultiColumnASCIIFi
   this->IndiceBottomNonZeroTensorElementTopLeft = new int ** [this->MPOBondDimension*this->MPOBondDimension];
   this->IndiceRightNonZeroTensorElementTopLeft = new int ** [this->MPOBondDimension*this->MPOBondDimension];
   this->ValuesNonZeroTensorElementTopLeft = new Complex ** [this->MPOBondDimension*this->MPOBondDimension];
-
+  
   MemoryCost+= (sizeof(int*) + sizeof(Complex**) + 2*sizeof(int**))*this->MPOBondDimension*this->MPOBondDimension;
 
   for (int i = 0; i < this->MPOBondDimension * this->MPOBondDimension; i++)
@@ -227,7 +253,7 @@ void ComplexPEPSTransfertMatrixPBC::InitializeTensorsElements(MultiColumnASCIIFi
   delete [] IndexRight;
   delete [] ElementsValues;
 }
- 
+
 /*
 int ComplexPEPSTransfertMatrixPBC::GenerateResultingStateAndCoefficient(int indiceTop, int chainSize, int lastIndice, Complex * coefArray, unsigned long * stateArrayBra, unsigned long * stateArrayKet, unsigned long pos)
 {
@@ -359,7 +385,7 @@ int ComplexPEPSTransfertMatrixPBC::LowLevelAddMultiplyOnAnySite(unsigned long * 
 	{
 	  NbrElement+=SearchInArrayAndSetWeight(this->GetNewIndexFromOldIndex(oldHilbertSpace[i], (oldHilbertSpace[i]/this->PowerD[position+1])%this->PowerD[1], this->IndiceRightNonZeroTensorElementTopLeft[oldHilbertSpace[i]%this->PowerD[1]][(oldHilbertSpace[i]/this->PowerD[position+1])%this->PowerD[1]][p], oldHilbertSpace[i]%this->PowerD[1], this->IndiceBottomNonZeroTensorElementTopLeft[oldHilbertSpace[i]%this->PowerD[1]][(oldHilbertSpace[i]/this->PowerD[position+1])%this->PowerD[1]][p],position+1)
 
-,newHilbertSpace,newWeigth, NbrElement,this->ValuesNonZeroTensorElementTopLeft[oldHilbertSpace[i]%this->PowerD[1]][(oldHilbertSpace[i]/this->PowerD[position+1])%this->PowerD[1]][p] *  oldWeigth[i]);
+	    ,newHilbertSpace,newWeigth, NbrElement,this->ValuesNonZeroTensorElementTopLeft[oldHilbertSpace[i]%this->PowerD[1]][(oldHilbertSpace[i]/this->PowerD[position+1])%this->PowerD[1]][p] *  oldWeigth[i]);
 
 	}
     }
@@ -370,15 +396,9 @@ int ComplexPEPSTransfertMatrixPBC::LowLevelAddMultiplyOnAnySite(unsigned long * 
 
 ComplexVector & ComplexPEPSTransfertMatrixPBC::LowLevelAddMultiplyOnLastSite(unsigned long * oldHilbertSpace, Complex * oldWeigth, ComplexVector & vDestination, int oldHilbertSpaceDimension, int topValue)
 {
-  for(int i = 0; i< oldHilbertSpaceDimension;i++)
+for(int i = 0; i< oldHilbertSpaceDimension;i++)
     {
-//      cout <<"i = "<<i<< " "<<oldHilbertSpace[i]<<" "<< oldHilbertSpace[i]/this->PowerD[this->ChainLength]<<" "<<oldHilbertSpace[i]%this->PowerD[1]<< " ";
-      
-//      cout <<endl;
-
-  //    cout<< this->NbrNonZeroTensorElementTopLeft[oldHilbertSpace[i]%this->PowerD[1]][oldHilbertSpace[i]/this->PowerD[this->ChainLength]]<<endl;
-   
-      for (int p = 0; p < this->NbrNonZeroTensorElementTopLeft[oldHilbertSpace[i]%this->PowerD[1]][oldHilbertSpace[i]/this->PowerD[this->ChainLength]] ; p++)
+    for (int p = 0; p < this->NbrNonZeroTensorElementTopLeft[oldHilbertSpace[i]%this->PowerD[1]][oldHilbertSpace[i]/this->PowerD[this->ChainLength]] ; p++)
 	{
 	  if (this->IndiceBottomNonZeroTensorElementTopLeft[oldHilbertSpace[i]%this->PowerD[1]][oldHilbertSpace[i]/this->PowerD[this->ChainLength]][p] == topValue)
 	    {
@@ -531,6 +551,8 @@ void ComplexPEPSTransfertMatrixPBC::LowLevelAddMultiplyOnAnySite(int position)
 
 void ComplexPEPSTransfertMatrixPBC::LowLevelAddMultiplyOnLastSite(int topValue)
 {
+  double BoundaryValue;
+  this->BoundaryMatrix->GetMatrixElement(topValue,topValue,BoundaryValue);
   for(int i = 0; i< this->TmpVector1->GetVectorDimension();i++) 
     {
       if ( Norm((*this->TmpVector1)[i]) > 1e-13 )
@@ -539,7 +561,7 @@ void ComplexPEPSTransfertMatrixPBC::LowLevelAddMultiplyOnLastSite(int topValue)
 	    {
 	      if (this->IndiceBottomNonZeroTensorElementTopLeft[i%this->PowerD[1]][i/this->PowerD[this->ChainLength]][p] == topValue)
 		{
-		  (*this->EndVector)[this->GetNewIndexFromOldIndex(i,i/this->PowerD[this->ChainLength], this->IndiceRightNonZeroTensorElementTopLeft[i%this->PowerD[1]][i/this->PowerD[this->ChainLength]][p],i%this->PowerD[1],0,this->ChainLength)/this->PowerD[1]] +=  (*this->TmpVector1)[i] * this->ValuesNonZeroTensorElementTopLeft[i%this->PowerD[1]][i/this->PowerD[this->ChainLength]][p];
+		  (*this->EndVector)[this->GetNewIndexFromOldIndex(i,i/this->PowerD[this->ChainLength], this->IndiceRightNonZeroTensorElementTopLeft[i%this->PowerD[1]][i/this->PowerD[this->ChainLength]][p],i%this->PowerD[1],0,this->ChainLength)/this->PowerD[1]] +=  (*this->TmpVector1)[i] * this->ValuesNonZeroTensorElementTopLeft[i%this->PowerD[1]][i/this->PowerD[this->ChainLength]][p] * BoundaryValue;
 		  
 		}
 	    }

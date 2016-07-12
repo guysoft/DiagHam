@@ -326,6 +326,11 @@ class RealDiagonalMatrix : public Matrix
   // return value = rank
   int Rank(double accuracy);
 
+  
+  // set matrix to identity
+  //
+  void SetToIdentity();
+
   // Output Stream overload
   //
   // Str = reference on output stream

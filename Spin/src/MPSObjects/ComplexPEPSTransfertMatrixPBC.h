@@ -25,11 +25,13 @@ class ComplexPEPSTransfertMatrixPBC : public  AbstractTransfertMatrixPBC
   ComplexVector * TmpVector2;
   ComplexVector * StartVector;
   ComplexVector * EndVector;
-  
+  RealDiagonalMatrix * BoundaryMatrix; 
+
  public:
 
   ComplexPEPSTransfertMatrixPBC ();
-  ComplexPEPSTransfertMatrixPBC(MultiColumnASCIIFile & tensorElementsFile,AbstractArchitecture * architecture);
+  ComplexPEPSTransfertMatrixPBC(MultiColumnASCIIFile & tensorElementsFile, RealDiagonalMatrix * boundaryMatrix, AbstractArchitecture * architecture);
+  ComplexPEPSTransfertMatrixPBC(MultiColumnASCIIFile & tensorElementsFile, AbstractArchitecture * architecture);
   ~ComplexPEPSTransfertMatrixPBC ();  
   
   // multiply a vector by the current hamiltonian for a given range of indices 

@@ -822,5 +822,12 @@ MathematicaOutput& operator << (MathematicaOutput& Str, const RealDiagonalMatrix
   return Str;
 }
 
+// set matrix to identity
+//
 
+void RealDiagonalMatrix::SetToIdentity()
+{
+  for (int i = 0; i < this->NbrRow; i++)
+    this->DiagonalElements[i] = 1.0;
+}
 #endif

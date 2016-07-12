@@ -24,6 +24,8 @@
 #include "MainTask/GenericRealMainTask.h"
 #include "MainTask/GenericComplexMainTask.h"
 
+#include "Matrix/RealDiagonalMatrix.h"
+
 #include "Options/Options.h"
 
 #include "GeneralTools/MultiColumnASCIIFile.h"
@@ -74,6 +76,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "zz-symmetry", "use the ZZ symmetry");
   (*SystemGroup) += new BooleanOption ('\n', "staggered", "use the stagerred Hilbert Space");
   (*SystemGroup) += new BooleanOption ('\n', "left", "compute left eigenvalue");
+  (*SystemGroup) += new BooleanOption ('\n', "vison", "add a vison line in both layers");
   (*SystemGroup) += new  SingleIntegerOption ('\n', "sz", "consider a specific value of sz", -1);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "k", "consider a specific value of k", -1);
 
@@ -132,7 +135,20 @@ int main(int argc, char** argv)
 //  AbstractTransfertMatrixPBC * TransferMatrix = 0;
   int NbrSites = Manager.GetInteger("length");
   
-  
+
+  RealDiagonalMatrix BoundaryConditions(9,true);
+  BoundaryConditions.SetToIdentity();
+  if(Manager.GetBoolean("vison") == true)
+    {
+      for(int i =0;i <9; i++)
+	{
+	  double  Tmp[3];
+	  Tmp[0] = -1.0;Tmp[1] = -1.0;Tmp[2] = 1.0;
+	  BoundaryConditions.SetMatrixElement(i,i,Tmp[i%3] *Tmp[i/3] ); 
+      	}
+      cout << BoundaryConditions<<endl;
+    }
+
   AbstractTransfertMatrixPBC *  TransferMatrix =0;
   if(TranslationFlag == true)
     {
@@ -157,7 +173,7 @@ int main(int argc, char** argv)
 	{
 	  if (DoubledFlag)
 	    {
-	      TransferMatrix = new ComplexPEPSTransfertMatrixPBC(TensorsElementsDefinition,Architecture.GetArchitecture()); 
+	      TransferMatrix = new ComplexPEPSTransfertMatrixPBC(TensorsElementsDefinition,&BoundaryConditions,Architecture.GetArchitecture()); 
 	    }
 	  else
 	    {
