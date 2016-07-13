@@ -28,6 +28,8 @@
 
 #include "HilbertSpace/BosonOnLatticeRealSpace.h"
 #include "HilbertSpace/BosonOnLatticeRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpace.h"
+#include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation.h"
 
 
 #include <iostream>
@@ -445,7 +447,28 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      cout << " Bosonic statistics not implemented" << endl;
+	      if (SU2SpinFlag == false)
+		{
+		  if (GutzwillerFlag == false)
+		    {
+		      if (TwoDTranslationFlag == false)
+			Spaces[TmpIndex] = new BosonOnLatticeRealSpace (NbrParticles, NbrSites);
+		      else
+			Spaces[TmpIndex] = new BosonOnLatticeRealSpaceAnd2DTranslation (NbrParticles, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+		    }
+		  else
+		    {
+		      if (TwoDTranslationFlag == false)
+			Spaces[TmpIndex] = new BosonOnLatticeGutzwillerProjectionRealSpace (NbrParticles, NbrSites);
+		      else
+			Spaces[TmpIndex] = new BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+		    }
+		}
+	      else
+		{
+		  cout << "Error: Bosonic statistics not implemented" << endl;
+		  return -1;		  
+		}
 	    }
 	}
       
@@ -716,26 +739,54 @@ int main(int argc, char** argv)
 			{
 			  if (SU2SpinFlag == false)
 			    {      
-			      if (TwoDTranslationFlag == false)
+			      if (GutzwillerFlag == false)
 				{
-				  PartialDensityMatrix = ((BosonOnLatticeRealSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
-				  PartialDensityMatrix *= CoefficientPerMomentumSector[TmpIndex][0];
-				  for (int i = 1; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+				  if (TwoDTranslationFlag == false)
 				    {
-				      HermitianMatrix TmpMatrix = ((BosonOnLatticeRealSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
-				      TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
-				      PartialDensityMatrix += TmpMatrix;
+				      PartialDensityMatrix = ((BosonOnLatticeRealSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
+				      PartialDensityMatrix *= CoefficientPerMomentumSector[TmpIndex][0];
+				      for (int i = 1; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+					{
+					  HermitianMatrix TmpMatrix = ((BosonOnLatticeRealSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+					  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+					  PartialDensityMatrix += TmpMatrix;
+					}
+				    }
+				  else
+				    {
+				      PartialDensityMatrix = ((BosonOnLatticeRealSpaceAnd2DTranslation*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
+				      PartialDensityMatrix *= CoefficientPerMomentumSector[TmpIndex][0];
+				      for (int i = 1; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+					{
+					  HermitianMatrix TmpMatrix = ((BosonOnLatticeRealSpaceAnd2DTranslation*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+					  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+					  PartialDensityMatrix += TmpMatrix;
+					}
 				    }
 				}
 			      else
 				{
-				  PartialDensityMatrix = ((BosonOnLatticeRealSpaceAnd2DTranslation*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
-				  PartialDensityMatrix *= CoefficientPerMomentumSector[TmpIndex][0];
-				  for (int i = 1; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+				  if (TwoDTranslationFlag == false)
 				    {
-				      HermitianMatrix TmpMatrix = ((BosonOnLatticeRealSpaceAnd2DTranslation*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
-				  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
-				  PartialDensityMatrix += TmpMatrix;
+				      PartialDensityMatrix = ((BosonOnLatticeGutzwillerProjectionRealSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
+				      PartialDensityMatrix *= CoefficientPerMomentumSector[TmpIndex][0];
+				      for (int i = 1; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+					{
+					  HermitianMatrix TmpMatrix = ((BosonOnLatticeGutzwillerProjectionRealSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+					  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+					  PartialDensityMatrix += TmpMatrix;
+					}
+				    }
+				  else
+				    {
+				      PartialDensityMatrix = ((BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
+				      PartialDensityMatrix *= CoefficientPerMomentumSector[TmpIndex][0];
+				      for (int i = 1; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+					{
+					  HermitianMatrix TmpMatrix = ((BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+					  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+					  PartialDensityMatrix += TmpMatrix;
+					}
 				    }
 				}
 			    }
@@ -886,8 +937,56 @@ int main(int argc, char** argv)
 				}
 			      else
 				{
-				  cout << "Error: Bosonic statistics not implemented" << endl;
-				  return -1;
+				  if (SU2SpinFlag == false)
+				    {      
+				      if (GutzwillerFlag == false)
+					{
+					  if (TwoDTranslationFlag == false)
+					    {
+					      for (int i = 0; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+						{
+						  HermitianMatrix TmpMatrix = ((BosonOnLatticeRealSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+						  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+						  PartialDensityMatrix += TmpMatrix;
+						}
+					    }
+					  else
+					    {
+					      for (int i = 0; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+						{
+						  HermitianMatrix TmpMatrix = ((BosonOnLatticeRealSpaceAnd2DTranslation*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+						  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+						  PartialDensityMatrix += TmpMatrix;
+						}
+					    }
+					}
+				      else
+					{
+					  if (TwoDTranslationFlag == false)
+					    {
+					      for (int i = 0; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+						{
+						  HermitianMatrix TmpMatrix = ((BosonOnLatticeGutzwillerProjectionRealSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+						  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+						  PartialDensityMatrix += TmpMatrix;
+						}
+					    }
+					  else
+					    {
+					      for (int i = 0; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+						{
+						  HermitianMatrix TmpMatrix = ((BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+						  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+						  PartialDensityMatrix += TmpMatrix;
+						}
+					    }
+					}
+				    }
+				  else
+				    {
+				      cout << "Error: Bosonic statistics not implemented" << endl;
+				      return -1;
+				    }
 				}			  
 			    }
 			}

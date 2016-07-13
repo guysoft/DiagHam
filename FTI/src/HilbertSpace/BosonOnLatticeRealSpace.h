@@ -44,6 +44,7 @@
 class BosonOnLatticeRealSpace : public BosonOnSphereShort
 {
   friend class FermionOnLatticeRealSpace;
+  friend class BosonOnLatticeRealSpaceAnd2DTranslation;
   
  protected:
 

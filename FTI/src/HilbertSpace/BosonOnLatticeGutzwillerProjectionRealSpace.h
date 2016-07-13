@@ -6,7 +6,7 @@
 //                    Copyright (C) 2001-2011 Nicolas Regnault                //
 //                                                                            //
 //                                                                            //
-//                    class of hardcore boson  on lattice in real space       //
+//                    class of hardcore boson on lattice in real space        //
 //                                                                            //
 //                        last modification : 10/09/2014                      //
 //                                                                            //
@@ -40,6 +40,8 @@
 
 class BosonOnLatticeGutzwillerProjectionRealSpace : public FermionOnLatticeRealSpace
 {
+
+  friend class BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation;
 
  protected:
 
@@ -112,17 +114,19 @@ class BosonOnLatticeGutzwillerProjectionRealSpace : public FermionOnLatticeRealS
 
  protected:
 
-  // core part of the evaluation orbital cut entanglement matrix calculation
+  // core part of the evaluation density matrix particle partition calculation
   // 
-  // minIndex = first index to consider in source Hilbert space
-  // nbrIndex = number of indices to consider in source Hilbert space
-  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
-  // destinationHilbertSpace = pointer to the destination Hilbert space  (i.e. part A)
+  // minIndex = first index to consider in complementary Hilbert space
+  // nbrIndex = number of indices to consider in complementary Hilbert space
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e part B)
+  // destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
   // groundState = reference on the total system ground state
   // densityMatrix = reference on the density matrix where result has to stored
   // return value = number of components that have been added to the density matrix
-  virtual long EvaluatePartialEntanglementMatrixCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace, ComplexVector& groundState, ComplexMatrix* entanglementMatrix);
-
+  virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  
+								  ParticleOnSphere* destinationHilbertSpace,
+								  ComplexVector& groundState,  HermitianMatrix* densityMatrix);
+    
   // apply a_n  operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad or A call
   //
   // index = index of the state on which the operator has to be applied

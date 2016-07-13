@@ -134,6 +134,8 @@ class FermionOnSphere :  public ParticleOnSphere
   
   friend class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation;
 
+  friend class BosonOnLatticeRealSpaceAnd2DTranslation;
+
  protected:
 
   // number of fermions

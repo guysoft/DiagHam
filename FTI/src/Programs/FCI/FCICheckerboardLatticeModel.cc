@@ -11,6 +11,8 @@
 #include "HilbertSpace/FermionOnLatticeRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/BosonOnLatticeRealSpace.h"
 #include "HilbertSpace/BosonOnLatticeRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpace.h"
+#include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation.h"
 
 
 #include "Hamiltonian/ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian.h"
@@ -98,6 +100,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "offset", "second coordinate in momentum space of the second spanning vector of the reciprocal lattice (0 if lattice is untilted)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "real-offset", "second coordinate in real space of the second spanning vector of the real space lattice (0 if lattice is untilted)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
+  (*SystemGroup) += new BooleanOption  ('\n', "gutzwiller", "use the gutzwiller projected Hilbert space");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive nearest neighbor potential strength", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive nearest next neighbor potential strength", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "three-body", "use a three body interaction instead of a two body interaction");
@@ -218,20 +221,40 @@ int main(int argc, char** argv)
 	}
       else
 	{
-         if ( Manager.GetBoolean("no-translation") == false)
-	 {
-	   if (TiltedFlag == false)
-	    sprintf (FilePrefix, "%s_realspace_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
-	   else
-	     sprintf (FilePrefix, "%s_realspace_checkerboardlatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
-	 }
-	else
-	  {
-	    if (TiltedFlag == false)
-	      sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
-	    else
-	      sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
-	  }
+         if (Manager.GetBoolean("no-translation") == false)
+	   {
+	     if (Manager.GetBoolean ("gutzwiller") == false)
+	       {
+		 if (TiltedFlag == false)
+		   sprintf (FilePrefix, "%s_realspace_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+		 else
+		   sprintf (FilePrefix, "%s_realspace_checkerboardlatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+	       }
+	     else
+	       {
+		 if (TiltedFlag == false)
+		   sprintf (FilePrefix, "%s_realspace_gutzwiller_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+		 else
+		   sprintf (FilePrefix, "%s_realspace_gutzwiller_checkerboardlatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+	       }
+	   }
+	 else
+	   {
+	     if (Manager.GetBoolean ("gutzwiller") == false)
+	       {
+		 if (TiltedFlag == false)
+		   sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+		 else
+		   sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+	       }
+	     else
+	       {
+		 if (TiltedFlag == false)
+		   sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+		 else
+		   sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_checkerboardlatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+	       }
+	   }
 	}
     }
   else
@@ -419,7 +442,7 @@ int main(int argc, char** argv)
 		    }
 		  else
 		    {
-			  Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		      Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
 		    }
 		  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
@@ -462,11 +485,23 @@ int main(int argc, char** argv)
 		    }
 		  if (Manager.GetBoolean("boson") == true)
 		    {
-			if (Manager.GetBoolean("no-translation") == true)
-			  Space = new BosonOnLatticeRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
-			else
-			  Space = new BosonOnLatticeRealSpaceAnd2DTranslation(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
-									      i, NbrSitesX, j, NbrSitesY);
+		      if (Manager.GetBoolean ("gutzwiller") == false)
+			{
+			  if (Manager.GetBoolean("no-translation") == true)
+			    Space = new BosonOnLatticeRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
+			  else
+			    Space = new BosonOnLatticeRealSpaceAnd2DTranslation(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
+										i, NbrSitesX, j, NbrSitesY);
+			}
+		      else
+			{
+			  if (Manager.GetBoolean("no-translation") == true)
+			    Space = new BosonOnLatticeGutzwillerProjectionRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
+			  else
+			    Space = new BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation(NbrParticles, 
+												    TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
+												    i, NbrSitesX, j, NbrSitesY);
+			}
 		    }
 		  else
 		    {

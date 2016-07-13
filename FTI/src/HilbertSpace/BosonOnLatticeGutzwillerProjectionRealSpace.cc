@@ -6,9 +6,9 @@
 //                    Copyright (C) 2001-2011 Nicolas Regnault                //
 //                                                                            //
 //                                                                            //
-//                    class of fermions on lattice in real space              //
+//                    class of hardcore boson on lattice in real space        //
 //                                                                            //
-//                        last modification : 09/09/2014                      //
+//                        last modification : 10/09/2014                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -498,59 +498,6 @@ ComplexMatrix BosonOnLatticeGutzwillerProjectionRealSpace::EvaluatePartialEntang
      }    
 }
   
-// core part of the evaluation orbital cut entanglement matrix calculation
-// 
-// minIndex = first index to consider in source Hilbert space
-// nbrIndex = number of indices to consider in source Hilbert space
-// complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
-// destinationHilbertSpace = pointer to the destination Hilbert space  (i.e. part A)
-// groundState = reference on the total system ground state
-// densityMatrix = reference on the density matrix where result has to stored
-// return value = number of components that have been added to the density matrix
-
-long BosonOnLatticeGutzwillerProjectionRealSpace::EvaluatePartialEntanglementMatrixCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
-								       ComplexVector& groundState, ComplexMatrix* entanglementMatrix)
-{
-  BosonOnLatticeGutzwillerProjectionRealSpace* TmpHilbertSpace = (BosonOnLatticeGutzwillerProjectionRealSpace*) complementaryHilbertSpace;
-  BosonOnLatticeGutzwillerProjectionRealSpace* TmpDestinationHilbertSpace = (BosonOnLatticeGutzwillerProjectionRealSpace*) destinationHilbertSpace;
-  long TmpNbrNonZeroElements = 0;
-  int* TraceOutOrbitals = new int [this->LzMax - TmpDestinationHilbertSpace->LzMax];
-  int MaxIndex = minIndex + nbrIndex;
-  int TmpIndex = 0;
-  for (int i = 0; i < this->LzMax; ++i)
-    {
-      if (SearchInArray<int>(i, this->KeptOrbitals, TmpDestinationHilbertSpace->LzMax) < 0)
-	TraceOutOrbitals[TmpIndex++] = i;
-    }
-  for (; minIndex < MaxIndex; ++minIndex)    
-    {
-      int Pos = 0;
-      unsigned long TmpStateCompact = TmpHilbertSpace->StateDescription[minIndex];
-      unsigned long TmpState = 0x0ul;
-      for (int i = 0 ; i < TmpHilbertSpace->LzMax; ++i)
-	TmpState |= (TmpStateCompact >> i) << TraceOutOrbitals[i];
-      for (int j = 0; j < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++j)
-	{
-	  unsigned long TmpStateCompact2 = TmpDestinationHilbertSpace->StateDescription[j];
-	  unsigned long TmpState2 = 0x0ul;
-	  for (int i = 0 ; i < TmpDestinationHilbertSpace->LzMax; ++i)
-	    TmpState2 |= ((TmpStateCompact2 >> i) & 0x1ul) << this->KeptOrbitals[i];
-	  unsigned long TmpState3 = TmpState | TmpState2;
-	  int TmpLzMax = (this->LzMax << 1) + 1; 
-	  while ((TmpState3 >> TmpLzMax) == 0x0ul)
-	    --TmpLzMax;
-	  int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
-	  if (TmpPos != this->HilbertSpaceDimension)
-	    {
-	      entanglementMatrix->AddToMatrixElement(j, minIndex,groundState[TmpPos]);
-	      ++TmpNbrNonZeroElements;
-	    }
-	}
-    }
-  delete[] TraceOutOrbitals;
-  return TmpNbrNonZeroElements;
-}
-
 
 
 // print a given State
@@ -670,3 +617,75 @@ int BosonOnLatticeGutzwillerProjectionRealSpace::AdAd (int m1, int m2, double& c
   TmpState |= (0x1ul << m1);
   return this->FindStateIndex(TmpState, NewLzMax);
 }
+
+// core part of the evaluation density matrix particle partition calculation
+// 
+// minIndex = first index to consider in complementary Hilbert space
+// nbrIndex = number of indices to consider in complementary Hilbert space
+// complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e part B)
+// destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+// groundState = reference on the total system ground state
+// densityMatrix = reference on the density matrix where result has to stored
+// return value = number of components that have been added to the density matrix
+
+long BosonOnLatticeGutzwillerProjectionRealSpace::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  
+												     ParticleOnSphere* destinationHilbertSpace,
+												     ComplexVector& groundState,  HermitianMatrix* densityMatrix)
+{
+  BosonOnLatticeGutzwillerProjectionRealSpace* TmpHilbertSpace =  (BosonOnLatticeGutzwillerProjectionRealSpace*) complementaryHilbertSpace;
+  BosonOnLatticeGutzwillerProjectionRealSpace* TmpDestinationHilbertSpace =  (BosonOnLatticeGutzwillerProjectionRealSpace*) destinationHilbertSpace;
+  int* TmpStatePosition = new int [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+  int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+  Complex* TmpStateCoefficient = new Complex [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+  int MaxIndex = minIndex + nbrIndex;
+  long TmpNbrNonZeroElements = 0l;
+  BinomialCoefficients TmpBinomial (this->NbrBosons);
+  double TmpInvBinomial = 1.0 / sqrt(TmpBinomial(this->NbrBosons, TmpDestinationHilbertSpace->NbrBosons));
+  
+  for (; minIndex < MaxIndex; ++minIndex)    
+    {
+      int Pos = 0;
+      unsigned long TmpState = TmpHilbertSpace->StateDescription[minIndex];
+      for (int j = 0; j < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpState2 = TmpDestinationHilbertSpace->StateDescription[j];
+	  if ((TmpState & TmpState2) == 0x0ul)
+	    {
+ 	      int TmpLzMax = this->LzMax;
+	      unsigned long TmpState3 = TmpState | TmpState2;
+	      while ((TmpState3 >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
+	      if (TmpPos != this->HilbertSpaceDimension)
+		{
+		  double Coefficient = TmpInvBinomial;
+		  unsigned long Sign = 0x0ul;
+		  int Pos2 = TmpDestinationHilbertSpace->LzMax;
+		  TmpStatePosition[Pos] = TmpPos;
+		  TmpStatePosition2[Pos] = j;
+		  TmpStateCoefficient[Pos] = Coefficient;
+		  ++Pos;
+		}
+	    }
+	}
+      if (Pos != 0)
+	{
+	  ++TmpNbrNonZeroElements;
+	  for (int j = 0; j < Pos; ++j)
+	    {
+	      int Pos2 = TmpStatePosition2[j];
+	      Complex TmpValue = Conj(groundState[TmpStatePosition[j]]) * TmpStateCoefficient[j];
+	      for (int k = 0; k < Pos; ++k)
+		if (TmpStatePosition2[k] >= Pos2)
+		  {
+		    densityMatrix->AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[k]);
+		  }
+	    }
+	}
+    }
+  delete[] TmpStatePosition;
+  delete[] TmpStatePosition2;
+  delete[] TmpStateCoefficient;
+  return TmpNbrNonZeroElements;
+}
+

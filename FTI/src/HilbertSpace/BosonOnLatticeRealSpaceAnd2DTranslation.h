@@ -96,7 +96,7 @@ class BosonOnLatticeRealSpaceAnd2DTranslation : public BosonOnTorusWithMagneticT
   // maxYMomentum = maximum momentum in the y direction 
   // memory = amount of memory granted for precalculations
   BosonOnLatticeRealSpaceAnd2DTranslation (int nbrBosons, int nbrSite, int xMomentum, int maxXMomentum,
-						 int yMomentum, int maxYMomentum, unsigned long memory = 10000000);
+					   int yMomentum, int maxYMomentum, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -339,7 +339,7 @@ inline unsigned long BosonOnLatticeRealSpaceAnd2DTranslation::FindCanonicalFormA
       int ProdATmpMomentumMax =  this->NbrMomentum - 1;
       while (this->ProdATemporaryState[ProdATmpMomentumMax] == 0x0ul)
 	--ProdATmpMomentumMax;
-      stateDescription = this->BosonToFermion( this->ProdATemporaryState,ProdATmpMomentumMax);
+      stateDescription = this->BosonToFermion(this->ProdATemporaryState,ProdATmpMomentumMax);
     }
   return CanonicalState;  
 }
@@ -393,8 +393,6 @@ inline bool BosonOnLatticeRealSpaceAnd2DTranslation::TestMomentumConstraint(unsi
       while (this->ProdATemporaryState[ProdATmpMomentumMax] == 0x0ul)
 	--ProdATmpMomentumMax;
       TmpStateDescription2 = this->BosonToFermion( this->ProdATemporaryState,ProdATmpMomentumMax);
-      
-      //      cout << hex << stateDescription << " " << TmpStateDescription2 << " " << dec <<endl;
       TmpStateDescription = TmpStateDescription2;
       for(int i = 0 ; i < this->NbrMomentum ; i++)
 	{
@@ -420,8 +418,6 @@ inline bool BosonOnLatticeRealSpaceAnd2DTranslation::TestMomentumConstraint(unsi
 	  TmpXSize = 0;
 	}
     } 
-  
-  //  cout << "YSize=" << YSize << " TmpXSize=" << TmpXSize << endl;
   if ((((this->KyMomentum * YSize * this->MaxXMomentum)
 	+ (this->KxMomentum * TmpXSize * this->MaxYMomentum)) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)
     return false;
@@ -550,7 +546,6 @@ inline int BosonOnLatticeRealSpaceAnd2DTranslation::FindOrbitSize(unsigned long 
 
 inline unsigned long BosonOnLatticeRealSpaceAnd2DTranslation::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)
 {
-//  cout << "checking state " << hex << stateDescription << dec << endl;
   unsigned long CanonicalState = stateDescription;
   unsigned long stateDescriptionReference = stateDescription;  
   this->FermionToBoson(stateDescription, this->FermionicMaxMomentum, this->TemporaryState, this->TemporaryStateKyMax);
@@ -582,7 +577,6 @@ inline unsigned long BosonOnLatticeRealSpaceAnd2DTranslation::FindCanonicalForm(
 	    --TmpMomentumMax;
           TmpStateDescription = this->BosonToFermion( this->TemporaryState, TmpMomentumMax);
 	  
-//	  cout << "m=" << 0 << " n=" << n << " " << hex << TmpStateDescription << " " << stateDescription << " " << stateDescriptionReference << dec << endl;
 	  if (TmpStateDescription < CanonicalState)
 	    {
 	      CanonicalState = TmpStateDescription;
@@ -614,7 +608,6 @@ inline unsigned long BosonOnLatticeRealSpaceAnd2DTranslation::FindCanonicalForm(
 	    --TmpMomentumMax;
           TmpStateDescription = this->BosonToFermion( this->TemporaryState, TmpMomentumMax);
 	  
-//	  cout << "m=" << m << " n=" << n << " " << hex << TmpStateDescription << " " << stateDescription << " " << stateDescriptionReference << dec << endl;
 	  if (TmpStateDescription < CanonicalState)
 	    {
 	      CanonicalState = TmpStateDescription;

@@ -3281,16 +3281,16 @@ long FermionOnSphere::EvaluatePartialDensityMatrixParticlePartitionCore (int min
 }
 
 
-// // // // // core part of the evaluation density matrix particle partition calculation
-// // // // // 
-// // // // // minIndex = first index to consider in complementary Hilbert space
-// // // // // nbrIndex = number of indices to consider in complementary Hilbert space
-// // // // // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e part B)
-// // // // // destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
-// // // // // groundState = reference on the total system ground state
-// // // // // densityMatrix = reference on the density matrix where result has to stored
-// // // // // return value = number of components that have been added to the density matrix
-// // // // 
+// core part of the evaluation density matrix particle partition calculation
+// 
+// minIndex = first index to consider in complementary Hilbert space
+// nbrIndex = number of indices to consider in complementary Hilbert space
+// complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e part B)
+// destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+// groundState = reference on the total system ground state
+// densityMatrix = reference on the density matrix where result has to stored
+// return value = number of components that have been added to the density matrix
+
 long FermionOnSphere::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  
 									 ParticleOnSphere* destinationHilbertSpace,
 									 ComplexVector& groundState,  HermitianMatrix* densityMatrix)
@@ -3348,15 +3348,6 @@ long FermionOnSphere::EvaluatePartialDensityMatrixParticlePartitionCore (int min
 		  TmpStatePosition[Pos] = TmpPos;
 		  TmpStatePosition2[Pos] = j;
 		  TmpStateCoefficient[Pos] = Coefficient;
-		  //////////////
-		  cout << minIndex << "  " << j << " : " <<  Pos << " ::: " ;
-		  TmpHilbertSpace->PrintState (cout, minIndex);
-		  cout << " |  " ;
-		  TmpDestinationHilbertSpace->PrintState (cout, j);
-		  cout << " : " ;
-		  this->PrintState (cout, TmpPos);
-		  cout << " = " << Coefficient * groundState [TmpPos] << endl;
-		  /////////////
 		  ++Pos;
 		}
 	    }

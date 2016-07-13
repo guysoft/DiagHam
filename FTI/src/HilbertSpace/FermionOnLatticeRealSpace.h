@@ -43,6 +43,7 @@ class FermionOnLatticeRealSpace : public FermionOnSphere
 
  friend class FermionOnLatticeRealSpaceAnd2DTranslation;
  friend class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation;
+ friend class BosonOnLatticeRealSpaceAnd2DTranslation;
 
  protected:
 
