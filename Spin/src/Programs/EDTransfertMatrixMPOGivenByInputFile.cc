@@ -148,7 +148,7 @@ int main(int argc, char** argv)
       	}
     }
   
-  cout << BoundaryConditions<<endl;
+
   AbstractTransfertMatrixPBC *  TransferMatrix =0;
   if(TranslationFlag == true)
     {
@@ -156,7 +156,7 @@ int main(int argc, char** argv)
 	{
 	  if (DoubledFlag)
 	    {
-	      cout << "  	      TransferMatrix = new  ComplexPEPSTransfertMatrixPBCWithTranslations(TensorsElementsDefinition,Architecture.GetArchitecture());"<<endl;
+
 	      TransferMatrix = new  ComplexPEPSTransfertMatrixPBCWithTranslations(TensorsElementsDefinition,Architecture.GetArchitecture());
 	    }
 	  else
@@ -174,7 +174,7 @@ int main(int argc, char** argv)
 	{
 	  if (DoubledFlag)
 	    {
-	      cout <<"  TransferMatrix = new ComplexPEPSTransfertMatrixPBC(TensorsElementsDefinition,&BoundaryConditions,Architecture.GetArchitecture()); "<<endl;
+
 	      TransferMatrix = new ComplexPEPSTransfertMatrixPBC(TensorsElementsDefinition,&BoundaryConditions,Architecture.GetArchitecture()); 
 	    }
 	  else
