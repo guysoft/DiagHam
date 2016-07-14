@@ -7,7 +7,8 @@
 //                                                                            //
 //                                                                            //
 //                   class of fermions on lattice with spin                   //
-//       in real space with translation invariance in two directions          //
+//       in real space with translation invariance in two directions and      //
+//                               Sz<->-Sz symmetry                            //
 //        with a constraint on the mininum number of on-site singlet          //
 //                                                                            //
 //                        class author: Nicolas Regnault                      //
@@ -33,9 +34,8 @@
 
 
 #include "config.h"
-#include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpace.h"
-#include "HilbertSpace/FermionOnLatticeRealSpace.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
@@ -48,6 +48,7 @@
 #include "GeneralTools/Endian.h"
 #include "GeneralTools/ArrayTools.h"
 #include "Architecture/ArchitectureOperation/FQHETorusParticleEntanglementSpectrumOperation.h"
+#include "Architecture/ArchitectureOperation/FQHESphereParticleEntanglementSpectrumOperation.h"
 #include "GeneralTools/StringTools.h"
 
 #include <math.h>
@@ -66,52 +67,37 @@ using std::ios;
 // default constructor
 // 
 
-FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets ()
+FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets::FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets ()
 {
-  this->NbrFermions = 0;
-  this->IncNbrFermions = this->NbrFermions + 1;
-  this->SzFlag = false;
-  this->TotalSpin = 0;
-  this->MaxMomentum = 0;
-  this->NbrFermionsUp = 0;
-  this->NbrFermionsDown = 0;
-  this->NbrSite = 0;
-  this->NbrFermionStates = 2 * this->NbrMomentum;
-  this->MomentumModulo = 1;
-  this->XMomentum = 0; 
-  this->YMomentum = 0;
-  this->NbrSitePerUnitCell = 0;
-  this->StateShift = 2 * (this->MaxMomentum / this->MomentumModulo);
-  this->MomentumIncrement = (this->NbrFermions * this->StateShift/2) % this->MomentumModulo;
-  this->ComplementaryStateShift = 2 * this->MaxMomentum - this->StateShift;
-  this->MomentumMask = ((unsigned long) 1);
-  this->MaximumSignLookUp = 0;
-  this->LargeHilbertSpaceDimension = 0l;
-  this->HilbertSpaceDimension = 0;
-  this->StateDescription = 0;
-  this->StateHighestBit = 0;  
-  this->LargeHilbertSpaceDimension = 0;
-  this->RescalingFactors = 0;
-  this->TargetSpace = this;
+  this->MinNbrSinglets = 0; 
 }
 
 // basic constructor
 // 
 // nbrFermions = number of fermions
 // nbrSite = total number of sites 
+// minusSzParity = select the  Sz <-> -Sz symmetric sector with negative parity
 // xMomentum = momentum sector in the x direction
 // maxXMomentum = maximum momentum in the x direction
 // yMomentum = momentum sector in the y direction
 // maxYMomentum = maximum momentum in the y direction
 // memory = amount of memory granted for precalculations
 
-FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets (int nbrFermions, int minNbrSinglets, 
-																  int nbrSite, int xMomentum, int maxXMomentum,
-																  int yMomentum, int  maxYMomentum, unsigned long memory)
+FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets::FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets (int nbrFermions, int minNbrSinglets,
+																		      int nbrSite, bool minusSzParity, 
+																		      int xMomentum, int maxXMomentum,
+																		      int yMomentum, int  maxYMomentum, unsigned long memory)
 {  
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->SzFlag = false;
+  this->SzParitySign = 1.0;
+  this->SzParity = 0x0ul;
+  if (minusSzParity == true)
+    {
+      this->SzParitySign = -1.0;
+      this->SzParity = 0x1ul;
+    }
   this->TotalSpin = 0;
   this->MinNbrSinglets = minNbrSinglets; 
   this->NbrFermionsUp = 0;
@@ -121,7 +107,6 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::FermionOnLattic
   this->NbrMomentum = this->MaxMomentum + 1;
   this->MaxXMomentum = maxXMomentum;
   this->MaxYMomentum = maxYMomentum;
-  this->NbrSitePerUnitCell = this->NbrSite /  (this->MaxYMomentum * this->MaxXMomentum);
   this->NbrFermionStates = 2 * this->NbrMomentum;
   this->MomentumModulo = this->MaxXMomentum;
 
@@ -133,7 +118,6 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::FermionOnLattic
   this->StateXShift = 2 * (this->NbrSite / this->MaxXMomentum);
   this->ComplementaryStateXShift = (2 * this->MaxMomentum) - this->StateXShift;
   this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
-  this->TargetSpace = this;
 
   this->MaxYMomentum =  maxYMomentum;
   this->YMomentum = yMomentum % this->MaxYMomentum;
@@ -203,21 +187,30 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::FermionOnLattic
 // nbrFermions = number of fermions
 // nbrSite = total number of sites 
 // totalSpin = twice the total spin value
+// minusSzParity = select the  Sz <-> -Sz symmetric sector with negative parity
 // xMomentum = momentum sector in the x direction
 // maxXMomentum = maximum momentum in the x direction
 // yMomentum = momentum sector in the y direction
 // maxYMomentum = maximum momentum in the y direction
 // memory = amount of memory granted for precalculations
 
-FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets (int nbrFermions, int minNbrSinglets, int totalSpin, 
-																  int nbrSite, int xMomentum, int maxXMomentum,
-																  int yMomentum, int  maxYMomentum, unsigned long memory)
+FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets::FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets (int nbrFermions, int minNbrSinglets,
+																		      int totalSpin, int nbrSite, bool minusSzParity, 
+																		      int xMomentum, int maxXMomentum,
+																		      int yMomentum, int  maxYMomentum, unsigned long memory)
 {  
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->SzFlag = true;
   this->TotalSpin = totalSpin;
   this->MinNbrSinglets = minNbrSinglets; 
+  this->SzParitySign = 1.0;
+  this->SzParity = 0x0ul;
+  if (minusSzParity == true)
+    {
+      this->SzParitySign = -1.0;
+      this->SzParity = 0x1ul;
+    }
   this->NbrFermionsUp = (totalSpin + this->NbrFermions) >> 1;
   this->NbrFermionsDown = this->NbrFermions - this->NbrFermionsUp;
   this->NbrSite = nbrSite;
@@ -225,7 +218,6 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::FermionOnLattic
   this->NbrMomentum = this->MaxMomentum + 1;
   this->MaxXMomentum = maxXMomentum;
   this->MaxYMomentum = maxYMomentum;
-  this->NbrSitePerUnitCell = this->NbrSite /  (this->MaxYMomentum * this->MaxXMomentum);
   this->NbrFermionStates = 2 * this->NbrMomentum;
   this->MomentumModulo = this->MaxXMomentum;
 
@@ -254,7 +246,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::FermionOnLattic
   this->ComplementaryYMomentumFullMask = ~this->YMomentumFullMask; 
 
   this->NbrFermionsParity = (~((unsigned long) this->NbrFermions)) & 0x1ul;
-  this->TargetSpace = this;
+
 
   this->MaximumSignLookUp = 16;
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrSite - 1, this->NbrFermionsUp, 0);
@@ -305,7 +297,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::FermionOnLattic
 //
 // fermions = reference on the hilbert space to copy to copy
 
-FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets(const FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets& fermions)
+FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets::FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets(const FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets& fermions)
 {
   this->NbrFermionsUp = fermions.NbrFermionsUp;
   this->NbrFermionsDown = fermions.NbrFermionsDown;
@@ -313,11 +305,11 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::FermionOnLattic
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalSpin = fermions.TotalSpin;
   this->SzFlag = fermions.SzFlag;
+  this->SzParitySign = fermions.SzParitySign;
+  this->SzParity = fermions.SzParity;
   this->NbrSite = fermions.NbrSite;
-  this->NbrFermionsParity = fermions.NbrFermionsParity;
   this->MinNbrSinglets = fermions.MinNbrSinglets; 
 
-  this->NbrSitePerUnitCell = fermions.NbrSitePerUnitCell;
   this->MaxXMomentum = fermions.MaxXMomentum;
   this->XMomentum = fermions.XMomentum;
   this->StateXShift = fermions.StateXShift;
@@ -333,14 +325,8 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::FermionOnLattic
   this->YMomentumBlockMask = fermions.YMomentumBlockMask;  
   this->YMomentumFullMask = fermions.YMomentumFullMask;
   this->ComplementaryYMomentumFullMask = fermions.ComplementaryYMomentumFullMask; 
-  if (fermions.TargetSpace != &fermions)
-    {
-      this->TargetSpace = fermions.TargetSpace;
-    }
-  else
-    {
-      this->TargetSpace = this;
-    }
+  this->NbrFermionsParity = fermions.NbrFermionsParity;
+
   this->NbrFermionStates = fermions.NbrFermionStates;
   this->MaxMomentum = fermions.MaxMomentum;
   this->NbrMomentum = fermions.NbrMomentum;
@@ -377,7 +363,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::FermionOnLattic
 // destructor
 //
 
-FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::~FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets ()
+FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets::~FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets ()
 {
 }
 
@@ -386,7 +372,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::~FermionOnLatti
 // fermions = reference on the hilbert space to copy to copy
 // return value = reference on current hilbert space
 
-FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets& FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::operator = (const FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets& fermions)
+FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets& FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets::operator = (const FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets& fermions)
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -412,11 +398,11 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets& FermionOnLattic
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalSpin = fermions.TotalSpin;
   this->SzFlag = fermions.SzFlag;
+  this->SzParitySign = fermions.SzParitySign;
+  this->SzParity = fermions.SzParity;
   this->NbrSite = fermions.NbrSite;
-  this->NbrFermionsParity = fermions.NbrFermionsParity;
   this->MinNbrSinglets = fermions.MinNbrSinglets; 
 
-  this->NbrSitePerUnitCell = fermions.NbrSitePerUnitCell;
   this->MaxXMomentum = fermions.MaxXMomentum;
   this->XMomentum = fermions.XMomentum;
   this->StateXShift = fermions.StateXShift;
@@ -432,10 +418,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets& FermionOnLattic
   this->YMomentumBlockMask = fermions.YMomentumBlockMask;  
   this->YMomentumFullMask = fermions.YMomentumFullMask;
   this->ComplementaryYMomentumFullMask = fermions.ComplementaryYMomentumFullMask; 
-  if (fermions.TargetSpace != &fermions)
-    this->TargetSpace = fermions.TargetSpace;
-  else
-    this->TargetSpace = this;
+  this->NbrFermionsParity = fermions.NbrFermionsParity;
 
   this->NbrFermionStates = fermions.NbrFermionStates;
   this->MaxMomentum = fermions.MaxMomentum;
@@ -475,16 +458,16 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets& FermionOnLattic
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::Clone()
+AbstractHilbertSpace* FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets::Clone()
 {
-  return new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets(*this);
+  return new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets(*this);
 }
 
 // generate all states corresponding to the constraints
 //
 // return value = Hilbert space dimension
 
-long FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::GenerateStates()
+long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets::GenerateStates()
 {
   this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
   if (this->SzFlag == false)
@@ -494,9 +477,11 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::GenerateSt
   long TmpLargeHilbertSpaceDimension = 0l;
   int NbrTranslationX;
   int NbrTranslationY;
+  int NbrSzSymmetry;
+  double AdditionalSign;
   for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
     {
-      if ((this->FindCanonicalForm(this->StateDescription[i], NbrTranslationX, NbrTranslationY) == this->StateDescription[i]))
+      if ((this->FindCanonicalForm(this->StateDescription[i], NbrTranslationX, NbrTranslationY, NbrSzSymmetry) == this->StateDescription[i]))
 	{
 	  if (this->TestMomentumConstraint(this->StateDescription[i]) == true)
 	    {
@@ -525,20 +510,29 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::GenerateSt
 	  TmpStateDescription[TmpLargeHilbertSpaceDimension] = this->StateDescription[i];
 	  this->NbrStateInOrbit[TmpLargeHilbertSpaceDimension] = this->FindOrbitSize(this->StateDescription[i]);
 	  unsigned long& TmpSign = this->ReorderingSign[TmpLargeHilbertSpaceDimension];
-	  TmpSign = 0x0ul;	  
-	  int Index = 1;
-	  unsigned long TmpState =  this->StateDescription[i];
+	  TmpSign = 0x0ul;
+	  int Index = 0;
 	  for (int m = 0; m < this->MaxYMomentum; ++m)
 	    {
-	      unsigned long TmpState2 = TmpState;
-	      for (int n = 1; n < this->MaxXMomentum; ++n)
+	      int TmpNbrTranslationY = (this->MaxYMomentum - m) % this->MaxYMomentum;
+	      for (int n = 0; n < this->MaxXMomentum; ++n)
 		{
-		  TmpSign |= (this->GetSignAndApplySingleXTranslation(TmpState2) << Index) ^ ((TmpSign & (0x1ul << (Index - 1))) << 1);
+		  unsigned long TmpState =  this->StateDescription[i];
+		  int TmpNbrTranslationX = (this->MaxXMomentum - n) % this->MaxXMomentum;
+		  for (int n2 = 0; n2 < TmpNbrTranslationX; ++n2)
+		    {
+		      this->ApplySingleXTranslation(TmpState); 
+		    }
+		  for (int m2 = 0; m2 < TmpNbrTranslationY; ++m2)
+		    {
+		      this->ApplySingleYTranslation(TmpState); 
+		    }		  
+		  TmpSign |=  this->FindReorderingSign(TmpState, n, m, 0) << Index;
 		  ++Index;
+		  this->ApplySzSymmetry(TmpState);
+		  TmpSign |=  this->FindReorderingSign(TmpState, n, m, 1) << Index;
+		  ++Index;		  
 		}
-	      TmpSign |= ((this->GetSignAndApplySingleYTranslation(TmpState) << Index) 
-			  ^ ((TmpSign & (0x1ul << (Index - this->MaxXMomentum))) << this->MaxXMomentum));
-	      ++Index;
 	    }
 	  ++TmpLargeHilbertSpaceDimension;
 	}
@@ -560,6 +554,7 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::GenerateSt
   return TmpLargeHilbertSpaceDimension;
 }
 
+
 // generate all states corresponding to the constraints
 // 
 // nbrFermions = number of fermions
@@ -568,7 +563,7 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::GenerateSt
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-long FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::RawGenerateStates(int nbrFermions, int currentSite, int nbrSinglets, long pos)
+long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets::RawGenerateStates(int nbrFermions, int currentSite, int nbrSinglets, long pos)
 {
   if (nbrFermions == 0)
     {
@@ -622,7 +617,7 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::RawGenerat
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-long FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::RawGenerateStates(int nbrFermions, int currentSite, int nbrSpinUp, int nbrSinglets, long pos)
+long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets::RawGenerateStates(int nbrFermions, int currentSite, int nbrSpinUp, int nbrSinglets, long pos)
 {
   if ((nbrFermions == 0) && (nbrSpinUp == 0))
     {
@@ -684,7 +679,7 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::RawGenerat
 // nbrSinglets = number of on-site singlets
 // return value = Hilbert space dimension
 
-long FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::EvaluateHilbertSpaceDimension(int nbrFermions, int currentSite, int nbrSinglets)
+long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets::EvaluateHilbertSpaceDimension(int nbrFermions, int currentSite, int nbrSinglets)
 {
   if (nbrFermions == 0)
     {
@@ -722,7 +717,7 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::EvaluateHi
 // nbrSinglets = number of on-site singlets
 // return value = Hilbert space dimension
 
-long FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::EvaluateHilbertSpaceDimension(int nbrFermions, int currentSite, int nbrSpinUp, int nbrSinglets)
+long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets::EvaluateHilbertSpaceDimension(int nbrFermions, int currentSite, int nbrSpinUp, int nbrSinglets)
 {
   if ((nbrFermions == 0) && (nbrSpinUp == 0))
     {

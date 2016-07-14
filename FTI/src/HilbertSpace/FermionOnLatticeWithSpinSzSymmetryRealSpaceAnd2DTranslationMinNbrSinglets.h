@@ -7,7 +7,8 @@
 //                                                                            //
 //                                                                            //
 //                   class of fermions on lattice with spin                   //
-//       in real space with translation invariance in two directions          //
+//       in real space with translation invariance in two directions and      //
+//                               Sz<->-Sz symmetry                            //
 //        with a constraint on the mininum number of on-site singlet          //
 //                                                                            //
 //                        class author: Nicolas Regnault                      //
@@ -32,19 +33,18 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef FERMIONONLATTICEWITHSPINREALSPACEAND2DTRANSLATIONMNINNBRSINGLETS_H
-#define FERMIONONLATTICEWITHSPINREALSPACEAND2DTRANSLATIONMNINNBRSINGLETS_H
+#ifndef FERMIONONLATTICEWITHSPINSZSYMMETRYREALSPACEAND2DTRANSLATIONMINNBRSINGLETS_H
+#define FERMIONONLATTICEWITHSPINSZSYMMETRYREALSPACEAND2DTRANSLATIONMINNBRSINGLETS_H
 
 #include "config.h"
-#include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation.h"
 
 #include <iostream>
 
 
 
-class FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets : public FermionOnLatticeWithSpinRealSpaceAnd2DTranslation
+class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets : public FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation
 {
-
 
  protected:
 
@@ -55,20 +55,21 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets : public F
 
   // default constructor
   // 
-  FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets ();
+  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets ();
 
   // basic constructor
   // 
   // nbrFermions = number of fermions
   // minNbrSinglets = minimum number of on-site singlets
   // nbrSite = number of sites
+  // minusSzParity = select the  Sz <-> -Sz symmetric sector with negative parity
   // xMomentum = momentum sector in the x direction
   // maxXMomentum = maximum momentum in the x direction
   // yMomentum = momentum sector in the y direction
   // maxYMomentum = maximum momentum in the y direction 
   // memory = amount of memory granted for precalculations
-  FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets (int nbrFermions, int minNbrSinglets, int nbrSite, int xMomentum, int maxXMomentum,
-								   int yMomentum, int maxYMomentum, unsigned long memory = 10000000);
+  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets (int nbrFermions, int minNbrSinglets, int nbrSite, bool minusSzParity, int xMomentum, int maxXMomentum,
+									     int yMomentum, int maxYMomentum, unsigned long memory = 10000000);
   
   // basic constructor when Sz is preserved
   // 
@@ -76,34 +77,36 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets : public F
   // minNbrSinglets = minimum number of on-site singlets
   // totalSpin = twice the value of Sz
   // nbrSite = number of sites
+  // minusSzParity = select the  Sz <-> -Sz symmetric sector with negative parity
   // xMomentum = momentum sector in the x direction
   // maxXMomentum = maximum momentum in the x direction
   // yMomentum = momentum sector in the y direction
   // maxYMomentum = maximum momentum in the y direction 
   // memory = amount of memory granted for precalculations
-  FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets (int nbrFermions, int minNbrSinglets, int totalSpin, int nbrSite, int xMomentum, int maxXMomentum,
-								   int yMomentum, int maxYMomentum, unsigned long memory = 10000000);
+  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets (int nbrFermions, int minNbrSinglets, int totalSpin, int nbrSite, 
+									     bool minusSzParity, int xMomentum, int maxXMomentum,
+									     int yMomentum, int maxYMomentum, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
-  FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets(const FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets& fermions);
+  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets(const FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets& fermions);
 
   // destructor
   //
-  ~FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets ();
+  ~FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets ();
 
   // assignement (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets& operator = (const FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets& fermions);
+  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets& operator = (const FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets& fermions);
 
   // clone Hilbert space (without duplicating datas)
   //
   // return value = pointer to cloned Hilbert space
-  virtual AbstractHilbertSpace* Clone();
-
+  AbstractHilbertSpace* Clone();
+    
  protected:
 
   // evaluate Hilbert space dimension
@@ -146,8 +149,9 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets : public F
   // return value = position from which new states have to be stored
   virtual long RawGenerateStates(int nbrFermions, int currentSite, int nbrSpinUp, int nbrSinglets, long pos);
 
-
 };
+
+
 
 #endif
 
