@@ -68,7 +68,8 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleStringOption('i', "input-state", "name of the file containing the state whose Kx momentum has to be computed");
   (*SystemGroup) += new SingleStringOption('\n', "degenerate-states", "name of the file containing a list of states (override input-state)");
-  (*SystemGroup) += new SingleIntegerOption ('\n', "min-nbrsinglets", "", 0);
+  (*SystemGroup) += new SingleIntegerOption ('\n', "min-nbrsinglets", "mininum number of on-site singlet that defines the projected space", 0);
+  (*SystemGroup) += new BooleanOption ('\n', "only-weights", "do not save the projected states, only compute their weights in the unprojected basis", 0);  
   (*MiscGroup) += new BooleanOption ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -197,7 +198,11 @@ int main(int argc, char** argv)
     }
 
 
- 
+  char* MinNbrSingletsString = new char[256];
+  char* NbrParticlesString = new char[256];
+  sprintf (MinNbrSingletsString, "_minnbrsinglet_%d_n_%d_", MinNbrSiglets, NbrParticles);
+  sprintf (NbrParticlesString, "_n_%d_", NbrParticles);
+
   //  ParticleOnSphereWithSpin* InputSpace = 0;
   //  FermionOnLatticeWithSpinRealSpace* InputSpace = 0;
   if (Statistics == true)
@@ -269,11 +274,21 @@ int main(int argc, char** argv)
 		       << ", should be " << InputSpace->GetHilbertSpaceDimension() << " )" << endl;
 		    return -1;
 		}
-	      ComplexVector TmpVector = OutputSpace->FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::ConvertToNbodyBasis(InputStates[i], InputSpace);	      
+	      ComplexVector TmpVector = OutputSpace->FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::ConvertToNbodyBasis(InputStates[i], InputSpace);
+	      double TmpSqrNorm = TmpVector.SqrNorm(); 
 	      cout << InputStateNames[i] << " : " << (TmpVector.SqrNorm()) << endl;
-	      if (TmpVector.SqrNorm() > 0.0)
+	      if (Manager.GetBoolean("only-weights") == false)
 		{
-		  TmpVector /= TmpVector.Norm();
+		  if (TmpSqrNorm != 0.0)
+		    {
+		      char* VectorOutputName = ReplaceString(InputStateNames[i], NbrParticlesString, MinNbrSingletsString);
+		      TmpVector /= sqrt(TmpSqrNorm);
+		      if (TmpVector.WriteVector(VectorOutputName) == false)
+			{
+			  cout << "error, can't write " << VectorOutputName << endl;
+			  return -1;
+			}
+		    }
 		}
 	    }
 	}
