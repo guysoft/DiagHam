@@ -98,6 +98,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::FermionOnLattic
 // basic constructor
 // 
 // nbrFermions = number of fermions
+// minNbrSinglets = minimum number of on-site singlets
 // nbrSite = total number of sites 
 // xMomentum = momentum sector in the x direction
 // maxXMomentum = maximum momentum in the x direction
@@ -201,6 +202,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::FermionOnLattic
 // basic constructor when Sz is preserved
 // 
 // nbrFermions = number of fermions
+// minNbrSinglets = minimum number of on-site singlets
 // nbrSite = total number of sites 
 // totalSpin = twice the total spin value
 // xMomentum = momentum sector in the x direction

@@ -602,6 +602,56 @@ bool FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(char* file
 //
 // filename = vector file name
 // nbrParticles = reference to the number of particles 
+// nbrSites = reference on the number sites
+// szValue = reference on the value of the total spin
+// szSymmetry =  reference on the Sz<->-Sz parity, will be non-zero only if the vector is encoded with the Sz<->-Sz symmetry
+// minNbrSinglets = minimum number of on-site singlets
+// xMomentum = reference on the momentum sector in the x direction
+// yMomentum = reference on the momentum sector in the y direction
+// xPeriodicity = reference on the periodicity in the x direction with respect to site numbering 
+// yPeriodicity = reference on the periodicity in the y direction with respect to site numbering
+// statistics = reference on flag for fermionic statistics (true for fermion, false for bosons)
+// gutzwiller = reference on flag  that indicated if the Gutzwiller projection was implemented within the Hilbert space
+// return value = true if no error occured
+bool FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrSites, int& szValue, int& szSymmetry, int& minNbrSinglets, 
+								      int& xMomentum, int& yMomentum, int& xPeriodicity, int& yPeriodicity, bool& statistics, bool& gutzwiller)
+{
+  if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(filename, nbrParticles, nbrSites, szValue, szSymmetry, xMomentum, yMomentum, 
+								       xPeriodicity, yPeriodicity, statistics, gutzwiller) == false)
+    {
+      return false;
+    }
+  char* StrNbrParticles;
+  minNbrSinglets = 0;
+  StrNbrParticles = strstr(filename, "_minnbrsinglet_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 15;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && 
+	     (((StrNbrParticles[SizeString] >= '0') && (StrNbrParticles[SizeString] <= '9')) || (StrNbrParticles[SizeString] == '-')))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  minNbrSinglets = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	{
+	  cout << "error while retrieving the minimum number of on-site singlet" << endl;
+	  return false;
+	}
+    }
+  return true;
+}
+
+// try to guess system information from file name
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles 
 // nbrUnitCellX = reference on the number of unit cell  in the x direction
 // nbrUnitCellY = reference on the number of unit cell  in the y direction
 // nbrSiteInUnitCellX  = reference on the number of site in each unit cell  in the x direction
@@ -855,8 +905,10 @@ bool FTIHofstadterdModelWith2DTranslationFindSystemInfoFromVectorFileName(char* 
 // filename = vector file name
 // szValue = reference on the value of the total spin
 // szSymmetry =  reference on the Sz<->-Sz parity, will be non-zero only if the vector is encoded with the Sz<->-Sz symmetry
+// minNbrSinglets = minimum number of on-site singlets
 // return value = true if no error occured
-bool FTIHofstadterModelWithSzFindSystemInfoFromVectorFileName(char* filename,int & szValue, int& szSymmetry)
+
+bool FTIHofstadterModelWithSzFindSystemInfoFromVectorFileName(char* filename,int & szValue, int& szSymmetry, int& minNbrSinglets)
 {    
   char* StrNbrParticles;
   int SizeString;
@@ -905,6 +957,29 @@ bool FTIHofstadterModelWithSzFindSystemInfoFromVectorFileName(char* filename,int
       else
 	{
 	  cout << "error while retrieving the Sz<->-Sz parity" << endl;
+	  return false;
+	}
+    }
+  minNbrSinglets = 0;
+  StrNbrParticles = strstr(filename, "_minnbrsinglet_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 15;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && 
+	     (((StrNbrParticles[SizeString] >= '0') && (StrNbrParticles[SizeString] <= '9')) || (StrNbrParticles[SizeString] == '-')))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  minNbrSinglets = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	{
+	  cout << "error while retrieving the minimum number of on-site singlet" << endl;
 	  return false;
 	}
     }

@@ -95,6 +95,7 @@ int main(int argc, char** argv)
   bool Statistics = true;
   bool GutzwillerFlag = false;
   int NbrInputStates = 0;
+  int InputMinNbrSinglets = 0;
 
   if ((Manager.GetString("input-state") == 0) && (Manager.GetString("degenerate-states") == 0))
     {
@@ -110,9 +111,11 @@ int main(int argc, char** argv)
 	  cout << "can't open file " << Manager.GetString("input-state") << endl;
 	  return -1;
 	}
-      if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, SzValue, SzSymmetrySector, XMomentum, YMomentum, NbrSiteX, NbrSiteY, Statistics, GutzwillerFlag) == false)
+      if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, SzValue, SzSymmetrySector, InputMinNbrSinglets,
+									   XMomentum, YMomentum, NbrSiteX, NbrSiteY, Statistics, GutzwillerFlag) == false)
 	{
-	  if (FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, SzValue, SzSymmetrySector, Statistics, GutzwillerFlag) == false)
+	  if (FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, SzValue, SzSymmetrySector,
+								    Statistics, GutzwillerFlag) == false)
 	    {
 	      cout << "error while retrieving system parameters from file name " << Manager.GetString("input-state") << endl;
 	      return -1;
@@ -132,9 +135,11 @@ int main(int argc, char** argv)
 	  return -1;
 	}
       NbrInputStates = DegenerateFile.GetNbrLines();
-      if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(DegenerateFile(0, 0), NbrParticles, NbrSites, SzValue, SzSymmetrySector, XMomentum, YMomentum, NbrSiteX, NbrSiteY, Statistics, GutzwillerFlag) == false)
+      if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(DegenerateFile(0, 0), NbrParticles, NbrSites, SzValue, SzSymmetrySector, InputMinNbrSinglets,
+									   XMomentum, YMomentum, NbrSiteX, NbrSiteY, Statistics, GutzwillerFlag) == false)
 	{
-	  if (FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(DegenerateFile(0, 0), NbrParticles, NbrSites, SzValue, SzSymmetrySector, Statistics, GutzwillerFlag) == false)
+	  if (FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(DegenerateFile(0, 0), NbrParticles, NbrSites, SzValue, SzSymmetrySector,
+								    Statistics, GutzwillerFlag) == false)
 	    {
 	      cout << "error while retrieving system parameters from file name " << DegenerateFile(0, 0) << endl;
 	      return -1;
@@ -147,8 +152,8 @@ int main(int argc, char** argv)
     }
 
 
-  int MinNbrSiglets = Manager.GetInteger("min-nbrsinglets");
-  if ((MinNbrSiglets * 2) > NbrParticles)
+  int OutputMinNbrSinglets = Manager.GetInteger("min-nbrsinglets");
+  if ((OutputMinNbrSinglets * 2) > NbrParticles)
     {
       cout << "error, the minimal number of on-site singlets cannot be higher than " << (NbrParticles / 2) << endl;
       return -1;
@@ -200,8 +205,15 @@ int main(int argc, char** argv)
 
   char* MinNbrSingletsString = new char[256];
   char* NbrParticlesString = new char[256];
-  sprintf (MinNbrSingletsString, "_minnbrsinglet_%d_n_%d_", MinNbrSiglets, NbrParticles);
-  sprintf (NbrParticlesString, "_n_%d_", NbrParticles);
+  sprintf (MinNbrSingletsString, "_minnbrsinglet_%d_n_%d_", OutputMinNbrSinglets, NbrParticles);
+  if (InputMinNbrSinglets != 0)
+    {
+      sprintf (NbrParticlesString, "_minnbrsinglet_%d_n_%d_", InputMinNbrSinglets, NbrParticles);
+    }
+  else
+    {
+      sprintf (NbrParticlesString, "_n_%d_", NbrParticles);
+    }
 
   //  ParticleOnSphereWithSpin* InputSpace = 0;
   //  FermionOnLatticeWithSpinRealSpace* InputSpace = 0;
@@ -240,17 +252,34 @@ int main(int argc, char** argv)
 	    {
 	      if (SzSymmetrySector == 0)
 		{
-		  InputSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, 
-										      XMomentum, NbrSiteX, YMomentum, NbrSiteY, 10000000);
-		  OutputSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, MinNbrSiglets,
+		  if (InputMinNbrSinglets == 0)
+		    {
+		      InputSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, 
+											  XMomentum, NbrSiteX, YMomentum, NbrSiteY);
+		    }
+		  else
+		    {
+		      InputSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, InputMinNbrSinglets, SzValue, NbrSites, 
+													XMomentum, NbrSiteX, YMomentum, NbrSiteY);
+		    }
+		  OutputSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, OutputMinNbrSinglets,
 												     SzValue, NbrSites, XMomentum, NbrSiteX, YMomentum, NbrSiteY);
 		}
 	      else
 		{
-		  InputSpace = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, (SzSymmetrySector == -1),
-												XMomentum, NbrSiteX, YMomentum, NbrSiteY, 10000000);
-		  OutputSpace = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, MinNbrSiglets, SzValue, NbrSites, (SzSymmetrySector == -1),
-													       XMomentum, NbrSiteX, YMomentum, NbrSiteY, 10000000);
+		  if (InputMinNbrSinglets == 0)
+		    {
+		      InputSpace = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, (SzSymmetrySector == -1),
+												    XMomentum, NbrSiteX, YMomentum, NbrSiteY);
+		    }
+		  else
+		    {
+		      InputSpace = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, InputMinNbrSinglets, SzValue, 
+														  NbrSites, (SzSymmetrySector == -1),
+														  XMomentum, NbrSiteX, YMomentum, NbrSiteY);
+		    }
+		  OutputSpace = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, OutputMinNbrSinglets, SzValue, NbrSites, (SzSymmetrySector == -1),
+													       XMomentum, NbrSiteX, YMomentum, NbrSiteY);
 		}
 	    }
 	  else
