@@ -17,6 +17,7 @@
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets.h"
 #include "HilbertSpace/BosonOnLatticeRealSpace.h"
 #include "HilbertSpace/BosonOnLatticeRealSpaceOneOrbitalPerSiteAnd2DTranslation.h"
 #include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpace.h"
@@ -129,6 +130,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "hardcore", "consider hardcore bosons (oly valid in real space mode)");
   
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
+  (*SystemGroup) += new SingleIntegerOption ('\n', "min-nbrsinglets", "mininum number of on-site singlet that defines the projected space", -1);  
+
+
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -159,6 +163,14 @@ int main(int argc, char** argv)
   int MinBand = Manager.GetInteger("band-min");
   int MaxBand = Manager.GetInteger("band-max");
   bool EmbeddingFlag = Manager.GetBoolean("embedding");
+  
+  int  MinNbrSinglets = Manager.GetInteger("min-nbrsinglets");
+
+  if ((MinNbrSinglets >= 0 )&&(Manager.GetBoolean("spin") == false) )
+    {
+      cout <<" One cannot constain the number of singlets if there is no spin boulet!"<<endl;
+      exit(1);
+    }
   
   char Axis ='y';
   
@@ -195,7 +207,7 @@ int main(int argc, char** argv)
 	}	
     }
 
-  char* StatisticPrefix = new char [16];
+  char* StatisticPrefix = new char [50];
   sprintf (StatisticPrefix, "fermions");
   
   if (Manager.GetBoolean("boson") == false)
@@ -206,7 +218,14 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  sprintf (StatisticPrefix, "fermions_su2");
+	  if (MinNbrSinglets <= 0 )
+	    {
+	      sprintf (StatisticPrefix, "fermions_su2"); 
+	    }
+	  else
+	    {
+	      sprintf (StatisticPrefix, "fermions_su2_minsinglets_%d",MinNbrSinglets); 
+	    }
 	}
     }
   else
@@ -612,11 +631,18 @@ int main(int argc, char** argv)
 				{
 				  if ((SzSymmetryFlag == true) && (Sz == 0))
 				    {
-				      Space = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles, Sz,
-													       ((int) TightBindingModel->GetNbrBands() 
-														* TightBindingModel->GetNbrStatePerBand()),
-													       (SzSymmetrySector == -1),
-													       i, NbrCellX, j,  NbrCellY);	  
+				      if (MinNbrSinglets <= 0 )
+					{
+					  Space = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles, Sz,
+														   ((int) TightBindingModel->GetNbrBands() 
+														    * TightBindingModel->GetNbrStatePerBand()),
+														   (SzSymmetrySector == -1),
+														   i, NbrCellX, j,  NbrCellY );	  
+					}
+				      else
+					{
+					  Space = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, MinNbrSinglets, Sz, 													   ((int) TightBindingModel->GetNbrBands()  * TightBindingModel->GetNbrStatePerBand()), (SzSymmetrySector == -1),   i, NbrCellX, j,  NbrCellY, 10000000);
+					}
 				    }
 				  else
 				    {
@@ -626,9 +652,16 @@ int main(int argc, char** argv)
 					if (((int) TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand()) < 15)
 #endif
 					  {
-					    Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, Sz, 
-													   ((int) TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand()),
-													   i, NbrCellX, j,  NbrCellY);	  
+					    if (MinNbrSinglets <= 0 )
+					      {
+						Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, Sz, 
+													       ((int) TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand()),
+													       i, NbrCellX, j,  NbrCellY);	  
+					      }
+					    else
+					      {
+						Space = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, MinNbrSinglets, Sz, 													   ((int) TightBindingModel->GetNbrBands()  * TightBindingModel->GetNbrStatePerBand()), i, NbrCellX, j,  NbrCellY, 10000000ul);
+					      }
 					  }
 					else
 					  {
