@@ -8,11 +8,11 @@
 //                                                                            //
 //                   class of fermions on lattice with spin                   //
 //       in real space with translation invariance in two directions and      //
-//                               Sz<->-Sz symmetry                            //
+//                  Sz<->-Sz symmetry supporting up to 64 sites               //
 //                                                                            //
 //                        class author: Nicolas Regnault                      //
 //                                                                            //
-//                        last modification : 03/11/2014                      //
+//                        last modification : 15/07/2016                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -32,20 +32,18 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef FERMIONONLATTICEWITHSPINSZSYMMETRYREALSPACEAND2DTRANSLATION_H
-#define FERMIONONLATTICEWITHSPINSZSYMMETRYREALSPACEAND2DTRANSLATION_H
+#ifndef FERMIONONLATTICEWITHSPINSZSYMMETRYREALSPACEAND2DTRANSLATIONLONG_H
+#define FERMIONONLATTICEWITHSPINSZSYMMETRYREALSPACEAND2DTRANSLATIONLONG_H
 
 #include "config.h"
-#include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong.h"
 
 #include <iostream>
 
 
 
-class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation : public FermionOnLatticeWithSpinRealSpaceAnd2DTranslation
+class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong : public FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong
 {
-
-  friend class FermionOnSquareLatticeWithSU4SpinMomentumSpace;
 
  protected:
 
@@ -53,13 +51,13 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation : public Fermi
   double SzParitySign;
 
   // sign of the parity sector for the Sz<->-Sz symmetry, 0 for 1, 1 for -1
-  unsigned long SzParity;
+  ULONGLONG SzParity;
 
  public:
 
   // default constructor
   // 
-  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation ();
+  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong ();
 
   // basic constructor
   // 
@@ -71,8 +69,8 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation : public Fermi
   // yMomentum = momentum sector in the y direction
   // maxYMomentum = maximum momentum in the y direction 
   // memory = amount of memory granted for precalculations
-  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (int nbrFermions, int nbrSite, bool minusSzParity, int xMomentum, int maxXMomentum,
-							       int yMomentum, int maxYMomentum, unsigned long memory = 10000000);
+  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong (int nbrFermions, int nbrSite, bool minusSzParity, int xMomentum, int maxXMomentum,
+								   int yMomentum, int maxYMomentum, unsigned long memory = 10000000);
   
   // basic constructor when Sz is preserved
   // 
@@ -85,23 +83,23 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation : public Fermi
   // yMomentum = momentum sector in the y direction
   // maxYMomentum = maximum momentum in the y direction 
   // memory = amount of memory granted for precalculations
-  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (int nbrFermions, int totalSpin, int nbrSite, bool minusSzParity, int xMomentum, int maxXMomentum,
-							       int yMomentum, int maxYMomentum, unsigned long memory = 10000000);
+  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong (int nbrFermions, int totalSpin, int nbrSite, bool minusSzParity, int xMomentum, int maxXMomentum,
+								   int yMomentum, int maxYMomentum, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
-  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation(const FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation& fermions);
+  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong(const FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong& fermions);
 
   // destructor
   //
-  ~FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation ();
+  ~FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong ();
 
   // assignement (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation& operator = (const FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation& fermions);
+  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong& operator = (const FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong& fermions);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -142,14 +140,14 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation : public Fermi
   // state = reference on the vector to convert
   // targetNbodyBasis = reference on the nbody-basis where the final state will be expressed
   // return value = converted vector
-  ComplexVector ConvertToNbodyBasis(ComplexVector& state, FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* targetNbodyBasis);
+  ComplexVector ConvertToNbodyBasis(ComplexVector& state, FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong* targetNbodyBasis);
   
   // convert a given state from the full n-body basis to the current n-body basis with a fized Sz parity 
   //
   // state = reference on the vector to convert
   // inputNbodyBasis = reference on the nbody-basis where the inital state is expressed
   // return value = converted vector
-  ComplexVector ConvertFromNbodyBasis(ComplexVector& state, FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* inputNbodyBasis);
+  ComplexVector ConvertFromNbodyBasis(ComplexVector& state, FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong* inputNbodyBasis);
   
  protected:
 
@@ -170,7 +168,7 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation : public Fermi
   // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
   // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
   // return value = index of the destination state  
-  virtual int SymmetrizeAdAdResult(unsigned long& state, double& coefficient, 
+  virtual int SymmetrizeAdAdResult(ULONGLONG& state, double& coefficient, 
 				   int& nbrTranslationX, int& nbrTranslationY);
 
   
@@ -181,18 +179,18 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation : public Fermi
   // nbrTranslationY = reference on the number of translations to apply in the y direction to the resulting state to obtain the return orbit describing state
   // additionalSign = reference on the additional sign coming from symmetries beyond translation
   // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
-  virtual unsigned long FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY, int& nbrSzSymmetry);//double& additionalSign);
+  virtual ULONGLONG FindCanonicalForm(ULONGLONG stateDescription, int& nbrTranslationX, int& nbrTranslationY, int& nbrSzSymmetry);//double& additionalSign);
 
   //  test if the state and its translated version can be used to create a state corresponding to the momentum constraint
   //
   // stateDescription = unsigned integer describing the state
   // return value = true if the state satisfies the momentum constraint
-  virtual bool TestMomentumConstraint(unsigned long stateDescription);
+  virtual bool TestMomentumConstraint(ULONGLONG stateDescription);
 
   // find the size of the orbit for a given state
   //
   // return value = orbit size
-  virtual int FindOrbitSize(unsigned long stateDescription);
+  virtual int FindOrbitSize(ULONGLONG stateDescription);
 
   // find the reordering sign when applying a sequence of discrete symmetries
   //
@@ -201,19 +199,19 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation : public Fermi
   // nbrTranslationY = number of translations to apply in the y direction to
   // nbrSpinFlip = number of full spin flip to apply
   // return value = reordering sign (0 for +1, 1 for -1)
-  virtual unsigned long FindReorderingSign(unsigned long stateDescription, int nbrTranslationX, int nbrTranslationY, int nbrSzSymmetry);
+  virtual ULONGLONG FindReorderingSign(ULONGLONG stateDescription, int nbrTranslationX, int nbrTranslationY, int nbrSzSymmetry);
 
   // Apply the Sz operator to flip all the spins
   //
   // stateDescription = reference on state description
   // stateDescription = state that has to be converted to its canonical expression
-  virtual void ApplySzSymmetry (unsigned long& stateDescription);
+  virtual void ApplySzSymmetry (ULONGLONG& stateDescription);
   
   // get the fermonic sign when performing a flip all the spins, and apply the flip sign 
   //
   // stateDescription = reference on state description
   // return value = 0 if the sign is +1, 1 if the sign is -1
-  virtual unsigned long GetSignAndApplySzSymmetry (unsigned long& stateDescription);
+  virtual ULONGLONG GetSignAndApplySzSymmetry (ULONGLONG& stateDescription);
 
   // core part of the evaluation density matrix particle partition calculation
   // 
@@ -254,13 +252,13 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation : public Fermi
 // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
 // return value = index of the destination state  
 
-inline int FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient, 
+inline int FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::SymmetrizeAdAdResult(ULONGLONG& state, double& coefficient, 
 											     int& nbrTranslationX, int& nbrTranslationY)
 {
   int NbrSzSymmetry;
   state = this->FindCanonicalForm(state, nbrTranslationX, nbrTranslationY, NbrSzSymmetry);
   int TmpMaxMomentum = 2 * this->NbrSite - 1;
-  while ((state >> TmpMaxMomentum) == 0x0ul)
+  while ((state >> TmpMaxMomentum) == ((ULONGLONG) 0x0ul))
     --TmpMaxMomentum;
   int TmpIndex = this->FindStateIndex(state, TmpMaxMomentum);
   if (TmpIndex < this->HilbertSpaceDimension)
@@ -283,12 +281,12 @@ inline int FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::Symmetri
 // additionalSign = reference on the additional sign coming from symmetries beyond translation
 // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
 
-inline unsigned long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY,
+inline ULONGLONG FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::FindCanonicalForm(ULONGLONG stateDescription, int& nbrTranslationX, int& nbrTranslationY,
 												    int& nbrSzSymmetry)
 {
-  unsigned long CanonicalState = stateDescription;
-  unsigned long stateDescriptionReference = stateDescription;  
-  unsigned long TmpStateDescription;  
+  ULONGLONG CanonicalState = stateDescription;
+  ULONGLONG stateDescriptionReference = stateDescription;  
+  ULONGLONG TmpStateDescription;  
   nbrTranslationX = 0;
   nbrTranslationY = 0;
   nbrSzSymmetry = 0;
@@ -377,19 +375,19 @@ inline unsigned long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation
 // stateDescription = unsigned integer describing the state
 // return value = true if the state satisfies the momentum constraint
 
-inline bool FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::TestMomentumConstraint(unsigned long stateDescription)
+inline bool FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::TestMomentumConstraint(ULONGLONG stateDescription)
 {
-  unsigned long TmpStateDescription = stateDescription;
-  unsigned long TmpStateDescription2 = stateDescription;
-  unsigned long TmpStateDescription3 = stateDescription;
+  ULONGLONG TmpStateDescription = stateDescription;
+  ULONGLONG TmpStateDescription2 = stateDescription;
+  ULONGLONG TmpStateDescription3 = stateDescription;
   int XSize = 1;
-  unsigned long TmpSign = this->GetSignAndApplySingleXTranslation(TmpStateDescription);   
+  ULONGLONG TmpSign = this->GetSignAndApplySingleXTranslation(TmpStateDescription);   
   while (stateDescription != TmpStateDescription)
     {
       ++XSize;
       TmpSign ^= this->GetSignAndApplySingleXTranslation(TmpStateDescription);      
     }
-  if (TmpSign == 0x0ul)
+  if (TmpSign == ((ULONGLONG) 0x0ul))
     {
       if (((this->XMomentum * XSize) % this->MaxXMomentum) != 0)
 	return false;
@@ -407,7 +405,7 @@ inline bool FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::TestMom
       TmpSign ^= this->GetSignAndApplySingleYTranslation(TmpStateDescription2); 
       TmpStateDescription = TmpStateDescription2;
       TmpXSize = 0;
-      unsigned long TmpSign2 = TmpSign;
+      ULONGLONG TmpSign2 = TmpSign;
       while ((TmpXSize < XSize) && (stateDescription != TmpStateDescription))
 	{	  
 	  ++TmpXSize;
@@ -428,7 +426,7 @@ inline bool FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::TestMom
       TmpXSize = 0;
       TmpSign ^= this->GetSignAndApplySingleYTranslation(TmpStateDescription2); 
     }
-   if (TmpSign == 0x0ul)
+   if (TmpSign == ((ULONGLONG) 0x0ul))
     {
       if ((((this->YMomentum * YSize * this->MaxXMomentum)
 	    + (this->XMomentum * TmpXSize * this->MaxYMomentum)) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)
@@ -445,7 +443,7 @@ inline bool FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::TestMom
   TmpSign = this->GetSignAndApplySzSymmetry(TmpStateDescription2);
   if (stateDescription == TmpStateDescription2)
     {
-      if ((this->SzParity ^ TmpSign) == 0x0ul)
+      if ((this->SzParity ^ TmpSign) == ((ULONGLONG) 0x0ul))
 	return true;
       else
 	return false;
@@ -453,7 +451,7 @@ inline bool FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::TestMom
 
   int XSize2 = 1;
   TmpStateDescription = TmpStateDescription2;
-  unsigned long TmpSign2 = TmpSign;
+  ULONGLONG TmpSign2 = TmpSign;
   TmpSign2 ^= this->GetSignAndApplySingleXTranslation(TmpStateDescription);      
   while ((stateDescription != TmpStateDescription) && (XSize2 < XSize))
     {
@@ -462,7 +460,7 @@ inline bool FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::TestMom
     }  
   if (XSize2 < XSize)
     {
-      if ((this->SzParity ^ TmpSign2) != 0x0ul)
+      if ((this->SzParity ^ TmpSign2) != ((ULONGLONG) 0x0ul))
 	{
 	  if ((((this->XMomentum * XSize2 * 2 * this->MaxYMomentum) + (this->MaxXMomentum * this->MaxYMomentum)) % (2 * this->MaxXMomentum * this->MaxYMomentum)) != 0)
 	    return false;
@@ -506,7 +504,7 @@ inline bool FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::TestMom
   if (YSize == YSize2)
     return true;
 
-  if ((this->SzParity ^ TmpSign) != 0x0ul)
+  if ((this->SzParity ^ TmpSign) != ((ULONGLONG) 0x0ul))
     {
       if ((((this->YMomentum * YSize2 * 2 * this->MaxXMomentum)
 	    + (this->XMomentum * TmpXSize * 2 * this->MaxYMomentum) + (this->MaxXMomentum * this->MaxYMomentum)) % (2 * this->MaxXMomentum * this->MaxYMomentum)) != 0)
@@ -526,10 +524,10 @@ inline bool FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::TestMom
 //
 // return value = orbit size
 
-inline int FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FindOrbitSize(unsigned long stateDescription)
+inline int FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::FindOrbitSize(ULONGLONG stateDescription)
 {
-  unsigned long TmpStateDescription = stateDescription;
-  unsigned long TmpStateDescription2 = stateDescription;
+  ULONGLONG TmpStateDescription = stateDescription;
+  ULONGLONG TmpStateDescription2 = stateDescription;
   int XSize = 1;
   this->ApplySingleXTranslation(TmpStateDescription);      
   while (stateDescription != TmpStateDescription)
@@ -602,10 +600,10 @@ inline int FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FindOrbi
 // nbrSpinFlip = number of full spin flip to apply
 // return value = reordering sign (0 for +1, 1 for -1)
 
-inline unsigned long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FindReorderingSign(unsigned long stateDescription, int nbrTranslationX, int nbrTranslationY,
+inline ULONGLONG FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::FindReorderingSign(ULONGLONG stateDescription, int nbrTranslationX, int nbrTranslationY,
 												     int nbrSzSymmetry)
 {
-  unsigned long TmpSign = 0x0ul;
+  ULONGLONG TmpSign = ((ULONGLONG) 0x0ul);
   if (nbrSzSymmetry == 1)
     {
       TmpSign ^= this->GetSignAndApplySzSymmetry(stateDescription);
@@ -625,11 +623,11 @@ inline unsigned long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation
 //
 // stateDescription = reference on state description
 
-inline void FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::ApplySzSymmetry (unsigned long& stateDescription)
+inline void FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::ApplySzSymmetry (ULONGLONG& stateDescription)
 {
   
-  unsigned long TmpState = stateDescription;
-  stateDescription = ((TmpState >> 1) ^ TmpState) & FERMION_LATTICE_REALSPACE_SU2_SZ_MASK;
+  ULONGLONG TmpState = stateDescription;
+  stateDescription = ((TmpState >> 1) ^ TmpState) & FERMION_LATTICE_REALSPACE_SU2_SZ_MASK_LONG;
   stateDescription |= stateDescription << 1;
   stateDescription ^= TmpState; 
 }
@@ -639,23 +637,24 @@ inline void FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::ApplySz
 // stateDescription = reference on state description
 // return value = 0 if the sign is +1, 1 if the sign is -1
 
-inline unsigned long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::GetSignAndApplySzSymmetry (unsigned long& stateDescription)
+inline ULONGLONG FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::GetSignAndApplySzSymmetry (ULONGLONG& stateDescription)
 {
-  unsigned long TmpState = stateDescription;
-  stateDescription = ((TmpState >> 1) ^ TmpState) & FERMION_LATTICE_REALSPACE_SU2_SZ_MASK;
+  ULONGLONG TmpState = stateDescription;
+  stateDescription = ((TmpState >> 1) ^ TmpState) & FERMION_LATTICE_REALSPACE_SU2_SZ_MASK_LONG;
   stateDescription |= stateDescription << 1;
   stateDescription ^= TmpState; 
   // compute the parity of the pair number
   TmpState &= (TmpState >> 1);
-  TmpState &= FERMION_LATTICE_REALSPACE_SU2_SZ_MASK;
-#ifdef __64_BITS__
-  TmpState ^= (TmpState >> 32);
+  TmpState &= FERMION_LATTICE_REALSPACE_SU2_SZ_MASK_LONG;
+#ifdef __128_BIT_LONGLONG__
+  TmpState ^= (TmpState >> 64);
 #endif
+  TmpState ^= (TmpState >> 32);
   TmpState ^= (TmpState >> 16);
   TmpState ^= (TmpState >> 8);
   TmpState ^= (TmpState >> 4);
   TmpState ^= (TmpState >> 2);
-  return (TmpState & 0x01ul);
+  return (TmpState & ((ULONGLONG) 0x01ul));
 }
 
 #endif

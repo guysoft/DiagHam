@@ -8,11 +8,11 @@
 //                                                                            //
 //                   class of fermions on lattice with spin                   //
 //       in real space with translation invariance in two directions and      //
-//                               Sz<->-Sz symmetry                            //
+//                  Sz<->-Sz symmetry supporting up to 64 sites               //
 //                                                                            //
 //                        class author: Nicolas Regnault                      //
 //                                                                            //
-//                        last modification : 03/11/2014                      //
+//                        last modification : 15/07/2016                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -33,8 +33,8 @@
 
 
 #include "config.h"
-#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation.h"
-#include "HilbertSpace/FermionOnLatticeWithSpinRealSpace.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceLong.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
@@ -66,7 +66,7 @@ using std::ios;
 // default constructor
 // 
 
-FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation ()
+FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong ()
 {
   this->SzParitySign = 1.0;
 }
@@ -82,7 +82,7 @@ FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FermionOnLatticeWit
 // maxYMomentum = maximum momentum in the y direction
 // memory = amount of memory granted for precalculations
 
-FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (int nbrFermions, int nbrSite, bool minusSzParity, 
+FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong (int nbrFermions, int nbrSite, bool minusSzParity, 
 															  int xMomentum, int maxXMomentum,
 															  int yMomentum, int  maxYMomentum, unsigned long memory)
 {  
@@ -90,11 +90,11 @@ FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FermionOnLatticeWit
   this->IncNbrFermions = this->NbrFermions + 1;
   this->SzFlag = false;
   this->SzParitySign = 1.0;
-  this->SzParity = 0x0ul;
+  this->SzParity = ((ULONGLONG) 0x0ul);
   if (minusSzParity == true)
     {
       this->SzParitySign = -1.0;
-      this->SzParity = 0x1ul;
+      this->SzParity = ((ULONGLONG) 0x1ul);
     }
   this->TotalSpin = 0;
   this->NbrFermionsUp = 0;
@@ -109,12 +109,12 @@ FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FermionOnLatticeWit
 
   this->MomentumIncrement = (this->NbrFermions * this->StateShift/2) % this->MomentumModulo;
   this->ComplementaryStateShift = 2 * this->MaxMomentum - this->StateShift;
-  this->MomentumMask = (0x1ul << this->StateShift) - 0x1ul;
+  this->MomentumMask = (((ULONGLONG) 0x1ul) << this->StateShift) - ((ULONGLONG) 0x1ul);
 
   this->XMomentum = xMomentum % this->MaxXMomentum;
   this->StateXShift = 2 * (this->NbrSite / this->MaxXMomentum);
   this->ComplementaryStateXShift = (2 * this->MaxMomentum) - this->StateXShift;
-  this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
+  this->XMomentumMask = (((ULONGLONG) 0x1ul) << this->StateXShift) - ((ULONGLONG) 0x1ul);
 
   this->MaxYMomentum =  maxYMomentum;
   this->YMomentum = yMomentum % this->MaxYMomentum;
@@ -122,16 +122,16 @@ FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FermionOnLatticeWit
   this->StateYShift = 2 * (this->NbrSite / (this->MaxYMomentum * this->MaxXMomentum));
   this->YMomentumBlockSize = this->StateYShift * this->MaxYMomentum;
   this->ComplementaryStateYShift = this->YMomentumBlockSize - this->StateYShift;
-  this->YMomentumMask = (0x1ul << this->StateYShift) - 0x1ul;
-  this->YMomentumBlockMask = (0x1ul << this->YMomentumBlockSize) - 0x1ul;  
-  this->YMomentumFullMask = 0x0ul;
+  this->YMomentumMask = (((ULONGLONG) 0x1ul) << this->StateYShift) - ((ULONGLONG) 0x1ul);
+  this->YMomentumBlockMask = (((ULONGLONG) 0x1ul) << this->YMomentumBlockSize) - ((ULONGLONG) 0x1ul);  
+  this->YMomentumFullMask = ((ULONGLONG) 0x0ul);
   for (int i = 0; i < this->NbrYMomentumBlocks; ++i)
     {
       this->YMomentumFullMask |= this->YMomentumMask << (i *  this->YMomentumBlockSize);
     }
   this->ComplementaryYMomentumFullMask = ~this->YMomentumFullMask; 
 
-  this->NbrFermionsParity = (~((unsigned long) this->NbrFermions)) & 0x1ul;
+  this->NbrFermionsParity = (~((ULONGLONG) this->NbrFermions)) & ((ULONGLONG) 0x1ul);
 
 
   this->MaximumSignLookUp = 16;
@@ -153,7 +153,7 @@ FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FermionOnLatticeWit
 	  this->GenerateLookUpTable(memory);	  
 #ifdef __DEBUG__
 	  long UsedMemory = 0;
-	  UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+	  UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(ULONGLONG) + sizeof(int));
 	  cout << "memory requested for Hilbert space = ";
 	  if (UsedMemory >= 1024)
 	    if (UsedMemory >= 1048576)
@@ -191,7 +191,7 @@ FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FermionOnLatticeWit
 // maxYMomentum = maximum momentum in the y direction
 // memory = amount of memory granted for precalculations
 
-FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (int nbrFermions, int totalSpin, int nbrSite, bool minusSzParity, 
+FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong (int nbrFermions, int totalSpin, int nbrSite, bool minusSzParity, 
 															  int xMomentum, int maxXMomentum,
 															  int yMomentum, int  maxYMomentum, unsigned long memory)
 {  
@@ -200,11 +200,11 @@ FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FermionOnLatticeWit
   this->SzFlag = true;
   this->TotalSpin = totalSpin;
   this->SzParitySign = 1.0;
-  this->SzParity = 0x0ul;
+  this->SzParity = ((ULONGLONG) 0x0ul);
   if (minusSzParity == true)
     {
       this->SzParitySign = -1.0;
-      this->SzParity = 0x1ul;
+      this->SzParity = ((ULONGLONG) 0x1ul);
     }
   this->NbrFermionsUp = (totalSpin + this->NbrFermions) >> 1;
   this->NbrFermionsDown = this->NbrFermions - this->NbrFermionsUp;
@@ -218,12 +218,12 @@ FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FermionOnLatticeWit
 
   this->MomentumIncrement = (this->NbrFermions * this->StateShift/2) % this->MomentumModulo;
   this->ComplementaryStateShift = 2 * this->MaxMomentum - this->StateShift;
-  this->MomentumMask = (0x1ul << this->StateShift) - 0x1ul;
+  this->MomentumMask = (((ULONGLONG) 0x1ul) << this->StateShift) - ((ULONGLONG) 0x1ul);
 
   this->XMomentum = xMomentum % this->MaxXMomentum;
   this->StateXShift = 2 * (this->NbrSite / this->MaxXMomentum);
   this->ComplementaryStateXShift = (2 * this->MaxMomentum) - this->StateXShift;
-  this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
+  this->XMomentumMask = (((ULONGLONG) 0x1ul) << this->StateXShift) - ((ULONGLONG) 0x1ul);
 
   this->MaxYMomentum =  maxYMomentum;
   this->YMomentum = yMomentum % this->MaxYMomentum;
@@ -231,16 +231,16 @@ FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FermionOnLatticeWit
   this->StateYShift = 2 * (this->NbrSite / (this->MaxYMomentum * this->MaxXMomentum));
   this->YMomentumBlockSize = this->StateYShift * this->MaxYMomentum;
   this->ComplementaryStateYShift = this->YMomentumBlockSize - this->StateYShift;
-  this->YMomentumMask = (0x1ul << this->StateYShift) - 0x1ul;
-  this->YMomentumBlockMask = (0x1ul << this->YMomentumBlockSize) - 0x1ul;  
-  this->YMomentumFullMask = 0x0ul;
+  this->YMomentumMask = (((ULONGLONG) 0x1ul) << this->StateYShift) - ((ULONGLONG) 0x1ul);
+  this->YMomentumBlockMask = (((ULONGLONG) 0x1ul) << this->YMomentumBlockSize) - ((ULONGLONG) 0x1ul);  
+  this->YMomentumFullMask = ((ULONGLONG) 0x0ul);
   for (int i = 0; i < this->NbrYMomentumBlocks; ++i)
     {
       this->YMomentumFullMask |= this->YMomentumMask << (i *  this->YMomentumBlockSize);
     }
   this->ComplementaryYMomentumFullMask = ~this->YMomentumFullMask; 
 
-  this->NbrFermionsParity = (~((unsigned long) this->NbrFermions)) & 0x1ul;
+  this->NbrFermionsParity = (~((ULONGLONG) this->NbrFermions)) & ((ULONGLONG) 0x1ul);
 
 
   this->MaximumSignLookUp = 16;
@@ -262,7 +262,7 @@ FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FermionOnLatticeWit
 	  this->GenerateLookUpTable(memory);	  
 #ifdef __DEBUG__
 	  long UsedMemory = 0;
-	  UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+	  UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(ULONGLONG) + sizeof(int));
 	  cout << "memory requested for Hilbert space = ";
 	  if (UsedMemory >= 1024)
 	    if (UsedMemory >= 1048576)
@@ -292,7 +292,7 @@ FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FermionOnLatticeWit
 //
 // fermions = reference on the hilbert space to copy to copy
 
-FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation(const FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation& fermions)
+FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong(const FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong& fermions)
 {
   this->NbrFermionsUp = fermions.NbrFermionsUp;
   this->NbrFermionsDown = fermions.NbrFermionsDown;
@@ -357,7 +357,7 @@ FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::FermionOnLatticeWit
 // destructor
 //
 
-FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::~FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation ()
+FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::~FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong ()
 {
 }
 
@@ -366,7 +366,7 @@ FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::~FermionOnLatticeWi
 // fermions = reference on the hilbert space to copy to copy
 // return value = reference on current hilbert space
 
-FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation& FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::operator = (const FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation& fermions)
+FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong& FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::operator = (const FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong& fermions)
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -451,18 +451,18 @@ FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation& FermionOnLatticeWit
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::Clone()
+AbstractHilbertSpace* FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::Clone()
 {
-  return new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation(*this);
+  return new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong(*this);
 }
 
 // generate all states corresponding to the constraints
 //
 // return value = Hilbert space dimension
 
-long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::GenerateStates()
+long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::GenerateStates()
 {
-  this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+  this->StateDescription = new ULONGLONG [this->LargeHilbertSpaceDimension];
   if (this->SzFlag == false)
     this->RawGenerateStates(this->NbrFermions, this->NbrSite - 1, 0l);
   else
@@ -475,7 +475,7 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::GenerateStates
 //
 // return value = Hilbert space dimension
 
-long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::CoreGenerateStates()
+long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::CoreGenerateStates()
 {
   long TmpLargeHilbertSpaceDimension = 0l;
   int NbrTranslationX;
@@ -492,35 +492,35 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::CoreGenerateSt
 	    }
 	  else
 	    {
-	      this->StateDescription[i] = 0x0ul;
+	      this->StateDescription[i] = ((ULONGLONG) 0x0ul);
 	    }
 	}
       else
 	{
-	  this->StateDescription[i] = 0x0ul;
+	  this->StateDescription[i] = ((ULONGLONG) 0x0ul);
 	}
     }
   if (TmpLargeHilbertSpaceDimension == 0l)
     return 0l;
-  unsigned long* TmpStateDescription = new unsigned long [TmpLargeHilbertSpaceDimension];  
+  ULONGLONG* TmpStateDescription = new ULONGLONG [TmpLargeHilbertSpaceDimension];  
   this->NbrStateInOrbit = new int [TmpLargeHilbertSpaceDimension];
   this->ReorderingSign = new unsigned long [TmpLargeHilbertSpaceDimension];
   TmpLargeHilbertSpaceDimension = 0l;
   for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
     {
-      if (this->StateDescription[i] != 0x0ul)
+      if (this->StateDescription[i] != ((ULONGLONG) 0x0ul))
 	{
 	  TmpStateDescription[TmpLargeHilbertSpaceDimension] = this->StateDescription[i];
 	  this->NbrStateInOrbit[TmpLargeHilbertSpaceDimension] = this->FindOrbitSize(this->StateDescription[i]);
 	  unsigned long& TmpSign = this->ReorderingSign[TmpLargeHilbertSpaceDimension];
-	  TmpSign = 0x0ul;
+	  TmpSign = ((ULONGLONG) 0x0ul);
 	  int Index = 0;
 	  for (int m = 0; m < this->MaxYMomentum; ++m)
 	    {
 	      int TmpNbrTranslationY = (this->MaxYMomentum - m) % this->MaxYMomentum;
 	      for (int n = 0; n < this->MaxXMomentum; ++n)
 		{
-		  unsigned long TmpState =  this->StateDescription[i];
+		  ULONGLONG TmpState =  this->StateDescription[i];
 		  int TmpNbrTranslationX = (this->MaxXMomentum - n) % this->MaxXMomentum;
 		  for (int n2 = 0; n2 < TmpNbrTranslationX; ++n2)
 		    {
@@ -545,12 +545,12 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::CoreGenerateSt
 
   this->StateHighestBit = new int [TmpLargeHilbertSpaceDimension];  
   int CurrentMaxMomentum = (2 * this->MaxMomentum) + 1;
-  while (((this->StateDescription[0] >> CurrentMaxMomentum) & 0x1ul) == 0x0ul)
+  while (((this->StateDescription[0] >> CurrentMaxMomentum) & ((ULONGLONG) 0x1ul)) == ((ULONGLONG) 0x0ul))
     --CurrentMaxMomentum;
   this->StateHighestBit[0] = CurrentMaxMomentum;
   for (long i = 1l; i < TmpLargeHilbertSpaceDimension; ++i)
     {
-      while (((this->StateDescription[i] >> CurrentMaxMomentum) & 0x1ul) == 0x0ul)
+      while (((this->StateDescription[i] >> CurrentMaxMomentum) & ((ULONGLONG) 0x1ul)) == ((ULONGLONG) 0x0ul))
 	--CurrentMaxMomentum;
       this->StateHighestBit[i] = CurrentMaxMomentum;
     }
@@ -564,7 +564,7 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::CoreGenerateSt
 // targetNbodyBasis = reference on the nbody-basis where the final state will be expressed
 // return value = converted vector
 
-ComplexVector FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::ConvertToNbodyBasis(ComplexVector& state, FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* targetNbodyBasis)
+ComplexVector FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::ConvertToNbodyBasis(ComplexVector& state, FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong* targetNbodyBasis)
 {
   ComplexVector TmpVector (targetNbodyBasis->LargeHilbertSpaceDimension, true);
   int TmpNbrTranslationX;
@@ -581,7 +581,7 @@ ComplexVector FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::Conve
     }
   for (long i= 0l; i < targetNbodyBasis->LargeHilbertSpaceDimension; ++i)
     {
-      unsigned long TmpState = targetNbodyBasis->StateDescription[i];
+      ULONGLONG TmpState = targetNbodyBasis->StateDescription[i];
       TmpCoefficient = 1.0;
       this->ProdATemporaryNbrStateInOrbit = targetNbodyBasis->NbrStateInOrbit[i];
       int TmpIndex = this->SymmetrizeAdAdResult(TmpState, TmpCoefficient, TmpNbrTranslationX, TmpNbrTranslationY);
@@ -604,7 +604,7 @@ ComplexVector FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::Conve
 // inputNbodyBasis = reference on the nbody-basis where the inital state is expressed
 // return value = converted vector
 
-ComplexVector FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::ConvertFromNbodyBasis(ComplexVector& state, FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* inputNbodyBasis)
+ComplexVector FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::ConvertFromNbodyBasis(ComplexVector& state, FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong* inputNbodyBasis)
 {
   ComplexVector TmpVector (this->LargeHilbertSpaceDimension, true);
   int TmpNbrTranslationX;
@@ -621,7 +621,7 @@ ComplexVector FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::Conve
     }
   for (long i= 0l; i < inputNbodyBasis->LargeHilbertSpaceDimension; ++i)
     {
-      unsigned long TmpState = inputNbodyBasis->StateDescription[i];
+      ULONGLONG TmpState = inputNbodyBasis->StateDescription[i];
       TmpCoefficient = 1.0;
       this->ProdATemporaryNbrStateInOrbit = inputNbodyBasis->NbrStateInOrbit[i];
       int TmpIndex = this->SymmetrizeAdAdResult(TmpState, TmpCoefficient, TmpNbrTranslationX, TmpNbrTranslationY);
@@ -649,7 +649,7 @@ ComplexVector FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::Conve
 // architecture = pointer to the architecture to use parallelized algorithm
 // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
 
-HermitianMatrix FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int szSector, int szParitySector, 
+HermitianMatrix FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int szSector, int szParitySector, 
 															    int kxSector, int kySector, 
 															    ComplexVector& groundState, AbstractArchitecture* architecture)
 {
@@ -691,10 +691,10 @@ HermitianMatrix FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::Eva
   if (ComplementaryKyMomentum < 0)
     ComplementaryKyMomentum += this->MaxYMomentum;
   int ComplementarySzParitySector = TmpCurrentSzParitySector * szParitySector;
-  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation SubsytemSpace (nbrParticleSector, szSector, this->NbrSite, (szParitySector == -1), 
+  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong SubsytemSpace (nbrParticleSector, szSector, this->NbrSite, (szParitySector == -1), 
 									     kxSector, this->MaxXMomentum, kySector, this->MaxYMomentum);
   HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
-  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation ComplementarySpace (ComplementaryNbrParticles, ComplementarySzSector, this->NbrSite, 
+  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong ComplementarySpace (ComplementaryNbrParticles, ComplementarySzSector, this->NbrSite, 
 										  (ComplementarySzParitySector == -1), ComplementaryKxMomentum, this->MaxXMomentum, 
 										  ComplementaryKyMomentum , this->MaxYMomentum);
   cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
@@ -724,7 +724,7 @@ HermitianMatrix FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::Eva
 // architecture = pointer to the architecture to use parallelized algorithm
 // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
 
-HermitianMatrix FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int szSector, int szParitySector, 
+HermitianMatrix FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int szSector, int szParitySector, 
 															    int kxSector, int kySector, 
 															    int nbrGroundStates, ComplexVector* groundStates, 
 															    double* weights, 
@@ -768,10 +768,10 @@ HermitianMatrix FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::Eva
   if (ComplementaryKyMomentum < 0)
     ComplementaryKyMomentum += this->MaxYMomentum;
   int ComplementarySzParitySector = TmpCurrentSzParitySector * szParitySector;
-  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation SubsytemSpace (nbrParticleSector, szSector, this->NbrSite, (szParitySector == -1), 
+  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong SubsytemSpace (nbrParticleSector, szSector, this->NbrSite, (szParitySector == -1), 
 									     kxSector, this->MaxXMomentum, kySector, this->MaxYMomentum);
   HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
-  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation ComplementarySpace (ComplementaryNbrParticles, ComplementarySzSector, this->NbrSite, 
+  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong ComplementarySpace (ComplementaryNbrParticles, ComplementarySzSector, this->NbrSite, 
 										  (ComplementarySzParitySector == -1), ComplementaryKxMomentum, this->MaxXMomentum, 
 										  ComplementaryKyMomentum , this->MaxYMomentum);
   cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
@@ -799,7 +799,7 @@ HermitianMatrix FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::Eva
 // densityMatrix = reference on the density matrix where result has to stored
 // return value = number of components that have been added to the density matrix
 
-long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, 
+long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, 
 														     ParticleOnTorusWithSpinAndMagneticTranslations* complementaryHilbertSpace,  
 														     ParticleOnTorusWithSpinAndMagneticTranslations* destinationHilbertSpace,
 														     ComplexVector& groundState, HermitianMatrix* densityMatrix)
@@ -809,19 +809,19 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
   long TmpNbrNonZeroElements = 0l;
   if ((destinationHilbertSpace->GetTotalSpin() != 0) || (this->TotalSpin != 0))
     {
-      FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* TmpDestinationHilbertSpace =  (FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*) destinationHilbertSpace;
-      FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* TmpHilbertSpace = (FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*) complementaryHilbertSpace;
-      FermionOnLatticeWithSpinRealSpace* TmpDestinationFullHilbertSpace = 0;
+      FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong* TmpDestinationHilbertSpace =  (FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong*) destinationHilbertSpace;
+      FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong* TmpHilbertSpace = (FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong*) complementaryHilbertSpace;
+      FermionOnLatticeWithSpinRealSpaceLong* TmpDestinationFullHilbertSpace = 0;
       if (TmpDestinationHilbertSpace->SzFlag == false)
 	{
-	  TmpDestinationFullHilbertSpace = new FermionOnLatticeWithSpinRealSpace(TmpDestinationHilbertSpace->NbrFermions,
-										 TmpDestinationHilbertSpace->NbrSite);
+	  TmpDestinationFullHilbertSpace = new FermionOnLatticeWithSpinRealSpaceLong(TmpDestinationHilbertSpace->NbrFermions,
+										     TmpDestinationHilbertSpace->NbrSite);
 	}
       else
 	{
-	  TmpDestinationFullHilbertSpace = new FermionOnLatticeWithSpinRealSpace(TmpDestinationHilbertSpace->NbrFermions,
-										 TmpDestinationHilbertSpace->TotalSpin,
-										 TmpDestinationHilbertSpace->NbrSite);
+	  TmpDestinationFullHilbertSpace = new FermionOnLatticeWithSpinRealSpaceLong(TmpDestinationHilbertSpace->NbrFermions,
+										     TmpDestinationHilbertSpace->TotalSpin,
+										     TmpDestinationHilbertSpace->NbrSite);
 	}
       for (int i = 0; i < this->MaxXMomentum; ++i)
 	{
@@ -846,7 +846,7 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
       int* TmpDestinationRealIndices = new int[TmpDestinationFullHilbertSpace->GetHilbertSpaceDimension()];
       for (int j = 0; j < TmpDestinationFullHilbertSpace->HilbertSpaceDimension; ++j)
 	{
-	  unsigned long TmpCanonicalState2 = TmpDestinationFullHilbertSpace->StateDescription[j];
+	  ULONGLONG TmpCanonicalState2 = TmpDestinationFullHilbertSpace->StateDescription[j];
 	  int TmpDestinationNbrTranslationX;
 	  int TmpDestinationNbrTranslationY;
 	  double TmpDestinationCoefficient = 1.0;
@@ -861,45 +861,46 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
       for (; minIndex < MaxIndex; ++minIndex)    
 	{
 	  int Pos = 0;
-	  unsigned long TmpState = TmpHilbertSpace->StateDescription[minIndex];
+	  ULONGLONG TmpState = TmpHilbertSpace->StateDescription[minIndex];
 	  double TmpRescalingFactor = sqrt((double)  TmpHilbertSpace->NbrStateInOrbit[minIndex]);
 	  for (int j = 0; j < TmpDestinationFullHilbertSpace->HilbertSpaceDimension; ++j)
 	    {
-	      unsigned long TmpState2 = TmpDestinationFullHilbertSpace->StateDescription[j];
-	      if ((TmpState & TmpState2) == 0x0ul)
+	      ULONGLONG TmpState2 = TmpDestinationFullHilbertSpace->StateDescription[j];
+	      if ((TmpState & TmpState2) == ((ULONGLONG) 0x0ul))
 		{
 		  if (TmpDestinationRealIndices[j] < TmpDestinationHilbertSpace->GetHilbertSpaceDimension())
 		    {
 		      int TmpNbrTranslationX;
 		      int TmpNbrTranslationY;
 		      double TmpCoefficient = TmpRescalingFactor;
-		      unsigned long TmpState3 = TmpState | TmpState2;
+		      ULONGLONG TmpState3 = TmpState | TmpState2;
 		      int TmpPos = this->SymmetrizeAdAdResult(TmpState3, TmpCoefficient, TmpNbrTranslationX, TmpNbrTranslationY);
 		      
 		      if (TmpPos < this->HilbertSpaceDimension)
 			{      
  			  Complex Coefficient = TmpCoefficient * TmpDestinationFactors[j] * FourrierCoefficients[TmpNbrTranslationX][TmpNbrTranslationY];
-			  unsigned long Sign = 0x0ul;
+			  ULONGLONG Sign = ((ULONGLONG) 0x0ul);
 			  int Pos2 = 2 * TmpDestinationHilbertSpace->NbrSite - 1;
-			  unsigned long TmpState22 = TmpState2;
-			  while ((Pos2 > 0) && (TmpState22 != 0x0ul))
+			  ULONGLONG TmpState22 = TmpState2;
+			  while ((Pos2 > 0) && (TmpState22 != ((ULONGLONG) 0x0ul)))
 			    {
-			      while (((TmpState22 >> Pos2) & 0x1ul) == 0x0ul)
+			      while (((TmpState22 >> Pos2) & ((ULONGLONG) 0x1ul)) == ((ULONGLONG) 0x0ul))
 				--Pos2;
-			      TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
-#ifdef  __64_BITS__
-			      TmpState3 ^= TmpState3 >> 32;
+			      TmpState3 = TmpState & ((((ULONGLONG) 0x1ul) << (Pos2 + 1)) - 1ul);
+#ifdef __128_BIT_LONGLONG__
+			      TmpState3 ^= TmpState3 >> 64;
 #endif	
+			      TmpState3 ^= TmpState3 >> 32;
 			      TmpState3 ^= TmpState3 >> 16;
 			      TmpState3 ^= TmpState3 >> 8;
 			      TmpState3 ^= TmpState3 >> 4;
 			      TmpState3 ^= TmpState3 >> 2;
 			      TmpState3 ^= TmpState3 >> 1;
 			      Sign ^= TmpState3;
-			      TmpState22 &= ~(0x1ul << Pos2);
+			      TmpState22 &= ~(((ULONGLONG) 0x1ul) << Pos2);
 			      --Pos2;
 			    }
-			  if ((Sign & 0x1ul) != 0x0ul)		  
+			  if ((Sign & ((ULONGLONG) 0x1ul)) != ((ULONGLONG) 0x0ul))		  
 			    Coefficient *= -1.0;
 			  TmpEntanglementMatrix[TmpDestinationRealIndices[j]][minIndex - TmpMinIndex] += groundState[TmpPos] * Coefficient;
 			}
@@ -921,19 +922,19 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
     }
   else
     {
-      FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation* TmpDestinationHilbertSpace =  (FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation*) destinationHilbertSpace;
-      FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation* TmpHilbertSpace = (FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation*) complementaryHilbertSpace;
-      FermionOnLatticeWithSpinRealSpace* TmpDestinationFullHilbertSpace = 0;
+      FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong* TmpDestinationHilbertSpace =  (FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong*) destinationHilbertSpace;
+      FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong* TmpHilbertSpace = (FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong*) complementaryHilbertSpace;
+      FermionOnLatticeWithSpinRealSpaceLong* TmpDestinationFullHilbertSpace = 0;
       if (TmpDestinationHilbertSpace->SzFlag == false)
 	{
-	  TmpDestinationFullHilbertSpace = new FermionOnLatticeWithSpinRealSpace(TmpDestinationHilbertSpace->NbrFermions,
-										 TmpDestinationHilbertSpace->NbrSite);
+	  TmpDestinationFullHilbertSpace = new FermionOnLatticeWithSpinRealSpaceLong(TmpDestinationHilbertSpace->NbrFermions,
+										     TmpDestinationHilbertSpace->NbrSite);
 	}
       else
 	{
-	  TmpDestinationFullHilbertSpace = new FermionOnLatticeWithSpinRealSpace(TmpDestinationHilbertSpace->NbrFermions,
-										 TmpDestinationHilbertSpace->TotalSpin,
-										 TmpDestinationHilbertSpace->NbrSite);
+	  TmpDestinationFullHilbertSpace = new FermionOnLatticeWithSpinRealSpaceLong(TmpDestinationHilbertSpace->NbrFermions,
+										     TmpDestinationHilbertSpace->TotalSpin,
+										     TmpDestinationHilbertSpace->NbrSite);
 	}
       for (int i = 0; i < this->MaxXMomentum; ++i)
 	{
@@ -958,7 +959,7 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
       int* TmpDestinationRealIndices = new int[TmpDestinationFullHilbertSpace->GetHilbertSpaceDimension()];
       for (int j = 0; j < TmpDestinationFullHilbertSpace->HilbertSpaceDimension; ++j)
 	{
-	  unsigned long TmpCanonicalState2 = TmpDestinationFullHilbertSpace->StateDescription[j];
+	  ULONGLONG TmpCanonicalState2 = TmpDestinationFullHilbertSpace->StateDescription[j];
 	  int TmpDestinationNbrTranslationX;
 	  int TmpDestinationNbrTranslationY;
 	  double TmpDestinationCoefficient = 1.0;
@@ -973,45 +974,46 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
       for (; minIndex < MaxIndex; ++minIndex)    
 	{
 	  int Pos = 0;
-	  unsigned long TmpState = TmpHilbertSpace->StateDescription[minIndex];
+	  ULONGLONG TmpState = TmpHilbertSpace->StateDescription[minIndex];
 	  double TmpRescalingFactor = sqrt((double)  TmpHilbertSpace->NbrStateInOrbit[minIndex]);
 	  for (int j = 0; j < TmpDestinationFullHilbertSpace->HilbertSpaceDimension; ++j)
 	    {
-	      unsigned long TmpState2 = TmpDestinationFullHilbertSpace->StateDescription[j];
-	      if ((TmpState & TmpState2) == 0x0ul)
+	      ULONGLONG TmpState2 = TmpDestinationFullHilbertSpace->StateDescription[j];
+	      if ((TmpState & TmpState2) == ((ULONGLONG) 0x0ul))
 		{
 		  if (TmpDestinationRealIndices[j] < TmpDestinationHilbertSpace->GetHilbertSpaceDimension())
 		    {
 		      int TmpNbrTranslationX;
 		      int TmpNbrTranslationY;
 		      double TmpCoefficient = TmpRescalingFactor;
-		      unsigned long TmpState3 = TmpState | TmpState2;
+		      ULONGLONG TmpState3 = TmpState | TmpState2;
 		      int TmpPos = this->SymmetrizeAdAdResult(TmpState3, TmpCoefficient, TmpNbrTranslationX, TmpNbrTranslationY);
 		      
 		      if (TmpPos < this->HilbertSpaceDimension)
 			{      
  			  Complex Coefficient = TmpCoefficient * TmpDestinationFactors[j] * FourrierCoefficients[TmpNbrTranslationX][TmpNbrTranslationY];
-			  unsigned long Sign = 0x0ul;
+			  ULONGLONG Sign = ((ULONGLONG) 0x0ul);
 			  int Pos2 = 2 * TmpDestinationHilbertSpace->NbrSite - 1;
-			  unsigned long TmpState22 = TmpState2;
-			  while ((Pos2 > 0) && (TmpState22 != 0x0ul))
+			  ULONGLONG TmpState22 = TmpState2;
+			  while ((Pos2 > 0) && (TmpState22 != ((ULONGLONG) 0x0ul)))
 			    {
-			      while (((TmpState22 >> Pos2) & 0x1ul) == 0x0ul)
+			      while (((TmpState22 >> Pos2) & ((ULONGLONG) 0x1ul)) == ((ULONGLONG) 0x0ul))
 				--Pos2;
-			      TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
-#ifdef  __64_BITS__
-			      TmpState3 ^= TmpState3 >> 32;
+			      TmpState3 = TmpState & ((((ULONGLONG) 0x1ul) << (Pos2 + 1)) - 1ul);
+#ifdef __128_BIT_LONGLONG__
+			      TmpState3 ^= TmpState3 >> 64;
 #endif	
+			      TmpState3 ^= TmpState3 >> 32;
 			      TmpState3 ^= TmpState3 >> 16;
 			      TmpState3 ^= TmpState3 >> 8;
 			      TmpState3 ^= TmpState3 >> 4;
 			      TmpState3 ^= TmpState3 >> 2;
 			      TmpState3 ^= TmpState3 >> 1;
 			      Sign ^= TmpState3;
-			      TmpState22 &= ~(0x1ul << Pos2);
+			      TmpState22 &= ~(((ULONGLONG) 0x1ul) << Pos2);
 			      --Pos2;
 			    }
-			  if ((Sign & 0x1ul) != 0x0ul)		  
+			  if ((Sign & ((ULONGLONG) 0x1ul)) != ((ULONGLONG) 0x0ul))		  
 			    Coefficient *= -1.0;
 			  TmpEntanglementMatrix[TmpDestinationRealIndices[j]][minIndex - TmpMinIndex] += groundState[TmpPos] * Coefficient;
 			}
@@ -1053,7 +1055,7 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
 // densityMatrix = reference on the density matrix where result has to stored
 // return value = number of components that have been added to the density matrix
 
-long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnTorusWithSpinAndMagneticTranslations* complementaryHilbertSpace,
+long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnTorusWithSpinAndMagneticTranslations* complementaryHilbertSpace,
 														     ParticleOnTorusWithSpinAndMagneticTranslations* destinationHilbertSpace,
 														     int nbrGroundStates, ComplexVector* groundStates, double* weights, HermitianMatrix* densityMatrix)
 {
@@ -1062,19 +1064,19 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
   long TmpNbrNonZeroElements = 0l;
   if ((destinationHilbertSpace->GetTotalSpin() != 0) || (this->TotalSpin != 0))
     {
-      FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* TmpDestinationHilbertSpace =  (FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*) destinationHilbertSpace;
-      FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* TmpHilbertSpace = (FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*) complementaryHilbertSpace;
-      FermionOnLatticeWithSpinRealSpace* TmpDestinationFullHilbertSpace = 0;
+      FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong* TmpDestinationHilbertSpace =  (FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong*) destinationHilbertSpace;
+      FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong* TmpHilbertSpace = (FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong*) complementaryHilbertSpace;
+      FermionOnLatticeWithSpinRealSpaceLong* TmpDestinationFullHilbertSpace = 0;
       if (TmpDestinationHilbertSpace->SzFlag == false)
 	{
-	  TmpDestinationFullHilbertSpace = new FermionOnLatticeWithSpinRealSpace(TmpDestinationHilbertSpace->NbrFermions,
-										 TmpDestinationHilbertSpace->NbrSite);
+	  TmpDestinationFullHilbertSpace = new FermionOnLatticeWithSpinRealSpaceLong(TmpDestinationHilbertSpace->NbrFermions,
+										     TmpDestinationHilbertSpace->NbrSite);
 	}
       else
 	{
-	  TmpDestinationFullHilbertSpace = new FermionOnLatticeWithSpinRealSpace(TmpDestinationHilbertSpace->NbrFermions,
-										 TmpDestinationHilbertSpace->TotalSpin,
-										 TmpDestinationHilbertSpace->NbrSite);
+	  TmpDestinationFullHilbertSpace = new FermionOnLatticeWithSpinRealSpaceLong(TmpDestinationHilbertSpace->NbrFermions,
+										     TmpDestinationHilbertSpace->TotalSpin,
+										     TmpDestinationHilbertSpace->NbrSite);
 	}
       for (int i = 0; i < this->MaxXMomentum; ++i)
 	{
@@ -1101,7 +1103,7 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
       int* TmpDestinationRealIndices = new int[TmpDestinationFullHilbertSpace->GetHilbertSpaceDimension()];
       for (int j = 0; j < TmpDestinationFullHilbertSpace->HilbertSpaceDimension; ++j)
 	{
-	  unsigned long TmpCanonicalState2 = TmpDestinationFullHilbertSpace->StateDescription[j];
+	  ULONGLONG TmpCanonicalState2 = TmpDestinationFullHilbertSpace->StateDescription[j];
 	  int TmpDestinationNbrTranslationX;
 	  int TmpDestinationNbrTranslationY;
 	  double TmpDestinationCoefficient = 1.0;
@@ -1116,45 +1118,46 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
       for (; minIndex < MaxIndex; ++minIndex)    
 	{
 	  int Pos = 0;
-	  unsigned long TmpState = TmpHilbertSpace->StateDescription[minIndex];
+	  ULONGLONG TmpState = TmpHilbertSpace->StateDescription[minIndex];
 	  double TmpRescalingFactor = sqrt((double)  TmpHilbertSpace->NbrStateInOrbit[minIndex]);
 	  for (int j = 0; j < TmpDestinationFullHilbertSpace->HilbertSpaceDimension; ++j)
 	    {
-	      unsigned long TmpState2 = TmpDestinationFullHilbertSpace->StateDescription[j];
-	      if ((TmpState & TmpState2) == 0x0ul)
+	      ULONGLONG TmpState2 = TmpDestinationFullHilbertSpace->StateDescription[j];
+	      if ((TmpState & TmpState2) == ((ULONGLONG) 0x0ul))
 		{
 		  if (TmpDestinationRealIndices[j] < TmpDestinationHilbertSpace->GetHilbertSpaceDimension())
 		    {
 		      int TmpNbrTranslationX;
 		      int TmpNbrTranslationY;
 		      double TmpCoefficient = TmpRescalingFactor;
-		      unsigned long TmpState3 = TmpState | TmpState2;
+		      ULONGLONG TmpState3 = TmpState | TmpState2;
 		      int TmpPos = this->SymmetrizeAdAdResult(TmpState3, TmpCoefficient, TmpNbrTranslationX, TmpNbrTranslationY);
 		      
 		      if (TmpPos < this->HilbertSpaceDimension)
 			{      
  			  Complex Coefficient = TmpCoefficient * TmpDestinationFactors[j] * FourrierCoefficients[TmpNbrTranslationX][TmpNbrTranslationY];
-			  unsigned long Sign = 0x0ul;
+			  ULONGLONG Sign = ((ULONGLONG) 0x0ul);
 			  int Pos2 = 2 * TmpDestinationHilbertSpace->NbrSite - 1;
-			  unsigned long TmpState22 = TmpState2;
-			  while ((Pos2 > 0) && (TmpState22 != 0x0ul))
+			  ULONGLONG TmpState22 = TmpState2;
+			  while ((Pos2 > 0) && (TmpState22 != ((ULONGLONG) 0x0ul)))
 			    {
-			      while (((TmpState22 >> Pos2) & 0x1ul) == 0x0ul)
+			      while (((TmpState22 >> Pos2) & ((ULONGLONG) 0x1ul)) == ((ULONGLONG) 0x0ul))
 				--Pos2;
-			      TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
-#ifdef  __64_BITS__
-			      TmpState3 ^= TmpState3 >> 32;
+			      TmpState3 = TmpState & ((((ULONGLONG) 0x1ul) << (Pos2 + 1)) - 1ul);
+#ifdef __128_BIT_LONGLONG__
+			      TmpState3 ^= TmpState3 >> 64;
 #endif	
+			      TmpState3 ^= TmpState3 >> 32;
 			      TmpState3 ^= TmpState3 >> 16;
 			      TmpState3 ^= TmpState3 >> 8;
 			      TmpState3 ^= TmpState3 >> 4;
 			      TmpState3 ^= TmpState3 >> 2;
 			      TmpState3 ^= TmpState3 >> 1;
 			      Sign ^= TmpState3;
-			      TmpState22 &= ~(0x1ul << Pos2);
+			      TmpState22 &= ~(((ULONGLONG) 0x1ul) << Pos2);
 			      --Pos2;
 			    }
-			  if ((Sign & 0x1ul) != 0x0ul)		  
+			  if ((Sign & ((ULONGLONG) 0x1ul)) != ((ULONGLONG) 0x0ul))		  
 			    Coefficient *= -1.0;
 			  for (int k = 0; k < nbrGroundStates; ++k)
 			    TmpEntanglementMatrices[k][TmpDestinationRealIndices[j]][minIndex - TmpMinIndex] += groundStates[k][TmpPos] * Coefficient;
@@ -1181,19 +1184,19 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
     }
   else
     {
-      FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation* TmpDestinationHilbertSpace =  (FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation*) destinationHilbertSpace;
-      FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation* TmpHilbertSpace = (FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation*) complementaryHilbertSpace;
-      FermionOnLatticeWithSpinRealSpace* TmpDestinationFullHilbertSpace = 0;
+      FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong* TmpDestinationHilbertSpace =  (FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong*) destinationHilbertSpace;
+      FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong* TmpHilbertSpace = (FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong*) complementaryHilbertSpace;
+      FermionOnLatticeWithSpinRealSpaceLong* TmpDestinationFullHilbertSpace = 0;
       if (TmpDestinationHilbertSpace->SzFlag == false)
 	{
-	  TmpDestinationFullHilbertSpace = new FermionOnLatticeWithSpinRealSpace(TmpDestinationHilbertSpace->NbrFermions,
-										 TmpDestinationHilbertSpace->NbrSite);
+	  TmpDestinationFullHilbertSpace = new FermionOnLatticeWithSpinRealSpaceLong(TmpDestinationHilbertSpace->NbrFermions,
+										     TmpDestinationHilbertSpace->NbrSite);
 	}
       else
 	{
-	  TmpDestinationFullHilbertSpace = new FermionOnLatticeWithSpinRealSpace(TmpDestinationHilbertSpace->NbrFermions,
-										 TmpDestinationHilbertSpace->TotalSpin,
-										 TmpDestinationHilbertSpace->NbrSite);
+	  TmpDestinationFullHilbertSpace = new FermionOnLatticeWithSpinRealSpaceLong(TmpDestinationHilbertSpace->NbrFermions,
+										     TmpDestinationHilbertSpace->TotalSpin,
+										     TmpDestinationHilbertSpace->NbrSite);
 	}
       for (int i = 0; i < this->MaxXMomentum; ++i)
 	{
@@ -1220,7 +1223,7 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
       int* TmpDestinationRealIndices = new int[TmpDestinationFullHilbertSpace->GetHilbertSpaceDimension()];
       for (int j = 0; j < TmpDestinationFullHilbertSpace->HilbertSpaceDimension; ++j)
 	{
-	  unsigned long TmpCanonicalState2 = TmpDestinationFullHilbertSpace->StateDescription[j];
+	  ULONGLONG TmpCanonicalState2 = TmpDestinationFullHilbertSpace->StateDescription[j];
 	  int TmpDestinationNbrTranslationX;
 	  int TmpDestinationNbrTranslationY;
 	  double TmpDestinationCoefficient = 1.0;
@@ -1235,45 +1238,46 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
       for (; minIndex < MaxIndex; ++minIndex)    
 	{
 	  int Pos = 0;
-	  unsigned long TmpState = TmpHilbertSpace->StateDescription[minIndex];
+	  ULONGLONG TmpState = TmpHilbertSpace->StateDescription[minIndex];
 	  double TmpRescalingFactor = sqrt((double)  TmpHilbertSpace->NbrStateInOrbit[minIndex]);
 	  for (int j = 0; j < TmpDestinationFullHilbertSpace->HilbertSpaceDimension; ++j)
 	    {
-	      unsigned long TmpState2 = TmpDestinationFullHilbertSpace->StateDescription[j];
-	      if ((TmpState & TmpState2) == 0x0ul)
+	      ULONGLONG TmpState2 = TmpDestinationFullHilbertSpace->StateDescription[j];
+	      if ((TmpState & TmpState2) == ((ULONGLONG) 0x0ul))
 		{
 		  if (TmpDestinationRealIndices[j] < TmpDestinationHilbertSpace->GetHilbertSpaceDimension())
 		    {
 		      int TmpNbrTranslationX;
 		      int TmpNbrTranslationY;
 		      double TmpCoefficient = TmpRescalingFactor;
-		      unsigned long TmpState3 = TmpState | TmpState2;
+		      ULONGLONG TmpState3 = TmpState | TmpState2;
 		      int TmpPos = this->SymmetrizeAdAdResult(TmpState3, TmpCoefficient, TmpNbrTranslationX, TmpNbrTranslationY);
 		      
 		      if (TmpPos < this->HilbertSpaceDimension)
 			{      
  			  Complex Coefficient = TmpCoefficient * TmpDestinationFactors[j] * FourrierCoefficients[TmpNbrTranslationX][TmpNbrTranslationY];
-			  unsigned long Sign = 0x0ul;
+			  ULONGLONG Sign = ((ULONGLONG) 0x0ul);
 			  int Pos2 = 2 * TmpDestinationHilbertSpace->NbrSite - 1;
-			  unsigned long TmpState22 = TmpState2;
-			  while ((Pos2 > 0) && (TmpState22 != 0x0ul))
+			  ULONGLONG TmpState22 = TmpState2;
+			  while ((Pos2 > 0) && (TmpState22 != ((ULONGLONG) 0x0ul)))
 			    {
-			      while (((TmpState22 >> Pos2) & 0x1ul) == 0x0ul)
+			      while (((TmpState22 >> Pos2) & ((ULONGLONG) 0x1ul)) == ((ULONGLONG) 0x0ul))
 				--Pos2;
-			      TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
-#ifdef  __64_BITS__
-			      TmpState3 ^= TmpState3 >> 32;
+			      TmpState3 = TmpState & ((((ULONGLONG) 0x1ul) << (Pos2 + 1)) - 1ul);
+#ifdef __128_BIT_LONGLONG__
+			      TmpState3 ^= TmpState3 >> 64;
 #endif	
+			      TmpState3 ^= TmpState3 >> 32;
 			      TmpState3 ^= TmpState3 >> 16;
 			      TmpState3 ^= TmpState3 >> 8;
 			      TmpState3 ^= TmpState3 >> 4;
 			      TmpState3 ^= TmpState3 >> 2;
 			      TmpState3 ^= TmpState3 >> 1;
 			      Sign ^= TmpState3;
-			      TmpState22 &= ~(0x1ul << Pos2);
+			      TmpState22 &= ~(((ULONGLONG) 0x1ul) << Pos2);
 			      --Pos2;
 			    }
-			  if ((Sign & 0x1ul) != 0x0ul)		  
+			  if ((Sign & ((ULONGLONG) 0x1ul)) != ((ULONGLONG) 0x0ul))		  
 			    Coefficient *= -1.0;
 			  for (int k = 0; k < nbrGroundStates; ++k)
 			    TmpEntanglementMatrices[k][TmpDestinationRealIndices[j]][minIndex - TmpMinIndex] += groundStates[k][TmpPos] * Coefficient;

@@ -493,73 +493,7 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets::GenerateSt
     this->RawGenerateStates(this->NbrFermions, this->NbrSite - 1, 0, 0l);
   else
     this->RawGenerateStates(this->NbrFermions, this->NbrSite - 1, this->NbrFermionsUp, 0, 0l);
-  long TmpLargeHilbertSpaceDimension = 0l;
-  int NbrTranslationX;
-  int NbrTranslationY;
-  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
-    {
-      if ((this->FindCanonicalForm(this->StateDescription[i], NbrTranslationX, NbrTranslationY) == this->StateDescription[i]))
-	{
-	  if (this->TestMomentumConstraint(this->StateDescription[i]) == true)
-	    {
-	      ++TmpLargeHilbertSpaceDimension;
-	    }
-	  else
-	    {
-	      this->StateDescription[i] = 0x0ul;
-	    }
-	}
-      else
-	{
-	  this->StateDescription[i] = 0x0ul;
-	}
-    }
-  if (TmpLargeHilbertSpaceDimension == 0l)
-    return 0l;
-  unsigned long* TmpStateDescription = new unsigned long [TmpLargeHilbertSpaceDimension];  
-  this->NbrStateInOrbit = new int [TmpLargeHilbertSpaceDimension];
-  this->ReorderingSign = new unsigned long [TmpLargeHilbertSpaceDimension];
-  TmpLargeHilbertSpaceDimension = 0l;
-  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
-    {
-      if (this->StateDescription[i] != 0x0ul)
-	{
-	  TmpStateDescription[TmpLargeHilbertSpaceDimension] = this->StateDescription[i];
-	  this->NbrStateInOrbit[TmpLargeHilbertSpaceDimension] = this->FindOrbitSize(this->StateDescription[i]);
-	  unsigned long& TmpSign = this->ReorderingSign[TmpLargeHilbertSpaceDimension];
-	  TmpSign = 0x0ul;	  
-	  int Index = 1;
-	  unsigned long TmpState =  this->StateDescription[i];
-	  for (int m = 0; m < this->MaxYMomentum; ++m)
-	    {
-	      unsigned long TmpState2 = TmpState;
-	      for (int n = 1; n < this->MaxXMomentum; ++n)
-		{
-		  TmpSign |= (this->GetSignAndApplySingleXTranslation(TmpState2) << Index) ^ ((TmpSign & (0x1ul << (Index - 1))) << 1);
-		  ++Index;
-		}
-	      TmpSign |= ((this->GetSignAndApplySingleYTranslation(TmpState) << Index) 
-			  ^ ((TmpSign & (0x1ul << (Index - this->MaxXMomentum))) << this->MaxXMomentum));
-	      ++Index;
-	    }
-	  ++TmpLargeHilbertSpaceDimension;
-	}
-    }
-  delete[] this->StateDescription;
-  this->StateDescription = TmpStateDescription;
-
-  this->StateHighestBit = new int [TmpLargeHilbertSpaceDimension];  
-  int CurrentMaxMomentum = (2 * this->MaxMomentum) + 1;
-  while (((this->StateDescription[0] >> CurrentMaxMomentum) & 0x1ul) == 0x0ul)
-    --CurrentMaxMomentum;
-  this->StateHighestBit[0] = CurrentMaxMomentum;
-  for (long i = 1l; i < TmpLargeHilbertSpaceDimension; ++i)
-    {
-      while (((this->StateDescription[i] >> CurrentMaxMomentum) & 0x1ul) == 0x0ul)
-	--CurrentMaxMomentum;
-      this->StateHighestBit[i] = CurrentMaxMomentum;
-    }
-  return TmpLargeHilbertSpaceDimension;
+  return this->CoreGenerateStates();
 }
 
 // generate all states corresponding to the constraints

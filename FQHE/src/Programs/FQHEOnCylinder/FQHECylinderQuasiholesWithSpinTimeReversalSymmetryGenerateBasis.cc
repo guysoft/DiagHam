@@ -428,61 +428,133 @@ int main(int argc, char** argv)
 	      cout << "can't open " << UsedEigenstateFileName[i] << endl;
 	    }
 	}  
-      delete[]  SingleLayerVectors;   
-    }
 
-  for (int OrbitalIndex = 0; OrbitalIndex <= NbrFluxQuanta; ++OrbitalIndex)
-    {
-      RealSymmetricMatrix TmpAdAd(EffectiveSubspaceDimension, true);
-      int TmpMomentumShift = (2 * OrbitalIndex) - NbrFluxQuanta;
-      for (int i = 0; i < EffectiveSubspaceDimension; ++i)
+      char* OutputMatrixFileNameExtension = new char[128];
+      sprintf (OutputMatrixFileNameExtension, "_effective_%d_n_0_", EffectiveSubspaceDimension);
+      char* OutputMatrixFileNameExtension1 = ReplaceString(TmpOutputFileName, "_n_0_", OutputMatrixFileNameExtension);
+      
+      for (int OrbitalIndex = 0; OrbitalIndex <= NbrFluxQuanta; ++OrbitalIndex)
 	{
-	  int UpLayerNbrParticlesRight = (TwoLayerNbrParticles[TwoLayerIndices[i]] + TwoLayerSzSector) / 2;
-	  int DownLayerNbrParticlesRight  = (TwoLayerNbrParticles[TwoLayerIndices[i]] - TwoLayerSzSector) / 2;  
-	  int UpLayerLzValueRight  = TwoLayerUpLzValues[TwoLayerIndices[i]];
-	  int DownLayerLzValueRight  = TwoLayerUpLzValues[TwoLayerIndices[i]] - TwoLayerLzSector;
-	  for (int j = i + 1; j < EffectiveSubspaceDimension; ++j)
+	  RealSymmetricMatrix TmpAdAd(EffectiveSubspaceDimension, true);
+	  int TmpMomentumShift = (2 * OrbitalIndex) - NbrFluxQuanta;
+	  for (int i = 0; i < EffectiveSubspaceDimension; ++i)
 	    {
-	      int UpLayerNbrParticlesLeft = (TwoLayerNbrParticles[TwoLayerIndices[j]] + TwoLayerSzSector) / 2;
-	      int DownLayerNbrParticlesLeft  = (TwoLayerNbrParticles[TwoLayerIndices[j]] - TwoLayerSzSector) / 2;  
-	      int UpLayerLzValueLeft  = TwoLayerUpLzValues[TwoLayerIndices[j]];
-	      int DownLayerLzValueLeft  = TwoLayerUpLzValues[TwoLayerIndices[j]] - TwoLayerLzSector;
-	      if (((UpLayerNbrParticlesRight + 1) == UpLayerNbrParticlesLeft) && ((UpLayerLzValueRight + TmpMomentumShift ) == UpLayerLzValueLeft) &&
-		  ((DownLayerNbrParticlesRight + 1) == DownLayerNbrParticlesLeft) && ((DownLayerLzValueRight - TmpMomentumShift ) == DownLayerLzValueLeft))
+	      int UpLayerNbrParticlesRight = (TwoLayerNbrParticles[TwoLayerIndices[i]] + TwoLayerSzSector) / 2;
+	      int DownLayerNbrParticlesRight  = (TwoLayerNbrParticles[TwoLayerIndices[i]] - TwoLayerSzSector) / 2;  
+	      int UpLayerLzValueRight  = TwoLayerUpLzValues[TwoLayerIndices[i]];
+	      int DownLayerLzValueRight  = TwoLayerUpLzValues[TwoLayerIndices[i]] - TwoLayerLzSector;
+	      int UpLayerGlobalIndexRight = UsedEigenstateGlobalIndex[UpLayerNbrParticlesRight][(UpLayerLzValueRight- MinLzValues[UpLayerNbrParticlesRight]) / 2][TwoLayerUpIndices[TwoLayerIndices[i]]];
+	      int DownLayerGlobalIndexRight = UsedEigenstateGlobalIndex[DownLayerNbrParticlesRight][(DownLayerLzValueRight - MinLzValues[DownLayerNbrParticlesRight]) / 2][TwoLayerDownIndices[TwoLayerIndices[i]]];	      
+	      int TmpCount = 0;
+	      int TmpUpLayerGlobalIndexLeft;
+	      int TmpUpLayerGlobalIndexRight;
+	      for (int j = 0; j < EffectiveSubspaceDimension; ++j)
 		{
-		  
+		  int UpLayerNbrParticlesLeft = (TwoLayerNbrParticles[TwoLayerIndices[j]] + TwoLayerSzSector) / 2;
+		  int DownLayerNbrParticlesLeft  = (TwoLayerNbrParticles[TwoLayerIndices[j]] - TwoLayerSzSector) / 2;  
+		  int UpLayerLzValueLeft  = TwoLayerUpLzValues[TwoLayerIndices[j]];
+		  int DownLayerLzValueLeft  = TwoLayerUpLzValues[TwoLayerIndices[j]] - TwoLayerLzSector;
+		  int UpLayerGlobalIndexLeft = UsedEigenstateGlobalIndex[UpLayerNbrParticlesLeft][(UpLayerLzValueLeft- MinLzValues[UpLayerNbrParticlesLeft]) / 2][TwoLayerUpIndices[TwoLayerIndices[j]]];
+		  int DownLayerGlobalIndexLeft = UsedEigenstateGlobalIndex[DownLayerNbrParticlesLeft][(DownLayerLzValueLeft - MinLzValues[DownLayerNbrParticlesLeft]) / 2][TwoLayerDownIndices[TwoLayerIndices[j]]];	      
+		  if (((UpLayerNbrParticlesRight + 1) == UpLayerNbrParticlesLeft) && ((UpLayerLzValueRight + TmpMomentumShift) == UpLayerLzValueLeft) &&
+		      ((DownLayerNbrParticlesRight + 1) == DownLayerNbrParticlesLeft) && ((DownLayerLzValueRight - TmpMomentumShift) == DownLayerLzValueLeft))
+		    {
+		      ++TmpCount;
+		      TmpUpLayerGlobalIndexLeft = UpLayerGlobalIndexLeft;
+		      TmpUpLayerGlobalIndexRight = DownLayerGlobalIndexLeft;
+		    }		  
 		}
-	      if (((UpLayerNbrParticlesRight - 1) == UpLayerNbrParticlesLeft) && ((UpLayerLzValueRight - TmpMomentumShift ) == UpLayerLzValueLeft) &&
-		  ((DownLayerNbrParticlesRight - 1) == DownLayerNbrParticlesLeft) && ((DownLayerLzValueRight + TmpMomentumShift ) == DownLayerLzValueLeft))
+	      if (TmpCount > 0)
 		{
-		  
+		  RealVector TmpVectorUp (SingleLayerVectors[TmpUpLayerGlobalIndexLeft].GetVectorDimension());
+		  RealVector TmpVectorDown (SingleLayerVectors[TmpUpLayerGlobalIndexRight].GetVectorDimension());
+		  InputSpace->AduAu(OrbitalIndex, SingleLayerVectors[UpLayerGlobalIndexRight], TmpVectorUp, UpLayerNbrParticlesRight, UpLayerLzValueRight);
+		  InputSpace->AddAd(OrbitalIndex, SingleLayerVectors[DownLayerGlobalIndexRight], TmpVectorDown, DownLayerNbrParticlesRight, DownLayerLzValueRight);		  
+		  for (int j = 0; j < EffectiveSubspaceDimension; ++j)
+		    {
+		      int UpLayerNbrParticlesLeft = (TwoLayerNbrParticles[TwoLayerIndices[j]] + TwoLayerSzSector) / 2;
+		      int DownLayerNbrParticlesLeft  = (TwoLayerNbrParticles[TwoLayerIndices[j]] - TwoLayerSzSector) / 2;  
+		      int UpLayerLzValueLeft  = TwoLayerUpLzValues[TwoLayerIndices[j]];
+		      int DownLayerLzValueLeft  = TwoLayerUpLzValues[TwoLayerIndices[j]] - TwoLayerLzSector;
+		      int UpLayerGlobalIndexLeft = UsedEigenstateGlobalIndex[UpLayerNbrParticlesLeft][(UpLayerLzValueLeft - MinLzValues[UpLayerNbrParticlesLeft]) / 2][TwoLayerUpIndices[TwoLayerIndices[j]]];
+		      int DownLayerGlobalIndexLeft = UsedEigenstateGlobalIndex[DownLayerNbrParticlesLeft][(DownLayerLzValueLeft - MinLzValues[DownLayerNbrParticlesLeft]) / 2][TwoLayerDownIndices[TwoLayerIndices[j]]];	      
+		      if (((UpLayerNbrParticlesRight + 1) == UpLayerNbrParticlesLeft) && ((UpLayerLzValueRight + TmpMomentumShift) == UpLayerLzValueLeft) &&
+			  ((DownLayerNbrParticlesRight + 1) == DownLayerNbrParticlesLeft) && ((DownLayerLzValueRight - TmpMomentumShift) == DownLayerLzValueLeft))
+			{
+			  TmpAdAd.AddToMatrixElement(i, j, (SingleLayerVectors[DownLayerGlobalIndexLeft] * TmpVectorDown) * (SingleLayerVectors[UpLayerGlobalIndexLeft] * TmpVectorUp));
+			}
+		    }
 		}
-	      
 	    }
+	  char* TmpExtension = new char [128];
+	  sprintf (TmpExtension, "_cddcdu_%d.mat", OrbitalIndex);
+	  char* OutputMatrixFileNameExtension2 = ReplaceString(OutputMatrixFileNameExtension1, ".dat", TmpExtension);
+	  if (TmpAdAd.WriteMatrix(OutputMatrixFileNameExtension2) == false)
+	    {
+	      cout << "can't write " << OutputMatrixFileNameExtension2 << endl;
+	      return -1;
+	    }
+	  delete[] TmpExtension;
+	  delete[] OutputMatrixFileNameExtension2;
 	}
-   }
-  for (int OrbitalIndex = 0; OrbitalIndex <= NbrFluxQuanta; ++OrbitalIndex)
-    {
-      RealSymmetricMatrix TmpAduAu(EffectiveSubspaceDimension, true);
-      RealSymmetricMatrix TmpAddAd(EffectiveSubspaceDimension, true);
-       for (int i = 0; i < EffectiveSubspaceDimension; ++i)
+      for (int OrbitalIndex = 0; OrbitalIndex <= NbrFluxQuanta; ++OrbitalIndex)
 	{
-	  int UpLayerNbrParticlesRight = (TwoLayerNbrParticles[TwoLayerIndices[i]] + TwoLayerSzSector) / 2;
-	  int DownLayerNbrParticlesRight  = (TwoLayerNbrParticles[TwoLayerIndices[i]] - TwoLayerSzSector) / 2;  
-	  int UpLayerLzValueRight  = TwoLayerUpLzValues[TwoLayerIndices[i]];
-	  int DownLayerLzValueRight  = TwoLayerUpLzValues[TwoLayerIndices[i]] - TwoLayerLzSector;
-	  for (int j = i; j < EffectiveSubspaceDimension; ++j)
+	  RealSymmetricMatrix TmpAduAu(EffectiveSubspaceDimension, true);
+	  RealSymmetricMatrix TmpAddAd(EffectiveSubspaceDimension, true);
+	  for (int i = 0; i < EffectiveSubspaceDimension; ++i)
 	    {
-	      int UpLayerNbrParticlesLeft = (TwoLayerNbrParticles[TwoLayerIndices[j]] + TwoLayerSzSector) / 2;
-	      int DownLayerNbrParticlesLeft  = (TwoLayerNbrParticles[TwoLayerIndices[j]] - TwoLayerSzSector) / 2;  
-	      int UpLayerLzValueLeft  = TwoLayerUpLzValues[TwoLayerIndices[j]];
-	      int DownLayerLzValueLeft  = TwoLayerUpLzValues[TwoLayerIndices[j]] - TwoLayerLzSector;
-	      if ((UpLayerNbrParticlesRight == UpLayerNbrParticlesLeft) && (UpLayerLzValueRight == UpLayerLzValueLeft) &&
-		  (DownLayerNbrParticlesRight == DownLayerNbrParticlesLeft) && (DownLayerLzValueRight == DownLayerLzValueLeft))
-		{		  
-		}      
+	      int UpLayerNbrParticlesRight = (TwoLayerNbrParticles[TwoLayerIndices[i]] + TwoLayerSzSector) / 2;
+	      int DownLayerNbrParticlesRight  = (TwoLayerNbrParticles[TwoLayerIndices[i]] - TwoLayerSzSector) / 2;  
+	      int UpLayerLzValueRight  = TwoLayerUpLzValues[TwoLayerIndices[i]];
+	      int DownLayerLzValueRight  = TwoLayerUpLzValues[TwoLayerIndices[i]] - TwoLayerLzSector;
+	      int UpLayerGlobalIndexRight =  UsedEigenstateGlobalIndex[UpLayerNbrParticlesRight][(UpLayerLzValueRight- MinLzValues[UpLayerNbrParticlesRight]) / 2][TwoLayerUpIndices[TwoLayerIndices[i]]];
+	      int DownLayerGlobalIndexRight = UsedEigenstateGlobalIndex[DownLayerNbrParticlesRight][(DownLayerLzValueRight - MinLzValues[DownLayerNbrParticlesRight]) / 2][TwoLayerDownIndices[TwoLayerIndices[i]]];	      
+	      RealVector TmpVectorUp (SingleLayerVectors[UpLayerGlobalIndexRight].GetVectorDimension());
+	      RealVector TmpVectorDown (SingleLayerVectors[DownLayerGlobalIndexRight].GetVectorDimension());
+	      InputSpace->AduAu(OrbitalIndex, SingleLayerVectors[UpLayerGlobalIndexRight], TmpVectorUp, UpLayerNbrParticlesRight, UpLayerLzValueRight);
+	      InputSpace->AddAd(OrbitalIndex, SingleLayerVectors[DownLayerGlobalIndexRight], TmpVectorDown, DownLayerNbrParticlesRight, DownLayerLzValueRight);
+	      for (int j = i; j < EffectiveSubspaceDimension; ++j)
+		{
+		  int UpLayerNbrParticlesLeft = (TwoLayerNbrParticles[TwoLayerIndices[j]] + TwoLayerSzSector) / 2;
+		  int DownLayerNbrParticlesLeft  = (TwoLayerNbrParticles[TwoLayerIndices[j]] - TwoLayerSzSector) / 2;  
+		  int UpLayerLzValueLeft  = TwoLayerUpLzValues[TwoLayerIndices[j]];
+		  int DownLayerLzValueLeft  = TwoLayerUpLzValues[TwoLayerIndices[j]] - TwoLayerLzSector;
+		  int UpLayerGlobalIndexLeft = UsedEigenstateGlobalIndex[UpLayerNbrParticlesLeft][(UpLayerLzValueLeft - MinLzValues[UpLayerNbrParticlesLeft]) / 2][TwoLayerUpIndices[TwoLayerIndices[j]]];
+		  int DownLayerGlobalIndexLeft = UsedEigenstateGlobalIndex[DownLayerNbrParticlesLeft][(DownLayerLzValueLeft - MinLzValues[DownLayerNbrParticlesLeft]) / 2][TwoLayerDownIndices[TwoLayerIndices[j]]];	      
+		  if ((UpLayerNbrParticlesRight == UpLayerNbrParticlesLeft) && (UpLayerLzValueRight == UpLayerLzValueLeft) &&
+		      (DownLayerNbrParticlesRight == DownLayerNbrParticlesLeft) && (DownLayerLzValueRight == DownLayerLzValueLeft) &&
+		      (TwoLayerDownIndices[TwoLayerIndices[i]] == TwoLayerDownIndices[TwoLayerIndices[j]]))
+		    {			  
+		      TmpAduAu.AddToMatrixElement(j, i, SingleLayerVectors[UpLayerGlobalIndexLeft] * TmpVectorUp);
+		    }      		  
+		  if ((UpLayerNbrParticlesRight == UpLayerNbrParticlesLeft) && (UpLayerLzValueRight == UpLayerLzValueLeft) &&
+		      (DownLayerNbrParticlesRight == DownLayerNbrParticlesLeft) && (DownLayerLzValueRight == DownLayerLzValueLeft) &&
+		      (TwoLayerUpIndices[TwoLayerIndices[i]] == TwoLayerUpIndices[TwoLayerIndices[j]]))
+		    {			  
+		      TmpAddAd.AddToMatrixElement(j, i, SingleLayerVectors[DownLayerGlobalIndexLeft] * TmpVectorDown);
+		    }      		  
+		}
 	    }
+	  char* TmpExtension = new char [128];
+	  sprintf (TmpExtension, "_cducu_%d.mat", OrbitalIndex);
+	  char* OutputMatrixFileNameExtension2 = ReplaceString(OutputMatrixFileNameExtension1, ".dat", TmpExtension);
+	  if (TmpAduAu.WriteMatrix(OutputMatrixFileNameExtension2) == false)
+	    {
+	      cout << "can't write " << OutputMatrixFileNameExtension2 << endl;
+	      return -1;
+	    }
+	  delete[] OutputMatrixFileNameExtension2;
+	  sprintf (TmpExtension, "_cddcd_%d.mat", OrbitalIndex);
+	  OutputMatrixFileNameExtension2 = ReplaceString(OutputMatrixFileNameExtension1, ".dat", TmpExtension);
+	  if (TmpAddAd.WriteMatrix(OutputMatrixFileNameExtension2) == false)
+	    {
+	      cout << "can't write " << OutputMatrixFileNameExtension2 << endl;
+	      return -1;
+	    }
+	  delete[] TmpExtension;
+	  delete[] OutputMatrixFileNameExtension2;
 	}
+      delete[]  SingleLayerVectors;   
     }
 
   delete[] TwoLayerEnergies;

@@ -805,6 +805,84 @@ ostream& QuasiholeOnSphereWithSpinAndPairing::PrintState (ostream& Str, int stat
   return Str;
 }
 
+// apply a^\dagger_u_m to a given state defined only in the up layer
+//
+// m = index for destruction operators
+// inputState = reference of the state to act on
+// outputState  = reference of the state where the result will be stored
+// nbrParticlesUp = number of particles for the up layer input state
+// lzUp = momentum of the up layer input state
+
+void QuasiholeOnSphereWithSpinAndPairing::Adu (int m, RealVector& inputState, RealVector& outputState, int nbrParticlesUp, int lzUp)
+{
+  outputState.ClearVector();
+}
+  
+// apply a^\dagger_d_m to a given state defined only in the up layer
+//
+// m = index for destruction operators
+// inputState = reference of the state to act on
+// outputState  = reference of the state where the result will be stored
+// nbrParticlesDown = number of particles for the down layer input state
+// lzDown = momentum of the down layer input state
+
+void QuasiholeOnSphereWithSpinAndPairing::Add (int m, RealVector& inputState, RealVector& outputState, int nbrParticlesUp, int lzUp)
+{
+  outputState.ClearVector();
+}
+  
+// apply a_u_m to a given state defined only in the up layer
+//
+// m = index for destruction operators
+// inputState = reference of the state to act on
+// outputState  = reference of the state where the result will be stored
+// nbrParticlesUp = number of particles for the up layer input state
+// lzUp = momentum of the up layer input state
+
+void QuasiholeOnSphereWithSpinAndPairing::Au (int m, RealVector& inputState, RealVector& outputState, int nbrParticlesUp, int lzUp)
+{
+  outputState.ClearVector();
+}
+  
+// apply a_d_m to a given state defined only in the up layer
+//
+// m = index for destruction operators
+// inputState = reference of the state to act on
+// outputState  = reference of the state where the result will be stored
+// nbrParticlesDown = number of particles for the down layer input state
+// lzDown = momentum of the down layer input state
+
+void QuasiholeOnSphereWithSpinAndPairing::Ad (int m, RealVector& inputState, RealVector& outputState, int nbrParticlesUp, int lzUp)
+{
+  outputState.ClearVector();
+}
+  
+// apply a^\dagger_u_m a_u_m to a given state defined only in the up layer
+//
+// m = index for destruction operators
+// inputState = reference of the state to act on
+// outputState  = reference of the state where the result will be stored
+// nbrParticlesUp = number of particles in the up layer
+// lzUp = momentum of the up layer eigenstate
+
+void QuasiholeOnSphereWithSpinAndPairing::AduAu (int m, RealVector& inputState, RealVector& outputState, int nbrParticlesUp, int lzUp)
+{
+  outputState.ClearVector();
+}
+  
+// apply a^\dagger_u_m a_u_m to a given state defined only in the down layer
+//
+// m = index for destruction operators
+// inputState = reference of the state to act on
+// outputState  = reference of the state where the result will be stored
+// nbrParticlesDown = number of particles in the down layer
+// lzDown = momentum of the down layer eigenstate
+
+void QuasiholeOnSphereWithSpinAndPairing::AddAd (int m, RealVector& inputState, RealVector& outputState, int nbrParticlesDown, int lzDown)
+{
+  outputState.ClearVector();
+}
+  
 // convert a given state from a given  n-body basis basis to another one
 //
 // state = reference on the vector to convert

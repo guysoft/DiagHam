@@ -40,9 +40,17 @@
 #include <iostream>
 
 
+#ifdef __128_BIT_LONGLONG__
+#define FERMION_LATTICE_REALSPACE_SU2_SZ_MASK_LONG ((((ULONGLONG) (0x5555555555555555ul)) << 64) | ((ULONGLONG) (0x5555555555555555ul)))
+#else
+#define FERMION_LATTICE_REALSPACE_SU2_SZ_MASK_LONG ((((ULONGLONG) (0x55555555ul)) << 32) | ((ULONGLONG) (0x55555555ul)))
+#endif
+
 
 class FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong : public FermionOnTorusWithSpinAndMagneticTranslationsLong
 {
+
+  friend class FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong;
 
  protected:
 
@@ -381,6 +389,15 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong : public FermionOnTo
   // return avlue = maximum momentum along the y axis
   virtual int GetMaxYMomentum();
 
+  // Apply the Sz operator to flip all the spins and compute the fermonic sign if any
+  //
+  // index = index of the initial state  on state description
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state  
+  virtual int ApplySzSymmetry (int index, double& coefficient, int nbrTranslationX, int nbrTranslationY);
+
  protected:
 
   // find state index
@@ -407,6 +424,11 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong : public FermionOnTo
   //
   // return value = Hilbert space dimension
   virtual long GenerateStates();
+
+  // generate all states corresponding to the constraints (core part of the method)
+  //
+  // return value = Hilbert space dimension
+  virtual long CoreGenerateStates();
 
   // generate all states corresponding to the constraints
   // 
@@ -1180,6 +1202,39 @@ inline double FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong::AddAd (int 
 inline double FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong::AduAu (int index, int m)
 {
   return this->FermionOnTorusWithSpinAndMagneticTranslationsLong::AduAu (index, m);
+}
+
+// Apply the Sz operator to flip all the spins and compute the fermonic sign if any
+//
+// index = index of the initial state  on state description
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+// nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state  
+
+inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong::ApplySzSymmetry (int index, double& coefficient, int nbrTranslationX, int nbrTranslationY)
+{
+  
+  ULONGLONG TmpState = this->StateDescription[index];
+  ULONGLONG TmpState2 = ((TmpState >> 1) ^ TmpState) & FERMION_LATTICE_REALSPACE_SU2_SZ_MASK_LONG;
+  TmpState2 |= TmpState2 << 1;
+  TmpState2 ^= TmpState; 
+
+  TmpState &= (TmpState >> 1);
+  TmpState &= FERMION_LATTICE_REALSPACE_SU2_SZ_MASK_LONG;
+#ifdef __128_BIT_LONGLONG__
+  TmpState ^= (TmpState >> 64);
+#endif
+  TmpState ^= (TmpState >> 32);
+  TmpState ^= (TmpState >> 16);
+  TmpState ^= (TmpState >> 8);
+  TmpState ^= (TmpState >> 4);
+  TmpState ^= (TmpState >> 2);
+  coefficient = 1.0;
+  if ((TmpState & ((ULONGLONG) 0x1ul)) != ((ULONGLONG) 0x0ul))
+    coefficient = -1.0;
+  this->ProdATemporaryNbrStateInOrbit = this->NbrStateInOrbit[index];
+  return this->SymmetrizeAdAdResult(TmpState2, coefficient, nbrTranslationX, nbrTranslationY);
 }
 
 #endif

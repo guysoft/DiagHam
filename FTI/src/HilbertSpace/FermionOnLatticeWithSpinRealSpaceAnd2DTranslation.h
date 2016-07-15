@@ -469,6 +469,11 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // return value = Hilbert space dimension
   virtual long GenerateStates();
 
+  // generate all states corresponding to the constraints (core part of the method)
+  //
+  // return value = Hilbert space dimension
+  virtual long CoreGenerateStates();
+
   // generate all states corresponding to the constraints
   // 
   // nbrFermions = number of fermions

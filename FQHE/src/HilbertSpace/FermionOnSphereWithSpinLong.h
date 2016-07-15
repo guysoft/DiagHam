@@ -95,6 +95,8 @@ class FermionOnSphereWithSpinLong :  public ParticleOnSphereWithSpin
   // Lz maximum value associated to temporary state used when applying ProdA operator
   int ProdALzMax;
 
+  // target space for operations leaving the Hilbert-space
+  FermionOnSphereWithSpinLong* TargetSpace;
 
  public:
 

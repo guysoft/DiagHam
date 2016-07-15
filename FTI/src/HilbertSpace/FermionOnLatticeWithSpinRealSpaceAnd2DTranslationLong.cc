@@ -525,6 +525,16 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong::GenerateStates()
     this->RawGenerateStates(this->NbrFermions, this->NbrSite - 1, 0l);
   else
     this->RawGenerateStates(this->NbrFermions, this->NbrSite - 1, this->NbrFermionsUp, 0l);
+  return this->CoreGenerateStates();
+}
+
+
+// generate all states corresponding to the constraints (core part of the method)
+//
+// return value = Hilbert space dimension
+
+long FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong::CoreGenerateStates()
+{
   long TmpLargeHilbertSpaceDimension = 0l;
   int NbrTranslationX;
   int NbrTranslationY;

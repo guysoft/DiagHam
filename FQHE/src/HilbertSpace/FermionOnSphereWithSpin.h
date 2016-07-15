@@ -112,7 +112,7 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   int ProdALzMax;
 
   // target space for operations leaving the Hilbert-space
-  FermionOnSphereWithSpin *TargetSpace;
+  FermionOnSphereWithSpin* TargetSpace;
 
 
  public:

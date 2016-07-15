@@ -1,5 +1,5 @@
 #include "Hamiltonian/SpinChainJ1J2HamiltonianWithTranslations.h"
-#include "Hamiltonian/SpinChainAKLTRealHamiltonianWithTranslations.h"
+#include "Hamiltonian/SpinChainJ1J2RealHamiltonianWithTranslations.h"
 
 #include "HilbertSpace/Spin1_2ChainWithTranslations.h"
 #include "HilbertSpace/Spin1ChainWithTranslations.h"
@@ -202,7 +202,7 @@ int main(int argc, char** argv)
 			  if (Manager.GetBoolean("disable-realhamiltonian") == false)
 			    {
 			      Lanczos.SetRealAlgorithms();
-			      SpinChainAKLTRealHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins);
+			      SpinChainJ1J2RealHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins, J1Value, J2Value);
 			      GenericRealMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
 							  FirstRun, TmpEigenstateString);
 			      MainTaskOperation TaskOperation (&Task);
@@ -310,7 +310,7 @@ int main(int argc, char** argv)
 		      if (Manager.GetBoolean("disable-realhamiltonian") == false)
 			{
 			  Lanczos.SetRealAlgorithms();
-			  SpinChainAKLTRealHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins);
+			  SpinChainJ1J2RealHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins, J1Value, J2Value);
 			  GenericRealMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
 						   FirstRun, TmpEigenstateString);
 			  MainTaskOperation TaskOperation (&Task);

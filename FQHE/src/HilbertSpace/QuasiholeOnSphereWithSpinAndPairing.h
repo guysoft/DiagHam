@@ -191,6 +191,61 @@ class QuasiholeOnSphereWithSpinAndPairing :  public ParticleOnSphereWithSpin
   // return value = number of left states that are connected to the initial state
   virtual int AddAd (int index, int m, int*& leftIndices, double*& interactionElements);
   
+
+  // apply a^\dagger_u_m to a given state defined only in the up layer
+  //
+  // m = index for destruction operators
+  // inputState = reference of the state to act on
+  // outputState  = reference of the state where the result will be stored
+  // nbrParticlesUp = number of particles for the up layer input state
+  // lzUp = momentum of the up layer input state
+  virtual void Adu (int m, RealVector& inputState, RealVector& outputState, int nbrParticlesUp, int lzUp);
+  
+  // apply a^\dagger_d_m to a given state defined only in the up layer
+  //
+  // m = index for destruction operators
+  // inputState = reference of the state to act on
+  // outputState  = reference of the state where the result will be stored
+  // nbrParticlesDown = number of particles for the down layer input state
+  // lzDown = momentum of the down layer input state  
+  virtual void Add (int m, RealVector& inputState, RealVector& outputState, int nbrParticlesUp, int lzUp);
+  
+  // apply a_u_m to a given state defined only in the up layer
+  //
+  // m = index for destruction operators
+  // inputState = reference of the state to act on
+  // outputState  = reference of the state where the result will be stored
+  // nbrParticlesUp = number of particles for the up layer input state
+  // lzUp = momentum of the up layer input state  
+  virtual void Au (int m, RealVector& inputState, RealVector& outputState, int nbrParticlesUp, int lzUp);
+  
+  // apply a_d_m to a given state defined only in the up layer
+  //
+  // m = index for destruction operators
+  // inputState = reference of the state to act on
+  // outputState  = reference of the state where the result will be stored
+  // nbrParticlesDown = number of particles for the down layer input state
+  // lzDown = momentum of the down layer input state
+  virtual void Ad (int m, RealVector& inputState, RealVector& outputState, int nbrParticlesUp, int lzUp);
+
+  // apply a^\dagger_u_m a_u_m to a given state defined only in the up layer
+  //
+  // m = index for destruction operators
+  // inputState = reference of the state to act on
+  // outputState  = reference of the state where the result will be stored
+  // nbrParticlesUp = number of particles in the up layer
+  // lzUp = momentum of the up layer eigenstate
+  virtual void AduAu (int m, RealVector& inputState, RealVector& outputState, int nbrParticlesUp, int lzUp);
+  
+  // apply a^\dagger_u_m a_u_m to a given state defined only in the down layer
+  //
+  // m = index for destruction operators
+  // inputState = reference of the state to act on
+  // outputState  = reference of the state where the result will be stored
+  // nbrParticlesDown = number of particles in the down layer
+  // lzDown = momentum of the down layer eigenstate
+  virtual void AddAd (int m, RealVector& inputState, RealVector& outputState, int nbrParticlesDown, int lzDown);
+  
   // get the number of particles in a given state
   //
   // index =index of the state whose number of particles has to be returned
