@@ -15,6 +15,7 @@
 #include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets.h"
@@ -660,7 +661,7 @@ int main(int argc, char** argv)
 					      }
 					    else
 					      {
-						Space = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, MinNbrSinglets, Sz, 													   ((int) TightBindingModel->GetNbrBands()  * TightBindingModel->GetNbrStatePerBand()), i, NbrCellX, j,  NbrCellY, 10000000ul);
+						Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, MinNbrSinglets, Sz, 													   ((int) TightBindingModel->GetNbrBands()  * TightBindingModel->GetNbrStatePerBand()), i, NbrCellX, j,  NbrCellY, 10000000ul);
 					      }
 					  }
 					else
