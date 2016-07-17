@@ -815,7 +815,7 @@ ostream& QuasiholeOnSphereWithSpinAndPairing::PrintState (ostream& Str, int stat
 
 void QuasiholeOnSphereWithSpinAndPairing::Adu (int m, RealVector& inputState, RealVector& outputState, int nbrParticlesUp, int lzUp)
 {
-  outputState.ClearVector();
+  outputState.TransposeMultiply(this->SingleLayerAnnihilationMatrices[m][nbrParticlesUp - 1][(lzUp + this->GetMaximalLzSingleLayer(nbrParticlesUp - 1)) / 2], inputState);
 }
   
 // apply a^\dagger_d_m to a given state defined only in the up layer
@@ -826,9 +826,9 @@ void QuasiholeOnSphereWithSpinAndPairing::Adu (int m, RealVector& inputState, Re
 // nbrParticlesDown = number of particles for the down layer input state
 // lzDown = momentum of the down layer input state
 
-void QuasiholeOnSphereWithSpinAndPairing::Add (int m, RealVector& inputState, RealVector& outputState, int nbrParticlesUp, int lzUp)
+void QuasiholeOnSphereWithSpinAndPairing::Add (int m, RealVector& inputState, RealVector& outputState, int nbrParticlesDown, int lzDown)
 {
-  outputState.ClearVector();
+  outputState.TransposeMultiply(this->SingleLayerAnnihilationMatrices[m][nbrParticlesDown - 1][(lzDown + this->GetMaximalLzSingleLayer(nbrParticlesDown - 1)) / 2], inputState);
 }
   
 // apply a_u_m to a given state defined only in the up layer
@@ -841,7 +841,16 @@ void QuasiholeOnSphereWithSpinAndPairing::Add (int m, RealVector& inputState, Re
 
 void QuasiholeOnSphereWithSpinAndPairing::Au (int m, RealVector& inputState, RealVector& outputState, int nbrParticlesUp, int lzUp)
 {
-  outputState.ClearVector();
+  if ((this->SingleLayerAnnihilationMatrices[m][nbrParticlesUp] == 0) ||
+      (this->SingleLayerAnnihilationMatrices[m][nbrParticlesUp][(lzUp + this->GetMaximalLzSingleLayer(nbrParticlesUp)) / 2].GetNbrRow() == 0))
+    {
+      outputState.ClearVector();
+    }
+  else
+    {
+      cout << "Au " << this->SingleLayerAnnihilationMatrices[m][nbrParticlesUp][(lzUp + this->GetMaximalLzSingleLayer(nbrParticlesUp)) / 2].GetNbrRow() << " " << this->SingleLayerAnnihilationMatrices[m][nbrParticlesUp][(lzUp + this->GetMaximalLzSingleLayer(nbrParticlesUp)) / 2].GetNbrColumn() << " " << inputState.GetVectorDimension() << " " << outputState.GetVectorDimension() << endl;
+      outputState.Multiply(this->SingleLayerAnnihilationMatrices[m][nbrParticlesUp][(lzUp + this->GetMaximalLzSingleLayer(nbrParticlesUp)) / 2], inputState);
+    }
 }
   
 // apply a_d_m to a given state defined only in the up layer
@@ -852,9 +861,18 @@ void QuasiholeOnSphereWithSpinAndPairing::Au (int m, RealVector& inputState, Rea
 // nbrParticlesDown = number of particles for the down layer input state
 // lzDown = momentum of the down layer input state
 
-void QuasiholeOnSphereWithSpinAndPairing::Ad (int m, RealVector& inputState, RealVector& outputState, int nbrParticlesUp, int lzUp)
+void QuasiholeOnSphereWithSpinAndPairing::Ad (int m, RealVector& inputState, RealVector& outputState, int nbrParticlesDown, int lzDown)
 {
-  outputState.ClearVector();
+  if ((this->SingleLayerAnnihilationMatrices[m][nbrParticlesDown] == 0) ||
+      (this->SingleLayerAnnihilationMatrices[m][nbrParticlesDown][(lzDown + this->GetMaximalLzSingleLayer(nbrParticlesDown)) / 2].GetNbrRow() == 0))
+    {
+      outputState.ClearVector();
+    }
+  else
+    {
+      cout << "Ad " << this->SingleLayerAnnihilationMatrices[m][nbrParticlesDown][(lzDown + this->GetMaximalLzSingleLayer(nbrParticlesDown)) / 2].GetNbrRow() << " " << this->SingleLayerAnnihilationMatrices[m][nbrParticlesDown][(lzDown + this->GetMaximalLzSingleLayer(nbrParticlesDown)) / 2].GetNbrColumn() << " " << inputState.GetVectorDimension() << " " << outputState.GetVectorDimension() << endl;
+      outputState.Multiply(this->SingleLayerAnnihilationMatrices[m][nbrParticlesDown][(lzDown + this->GetMaximalLzSingleLayer(nbrParticlesDown)) / 2], inputState);
+    }
 }
   
 // apply a^\dagger_u_m a_u_m to a given state defined only in the up layer
@@ -866,8 +884,8 @@ void QuasiholeOnSphereWithSpinAndPairing::Ad (int m, RealVector& inputState, Rea
 // lzUp = momentum of the up layer eigenstate
 
 void QuasiholeOnSphereWithSpinAndPairing::AduAu (int m, RealVector& inputState, RealVector& outputState, int nbrParticlesUp, int lzUp)
-{
-  outputState.ClearVector();
+{  
+  outputState.Multiply(this->SingleLayerAdAMatrices[m][nbrParticlesUp][(lzUp + this->GetMaximalLzSingleLayer(nbrParticlesUp)) / 2], inputState);
 }
   
 // apply a^\dagger_u_m a_u_m to a given state defined only in the down layer
@@ -880,7 +898,7 @@ void QuasiholeOnSphereWithSpinAndPairing::AduAu (int m, RealVector& inputState, 
 
 void QuasiholeOnSphereWithSpinAndPairing::AddAd (int m, RealVector& inputState, RealVector& outputState, int nbrParticlesDown, int lzDown)
 {
-  outputState.ClearVector();
+  outputState.Multiply(this->SingleLayerAdAMatrices[m][nbrParticlesDown][(lzDown + this->GetMaximalLzSingleLayer(nbrParticlesDown)) / 2], inputState);
 }
   
 // convert a given state from a given  n-body basis basis to another one

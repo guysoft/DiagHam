@@ -96,6 +96,9 @@ int main(int argc, char** argv)
   int KValue = 1;
   int RValue = 2;
 
+  timeval TotalStartingTime;
+  gettimeofday (&(TotalStartingTime), 0);
+
   MultiColumnASCIIFile SingleLayerSpectrumFile;
   if (SingleLayerSpectrumFile.Parse(Manager.GetString("singlelayer-spectra")) == false)
     {
@@ -175,6 +178,7 @@ int main(int argc, char** argv)
   int* TwoLayerUpLzValues = new int [TotalNbrLevels];
   int* TwoLayerDownIndices = new int [TotalNbrLevels];
   double* TwoLayerEnergies = new double [TotalNbrLevels];
+  double* TwoLayerBareEnergies = new double [TotalNbrLevels];
   TotalNbrLevels = 0;
   for (int UpLayerNbrParticles = 0; UpLayerNbrParticles <= MaxNbrParticlesPerLayer; ++UpLayerNbrParticles)
     {
@@ -196,6 +200,7 @@ int main(int argc, char** argv)
 		      for (int j = 0; j < NbrEnergies[DownLayerNbrParticles][DownLayerLzSector]; ++j)
 			{
 			  TwoLayerEnergies[TotalNbrLevels] = Energies[UpLayerNbrParticles][UpLayerLzSector][i] + Energies[DownLayerNbrParticles][DownLayerLzSector][j] + TmpEnergyShift;
+			  TwoLayerBareEnergies[TotalNbrLevels] = Energies[UpLayerNbrParticles][UpLayerLzSector][i] + Energies[DownLayerNbrParticles][DownLayerLzSector][j];
 			  TwoLayerNbrParticles[TotalNbrLevels] = TmpNbrParticles;
 			  TwoLayerIndices[TotalNbrLevels] = TotalNbrLevels;
 			  TwoLayerUpLzValues[TotalNbrLevels] = ShiftedUpLayerLzSector;
@@ -279,7 +284,7 @@ int main(int argc, char** argv)
   ofstream File;  
   File.open(OutputFileName, ios::binary | ios::out); 
   File.precision(14); 
-  File << "# N Sz Lz N_u N_d Lz_u Lz_d E file_index_up file_index_down" << endl;
+  File << "# N Sz Lz N_u N_d Lz_u Lz_d E E-E_c file_index_up file_index_down" << endl;
   for (int i = 0; i < EffectiveSubspaceDimension; ++i)
     {
       int UpLayerNbrParticles = (TwoLayerNbrParticles[TwoLayerIndices[i]] + TwoLayerSzSector) / 2;
@@ -287,7 +292,7 @@ int main(int argc, char** argv)
       int DownLayerLzValue = TwoLayerUpLzValues[TwoLayerIndices[i]] - TwoLayerLzSector;
       File << TwoLayerNbrParticles[TwoLayerIndices[i]] << " " << TwoLayerSzSector << " " << TwoLayerLzSector
 	   << " " << UpLayerNbrParticles << " " << DownLayerNbrParticles << " " 
-	   << TwoLayerUpLzValues[TwoLayerIndices[i]] << " " << DownLayerLzValue << " " << TwoLayerEnergies[i]
+	   << TwoLayerUpLzValues[TwoLayerIndices[i]] << " " << DownLayerLzValue << " " << TwoLayerEnergies[i] << " " << TwoLayerBareEnergies[TwoLayerIndices[i]]
 	   << " " << UsedEigenstateGlobalIndex[UpLayerNbrParticles][(TwoLayerUpLzValues[TwoLayerIndices[i]] - MinLzValues[UpLayerNbrParticles]) / 2][TwoLayerUpIndices[TwoLayerIndices[i]]]
 	   << " " << UsedEigenstateGlobalIndex[DownLayerNbrParticles][(DownLayerLzValue - MinLzValues[DownLayerNbrParticles]) / 2][TwoLayerDownIndices[TwoLayerIndices[i]]] << endl;
     }
@@ -338,11 +343,24 @@ int main(int argc, char** argv)
 	  sprintf (FilePrefix, "bosons_cylinder_ratio_%.6f", Ratio);
 	}
     }
+  timeval TotalEndingTime;
+  gettimeofday (&(TotalEndingTime), 0);
+  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+			((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));               
+  cout << "Effective basis generated in " << Dt << "s" << endl;
 
   if (Manager.GetBoolean("build-eigenstates"))
     {
-      InputSpace = new QuasiholeOnSphereWithSpinAndPairing (KValue, RValue, TwoLayerLzSector, NbrFluxQuanta, TwoLayerSzSector, 
-							    Manager.GetString("directory"), FilePrefix, true);
+      if (Manager.GetBoolean("build-effectivehamiltonian"))
+	{
+	  InputSpace = new QuasiholeOnSphereWithSpinAndPairing (KValue, RValue, TwoLayerLzSector, NbrFluxQuanta, TwoLayerSzSector, 
+								Manager.GetString("directory"), FilePrefix);
+	}
+      else
+	{
+	  InputSpace = new QuasiholeOnSphereWithSpinAndPairing (KValue, RValue, TwoLayerLzSector, NbrFluxQuanta, TwoLayerSzSector, 
+								Manager.GetString("directory"), FilePrefix, true);
+	}
       char* TmpEigenstateBasisFile = 0;
       if (Manager.GetBoolean("write-eigenstatebasis") == true)
 	{
@@ -418,8 +436,9 @@ int main(int argc, char** argv)
       if (InputSpace == 0)
 	{
 	  InputSpace = new QuasiholeOnSphereWithSpinAndPairing (KValue, RValue, TwoLayerLzSector, NbrFluxQuanta, TwoLayerSzSector, 
-								Manager.GetString("directory"), FilePrefix, true);
+								Manager.GetString("directory"), FilePrefix);
 	}
+      gettimeofday (&(TotalStartingTime), 0);
       RealVector* SingleLayerVectors = new RealVector[NbrGlobalIndices];
       for (int i = 0; i < NbrGlobalIndices; ++i)
 	{
@@ -432,7 +451,11 @@ int main(int argc, char** argv)
       char* OutputMatrixFileNameExtension = new char[128];
       sprintf (OutputMatrixFileNameExtension, "_effective_%d_n_0_", EffectiveSubspaceDimension);
       char* OutputMatrixFileNameExtension1 = ReplaceString(TmpOutputFileName, "_n_0_", OutputMatrixFileNameExtension);
-      
+	  
+      char* OutputMatrixFileNameList = ReplaceString(OutputMatrixFileNameExtension1, ".dat", ".ham.list");
+      ofstream File;  
+      File.open(OutputMatrixFileNameList, ios::binary | ios::out); 
+    
       for (int OrbitalIndex = 0; OrbitalIndex <= NbrFluxQuanta; ++OrbitalIndex)
 	{
 	  RealSymmetricMatrix TmpAdAd(EffectiveSubspaceDimension, true);
@@ -447,7 +470,7 @@ int main(int argc, char** argv)
 	      int DownLayerGlobalIndexRight = UsedEigenstateGlobalIndex[DownLayerNbrParticlesRight][(DownLayerLzValueRight - MinLzValues[DownLayerNbrParticlesRight]) / 2][TwoLayerDownIndices[TwoLayerIndices[i]]];	      
 	      int TmpCount = 0;
 	      int TmpUpLayerGlobalIndexLeft;
-	      int TmpUpLayerGlobalIndexRight;
+	      int TmpDownLayerGlobalIndexLeft;
 	      for (int j = 0; j < EffectiveSubspaceDimension; ++j)
 		{
 		  int UpLayerNbrParticlesLeft = (TwoLayerNbrParticles[TwoLayerIndices[j]] + TwoLayerSzSector) / 2;
@@ -456,20 +479,21 @@ int main(int argc, char** argv)
 		  int DownLayerLzValueLeft  = TwoLayerUpLzValues[TwoLayerIndices[j]] - TwoLayerLzSector;
 		  int UpLayerGlobalIndexLeft = UsedEigenstateGlobalIndex[UpLayerNbrParticlesLeft][(UpLayerLzValueLeft- MinLzValues[UpLayerNbrParticlesLeft]) / 2][TwoLayerUpIndices[TwoLayerIndices[j]]];
 		  int DownLayerGlobalIndexLeft = UsedEigenstateGlobalIndex[DownLayerNbrParticlesLeft][(DownLayerLzValueLeft - MinLzValues[DownLayerNbrParticlesLeft]) / 2][TwoLayerDownIndices[TwoLayerIndices[j]]];	      
-		  if (((UpLayerNbrParticlesRight + 1) == UpLayerNbrParticlesLeft) && ((UpLayerLzValueRight + TmpMomentumShift) == UpLayerLzValueLeft) &&
-		      ((DownLayerNbrParticlesRight + 1) == DownLayerNbrParticlesLeft) && ((DownLayerLzValueRight - TmpMomentumShift) == DownLayerLzValueLeft))
+		  if (((UpLayerNbrParticlesRight - 1) == UpLayerNbrParticlesLeft) && ((UpLayerLzValueRight - TmpMomentumShift) == UpLayerLzValueLeft) &&
+		      ((DownLayerNbrParticlesRight - 1) == DownLayerNbrParticlesLeft) && ((DownLayerLzValueRight - TmpMomentumShift) == DownLayerLzValueLeft))
 		    {
 		      ++TmpCount;
 		      TmpUpLayerGlobalIndexLeft = UpLayerGlobalIndexLeft;
-		      TmpUpLayerGlobalIndexRight = DownLayerGlobalIndexLeft;
+		      TmpDownLayerGlobalIndexLeft = DownLayerGlobalIndexLeft;
 		    }		  
 		}
 	      if (TmpCount > 0)
 		{
 		  RealVector TmpVectorUp (SingleLayerVectors[TmpUpLayerGlobalIndexLeft].GetVectorDimension());
-		  RealVector TmpVectorDown (SingleLayerVectors[TmpUpLayerGlobalIndexRight].GetVectorDimension());
-		  InputSpace->AduAu(OrbitalIndex, SingleLayerVectors[UpLayerGlobalIndexRight], TmpVectorUp, UpLayerNbrParticlesRight, UpLayerLzValueRight);
-		  InputSpace->AddAd(OrbitalIndex, SingleLayerVectors[DownLayerGlobalIndexRight], TmpVectorDown, DownLayerNbrParticlesRight, DownLayerLzValueRight);		  
+		  RealVector TmpVectorDown (SingleLayerVectors[TmpDownLayerGlobalIndexLeft].GetVectorDimension());
+		  InputSpace->Au(OrbitalIndex, SingleLayerVectors[UpLayerGlobalIndexRight], TmpVectorUp, UpLayerNbrParticlesRight, UpLayerLzValueRight);
+//		  cout << TmpVectorUp << endl;
+		  InputSpace->Ad(OrbitalIndex, SingleLayerVectors[DownLayerGlobalIndexRight], TmpVectorDown, DownLayerNbrParticlesRight, DownLayerLzValueRight);		  
 		  for (int j = 0; j < EffectiveSubspaceDimension; ++j)
 		    {
 		      int UpLayerNbrParticlesLeft = (TwoLayerNbrParticles[TwoLayerIndices[j]] + TwoLayerSzSector) / 2;
@@ -478,10 +502,19 @@ int main(int argc, char** argv)
 		      int DownLayerLzValueLeft  = TwoLayerUpLzValues[TwoLayerIndices[j]] - TwoLayerLzSector;
 		      int UpLayerGlobalIndexLeft = UsedEigenstateGlobalIndex[UpLayerNbrParticlesLeft][(UpLayerLzValueLeft - MinLzValues[UpLayerNbrParticlesLeft]) / 2][TwoLayerUpIndices[TwoLayerIndices[j]]];
 		      int DownLayerGlobalIndexLeft = UsedEigenstateGlobalIndex[DownLayerNbrParticlesLeft][(DownLayerLzValueLeft - MinLzValues[DownLayerNbrParticlesLeft]) / 2][TwoLayerDownIndices[TwoLayerIndices[j]]];	      
-		      if (((UpLayerNbrParticlesRight + 1) == UpLayerNbrParticlesLeft) && ((UpLayerLzValueRight + TmpMomentumShift) == UpLayerLzValueLeft) &&
-			  ((DownLayerNbrParticlesRight + 1) == DownLayerNbrParticlesLeft) && ((DownLayerLzValueRight - TmpMomentumShift) == DownLayerLzValueLeft))
+		      if (((UpLayerNbrParticlesRight - 1) == UpLayerNbrParticlesLeft) && ((UpLayerLzValueRight - TmpMomentumShift) == UpLayerLzValueLeft) &&
+			  ((DownLayerNbrParticlesRight - 1) == DownLayerNbrParticlesLeft) && ((DownLayerLzValueRight - TmpMomentumShift) == DownLayerLzValueLeft))
 			{
-			  TmpAdAd.AddToMatrixElement(i, j, (SingleLayerVectors[DownLayerGlobalIndexLeft] * TmpVectorDown) * (SingleLayerVectors[UpLayerGlobalIndexLeft] * TmpVectorUp));
+			  if (SingleLayerVectors[UpLayerGlobalIndexLeft].GetVectorDimension() != TmpVectorUp.GetVectorDimension())
+			    {
+			      cout << "error 1" << endl;
+			    }
+			  if (SingleLayerVectors[DownLayerGlobalIndexLeft].GetVectorDimension() != TmpVectorDown.GetVectorDimension())
+			    {
+			      cout << "error 2 : " << SingleLayerVectors[DownLayerGlobalIndexLeft].GetVectorDimension() << " " <<  TmpVectorDown.GetVectorDimension() << endl;
+			    }
+			  double Tmp = (SingleLayerVectors[DownLayerGlobalIndexLeft] * TmpVectorDown) * (SingleLayerVectors[UpLayerGlobalIndexLeft] * TmpVectorUp);		 
+			  TmpAdAd.AddToMatrixElement(i, j, Tmp);
 			}
 		    }
 		}
@@ -489,6 +522,7 @@ int main(int argc, char** argv)
 	  char* TmpExtension = new char [128];
 	  sprintf (TmpExtension, "_cddcdu_%d.mat", OrbitalIndex);
 	  char* OutputMatrixFileNameExtension2 = ReplaceString(OutputMatrixFileNameExtension1, ".dat", TmpExtension);
+	  File << OutputMatrixFileNameExtension2 << " 0.0" << endl;
 	  if (TmpAdAd.WriteMatrix(OutputMatrixFileNameExtension2) == false)
 	    {
 	      cout << "can't write " << OutputMatrixFileNameExtension2 << endl;
@@ -538,6 +572,7 @@ int main(int argc, char** argv)
 	  char* TmpExtension = new char [128];
 	  sprintf (TmpExtension, "_cducu_%d.mat", OrbitalIndex);
 	  char* OutputMatrixFileNameExtension2 = ReplaceString(OutputMatrixFileNameExtension1, ".dat", TmpExtension);
+	  File << OutputMatrixFileNameExtension2 << " 0.0" << endl;
 	  if (TmpAduAu.WriteMatrix(OutputMatrixFileNameExtension2) == false)
 	    {
 	      cout << "can't write " << OutputMatrixFileNameExtension2 << endl;
@@ -546,6 +581,7 @@ int main(int argc, char** argv)
 	  delete[] OutputMatrixFileNameExtension2;
 	  sprintf (TmpExtension, "_cddcd_%d.mat", OrbitalIndex);
 	  OutputMatrixFileNameExtension2 = ReplaceString(OutputMatrixFileNameExtension1, ".dat", TmpExtension);
+	  File << OutputMatrixFileNameExtension2 << " 0.0" << endl;
 	  if (TmpAddAd.WriteMatrix(OutputMatrixFileNameExtension2) == false)
 	    {
 	      cout << "can't write " << OutputMatrixFileNameExtension2 << endl;
@@ -555,8 +591,12 @@ int main(int argc, char** argv)
 	  delete[] OutputMatrixFileNameExtension2;
 	}
       delete[]  SingleLayerVectors;   
+      gettimeofday (&(TotalEndingTime), 0);
+      Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+		     ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));               
+      cout << "Effective hamiltonian generated in " << Dt << "s" << endl;
     }
-
+  File.close();
   delete[] TwoLayerEnergies;
   delete[] TwoLayerNbrParticles;
   delete[] TwoLayerIndices;
