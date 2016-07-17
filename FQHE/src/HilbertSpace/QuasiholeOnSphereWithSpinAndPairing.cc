@@ -848,7 +848,6 @@ void QuasiholeOnSphereWithSpinAndPairing::Au (int m, RealVector& inputState, Rea
     }
   else
     {
-      cout << "Au " << this->SingleLayerAnnihilationMatrices[m][nbrParticlesUp][(lzUp + this->GetMaximalLzSingleLayer(nbrParticlesUp)) / 2].GetNbrRow() << " " << this->SingleLayerAnnihilationMatrices[m][nbrParticlesUp][(lzUp + this->GetMaximalLzSingleLayer(nbrParticlesUp)) / 2].GetNbrColumn() << " " << inputState.GetVectorDimension() << " " << outputState.GetVectorDimension() << endl;
       outputState.Multiply(this->SingleLayerAnnihilationMatrices[m][nbrParticlesUp][(lzUp + this->GetMaximalLzSingleLayer(nbrParticlesUp)) / 2], inputState);
     }
 }
@@ -870,7 +869,6 @@ void QuasiholeOnSphereWithSpinAndPairing::Ad (int m, RealVector& inputState, Rea
     }
   else
     {
-      cout << "Ad " << this->SingleLayerAnnihilationMatrices[m][nbrParticlesDown][(lzDown + this->GetMaximalLzSingleLayer(nbrParticlesDown)) / 2].GetNbrRow() << " " << this->SingleLayerAnnihilationMatrices[m][nbrParticlesDown][(lzDown + this->GetMaximalLzSingleLayer(nbrParticlesDown)) / 2].GetNbrColumn() << " " << inputState.GetVectorDimension() << " " << outputState.GetVectorDimension() << endl;
       outputState.Multiply(this->SingleLayerAnnihilationMatrices[m][nbrParticlesDown][(lzDown + this->GetMaximalLzSingleLayer(nbrParticlesDown)) / 2], inputState);
     }
 }
