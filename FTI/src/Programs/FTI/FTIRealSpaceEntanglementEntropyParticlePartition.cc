@@ -27,6 +27,9 @@
 #include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceLong.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong.h"
 
 #include "HilbertSpace/BosonOnLatticeRealSpace.h"
 #include "HilbertSpace/BosonOnLatticeRealSpaceAnd2DTranslation.h"
@@ -382,9 +385,13 @@ int main(int argc, char** argv)
 	      if (SU2SpinFlag == false)
 		{
 		  if (TwoDTranslationFlag == false)
-		    Spaces[TmpIndex] = new FermionOnLatticeRealSpace (NbrParticles, NbrSites);
+		    {
+		      Spaces[TmpIndex] = new FermionOnLatticeRealSpace (NbrParticles, NbrSites);
+		    }
 		  else
-		    Spaces[TmpIndex] = new FermionOnLatticeRealSpaceAnd2DTranslation (NbrParticles, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+		    {
+		      Spaces[TmpIndex] = new FermionOnLatticeRealSpaceAnd2DTranslation (NbrParticles, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+		    }
 		}
 	      else
 		{
@@ -394,7 +401,14 @@ int main(int argc, char** argv)
 			{
 			  if (TwoDTranslationFlag == false)
 			    { 
-			      Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpace (NbrParticles, NbrSites);
+			      if (NbrSites <= 32)
+				{
+				  Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpace (NbrParticles, NbrSites);
+				}
+			      else
+				{
+				  Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceLong (NbrParticles, NbrSites);
+				}
 			    }
 			  else
 			    {
@@ -402,26 +416,53 @@ int main(int argc, char** argv)
 				{
 				  if (MinNbrSinglets == 0)
 				    {
-				      Spaces[TmpIndex] = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles, NbrSites, (SzSymmetrySector == -1), 
-															  TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+				      if (NbrSites <= 32)
+					{
+					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles, NbrSites, (SzSymmetrySector == -1), 
+															      TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+					}
+				      else
+					{
+					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong (NbrParticles, NbrSites, (SzSymmetrySector == -1), 
+																  TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+					}
 				    }
 				  else
 				    {
-				      Spaces[TmpIndex] = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, MinNbrSinglets, NbrSites, 
-																	(SzSymmetrySector == -1), 
-																	TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+				      if (NbrSites <= 32)
+					{
+					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, MinNbrSinglets, NbrSites, 
+																	    (SzSymmetrySector == -1), 
+																	    TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+					}
+				      else
+					{
+					}
 				    }
 				}
 			      else
 				{
 				  if (MinNbrSinglets == 0)
 				    {
-				      Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+				      if (NbrSites <= 32)
+					{
+					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+					}
+				      else
+					{
+					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong (NbrParticles, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+					}
 				    }
 				  else
 				    {
-				      Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, MinNbrSinglets, NbrSites, TotalKx[i], 
-															      NbrSiteX, TotalKy[i], NbrSiteY);
+				      if (NbrSites <= 32)
+					{
+					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, MinNbrSinglets, NbrSites, TotalKx[i], 
+																  NbrSiteX, TotalKy[i], NbrSiteY);
+					}
+				      else
+					{
+					}
 				    }
 				}
 			    }
@@ -430,7 +471,14 @@ int main(int argc, char** argv)
 			{
 			  if (TwoDTranslationFlag == false)
 			    {
-			      Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpace (NbrParticles, TotalSpin, NbrSites, 10000000);
+			      if (NbrSites <= 32)
+				{
+				  Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpace (NbrParticles, TotalSpin, NbrSites, 10000000);
+				}
+			      else
+				{
+				  Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceLong (NbrParticles, TotalSpin, NbrSites, 10000000);
+				}
 			    }
 			  else
 			    {
@@ -438,27 +486,56 @@ int main(int argc, char** argv)
 				{
 				  if (MinNbrSinglets == 0)
 				    {
-				      Spaces[TmpIndex] = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles, TotalSpin, NbrSites, (SzSymmetrySector == -1),
-															  TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY, 10000000);
+				      if (NbrSites <= 32)
+					{
+					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles, TotalSpin, NbrSites, (SzSymmetrySector == -1),
+															      TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY, 10000000);
+					}
+				      else
+					{
+					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong (NbrParticles, TotalSpin, NbrSites, 
+																  (SzSymmetrySector == -1),
+																  TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY, 10000000);
+					}
 				    }
 				  else
 				    {
-				      Spaces[TmpIndex] = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, MinNbrSinglets, TotalSpin, NbrSites, 
-																	(SzSymmetrySector == -1),
-																	TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+				      if (NbrSites <= 32)
+					{
+					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, MinNbrSinglets, TotalSpin, 
+																	    NbrSites, (SzSymmetrySector == -1),
+																	    TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+					}
+				      else
+					{
+					}
 				    }
 				}
 			      else
 				{
 				  if (MinNbrSinglets == 0)
 				    {
-				      Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, TotalSpin, NbrSites, 
-														TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY, 10000000);
+				      if (NbrSites <= 32)
+					{
+					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, TotalSpin, NbrSites, 
+														    TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY, 10000000);
+					}
+				      else
+					{
+					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong (NbrParticles, TotalSpin, NbrSites, 
+															TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY, 10000000);
+					}
 				    }
 				  else
 				    {
-				      Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, MinNbrSinglets, TotalSpin, NbrSites, 
-															      TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY, 10000000);
+				      if (NbrSites <= 32)
+					{
+					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, MinNbrSinglets, TotalSpin, NbrSites, 
+																  TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY, 10000000);
+					}
+				      else
+					{
+					}
 				    }
 				}
 			    }

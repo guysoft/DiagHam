@@ -307,14 +307,14 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong : public FermionOnTo
   // state = reference on the state to convert
   // space = pointer to the Hilbert space where state is defined
   // return value = state in the (Kx,Ky) basis
-  //  virtual ComplexVector ConvertToKxKyBasis(ComplexVector& state, ParticleOnSphere* space);
+  virtual ComplexVector ConvertToKxKyBasis(ComplexVector& state, ParticleOnSphere* space);
 
   // convert a state defined in the (Kx,Ky) basis into a state in the real space basis
   //
   // state = reference on the state to convert
   // space = pointer to the Hilbert space where state is defined
   // return value = state in the (Kx,Ky) basis
-  //  virtual ComplexVector ConvertFromKxKyBasis(ComplexVector& state, ParticleOnSphere* space);
+  virtual ComplexVector ConvertFromKxKyBasis(ComplexVector& state, ParticleOnSphere* space);
 
   // convert a given state from a given  n-body basis basis to another one
   //
@@ -605,9 +605,9 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong : public FermionOnTo
   // groundState = reference on the total system ground state
   // densityMatrix = reference on the density matrix where result has to stored
   // return value = number of components that have been added to the density matrix
-/*   virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnTorusWithSpinAndMagneticTranslations* complementaryHilbertSpace,   */
-/* 								  ParticleOnTorusWithSpinAndMagneticTranslations* destinationHilbertSpace, */
-/* 								  ComplexVector& groundState, HermitianMatrix* densityMatrix); */
+  virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnTorusWithSpinAndMagneticTranslations* complementaryHilbertSpace,  
+								  ParticleOnTorusWithSpinAndMagneticTranslations* destinationHilbertSpace,
+								  ComplexVector& groundState, HermitianMatrix* densityMatrix);
 
 };
 

@@ -615,6 +615,13 @@ class RealVector : public Vector
   // return value = reference on current vector
   RealVector& Multiply (const RealMatrix&  M, RealVector& V);
 
+  // left multiply a vector with the transpose of a real matrix and use to store result in current vector (without creating temporary vector)
+  //
+  // M = matrix to use
+  // V = vector to multiply
+  // return value = reference on current vector
+  RealVector& TransposeMultiply (const RealMatrix&  M, RealVector& V);
+
   // do a partial left multication of a vector with a real matrix and store result in current vector (without creating temporary vector)
   //
   // M = matrix to use

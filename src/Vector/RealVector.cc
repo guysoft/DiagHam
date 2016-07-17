@@ -2332,6 +2332,31 @@ RealVector& RealVector::Multiply (const RealMatrix&  M, RealVector& V)
   return *this;
 }
 
+// left multiply a vector with the transpose of a real matrix and use to store result in current vector (without creating temporary vector)
+//
+// M = matrix to use
+// V = vector to multiply
+// return value = reference on current vector
+
+RealVector& RealVector::TransposeMultiply (const RealMatrix&  M, RealVector& V)
+{
+  if ((this->Dimension == 0) || (V.Dimension != M.NbrRow))
+    return *this;
+  this->Localize();
+  V.Localize();
+  if (this->Dimension != M.NbrColumn)
+   this->Resize(M.NbrColumn);
+  for (int i = 0; i < this->Dimension; i ++)
+    {
+      this->Components[i] = M.Columns[i].Components[0] * V.Components[0];
+      for (int j = 1; j < V.Dimension; j++)
+	this->Components[i] += M.Columns[i].Components[j] * V.Components[j];
+    }
+  this->Delocalize(true);
+  V.Delocalize();
+  return *this;
+}
+
 // do a partial left multication of a vector with a real matrix and store result in current vector (without creating temporary vector)
 //
 // M = matrix to use
