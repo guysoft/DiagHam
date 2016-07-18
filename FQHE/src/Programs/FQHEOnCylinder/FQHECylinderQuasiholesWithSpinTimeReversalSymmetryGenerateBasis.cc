@@ -64,7 +64,7 @@ int main(int argc, char** argv)
   (*OutputGroup) += new BooleanOption ('\n', "build-eigenstates", "build the eigenstates in the full quasihole basis");
   (*OutputGroup) += new BooleanOption ('\n', "write-eigenstatebasis", "write a file that describes the effective eigenstate basis");
   (*OutputGroup) += new BooleanOption ('\n', "build-effectivehamiltonian", "compute and store all the  building blocks to generate the Hamiltonian in the effective basis");
-
+  (*OutputGroup) += new BooleanOption ('\n', "write-fullspectrum", "write the full spectrum of the two decoupled layer problem (including the charging energy)");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -216,6 +216,24 @@ int main(int argc, char** argv)
 
   cout << "total number of levels in the Sz=" << TwoLayerSzSector << " Ky=" << TwoLayerLzSector << " : " << TotalNbrLevels << endl; 
   SortArrayUpOrdering<int>(TwoLayerEnergies, TwoLayerIndices, TotalNbrLevels);
+  if (Manager.GetBoolean("write-fullspectrum"))
+    {
+      char* OutputFileName = ReplaceString(TmpOutputFileName, ".dat", "_fullspectrum.dat");
+      ofstream File;  
+      File.open(OutputFileName, ios::binary | ios::out); 
+      File.precision(14); 
+      File << "# N Sz Lz N_u N_d Lz_u Lz_d E" << endl;
+      for (int i = 0; i < TotalNbrLevels; ++i)
+	{
+	  int UpLayerNbrParticles = (TwoLayerNbrParticles[TwoLayerIndices[i]] + TwoLayerSzSector) / 2;
+	  int DownLayerNbrParticles = (TwoLayerNbrParticles[TwoLayerIndices[i]] - TwoLayerSzSector) / 2;  
+	  int DownLayerLzValue = TwoLayerUpLzValues[TwoLayerIndices[i]] - TwoLayerLzSector;
+	  File << TwoLayerNbrParticles[TwoLayerIndices[i]] << " " << TwoLayerSzSector << " " << TwoLayerLzSector
+	       << " " << UpLayerNbrParticles << " " << DownLayerNbrParticles << " " 
+	       << TwoLayerUpLzValues[TwoLayerIndices[i]] << " " << DownLayerLzValue << " " << TwoLayerEnergies[i] << endl;
+	}     
+      File.close();
+    }
   int EffectiveSubspaceDimension = Manager.GetInteger("nbr-states");
   double Error = Manager.GetDouble("degeneracy-error");
   if (EffectiveSubspaceDimension == TotalNbrLevels)
