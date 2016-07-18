@@ -57,6 +57,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-ky", "twice the total momentum of the two layer system", 0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "charging-energy", "factor in front of the charging energy (i.e 1/(2C))", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "average-nbrparticles", "average number of particles", 0.0);
+  (*SystemGroup) += new SingleIntegerOption ('\n', "optimize-chargingenergy", "find the optimal value of the charging energy such that it is minimal at the indicated number of particles (only valid if positive)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "fix-nbrparticles", "fix the number of particles for the two layer system (no restriction if negative)", -1);  
   (*SystemGroup) += new SingleDoubleOption ('\n', "degeneracy-error", "difference below which two energies are considered to be degenerate", 1.0e-12);
   (*SystemGroup) += new SingleStringOption ('\n', "directory", "use a specific directory for the input data instead of the current one (only useful when building the eigenstates in the full quasihole basis)");
@@ -180,6 +181,7 @@ int main(int argc, char** argv)
   double* TwoLayerEnergies = new double [TotalNbrLevels];
   double* TwoLayerBareEnergies = new double [TotalNbrLevels];
   TotalNbrLevels = 0;
+  double ChargingEnergy = Manager.GetDouble("charging-energy");
   for (int UpLayerNbrParticles = 0; UpLayerNbrParticles <= MaxNbrParticlesPerLayer; ++UpLayerNbrParticles)
     {
       if (NbrLzSectors[UpLayerNbrParticles] != 0)
@@ -188,9 +190,13 @@ int main(int argc, char** argv)
 	  if ((DownLayerNbrParticles >= 0) && (DownLayerNbrParticles <= MaxNbrParticlesPerLayer) && (NbrLzSectors[DownLayerNbrParticles] != 0) && ((FixTotalNbrParticles < 0) || (FixTotalNbrParticles == (DownLayerNbrParticles + UpLayerNbrParticles))))
 	    {
 	      int TmpNbrParticles = UpLayerNbrParticles + DownLayerNbrParticles;
-	      double TmpEnergyShift = (Manager.GetDouble("average-nbrparticles") - ((double) TmpNbrParticles));
-	      TmpEnergyShift *= TmpEnergyShift;	      
-	      TmpEnergyShift *= Manager.GetDouble("charging-energy");
+	      double TmpEnergyShift = 0.0;
+	      if (Manager.GetInteger("optimize-chargingenergy") < 0)
+		{
+		  TmpEnergyShift = (Manager.GetDouble("average-nbrparticles") - ((double) TmpNbrParticles));
+		  TmpEnergyShift *= TmpEnergyShift;	      
+		  TmpEnergyShift *= ChargingEnergy;
+		}
 	      for (int UpLayerLzSector = 0; UpLayerLzSector < NbrLzSectors[UpLayerNbrParticles]; ++UpLayerLzSector)
 		{
 		  int ShiftedUpLayerLzSector = ((UpLayerLzSector * 2) + MinLzValues[UpLayerNbrParticles]);
@@ -215,6 +221,48 @@ int main(int argc, char** argv)
     }
 
   cout << "total number of levels in the Sz=" << TwoLayerSzSector << " Ky=" << TwoLayerLzSector << " : " << TotalNbrLevels << endl; 
+
+  if (Manager.GetInteger("optimize-chargingenergy") >= 0)
+    {
+      double MinEnergyNbrParticlesMinus2 = 1.0e200;
+      double MinEnergyNbrParticlesPlus2 = 1.0e200;
+      double MinEnergyNbrParticles = 1.0e200;
+      int OptimizeNbrParticles = Manager.GetInteger("optimize-chargingenergy");
+      double AverageNbrParticles = Manager.GetDouble("average-nbrparticles");
+      for (int i = 0; i < TotalNbrLevels; ++i)
+	{
+	  if (TwoLayerNbrParticles[i] == OptimizeNbrParticles)
+	    {
+	      if (MinEnergyNbrParticles > TwoLayerBareEnergies[i])
+		MinEnergyNbrParticles = TwoLayerBareEnergies[i];
+	    }
+	  else
+	    {
+	      if (TwoLayerNbrParticles[i] == (OptimizeNbrParticles - 2))
+		{
+		  if (MinEnergyNbrParticlesMinus2  > TwoLayerBareEnergies[i])
+		    MinEnergyNbrParticlesMinus2 = TwoLayerBareEnergies[i];
+		}
+	      else
+		{
+		  if (TwoLayerNbrParticles[i] == (OptimizeNbrParticles + 2))
+		    { 
+		      if (MinEnergyNbrParticlesPlus2  > TwoLayerBareEnergies[i])
+			MinEnergyNbrParticlesPlus2 = TwoLayerBareEnergies[i];
+		    }
+		}
+	    }
+	} 
+      ChargingEnergy = (MinEnergyNbrParticlesMinus2 - MinEnergyNbrParticlesPlus2) / (8.0 * (((double) OptimizeNbrParticles) - AverageNbrParticles));
+      cout << "optimal charging energy = " << ChargingEnergy << endl;
+      for (int i = 0; i < TotalNbrLevels; ++i)
+	{
+	  TwoLayerEnergies[i] = TwoLayerBareEnergies[i] + (ChargingEnergy * (((double) TwoLayerNbrParticles[i]) - AverageNbrParticles) * 
+							   (((double) TwoLayerNbrParticles[i]) - AverageNbrParticles));
+	}
+    }
+
+
   SortArrayUpOrdering<int>(TwoLayerEnergies, TwoLayerIndices, TotalNbrLevels);
   if (Manager.GetBoolean("write-fullspectrum"))
     {
