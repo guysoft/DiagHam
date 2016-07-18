@@ -230,7 +230,7 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      sprintf (StatisticPrefix, "fermions_su2_minsinglets_%d",MinNbrSinglets); 
+	      sprintf (StatisticPrefix, "fermions_su2_minnbrsinglet_%d",MinNbrSinglets); 
 	    }
 	}
     }

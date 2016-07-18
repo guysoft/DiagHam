@@ -117,6 +117,7 @@ class DoubledSpin0_1_2_ChainWithTranslations : public AbstractDoubledSpinChainWi
   
   virtual void AddConvertFromGeneralSpaceWithMomentum(ComplexVector vSource,ComplexVector & vDestination);
   virtual void ConvertToGeneralSpaceWithMomentum(ComplexVector vSource,ComplexVector & vDestination);
+  virtual void ApplyInversionSymmetry(ComplexVector & sourceVector,  ComplexVector & destinationVector);  
   
  protected:
 

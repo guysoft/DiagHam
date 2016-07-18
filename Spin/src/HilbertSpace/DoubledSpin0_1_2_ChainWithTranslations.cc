@@ -30,6 +30,7 @@
 #include "HilbertSpace/Spin0_1_2_ChainWithTranslations.h"
 #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslations.h"
 #include "Matrix/RealSymmetricMatrix.h"
+#include "Matrix/RealDiagonalMatrix.h"
 #include "GeneralTools/ArrayTools.h"
 #include <iostream>
 #include <math.h>
@@ -125,7 +126,6 @@ DoubledSpin0_1_2_ChainWithTranslations::DoubledSpin0_1_2_ChainWithTranslations (
       this->GenerateLookUpTable(memorySize);
     }
   this->RescalingFactors = 0;
-//  cout <<"BraShiftNegativeSz = "<<BraShiftNegativeSz<<endl;
 }
  
 
@@ -937,3 +937,33 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
   return TmpDensityMatrix;
 }
 
+
+void  DoubledSpin0_1_2_ChainWithTranslations::ApplyInversionSymmetry(ComplexVector & sourceVector,  ComplexVector & destinationVector)
+{
+  RealDiagonalMatrix ZMatrix(9,true);
+  double  Tmp[3];
+  Tmp[0] = -1.0;Tmp[1] = -1.0;Tmp[2] = 1.0;
+  for(int i =0;i <9; i++)
+    {
+      ZMatrix.SetMatrixElement(i,i,Tmp[i%3] *Tmp[i/3] ); 
+    }
+  
+  double TmpFactor;
+  unsigned long OldState;
+  int TmpIndice;
+  unsigned long  TmpStateDescription;
+  for (int i =0; i <this->HilbertSpaceDimension; i++)
+    {
+      TmpFactor =1.0;
+      OldState = 0ul;
+      TmpStateDescription =  this->ChainDescription[i]; 
+      for (int p = 0 ; p <this->ChainLength ; p++)
+	{
+	  TmpIndice = (TmpStateDescription/this->PowerD[p]) % this->PowerD[1];
+	  if  (p%2 == 0 ) 
+	    TmpFactor*=ZMatrix(TmpIndice,TmpIndice);
+	  OldState+= TmpIndice*this->PowerD[this->ChainLength-p-1];
+	}
+      destinationVector[i] = Conj(TmpFactor*sourceVector[this->FindStateIndex(OldState)]) ;
+    }
+}
