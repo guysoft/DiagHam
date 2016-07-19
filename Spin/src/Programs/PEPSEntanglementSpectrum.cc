@@ -458,7 +458,7 @@ int main(int argc, char** argv)
 			  ofstream DensityMatrixFile;
 			  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
 			  DensityMatrixFile.precision(14);
-			  DensityMatrixFile << SubSystemSz << " " << TmpValue << " "<<log(TmpValue)<<endl;
+			  DensityMatrixFile << SubSystemSz << " " << TmpValue << " "<<-log(TmpValue)<<endl;
 			  DensityMatrixFile.close();
 			}		  
 		      if (TmpValue > 1e-14)
@@ -516,7 +516,7 @@ int main(int argc, char** argv)
 			  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
 			  DensityMatrixFile.precision(14);
 			  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-			    DensityMatrixFile << SubSystemSz << " " << SubSystemK<< " "<< TmpDiag[i] << endl;
+			    DensityMatrixFile << SubSystemSz << " " << SubSystemK<< " "<< TmpDiag[i] << " " <<-log(TmpDiag[i])<<endl;
 			  DensityMatrixFile.close();
 			}
 		      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
@@ -538,7 +538,7 @@ int main(int argc, char** argv)
 			      ofstream DensityMatrixFile;
 			      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
 			      DensityMatrixFile.precision(14);
-			      DensityMatrixFile << SubSystemSz << " " << SubSystemK<< " "<<TmpValue << endl;
+			      DensityMatrixFile << SubSystemSz << " " << SubSystemK<< " "<<TmpValue <<" " <<-log(TmpValue)<< endl;
 			      DensityMatrixFile.close();
 			    }		  
 			  if (TmpValue > 1e-14)
@@ -608,7 +608,7 @@ int main(int argc, char** argv)
 			  ofstream DensityMatrixFile;
 			  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
 			  DensityMatrixFile.precision(14);
-			  DensityMatrixFile << SubSystemSz << " " <<  SubSystemK<<" "<< TmpValue << " "<<log(TmpValue)<<endl;
+			  DensityMatrixFile << SubSystemSz << " " <<  SubSystemK<<" "<< TmpValue << " "<<-log(TmpValue)<<endl;
 			  DensityMatrixFile.close();
 			}		  
 		      if (TmpValue > 1e-14)
