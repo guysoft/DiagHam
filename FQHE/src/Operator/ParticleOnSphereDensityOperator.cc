@@ -237,6 +237,84 @@ RealVector& ParticleOnSphereDensityOperator::LowLevelAddMultiply(RealVector& vSo
   return vDestination;
 }
   
+// multiply a set of vectors by the current operator for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* ParticleOnSphereDensityOperator::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+									 int firstComponent, int nbrComponent)
+{
+  if (((int) this->Particle->GetLargeHilbertSpaceDimension()) == this->Particle->GetHilbertSpaceDimension())
+    {
+      int Last = firstComponent + nbrComponent;;
+      if (this->OperatorIndexDagger == this->OperatorIndex)
+	{
+	  for (int i = firstComponent; i < Last; ++i)
+	    {
+	      double TmpCoefficient = this->Particle->AdA(i, this->OperatorIndex);
+	      for (int k = 0; k < nbrVectors; ++k)
+		{
+		  vDestinations[k][i] += vSources[k][i] * TmpCoefficient;
+		}
+	    }
+	}
+      else
+	{
+	  int TmpIndex;
+	  double TmpCoefficient = 0.0;
+	  for (int i = firstComponent; i < Last; ++i)
+	    {
+	      TmpIndex =  this->Particle->AdA(i, this->OperatorIndexDagger, this->OperatorIndex, TmpCoefficient);
+	      if (TmpCoefficient != 0.0)
+		{
+		  for (int k = 0; k < nbrVectors; ++k)
+		    {
+		      vDestinations[k][TmpIndex] +=  vSources[k][i] * TmpCoefficient;
+		    }
+		}
+	    }
+	}
+    }
+  else
+    {
+      long Last = ((long) firstComponent) + ((long) nbrComponent);
+      if (this->OperatorIndexDagger == this->OperatorIndex)
+	{
+	  for (long i = firstComponent; i < Last; ++i)
+	    {
+	      double TmpCoefficient = this->Particle->AdA(i, this->OperatorIndex);
+	      for (int k = 0; k < nbrVectors; ++k)
+		{
+		  vDestinations[k][i] += vSources[k][i] * TmpCoefficient;
+		}
+	    }
+	}
+      else
+	{
+	  long TmpIndex;
+	  double TmpCoefficient = 0.0;
+	  for (long i = firstComponent; i < Last; ++i)
+	    {
+	      TmpIndex =  this->Particle->AdA(i, this->OperatorIndexDagger, this->OperatorIndex, TmpCoefficient);
+	      if (TmpCoefficient != 0.0)
+		{
+		  for (int k = 0; k < nbrVectors; ++k)
+		    {
+		      vDestinations[k][TmpIndex] +=  vSources[k][i] * TmpCoefficient;
+		    }
+		}
+	    }
+	}
+    }
+  return vDestinations;
+}
+
 
 // evaluate part of the matrix element, within a given of indices
 //
@@ -358,5 +436,83 @@ ComplexVector& ParticleOnSphereDensityOperator::LowLevelAddMultiply(ComplexVecto
   return vDestination;
 }
   
+// multiply a set of vectors by the current operator for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* ParticleOnSphereDensityOperator::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+									    int firstComponent, int nbrComponent)
+{
+  if (((int) this->Particle->GetLargeHilbertSpaceDimension()) == this->Particle->GetHilbertSpaceDimension())
+    {
+      int Last = firstComponent + nbrComponent;;
+      if (this->OperatorIndexDagger == this->OperatorIndex)
+	{
+	  for (int i = firstComponent; i < Last; ++i)
+	    {
+	      double TmpCoefficient = this->Particle->AdA(i, this->OperatorIndex);
+	      for (int k = 0; k < nbrVectors; ++k)
+		{
+		  vDestinations[k][i] += vSources[k][i] * TmpCoefficient;
+		}
+	    }
+	}
+      else
+	{
+	  int TmpIndex;
+	  double TmpCoefficient = 0.0;
+	  for (int i = firstComponent; i < Last; ++i)
+	    {
+	      TmpIndex =  this->Particle->AdA(i, this->OperatorIndexDagger, this->OperatorIndex, TmpCoefficient);
+	      if (TmpCoefficient != 0.0)
+		{
+		  for (int k = 0; k < nbrVectors; ++k)
+		    {
+		      vDestinations[k][TmpIndex] +=  vSources[k][i] * TmpCoefficient;
+		    }
+		}
+	    }
+	}
+    }
+  else
+    {
+      long Last = ((long) firstComponent) + ((long) nbrComponent);
+      if (this->OperatorIndexDagger == this->OperatorIndex)
+	{
+	  for (long i = firstComponent; i < Last; ++i)
+	    {
+	      double TmpCoefficient = this->Particle->AdA(i, this->OperatorIndex);
+	      for (int k = 0; k < nbrVectors; ++k)
+		{
+		  vDestinations[k][i] += vSources[k][i] * TmpCoefficient;
+		}
+	    }
+	}
+      else
+	{
+	  long TmpIndex;
+	  double TmpCoefficient = 0.0;
+	  for (long i = firstComponent; i < Last; ++i)
+	    {
+	      TmpIndex =  this->Particle->AdA(i, this->OperatorIndexDagger, this->OperatorIndex, TmpCoefficient);
+	      if (TmpCoefficient != 0.0)
+		{
+		  for (int k = 0; k < nbrVectors; ++k)
+		    {
+		      vDestinations[k][TmpIndex] +=  vSources[k][i] * TmpCoefficient;
+		    }
+		}
+	    }
+	}
+    }
+  return vDestinations;
+}
+
 
 

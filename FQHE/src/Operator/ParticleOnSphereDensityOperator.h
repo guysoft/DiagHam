@@ -107,7 +107,7 @@ class ParticleOnSphereDensityOperator : public AbstractOperator
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = corresponding matrix element
-  Complex PartialMatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent);
+  virtual Complex PartialMatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent);
 
   // multiply a vector by the current operator for a given range of indices 
   // and store result in another vector
@@ -117,9 +117,21 @@ class ParticleOnSphereDensityOperator : public AbstractOperator
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-				  int firstComponent, int nbrComponent);
+  virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+					  int firstComponent, int nbrComponent);
   
+  // multiply a set of vectors by the current operator for a given range of indices 
+  // and add result to another set of vectors, low level function (no architecture optimization)
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual RealVector* LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+						  int firstComponent, int nbrComponent);
+
   // evaluate part of the matrix element, within a given of indices
   //
   // V1 = vector to left multiply with current matrix
@@ -127,7 +139,7 @@ class ParticleOnSphereDensityOperator : public AbstractOperator
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = corresponding matrix element
-  Complex PartialMatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent);
+  virtual Complex PartialMatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent);
 
   // multiply a vector by the current operator for a given range of indices 
   // and store result in another vector
@@ -137,9 +149,21 @@ class ParticleOnSphereDensityOperator : public AbstractOperator
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-				     int firstComponent, int nbrComponent);
+  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+					     int firstComponent, int nbrComponent);
   
+  // multiply a set of vectors by the current operator for a given range of indices 
+  // and add result to another set of vectors, low level function (no architecture optimization)
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+						     int firstComponent, int nbrComponent);
+
 };
 
 #endif

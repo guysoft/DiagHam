@@ -62,6 +62,7 @@ class AbstractArchitectureOperation
       HamiltonianFullDiagonalize = 0x41,
       VectorSparseTensorMultiply = 0x42,
       MatrixFullDiagonalize = 0x43,
+      MultipleVectorOperatorMultiply = 0x44,
       Generic = 0x100,
       HamiltonianPrecalculation = 0x200,
       GenericHamiltonianParticlePrecalculation = 0x300,

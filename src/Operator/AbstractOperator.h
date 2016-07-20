@@ -35,12 +35,11 @@
 #include "config.h"
 #include "GeneralTools/GarbageFlag.h"
 #include "Vector/RealVector.h"
+#include "Vector/ComplexVector.h"
 
 #include <iostream>
 
 
-class ComplexVector;
-//class RealVector;
 class Complex;
 class Matrix;
 class RealSymmetricMatrix;
@@ -212,10 +211,58 @@ class AbstractOperator
   virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 					     int firstComponent, int nbrComponent);
 
+  // multiply a set of vectors by the current operator for a given range of indices 
+  // and store result in another set of vectors, low level function (no architecture optimization)
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors where result has to be stored
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual RealVector* LowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+					       int firstComponent, int nbrComponent);
+
+  // multiply a set of vectors by the current operator for a given range of indices 
+  // and add result to another set of vectors, low level function (no architecture optimization)
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual RealVector* LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+						  int firstComponent, int nbrComponent);
+
+  // multiply a set of vectors by the current operator for a given range of indices 
+  // and store result in another set of vectors, low level function (no architecture optimization)
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors where result has to be stored
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual ComplexVector* LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+						  int firstComponent, int nbrComponent);
+
+  // multiply a set of vectors by the current operator for a given range of indices 
+  // and add result to another set of vectors, low level function (no architecture optimization)
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+						     int firstComponent, int nbrComponent);
+
   // Output Stream overload
   //
   // Str = reference on output stream
-  // H = Hamiltonian to print
+  // O = Operator to print
   // return value = reference on output stream
   friend ostream& operator << (ostream& Str, AbstractOperator& O);
 
@@ -223,7 +270,7 @@ class AbstractOperator
   // Mathematica Output Stream overload
   //
   // Str = reference on Mathematica output stream
-  // H = Hamiltonian to print
+  // O = Operator to print
   // return value = reference on output stream
   friend MathematicaOutput& operator << (MathematicaOutput& Str, AbstractOperator& O);
 #endif

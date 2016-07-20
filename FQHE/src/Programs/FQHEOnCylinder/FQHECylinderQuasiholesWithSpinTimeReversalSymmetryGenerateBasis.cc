@@ -6,6 +6,9 @@
 #include "GeneralTools/StringTools.h"
 #include "GeneralTools/ArrayTools.h"
 
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
+
 #include "Tools/FQHEFiles/FQHEOnCylinderFileTools.h"
 
 #include "HilbertSpace/QuasiholeOnSphereWithSpinAndPairing.h"

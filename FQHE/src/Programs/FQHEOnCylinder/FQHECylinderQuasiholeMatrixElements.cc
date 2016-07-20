@@ -8,8 +8,13 @@
 
 #include "Options/Options.h"
 
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
+
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/ConfigurationParser.h"
+
+#include "Operator/ParticleOnSphereWithSpinDensityOperator.h"
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
@@ -56,7 +61,11 @@ int main(int argc, char** argv)
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
+
+  ArchitectureManager Architecture;
+
   Manager += SystemGroup;
+  Architecture.AddOptionGroup(&Manager);
   Manager += OutputGroup;
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
@@ -68,6 +77,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "cylinder-perimeter", "if non zero, fix the cylinder perimeter (in magnetic length unit) instead of the aspect ratio", 0);
   (*OutputGroup) += new BooleanOption  ('\n', "disable-ascii", "only store the binary files");
   (*OutputGroup) += new BooleanOption  ('\n', "disable-directory", "do not create a directory to store the data");
+  (*OutputGroup) += new BooleanOption  ('\n', "show-admissible", "show the admissible configurations");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -188,6 +198,8 @@ int main(int argc, char** argv)
 	  int RightStateMaxTotalLz = 0;
 	  for (int RightTotalLz = -RightStateMaxTotalLz; RightTotalLz <= RightStateMaxTotalLz; RightTotalLz += 2)
 	    {
+	      timeval TotalStartingTime;
+	      gettimeofday (&(TotalStartingTime), 0);
 	      ParticleOnSphere* RightSpace = 0;
 	      if (Statistics == true)
 		{
@@ -205,6 +217,11 @@ int main(int argc, char** argv)
 		      ++RightNbrQuasiholeStates;
 		    }
 		}
+	      timeval TotalEndingTime;
+	      gettimeofday (&(TotalEndingTime), 0);
+	      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+				    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));               
+	      cout << "finding admissible configurations done in " << Dt << "s" << endl;
 	      if (RightNbrQuasiholeStates > 0)
 		{
 		  cout << "---------------------------------------" << endl;
@@ -213,19 +230,34 @@ int main(int argc, char** argv)
 		  cout << "found " << RightNbrQuasiholeStates << " quasihole states" << endl;
 		  unsigned long** RightRootConfigurations = new unsigned long*[RightNbrQuasiholeStates];
 		  RightNbrQuasiholeStates = 0;
-		  cout << "admissible configurations : " << endl;
-		  for (long i = 0l; i < RightSpace->GetHilbertSpaceDimension(); ++i)
+		  if (Manager.GetBoolean("show-admissible"))
 		    {
-		      if (RightSpace->HasPauliExclusions(i, KValue, RValue + (KValue * FermionFactor)) == true)
+		      cout << "admissible configurations : " << endl;
+		      for (long i = 0l; i < RightSpace->GetHilbertSpaceDimension(); ++i)
 			{
-			  RightRootConfigurations[RightNbrQuasiholeStates] = new unsigned long[LzMax + 1];
-			  RightSpace->GetOccupationNumber(i, RightRootConfigurations[RightNbrQuasiholeStates]);
-			  for (int j = 0; j <= LzMax; ++j)
+			  if (RightSpace->HasPauliExclusions(i, KValue, RValue + (KValue * FermionFactor)) == true)
 			    {
-			      cout << RightRootConfigurations[RightNbrQuasiholeStates][j] << " ";
+			      RightRootConfigurations[RightNbrQuasiholeStates] = new unsigned long[LzMax + 1];
+			      RightSpace->GetOccupationNumber(i, RightRootConfigurations[RightNbrQuasiholeStates]);
+			      for (int j = 0; j <= LzMax; ++j)
+				{
+				  cout << RightRootConfigurations[RightNbrQuasiholeStates][j] << " ";
+				}
+			      cout << endl;
+			      ++RightNbrQuasiholeStates;
 			    }
-			  cout << endl;
-			  ++RightNbrQuasiholeStates;
+			}
+		    }
+		  else
+		    {
+		      for (long i = 0l; i < RightSpace->GetHilbertSpaceDimension(); ++i)
+			{
+			  if (RightSpace->HasPauliExclusions(i, KValue, RValue + (KValue * FermionFactor)) == true)
+			    {
+			      RightRootConfigurations[RightNbrQuasiholeStates] = new unsigned long[LzMax + 1];
+			      RightSpace->GetOccupationNumber(i, RightRootConfigurations[RightNbrQuasiholeStates]);
+			      ++RightNbrQuasiholeStates;
+			    }
 			}
 		    }
 		  RealMatrix RightVectors = FQHECylinderQuasiholeMatrixElementsComputeQuasiholeStates(RightSpace, RightRootConfigurations, 
@@ -271,6 +303,8 @@ int main(int argc, char** argv)
       
       for (int RightTotalLz = -RightStateMaxTotalLz; RightTotalLz <= RightStateMaxTotalLz; RightTotalLz += 2)
 	{
+	  timeval TotalStartingTime;
+	  gettimeofday (&(TotalStartingTime), 0);
 	  ParticleOnSphere* RightSpace = 0;
 	  if (Statistics == true)
 	    {
@@ -288,6 +322,11 @@ int main(int argc, char** argv)
 		  ++RightNbrQuasiholeStates;
 		}
 	    }
+	  timeval TotalEndingTime;
+	  gettimeofday (&(TotalEndingTime), 0);
+	  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+				((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));               
+	  cout << "finding admissible configurations done in " << Dt << "s" << endl;
 	  if (RightNbrQuasiholeStates > 0)
 	    {
 	      cout << "---------------------------------------" << endl;
@@ -296,19 +335,34 @@ int main(int argc, char** argv)
 	      cout << "found " << RightNbrQuasiholeStates << " quasihole states" << endl;
 	      unsigned long** RightRootConfigurations = new unsigned long*[RightNbrQuasiholeStates];
 	      RightNbrQuasiholeStates = 0;
-	      cout << "admissible configurations : " << endl;
-	      for (long i = 0l; i < RightSpace->GetHilbertSpaceDimension(); ++i)
+	      if (Manager.GetBoolean("show-admissible"))
 		{
-		  if (RightSpace->HasPauliExclusions(i, KValue, RValue + (KValue * FermionFactor)) == true)
+		  cout << "admissible configurations : " << endl;
+		  for (long i = 0l; i < RightSpace->GetHilbertSpaceDimension(); ++i)
 		    {
-		      RightRootConfigurations[RightNbrQuasiholeStates] = new unsigned long[LzMax + 1];
-		      RightSpace->GetOccupationNumber(i, RightRootConfigurations[RightNbrQuasiholeStates]);
-		      for (int j = 0; j <= LzMax; ++j)
+		      if (RightSpace->HasPauliExclusions(i, KValue, RValue + (KValue * FermionFactor)) == true)
 			{
-			  cout << RightRootConfigurations[RightNbrQuasiholeStates][j] << " ";
+			  RightRootConfigurations[RightNbrQuasiholeStates] = new unsigned long[LzMax + 1];
+			  RightSpace->GetOccupationNumber(i, RightRootConfigurations[RightNbrQuasiholeStates]);
+			  for (int j = 0; j <= LzMax; ++j)
+			    {
+			      cout << RightRootConfigurations[RightNbrQuasiholeStates][j] << " ";
+			    }
+			  cout << endl;
+			  ++RightNbrQuasiholeStates;
 			}
-		      cout << endl;
-		      ++RightNbrQuasiholeStates;
+		    }
+		}
+	      else
+		{
+		  for (long i = 0l; i < RightSpace->GetHilbertSpaceDimension(); ++i)
+		    {
+		      if (RightSpace->HasPauliExclusions(i, KValue, RValue + (KValue * FermionFactor)) == true)
+			{
+			  RightRootConfigurations[RightNbrQuasiholeStates] = new unsigned long[LzMax + 1];
+			  RightSpace->GetOccupationNumber(i, RightRootConfigurations[RightNbrQuasiholeStates]);
+			  ++RightNbrQuasiholeStates;
+			}
 		    }
 		}
 	      RealMatrix RightVectors = FQHECylinderQuasiholeMatrixElementsComputeQuasiholeStates(RightSpace, RightRootConfigurations, 
@@ -345,20 +399,35 @@ int main(int argc, char** argv)
 			  cout << "  found " << LeftNbrQuasiholeStates << " quasihole states with N-1=" << LeftStateNbrParticles << " LzMax=" << LzMax << " TotalLz=" << LeftTotalLz << endl;
 			  unsigned long** LeftRootConfigurations = new unsigned long*[LeftNbrQuasiholeStates];
 			  LeftNbrQuasiholeStates = 0;
-			  cout << "  admissible configurations : " << endl;
-			  for (long i = 0l; i < LeftSpace->GetHilbertSpaceDimension(); ++i)
+			  if (Manager.GetBoolean("show-admissible"))
 			    {
-			      if (LeftSpace->HasPauliExclusions(i, KValue, RValue + (KValue * FermionFactor)) == true)
+			      cout << "  admissible configurations : " << endl;
+			      for (long i = 0l; i < LeftSpace->GetHilbertSpaceDimension(); ++i)
 				{
-				  LeftRootConfigurations[LeftNbrQuasiholeStates] = new unsigned long[LzMax + 1];
-				  LeftSpace->GetOccupationNumber(i, LeftRootConfigurations[LeftNbrQuasiholeStates]);
-				  cout << "  ";
-				  for (int j = 0; j <= LzMax; ++j)
+				  if (LeftSpace->HasPauliExclusions(i, KValue, RValue + (KValue * FermionFactor)) == true)
 				    {
-				      cout << LeftRootConfigurations[LeftNbrQuasiholeStates][j] << " ";
+				      LeftRootConfigurations[LeftNbrQuasiholeStates] = new unsigned long[LzMax + 1];
+				      LeftSpace->GetOccupationNumber(i, LeftRootConfigurations[LeftNbrQuasiholeStates]);
+				      cout << "  ";
+				      for (int j = 0; j <= LzMax; ++j)
+					{
+					  cout << LeftRootConfigurations[LeftNbrQuasiholeStates][j] << " ";
+					}
+				      cout << endl;
+				      ++LeftNbrQuasiholeStates;
 				    }
-				  cout << endl;
-				  ++LeftNbrQuasiholeStates;
+				}
+			    }
+			  else
+			    {
+			      for (long i = 0l; i < LeftSpace->GetHilbertSpaceDimension(); ++i)
+				{
+				  if (LeftSpace->HasPauliExclusions(i, KValue, RValue + (KValue * FermionFactor)) == true)
+				    {
+				      LeftRootConfigurations[LeftNbrQuasiholeStates] = new unsigned long[LzMax + 1];
+				      LeftSpace->GetOccupationNumber(i, LeftRootConfigurations[LeftNbrQuasiholeStates]);
+				      ++LeftNbrQuasiholeStates;
+				    }
 				}
 			    }
 			  RealMatrix LeftVectors = FQHECylinderQuasiholeMatrixElementsComputeQuasiholeStates(LeftSpace, LeftRootConfigurations, 
@@ -385,24 +454,6 @@ int main(int argc, char** argv)
  				  TmpOutputMatrix.SetMatrixElement(j, i, Tmp);
  				}			  
 			    }
-// 			  for (int i = 0; i < RightNbrQuasiholeStates; ++i)
-// 			    {
-// 			      RealVector TmpVector (LeftSpace->GetLargeHilbertSpaceDimension(), true);
-// 			      for (int j = 0; j < RightSpace->GetHilbertSpaceDimension(); ++j)
-// 				{
-// 				  double TmpCoefficient = 0.0;
-// 				  int TmpIndex = RightSpace->A(j, ShiftedOperatorLzValue, TmpCoefficient);
-// 				  if (TmpIndex < LeftSpace->GetHilbertSpaceDimension())
-// 				    {
-// 				      TmpVector[TmpIndex] += TmpCoefficient * RightVectors[i][j];
-// 				    }
-// 				}
-// 			      for (int j = 0; j < LeftNbrQuasiholeStates; ++j)
-// 				{
-// 				  double Tmp = -(LeftVectors[j] * TmpVector);
-// 				  TmpOutputMatrix.SetMatrixElement(j, i, Tmp);
-// 				}			  
-// 			    }
 			  delete[] LeftRootConfigurations;
 			  char* TmpOutputFileName = new char[256 + strlen(FilePrefix)];
 			  sprintf (TmpOutputFileName, "%s_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", FilePrefix, KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
@@ -426,13 +477,16 @@ int main(int argc, char** argv)
 		  gettimeofday (&(TotalStartingTime), 0);
 		  RealSymmetricMatrix TmpOutputMatrix(RightNbrQuasiholeStates, true);
 		  RealMatrix TmpMatrix (RightSpace->GetHilbertSpaceDimension(), RightNbrQuasiholeStates);
+		  Architecture.GetArchitecture()->SetDimension(RightSpace->GetHilbertSpaceDimension());
 		  for (int j = 0; j < RightSpace->GetHilbertSpaceDimension(); ++j)
 		    {
-		      double TmpCoefficient = RightSpace->AdA(j, ShiftedOperatorLzValue);
-		      for (int i = 0; i < RightNbrQuasiholeStates; ++i)
-			{
-			  TmpMatrix[i][j] = TmpCoefficient * RightVectors[i][j];
-			}
+// 		      ParticleOnSphereDensityOperator TmpOperator (RightSpace, j);
+// 		      VectorOperatorMultiplyOperation TmpOperation (&TmpOperator, )
+ 		      double TmpCoefficient = RightSpace->AdA(j, ShiftedOperatorLzValue);
+ 		      for (int i = 0; i < RightNbrQuasiholeStates; ++i)
+ 			{
+ 			  TmpMatrix[i][j] = TmpCoefficient * RightVectors[i][j];
+ 			}
 		    }
  		  for (int i = 0; i < RightNbrQuasiholeStates; ++i)
  		    {

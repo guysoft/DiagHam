@@ -283,6 +283,82 @@ ComplexVector& AbstractOperator::LowLevelAddMultiply(ComplexVector& vSource, Com
   return vDestination;
 }
 
+// multiply a set of vectors by the current operator for a given range of indices 
+// and store result in another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* AbstractOperator::LowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+						       int firstComponent, int nbrComponent)
+{
+  for (int i = 0; i < nbrVectors; ++i)
+    vDestinations[i].ClearVector();
+  return this->LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);    
+}
+
+// multiply a set of vectors by the current operator for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* AbstractOperator::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+							  int firstComponent, int nbrComponent)
+{
+  for (int i = 0; i < nbrVectors; ++i)
+    {
+      this->LowLevelAddMultiply(vSources[i], vDestinations[i], firstComponent, nbrComponent);
+    }
+  return vDestinations;
+}
+
+// multiply a set of vectors by the current operator for a given range of indices 
+// and store result in another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* AbstractOperator::LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+							  int firstComponent, int nbrComponent)
+{
+  for (int i = 0; i < nbrVectors; ++i)
+    vDestinations[i].ClearVector();
+  return this->LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);    
+}
+
+// multiply a set of vectors by the current operator for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* AbstractOperator::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+							     int firstComponent, int nbrComponent)
+{
+  for (int i = 0; i < nbrVectors; ++i)
+    {
+      this->LowLevelAddMultiply(vSources[i], vDestinations[i], firstComponent, nbrComponent);
+    }
+  return vDestinations;
+}
+
 // Output Stream overload
 //
 // Str = reference on output stream
