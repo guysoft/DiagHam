@@ -1462,13 +1462,13 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong::EvaluatePartialDensi
       for (int j = 0; j < TmpDestinationFullHilbertSpace->HilbertSpaceDimension; ++j)
 	{
 	  ULONGLONG TmpState2 = TmpDestinationFullHilbertSpace->StateDescription[j];
-	  if ((TmpState & TmpState2) == 0x0ul)
+	  if ((TmpState & TmpState2) == ((ULONGLONG) 0x0ul))
 	    {
 	      int TmpDestinationNbrTranslationX;
 	      int TmpDestinationNbrTranslationY;
 	      ULONGLONG TmpCanonicalState2 = TmpDestinationHilbertSpace->FindCanonicalForm(TmpState2, TmpDestinationNbrTranslationX, TmpDestinationNbrTranslationY);
 	      int TmpDestinationLzMax = 2 * TmpDestinationHilbertSpace->NbrSite - 1;
-	      while ((TmpCanonicalState2 >> TmpDestinationLzMax) == 0x0ul)
+	      while ((TmpCanonicalState2 >> TmpDestinationLzMax) ==  ((ULONGLONG) 0x0ul))
 		--TmpDestinationLzMax;
 	      int RealDestinationIndex = TmpDestinationHilbertSpace->FindStateIndex(TmpCanonicalState2, TmpDestinationLzMax);
 	      if (RealDestinationIndex < TmpDestinationHilbertSpace->GetHilbertSpaceDimension())
@@ -1477,7 +1477,7 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong::EvaluatePartialDensi
 		  int TmpNbrTranslationX;
 		  int TmpNbrTranslationY;
 		  ULONGLONG TmpState3 = this->FindCanonicalForm((TmpState | TmpState2), TmpNbrTranslationX, TmpNbrTranslationY);
-		  while ((TmpState3 >> TmpLzMax) == 0x0ul)
+		  while ((TmpState3 >> TmpLzMax) ==  ((ULONGLONG) 0x0ul))
 		    --TmpLzMax;
 		  int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
 		  if (TmpPos < this->HilbertSpaceDimension)
@@ -1488,14 +1488,14 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong::EvaluatePartialDensi
 		      int DestinationNbrTranslationY = (this->MaxYMomentum - TmpDestinationNbrTranslationY) % this->MaxYMomentum;
 		      Complex Coefficient = TmpInvBinomial * FourrierCoefficients[TmpNbrTranslationX][TmpNbrTranslationY] * FourrierCoefficientsDestination[TmpDestinationNbrTranslationX][TmpDestinationNbrTranslationY] / sqrt ((double) (this->NbrStateInOrbit[TmpPos] * TmpDestinationHilbertSpace->NbrStateInOrbit[RealDestinationIndex]));
 		      ULONGLONG Sign =  ((this->ReorderingSign[TmpPos] >> ((NbrTranslationY * this->MaxXMomentum) + NbrTranslationX))
-					     ^ (TmpDestinationHilbertSpace->ReorderingSign[RealDestinationIndex] >> (DestinationNbrTranslationY * TmpDestinationHilbertSpace->MaxXMomentum + DestinationNbrTranslationX))) & 0x1ul;
+					 ^ (TmpDestinationHilbertSpace->ReorderingSign[RealDestinationIndex] >> (DestinationNbrTranslationY * TmpDestinationHilbertSpace->MaxXMomentum + DestinationNbrTranslationX))) &  ((ULONGLONG) 0x1ul);
 		      int Pos2 = 2 * TmpDestinationHilbertSpace->NbrSite - 1;
 		      ULONGLONG TmpState22 = TmpState2;
-		      while ((Pos2 > 0) && (TmpState22 != 0x0ul))
+		      while ((Pos2 > 0) && (TmpState22 !=  ((ULONGLONG) 0x0ul)))
 			{
-			  while (((TmpState22 >> Pos2) & 0x1ul) == 0x0ul)
+			  while (((TmpState22 >> Pos2) &  ((ULONGLONG) 0x1ul)) ==  ((ULONGLONG) 0x0ul))
 			    --Pos2;
-			  TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
+			  TmpState3 = TmpState & ( (  ((ULONGLONG) 0x1ul) << (Pos2 + 1)) -   ((ULONGLONG) 0x1ul));
 #ifdef __128_BIT_LONGLONG__
 			  TmpState3 ^= TmpState3 >> 64;
 #endif	
@@ -1506,17 +1506,18 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong::EvaluatePartialDensi
 			  TmpState3 ^= TmpState3 >> 2;
 			  TmpState3 ^= TmpState3 >> 1;
 			  Sign ^= TmpState3;
-			  TmpState22 &= ~(0x1ul << Pos2);
+			  TmpState22 &= ~( ((ULONGLONG) 0x1ul) << Pos2);
 			  --Pos2;
 			}
- 		      if ((Sign & 0x1ul) != 0x0ul)		  
- 			Coefficient *= -1.0;
- 		      TmpEntanglementMatrix[RealDestinationIndex][minIndex - TmpMinIndex] += groundState[TmpPos] * Coefficient;
+		      if (Sign &  ((ULONGLONG) 0x1ul) != ((ULONGLONG) 0x0ul))
+			Coefficient *= -1.0;
+		      TmpEntanglementMatrix[RealDestinationIndex][minIndex - TmpMinIndex] += groundState[TmpPos] * Coefficient;
 		    }
 		}
 	    }
 	}
     }
+  
   for (int i = 0; i < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++i)
     {
       for (int j = i; j < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++j)
