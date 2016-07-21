@@ -30,6 +30,10 @@
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceLong.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSingletsLong.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSingletsLong.h"
+
+
 
 #include "HilbertSpace/BosonOnLatticeRealSpace.h"
 #include "HilbertSpace/BosonOnLatticeRealSpaceAnd2DTranslation.h"
@@ -437,6 +441,9 @@ int main(int argc, char** argv)
 					}
 				      else
 					{
+					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSingletsLong (NbrParticles, MinNbrSinglets, NbrSites, 
+																						    (SzSymmetrySector == -1), 
+																		TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
 					}
 				    }
 				}
@@ -462,6 +469,8 @@ int main(int argc, char** argv)
 					}
 				      else
 					{
+					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSingletsLong (NbrParticles, MinNbrSinglets, NbrSites, TotalKx[i], 
+																  NbrSiteX, TotalKy[i], NbrSiteY);
 					}
 				    }
 				}
@@ -508,6 +517,9 @@ int main(int argc, char** argv)
 					}
 				      else
 					{
+					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSingletsLong (NbrParticles, MinNbrSinglets, TotalSpin, 
+																	    NbrSites, (SzSymmetrySector == -1),
+																	    TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
 					}
 				    }
 				}
@@ -535,6 +547,8 @@ int main(int argc, char** argv)
 					}
 				      else
 					{
+					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSingletsLong (NbrParticles, MinNbrSinglets, TotalSpin, NbrSites, 
+																      TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY, 10000000);
 					}
 				    }
 				}
