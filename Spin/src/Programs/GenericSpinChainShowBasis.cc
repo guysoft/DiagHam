@@ -9,6 +9,9 @@
 #include "HilbertSpace/Spin0_1_2_ChainWithTranslationsStaggered.h"
 #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsStaggered.h"
 #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslations.h"
+#include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry.h"
+#include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry.h"
+
 #include "HilbertSpace/DoubledSpin1_2_ChainWithTranslations.h"
 #include "HilbertSpace/DoubledSpin1_2_ChainWithTranslations_alternative.h"
 
@@ -55,6 +58,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('\n', "parity", "parity of the spin chain", 0);
   (*SystemGroup) += new  BooleanOption ('\n', "periodic-chain", "consider periodic instead of open chain", false);
   (*SystemGroup) += new  BooleanOption ('\n', "zero-half", "consider the 0 +1/2 spin chain", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "symmetry", "use Hilbert space with ZZ symmetry in the case of the 0+1/2 doubled chain");
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "zket", "value of the Z operator in the ket layer", 0);
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "zbra", "value of the Z operator in the bra layer", 0);
+  
   (*SystemGroup) += new  SingleIntegerOption ('k', "momentum", "momentum sector (for periodic chain)", 0);
   (*SystemGroup) += new SingleStringOption  ('e', "state", "name of the file containing the eigenstate to be displayed");
   (*SystemGroup) += new BooleanOption ('\n', "complex-vector", "the eigenstate to be  displayed is a complex vector");
@@ -78,7 +85,7 @@ int main(int argc, char** argv)
   int SzValue = Manager.GetInteger("sz-value");
   int Momentum = Manager.GetInteger("momentum");
   double Error = Manager.GetDouble("hide-component");
-
+  bool SymmetryFlag = Manager.GetBoolean("symmetry"); 
   
   if (Manager.GetBoolean("doubled-spinchain"))
     {
@@ -101,6 +108,13 @@ int main(int argc, char** argv)
 		      cout << "error while reading " << Manager.GetString("state") << endl;
 		      return -1;
 		    }
+		  
+		  if (Space.GetLargeHilbertSpaceDimension() != State.GetLargeVectorDimension())
+		    {
+		      cout << "dimension mismatch between Hilbert space and ground state" << endl;
+		      return 0;
+		    }
+		  
 		  for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
 		    if (fabs(State[i]) > Error)
 		      Space.PrintState(cout, i) << " : "  << State[i] << endl;
@@ -145,12 +159,25 @@ int main(int argc, char** argv)
 		  AbstractSpinChain* Space = 0;
 		  if (Manager.GetBoolean( "staggered") == true)
 		    {
-		      Space = new  DoubledSpin0_1_2_ChainWithTranslationsStaggered ( NbrSpins, SzValue,  1000000, 1000000);
+		      if (SymmetryFlag == false )
+			{
+			  Space = new  DoubledSpin0_1_2_ChainWithTranslationsStaggered ( NbrSpins, SzValue,  1000000, 1000000);
+			}
+		      else
+			{
+			  Space = new DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry(NbrSpins, SzValue ,Manager.GetInteger("zbra"),Manager.GetInteger("zket"),10000,10000);
+			}
 		    }
 		  else
 		    {
-		 
-		      Space = new DoubledSpin0_1_2_ChainWithTranslations ( NbrSpins, SzValue,  1000000, 1000000);
+		      if (SymmetryFlag == false )
+			{
+			  Space = new DoubledSpin0_1_2_ChainWithTranslations ( NbrSpins, SzValue,  1000000, 1000000);
+			}
+		      else
+			{
+			  Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry(NbrSpins,  SzValue, Manager.GetInteger("zbra"),Manager.GetInteger("zket"),10000,10000);
+			}
 		
 		    }
 		  
@@ -169,6 +196,11 @@ int main(int argc, char** argv)
 			      cout << "error while reading " << Manager.GetString("state") << endl;
 			      return -1;
 			    }
+			  if (Space->GetLargeHilbertSpaceDimension() != State.GetLargeVectorDimension())
+			    {
+			      cout << "dimension mismatch between Hilbert space and ground state" << endl;
+			      return 0;
+			    }
 			  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 			    if (fabs(State[i]) > Error)
 			      Space->PrintState(cout, i) << " : "  << State[i] << endl;
@@ -181,6 +213,11 @@ int main(int argc, char** argv)
 			      cout << "error while reading " << Manager.GetString("state") << endl;
 			      return -1;
 			    }
+			  if (Space->GetLargeHilbertSpaceDimension() != State.GetLargeVectorDimension())
+			    {
+			      cout << "dimension mismatch between Hilbert space and ground state" << endl;
+			      return 0;
+			    }
 			  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 			    if (Norm(State[i]) > Error)
 			      Space->PrintState(cout, i) << " : "  << State[i] << endl;
@@ -192,11 +229,25 @@ int main(int argc, char** argv)
 		  AbstractSpinChain* Space = 0;
 		  if (Manager.GetBoolean( "staggered") == true)
 		    {
-		      Space = new  DoubledSpin0_1_2_ChainWithTranslationsStaggered (NbrSpins,Momentum, SzValue,  1000000, 1000000);
+		      if (SymmetryFlag == false )
+			{
+			  Space = new  DoubledSpin0_1_2_ChainWithTranslationsStaggered (NbrSpins,Momentum, SzValue,  1000000, 1000000);
+			}
+		      else
+			{
+			  Space = new DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry(NbrSpins, Momentum,  SzValue, Manager.GetInteger("zbra"),Manager.GetInteger("zket"),10000,10000);
+			}
 		    }
 		  else
 		    {
-		      Space = new DoubledSpin0_1_2_ChainWithTranslations (NbrSpins, Momentum,SzValue,  1000000, 1000000);
+		      if (SymmetryFlag == false )
+			{
+			  Space = new DoubledSpin0_1_2_ChainWithTranslations (NbrSpins, Momentum,SzValue,  1000000, 1000000);
+			}
+		      else
+			{
+			  Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry(NbrSpins, Momentum,  SzValue, Manager.GetInteger("zbra"),Manager.GetInteger("zket"),10000,10000);
+			}
 		    }
 		  
 		  
@@ -215,6 +266,12 @@ int main(int argc, char** argv)
 			      cout << "error while reading " << Manager.GetString("state") << endl;
 			      return -1;
 			    }
+			  if (Space->GetLargeHilbertSpaceDimension() != State.GetLargeVectorDimension())
+			    {
+			      cout << "dimension mismatch between Hilbert space and ground state" << endl;
+			      return 0;
+			    }
+			  
 			  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 			    if (fabs(State[i]) > Error)
 			      Space->PrintState(cout, i) << " : "  << State[i] << endl;
@@ -226,6 +283,11 @@ int main(int argc, char** argv)
 			    {
 			      cout << "error while reading " << Manager.GetString("state") << endl;
 			      return -1;
+			    }
+			  if (Space->GetLargeHilbertSpaceDimension() != State.GetLargeVectorDimension())
+			    {
+			      cout << "dimension mismatch between Hilbert space and ground state" << endl;
+			      return 0;
 			    }
 			  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 			    if (Norm(State[i]) > Error)
