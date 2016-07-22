@@ -886,7 +886,7 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::EvaluatePa
 			    {
 			      while (((TmpState22 >> Pos2) & ((ULONGLONG) 0x1ul)) == ((ULONGLONG) 0x0ul))
 				--Pos2;
-			      TmpState3 = TmpState & ((((ULONGLONG) 0x1ul) << (Pos2 + 1)) - 1ul);
+			      TmpState3 = TmpState & (( ((ULONGLONG) 0x1ul) << (Pos2 + 1)) - ((ULONGLONG) 0x1ul));
 #ifdef __128_BIT_LONGLONG__
 			      TmpState3 ^= TmpState3 >> 64;
 #endif	
@@ -999,7 +999,7 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::EvaluatePa
 			    {
 			      while (((TmpState22 >> Pos2) & ((ULONGLONG) 0x1ul)) == ((ULONGLONG) 0x0ul))
 				--Pos2;
-			      TmpState3 = TmpState & ((((ULONGLONG) 0x1ul) << (Pos2 + 1)) - 1ul);
+			      TmpState3 = TmpState & ((((ULONGLONG) 0x1ul) << (Pos2 + 1)) - ((ULONGLONG) 0x1ul));
 #ifdef __128_BIT_LONGLONG__
 			      TmpState3 ^= TmpState3 >> 64;
 #endif	
@@ -1143,7 +1143,7 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::EvaluatePa
 			    {
 			      while (((TmpState22 >> Pos2) & ((ULONGLONG) 0x1ul)) == ((ULONGLONG) 0x0ul))
 				--Pos2;
-			      TmpState3 = TmpState & ((((ULONGLONG) 0x1ul) << (Pos2 + 1)) - 1ul);
+			      TmpState3 = TmpState & ((((ULONGLONG) 0x1ul) << (Pos2 + 1)) - ((ULONGLONG) 0x1ul));
 #ifdef __128_BIT_LONGLONG__
 			      TmpState3 ^= TmpState3 >> 64;
 #endif	
@@ -1263,7 +1263,7 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong::EvaluatePa
 			    {
 			      while (((TmpState22 >> Pos2) & ((ULONGLONG) 0x1ul)) == ((ULONGLONG) 0x0ul))
 				--Pos2;
-			      TmpState3 = TmpState & ((((ULONGLONG) 0x1ul) << (Pos2 + 1)) - 1ul);
+			      TmpState3 = TmpState & ((((ULONGLONG) 0x1ul) << (Pos2 + 1)) -  ((ULONGLONG) 0x1ul));
 #ifdef __128_BIT_LONGLONG__
 			      TmpState3 ^= TmpState3 >> 64;
 #endif	
