@@ -25,4 +25,5 @@ FQHEMPSEvaluateCFTOperation.cc \
 FQHETorusApplyCNRotationOperation.cc \
 FQHETorusComputeMatrixElementOperation.cc \
 FQHETorusSymmetrizeU1U1StateOperation.cc \
-FQHESphereWithSpinApplyOneBodyTransformationOperation.cc
+FQHESphereWithSpinApplyOneBodyTransformationOperation.cc \
+FQHECylinderMultipleJackGeneratorOperation.cc

@@ -14,7 +14,11 @@
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/ConfigurationParser.h"
 
-#include "Operator/ParticleOnSphereWithSpinDensityOperator.h"
+#include "Operator/ParticleOnSphereDensityOperator.h"
+#include "Operator/ParticleOnSphereAnnihilationOperator.h"
+
+#include "Architecture/ArchitectureOperation/MultipleVectorOperatorMultiplyOperation.h"
+#include "Architecture/ArchitectureOperation/FQHECylinderMultipleJackGeneratorOperation.h"
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
@@ -48,9 +52,10 @@ using std::ofstream;
 // totalLz = total angular momentum along the z direction
 // ratio = cylinder aspect ratio
 // filePrefix = output file prefix
+// architecture = pointer to the architecture
 // return value = orthonomalized basis of quasihole states
 RealMatrix FQHECylinderQuasiholeMatrixElementsComputeQuasiholeStates(ParticleOnSphere* space, unsigned long** rootConfigurations, int nbrQuasiholeStates,
-								     int kValue, int rValue, int nbrParticles, int lzMax, int totalLz, double ratio, char* filePrefix);
+								     int kValue, int rValue, int nbrParticles, int lzMax, int totalLz, double ratio, char* filePrefix, AbstractArchitecture* architecture);
 
 
 int main(int argc, char** argv)
@@ -262,7 +267,7 @@ int main(int argc, char** argv)
 		    }
 		  RealMatrix RightVectors = FQHECylinderQuasiholeMatrixElementsComputeQuasiholeStates(RightSpace, RightRootConfigurations, 
 												      RightNbrQuasiholeStates, KValue, RValue,
-												      RightStateNbrParticles, LzMax, RightTotalLz, Ratio, FilePrefix);
+												      RightStateNbrParticles, LzMax, RightTotalLz, Ratio, FilePrefix, Architecture.GetArchitecture());
 		  for (int OperatorLzValue = -LzMax; OperatorLzValue <= LzMax; OperatorLzValue += 2)
 		    {
 		      int ShiftedOperatorLzValue = (OperatorLzValue + LzMax) >> 1;
@@ -367,7 +372,14 @@ int main(int argc, char** argv)
 		}
 	      RealMatrix RightVectors = FQHECylinderQuasiholeMatrixElementsComputeQuasiholeStates(RightSpace, RightRootConfigurations, 
 												  RightNbrQuasiholeStates, KValue, RValue,
-												  RightStateNbrParticles, LzMax, RightTotalLz, Ratio, FilePrefix);
+												  RightStateNbrParticles, LzMax, RightTotalLz, Ratio, FilePrefix, Architecture.GetArchitecture());
+	      RealVector* TmpAdAInputVectors = new RealVector[RightNbrQuasiholeStates];
+	      RealVector* TmpAdAOutputVectors = new RealVector[RightNbrQuasiholeStates];
+	      for (int j = 0; j < RightNbrQuasiholeStates; ++j)
+		{
+		  TmpAdAInputVectors[j] = RightVectors[j];
+		  TmpAdAOutputVectors[j] = RealVector(RightSpace->GetHilbertSpaceDimension());
+		}
 	      for (int OperatorLzValue = -LzMax; OperatorLzValue <= LzMax; OperatorLzValue += 2)
 		{
 		  int ShiftedOperatorLzValue = (OperatorLzValue + LzMax) >> 1;
@@ -432,28 +444,46 @@ int main(int argc, char** argv)
 			    }
 			  RealMatrix LeftVectors = FQHECylinderQuasiholeMatrixElementsComputeQuasiholeStates(LeftSpace, LeftRootConfigurations, 
 													     LeftNbrQuasiholeStates, KValue, RValue,
-													     LeftStateNbrParticles, LzMax, LeftTotalLz, Ratio, FilePrefix);
+													     LeftStateNbrParticles, LzMax, LeftTotalLz, Ratio, FilePrefix, Architecture.GetArchitecture());
 			  RightSpace->SetTargetSpace(LeftSpace);
-			  RealMatrix TmpOutputMatrix(LeftNbrQuasiholeStates, RightNbrQuasiholeStates, true);
-			  RealMatrix TmpVectors(LeftSpace->GetLargeHilbertSpaceDimension(), RightNbrQuasiholeStates, true);
-			  for (int j = 0; j < RightSpace->GetHilbertSpaceDimension(); ++j)
+			  RealVector* TmpAOutputVectors = new RealVector[RightNbrQuasiholeStates];
+			  for (int j = 0; j < RightNbrQuasiholeStates; ++j)
 			    {
-			      double TmpCoefficient = 0.0;
-			      int TmpIndex = RightSpace->A(j, ShiftedOperatorLzValue, TmpCoefficient);
-			      if (TmpIndex < LeftSpace->GetHilbertSpaceDimension())
-				{
-				  for (int i = 0; i < RightNbrQuasiholeStates; ++i)
-				    TmpVectors[i][TmpIndex] += TmpCoefficient * RightVectors[i][j];
-				}
+			      TmpAOutputVectors[j] = RealVector(LeftSpace->GetHilbertSpaceDimension());
 			    }
+ 			  RealMatrix TmpOutputMatrix(LeftNbrQuasiholeStates, RightNbrQuasiholeStates, true);
+			  Architecture.GetArchitecture()->SetDimension(RightSpace->GetHilbertSpaceDimension());		  
+			  ParticleOnSphereAnnihilationOperator TmpAOperator (RightSpace, ShiftedOperatorLzValue);
+			  MultipleVectorOperatorMultiplyOperation TmpOperation (&TmpAOperator, TmpAdAInputVectors, TmpAOutputVectors, RightNbrQuasiholeStates);
+			  TmpOperation.ApplyOperation(Architecture.GetArchitecture());
 			  for (int i = 0; i < RightNbrQuasiholeStates; ++i)
 			    {
- 			      for (int j = 0; j < LeftNbrQuasiholeStates; ++j)
- 				{
- 				  double Tmp = -(LeftVectors[j] * TmpVectors[i]);
- 				  TmpOutputMatrix.SetMatrixElement(j, i, Tmp);
- 				}			  
+			      for (int k = 0; k < LeftNbrQuasiholeStates; ++k)
+				{ 
+				  TmpOutputMatrix.SetMatrixElement(k, i, -(LeftVectors[k] * TmpAOutputVectors[i]));
+				}
 			    }
+			  delete[] TmpAOutputVectors;
+
+// 			  RealMatrix TmpVectors(LeftSpace->GetLargeHilbertSpaceDimension(), RightNbrQuasiholeStates, true);
+// 			  for (int j = 0; j < RightSpace->GetHilbertSpaceDimension(); ++j)
+// 			    {
+// 			      double TmpCoefficient = 0.0;
+// 			      int TmpIndex = RightSpace->A(j, ShiftedOperatorLzValue, TmpCoefficient);
+// 			      if (TmpIndex < LeftSpace->GetHilbertSpaceDimension())
+// 				{
+// 				  for (int i = 0; i < RightNbrQuasiholeStates; ++i)
+// 				    TmpVectors[i][TmpIndex] += TmpCoefficient * RightVectors[i][j];
+// 				}
+// 			    }
+// 			  for (int i = 0; i < RightNbrQuasiholeStates; ++i)
+// 			    {
+//  			      for (int j = 0; j < LeftNbrQuasiholeStates; ++j)
+//  				{
+//  				  double Tmp = -(LeftVectors[j] * TmpVectors[i]);
+//  				  TmpOutputMatrix.SetMatrixElement(j, i, Tmp);
+//  				}			  
+// 			    }
 			  delete[] LeftRootConfigurations;
 			  char* TmpOutputFileName = new char[256 + strlen(FilePrefix)];
 			  sprintf (TmpOutputFileName, "%s_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_c_%d.mat", FilePrefix, KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
@@ -476,25 +506,34 @@ int main(int argc, char** argv)
 		  TotalStartingTime;
 		  gettimeofday (&(TotalStartingTime), 0);
 		  RealSymmetricMatrix TmpOutputMatrix(RightNbrQuasiholeStates, true);
-		  RealMatrix TmpMatrix (RightSpace->GetHilbertSpaceDimension(), RightNbrQuasiholeStates);
-		  Architecture.GetArchitecture()->SetDimension(RightSpace->GetHilbertSpaceDimension());
-		  for (int j = 0; j < RightSpace->GetHilbertSpaceDimension(); ++j)
-		    {
-// 		      ParticleOnSphereDensityOperator TmpOperator (RightSpace, j);
-// 		      VectorOperatorMultiplyOperation TmpOperation (&TmpOperator, )
- 		      double TmpCoefficient = RightSpace->AdA(j, ShiftedOperatorLzValue);
- 		      for (int i = 0; i < RightNbrQuasiholeStates; ++i)
- 			{
- 			  TmpMatrix[i][j] = TmpCoefficient * RightVectors[i][j];
- 			}
-		    }
+		  
+		  Architecture.GetArchitecture()->SetDimension(RightSpace->GetHilbertSpaceDimension());		  
+		  ParticleOnSphereDensityOperator TmpOperator (RightSpace, ShiftedOperatorLzValue);
+		  MultipleVectorOperatorMultiplyOperation TmpOperation (&TmpOperator, TmpAdAInputVectors, TmpAdAOutputVectors, RightNbrQuasiholeStates);
+		  TmpOperation.ApplyOperation(Architecture.GetArchitecture());
  		  for (int i = 0; i < RightNbrQuasiholeStates; ++i)
  		    {
  		      for (int k = i; k < RightNbrQuasiholeStates; ++k)
 			{ 
-			  TmpOutputMatrix.SetMatrixElement(i, k, RightVectors[k] * TmpMatrix[i]);
+			  TmpOutputMatrix.SetMatrixElement(i, k, RightVectors[k] * TmpAdAOutputVectors[i]);
 			}
 		    }
+// 		  RealMatrix TmpMatrix (RightSpace->GetHilbertSpaceDimension(), RightNbrQuasiholeStates);
+// 		  for (int j = 0; j < RightSpace->GetHilbertSpaceDimension(); ++j)
+// 		    {
+//  		      double TmpCoefficient = RightSpace->AdA(j, ShiftedOperatorLzValue);
+//  		      for (int i = 0; i < RightNbrQuasiholeStates; ++i)
+//  			{
+//  			  TmpMatrix[i][j] = TmpCoefficient * RightVectors[i][j];
+//  			}
+// 		    }
+//  		  for (int i = 0; i < RightNbrQuasiholeStates; ++i)
+//  		    {
+//  		      for (int k = i; k < RightNbrQuasiholeStates; ++k)
+// 			{ 
+// 			  TmpOutputMatrix.SetMatrixElement(i, k, RightVectors[k] * TmpMatrix[i]);
+// 			}
+// 		    }
 		  char* TmpOutputFileName = new char[256 + strlen(FilePrefix)];
 		  sprintf (TmpOutputFileName, "%s_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d.mat", FilePrefix, KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, OperatorLzValue);
 		  char* AsciiTmpOutputFileName = new char[16 + strlen(TmpOutputFileName)];
@@ -510,6 +549,8 @@ int main(int argc, char** argv)
 		  cout << "computing c^+c matrix elements done in " << Dt << "s" << endl;
 		}
 	      delete[] RightRootConfigurations;
+	      delete[] TmpAdAInputVectors;
+	      delete[] TmpAdAOutputVectors;
 	    }
 	  delete RightSpace;
 	}
@@ -529,10 +570,11 @@ int main(int argc, char** argv)
 // totalLz = total angular momentum along the z direction
 // ratio = cylinder aspect ratio
 // filePrefix = output file prefix
+// architecture = pointer to the architecture
 // return value = orthonomalized basis of quasihole states
 
 RealMatrix FQHECylinderQuasiholeMatrixElementsComputeQuasiholeStates(ParticleOnSphere* space, unsigned long** rootConfigurations, int nbrQuasiholeStates, 
-								     int kValue, int rValue, int nbrParticles, int lzMax, int totalLz, double ratio, char* filePrefix)
+								     int kValue, int rValue, int nbrParticles, int lzMax, int totalLz, double ratio, char* filePrefix, AbstractArchitecture* architecture)
 {
   char* QuasiholeVectorFileName = new char[256 + strlen(filePrefix)];
   sprintf (QuasiholeVectorFileName, "%s_qh_states_k_%d_r_%d_n_%d_nphi_%d_lz_%d.mat", filePrefix, kValue, rValue, nbrParticles, lzMax, totalLz);
@@ -547,57 +589,64 @@ RealMatrix FQHECylinderQuasiholeMatrixElementsComputeQuasiholeStates(ParticleOnS
     }
   timeval TotalStartingTime;
   gettimeofday (&(TotalStartingTime), 0);
-  RealVector* QuasiholeVectors = new RealVector[nbrQuasiholeStates];
-  int* ReferenceState = new int[lzMax + 1];
-  double Alpha = ((double) -(kValue + 1)) / ((double) (rValue - 1));
-  if (space->GetParticleStatistic() == AbstractQHEParticle::BosonicStatistic)
-    {
-      for (int i = 0; i < nbrQuasiholeStates; ++i)
-	{	  
-	  for (int j = 0; j <= lzMax; ++j)
-	    {
-	      ReferenceState[j] = (int) rootConfigurations[i][j];
-	    }
-	  double Alpha = ((double) -kValue) / ((double) (rValue + kValue));
-	  if (nbrParticles >1)
-	    {
-	      BosonOnSphereHaldaneBasisShort SqueezedSpace (nbrParticles, totalLz, lzMax, ReferenceState);
-	      RealVector TmpState(SqueezedSpace.GetLargeHilbertSpaceDimension(), true);
-	      SqueezedSpace.GenerateJackPolynomial(TmpState, Alpha);
-	      SqueezedSpace.NormalizeJackToCylinder(TmpState, ratio);
-	      QuasiholeVectors[i] = SqueezedSpace.ConvertToNbodyBasis(TmpState, *((BosonOnSphereShort*) space));
-	    }
-	  else
-	    {
-	      QuasiholeVectors[i] = RealVector(1);
-	      QuasiholeVectors[i][0] = 1.0;
-	    }
-	}
-    }
-  else
-    {
-      for (int i = 0; i < nbrQuasiholeStates; ++i)
-	{	  
-	  for (int j = 0; j <= lzMax; ++j)
-	    {
-	      ReferenceState[j] = (int) rootConfigurations[i][j];
-	    }
-	  if (nbrParticles >1)
-	    {
-	      FermionOnSphereHaldaneBasis SqueezedSpace (nbrParticles, totalLz, lzMax, ReferenceState);
-	      RealVector TmpState(SqueezedSpace.GetLargeHilbertSpaceDimension(), true);
-	      SqueezedSpace.GenerateJackPolynomial(TmpState, Alpha);
-	      SqueezedSpace.NormalizeJackToCylinder(TmpState, ratio);
-	      QuasiholeVectors[i] = SqueezedSpace.ConvertToNbodyBasis(TmpState, *((FermionOnSphere*) space));
-	    }
-	  else
-	    {
-	      QuasiholeVectors[i] = RealVector(1);
-	      QuasiholeVectors[i][0] = 1.0;
-	    }
-	}
-    }
-  delete[] ReferenceState;
+
+
+  FQHECylinderMultipleJackGeneratorOperation TmpOperation (space, rootConfigurations, nbrQuasiholeStates, kValue, rValue, nbrParticles, lzMax, totalLz, ratio);
+  TmpOperation.ApplyOperation(architecture);
+  RealMatrix QuasiholeVectors2 = TmpOperation.GetBasis();
+
+//   RealVector* QuasiholeVectors = new RealVector[nbrQuasiholeStates];
+//   int* ReferenceState = new int[lzMax + 1];
+//   double Alpha = ((double) -(kValue + 1)) / ((double) (rValue - 1));
+//   if (space->GetParticleStatistic() == AbstractQHEParticle::BosonicStatistic)
+//     {
+//       for (int i = 0; i < nbrQuasiholeStates; ++i)
+// 	{	  
+// 	  for (int j = 0; j <= lzMax; ++j)
+// 	    {
+// 	      ReferenceState[j] = (int) rootConfigurations[i][j];
+// 	    }
+// 	  double Alpha = ((double) -kValue) / ((double) (rValue + kValue));
+// 	  if (nbrParticles >1)
+// 	    {
+// 	      BosonOnSphereHaldaneBasisShort SqueezedSpace (nbrParticles, totalLz, lzMax, ReferenceState);
+// 	      RealVector TmpState(SqueezedSpace.GetLargeHilbertSpaceDimension(), true);
+// 	      SqueezedSpace.GenerateJackPolynomial(TmpState, Alpha);
+// 	      SqueezedSpace.NormalizeJackToCylinder(TmpState, ratio);
+// 	      QuasiholeVectors[i] = SqueezedSpace.ConvertToNbodyBasis(TmpState, *((BosonOnSphereShort*) space));
+// 	    }
+// 	  else
+// 	    {
+// 	      QuasiholeVectors[i] = RealVector(1);
+// 	      QuasiholeVectors[i][0] = 1.0;
+// 	    }
+// 	}
+//     }
+//   else
+//     {
+//       for (int i = 0; i < nbrQuasiholeStates; ++i)
+// 	{	  
+// 	  for (int j = 0; j <= lzMax; ++j)
+// 	    {
+// 	      ReferenceState[j] = (int) rootConfigurations[i][j];
+// 	    }
+// 	  if (nbrParticles >1)
+// 	    {
+// 	      FermionOnSphereHaldaneBasis SqueezedSpace (nbrParticles, totalLz, lzMax, ReferenceState);
+// 	      RealVector TmpState(SqueezedSpace.GetLargeHilbertSpaceDimension(), true);
+// 	      SqueezedSpace.GenerateJackPolynomial(TmpState, Alpha);
+// 	      SqueezedSpace.NormalizeJackToCylinder(TmpState, ratio);
+// 	      QuasiholeVectors[i] = SqueezedSpace.ConvertToNbodyBasis(TmpState, *((FermionOnSphere*) space));
+// 	    }
+// 	  else
+// 	    {
+// 	      QuasiholeVectors[i] = RealVector(1);
+// 	      QuasiholeVectors[i][0] = 1.0;
+// 	    }
+// 	}
+//     }
+//   delete[] ReferenceState;
+
   char* QuasiholeDimensionFileName = new char[256 + strlen(filePrefix)];
   sprintf (QuasiholeDimensionFileName, "%s_qh_states_k_%d_r_%d_nphi_%d.dat", filePrefix, kValue, rValue, lzMax);
   if (IsFile(QuasiholeDimensionFileName) == true)
@@ -615,8 +664,8 @@ RealMatrix FQHECylinderQuasiholeMatrixElementsComputeQuasiholeStates(ParticleOnS
       File << lzMax << " " << nbrParticles << " " << totalLz << " " << nbrQuasiholeStates << endl;
       File.close();
     }
-  RealMatrix QuasiholeVectors2(QuasiholeVectors, nbrQuasiholeStates);
-  QuasiholeVectors2.OrthoNormalizeColumns();
+//   RealMatrix QuasiholeVectors2(QuasiholeVectors, nbrQuasiholeStates);
+//   QuasiholeVectors2.OrthoNormalizeColumns();
   if (QuasiholeVectors2.WriteMatrix(QuasiholeVectorFileName) == false)
     {
       cout << "error while writing " << QuasiholeVectorFileName << endl;
