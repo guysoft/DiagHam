@@ -99,6 +99,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-sz", "only evalute a given spin sector (negative if all sz sectors have to be computed)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "sz-parity", "only evalute a given sz parity sector (0 if all sz parity sectors have to be computed)", 0);
   (*SystemGroup) += new  BooleanOption  ('\n', "redundant-kx", "Calculate all kx subspaces", false);
   (*SystemGroup) += new  BooleanOption  ('\n', "redundant-ky", "Calculate all ky subspaces", false);
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
@@ -450,6 +451,11 @@ int main(int argc, char** argv)
 	{
 	  SzSymmetrySector = -1;
 	  MaxSzSymmetrySector = 1;
+	  if (Manager.GetInteger("sz-parity") != 0)
+	  {
+	    SzSymmetrySector = Manager.GetInteger("sz-parity");
+	    MaxSzSymmetrySector = Manager.GetInteger("sz-parity");
+	  }
 	}
       for (; SzSymmetrySector <= MaxSzSymmetrySector; SzSymmetrySector += 2)
 	{
