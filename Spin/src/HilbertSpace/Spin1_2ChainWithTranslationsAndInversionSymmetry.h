@@ -276,11 +276,7 @@ inline bool Spin1_2ChainWithTranslationsAndInversionSymmetry::TestMomentumConstr
 
 inline void Spin1_2ChainWithTranslationsAndInversionSymmetry::ApplyInversionSymmetry(unsigned long& stateDescription)
 {
-#ifdef __64_BITS__
-  unsigned long InitialState = stateDescription & 0xfffffffffffffffeul;  
-#else
-  unsigned long InitialState = stateDescription & 0xfffffffeul;  
-#endif	
+  unsigned long InitialState = stateDescription & (~((0x1ul << this->StateShift) - 0x1ul));  
   InitialState <<= this->InversionShift;
 #ifdef __64_BITS__
   unsigned long TmpState = this->InversionTable[InitialState & 0xfful] << 56;

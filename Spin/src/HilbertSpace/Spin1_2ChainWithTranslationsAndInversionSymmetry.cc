@@ -90,12 +90,12 @@ Spin1_2ChainWithTranslationsAndInversionSymmetry::Spin1_2ChainWithTranslationsAn
       this->InversionSector = -1.0;
     }
 #ifdef __64_BITS__
-  this->InversionShift = 32 - (((this->ChainLength + 1) >> 1));
+  this->InversionShift = 32 - ((((this->ChainLength + 1) >> 1)) * this->StateShift);
 #else
-  this->InversionShift = 16 - (((this->ChainLength + 1) >> 1) - 1);
+  this->InversionShift = 16 - ((((this->ChainLength + 1) >> 1) - 1) * this->StateShift);
 #endif
   if ((this->ChainLength & 1) == 0)
-    this->InversionUnshift = this->InversionShift - 1;
+    this->InversionUnshift = this->InversionShift -  this->StateShift;
   else
     this->InversionUnshift = this->InversionShift;
   this->SzSymmetrySector = 0.0;
@@ -185,12 +185,12 @@ Spin1_2ChainWithTranslationsAndInversionSymmetry::Spin1_2ChainWithTranslationsAn
       this->InversionSector = -1.0;
     }
 #ifdef __64_BITS__
-  this->InversionShift = 32 - (((this->ChainLength + 1) >> 1));
+  this->InversionShift = 32 - ((((this->ChainLength + 1) >> 1)) * this->StateShift);
 #else
-  this->InversionShift = 16 - (((this->ChainLength + 1) >> 1) - 1);
+  this->InversionShift = 16 - ((((this->ChainLength + 1) >> 1) - 1) * this->StateShift);
 #endif
   if ((this->ChainLength & 1) == 0)
-    this->InversionUnshift = this->InversionShift - 1;
+    this->InversionUnshift = this->InversionShift -  this->StateShift;
   else
     this->InversionUnshift = this->InversionShift;
   this->SzSymmetrySector = 0.0;
