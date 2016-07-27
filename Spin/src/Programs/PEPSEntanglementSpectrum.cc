@@ -120,15 +120,17 @@ int main(int argc, char** argv)
   ComplexVector * ComplexGroundStates = 0;
   char** GroundStateFiles = 0;
   double EigenvalueError = 1e-10;
-
+  double *  Coefficients = 0;
   AbstractDoubledSpinChainWithTranslations ** Spaces = 0;
   bool ComplexFlag = Manager.GetBoolean("complex");
 
   if (Manager.GetString("degenerated-groundstate") == 0)
     {
       GroundStateFiles = new char* [1];
+      Coefficients = new double[1];
       GroundStateFiles[0] = new char [strlen(Manager.GetString("ground-file")) + 1];
       strcpy (GroundStateFiles[0], Manager.GetString("ground-file"));      
+      Coefficients[0] = 1.0;
     }
   else
     {
@@ -140,10 +142,29 @@ int main(int argc, char** argv)
 	}
        NbrSpaces = DegeneratedFile.GetNbrLines();
        GroundStateFiles = new char* [NbrSpaces];
+
        for (int i = 0; i < NbrSpaces; ++i)
 	 {
 	   GroundStateFiles[i] = new char [strlen(DegeneratedFile(0, i)) + 1];
 	   strcpy (GroundStateFiles[i], DegeneratedFile(0, i));      	   
+	 }
+
+       if (DegeneratedFile.GetNbrColumns() == 1)
+         {
+           Coefficients = new double[NbrSpaces];
+           for (int i = 0; i < NbrSpaces; ++i)
+             Coefficients[i] = 1.0 / ((double) NbrSpaces);
+         }
+       else
+	 {
+	   double TmpSum = 0.0;
+	   Coefficients = DegeneratedFile.GetAsDoubleArray(1);
+
+//           for (int i = 0; i < NbrSpaces; ++i)
+//             TmpSum += Coefficients[i];
+	   //           TmpSum = 1.0 / TmpSum;
+//           for (int i = 0; i < NbrSpaces; ++i)
+//             Coefficients[i] *= TmpSum;
 	 }
     }
   
@@ -335,14 +356,13 @@ int main(int argc, char** argv)
 	  cout << "processing subsystem Sz =" << SubSystemSz << endl;
 	  if(ComplexFlag == false)
 	    {
-	      RealSymmetricMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrix(SubSystemSz,GroundStates[0]);
+	      RealSymmetricMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrix(SubSystemSz,GroundStates[0])*Coefficients[0];
 	      for (int i = 1; i < NbrSpaces; ++i)
 		{
 		  RealSymmetricMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrix(SubSystemSz,GroundStates[i]);
-		  PartialDensityMatrix += TmpMatrix;
+		  PartialDensityMatrix += TmpMatrix*Coefficients[i];
 		}
-	      if (NbrSpaces > 1)
-		PartialDensityMatrix /= ((double) NbrSpaces);
+	      
 	      
 	      if (PartialDensityMatrix.GetNbrRow() > 1)
 		{
@@ -401,14 +421,15 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      HermitianMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrix(SubSystemSz, ComplexGroundStates[0]);
+	      HermitianMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrix(SubSystemSz, ComplexGroundStates[0])*Coefficients[0];
+	      cout <<PartialDensityMatrix<<endl;
 	      for (int i = 1; i < NbrSpaces; ++i)
 		{
-		  HermitianMatrix TmpMatrix =  Spaces[i]->EvaluatePartialDensityMatrix(SubSystemSz, ComplexGroundStates[i]);
+		  HermitianMatrix TmpMatrix =  Spaces[i]->EvaluatePartialDensityMatrix(SubSystemSz, ComplexGroundStates[i])*Coefficients[i];
+		  cout << TmpMatrix<<endl;
 		  PartialDensityMatrix += TmpMatrix;
 		}
-	      if (NbrSpaces > 1)
-		PartialDensityMatrix /= sqrt(((double) NbrSpaces));
+
 	      if (PartialDensityMatrix.GetNbrRow() > 1)
 		{
 		  RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
@@ -485,14 +506,13 @@ int main(int argc, char** argv)
 	      cout << "processing subsystem Sz =" << SubSystemSz << endl;
 	      if(ComplexFlag == false)
 		{
-		  RealSymmetricMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrix(SubSystemSz,SubSystemK,GroundStates[0]);
+		  RealSymmetricMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrix(SubSystemSz,SubSystemK,GroundStates[0]) * Coefficients[0];
 		  for (int i = 1; i < NbrSpaces; ++i)
 		    {
-		      RealSymmetricMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrix(SubSystemSz,SubSystemK,GroundStates[i]);
+		      RealSymmetricMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrix(SubSystemSz,SubSystemK,GroundStates[i]) * Coefficients[i];
 		      PartialDensityMatrix += TmpMatrix;
 		    }
-		  if (NbrSpaces > 1)
-		    PartialDensityMatrix /= ((double) NbrSpaces);
+		  
 		  
 		  if (PartialDensityMatrix.GetNbrRow() > 1)
 		    {
@@ -551,10 +571,10 @@ int main(int argc, char** argv)
 		}
 	      else
 		{
-		  HermitianMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrix(SubSystemSz,SubSystemK, ComplexGroundStates[0]);
+		  HermitianMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrix(SubSystemSz,SubSystemK, ComplexGroundStates[0])* Coefficients[0];
 		  for (int i = 1; i < NbrSpaces; ++i)
 		    {
-		      HermitianMatrix TmpMatrix =  Spaces[i]->EvaluatePartialDensityMatrix(SubSystemSz, SubSystemK,ComplexGroundStates[i]);
+		      HermitianMatrix TmpMatrix =  Spaces[i]->EvaluatePartialDensityMatrix(SubSystemSz, SubSystemK,ComplexGroundStates[i])* Coefficients[i];
 		      PartialDensityMatrix += TmpMatrix;
 		    }
 		  if (NbrSpaces > 1)
