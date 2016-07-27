@@ -80,8 +80,6 @@ SpinChainJ1J2RealHamiltonianWithTranslations::SpinChainJ1J2RealHamiltonianWithTr
 
 SpinChainJ1J2RealHamiltonianWithTranslations::~SpinChainJ1J2RealHamiltonianWithTranslations() 
 {
-  delete[] this->SzSzContributions;
-  delete[] this->ExponentialTable;
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 

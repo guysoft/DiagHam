@@ -122,8 +122,8 @@ Spin1ChainWithTranslationsAndSzSymmetry::Spin1ChainWithTranslationsAndSzSymmetry
 //
 // chainLength = number of spin 1
 // momemtum = total momentum of each state
-// sz = twice the value of total Sz component (should be equal to zero)
 // szSymmetrySector = Sz<->-Sz symmetry sector (can be either +1 or -1)
+// sz = twice the value of total Sz component (should be equal to zero)
 // memory = amount of memory granted for precalculations
 
 Spin1ChainWithTranslationsAndSzSymmetry::Spin1ChainWithTranslationsAndSzSymmetry (int chainLength, int momentum, int szSymmetrySector, int sz, unsigned long memory) 

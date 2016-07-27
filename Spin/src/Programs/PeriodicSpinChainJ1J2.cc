@@ -2,6 +2,9 @@
 #include "Hamiltonian/SpinChainJ1J2RealHamiltonianWithTranslations.h"
 
 #include "HilbertSpace/Spin1_2ChainWithTranslations.h"
+#include "HilbertSpace/Spin1_2ChainWithTranslationsAndSzSymmetry.h"
+#include "HilbertSpace/Spin1_2ChainWithTranslationsAndInversionSymmetry.h"
+#include "HilbertSpace/Spin1_2ChainWithTranslationsAndSzInversionSymmetries.h"
 #include "HilbertSpace/Spin1ChainWithTranslations.h"
 #include "HilbertSpace/Spin1ChainWithTranslationsAndSzSymmetry.h"
 #include "HilbertSpace/Spin1ChainWithTranslationsAndInversionSymmetry.h"
@@ -166,19 +169,22 @@ int main(int argc, char** argv)
       MaxMomentum = InitialMomentum + 1;
     }
 
-  if ((InitalSzValue == 0) && (Manager.GetBoolean("disable-szsymmetry") == false) && (SpinValue == 2))
+  if ((InitalSzValue == 0) && (Manager.GetBoolean("disable-szsymmetry") == false) && (SpinValue <= 2))
     {
       for (int Momentum = InitialMomentum; Momentum < MaxMomentum; ++Momentum)
 	{
 	  for (int SzSymmetrySector = -1; SzSymmetrySector <= 1; SzSymmetrySector += 2)
 	    {
-	      if ((Manager.GetBoolean("disable-inversionsymmetry") == false)  && (SpinValue == 2) && ((Momentum == 0) || (((NbrSpins & 1) == 0) && (Momentum == (NbrSpins >> 1)))))
+	      if ((Manager.GetBoolean("disable-inversionsymmetry") == false)  && (SpinValue <= 2) && ((Momentum == 0) || (((NbrSpins & 1) == 0) && (Momentum == (NbrSpins >> 1)))))
 		{
 		  for (int InversionSymmetrySector = -1; InversionSymmetrySector <= 1; InversionSymmetrySector += 2)
 		    {
 		      AbstractSpinChainWithTranslations* Chain = 0;
 		      switch (SpinValue)
 			{
+ 			case 1 :
+ 			  Chain = new Spin1_2ChainWithTranslationsAndSzInversionSymmetries (NbrSpins, Momentum, 1, InversionSymmetrySector, SzSymmetrySector, InitalSzValue, 1000000, 1000000);
+ 			  break;
 			case 2 :
 			  Chain = new Spin1ChainWithTranslationsAndSzInversionSymmetries (NbrSpins, Momentum, InversionSymmetrySector, SzSymmetrySector, InitalSzValue);
 			  break;
@@ -228,6 +234,9 @@ int main(int argc, char** argv)
 		  AbstractSpinChainWithTranslations* Chain = 0;
 		  switch (SpinValue)
 		    {
+		    case 1 :
+		      Chain = new Spin1_2ChainWithTranslationsAndSzSymmetry (NbrSpins, Momentum, 1, SzSymmetrySector, InitalSzValue, 1000000, 1000000);
+		      break;
 		    case 2 :
 		      Chain = new Spin1ChainWithTranslationsAndSzSymmetry (NbrSpins, Momentum, SzSymmetrySector, InitalSzValue);
 		      break;
@@ -273,13 +282,16 @@ int main(int argc, char** argv)
     {
       for (int Momentum = InitialMomentum; Momentum < MaxMomentum; ++Momentum)
 	{
-	  if ((Manager.GetBoolean("disable-inversionsymmetry") == false)  && (SpinValue == 2) && ((Momentum == 0) || (((NbrSpins & 1) == 0) && (Momentum == (NbrSpins >> 1)))))
+	  if ((Manager.GetBoolean("disable-inversionsymmetry") == false)  && (SpinValue <= 2) && ((Momentum == 0) || (((NbrSpins & 1) == 0) && (Momentum == (NbrSpins >> 1)))))
 	    {
 	      for (int InversionSymmetrySector = -1; InversionSymmetrySector <= 1; InversionSymmetrySector += 2)
 		{
 		  AbstractSpinChainWithTranslations* Chain = 0;
 		  switch (SpinValue)
 		    {
+ 		    case 1 :
+ 		      Chain = new Spin1_2ChainWithTranslationsAndInversionSymmetry (NbrSpins, Momentum, 1, InversionSymmetrySector, InitalSzValue, 1000000, 1000000);
+ 		      break;
 		    case 2 :
 		      Chain = new Spin1ChainWithTranslationsAndInversionSymmetry (NbrSpins, Momentum, InversionSymmetrySector, InitalSzValue);
 		      break;

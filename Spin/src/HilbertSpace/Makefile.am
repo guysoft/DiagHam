@@ -41,5 +41,7 @@ Spin1ChainWithTranslationsAndSzInversionSymmetries.cc \
 PEPSLocalPhysicalAndVirtualSpin.cc \
 Spin1_2ChainWithPseudospin.cc \
 Spin1_2ChainNewAnd2DTranslation.cc \
-Spin1_2ChainNewSzSymmetryAnd2DTranslation.cc
-
+Spin1_2ChainNewSzSymmetryAnd2DTranslation.cc \
+Spin1_2ChainWithTranslationsAndSzSymmetry.cc \
+Spin1_2ChainWithTranslationsAndInversionSymmetry.cc \
+Spin1_2ChainWithTranslationsAndSzInversionSymmetries.cc

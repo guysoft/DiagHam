@@ -48,6 +48,9 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
 
  protected: 
 
+  // number of sites in the x direction
+  int MaxXMomentum;
+
   // array containing falg indicating if a state beloging to an orbit with a given number of member is compatible with momentum constraint
   bool* CompatibilityWithMomentum;
 
@@ -118,31 +121,31 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // clone Hilbert space (without duplicating datas)
   //
   // return value = pointer to cloned Hilbert space
-  AbstractHilbertSpace* Clone();
+  virtual AbstractHilbertSpace* Clone();
 
   // return a list of all possible quantum numbers 
   //
   // return value = pointer to corresponding quantum number
-  List<AbstractQuantumNumber*> GetQuantumNumbers ();
+  virtual List<AbstractQuantumNumber*> GetQuantumNumbers ();
 
   // return quantum number associated to a given state
   //
   // index = index of the state
   // return value = pointer to corresponding quantum number
-  AbstractQuantumNumber* GetQuantumNumber (int index);
+  virtual AbstractQuantumNumber* GetQuantumNumber (int index);
 
   // return value of the value of the sum of the square of spin projection on (Oz) 
   //
   // index = index of the state to test
   // return value = twice spin projection on (Oz)
-  double TotalSzSz (int index);
+  virtual double TotalSzSz (int index);
 
 
   // return value of spin projection on (Oz) for a given state
   //
   // index = index of the state to test
   // return value = spin projection on (Oz)
-  int TotalSz (int index);
+  virtual int TotalSz (int index);
 
   // return eigenvalue of Sz_i Sz_j associated to a given state
   //
@@ -150,7 +153,7 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // j = second position
   // state = index of the state to consider
   // return value = corresponding eigenvalue
-  double SziSzj (int i, int j, int state);
+  virtual double SziSzj (int i, int j, int state);
 
   // compute the parity (prod_i Sz_i) for a given state
   //
@@ -165,7 +168,7 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // state = index of the state to be applied on P_ij operator
   // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of resulting state
-  int Pij (int i, int j, int state, double& coefficient, int& nbrTranslation);
+  virtual int Pij (int i, int j, int state, double& coefficient, int& nbrTranslation);
 
   // return index of resulting state from application of S-_i S+_j operator on a given state
   //
@@ -175,7 +178,7 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // coefficient = reference on double where numerical coefficient has to be stored
   // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of resulting state
-  int SmiSpj (int i, int j, int state, double& coefficient, int& nbrTranslation);
+  virtual int SmiSpj (int i, int j, int state, double& coefficient, int& nbrTranslation);
 
   // return index of resulting state from application of S+_i operator on a given state (only valid if there is no constraint on total Sz)
   //
@@ -184,7 +187,7 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // coefficient = reference on double where numerical coefficient has to be stored
   // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of resulting state
-  int Spi (int i, int state, double& coefficient, int& nbrTranslation);
+  virtual int Spi (int i, int state, double& coefficient, int& nbrTranslation);
 
   // return index of resulting state from application of S-_i operator on a given state (only valid if there is no constraint on total Sz)
   //
@@ -193,7 +196,7 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // coefficient = reference on double where numerical coefficient has to be stored
   // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of resulting state
-  int Smi (int i, int state, double& coefficient, int& nbrTranslation);
+  virtual int Smi (int i, int state, double& coefficient, int& nbrTranslation);
     
   // return index of resulting state from application of S+_i S+_j operator on a given state
   //
@@ -203,7 +206,7 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // coefficient = reference on double where numerical coefficient has to be stored
   // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of resulting state
-  int SpiSpj (int i, int j, int state, double& coefficient, int& nbrTranslation);
+  virtual int SpiSpj (int i, int j, int state, double& coefficient, int& nbrTranslation);
 
   // return index of resulting state from application of S-_i S-_j operator on a given state
   //
@@ -213,7 +216,7 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // coefficient = reference on double where numerical coefficient has to be stored
   // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of resulting state
-  int SmiSmj (int i, int j, int state, double& coefficient, int& nbrTranslation);
+  virtual int SmiSmj (int i, int j, int state, double& coefficient, int& nbrTranslation);
 
   // return index of resulting state from application of S+_i S+_i operator on a given state
   //
@@ -222,7 +225,7 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // coefficient = reference on double where numerical coefficient has to be stored
   // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of resulting state
-  int SpiSpi (int i, int state, double& coefficient, int& nbrTranslation);
+  virtual int SpiSpi (int i, int state, double& coefficient, int& nbrTranslation);
 
   // return index of resulting state from application of S-_i S-_i operator on a given state
   //
@@ -231,7 +234,7 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // coefficient = reference on double where numerical coefficient has to be stored
   // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of resulting state
-  int SmiSmi (int i, int state, double& coefficient, int& nbrTranslation);
+  virtual int SmiSmi (int i, int state, double& coefficient, int& nbrTranslation);
 
   // return index of resulting state from application of S+_i Sz_j operator on a given state
   //
@@ -241,7 +244,7 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // coefficient = reference on double where numerical coefficient has to be stored
   // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of resulting state
-  int SpiSzj (int i, int j, int state, double& coefficient, int& nbrTranslation);
+  virtual int SpiSzj (int i, int j, int state, double& coefficient, int& nbrTranslation);
 
   // return index of resulting state from application of S-_i Sz_j operator on a given state
   //
@@ -251,27 +254,27 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // coefficient = reference on double where numerical coefficient has to be stored
   // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of resulting state
-  int SmiSzj (int i, int j, int state, double& coefficient, int& nbrTranslation);
+  virtual int SmiSzj (int i, int j, int state, double& coefficient, int& nbrTranslation);
 
   // extract subspace with a fixed quantum number
   //
   // q = quantum number value
   // converter = reference on subspace-space converter to use
   // return value = pointer to the new subspace
-  AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, SubspaceSpaceConverter& converter);
+  virtual AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, SubspaceSpaceConverter& converter);
 
   // find state index
   //
   // state = state description
   // return value = corresponding index
-  int FindStateIndex(unsigned long state);
+  virtual int FindStateIndex(unsigned long state);
 
   // print a given State
   //
   // Str = reference on current output stream 
   // state = ID of the state to print
   // return value = reference on current output stream 
-  ostream& PrintState (ostream& Str, int state);
+  virtual ostream& PrintState (ostream& Str, int state);
 
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition.
   // 
@@ -279,7 +282,7 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // kSector = momentum of the subsystem
   // groundState = reference on the total system ground state
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
-  HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrSpinUpSector, int kSector, RealVector& groundState);
+  virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrSpinUpSector, int kSector, RealVector& groundState);
   
 
  protected:
@@ -288,14 +291,14 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   //
   // stateDescription = state to which the spin projection has to be evaluated
   // return value = twice spin projection on (Oz)
-  int GetTotalSz (unsigned long stateDescription);
+  virtual int GetTotalSz (unsigned long stateDescription);
 
   // find the canonical form of a state
   //
   // state = state description
-  // nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
+  // nbrTranslations = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
   // return value = canonical form of the state
-  unsigned long FindCanonicalForm(unsigned long state, int& nbrTranslation);
+  virtual unsigned long FindCanonicalForm(unsigned long state, int& nbrTranslations);
 
   // find the canonical form of a state and find how many translations are needed to obtain the same state
   //
@@ -303,13 +306,13 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
   // nbrTranslationToIdentity = reference on the number of translation needed to obtain the same state
   // return value = canonical form of the state
-  unsigned long FindCanonicalForm(unsigned long stateDescription, int& nbrTranslation, int& nbrTranslationToIdentity);
+  virtual unsigned long FindCanonicalForm(unsigned long stateDescription, int& nbrTranslation, int& nbrTranslationToIdentity);
 
   // find how many translations are needed to obtain the same state
   //
   // stateDescription = unsigned integer describing the state
   // return value = number of translation needed to obtain the same state
-  int FindNumberTranslation(unsigned long stateDescription);
+  virtual int FindNumberTranslation(unsigned long stateDescription);
 
   // constructor from pre-constructed datas
   //
@@ -331,22 +334,22 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // sitePosition = largest sit position that has to be filled 
   // currentNbrSpinUp = number of spin to put in each state
   // return value = new current position in the Hilbert space basis
-  long GenerateStates(long position, int sitePosition, int currentNbrSpinUp);
+  virtual long GenerateStates(long position, int sitePosition, int currentNbrSpinUp);
 
   // create precalculation tables
   //
-  void CreatePrecalculationTable();
+  virtual void CreatePrecalculationTable();
 
   // create look-up table used to speed up index search
   //
-  void CreateLookUpTable();
+  virtual void CreateLookUpTable();
 
   // evaluate Hilbert space dimension
   //
   // nbrSpins = number of spins
   // sz = twice the z projection of the total momentum
   // return value = Hilbert space dimension
-  long EvaluateHilbertSpaceDimension(int nbrSpins, int szMax);
+  virtual long EvaluateHilbertSpaceDimension(int nbrSpins, int szMax);
 
   // convert the state on the site to its binary representation
   //
@@ -363,37 +366,113 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   virtual void GetBosonicOccupation (unsigned int index, int * finalState);
   
   //return the scaling factor when going from state i to state j
-  inline double GetRescalingFactor(int i,int j) const {return this->RescalingFactors[this->NbrStateInOrbit[i]][this->NbrStateInOrbit[j]];};
+  virtual double GetRescalingFactor(int i,int j) const {return this->RescalingFactors[this->NbrStateInOrbit[i]][this->NbrStateInOrbit[j]];};
   
-    
+  // factorized code that is used to symmetrize the result of any operator action
+  //
+  // state = reference on the state that has been produced with the operator action
+  // nbrStateInOrbit = original number of states in the orbit before the operator action
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslations = reference on the number of translations to obtain the canonical form of the resulting state
+  // return value = index of the destination state  
+  virtual int SymmetrizeResult(unsigned long& state, int nbrStateInOrbit, double& coefficient, int& nbrTranslations);
+
+  //  test if the state and its translated version can be used to create a state corresponding to the momentum constraint
+  //
+  // stateDescription = unsigned integer describing the state
+  // return value = true if the state satisfies the momentum constraint
+  virtual bool TestMomentumConstraint(unsigned long stateDescription);
+
+  // find the size of the orbit for a given state
+  //
+  // return value = orbit size
+  virtual int FindOrbitSize(unsigned long stateDescription);
+
   // apply a single translation in the x direction for a state description
   //
   // stateDescription = reference on the state description
-  void ApplySingleXTranslation(unsigned long& stateDescription);
+  virtual void ApplySingleXTranslation(unsigned long& stateDescription);
+
 };
 
+// factorized code that is used to symmetrize the result of any operator action
+//
+// state = reference on the state that has been produced with the operator action
+// nbrStateInOrbit = original number of states in the orbit before the operator action
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslations = reference on the number of translations to obtain the canonical form of the resulting state
+// return value = index of the destination state  
+
+inline int Spin1_2ChainWithTranslations::SymmetrizeResult(unsigned long& state, int nbrStateInOrbit, double& coefficient, 
+							  int& nbrTranslations)
+{
+  state = this->FindCanonicalForm(state, nbrTranslations);
+  int TmpIndex = this->FindStateIndex(state);
+  if (TmpIndex < this->HilbertSpaceDimension)
+    {
+      coefficient *= this->RescalingFactors[nbrStateInOrbit][this->NbrStateInOrbit[TmpIndex]];
+      nbrTranslations = (this->MaxXMomentum - nbrTranslations) % this->MaxXMomentum;
+     }
+  return TmpIndex;
+}
+
+// find the size of the orbit for a given state
+//
+// return value = orbit size
+
+inline int Spin1_2ChainWithTranslations::FindOrbitSize(unsigned long stateDescription)
+{
+  unsigned long TmpStateDescription = stateDescription;
+  int XSize = 1;
+  this->ApplySingleXTranslation(TmpStateDescription);      
+  while (stateDescription != TmpStateDescription)
+    {
+      ++XSize;
+      this->ApplySingleXTranslation(TmpStateDescription);      
+    }
+  return XSize;
+}
+
+//  test if the state and its translated version can be used to create a state corresponding to the momentum constraint
+//
+// stateDescription = unsigned integer describing the state
+// return value = true if the state satisfies the momentum constraint
+
+inline bool Spin1_2ChainWithTranslations::TestMomentumConstraint(unsigned long stateDescription)
+{
+  unsigned long TmpStateDescription = stateDescription;
+  int XSize = 1;
+  this->ApplySingleXTranslation(TmpStateDescription);   
+  while (stateDescription != TmpStateDescription)
+    {
+      ++XSize;
+      this->ApplySingleXTranslation(TmpStateDescription);      
+    }
+  if (((this->Momentum * XSize) % this->MaxXMomentum) != 0)
+    return false;
+  return true;
+}
 
 
 // find the canonical form of a state
 //
 // stateDescription = state description
-// nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
+// nbrTranslations = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
 // return value = canonical form of the state
 
-inline unsigned long Spin1_2ChainWithTranslations::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslation)
+inline unsigned long Spin1_2ChainWithTranslations::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslations)
 {
-  nbrTranslation = 0;
+  nbrTranslations = 0;
   unsigned long CanonicalState = stateDescription;
-  int index = 1;  
-  while (index < this->ChainLength)
+  nbrTranslations = 0;
+  for (int n = 1; n < this->MaxXMomentum; ++n)
     {
-      stateDescription = (stateDescription >> this->StateShift) | ((stateDescription & this->StateMask) << this->ComplementaryStateShift);
+      this->ApplySingleXTranslation(stateDescription);      
       if (stateDescription < CanonicalState)
 	{
 	  CanonicalState = stateDescription;
-	  nbrTranslation = index;
+	  nbrTranslations = n;	      
 	}
-      ++index;
     }
   return CanonicalState;
 }
