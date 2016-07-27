@@ -93,11 +93,12 @@ HermitianMatrix::HermitianMatrix(int dimension, bool zero)
   this->Flag.Initialize();
   this->MatrixType = Matrix::ComplexElements | Matrix::Hermitian;
   this->DiagonalElements = new double [this->NbrRow];
-  this->RealOffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l];
-  this->ImaginaryOffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l];
+  cout << "array size = 2 * " << ((((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l) << endl;
+  this->RealOffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l];
+  this->ImaginaryOffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l];
   if (zero == true)
     {
-      int pos = 0;
+      long pos = 0l;
       for (int i = 0; i < this->NbrRow; i++)
 	{
 	  this->DiagonalElements[i] = 0.0;
@@ -171,7 +172,7 @@ HermitianMatrix::HermitianMatrix(MPI::Intracomm& communicator, int id, bool broa
   this->ImaginaryOffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l];
   if (TmpArray[2] == 1)
     {
-      int pos = 0;
+      long pos = 0l;
       for (int i = 0; i < this->NbrRow; i++)
 	{
 	  this->DiagonalElements[i] = 0.0;
