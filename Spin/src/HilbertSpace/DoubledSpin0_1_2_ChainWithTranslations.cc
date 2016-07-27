@@ -704,15 +704,19 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
 	    HRep.SetMatrixElement(i,j,groundState[Index]);
 	}
     }
+
+  ComplexMatrix SquareRho( TmpDestinationHilbertSpace.HilbertSpaceDimension,  TmpDestinationHilbertSpace.HilbertSpaceDimension,true);
+  SquareRho = HRep*HRep;
+
   Complex Trace = 0.0;
   Complex Tmp = 0.0;
-  for (int i = 0; i <TmpDestinationHilbertSpace.HilbertSpaceDimension;i++)
+  for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension;i++)
     {
-      HRep.GetMatrixElement(i,i,Tmp);
+      SquareRho.GetMatrixElement(i,i,Tmp);
       Trace+=Tmp;
     }
   cout <<"Trace "<< Trace<<endl;
-  HRep/= Phase(Arg(Trace));
+  HRep/= Phase(0.5*Arg(Trace));
   Complex Tmp1;
   Complex Tmp2;
   cout << "check hermiticity" << endl;
@@ -849,6 +853,8 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
   if (ComplementaryKSector < 0)
     ComplementaryKSector += (this->ChainLength);
   
+//  int ComplementaryKSector = momentumSector;
+  
   Spin0_1_2_ChainWithTranslations TmpHilbertSpace(this->ChainLength,ComplementaryKSector,szSector,10000,10000);
  
  int MaxDimension = TmpDestinationHilbertSpace.HilbertSpaceDimension;
@@ -868,7 +874,6 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
     {
       for(int j=0;j < TmpHilbertSpace.HilbertSpaceDimension;j++)
 	{
-
 	  ReferenceBra = TmpDestinationHilbertSpace.ChainDescription[i];
 	  ReferenceKet = TmpHilbertSpace.ChainDescription[j];
 	  
@@ -904,21 +909,22 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
 	}
     }
 
-
+  ComplexMatrix SquareRho( MaxDimension, MaxDimension,true);
+  SquareRho = HRep*HRep;
 
   Complex Trace = 0.0;
   Complex Tmp = 0.0;
   for (int i = 0; i < MaxDimension;i++)
     {
-      HRep.GetMatrixElement(i,i,Tmp);
+      SquareRho.GetMatrixElement(i,i,Tmp);
       Trace+=Tmp;
     }
   cout <<"Trace "<< Trace<<endl;
-  HRep/= Phase(Arg(Trace));
+  HRep/= Phase(0.5*Arg(Trace));
   Complex Tmp1;
   Complex Tmp2;
   cout << "check hermiticity" << endl;
-
+  
   double Error = 5e-8;
   
   for (int i = 0; i <   MaxDimension; ++i)
@@ -940,6 +946,7 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
 
 void  DoubledSpin0_1_2_ChainWithTranslations::ApplyInversionSymmetry(ComplexVector & sourceVector,  ComplexVector & destinationVector)
 {
+//  cout <<"using void  DoubledSpin0_1_2_ChainWithTranslations::ApplyInversionSymmetry(ComplexVector & sourceVector,  ComplexVector & destinationVector)"<<endl;
   RealDiagonalMatrix ZMatrix(9,true);
   double  Tmp[3];
   Tmp[0] = -1.0;Tmp[1] = -1.0;Tmp[2] = 1.0;
@@ -947,23 +954,164 @@ void  DoubledSpin0_1_2_ChainWithTranslations::ApplyInversionSymmetry(ComplexVect
     {
       ZMatrix.SetMatrixElement(i,i,Tmp[i%3] *Tmp[i/3] ); 
     }
-  
+//  cout <<ZMatrix<<endl;
   double TmpFactor;
   unsigned long OldState;
   int TmpIndice;
   unsigned long  TmpStateDescription;
+
+
+  int tmp = this->FindNextInversionSymetricIndice(0);
+
+  if((tmp ==this->HilbertSpaceDimension) )
+    {
+      tmp=0;
+      while(Norm(sourceVector[tmp]) < 1e-8 )
+	tmp++;
+    }
+  
+  while(Norm(sourceVector[tmp]) < 1e-8 )
+    {
+      tmp=this->FindNextInversionSymetricIndice(tmp);
+    }
+  
+  cout <<tmp<<" "<< Norm(sourceVector[tmp])<<endl;
+//  sourceVector*=Conj(sourceVector[tmp])/Norm(sourceVector[tmp]);
+  sourceVector/=Phase(Arg(sourceVector[tmp]));
+
+//  this->NormalizeDensityMatrix(sourceVector);
   for (int i =0; i <this->HilbertSpaceDimension; i++)
     {
-      TmpFactor =1.0;
+      cout <<" i = " <<i<< " : "<<this->ChainDescription[i]<<endl;;
+      TmpFactor = 1.0;
       OldState = 0ul;
       TmpStateDescription =  this->ChainDescription[i]; 
       for (int p = 0 ; p <this->ChainLength ; p++)
 	{
 	  TmpIndice = (TmpStateDescription/this->PowerD[p]) % this->PowerD[1];
+	  cout <<TmpIndice<<" ";
 	  if  (p%2 == 0 ) 
 	    TmpFactor*=ZMatrix(TmpIndice,TmpIndice);
 	  OldState+= TmpIndice*this->PowerD[this->ChainLength-p-1];
 	}
+
+      cout <<endl<<" "<<OldState<< " "<<this->FindStateIndex(OldState)<<" "<<sourceVector[this->FindStateIndex(OldState)]<<endl;
       destinationVector[i] = Conj(TmpFactor*sourceVector[this->FindStateIndex(OldState)]) ;
+    }
+}
+
+
+int DoubledSpin0_1_2_ChainWithTranslations::FindNextInversionSymetricIndice(int previousOne)
+{
+  unsigned long OldState;
+  int TmpIndice;
+  unsigned long  TmpStateDescription;
+  for (int i =previousOne+1; i <this->HilbertSpaceDimension; i++)
+    {
+      OldState = 0ul;
+      TmpStateDescription =  this->ChainDescription[i]; 
+      for (int p = 0 ; p <this->ChainLength ; p++)
+	{
+	  TmpIndice = (TmpStateDescription/this->PowerD[p]) % this->PowerD[1];
+	  OldState+= TmpIndice*this->PowerD[this->ChainLength-p-1];
+	} 
+      if (OldState ==  this->ChainDescription[i]) 
+	return i;
+    } 
+  return this->HilbertSpaceDimension;
+}
+
+
+void  DoubledSpin0_1_2_ChainWithTranslations::ApplyInversionSymmetry(ComplexVector & sourceVector,  ComplexVector & destinationVector, bool translationFlag)
+{
+  if (translationFlag == false ) 
+    {
+      this->ApplyInversionSymmetry(sourceVector, destinationVector) ;
+    }
+  else
+    {
+      //  cout <<"using void  DoubledSpin0_1_2_ChainWithTranslations::ApplyInversionSymmetry(ComplexVector & sourceVector,  ComplexVector & destinationVector)"<<endl;
+      RealDiagonalMatrix ZMatrix(9,true);
+      double  Tmp[3];
+      Tmp[0] = -1.0;Tmp[1] = -1.0;Tmp[2] = 1.0;
+      for(int i =0;i <9; i++)
+	{
+	  ZMatrix.SetMatrixElement(i,i,Tmp[i%3] *Tmp[i/3] ); 
+	}
+      //  cout <<ZMatrix<<endl;
+      double TmpFactor;
+      unsigned long OldState;
+      int TmpIndice;
+      unsigned long  TmpStateDescription;
+      unsigned long  TmpCanonicalState;
+      int NbrTranslation;
+
+      int tmp = this->FindNextInversionSymetricIndice(0);
+      
+      if((tmp ==this->HilbertSpaceDimension) )
+	{
+	  tmp=0;
+	  while(Norm(sourceVector[tmp]) < 1e-8 )
+	    tmp++;
+	}
+      
+      while(Norm(sourceVector[tmp]) < 1e-8 )
+	{
+	  tmp=this->FindNextInversionSymetricIndice(tmp);
+	}
+      
+
+      sourceVector*=Conj(sourceVector[tmp])/Norm(sourceVector[tmp]);
+      for (int i =0; i <this->HilbertSpaceDimension; i++)
+	{
+	  cout <<" i = " <<i<< " : "<<this->ChainDescription[i]<<endl;;
+	  TmpFactor = 1.0;
+	  OldState = 0ul;
+	  TmpStateDescription =  this->ChainDescription[i]; 
+	  for (int p = 0 ; p <this->ChainLength ; p++)
+	    {
+	      TmpIndice = (TmpStateDescription/this->PowerD[p]) % this->PowerD[1];
+	      cout <<TmpIndice<<" ";
+	      if  (p%2 == 0 ) 
+		TmpFactor*=ZMatrix(TmpIndice,TmpIndice);
+	      OldState+= TmpIndice*this->PowerD[this->ChainLength-p-1];
+	    }
+
+	  this->FindCanonicalForm(OldState,TmpCanonicalState, NbrTranslation);	  
+//	  cout <<endl<<" "<<OldState<< " "<<" "<<this->FindStateIndex(TmpCanonicalState)<<" "<< NbrTranslation <<" "<<sourceVector[this->FindStateIndex(TmpCanonicalState)]<<endl;
+
+
+	  destinationVector[i] = Conj(TmpFactor*sourceVector[this->FindStateIndex(TmpCanonicalState)]*this->TranslationPhase[NbrTranslation]) ;
+	}
+    }
+}
+
+
+void  DoubledSpin0_1_2_ChainWithTranslations::NormalizeDensityMatrix(ComplexVector & sourceVector)
+{
+
+  unsigned long SourceState,TmpState;
+  unsigned int TmpBra,TmpKet;
+  Complex Trace = 0.0;
+  for(int i=0;i < this->HilbertSpaceDimension;i++)
+    {
+      if ( Norm(sourceVector[i]) > 1e-8 ) 
+	{
+	  TmpState=0;
+	  SourceState = this->ChainDescription[i];
+	  for (int p = 0;p <this->ChainLength;p++)
+	    {
+	      this->GetBraAndKetIndicesFromCommonIndex(TmpBra,TmpKet, SourceState%9);
+	      TmpState+= this->PowerD[p] * this->GetCommonIndexFromBraAndKetIndices(TmpKet, TmpBra );
+	      SourceState/=9;
+	    }
+	  int Index = this->FindStateIndex (TmpState);
+	  cout <<endl<<"Index = " << Index<<endl;
+	  if (Index < this->HilbertSpaceDimension ) 
+	    {
+	      sourceVector/=Phase(0.5*(Arg(sourceVector[i]) + Arg(sourceVector[Index])));
+	      return;
+	    }
+	}
     }
 }

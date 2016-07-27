@@ -100,7 +100,8 @@ class Spin0_1_2_ChainWithTranslations : public AbstractSpinChainWithTranslations
   // memorySize = memory size in bytes allowed for look-up table
   // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
   Spin0_1_2_ChainWithTranslations (int chainLength,  int diffSz, int memorySize, int memorySlice);
-
+  Spin0_1_2_ChainWithTranslations (int chainLength,  int memorySize=100000, int memorySlice=100000);
+  
   // constructor for complete Hilbert space corresponding to a given total spin projection Sz
   //
   // chainLength = number of spin 1
@@ -180,8 +181,10 @@ class Spin0_1_2_ChainWithTranslations : public AbstractSpinChainWithTranslations
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
   long GenerateStates(int length, int diffSz, long pos);
+  long GenerateStates(int length, long pos);
   
   long ShiftedEvaluateHilbertSpaceDimension(int length, int diffSz);
+  long ShiftedEvaluateHilbertSpaceDimension(int length);
 
   double TotalSzSz (int index);
   double SziSzj (int i, int j, int state);

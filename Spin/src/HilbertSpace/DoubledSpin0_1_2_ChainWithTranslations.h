@@ -118,7 +118,8 @@ class DoubledSpin0_1_2_ChainWithTranslations : public AbstractDoubledSpinChainWi
   virtual void AddConvertFromGeneralSpaceWithMomentum(ComplexVector vSource,ComplexVector & vDestination);
   virtual void ConvertToGeneralSpaceWithMomentum(ComplexVector vSource,ComplexVector & vDestination);
   virtual void ApplyInversionSymmetry(ComplexVector & sourceVector,  ComplexVector & destinationVector);  
-  
+  virtual void ApplyInversionSymmetry(ComplexVector & sourceVector,  ComplexVector & destinationVector, bool translationFlag); 
+  virtual void NormalizeDensityMatrix(ComplexVector & sourceVector);
  protected:
 
   // return value of twice spin projection on (Oz) for a given state
@@ -168,7 +169,10 @@ class DoubledSpin0_1_2_ChainWithTranslations : public AbstractDoubledSpinChainWi
   // evaluate all exponential factors
   //   
   virtual void EvaluateExponentialFactors();
-  
+
+
+  virtual int FindNextInversionSymetricIndice(int);
+
 };
 
 

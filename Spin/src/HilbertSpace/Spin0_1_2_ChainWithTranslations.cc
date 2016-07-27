@@ -65,6 +65,67 @@ Spin0_1_2_ChainWithTranslations::Spin0_1_2_ChainWithTranslations ()
 
 
 
+
+// constructor for Hilbert space corresponding no constaint on Sz no contraint on Momentum
+//
+// chainLength = number of spin 1
+// momemtum = total momentum of each state
+// sz = twice the value of total Sz component
+// memorySize = memory size in bytes allowed for look-up table
+// memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
+
+Spin0_1_2_ChainWithTranslations::Spin0_1_2_ChainWithTranslations (int chainLength, int memorySize, int memorySlice) 
+{
+  this->Flag.Initialize();
+  this->ChainLength = chainLength;
+  this->FixedSpinProjectionFlag = false;
+  this->ComplementaryStateShift = 2*(this->ChainLength - 1);
+  memorySize /= sizeof(long);
+  this->LookUpTableShift = 1;
+  memorySize/=8;
+  while ((1 << this->LookUpTableShift) <= memorySize)
+    ++this->LookUpTableShift;
+  if (this->LookUpTableShift < (this->ChainLength << 1))
+    this->LookUpTableShift = (this->ChainLength << 1) - this->LookUpTableShift + 1;
+  else
+    this->LookUpTableShift = 0;
+  
+  this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->ChainLength-1);
+  this->ShiftNegativeDiffSz = this->LargeHilbertSpaceDimension;
+  
+  this->ChainDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+  
+  long TmpHilbertSpaceDimension = GenerateStates(this->ChainLength-1, 0l);
+  
+  SortArrayDownOrdering(this->ChainDescription ,TmpHilbertSpaceDimension);
+  
+  if (TmpHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
+    {
+      cout << TmpHilbertSpaceDimension << " " << this->LargeHilbertSpaceDimension << endl;
+      cout << "Mismatch in State-count and State Generation in Spin0_1_2_ChainWithTranslations!" << endl;
+      exit(1);
+    } 
+  
+  this->LargeHilbertSpaceDimension = TmpHilbertSpaceDimension;
+  this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
+
+  if (this->LargeHilbertSpaceDimension > 0l)
+    {
+      this->GenerateLookUpTable();
+    }
+  this->RescalingFactors = 0;
+
+  for(int i=0; i < this->LargeHilbertSpaceDimension; i++)
+    {
+      if ( i !=  this->FindStateIndex(this->ChainDescription[i]) )
+	{
+	  cout <<"Problem in Find state index "<< i<< " "<< this->FindStateIndex(this->ChainDescription[i])<<endl;
+	}
+    }
+}
+
+
 // constructor for Hilbert space corresponding to a given total spin projection Sz no contraint on Momentum
 //
 // chainLength = number of spin 1
@@ -92,6 +153,7 @@ Spin0_1_2_ChainWithTranslations::Spin0_1_2_ChainWithTranslations (int chainLengt
   
   this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->ChainLength-1, this->DiffSz);
   this->ShiftNegativeDiffSz = this->LargeHilbertSpaceDimension;
+
 /*  if (this->DiffSz !=0 )
     this->LargeHilbertSpaceDimension += this->ShiftedEvaluateHilbertSpaceDimension(this->ChainLength-1, -this->DiffSz);*/
   
@@ -443,7 +505,6 @@ long Spin0_1_2_ChainWithTranslations::GenerateStates(int length, int diffSz, lon
 
 long Spin0_1_2_ChainWithTranslations::ShiftedEvaluateHilbertSpaceDimension(int length, int diffSz)
 {
-
   if (length == 0)
     {
       if ((diffSz == 0)||(diffSz == 1)||(diffSz == -1))
@@ -459,6 +520,69 @@ long Spin0_1_2_ChainWithTranslations::ShiftedEvaluateHilbertSpaceDimension(int l
   Tmp += this->ShiftedEvaluateHilbertSpaceDimension(length-1, diffSz); 
   Tmp += this->ShiftedEvaluateHilbertSpaceDimension(length-1, diffSz-1);
   return Tmp;
+}
+
+
+// evaluate Hilbert space dimension
+//
+// nbrBosons = number of bosons
+// lzMax = momentum maximum value for a boson
+// totalLz = momentum total value
+// nbrNUp = number of particles with quantum number up
+// nbrNDown = number of particles with quantum number down
+// return value = Hilbert space dimension
+
+long Spin0_1_2_ChainWithTranslations::ShiftedEvaluateHilbertSpaceDimension(int length)
+{
+  if (length == 0)
+    {
+      return 3;
+    } 
+  
+  return 3*this->ShiftedEvaluateHilbertSpaceDimension(length-1); 
+}
+
+
+// generate all states corresponding to the constraints
+// 
+// length = length of the chain to be decided for bra spins
+// diffSz = difference of spin projection between bra and ket chain
+// pos = position in StateDescription array where to store states
+// return value = position from which new states have to be stored
+long Spin0_1_2_ChainWithTranslations::GenerateStates(int length,  long pos)
+{
+  if (length == 0)
+    {
+      this->ChainDescription[pos] = 0x1ul<<1;
+      pos ++;
+      this->ChainDescription[pos] = 0x1ul;
+      pos ++;
+      this->ChainDescription[pos] = 0x0ul;
+      pos ++;
+      return pos;
+    }
+  
+  long TmpPos;
+  unsigned long Mask;
+  
+  if(length > 0)
+    { 
+      TmpPos = this->GenerateStates(length-1, pos); 
+      Mask = (((0x1ul)) << ((length<<1)));
+      for (; pos < TmpPos; ++pos)
+	{
+	  this->ChainDescription[pos] |= Mask;
+	}
+      TmpPos = this->GenerateStates(length-1, pos); 
+      Mask = (((0x1ul << 1)) << ((length<<1)));
+      for (; pos < TmpPos; ++pos)
+	this->ChainDescription[pos] |= Mask;
+      TmpPos = this->GenerateStates(length-1, pos); 
+      Mask = (((0x0ul)) << ((length<<1)));
+      for (; pos < TmpPos; ++pos)
+	this->ChainDescription[pos] |= Mask;
+      return pos;
+    }
 }
 
 

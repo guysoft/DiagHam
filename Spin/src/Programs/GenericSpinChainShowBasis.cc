@@ -218,6 +218,7 @@ int main(int argc, char** argv)
 			      cout << "dimension mismatch between Hilbert space and ground state" << endl;
 			      return 0;
 			    }
+			  ((DoubledSpin0_1_2_ChainWithTranslations *) Space)->NormalizeDensityMatrix(State);
 			  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 			    if (Norm(State[i]) > Error)
 			      Space->PrintState(cout, i) << " : "  << State[i] << endl;
@@ -271,7 +272,7 @@ int main(int argc, char** argv)
 			      cout << "dimension mismatch between Hilbert space and ground state" << endl;
 			      return 0;
 			    }
-			  
+ 
 			  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 			    if (fabs(State[i]) > Error)
 			      Space->PrintState(cout, i) << " : "  << State[i] << endl;
@@ -289,6 +290,7 @@ int main(int argc, char** argv)
 			      cout << "dimension mismatch between Hilbert space and ground state" << endl;
 			      return 0;
 			    }
+			  ((DoubledSpin0_1_2_ChainWithTranslations *) Space)->NormalizeDensityMatrix(State);
 			  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 			    if (Norm(State[i]) > Error)
 			      Space->PrintState(cout, i) << " : "  << State[i] << endl;
