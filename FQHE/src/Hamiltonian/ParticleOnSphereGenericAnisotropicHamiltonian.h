@@ -60,7 +60,11 @@ class ParticleOnSphereGenericAnisotropicHamiltonian : public AbstractQHEOnSphere
   // array with the coefficient in front of each one body term (ordered such that the first element corresponds to the one of a+_-s a_-s)
   double* OneBodyPotentials;
 
-  double* AnisotropicPseudoPotential;
+  // array with the anisotropic pseudo-potentials alpha=2 (last element corresponds to the delta interaction)
+  double* AnisotropicPseudoPotentialAlpha2;
+
+  // array with the anisotropic pseudo-potentials alpha=4 (last element corresponds to the delta interaction)
+  double* AnisotropicPseudoPotentialAlpha4;
 
  public:
 
@@ -71,12 +75,14 @@ class ParticleOnSphereGenericAnisotropicHamiltonian : public AbstractQHEOnSphere
   // lzmax = maximum Lz value reached by a particle in the state
   // architecture = architecture to use for precalculation
   // pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction)
+  // anisotropicPseudoPotentialAlpha2 = array with the anisotropic pseudo-potentials alpha=2 (ordered such that the first element corresponds to the delta interaction)
+  // anisotropicPseudoPotentialAlpha4 = array with the anisotropic pseudo-potentials alpha=4 (ordered such that the first element corresponds to the delta interaction)
   // l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   // hermitianFlag = flag to indicate if hermitian symmetry of Hamiltonian shall be used
-  ParticleOnSphereGenericAnisotropicHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, double* pseudoPotential, double* anisotropicPseudoPotential, double l2Factor,
+  ParticleOnSphereGenericAnisotropicHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, double* pseudoPotential, double* anisotropicPseudoPotential2, double* anisotropicPseudoPotentialAlpha4, double l2Factor,
 				     AbstractArchitecture* architecture, long memory = -1, 
 				     bool onDiskCacheFlag = false, char* precalculationFileName = 0, bool hermitianFlag = false);
 
@@ -88,13 +94,15 @@ class ParticleOnSphereGenericAnisotropicHamiltonian : public AbstractQHEOnSphere
   // architecture = architecture to use for precalculation
   // pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction)
   // oneBodyPotentials = array with the coefficient in front of each one body term (ordered such that the first element corresponds to the one of a+_-s a_-s)
+  // anisotropicPseudoPotentialAlpha2 = array with the anisotropic pseudo-potentials alpha=2 (ordered such that the first element corresponds to the delta interaction)
+  // anisotropicPseudoPotentialAlpha4 = array with the anisotropic pseudo-potentials alpha=4 (ordered such that the first element corresponds to the delta interaction)
   // l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   // hermitianFlag = flag to indicate if hermitian symmetry of Hamiltonian shall be used
   ParticleOnSphereGenericAnisotropicHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
-				     double* pseudoPotential, double* oneBodyPotentials, double* anisotropicPseudoPotential, double l2Factor,
+				     double* pseudoPotential, double* oneBodyPotentials, double* anisotropicPseudoPotentialAlpha2, double* anisotropicPseudoPotentialAlpha4, double l2Factor,
 				     AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag,
 				     char* precalculationFileName, bool hermitianFlag = false);
     

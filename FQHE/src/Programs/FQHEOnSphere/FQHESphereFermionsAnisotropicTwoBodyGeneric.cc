@@ -71,6 +71,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new  SingleStringOption ('\n', "Vm2-file", "file describing the anisotropic pseudopotentials V_m^2, m = 1, 3, 5, etc.");
+  (*SystemGroup) += new  SingleStringOption ('\n', "Vm4-file", "file describing the anisotropic pseudopotentials V_m^4, m = 1, 3, 5, etc.");
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
@@ -126,8 +127,10 @@ int main(int argc, char** argv)
   bool FirstRun = true;
   double* PseudoPotentials = new double[LzMax + 1];
   double* OneBodyPotentials = 0;
-  double* AnisotropicPseudoPotentials = new double[LzMax + 1];
-  double* OneBodyAnisotropicPotentials = 0;
+  double* AnisotropicPseudoPotentialsAlpha2 = new double[LzMax + 1];
+  double* OneBodyAnisotropicPotentialsAlpha2 = 0;
+  double* AnisotropicPseudoPotentialsAlpha4 = new double[LzMax + 1];
+  double* OneBodyAnisotropicPotentialsAlpha4 = 0;
 
   if (Manager.GetString("interaction-file") == 0)
     {
@@ -148,14 +151,30 @@ int main(int argc, char** argv)
     }
   else
     {
-      if (FQHESphereGetPseudopotentials(Manager.GetString("Vm2-file"), LzMax, AnisotropicPseudoPotentials, OneBodyAnisotropicPotentials) == false)
+      if (FQHESphereGetPseudopotentials(Manager.GetString("Vm2-file"), LzMax, AnisotropicPseudoPotentialsAlpha2, OneBodyAnisotropicPotentialsAlpha2) == false)
         {
 	  cout << "Problem reading in pseudopotentials." << endl;
 	  return -1;
 	}
     }
 
-  cout << "Done reading in pseudopotentials." << endl;
+  cout << "Done reading in pseudopotentials alpha=2." << endl;
+
+  if (Manager.GetString("Vm4-file") == 0)
+    { 
+      cout << "an interaction file has to be provided" << endl;
+      return -1;
+    }
+  else
+    {
+      if (FQHESphereGetPseudopotentials(Manager.GetString("Vm4-file"), LzMax, AnisotropicPseudoPotentialsAlpha4, OneBodyAnisotropicPotentialsAlpha4) == false)
+        {
+	  cout << "Problem reading in pseudopotentials." << endl;
+	  return -1;
+	}
+    }
+
+  cout << "Done reading in pseudopotentials alpha=4." << endl;
 
   if (Manager.GetBoolean("l2-only"))
     {      
@@ -235,7 +254,8 @@ int main(int argc, char** argv)
 	{
 	  if (OneBodyPotentials == 0)
 	    Hamiltonian = new ParticleOnSphereGenericAnisotropicHamiltonian(Space, NbrParticles, LzMax, PseudoPotentials, 
-								 AnisotropicPseudoPotentials,
+								 AnisotropicPseudoPotentialsAlpha2,
+								 AnisotropicPseudoPotentialsAlpha4,
 								 Manager.GetDouble("l2-factor"),
 								 Architecture.GetArchitecture(), 
 								 Memory, DiskCacheFlag,
@@ -243,7 +263,8 @@ int main(int argc, char** argv)
 								 !Manager.GetBoolean("no-hermitian"));
 	  else
 	    Hamiltonian = new ParticleOnSphereGenericAnisotropicHamiltonian(Space, NbrParticles, LzMax, PseudoPotentials,
-								 OneBodyPotentials, AnisotropicPseudoPotentials,
+								 OneBodyPotentials, AnisotropicPseudoPotentialsAlpha2, 
+								 AnisotropicPseudoPotentialsAlpha4, 
 								 Manager.GetDouble("l2-factor"),
 								 Architecture.GetArchitecture(), 
 								 Memory, DiskCacheFlag,
@@ -331,7 +352,8 @@ int main(int argc, char** argv)
 	FirstRun = false;
     }
   delete [] PseudoPotentials;
-  delete [] AnisotropicPseudoPotentials;
+  delete [] AnisotropicPseudoPotentialsAlpha2;
+  delete [] AnisotropicPseudoPotentialsAlpha4;
   delete [] OutputNameLz;
   delete [] ExtraTerms;
   return 0;

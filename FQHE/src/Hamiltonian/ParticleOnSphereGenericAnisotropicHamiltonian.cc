@@ -60,12 +60,14 @@ using std::ostream;
 // lzmax = maximum Lz value reached by a particle in the state
 // architecture = architecture to use for precalculation
 // pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction)
+// anisotropicPseudoPotentialAlpha2 = array with the anisotropic pseudo-potentials alpha=2 (ordered such that the first element corresponds to the delta interaction)
+// anisotropicPseudoPotentialAlpha4 = array with the anisotropic pseudo-potentials alpha=4 (ordered such that the first element corresponds to the delta interaction)
 // l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 // hermitianFlag = flag to indicate if hermitian symmetry of Hamiltonian shall be used
-ParticleOnSphereGenericAnisotropicHamiltonian::ParticleOnSphereGenericAnisotropicHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, double* pseudoPotential, double* anisotropicPseudoPotential, double l2Factor,
+ParticleOnSphereGenericAnisotropicHamiltonian::ParticleOnSphereGenericAnisotropicHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, double* pseudoPotential, double* anisotropicPseudoPotentialAlpha2, double* anisotropicPseudoPotentialAlpha4, double l2Factor,
 								       AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag,
 								       char* precalculationFileName, bool hermitianFlag)
 {
@@ -81,9 +83,13 @@ ParticleOnSphereGenericAnisotropicHamiltonian::ParticleOnSphereGenericAnisotropi
   for (int i = 0; i < this->NbrLzValue; ++i)
     this->PseudoPotential[i] = pseudoPotential[this->LzMax - i];
 
-  this->AnisotropicPseudoPotential = new double [this->NbrLzValue];
+  this->AnisotropicPseudoPotentialAlpha2 = new double [this->NbrLzValue];
   for (int i = 0; i < this->NbrLzValue; ++i)
-    this->AnisotropicPseudoPotential[i] = anisotropicPseudoPotential[i];
+    this->AnisotropicPseudoPotentialAlpha2[i] = anisotropicPseudoPotentialAlpha2[i];
+
+  this->AnisotropicPseudoPotentialAlpha4 = new double [this->NbrLzValue];
+  for (int i = 0; i < this->NbrLzValue; ++i)
+    this->AnisotropicPseudoPotentialAlpha4[i] = anisotropicPseudoPotentialAlpha4[i];
 
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.0;
@@ -154,13 +160,15 @@ ParticleOnSphereGenericAnisotropicHamiltonian::ParticleOnSphereGenericAnisotropi
 // architecture = architecture to use for precalculation
 // pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction)
 // oneBodyPotentials = array with the coefficient in front of each one body term (ordered such that the first element corresponds to the one of a+_-s a_-s)
+// anisotropicPseudoPotentialAlpha2 = array with the anisotropic pseudo-potentials alpha=2 (ordered such that the first element corresponds to the delta interaction)
+// anisotropicPseudoPotentialAlpha4 = array with the anisotropic pseudo-potentials alpha=4 (ordered such that the first element corresponds to the delta interaction)
 // l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 // hermitianFlag = flag to indicate if hermitian symmetry of Hamiltonian shall be used
 ParticleOnSphereGenericAnisotropicHamiltonian::ParticleOnSphereGenericAnisotropicHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
-								       double* pseudoPotential, double* oneBodyPotentials, double* anisotropicPseudoPotential, double l2Factor,
+								       double* pseudoPotential, double* oneBodyPotentials, double* anisotropicPseudoPotentialAlpha2, double* anisotropicPseudoPotentialAlpha4, double l2Factor,
 								       AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag,
 								       char* precalculationFileName, bool hermitianFlag)
 {
@@ -175,14 +183,19 @@ ParticleOnSphereGenericAnisotropicHamiltonian::ParticleOnSphereGenericAnisotropi
   for (int i = 0; i < this->NbrLzValue; ++i)
     this->PseudoPotential[i] = pseudoPotential[this->LzMax - i];
 
-  this->AnisotropicPseudoPotential = new double [this->NbrLzValue];
+  this->AnisotropicPseudoPotentialAlpha2 = new double [this->NbrLzValue];
   for (int i = 0; i < this->NbrLzValue; ++i)
-    this->AnisotropicPseudoPotential[i] = anisotropicPseudoPotential[i];
+    this->AnisotropicPseudoPotentialAlpha2[i] = anisotropicPseudoPotentialAlpha2[i];
+
+  this->AnisotropicPseudoPotentialAlpha4 = new double [this->NbrLzValue];
+  for (int i = 0; i < this->NbrLzValue; ++i)
+    this->AnisotropicPseudoPotentialAlpha4[i] = anisotropicPseudoPotentialAlpha4[i];
 
   this->OneBodyTermFlag = true;
   this->OneBodyPotentials = new double [this->NbrLzValue];
   for (int i = 0; i < this->NbrLzValue; ++i)
     this->OneBodyPotentials[i] = oneBodyPotentials[i];
+
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.0;
   long MinIndex;
@@ -259,7 +272,8 @@ ParticleOnSphereGenericAnisotropicHamiltonian::~ParticleOnSphereGenericAnisotrop
   else
     delete[] this->M3Value;
   delete[] this->PseudoPotential;
-  delete[] this->AnisotropicPseudoPotential;
+  delete[] this->AnisotropicPseudoPotentialAlpha2;
+  delete[] this->AnisotropicPseudoPotentialAlpha4;
   if (this->OneBodyTermFlag == true)
     delete[] this->OneBodyPotentials;
   if (this->L2Operator != 0)
@@ -402,15 +416,15 @@ void ParticleOnSphereGenericAnisotropicHamiltonian::EvaluateInteractionFactors()
 		  }
 
 
-		// add the anisotropic pseudopotential
+		// add the anisotropic pseudopotential alpha = 2
 		double TmpAniso = 0.0;		
 		int Alpha = 2;
 
 		int Mom = 1;
 		while (Mom <= this->LzMax)
 		  {
-		    //if (this->AnisotropicPseudoPotential[Mom] > 0)
-		      //{
+		    if (this->AnisotropicPseudoPotentialAlpha2[Mom] > 0)
+		      {
 			int L12 = this->LzMax - Mom;
 			int L34 = this->LzMax - Mom - Alpha;
 			int tmpmin;
@@ -421,7 +435,7 @@ void ParticleOnSphereGenericAnisotropicHamiltonian::EvaluateInteractionFactors()
 
 			for (int ML = -tmpmin; ML <= tmpmin; ML++)
 				if ( (2*ML==(m1+m2)) && (2*ML==(m3+m4)) )
-					TmpAniso +=  this->AnisotropicPseudoPotential[Mom]  * Clebsch.GetCoefficient(m1, m2, 2*L12) * Clebsch.GetCoefficient(m3, m4, 2*L34);
+					TmpAniso +=  this->AnisotropicPseudoPotentialAlpha2[Mom]  * Clebsch.GetCoefficient(m1, m2, 2*L12) * Clebsch.GetCoefficient(m3, m4, 2*L34);
 
 			L12 = this->LzMax - Mom - Alpha;
 			L34 = this->LzMax - Mom;
@@ -432,8 +446,47 @@ void ParticleOnSphereGenericAnisotropicHamiltonian::EvaluateInteractionFactors()
 
 			for (int ML = -tmpmin; ML <= tmpmin; ML++)
 				if ( (2*ML==(m1+m2)) && (2*ML==(m3+m4)) )
-					TmpAniso += this->AnisotropicPseudoPotential[Mom] * Clebsch.GetCoefficient(m1, m2, 2*L12) * Clebsch.GetCoefficient(m3, m4, 2*L34);
-		     //}
+					TmpAniso += this->AnisotropicPseudoPotentialAlpha2[Mom] * Clebsch.GetCoefficient(m1, m2, 2*L12) * Clebsch.GetCoefficient(m3, m4, 2*L34);
+		     }
+		    Mom = Mom + 2;
+		  }
+
+		
+		TmpCoefficient[Pos] += 0.5 * TmpAniso;
+
+
+		// add the anisotropic pseudopotential alpha = 4
+		TmpAniso = 0.0;		
+		Alpha = 4;
+
+		Mom = 1;
+		while (Mom <= this->LzMax)
+		  {
+		    if (this->AnisotropicPseudoPotentialAlpha4[Mom] > 0)
+		      {
+			int L12 = this->LzMax - Mom;
+			int L34 = this->LzMax - Mom - Alpha;
+			int tmpmin;
+			if (L12 < L34)	
+				tmpmin = L12;
+			else
+				tmpmin = L34;
+
+			for (int ML = -tmpmin; ML <= tmpmin; ML++)
+				if ( (2*ML==(m1+m2)) && (2*ML==(m3+m4)) )
+					TmpAniso +=  this->AnisotropicPseudoPotentialAlpha4[Mom]  * Clebsch.GetCoefficient(m1, m2, 2*L12) * Clebsch.GetCoefficient(m3, m4, 2*L34);
+
+			L12 = this->LzMax - Mom - Alpha;
+			L34 = this->LzMax - Mom;
+			if (L12 < L34)	
+				tmpmin = L12;
+			else
+				tmpmin = L34;
+
+			for (int ML = -tmpmin; ML <= tmpmin; ML++)
+				if ( (2*ML==(m1+m2)) && (2*ML==(m3+m4)) )
+					TmpAniso += this->AnisotropicPseudoPotentialAlpha4[Mom] * Clebsch.GetCoefficient(m1, m2, 2*L12) * Clebsch.GetCoefficient(m3, m4, 2*L34);
+		     }
 		    Mom = Mom + 2;
 		  }
 
