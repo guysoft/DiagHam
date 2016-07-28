@@ -423,11 +423,11 @@ Complex ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian::Evalua
       N1 = 1.0;
       while ((Norm(Coefficient) + (fabs(Precision1) + fabs(Precision2))) != Norm(Coefficient))
 	{
-	  Q2 = this->InvRatio * N1 * N1 - 2 * N1 * N2 * cosine + this->Ratio * N2 * N2;
+	  Q2 = this->InvRatio * N1 * N1 - 2.0 * N1 * N2 * cosine + this->Ratio * N2 * N2;
 	  Precision1 = this->GetVofQ(PIOnMS*Q2);
 	  Coefficient += Precision1 * Phase(N1 * Factor);
 
-	  Q2 = this->InvRatio * N1 * N1 + 2 * N1 * N2 * cosine + this->Ratio * N2 * N2;
+	  Q2 = this->InvRatio * N1 * N1 + 2.0 * N1 * N2 * cosine + this->Ratio * N2 * N2;
 	  Precision2 = this->GetVofQ(PIOnMS*Q2);
 	  Coefficient += Precision2 * Phase(- N1 * Factor);
 
@@ -455,11 +455,11 @@ Complex ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian::Evalua
       N1 = 1.0;
       while ((Norm(Coefficient) + fabs(Precision1) + fabs(Precision2)) != Norm(Coefficient))
 	{
-	  Q2 = this->InvRatio * N1 * N1 - 2 * N1 * N2 * cosine + this->Ratio * N2 * N2;
+	  Q2 = this->InvRatio * N1 * N1 - 2.0 * N1 * N2 * cosine + this->Ratio * N2 * N2;
 	  Precision1 = this->GetVofQ(PIOnMS*Q2);
 	  Coefficient += Precision1 * Phase(N1 * Factor);
 
-	  Q2 = this->InvRatio * N1 * N1 + 2 * N1 * N2 * cosine + this->Ratio * N2 * N2;
+	  Q2 = this->InvRatio * N1 * N1 + 2.0 * N1 * N2 * cosine + this->Ratio * N2 * N2;
 	  Precision2 = this->GetVofQ(PIOnMS*Q2);
 	  Coefficient += Precision2 * Phase(- N1 * Factor);
 

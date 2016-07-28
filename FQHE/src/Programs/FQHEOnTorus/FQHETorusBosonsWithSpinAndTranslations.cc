@@ -2,6 +2,7 @@
 #include "HilbertSpace/BosonOnTorusWithSpinAllSzAndMagneticTranslations.h"
 
 #include "Hamiltonian/ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian.h"
+#include "Hamiltonian/ParticleOnTwistedTorusWithSpinAndMagneticTranslationsGenericHamiltonian.h"
 #include "Hamiltonian/ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonianWithPairing.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
@@ -65,6 +66,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('x', "x-momentum", "constraint on the total momentum in the x direction (negative if none)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('y', "y-momentum", "constraint on the total momentum in the y direction (negative if none)", -1);
   (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the two torus lengths", 1.0);
+  (*SystemGroup) += new SingleDoubleOption   ('\n', "angle", "angle between the two fundamental cycles of the torus in pi units (0 if rectangular)", 0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "spinup-flux", "inserted flux for particles with spin up (in 2pi / N_phi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "spindown-flux", "inserted flux for particles with spin down (in 2pi / N_phi unit)", 0.0);
   (*SystemGroup) += new SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
@@ -108,6 +110,7 @@ int main(int argc, char** argv)
   int XMomentum = Manager.GetInteger("x-momentum");
   int YMomentum = Manager.GetInteger("y-momentum");
   double XRatio = Manager.GetDouble("ratio");
+  double Angle = Manager.GetDouble("angle");
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
   char* SavePrecalculationFileName = Manager.GetString("save-precalculation");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
@@ -167,28 +170,85 @@ int main(int argc, char** argv)
   if ((OneBodyPseudoPotentials[2] == 0) && (Manager.GetDouble("pairing") == 0.0))
     {
       if ((Manager.GetDouble("spinup-flux") == 0.0) && (Manager.GetDouble("spindown-flux") == 0.0))
-	sprintf (OutputFileName, "bosons_torus_su2_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", InteractionName, NbrBosons, MaxMomentum, TotalSpin, XRatio);
+	{
+	  if (Angle == 0.0)    
+	    {
+	      sprintf (OutputFileName, "bosons_torus_su2_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", InteractionName, NbrBosons, MaxMomentum, TotalSpin, XRatio);
+	    }
+	  else
+	    {
+	      sprintf (OutputFileName, "bosons_torus_su2_%s_n_%d_2s_%d_sz_%d_ratio_%f_angle_%.6f.dat", InteractionName, NbrBosons, MaxMomentum, TotalSpin, XRatio, Angle);
+	    }
+	}
       else
-	sprintf (OutputFileName, "bosons_torus_su2_%s_n_%d_2s_%d_sz_%d_ratio_%f_fluxup_%f_fluxdown_%f.dat", InteractionName, NbrBosons, 
-		 MaxMomentum, TotalSpin, XRatio, Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"));
+	{
+	  if (Angle == 0.0)    
+	    {
+	      sprintf (OutputFileName, "bosons_torus_su2_%s_n_%d_2s_%d_sz_%d_ratio_%f_fluxup_%f_fluxdown_%f.dat", InteractionName, NbrBosons, 
+		       MaxMomentum, TotalSpin, XRatio, Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"));
+	    }
+	  else
+	    {
+	      sprintf (OutputFileName, "bosons_torus_su2_%s_n_%d_2s_%d_sz_%d_ratio_%f_angle_%.6f_fluxup_%f_fluxdown_%f.dat", InteractionName, NbrBosons, 
+		       MaxMomentum, TotalSpin, XRatio, Angle, Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"));
+	    }
+	}
     }
   else
     {
       if (Manager.GetDouble("pairing") == 0.0)
 	{
 	  if ((Manager.GetDouble("spinup-flux") == 0.0) && (Manager.GetDouble("spindown-flux") == 0.0))
-	    sprintf (OutputFileName, "bosons_torus_su2_%s_n_%d_2s_%d_ratio_%f.dat", InteractionName, NbrBosons, MaxMomentum, XRatio);
+	    {
+	      if (Angle == 0.0)    
+		{
+		  sprintf (OutputFileName, "bosons_torus_su2_%s_n_%d_2s_%d_ratio_%f.dat", InteractionName, NbrBosons, MaxMomentum, XRatio);
+		}
+	      else
+		{
+		  sprintf (OutputFileName, "bosons_torus_su2_%s_n_%d_2s_%d_ratio_%f_angle_%.6f.dat", InteractionName, NbrBosons, MaxMomentum, XRatio, Angle);
+		}
+	    }
 	  else
-	    sprintf (OutputFileName, "bosons_torus_su2_%s_n_%d_2s_%d_ratio_%f_fluxup_%f_fluxdown_%f.dat", InteractionName, NbrBosons, 
-		     MaxMomentum, XRatio, Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"));
+	    {
+	      if (Angle == 0.0)    
+		{
+		  sprintf (OutputFileName, "bosons_torus_su2_%s_n_%d_2s_%d_ratio_%f_fluxup_%f_fluxdown_%f.dat", InteractionName, NbrBosons, 
+			   MaxMomentum, XRatio, Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"));
+		}
+	      else
+		{
+		  sprintf (OutputFileName, "bosons_torus_su2_%s_n_%d_2s_%d_ratio_%f_angle_%.6f_fluxup_%f_fluxdown_%f.dat", InteractionName, NbrBosons, 
+			   MaxMomentum, XRatio, Angle, Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"));
+		}
+	    }
 	}
       else
 	{
 	  if ((Manager.GetDouble("spinup-flux") == 0.0) && (Manager.GetDouble("spindown-flux") == 0.0))
-	    sprintf (OutputFileName, "bosons_torus_su2_%s_pairing_%.6f_n_%d_2s_%d_ratio_%f.dat", InteractionName, Manager.GetDouble("pairing"), NbrBosons, MaxMomentum, XRatio);
+	    {
+	      if (Angle == 0.0)    
+		{
+		  sprintf (OutputFileName, "bosons_torus_su2_%s_pairing_%.6f_n_%d_2s_%d_ratio_%f.dat", InteractionName, Manager.GetDouble("pairing"), NbrBosons, MaxMomentum, XRatio);
+		}
+	      else
+		{
+		  sprintf (OutputFileName, "bosons_torus_su2_%s_pairing_%.6f_n_%d_2s_%d_ratio_%f_angle_%.6f.dat", InteractionName, Manager.GetDouble("pairing"), NbrBosons, MaxMomentum, XRatio, Angle);
+		}
+	    }
 	  else
-	    sprintf (OutputFileName, "bosons_torus_su2_%s_pairing_%.6f_n_%d_2s_%d_ratio_%f_fluxup_%f_fluxdown_%f.dat", InteractionName, Manager.GetDouble("pairing"),
-		     NbrBosons, MaxMomentum, XRatio, Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"));
+	    {
+	      if (Angle == 0.0)    
+		{
+		  sprintf (OutputFileName, "bosons_torus_su2_%s_pairing_%.6f_n_%d_2s_%d_ratio_%f_fluxup_%f_fluxdown_%f.dat", InteractionName, Manager.GetDouble("pairing"),
+			   NbrBosons, MaxMomentum, XRatio, Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"));
+		}
+	      else
+		{
+		  sprintf (OutputFileName, "bosons_torus_su2_%s_pairing_%.6f_n_%d_2s_%d_ratio_%f_angle_%.6f_fluxup_%f_fluxdown_%f.dat", InteractionName, Manager.GetDouble("pairing"),
+			   NbrBosons, MaxMomentum, XRatio, Angle, Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"));
+		}
+	    }
 	}
     }
   ofstream File;
@@ -323,26 +383,57 @@ int main(int argc, char** argv)
       AbstractQHEHamiltonian* Hamiltonian = 0;
       if (Manager.GetDouble("pairing") == 0.0)
 	{
-	  Hamiltonian = new ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian(Space, NbrBosons, MaxMomentum, XMomentum, XRatio,
-											     NbrPseudoPotentials[0], PseudoPotentials[0],
-											     NbrPseudoPotentials[1], PseudoPotentials[1],
-											     NbrPseudoPotentials[2], PseudoPotentials[2],
-											     Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
-											     Architecture.GetArchitecture(), Memory, 0,
-											     OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], 
-											     OneBodyPseudoPotentials[2]);
-	}
-      else
-	{
-	  Hamiltonian = new ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonianWithPairing(Space, NbrBosons, MaxMomentum, XMomentum, XRatio,
+	  if (Angle == 0.0)
+	    {
+	      Hamiltonian = new ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian(Space, NbrBosons, MaxMomentum, XMomentum, XRatio,
+												 NbrPseudoPotentials[0], PseudoPotentials[0],
+												 NbrPseudoPotentials[1], PseudoPotentials[1],
+												 NbrPseudoPotentials[2], PseudoPotentials[2],
+												 Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
+												 Architecture.GetArchitecture(), Memory, 0,
+												 OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], 
+												 OneBodyPseudoPotentials[2]);
+	    }
+	  else
+	    {
+	      Hamiltonian = new ParticleOnTwistedTorusWithSpinAndMagneticTranslationsGenericHamiltonian(Space, NbrBosons, MaxMomentum, XMomentum, XRatio, Angle,
 													NbrPseudoPotentials[0], PseudoPotentials[0],
 													NbrPseudoPotentials[1], PseudoPotentials[1],
 													NbrPseudoPotentials[2], PseudoPotentials[2],
-													Manager.GetDouble("pairing"), 
 													Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
 													Architecture.GetArchitecture(), Memory, 0,
 													OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], 
 													OneBodyPseudoPotentials[2]);
+	    }
+	}
+      else
+	{
+	  if (Angle == 0.0)
+	    {
+	      Hamiltonian = new ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonianWithPairing(Space, NbrBosons, MaxMomentum, XMomentum, XRatio,
+													    NbrPseudoPotentials[0], PseudoPotentials[0],
+													    NbrPseudoPotentials[1], PseudoPotentials[1],
+													    NbrPseudoPotentials[2], PseudoPotentials[2],
+													    Manager.GetDouble("pairing"), 
+													    Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
+													    Architecture.GetArchitecture(), Memory, 0,
+													    OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], 
+													    OneBodyPseudoPotentials[2]);
+	    }
+	  else
+	    {
+// 	      Hamiltonian = new ParticleOnTwistedTorusWithSpinAndMagneticTranslationsGenericHamiltonianWithPairing(Space, NbrBosons, MaxMomentum, XMomentum, XRatio, Angle,
+// 														   NbrPseudoPotentials[0], PseudoPotentials[0],
+// 														   NbrPseudoPotentials[1], PseudoPotentials[1],
+// 														   NbrPseudoPotentials[2], PseudoPotentials[2],
+// 														   Manager.GetDouble("pairing"), 
+// 														   Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
+// 														   Architecture.GetArchitecture(), Memory, 0,
+// 														   OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], 
+// 														   OneBodyPseudoPotentials[2]);
+	      cout << "error, twisted torus and pairing is not yet supported" << endl;
+	      return -1;
+	    }
 	}
       double Shift = Manager.GetDouble("energy-shift");
       Hamiltonian->ShiftHamiltonian(Shift);
