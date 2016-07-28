@@ -381,7 +381,10 @@ ostream& DoubledSpin0_1_2_ChainWithTranslations::PrintState (ostream& Str, int s
   if (state >= this->HilbertSpaceDimension)    
     return Str;
   unsigned int tmpBra,tmpKet;
+  int BraNumber, KetNumber;
   unsigned long StateDescription = this->ChainDescription[state];  
+
+  this->ComputeDiffereenceSubLatticeNumberZero(StateDescription, BraNumber, KetNumber);
 
   Str << this->FindStateIndex(StateDescription) << " : " << StateDescription<< " : ";
   for (int j = this->ChainLength; j >0; j--)
@@ -406,6 +409,7 @@ ostream& DoubledSpin0_1_2_ChainWithTranslations::PrintState (ostream& Str, int s
 	  Str << "0 ";
       Str << ") ";
     }
+  Str<<" SublatticeZeroNumberDifference = (" << BraNumber<<"," << KetNumber<< ")";
   return Str;
 }
 
@@ -707,7 +711,8 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
 
   ComplexMatrix SquareRho( TmpDestinationHilbertSpace.HilbertSpaceDimension,  TmpDestinationHilbertSpace.HilbertSpaceDimension,true);
   SquareRho = HRep*HRep;
-
+  
+  /*
   Complex Trace = 0.0;
   Complex Tmp = 0.0;
   for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension;i++)
@@ -717,7 +722,9 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
     }
   cout <<"Trace "<< Trace<<endl;
   HRep/= Phase(0.5*Arg(Trace));
-  Complex Tmp1;
+  */
+
+  Complex Tmp1,Tmp;
   Complex Tmp2;
   cout << "check hermiticity" << endl;
 
@@ -732,7 +739,7 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
 	  {
 	    cout << "error at " << i << " " << j << " : " << Tmp1 << " " << Tmp2 << " " << Norm(Tmp1 - Conj(Tmp2)) << " (should be lower than " << (Error ) << ")" << endl;
 	  }
-	HRep.GetMatrixElement(i,j,Tmp);
+	SquareRho.GetMatrixElement(i,j,Tmp);
 	TmpDensityMatrix.SetMatrixElement(i,j,Tmp);
       }  
   
@@ -1089,7 +1096,6 @@ void  DoubledSpin0_1_2_ChainWithTranslations::ApplyInversionSymmetry(ComplexVect
 
 void  DoubledSpin0_1_2_ChainWithTranslations::NormalizeDensityMatrix(ComplexVector & sourceVector)
 {
-
   unsigned long SourceState,TmpState;
   unsigned int TmpBra,TmpKet;
   Complex Trace = 0.0;
@@ -1113,5 +1119,33 @@ void  DoubledSpin0_1_2_ChainWithTranslations::NormalizeDensityMatrix(ComplexVect
 	      return;
 	    }
 	}
+    }
+}
+
+void DoubledSpin0_1_2_ChainWithTranslations::ComputeDiffereenceSubLatticeNumberZero( unsigned long stateDescription , int & braNumber, int & ketNumber )
+{
+  unsigned long SourceState =  stateDescription;
+  braNumber = 0;
+  ketNumber = 0;
+  unsigned  int TmpBra, TmpKet;
+  for (int p = 0;p <this->ChainLength;p++)
+    {
+      this->GetBraAndKetIndicesFromCommonIndex(TmpBra,TmpKet, SourceState%9);
+      if( p%2 == 0 )
+	{
+	  if (TmpBra == 2)
+	    braNumber++;
+	  if (TmpKet == 2) 
+	    ketNumber++;
+
+	}
+      else
+	{
+	  if (TmpBra == 2)
+	    braNumber--;
+	  if (TmpKet == 2) 
+	    ketNumber--;
+	}
+      SourceState/=9;
     }
 }

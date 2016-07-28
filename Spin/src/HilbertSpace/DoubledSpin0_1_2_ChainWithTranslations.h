@@ -172,6 +172,7 @@ class DoubledSpin0_1_2_ChainWithTranslations : public AbstractDoubledSpinChainWi
 
 
   virtual int FindNextInversionSymetricIndice(int);
+  virtual void ComputeDiffereenceSubLatticeNumberZero( unsigned long stateDescription , int & braNumber, int & ketNumber );
 
 };
 
