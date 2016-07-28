@@ -423,7 +423,7 @@ void ParticleOnSphereGenericAnisotropicHamiltonian::EvaluateInteractionFactors()
 		int Mom = 1;
 		while (Mom <= this->LzMax)
 		  {
-		    if (this->AnisotropicPseudoPotentialAlpha2[Mom] > 0)
+		    if (this->AnisotropicPseudoPotentialAlpha2[Mom] != 0.0)
 		      {
 			int L12 = this->LzMax - Mom;
 			int L34 = this->LzMax - Mom - Alpha;
@@ -462,7 +462,7 @@ void ParticleOnSphereGenericAnisotropicHamiltonian::EvaluateInteractionFactors()
 		Mom = 1;
 		while (Mom <= this->LzMax)
 		  {
-		    if (this->AnisotropicPseudoPotentialAlpha4[Mom] > 0)
+		    if (this->AnisotropicPseudoPotentialAlpha4[Mom] != 0.0)
 		      {
 			int L12 = this->LzMax - Mom;
 			int L34 = this->LzMax - Mom - Alpha;
