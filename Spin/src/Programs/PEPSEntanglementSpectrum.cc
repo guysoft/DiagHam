@@ -312,6 +312,8 @@ int main(int argc, char** argv)
 	      return 0;
 	    }
 	  cout <<"Norm = "<< ComplexGroundStates[i].Norm()<<endl;
+	
+	  ((DoubledSpin0_1_2_ChainWithTranslations  *) Spaces[i])->NormalizeDensityMatrix(ComplexGroundStates[i]);
 	}
     }
 
@@ -348,7 +350,7 @@ int main(int argc, char** argv)
   double RemainingDensitySum=1.0;
   if (TranslationFlag ==false ) 
     {
-      for (int SubSystemSz=0; SubSystemSz <=  MaxSubsystemSz; ++ SubSystemSz)
+      for (int SubSystemSz=-MaxSubsystemSz; SubSystemSz <=  MaxSubsystemSz; ++ SubSystemSz)
 	{
 	  double EntanglementEntropy = 0.0;
 	  double DensitySum = 0.0;  

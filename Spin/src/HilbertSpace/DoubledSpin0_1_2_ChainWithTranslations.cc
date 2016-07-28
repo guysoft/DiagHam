@@ -712,7 +712,6 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
   ComplexMatrix SquareRho( TmpDestinationHilbertSpace.HilbertSpaceDimension,  TmpDestinationHilbertSpace.HilbertSpaceDimension,true);
   SquareRho = HRep*HRep;
   
-  /*
   Complex Trace = 0.0;
   Complex Tmp = 0.0;
   for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension;i++)
@@ -721,10 +720,10 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
       Trace+=Tmp;
     }
   cout <<"Trace "<< Trace<<endl;
-  HRep/= Phase(0.5*Arg(Trace));
-  */
+//  HRep/= sqrt(Norm(Trace));
+  
 
-  Complex Tmp1,Tmp;
+  Complex Tmp1;
   Complex Tmp2;
   cout << "check hermiticity" << endl;
 
@@ -739,10 +738,9 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
 	  {
 	    cout << "error at " << i << " " << j << " : " << Tmp1 << " " << Tmp2 << " " << Norm(Tmp1 - Conj(Tmp2)) << " (should be lower than " << (Error ) << ")" << endl;
 	  }
-	SquareRho.GetMatrixElement(i,j,Tmp);
+	HRep.GetMatrixElement(i,j,Tmp);
 	TmpDensityMatrix.SetMatrixElement(i,j,Tmp);
       }  
-  
   return TmpDensityMatrix;
 }
 
