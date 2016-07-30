@@ -6,10 +6,9 @@
 //         Copyright (C) 2001-2002 Nicolas Regnault and Gunnar Moeller        //
 //                                                                            //
 //                                                                            //
-//           class of Jain composite fermion wave function on sphere          //
-//                      with filled (pseudo) Landau levels                    //
+//           class of particles with complex coordinates on a disk            //
 //                                                                            //
-//                        last modification : 16/09/2004                      //
+//                        last modification : 16/07/2016                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,55 +28,114 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTPARTICLECOLLECTIONONSPHERE_H
-#define ABSTRACTPARTICLECOLLECTIONONSPHERE_H
+#ifndef PARTICLEONDISKCOLLECTION_H
+#define PARTICLEONDISKCOLLECTION_H
+
 #include "config.h"
-#include "AbstractParticleCollection.h"
 #include "MathTools/Complex.h"
 #include "MathTools/RandomNumber/NumRecRandomGenerator.h"
 #include "GeneralTools/GarbageFlag.h"
 #include "Vector/RealVector.h"
+#include "AbstractParticleCollectionOnDisk.h"
 #include "Matrix/RealSymmetricMatrix.h"
 
-class AbstractParticleCollectionOnSphere : public AbstractParticleCollection {
+class ParticleOnDiskCollection : public AbstractParticleCollectionOnDisk {
  protected:
+  // number of particles
+  int NbrParticles;
+  // typical radius for moving particles
+  double R0;
+
+  // target filling factor
+  double Nu;
+
+  Complex LastZ;
+  /* double LastR; */
+  /* double LastPhi; */
+  Complex *CoordinatesZ;
+  AbstractRandomNumberGenerator *Generator;
+  bool ExternalGenerator;
+  GarbageFlag Flag;
+  RealVector Positions;
   
  public:
 
-  //destructor
-  virtual ~AbstractParticleCollectionOnSphere();
-  
-  // rotate the coordinates of all particles with a common random vector (cannot be reverted for now)
-  virtual void RotateAll() = 0;
+  // constructors:
+  ParticleOnDiskCollection();
+  ParticleOnDiskCollection(int N, double nu, long seed =-1);
+  ParticleOnDiskCollection(int N, double nu, AbstractRandomNumberGenerator *generator);
+  ParticleOnDiskCollection(const ParticleOnDiskCollection &tocopy);
 
-  // rotate the coordinates of all particles by the rotation that brings the north pole to angles theta and phi
-  virtual void RotateAll(double theta, double phi) = 0;
+  //destructor
+  virtual ~ParticleOnDiskCollection();
+  
+  // randomly moves particle number nbrParticle
+  virtual void Move(int nbrParticle);
+
+  // randomly select a particle and move it
+  // return value = number of particle that was moved
+  virtual int Move();
 
   // get previous coordinates of last particle that was moved
-  virtual void GetPreviousPos(Complex &lastU, Complex &lastV) = 0;
+  virtual void GetPreviousPos(Complex &lastZ)
+  { lastZ=this->LastZ; }
 
   // get pointers to spinor coordinates
-  virtual void GetSpinorCoordinates(Complex* &U, Complex* &V) = 0;
+  virtual void GetCoordinates(Complex* &Z)
+  { Z=this->CoordinatesZ; }
+
+  // get number of particles
+  virtual int GetNbrParticles(){ return NbrParticles; }
+
+  // restore last move
+  virtual void RestoreMove();
 
   // stretch the default steplength by a factor
-  virtual void MultiplyStepLength(double multiplier) = 0;
+  virtual void MultiplyStepLength(double multiplier);
 
   // access particle positions of a single particle 
-  virtual double Theta(int nbrParticle) = 0;
-  virtual double Phi(int nbrParticle) = 0;
+  virtual double GetR(int nbrParticle);
+  virtual double Phi(int nbrParticle);
 
   // set new particle position
-  virtual void SetPosition(int nbrParticle, double theta, double phi) = 0;
+  virtual void SetPosition(int nbrParticle, double x, double y);
+
+  // get all particle positions
+  virtual RealVector& GetPositions();
+
+  // allow access to internal Random number generator:
+  virtual double GetRandomNumber();
+
+  // randomize particle positions
+  virtual void Randomize();
+
+  // get type of collection
+  virtual int GetCollectionType();
 
   // get absolute values of all relative distances
   // distances = matrix in which to return the distances
-  virtual void GetDistances(RealSymmetricMatrix &distances) = 0;
+  virtual void GetDistances(RealSymmetricMatrix &distances);
 
   // toggle positions of first N/2 particles with the remaining N/2 positions
   //
-  virtual void ToggleHalfHalf() = 0;
-  
+  virtual void ToggleHalfHalf();
+
+  // print positions (mainly for testing)
+  ostream &PrintPositions(ostream &Str);
 };
+
+
+inline RealVector& ParticleOnDiskCollection::GetPositions()
+{
+  return this->Positions;
+}
+
+// get type of collection
+inline int ParticleOnDiskCollection::GetCollectionType()
+{
+  return AbstractParticleCollection::OnDiskCollection;
+}
+  
 
 
 #endif

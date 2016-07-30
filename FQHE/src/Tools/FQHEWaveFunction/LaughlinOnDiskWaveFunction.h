@@ -51,6 +51,15 @@ class LaughlinOnDiskWaveFunction: public Abstract1DComplexFunction
   // invert of the maximum x value
   double InvScale;
 
+  // log - scale (to be added in exponent)
+  double LogScale;
+
+  // last value of Sums of Square coordinates on invoking operator()
+  double SumSqr;
+
+  // flag for exponential factor
+  bool ExponentialFactors;
+
  public:
 
   // constructor
@@ -58,7 +67,8 @@ class LaughlinOnDiskWaveFunction: public Abstract1DComplexFunction
   // nbrParticles = number of particles
   // invFillingFactor = inverse value of the filling factor
   // scale = typical sytem size
-  LaughlinOnDiskWaveFunction(int nbrParticles, int invFillingFactor, double scale = 1.0);
+  // useExponentials = flag whether to use exponential factors
+  LaughlinOnDiskWaveFunction(int nbrParticles, int invFillingFactor, double scale = 1.0, bool useExponentials = false);
 
   // copy constructor
   //
@@ -73,6 +83,10 @@ class LaughlinOnDiskWaveFunction: public Abstract1DComplexFunction
   //
   // return value = clone of the function 
   Abstract1DComplexFunction* Clone ();
+
+  // change the normalization of the funtion by a multiplicative factor
+  // factor = factor to be multiplied
+  virtual void Renormalize(double factor);
 
   // evaluate function at a given point
   //

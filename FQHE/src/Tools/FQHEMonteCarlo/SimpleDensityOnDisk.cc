@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2008 Gunnar Moeller                    //
 //                                                                            //
 //                                                                            //
-//        class for a binned correlation function on the sphere geometry      //
+//          class for a binned density measurement on the disk geometry       //
 //                                                                            //
-//                        last modification : 19/10/2009                      //
+//                        last modification : 19/07/2016                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,9 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-
 #include "config.h"
-#include "SphereTwoBodyCorrelator.h"
+#include "SimpleDensityOnDisk.h"
 #include <iostream>
 
 using std::ios;
@@ -38,33 +37,42 @@ using std::ios_base;
 using std::endl;
 
 
-SphereTwoBodyCorrelator::SphereTwoBodyCorrelator()
+SimpleDensityOnDisk::SimpleDensityOnDisk()
 {
   this->Bins=0;
 }
 
 // constructor
+// rMax = maximum radius to consider
 // resolution = total number of bins
 // highres = number of points in high resolution interval at small r
 // range =  ranger over which high resolution is implemented
-SphereTwoBodyCorrelator::SphereTwoBodyCorrelator(int nbrFlux, int resolution, int highres, int range, bool printLength)
+SimpleDensityOnDisk::SimpleDensityOnDisk(double rMax, int resolution, int highres, int range)
 {
+  this->Type = RealObservableT & VectorValued;
+  this->PrintFlag=true;
   this->Bins=resolution+highres-range+1;
   this->Resolution=resolution;
   this->Highres=highres;
   this->Range=range;
+  if (this->Range > 0)
+    this->HighResRatio = (double)this->Highres / (double) this->Range;
+  else
+    {
+      this->Range = 0;
+      this->HighResRatio = 1.0;
+      this->Highres=0;
+    }
   this->Measures = 0.0;
-  this->Correlations=new double[Bins];
-  for (int j=0;j<Bins;++j)
+  this->Correlations=new double[Bins+1];
+  for (int j=0;j<=Bins;++j)
     Correlations[j]=0.0;
-  this->NbrFlux=nbrFlux;
   this->NbrParticles=0;
-  this->Radius = sqrt(0.5*(double)NbrFlux); // the radius is also the inverse magnetic length
-  this->PrintLength=printLength;
+  this->MaxRadius = rMax; // the radius is also the inverse magnetic length
 }
   
 // destructor
-SphereTwoBodyCorrelator::~SphereTwoBodyCorrelator()
+SimpleDensityOnDisk::~SimpleDensityOnDisk()
 {
   if (Bins!=0)
     delete [] Correlations;
@@ -72,47 +80,64 @@ SphereTwoBodyCorrelator::~SphereTwoBodyCorrelator()
 
 // call to make an observation
 // weight = relative weight of this sample
-void SphereTwoBodyCorrelator::RecordValue(double weight)
+void SimpleDensityOnDisk::RecordValue(double weight)
 {
-  double Rij,phi,tmp;
+  double Ri,phi,tmp;
   int index;
   this->Measures+=weight;
-  for( int i=1;i<this->NbrParticles;++i)
+  if (std::isnan(weight))
     {
-      for(int j=0; j<i;++j)
+      std::cout << "Error: irregular weight: "<<weight<<std::endl;
+      exit(1);
+    }
+  
+  for( int i=0;i<this->NbrParticles;++i)
+    {
+      //std::cout << CoordinatesZ[i] << " ";
+      Ri=Norm(CoordinatesZ[i]);
+      index=this->GetIndex(Ri);
+      if (index>=Range)
+	this->Correlations[index+Highres-Range]+=weight;  
+      else
 	{
-	  // set Rij=sin(\theta_ij/2)
-	  Rij=Norm(SpinorUCoordinates[i]*SpinorVCoordinates[j]-SpinorUCoordinates[j]*SpinorVCoordinates[i]);  
-	  phi=2.0*asin(Rij);
-	  index= (int)((1.0-(tmp=cos(phi)))/2.0*Resolution);
-	  if (index>=Range)
-	    this->Correlations[index+Highres-Range+1]+=weight;  
-	  else
-	    {
-	      index= (int)((1.0-tmp)/2.0*Highres*Resolution/Range);
-	      this->Correlations[index+1]+=weight;
-	    }
+	  index = this->GetHighResIndex(Ri);
+	  this->Correlations[index]+=weight;
 	}
     }
 }
 
 // print legend to the given stream
 // all = flag indicating whether to print all, or shortened information
-void SphereTwoBodyCorrelator::PrintLegend(std::ostream &output, bool all)
+void SimpleDensityOnDisk::PrintLegend(std::ostream &output, bool all)
 {
   output << "# r\tg(r)"<<endl;
 }
 
 // print status to the given stream
 // all = flag indicating whether to print all, or shortened information
-void SphereTwoBodyCorrelator::PrintStatus(std::ostream &output, bool all)
+void SimpleDensityOnDisk::PrintStatus(std::ostream &output, bool all)
 {
   // no action, for now
 }
 
+// request whether observable should be printed
+//
+bool SimpleDensityOnDisk::IncludeInPrint()
+{
+  return this->PrintFlag;
+}
+
+// set print status
+//
+void SimpleDensityOnDisk::IncludeInPrint(bool newStatus)
+{
+  this->PrintFlag=newStatus;
+}
+
+
 // print formatted data suitable for plotting
 // ouput = the target stream
-void SphereTwoBodyCorrelator::WriteDataFile(std::ostream &output)
+void SimpleDensityOnDisk::WriteDataFile(std::ostream &output)
 {
   if (output.flags() & ios_base::binary)
     {
@@ -124,41 +149,45 @@ void SphereTwoBodyCorrelator::WriteDataFile(std::ostream &output)
       // write as textfile
 
       double Units;
-      if (this->PrintLength)
-	{
-	  Units=this->Radius;
-	  output << "# r\tg(r)\n";
-	}
-      else
-	{
-	  Units=1.0;
-	  output << "# phi\tg(phi)\n";
-	}
-      double Normalization=Measures/(Resolution*(double)Highres/Range)*NbrParticles*NbrParticles;
-      for (int i=0;i<=Highres;i++)
-	output << Units*acos(1-(double)i/(Resolution*(double)Highres/Range)*2.0)<<"\t"
+      double Normalization=Measures/Resolution*NbrParticles;
+      output << "# Rmax="<<this->MaxRadius<<", weight out of range = "<< this->Correlations[this->Bins]/Normalization<<"\n";
+      output << "# r\tg(r)\n";
+      Normalization=Measures/(Resolution*this->HighResRatio)*NbrParticles;
+      for (int i=0;i<Highres;i++)
+	output << this->GetHighResBinRadius(i+0.5)<<"\t"
 	       << this->Correlations[i]/Normalization << endl;
-      Normalization=Measures/Resolution*NbrParticles*NbrParticles;
-      for (int i=1;i<=Resolution-Range; ++i)
-	output << Units*acos(1-(double)(i+Range)/Resolution*2.0) <<"\t"
-	       << this->Correlations[i]/Normalization << endl;
+      Normalization=Measures/Resolution*NbrParticles;
+      for (int i=0;i<Resolution-Range; ++i)
+	output << this->GetBinRadius(i+Range+0.5) <<"\t"
+	       << this->Correlations[i+Highres]/Normalization << endl;
     }
 }
 
 
 // write binary data 
 // ouput = the target stream
-void SphereTwoBodyCorrelator::WriteBinaryData(std::ostream &output)
+void SimpleDensityOnDisk::WriteBinaryData(std::ostream &output)
 {
   std::cout << "Need to implement binary write"<<endl;
 }
 
 // set particle collection that the observable operates on
 // system = particle collection
-void SphereTwoBodyCorrelator::SetParticleCollection(AbstractParticleCollection *system)
+void SimpleDensityOnDisk::SetParticleCollection(AbstractParticleCollection *system)
 {
-  this->System = (ParticleOnSphereCollection*) system;
+  if (system->GetCollectionType() != AbstractParticleCollection::OnDiskCollection)
+    {
+      std::cerr << "Error: wrong type of particle collection!"<<endl;
+      exit(1);
+    }
+  this->System = (ParticleOnDiskCollection*) system;
   this->NbrParticles = System->GetNbrParticles();
-  this->System->GetSpinorCoordinates(SpinorUCoordinates, SpinorVCoordinates);
+  this->System->GetCoordinates(CoordinatesZ);
+  // std::cout << "Particle collection registered in TwoBody Correlations"<<endl;
 }
+
+
+
+
+
 

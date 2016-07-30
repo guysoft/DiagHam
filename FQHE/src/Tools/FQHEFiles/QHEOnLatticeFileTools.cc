@@ -302,8 +302,8 @@ bool FQHEOnLatticeFindSystemInfoFromFileName(char* filename, int& nbrParticles, 
 	{
 	  StrNbrParticles += 3;
 	  int SizeString = 0;
-	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
-		 && (StrNbrParticles[SizeString] <= '9'))
+	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && ( ((StrNbrParticles[SizeString] >= '0') 
+												     && (StrNbrParticles[SizeString] <= '9')) || (StrNbrParticles[SizeString] =='.') || (StrNbrParticles[SizeString]=='e') || (StrNbrParticles[SizeString]=='-')))
 	    ++SizeString;
 	  if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
 	    {

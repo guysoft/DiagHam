@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2008 Gunnar Moeller                    //
 //                                                                            //
 //                                                                            //
-// abstract class for collection of particles used in a Monte Carlo algorithm // 
+//      class for a basic Monte Carlo algorith for particles on a sphere      //
 //                                                                            //
-//                     last modification : 18/02/2008                         //
+//                        last modification : 23/01/2008                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,61 +28,56 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTPARTICLECOLLECTION_H
-#define ABSTRACTPARTICLECOLLECTION_H
+#ifndef LAUGHLINSAMPLINGFUNCTIONONDISK_H
+#define LAUGHLINSAMPLINGFUNCTIONONDISK_H
 
-#include "config.h"
+#include "AbstractMCSamplingFunctionOnDisk.h"
 
-#include "Vector/RealVector.h"
-
-class AbstractParticleCollection
+class LaughlinSamplingFunctionOnDisk : public AbstractMCSamplingFunctionOnDisk
 {
- public:
-  enum Types
-    {
-      Other = 0x0,
-      OnSphereCollection = 0x01,
-      OnDiskCollection = 0x02
-    };
-
  protected:
+  // number of particles in each layer
+  int NbrParticles;
+  // exponent of Jastrow Factors
+  int Exponent;
+  // defect angle at origin
+  double DefectAngle;
+
+  // pointers to coordinates (external)
+  Complex *CoordinatesZ;
+
+  // for access to ParticleCollection
+  Complex LastZ;
+
+  // norm for total function value
+  double ElementNorm;
+
+  // log of overall normalization factor
+  double LogScale;
   
-
-  // index of last moved particle
-  int LastMoved;
-
  public:
-  // destructor
-  virtual ~AbstractParticleCollection();
-  
-  // randomly moves particle number nbrParticle
-  virtual void Move(int nbrParticle) = 0;
+  // constructor
+  LaughlinSamplingFunctionOnDisk(int nbrParticles, int exponent, double defectAngle=0.0);
+  // virtual destructor
+  virtual ~LaughlinSamplingFunctionOnDisk();
 
-  // randomly select a particle and move it
-  // return value = number of particle that was moved
-  virtual int Move() = 0;
+  // register basic system of particles
+  virtual void RegisterSystem(AbstractParticleCollectionOnDisk *system);
 
-  // get number of last particle that was moved
-  int GetMovedNbr() { return LastMoved; }
+  // set function value to one for present particle positions
+  virtual void AdaptNorm();
 
-  // get number of particles
-  virtual int GetNbrParticles() = 0;
- 
-  // restore last move
-  virtual void RestoreMove() = 0;
+  // method for ratio of probabilities with respect to the last configuration
+  // allows for more rapid calculation due to cancellation of factors
+  virtual double GetTransitionRatio();
 
-  // get all particle positions
-  virtual RealVector& GetPositions() = 0;
+  // get the full function value for a system of particles
+  virtual Complex GetFunctionValue();
 
-  // allow access to internal Random number generator:
-  virtual double GetRandomNumber() = 0;
-
-  // randomize particle positions
-  virtual void Randomize() = 0;
-
-  // get type of collection
-  virtual int GetCollectionType() = 0;
+  // call this method to scale the sampling function (needed to normalize the function)
+  // scale = total scaling factor
+  virtual void ScaleByFactor(double scale);
   
 };
 
-#endif
+#endif 

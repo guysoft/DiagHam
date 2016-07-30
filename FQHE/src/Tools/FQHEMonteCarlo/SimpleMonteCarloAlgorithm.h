@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SIMPLEMONTECARLOONSPHEREALGORITHM_H
-#define SIMPLEMONTECARLOONSPHEREALGORITHM_H
+#ifndef SIMPLEMONTECARLOALGORITHM_H
+#define SIMPLEMONTECARLOALGORITHM_H
 
 
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
@@ -42,7 +42,7 @@ using std::ostream;
 
 class OptionManager;
 
-class SimpleMonteCarloOnSphereAlgorithm
+class SimpleMonteCarloAlgorithm
 {
  protected:
 
@@ -56,7 +56,7 @@ class SimpleMonteCarloOnSphereAlgorithm
   AbstractMCSamplingFunction *SamplingFunction;  
   
   // class holding the particle coordinates
-  AbstractParticleCollectionOnSphere *System;
+  AbstractParticleCollection *System;
 
   // pointer to the option manager
   OptionManager* Options;
@@ -87,21 +87,23 @@ class SimpleMonteCarloOnSphereAlgorithm
  public:
 
   // default constructor
-  SimpleMonteCarloOnSphereAlgorithm();
+  SimpleMonteCarloAlgorithm();
 
   // set up for basic monte-carlo scheme
+  // geometry = type of geometry to consider
   // nbrParticles = number of particles in system
   // waveFunction = wavefunction to be simulated
   // samplingFunction = function to be used to generate samples
   // manager = pointer to option manager
   // maxNbrObservables = maximum number of observables to be assigned
-  SimpleMonteCarloOnSphereAlgorithm(int nbrParticles, Abstract1DComplexFunction *waveFunction,
+  // nu = filling factor (used for initial configuration on disk)
+  SimpleMonteCarloAlgorithm(AbstractParticleCollection::Types geometry, int nbrParticles, Abstract1DComplexFunction *waveFunction,
 				    AbstractMCSamplingFunction *samplingFunction,
-				    OptionManager *manager, int maxNbrObservables = 10);
+				    OptionManager *manager, int maxNbrObservables = 10, double nu=1.0);
 
   
   // destructor
-  ~SimpleMonteCarloOnSphereAlgorithm();
+  ~SimpleMonteCarloAlgorithm();
 
   // add an observable
   // O = pointer to the observable to be added

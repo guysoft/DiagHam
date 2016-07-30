@@ -101,6 +101,7 @@ bool FQHESphereGetPseudopotentials (char* fileName, int lzMax, double* pseudoPot
 	  return false;
 	}
     }
+  return true;
 }
 
 // get the one-body potential for spinless particles on sphere from file

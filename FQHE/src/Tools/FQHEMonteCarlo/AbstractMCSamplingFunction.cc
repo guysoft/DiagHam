@@ -31,6 +31,7 @@
 #include "AbstractMCSamplingFunction.h"
 
 #include <iostream>
+#include <cmath>
 using std::cout;
 using std::endl;
 
@@ -53,9 +54,9 @@ void AbstractMCSamplingFunction::AdaptNorm()
 {
   int countdown=100;
   double norm=Norm(this->GetFunctionValue());
-  while (((norm<.1)||(norm>10.0))&&(countdown-- > 0))
+  while ((((norm<.1)||(norm>10.0))||(std::isnan((double)norm)))&&(countdown-- > 0))
     {
-      if (norm>1e300)
+      if ((norm>1e300)||std::isnan((double)norm))
 	this->ScaleByFactor(1e-300);
       else if (norm==0.0)
 	this->ScaleByFactor(1e300);

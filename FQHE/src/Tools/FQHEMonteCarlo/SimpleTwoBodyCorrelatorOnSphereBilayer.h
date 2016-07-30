@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SPHERETWOBODYCORRELATOR_H
-#define SPHERETWOBODYCORRELATOR_H
+#ifndef SPHEREBILAYERTWOBODYCORRELATOR_H
+#define SPHEREBILAYERTWOBODYCORRELATOR_H
 
 #include "config.h"
 #include "AbstractObservable.h"
@@ -37,7 +37,7 @@
 #include <iostream>
 
 
-class SphereTwoBodyCorrelator
+class SimpleTwoBodyCorrelatorOnSphereBilayer : public AbstractObservable
 {
  protected:
     // Radius of the sphere in units of magnetic length
@@ -62,11 +62,16 @@ class SphereTwoBodyCorrelator
   double Measures;
 
   // array of measurements
-  double *Correlations;
+  double *CorrelationsUp;
+  double *CorrelationsIntra;
+  double *CorrelationsDown;
 
   // Number of particles
   int NbrParticles;
-
+  
+  // Number of particles in upper layer
+  int NbrParticlesUp;
+  
    // system that the observable operates on
   ParticleOnSphereCollection *System;
 
@@ -76,22 +81,26 @@ class SphereTwoBodyCorrelator
 
   // Flag for output
   bool PrintLength;
+
+  // Flag indicating whether variable is printed by default
+  bool PrintFlag;
   
  public:
 
   // standard constructor
-  SphereTwoBodyCorrelator();
+  SimpleTwoBodyCorrelatorOnSphereBilayer();
   
   // constructor
   // nbrFlux = number of flux piercing the sphere
+  // nbrUp = number of particles in upper layer
   // resolution = total number of bins
   // highres = number of points in high resolution interval at small r
   // range =  ranger over which high resolution is implemented
   // printLength = flag setting units of x-axis upon output length / angle
-  SphereTwoBodyCorrelator(int nbrFlux, int resolution, int highres, int range=0, bool printLength=true);
+  SimpleTwoBodyCorrelatorOnSphereBilayer(int nbrFlux, int nbrUp, int resolution, int highres, int range=0, bool printLength=true);
   
   // destructor
-  virtual ~SphereTwoBodyCorrelator();
+  virtual ~SimpleTwoBodyCorrelatorOnSphereBilayer();
 
   // call to make an observation
   // weight = relative weight of this sample
@@ -107,6 +116,14 @@ class SphereTwoBodyCorrelator
   // print status to the given stream
   // all = flag indicating whether to print all, or shortened information
   virtual void PrintStatus(std::ostream &output, bool all = false);
+
+  // request whether observable should be printed
+  //
+  virtual bool IncludeInPrint();
+
+  // set print status
+  //
+  virtual void IncludeInPrint(bool newStatus);
 
   // print formatted data suitable for plotting
   // ouput = the target stream

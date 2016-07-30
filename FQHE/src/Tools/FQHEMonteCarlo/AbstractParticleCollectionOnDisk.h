@@ -3,12 +3,13 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2008 Gunnar Moeller                    //
+//         Copyright (C) 2001-2002 Nicolas Regnault and Gunnar Moeller        //
 //                                                                            //
 //                                                                            //
-// abstract class for collection of particles used in a Monte Carlo algorithm // 
+//           class of Jain composite fermion wave function on sphere          //
+//                      with filled (pseudo) Landau levels                    //
 //                                                                            //
-//                     last modification : 18/02/2008                         //
+//                        last modification : 16/09/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,61 +29,51 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTPARTICLECOLLECTION_H
-#define ABSTRACTPARTICLECOLLECTION_H
-
+#ifndef ABSTRACTPARTICLECOLLECTIONONDISK_H
+#define ABSTRACTPARTICLECOLLECTIONONDISK_H
 #include "config.h"
-
+#include "AbstractParticleCollection.h"
+#include "MathTools/Complex.h"
+#include "MathTools/RandomNumber/NumRecRandomGenerator.h"
+#include "GeneralTools/GarbageFlag.h"
 #include "Vector/RealVector.h"
+#include "Matrix/RealSymmetricMatrix.h"
 
-class AbstractParticleCollection
-{
- public:
-  enum Types
-    {
-      Other = 0x0,
-      OnSphereCollection = 0x01,
-      OnDiskCollection = 0x02
-    };
-
+class AbstractParticleCollectionOnDisk : public AbstractParticleCollection {
  protected:
   
-
-  // index of last moved particle
-  int LastMoved;
-
  public:
-  // destructor
-  virtual ~AbstractParticleCollection();
+
+  //destructor
+  virtual ~AbstractParticleCollectionOnDisk() {}
   
-  // randomly moves particle number nbrParticle
-  virtual void Move(int nbrParticle) = 0;
+  // get previous coordinates of last particle that was moved
+  virtual void GetPreviousPos(Complex &lastZ) = 0;
 
-  // randomly select a particle and move it
-  // return value = number of particle that was moved
-  virtual int Move() = 0;
+  // get pointers to spinor coordinates
+  virtual void GetCoordinates(Complex* &Z) = 0;
 
-  // get number of last particle that was moved
-  int GetMovedNbr() { return LastMoved; }
+  // access particle positions of a single particle 
+  /* virtual double GetR(int nbrParticle); */
+  /* virtual double Phi(int nbrParticle); */
 
-  // get number of particles
-  virtual int GetNbrParticles() = 0;
- 
-  // restore last move
-  virtual void RestoreMove() = 0;
+  // set new particle position
+  virtual void SetPosition(int nbrParticle, double r, double phi) = 0;
 
-  // get all particle positions
-  virtual RealVector& GetPositions() = 0;
+  // get previous coordinates of last particle that was moved
 
-  // allow access to internal Random number generator:
-  virtual double GetRandomNumber() = 0;
+  // stretch the default steplength by a factor
+  virtual void MultiplyStepLength(double multiplier) = 0;
 
-  // randomize particle positions
-  virtual void Randomize() = 0;
+  // get absolute values of all relative distances
+  // distances = matrix in which to return the distances
+  virtual void GetDistances(RealSymmetricMatrix &distances) = 0;
 
-  // get type of collection
-  virtual int GetCollectionType() = 0;
+  // toggle positions of first N/2 particles with the remaining N/2 positions
+  //
+  virtual void ToggleHalfHalf() = 0;
   
 };
+
 
 #endif

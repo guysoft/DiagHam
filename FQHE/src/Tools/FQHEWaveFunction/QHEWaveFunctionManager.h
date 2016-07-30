@@ -55,6 +55,10 @@ class QHEWaveFunctionManager
   // id of the geometry to use
   int GeometryID;
 
+  // flags for any geometry options
+  int GeometryOptions;
+
+  // id of the wavefunction to use
   int WavefunctionID;
 
  public:
@@ -66,6 +70,13 @@ class QHEWaveFunctionManager
       DiskGeometry = 0x02,
       SphereWithSpinGeometry = 0x04,
       SphereWithSU3SpinGeometry = 0x08
+    };
+
+  // list of avalaible geometries
+  enum GeometryOptions
+    {
+      NoOptions = 0x0,
+      DiskWithBackground = 0x01,
     };
 
   // list of available wavefunctions:
@@ -102,7 +113,7 @@ class QHEWaveFunctionManager
   // constructor
   //
   // geometry = id of the geometry to use
-  QHEWaveFunctionManager(int geometry = QHEWaveFunctionManager::SphereGeometry);
+  QHEWaveFunctionManager(int geometry = QHEWaveFunctionManager::SphereGeometry, int geometryOptions=QHEWaveFunctionManager::NoOptions);
 
   // destructor
   //

@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2008 Gunnar Moeller                    //
 //                                                                            //
 //                                                                            //
-// abstract class for collection of particles used in a Monte Carlo algorithm // 
+//      class for a basic Monte Carlo algorith for particles on a sphere      //
 //                                                                            //
-//                     last modification : 18/02/2008                         //
+//                        last modification : 23/01/2008                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,61 +28,35 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTPARTICLECOLLECTION_H
-#define ABSTRACTPARTICLECOLLECTION_H
+#ifndef ABSTRACTMCSAMPLINGFUNCTIONONDISK_H
+#define ABSTRACTMCSAMPLINGFUNCTIONONDISK_H
 
 #include "config.h"
+#include "MathTools/Complex.h"
+#include "AbstractMCSamplingFunction.h"
+#include "AbstractParticleCollectionOnDisk.h"
 
-#include "Vector/RealVector.h"
 
-class AbstractParticleCollection
+class AbstractMCSamplingFunctionOnDisk: public AbstractMCSamplingFunction
 {
+ protected:
+  // pointer to the ensemble of particles that shall be examined in MonteCarlo
+  AbstractParticleCollectionOnDisk *System;
+  
  public:
-  enum Types
-    {
-      Other = 0x0,
-      OnSphereCollection = 0x01,
-      OnDiskCollection = 0x02
-    };
+  // virtual destructor
+  virtual ~AbstractMCSamplingFunctionOnDisk();
+
+  // register basic system of particles
+  virtual void RegisterSystem(AbstractParticleCollection *system);
+
+  // register basic system of particles
+  virtual void RegisterSystem(AbstractParticleCollectionOnDisk *system) = 0;
 
  protected:
-  
-
-  // index of last moved particle
-  int LastMoved;
-
- public:
-  // destructor
-  virtual ~AbstractParticleCollection();
-  
-  // randomly moves particle number nbrParticle
-  virtual void Move(int nbrParticle) = 0;
-
-  // randomly select a particle and move it
-  // return value = number of particle that was moved
-  virtual int Move() = 0;
-
-  // get number of last particle that was moved
-  int GetMovedNbr() { return LastMoved; }
-
-  // get number of particles
-  virtual int GetNbrParticles() = 0;
- 
-  // restore last move
-  virtual void RestoreMove() = 0;
-
-  // get all particle positions
-  virtual RealVector& GetPositions() = 0;
-
-  // allow access to internal Random number generator:
-  virtual double GetRandomNumber() = 0;
-
-  // randomize particle positions
-  virtual void Randomize() = 0;
-
-  // get type of collection
-  virtual int GetCollectionType() = 0;
+  // register basic system of particles
+  virtual AbstractParticleCollection * GetSystem();  
   
 };
 
-#endif
+#endif // ABSTRACTMCSAMPLINGFUNCTION_H

@@ -28,16 +28,18 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "SimpleMonteCarloOnSphereAlgorithm.h"
+#include "SimpleMonteCarloAlgorithm.h"
 #include "TrivialSamplingFunction.h"
 #include "Options/Options.h"
 #include "ParticleOnSphereCollection.h"
+#include "ParticleOnDiskCollection.h"
+
 #include <iostream>
 using std::cout;
 using std::endl;
 
 // default constructor
-SimpleMonteCarloOnSphereAlgorithm::SimpleMonteCarloOnSphereAlgorithm()
+SimpleMonteCarloAlgorithm::SimpleMonteCarloAlgorithm()
 {
   this->NbrParticles=0;
   this->HavePrivateSamplingFct=false;
@@ -49,9 +51,9 @@ SimpleMonteCarloOnSphereAlgorithm::SimpleMonteCarloOnSphereAlgorithm()
 // samplingFunction = function to be used to generate samples
 // manager = pointer to option manager
 // maxNbrObservables = maximum number of observables to be assigned
-SimpleMonteCarloOnSphereAlgorithm::SimpleMonteCarloOnSphereAlgorithm(int nbrParticles,
+SimpleMonteCarloAlgorithm::SimpleMonteCarloAlgorithm(AbstractParticleCollection::Types type, int nbrParticles,
 		    Abstract1DComplexFunction *waveFunction, AbstractMCSamplingFunction *samplingFunction,
-		    OptionManager *manager, int maxNbrObservables)
+								     OptionManager *manager, int maxNbrObservables, double nu)
 {
   if (waveFunction==0)
     {
@@ -74,11 +76,28 @@ SimpleMonteCarloOnSphereAlgorithm::SimpleMonteCarloOnSphereAlgorithm(int nbrPart
 
   this->Options=manager;  
   long Seed = Options->GetInteger("randomSeed");
-  this->System=new ParticleOnSphereCollection(this->NbrParticles, Seed);
+  switch (type)
+    {
+    case AbstractParticleCollection::OnSphereCollection:
+      {
+	this->System=new ParticleOnSphereCollection(this->NbrParticles, Seed);
+	break;
+      }
+    case AbstractParticleCollection::OnDiskCollection:
+      {
+	this->System=new ParticleOnDiskCollection(this->NbrParticles, nu, Seed);
+	break;
+      }
+    default:
+      {
+	std::cerr << "Error: unknown particle collection type" << endl;
+	exit(1);
+      }
+    }
   this->SamplingFunction->RegisterSystem(this->System);
   this->SamplingFunction->AdaptAverageMCNorm(Options->GetInteger("thermalize")); // this also relaxes the particle positions in System
   // renormalize wavefunction, as this has led to problems
-  //this->NormalizePsi();
+  this->NormalizePsi(100);
   this->MaxNbrObservables=maxNbrObservables;
   this->Observables= new AbstractObservable*[MaxNbrObservables];
   this->Frequencies= new int[MaxNbrObservables];
@@ -86,7 +105,7 @@ SimpleMonteCarloOnSphereAlgorithm::SimpleMonteCarloOnSphereAlgorithm(int nbrPart
 }
   
 // destructor
-SimpleMonteCarloOnSphereAlgorithm::~SimpleMonteCarloOnSphereAlgorithm()
+SimpleMonteCarloAlgorithm::~SimpleMonteCarloAlgorithm()
 {
   if (this->NbrParticles!=0)
     {
@@ -103,7 +122,7 @@ SimpleMonteCarloOnSphereAlgorithm::~SimpleMonteCarloOnSphereAlgorithm()
 // add an observable
 // O = pointer to the observable to be added
 // frequency = integer value indicating on which microsteps observations are being made
-void SimpleMonteCarloOnSphereAlgorithm::AddObservable(AbstractObservable *O, int frequency)
+void SimpleMonteCarloAlgorithm::AddObservable(AbstractObservable *O, int frequency)
 {
   if (this->NbrObservables<this->MaxNbrObservables)
     {
@@ -131,7 +150,7 @@ void SimpleMonteCarloOnSphereAlgorithm::AddObservable(AbstractObservable *O, int
 // thermalize system with a number of microsteps
 // time = number of microsteps
 // startFromRandom = flag indicating if we want to restart from a random configuration
-void SimpleMonteCarloOnSphereAlgorithm::Thermalize(int time, bool startFromRandom)
+void SimpleMonteCarloAlgorithm::Thermalize(int time, bool startFromRandom)
 {
   if (startFromRandom)
     System->Randomize();
@@ -140,7 +159,7 @@ void SimpleMonteCarloOnSphereAlgorithm::Thermalize(int time, bool startFromRando
 
 // renormalize wavefunction
 // time = number of points to average
-void SimpleMonteCarloOnSphereAlgorithm::NormalizePsi(int time)
+void SimpleMonteCarloAlgorithm::NormalizePsi(int time)
 {
   double SumSqrPsiValues=0.0;
   for (int t=0; t<time; ++t)
@@ -153,7 +172,7 @@ void SimpleMonteCarloOnSphereAlgorithm::NormalizePsi(int time)
 
 // run simulation
 // all options are included via the AddOptionGroup method
-void SimpleMonteCarloOnSphereAlgorithm::Simulate(ostream &Output)
+void SimpleMonteCarloAlgorithm::Simulate(ostream &Output)
 {
   this->NbrAcceptedMoves = 0l;
   this->NbrAttemptedMoves = 0l;
@@ -202,17 +221,33 @@ void SimpleMonteCarloOnSphereAlgorithm::Simulate(ostream &Output)
 }
 
 
+// #define TESTING_MC
+
 // perform a number of Monte-Carlo microsteps
 // nbrSteps = number of steps
 //
-void SimpleMonteCarloOnSphereAlgorithm::PerformMicroSteps(int nbrSteps)
+void SimpleMonteCarloAlgorithm::PerformMicroSteps(int nbrSteps)
 {
   double acceptanceProbability;
   for (int i = 0; i < nbrSteps; ++i)
     {
+#ifdef TESTING_MC
+      Complex WaveFctValue = (*(this->WaveFunction))(System->GetPositions());
+#endif
       System->Move();      
       ++this->NbrAttemptedMoves;
       acceptanceProbability = SamplingFunction->GetTransitionRatio();
+#ifdef TESTING_MC
+      Complex WaveFctValue2 = (*(this->WaveFunction))(System->GetPositions());
+      if (fabs(acceptanceProbability  - SqrNorm(WaveFctValue2)/SqrNorm(WaveFctValue)) > 1e-10)
+	{
+	  std::cout << "Error with transition amplitudes: before = "<<SqrNorm(WaveFctValue)<<", after= "<<SqrNorm(WaveFctValue2) 
+		    << ", ratio (predicted)=" <<SqrNorm(WaveFctValue2)/SqrNorm(WaveFctValue) << ", actual ratio="<<acceptanceProbability<<std::endl;
+	}
+      else
+	std::cout << "No error: before = "<<SqrNorm(WaveFctValue)<<", after= "<<SqrNorm(WaveFctValue2) 
+		  << ", ratio (predicted)=" <<SqrNorm(WaveFctValue2)/SqrNorm(WaveFctValue) << ", actual ratio="<<acceptanceProbability<<std::endl;
+#endif
       if ((acceptanceProbability < 1.0) &&  (System->GetRandomNumber() > acceptanceProbability))
 	{
 	  System->RestoreMove();
@@ -229,7 +264,7 @@ void SimpleMonteCarloOnSphereAlgorithm::PerformMicroSteps(int nbrSteps)
 // add an option group containing all options related to the wave functions
 //
 // manager = pointer to the option manager
-void SimpleMonteCarloOnSphereAlgorithm::AddOptionGroup(OptionManager* manager)
+void SimpleMonteCarloAlgorithm::AddOptionGroup(OptionManager* manager)
 {
  OptionGroup* MCGroup  = new OptionGroup ("Monte-Carlo options");
   (*(manager)) += MCGroup;  
@@ -246,7 +281,7 @@ void SimpleMonteCarloOnSphereAlgorithm::AddOptionGroup(OptionManager* manager)
 // write measurements of all observables to a given stream
 // str = output stream
 //
-void SimpleMonteCarloOnSphereAlgorithm::WriteObservations(ostream &str)
+void SimpleMonteCarloAlgorithm::WriteObservations(ostream &str)
 {
   for (int i=0; i<NbrObservables; ++i)
     {

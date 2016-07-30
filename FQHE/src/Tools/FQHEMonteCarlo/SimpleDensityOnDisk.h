@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2008 Gunnar Moeller                    //
 //                                                                            //
 //                                                                            //
-//        class for a binned correlation function on the sphere geometry      //
+//        class for a binned density measurements for the disk geometry       //
 //                                                                            //
-//                        last modification : 19/10/2009                      //
+//                        last modification : 19/10/2016                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,59 +28,50 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SPHEREBILAYERTWOBODYCORRELATOR_H
-#define SPHEREBILAYERTWOBODYCORRELATOR_H
+#ifndef SIMPLEDENSITYONDISK_H
+#define SIMPLEDENSITYONDISK_H
 
 #include "config.h"
 #include "AbstractObservable.h"
-#include "ParticleOnSphereCollection.h"
+#include "ParticleOnDiskCollection.h"
 #include <iostream>
+#include <cmath>
 
-
-class SphereBilayerTwoBodyCorrelator : public AbstractObservable
+class SimpleDensityOnDisk : public AbstractObservable
 {
  protected:
-    // Radius of the sphere in units of magnetic length
-  double Radius;
-
-  // Number of Flux quanta piercing the sphere
-  int NbrFlux;
+    // maximum radius up to which samples need to be recorded
+  double MaxRadius;
 
   // number of bins
   int Bins;
 
-  // overall resolution 
+  // overall resolution (number of bins on regular axis)
   int Resolution;
 
-  // increased resolution for the interval close to the origin
+  // increased resolution for the interval close to the origin (in place of Range bins)
   int Highres;
 
   // number of datapoints to be included in that interval
   int Range;
 
+  // ratio of highres area
+  double HighResRatio;
+
   // total weight of observations
   double Measures;
 
   // array of measurements
-  double *CorrelationsUp;
-  double *CorrelationsIntra;
-  double *CorrelationsDown;
+  double *Correlations;
 
   // Number of particles
   int NbrParticles;
-  
-  // Number of particles in upper layer
-  int NbrParticlesUp;
-  
+
    // system that the observable operates on
-  ParticleOnSphereCollection *System;
+  ParticleOnDiskCollection *System;
 
-  // pointers to spinor coordinates (external)
-  Complex *SpinorUCoordinates;
-  Complex *SpinorVCoordinates;
-
-  // Flag for output
-  bool PrintLength;
+  // pointers to coordinates (external)
+  Complex *CoordinatesZ;
 
   // Flag indicating whether variable is printed by default
   bool PrintFlag;
@@ -88,26 +79,21 @@ class SphereBilayerTwoBodyCorrelator : public AbstractObservable
  public:
 
   // standard constructor
-  SphereBilayerTwoBodyCorrelator();
+  SimpleDensityOnDisk();
   
   // constructor
-  // nbrFlux = number of flux piercing the sphere
-  // nbrUp = number of particles in upper layer
+  // rMax = maximum radius to represent
   // resolution = total number of bins
   // highres = number of points in high resolution interval at small r
   // range =  ranger over which high resolution is implemented
-  // printLength = flag setting units of x-axis upon output length / angle
-  SphereBilayerTwoBodyCorrelator(int nbrFlux, int nbrUp, int resolution, int highres, int range=0, bool printLength=true);
+  SimpleDensityOnDisk(double rMax, int resolution, int highres, int range=0);
   
   // destructor
-  virtual ~SphereBilayerTwoBodyCorrelator();
+  virtual ~SimpleDensityOnDisk();
 
   // call to make an observation
   // weight = relative weight of this sample
   virtual void RecordValue(double weight);
-
-  // set units of print output
-  virtual void SetPrintLength(bool printLength=true){this->PrintLength=printLength;}
 
   // print legend to the given stream
   // all = flag indicating whether to print all, or shortened information
@@ -136,6 +122,39 @@ class SphereBilayerTwoBodyCorrelator : public AbstractObservable
   // set particle collection that the observable operates on
   // system = particle collection
   virtual void SetParticleCollection(AbstractParticleCollection *system);
+
+ private:
+  // get bin index for a given radius
+  int GetIndex(double radius)
+  {
+    if (radius > this->MaxRadius) return this->Bins;
+    else
+      return (int)(std::pow(radius/this->MaxRadius,2)*this->Resolution);
+  }
+
+  // get bin index for a radius on the high resolution grid
+  int GetHighResIndex(double radius)
+  {
+    if (radius > this->MaxRadius) return this->Bins;
+    else
+      {
+	// std::cout << "radius="<<radius<<", maxR="<<MaxRadius<<", HighResRatio="<<HighResRatio<<", Res="<<Resolution <<std::endl;
+	return (int)(std::pow(radius/this->MaxRadius,2)*this->HighResRatio*this->Resolution);
+      }
+  }
+    
+  // get bin radius for a (continuous) bin index on regular scale
+  double GetBinRadius(double binNbr)
+  {
+    return std::sqrt( binNbr/this->Resolution) * this->MaxRadius;
+  }
+
+  // get bin radius for a (continuous) bin index on high resolution scale
+  double GetHighResBinRadius(double binNbr)
+  {
+    return std::sqrt( binNbr/(this->Resolution*this->HighResRatio)) * this->MaxRadius ;
+  }
+
   
 };
 

@@ -37,6 +37,7 @@
 #include "LaughlinSamplingFunction.h"
 #include "HalperinSamplingFunction.h"
 #include "MRBlockSamplingFunction.h"
+#include "LaughlinSamplingFunctionOnDisk.h"
 
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 
@@ -96,6 +97,12 @@ void QHESamplingFunctionManager::AddOptionGroup(OptionManager* manager)
 	  (*SamplingFunctionGroup) += new SingleIntegerOption  ('\n', "laughlin-exponent", "power to which the jastrow factors in sampling function are raised",2);
 	  (*SamplingFunctionGroup) += new MultipleIntegerOption  ('\n', "SHC", "coefficients (k,l,m) of sampling Halperin wavefunction",',' ,',', "1,1,1");
 	}
+      else if (this->GeometryID & QHESamplingFunctionManager::DiskGeometry)
+	{
+	  (*SamplingFunctionGroup) += new SingleIntegerOption  ('\n', "laughlin-exponent", "power to which the jastrow factors in sampling function are raised",2);
+	  (*SamplingFunctionGroup) += new SingleIntegerOption  ('\n', "defect-angle", "defect angle for disk geometry (units of 2pi)", 0.0, true, 0.0, true, 1.0);
+	}
+
     }
 }
 
@@ -122,7 +129,7 @@ ostream& QHESamplingFunctionManager::ShowAvalaibleSamplingFunctions (ostream& st
       else
 	if (this->GeometryID == QHESamplingFunctionManager::DiskGeometry)
 	  {
-	    str << "  no sampling functions, yet" << endl;	
+	    str << "  * laughlin : laughlin-type wavefunction" << endl;
 	  }
 	else
 	  if (this->GeometryID == QHESamplingFunctionManager::SphereWithSpinGeometry)
@@ -215,7 +222,14 @@ AbstractMCSamplingFunction* QHESamplingFunctionManager::GetSamplingFunction()
       else
 	if (this->GeometryID == QHESamplingFunctionManager::DiskGeometry)
 	  {
-	    // none implemented for the moment
+	  if ((strcmp (this->Options->GetString("sampler"), "laughlin") == 0))
+	    {
+	      int N = this->Options->GetInteger("nbr-particles");	      
+	      int m = this->Options->GetInteger("laughlin-exponent");
+	      int alpha = this->Options->GetInteger("defect-angle");
+	      AbstractMCSamplingFunction* rst  = new LaughlinSamplingFunctionOnDisk(N,m,alpha);
+	      return rst;
+	    }
 	    return 0;
 	  }
 	else

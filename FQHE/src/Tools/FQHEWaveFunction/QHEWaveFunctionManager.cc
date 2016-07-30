@@ -76,10 +76,11 @@ using std::cout;
 //
 // geometry = id of the geometry to use
 
-QHEWaveFunctionManager::QHEWaveFunctionManager(int geometry)
+QHEWaveFunctionManager::QHEWaveFunctionManager(int geometry, int geometryOptions)
 {
   this->GeometryID = geometry;
   this->Options = 0;
+  this->GeometryOptions = geometryOptions;
 }
 
 // destructor
@@ -396,14 +397,22 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	if (strcmp (this->Options->GetString("test-wavefunction"), "laughlin") == 0)
 	  {
 	    return new LaughlinOnDiskWaveFunction(this->Options->GetInteger("nbr-particles"), 
-						  this->Options->GetInteger("nbr-flux") + 1);
+						  this->Options->GetInteger("nbr-flux") + 1, 1.0, ((this->GeometryOptions & DiskWithBackground) != 0));
 	  }
 	if (strcmp (this->Options->GetString("test-wavefunction"), "pfaffian") == 0)
 	  {
+	    if (this->GeometryOptions & DiskWithBackground)
+	      {
+		cout << "Warning: exponential background not implemented for Pfaffian" << endl;
+	      }
 	    return new PfaffianOnDiskWaveFunction(this->Options->GetInteger("nbr-particles"));
 	  }
 	if (strcmp (this->Options->GetString("test-wavefunction"), "read") == 0)
 	  {
+	    if (this->GeometryOptions & DiskWithBackground)
+	      {
+		cout << "Warning: exponential background not implemented for Moore Read" << endl;
+	      }
 	    return new MooreReadOnDiskWaveFunction(this->Options->GetInteger("nbr-particles"), 
 						   this->Options->GetInteger("cluster-size"));
 	  }

@@ -4,10 +4,10 @@
 #include "Tools/FQHEWaveFunction/QHEWaveFunctionManager.h"
 #include "Tools/FQHEMonteCarlo/AbstractMCSamplingFunction.h"
 #include "Tools/FQHEMonteCarlo/QHESamplingFunctionManager.h"
-#include "Tools/FQHEMonteCarlo/SimpleMonteCarloOnSphereAlgorithm.h"
+#include "Tools/FQHEMonteCarlo/SimpleMonteCarloAlgorithm.h"
 #include "Tools/FQHEMonteCarlo/SphereBilayerCoulombEnergy.h"
 #include "Tools/FQHEMonteCarlo/SphereWithSpinGeneralEnergy.h"
-#include "Tools/FQHEMonteCarlo/SphereBilayerTwoBodyCorrelator.h"
+#include "Tools/FQHEMonteCarlo/SimpleTwoBodyCorrelatorOnSphereBilayer.h"
 #include "MCObservables/RealObservable.h"
 
 #include "Options/Options.h"
@@ -35,7 +35,7 @@ int main(int argc, char** argv)
   QHESamplingFunctionManager SamplingFunctionManager(QHESamplingFunctionManager::SphereWithSpinGeometry);
   
   Manager += SystemGroup;
-  SimpleMonteCarloOnSphereAlgorithm::AddOptionGroup(&Manager);
+  SimpleMonteCarloAlgorithm::AddOptionGroup(&Manager);
   WaveFunctionManager.AddOptionGroup(&Manager);
   SamplingFunctionManager.AddOptionGroup(&Manager);
   Manager += MiscGroup;
@@ -96,7 +96,7 @@ int main(int argc, char** argv)
   if (SamplingFunction!=0)
     cout << "Sampler:  " << SamplingFunctionManager.GetDescription()<<endl;  
 
-  SimpleMonteCarloOnSphereAlgorithm MonteCarloRoutine(NbrParticles, TestWaveFunction, SamplingFunction,
+  SimpleMonteCarloAlgorithm MonteCarloRoutine(AbstractParticleCollection::OnSphereCollection, NbrParticles, TestWaveFunction, SamplingFunction,
 						      &Manager);
 
   // add observables
@@ -143,7 +143,7 @@ int main(int argc, char** argv)
 	}
     }
 
-  SphereBilayerTwoBodyCorrelator *Correlators= new SphereBilayerTwoBodyCorrelator(NbrFlux, NbrUp, 1024, 1, 1);
+  SimpleTwoBodyCorrelatorOnSphereBilayer *Correlators= new SimpleTwoBodyCorrelatorOnSphereBilayer(NbrFlux, NbrUp, 1024, 1, 1);
   Correlators->IncludeInPrint(false);
   MonteCarloRoutine.AddObservable(Correlators, 20);
   // run simulation
