@@ -2138,8 +2138,7 @@ ostream& operator << (ostream& Str, const ComplexMatrix& P)
 int* ComplexMatrix::LUDecomposition(ComplexLowerTriangularMatrix& lowerMatrix, ComplexUpperTriangularMatrix& upperMatrix)
 {
 #ifdef __LAPACKONLY__
-  //return this->LUDecomposition();
-  return this->LapackLUDecomposition(lowerMatrix, upperMatrix);
+^
 #endif
   if (this->NbrRow != this->NbrColumn)
     {

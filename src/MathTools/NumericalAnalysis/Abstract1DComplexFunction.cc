@@ -46,6 +46,7 @@ Abstract1DComplexFunction::~Abstract1DComplexFunction()
 // factor = factor to be multiplied
 void Abstract1DComplexFunction::Renormalize(double factor)
 {
+  cout << "Dummy normalization"<<endl;
 }
 
 // set wavefunction to one for a given set of particle coordinates
