@@ -14,6 +14,8 @@
 #include "Tools/FQHEMPS/FQHEMPSMatrixManager.h"
 #include "Tools/FQHEMPS/AbstractFQHEMPSMatrix.h"
 
+#include "Tools/FQHEMPS/FQHEMPODensityOperator.h"
+
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
 #include "Vector/RealVector.h"
@@ -119,37 +121,66 @@ int main(int argc, char** argv)
   int NbrFluxQuanta = (LeftNbrFluxQuanta + RightNbrFluxQuanta) + 1;
 
   AbstractFQHEMPSMatrix* MPSMatrix = MPSMatrixManager.GetMPSMatrices(NbrFluxQuanta, Architecture.GetArchitecture()); 
-
   if (Manager.GetBoolean("only-export"))
     {
       return 0;
     }
   int NbrBMatrices = MPSMatrix->GetNbrMatrices();
-
   SparseRealMatrix* BMatrices = MPSMatrix->GetMatrices();
-  int MPSRowIndex = 0;
-  int MPSColumnIndex = 0;
-  MPSMatrix->GetMatrixBoundaryIndices(MPSRowIndex, MPSColumnIndex, Manager.GetBoolean("use-padding"));
-  
-  RealVector TmpVectorEMatrix (BMatrices[0].GetNbrRow() * BMatrices[0].GetNbrRow(), true);
-  RealVector TmpVectorEMatrix2 (BMatrices[0].GetNbrRow() * BMatrices[0].GetNbrRow(), true);
-  double* Coefficients = new double[NbrBMatrices];
-  for(int i= 0; i < NbrBMatrices; i++)
-    Coefficients[i] = 1.0;
-  TmpVectorEMatrix[MPSRowIndex + (BMatrices[0].GetNbrRow() * MPSRowIndex)] = 1.0;
-  TensorProductSparseMatrixHamiltonian* EHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, BMatrices, BMatrices, Coefficients,
-												Architecture.GetArchitecture()); 
-//   for (int p = 0; p <  NbrBlock ;p++)
-//     {
-//       EHamiltonian->LowLevelMultiply(TmpVectorEMatrix, TmpVectorEMatrix2);
-//       RealVector TmpVectorEMatrix3 = TmpVectorEMatrix;
-//       TmpVectorEMatrix = TmpVectorEMatrix2;
-//       TmpVectorEMatrix2 = TmpVectorEMatrix3;
-//     }
+  double Normalisation = 1.0;
 
-  double Norm = TmpVectorEMatrix[MPSColumnIndex + (BMatrices[0].GetNbrColumn() * MPSColumnIndex)];
-  double Normalisation = 1.0/ sqrt(Norm);
+  if (Manager.GetBoolean("infinite-cylinder") == false)
+    {
+      double* TotalOneBodyPotentials = new double[NbrFluxQuanta + 1];
+      if (Manager.GetString("left-interaction") != 0)
+	{
+	  for (int i = 0; i <= LeftNbrFluxQuanta; ++i)
+	    {
+	      TotalOneBodyPotentials[i] = LeftOneBodyPotential[i];
+	    }
+	}
+      for (int i = 0; i <= RightNbrFluxQuanta; ++i)
+	{
+	  TotalOneBodyPotentials[i + LeftNbrFluxQuanta + 1] = RightOneBodyPotential[i];
+	}
 
+      int MPSRowIndex = 0;
+      int MPSColumnIndex = 0;
+      MPSMatrix->GetMatrixBoundaryIndices(MPSRowIndex, MPSColumnIndex, Manager.GetBoolean("use-padding"));
+      
+      RealVector TmpVectorEMatrix (BMatrices[0].GetNbrRow() * BMatrices[0].GetNbrRow(), true);
+      RealVector TmpVectorEMatrix2 (BMatrices[0].GetNbrRow() * BMatrices[0].GetNbrRow(), true);
+      double* Coefficients = new double[NbrBMatrices];
+      for(int i= 0; i < NbrBMatrices; i++)
+	Coefficients[i] = 1.0;
+      TmpVectorEMatrix[MPSRowIndex + (BMatrices[0].GetNbrRow() * MPSRowIndex)] = 1.0;
+      TensorProductSparseMatrixHamiltonian* TransferMatrix = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, BMatrices, BMatrices, Coefficients,
+												      Architecture.GetArchitecture()); 
+      for (int i = 0; i <= NbrFluxQuanta; ++i)
+	{
+	  TransferMatrix->LowLevelMultiply(TmpVectorEMatrix, TmpVectorEMatrix2);
+	  RealVector TmpVectorEMatrix3 = TmpVectorEMatrix;
+	  TmpVectorEMatrix = TmpVectorEMatrix2;
+	  TmpVectorEMatrix2 = TmpVectorEMatrix3;
+	}      
+      Normalisation = 1.0 / TmpVectorEMatrix[MPSColumnIndex + (BMatrices[0].GetNbrColumn() * MPSColumnIndex)];
+      FQHEMPODensityOperator TmpMPO (MPSMatrix->GetMaximumOccupation(), 1.0);
+      int MPORowIndex = 0;
+      int MPOColumnIndex = 0;
+      TmpMPO.GetMatrixBoundaryIndices(MPORowIndex, MPOColumnIndex);
+
+      TmpVectorEMatrix = RealVector(BMatrices[0].GetNbrRow() * BMatrices[0].GetNbrRow() * TmpMPO.GetBondDimension(), true);
+      TmpVectorEMatrix2 = RealVector(BMatrices[0].GetNbrRow() * BMatrices[0].GetNbrRow() * TmpMPO.GetBondDimension(), true);
+      TmpVectorEMatrix[MPSRowIndex + (BMatrices[0].GetNbrRow() * MPSRowIndex)] = 1.0;
+
+      for (int i = 0; i <= NbrFluxQuanta; ++i)
+	{
+	  //	  EHamiltonian->LowLevelMultiply(TmpVectorEMatrix, TmpVectorEMatrix2);
+	  RealVector TmpVectorEMatrix3 = TmpVectorEMatrix;
+	  TmpVectorEMatrix = TmpVectorEMatrix2;
+	  TmpVectorEMatrix2 = TmpVectorEMatrix3;	  
+	}
+    }
 
 //   cout << "B matrix size = " << BMatrices[0].GetNbrRow() << "x" << BMatrices[0].GetNbrColumn() << endl;
 //   unsigned long * ArrayPhysicalIndice = MPSMatrix->GetPhysicalIndices();

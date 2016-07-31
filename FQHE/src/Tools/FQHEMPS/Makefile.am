@@ -15,4 +15,6 @@ FQHEMPSFixedQSectorMatrix.cc \
 FQHEMPSClustered2ROptimizedMatrix.cc \
 FQHEMPSSymmetrizedStateMatrix.cc \
 FQHEMPSTwistedSymmetrizedStateMatrix.cc \
-FQHEMPSFixedBondDimensionMatrix.cc
+FQHEMPSFixedBondDimensionMatrix.cc \
+AbstractFQHEMPOMatrix.cc \
+FQHEMPODensityOperator.cc

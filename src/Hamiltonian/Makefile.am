@@ -7,4 +7,5 @@ ExplicitHamiltonian.cc \
 FileBasedHamiltonian.cc \
 FileBasedHermitianHamiltonian.cc \
 TensorProductSparseMatrixHamiltonian.cc \
-TensorProductSparseMatrixSelectedBlockHamiltonian.cc
+TensorProductSparseMatrixSelectedBlockHamiltonian.cc \
+MultipleTensorProductSparseMatrixHamiltonian.cc
