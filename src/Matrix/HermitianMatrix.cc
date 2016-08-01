@@ -187,18 +187,50 @@ HermitianMatrix::HermitianMatrix(MPI::Intracomm& communicator, int id, bool broa
     {
       if (TmpArray[2] == 2)
 	{
-	  long NbrOffDiagonalElements = (((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l;
+	  long NbrOffDiagonalElements = (((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l;
 	  if (broadcast == true)
 	    {
 	      communicator.Bcast(this->DiagonalElements, this->NbrRow, MPI::DOUBLE, id);    
-	      communicator.Bcast(this->RealOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id);      
-	      communicator.Bcast(this->ImaginaryOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id);     
+	      long Tmp = NbrOffDiagonalElements;
+	      long Index = 0l;
+	      while (Tmp >= (1l << 30))
+		{
+		  communicator.Bcast(&(this->RealOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id);      
+		  Tmp -= (1l << 30);
+		  Index += (1l << 30);
+		}
+ 	      communicator.Bcast(&(this->RealOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id);      
+	      Tmp = NbrOffDiagonalElements;
+	      Index = 0l;
+	      while (Tmp >= (1l << 30))
+		{
+		  communicator.Bcast(&(this->ImaginaryOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id);     
+		  Tmp -= (1l << 30);
+		  Index += (1l << 30);
+		}
+	      communicator.Bcast(&(this->ImaginaryOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id);     
 	    }
 	  else
 	    {
 	      communicator.Recv(this->DiagonalElements, this->NbrRow, MPI::DOUBLE, id, 1);   
-	      communicator.Recv(this->RealOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id, 1);   
-	      communicator.Recv(this->ImaginaryOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id, 1);   
+	      long Tmp = NbrOffDiagonalElements;
+	      long Index = 0l;
+	      while (Tmp >= (1l << 30))
+		{
+		  communicator.Recv(&(this->RealOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id, 1);   
+		  Tmp -= (1l << 30);
+		  Index += (1l << 30);
+		}
+	      communicator.Recv(&(this->RealOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id, 1);   
+	      Tmp = NbrOffDiagonalElements;
+	      Index = 0l;
+	      while (Tmp >= (1l << 30))
+		{
+		  communicator.Recv(&(this->ImaginaryOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id, 1);   
+		  Tmp -= (1l << 30);
+		  Index += (1l << 30);
+		}
+	      communicator.Recv(&(this->ImaginaryOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id, 1);   
 	    }
 	}
     }
@@ -271,8 +303,8 @@ HermitianMatrix::HermitianMatrix(const ComplexMatrix& M)
   this->Flag.Initialize();
   this->MatrixType = Matrix::ComplexElements | Matrix::Hermitian;
   this->DiagonalElements = new double [this->NbrRow];
-  this->RealOffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l];
-  this->ImaginaryOffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l];
+  this->RealOffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l];
+  this->ImaginaryOffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l];
   Complex Tmp;
   long Index = 0l;
   for (int i = 0; i < this->NbrRow; ++i)
