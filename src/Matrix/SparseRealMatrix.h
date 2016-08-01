@@ -81,6 +81,8 @@ class SparseRealMatrix : public Matrix
   friend class SparseMatrixMatrixMultiplyOperation;
   friend class TensorProductSparseMatrixHamiltonian;
   friend class TensorProductSparseMatrixSelectedBlockHamiltonian;
+  friend class TripleTensorProductSparseMatrixHamiltonian;
+  friend class MultipleTensorProductSparseMatrixHamiltonian;
   friend class SparseComplexMatrix;
 
  protected:

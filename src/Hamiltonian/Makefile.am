@@ -8,4 +8,5 @@ FileBasedHamiltonian.cc \
 FileBasedHermitianHamiltonian.cc \
 TensorProductSparseMatrixHamiltonian.cc \
 TensorProductSparseMatrixSelectedBlockHamiltonian.cc \
-MultipleTensorProductSparseMatrixHamiltonian.cc
+MultipleTensorProductSparseMatrixHamiltonian.cc \
+TripleTensorProductSparseMatrixHamiltonian.cc
