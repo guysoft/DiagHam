@@ -48,6 +48,7 @@ FQHEMPODensityOperator::FQHEMPODensityOperator()
 FQHEMPODensityOperator::FQHEMPODensityOperator(int maxOccupation, double prefactor)
 {
   this->NbrOMatrices =  maxOccupation + 1;
+  this->BondDimension = 2;
   this->UpperPhysicalIndices = new unsigned long[this->NbrOMatrices];
   this->LowerPhysicalIndices = new unsigned long[this->NbrOMatrices];
   this->RealOMatrices = new SparseRealMatrix[this->NbrOMatrices];
@@ -62,6 +63,7 @@ FQHEMPODensityOperator::FQHEMPODensityOperator(int maxOccupation, double prefact
       this->RealOMatrices[i].SetMatrixElement(0, 0, 1.0);
       this->RealOMatrices[i].SetMatrixElement(0, 1, prefactor * ((double) i));
       this->RealOMatrices[i].SetMatrixElement(1, 1, 1.0);
+      this->RealOMatrices[i].LockMatrix();
     }
 }
 
@@ -92,5 +94,17 @@ char* FQHEMPODensityOperator::GetName()
   char* TmpString = new char[16];
   sprintf(TmpString, "density");
   return TmpString;
+}
+
+// set a new prefactor in front of the operator
+//
+// prefactor = prefactor in front of the operator
+
+void FQHEMPODensityOperator::SetPrefactor(double prefactor)
+{
+  for (int i = 0; i < this->NbrOMatrices; ++i)
+    {
+      this->RealOMatrices[i].SetMatrixElement(0, 1, prefactor * ((double) i));
+    }
 }
 

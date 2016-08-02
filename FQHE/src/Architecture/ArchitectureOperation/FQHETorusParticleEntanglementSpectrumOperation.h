@@ -153,6 +153,12 @@ class FQHETorusParticleEntanglementSpectrumOperation: public AbstractPrecalculat
   // return value = upper bound
   long GetNbrNonZeroMatrixElements();
 
+  // get the reference on the reduced density matrix
+  // 
+  // return value = eference on the reduced density matrix
+  HermitianMatrix& GetMatrix();
+
+
  protected:
 
   // apply operation for SMP architecture
@@ -194,6 +200,15 @@ inline int FQHETorusParticleEntanglementSpectrumOperation::GetHilbertSpaceDimens
 inline long FQHETorusParticleEntanglementSpectrumOperation::GetNbrNonZeroMatrixElements()
 {
   return this->NbrNonZeroElements;
+}
+
+// get the reference on the reduced density matrix
+// 
+// return value = eference on the reduced density matrix
+
+inline HermitianMatrix& FQHETorusParticleEntanglementSpectrumOperation::GetMatrix()
+{
+  return this->ComplexDensityMatrix;
 }
 
 #endif

@@ -81,7 +81,7 @@ TripleTensorProductSparseMatrixHamiltonian::TripleTensorProductSparseMatrixHamil
   this->LeftMatrixNbrRow  = this->LeftMatrices[0].GetNbrRow();
   this->HamiltonianShift = 0.0;
   this->Architecture = architecture;
-  long HamiltonianDimension = this->LeftMatrices[0].GetNbrRow() * this->MiddleMatrices[0].GetNbrRow() * this->RightMatrices[0].GetNbrRow();
+  long HamiltonianDimension = this->RightMatrixNbrRow * this->MiddleMatrixNbrRow * this->LeftMatrixNbrRow;
   this->HilbertSpace = new UndescribedHilbertSpace(HamiltonianDimension);
   this->LeftHamiltonianVectorMultiplicationFlag = true;
   this->InitializeTemporaryArrays();
@@ -110,29 +110,75 @@ TripleTensorProductSparseMatrixHamiltonian::~TripleTensorProductSparseMatrixHami
 RealVector& TripleTensorProductSparseMatrixHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
 									    int firstComponent, int nbrComponent)
 {
-  int RightMatrixDimension = this->RightMatrices[0].GetNbrRow();
-  int LeftMatrixDimension = this->LeftMatrices[0].GetNbrRow();
-  int IndexStep = this->RightMatrices[0].GetNbrColumn();
-  int LastComponent = firstComponent + nbrComponent - 1;
-  int LeftMatrixLastIndex = LastComponent / this->RightMatrices[0].GetNbrRow();
-  int RightMatrixLastIndex = LastComponent % this->RightMatrices[0].GetNbrRow();
-  long TmpARowPointer;
-  long TmpARowLastPointer;
-  long TmpBRowPointer;
-  long TmpBRowLastPointer;
-
-  double** LocalTemporaryMatrix = this->TemporaryArray;
-
-  for (int i = 0; i < this->NbrTensorProducts; ++i)
+  int LastComponent = firstComponent + nbrComponent;
+  RealVector TmpVector (vSource.GetVectorDimension());
+  RealVector TmpVector2 (vSource.GetVectorDimension());
+  int TmpLeftRowIndex;
+  int TmpMiddleRowIndex;
+  int TmpRightRowIndex;
+  long TmpRowPointer;
+  long TmpRowLastPointer;
+  for (int k = 0; k <  this->NbrTensorProducts; ++k)
     {
-      SparseRealMatrix& TmpLeftMatrix = this->LeftMatrices[i];
-      SparseRealMatrix& TmpRightMatrix = this->RightMatrices[i];
-
-      VectorTensorMultiplicationCoreOperation Operation(this, i, vSource);
-      Operation.ApplyOperation(this->Architecture);
-
-      VectorSparseTensorMultiplyOperation Operation2(this, i, &vDestination);
-      Operation2.ApplyOperation(this->Architecture);
+      SparseRealMatrix& TmpLeftMatrix = this->LeftMatrices[k];
+      SparseRealMatrix& TmpMiddleMatrix = this->MiddleMatrices[k];
+      SparseRealMatrix& TmpRightMatrix = this->RightMatrices[k];
+      for (int i = firstComponent; i < LastComponent; ++i)
+	{
+	  TmpVector[i] = 0.0;
+	  this->GetIndicesFromLinearizedIndex(i, TmpLeftRowIndex, TmpMiddleRowIndex, TmpRightRowIndex);
+	  TmpRowPointer = TmpRightMatrix.RowPointers[TmpRightRowIndex];
+	  if (TmpRowPointer >= 0l)
+	    {
+	      TmpRowLastPointer = TmpRightMatrix.RowLastPointers[TmpRightRowIndex];
+	      for (; TmpRowPointer <= TmpRowLastPointer; ++TmpRowPointer)
+		{
+		  TmpVector[i] += TmpRightMatrix.MatrixElements[TmpRowPointer] * vSource[this->GetLinearizedIndex(TmpLeftRowIndex, TmpMiddleRowIndex, 
+														  TmpRightMatrix.ColumnIndices[TmpRowPointer])];
+// 		  cout << "right " << TmpRightMatrix.MatrixElements[TmpRowPointer]  << " " << vSource[this->GetLinearizedIndex(TmpLeftRowIndex, TmpMiddleRowIndex, TmpRightMatrix.ColumnIndices[TmpRowPointer])] 
+// 		       << " " << this->GetLinearizedIndex(TmpLeftRowIndex, TmpMiddleRowIndex, TmpRightMatrix.ColumnIndices[TmpRowPointer]) << endl;
+		}
+	      TmpVector[i] *= this->Coefficients[k];
+// 	      cout << "check right " << k << " " << TmpVector[i] << " " << this->Coefficients[k] << endl;
+	    }
+	}
+      for (int i = firstComponent; i < LastComponent; ++i)
+	{
+	  TmpVector2[i] = 0.0;
+	  this->GetIndicesFromLinearizedIndex(i, TmpLeftRowIndex, TmpMiddleRowIndex, TmpRightRowIndex);
+	  TmpRowPointer = TmpMiddleMatrix.RowPointers[TmpMiddleRowIndex];
+// 	  cout << "TmpMiddleRowIndex=" << TmpMiddleRowIndex << " " << TmpMiddleMatrix.RowPointers[TmpMiddleRowIndex] << endl;
+	  if (TmpRowPointer >= 0l)
+	    {
+	      TmpRowLastPointer = TmpMiddleMatrix.RowLastPointers[TmpMiddleRowIndex];
+	      for (; TmpRowPointer <= TmpRowLastPointer; ++TmpRowPointer)
+		{
+		  TmpVector2[i] += TmpMiddleMatrix.MatrixElements[TmpRowPointer] * TmpVector[this->GetLinearizedIndex(TmpLeftRowIndex, 
+														      TmpMiddleMatrix.ColumnIndices[TmpRowPointer], TmpRightRowIndex)];
+// 		  cout << "middle " << TmpMiddleMatrix.MatrixElements[TmpRowPointer] << " " <<  TmpVector[this->GetLinearizedIndex(TmpLeftRowIndex, 
+// 																   TmpMiddleMatrix.ColumnIndices[TmpRowPointer], TmpRightRowIndex)]
+// 		       << " " << this->GetLinearizedIndex(TmpLeftRowIndex, TmpMiddleMatrix.ColumnIndices[TmpRowPointer], TmpRightRowIndex) << endl;
+		}
+	    }
+	}
+      for (int i = firstComponent; i < LastComponent; ++i)
+	{
+	  this->GetIndicesFromLinearizedIndex(i, TmpLeftRowIndex, TmpMiddleRowIndex, TmpRightRowIndex);
+	  TmpRowPointer = TmpLeftMatrix.RowPointers[TmpLeftRowIndex];
+	  if (TmpRowPointer >= 0l)
+	    {
+	      TmpRowLastPointer = TmpLeftMatrix.RowLastPointers[TmpLeftRowIndex];
+	      for (; TmpRowPointer <= TmpRowLastPointer; ++TmpRowPointer)
+		{
+		  vDestination[i] += TmpLeftMatrix.MatrixElements[TmpRowPointer] * TmpVector2[this->GetLinearizedIndex(TmpLeftMatrix.ColumnIndices[TmpRowPointer], TmpMiddleRowIndex,
+														       TmpRightRowIndex)];
+// 		  cout << "left " << TmpLeftMatrix.MatrixElements[TmpRowPointer] << " " << TmpVector2[this->GetLinearizedIndex(TmpLeftMatrix.ColumnIndices[TmpRowPointer], TmpMiddleRowIndex,
+// 																TmpRightRowIndex)] 
+// 		       << " " << this->GetLinearizedIndex(TmpLeftMatrix.ColumnIndices[TmpRowPointer], TmpMiddleRowIndex,
+// 							  TmpRightRowIndex) << endl;	
+		}
+	    }
+	}
     }
   
   if (this->HamiltonianShift != 0.0)
@@ -141,6 +187,37 @@ RealVector& TripleTensorProductSparseMatrixHamiltonian::LowLevelAddMultiply(Real
 	vDestination[i] += this->HamiltonianShift * vSource[i];
     }
   return vDestination;
+//   int RightMatrixDimension = this->RightMatrices[0].GetNbrRow();
+//   int LeftMatrixDimension = this->LeftMatrices[0].GetNbrRow();
+//   int IndexStep = this->RightMatrices[0].GetNbrColumn();
+//   int LastComponent = firstComponent + nbrComponent - 1;
+//   int LeftMatrixLastIndex = LastComponent / this->RightMatrices[0].GetNbrRow();
+//   int RightMatrixLastIndex = LastComponent % this->RightMatrices[0].GetNbrRow();
+//   long TmpARowPointer;
+//   long TmpARowLastPointer;
+//   long TmpBRowPointer;
+//   long TmpBRowLastPointer;
+
+//   double** LocalTemporaryMatrix = this->TemporaryArray;
+
+//   for (int i = 0; i < this->NbrTensorProducts; ++i)
+//     {
+//       SparseRealMatrix& TmpLeftMatrix = this->LeftMatrices[i];
+//       SparseRealMatrix& TmpRightMatrix = this->RightMatrices[i];
+
+//       VectorTensorMultiplicationCoreOperation Operation(this, i, vSource);
+//       Operation.ApplyOperation(this->Architecture);
+
+//       VectorSparseTensorMultiplyOperation Operation2(this, i, &vDestination);
+//       Operation2.ApplyOperation(this->Architecture);
+//     }
+  
+//   if (this->HamiltonianShift != 0.0)
+//     {
+//       for (int i = firstComponent; i < LastComponent; ++i)
+// 	vDestination[i] += this->HamiltonianShift * vSource[i];
+//     }
+//   return vDestination;
 }
 
 // multiply a set of vectors by the current hamiltonian for a given range of indices 

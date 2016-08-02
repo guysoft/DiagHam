@@ -609,7 +609,7 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
   //index = index of the fermionic state
   //stateDescriptionUp = reference on array where up description will be stored
   //stateDescriptionDown = reference on array where down description will be stored
-  void GetBosonicDescription(int index, unsigned long * & stateDescriptionUp, unsigned long * & stateDescriptionDown);
+  void GetBosonicDescription(int index, unsigned long* & stateDescriptionUp, unsigned long* & stateDescriptionDown);
 
   //convert a vector in the monomial basis to the Fock basis
   //

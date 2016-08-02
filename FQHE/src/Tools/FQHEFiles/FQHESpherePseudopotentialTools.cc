@@ -101,6 +101,17 @@ bool FQHESphereGetPseudopotentials (char* fileName, int lzMax, double* pseudoPot
 	  return false;
 	}
     }
+  else
+    {
+      if (InteractionDefinition.GetAsDoubleArray("OneBodyPotentials", ' ', oneBodyPotential, TmpNbrPseudoPotentials) == true)
+	{
+	  if (TmpNbrPseudoPotentials != (lzMax + 1))
+	    {
+	      cout << "OneBodyPotential has a wrong number of components or has a wrong value in " << fileName << endl;
+	      return false;
+	    }
+	}
+    }
   return true;
 }
 
@@ -122,9 +133,13 @@ bool FQHESphereGetOneBodyPotentials (char* fileName, int& lzMax, double*& oneBod
   oneBodyPotential = 0;
   if (InteractionDefinition.GetAsDoubleArray("Onebodypotentials", ' ', oneBodyPotential, lzMax) == false)
     {
-      cout << "OneBodyPotential is not defined in " << fileName << endl;
-      return false;
+      if (InteractionDefinition.GetAsDoubleArray("OneBodyPotentials", ' ', oneBodyPotential, lzMax) == false)
+	{
+	  cout << "OneBodyPotentials Onebodypotentials or  is not defined in " << fileName << endl;
+	  return false;
+	}
     }
+  --lzMax;
   return true;
 }
 

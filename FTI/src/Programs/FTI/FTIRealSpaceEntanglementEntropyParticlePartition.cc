@@ -442,7 +442,7 @@ int main(int argc, char** argv)
 				      else
 					{
 					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSingletsLong (NbrParticles, MinNbrSinglets, NbrSites, 
-																						    (SzSymmetrySector == -1), 
+																		(SzSymmetrySector == -1), 
 																		TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
 					}
 				    }

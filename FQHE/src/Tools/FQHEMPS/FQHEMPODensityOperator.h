@@ -50,7 +50,7 @@ class FQHEMPODensityOperator : public AbstractFQHEMPOMatrix
   // constructor 
   //
   // maxOccupation = maximum occupation for a single orbital
-  // prefactor = repfactor in front of the density operator
+  // prefactor = prefactor in front of the density operator
   FQHEMPODensityOperator(int maxOccupation, double prefactor);
 
   // destructor
@@ -72,6 +72,11 @@ class FQHEMPODensityOperator : public AbstractFQHEMPOMatrix
   //
   // return value = aximum occupation per orbital
   virtual int GetMaximumOccupation();
+
+  // set a new prefactor in front of the operator
+  //
+  // prefactor = prefactor in front of the operator
+  virtual void SetPrefactor(double prefactor);
 
  protected:
 

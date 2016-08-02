@@ -189,6 +189,10 @@ class SparseRealMatrix : public Matrix
   // x = value to add to matrix element
   void AddToMatrixElement(int i, int j, double x);
 
+  // lock the sparse matrix such that no additional element can be added (still SetMatrixElement/AddToMatrixElement can still be used to alter the existing matrix elements)
+  //
+  void LockMatrix();
+
   // Resize matrix
   //
   // nbrRow = new number of rows
@@ -639,6 +643,14 @@ inline void SparseRealMatrix::GetMatrixElement(int i, int j, double& x) const
     }
   x = this->MatrixElements[TmpIndex];
   return;
+}
+
+// lock the sparse matrix such that no additional element can be added (still SetMatrixElement/AddToMatrixElement can still be used to alter the existing matrix elements)
+//
+
+inline void SparseRealMatrix::LockMatrix()
+{
+  this->NbrMatrixElementPacketSize = 0l;
 }
 
 // get the matrix element

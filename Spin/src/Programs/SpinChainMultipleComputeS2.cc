@@ -13,6 +13,9 @@
 #include "HilbertSpace/Spin1Chain.h"
 #include "HilbertSpace/Spin1_2ChainFull.h"
 #include "HilbertSpace/Spin1_2ChainWithTranslations.h"
+#include "HilbertSpace/Spin1_2ChainWithTranslationsAndSzSymmetry.h"
+#include "HilbertSpace/Spin1_2ChainWithTranslationsAndInversionSymmetry.h"
+#include "HilbertSpace/Spin1_2ChainWithTranslationsAndSzInversionSymmetries.h"
 #include "HilbertSpace/Spin1ChainWithTranslations.h"
 #include "HilbertSpace/Spin1_2ChainFullAnd2DTranslation.h"
 #include "HilbertSpace/Spin1_2ChainFullInversionAnd2DTranslation.h"
@@ -453,7 +456,30 @@ int main(int argc, char** argv)
 	  switch (SpinValue)
 	    {
 	    case 1 :
-	      Space = new Spin1_2ChainWithTranslations (NbrSpins, XMomentum, 1, TotalSz, 1000000, 1000000);
+	      {
+		if (InversionFlag == true)
+		  {
+		    if (SzSymmetryFlag == true)
+		      {
+			Space = new Spin1_2ChainWithTranslationsAndSzInversionSymmetries (NbrSpins, XMomentum, 1, InversionSector, SzSymmetrySector, TotalSz, 1000000, 1000000);
+		      }
+		    else
+		      {
+			Space = new Spin1_2ChainWithTranslationsAndInversionSymmetry (NbrSpins, XMomentum, 1, InversionSector, TotalSz, 1000000, 1000000);
+		      }
+		  }
+		else
+		  {
+		    if (SzSymmetryFlag == true)
+		      {
+			Space = new Spin1_2ChainWithTranslationsAndSzSymmetry (NbrSpins, XMomentum, 1, SzSymmetrySector, TotalSz, 1000000, 1000000);
+		      }
+		    else
+		      {
+			Space = new Spin1_2ChainWithTranslations (NbrSpins, XMomentum, 1, TotalSz, 1000000, 1000000);
+		      }
+		  }
+	      }
 	      break;
 	    case 2 :
 	      {
