@@ -414,7 +414,7 @@ bool MatrixFullDiagonalizeOperation::ArchitectureDependentApplyOperation(SimpleM
       
       if (architecture->IsMasterNode())
 	{
-	  cout << "starting diagonalization" << endl;
+	  cout << "requesting diagonalization temporary arrays" << endl;
 	}
       
       FORTRAN_NAME(pzheev)(JobZ, UpperLower, 
@@ -427,12 +427,22 @@ bool MatrixFullDiagonalizeOperation::ArchitectureDependentApplyOperation(SimpleM
 			   ScalapackRWorkingArea, &ScalapackRWorkingAreaSize, 
 			   &Information);  
       
+      long ScalapackWorkingAreaSizeLong = (long) ScalapackWorkingArea[0].r;
       ScalapackWorkingAreaSize = (int) ScalapackWorkingArea[0].r;
-      ScalapackRWorkingAreaSize = (int) ScalapackRWorkingArea[0].r;
       delete[] ScalapackWorkingArea;
+      ScalapackWorkingArea = new doublecomplex[ScalapackWorkingAreaSizeLong];
+      cout << "Scalapack working area size = " << ScalapackWorkingAreaSizeLong << "(long), " << ScalapackWorkingAreaSize << "(int)" << endl;  
+
+      long ScalapackRWorkingAreaSizeLong = (long) ScalapackRWorkingArea[0].r;
+      ScalapackRWorkingAreaSize = (int) ScalapackRWorkingArea[0].r;
+      cout << "Scalapack R working area size = " << ScalapackWorkingAreaSizeLong << "(long), " << ScalapackWorkingAreaSize << "(int)" << endl;  
       delete[] ScalapackRWorkingArea;
-      ScalapackWorkingArea = new doublecomplex[ScalapackWorkingAreaSize];
-      ScalapackRWorkingArea = new doublecomplex [ScalapackRWorkingAreaSize];
+      ScalapackRWorkingArea = new doublecomplex [ScalapackRWorkingAreaSizeLong];
+
+      if (architecture->IsMasterNode())
+	{
+	  cout << "starting diagonalization" << endl;
+	}
       
       FORTRAN_NAME(pzheev)(JobZ, UpperLower, 
 			   &TmpGlobalNbrRow, LocalScalapackMatrix, 
