@@ -1399,7 +1399,13 @@ HermitianMatrix FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong::EvaluateP
   Operation.ApplyOperation(architecture);
   cout << "nbr matrix elements non zero = " << Operation.GetNbrNonZeroMatrixElements() << endl;
   if (Operation.GetNbrNonZeroMatrixElements() > 0)	
-    return TmpDensityMatrix;
+    {
+      if (Operation.GetMatrix().GetNbrRow() != TmpDensityMatrix.GetNbrRow())
+	{
+	  TmpDensityMatrix = Operation.GetMatrix();
+	}
+      return TmpDensityMatrix;
+    }
   else
     {
       HermitianMatrix TmpDensityMatrixZero;
