@@ -140,6 +140,11 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // return value = twice spin projection on (Oz)
   virtual double TotalSzSz (int index);
 
+  // get the value of the spin (i.e. S) at a given site
+  // 
+  // site = site index
+  // return value = twice the spin
+  virtual int GetLocalSpin(int site);
 
   // return value of spin projection on (Oz) for a given state
   //
@@ -529,6 +534,16 @@ inline int Spin1_2ChainWithTranslations::FindNumberTranslation(unsigned long sta
 inline void Spin1_2ChainWithTranslations::ApplySingleXTranslation(unsigned long& stateDescription)
 {
   stateDescription = (stateDescription >> this->StateShift) | ((stateDescription & this->StateMask) << this->ComplementaryStateShift);
+}
+
+// get the value of the spin (i.e. S) at a given site
+// 
+// site = site index
+// return value = twice the spin
+
+inline int Spin1_2ChainWithTranslations::GetLocalSpin(int site)
+{
+  return 1;
 }
 
 #endif
