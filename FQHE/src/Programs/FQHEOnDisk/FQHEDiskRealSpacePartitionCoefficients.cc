@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include <fstream>
+#include <gsl/gsl_sf_gamma.h>
+
 
 using std::cout;
 using std::endl;
@@ -89,5 +91,12 @@ int main(int argc, char** argv)
 
 double FQHEDiskComputeSharpRealSpaceCutCoefficient (double orbitalIndex, double radius)
 {  
-  return 1.0;
+  radius *= radius;
+  radius *= 0.5;
+#ifdef __GSL__
+  return gsl_sf_gamma_inc_P((double) (orbitalIndex + 1), radius);
+#else
+  cout << "gsl is required" << endl;
+  return 0.0;
+#endif
 }
