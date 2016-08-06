@@ -483,48 +483,53 @@ int main(int argc, char** argv)
   ofstream File;
   char** TmpFileName;
   if (Manager.GetString("output-file") != 0)
-    File.open(Manager.GetString("output-file"), ios::binary | ios::out);
+    {
+      File.open(Manager.GetString("output-file"), ios::binary | ios::out);
+      TmpFileName = new char* [1];
+      TmpFileName[0] = new char [strlen(Manager.GetString("output-file")) + 1];
+      strcpy (TmpFileName[0], Manager.GetString("output-file"));
+    }
   else
     {
       TmpFileName = new char* [TmpNbrEntanglementMatrices];
       for (int l = 0; l < TmpNbrEntanglementMatrices; ++l)
-      {
-	if (RealSpaceCut == false)
 	{
-	  TmpFileName[l] = ReplaceExtensionToFileName(GroundStateFiles[l], "vec", "partent");
-	  if (TmpFileName == 0)
+	  if (RealSpaceCut == false)
 	    {
-	      cout << "no vec extension was find in " << GroundStateFiles[l] << " file name" << endl;
-	      return 0;
-	    }
-	}
-	else
-	{
-	  char* TmpExtension = new char [512];
-	  if (CutName != 0)
-	    {
-	      sprintf(TmpExtension, "%s.realent", CutName);
+	      TmpFileName[l] = ReplaceExtensionToFileName(GroundStateFiles[l], "vec", "partent");
+	      if (TmpFileName == 0)
+		{
+		  cout << "no vec extension was find in " << GroundStateFiles[l] << " file name" << endl;
+		  return 0;
+		}
 	    }
 	  else
 	    {
-	      if (RealSpaceCutCylinder == false)
+	      char* TmpExtension = new char [512];
+	      if (CutName != 0)
 		{
-		  sprintf(TmpExtension, "_thetabot_%.6f_thetabot_%.6f.realent", Manager.GetDouble("realspace-theta-top"), 
-			  Manager.GetDouble("realspace-theta-bot"));
+		  sprintf(TmpExtension, "%s.realent", CutName);
 		}
 	      else
 		{
-		  sprintf(TmpExtension, "_x_%.6f.realent", Manager.GetDouble("realspace-cylindercut"));
+		  if (RealSpaceCutCylinder == false)
+		    {
+		      sprintf(TmpExtension, "_thetabot_%.6f_thetabot_%.6f.realent", Manager.GetDouble("realspace-theta-top"), 
+			      Manager.GetDouble("realspace-theta-bot"));
+		    }
+		  else
+		    {
+		      sprintf(TmpExtension, "_x_%.6f.realent", Manager.GetDouble("realspace-cylindercut"));
+		    }
+		}
+	      TmpFileName[l] = ReplaceExtensionToFileName(GroundStateFiles[l], "vec", TmpExtension);
+	      if (TmpFileName == 0)
+		{
+		  cout << "no vec extension was find in " << GroundStateFiles[l] << " file name" << endl;
+		  return 0;
 		}
 	    }
-	  TmpFileName[l] = ReplaceExtensionToFileName(GroundStateFiles[l], "vec", TmpExtension);
-	  if (TmpFileName == 0)
-	    {
-	      cout << "no vec extension was find in " << GroundStateFiles[l] << " file name" << endl;
-	      return 0;
-	    }
 	}
-      }
     }
   cout.precision(14);
   

@@ -71,6 +71,8 @@ TensorProductSparseMatrixHamiltonian::TensorProductSparseMatrixHamiltonian(int n
       this->RightMatrices[i] = rightMatrices[i];
       this->Coefficients[i] = coefficients[i];
     }
+  this->RightMatrixNbrRow = this->RightMatrices[0].GetNbrRow();
+  this->LeftMatrixNbrRow  = this->LeftMatrices[0].GetNbrRow();
   this->HamiltonianShift = 0.0;
   this->Architecture = architecture;
   long HamiltonianDimension = this->LeftMatrices[0].GetNbrRow() * this->RightMatrices[0].GetNbrRow();

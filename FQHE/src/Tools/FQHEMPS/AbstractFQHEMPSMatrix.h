@@ -34,11 +34,10 @@
 
 #include "config.h"
 #include "MathTools/Complex.h" 
+#include "Matrix/SparseRealMatrix.h"
+#include "Matrix/SparseComplexMatrix.h"
 
 #include <fstream>
-
-class SparseRealMatrix;
-class SparseComplexMatrix;
 
 
 using std::ofstream;
@@ -105,6 +104,11 @@ class AbstractFQHEMPSMatrix
   //
   // return value = aximum occupation per orbital
   virtual int GetMaximumOccupation();
+
+  // get the MPO bond dimension
+  //
+  // return value = MPO bond dimension
+  virtual int GetBondDimension();
 
   // get the array where the matrices are stored
   //
@@ -454,6 +458,22 @@ inline unsigned long* AbstractFQHEMPSMatrix::GetPhysicalIndices()
 inline bool AbstractFQHEMPSMatrix::IsTorus()
 {
   return this->TorusFlag;
+}
+
+// get the MPO bond dimension
+//
+// return value = MPO bond dimension
+
+inline int AbstractFQHEMPSMatrix::GetBondDimension()
+{
+  if (this->RealBMatrices != 0)
+    {
+      return this->RealBMatrices[0].GetNbrRow();
+    }
+  else
+    {
+      return this->ComplexBMatrices[0].GetNbrRow();
+    }
 }
 
 #endif

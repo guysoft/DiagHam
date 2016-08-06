@@ -3,5 +3,7 @@ SUBDIRS=
 noinst_LIBRARIES=libSpinArchitectureOperation.a
 
 libSpinArchitectureOperation_a_SOURCES=NDMAPPrecalculationOperation.cc \
-SUNSpinPrecalculationOperation.cc
+SUNSpinPrecalculationOperation.cc \
+SpinChainMultipleEntanglementSpectrumOperation.cc
+
 

@@ -40,8 +40,6 @@
 
 
 using std::ostream;
-class MathematicaOutput;
-class Matrix;
 
 
 class TripleTensorProductSparseMatrixHamiltonian : public TensorProductSparseMatrixHamiltonian
@@ -55,12 +53,8 @@ class TripleTensorProductSparseMatrixHamiltonian : public TensorProductSparseMat
   // middle matrices of each tensor product
   SparseRealMatrix* MiddleMatrices;  
 
-  // number of row for the right matrix
-  int RightMatrixNbrRow;
   // number of row for the middle matrix
   int MiddleMatrixNbrRow;
-  // number of row for the middle matrix
-  int LeftMatrixNbrRow;
   
  public:
 

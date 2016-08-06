@@ -214,10 +214,90 @@ int main(int argc, char** argv)
       double TmpNbrParticles = TmpVectorEMatrix[MPSRowIndex + (((TmpMPOMatrices[0].GetNbrRow() * MPSRowIndex) + MPORowIndex) * BMatrices[0].GetNbrRow())];
       cout << (TmpNbrParticles * Normalisation) << endl;
     }
+  else
+    {      
+      ComplexVector TransferMatrixRightEigenstate;
+      ComplexVector TransferMatrixLeftEigenstate;
+      if (Manager.GetString("left-eigenstate") == 0)
+	{
+	  cout << "error, the transfer matrix left eigenstate should be provided" << endl;
+	  return -1;
+	}
+      if (TransferMatrixLeftEigenstate.ReadVector(Manager.GetString("left-eigenstate")) == false)
+	{
+	  cout << "can't read " << Manager.GetString("left-eigenstate") << endl;
+	  return 0;
+	}            
+      if (Manager.GetString("left-interaction") != 0)
+	{
+	  if (Manager.GetString("right-eigenstate") == 0)
+	    { 
+	      cout << "error, the transfer matrix right eigenstate should be provided" << endl;
+	      return -1;
+	    }
+	  if (TransferMatrixRightEigenstate.ReadVector(Manager.GetString("right-eigenstate")) == false)
+	    {
+	      cout << "can't read " << Manager.GetString("right-eigenstate") << endl;
+	      return 0;
+	    }            
+	}
+      FQHEMPODensityOperator TmpMPO (MPSMatrix->GetMaximumOccupation(), 1.0);
+      int MPORowIndex = 0;
+      int MPOColumnIndex = 0;
+      TmpMPO.GetMatrixBoundaryIndices(MPORowIndex, MPOColumnIndex);
+      SparseRealMatrix* TmpMPOMatrices = TmpMPO.GetMatrices();
+      double* Coefficients = new double[NbrBMatrices];
+      for(int i= 0; i < NbrBMatrices; i++)
+	Coefficients[i] = 1.0;
+      TensorProductSparseMatrixHamiltonian* MPSTransferMatrix = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, BMatrices,BMatrices, Coefficients,
+													 Architecture.GetArchitecture()); 
+      TripleTensorProductSparseMatrixHamiltonian* MPSMPOTransferMatrix = new TripleTensorProductSparseMatrixHamiltonian(NbrBMatrices, BMatrices, TmpMPOMatrices, BMatrices, Coefficients,
+															Architecture.GetArchitecture()); 
 
-//   cout << "B matrix size = " << BMatrices[0].GetNbrRow() << "x" << BMatrices[0].GetNbrColumn() << endl;
-//   unsigned long * ArrayPhysicalIndice = MPSMatrix->GetPhysicalIndices();
-  
+      ComplexVector TmpVector1 (MPSMatrix->GetBondDimension() * MPSMatrix->GetBondDimension() * TmpMPO.GetBondDimension(), true);
+      ComplexVector TmpVector2 (MPSMatrix->GetBondDimension() * MPSMatrix->GetBondDimension() * TmpMPO.GetBondDimension(), true);							
+      int TmpLeftIndex;
+      int TmpRightIndex;
+      int TmpLinearizedIndex;
+      for (int i = 0 ; i < TransferMatrixLeftEigenstate.GetVectorDimension(); ++i)
+	{
+	  MPSTransferMatrix->GetIndicesFromLinearizedIndex(i, TmpLeftIndex, TmpRightIndex);
+	  TmpLinearizedIndex = MPSMPOTransferMatrix->GetLinearizedIndex(TmpLeftIndex, MPOColumnIndex, TmpRightIndex);
+	  TmpVector1[TmpLinearizedIndex] = TransferMatrixLeftEigenstate[i];
+	}
+//      ComplexVector TmpVector1 (MPSMatrix->GetBondDimension() * MPSMatrix->GetBondDimension(), true);
+//      ComplexVector TmpVector2 (MPSMatrix->GetBondDimension() * MPSMatrix->GetBondDimension(), true);
+      cout << (TmpVector1 * TmpVector1) << endl;
+//       MPSTransferMatrix->LowLevelMultiply(TransferMatrixLeftEigenstate, TmpVector1);
+//       MPSTransferMatrix->LowLevelMultiply(TmpVector1, TmpVector2);
+//       ComplexVector TmpVector3 = TmpVector1;
+//       TmpVector1 = TmpVector2;
+//       TmpVector2 = TmpVector3;	      
+//       MPSTransferMatrix->LowLevelMultiply(TmpVector1, TmpVector2);
+      if (Manager.GetString("left-interaction") == 0)
+	{
+	  for (int i = 0; i <= RightNbrFluxQuanta; ++i)
+	    {
+ 	      TmpMPO.SetPrefactor(RightOneBodyPotential[i]);
+ 	      MPSMPOTransferMatrix->LowLevelMultiply(TmpVector1, TmpVector2);
+ 	      ComplexVector TmpVector3 = TmpVector1;
+ 	      TmpVector1 = TmpVector2;
+ 	      TmpVector2 = TmpVector3;	      
+	    }
+	}
+      TmpVector2.ClearVector();
+      for (int i = 0 ; i < TransferMatrixLeftEigenstate.GetVectorDimension(); ++i)
+	{
+	  MPSTransferMatrix->GetIndicesFromLinearizedIndex(i, TmpLeftIndex, TmpRightIndex);
+	  TmpLinearizedIndex = MPSMPOTransferMatrix->GetLinearizedIndex(TmpLeftIndex, MPOColumnIndex, TmpRightIndex);
+	  TmpVector2[TmpLinearizedIndex] = TransferMatrixLeftEigenstate[i];
+	}
+      cout << (TmpVector1 * TmpVector2) << endl;
+      cout << (TmpVector1 * TmpVector1) << endl;
+      cout << (TmpVector2 * TmpVector2) << endl;
+      //   cout << "B matrix size = " << BMatrices[0].GetNbrRow() << "x" << BMatrices[0].GetNbrColumn() << endl;
+      //   unsigned long * ArrayPhysicalIndice = MPSMatrix->GetPhysicalIndices();
+    }
   
   return 0;
 }

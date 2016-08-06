@@ -14,6 +14,9 @@
 #include "HilbertSpace/Spin1_2ChainFullAnd2DTranslation.h"
 #include "HilbertSpace/Spin1_2ChainFullInversionAnd2DTranslation.h"
 #include "HilbertSpace/Spin1_2ChainWithTranslations.h"
+#include "HilbertSpace/Spin1_2ChainWithTranslationsAndSzSymmetry.h"
+#include "HilbertSpace/Spin1_2ChainWithTranslationsAndInversionSymmetry.h"
+#include "HilbertSpace/Spin1_2ChainWithTranslationsAndSzInversionSymmetries.h"
 #include "HilbertSpace/Spin1ChainWithTranslations.h"
 #include "HilbertSpace/Spin1ChainWithTranslationsAndSzSymmetry.h"
 #include "HilbertSpace/Spin1ChainWithTranslationsAndInversionSymmetry.h"
@@ -22,6 +25,8 @@
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
+
+#include "Architecture/ArchitectureOperation/SpinChainMultipleEntanglementSpectrumOperation.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -295,7 +300,30 @@ int main(int argc, char** argv)
 	  switch (SpinValue)
 	    {
 	    case 1 :
-	      Space = new Spin1_2ChainWithTranslations (NbrSpins, XMomentum, 1, TotalSz, 1000000, 1000000);
+	      {
+		if (InversionSector != 0)
+		  {
+		    if (SzSymmetrySector != 0)
+		      {
+			Space = new Spin1_2ChainWithTranslationsAndSzInversionSymmetries (NbrSpins, XMomentum, 1, InversionSector, SzSymmetrySector, TotalSz, 1000000, 1000000);
+		      }
+		    else
+		      {
+			Space = new Spin1_2ChainWithTranslationsAndInversionSymmetry (NbrSpins, XMomentum, 1, InversionSector, TotalSz, 1000000, 1000000);
+		      }
+		  }
+		else
+		  {
+		    if (SzSymmetrySector != 0)
+		      {
+			Space = new Spin1_2ChainWithTranslationsAndSzSymmetry (NbrSpins, XMomentum, 1, SzSymmetrySector, TotalSz, 1000000, 1000000);
+		      }
+		    else
+		      {
+			Space = new Spin1_2ChainWithTranslations (NbrSpins, XMomentum, 1, TotalSz, 1000000, 1000000);
+		      }
+		  }
+	      }
 	      break;
 	    case 2 :
 	      {
@@ -471,56 +499,61 @@ int main(int argc, char** argv)
 		{
 		  cout << "processing subsytem size " << SubsystemSize << endl;
 		}
-	      for (int Index = MinIndex; Index <= MaxIndex; ++Index)
-		{
-		  if (ShowTimeFlag == true)
-		    {
-		      gettimeofday (&(TotalStartingTime), 0);
-		    }
-		  RealMatrix PartialEntanglementMatrix;
-		  if (GenericCutFlag == false)
-		    PartialEntanglementMatrix = Space->EvaluatePartialEntanglementMatrix(SubsystemSize, TmpSzA, RealEigenstates[Index]);
-		  else
-		    PartialEntanglementMatrix = Space->EvaluatePartialEntanglementMatrix(SubsystemSites, SubsystemSize, TmpSzA, RealEigenstates[Index]);
-		  if ((PartialEntanglementMatrix.GetNbrRow() > 1) && (PartialEntanglementMatrix.GetNbrColumn() > 1))
-		    {
-		      double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition();
-		      int TmpDimension = PartialEntanglementMatrix.GetNbrColumn();
-		      if (TmpDimension > PartialEntanglementMatrix.GetNbrRow())
-			{
-			  TmpDimension = PartialEntanglementMatrix.GetNbrRow();
-			}
-		      for (int i = 0; i < TmpDimension; ++i)
-			TmpValues[i] *= TmpValues[i];   
-		      SortArrayDownOrdering(TmpValues, TmpDimension);
-		      EntanglementSpectrumDimension[(TmpSzA - MinSzA) / 2] = TmpDimension;
-		      EntanglementSpectra[(TmpSzA - MinSzA) / 2][Index - MinIndex] = TmpValues;
-		    }
-		  else
-		    {
-		      double* TmpValues = new double[1];
-		      TmpValues[0] = 0.0;
-		      if (PartialEntanglementMatrix.GetNbrRow() == 1)
-			{
-			  for (int i = 0; i < PartialEntanglementMatrix.GetNbrColumn(); ++i)
-			    TmpValues[0] += PartialEntanglementMatrix[i][0] * PartialEntanglementMatrix[i][0];
-			}
-		      else
-			{
-			  for (int i = 0; i < PartialEntanglementMatrix.GetNbrRow(); ++i)
-			    TmpValues[0] += PartialEntanglementMatrix[0][i] * PartialEntanglementMatrix[0][i];				  
-			}
-		      EntanglementSpectrumDimension[(TmpSzA - MinSzA) / 2] = 1;
-		      EntanglementSpectra[(TmpSzA - MinSzA) / 2][Index - MinIndex] = TmpValues;
-		    }
-		  if (ShowTimeFlag == true)
-		    {
-		      gettimeofday (&(TotalEndingTime), 0);
-		      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
-					    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
-		      cout << "entanglement spectrum of state " << Index << " done in " << Dt << "s" << endl;
-		    }
-		}
+
+	      SpinChainMultipleEntanglementSpectrumOperation TmpOperation(Space, RealEigenstates, MinIndex, MaxIndex, SubsystemSize, TmpSzA, SubsystemSites);
+	      TmpOperation.ApplyOperation(Architecture.GetArchitecture());
+	      EntanglementSpectrumDimension[(TmpSzA - MinSzA) / 2] = TmpOperation.GetEntanglementSpectrumDimension();	      
+	      EntanglementSpectra[(TmpSzA - MinSzA) / 2] = TmpOperation.GetEntanglementSpectra();
+// 	      for (int Index = MinIndex; Index <= MaxIndex; ++Index)
+// 		{
+// 		  if (ShowTimeFlag == true)
+// 		    {
+// 		      gettimeofday (&(TotalStartingTime), 0);
+// 		    }
+// 		  RealMatrix PartialEntanglementMatrix;
+// 		  if (GenericCutFlag == false)
+// 		    PartialEntanglementMatrix = Space->EvaluatePartialEntanglementMatrix(SubsystemSize, TmpSzA, RealEigenstates[Index]);
+// 		  else
+// 		    PartialEntanglementMatrix = Space->EvaluatePartialEntanglementMatrix(SubsystemSites, SubsystemSize, TmpSzA, RealEigenstates[Index]);
+// 		  if ((PartialEntanglementMatrix.GetNbrRow() > 1) && (PartialEntanglementMatrix.GetNbrColumn() > 1))
+// 		    {
+// 		      double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition();
+// 		      int TmpDimension = PartialEntanglementMatrix.GetNbrColumn();
+// 		      if (TmpDimension > PartialEntanglementMatrix.GetNbrRow())
+// 			{
+// 			  TmpDimension = PartialEntanglementMatrix.GetNbrRow();
+// 			}
+// 		      for (int i = 0; i < TmpDimension; ++i)
+// 			TmpValues[i] *= TmpValues[i];   
+// 		      SortArrayDownOrdering(TmpValues, TmpDimension);
+// 		      EntanglementSpectrumDimension[(TmpSzA - MinSzA) / 2] = TmpDimension;
+// 		      EntanglementSpectra[(TmpSzA - MinSzA) / 2][Index - MinIndex] = TmpValues;
+// 		    }
+// 		  else
+// 		    {
+// 		      double* TmpValues = new double[1];
+// 		      TmpValues[0] = 0.0;
+// 		      if (PartialEntanglementMatrix.GetNbrRow() == 1)
+// 			{
+// 			  for (int i = 0; i < PartialEntanglementMatrix.GetNbrColumn(); ++i)
+// 			    TmpValues[0] += PartialEntanglementMatrix[i][0] * PartialEntanglementMatrix[i][0];
+// 			}
+// 		      else
+// 			{
+// 			  for (int i = 0; i < PartialEntanglementMatrix.GetNbrRow(); ++i)
+// 			    TmpValues[0] += PartialEntanglementMatrix[0][i] * PartialEntanglementMatrix[0][i];				  
+// 			}
+// 		      EntanglementSpectrumDimension[(TmpSzA - MinSzA) / 2] = 1;
+// 		      EntanglementSpectra[(TmpSzA - MinSzA) / 2][Index - MinIndex] = TmpValues;
+// 		    }
+// 		  if (ShowTimeFlag == true)
+// 		    {
+// 		      gettimeofday (&(TotalEndingTime), 0);
+// 		      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+// 					    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+// 		      cout << "entanglement spectrum of state " << Index << " done in " << Dt << "s" << endl;
+// 		    }
+// 	    }
 	    }
 	  else
 	    {
@@ -543,56 +576,60 @@ int main(int argc, char** argv)
 		{
 		  cout << "processing subsytem size " << SubsystemSize << endl;
 		}
-	      for (int Index = MinIndex; Index <= MaxIndex; ++Index)
-		{
-		  if (ShowTimeFlag == true)
-		    {
-		      gettimeofday (&(TotalStartingTime), 0);
-		    }
-		  ComplexMatrix PartialEntanglementMatrix;
-		  if (GenericCutFlag == false)
-		    PartialEntanglementMatrix = Space->EvaluatePartialEntanglementMatrix(SubsystemSize, TmpSzA, ComplexEigenstates[Index]);
-		  else
-		    PartialEntanglementMatrix = Space->EvaluatePartialEntanglementMatrix(SubsystemSites, SubsystemSize, TmpSzA, ComplexEigenstates[Index]);
-		  if ((PartialEntanglementMatrix.GetNbrRow() > 1) && (PartialEntanglementMatrix.GetNbrColumn() > 1))
-		    {
-		      double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition();
-		      int TmpDimension = PartialEntanglementMatrix.GetNbrColumn();
-		      if (TmpDimension > PartialEntanglementMatrix.GetNbrRow())
-			{
-			  TmpDimension = PartialEntanglementMatrix.GetNbrRow();
-			}
-		      for (int i = 0; i < TmpDimension; ++i)
-			TmpValues[i] *= TmpValues[i];   
-		      SortArrayDownOrdering(TmpValues, TmpDimension);
-		      EntanglementSpectrumDimension[(TmpSzA - MinSzA) / 2] = TmpDimension;
-		      EntanglementSpectra[(TmpSzA - MinSzA) / 2][Index - MinIndex] = TmpValues;
-		    }
-		  else
-		    {
-		      double* TmpValues = new double[1];
-		      TmpValues[0] = 0.0;
-		      if (PartialEntanglementMatrix.GetNbrRow() == 1)
-			{
-			  for (int i = 0; i < PartialEntanglementMatrix.GetNbrColumn(); ++i)
-			    TmpValues[0] += SqrNorm(PartialEntanglementMatrix[i][0]);
-			}
-		      else
-			{
-			  for (int i = 0; i < PartialEntanglementMatrix.GetNbrRow(); ++i)
-			    TmpValues[0] += SqrNorm(PartialEntanglementMatrix[0][i]);				  
-			}
-		      EntanglementSpectrumDimension[(TmpSzA - MinSzA) / 2] = 1;
-		      EntanglementSpectra[(TmpSzA - MinSzA) / 2][Index - MinIndex] = TmpValues;
-		    }
-		  if (ShowTimeFlag == true)
-		    {
-		      gettimeofday (&(TotalEndingTime), 0);
-		      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
-					    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
-		      cout << "entanglement spectrum of state " << Index << " done in " << Dt << "s" << endl;
-		    }		  
-		}
+	      SpinChainMultipleEntanglementSpectrumOperation TmpOperation(Space, ComplexEigenstates, MinIndex, MaxIndex, SubsystemSize, TmpSzA, SubsystemSites);
+	      TmpOperation.ApplyOperation(Architecture.GetArchitecture());
+	      EntanglementSpectrumDimension[(TmpSzA - MinSzA) / 2] = TmpOperation.GetEntanglementSpectrumDimension();	      
+	      EntanglementSpectra[(TmpSzA - MinSzA) / 2] = TmpOperation.GetEntanglementSpectra();
+// 	      for (int Index = MinIndex; Index <= MaxIndex; ++Index)
+// 		{
+// 		  if (ShowTimeFlag == true)
+// 		    {
+// 		      gettimeofday (&(TotalStartingTime), 0);
+// 		    }
+// 		  ComplexMatrix PartialEntanglementMatrix;
+// 		  if (GenericCutFlag == false)
+// 		    PartialEntanglementMatrix = Space->EvaluatePartialEntanglementMatrix(SubsystemSize, TmpSzA, ComplexEigenstates[Index]);
+// 		  else
+// 		    PartialEntanglementMatrix = Space->EvaluatePartialEntanglementMatrix(SubsystemSites, SubsystemSize, TmpSzA, ComplexEigenstates[Index]);
+// 		  if ((PartialEntanglementMatrix.GetNbrRow() > 1) && (PartialEntanglementMatrix.GetNbrColumn() > 1))
+// 		    {
+// 		      double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition();
+// 		      int TmpDimension = PartialEntanglementMatrix.GetNbrColumn();
+// 		      if (TmpDimension > PartialEntanglementMatrix.GetNbrRow())
+// 			{
+// 			  TmpDimension = PartialEntanglementMatrix.GetNbrRow();
+// 			}
+// 		      for (int i = 0; i < TmpDimension; ++i)
+// 			TmpValues[i] *= TmpValues[i];   
+// 		      SortArrayDownOrdering(TmpValues, TmpDimension);
+// 		      EntanglementSpectrumDimension[(TmpSzA - MinSzA) / 2] = TmpDimension;
+// 		      EntanglementSpectra[(TmpSzA - MinSzA) / 2][Index - MinIndex] = TmpValues;
+// 		    }
+// 		  else
+// 		    {
+// 		      double* TmpValues = new double[1];
+// 		      TmpValues[0] = 0.0;
+// 		      if (PartialEntanglementMatrix.GetNbrRow() == 1)
+// 			{
+// 			  for (int i = 0; i < PartialEntanglementMatrix.GetNbrColumn(); ++i)
+// 			    TmpValues[0] += SqrNorm(PartialEntanglementMatrix[i][0]);
+// 			}
+// 		      else
+// 			{
+// 			  for (int i = 0; i < PartialEntanglementMatrix.GetNbrRow(); ++i)
+// 			    TmpValues[0] += SqrNorm(PartialEntanglementMatrix[0][i]);				  
+// 			}
+// 		      EntanglementSpectrumDimension[(TmpSzA - MinSzA) / 2] = 1;
+// 		      EntanglementSpectra[(TmpSzA - MinSzA) / 2][Index - MinIndex] = TmpValues;
+// 		    }
+// 		  if (ShowTimeFlag == true)
+// 		    {
+// 		      gettimeofday (&(TotalEndingTime), 0);
+// 		      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+// 					    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+// 		      cout << "entanglement spectrum of state " << Index << " done in " << Dt << "s" << endl;
+// 		    }		  
+// 		}
 	    }
 	  else
 	    {

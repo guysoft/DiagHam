@@ -39,8 +39,8 @@
 
 
 using std::ostream;
-class MathematicaOutput;
-class Matrix;
+using std::cout;
+using std::endl;
 
 
 class TensorProductSparseMatrixHamiltonian : public AbstractHamiltonian
@@ -74,6 +74,11 @@ class TensorProductSparseMatrixHamiltonian : public AbstractHamiltonian
   
   // pointer to the architecture
   AbstractArchitecture* Architecture;
+
+  // number of row for the right matrix
+  int RightMatrixNbrRow;
+  // number of row for the left matrix
+  int LeftMatrixNbrRow;
 
  public:
 
@@ -229,6 +234,20 @@ class TensorProductSparseMatrixHamiltonian : public AbstractHamiltonian
   // return value = true if compatible (otherwise, any parallelization will be disable for these operations)
   virtual bool IsHamiltonianVectorOperationCompatible();
   
+  // get the linearized index corresponding to a set of indices
+  //
+  // leftIndex = left index 
+  // rightIndex = right index 
+  // return value = linearized index
+  virtual int GetLinearizedIndex (int leftIndex, int rightIndex);
+
+  // get a set of indices from their linearized version
+  //
+  // linearizedIndex = linearized index
+  // leftIndex = reference ont the left index 
+  // rightIndex = reference ont the right index 
+  virtual void GetIndicesFromLinearizedIndex (int linearizedIndex, int& leftIndex, int& rightIndex);
+
  protected:
   
   // initialize the temporary arrays
@@ -294,4 +313,28 @@ inline bool TensorProductSparseMatrixHamiltonian::IsHamiltonianVectorOperationCo
   return false;
 }
   
+// get the linearized index corresponding to a set of indices
+//
+// leftIndex = left index 
+// rightIndex = right index 
+// return value = linearized index
+
+inline int TensorProductSparseMatrixHamiltonian::GetLinearizedIndex (int leftIndex, int rightIndex)
+{
+  return ((leftIndex * this->RightMatrixNbrRow) + rightIndex);
+}
+
+// get a set of indices from their linearized version
+//
+// linearizedIndex = linearized index
+// leftIndex = reference ont the left index 
+// rightIndex = reference ont the right index 
+
+inline void TensorProductSparseMatrixHamiltonian::GetIndicesFromLinearizedIndex (int linearizedIndex, int& leftIndex, int& rightIndex)
+{
+  rightIndex = linearizedIndex % this->RightMatrixNbrRow;
+  linearizedIndex /= this->RightMatrixNbrRow;;
+  leftIndex = linearizedIndex;
+}
+
 #endif
