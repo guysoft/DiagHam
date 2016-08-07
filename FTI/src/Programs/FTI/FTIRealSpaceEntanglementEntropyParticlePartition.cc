@@ -80,6 +80,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "decoupled", "assume that the total spin is a good quantum number of the problem");
   (*SystemGroup) += new BooleanOption  ('\n', "hofstadter", "the file name uses Hofstadter model convention");
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "particles have a SU(2) spin");
+  (*SystemGroup) += new SingleStringOption ('\n', "selected-blocks", "provide a column formatted ascii file that indicates which block of the reduced density matrix should be computed");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
   (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
@@ -638,9 +639,199 @@ int main(int argc, char** argv)
   int MaxSubsystemNbrParticles = (NbrParticles >> 1) + (NbrParticles & 1);
   if (Manager.GetInteger("max-na") > 0)
     MaxSubsystemNbrParticles = Manager.GetInteger("max-na");
-  int SubsystemNbrParticles = Manager.GetInteger("min-na");
-  
-  for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
+  int MinSubsystemNbrParticles = Manager.GetInteger("min-na");
+
+
+  int TotalNbrReducedDensityMatrixBlocks = 0;
+  int* SubsystemNbrParticleSectors = 0;
+  int* SubsystemTotalSzSectors = 0;
+  int* SubsystemSzSymmetrySectors = 0;
+  int* SubsystemKxSectors = 0; 
+  int* SubsystemKySectors = 0; 
+  if (Manager.GetString("selected-blocks") == 0)
+    {
+      for (int SubsystemNbrParticles = MinSubsystemNbrParticles; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
+	{
+	  int ComplementaryNbrParticles = NbrParticles - SubsystemNbrParticles;
+	  int MinSz = -SubsystemNbrParticles;
+	  if (Manager.GetInteger("min-sza") > MinSz)
+	    MinSz = Manager.GetInteger("min-sza");
+	  if ((TotalSpin - ComplementaryNbrParticles) > MinSz)
+	    MinSz = (TotalSpin - ComplementaryNbrParticles);
+	  int MaxSz = SubsystemNbrParticles;
+	  if (Manager.GetInteger("max-sza") < MaxSz)
+	    MaxSz = Manager.GetInteger("max-sza");
+	  if ((TotalSpin + ComplementaryNbrParticles) < MaxSz)
+	    MaxSz = (TotalSpin + ComplementaryNbrParticles);
+	  if ((Manager.GetBoolean("decoupled") == false) || (Manager.GetBoolean("su2-spin")) == false)
+	    {
+	      MinSz = 0;
+	      MaxSz = 0;
+	    }
+	  int SubsystemTotalKxMin = 0;
+	  int SubsystemTotalKyMin = 0;
+	  int SubsystemTotalKxMax = 1;
+	  int SubsystemTotalKyMax = 1;
+	  if(TwoDTranslationFlag == true)
+	    {
+	      SubsystemTotalKxMax = NbrSiteX;
+	      SubsystemTotalKyMax = NbrSiteY;
+	    }
+	  
+	  for (int SubsystemTotalSz = MinSz; SubsystemTotalSz <= MaxSz; SubsystemTotalSz += 2)
+	    {
+	      int SubsystemSzSymmetrySector = 0;
+	      int MaxSzSymmetrySector = 0;
+	      if ((SubsystemTotalSz == 0) & (SzSymmetrySector != 0))
+		{
+		  SubsystemSzSymmetrySector = -1;
+		  MaxSzSymmetrySector = 1;
+		}
+	      for (; SubsystemSzSymmetrySector <= MaxSzSymmetrySector; SubsystemSzSymmetrySector += 2)
+		{
+		  for (int SubsystemTotalKx = SubsystemTotalKxMin; SubsystemTotalKx < SubsystemTotalKxMax; ++SubsystemTotalKx)
+		    {
+		      for (int SubsystemTotalKy = SubsystemTotalKyMin; SubsystemTotalKy < SubsystemTotalKyMax; ++SubsystemTotalKy)
+			{
+			  ++TotalNbrReducedDensityMatrixBlocks;
+			}
+		    }
+		}
+	    }
+	}
+      SubsystemNbrParticleSectors = new int [TotalNbrReducedDensityMatrixBlocks];
+      SubsystemTotalSzSectors = new int [TotalNbrReducedDensityMatrixBlocks];
+      SubsystemSzSymmetrySectors = new int [TotalNbrReducedDensityMatrixBlocks];
+      SubsystemKxSectors = new int [TotalNbrReducedDensityMatrixBlocks]; 
+      SubsystemKySectors = new int [TotalNbrReducedDensityMatrixBlocks]; 
+      TotalNbrReducedDensityMatrixBlocks = 0;  
+      for (int SubsystemNbrParticles = MinSubsystemNbrParticles; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
+	{
+	  int ComplementaryNbrParticles = NbrParticles - SubsystemNbrParticles;
+	  int MinSz = -SubsystemNbrParticles;
+	  if (Manager.GetInteger("min-sza") > MinSz)
+	    MinSz = Manager.GetInteger("min-sza");
+	  if ((TotalSpin - ComplementaryNbrParticles) > MinSz)
+	    MinSz = (TotalSpin - ComplementaryNbrParticles);
+	  int MaxSz = SubsystemNbrParticles;
+	  if (Manager.GetInteger("max-sza") < MaxSz)
+	    MaxSz = Manager.GetInteger("max-sza");
+	  if ((TotalSpin + ComplementaryNbrParticles) < MaxSz)
+	    MaxSz = (TotalSpin + ComplementaryNbrParticles);
+	  if ((Manager.GetBoolean("decoupled") == false) || (Manager.GetBoolean("su2-spin")) == false)
+	    {
+	      MinSz = 0;
+	      MaxSz = 0;
+	    }
+	  int SubsystemTotalKxMin = 0;
+	  int SubsystemTotalKyMin = 0;
+	  int SubsystemTotalKxMax = 1;
+	  int SubsystemTotalKyMax = 1;
+	  if(TwoDTranslationFlag == true)
+	    {
+	      SubsystemTotalKxMax = NbrSiteX;
+	      SubsystemTotalKyMax = NbrSiteY;
+	    }
+	  
+	  for (int SubsystemTotalSz = MinSz; SubsystemTotalSz <= MaxSz; SubsystemTotalSz += 2)
+	    {
+	      int SubsystemSzSymmetrySector = 0;
+	      int MaxSzSymmetrySector = 0;
+	      if ((SubsystemTotalSz == 0) & (SzSymmetrySector != 0))
+		{
+		  SubsystemSzSymmetrySector = -1;
+		  MaxSzSymmetrySector = 1;
+		}
+	      for (; SubsystemSzSymmetrySector <= MaxSzSymmetrySector; SubsystemSzSymmetrySector += 2)
+		{
+		  for (int SubsystemTotalKx = SubsystemTotalKxMin; SubsystemTotalKx < SubsystemTotalKxMax; ++SubsystemTotalKx)
+		    {
+		      for (int SubsystemTotalKy = SubsystemTotalKyMin; SubsystemTotalKy < SubsystemTotalKyMax; ++SubsystemTotalKy)
+			{
+			  SubsystemNbrParticleSectors[TotalNbrReducedDensityMatrixBlocks] = SubsystemNbrParticles;
+			  SubsystemTotalSzSectors[TotalNbrReducedDensityMatrixBlocks] = SubsystemTotalSz;
+			  SubsystemSzSymmetrySectors[TotalNbrReducedDensityMatrixBlocks] = SubsystemSzSymmetrySector;
+			  SubsystemKxSectors[TotalNbrReducedDensityMatrixBlocks] = SubsystemTotalKx;
+			  SubsystemKySectors[TotalNbrReducedDensityMatrixBlocks] = SubsystemTotalKy;
+			  ++TotalNbrReducedDensityMatrixBlocks;
+			}
+		    }
+		}
+	    }
+	}
+    }
+  else
+    {
+      MultiColumnASCIIFile BlockFile;
+      if (BlockFile.Parse(Manager.GetString("selected-points")) == false)
+	{
+	  BlockFile.DumpErrors(cout);
+	  return -1;
+	}
+      TotalNbrReducedDensityMatrixBlocks = BlockFile.GetNbrLines();
+      SubsystemNbrParticleSectors = BlockFile.GetAsIntegerArray(0);
+      if(TwoDTranslationFlag == true)
+	{
+	  SubsystemKxSectors = BlockFile.GetAsIntegerArray(1);
+	  SubsystemKySectors = BlockFile.GetAsIntegerArray(2);
+	  if ((Manager.GetBoolean("decoupled") == false) || (Manager.GetBoolean("su2-spin")) == false)
+	    {
+	      for (int i = 0; i < TotalNbrReducedDensityMatrixBlocks; ++i)
+		{
+		  SubsystemTotalSzSectors[i] = 0;
+		  SubsystemSzSymmetrySectors[i] = 0;
+		}
+	    }
+	  else
+	    {
+	      SubsystemTotalSzSectors = BlockFile.GetAsIntegerArray(3);
+	      if (BlockFile.GetNbrColumns() >= 5)
+		{
+		  SubsystemSzSymmetrySectors = BlockFile.GetAsIntegerArray(4);
+		}
+	      else
+		{
+		  for (int i = 0; i < TotalNbrReducedDensityMatrixBlocks; ++i)
+		    {
+		      SubsystemSzSymmetrySectors[i] = 0;
+		    }
+		}
+	    }
+	}
+      else
+	{
+	  for (int i = 0; i < TotalNbrReducedDensityMatrixBlocks; ++i)
+	    {
+	      SubsystemKxSectors[i] = 0;
+	      SubsystemKySectors[i] = 0;
+	    }
+	  if ((Manager.GetBoolean("decoupled") == false) || (Manager.GetBoolean("su2-spin")) == false)
+	    {
+	      for (int i = 0; i < TotalNbrReducedDensityMatrixBlocks; ++i)
+		{
+		  SubsystemTotalSzSectors[i] = 0;
+		  SubsystemSzSymmetrySectors[i] = 0;
+		}
+	    }
+	  else
+	    {
+	      SubsystemTotalSzSectors = BlockFile.GetAsIntegerArray(1);
+	      if (BlockFile.GetNbrColumns() >= 3)
+		{
+		  SubsystemSzSymmetrySectors = BlockFile.GetAsIntegerArray(2);
+		}
+	      else
+		{
+		  for (int i = 0; i < TotalNbrReducedDensityMatrixBlocks; ++i)
+		    {
+		      SubsystemSzSymmetrySectors[i] = 0;
+		    }
+		}
+	    }
+	}
+    }
+
+  for (int SubsystemNbrParticles = MinSubsystemNbrParticles; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
     {
       double EntanglementEntropy = 0.0;
       double DensitySum = 0.0;
@@ -665,10 +856,10 @@ int main(int argc, char** argv)
       int SubsystemTotalKxMax = 1;
       int SubsystemTotalKyMax = 1;
       if(TwoDTranslationFlag == true)
-      {
-	SubsystemTotalKxMax = NbrSiteX;
-	SubsystemTotalKyMax = NbrSiteY;
-      }
+	{
+	  SubsystemTotalKxMax = NbrSiteX;
+	  SubsystemTotalKyMax = NbrSiteY;
+	}
       
       for (int SubsystemTotalSz = MinSz; SubsystemTotalSz <= MaxSz; SubsystemTotalSz += 2)
 	{
