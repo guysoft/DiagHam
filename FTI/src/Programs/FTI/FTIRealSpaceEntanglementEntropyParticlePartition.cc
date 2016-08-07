@@ -1573,14 +1573,25 @@ int main(int argc, char** argv)
 	    }
 	  if (Manager.GetBoolean("export-densitymatrix") == true)
 	    {
-	      char* TmpBlockFileName = new char[strlen(DensityMatrixFileName) + 256];
-	      sprintf (TmpBlockFileName, "%s_na_%d_kxa_%d_kya_%d_sza_%d_szsyma_%d.mat", DensityMatrixFileName, SubsystemNbrParticles, SubsystemTotalKx, 
-		       SubsystemTotalKy, SubsystemTotalSz, SubsystemSzSymmetrySector);
+	      char* TmpBlockFileName = 0;
+	      if (DensityMatrixFileName == 0)
+		{
+		  TmpBlockFileName = new char[256];
+		  sprintf (TmpBlockFileName, "densitymatrix_na_%d_kxa_%d_kya_%d_sza_%d_szsyma_%d.mat", SubsystemNbrParticles, SubsystemTotalKx, 
+			   SubsystemTotalKy, SubsystemTotalSz, SubsystemSzSymmetrySector);		  
+		}
+	      else
+		{
+		  TmpBlockFileName = new char[strlen(DensityMatrixFileName) + 256];
+		  sprintf (TmpBlockFileName, "%s_na_%d_kxa_%d_kya_%d_sza_%d_szsyma_%d.mat", DensityMatrixFileName, SubsystemNbrParticles, SubsystemTotalKx, 
+			   SubsystemTotalKy, SubsystemTotalSz, SubsystemSzSymmetrySector);
+		}
 	      if (PartialDensityMatrix.WriteMatrix(TmpBlockFileName) == false)
 		{
 		  cout << "error, can't write the reduced density matrix block " << TmpBlockFileName << endl;
 		  return -1;
 		}
+	      delete[] TmpBlockFileName;
 	      return 0;
 	    }
 	}
