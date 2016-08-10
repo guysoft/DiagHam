@@ -58,6 +58,19 @@ using std::ios;
 using std::ofstream;
 
 
+// compute the spectrum of a single egde
+// 
+// mPSMatrix = pointer tothe MPS matrix
+// overlapMatrix= reference on the overlap matrix
+// hamiltonianMatrix = reference on the hamiltonian matrix for the edge
+// pSector = P sector that should be considered
+// cFTSector = CFT sector that should be considered
+// qSector = Q sector that should be considered
+// eigenvalueError = relative error on the eigenvalues below which an eigenvalue is considered to be equal to zero
+RealDiagonalMatrix FQHEMPSEvaluateSingleEdgeSpectrum(AbstractFQHEMPSMatrix* mPSMatrix, RealMatrix& overlapMatrix, RealMatrix& hamiltonianMatrix,
+						     int pSector, int cFTSector, int qSector, double eigenvalueError);
+
+
 int main(int argc, char** argv)
 {
   cout.precision(14); 
@@ -66,7 +79,7 @@ int main(int argc, char** argv)
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   
   ArchitectureManager Architecture;
-   FQHEMPSMatrixManager MPSMatrixManager (false, false);
+  FQHEMPSMatrixManager MPSMatrixManager (false, false);
 
   MPSMatrixManager.AddOptionGroup(&Manager);
   OptionGroup* SystemGroup = Manager.GetOptionGroup("system options");
@@ -99,6 +112,7 @@ int main(int argc, char** argv)
     }
 
 
+  double Error = 1e-13;
   int LeftNbrFluxQuanta = -1;
   double* LeftOneBodyPotential = 0;
   int RightNbrFluxQuanta = 0;
@@ -254,8 +268,22 @@ int main(int argc, char** argv)
       TripleTensorProductSparseMatrixHamiltonian* MPSMPOTransferMatrix = new TripleTensorProductSparseMatrixHamiltonian(NbrBMatrices, BMatrices, TmpMPOMatrices, BMatrices, Coefficients,
 															Architecture.GetArchitecture()); 
 
-      ComplexVector TmpVector1 (MPSMatrix->GetBondDimension() * MPSMatrix->GetBondDimension() * TmpMPO.GetBondDimension(), true);
-      ComplexVector TmpVector2 (MPSMatrix->GetBondDimension() * MPSMatrix->GetBondDimension() * TmpMPO.GetBondDimension(), true);							
+
+
+      ComplexVector TmpVector1 (MPSMatrix->GetBondDimension() * MPSMatrix->GetBondDimension(), true);
+      ComplexVector TmpVector2 (MPSMatrix->GetBondDimension() * MPSMatrix->GetBondDimension(), true);
+      MPSTransferMatrix->LowLevelMultiply(TransferMatrixLeftEigenstate, TmpVector1);
+      MPSTransferMatrix->LowLevelMultiply(TmpVector1, TmpVector2);
+      MPSTransferMatrix->LowLevelMultiply(TmpVector2, TmpVector1);
+      double MPSNorm = pow(TmpVector1.Norm(), 1.0 / 3.0);
+      MPSNorm = 1.0 / sqrt(MPSNorm);
+      for(int i= 0; i < NbrBMatrices; i++)
+	{
+	  BMatrices[i] *= MPSNorm;
+	}
+
+      TmpVector1 = ComplexVector (MPSMatrix->GetBondDimension() * MPSMatrix->GetBondDimension() * TmpMPO.GetBondDimension(), true);
+      TmpVector2 = ComplexVector (MPSMatrix->GetBondDimension() * MPSMatrix->GetBondDimension() * TmpMPO.GetBondDimension(), true);							
       int TmpLeftIndex;
       int TmpRightIndex;
       int TmpLinearizedIndex;
@@ -265,15 +293,6 @@ int main(int argc, char** argv)
 	  TmpLinearizedIndex = MPSMPOTransferMatrix->GetLinearizedIndex(TmpLeftIndex, MPOColumnIndex, TmpRightIndex);
 	  TmpVector1[TmpLinearizedIndex] = TransferMatrixLeftEigenstate[i];
 	}
-//      ComplexVector TmpVector1 (MPSMatrix->GetBondDimension() * MPSMatrix->GetBondDimension(), true);
-//      ComplexVector TmpVector2 (MPSMatrix->GetBondDimension() * MPSMatrix->GetBondDimension(), true);
-      cout << (TmpVector1 * TmpVector1) << endl;
-//       MPSTransferMatrix->LowLevelMultiply(TransferMatrixLeftEigenstate, TmpVector1);
-//       MPSTransferMatrix->LowLevelMultiply(TmpVector1, TmpVector2);
-//       ComplexVector TmpVector3 = TmpVector1;
-//       TmpVector1 = TmpVector2;
-//       TmpVector2 = TmpVector3;	      
-//       MPSTransferMatrix->LowLevelMultiply(TmpVector1, TmpVector2);
       if (Manager.GetString("left-interaction") == 0)
 	{
 	  for (int i = 0; i <= RightNbrFluxQuanta; ++i)
@@ -284,21 +303,172 @@ int main(int argc, char** argv)
  	      TmpVector1 = TmpVector2;
  	      TmpVector2 = TmpVector3;	      
 	    }
+	  
+	  TmpVector2 = ComplexVector(MPSMatrix->GetBondDimension() * MPSMatrix->GetBondDimension(), true);
+	  for (int i = 0 ; i < TransferMatrixLeftEigenstate.GetVectorDimension(); ++i)
+	    {
+	      MPSTransferMatrix->GetIndicesFromLinearizedIndex(i, TmpLeftIndex, TmpRightIndex);
+	      TmpLinearizedIndex = MPSMPOTransferMatrix->GetLinearizedIndex(TmpLeftIndex, MPORowIndex, TmpRightIndex);
+	      TmpVector2[i] = TmpVector1[TmpLinearizedIndex];
+	    }
+	  cout << (TmpVector2 * TmpVector2) << endl;
+
+	  int TmpDimension =  MPSMatrix->GetBondDimension();
+	  RealMatrix OverlapMatrix(TmpDimension, TmpDimension, true);
+	  RealMatrix HamiltonianMatrix(TmpDimension, TmpDimension, true);
+ 	  for (int i = 0; i < TmpDimension; ++i)
+	    for (int j = 0; j < TmpDimension; ++j)
+	      {
+		OverlapMatrix.SetMatrixElement(i, j,  TransferMatrixLeftEigenstate[i * TmpDimension + j].Re); 
+		HamiltonianMatrix.SetMatrixElement(i, j, TmpVector2[i * TmpDimension + j].Re); 
+	      }
+	  
+	  double**** EdgeSpectrum = new double***[MPSMatrix->GetTruncationLevel() + 1];
+	  int*** EdgeSpectrumDimension = new int**[MPSMatrix->GetTruncationLevel() + 1];
+	  for (int CurrentPLevel = 0; CurrentPLevel <= MPSMatrix->GetTruncationLevel(); ++CurrentPLevel)
+	    {
+	      EdgeSpectrumDimension[CurrentPLevel] = new int*[MPSMatrix->GetNbrCFTSectors()];
+	      EdgeSpectrum[CurrentPLevel] = new double**[MPSMatrix->GetNbrCFTSectors()];	      	      
+	      for (int CurrentCFTSector = 0; CurrentCFTSector < MPSMatrix->GetNbrCFTSectors(); ++CurrentCFTSector)
+		{
+		  int LocalMinQValue;
+		  int LocalMaxQValue;
+		  MPSMatrix->GetChargeIndexRange(CurrentPLevel, CurrentCFTSector, LocalMinQValue, LocalMaxQValue);
+		  if (LocalMinQValue <=  LocalMaxQValue)
+		    {
+		      EdgeSpectrumDimension[CurrentPLevel][CurrentCFTSector] = new int[LocalMaxQValue - LocalMinQValue + 1];
+		      EdgeSpectrum[CurrentPLevel][CurrentCFTSector] = new double*[LocalMaxQValue - LocalMinQValue + 1];	      
+		    }
+		  else
+		    {
+		      EdgeSpectrum[CurrentPLevel][CurrentCFTSector] = 0;
+		    }
+		  for (int LocalQValue =  LocalMinQValue; LocalQValue <= LocalMaxQValue; ++LocalQValue)
+		    {
+		      cout << "computing sector P=" << CurrentPLevel<< " CFT=" << CurrentCFTSector << " Q=" << LocalQValue << endl;
+		      RealDiagonalMatrix TmpEdgeSpectrum = FQHEMPSEvaluateSingleEdgeSpectrum(MPSMatrix, OverlapMatrix, HamiltonianMatrix, CurrentPLevel, CurrentCFTSector, LocalQValue, Error);		      
+		      if (TmpEdgeSpectrum.GetNbrRow() > 0)
+			{
+			  for (int i = 0 ; i < TmpEdgeSpectrum.GetNbrRow(); ++i)
+			    {
+			      if (TmpEdgeSpectrum[i] > 0.0)
+				EdgeSpectrumDimension[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue]++;
+			    }
+			  if (EdgeSpectrumDimension[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue] > 0)
+			    {
+			      EdgeSpectrum[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue] = new double[EdgeSpectrumDimension[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue]];
+			      EdgeSpectrumDimension[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue] = 0;
+			      for (int i = 0 ; i < TmpEdgeSpectrum.GetNbrRow(); ++i)
+				{
+				  if (TmpEdgeSpectrum[i] > 0.0)
+				    {
+				      EdgeSpectrum[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue][EdgeSpectrumDimension[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue]] = TmpEdgeSpectrum[i];
+				      EdgeSpectrumDimension[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue]++;
+				    }
+				}
+			      SortArrayDownOrdering<double>(EdgeSpectrum[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue],
+							    EdgeSpectrumDimension[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue]);
+			    }
+			}
+		      else
+			{
+			  EdgeSpectrumDimension[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue] = 0;
+			}		      
+		    }
+		}
+	    }
+	  for (int CurrentPLevel = 0; CurrentPLevel <= MPSMatrix->GetTruncationLevel(); ++CurrentPLevel)
+	    {
+	      for (int CurrentCFTSector = 0; CurrentCFTSector < MPSMatrix->GetNbrCFTSectors(); ++CurrentCFTSector)
+		{
+		  int LocalMinQValue;
+		  int LocalMaxQValue;
+		  MPSMatrix->GetChargeIndexRange(CurrentPLevel, CurrentCFTSector, LocalMinQValue, LocalMaxQValue);
+		  for (int LocalQValue =  LocalMinQValue; LocalQValue <= LocalMaxQValue; ++LocalQValue)
+		    {
+		      for (int i = 0; i < EdgeSpectrumDimension[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue]; ++i)
+			{
+			  cout << CurrentCFTSector  << " " << LocalQValue << " " 
+			       << CurrentPLevel << " "
+			       <<  EdgeSpectrum[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue][i]  << endl;
+			}		      
+		    }
+		}
+	    }
+
 	}
-      TmpVector2.ClearVector();
-      for (int i = 0 ; i < TransferMatrixLeftEigenstate.GetVectorDimension(); ++i)
-	{
-	  MPSTransferMatrix->GetIndicesFromLinearizedIndex(i, TmpLeftIndex, TmpRightIndex);
-	  TmpLinearizedIndex = MPSMPOTransferMatrix->GetLinearizedIndex(TmpLeftIndex, MPOColumnIndex, TmpRightIndex);
-	  TmpVector2[TmpLinearizedIndex] = TransferMatrixLeftEigenstate[i];
-	}
-      cout << (TmpVector1 * TmpVector2) << endl;
-      cout << (TmpVector1 * TmpVector1) << endl;
-      cout << (TmpVector2 * TmpVector2) << endl;
-      //   cout << "B matrix size = " << BMatrices[0].GetNbrRow() << "x" << BMatrices[0].GetNbrColumn() << endl;
-      //   unsigned long * ArrayPhysicalIndice = MPSMatrix->GetPhysicalIndices();
     }
   
   return 0;
 }
 
+// compute the spectrum of a single egde
+// 
+// mPSMatrix = pointer tothe MPS matrix
+// overlapMatrix= reference on the overlap matrix
+// hamiltonianMatrix = reference on the hamiltonian matrix for the edge
+// pSector = P sector that should be considered
+// cFTSector = CFT sector that should be considered
+// qSector = Q sector that should be considered
+// eigenvalueError = relative error on the eigenvalues below which an eigenvalue is considered to be equal to zero
+// eigenstateFileName = if non-zero, save the eigenstate of the reduced density matrix using eigenstateFileName as a prefix
+
+RealDiagonalMatrix FQHEMPSEvaluateSingleEdgeSpectrum(AbstractFQHEMPSMatrix* mPSMatrix, RealMatrix& overlapMatrix, RealMatrix& hamiltonianMatrix,
+						     int pSector, int cFTSector, int qSector, double eigenvalueError)
+{
+  RealMatrix OverlapMatrix = mPSMatrix->ExtractBlock(overlapMatrix, pSector, cFTSector,qSector, pSector, cFTSector, qSector);
+  RealDiagonalMatrix TmpEnergySpectrum;
+  if ((OverlapMatrix.GetNbrRow() > 0) && (OverlapMatrix.ComputeNbrNonZeroMatrixElements() > 0l))
+    {
+      cout << "diagonalizing the overlap" << endl;
+      RealSymmetricMatrix SymOverlapMatrix (OverlapMatrix);
+      RealMatrix TmpBasis(SymOverlapMatrix.GetNbrRow(), SymOverlapMatrix.GetNbrRow());
+      TmpBasis.SetToIdentity();
+      RealDiagonalMatrix TmpDiag;
+#ifdef __LAPACK__
+      SymOverlapMatrix.LapackDiagonalize(TmpDiag, TmpBasis);
+#else
+      SymOverlapMatrix.Diagonalize(TmpDiag, TmpBasis);
+#endif
+      double LocalEigenvalueError = 0.0;
+      for (int i = 0; i < TmpDiag.GetNbrColumn(); ++i)
+	if (TmpDiag(i, i) > LocalEigenvalueError)
+	  LocalEigenvalueError = TmpDiag(i, i);
+      cout << "LocalEigenvalueError=" << LocalEigenvalueError << endl;
+      LocalEigenvalueError = eigenvalueError;
+      int NbrZeroEigenvalues = 0;
+      for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
+	{
+	  if (TmpDiag(i, i) < LocalEigenvalueError)
+	    {
+	      ++NbrZeroEigenvalues;	    
+	    }
+	}
+      cout << "nbr non zero eigenvalues = " << (TmpDiag.GetNbrRow() - NbrZeroEigenvalues) << " (full dim = " << TmpDiag.GetNbrRow() << ")" << endl;
+      
+      if (NbrZeroEigenvalues < SymOverlapMatrix.GetNbrRow())
+	{
+ 	  RealMatrix TruncatedBasis (TmpDiag.GetNbrRow(), TmpDiag.GetNbrRow() -  NbrZeroEigenvalues, true);
+ 	  NbrZeroEigenvalues = 0;
+ 	  for (int i = 0; i < TmpBasis.GetNbrColumn(); ++i)
+ 	    {
+ 	      if (TmpDiag(i, i) > LocalEigenvalueError)
+ 		{
+ 		  TruncatedBasis[NbrZeroEigenvalues].Copy(TmpBasis[i]);
+ 		  TruncatedBasis[NbrZeroEigenvalues] *= sqrt(TmpDiag(i, i));
+ 		  ++NbrZeroEigenvalues;
+ 		}
+ 	    }
+
+	  RealMatrix HamiltonianMatrix = mPSMatrix->ExtractBlock(hamiltonianMatrix, pSector, cFTSector,qSector, pSector, cFTSector, qSector);
+	  RealSymmetricMatrix SymHamiltonianMatrix (HamiltonianMatrix);
+	  RealSymmetricMatrix* TruncatedHamiltonianMatrix = (RealSymmetricMatrix*) SymHamiltonianMatrix.Conjugate(TruncatedBasis);
+#ifdef __LAPACK__
+	  TruncatedHamiltonianMatrix->LapackDiagonalize(TmpEnergySpectrum);
+#else
+	  TruncatedHamiltonianMatrix->Diagonalize(TmpEnergySpectrum);
+#endif
+	}
+    }
+  return TmpEnergySpectrum;
+}

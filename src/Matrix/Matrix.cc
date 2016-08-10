@@ -692,7 +692,7 @@ long Matrix::ComputeNbrNonZeroMatrixElements()
 	  for (int j = 0; j < this->NbrColumn; ++j)
 	    {
 	      this->GetMatrixElement(i, j, Tmp);
-	      if (Tmp == 0.0)
+	      if (Tmp != 0.0)
 	        ++TmpCount;
 	    }      
 	}
@@ -705,7 +705,7 @@ long Matrix::ComputeNbrNonZeroMatrixElements()
 	  for (int j = 0; j < this->NbrColumn; ++j)
 	    {
 	      this->GetMatrixElement(i, j, Tmp);
-	      if ((Tmp.Re == 0.0) && (Tmp.Im == 0.0))
+	      if ((Tmp.Re != 0.0) || (Tmp.Im != 0.0))
 	        ++TmpCount;
 	    }      
 	}

@@ -300,7 +300,7 @@ int main(int argc, char** argv)
 		  int* TmpSzValues = SpectrumFile.GetAsIntegerArray(0);
 		  int* TmpKValues = SpectrumFile.GetAsIntegerArray(1);
 		  int* TmpSzSymValues = SpectrumFile.GetAsIntegerArray(2);
-		  double* TmpEnergies = SpectrumFile.GetAsDoubleArray(3);
+		  double* TmpEnergies = SpectrumFile.GetAsDoubleArray(4);
 		  int TmpIndex = 0; 
 		  while ((TmpIndex < TotalNbrEnergies) && 
 			 ((TmpSzValues[TmpIndex] != TotalSz) || (TmpKValues[TmpIndex] != XMomentum) || 
