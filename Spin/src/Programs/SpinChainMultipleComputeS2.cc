@@ -570,7 +570,7 @@ int main(int argc, char** argv)
 	    {
 	      if (Degeneracies[k] == 1)
 		{
-		  TmpNonDegenerateComplexEigenstates[NbrNonDegenerateStates] = RealEigenstates[TmpIndex];
+		  TmpNonDegenerateComplexEigenstates[NbrNonDegenerateStates] = ComplexEigenstates[TmpIndex];
 		  ++NbrNonDegenerateStates;
 		}
 	      TmpIndex += Degeneracies[k];	  
