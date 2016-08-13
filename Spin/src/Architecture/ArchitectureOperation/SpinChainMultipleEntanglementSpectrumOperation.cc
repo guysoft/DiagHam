@@ -208,8 +208,8 @@ bool SpinChainMultipleEntanglementSpectrumOperation::RawApplyOperation()
 		}
 	      else
 		{
-	      for (int i = 0; i < PartialEntanglementMatrix.GetNbrRow(); ++i)
-		TmpValues[0] += PartialEntanglementMatrix[0][i] * PartialEntanglementMatrix[0][i];				  
+		  for (int i = 0; i < PartialEntanglementMatrix.GetNbrRow(); ++i)
+		    TmpValues[0] += PartialEntanglementMatrix[0][i] * PartialEntanglementMatrix[0][i];				  
 		}
 	      this->EntanglementSpectrumDimension = 1;
 	      this->EntanglementSpectra[Index - this->FirstState] = TmpValues;

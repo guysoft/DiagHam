@@ -1573,34 +1573,60 @@ int main(int argc, char** argv)
 	    }
 	  if (Manager.GetBoolean("export-densitymatrix") == true)
 	    {
-	      char* TmpBlockFileName = 0;
-	      if (DensityMatrixFileName == 0)
+	      if (Architecture.GetArchitecture()->CanWriteOnDisk())
 		{
-		  TmpBlockFileName = new char[256];
-		  sprintf (TmpBlockFileName, "densitymatrix_na_%d_kxa_%d_kya_%d_sza_%d_szsyma_%d.mat", SubsystemNbrParticles, SubsystemTotalKx, 
-			   SubsystemTotalKy, SubsystemTotalSz, SubsystemSzSymmetrySector);		  
+		  char* TmpBlockFileName = 0;
+		  if (DensityMatrixFileName == 0)
+		    {
+		      TmpBlockFileName = new char[256];
+		      sprintf (TmpBlockFileName, "densitymatrix_na_%d_kxa_%d_kya_%d_sza_%d_szsyma_%d.mat", SubsystemNbrParticles, SubsystemTotalKx, 
+			       SubsystemTotalKy, SubsystemTotalSz, SubsystemSzSymmetrySector);		  
+		    }
+		  else
+		    {
+		      TmpBlockFileName = new char[strlen(DensityMatrixFileName) + 256];
+		      sprintf (TmpBlockFileName, "%s_na_%d_kxa_%d_kya_%d_sza_%d_szsyma_%d.mat", DensityMatrixFileName, SubsystemNbrParticles, SubsystemTotalKx, 
+			       SubsystemTotalKy, SubsystemTotalSz, SubsystemSzSymmetrySector);
+		    }
+		  if (PartialDensityMatrix.WriteMatrix(TmpBlockFileName) == false)
+		    {
+		      cout << "error, can't write the reduced density matrix block " << TmpBlockFileName << endl;
+		      return -1;
+		    }
+		  delete[] TmpBlockFileName;
 		}
-	      else
-		{
-		  TmpBlockFileName = new char[strlen(DensityMatrixFileName) + 256];
-		  sprintf (TmpBlockFileName, "%s_na_%d_kxa_%d_kya_%d_sza_%d_szsyma_%d.mat", DensityMatrixFileName, SubsystemNbrParticles, SubsystemTotalKx, 
-			   SubsystemTotalKy, SubsystemTotalSz, SubsystemSzSymmetrySector);
-		}
-	      if (PartialDensityMatrix.WriteMatrix(TmpBlockFileName) == false)
-		{
-		  cout << "error, can't write the reduced density matrix block " << TmpBlockFileName << endl;
-		  return -1;
-		}
-	      delete[] TmpBlockFileName;
 	      return 0;
 	    }
 	}
       else
 	{
-	  if (PartialDensityMatrix.ReadMatrix(Manager.GetString("import-densitymatrix")) == false)
+	  if (Manager.GetBoolean("use-scalapack") == true)
 	    {
-	      cout << "error, can't read the reduced density matrix block " << Manager.GetString("import-densitymatrix") << endl;
-	      return -1;
+	      if (Architecture.GetArchitecture()->CanWriteOnDisk())
+		{
+		  if (PartialDensityMatrix.ReadMatrix(Manager.GetString("import-densitymatrix")) == false)
+		    {
+		      cout << "error, can't read the reduced density matrix block " << Manager.GetString("import-densitymatrix") << endl;
+		      return -1;
+		    }
+		}
+	      else
+		{
+		  PartialDensityMatrix = HermitianMatrix(2, true);
+		  PartialDensityMatrix.SetMatrixElement(0, 0, 0.5);
+		  PartialDensityMatrix.SetMatrixElement(1, 1, 0.5);
+		}
+	    }
+	  else
+	    {
+	      if (Architecture.GetArchitecture()->CanWriteOnDisk())
+		{
+		  if (PartialDensityMatrix.ReadMatrix(Manager.GetString("import-densitymatrix")) == false)
+		    {
+		      cout << "error, can't read the reduced density matrix block " << Manager.GetString("import-densitymatrix") << endl;
+		      return -1;
+		    }
+		}	      
 	    }
 	}
       if (PartialDensityMatrix.GetNbrRow() > 1)
