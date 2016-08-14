@@ -287,13 +287,16 @@ int main(int argc, char** argv)
     }
   int EffectiveSubspaceDimension = Manager.GetInteger("nbr-states");
   double Error = Manager.GetDouble("degeneracy-error");
-  if (EffectiveSubspaceDimension == TotalNbrLevels)
+  if (EffectiveSubspaceDimension >= TotalNbrLevels)
     {
-      --EffectiveSubspaceDimension;
+      EffectiveSubspaceDimension = TotalNbrLevels;
     }
-  while ((EffectiveSubspaceDimension > 0) && (fabs (TwoLayerEnergies[EffectiveSubspaceDimension - 1] - TwoLayerEnergies[EffectiveSubspaceDimension]) < Error))
+  else
     {
-      --EffectiveSubspaceDimension;
+      while ((EffectiveSubspaceDimension > 0) && (fabs (TwoLayerEnergies[EffectiveSubspaceDimension - 1] - TwoLayerEnergies[EffectiveSubspaceDimension]) < Error))
+	{
+	  --EffectiveSubspaceDimension;
+	}
     }
   
   int** LargestUsedEigenstate = new int* [MaxNbrParticlesPerLayer + 1];
