@@ -171,7 +171,10 @@ int main(int argc, char** argv)
 	      for (int UpLayerLzSector = 0; UpLayerLzSector < NbrLzSectors[UpLayerNbrParticles]; ++UpLayerLzSector)
 		{
 		  int DownLayerLzSector = ((((UpLayerLzSector * 2) + MinLzValues[UpLayerNbrParticles]) - TwoLayerLzSector) -  MinLzValues[DownLayerNbrParticles]) / 2;
-		  TotalNbrLevels += NbrEnergies[UpLayerNbrParticles][UpLayerLzSector] *  NbrEnergies[DownLayerNbrParticles][DownLayerLzSector];
+		  if ((DownLayerLzSector >= 0) && (DownLayerLzSector < NbrLzSectors[DownLayerNbrParticles]))
+		    {
+		      TotalNbrLevels += NbrEnergies[UpLayerNbrParticles][UpLayerLzSector] *  NbrEnergies[DownLayerNbrParticles][DownLayerLzSector];
+		    }
 		}
 	    }
 	} 
@@ -204,18 +207,21 @@ int main(int argc, char** argv)
 		{
 		  int ShiftedUpLayerLzSector = ((UpLayerLzSector * 2) + MinLzValues[UpLayerNbrParticles]);
 		  int DownLayerLzSector = ((ShiftedUpLayerLzSector - TwoLayerLzSector) - MinLzValues[DownLayerNbrParticles]) / 2;
-		  for (int i = 0; i < NbrEnergies[UpLayerNbrParticles][UpLayerLzSector]; ++i)
+		  if ((DownLayerLzSector >= 0) && (DownLayerLzSector < NbrLzSectors[DownLayerNbrParticles]))
 		    {
-		      for (int j = 0; j < NbrEnergies[DownLayerNbrParticles][DownLayerLzSector]; ++j)
+		      for (int i = 0; i < NbrEnergies[UpLayerNbrParticles][UpLayerLzSector]; ++i)
 			{
-			  TwoLayerEnergies[TotalNbrLevels] = Energies[UpLayerNbrParticles][UpLayerLzSector][i] + Energies[DownLayerNbrParticles][DownLayerLzSector][j] + TmpEnergyShift;
-			  TwoLayerBareEnergies[TotalNbrLevels] = Energies[UpLayerNbrParticles][UpLayerLzSector][i] + Energies[DownLayerNbrParticles][DownLayerLzSector][j];
-			  TwoLayerNbrParticles[TotalNbrLevels] = TmpNbrParticles;
-			  TwoLayerIndices[TotalNbrLevels] = TotalNbrLevels;
-			  TwoLayerUpLzValues[TotalNbrLevels] = ShiftedUpLayerLzSector;
-			  TwoLayerUpIndices[TotalNbrLevels] = i;
-			  TwoLayerDownIndices[TotalNbrLevels] = j;
-			  ++TotalNbrLevels;
+			  for (int j = 0; j < NbrEnergies[DownLayerNbrParticles][DownLayerLzSector]; ++j)
+			    {
+			      TwoLayerEnergies[TotalNbrLevels] = Energies[UpLayerNbrParticles][UpLayerLzSector][i] + Energies[DownLayerNbrParticles][DownLayerLzSector][j] + TmpEnergyShift;
+			      TwoLayerBareEnergies[TotalNbrLevels] = Energies[UpLayerNbrParticles][UpLayerLzSector][i] + Energies[DownLayerNbrParticles][DownLayerLzSector][j];
+			      TwoLayerNbrParticles[TotalNbrLevels] = TmpNbrParticles;
+			      TwoLayerIndices[TotalNbrLevels] = TotalNbrLevels;
+			      TwoLayerUpLzValues[TotalNbrLevels] = ShiftedUpLayerLzSector;
+			      TwoLayerUpIndices[TotalNbrLevels] = i;
+			      TwoLayerDownIndices[TotalNbrLevels] = j;
+			      ++TotalNbrLevels;
+			    }
 			}
 		    }
 		}
