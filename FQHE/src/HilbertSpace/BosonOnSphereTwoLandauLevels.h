@@ -427,15 +427,15 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   // nbrComponent = number of components to be computed
   virtual void BosonicStateTimePolarizedSlatersLzSzSymmetry(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpace , FermionOnSphereWithSpin* finalSpace, int firstComponent,int nbrComponent, unsigned long** slaterPermutations, double *slaterSigns, int nbrSlaterPermutations);
 	
-	// compute the projection of the product of a bosonic state and the halperin 110 state
-	//
-	// bosonState = real vector where the bosonic state is stored
-	// outputVector = 	real vector where the result has to be stored
-	// fermionSpace = pointer to the fermionic Hilbert space
-	// finalSpace = pointer to the final Hilbert space
-	// firstComponent = first component to be computed
-	// nbrComponent = number of components to be computed
-	virtual void BosonicStateTimePolarizedSlaters(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpaceUp ,FermionOnSphere * fermionSpaceDown,  FermionOnSphereWithSpin* finalSpace, int indexUp , int indexDown, int firstComponent,int nbrComponent);
+  // compute the projection of the product of a bosonic state and the halperin 110 state
+  //
+  // bosonState = real vector where the bosonic state is stored
+  // outputVector = 	real vector where the result has to be stored
+  // fermionSpace = pointer to the fermionic Hilbert space
+  // finalSpace = pointer to the final Hilbert space
+  // firstComponent = first component to be computed
+  // nbrComponent = number of components to be computed
+  virtual void BosonicStateTimePolarizedSlaters(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpaceUp ,FermionOnSphere * fermionSpaceDown,  FermionOnSphereWithSpin* finalSpace, int indexUp , int indexDown, int firstComponent,int nbrComponent);
 
   // compute  the lz symmetric state with given index
   //

@@ -378,6 +378,7 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   virtual void LLLFermionicStateTimeFermionicStateSymmetric(LongRationalVector& lllFermionState, LongRationalVector& fermionState, LongRationalVector& outputVector, FermionOnSphere* lllFermionSpace, BosonOnSphereShort* finalSpace, int firstComponent, int nbrComponent, bool reverseFluxFlag = false);
 	
   // compute the product of a fermionic state in the lowest Landau level and a fermionic state in the two lowest Landau levels
+  //
   // lllFermionState = real vector where the lowest Landau level fermionic state is stored
   // fermionState = real vector where the two Landau level fermionic state is stored
   // outputVector = real vector where the result has to be stored
@@ -385,9 +386,9 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // finalSpace = pointer to the final Hilbert space
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed
-  virtual void LLLFermionicStateTimeFermionicState(RealVector& lllFermionState, RealVector& fermionState, RealVector& outputVector, FermionOnSphere* lllFermionSpace, BosonOnSphereTwoLandauLevels * finalSpace, int firstComponent,int nbrComponent);
-	
-  
+  virtual void LLLFermionicStateTimeFermionicState(RealVector& lllFermionState, RealVector& fermionState, RealVector& outputVector, 
+						   FermionOnSphere* lllFermionSpace, BosonOnSphereTwoLandauLevels * finalSpace, int firstComponent, int nbrComponent);
+	  
   // compute the number of particles in each Landau level
   //
   // state = ID of the state to handle
@@ -401,16 +402,17 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // finalSpace = reference to space of output vector space
   void  ProjectionInTheLowestLevel(RealVector &inputVector, RealVector & outputVector, FermionOnSphere * finalSpace);
 
-	// compute the projection of the product of a fermionic state in the lowest Landau level and a fermionic state in the two lowest Landau levels
-	// lllFermionState = real vector where the lowest Landau level fermionic state is stored
-	// fermionState = real vector where the two Landau level fermionic state is stored
-	// outputVector = real vector where the result has to be stored
-	// lllFermionSpace = pointer to the lowest Landau level Hilbert space
-	// finalSpace = pointer to the final Hilbert space
-	// firstComponent = first component to be computed
-	// nbrComponent = number of components to be computed
-
-	virtual void FermionicStateTimeFermionicState(RealVector& fermionState1, RealVector& fermionState2, RealVector& outputVector, FermionOnSphereTwoLandauLevels *  fermionSpace2 , BosonOnSphereShort* finalSpace, int firstComponent,int nbrComponent);
+  // compute the projection of the product of a fermionic state in the lowest Landau level and a fermionic state in the two lowest Landau levels
+  //
+  // lllFermionState = real vector where the lowest Landau level fermionic state is stored
+  // fermionState = real vector where the two Landau level fermionic state is stored
+  // outputVector = real vector where the result has to be stored
+  // lllFermionSpace = pointer to the lowest Landau level Hilbert space
+  // finalSpace = pointer to the final Hilbert space
+  // firstComponent = first component to be computed
+  // nbrComponent = number of components to be computed
+  virtual void FermionicStateTimeFermionicState(RealVector& fermionState1, RealVector& fermionState2, RealVector& outputVector, FermionOnSphereTwoLandauLevels*  fermionSpace2 , 
+						BosonOnSphereShort* finalSpace, int firstComponent,int nbrComponent);
 
 
 protected:

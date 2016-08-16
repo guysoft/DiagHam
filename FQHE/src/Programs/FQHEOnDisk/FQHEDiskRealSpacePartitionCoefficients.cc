@@ -5,8 +5,9 @@
 #include <stdlib.h>
 #include <math.h>
 #include <fstream>
+#ifdef __GSL__
 #include <gsl/gsl_sf_gamma.h>
-
+#endif
 
 using std::cout;
 using std::endl;
