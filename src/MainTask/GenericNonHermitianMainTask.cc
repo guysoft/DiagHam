@@ -253,7 +253,7 @@ void GenericNonHermitianMainTask::SetArchitecture(AbstractArchitecture* architec
   
 int GenericNonHermitianMainTask::ExecuteMainTask()
 {
-  double* TmpRealPart = new double [this->NbrEigenvalues];
+  double* TmpNorm = new double [this->NbrEigenvalues];
   int* TmpIndices = new int[this->NbrEigenvalues];
   Complex* TmpEigenvalues = 0;
   ComplexVector* TmpEigenstates = 0;
@@ -382,12 +382,13 @@ int GenericNonHermitianMainTask::ExecuteMainTask()
 	  PowerMethod->GetEigenvalues(TmpEigenvalues, this->NbrEigenvalues);
 	}
     }
+
   for (int i = 0; i < this->NbrEigenvalues; ++i)
     {
-      TmpRealPart[i] = TmpEigenvalues[i].Re;
+      TmpNorm[i] = Norm(TmpEigenvalues[i]);
       TmpIndices[i] = i;
     }
-  SortArrayDownOrdering<int>(TmpRealPart, TmpIndices, this->NbrEigenvalues);
+  SortArrayDownOrdering<int>(TmpNorm, TmpIndices, this->NbrEigenvalues);
   for (int i = 1; i < this->NbrEigenvalues; ++i)
     {
       if ((fabs(TmpEigenvalues[TmpIndices[i - 1]].Re - TmpEigenvalues[TmpIndices[i]].Re) < this->SortingError) && 
@@ -398,6 +399,7 @@ int GenericNonHermitianMainTask::ExecuteMainTask()
 	  TmpIndices[i] = Tmp;
 	}
     }
+  
   for (int i = 0; i < this->NbrEigenvalues; ++i)
     {
       if (this->ComputeEigenstates)
@@ -447,7 +449,7 @@ int GenericNonHermitianMainTask::ExecuteMainTask()
       
       File.close();
     }
-  delete[] TmpRealPart;
+  delete[] TmpNorm;
   delete[] TmpIndices;
   delete[] TmpEigenstates;
   delete[] TmpEigenvalues;
