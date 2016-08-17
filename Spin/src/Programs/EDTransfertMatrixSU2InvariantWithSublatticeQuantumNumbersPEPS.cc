@@ -183,18 +183,25 @@ int main(int argc, char** argv)
 
   int SubLatticeZeroBraMax=NbrSites/2;
   int SubLatticeZeroKetMax=NbrSites/2;  
-  int SubLatticeZeroBra, SubLatticeZeroKet;
+  int SubLatticeZeroBra, SubLatticeZeroKet,ZvalueKet;
   for(int Sz = SzMin; Sz<= SzMax ;Sz+=1)
     {
       cout <<"Sz = "<<Sz<<endl;
       for (int i = MinKx; i <= MaxKx; ++i)
 	{
 	  cout <<" K = "<<i<<endl;
+
+
 	  for(int ZvalueBra = 0 ; ZvalueBra <= ZvalueMax;ZvalueBra++)
 	    {
-	      for(int ZvalueKet = 0 ; ZvalueKet <= ZvalueMax;ZvalueKet++)
+	      if (Sz %2 == 0)
+		ZvalueKet =  ZvalueBra;
+	      else
 		{
-		  if (ZvalueBra ==0)
+		  ZvalueKet = 1 - ZvalueBra;
+		}
+	      
+	      if (ZvalueBra ==0)
 		    SubLatticeZeroBra = 0;
 		  else
 		    SubLatticeZeroBra = 1;
@@ -255,7 +262,6 @@ int main(int argc, char** argv)
 			    }
 			}
 		    }
-		}
 	    }
 	}
     }
