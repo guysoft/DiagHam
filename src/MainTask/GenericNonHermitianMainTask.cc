@@ -388,17 +388,8 @@ int GenericNonHermitianMainTask::ExecuteMainTask()
       TmpNorm[i] = Norm(TmpEigenvalues[i]);
       TmpIndices[i] = i;
     }
+  
   SortArrayDownOrdering<int>(TmpNorm, TmpIndices, this->NbrEigenvalues);
-  for (int i = 1; i < this->NbrEigenvalues; ++i)
-    {
-      if ((fabs(TmpEigenvalues[TmpIndices[i - 1]].Re - TmpEigenvalues[TmpIndices[i]].Re) < this->SortingError) && 
-	  (TmpEigenvalues[TmpIndices[i - 1]].Im < TmpEigenvalues[TmpIndices[i]].Im))
-	{
-	  int Tmp = TmpIndices[i - 1];
-	  TmpIndices[i - 1] = TmpIndices[i];
-	  TmpIndices[i] = Tmp;
-	}
-    }
   
   for (int i = 0; i < this->NbrEigenvalues; ++i)
     {
