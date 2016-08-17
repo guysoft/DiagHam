@@ -174,7 +174,6 @@ int main(int argc, char** argv)
 	{
 	  if (DoubledFlag)
 	    {
-
 	      TransferMatrix = new ComplexPEPSTransfertMatrixPBC(TensorsElementsDefinition,&BoundaryConditions,Architecture.GetArchitecture()); 
 	    }
 	  else
