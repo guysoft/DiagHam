@@ -538,7 +538,7 @@ int main(int argc, char** argv)
       double TmpPrefactor1 =  1.0 / sqrt(M_PI);
       double TmpPrefactor2 =  2.0 * M_PI / Perimeter;
       double TmpShiftUp = (0.5 * ((double) LzMax) - Manager.GetDouble("flux-insertion")) * TmpPrefactor2;
-      double TmpShiftDown = (0.5 * ((double) LzMax) + Manager.GetDouble("flux-insertion")) * TmpPrefactor2;
+      double TmpShiftDown = (0.5 * ((double) LzMax) - Manager.GetDouble("flux-insertion")) * TmpPrefactor2;
       for (int TmpX = 0; TmpX <= NbrPoints; ++TmpX)
 	{ 
 	  TmpMatrixUpLayer.ClearMatrix();
