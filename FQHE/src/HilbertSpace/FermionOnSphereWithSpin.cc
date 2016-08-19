@@ -1410,6 +1410,67 @@ int FermionOnSphereWithSpin::Add (int m, double& coefficient)
 }
 
 
+// apply a^+_m_u  operator to a given state. 
+//
+// index = index of the state on which the operator has to be applied
+// m = index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value =  index of the resulting state 
+
+int FermionOnSphereWithSpin::Adu (int index, int m, double& coefficient)
+{
+  unsigned long TmpState = this->StateDescription[index];
+  m <<= 1; 
+  ++m;
+  if ((TmpState & (0x1ul << m)) != 0x0ul)
+    return this->TargetSpace->HilbertSpaceDimension;
+  coefficient = 1.0;
+  int NewLzMax = this->StateHighestBit[index];  
+  if (m > NewLzMax)
+    NewLzMax = m;
+  else
+    {
+      coefficient *= this->SignLookUpTable[(TmpState >> m) & this->SignLookUpTableMask[m]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 16)) & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+    }
+  TmpState |= (0x1ul << m);
+  return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
+}
+
+// apply a^+_m_d  operator to a given state. 
+//
+// index = index of the state on which the operator has to be applied
+// m = index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value =  index of the resulting state 
+
+int FermionOnSphereWithSpin::Add (int index, int m, double& coefficient)
+{
+  unsigned long TmpState = this->StateDescription[index];
+  m <<= 1;  
+  if ((TmpState & (0x1ul << m)) != 0x0ul)
+    return this->TargetSpace->HilbertSpaceDimension;
+  coefficient = 1.0;
+  int NewLzMax = this->StateHighestBit[index];  
+  if (m > NewLzMax)
+    NewLzMax = m;
+  else
+    {
+      coefficient *= this->SignLookUpTable[(TmpState >> m) & this->SignLookUpTableMask[m]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 16)) & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+    }
+  TmpState |= (0x1ul << m);
+  return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
+}
+
 // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
 //
 // index = index of the state on which the operator has to be applied

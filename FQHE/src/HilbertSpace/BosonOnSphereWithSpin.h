@@ -548,7 +548,6 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // minIndex = first computed component
   // nbrComponents = Nomber of computed components
   // FinalSpace = pointer on the Hilbert Space whose the final state belong
-
   void BosonicStateWithSpinTimesBosonicState(RealVector& spinfulState, RealVector& polarizedState, RealVector& outputVector,BosonOnSphereShort * polarizedSpace,int minIndex,int nbrComponents, BosonOnSphereWithSpin * finalSpace);
 
 
@@ -559,7 +558,6 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
   //MinusStateDown = reference on array where minus state down spin occupations stored
   //coefficient = coefficient of term before symmetrisation
   //OutputVector = vector where resulting term will be added
-
   void SymmetriseOverGroupsAndAddToVector(unsigned long * & PlusStateUp, unsigned long * & MinusStateUp, unsigned long * & PlusStateDown, unsigned long * &MinusStateDown, double coefficient, RealVector & OutputVector);
 
   //Compute the geometric correction factor for a given product state when multiplying two monomials and working with second quantised forms on the sphere for fully polarized states
@@ -633,6 +631,29 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
   //PolarizedMonomialOccupationBasis reference on array to store result
   //maxLz twice the maximum angular momentum of the monomial
   void ConvertPolarizedMonomialToOccupationBasis( unsigned long *& PolarizedMonomial, unsigned long *& PolarizedMonomialOccupationBasis, int maxLz );
+
+  // convert a state such that its components are now expressed in the unnormalized basis
+  //
+  // state = reference to the state to convert
+  // reference = set which component as to be normalized to 1
+  // symmetryFactor = if true also remove the symmetry factors
+  // return value = converted state
+  virtual RealVector& ConvertToUnnormalizedMonomial(RealVector& state, long reference = 0, bool symmetryFactor = true);    
+
+  // convert a state such that its components are now expressed in the normalized basis
+  //
+  // state = reference to the state to convert
+  // reference = set which component has been normalized to 1
+  // symmetryFactor = if true also add the symmetry factors
+  // return value = converted state
+  virtual RealVector& ConvertFromUnnormalizedMonomial(RealVector& state, long reference = 0, bool symmetryFactor = true);
+
+  // normalize Jack with respect to cylinder basis
+  //
+  // state = reference to the Jack state to normalize
+  // aspect = aspect ratio of cylinder
+  // return value = normalized state
+  virtual RealVector& NormalizeJackToCylinder(RealVector& state, double aspect);
 
   //find state index
   //
@@ -758,15 +779,13 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // initialStateUp = initial spin up bosonic state in its fermionic representation 
   // initialStateDown = initial spin down bosonic state in its fermionic representation
   // initialStateLzMax = initial bosonic state maximum Lz value
-  // finalState = reference on the array where the monomial representation has to be stored
-  
+  // finalState = reference on the array where the monomial representation has to be stored  
   void ConvertToMonomial(unsigned long initialStateUp, unsigned long initialStateDown, int initialStateLzMax, unsigned long*& finalState);
 
   // convert a bosonic state from its monomial representation
   //
   // initialState = array where the monomial representation is stored
-  // return value = bosonic state in its fermionic representation
-  
+  // return value = bosonic state in its fermionic representation  
   unsigned long ConvertFromMonomial(unsigned long* initialState);
 
   // get LzMax value for a given state
