@@ -153,7 +153,7 @@ int main(int argc, char** argv)
     }
   
   int SzMin = -2*NbrSites;
-  int SzMax = NbrSites;
+  int SzMax = 2*NbrSites;
 
   char * SubspaceLegend = new char [200];
   char * TmpSzString = new char [200];

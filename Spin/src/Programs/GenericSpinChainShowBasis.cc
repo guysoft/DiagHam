@@ -265,7 +265,6 @@ int main(int argc, char** argv)
 			    Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry(NbrSpins, Momentum,  SzValue, Manager.GetInteger("zbra"),Manager.GetInteger("zket"),10000,10000);
 			  else
 			    {
-//			      cout <<" I am indeed here"<<endl;
 			      Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (NbrSpins, Momentum,  SzValue, Manager.GetInteger("zbra"),Manager.GetInteger("zket"),  Manager.GetInteger("sket") *  Manager.GetInteger("sket"), Manager.GetInteger("sbra") *  Manager.GetInteger("sbra"), Manager.GetInteger("sket")* Manager.GetInteger("sbra")* Manager.GetInteger("sproduct"), 100000,100000);
 			    }
 			}
@@ -458,8 +457,8 @@ int main(int argc, char** argv)
 	     RealVector State;
 	     if (State.ReadVector(Manager.GetString("state")) == false)
 	       {
-	      cout << "error while reading " << Manager.GetString("state") << endl;
-	      return -1;
+		 cout << "error while reading " << Manager.GetString("state") << endl;
+		 return -1;
 	       }
 	     for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 	       if (fabs(State[i]) > Error)
