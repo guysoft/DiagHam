@@ -29,7 +29,10 @@
 
 
 #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers.h"
-#include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry.cc"
+// #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry.cc"
+
+class DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry;
+
 #include "GeneralTools/ArrayTools.h"
 
 #include <iostream>

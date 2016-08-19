@@ -8,9 +8,12 @@
 #include "HilbertSpace/Spin0_1_2_ChainWithTranslations.h"
 #include "HilbertSpace/Spin0_1_2_ChainWithTranslationsStaggered.h"
 #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsStaggered.h"
-#include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslations.h"
-#include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry.h"
+//#include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslations.h"
+
+// #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry.h"
+
 #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry.h"
+#include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers.h"
 
 #include "HilbertSpace/DoubledSpin1_2_ChainWithTranslations.h"
 #include "HilbertSpace/DoubledSpin1_2_ChainWithTranslations_alternative.h"
@@ -61,6 +64,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "symmetry", "use Hilbert space with ZZ symmetry in the case of the 0+1/2 doubled chain");
   (*SystemGroup) += new  SingleIntegerOption ('\n', "zket", "value of the Z operator in the ket layer", 0);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "zbra", "value of the Z operator in the bra layer", 0);
+
+  (*SystemGroup) += new BooleanOption  ('\n', "sublatticeQN", "use Hilbert space with sublattice quantum numbers (implies the use of ZZ symmetry) in the case of the 0+1/2 doubled chain");
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "sket", "value of the Sublattice QN in the ket layer", 0);
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "sbra", "value of the Sublattice QN the bra layer", 0);
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "sproduct", "value of the product of the Sublattice QNs", 0);
   
   (*SystemGroup) += new  SingleIntegerOption ('k', "momentum", "momentum sector (for periodic chain)", 0);
   (*SystemGroup) += new SingleStringOption  ('e', "state", "name of the file containing the eigenstate to be displayed");
@@ -86,6 +94,10 @@ int main(int argc, char** argv)
   int Momentum = Manager.GetInteger("momentum");
   double Error = Manager.GetDouble("hide-component");
   bool SymmetryFlag = Manager.GetBoolean("symmetry"); 
+  bool SubLatticeQuantumNumberFlag =  Manager.GetBoolean("sublatticeQN"); 
+
+  if  (SubLatticeQuantumNumberFlag == true )
+    SymmetryFlag = true;
   
   if (Manager.GetBoolean("doubled-spinchain"))
     {
@@ -176,9 +188,11 @@ int main(int argc, char** argv)
 			}
 		      else
 			{
-			  Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry(NbrSpins,  SzValue, Manager.GetInteger("zbra"),Manager.GetInteger("zket"),10000,10000);
+			  if (SubLatticeQuantumNumberFlag == false ) 
+			    Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry(NbrSpins,  SzValue, Manager.GetInteger("zbra"),Manager.GetInteger("zket"),10000,10000);
+			  else
+			    Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (NbrSpins,  SzValue, Manager.GetInteger("zbra"),Manager.GetInteger("zket"),  Manager.GetInteger("sbra") *  Manager.GetInteger("sbra"), Manager.GetInteger("sket") *  Manager.GetInteger("sket"),  Manager.GetInteger("sket")* Manager.GetInteger("sbra")* Manager.GetInteger("sproduct"), 100000,100000);
 			}
-		
 		    }
 		  
 		  if (Manager.GetString("state") == 0)
@@ -247,7 +261,13 @@ int main(int argc, char** argv)
 			}
 		      else
 			{
-			  Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry(NbrSpins, Momentum,  SzValue, Manager.GetInteger("zbra"),Manager.GetInteger("zket"),10000,10000);
+			  if (SubLatticeQuantumNumberFlag == false ) 
+			    Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry(NbrSpins, Momentum,  SzValue, Manager.GetInteger("zbra"),Manager.GetInteger("zket"),10000,10000);
+			  else
+			    {
+//			      cout <<" I am indeed here"<<endl;
+			      Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (NbrSpins, Momentum,  SzValue, Manager.GetInteger("zbra"),Manager.GetInteger("zket"),  Manager.GetInteger("sket") *  Manager.GetInteger("sket"), Manager.GetInteger("sbra") *  Manager.GetInteger("sbra"), Manager.GetInteger("sket")* Manager.GetInteger("sbra")* Manager.GetInteger("sproduct"), 100000,100000);
+			    }
 			}
 		    }
 		  
