@@ -50,8 +50,9 @@ double FQHECylinderComputePolynomialLeftPotentialCoefficients (double orbitalInd
 // perimeter = cylinder perimeter
 // alpha = exponent of the polynomial
 // cutPosition = x position below which the potential should be set to zero 
+// flux = flux insertion (in flux quantum unit) along the cylinder axis
 // return value = one-body matrix element
-double FQHECylinderComputePolynomialRightMomentumPotentialCoefficients (double orbitalIndex, double perimeter, int alpha, double cutPosition);
+double FQHECylinderComputePolynomialRightMomentumPotentialCoefficients (double orbitalIndex, double perimeter, int alpha, double cutPosition, double flux);
 
 // compute the one-body matrix element for a polynomial left confining potential
 //
@@ -59,8 +60,9 @@ double FQHECylinderComputePolynomialRightMomentumPotentialCoefficients (double o
 // perimeter = cylinder perimeter
 // alpha = exponent of the polynomial
 // cutPosition = x position above which the potential should be set to zero 
+// flux = flux insertion (in flux quantum unit) along the cylinder axis
 // return value = one-body matrix element
-double FQHECylinderComputePolynomialLeftMomentumPotentialCoefficients (double orbitalIndex, double perimeter, int alpha, double cutPosition);
+double FQHECylinderComputePolynomialLeftMomentumPotentialCoefficients (double orbitalIndex, double perimeter, int alpha, double cutPosition, double flux);
 
 
 int main(int argc, char** argv)
@@ -76,13 +78,14 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('r', "aspect-ratio", "aspect ratio of the cylinder", 1);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "cylinder-perimeter", "if non zero, fix the cylinder perimeter (in magnetic length unit) instead of the aspect ratio", 0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "error", "error below which a matrix element is considered equal to zero", 0.0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "confining-rightpower", "integer exponent of the right confining potential", 2);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "confining-rightpower", "integer exponent of the right confining potential", 1);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "confining-rightstrength", "strength of the right confining potential", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "confining-rightoffset", "position (with respect to half of the cylinder) below which the right confining potential is equal to zero", 0.0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "confining-leftpower", "integer exponent of the left confining potential", 2);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "confining-leftpower", "integer exponent of the left confining potential", 1);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "confining-leftstrength", "strength of the left confining potential", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "confining-leftoffset", "position (with respect to half of the cylinder) above which the left confining potential is equal to zero", 0.0);
   (*SystemGroup) += new  BooleanOption ('\n', "confining-momentum", "if set, the confining potential is defined in the momentum space");
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "flux-insertion", "include a flux insertion (in flux quantum unit) along the cylinder axis", 0.0);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "optional output file name instead of the default one");
   (*OutputGroup) += new BooleanOption ('\n', "spinful", "the output file will be used for a spinful system, assuming the same confining potential for all species");
   (*OutputGroup) += new BooleanOption ('\n', "time-reversal", "the output file will be used for a spinful system with time reversal symmetry, assuming the same confining potential for all species");
@@ -139,13 +142,29 @@ int main(int argc, char** argv)
       OutputFile = new char[512];
       if (Manager.GetBoolean("confining-momentum") == true)
 	{
-	  sprintf (OutputFile, "confining_momentum_cylinder_perimeter_%.6f_2s_%d_alphar_%d_x0r_%.6f_v0r_%.6f_alphal_%d_x0l_%.6f_v0l_%.6f.dat", 
-		   Perimeter, NbrFluxQuanta, RightAlpha, RightShift, RightV0, LeftAlpha, LeftShift, LeftV0);
+	  if (Manager.GetDouble("flux-insertion") == 0.0)
+	    {
+	      sprintf (OutputFile, "confining_momentum_cylinder_perimeter_%.6f_2s_%d_alphar_%d_x0r_%.6f_v0r_%.6f_alphal_%d_x0l_%.6f_v0l_%.6f.dat", 
+		       Perimeter, NbrFluxQuanta, RightAlpha, RightShift, RightV0, LeftAlpha, LeftShift, LeftV0);
+	    }
+	  else
+	    {
+	      sprintf (OutputFile, "confining_momentum_cylinder_perimeter_%.6f_2s_%d_alphar_%d_x0r_%.6f_v0r_%.6f_alphal_%d_x0l_%.6f_v0l_%.6f_flux_%.6f.dat", 
+		       Perimeter, NbrFluxQuanta, RightAlpha, RightShift, RightV0, LeftAlpha, LeftShift, LeftV0, Manager.GetDouble("flux-insertion"));
+	    }
 	}
       else
 	{
-	  sprintf (OutputFile, "confining_cylinder_perimeter_%.6f_2s_%d_alphar_%d_x0r_%.6f_v0r_%.6f_alphal_%d_x0l_%.6f_v0l_%.6f.dat", 
-		   Perimeter, NbrFluxQuanta, RightAlpha, RightShift, RightV0, LeftAlpha, LeftShift, LeftV0);
+	  if (Manager.GetDouble("flux-insertion") == 0.0)
+	    {
+	      sprintf (OutputFile, "confining_cylinder_perimeter_%.6f_2s_%d_alphar_%d_x0r_%.6f_v0r_%.6f_alphal_%d_x0l_%.6f_v0l_%.6f.dat", 
+		       Perimeter, NbrFluxQuanta, RightAlpha, RightShift, RightV0, LeftAlpha, LeftShift, LeftV0);
+	    }
+	  else
+	    {
+	      sprintf (OutputFile, "confining_cylinder_perimeter_%.6f_2s_%d_alphar_%d_x0r_%.6f_v0r_%.6f_alphal_%d_x0l_%.6f_v0l_%.6f_flux_%.6f.dat", 
+		       Perimeter, NbrFluxQuanta, RightAlpha, RightShift, RightV0, LeftAlpha, LeftShift, LeftV0, Manager.GetDouble("flux-insertion"));
+	    }
 	}
     }
   else
@@ -217,7 +236,7 @@ int main(int argc, char** argv)
 	      if (Manager.GetBoolean("confining-momentum") == true)
 		{
 		  TmpCoefficient = RightV0 * FQHECylinderComputePolynomialRightMomentumPotentialCoefficients(((double) NbrCoefficients) - 0.5 * ((double) NbrFluxQuanta), 
-													     Perimeter, RightAlpha, RightShift);
+													     Perimeter, RightAlpha, RightShift, Manager.GetDouble("flux-insertion"));
 		}
 	      else
 		{
@@ -245,7 +264,7 @@ int main(int argc, char** argv)
 	      if (Manager.GetBoolean("confining-momentum") == true)
 		{
 		  TmpCoefficient = LeftV0 * FQHECylinderComputePolynomialLeftMomentumPotentialCoefficients(((double) NbrCoefficients) - 0.5 * ((double) NbrFluxQuanta), 
-													     Perimeter, LeftAlpha, LeftShift);
+													   Perimeter, LeftAlpha, LeftShift, Manager.GetDouble("flux-insertion"));
 		}
 	      else
 		{
@@ -426,11 +445,13 @@ double FQHECylinderComputePolynomialLeftPotentialCoefficients (double orbitalInd
 // perimeter = cylinder perimeter
 // alpha = exponent of the polynomial
 // cutPosition = x position below which the potential should be set to zero 
+// flux = flux insertion (in flux quantum unit) along the cylinder axis
 // return value = one-body matrix element
 
-double FQHECylinderComputePolynomialRightMomentumPotentialCoefficients (double orbitalIndex, double perimeter, int alpha, double cutPosition)
+double FQHECylinderComputePolynomialRightMomentumPotentialCoefficients (double orbitalIndex, double perimeter, int alpha, double cutPosition, double flux)
 {
   orbitalIndex -= cutPosition * perimeter / (2.0 * M_PI);
+  orbitalIndex += flux;
   if (orbitalIndex >= 0.0)
     {
       return pow(orbitalIndex, alpha);
@@ -447,11 +468,13 @@ double FQHECylinderComputePolynomialRightMomentumPotentialCoefficients (double o
 // perimeter = cylinder perimeter
 // alpha = exponent of the polynomial
 // cutPosition = x position above which the potential should be set to zero 
+// flux = flux insertion (in flux quantum unit) along the cylinder axis
 // return value = one-body matrix element
 
-double FQHECylinderComputePolynomialLeftMomentumPotentialCoefficients (double orbitalIndex, double perimeter, int alpha, double cutPosition)
+double FQHECylinderComputePolynomialLeftMomentumPotentialCoefficients (double orbitalIndex, double perimeter, int alpha, double cutPosition, double flux)
 {
   orbitalIndex -= cutPosition * perimeter / (2.0 * M_PI);
+  orbitalIndex += flux;
   orbitalIndex *= -1.0;
   if (orbitalIndex >= 0.0)
     {

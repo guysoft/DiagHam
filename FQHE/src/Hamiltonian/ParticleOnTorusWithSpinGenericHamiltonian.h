@@ -99,13 +99,16 @@ class ParticleOnTorusWithSpinGenericHamiltonian : public AbstractQHEOnTorusWithS
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+  // onebodyPotentialUpUp =  one-body potential (sorted from component on the lowest Ky state to component on the highest Ky state) for particles with spin up, null pointer if none
+  // onebodyPotentialDownDown =  one-body potential (sorted from component on the lowest Ky state to component on the highest Ky state) for particles with spin down, null pointer if none
+  // onebodyPotentialUpDown =  one-body tunnelling potential (sorted from component on the lowest Ky state to component on the highest Ky state), on site, symmetric spin up / spin down
   ParticleOnTorusWithSpinGenericHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int maxMomentum, double ratio, 
 					    int nbrPseudopotentialsUpUp, double* pseudopotentialsUpUp,
 					    int nbrPseudopotentialsDownDown, double* pseudopotentialsDownDown,
 					    int nbrPseudopotentialsUpDown, double* pseudopotentialsUpDown,
 					    double spinFluxUp, double spinFluxDown, 
 					    AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0, 
-					    double * oneBodyPotentielUpUp = 0, double * oneBodyPotentielDownDown = 0, double * oneBodyPotentielUpDown = 0);
+					    double * oneBodyPotentialUpUp = 0, double * oneBodyPotentialDownDown = 0, double * oneBodyPotentialUpDown = 0);
 
   // destructor
   //

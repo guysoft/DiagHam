@@ -3,13 +3,13 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2002 Nicolas Regnault                  //
+//                  Copyright (C) 2001-2004 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//       class of hamiltonian associated to particles on a torus with         //
-//                         generic two body interaction                       //
+//      class of hamiltonian associated to particles on a cylinder with       //
+//     SU(2) spin and a generic interaction defined by its pseudopotential    //
 //                                                                            //
-//                        last modification : 17/04/2012                      //
+//                        last modification : 19/08/2016                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "Hamiltonian/ParticleOnTorusWithSpinGenericHamiltonian.h"
+#include "Hamiltonian/ParticleOnCylinderWithSpinGenericHamiltonian.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
@@ -39,13 +39,14 @@
 #include "Output/MathematicaOutput.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "MathTools/ClebschGordanCoefficients.h"
-#include "Polynomial/SpecialPolynomial.h"
+#include "Operator/ParticleOnSphereSquareTotalMomentumOperator.h"
 
 #include "Architecture/AbstractArchitecture.h"
+#include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
+#include "Polynomial/SpecialPolynomial.h"
 
 #include <iostream>
-#include <math.h>
-#include <stdlib.h>
+#include <sys/time.h>
 
 
 using std::cout;
@@ -53,83 +54,53 @@ using std::endl;
 using std::ostream;
 
 
-#define M1_12 0.08333333333333333
-
 // default constructor
 //
 
-ParticleOnTorusWithSpinGenericHamiltonian::ParticleOnTorusWithSpinGenericHamiltonian()
+ParticleOnCylinderWithSpinGenericHamiltonian::ParticleOnCylinderWithSpinGenericHamiltonian()
 {
-  this->Particles = 0;
-  this->LzMax = 0;
-  this->NbrLzValue = 0;
-  this->NbrParticles = 0;
-  this->FastMultiplicationFlag = false;
-  this->HermitianSymmetryFlag = false;//true;
-  this->Ratio = 0;  
-  this->InvRatio = 0;
-  this->SpinFluxUp = 0;
-  this->SpinFluxDown = 0;
-  this->HamiltonianShift = 0.0;
-  this->Architecture = 0;
-  this->PrecalculationShift = 0;  
-
-  this->NbrPseudopotentialsUpUp = 0;
-  this->PseudopotentialsUpUp = 0;
-  this->NbrPseudopotentialsDownDown = 0;
-  this->NbrPseudopotentialsUpDown = 0;
-  this->PseudopotentialsUpDown = 0;
-  
-  this->MaxNbrPseudopotentials = 0;
-  this->LaguerrePolynomials = 0;
-  this->OneBodyInteractionFactorsupup = 0;
-  this->OneBodyInteractionFactorsdowndown = 0;
-  this->OneBodyInteractionFactorsupdown = 0;
 }
 
-
-// constructor from default datas
+// constructor
 //
 // particles = Hilbert space associated to the system
 // nbrParticles = number of particles
-// maxMomentum = maximum Lz value reached by a particle in the state
+// lzmax = maximum Lz value reached by a particle in the state
 // ratio = ratio between the width in the x direction and the width in the y direction
+// architecture = architecture to use for precalculation
 // nbrPseudopotentialsUpUp = number of pseudopotentials for up-up interaction
 // pseudopotentialsUpUp = pseudopotential coefficients for up-up interaction
 // nbrPseudopotentialsDownDown = number of pseudopotentials for down-down interaction
 // pseudopotentialsDownDown = pseudopotential coefficients for down-down interaction
 // nbrPseudopotentialsUpDown = number of pseudopotentials for up-down interaction
 // pseudopotentialsUpDown = pseudopotential coefficients for up-down interaction
-// pseudopotentials = pseudopotential coefficients
-// spinFluxUp = additional inserted flux for spin up
-// spinFluxDown = additional inserted flux for spin down
-// architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-// onebodyPotentialUpUp =  one-body potential (sorted from component on the lowest Ky state to component on the highest Ky state) for particles with spin up, null pointer if none
-// onebodyPotentialDownDown =  one-body potential (sorted from component on the lowest Ky state to component on the highest Ky state) for particles with spin down, null pointer if none
-// onebodyPotentialUpDown =  one-body tunnelling potential (sorted from component on the lowest Ky state to component on the highest Ky state), on site, symmetric spin up / spin down
+// onebodyPotentialUpUp =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin up, null pointer if none
+// onebodyPotentialDownDown =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin down, null pointer if none
+// onebodyPotentialUpDown =  one-body tunnelling potential (sorted from component on the lowest Lz state to component on the highest Lz state), on site, symmetric spin up / spin down
 
-ParticleOnTorusWithSpinGenericHamiltonian::ParticleOnTorusWithSpinGenericHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int maxMomentum, double ratio, 
-										     int nbrPseudopotentialsUpUp, double* pseudopotentialsUpUp,
-										     int nbrPseudopotentialsDownDown, double* pseudopotentialsDownDown,
-										     int nbrPseudopotentialsUpDown, double* pseudopotentialsUpDown,
-										     double spinFluxUp, double spinFluxDown,
-										     AbstractArchitecture* architecture, long memory, char* precalculationFileName, 
-										     double * oneBodyPotentialUpUp, double * oneBodyPotentialDownDown, double * oneBodyPotentialUpDown)
+ParticleOnCylinderWithSpinGenericHamiltonian::ParticleOnCylinderWithSpinGenericHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, double ratio, 
+											   int nbrPseudopotentialsUpUp, double* pseudopotentialsUpUp,
+											   int nbrPseudopotentialsDownDown, double* pseudopotentialsDownDown,
+											   int nbrPseudopotentialsUpDown, double* pseudopotentialsUpDown,
+											   double spinFluxUp, double spinFluxDown,
+											   AbstractArchitecture* architecture, long memory, char* precalculationFileName, 
+											   double * oneBodyPotentialUpUp, double * oneBodyPotentialDownDown, double * oneBodyPotentialUpDown)
 {
   this->Particles = particles;
-  this->LzMax = maxMomentum - 1;
+  this->LzMax = lzmax;
   this->NbrLzValue = this->LzMax + 1;
   this->NbrParticles = nbrParticles;
-  this->FastMultiplicationFlag = false;
   this->Ratio = ratio;
-  this->InvRatio = 1.0 / ratio;
+  this->InvRatio = 1.0 / this->Ratio;
+  this->SpinFluxUp = 0.0;
+  this->SpinFluxDown = 0.0;
+  this->FastMultiplicationFlag = false;
+  this->OneBodyTermFlag = false;
   this->Architecture = architecture;
-  long MinIndex;
-  long MaxIndex;
-  this->SpinFluxUp = spinFluxUp;
-  this->SpinFluxDown = spinFluxDown;
+  this->L2Hamiltonian = 0;
+  this->S2Hamiltonian = 0;
 
   this->NbrPseudopotentialsUpUp = nbrPseudopotentialsUpUp;
   this->PseudopotentialsUpUp = new double[this->NbrPseudopotentialsUpUp];
@@ -153,51 +124,35 @@ ParticleOnTorusWithSpinGenericHamiltonian::ParticleOnTorusWithSpinGenericHamilto
   for (int i = 0; i < this->MaxNbrPseudopotentials; ++i)
     this->LaguerrePolynomials[i] = LaguerrePolynomial(i);
 
+  this->EvaluateInteractionFactors();
+  this->HamiltonianShift = 0.0;
+  long MinIndex;
+  long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
+  this->DiskStorageFlag = false;
+  this->Memory = memory;
   this->OneBodyInteractionFactorsupup = 0;
-  if(oneBodyPotentialUpUp != 0)
+  if (oneBodyPotentialUpUp != 0)
     {
-      cout << "One-body interaction factors up-up : " << endl;
-      this->OneBodyInteractionFactorsupup = new double[this->NbrLzValue];
-      for(int i = 0; i < this->NbrLzValue; i++)
-	{
-	  this->OneBodyInteractionFactorsupup[i] = oneBodyPotentialUpUp[i];
-	  cout << this->OneBodyInteractionFactorsupup[i] << " ";
-	}
-      cout << endl;
+      this->OneBodyInteractionFactorsupup = new double [this->NbrLzValue];
+      for (int i = 0; i <= this->LzMax; ++i)
+	this->OneBodyInteractionFactorsupup[i] = oneBodyPotentialUpUp[i];
     }
   this->OneBodyInteractionFactorsdowndown = 0;
-  if(oneBodyPotentialDownDown != 0)
+  if (oneBodyPotentialDownDown != 0)
     {
-      cout << "One-body interaction factors down-down : " << endl;
-      this->OneBodyInteractionFactorsdowndown = new double[this->NbrLzValue];
-      for(int i = 0; i < this->NbrLzValue; i++)
-	{
-	  this->OneBodyInteractionFactorsdowndown[i] = oneBodyPotentialDownDown[i];
-	  cout << this->OneBodyInteractionFactorsdowndown[i] << " ";
-	}
-      cout << endl;
-    } 
+      this->OneBodyInteractionFactorsdowndown = new double [this->NbrLzValue];
+      for (int i = 0; i <= this->LzMax; ++i)
+	this->OneBodyInteractionFactorsdowndown[i] = oneBodyPotentialDownDown[i];
+    }
   this->OneBodyInteractionFactorsupdown = 0;
-  if(oneBodyPotentialUpDown != 0)
+  if (oneBodyPotentialUpDown != 0)
     {
-      cout << "One-body interaction factors up-down : " << endl;
-      this->OneBodyInteractionFactorsupdown = new double[this->NbrLzValue];
-      for(int i = 0; i < this->NbrLzValue; i++)
-	{
-	  this->OneBodyInteractionFactorsupdown[i] = oneBodyPotentialUpDown[i];
-	  cout << this->OneBodyInteractionFactorsupdown[i] << " ";
-	}
-      cout <<endl;
-    } 
-
- 
-  this->EvaluateInteractionFactors();
-  this->S2Hamiltonian = 0;
-  this->L2Hamiltonian = 0;
-  this->HamiltonianShift = 0.0;
-  this->DiskStorageFlag = false;
+      this->OneBodyInteractionFactorsupdown = new double [this->NbrLzValue];
+      for (int i = 0; i <= this->LzMax; ++i)
+	this->OneBodyInteractionFactorsupdown[i] = oneBodyPotentialUpDown[i];
+    }
   if (precalculationFileName == 0)
     {
       if (memory > 0)
@@ -209,13 +164,27 @@ ParticleOnTorusWithSpinGenericHamiltonian::ParticleOnTorusWithSpinGenericHamilto
 	    if (TmpMemory < (1 << 20))
 	      cout  << "fast = " << (TmpMemory >> 10) << "kb ";
 	    else
-	      if (TmpMemory < (1 << 30))
-		cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
-	      else
-		cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
-	  if (memory > 0)
+	  if (TmpMemory < (1 << 30))
+	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
+	  else
+	    {
+	      cout  << "fast = " << (TmpMemory >> 30) << ".";
+	      TmpMemory -= ((TmpMemory >> 30) << 30);
+	      TmpMemory *= 100l;
+	      TmpMemory >>= 30;
+	      if (TmpMemory < 10l)
+		cout << "0";
+	      cout  << TmpMemory << " Gb ";
+	    }
+	  if (this->DiskStorageFlag == false)
 	    {
 	      this->EnableFastMultiplication();
+	    }
+	  else
+	    {
+	      char* TmpFileName = this->Architecture->GetTemporaryFileName();
+	      this->EnableFastMultiplicationWithDiskStorage(TmpFileName);	      
+	      delete[] TmpFileName;
 	    }
 	}
     }
@@ -226,57 +195,37 @@ ParticleOnTorusWithSpinGenericHamiltonian::ParticleOnTorusWithSpinGenericHamilto
 // destructor
 //
 
-ParticleOnTorusWithSpinGenericHamiltonian::~ParticleOnTorusWithSpinGenericHamiltonian() 
+ParticleOnCylinderWithSpinGenericHamiltonian::~ParticleOnCylinderWithSpinGenericHamiltonian() 
 {
-  delete[] this->PseudopotentialsUpUp;
-  delete[] this->PseudopotentialsDownDown;
-  delete[] this->PseudopotentialsUpDown;
-  delete[] this->LaguerrePolynomials;
-}
-
-// set Hilbert space
-//
-// hilbertSpace = pointer to Hilbert space to use
-
-void ParticleOnTorusWithSpinGenericHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
-{
-  delete[] this->InteractionFactors;
-  if (this->FastMultiplicationFlag == true)
-    {
-      for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
-	{
-	  delete[] this->InteractionPerComponentIndex[i];
-	  delete[] this->InteractionPerComponentCoefficient[i];
-	}
-      delete[] this->InteractionPerComponentIndex;
-      delete[] this->InteractionPerComponentCoefficient;
-      delete[] this->NbrInteractionPerComponent;
-    }
-  this->Particles = (ParticleOnSphereWithSpin*) hilbertSpace;
-  this->EvaluateInteractionFactors();
 }
 
 // evaluate all interaction factors
 //   
 
-void ParticleOnTorusWithSpinGenericHamiltonian::EvaluateInteractionFactors()
+void ParticleOnCylinderWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 {
+  // in absence of above code, initialize the following two fields to zero
   this->M1IntraValue = 0;
   this->M1InterValue = 0;
   
+  // int Lim;
+  // int Min;
+  // int Pos = 0;
+  // int m4;
   long TotalNbrInteractionFactors = 0;
 
   int Sign = 1;
   if (this->LzMax & 1)
     Sign = 0;
+  double TmpCoefficient = 0.0;
 
-  this->NbrInterSectorSums = this->NbrLzValue;
+  this->NbrInterSectorSums = 2 * this->LzMax + 1;
   this->NbrInterSectorIndicesPerSum = new int[this->NbrInterSectorSums];
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
     this->NbrInterSectorIndicesPerSum[i] = 0;
   for (int m1 = 0; m1 <= this->LzMax; ++m1)
     for (int m2 = 0; m2 <= this->LzMax; ++m2)
-      ++this->NbrInterSectorIndicesPerSum[(m1 + m2) % this->NbrLzValue];      
+      ++this->NbrInterSectorIndicesPerSum[m1 + m2];      
   this->InterSectorIndicesPerSum = new int* [this->NbrInterSectorSums];
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
     {
@@ -286,21 +235,20 @@ void ParticleOnTorusWithSpinGenericHamiltonian::EvaluateInteractionFactors()
   for (int m1 = 0; m1 <= this->LzMax; ++m1)
     for (int m2 = 0; m2 <= this->LzMax; ++m2)
       {
-	int TmpIndex = (m1 + m2) % this->NbrLzValue;
-	this->InterSectorIndicesPerSum[TmpIndex][this->NbrInterSectorIndicesPerSum[TmpIndex] << 1] = m1;
-	this->InterSectorIndicesPerSum[TmpIndex][1 + (this->NbrInterSectorIndicesPerSum[TmpIndex] << 1)] = m2;
-	++this->NbrInterSectorIndicesPerSum[TmpIndex];
+	this->InterSectorIndicesPerSum[(m1 + m2)][this->NbrInterSectorIndicesPerSum[(m1 + m2)] << 1] = m1;
+	this->InterSectorIndicesPerSum[(m1 + m2)][1 + (this->NbrInterSectorIndicesPerSum[(m1 + m2)] << 1)] = m2;
+	++this->NbrInterSectorIndicesPerSum[(m1 + m2)];
       }
 
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
-      this->NbrIntraSectorSums = this->NbrLzValue;
+      this->NbrIntraSectorSums = 2 * this->LzMax - 1;
       this->NbrIntraSectorIndicesPerSum = new int[this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 	this->NbrIntraSectorIndicesPerSum[i] = 0;      
       for (int m1 = 0; m1 < this->LzMax; ++m1)
 	for (int m2 = m1 + 1; m2 <= this->LzMax; ++m2)
-	  ++this->NbrIntraSectorIndicesPerSum[(m1 + m2) % this->NbrLzValue];
+	  ++this->NbrIntraSectorIndicesPerSum[(m1 + m2) - 1];
       this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 	{
@@ -310,10 +258,9 @@ void ParticleOnTorusWithSpinGenericHamiltonian::EvaluateInteractionFactors()
       for (int m1 = 0; m1 < this->LzMax; ++m1)
 	for (int m2 = m1 + 1; m2 <= this->LzMax; ++m2)
 	  {
-	    int TmpIndex = (m1 + m2) % this->NbrLzValue;
-	    this->IntraSectorIndicesPerSum[TmpIndex][this->NbrIntraSectorIndicesPerSum[TmpIndex] << 1] = m1;
-	    this->IntraSectorIndicesPerSum[TmpIndex][1 + (this->NbrIntraSectorIndicesPerSum[TmpIndex] << 1)] = m2;
-	    ++this->NbrIntraSectorIndicesPerSum[TmpIndex];
+	    this->IntraSectorIndicesPerSum[(m1 + m2) - 1][this->NbrIntraSectorIndicesPerSum[(m1 + m2) - 1] << 1] = m1;
+	    this->IntraSectorIndicesPerSum[(m1 + m2) - 1][1 + (this->NbrIntraSectorIndicesPerSum[(m1 + m2) - 1] << 1)] = m2;
+	    ++this->NbrIntraSectorIndicesPerSum[(m1 + m2) - 1];
 	  }
 
       this->InteractionFactorsupup = new double* [this->NbrIntraSectorSums];
@@ -347,8 +294,6 @@ void ParticleOnTorusWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 												       this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown)
 								- this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown,
 												       this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown));
-		  //		  this->InteractionFactorsupup[i][Index] = 0.0;
-		  //		  this->InteractionFactorsdowndown[i][Index] = 0.0;		  
 		  TotalNbrInteractionFactors += 2;
 		  ++Index;
 		}
@@ -380,29 +325,25 @@ void ParticleOnTorusWithSpinGenericHamiltonian::EvaluateInteractionFactors()
     }
   else
     {
-      this->NbrIntraSectorSums = this->NbrLzValue;
+      this->NbrIntraSectorSums = 2 * this->LzMax+1;
       this->NbrIntraSectorIndicesPerSum = new int[this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 	this->NbrIntraSectorIndicesPerSum[i] = 0;      
       for (int m1 = 0; m1 <= this->LzMax; ++m1)
 	for (int m2 = m1; m2 <= this->LzMax; ++m2)
-	  ++this->NbrIntraSectorIndicesPerSum[(m1 + m2) % this->NbrLzValue];
+	  ++this->NbrIntraSectorIndicesPerSum[m1 + m2];
       this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 	{
-	  if (this->NbrIntraSectorIndicesPerSum[i] != 0)
-	    this->IntraSectorIndicesPerSum[i] = new int[2 * this->NbrIntraSectorIndicesPerSum[i]];      
-	  else
-	    this->IntraSectorIndicesPerSum[i] = 0;
+	  this->IntraSectorIndicesPerSum[i] = new int[2 * this->NbrIntraSectorIndicesPerSum[i]];      
 	  this->NbrIntraSectorIndicesPerSum[i] = 0;
 	}
       for (int m1 = 0; m1 <= this->LzMax; ++m1)
 	for (int m2 = m1; m2 <= this->LzMax; ++m2)
 	  {
-	    int TmpIndex = (m1 + m2) % this->NbrLzValue;
-	    this->IntraSectorIndicesPerSum[TmpIndex][this->NbrIntraSectorIndicesPerSum[TmpIndex] << 1] = m1;
-	    this->IntraSectorIndicesPerSum[TmpIndex][1 + (this->NbrIntraSectorIndicesPerSum[TmpIndex] << 1)] = m2;
-	    ++this->NbrIntraSectorIndicesPerSum[TmpIndex];
+	    this->IntraSectorIndicesPerSum[m1 + m2][this->NbrIntraSectorIndicesPerSum[m1 + m2] << 1] = m1;
+	    this->IntraSectorIndicesPerSum[m1 + m2][1 + (this->NbrIntraSectorIndicesPerSum[m1 + m2] << 1)] = m2;
+	    ++this->NbrIntraSectorIndicesPerSum[m1 + m2];
 	  }
 
       this->InteractionFactorsupup = new double* [this->NbrIntraSectorSums];
@@ -474,8 +415,6 @@ void ParticleOnTorusWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 													    this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown);
 			}
 		    }
-// 		  this->InteractionFactorsupup[i][Index] *= -1.0;
-// 		  this->InteractionFactorsdowndown[i][Index] *= -1.0;		  
 		  TotalNbrInteractionFactors += 2;
 		  ++Index;
 		}
@@ -506,8 +445,9 @@ void ParticleOnTorusWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 	}
     }
 
-  cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
-  cout << "====================================" << endl;
+
+ cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
+ cout << "====================================" << endl;
 }
 
 // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
@@ -524,8 +464,8 @@ void ParticleOnTorusWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 // spinFluxM4 = additional inserted flux for m4
 // return value = numerical coefficient
 
-double ParticleOnTorusWithSpinGenericHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, int nbrPseudopotentials, double* pseudopotentials,
-										 double spinFluxM1, double spinFluxM2, double spinFluxM3, double spinFluxM4)
+double ParticleOnCylinderWithSpinGenericHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, int nbrPseudopotentials, double* pseudopotentials,
+										    double spinFluxM1, double spinFluxM2, double spinFluxM3, double spinFluxM4)
 {
   double Coefficient = 1.0;
   double PIOnM = M_PI / ((double) this->NbrLzValue);
@@ -619,6 +559,4 @@ double ParticleOnTorusWithSpinGenericHamiltonian::EvaluateInteractionCoefficient
   //Normalize per flux (gives correct energy scale for 2-particle problem)
   return (Sum / ((double) this->NbrLzValue));
 }
-
-
 

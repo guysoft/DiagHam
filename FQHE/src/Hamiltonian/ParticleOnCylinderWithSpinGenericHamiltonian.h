@@ -6,10 +6,10 @@
 //                  Copyright (C) 2001-2004 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//       class of hamiltonian associated to particles on a sphere with        //
+//       class of hamiltonian associated to particles on a cylinder with      //
 //     SU(2) spin and a generic interaction defined by its pseudopotential    //
 //                                                                            //
-//                        last modification : 07/06/2007                      //
+//                        last modification : 19/08/2016                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,13 +29,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONSPHEREWITHSPINGENERICHAMILTONIAN_H
-#define PARTICLEONSPHEREWITHSPINGENERICHAMILTONIAN_H
+#ifndef PARTICLEONCYLINDERWITHSPINGENERICHAMILTONIAN_H
+#define PARTICLEONCYLINDERWITHSPINGENERICHAMILTONIAN_H
 
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
-#include "Hamiltonian/AbstractQHEOnSphereWithSpinHamiltonian.h"
+#include "Hamiltonian/ParticleOnTorusWithSpinGenericHamiltonian.h"
 
 #include <iostream>
 
@@ -47,67 +47,50 @@ class MathematicaOutput;
 class AbstractArchitecture;
 
 
-class ParticleOnSphereWithSpinGenericHamiltonian : public AbstractQHEOnSphereWithSpinHamiltonian
+class ParticleOnCylinderWithSpinGenericHamiltonian : public ParticleOnTorusWithSpinGenericHamiltonian
 {
-
-  friend class QHEParticlePrecalculationOperation;
 
  protected:
 
-  // array with the pseudo-potentials (ordered such that the last element corresponds to the delta interaction)
-  // first index refered to the spin sector (sorted as up-up, down-down, up-down)
-  double** PseudoPotentials;
-
-  //parameter taking into account the in-plane field defined by Q=(B_paralel/B_perpendicular)*distance	
-  double Qvector;
 
  public:
 
-  ParticleOnSphereWithSpinGenericHamiltonian();
 
-  // constructor from default datas
+  // default constructor
+  //
+  ParticleOnCylinderWithSpinGenericHamiltonian();
+
+  // constructor
   //
   // particles = Hilbert space associated to the system
   // nbrParticles = number of particles
   // lzmax = maximum Lz value reached by a particle in the state
+  // ratio = ratio between the width in the x direction and the width in the y direction
   // architecture = architecture to use for precalculation
-  // pseudoPotential = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
-  //                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
+  // nbrPseudopotentialsUpUp = number of pseudopotentials for up-up interaction
+  // pseudopotentialsUpUp = pseudopotential coefficients for up-up interaction
+  // nbrPseudopotentialsDownDown = number of pseudopotentials for down-down interaction
+  // pseudopotentialsDownDown = pseudopotential coefficients for down-down interaction
+  // nbrPseudopotentialsUpDown = number of pseudopotentials for up-down interaction
+  // pseudopotentialsUpDown = pseudopotential coefficients for up-down interaction
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   // onebodyPotentialUpUp =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin up, null pointer if none
   // onebodyPotentialDownDown =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin down, null pointer if none
   // onebodyPotentialUpDown =  one-body tunnelling potential (sorted from component on the lowest Lz state to component on the highest Lz state), on site, symmetric spin up / spin down
-  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
-  // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnSphereWithSpinGenericHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, double** pseudoPotential,
-					     double* onebodyPotentialUpUp, double* onebodyPotentialDownDown,
-					     double* onebodyPotentialUpDown, 
-					     AbstractArchitecture* architecture, long memory = -1, 
-					     bool onDiskCacheFlag = false, char* precalculationFileName = 0);
+  ParticleOnCylinderWithSpinGenericHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, double ratio,
+					       int nbrPseudopotentialsUpUp, double* pseudopotentialsUpUp,
+					       int nbrPseudopotentialsDownDown, double* pseudopotentialsDownDown,
+					       int nbrPseudopotentialsUpDown, double* pseudopotentialsUpDown,
+					       double spinFluxUp, double spinFluxDown, 
+					       AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0, 
+					       double * oneBodyPotentialUpUp = 0, double * oneBodyPotentialDownDown = 0, double * oneBodyPotentialUpDown = 0);
+
 
   // destructor
   //
-  ~ParticleOnSphereWithSpinGenericHamiltonian();
+  ~ParticleOnCylinderWithSpinGenericHamiltonian();
 
-  // set Hilbert space
-  //
-  // hilbertSpace = pointer to Hilbert space to use
-  virtual void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
-
-  // get Hilbert space on which Hamiltonian acts
-  //
-  // return value = pointer to used Hilbert space
-  virtual AbstractHilbertSpace* GetHilbertSpace ();
-
-  // return dimension of Hilbert space where Hamiltonian acts
-  //
-  // return value = corresponding matrix elementdimension
-  virtual int GetHilbertSpaceDimension ();
-  
-  // shift Hamiltonian from a given energy
-  //
-  // shift = shift value
-  virtual void ShiftHamiltonian (double shift);
 
  protected:
  
@@ -115,6 +98,21 @@ class ParticleOnSphereWithSpinGenericHamiltonian : public AbstractQHEOnSphereWit
   //   
   virtual void EvaluateInteractionFactors();
 
+  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
+  //
+  // m1 = first index
+  // m2 = second index
+  // m3 = third index
+  // m4 = fourth index
+  // nbrPseudopotentials = number of pseudopotentials
+  // pseudopotentials = pseudopotential coefficients
+  // spinFluxM1 = additional inserted flux for m1
+  // spinFluxM2 = additional inserted flux for m2
+  // spinFluxM3 = additional inserted flux for m3
+  // spinFluxM4 = additional inserted flux for m4
+  // return value = numerical coefficient
+  virtual double EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, int nbrPseudopotentials, double* pseudopotentials,
+						double spinFluxM1, double spinFluxM2, double spinFluxM3, double spinFluxM4);
 
 };
 
