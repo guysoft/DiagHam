@@ -261,6 +261,83 @@ int main(int argc, char** argv)
 	}
       else
 	{
+	  ComplexFlag = true;
+	  if (Manager.GetString("bin-hamiltonian") != 0)
+	    {
+	      if (HRep.ReadMatrix(Manager.GetString("bin-hamiltonian")) == false)
+		{
+		  cout << "can't read " << Manager.GetString("bin-hamiltonian") << endl;
+		  return -1;
+		}
+	    }
+	  else
+	    {
+	      MultiColumnASCIIFile HamiltonianFile;
+	      if (HamiltonianFile.Parse(Manager.GetString("multiple-binhamiltonians")) == false)
+		{
+		  return -1;
+		}
+	      if (HRep.ReadMatrix(HamiltonianFile(0, 0)) == false)
+		{
+		  cout << "can't read " << HamiltonianFile(0, 0) << endl;
+		  return -1;
+		}
+	      double* TmpWeigths;
+	      if (HamiltonianFile.GetNbrColumns() > 1)
+		{
+		  TmpWeigths = HamiltonianFile.GetAsDoubleArray(1);
+		}
+	      else
+		{
+		  TmpWeigths = new double[HamiltonianFile.GetNbrLines()];
+		  for (int i = 0; i < HamiltonianFile.GetNbrLines(); ++i)
+		    {
+		      TmpWeigths[i] = 1.0;
+		    }
+		}	      
+	      HRep *= TmpWeigths[0];
+	      for (int i = 1; i < HamiltonianFile.GetNbrLines(); ++i)
+		{
+		  HermitianMatrix TmpH;
+		  if (TmpH.ReadMatrix(HamiltonianFile(0, i)) == false)
+		    {
+		      cout << "can't read " << HamiltonianFile(0, i) << endl;
+		      return -1;
+		    }
+		  if (TmpH.GetNbrRow() != HRepReal.GetNbrRow())
+		    {
+		      cout << "error, " << HamiltonianFile(0, i) << " and " << HamiltonianFile(0, 0) 
+			   << " do not have the same size" << endl;
+		    }
+		  TmpH *= TmpWeigths[i];
+		  HRep += TmpH;
+		}
+	    }
+	  if (Manager.GetDouble("rescaling-factor") != 1.0)
+	    {
+	      HRep *= Manager.GetDouble("rescaling-factor");
+	    }
+	  if (Manager.GetString("add-diagonal") != 0)
+	    {
+	      MultiColumnASCIIFile DiagonalFile;
+	      if (DiagonalFile.Parse(Manager.GetString("add-diagonal")) == false)
+		{
+		  DiagonalFile.DumpErrors(cout);
+		  return -1;
+		}
+	      if (DiagonalFile.GetNbrLines() != HRep.GetNbrRow())
+		{
+		  cout << "error, " << Manager.GetString("add-diagonal") << " does not have the coorect number of lines (is " << DiagonalFile.GetNbrLines() 
+		       << ", should be " << HRep.GetNbrRow() << ")" << endl;
+		}
+	      double* TmpDiagonalElements = DiagonalFile.GetAsDoubleArray(Manager.GetInteger("column-diagonal"));
+	      for (int i = 0; i < HRep.GetNbrRow(); ++i)
+		{
+		  HRep.AddToMatrixElement(i, i, TmpDiagonalElements[i]);
+		}
+	    }
+	  DummyHilbertSpace = new UndescribedHilbertSpace(HRep.GetNbrRow());
+	  Hamiltonian = new ExplicitHamiltonian(DummyHilbertSpace, &HRep);
 	}
       Architecture.GetArchitecture()->SetDimension(Hamiltonian->GetHilbertSpaceDimension());	
       
