@@ -118,15 +118,15 @@ int main(int argc, char** argv)
     }
 
   AbstractHamiltonian* Hamiltonian = 0;
+  bool ComplexFlag = Manager.GetBoolean("complex");
   if (Manager.GetString("hamiltonian") != 0)
     {
-      if (Manager.GetBoolean("complex") == false)
+      if (ComplexFlag == false)
 	{
 	  Hamiltonian  = new FileBasedHamiltonian(Manager.GetString("hamiltonian"), Manager.GetInteger("data-column"), false, Manager.GetBoolean("fortran"), Manager.GetInteger("skip-lines"));
 	}
       else
 	{
-	  Lanczos.SetComplexAlgorithms();
 	  Hamiltonian  = new FileBasedHermitianHamiltonian(Manager.GetString("hamiltonian"), Manager.GetInteger("data-column"), false, Manager.GetBoolean("fortran"), Manager.GetInteger("skip-lines"));
 	}
       
@@ -139,7 +139,7 @@ int main(int argc, char** argv)
       
       Hamiltonian->ShiftHamiltonian(Manager.GetDouble("shift-spectrum"));
       
-      if (Manager.GetBoolean("complex") == false)
+      if (ComplexFlag == false)
 	{
 	  GenericRealMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, "", CommentLine, Manager.GetDouble("shift-spectrum"),  Manager.GetString("output-file"), true, EigenvectorFileName);
 	  MainTaskOperation TaskOperation (&Task);
@@ -147,6 +147,7 @@ int main(int argc, char** argv)
 	}
       else
 	{
+	  Lanczos.SetComplexAlgorithms();
 	  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, "", CommentLine, Manager.GetDouble("shift-spectrum"),  Manager.GetString("output-file"), true, EigenvectorFileName);
 	  MainTaskOperation TaskOperation (&Task);
 	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
@@ -157,8 +158,7 @@ int main(int argc, char** argv)
       UndescribedHilbertSpace* DummyHilbertSpace = 0;
       RealSymmetricMatrix HRepReal;
       HermitianMatrix HRep;
-      bool ComplexFlag = Manager.GetBoolean("complex");
-      if (Manager.GetBoolean("complex") == false)
+      if (ComplexFlag == false)
 	{
 	  if (Manager.GetString("bin-hamiltonian") != 0)
 	    {
@@ -261,7 +261,6 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  ComplexFlag = true;
 	  if (Manager.GetString("bin-hamiltonian") != 0)
 	    {
 	      if (HRep.ReadMatrix(Manager.GetString("bin-hamiltonian")) == false)
@@ -363,6 +362,7 @@ int main(int argc, char** argv)
 	}
       else
 	{
+	  Lanczos.SetComplexAlgorithms();
 	  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, "", CommentLine, Manager.GetDouble("shift-spectrum"),  Manager.GetString("output-file"), true, EigenvectorFileName);
 	  MainTaskOperation TaskOperation (&Task);
 	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
