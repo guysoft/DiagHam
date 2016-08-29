@@ -1915,15 +1915,15 @@ ComplexVector& ComplexVector::AddMultiply (const HermitianMatrix&  M, ComplexVec
     {
       this->Components[i].Re += M.DiagonalElements[i] * V.Components[i].Re;
       this->Components[i].Im += M.DiagonalElements[i] * V.Components[i].Im;
-      int pos = i - 1;
+      long pos = ((long) i) - 1l;
       int j = 0;
       for (; j < i; ++j)
 	{
 	  this->Components[i].Re += M.RealOffDiagonalElements[pos] * V.Components[j].Re + 
-	    M.ImaginaryOffDiagonalElements[pos ] * V.Components[j].Im;
+	    M.ImaginaryOffDiagonalElements[pos] * V.Components[j].Im;
 	  this->Components[i].Im += M.RealOffDiagonalElements[pos] * V.Components[j].Im 
 	    - M.ImaginaryOffDiagonalElements[pos] * V.Components[j].Re;
-	  pos += this->Dimension - j - 2 + M.Increment;
+	  pos += (long) (this->Dimension - j - 2 + M.Increment);
 	}
       ++pos;
       ++j;
@@ -1959,7 +1959,7 @@ ComplexVector& ComplexVector::AddMultiply (const HermitianMatrix&  M, ComplexVec
   double x;
   double y;
   int i = 0;
-  int Pos = sourceStart - 1;
+  long Pos = sourceStart - 1;
   for (; i < sourceStart; ++i)
     {
       x = 0.0;
@@ -1972,13 +1972,13 @@ ComplexVector& ComplexVector::AddMultiply (const HermitianMatrix&  M, ComplexVec
 	    + M.ImaginaryOffDiagonalElements[Pos] * V.Components[j].Re;
 	  ++Pos;
 	}
-      Pos += Inc1 - i;
+      Pos += (long) (Inc1 - i);
       this->Components[i].Re += x;
       this->Components[i].Im += y;
     }
   Inc1 = this->Dimension - Last + M.Increment;
-  int Pos2 = Pos;
-  int Pos3 = Pos;
+  long Pos2 = Pos;
+  long Pos3 = Pos;
   ++Pos2;
   for (; i < Last; ++i)
     {
@@ -1991,7 +1991,7 @@ ComplexVector& ComplexVector::AddMultiply (const HermitianMatrix&  M, ComplexVec
 	    M.ImaginaryOffDiagonalElements[Pos] * V.Components[j].Im;
 	  y += M.RealOffDiagonalElements[Pos] * V.Components[j].Im 
 	    - M.ImaginaryOffDiagonalElements[Pos] * V.Components[j].Re;
-	  Pos += Inc2 - j;
+	  Pos += (long) (Inc2 - j);
 	}
       x += M.DiagonalElements[i] * V.Components[i].Re;
       y += M.DiagonalElements[i] * V.Components[i].Im;
@@ -2004,7 +2004,7 @@ ComplexVector& ComplexVector::AddMultiply (const HermitianMatrix&  M, ComplexVec
 	    M.ImaginaryOffDiagonalElements[Pos2] * V.Components[j].Re;
 	  ++Pos2;
 	}
-      Pos2 += Inc1; 
+      Pos2 += (long) Inc1; 
       ++Pos3;
       this->Components[i].Re += x;
       this->Components[i].Im += y;
@@ -2020,11 +2020,11 @@ ComplexVector& ComplexVector::AddMultiply (const HermitianMatrix&  M, ComplexVec
 	    M.ImaginaryOffDiagonalElements[Pos] * V.Components[j].Im;
 	  y += M.RealOffDiagonalElements[Pos] * V.Components[j].Im - 
 	    M.ImaginaryOffDiagonalElements[Pos] * V.Components[j].Re;
-	  Pos += Inc2 - j;
+	  Pos += (long) (Inc2 - j);
 	}
       ++Pos3;
       this->Components[i].Re += x;
-       this->Components[i].Im += y;
+      this->Components[i].Im += y;
    }
   return *this;
 }
