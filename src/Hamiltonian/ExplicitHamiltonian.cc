@@ -202,6 +202,26 @@ RealVector& ExplicitHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVe
   return vDestination.AddMultiply(*(this->Hamiltonian), vSource, firstComponent, nbrComponent);
 }
 
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* ExplicitHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+							     int firstComponent, int nbrComponent)
+{
+  for (int i = 0; i < nbrVectors; ++i)
+    {
+      vDestinations[i].AddMultiply(*(this->Hamiltonian), vSources[i], firstComponent, nbrComponent);
+    }
+  return vDestinations;
+}
+ 
 // multiply a vector by the current hamiltonian and store result in another vector
 // low level function (no architecture optimization)
 //
@@ -255,6 +275,26 @@ ComplexVector& ExplicitHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, 
   return vDestination.AddMultiply(*(this->Hamiltonian), vSource, firstComponent, nbrComponent);
 }
  
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* ExplicitHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+								int firstComponent, int nbrComponent)
+{
+  for (int i = 0; i < nbrVectors; ++i)
+    {
+      vDestinations[i].AddMultiply(*(this->Hamiltonian), vSources[i], firstComponent, nbrComponent);
+    }
+  return vDestinations;
+}
+
 // return a list of left interaction operators
 //
 // return value = list of left interaction operators
