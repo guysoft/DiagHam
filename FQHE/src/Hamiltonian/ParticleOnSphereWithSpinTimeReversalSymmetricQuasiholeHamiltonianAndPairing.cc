@@ -87,6 +87,7 @@ ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::Par
   long MaxIndex;
   
   this->HermitianSymmetryFlag = true;
+//   this->HermitianSymmetryFlag = false;
   
   
   this->Architecture = architecture;
@@ -941,6 +942,7 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 	      if (TmpCoefficient != 0.0)
 		{
 		  NbrElements = TmpParticles->AuAd(i, lz, TmpLeftIndices, TmpInteractionElements);
+		  cout << i << " " <<  NbrElements << " " << endl;
 		  for (int j = 0; j < NbrElements; ++j)
 		    {
 		      TmpCounting[CurrentNbrCounting] = TmpLeftIndices[j];
@@ -1626,6 +1628,7 @@ RealVector* ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAnd
   delete TmpParticles;
   return vDestinations;
 }
+
 // ask if Hamiltonian implements hermitian symmetry operations
 //
 

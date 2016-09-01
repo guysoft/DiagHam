@@ -886,14 +886,20 @@ bool ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::GetLoadBalancin
 		  ++Pos;
 		}
 	    }
+	  while (Pos < (nbrTasks - 1))
+	    {
+	      LoadBalancingArray[Pos + 1] = MaxIndex + 1;
+	      SegmentSize[Pos] = 0;
+	      ++Pos;
+	    }
 	  this->LoadBalancingArray[nbrTasks] = MaxIndex + 1;
 	  SegmentSize[nbrTasks - 1] = TmpNbrElement;
 	  
 	  cout << "LoadBalancingArray=[ (" << (this->LoadBalancingArray[1] - this->LoadBalancingArray[0]) << ", " << SegmentSize[0] <<")";
 	  for (int i = 1; i < nbrTasks; ++i)
-	    cout << " (" << (this->LoadBalancingArray[i+1] - this->LoadBalancingArray[i]) << ", " << SegmentSize[i] << ")";
+	    cout << " (" << (this->LoadBalancingArray[i + 1] - this->LoadBalancingArray[i]) << ", " << SegmentSize[i] << ")";
 	  cout << "]"<< endl;
-	  delete [] SegmentSize;
+	  delete[] SegmentSize;
 	}
     }
   else

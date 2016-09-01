@@ -206,6 +206,9 @@ int main(int argc, char** argv)
   char* OutputNamePrefix = new char [512];
   char* NormName = new char[512];
   char* EnergyName;
+  char* InteractionName = new char[strlen(Manager.GetString("interaction-name")) + 1];
+  strcpy(InteractionName, Manager.GetString("interaction-name"));
+  
   ParticleOnSphere* Space = 0;
   
   if (Statistics == false)
@@ -227,7 +230,7 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("compute-energy"))
       {
 	EnergyName = new char[512];
-	sprintf (EnergyName, "bosons_sphere_%s_n_%d_2s_%d_dt_%g_t0_%g_nbrsteps_%d_energy.dat", Manager.GetString("interaction-name"), NbrParticles, LzMax, TmpTime, TimeShift, NbrTimeSteps);
+	sprintf (EnergyName, "bosons_sphere_%s_n_%d_2s_%d_dt_%g_t0_%g_nbrsteps_%d_energy.dat", InteractionName, NbrParticles, LzMax, TmpTime, TimeShift, NbrTimeSteps);
       }
       
     }
@@ -239,11 +242,11 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("compute-energy"))
       {
 	EnergyName = new char[512];
-	sprintf (EnergyName, "fermions_sphere_%s_n_%d_2s_%d_dt_%g_t0_%g_nbrsteps_%d_energy.dat", Manager.GetString("interaction-name"), NbrParticles, LzMax, TmpTime, TimeShift, NbrTimeSteps);
+	sprintf (EnergyName, "fermions_sphere_%s_n_%d_2s_%d_dt_%g_t0_%g_nbrsteps_%d_energy.dat", InteractionName, NbrParticles, LzMax, TmpTime, TimeShift, NbrTimeSteps);
       }
     }
 
-
+  delete[] InteractionName;
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 
   char* StateFileName = Manager.GetString("initial-state");
