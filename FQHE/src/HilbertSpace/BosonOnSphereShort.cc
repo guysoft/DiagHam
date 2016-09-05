@@ -47,6 +47,7 @@
 
 #include "Architecture/ArchitectureOperation/FQHESphereParticleEntanglementSpectrumOperation.h"
 #include "Architecture/ArchitectureOperation/FQHESphereSymmetrizeU1U1StateOperation.h"
+
 #include <math.h>
 #include <stdlib.h>
 #include <algorithm>
@@ -3994,9 +3995,8 @@ RealVector& BosonOnSphereShort::NormalizeJackToCylinder(RealVector& state, doubl
       Norm += state[i] * state[i];
    }
   delete[] LogFactorials;
-  cout<<"Norm= "<< Norm << endl;
-  state /= sqrtl(Norm);
- 
+  cout << "Norm= "<< Norm << endl;
+  state /= sqrtl(Norm); 
   return state;
 }
 

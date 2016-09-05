@@ -495,8 +495,6 @@ long QuasiholeOnSphereWithSpinAndPairing::GenerateStates()
   return TmpDimension;      
 }
 
-
-
 // evaluate Hilbert space dimension
 //
 // return value = Hilbert space dimension
@@ -552,6 +550,7 @@ int QuasiholeOnSphereWithSpinAndPairing::FindStateIndex(int nbrParticlesUp, int 
 // index = state index
 // alpha = reference on the value of alpha (up spin)
 // beta = reference on the value of beta (down spsin)
+
 void QuasiholeOnSphereWithSpinAndPairing::FindBetaIndices(int index, int& alpha, int& beta)
 {
   int nbrParticlesUp = this->NbrFermionUpFullSpace[index];
@@ -577,6 +576,7 @@ void QuasiholeOnSphereWithSpinAndPairing::FindBetaIndices(int index, int& alpha,
 // leftIndices = reference to an array containing the indices of the resulting states
 // interactionElements = reference to an array containing the matrix elements 
 // return value = number of left states that are connected to the initial state
+
 int QuasiholeOnSphereWithSpinAndPairing::AuAd (int index, int m, int*& leftIndices, double*& interactionElements)
 {
   int NumberCouplingElements;
@@ -645,6 +645,7 @@ int QuasiholeOnSphereWithSpinAndPairing::AuAd (int index, int m, int*& leftIndic
 // leftIndices = reference to an array containing the indices of the resulting states
 // interactionElements = reference to an array containing the matrix elements 
 // return value = number of left states that are connected to the initial state
+
 int QuasiholeOnSphereWithSpinAndPairing::AduAdd (int index, int m, int*& leftIndices, double*& interactionElements)
 {
   int NumberCouplingElements;
@@ -709,6 +710,7 @@ int QuasiholeOnSphereWithSpinAndPairing::AduAdd (int index, int m, int*& leftInd
 // leftIndices = reference to an array containing the indices of the resulting states
 // interactionElements = reference to an array containing the matrix elements 
 // return value = number of left states that are connected to the initial state
+
 int QuasiholeOnSphereWithSpinAndPairing::AddAd (int index, int m, int*& leftIndices, double*& interactionElements)
 {
   int NumberCouplingElements = 0;

@@ -64,6 +64,7 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
 
   friend class BosonOnSphereTwoLandauLevels;
   friend class BosonOnSphereShort;
+  friend class BosonOnSphereWithSU2Spin;
   
  protected:
 
@@ -768,6 +769,13 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // finalStateDown = reference on the array where the monomial spin down representation has to be stored
   virtual void ConvertToMonomial(unsigned long initialState, int*& finalStateUp, int*& finalStateDown);
 
+  // convert a state to its monomial representation
+  //
+  // initialState = initial bosonic state in its fermionic representation
+  // finalStateUp = reference on the array where the monomial spin up representation has to be stored
+  // finalStateDown = reference on the array where the monomial spin down representation has to be stored
+  virtual void ConvertToMonomial(unsigned long initialState, unsigned long*& finalStateUp, unsigned long*& finalStateDown);
+
   // convert a  state from its monomial representation
   //
   // initialStateUp = array where the monomial spin up representation is stored
@@ -780,7 +788,7 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // initialStateUp = array where the monomial spin up representation is stored
   // initialStateDown = array where the monomial spin down representation is stored
   // return value = state in its fermionic representation
-  virtual unsigned long ConvertFromMonomial(unsigned long * initialStateUp, unsigned long* initialStateDown);
+  virtual unsigned long ConvertFromMonomial(unsigned long* initialStateUp, unsigned long* initialStateDown);
   
   // compute the product of a monomial and the halperin 110 state
   //
@@ -871,6 +879,27 @@ inline void FermionOnSphereWithSpin::ConvertToMonomial(unsigned long initialStat
 	finalStateUp[IndexUp++] = j;
       if ((Tmp & 1ul) != 0ul)
 	finalStateDown[IndexDown++] = j;      
+    }
+}
+
+// convert a state to its monomial representation
+//
+// initialState = initial bosonic state in its fermionic representation
+// finalStateUp = reference on the array where the monomial spin up representation has to be stored
+// finalStateDown = reference on the array where the monomial spin down representation has to be stored
+
+inline void FermionOnSphereWithSpin::ConvertToMonomial(unsigned long initialState, unsigned long*& finalStateUp, unsigned long*& finalStateDown)
+{
+  int IndexUp = 0;
+  int IndexDown = 0;
+  unsigned long Tmp;
+  for (int j = this->LzMax; j >= 0; --j)
+    {
+      Tmp = initialState >> (j * 2);
+      if ((Tmp & 2ul) != 0ul)
+	finalStateUp[IndexUp++] = (unsigned long) j;
+      if ((Tmp & 1ul) != 0ul)
+	finalStateDown[IndexDown++] = (unsigned long) j;      
     }
 }
 

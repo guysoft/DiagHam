@@ -2957,8 +2957,10 @@ double BosonOnSphereWithSpin::OccupationCorrectionFactor(unsigned long * firstPo
 
 RealVector& BosonOnSphereWithSpin::ConvertToUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
 {
-  int* TmpMonomialReference = new int [this->NbrBosons];
-  int* TmpMonomial = new int [this->NbrBosons];
+  int TemporaryStateLzMaxUp;
+  int TemporaryStateLzMaxDown;
+  unsigned long* TmpMonomialReference = new unsigned long [this->NbrBosons];
+  unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
   double Factor = 1.0 / state[reference];
   state[reference] = 1.0;
   double* SqrtCoefficients = new double [this->LzMax + 1];
@@ -2969,84 +2971,69 @@ RealVector& BosonOnSphereWithSpin::ConvertToUnnormalizedMonomial(RealVector& sta
       SqrtCoefficients[k] = sqrt(Binomials.GetNumericalCoefficient(this->LzMax, k));
       InvSqrtCoefficients[k] = 1.0 / SqrtCoefficients[k];
     }
-//   unsigned long TmpState = this->StateDescription[reference];
-//   int Index = 0;
-//   for (int j = this->LzMax; j >= 0; --j)
-//     {
-//       switch ((TmpState >> (2 * j)) & 3ul)
-// 	{
-// 	case 0x1ul:
-// 	  TmpMonomialReference[Index++] = j;
-// 	  break;
-// 	case 0x2ul:
-// 	  TmpMonomialReference[Index++] = j;
-// 	  break;
-// 	case 0x3ul:
-// 	  {
-// 	    TmpMonomialReference[Index++] = j;
-// 	    TmpMonomialReference[Index++] = j;
-// 	  }
-// 	  break;
-// 	}
-//     }
-//   for (int i = 1; i < this->HilbertSpaceDimension; ++i)
-//     {
-//       Index = 0;
-//       TmpState = this->StateDescription[i];
-//       for (int j = this->LzMax; j >= 0; --j)
-// 	{
-// 	  switch ((TmpState >> (2 * j)) & 3ul)
-// 	    {
-// 	    case 0x1ul:
-// 	      TmpMonomial[Index++] = j;
-// 	      break;
-// 	    case 0x2ul:
-// 	      TmpMonomial[Index++] = j;
-// 	      break;
-// 	    case 0x3ul:
-// 	      {
-// 		TmpMonomial[Index++] = j;
-// 		TmpMonomial[Index++] = j;
-// 	      }
-// 	      break;
-// 	    }
-// 	}
-//       int Index1 = 0;
-//       int Index2 = 0;
-//       double Coefficient = Factor;
-//       while ((Index1 < this->NbrBosons) && (Index2 < this->NbrBosons))
-// 	{
-// 	  while ((Index1 < this->NbrBosons) && (TmpMonomialReference[Index1] > TmpMonomial[Index2]))
-// 	    {
-// 	      Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
-// 	      ++Index1;
-// 	    }
-// 	  while ((Index1 < this->NbrBosons) && (Index2 < this->NbrBosons) && (TmpMonomialReference[Index1] == TmpMonomial[Index2]))
-// 	    {
-// 	      ++Index1;
-// 	      ++Index2;
-// 	    }
-// 	  while ((Index2 < this->NbrBosons) && (TmpMonomialReference[Index1] < TmpMonomial[Index2]))
-// 	    {
-// 	      Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
-// 	      ++Index2;
-// 	    }	  
-// 	}
-//       while (Index1 < this->NbrBosons)
-// 	{
-// 	  Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
-// 	  ++Index1;
-// 	}
-//       while (Index2 < this->NbrBosons)
-// 	{
-// 	  Coefficient *= SqrtCoefficients[TmpMonomialReference[Index2]];
-// 	  ++Index2;
-// 	}
-//       state[i] *= Coefficient;
-//     }
+  cout << hex << this->StateDescriptionUp[reference] << " " << this->StateDescriptionDown[reference] << dec << " " << ((this->StateInfo[reference]  >> 10) & 0x3ffu) << endl;
+  this->ConvertToMonomial(this->StateDescriptionUp[reference], this->StateDescriptionDown[reference], (this->StateInfo[reference] >> 10) & 0x3ffu, TmpMonomialReference);
+  FactorialCoefficient ReferenceFactorial;
+  FactorialCoefficient Factorial;
+  this->FermionToBoson(this->StateDescriptionUp[reference], this->StateDescriptionDown[reference], this->LzMax, 
+		       this->TemporaryState, TemporaryStateLzMaxUp, TemporaryStateLzMaxDown);
+  for (int k = 0; k <= TemporaryStateLzMaxUp; ++k)
+    if (this->TemporaryState[k] > 1)
+      ReferenceFactorial.FactorialMultiply(this->TemporaryState[k] >> 16);
+  for (int k = 0; k <= TemporaryStateLzMaxDown; ++k)
+    if (this->TemporaryState[k] > 1)
+      ReferenceFactorial.FactorialMultiply(this->TemporaryState[k] & 0xffff);
+  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+    {
+      this->ConvertToMonomial(this->StateDescriptionUp[i], this->StateDescriptionDown[i], this->LzMax, TmpMonomial);
+      int Index1 = 0;
+      int Index2 = 0;
+      double Coefficient = Factor;
+      while ((Index1 < this->NbrBosons) && (Index2 < this->NbrBosons))
+	{
+	  while ((Index1 < this->NbrBosons) && (TmpMonomialReference[Index1] > TmpMonomial[Index2]))
+	    {
+	      Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+	      ++Index1;
+	    }
+	  while ((Index1 < this->NbrBosons) && (Index2 < this->NbrBosons) && (TmpMonomialReference[Index1] == TmpMonomial[Index2]))
+	    {
+	      ++Index1;
+	      ++Index2;
+	    }
+	  while ((Index2 < this->NbrBosons) && (TmpMonomialReference[Index1] < TmpMonomial[Index2]))
+	    {
+	      Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
+	      ++Index2;
+	    }	  
+	}
+      while (Index1 < this->NbrBosons)
+	{
+	  Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+	  ++Index1;
+	}
+      while (Index2 < this->NbrBosons)
+	{
+	  Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
+	  ++Index2;
+	}
+      if (symmetryFactor == true)
+	{
+	  Factorial = ReferenceFactorial;
+	  this->FermionToBoson(this->StateDescriptionUp[i], this->StateDescriptionDown[i], this->StateInfo[i], 
+			       this->TemporaryState, TemporaryStateLzMaxUp, TemporaryStateLzMaxDown);
+	  for (int k = 0; k <= TemporaryStateLzMaxUp; ++k)
+	    if (this->TemporaryState[k] > 1)
+	      Factorial.FactorialMultiply(this->TemporaryState[k] >> 16);
+	  for (int k = 0; k <= TemporaryStateLzMaxDown; ++k)
+	    if (this->TemporaryState[k] > 1)
+	      Factorial.FactorialMultiply(this->TemporaryState[k] & 0xffff);
+	  Coefficient *= sqrt(Factorial.GetNumericalValue());
+	}
+      state[i] *= Coefficient;
+    }
   delete[] TmpMonomialReference;
   delete[] TmpMonomial;
-  state[reference] = 1.0;
   return state;
 }
 

@@ -32,16 +32,22 @@
 #include "HilbertSpace/BosonOnSphereWithSU2Spin.h"
 #include "HilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
+#include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Vector/RealVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "MathTools/BinomialCoefficients.h"
+#include "MathTools/FactorialCoefficient.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
+#include "GeneralTools/ArrayTools.h"
+#include "GeneralTools/Permutations.h"
 
 #include <math.h>
 #include <cstdlib>
+#include <algorithm>
+#include <map>
 
 using std::cout;
 using std::endl;
@@ -495,6 +501,31 @@ ostream& BosonOnSphereWithSU2Spin::PrintState (ostream& Str, int state)
   return Str;
 }
 
+// print a given State using the monomial notation
+//
+// Str = reference on current output stream 
+// state = ID of the state to print
+// return value = reference on current output stream 
+
+ostream& BosonOnSphereWithSU2Spin::PrintStateMonomial (ostream& Str, long state)
+{
+  unsigned long* TmpMonomialUp = new unsigned long [this->NbrBosonsUp];
+  unsigned long* TmpMonomialDown = new unsigned long [this->NbrBosonsDown];
+  this->ConvertToMonomial(this->StateDescriptionUp[state], this->StateDescriptionDown[state], TmpMonomialUp, TmpMonomialDown);
+  Str << "[";
+  for (int i = 0; i < (this->NbrBosonsUp - 1); ++i)
+    Str << TmpMonomialUp[i] << ",";
+  Str << TmpMonomialUp[this->NbrBosonsUp - 1];
+  Str << "][";
+  for (int i = 0; i < (this->NbrBosonsDown - 1); ++i)
+    Str << TmpMonomialDown[i] << ",";
+  Str << TmpMonomialDown[this->NbrBosonsDown - 1];
+  Str << "]";
+  delete[] TmpMonomialUp;
+  delete[] TmpMonomialDown;
+  return Str;
+}
+ 
 // generate all states corresponding to the constraints
 // 
 // nbrBosons = number of bosons
@@ -1205,3 +1236,346 @@ ComplexMatrix BosonOnSphereWithSU2Spin::TransformationMatrixSU2ToU1(BosonOnSpher
     }
   return TmpMatrix;
 }
+
+// convert a state such that its components are now expressed in the unnormalized basis
+//
+// state = reference to the state to convert
+// reference = set which component as to be normalized to 1
+// symmetryFactor = if true also remove the symmetry factors
+// return value = converted state
+
+RealVector& BosonOnSphereWithSU2Spin::ConvertToUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
+{
+  unsigned long* TmpMonomialReferenceUp = new unsigned long [this->NbrBosonsUp];
+  unsigned long* TmpMonomialReferenceDown = new unsigned long [this->NbrBosonsDown];
+  unsigned long* TmpMonomialUp = new unsigned long [this->NbrBosonsUp];
+  unsigned long* TmpMonomialDown = new unsigned long [this->NbrBosonsDown];
+  double Factor = 1.0 / state[reference];
+  double* SqrtCoefficients = new double [this->LzMax + 1];
+  double* InvSqrtCoefficients = new double [this->LzMax + 1];
+  BinomialCoefficients Binomials(this->LzMax);
+  for (int k = 0; k <= this->LzMax; ++k)
+    {
+      SqrtCoefficients[k] = sqrt(Binomials.GetNumericalCoefficient(this->LzMax, k));
+      InvSqrtCoefficients[k] = 1.0 / SqrtCoefficients[k];
+    }
+  this->ConvertToMonomial(this->StateDescriptionUp[reference], this->StateDescriptionDown[reference], TmpMonomialReferenceUp, TmpMonomialReferenceDown);
+  FactorialCoefficient ReferenceFactorial;
+  FactorialCoefficient Factorial;
+  this->FermionToBoson(this->StateDescriptionUp[reference], this->StateDescriptionDown[reference], this->TemporaryStateUp, this->TemporaryStateDown);
+  for (int k = 0; k <= this->LzMax; ++k)
+    if (this->TemporaryStateUp[k] > 1)
+      ReferenceFactorial.FactorialMultiply(this->TemporaryStateUp[k]);
+  for (int k = 0; k <= this->LzMax; ++k)
+    if (this->TemporaryStateDown[k] > 1)
+      ReferenceFactorial.FactorialMultiply(this->TemporaryStateDown[k]);
+  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+    {
+      this->ConvertToMonomial(this->StateDescriptionUp[i], this->StateDescriptionDown[i], TmpMonomialUp, TmpMonomialDown);
+      int Index1 = 0;
+      int Index2 = 0;
+      double Coefficient = Factor;
+      while ((Index1 < this->NbrBosonsUp) && (Index2 < this->NbrBosonsUp))
+	{
+	  while ((Index1 < this->NbrBosonsUp) && (TmpMonomialReferenceUp[Index1] > TmpMonomialUp[Index2]))
+	    {
+	      Coefficient *= InvSqrtCoefficients[TmpMonomialReferenceUp[Index1]];
+	      ++Index1;
+	    }
+	  while ((Index1 < this->NbrBosonsUp) && (Index2 < this->NbrBosonsUp) && (TmpMonomialReferenceUp[Index1] == TmpMonomialUp[Index2]))
+	    {
+	      ++Index1;
+	      ++Index2;
+	    }
+	  while ((Index2 < this->NbrBosonsUp) && (TmpMonomialReferenceUp[Index1] < TmpMonomialUp[Index2]))
+	    {
+	      Coefficient *= SqrtCoefficients[TmpMonomialUp[Index2]];
+	      ++Index2;
+	    }	  
+	}
+      while (Index1 < this->NbrBosonsUp)
+	{
+	  Coefficient *= InvSqrtCoefficients[TmpMonomialReferenceUp[Index1]];
+	  ++Index1;
+	}
+      while (Index2 < this->NbrBosonsUp)
+	{
+	  Coefficient *= SqrtCoefficients[TmpMonomialUp[Index2]];
+	  ++Index2;
+	}
+      Index1 = 0;
+      Index2 = 0;
+      while ((Index1 < this->NbrBosonsDown) && (Index2 < this->NbrBosonsDown))
+	{
+	  while ((Index1 < this->NbrBosonsDown) && (TmpMonomialReferenceDown[Index1] > TmpMonomialDown[Index2]))
+	    {
+	      Coefficient *= InvSqrtCoefficients[TmpMonomialReferenceDown[Index1]];
+	      ++Index1;
+	    }
+	  while ((Index1 < this->NbrBosonsDown) && (Index2 < this->NbrBosonsDown) && (TmpMonomialReferenceDown[Index1] == TmpMonomialDown[Index2]))
+	    {
+	      ++Index1;
+	      ++Index2;
+	    }
+	  while ((Index2 < this->NbrBosonsDown) && (TmpMonomialReferenceDown[Index1] < TmpMonomialDown[Index2]))
+	    {
+	      Coefficient *= SqrtCoefficients[TmpMonomialDown[Index2]];
+	      ++Index2;
+	    }	  
+	}
+      while (Index1 < this->NbrBosonsDown)
+	{
+	  Coefficient *= InvSqrtCoefficients[TmpMonomialReferenceDown[Index1]];
+	  ++Index1;
+	}
+      while (Index2 < this->NbrBosonsDown)
+	{
+	  Coefficient *= SqrtCoefficients[TmpMonomialDown[Index2]];
+	  ++Index2;
+	}
+      if (symmetryFactor == true)
+	{
+	  Factorial = ReferenceFactorial;
+	  this->FermionToBoson(this->StateDescriptionUp[i], this->StateDescriptionDown[i], this->TemporaryStateUp, this->TemporaryStateDown);
+	  for (int k = 0; k <= LzMax; ++k)
+	    if (this->TemporaryStateUp[k] > 1)
+	      Factorial.FactorialMultiply(this->TemporaryStateUp[k]);
+	  for (int k = 0; k <= LzMax; ++k)
+	    if (this->TemporaryStateDown[k] > 1)
+	      Factorial.FactorialMultiply(this->TemporaryStateDown[k]);
+	  Coefficient *= sqrt(Factorial.GetNumericalValue());
+	}
+      state[i] *= Coefficient;
+    }
+  delete[] TmpMonomialReferenceUp;
+  delete[] TmpMonomialReferenceDown;
+  delete[] TmpMonomialUp;
+  delete[] TmpMonomialDown;
+  return state;
+}
+
+// normalize Jack with respect to cylinder basis
+//
+// state = reference to the Jack state to normalize
+// aspect = aspect ratio of cylinder
+// return value = normalized state
+
+RealVector& BosonOnSphereWithSU2Spin::NormalizeJackToCylinder(RealVector& state, double aspect)
+{
+  long double Pi_L = 3.14159265358979323846264338328L;
+  double Perimeter = sqrt(2.0 * M_PI * (double)(this->LzMax + 1) * aspect);
+  double KappaSquare = 2.0 * M_PI / Perimeter;
+  KappaSquare *= KappaSquare;
+  double TmpShift = 0.5 * ((double) this->LzMax);
+  long ReferenceIndex = 0l;
+  double Norm = 0.0;//state[0l] * state[0l];
+  double* LogFactorials = new double [this->NbrBosons + 1];
+  LogFactorials[0] = 0.0;
+  LogFactorials[1] = 0.0;
+  for (int i = 2; i <= this->NbrBosons; ++i)
+    {
+      LogFactorials[i] = LogFactorials[i - 1] + log((double) i);
+    }
+  double ReferenceExpFactor = 0.0;
+  this->FermionToBoson(this->StateDescriptionUp[ReferenceIndex], this->StateDescriptionDown[ReferenceIndex], this->TemporaryStateUp, this->TemporaryStateDown);
+  double SumMSquare = 0.0;
+  double TmpFactorial = 0.0;
+  for (int j = 0; j <= this->LzMax; ++j)
+    {
+      if (this->TemporaryStateUp[j] > 0)
+	{
+	  SumMSquare += (((((double) j) - TmpShift) * (((double) j) - TmpShift)) *  this->TemporaryStateUp[j]);
+	  TmpFactorial -= LogFactorials[this->TemporaryStateUp[j]]; 
+	}
+      if (this->TemporaryStateDown[j] > 0)
+	{
+	  SumMSquare += (((((double) j) - TmpShift) * (((double) j) - TmpShift)) *  this->TemporaryStateDown[j]);
+	  TmpFactorial -= LogFactorials[this->TemporaryStateDown[j]]; 
+	}
+    }  
+  ReferenceExpFactor = (KappaSquare * SumMSquare) + TmpFactorial;
+  for (int i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+    {
+      this->FermionToBoson(this->StateDescriptionUp[i], this->StateDescriptionDown[i], this->TemporaryStateUp, this->TemporaryStateDown);
+      SumMSquare = 0.0;
+      TmpFactorial = 0.0;
+      for (int j = 0; j <= this->LzMax; ++j)
+	{
+	  if (this->TemporaryStateUp[j] > 0)
+	    {
+	      SumMSquare += (((((double) j) - TmpShift) * (((double) j) - TmpShift)) *  this->TemporaryStateUp[j]);
+	      TmpFactorial -= LogFactorials[this->TemporaryStateUp[j]]; 
+	    }
+	  if (this->TemporaryStateDown[j] > 0)
+	    {
+	      SumMSquare += (((((double) j) - TmpShift) * (((double) j) - TmpShift)) *  this->TemporaryStateDown[j]);
+	      TmpFactorial -= LogFactorials[this->TemporaryStateDown[j]]; 
+	    }
+	}
+      state[i] *= exp(0.5 * ((KappaSquare * SumMSquare) + TmpFactorial - ReferenceExpFactor));      
+      Norm += state[i] * state[i];
+    }
+  cout << "Norm= "<< Norm << endl;
+  state /= sqrt(Norm);
+  delete[] LogFactorials;
+  return state;
+}
+
+// Compute the product of a spinful fermionic state with a Van der Monde determinant 
+//
+// fermionicState = reference on the spinful fermionic state
+// outputVector = reference on the vector where the result will be stored
+// fermionicSpace = pointer on the Hilbert Space associated to the spinful fermionic state
+// minIndex = first component to compute
+// nbrComponents = number of components to compute
+
+void BosonOnSphereWithSU2Spin::SlaterTimeSpinfulFermionicState(RealVector& fermionicState, RealVector& outputVector, FermionOnSphereWithSpin* fermionicSpace, 
+							       int minIndex, int nbrComponents)
+{
+  unsigned long* FinalStatesUp = new unsigned long [this->GetHilbertSpaceDimension()];
+  unsigned long* FinalStatesDown = new unsigned long [this->GetHilbertSpaceDimension()];
+  long* Weigth = new long [this->GetHilbertSpaceDimension()];
+  unsigned long* SlaterUp = new unsigned long[this->NbrBosons];
+  unsigned long* SlaterDown = new unsigned long[this->NbrBosons];
+  int MaxIndex = minIndex + nbrComponents;
+  FactorialCoefficient Coefficient;	
+  for (long i = minIndex; i < MaxIndex; i++)
+    {
+      if (fermionicState[i] != 0.0)
+	{
+	  // 	  fermionSpace->ConvertToMonomial(this->StateDescription[i], SlaterUp, Down);
+	  unsigned long NbrStates = this->VanDerMondeTimesSlater(SlaterUp, SlaterDown, FinalStatesUp, FinalStatesDown, Weigth);
+// 		  for (unsigned long Index = 0; Index < NbrStates; Index++)
+// 		    {
+// 		      int TmpLzMax = this->LzMax+this->NbrBosons - 1;
+// 		      while ((FinalStates[Index] >> TmpLzMax) == 0x0ul)
+// 			--TmpLzMax;
+// 		      this->FermionToBoson(FinalStates[Index],TmpLzMax,this->TemporaryState,this->TemporaryStateLzMax);
+// 		      Coefficient.SetToOne();
+// 		      for(int p = 0; p < this->TemporaryStateLzMax + 1; p++)
+// 			{
+// 			  Coefficient.FactorialMultiply(this->TemporaryState[p]);
+// 			}
+// 		      outputVector[this->FermionBasis->FindStateIndex(FinalStates[Index],TmpLzMax)] += fermionState1[i]*fermionState2[j]*Coefficient.GetIntegerValue()*Weigth[Index];
+// 		    }
+// 		}
+// 	    }
+	}
+    }
+}
+
+// Compute the product of a spinful Slater determinant with a Van der Monde determinant
+//
+// slaterUp = monomial representation of the Slater spin up part
+// slaterDown = monomial representation of the Slater spin up part
+// finalStatesUp = reference on the array where the spin up fermionic representation of the produced states will be stored
+// finalStatesDown = reference on the array where the spin down fermionic representation of the produced states will be stored
+// weigth = reference on the array where the coefficient of the states product will be stored
+// return value = number of produced states
+
+unsigned long BosonOnSphereWithSU2Spin::VanDerMondeTimesSlater (unsigned long* slaterUp, unsigned long* slaterDown, unsigned long*& finalStatesUp, 
+								unsigned long*& finalStatesDown, long*& weigth)
+{
+  unsigned long TmpNbrStates = 0;
+  long CoefUp = 1;
+  long CoefDown = 1;
+  unsigned long StateUp [this->NbrBosonsUp];
+  unsigned long StateDown [this->NbrBosonsDown];
+  unsigned long TmpState = 0ul;
+  unsigned long Sign = 0ul;
+  unsigned long Mask = 0ul;
+  
+  for (int i = 0; i < this->NbrBosonsUp; ++i)
+    {
+      StateUp[i] = slaterUp[i] + 1;
+    }
+  for (int i = 0; i < this->NbrBosonsDown; ++i)
+    {
+      StateDown[i] = slaterDown[i] + 1;
+    }
+  
+  this->ConvertFromMonomial(StateUp, StateDown, finalStatesUp[0], finalStatesDown[0]);
+  weigth[0] = CoefUp * CoefDown;
+  ++TmpNbrStates;
+  
+  while (std::prev_permutation(slaterUp, slaterUp + this->NbrBosonsUp))
+    {
+      CoefDown = 1;
+      for (int i = 0; i < this->NbrBosonsUp; ++i)
+	{
+	  StateUp[i] = slaterUp[i] + 1;
+	}
+      for (int i = 0; i < this->NbrBosonsDown; ++i)
+	{
+	  StateDown[i] = slaterDown[i] + 1;
+	}
+      
+      TmpState = 0ul;
+      Sign = 0ul;
+      for (int i = 0; i < this->NbrBosonsUp; ++i)
+	{
+	  Mask = (1ul << slaterUp[i]);
+	  unsigned long TmpState2 = TmpState & (Mask - 1ul);
+#ifdef  __64_BITS__
+	  TmpState2 ^= TmpState2 >> 32;
+#endif	
+	  TmpState2 ^= TmpState2 >> 16;
+	  TmpState2 ^= TmpState2 >> 8;
+	  TmpState2 ^= TmpState2 >> 4;
+	  TmpState2 ^= TmpState2 >> 2;
+	  TmpState2 ^= TmpState2 >> 1;
+	  Sign ^= TmpState2;
+	  TmpState |= Mask;
+	}
+      SortArrayDownOrdering(StateUp, this->NbrBosonsUp);
+      
+      if ((Sign & 0x1ul) == 0ul)
+	{
+	  CoefUp = 1l;
+	}
+      else
+	{
+	  CoefUp = -1l;
+	}
+      //      TmpNbrStates += SearchInArrayAndSetWeight(this->ConvertFromMonomial(State), finalStates, weigth, TmpNbrStates, CoefUp * CoefDown);
+
+      while (std::prev_permutation(slaterDown, slaterDown + this->NbrBosonsDown))
+	{
+	  for (int i = 0; i < this->NbrBosonsDown; ++i)
+	    {
+	      StateDown[i] = slaterDown[i] + 1;
+	    }
+	  
+	  TmpState = 0ul;
+	  Sign = 0ul;
+	  for (int i = 0; i < this->NbrBosonsDown; ++i)
+	    {
+	      Mask = (1ul << slaterDown[i]);
+	      unsigned long TmpState2 = TmpState & (Mask - 1ul);
+#ifdef  __64_BITS__
+	      TmpState2 ^= TmpState2 >> 32;
+#endif	
+	      TmpState2 ^= TmpState2 >> 16;
+	      TmpState2 ^= TmpState2 >> 8;
+	      TmpState2 ^= TmpState2 >> 4;
+	      TmpState2 ^= TmpState2 >> 2;
+	      TmpState2 ^= TmpState2 >> 1;
+	      Sign ^= TmpState2;
+	      TmpState |= Mask;
+	    }
+	  SortArrayDownOrdering(StateDown, this->NbrBosonsDown);
+	  
+	  if ((Sign & 0x1ul) == 0ul)
+	    {
+	      CoefDown = 1;
+	    }
+	  else
+	    {
+	      CoefDown = -1;
+	    }
+	  //	  TmpNbrStates += SearchInArrayAndSetWeight(this->ConvertFromMonomial(State),finalStates,weigth, TmpNbrStates,Coef);
+	}
+    }
+  return TmpNbrStates;
+}
+
