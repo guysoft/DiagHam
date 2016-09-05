@@ -156,4 +156,3 @@ ParticleOnSphereGenericAnisotropicHamiltonian.cc \
 ParticleOnTwistedTorusWithSpinAndMagneticTranslationsGenericHamiltonian.cc \
 ParticleOnCylinderWithSpinGenericHamiltonian.cc \
 ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingAllMomenta.cc
-
