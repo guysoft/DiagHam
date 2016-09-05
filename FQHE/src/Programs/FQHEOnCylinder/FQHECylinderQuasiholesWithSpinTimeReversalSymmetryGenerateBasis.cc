@@ -61,6 +61,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption ('\n', "charging-energy", "factor in front of the charging energy (i.e 1/(2C))", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "average-nbrparticles", "average number of particles", 0.0);
   (*SystemGroup) += new SingleIntegerOption ('\n', "optimize-chargingenergy", "find the optimal value of the charging energy such that it is minimal at the indicated number of particles (only valid if positive)", -1);
+  (*SystemGroup) += new BooleanOption ('\n', "only-optimize", "only compute the optimal value of the charging energy without generating the effective basis");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "fix-nbrparticles", "fix the number of particles for the two layer system (no restriction if negative)", -1);  
   (*SystemGroup) += new SingleDoubleOption ('\n', "degeneracy-error", "difference below which two energies are considered to be degenerate", 1.0e-12);
   (*SystemGroup) += new SingleStringOption ('\n', "directory", "use a specific directory for the input data instead of the current one (only useful when building the eigenstates in the full quasihole basis)");
@@ -264,6 +265,10 @@ int main(int argc, char** argv)
 	} 
       ChargingEnergy = (MinEnergyNbrParticlesMinus2 - MinEnergyNbrParticlesPlus2) / (8.0 * (((double) OptimizeNbrParticles) - AverageNbrParticles));
       cout << "optimal charging energy = " << ChargingEnergy << endl;
+      if (Manager.GetBoolean("only-optimize") == true)
+	{
+	  return 0;
+	}
       for (int i = 0; i < TotalNbrLevels; ++i)
 	{
 	  TwoLayerEnergies[i] = TwoLayerBareEnergies[i] + (ChargingEnergy * (((double) TwoLayerNbrParticles[i]) - AverageNbrParticles) * 

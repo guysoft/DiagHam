@@ -12,6 +12,7 @@
 #include "HilbertSpace/FermionOnSpherePTruncated.h"
 #include "HilbertSpace/FermionOnSpherePTruncatedLong.h"
 #include "HilbertSpace/BosonOnSpherePTruncated.h"
+#include "HilbertSpace/BosonOnSphereWithSU2Spin.h"
 
 #include "Options/Options.h"
 
@@ -323,6 +324,15 @@ int main(int argc, char** argv)
 	}
      else
        {
+	 if (HaldaneBasisFlag == false)
+	   {
+	     OutputBasis = new BosonOnSphereWithSU2Spin(NbrParticles, TotalLz, LzMax, TotalSz);
+	   }
+	 else
+	   {
+	     cout << "squezed basis is not supported for SU(2) spinful bosons" << endl;
+	     return -1;
+	   }
        }
     }
 

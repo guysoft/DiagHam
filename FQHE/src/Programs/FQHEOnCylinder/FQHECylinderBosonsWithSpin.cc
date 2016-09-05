@@ -1,10 +1,8 @@
 #include "HilbertSpace/AbstractQHEParticle.h"
 #include "HilbertSpace/ParticleOnSphereManager.h"
-#include "HilbertSpace/BosonOnSphereWithSpin.h"
+#include "HilbertSpace/BosonOnSphereWithSU2Spin.h"
 
-#include "Hamiltonian/ParticleOnSphereWithSpinGenericHamiltonian.h"
-#include "Hamiltonian/ParticleOnSphereWithSpinS2Hamiltonian.h"
-#include "Hamiltonian/ParticleOnSphereWithSpinL2Hamiltonian.h"
+#include "Hamiltonian/ParticleOnCylinderWithSpinGenericHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -111,7 +109,10 @@ int main(int argc, char** argv)
   bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
   double Ratio = Manager.GetDouble("aspect-ratio");
   double Perimeter = Manager.GetDouble("cylinder-perimeter");
-
+  if (Perimeter != 0.0)
+    {
+      Ratio = 2.0 * M_PI * (LzMax + 1) / (Perimeter * Perimeter);
+    }
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;  
   int InitialLz = Manager.GetInteger("initial-lz");
   int NbrLz = Manager.GetInteger("nbr-lz");
@@ -122,7 +123,7 @@ int main(int argc, char** argv)
 
   int NbrUp = (NbrBosons + TotalSpin) >> 1;
   int NbrDown = (NbrBosons - TotalSpin) >> 1;
-  if ((NbrUp < 0 ) || (NbrDown < 0 ))
+  if ((NbrUp < 0) || (NbrDown < 0))
     {
       cout << "This value of the spin z projection cannot be achieved with this particle number!" << endl;
       return -1;
@@ -216,8 +217,13 @@ int main(int argc, char** argv)
 	  Space->PrintState(cout, i) << endl;
 
       AbstractQHEOnSphereWithSpinHamiltonian* Hamiltonian;
-      Hamiltonian = new ParticleOnSphereWithSpinGenericHamiltonian(Space, NbrBosons, LzMax, PseudoPotentials, OneBodyPotentialUpUp, OneBodyPotentialDownDown, NULL, 
-								   Architecture.GetArchitecture(), Memory, onDiskCacheFlag, LoadPrecalculationFileName);
+      Hamiltonian = new ParticleOnCylinderWithSpinGenericHamiltonian(Space, NbrBosons, LzMax, Ratio,
+								     NbrPseudoPotentials[0], PseudoPotentials[0],
+								     NbrPseudoPotentials[1], PseudoPotentials[1],
+								     NbrPseudoPotentials[2], PseudoPotentials[2],
+								     Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
+								     Architecture.GetArchitecture(), Memory, 0, OneBodyPseudoPotentials[0], 
+								     OneBodyPseudoPotentials[1], OneBodyPseudoPotentials[2]);
 	  
      
       Hamiltonian->ShiftHamiltonian(Shift);
