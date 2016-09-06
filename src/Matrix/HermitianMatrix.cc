@@ -191,50 +191,54 @@ HermitianMatrix::HermitianMatrix(MPI::Intracomm& communicator, int id, bool broa
 	  if (broadcast == true)
 	    {
 	      communicator.Bcast(this->DiagonalElements, this->NbrRow, MPI::DOUBLE, id);    
-	      communicator.Bcast(this->RealOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id); 
-	      communicator.Bcast(this->ImaginaryOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id);  
-// 	      long Tmp = NbrOffDiagonalElements;
-// 	      long Index = 0l;
-// 	      while (Tmp >= (1l << 30))
-// 		{
-// 		  communicator.Bcast(&(this->RealOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id);      
-// 		  Tmp -= (1l << 30);
-// 		  Index += (1l << 30);
-// 		}
-//  	      communicator.Bcast(&(this->RealOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id);      
-// 	      Tmp = NbrOffDiagonalElements;
-// 	      Index = 0l;
-// 	      while (Tmp >= (1l << 30))
-// 		{
-// 		  communicator.Bcast(&(this->ImaginaryOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id);     
-// 		  Tmp -= (1l << 30);
-// 		  Index += (1l << 30);
-// 		}
-// 	      communicator.Bcast(&(this->ImaginaryOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id);     
+// 	      communicator.Bcast(this->RealOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id); 
+// 	      communicator.Bcast(this->ImaginaryOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id);  
+	      long Tmp = NbrOffDiagonalElements;
+	      long Index = 0l;
+	      while (Tmp >= (1l << 30))
+		{
+		  communicator.Bcast(&(this->RealOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id);      
+		  Tmp -= (1l << 30);
+		  Index += (1l << 30);
+		}
+	      if (Tmp > 0l)
+		communicator.Bcast(&(this->RealOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id);      
+	      Tmp = NbrOffDiagonalElements;
+	      Index = 0l;
+	      while (Tmp >= (1l << 30))
+		{
+		  communicator.Bcast(&(this->ImaginaryOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id);     
+		  Tmp -= (1l << 30);
+		  Index += (1l << 30);
+		}
+	      if (Tmp > 0l)
+		communicator.Bcast(&(this->ImaginaryOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id);     
 	    }
 	  else
 	    {
-	      communicator.Recv(this->RealOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id, 1);   
-	      communicator.Recv(this->ImaginaryOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id, 1);   
-// 	      communicator.Recv(this->DiagonalElements, this->NbrRow, MPI::DOUBLE, id, 1);   
-// 	      long Tmp = NbrOffDiagonalElements;
-// 	      long Index = 0l;
-// 	      while (Tmp >= (1l << 30))
-// 		{
-// 		  communicator.Recv(&(this->RealOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id, 1);   
-// 		  Tmp -= (1l << 30);
-// 		  Index += (1l << 30);
-// 		}
-// 	      communicator.Recv(&(this->RealOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id, 1);   
-// 	      Tmp = NbrOffDiagonalElements;
-// 	      Index = 0l;
-// 	      while (Tmp >= (1l << 30))
-// 		{
-// 		  communicator.Recv(&(this->ImaginaryOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id, 1);   
-// 		  Tmp -= (1l << 30);
-// 		  Index += (1l << 30);
-// 		}
-// 	      communicator.Recv(&(this->ImaginaryOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id, 1);   
+	      communicator.Recv(this->DiagonalElements, this->NbrRow, MPI::DOUBLE, id, 1);  
+// 	      communicator.Recv(this->RealOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id, 1);   
+// 	      communicator.Recv(this->ImaginaryOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id, 1);   
+	      long Tmp = NbrOffDiagonalElements;
+	      long Index = 0l;
+	      while (Tmp >= (1l << 30))
+		{
+		  communicator.Recv(&(this->RealOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id, 1);   
+		  Tmp -= (1l << 30);
+		  Index += (1l << 30);
+		}
+	      if (Tmp > 0l)
+		communicator.Recv(&(this->RealOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id, 1);   
+	      Tmp = NbrOffDiagonalElements;
+	      Index = 0l;
+	      while (Tmp >= (1l << 30))
+		{
+		  communicator.Recv(&(this->ImaginaryOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id, 1);   
+		  Tmp -= (1l << 30);
+		  Index += (1l << 30);
+		}
+	      if (Tmp > 0l)
+		communicator.Recv(&(this->ImaginaryOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id, 1);   
 	    }
 	}
     }
@@ -2138,26 +2142,28 @@ Matrix& HermitianMatrix::SendMatrix(MPI::Intracomm& communicator, int id)
     return *this;
   long NbrOffDiagonalElements = (((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l;
   communicator.Send(this->DiagonalElements, this->NbrRow, MPI::DOUBLE, id, 1);    
-  communicator.Send(this->RealOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id, 1);
-  communicator.Send(this->ImaginaryOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id, 1);  
-//   long Tmp = NbrOffDiagonalElements;
-//   long Index = 0l;
-//   while (Tmp >= (1l << 30))
-//     {
-//       communicator.Send(&(this->RealOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id, 1);    
-//       Tmp -= (1l << 30);
-//       Index += (1l << 30);
-//     }
-//   communicator.Send(&(this->RealOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id, 1);    
-//   Tmp = NbrOffDiagonalElements;
-//   Index = 0l;
-//   while (Tmp >= (1l << 30))
-//     {
-//       communicator.Send(&(this->ImaginaryOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id, 1);    
-//       Tmp -= (1l << 30);
-//       Index += (1l << 30);
-//     }
-//   communicator.Send(&(this->ImaginaryOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id, 1);    
+//   communicator.Send(this->RealOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id, 1);
+//   communicator.Send(this->ImaginaryOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id, 1);  
+  long Tmp = NbrOffDiagonalElements;
+  long Index = 0l;
+  while (Tmp >= (1l << 30))
+    {
+      communicator.Send(&(this->RealOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id, 1);    
+      Tmp -= (1l << 30);
+      Index += (1l << 30);
+    }
+  if (Tmp > 0l)
+    communicator.Send(&(this->RealOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id, 1);    
+  Tmp = NbrOffDiagonalElements;
+  Index = 0l;
+  while (Tmp >= (1l << 30))
+    {
+      communicator.Send(&(this->ImaginaryOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id, 1);    
+      Tmp -= (1l << 30);
+      Index += (1l << 30);
+    }
+  if (Tmp > 0l)
+    communicator.Send(&(this->ImaginaryOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id, 1);    
   return *this;
 }
 
@@ -2205,26 +2211,28 @@ Matrix& HermitianMatrix::BroadcastMatrix(MPI::Intracomm& communicator,  int id)
     }
   long NbrOffDiagonalElements = (((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l;
   communicator.Bcast(this->DiagonalElements, this->NbrRow, MPI::DOUBLE, id);    
-  communicator.Bcast(this->RealOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id); 
-  communicator.Bcast(this->ImaginaryOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id);  
-//   long Tmp = NbrOffDiagonalElements;
-//   long Index = 0l;
-//   while (Tmp >= (1l << 30))
-//     {
-//       communicator.Bcast(&(this->RealOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id);    
-//       Tmp -= (1l << 30);
-//       Index += (1l << 30);
-//     }
-//   communicator.Bcast(&(this->RealOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id);    
-//   Tmp = NbrOffDiagonalElements;
-//   Index = 0l;
-//   while (Tmp >= (1l << 30))
-//     {
-//       communicator.Bcast(&(this->ImaginaryOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id);    
-//       Tmp -= (1l << 30);
-//       Index += (1l << 30);
-//     }
-//   communicator.Bcast(&(this->ImaginaryOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id);    
+//   communicator.Bcast(this->RealOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id); 
+//   communicator.Bcast(this->ImaginaryOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id);  
+  long Tmp = NbrOffDiagonalElements;
+  long Index = 0l;
+  while (Tmp >= (1l << 30))
+    {
+      communicator.Bcast(&(this->RealOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id);    
+      Tmp -= (1l << 30);
+      Index += (1l << 30);
+    }
+  if (Tmp > 0l)
+    communicator.Bcast(&(this->RealOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id);    
+  Tmp = NbrOffDiagonalElements;
+  Index = 0l;
+  while (Tmp >= (1l << 30))
+    {
+      communicator.Bcast(&(this->ImaginaryOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id);    
+      Tmp -= (1l << 30);
+      Index += (1l << 30);
+    }
+  if (Tmp > 0l)
+    communicator.Bcast(&(this->ImaginaryOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id);    
   return *this;
 }
 
@@ -2259,26 +2267,28 @@ Matrix& HermitianMatrix::ReceiveMatrix(MPI::Intracomm& communicator, int id)
     }
   long NbrOffDiagonalElements = (((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l;
   communicator.Recv(this->DiagonalElements, this->NbrRow, MPI::DOUBLE, id, 1);    
-  communicator.Recv(this->RealOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id, 1);
-  communicator.Recv(this->ImaginaryOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id, 1);
-//   long Tmp = NbrOffDiagonalElements;
-//   long Index = 0l;
-//   while (Tmp >= (1l << 30))
-//     {
-//       communicator.Recv(&(this->RealOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id, 1);    
-//       Tmp -= (1l << 30);
-//       Index += (1l << 30);
-//     }
-//   communicator.Recv(&(this->RealOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id, 1);    
-//   Tmp = NbrOffDiagonalElements;
-//   Index = 0l;
-//   while (Tmp >= (1l << 30))
-//     {
-//       communicator.Recv(&(this->ImaginaryOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id, 1);    
-//       Tmp -= (1l << 30);
-//       Index += (1l << 30);
-//     }
-//   communicator.Recv(&(this->ImaginaryOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id, 1);    
+//   communicator.Recv(this->RealOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id, 1);
+//   communicator.Recv(this->ImaginaryOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id, 1);
+  long Tmp = NbrOffDiagonalElements;
+  long Index = 0l;
+  while (Tmp >= (1l << 30))
+    {
+      communicator.Recv(&(this->RealOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id, 1);    
+      Tmp -= (1l << 30);
+      Index += (1l << 30);
+    }
+  if (Tmp > 0l)
+    communicator.Recv(&(this->RealOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id, 1);    
+  Tmp = NbrOffDiagonalElements;
+  Index = 0l;
+  while (Tmp >= (1l << 30))
+    {
+      communicator.Recv(&(this->ImaginaryOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id, 1);    
+      Tmp -= (1l << 30);
+      Index += (1l << 30);
+    }
+  if (Tmp > 0l)
+    communicator.Recv(&(this->ImaginaryOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id, 1);    
   return *this;
 }
 
@@ -2346,16 +2356,17 @@ Matrix& HermitianMatrix::SumMatrix(MPI::Intracomm& communicator, int id)
     }
   try
     {
-      communicator.Reduce(this->RealOffDiagonalElements, TmpComponents, NbrOffDiagonalElements, MPI::DOUBLE, MPI::SUM, id);
-//      long Tmp = NbrOffDiagonalElements;
-//      long Index = 0l;
-//      while (Tmp >= (1l << 30))
-// 	{
-// 	  communicator.Reduce(&(this->RealOffDiagonalElements[Index]), TmpComponents, (1l << 30), MPI::DOUBLE, MPI::SUM, id);	  
-// 	  Tmp -= (1l << 30);
-// 	  Index += (1l << 30);
-// 	}
-//       communicator.Reduce(&(this->RealOffDiagonalElements[Index]), TmpComponents, Tmp, MPI::DOUBLE, MPI::SUM, id);
+//      communicator.Reduce(this->RealOffDiagonalElements, TmpComponents, NbrOffDiagonalElements, MPI::DOUBLE, MPI::SUM, id);
+     long Tmp = NbrOffDiagonalElements;
+     long Index = 0l;
+     while (Tmp >= (1l << 30))
+	{
+	  communicator.Reduce(&(this->RealOffDiagonalElements[Index]), TmpComponents, (1l << 30), MPI::DOUBLE, MPI::SUM, id);	  
+	  Tmp -= (1l << 30);
+	  Index += (1l << 30);
+	}
+      if (Tmp > 0l)
+	communicator.Reduce(&(this->RealOffDiagonalElements[Index]), TmpComponents, Tmp, MPI::DOUBLE, MPI::SUM, id);
     } 
   catch ( MPI::Exception e)
     {
@@ -2368,16 +2379,17 @@ Matrix& HermitianMatrix::SumMatrix(MPI::Intracomm& communicator, int id)
     }
   try
     {
-      communicator.Reduce(this->ImaginaryOffDiagonalElements, TmpComponents, NbrOffDiagonalElements, MPI::DOUBLE, MPI::SUM, id);
-//       long Tmp = NbrOffDiagonalElements;
-//       long Index = 0l;
-//       while (Tmp >= (1l << 30))
-// 	{
-// 	  communicator.Reduce(&(this->ImaginaryOffDiagonalElements[Index]), TmpComponents, (1l << 30), MPI::DOUBLE, MPI::SUM, id);	  
-// 	  Tmp -= (1l << 30);
-// 	  Index += (1l << 30);
-// 	}
-//       communicator.Reduce(&(this->ImaginaryOffDiagonalElements[Index]), TmpComponents, Tmp, MPI::DOUBLE, MPI::SUM, id);
+//      communicator.Reduce(this->ImaginaryOffDiagonalElements, TmpComponents, NbrOffDiagonalElements, MPI::DOUBLE, MPI::SUM, id);
+      long Tmp = NbrOffDiagonalElements;
+      long Index = 0l;
+      while (Tmp >= (1l << 30))
+	{
+	  communicator.Reduce(&(this->ImaginaryOffDiagonalElements[Index]), TmpComponents, (1l << 30), MPI::DOUBLE, MPI::SUM, id);	  
+	  Tmp -= (1l << 30);
+	  Index += (1l << 30);
+	}
+      if (Tmp > 0l)
+	communicator.Reduce(&(this->ImaginaryOffDiagonalElements[Index]), TmpComponents, Tmp, MPI::DOUBLE, MPI::SUM, id);
     } 
   catch ( MPI::Exception e)
     {
@@ -2411,26 +2423,28 @@ Matrix* HermitianMatrix::BroadcastClone(MPI::Intracomm& communicator, int id)
       communicator.Bcast(TmpArray, 3, MPI::INT, id);      
       long NbrOffDiagonalElements = (((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l;
       communicator.Bcast(this->DiagonalElements, this->NbrRow, MPI::DOUBLE, id);    
-      communicator.Bcast(this->RealOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id);
-      communicator.Bcast(this->ImaginaryOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id);
-//       long Tmp = NbrOffDiagonalElements;
-//       long Index = 0l;
-//       while (Tmp >= (1l << 30))
-// 	{
-// 	  communicator.Bcast(&(this->RealOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id);    
-// 	  Tmp -= (1l << 30);
-// 	  Index += (1l << 30);
-// 	}
-//       communicator.Bcast(&(this->RealOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id);    
-//       Tmp = NbrOffDiagonalElements;
-//       Index = 0l;
-//       while (Tmp >= (1l << 30))
-// 	{
-// 	  communicator.Bcast(&(this->ImaginaryOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id);    
-// 	  Tmp -= (1l << 30);
-// 	  Index += (1l << 30);
-// 	}
-//       communicator.Bcast(&(this->ImaginaryOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id);    
+//       communicator.Bcast(this->RealOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id);
+//       communicator.Bcast(this->ImaginaryOffDiagonalElements, NbrOffDiagonalElements, MPI::DOUBLE, id);
+      long Tmp = NbrOffDiagonalElements;
+      long Index = 0l;
+      while (Tmp >= (1l << 30))
+	{
+	  communicator.Bcast(&(this->RealOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id);    
+	  Tmp -= (1l << 30);
+	  Index += (1l << 30);
+	}
+      if (Tmp > 0l)
+	communicator.Bcast(&(this->RealOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id);    
+      Tmp = NbrOffDiagonalElements;
+      Index = 0l;
+      while (Tmp >= (1l << 30))
+	{
+	  communicator.Bcast(&(this->ImaginaryOffDiagonalElements[Index]), (1l << 30), MPI::DOUBLE, id);    
+	  Tmp -= (1l << 30);
+	  Index += (1l << 30);
+	}
+      if (Tmp > 0l)
+	communicator.Bcast(&(this->ImaginaryOffDiagonalElements[Index]), Tmp, MPI::DOUBLE, id);    
     }
   else
     {
