@@ -111,7 +111,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "confining-leftpower", "integer exponent of the left confining potential", 1);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "confining-leftstrength", "strength of the left confining potential", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "confining-leftoffset", "position (with respect to half of the cylinder) above which the left confining potential is equal to zero", 0.0);
-  (*SystemGroup) += new  BooleanOption ('\n', "confining-momentum", "if set, the confining potential is defined in the momentum space");
+  (*SystemGroup) += new BooleanOption ('\n', "confining-momentum", "if set, the confining potential is defined in the momentum space");
+  (*SystemGroup) += new BooleanOption('\n', "confining-phase", "add an additional phase information");
+  (*SystemGroup) += new SingleDoubleOption ('\n', "confining-leftphase", "additional phase for the confining left potential in pi units", 0.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "confining-rightphase", "additional phase for the confining right potential in pi units", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "flux-insertion", "include a flux insertion (in flux quantum unit) along the cylinder axis", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "y-extension", "if not zero, the confining potential is non zero along the perimeter only in the region [-L/2,L/2]", 0.0); 
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-momentumtransfer", "when using a finite extension along the cylinder perimeter, truncate the potentials to a given maximum momentum transfer (negative if no truncation should be performed)", -1);
@@ -168,65 +171,58 @@ int main(int argc, char** argv)
   char* OutputFile = 0;
   if (Manager.GetString("output-file") == 0)
     {
-      OutputFile = new char[512];
+      char* OutputFilePrefix = new char[512];
       if (Manager.GetBoolean("confining-momentum") == true)
 	{
-	  if (Manager.GetDouble("flux-insertion") == 0.0)
+	  if (Manager.GetDouble("y-extension") == 0.0)
 	    {
-	      if (Manager.GetDouble("y-extension") == 0.0)
-		{
-		  sprintf (OutputFile, "confining_momentum_cylinder_perimeter_%.6f_2s_%d_alphar_%d_x0r_%.6f_v0r_%.6f_alphal_%d_x0l_%.6f_v0l_%.6f.dat", 
-			   Perimeter, NbrFluxQuanta, RightAlpha, RightShift, RightV0, LeftAlpha, LeftShift, LeftV0);
-		}
-	      else
-		{
-		  sprintf (OutputFile, "confining_momentum_cylinder_perimeter_%.6f_2s_%d_alphar_%d_x0r_%.6f_v0r_%.6f_alphal_%d_x0l_%.6f_v0l_%.6f_l_%.6f.dat", 
-			   Perimeter, NbrFluxQuanta, RightAlpha, RightShift, RightV0, LeftAlpha, LeftShift, LeftV0, Manager.GetDouble("y-extension"));
-		}
+	      sprintf (OutputFilePrefix, "confining_momentum_cylinder_perimeter_%.6f_2s_%d_", Perimeter, NbrFluxQuanta);
 	    }
 	  else
 	    {
-	      if (Manager.GetDouble("y-extension") == 0.0)
-		{
-		  sprintf (OutputFile, "confining_momentum_cylinder_perimeter_%.6f_2s_%d_alphar_%d_x0r_%.6f_v0r_%.6f_alphal_%d_x0l_%.6f_v0l_%.6f_flux_%.6f.dat", 
-			   Perimeter, NbrFluxQuanta, RightAlpha, RightShift, RightV0, LeftAlpha, LeftShift, LeftV0, Manager.GetDouble("flux-insertion"));
-		}
-	      else
-		{
-		  sprintf (OutputFile, "confining_momentum_cylinder_perimeter_%.6f_2s_%d_alphar_%d_x0r_%.6f_v0r_%.6f_alphal_%d_x0l_%.6f_v0l_%.6f_l_%.6f_flux_%.6f.dat", 
-			   Perimeter, NbrFluxQuanta, RightAlpha, RightShift, RightV0, LeftAlpha, LeftShift, LeftV0, Manager.GetDouble("y-extension"), 
-			   Manager.GetDouble("flux-insertion"));
-		}
+	      sprintf (OutputFilePrefix, "confining_momentum_cylinder_perimeter_%.6f_2s_%d_l_%.6f_", Perimeter, NbrFluxQuanta, 
+		       Manager.GetDouble("y-extension"));
 	    }
 	}
       else
 	{
-	  if (Manager.GetDouble("flux-insertion") == 0.0)
+	  if (Manager.GetDouble("y-extension") == 0.0)
 	    {
-	      if (Manager.GetDouble("y-extension") == 0.0)
-		{
-		  sprintf (OutputFile, "confining_cylinder_perimeter_%.6f_2s_%d_alphar_%d_x0r_%.6f_v0r_%.6f_alphal_%d_x0l_%.6f_v0l_%.6f.dat", 
-			   Perimeter, NbrFluxQuanta, RightAlpha, RightShift, RightV0, LeftAlpha, LeftShift, LeftV0);
-		}
-	      else
-		{
-		  sprintf (OutputFile, "confining_cylinder_perimeter_%.6f_2s_%d_alphar_%d_x0r_%.6f_v0r_%.6f_alphal_%d_x0l_%.6f_v0l_%.6ff_l_%.6f.dat", 
-			   Perimeter, NbrFluxQuanta, RightAlpha, RightShift, RightV0, LeftAlpha, LeftShift, LeftV0, Manager.GetDouble("y-extension"));
-		}
+	      sprintf (OutputFilePrefix, "confining_cylinder_perimeter_%.6f_2s_%d_", Perimeter, NbrFluxQuanta);
 	    }
 	  else
 	    {
-	      if (Manager.GetDouble("y-extension") == 0.0)
-		{
-		  sprintf (OutputFile, "confining_cylinder_perimeter_%.6f_2s_%d_alphar_%d_x0r_%.6f_v0r_%.6f_alphal_%d_x0l_%.6f_v0l_%.6f_flux_%.6f.dat", 
-			   Perimeter, NbrFluxQuanta, RightAlpha, RightShift, RightV0, LeftAlpha, LeftShift, LeftV0, Manager.GetDouble("flux-insertion"));
-		}
-	      else
-		{
-		  sprintf (OutputFile, "confining_cylinder_perimeter_%.6f_2s_%d_alphar_%d_x0r_%.6f_v0r_%.6f_alphal_%d_x0l_%.6f_v0l_%.6ff_l_%.6f_flux_%.6f.dat", 
-			   Perimeter, NbrFluxQuanta, RightAlpha, RightShift, RightV0, LeftAlpha, LeftShift, LeftV0, Manager.GetDouble("y-extension"),
-			   Manager.GetDouble("flux-insertion"));
-		}
+	      sprintf (OutputFilePrefix, "confining_cylinder_perimeter_%.6f_2s_%d_l_%.6f_", Perimeter, NbrFluxQuanta, 
+		       Manager.GetDouble("y-extension"));
+	    }
+	}
+      OutputFile = new char[512 + strlen(OutputFilePrefix)];
+      if (Manager.GetDouble("flux-insertion") == 0.0)
+	{
+	  if (Manager.GetBoolean("confining-phase") == false)
+	    {
+	      sprintf (OutputFile, "%salphar_%d_x0r_%.6f_v0r_%.6f_alphal_%d_x0l_%.6f_v0l_%.6f.dat", 
+		       OutputFilePrefix, RightAlpha, RightShift, RightV0, LeftAlpha, LeftShift, LeftV0);
+	    }
+	  else
+	    {
+	      sprintf (OutputFile, "%salphar_%d_x0r_%.6f_v0r_%.6f_phir_%.6f_alphal_%d_x0l_%.6f_v0l_%.6f_phil_%.6f.dat", 
+		       OutputFilePrefix, RightAlpha, RightShift, RightV0, Manager.GetDouble("confining-rightphase"),
+		       LeftAlpha, LeftShift, LeftV0, Manager.GetDouble("confining-leftphase"));
+	    }
+	}
+      else
+	{
+	  if (Manager.GetBoolean("confining-phase") == false)
+	    {
+	      sprintf (OutputFile, "%salphar_%d_x0r_%.6f_v0r_%.6f_alphal_%d_x0l_%.6f_v0l_%.6f_flux_%.6f.dat", 
+		       OutputFilePrefix, RightAlpha, RightShift, RightV0, LeftAlpha, LeftShift, LeftV0, Manager.GetDouble("flux-insertion"));
+	    }
+	  else
+	    {
+	      sprintf (OutputFile, "%salphar_%d_x0r_%.6f_v0r_%.6f_phir_%.6f_alphal_%d_x0l_%.6f_v0l_%.6f_phil_%.6f_flux_%.6f.dat", 
+		       OutputFilePrefix, RightAlpha, RightShift, RightV0, Manager.GetDouble("confining-rightphase"),
+		       LeftAlpha, LeftShift, LeftV0, Manager.GetDouble("confining-leftphase"), Manager.GetDouble("flux-insertion"));
 	    }
 	}
     }
@@ -467,6 +463,25 @@ int main(int argc, char** argv)
 		  else
 		    {
 		      File << TmpCoefficient << " " << TmpCoefficient;
+		    }
+		  if (Manager.GetBoolean("confining-phase") == true)
+		    {
+		      if (Manager.GetBoolean("confining-momentum") == true)
+			{
+			  double TmpPhase = 0.0;
+			  if ((((double) (MinN + m - NbrFluxQuanta)) * 0.5) < (LeftShift * Perimeter / (2.0 * M_PI)))
+			    {
+			      TmpPhase += Manager.GetDouble("confining-leftphase");
+			    }
+			  else
+			    {
+			      if ((((double) (MinN + m - NbrFluxQuanta)) * 0.5) > (RightShift * Perimeter / (2.0 * M_PI)))
+				{
+				  TmpPhase += Manager.GetDouble("confining-rightphase");
+				}
+			    }
+			  File << " " << TmpPhase;			      
+			}
 		    }
 		  File << endl;
 		}

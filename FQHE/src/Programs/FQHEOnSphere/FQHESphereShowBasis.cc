@@ -14,6 +14,7 @@
 #include "HilbertSpace/FermionOnSphereWithSU3Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
+#include "HilbertSpace/BosonOnSphereWithSU2Spin.h"
 #include "HilbertSpace/BosonOnSphereWithSU3Spin.h"
 #include "HilbertSpace/BosonOnSphereWithSU4Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSpinAllSz.h"
@@ -72,6 +73,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistic instead of bosonic statistic");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "consider particles with SU(2) spin");
+  (*SystemGroup) += new BooleanOption  ('\n', "use-alt", "use alternative Hilbert space for the SU(2) spinful bosonic states");
   (*SystemGroup) += new BooleanOption  ('\n', "4-D", "consider particles on the 4D sphere (only available in the bosonic mode)");
   (*SystemGroup) += new BooleanOption  ('\n', "cp2", "consider particles on the CP2 ");
   (*SystemGroup) += new BooleanOption  ('\n', "truncated-cp2", "consider particles on a truncated CP2 geometry");
@@ -278,9 +280,20 @@ int main(int argc, char** argv)
 	      if (SU2SpinFlag == true)
 		{
 		  if (AllSzFlag == false)
-		    Space = new BosonOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+		    {
+		      if (Manager.GetBoolean("use-alt") == false)
+			{		       
+			  Space = new BosonOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+			}
+		      else
+			{		       
+			  Space = new BosonOnSphereWithSU2Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+			}
+		    }
 		  else
-		    Space = new BosonOnSphereWithSpinAllSz(NbrParticles, TotalLz, NbrFluxQuanta);
+		    {
+		      Space = new BosonOnSphereWithSpinAllSz(NbrParticles, TotalLz, NbrFluxQuanta);
+		    }
 		}
 	      else
 		{

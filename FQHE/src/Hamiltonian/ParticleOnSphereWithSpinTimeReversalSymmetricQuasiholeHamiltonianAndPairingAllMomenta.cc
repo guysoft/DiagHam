@@ -1064,6 +1064,42 @@ long ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 		}	
 	    }
 	}
+      if (this->OneBodyOffDiagonalInteractionFactorsPairing != 0)
+	{
+	  for (int k = 0; k < this->MaximumMomentumTransfer; ++k)
+	    {
+	      for (int lz = 0; lz < (this->LzMax - k); ++lz)
+		{
+		  TmpCoefficient = this->OneBodyOffDiagonalInteractionFactorsPairing[lz][k];
+		  if ((TmpCoefficient.Re != 0.0) || (TmpCoefficient.Im != 0.0))
+		    {
+		      NbrElements = TmpParticles->AuAd(i, lz + k + 1, lz, TmpLeftIndices, TmpInteractionElements);
+		      Memory += NbrElements;
+		      TmpTotal += NbrElements;
+		      this->NbrInteractionPerComponent[i - this->PrecalculationShift] += NbrElements;
+		      NbrElements = TmpParticles->AuAd(i, lz, lz + k + 1, TmpLeftIndices, TmpInteractionElements);
+		      Memory += NbrElements;
+		      TmpTotal += NbrElements;
+		      this->NbrInteractionPerComponent[i - this->PrecalculationShift] += NbrElements;
+		      if (this->HermitianSymmetryFlag == false)
+			{
+			  NbrElements = TmpParticles->AduAdd(i, lz + k + 1, lz, TmpLeftIndices, TmpInteractionElements);
+			  Memory += NbrElements;
+			  TmpTotal += NbrElements;
+			  this->NbrInteractionPerComponent[i - this->PrecalculationShift] += NbrElements;
+			  NbrElements = TmpParticles->AduAdd(i, lz, lz + k + 1, TmpLeftIndices, TmpInteractionElements);
+			  Memory += NbrElements;
+			  TmpTotal += NbrElements;
+			  this->NbrInteractionPerComponent[i - this->PrecalculationShift] += NbrElements;
+			}
+		    }	
+		}
+	    }
+	}
+
+
+
+
       for (int k = 0; k < CurrentNbrCounting; ++k)
 	TmpCounting[k] = 0;
       CurrentNbrCounting = 0;
@@ -1227,6 +1263,51 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 			  ++CurrentNbrCounting;
 			}
 		    }
+		}
+	    }
+	}
+      if (this->OneBodyOffDiagonalInteractionFactorsPairing != 0)
+	{
+	  for (int k = 0; k < this->MaximumMomentumTransfer; ++k)
+	    {
+	      for (int lz = 0; lz < (this->LzMax - k); ++lz)
+		{
+		  TmpCoefficient = this->OneBodyOffDiagonalInteractionFactorsPairing[lz][k];
+		  if ((TmpCoefficient.Re != 0.0) || (TmpCoefficient.Im != 0.0))
+		    {
+		      NbrElements = TmpParticles->AuAd(i, lz + k + 1, lz, TmpLeftIndices, TmpInteractionElements);
+		      for (int j = 0; j < NbrElements; ++j)
+			{
+			  TmpCounting[CurrentNbrCounting] = TmpLeftIndices[j];
+			  TmpCoefficients[CurrentNbrCounting] = TmpCoefficient * TmpInteractionElements[j];
+			  ++CurrentNbrCounting;
+			}
+		      NbrElements = TmpParticles->AuAd(i, lz, lz + k + 1, TmpLeftIndices, TmpInteractionElements);
+		      for (int j = 0; j < NbrElements; ++j)
+			{
+			  TmpCounting[CurrentNbrCounting] = TmpLeftIndices[j];
+			  TmpCoefficients[CurrentNbrCounting] = TmpCoefficient * TmpInteractionElements[j];
+			  ++CurrentNbrCounting;
+			}
+		      if (this->HermitianSymmetryFlag == false)
+			{
+			  TmpCoefficient.Im *= -1.0;
+			  NbrElements = TmpParticles->AduAdd(i, lz + k + 1, lz, TmpLeftIndices, TmpInteractionElements);
+			  for (int j = 0; j < NbrElements; ++j)
+			    {
+			      TmpCounting[CurrentNbrCounting] = TmpLeftIndices[j];
+			      TmpCoefficients[CurrentNbrCounting] = TmpCoefficient * Conj(TmpInteractionElements[j]);
+			      ++CurrentNbrCounting;
+			    }
+			  NbrElements = TmpParticles->AduAdd(i, lz, lz + k + 1, TmpLeftIndices, TmpInteractionElements);
+			  for (int j = 0; j < NbrElements; ++j)
+			    {
+			      TmpCounting[CurrentNbrCounting] = TmpLeftIndices[j];
+			      TmpCoefficients[CurrentNbrCounting] = TmpCoefficient * Conj(TmpInteractionElements[j]);
+			      ++CurrentNbrCounting;
+			    }
+			}
+		    }	
 		}
 	    }
 	}

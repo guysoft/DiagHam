@@ -557,8 +557,8 @@ int main(int argc, char** argv)
 		      for (int MomentumTransfer = 1; MomentumTransfer <= Manager.GetInteger("offdiagonal-density"); ++MomentumTransfer)
 			{
 			  int ShiftedOperatorLzValue = (OperatorLzValue + LzMax) >> 1;
-			  int LeftTotalLz = RightTotalLz - (2 * MomentumTransfer);
 			  int LeftStateNbrParticles = RightStateNbrParticles;
+			  int LeftTotalLz = RightTotalLz - (2 * MomentumTransfer);
 			  if ((LeftTotalLz >= -RightStateMaxTotalLz) && (LeftTotalLz <= RightStateMaxTotalLz) && 
 			      (abs(OperatorLzValue - (2 * MomentumTransfer)) <= LzMax))
 			    {
@@ -636,7 +636,7 @@ int main(int argc, char** argv)
 				    {
 				      for (int k = 0; k < LeftNbrQuasiholeStates; ++k)
 					{ 
-					  TmpOutputMatrix.SetMatrixElement(k, i, (LeftVectors[k] * TmpAdAOutputVectors[i]));
+					  TmpOutputMatrix.SetMatrixElement(k, i, -(LeftVectors[k] * TmpAdAOutputVectors[i]));
 					}
 				    }
 				  delete[] TmpAdAOutputVectors;
@@ -648,6 +648,110 @@ int main(int argc, char** argv)
 				  char* TmpOutputFileName = new char[256 + strlen(FilePrefix)];
 				  sprintf (TmpOutputFileName, "%s_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d_%d.mat", FilePrefix, KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, 
 					   (OperatorLzValue - (2 * MomentumTransfer)), OperatorLzValue);
+				  char* AsciiTmpOutputFileName = new char[16 + strlen(TmpOutputFileName)];
+				  sprintf (AsciiTmpOutputFileName, "%s.txt", TmpOutputFileName);
+				  if (Manager.GetBoolean("enable-ascii") == true)
+				    TmpOutputMatrix.WriteAsciiMatrix(AsciiTmpOutputFileName, true);
+				  TmpOutputMatrix.WriteMatrix(TmpOutputFileName);			  
+				  delete[] TmpOutputFileName;
+				}
+			      delete LeftSpace;		      		      
+			      timeval TotalEndingTime;
+			      gettimeofday (&(TotalEndingTime), 0);
+			      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+						    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));               
+			      cout << "computing c^+c matrix elements done in " << Dt << "s" << endl;
+			    }
+			  LeftTotalLz = RightTotalLz + (2 * MomentumTransfer);
+			  if ((LeftTotalLz >= -RightStateMaxTotalLz) && (LeftTotalLz <= RightStateMaxTotalLz) && 
+			      (abs(OperatorLzValue + (2 * MomentumTransfer)) <= LzMax))
+			    {
+			      ParticleOnSphere* LeftSpace = 0;
+			      if (Statistics == true)
+				{
+				  LeftSpace = new FermionOnSphere(LeftStateNbrParticles, LeftTotalLz, LzMax);
+				}
+			      else
+				{
+				  LeftSpace = new BosonOnSphereShort(LeftStateNbrParticles, LeftTotalLz, LzMax);
+				}     
+			      int LeftNbrQuasiholeStates = 0;
+			      for (long i = 0l; i < LeftSpace->GetHilbertSpaceDimension(); ++i)
+				{
+				  if (LeftSpace->HasPauliExclusions(i, KValue, RValue + (KValue * FermionFactor)) == true)
+				    {
+				      ++LeftNbrQuasiholeStates;
+				    }
+				}
+			      timeval TotalStartingTime;
+			      gettimeofday (&(TotalStartingTime), 0);
+			      if (LeftNbrQuasiholeStates > 0)
+				{
+				  cout << "  computing <Psi_{N}|c^+_{" << (OperatorLzValue + (2 * MomentumTransfer)) << "}c_{" << OperatorLzValue << "}|Psi_{N}>" << endl;
+				  cout << "  found " << LeftNbrQuasiholeStates << " quasihole states with N=" << LeftStateNbrParticles << " LzMax=" << LzMax << " TotalLz=" << LeftTotalLz << endl;
+				  unsigned long** LeftRootConfigurations = new unsigned long*[LeftNbrQuasiholeStates];
+				  LeftNbrQuasiholeStates = 0;
+				  if (Manager.GetBoolean("show-admissible"))
+				    {
+				      cout << "  admissible configurations : " << endl;
+				      for (long i = 0l; i < LeftSpace->GetHilbertSpaceDimension(); ++i)
+					{
+					  if (LeftSpace->HasPauliExclusions(i, KValue, RValue + (KValue * FermionFactor)) == true)
+					    {
+					      LeftRootConfigurations[LeftNbrQuasiholeStates] = new unsigned long[LzMax + 1];
+					      LeftSpace->GetOccupationNumber(i, LeftRootConfigurations[LeftNbrQuasiholeStates]);
+					      cout << "  ";
+					      for (int j = 0; j <= LzMax; ++j)
+						{
+						  cout << LeftRootConfigurations[LeftNbrQuasiholeStates][j] << " ";
+						}
+					      cout << endl;
+					      ++LeftNbrQuasiholeStates;
+					    }
+					}
+				    }
+				  else
+				    {
+				      for (long i = 0l; i < LeftSpace->GetHilbertSpaceDimension(); ++i)
+					{
+					  if (LeftSpace->HasPauliExclusions(i, KValue, RValue + (KValue * FermionFactor)) == true)
+					    {
+					      LeftRootConfigurations[LeftNbrQuasiholeStates] = new unsigned long[LzMax + 1];
+					      LeftSpace->GetOccupationNumber(i, LeftRootConfigurations[LeftNbrQuasiholeStates]);
+					      ++LeftNbrQuasiholeStates;
+					    }
+					}
+				    }
+				  RealMatrix LeftVectors = FQHECylinderQuasiholeMatrixElementsComputeQuasiholeStates(LeftSpace, LeftRootConfigurations, 
+														     LeftNbrQuasiholeStates, KValue, RValue,
+														     LeftStateNbrParticles, LzMax, LeftTotalLz, Ratio, FilePrefix, Architecture.GetArchitecture());
+				  RightSpace->SetTargetSpace(LeftSpace);
+				  RealVector* TmpAdAOutputVectors = new RealVector[RightNbrQuasiholeStates];
+				  for (int j = 0; j < RightNbrQuasiholeStates; ++j)
+				    {
+				      TmpAdAOutputVectors[j] = RealVector(LeftSpace->GetHilbertSpaceDimension());
+				    }
+				  RealMatrix TmpOutputMatrix(LeftNbrQuasiholeStates, RightNbrQuasiholeStates, true);
+				  Architecture.GetArchitecture()->SetDimension(RightSpace->GetHilbertSpaceDimension());		  
+				  ParticleOnSphereDensityOperator TmpOperator (RightSpace, ShiftedOperatorLzValue + MomentumTransfer, ShiftedOperatorLzValue);
+				  MultipleVectorOperatorMultiplyOperation TmpOperation (&TmpOperator, TmpAdAInputVectors, TmpAdAOutputVectors, RightNbrQuasiholeStates);
+				  TmpOperation.ApplyOperation(Architecture.GetArchitecture());
+				  for (int i = 0; i < RightNbrQuasiholeStates; ++i)
+				    {
+				      for (int k = 0; k < LeftNbrQuasiholeStates; ++k)
+					{ 
+					  TmpOutputMatrix.SetMatrixElement(k, i, -(LeftVectors[k] * TmpAdAOutputVectors[i]));
+					}
+				    }
+				  delete[] TmpAdAOutputVectors;
+				  for (int k = 0; k < LeftNbrQuasiholeStates; ++k)
+				    {
+				      delete[] LeftRootConfigurations[k];
+				    }
+				  delete[] LeftRootConfigurations;
+				  char* TmpOutputFileName = new char[256 + strlen(FilePrefix)];
+				  sprintf (TmpOutputFileName, "%s_qh_k_%d_r_%d_n_%d_nphi_%d_lz_%d_cdc_%d_%d.mat", FilePrefix, KValue, RValue, RightStateNbrParticles, LzMax, RightTotalLz, 
+					   (OperatorLzValue + (2 * MomentumTransfer)), OperatorLzValue);
 				  char* AsciiTmpOutputFileName = new char[16 + strlen(TmpOutputFileName)];
 				  sprintf (AsciiTmpOutputFileName, "%s.txt", TmpOutputFileName);
 				  if (Manager.GetBoolean("enable-ascii") == true)

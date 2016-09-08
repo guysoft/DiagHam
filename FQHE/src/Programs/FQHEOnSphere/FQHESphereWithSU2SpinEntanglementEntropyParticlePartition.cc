@@ -8,6 +8,7 @@
 
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
+#include "HilbertSpace/BosonOnSphereWithSU2Spin.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -67,12 +68,13 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "no-sz", "indicates that the input states are not Sz eigenstates");
   (*SystemGroup) += new BooleanOption  ('c', "complex", "Assume vectors consist of complex numbers");
   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
-  (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
-  (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
   (*SystemGroup) += new BooleanOption  ('\n', "realspace-cut", "use real space partition instead of particle partition");
   (*SystemGroup) += new SingleDoubleOption ('\n', "realspace-theta-top", "inclination angle that defines the top of the real space parition (in degrees)", 0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "realspace-theta-bot", "inclination angle that defines the bottom of the real space parition (in degrees)", 90);
   (*SystemGroup) += new SingleDoubleOption ('\n', "realspace-phi-range", "angle between the 2 longitudes that defines the real space parition (in degrees)", 360);
+  (*SystemGroup) += new BooleanOption  ('\n', "use-alt", "use alternative Hilbert space for  bosonic states");
+  (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
+  (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
   (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
   (*OutputGroup) += new SingleIntegerOption  ('\n', "lza-eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with a fixed total Lz value", 0);
   (*OutputGroup) += new SingleIntegerOption  ('\n', "sza-eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with a fixed total Sz value", 0);
@@ -231,7 +233,14 @@ int main(int argc, char** argv)
 	{
 	  if (NoSzFlag == false)
 	    {
-	      Spaces[i] = new BosonOnSphereWithSpin (NbrParticles, TotalLz[i], LzMax, TotalSz[i]);
+	      if (Manager.GetBoolean("use-alt") == false)
+		{
+		  Spaces[i] = new BosonOnSphereWithSpin (NbrParticles, TotalLz[i], LzMax, TotalSz[i]);
+		}
+	      else
+		{
+		  Spaces[i] = new BosonOnSphereWithSU2Spin (NbrParticles, TotalLz[i], LzMax, TotalSz[i]);
+		}
 	    }
 	  else
 	    {

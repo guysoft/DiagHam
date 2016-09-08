@@ -21,6 +21,7 @@
 
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/MultiColumnASCIIFile.h"
 
 #include <iostream>
 #include <cstring>
@@ -67,6 +68,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "all-fixednbrparticles", "do the calculation for all the fixed particle number sector from 0 to --nbr-particles");
   (*SystemGroup) += new SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
+  (*SystemGroup) += new SingleStringOption ('\n', "confining-file", "file describing the confining potential");
+  (*SystemGroup) += new SingleStringOption ('\n', "superconducting-file", "file describing the superconducting order paarameter");
   (*SystemGroup) += new SingleDoubleOption ('\n', "charging-energy", "factor in front of the charging energy (i.e 1/(2C))", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "average-nbrparticles", "average number of particles", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "force-negativeky", "manually force to compute the negative ky sectors if ky is conserved");
@@ -119,7 +122,6 @@ int main(int argc, char** argv)
   
   int KValue = 1;
   int RValue = 2;
-  int MaximumMomentumTranfer = 0;
 
   double Ratio = Manager.GetDouble("aspect-ratio");
   double Perimeter = Manager.GetDouble("cylinder-perimeter");
@@ -157,39 +159,194 @@ int main(int argc, char** argv)
   double* OneBodyPotentialDownDown = 0;
   double* OneBodyPotentialUpDown = 0;
   double* OneBodyPotentialPairing = 0;
+  double** OffDiagonalOneBodyPotentialUpUp = 0;
+  double** OffDiagonalOneBodyPotentialDownDown = 0;
+  Complex* ComplexOneBodyPotentialPairing = 0;
+  Complex** OffDiagonalComplexOneBodyPotentialPairing = 0;
   double** PseudoPotentials  = 0;
   bool PreserveKySymmetryFlag = false;//true;
-  int MaxMomentumTransfer = 0;
+  int MaximumMomentumTransfer = 0;
 
-  if (Manager.GetString("interaction-file") == 0)
+  if ((Manager.GetString("interaction-file") == 0) && (Manager.GetString("confining-file") == 0))
     {
       cout << "an interaction file has to be provided" << endl;
       return -1;
     }
-  else
+
+  if (Manager.GetString("interaction-file") != 0) 
     {
       if (FQHESphereSU2GetPseudopotentialsWithPairing(Manager.GetString("interaction-file"), LzMax, PseudoPotentials, 
 						      OneBodyPotentialUpUp, OneBodyPotentialDownDown, OneBodyPotentialUpDown, OneBodyPotentialPairing) == false)
 	{
 	  return -1;
 	}
+      if (OneBodyPotentialUpDown != 0)
+	{
+	  cout << "warning, OneBodyPotentialUpDown is not supported" << endl;
+	}
+      if (PseudoPotentials != 0)
+	{
+	  cout << "warning, there should be no two-body pseudopotentials. Two-body interactions are implemented through the restriction to the quasihole Hilbert space" << endl;
+	}
+      if (OneBodyPotentialPairing != 0)
+	{
+	  ComplexOneBodyPotentialPairing = new Complex[LzMax + 1];
+	  for (int i = 0; i <= LzMax; ++i)
+	    {
+	      ComplexOneBodyPotentialPairing[i] = OneBodyPotentialPairing[i];
+	    }
+	}
     }
-  if (OneBodyPotentialUpDown != 0)
+  else
     {
-      cout << "warning, OneBodyPotentialUpDown is not supported" << endl;
-    }
-  if (PseudoPotentials != 0)
-    {
-      cout << "warning, there should be no two-body pseudopotentials. Two-body interactions are implemented through the restriction to the quasihole Hilbert space" << endl;
-    }
-
-  Complex* ComplexOneBodyPotentialPairing = 0;
-  if (OneBodyPotentialPairing != 0)
-    {
-      ComplexOneBodyPotentialPairing = new Complex[LzMax + 1];
+      MultiColumnASCIIFile ConfiningFile;
+      if (ConfiningFile.Parse(Manager.GetString("confining-file")) == false)
+	{
+	  ConfiningFile.DumpErrors(cout);
+	  return -1;
+	}
+      if ((ConfiningFile.GetNbrColumns() < 4) || (ConfiningFile.GetNbrLines() == 0))
+	{
+	  cout << "error, " << Manager.GetString("confining-file") << " has an invalid format" << endl;
+	  return -1;
+	}
+      int* CreationIndices = ConfiningFile.GetAsIntegerArray(0);
+      int* AnnihilationIndices = ConfiningFile.GetAsIntegerArray(1);
+      double* TmpUpUpPotential = ConfiningFile.GetAsDoubleArray(2);
+      double* TmpDownDownPotential = ConfiningFile.GetAsDoubleArray(3);
+      for (int i = 0; i < ConfiningFile.GetNbrLines(); ++i)
+	{
+	  if ((CreationIndices[i] < 0) || (AnnihilationIndices[i] < 0) || (CreationIndices[i] > LzMax) || (AnnihilationIndices[i] > LzMax))
+	    {
+	      cout << "invalid indices line " << (i+1) << endl;
+	      return -1;
+	    }
+	  if (abs(CreationIndices[i] - AnnihilationIndices[i]) > MaximumMomentumTransfer)
+	    {
+	      MaximumMomentumTransfer = abs(CreationIndices[i] - AnnihilationIndices[i]);
+	    }
+	}
+      OneBodyPotentialUpUp = new double[LzMax + 1];
+      OneBodyPotentialDownDown = new double[LzMax + 1];
       for (int i = 0; i <= LzMax; ++i)
 	{
-	  ComplexOneBodyPotentialPairing[i] = OneBodyPotentialPairing[i];
+	  OneBodyPotentialUpUp[i] = 0.0;
+	  OneBodyPotentialDownDown[i] = 0.0;	  
+	}
+      if (MaximumMomentumTransfer > 0)
+	{
+	  OffDiagonalOneBodyPotentialUpUp = new double*[LzMax + 1];
+	  OffDiagonalOneBodyPotentialDownDown = new double*[LzMax + 1];
+	  for (int i = 0; i <= LzMax; ++i)
+	    {
+	      OffDiagonalOneBodyPotentialUpUp[i] = new double[MaximumMomentumTransfer];
+	      OffDiagonalOneBodyPotentialDownDown[i] = new double[MaximumMomentumTransfer];
+	      for (int j = 0; j < MaximumMomentumTransfer; ++j)	  
+		{
+		  OffDiagonalOneBodyPotentialUpUp[i][j] = 0.0;
+		  OffDiagonalOneBodyPotentialDownDown[i][j] = 0.0;
+		}
+	    }	  
+	}
+      for (int i = 0; i < ConfiningFile.GetNbrLines(); ++i)
+	{
+	  int TmpMomentumTransfer = CreationIndices[i] - AnnihilationIndices[i];
+	  if (TmpMomentumTransfer == 0)
+	    {
+	      OneBodyPotentialUpUp[CreationIndices[i]] = TmpUpUpPotential[i];
+	      OneBodyPotentialDownDown[CreationIndices[i]] = TmpDownDownPotential[i];
+	    }
+	  else
+	    {
+	      if (TmpMomentumTransfer > 0)
+		{
+		  OffDiagonalOneBodyPotentialUpUp[CreationIndices[i]][TmpMomentumTransfer - 1] = TmpUpUpPotential[i];
+		  OffDiagonalOneBodyPotentialDownDown[CreationIndices[i]][TmpMomentumTransfer - 1] = TmpDownDownPotential[i];		  
+		}
+	      else
+		{
+		  OffDiagonalOneBodyPotentialUpUp[CreationIndices[i]][-TmpMomentumTransfer - 1] = TmpUpUpPotential[i];
+		  OffDiagonalOneBodyPotentialDownDown[CreationIndices[i]][-TmpMomentumTransfer - 1] = TmpDownDownPotential[i];
+		}
+	    }
+	}
+      if (Manager.GetString("superconducting-file") != 0)
+	{
+	  MultiColumnASCIIFile SupreconductingFile;
+	  if (SupreconductingFile.Parse(Manager.GetString("superconducting-file")) == false)
+	    {
+	      SupreconductingFile.DumpErrors(cout);
+	      return -1;
+	    }
+	  if ((SupreconductingFile.GetNbrColumns() < 3) || (SupreconductingFile.GetNbrLines() == 0))
+	    {
+	      cout << "error, " << Manager.GetString("confining-file") << " has an invalid format" << endl;
+	      return -1;
+	    }
+	  int* CreationIndices = SupreconductingFile.GetAsIntegerArray(0);
+	  int* AnnihilationIndices = SupreconductingFile.GetAsIntegerArray(1);
+	  double* TmpPairingPotential = SupreconductingFile.GetAsDoubleArray(2);
+	  double* TmpPairingPhasePotential;
+	  if (SupreconductingFile.GetNbrColumns() > 3)
+	    {
+	      TmpPairingPhasePotential = SupreconductingFile.GetAsDoubleArray(3);
+	    }
+	  else
+	    {
+	      TmpPairingPhasePotential = new double[SupreconductingFile.GetNbrLines()];
+	      for (int i = 0; i < SupreconductingFile.GetNbrLines(); ++i)
+		{
+		  TmpPairingPhasePotential[i] = 0.0;
+		}
+	    }
+	  for (int i = 0; i < SupreconductingFile.GetNbrLines(); ++i)
+	    {
+	      if ((CreationIndices[i] < 0) || (AnnihilationIndices[i] < 0) || (CreationIndices[i] > LzMax) || (AnnihilationIndices[i] > LzMax))
+		{
+		  cout << "invalid indices line " << (i+1) << endl;
+		  return -1;
+		}
+	      if (abs(CreationIndices[i] - AnnihilationIndices[i]) > MaximumMomentumTransfer)
+		{
+		  MaximumMomentumTransfer = abs(CreationIndices[i] - AnnihilationIndices[i]);
+		}
+	    }
+	  ComplexOneBodyPotentialPairing = new Complex[LzMax + 1];
+	  for (int i = 0; i <= LzMax; ++i)
+	    {
+	      ComplexOneBodyPotentialPairing[i] = 0.0;
+	    }
+	  if (MaximumMomentumTransfer > 0)
+	    {
+	      OffDiagonalComplexOneBodyPotentialPairing = new Complex*[LzMax + 1];
+	      for (int i = 0; i <= LzMax; ++i)
+		{
+		  OffDiagonalComplexOneBodyPotentialPairing[i] = new Complex[MaximumMomentumTransfer];
+		  for (int j = 0; j < MaximumMomentumTransfer; ++j)	  
+		    {
+		      OffDiagonalComplexOneBodyPotentialPairing[i][j] = 0.0;
+		    }
+		}	  
+	    }
+	  for (int i = 0; i < SupreconductingFile.GetNbrLines(); ++i)
+	    {
+	      int TmpMomentumTransfer = CreationIndices[i] - AnnihilationIndices[i];
+	      if (TmpMomentumTransfer == 0)
+		{
+		  ComplexOneBodyPotentialPairing[CreationIndices[i]] = TmpPairingPotential[i] * Phase(M_PI * TmpPairingPhasePotential[i]);
+		}
+	      else
+		{
+		  if (TmpMomentumTransfer > 0)
+		    {
+		      OffDiagonalComplexOneBodyPotentialPairing[CreationIndices[i]][TmpMomentumTransfer - 1] = TmpPairingPotential[i] * Phase(M_PI * TmpPairingPhasePotential[i]);
+		    }
+		  else
+		    {
+		      OffDiagonalComplexOneBodyPotentialPairing[CreationIndices[i]][-TmpMomentumTransfer - 1] = TmpPairingPotential[i] * Phase(M_PI * TmpPairingPhasePotential[i]);
+		    }
+		}
+	    }	  
 	}
     }
 
@@ -310,10 +467,10 @@ int main(int argc, char** argv)
 		  // 													     Manager.GetDouble("average-nbrparticles"),
 		  // 													     Architecture.GetArchitecture(), 
 		  // 													     Memory);
-		  Hamiltonian = new ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingAllMomenta (Space, LzMax, MaximumMomentumTranfer, 
+		  Hamiltonian = new ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingAllMomenta (Space, LzMax, MaximumMomentumTransfer, 
 															   OneBodyPotentialUpUp, OneBodyPotentialDownDown,
 															   0, 0,
-															   ComplexOneBodyPotentialPairing,0,
+															   ComplexOneBodyPotentialPairing, 0,
 															   Manager.GetDouble("charging-energy"), 
 															   Manager.GetDouble("average-nbrparticles"),
 															   Architecture.GetArchitecture(), 
@@ -396,12 +553,12 @@ int main(int argc, char** argv)
 	  QuasiholeOnSphereWithSpinAndPairing* Space = 0;
 	  if (LocalNbrParticles >= 0)
 	    {
-	      //	      Space = new QuasiholeOnSphereWithSpinAllMomenta (KValue, RValue, LzMax, LocalNbrParticles, TotalSz, MaxMomentumTransfer, 
+	      //	      Space = new QuasiholeOnSphereWithSpinAllMomenta (KValue, RValue, LzMax, LocalNbrParticles, TotalSz, MaximumMomentumTransfer, 
 	      // Manager.GetString("directory"), FilePrefix);
 	    }
 	  else
 	    {
-	      Space = new QuasiholeOnSphereWithSpinAndPairingAllMomenta (KValue, RValue, LzMax, TotalSz, MaxMomentumTransfer, Manager.GetString("directory"), FilePrefix);
+	      Space = new QuasiholeOnSphereWithSpinAndPairingAllMomenta (KValue, RValue, LzMax, TotalSz, MaximumMomentumTransfer, Manager.GetString("directory"), FilePrefix);
 	    }
 	  if (Space->GetLargeHilbertSpaceDimension() > 0l)
 	    {
@@ -413,10 +570,11 @@ int main(int argc, char** argv)
 	      AbstractHamiltonian* Hamiltonian = 0;
 	      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 		Memory = Architecture.GetArchitecture()->GetLocalMemory();
-	      Hamiltonian = new ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingAllMomenta (Space, LzMax, MaximumMomentumTranfer, 
+	      cout << "MaximumMomentumTransfer = " << MaximumMomentumTransfer << " "  << OffDiagonalOneBodyPotentialUpUp << endl;
+	      Hamiltonian = new ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingAllMomenta (Space, LzMax, MaximumMomentumTransfer, 
 														       OneBodyPotentialUpUp, OneBodyPotentialDownDown,
-														       0, 0,
-														       ComplexOneBodyPotentialPairing,0,
+														       OffDiagonalOneBodyPotentialUpUp, OffDiagonalOneBodyPotentialDownDown,
+														       ComplexOneBodyPotentialPairing, OffDiagonalComplexOneBodyPotentialPairing,
 														       Manager.GetDouble("charging-energy"), 
 														       Manager.GetDouble("average-nbrparticles"),
 														       Architecture.GetArchitecture(), 

@@ -13,6 +13,7 @@
 #include "HilbertSpace/FermionOnSpherePTruncated.h"
 #include "HilbertSpace/FermionOnSpherePTruncatedLong.h"
 #include "HilbertSpace/BosonOnSpherePTruncated.h"
+#include "HilbertSpace/BosonOnSphereWithSU2Spin.h"
 #include "HilbertSpace/BosonOnCP2.h"
 #include "HilbertSpace/BosonOnCP2TzZ3Symmetry.h"
 #include "HilbertSpace/FermionOnCP2.h"
@@ -279,53 +280,61 @@ int main(int argc, char** argv)
 	}
     }
   else
-    {
-      if (Manager.GetBoolean("huge-basis") == true)
+    { 
+      if (SU2Flag == false)
 	{
-	  if (Manager.GetString("load-hilbert") == 0)
+	  if (Manager.GetBoolean("huge-basis") == true)
 	    {
-	      cout << "error : huge basis mode requires to save and load the Hilbert space" << endl;
-	      return -1;
-	    }
-	  OutputBasis = new BosonOnSphereHaldaneHugeBasisShort (Manager.GetString("load-hilbert"), Manager.GetInteger("memory"));
-	}
-      else
-	{
-	  if (HaldaneBasisFlag == false)
-	    {
-	      if (Manager.GetBoolean("p-truncated") == false)
+	      if (Manager.GetString("load-hilbert") == 0)
 		{
-		  if (CP2Flag == false)
-		  {
-		    OutputBasis = new BosonOnSphereShort(NbrParticles, TotalLz, LzMax);
-		  }
+		  cout << "error : huge basis mode requires to save and load the Hilbert space" << endl;
+		  return -1;
+		}
+	      OutputBasis = new BosonOnSphereHaldaneHugeBasisShort (Manager.GetString("load-hilbert"), Manager.GetInteger("memory"));
+	    }
+	  else
+	    {
+	      if (HaldaneBasisFlag == false)
+		{
+		  if (Manager.GetBoolean("p-truncated") == false)
+		    {
+		      if (CP2Flag == false)
+			{
+			  OutputBasis = new BosonOnSphereShort(NbrParticles, TotalLz, LzMax);
+			}
+		      else
+			{
+			  if (Manager.GetBoolean("tzZ3symmetrized-basis") == true || SymFlagTzZ3 == true)
+			    OutputBasis = new BosonOnCP2TzZ3Symmetry(NbrParticles, LzMax, TotalTz, TotalY, SymFlagTzMinusParity);
+			  else
+			    OutputBasis = new BosonOnCP2(NbrParticles, LzMax, TotalTz, TotalY);
+			  
+			}
+		    }
 		  else
-		  {
-		    if (Manager.GetBoolean("tzZ3symmetrized-basis") == true || SymFlagTzZ3 == true)
-		      OutputBasis = new BosonOnCP2TzZ3Symmetry(NbrParticles, LzMax, TotalTz, TotalY, SymFlagTzMinusParity);
-		    else
-		      OutputBasis = new BosonOnCP2(NbrParticles, LzMax, TotalTz, TotalY);
-		      
-		  }
+		    {
+		      int* ReferenceState = 0;
+		      if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
+			return -1;
+		  OutputBasis = new BosonOnSpherePTruncated(NbrParticles, TotalLz, LzMax, Manager.GetInteger("p-truncation"), (int) Manager.GetInteger("boson-truncation"), ReferenceState);
+		    }
 		}
 	      else
 		{
 		  int* ReferenceState = 0;
 		  if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
 		    return -1;
-		  OutputBasis = new BosonOnSpherePTruncated(NbrParticles, TotalLz, LzMax, Manager.GetInteger("p-truncation"), (int) Manager.GetInteger("boson-truncation"), ReferenceState);
+		  if (Manager.GetString("load-hilbert") != 0)
+		    OutputBasis = new BosonOnSphereHaldaneBasisShort(Manager.GetString("load-hilbert"));	  
+		  else
+		    OutputBasis = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, LzMax, ReferenceState);	  
 		}
 	    }
-	  else
-	    {
-	      int* ReferenceState = 0;
-	      if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
-		return -1;
-	      if (Manager.GetString("load-hilbert") != 0)
-		OutputBasis = new BosonOnSphereHaldaneBasisShort(Manager.GetString("load-hilbert"));	  
-	      else
-		OutputBasis = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, LzMax, ReferenceState);	  
-	    }
+	}
+      else
+	{
+	  if (HaldaneBasisFlag == false)
+	    OutputBasis = new BosonOnSphereWithSU2Spin(NbrParticles, TotalLz, LzMax, TotalSz);
 	}
     }
 
@@ -341,7 +350,9 @@ int main(int argc, char** argv)
 	 }
      }
    else
-     OutputBasis->ConvertToUnnormalizedMonomial(OutputState, Manager.GetInteger("normalization"), SymmetryFactor);
+     {
+       OutputBasis->ConvertToUnnormalizedMonomial(OutputState, Manager.GetInteger("normalization"), SymmetryFactor);
+     }
   
 
   cout << OutputBasis->GetLargeHilbertSpaceDimension() << " " << OutputState.GetLargeVectorDimension() << endl;
