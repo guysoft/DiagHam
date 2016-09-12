@@ -12,6 +12,8 @@
 #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsStaggered.h"
 #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry.h"
 #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry.h"
+#include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers.h"
+
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -61,10 +63,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "spin", "spin quantum number", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "translation", "use Hilbert space with translation");
   (*SystemGroup) += new BooleanOption  ('\n', "symmetry", "use Hilbert space with ZZ symmetry");
+  (*SystemGroup) += new BooleanOption  ('\n', "sublattice-symmetry", "use Hilbert space with sublattice quatum numbers");
   (*SystemGroup) += new BooleanOption  ('\n', "staggered", "use the Hilbert space with the staggered Sz symmetry");
   (*SystemGroup) += new BooleanOption  ('\n', "momentum", "compute the momentum resolved entanglement spectrum");
- 
-
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "translation-step", "", 1); 
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
   (*SystemGroup) += new BooleanOption  ('c', "complex", "states of the density matrix are complex");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
@@ -106,6 +108,7 @@ int main(int argc, char** argv)
 
   int ChainLength = Manager.GetInteger("nbr-sites"); 
   int Sz = Manager.GetInteger("spin"); 
+  int TranslationStep  = Manager.GetInteger("translation-step"); 
   bool TranslationFlag = Manager.GetBoolean("translation");
   bool SymmetryFlag = Manager.GetBoolean("symmetry"); 
   bool MomentumFlag = Manager.GetBoolean("momentum");
@@ -123,6 +126,7 @@ int main(int argc, char** argv)
   double *  Coefficients = 0;
   AbstractDoubledSpinChainWithTranslations ** Spaces = 0;
   bool ComplexFlag = Manager.GetBoolean("complex");
+  bool  SubLatticeQunatumNumbersFlag = Manager.GetBoolean("sublattice-symmetry");
 
   if (Manager.GetString("degenerated-groundstate") == 0)
     {
@@ -153,7 +157,7 @@ int main(int argc, char** argv)
          {
            Coefficients = new double[NbrSpaces];
            for (int i = 0; i < NbrSpaces; ++i)
-             Coefficients[i] = 1.0 / ((double) NbrSpaces);
+             Coefficients[i] = 1.0 / (sqrt((double) NbrSpaces));
          }
        else
 	 {
@@ -227,18 +231,39 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-       	      int ZKet;
-	      int ZBra;
-	      int Momentum;
-	      for (int i = 0; i < NbrSpaces; ++i)
+	      if (SubLatticeQunatumNumbersFlag == false)
 		{
-		  if (PEPSFindSystemInfoFromVectorFileName(GroundStateFiles[i],ChainLength, Sz, Momentum, ZBra, ZKet) == false)
+		  int ZKet;
+		  int ZBra;
+		  int Momentum;
+		  for (int i = 0; i < NbrSpaces; ++i)
 		    {
-		      cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
-		      return -1;
+		      if (PEPSFindSystemInfoFromVectorFileName(GroundStateFiles[i],ChainLength, Sz, Momentum, ZBra, ZKet) == false)
+			{
+			  cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
+			  return -1;
+			}
+		      cout <<"Spaces = "<<i<<" "<<ChainLength<<" "<< Momentum<< " "<<Sz<<" "<< ZBra<<" "<< ZKet<<endl;
+		      Spaces[i] = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry(ChainLength, Momentum, TranslationStep, Sz, ZBra, ZKet,10000,10000);
 		    }
-		  cout <<"Spaces = "<<i<<" "<<ChainLength<<" "<< Momentum<< " "<<Sz<<" "<< ZBra<<" "<< ZKet<<endl;
-		  Spaces[i] = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry(ChainLength, Momentum, Sz, ZBra, ZKet,10000,10000);
+		}
+	      else
+		{
+		  int ZKet;
+		  int ZBra;
+		  int Momentum;
+		  int SubLatticeZeroKet, SubLatticeZeroBra, SubLatticeZeroProduct;
+		  for (int i = 0; i < NbrSpaces; ++i)
+		    {
+		      if (PEPSFindSystemInfoFromVectorFileName(GroundStateFiles[i],ChainLength, Sz, Momentum, ZBra, ZKet, SubLatticeZeroBra, SubLatticeZeroKet, SubLatticeZeroProduct) == false)
+			{
+			  cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
+			  return -1;
+			}
+
+		      Spaces[i] = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (ChainLength, Momentum, TranslationStep, Sz, ZBra, ZKet,SubLatticeZeroKet*SubLatticeZeroKet,SubLatticeZeroBra*SubLatticeZeroBra, SubLatticeZeroProduct*SubLatticeZeroKet*SubLatticeZeroBra, 100000,100000);
+		    }
+		  
 		}
 	    }
 	}
@@ -270,7 +295,7 @@ int main(int argc, char** argv)
 		      return -1;
 		    }
 		  cout <<"Spaces = "<<i<<" "<<ChainLength<<" "<< Momentum<< " "<<Sz<<" "<<endl;
-		  Spaces[i] = new DoubledSpin0_1_2_ChainWithTranslations(ChainLength, Momentum, Sz,10000,10000);
+		  Spaces[i] = new DoubledSpin0_1_2_ChainWithTranslations(ChainLength, Momentum, TranslationStep, Sz,10000,10000);
 		}
 	    }
 	}
@@ -428,7 +453,7 @@ int main(int argc, char** argv)
 	      for (int i = 1; i < NbrSpaces; ++i)
 		{
 		  HermitianMatrix TmpMatrix =  Spaces[i]->EvaluatePartialDensityMatrix(SubSystemSz, ComplexGroundStates[i])*Coefficients[i];
-		  cout << TmpMatrix<<endl;
+//		  cout << TmpMatrix<<endl;
 		  PartialDensityMatrix += TmpMatrix;
 		}
 
@@ -498,9 +523,10 @@ int main(int argc, char** argv)
     }
   else
     {
-      for (int SubSystemSz=0; SubSystemSz <=  MaxSubsystemSz; ++ SubSystemSz)
+      int MaxSubsystemK = ChainLength / TranslationStep;
+      for (int SubSystemSz=- MaxSubsystemSz; SubSystemSz <=  MaxSubsystemSz; ++ SubSystemSz)
 	{
-	  for (int SubSystemK=0; SubSystemK <MaxSubsystemSz ; ++SubSystemK)
+	  for (int SubSystemK=0; SubSystemK <MaxSubsystemK ; ++SubSystemK)
 	    {
 	      double EntanglementEntropy = 0.0;
 	      double DensitySum = 0.0;  
@@ -508,11 +534,12 @@ int main(int argc, char** argv)
 	      cout << "processing subsystem Sz =" << SubSystemSz << endl;
 	      if(ComplexFlag == false)
 		{
-		  RealSymmetricMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrix(SubSystemSz,SubSystemK,GroundStates[0]) * Coefficients[0];
+		  RealSymmetricMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrix(SubSystemSz,SubSystemK,GroundStates[0]);
+		  PartialDensityMatrix *= Coefficients[0];
 		  for (int i = 1; i < NbrSpaces; ++i)
 		    {
-		      RealSymmetricMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrix(SubSystemSz,SubSystemK,GroundStates[i]) * Coefficients[i];
-		      PartialDensityMatrix += TmpMatrix;
+		      RealSymmetricMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrix(SubSystemSz,SubSystemK,GroundStates[i]);
+		      PartialDensityMatrix += TmpMatrix * Coefficients[i];
 		    }
 		  
 		  
@@ -579,8 +606,7 @@ int main(int argc, char** argv)
 		      HermitianMatrix TmpMatrix =  Spaces[i]->EvaluatePartialDensityMatrix(SubSystemSz, SubSystemK,ComplexGroundStates[i])* Coefficients[i];
 		      PartialDensityMatrix += TmpMatrix;
 		    }
-		  if (NbrSpaces > 1)
-		    PartialDensityMatrix /= sqrt(((double) NbrSpaces));
+
 		  if (PartialDensityMatrix.GetNbrRow() > 1)
 		    {
 		      RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());

@@ -908,5 +908,98 @@ bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz
     }
   
   return true;
+}
+
+
+
+bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int & momentum, int & valueOfZBra, int & valueOfZKet, int & valueSubLatticeZeroBra, int & valueSubLatticeZeroKet, int & valueSubLatticeZeroProduct )
+{
+  if (PEPSFindSystemInfoFromVectorFileName(filename, nbrSpins, sz, momentum, valueOfZBra, valueOfZKet) == false)
+   return false;
+  
+  
+  char* StrNbrSpins;
+  StrNbrSpins = strstr(filename, "_sbra_");
+  if (StrNbrSpins != 0)
+    {
+      StrNbrSpins += 6;
+      int SizeString = 0;
+      if (StrNbrSpins[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrSpins[SizeString] != '\0') && 
+	     (StrNbrSpins[SizeString] >= '0') && (StrNbrSpins[SizeString] <= '9'))
+	++SizeString;
+      if ((SizeString > 1) || ((SizeString == 1) && (StrNbrSpins[0] != '-')))
+	{
+	  StrNbrSpins[SizeString] = '\0';
+	  valueSubLatticeZeroBra = atoi(StrNbrSpins);
+	  StrNbrSpins[SizeString] = '_';
+	  StrNbrSpins += SizeString;
+	}
+      else
+	StrNbrSpins = 0;
+    }
+  if (StrNbrSpins == 0)
+    {
+      cout << "can't guess the value of S symmetry bra  from file name " << filename << endl;
+      return false;            
+    }
+
+  StrNbrSpins = strstr(filename, "_sket_");
+  if (StrNbrSpins != 0)
+    {
+      StrNbrSpins += 6;
+      int SizeString = 0;
+      if (StrNbrSpins[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrSpins[SizeString] != '\0') && 
+	     (StrNbrSpins[SizeString] >= '0') && (StrNbrSpins[SizeString] <= '9'))
+	++SizeString;
+      if ((SizeString > 1) || ((SizeString == 1) && (StrNbrSpins[0] != '-')))
+	{
+	  char tmp = StrNbrSpins[SizeString];
+	  StrNbrSpins[SizeString] = '\0';
+	  valueSubLatticeZeroKet = atoi(StrNbrSpins);
+	  StrNbrSpins[SizeString] = tmp;
+	  StrNbrSpins += SizeString;
+	}
+      else
+	StrNbrSpins = 0;
+    }
+  if (StrNbrSpins == 0)
+    {
+      cout << "can't guess the value of S symmetry ket  from file name " << filename << endl;
+      return false;            
+    }
+  
+  StrNbrSpins = strstr(filename, "_sprod_");
+  if (StrNbrSpins != 0)
+    {
+      StrNbrSpins += 7;
+      int SizeString = 0;
+      if (StrNbrSpins[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrSpins[SizeString] != '\0') && 
+	     (StrNbrSpins[SizeString] >= '0') && (StrNbrSpins[SizeString] <= '9'))
+	++SizeString;
+      if ((SizeString > 1) || ((SizeString == 1) && (StrNbrSpins[0] != '-')))
+	{
+	  char tmp = StrNbrSpins[SizeString];
+	  StrNbrSpins[SizeString] = '\0';
+	  valueSubLatticeZeroProduct = atoi(StrNbrSpins);
+	  StrNbrSpins[SizeString] = tmp;
+	  StrNbrSpins += SizeString;
+	}
+      else
+	StrNbrSpins = 0;
+    }
+  if (StrNbrSpins == 0)
+    {
+      cout << "can't guess the value of the product of S symmetry from file name " << filename << endl;
+      return false;            
+    }
+  
+  
+  return true;
 
 }

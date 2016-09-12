@@ -59,13 +59,13 @@ AbstractDoubledSpinChainWithTranslations::~AbstractDoubledSpinChainWithTranslati
     {
       if(this->RescalingFactors != 0 )
 	{ 
-	  for (int i = 1; i <= this->ChainLength; ++i)
+	  for (int i = 1; i <= this->MaxXMomentum; ++i)
 	    {
 	      delete[] this->RescalingFactors[i];
 	    } 
 	  delete[] this->RescalingFactors;
 	  delete[] this->NbrStateInOrbit;
-	  delete[] this->CompatibilityWithMomentum;
+	  delete[] this->CompatibilityWithMomentum; 
 	}
     }
 }
@@ -106,6 +106,7 @@ AbstractDoubledSpinChainWithTranslations & AbstractDoubledSpinChainWithTranslati
       
       this->ComplementaryStateShift = chain.ComplementaryStateShift;
       this->Momentum = chain.Momentum;
+      this->MaxXMomentum = chain.MaxXMomentum;
       this->CompatibilityWithMomentum = chain.CompatibilityWithMomentum;
       this->RescalingFactors = chain.RescalingFactors;
       this->NbrStateInOrbit = chain.NbrStateInOrbit;
@@ -113,6 +114,7 @@ AbstractDoubledSpinChainWithTranslations & AbstractDoubledSpinChainWithTranslati
   else
     {
       this->Momentum = 0;
+      this->MaxXMomentum = 0;
       this->CompatibilityWithMomentum = 0;
       this->RescalingFactors = 0;
       this->NbrStateInOrbit = 0;
@@ -126,7 +128,7 @@ AbstractDoubledSpinChainWithTranslations & AbstractDoubledSpinChainWithTranslati
 
 void AbstractDoubledSpinChainWithTranslations::CreatePrecalculationTable()
 {
-  int TmpPeriodicity = this->ChainLength ;
+  int TmpPeriodicity = this->MaxXMomentum ;
   this->CompatibilityWithMomentum = new bool [TmpPeriodicity + 1];
   for (int i = 0; i <= TmpPeriodicity; ++i)
     if (((i * this->Momentum) % TmpPeriodicity) == 0)

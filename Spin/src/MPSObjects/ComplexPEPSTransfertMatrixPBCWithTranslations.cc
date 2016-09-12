@@ -97,6 +97,8 @@ void ComplexPEPSTransfertMatrixPBCWithTranslations::SetHilbertSpace(AbstractHilb
       this->EndVector =  new ComplexVector (this->PowerD[this->ChainLength],true);
       this->StartVector =  new ComplexVector (this->PowerD[this->ChainLength],true);
     }
+  unsigned long MemoryCost =  (2*this->PowerD[this->ChainLength+1] + 2*this->PowerD[this->ChainLength])*sizeof(Complex);
+  cout <<"Memory Cost " <<MemoryCost<<endl;
 }
 
 /*

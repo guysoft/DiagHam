@@ -126,6 +126,8 @@ DoubledSpin0_1_2_ChainWithTranslations::DoubledSpin0_1_2_ChainWithTranslations (
       this->GenerateLookUpTable(memorySize);
     }
   this->RescalingFactors = 0;
+  int MemoryCost = sizeof(unsigned long) * this->LargeHilbertSpaceDimension + this->ChainLength *  sizeof(int);
+  cout <<" Memory cost of the Hilbert Space " <<MemoryCost <<endl;
 }
  
 
@@ -138,13 +140,17 @@ DoubledSpin0_1_2_ChainWithTranslations::DoubledSpin0_1_2_ChainWithTranslations (
 // memorySize = memory size in bytes allowed for look-up table
 // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
 
-DoubledSpin0_1_2_ChainWithTranslations::DoubledSpin0_1_2_ChainWithTranslations (int chainLength, int momentum, int diffSz, int memorySize, int memorySlice) 
+DoubledSpin0_1_2_ChainWithTranslations::DoubledSpin0_1_2_ChainWithTranslations (int chainLength, int momentum,  int translationStep, int diffSz, int memorySize, int memorySlice) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
   this->DiffSz = diffSz;
   this->FixedSpinProjectionFlag = true;
-  this->Momentum = momentum;
+
+
+  this->MaxXMomentum = this->ChainLength/ translationStep;
+  this->ComplementaryStateShift = 2*(this->ChainLength - translationStep);
+  this->Momentum = momentum %  this->MaxXMomentum;
   this->ComplementaryStateShift = 2*(this->ChainLength - 1);
   memorySize /= sizeof(long);
   this->LookUpTableShift = 1;
@@ -239,6 +245,9 @@ DoubledSpin0_1_2_ChainWithTranslations::DoubledSpin0_1_2_ChainWithTranslations (
   if (this->HilbertSpaceDimension > 0)
     this->GenerateLookUpTable(memorySize);  
   this->EvaluateExponentialFactors();
+
+  unsigned long MemoryCost = (sizeof(unsigned long) + sizeof(int)) * this->LargeHilbertSpaceDimension + this->ChainLength *  sizeof(int) + this->MaxXMomentum*sizeof(Complex);
+  cout <<" Memory cost of the Hilbert Space " <<MemoryCost <<endl;
 }
 
 
@@ -261,6 +270,7 @@ DoubledSpin0_1_2_ChainWithTranslations::DoubledSpin0_1_2_ChainWithTranslations (
       this->ChainDescriptionKet = chain.ChainDescriptionKet;
       this->DiffSz = chain.DiffSz;
       this->Momentum = chain.Momentum;
+      this->MaxXMomentum = chain.MaxXMomentum;
       this->FixedSpinProjectionFlag = chain.FixedSpinProjectionFlag;
       this->CompatibilityWithMomentum = chain.CompatibilityWithMomentum;
       this->RescalingFactors = chain.RescalingFactors;
@@ -294,6 +304,7 @@ DoubledSpin0_1_2_ChainWithTranslations::DoubledSpin0_1_2_ChainWithTranslations (
       this->BraShiftNegativeSz =0;
       this->PowerD = 0;
       this->TranslationPhase=0;
+      this->MaxXMomentum = 0;
     }
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
@@ -322,6 +333,7 @@ DoubledSpin0_1_2_ChainWithTranslations & DoubledSpin0_1_2_ChainWithTranslations:
   this->PowerD = chain.PowerD;
   this->ChainDescription = chain.ChainDescription;
   this->TranslationPhase = chain.TranslationPhase;
+  this->MaxXMomentum = chain.MaxXMomentum;
   return *this;
 }
 
@@ -773,14 +785,14 @@ void DoubledSpin0_1_2_ChainWithTranslations::ConvertToGeneralSpaceWithMomentum(C
 
 void DoubledSpin0_1_2_ChainWithTranslations::AddConvertFromGeneralSpaceWithMomentum(ComplexVector vSource,ComplexVector & vDestination)
 {
-  int TmpState;
+  unsigned long TmpState;
   for(int i =0; i <this->HilbertSpaceDimension; i++)
     {
-      TmpState = (long) this->ChainDescription[i];
+      TmpState = (unsigned long) this->ChainDescription[i];
       for(int p =0 ;p <	  this->NbrStateInOrbit[i];p++)
 	{
-	  vDestination[i] += this->TranslationPhase[p] * vSource[TmpState] / sqrt ( ((double) this->NbrStateInOrbit[i]));
-	  TmpState = ((long) TmpState/9) + ((long) TmpState%9)*this->PowerD[this->ChainLength-1];
+	  vDestination[i] += this->TranslationPhase[p] * vSource[(int ) TmpState] / sqrt ( ((double) this->NbrStateInOrbit[i]));
+ 	  this->ApplySingleXTranslation(TmpState);
 	}
     }
 }
@@ -790,10 +802,10 @@ void DoubledSpin0_1_2_ChainWithTranslations::AddConvertFromGeneralSpaceWithMomen
 
 void  DoubledSpin0_1_2_ChainWithTranslations::EvaluateExponentialFactors()
 {
-  this->TranslationPhase = new Complex[this->ChainLength];
-  for (int i = 0; i < this->ChainLength; ++i)
+  this->TranslationPhase = new Complex[this->MaxXMomentum];
+  for (int i = 0; i < this->MaxXMomentum; ++i)
     { 
-      this->TranslationPhase[i] = Phase(2.0 * M_PI * ((this->Momentum * ((double) i) / ((double) this->ChainLength))));
+      this->TranslationPhase[i] = Phase(2.0 * M_PI * ((this->Momentum * ((double) i) / ((double) this->MaxXMomentum))));
     }
 }
 
@@ -853,16 +865,17 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
 
 HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMatrix (int szSector, int momentumSector, ComplexVector& groundState)
 {
-  Spin0_1_2_ChainWithTranslations TmpDestinationHilbertSpace(this->ChainLength, momentumSector ,szSector,10000,10000);
-  int ComplementaryKSector = this->Momentum - momentumSector;
+  Spin0_1_2_ChainWithTranslations TmpDestinationHilbertSpace(this->ChainLength, momentumSector ,this->ChainLength / this->MaxXMomentum, szSector,10000,10000);
+
+  int ComplementaryKSector = (this->Momentum - momentumSector) %  this->MaxXMomentum;
   if (ComplementaryKSector < 0)
-    ComplementaryKSector += (this->ChainLength);
+    ComplementaryKSector +=  this->MaxXMomentum;
   
-//  int ComplementaryKSector = momentumSector;
+  //  int ComplementaryKSector = momentumSector;
   
-  Spin0_1_2_ChainWithTranslations TmpHilbertSpace(this->ChainLength,ComplementaryKSector,szSector,10000,10000);
- 
- int MaxDimension = TmpDestinationHilbertSpace.HilbertSpaceDimension;
+  Spin0_1_2_ChainWithTranslations TmpHilbertSpace(this->ChainLength,ComplementaryKSector,this->ChainLength / this->MaxXMomentum,szSector,10000,10000);
+  
+  int MaxDimension = TmpDestinationHilbertSpace.HilbertSpaceDimension;
   
   if ( MaxDimension < TmpHilbertSpace.HilbertSpaceDimension )
     {
@@ -875,9 +888,9 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
 
   ComplexMatrix HRep( MaxDimension, MaxDimension,true);
   
-  for(int i=0;i < TmpDestinationHilbertSpace.HilbertSpaceDimension;i++)
+  for(int i = 0 ; i < TmpDestinationHilbertSpace.HilbertSpaceDimension;i++)
     {
-      for(int j=0;j < TmpHilbertSpace.HilbertSpaceDimension;j++)
+      for(int j = 0 ; j < TmpHilbertSpace.HilbertSpaceDimension;j++)
 	{
 	  ReferenceBra = TmpDestinationHilbertSpace.ChainDescription[i];
 	  ReferenceKet = TmpHilbertSpace.ChainDescription[j];
@@ -886,7 +899,6 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
 	    {
 	      for(int k = 0; k < TmpHilbertSpace.NbrStateInOrbit[j]; k++)
 		{
-		  
 		  TmpState=0;
 		  TmpBra = ReferenceBra;
 		  TmpKet = ReferenceKet;
@@ -902,9 +914,9 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
 		  int Index = this->FindStateIndex (TmpCanonicalState);
 		  if (Index < this->HilbertSpaceDimension ) 
 		    {
-		      double TmpFactor=sqrt( (double) (TmpDestinationHilbertSpace.NbrStateInOrbit[i] * TmpHilbertSpace.NbrStateInOrbit[j] * ( double) this->NbrStateInOrbit[Index])); 
+		      double TmpFactor =sqrt( (double) (TmpDestinationHilbertSpace.NbrStateInOrbit[i] * TmpHilbertSpace.NbrStateInOrbit[j] * ( double) this->NbrStateInOrbit[Index])); 
 		      //	      double TmpFactor=1.0;
-		      double Argument =  2.0 * M_PI * (NbrTranslation *  this->Momentum - t * momentumSector  - k * ComplementaryKSector) /this->ChainLength ;
+		      double Argument =  2.0 * M_PI * (NbrTranslation * this->Momentum  - t * momentumSector  - k * ComplementaryKSector) /  this->MaxXMomentum ;
 		      HRep.AddToMatrixElement(i,j,groundState[Index]/TmpFactor*Phase(Argument));
 		    }
 		  TmpHilbertSpace.ApplySingleXTranslation(ReferenceKet);
@@ -943,7 +955,7 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
 	  }
 	HRep.GetMatrixElement(i,j,Tmp);
 	TmpDensityMatrix.SetMatrixElement(i,j,Tmp);
-      }  
+      }
   
   return TmpDensityMatrix;
 }
@@ -1110,7 +1122,7 @@ void  DoubledSpin0_1_2_ChainWithTranslations::NormalizeDensityMatrix(ComplexVect
 	      SourceState/=9;
 	    }
 	  int Index = this->FindStateIndex (TmpState);
-	  cout <<endl<<"Index = " << Index<<endl;
+//	  cout <<endl<<"Index = " << Index<<endl;
 	  if (Index < this->HilbertSpaceDimension ) 
 	    {
 	      sourceVector/=Phase(0.5*(Arg(sourceVector[i]) + Arg(sourceVector[Index])));

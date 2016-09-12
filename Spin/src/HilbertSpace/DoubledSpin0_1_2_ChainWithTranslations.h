@@ -71,7 +71,7 @@ class DoubledSpin0_1_2_ChainWithTranslations : public AbstractDoubledSpinChainWi
   // momemtum = total momentum of each state
   // sz = twice the value of total Sz component
   // memorySize = memory size in bytes allowed for look-up table
-  DoubledSpin0_1_2_ChainWithTranslations (int chainLength, int momentum, int sz, int memorySize, int memorySlice);
+  DoubledSpin0_1_2_ChainWithTranslations (int chainLength, int momentum,  int translationStep, int sz, int memorySize, int memorySlice);
 
   // copy constructor (without duplicating datas)
   //
@@ -174,6 +174,8 @@ class DoubledSpin0_1_2_ChainWithTranslations : public AbstractDoubledSpinChainWi
   virtual int FindNextInversionSymetricIndice(int);
   virtual void ComputeDiffereenceSubLatticeNumberZero( unsigned long stateDescription , int & braNumber, int & ketNumber );
 
+  virtual  inline void ApplySingleXTranslation(unsigned long& stateDescription);
+
 };
 
 
@@ -190,7 +192,7 @@ inline void DoubledSpin0_1_2_ChainWithTranslations::FindCanonicalForm(unsigned l
   int index = 1;  
   while (index < this->ChainLength)
     {
-      stateDescription = (stateDescription/9) + (stateDescription%9)*this->PowerD[this->ChainLength-1];
+      this->ApplySingleXTranslation(stateDescription);
       
       if (stateDescription < canonicalState)
 	{
@@ -216,7 +218,7 @@ inline void DoubledSpin0_1_2_ChainWithTranslations::FindCanonicalForm(unsigned l
 
   unsigned long ReferenceState = stateDescription;
 
-  stateDescription = (stateDescription/9) + (stateDescription%9)*this->PowerD[this->ChainLength-1];
+  this->ApplySingleXTranslation(stateDescription);
   while ((ReferenceState != stateDescription) && (nbrTranslationToIdentity < this->ChainLength))
     {
       if (stateDescription < canonicalState)
@@ -225,7 +227,7 @@ inline void DoubledSpin0_1_2_ChainWithTranslations::FindCanonicalForm(unsigned l
 	  nbrTranslation = nbrTranslationToIdentity;
 	}
       
-      stateDescription = (stateDescription/9) + (stateDescription%9)*this->PowerD[this->ChainLength-1];
+      this->ApplySingleXTranslation(stateDescription);
       ++nbrTranslationToIdentity;
     }
 }
@@ -238,16 +240,26 @@ inline void DoubledSpin0_1_2_ChainWithTranslations::FindCanonicalForm(unsigned l
 inline int DoubledSpin0_1_2_ChainWithTranslations::FindNumberTranslation(unsigned long stateDescription)
 {
   int index = 1;
-  unsigned long TmpState = (stateDescription/9) + (stateDescription%9)*this->PowerD[this->ChainLength-1];
+  unsigned long TmpState = stateDescription;
+  this->ApplySingleXTranslation(TmpState);
   while (TmpState !=  stateDescription)
     {     
-      TmpState = (TmpState/9) + (TmpState%9)*this->PowerD[this->ChainLength-1];
+      this->ApplySingleXTranslation(TmpState);
       ++index;
     }
   return index;
 }
 
 
+// apply a single translation in the x direction for a state description
+//
+// stateDescription = reference on the state description
+
+inline void DoubledSpin0_1_2_ChainWithTranslations::ApplySingleXTranslation(unsigned long& stateDescription)
+{
+  for(int i =0 ; i < this->ChainLength/this->MaxXMomentum; i++)
+    stateDescription = (stateDescription/9) + (stateDescription%9)*this->PowerD[this->ChainLength-1];
+}
 
 inline unsigned int DoubledSpin0_1_2_ChainWithTranslations::GetCommonIndexFromBraAndKetIndices(unsigned int braIndex, unsigned int ketIndex )
 {

@@ -49,6 +49,7 @@ class AbstractDoubledSpinChainWithTranslations : public AbstractDoubledSpinChain
 
   //  total difference sz component (if fixed)
   int Momentum;
+  int MaxXMomentum;
   
   // array containing flag indicating if a state belonging to an orbit with a given number of member is compatible with momentum constraint
   bool* CompatibilityWithMomentum;

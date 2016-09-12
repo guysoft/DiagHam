@@ -200,14 +200,14 @@ Spin0_1_2_ChainWithTranslations::Spin0_1_2_ChainWithTranslations (int chainLengt
 // memorySize = memory size in bytes allowed for look-up table
 // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
 
-Spin0_1_2_ChainWithTranslations::Spin0_1_2_ChainWithTranslations (int chainLength, int momentum, int diffSz, int memorySize, int memorySlice) 
+Spin0_1_2_ChainWithTranslations::Spin0_1_2_ChainWithTranslations (int chainLength, int momentum, int translationStep, int diffSz, int memorySize, int memorySlice) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
   this->DiffSz = diffSz;
   this->FixedSpinProjectionFlag = true;
   this->Momentum = momentum;
-  this->ComplementaryStateShift = 2*(this->ChainLength - 1);
+
   memorySize /= sizeof(long);
   this->LookUpTableShift = 1;
   while ((1 << this->LookUpTableShift) <= memorySize)
@@ -217,6 +217,11 @@ Spin0_1_2_ChainWithTranslations::Spin0_1_2_ChainWithTranslations (int chainLengt
   else
     this->LookUpTableShift = 0;
   
+  this->StateMask = (0x1ul << (translationStep<<1)) - 1ul;
+  this->StateShift = translationStep<<1;
+  this->MaxXMomentum = this->ChainLength/ translationStep;
+  this->ComplementaryStateShift = 2*(this->ChainLength - translationStep);
+
   this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->ChainLength-1, this->DiffSz);
   this->ShiftNegativeDiffSz = this->LargeHilbertSpaceDimension;
 
@@ -248,7 +253,12 @@ Spin0_1_2_ChainWithTranslations::Spin0_1_2_ChainWithTranslations (int chainLengt
   for (long i = 0l; i < TmpHilbertSpaceDimension; ++i)
     {
       TmpState = this->ChainDescription[i];
+//      TmpStateBis = this->ChainDescription[i];
+
+      //      this->ApplySingleXTranslation(TmpState);
+//      cout << TmpState<<" ";
       this->FindCanonicalForm(TmpState,TmpCanonicalState,NbrTranslation);
+//      cout << TmpCanonicalState <<" "<<NbrTranslation<<endl;
       
       if (TmpState  == TmpCanonicalState)
 	{
@@ -654,7 +664,7 @@ int Spin0_1_2_ChainWithTranslations::Smi (int i, int state, double& coefficient,
 
 void Spin0_1_2_ChainWithTranslations::CreatePrecalculationTable()
 {
-  int TmpPeriodicity = this->ChainLength;
+  int TmpPeriodicity = this->MaxXMomentum;
   this->CompatibilityWithMomentum = new bool [TmpPeriodicity + 1];
   for (int i = 0; i <= TmpPeriodicity; ++i)
     if (((i * this->Momentum) % TmpPeriodicity) == 0)

@@ -67,7 +67,7 @@ class DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry : public DoubledSpin0_
   // momemtum = total momentum of each state
   // sz = twice the value of total Sz component
   // memorySize = memory size in bytes allowed for look-up table
-  DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry (int chainLength, int momentum, int sz,int zEigenvalueBra, int zEigenvalueKet, int memorySize, int memorySlice);
+  DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry (int chainLength, int momentum, int translationStep, int sz,int zEigenvalueBra, int zEigenvalueKet, int memorySize, int memorySlice);
 
   // copy constructor (without duplicating datas)
   //

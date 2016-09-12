@@ -160,16 +160,19 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
 // memorySize = memory size in bytes allowed for look-up table
 // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
 
-DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry (int chainLength, int momentum, int diffSz, int zEigenvalueBra, int zEigenvalueKet, int memorySize, int memorySlice) 
+DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry (int chainLength, int momentum, int translationStep, int diffSz, int zEigenvalueBra, int zEigenvalueKet, int memorySize, int memorySlice) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
   this->DiffSz = diffSz;
   this->FixedSpinProjectionFlag = true;
   this->Momentum = momentum;
-  this->ZEigenvalueBra=zEigenvalueBra;
-  this->ZEigenvalueKet=zEigenvalueKet;
-  this->ComplementaryStateShift = 2*(this->ChainLength - 1);
+  this->ZEigenvalueBra = zEigenvalueBra;
+  this->ZEigenvalueKet = zEigenvalueKet;
+
+  this->MaxXMomentum = this->ChainLength / translationStep;
+  this->ComplementaryStateShift = 2*(this->ChainLength - translationStep);
+
   memorySize /= sizeof(long);
   this->LookUpTableShift = 1;
   while ((1 << this->LookUpTableShift) <= memorySize)
@@ -222,6 +225,7 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
       if (TmpState  == TmpCanonicalState)
 	{
 	  CurrentNbrStateInOrbit = this->FindNumberTranslation(TmpCanonicalState);
+//	  cout <<TmpCanonicalState<<" "<<CurrentNbrStateInOrbit<<endl;
 	  if ((this->CompatibilityWithMomentum[CurrentNbrStateInOrbit] == true)&&(this->ComputeZValueBra(TmpCanonicalState) == this->ZEigenvalueBra) &&(this->ComputeZValueKet(TmpCanonicalState) == this->ZEigenvalueKet) )
 	    {
 	      ++this->LargeHilbertSpaceDimension;
@@ -285,6 +289,7 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
       this->ChainDescription = chain.ChainDescription;
       this->DiffSz = chain.DiffSz;
       this->Momentum = chain.Momentum;
+      this->MaxXMomentum = chain.MaxXMomentum;
       this->FixedSpinProjectionFlag = chain.FixedSpinProjectionFlag;
       this->CompatibilityWithMomentum = chain.CompatibilityWithMomentum;
       this->RescalingFactors = chain.RescalingFactors;
@@ -309,6 +314,7 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry::DoubledSpin0_1_2_ChainWithT
       this->ChainDescriptionKet = 0;
       this->ChainLength = 0;
       this->Momentum = 0;
+      this->MaxXMomentum = 0;
       this->DiffSz = 0;
       this->FixedSpinProjectionFlag = false;
       this->CompatibilityWithMomentum = 0;

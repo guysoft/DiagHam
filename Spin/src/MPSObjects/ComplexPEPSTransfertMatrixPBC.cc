@@ -86,7 +86,6 @@ ComplexPEPSTransfertMatrixPBC::~ComplexPEPSTransfertMatrixPBC()
 
 void ComplexPEPSTransfertMatrixPBC::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
-
   this->HilbertSpace = (AbstractSpinChain * )hilbertSpace;
   if ( this->ChainLength != this->HilbertSpace ->GetSpinChainLength() )
     {
@@ -111,6 +110,8 @@ void ComplexPEPSTransfertMatrixPBC::SetHilbertSpace (AbstractHilbertSpace* hilbe
       this->BoundaryMatrix = new RealDiagonalMatrix( this->PowerD[1] ,true);
       this->BoundaryMatrix->SetToIdentity();
     }
+  unsigned long MemoryCost =  (2*this->PowerD[this->ChainLength+1] + 2*this->PowerD[this->ChainLength])*sizeof(Complex);
+  cout <<"Memory Cost " <<MemoryCost<<endl;
 }
 
 

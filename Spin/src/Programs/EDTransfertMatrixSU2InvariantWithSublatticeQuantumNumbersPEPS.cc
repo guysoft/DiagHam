@@ -69,7 +69,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "vison", "add a vison line in both layers");
   (*SystemGroup) += new  SingleIntegerOption ('\n', "sz", "consider a specific value of sz", -1);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "k", "consider a specific value of k", -1);
-
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "translation-step", "", 1);
+  
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -111,7 +112,7 @@ int main(int argc, char** argv)
   AbstractHilbertSpace *  Space = 0;  
 //  AbstractTransfertMatrixPBC * TransferMatrix = 0;
   int NbrSites = Manager.GetInteger("length");
-  
+  int  TranslationStep  = Manager.GetInteger("translation-step");  
 
   RealDiagonalMatrix BoundaryConditions(9,true);
   BoundaryConditions.SetToIdentity();
@@ -144,7 +145,7 @@ int main(int argc, char** argv)
       return 0;
     }            
   int MinKx = 0;
-  int MaxKx = NbrSites - 1;
+  int MaxKx = NbrSites / TranslationStep  - 1;
   
   if (Manager.GetInteger("k") != -1 )
     {
@@ -202,13 +203,13 @@ int main(int argc, char** argv)
 		}
 	      
 	      if (ZvalueBra ==0)
-		    SubLatticeZeroBra = 0;
-		  else
-		    SubLatticeZeroBra = 1;
-
-		  for(; SubLatticeZeroBra<= SubLatticeZeroBraMax; SubLatticeZeroBra+=2)
-		    {
-		      if (ZvalueKet ==0)
+		SubLatticeZeroBra = 0;
+	      else
+		SubLatticeZeroBra = 1;
+	      
+	      for(; SubLatticeZeroBra<= SubLatticeZeroBraMax; SubLatticeZeroBra+=2)
+		{
+		  if (ZvalueKet ==0)
 			SubLatticeZeroKet = 0;
 		      else
 			SubLatticeZeroKet = 1;
@@ -220,7 +221,7 @@ int main(int argc, char** argv)
 				SubLatticeZeroProduct = 0;
 			      if (TranslationFlag) 
 				{
-				  Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (NbrSites,i,Sz, ZvalueBra, ZvalueKet,SubLatticeZeroKet*SubLatticeZeroKet,SubLatticeZeroBra*SubLatticeZeroBra, SubLatticeZeroProduct*SubLatticeZeroKet*SubLatticeZeroBra, 100000,100000);
+				  Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (NbrSites,i,TranslationStep ,Sz, ZvalueBra, ZvalueKet,SubLatticeZeroKet*SubLatticeZeroKet,SubLatticeZeroBra*SubLatticeZeroBra, SubLatticeZeroProduct*SubLatticeZeroKet*SubLatticeZeroBra, 100000,100000);
 				}
 			      else
 				Space = new  DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (NbrSites,Sz, ZvalueBra, ZvalueKet,SubLatticeZeroKet*SubLatticeZeroKet,SubLatticeZeroBra*SubLatticeZeroBra, SubLatticeZeroProduct*SubLatticeZeroKet*SubLatticeZeroBra, 100000,100000); 

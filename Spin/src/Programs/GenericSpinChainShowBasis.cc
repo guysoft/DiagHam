@@ -60,6 +60,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  BooleanOption ('\n', "staggered", "use the double spin chain HilbertSpace");
   (*SystemGroup) += new  SingleIntegerOption ('\n', "parity", "parity of the spin chain", 0);
   (*SystemGroup) += new  BooleanOption ('\n', "periodic-chain", "consider periodic instead of open chain", false);
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "max-momentum", "max momentum in the periodic case (should be a divisor of the number of sites)", -1);  
+
   (*SystemGroup) += new  BooleanOption ('\n', "zero-half", "consider the 0 +1/2 spin chain", false);
   (*SystemGroup) += new BooleanOption  ('\n', "symmetry", "use Hilbert space with ZZ symmetry in the case of the 0+1/2 doubled chain");
   (*SystemGroup) += new  SingleIntegerOption ('\n', "zket", "value of the Z operator in the ket layer", 0);
@@ -92,6 +94,9 @@ int main(int argc, char** argv)
   int NbrSpins = Manager.GetInteger("nbr-spin");
   int SzValue = Manager.GetInteger("sz-value");
   int Momentum = Manager.GetInteger("momentum");
+  int MaxMomentum = Manager.GetInteger("max-momentum");
+  if (MaxMomentum == -1) 
+    MaxMomentum = NbrSpins;
   double Error = Manager.GetDouble("hide-component");
   bool SymmetryFlag = Manager.GetBoolean("symmetry"); 
   bool SubLatticeQuantumNumberFlag =  Manager.GetBoolean("sublatticeQN"); 
@@ -257,15 +262,15 @@ int main(int argc, char** argv)
 		    {
 		      if (SymmetryFlag == false )
 			{
-			  Space = new DoubledSpin0_1_2_ChainWithTranslations (NbrSpins, Momentum,SzValue,  1000000, 1000000);
+			  Space = new DoubledSpin0_1_2_ChainWithTranslations (NbrSpins, Momentum, NbrSpins /MaxMomentum  ,SzValue,  1000000, 1000000);
 			}
 		      else
 			{
 			  if (SubLatticeQuantumNumberFlag == false ) 
-			    Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry(NbrSpins, Momentum,  SzValue, Manager.GetInteger("zbra"),Manager.GetInteger("zket"),10000,10000);
+			    Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry(NbrSpins, Momentum, NbrSpins /MaxMomentum ,  SzValue, Manager.GetInteger("zbra"),Manager.GetInteger("zket"),10000,10000);
 			  else
 			    {
-			      Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (NbrSpins, Momentum,  SzValue, Manager.GetInteger("zbra"),Manager.GetInteger("zket"),  Manager.GetInteger("sket") *  Manager.GetInteger("sket"), Manager.GetInteger("sbra") *  Manager.GetInteger("sbra"), Manager.GetInteger("sket")* Manager.GetInteger("sbra")* Manager.GetInteger("sproduct"), 100000,100000);
+			      Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (NbrSpins, Momentum, NbrSpins /MaxMomentum  , SzValue, Manager.GetInteger("zbra"),Manager.GetInteger("zket"),  Manager.GetInteger("sket") *  Manager.GetInteger("sket"), Manager.GetInteger("sbra") *  Manager.GetInteger("sbra"), Manager.GetInteger("sket")* Manager.GetInteger("sbra")* Manager.GetInteger("sproduct"), 100000,100000);
 			    }
 			}
 		    }
@@ -378,7 +383,7 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      Space = new Spin0_1_2_ChainWithTranslations ( NbrSpins,  Momentum, SzValue,  1000000, 1000000);
+	      Space = new Spin0_1_2_ChainWithTranslations ( NbrSpins,  Momentum,  NbrSpins / MaxMomentum, SzValue,  1000000, 1000000);
 	    }
 	  
 	  

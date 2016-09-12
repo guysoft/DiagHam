@@ -54,6 +54,17 @@ class Spin0_1_2_ChainWithTranslations : public AbstractSpinChainWithTranslations
   // array containing falg indicating if a state beloging to an orbit with a given number of member is compatible with momentum constraint
   bool* CompatibilityWithMomentum;
 
+  // number of sites in the x direction
+  int MaxXMomentum;
+  // shift to apply to move a group spin using an elementary translation
+  int StateShift;
+  // shift to apply to move the spin from one end to the other one
+  int ComplementaryStateShift;
+  // mask to apply to get a group of spins
+  unsigned long StateMask;
+  
+
+
   int DiffSz;
   bool FixedSpinProjectionFlag;
   
@@ -74,13 +85,6 @@ class Spin0_1_2_ChainWithTranslations : public AbstractSpinChainWithTranslations
   // number of state in each orbit
   int* NbrStateInOrbit;
 
-  // shift to apply to move a group spin using an elementary translation
-  int StateShift;
-  // shift to apply to move the spin from one end to the other one
-  int ComplementaryStateShift;
-  // mask to apply to get a group of spins
-  unsigned long StateMask;
-  
   // array describing each n-nody state 
   unsigned long* ChainDescription;
   
@@ -108,7 +112,7 @@ class Spin0_1_2_ChainWithTranslations : public AbstractSpinChainWithTranslations
   // momemtum = total momentum of each state
   // sz = twice the value of total Sz component
   // memorySize = memory size in bytes allowed for look-up table
-  Spin0_1_2_ChainWithTranslations (int chainLength, int momentum, int sz, int memorySize, int memorySlice);
+  Spin0_1_2_ChainWithTranslations (int chainLength, int momentum,  int translationStep, int sz, int memorySize, int memorySlice);
 
   // copy constructor (without duplicating datas)
   //
@@ -224,7 +228,9 @@ inline unsigned long Spin0_1_2_ChainWithTranslations::FindCanonicalForm(unsigned
 
 inline void Spin0_1_2_ChainWithTranslations::ApplySingleXTranslation(unsigned long& stateDescription)
 {
-  int Tmp = stateDescription & 0x3ul;
+  stateDescription = (stateDescription >> this->StateShift) | ((stateDescription & this->StateMask) << this->ComplementaryStateShift);
+
+/*  int Tmp = stateDescription & 0x3ul;
   
   for (int i = 1; i < this->ChainLength; i++)
     {
@@ -258,6 +264,7 @@ inline void Spin0_1_2_ChainWithTranslations::ApplySingleXTranslation(unsigned lo
       stateDescription &= (~(0x3ul << 2*(this->ChainLength-1)));
       break;
     }
+*/
 }
 
 
@@ -329,6 +336,52 @@ inline int Spin0_1_2_ChainWithTranslations::FindNumberTranslation(unsigned long 
   return index;
 }
 
+/*
+
+// apply a single translation in the x direction for a state description
+//
+// stateDescription = reference on the state description
+
+inline void Spin0_1_2_ChainWithTranslations::ApplySingleXTranslation(unsigned long& stateDescription)
+{
+  int Tmp = stateDescription & 0x15ul;
+  
+  for (int i = 1; i < this->ChainLength; i++)
+    {
+      switch ((stateDescription >> (2*i))& 0x3ul)
+	{
+	case 0x2:
+	  stateDescription &= (~(0x1ul << 2*(i-1)));
+	  stateDescription |= (0x1ul << (2*(i-1)+1));
+	  break;
+	case 0x1:
+	  stateDescription &= (~(0x1ul << (2*(i-1)+1) ));
+	  stateDescription |= (0x1ul << 2*(i-1));
+	  break;
+	case 0x0:
+	  stateDescription &= (~(0x3ul << 2*(i-1)));
+	  break;
+	}
+    }
+
+  switch (Tmp)
+    {
+    case 0x2:
+      stateDescription &= (~(0x1ul << 2*(this->ChainLength-1)));
+      stateDescription |= (0x1ul << (2*(this->ChainLength-1)+1));     
+      break;
+    case 0x1:
+      stateDescription &= (~(0x1ul << (2*(this->ChainLength-1)+1) ));
+      stateDescription |= (0x1ul << 2*(this->ChainLength-1));
+      break;
+    case 0x0:
+      stateDescription &= (~(0x3ul << 2*(this->ChainLength-1)));
+      break;
+    }
+}
+
+
+*/
 
 #endif
 
