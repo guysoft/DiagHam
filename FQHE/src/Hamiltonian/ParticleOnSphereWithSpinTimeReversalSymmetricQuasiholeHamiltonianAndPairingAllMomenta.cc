@@ -1286,7 +1286,7 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 		      for (int j = 0; j < NbrElements; ++j)
 			{
 			  TmpCounting[CurrentNbrCounting] = TmpLeftIndices[j];
-			  TmpCoefficients[CurrentNbrCounting] = TmpCoefficient * TmpInteractionElements[j];
+			  TmpCoefficients[CurrentNbrCounting] = Conj(TmpCoefficient) * TmpInteractionElements[j];
 			  ++CurrentNbrCounting;
 			}
 		      if (this->HermitianSymmetryFlag == false)
