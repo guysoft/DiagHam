@@ -118,6 +118,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "flux-insertion", "include a flux insertion (in flux quantum unit) along the cylinder axis", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "y-extension", "if not zero, the confining potential is non zero along the perimeter only in the region [-L/2,L/2]", 0.0); 
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-momentumtransfer", "when using a finite extension along the cylinder perimeter, truncate the potentials to a given maximum momentum transfer (negative if no truncation should be performed)", -1);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "y-rightshift", "shift the right confining potential along the perimeter, i.e. [-L/2 + shift, L/2 + shift]", 0.0); 
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "optional output file name instead of the default one");
   (*OutputGroup) += new BooleanOption ('\n', "spinful", "the output file will be used for a spinful system, assuming the same confining potential for all species");
   (*OutputGroup) += new BooleanOption ('\n', "time-reversal", "the output file will be used for a spinful system with time reversal symmetry, assuming the same confining potential for all species");
@@ -180,8 +181,16 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      sprintf (OutputFilePrefix, "confining_momentum_cylinder_perimeter_%.6f_2s_%d_l_%.6f_", Perimeter, NbrFluxQuanta, 
-		       Manager.GetDouble("y-extension"));
+	      if (Manager.GetDouble("y-rightshift") != 0.0)
+		{
+		  sprintf (OutputFilePrefix, "confining_momentum_cylinder_perimeter_%.6f_2s_%d_l_%.6f_yshiftr_%.6f_", Perimeter, NbrFluxQuanta, 
+			   Manager.GetDouble("y-extension"), Manager.GetDouble("y-rightshift"));
+		}
+	      else
+		{
+		  sprintf (OutputFilePrefix, "confining_momentum_cylinder_perimeter_%.6f_2s_%d_l_%.6f_", Perimeter, NbrFluxQuanta, 
+			   Manager.GetDouble("y-extension"));
+		}
 	    }
 	}
       else
@@ -192,8 +201,16 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      sprintf (OutputFilePrefix, "confining_cylinder_perimeter_%.6f_2s_%d_l_%.6f_", Perimeter, NbrFluxQuanta, 
-		       Manager.GetDouble("y-extension"));
+	      if (Manager.GetDouble("y-rightshift") != 0.0)
+		{
+		  sprintf (OutputFilePrefix, "confining_cylinder_perimeter_%.6f_2s_%d_l_%.6f_yshiftr_%.6f_", Perimeter, NbrFluxQuanta, 
+			   Manager.GetDouble("y-extension"), Manager.GetDouble("y-rightshift"));
+		}
+	      else
+		{
+		  sprintf (OutputFilePrefix, "confining_cylinder_perimeter_%.6f_2s_%d_l_%.6f_", Perimeter, NbrFluxQuanta, 
+			   Manager.GetDouble("y-extension"));
+		}
 	    }
 	}
       OutputFile = new char[512 + strlen(OutputFilePrefix)];
@@ -477,7 +494,7 @@ int main(int argc, char** argv)
 			    {
 			      if ((((double) (MinN + m - NbrFluxQuanta)) * 0.5) > (RightShift * Perimeter / (2.0 * M_PI)))
 				{
-				  TmpPhase += Manager.GetDouble("confining-rightphase");
+				  TmpPhase += Manager.GetDouble("confining-rightphase") + 2.0 * (Manager.GetDouble("y-rightshift") / Perimeter * ((double) (MinN - m)));
 				}
 			    }
 			  File << " " << TmpPhase;			      

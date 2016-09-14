@@ -166,7 +166,7 @@ int main(int argc, char** argv)
   double** PseudoPotentials  = 0;
   bool PreserveKySymmetryFlag = false;//true;
   int MaximumMomentumTransfer = 0;
-
+ 
   if ((Manager.GetString("interaction-file") == 0) && (Manager.GetString("confining-file") == 0))
     {
       cout << "an interaction file has to be provided" << endl;
@@ -272,34 +272,34 @@ int main(int argc, char** argv)
 	}
       if (Manager.GetString("superconducting-file") != 0)
 	{
-	  MultiColumnASCIIFile SupreconductingFile;
-	  if (SupreconductingFile.Parse(Manager.GetString("superconducting-file")) == false)
+	  MultiColumnASCIIFile SuperconductingFile;
+	  if (SuperconductingFile.Parse(Manager.GetString("superconducting-file")) == false)
 	    {
-	      SupreconductingFile.DumpErrors(cout);
+	      SuperconductingFile.DumpErrors(cout);
 	      return -1;
 	    }
-	  if ((SupreconductingFile.GetNbrColumns() < 3) || (SupreconductingFile.GetNbrLines() == 0))
+	  if ((SuperconductingFile.GetNbrColumns() < 3) || (SuperconductingFile.GetNbrLines() == 0))
 	    {
 	      cout << "error, " << Manager.GetString("confining-file") << " has an invalid format" << endl;
 	      return -1;
 	    }
-	  int* CreationIndices = SupreconductingFile.GetAsIntegerArray(0);
-	  int* AnnihilationIndices = SupreconductingFile.GetAsIntegerArray(1);
-	  double* TmpPairingPotential = SupreconductingFile.GetAsDoubleArray(2);
+	  int* CreationIndices = SuperconductingFile.GetAsIntegerArray(0);
+	  int* AnnihilationIndices = SuperconductingFile.GetAsIntegerArray(1);
+	  double* TmpPairingPotential = SuperconductingFile.GetAsDoubleArray(2);
 	  double* TmpPairingPhasePotential;
-	  if (SupreconductingFile.GetNbrColumns() > 3)
+	  if (SuperconductingFile.GetNbrColumns() > 3)
 	    {
-	      TmpPairingPhasePotential = SupreconductingFile.GetAsDoubleArray(3);
+	      TmpPairingPhasePotential = SuperconductingFile.GetAsDoubleArray(3);
 	    }
 	  else
 	    {
-	      TmpPairingPhasePotential = new double[SupreconductingFile.GetNbrLines()];
-	      for (int i = 0; i < SupreconductingFile.GetNbrLines(); ++i)
+	      TmpPairingPhasePotential = new double[SuperconductingFile.GetNbrLines()];
+	      for (int i = 0; i < SuperconductingFile.GetNbrLines(); ++i)
 		{
 		  TmpPairingPhasePotential[i] = 0.0;
 		}
 	    }
-	  for (int i = 0; i < SupreconductingFile.GetNbrLines(); ++i)
+	  for (int i = 0; i < SuperconductingFile.GetNbrLines(); ++i)
 	    {
 	      if ((CreationIndices[i] < 0) || (AnnihilationIndices[i] < 0) || (CreationIndices[i] > LzMax) || (AnnihilationIndices[i] > LzMax))
 		{
@@ -328,7 +328,7 @@ int main(int argc, char** argv)
 		    }
 		}	  
 	    }
-	  for (int i = 0; i < SupreconductingFile.GetNbrLines(); ++i)
+	  for (int i = 0; i < SuperconductingFile.GetNbrLines(); ++i)
 	    {
 	      int TmpMomentumTransfer = CreationIndices[i] - AnnihilationIndices[i];
 	      if (TmpMomentumTransfer == 0)
@@ -343,7 +343,7 @@ int main(int argc, char** argv)
 		    }
 		  else
 		    {
-		      OffDiagonalComplexOneBodyPotentialPairing[CreationIndices[i]][-TmpMomentumTransfer - 1] = TmpPairingPotential[i] * Phase(M_PI * TmpPairingPhasePotential[i]);
+//		      OffDiagonalComplexOneBodyPotentialPairing[CreationIndices[i]][-TmpMomentumTransfer - 1] = -TmpPairingPotential[i] * Phase(M_PI * TmpPairingPhasePotential[i]);
 		    }
 		}
 	    }	  
