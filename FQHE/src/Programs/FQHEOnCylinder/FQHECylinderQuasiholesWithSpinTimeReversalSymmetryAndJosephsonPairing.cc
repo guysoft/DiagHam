@@ -321,7 +321,7 @@ int main(int argc, char** argv)
 	      OffDiagonalComplexOneBodyPotentialPairing = new Complex*[LzMax + 1];
 	      for (int i = 0; i <= LzMax; ++i)
 		{
-		  OffDiagonalComplexOneBodyPotentialPairing[i] = new Complex[MaximumMomentumTransfer];
+		  OffDiagonalComplexOneBodyPotentialPairing[i] = new Complex[(2 * MaximumMomentumTransfer) + 1];
 		  for (int j = 0; j < MaximumMomentumTransfer; ++j)	  
 		    {
 		      OffDiagonalComplexOneBodyPotentialPairing[i][j] = 0.0;
@@ -337,14 +337,14 @@ int main(int argc, char** argv)
 		}
 	      else
 		{
-		  if (TmpMomentumTransfer > 0)
-		    {
-		      OffDiagonalComplexOneBodyPotentialPairing[CreationIndices[i]][TmpMomentumTransfer - 1] = TmpPairingPotential[i] * Phase(M_PI * TmpPairingPhasePotential[i]);
-		    }
-		  else
-		    {
-//		      OffDiagonalComplexOneBodyPotentialPairing[CreationIndices[i]][-TmpMomentumTransfer - 1] = -TmpPairingPotential[i] * Phase(M_PI * TmpPairingPhasePotential[i]);
-		    }
+// 		  if (TmpMomentumTransfer > 0)
+// 		    {
+		      OffDiagonalComplexOneBodyPotentialPairing[CreationIndices[i]][MaximumMomentumTransfer + TmpMomentumTransfer] = TmpPairingPotential[i] * Phase(M_PI * TmpPairingPhasePotential[i]);
+// 		    }
+// 		  else
+// 		    {
+// 		      OffDiagonalComplexOneBodyPotentialPairing[CreationIndices[i]][-TmpMomentumTransfer - 1] = -TmpPairingPotential[i] * Phase(M_PI * TmpPairingPhasePotential[i]);
+// 		    }
 		}
 	    }	  
 	}
