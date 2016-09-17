@@ -535,9 +535,15 @@ int main(int argc, char** argv)
       sprintf (OutputMatrixFileNameExtension, "_effective_%d_n_0_", EffectiveSubspaceDimension);
       char* OutputMatrixFileNameExtension1 = ReplaceString(TmpOutputFileName, "_n_0_", OutputMatrixFileNameExtension);
 	  
-      char* OutputMatrixFileNameList = ReplaceString(OutputMatrixFileNameExtension1, ".dat", ".ham.list");
-      ofstream File;  
-      File.open(OutputMatrixFileNameList, ios::binary | ios::out); 
+      char* OutputPairingMatrixFileNameList = ReplaceString(OutputMatrixFileNameExtension1, ".dat", ".cddcdu.list");
+      char* OutputConfiningUpMatrixFileNameList = ReplaceString(OutputMatrixFileNameExtension1, ".dat", ".cducu.list");
+      char* OutputConfiningDownMatrixFileNameList = ReplaceString(OutputMatrixFileNameExtension1, ".dat", ".cddcd.list");
+      ofstream FilePairing;
+      ofstream FileConfiningUp;
+      ofstream FileConfiningDown;
+      FilePairing.open(OutputPairingMatrixFileNameList, ios::binary | ios::out); 
+      FileConfiningUp.open(OutputConfiningUpMatrixFileNameList, ios::binary | ios::out); 
+      FileConfiningDown.open(OutputConfiningDownMatrixFileNameList, ios::binary | ios::out); 
     
       for (int OrbitalIndex = 0; OrbitalIndex <= NbrFluxQuanta; ++OrbitalIndex)
 	{
@@ -605,7 +611,7 @@ int main(int argc, char** argv)
 	  char* TmpExtension = new char [128];
 	  sprintf (TmpExtension, "_cddcdu_%d.mat", OrbitalIndex);
 	  char* OutputMatrixFileNameExtension2 = ReplaceString(OutputMatrixFileNameExtension1, ".dat", TmpExtension);
-	  File << OutputMatrixFileNameExtension2 << " 0.0" << endl;
+	  FilePairing << OutputMatrixFileNameExtension2 << " 0.0" << endl;
 	  if (TmpAdAd.WriteMatrix(OutputMatrixFileNameExtension2) == false)
 	    {
 	      cout << "can't write " << OutputMatrixFileNameExtension2 << endl;
@@ -614,6 +620,7 @@ int main(int argc, char** argv)
 	  delete[] TmpExtension;
 	  delete[] OutputMatrixFileNameExtension2;
 	}
+      FilePairing.close();
       for (int OrbitalIndex = 0; OrbitalIndex <= NbrFluxQuanta; ++OrbitalIndex)
 	{
 	  RealSymmetricMatrix TmpAduAu(EffectiveSubspaceDimension, true);
@@ -655,7 +662,7 @@ int main(int argc, char** argv)
 	  char* TmpExtension = new char [128];
 	  sprintf (TmpExtension, "_cducu_%d.mat", OrbitalIndex);
 	  char* OutputMatrixFileNameExtension2 = ReplaceString(OutputMatrixFileNameExtension1, ".dat", TmpExtension);
-	  File << OutputMatrixFileNameExtension2 << " 0.0" << endl;
+	  FileConfiningUp << OutputMatrixFileNameExtension2 << " 0.0" << endl;
 	  if (TmpAduAu.WriteMatrix(OutputMatrixFileNameExtension2) == false)
 	    {
 	      cout << "can't write " << OutputMatrixFileNameExtension2 << endl;
@@ -664,7 +671,7 @@ int main(int argc, char** argv)
 	  delete[] OutputMatrixFileNameExtension2;
 	  sprintf (TmpExtension, "_cddcd_%d.mat", OrbitalIndex);
 	  OutputMatrixFileNameExtension2 = ReplaceString(OutputMatrixFileNameExtension1, ".dat", TmpExtension);
-	  File << OutputMatrixFileNameExtension2 << " 0.0" << endl;
+	  FileConfiningDown << OutputMatrixFileNameExtension2 << " 0.0" << endl;
 	  if (TmpAddAd.WriteMatrix(OutputMatrixFileNameExtension2) == false)
 	    {
 	      cout << "can't write " << OutputMatrixFileNameExtension2 << endl;
@@ -673,6 +680,8 @@ int main(int argc, char** argv)
 	  delete[] TmpExtension;
 	  delete[] OutputMatrixFileNameExtension2;
 	}
+      FileConfiningDown.close();
+      FileConfiningUp.close();
       delete[]  SingleLayerVectors;   
       gettimeofday (&(TotalEndingTime), 0);
       Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 

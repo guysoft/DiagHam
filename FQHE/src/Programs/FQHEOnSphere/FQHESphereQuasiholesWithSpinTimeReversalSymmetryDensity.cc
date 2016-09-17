@@ -58,7 +58,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption('\n', "degenerate-states", "name of the file containing a list of states (override input-state)");
   (*SystemGroup) += new SingleStringOption('\n', "use-hilbert", "similar to --degenerate-states using a single line text file (starting with Basis=) instead of a single column text file");
   (*SystemGroup) += new SingleStringOption ('\n', "directory", "use a specific directory for the input data instead of the current one");
-  (*SystemGroup) += new SingleStringOption ('\n', "occupation-matrices", "use precomputed occupation matrices to evaluate the integrated charge");
+  (*SystemGroup) += new SingleStringOption ('\n', "cducu-matrices", "use precomputed occupation matrices to evaluate the integrated charge");
+  (*SystemGroup) += new SingleStringOption ('\n', "cddcd-matrices", "use precomputed occupation matrices to evaluate the integrated charge");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "flux-insertion", "include a flux insertion (in flux quantum unit) along the cylinder axis", 0.0);
   (*OutputGroup) += new BooleanOption ('\n', "realspace-density", "plot the density in real space");
   (*OutputGroup) += new SingleIntegerOption  ('\n', "nbr-points", "number of points along the cylinder axis", 400);  
@@ -178,7 +179,7 @@ int main(int argc, char** argv)
 	}
     }
   RealDiagonalMatrix TmpImbalanceEigenvalues(NbrInputStates);     
-  if (Manager.GetString("occupation-matrices") == 0)
+  if (Manager.GetString("cddcd-matrices") == 0)
     {
 
       char* FilePrefix = new char[512];
@@ -354,9 +355,12 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  char* DensityMatrixListMatrixFileName = ReplaceExtensionToFileName(InputStateNames[0], "vec", "density.mat.list");
-	  ofstream File2;
-	  File2.open(DensityMatrixListMatrixFileName, ios::binary | ios::out); 
+	  char* DensityUpMatrixListMatrixFileName = ReplaceExtensionToFileName(InputStateNames[0], "vec", "cducu.list");
+	  ofstream FileUp;
+	  FileUp.open(DensityUpMatrixListMatrixFileName, ios::binary | ios::out); 
+	  char* DensityDownMatrixListMatrixFileName = ReplaceExtensionToFileName(InputStateNames[0], "vec", "cddcd.list");
+	  ofstream FileDown;
+	  FileDown.open(DensityDownMatrixListMatrixFileName, ios::binary | ios::out); 
 	  for (int LayerIndex = 0; LayerIndex <= 1; ++LayerIndex)
 	    {
 	      for (int MomentumIndex = 0; MomentumIndex <= LzMax; ++MomentumIndex)
@@ -385,12 +389,16 @@ int main(int argc, char** argv)
 		      cout << "can't write " << TmpDensityMatrixFileName << endl;
 		      return -1;
 		    }
-		  File2 << TmpDensityMatrixFileName << endl;
+		  if (LayerIndex == 0)
+		    FileUp << TmpDensityMatrixFileName << endl;
+		  else
+		    FileDown << TmpDensityMatrixFileName << endl;
 		  delete[] TmpExtension;
 		  delete[] TmpDensityMatrixFileName;
 		}
 	    }
-	  File2.close();
+	  FileUp.close();
+	  FileDown.close();
 	}
       File.close();
     }
@@ -431,20 +439,26 @@ int main(int argc, char** argv)
 	  InputVectors = RealMatrix(TmpVectors, NbrInputStates);
 	}  
 
-      MultiColumnASCIIFile OccupationMatrixListFile;
-      if (OccupationMatrixListFile.Parse(Manager.GetString("occupation-matrices")) == false)
+      MultiColumnASCIIFile OccupationUpMatrixListFile;
+      if (OccupationUpMatrixListFile.Parse(Manager.GetString("cducu-matrices")) == false)
 	{
-	  OccupationMatrixListFile.DumpErrors(cout);
+	  OccupationUpMatrixListFile.DumpErrors(cout);
 	  return -1;
 	}
-      LzMax = (OccupationMatrixListFile.GetNbrLines() / 2) - 1;
+      MultiColumnASCIIFile OccupationDownMatrixListFile;
+      if (OccupationDownMatrixListFile.Parse(Manager.GetString("cddcd-matrices")) == false)
+	{
+	  OccupationDownMatrixListFile.DumpErrors(cout);
+	  return -1;
+	}
+      LzMax = OccupationUpMatrixListFile.GetNbrLines() - 1;
       for (int LayerIndex = 0; LayerIndex <= 1; ++LayerIndex)
 	{
 	  OneBodyMatrixElements[LayerIndex] = new RealSymmetricMatrix[LzMax + 1];
 	  for (int MomentumIndex = 0; MomentumIndex <= LzMax; ++MomentumIndex)
 	    {      
 	      RealSymmetricMatrix TmpMatrix;
-	      if (TmpMatrix.ReadMatrix(OccupationMatrixListFile(0, MomentumIndex + (LayerIndex * (LzMax + 1)))) == false)
+	      if ((LayerIndex == 0 && TmpMatrix.ReadMatrix(OccupationUpMatrixListFile(0, MomentumIndex)) == false) || (LayerIndex == 1 && TmpMatrix.ReadMatrix(OccupationDownMatrixListFile(0, MomentumIndex)) == false))
 		{
 		  return -1;
 		}
