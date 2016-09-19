@@ -170,4 +170,5 @@ QuasiholeOnSphereWithSpinAndPairing.cc \
 QuasiholeOnSphereWithSpin.cc \
 FermionOnTorusWithSpinAndMagneticTranslationsLong.cc \
 FermionOnTorusWithMagneticTranslationsLong.cc \
-QuasiholeOnSphereWithSpinAndPairingAllMomenta.cc
+QuasiholeOnSphereWithSpinAndPairingAllMomenta.cc \
+FermionOnSphereWithSpinAndPairingAllLz.cc

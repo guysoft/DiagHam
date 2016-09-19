@@ -84,7 +84,13 @@ ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingAllMo
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingAllMomenta::ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingAllMomenta(QuasiholeOnSphereWithSpinAndPairing* particles, int lzmax, int maxMomentumTransfer, double* onebodyPotentialUpUp, double* onebodyPotentialDownDown, double** onebodyOffDiagonalPotentialUpUp, double** onebodyOffDiagonalPotentialDownDown, Complex* onebodyPotentialPairing, Complex** onebodyOffDiagonalPotentialPairing, double chargingEnergy, double averageNumberParticles, AbstractArchitecture* architecture, long memory)
+ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingAllMomenta::ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingAllMomenta(QuasiholeOnSphereWithSpinAndPairing* particles, int lzmax, 
+																					     int maxMomentumTransfer, double* onebodyPotentialUpUp, 
+																					     double* onebodyPotentialDownDown, Complex** onebodyOffDiagonalPotentialUpUp, 
+																					     Complex** onebodyOffDiagonalPotentialDownDown, 
+																					     Complex* onebodyPotentialPairing, 
+																					     Complex** onebodyOffDiagonalPotentialPairing, double chargingEnergy, 
+																					     double averageNumberParticles, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->LzMax = lzmax;
@@ -129,10 +135,10 @@ ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingAllMo
   this->OneBodyOffDiagonalInteractionFactorsupup = 0;
   if (onebodyOffDiagonalPotentialUpUp != 0)
     {
-      this->OneBodyOffDiagonalInteractionFactorsupup = new double*[this->LzMax + 1];
+      this->OneBodyOffDiagonalInteractionFactorsupup = new Complex*[this->LzMax + 1];
       for (int i = 0; i <= this->LzMax; ++i)
 	{
-	  this->OneBodyOffDiagonalInteractionFactorsupup[i] = new double[this->MaximumMomentumTransfer];
+	  this->OneBodyOffDiagonalInteractionFactorsupup[i] = new Complex[this->MaximumMomentumTransfer];
 	  for (int j = 0; j < this->MaximumMomentumTransfer; ++j)
 	    {
 	      this->OneBodyOffDiagonalInteractionFactorsupup[i][j] = onebodyOffDiagonalPotentialUpUp[i][j];
@@ -142,10 +148,10 @@ ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingAllMo
   this->OneBodyOffDiagonalInteractionFactorsdowndown = 0;
   if (onebodyOffDiagonalPotentialDownDown != 0)
     {
-      this->OneBodyOffDiagonalInteractionFactorsdowndown = new double*[this->LzMax + 1];
+      this->OneBodyOffDiagonalInteractionFactorsdowndown = new Complex*[this->LzMax + 1];
       for (int i = 0; i <= this->LzMax; ++i)
 	{
-	  this->OneBodyOffDiagonalInteractionFactorsdowndown[i] = new double[this->MaximumMomentumTransfer];
+	  this->OneBodyOffDiagonalInteractionFactorsdowndown[i] = new Complex[this->MaximumMomentumTransfer];
 	  for (int j = 0; j < this->MaximumMomentumTransfer; ++j)
 	    {
 	      this->OneBodyOffDiagonalInteractionFactorsdowndown[i][j] = onebodyOffDiagonalPotentialDownDown[i][j];
@@ -367,7 +373,7 @@ ComplexVector& ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonian
 			    vDestination[TmpLeftIndices[j]] += (TmpCoef * TmpInteractionElements[j] * this->OneBodyOffDiagonalInteractionFactorsupup[lz][k]);
 			  NbrElements = TmpParticles->AduAu(index, lz, lz + k + 1, TmpLeftIndices, TmpInteractionElements);
 			  for (int j = 0; j < NbrElements; ++j)
-			    vDestination[TmpLeftIndices[j]] += (TmpCoef * TmpInteractionElements[j] * this->OneBodyOffDiagonalInteractionFactorsupup[lz][k]);
+			    vDestination[TmpLeftIndices[j]] += (TmpCoef * TmpInteractionElements[j] * Conj(this->OneBodyOffDiagonalInteractionFactorsupup[lz][k]));
 			}
 		    }
 		}
@@ -385,7 +391,7 @@ ComplexVector& ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonian
 			    vDestination[TmpLeftIndices[j]] += (TmpCoef * TmpInteractionElements[j] * this->OneBodyOffDiagonalInteractionFactorsdowndown[lz][k]);
 			  NbrElements = TmpParticles->AddAd(index, lz, lz + k + 1, TmpLeftIndices, TmpInteractionElements);
 			  for (int j = 0; j < NbrElements; ++j)
-			    vDestination[TmpLeftIndices[j]] += (TmpCoef * TmpInteractionElements[j] * this->OneBodyOffDiagonalInteractionFactorsdowndown[lz][k]);
+			    vDestination[TmpLeftIndices[j]] += (TmpCoef * TmpInteractionElements[j] * Conj(this->OneBodyOffDiagonalInteractionFactorsdowndown[lz][k]));
 			}
 		    }
 		}
@@ -583,9 +589,9 @@ ComplexVector& ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonian
 			    {
 			      if (TmpLeftIndices[j] <= index)
 				{
-				  vDestination[TmpLeftIndices[j]] += (TmpCoef * TmpInteractionElements[j] * this->OneBodyOffDiagonalInteractionFactorsupup[lz][k]);
+				  vDestination[TmpLeftIndices[j]] += (TmpCoef * TmpInteractionElements[j] * Conj(this->OneBodyOffDiagonalInteractionFactorsupup[lz][k]));
 				  if (TmpLeftIndices[j] < index)
-				    TmpSum += (vSource[TmpLeftIndices[j]] * TmpInteractionElements[j] * this->OneBodyOffDiagonalInteractionFactorsupup[lz][k]);
+				    TmpSum += (vSource[TmpLeftIndices[j]] * TmpInteractionElements[j] * Conj(this->OneBodyOffDiagonalInteractionFactorsupup[lz][k]));
 				}
 			    }
 			}
@@ -616,9 +622,9 @@ ComplexVector& ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonian
 			    {
 			      if (TmpLeftIndices[j] <= index)
 				{
-				  vDestination[TmpLeftIndices[j]] += (TmpCoef * TmpInteractionElements[j] * this->OneBodyOffDiagonalInteractionFactorsdowndown[lz][k]);
+				  vDestination[TmpLeftIndices[j]] += (TmpCoef * TmpInteractionElements[j] * Conj(this->OneBodyOffDiagonalInteractionFactorsdowndown[lz][k]));
 				  if (TmpLeftIndices[j] < index)
-				    TmpSum += (vSource[TmpLeftIndices[j]] * TmpInteractionElements[j] * this->OneBodyOffDiagonalInteractionFactorsdowndown[lz][k]);
+				    TmpSum += (vSource[TmpLeftIndices[j]] * TmpInteractionElements[j] * Conj(this->OneBodyOffDiagonalInteractionFactorsdowndown[lz][k]));
 				}
 			    }
 			}
@@ -1419,14 +1425,14 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 			{
 			  if (this->HermitianSymmetryFlag == false)
 			    {
-			      CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, this->OneBodyOffDiagonalInteractionFactorsupup[lz][k] * TmpInteractionElements[j]);
+			      CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, Conj(this->OneBodyOffDiagonalInteractionFactorsupup[lz][k]) * TmpInteractionElements[j]);
 			    }
 			  else
 			    {
 			      if (TmpLeftIndices[j] < i)
-				CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, this->OneBodyOffDiagonalInteractionFactorsupup[lz][k] * TmpInteractionElements[j]);
+				CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, Conj(this->OneBodyOffDiagonalInteractionFactorsupup[lz][k]) * TmpInteractionElements[j]);
 			      if (TmpLeftIndices[j] == i)
-				CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, this->OneBodyOffDiagonalInteractionFactorsupup[lz][k] * TmpInteractionElements[j] * 0.5);
+				CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, Conj(this->OneBodyOffDiagonalInteractionFactorsupup[lz][k]) * TmpInteractionElements[j] * 0.5);
 			      
 			    }
 			}
@@ -1464,14 +1470,14 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 			{
 			  if (this->HermitianSymmetryFlag == false)
 			    {
-			      CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, this->OneBodyOffDiagonalInteractionFactorsdowndown[lz][k] * TmpInteractionElements[j]);
+			      CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, Conj(this->OneBodyOffDiagonalInteractionFactorsdowndown[lz][k]) * TmpInteractionElements[j]);
 			    }
 			  else
 			    {
 			      if (TmpLeftIndices[j] < i)
-				CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, this->OneBodyOffDiagonalInteractionFactorsdowndown[lz][k] * TmpInteractionElements[j]);
+				CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, Conj(this->OneBodyOffDiagonalInteractionFactorsdowndown[lz][k]) * TmpInteractionElements[j]);
 			      if (TmpLeftIndices[j] == i)
-				CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, this->OneBodyOffDiagonalInteractionFactorsdowndown[lz][k] * TmpInteractionElements[j] * 0.5);
+				CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, Conj(this->OneBodyOffDiagonalInteractionFactorsdowndown[lz][k]) * TmpInteractionElements[j] * 0.5);
 			      
 			    }
 			}

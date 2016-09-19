@@ -403,6 +403,33 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   virtual void SlaterTimeSpinfulFermionicState(RealVector& fermionicState, RealVector& outputVector, FermionOnSphereWithSpin* fermionicSpace, 
 					       int minIndex, int nbrComponents);
 
+  // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. The entanglement matrix is only evaluated in a given Lz sector.
+  // 
+  // nbrParticleSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated
+  // szSector = Sz sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+  // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
+  virtual RealMatrix EvaluatePartialEntanglementMatrixParticlePartition (int nbrParticleSector, int lzSector, int szSector, RealVector& groundState, bool removeBinomialCoefficient = false);
+   
+  // evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using a generic real space partition. 
+  // The entanglement matrix is only evaluated in a given Lz sector and computed from precalculated particle entanglement matrix
+  // 
+  // nbrParticleSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // szSector = Sz sector in which the density matrix has to be evaluated 
+  // nbrOrbitalA = number of orbitals that have to be kept for the A part
+  // weightOrbitalAUp = weight of each orbital in the A part with spin up (starting from the leftmost orbital)
+  // weightOrbitalADown = weight of each orbital in the A part with spin down (starting from the leftmost orbital)
+  // nbrOrbitalB = number of orbitals that have to be kept for the B part
+  // weightOrbitalBUp = weight of each orbital in the B part with spin up (starting from the leftmost orbital)
+  // weightOrbitalBDown = weight of each orbital in the B part with spin down (starting from the leftmost orbital)
+  // entanglementMatrix = reference on the entanglement matrix (will be overwritten)
+  // return value = reference on the entanglement matrix
+  virtual RealMatrix& EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix (int nbrParticleSector, int lzSector, int szSector,
+													 int nbrOrbitalA, double* weightOrbitalAUp, double* weightOrbitalADown, 
+													 int nbrOrbitalB, double* weightOrbitalBUp, double* weightOrbitalBDown, RealMatrix& entanglementMatrix);
   protected:
 
   // find state index
@@ -537,8 +564,8 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // occupationCoefficient = invert of the coefficient that comes from the initial state occupation number 
   // occupationCoefficientArray = array that provides 1/2 ln (N!)
   virtual void TransformOneBodyBasisRecursive(ComplexVector& targetState, Complex coefficient,
-				      int position, int* momentumIndices, int* initialSU2Indices, int* currentSU2Indices, ComplexMatrix* oneBodyBasis, 
-				      double occupationCoefficient, double* occupationCoefficientArray);
+					      int position, int* momentumIndices, int* initialSU2Indices, int* currentSU2Indices, ComplexMatrix* oneBodyBasis, 
+					      double occupationCoefficient, double* occupationCoefficientArray);
 
   // Compute the product of a spinful Slater determinant with a Van der Monde determinant
   //

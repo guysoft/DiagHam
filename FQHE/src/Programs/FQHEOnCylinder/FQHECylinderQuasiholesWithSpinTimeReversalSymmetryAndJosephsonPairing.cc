@@ -159,8 +159,8 @@ int main(int argc, char** argv)
   double* OneBodyPotentialDownDown = 0;
   double* OneBodyPotentialUpDown = 0;
   double* OneBodyPotentialPairing = 0;
-  double** OffDiagonalOneBodyPotentialUpUp = 0;
-  double** OffDiagonalOneBodyPotentialDownDown = 0;
+  Complex** OffDiagonalOneBodyPotentialUpUp = 0;
+  Complex** OffDiagonalOneBodyPotentialDownDown = 0;
   Complex* ComplexOneBodyPotentialPairing = 0;
   Complex** OffDiagonalComplexOneBodyPotentialPairing = 0;
   double** PseudoPotentials  = 0;
@@ -214,6 +214,32 @@ int main(int argc, char** argv)
       int* AnnihilationIndices = ConfiningFile.GetAsIntegerArray(1);
       double* TmpUpUpPotential = ConfiningFile.GetAsDoubleArray(2);
       double* TmpDownDownPotential = ConfiningFile.GetAsDoubleArray(3);
+      double* TmpUpUpPhasePotential;
+      if (ConfiningFile.GetNbrColumns() > 4)
+	{
+	  TmpUpUpPhasePotential = ConfiningFile.GetAsDoubleArray(4);
+	}
+      else
+	{
+	  TmpUpUpPhasePotential = new double[ConfiningFile.GetNbrLines()];
+	  for (int i = 0; i < ConfiningFile.GetNbrLines(); ++i)
+	    {
+	      TmpUpUpPhasePotential[i] = 0.0;
+	    }
+	}
+      double* TmpDownDownPhasePotential;
+      if (ConfiningFile.GetNbrColumns() > 5)
+	{
+	  TmpDownDownPhasePotential = ConfiningFile.GetAsDoubleArray(5);
+	}
+      else
+	{
+	  TmpDownDownPhasePotential = new double[ConfiningFile.GetNbrLines()];
+	  for (int i = 0; i < ConfiningFile.GetNbrLines(); ++i)
+	    {
+	      TmpDownDownPhasePotential[i] = 0.0;
+	    }
+	}
       for (int i = 0; i < ConfiningFile.GetNbrLines(); ++i)
 	{
 	  if ((CreationIndices[i] < 0) || (AnnihilationIndices[i] < 0) || (CreationIndices[i] > LzMax) || (AnnihilationIndices[i] > LzMax))
@@ -235,12 +261,12 @@ int main(int argc, char** argv)
 	}
       if (MaximumMomentumTransfer > 0)
 	{
-	  OffDiagonalOneBodyPotentialUpUp = new double*[LzMax + 1];
-	  OffDiagonalOneBodyPotentialDownDown = new double*[LzMax + 1];
+	  OffDiagonalOneBodyPotentialUpUp = new Complex*[LzMax + 1];
+	  OffDiagonalOneBodyPotentialDownDown = new Complex*[LzMax + 1];
 	  for (int i = 0; i <= LzMax; ++i)
 	    {
-	      OffDiagonalOneBodyPotentialUpUp[i] = new double[MaximumMomentumTransfer];
-	      OffDiagonalOneBodyPotentialDownDown[i] = new double[MaximumMomentumTransfer];
+	      OffDiagonalOneBodyPotentialUpUp[i] = new Complex[MaximumMomentumTransfer];
+	      OffDiagonalOneBodyPotentialDownDown[i] = new Complex[MaximumMomentumTransfer];
 	      for (int j = 0; j < MaximumMomentumTransfer; ++j)	  
 		{
 		  OffDiagonalOneBodyPotentialUpUp[i][j] = 0.0;
@@ -260,13 +286,13 @@ int main(int argc, char** argv)
 	    {
 	      if (TmpMomentumTransfer > 0)
 		{
-		  OffDiagonalOneBodyPotentialUpUp[CreationIndices[i]][TmpMomentumTransfer - 1] = TmpUpUpPotential[i];
-		  OffDiagonalOneBodyPotentialDownDown[CreationIndices[i]][TmpMomentumTransfer - 1] = TmpDownDownPotential[i];		  
+		  OffDiagonalOneBodyPotentialUpUp[CreationIndices[i]][TmpMomentumTransfer - 1] = (TmpUpUpPotential[i] * Phase(M_PI * TmpUpUpPhasePotential[i]));
+		  OffDiagonalOneBodyPotentialDownDown[CreationIndices[i]][TmpMomentumTransfer - 1] = (TmpDownDownPotential[i] * Phase(M_PI * TmpDownDownPhasePotential[i]));
 		}
 	      else
 		{
-		  OffDiagonalOneBodyPotentialUpUp[CreationIndices[i]][-TmpMomentumTransfer - 1] = TmpUpUpPotential[i];
-		  OffDiagonalOneBodyPotentialDownDown[CreationIndices[i]][-TmpMomentumTransfer - 1] = TmpDownDownPotential[i];
+		  OffDiagonalOneBodyPotentialUpUp[CreationIndices[i]][-TmpMomentumTransfer - 1] = (TmpUpUpPotential[i] * Phase(-M_PI * TmpUpUpPhasePotential[i]));
+		  OffDiagonalOneBodyPotentialDownDown[CreationIndices[i]][-TmpMomentumTransfer - 1] = (TmpDownDownPotential[i] * Phase(-M_PI * TmpDownDownPhasePotential[i]));
 		}
 	    }
 	}

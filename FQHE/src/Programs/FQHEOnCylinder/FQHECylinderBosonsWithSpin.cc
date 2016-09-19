@@ -156,7 +156,8 @@ int main(int argc, char** argv)
   else
     {
       sprintf (GeometryName, "cylinder_ratio_%.6f", Ratio);
-    } char* OutputName = new char [512];
+    }
+  char* OutputName = new char [512];
   if (OneBodyPseudoPotentials[2] == 0)
     {
       if ((Manager.GetDouble("spinup-flux") == 0.0) && (Manager.GetDouble("spindown-flux") == 0.0))

@@ -187,15 +187,15 @@ int main(int argc, char** argv)
       return - 1;
     }
   if ((SVDFlag == false) && (Manager.GetString("states") != 0))
-  {
-    cout << "--states option only supported for SVD method" << endl;
-    return -1;
-  }
+    {
+      cout << "--states option only supported for SVD method" << endl;
+      return -1;
+    }
   if ((Manager.GetString("realspace-generic") == 0) && (Manager.GetString("states") != 0))
-  {
-    cout << "--states option only supported for real space generic cut" << endl;
-    return -1;
-  }
+    {
+      cout << "--states option only supported for real space generic cut" << endl;
+      return -1;
+    }
   if ((Manager.GetString("degenerated-groundstate") == 0) && (Manager.GetString("states") == 0))
     {
       GroundStateFiles = new char* [1];

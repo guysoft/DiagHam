@@ -1579,3 +1579,310 @@ unsigned long BosonOnSphereWithSU2Spin::VanDerMondeTimesSlater (unsigned long* s
   return TmpNbrStates;
 }
 
+// evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. The entanglement matrix is only evaluated in a given Lz sector.
+// 
+// nbrParticleSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated
+// szSector = Sz sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+// return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
+
+RealMatrix BosonOnSphereWithSU2Spin::EvaluatePartialEntanglementMatrixParticlePartition (int nbrParticleSector, int lzSector, int szSector, RealVector& groundState, bool removeBinomialCoefficient)
+{
+  cout << "test" << endl;
+  int nbrOrbitalA = this->LzMax + 1;
+  int nbrOrbitalB = this->LzMax + 1;  
+  if (nbrParticleSector == 0)
+    {
+      if ((lzSector == 0) && (szSector == 0))
+	{
+	  RealMatrix TmpEntanglementMatrix(1, this->HilbertSpaceDimension, true);
+	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	    TmpEntanglementMatrix.SetMatrixElement(0, i, groundState[i]);
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  RealMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;
+	}
+    }
+  if (nbrParticleSector == this->NbrBosons)
+    {
+      if ((lzSector == this->TotalLz) && (szSector == this->TotalSpin))
+	{
+	  RealMatrix TmpEntanglementMatrix(this->HilbertSpaceDimension, 1, true);
+	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	    TmpEntanglementMatrix.SetMatrixElement(i, 0, groundState[i]);
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  RealMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;
+	}
+    } 
+  int ComplementaryNbrParticles = this->NbrBosons - nbrParticleSector;
+  int ComplementarySzSector = this->TotalSpin - szSector;
+  int ComplementaryLzSector = this->TotalLz - lzSector;
+  if ((abs(ComplementarySzSector) > ComplementaryNbrParticles) || (abs(ComplementaryLzSector) > (this->LzMax * ComplementaryNbrParticles)))
+    {
+      RealMatrix TmpEntanglementMatrix;
+      return TmpEntanglementMatrix;  
+    }
+
+  double* LogFactorials = new double[this->NbrBosons + 1];
+  LogFactorials[0] = 0.0;
+  LogFactorials[1] = 0.0;
+  for (int i = 2 ; i <= this->NbrBosons; ++i)
+    LogFactorials[i] = LogFactorials[i - 1] + log((double) i); 
+  double TmpLogBinomial = LogFactorials[this->NbrBosons] - LogFactorials[ComplementaryNbrParticles] - LogFactorials[nbrParticleSector];
+  if (removeBinomialCoefficient == true)
+    TmpLogBinomial = 0.0;
+
+
+  BosonOnSphereWithSU2Spin SubsytemSpace(nbrParticleSector, lzSector, this->LzMax, szSector);
+  BosonOnSphereWithSU2Spin ComplementarySubsytemSpace(ComplementaryNbrParticles, ComplementaryLzSector, this->LzMax, ComplementarySzSector);  
+  RealMatrix TmpEntanglementMatrix(SubsytemSpace.GetHilbertSpaceDimension(), ComplementarySubsytemSpace.GetHilbertSpaceDimension(), true);
+  long TmpNbrNonZeroElements = 0l;
+  unsigned long** TmpSubsytemSpaceOccupationNumbersUp = new unsigned long* [SubsytemSpace.HilbertSpaceDimension];
+  unsigned long** TmpSubsytemSpaceOccupationNumbersDown = new unsigned long* [SubsytemSpace.HilbertSpaceDimension];
+  unsigned long** TmpSubsytemSpaceMonomialUp = new unsigned long* [SubsytemSpace.HilbertSpaceDimension];
+  unsigned long** TmpSubsytemSpaceMonomialDown = new unsigned long* [SubsytemSpace.HilbertSpaceDimension];
+  double* TmpSubsytemLogFactorials = new double [SubsytemSpace.HilbertSpaceDimension];
+  unsigned long* TmpMonomialUp1 = new unsigned long [ComplementaryNbrParticles];
+  unsigned long* TmpMonomialDown1 = new unsigned long [ComplementaryNbrParticles];
+  unsigned long* TmpMonomialUp3 = new unsigned long [this->NbrBosons];
+  unsigned long* TmpMonomialDown3 = new unsigned long [this->NbrBosons];
+
+  for (int i = 0; i < SubsytemSpace.HilbertSpaceDimension; ++i)
+    {
+      TmpSubsytemSpaceOccupationNumbersUp[i] = new unsigned long [this->NbrLzValue];
+      TmpSubsytemSpaceOccupationNumbersDown[i] = new unsigned long [this->NbrLzValue];
+      TmpSubsytemSpaceMonomialUp[i] = new unsigned long [nbrParticleSector];
+      TmpSubsytemSpaceMonomialDown[i] = new unsigned long [nbrParticleSector];
+      SubsytemSpace.FermionToBoson(SubsytemSpace.StateDescriptionUp[i], SubsytemSpace.StateDescriptionDown[i], 
+				      TmpSubsytemSpaceOccupationNumbersUp[i], TmpSubsytemSpaceOccupationNumbersDown[i]);
+      SubsytemSpace.ConvertToMonomial(SubsytemSpace.StateDescriptionUp[i], SubsytemSpace.StateDescriptionDown[i], 
+					 TmpSubsytemSpaceMonomialUp[i], TmpSubsytemSpaceMonomialDown[i]);
+      unsigned long* TmpOccupationNumberUp = TmpSubsytemSpaceOccupationNumbersUp[i];
+      unsigned long* TmpOccupationNumberDown = TmpSubsytemSpaceOccupationNumbersDown[i];
+      double TmpFactor = 0.0;
+      for (int k = 0; k <= SubsytemSpace.LzMax; ++k)
+	{
+	  TmpFactor += LogFactorials[TmpOccupationNumberUp[k]];
+	  TmpFactor += LogFactorials[TmpOccupationNumberDown[k]];
+	}
+      TmpSubsytemLogFactorials[i] = TmpFactor;      
+    }
+  for (int MinIndex = 0; MinIndex < ComplementarySubsytemSpace.HilbertSpaceDimension; ++MinIndex)    
+    {
+      ComplementarySubsytemSpace.ConvertToMonomial(ComplementarySubsytemSpace.StateDescriptionUp[MinIndex], ComplementarySubsytemSpace.StateDescriptionDown[MinIndex], 
+						   TmpMonomialUp1, TmpMonomialDown1);
+       for (int k = 0; k < ComplementaryNbrParticles; ++k)
+	 {
+	   TmpMonomialUp1[k] += this->LzMax + 1 - nbrOrbitalA;
+	   TmpMonomialDown1[k] += this->LzMax + 1 - nbrOrbitalA;
+	 }   
+      ComplementarySubsytemSpace.FermionToBoson(ComplementarySubsytemSpace.StateDescriptionUp[MinIndex], ComplementarySubsytemSpace.StateDescriptionDown[MinIndex],  
+						ComplementarySubsytemSpace.TemporaryStateUp, ComplementarySubsytemSpace.TemporaryStateDown);
+      double ComplementarySubsytemSpaceFactorial = 0.0;
+      for (int k = 0; k <= ComplementarySubsytemSpace.LzMax; ++k)
+	{
+	  ComplementarySubsytemSpaceFactorial += LogFactorials[ComplementarySubsytemSpace.TemporaryStateUp[k]];
+	  ComplementarySubsytemSpaceFactorial += LogFactorials[ComplementarySubsytemSpace.TemporaryStateDown[k]];
+	}
+      for (int j = 0; j < SubsytemSpace.HilbertSpaceDimension; ++j)
+	{
+	  unsigned long* TmpMonomialUp2 = TmpSubsytemSpaceMonomialUp[j];
+	  unsigned long* TmpMonomialDown2 = TmpSubsytemSpaceMonomialDown[j];
+	  int TmpIndex2 = 0;
+	  int TmpIndex3 = 0;
+	  int TmpIndex4 = 0;
+	  while ((TmpIndex2 < ComplementarySubsytemSpace.NbrBosonsUp) && (TmpIndex3 < SubsytemSpace.NbrBosonsUp)) 
+	    {
+	      while ((TmpIndex2 < ComplementarySubsytemSpace.NbrBosonsUp) && (TmpMonomialUp2[TmpIndex3] <= TmpMonomialUp1[TmpIndex2]))
+		{
+		  TmpMonomialUp3[TmpIndex4] = TmpMonomialUp1[TmpIndex2];
+		  ++TmpIndex2;
+		  ++TmpIndex4;		  
+		}
+	      if (TmpIndex2 < ComplementarySubsytemSpace.NbrBosonsUp)
+		{
+		  while ((TmpIndex3 < SubsytemSpace.NbrBosonsUp) && (TmpMonomialUp1[TmpIndex2] <= TmpMonomialUp2[TmpIndex3]))
+		    {
+		      TmpMonomialUp3[TmpIndex4] = TmpMonomialUp2[TmpIndex3];
+		      ++TmpIndex3;
+		      ++TmpIndex4;		  
+		    }
+		}
+	    }
+	  while (TmpIndex2 < ComplementarySubsytemSpace.NbrBosonsUp)
+	    {
+	      TmpMonomialUp3[TmpIndex4] = TmpMonomialUp1[TmpIndex2];
+	      ++TmpIndex2;
+	      ++TmpIndex4;		  
+	    }
+	  while (TmpIndex3 < SubsytemSpace.NbrBosonsUp)
+	    {
+	      TmpMonomialUp3[TmpIndex4] = TmpMonomialUp2[TmpIndex3];
+	      ++TmpIndex3;
+	      ++TmpIndex4;		  
+	    }
+	  TmpIndex2 = 0;
+	  TmpIndex3 = 0;
+	  TmpIndex4 = 0;
+	  while ((TmpIndex2 < ComplementarySubsytemSpace.NbrBosonsDown) && (TmpIndex3 < SubsytemSpace.NbrBosonsDown)) 
+	    {
+	      while ((TmpIndex2 < ComplementarySubsytemSpace.NbrBosonsDown) && (TmpMonomialDown2[TmpIndex3] <= TmpMonomialDown1[TmpIndex2]))
+		{
+		  TmpMonomialDown3[TmpIndex4] = TmpMonomialDown1[TmpIndex2];
+		  ++TmpIndex2;
+		  ++TmpIndex4;		  
+		}
+	      if (TmpIndex2 < ComplementarySubsytemSpace.NbrBosonsDown)
+		{
+		  while ((TmpIndex3 < SubsytemSpace.NbrBosonsDown) && (TmpMonomialDown1[TmpIndex2] <= TmpMonomialDown2[TmpIndex3]))
+		    {
+		      TmpMonomialDown3[TmpIndex4] = TmpMonomialDown2[TmpIndex3];
+		      ++TmpIndex3;
+		      ++TmpIndex4;		  
+		    }
+		}
+	    }
+	  while (TmpIndex2 < ComplementarySubsytemSpace.NbrBosonsDown)
+	    {
+	      TmpMonomialDown3[TmpIndex4] = TmpMonomialDown1[TmpIndex2];
+	      ++TmpIndex2;
+	      ++TmpIndex4;		  
+	    }
+	  while (TmpIndex3 < SubsytemSpace.NbrBosonsDown)
+	    {
+	      TmpMonomialDown3[TmpIndex4] = TmpMonomialDown2[TmpIndex3];
+	      ++TmpIndex3;
+	      ++TmpIndex4;		  
+	    }
+
+	  unsigned long TmpStateUp;
+	  unsigned long TmpStateDown;
+	  this->ConvertFromMonomial(TmpMonomialUp3, TmpMonomialDown3, TmpStateUp, TmpStateDown);
+	  int TmpPos = this->FindStateIndex(TmpStateUp, TmpStateDown);
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+	      this->FermionToBoson(TmpStateUp, TmpStateDown, this->TemporaryStateUp, this->TemporaryStateDown);
+	      double TmpFactorial = 0.0;	      
+	      for (int k = 0; k <= this->LzMax; ++k)
+		{
+		  TmpFactorial += LogFactorials[this->TemporaryStateUp[k]];
+		  TmpFactorial += LogFactorials[this->TemporaryStateDown[k]];
+		}
+	      TmpFactorial -= ComplementarySubsytemSpaceFactorial + TmpSubsytemLogFactorials[j] + TmpLogBinomial;
+	      TmpFactorial *= 0.5; 	      
+	      ++TmpNbrNonZeroElements;
+	      double Tmp = exp(TmpFactorial) * groundState[TmpPos];
+	      TmpEntanglementMatrix.SetMatrixElement(j, MinIndex, Tmp);
+	    }
+	}
+    }
+
+  for (int i = 0; i < SubsytemSpace.HilbertSpaceDimension; ++i)
+    {
+      delete[] TmpSubsytemSpaceOccupationNumbersUp[i];
+      delete[] TmpSubsytemSpaceOccupationNumbersDown[i];
+      delete[] TmpSubsytemSpaceMonomialUp[i];
+      delete[] TmpSubsytemSpaceMonomialDown[i];
+    }
+  delete[] TmpSubsytemSpaceOccupationNumbersUp;
+  delete[] TmpSubsytemSpaceOccupationNumbersDown;
+  delete[] TmpSubsytemSpaceMonomialUp;
+  delete[] TmpSubsytemSpaceMonomialDown;
+  delete[] LogFactorials;
+  if (TmpNbrNonZeroElements > 0l)
+    {
+      return TmpEntanglementMatrix;
+    }
+  else
+    {
+      RealMatrix TmpEntanglementMatrixZero;
+      return TmpEntanglementMatrixZero;
+    }
+}
+   
+// evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using a generic real space partition. 
+// The entanglement matrix is only evaluated in a given Lz sector and computed from precalculated particle entanglement matrix
+// 
+// nbrParticleSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// szSector = Sz sector in which the density matrix has to be evaluated 
+// nbrOrbitalA = number of orbitals that have to be kept for the A part
+// weightOrbitalAUp = weight of each orbital in the A part with spin up (starting from the leftmost orbital)
+// weightOrbitalADown = weight of each orbital in the A part with spin down (starting from the leftmost orbital)
+// nbrOrbitalB = number of orbitals that have to be kept for the B part
+// weightOrbitalBUp = weight of each orbital in the B part with spin up (starting from the leftmost orbital)
+// weightOrbitalBDown = weight of each orbital in the B part with spin down (starting from the leftmost orbital)
+// entanglementMatrix = reference on the entanglement matrix (will be overwritten)
+// return value = reference on the entanglement matrix
+
+RealMatrix& BosonOnSphereWithSU2Spin::EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix (int nbrParticleSector, int lzSector, int szSector,
+															 int nbrOrbitalA, double* weightOrbitalAUp, double* weightOrbitalADown, 
+															 int nbrOrbitalB, double* weightOrbitalBUp, double* weightOrbitalBDown, RealMatrix& entanglementMatrix)
+{
+  int ComplementaryNbrParticles = this->NbrBosons - nbrParticleSector;
+  int ComplementarySzSector = this->TotalSpin - szSector;
+  int TotalLzDisk = ConvertLzFromSphereToDisk(this->TotalLz, this->NbrBosons, this->LzMax);
+  int LzADisk = ConvertLzFromSphereToDisk(lzSector, nbrParticleSector, nbrOrbitalA - 1);
+  if ((LzADisk < 0) || (LzADisk > ((nbrOrbitalA - 1) * nbrParticleSector)))
+    {
+      return entanglementMatrix;	  
+    }
+  int LzBDisk = (TotalLzDisk - LzADisk) - ComplementaryNbrParticles * (this->LzMax + 1 - nbrOrbitalB);
+  if ((LzBDisk < 0) || (LzBDisk > ((nbrOrbitalB - 1) * ComplementaryNbrParticles)))
+    {
+      return entanglementMatrix;	  
+    }
+  int ComplementaryLzSector = ConvertLzFromDiskToSphere(LzBDisk, ComplementaryNbrParticles, nbrOrbitalB - 1);
+  BosonOnSphereWithSU2Spin SubsytemSpace(nbrParticleSector, lzSector, nbrOrbitalA - 1, szSector);
+  BosonOnSphereWithSU2Spin ComplementarySubsytemSpace(ComplementaryNbrParticles, ComplementaryLzSector, nbrOrbitalB - 1, ComplementarySzSector);  
+
+  cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
+  unsigned long* TmpMonomialUp1 = new unsigned long [ComplementaryNbrParticles];
+  unsigned long* TmpMonomialDown1 = new unsigned long [ComplementaryNbrParticles];
+  unsigned long* TmpMonomialUp3 = new unsigned long [nbrParticleSector];
+  unsigned long* TmpMonomialDown3 = new unsigned long [nbrParticleSector];
+  
+  for (int i = 0; i < SubsytemSpace.HilbertSpaceDimension; ++i)
+    {
+      SubsytemSpace.ConvertToMonomial(SubsytemSpace.StateDescriptionUp[i], SubsytemSpace.StateDescriptionDown[i], TmpMonomialUp3, TmpMonomialDown3);
+      double Tmp = 1.0;
+      for (int j = 0; j < SubsytemSpace.NbrBosonsUp; j++)
+	{
+	  Tmp *= weightOrbitalAUp[TmpMonomialUp3[j]];
+	}
+      for (int j = 0; j < SubsytemSpace.NbrBosonsDown; j++)
+	{
+	  Tmp *= weightOrbitalADown[TmpMonomialDown3[j]];
+	}
+      for (int j = 0; j < ComplementarySubsytemSpace.HilbertSpaceDimension; ++j)          
+	entanglementMatrix(i, j) *= Tmp;      
+    }
+  
+  for (int MinIndex = 0; MinIndex < ComplementarySubsytemSpace.HilbertSpaceDimension; ++MinIndex)    
+    {
+      ComplementarySubsytemSpace.ConvertToMonomial(ComplementarySubsytemSpace.StateDescriptionUp[MinIndex], ComplementarySubsytemSpace.StateDescriptionDown[MinIndex], TmpMonomialUp1, TmpMonomialDown1);
+      double FormFactor = 1.0;
+      for (int i = 0; i < ComplementarySubsytemSpace.NbrBosonsUp; i++)
+	FormFactor *= weightOrbitalBUp[TmpMonomialUp1[i]];
+      for (int i = 0; i < ComplementarySubsytemSpace.NbrBosonsDown; i++)
+	FormFactor *= weightOrbitalBDown[TmpMonomialDown1[i]];
+      for (int j = 0; j < SubsytemSpace.HilbertSpaceDimension; ++j)
+	entanglementMatrix(j, MinIndex) *= FormFactor; 
+    }
+  
+  delete[] TmpMonomialUp1;
+  delete[] TmpMonomialDown1;
+  delete[] TmpMonomialUp3;
+  delete[] TmpMonomialDown3;
+  
+  return entanglementMatrix;
+}

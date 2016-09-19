@@ -58,9 +58,9 @@ class ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairin
   // array that contains all one-body interaction factors for particles with spin down
   double* OneBodyInteractionFactorsdowndown;
   // off-diagonal contribution of the one-body potential for particles with spin up, the first entry is the annihilation index, the second entry is the momentum tranfer
-  double** OneBodyOffDiagonalInteractionFactorsupup;
+  Complex** OneBodyOffDiagonalInteractionFactorsupup;
   // off-diagonal contribution of the one-body potential for particles with spin down, the first entry is the annihilation index, the second entry is the momentum tranfer
-  double** OneBodyOffDiagonalInteractionFactorsdowndown;
+  Complex** OneBodyOffDiagonalInteractionFactorsdowndown;
 
 
   // array that contains all one-body interaction factors for the pairing term
@@ -102,7 +102,7 @@ class ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairin
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairingAllMomenta(QuasiholeOnSphereWithSpinAndPairing* particles, int lzmax, int maxMomentumTransfer,
 											double* onebodyPotentialUpUp, double* onebodyPotentialDownDown,
-											double** onebodyOffDiagonalPotentialUpUp, double** onebodyOffDiagonalPotentialDownDown,
+											Complex** onebodyOffDiagonalPotentialUpUp, Complex** onebodyOffDiagonalPotentialDownDown,
 											Complex* onebodyPotentialPairing, Complex** onebodyOffDiagonalPotentialPairing, 
 											double chargingEnergy, double averageNumberParticles,
 											AbstractArchitecture* architecture, long memory = -1);
