@@ -8,9 +8,10 @@
 //                                                                            //
 //     class of hamiltonian associated to particles on a cylinder with        //
 //        SU(2) spin with opposite magnetic field for each species            //
-//     a generic interaction defined by its pseudopotential and pairing       //
+//      a generic interaction defined by its pseudopotential, pairing         //
+//               and translation breaking one body potentials                 //
 //                                                                            //
-//                        last modification : 15/09/2016                      //
+//                        last modification : 19/09/2016                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "Hamiltonian/ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing.h"
+#include "Hamiltonian/ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairingAllMomenta.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
@@ -54,7 +55,7 @@ using std::endl;
 using std::ostream;
 
 
-ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing::ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing()
+ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairingAllMomenta::ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairingAllMomenta()
 {
 }
 
@@ -62,47 +63,42 @@ ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing::Par
 //
 // particles = Hilbert space associated to the system
 // lzmax = maximum Lz value reached by a particle in the state
+// ratio = ratio between the width in the x direction and the width in the y direction
+// maxMomentumTransfer = maxixum monentum transfer that can appear in a one body operator
 // pseudoPotential = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
 //                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
 // onebodyPotentialUpUp =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin up, null pointer if none
 // onebodyPotentialDownDown =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin down, null pointer if none
+// onebodyOffDiagonalPotentialUpUp = off-diagonal contribution of the one-body potential for particles with spin up, the first entry is the annihilation index, 
+//                                   the second entry is the momentum tranfer
+// onebodyOffDiagonalPotentialDownDown = off-diagonal contribution of the one-body potential for particles with spin down, the first entry is the annihilation index, 
+//                                       the second entry is the momentum tranfer
 // onebodyPotentialPairing =  one-body pairing term (sorted from component on the lowest Lz state to component on the highest Lz state), on site, symmetric spin up / spin down
+// onebodyOffDiagonalPotentialPairing = off diagonal contribution of the one-body pairing term, the first entry is the index of the rightmost creation operator, 
+//	    				  the second entry is the momentum tranfer
 // chargingEnergy = factor in front of the charging energy (i.e 1/(2C))
 // averageNumberParticles = average number of particles in the system
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-// onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
-// precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing::ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing(ParticleOnSphereWithSpin* particles, int lzmax, double ratio, 
-																		     double** pseudoPotential, double* onebodyPotentialUpUp, double* onebodyPotentialDownDown, 
-																		     double* onebodyPotentialPairing, double chargingEnergy, double averageNumberParticles,
-																		     AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
-																		     char* precalculationFileName)
+ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairingAllMomenta::ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairingAllMomenta(ParticleOnSphereWithSpin* particles, int lzmax, double ratio, int maxMomentumTransfer, 
+																					     double** pseudoPotential, double* onebodyPotentialUpUp, double* onebodyPotentialDownDown,
+																					     Complex** onebodyOffDiagonalPotentialUpUp, Complex** onebodyOffDiagonalPotentialDownDown,
+																					     Complex* onebodyPotentialPairing, Complex** onebodyOffDiagonalPotentialPairing,
+																					     double chargingEnergy, double averageNumberParticles, 
+																					     AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
-  this->LzMax = lzmax;
-  this->NbrLzValue = this->LzMax + 1;
+  // warning : unusual definition of LzMax for the cylinder geometry, using the Chern insulator definition
+  this->LzMax = lzmax + 1;
   this->NbrParticles = 0;
   this->Ratio = ratio;
   this->InvRatio = 1.0 / this->Ratio;
   
   this->FastMultiplicationFlag = false;
-  this->OneBodyTermFlag = false;
   this->Architecture = architecture;
-  this->PseudoPotentials = new double* [3];
-  this->L2Hamiltonian = 0;
-  this->S2Hamiltonian = 0;
-  for (int j = 0; j < 3; ++j)
-    {
-      this->PseudoPotentials[j] = new double [this->NbrLzValue];
-      for (int i = 0; i < this->NbrLzValue; ++i)
-	{
-	  this->PseudoPotentials[j][i] = pseudoPotential[j][i];
-	}
-    }
 
-  this->NbrPseudopotentialsUpUp = this->NbrLzValue;
+  this->NbrPseudopotentialsUpUp = this->LzMax;
   while ((this->NbrPseudopotentialsUpUp > 0) && (pseudoPotential[0][this->NbrPseudopotentialsUpUp - 1] == 0.0))
     {
       --this->NbrPseudopotentialsUpUp;
@@ -119,7 +115,7 @@ ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing::Par
     {
       this->PseudopotentialsUpUp = 0;
     }
-  this->NbrPseudopotentialsDownDown = this->NbrLzValue;
+  this->NbrPseudopotentialsDownDown = this->LzMax;
   while ((this->NbrPseudopotentialsDownDown > 0) && (pseudoPotential[1][this->NbrPseudopotentialsDownDown - 1] == 0.0))
     {
       --this->NbrPseudopotentialsDownDown;
@@ -136,7 +132,7 @@ ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing::Par
     {
       this->PseudopotentialsDownDown = 0;
     }
-  this->NbrPseudopotentialsUpDown = this->NbrLzValue;
+  this->NbrPseudopotentialsUpDown = this->LzMax;
   while ((this->NbrPseudopotentialsUpDown > 0) && (pseudoPotential[2][this->NbrPseudopotentialsUpDown - 1] == 0.0))
     {
       --this->NbrPseudopotentialsUpDown;
@@ -162,45 +158,42 @@ ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing::Par
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
-  this->DiskStorageFlag = onDiskCacheFlag;
   this->Memory = memory;
-  this->OneBodyInteractionFactorsupup = new double [this->NbrLzValue];
-  for (int i = 0; i <= this->LzMax; ++i)
+  this->OneBodyInteractionFactorsupup = new double [this->LzMax];
+  for (int i = 0; i < this->LzMax; ++i)
     this->OneBodyInteractionFactorsupup[i] = this->ChargingEnergy * (1.0 - (2.0 * this->AverageNumberParticles));
   if (onebodyPotentialUpUp != 0)
     {
-      for (int i = 0; i <= this->LzMax; ++i)
+      for (int i = 0; i < this->LzMax; ++i)
 	this->OneBodyInteractionFactorsupup[i] += onebodyPotentialUpUp[i];
     }
-  this->OneBodyInteractionFactorsdowndown = new double [this->NbrLzValue];
-  for (int i = 0; i <= this->LzMax; ++i)
+  this->OneBodyInteractionFactorsdowndown = new double [this->LzMax];
+  for (int i = 0; i < this->LzMax; ++i)
     this->OneBodyInteractionFactorsdowndown[i] = this->ChargingEnergy * (1.0 - (2.0 * this->AverageNumberParticles));
   if (onebodyPotentialDownDown != 0)
     {
-      for (int i = 0; i <= this->LzMax; ++i)
+      for (int i = 0; i < this->LzMax; ++i)
 	this->OneBodyInteractionFactorsdowndown[i] += onebodyPotentialDownDown[i];
     }
   this->OneBodyInteractionFactorsupdown = 0;
   this->OneBodyInteractionFactorsPairing = 0;
   if (onebodyPotentialPairing != 0)
     {
-      this->OneBodyInteractionFactorsPairing = new double [this->NbrLzValue];
-      for (int i = 0; i <= this->LzMax; ++i)
+      this->OneBodyInteractionFactorsPairing = new Complex [this->LzMax];
+      for (int i = 0; i < this->LzMax; ++i)
 	{
 	  this->OneBodyInteractionFactorsPairing[i] = onebodyPotentialPairing[i];
 	}
     }
-  if (precalculationFileName == 0)
+  if (memory > 0)
     {
-      if (memory > 0)
-	{
-	  long TmpMemory = this->FastMultiplicationMemory(memory);
-	  if (TmpMemory < 1024)
-	    cout  << "fast = " <<  TmpMemory << "b ";
-	  else
-	    if (TmpMemory < (1 << 20))
-	      cout  << "fast = " << (TmpMemory >> 10) << "kb ";
-	    else
+      long TmpMemory = this->FastMultiplicationMemory(memory);
+      if (TmpMemory < 1024)
+	cout  << "fast = " <<  TmpMemory << "b ";
+      else
+	if (TmpMemory < (1 << 20))
+	  cout  << "fast = " << (TmpMemory >> 10) << "kb ";
+	else
 	  if (TmpMemory < (1 << 30))
 	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
 	  else
@@ -213,26 +206,14 @@ ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing::Par
 		cout << "0";
 	      cout  << TmpMemory << " Gb ";
 	    }
-	  if (this->DiskStorageFlag == false)
-	    {
-	      this->EnableFastMultiplication();
-	    }
-	  else
-	    {
-	      char* TmpFileName = this->Architecture->GetTemporaryFileName();
-	      this->EnableFastMultiplicationWithDiskStorage(TmpFileName);	      
-	      delete[] TmpFileName;
-	    }
-	}
+      this->EnableFastMultiplication();
     }
-  else
-    this->LoadPrecalculation(precalculationFileName);
 }
 
 // destructor
 //
 
-ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing::~ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing() 
+ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairingAllMomenta::~ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairingAllMomenta() 
 {
   if (this->PseudopotentialsUpUp != 0)
     delete[] this->PseudopotentialsUpUp;
@@ -245,18 +226,8 @@ ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing::~Pa
 // evaluate all interaction factors
 //   
 
-void ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing::EvaluateInteractionFactors()
+void ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairingAllMomenta::EvaluateInteractionFactors()
 {
-
-  // in absence of above code, initialize the following two fields to zero
-  this->M1IntraValue = 0;
-  this->M1InterValue = 0;
-  
-  // int Lim;
-  // int Min;
-  // int Pos = 0;
-  int J = 2 * this->LzMax - 2;
-  // int m4;
   long TotalNbrInteractionFactors = 0;
 
   int Sign = 1;
@@ -264,12 +235,12 @@ void ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing
     Sign = 0;
   double TmpCoefficient = 0.0;
 
-  this->NbrInterSectorSums = 2 * this->LzMax + 1;
+  this->NbrInterSectorSums = 2 * this->LzMax - 1;
   this->NbrInterSectorIndicesPerSum = new int[this->NbrInterSectorSums];
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
     this->NbrInterSectorIndicesPerSum[i] = 0;
-  for (int m1 = 0; m1 <= this->LzMax; ++m1)
-    for (int m2 = 0; m2 <= this->LzMax; ++m2)
+  for (int m1 = 0; m1 < this->LzMax; ++m1)
+    for (int m2 = 0; m2 < this->LzMax; ++m2)
       ++this->NbrInterSectorIndicesPerSum[m1 + m2];      
   this->InterSectorIndicesPerSum = new int* [this->NbrInterSectorSums];
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
@@ -277,8 +248,8 @@ void ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing
       this->InterSectorIndicesPerSum[i] = new int[2 * this->NbrInterSectorIndicesPerSum[i]];      
       this->NbrInterSectorIndicesPerSum[i] = 0;
     }
-  for (int m1 = 0; m1 <= this->LzMax; ++m1)
-    for (int m2 = 0; m2 <= this->LzMax; ++m2)
+  for (int m1 = 0; m1 < this->LzMax; ++m1)
+    for (int m2 = 0; m2 < this->LzMax; ++m2)
       {
 	this->InterSectorIndicesPerSum[(m1 + m2)][this->NbrInterSectorIndicesPerSum[(m1 + m2)] << 1] = m1;
 	this->InterSectorIndicesPerSum[(m1 + m2)][1 + (this->NbrInterSectorIndicesPerSum[(m1 + m2)] << 1)] = m2;
@@ -287,12 +258,12 @@ void ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing
 
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
-      this->NbrIntraSectorSums = 2 * this->LzMax - 1;
+      this->NbrIntraSectorSums = 2 * this->LzMax - 3;
       this->NbrIntraSectorIndicesPerSum = new int[this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 	this->NbrIntraSectorIndicesPerSum[i] = 0;      
       for (int m1 = 0; m1 < this->LzMax; ++m1)
-	for (int m2 = m1 + 1; m2 <= this->LzMax; ++m2)
+	for (int m2 = m1 + 1; m2 < this->LzMax; ++m2)
 	  ++this->NbrIntraSectorIndicesPerSum[(m1 + m2) - 1];
       this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
@@ -301,19 +272,19 @@ void ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing
 	  this->NbrIntraSectorIndicesPerSum[i] = 0;
 	}
       for (int m1 = 0; m1 < this->LzMax; ++m1)
-	for (int m2 = m1 + 1; m2 <= this->LzMax; ++m2)
+	for (int m2 = m1 + 1; m2 < this->LzMax; ++m2)
 	  {
 	    this->IntraSectorIndicesPerSum[(m1 + m2) - 1][this->NbrIntraSectorIndicesPerSum[(m1 + m2) - 1] << 1] = m1;
 	    this->IntraSectorIndicesPerSum[(m1 + m2) - 1][1 + (this->NbrIntraSectorIndicesPerSum[(m1 + m2) - 1] << 1)] = m2;
 	    ++this->NbrIntraSectorIndicesPerSum[(m1 + m2) - 1];
 	  }
 
-      this->InteractionFactorsupup = new double* [this->NbrIntraSectorSums];
-      this->InteractionFactorsdowndown = new double* [this->NbrIntraSectorSums];
+      this->InteractionFactorsupup = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsdowndown = new Complex* [this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 	{
-	  this->InteractionFactorsupup[i] = new double[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
-	  this->InteractionFactorsdowndown[i] = new double[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+	  this->InteractionFactorsupup[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+	  this->InteractionFactorsdowndown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
 	  int Index = 0;
 	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
 	    {
@@ -339,10 +310,10 @@ void ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing
 
       if (this->NbrPseudopotentialsUpDown > 0)
 	{
-	  this->InteractionFactorsupdown = new double* [this->NbrInterSectorSums];
+	  this->InteractionFactorsupdown = new Complex* [this->NbrInterSectorSums];
 	  for (int i = 0; i < this->NbrInterSectorSums; ++i)
 	    {
-	      this->InteractionFactorsupdown[i] = new double[this->NbrInterSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
+	      this->InteractionFactorsupdown[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
 	      int Index = 0;
 	      for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
 		{
@@ -373,8 +344,8 @@ void ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing
       this->NbrIntraSectorIndicesPerSum = new int[this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 	this->NbrIntraSectorIndicesPerSum[i] = 0;      
-      for (int m1 = 0; m1 <= this->LzMax; ++m1)
-	for (int m2 = m1; m2 <= this->LzMax; ++m2)
+      for (int m1 = 0; m1 < this->LzMax; ++m1)
+	for (int m2 = m1; m2 < this->LzMax; ++m2)
 	  ++this->NbrIntraSectorIndicesPerSum[m1 + m2];
       this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
@@ -382,20 +353,20 @@ void ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing
 	  this->IntraSectorIndicesPerSum[i] = new int[2 * this->NbrIntraSectorIndicesPerSum[i]];      
 	  this->NbrIntraSectorIndicesPerSum[i] = 0;
 	}
-      for (int m1 = 0; m1 <= this->LzMax; ++m1)
-	for (int m2 = m1; m2 <= this->LzMax; ++m2)
+      for (int m1 = 0; m1 < this->LzMax; ++m1)
+	for (int m2 = m1; m2 < this->LzMax; ++m2)
 	  {
 	    this->IntraSectorIndicesPerSum[m1 + m2][this->NbrIntraSectorIndicesPerSum[m1 + m2] << 1] = m1;
 	    this->IntraSectorIndicesPerSum[m1 + m2][1 + (this->NbrIntraSectorIndicesPerSum[m1 + m2] << 1)] = m2;
 	    ++this->NbrIntraSectorIndicesPerSum[m1 + m2];
 	  }
 
-      this->InteractionFactorsupup = new double* [this->NbrIntraSectorSums];
-      this->InteractionFactorsdowndown = new double* [this->NbrIntraSectorSums];
+      this->InteractionFactorsupup = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsdowndown = new Complex* [this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 	{
-	  this->InteractionFactorsupup[i] = new double[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
-	  this->InteractionFactorsdowndown[i] = new double[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+	  this->InteractionFactorsupup[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+	  this->InteractionFactorsdowndown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
 	  int Index = 0;
 	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
 	    {
@@ -449,10 +420,10 @@ void ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing
 
       if (this->NbrPseudopotentialsUpDown > 0)
 	{
-	  this->InteractionFactorsupdown = new double* [this->NbrInterSectorSums];
+	  this->InteractionFactorsupdown = new Complex* [this->NbrInterSectorSums];
 	  for (int i = 0; i < this->NbrInterSectorSums; ++i)
 	    {
-	      this->InteractionFactorsupdown[i] = new double[this->NbrInterSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
+	      this->InteractionFactorsupdown[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
 	      int Index = 0;
 	      for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
 		{
@@ -493,7 +464,7 @@ void ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing
 // pseudopotentials = pseudopotential coefficients
 // return value = numerical coefficient
 
-double ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, int nbrPseudopotentials, double* pseudopotentials)
+double ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairingAllMomenta::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, int nbrPseudopotentials, double* pseudopotentials)
 {
   double Kappa2Factor = (2.0 * M_PI * this->Ratio / ((double) (this->LzMax + 1)));
   double Coefficient = pseudopotentials[0] * exp (-0.25 * Kappa2Factor * (((double) ((m1 - m2) * (m1 - m2))) + ((double) ((m3 - m4) * (m3 - m4))))) / sqrt(2.0 * M_PI);

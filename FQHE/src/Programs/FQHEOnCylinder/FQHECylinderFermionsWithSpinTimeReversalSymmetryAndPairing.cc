@@ -116,6 +116,7 @@ int main(int argc, char** argv)
       Ratio = 2.0 * M_PI * (LzMax + 1) / (Perimeter * Perimeter);
     }
   bool FirstRun = true;
+  double EnergyShift = -10.0;
 
   double* OneBodyPotentialUpUp = 0;
   double* OneBodyPotentialDownDown = 0;
@@ -446,8 +447,7 @@ int main(int argc, char** argv)
 													 Architecture.GetArchitecture(), 
 													 Memory, DiskCacheFlag,
 													 LoadPrecalculationFileName);
-	  double Shift = - 10.0;
-	  Hamiltonian->ShiftHamiltonian(Shift);
+	  Hamiltonian->ShiftHamiltonian(EnergyShift);
 	  char* EigenvectorName = 0;
 	  if (Manager.GetBoolean("eigenstate") == true)	
 	    {
@@ -457,7 +457,7 @@ int main(int argc, char** argv)
 	  
 	  char* TmpString = new char[64];
 	  sprintf (TmpString, "%d ", L);
- 	  GenericRealMainTask Task(&Manager, Space, &Lanczos, Hamiltonian, TmpString, CommentLine, 0.0,  FullOutputFileName,
+ 	  GenericRealMainTask Task(&Manager, Space, &Lanczos, Hamiltonian, TmpString, CommentLine, EnergyShift,  FullOutputFileName,
 				   FirstRun, EigenvectorName);
 	  MainTaskOperation TaskOperation (&Task);
 	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
@@ -482,8 +482,7 @@ int main(int argc, char** argv)
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
 
-      double Shift = - 10.0;
-      Hamiltonian->ShiftHamiltonian(Shift);
+      Hamiltonian->ShiftHamiltonian(EnergyShift);
       char* EigenvectorName = 0;
       if (Manager.GetBoolean("eigenstate") == true)	
 	{	  
@@ -493,7 +492,7 @@ int main(int argc, char** argv)
       
       char* TmpString = new char[64];
       sprintf (TmpString, "");
-      GenericComplexMainTask Task(&Manager, Space, &Lanczos, Hamiltonian, TmpString, CommentLine, 0.0,  FullOutputFileName,
+      GenericComplexMainTask Task(&Manager, Space, &Lanczos, Hamiltonian, TmpString, CommentLine, EnergyShift,  FullOutputFileName,
 				  FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
