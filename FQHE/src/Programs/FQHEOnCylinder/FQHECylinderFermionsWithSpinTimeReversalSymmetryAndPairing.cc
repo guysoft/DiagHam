@@ -1,8 +1,10 @@
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/FermionOnSphereWithSpinAllLz.h"
 #include "HilbertSpace/FermionOnSphereWithSpinAndPairing.h"
 #include "HilbertSpace/FermionOnSphereWithSpinAndPairingAllLz.h"
 
 #include "Hamiltonian/ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing.h"
+#include "Hamiltonian/ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairingAllMomenta.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -64,6 +66,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-ky", "number of ky value to evaluate", -1);
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "if positive, fix the total number of particles", -1);
   (*SystemGroup) += new BooleanOption  ('\n', "force-negativeky", "manually force to compute the negative ky sectors if ky is conserved");
+  (*SystemGroup) += new BooleanOption  ('\n', "force-noky", "assume that ky is not conserved, irrespective of the hamiltonian");
   (*SystemGroup) += new SingleDoubleOption  ('r', "aspect-ratio", "aspect ratio of the cylinder", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "cylinder-perimeter", "if non zero, fix the cylinder perimeter (in magnetic length unit) instead of the aspect ratio", 0);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
@@ -72,6 +75,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('\n', "superconducting-file", "file describing the superconducting order paarameter");
   (*SystemGroup) += new SingleDoubleOption ('\n', "charging-energy", "factor in front of the charging energy (i.e 1/(2C))", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "average-nbrparticles", "average number of particles", 0.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "rescale-onebody", "apply a global rescaling factor to all the one body term", 1.0);
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
 
@@ -133,6 +137,7 @@ int main(int argc, char** argv)
   Complex** OffDiagonalComplexOneBodyPotentialPairing = 0;
   bool PreserveKySymmetryFlag = false;
   int MaximumMomentumTransfer = 0;
+  double OneBodyRescalingFactor = Manager.GetDouble("rescale-onebody");
 
   if (Manager.GetString("interaction-file") == 0)
     {
@@ -234,20 +239,20 @@ int main(int argc, char** argv)
 	  int TmpMomentumTransfer = CreationIndices[i] - AnnihilationIndices[i];
 	  if (TmpMomentumTransfer == 0)
 	    {
-	      OneBodyPotentialUpUp[CreationIndices[i]] = TmpUpUpPotential[i];
-	      OneBodyPotentialDownDown[CreationIndices[i]] = TmpDownDownPotential[i];
+	      OneBodyPotentialUpUp[CreationIndices[i]] = OneBodyRescalingFactor * TmpUpUpPotential[i];
+	      OneBodyPotentialDownDown[CreationIndices[i]] = OneBodyRescalingFactor * TmpDownDownPotential[i];
 	    }
 	  else
 	    {
 	      if (TmpMomentumTransfer > 0)
 		{
-		  OffDiagonalOneBodyPotentialUpUp[CreationIndices[i]][TmpMomentumTransfer - 1] = (TmpUpUpPotential[i] * Phase(M_PI * TmpUpUpPhasePotential[i]));
-		  OffDiagonalOneBodyPotentialDownDown[CreationIndices[i]][TmpMomentumTransfer - 1] = (TmpDownDownPotential[i] * Phase(M_PI * TmpDownDownPhasePotential[i]));
+		  OffDiagonalOneBodyPotentialUpUp[CreationIndices[i]][TmpMomentumTransfer - 1] = OneBodyRescalingFactor * (TmpUpUpPotential[i] * Phase(M_PI * TmpUpUpPhasePotential[i]));
+		  OffDiagonalOneBodyPotentialDownDown[CreationIndices[i]][TmpMomentumTransfer - 1] = OneBodyRescalingFactor * (TmpDownDownPotential[i] * Phase(M_PI * TmpDownDownPhasePotential[i]));
 		}
 	      else
 		{
-		  OffDiagonalOneBodyPotentialUpUp[CreationIndices[i]][-TmpMomentumTransfer - 1] = (TmpUpUpPotential[i] * Phase(-M_PI * TmpUpUpPhasePotential[i]));
-		  OffDiagonalOneBodyPotentialDownDown[CreationIndices[i]][-TmpMomentumTransfer - 1] = (TmpDownDownPotential[i] * Phase(-M_PI * TmpDownDownPhasePotential[i]));
+		  OffDiagonalOneBodyPotentialUpUp[CreationIndices[i]][-TmpMomentumTransfer - 1] = OneBodyRescalingFactor * (TmpUpUpPotential[i] * Phase(-M_PI * TmpUpUpPhasePotential[i]));
+		  OffDiagonalOneBodyPotentialDownDown[CreationIndices[i]][-TmpMomentumTransfer - 1] = OneBodyRescalingFactor * (TmpDownDownPotential[i] * Phase(-M_PI * TmpDownDownPhasePotential[i]));
 		}
 	    }
 	}
@@ -265,8 +270,8 @@ int main(int argc, char** argv)
 	  cout << "error, " << Manager.GetString("confining-file") << " has an invalid format" << endl;
 	  return -1;
 	}
-      int* CreationIndices = SuperconductingFile.GetAsIntegerArray(0);
-      int* AnnihilationIndices = SuperconductingFile.GetAsIntegerArray(1);
+      int* AnnihilationIndicesUp = SuperconductingFile.GetAsIntegerArray(0);
+      int* AnnihilationIndicesDown = SuperconductingFile.GetAsIntegerArray(1);
       double* TmpPairingPotential = SuperconductingFile.GetAsDoubleArray(2);
       double* TmpPairingPhasePotential;
       if (SuperconductingFile.GetNbrColumns() > 3)
@@ -283,14 +288,14 @@ int main(int argc, char** argv)
 	}
       for (int i = 0; i < SuperconductingFile.GetNbrLines(); ++i)
 	{
-	  if ((CreationIndices[i] < 0) || (AnnihilationIndices[i] < 0) || (CreationIndices[i] > LzMax) || (AnnihilationIndices[i] > LzMax))
+	  if ((AnnihilationIndicesUp[i] < 0) || (AnnihilationIndicesDown[i] < 0) || (AnnihilationIndicesUp[i] > LzMax) || (AnnihilationIndicesDown[i] > LzMax))
 	    {
 	      cout << "invalid indices line " << (i+1) << endl;
 	      return -1;
 	    }
-	  if (abs(CreationIndices[i] - AnnihilationIndices[i]) > MaximumMomentumTransfer)
+	  if (abs(AnnihilationIndicesDown[i] - AnnihilationIndicesUp[i]) > MaximumMomentumTransfer)
 	    {
-	      MaximumMomentumTransfer = abs(CreationIndices[i] - AnnihilationIndices[i]);
+	      MaximumMomentumTransfer = abs(AnnihilationIndicesDown[i] -AnnihilationIndicesUp [i]);
 	    }
 	}
       ComplexOneBodyPotentialPairing = new Complex[LzMax + 1];
@@ -312,19 +317,19 @@ int main(int argc, char** argv)
 	}
       for (int i = 0; i < SuperconductingFile.GetNbrLines(); ++i)
 	{
-	  int TmpMomentumTransfer = CreationIndices[i] - AnnihilationIndices[i];
+	  int TmpMomentumTransfer = AnnihilationIndicesDown[i] - AnnihilationIndicesUp[i];
 	  if (TmpMomentumTransfer == 0)
 	    {
-	      ComplexOneBodyPotentialPairing[CreationIndices[i]] = TmpPairingPotential[i] * Phase(M_PI * TmpPairingPhasePotential[i]);
+	      ComplexOneBodyPotentialPairing[AnnihilationIndicesUp[i]] = OneBodyRescalingFactor * TmpPairingPotential[i] * Phase(M_PI * TmpPairingPhasePotential[i]);
 	    }
 	  else
 	    {
-	      OffDiagonalComplexOneBodyPotentialPairing[CreationIndices[i]][MaximumMomentumTransfer + TmpMomentumTransfer] = TmpPairingPotential[i] * Phase(M_PI * TmpPairingPhasePotential[i]);
+	      OffDiagonalComplexOneBodyPotentialPairing[AnnihilationIndicesUp[i]][MaximumMomentumTransfer + TmpMomentumTransfer] = OneBodyRescalingFactor * TmpPairingPotential[i] * Phase(M_PI * TmpPairingPhasePotential[i]);
 	    }
 	}	  
     }
 
-  if (MaximumMomentumTransfer == 0)
+  if ((MaximumMomentumTransfer == 0) && (Manager.GetBoolean("force-noky") == false))
     {
       PreserveKySymmetryFlag = true;
     }
@@ -367,7 +372,7 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  sprintf (OutputFileName, "fermions_%s_su2_%s_cenergy_%.6f_n0_%.6f_pairing_n_0_2s_%d_sz_%d.", GeometryName, 
+	  sprintf (OutputFileName, "fermions_%s_su2_%s_cenergy_%.6f_n0_%.6f_pairing_n_0_2s_%d_sz_%d", GeometryName, 
 		   Manager.GetString("interaction-name"), 
 		   Manager.GetDouble("charging-energy"), Manager.GetDouble("average-nbrparticles"), LzMax, TotalSz);
 	}
@@ -400,7 +405,7 @@ int main(int argc, char** argv)
     {
       Lanczos.SetRealAlgorithms();
       char* CommentLine = new char [512];
-      sprintf (CommentLine, " Lz E");
+      sprintf (CommentLine, " Ky");
       int  L = 0;
       if (InitialLz >= 0)
 	{
@@ -442,7 +447,7 @@ int main(int argc, char** argv)
 													 PseudoPotentials, OneBodyPotentialUpUp, 
 													 OneBodyPotentialDownDown,
 													 OneBodyPotentialPairing,
-													 Manager.GetDouble("charging-energy"), 
+													 OneBodyRescalingFactor * Manager.GetDouble("charging-energy"), 
 													 Manager.GetDouble("average-nbrparticles"),
 													 Architecture.GetArchitecture(), 
 													 Memory, DiskCacheFlag,
@@ -474,14 +479,33 @@ int main(int argc, char** argv)
   else
     {
       char* CommentLine = new char [512];
-      sprintf (CommentLine, " E");
+      sprintf (CommentLine, "");
       ParticleOnSphereWithSpin* Space;
-      Space = new FermionOnSphereWithSpinAndPairingAllLz(LzMax, TotalSz);
+      if (Manager.GetInteger("nbr-particles") >= 0)
+	{
+	  Space = new FermionOnSphereWithSpinAllLz(Manager.GetInteger("nbr-particles"), LzMax, TotalSz);
+	}
+      else
+	{
+	  Space = new FermionOnSphereWithSpinAndPairingAllLz(LzMax, TotalSz);
+	}
+//       for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+// 	{
+// 	  Space->PrintState(cout, i) << endl;
+// 	}
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-      AbstractQHEOnSphereWithSpinHamiltonian* Hamiltonian = 0;
+      AbstractQHEHamiltonian* Hamiltonian = 0;
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
 
+      Hamiltonian = new ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairingAllMomenta (Space, LzMax, Ratio, MaximumMomentumTransfer, 
+													       PseudoPotentials, OneBodyPotentialUpUp, OneBodyPotentialDownDown,
+													       OffDiagonalOneBodyPotentialUpUp, OffDiagonalOneBodyPotentialDownDown,
+													       ComplexOneBodyPotentialPairing, OffDiagonalComplexOneBodyPotentialPairing,
+													       OneBodyRescalingFactor * Manager.GetDouble("charging-energy"), 
+													       Manager.GetDouble("average-nbrparticles"),
+													       Architecture.GetArchitecture(), 
+													       Memory);
       Hamiltonian->ShiftHamiltonian(EnergyShift);
       char* EigenvectorName = 0;
       if (Manager.GetBoolean("eigenstate") == true)	

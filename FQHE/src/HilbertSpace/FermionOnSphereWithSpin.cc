@@ -667,7 +667,7 @@ int FermionOnSphereWithSpin::AduAu (int index, int m, int n, double& coefficient
 #endif
   State &= ~(0x1ul << n);
   if (NewLargestBit == n)
-    while ((State >> NewLargestBit) == 0)
+    while (((State >> NewLargestBit) == 0) && (NewLargestBit > 0))
       --NewLargestBit;
 
   if ((State & (0x1ul << m))!= 0x0ul)
@@ -689,7 +689,7 @@ int FermionOnSphereWithSpin::AduAu (int index, int m, int n, double& coefficient
 #endif
     }
   State |= (0x1ul << m);
-  return this->TargetSpace->CarefulFindStateIndex(State, NewLargestBit);
+  return this->TargetSpace->FindStateIndex(State, NewLargestBit);
 }
 
 // apply a^+_m_d a_n_d operator to a given state 
@@ -699,6 +699,7 @@ int FermionOnSphereWithSpin::AduAu (int index, int m, int n, double& coefficient
 // n = index of the annihilation operator
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
+
 int FermionOnSphereWithSpin::AddAd (int index, int m, int n, double& coefficient)
 {
   int StateHighestBit = this->StateHighestBit[index];
@@ -719,7 +720,7 @@ int FermionOnSphereWithSpin::AddAd (int index, int m, int n, double& coefficient
 #endif
   State &= ~(0x1ul << n);
   if (NewLargestBit == n)
-    while ((State >> NewLargestBit) == 0)
+    while (((State >> NewLargestBit) == 0) && (NewLargestBit > 0))
       --NewLargestBit;
 
   if ((State & (0x1ul << m))!= 0x0ul)
@@ -741,7 +742,7 @@ int FermionOnSphereWithSpin::AddAd (int index, int m, int n, double& coefficient
 #endif
     }
   State |= (0x1ul << m);
-  return this->TargetSpace->CarefulFindStateIndex(State, NewLargestBit);
+  return this->TargetSpace->FindStateIndex(State, NewLargestBit);
 }
 
 
@@ -772,7 +773,7 @@ int FermionOnSphereWithSpin::AduAd (int index, int m, int n, double& coefficient
 #endif
   State &= ~(0x1ul << n);
   if (NewLargestBit == n)
-    while ((State >> NewLargestBit) == 0)
+    while (((State >> NewLargestBit) == 0) && (NewLargestBit > 0))
       --NewLargestBit;
 
   if ((State & (0x1ul << m))!= 0x0ul)
@@ -826,7 +827,7 @@ int FermionOnSphereWithSpin::AddAu (int index, int m, int n, double& coefficient
 #endif
   State &= ~(0x1ul << n);
   if (NewLargestBit == n)
-    while ((State >> NewLargestBit) == 0)
+    while (((State >> NewLargestBit) == 0) && (NewLargestBit > 0))
       --NewLargestBit;
 
   if ((State & (0x1ul << m))!= 0x0ul)

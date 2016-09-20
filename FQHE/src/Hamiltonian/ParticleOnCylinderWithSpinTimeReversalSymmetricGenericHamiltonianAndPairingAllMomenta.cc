@@ -89,16 +89,16 @@ ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairingAllMo
 																					     AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
-  // warning : unusual definition of LzMax for the cylinder geometry, using the Chern insulator definition
-  this->LzMax = lzmax + 1;
+  this->LzMax = lzmax;
   this->NbrParticles = 0;
   this->Ratio = ratio;
   this->InvRatio = 1.0 / this->Ratio;
-  
+  this->MaximumMomentumTransfer = maxMomentumTransfer;
+
   this->FastMultiplicationFlag = false;
   this->Architecture = architecture;
 
-  this->NbrPseudopotentialsUpUp = this->LzMax;
+  this->NbrPseudopotentialsUpUp = this->LzMax + 1;
   while ((this->NbrPseudopotentialsUpUp > 0) && (pseudoPotential[0][this->NbrPseudopotentialsUpUp - 1] == 0.0))
     {
       --this->NbrPseudopotentialsUpUp;
@@ -115,7 +115,7 @@ ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairingAllMo
     {
       this->PseudopotentialsUpUp = 0;
     }
-  this->NbrPseudopotentialsDownDown = this->LzMax;
+  this->NbrPseudopotentialsDownDown = this->LzMax + 1;
   while ((this->NbrPseudopotentialsDownDown > 0) && (pseudoPotential[1][this->NbrPseudopotentialsDownDown - 1] == 0.0))
     {
       --this->NbrPseudopotentialsDownDown;
@@ -132,7 +132,7 @@ ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairingAllMo
     {
       this->PseudopotentialsDownDown = 0;
     }
-  this->NbrPseudopotentialsUpDown = this->LzMax;
+  this->NbrPseudopotentialsUpDown = this->LzMax + 1;
   while ((this->NbrPseudopotentialsUpDown > 0) && (pseudoPotential[2][this->NbrPseudopotentialsUpDown - 1] == 0.0))
     {
       --this->NbrPseudopotentialsUpDown;
@@ -159,30 +159,76 @@ ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairingAllMo
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
   this->Memory = memory;
-  this->OneBodyInteractionFactorsupup = new double [this->LzMax];
-  for (int i = 0; i < this->LzMax; ++i)
+  this->OneBodyInteractionFactorsupup = new double [this->LzMax + 1];
+  for (int i = 0; i <= this->LzMax; ++i)
     this->OneBodyInteractionFactorsupup[i] = this->ChargingEnergy * (1.0 - (2.0 * this->AverageNumberParticles));
   if (onebodyPotentialUpUp != 0)
     {
-      for (int i = 0; i < this->LzMax; ++i)
+      for (int i = 0; i <= this->LzMax; ++i)
 	this->OneBodyInteractionFactorsupup[i] += onebodyPotentialUpUp[i];
     }
-  this->OneBodyInteractionFactorsdowndown = new double [this->LzMax];
-  for (int i = 0; i < this->LzMax; ++i)
+  this->OneBodyInteractionFactorsdowndown = new double [this->LzMax + 1];
+  for (int i = 0; i <= this->LzMax; ++i)
     this->OneBodyInteractionFactorsdowndown[i] = this->ChargingEnergy * (1.0 - (2.0 * this->AverageNumberParticles));
   if (onebodyPotentialDownDown != 0)
     {
-      for (int i = 0; i < this->LzMax; ++i)
+      for (int i = 0; i <= this->LzMax; ++i)
 	this->OneBodyInteractionFactorsdowndown[i] += onebodyPotentialDownDown[i];
     }
   this->OneBodyInteractionFactorsupdown = 0;
+  double TmpSign = 1.0;
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+    TmpSign = -1.0;
+  this->OneBodyOffDiagonalInteractionFactorsupup = 0;
+  if (onebodyOffDiagonalPotentialUpUp != 0)
+    {
+      this->OneBodyOffDiagonalInteractionFactorsupup = new Complex*[this->LzMax + 1];
+      for (int i = 0; i <= this->LzMax; ++i)
+	{
+	  this->OneBodyOffDiagonalInteractionFactorsupup[i] = new Complex[this->MaximumMomentumTransfer];
+	  for (int j = 0; j < this->MaximumMomentumTransfer; ++j)
+	    {
+	      this->OneBodyOffDiagonalInteractionFactorsupup[i][j] = TmpSign * onebodyOffDiagonalPotentialUpUp[i][j];
+	    }
+	}
+    }
+  this->OneBodyOffDiagonalInteractionFactorsdowndown = 0;
+  if (onebodyOffDiagonalPotentialDownDown != 0)
+    {
+      this->OneBodyOffDiagonalInteractionFactorsdowndown = new Complex*[this->LzMax + 1];
+      for (int i = 0; i <= this->LzMax; ++i)
+	{
+	  this->OneBodyOffDiagonalInteractionFactorsdowndown[i] = new Complex[this->MaximumMomentumTransfer];
+	  for (int j = 0; j < this->MaximumMomentumTransfer; ++j)
+	    {
+	      this->OneBodyOffDiagonalInteractionFactorsdowndown[i][j] = TmpSign * onebodyOffDiagonalPotentialDownDown[i][j];
+	    }
+	}
+    }
   this->OneBodyInteractionFactorsPairing = 0;
   if (onebodyPotentialPairing != 0)
     {
-      this->OneBodyInteractionFactorsPairing = new Complex [this->LzMax];
-      for (int i = 0; i < this->LzMax; ++i)
+      this->OneBodyInteractionFactorsPairing = new Complex [this->LzMax + 1];
+      for (int i = 0; i <= this->LzMax; ++i)
 	{
 	  this->OneBodyInteractionFactorsPairing[i] = onebodyPotentialPairing[i];
+	}
+    }
+  this->OneBodyOffDiagonalInteractionFactorsPairing = 0;
+  if (onebodyOffDiagonalPotentialPairing != 0)
+    {
+      this->OneBodyOffDiagonalInteractionFactorsPairing = new Complex* [this->LzMax + 1];
+      for (int i = 0; i <= this->LzMax; ++i)
+	{
+	  this->OneBodyOffDiagonalInteractionFactorsPairing[i] = new Complex[2 * this->MaximumMomentumTransfer + 1];
+	  for (int j = 0; j < this->MaximumMomentumTransfer; ++j)
+	    {
+	      this->OneBodyOffDiagonalInteractionFactorsPairing[i][j] = onebodyOffDiagonalPotentialPairing[i][j];
+	    }
+	  for (int j = this->MaximumMomentumTransfer + 1; j <= (2 * this->MaximumMomentumTransfer); ++j)
+	    {
+	      this->OneBodyOffDiagonalInteractionFactorsPairing[i][j] = onebodyOffDiagonalPotentialPairing[i][j];
+	    }
 	}
     }
   if (memory > 0)
@@ -235,12 +281,12 @@ void ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing
     Sign = 0;
   double TmpCoefficient = 0.0;
 
-  this->NbrInterSectorSums = 2 * this->LzMax - 1;
+  this->NbrInterSectorSums = 2 * this->LzMax + 1;
   this->NbrInterSectorIndicesPerSum = new int[this->NbrInterSectorSums];
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
     this->NbrInterSectorIndicesPerSum[i] = 0;
-  for (int m1 = 0; m1 < this->LzMax; ++m1)
-    for (int m2 = 0; m2 < this->LzMax; ++m2)
+  for (int m1 = 0; m1 <= this->LzMax; ++m1)
+    for (int m2 = 0; m2 <= this->LzMax; ++m2)
       ++this->NbrInterSectorIndicesPerSum[m1 + m2];      
   this->InterSectorIndicesPerSum = new int* [this->NbrInterSectorSums];
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
@@ -248,8 +294,8 @@ void ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing
       this->InterSectorIndicesPerSum[i] = new int[2 * this->NbrInterSectorIndicesPerSum[i]];      
       this->NbrInterSectorIndicesPerSum[i] = 0;
     }
-  for (int m1 = 0; m1 < this->LzMax; ++m1)
-    for (int m2 = 0; m2 < this->LzMax; ++m2)
+  for (int m1 = 0; m1 <= this->LzMax; ++m1)
+    for (int m2 = 0; m2 <= this->LzMax; ++m2)
       {
 	this->InterSectorIndicesPerSum[(m1 + m2)][this->NbrInterSectorIndicesPerSum[(m1 + m2)] << 1] = m1;
 	this->InterSectorIndicesPerSum[(m1 + m2)][1 + (this->NbrInterSectorIndicesPerSum[(m1 + m2)] << 1)] = m2;
@@ -258,12 +304,12 @@ void ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing
 
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
-      this->NbrIntraSectorSums = 2 * this->LzMax - 3;
+      this->NbrIntraSectorSums = 2 * this->LzMax - 1;
       this->NbrIntraSectorIndicesPerSum = new int[this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 	this->NbrIntraSectorIndicesPerSum[i] = 0;      
-      for (int m1 = 0; m1 < this->LzMax; ++m1)
-	for (int m2 = m1 + 1; m2 < this->LzMax; ++m2)
+      for (int m1 = 0; m1 <= this->LzMax; ++m1)
+	for (int m2 = m1 + 1; m2 <= this->LzMax; ++m2)
 	  ++this->NbrIntraSectorIndicesPerSum[(m1 + m2) - 1];
       this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
@@ -271,8 +317,8 @@ void ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing
 	  this->IntraSectorIndicesPerSum[i] = new int[2 * this->NbrIntraSectorIndicesPerSum[i]];      
 	  this->NbrIntraSectorIndicesPerSum[i] = 0;
 	}
-      for (int m1 = 0; m1 < this->LzMax; ++m1)
-	for (int m2 = m1 + 1; m2 < this->LzMax; ++m2)
+      for (int m1 = 0; m1 <= this->LzMax; ++m1)
+	for (int m2 = m1 + 1; m2 <= this->LzMax; ++m2)
 	  {
 	    this->IntraSectorIndicesPerSum[(m1 + m2) - 1][this->NbrIntraSectorIndicesPerSum[(m1 + m2) - 1] << 1] = m1;
 	    this->IntraSectorIndicesPerSum[(m1 + m2) - 1][1 + (this->NbrIntraSectorIndicesPerSum[(m1 + m2) - 1] << 1)] = m2;
@@ -340,12 +386,12 @@ void ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing
     }
   else
     {
-      this->NbrIntraSectorSums = 2 * this->LzMax+1;
+      this->NbrIntraSectorSums = 2 * this->LzMax + 1;
       this->NbrIntraSectorIndicesPerSum = new int[this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 	this->NbrIntraSectorIndicesPerSum[i] = 0;      
-      for (int m1 = 0; m1 < this->LzMax; ++m1)
-	for (int m2 = m1; m2 < this->LzMax; ++m2)
+      for (int m1 = 0; m1 <= this->LzMax; ++m1)
+	for (int m2 = m1; m2 <= this->LzMax; ++m2)
 	  ++this->NbrIntraSectorIndicesPerSum[m1 + m2];
       this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
@@ -353,8 +399,8 @@ void ParticleOnCylinderWithSpinTimeReversalSymmetricGenericHamiltonianAndPairing
 	  this->IntraSectorIndicesPerSum[i] = new int[2 * this->NbrIntraSectorIndicesPerSum[i]];      
 	  this->NbrIntraSectorIndicesPerSum[i] = 0;
 	}
-      for (int m1 = 0; m1 < this->LzMax; ++m1)
-	for (int m2 = m1; m2 < this->LzMax; ++m2)
+      for (int m1 = 0; m1 <= this->LzMax; ++m1)
+	for (int m2 = m1; m2 <= this->LzMax; ++m2)
 	  {
 	    this->IntraSectorIndicesPerSum[m1 + m2][this->NbrIntraSectorIndicesPerSum[m1 + m2] << 1] = m1;
 	    this->IntraSectorIndicesPerSum[m1 + m2][1 + (this->NbrIntraSectorIndicesPerSum[m1 + m2] << 1)] = m2;
