@@ -134,7 +134,7 @@ int main(int argc, char** argv)
 
   if (Manager.GetString("interaction-file") == 0)
     {
-      cout << "an interaction file has to be provided" << endl;
+      cout << "an isotropic interaction file not provided" << endl;
       return -1;
     }
   else
@@ -146,7 +146,7 @@ int main(int argc, char** argv)
 
   if (Manager.GetString("Vm2-file") == 0)
     {
-      cout << "an interaction file has to be provided" << endl;
+      cout << "an anisotropic alpha=2 interaction file not provided" << endl;
       return -1;
     }
   else
@@ -162,7 +162,7 @@ int main(int argc, char** argv)
 
   if (Manager.GetString("Vm4-file") == 0)
     { 
-      cout << "an interaction file has to be provided" << endl;
+      cout << "an anisotropic alpha=4 interaction not provided" << endl;
       return -1;
     }
   else

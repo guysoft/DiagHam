@@ -86,7 +86,7 @@ ParticleOnCylinderLaplacianDeltaHamiltonian::ParticleOnCylinderLaplacianDeltaHam
   this->MagneticField = bFieldParameter;
   this->EvaluateInteractionFactors();
   this->EnergyShift = 0.0;
-
+  this->HermitianSymmetryFlag=true;
 
   this->OneBodyInteractionFactors = 0;
   if ((this->ElectricField != 0) || (this->Confinement != 0))
@@ -245,7 +245,7 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
 		        this->M2Value[this->NbrInteractionFactors] = m2;
 		        this->M3Value[this->NbrInteractionFactors] = m3;
 		        this->M4Value[this->NbrInteractionFactors] = m4;
-                        //cout<<TmpCoefficient[Pos].Re<<" "<<(m1+1)<<" "<<(m2+1)<<" "<<(m3+1)<<" "<<(m4+1)<<endl;
+                        //cout<<TmpCoefficient[Pos].Re<<" "<<m1<<" "<<m2<<" "<<m3<<" "<<m4<<endl;
 		        ++this->NbrInteractionFactors;
 		      }
 		    ++Pos;

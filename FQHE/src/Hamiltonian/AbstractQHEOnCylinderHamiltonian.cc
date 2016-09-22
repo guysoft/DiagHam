@@ -50,12 +50,25 @@ using std::cout;
 using std::endl;
 using std::ostream;
 
+// default constructor
+//
+AbstractQHEOnCylinderHamiltonian::AbstractQHEOnCylinderHamiltonian()
+{
+  this->HermitianSymmetryFlag=true;
+}
 
 // destructor
 //
 
 AbstractQHEOnCylinderHamiltonian::~AbstractQHEOnCylinderHamiltonian()
 {
+}
+
+// ask if Hamiltonian implements hermitian symmetry operations
+//
+bool AbstractQHEOnCylinderHamiltonian::IsHermitian()
+{
+  return this->HermitianSymmetryFlag;
 }
 
 // set Hilbert space
@@ -161,7 +174,6 @@ ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVect
   return this->LowLevelAddMultiply(vSource, vDestination, 0, this->Particles->GetHilbertSpaceDimension());
 }
 
-// WORKING VERSION -- FULL
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and add result to another vector, low level function (no architecture optimization)
 //
@@ -170,7 +182,7 @@ ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVect
 // firstComponent = index of the first component to evaluate
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
-/*
+
 ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 								  int firstComponent, int nbrComponent)
 {
@@ -178,9 +190,13 @@ ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVect
   int Dim = this->Particles->GetHilbertSpaceDimension();
   double Shift = this->EnergyShift;
   double Coefficient;
+  if (this->NbrInteractionFactors == 0)
+    return vDestination;
+  else
+  {
   if (this->FastMultiplicationFlag == false)
     {
-      //cout<<"Flagfalse"<<endl;
+      cout<<"NH Flag false"<<endl;
       double Coefficient;
       int Index;
       int m1;
@@ -201,7 +217,7 @@ ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVect
 	    {
 	      Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 	      if (Index < Dim)
-		vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+		    vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
 	    }
 	}
       m1 = this->M1Value[ReducedNbrInteractionFactors];
@@ -239,7 +255,9 @@ ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVect
 	      TmpIndexArray = this->InteractionPerComponentIndex[i];
 	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
 	      for (j = 0; j < TmpNbrInteraction; ++j)
-		vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * vSource[i];
+               {
+		 vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * vSource[i];
+               }
 	      vDestination[i] += Shift * vSource[i];
 	    }
         
@@ -269,7 +287,9 @@ ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVect
 	      TmpIndexArray = this->InteractionPerComponentIndex[Pos];
 	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[Pos];
 	      for (j = 0; j < TmpNbrInteraction; ++j)
+               {
 		vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * vSource[i];
+               }
 	      vDestination[i] += Shift * vSource[i];
 	      ++Pos;
 	    }
@@ -300,8 +320,8 @@ ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVect
 		      {
 			Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 			if (Index < Dim)
-			  vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
-		      }
+ 			    vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+   		      }
 		  }
 		m1 = this->M1Value[ReducedNbrInteractionFactors];
 		m2 = this->M2Value[ReducedNbrInteractionFactors];
@@ -312,7 +332,7 @@ ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVect
 		  {
 		    Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 		    if (Index < Dim)
-		      vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+		       vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
 		    vDestination[i] += this->EnergyShift * vSource[i];
 		  }
                 if (this->OneBodyInteractionFactors != 0)
@@ -324,11 +344,62 @@ ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVect
 	}
    }
   return vDestination;
+ }
 }
 
-*/
+//-----------------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------- HERMITIAN ROUTINES ----------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------------------------------
 
-ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// return value = reference on vectorwhere result has been stored
+
+RealVector& AbstractQHEOnCylinderHamiltonian::HermitianLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination)
+{
+  return vDestination;
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+RealVector& AbstractQHEOnCylinderHamiltonian::HermitianLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+								      int firstComponent, int nbrComponent)
+{
+  return vDestination;
+}
+ 
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// return value = reference on vectorwhere result has been stored
+
+ComplexVector& AbstractQHEOnCylinderHamiltonian::HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination)
+{
+  return this->HermitianLowLevelAddMultiply(vSource, vDestination, 0, this->Particles->GetHilbertSpaceDimension());
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+ComplexVector& AbstractQHEOnCylinderHamiltonian::HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 								  int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
@@ -341,7 +412,7 @@ ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVect
   {
   if (this->FastMultiplicationFlag == false)
     {
-      //cout<<"Flagfalse"<<endl;
+      //cout<<"Flag false"<<endl;
       double Coefficient;
       int Index;
       int m1;
@@ -362,7 +433,7 @@ ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVect
 	    {
 	      Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 	      if (Index <= i)
-               { 
+               {
 		 vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
                  if (Index < i)
                     vDestination[i] += Coefficient * Conj(TmpInteraction) * vSource[Index];

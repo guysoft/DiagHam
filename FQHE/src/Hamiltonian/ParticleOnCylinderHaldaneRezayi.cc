@@ -78,6 +78,7 @@ ParticleOnCylinderHaldaneRezayi::ParticleOnCylinderHaldaneRezayi(ParticleOnSpher
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
   this->EnergyShift = 0.0;
+  this->HermitianSymmetryFlag=true;
 
   if (precalculationFileName == 0)
     {
@@ -370,7 +371,7 @@ Complex ParticleOnCylinderHaldaneRezayi::EvaluateInteractionCoefficientInter(int
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-ComplexVector& ParticleOnCylinderHaldaneRezayi::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+ComplexVector& ParticleOnCylinderHaldaneRezayi::HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 								  int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;

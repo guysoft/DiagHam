@@ -84,7 +84,7 @@ ParticleOnCylinderThreeBodyLaplacianDeltaHamiltonian::ParticleOnCylinderThreeBod
   this->MagneticField = bFieldParameter;
   this->EvaluateInteractionFactors();
   this->EnergyShift = 0.0;
-
+  this->HermitianSymmetryFlag=true;
 
   this->OneBodyInteractionFactors = 0;
   if ((this->ElectricField != 0) || (this->Confinement != 0))

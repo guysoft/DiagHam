@@ -50,12 +50,26 @@ using std::cout;
 using std::endl;
 using std::ostream;
 
+// default constructor
+//
+AbstractQHEOnCylinderThreeBodyHamiltonian::AbstractQHEOnCylinderThreeBodyHamiltonian()
+{
+  this->HermitianSymmetryFlag=true;
+}
+
 
 // destructor
 //
 
 AbstractQHEOnCylinderThreeBodyHamiltonian::~AbstractQHEOnCylinderThreeBodyHamiltonian()
 {
+}
+
+// ask if Hamiltonian implements hermitian symmetry operations
+//
+bool AbstractQHEOnCylinderThreeBodyHamiltonian::IsHermitian()
+{
+  return this->HermitianSymmetryFlag;
 }
 
 // set Hilbert space
@@ -129,7 +143,7 @@ Complex AbstractQHEOnCylinderThreeBodyHamiltonian::MatrixElement (ComplexVector&
 // vDestination = vector at which result has to be added
 // return value = reference on vectorwhere result has been stored
 
-RealVector& AbstractQHEOnCylinderThreeBodyHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination)
+RealVector& AbstractQHEOnCylinderThreeBodyHamiltonian::HermitianLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination)
 {
   return vDestination;
 }
@@ -142,7 +156,7 @@ RealVector& AbstractQHEOnCylinderThreeBodyHamiltonian::LowLevelAddMultiply(RealV
 // firstComponent = index of the first component to evaluate
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
-RealVector& AbstractQHEOnCylinderThreeBodyHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+RealVector& AbstractQHEOnCylinderThreeBodyHamiltonian::HermitianLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
 								      int firstComponent, int nbrComponent)
 {
   return vDestination;
@@ -156,9 +170,9 @@ RealVector& AbstractQHEOnCylinderThreeBodyHamiltonian::LowLevelAddMultiply(RealV
 // vDestination = vector at which result has to be added
 // return value = reference on vectorwhere result has been stored
 
-ComplexVector& AbstractQHEOnCylinderThreeBodyHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination)
+ComplexVector& AbstractQHEOnCylinderThreeBodyHamiltonian::HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination)
 {
-  return this->LowLevelAddMultiply(vSource, vDestination, 0, this->Particles->GetHilbertSpaceDimension());
+  return this->HermitianLowLevelAddMultiply(vSource, vDestination, 0, this->Particles->GetHilbertSpaceDimension());
 }
 
 // WORKING VERSION -- FULL
@@ -363,7 +377,7 @@ ComplexVector& AbstractQHEOnCylinderThreeBodyHamiltonian::LowLevelAddMultiply(Co
 }
 */
 
-ComplexVector& AbstractQHEOnCylinderThreeBodyHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+ComplexVector& AbstractQHEOnCylinderThreeBodyHamiltonian::HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 								  int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;

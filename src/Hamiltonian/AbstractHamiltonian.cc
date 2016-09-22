@@ -135,7 +135,7 @@ ComplexMatrix& AbstractHamiltonian::GetHamiltonian (ComplexMatrix& M)
       if (this->IsHermitian())
 	this->HermitianLowLevelMultiply(TmpV1, TmpV2);
       else
-	this->LowLevelMultiply(TmpV1, TmpV2);
+	this->LowLevelMultiply(TmpV1, TmpV2, i, 1);
       if (this->LeftHamiltonianVectorMultiplicationFlag == false)
 	{
 	  for (int j = 0; j < this->GetHilbertSpaceDimension(); j++)

@@ -117,7 +117,7 @@ class ParticleOnCylinderHaldaneRezayi : public AbstractQHEOnCylinderHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
 
-  ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+  ComplexVector& HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 								  int firstComponent, int nbrComponent);
 
   // test the amount of memory needed for fast multiplication algorithm (partial evaluation)

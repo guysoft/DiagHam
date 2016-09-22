@@ -108,11 +108,22 @@ class AbstractQHEOnCylinderThreeBodyHamiltonian : public AbstractQHEHamiltonian
   // multiplicative coefficient obtained for each term of the hamiltonian when applying on a given state and with a given destination state
   Complex** InteractionPerComponentCoefficient;
 
+  // flag for implementation of hermitian symmetry
+  bool HermitianSymmetryFlag;
+
  public:
+
+  // default constructor
+  //
+  AbstractQHEOnCylinderThreeBodyHamiltonian();
 
   // destructor
   //
   virtual ~AbstractQHEOnCylinderThreeBodyHamiltonian() = 0;
+
+  // ask if Hamiltonian implements hermitian symmetry operations
+  // 
+  virtual bool IsHermitian();
 
   // set Hilbert space
   //
@@ -154,7 +165,7 @@ class AbstractQHEOnCylinderThreeBodyHamiltonian : public AbstractQHEHamiltonian
   // vSource = vector to be multiplied
   // vDestination = vector at which result has to be added
   // return value = reference on vectorwhere result has been stored
-  virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination);
+  virtual RealVector& HermitianLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
@@ -164,7 +175,7 @@ class AbstractQHEOnCylinderThreeBodyHamiltonian : public AbstractQHEHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+  virtual RealVector& HermitianLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
 					  int firstComponent, int nbrComponent);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
@@ -173,7 +184,7 @@ class AbstractQHEOnCylinderThreeBodyHamiltonian : public AbstractQHEHamiltonian
   // vSource = vector to be multiplied
   // vDestination = vector at which result has to be added
   // return value = reference on vectorwhere result has been stored
-  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination);
+  virtual ComplexVector& HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
@@ -183,7 +194,7 @@ class AbstractQHEOnCylinderThreeBodyHamiltonian : public AbstractQHEHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+  virtual ComplexVector& HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 				     int firstComponent, int nbrComponent);
  
   // return a list of left interaction operators

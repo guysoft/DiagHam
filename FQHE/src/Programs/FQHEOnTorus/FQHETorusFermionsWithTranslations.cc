@@ -26,6 +26,7 @@
 #include "Options/Options.h"
 
 #include "MainTask/FQHEOnTorusMainTask.h"
+#include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 
 #include <iostream>
 #include <cstring>
@@ -89,6 +90,7 @@ int main(int argc, char** argv)
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
+  (*MiscGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -425,6 +427,40 @@ int main(int argc, char** argv)
               sprintf (EigenvectorName, "%s_kx_%d_ky_%d", Manager.GetString("eigenstate-file"), XMomentum, YMomentum);
 	  delete [] TmpName;
 	}
+
+      if (Manager.GetString("energy-expectation") != 0 )
+	{
+
+	  char* StateFileName = Manager.GetString("energy-expectation");
+	  if (IsFile(StateFileName) == false)
+	    {
+	      cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
+	      return -1;           
+	    }
+	  ComplexVector InputState;
+ 	  if (InputState.ReadVector(StateFileName) == false)
+	    {
+	      cout << "error while reading " << StateFileName << endl;
+	      return -1;
+	    }
+
+	  if (InputState.GetVectorDimension() != TotalSpace->GetHilbertSpaceDimension())
+	    {
+	      cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
+	      return -1;
+	    }
+	  ComplexVector TmpState(TotalSpace->GetHilbertSpaceDimension(), true);
+
+	  VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &InputState, &TmpState);
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
+	
+	  Complex EnergyValue = InputState * TmpState;
+          cout << "<Energy>= " << EnergyValue.Re << " " << EnergyValue.Im << endl;
+	  return 0;
+	}
+
+
+
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);      
       FQHEOnTorusMainTask Task (&Manager, TotalSpace, &Lanczos, Hamiltonian, YMomentum, Shift, OutputName, FirstRun, EigenvectorName);
