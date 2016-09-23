@@ -50,6 +50,7 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
 
 
   friend class BosonOnSphereWithSU4Spin;
+  friend class BosonOnSphereWithSU2SpinSzSymmetry;
 
 
  protected:
