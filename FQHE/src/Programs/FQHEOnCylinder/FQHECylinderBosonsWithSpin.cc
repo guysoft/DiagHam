@@ -149,54 +149,85 @@ int main(int argc, char** argv)
 	}
     }
 
-  char* GeometryName = new char[128];
-  if (Perimeter > 0.0)	
+  char* DiscreteSymmetryName = new char[128];
+  if (Manager.GetBoolean("szsymmetrized-basis") == false)
     {
-      if (Manager.GetBoolean("szsymmetrized-basis") == false)
+      if (Manager.GetBoolean("lzsymmetrized-basis") == false)
 	{
-	  sprintf (GeometryName, "cylinder_perimeter_%.6f_su2", Perimeter);
+	  sprintf (DiscreteSymmetryName, "");
 	}
       else
 	{
-	  if (Manager.GetBoolean("minus-szparity") == false)
+	  if (Manager.GetBoolean("minus-lzparity") == false)
 	    {
-	      sprintf (GeometryName, "cylinder_perimeter_%.6f_su2_szsym_1", Perimeter);
+	      sprintf (DiscreteSymmetryName, "_lzsym_1");
 	    }
 	  else
 	    {
-	      sprintf (GeometryName, "cylinder_perimeter_%.6f_su2_szsym_-1", Perimeter);
+	      sprintf (DiscreteSymmetryName, "_lzsym_-1");
 	    }
 	}
     }
   else
     {
-      if (Manager.GetBoolean("szsymmetrized-basis") == false)
+      if (Manager.GetBoolean("lzsymmetrized-basis") == false)
 	{
-	  sprintf (GeometryName, "cylinder_ratio_%.6f_su2", Ratio);
+	  if (Manager.GetBoolean("minus-szparity") == false)
+	    {
+	      sprintf (DiscreteSymmetryName, "_szsym_1");
+	    }
+	  else
+	    {
+	      sprintf (DiscreteSymmetryName, "_szsym_-1");
+	    }
 	}
       else
 	{
 	  if (Manager.GetBoolean("minus-szparity") == false)
 	    {
-	      sprintf (GeometryName, "cylinder_ratio_%.6f_su2_szsym_1", Ratio);
+	      if (Manager.GetBoolean("minus-lzparity") == false)
+		{
+		  sprintf (DiscreteSymmetryName, "_lzsym_1_szsym_1");
+		}
+	      else
+		{
+		  sprintf (DiscreteSymmetryName, "_lzsym_-1_szsym_1");
+		}
 	    }
 	  else
 	    {
-	      sprintf (GeometryName, "cylinder_ratio_%.6f_su2_szsym_-1", Ratio);
+	      if (Manager.GetBoolean("minus-lzparity") == false)
+		{
+		  sprintf (DiscreteSymmetryName, "_lzsym_1_szsym_-1");
+		}
+	      else
+		{
+		  sprintf (DiscreteSymmetryName, "_lzsym_-1_szsym_-1");
+		}
 	    }
 	}
     }
-  char* OutputName = new char [512];
+  char* GeometryName = new char[128];
+  if (Perimeter > 0.0)	
+    {
+      sprintf (GeometryName, "cylinder_perimeter_%.6f_su2", Perimeter);
+    }
+  else
+    {
+      sprintf (GeometryName, "cylinder_ratio_%.6f_su2", Ratio);
+    }
+    char* OutputName = new char [512 + strlen(DiscreteSymmetryName) + strlen(GeometryName )+ strlen(Manager.GetString("interaction-name"))];
   if (OneBodyPseudoPotentials[2] == 0)
     {
       if ((Manager.GetDouble("spinup-flux") == 0.0) && (Manager.GetDouble("spindown-flux") == 0.0))
 	{
-	  sprintf (OutputName, "bosons_%s_%s_n_%d_2s_%d_sz_%d.dat", GeometryName, Manager.GetString("interaction-name"), 
-		       NbrBosons, LzMax, TotalSpin);
+	  sprintf (OutputName, "bosons_%s%s_%s_n_%d_2s_%d_sz_%d.dat", GeometryName, DiscreteSymmetryName, Manager.GetString("interaction-name"), 
+		   NbrBosons, LzMax, TotalSpin);
 	}
       else
 	{
-	  sprintf (OutputName, "bosons_%s_%s_n_%d_2s_%d_sz_%d_fluxup_%.6f_fluxdown_%.6f.dat", GeometryName, Manager.GetString("interaction-name"), 
+	  sprintf (OutputName, "bosons_%s%s_%s_n_%d_2s_%d_sz_%d_fluxup_%.6f_fluxdown_%.6f.dat", GeometryName, DiscreteSymmetryName, 
+		   Manager.GetString("interaction-name"), 
 		   NbrBosons, LzMax, TotalSpin, Ratio, Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"));
 	}
     }
@@ -204,11 +235,12 @@ int main(int argc, char** argv)
     {
       if ((Manager.GetDouble("spinup-flux") == 0.0) && (Manager.GetDouble("spindown-flux") == 0.0))
 	{
-	  sprintf (OutputName, "bosons_%s_%s_n_%d_2s_%d.dat", GeometryName, Manager.GetString("interaction-name"), NbrBosons, LzMax);
+	  sprintf (OutputName, "bosons_%s%s_%s_n_%d_2s_%d.dat", GeometryName, DiscreteSymmetryName, Manager.GetString("interaction-name"), NbrBosons, LzMax);
 	}
       else
 	{
-	  sprintf (OutputName, "bosons_%s_%s_n_%d_2s_%d_fluxup_%.6f_fluxdown_%.6f.dat", GeometryName, Manager.GetString("interaction-name"), NbrBosons, LzMax,
+	  sprintf (OutputName, "bosons_%s%s_%s_n_%d_2s_%d_fluxup_%.6f_fluxdown_%.6f.dat", GeometryName, DiscreteSymmetryName, 
+		   Manager.GetString("interaction-name"), NbrBosons, LzMax,
 		   Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"));
 	}
     }

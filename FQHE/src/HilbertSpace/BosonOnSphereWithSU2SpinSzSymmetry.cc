@@ -115,7 +115,7 @@ BosonOnSphereWithSU2SpinSzSymmetry::BosonOnSphereWithSU2SpinSzSymmetry (int nbrB
       exit(1);
     } 
   this->LargeHilbertSpaceDimension = TmpHilbertSpaceDimension;
-  this->GenerateSatetsWithDiscreateSymmetry();
+  this->GenerateStatesWithDiscreteSymmetry();
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
   this->TargetSpace = this;
   cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
@@ -200,7 +200,7 @@ BosonOnSphereWithSU2SpinSzSymmetry::BosonOnSphereWithSU2SpinSzSymmetry (int nbrB
     }
 
   this->LargeHilbertSpaceDimension = TmpHilbertSpaceDimension;
-  this->GenerateSatetsWithDiscreateSymmetry();
+  this->GenerateStatesWithDiscreteSymmetry();
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
   cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
 
@@ -256,6 +256,8 @@ BosonOnSphereWithSU2SpinSzSymmetry::BosonOnSphereWithSU2SpinSzSymmetry(const Bos
   this->ProdATemporaryStateSigma[1] = this->ProdATemporaryStateDown;
   this->StateDescriptionUp = bosons.StateDescriptionUp;
   this->StateDescriptionDown = bosons.StateDescriptionDown;
+  this->NbrStateInOrbit = bosons.NbrStateInOrbit;
+  this->RescalingFactors = bosons.RescalingFactors;
   this->StateDescriptionSigma[0] = this->StateDescriptionUp;
   this->StateDescriptionSigma[1] = this->StateDescriptionDown;
   this->UniqueStateDescriptionUp = bosons.UniqueStateDescriptionUp;
@@ -273,6 +275,11 @@ BosonOnSphereWithSU2SpinSzSymmetry::BosonOnSphereWithSU2SpinSzSymmetry(const Bos
 
 BosonOnSphereWithSU2SpinSzSymmetry::~BosonOnSphereWithSU2SpinSzSymmetry ()
 {
+  if ((this->LargeHilbertSpaceDimension != 0l) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+    {
+      delete[] this->NbrStateInOrbit;
+      delete[] this->RescalingFactors;	  
+    }
 }
 
 // assignement (without duplicating datas)
@@ -319,6 +326,8 @@ BosonOnSphereWithSU2SpinSzSymmetry& BosonOnSphereWithSU2SpinSzSymmetry::operator
   this->ProdATemporaryStateSigma[1] = this->ProdATemporaryStateDown;
   this->StateDescriptionUp = bosons.StateDescriptionUp;
   this->StateDescriptionDown = bosons.StateDescriptionDown;
+  this->NbrStateInOrbit = bosons.NbrStateInOrbit;
+  this->RescalingFactors = bosons.RescalingFactors;
   this->UniqueStateDescriptionUp = bosons.UniqueStateDescriptionUp;
   this->UniqueStateDescriptionSubArraySizeUp = bosons.UniqueStateDescriptionSubArraySizeUp;
   this->StateDescriptionSigma[0] = this->StateDescriptionUp;
@@ -353,7 +362,7 @@ void BosonOnSphereWithSU2SpinSzSymmetry::SetTargetSpace(ParticleOnSphereWithSpin
 // generate the Hilbert space with the discrete symmetry constraint
 //
 
-void BosonOnSphereWithSU2SpinSzSymmetry::GenerateSatetsWithDiscreateSymmetry()
+void BosonOnSphereWithSU2SpinSzSymmetry::GenerateStatesWithDiscreteSymmetry()
 
 {
   long TmpHilbertSpaceDimension = 0l;
@@ -381,6 +390,7 @@ void BosonOnSphereWithSU2SpinSzSymmetry::GenerateSatetsWithDiscreateSymmetry()
     {
       unsigned long* TmpStateDescriptionUp = new unsigned long [TmpHilbertSpaceDimension];
       unsigned long* TmpStateDescriptionDown = new unsigned long [TmpHilbertSpaceDimension];
+      this->NbrStateInOrbit = new int[TmpHilbertSpaceDimension];
       TmpHilbertSpaceDimension = 0;
       if (this->SzParitySign > 0.0)
 	{
@@ -390,6 +400,14 @@ void BosonOnSphereWithSU2SpinSzSymmetry::GenerateSatetsWithDiscreateSymmetry()
 		{
 		  TmpStateDescriptionUp[TmpHilbertSpaceDimension] = this->StateDescriptionUp[i];
 		  TmpStateDescriptionDown[TmpHilbertSpaceDimension] = this->StateDescriptionDown[i];
+		  if (this->StateDescriptionUp[i] == this->StateDescriptionDown[i])
+		    {
+		      this->NbrStateInOrbit[TmpHilbertSpaceDimension] = 1;
+		    }
+		  else
+		    {
+		      this->NbrStateInOrbit[TmpHilbertSpaceDimension] = 2;
+		    }
 		  ++TmpHilbertSpaceDimension;
 		}
 	    }
@@ -400,6 +418,7 @@ void BosonOnSphereWithSU2SpinSzSymmetry::GenerateSatetsWithDiscreateSymmetry()
 	    {
 	      if (this->StateDescriptionUp[i] > this->StateDescriptionDown[i])
 		{
+		  this->NbrStateInOrbit[TmpHilbertSpaceDimension] = 2;
 		  TmpStateDescriptionUp[TmpHilbertSpaceDimension] = this->StateDescriptionUp[i];
 		  TmpStateDescriptionDown[TmpHilbertSpaceDimension] = this->StateDescriptionDown[i];
 		  ++TmpHilbertSpaceDimension;
@@ -410,6 +429,15 @@ void BosonOnSphereWithSU2SpinSzSymmetry::GenerateSatetsWithDiscreateSymmetry()
       delete[] this->StateDescriptionDown;
       this->StateDescriptionUp = TmpStateDescriptionUp;
       this->StateDescriptionDown = TmpStateDescriptionDown;
+      this->RescalingFactors = new double*[3];
+      for (int i = 1; i <= 2; ++i)
+	{
+	  this->RescalingFactors[i] = new double[3];
+	  for (int j = 1; j <= 2; ++j)
+	    {
+	      this->RescalingFactors[i][j] = sqrt(((double) i) / ((double) j));
+	    }
+	}
     }
   this->LargeHilbertSpaceDimension = TmpHilbertSpaceDimension;
 }
@@ -424,6 +452,10 @@ int BosonOnSphereWithSU2SpinSzSymmetry::FindStateIndex(unsigned long stateDescri
 {
   int PosMin = 0;
   int PosMax = this->NbrUniqueStateDescriptionUp - 1;
+  if ((stateDescriptionUp > this->UniqueStateDescriptionUp[PosMin]) || (stateDescriptionUp < this->UniqueStateDescriptionUp[PosMax]))
+    {
+      return this->HilbertSpaceDimension;
+    }
   int PosMid = (PosMin + PosMax) >> 1;
   unsigned long CurrentState = this->UniqueStateDescriptionUp[PosMid];
   while ((PosMax > PosMin) && (CurrentState != stateDescriptionUp))
@@ -488,10 +520,7 @@ int BosonOnSphereWithSU2SpinSzSymmetry::AduAu (int index, int m, int n, double& 
       coefficient = 0.0;
       return this->HilbertSpaceDimension;      
     }
-  if (this->StateDescriptionUp[index] == this->StateDescriptionDown[index])
-    this->ProdATemporaryOrbitFactor = 1.0;
-  else
-    this->ProdATemporaryOrbitFactor = M_SQRT2;
+  this->ProdATemporaryNbrStateInOrbit = this->NbrStateInOrbit[index];
   coefficient = (double) this->TemporaryStateUp[n];
   --this->TemporaryStateUp[n];
   ++this->TemporaryStateUp[m];
@@ -518,10 +547,7 @@ int BosonOnSphereWithSU2SpinSzSymmetry::AduAd (int index, int m, int n, double& 
       return this->HilbertSpaceDimension;      
     }
   this->FermionToBoson(this->StateDescriptionUp[index], this->NUpLzMax, this->TemporaryStateUp);
-  if (this->StateDescriptionUp[index] == this->StateDescriptionDown[index])
-    this->ProdATemporaryOrbitFactor = 1.0;
-  else
-    this->ProdATemporaryOrbitFactor = M_SQRT2;
+  this->ProdATemporaryNbrStateInOrbit = this->NbrStateInOrbit[index];
   coefficient = (double) this->TemporaryStateDown[n];
   --this->TemporaryStateDown[n];
   ++this->TemporaryStateUp[m];
@@ -549,10 +575,7 @@ int BosonOnSphereWithSU2SpinSzSymmetry::AddAu (int index, int m, int n, double& 
       return this->TargetSpace->HilbertSpaceDimension;      
     }
   this->FermionToBoson(this->StateDescriptionDown[index], this->NDownLzMax, this->TemporaryStateDown);
-  if (this->StateDescriptionUp[index] == this->StateDescriptionDown[index])
-    this->ProdATemporaryOrbitFactor = 1.0;
-  else
-    this->ProdATemporaryOrbitFactor = M_SQRT2;
+  this->ProdATemporaryNbrStateInOrbit = this->NbrStateInOrbit[index];
   coefficient = (double) this->TemporaryStateUp[n];
   --this->TemporaryStateUp[n];
   ++this->TemporaryStateDown[m];
@@ -579,10 +602,7 @@ int BosonOnSphereWithSU2SpinSzSymmetry::AddAd (int index, int m, int n, double& 
       coefficient = 0.0;
       return this->HilbertSpaceDimension;      
     }
-  if (this->StateDescriptionUp[index] == this->StateDescriptionDown[index])
-    this->ProdATemporaryOrbitFactor = 1.0;
-  else
-    this->ProdATemporaryOrbitFactor = M_SQRT2;
+  this->ProdATemporaryNbrStateInOrbit = this->NbrStateInOrbit[index];
   coefficient = (double) this->TemporaryStateDown[n];
   --this->TemporaryStateDown[n];
   ++this->TemporaryStateDown[m];
@@ -607,10 +627,7 @@ double BosonOnSphereWithSU2SpinSzSymmetry::AuAu (int index, int n1, int n2)
       return 0.0;
     }
   this->FermionToBoson(this->StateDescriptionDown[index], this->NDownLzMax, this->ProdATemporaryStateDown);
-  if (this->StateDescriptionUp[index] == this->StateDescriptionDown[index])
-    this->ProdATemporaryOrbitFactor = 1.0;
-  else
-    this->ProdATemporaryOrbitFactor = M_SQRT2;
+  this->ProdATemporaryNbrStateInOrbit = this->NbrStateInOrbit[index];
   double Coefficient = this->ProdATemporaryStateUp[n2];
   --this->ProdATemporaryStateUp[n2];
   Coefficient *= this->ProdATemporaryStateUp[n1];
@@ -633,10 +650,7 @@ double BosonOnSphereWithSU2SpinSzSymmetry::AuAd (int index, int n1, int n2)
     {
       return 0.0;
     }
-  if (this->StateDescriptionUp[index] == this->StateDescriptionDown[index])
-    this->ProdATemporaryOrbitFactor = 1.0;
-  else
-    this->ProdATemporaryOrbitFactor = M_SQRT2;
+  this->ProdATemporaryNbrStateInOrbit = this->NbrStateInOrbit[index];
   double Coefficient = this->ProdATemporaryStateDown[n2];
   --this->ProdATemporaryStateDown[n2];
   Coefficient *= this->ProdATemporaryStateUp[n1];
@@ -660,10 +674,7 @@ double BosonOnSphereWithSU2SpinSzSymmetry::AdAd (int index, int n1, int n2)
       return 0.0;
     }
   this->FermionToBoson(this->StateDescriptionUp[index], this->NUpLzMax, this->ProdATemporaryStateUp);
-  if (this->StateDescriptionUp[index] == this->StateDescriptionDown[index])
-    this->ProdATemporaryOrbitFactor = 1.0;
-  else
-    this->ProdATemporaryOrbitFactor = M_SQRT2;
+  this->ProdATemporaryNbrStateInOrbit = this->NbrStateInOrbit[index];
   double Coefficient = this->ProdATemporaryStateDown[n2];
   --this->ProdATemporaryStateDown[n2];
   Coefficient *= this->ProdATemporaryStateDown[n1];
@@ -684,10 +695,7 @@ double BosonOnSphereWithSU2SpinSzSymmetry::ProdA (int index, int* n, int* spinIn
   double Coefficient = 1.0;
   this->FermionToBoson(this->StateDescriptionUp[index], this->NUpLzMax, this->ProdATemporaryStateUp);
   this->FermionToBoson(this->StateDescriptionDown[index], this->NDownLzMax, this->ProdATemporaryStateDown);
-  if (this->StateDescriptionUp[index] == this->StateDescriptionDown[index])
-    this->ProdATemporaryOrbitFactor = 1.0;
-  else
-    this->ProdATemporaryOrbitFactor = M_SQRT2;
+  this->ProdATemporaryNbrStateInOrbit = this->NbrStateInOrbit[index];
   for (int i = nbrIndices - 1; i >= 0; --i)
     {
       if (spinIndices[i] == 0)
@@ -937,6 +945,7 @@ RealMatrix BosonOnSphereWithSU2SpinSzSymmetry::EvaluatePartialEntanglementMatrix
 	  unsigned long TmpStateDown;
 	  this->ConvertFromMonomial(TmpMonomialUp3, TmpMonomialDown3, TmpStateUp, TmpStateDown);
 	  double TmpCoefficient = 1.0;
+	  this->ProdATemporaryNbrStateInOrbit = 1;
 	  int TmpPos =  this->SymmetrizeAdAdResult(TmpStateUp, TmpStateDown, TmpCoefficient);  
 	  if (TmpPos != this->HilbertSpaceDimension)
 	    {

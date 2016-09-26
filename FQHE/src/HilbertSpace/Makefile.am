@@ -173,4 +173,7 @@ FermionOnTorusWithMagneticTranslationsLong.cc \
 QuasiholeOnSphereWithSpinAndPairingAllMomenta.cc \
 FermionOnSphereWithSpinAndPairingAllLz.cc \
 FermionOnSphereWithSpinAllLz.cc \
-BosonOnSphereWithSU2SpinSzSymmetry.cc
+BosonOnSphereWithSU2SpinSzSymmetry.cc \
+BosonOnSphereWithSU2SpinLzSymmetry.cc \
+BosonOnSphereWithSU2SpinLzSzSymmetry.cc
+

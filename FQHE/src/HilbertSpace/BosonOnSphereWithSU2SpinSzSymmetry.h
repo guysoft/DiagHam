@@ -53,10 +53,15 @@ class BosonOnSphereWithSU2SpinSzSymmetry :  public BosonOnSphereWithSU2Spin
   double SzParitySign;
   
   // a temporary variable to store the normalization factor coming from the orbit size
-  double ProdATemporaryOrbitFactor;
+  int ProdATemporaryNbrStateInOrbit;
 
   // pointer to the Hilbert space where the result of any operator lies
   BosonOnSphereWithSU2SpinSzSymmetry* TargetSpace;
+
+  // number of state in each orbit
+  int* NbrStateInOrbit;
+  // array containing rescaling factors when passing from one orbit to another
+  double** RescalingFactors;
 
  public:
 
@@ -236,7 +241,7 @@ class BosonOnSphereWithSU2SpinSzSymmetry :  public BosonOnSphereWithSU2Spin
 
   // generate the Hilbert space with the discrete symmetry constraint
   //
-  virtual void GenerateSatetsWithDiscreateSymmetry();
+  virtual void GenerateStatesWithDiscreteSymmetry();
 
   // find state index
   //
@@ -298,10 +303,7 @@ inline double BosonOnSphereWithSU2SpinSzSymmetry::AsigmaAsigma (int index, int n
     {
       return 0.0;
     }
-  if (this->StateDescriptionUp[index] == this->StateDescriptionDown[index])
-    this->ProdATemporaryOrbitFactor = 1.0;
-  else
-    this->ProdATemporaryOrbitFactor = M_SQRT2;
+  this->ProdATemporaryNbrStateInOrbit = this->NbrStateInOrbit[index];
   double Coefficient = this->ProdATemporaryStateSigma[sigma2][n2];
   --this->ProdATemporaryStateSigma[sigma2][n2];
   Coefficient *= this->ProdATemporaryStateSigma[sigma1][n1];
@@ -381,19 +383,22 @@ inline int BosonOnSphereWithSU2SpinSzSymmetry::FindStateIndex(unsigned long*& st
 
 inline int BosonOnSphereWithSU2SpinSzSymmetry::SymmetrizeAdAdResult(unsigned long& stateDescriptionUp, unsigned long& stateDescriptionDown, double& coefficient)
 {
-  coefficient *= this->ProdATemporaryOrbitFactor;
   if (stateDescriptionUp < stateDescriptionDown)
     {
       unsigned long Tmp = stateDescriptionUp;
       stateDescriptionUp = stateDescriptionDown;
       stateDescriptionDown = Tmp;
-      coefficient *= this->SzParitySign * M_SQRT1_2;
+      coefficient *= this->SzParitySign * this->RescalingFactors[this->ProdATemporaryNbrStateInOrbit][2];
     }
   else
     {
       if (stateDescriptionUp != stateDescriptionDown)
 	{
-	  coefficient *= M_SQRT1_2;
+	  coefficient *= this->RescalingFactors[this->ProdATemporaryNbrStateInOrbit][2];
+	}
+      else
+	{
+	  coefficient *= this->RescalingFactors[this->ProdATemporaryNbrStateInOrbit][1];
 	}
     }
   return this->TargetSpace->FindStateIndex(stateDescriptionUp, stateDescriptionDown);

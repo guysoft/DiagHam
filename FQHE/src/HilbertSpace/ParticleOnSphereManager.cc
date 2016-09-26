@@ -72,11 +72,15 @@
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneSymmetricBasisShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneHugeBasisShort.h"
+
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
 #include "HilbertSpace/BosonOnSphereWithSU2Spin.h"
 #include "HilbertSpace/BosonOnSphereWithSU2SpinSzSymmetry.h"
+#include "HilbertSpace/BosonOnSphereWithSU2SpinLzSymmetry.h"
+#include "HilbertSpace/BosonOnSphereWithSU2SpinLzSzSymmetry.h"
 #include "HilbertSpace/BosonOnSphereWithSpinOld.h"
 #include "HilbertSpace/BosonOnSphereWithSpinAllSz.h"
+
 #include "HilbertSpace/BosonOnSphereWithSU4Spin.h"
 #include "HilbertSpace/BosonOnSphereWithSU4SpinAllEntanglement.h"
 
@@ -166,20 +170,18 @@ void ParticleOnSphereManager::AddOptionGroup(OptionManager* manager, const char*
     case 2:
       {
 	(*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system", 0);
+	(*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
+	(*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use Sz <-> -Sz symmetrized version of the basis (only valid if total-sz=0)");
+	(*SystemGroup) += new BooleanOption  ('\n', "minus-szparity", "select the  Sz <-> -Sz symmetric sector with negative parity");
+	(*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
 	if (this->FermionFlag == true) // symmetrized bases not defined for bosons at the moment
 	  {
-	    (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
-	    (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use Sz <-> -Sz symmetrized version of the basis (only valid if total-sz=0)");
-	    (*SystemGroup) += new BooleanOption  ('\n', "minus-szparity", "select the  Sz <-> -Sz symmetric sector with negative parity");
-	    (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
 	    (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
 	    (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
 	  }
 	if (this->BosonFlag == true)
 	  {
 	    // boson options
-	    (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use Sz <-> -Sz symmetrized version of the basis (only valid if total-sz=0)");
-	    (*SystemGroup) += new BooleanOption  ('\n', "minus-szparity", "select the  Sz <-> -Sz symmetric sector with negative parity");
 	    (*SystemGroup) += new BooleanOption  ('\n', "all-sz", "use Hilbert-space with all values of sz");
 	    (*SystemGroup) += new SingleIntegerOption  ('\n', "pair-parity", "parity for N_up as compared to int(N/2) (0=same, 1=different, -1=none)", -1);
 	    (*PrecalculationGroup) += new BooleanOption  ('\n', "use-old", "use full integer representation of bosonic states (slow)");
@@ -841,45 +843,75 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
       int NbrBosons = this->Options->GetInteger("nbr-particles");
       int LzMax = this->Options->GetInteger("lzmax");
       bool SzSymmetrizedBasis = this->Options->GetBoolean("szsymmetrized-basis");
+      bool LzSymmetrizedBasis = this->Options->GetBoolean("lzsymmetrized-basis");
       int SzTotal = this->Options->GetInteger("total-sz");
       unsigned long MemorySpace = ((unsigned long) this->Options->GetInteger("fast-search")) << 20;
-      if (SzSymmetrizedBasis == true)
+      if  ((LzSymmetrizedBasis == false) || (totalLz != 0))
 	{
-	  if (this->Options->GetBoolean("all-sz"))
+	  if (SzSymmetrizedBasis == true)
 	    {
-	      Space = new BosonOnSphereWithSU2SpinSzSymmetry(NbrBosons, totalLz, LzMax, this->Options->GetBoolean("minus-szparity"));
+	      if (this->Options->GetBoolean("all-sz"))
+		{
+		  Space = new BosonOnSphereWithSU2SpinSzSymmetry(NbrBosons, totalLz, LzMax, this->Options->GetBoolean("minus-szparity"));
+		}
+	      else
+		{
+		  Space = new BosonOnSphereWithSU2SpinSzSymmetry(NbrBosons, totalLz, LzMax, SzTotal, this->Options->GetBoolean("minus-szparity"), MemorySpace);
+		}
 	    }
 	  else
 	    {
-	      Space = new BosonOnSphereWithSU2SpinSzSymmetry(NbrBosons, totalLz, LzMax, SzTotal, this->Options->GetBoolean("minus-szparity"), MemorySpace);
+	      if (this->Options->GetBoolean("all-sz"))
+		{
+		  if (this->Options->GetInteger("pair-parity")>=0)
+		    Space = new BosonOnSphereWithSpinAllSz(NbrBosons, totalLz, LzMax, this->Options->GetInteger("pair-parity"), MemorySpace);
+		  else
+		    Space = new BosonOnSphereWithSpinAllSz(NbrBosons, totalLz, LzMax, MemorySpace);
+		}
+	      else
+		{
+		  unsigned long MemorySpace = ((unsigned long) this->Options->GetInteger("fast-search")) << 20;
+		  if (this->Options->GetBoolean("use-old"))
+		    {
+		      Space = new BosonOnSphereWithSpinOld(NbrBosons, totalLz, LzMax, SzTotal);
+		    }
+		  else
+		    {
+		      if (this->Options->GetBoolean("use-alt"))
+			{
+			  Space = new BosonOnSphereWithSU2Spin(NbrBosons, totalLz, LzMax, SzTotal, MemorySpace);
+			}
+		      else
+			{
+			  Space = new BosonOnSphereWithSpin(NbrBosons, totalLz, LzMax, SzTotal, MemorySpace);
+			}
+		    }
+		}
 	    }
 	}
       else
 	{
-	  if (this->Options->GetBoolean("all-sz"))
+	  if (SzSymmetrizedBasis == true)
 	    {
-	      if (this->Options->GetInteger("pair-parity")>=0)
-		Space = new BosonOnSphereWithSpinAllSz(NbrBosons, totalLz, LzMax, this->Options->GetInteger("pair-parity"), MemorySpace);
-	      else
-		Space = new BosonOnSphereWithSpinAllSz(NbrBosons, totalLz, LzMax, MemorySpace);
-	    }
-	  else
-	    {
-	      unsigned long MemorySpace = ((unsigned long) this->Options->GetInteger("fast-search")) << 20;
-	      if (this->Options->GetBoolean("use-old"))
+	      if (this->Options->GetBoolean("all-sz"))
 		{
-		  Space = new BosonOnSphereWithSpinOld(NbrBosons, totalLz, LzMax, SzTotal);
+		  Space = new BosonOnSphereWithSU2SpinLzSzSymmetry(NbrBosons, LzMax, 
+								   this->Options->GetBoolean("minus-szparity"), this->Options->GetBoolean("minus-lzparity"));
 		}
 	      else
 		{
-		  if (this->Options->GetBoolean("use-alt"))
-		    {
-		      Space = new BosonOnSphereWithSU2Spin(NbrBosons, totalLz, LzMax, SzTotal, MemorySpace);
-		    }
-		  else
-		    {
-		      Space = new BosonOnSphereWithSpin(NbrBosons, totalLz, LzMax, SzTotal, MemorySpace);
-		    }
+		  Space = new BosonOnSphereWithSU2SpinLzSzSymmetry(NbrBosons, LzMax, SzTotal, this->Options->GetBoolean("minus-szparity"), this->Options->GetBoolean("minus-lzparity"), MemorySpace);
+		}
+	    }
+	  else
+	    {
+	      if (this->Options->GetBoolean("all-sz"))
+		{
+		  Space = new BosonOnSphereWithSU2SpinLzSymmetry(NbrBosons, LzMax, this->Options->GetBoolean("minus-lzparity"));
+		}
+	      else
+		{
+		  Space = new BosonOnSphereWithSU2SpinLzSymmetry(NbrBosons, LzMax, SzTotal, this->Options->GetBoolean("minus-lzparity"));
 		}
 	    }
 	}
