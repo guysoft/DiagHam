@@ -432,6 +432,192 @@ bool FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(char* filename, int& n
   
 }
 
+// try to guess system information from file name for system with an SU(2) degree of freedom and discrete symmetries (alternate version)
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles
+// lzMax = reference to twice the maximum momentum for a single particle
+// lz = reference to twice the z projection of the angular momentum
+// sz = reference to twice the z projection of the total spin
+// szSymmetry = reference on the parity the Sz<->-Sz symmetry
+// lzSymmetry = reference on the parity for the Lz<->-Lz symmetry
+// statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// return value = true if no error occured
+
+bool FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& lzMax, int& lz, int& sz, 
+							  int& szSymmetry, int& lzSymmetry, bool& statistics)
+{
+  char* StrNbrParticles = strstr(filename, "_n_");
+  if (StrNbrParticles == 0)
+    StrNbrParticles = strstr(filename, "_p_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 3;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  nbrParticles = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess number of particles from file name " << filename << endl;
+      return false;            
+    }
+  StrNbrParticles = strstr(filename, "_2s_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  lzMax = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess maximum momentum from file name " << filename << endl;
+      return false;            
+    }
+  if (strstr(filename, "fermion") == 0)
+    {
+      if (strstr(filename, "boson") == 0)
+	{
+	  cout << "can't guess particle statistics from file name " << filename << endl;
+	  return false;	  
+	}
+      else
+	{
+	  statistics = false;
+	}
+    }
+  else
+    {
+      statistics = true;
+    }
+  StrNbrParticles = strstr(filename, "_lz_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      int SizeString = 0;
+      if (StrNbrParticles[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrParticles[SizeString] != '\0') && ((StrNbrParticles[SizeString] != '.') || (StrNbrParticles[SizeString] != '_')) 
+	     && (StrNbrParticles[SizeString] >= '0') && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '.') || (StrNbrParticles[SizeString] == '_')) && (SizeString != 0))
+	{
+
+	  char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  lz = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess z projection of the angular momentum from file name " << filename << endl;
+      return false;            
+    }
+  StrNbrParticles = strstr(filename, "_sz_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      int SizeString = 0;
+      if (StrNbrParticles[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  sz = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess z projection of the total spin from file name " << filename << endl;
+      return false;            
+    }
+  StrNbrParticles = strstr(filename, "_szsym_");
+  szSymmetry = 0;
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 7;
+      int SizeString = 0;
+      if (StrNbrParticles[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  szSymmetry = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+      if (StrNbrParticles == 0)
+	{
+	  cout << "can't guess the Sz<->-Sz sector from file name " << filename << endl;
+	  return false;            
+	}
+    }
+  StrNbrParticles = strstr(filename, "_lzsym_");
+  lzSymmetry = 0;
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 7;
+      int SizeString = 0;
+      if (StrNbrParticles[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  lzSymmetry = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+      if (StrNbrParticles == 0)
+	{
+	  cout << "can't guess the Lz<->-Lz sector from file name " << filename << endl;
+	  return false;            
+	}
+    }
+  return true;
+}
+
 
 // try to guess system information from file name for system with an SU(3) degree of freedom and discrete symmetries
 //
@@ -783,6 +969,162 @@ bool FQHEOnCP2FindSystemInfoFromVectorFileName(char* filename, int& nbrParticles
     {
       tzSymmetry = true;
       tzZ3Symmetry = true;
+    }
+  return true;
+}
+
+// try to guess system information from file name for a system of bosons on the S2xS2 geometry
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles
+// nbrFluxQuanta1 = reference to the number of flux of quanta for the first sphere
+// nbrFluxQuanta2 = reference to the number of flux of quanta for the first sphere
+// totalLz = reference to twice the z projection of the first sphere angular momentum
+// totalKz = reference to twice the z projection of the second sphere angular momentum
+// statistics = reference to flag for fermionic statistics (true for fermion, false for bosons)
+// return value = true if no error occured
+
+bool FQHEOnS2xS2FindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrFluxQuanta1, int& nbrFluxQuanta2, int& totalLz, int& totalKz, bool& statistics)
+{
+  char* StrNbrParticles;
+  StrNbrParticles = strstr(filename, "_n_");
+  if (StrNbrParticles == 0)
+    StrNbrParticles = strstr(filename, "_p_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 3;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  nbrParticles = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess number of particles from file name " << filename << endl;
+      return false;            
+    }
+  StrNbrParticles = strstr(filename, "_2s1_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 5;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  nbrFluxQuanta1 = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess the number of flux quanta of the first sphere from file name " << filename << endl;
+      return false;            
+    }
+  StrNbrParticles = strstr(filename, "_2s2_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 5;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  nbrFluxQuanta2 = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess the number of flux quanta of the second sphere from file name " << filename << endl;
+      return false;            
+    }
+  if (strstr(filename, "fermion") == 0)
+    {
+      if (strstr(filename, "boson") == 0)
+	{
+	  cout << "can't guess particle statistics from file name " << filename << endl;
+	  return false;	  
+	}
+      else
+	{
+	  statistics = false;
+	}
+    }
+  else
+    {
+      statistics = true;
+    }
+  StrNbrParticles = strstr(filename, "_lz_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      int SizeString = 0;
+      if (StrNbrParticles[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+	  char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  totalLz = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess z projection of the first sphere angular momentum from file name " << filename << endl;
+      return false;            
+    }
+  StrNbrParticles = strstr(filename, "_kz_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      int SizeString = 0;
+      if (StrNbrParticles[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+	  char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  totalKz = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess z projection of the second sphere angular momentum from file name " << filename << endl;
+      return false;            
     }
   return true;
 }

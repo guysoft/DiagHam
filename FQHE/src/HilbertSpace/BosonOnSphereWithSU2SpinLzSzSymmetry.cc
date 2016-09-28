@@ -132,14 +132,14 @@ BosonOnSphereWithSU2SpinLzSzSymmetry::BosonOnSphereWithSU2SpinLzSzSymmetry (int 
       this->GenerateLookUpTable(10000000);
       
 #ifdef __DEBUG__
-      int UsedMemory = 0;
-      UsedMemory += this->HilbertSpaceDimension * (4 * sizeof(unsigned long));
+      long UsedMemory = 0l;
+      UsedMemory += this->LargeHilbertSpaceDimension * ((2 * sizeof(unsigned long)) + sizeof(int));
       cout << "memory requested for Hilbert space = ";
-      if (UsedMemory >= 1024)
-	if (UsedMemory >= 1048576)
-	  cout << (UsedMemory >> 20) << "Mo" << endl;
+      if (UsedMemory >= 1024l)
+	if (UsedMemory >= 1048576l)
+	  cout << (UsedMemory >> 20) << "Mb" << endl;
 	else
-	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+	  cout << (UsedMemory >> 10) << "kb" <<  endl;
       else
 	cout << UsedMemory << endl;
 #endif

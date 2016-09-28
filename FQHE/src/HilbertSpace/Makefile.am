@@ -175,5 +175,8 @@ FermionOnSphereWithSpinAndPairingAllLz.cc \
 FermionOnSphereWithSpinAllLz.cc \
 BosonOnSphereWithSU2SpinSzSymmetry.cc \
 BosonOnSphereWithSU2SpinLzSymmetry.cc \
-BosonOnSphereWithSU2SpinLzSzSymmetry.cc
+BosonOnSphereWithSU2SpinLzSzSymmetry.cc \
+BosonOnS2xS2.cc \
+FermionOnS2xS2.cc
+
 

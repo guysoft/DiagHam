@@ -131,6 +131,7 @@ class FermionOnSphere :  public ParticleOnSphere
   friend class BosonOnSquareLatticeWithSU2SpinMomentumSpace;
   friend class BosonOnSquareLatticeWannierSpace;
   friend class BosonOnCubicLatticeMomentumSpace;
+  friend class BosonOnS2xS2;
   
   friend class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation;
 

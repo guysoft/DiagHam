@@ -313,7 +313,6 @@ int main(int argc, char** argv)
 	}
       if (FirstRun == true)
 	FirstRun = false;
-      if (HaldaneBasisFlag) return 0; // only one subspace defined...
     }
   delete[] OutputName;
   return 0;

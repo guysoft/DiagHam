@@ -770,36 +770,36 @@ RealMatrix BosonOnSphereWithSU2SpinSzSymmetry::EvaluatePartialEntanglementMatrix
 {
   int nbrOrbitalA = this->LzMax + 1;
   int nbrOrbitalB = this->LzMax + 1;  
-  if (nbrParticleSector == 0)
-    {
-      if ((lzSector == 0) && (szSector == 0))
-	{
-	  RealMatrix TmpEntanglementMatrix(1, this->HilbertSpaceDimension, true);
-	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-	    TmpEntanglementMatrix.SetMatrixElement(0, i, groundState[i]);
-	  return TmpEntanglementMatrix;
-	}
-      else
-	{
-	  RealMatrix TmpEntanglementMatrix;
-	  return TmpEntanglementMatrix;
-	}
-    }
-  if (nbrParticleSector == this->NbrBosons)
-    {
-      if ((lzSector == this->TotalLz) && (szSector == this->TotalSpin))
-	{
-	  RealMatrix TmpEntanglementMatrix(this->HilbertSpaceDimension, 1, true);
-	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-	    TmpEntanglementMatrix.SetMatrixElement(i, 0, groundState[i]);
-	  return TmpEntanglementMatrix;
-	}
-      else
-	{
-	  RealMatrix TmpEntanglementMatrix;
-	  return TmpEntanglementMatrix;
-	}
-    } 
+//   if (nbrParticleSector == 0)
+//     {
+//       if ((lzSector == 0) && (szSector == 0))
+// 	{
+// 	  RealMatrix TmpEntanglementMatrix(1, this->HilbertSpaceDimension, true);
+// 	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+// 	    TmpEntanglementMatrix.SetMatrixElement(0, i, groundState[i]);
+// 	  return TmpEntanglementMatrix;
+// 	}
+//       else
+// 	{
+// 	  RealMatrix TmpEntanglementMatrix;
+// 	  return TmpEntanglementMatrix;
+// 	}
+//     }
+//   if (nbrParticleSector == this->NbrBosons)
+//     {
+//       if ((lzSector == this->TotalLz) && (szSector == this->TotalSpin))
+// 	{
+// 	  RealMatrix TmpEntanglementMatrix(this->HilbertSpaceDimension, 1, true);
+// 	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+// 	    TmpEntanglementMatrix.SetMatrixElement(i, 0, groundState[i]);
+// 	  return TmpEntanglementMatrix;
+// 	}
+//       else
+// 	{
+// 	  RealMatrix TmpEntanglementMatrix;
+// 	  return TmpEntanglementMatrix;
+// 	}
+//     } 
   int ComplementaryNbrParticles = this->NbrBosons - nbrParticleSector;
   int ComplementarySzSector = this->TotalSpin - szSector;
   int ComplementaryLzSector = this->TotalLz - lzSector;

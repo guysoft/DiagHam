@@ -4,7 +4,7 @@
 //                            DiagHam  version 0.01                           //
 //                                                                            //
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
-//                                                                            //
+//                                                                           //
 //                                                                            //
 //    set of functions used to managed files related to QHE on sphere         //
 //                                                                            //
@@ -88,6 +88,20 @@ bool FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(char* filename, int& n
 bool FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& lzMax, int& lz, int& sz, 
 							  bool& szSymmetry, bool& szSymmetryMinusParity, bool& lzSymmetry, bool& lzSymmetryMinusParity, bool& statistics);
 
+// try to guess system information from file name for system with an SU(2) degree of freedom and discrete symmetries (alternate version)
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles
+// lzMax = reference to twice the maximum momentum for a single particle
+// lz = reference to twice the z projection of the angular momentum
+// sz = reference to twice the z projection of the total spin
+// szSymmetry = reference on the parity the Sz<->-Sz symmetry
+// lzSymmetry = reference on the parity for the Lz<->-Lz symmetry
+// statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// return value = true if no error occured
+bool FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& lzMax, int& lz, int& sz, 
+							  int& szSymmetry, int& lzSymmetry, bool& statistics);
+
 // try to guess system information from file name for system with an SU(3) degree of freedom and discrete symmetries
 //
 // filename = vector file name
@@ -155,8 +169,19 @@ bool FQHEOn4DSphereFindSystemInfoFromPESVectorFileName(char* filename, int& nbrP
 //tzZ3Symmetry = reference on the flag of the permutation symmetry 
 // statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
 // return value = true if no error occured
-
 bool FQHEOnCP2FindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrFluxQuanta, int& tz, int& y, bool& tzSymmetry, bool& tzSymmetryMinusParity, bool& tzZ3Symmetry, bool& statistics);
+
+// try to guess system information from file name for a system of bosons on the S2xS2 geometry
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles
+// nbrFluxQuanta1 = reference to the number of flux of quanta for the first sphere
+// nbrFluxQuanta2 = reference to the number of flux of quanta for the first sphere
+// totalLz = reference to twice the z projection of the first sphere angular momentum
+// totalKz = reference to twice the z projection of the second sphere angular momentum
+// statistics = reference to flag for fermionic statistics (true for fermion, false for bosons)
+// return value = true if no error occured
+bool FQHEOnS2xS2FindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrFluxQuanta1, int& nbrFluxQuanta2, int& totalLz, int& totalKz, bool& statistics);
 
 // try to guess system information from PES file name
 //

@@ -9,6 +9,9 @@
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
 #include "HilbertSpace/BosonOnSphereWithSU2Spin.h"
+#include "HilbertSpace/BosonOnSphereWithSU2SpinSzSymmetry.h"
+#include "HilbertSpace/BosonOnSphereWithSU2SpinLzSymmetry.h"
+#include "HilbertSpace/BosonOnSphereWithSU2SpinLzSzSymmetry.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -134,6 +137,8 @@ int main(int argc, char** argv)
     }
   int* TotalLz = 0;
   int* TotalSz = 0;
+  int* LzSymmetry = 0;
+  int* SzSymmetry = 0;
   bool Statistics = true;
   int NbrSpaces = 1;
   ParticleOnSphereWithSpin** Spaces = 0;
@@ -146,6 +151,8 @@ int main(int argc, char** argv)
       GroundStateFiles = new char* [1];
       TotalLz = new int[1];
       TotalSz = new int[1];
+      LzSymmetry = new int[1];
+      SzSymmetry = new int[1];
       GroundStateFiles[0] = new char [strlen(Manager.GetString("ground-file")) + 1];
       strcpy (GroundStateFiles[0], Manager.GetString("ground-file"));      
     }
@@ -161,6 +168,8 @@ int main(int argc, char** argv)
        GroundStateFiles = new char* [NbrSpaces];
        TotalLz = new int[NbrSpaces];
        TotalSz = new int[NbrSpaces];
+       LzSymmetry = new int[NbrSpaces];
+       SzSymmetry = new int[NbrSpaces];
        for (int i = 0; i < NbrSpaces; ++i)
 	 {
 	   GroundStateFiles[i] = new char [strlen(DegeneratedFile(0, i)) + 1];
@@ -172,10 +181,12 @@ int main(int argc, char** argv)
     {
       TotalLz[i] = 0;
       TotalSz[i] = 0;
+      LzSymmetry[i] = 0;
+      SzSymmetry[i] = 0;
       if (NoSzFlag == false)
 	{
 	  if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(GroundStateFiles[i],
-								   NbrParticles, LzMax, TotalLz[i], TotalSz[i], Statistics) == false)
+								   NbrParticles, LzMax, TotalLz[i], TotalSz[i], LzSymmetry[i], SzSymmetry[i], Statistics) == false)
 	    {
 	      cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
 	      return -1;
@@ -240,7 +251,29 @@ int main(int argc, char** argv)
 		}
 	      else
 		{
-		  Spaces[i] = new BosonOnSphereWithSU2Spin (NbrParticles, TotalLz[i], LzMax, TotalSz[i]);
+		  if (LzSymmetry[i] == 0)
+		    {
+		      if (SzSymmetry[i] == 0)
+			{		      
+			  Spaces[i] = new BosonOnSphereWithSU2Spin (NbrParticles, TotalLz[i], LzMax, TotalSz[i]);
+			}
+		      else
+			{		      
+			  Spaces[i] = new BosonOnSphereWithSU2SpinSzSymmetry (NbrParticles, TotalLz[i], LzMax, TotalSz[i], (SzSymmetry[i] == -1));
+			}
+
+		    }
+		  else
+		    {
+		      if (SzSymmetry[i] == 0)
+			{		      
+			  Spaces[i] = new BosonOnSphereWithSU2SpinLzSymmetry (NbrParticles, LzMax, TotalSz[i], (LzSymmetry[i] == -1));
+			}
+		      else
+			{		      
+			  Spaces[i] = new BosonOnSphereWithSU2SpinLzSzSymmetry (NbrParticles, LzMax, TotalSz[i], (SzSymmetry[i] == -1), (LzSymmetry[i] == -1));
+			}
+		    }
 		}
 	    }
 	  else
