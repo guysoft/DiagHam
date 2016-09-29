@@ -14,6 +14,10 @@
 #include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSingletsLong.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSingletsLong.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -246,40 +250,116 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* InputSpace = 0;
-	  FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* OutputSpace = 0;
+	  ParticleOnTorusWithSpinAndMagneticTranslations* InputSpace = 0;
+	  ParticleOnTorusWithSpinAndMagneticTranslations* OutputSpace  = 0;
+// 	  FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* InputSpace = 0;
+// 	  FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* OutputSpace = 0;
 	  if (GutzwillerFlag == false)
 	    {
 	      if (SzSymmetrySector == 0)
 		{
 		  if (InputMinNbrSinglets == 0)
 		    {
-		      InputSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, 
-											  XMomentum, NbrSiteX, YMomentum, NbrSiteY);
+#ifdef __64_BITS__
+		      if (NbrSites < 31)
+#else
+		      if (NbrSites < 15)
+#endif
+			{
+			  InputSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, 
+											      XMomentum, NbrSiteX, YMomentum, NbrSiteY);
+			}
+		      else
+			{
+			  InputSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong (NbrParticles, SzValue, NbrSites, 
+												  XMomentum, NbrSiteX, YMomentum, NbrSiteY);
+			}
 		    }
 		  else
 		    {
-		      InputSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, InputMinNbrSinglets, SzValue, NbrSites, 
-													XMomentum, NbrSiteX, YMomentum, NbrSiteY);
+#ifdef __64_BITS__
+		      if (NbrSites < 31)
+#else
+		      if (NbrSites < 15)
+#endif
+			{
+			  InputSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, InputMinNbrSinglets, SzValue, NbrSites, 
+													    XMomentum, NbrSiteX, YMomentum, NbrSiteY);
+			}
+		      else
+			{
+			  InputSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSingletsLong (NbrParticles, InputMinNbrSinglets, SzValue, NbrSites, 
+														XMomentum, NbrSiteX, YMomentum, NbrSiteY);
+			}
 		    }
-		  OutputSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, OutputMinNbrSinglets,
-												     SzValue, NbrSites, XMomentum, NbrSiteX, YMomentum, NbrSiteY);
+#ifdef __64_BITS__
+		  if (NbrSites < 31)
+#else
+		    if (NbrSites < 15)
+#endif
+		      {
+			OutputSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, OutputMinNbrSinglets,
+													   SzValue, NbrSites, XMomentum, NbrSiteX, YMomentum, NbrSiteY);
+		      }
+		    else
+		      {
+			OutputSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSingletsLong (NbrParticles, OutputMinNbrSinglets,
+													       SzValue, NbrSites, XMomentum, NbrSiteX, YMomentum, NbrSiteY);
+		      }
 		}
 	      else
 		{
 		  if (InputMinNbrSinglets == 0)
 		    {
-		      InputSpace = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, (SzSymmetrySector == -1),
-												    XMomentum, NbrSiteX, YMomentum, NbrSiteY);
+#ifdef __64_BITS__
+		  if (NbrSites < 31)
+#else
+		    if (NbrSites < 15)
+#endif
+		      {
+			InputSpace = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, (SzSymmetrySector == -1),
+												      XMomentum, NbrSiteX, YMomentum, NbrSiteY);
+		      }
+		    else
+		      {
+			InputSpace = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong (NbrParticles, SzValue, NbrSites, (SzSymmetrySector == -1),
+													  XMomentum, NbrSiteX, YMomentum, NbrSiteY);
+		      }
 		    }
 		  else
 		    {
-		      InputSpace = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, InputMinNbrSinglets, SzValue, 
-														  NbrSites, (SzSymmetrySector == -1),
-														  XMomentum, NbrSiteX, YMomentum, NbrSiteY);
+#ifdef __64_BITS__
+		  if (NbrSites < 31)
+#else
+		    if (NbrSites < 15)
+#endif
+		      {
+			InputSpace = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, InputMinNbrSinglets, SzValue, 
+														    NbrSites, (SzSymmetrySector == -1),
+														    XMomentum, NbrSiteX, YMomentum, NbrSiteY);
+		      }
+		    else
+		      {
+			InputSpace = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSingletsLong (NbrParticles, InputMinNbrSinglets, SzValue, 
+															NbrSites, (SzSymmetrySector == -1),
+															XMomentum, NbrSiteX, YMomentum, NbrSiteY);
+		      }
+
 		    }
-		  OutputSpace = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, OutputMinNbrSinglets, SzValue, NbrSites, (SzSymmetrySector == -1),
-													       XMomentum, NbrSiteX, YMomentum, NbrSiteY);
+#ifdef __64_BITS__
+		  if (NbrSites < 31)
+#else
+		    if (NbrSites < 15)
+#endif
+		      {
+			OutputSpace = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, OutputMinNbrSinglets, SzValue, NbrSites, (SzSymmetrySector == -1),
+														     XMomentum, NbrSiteX, YMomentum, NbrSiteY);
+		      }
+		    else
+		      {
+			OutputSpace = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSingletsLong (NbrParticles, OutputMinNbrSinglets, SzValue, NbrSites, (SzSymmetrySector == -1),
+															 XMomentum, NbrSiteX, YMomentum, NbrSiteY);
+		      }
 		}
 	    }
 	  else
@@ -303,7 +383,21 @@ int main(int argc, char** argv)
 		       << ", should be " << InputSpace->GetHilbertSpaceDimension() << " )" << endl;
 		    return -1;
 		}
-	      ComplexVector TmpVector = OutputSpace->FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::ConvertToNbodyBasis(InputStates[i], InputSpace);
+	      ComplexVector TmpVector;
+#ifdef __64_BITS__
+	      if (NbrSites < 31)
+#else
+		if (NbrSites < 15)
+#endif
+		  {
+		    TmpVector = ((FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*) OutputSpace)->FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::ConvertToNbodyBasis(InputStates[i], 
+															(FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*) InputSpace);
+		  }
+		else
+		  {
+		    TmpVector = ((FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong*) OutputSpace)->FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong::ConvertToNbodyBasis(InputStates[i], 
+															    (FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong*) InputSpace);
+		  }
 	      double TmpSqrNorm = TmpVector.SqrNorm(); 
 	      cout << InputStateNames[i] << " : " << (TmpVector.SqrNorm()) << endl;
 	      if (Manager.GetBoolean("only-weights") == false)
