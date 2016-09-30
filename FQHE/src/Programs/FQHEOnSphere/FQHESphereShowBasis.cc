@@ -15,6 +15,9 @@
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
 #include "HilbertSpace/BosonOnSphereWithSU2Spin.h"
+#include "HilbertSpace/BosonOnSphereWithSU2SpinSzSymmetry.h"
+#include "HilbertSpace/BosonOnSphereWithSU2SpinLzSymmetry.h"
+#include "HilbertSpace/BosonOnSphereWithSU2SpinLzSzSymmetry.h"
 #include "HilbertSpace/BosonOnSphereWithSU3Spin.h"
 #include "HilbertSpace/BosonOnSphereWithSU4Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSpinAllSz.h"
@@ -287,7 +290,29 @@ int main(int argc, char** argv)
 			}
 		      else
 			{		       
-			  Space = new BosonOnSphereWithSU2Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+			  if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
+			    {
+			      Space = new BosonOnSphereWithSU2Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);				
+			    }
+			  else
+			    {
+			      if ((SzSymmetrizedBasis == true)  && (TotalSz == 0) && (LzSymmetrizedBasis == true) && (TotalLz == 0))
+				{
+				  Space = new BosonOnSphereWithSU2SpinLzSzSymmetry(NbrParticles, NbrFluxQuanta, TotalSz, Manager.GetBoolean("minus-szparity"),
+										  Manager.GetBoolean("minus-lzparity"));
+				}
+			      else 
+				{
+				  if ((SzSymmetrizedBasis == true)  && (TotalSz == 0))
+				    {
+				      Space = new BosonOnSphereWithSU2SpinSzSymmetry(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, Manager.GetBoolean("minus-szparity"));
+				    }
+				  else
+				    {
+				      Space = new BosonOnSphereWithSU2SpinLzSymmetry(NbrParticles, NbrFluxQuanta, TotalSz, Manager.GetBoolean("minus-lzparity"));
+				    }
+				}
+			    }
 			}
 		    }
 		  else
