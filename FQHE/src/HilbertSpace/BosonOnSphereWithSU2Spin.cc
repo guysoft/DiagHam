@@ -1579,6 +1579,108 @@ unsigned long BosonOnSphereWithSU2Spin::VanDerMondeTimesSlater (unsigned long* s
   return TmpNbrStates;
 }
 
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
+// 
+// subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
+// nbrParticleSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// szSector = Sz sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
+
+RealSymmetricMatrix BosonOnSphereWithSU2Spin::EvaluatePartialDensityMatrix (int subsytemSize, int nbrParticleSector, int lzSector, int szSector, RealVector& groundState)
+{
+  RealMatrix TmpDensityMatrix;
+  return TmpDensityMatrix;
+ }
+
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
+// 
+// subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
+// nbrParticleSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// szSector = Sz sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
+
+RealMatrix BosonOnSphereWithSU2Spin::EvaluatePartialEntanglementMatrix (int subsytemSize, int nbrParticleSector, int lzSector, int szSector, RealVector& groundState)
+{
+  int nbrOrbitalA = subsytemSize;
+  int nbrOrbitalB = this->LzMax + 1 - nbrOrbitalA;  
+  int ComplementaryNbrParticles = this->NbrBosons - nbrParticleSector;
+  int ComplementarySzSector = this->TotalSpin - szSector;
+
+
+  int TotalLzDisk = ConvertLzFromSphereToDisk(this->TotalLz, this->NbrBosons, this->LzMax);  
+  int LzSectorDisk = ConvertLzFromSphereToDisk(lzSector, nbrParticleSector, nbrOrbitalA - 1);
+  int ComplementaryLzSectorDisk = (TotalLzDisk - LzSectorDisk) - (ComplementaryNbrParticles * nbrOrbitalA);
+  int ComplementaryLzSector = ConvertLzFromDiskToSphere(ComplementaryLzSectorDisk, ComplementaryNbrParticles, nbrOrbitalB - 1);
+
+  if ((abs(ComplementarySzSector) > ComplementaryNbrParticles) || (abs(ComplementaryLzSector) > ((nbrOrbitalB - 1) * ComplementaryNbrParticles)))
+    {
+      RealMatrix TmpEntanglementMatrix;
+      return TmpEntanglementMatrix;  
+    }
+  BosonOnSphereWithSU2Spin SubsytemSpace(nbrParticleSector, lzSector, nbrOrbitalA - 1, szSector);
+  BosonOnSphereWithSU2Spin ComplementarySubsytemSpace(ComplementaryNbrParticles, ComplementaryLzSector, nbrOrbitalB - 1, ComplementarySzSector);  
+  RealMatrix TmpEntanglementMatrix(SubsytemSpace.GetHilbertSpaceDimension(), ComplementarySubsytemSpace.GetHilbertSpaceDimension(), true);
+  long TmpNbrNonZeroElements = 0l;
+  unsigned long** TmpSubsytemSpaceOccupationNumbersUp = new unsigned long* [SubsytemSpace.HilbertSpaceDimension];
+  unsigned long** TmpSubsytemSpaceOccupationNumbersDown = new unsigned long* [SubsytemSpace.HilbertSpaceDimension];
+  unsigned long TmpStateUp;
+  unsigned long TmpStateDown;
+  for (int i = 0; i < SubsytemSpace.HilbertSpaceDimension; ++i)
+    {
+      TmpSubsytemSpaceOccupationNumbersUp[i] = new unsigned long [SubsytemSpace.NbrLzValue];
+      TmpSubsytemSpaceOccupationNumbersDown[i] = new unsigned long [SubsytemSpace.NbrLzValue];
+      SubsytemSpace.FermionToBoson(SubsytemSpace.StateDescriptionUp[i], SubsytemSpace.StateDescriptionDown[i], 
+				   TmpSubsytemSpaceOccupationNumbersUp[i], TmpSubsytemSpaceOccupationNumbersDown[i]);
+    }
+
+  for (int MinIndex = 0; MinIndex < ComplementarySubsytemSpace.HilbertSpaceDimension; ++MinIndex)    
+    {
+      ComplementarySubsytemSpace.FermionToBoson(ComplementarySubsytemSpace.StateDescriptionUp[MinIndex], ComplementarySubsytemSpace.StateDescriptionDown[MinIndex],  
+						ComplementarySubsytemSpace.TemporaryStateUp, ComplementarySubsytemSpace.TemporaryStateDown);
+      for (int j = 0; j < SubsytemSpace.HilbertSpaceDimension; ++j)
+	{
+	  for (int i = 0; i <= SubsytemSpace.LzMax; ++i)
+	    {
+	      this->TemporaryStateUp[i] = TmpSubsytemSpaceOccupationNumbersUp[j][i];
+	      this->TemporaryStateDown[i] = TmpSubsytemSpaceOccupationNumbersDown[j][i];
+	    }
+	  for (int i = 0; i <= ComplementarySubsytemSpace.LzMax; ++i)
+	    {
+	      this->TemporaryStateUp[i + nbrOrbitalA] = ComplementarySubsytemSpace.TemporaryStateUp[i];
+	      this->TemporaryStateDown[i + nbrOrbitalA] = ComplementarySubsytemSpace.TemporaryStateDown[i];
+	    }
+	  this->BosonToFermion(this->TemporaryStateUp, this->TemporaryStateDown, TmpStateUp, TmpStateDown);
+	  int TmpPos = this->FindStateIndex(TmpStateUp, TmpStateDown);
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+	      TmpEntanglementMatrix.SetMatrixElement(j, MinIndex, groundState[TmpPos]);
+	      ++TmpNbrNonZeroElements;
+	    }
+	}
+    }
+
+  for (int i = 0; i < SubsytemSpace.HilbertSpaceDimension; ++i)
+    {
+      delete[] TmpSubsytemSpaceOccupationNumbersUp[i];
+      delete[] TmpSubsytemSpaceOccupationNumbersDown[i];
+    }
+  delete[] TmpSubsytemSpaceOccupationNumbersUp;
+  delete[] TmpSubsytemSpaceOccupationNumbersDown;
+  if (TmpNbrNonZeroElements > 0l)
+    {
+      return TmpEntanglementMatrix;
+    }
+  else
+    {
+      RealMatrix TmpEntanglementMatrixZero;
+      return TmpEntanglementMatrixZero;
+    }
+}
+
 // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. The entanglement matrix is only evaluated in a given Lz sector.
 // 
 // nbrParticleSector = number of particles that belong to the subsytem 
@@ -1590,7 +1692,6 @@ unsigned long BosonOnSphereWithSU2Spin::VanDerMondeTimesSlater (unsigned long* s
 
 RealMatrix BosonOnSphereWithSU2Spin::EvaluatePartialEntanglementMatrixParticlePartition (int nbrParticleSector, int lzSector, int szSector, RealVector& groundState, bool removeBinomialCoefficient)
 {
-  cout << "test" << endl;
   int nbrOrbitalA = this->LzMax + 1;
   int nbrOrbitalB = this->LzMax + 1;  
   if (nbrParticleSector == 0)

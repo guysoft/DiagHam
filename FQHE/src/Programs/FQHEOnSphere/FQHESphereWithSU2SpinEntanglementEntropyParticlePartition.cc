@@ -322,7 +322,7 @@ int main(int argc, char** argv)
       MaxNbrNDown = 0;
    }
 
-  if (DensityMatrixFileName != 0)
+  if ((DensityMatrixFileName != 0) && (Architecture.GetArchitecture()->CanWriteOnDisk()))
     {
       ofstream DensityMatrixFile;
       DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out); 
@@ -338,31 +338,36 @@ int main(int argc, char** argv)
       DensityMatrixFile.close();
     }
 
-  ofstream File;
+  char* OutputFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "partent");
   if (Manager.GetString("output-file") != 0)
     {
-      File.open(Manager.GetString("output-file"), ios::binary | ios::out);
+      OutputFileName = new char [strlen(Manager.GetString("output-file")) + 1];
+      strcpy(OutputFileName, Manager.GetString("output-file"));
     }
   else
     {
-      char* TmpFileName = 0;
       if (RealSpaceCut == false)
 	{
-	  TmpFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "partent");
+	 OutputFileName  = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "partent");
 	}
       else
 	{
-	  TmpFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "realent");	  
+	 OutputFileName  = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "realent");	  
 	}
-      if (TmpFileName == 0)
+      if (OutputFileName == 0)
 	{
 	  cout << "no vec extension was find in " << GroundStateFiles[0] << " file name" << endl;
 	  return 0;
 	}
-      File.open(TmpFileName, ios::binary | ios::out);
-      delete[] TmpFileName;
     }
-  File.precision(14);
+
+  if (Architecture.GetArchitecture()->CanWriteOnDisk())  
+    {
+      ofstream File;
+      File.open(OutputFileName, ios::binary | ios::out);
+      File.precision(14);
+      File.close();
+    }
   cout.precision(14);
 
   int MaxSubsystemNbrParticles = (NbrParticles >> 1) + (NbrParticles & 1);
@@ -768,7 +773,7 @@ int main(int argc, char** argv)
 			    }
 			  
 			  TmpDiag.SortMatrixDownOrder();
-			  if (DensityMatrixFileName != 0)
+			  if ((DensityMatrixFileName != 0) &&(Architecture.GetArchitecture()->CanWriteOnDisk()))
 			    {
 			      ofstream DensityMatrixFile;
 			      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
@@ -806,7 +811,7 @@ int main(int argc, char** argv)
 			if (PartialDensityMatrix.GetNbrRow() == 1)
 			  {
 			    double TmpValue = PartialDensityMatrix(0,0);
-			    if (DensityMatrixFileName != 0)
+			    if ((DensityMatrixFileName != 0) &&(Architecture.GetArchitecture()->CanWriteOnDisk()))
 			      {
 				ofstream DensityMatrixFile;
 				DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
@@ -963,7 +968,7 @@ int main(int argc, char** argv)
 		      ComplexPartialDensityMatrix.Diagonalize(TmpDiag);
 #endif		  
 		      TmpDiag.SortMatrixDownOrder();
-		      if (DensityMatrixFileName != 0)
+		      if ((DensityMatrixFileName != 0) && (Architecture.GetArchitecture()->CanWriteOnDisk()))
 			{
 			  ofstream DensityMatrixFile;
 			  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
@@ -1001,7 +1006,7 @@ int main(int argc, char** argv)
 		    if (ComplexPartialDensityMatrix.GetNbrRow() == 1)
 		      {
 			double TmpValue = ComplexPartialDensityMatrix(0,0);
-			if (DensityMatrixFileName != 0)
+			if ((DensityMatrixFileName != 0) && (Architecture.GetArchitecture()->CanWriteOnDisk()))
 			  {
 			    ofstream DensityMatrixFile;
 			    DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
@@ -1028,16 +1033,26 @@ int main(int argc, char** argv)
 		    }
 		}
 	    }
-      if (RealSpaceCut == true)
-	TotalTrace += DensitySum;
-
+      if (Architecture.GetArchitecture()->CanWriteOnDisk())  
+	{
+	  ofstream File;
+	  File.open(OutputFileName, ios::binary | ios::out | ios::app);
+	  File.precision(14);
+	  if (RealSpaceCut == true)
+	    TotalTrace += DensitySum;
+	  
 	  File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
+	  File.close();
 	}
-  if (RealSpaceCut == true)
+    }
+  if ((RealSpaceCut == true) && (Architecture.GetArchitecture()->CanWriteOnDisk()))
     {
+      ofstream File;
+      File.open(OutputFileName, ios::binary | ios::out | ios::app);
+      File.precision(14);
       cout <<" Total density matrix trace is equal to "<< TotalTrace<<endl;
       File << "# Total density matrix trace is equal to "<< TotalTrace<<endl;
+      File.close();
     }
-  File.close();
 }
 
