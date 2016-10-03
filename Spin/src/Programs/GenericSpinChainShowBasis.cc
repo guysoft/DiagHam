@@ -1,20 +1,23 @@
 #include "HilbertSpace/Spin1_2Chain.h"
 #include "HilbertSpace/Spin1_2ChainFull.h"
 #include "HilbertSpace/Spin1_2ChainFixedParity.h"
-#include "HilbertSpace/Spin1Chain.h"
-#include "HilbertSpace/DoubledSpin1_2_Chain.h"
 #include "HilbertSpace/Spin1_2ChainWithTranslations.h"
+
+#include "HilbertSpace/Spin1Chain.h"
 #include "HilbertSpace/Spin1ChainWithTranslations.h"
+#include "HilbertSpace/Spin1ChainWithTranslationsAndSzSymmetry.h"
+#include "HilbertSpace/Spin1ChainWithTranslationsAndInversionSymmetry.h"
+#include "HilbertSpace/Spin1ChainWithTranslationsAndSzInversionSymmetries.h"
+
+
+#include "HilbertSpace/DoubledSpin1_2_Chain.h"
 #include "HilbertSpace/Spin0_1_2_ChainWithTranslations.h"
 #include "HilbertSpace/Spin0_1_2_ChainWithTranslationsStaggered.h"
 #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsStaggered.h"
 //#include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslations.h"
-
 // #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry.h"
-
 #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry.h"
 #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers.h"
-
 #include "HilbertSpace/DoubledSpin1_2_ChainWithTranslations.h"
 #include "HilbertSpace/DoubledSpin1_2_ChainWithTranslations_alternative.h"
 
@@ -61,6 +64,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('\n', "parity", "parity of the spin chain", 0);
   (*SystemGroup) += new  BooleanOption ('\n', "periodic-chain", "consider periodic instead of open chain", false);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "max-momentum", "max momentum in the periodic case (should be a divisor of the number of sites)", -1);  
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "sz-symmetry", "set the Sz<->-Sz symmetry sector (0 if it should not be used)", 0);
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "inversion-symmetry", "set the inversion symmetry sector (0 if it should not be used)", 0);
 
   (*SystemGroup) += new  BooleanOption ('\n', "zero-half", "consider the 0 +1/2 spin chain", false);
   (*SystemGroup) += new BooleanOption  ('\n', "symmetry", "use Hilbert space with ZZ symmetry in the case of the 0+1/2 doubled chain");
@@ -492,7 +497,31 @@ int main(int argc, char** argv)
 	    Space = new Spin1_2ChainWithTranslations (NbrSpins, Momentum, 1, SzValue, 1000000, 1000000);
 	    break;
 	  case 2 :
-	    Space = new Spin1ChainWithTranslations (NbrSpins, Momentum, SzValue);
+	    {
+	      if ((Manager.GetInteger("sz-symmetry") == 0) || (SzValue != 0))
+		{
+		  if ((Manager.GetInteger("inversion-symmetry") != 0) && ((Momentum == 0) || (((NbrSpins & 1) == 0) && (Momentum == (NbrSpins / 2)))))
+		    {
+		      Space = new Spin1ChainWithTranslationsAndInversionSymmetry (NbrSpins, Momentum, Manager.GetInteger("inversion-symmetry"), SzValue);
+		    }
+		  else
+		    {
+		      Space = new Spin1ChainWithTranslations (NbrSpins, Momentum, SzValue);
+		    }
+		}
+	      else
+		{
+		  if ((Manager.GetInteger("inversion-symmetry") != 0) && ((Momentum == 0) || (((NbrSpins & 1) == 0) && (Momentum == (NbrSpins / 2)))))
+		    {
+		      Space = new Spin1ChainWithTranslationsAndSzInversionSymmetries (NbrSpins, Momentum, Manager.GetInteger("inversion-symmetry"), 
+										      Manager.GetInteger("sz-symmetry"), SzValue);
+		    }
+		  else
+		    {
+		      Space = new Spin1ChainWithTranslationsAndSzSymmetry (NbrSpins, Momentum, Manager.GetInteger("sz-symmetry"), SzValue);
+		    }
+		}
+	    }
 	    break;
 	  default :
 	    {
