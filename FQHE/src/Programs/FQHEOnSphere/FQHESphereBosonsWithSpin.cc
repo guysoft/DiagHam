@@ -17,6 +17,7 @@
 #include "Options/Options.h"
 
 #include "GeneralTools/ConfigurationParser.h"
+#include "GeneralTools/FilenameTools.h"
 
 #include <iostream>
 #include <cstring>
@@ -152,6 +153,65 @@ int main(int argc, char** argv)
       return -1;
     }
 
+  char* DiscreteSymmetryName = new char[128];
+  if (Manager.GetBoolean("szsymmetrized-basis") == false)
+    {
+      if (Manager.GetBoolean("lzsymmetrized-basis") == false)
+	{
+	  sprintf (DiscreteSymmetryName, "");
+	}
+      else
+	{
+	  if (Manager.GetBoolean("minus-lzparity") == false)
+	    {
+	      sprintf (DiscreteSymmetryName, "_lzsym_1");
+	    }
+	  else
+	    {
+	      sprintf (DiscreteSymmetryName, "_lzsym_-1");
+	    }
+	}
+    }
+  else
+    {
+      if (Manager.GetBoolean("lzsymmetrized-basis") == false)
+	{
+	  if (Manager.GetBoolean("minus-szparity") == false)
+	    {
+	      sprintf (DiscreteSymmetryName, "_szsym_1");
+	    }
+	  else
+	    {
+	      sprintf (DiscreteSymmetryName, "_szsym_-1");
+	    }
+	}
+      else
+	{
+	  if (Manager.GetBoolean("minus-szparity") == false)
+	    {
+	      if (Manager.GetBoolean("minus-lzparity") == false)
+		{
+		  sprintf (DiscreteSymmetryName, "_lzsym_1_szsym_1");
+		}
+	      else
+		{
+		  sprintf (DiscreteSymmetryName, "_lzsym_-1_szsym_1");
+		}
+	    }
+	  else
+	    {
+	      if (Manager.GetBoolean("minus-lzparity") == false)
+		{
+		  sprintf (DiscreteSymmetryName, "_lzsym_1_szsym_-1");
+		}
+	      else
+		{
+		  sprintf (DiscreteSymmetryName, "_lzsym_-1_szsym_-1");
+		}
+	    }
+	}
+    }
+
   if (Manager.GetString("interaction-file") == 0)
     {
       if (!Manager.GetBoolean("l2-s2-only"))
@@ -198,8 +258,8 @@ int main(int argc, char** argv)
 	if (Manager.GetDouble("s2-factor") != 0.0)
 	  sprintf(ExtraTerms,"_s2_%g",Manager.GetDouble("s2-factor"));
     }
-  char* OutputNameLz = new char [512 + strlen(InteractionName)];
-  sprintf (OutputNameLz, "bosons_sphere_su2_%s%s_n_%d_2s_%d_sz_%d_lz.dat", InteractionName, ExtraTerms,
+  char* OutputName = new char [512 + strlen(DiscreteSymmetryName) + strlen(InteractionName)];
+  sprintf (OutputName, "bosons_sphere_su2%s_%s%s_n_%d_2s_%d_sz_%d_lz.dat", DiscreteSymmetryName, InteractionName, ExtraTerms,
 	   NbrBosons, LzMax, SzTotal);
 
   int Max = (LzMax * (NbrUp+NbrDown));
@@ -243,7 +303,7 @@ int main(int argc, char** argv)
 	      Hamiltonian = new ParticleOnSphereWithSpinL2Hamiltonian(Space, NbrBosons, LzMax, L*LSign, 
 								      Architecture.GetArchitecture(),
 								      Manager.GetDouble("l2-factor"),
-						      ((unsigned long)Manager.GetInteger("l2-memory")) << 20);
+								      ((unsigned long)Manager.GetInteger("l2-memory")) << 20);
 	      
 	      
 	      if (Manager.GetDouble("s2-factor") != 0.0)
@@ -276,12 +336,12 @@ int main(int argc, char** argv)
       char* EigenvectorName = 0;
       if (Manager.GetBoolean("eigenstate") == true)	
 	{
-	  EigenvectorName = new char [120];
-	  sprintf (EigenvectorName, "bosons_sphere_su2_%s%s_n_%d_2s_%d_sz_%d_lz_%d",
-		   InteractionName, ExtraTerms,
-		   NbrBosons, LzMax, SzTotal, L*LSign);
+	  char* TmpName = RemoveExtensionFromFileName(OutputName, ".dat");
+	  EigenvectorName = new char [32 + strlen(TmpName)];
+	  sprintf (EigenvectorName, "%s_lz_%d", TmpName, L * LSign);
+	  delete[] TmpName;
 	}
-      QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L*LSign, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
+      QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L*LSign, Shift, OutputName, FirstRun, EigenvectorName, LzMax);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       delete Hamiltonian;
@@ -295,7 +355,7 @@ int main(int argc, char** argv)
 	FirstRun = false;
       if (HaldaneBasisFlag) return 0; // only one subspace defined...
     }
-  delete[] OutputNameLz;
+  delete[] OutputName;
   delete[] ExtraTerms;
   return 0;
 }
