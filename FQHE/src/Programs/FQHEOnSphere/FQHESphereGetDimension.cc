@@ -234,6 +234,27 @@ long Boson4DSphereEvaluateHilbertSpaceDimension(int nbrBosons, int nbrFluxQuanta
 // return value = reference on the output stream
 ostream& Boson4DSphereWriteDimension(ostream& output, int nbrParticles, int nbrFluxQuanta);
 
+// evaluate Hilbert space dimension for fermions on the CP2 geometry
+//
+// nbrFermions = number of fermions
+// currentTz = current value of Tz for a single particle
+// currentTzMax = current maiximum value of Tz that can be reached with the currentY Y value
+// currentY = current value of Y for a single particle
+// currentTotalTz = current total value of Tz
+// currentTotalY = current total value of Y
+// totalTz = required total value of Tz
+// totalTz = required total value of Y
+// minY = three times the minimum value for Y
+// return value = Hilbert space dimension
+long FermionCP2EvaluateHilbertSpaceDimension(int nbrFermions, int currentTz, int currentTzMax, int currentY, int currentTotalTz, int currentTotalY, int totalTz, int totalY, int minY);
+
+// save dimensions in a given output stream for fermions on the CP geometry
+// 
+// output = reference on the output stream
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// return value = reference on the output stream
+ostream& FermionCP2SphereWriteDimension(ostream& output, int nbrParticles, int nbrFluxQuanta);
 
 
 int main(int argc, char** argv)
@@ -256,6 +277,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "su4-spin", "consider particles with SU(4) spin");
   (*SystemGroup) += new BooleanOption  ('\n', "2-ll", "consider particles within two Landau levels");
   (*SystemGroup) += new BooleanOption  ('\n', "3-ll", "consider particles within three Landau levels");
+  (*SystemGroup) += new BooleanOption  ('\n', "cp2", "consider particles on the CP2 ");
   (*SystemGroup) += new BooleanOption  ('\n', "ground-only", "get the dimension only for the largest subspace");
   (*SystemGroup) += new BooleanOption ('\n', "use-files", "use dimension files that have been previously generated to increase speed. Files must be in current directory and obey the statistics_sphere_n_nbrparticles_q_nbrfluxquanta.dim naming convention");
   (*OutputGroup) += new BooleanOption  ('\n', "save-disk", "save output on disk");
@@ -286,7 +308,9 @@ int main(int argc, char** argv)
     }
   
   if ((Manager.GetBoolean("su4-spin") == false) && (Manager.GetBoolean("su2-spin") == false) && 
-      (Manager.GetBoolean("su3-spin") == false) && (Manager.GetBoolean("su2su2-spin") == false) && (Manager.GetBoolean("2-ll") == false) && (Manager.GetBoolean("3-ll") == false) && (Manager.GetBoolean("4-D") == false))
+      (Manager.GetBoolean("su3-spin") == false) && (Manager.GetBoolean("su2su2-spin") == false) && 
+      (Manager.GetBoolean("2-ll") == false) && (Manager.GetBoolean("3-ll") == false) && (Manager.GetBoolean("4-D") == false) &&
+      (Manager.GetBoolean("cp2") == false))
     {
       if (Manager.GetBoolean("ground-only") == true)
 	{
@@ -659,13 +683,15 @@ int main(int argc, char** argv)
 	}
       return 0;
     }
-    if (Manager.GetBoolean("4-D") == true)
+  if (Manager.GetBoolean("4-D") == true)
     {
       if (Manager.GetBoolean("boson") == false)
-     	cout << "Fermionic mode not implemented for FQHE on the 4D sphere" << endl;
+	{
+	  cout << "Fermionic mode not implemented for FQHE on the 4D sphere" << endl;
+	}
       else
-      {
-	 if (Manager.GetBoolean("save-disk") == true)
+	{
+	  if (Manager.GetBoolean("save-disk") == true)
 	    {
 	      char* OutputFileName = 0;
 	      if (Manager.GetString("output-file") == 0)
@@ -678,13 +704,57 @@ int main(int argc, char** argv)
 	      Boson4DSphereWriteDimension(File, NbrParticles, NbrFluxQuanta);
 	      File.close();
 	      delete[] OutputFileName;
-	     }
-	    else
+	    }
+	  else
 	    Boson4DSphereWriteDimension(cout, NbrParticles, NbrFluxQuanta);
-	
+	  
+	}
+      return 0;
+    }
+  if (Manager.GetBoolean("cp2") == true)
+    {
+      if (Manager.GetBoolean("boson") == false)
+	{
+	  if (Manager.GetBoolean("save-disk") == true)
+	    {
+	      char* OutputFileName = 0;
+	      if (Manager.GetString("output-file") == 0)
+		{
+		  OutputFileName = new char[256];
+		  sprintf (OutputFileName, "fermions_cp2_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
+		}
+	      ofstream File;
+	      File.open(OutputFileName, ios::binary | ios::out);
+	      FermionCP2SphereWriteDimension(File, NbrParticles, NbrFluxQuanta);
+	      File.close();
+	      delete[] OutputFileName;
+	    }
+	  else
+	    {
+	      FermionCP2SphereWriteDimension(cout, NbrParticles, NbrFluxQuanta);
 	    }
 	}
-  return 0;
+      else
+	{
+// 	  if (Manager.GetBoolean("save-disk") == true)
+// 	    {
+// 	      char* OutputFileName = 0;
+// 	      if (Manager.GetString("output-file") == 0)
+// 		{
+// 		  OutputFileName = new char[256];
+// 		  sprintf (OutputFileName, "bosons_sphere4d_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
+// 		}
+// 	      ofstream File;
+// 	      File.open(OutputFileName, ios::binary | ios::out);
+// 	      Boson4DSphereWriteDimension(File, NbrParticles, NbrFluxQuanta);
+// 	      File.close();
+// 	      delete[] OutputFileName;
+// 	    }
+// 	  else
+// 	    Boson4DSphereWriteDimension(cout, NbrParticles, NbrFluxQuanta);	  
+	}
+      return 0;
+    }
 }
 
 // evaluate Hilbert space dimension for bosons
@@ -1668,8 +1738,8 @@ long BosonSU2ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int 
 //evaluate Hilbert space dimension for bosons on the 4D sphere
 //
 //nbrBosons = number of bosons
-
 //return value = Hilbert space dimension
+
 long Boson4DSphereEvaluateHilbertSpaceDimension(int nbrBosons, int nbrFluxQuanta, int shiftedTotalJz, int shiftedTotalKz, int currentJ, int currentJz, int currentKz, int currentTotalJz, int currentTotalKz)
 {
   if (nbrBosons < 0)
@@ -1722,6 +1792,7 @@ long Boson4DSphereEvaluateHilbertSpaceDimension(int nbrBosons, int nbrFluxQuanta
 // nbrParticles = number of particles
 // nbrFluxQuanta = number of flux quanta
 // return value = reference on the output stream
+
 ostream& Boson4DSphereWriteDimension(ostream& output, int nbrParticles, int nbrFluxQuanta)
 {
   output << "# Hilbert space dimension in each Jz and Kz sector for " << nbrParticles << " bosons" << endl;
@@ -1743,3 +1814,89 @@ ostream& Boson4DSphereWriteDimension(ostream& output, int nbrParticles, int nbrF
     }
   return output;
 }	 
+
+// evaluate Hilbert space dimension for fermions on the CP2 geometry
+//
+// nbrFermions = number of fermions
+// currentTz = current value of Tz for a single particle
+// currentTzMax = current maiximum value of Tz that can be reached with the currentY Y value
+// currentY = current value of Y for a single particle
+// currentTotalTz = current total value of Tz
+// currentTotalY = current total value of Y
+// totalTz = required total value of Tz
+// totalTz = required total value of Y
+// minY = three times the minimum value for Y
+// return value = Hilbert space dimension
+
+long FermionCP2EvaluateHilbertSpaceDimension(int nbrFermions, int currentTz, int currentTzMax, int currentY, int currentTotalTz, int currentTotalY, int totalTz, int totalY, int minY)
+{
+  if (nbrFermions < 0)
+    return 0l;
+  if ((currentTotalTz + (currentTzMax * nbrFermions)) < totalTz)
+    return 0l;
+  if ((currentTotalY + (currentY * nbrFermions)) < totalY)
+    return 0l;
+  
+  if (currentTz < -currentTzMax)
+   {
+     --currentTzMax;
+     currentTz = currentTzMax;
+     currentY = currentY - 3;
+   }
+    
+  if (nbrFermions == 0)
+    {
+      if ((currentTotalTz == totalTz) && (currentTotalY == totalY))
+      {
+	return 1l;
+      }
+      else	
+	return 0l;
+    }
+
+  if (currentY < minY)
+    return 0l;
+      
+  long Count = 0;  
+  Count += FermionCP2EvaluateHilbertSpaceDimension(nbrFermions - 1, currentTz - 2, currentTzMax, currentY, currentTotalTz + currentTz, currentTotalY + currentY, totalTz, totalY, minY);
+  Count += FermionCP2EvaluateHilbertSpaceDimension(nbrFermions, currentTz - 2, currentTzMax, currentY, currentTotalTz, currentTotalY, totalTz, totalY, minY);
+  return Count;
+}
+
+// save dimensions in a given output stream for fermions on the CP geometry
+// 
+// output = reference on the output stream
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// return value = reference on the output stream
+
+ostream& FermionCP2SphereWriteDimension(ostream& output, int nbrParticles, int nbrFluxQuanta)
+{
+  output << "# Hilbert space dimension in each Jz and Kz sector for " << nbrParticles << " fermions" << endl;
+  output << "# on the C2 geometry with " << nbrFluxQuanta << " flux quanta" << endl;
+  output << "#" << endl << "#  dimensions for each subspaces with the following convention " << endl 
+	 << "# (three time the total Y value) (twice the total Tz value) (dimension of the subspace with fixed Y and Tz)" << endl;
+	 
+  int MinR = 0;
+  int MaxR = nbrFluxQuanta * nbrParticles;
+  for (int r = MinR; r <= MaxR; ++r)
+    {
+      int MinS = 0;
+      int MaxS = nbrFluxQuanta * nbrParticles - r;
+      if (MaxS > r)
+	MaxS = r;
+      for (int s = MinS; s <= MaxS ; ++s)
+	{
+	  int Tz = r - s;
+	  int Y = 3 * (r + s) - (2 * nbrParticles * nbrFluxQuanta);
+	  long TmpDimension = FermionCP2EvaluateHilbertSpaceDimension(nbrParticles, nbrFluxQuanta, nbrFluxQuanta, nbrFluxQuanta, 
+								      0, 0, Tz, Y, -2 * nbrFluxQuanta);
+	  if (TmpDimension > 0l)
+	    {
+	      output << Y << " " << Tz << " " << TmpDimension << endl;
+	    }
+	}
+    }
+  return output;
+}	 
+

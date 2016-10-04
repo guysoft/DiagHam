@@ -1065,6 +1065,7 @@ ostream& Spin1ChainWithTranslations::PrintState (ostream& Str, int state)
 	  Str << "1 ";
       TmpStateDescription >>= 2;
     }
+  Str << " (" << this->NbrStateInOrbit[state] << ")";
   return Str;
 }
 
