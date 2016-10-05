@@ -69,6 +69,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "vison", "add a vison line in both layers");
   (*SystemGroup) += new  SingleIntegerOption ('\n', "sz", "consider a specific value of sz", -1);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "k", "consider a specific value of k", -1);
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "zbra", "consider a specific value of zbra", -1);
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "sublatticezerobra","consider a specific value of DeltaNo Bra" , -1);
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "sublatticezeroket","consider a specific value of DeltaNo Ket" , -1);
+
   (*SystemGroup) += new  SingleIntegerOption ('\n', "translation-step", "", 1);
   
 #ifdef __LAPACK__
@@ -153,6 +157,14 @@ int main(int argc, char** argv)
       MaxKx = MinKx;
     }
   
+  int ZvalueBraMin = 0;
+  int ZvalueBraMax = 1;
+  if (Manager.GetInteger("zbra") != -1 )
+    {
+      ZvalueBraMin = Manager.GetInteger("zbra");
+      ZvalueBraMax = Manager.GetInteger("zbra");
+    }
+  
   int SzMin = -2*NbrSites;
   int SzMax = 2*NbrSites;
 
@@ -163,7 +175,7 @@ int main(int argc, char** argv)
       SzMin = Manager.GetInteger("sz");
       SzMax = SzMin;
     }
-  int ZvalueMax = 1;
+
   
   if (TranslationFlag == false) 
     { 
@@ -184,16 +196,32 @@ int main(int argc, char** argv)
 
   int SubLatticeZeroBraMax=NbrSites/2;
   int SubLatticeZeroKetMax=NbrSites/2;  
-  int SubLatticeZeroBra, SubLatticeZeroKet,ZvalueKet;
+  int SubLatticeZeroBraMin, SubLatticeZeroKetMin,ZvalueKet;
+
+  if (Manager.GetInteger("sublatticezerobra") != -1 )
+    {
+      SubLatticeZeroBraMax =Manager.GetInteger("sublatticezerobra");
+    }
+  
+  if (Manager.GetInteger("sublatticezerobra") != -1 )
+    {
+      SubLatticeZeroBraMax =Manager.GetInteger("sublatticezerobra");
+    }
+
+  if (Manager.GetInteger("sublatticezeroket") != -1 )
+    {
+      SubLatticeZeroKetMax =Manager.GetInteger("sublatticezeroket");
+    }
+
+
   for(int Sz = SzMin; Sz<= SzMax ;Sz+=1)
     {
       cout <<"Sz = "<<Sz<<endl;
       for (int i = MinKx; i <= MaxKx; ++i)
 	{
 	  cout <<" K = "<<i<<endl;
-
-
-	  for(int ZvalueBra = 0 ; ZvalueBra <= ZvalueMax;ZvalueBra++)
+	  
+	  for(int ZvalueBra = ZvalueBraMin ; ZvalueBra <= ZvalueBraMax;ZvalueBra++)
 	    {
 	      if (Sz %2 == 0)
 		ZvalueKet =  ZvalueBra;
@@ -203,70 +231,80 @@ int main(int argc, char** argv)
 		}
 	      
 	      if (ZvalueBra ==0)
-		SubLatticeZeroBra = 0;
+		SubLatticeZeroBraMin = 0;
 	      else
-		SubLatticeZeroBra = 1;
-	      
-	      for(; SubLatticeZeroBra<= SubLatticeZeroBraMax; SubLatticeZeroBra+=2)
+		SubLatticeZeroBraMin = 1;
+	      if (Manager.GetInteger("sublatticezerobra") != -1 )
+		{
+		  SubLatticeZeroBraMin =Manager.GetInteger("sublatticezerobra");
+		}
+
+	      for(int  SubLatticeZeroBra =  SubLatticeZeroBraMin; SubLatticeZeroBra<= SubLatticeZeroBraMax; SubLatticeZeroBra+=2)
 		{
 		  if (ZvalueKet ==0)
-			SubLatticeZeroKet = 0;
+			SubLatticeZeroKetMin = 0;
 		      else
-			SubLatticeZeroKet = 1;
-		      for( ; SubLatticeZeroKet <= SubLatticeZeroKetMax; SubLatticeZeroKet+=2)
+			SubLatticeZeroKetMin = 1;
+
+		  if (Manager.GetInteger("sublatticezeroket") != -1 )
+		    {
+		      SubLatticeZeroKetMin = Manager.GetInteger("sublatticezeroket");
+		    }
+		  
+		  for(int SubLatticeZeroKet = SubLatticeZeroKetMin ; SubLatticeZeroKet <= SubLatticeZeroKetMax; SubLatticeZeroKet+=2)
+		    {
+		      for(int SubLatticeZeroProduct = -1; SubLatticeZeroProduct<=1; SubLatticeZeroProduct+=2)
 			{
-			  for(int SubLatticeZeroProduct = -1; SubLatticeZeroProduct<=1; SubLatticeZeroProduct+=2)
+			  if  ( SubLatticeZeroBra  * SubLatticeZeroKet ==0 )
+			    SubLatticeZeroProduct = 0;
+			  if (TranslationFlag) 
 			    {
-			      if  ( SubLatticeZeroBra  * SubLatticeZeroKet ==0 )
-				SubLatticeZeroProduct = 0;
-			      if (TranslationFlag) 
+			      Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (NbrSites,i,TranslationStep ,Sz, ZvalueBra, ZvalueKet,SubLatticeZeroKet*SubLatticeZeroKet,SubLatticeZeroBra*SubLatticeZeroBra, SubLatticeZeroProduct*SubLatticeZeroKet*SubLatticeZeroBra, 100000,100000);
+			    }
+			  else
+			    Space = new  DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (NbrSites,Sz, ZvalueBra, ZvalueKet,SubLatticeZeroKet*SubLatticeZeroKet,SubLatticeZeroBra*SubLatticeZeroBra, SubLatticeZeroProduct*SubLatticeZeroKet*SubLatticeZeroBra, 100000,100000); 
+			  
+			  cout <<"Symmetry sector = "<< ZvalueBra<<" "<< ZvalueKet<<endl;
+			  cout << SubLatticeZeroBra << " " <<SubLatticeZeroKet<<" "<<SubLatticeZeroProduct<<endl;
+			  TransferMatrix->SetHilbertSpace(Space);	  
+			  
+			  char * TmpEigenstateString = new char [200] ;
+			  
+			  if (Space->GetHilbertSpaceDimension() > 0 ) 
+			    {
+			      
+			      cout <<"Hilbert Space dimension = "<<Space->GetHilbertSpaceDimension()<<endl;
+			      if (TranslationFlag)
 				{
-				  Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (NbrSites,i,TranslationStep ,Sz, ZvalueBra, ZvalueKet,SubLatticeZeroKet*SubLatticeZeroKet,SubLatticeZeroBra*SubLatticeZeroBra, SubLatticeZeroProduct*SubLatticeZeroKet*SubLatticeZeroBra, 100000,100000);
+				  sprintf(TmpSzString,"%d %d %d %d %d %d %d",Sz,i, ZvalueBra, ZvalueKet, SubLatticeZeroBra, SubLatticeZeroKet,SubLatticeZeroProduct);
+				  sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_sz_%d_k_%d_zbra_%d_zket_%d_sbra_%d_sket_%d_sprod_%d",Manager.GetString("peps-name"),NbrSites,Sz,i, ZvalueBra, ZvalueKet, SubLatticeZeroBra, SubLatticeZeroKet,SubLatticeZeroProduct);
 				}
 			      else
-				Space = new  DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (NbrSites,Sz, ZvalueBra, ZvalueKet,SubLatticeZeroKet*SubLatticeZeroKet,SubLatticeZeroBra*SubLatticeZeroBra, SubLatticeZeroProduct*SubLatticeZeroKet*SubLatticeZeroBra, 100000,100000); 
-			      
-			      cout <<"Symmetry sector = "<< ZvalueBra<<" "<< ZvalueKet<<endl;
-			      cout << SubLatticeZeroBra << " " <<SubLatticeZeroKet<<" "<<SubLatticeZeroProduct<<endl;
-			      TransferMatrix->SetHilbertSpace(Space);	  
-			      
-			      char * TmpEigenstateString = new char [200] ;
-			      
-			      if (Space->GetHilbertSpaceDimension() > 0 ) 
 				{
-				  
-				  cout <<"Hilbert Space dimension = "<<Space->GetHilbertSpaceDimension()<<endl;
-				  if (TranslationFlag)
-				    {
-				      sprintf(TmpSzString,"%d %d %d %d %d %d %d",Sz,i, ZvalueBra, ZvalueKet, SubLatticeZeroBra, SubLatticeZeroKet,SubLatticeZeroProduct);
-				      sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_sz_%d_k_%d_zbra_%d_zket_%d_sbra_%d_sket_%d_sprod_%d",Manager.GetString("peps-name"),NbrSites,Sz,i, ZvalueBra, ZvalueKet, SubLatticeZeroBra, SubLatticeZeroKet,SubLatticeZeroProduct);
-				    }
-				  else
-				    {
-				      sprintf(TmpSzString,"%d %d %d %d %d %d",Sz, ZvalueBra, ZvalueKet, SubLatticeZeroBra, SubLatticeZeroKet,SubLatticeZeroProduct);
-				      sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_sz_%d_zbra_%d_zket_%d_sbra_%d_sket_%d_sprod_%d",Manager.GetString("peps-name"),NbrSites,Sz, ZvalueBra, ZvalueKet, SubLatticeZeroBra, SubLatticeZeroKet,SubLatticeZeroProduct);
-				    }
-				  
-				  Lanczos.SetComplexAlgorithms();
-				  
-				  int NbrEigenvalues = Manager.GetInteger("nbr-eigen" );
-				  GenericNonHermitianMainTask Task (&Manager,  TransferMatrix, NbrEigenvalues, Manager.GetBoolean("eigenstate"), LeftFlag, 1e-12, TmpSzString, SubspaceLegend,0.0,FirstRunFlag, FullOutputFileName,TmpEigenstateString);
-				  FirstRunFlag = false;
-				  MainTaskOperation TaskOperation (&Task);
-				  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-				  
-				  
-				  cout << "------------------------------------" << endl;
+				  sprintf(TmpSzString,"%d %d %d %d %d %d",Sz, ZvalueBra, ZvalueKet, SubLatticeZeroBra, SubLatticeZeroKet,SubLatticeZeroProduct);
+				  sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_sz_%d_zbra_%d_zket_%d_sbra_%d_sket_%d_sprod_%d",Manager.GetString("peps-name"),NbrSites,Sz, ZvalueBra, ZvalueKet, SubLatticeZeroBra, SubLatticeZeroKet,SubLatticeZeroProduct);
 				}
-			      delete Space;
-			      delete [] TmpEigenstateString;
+			      
+			      Lanczos.SetComplexAlgorithms();
+			      
+			      int NbrEigenvalues = Manager.GetInteger("nbr-eigen" );
+			      GenericNonHermitianMainTask Task (&Manager,  TransferMatrix, NbrEigenvalues, Manager.GetBoolean("eigenstate"), LeftFlag, 1e-12, TmpSzString, SubspaceLegend,0.0,FirstRunFlag, FullOutputFileName,TmpEigenstateString);
+			      FirstRunFlag = false;
+			      MainTaskOperation TaskOperation (&Task);
+			      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+			      
+			      
+			      cout << "------------------------------------" << endl;
 			    }
+			  delete Space;
+			  delete [] TmpEigenstateString;
 			}
 		    }
+		}
 	    }
 	}
     }
-
+  
   delete TransferMatrix;
   delete []  TmpSzString;
   delete [] SubspaceLegend;
