@@ -434,6 +434,18 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
   virtual RealMatrix EvaluatePartialEntanglementMatrixParticlePartition (int nbrParticleSector, int lzSector, int szSector, RealVector& groundState, bool removeBinomialCoefficient = false);
    
+  // core part of the entanglement matrix evaluation for the particle partition
+  // 
+  // minIndex = first index to consider in the complementary Hilbert space
+  // nbrIndex = number of indices to consider in the complementary Hilbert space
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+  // destinationHilbertSpace = pointer to the destination Hilbert space  (i.e. part A)
+  // groundState = reference on the total system ground state
+  // entanglementMatrix = pointer to entanglement matrix
+  // removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+  // return value = number of components that have been added to the entanglement matrix
+  virtual long EvaluatePartialEntanglementMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace, RealVector& groundState, RealMatrix* entanglementMatrix, bool removeBinomialCoefficient = false);
+   
   // evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using a generic real space partition. 
   // The entanglement matrix is only evaluated in a given Lz sector and computed from precalculated particle entanglement matrix
   // 

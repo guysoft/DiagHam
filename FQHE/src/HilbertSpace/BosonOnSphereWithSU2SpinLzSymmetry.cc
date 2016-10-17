@@ -154,7 +154,7 @@ BosonOnSphereWithSU2SpinLzSymmetry::BosonOnSphereWithSU2SpinLzSymmetry (int nbrB
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
   this->TotalLz = 0;
-  this->TotalSpin = 0;
+  this->TotalSpin = totalSpin;
   this->SzParitySign = 1.0;
   if (minusLzParity == false)
     this->LzParitySign = 1.0;

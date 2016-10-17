@@ -1,7 +1,8 @@
 #include "HilbertSpace/BosonOnS2xS2.h"
 #include "HilbertSpace/BosonOnS2xS2HardcoreNoNearestNeighbors.h"
 
-#include "Hamiltonian/ParticleOnS2xS2DeltaHamiltonian.h"
+#include "Hamiltonian/ParticleOnCylinderxCylinderDeltaHamiltonian.h"
+#include "Hamiltonian/ParticleOnCylinderxCylinderDeltaTruncatedHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -35,7 +36,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("FQHES2xS2BosonsDelta" , "0.01");
+  OptionManager Manager ("FQHECylinderxCylinderBosonsDelta" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
@@ -53,10 +54,16 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
   (*SystemGroup) += new SingleIntegerOption  ('l', "nbr-flux1", "number of flux quanta for the first sphere", 0);
   (*SystemGroup) += new SingleIntegerOption  ('k', "nbr-flux2", "number of flux quanta for the second sphere", 0);
+  (*SystemGroup) += new SingleDoubleOption  ('r', "aspect-ratio1", "aspect ratio of the first cylinder", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "cylinder-perimeter1", "if non zero, fix the first cylinder perimeter (in magnetic length unit) instead of the aspect ratio", 0);
+  (*SystemGroup) += new SingleDoubleOption  ('r', "aspect-ratio2", "aspect ratio of the second cylinder", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "cylinder-perimeter2", "if non zero, fix the second cylinder perimeter (in magnetic length unit) instead of the aspect ratio", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "inital value for the z projection of the first sphere angular momentum (Lz)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-kz", "inital value for the projection of the first sphere angular momentum (Kz)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of Lz sectors to compute (0 if all possible sectors have to be computed)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-kz", "number of Kz sectors to compute (0 if all possible sectors have to be computed)", 0);
+  (*SystemGroup) += new  BooleanOption ('\n', "use-exclusion", "forbid any configuration with orbital multiple occupancy");
+  
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
@@ -68,7 +75,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHES2xS2BosonsDelta -h" << endl;
+      cout << "see man page for option syntax or type FQHECylinderxCylinderBosonsDelta -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -81,12 +88,33 @@ int main(int argc, char** argv)
   int NbrBosons = Manager.GetInteger("nbr-particles");
   int NbrFluxQuanta1 = Manager.GetInteger("nbr-flux1");
   int NbrFluxQuanta2 = Manager.GetInteger("nbr-flux2");
+  double Ratio1 = Manager.GetDouble("aspect-ratio1");
+  double Perimeter1 = Manager.GetDouble("cylinder-perimeter1");
+  if (Perimeter1 != 0.0)
+    {
+      Ratio1 = 2.0 * M_PI * (NbrFluxQuanta1 + 1) / (Perimeter1 * Perimeter1);
+    }
+  double Ratio2 = Manager.GetDouble("aspect-ratio2");
+  double Perimeter2 = Manager.GetDouble("cylinder-perimeter2");
+  if (Perimeter2 != 0.0)
+    {
+      Ratio2 = 2.0 * M_PI * (NbrFluxQuanta2 + 1) / (Perimeter2 * Perimeter2);
+    }
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   
   bool FirstRun = true;
 
-  char* OutputName = new char [256];
-  sprintf (OutputName, "bosons_s2xs2_delta_n_%d_2s1_%d_2s2_%d.dat", NbrBosons, NbrFluxQuanta1, NbrFluxQuanta2);
+  char* GeometryName = new char[256];
+  if (Perimeter1 > 0.0)	
+    {
+      sprintf (GeometryName, "cylinder_perimeter1_%.6f_perimeter2_%.6f", Perimeter1, Perimeter2);
+    }
+  else
+    {
+      sprintf (GeometryName, "cylinder_ratio1_%.6f_ratio2_%.6f", Ratio1, Ratio2);
+    }
+  char* OutputName = new char [256 + strlen(GeometryName)];
+  sprintf (OutputName, "bosons_%s_delta_n_%d_2s1_%d_2s2_%d.dat", GeometryName, NbrBosons, NbrFluxQuanta1, NbrFluxQuanta2);
 
   int MaxTotalLz = NbrFluxQuanta1 * NbrBosons;
   int MaxTotalKz = NbrFluxQuanta2 * NbrBosons;
@@ -114,8 +142,15 @@ int main(int argc, char** argv)
       for (int TotalKz = MinTotalKz; TotalKz <= MaxTotalKz; TotalKz += 2)
 	{
 	  ParticleOnSphere* Space = 0;
-	  Space = new BosonOnS2xS2(NbrBosons, NbrFluxQuanta1, NbrFluxQuanta2, TotalLz, TotalKz);
-
+	  if (Manager.GetBoolean("use-exclusion") == false)
+	    {
+	      Space = new BosonOnS2xS2(NbrBosons, NbrFluxQuanta1, NbrFluxQuanta2, TotalLz, TotalKz);
+	    }
+	  else
+	    {
+	      Space = new BosonOnS2xS2HardcoreNoNearestNeighbors(NbrBosons, NbrFluxQuanta1, NbrFluxQuanta2, TotalLz, TotalKz);
+	    }
+     
 	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 	  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	    Memory = Architecture.GetArchitecture()->GetLocalMemory();
@@ -123,7 +158,17 @@ int main(int argc, char** argv)
 	  // 	Space->PrintState(cout, i);
 	  
 	  AbstractQHEHamiltonian* Hamiltonian = 0;
-	  Hamiltonian = new ParticleOnS2xS2DeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta1, NbrFluxQuanta2, Architecture.GetArchitecture(), Memory);
+	  if (Manager.GetBoolean("use-exclusion") == false)
+	    {
+	      Hamiltonian = new ParticleOnCylinderxCylinderDeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta1, NbrFluxQuanta2, Ratio1, Ratio2,
+									    Architecture.GetArchitecture(), Memory);
+	    }
+	  else
+	    {
+	      Hamiltonian = new ParticleOnCylinderxCylinderDeltaTruncatedHamiltonian(Space, NbrBosons, NbrFluxQuanta1, NbrFluxQuanta2, Ratio1, Ratio2,
+										     Architecture.GetArchitecture(), Memory);
+	    }
+
       
 	  char* EigenvectorName = 0;
 	  if (Manager.GetBoolean("eigenstate") == true)	

@@ -32,6 +32,8 @@
 #include "HilbertSpace/BosonOnCP2TzZ3Symmetry.h"
 #include "HilbertSpace/FermionOnCP2.h"
 #include "HilbertSpace/FermionOnCP2Long.h"
+#include "HilbertSpace/FermionOnS2xS2.h"
+#include "HilbertSpace/BosonOnS2xS2.h"
 #include "HilbertSpace/QuasiholeOnSphereWithSpinAndPairing.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
@@ -67,6 +69,7 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
   (*SystemGroup) += new SingleIntegerOption  ('l', "nbr-flux", "number of flux quanta", 20);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrflux-2", "number of flux quanta for the second sphere on the S2XS2 geometry", 20);
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the total lz value", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "jz-value", "twice the total value of jz (only useful in the bosonic 4D mode)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "kz-value", "twice the total value of kz (only useful in the bosonic 4D mode)", 0);
@@ -79,6 +82,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "use-alt", "use alternative Hilbert space for the SU(2) spinful bosonic states");
   (*SystemGroup) += new BooleanOption  ('\n', "4-D", "consider particles on the 4D sphere (only available in the bosonic mode)");
   (*SystemGroup) += new BooleanOption  ('\n', "cp2", "consider particles on the CP2 ");
+  (*SystemGroup) += new BooleanOption  ('\n', "s2xs2", "consider particles on the S2xS2 geometry");
   (*SystemGroup) += new BooleanOption  ('\n', "truncated-cp2", "consider particles on a truncated CP2 geometry");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-y", "minimum value of y for a truncated CP2 geometry", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "tzZ3symmetrized-basis", "use Tz <-> -Tz and Z3 permutations symmetrized version of the CP2 basis (only valid if total-tz=0 and total-y = 0)");
@@ -129,6 +133,7 @@ int main(int argc, char** argv)
 
   int NbrParticles = Manager.GetInteger("nbr-particles"); 
   int NbrFluxQuanta = Manager.GetInteger("nbr-flux"); 
+  int NbrFluxQuanta2 = Manager.GetInteger("nbrflux-2"); 
   int TotalLz = Manager.GetInteger("lz-value");
   int TotalTz = Manager.GetInteger("total-tz");
   int TotalY = Manager.GetInteger("total-y");
@@ -151,6 +156,7 @@ int main(int argc, char** argv)
   bool ComplexFlag = Manager.GetBoolean("complex-vector");
   bool FourDFlag = Manager.GetBoolean("4-D");
   bool CP2Flag = Manager.GetBoolean("cp2");
+  bool S2xS2Flag = Manager.GetBoolean("s2xs2");
   bool TruncatedCP2Flag = Manager.GetBoolean("truncated-cp2");
   int MinY = Manager.GetInteger("min-y");
   bool SymFlagTzZ3 = Manager.GetBoolean("tzZ3symmetrized-basis");
@@ -164,74 +170,72 @@ int main(int argc, char** argv)
   if (FourDFlag == true)
     NbrOrbitals = (NbrFluxQuanta + 1)*(NbrFluxQuanta + 2)*(NbrFluxQuanta + 3) / 6;
   if (CP2Flag == true)
-  {
-    NbrOrbitals = (NbrFluxQuanta + 1)*(NbrFluxQuanta + 2) / 2;
-    if (TruncatedCP2Flag == false)      
-      MinY = -2*NbrFluxQuanta;
-    else
-      NbrOrbitals -= (2*NbrFluxQuanta + MinY) * (2*NbrFluxQuanta + MinY + 3) / 18;
-  }
+    {
+      NbrOrbitals = (NbrFluxQuanta + 1)*(NbrFluxQuanta + 2) / 2;
+      if (TruncatedCP2Flag == false)      
+	MinY = -2*NbrFluxQuanta;
+      else
+	NbrOrbitals -= (2*NbrFluxQuanta + MinY) * (2*NbrFluxQuanta + MinY + 3) / 18;
+    }
   
-  {
-    int TmpL=0;
-    int *TmpIs=Manager.GetIntegers("pauli",TmpL);
-    if (TmpL>0)
-      {
-	if (TmpL!=2)
-	  {
-	    cout << "--pauli takes two arguments k,r describing the exclusion statistics"<<endl;
-	    exit(1);
-	  }
-	PauliK=TmpIs[0];
-	PauliR=TmpIs[1];
-	cout << "applying ("<<PauliK<<", "<<PauliR<<") exclusion statistics"<<endl;
-      }
-  }
+  int TmpL=0;
+  int *TmpIs=Manager.GetIntegers("pauli",TmpL);
+  if (TmpL>0)
+    {
+      if (TmpL!=2)
+	{
+	  cout << "--pauli takes two arguments k,r describing the exclusion statistics"<<endl;
+	  exit(1);
+	}
+      PauliK=TmpIs[0];
+      PauliR=TmpIs[1];
+      cout << "applying ("<<PauliK<<", "<<PauliR<<") exclusion statistics"<<endl;
+    }
   
   if (FourDFlag == true)
-  {
-    if (Manager.GetBoolean("boson") == false)
-      cout << "Warning : --4-D option only implemented in bosonic mode" << endl;
-    
-    if (- (NbrFluxQuanta*(NbrFluxQuanta+1)*(2*NbrFluxQuanta+1))/6 + NbrFluxQuanta*(NbrFluxQuanta*(NbrFluxQuanta+1))/2 + (NbrFluxQuanta + 1)*(NbrFluxQuanta + 1) + NbrParticles > 129)
     {
-      cout << "number of fermionic orbitals is too big to allow the storage of one state in one long integer" << endl;
-      return -1; 
-    } 
-    if (((NbrParticles * NbrFluxQuanta) & 1) != ((TotalJz + TotalKz) & 1)) 
-      {
-        cout << "incompatible values for the number of particles, the number of flux quanta and twice the total jz and kz value (nbr-particles * nbr-flux and jz + kz should have the same parity)" << endl;
-        return -1;
-      }
-  }
-  
-  if (CP2Flag == true)
-  {
-    if (Manager.GetBoolean("boson") == true)
-    {
-      if ((NbrFluxQuanta + 1)*(NbrFluxQuanta + 2)/2 + NbrParticles > 64)
+      if (Manager.GetBoolean("boson") == false)
+	cout << "Warning : --4-D option only implemented in bosonic mode" << endl;
+      
+      if (- (NbrFluxQuanta*(NbrFluxQuanta+1)*(2*NbrFluxQuanta+1))/6 + NbrFluxQuanta*(NbrFluxQuanta*(NbrFluxQuanta+1))/2 + (NbrFluxQuanta + 1)*(NbrFluxQuanta + 1) + NbrParticles > 129)
 	{
-	  cout  << "number of fermionic orbitals is too big to allow the storage of one state in one long integer" << endl;
+	  cout << "number of fermionic orbitals is too big to allow the storage of one state in one long integer" << endl;
+	  return -1; 
+	} 
+      if (((NbrParticles * NbrFluxQuanta) & 1) != ((TotalJz + TotalKz) & 1)) 
+	{
+	  cout << "incompatible values for the number of particles, the number of flux quanta and twice the total jz and kz value (nbr-particles * nbr-flux and jz + kz should have the same parity)" << endl;
 	  return -1;
 	}
     }
-    else
-      if ((NbrFluxQuanta + 1)*(NbrFluxQuanta + 2)/2 > 128)
+  
+  if (CP2Flag == true)
+    {
+      if (Manager.GetBoolean("boson") == true)
 	{
-	  cout  << "number of fermionic orbitals is too big to allow the storage of one state in one long integer" << endl;
+	  if ((NbrFluxQuanta + 1)*(NbrFluxQuanta + 2)/2 + NbrParticles > 64)
+	    {
+	      cout  << "number of fermionic orbitals is too big to allow the storage of one state in one long integer" << endl;
+	      return -1;
+	    }
+	}
+      else
+	if ((NbrFluxQuanta + 1)*(NbrFluxQuanta + 2)/2 > 128)
+	  {
+	    cout  << "number of fermionic orbitals is too big to allow the storage of one state in one long integer" << endl;
+	    return -1;
+	  }
+      if ((YValue + 3*TzValue + 2*NbrParticles*NbrFluxQuanta) % 6 != 0)
+	{
+	  cout << "Y + 3Tz + 2N*Nphi should  be a multiple of 6" << endl;
 	  return -1;
 	}
-   if ((YValue + 3*TzValue + 2*NbrParticles*NbrFluxQuanta) % 6 != 0)
-   {
-      cout << "Y + 3Tz + 2N*Nphi should  be a multiple of 6" << endl;
-      return -1;
-   }
-   if ((YValue - 3*TzValue + 2*NbrParticles*NbrFluxQuanta) % 6 != 0)
-   {
-      cout << "Y - 3Tz + 2N*Nphi should  be a multiple of 6" << endl;
-      return -1;
-   }
-  }
+      if ((YValue - 3*TzValue + 2*NbrParticles*NbrFluxQuanta) % 6 != 0)
+	{
+	  cout << "Y - 3Tz + 2N*Nphi should  be a multiple of 6" << endl;
+	  return -1;
+	}
+    }
   
   if ((AllLzFlag == false) && (FourDFlag == false) && (CP2Flag == false))
     if (((NbrParticles * NbrFluxQuanta) & 1) != (TotalLz & 1)) 
@@ -239,7 +243,7 @@ int main(int argc, char** argv)
         cout << "incompatible values for the number of particles, the number of flux quanta and twice the total lz value (nbr-particles * nbr-flux and lz-value should have the same parity)" << endl;
         return -1;
       }
-
+  
       
   ParticleOnSphere* Space = 0;
   if (Manager.GetBoolean("boson") == true)
@@ -251,16 +255,23 @@ int main(int argc, char** argv)
 	      if (HaldaneBasisFlag == false)
 		{
 		  if (FourDFlag == false)
-		  {
-		    if (CP2Flag == false)
 		    {
-		      Space = new BosonOnSphereShort(NbrParticles, TotalLz, NbrFluxQuanta);
-		    }
-		    else
-		      if (SymFlagTzZ3 == false)
-			Space = new BosonOnCP2(NbrParticles, NbrFluxQuanta, TzValue, YValue);
+		      if (CP2Flag == false)
+			{
+			  if (S2xS2Flag == false)
+			    {
+			      Space = new BosonOnSphereShort(NbrParticles, TotalLz, NbrFluxQuanta);
+			    }
+			  else
+			    {
+			      Space = new BosonOnS2xS2(NbrParticles, NbrFluxQuanta, NbrFluxQuanta2, TotalLz, TotalKz);
+			    }
+			}
 		      else
-			Space = new BosonOnCP2TzZ3Symmetry(NbrParticles, NbrFluxQuanta, TzValue, YValue, TzMinusParity);
+			if (SymFlagTzZ3 == false)
+			  Space = new BosonOnCP2(NbrParticles, NbrFluxQuanta, TzValue, YValue);
+			else
+			  Space = new BosonOnCP2TzZ3Symmetry(NbrParticles, NbrFluxQuanta, TzValue, YValue, TzMinusParity);
 		    }
 		  else
 		  {
@@ -342,7 +353,7 @@ int main(int argc, char** argv)
     }
   else
     {
-      if ((SU2SpinFlag == false) && (SU3SpinFlag == false) && (SU4SpinFlag == false) && (AllSzFlag == false) && (TwoLLFlag == false) && (ThreeLLFlag == false) && (FourLLFlag == false) && (CP2Flag == false))
+      if ((SU2SpinFlag == false) && (SU3SpinFlag == false) && (SU4SpinFlag == false) && (AllSzFlag == false) && (TwoLLFlag == false) && (ThreeLLFlag == false) && (FourLLFlag == false) && (CP2Flag == false) && (S2xS2Flag == false))
 	{
 	  if (HaldaneBasisFlag == false)
 	    {
@@ -474,19 +485,25 @@ int main(int argc, char** argv)
 		    if (FourLLFlag == true)
 		      Space = new FermionOnSphereFourLandauLevels(NbrParticles, TotalLz, NbrFluxQuanta);
 		    else
-		      if (CP2Flag == true)
 		      {
-			if (TruncatedCP2Flag == false)
-			{
-			  if (NbrOrbitals < 64)
-			    Space = new FermionOnCP2(NbrParticles, NbrFluxQuanta, TzValue, YValue);
-			  else
-			    Space = new FermionOnCP2Long(NbrParticles, NbrFluxQuanta, TzValue, YValue);
-			}
-			else
-			{
-			  Space = new FermionOnCP2(NbrParticles, NbrFluxQuanta, MinY, TzValue, YValue);
-			}
+			if (CP2Flag == true)
+			  {
+			    if (TruncatedCP2Flag == false)
+			      {
+				if (NbrOrbitals < 64)
+				  Space = new FermionOnCP2(NbrParticles, NbrFluxQuanta, TzValue, YValue);
+				else
+				  Space = new FermionOnCP2Long(NbrParticles, NbrFluxQuanta, TzValue, YValue);
+			      }
+			    else
+			      {
+				Space = new FermionOnCP2(NbrParticles, NbrFluxQuanta, MinY, TzValue, YValue);
+			      }
+			  }
+			if (S2xS2Flag == true)
+			  {
+			    Space = new FermionOnS2xS2(NbrParticles, NbrFluxQuanta, NbrFluxQuanta2, TotalLz, TotalKz);
+			  }
 		      }
     }
   
