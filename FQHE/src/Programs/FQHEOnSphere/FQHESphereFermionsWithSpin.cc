@@ -332,6 +332,11 @@ int main(int argc, char** argv)
       else
 	L &= ~0x1;
     }
+  else
+   { 
+     L = InitialLz;
+     cout << "Negative Lz " << InitialLz;
+   }
   if (NbrLz > 0)
     {
       if (L + (2 * (NbrLz - 1)) < Max)

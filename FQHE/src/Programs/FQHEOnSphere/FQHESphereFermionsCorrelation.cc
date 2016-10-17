@@ -79,7 +79,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "landau-level", "index of the Landau level (0 being the LLL)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "landau-level", "index of the Landau level (n=0 being the LLL). WARNING: if using this option, l+1 should be the total number of orbitals that defines your input state (i.e., the flux Q will be determined from l=2Q+2n)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
   (*SystemGroup) += new BooleanOption  ('\n', "p-truncated", "use a p-truncated basis instead of the full squeezed basis");
   (*SystemGroup) += new SingleIntegerOption ('\n', "p-truncation", "p-truncation for the p-truncated basis (if --p-truncated is used)", 0);
@@ -558,12 +558,13 @@ int main(int argc, char** argv)
      } 
    }
 
+  int TwoQ = LzMax - 2 * LandauLevel;
 
   AbstractFunctionBasis* Basis;
   if (LandauLevel == 0)
-    Basis = new ParticleOnSphereFunctionBasis(LzMax);
+    Basis = new ParticleOnSphereFunctionBasis(TwoQ);
   else
-    Basis = new ParticleOnSphereGenericLLFunctionBasis(LzMax - (2 * LandauLevel), LandauLevel);
+    Basis = new ParticleOnSphereGenericLLFunctionBasis(TwoQ, LandauLevel);
 
   Complex Sum (0.0, 0.0);
   Complex Sum2 (0.0, 0.0);
@@ -572,6 +573,8 @@ int main(int argc, char** argv)
   double X = 0.0;
   double XInc = M_PI / ((double) NbrPoints);
 
+
+  Complex* PrecalculatedMatrixElements = new Complex [LzMax + 1];
   Complex* PrecalculatedValues = new Complex [LzMax + 1];
   RealVector State;
   if (State.ReadVectorTest(Manager.GetString("eigenstate")) == true)
@@ -590,14 +593,16 @@ int main(int argc, char** argv)
       if (DensityFlag == false)
 	for (int i = 0; i <= LzMax; ++i)
 	  {
-	    Basis->GetFunctionValue(Value, TmpValue, LzMax);
-	    ParticleOnSphereDensityDensityOperator Operator (Space, i, LzMax, i, LzMax);
+	    Basis->GetFunctionValue(Value, TmpValue, LzMax - LandauLevel);
+	    ParticleOnSphereDensityDensityOperator Operator (Space, i, LzMax - LandauLevel, i, LzMax - LandauLevel);
+	    PrecalculatedMatrixElements[i] = Operator.MatrixElement(State, State);
 	    PrecalculatedValues[i] = Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
 	  }
       else
 	for (int i = 0; i <= LzMax; ++i)
 	  {
 	    ParticleOnSphereDensityOperator Operator (Space, i);
+	    PrecalculatedMatrixElements[i] = Operator.MatrixElement(State, State);
 	    PrecalculatedValues[i] = Operator.MatrixElement(State, State);
 	  }
     }
@@ -617,14 +622,16 @@ int main(int argc, char** argv)
       if (DensityFlag == false)
 	for (int i = 0; i <= LzMax; ++i)
 	  {
-	    Basis->GetFunctionValue(Value, TmpValue, LzMax);
-	    ParticleOnSphereDensityDensityOperator Operator (Space, i, LzMax, i, LzMax);
+	    Basis->GetFunctionValue(Value, TmpValue, LzMax - LandauLevel);
+	    ParticleOnSphereDensityDensityOperator Operator (Space, i, LzMax - LandauLevel, i, LzMax - LandauLevel);
+	    PrecalculatedMatrixElements[i] = Operator.MatrixElement(ComplexState, ComplexState);
 	    PrecalculatedValues[i] = Operator.MatrixElement(ComplexState, ComplexState) * TmpValue * Conj(TmpValue);
 	  }
       else
 	for (int i = 0; i <= LzMax; ++i)
 	  {
 	    ParticleOnSphereDensityOperator Operator (Space, i);
+	    PrecalculatedMatrixElements[i] = Operator.MatrixElement(ComplexState, ComplexState);
 	    PrecalculatedValues[i] = Operator.MatrixElement(ComplexState, ComplexState);
 	  }
     }
@@ -663,12 +670,12 @@ int main(int argc, char** argv)
   if (CoefficientOnlyFlag == false)
     {
       for (int i = 0; i <= LzMax; ++i)
-	File << "# " << i << " " << PrecalculatedValues[i].Re<< endl;
+	File << "# " << i << " " << PrecalculatedMatrixElements[i].Re<< endl;
     }
   else
     {
       for (int i = 0; i <= LzMax; ++i)
-	File << i << " " << PrecalculatedValues[i].Re<< endl;
+	File << i << " " << PrecalculatedMatrixElements[i].Re<< endl;
     }
   if (CoefficientOnlyFlag == false)
     {
@@ -679,7 +686,7 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("radians") == true)
 	Factor2 = 1.0;
       else
-	Factor2 = sqrt (0.5 * LzMax);
+	Factor2 = sqrt (0.5 * TwoQ);
       for (int x = 0; x < NbrPoints; ++x)
 	{
 	  Value[0] = X;
@@ -699,6 +706,7 @@ int main(int argc, char** argv)
   File.close();
  
   delete[] PrecalculatedValues;
+  delete[] PrecalculatedMatrixElements;
 
   return 0;
 }

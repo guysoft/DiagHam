@@ -5,6 +5,7 @@
 #include "Operator/ParticleOnSphereWithSpinDensityDensityOperator.h"
 #include "Operator/ParticleOnSphereWithSpinDensityOperator.h"
 #include "FunctionBasis/ParticleOnSphereFunctionBasis.h"
+#include "FunctionBasis/ParticleOnSphereGenericLLFunctionBasis.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -55,10 +56,14 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the lz value corresponding to the eigenvector (override autodetection from input file name if greater or equal to zero)", 0, true, 0);
+ (*SystemGroup) += new SingleIntegerOption  ('\n', "landau-level", "index of the Landau level (n=0 being the LLL). WARNING: if using this option, l+1 should be the total number of orbitals that defines your input state (i.e., the flux Q will be determined from l=2Q+2n)", 0);
   (*SystemGroup) += new SingleStringOption  ('e', "eigenstate", "name of the file containing the eigenstate");
   (*SystemGroup) += new SingleStringOption  ('i', "interaction-name", "name of the interaction (used for output file name)", "sphere_spin");
   (*SystemGroup) += new SingleStringOption ('a', "add-filename", "add a string with additional informations to the output file name(just before the .dat extension)");
   (*SystemGroup) += new BooleanOption  ('\n', "coefficients-only", "only compute the one or two body coefficients that are requested to evaluate the density-density correlation", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "use-twoLLs", "use two Landau levels instead of two spin species. WARNING: the Hilbert space will be the same for both", false);
+ (*SystemGroup) += new SingleIntegerOption  ('\n', "first-LLindex", "index of first Landau level (if two Landau levels are used)", 0);
+ (*SystemGroup) += new SingleIntegerOption  ('\n', "second-LLindex", "index of second Landau level (if two Landau levels are used)", 0);
   (*SystemGroup) += new BooleanOption  ('b', "bilayer", "adjust normalization as a bilayer correlation function");
   (*SystemGroup) += new BooleanOption  ('\n', "shift", "calculate 'shift' as defined for bilayer states");
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
@@ -82,10 +87,12 @@ int main(int argc, char** argv)
 
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
+  int LandauLevel = Manager.GetInteger("landau-level");
   int TotalLz = ((SingleIntegerOption*) Manager["total-lz"])->GetInteger();
   int SzTotal = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
   int NbrPoints = ((SingleIntegerOption*) Manager["nbr-points"])->GetInteger();
   bool DensityFlag = Manager.GetBoolean("density");
+  bool TwoLLsFlag = Manager.GetBoolean("use-twoLLs");
   bool Statistics = true;
 
   if (Manager.GetString("eigenstate") == 0)
@@ -100,7 +107,10 @@ int main(int argc, char** argv)
 	cout << "error while retrieving system informations from file name " << Manager.GetString("eigenstate") << endl;
 	return -1;
       }
-  cout << NbrParticles << " " << TotalLz << " " << SzTotal << " " << endl;
+  cout << "N= " << NbrParticles << " Lz= " << TotalLz << " Sz= " << SzTotal << " " << endl;
+  cout << "Landau level= " << LandauLevel << endl;
+  if (LandauLevel > 0)
+    cout << "Warning: it will be assumed that l=2Q+2n" << endl;
 
   RealVector State;
   if (State.ReadVector (Manager.GetString("eigenstate")) == false)
@@ -146,7 +156,16 @@ int main(int argc, char** argv)
 
   cout << "dim = " << Space->GetHilbertSpaceDimension() << endl;
 
-  ParticleOnSphereFunctionBasis Basis(LzMax);
+  if (TwoLLsFlag == false)
+   {
+     int TwoQ = LzMax - 2*LandauLevel;
+
+     AbstractFunctionBasis* Basis;
+     if (LandauLevel == 0)
+       Basis = new ParticleOnSphereFunctionBasis(TwoQ);
+     else
+       Basis = new ParticleOnSphereGenericLLFunctionBasis(TwoQ, LandauLevel);
+
 
   Complex* Sum = new Complex [3];
   Complex Sum2 (0.0, 0.0);
@@ -154,9 +173,14 @@ int main(int argc, char** argv)
   RealVector Value(2, true);
   double X = 0.0;
   double XInc = M_PI / ((double) NbrPoints);
+
   Complex** PrecalculatedValues = new Complex* [3];
   for (int i = 0; i < 3; ++i)
     PrecalculatedValues[i] = new Complex [LzMax + 1];
+
+  Complex** PrecalculatedMatrixElements = new Complex* [3];
+  for (int i = 0; i < 3; ++i)
+    PrecalculatedMatrixElements[i] = new Complex [LzMax + 1];
    
   if (DensityFlag == true)
     {
@@ -164,30 +188,35 @@ int main(int argc, char** argv)
 	{
 	  ParticleOnSphereWithSpinDensityOperator Operator (Space, i, 0, i, 0);
 	  PrecalculatedValues[0][i] =   Operator.MatrixElement(State, State);
+          PrecalculatedMatrixElements[0][i] =   Operator.MatrixElement(State, State);
 	}
       for (int i = 0; i <= LzMax; ++i)
 	{
 	  ParticleOnSphereWithSpinDensityOperator Operator (Space, i, 1, i, 1);
 	  PrecalculatedValues[1][i] =   Operator.MatrixElement(State, State);
+	  PrecalculatedMatrixElements[1][i] =   Operator.MatrixElement(State, State);
 	}
     }
   else
     {
-      Basis.GetFunctionValue(Value, TmpValue, LzMax);
+      Basis->GetFunctionValue(Value, TmpValue, LzMax - LandauLevel);
       for (int i = 0; i <= LzMax; ++i)
 	{
-	  ParticleOnSphereWithSpinDensityDensityOperator Operator (Space, i, 0, LzMax, 0, i, 0, LzMax, 0);
+	  ParticleOnSphereWithSpinDensityDensityOperator Operator (Space, i, 0, LzMax - LandauLevel, 0, i, 0, LzMax - LandauLevel, 0);
 	  PrecalculatedValues[0][i] =   Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+	  PrecalculatedMatrixElements[0][i] =   Operator.MatrixElement(State, State);
 	}
       for (int i = 0; i <= LzMax; ++i)
 	{
-	  ParticleOnSphereWithSpinDensityDensityOperator Operator (Space, i, 1, LzMax, 1, i, 1, LzMax, 1);
+	  ParticleOnSphereWithSpinDensityDensityOperator Operator (Space, i, 1, LzMax - LandauLevel, 1, i, 1, LzMax - LandauLevel, 1);
 	  PrecalculatedValues[2][i] =  Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+	  PrecalculatedMatrixElements[2][i] =  Operator.MatrixElement(State, State);
 	}
       for (int i = 0; i <= LzMax; ++i)
 	{
-	  ParticleOnSphereWithSpinDensityDensityOperator Operator1 (Space, i, 0, LzMax, 1, i, 0, LzMax, 1);
+	  ParticleOnSphereWithSpinDensityDensityOperator Operator1 (Space, i, 0, LzMax - LandauLevel, 1, i, 0, LzMax - LandauLevel, 1);
 	  PrecalculatedValues[1][i] =  Operator1.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+	  PrecalculatedMatrixElements[1][i] =  Operator1.MatrixElement(State, State);
 	}
     }
 
@@ -218,7 +247,7 @@ int main(int argc, char** argv)
       delete[] TmpFileName;
     }
   
-  double Factor2 = sqrt (0.5 * LzMax );
+  double Factor2 = sqrt (0.5 * TwoQ);
   if (((BooleanOption*) Manager["radians"])->GetBoolean() == true) 
     Factor2 = 1.0;
   if (DensityFlag == true)
@@ -232,7 +261,7 @@ int main(int argc, char** argv)
 	  File << "# " << i;
 	  for (int j = 0; j < 2; ++j)
 	    {
-	      File << " " << PrecalculatedValues[j][i].Re;
+	      File << " " << PrecalculatedMatrixElements[j][i].Re;
 	      Sum2 += PrecalculatedValues[j][i].Re;
 	    }
 	  File << endl;
@@ -246,7 +275,7 @@ int main(int argc, char** argv)
 	    Sum[j] = 0.0;
 	  for (int i = 0; i <= LzMax; ++i)
 	    {
-	      Basis.GetFunctionValue(Value, TmpValue, i);
+	      Basis->GetFunctionValue(Value, TmpValue, i);
 	      Sum[0] += PrecalculatedValues[0][i] * (Conj(TmpValue) * TmpValue);
 	      Sum[1] += PrecalculatedValues[1][i] * (Conj(TmpValue) * TmpValue);
 	    }
@@ -265,13 +294,17 @@ int main(int argc, char** argv)
 	{
 	  File << i;
 	  for (int j=0; j<3; ++j)
-	    File << " " << PrecalculatedValues[j][i].Re;
+	    File << " " << PrecalculatedMatrixElements[j][i].Re;
 	  File << endl;
 	}
       File.close();
       for (int i = 0; i < 3; ++i)
-	delete[] PrecalculatedValues[i];
+       {
+	 delete[] PrecalculatedValues[i];
+         delete[] PrecalculatedMatrixElements[i];
+       }
       delete[] PrecalculatedValues;      
+      delete[] PrecalculatedMatrixElements;
     }
   else
     {
@@ -288,7 +321,7 @@ int main(int argc, char** argv)
 	    Sum[j] = 0.0;
 	  for (int i = 0; i <= LzMax; ++i)
 	    {
-	      Basis.GetFunctionValue(Value, TmpValue, i);
+	      Basis->GetFunctionValue(Value, TmpValue, i);
 	      for (int j = 0; j < 3; ++j)	    
 		Sum[j] += PrecalculatedValues[j][i] * (Conj(TmpValue) * TmpValue);
 	    }
@@ -300,8 +333,12 @@ int main(int argc, char** argv)
 	}
       File.close();
       for (int i = 0; i < 3; ++i)
-	delete[] PrecalculatedValues[i];
-      delete[] PrecalculatedValues;
+       {
+	 delete[] PrecalculatedValues[i];
+         delete[] PrecalculatedMatrixElements[i];
+       }
+      delete[] PrecalculatedValues;      
+      delete[] PrecalculatedMatrixElements;
       delete[] Sum;
 
       // CALCULATION OF "SHIFT OPERATOR":
@@ -346,7 +383,7 @@ int main(int argc, char** argv)
 	      Sum2 = 0.0;	  
 	      for (int m = 0; m <= LzMax; ++m)
 		{
-		  Basis.GetFunctionValue(Value, TmpValue, m);
+		  Basis->GetFunctionValue(Value, TmpValue, m);
 		  double CommonFactor=SqrNorm(TmpValue);      
 		  Sum3 += CommonFactor*PrecalculatedValues2[Pos];
 		  ++Pos;
@@ -365,8 +402,214 @@ int main(int argc, char** argv)
 	  delete[] PrecalculatedValues;
 	  delete [] OutputNameCorr;
 	}
-    }  
+    } 
+   }
+  else
+   {
+     //two Landau levels instead of two spins
+
+     int LandauLevel1 = Manager.GetInteger("first-LLindex");
+     int LandauLevel2 = Manager.GetInteger("second-LLindex");
+     cout << "Using two Landau levels n1= " << LandauLevel1 << " and n2= " << LandauLevel2 << endl;
+
+     int TwoQ1 = LzMax - 2*LandauLevel1;
+
+     AbstractFunctionBasis* Basis1;
+     if (LandauLevel1 == 0)
+       Basis1 = new ParticleOnSphereFunctionBasis(TwoQ1);
+     else
+       Basis1 = new ParticleOnSphereGenericLLFunctionBasis(TwoQ1, LandauLevel1);
+
+     int TwoQ2 = LzMax - 2*LandauLevel2;
+
+     AbstractFunctionBasis* Basis2;
+     if (LandauLevel2 == 0)
+       Basis2 = new ParticleOnSphereFunctionBasis(TwoQ2);
+     else
+       Basis2 = new ParticleOnSphereGenericLLFunctionBasis(TwoQ2, LandauLevel2);
+
+     Complex* Sum = new Complex [3];
+     Complex Sum2 (0.0, 0.0);
+     Complex TmpValue;
+     RealVector Value(2, true);
+     double X = 0.0;
+     double XInc = M_PI / ((double) NbrPoints);
+
+     Complex** PrecalculatedValues = new Complex* [3];
+     for (int i = 0; i < 3; ++i)
+       PrecalculatedValues[i] = new Complex [LzMax + 1];
+
+     Complex** PrecalculatedMatrixElements = new Complex* [3];
+     for (int i = 0; i < 3; ++i)
+       PrecalculatedMatrixElements[i] = new Complex [LzMax + 1];
+   
+     if (DensityFlag == true)
+      {
+        for (int i = 0; i <= LzMax; ++i)
+	 {
+          //note: for some reason, ParticleOnSphereWithSpinDensityOperator treats 0 as down spin... so we swap and use 1 for up
+	  ParticleOnSphereWithSpinDensityOperator Operator (Space, i, 1, i, 1);
+	  PrecalculatedValues[0][i] =   Operator.MatrixElement(State, State);
+          PrecalculatedMatrixElements[0][i] =   Operator.MatrixElement(State, State);
+	 }
+       for (int i = 0; i <= LzMax; ++i)
+	 {
+          //note: for some reason, ParticleOnSphereWithSpinDensityOperator treats 0 as down spin... 
+	  ParticleOnSphereWithSpinDensityOperator Operator (Space, i, 0, i, 0);
+	  PrecalculatedValues[1][i] =   Operator.MatrixElement(State, State);
+	  PrecalculatedMatrixElements[1][i] =   Operator.MatrixElement(State, State);
+	 }
+      }
+     else
+     {
+       for (int i = 0; i <= LzMax; ++i)
+	{
+          Basis1->GetFunctionValue(Value, TmpValue, LzMax - LandauLevel1);
+	  ParticleOnSphereWithSpinDensityDensityOperator Operator (Space, i, 0, LzMax - LandauLevel1, 0, i, 0, LzMax - LandauLevel1, 0);
+	  PrecalculatedValues[0][i] =   Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+	  PrecalculatedMatrixElements[0][i] =   Operator.MatrixElement(State, State);
+	}
+      for (int i = 0; i <= LzMax; ++i)
+	{
+          Basis2->GetFunctionValue(Value, TmpValue, LzMax - LandauLevel2);
+	  ParticleOnSphereWithSpinDensityDensityOperator Operator (Space, i, 1, LzMax - LandauLevel2, 1, i, 1, LzMax - LandauLevel2, 1);
+	  PrecalculatedValues[2][i] =  Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+	  PrecalculatedMatrixElements[2][i] =  Operator.MatrixElement(State, State);
+	}
+      for (int i = 0; i <= LzMax; ++i)
+	{
+          Basis2->GetFunctionValue(Value, TmpValue, LzMax - LandauLevel2);
+	  ParticleOnSphereWithSpinDensityDensityOperator Operator1 (Space, i, 0, LzMax - LandauLevel2, 1, i, 0, LzMax - LandauLevel2, 1);
+	  PrecalculatedValues[1][i] =  Operator1.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+	  PrecalculatedMatrixElements[1][i] =  Operator1.MatrixElement(State, State);
+	}
+      }
+
+    ofstream File;
+    File.precision(14);
+    if (((SingleStringOption*) Manager["output-file"])->GetString() != 0)
+      File.open(((SingleStringOption*) Manager["output-file"])->GetString(), ios::binary | ios::out);
+    else
+      {
+        char* TmpFileName = 0;
+        if (DensityFlag == false)
+	  {
+	    if (Manager.GetBoolean("coefficients-only"))
+	      TmpFileName = ReplaceExtensionToFileName(Manager.GetString("eigenstate"), "vec", "rhorho-c");
+	    else
+	      TmpFileName = ReplaceExtensionToFileName(Manager.GetString("eigenstate"), "vec", "rhorho");
+	  }
+        else
+	 {
+	    TmpFileName = ReplaceExtensionToFileName(Manager.GetString("eigenstate"), "vec", "rho");
+	 }
+        if (TmpFileName == 0)
+	 {
+	  cout << "no vec extension was find in " << Manager.GetString("eigenstate") << " file name" << endl;
+	  return 0;
+	 }
+        File.open(TmpFileName, ios::binary | ios::out);
+        delete[] TmpFileName;
+      }
+  
+     double Factor2 = 0.5 * (sqrt (0.5 * TwoQ1) + sqrt (0.5 * TwoQ2));
+     if (((BooleanOption*) Manager["radians"])->GetBoolean() == true) 
+       Factor2 = 1.0;
+     if (DensityFlag == true)
+      {
+        double Factor1 = 1.0;
+        File << "# density coefficients for " << Manager.GetString("eigenstate") << endl;
+        File << "#" << endl << "# (l+S) n_l^{u} n_l^{d}" << endl;
+        double Sum2 = 0.0;
+        for (int i = 0; i <= LzMax; ++i)
+	  {
+	    File << "# " << i;
+	    for (int j = 0; j < 2; ++j)
+	      {
+	        File << " " << PrecalculatedMatrixElements[j][i].Re;
+	        Sum2 += PrecalculatedValues[j][i].Re;
+	      }
+	    File << endl;
+	  }
+        File << "# sum = " << Sum2 << endl;
+        File << "# dist (rad) rho_{u} rho_{d} rho_{u}+rho_{d}" << endl;
+        for (int x = 0; x < NbrPoints; ++x)
+	  {
+	    Value[0] = X;
+	    for (int j = 0; j < 3; ++j)
+	      Sum[j] = 0.0;
+	    for (int i = 0; i <= LzMax; ++i)
+	      {
+	        Basis1->GetFunctionValue(Value, TmpValue, i);
+	        Sum[0] += PrecalculatedValues[0][i] * (Conj(TmpValue) * TmpValue);
+	        Basis2->GetFunctionValue(Value, TmpValue, i);
+	        Sum[1] += PrecalculatedValues[1][i] * (Conj(TmpValue) * TmpValue);
+	      }
+	    File << (X * Factor2);
+	    File << " " << (Sum[0].Re  * Factor1) << " " << (Sum[1].Re  * Factor1) << " " << ((Sum[0].Re + Sum[1].Re) * Factor1) << endl;
+	    X += XInc;
+	  }
+        File.close();     
+        return 0;
+      }
+    if (Manager.GetBoolean("coefficients-only"))
+      {
+        File << "# density-density correlation coefficients for " << Manager.GetString("eigenstate") << endl;
+        File << "#" << endl << "# (l+S) n_l^{u,u} n_l^{u,d} n_l^{d,d}" << endl;
+        for (int i = 0; i <= LzMax; ++i)
+	  {
+	    File << i;
+	    for (int j=0; j<3; ++j)
+	      File << " " << PrecalculatedMatrixElements[j][i].Re;
+	    File << endl;
+	  }
+        File.close();
+        for (int i = 0; i < 3; ++i)
+         {
+	   delete[] PrecalculatedValues[i];
+           delete[] PrecalculatedMatrixElements[i];
+         }
+        delete[] PrecalculatedValues;      
+        delete[] PrecalculatedMatrixElements;
+      }
+    else
+     {
+       double Factor1;
+       if (Manager.GetBoolean("bilayer"))
+	 Factor1 = (64.0 * M_PI * M_PI) / ((double) (NbrParticles * NbrParticles));
+       else
+	Factor1 = (16.0 * M_PI * M_PI) / ((double) (NbrParticles * NbrParticles));
+      File << "# dist (rad) rho_{u,u} rho_{u,d} rho_{d,d}";
+      for (int x = 0; x < NbrPoints; ++x)
+	{
+	  Value[0] = X;
+	  for (int j = 0; j < 3; ++j)
+	    Sum[j] = 0.0;
+	  for (int i = 0; i <= LzMax; ++i)
+	    {
+	      Basis1->GetFunctionValue(Value, TmpValue, i);
+	      Sum[0] += PrecalculatedValues[0][i] * (Conj(TmpValue) * TmpValue);
+	      Basis1->GetFunctionValue(Value, TmpValue, i);
+	      Sum[1] += PrecalculatedValues[1][i] * (Conj(TmpValue) * TmpValue);
+	      Basis2->GetFunctionValue(Value, TmpValue, i);
+	      Sum[2] += PrecalculatedValues[2][i] * (Conj(TmpValue) * TmpValue);
+	    }
+	  File << (X * Factor2);
+	  for (int j = 0; j < 3; ++j)
+	    File << " " << (Norm(Sum[j])  * Factor1);
+	  File << endl;
+	  X += XInc;
+	}
+      File.close();
+      for (int i = 0; i < 3; ++i)
+       {
+	 delete[] PrecalculatedValues[i];
+         delete[] PrecalculatedMatrixElements[i];
+       }
+      delete[] PrecalculatedValues;      
+      delete[] PrecalculatedMatrixElements;
+      delete[] Sum;
+   } 
   return 0;
+  }
 }
-
-
