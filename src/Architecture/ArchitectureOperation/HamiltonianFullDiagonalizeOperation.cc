@@ -609,8 +609,17 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 	  int TmpNode = architecture->GetNodeIDFromIndex(j - 1);
 	  if (TmpNode ==  architecture->GetNodeNbr())
 	    {
-	      InputVector[j - 1] = 1.0;
-	      this->Hamiltonian->Multiply(InputVector, OutputVector, j - 1, 1);
+	      if (this->Hamiltonian->IsHermitian() == true)
+		{
+		  InputVector.ClearVector();
+		  InputVector[j - 1] = 1.0;
+		  this->Hamiltonian->HermitianMultiply(InputVector, OutputVector, j - 1, 1);
+		}
+	      else
+		{
+		  InputVector[j - 1] = 1.0;
+		  this->Hamiltonian->Multiply(InputVector, OutputVector, j - 1, 1);
+		}
 	    }
 	  architecture->BroadcastVector(TmpNode, OutputVector);
   	  for (int i = 1; i <= TmpGlobalNbrRow; ++i)

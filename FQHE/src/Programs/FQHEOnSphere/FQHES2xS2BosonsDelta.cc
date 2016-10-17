@@ -63,6 +63,9 @@ int main(int argc, char** argv)
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
+#ifdef __SCALAPACK__
+  (*ToolsGroup) += new BooleanOption  ('\n', "use-scalapack", "use SCALAPACK libraries instead of DiagHam or LAPACK libraries");
+#endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -111,7 +114,12 @@ int main(int argc, char** argv)
 
   for (int TotalLz = MinTotalLz; TotalLz <= MaxTotalLz; TotalLz += 2)
     {
-      for (int TotalKz = MinTotalKz; TotalKz <= MaxTotalKz; TotalKz += 2)
+      int TmpMaxTotalKz = MaxTotalKz;
+      if ((NbrFluxQuanta1 == NbrFluxQuanta2) && (Manager.GetInteger("nbr-lz") < 0) && (Manager.GetInteger("nbr-kz") < 0)) 
+	{
+	  TmpMaxTotalKz = MinTotalLz;
+	}
+      for (int TotalKz = MinTotalKz; TotalKz <= TmpMaxTotalKz; TotalKz += 2)
 	{
 	  ParticleOnSphere* Space = 0;
 	  Space = new BosonOnS2xS2(NbrBosons, NbrFluxQuanta1, NbrFluxQuanta2, TotalLz, TotalKz);
