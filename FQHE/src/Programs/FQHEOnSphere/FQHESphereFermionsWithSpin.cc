@@ -101,7 +101,7 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new  BooleanOption ('\n', "restart-projection", "allow lanczos projections to be restarted if full convergence not yet reached");
   
   
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
@@ -324,7 +324,7 @@ int main(int argc, char** argv)
   int  L = 0;
   if ((abs(Max) & 1) != 0)
      L = 1;
-  if (InitialLz >= 0)
+  if (InitialLz != 0)
     {
       L = InitialLz;
       if ((abs(Max) & 1) != 0)
@@ -332,11 +332,6 @@ int main(int argc, char** argv)
       else
 	L &= ~0x1;
     }
-  else
-   { 
-     L = InitialLz;
-     cout << "Negative Lz " << InitialLz;
-   }
   if (NbrLz > 0)
     {
       if (L + (2 * (NbrLz - 1)) < Max)
