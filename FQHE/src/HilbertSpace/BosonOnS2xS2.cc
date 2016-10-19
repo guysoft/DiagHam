@@ -30,7 +30,6 @@
 
 #include "config.h"
 #include "HilbertSpace/BosonOnS2xS2.h"
-#include "HilbertSpace/FermionOnLatticeRealSpace.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/ComplexLapackDeterminant.h"
 #include "Vector/RealVector.h"
