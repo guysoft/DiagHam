@@ -164,7 +164,7 @@ int main(int argc, char** argv)
   Complex* ComplexOneBodyPotentialPairing = 0;
   Complex** OffDiagonalComplexOneBodyPotentialPairing = 0;
   double** PseudoPotentials  = 0;
-  bool PreserveKySymmetryFlag = false;//true;
+  bool PreserveKySymmetryFlag = false;
   int MaximumMomentumTransfer = 0;
  
   if ((Manager.GetString("interaction-file") == 0) && (Manager.GetString("confining-file") == 0))
@@ -363,18 +363,17 @@ int main(int argc, char** argv)
 		}
 	      else
 		{
-// 		  if (TmpMomentumTransfer > 0)
-// 		    {
-		      OffDiagonalComplexOneBodyPotentialPairing[CreationIndices[i]][MaximumMomentumTransfer + TmpMomentumTransfer] = TmpPairingPotential[i] * Phase(M_PI * TmpPairingPhasePotential[i]);
-// 		    }
-// 		  else
-// 		    {
-// 		      OffDiagonalComplexOneBodyPotentialPairing[CreationIndices[i]][-TmpMomentumTransfer - 1] = -TmpPairingPotential[i] * Phase(M_PI * TmpPairingPhasePotential[i]);
-// 		    }
+		  OffDiagonalComplexOneBodyPotentialPairing[CreationIndices[i]][MaximumMomentumTransfer + TmpMomentumTransfer] = TmpPairingPotential[i] * Phase(M_PI * TmpPairingPhasePotential[i]);
 		}
 	    }	  
 	}
     }
+  if (MaximumMomentumTransfer == 0)
+    {
+      PreserveKySymmetryFlag = true;
+    }
+
+
 
   char* OutputNameLz = new char [256 + strlen(Manager.GetString("interaction-name"))];
   int TmpFixedNbrParticles = 0;
