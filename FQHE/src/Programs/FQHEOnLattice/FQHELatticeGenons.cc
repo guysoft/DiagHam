@@ -1,9 +1,10 @@
 #include "HilbertSpace/BosonOnLattice.h"
+#include "HilbertSpace/FermionOnLattice.h"
 #include "HilbertSpace/HardCoreBosonOnLattice.h"
 #include "HilbertSpace/SingleParticleOnLattice.h"
 #include "Hamiltonian/ParticleOnLatticeDeltaHamiltonian.h"
-#include "Hamiltonian/ParticleOnLatticeKapitMuellerHamiltonian.h"
-#include "Hamiltonian/ParticleOnLatticeKapitMuellerMultiLayerHamiltonian.h"
+//#include "Hamiltonian/ParticleOnLatticeKapitMuellerHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeProjectedKapitMuellerMultiLayerHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -17,6 +18,7 @@
 #include "Tools/FQHEWaveFunction/GutzwillerOnLatticeWaveFunction.h"
 
 #include "GeneralTools/FilenameTools.h"
+#include "MathTools/IntegerAlgebraTools.h"
 
 #include "Options/Options.h"
 
@@ -86,7 +88,7 @@ int main(int argc, char** argv)
 {
   cout.precision(14);
 
-  OptionManager Manager ("FQHELatticeBosons" , "0.01");
+  OptionManager Manager ("FQHELatticeGenons" , "0.01");  
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
@@ -102,13 +104,17 @@ int main(int argc, char** argv)
   Manager += ToolsGroup;
   Manager += MiscGroup;
 
-  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 8);
+  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles N", 8);
   (*SystemGroup) += new SingleIntegerOption  ('x', "lx", "length in x-direction of given lattice", 5);
   (*SystemGroup) += new SingleIntegerOption  ('y', "ly", "length in y-direction of given lattice", 1);
   (*SystemGroup) += new SingleIntegerOption  ('q', "flux", "number of flux quanta piercing the lattice (-1=all)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-body", "number of body involed in the contact interaction", 2);
   (*SystemGroup) += new SingleDoubleOption  ('u', "contactU", "prefactor U of the contact interaction (kinetic term ~ 1)", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('w', "contactW", "prefactor W of an inter-layer contact interaction", 0.0);
+  (*SystemGroup) += new SingleIntegerOption  ('b', "basis-size", "number of single-particle eigenstates to keep (default is N+#branch cuts)", -1);
+  (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model");
+
+
   (*SystemGroup) += new MultipleDoubleOption  ('s', "solenoid-flux", "twist in periodic boundary conditions phi_x[,phi_y])",',');
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
   (*SystemGroup) += new SingleStringOption('l',"landau-axis","potential in the Landau gauge along axis","y");
@@ -117,11 +123,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('R', "randomPotential", "Introduce a random potential at all sites", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "positive-hopping", "choose positive sign of hopping terms", false);
   (*SystemGroup) += new BooleanOption  ('\n', "all-flux", "calculate all values of the flux to test symmetry under n_phi->1-n_phi", false);
-  (*SystemGroup) += new SingleDoubleOption  ('K', "Kapit-Mueller", "Use the Kapit-Mueller hoppings with the argument being the maximum range", -1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('r', "hopping-range", "Range of hoppings in the Kapit-Mueller Hamiltonian", 100.0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-layers", "number of layers for the Kapit-Mueller case", 1);
   (*SystemGroup) += new MultipleDoubleOption  ('\n', "branch-cuts", "branch cuts with 4 arguments (xi1,yi1,xj1,yj1) for each branch cut", ',', '_');
   (*SystemGroup) += new MultipleIntegerOption  ('\n', "branch-shift", "shifts for the individual branch-cuts s1,s2,... ", ',', '_');
-  
+
+  (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
   
   (*PrecalculationGroup) += new BooleanOption ('\n', "no-hermitian", "do not use hermitian symmetry of the hamiltonian");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
@@ -135,7 +142,7 @@ int main(int argc, char** argv)
   (*MiscGroup) += new SingleDoubleOption('\n', "tolerance", "tolerance for variational parameters in condensate",1e-6);
   (*MiscGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
   (*MiscGroup) += new SingleStringOption  ('o', "output-file", "redirect output to this file",NULL);
-(*MiscGroup) += new BooleanOption  ('\n', "get-hvalue", "show energy expectation value for eigenstates", false);
+  (*MiscGroup) += new BooleanOption  ('\n', "get-hvalue", "show energy expectation value for eigenstates", false);
   (*MiscGroup) += new  BooleanOption ('\n',"show-basis", "show the basis of the Hilbert-space");
   (*MiscGroup) += new  BooleanOption ('\n',"show-hamiltonian", "show Hamiltonian matrix, and exit");
 #ifdef HAVE_ARPACK
@@ -146,7 +153,7 @@ int main(int argc, char** argv)
 
   Manager.StandardProceedings(argv, argc, cout);
   
-  int NbrBosons = Manager.GetInteger("nbr-particles");
+  int NbrParticles = Manager.GetInteger("nbr-particles");
   int Lx = Manager.GetInteger("lx");
   int Ly = Manager.GetInteger("ly");
   int NbrFluxQuanta = Manager.GetInteger("flux");
@@ -159,7 +166,7 @@ int main(int argc, char** argv)
     if (tmpI>1) SolenoidY=Fluxes[1];
     
     if (tmpI>0) delete [] Fluxes;
-  }
+  }  
   bool ReverseHopping = Manager.GetBoolean("positive-hopping");
   bool HardCore = Manager.GetBoolean("hard-core");
   char LandauQuantization = Manager.GetString("landau-axis")[0];
@@ -169,6 +176,8 @@ int main(int argc, char** argv)
   if (HardCore) ContactU=0.0;
   double Delta = Manager.GetDouble("deltaPotential");
   double Random = Manager.GetDouble("randomPotential");
+  bool HaveBosons = Manager.GetBoolean("boson");
+
   if (ULONG_MAX>>20 < (unsigned long)Manager.GetInteger("memory"))
     cout << "Warning: integer overflow in memory request - you might want to use 64 bit code."<<endl;
   unsigned long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
@@ -193,11 +202,18 @@ int main(int argc, char** argv)
 
   int NbrLayers = Manager.GetInteger("nbr-layers");
 
+  bool FlatBand = Manager.GetBoolean("flat-band");
+  int NbrProjectorStates = Manager.GetInteger("basis-size");
+  if (NbrProjectorStates > NbrSites * NbrLayers)
+    NbrProjectorStates = -1;
+
   if (Manager.GetString("energy-expectation") != 0 ) Memory = 0x0l;
 
   int NbrFluxValues = 1;
   if (NbrFluxQuanta == -1)
     {
+      cout << "Please indicate the number of flux quanta using -q"<<endl;
+      exit(1);
       NbrFluxQuanta = 0;
       if (Manager.GetBoolean("all-flux"))
 	NbrFluxValues = NbrSites+1;
@@ -206,40 +222,45 @@ int main(int argc, char** argv)
     }
 
   char* OutputName;
-  char auxArguments[128]="";
+  char* OutputNameBase;
+  char auxArguments[256]="";
   char deltaString[20]="";
   char interactionStr[100]="";
   int offset=0;
   if ( (OutputName = Manager.GetString("output-file")) == NULL)
     {
-      OutputName = new char [256];      
-      if (Manager.GetDouble("Kapit-Mueller")>0.0)
-	{
-	  offset+=sprintf(auxArguments,"KM_%g_", Manager.GetDouble("Kapit-Mueller"));
+      OutputNameBase = new char[512];
+      
+      offset+=sprintf(auxArguments,"KM_%g_", Manager.GetDouble("hopping-range"));
 	  
-	  if (NbrLayers>1)
-	    offset+=sprintf(auxArguments+offset,"l_%d_", NbrLayers);
+      if (NbrLayers>1)
+	offset+=sprintf(auxArguments+offset,"l_%d_", NbrLayers);
 
-	  if (NbrCuts>0)
+      if (FlatBand)
+	offset+=sprintf(auxArguments+offset,"flatband_");
+      
+      if (NbrProjectorStates > 0)
+	offset+=sprintf(auxArguments+offset,"b_%d_", NbrProjectorStates);
+
+      if (NbrCuts>0)
+	{
+	  MultipleDoubleOption* option = (MultipleDoubleOption*)Manager["branch-cuts"];
+	  char * coords = option->GetAsAString();
+	  offset+=sprintf(auxArguments+offset,"cuts_%s_", coords);
+	  delete [] coords;
+	  if (branchShift!=0)
 	    {
-	      MultipleDoubleOption* option = (MultipleDoubleOption*)Manager["branch-cuts"];
-	      char * coords = option->GetAsAString();
-	      offset+=sprintf(auxArguments+offset,"cuts_%s_", coords);
-	      delete [] coords;
-	      if (branchShift!=0)
-		{
-		  bool nonTrivial=false;
-		  for (int i=0; i<NbrCuts; ++i)
-		    if (branchShift[i]!=1) nonTrivial=true;
+	      bool nonTrivial=false;
+	      for (int i=0; i<NbrCuts; ++i)
+		if (branchShift[i]!=1) nonTrivial=true;
 		  
-		  if (nonTrivial)
-		    {
-		      MultipleIntegerOption* option = (MultipleIntegerOption*)Manager["branch-cuts"];
+	      if (nonTrivial)
+		{
+		  MultipleIntegerOption* option = (MultipleIntegerOption*)Manager["branch-cuts"];
 		      
-		      char * shift = option->GetAsAString();
-		      offset+=sprintf(auxArguments+offset,"sh_%s_", shift);
-		      delete [] shift;
-		    }
+		  char * shift = option->GetAsAString();
+		  offset+=sprintf(auxArguments+offset,"sh_%s_", shift);
+		  delete [] shift;
 		}
 	    }
 	}
@@ -272,139 +293,150 @@ int main(int argc, char** argv)
 	    }
 	}
       if ((SolenoidX!=0.0)||(SolenoidY!=0.0))
-	    {
-	      sprintf(interactionStr,"%s_s_%g_%g",interactionStr,SolenoidX,SolenoidY);
-	    }
-      if (NbrFluxValues == 1)
-	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq_%d.dat", NbrBosons, Lx, Ly, interactionStr, auxArguments, deltaString, NbrFluxQuanta);
+	{
+	  sprintf(interactionStr,"%s_s_%g_%g",interactionStr,SolenoidX,SolenoidY);
+	}
+      
+      char* StatisticPrefix = new char [50];
+      
+      if (Manager.GetBoolean("boson") == false)
+	sprintf (StatisticPrefix, "fermions");
       else
-	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq.dat", NbrBosons, Lx, Ly, interactionStr, auxArguments, deltaString);
-    }
-  ParticleOnLattice* Space;
-  if (NbrBosons>1)
-    {
-      if (HardCore)
-	Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY, NbrLayers);
-      else Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY, LandauQuantization, NbrLayers);
+	sprintf (StatisticPrefix, "bosons");
+
+      if (NbrFluxValues == 1)
+	sprintf (OutputNameBase, "%s_lattice_genons_n_%d_x_%d_y_%d%s_%s%sq_%d", StatisticPrefix, NbrParticles, Lx, Ly, interactionStr, auxArguments, deltaString, NbrFluxQuanta);
+      else
+	sprintf (OutputNameBase, "%s_lattice_genons_n_%d_x_%d_y_%d%s_%s%sq", StatisticPrefix, NbrParticles, Lx, Ly, interactionStr, auxArguments, deltaString);
+      OutputName = new char[strlen(OutputNameBase)+5];
+      sprintf(OutputName,"%s.dat",OutputNameBase);
     }
   else
     {
-      if (!Manager.GetBoolean("no-single-particle-basis"))	
-	Space = new SingleParticleOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY, LandauQuantization, NbrLayers);      
+      OutputNameBase = RemoveExtensionFromFileName(OutputName,".dat");
+      if (OutputNameBase==NULL)
+	{
+	  OutputNameBase = OutputName;
+	  OutputName = new char[strlen(OutputNameBase)+5];
+	  sprintf(OutputName,"%s.dat",OutputNameBase);
+	}
+    }
+  ParticleOnLattice* Space;
+  if (NbrProjectorStates <= 0)
+    {
+      int FluxPerMUC = FindGCD(NbrSites, NbrFluxQuanta);
+      int NbrMUC = NbrFluxQuanta / FluxPerMUC;
+      if (NbrMUC==0) NbrMUC=1;
+      NbrProjectorStates = NbrSites * NbrLayers / NbrMUC + NbrCuts;
+      if (NbrProjectorStates > NbrSites * NbrLayers)
+	NbrProjectorStates = NbrSites * NbrLayers; // maximum number of states
+      cout << "Deduced NbrProjectorStates="<<NbrProjectorStates<<" for N_MUC="<<NbrMUC<<" N_cut="<<NbrCuts<<endl;
+    }
+  // model space as lattice of dimensions NbrProjectorStates x 1 for simplicity, with NbrLayers set to one.
+  if (HaveBosons)
+    {
+      if (NbrParticles>1)
+	{
+	  if (HardCore)
+	    {
+	      std::cerr << "Hard-core bosons are not defined"<<std::endl;
+	      exit(1);
+	      Space =new HardCoreBosonOnLattice(NbrParticles, NbrProjectorStates, 1, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY, 1);
+	    }
+	  else Space = new BosonOnLattice(NbrParticles, NbrProjectorStates, 1, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY, LandauQuantization, 1);
+	}
       else
-       Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY, LandauQuantization, NbrLayers);
+	{
+	  if (!Manager.GetBoolean("no-single-particle-basis"))
+	    Space = new SingleParticleOnLattice(NbrParticles, NbrProjectorStates, 1, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY, LandauQuantization, 1);
+	  else
+	    Space = new BosonOnLattice(NbrParticles, NbrProjectorStates, 1, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY, LandauQuantization, 1);
+	}
+    }
+  else
+    {
+      Space = new FermionOnLattice(NbrParticles, NbrProjectorStates, 1, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY, /* NbrLayers */ 1);
     }
       
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   
   AbstractQHEOnLatticeHamiltonian* Hamiltonian;
-  if (Manager.GetDouble("Kapit-Mueller")<=0.0)
-    Hamiltonian = new ParticleOnLatticeDeltaHamiltonian(Space, NbrBosons, Lx, Ly, NbrFluxQuanta, ContactU, ReverseHopping, Delta,
-							Random, Architecture.GetArchitecture(), NbrBody, Memory, LoadPrecalculationFileName,
-							!Manager.GetBoolean("no-hermitian"));
-  
-  else
+  Hamiltonian = new ParticleOnLatticeProjectedKapitMuellerMultiLayerHamiltonian(Space, NbrParticles, NbrProjectorStates, FlatBand, Lx, Ly, NbrLayers, NbrFluxQuanta, ContactU, ContactW, ReverseHopping, Delta,
+										Random, Manager.GetDouble("hopping-range"), NbrCuts, branchCuts, branchShift, Architecture.GetArchitecture(), NbrBody, Memory, LoadPrecalculationFileName,
+										!Manager.GetBoolean("no-hermitian"));
+  if (Manager.GetString("energy-expectation") != 0 )
     {
-      if (NbrLayers>1)
-	Hamiltonian = new ParticleOnLatticeKapitMuellerMultiLayerHamiltonian(Space, NbrBosons, Lx, Ly, NbrFluxQuanta, ContactU, ContactW, ReverseHopping, Delta,
-									     Random, Manager.GetDouble("Kapit-Mueller"), NbrCuts, branchCuts, branchShift, Architecture.GetArchitecture(), NbrBody, Memory, LoadPrecalculationFileName,
-								 !Manager.GetBoolean("no-hermitian"));
-      else
-	Hamiltonian = new ParticleOnLatticeKapitMuellerHamiltonian(Space, NbrBosons, Lx, Ly, NbrFluxQuanta, ContactU, ReverseHopping, Delta,
-								   Random, Manager.GetDouble("Kapit-Mueller"), Architecture.GetArchitecture(), NbrBody, Memory, LoadPrecalculationFileName,
-								   !Manager.GetBoolean("no-hermitian"));
+      char* StateFileName = Manager.GetString("energy-expectation");
+      if (IsFile(StateFileName) == false)
+	{
+	  cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
+	  return -1;           
+	}
+      ComplexVector State;
+      if (State.ReadVector(StateFileName) == false)
+	{
+	  cout << "error while reading " << StateFileName << endl;
+	  return -1;
+	}
+      if (State.GetVectorDimension()!=Space->GetHilbertSpaceDimension())
+	{
+	  cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
+	  return -1;
+	}
+      ComplexVector TmpState(Space->GetHilbertSpaceDimension());
+      VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
+      Operation.ApplyOperation(Architecture.GetArchitecture());
+      Complex EnergyValue = State*TmpState;
+      cout << "< Energy > = "<<EnergyValue<<endl;
+      return 0;
     }
 
-
-	/*int NbrDiagonalInteractionFactors = NbrSites;
-  double * DiagonalInteractionFactors = new double[NbrDiagonalInteractionFactors];
-  int * DiagonalQValues=new int[NbrDiagonalInteractionFactors];
-  for (int i=0; i<NbrDiagonalInteractionFactors; ++i)
-	{
-	  DiagonalQValues[i]=i;
-	  DiagonalInteractionFactors[i]=ContactU;
-	}
-	
-	for (int i = 0 ; i < Space->GetHilbertSpaceDimension(); i ++)
-	{
-		cout <<"i = "<<i<<" "<<Space->PrintState(cout, i)<<" "<<Space->ProdAdProdADiagonal(i,2, NbrDiagonalInteractionFactors,
-							   DiagonalInteractionFactors, DiagonalQValues)<<" "<<Space->AdAdAADiagonal(i, NbrDiagonalInteractionFactors,
-							 DiagonalInteractionFactors, DiagonalQValues) <<endl;
-
-	}*/
-  if (Manager.GetString("energy-expectation") != 0 )
-	{
-	  char* StateFileName = Manager.GetString("energy-expectation");
-	  if (IsFile(StateFileName) == false)
-	    {
-	      cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
-	      return -1;           
-	    }
-	  ComplexVector State;
-	  if (State.ReadVector(StateFileName) == false)
-	    {
-	      cout << "error while reading " << StateFileName << endl;
-	      return -1;
-	    }
-	  if (State.GetVectorDimension()!=Space->GetHilbertSpaceDimension())
-	    {
-	      cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
-	      return -1;
-	    }
-	  ComplexVector TmpState(Space->GetHilbertSpaceDimension());
-	  VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
-	  Operation.ApplyOperation(Architecture.GetArchitecture());
-	  Complex EnergyValue = State*TmpState;
-	  cout << "< Energy > = "<<EnergyValue<<endl;
-	  return 0;
-	}
-
-//   // testing Hamiltonian:
+  //   // testing Hamiltonian:
   
-//   ComplexMatrix HRe(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
-//   ComplexMatrix HIm(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
-//   GetHamiltonian(Hamiltonian,HRe);
-//   GetHamiltonianIm(Hamiltonian,HIm);
-//   Complex one, two, M_I(0.0,1.0);
-//   for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
-//     for (int j=0; j<Hamiltonian->GetHilbertSpaceDimension(); ++j)
-//       {
-// 	HRe.GetMatrixElement(i,j,one);
-// 	HIm.GetMatrixElement(i,j,two);
-// 	one= one*M_I;
-// 	if (Norm(one-two)>1e-10)
-// 	  cout << "Discrepancy in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
-//       }
-//   for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
-//     for (int j=0; j<i; ++j)
-//       {
-// 	HRe.GetMatrixElement(i,j,one);
-// 	HRe.GetMatrixElement(j,i,two);
-// 	if (Norm(one-Conj(two))>1e-10)
-// 	  cout << "Matrix not hermitian in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
-//       }
+  //   ComplexMatrix HRe(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
+  //   ComplexMatrix HIm(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
+  //   GetHamiltonian(Hamiltonian,HRe);
+  //   GetHamiltonianIm(Hamiltonian,HIm);
+  //   Complex one, two, M_I(0.0,1.0);
+  //   for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
+  //     for (int j=0; j<Hamiltonian->GetHilbertSpaceDimension(); ++j)
+  //       {
+  // 	HRe.GetMatrixElement(i,j,one);
+  // 	HIm.GetMatrixElement(i,j,two);
+  // 	one= one*M_I;
+  // 	if (Norm(one-two)>1e-10)
+  // 	  cout << "Discrepancy in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
+  //       }
+  //   for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
+  //     for (int j=0; j<i; ++j)
+  //       {
+  // 	HRe.GetMatrixElement(i,j,one);
+  // 	HRe.GetMatrixElement(j,i,two);
+  // 	if (Norm(one-Conj(two))>1e-10)
+  // 	  cout << "Matrix not hermitian in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
+  //       }
 
-//   ComplexVector TmpV1a (Hamiltonian->GetHilbertSpaceDimension(), true);
-//   ComplexVector TmpV1b (Hamiltonian->GetHilbertSpaceDimension(), true);
-//   ComplexVector TmpV2a (Hamiltonian->GetHilbertSpaceDimension(), true);
-//   ComplexVector TmpV2b (Hamiltonian->GetHilbertSpaceDimension(), true);
-//   for (int i = 0; i < Hamiltonian->GetHilbertSpaceDimension(); i++)
-//     {
-//       TmpV1a.Re(i) = (rand() - 32767) * 0.5;
-//       TmpV1a.Im(i) = (rand() - 32767) * 0.5;
-//     }
-//   TmpV1a /= TmpV1a.Norm();
-//   TmpV1b = TmpV1a*M_I;
-//   Hamiltonian->LowLevelMultiply(TmpV1a, TmpV2a);
-//   Hamiltonian->LowLevelMultiply(TmpV1b, TmpV2b);
-//   for (int j=0; j<Hamiltonian->GetHilbertSpaceDimension(); ++j)
-//       {
-// 	one = TmpV2a[j];
-// 	two = TmpV2b[j];
-// 	one = one*M_I;
-// 	if (Norm(one-two)>1e-10)
-// 	  cout << "Discrepancy in "<<j<<": "<<one << " vs " << two << endl;
-//       }  
+  //   ComplexVector TmpV1a (Hamiltonian->GetHilbertSpaceDimension(), true);
+  //   ComplexVector TmpV1b (Hamiltonian->GetHilbertSpaceDimension(), true);
+  //   ComplexVector TmpV2a (Hamiltonian->GetHilbertSpaceDimension(), true);
+  //   ComplexVector TmpV2b (Hamiltonian->GetHilbertSpaceDimension(), true);
+  //   for (int i = 0; i < Hamiltonian->GetHilbertSpaceDimension(); i++)
+  //     {
+  //       TmpV1a.Re(i) = (rand() - 32767) * 0.5;
+  //       TmpV1a.Im(i) = (rand() - 32767) * 0.5;
+  //     }
+  //   TmpV1a /= TmpV1a.Norm();
+  //   TmpV1b = TmpV1a*M_I;
+  //   Hamiltonian->LowLevelMultiply(TmpV1a, TmpV2a);
+  //   Hamiltonian->LowLevelMultiply(TmpV1b, TmpV2b);
+  //   for (int j=0; j<Hamiltonian->GetHilbertSpaceDimension(); ++j)
+  //       {
+  // 	one = TmpV2a[j];
+  // 	two = TmpV2b[j];
+  // 	one = one*M_I;
+  // 	if (Norm(one-two)>1e-10)
+  // 	  cout << "Discrepancy in "<<j<<": "<<one << " vs " << two << endl;
+  //       }  
 
 
   for (int iter=0; iter<NbrFluxValues; ++iter, ++NbrFluxQuanta)
@@ -417,19 +449,19 @@ int main(int argc, char** argv)
       char* EigenvectorName = 0;
       if ((Manager.GetBoolean("eigenstate")||(Manager.GetBoolean("optimize-condensate"))))
 	{
-	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq_%d", NbrBosons, Lx, Ly, interactionStr, auxArguments, deltaString, NbrFluxQuanta);
+	  EigenvectorName = new char [strlen(OutputNameBase)+32];
+	  sprintf (EigenvectorName, "bosons_lattice_genons_n_%d_x_%d_y_%d%s_%s%sq_%d", NbrParticles, Lx, Ly, interactionStr, auxArguments, deltaString, NbrFluxQuanta);
 	}
       if (Manager.GetBoolean("optimize-condensate"))
 	{
 	  char *ParameterName = new char[strlen(EigenvectorName)+10];
 	  sprintf(ParameterName,"%s.cond.par",EigenvectorName);
 	  sprintf(EigenvectorName,"%s.cond.vec",EigenvectorName);
-	  GutzwillerOnLatticeWaveFunction Condensate(NbrBosons, HardCore, Space);
+	  GutzwillerOnLatticeWaveFunction Condensate(NbrParticles, HardCore, Space);
 	  Condensate.SetHamiltonian(Hamiltonian);
 	  Condensate.SetArchitecture(Architecture.GetArchitecture());
 	  Condensate.SetToRandomPhase();
-	  int MaxEval = NbrSites*(NbrBosons+1)*2*Manager.GetInteger("nbr-iter");
+	  int MaxEval = NbrSites*(NbrParticles+1)*2*Manager.GetInteger("nbr-iter");
 	  double Energy=Condensate.Optimize(Manager.GetDouble("tolerance"), MaxEval);
 	  Condensate.GetLastWaveFunction().WriteVector(EigenvectorName);
 	  Condensate.GetVariationalParameters().WriteVector(ParameterName);

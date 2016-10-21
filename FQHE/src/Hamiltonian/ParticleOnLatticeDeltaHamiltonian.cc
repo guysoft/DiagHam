@@ -341,5 +341,5 @@ void ParticleOnLatticeDeltaHamiltonian::EvaluateInteractionFactors()
   else // no such interactions
     {
       NbrDiagonalInteractionFactors=0;
-    }
+    }  
 }

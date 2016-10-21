@@ -66,6 +66,8 @@ using std::ostream;
 // hermitianFlag = flag indicating whether to use hermitian symmetry
 ParticleOnLatticeKapitMuellerHamiltonian::ParticleOnLatticeKapitMuellerHamiltonian(ParticleOnLattice* particles, int nbrParticles, int lx, int ly, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, double deltaPotential, double randomPotential, double range, AbstractArchitecture* architecture, int nbrBody, unsigned long memory, char* precalculationFileName, bool hermitianFlag)
 {
+  cout << "creating ParticleOnLatticeKapitMuellerHamiltonian:\n"
+       << "nbrParticles="<<nbrParticles<<", lx="<<lx<<", ly="<<ly<<", nbrFluxQuanta="<<nbrFluxQuanta<<"\nU="<<contactInteractionU<<", reverseHopping="<<reverseHopping<<", deltaPotential="<<deltaPotential<<", randomPotential="<<randomPotential<<", range="<<range<<", nbrBody="<<nbrBody<<", hermitianFlag = "<<hermitianFlag<<endl;
   this->Particles=particles;
   this->NbrParticles=nbrParticles;
   this->Lx=lx;
@@ -234,9 +236,9 @@ void ParticleOnLatticeKapitMuellerHamiltonian::EvaluateInteractionFactors()
 #ifdef DEBUG_OUTPUT
 			    //if (TranslationPhase!=1.0)
 			    if (Norm(amplitude) > 1e-15)
-			      cout << "("<<i<<", "<<j<<")->("<<k+dX*Lx<<", "<<l+dY*Ly<<") with dL=("<<dX<<"," <<dY<<") : "
+			      cout << "image ("<<dX<<", "<<dY<<"): sites ("<<i<<", "<<j<<")->("<<k+dX*Lx<<", "<<l+dY*Ly<<") with dL=("<<dX<<"," <<dY<<") : "
 				   <<"Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
-				   << TranslationPhase << endl;
+				   << TranslationPhase << " amp="<< amplitude<<endl;
 #endif
 			    HoppingTerms[TmpNumberTerms] += amplitude;
 			  }

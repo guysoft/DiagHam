@@ -124,6 +124,13 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // quantum number attached to each "self-interaction" factor
   int* DiagonalQValues;
 
+  // non-onsite interactions are encoded in the arrays *RhoRhoInteraction*
+  double* RhoRhoInteractionFactors;
+  // number of interaction factors
+  int NbrRhoRhoInteractionFactors;
+  // quantum numbers attached to each of the density-density interactions
+  int* RhoRhoQ12Values;
+  
   // flag for storing the result of test for complex matrix elements
   bool HaveComplexMatrixElements;
   // flag whether test has been carried out
@@ -1231,11 +1238,17 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
     }
   
   // separated diagonal terms as these will be the general rule for contact interactions
-  if (NbrDiagonalInteractionFactors>0)
+  if (this->NbrDiagonalInteractionFactors>0 || this->NbrRhoRhoInteractionFactors>0)
     {
+      Coefficient = 0.0;
+
+      if (NbrDiagonalInteractionFactors!=0.0)
+	Coefficient += particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors,
+				  DiagonalInteractionFactors, DiagonalQValues);
+      if (NbrRhoRhoInteractionFactors!=0.0)
+	Coefficient += particles->RhoRhoDiagonal(index, NbrRhoRhoInteractionFactors, RhoRhoInteractionFactors, RhoRhoQ12Values);
+
       // need additional symmetry factor of 1/2 in hermitian mode, as diagonal elements will not be treated separately if stored in memory!
-      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors,
-					      DiagonalInteractionFactors, DiagonalQValues);
       if (this->IsHermitian())
 	Coefficient *= 0.5;
 
@@ -1248,8 +1261,7 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 	    }
 	  coefficientIndexArray[positionR] = (unsigned short) tmpElementPos;
 	  ++positionR;
-	  //cout << "diag - connecting :"<<i<<", "<<i<<": "<<Coefficient<<endl;
-		   
+	  //cout << "diag - connecting :"<<i<<", "<<i<<": "<<Coefficient<<endl;		   
     }
 }
 
@@ -1424,9 +1436,13 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyAddMultiplyCompone
     }
   
   // separated diagonal terms as these will be the general rule for contact interactions
-  if (NbrDiagonalInteractionFactors>0)
+  if (this->NbrDiagonalInteractionFactors>0 || this->NbrRhoRhoInteractionFactors>0)
     {
-      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
+      Coefficient = 0.0;
+      if (NbrDiagonalInteractionFactors!=0.0)
+	Coefficient += particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
+      if (NbrRhoRhoInteractionFactors!=0.0)
+	Coefficient += particles->RhoRhoDiagonal(index, NbrRhoRhoInteractionFactors, RhoRhoInteractionFactors, RhoRhoQ12Values);
       vDestination[index] +=  Coefficient * vSource[index];
     }
 }
@@ -1493,12 +1509,13 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyConjugateAddMultip
     }
   
   // separated diagonal terms as these will be the general rule for contact interactions
-  if (NbrDiagonalInteractionFactors>0)
-    {
-      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
-      if (Coefficient != 0.0)
-	vDestination[index] +=  Coefficient * vSource[index];
-    }
+  Coefficient = 0.0;
+  if (NbrDiagonalInteractionFactors > 0)
+    Coefficient += particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
+  if (NbrRhoRhoInteractionFactors > 0)
+    Coefficient += particles->RhoRhoDiagonal(index, NbrRhoRhoInteractionFactors, RhoRhoInteractionFactors, RhoRhoQ12Values);
+  if (Coefficient != 0.0)
+    vDestination[index] +=  Coefficient * vSource[index];
 }
 
 // core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
@@ -1693,9 +1710,14 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyAddMultiplyCompone
     }	  
   
   // separated diagonal terms as these will be the general rule for contact interactions
+
+  Coefficient = 0.0;
   if (this->NbrDiagonalInteractionFactors > 0)
+    Coefficient += particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
+  if (this->NbrRhoRhoInteractionFactors > 0)
+    Coefficient += particles->RhoRhoDiagonal(index, NbrRhoRhoInteractionFactors, RhoRhoInteractionFactors, RhoRhoQ12Values);
+  if (Coefficient != 0.0)
     {
-      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors , DiagonalInteractionFactors, DiagonalQValues);
       for (int l = 0; l < nbrVectors; ++l)
 	vDestinations[l][index] +=  Coefficient * vSources[l][index];
     }
@@ -1772,9 +1794,13 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyConjugateAddMultip
     }	  
   
   // separated diagonal terms as these will be the general rule for contact interactions
+  Coefficient = 0.0;
   if (this->NbrDiagonalInteractionFactors > 0)
+    Coefficient += particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
+  if (this->NbrRhoRhoInteractionFactors > 0)
+    Coefficient += particles->RhoRhoDiagonal(index, NbrRhoRhoInteractionFactors, RhoRhoInteractionFactors, RhoRhoQ12Values);
+  if (Coefficient != 0.0)
     {
-      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors , DiagonalInteractionFactors, DiagonalQValues);
       for (int l = 0; l < nbrVectors; ++l)
 	vDestinations[l][index] +=  Coefficient * vSources[l][index];
     }
@@ -1857,12 +1883,13 @@ inline void AbstractQHEOnLatticeHamiltonian::HermitianEvaluateMNTwoBodyAddMultip
       vDestination[index] += TmpSum;
     }	  
   // separated diagonal terms as these will be the general rule for contact interactions
+  Coefficient = 0.0;
   if (this->NbrDiagonalInteractionFactors > 0)
-    {
-      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors,
-					      DiagonalInteractionFactors, DiagonalQValues);
-      vDestination[index] +=  Coefficient * vSource[index];
-    }
+    Coefficient += particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
+  if (this->NbrRhoRhoInteractionFactors > 0)
+    Coefficient += particles->RhoRhoDiagonal(index, NbrRhoRhoInteractionFactors, RhoRhoInteractionFactors, RhoRhoQ12Values);
+  if (Coefficient != 0.0)
+    vDestination[index] +=  Coefficient * vSource[index];
 }
 
 inline void AbstractQHEOnLatticeHamiltonian::HermitianEvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, ComplexVector& vSource, ComplexVector& vDestination)
@@ -2054,9 +2081,13 @@ inline void AbstractQHEOnLatticeHamiltonian::HermitianEvaluateMNTwoBodyAddMultip
     }	  
   
   // separated diagonal terms as these will be the general rule for contact interactions
+  Coefficient = 0.0;
   if (this->NbrDiagonalInteractionFactors > 0)
+    Coefficient += particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
+  if (this->NbrRhoRhoInteractionFactors > 0)
+    Coefficient += particles->RhoRhoDiagonal(index, NbrRhoRhoInteractionFactors, RhoRhoInteractionFactors, RhoRhoQ12Values);
+  if (Coefficient != 0.0)
     {
-      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors , DiagonalInteractionFactors, DiagonalQValues);
       for (int l = 0; l < nbrVectors; ++l)
 	vDestinations[l][index] +=  Coefficient * vSources[l][index];
     }
@@ -2124,11 +2155,15 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyAddMultiplyCompone
     }
   
   // separated diagonal terms as these will be the general rule for contact interactions
-  if (NbrDiagonalInteractionFactors>0)
-	{
-	  Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
-	  vDestination[index] +=  Coefficient * vSource[index];
-	}
+  Coefficient = 0.0;
+  if (this->NbrDiagonalInteractionFactors > 0)
+    Coefficient += particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
+  if (this->NbrRhoRhoInteractionFactors > 0)
+    Coefficient += particles->RhoRhoDiagonal(index, NbrRhoRhoInteractionFactors, RhoRhoInteractionFactors, RhoRhoQ12Values);
+  if (Coefficient != 0.0)
+    {
+      vDestination[index] +=  Coefficient * vSource[index];
+    }
 }
 
 // core part of the AddMultiply method involving the one-body interaction, including loop on vector components
@@ -2309,9 +2344,13 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyAddMultiplyCompone
     }	  
   
   // separated diagonal terms as these will be the general rule for contact interactions
+  Coefficient = 0.0;
   if (this->NbrDiagonalInteractionFactors > 0)
+    Coefficient += particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
+  if (this->NbrRhoRhoInteractionFactors > 0)
+    Coefficient += particles->RhoRhoDiagonal(index, NbrRhoRhoInteractionFactors, RhoRhoInteractionFactors, RhoRhoQ12Values);
+  if (Coefficient != 0.0)
     {
-      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors , DiagonalInteractionFactors, DiagonalQValues);
       for (int l = 0; l < nbrVectors; ++l)
 	vDestinations[l][index] +=  Coefficient * vSources[l][index];
     }
@@ -2428,11 +2467,14 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyConjugateAddMultip
     }
   
   // separated diagonal terms as these will be the general rule for contact interactions
+  Coefficient = 0.0;
   if (this->NbrDiagonalInteractionFactors > 0)
+    Coefficient += particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
+  if (this->NbrRhoRhoInteractionFactors > 0)
+    Coefficient += particles->RhoRhoDiagonal(index, NbrRhoRhoInteractionFactors, RhoRhoInteractionFactors, RhoRhoQ12Values);
+  if (Coefficient != 0.0)
     {
-      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
-      if (Coefficient != 0.0)
-	vDestination[index] +=  Coefficient * vSource[index];
+      vDestination[index] +=  Coefficient * vSource[index];
     }
 }
 
@@ -2562,9 +2604,13 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyConjugateAddMultip
     }	  
   
   // separated diagonal terms as these will be the general rule for contact interactions
+  Coefficient = 0.0;
   if (this->NbrDiagonalInteractionFactors > 0)
+    Coefficient += particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
+  if (this->NbrRhoRhoInteractionFactors > 0)
+    Coefficient += particles->RhoRhoDiagonal(index, NbrRhoRhoInteractionFactors, RhoRhoInteractionFactors, RhoRhoQ12Values);
+  if (Coefficient != 0.0)
     {
-      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors , DiagonalInteractionFactors, DiagonalQValues);
       for (int l = 0; l < nbrVectors; ++l)
 	vDestinations[l][index] +=  Coefficient * vSources[l][index];
     }
@@ -2690,9 +2736,13 @@ inline void AbstractQHEOnLatticeHamiltonian::HermitianEvaluateMNTwoBodyAddMultip
     }
   
   // separated diagonal terms as these will be the general rule for contact interactions
+  Coefficient = 0.0;
   if (this->NbrDiagonalInteractionFactors > 0)
+    Coefficient += particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
+  if (this->NbrRhoRhoInteractionFactors > 0)
+    Coefficient += particles->RhoRhoDiagonal(index, NbrRhoRhoInteractionFactors, RhoRhoInteractionFactors, RhoRhoQ12Values);
+  if (Coefficient != 0.0)
     {
-      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
       vDestination[index] +=  Coefficient * vSource[index];
     }
 }
@@ -2837,9 +2887,13 @@ inline void AbstractQHEOnLatticeHamiltonian::HermitianEvaluateMNTwoBodyAddMultip
     }	  
   
   // separated diagonal terms as these will be the general rule for contact interactions
+  Coefficient = 0.0;
   if (this->NbrDiagonalInteractionFactors > 0)
+    Coefficient += particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
+  if (this->NbrRhoRhoInteractionFactors > 0)
+    Coefficient += particles->RhoRhoDiagonal(index, NbrRhoRhoInteractionFactors, RhoRhoInteractionFactors, RhoRhoQ12Values);
+  if (Coefficient != 0.0)
     {
-      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors , DiagonalInteractionFactors, DiagonalQValues);
       for (int l = 0; l < nbrVectors; ++l)
 	vDestinations[l][index] +=  Coefficient * vSources[l][index];
     }
@@ -2888,7 +2942,7 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 		      ++this->NbrComplexInteractionPerComponent[i - this->PrecalculationShift];
 		    }
 		}
-	    }	 	  
+	    }
 	}
     }
   else // intelligent storage
@@ -2931,11 +2985,12 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
     }	  
   
   // separated diagonal terms as these will be the general rule for contact interactions
-  if (this->NbrDiagonalInteractionFactors > 0)
-    {	  
+  
+  if (this->NbrDiagonalInteractionFactors > 0 || this->NbrRhoRhoInteractionFactors > 0)
+    {
+      // assume diagonal terms are non-zero:
       for (int i = firstComponent; i < lastComponent; ++i)
 	{
-	  Coefficient = particles->AdAdAADiagonal(i, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
 	  ++memory;
 	  ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];
 	}

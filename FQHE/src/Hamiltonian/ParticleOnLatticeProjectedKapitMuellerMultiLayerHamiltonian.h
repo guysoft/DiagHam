@@ -3,14 +3,14 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2008 Gunnar Moeller                    //
+//                  Copyright (C) 2001-2016 Gunnar Moeller                    //
 //                                                                            //
 //                                                                            //
 //                 class of quantum Hall hamiltonian associated               //
 //       with the Kapit Mueller Hamiltonian for two coupled layers            //
 //                with contact interactions on a lattice                      //
 //                                                                            //
-//                      last modification : 13/04/2016                        //
+//                      last modification : 13/10/2016                        //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,14 +30,15 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONLATTICEKAPITMUELLERBILAYERHAMILTONIAN_H
-#define PARTICLEONLATTICEKAPITMUELLERBILAYERHAMILTONIAN_H
+#ifndef PARTICLEONLATTICEPROJECTEDKAPITMUELLERMULTILAYERHAMILTONIAN_H
+#define PARTICLEONLATTICEPROJECTEDKAPITMUELLERMULTILAYERHAMILTONIAN_H
 
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnLattice.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "Hamiltonian/AbstractQHEOnLatticeHamiltonian.h"
+#include "Matrix/ComplexMatrix.h"
 
 #include <iostream>
 #include <cmath>
@@ -50,12 +51,15 @@ class MathematicaOutput;
 class KMBranchCut;
 
 
-class ParticleOnLatticeKapitMuellerMultiLayerHamiltonian : public AbstractQHEOnLatticeHamiltonian
+class ParticleOnLatticeProjectedKapitMuellerMultiLayerHamiltonian : public AbstractQHEOnLatticeHamiltonian
 {
  protected:
 
   // number of (identical) layers
   int NbrLayers;
+
+  // number of single particle states on which to project
+  int NbrProjectorStates;
 
   // strength of intra-layer on-site delta-interaction
   double ContactInteractionU;
@@ -72,18 +76,22 @@ class ParticleOnLatticeKapitMuellerMultiLayerHamiltonian : public AbstractQHEOnL
   // maximum range of single-particle hopping
   double Range;
 
-  // flag for reversed hopping
-  bool ReverseHopping;
-
-  // number of branch cuts
+  // parameters to pass on to EvaluateInteractionFactors:
   int NbrBranchCuts;
-
-  // array with information about branch cuts
-  KMBranchCut *BranchCuts;
-
-  // magnitude of the shift in branch cuts
+  double *BranchCoordinates;
   int *BranchShift;
 
+  // One body eigenstate basis associated to each point of the band structure, the array index corresponds to the linearized momentum
+  ComplexMatrix OneBodyBasis;
+
+  // energy spectrum of the single-particle problem; index is the state index (no momentum implemented)
+  double* EnergyLevels;
+
+  // flag indicating whether to apply flat-band projection
+  bool FlatBand;
+
+  // flag for reversed hopping
+  bool ReverseHopping;
 
  public:
 
@@ -92,8 +100,11 @@ class ParticleOnLatticeKapitMuellerMultiLayerHamiltonian : public AbstractQHEOnL
   //
   // particles = Hilbert space associated to the system
   // nbrParticles = number of particles
+  // numStates = number of single particle states to consider (projection to lowest numState SP states)
+  // flatBand = apply the flat-band projection for all kept single-particle states
   // lx = length of simulation cell in x-direction
   // ly = length of simulation cell in y-direction
+  // nbrLayers = number of layers to simulate
   // nbrFluxQuanta = number of flux quanta piercing the simulation cell
   // contactInteractionU = strength of intra-layer on-site delta interaction
   // contactInteractionW = strength of inter-layer on-site delta interaction
@@ -108,11 +119,11 @@ class ParticleOnLatticeKapitMuellerMultiLayerHamiltonian : public AbstractQHEOnL
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   // hermitianFlag = flag indicating whether to use hermitian symmetry
-  ParticleOnLatticeKapitMuellerMultiLayerHamiltonian(ParticleOnLattice* particles, int nbrParticles, int lx, int ly, int nbrFluxQuanta, double contactInteractionU, double contactInteractionW, bool reverseHopping, double deltaPotential, double randomPotential, double range, int nbrBranchCuts, double *branchCoordinates, int *branchShift, AbstractArchitecture* architecture, int nbrBody = 2, unsigned long memory = 0, char* precalculationFileName = 0, bool hermitianFlag = false);
+  ParticleOnLatticeProjectedKapitMuellerMultiLayerHamiltonian(ParticleOnLattice* particles, int nbrParticles, int numStates, bool flatBand, int lx, int ly, int nbrLayers, int nbrFluxQuanta, double contactInteractionU, double contactInteractionW, bool reverseHopping, double deltaPotential, double randomPotential, double range, int nbrBranchCuts, double *branchCoordinates, int *branchShift, AbstractArchitecture* architecture, int nbrBody = 2, unsigned long memory = 0, char* precalculationFileName = 0, bool hermitianFlag = false);
 
   // destructor
   //
-  ~ParticleOnLatticeKapitMuellerMultiLayerHamiltonian();
+  ~ParticleOnLatticeProjectedKapitMuellerMultiLayerHamiltonian();
 
   // clone hamiltonian without duplicating datas
   //
@@ -125,69 +136,21 @@ class ParticleOnLatticeKapitMuellerMultiLayerHamiltonian : public AbstractQHEOnL
   // Str = reference on output stream
   // H = Hamiltonian to print
   // return value = reference on output stream
-  friend ostream& operator << (ostream& Str, ParticleOnLatticeKapitMuellerMultiLayerHamiltonian& H);
+  friend ostream& operator << (ostream& Str, ParticleOnLatticeProjectedKapitMuellerMultiLayerHamiltonian& H);
 
   // Mathematica Output Stream overload
   //
   // Str = reference on Mathematica output stream
   // H = Hamiltonian to print
   // return value = reference on output stream
-  friend MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnLatticeKapitMuellerMultiLayerHamiltonian& H);
+  friend MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnLatticeProjectedKapitMuellerMultiLayerHamiltonian& H);
 
  private:
- 
   // evaluate all interaction factors
   //   
   void EvaluateInteractionFactors();
-
-  /// evaluate branch crossings for a link from site i to j
-  /// @param xi, yi, xj, yj coordinates of the initial (i) and final site (j)
-  /// @return overall shift for crossing any of the known branch cuts
-  int EvaluateBranchCrossings(int xi, int yi, int xj, int yj);
-
-  
-  // calculate hopping amplitude and phase for the Kapit-Mueller single-particle Hamiltonian
-  Complex KapitMuellerHopping(int xj, int yj, int xi, int yi);
-
-  Complex SumImagesForHoppings(int xj, int yj, int xi, int yi, int limit);
-
-  // calculate distance on lattice
-  double GetDistance(int dx, int dy) {return sqrt(dx*dx+dy*dy);}
-
+ 
 };
 
 
-inline Complex ParticleOnLatticeKapitMuellerMultiLayerHamiltonian::KapitMuellerHopping(int xj, int yj, int xi, int yi)
-{
-  int x = xj - xi;
-  int y = yj - yi;
-  int sgn = 1-2*((x + y + x*y) & 0x1);
-
-  double amplitude = sgn*std::exp(-0.5*M_PI*(1.0-this->FluxDensity)*((x*x + y*y)));
-  if (this->Particles->GetLandauGaugeAxis()=='y')
-    return Polar(amplitude, -M_PI * this->FluxDensity * (yj-yi) * (xj+xi) );
-  else if (this->Particles->GetLandauGaugeAxis()=='x')
-    return Polar(amplitude, -M_PI * this->FluxDensity *  (yj+yi) * (xj-xi) );
-  else
-    {
-      std::cerr << "Unknown Landau quantization axis"<<endl;
-      exit(1);
-    }
-}
-
-
-inline Complex ParticleOnLatticeKapitMuellerMultiLayerHamiltonian::SumImagesForHoppings(int xj, int yj, int xi, int yi, int images)
-{
-  Complex sum=0.0;
-  double GaugeX, GaugeY;
-  this->Particles->GetSolenoidFluxes(GaugeX, GaugeY);
-  for (int dX = -images; dX <= images; ++dX)
-    for (int dY = -images; dY <= images; ++dY)
-      {
-	sum+=Polar(-2.0*M_PI*this->FluxDensity*this->Lx*dX * yj + dX*GaugeX + dY*GaugeY) * this->KapitMuellerHopping(xj+dX*this->Lx, yj+dY*this->Ly, xi, yi);
-      }
-  std::cout << "JL( ("<<xj<<", "<<yj<<")<-("<<xi<<", "<<yi<<")="<<sum<<std::endl;
-  return sum;
-}
-
-#endif // PARTICLEONLATTICEKAPITMUELLERBILAYERHAMILTONIAN_H
+#endif // PARTICLEONLATTICEPROJECTEDKAPITMUELLERMULTILAYERHAMILTONIAN_H

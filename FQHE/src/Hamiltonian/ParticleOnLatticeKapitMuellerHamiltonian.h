@@ -121,6 +121,9 @@ class ParticleOnLatticeKapitMuellerHamiltonian : public AbstractQHEOnLatticeHami
   void EvaluateInteractionFactors();
   
   // calculate hopping amplitude and phase for the Kapit-Mueller single-particle Hamiltonian
+  // (xj, yj) coordinates of the final site
+  // (xi, yi) coordinates of the initial site
+  // return (complex) hopping strength
   Complex KapitMuellerHopping(int xj, int yj, int xi, int yi);
 
   Complex SumImagesForHoppings(int xj, int yj, int xi, int yi, int limit);
@@ -130,7 +133,10 @@ class ParticleOnLatticeKapitMuellerHamiltonian : public AbstractQHEOnLatticeHami
 
 };
 
-
+// calculate the hopping amplitude between a single pair of sites in the Kapit-Mueller model
+// (xj, yj) coordinates of the final site
+// (xi, yi) coordinates of the initial site
+// return (complex) hopping strength
 inline Complex ParticleOnLatticeKapitMuellerHamiltonian::KapitMuellerHopping(int xj, int yj, int xi, int yi)
 {
   int x = xj - xi;
@@ -150,6 +156,10 @@ inline Complex ParticleOnLatticeKapitMuellerHamiltonian::KapitMuellerHopping(int
 }
 
 
+// calculate the total hopping amplitude for the Kapit-Mueller model, including hoppings between all images of two sites in the simulation cell
+// (xj, yj) coordinates of the final site
+// (xi, yi) coordinates of the initial site
+// return (complex) hopping strength
 inline Complex ParticleOnLatticeKapitMuellerHamiltonian::SumImagesForHoppings(int xj, int yj, int xi, int yi, int images)
 {
   Complex sum=0.0;

@@ -235,78 +235,82 @@ int main(int argc, char** argv)
       if ((CorrelationFlag == true)||(AllOps == true))
 	{
 	  sprintf (OutputNameCorr, "%s.rho_rho.dat", OutputNameBase);
-	      File.open(OutputNameCorr, ios::binary | ios::out);
-	      File << "# density-density correlation for " << VectorFiles[i]<< endl;
-	      File << "# x\ty\tg"<< endl;
-	      ParticleOnLatticeOneBodyOperator Operator0 (Space, ReferenceSite, ReferenceSite);
-	      Complex Zero=Operator0.MatrixElement(State, State);
-	      for (int x = 0; x < Lx; ++x)
+	  File.open(OutputNameCorr, ios::binary | ios::out);
+	  File << "# density-density correlation for " << VectorFiles[i]<< endl;
+	  File << "# x\ty\tg"<< endl;
+	  ParticleOnLatticeOneBodyOperator Operator0 (Space, ReferenceSite, ReferenceSite);
+	  Complex Zero=Operator0.MatrixElement(State, State);
+	  for (int x = 0; x < Lx; ++x)
+	    {
+	      for (int y = 0; y < Ly; ++y)
 		{
-		  for (int y = 0; y < Ly; ++y)
+		  for (int Sub=0; Sub<NbrSubLattices; ++Sub)
 		    {
-		      for (int Sub=0; Sub<NbrSubLattices; ++Sub)
+		      int q=Space->EncodeQuantumNumber(x, y, Sub, Tmp);
+		      ParticleOnLatticeDensityDensityOperator Operator (Space, q, ReferenceSite);
+		      double ME;
+		      if (q==ReferenceSite)
+			ME = Real(Zero)*(Real(Zero)-1);
+		      else
 			{
-			  int q=Space->EncodeQuantumNumber(x, y, Sub, Tmp);
-			  ParticleOnLatticeDensityDensityOperator Operator (Space, q, ReferenceSite);
-			  double ME;
-			  if (q==ReferenceSite)
-			    ME = Real(Zero)*Real(Zero);
-			  else
-			    ME=Real(Operator.MatrixElement(State, State));
-			  double X,Y;
-			  if (GenericLattice)
-			    {
-			      CellPosition[0]=x;
-			      CellPosition[1]=y;
-			      SitePosition = Lattice->GetSitePosition(CellPosition,Sub);
-			      X=SitePosition[0];
-			      Y=SitePosition[1];
-			    }
-			  else
-			    {
-			      X=(double)x;
-			      Y=(double)y;
-			    }
-		      
-			  File << X << "\t" << Y << "\t" << ME << endl;
+			  ParticleOnLatticeOneBodyOperator Operator1 (Space, q, q);
+			  Complex One=Operator1.MatrixElement(State, State);
+			  ME=Real(Operator.MatrixElement(State, State))-Real(Zero)*Real(One);
 			}
+		      double X,Y;
+		      if (GenericLattice)
+			{
+			  CellPosition[0]=x;
+			  CellPosition[1]=y;
+			  SitePosition = Lattice->GetSitePosition(CellPosition,Sub);
+			  X=SitePosition[0];
+			  Y=SitePosition[1];
+			}
+		      else
+			{
+			  X=(double)x;
+			  Y=(double)y;
+			}
+		      
+		      File << X << "\t" << Y << "\t" << ME << endl;
 		    }
-		  if (Plot) File << endl;
 		}
-	      File.close();
+	      if (Plot) File << endl;
+	    }
+	  File.close();
 	}
       if ((DensityFlag == true)||(AllOps==true))
 	{
-	      sprintf (OutputNameCorr, "%s.rho.dat", OutputNameBase);
-	      File.open(OutputNameCorr, ios::binary | ios::out);
-	      File << "# density-profile for " << VectorFiles[i]<< endl;
-	      File << "# x\ty\tg"<< endl;
-	      for (int x = 0; x < Lx; ++x)
-		{
-		  for (int y = 0; y < Ly; ++y)
-		    for (int Sub=0; Sub<NbrSubLattices; ++Sub)
+	  sprintf (OutputNameCorr, "%s.rho.dat", OutputNameBase);
+	  File.open(OutputNameCorr, ios::binary | ios::out);
+	  File << "# density-profile for " << VectorFiles[i]<< endl;
+	  File << "# x\ty\tg"<< endl;
+	  for (int x = 0; x < Lx; ++x)
+	    {
+	      for (int y = 0; y < Ly; ++y)
+		for (int Sub=0; Sub<NbrSubLattices; ++Sub)
+		  {
+		    int q=Space->EncodeQuantumNumber(x, y, Sub, Tmp);
+		    ParticleOnLatticeOneBodyOperator Operator (Space, q, q);
+		    double X,Y;
+		    if (GenericLattice)
 		      {
-			int q=Space->EncodeQuantumNumber(x, y, Sub, Tmp);
-			ParticleOnLatticeOneBodyOperator Operator (Space, q, q);
-			double X,Y;
-			if (GenericLattice)
-			  {
-			    CellPosition[0]=x;
-			    CellPosition[1]=y;
-			    SitePosition = Lattice->GetSitePosition(CellPosition,Sub);
-			    X=SitePosition[0];
-			    Y=SitePosition[1];
-			  }
-			else
-			  {
-			    X=(double)x;
-			    Y=(double)y;
-			  }
-			File << X << "\t" << Y << "\t" << Real(Operator.MatrixElement(State, State)) << endl;		  
+			CellPosition[0]=x;
+			CellPosition[1]=y;
+			SitePosition = Lattice->GetSitePosition(CellPosition,Sub);
+			X=SitePosition[0];
+			Y=SitePosition[1];
 		      }
-		  if (Plot) File << endl;
-		}
-	      File.close();
+		    else
+		      {
+			X=(double)x;
+			Y=(double)y;
+		      }
+		    File << X << "\t" << Y << "\t" << Real(Operator.MatrixElement(State, State)) << endl;		  
+		  }
+	      if (Plot) File << endl;
+	    }
+	  File.close();
 	}
       if ((FluctuationFlag == true)||(AllOps==true))
 	{

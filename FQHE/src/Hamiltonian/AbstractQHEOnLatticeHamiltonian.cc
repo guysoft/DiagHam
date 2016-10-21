@@ -61,6 +61,8 @@ AbstractQHEOnLatticeHamiltonian::AbstractQHEOnLatticeHamiltonian()
   this->NbrQ12Indices=0;
   this->NbrRealInteractionPerComponent=0;
   this->NbrComplexInteractionPerComponent=0;
+  this->NbrDiagonalInteractionFactors=0;
+  this->NbrRhoRhoInteractionFactors=0;
   this->LoadBalancingArray=0;
   this->NbrBalancedTasks=0;
   this->FastMultiplicationStep=0;
@@ -136,6 +138,11 @@ void AbstractQHEOnLatticeHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hil
       delete [] this->DiagonalInteractionFactors;
       delete [] this->DiagonalQValues;
     }
+  if (this->NbrRhoRhoInteractionFactors>0)  
+    {
+      delete [] RhoRhoInteractionFactors;
+      delete [] RhoRhoQ12Values;
+    }
   this->Particles = (ParticleOnLattice*) hilbertSpace;
   this->HaveTestedForComplexMatrixElement=false;
   this->EvaluateInteractionFactors();
@@ -155,7 +162,7 @@ void AbstractQHEOnLatticeHamiltonian::SetNbrFluxQuanta(int nbrFluxQuanta)
       delete [] this->KineticQi;
       delete [] this->KineticQf;
     }
-  if (NbrInteractionFactors>0)
+  if (NbrInteractionFactors>0 && NbrQ12Indices==0)
     {
       delete [] this->InteractionFactors;
       delete [] this->Q1Value;
@@ -352,7 +359,7 @@ bool AbstractQHEOnLatticeHamiltonian::HermitianSymmetrizeInteractionFactors()
 	  M[0] = this->KineticQi[j];
 	  N[0] = this->KineticQf[j];
 	  Flags[j] = this->Particles->CheckOrder(M, N, 1);
-	  // cout << "M="<<M[0]<<", N="<<N[0]<<", order: "<<Flags[j]<<" element: "<<HoppingTerms[j]<<endl;
+	  cout << "M="<<M[0]<<", N="<<N[0]<<", order: "<<Flags[j]<<" element: "<<HoppingTerms[j]<<endl;
 	  if (Flags[j]>0)
 	    ++TmpNbrHoppingTerms;
 	  else if (Flags[j]==0)
@@ -376,6 +383,7 @@ bool AbstractQHEOnLatticeHamiltonian::HermitianSymmetrizeInteractionFactors()
       delete [] this->HoppingTerms;
       delete [] this->KineticQi;
       delete [] this->KineticQf;
+      delete [] Flags;
       this->HoppingTerms = TmpHoppingTerms;
       this->KineticQi = TmpQi;
       this->KineticQf = TmpQf; 
@@ -523,6 +531,7 @@ bool AbstractQHEOnLatticeHamiltonian::HermitianSymmetrizeInteractionFactors()
 	      delete [] OldQ3PerQ12;
 	      delete [] OldQ4PerQ12;
 	    }
+	  delete [] Q34Flags;
 	}
       if (this->NbrQ12Indices!=TmpNbrQ12Values)
 	{
@@ -1479,6 +1488,7 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMult
 	vDestinations[l][k] += TmpSum[l] + this->HamiltonianShift * Coefficient2[l];
     }
   delete [] Coefficient2;
+  delete [] TmpSum;
   return vDestinations;
 }
 

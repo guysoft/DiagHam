@@ -45,7 +45,7 @@ using std::endl;
 using std::ostream;
 
 // switch for debugging output:
-#define DEBUG_OUTPUT
+//#define DEBUG_OUTPUT
 
 
 // class for storing information about branch cuts
@@ -133,21 +133,23 @@ public:
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 // hermitianFlag = flag indicating whether to use hermitian symmetry
-ParticleOnLatticeKapitMuellerMultiLayerHamiltonian::ParticleOnLatticeKapitMuellerMultiLayerHamiltonian(ParticleOnLattice* particles, int nbrParticles, int lx, int ly, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, double deltaPotential, double randomPotential, double range, int nbrBranchCuts, double *branchCoordinates, int *branchShift, AbstractArchitecture* architecture, int nbrBody, unsigned long memory, char* precalculationFileName, bool hermitianFlag)
+ParticleOnLatticeKapitMuellerMultiLayerHamiltonian::ParticleOnLatticeKapitMuellerMultiLayerHamiltonian(ParticleOnLattice* particles, int nbrParticles, int lx, int ly, int nbrFluxQuanta, double contactInteractionU, double contactInteractionW, bool reverseHopping, double deltaPotential, double randomPotential, double range, int nbrBranchCuts, double *branchCoordinates, int *branchShift, AbstractArchitecture* architecture, int nbrBody, unsigned long memory, char* precalculationFileName, bool hermitianFlag)
 {
   this->Particles=particles;
   this->NbrParticles=nbrParticles;
   this->Lx=lx;
   this->Ly=ly;
-  this->NbrSublattices=this->Particles->GetNbrSublattices();
+  this->NbrLayers=this->Particles->GetNbrSublattices();
+  this->NbrSublattices=1;
   this->HaveKySymmetry=false;
   this->KyMax=0;  
   this->NbrCells=lx*ly;
-  this->NbrSites=NbrCells*NbrSublattices;
+  this->NbrSites=NbrCells*NbrLayers;
   this->NbrFluxQuanta=nbrFluxQuanta;
   this->HamiltonianShift=0.0;
   this->FluxDensity=((double)nbrFluxQuanta)/NbrCells;
   this->ContactInteractionU=contactInteractionU;
+  this->ContactInteractionW=contactInteractionW;
   this->ReverseHopping = reverseHopping;
   this->DeltaPotential = deltaPotential;
   this->RandomPotential = randomPotential;
@@ -252,10 +254,15 @@ ParticleOnLatticeKapitMuellerMultiLayerHamiltonian::~ParticleOnLatticeKapitMuell
       delete [] this->Q2Value;
       
     }
-  if (NbrDiagonalInteractionFactors>0)
+  if (this->NbrDiagonalInteractionFactors>0)
     {
       delete [] this->DiagonalInteractionFactors;
       delete [] this->DiagonalQValues;
+    }
+  if (this->NbrRhoRhoInteractionFactors>0)
+    {
+      delete [] this->RhoRhoQ12Values;
+      delete [] this->RhoRhoInteractionFactors;
     }
   if (this->NbrBranchCuts>0)
     {
@@ -294,8 +301,11 @@ void ParticleOnLatticeKapitMuellerMultiLayerHamiltonian::EvaluateInteractionFact
 {  
   // hopping terms are present independent of statistics:
   this->NbrHoppingTerms=this->NbrSites*this->NbrSites;
+  cout << "this->DeltaPotential="<<this->DeltaPotential<<", this->RandomPotential="<<this->RandomPotential<<endl;
+  cout << "this->NbrSites"<<this->NbrSites<<endl;
+  cout << "NbrHoppingTerms="<<NbrHoppingTerms<<endl;
   if (this->DeltaPotential != 0.0) ++this->NbrHoppingTerms;
-  if (this->RandomPotential != 0.0) this->NbrHoppingTerms+=this->NbrSites;  
+  if (this->RandomPotential != 0.0) this->NbrHoppingTerms+=this->NbrSites;
   this->HoppingTerms = new Complex[NbrHoppingTerms];
   this->KineticQi = new int[NbrHoppingTerms];
   this->KineticQf = new int[NbrHoppingTerms];
@@ -306,7 +316,7 @@ void ParticleOnLatticeKapitMuellerMultiLayerHamiltonian::EvaluateInteractionFact
 
   // manual parameters, for now
   int images = 50; // number of images of the simulation cell
-  int maxRange = std::sqrt(23./(1.0-this->FluxDensity)); // larger exponents will yields numerical zero
+  int maxRange = std::sqrt(23./(1.0-this->FluxDensity)); // larger exponents will yield numerical zero
   if (this->Range > maxRange)
     {
       cout << "Testing: range not reduced to new maxRange="<<maxRange<<endl;
@@ -316,14 +326,14 @@ void ParticleOnLatticeKapitMuellerMultiLayerHamiltonian::EvaluateInteractionFact
   Complex amplitude;
   //loop over initial sites (i,j)
   
-  int *qi = new int[this->NbrSublattices];
-  int *qf = new int[this->NbrSublattices];
+  int *qi = new int[this->NbrLayers];
+  int *qf = new int[this->NbrLayers];
 
   for (int i=0; i<Lx; ++i)
     {
       for (int j=0; j<Ly; ++j)
 	{
-	  for (int s=0; s<this->NbrSublattices; ++s)
+	  for (int s=0; s<this->NbrLayers; ++s)
 	    qi[s] = Particles->EncodeQuantumNumber(i, j, s, TranslationPhase);
 	      	      
 	  // have long-range hopping, so sum over all possible final sites (k,l)
@@ -331,11 +341,11 @@ void ParticleOnLatticeKapitMuellerMultiLayerHamiltonian::EvaluateInteractionFact
 	    {
 	      for (int l=0; l<Ly; ++l)
 		{		  
-		  for (int s=0; s<this->NbrSublattices; ++s)
+		  for (int s=0; s<this->NbrLayers; ++s)
 		    qf[s] = Particles->EncodeQuantumNumber(k, l, s, TranslationPhase);
 		  
 		  
-		  ComplexMatrix sumHopping(this->NbrSublattices, this->NbrSublattices, true);
+		  ComplexMatrix sumHopping(this->NbrLayers, this->NbrLayers, true);
 		  for (int dX = -images; dX <= images; ++dX)
 		    for (int dY = -images; dY <= images; ++dY)
 		      {
@@ -350,14 +360,14 @@ void ParticleOnLatticeKapitMuellerMultiLayerHamiltonian::EvaluateInteractionFact
 			      {
 				// check for any branch cuts being crossed
 				int shiftModulo = this->EvaluateBranchCrossings(i, j, k+dX*Lx, l+dY*Ly);
-				while (shiftModulo<0) shiftModulo+=this->NbrSublattices;
-				shiftModulo %= this->NbrSublattices;		    
+				while (shiftModulo<0) shiftModulo+=this->NbrLayers;
+				shiftModulo %= this->NbrLayers;		    
 
-				for (int si=0; si<this->NbrSublattices; ++si)
+				for (int si=0; si<this->NbrLayers; ++si)
 				  {
 				    int sf = (si+shiftModulo);
-				    while (sf<0) sf+=this->NbrSublattices;
-				    sf %= this->NbrSublattices;		    
+				    while (sf<0) sf+=this->NbrLayers;
+				    sf %= this->NbrLayers;		    
 				    sumHopping.AddToMatrixElement(si, sf, amplitude);
 				  }
 #ifdef DEBUG_OUTPUT
@@ -373,14 +383,14 @@ void ParticleOnLatticeKapitMuellerMultiLayerHamiltonian::EvaluateInteractionFact
 		  //if (Norm(sumHopping[0][0])>1e-15)
 		  {
 		    cout << "H[("<<i<<", "<<j<<")->("<<k<<", "<<l<<")]= ";
-		    for (int si=0; si<this->NbrSublattices; ++si)
-		      for (int sf=0; sf<this->NbrSublattices; ++sf)
+		    for (int si=0; si<this->NbrLayers; ++si)
+		      for (int sf=0; sf<this->NbrLayers; ++sf)
 			cout << sumHopping[si][sf]<<", ";
 		    cout<<" tP="<<TranslationPhase<<endl;
 		  }
 #endif
-		  for (int si=0; si<this->NbrSublattices; ++si)
-		    for (int sf=0; sf<this->NbrSublattices; ++sf)
+		  for (int si=0; si<this->NbrLayers; ++si)
+		    for (int sf=0; sf<this->NbrLayers; ++sf)
 		      {
 			// only take into account terms with non-zero magnitude
 			sumHopping.GetMatrixElement(si, sf, amplitude);
@@ -465,6 +475,36 @@ void ParticleOnLatticeKapitMuellerMultiLayerHamiltonian::EvaluateInteractionFact
   else // no such interactions
     {
       NbrDiagonalInteractionFactors=0;
+    }
+  
+  // inter-layer interactions
+  if (this->NbrLayers>0 && this->ContactInteractionW!=0.0)
+    {
+      Complex translationPhase;
+      this->NbrRhoRhoInteractionFactors = this->NbrCells;
+      this->RhoRhoQ12Values = new int[2*this->NbrRhoRhoInteractionFactors];
+      this->RhoRhoInteractionFactors = new double[this->NbrRhoRhoInteractionFactors];
+      cout << "adding interlayer interaction terms"<<endl;
+      int index=0;
+      for (int i=0; i<this->Lx; ++i)
+	for (int j=0; j<this->Ly; ++j)
+	  {
+	    for (int s=0; s<this->NbrLayers; ++s)
+	      {
+		int q1 = this->Particles->EncodeQuantumNumber(i, j, s, translationPhase);
+		for (int s2=s+1; s2<this->NbrLayers; ++s2)
+		  {
+		    int q2 = this->Particles->EncodeQuantumNumber(i, j, s2, translationPhase);
+		    this->RhoRhoQ12Values[index<<1]=q1;
+		    this->RhoRhoQ12Values[(index<<1)+1]=q2;
+		    this->RhoRhoInteractionFactors[index++]=this->ContactInteractionW;
+		  }
+	      }
+	  }
+    }
+  else // no such interactions
+    {
+      this->NbrRhoRhoInteractionFactors=0;
     }
 }
 
