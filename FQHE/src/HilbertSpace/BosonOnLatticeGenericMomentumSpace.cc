@@ -459,7 +459,7 @@ int BosonOnLatticeGenericMomentumSpace::AdAdAA (int index, int q1, int q2, int r
     {
       for (int i = this->TemporaryStateHighestBit + 1; i <= q2; ++i)
 	this->TemporaryState[i] = 0ul;
-      TemporaryStateHighestBit = q2;      
+      TemporaryStateHighestBit = q2;
     }
   ++this->TemporaryState[q2];
   coefficient *= this->TemporaryState[q2];

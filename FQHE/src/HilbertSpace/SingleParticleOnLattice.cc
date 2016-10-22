@@ -369,6 +369,7 @@ int SingleParticleOnLattice::EncodeQuantumNumber(int posx, int posy, int sublatt
   int numXTranslations=0, numYTranslations=0;  
   while (posx<0)
     {
+      if (posx>0) cout << "Error in EQN"<<endl;
       posx+=this->Lx;
       ++numXTranslations;      
     }
@@ -376,6 +377,7 @@ int SingleParticleOnLattice::EncodeQuantumNumber(int posx, int posy, int sublatt
     {
       posx-=this->Lx;
       --numXTranslations;
+      if (posx<0) cout << "Error in EQN"<<endl;
     }
   while (posy<0)
     {

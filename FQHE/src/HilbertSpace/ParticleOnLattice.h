@@ -213,12 +213,20 @@ class ParticleOnLattice :  public AbstractQHEParticle
   // apply \sum q U_q a^+_q a_q ( a^+_q a_q - 1 )
   // index = index of the state on which the operator has to be applied
   // nbrInteraction = number of q-values in sum, if equals NbrStates, ordered sequence 0,...,NbrStates-1 assumed
-  // qValues = array of quantum numbers where an interaction is present
   // interactionPerQ = coefficient U_q of the interaction
+  // qValues = array of quantum numbers where an interaction is present
   //
   virtual double AdAdAADiagonal(int index, int nbrInteraction, double *interactionPerQ, int *qValues);
+
+  // calculate (possibly non-local) density-density interactions \sum q V_{q1,q2} : n_q1 n_q2 :
+  // index = index of the state on which the operator has to be applied
+  // nbrInteraction = number of q-values in sum
+  // interactionPerQ12 = coefficient V_(q1, q2) of the interaction
+  // q12Values = array of quantum numbers of the orbitals in tuples (q1, q2), 2*nbrInteraction entries in total
+  //
+  virtual double RhoRhoDiagonal(int index, int nbrInteraction, double *interactionPerQ12, int *q12Values);
 	
-	  // apply \sum q U_q a^+_q a_q ( a^+_q a_q - 1 )
+  // apply \sum q U_q a^+_q a_q ( a^+_q a_q - 1 )
   // index = index of the state on which the operator has to be applied
   // nbrInteraction = number of q-values in sum, if equals NbrStates, ordered sequence 0,...,NbrStates-1 assumed
   // qValues = array of quantum numbers where an interaction is present

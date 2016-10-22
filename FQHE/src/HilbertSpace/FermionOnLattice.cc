@@ -61,19 +61,20 @@ FermionOnLattice::FermionOnLattice()
 // memory = memory that can be allocated for precalculations
 // solenoidX = solenoid flux through lattice in x-direction (in units of pi)
 // solenoidY = solenoid flux through lattice in y-direction (in units of pi)
+// nbrSublattices = number of sublattices to create
 // verbose = flag indicating if any output is wanted
-FermionOnLattice::FermionOnLattice (int nbrFermions, int lx, int ly, int nbrFluxQuanta, unsigned long memory, double solenoidX, double solenoidY, bool verbose)
+FermionOnLattice::FermionOnLattice(int nbrFermions, int lx, int ly, int nbrFluxQuanta, unsigned long memory, double solenoidX, double solenoidY, int nbrSublattices, bool verbose)
 {
   this->NbrFermions = nbrFermions;
   this->Lx = lx;
   this->Ly = ly;
-  this->NbrSublattices = 1;  
-  this->NbrStates = Lx*Ly;
+  this->NbrSublattices = nbrSublattices;  
+  this->NbrStates = Lx*Ly*nbrSublattices;
 
 #ifdef __64_BITS__  
-  if (this->NbrStates>64)    
+  if (this->NbrStates>64)
 #else
-  if (this->NbrStates>32)    
+  if (this->NbrStates>32)
 #endif
     {
       cout<<"FermionOnLattice: Cannot represent the "<<NbrStates<<" states requested in a single word"<<endl;
@@ -442,7 +443,7 @@ int FermionOnLattice::AdAdAA (int index, int m1, int m2, int n1, int n2, double 
 #endif  
   TmpState &= ~(((unsigned long) (0x1)) << n2);
   if (NewHighestBit == n2)
-    while ((TmpState >> NewHighestBit) == 0)
+    while ((TmpState >> NewHighestBit) == 0 && NewHighestBit>0)
       --NewHighestBit;
   coefficient *= this->SignLookUpTable[(TmpState >> n1) & this->SignLookUpTableMask[n1]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
@@ -452,7 +453,7 @@ int FermionOnLattice::AdAdAA (int index, int m1, int m2, int n1, int n2, double 
 #endif
   TmpState &= ~(((unsigned long) (0x1)) << n1);
   if (NewHighestBit == n1)
-    while ((TmpState >> NewHighestBit) == 0)
+    while ((TmpState >> NewHighestBit) == 0 && NewHighestBit>0)
       --NewHighestBit;
   // create particle at m2
   if ((TmpState & (((unsigned long) (0x1)) << m2))!= 0)
@@ -509,7 +510,7 @@ double FermionOnLattice::AA (int index, int n1, int n2)
 {
   this->ProdATemporaryState = this->StateDescription[index];
 
-  if (((ProdATemporaryState & (((unsigned long) (0x1)) << n1)) == 0) 
+  if (((ProdATemporaryState & (((unsigned long) (0x1)) << n1)) == 0)
       || ((ProdATemporaryState & (((unsigned long) (0x1)) << n2)) == 0) || (n1 == n2))
     return 0.0;
 
