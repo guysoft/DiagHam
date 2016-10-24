@@ -186,6 +186,7 @@ int main(int argc, char** argv)
   int* TwoLayerUpLzValues = new int [TotalNbrLevels];
   int* TwoLayerDownIndices = new int [TotalNbrLevels];
   double* TwoLayerEnergies = new double [TotalNbrLevels];
+  double* TwoLayerSortedEnergies = new double [TotalNbrLevels];
   double* TwoLayerBareEnergies = new double [TotalNbrLevels];
   TotalNbrLevels = 0;
   double ChargingEnergy = Manager.GetDouble("charging-energy");
@@ -215,6 +216,7 @@ int main(int argc, char** argv)
 			  for (int j = 0; j < NbrEnergies[DownLayerNbrParticles][DownLayerLzSector]; ++j)
 			    {
 			      TwoLayerEnergies[TotalNbrLevels] = Energies[UpLayerNbrParticles][UpLayerLzSector][i] + Energies[DownLayerNbrParticles][DownLayerLzSector][j] + TmpEnergyShift;
+			      TwoLayerSortedEnergies[TotalNbrLevels] = TwoLayerEnergies[TotalNbrLevels];
 			      TwoLayerBareEnergies[TotalNbrLevels] = Energies[UpLayerNbrParticles][UpLayerLzSector][i] + Energies[DownLayerNbrParticles][DownLayerLzSector][j];
 			      TwoLayerNbrParticles[TotalNbrLevels] = TmpNbrParticles;
 			      TwoLayerIndices[TotalNbrLevels] = TotalNbrLevels;
@@ -277,7 +279,8 @@ int main(int argc, char** argv)
     }
 
 
-  SortArrayUpOrdering<int>(TwoLayerEnergies, TwoLayerIndices, TotalNbrLevels);
+  SortArrayUpOrdering<int>(TwoLayerSortedEnergies, TwoLayerIndices, TotalNbrLevels);
+
   if (Manager.GetBoolean("write-fullspectrum"))
     {
       char* OutputFileName = ReplaceString(TmpOutputFileName, ".dat", "_fullspectrum.dat");
@@ -292,10 +295,11 @@ int main(int argc, char** argv)
 	  int DownLayerLzValue = TwoLayerUpLzValues[TwoLayerIndices[i]] - TwoLayerLzSector;
 	  File << TwoLayerNbrParticles[TwoLayerIndices[i]] << " " << TwoLayerSzSector << " " << TwoLayerLzSector
 	       << " " << UpLayerNbrParticles << " " << DownLayerNbrParticles << " " 
-	       << TwoLayerUpLzValues[TwoLayerIndices[i]] << " " << DownLayerLzValue << " " << TwoLayerEnergies[i] << endl;
+	       << TwoLayerUpLzValues[TwoLayerIndices[i]] << " " << DownLayerLzValue << " " << TwoLayerEnergies[TwoLayerIndices[i]] << endl;
 	}     
       File.close();
     }
+
   int EffectiveSubspaceDimension = Manager.GetInteger("nbr-states");
   double Error = Manager.GetDouble("degeneracy-error");
   if (EffectiveSubspaceDimension >= TotalNbrLevels)
@@ -309,6 +313,13 @@ int main(int argc, char** argv)
 	  --EffectiveSubspaceDimension;
 	}
     }
+  int* TmpTwoLayerNbrParticles = new int [EffectiveSubspaceDimension];
+  for (int i = 0; i < EffectiveSubspaceDimension; ++i)
+    {
+      TmpTwoLayerNbrParticles[i] = TwoLayerNbrParticles[TwoLayerIndices[i]];
+    }
+  SortArrayDownOrdering<int>(TmpTwoLayerNbrParticles, TwoLayerIndices, EffectiveSubspaceDimension);
+  delete[] TmpTwoLayerNbrParticles;
   
   int** LargestUsedEigenstate = new int* [MaxNbrParticlesPerLayer + 1];
   for (int i = 0; i <= MaxNbrParticlesPerLayer; ++i)
@@ -375,7 +386,7 @@ int main(int argc, char** argv)
       int DownLayerLzValue = TwoLayerUpLzValues[TwoLayerIndices[i]] - TwoLayerLzSector;
       File << TwoLayerNbrParticles[TwoLayerIndices[i]] << " " << TwoLayerSzSector << " " << TwoLayerLzSector
 	   << " " << UpLayerNbrParticles << " " << DownLayerNbrParticles << " " 
-	   << TwoLayerUpLzValues[TwoLayerIndices[i]] << " " << DownLayerLzValue << " " << TwoLayerEnergies[i] << " " << TwoLayerBareEnergies[TwoLayerIndices[i]]
+	   << TwoLayerUpLzValues[TwoLayerIndices[i]] << " " << DownLayerLzValue << " " << TwoLayerEnergies[TwoLayerIndices[i]] << " " << TwoLayerBareEnergies[TwoLayerIndices[i]]
 	   << " " << UsedEigenstateGlobalIndex[UpLayerNbrParticles][(TwoLayerUpLzValues[TwoLayerIndices[i]] - MinLzValues[UpLayerNbrParticles]) / 2][TwoLayerUpIndices[TwoLayerIndices[i]]]
 	   << " " << UsedEigenstateGlobalIndex[DownLayerNbrParticles][(DownLayerLzValue - MinLzValues[DownLayerNbrParticles]) / 2][TwoLayerDownIndices[TwoLayerIndices[i]]] << endl;
     }
