@@ -38,6 +38,10 @@
 #include "HilbertSpace/FermionOnSphereWithSpinAllSzLzSymmetry.h"
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
 #include "HilbertSpace/BosonOnSphereWithSpinAllSz.h"
+#include "HilbertSpace/BosonOnSphereWithSU2Spin.h"
+#include "HilbertSpace/BosonOnSphereWithSU2SpinSzSymmetry.h"
+#include "HilbertSpace/BosonOnSphereWithSU2SpinLzSymmetry.h"
+#include "HilbertSpace/BosonOnSphereWithSU2SpinLzSzSymmetry.h"
 
 #include "Hamiltonian/ParticleOnSphereWithSpinL2Hamiltonian.h"
 #include "Hamiltonian/ParticleOnSphereWithSpinS2Hamiltonian.h"
@@ -82,6 +86,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "statistics", "particle statistics (bosons or fermions, try to guess it from file name if not defined)");
   (*SystemGroup) += new BooleanOption  ('\n', "no-spin", "do not compute the S^2 value of the state");
   (*SystemGroup) += new BooleanOption  ('\n', "no-szparity", "do not compute the parity under the Sz<->-Sz symmetry");
+  (*SystemGroup) += new BooleanOption  ('\n', "use-alt", "use alternative Hilbert space for  bosonic states");
 //  (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
 //  (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
 //  (*SystemGroup) += new SingleStringOption  ('\n', "reference-state", "reference state to start the Haldane algorithm from (can be laughlin, pfaffian or readrezayi3)", "laughlin");
@@ -340,7 +345,44 @@ int main(int argc, char** argv)
 	    Space = new BosonOnSphereWithSpinAllSz (NbrParticles, TotalLz, LzMax, MemorySpace);
 	}
       else
-	Space = new BosonOnSphereWithSpin(NbrParticles, TotalLz, LzMax, TotalSz);
+	{
+	  if (Manager.GetBoolean("use-alt") == false)
+	    {
+	      Space = new BosonOnSphereWithSpin (NbrParticles, TotalLz, LzMax, TotalSz);
+	    }
+	  else
+	    {
+	      int LzSymmetry = 0;
+	      int SzSymmetry = 0;
+	      if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(StateFileName, NbrParticles, LzMax, TotalLz, TotalSz, LzSymmetry, SzSymmetry, FermionFlag) == false)
+		{
+		  cout << "error while retrieving system parameters from file name " << StateFileName << endl;
+		  return -1;
+		}
+	      if (LzSymmetry == 0)
+		{
+		  if (SzSymmetry == 0)
+		    {		      
+		      Space = new BosonOnSphereWithSU2Spin (NbrParticles, TotalLz, LzMax, TotalSz);
+		    }
+		  else
+		    {		      
+		      Space = new BosonOnSphereWithSU2SpinSzSymmetry (NbrParticles, TotalLz, LzMax, TotalSz, (SzSymmetry == -1));
+		    }		  
+		}
+	      else
+		{
+		  if (SzSymmetry == 0)
+		    {		      
+		      Space = new BosonOnSphereWithSU2SpinLzSymmetry (NbrParticles, LzMax, TotalSz, (LzSymmetry == -1));
+		    }
+		  else
+		    {		      
+		      Space = new BosonOnSphereWithSU2SpinLzSzSymmetry (NbrParticles, LzMax, TotalSz, (SzSymmetry == -1), (LzSymmetry == -1));
+		    }
+		}
+	    }
+	}
     }
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   

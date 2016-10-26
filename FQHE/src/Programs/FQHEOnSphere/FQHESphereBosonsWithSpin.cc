@@ -338,7 +338,7 @@ int main(int argc, char** argv)
 	{
 	  char* TmpName = RemoveExtensionFromFileName(OutputName, ".dat");
 	  EigenvectorName = new char [32 + strlen(TmpName)];
-	  sprintf (EigenvectorName, "%s_lz_%d", TmpName, L * LSign);
+	  sprintf (EigenvectorName, "%s_%d", TmpName, L * LSign);
 	  delete[] TmpName;
 	}
       QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L*LSign, Shift, OutputName, FirstRun, EigenvectorName, LzMax);
