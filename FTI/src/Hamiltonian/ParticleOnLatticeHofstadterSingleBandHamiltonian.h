@@ -129,6 +129,19 @@ class ParticleOnLatticeHofstadterSingleBandHamiltonian : public ParticleOnLattic
   // return value = corresponding matrix element
   Complex ComputeEmbeddingForTwoBodyOperator(int s1, int s2, int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
 
+  // compute the matrix element for on-site two body interaction involving sites on generic sublattic 
+  //
+  // dRx = number of unit vector translations along x-direction
+  // dRy = number of unit vector translations along y-direction
+  // kx2 = second creation momentum along x for the translated site
+  // ky2 = second creation momentum along y for the translated site
+  // kx3 = first annihilation momentum along x for the translated site
+  // ky3 = first annihilation momentum along y for the translated site
+  //
+  // return value = corresponding matrix element
+  Complex ComputeBlochPhases(int dRx, int dRy, int kx2, int ky2, int kx3, int ky3);
+
+
   // compute the transformation basis contribution to the interaction matrix element
   // 
   // oneBodyBasis = array of transformation basis matrices
