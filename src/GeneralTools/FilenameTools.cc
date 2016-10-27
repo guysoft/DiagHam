@@ -712,7 +712,7 @@ bool FilenameBooleanSearch (bool& OutputBool, char* MyFilename, const char* Sear
 // SearchString = string to search in file name
 // return = true, if the search string was located and a character is returned
 // 
-bool FilenameCharacterSearch (char& OutputChar, char* MyFilename, const char* SearchString)
+bool FilenameCharacterSearch (char& OutputChar, char* MyFilename,  char const* SearchString)
 {
   if (OutputChar==0)
     {
@@ -739,13 +739,15 @@ bool FilenameCharacterSearch (char& OutputChar, char* MyFilename, const char* Se
 //
 bool FilenamePenultimateDotIntegerSearch (int& OutputInt, char* MyFilename)
 {
-  if(OutputInt==0)
+  if (OutputInt==0)
     {
-      char* MyFilenameTmp = new char[strlen(MyFilename)+1]; //create a dynamic-sized array on the heap
+      int len=strlen(MyFilename);
+      char* MyFilenameTmp = new char[len+1]; //create a dynamic-sized array on the heap
       strcpy(MyFilenameTmp, MyFilename);
 
       char* d1=NULL; char* d2=NULL;
-      for(char* c = MyFilenameTmp; *c; c++) //go through each character, terminate when you reach the end of the string (i.e. the null character)
+      int i=0;
+      for (char* c = MyFilenameTmp; *c != '\0'&& i <= len; c++, i++) //go through each character, terminate when you reach the end of the string (i.e. the null character)
 	{
 	  if(*c == '.')
 	    {
@@ -756,7 +758,7 @@ bool FilenamePenultimateDotIntegerSearch (int& OutputInt, char* MyFilename)
 	
       OutputInt = atoi(d1+1); //position after the penultimate dot
 
-      d2 = '\0'; //terminate the stripped char array (e.g. without the ".0.vec" ending)
+      *d2 = '\0'; //terminate the stripped char array (e.g. without the ".0.vec" ending)
 	
       delete[] MyFilenameTmp; //delete array copy from heap
     }

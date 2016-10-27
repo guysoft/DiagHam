@@ -189,7 +189,7 @@ bool FilenameBooleanSearch (bool& OutputBool, char* MyFilename, const char* Sear
 // MyFilename = file name to examine
 // SearchString = string to search in file name
 // return value = true if the search string was located and a character is returned
-bool FilenameCharacterSearch (char& OutputChar, char* MyFilename, const char* SearchString);
+bool FilenameCharacterSearch (char& OutputChar, char* MyFilename, char const* SearchString);
 
 // search for occurances of "fermion" and "boson" in a file name, then report false (i.e. bosons), true (i.e. fermions), or cannot be determined from file name
 //
