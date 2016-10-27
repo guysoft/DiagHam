@@ -269,14 +269,14 @@ int main(int argc, char** argv)
 	      if ( Manager.GetBoolean("hardcore") == false)
 		lenFilePrefix += sprintf (FilePrefix, "%s_realspace_hofstadter_X_%d_Y_%d_q_%d", StatisticPrefix, UnitCellX, UnitCellY, FluxPerCell);
 	      else
-		lenFilePrefix += sprintf (FilePrefix, "%s_realspace_hardcore_hofstadter_X_%d_Y_%d_q_%d", StatisticPrefix, UnitCellX, UnitCellY, FluxPerCell);
+		lenFilePrefix += sprintf (FilePrefix, "%s_realspace_gutzwiller_hofstadter_X_%d_Y_%d_q_%d", StatisticPrefix, UnitCellX, UnitCellY, FluxPerCell);
 	    }
 	  else
 	    {
 	      if ( Manager.GetBoolean("hardcore") == false)
 		lenFilePrefix += sprintf (FilePrefix, "%s_realspace_notranslation_hofstadter_X_%d_Y_%d_q_%d", StatisticPrefix, UnitCellX, UnitCellY, FluxPerCell);
 	      else
-		lenFilePrefix += sprintf (FilePrefix, "%s_realspace_notranslation_hardcore_hofstadter_X_%d_Y_%d_q_%d", StatisticPrefix, UnitCellX, UnitCellY, FluxPerCell);
+		lenFilePrefix += sprintf (FilePrefix, "%s_realspace_notranslation_gutzwiller_hofstadter_X_%d_Y_%d_q_%d", StatisticPrefix, UnitCellX, UnitCellY, FluxPerCell);
 	    }
 	}
       

@@ -1,11 +1,20 @@
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpace.h"
+
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd1DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd1DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd1DTranslation.h"
+
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslationLong.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong.h"
+
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
+
+
 #include "HilbertSpace/FermionOnLatticeRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeRealSpaceFixedParity.h"
 #include "HilbertSpace/FermionOnLatticeRealSpaceAnd2DTranslation.h"
@@ -219,11 +228,26 @@ int main(int argc, char** argv)
 		    {
 		      unsigned long memory = 10000000;
 		      if (Manager.GetBoolean("conserve-sz") == false)
-			Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("max-xmomentum"),
+			{
+			  Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("max-xmomentum"),
 										    Manager.GetInteger("y-momentum"), Manager.GetInteger("max-ymomentum"));
+			}
 		      else
-			Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation(NbrParticles, TotalSz, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("max-xmomentum"),
-										    Manager.GetInteger("y-momentum"), Manager.GetInteger("max-ymomentum"), memory);
+			{
+			  if (Manager.GetBoolean("szsymmetrized-basis") == false)
+			    {
+			      Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation(NbrParticles, TotalSz, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("max-xmomentum"),
+											    Manager.GetInteger("y-momentum"), Manager.GetInteger("max-ymomentum"), memory);
+			    }
+			  else
+			    {
+			      bool MinusParitySector = true;
+			      if (Manager.GetInteger("sz-parity") == 1)
+				MinusParitySector = false;
+			      Space = new  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles,TotalSz, NbrSites, MinusParitySector, Manager.GetInteger("x-momentum"),  Manager.GetInteger("max-xmomentum"), Manager.GetInteger("y-momentum"), Manager.GetInteger("max-ymomentum"));
+			      
+			    }
+			}
 		    }
 		  else
 		    {

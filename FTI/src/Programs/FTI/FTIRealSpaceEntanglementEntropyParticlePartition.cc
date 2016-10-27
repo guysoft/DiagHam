@@ -1675,8 +1675,16 @@ int main(int argc, char** argv)
 				  sprintf(TmpSuffix, "partent_na_%d_kxa_%d_kya_%d.%d.vec", SubsystemNbrParticles, SubsystemTotalKx,SubsystemTotalKy, i);
 				}
 			      else
-				sprintf(TmpSuffix, "partent_na_%d_sza_%d_kxa_%d_kya_%d.%d.vec", SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalKx,SubsystemTotalKy, i);
-			      
+				{
+				  if (SubsystemSzSymmetrySector != 0 )
+				    {
+				      sprintf(TmpSuffix, "partent_na_%d_sza_%d_szsyma_%d_kxa_%d_kya_%d.%d.vec", SubsystemNbrParticles, SubsystemTotalSz, SubsystemSzSymmetrySector ,SubsystemTotalKx,SubsystemTotalKy, i);
+				    }
+				  else
+				    {
+				      sprintf(TmpSuffix, "partent_na_%d_sza_%d_kxa_%d_kya_%d.%d.vec", SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalKx,SubsystemTotalKy, i);
+				    }
+				}
 			      TmpEigenstateName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", TmpSuffix);
 			      TmpEigenstates[i].WriteVector(TmpEigenstateName);
 			    }

@@ -54,6 +54,7 @@ TightBindingModelPWaveSuperconductor.cc \
 TightBindingModelHofstadterFiniteCylinder.cc \
 TightBindingModelKitaevHeisenbergHoneycombLattice.cc \
 TightBindingModelSimpleSquareLattice.cc \
-TightBindingModelKitaevChain.cc 
+TightBindingModelKitaevChain.cc \
+TightBindingModelHalfContinuousHofstadterModel.cc
 
 #TightBindingModelSimpleChainWithConfinementLattice.cc
