@@ -96,6 +96,28 @@ class TightBindingModelHofstadterSquare : public Abstract2DTightBindingModel
 
   HermitianMatrix  BuildTightBindingHamiltonianRealSpace(int* nbrConnectedOrbitals, int** orbitalIndices, int** spatialIndices, Complex** hoppingAmplitudes);
 
+  void ComputeInteractingOrbitals(int*& nbrInteractingOrbitals, int**& interactingOrbitalsOrbitalIndices,
+				  int**& interactingOrbitalsSpatialIndices, double**& interactingOrbitalsPotentials,
+				  bool bosonFlag, double uPotential, double vPotential);
+
+  // returns the single-particle wavefunction according to the definition phi_{n,k}=u_{n,alpha}(k)*exp{i k.r}
+  //
+  // Position = overall position vector relative to the origin
+  // Coefficients = u values (i.e. normalised eignvectors of the Hamiltonian matrix)
+  // indexK = linearised index of momentum sector
+  // alpha = sublattice index
+  // bandIndex = band index
+  // return value = single-particle wavefunction
+  //
+  void GetFunctionValue(RealVector& Position, Complex& Coefficients, int indexK, int alpha, int bandIndex);
+
+  // decode single integer for sublattice index into set of quantum numbers/positions posx, posy
+  // index = sublattice index
+  // [out] posx = position along x-direction
+  // [out] posy = position along y-direction
+  //
+  void DecodeSublatticeIndex(int index, int &posx, int &posy);  
+
  protected :
 
   // core part that compute the band structure
@@ -132,14 +154,6 @@ class TightBindingModelHofstadterSquare : public Abstract2DTightBindingModel
   // numXTranslations = number of translation in the y direction to get back to the unit cell
   //
   int  EncodeSublatticeIndex(int posx, int posy,int & numXTranslations,int &numYTranslations, Complex &translationPhase);
-
-
-  // decode single integer for sublattice index into set of quantum numbers/positions posx, posy
-  // index = sublattice index
-  // [out] posx = position along x-direction
-  // [out] posy = position along y-direction
-  //
-  void DecodeSublatticeIndex(int index, int &posx, int &posy);  
 
   int  GetRealSpaceTightBindingLinearizedIndexSafe(int x, int y, int orbitalIndex, int & numXTranslations, int &numYTranslations);
 

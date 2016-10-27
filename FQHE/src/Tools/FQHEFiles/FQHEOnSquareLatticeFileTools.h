@@ -133,5 +133,27 @@ bool FQHEOnCubicLatticeFindSystemInfoFromFileName(char* filename, int& nbrPartic
 // return value = true if no error occured
 bool FQHEOnCubicLatticeFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrSiteX, int& nbrSiteY, int& nbrSiteZ, int& momentumX, int& momentumY, int& momentumZ, bool& statistics);
 
+// try to guess system information from file name for a Hofstadter lattice model
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles 
+// NbrCellX = number of magnetic unit cells along X
+// NbrCellY = number of magnetic unit cells along Y
+// Interaction = onsite interaction
+// FluxPerCell = number of flux quanta per unit cell
+// NbrState = number of the eigenstate
+// Statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// Hardcore = flag indicating hard-core bosons
+// EmbeddingFlag = flag indicating whether embedding is used
+// Axis = character indicating axis of Landau gauge
+// GammaX = periodic boundary conditions along X
+// GammaY = periodic boundary conditions along Y
+// MomentumX = momentum along x-direction
+// MomentumY = momentum along y-direction
+// UnitCellX = size of magnetic unit cell along x
+// UnitCellY = size of magnetic unit cell along y
+// return value = true if no error occured
+// 
+bool FQHEOnSquareLatticeFindSystemInfoFromVectorFileName_Hofstadter(char* filename, int& NbrParticles, int& NbrCellX, int& NbrCellY, double& Interaction, int& FluxPerCell, int& NbrState, bool& Statistics, bool& Hardcore, bool& EmbeddingFlag, char& Axis, double& GammaX, double& GammaY, int& MomentumX, int& MomentumY, int& UnitCellX, int& UnitCellY);
 
 #endif

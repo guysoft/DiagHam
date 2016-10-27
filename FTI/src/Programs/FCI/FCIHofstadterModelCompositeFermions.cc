@@ -171,7 +171,7 @@ int main(int argc, char** argv)
   
   char* OutputNameCFEnergy;
   OutputNameCFEnergy = new char [300];
-  sprintf (OutputNameCFEnergy, "HoftadterModel_bandstructure_X_%d_Y_%d_x_%d_y_%d_q_%d.dat", NxZeroCF,NyZeroCF, MaxMomentumXCF,MaxMomentumYCF, FluxPerCellCF);
+  sprintf (OutputNameCFEnergy, "HofstadterModel_bandstructure_X_%d_Y_%d_x_%d_y_%d_q_%d.dat", NxZeroCF,NyZeroCF, MaxMomentumXCF,MaxMomentumYCF, FluxPerCellCF);
   TightBindingModelCF.WriteAsciiSpectrum(OutputNameCFEnergy);
   
   if(NoTranslationFlag == true)
@@ -188,7 +188,7 @@ int main(int argc, char** argv)
   
   cout <<"Building CF factor with MaxMomentumXCF =" << MaxMomentumXCF << "  MaxMomentumYCF =" << MaxMomentumYCF << " NxZeroCF  = "<<  NxZeroCF<< " NyZeroCF = " <<NyZeroCF <<" FluxPerCellCF = "<< FluxPerCellCF <<endl;
   
-  sprintf (OutputNameCFEnergy, "HoftadterModel_bandstructureWithEmbedding_X_%d_Y_%d_x_%d_y_%d_q_%d.dat", NxZeroCF, NyZeroCF, MaxMomentumXCF,MaxMomentumYCF, FluxPerCellCF);
+  sprintf (OutputNameCFEnergy, "HofstadterModel_bandstructureWithEmbedding_X_%d_Y_%d_x_%d_y_%d_q_%d.dat", NxZeroCF, NyZeroCF, MaxMomentumXCF,MaxMomentumYCF, FluxPerCellCF);
   TightBindingModelCF2.WriteAsciiSpectrum(OutputNameCFEnergy);
   
  
@@ -234,6 +234,7 @@ if(NoTranslationFlag == true)
   if(NoTranslationFlag == false)
     {
       BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation Space (NbrBosons, Lx, Ly , XMomentum, MaxMomentumX, YMomentum, MaxMomentumY);
+      cout << "Using Hilbert space: BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation"<<endl;
       char* OutputName;
       if ( (OutputName = Manager.GetString("output-file")) == NULL)
 	{
@@ -257,6 +258,7 @@ if(NoTranslationFlag == true)
   else
     {
       BosonOnLatticeGutzwillerProjectionRealSpace Space1 (NbrBosons,Lx*Ly);
+      cout << "Using Hilbert space: BosonOnLatticeGutzwillerProjectionRealSpace"<<endl;
       ComplexVector TrialState1(Space1.GetHilbertSpaceDimension(),true);
       Space1.GetCompositeFermionWavefunction(TrialState1, JastrowEigenVecs, CFEigenVecs);
       

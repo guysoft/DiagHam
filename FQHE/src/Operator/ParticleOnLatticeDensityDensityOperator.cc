@@ -176,7 +176,7 @@ Complex ParticleOnLatticeDensityDensityOperator::PartialMatrixElement (ComplexVe
     {
       Index = TmpParticle->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
       if (Index != FullDim)
-	Element += Conj(V1[Index]) * V2[i] * Coefficient;      
+	Element += Conj(V1[Index]) * V2[i] * Coefficient;  
     }
   delete TmpParticle;
   return Element;

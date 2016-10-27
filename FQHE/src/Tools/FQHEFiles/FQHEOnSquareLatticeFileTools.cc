@@ -7,9 +7,9 @@
 //                                                                            //
 //                                                                            //
 //             set of functions used to managed files related to FQHE         //
-//                          on square lattice disk                            //
+//                          on square lattice                                 //
 //                                                                            //
-//                        last modification : 01/03/2011                      //
+//                        last modification : 14/10/2016                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -35,10 +35,131 @@
 #include <cstring>
 #include <cstdlib>
 
-
 using std::cout;
 using std::endl;
 
+bool StatisticsCheck (bool& MyParameter, char* MyFilename)
+{
+  if (MyParameter == true)
+    {
+      if (strstr(MyFilename, "fermion") == 0)
+	{
+	  if (strstr(MyFilename, "boson") == 0)
+	    {
+	      cout << "can't guess particle statistics from file name " << MyFilename << endl;
+	      return false;	  
+	    }
+	  else
+	    {
+	      MyParameter = false; //for bosons
+	    }
+	}
+      else
+	{
+	  MyParameter = true; //for fermions
+	}
+    }
+  return true;
+}
+
+bool IntegerSearch (int& MyParameter, char* MyFilename, const char* MyString)
+{
+  if (MyParameter==0)
+    {
+      char* MyPointer = strstr(MyFilename, MyString); //set pointer to beginning of substring
+      if (MyPointer != 0)
+	{
+	  MyPointer += strlen(MyString); //move pointer to the end of substring
+	  MyParameter = atoi(MyPointer); //convert subsequent number to integer
+	}
+      else
+	{
+	  cout << "can't guess " << MyString << " from file name " << MyFilename << endl;
+	  return false;            
+	}
+    }
+  return true;
+}
+
+bool DoubleSearch (double& MyParameter, char* MyFilename, const char* MyString)
+{
+  if (MyParameter==0)
+    {
+      char* MyPointer = strstr(MyFilename, MyString); //set pointer to beginning of substring
+      if (MyPointer != 0)
+	{
+	  MyPointer += strlen(MyString); //move pointer to the end of substring
+	  MyParameter = strtod(MyPointer,NULL); //convert subsequent number to double
+	}
+      else
+	{
+	  cout << "can't guess " << MyString << " from file name " << MyFilename << endl;
+	  return false;            
+	}
+    }
+  return true;
+}
+
+bool BooleanSearch (bool& MyParameter, char* MyFilename, const char* MyString)
+{
+  if (strstr(MyFilename, MyString) != 0) //if there is an occurence of the substring, assign MyParameter=true
+    {
+      MyParameter=true;
+    }
+  return true;
+}
+
+// extract the character following the search string from a file name
+// OutputChar[in] = if the character is zero on input, do not parse and return immediately
+// OutputChar[out] = character following search string, as parsed from file name
+// MyFilename = file name to examine
+// SearchString = string to search in file name
+// return = true, if the search string was located and a character is returned
+// 
+bool FilenameCharacterSearch (char& OutputChar, char* MyFilename, const char* SearchString)
+{
+  if (OutputChar==0)
+    {
+      char* MyPointer = strstr(MyFilename, SearchString); //set pointer to beginning of substring
+      if (MyPointer != 0)
+	{
+	  MyPointer += strlen(SearchString); //move pointer to the end of substring	  
+	  OutputChar = *MyPointer; // return the subsequent character
+	}
+      else
+	{
+	  cout << "can't find the character search string " << SearchString << " in file name " << MyFilename << endl;
+	  return false;
+	}
+    }
+  return true;
+}
+
+bool PenultimateDotIntegerSearch (int& MyParameter, char* MyFilename)
+{
+  if(MyParameter==0)
+    {
+      char* MyFilenameTmp = new char[strlen(MyFilename)+1]; //create a dynamic-sized array on the heap
+      strcpy(MyFilenameTmp, MyFilename);
+
+      char* d1=NULL; char* d2=NULL;
+      for(char* c = MyFilenameTmp; *c; c++) //go through each character, terminate when you reach the end of the string (i.e. the null character)
+	{
+	  if(*c == '.')
+	    {
+	      d1 = d2; //penultimate dot
+	      d2 = c; //final dot
+	    }
+	}
+	
+      MyParameter = atoi(d1+1); //position after the penultimate dot
+
+      d2 = '\0'; //terminate the stripped char array (e.g. without the ".0.vec" ending)
+	
+      delete[] MyFilenameTmp; //delete array copy from heap
+    }
+  return true;
+}
 
 // try to guess system information from file name
 //
@@ -320,7 +441,7 @@ bool FQHEOnSquareLatticeWithSpinFindSystemInfoFromVectorFileName(char* filename,
     }
   if (StrNbrParticles == 0)
     {
-     totalSz  = 0;
+      totalSz  = 0;
     }
   return true;
 }
@@ -364,7 +485,7 @@ bool FQHEOnSquareLatticeWithSpinFindSystemInfoFromVectorFileName(char* filename,
     }
   if (StrNbrParticles == 0)
     {
-     totalSz  = 0;
+      totalSz  = 0;
     }
   return true;
 }
@@ -545,6 +666,52 @@ bool FQHEOnCubicLatticeFindSystemInfoFromVectorFileName(char* filename, int& nbr
     {
       nbrSiteZ = 0;
     }
+  return true;
+}
+
+// try to guess system information from file name for a Hofstadter lattice model (added by ba340)
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles 
+// NbrCellX = number of magnetic unit cells along X
+// NbrCellY = number of magnetic unit cells along Y
+// Interaction = onsite interaction
+// FluxPerCell = number of flux quanta per unit cell
+// NbrState = number of the eigenstate
+// Statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// Hardcore = flag indicating hard-core bosons
+// EmbeddingFlag = flag indicating whether embedding is used
+// Axis = character indicating axis of Landau gauge
+// GammaX = periodic boundary conditions along X
+// GammaY = periodic boundary conditions along Y
+// MomentumX = momentum along x-direction
+// MomentumY = momentum along y-direction
+// UnitCellX = size of magnetic unit cell along x
+// UnitCellY = size of magnetic unit cell along y
+// 
+bool FQHEOnSquareLatticeFindSystemInfoFromVectorFileName_Hofstadter(char* filename, int& NbrParticles, int& NbrCellX, int& NbrCellY, double& Interaction, int& FluxPerCell, int& NbrState, bool& Statistics, bool& Hardcore, bool& EmbeddingFlag, char& Axis, double& GammaX, double& GammaY, int& MomentumX, int& MomentumY, int& UnitCellX, int& UnitCellY)
+{
+  StatisticsCheck(Statistics, filename);
+  IntegerSearch(UnitCellX, filename, "_X_");
+  IntegerSearch(UnitCellY, filename, "_Y_");
+  IntegerSearch(FluxPerCell, filename, "_q_");
+  FilenameCharacterSearch(Axis, filename, "landau-");
+  if (Axis != 'x' && Axis != 'y')
+    {
+      cout << "Did not find a valid Landau-gauge axis in file name - defaulting to landau-y" << endl;
+      Axis = 'y';
+    }
+  IntegerSearch(NbrParticles, filename, "_n_");
+  IntegerSearch(NbrCellX, filename, "_x_");
+  IntegerSearch(NbrCellY, filename, "_y_");
+  BooleanSearch(Hardcore, filename, "hardcore");
+  if(Hardcore==false){DoubleSearch(Interaction, filename, "_u_");}else{Interaction==0;}
+  DoubleSearch(GammaX, filename, "_gx_");
+  DoubleSearch(GammaY, filename, "_gy_");
+  BooleanSearch(EmbeddingFlag, filename, "emb");
+  IntegerSearch(MomentumX, filename, "_kx_");
+  IntegerSearch(MomentumY, filename, "_ky_");
+  PenultimateDotIntegerSearch(NbrState, filename);
   return true;
 }
 

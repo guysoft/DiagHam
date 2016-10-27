@@ -804,3 +804,179 @@ HermitianMatrix  TightBindingModelHofstadterSquare::BuildTightBindingHamiltonian
   return TmpHamiltonian;
 }
 
+
+// compute the description of the density-density interaction for the unit cell at the origin
+//
+// nbrInteractingOrbitals = number of orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsOrbitalIndices = orbital indices of the orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsSpatialIndices = spatial indices (sorted as 2 consecutive integers) of the orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsPotentials = intensity of each density-density term 
+// bosonFlag = true if we are dealing with bosons
+// uPotential = nearest neighbor (for fermions) or on-site (for bosons) interaction amplitude
+// vPotential = next nearest neighbor (for fermions) or nearest neighbor (for bosons) interaction amplitude
+
+void TightBindingModelHofstadterSquare::ComputeInteractingOrbitals(int*& nbrInteractingOrbitals, int**& interactingOrbitalsOrbitalIndices,
+							   int**& interactingOrbitalsSpatialIndices, double**& interactingOrbitalsPotentials,
+							   bool bosonFlag, double uPotential, double vPotential)
+{
+  nbrInteractingOrbitals = new int[this->GetNbrBands()];
+  interactingOrbitalsOrbitalIndices = new int*[this->GetNbrBands()];
+  interactingOrbitalsSpatialIndices = new int*[this->GetNbrBands()];
+  interactingOrbitalsPotentials = new double*[this->GetNbrBands()];
+  int p, q;
+  int numXTranslations, numYTranslations;
+  Complex TranslationPhase;
+  if (bosonFlag == false)
+    {
+
+      // bosons
+      // allocate maximum number of interacting orbitals per site
+      for (int s=0; s<this->GetNbrBands(); ++s)       
+	nbrInteractingOrbitals[s] = 4; // four NN interactions
+      if (vPotential != 0.0)
+	for (int s=0; s<this->GetNbrBands(); ++s)       
+	  nbrInteractingOrbitals[s] += 4; // four additional terms for NNN interactions
+      for (int s=0; s<this->GetNbrBands(); ++s)
+	{
+	  interactingOrbitalsOrbitalIndices[s] = new int[nbrInteractingOrbitals[s]];
+	  interactingOrbitalsSpatialIndices[s] = new int[nbrInteractingOrbitals[s] * 2];
+	  interactingOrbitalsPotentials[s] = new double[nbrInteractingOrbitals[s]];
+
+	  nbrInteractingOrbitals[s] = 0;
+      
+	  // define NN interactions
+	  if (uPotential != 0.0)
+	    {
+	      int i,j;
+	      this->DecodeSublatticeIndex(s, i, j);
+
+	      int nbrV = 4;
+	      int dX[4] = {1,-1,0,0};
+	      int dY[4] = {0,0,1,-1};
+	      
+	      for (int nn=0; nn<nbrV; ++nn)
+		{
+		  int s2=this->EncodeSublatticeIndex(i+dX[nn], j+dY[nn], numXTranslations, numYTranslations, TranslationPhase);
+		  if (s2>=s)
+		    {
+		      this->GetRealSpaceIndex(-numXTranslations, -numYTranslations, p , q);
+	      
+		      interactingOrbitalsOrbitalIndices[s][nbrInteractingOrbitals[s]] = s2;
+		      interactingOrbitalsSpatialIndices[s][2 * nbrInteractingOrbitals[s]] = p;
+		      interactingOrbitalsSpatialIndices[s][(2 * nbrInteractingOrbitals[s]) + 1] = q;
+		      if (s==s2)
+			interactingOrbitalsPotentials[s][nbrInteractingOrbitals[s]] = 0.5*uPotential;
+		      else
+			interactingOrbitalsPotentials[s][nbrInteractingOrbitals[s]] = uPotential;
+		      ++nbrInteractingOrbitals[s];
+		    }
+		}
+	    }
+
+
+	  if (vPotential != 0.0)
+	    {
+	      int i,j;
+	      this->DecodeSublatticeIndex(s, i, j);
+
+	      int nbrV = 4;
+	      int dX[4] = {1,-1,0,0};
+	      int dY[4] = {0,0,1,-1};
+	      
+	      for (int nn=0; nn<nbrV; ++nn)
+		{
+		  int s2=this->EncodeSublatticeIndex(i+dX[nn], j+dY[nn], numXTranslations, numYTranslations, TranslationPhase);
+		  if (s2>=s)
+		    {
+		      this->GetRealSpaceIndex(-numXTranslations, -numYTranslations, p , q);
+	      
+		      interactingOrbitalsOrbitalIndices[s][nbrInteractingOrbitals[s]] = s2;
+		      interactingOrbitalsSpatialIndices[s][2 * nbrInteractingOrbitals[s]] = p;
+		      interactingOrbitalsSpatialIndices[s][(2 * nbrInteractingOrbitals[s]) + 1] = q;
+		      if (s==s2)
+			interactingOrbitalsPotentials[s][nbrInteractingOrbitals[s]] = 0.5*vPotential;
+		      else
+			interactingOrbitalsPotentials[s][nbrInteractingOrbitals[s]] = vPotential;
+		      ++nbrInteractingOrbitals[s];
+		    }
+		}
+	    }
+	}
+    }
+  else
+    { // bosons
+      // allocate maximum number of interacting orbitals per site
+      for (int s=0; s<this->GetNbrBands(); ++s)       
+	nbrInteractingOrbitals[s] = 1; // one interaction for onsite term
+      if (vPotential != 0.0)
+	for (int s=0; s<this->GetNbrBands(); ++s)       
+	  nbrInteractingOrbitals[s] += 4; // four terms for NN interactions
+      for (int s=0; s<this->GetNbrBands(); ++s)       
+	{
+	  interactingOrbitalsOrbitalIndices[s] = new int[nbrInteractingOrbitals[s]];
+	  interactingOrbitalsSpatialIndices[s] = new int[nbrInteractingOrbitals[s] * 2];
+	  interactingOrbitalsPotentials[s] = new double[nbrInteractingOrbitals[s]];
+
+	  nbrInteractingOrbitals[s] = 0;
+      
+	  // define onsite interactions
+	  interactingOrbitalsOrbitalIndices[s][nbrInteractingOrbitals[s]] = s;
+	  this->GetRealSpaceIndex(0, 0, p, q);
+	  interactingOrbitalsSpatialIndices[s][2 * nbrInteractingOrbitals[s]] = p;
+	  interactingOrbitalsSpatialIndices[s][(2 * nbrInteractingOrbitals[s]) + 1] = q;
+	  interactingOrbitalsPotentials[s][nbrInteractingOrbitals[s]] = 0.5*uPotential;
+	  ++nbrInteractingOrbitals[s];
+
+	  if (vPotential != 0.0)
+	    {
+	      int i,j;
+	      this->DecodeSublatticeIndex(s, i, j);
+	      
+	      int nbrV = 4;
+	      int dX[4] = {1,-1,0,0};
+	      int dY[4] = {0,0,1,-1};
+	      
+	      for (int nn=0; nn<nbrV; ++nn)
+		{
+		  int s2=this->EncodeSublatticeIndex(i+dX[nn], j+dY[nn], numXTranslations, numYTranslations, TranslationPhase);
+		  if (s2>=s)
+		    {
+		      this->GetRealSpaceIndex(-numXTranslations, -numYTranslations, p , q);
+	      
+		      interactingOrbitalsOrbitalIndices[s][nbrInteractingOrbitals[s]] = s2;
+		      interactingOrbitalsSpatialIndices[s][2 * nbrInteractingOrbitals[s]] = p;
+		      interactingOrbitalsSpatialIndices[s][(2 * nbrInteractingOrbitals[s]) + 1] = q;
+		      if (s==s2)
+			interactingOrbitalsPotentials[s][nbrInteractingOrbitals[s]] = 0.5*vPotential;
+		      else
+			interactingOrbitalsPotentials[s][nbrInteractingOrbitals[s]] = vPotential;
+		      ++nbrInteractingOrbitals[s];
+		    }
+		}
+	    }
+	}
+    }
+}
+
+
+// returns the single-particle wavefunction according to the definition phi_{n,k}=u_{n,alpha}(k)*exp{i k.r}
+//
+// Position = overall position vector relative to the origin
+// Coefficients = u values (i.e. normalised eignvectors of the Hamiltonian matrix)
+// indexK = linearised index of momentum sector
+// alpha = sublattice index
+// bandIndex = band index
+// return value = single-particle wavefunction
+//
+void TightBindingModelHofstadterSquare::GetFunctionValue(RealVector& Position, Complex& Coefficients, int indexK, int alpha, int bandIndex)
+{
+  int kx, ky;
+   this->GetLinearizedMomentumIndex(indexK, kx, ky);
+   double Kx=kx*2.0*M_PI/NbrSiteX;
+   double Ky=ky*2.0*M_PI/NbrSiteY;
+
+   double Arg = (Kx * Position[0]) + (Ky * Position[1]);
+   Coefficients = this->GetOneBodyMatrix(indexK).GetMatrixElement(alpha, bandIndex)*Polar(Arg);
+
+   return;
+}

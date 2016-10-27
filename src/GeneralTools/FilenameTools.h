@@ -152,4 +152,60 @@ char* AddSegmentInFileName(char* inputName, const char* insertion, const char* e
 // return value = true if the directory has been created wothout error
 bool CreateDirectory (const char* directory);
 
+
+// tools for parsing parts of filenames
+
+// extract the integer following the search string from a file name
+//
+// OutputInt[in] = if the integer is not zero on input, do not parse and return immediately
+// OutputInt[out] = integer following search string, as parsed from file name
+// MyFilename = file name to examine
+// SearchString = string to search in file name
+// return value = true if the search string was located and an integer is returned
+bool FilenameIntegerSearch (int& OutputInt, char* MyFilename, const char* SearchString);
+
+// extract the double following the search string from a file name
+//
+// OutputDouble[in] = if the double is not zero on input, do not parse and return immediately
+// OutputDouble[out] = double following search string, as parsed from file name
+// MyFilename = file name to examine
+// SearchString = string to search in file name
+// return value = true if the search string was located and a double is returned
+bool FilenameDoubleSearch (double& OutputDouble, char* MyFilename, const char* SearchString);
+
+// search for an occurance of a string in a file name, then report true (i.e. present) or false (i.e. absent)
+//
+// OutputBool[in] = the derisred boolean variable, which needs updating
+// OutputBool[out] = boolean reporting the result of the string search in the file name 
+// MyFilename = file name to search
+// SearchString = string to search in file name
+// return value = true if the string was searched in the file name and a boolean is returned
+bool FilenameBooleanSearch (bool& OutputBool, char* MyFilename, const char* SearchString);
+
+// extract the character following the search string from a file name
+//
+// OutputChar[in] = if the character is not zero on input, do not parse and return immediately
+// OutputChar[out] = character following search string, as parsed from file name
+// MyFilename = file name to examine
+// SearchString = string to search in file name
+// return value = true if the search string was located and a character is returned
+bool FilenameCharacterSearch (char& OutputChar, char* MyFilename, const char* SearchString);
+
+// search for occurances of "fermion" and "boson" in a file name, then report false (i.e. bosons), true (i.e. fermions), or cannot be determined from file name
+//
+// OutputBool[in] = if the boolean is not true on input, do not parse and return immediately
+// OutputBool[out] = boolean reporting the result of the statistics, as parsed from file name
+// MyFilename = file name to search
+// return value = true if the statistics was checked in the file name and a boolean is returned
+bool FilenameStatisticsCheck (bool& OutputBool, char* MyFilename);
+
+// extract the integer following the penultimate dot in a file name
+//
+// OutputInt[in] = if the integer is not zero on input, do not parse and return immediately
+// OutputInt[out] = int following penultimate dot, as parsed from file name 
+// MyFilename = file name to search
+// return value = true if the penultimate dot was located and the following integer returned
+bool FilenamePenultimateDotIntegerSearch (int& OutputInt, char* MyFilename);
+
+
 #endif

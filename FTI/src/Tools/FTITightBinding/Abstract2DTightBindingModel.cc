@@ -1529,8 +1529,37 @@ HermitianMatrix Abstract2DTightBindingModel::BuildTightBindingHamiltonianRecipro
 	     TmpHamiltonian.AddToMatrixElement(k, orbitalIndices[k][l], Conj(hoppingAmplitudes[k][l]) * Phase(TmpPhase));
 	 }
      }
-  return TmpHamiltonian;
- 
+  return TmpHamiltonian; 
+}
+
+
+// generate a tight-binding Density-Density interaction in real space for the current Tight-Binding Model
+// nbrInteractingOrbitals = number of orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsOrbitalIndices = orbital indices of the orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsSpatialIndices = spatial indices (sorted as 2 consecutive integers) of the orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsPotentials = intensity of each density-density term 
+RealSymmetricMatrix Abstract2DTightBindingModel::GenerateDensityDensityInteraction(int *NbrInteractingOrbitals, int **InteractingOrbitalsOrbitalIndices, int **InteractingOrbitalsSpatialIndices,  double **InteractingOrbitalsPotentials)
+{
+  RealSymmetricMatrix interaction(this->GetNbrBands() * this->GetNbrStatePerBand(), true);
+  for (int x = 0; x < this->NbrSiteX; ++x)
+    {
+      for (int y = 0; y < this->NbrSiteY; ++y)
+	{
+	  for (int OrbitalIndex = 0; OrbitalIndex < this->GetNbrBands(); ++OrbitalIndex)
+	    {
+	      for (int k = 0; k < NbrInteractingOrbitals[OrbitalIndex]; ++k)
+		{
+		  interaction.AddToMatrixElement(this->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, OrbitalIndex), 
+							       this->GetRealSpaceTightBindingLinearizedIndexSafe(x + InteractingOrbitalsSpatialIndices[OrbitalIndex][2 * k], 
+														 y + InteractingOrbitalsSpatialIndices[OrbitalIndex][(2 * k) + 1], 
+														 InteractingOrbitalsOrbitalIndices[OrbitalIndex][k]), 
+							       InteractingOrbitalsPotentials[OrbitalIndex][k]);
+				  
+		}
+	    }
+	}
+    }
+  return interaction;
 }
 
 // core part that compute the band structure

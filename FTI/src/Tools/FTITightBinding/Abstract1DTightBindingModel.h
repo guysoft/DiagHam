@@ -298,7 +298,13 @@ inline double Abstract1DTightBindingModel::GetEnergy(int bandIndex, int momentum
 
 inline ComplexMatrix&  Abstract1DTightBindingModel::GetOneBodyMatrix(int momentumIndex)
 {
-  return this->OneBodyBasis[momentumIndex];
+  if (this->OneBodyBasis!=NULL)
+    return this->OneBodyBasis[momentumIndex];
+  else
+    {
+      std::cerr << "Error: requested one-body matrix, but TightBindingModel did not store the single-particle eigenstates."<<std::endl;
+      exit(1);
+    }
 }
 
 // get the number of sites in the x direction

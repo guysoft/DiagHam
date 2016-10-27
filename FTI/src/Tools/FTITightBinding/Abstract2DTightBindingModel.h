@@ -35,6 +35,8 @@
 #include "config.h"
 #include "Tools/FTITightBinding/Abstract1DTightBindingModel.h"
 #include "Matrix/RealMatrix.h"
+#include "Matrix/RealSymmetricMatrix.h"
+
 
 
 class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
@@ -373,6 +375,14 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // p = reference on the first lattice index
   // q = reference on the second lattice index
   virtual void GetRealSpaceIndex (int i, int j, int& p, int& q);
+
+
+  // generate a tight-binding Density-Density interaction in real space for the current Tight-Binding Model, given neighbourship relations of orbitals
+  // nbrInteractingOrbitals = number of orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+  // interactingOrbitalsOrbitalIndices = orbital indices of the orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+  // interactingOrbitalsSpatialIndices = spatial indices (sorted as 2 consecutive integers) of the orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+  // interactingOrbitalsPotentials = intensity of each density-density term 
+  RealSymmetricMatrix GenerateDensityDensityInteraction(int *NbrInteractingOrbitals, int **InteractingOrbitalsOrbitalIndices, int **InteractingOrbitalsSpatialIndices,  double **InteractingOrbitalsPotentials);
   
   // compute the band structure at a single point of the Brillouin zone
   //
