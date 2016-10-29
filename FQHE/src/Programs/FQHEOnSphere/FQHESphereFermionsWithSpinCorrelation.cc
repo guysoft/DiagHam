@@ -55,7 +55,7 @@ int main(int argc, char** argv)
   Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
 
-  (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the lz value corresponding to the eigenvector (override autodetection from input file name if greater or equal to zero)", 0, true, 0);
+  (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the lz value corresponding to the eigenvector (override autodetection from input file name if greater or equal to zero)", 0);
  (*SystemGroup) += new SingleIntegerOption  ('\n', "landau-level", "index of the Landau level (n=0 being the LLL). WARNING: if using this option, l+1 should be the total number of orbitals that defines your input state (i.e., the flux Q will be determined from l=2Q+2n)", 0);
   (*SystemGroup) += new SingleStringOption  ('e', "eigenstate", "name of the file containing the eigenstate");
   (*SystemGroup) += new SingleStringOption  ('i', "interaction-name", "name of the interaction (used for output file name)", "sphere_spin");
