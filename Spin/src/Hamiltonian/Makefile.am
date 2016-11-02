@@ -51,4 +51,5 @@ TwoDimensionalTriangularLatticeWithPseudospinHamiltonian.cc \
 TwoDimensionalKagomeLatticeHamiltonian.cc \
 TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian.cc \
 SpinChainJ1J2HamiltonianWithTranslations.cc \
-SpinChainJ1J2RealHamiltonianWithTranslations.cc
+SpinChainJ1J2RealHamiltonianWithTranslations.cc \
+TwoDimensionalTriangularRareEarthHamiltonian.cc

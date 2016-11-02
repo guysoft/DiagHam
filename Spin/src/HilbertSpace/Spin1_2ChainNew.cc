@@ -564,6 +564,62 @@ int Spin1_2ChainNew::SpiSmjSzk (int i, int j, int k, int state, double& coeffici
   return this->HilbertSpaceDimension;
 }
 
+// operate local isometry on three sites
+//
+// i = position of first site
+// j = position of second site 
+// k = position of third site
+// state = index of the state that the isometry has to be applied on
+// indices = reference to an array where the indices of the resulting states have to be stored
+// coefficients = reference to the array where the coefficients have to be stored
+// return value = number of non-zero coefficients
+  
+int Spin1_2ChainNew::ThreeSiteIsometry (int i, int j, int k, int state, int*& indices, double*& coefficients)
+{
+  unsigned long tmpStateI = (this->StateDescription[state] >> i) & 0x1ul;
+  unsigned long tmpStateJ = (this->StateDescription[state] >> j) & 0x1ul;
+  unsigned long tmpStateK = (this->StateDescription[state] >> k) & 0x1ul;
+  
+  int localSz = (int) (tmpStateI + tmpStateJ + tmpStateK);
+  if ((localSz == 0) || (localSz == 3))
+    return 0;
+  
+  if (tmpStateJ == tmpStateK)
+  {
+    if (localSz == 2)
+      indices[0] = this->SpiSmj (i, j, state, coefficients[0]);
+    else
+      indices[0] = this->SpiSmj (j, i, state, coefficients[0]);
+    coefficients[0] = -2.0 / sqrt(6.0);    
+    return 1;
+  }
+  
+  if (tmpStateI == tmpStateJ)
+  {
+    indices[0] = state;
+    coefficients[0] = 1.0 / sqrt(2.0);
+    if (localSz == 2)
+      indices[1] = this->SpiSmj (k, j, state, coefficients[1]);
+    else
+      indices[1] = this->SpiSmj (j, k, state, coefficients[1]);
+    coefficients[1] = 1.0 / sqrt(6.0);
+  }
+  else
+  {
+    indices[0] = state;
+    coefficients[0] = 1.0 / sqrt(6.0);
+    if (localSz == 2)
+      indices[1] = this->SpiSmj (j, k, state, coefficients[1]);
+    else
+      indices[1] = this->SpiSmj (k, j, state, coefficients[1]);
+    coefficients[1] = -1.0 / sqrt(2.0);
+  }
+  return 2;
+  
+}
+
+
+
 // compute the parity (prod_i Sz_i) for a given state
 //
 // state = index of the state to be applied on Sz_i operator

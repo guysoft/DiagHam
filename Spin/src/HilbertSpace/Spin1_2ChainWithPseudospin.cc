@@ -647,3 +647,114 @@ double Spin1_2ChainWithPseudospin::JDiagonali (int i, int state, double* couplin
   int Tmp = (int) ((this->StateDescription[state] >> (2*i)) & 0x1ul);
   return coupling[Tmp];
 }
+
+// convert a state defined on a lattice with a number of sites equals to a multiple of three
+//
+// state = reference on the state to convert
+// space = pointer to the Hilbert space where state is defined
+// return value = state in the (Kx,Ky) basis
+
+RealVector Spin1_2ChainWithPseudospin::ProjectToEffectiveSubspaceThreeToOne(ComplexVector& state, AbstractSpinChain* space)
+{
+  Spin1_2ChainNew* TmpSpace = (Spin1_2ChainNew*) space;
+  RealVector TmpVector (this->HilbertSpaceDimension, true);
+  RealVector TmpVector1 (this->HilbertSpaceDimension, true);
+  
+  cout << "Dimension full space = " << (TmpSpace->HilbertSpaceDimension) << endl;
+  cout << "Dimension projected space = " << (this->HilbertSpaceDimension) << endl;
+  unsigned long TmpState;
+  unsigned long TmpStateEffective;
+  
+  int tmpStateI;
+  int tmpStateJ;
+  int tmpStateK;
+  
+  int tmpStateLocalSz;
+  int tmpStateLocalPseudospin;
+  int TmpIndexEffective;
+  int localSz;
+  int localSpinStructure;
+  double Coefficient;
+  
+  int* TmpFlag = new int[this->HilbertSpaceDimension];
+  double** Isometry = new double* [2];
+  for (int i = 0; i < 2; ++i)
+    Isometry[i] = new double [3];
+  Isometry[1][0] = 1.0 / sqrt(6.0);
+  Isometry[1][1] = 1.0 / sqrt(6.0);
+  Isometry[1][2] = -2.0 / sqrt(6.0);
+  Isometry[0][0] = 1.0 / sqrt(2.0);
+  Isometry[0][1] = -1.0 / sqrt(2.0);
+  Isometry[0][2] = 0.0;
+  
+  for (int j = 0; j < TmpSpace->HilbertSpaceDimension; ++j)
+  {
+    Coefficient = state[j].Re;
+//     cout << j << " " << Coefficient << " " << state[j].Im << endl;
+    TmpState = TmpSpace->StateDescription[j];
+    int k = TmpSpace->ChainLength - 1;
+    TmpVector1.ClearVector();
+    for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+      TmpFlag[i] = 0;
+    while ((fabs(Coefficient) > 1.0e-15) && (k > 0))
+    {
+      tmpStateK = (int) ((TmpState >> k) & 0x1ul);
+      tmpStateJ = (int) ((TmpState >> (k - 1)) & 0x1ul);
+      tmpStateI = (int) ((TmpState >> (k - 2)) & 0x1ul);
+      
+      localSz = tmpStateI + tmpStateJ + tmpStateK - 1;
+      
+      if ((localSz == 0) || (localSz == 1))
+      {
+	TmpIndexEffective = (k + 1)/3 - 1;
+	
+	for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	  {
+	    TmpStateEffective = this->StateDescription[i];
+	    tmpStateLocalSz = (int) ((TmpStateEffective >> (2 * TmpIndexEffective + 1)) & 0x1ul);
+	    if (tmpStateLocalSz == localSz)
+	    {
+	      tmpStateLocalPseudospin = (int) ((TmpStateEffective >> (2 * TmpIndexEffective)) & 0x1ul);
+	      if (tmpStateI == tmpStateJ)
+		localSpinStructure = 0;
+	      else
+	      {
+		if (tmpStateI == tmpStateK)
+		  localSpinStructure = 1;
+		else
+		  localSpinStructure = 2;
+	      }
+// 	      cout << i << " " << (Coefficient * Isometry[tmpStateLocalPseudospin][localSpinStructure]) << endl;
+	      if (TmpFlag[i] == 0)
+	      {
+		TmpVector1[i] = Isometry[tmpStateLocalPseudospin][localSpinStructure];
+		TmpFlag[i] = 1;
+	      }
+	      else
+		TmpVector1[i] *= Isometry[tmpStateLocalPseudospin][localSpinStructure];
+	    }
+	    else
+	    {
+	      TmpVector1[i] = 0.0;
+	      TmpFlag[i] = 1;
+	    }
+	  }
+      }
+      else
+      {
+	k = 0;
+	Coefficient = 0.0;
+      }
+      k -= 3;
+    }
+   TmpVector.AddLinearCombination(Coefficient, TmpVector1);
+  }
+
+//   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+//     cout << TmpVector[i] << endl;
+  for (int i = 0; i < 2; ++i)
+    delete[] Isometry[i];
+  delete[] Isometry;
+  delete[] TmpFlag;
+  return TmpVector;
+}

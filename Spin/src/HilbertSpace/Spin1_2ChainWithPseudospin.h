@@ -46,7 +46,6 @@ using std::ostream;
 
 class Spin1_2ChainWithPseudospin : public Spin1_2ChainNew
 {
-
  protected:
 
  public:
@@ -151,6 +150,13 @@ class Spin1_2ChainWithPseudospin : public Spin1_2ChainNew
   // state = ID of the state to print
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state);
+  
+  // convert a state defined on a lattice with a number of sites equals to a multiple of three
+  //
+  // state = reference on the state to convert
+  // space = pointer to the Hilbert space where state is defined
+  // return value = state in the (Kx,Ky) basis
+  virtual RealVector ProjectToEffectiveSubspaceThreeToOne(ComplexVector& state, AbstractSpinChain* space);
 
  protected:
 

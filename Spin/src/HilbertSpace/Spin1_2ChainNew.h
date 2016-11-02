@@ -49,6 +49,7 @@ class Spin1_2ChainNew : public AbstractSpinChain
  friend class Spin1_2ChainNewSzSymmetryAnd2DTranslation;
  friend class Spin1_2ChainNewInversionAnd2DTranslation;
  friend class Spin1_2ChainNewSzSymmetryInversionAnd2DTranslation;
+ friend class Spin1_2ChainWithPseudospin;
  
  protected:
 
@@ -219,6 +220,18 @@ class Spin1_2ChainNew : public AbstractSpinChain
   // coefficient = reference on double where numerical coefficient has to be stored
   // return value = index of resulting state
   virtual int SpiSmjSzk (int i, int j, int k, int state, double& coefficient);
+  
+  // operate local isometry on three sites
+  //
+  // i = position of first site
+  // j = position of second site 
+  // k = position of third site
+  // state = index of the state that the isometry has to be applied on
+  // indices = reference to an array where the indices of the resulting states have to be stored
+  // coefficients = reference to the array where the coefficients have to be stored
+  // return value = number of non-zero coefficients
+  virtual int ThreeSiteIsometry (int i, int j, int k, int state, int*& indices, double*& coefficients);
+  
 
   // translate a state assuming the system have periodic boundary
   // conditions (increasing the site index)
