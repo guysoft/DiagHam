@@ -408,7 +408,7 @@ int main(int argc, char** argv)
 			{
 			  if (TwoDTranslationFlag == false)
 			    { 
-			      if (NbrSites <= 32)
+			      if (NbrSites <= 31)
 				{
 				  Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpace (NbrParticles, NbrSites);
 				}
@@ -423,7 +423,7 @@ int main(int argc, char** argv)
 				{
 				  if (MinNbrSinglets == 0)
 				    {
-				      if (NbrSites <= 32)
+				      if (NbrSites <= 31)
 					{
 					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles, NbrSites, (SzSymmetrySector == -1), 
 															      TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
@@ -436,7 +436,7 @@ int main(int argc, char** argv)
 				    }
 				  else
 				    {
-				      if (NbrSites <= 32)
+				      if (NbrSites <= 31)
 					{
 					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, MinNbrSinglets, NbrSites, 
 																	    (SzSymmetrySector == -1), 
@@ -454,7 +454,7 @@ int main(int argc, char** argv)
 				{
 				  if (MinNbrSinglets == 0)
 				    {
-				      if (NbrSites <= 32)
+				      if (NbrSites <= 31)
 					{
 					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
 					}
@@ -465,7 +465,7 @@ int main(int argc, char** argv)
 				    }
 				  else
 				    {
-				      if (NbrSites <= 32)
+				      if (NbrSites <= 31)
 					{
 					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, MinNbrSinglets, NbrSites, TotalKx[i], 
 																  NbrSiteX, TotalKy[i], NbrSiteY);
@@ -483,7 +483,7 @@ int main(int argc, char** argv)
 			{
 			  if (TwoDTranslationFlag == false)
 			    {
-			      if (NbrSites <= 32)
+			      if (NbrSites <= 31)
 				{
 				  Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpace (NbrParticles, TotalSpin, NbrSites, 10000000);
 				}
@@ -498,7 +498,7 @@ int main(int argc, char** argv)
 				{
 				  if (MinNbrSinglets == 0)
 				    {
-				      if (NbrSites <= 32)
+				      if (NbrSites <= 31)
 					{
 					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles, TotalSpin, NbrSites, (SzSymmetrySector == -1),
 															      TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY, 10000000);
@@ -512,7 +512,7 @@ int main(int argc, char** argv)
 				    }
 				  else
 				    {
-				      if (NbrSites <= 32)
+				      if (NbrSites <= 31)
 					{
 					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, MinNbrSinglets, TotalSpin, 
 																	    NbrSites, (SzSymmetrySector == -1),
@@ -530,7 +530,7 @@ int main(int argc, char** argv)
 				{
 				  if (MinNbrSinglets == 0)
 				    {
-				      if (NbrSites <= 32)
+				      if (NbrSites <= 31)
 					{
 					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, TotalSpin, NbrSites, 
 														    TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY, 10000000);
@@ -543,7 +543,7 @@ int main(int argc, char** argv)
 				    }
 				  else
 				    {
-				      if (NbrSites <= 32)
+				      if (NbrSites <= 31)
 					{
 					  Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSinglets (NbrParticles, MinNbrSinglets, TotalSpin, NbrSites, 
 																  TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY, 10000000);
@@ -932,7 +932,7 @@ int main(int argc, char** argv)
 			    }
 			  else
 			    {
-			      if (NbrSites <= 32)
+			      if (NbrSites <= 31)
 				{
 				  if (MinNbrSinglets == 0)
 				    {
@@ -988,7 +988,7 @@ int main(int argc, char** argv)
 			{
 			  if (TwoDTranslationFlag == false)
 			    {
-			      if (NbrSites <= 32)
+			      if (NbrSites <= 31)
 				{
 				  PartialDensityMatrix = ((FermionOnLatticeWithSpinRealSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalSz, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
 				  PartialDensityMatrix *= CoefficientPerMomentumSector[TmpIndex][0];
@@ -1015,7 +1015,7 @@ int main(int argc, char** argv)
 			    {
 			      if (SubsystemSzSymmetrySector == 0)
 				{
-				  if (NbrSites <= 32)
+				  if (NbrSites <= 31)
 				    {
 				      // 					      PartialDensityMatrix = ((FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles,  SubsystemTotalSz, SubsystemTotalKx, SubsystemTotalKy, NbrGroundStatePerMomentumSector[TmpIndex], GroundStatePerMomentumSector[TmpIndex], CoefficientPerMomentumSector[TmpIndex] , Architecture.GetArchitecture());
 				      if (MinNbrSinglets == 0)
@@ -1071,7 +1071,7 @@ int main(int argc, char** argv)
 				}
 			      else
 				{
-				  if (NbrSites <= 32)
+				  if (NbrSites <= 31)
 				    {
 				      if (MinNbrSinglets == 0)
 					{
@@ -1280,7 +1280,7 @@ int main(int argc, char** argv)
 				{
 				  if (TwoDTranslationFlag == false)
 				    {
-				      if (NbrSites <= 32)
+				      if (NbrSites <= 31)
 					{
 					  for (int i = 0; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
 					    {
@@ -1301,7 +1301,7 @@ int main(int argc, char** argv)
 				    }
 				  else
 				    {
-				      if (NbrSites <= 32)
+				      if (NbrSites <= 31)
 					{
 					  if (MinNbrSinglets == 0)
 					    {
@@ -1342,7 +1342,7 @@ int main(int argc, char** argv)
 				{
 				  if (TwoDTranslationFlag == false)
 				    {
-				      if (NbrSites <= 32)
+				      if (NbrSites <= 31)
 					{
 					  for (int i = 0; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
 					    {
@@ -1365,7 +1365,7 @@ int main(int argc, char** argv)
 				    {
 				      if (SubsystemSzSymmetrySector == 0)
 					{
-					  if(NbrSites <= 32)
+					  if(NbrSites <= 31)
 					    {
 					      if (MinNbrSinglets == 0)
 						{
@@ -1413,7 +1413,7 @@ int main(int argc, char** argv)
 					{
 					  
 					  
-					  if(NbrSites <= 32)
+					  if(NbrSites <= 31)
 					    {
 					      if (MinNbrSinglets == 0)
 						{

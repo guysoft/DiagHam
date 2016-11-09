@@ -1062,7 +1062,7 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartia
 long FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnTorusWithSpinAndMagneticTranslations* complementaryHilbertSpace,
 														     ParticleOnTorusWithSpinAndMagneticTranslations* destinationHilbertSpace,
 														     int nbrGroundStates, ComplexVector* groundStates, double* weights, HermitianMatrix* densityMatrix)
-{
+{ 
   Complex** FourrierCoefficientsDestination = new Complex* [this->MomentumModulo];
   Complex** FourrierCoefficients = new Complex* [this->MomentumModulo];
   long TmpNbrNonZeroElements = 0l;
