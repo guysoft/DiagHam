@@ -2,6 +2,7 @@
 
 #include "HilbertSpace/Spin1_2ChainWithTranslations.h"
 #include "HilbertSpace/Spin1ChainWithTranslations.h"
+#include "HilbertSpace/Spin2ChainWithTranslations.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -117,6 +118,9 @@ int main(int argc, char** argv)
 	      break;
 	    case 2 :
 	      Chain = new Spin1ChainWithTranslations (NbrSpins, Momentum, InitalSzValue);
+	      break;
+	    case 4 :
+	      Chain = new Spin2ChainWithTranslations (NbrSpins, Momentum, InitalSzValue);
 	      break;
 	    default :
 	      {
