@@ -453,7 +453,6 @@ ComplexMatrix Spin2ChainWithTranslationsAndSzSymmetry::EvaluatePartialEntangleme
     }
   Spin2Chain TmpDestinationHilbertSpace(nbrSites, szSector, 1000000);
   Spin2Chain TmpHilbertSpace(this->ChainLength - nbrSites, this->Sz - szSector, 1000000);
-
   ComplexMatrix TmpEntanglementMatrix(TmpHilbertSpace.HilbertSpaceDimension, TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
   int Shift = 3 * nbrSites;
   int MinIndex = 0;

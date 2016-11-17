@@ -10,6 +10,7 @@
 
 #include "HilbertSpace/Spin1_2Chain.h"
 #include "HilbertSpace/Spin1Chain.h"
+#include "HilbertSpace/Spin2Chain.h"
 #include "HilbertSpace/Spin1_2ChainFull.h"
 #include "HilbertSpace/Spin1_2ChainFullAnd2DTranslation.h"
 #include "HilbertSpace/Spin1_2ChainFullInversionAnd2DTranslation.h"
@@ -21,6 +22,10 @@
 #include "HilbertSpace/Spin1ChainWithTranslationsAndSzSymmetry.h"
 #include "HilbertSpace/Spin1ChainWithTranslationsAndInversionSymmetry.h"
 #include "HilbertSpace/Spin1ChainWithTranslationsAndSzInversionSymmetries.h"
+#include "HilbertSpace/Spin2ChainWithTranslations.h"
+#include "HilbertSpace/Spin2ChainWithTranslationsAndSzSymmetry.h"
+#include "HilbertSpace/Spin2ChainWithTranslationsAndInversionSymmetry.h"
+#include "HilbertSpace/Spin2ChainWithTranslationsAndSzInversionSymmetries.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -285,6 +290,11 @@ int main(int argc, char** argv)
 		Space = new Spin1Chain (NbrSpins, TotalSz, 1000000);
 	      }
 	      break;
+	    case 4 :
+	      {
+		Space = new Spin1Chain (NbrSpins, TotalSz, 1000000);
+	      }
+	      break;
 	    default :
 	      {
 		if ((SpinValue & 1) == 0)
@@ -347,6 +357,32 @@ int main(int argc, char** argv)
 		    else
 		      {
 			Space = new Spin1ChainWithTranslations (NbrSpins, XMomentum, TotalSz);
+		      }
+		  }
+	      }
+	      break;
+	    case 4 :
+	      {
+		if (InversionSector != 0)
+		  {
+		    if (SzSymmetrySector != 0)
+		      {
+			Space = new Spin2ChainWithTranslationsAndSzInversionSymmetries (NbrSpins, XMomentum, InversionSector, SzSymmetrySector, TotalSz);
+		      }
+		    else
+		      {
+			Space = new Spin2ChainWithTranslationsAndInversionSymmetry (NbrSpins, XMomentum, InversionSector, TotalSz);
+		      }
+		  }
+		else
+		  {
+		    if (SzSymmetrySector != 0)
+		      {
+			Space = new Spin2ChainWithTranslationsAndSzSymmetry (NbrSpins, XMomentum, SzSymmetrySector, TotalSz);
+		      }
+		    else
+		      {
+			Space = new Spin2ChainWithTranslations (NbrSpins, XMomentum, TotalSz);
 		      }
 		  }
 	      }

@@ -403,7 +403,7 @@ RealMatrix Spin2ChainWithTranslationsAndInversionSymmetry::EvaluatePartialEntang
   Spin2Chain TmpHilbertSpace(this->ChainLength - nbrSites, this->Sz - szSector, 1000000);
 
   RealMatrix TmpEntanglementMatrix(TmpHilbertSpace.HilbertSpaceDimension, TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
-  int Shift = 2 * nbrSites;
+  int Shift = 3 * nbrSites;
   int MinIndex = 0;
   int MaxIndex = TmpHilbertSpace.HilbertSpaceDimension;
   int TmpNbrTranslation;
@@ -425,7 +425,7 @@ RealMatrix Spin2ChainWithTranslationsAndInversionSymmetry::EvaluatePartialEntang
 	}
     }
   unsigned long Mask1 = (0x1ul << Shift) - 0x1ul;
-  unsigned long Mask2 = (0x1ul << (2 * this->ChainLength)) - 0x1ul;
+  unsigned long Mask2 = (0x1ul << (3 * this->ChainLength)) - 0x1ul;
   for (; MinIndex < MaxIndex; ++MinIndex)    
     {
       unsigned long TmpState = TmpHilbertSpace.StateDescription[MinIndex] << Shift;

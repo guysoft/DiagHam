@@ -244,12 +244,6 @@ Spin1ChainWithTranslations::~Spin1ChainWithTranslations ()
 	{
 	  delete[] this->LookUpTable;
 	  delete[] this->StateDescription;
-	  for (int i = 1; i <= this->ChainLength; ++i)
-	    {
-	      delete[] this->RescalingFactors[i];
-	    } 
-	  delete[] this->RescalingFactors;
-	  delete[] this->NbrStateInOrbit;
 	}
     }
 }

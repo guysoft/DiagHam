@@ -11,11 +11,16 @@
 #include "HilbertSpace/Spin1_2Chain.h"
 #include "HilbertSpace/Spin1_2ChainFull.h"
 #include "HilbertSpace/Spin1Chain.h"
+#include "HilbertSpace/Spin2Chain.h"
 #include "HilbertSpace/Spin1_2ChainWithTranslations.h"
 #include "HilbertSpace/Spin1ChainWithTranslations.h"
 #include "HilbertSpace/Spin1ChainWithTranslationsAndSzSymmetry.h"
 #include "HilbertSpace/Spin1ChainWithTranslationsAndInversionSymmetry.h"
 #include "HilbertSpace/Spin1ChainWithTranslationsAndSzInversionSymmetries.h"
+#include "HilbertSpace/Spin2ChainWithTranslations.h"
+#include "HilbertSpace/Spin2ChainWithTranslationsAndSzSymmetry.h"
+#include "HilbertSpace/Spin2ChainWithTranslationsAndInversionSymmetry.h"
+#include "HilbertSpace/Spin2ChainWithTranslationsAndSzInversionSymmetries.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -265,6 +270,9 @@ int main(int argc, char** argv)
 	      break;
 	    case 2 :
 	      Spaces[i] = new Spin1Chain (NbrSpins, TotalSz[i], 1000000);
+	      break;
+	    case 4 :
+	      Spaces[i] = new Spin2Chain (NbrSpins, TotalSz[i], 1000000);
 	      break;
 	    default :
 	      {
@@ -547,6 +555,32 @@ int main(int argc, char** argv)
 			else
 			  {
 			    Spaces[i] = new Spin1ChainWithTranslations (NbrSpins, Momenta[i], TotalSz[i]);
+			  }
+		      }
+		  }
+		  break;
+		case 4 :
+		  {
+		    if (InversionSectors[i] != 0)
+		      {
+			if (SzSymmetrySectors[i] != 0)
+			  {
+			    Spaces[i] = new Spin2ChainWithTranslationsAndSzInversionSymmetries (NbrSpins, Momenta[i], InversionSectors[i], SzSymmetrySectors[i], TotalSz[i]);
+			  }
+			else
+			  {
+			    Spaces[i] = new Spin2ChainWithTranslationsAndInversionSymmetry (NbrSpins, Momenta[i], InversionSectors[i], TotalSz[i]);
+			  }
+		      }
+		    else
+		      {
+			if (SzSymmetrySectors[i] != 0)
+			  {
+			    Spaces[i] = new Spin2ChainWithTranslationsAndSzSymmetry (NbrSpins, Momenta[i], SzSymmetrySectors[i], TotalSz[i]);
+			  }
+			else
+			  {
+			    Spaces[i] = new Spin2ChainWithTranslations (NbrSpins, Momenta[i], TotalSz[i]);
 			  }
 		      }
 		  }
