@@ -565,8 +565,24 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // initialStateDown = array where the monomial representation for the down spin is stored
   // finalStateUp = reference on the bosonic up state in its fermionic representation
   // finalStateDown = reference on the bosonic down state in its fermionic representation
-  virtual unsigned long ConvertFromMonomial(unsigned long* initialStateUp, unsigned long* initialStateDown, 
-					    unsigned long& finalStateUp, unsigned long& finalStateDown);
+  virtual void ConvertFromMonomial(unsigned long* initialStateUp, unsigned long* initialStateDown, 
+				   unsigned long& finalStateUp, unsigned long& finalStateDown);
+
+  // convert a bosonic state from its monomial representation for single component
+  //
+  // initialStateUp = array where the monomial representation for the up spin is stored
+  // initialStateDown = array where the monomial representation for the down spin is stored
+  // finalStateUp = reference on the bosonic up state
+  // finalStateDown = reference on the bosonic down state
+  virtual void ConvertFromMonomial(unsigned long* initialStateUp, unsigned long* initialStateDown, 
+				   unsigned long*& finalStateUp, unsigned long*& finalStateDown);
+
+  // convert a bosonic state from its monomial representation for single component
+  //
+  // initialState = array where the monomial representation for a single spin component is stored
+  // finalState = reference on the bosonic single spin component state
+  // nbrParticles = numebr of particles in the single spin component
+  virtual void ConvertFromMonomial(unsigned long* initialState, unsigned long*& finalState, int nbrParticles);
 
   // apply generic a^+_m1_i a^+_m2_j operator to the state produced using A*A* method (without destroying it)
   //
@@ -604,13 +620,10 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   //
   // slaterUp = monomial representation of the Slater spin up part
   // slaterDown = monomial representation of the Slater spin up part
-  // finalStatesUp = reference on the array where the spin up fermionic representation of the produced states will be stored
-  // finalStatesUp = reference on the array where the spin down fermionic representation of the produced states will be stored
-  // weigth = reference on the array where the coefficient of the states product will be stored
-  // return value = number of produced states
-  virtual unsigned long VanDerMondeTimesSlater (unsigned long* slaterUp, unsigned long* slaterDown, unsigned long*& finalStatesUp, 
-						unsigned long*& finalStatesDown, long*& weigth);
-
+  // finalState = reference on the vector the produced state will be stored
+  // threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
+  virtual void VanDerMondeTimesSlater (unsigned long* slaterUp, unsigned long* slaterDown, RealVector& finalState, double*** threeOrbitalOverlaps);
+  
 };
 
 // get the number of orbitals
@@ -850,8 +863,8 @@ inline void BosonOnSphereWithSU2Spin::ConvertToMonomial(unsigned long initialSta
 // finalStateUp = reference on the bosonic up state in its fermionic representation
 // finalStateDown = reference on the bosonic down state in its fermionic representation
 
-inline unsigned long BosonOnSphereWithSU2Spin::ConvertFromMonomial(unsigned long* initialStateUp, unsigned long* initialStateDown, 
-								   unsigned long& finalStateUp, unsigned long& finalStateDown)
+inline void BosonOnSphereWithSU2Spin::ConvertFromMonomial(unsigned long* initialStateUp, unsigned long* initialStateDown, 
+							  unsigned long& finalStateUp, unsigned long& finalStateDown)
 {
   finalStateUp = 0x0ul;
   for (int i = 0; i < this->NbrBosonsUp; ++i)
@@ -859,6 +872,49 @@ inline unsigned long BosonOnSphereWithSU2Spin::ConvertFromMonomial(unsigned long
   finalStateDown = 0x0ul;
   for (int i = 0; i < this->NbrBosonsDown; ++i)
     finalStateDown |= 0x1ul << (initialStateDown[i] + ((unsigned long) (this->NbrBosonsDown - i)) - 1ul);
+}
+
+// convert a bosonic state from its monomial representation for single component
+//
+// initialStateUp = array where the monomial representation for the up spin is stored
+// initialStateDown = array where the monomial representation for the down spin is stored
+// finalStateUp = reference on the bosonic up state
+// finalStateDown = reference on the bosonic down state
+
+inline void BosonOnSphereWithSU2Spin::ConvertFromMonomial(unsigned long* initialStateUp, unsigned long* initialStateDown, 
+							  unsigned long*& finalStateUp, unsigned long*& finalStateDown)
+{
+  for (int i = 0; i <= this->LzMax; ++i)
+    {
+      finalStateUp[i] = 0ul;
+      finalStateDown[i] = 0ul;
+    }
+  for (int i = 0; i < this->NbrBosonsUp; ++i)
+    {
+      ++finalStateUp[initialStateUp[i]]; 
+    }
+  for (int i = 0; i < this->NbrBosonsDown; ++i)
+    {
+      ++finalStateDown[initialStateDown[i]]; 
+    }
+}
+
+// convert a bosonic state from its monomial representation for single component
+//
+// initialState = array where the monomial representation for a single spin component is stored
+// finalState = reference on the bosonic single spin component state
+// nbrParticles = numebr of particles in the single spin component
+
+inline void BosonOnSphereWithSU2Spin::ConvertFromMonomial(unsigned long* initialState, unsigned long*& finalState, int nbrParticles)
+{
+  for (int i = 0; i <= this->LzMax; ++i)
+    {
+      finalState[i] = 0ul;
+    }
+  for (int i = 0; i < nbrParticles; ++i)
+    {
+      ++finalState[initialState[i]]; 
+    }
 }
 
 // apply generic a^+_m1_i a^+_m2_j operator to the state produced using A*A* method (without destroying it)
