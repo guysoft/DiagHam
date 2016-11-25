@@ -81,21 +81,28 @@ int main(int argc, char** argv)
     }
   NbrFluxQuantumLambdaLevels /= NbrLandauLevel;
   --NbrFluxQuantumLambdaLevels;
-  int NbrFluxQuanta = NbrFluxQuantumLambdaLevels + (NbrParticles - 1);
+  int NbrFluxQuanta = (NbrParticles - 1);
+  if (Manager.GetBoolean("reverse-flux") == false)
+    NbrFluxQuanta += NbrFluxQuantumLambdaLevels;
+  else
+    NbrFluxQuanta -= NbrFluxQuantumLambdaLevels;
   int TotalLz = 0;
     
   FermionOnSphereWithSpin* InputSpace = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuantumLambdaLevels, TotalSz);
 
   BosonOnSphereWithSU2Spin* OutputSpace = new BosonOnSphereWithSU2Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
 
+  char* OutputName = new char [512 + strlen(Manager.GetString("interaction-name"))];
+  sprintf (OutputName, "bosons_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz_%d.%ld.vec", Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta, TotalSz, TotalLz, Manager.GetInteger("outputvector-index"));
+
+  cout << "generating state " << OutputName << endl;
   RealVector InputVector (InputSpace->GetHilbertSpaceDimension(), true);
   RealVector OutputVector (OutputSpace->GetHilbertSpaceDimension(), true);
   
   InputVector[0] = 1.0;
-  OutputSpace->SlaterTimeSpinfulFermionicState(InputVector, OutputVector, InputSpace, 0, InputSpace->GetHilbertSpaceDimension());
+  OutputSpace->SlaterTimeSpinfulFermionicState(InputVector, OutputVector, InputSpace, 0, InputSpace->GetHilbertSpaceDimension(),
+					       !(Manager.GetBoolean("normalize")));
 
-  char* OutputName = new char [512 + strlen(Manager.GetString("interaction-name"))];
-  sprintf (OutputName, "bosons_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz_%d.%ld.vec", Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta, TotalSz, TotalLz, Manager.GetInteger("outputvector-index"));
   if (Manager.GetBoolean("normalize") == true)
     OutputVector.Normalize();
   if (OutputVector.WriteVector(OutputName) == false)

@@ -261,27 +261,102 @@ int main(int argc, char** argv)
 	}
       
       Spaces = new AbstractSpinChain* [NbrSpaces];
-      for (int i = 0; i < NbrSpaces; ++i)
+      if (MomentumFlag == false)
 	{
-	  switch (SpinValue)
+	  for (int i = 0; i < NbrSpaces; ++i)
 	    {
-	    case 1 :
-	      Spaces[i] = new Spin1_2Chain (NbrSpins, TotalSz[i], 1000000);
-	      break;
-	    case 2 :
-	      Spaces[i] = new Spin1Chain (NbrSpins, TotalSz[i], 1000000);
-	      break;
-	    case 4 :
-	      Spaces[i] = new Spin2Chain (NbrSpins, TotalSz[i], 1000000);
-	      break;
-	    default :
-	      {
-		if ((SpinValue & 1) == 0)
-		  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
-		else 
-		  cout << "spin " << SpinValue << "/2 are not available" << endl;
-		return -1;
-	      }
+	      switch (SpinValue)
+		{
+		case 1 :
+		  Spaces[i] = new Spin1_2Chain (NbrSpins, TotalSz[i], 1000000);
+		  break;
+		case 2 :
+		  Spaces[i] = new Spin1Chain (NbrSpins, TotalSz[i], 1000000);
+		  break;
+		case 4 :
+		  Spaces[i] = new Spin2Chain (NbrSpins, TotalSz[i], 1000000);
+		  break;
+		default :
+		  {
+		    if ((SpinValue & 1) == 0)
+		      cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+		    else 
+		      cout << "spin " << SpinValue << "/2 are not available" << endl;
+		    return -1;
+		  }
+		}
+	    }
+	}
+      else
+	{
+	  for (int i = 0; i < NbrSpaces; ++i)
+	    {
+	      switch (SpinValue)
+		{
+		case 1 :
+		  Spaces[i] = new Spin1_2ChainWithTranslations (NbrSpins, Momenta[i], 1, TotalSz[i], 1000000, 1000000);
+		  break;
+		case 2 :
+		  {
+		    if (InversionSectors[i] != 0)
+		      {
+			if (SzSymmetrySectors[i] != 0)
+			  {
+			    Spaces[i] = new Spin1ChainWithTranslationsAndSzInversionSymmetries (NbrSpins, Momenta[i], InversionSectors[i], SzSymmetrySectors[i], TotalSz[i]);
+			  }
+			else
+			  {
+			    Spaces[i] = new Spin1ChainWithTranslationsAndInversionSymmetry (NbrSpins, Momenta[i], InversionSectors[i], TotalSz[i]);
+			  }
+		      }
+		    else
+		      {
+			if (SzSymmetrySectors[i] != 0)
+			  {
+			    Spaces[i] = new Spin1ChainWithTranslationsAndSzSymmetry (NbrSpins, Momenta[i], SzSymmetrySectors[i], TotalSz[i]);
+			  }
+			else
+			  {
+			    Spaces[i] = new Spin1ChainWithTranslations (NbrSpins, Momenta[i], TotalSz[i]);
+			  }
+		      }
+		  }
+		  break;
+		case 4 :
+		  {
+		    if (InversionSectors[i] != 0)
+		      {
+			if (SzSymmetrySectors[i] != 0)
+			  {
+			    Spaces[i] = new Spin2ChainWithTranslationsAndSzInversionSymmetries (NbrSpins, Momenta[i], InversionSectors[i], SzSymmetrySectors[i], TotalSz[i]);
+			  }
+			else
+			  {
+			    Spaces[i] = new Spin2ChainWithTranslationsAndInversionSymmetry (NbrSpins, Momenta[i], InversionSectors[i], TotalSz[i]);
+			  }
+		      }
+		    else
+		      {
+			if (SzSymmetrySectors[i] != 0)
+			  {
+			    Spaces[i] = new Spin2ChainWithTranslationsAndSzSymmetry (NbrSpins, Momenta[i], SzSymmetrySectors[i], TotalSz[i]);
+			  }
+			else
+			  {
+			    Spaces[i] = new Spin2ChainWithTranslations (NbrSpins, Momenta[i], TotalSz[i]);
+			  }
+		      }
+		  }
+		  break;
+		default :
+		  {
+		    if ((SpinValue & 1) == 0)
+		      cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+		    else 
+		      cout << "spin " << SpinValue << "/2 are not available" << endl;
+		    return -1;
+		  }
+		}
 	    }
 	}
       for (int i = 0; i < NbrSpaces; ++i)

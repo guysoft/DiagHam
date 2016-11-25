@@ -1243,7 +1243,7 @@ void Spin1ChainWithTranslations::GenerateLookUpTable(unsigned long memory)
   for (int i = 0; i < TmpMaxBitPosition; ++i)
     this->LookUpTable[i] = new int [this->LookUpTableMemorySize + 1];
   int CurrentMaxMomentum = TmpMaxBitPosition;
-  while ((this->StateDescription[0] >> CurrentMaxMomentum) == 0x0ul)
+  while (((this->StateDescription[0] >> CurrentMaxMomentum) == 0x0ul) && (CurrentMaxMomentum > 0))
     --CurrentMaxMomentum;
   int* TmpLookUpTable = this->LookUpTable[CurrentMaxMomentum];
   if (CurrentMaxMomentum < this->MaximumLookUpShift)

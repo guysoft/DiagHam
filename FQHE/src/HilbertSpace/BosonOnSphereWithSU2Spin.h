@@ -401,8 +401,9 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // fermionicSpace = pointer on the Hilbert Space associated to the spinful fermionic state
   // minIndex = first component to compute
   // nbrComponents = number of components to compute
+  // unnormalizedFlag = true if the state should be written in the unnormalized basis
   virtual void SlaterTimeSpinfulFermionicState(RealVector& fermionicState, RealVector& outputVector, FermionOnSphereWithSpin* fermionicSpace, 
-					       int minIndex, int nbrComponents);
+					       int minIndex, int nbrComponents, bool unnormalizedFlag);
 
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
   // 
@@ -622,8 +623,16 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // slaterDown = monomial representation of the Slater spin up part
   // finalState = reference on the vector the produced state will be stored
   // threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
-  virtual void VanDerMondeTimesSlater (unsigned long* slaterUp, unsigned long* slaterDown, RealVector& finalState, double*** threeOrbitalOverlaps);
+  virtual void VanDerMondeTimesSlater (unsigned long* slaterUp, unsigned long* slaterDown, RealVector& finalState, double** threeOrbitalOverlaps);
   
+  // Compute the product of a spinful Slater determinant with a Van der Monde determinant, assuming a reverse flux attachment
+  //
+  // slaterUp = monomial representation of the Slater spin up part
+  // slaterDown = monomial representation of the Slater spin up part
+  // finalState = reference on the vector the produced state will be stored
+  // threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
+  virtual void ReverseVanDerMondeTimesSlater (unsigned long* slaterUp, unsigned long* slaterDown, RealVector& finalState, double** threeOrbitalOverlaps);
+
 };
 
 // get the number of orbitals

@@ -11,6 +11,7 @@
 
 #include "HilbertSpace/Spin1_2Chain.h"
 #include "HilbertSpace/Spin1Chain.h"
+#include "HilbertSpace/Spin2Chain.h"
 #include "HilbertSpace/Spin1_2ChainFull.h"
 #include "HilbertSpace/Spin1_2ChainWithTranslations.h"
 #include "HilbertSpace/Spin1ChainWithTranslations.h"
@@ -19,6 +20,10 @@
 #include "HilbertSpace/Spin1ChainWithTranslationsAndSzInversionSymmetries.h"
 #include "HilbertSpace/Spin1_2ChainFullAnd2DTranslation.h"
 #include "HilbertSpace/Spin1_2ChainFullInversionAnd2DTranslation.h"
+#include "HilbertSpace/Spin2ChainWithTranslations.h"
+#include "HilbertSpace/Spin2ChainWithTranslationsAndSzSymmetry.h"
+#include "HilbertSpace/Spin2ChainWithTranslationsAndInversionSymmetry.h"
+#include "HilbertSpace/Spin2ChainWithTranslationsAndSzInversionSymmetries.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -76,6 +81,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('i', "input-state", "state whose total S^2 has to be computed");  
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerate-states", "a single column formatted ASCCI file that contains a list of states whose total S^2 have to be computed");  
   (*SystemGroup) += new BooleanOption  ('c', "complex", "consider complex wave function");
+  (*SystemGroup) += new BooleanOption  ('\n', "force-real", "assume real eigenstates even for momentum eigenstates");
   (*OutputGroup) += new BooleanOption  ('\n', "compute-eigenstates", "compute the S^2 eigenstates when using the --degenerate-states option");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
@@ -242,6 +248,9 @@ int main(int argc, char** argv)
 	    case 2 :
 	      Space = new Spin1Chain (NbrSpins, TotalSz, 1000000);
 	      break;
+	    case 4 :
+	      Space = new Spin2Chain (NbrSpins, TotalSz, 1000000);
+	      break;
 	    default :
 	      {
 		if ((SpinValue & 1) == 0)
@@ -407,6 +416,32 @@ int main(int argc, char** argv)
 		      }
 		  }
 		  break;
+		case 4 :
+		  {
+		    if (InversionFlag == true)
+		      {
+			if (SzSymmetryFlag == true)
+			  {
+			    Space = new Spin2ChainWithTranslationsAndSzInversionSymmetries (NbrSpins, XMomentum, InversionSector, SzSymmetrySector, TotalSz);
+			  }
+			else
+			  {
+			    Space = new Spin2ChainWithTranslationsAndInversionSymmetry (NbrSpins, XMomentum, InversionSector, TotalSz);
+			  }
+		      }
+		    else
+		      {
+			if (SzSymmetryFlag == true)
+		      {
+			Space = new Spin2ChainWithTranslationsAndSzSymmetry (NbrSpins, XMomentum, SzSymmetrySector, TotalSz);
+		      }
+			else
+			  {
+			    Space = new Spin2ChainWithTranslations (NbrSpins, XMomentum, TotalSz);
+			  }
+		      }
+		  }
+		  break;
 		default :
 		  {
 		    if ((SpinValue & 1) == 0)
@@ -420,87 +455,176 @@ int main(int argc, char** argv)
 	  else
 	    {
 	    }
-	  SpinWith1DTranslationS2Operator TmpOperator(Space, NbrSpins);
 
-	  if (Manager.GetString("degenerate-states") == 0)
+	  if (Manager.GetBoolean("force-real") == true)
 	    {
-	      ComplexVector TmpState;
-	      if (TmpState.ReadVector (InputStateNames[0]) == false)
-		{
-		  cout << "can't open vector file " << InputStateNames[0] << endl;
-		  return -1;      
-		}
+	      SpinWith1DTranslationS2Operator TmpOperator(Space, NbrSpins);
 	      
-	      Complex TmpS2 = TmpOperator.MatrixElement(TmpState, TmpState);
-	      cout << "<S^2>=" << TmpS2.Re << " <S>=" << (0.5 * (sqrt((4.0 * TmpS2.Re) + 1.0) - 1.0)) << endl;
-	      cout << "round(<2S>)=" << round(sqrt((4.0 * TmpS2.Re) + 1.0) - 1.0) << endl; 
+	      if (Manager.GetString("degenerate-states") == 0)
+		{
+		  RealVector TmpState;
+		  if (TmpState.ReadVector (InputStateNames[0]) == false)
+		    {
+		      cout << "can't open vector file " << InputStateNames[0] << endl;
+		      return -1;      
+		    }
+		  
+		  Complex TmpS2 = TmpOperator.MatrixElement(TmpState, TmpState);
+		  cout << "<S^2>=" << TmpS2.Re << " <S>=" << (0.5 * (sqrt((4.0 * TmpS2.Re) + 1.0) - 1.0)) << endl;
+		  cout << "round(<2S>)=" << round(sqrt((4.0 * TmpS2.Re) + 1.0) - 1.0) << endl; 
+		}
+	      else
+		{
+		  MultiColumnASCIIFile DegenerateFile;
+		  RealVector* InputStates = new RealVector[NbrStates];
+		  if (DegenerateFile.Parse(Manager.GetString("degenerate-states")) == false)
+		    {
+		      DegenerateFile.DumpErrors(cout);
+		      return -1;
+		    }
+		  if (InputStates[0].ReadVector (DegenerateFile(0, 0)) == false)
+		    {
+		      cout << "can't open vector file " << DegenerateFile(0, 0) << endl;
+		      return -1;      
+		    }	  
+		  for (int i = 1; i < NbrStates; ++i)
+		    {
+		      if (InputStates[i].ReadVector (DegenerateFile(0, i)) == false)
+			{
+			  cout << "can't open vector file " << DegenerateFile(0, i) << endl;
+			  return -1;      
+			}	  
+		      if (InputStates[0].GetVectorDimension() != InputStates[i].GetVectorDimension())
+			{
+			  cout << "error, " << DegenerateFile(0, 0) << " and " <<  DegenerateFile(0, i) << "don't have the same  dimension (" << InputStates[0].GetVectorDimension() << " and " << InputStates[i].GetVectorDimension()<< ")" << endl;
+			  return -1;
+			}
+		    }
+		  RealSymmetricMatrix S2Matrix(NbrStates, true);
+		  for (int i = 0; i < NbrStates; ++i)
+		    {
+		      for (int j = i; j < NbrStates; ++j)
+			{
+			  Complex TmpS2 = TmpOperator.MatrixElement(InputStates[i], InputStates[j]);
+			  S2Matrix.SetMatrixElement(j, i, TmpS2.Re);
+			}
+		    }
+		  RealDiagonalMatrix TmpS2Eigenvalues(NbrStates);
+		  RealMatrix TmpBasis (NbrStates, NbrStates);
+		  TmpBasis.SetToIdentity();
+		  S2Matrix.LapackDiagonalize(TmpS2Eigenvalues, TmpBasis);
+		  for (int i = 0; i < NbrStates; ++i)
+		    {
+		      double TmpS2 = TmpS2Eigenvalues[i];
+		      cout << "<S^2>=" << TmpS2 << " <S>=" << (0.5 * (sqrt((4.0 * TmpS2) + 1.0) - 1.0)) << endl;
+		      cout << "round(<2S>)=" <<  round(sqrt((4.0 * TmpS2) + 1.0) - 1.0) << endl; 
+		    }
+		  if (Manager.GetBoolean("compute-eigenstates"))
+		    {
+		      RealMatrix TmpMatrix (InputStates, NbrStates);
+		      TmpMatrix.Multiply(TmpBasis);
+		      for (int i = 0; i < NbrStates; ++i)
+			{
+			  char* SzString = new char [16];
+			  sprintf (SzString, "sz_%d", TotalSz);
+			  char* SzS2String = new char [32];
+			  sprintf (SzS2String, "sz_%d_s_%d", TotalSz, (int) (round(sqrt((4.0 * TmpS2Eigenvalues[i]) + 1.0) - 1.0)));
+			  char* TmpOutputName = ReplaceString(InputStateNames[i], SzString, SzS2String);
+			  cout << "writing " << TmpOutputName << endl;		      
+			  if (TmpMatrix[i].WriteVector(TmpOutputName) == false)
+			    {
+			      cout << "error, can't write " << TmpOutputName << endl;
+			    }
+			  delete[] TmpOutputName;
+			}
+		    }
+		  
+		}
 	    }
 	  else
 	    {
-	      MultiColumnASCIIFile DegenerateFile;
-	      ComplexVector* InputStates = new ComplexVector[NbrStates];
-	      if (DegenerateFile.Parse(Manager.GetString("degenerate-states")) == false)
+	      SpinWith1DTranslationS2Operator TmpOperator(Space, NbrSpins);
+	      
+	      if (Manager.GetString("degenerate-states") == 0)
 		{
-		  DegenerateFile.DumpErrors(cout);
-		  return -1;
-		}
-	      if (InputStates[0].ReadVector (DegenerateFile(0, 0)) == false)
-		{
-		  cout << "can't open vector file " << DegenerateFile(0, 0) << endl;
-		  return -1;      
-		}	  
-	      for (int i = 1; i < NbrStates; ++i)
-		{
-		  if (InputStates[i].ReadVector (DegenerateFile(0, i)) == false)
+		  ComplexVector TmpState;
+		  if (TmpState.ReadVector (InputStateNames[0]) == false)
 		    {
-		      cout << "can't open vector file " << DegenerateFile(0, i) << endl;
+		      cout << "can't open vector file " << InputStateNames[0] << endl;
 		      return -1;      
-		    }	  
-		  if (InputStates[0].GetVectorDimension() != InputStates[i].GetVectorDimension())
+		    }
+		  
+		  Complex TmpS2 = TmpOperator.MatrixElement(TmpState, TmpState);
+		  cout << "<S^2>=" << TmpS2.Re << " <S>=" << (0.5 * (sqrt((4.0 * TmpS2.Re) + 1.0) - 1.0)) << endl;
+		  cout << "round(<2S>)=" << round(sqrt((4.0 * TmpS2.Re) + 1.0) - 1.0) << endl; 
+		}
+	      else
+		{
+		  MultiColumnASCIIFile DegenerateFile;
+		  ComplexVector* InputStates = new ComplexVector[NbrStates];
+		  if (DegenerateFile.Parse(Manager.GetString("degenerate-states")) == false)
 		    {
-		      cout << "error, " << DegenerateFile(0, 0) << " and " <<  DegenerateFile(0, i) << "don't have the same  dimension (" << InputStates[0].GetVectorDimension() << " and " << InputStates[i].GetVectorDimension()<< ")" << endl;
+		      DegenerateFile.DumpErrors(cout);
 		      return -1;
 		    }
-		}
-	      HermitianMatrix S2Matrix(NbrStates, true);
-	      for (int i = 0; i < NbrStates; ++i)
-		{
-		  for (int j = i; j < NbrStates; ++j)
+		  if (InputStates[0].ReadVector (DegenerateFile(0, 0)) == false)
 		    {
-		      Complex TmpS2 = TmpOperator.MatrixElement(InputStates[i], InputStates[j]);
-		      S2Matrix.SetMatrixElement(j, i, TmpS2);
+		      cout << "can't open vector file " << DegenerateFile(0, 0) << endl;
+		      return -1;      
+		    }	  
+		  for (int i = 1; i < NbrStates; ++i)
+		    {
+		      if (InputStates[i].ReadVector (DegenerateFile(0, i)) == false)
+			{
+			  cout << "can't open vector file " << DegenerateFile(0, i) << endl;
+			  return -1;      
+			}	  
+		      if (InputStates[0].GetVectorDimension() != InputStates[i].GetVectorDimension())
+			{
+			  cout << "error, " << DegenerateFile(0, 0) << " and " <<  DegenerateFile(0, i) << "don't have the same  dimension (" << InputStates[0].GetVectorDimension() << " and " << InputStates[i].GetVectorDimension()<< ")" << endl;
+			  return -1;
+			}
 		    }
-		}
-	      RealDiagonalMatrix TmpS2Eigenvalues(NbrStates);
-	      ComplexMatrix TmpBasis (NbrStates, NbrStates);
-	      TmpBasis.SetToIdentity();
-	      S2Matrix.LapackDiagonalize(TmpS2Eigenvalues, TmpBasis);
-	      for (int i = 0; i < NbrStates; ++i)
-		{
-		  double TmpS2 = TmpS2Eigenvalues[i];
-		  cout << "<S^2>=" << TmpS2 << " <S>=" << (0.5 * (sqrt((4.0 * TmpS2) + 1.0) - 1.0)) << endl;
-		  cout << "round(<2S>)=" <<  round(sqrt((4.0 * TmpS2) + 1.0) - 1.0) << endl; 
-		}
-	      if (Manager.GetBoolean("compute-eigenstates"))
-		{
-		  ComplexMatrix TmpMatrix (InputStates, NbrStates);
-		  TmpMatrix.Multiply(TmpBasis);
+		  HermitianMatrix S2Matrix(NbrStates, true);
 		  for (int i = 0; i < NbrStates; ++i)
 		    {
-		      char* SzString = new char [16];
-		      sprintf (SzString, "sz_%d", TotalSz);
-		      char* SzS2String = new char [32];
-		      sprintf (SzS2String, "sz_%d_s_%d", TotalSz, (int) (round(sqrt((4.0 * TmpS2Eigenvalues[i]) + 1.0) - 1.0)));
-		      char* TmpOutputName = ReplaceString(InputStateNames[i], SzString, SzS2String);
-		      cout << "writing " << TmpOutputName << endl;		      
-		      if (TmpMatrix[i].WriteVector(TmpOutputName) == false)
+		      for (int j = i; j < NbrStates; ++j)
 			{
-			  cout << "error, can't write " << TmpOutputName << endl;
+		      Complex TmpS2 = TmpOperator.MatrixElement(InputStates[i], InputStates[j]);
+		      S2Matrix.SetMatrixElement(j, i, TmpS2);
 			}
-		      delete[] TmpOutputName;
 		    }
+		  RealDiagonalMatrix TmpS2Eigenvalues(NbrStates);
+		  ComplexMatrix TmpBasis (NbrStates, NbrStates);
+		  TmpBasis.SetToIdentity();
+		  S2Matrix.LapackDiagonalize(TmpS2Eigenvalues, TmpBasis);
+		  for (int i = 0; i < NbrStates; ++i)
+		    {
+		      double TmpS2 = TmpS2Eigenvalues[i];
+		      cout << "<S^2>=" << TmpS2 << " <S>=" << (0.5 * (sqrt((4.0 * TmpS2) + 1.0) - 1.0)) << endl;
+		      cout << "round(<2S>)=" <<  round(sqrt((4.0 * TmpS2) + 1.0) - 1.0) << endl; 
+		    }
+		  if (Manager.GetBoolean("compute-eigenstates"))
+		    {
+		      ComplexMatrix TmpMatrix (InputStates, NbrStates);
+		      TmpMatrix.Multiply(TmpBasis);
+		      for (int i = 0; i < NbrStates; ++i)
+			{
+			  char* SzString = new char [16];
+			  sprintf (SzString, "sz_%d", TotalSz);
+			  char* SzS2String = new char [32];
+			  sprintf (SzS2String, "sz_%d_s_%d", TotalSz, (int) (round(sqrt((4.0 * TmpS2Eigenvalues[i]) + 1.0) - 1.0)));
+			  char* TmpOutputName = ReplaceString(InputStateNames[i], SzString, SzS2String);
+			  cout << "writing " << TmpOutputName << endl;		      
+			  if (TmpMatrix[i].WriteVector(TmpOutputName) == false)
+			    {
+			      cout << "error, can't write " << TmpOutputName << endl;
+			    }
+			  delete[] TmpOutputName;
+			}
+		    }
+		  
 		}
-	      
 	    }
 	}
     }
