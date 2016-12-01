@@ -63,12 +63,12 @@ using std::ios;
 TightBindingModelHalfContinuousHofstadterModel::TightBindingModelHalfContinuousHofstadterModel(double laserStrength,  int flux,  int nbrSiteX,  int nbrSiteY, double gammaX, double gammaY, AbstractArchitecture* architecture, int cutOFF, bool storeOneBodyMatrices)
 {
   this->NbrStep = cutOFF+1;
-  this->Flux =  flux;
+  this->Flux =  ((double) flux);
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
   this->LaserStrength = laserStrength; 
   this->InvMomentum= 1.0/((2.0 * M_PI)*(2.0 * M_PI));
-  this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
+  this->KxFactor = 2.0 * M_PI  / ((double)  this->Flux *this->NbrSiteX);
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
   this->GammaX = gammaX;
   this->GammaY = gammaY;
@@ -213,9 +213,9 @@ void TightBindingModelHalfContinuousHofstadterModel::CoreComputeBandStructure(lo
               K2 = this->KyFactor*(((double) ky) + this->GammaY);
              
               HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
-	      for (int t = 0; t< this->NbrStep; t++)
+	      for (int t = 0; t < this->NbrStep; t++)
 		{
-		  double MomentaX = K1-M_PI*(this->NbrStep-1) + 2*M_PI*t;
+		  double MomentaX = K1-M_PI/this->Flux*(this->NbrStep-1) + 2*M_PI/this->Flux*t;
 		  int IntermediateIndex = this->GetIntermediateLinearizedIndices(t);
 		  TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex, IntermediateIndex,this->InvMomentum*(MomentaX*MomentaX));
 		  

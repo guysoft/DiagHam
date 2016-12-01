@@ -139,7 +139,7 @@ int main(int argc, char** argv)
     
     char* FilePrefix = new char [256];
 
-    sprintf (FilePrefix, "%s_singleband_halfcontinuoushofstadtermodel_nq_%ld_n_%d_x_%d_y_%d", StatisticPrefix, Manager.GetInteger("cutOFF") , NbrParticles, NbrSitesX, NbrSitesY);
+    sprintf (FilePrefix, "%s_singleband_halfcontinuoushofstadtermodel_nq_%ld_n_%d_x_%d_y_%d", StatisticPrefix, Manager.GetInteger("cutOFF") , NbrParticles ,NbrSitesX, NbrSitesY);
     
 /*    if (Manager.GetBoolean("two-bands") == false)
       {
