@@ -248,6 +248,21 @@ class BosonOnSphereWithSU2SpinSzSymmetry :  public BosonOnSphereWithSU2Spin
 													 int nbrOrbitalA, double* weightOrbitalAUp, double* weightOrbitalADown, 
 													 int nbrOrbitalB, double* weightOrbitalBUp, double* weightOrbitalBDown, RealMatrix& entanglementMatrix);
 
+  // convert a given state from a generic basis from the current Sz subspace basis
+  //
+  // state = reference on the vector to convert
+  // space = reference on the basis associated to state
+  // return value = converted vector
+  virtual RealVector ConvertToNbodyBasis(RealVector& state, ParticleOnSphereWithSpin* space);
+  
+  // convert a given state from a generic basis to the current Sz subspace basis
+  //
+  // state = reference on the vector to convert
+  // space = reference on the basis associated to state
+  // return value = converted vector
+  virtual RealVector ConvertFromNbodyBasis(RealVector& state, ParticleOnSphereWithSpin* space);
+  
+
   protected:
 
   // generate the Hilbert space with the discrete symmetry constraint
@@ -294,6 +309,21 @@ class BosonOnSphereWithSU2SpinSzSymmetry :  public BosonOnSphereWithSU2Spin
   // return value = index of the destination state  
   virtual int SymmetrizeAdAdResult(unsigned long*& stateDescriptionUp, unsigned long*& stateDescriptionDown, double& coefficient);
 
+  // Compute the product of a spinful Slater determinant with a Van der Monde determinant
+  //
+  // slaterUp = monomial representation of the Slater spin up part
+  // slaterDown = monomial representation of the Slater spin up part
+  // finalState = reference on the vector the produced state will be stored
+  // threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
+  virtual void VanDerMondeTimesSlater (unsigned long* slaterUp, unsigned long* slaterDown, RealVector& finalState, double** threeOrbitalOverlaps);
+  
+  // Compute the product of a spinful Slater determinant with a Van der Monde determinant, assuming a reverse flux attachment
+  //
+  // slaterUp = monomial representation of the Slater spin up part
+  // slaterDown = monomial representation of the Slater spin up part
+  // finalState = reference on the vector the produced state will be stored
+  // threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
+  virtual void ReverseVanDerMondeTimesSlater (unsigned long* slaterUp, unsigned long* slaterDown, RealVector& finalState, double** threeOrbitalOverlaps);
 };
 
 // apply a_n1_sigma1 a_n2_sigma2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call. Sigma is 0 for up and 1 for down

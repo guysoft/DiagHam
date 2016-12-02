@@ -421,3 +421,26 @@ void BosonOnSphereWithSU2SpinLzSymmetry::GenerateStatesWithDiscreteSymmetry()
   this->LargeHilbertSpaceDimension = TmpLargeHilbertSpaceDimension;
 }
 
+// convert a given state from a generic basis to the current Sz subspace basis
+//
+// state = reference on the vector to convert
+// space = reference on the basis associated to state
+// return value = converted vector
+
+RealVector BosonOnSphereWithSU2SpinLzSymmetry::ConvertFromNbodyBasis(RealVector& state, ParticleOnSphereWithSpin* space)
+{
+  BosonOnSphereWithSU2Spin* TmpSpace = (BosonOnSphereWithSU2Spin*) space;
+  RealVector TmpVector (TmpSpace->HilbertSpaceDimension, true);
+  for (int i = 0; i < TmpSpace->HilbertSpaceDimension; ++i)
+    {
+      double Coefficient = 1.0;
+      this->ProdATemporaryNbrStateInOrbit = 1;
+      int TmpPos =  this->SymmetrizeAdAdResult(TmpSpace->StateDescriptionUp[i], TmpSpace->StateDescriptionDown[i], Coefficient);
+      if (TmpPos != this->HilbertSpaceDimension)
+	{
+	  TmpVector[i] = this->SzParitySign * this->LzParitySign * Coefficient * state[TmpPos];
+	}
+      
+    }
+  return TmpVector;
+}

@@ -51,7 +51,9 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
 
   friend class BosonOnSphereWithSU4Spin;
   friend class BosonOnSphereWithSU2SpinSzSymmetry;
-
+  friend class BosonOnSphereWithSU2SpinLzSymmetry;
+  friend class BosonOnSphereWithSU2SpinLzSzSymmetry;
+  friend class FQHESphereWithSU2SpinVanDerMondeTimesSlaterOperation;
 
  protected:
 
@@ -402,8 +404,9 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // minIndex = first component to compute
   // nbrComponents = number of components to compute
   // unnormalizedFlag = true if the state should be written in the unnormalized basis
+  // architecture = pointer to the architecture
   virtual void SlaterTimeSpinfulFermionicState(RealVector& fermionicState, RealVector& outputVector, FermionOnSphereWithSpin* fermionicSpace, 
-					       int minIndex, int nbrComponents, bool unnormalizedFlag);
+					       int minIndex, int nbrComponents, bool unnormalizedFlag, AbstractArchitecture* architecture);
 
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
   // 
@@ -464,7 +467,22 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   virtual RealMatrix& EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix (int nbrParticleSector, int lzSector, int szSector,
 													 int nbrOrbitalA, double* weightOrbitalAUp, double* weightOrbitalADown, 
 													 int nbrOrbitalB, double* weightOrbitalBUp, double* weightOrbitalBDown, RealMatrix& entanglementMatrix);
-  protected:
+
+  // convert a given state from a generic basis from the current Sz subspace basis
+  //
+  // state = reference on the vector to convert
+  // space = reference on the basis associated to state
+  // return value = converted vector
+  virtual RealVector ConvertToNbodyBasis(RealVector& state, ParticleOnSphereWithSpin* space);
+  
+  // convert a given state from a generic basis to the current Sz subspace basis
+  //
+  // state = reference on the vector to convert
+  // space = reference on the basis associated to state
+  // return value = converted vector
+  virtual RealVector ConvertFromNbodyBasis(RealVector& state, ParticleOnSphereWithSpin* space);
+  
+ protected:
 
   // find state index
   //
@@ -632,6 +650,16 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // finalState = reference on the vector the produced state will be stored
   // threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
   virtual void ReverseVanDerMondeTimesSlater (unsigned long* slaterUp, unsigned long* slaterDown, RealVector& finalState, double** threeOrbitalOverlaps);
+  
+  // Compute the product of a spinful Slater determinant with a Van der Monde determinant, assuming a reverse flux attachment and peforming only (N-1)! permutations
+  //
+  // slaterUp = monomial representation of the Slater spin up part
+  // slaterDown = monomial representation of the Slater spin up part
+  // finalState = reference on the vector the produced state will be stored
+  // threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
+  // position = perform a swap between the last element the one at given position 
+  virtual void ReverseVanDerMondeTimesSlater (unsigned long* slaterUp, unsigned long* slaterDown, RealVector& finalState, 
+					      double** threeOrbitalOverlaps, int position);
 
 };
 

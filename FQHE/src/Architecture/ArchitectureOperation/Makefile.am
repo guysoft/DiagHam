@@ -26,4 +26,5 @@ FQHETorusApplyCNRotationOperation.cc \
 FQHETorusComputeMatrixElementOperation.cc \
 FQHETorusSymmetrizeU1U1StateOperation.cc \
 FQHESphereWithSpinApplyOneBodyTransformationOperation.cc \
-FQHECylinderMultipleJackGeneratorOperation.cc
+FQHECylinderMultipleJackGeneratorOperation.cc \
+FQHESphereWithSU2SpinVanDerMondeTimesSlaterOperation.cc

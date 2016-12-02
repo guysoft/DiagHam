@@ -101,7 +101,8 @@ class AbstractArchitectureOperation
       FQHETorusSymmetrizeU1U1StateOperation = 0x30005,
       FQHESphereWithSpinApplyOneBodyTransformationOperation = 0x30006,
       FQHECylinderMultipleJackGeneratorOperation = 0x30007,
-      SpinChainMultipleEntanglementSpectrum = 0x30008
+      SpinChainMultipleEntanglementSpectrum = 0x30008,
+      FQHESphereWithSU2SpinVanDerMondeTimesSlater = 0x30009
     };
   
   // destructor

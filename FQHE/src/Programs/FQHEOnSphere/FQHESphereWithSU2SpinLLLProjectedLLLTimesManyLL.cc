@@ -3,6 +3,9 @@
 
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "HilbertSpace/BosonOnSphereWithSU2Spin.h"
+#include "HilbertSpace/BosonOnSphereWithSU2SpinLzSymmetry.h"
+#include "HilbertSpace/BosonOnSphereWithSU2SpinSzSymmetry.h"
+#include "HilbertSpace/BosonOnSphereWithSU2SpinLzSzSymmetry.h"
 
 #include "Options/Options.h"
 
@@ -48,6 +51,10 @@ int main(int argc, char** argv)
   
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
   (*SystemGroup) += new BooleanOption ('\n',"reverse-flux","the fluxes bind to each particle are in the opposite direction than the magnetic field");
+  (*SystemGroup) += new BooleanOption ('\n',"disable-szsymmetry","disable the Sz<->-Sz symmetry for the Sz=0 sector");
+  (*SystemGroup) += new BooleanOption ('\n',"disable-lzsymmetry","disable the Lz<->-Lz symmetry for the Lz=0 sector");
+  (*SystemGroup) += new BooleanOption  ('\n', "minus-szparity", "select the  Sz <-> -Sz symmetric sector with negative parity");
+  (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
 
   (*OutputGroup) += new BooleanOption ('\n', "normalize", "normalize the projected state assuming the sphere geometry");
   (*OutputGroup) += new BooleanOption  ('\n', "rational" , "use rational numbers instead of double precision floating point numbers");
@@ -88,27 +95,127 @@ int main(int argc, char** argv)
     NbrFluxQuanta -= NbrFluxQuantumLambdaLevels;
   int TotalLz = 0;
     
+  bool LzSymmmetryFlag = true;
+  if ((TotalLz != 0) || (Manager.GetBoolean("disable-lzsymmetry") == true))
+    {
+      LzSymmmetryFlag = false;
+    }
+  bool SzSymmmetryFlag = true;
+  if ((TotalSz != 0) || (Manager.GetBoolean("disable-szsymmetry") == true))
+    {
+      SzSymmmetryFlag = false;
+    }
+  char* DiscreteSymmetryName = new char[128];
+  if (SzSymmmetryFlag == false)
+    {
+      if (LzSymmmetryFlag == false)
+	{
+	  sprintf (DiscreteSymmetryName, "");
+	}
+      else
+	{
+	  if (Manager.GetBoolean("minus-lzparity") == false)
+	    {
+	      sprintf (DiscreteSymmetryName, "_lzsym_1");
+	    }
+	  else
+	    {
+	      sprintf (DiscreteSymmetryName, "_lzsym_-1");
+	    }
+	}
+    }
+  else
+    {
+      if (LzSymmmetryFlag == false)
+	{
+	  if (Manager.GetBoolean("minus-szparity") == false)
+	    {
+	      sprintf (DiscreteSymmetryName, "_szsym_1");
+	    }
+	  else
+	    {
+	      sprintf (DiscreteSymmetryName, "_szsym_-1");
+	    }
+	}
+      else
+	{
+	  if (Manager.GetBoolean("minus-szparity") == false)
+	    {
+	      if (Manager.GetBoolean("minus-lzparity") == false)
+		{
+		  sprintf (DiscreteSymmetryName, "_lzsym_1_szsym_1");
+		}
+	      else
+		{
+		  sprintf (DiscreteSymmetryName, "_lzsym_-1_szsym_1");
+		}
+	    }
+	  else
+	    {
+	      if (Manager.GetBoolean("minus-lzparity") == false)
+		{
+		  sprintf (DiscreteSymmetryName, "_lzsym_1_szsym_-1");
+		}
+	      else
+		{
+		  sprintf (DiscreteSymmetryName, "_lzsym_-1_szsym_-1");
+		}
+	    }
+	}
+    }
+
+
   FermionOnSphereWithSpin* InputSpace = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuantumLambdaLevels, TotalSz);
 
-  BosonOnSphereWithSU2Spin* OutputSpace = new BosonOnSphereWithSU2Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+  BosonOnSphereWithSU2Spin* OutputSpace = 0;
+  if (LzSymmmetryFlag == true)
+    {
+      if (SzSymmmetryFlag == true)
+	{
+	  OutputSpace = new BosonOnSphereWithSU2SpinLzSzSymmetry(NbrParticles, NbrFluxQuanta, TotalSz, Manager.GetBoolean("minus-szparity"), 
+								  Manager.GetBoolean("minus-lzparity"));
+	}
+      else
+	{
+	  OutputSpace = new BosonOnSphereWithSU2SpinLzSymmetry(NbrParticles, NbrFluxQuanta, TotalSz, Manager.GetBoolean("minus-lzparity"));
+	}
+    }
+  else
+    {
+      if (SzSymmmetryFlag == true)
+	{
+	  OutputSpace = new BosonOnSphereWithSU2SpinSzSymmetry(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, Manager.GetBoolean("minus-szparity"));
+	}
+      else
+	{
+	  OutputSpace = new BosonOnSphereWithSU2Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+	}
+    }
 
-  char* OutputName = new char [512 + strlen(Manager.GetString("interaction-name"))];
-  sprintf (OutputName, "bosons_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz_%d.%ld.vec", Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta, TotalSz, TotalLz, Manager.GetInteger("outputvector-index"));
+  char* OutputName = new char [512  + strlen(DiscreteSymmetryName)+ strlen(Manager.GetString("interaction-name"))];
+  sprintf (OutputName, "bosons_sphere_su2%s_%s_n_%d_2s_%d_sz_%d_lz_%d.%ld.vec", DiscreteSymmetryName, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta, TotalSz, TotalLz, Manager.GetInteger("outputvector-index"));
 
-  cout << "generating state " << OutputName << endl;
+  if (Architecture.GetArchitecture()->CanWriteOnDisk())
+    {
+      cout << "generating state " << OutputName << endl;
+    }
   RealVector InputVector (InputSpace->GetHilbertSpaceDimension(), true);
   RealVector OutputVector (OutputSpace->GetHilbertSpaceDimension(), true);
   
   InputVector[0] = 1.0;
   OutputSpace->SlaterTimeSpinfulFermionicState(InputVector, OutputVector, InputSpace, 0, InputSpace->GetHilbertSpaceDimension(),
-					       !(Manager.GetBoolean("normalize")));
+					       !(Manager.GetBoolean("normalize")), Architecture.GetArchitecture());
 
-  if (Manager.GetBoolean("normalize") == true)
-    OutputVector.Normalize();
-  if (OutputVector.WriteVector(OutputName) == false)
+  if (Architecture.GetArchitecture()->CanWriteOnDisk())
     {
-      cout << "can't write " << OutputName << endl;
+      if (Manager.GetBoolean("normalize") == true)
+	OutputVector.Normalize();
+      if (OutputVector.WriteVector(OutputName) == false)
+	{
+	  cout << "can't write " << OutputName << endl;
+	}
     }
+
   delete[] OutputName;
   
   delete OutputSpace;

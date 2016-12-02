@@ -1125,3 +1125,327 @@ RealMatrix& BosonOnSphereWithSU2SpinSzSymmetry::EvaluateEntanglementMatrixGeneri
   
   return entanglementMatrix;
 }
+
+// Compute the product of a spinful Slater determinant with a Van der Monde determinant
+//
+// slaterUp = monomial representation of the Slater spin up part
+// slaterDown = monomial representation of the Slater spin up part
+// finalState = reference on the vector the produced state will be stored
+// threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
+
+void BosonOnSphereWithSU2SpinSzSymmetry::VanDerMondeTimesSlater (unsigned long* slaterUp, unsigned long* slaterDown, RealVector& finalState, 
+								 double** threeOrbitalOverlaps)
+{
+  unsigned long TmpNbrStates = 0;
+  long CoefUp = 1;
+  long CoefDown = 1;
+  unsigned long StateUp [this->NbrBosonsUp];
+  unsigned long StateDown [this->NbrBosonsDown];
+  unsigned long TmpFinalStateUp;
+  unsigned long TmpFinalStateDown;
+  unsigned long TmpState = 0ul;
+  double Sign = 1.0;
+  unsigned long Mask = 0ul;
+  unsigned long VanDerMonde [this->NbrBosons];
+  unsigned long TmpHeapArray [this->NbrBosons];
+  unsigned long TmpDim = ((unsigned long) this->NbrBosons);
+  for (unsigned long i = 0ul; i < TmpDim; ++i)
+    {
+      VanDerMonde[i] = i;
+      TmpHeapArray[i] = 0ul;
+    }
+  finalState.ClearVector();
+
+
+  double TmpFactorUp = 0.0;
+  bool ChangedUp = false;
+  for (int i = 0; i < this->NbrBosonsUp; ++i)
+    {
+      StateUp[i] = slaterUp[i] + VanDerMonde[i];
+      TmpFactorUp += threeOrbitalOverlaps[StateUp[i]][VanDerMonde[i]];
+    }
+  double TmpFactorDown = 0.0;
+  bool ChangedDown = false;
+  for (int i = 0; i < this->NbrBosonsDown; ++i)
+    {
+      StateDown[i] = slaterDown[i] + VanDerMonde[this->NbrBosonsUp + i];
+      TmpFactorDown += threeOrbitalOverlaps[StateDown[i]][VanDerMonde[this->NbrBosonsUp + i]];
+    }
+  
+  double Coefficient = 1.0;
+  this->ProdATemporaryNbrStateInOrbit = 1;
+  this->ConvertFromMonomial(StateUp, StateDown, this->TemporaryStateUp, this->TemporaryStateDown);
+  this->BosonToFermion(this->TemporaryStateUp, this->TemporaryStateDown, TmpFinalStateUp, TmpFinalStateDown);
+//  int TmpPos =  this->FindStateIndex(TmpFinalStateUp, TmpFinalStateDown);
+  int TmpPos =  this->SymmetrizeAdAdResult(TmpFinalStateUp, TmpFinalStateDown, Coefficient);
+  if (TmpPos != this->HilbertSpaceDimension)
+    {
+      finalState[TmpPos] += Sign * Coefficient * exp(TmpFactorUp + TmpFactorDown);
+    }
+  ++TmpNbrStates;
+  unsigned long Tmp = 0;
+  while (Tmp < TmpDim)
+    {
+      if (TmpHeapArray[Tmp] < Tmp)
+	{
+	  if ((Tmp & 0x1ul) == 0x0ul)
+	    {
+	      unsigned long Tmp2 = VanDerMonde[Tmp];
+	      VanDerMonde[Tmp] = VanDerMonde[0];
+	      VanDerMonde[0] = Tmp2;
+	      if (Tmp >= this->NbrBosonsUp)
+		ChangedDown = true;
+	      ChangedUp = true;
+	      
+	    }
+	  else
+	    {
+	      unsigned long Tmp2 = VanDerMonde[Tmp];
+	      VanDerMonde[Tmp] = VanDerMonde[TmpHeapArray[Tmp]];
+	      VanDerMonde[TmpHeapArray[Tmp]] = Tmp2;
+	      if (TmpHeapArray[Tmp] >= this->NbrBosonsUp)
+		{
+		  ChangedDown = true;
+		}
+	      else
+		{
+		  ChangedUp = true;		  
+		  if (Tmp >= this->NbrBosonsUp)
+		    {
+		      ChangedDown = true;
+		    }
+		}
+	    }
+	  if (ChangedUp == true)
+	    {
+	      TmpFactorUp = 0.0;
+	      for (int i = 0; i < this->NbrBosonsUp; ++i)
+		{
+		  StateUp[i] = slaterUp[i] + VanDerMonde[i];
+		  TmpFactorUp += threeOrbitalOverlaps[StateUp[i]][VanDerMonde[i]];
+		}
+	      this->ConvertFromMonomial(StateUp, this->TemporaryStateUp, this->NbrBosonsUp);
+	      TmpFinalStateUp = this->BosonToFermion(this->TemporaryStateUp);
+	      ChangedUp = false;
+	    }
+	  if (ChangedDown == true)
+	    {
+	      TmpFactorDown = 0.0;
+	      for (int i = 0; i < this->NbrBosonsDown; ++i)
+		{
+		  StateDown[i] = slaterDown[i] + VanDerMonde[this->NbrBosonsUp + i];
+		  TmpFactorDown += threeOrbitalOverlaps[StateDown[i]][VanDerMonde[this->NbrBosonsUp + i]];
+		}
+	      this->ConvertFromMonomial(StateDown, this->TemporaryStateDown, this->NbrBosonsDown);
+	      TmpFinalStateDown = this->BosonToFermion(this->TemporaryStateDown);
+	      ChangedDown = false;	      
+	    }
+	  Sign *= -1.0;
+	  Coefficient = 1.0;
+	  int TmpPos = this->SymmetrizeAdAdResult(TmpFinalStateUp, TmpFinalStateDown, Coefficient);
+//	  int TmpPos = this->FindStateIndex(TmpFinalStateUp, TmpFinalStateDown);
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+	      finalState[TmpPos] += Sign* Coefficient * exp(TmpFactorUp + TmpFactorDown);
+	    }
+	  ++TmpHeapArray[Tmp];
+	  Tmp = 0ul;
+	}
+      else
+	{
+	  TmpHeapArray[Tmp]= 0ul;
+	  ++Tmp;
+	}
+    }
+}
+
+// Compute the product of a spinful Slater determinant with a Van der Monde determinant, assuming a reverse flux attachment
+//
+// slaterUp = monomial representation of the Slater spin up part
+// slaterDown = monomial representation of the Slater spin up part
+// finalState = reference on the vector the produced state will be stored
+// threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
+
+void BosonOnSphereWithSU2SpinSzSymmetry::ReverseVanDerMondeTimesSlater (unsigned long* slaterUp, unsigned long* slaterDown, RealVector& finalState, 
+									double** threeOrbitalOverlaps)
+{
+  unsigned long TmpNbrStates = 0;
+  long CoefUp = 1;
+  long CoefDown = 1;
+  unsigned long StateUp [this->NbrBosonsUp];
+  unsigned long StateDown [this->NbrBosonsDown];
+  unsigned long TmpFinalStateUp;
+  unsigned long TmpFinalStateDown;
+  unsigned long TmpState = 0ul;
+  double Sign = 1.0;
+  unsigned long Mask = 0ul;
+  unsigned long VanDerMonde [this->NbrBosons];
+  unsigned long TmpHeapArray [this->NbrBosons];
+  unsigned long TmpDim = ((unsigned long) this->NbrBosons);
+  for (unsigned long i = 0ul; i < TmpDim; ++i)
+    {
+      VanDerMonde[i] = i;
+      TmpHeapArray[i] = 0ul;
+    }
+  finalState.ClearVector();
+
+
+  double TmpFactor = 0.0;
+  unsigned long Tmp = 0;
+  double Coefficient = 1.0;
+  this->ProdATemporaryNbrStateInOrbit = 1;
+  bool DiscardFlag = false;
+  for (int i = 0; (i < this->NbrBosonsUp) && (DiscardFlag == false); ++i)
+    {
+      StateUp[i] = VanDerMonde[i] - slaterUp[i];
+      if ((StateUp[i] >= 0) && (StateUp[i] <= this->LzMax))
+	{
+	  TmpFactor += threeOrbitalOverlaps[StateUp[i]][VanDerMonde[i]];
+	}
+      else
+	{
+	  DiscardFlag = true;
+	}
+    }
+  if (DiscardFlag == false)
+    {
+      for (int i = 0; (i < this->NbrBosonsDown) && (DiscardFlag == false); ++i)
+	{
+	  StateDown[i] = VanDerMonde[this->NbrBosonsUp + i] - slaterDown[i];
+	  if ((StateDown[i] >= 0) && (StateDown[i] <= this->LzMax))
+	    {
+	      TmpFactor += threeOrbitalOverlaps[StateDown[i]][VanDerMonde[this->NbrBosonsUp + i]];
+	    }
+	  else
+	    {
+	      DiscardFlag = true;
+	    }
+	}
+      if (DiscardFlag == false)
+	{
+	  this->ConvertFromMonomial(StateUp, StateDown, this->TemporaryStateUp, this->TemporaryStateDown);
+	  this->BosonToFermion(this->TemporaryStateUp, this->TemporaryStateDown, TmpFinalStateUp, TmpFinalStateDown);
+	  Coefficient = 1.0;
+//		  int TmpPos = this->FindStateIndex(TmpFinalStateUp, TmpFinalStateDown);
+	  int TmpPos =  this->SymmetrizeAdAdResult(TmpFinalStateUp, TmpFinalStateDown, Coefficient);
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+	      finalState[TmpPos] += Sign * Coefficient * exp(TmpFactor);
+	    }
+	}
+    }
+  while (Tmp < TmpDim)
+    {
+      if (TmpHeapArray[Tmp] < Tmp)
+	{
+	  if ((Tmp & 0x1ul) == 0x0ul)
+	    {
+	      unsigned long Tmp2 = VanDerMonde[Tmp];
+	      VanDerMonde[Tmp] = VanDerMonde[0];
+	      VanDerMonde[0] = Tmp2;
+	      
+	    }
+	  else
+	    {
+	      unsigned long Tmp2 = VanDerMonde[Tmp];
+	      VanDerMonde[Tmp] = VanDerMonde[TmpHeapArray[Tmp]];
+	      VanDerMonde[TmpHeapArray[Tmp]] = Tmp2;
+	    }
+	  Sign *= -1.0;
+	  DiscardFlag = false;
+	  TmpFactor = 0.0;
+	  for (int i = 0; (i < this->NbrBosonsUp) && (DiscardFlag == false); ++i)
+	    {
+	      StateUp[i] = VanDerMonde[i] - slaterUp[i];
+	      if ((StateUp[i] >= 0) && (StateUp[i] <= this->LzMax))
+		{
+		  TmpFactor += threeOrbitalOverlaps[StateUp[i]][VanDerMonde[i]];
+		}
+	      else
+		{
+		  DiscardFlag = true;
+		}
+	    }
+	  if (DiscardFlag == false)
+	    {
+	      for (int i = 0; (i < this->NbrBosonsDown) && (DiscardFlag == false); ++i)
+		{
+		  StateDown[i] = VanDerMonde[this->NbrBosonsUp + i] - slaterDown[i];
+		  if ((StateDown[i] >= 0) && (StateDown[i] <= this->LzMax))
+		    {
+		      TmpFactor += threeOrbitalOverlaps[StateDown[i]][VanDerMonde[this->NbrBosonsUp + i]];
+		    }
+		  else
+		    {
+		      DiscardFlag = true;
+		    }
+		}
+	      if (DiscardFlag == false)
+		{
+		  this->ConvertFromMonomial(StateUp, StateDown, this->TemporaryStateUp, this->TemporaryStateDown);
+		  this->BosonToFermion(this->TemporaryStateUp, this->TemporaryStateDown, TmpFinalStateUp, TmpFinalStateDown);
+		  Coefficient = 1.0;
+		  int TmpPos =  this->SymmetrizeAdAdResult(TmpFinalStateUp, TmpFinalStateDown, Coefficient);
+//		  int TmpPos = this->FindStateIndex(TmpFinalStateUp, TmpFinalStateDown);
+		  if (TmpPos != this->HilbertSpaceDimension)
+		    {
+		      finalState[TmpPos] += Sign* Coefficient * exp(TmpFactor);
+		    }
+		}
+	    }
+	  ++TmpHeapArray[Tmp];
+	  Tmp = 0ul;
+	}
+      else
+	{
+	  TmpHeapArray[Tmp]= 0ul;
+	  ++Tmp;
+	}
+    }
+}
+
+// convert a given state from a generic basis from the current Sz subspace basis
+//
+// state = reference on the vector to convert
+// space = reference on the basis associated to state
+// return value = converted vector
+
+RealVector BosonOnSphereWithSU2SpinSzSymmetry::ConvertToNbodyBasis(RealVector& state, ParticleOnSphereWithSpin* space)
+{
+  BosonOnSphereWithSU2Spin* TmpSpace = (BosonOnSphereWithSU2Spin*) space;
+  RealVector TmpVector (this->HilbertSpaceDimension, true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      int Pos = TmpSpace->FindStateIndex(this->StateDescriptionUp[i], this->StateDescriptionDown[i]);
+      if (Pos < TmpSpace->HilbertSpaceDimension)
+	{
+	  TmpVector[i] =  state[Pos] * sqrt((double) this->NbrStateInOrbit[i]);
+	}
+    }
+  return TmpVector;
+}
+  
+// convert a given state from a generic basis to the current Sz subspace basis
+//
+// state = reference on the vector to convert
+// space = reference on the basis associated to state
+// return value = converted vector
+
+RealVector BosonOnSphereWithSU2SpinSzSymmetry::ConvertFromNbodyBasis(RealVector& state, ParticleOnSphereWithSpin* space)
+{
+  BosonOnSphereWithSU2Spin* TmpSpace = (BosonOnSphereWithSU2Spin*) space;
+  RealVector TmpVector (TmpSpace->HilbertSpaceDimension, true);
+  for (int i = 0; i < TmpSpace->HilbertSpaceDimension; ++i)
+    {
+      double Coefficient = 1.0;
+      this->ProdATemporaryNbrStateInOrbit = 1;
+      int TmpPos =  this->SymmetrizeAdAdResult(TmpSpace->StateDescriptionUp[i], TmpSpace->StateDescriptionDown[i], Coefficient);
+      if (TmpPos != this->HilbertSpaceDimension)
+	{
+	  TmpVector[i] = this->SzParitySign * Coefficient * state[TmpPos];
+	}
+      
+    }
+  return TmpVector;
+}
+  

@@ -102,6 +102,13 @@ class BosonOnSphereWithSU2SpinLzSymmetry :  public BosonOnSphereWithSU2SpinSzSym
   // return value = pointer to cloned Hilbert space
   virtual AbstractHilbertSpace* Clone();
 
+  // convert a given state from a generic basis to the current Sz subspace basis
+  //
+  // state = reference on the vector to convert
+  // space = reference on the basis associated to state
+  // return value = converted vector
+  virtual RealVector ConvertFromNbodyBasis(RealVector& state, ParticleOnSphereWithSpin* space);
+  
  protected:
 
   // generate the Hilbert space with the discrete symmetry constraint

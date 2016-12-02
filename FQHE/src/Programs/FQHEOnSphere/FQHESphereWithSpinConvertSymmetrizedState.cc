@@ -19,6 +19,10 @@
 #include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetryLong.h"
 #include "HilbertSpace/FermionOnSphereWithSpinSzSymmetryLong.h"
 #include "HilbertSpace/FermionOnSphereWithSpinLzSymmetryLong.h"
+#include "HilbertSpace/BosonOnSphereWithSU2Spin.h"
+#include "HilbertSpace/BosonOnSphereWithSU2SpinLzSymmetry.h"
+#include "HilbertSpace/BosonOnSphereWithSU2SpinSzSymmetry.h"
+#include "HilbertSpace/BosonOnSphereWithSU2SpinLzSzSymmetry.h"
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
@@ -63,53 +67,53 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHESphereWithSpinConvertSymmetrizedState -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
-  if (((SingleStringOption*) Manager["input-file"])->GetString() == 0)
+  if (Manager.GetString("input-file") == 0)
     {
       cout << "error, one input file should be provided. See man page for option syntax or type FQHESphereWithSpinConvertSymmetrizedState -h" << endl;
       return -1;
     }
-  if (IsFile(((SingleStringOption*) Manager["input-file"])->GetString()) == false)
+  if (IsFile(Manager.GetString("input-file")) == false)
     {
-      cout << "can't open file " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
+      cout << "can't open file " << Manager.GetString("input-file") << endl;
     }
 
-  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger(); 
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger(); 
-  int TotalLz = ((SingleIntegerOption*) Manager["total-lz"])->GetInteger();
-  int TotalSz = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
-  bool SymmetrizeFlag = ((BooleanOption*) Manager["symmetrize"])->GetBoolean();
-  bool SzSymmetrizedBasis = ((BooleanOption*) Manager["szsymmetrized-basis"])->GetBoolean();
-  bool SzMinusParity = ((BooleanOption*) Manager["minus-szparity"])->GetBoolean();
-  bool LzSymmetrizedBasis = ((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean();
-  bool LzMinusParity = ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean();
+  int NbrParticles = Manager.GetInteger("nbr-particles"); 
+  int LzMax = Manager.GetInteger("lzmax"); 
+  int TotalLz = Manager.GetInteger("total-lz");
+  int TotalSz = Manager.GetInteger("total-sz");
+  bool SymmetrizeFlag = Manager.GetBoolean("symmetrize");
+  bool SzSymmetrizedBasis = Manager.GetBoolean("szsymmetrized-basis");
+  bool SzMinusParity = Manager.GetBoolean("minus-szparity");
+  bool LzSymmetrizedBasis = Manager.GetBoolean("lzsymmetrized-basis");
+  bool LzMinusParity = Manager.GetBoolean("minus-lzparity");
   bool Statistics = true;
   long MemorySpace = 9l << 20;
-  if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["input-file"])->GetString(), NbrParticles, LzMax, TotalLz, TotalSz, SzSymmetrizedBasis, SzMinusParity, 
+  if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("input-file"), NbrParticles, LzMax, TotalLz, TotalSz, SzSymmetrizedBasis, SzMinusParity, 
 							   LzSymmetrizedBasis, LzMinusParity, Statistics) == false)
     {
-      cout << "error while retrieving system parameters from file name " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
+      cout << "error while retrieving system parameters from file name " << Manager.GetString("input-file") << endl;
       return -1;
     }
       
-  if (((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean() == true)
+  if (Manager.GetBoolean("lzsymmetrized-basis") == true)
     {
-      LzSymmetrizedBasis = ((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean();
-      LzMinusParity = ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean();      
+      LzSymmetrizedBasis = Manager.GetBoolean("lzsymmetrized-basis");
+      LzMinusParity = Manager.GetBoolean("minus-lzparity");      
     }
-  if (((BooleanOption*) Manager["szsymmetrized-basis"])->GetBoolean() == true)
+  if (Manager.GetBoolean("szsymmetrized-basis") == true)
     {
-      SzSymmetrizedBasis = ((BooleanOption*) Manager["szsymmetrized-basis"])->GetBoolean();
-      SzMinusParity = ((BooleanOption*) Manager["minus-szparity"])->GetBoolean();
+      SzSymmetrizedBasis = Manager.GetBoolean("szsymmetrized-basis");
+      SzMinusParity = Manager.GetBoolean("minus-szparity");
     }
-  if ((((BooleanOption*) Manager["boson"])->GetBoolean() == true) || (((BooleanOption*) Manager["fermion"])->GetBoolean() == true))
+  if ((Manager.GetBoolean("boson") == true) || (Manager.GetBoolean("fermion") == true))
     {
-      if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+      if (Manager.GetBoolean("boson") == true)
 	Statistics = false;
       else
 	Statistics = true;
@@ -121,9 +125,9 @@ int main(int argc, char** argv)
     }
 
   RealVector State;
-  if (State.ReadVector (((SingleStringOption*) Manager["input-file"])->GetString()) == false)
+  if (State.ReadVector (Manager.GetString("input-file")) == false)
     {
-      cout << "can't open vector file " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
+      cout << "can't open vector file " << Manager.GetString("input-file") << endl;
       return -1;      
     }
 
@@ -224,11 +228,64 @@ int main(int argc, char** argv)
 		delete InitialSpace;
 	      }
 	  }
-      if (OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
+      if (OutputState.WriteVector(Manager.GetString("output-file")) == false)
 	{
-	  cout << "error while writing output state " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;
+	  cout << "error while writing output state " << Manager.GetString("output-file") << endl;
 	  return -1;
 	}
+    }
+  else
+    {
+      RealVector OutputState;
+      BosonOnSphereWithSU2Spin* InitialSpace = 0;
+      if (LzSymmetrizedBasis == true)
+	{
+	  if (SzSymmetrizedBasis == true)
+	    {
+	      InitialSpace = new BosonOnSphereWithSU2SpinLzSzSymmetry(NbrParticles, LzMax, TotalSz, SzMinusParity, LzMinusParity);
+	    }
+	  else
+	    {
+	      InitialSpace = new BosonOnSphereWithSU2SpinLzSymmetry(NbrParticles, LzMax, TotalSz, LzMinusParity);
+	    }
+	}
+      else
+	{
+	  if (SzSymmetrizedBasis == true)
+	    {
+	      InitialSpace = new BosonOnSphereWithSU2SpinSzSymmetry(NbrParticles, TotalLz, LzMax, TotalSz, SzMinusParity);
+	    }
+	  else
+	    {
+	      InitialSpace = new BosonOnSphereWithSU2Spin(NbrParticles, TotalLz, LzMax, TotalSz);
+	    }
+	}
+      BosonOnSphereWithSU2Spin* TargetSpace = new BosonOnSphereWithSU2Spin(NbrParticles, TotalLz, LzMax, TotalSz);
+      if (SymmetrizeFlag)
+	{
+	  if (TargetSpace->GetHilbertSpaceDimension() != State.GetVectorDimension())
+	    {
+	      cout << "dimension mismatch between Hilbert space and input state" << endl;
+	      return -1;
+	    }
+	  OutputState = InitialSpace->ConvertToNbodyBasis(State, TargetSpace);
+	}
+      else
+	{
+	  if (InitialSpace->GetHilbertSpaceDimension() != State.GetVectorDimension())
+	    {
+	      cout << "dimension mismatch between Hilbert space and input state" << endl;
+	      return -1;
+	    }
+	  OutputState = InitialSpace->ConvertFromNbodyBasis(State, TargetSpace);
+	}
+      if (OutputState.WriteVector(Manager.GetString("output-file")) == false)
+	{
+	  cout << "error while writing output state " << Manager.GetString("output-file") << endl;
+	  return -1;
+	}
+      delete InitialSpace;
+      delete TargetSpace;
     }
 }
 
