@@ -19,6 +19,7 @@
 #include "Tools/FQHEFiles/FQHEOnCylinderFileTools.h"
 
 #include "Vector/RealVector.h"
+#include "Vector/ComplexVector.h"
 
 
 #include <iostream>
@@ -96,6 +97,8 @@ int main(int argc, char** argv)
   char* OutputName = 0;
   ofstream FileChargeImbalance;
   RealSymmetricMatrix** OneBodyMatrixElements = new RealSymmetricMatrix*[2];
+  HermitianMatrix** ComplexOneBodyMatrixElements = new HermitianMatrix*[2];
+  bool ComplexFlag = false;
       
   if ((Manager.GetString("input-state") == 0) && (Manager.GetString("degenerate-states") == 0) 
       && (Manager.GetString("use-hilbert") == 0))
@@ -104,9 +107,9 @@ int main(int argc, char** argv)
       return -1;
     }
     
-  if (Manager.GetString("output"))
+  if (Manager.GetString("output") != 0)
     {
-      OutputName = new char[strlen(Manager.GetString("output") + 1)];
+      OutputName = new char[strlen(Manager.GetString("output")) + 1];
       strcpy (OutputName, Manager.GetString("output"));
       FileChargeImbalance.open(OutputName, ios::binary | ios::out); 
       FileChargeImbalance.precision(14); 
@@ -222,43 +225,92 @@ int main(int argc, char** argv)
 	}
       
       RealVector* InputStates = new RealVector[NbrInputStates];
+      ComplexVector* ComplexInputStates = new ComplexVector[NbrInputStates];
       if (Manager.GetString("input-state") != 0)
 	{
-	  if (InputStates[0].ReadVector (Manager.GetString("input-state")) == false)
+	  if (InputStates[0].ReadVectorTest(Manager.GetString("input-state")) == true)
 	    {
-	      cout << "can't open vector file " << Manager.GetString("input-state") << endl;
-	      return -1;      
+	      if (InputStates[0].ReadVector (Manager.GetString("input-state")) == false)
+		{
+		  cout << "can't open vector file " << Manager.GetString("input-state") << endl;
+		  return -1;      
+		}
+	    }
+	  else
+	    {
+	      ComplexFlag = true;
+	      if (ComplexInputStates[0].ReadVector (Manager.GetString("input-state")) == false)
+		{
+		  cout << "can't open vector file " << Manager.GetString("input-state") << endl;
+		  return -1;      
+		}
 	    }
 	}
       else
 	{
-	  if (InputStates[0].ReadVector (InputStateNames[0]) == false)
+	  if (InputStates[0].ReadVectorTest(InputStateNames[0]) == true)
 	    {
-	      cout << "can't open vector file " << InputStateNames[0]  << endl;
-	      return -1;      
-	    }	  
-	  for (int i = 1; i < NbrInputStates; ++i)
-	    {
-	      if (InputStates[i].ReadVector (InputStateNames[i]) == false)
+	      if (InputStates[0].ReadVector (InputStateNames[0]) == false)
 		{
-		  cout << "can't open vector file " << InputStateNames[i] << endl;
+		  cout << "can't open vector file " << InputStateNames[0]  << endl;
 		  return -1;      
 		}	  
-	      if (InputStates[0].GetVectorDimension() != InputStates[i].GetVectorDimension())
+	      for (int i = 1; i < NbrInputStates; ++i)
 		{
-		  cout << "error, " << InputStateNames[0] << " and " <<  InputStateNames[i] << " don't have the same  dimension (" 
-		       << InputStates[0].GetVectorDimension() << " and " << InputStates[i].GetVectorDimension()<< ")" << endl;
-		  return -1;
+		  if (InputStates[i].ReadVector (InputStateNames[i]) == false)
+		    {
+		      cout << "can't open vector file " << InputStateNames[i] << endl;
+		      return -1;      
+		    }	  
+		  if (InputStates[0].GetVectorDimension() != InputStates[i].GetVectorDimension())
+		    {
+		      cout << "error, " << InputStateNames[0] << " and " <<  InputStateNames[i] << " don't have the same  dimension (" 
+			   << InputStates[0].GetVectorDimension() << " and " << InputStates[i].GetVectorDimension()<< ")" << endl;
+		      return -1;
+		    }
+		}
+	    }
+	  else
+	    {
+	      ComplexFlag = true;
+	      if (ComplexInputStates[0].ReadVector (InputStateNames[0]) == false)
+		{
+		  cout << "can't open vector file " << InputStateNames[0]  << endl;
+		  return -1;      
+		}	  
+	      for (int i = 1; i < NbrInputStates; ++i)
+		{
+		  if (ComplexInputStates[i].ReadVector (InputStateNames[i]) == false)
+		    {
+		      cout << "can't open vector file " << InputStateNames[i] << endl;
+		      return -1;      
+		    }	  
+		  if (ComplexInputStates[0].GetVectorDimension() != ComplexInputStates[i].GetVectorDimension())
+		    {
+		      cout << "error, " << InputStateNames[0] << " and " <<  InputStateNames[i] << " don't have the same  dimension (" 
+			   << ComplexInputStates[0].GetVectorDimension() << " and " << ComplexInputStates[i].GetVectorDimension()<< ")" << endl;
+		      return -1;
+		    }
 		}
 	    }
 	}
       
       RealVector* TmpStates = new RealVector[NbrInputStates];
-      for (int i = 0; i < NbrInputStates; ++i)
+      ComplexVector* ComplexTmpStates = new ComplexVector[NbrInputStates];
+      if (ComplexFlag == false)
 	{
-	  TmpStates[i] = RealVector(InputStates[0].GetVectorDimension());
-	}      
-      
+	  for (int i = 0; i < NbrInputStates; ++i)
+	    {
+	      TmpStates[i] = RealVector(InputStates[0].GetVectorDimension());
+	    }      
+	}
+      else
+	{
+	  for (int i = 0; i < NbrInputStates; ++i)
+	    {
+	      ComplexTmpStates[i] = ComplexVector(ComplexInputStates[0].GetVectorDimension());
+	    }      
+	}
       cout << KValue << " " << RValue << " " << TotalLz << " " << LzMax << " " << NbrParticles << " " << TotalSz << " " << Manager.GetString("directory") << " " << FilePrefix << endl;
       QuasiholeOnSphereWithSpinAndPairing* InputSpace;
       if (NbrParticles == 0)
@@ -284,6 +336,7 @@ int main(int argc, char** argv)
       for (int LayerIndex = 0; LayerIndex <= 1; ++LayerIndex)
 	{
 	  OneBodyMatrixElements[LayerIndex] = new RealSymmetricMatrix[LzMax + 1];
+	  ComplexOneBodyMatrixElements[LayerIndex] = new HermitianMatrix[LzMax + 1];
 	  for (int MomentumIndex = 0; MomentumIndex <= LzMax; ++MomentumIndex)
 	    {      
 	      for (int i = 0; i <= LzMax; ++i)
@@ -312,19 +365,35 @@ int main(int argc, char** argv)
 														 Architecture.GetArchitecture(), 
 														 Memory, false, 0);
 		}
-	      
-	      MultipleVectorHamiltonianMultiplyOperation TmpOperation(Hamiltonian, InputStates, TmpStates, NbrInputStates);
-	      TmpOperation.ApplyOperation(Architecture.GetArchitecture());
-	      
-	      RealSymmetricMatrix TmpMatrix (NbrInputStates, true);
-	      for (int i = 0; i < NbrInputStates; ++i)
+
+	      if (ComplexFlag == false)
 		{
-		  for (int j = i; j < NbrInputStates; ++j)
+		  MultipleVectorHamiltonianMultiplyOperation TmpOperation(Hamiltonian, InputStates, TmpStates, NbrInputStates);
+		  TmpOperation.ApplyOperation(Architecture.GetArchitecture());
+		  RealSymmetricMatrix TmpMatrix (NbrInputStates, true);
+		  for (int i = 0; i < NbrInputStates; ++i)
 		    {
-		      TmpMatrix.SetMatrixElement(i, j, TmpStates[i] * InputStates[j]);
+		      for (int j = i; j < NbrInputStates; ++j)
+			{
+			  TmpMatrix.SetMatrixElement(i, j, TmpStates[i] * InputStates[j]);
+			}
 		    }
+		  OneBodyMatrixElements[LayerIndex][MomentumIndex] = TmpMatrix;
 		}
-	      OneBodyMatrixElements[LayerIndex][MomentumIndex] = TmpMatrix;
+	      else
+		{
+		  MultipleVectorHamiltonianMultiplyOperation TmpOperation(Hamiltonian, ComplexInputStates, ComplexTmpStates, NbrInputStates);
+		  TmpOperation.ApplyOperation(Architecture.GetArchitecture());
+		  HermitianMatrix TmpMatrix (NbrInputStates, true);
+		  for (int i = 0; i < NbrInputStates; ++i)
+		    {
+		      for (int j = i; j < NbrInputStates; ++j)
+			{
+			  TmpMatrix.SetMatrixElement(i, j, ComplexTmpStates[i] * ComplexInputStates[j]);
+			}
+		    }
+		  ComplexOneBodyMatrixElements[LayerIndex][MomentumIndex] = TmpMatrix;
+		}
 	      delete Hamiltonian;
 	    }
 	}
@@ -345,9 +414,18 @@ int main(int argc, char** argv)
 		    {
 		      for (int j = i; j < NbrInputStates; ++j)
 			{	  
-			  double Tmp;
-			  OneBodyMatrixElements[LayerIndex][MomentumIndex].GetMatrixElement(i, j, Tmp);
-			  File << LayerIndex << " " << MomentumIndex << " " << i << " " << j << " " << Tmp << endl;
+			  if (ComplexFlag == false)
+			    {
+			      double Tmp;
+			      OneBodyMatrixElements[LayerIndex][MomentumIndex].GetMatrixElement(i, j, Tmp);
+			      File << LayerIndex << " " << MomentumIndex << " " << i << " " << j << " " << Tmp << endl;
+			    }
+			  else
+			    {
+			      Complex Tmp;
+			      ComplexOneBodyMatrixElements[LayerIndex][MomentumIndex].GetMatrixElement(i, j, Tmp);
+			      File << LayerIndex << " " << MomentumIndex << " " << i << " " << j << " " << Tmp << endl;
+			    }
 			}
 		    }
 		}
@@ -369,9 +447,18 @@ int main(int argc, char** argv)
 		    {
 		      for (int j = i; j < NbrInputStates; ++j)
 			{	  
-			  double Tmp;
-			  OneBodyMatrixElements[LayerIndex][MomentumIndex].GetMatrixElement(i, j, Tmp);
-			  File << LayerIndex << " " << MomentumIndex << " " << i << " " << j << " " << Tmp << endl;
+			  if (ComplexFlag == false)
+			    {
+			      double Tmp;
+			      OneBodyMatrixElements[LayerIndex][MomentumIndex].GetMatrixElement(i, j, Tmp);
+			      File << LayerIndex << " " << MomentumIndex << " " << i << " " << j << " " << Tmp << endl;
+			    }
+			  else
+			    {
+			      Complex Tmp;
+			      OneBodyMatrixElements[LayerIndex][MomentumIndex].GetMatrixElement(i, j, Tmp);
+			      File << LayerIndex << " " << MomentumIndex << " " << i << " " << j << " " << Tmp << endl;
+			    }
 			}
 		    }
 		  char* TmpExtension = new char[256];
@@ -384,10 +471,21 @@ int main(int argc, char** argv)
 		      sprintf (TmpExtension, "density_down_m_%d.mat", MomentumIndex);
 		    }
 		  char* TmpDensityMatrixFileName = ReplaceExtensionToFileName(InputStateNames[0], "vec", TmpExtension);
-		  if (OneBodyMatrixElements[LayerIndex][MomentumIndex].WriteMatrix(TmpDensityMatrixFileName) == false)
+		  if (ComplexFlag == false)
 		    {
-		      cout << "can't write " << TmpDensityMatrixFileName << endl;
-		      return -1;
+		      if (OneBodyMatrixElements[LayerIndex][MomentumIndex].WriteMatrix(TmpDensityMatrixFileName) == false)
+			{
+			  cout << "can't write " << TmpDensityMatrixFileName << endl;
+			  return -1;
+			}
+		    }
+		  else
+		    {
+		      if (ComplexOneBodyMatrixElements[LayerIndex][MomentumIndex].WriteMatrix(TmpDensityMatrixFileName) == false)
+			{
+			  cout << "can't write " << TmpDensityMatrixFileName << endl;
+			  return -1;
+			}
 		    }
 		  if (LayerIndex == 0)
 		    FileUp << TmpDensityMatrixFileName << endl;
@@ -458,7 +556,8 @@ int main(int argc, char** argv)
 	  for (int MomentumIndex = 0; MomentumIndex <= LzMax; ++MomentumIndex)
 	    {      
 	      RealSymmetricMatrix TmpMatrix;
-	      if ((LayerIndex == 0 && TmpMatrix.ReadMatrix(OccupationUpMatrixListFile(0, MomentumIndex)) == false) || (LayerIndex == 1 && TmpMatrix.ReadMatrix(OccupationDownMatrixListFile(0, MomentumIndex)) == false))
+	      if ((LayerIndex == 0 && TmpMatrix.ReadMatrix(OccupationUpMatrixListFile(0, MomentumIndex)) == false) 
+		  || (LayerIndex == 1 && TmpMatrix.ReadMatrix(OccupationDownMatrixListFile(0, MomentumIndex)) == false))
 		{
 		  return -1;
 		}
@@ -470,48 +569,92 @@ int main(int argc, char** argv)
     }
 
   cout << "Integrated charge in the upper layer / lower layer:" << endl;
-  RealSymmetricMatrix TotalChargeImbalance(NbrInputStates, true);
-  for (int MomentumIndex = 0; MomentumIndex <= LzMax; ++MomentumIndex)
-    {      
-      if (MomentumIndex < (LzMax + 1) / 2)
-	{
-	  TotalChargeImbalance += OneBodyMatrixElements[0][MomentumIndex];
-	  TotalChargeImbalance += OneBodyMatrixElements[1][MomentumIndex];
-	}
-      else
-	{
-	  TotalChargeImbalance -= OneBodyMatrixElements[0][MomentumIndex];
-	  TotalChargeImbalance -= OneBodyMatrixElements[1][MomentumIndex];
-	}
-      
-      RealSymmetricMatrix TotalChargeUpLayer (NbrInputStates, true);
-      RealSymmetricMatrix TotalCharge (NbrInputStates, true);
-      for (int MomentumIndex2 = 0; MomentumIndex2 <= MomentumIndex; ++MomentumIndex2)
+  if (ComplexFlag == false)
+    {
+      RealSymmetricMatrix TotalChargeImbalance(NbrInputStates, true);
+      for (int MomentumIndex = 0; MomentumIndex <= LzMax; ++MomentumIndex)
 	{      
-	  TotalChargeUpLayer += OneBodyMatrixElements[0][MomentumIndex2];
-	  TotalCharge += OneBodyMatrixElements[0][MomentumIndex2];
+	  if (MomentumIndex < (LzMax + 1) / 2)
+	    {
+	      TotalChargeImbalance += OneBodyMatrixElements[0][MomentumIndex];
+	      TotalChargeImbalance += OneBodyMatrixElements[1][MomentumIndex];
+	    }
+	  else
+	    {
+	      TotalChargeImbalance -= OneBodyMatrixElements[0][MomentumIndex];
+	      TotalChargeImbalance -= OneBodyMatrixElements[1][MomentumIndex];
+	    }
+	  
+	  RealSymmetricMatrix TotalChargeUpLayer (NbrInputStates, true);
+	  RealSymmetricMatrix TotalCharge (NbrInputStates, true);
+	  for (int MomentumIndex2 = 0; MomentumIndex2 <= MomentumIndex; ++MomentumIndex2)
+	    {      
+	      TotalChargeUpLayer += OneBodyMatrixElements[0][MomentumIndex2];
+	      TotalCharge += OneBodyMatrixElements[0][MomentumIndex2];
+	    }
+	  RealDiagonalMatrix TmpUpEigenvalues(NbrInputStates);
+	  TotalChargeUpLayer.LapackDiagonalize(TmpUpEigenvalues);
+	  RealSymmetricMatrix TotalChargeDownLayer (NbrInputStates, true);
+	  for (int MomentumIndex2 = 0; MomentumIndex2 <= MomentumIndex; ++MomentumIndex2)
+	    {      
+	      TotalChargeDownLayer += OneBodyMatrixElements[1][LzMax - MomentumIndex2];
+	      TotalCharge += OneBodyMatrixElements[1][LzMax - MomentumIndex2];
+	    }
+	  RealDiagonalMatrix TmpDownEigenvalues(NbrInputStates);
+	  TotalChargeDownLayer.LapackDiagonalize(TmpDownEigenvalues);
+	  RealDiagonalMatrix TmpEigenvalues(NbrInputStates);
+	  TotalCharge.LapackDiagonalize(TmpEigenvalues);
+	  cout << MomentumIndex;
+	  for (int i = 0; i < NbrInputStates; ++i)
+	    cout << " " << TmpUpEigenvalues[i] << " " << TmpDownEigenvalues[i] << " " << TmpEigenvalues[i];
+	  cout << endl;
 	}
-      RealDiagonalMatrix TmpUpEigenvalues(NbrInputStates);
-      TotalChargeUpLayer.LapackDiagonalize(TmpUpEigenvalues);
-      RealSymmetricMatrix TotalChargeDownLayer (NbrInputStates, true);
-      for (int MomentumIndex2 = 0; MomentumIndex2 <= MomentumIndex; ++MomentumIndex2)
-	{      
-	  TotalChargeDownLayer += OneBodyMatrixElements[1][LzMax - MomentumIndex2];
-	  TotalCharge += OneBodyMatrixElements[1][LzMax - MomentumIndex2];
-	}
-      RealDiagonalMatrix TmpDownEigenvalues(NbrInputStates);
-      TotalChargeDownLayer.LapackDiagonalize(TmpDownEigenvalues);
-      RealDiagonalMatrix TmpEigenvalues(NbrInputStates);
-      TotalCharge.LapackDiagonalize(TmpEigenvalues);
-      cout << MomentumIndex;
-      for (int i = 0; i < NbrInputStates; ++i)
-	cout << " " << TmpUpEigenvalues[i] << " " << TmpDownEigenvalues[i] << " " << TmpEigenvalues[i];
-      cout << endl;
+      TotalChargeImbalance.LapackDiagonalize(TmpImbalanceEigenvalues);
     }
-  
-   TotalChargeImbalance.LapackDiagonalize(TmpImbalanceEigenvalues);
-   for (int i = 0; i < NbrInputStates; ++i)
-	cout << "Charge imbalance between left and right (orbital cut) " << (TmpImbalanceEigenvalues[i]) << endl;
+  else
+    {
+      HermitianMatrix TotalChargeImbalance(NbrInputStates, true);
+      for (int MomentumIndex = 0; MomentumIndex <= LzMax; ++MomentumIndex)
+	{      
+	  if (MomentumIndex < (LzMax + 1) / 2)
+	    {
+	      TotalChargeImbalance += ComplexOneBodyMatrixElements[0][MomentumIndex];
+	      TotalChargeImbalance += ComplexOneBodyMatrixElements[1][MomentumIndex];
+	    }
+	  else
+	    {
+	      TotalChargeImbalance -= ComplexOneBodyMatrixElements[0][MomentumIndex];
+	      TotalChargeImbalance -= ComplexOneBodyMatrixElements[1][MomentumIndex];
+	    }
+	  
+	  HermitianMatrix TotalChargeUpLayer (NbrInputStates, true);
+	  HermitianMatrix TotalCharge (NbrInputStates, true);
+	  for (int MomentumIndex2 = 0; MomentumIndex2 <= MomentumIndex; ++MomentumIndex2)
+	    {      
+	      TotalChargeUpLayer += ComplexOneBodyMatrixElements[0][MomentumIndex2];
+	      TotalCharge += ComplexOneBodyMatrixElements[0][MomentumIndex2];
+	    }
+	  RealDiagonalMatrix TmpUpEigenvalues(NbrInputStates);
+	  TotalChargeUpLayer.LapackDiagonalize(TmpUpEigenvalues);
+	  HermitianMatrix TotalChargeDownLayer (NbrInputStates, true);
+	  for (int MomentumIndex2 = 0; MomentumIndex2 <= MomentumIndex; ++MomentumIndex2)
+	    {      
+	      TotalChargeDownLayer += ComplexOneBodyMatrixElements[1][LzMax - MomentumIndex2];
+	      TotalCharge += ComplexOneBodyMatrixElements[1][LzMax - MomentumIndex2];
+	    }
+	  RealDiagonalMatrix TmpDownEigenvalues(NbrInputStates);
+	  TotalChargeDownLayer.LapackDiagonalize(TmpDownEigenvalues);
+	  RealDiagonalMatrix TmpEigenvalues(NbrInputStates);
+	  TotalCharge.LapackDiagonalize(TmpEigenvalues);
+	  cout << MomentumIndex;
+	  for (int i = 0; i < NbrInputStates; ++i)
+	    cout << " " << TmpUpEigenvalues[i] << " " << TmpDownEigenvalues[i] << " " << TmpEigenvalues[i];
+	  cout << endl;
+	}
+      TotalChargeImbalance.LapackDiagonalize(TmpImbalanceEigenvalues);
+    }
+  for (int i = 0; i < NbrInputStates; ++i)
+    cout << "Charge imbalance between left and right (orbital cut) " << (TmpImbalanceEigenvalues[i]) << endl;
    
   if (Manager.GetBoolean("realspace-density") == true)
     {
@@ -531,14 +674,6 @@ int main(int argc, char** argv)
 	}
       double CylinderLength = Perimeter / Ratio;
       int NbrPoints = Manager.GetInteger("nbr-points");
-
-      RealSymmetricMatrix TotalChargeImbalance(NbrInputStates, true);
-      RealSymmetricMatrix TmpMatrixUpLayer (NbrInputStates, true);
-      RealSymmetricMatrix TmpMatrixUpLayerIntegratedCharge (NbrInputStates, true);
-      RealSymmetricMatrix TmpMatrixDownLayer (NbrInputStates, true);
-      RealSymmetricMatrix TmpMatrixDownLayerIntegratedCharge (NbrInputStates, true);
-      RealSymmetricMatrix TmpMatrixTotal (NbrInputStates, true);
-      RealSymmetricMatrix TmpMatrixTotalIntegratedCharge (NbrInputStates, true);
       RealDiagonalMatrix TmpImbalanceEigenvaluesRealSpace(NbrInputStates);
       RealDiagonalMatrix TmpEigenvaluesUpLayer(NbrInputStates);
       RealDiagonalMatrix TmpEigenvaluesUpLayerIntegratedCharge(NbrInputStates);
@@ -553,52 +688,138 @@ int main(int argc, char** argv)
       double TmpPrefactor2 =  2.0 * M_PI / Perimeter;
       double TmpShiftUp = (0.5 * ((double) LzMax) - Manager.GetDouble("flux-insertion")) * TmpPrefactor2;
       double TmpShiftDown = (0.5 * ((double) LzMax) - Manager.GetDouble("flux-insertion")) * TmpPrefactor2;
-      for (int TmpX = 0; TmpX <= NbrPoints; ++TmpX)
-	{ 
-	  TmpMatrixUpLayer.ClearMatrix();
-	  TmpMatrixUpLayerIntegratedCharge.ClearMatrix();
-	  TmpMatrixDownLayer.ClearMatrix();
-	  TmpMatrixDownLayerIntegratedCharge.ClearMatrix();
-	  TmpMatrixTotal.ClearMatrix();
-	  TmpMatrixTotalIntegratedCharge.ClearMatrix();
+
+      if (ComplexFlag == false)
+	{
+	  RealSymmetricMatrix TotalChargeImbalance(NbrInputStates, true);
+	  RealSymmetricMatrix TmpMatrixUpLayer (NbrInputStates, true);
+	  RealSymmetricMatrix TmpMatrixUpLayerIntegratedCharge (NbrInputStates, true);
+	  RealSymmetricMatrix TmpMatrixDownLayer (NbrInputStates, true);
+	  RealSymmetricMatrix TmpMatrixDownLayerIntegratedCharge (NbrInputStates, true);
+	  RealSymmetricMatrix TmpMatrixTotal (NbrInputStates, true);
+	  RealSymmetricMatrix TmpMatrixTotalIntegratedCharge (NbrInputStates, true);
+	  for (int TmpX = 0; TmpX <= NbrPoints; ++TmpX)
+	    { 
+	      TmpMatrixUpLayer.ClearMatrix();
+	      TmpMatrixUpLayerIntegratedCharge.ClearMatrix();
+	      TmpMatrixDownLayer.ClearMatrix();
+	      TmpMatrixDownLayerIntegratedCharge.ClearMatrix();
+	      TmpMatrixTotal.ClearMatrix();
+	      TmpMatrixTotalIntegratedCharge.ClearMatrix();
+	      for (int i = 0; i <= LzMax; ++i)
+		{
+		  double TmpFactor = TmpPrefactor1 * exp(-(XPosition + TmpShiftUp - (TmpPrefactor2 * ((double) i))) * (XPosition + TmpShiftUp - (TmpPrefactor2 * ((double) i))));
+		  TmpMatrixUpLayer.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[0][i]);
+		  TmpMatrixTotal.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[0][i]);
+		  TmpFactor = 0.5 * (1.0 + erf(XPosition + TmpShiftUp - (TmpPrefactor2 * ((double) i))));
+		  TmpMatrixUpLayerIntegratedCharge.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[0][i]);
+		  TmpMatrixTotalIntegratedCharge.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[0][i]);
+		  TmpFactor = TmpPrefactor1 * exp(-(XPosition - TmpShiftDown + (TmpPrefactor2 * ((double) i))) * (XPosition - TmpShiftDown + (TmpPrefactor2 * ((double) i))));
+		  TmpMatrixDownLayer.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][LzMax - i]);
+		  TmpMatrixTotal.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][LzMax - i]);
+		  TmpFactor = 0.5 * (1.0 + erf(XPosition - TmpShiftDown + (TmpPrefactor2 * ((double) i))));
+		  TmpMatrixDownLayerIntegratedCharge.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][LzMax - i]);
+		  TmpMatrixTotalIntegratedCharge.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][LzMax - i]);
+		  
+		}
+	      TmpMatrixUpLayer.LapackDiagonalize(TmpEigenvaluesUpLayer);
+	      TmpMatrixUpLayerIntegratedCharge.LapackDiagonalize(TmpEigenvaluesUpLayerIntegratedCharge);
+	      TmpMatrixDownLayer.LapackDiagonalize(TmpEigenvaluesDownLayer);
+	      TmpMatrixDownLayerIntegratedCharge.LapackDiagonalize(TmpEigenvaluesDownLayerIntegratedCharge);
+	      TmpMatrixTotal.LapackDiagonalize(TmpEigenvaluesTotal);
+	      TmpMatrixTotalIntegratedCharge.LapackDiagonalize(TmpEigenvaluesTotalIntegratedCharge);
+	      File << XPosition;
+	      
+	      // 	  if (TmpX <= NbrPoints / 2)
+	      // 	    TotalChargeImbalance += TmpMatrixTotal;
+	      // 	  else
+	      // 	    TotalChargeImbalance -= TmpMatrixTotal;
+	      for (int i = 0; i < NbrInputStates; ++i)
+		{   
+		  File << " " << TmpEigenvaluesUpLayer[i] << " " << TmpEigenvaluesUpLayerIntegratedCharge[i]
+		       << " " << TmpEigenvaluesDownLayer[i] << " " << TmpEigenvaluesDownLayerIntegratedCharge[i]
+		       << " " << TmpEigenvaluesTotal[i] << " " << TmpEigenvaluesTotalIntegratedCharge[i];
+		  
+		  
+		}      
+	      File << endl;
+	      XPosition += XStep;
+	    }
+	  TotalChargeImbalance.ClearMatrix();
 	  for (int i = 0; i <= LzMax; ++i)
 	    {
-	      double TmpFactor = TmpPrefactor1 * exp(-(XPosition + TmpShiftUp - (TmpPrefactor2 * ((double) i))) * (XPosition + TmpShiftUp - (TmpPrefactor2 * ((double) i))));
-	      TmpMatrixUpLayer.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[0][i]);
-	      TmpMatrixTotal.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[0][i]);
-	      TmpFactor = 0.5 * (1.0 + erf(XPosition + TmpShiftUp - (TmpPrefactor2 * ((double) i))));
-	      TmpMatrixUpLayerIntegratedCharge.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[0][i]);
-	      TmpMatrixTotalIntegratedCharge.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[0][i]);
-	      TmpFactor = TmpPrefactor1 * exp(-(XPosition - TmpShiftDown + (TmpPrefactor2 * ((double) i))) * (XPosition - TmpShiftDown + (TmpPrefactor2 * ((double) i))));
-	      TmpMatrixDownLayer.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][LzMax - i]);
-	      TmpMatrixTotal.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][LzMax - i]);
-	      TmpFactor = 0.5 * (1.0 + erf(XPosition - TmpShiftDown + (TmpPrefactor2 * ((double) i))));
-	      TmpMatrixDownLayerIntegratedCharge.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][LzMax - i]);
-	      TmpMatrixTotalIntegratedCharge.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][LzMax - i]);
-	      
+	      double TmpFactor = -erf(+ TmpShiftUp - (TmpPrefactor2 * ((double) i)));
+	      TotalChargeImbalance.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[0][i]);
+	      TmpFactor = -erf(- TmpShiftDown + (TmpPrefactor2 * ((double) i)));
+	      TotalChargeImbalance.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][LzMax - i]);	  
 	    }
-	  TmpMatrixUpLayer.LapackDiagonalize(TmpEigenvaluesUpLayer);
-	  TmpMatrixUpLayerIntegratedCharge.LapackDiagonalize(TmpEigenvaluesUpLayerIntegratedCharge);
-	  TmpMatrixDownLayer.LapackDiagonalize(TmpEigenvaluesDownLayer);
-	  TmpMatrixDownLayerIntegratedCharge.LapackDiagonalize(TmpEigenvaluesDownLayerIntegratedCharge);
-	  TmpMatrixTotal.LapackDiagonalize(TmpEigenvaluesTotal);
-	  TmpMatrixTotalIntegratedCharge.LapackDiagonalize(TmpEigenvaluesTotalIntegratedCharge);
-	  File << XPosition;
-	  
-// 	  if (TmpX <= NbrPoints / 2)
-// 	    TotalChargeImbalance += TmpMatrixTotal;
-// 	  else
-// 	    TotalChargeImbalance -= TmpMatrixTotal;
-	  for (int i = 0; i < NbrInputStates; ++i)
-	    {   
-	      File << " " << TmpEigenvaluesUpLayer[i] << " " << TmpEigenvaluesUpLayerIntegratedCharge[i]
-		   << " " << TmpEigenvaluesDownLayer[i] << " " << TmpEigenvaluesDownLayerIntegratedCharge[i]
-		   << " " << TmpEigenvaluesTotal[i] << " " << TmpEigenvaluesTotalIntegratedCharge[i];
-		   
+	  TotalChargeImbalance.LapackDiagonalize(TmpImbalanceEigenvaluesRealSpace);
+	}
+      else
+	{
+	  HermitianMatrix TotalChargeImbalance(NbrInputStates, true);
+	  HermitianMatrix TmpMatrixUpLayer (NbrInputStates, true);
+	  HermitianMatrix TmpMatrixUpLayerIntegratedCharge (NbrInputStates, true);
+	  HermitianMatrix TmpMatrixDownLayer (NbrInputStates, true);
+	  HermitianMatrix TmpMatrixDownLayerIntegratedCharge (NbrInputStates, true);
+	  HermitianMatrix TmpMatrixTotal (NbrInputStates, true);
+	  HermitianMatrix TmpMatrixTotalIntegratedCharge (NbrInputStates, true);
+	  for (int TmpX = 0; TmpX <= NbrPoints; ++TmpX)
+	    { 
+	      TmpMatrixUpLayer.ClearMatrix();
+	      TmpMatrixUpLayerIntegratedCharge.ClearMatrix();
+	      TmpMatrixDownLayer.ClearMatrix();
+	      TmpMatrixDownLayerIntegratedCharge.ClearMatrix();
+	      TmpMatrixTotal.ClearMatrix();
+	      TmpMatrixTotalIntegratedCharge.ClearMatrix();
+	      for (int i = 0; i <= LzMax; ++i)
+		{
+		  double TmpFactor = TmpPrefactor1 * exp(-(XPosition + TmpShiftUp - (TmpPrefactor2 * ((double) i))) * (XPosition + TmpShiftUp - (TmpPrefactor2 * ((double) i))));
+		  TmpMatrixUpLayer.AddLinearCombination(TmpFactor, ComplexOneBodyMatrixElements[0][i]);
+		  TmpMatrixTotal.AddLinearCombination(TmpFactor, ComplexOneBodyMatrixElements[0][i]);
+		  TmpFactor = 0.5 * (1.0 + erf(XPosition + TmpShiftUp - (TmpPrefactor2 * ((double) i))));
+		  TmpMatrixUpLayerIntegratedCharge.AddLinearCombination(TmpFactor, ComplexOneBodyMatrixElements[0][i]);
+		  TmpMatrixTotalIntegratedCharge.AddLinearCombination(TmpFactor, ComplexOneBodyMatrixElements[0][i]);
+		  TmpFactor = TmpPrefactor1 * exp(-(XPosition - TmpShiftDown + (TmpPrefactor2 * ((double) i))) * (XPosition - TmpShiftDown + (TmpPrefactor2 * ((double) i))));
+		  TmpMatrixDownLayer.AddLinearCombination(TmpFactor, ComplexOneBodyMatrixElements[1][LzMax - i]);
+		  TmpMatrixTotal.AddLinearCombination(TmpFactor, ComplexOneBodyMatrixElements[1][LzMax - i]);
+		  TmpFactor = 0.5 * (1.0 + erf(XPosition - TmpShiftDown + (TmpPrefactor2 * ((double) i))));
+		  TmpMatrixDownLayerIntegratedCharge.AddLinearCombination(TmpFactor, ComplexOneBodyMatrixElements[1][LzMax - i]);
+		  TmpMatrixTotalIntegratedCharge.AddLinearCombination(TmpFactor, ComplexOneBodyMatrixElements[1][LzMax - i]);
+		  
+		}
+	      TmpMatrixUpLayer.LapackDiagonalize(TmpEigenvaluesUpLayer);
+	      TmpMatrixUpLayerIntegratedCharge.LapackDiagonalize(TmpEigenvaluesUpLayerIntegratedCharge);
+	      TmpMatrixDownLayer.LapackDiagonalize(TmpEigenvaluesDownLayer);
+	      TmpMatrixDownLayerIntegratedCharge.LapackDiagonalize(TmpEigenvaluesDownLayerIntegratedCharge);
+	      TmpMatrixTotal.LapackDiagonalize(TmpEigenvaluesTotal);
+	      TmpMatrixTotalIntegratedCharge.LapackDiagonalize(TmpEigenvaluesTotalIntegratedCharge);
+	      File << XPosition;
 	      
-	    }      
-	  File << endl;
-	  XPosition += XStep;
+	      // 	  if (TmpX <= NbrPoints / 2)
+	      // 	    TotalChargeImbalance += TmpMatrixTotal;
+	      // 	  else
+	      // 	    TotalChargeImbalance -= TmpMatrixTotal;
+	      for (int i = 0; i < NbrInputStates; ++i)
+		{   
+		  File << " " << TmpEigenvaluesUpLayer[i] << " " << TmpEigenvaluesUpLayerIntegratedCharge[i]
+		       << " " << TmpEigenvaluesDownLayer[i] << " " << TmpEigenvaluesDownLayerIntegratedCharge[i]
+		       << " " << TmpEigenvaluesTotal[i] << " " << TmpEigenvaluesTotalIntegratedCharge[i];
+		  
+		  
+		}      
+	      File << endl;
+	      XPosition += XStep;
+	    }
+	  TotalChargeImbalance.ClearMatrix();
+	  for (int i = 0; i <= LzMax; ++i)
+	    {
+	      double TmpFactor = -erf(+ TmpShiftUp - (TmpPrefactor2 * ((double) i)));
+	      TotalChargeImbalance.AddLinearCombination(TmpFactor, ComplexOneBodyMatrixElements[0][i]);
+	      TmpFactor = -erf(- TmpShiftDown + (TmpPrefactor2 * ((double) i)));
+	      TotalChargeImbalance.AddLinearCombination(TmpFactor, ComplexOneBodyMatrixElements[1][LzMax - i]);	  
+	    }
+	  TotalChargeImbalance.LapackDiagonalize(TmpImbalanceEigenvaluesRealSpace);
 	}
 //       TotalChargeImbalance.LapackDiagonalize(TmpImbalanceEigenvaluesRealSpace);
 //       for (int i = 0; i < NbrInputStates; ++i)
@@ -608,15 +829,6 @@ int main(int argc, char** argv)
 // 	    FileChargeImbalance << i << " " << TmpImbalanceEigenvalues[i] << " " << TmpImbalanceEigenvaluesRealSpace[i]* XStep << endl;
 // 	}
       
-      TotalChargeImbalance.ClearMatrix();
-      for (int i = 0; i <= LzMax; ++i)
-	{
-	  double TmpFactor = -erf(+ TmpShiftUp - (TmpPrefactor2 * ((double) i)));
-	  TotalChargeImbalance.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[0][i]);
-	  TmpFactor = -erf(- TmpShiftDown + (TmpPrefactor2 * ((double) i)));
-	  TotalChargeImbalance.MultiplyAndAdd(TmpFactor, OneBodyMatrixElements[1][LzMax - i]);	  
-	}
-      TotalChargeImbalance.LapackDiagonalize(TmpImbalanceEigenvaluesRealSpace);
       for (int i = 0; i < NbrInputStates; ++i)
 	{
 	  cout << "Charge imbalance between left and right (real space cut) " << TmpImbalanceEigenvaluesRealSpace[i] << endl;

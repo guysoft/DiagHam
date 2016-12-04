@@ -141,6 +141,17 @@ class ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairin
   virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
 					  int firstComponent, int nbrComponent);
 
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+					     int firstComponent, int nbrComponent);
+
   // multiply a set of vectors by the current hamiltonian for a given range of indices 
   // and add result to another set of vectors, low level function (no architecture optimization)
   //
@@ -153,6 +164,18 @@ class ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairin
   virtual RealVector* LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
 						  int firstComponent, int nbrComponent);
   
+  // multiply a set of vectors by the current hamiltonian for a given range of indices 
+  // and add result to another set of vectors, low level function (no architecture optimization)
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+						     int firstComponent, int nbrComponent);
+  
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
   //
@@ -164,6 +187,17 @@ class ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairin
   virtual RealVector& HermitianLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
 						   int firstComponent, int nbrComponent);
  
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual ComplexVector& HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+						      int firstComponent, int nbrComponent);
+  
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
   //
@@ -176,6 +210,18 @@ class ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairin
   virtual RealVector* HermitianLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
 							   int firstComponent, int nbrComponent);
   
+  // multiply a et of vectors by the current hamiltonian for a given range of indices 
+  // and add result to another et of vectors, low level function (no architecture optimization)
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual ComplexVector* HermitianLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+							      int firstComponent, int nbrComponent);
+  
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
   // using partial fast multiply option
@@ -187,6 +233,18 @@ class ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairin
   // return value = reference on vector where result has been stored
   virtual RealVector& LowLevelAddMultiplyPartialFastMultiply(RealVector& vSource, RealVector& vDestination, 
 							     int firstComponent, int nbrComponent);
+  
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  // using partial fast multiply option
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual ComplexVector& LowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+								int firstComponent, int nbrComponent);
   
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
@@ -202,7 +260,21 @@ class ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairin
                                                                      int firstComponent, int nbrComponent);
 
   
-   // multiply a vector by the current hamiltonian for a given range of indices 
+  // multiply a et of vectors by the current hamiltonian for a given range of indices 
+  // and add result to another et of vectors, low level function (no architecture optimization)
+  // using partial fast multiply option
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual ComplexVector* LowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+									int firstComponent, int nbrComponent);
+
+  
+  // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
   // using partial fast multiply option
   //
@@ -213,6 +285,18 @@ class ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairin
   // return value = reference on vector where result has been stored
   virtual RealVector& HermitianLowLevelAddMultiplyPartialFastMultiply(RealVector& vSource, RealVector& vDestination, 
 								      int firstComponent, int nbrComponent);
+  
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  // using partial fast multiply option
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual ComplexVector& HermitianLowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+									 int firstComponent, int nbrComponent);
   
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
@@ -226,6 +310,19 @@ class ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairin
   // return value = pointer to the array of vectors where result has been stored
   virtual RealVector* HermitianLowLevelMultipleAddMultiplyPartialFastMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
 									      int firstComponent, int nbrComponent);
+  
+  // multiply a et of vectors by the current hamiltonian for a given range of indices 
+  // and add result to another et of vectors, low level function (no architecture optimization)
+  // using partial fast multiply option
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual ComplexVector* HermitianLowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+										 int firstComponent, int nbrComponent);
   
   // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
   //
