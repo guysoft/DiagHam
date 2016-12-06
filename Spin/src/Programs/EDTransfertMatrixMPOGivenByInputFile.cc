@@ -5,6 +5,7 @@
 #include "HilbertSpace/UndescribedHilbertSpace.h"
 
 #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslations.h"
+#include "HilbertSpace/VirtualSpaceTransferMatrixWithTranslations.h"
 #include "HilbertSpace/Spin1_2ChainNew.h"
 #include "HilbertSpace/Spin1_2ChainWithTranslations.h"
 #include "HilbertSpace/DoubledSpin1_2_Chain.h"
@@ -67,9 +68,10 @@ int main(int argc, char** argv)
   Manager += ToolsGroup;
 
   (*SystemGroup) += new  SingleIntegerOption ('L', "length", "length of the spin chain", 4);
-  (*SystemGroup) += new  SingleIntegerOption ('L', "length", "length of the spin chain", 4);
   (*SystemGroup) += new SingleStringOption  ('\n', "tensor-file", "name of the file containing the eigenstate to be displayed");
   (*SystemGroup) += new SingleStringOption  ('\n', "peps-name", "name of the peps used to form the output file name");
+  (*SystemGroup) += new BooleanOption ('\n', "no-spin", "use undescribed hilbert space ");
+
   (*SystemGroup) += new BooleanOption ('\n', "spin-half", "use spin-half virtual space");
   (*SystemGroup) += new BooleanOption ('c', "complex", "use complex version of the code");
   (*SystemGroup) += new BooleanOption ('\n', "doubled", "use double version of the code");
@@ -110,6 +112,7 @@ int main(int argc, char** argv)
   bool DoubledFlag = Manager.GetBoolean("doubled");
   bool TranslationFlag = Manager.GetBoolean("translation");
   bool SymmetryFlag = Manager.GetBoolean("zz-symmetry");
+  bool UndescribedHilbertSpaceFlag =  Manager.GetBoolean("no-spin");
   bool LeftFlag = Manager.GetBoolean("left");
   MultiColumnASCIIFile TensorsElementsDefinition;
   if (TensorsElementsDefinition.Parse(Manager.GetString("tensor-file")) == false)
@@ -135,10 +138,8 @@ int main(int argc, char** argv)
 
   bool FirstRunFlag = true;   
   AbstractHilbertSpace *  Space = 0;  
-//  AbstractTransfertMatrixPBC * TransferMatrix = 0;
   int NbrSites = Manager.GetInteger("length");
   
-
   RealDiagonalMatrix BoundaryConditions(9,true);
   BoundaryConditions.SetToIdentity();
   if(Manager.GetBoolean("vison") == true)
@@ -159,7 +160,6 @@ int main(int argc, char** argv)
 	{
 	  if (DoubledFlag)
 	    {
-
 	      TransferMatrix = new  ComplexPEPSTransfertMatrixPBCWithTranslations(TensorsElementsDefinition,Architecture.GetArchitecture());
 	    }
 	  else
@@ -232,6 +232,13 @@ int main(int argc, char** argv)
       MaxKx=0;
     }
   
+  if (UndescribedHilbertSpaceFlag ==true)
+    {
+      SzMin = 0;
+      SzMax = 0;
+      ZvalueMax = 0;
+    }
+  
   if (TranslationFlag)
     {
       if(SymmetryFlag)
@@ -266,67 +273,82 @@ int main(int argc, char** argv)
 		  ZvalueKet = 1 - ZvalueBra;
 		}
 	      
-	      if(Manager.GetBoolean("spin-half") == true)
-		{
-		  if (DoubledFlag)
-		    {
-		      if (TranslationFlag) 
-			{
-			  Space = new DoubledSpin1_2_ChainWithTranslations (NbrSites,i,Sz,100000,100000);
-			}
-		      else
-			Space =  new DoubledSpin1_2_Chain(NbrSites,Sz,100000,100000);
-		    }
-		  else
-		    {
-		      if (TranslationFlag) 
-			{
-			  Space = new  Spin1_2ChainWithTranslations (NbrSites,i,1,Sz,1000000,1000000);
-			}
-		      else
-			Space = new  Spin1_2ChainNew (NbrSites,Sz,100000);
-		    }
-		}
-	      else
+	      if (UndescribedHilbertSpaceFlag)
 		{
 		  if (TranslationFlag) 
 		    {
-		      if (SymmetryFlag)
+		      Space = new VirtualSpaceTransferMatrixWithTranslations(NbrSites,3,i,TranslationStep,100000,100000);
+		    }
+		  else
+		    {
+		      Space = new VirtualSpaceTransferMatrixWithTranslations(NbrSites,3,100000,100000);
+		    }
+		}
+	      else	      
+		{
+		  if(Manager.GetBoolean("spin-half") == true)
+		    {
+		      if (DoubledFlag)
 			{
-			  if(StaggeredFlag)
-			    Space = new DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry (NbrSites,i,Sz, ZvalueBra, ZvalueKet,100000,100000);
+			  if (TranslationFlag) 
+			    {
+			      Space = new DoubledSpin1_2_ChainWithTranslations (NbrSites,i,Sz,100000,100000);
+			    }
 			  else
-			    Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry (NbrSites,i,TranslationStep, Sz, ZvalueBra, ZvalueKet,100000,100000);
+			    Space =  new DoubledSpin1_2_Chain(NbrSites,Sz,100000,100000);
 			}
 		      else
 			{
-			  if(StaggeredFlag)
-			    Space = new DoubledSpin0_1_2_ChainWithTranslationsStaggered (NbrSites,i,Sz,100000,100000);
+			  if (TranslationFlag) 
+			    {
+			      Space = new  Spin1_2ChainWithTranslations (NbrSites,i,1,Sz,1000000,1000000);
+			    }
 			  else
-			    Space = new DoubledSpin0_1_2_ChainWithTranslations (NbrSites,i,TranslationStep,Sz,100000,100000);
+			    Space = new  Spin1_2ChainNew (NbrSites,Sz,100000);
 			}
 		    }
 		  else
 		    {
-		      if (SymmetryFlag)
+		      if (TranslationFlag) 
 			{
-			  if(StaggeredFlag)
-			    Space = new DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry (NbrSites,Sz, ZvalueBra, ZvalueKet,100000,100000);
+			  if (SymmetryFlag)
+			    {
+			      if(StaggeredFlag)
+				Space = new DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry (NbrSites,i,Sz, ZvalueBra, ZvalueKet,100000,100000);
+			      else
+				Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry (NbrSites,i,TranslationStep, Sz, ZvalueBra, ZvalueKet,100000,100000);
+			    }
 			  else
-			    Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry (NbrSites,Sz, ZvalueBra, ZvalueKet,100000,100000);
+			    {
+			      if(StaggeredFlag)
+				Space = new DoubledSpin0_1_2_ChainWithTranslationsStaggered (NbrSites,i,Sz,100000,100000);
+			      else
+				Space = new DoubledSpin0_1_2_ChainWithTranslations (NbrSites,i,TranslationStep,Sz,100000,100000);
+			    }
 			}
 		      else
 			{
-			  if(StaggeredFlag)
-			    Space = new DoubledSpin0_1_2_ChainWithTranslationsStaggered (NbrSites,Sz, 100000,100000);
+			  if (SymmetryFlag)
+			    {
+			      if(StaggeredFlag)
+				Space = new DoubledSpin0_1_2_ChainWithTranslationsStaggeredAndZZSymmetry (NbrSites,Sz, ZvalueBra, ZvalueKet,100000,100000);
+			      else
+				Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry (NbrSites,Sz, ZvalueBra, ZvalueKet,100000,100000);
+			    }
 			  else
 			    {
-			      cout <<" Space = new DoubledSpin0_1_2_ChainWithTranslations (NbrSites,Sz, 100000,100000);" <<endl;
-			      Space = new DoubledSpin0_1_2_ChainWithTranslations (NbrSites,Sz, 100000,100000);
+			      if(StaggeredFlag)
+				Space = new DoubledSpin0_1_2_ChainWithTranslationsStaggered (NbrSites,Sz, 100000,100000);
+			      else
+				{
+				  cout <<" Space = new DoubledSpin0_1_2_ChainWithTranslations (NbrSites,Sz, 100000,100000);" <<endl;
+				  Space = new DoubledSpin0_1_2_ChainWithTranslations (NbrSites,Sz, 100000,100000);
+				}
 			    }
 			}
 		    }
 		}
+
 	      if (SymmetryFlag)
 		{
 		  cout <<"Symmetry sector = "<< ZvalueBra<<" "<< ZvalueKet<<endl;
@@ -350,31 +372,48 @@ int main(int argc, char** argv)
 			TransferMatrix->Multiply(TestVector,DestinationVector);
 			if ( fabs(DestinationVector.Norm()) > 1e-14 )
  			{ */
+
 		      cout <<"Hilbert Space dimension = "<<Space->GetHilbertSpaceDimension()<<endl;
-		      if (TranslationFlag)
+		      if (UndescribedHilbertSpaceFlag)
 			{
-			  if(SymmetryFlag)
+			  if (TranslationFlag)
 			    {
-			      sprintf(TmpSzString,"%d %d %d %d",Sz,i, ZvalueBra, ZvalueKet);
-			      sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_sz_%d_k_%d_zbra_%d_zket_%d",Manager.GetString("peps-name"),NbrSites,Sz,i, ZvalueBra, ZvalueKet);
+			      sprintf(TmpSzString,"%d",i);			  
+			      sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_k_%d",Manager.GetString("peps-name"),NbrSites,i);
 			    }
 			  else
 			    {
-			      sprintf(TmpSzString,"%d %d",Sz,i);
-			      sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_sz_%d_k_%d",Manager.GetString("peps-name"),NbrSites,Sz,i);
+			      sprintf(TmpSzString,"");			  
+			      sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_",Manager.GetString("peps-name"),NbrSites);
 			    }
 			}
 		      else
 			{
-			  if(SymmetryFlag)
+			  if (TranslationFlag)
 			    {
-			      sprintf(TmpSzString,"%d %d %d",Sz, ZvalueBra, ZvalueKet);
-			      sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_sz_%d_zbra_%d_zket_%d",Manager.GetString("peps-name"),NbrSites,Sz, ZvalueBra, ZvalueKet);
+			      if(SymmetryFlag)
+				{
+				  sprintf(TmpSzString,"%d %d %d %d",Sz,i, ZvalueBra, ZvalueKet);
+				  sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_sz_%d_k_%d_zbra_%d_zket_%d",Manager.GetString("peps-name"),NbrSites,Sz,i, ZvalueBra, ZvalueKet);
+				}
+			      else
+				{
+ 				  sprintf(TmpSzString,"%d %d",Sz,i);
+				  sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_sz_%d_k_%d",Manager.GetString("peps-name"),NbrSites,Sz,i);
+				}
 			    }
 			  else
 			    {
-			      sprintf(TmpSzString,"%d",Sz);			  
-			      sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_sz_%d",Manager.GetString("peps-name"),NbrSites,Sz);
+			      if(SymmetryFlag)
+				{
+				  sprintf(TmpSzString,"%d %d %d",Sz, ZvalueBra, ZvalueKet);
+				  sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_sz_%d_zbra_%d_zket_%d",Manager.GetString("peps-name"),NbrSites,Sz, ZvalueBra, ZvalueKet);
+				}
+			      else
+				{
+				  sprintf(TmpSzString,"%d",Sz);			  
+				  sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_sz_%d",Manager.GetString("peps-name"),NbrSites,Sz);
+				}
 			    }
 			}
 		      Lanczos.SetComplexAlgorithms();

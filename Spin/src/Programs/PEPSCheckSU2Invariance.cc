@@ -73,7 +73,7 @@ int main(int argc, char** argv)
   int TmpMPODimension =0;
   int PhysicalDimension = InitializeTensorsElements(TensorsElementsDefinition, TensorMatrix, TmpMPODimension) ;
 
-
+/*
   ComplexMatrix *  ResultSigmaZ = new ComplexMatrix[PhysicalDimension];
   ComplexMatrix *  ResultSigmaX = new ComplexMatrix[PhysicalDimension];
   ComplexMatrix *  ResultSigmaY = new ComplexMatrix[PhysicalDimension];
@@ -151,6 +151,35 @@ int main(int argc, char** argv)
       cout <<  ResultSigmaX[i]<<endl;
       cout <<  ResultSigmaY[i]<<endl;
     }
+*/
+
+  ComplexMatrix *  ResultGaussLaw = new ComplexMatrix[PhysicalDimension];
+  for (int i =0; i <PhysicalDimension; i++)
+    {
+      ResultGaussLaw[i]= ComplexMatrix( TensorMatrix[0].GetNbrRow(), TensorMatrix[0].GetNbrRow(),true );
+    }
+  
+  double ChargeMatrix[3];
+  ChargeMatrix[0]=1;
+  ChargeMatrix[1]=1;
+  ChargeMatrix[2]=-3;
+  for (int i =0; i <PhysicalDimension; i++)
+    {
+      Complex Tmp;      
+      for (int j =0; j < TensorMatrix[0].GetNbrRow(); j++)
+	{
+	  for (int k =0; k < TensorMatrix[0].GetNbrRow(); k++)
+	    {
+	      TensorMatrix[i].GetMatrixElement(j,k,Tmp);
+	      int Left = j % TmpMPODimension;
+	      int Up = j / TmpMPODimension;
+	      int Right = k % TmpMPODimension;
+	      int Down = k / TmpMPODimension;
+	      ResultGaussLaw[i].AddToMatrixElement(j,k, Tmp*(ChargeMatrix[Left] +ChargeMatrix[Up] + ChargeMatrix[Right] +  ChargeMatrix[Down]));
+	    }
+	}
+      cout << ResultGaussLaw[i]<<endl;
+    }
 }
 
 double SigmaZ(int i, int j)
@@ -183,6 +212,7 @@ Complex SigmaY(int i, int j)
     return Complex (0.0,-1.0);
   return Complex (0.0,0.0);
 };
+
 
 int InitializeTensorsElements(MultiColumnASCIIFile & tensorElementsFile, ComplexMatrix *& tensorMatrix, int & TmpMPODimension)
 {

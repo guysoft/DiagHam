@@ -139,7 +139,7 @@ class AbstractDoubledSpinChain : public AbstractSpinChain
   void GenerateLookUpTable(unsigned long memory);
 
 
-  virtual int GetTotalSz (unsigned long stateDescriptionBra,unsigned long stateDescriptionKet) = 0;
+  virtual int GetTotalSz (unsigned long stateDescriptionBra,unsigned long stateDescriptionKet){ return 0;};
   
 /*  double TotalSzSz (int index);
   double SziSzj (int i, int j, int state);
