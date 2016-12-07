@@ -532,7 +532,7 @@ double FermionOnLattice::AA (int index, int n1, int n2)
 #endif
   this->ProdATemporaryState &= ~(((unsigned long) (0x1)) << n1);
 
-  while ((this->ProdATemporaryState >> this->ProdAHighestBit) == 0)
+  while (((this->ProdATemporaryState >> this->ProdAHighestBit) == 0) && (this->ProdAHighestBit >= 0))
     --this->ProdAHighestBit;
   return Coefficient;
 }

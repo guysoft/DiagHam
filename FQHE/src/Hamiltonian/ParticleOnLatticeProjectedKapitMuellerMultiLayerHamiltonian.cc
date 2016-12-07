@@ -78,7 +78,7 @@ public:
   /// @param r coordinates in order of (x_A, y_A, x_B, y_B)
   /// @param shift modulo added to layer index when crossing branch cut
   KMBranchCut(double *r, int shift=1):
-    A(2), 
+    A(2),
     B(2),
     E2(2,true)
   {
@@ -294,11 +294,11 @@ void ParticleOnLatticeProjectedKapitMuellerMultiLayerHamiltonian::EvaluateIntera
   HermitianMatrix TmpOneBodyHamiltonian(this->NbrSites, true);
   SingleParticleHamiltonian->GetHamiltonian(TmpOneBodyHamiltonian);
   
+  // output for testing
   if (SingleParticleHamiltonian->GetHilbertSpaceDimension() < 10)
     {
       cout << "Single-Particle Hamiltonian:\n"<<TmpOneBodyHamiltonian;
     }
-
   
   delete SingleParticleHamiltonian;
 
@@ -316,6 +316,14 @@ void ParticleOnLatticeProjectedKapitMuellerMultiLayerHamiltonian::EvaluateIntera
       this->EnergyLevels[i] = TmpDiag(i, i);
       cout << "E["<<i<<"]="<<this->EnergyLevels[i]<<endl;
     }
+
+  // output for testing
+  if (SingleParticleHamiltonian->GetHilbertSpaceDimension() < 10)
+    for (int i = 0; i < this->NbrSites; ++i)
+      {
+	this->EnergyLevels[i] = TmpDiag(i, i);
+	cout << "Phi["<<i<<"]="<<this->OneBodyBasis[i]<<endl;
+      }
 
 
   // hopping terms are present independent of statistics:
@@ -341,7 +349,7 @@ void ParticleOnLatticeProjectedKapitMuellerMultiLayerHamiltonian::EvaluateIntera
   if (this->DeltaPotential != 0.0 || this->RandomPotential != 0.0)
     {
       double LocalPotentials[this->NbrSites];
-      for (int i=0; i<this->NbrSites; ++i) LocalPotentials[i] = 0;
+      for (int i=0; i<this->NbrSites; ++i) LocalPotentials[i] = 0.0;
       for (int l=0; l<this->NbrLayers; ++l)
 	{
 	  int q = SingleParticleSpace.EncodeQuantumNumber(0, 0, l, TranslationPhase);
@@ -400,6 +408,7 @@ void ParticleOnLatticeProjectedKapitMuellerMultiLayerHamiltonian::EvaluateIntera
   Complex tmpSum;
   cout << "adding interaction terms"<<endl;
 		  
+  bool symmetries = false;
   for (int n1=0; n1<this->NbrProjectorStates; ++n1)
     for (int n2=0; n2<this->NbrProjectorStates; ++n2)
       {
@@ -435,11 +444,14 @@ void ParticleOnLatticeProjectedKapitMuellerMultiLayerHamiltonian::EvaluateIntera
 		    for (int j=0; j<this->Ly; ++j)
 		      for (int s=0; s<this->NbrLayers; ++s)
 			{
-			  int q = this->Particles->EncodeQuantumNumber(i, j, s, TranslationPhase);
+			  int q = SingleParticleSpace.EncodeQuantumNumber(i, j, s, TranslationPhase); 
 			  // if (q>=this->NbrSites)
 			  //   cout << "Error: exceed number of single body states at i="<<i<<", j"<<j<<", s="<<s<<" -> q="<<q<<" (NbrSites="<<NbrSites<<")"<<endl;
 			  tmpSum += this->ContactInteractionU * Conj(this->OneBodyBasis[n3][q] * this->OneBodyBasis[n4][q])
 			    * this->OneBodyBasis[n1][q] * this->OneBodyBasis[n2][q];
+			  // if (n1==0 && n2==0 && n3==0 && n4==0)
+			  //   cout << "Contribution for n=(0,0,0,0) at q="<<q<<" for (i,j,s)="<<i<<", "<<j<<", "<<s<<") is = "<< Conj(this->OneBodyBasis[n3][q] * this->OneBodyBasis[n4][q])
+			  //     * this->OneBodyBasis[n1][q] * this->OneBodyBasis[n2][q] << endl;
 			}
 		}
 
@@ -450,25 +462,33 @@ void ParticleOnLatticeProjectedKapitMuellerMultiLayerHamiltonian::EvaluateIntera
 		    for (int j=0; j<this->Ly; ++j)
 		      for (int s=0; s<this->NbrLayers; ++s)
 			{
-			  int q1 = this->Particles->EncodeQuantumNumber(i, j, s, TranslationPhase);
+			  int q1 = SingleParticleSpace.EncodeQuantumNumber(i, j, s, TranslationPhase);
 			  for (int s2=s+1; s2<this->NbrLayers; ++s2)
 			    {
-			      int q2 = this->Particles->EncodeQuantumNumber(i, j, s2, TranslationPhase);
+			      int q2 = SingleParticleSpace.EncodeQuantumNumber(i, j, s2, TranslationPhase);
 			      tmpSum += this->ContactInteractionW * Conj(this->OneBodyBasis[n4][q1] * this->OneBodyBasis[n3][q2])
 				* this->OneBodyBasis[n2][q2] * this->OneBodyBasis[n1][q1];
 			    }
 			}
 		}
+	      // cout << this->Q1Value[tmpQ12Index] << " " << this->Q2Value[tmpQ12Index] << " " << TmpQ3Values[tmpQ34Index] << " " << TmpQ4Values[tmpQ34Index] << " " << tmpSum << endl;
+	      
 	      if (Norm(tmpSum) > 10. * MACHINE_PRECISION)  // check for numerically non-zero coefficients
 		this->InteractionFactors[tmpNbrInteractionFactors++] = tmpSum;
 	      else
-		this->InteractionFactors[tmpNbrInteractionFactors++] = 0.0; // waste some time by keeping these coefficients, for now.     
+		this->InteractionFactors[tmpNbrInteractionFactors++] = 0.0; // waste some time by keeping these coefficients, for now.
 	      ++tmpQ34Index;
+
 	    }
 	++tmpQ12Index;
       }
 
   if (tmpQ12Index < NbrQ12Indices)
+    {
+      cout << "Inconsistent count of NbrQ12Indices!"<<endl;
+      exit(1);
+    }
+
   if (this->NbrInteractionFactors > tmpNbrInteractionFactors)
     {
       Complex *newIFs = new Complex[tmpNbrInteractionFactors];

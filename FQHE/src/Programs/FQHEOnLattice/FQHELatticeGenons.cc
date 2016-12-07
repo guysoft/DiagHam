@@ -205,7 +205,10 @@ int main(int argc, char** argv)
   bool FlatBand = Manager.GetBoolean("flat-band");
   int NbrProjectorStates = Manager.GetInteger("basis-size");
   if (NbrProjectorStates > NbrSites * NbrLayers)
-    NbrProjectorStates = -1;
+    {
+      cout << "Maximal number of orbitals exceeds lattice size. Using automatic prediction of number of basis states." << endl;
+      NbrProjectorStates = -1;
+    }
 
   if (Manager.GetString("energy-expectation") != 0 ) Memory = 0x0l;
 
@@ -324,12 +327,17 @@ int main(int argc, char** argv)
   ParticleOnLattice* Space;
   if (NbrProjectorStates <= 0)
     {
-      int FluxPerMUC = FindGCD(NbrSites, NbrFluxQuanta);
+      int GCD = FindGCD(NbrSites, NbrFluxQuanta);
+      int FluxPerMUC = NbrFluxQuanta / GCD;
       int NbrMUC = NbrFluxQuanta / FluxPerMUC;
       if (NbrMUC==0) NbrMUC=1;
       NbrProjectorStates = NbrSites * NbrLayers / NbrMUC + NbrCuts;
       if (NbrProjectorStates > NbrSites * NbrLayers)
-	NbrProjectorStates = NbrSites * NbrLayers; // maximum number of states
+	{
+	  NbrProjectorStates = NbrSites * NbrLayers; // maximum number of states
+	  cout << "Limiting number of orbitals to "<<NbrProjectorStates<<endl;
+	}
+      cout << "Flux per MUC="<<FluxPerMUC<<endl;
       cout << "Deduced NbrProjectorStates="<<NbrProjectorStates<<" for N_MUC="<<NbrMUC<<" N_cut="<<NbrCuts<<endl;
     }
   // model space as lattice of dimensions NbrProjectorStates x 1 for simplicity, with NbrLayers set to one.
