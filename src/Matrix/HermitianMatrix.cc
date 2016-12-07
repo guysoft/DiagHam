@@ -1776,7 +1776,7 @@ RealDiagonalMatrix& HermitianMatrix::Diagonalize (RealDiagonalMatrix& M, Complex
   RealMatrix TmpMatrix3(2 * this->NbrRow, 2 * this->NbrRow);
   TmpMatrix1.Diagonalize(TmpMatrix2, TmpMatrix3, err, maxIter);
   TmpMatrix2.SortMatrixUpOrder(TmpMatrix3);
-  double LastEV=-1e300;
+  double LastEV=-1e300, TmpNorm;
   int NewEVIndex=-1;
   for (int i = M.GetNbrRow()-1; i >= 0; --i)
     {
@@ -1803,7 +1803,8 @@ RealDiagonalMatrix& HermitianMatrix::Diagonalize (RealDiagonalMatrix& M, Complex
 	    {
 	      TmpVector -= (Q[k]*TmpVector) * Q[k];
 	    }
-	  TmpVector/=TmpVector.Norm();
+	  if ((TmpNorm = TmpVector.Norm()) != 0.0)
+	    TmpVector/=TmpVector.Norm();
 	  for (int j = 0; j < M.GetNbrRow(); ++j)
 	    {
 	      Q[i].Re(j) = TmpVector.Re(j);

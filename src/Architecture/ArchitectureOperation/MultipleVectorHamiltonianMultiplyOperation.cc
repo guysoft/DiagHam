@@ -137,7 +137,8 @@ MultipleVectorHamiltonianMultiplyOperation::MultipleVectorHamiltonianMultiplyOpe
   this->NbrVectors = nbrVectors;
   this->OperationType = AbstractArchitectureOperation::MultipleVectorHamiltonianMultiply;
   this->ExecutionTime=0.0;
-  PartialComplexVector* DummyComplexDestinationPartialVectors = new PartialComplexVector[this->NbrVectors];
+  // what is the following line for?
+  // PartialComplexVector* DummyComplexDestinationPartialVectors = new PartialComplexVector[this->NbrVectors];
   if ((forceNormalMultiplication == false) && (forceConjugateMultiplication == false) && (forceHermitianeMultiplication == false))
     {
       this->UseConjugateFlag = false;
