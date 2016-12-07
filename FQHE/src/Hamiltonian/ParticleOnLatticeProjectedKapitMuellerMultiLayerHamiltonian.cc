@@ -300,8 +300,6 @@ void ParticleOnLatticeProjectedKapitMuellerMultiLayerHamiltonian::EvaluateIntera
       cout << "Single-Particle Hamiltonian:\n"<<TmpOneBodyHamiltonian;
     }
   
-  delete SingleParticleHamiltonian;
-
   this->OneBodyBasis.Resize(this->NbrSites, this->NbrSites);
   this->OneBodyBasis.SetToIdentity();
   RealDiagonalMatrix TmpDiag;
@@ -324,6 +322,8 @@ void ParticleOnLatticeProjectedKapitMuellerMultiLayerHamiltonian::EvaluateIntera
 	this->EnergyLevels[i] = TmpDiag(i, i);
 	cout << "Phi["<<i<<"]="<<this->OneBodyBasis[i]<<endl;
       }
+
+  delete SingleParticleHamiltonian;
 
 
   // hopping terms are present independent of statistics:
