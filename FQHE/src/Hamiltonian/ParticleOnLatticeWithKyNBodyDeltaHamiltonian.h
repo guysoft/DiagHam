@@ -193,7 +193,7 @@ class ParticleOnLatticeWithKyNBodyDeltaHamiltonian : public ParticleOnLatticeWit
   // indexArray = array where indices connected to the index-th component through the Hamiltonian
   // coefficientArray = array of the numerical coefficients related to the indexArray
   // position = reference on the current position in arrays indexArray and coefficientArray
-  virtual void EvaluateMNNBodyFastMultiplicationComponent(ParticleOnLattice* particles, int index, int* indexArray, unsigned short* coefficientArray, int& positionR, int & positionC);
+  virtual void EvaluateMNNBodyFastMultiplicationComponent(ParticleOnLattice* particles, int index, int* indexArray, ElementIndexType* coefficientArray, int& positionR, int & positionC);
 
   // core part of the PartialFastMultiplicationMemory method involving n-body term
   // 
@@ -474,7 +474,7 @@ inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::HermitianEvaluateMNNBo
 // coefficientArray = array of the numerical coefficients related to the indexArray
 // position = reference on the current position in arrays indexArray and coefficientArray
 
-inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyFastMultiplicationComponent(ParticleOnLattice* particles, int index, int* indexArray, unsigned short* coefficientIndexArray, int& positionR, int & positionC)
+inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyFastMultiplicationComponent(ParticleOnLattice* particles, int index, int* indexArray, ElementIndexType* coefficientIndexArray, int& positionR, int & positionC)
 {
   int Index;
   int tmpElementPos;
@@ -508,24 +508,24 @@ inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyFastMul
 			    {
 			      indexArray[positionR] = Index;
 			      tmpElementPos = RealInteractionCoefficients.InsertElement(Coefficient * Coefficient2 * TmpInteractionFactor->Re);
-			      if (tmpElementPos > USHRT_MAX )
+			      if (tmpElementPos > MaxElementIndex )
 				{
-				  cout << "Error: too many different real matrix elements for fast storage"<<endl;
+				  cout << "Error: too many different real matrix elements for fast storage: Current index"<< tmpElementPos <<endl;
 				  exit(1);
 				}
-			      coefficientIndexArray[positionR] = (unsigned short) tmpElementPos;
+			      coefficientIndexArray[positionR] = (ElementIndexType) tmpElementPos;
 			      ++positionR;
 			    }
 			  else
 			    {
 			      indexArray[positionC] = Index;
 			      tmpElementPos = ComplexInteractionCoefficients.InsertElement(Coefficient * Coefficient2 * (*TmpInteractionFactor));
-			      if (tmpElementPos > USHRT_MAX )
+			      if (tmpElementPos > MaxElementIndex )
 				{
-				  cout << "Error: too many different complex matrix elements for fast storage"<<endl;
+				  cout << "Error: too many different complex matrix elements for fast storageCurrent index" << tmpElementPos<<endl;
 				  exit(1);
 				}
-			      coefficientIndexArray[positionC] = (unsigned short) tmpElementPos;
+			      coefficientIndexArray[positionC] = (ElementIndexType) tmpElementPos;
 			      ++positionC;
 			    }
 			}

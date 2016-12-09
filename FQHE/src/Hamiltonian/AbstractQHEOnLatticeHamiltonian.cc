@@ -56,7 +56,8 @@ using std::ostream;
 
 // default constructor
 //
-AbstractQHEOnLatticeHamiltonian::AbstractQHEOnLatticeHamiltonian()
+AbstractQHEOnLatticeHamiltonian::AbstractQHEOnLatticeHamiltonian() :
+  MaxElementIndex (std::numeric_limits<ElementIndexType>::max())
 {
   this->NbrQ12Indices=0;
   this->NbrRealInteractionPerComponent=0;
@@ -653,10 +654,10 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
 ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int lastComponent)
 {
   int* TmpIndexArray;
-  unsigned short* TmpCoefficientIndexArray;
+  ElementIndexType* TmpCoefficientIndexArray;
   double TmpRe, TmpIm;
-  unsigned short TmpNbrRealInteraction;
-  unsigned short TmpNbrComplexInteraction;
+  ElementIndexType TmpNbrRealInteraction;
+  ElementIndexType TmpNbrComplexInteraction;
   Complex *TmpCPtr;
   int k = firstComponent;
   firstComponent -= this->PrecalculationShift;
@@ -708,7 +709,7 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyPartialFastMu
 {
   int LastComponent = firstComponent + nbrComponent;
   int* TmpIndexArray;
-  unsigned short* TmpCoefficientIndexArray;
+  ElementIndexType* TmpCoefficientIndexArray;
   double TmpRe, TmpIm;
   Complex *TmpCPtr;
   int TmpNbrRealInteraction;
@@ -834,9 +835,9 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::LowLevelMultipleAddMultiplyFastM
   int* TmpIndexArray;
   int Index;
   double TmpRealCoefficient;
-  unsigned short* TmpCoefficientIndexArray;
-  unsigned short TmpNbrRealInteraction;
-  unsigned short TmpNbrComplexInteraction;
+  ElementIndexType* TmpCoefficientIndexArray;
+  ElementIndexType TmpNbrRealInteraction;
+  ElementIndexType TmpNbrComplexInteraction;
   Complex TmpCoefficient;
   Complex* Coefficient2 = new Complex [nbrVectors];
   int k = firstComponent;
@@ -954,10 +955,10 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyFast
 										   int firstComponent, int lastComponent)
 {
   int* TmpIndexArray;
-  unsigned short* TmpCoefficientIndexArray;
+  ElementIndexType* TmpCoefficientIndexArray;
   Complex TmpSum;
-  unsigned short TmpNbrRealInteraction;
-  unsigned short TmpNbrComplexInteraction;
+  ElementIndexType TmpNbrRealInteraction;
+  ElementIndexType TmpNbrComplexInteraction;
   int k = firstComponent;
   firstComponent -= this->PrecalculationShift;
   lastComponent -= this->PrecalculationShift;
@@ -997,7 +998,7 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyPart
   Complex TmpSum=0.0;
   ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
   int* TmpIndexArray;
-  unsigned short* TmpCoefficientIndexArray;
+  ElementIndexType* TmpCoefficientIndexArray;
   Complex TmpC;
   int TmpNbrRealInteraction;
   int TmpNbrComplexInteraction;
@@ -1125,9 +1126,9 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMult
   double TmpRealCoefficient;
 	
 	int* TmpIndexArray;
-  unsigned short* TmpCoefficientIndexArray;
-  unsigned short TmpNbrRealInteraction;
-  unsigned short TmpNbrComplexInteraction;
+  ElementIndexType* TmpCoefficientIndexArray;
+  ElementIndexType TmpNbrRealInteraction;
+  ElementIndexType TmpNbrComplexInteraction;
   Complex* TmpSum = new Complex [nbrVectors];
 	
   int k = firstComponent;
@@ -1257,10 +1258,10 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyFast
 										   int firstComponent, int lastComponent)
 {
   int* TmpIndexArray;
-  unsigned short* TmpCoefficientIndexArray;
+  ElementIndexType* TmpCoefficientIndexArray;
   Complex TmpElement;
-  unsigned short TmpNbrRealInteraction;
-  unsigned short TmpNbrComplexInteraction;
+  ElementIndexType TmpNbrRealInteraction;
+  ElementIndexType TmpNbrComplexInteraction;
   Complex TmpSum;
   int k = firstComponent;
   firstComponent -= this->PrecalculationShift;
@@ -1305,7 +1306,7 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyPart
   int LastComponent = firstComponent + nbrComponent;
   ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
   int* TmpIndexArray;
-  unsigned short* TmpCoefficientIndexArray;
+  ElementIndexType* TmpCoefficientIndexArray;
   Complex TmpInteraction, TmpC;
   Complex TmpSum;
   int TmpNbrRealInteraction;
@@ -1442,9 +1443,9 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMult
   int Index;
   double TmpRealCoefficient;
   Complex TmpCoefficient;
-  unsigned short* TmpCoefficientIndexArray;
-  unsigned short TmpNbrRealInteraction;
-  unsigned short TmpNbrComplexInteraction;
+  ElementIndexType* TmpCoefficientIndexArray;
+  ElementIndexType TmpNbrRealInteraction;
+  ElementIndexType TmpNbrComplexInteraction;
   Complex* Coefficient2 = new Complex [nbrVectors];
   Complex* TmpSum = new Complex[nbrVectors];
   for (int l = 0; l < nbrVectors; ++l)
@@ -1586,9 +1587,9 @@ RealVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyFastMultiply(Rea
 										   int firstComponent, int lastComponent)
 {
   int* TmpIndexArray;
-  unsigned short* TmpCoefficientIndexArray;
+  ElementIndexType* TmpCoefficientIndexArray;
   double TmpRe;
-  unsigned short TmpNbrRealInteraction;
+  ElementIndexType TmpNbrRealInteraction;
   int k = firstComponent;
   firstComponent -= this->PrecalculationShift;
   lastComponent -= this->PrecalculationShift;
@@ -1626,7 +1627,7 @@ RealVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyPartialFastMulti
   int LastComponent = firstComponent + nbrComponent;
   ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
   int* TmpIndexArray;
-  unsigned short* TmpCoefficientIndexArray;
+  ElementIndexType* TmpCoefficientIndexArray;
   double TmpRe;
   int TmpNbrRealInteraction;
   firstComponent -= this->PrecalculationShift;
@@ -1739,8 +1740,8 @@ RealVector* AbstractQHEOnLatticeHamiltonian::LowLevelMultipleAddMultiplyFastMult
   int* TmpIndexArray;
   int Index;
   double TmpRealCoefficient;
-  unsigned short* TmpCoefficientIndexArray;
-  unsigned short TmpNbrRealInteraction;
+  ElementIndexType* TmpCoefficientIndexArray;
+  ElementIndexType TmpNbrRealInteraction;
   double* Coefficient2 = new double [nbrVectors];
   int k = firstComponent;
   firstComponent -= this->PrecalculationShift;
@@ -1860,9 +1861,9 @@ RealVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyFastMul
 										   int firstComponent, int lastComponent)
 {
   int* TmpIndexArray;
-  unsigned short* TmpCoefficientIndexArray;
+  ElementIndexType* TmpCoefficientIndexArray;
   double TmpSum;
-  unsigned short TmpNbrRealInteraction;
+  ElementIndexType TmpNbrRealInteraction;
   int k = firstComponent;
   firstComponent -= this->PrecalculationShift;
   lastComponent -= this->PrecalculationShift;
@@ -1900,7 +1901,7 @@ RealVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyPartial
   double TmpSum=0.0;
   ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
   int* TmpIndexArray;
-  unsigned short* TmpCoefficientIndexArray;
+  ElementIndexType* TmpCoefficientIndexArray;
   int TmpNbrRealInteraction;
   firstComponent -= this->PrecalculationShift;
   LastComponent -= this->PrecalculationShift;
@@ -2022,8 +2023,8 @@ RealVector* AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMultipl
   int* TmpIndexArray;
   int Index;
   double TmpRealCoefficient;
-  unsigned short* TmpCoefficientIndexArray;
-  unsigned short TmpNbrRealInteraction;
+  ElementIndexType* TmpCoefficientIndexArray;
+  ElementIndexType TmpNbrRealInteraction;
   double* TmpSum = new double [nbrVectors];
   int k = firstComponent;
   firstComponent -= this->PrecalculationShift;
@@ -2142,10 +2143,10 @@ RealVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyFastMul
 										   int firstComponent, int lastComponent)
 {
   int* TmpIndexArray;
-  unsigned short* TmpCoefficientIndexArray;
+  ElementIndexType* TmpCoefficientIndexArray;
   double TmpElement;
-  unsigned short TmpNbrRealInteraction;
-  unsigned short TmpNbrComplexInteraction;
+  ElementIndexType TmpNbrRealInteraction;
+  ElementIndexType TmpNbrComplexInteraction;
   double TmpSum;
   int k = firstComponent;
   firstComponent -= this->PrecalculationShift;
@@ -2185,7 +2186,7 @@ RealVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyPartial
   int LastComponent = firstComponent + nbrComponent;
   ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
   int* TmpIndexArray;
-  unsigned short* TmpCoefficientIndexArray;
+  ElementIndexType* TmpCoefficientIndexArray;
   double TmpC;
   double TmpSum;
   int TmpNbrRealInteraction;
@@ -2316,8 +2317,8 @@ RealVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMultipl
   int* TmpIndexArray;
   int Index;
   double TmpRealCoefficient;
-  unsigned short* TmpCoefficientIndexArray;
-  unsigned short TmpNbrRealInteraction;
+  ElementIndexType* TmpCoefficientIndexArray;
+  ElementIndexType TmpNbrRealInteraction;
   double* Coefficient2 = new double [nbrVectors];
   double* TmpSum = new double[nbrVectors];
   for (int l = 0; l < nbrVectors; ++l)
@@ -2494,8 +2495,8 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
-  this->NbrRealInteractionPerComponent = new unsigned short [EffectiveHilbertSpaceDimension];
-  this->NbrComplexInteractionPerComponent = new unsigned short [EffectiveHilbertSpaceDimension];   
+  this->NbrRealInteractionPerComponent = new ElementIndexType [EffectiveHilbertSpaceDimension];
+  this->NbrComplexInteractionPerComponent = new ElementIndexType [EffectiveHilbertSpaceDimension];   
   for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
     {
       this->NbrRealInteractionPerComponent[i] = 0x0;
@@ -2521,13 +2522,13 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
   
   // memory requirement, ignoring the actual storage size of the values of matrix
   // elements, which is assumed small (maybe need to add an estimate, at least)
-  long TmpMemory = AllowedMemory - (2*sizeof (unsigned short) + sizeof (int*) + sizeof(unsigned short*)) * EffectiveHilbertSpaceDimension;
-  cout << "of which can be stored: "<<(TmpMemory / ((int) (sizeof (int) + sizeof(unsigned short))))<<endl;
-  if ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(unsigned short)))) < Memory))
+  long TmpMemory = AllowedMemory - (2*sizeof (ElementIndexType) + sizeof (int*) + sizeof(ElementIndexType*)) * EffectiveHilbertSpaceDimension;
+  cout << "of which can be stored: "<<(TmpMemory / ((int) (sizeof (int) + sizeof(ElementIndexType))))<<endl;
+  if ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(ElementIndexType)))) < Memory))
     {
       this->FastMultiplicationStep = 1;
       int ReducedSpaceDimension  = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
-      while ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(unsigned short)))) < Memory))
+      while ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(ElementIndexType)))) < Memory))
 	{
 	  ++this->FastMultiplicationStep;
 	  ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
@@ -2535,7 +2536,7 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
 	    ++ReducedSpaceDimension;
 	  // memory requirement, ignoring the actual storage size of the values of matrix
 	  // elements, which is assumed small (maybe need to add an estimate, at least, again!)
-	  TmpMemory = AllowedMemory - (2*sizeof (unsigned short) + sizeof (int*) + sizeof(unsigned short*)) * ReducedSpaceDimension;
+	  TmpMemory = AllowedMemory - (2*sizeof (ElementIndexType) + sizeof (int*) + sizeof(ElementIndexType*)) * ReducedSpaceDimension;
 	  Memory = 0;
 	  for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
 	    {
@@ -2544,13 +2545,13 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
 	    }	  
 	}
       
-      Memory = ((2*sizeof (unsigned short) + sizeof (int*) + sizeof(unsigned short*)) * ReducedSpaceDimension) + (Memory * (sizeof (int) + sizeof(unsigned short)));
+      Memory = ((2*sizeof (ElementIndexType) + sizeof (int*) + sizeof(ElementIndexType*)) * ReducedSpaceDimension) + (Memory * (sizeof (int) + sizeof(ElementIndexType)));
       
       if (this->DiskStorageFlag == false)
 	{
 	  int TotalReducedSpaceDimension = ReducedSpaceDimension;
-	  unsigned short* TmpNbrRealInteractionPerComponent = new unsigned short [TotalReducedSpaceDimension];
-	  unsigned short* TmpNbrComplexInteractionPerComponent = new unsigned short [TotalReducedSpaceDimension];	  
+	  ElementIndexType* TmpNbrRealInteractionPerComponent = new ElementIndexType [TotalReducedSpaceDimension];
+	  ElementIndexType* TmpNbrComplexInteractionPerComponent = new ElementIndexType [TotalReducedSpaceDimension];	  
 	  int Pos = 0;
 	  for (int i = 0; i < ReducedSpaceDimension; ++i)
 	    {
@@ -2566,7 +2567,7 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
     }
   else
     {
-      Memory = ((2*sizeof (unsigned short) + sizeof (int*) + sizeof(unsigned short*)) * EffectiveHilbertSpaceDimension) + (Memory * (sizeof (int) + sizeof(unsigned short)));
+      Memory = ((2*sizeof (ElementIndexType) + sizeof (int*) + sizeof(ElementIndexType*)) * EffectiveHilbertSpaceDimension) + (Memory * (sizeof (int) + sizeof(ElementIndexType)));
       this->FastMultiplicationStep = 1;
     }
 
@@ -2618,14 +2619,14 @@ void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplication()
   if ((ReducedSpaceDimension * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
     ++ReducedSpaceDimension;
   this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
-  this->InteractionPerComponentCoefficientIndex = new unsigned short* [ReducedSpaceDimension];
+  this->InteractionPerComponentCoefficientIndex = new ElementIndexType* [ReducedSpaceDimension];
   
   // allocate all memory at the outset:
   for (int i = 0; i < ReducedSpaceDimension; ++i)
     {
 			//cout <<"i = "<< i << this->NbrRealInteractionPerComponent[i]<<" "<<this->NbrComplexInteractionPerComponent[i]<<endl;
       this->InteractionPerComponentIndex[i] = new int [this->NbrRealInteractionPerComponent[i] + this->NbrComplexInteractionPerComponent[i]];
-      this->InteractionPerComponentCoefficientIndex[i] = new unsigned short [this->NbrRealInteractionPerComponent[i]
+      this->InteractionPerComponentCoefficientIndex[i] = new ElementIndexType [this->NbrRealInteractionPerComponent[i]
 									     +this->NbrComplexInteractionPerComponent[i]];
     }
   
@@ -2690,6 +2691,8 @@ void AbstractQHEOnLatticeHamiltonian::PartialEnableFastMultiplication(int firstC
   //       this->EvaluateFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[TotalPos], 
   // 						this->InteractionPerComponentCoefficientIndex[TotalPos], TotalPos);
   //     }
+
+  cout << "Distinct matrix elements in PartialEnableFastMultiplication: real = "<< RealInteractionCoefficients.GetNbrElements() << ", complex = " << ComplexInteractionCoefficients.GetNbrElements() << endl;
   
   delete TmpParticles;
 }
@@ -2711,15 +2714,15 @@ bool AbstractQHEOnLatticeHamiltonian::SavePrecalculation (char* fileName)
       Tmp /= this->FastMultiplicationStep;
       if ((Tmp * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
 	++Tmp;
-      File.write((char*) this->NbrRealInteractionPerComponent, sizeof(unsigned short) * Tmp);
-      File.write((char*) this->NbrComplexInteractionPerComponent, sizeof(unsigned short) * Tmp);
+      File.write((char*) this->NbrRealInteractionPerComponent, sizeof(ElementIndexType) * Tmp);
+      File.write((char*) this->NbrComplexInteractionPerComponent, sizeof(ElementIndexType) * Tmp);
       for (int i = 0; i < Tmp; ++i)
 	{
 	  File.write((char*) (this->InteractionPerComponentIndex[i]), sizeof(int) * (this->NbrRealInteractionPerComponent[i]+this->NbrComplexInteractionPerComponent[i]));
 	}
       for (int i = 0; i < Tmp; ++i)
 	{
-	  File.write((char*) (this->InteractionPerComponentCoefficientIndex[i]), sizeof(unsigned short) * (this->NbrRealInteractionPerComponent[i]+this->NbrComplexInteractionPerComponent[i]));	  
+	  File.write((char*) (this->InteractionPerComponentCoefficientIndex[i]), sizeof(ElementIndexType) * (this->NbrRealInteractionPerComponent[i]+this->NbrComplexInteractionPerComponent[i]));	  
 	}
       RealInteractionCoefficients.WriteArray(File);
       ComplexInteractionCoefficients.WriteArray(File);
@@ -2753,13 +2756,13 @@ bool AbstractQHEOnLatticeHamiltonian::LoadPrecalculation (char* fileName)
   Tmp /= this->FastMultiplicationStep;
   if ((Tmp * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
     ++Tmp;
-  this->NbrRealInteractionPerComponent = new unsigned short [Tmp];
-  this->NbrComplexInteractionPerComponent = new unsigned short [Tmp];
-  File.read((char*) this->NbrRealInteractionPerComponent, sizeof(unsigned short) * Tmp);
-  File.read((char*) this->NbrComplexInteractionPerComponent, sizeof(unsigned short) * Tmp);
+  this->NbrRealInteractionPerComponent = new ElementIndexType [Tmp];
+  this->NbrComplexInteractionPerComponent = new ElementIndexType [Tmp];
+  File.read((char*) this->NbrRealInteractionPerComponent, sizeof(ElementIndexType) * Tmp);
+  File.read((char*) this->NbrComplexInteractionPerComponent, sizeof(ElementIndexType) * Tmp);
 
   this->InteractionPerComponentIndex = new int* [Tmp];
-  this->InteractionPerComponentCoefficientIndex = new unsigned short* [Tmp];
+  this->InteractionPerComponentCoefficientIndex = new ElementIndexType* [Tmp];
   for (int i = 0; i < Tmp; ++i)
     {
       this->InteractionPerComponentIndex[i] = new int [(this->NbrRealInteractionPerComponent[i]+this->NbrComplexInteractionPerComponent[i])];
@@ -2767,8 +2770,8 @@ bool AbstractQHEOnLatticeHamiltonian::LoadPrecalculation (char* fileName)
     }
   for (int i = 0; i < Tmp; ++i)
     {
-      this->InteractionPerComponentCoefficientIndex[i]=new unsigned short[(this->NbrRealInteractionPerComponent[i]+this->NbrComplexInteractionPerComponent[i])];
-      File.read((char*) (this->InteractionPerComponentCoefficientIndex[i]), sizeof(unsigned short) * (this->NbrRealInteractionPerComponent[i]+this->NbrComplexInteractionPerComponent[i]));	  
+      this->InteractionPerComponentCoefficientIndex[i]=new ElementIndexType[(this->NbrRealInteractionPerComponent[i]+this->NbrComplexInteractionPerComponent[i])];
+      File.read((char*) (this->InteractionPerComponentCoefficientIndex[i]), sizeof(ElementIndexType) * (this->NbrRealInteractionPerComponent[i]+this->NbrComplexInteractionPerComponent[i]));	  
     }
   RealInteractionCoefficients.ReadArray(File);
   ComplexInteractionCoefficients.ReadArray(File);

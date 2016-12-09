@@ -987,8 +987,8 @@ long ParticleOnLatticeWithKyNBodyDeltaHamiltonian::FastMultiplicationMemory(long
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
   
-  this->NbrRealInteractionPerComponent = new unsigned short [EffectiveHilbertSpaceDimension];
-  this->NbrComplexInteractionPerComponent = new unsigned short [EffectiveHilbertSpaceDimension];   
+  this->NbrRealInteractionPerComponent = new ElementIndexType [EffectiveHilbertSpaceDimension];
+  this->NbrComplexInteractionPerComponent = new ElementIndexType [EffectiveHilbertSpaceDimension];   
   for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
     {
       this->NbrRealInteractionPerComponent[i] = 0x0;
@@ -1015,13 +1015,13 @@ long ParticleOnLatticeWithKyNBodyDeltaHamiltonian::FastMultiplicationMemory(long
   
   // memory requirement, ignoring the actual storage size of the values of matrix
   // elements, which is assumed small (maybe need to add an estimate, at least)
-  long TmpMemory = allowedMemory - (2*sizeof (unsigned short) + sizeof (int*) + sizeof(unsigned short*)) * EffectiveHilbertSpaceDimension;
-  cout << "of which can be stored: "<<(TmpMemory / ((int) (sizeof (int) + sizeof(unsigned short))))<<endl;
-  if ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(unsigned short)))) < Memory))
+  long TmpMemory = allowedMemory - (2*sizeof (ElementIndexType) + sizeof (int*) + sizeof(ElementIndexType*)) * EffectiveHilbertSpaceDimension;
+  cout << "of which can be stored: "<<(TmpMemory / ((int) (sizeof (int) + sizeof(ElementIndexType))))<<endl;
+  if ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(ElementIndexType)))) < Memory))
     {
       this->FastMultiplicationStep = 1;
       int ReducedSpaceDimension  = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
-      while ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(unsigned short)))) < Memory))
+      while ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(ElementIndexType)))) < Memory))
 	{
 	  ++this->FastMultiplicationStep;
 	  ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
@@ -1029,7 +1029,7 @@ long ParticleOnLatticeWithKyNBodyDeltaHamiltonian::FastMultiplicationMemory(long
 	    ++ReducedSpaceDimension;
 	  // memory requirement, ignoring the actual storage size of the values of matrix
 	  // elements, which is assumed small (maybe need to add an estimate, at least, again!)
-	  TmpMemory = allowedMemory - (2*sizeof (unsigned short) + sizeof (int*) + sizeof(unsigned short*)) * ReducedSpaceDimension;
+	  TmpMemory = allowedMemory - (2*sizeof (ElementIndexType) + sizeof (int*) + sizeof(ElementIndexType*)) * ReducedSpaceDimension;
 	  Memory = 0;
 	  for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
 	    {
@@ -1038,13 +1038,13 @@ long ParticleOnLatticeWithKyNBodyDeltaHamiltonian::FastMultiplicationMemory(long
 	    }	  
 	}
       
-      Memory = ((2*sizeof (unsigned short) + sizeof (int*) + sizeof(unsigned short*)) * ReducedSpaceDimension) + (Memory * (sizeof (int) + sizeof(unsigned short)));
+      Memory = ((2*sizeof (ElementIndexType) + sizeof (int*) + sizeof(ElementIndexType*)) * ReducedSpaceDimension) + (Memory * (sizeof (int) + sizeof(ElementIndexType)));
       
       if (this->DiskStorageFlag == false)
 	{
 	  int TotalReducedSpaceDimension = ReducedSpaceDimension;
-	  unsigned short* TmpNbrRealInteractionPerComponent = new unsigned short [TotalReducedSpaceDimension];
-	  unsigned short* TmpNbrComplexInteractionPerComponent = new unsigned short [TotalReducedSpaceDimension];	  
+	  ElementIndexType* TmpNbrRealInteractionPerComponent = new ElementIndexType [TotalReducedSpaceDimension];
+	  ElementIndexType* TmpNbrComplexInteractionPerComponent = new ElementIndexType [TotalReducedSpaceDimension];	  
 	  int Pos = 0;
 	  for (int i = 0; i < ReducedSpaceDimension; ++i)
 	    {
@@ -1060,7 +1060,7 @@ long ParticleOnLatticeWithKyNBodyDeltaHamiltonian::FastMultiplicationMemory(long
     }
   else
     {
-      Memory = ((2*sizeof (unsigned short) + sizeof (int*) + sizeof(unsigned short*)) * EffectiveHilbertSpaceDimension) + (Memory * (sizeof (int) + sizeof(unsigned short)));
+      Memory = ((2*sizeof (ElementIndexType) + sizeof (int*) + sizeof(ElementIndexType*)) * EffectiveHilbertSpaceDimension) + (Memory * (sizeof (int) + sizeof(ElementIndexType)));
       this->FastMultiplicationStep = 1;
     }
   
@@ -1289,7 +1289,7 @@ ComplexVector& ParticleOnLatticeWithKyNBodyDeltaHamiltonian::LowLevelAddMultiply
   double TmpInteractionRe,TmpInteractionIm;
   int LastComponent = firstComponent + nbrComponent;
   int* TmpIndexArray;
-  unsigned short* TmpCoefficientIndexArray;
+  ElementIndexType* TmpCoefficientIndexArray;
   double TmpRe, TmpIm;
   Complex *TmpCPtr;
   int TmpNbrRealInteraction;

@@ -43,7 +43,6 @@
 #include <cstdlib>
 #include <climits>
 
-
 using std::ostream;
 
 
@@ -52,14 +51,27 @@ class AbstractArchitecture;
 using std::cout;
 using std::endl;
 
+// switch enabling longer element indices:
+#define ABSTRACTQHEONLATTICEHAMILTONIAN_LONGINDEX
+
 // threshold before something is defined different from zero
 #define LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD 1.71245451764e-13
-
 
 class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
 {
   
   friend class QHEParticlePrecalculationOperation;
+
+ protected:
+  // allow variable data type for ElementIndex
+
+#ifndef ABSTRACTQHEONLATTICEHAMILTONIAN_LONGINDEX
+  typedef unsigned short ElementIndexType;
+#else
+  typedef unsigned ElementIndexType;
+#endif
+
+  const ElementIndexType MaxElementIndex;
 
  protected:
   
@@ -151,14 +163,14 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // step between each precalculated index (main part: start at 0, FastMultiplicationStep, 2*FastMultiplicationStep, ...)
   int FastMultiplicationStep;
   // number of non-null real terms in the hamiltonian for each state (typically a small number)
-  unsigned short* NbrRealInteractionPerComponent;
+  ElementIndexType* NbrRealInteractionPerComponent;
   // number of non-null complex terms in the hamiltonian for each state
-  unsigned short* NbrComplexInteractionPerComponent;
+  ElementIndexType* NbrComplexInteractionPerComponent;
   // index of the state obtained for each term of the hamiltonian when applying on a given state
   // holding indices for both real (1st) and complex matrix elements
   int** InteractionPerComponentIndex;
   // index of real (first in enumeration) and complex (following) multiplicative coefficients obtained for each term of the hamiltonian when applying on a given state and with a given destination state
-  unsigned short** InteractionPerComponentCoefficientIndex;
+  ElementIndexType** InteractionPerComponentCoefficientIndex;
   
 
   // array storing a single copy of each real matrix element value
@@ -895,7 +907,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // coefficientIndexArray = array of the indices of the numerical coefficients related to the indexArray
   // position = reference on the current position in arrays indexArray and coefficientArray
   void EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnLattice* particles, int index, 
-					   int* indexArray, unsigned short* coefficientIndexArray,int& positionR, int & positionC);
+					   int* indexArray, ElementIndexType* coefficientIndexArray,int& positionR, int & positionC);
 	
   // core part of the FastMultiplication method involving 1- and 2-body terms and diagonal elements
   // 
@@ -905,7 +917,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // coefficientIndexArray = array of the indices of the numerical coefficients related to the indexArray
   // position = reference on the current position in arrays indexArray and coefficientArray
   void EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnLattice* particles, int index, 
-					   int* indexArray, unsigned short* coefficientIndexArray, int & positionR, int & positionC);
+					   int* indexArray, ElementIndexType* coefficientIndexArray, int & positionR, int & positionC);
   
   // core part of the AddMultiply method involving the one-body interaction, including loop on vector components
   // 
@@ -1073,7 +1085,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
 // position = reference on the current position in arrays indexArray and coefficientArray
 
 inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnLattice* particles, int index, 
-											  int* indexArray, unsigned short* coefficientIndexArray, int& positionR, int & positionC)
+											  int* indexArray, ElementIndexType* coefficientIndexArray, int& positionR, int & positionC)
 {
 	//cout <<"Index " << index<<endl;
   int qi, qf;
@@ -1097,24 +1109,24 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplication
 	    {
 	      indexArray[positionR] = Index2;
 	      tmpElementPos = RealInteractionCoefficients.InsertElement(Coefficient*this->HoppingTerms[j].Re);
-	      if (tmpElementPos > USHRT_MAX )
+	      if (tmpElementPos >= this->MaxElementIndex )
 		{
-		  cout << "Error: too many different real matrix elements for fast storage"<<endl;
+		  cout << "Error: too many different real matrix elements for fast storage: current index"<< tmpElementPos<<" (Max="<<MaxElementIndex<<")"<<endl;
 		  exit(1);
 		}
-	      coefficientIndexArray[positionR] = (unsigned short) tmpElementPos;
+	      coefficientIndexArray[positionR] = (ElementIndexType) tmpElementPos;
 	      ++positionR;
 	    }
 	  else
 	    {
 	      indexArray[positionC] = Index2;
 	      tmpElementPos = ComplexInteractionCoefficients.InsertElement(Coefficient*this->HoppingTerms[j]);
-	      if (tmpElementPos > USHRT_MAX )
+	      if (tmpElementPos >= this->MaxElementIndex )
 		{
-		  cout << "Error: too many different complex matrix elements for fast storage"<<endl;
+		  cout << "Error: too many different complex matrix elements for fast storage: current index"<< tmpElementPos<<" (Max="<<MaxElementIndex<<")"<<endl;
 		  exit(1);
 		}
-	      coefficientIndexArray[positionC] = (unsigned short) tmpElementPos;
+	      coefficientIndexArray[positionC] = (ElementIndexType) tmpElementPos;
 	      ++positionC;
 	    }
 	  //cout << "Hopping connecting : "<<index<<" to "<<Index2<<", "<<": "<<Coefficient*this->HoppingTerms[j]<<endl;
@@ -1132,7 +1144,7 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplication
 // position = reference on the current position in arrays indexArray and coefficientArray
 
 inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnLattice* particles, int index, 
-										 int* indexArray, unsigned short* coefficientIndexArray, int& positionR, int & positionC)
+										 int* indexArray, ElementIndexType* coefficientIndexArray, int& positionR, int & positionC)
 {
   int Index2;
   int tmpElementPos;
@@ -1156,12 +1168,12 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 		{
 		  indexArray[positionR] = Index2;
 		  tmpElementPos = RealInteractionCoefficients.InsertElement(Coefficient*this->InteractionFactors[j].Re);
-		  if (tmpElementPos > USHRT_MAX )
+		  if (tmpElementPos >= this->MaxElementIndex)
 		    {
-		      cout << "Error: too many different real matrix elements for fast storage"<<endl;
+		      cout << "Error: too many different real matrix elements for fast storage: Current index"<< tmpElementPos<<" (Max="<<MaxElementIndex<<")"<<endl;
 		      exit(1);
 		    }
-		  coefficientIndexArray[positionR] = (unsigned short) tmpElementPos;
+		  coefficientIndexArray[positionR] = (ElementIndexType) tmpElementPos;
 		  ++positionR;
 		}
 	      else
@@ -1169,12 +1181,12 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 		  indexArray[positionC] = Index2;
 		  tmpElementPos = ComplexInteractionCoefficients.InsertElement
 		    (Coefficient*this->InteractionFactors[j]);
-		  if (tmpElementPos > USHRT_MAX )
+		  if (tmpElementPos >= this->MaxElementIndex)
 		    {
-		      cout << "Error: too many different complex matrix elements for fast storage"<<endl;
+		      cout << "Error: too many different complex matrix elements for fast storage: Current index"<< tmpElementPos<<" (Max="<<MaxElementIndex<<")"<<endl;
 		      exit(1);
 		    }
-		  coefficientIndexArray[positionC] = (unsigned short) tmpElementPos;
+		  coefficientIndexArray[positionC] = (ElementIndexType) tmpElementPos;
 		  ++positionC;
 		}
 	      //cout << "4b - connecting :"<<Index2<<", "<<i<<": "<<Coefficient*this->InteractionFactors[j]<< " (q's=["<<q1<<","<<q2<<","<<q3<<","<<q4<<"])"<<endl;
@@ -1206,12 +1218,12 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 			  indexArray[positionR] = Index2;
 			  tmpElementPos = RealInteractionCoefficients.InsertElement
 			    (Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors].Re);
-			  if (tmpElementPos > USHRT_MAX )
+			  if (tmpElementPos >= this->MaxElementIndex)
 			    {
-			      cout << "Error: too many different real matrix elements for fast storage"<<endl;
+			      cout << "Error: too many different real matrix elements for fast storage: Current index"<< tmpElementPos<<" (Max="<<MaxElementIndex<<")"<<endl;
 			      exit(1);
 			    }
-			  coefficientIndexArray[positionR] = (unsigned short) tmpElementPos;
+			  coefficientIndexArray[positionR] = (ElementIndexType) tmpElementPos;
 			  ++positionR;
 			}
 		      else
@@ -1219,12 +1231,12 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 			  indexArray[positionC] = Index2;
 			  tmpElementPos = ComplexInteractionCoefficients.InsertElement
 			    (Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors]);
-			  if (tmpElementPos > USHRT_MAX )
+			  if (tmpElementPos >= this->MaxElementIndex)
 			    {
-			      cout << "Error: too many different complex matrix elements for fast storage"<<endl;
+			      cout << "Error: too many different complex matrix elements for fast storage: Current index"<< tmpElementPos<<" (Max="<<MaxElementIndex<<")"<<endl;
 			      exit(1);
 			    }
-			  coefficientIndexArray[positionC] = (unsigned short) tmpElementPos;
+			  coefficientIndexArray[positionC] = (ElementIndexType) tmpElementPos;
 			  ++positionC;
 			}
 		      //cout << "4b - connecting :"<<Index2<<", "<<i<<": "<<Coefficient<<"*"<<Coefficient2<<"*"<<this->InteractionFactors[ProcessedNbrInteractionFactors]<< " (q's=["<<this->Q1Value[i12]<<", "<<this->Q2Value[i12]<<", "<<TmpQ3Values[i34]<<", "<<TmpQ4Values[i34]<<"])"<<endl;
@@ -1254,12 +1266,12 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 
 	  indexArray[positionR] = index;
 	  tmpElementPos = RealInteractionCoefficients.InsertElement(Coefficient);
-	  if (tmpElementPos > USHRT_MAX )
+	  if (tmpElementPos >= this->MaxElementIndex)
 	    {
-	      cout << "Error: too many different real matrix elements for fast storage"<<endl;
+	      cout << "Error: too many different real matrix elements for fast storage: Current index"<< tmpElementPos<<" (Max="<<MaxElementIndex<<")"<<endl;
 	      exit(1);
 	    }
-	  coefficientIndexArray[positionR] = (unsigned short) tmpElementPos;
+	  coefficientIndexArray[positionR] = (ElementIndexType) tmpElementPos;
 	  ++positionR;
 	  //cout << "diag - connecting :"<<i<<", "<<i<<": "<<Coefficient<<endl;		   
     }
