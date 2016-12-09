@@ -34,6 +34,8 @@
 #include "HilbertSpace/FermionOnCP2Long.h"
 #include "HilbertSpace/FermionOnS2xS2.h"
 #include "HilbertSpace/BosonOnS2xS2.h"
+#include "HilbertSpace/BosonOnS2xS2HardcoreNoNearestNeighbors.h"
+#include "HilbertSpace/FermionOnS2xS2WithExclusionPrinciple.h"
 #include "HilbertSpace/QuasiholeOnSphereWithSpinAndPairing.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
@@ -83,6 +85,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "4-D", "consider particles on the 4D sphere (only available in the bosonic mode)");
   (*SystemGroup) += new BooleanOption  ('\n', "cp2", "consider particles on the CP2 ");
   (*SystemGroup) += new BooleanOption  ('\n', "s2xs2", "consider particles on the S2xS2 geometry");
+  (*SystemGroup) += new BooleanOption  ('\n', "s2s2-hardcorenonn", "consider particles on the S2xS2 geometry, with hardcore contraint and no nearest neighbor");
   (*SystemGroup) += new BooleanOption  ('\n', "truncated-cp2", "consider particles on a truncated CP2 geometry");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-y", "minimum value of y for a truncated CP2 geometry", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "tzZ3symmetrized-basis", "use Tz <-> -Tz and Z3 permutations symmetrized version of the CP2 basis (only valid if total-tz=0 and total-y = 0)");
@@ -264,7 +267,14 @@ int main(int argc, char** argv)
 			    }
 			  else
 			    {
-			      Space = new BosonOnS2xS2(NbrParticles, NbrFluxQuanta, NbrFluxQuanta2, TotalLz, TotalKz);
+			      if (Manager.GetBoolean("s2s2-hardcorenonn") == true)
+				{
+				  Space = new BosonOnS2xS2HardcoreNoNearestNeighbors(NbrParticles, NbrFluxQuanta, NbrFluxQuanta2, TotalLz, TotalKz);
+				}
+			      else
+				{
+				  Space = new BosonOnS2xS2(NbrParticles, NbrFluxQuanta, NbrFluxQuanta2, TotalLz, TotalKz);
+				}
 			    }
 			}
 		      else
@@ -410,19 +420,19 @@ int main(int argc, char** argv)
 		else
 		  {
 		    if (Manager.GetBoolean("quasiholes") == false)
-		    {
-		      if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
-		      Space = new FermionOnSphereWithSpinAndPairing(TotalLz, NbrFluxQuanta, TotalSz);
-		    }
-		    else
-		    {
-		      if (PauliK == 0 or PauliR == 0)
 		      {
-			PauliK = 1;
-			PauliR = 2;
+			if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
+			  Space = new FermionOnSphereWithSpinAndPairing(TotalLz, NbrFluxQuanta, TotalSz);
 		      }
-		      Space = new QuasiholeOnSphereWithSpinAndPairing(PauliK, PauliR, TotalLz, NbrFluxQuanta, TotalSz, 0, "fermions");
-		    }
+		    else
+		      {
+			if (PauliK == 0 or PauliR == 0)
+			  {
+			    PauliK = 1;
+			    PauliR = 2;
+			  }
+			Space = new QuasiholeOnSphereWithSpinAndPairing(PauliK, PauliR, TotalLz, NbrFluxQuanta, TotalSz, 0, "fermions");
+		      }
 		  }
 	      }
 	    else
@@ -502,7 +512,14 @@ int main(int argc, char** argv)
 			  }
 			if (S2xS2Flag == true)
 			  {
-			    Space = new FermionOnS2xS2(NbrParticles, NbrFluxQuanta, NbrFluxQuanta2, TotalLz, TotalKz);
+			      if (Manager.GetBoolean("s2s2-hardcorenonn") == true)
+				{
+				  Space = new FermionOnS2xS2WithExclusionPrinciple(NbrParticles, NbrFluxQuanta, NbrFluxQuanta2, TotalLz, TotalKz);
+				}
+			      else
+				{
+				  Space = new FermionOnS2xS2(NbrParticles, NbrFluxQuanta, NbrFluxQuanta2, TotalLz, TotalKz);
+				}
 			  }
 		      }
     }
@@ -598,7 +615,7 @@ int main(int argc, char** argv)
 	{
 	  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 	    {
-	      if ((PauliK==0)||(Space->HasPauliExclusions(i,PauliK,PauliR)))
+	      if ((PauliK==0) || (Space->HasPauliExclusions(i,PauliK,PauliR)))
 		{
 		  if (AddIndex == true) 
 		    File << i << " ";

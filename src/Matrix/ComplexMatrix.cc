@@ -2259,7 +2259,6 @@ MathematicaOutput& operator << (MathematicaOutput& Str, const ComplexMatrix& P)
 
 
 
-#ifdef __LAPACK__
 
 // calculate a determinant using the LAPACK library (conserving current matrix)
 //
@@ -2267,6 +2266,7 @@ Complex ComplexMatrix::LapackDeterminant ()
 {
   if (this->NbrColumn != this->NbrRow)
     return 0.0;
+#ifdef __LAPACK__
   doublecomplex* TmpMatrix = new doublecomplex [this->NbrRow * this->NbrRow];
   Complex *TmpColumn;
   for (int j=0;j<NbrRow;++j)
@@ -2302,11 +2302,13 @@ Complex ComplexMatrix::LapackDeterminant ()
 
   delete [] TmpMatrix;
   delete [] Permutation;
-  
-  return Result;
-}
 
+#else
+  cout << "Warning, using LapackDeterminant without the lapack library" << endl;
+  Complex Result(0.0,0.0);
+  return Result;
 #endif
+}
 
 
 // compute singular value decomposition U D V^t
@@ -2566,8 +2568,6 @@ ComplexDiagonalMatrix& ComplexMatrix::Diagonalize (ComplexDiagonalMatrix& M, Com
 
 
 
-#ifdef __LAPACK__
-  
 // Diagonalize a complex skew symmetric matrix using the LAPACK library (modifying current matrix)
 //
 // M = reference on real diagonal matrix of eigenvalues
@@ -2580,6 +2580,7 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& 
     return M;
   if (M.GetNbrColumn() != this->NbrColumn)
     M.Resize(this->NbrColumn, this->NbrColumn);
+#ifdef __LAPACK__
   doublecomplex* TmpMatrix = new doublecomplex [this->NbrRow * this->NbrRow];
   doublecomplex* Tau = new doublecomplex [this->NbrRow];
   doublecomplex* Eigenvalues = new doublecomplex [this->NbrRow];
@@ -2644,7 +2645,9 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& 
   delete [] Eigenvalues;
   //delete [] Scale;
   delete [] complexWork;
-  
+#else
+  cout << "Warning, using ComplexMatrix::LapackDiagonalize without the lapack library" << endl;
+#endif  
   return M;
 }
 
@@ -2661,6 +2664,7 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& 
     M.Resize(this->NbrColumn, this->NbrColumn);
   if (Q.GetNbrColumn() != this->NbrColumn)
     Q.Resize(this->NbrColumn, this->NbrColumn);
+#ifdef __LAPACK__
   char JobVL;
   char JobVR;
   if (leftFlag == true)
@@ -2768,6 +2772,9 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& 
   delete [] complexWork;
   delete [] realWork;
     
+#else
+  cout << "Warning, using ComplexMatrix::LapackDiagonalize without the lapack library" << endl;
+#endif  
   return M;
 }
 
@@ -2786,6 +2793,7 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackSchurForm (ComplexDiagonalMatrix& M,
     Q.Resize(this->NbrColumn, this->NbrColumn);
   if (S.GetNbrColumn() != this->NbrColumn)
     S.Resize(this->NbrColumn, this->NbrColumn);
+#ifdef __LAPACK__
   doublecomplex* TmpMatrix = new doublecomplex [this->NbrRow * this->NbrRow];
   doublecomplex* TransQ = new doublecomplex [this->NbrRow * this->NbrRow];
   doublecomplex* Tau = new doublecomplex [this->NbrRow];
@@ -2899,6 +2907,9 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackSchurForm (ComplexDiagonalMatrix& M,
   //delete [] Scale;
   delete [] complexWork;
   
+#else
+  cout << "Warning, using ComplexMatrix::LapackSchurForm without the lapack library" << endl;
+#endif  
   return M;
 }
 
@@ -2915,6 +2926,7 @@ int* ComplexMatrix::LapackLUDecomposition(ComplexLowerTriangularMatrix& lowerMat
       cout << "LU decomposition is only performed for square matrices" << endl;
       return 0; 
     }
+#ifdef __LAPACK__
   int* PermutationArray = new int [this->NbrRow];
   doublecomplex* TmpMatrix = new doublecomplex [((long) this->NbrRow) * ((long) this->NbrColumn)];
   long Pos = 0l;
@@ -2971,6 +2983,10 @@ int* ComplexMatrix::LapackLUDecomposition(ComplexLowerTriangularMatrix& lowerMat
     }
   delete [] TmpMatrix;
   return PermutationArray;
+#else
+  cout << "Warning, using ComplexMatrix::LapackLUDecomposition without the lapack library" << endl;
+  return 0;
+#endif  
 }
   
 // invert the current matrix using the LAPACK library
@@ -2983,6 +2999,7 @@ void ComplexMatrix::LapackInvert()
       cout << "Matrix inversion is only performed for square matrices" << endl;
       return ; 
     }
+#ifdef __LAPACK__
   int* PermutationArray = new int [this->NbrRow];
   doublecomplex* TmpMatrix = new doublecomplex [((long) this->NbrRow) * ((long) this->NbrColumn)];
   long Pos = 0l;
@@ -3024,9 +3041,10 @@ void ComplexMatrix::LapackInvert()
     }
   delete [] TmpMatrix;
   delete [] PermutationArray;
+#else
+  cout << "Warning, using ComplexMatrix::LapackInvert without the lapack library" << endl;
+#endif  
 }
-  
-#endif
 
 // build a random unitary matrix
 //

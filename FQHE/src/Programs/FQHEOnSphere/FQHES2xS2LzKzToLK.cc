@@ -63,7 +63,11 @@ int main(int argc, char** argv)
       cout << "file should contain at least three columns" << endl;
       return -1;
     }
-
+  bool FermionFlag = false;
+  if (strstr(Manager.GetString("spectrum"), "fermions") != 0)
+    {
+      FermionFlag = true;
+    }
   char* OutputFileName;
   if (Manager.GetString("output-file") != 0)
     {
@@ -192,52 +196,58 @@ int main(int argc, char** argv)
 	  int TmpPos1 = SectorPositions[CurrentKzValue][CurrentLzValue];
 	  if (TmpPos1 < 0)
 	    {
-	      cout << "error, missing sector (Lz,Kz) = (" << CurrentLzValue << ", " << CurrentKzValue << ")" << endl;
-	      return 0;
-	    }
-	  for (int i = 0; i < Dimensions[TmpPos1]; ++i)
-	    {
-	      if (EigenvalueFlags[TmpPos1][i] == true)
+	      if (FermionFlag == false)
 		{
-		  for (int CurrentKzValue2 = CurrentKzValue; CurrentKzValue2 >= 0; CurrentKzValue2 -= 2)
+		  cout << "error, missing sector (Lz,Kz) = (" << CurrentLzValue << ", " << CurrentKzValue << ")" << endl;
+		  return 0;
+		}
+	    }
+	  else
+	    {
+	      for (int i = 0; i < Dimensions[TmpPos1]; ++i)
+		{
+		  if (EigenvalueFlags[TmpPos1][i] == true)
 		    {
-		      for (int CurrentLzValue2 = CurrentLzValue; CurrentLzValue2 >= 0; CurrentLzValue2 -= 2)
+		      for (int CurrentKzValue2 = CurrentKzValue; CurrentKzValue2 >= 0; CurrentKzValue2 -= 2)
 			{
-			  int TmpPos2 = SectorPositions[CurrentKzValue2][CurrentLzValue2];
-			  if (TmpPos2 < 0)
+			  for (int CurrentLzValue2 = CurrentLzValue; CurrentLzValue2 >= 0; CurrentLzValue2 -= 2)
 			    {
-			      cout << "error, missing sector (Lz,Kz) = (" << CurrentLzValue2 << ", " << CurrentKzValue2 << ")" << endl;
-			      return 0;
-			    }		  
-			  if ((CurrentKzValue2 != CurrentKzValue) || (CurrentLzValue2 != CurrentLzValue))
-			    {
-			      //			      cout << CurrentKzValue << " " << CurrentLzValue << " " <<  CurrentKzValue2 << " " << CurrentLzValue2 << endl;
-			      double MinError = 1.0e300;
-			      int TmpPos3 = -1;
-			      for (int j = 0; j < Dimensions[TmpPos2]; ++j)
+			      int TmpPos2 = SectorPositions[CurrentKzValue2][CurrentLzValue2];
+			      if (TmpPos2 < 0)
 				{
-				  if (EigenvalueFlags[TmpPos2][j] == true)
+				  cout << "error, missing sector (Lz,Kz) = (" << CurrentLzValue2 << ", " << CurrentKzValue2 << ")" << endl;
+				  return 0;
+				}		  
+			      if ((CurrentKzValue2 != CurrentKzValue) || (CurrentLzValue2 != CurrentLzValue))
+				{
+				  //			      cout << CurrentKzValue << " " << CurrentLzValue << " " <<  CurrentKzValue2 << " " << CurrentLzValue2 << endl;
+				  double MinError = 1.0e300;
+				  int TmpPos3 = -1;
+				  for (int j = 0; j < Dimensions[TmpPos2]; ++j)
 				    {
-				      if (fabs(Eigenvalues[TmpPos1][i] - Eigenvalues[TmpPos2][j]) < MinError)
+				      if (EigenvalueFlags[TmpPos2][j] == true)
 					{
-					  TmpPos3 = j;
-					  MinError = fabs(Eigenvalues[TmpPos1][i] - Eigenvalues[TmpPos2][j]);
+					  if (fabs(Eigenvalues[TmpPos1][i] - Eigenvalues[TmpPos2][j]) < MinError)
+					    {
+					      TmpPos3 = j;
+					      MinError = fabs(Eigenvalues[TmpPos1][i] - Eigenvalues[TmpPos2][j]);
+					    }
 					}
-				    }
-				}			      
-			      if (TmpPos3 >= 0)
-				{
-				  EigenvalueFlags[TmpPos2][TmpPos3] = false;
-				  if (MinError > MaxError)
+				    }			      
+				  if (TmpPos3 >= 0)
 				    {
-				      MaxError = MinError;
+				      EigenvalueFlags[TmpPos2][TmpPos3] = false;
+				      if (MinError > MaxError)
+					{
+					  MaxError = MinError;
+					}
 				    }
 				}
 			    }
 			}
+		      File << CurrentLzValue << " " << CurrentKzValue << " " << Eigenvalues[TmpPos1][i] << endl;
+		      EigenvalueFlags[TmpPos1][i] = false;
 		    }
-		  File << CurrentLzValue << " " << CurrentKzValue << " " << Eigenvalues[TmpPos1][i] << endl;
-		  EigenvalueFlags[TmpPos1][i] = false;
 		}
 	    }
 	}      

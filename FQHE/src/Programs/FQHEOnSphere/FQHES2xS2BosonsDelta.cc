@@ -2,6 +2,7 @@
 #include "HilbertSpace/BosonOnS2xS2HardcoreNoNearestNeighbors.h"
 
 #include "Hamiltonian/ParticleOnS2xS2DeltaHamiltonian.h"
+#include "Hamiltonian/ParticleOnS2xS2GenericTwoBodyHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"

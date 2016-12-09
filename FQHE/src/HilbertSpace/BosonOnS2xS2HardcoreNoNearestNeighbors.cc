@@ -367,3 +367,91 @@ long BosonOnS2xS2HardcoreNoNearestNeighbors::EvaluateHilbertSpaceDimension(int n
   return Count;
 }
 
+// request whether state with given index satisfies a general Pauli exclusion principle
+// index = state index
+// pauliK = number of particles allowed in consecutive orbitals
+// pauliR = number of consecutive orbitals
+
+bool BosonOnS2xS2HardcoreNoNearestNeighbors::HasPauliExclusions(int index, int pauliK, int pauliR)
+{
+  unsigned long TmpState = this->StateDescription[index];
+  unsigned long TmpMask = (0x3ul << this->NbrSiteY) | 0x3ul;
+  unsigned long TmpPattern0110 = (0x1ul << this->NbrSiteY) | 0x2ul;
+  unsigned long TmpPattern1001 = (0x2ul << this->NbrSiteY) | 0x1ul;
+  int TmpNbrPatterns = 0;
+  for (int i = 1;  i < this->NbrSiteX; ++i)
+    {
+      for (int j = 1;  j < this->NbrSiteY; ++j)
+	{
+	  if (((TmpState & TmpMask) == TmpPattern1001) || ((TmpState & TmpMask) == TmpPattern0110))
+	    {
+	      if ((this->GetSafeOccupation(index, i - 2, j - 1) != 0x0ul) || (this->GetSafeOccupation(index, i - 2, j) != 0x0ul) ||
+		  (this->GetSafeOccupation(index, i + 1, j - 1) != 0x0ul) || (this->GetSafeOccupation(index, i + 1, j) != 0x0ul) ||
+		  (this->GetSafeOccupation(index, i - 1, j - 2) != 0x0ul) || (this->GetSafeOccupation(index, i, j - 2) != 0x0ul) ||
+		  (this->GetSafeOccupation(index, i - 1, j + 1) != 0x0ul) || (this->GetSafeOccupation(index, i, j + 1) != 0x0ul))
+		{
+		  return false;
+		}
+	      ++TmpNbrPatterns;
+	    }
+	  TmpMask <<= 1;
+	  TmpPattern0110 <<= 1;
+	  TmpPattern1001 <<= 1;
+	}
+      TmpMask <<= 1;
+      TmpPattern0110 <<= 1;      
+      TmpPattern1001 <<= 1;
+    }
+  if (TmpNbrPatterns > 0)
+    {
+      if (TmpState != this->FindCanonical(TmpState, 0, 0))
+	{
+	  return false;
+	}
+    }
+  return true;
+}
+
+// request whether state with given index satisfies a general Pauli exclusion principle
+// index = state index
+// pauliK = number of particles allowed in consecutive orbitals
+// pauliR = number of consecutive orbitals
+
+unsigned long BosonOnS2xS2HardcoreNoNearestNeighbors::FindCanonical(unsigned long state, int xPosition, int yPosition)
+{
+  if (yPosition >= (this->NbrSiteY - 1))
+    {
+      yPosition = 0;
+      xPosition++;
+    }
+  if (xPosition >= (this->NbrSiteX - 1))
+    {
+      return state;
+    }
+  int TmpShift = (xPosition *  this->NbrSiteY) + yPosition;
+  unsigned long TmpMask = (0x3ul << this->NbrSiteY) | 0x3ul;
+  unsigned long TmpPattern0110 = (0x1ul << this->NbrSiteY) | 0x2ul;
+  unsigned long TmpPattern1001 = (0x2ul << this->NbrSiteY) | 0x1ul;
+  TmpMask <<= TmpShift;
+  TmpPattern0110 <<= TmpShift;
+  TmpPattern1001 <<= TmpShift;
+  if ((state & TmpMask) == TmpPattern0110)
+    {
+      unsigned long TmpState1 = this->FindCanonical(state, xPosition, yPosition + 1);
+      unsigned long TmpState2 = this->FindCanonical((state & ~TmpMask) | TmpPattern1001, xPosition, yPosition + 1);
+      if (TmpState1 < TmpState2)
+	return TmpState2;
+      else
+	return TmpState1;
+    }
+  if ((state & TmpMask) == TmpPattern1001)
+    {
+      unsigned long TmpState1 = this->FindCanonical(state, xPosition, yPosition + 1);
+      unsigned long TmpState2 = this->FindCanonical((state & ~TmpMask) | TmpPattern0110, xPosition, yPosition + 1);
+      if (TmpState1 < TmpState2)
+	return TmpState2;
+      else
+	return TmpState1;      
+    }
+  return this->FindCanonical(state, xPosition, yPosition + 1);
+}

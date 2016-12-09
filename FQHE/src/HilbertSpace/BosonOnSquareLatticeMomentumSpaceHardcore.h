@@ -132,6 +132,14 @@ class BosonOnSquareLatticeMomentumSpaceHardcore : public BosonOnSphereShortHardc
   virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, 
 									 int nbrGroundStates, ComplexVector* groundStates, double* weights, AbstractArchitecture* architecture = 0);
 
+  // get the occupation of a given orbital in a state, not assuming the coordinates are valid
+  //
+  // index = state index
+  // xPosition = orbital x coordinates
+  // yPosition = orbital y coordinates
+  // return value = orbital occupation
+  virtual unsigned long GetSafeOccupation(int index, int xPosition, int yPosition);
+
  protected:
 
   // evaluate Hilbert space dimension
@@ -159,6 +167,25 @@ class BosonOnSquareLatticeMomentumSpaceHardcore : public BosonOnSphereShortHardc
 
 };
 
+
+// get the occupation of a given orbital in a state, not assuming the coordinates are valid
+//
+// index = state index
+// xPosition = orbital x coordinates
+// yPosition = orbital y coordinates
+// return value = orbital occupation
+
+inline unsigned long BosonOnSquareLatticeMomentumSpaceHardcore::GetSafeOccupation(int index, int xPosition, int yPosition)
+{
+  if ((xPosition < 0) || (yPosition < 0) || (xPosition >= this->NbrSiteX) || (yPosition >= this->NbrSiteY))
+    {
+      return 0x0ul;
+    }
+  else
+    {
+      return ((this->StateDescription[index] >> ((xPosition * this->NbrSiteY) + yPosition)) & 0x1ul);
+    }
+}
 
 #endif
 

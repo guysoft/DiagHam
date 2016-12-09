@@ -698,8 +698,6 @@ class ComplexMatrix : public Matrix
   // return value = pointer on the diagonal elements of D
   double* SingularValueDecomposition();
 
-#ifdef __LAPACK__
-
   // calculate a determinant using the LAPACK library (conserving current matrix)
   //
   Complex LapackDeterminant ();
@@ -740,6 +738,8 @@ class ComplexMatrix : public Matrix
  
 
  private:
+
+#ifdef __LAPACK__
 
   int LapackWorkAreaDimension;
   doublecomplex *LapackMatrix;
