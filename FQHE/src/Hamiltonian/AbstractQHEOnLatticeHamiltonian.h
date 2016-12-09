@@ -41,7 +41,7 @@
 
 #include <iostream>
 #include <cstdlib>
-#include <climits>
+#include <limits>
 
 using std::ostream;
 

@@ -41,7 +41,7 @@
 #include <iostream>
 #include <sys/time.h>
 #include <fstream>
-#include <climits>
+#include <limits>
 #include <cstdlib>
 #include <cstring>
 
