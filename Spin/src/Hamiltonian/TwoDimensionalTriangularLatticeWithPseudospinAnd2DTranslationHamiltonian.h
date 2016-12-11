@@ -208,7 +208,7 @@ class TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHamiltonian :
   
   // enable fast multiplication algorithm
   //
-  void EnableFastMultiplication();
+//   void EnableFastMultiplication();
   
   
   // ask if Hamiltonian implements hermitian symmetry operations
