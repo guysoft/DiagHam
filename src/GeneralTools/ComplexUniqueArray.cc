@@ -100,14 +100,29 @@ ComplexUniqueArray::~ComplexUniqueArray()
 // returns : index of this element  
 unsigned ComplexUniqueArray::InsertElement(const Complex& element)
 {
-  for (unsigned i=0; i<NbrElements; ++i)
+#ifdef __SMP__
+  pthread_mutex_lock(this->BufferMutex);
+#endif
+  unsigned TmpNbrElements = this->NbrElements; // safely get the current number of elements
+#ifdef __SMP__
+  pthread_mutex_unlock(this->BufferMutex);
+#endif
+  // start searching without locking memory access
+  unsigned i=0;
+  for (; i<TmpNbrElements; ++i)
     {
       if (SqrNorm(Elements[i]-element)<1e-30)
 	return i;
     }
+  // element not found among previously existing entries, but another thread may have added further elements in the meantime.
 #ifdef __SMP__
   pthread_mutex_lock(this->BufferMutex);
 #endif
+  for (; i<this->NbrElements; ++i)
+    {
+      if (SqrNorm(Elements[i]-element)<1e-30)
+	return i;
+    }
   // element not found
   if (NbrElements < InternalSize)
     {
@@ -133,9 +148,10 @@ unsigned ComplexUniqueArray::InsertElement(const Complex& element)
 	newElements[i]=Elements[i];
       newElements[NbrElements]=element;
       ++NbrElements;
+      Complex *tmpElements=this->Elements;
+      this->Elements=newElements;
       if ((this->InternalSize!=0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
-	delete [] Elements;
-      this->Elements=newElements;      
+	delete [] tmpElements;
     }
   unsigned Result=NbrElements-1;
 #ifdef __SMP__

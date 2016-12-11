@@ -149,9 +149,10 @@ unsigned RealUniqueArray::InsertElement(double element)
 	newElements[i]=Elements[i];
       newElements[NbrElements]=element;
       ++NbrElements;
+      double *tmpElements=this->Elements;
+      this->Elements = newElements;
       if ((this->InternalSize!=0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
-	delete [] Elements;
-      this->Elements=newElements;      
+	delete [] tmpElements;
     }
   unsigned Result=NbrElements-1;
 #ifdef __SMP__
