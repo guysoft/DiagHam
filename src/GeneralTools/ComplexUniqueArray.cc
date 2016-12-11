@@ -40,7 +40,7 @@ using std::endl;
 
 
 // standard constructor
-ComplexUniqueArray::ComplexUniqueArray(int internalSize)
+ComplexUniqueArray::ComplexUniqueArray(unsigned internalSize)
 {
   this->InternalSize=internalSize;
   this->NbrElements=0;
@@ -69,7 +69,7 @@ ComplexUniqueArray::ComplexUniqueArray(ComplexUniqueArray &array, bool duplicate
       if (this->InternalSize>0)
 	{
 	  this->Elements=new Complex[InternalSize];
-	  for (int i=0; i<NbrElements; ++i)
+	  for (unsigned i=0; i<NbrElements; ++i)
 	    this->Elements[i]=array.Elements[i];
 	  this->Flag.Initialize();
 	}
@@ -96,9 +96,9 @@ ComplexUniqueArray::~ComplexUniqueArray()
 // Insert element
 // element = new element to be inserted
 // returns : index of this element  
-int ComplexUniqueArray::InsertElement(const Complex& element)
+unsigned ComplexUniqueArray::InsertElement(const Complex& element)
 {
-  for (int i=0; i<NbrElements; ++i)
+  for (unsigned i=0; i<NbrElements; ++i)
     {
       if (SqrNorm(Elements[i]-element)<1e-30)
 	return i;
@@ -114,9 +114,20 @@ int ComplexUniqueArray::InsertElement(const Complex& element)
     }
   else
     {
-      this->InternalSize*=2;      
+      if (this->InternalSize < (std::numeric_limits<unsigned>::max() / 2))
+	this->InternalSize*=2;
+      else
+	{
+	  if (this->InternalSize == std::numeric_limits<unsigned>::max())
+	    {
+	      cout << "Array overflow in ComplexUniqueArray: cannot store more entries"<<endl;
+	      exit(1);
+	    }
+	  else
+	    this->InternalSize = std::numeric_limits<unsigned>::max();
+	}
       Complex *newElements= new Complex[InternalSize];
-      for (int i=0; i<NbrElements; ++i)
+      for (unsigned i=0; i<NbrElements; ++i)
 	newElements[i]=Elements[i];
       newElements[NbrElements]=element;
       ++NbrElements;
@@ -124,7 +135,7 @@ int ComplexUniqueArray::InsertElement(const Complex& element)
 	delete [] Elements;
       this->Elements=newElements;      
     }
-  int Result=NbrElements-1;
+  unsigned Result=NbrElements-1;
 #ifdef __SMP__
   pthread_mutex_unlock(this->BufferMutex);
 #endif
@@ -134,9 +145,9 @@ int ComplexUniqueArray::InsertElement(const Complex& element)
 // search entry
 // value = value to be searched for
 // returns : index of the element, or -1 if not found
-int ComplexUniqueArray::SearchElement(const Complex &value)
+unsigned ComplexUniqueArray::SearchElement(const Complex &value)
 {
-  for (int i=0; i<NbrElements; ++i)
+  for (unsigned i=0; i<NbrElements; ++i)
     {
       if (SqrNorm(Elements[i]-value)<1e-30)
 	return i;
@@ -148,7 +159,7 @@ int ComplexUniqueArray::SearchElement(const Complex &value)
 // empty all elements
 // disallocate = flag indicating whether all memory should be unallocated
 // internalSize = minimum table size to allocate (only used if disallocating)
-void ComplexUniqueArray::Empty(bool disallocate, int internalSize)
+void ComplexUniqueArray::Empty(bool disallocate, unsigned internalSize)
 {
 #ifdef __SMP__
   pthread_mutex_lock(this->BufferMutex);
@@ -174,7 +185,7 @@ void ComplexUniqueArray::Empty(bool disallocate, int internalSize)
 void ComplexUniqueArray::WriteArray(ofstream &file)
 {
   WriteLittleEndian(file, this->NbrElements);
-  for (int i = 0; i < this->NbrElements; ++i)
+  for (unsigned i = 0; i < this->NbrElements; ++i)
     WriteLittleEndian(file, this->Elements[i]);  
 }
 
@@ -189,12 +200,12 @@ void ComplexUniqueArray::ReadArray(ifstream &file)
     {
       delete [] Elements;
     }
-  int TmpDimension;
+  unsigned TmpDimension;
   ReadLittleEndian(file, TmpDimension);
   this->InternalSize=TmpDimension;
   this->NbrElements=TmpDimension;
   this->Elements=new Complex[TmpDimension];
-  for (int i = 0; i < this->NbrElements; ++i)
+  for (unsigned i = 0; i < this->NbrElements; ++i)
     ReadLittleEndian(file, this->Elements[i]);
 #ifdef __SMP__
   pthread_mutex_unlock(this->BufferMutex);

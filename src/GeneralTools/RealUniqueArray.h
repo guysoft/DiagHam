@@ -49,9 +49,9 @@ class RealUniqueArray
   // array with elements
   double *Elements;
   // size of array
-  int InternalSize;
+  unsigned InternalSize;
   // number of elements stored
-  int NbrElements;
+  unsigned NbrElements;
 
   // mutex to lock write access to array Elements
 #ifdef __SMP__
@@ -64,7 +64,7 @@ class RealUniqueArray
  public:
   // standard constructor
   // internalSize = minimum table size to allocate
-  RealUniqueArray(int internalSize=100);
+  RealUniqueArray(unsigned internalSize=100);
 
   // copy constructor
   RealUniqueArray(RealUniqueArray &array, bool duplicateFlag=false);
@@ -75,23 +75,23 @@ class RealUniqueArray
   // Insert element
   // element = new element to be inserted
   // returns : index of this element  
-  int InsertElement(double element);
+  unsigned InsertElement(double element);
 
   // search entry
   // value = value to be searched for
   // returns : index of the element, or -1 if not found
-  int SearchElement(double value);
+  unsigned SearchElement(double value);
 
   // get number of elements
-  int GetNbrElements(){ return NbrElements;}
+  unsigned GetNbrElements(){ return NbrElements;}
 
   // empty all elements
   // disallocate = flag indicating whether all memory should be unallocated
   // internalSize = minimum table size to allocate (only used if disallocating)
-  void Empty(bool disallocate = false, int internalSize = 100);
+  void Empty(bool disallocate = false, unsigned internalSize = 100);
 
   // Access an element
-  double& operator [] (int i);
+  double& operator [] (unsigned i);
 
   // Write to file
   // file = open stream to write to
@@ -107,7 +107,7 @@ class RealUniqueArray
 //
 // i = coordinate position
 
-inline double& RealUniqueArray::operator [] (int i)
+inline double& RealUniqueArray::operator [] (unsigned i)
 {
   return this->Elements[i];
 }

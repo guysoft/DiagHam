@@ -48,9 +48,9 @@ class ComplexUniqueArray
   // array with elements
   Complex *Elements;
   // size of array
-  int InternalSize;
+  unsigned InternalSize;
   // number of elements stored
-  int NbrElements;
+  unsigned NbrElements;
 
   // mutex to lock write access to array Elements
 #ifdef __SMP__
@@ -62,7 +62,7 @@ class ComplexUniqueArray
 
  public:
   // standard constructor
-  ComplexUniqueArray(int internalSize=100);
+  ComplexUniqueArray(unsigned internalSize=100);
 
   // copy constructor
   ComplexUniqueArray(ComplexUniqueArray &array, bool duplicateFlag = false);
@@ -73,23 +73,23 @@ class ComplexUniqueArray
   // Insert element
   // element = new element to be inserted
   // returns : index of this element  
-  int InsertElement(const Complex &element);
+  unsigned InsertElement(const Complex &element);
 
   // search entry
   // value = value to be searched for
   // returns : index of the element, or -1 if not found
-  int SearchElement(const Complex &value);
+  unsigned SearchElement(const Complex &value);
 
   // get number of elements
-  int GetNbrElements(){ return NbrElements;}
+  unsigned GetNbrElements(){ return NbrElements;}
 
   // empty all elements
   // disallocate = flag indicating whether all memory should be unallocated
   // internalSize = minimum table size to allocate (only used if disallocating)
-  void Empty(bool disallocate = false, int internalSize = 100);
+  void Empty(bool disallocate = false, unsigned internalSize = 100);
 
   // Access an element
-  Complex& operator [] (int i);
+  Complex& operator [] (unsigned i);
 
   // Write to file
   // file = open stream to write to
@@ -106,7 +106,7 @@ class ComplexUniqueArray
 //
 // i = coordinate position
 
-inline Complex& ComplexUniqueArray::operator [] (int i)
+inline Complex& ComplexUniqueArray::operator [] (unsigned i)
 {
   return this->Elements[i];
 }
