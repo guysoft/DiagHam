@@ -35,6 +35,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <limits>
 
 using std::cout;
 using std::endl;

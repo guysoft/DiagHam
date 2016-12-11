@@ -34,6 +34,7 @@
 #include "GeneralTools/Endian.h"
 
 #include <iostream>
+#include <limits>
 
 using std::cout;
 using std::endl;
