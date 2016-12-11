@@ -46,7 +46,14 @@ using std::endl;
 using std::ostream;
 
 
-// constructor from default data
+// default constructor
+
+TwoDimensionalTriangularLatticeWithPseudospinHamiltonian::TwoDimensionalTriangularLatticeWithPseudospinHamiltonian()
+{
+}
+
+
+// constructor
 //
 // chain = pointer to Hilbert space of the associated system
 // nbrSpinX = number of spin along the x direction
@@ -67,40 +74,40 @@ TwoDimensionalTriangularLatticeWithPseudospinHamiltonian::TwoDimensionalTriangul
   this->Offset = offset;
   
   // projection of kagome onto the s = 1/2 states on each triangle
-//   this->PseudospinCouplingElements = new double[3];    
-//   this->PseudospinCouplingElements[0] = 0.0;
-//   this->PseudospinCouplingElements[1] = 1.0/sqrt(3.0);
-//   this->PseudospinCouplingElements[2] = -1.0/sqrt(3.0);
-//   
-//   this-> PseudospinDiagCouplingElements = new double*[3];
-//   for (int i = 0; i < 3; ++i)
-//     this->PseudospinDiagCouplingElements[i] = new double[2];
-//   this->PseudospinDiagCouplingElements[0][0] = 1.0;
-//   this->PseudospinDiagCouplingElements[0][1] = -1.0/3.0;
-//   
-//   this->PseudospinDiagCouplingElements[1][0] = 0.0;
-//   this->PseudospinDiagCouplingElements[1][1] = 2.0/3.0;
-//   
-//   this->PseudospinDiagCouplingElements[2][0] = 0.0;
-//   this->PseudospinDiagCouplingElements[2][1] = 2.0/3.0;
-  
-//   //test: trivial coupling, Heisenberg model
   this->PseudospinCouplingElements = new double[3];    
   this->PseudospinCouplingElements[0] = 0.0;
-  this->PseudospinCouplingElements[1] = 0.0;
-  this->PseudospinCouplingElements[2] = 0.0;
+  this->PseudospinCouplingElements[1] = 1.0/sqrt(3.0);
+  this->PseudospinCouplingElements[2] = -1.0/sqrt(3.0);
   
   this-> PseudospinDiagCouplingElements = new double*[3];
   for (int i = 0; i < 3; ++i)
     this->PseudospinDiagCouplingElements[i] = new double[2];
   this->PseudospinDiagCouplingElements[0][0] = 1.0;
-  this->PseudospinDiagCouplingElements[0][1] = 1.0;
+  this->PseudospinDiagCouplingElements[0][1] = -1.0/3.0;
   
-  this->PseudospinDiagCouplingElements[1][0] = 1.0;
-  this->PseudospinDiagCouplingElements[1][1] = 1.0;
+  this->PseudospinDiagCouplingElements[1][0] = 0.0;
+  this->PseudospinDiagCouplingElements[1][1] = 2.0/3.0;
   
-  this->PseudospinDiagCouplingElements[2][0] = 1.0;
-  this->PseudospinDiagCouplingElements[2][1] = 1.0;
+  this->PseudospinDiagCouplingElements[2][0] = 0.0;
+  this->PseudospinDiagCouplingElements[2][1] = 2.0/3.0;
+  
+//   //test: trivial coupling, Heisenberg model
+//   this->PseudospinCouplingElements = new double[3];    
+//   this->PseudospinCouplingElements[0] = 0.0;
+//   this->PseudospinCouplingElements[1] = 0.0;
+//   this->PseudospinCouplingElements[2] = 0.0;
+//   
+//   this-> PseudospinDiagCouplingElements = new double*[3];
+//   for (int i = 0; i < 3; ++i)
+//     this->PseudospinDiagCouplingElements[i] = new double[2];
+//   this->PseudospinDiagCouplingElements[0][0] = 1.0;
+//   this->PseudospinDiagCouplingElements[0][1] = 1.0;
+//   
+//   this->PseudospinDiagCouplingElements[1][0] = 1.0;
+//   this->PseudospinDiagCouplingElements[1][1] = 1.0;
+//   
+//   this->PseudospinDiagCouplingElements[2][0] = 1.0;
+//   this->PseudospinDiagCouplingElements[2][1] = 1.0;
   
   
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];

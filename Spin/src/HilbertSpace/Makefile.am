@@ -51,4 +51,5 @@ Spin2ChainWithTranslations.cc \
 Spin2ChainWithTranslationsAndSzSymmetry.cc \
 Spin2ChainWithTranslationsAndInversionSymmetry.cc \
 Spin2ChainWithTranslationsAndSzInversionSymmetries.cc \
-VirtualSpaceTransferMatrixWithTranslations.cc
+VirtualSpaceTransferMatrixWithTranslations.cc \
+Spin1_2ChainWithPseudospinAnd2DTranslation.cc

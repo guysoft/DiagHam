@@ -54,4 +54,5 @@ SpinChainJ1J2HamiltonianWithTranslations.cc \
 SpinChainJ1J2RealHamiltonianWithTranslations.cc \
 TwoDimensionalTriangularRareEarthHamiltonian.cc \
 SpinChainAKLTP3P4HamiltonianWithTranslations.cc \
-SpinChainAKLTP3P4RealHamiltonianWithTranslations.cc
+SpinChainAKLTP3P4RealHamiltonianWithTranslations.cc \
+TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHamiltonian.cc

@@ -129,6 +129,79 @@ class Spin1_2ChainWithPseudospin : public Spin1_2ChainNew
   // coupling = array where the coupling coefficients are stored
   // return value = numerical coefficient
   virtual double JDiagonali (int i, int state, double* coupling);
+  
+   // return index of resulting state from application of S-_i S+_j operator on a given state
+  //
+  // i = position of S- operator
+  // j = position of S+ operator
+  // state = index of the state to be applied on S-_i S+_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of resulting state
+  virtual int SmiSpj (int i, int j, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
+  // operator acting on pseudospin on site i (off-diagonal part)
+  //
+  // i = position of pseudospin operator
+  // state = index of the state to be applied on JAi operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of the resulting state
+  virtual int JOffDiagonali (int i, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
+  // operator acting on pseudospin on site i and j(off-diagonal part)
+  //
+  // i = position of pseudospin operator
+  // j = position of pseudospin operator
+  // state = index of the state to be applied on JAi operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of the resulting state
+  virtual int JoffiJoffj (int i, int j, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
+   // operator acting on pseudospin on site i (off-diagonal) and j(diagonal part)
+  //
+  // i = position of pseudospin operator
+  // j = position of pseudospin operator
+  // state = index of the state to be applied on JAi operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of the resulting state
+  virtual int JoffiJj (int i, int j, int state, double* coupling, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
+    
+  // operator acting on pseudospin on site i (diagonal) and j(diagonal part)
+  //
+  // i = position of pseudospin operator
+  // j = position of pseudospin operator
+  // state = index of the state to be applied on JAi operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of the resulting state
+  virtual int SmiSpjJiJj (int i, int j, int state, double* couplingI, double* couplingJ, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
+  
+  // operator acting on pseudospin on site i (off-diagonal) and j(diagonal part)
+  //
+  // i = position of pseudospin operator
+  // j = position of pseudospin operator
+  // state = index of the state to be applied on JAi operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of the resulting state
+  virtual int SmiSpjJoffiJj (int i, int j, int state, double* coupling, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
+   // operator acting on pseudospin on site i (diagonal) and j(off-diagonal part)
+  //
+  // i = position of pseudospin operator
+  // j = position of pseudospin operator
+  // state = index of the state to be applied on JAi operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of the resulting state
+  virtual int SmiSpjJiJoffj (int i, int j, int state, double* coupling, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
+   // operator acting on pseudospin on site i (off-diagonal) and j(diagonal part)
+  //
+  // i = position of pseudospin operator
+  // j = position of pseudospin operator
+  // state = index of the state to be applied on JAi operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of the resulting state
+  virtual int SmiSpjJoffiJoffj (int i, int j, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
     
   // compute the parity (prod_i Sz_i) for a given state
   //

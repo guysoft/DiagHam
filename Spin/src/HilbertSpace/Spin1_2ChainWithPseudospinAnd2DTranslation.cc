@@ -9,8 +9,9 @@
 //                                                                            //
 //               class of spin 1/2 chain with a fixed Sz value                //
 //               and a pseudospin 1/2 (not a conserved quantity)              //
+//                           and 2D translations                              //
 //                                                                            //
-//                        last modification : 11/06/2016                      //
+//                        last modification : 25/11/2016                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "HilbertSpace/Spin1_2ChainWithPseudospin.h"
+#include "HilbertSpace/Spin1_2ChainWithPseudospinAnd2DTranslation.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealMatrix.h"
 #include "Matrix/ComplexMatrix.h"
@@ -53,7 +54,7 @@ using std::dec;
 // default constructor
 //
 
-Spin1_2ChainWithPseudospin::Spin1_2ChainWithPseudospin ()
+Spin1_2ChainWithPseudospinAnd2DTranslation::Spin1_2ChainWithPseudospinAnd2DTranslation ()
 {
 }
 
@@ -63,7 +64,7 @@ Spin1_2ChainWithPseudospin::Spin1_2ChainWithPseudospin ()
 // sz = twice the value of total Sz component
 // memorySize = memory size in bytes allowed for look-up table
 
-Spin1_2ChainWithPseudospin::Spin1_2ChainWithPseudospin (int chainLength, int sz, int memorySize) 
+Spin1_2ChainWithPseudospinAnd2DTranslation::Spin1_2ChainWithPseudospinAnd2DTranslation (int chainLength, int sz, int xMomentum, int maxXMomentum, int yMomentum, int maxYMomentum, int memorySize) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
@@ -75,14 +76,38 @@ Spin1_2ChainWithPseudospin::Spin1_2ChainWithPseudospin (int chainLength, int sz,
     {
       this->ChainLength = 1;
     }
+    
+  this->MaxXMomentum = maxXMomentum;
+  this->MaxYMomentum = maxYMomentum;
+    
+  this->XMomentum = xMomentum;
+  this->YMomentum = yMomentum;
+  
   this->FixedQuantumNumberFlag = true;
   this->Sz = sz;
+  
+  this->StateXShift = 2 * this->ChainLength / this->MaxXMomentum;
+  this->ComplementaryStateXShift = 2 * this->ChainLength- this->StateXShift;
+  this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
+
+  this->NbrYMomentumBlocks = (2 * this->ChainLength) / this->StateXShift;
+  this->StateYShift = ((2 * this->ChainLength) / (this->MaxYMomentum * this->MaxXMomentum));
+  this->YMomentumBlockSize = this->StateYShift * this->MaxYMomentum;
+  this->ComplementaryStateYShift = this->YMomentumBlockSize - this->StateYShift;
+  this->YMomentumMask = (0x1ul << this->StateYShift) - 0x1ul;
+  this->YMomentumBlockMask = (0x1ul << this->YMomentumBlockSize) - 0x1ul;  
+  this->YMomentumFullMask = 0x0ul;
+  for (int i = 0; i < this->NbrYMomentumBlocks; ++i)
+      this->YMomentumFullMask |= this->YMomentumMask << (i *  this->YMomentumBlockSize);
+  this->ComplementaryYMomentumFullMask = ~this->YMomentumFullMask; 
 
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->Sz, this->ChainLength);
   this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
-  this->LargeHilbertSpaceDimension = this->GenerateStates ((this->Sz + this->ChainLength) >> 1, this->ChainLength - 1, 0l);
+  this->LargeHilbertSpaceDimension = this->GenerateStates();
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
-  this->GenerateLookUpTable(memorySize);
+  if (this->HilbertSpaceDimension > 0)
+  {
+    this->GenerateLookUpTable(memorySize);
   
 //   double TmpCoef;
 //   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
@@ -94,17 +119,20 @@ Spin1_2ChainWithPseudospin::Spin1_2ChainWithPseudospin (int chainLength, int sz,
 //     cout << endl;
 //   }
 //   cout << endl;
-  this->Flag.Initialize();
+    this->Flag.Initialize();
+//     for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+//       this->PrintState(cout, i) << endl;
+    
+    this->PrintState(cout, 0) << endl;
+  }
   
-//   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-//     this->PrintState(cout, i) << endl;
 }
 
 // copy constructor (without duplicating datas)
 //
 // chain = reference on chain to copy
 
-Spin1_2ChainWithPseudospin::Spin1_2ChainWithPseudospin (const Spin1_2ChainWithPseudospin& chain)
+Spin1_2ChainWithPseudospinAnd2DTranslation::Spin1_2ChainWithPseudospinAnd2DTranslation (const Spin1_2ChainWithPseudospinAnd2DTranslation& chain)
 {
   this->Flag = chain.Flag;
   if (chain.ChainLength != 0)
@@ -120,6 +148,28 @@ Spin1_2ChainWithPseudospin::Spin1_2ChainWithPseudospin (const Spin1_2ChainWithPs
       this->MaximumLookUpShift = chain.MaximumLookUpShift;
       this->FixedQuantumNumberFlag = chain.FixedQuantumNumberFlag;      
       this->Flag = chain.Flag;
+      
+      
+      this->MaxXMomentum = chain.MaxXMomentum;
+      this->XMomentum = chain.XMomentum;
+      this->StateXShift = chain.StateXShift;
+      this->ComplementaryStateXShift = chain.ComplementaryStateXShift;
+      this->XMomentumMask = chain.XMomentumMask;
+      this->MaxYMomentum = chain.MaxYMomentum;
+      this->YMomentum = chain.YMomentum;
+      this->NbrYMomentumBlocks = chain.NbrYMomentumBlocks;
+      this->StateYShift = chain.StateYShift;
+      this->YMomentumBlockSize = chain.YMomentumBlockSize;
+      this->ComplementaryStateYShift = chain.ComplementaryStateYShift;
+      this->YMomentumMask = chain.YMomentumMask;
+      this->YMomentumBlockMask = chain.YMomentumBlockMask;  
+      this->YMomentumFullMask = chain.YMomentumFullMask;
+      this->ComplementaryYMomentumFullMask = chain.ComplementaryYMomentumFullMask; 
+      
+      this->RescalingFactors = chain.RescalingFactors;
+      this->NbrStateInOrbit = chain.NbrStateInOrbit;
+      this->LookUpTableMask = chain.LookUpTableMask;
+      this->LookUpPosition = chain.LookUpPosition;
     }
   else
     {
@@ -132,25 +182,45 @@ Spin1_2ChainWithPseudospin::Spin1_2ChainWithPseudospin (const Spin1_2ChainWithPs
       this->LookUpTableShift = 0;
       this->LookUpTableMemorySize = 0;
       this->MaximumLookUpShift = 0;
+      
+      this->MaxXMomentum = 0;
+      this->XMomentum = 0;
+      this->StateXShift = 0;
+      this->ComplementaryStateXShift = 0;
+      this->XMomentumMask = 0;
+      this->MaxYMomentum = 0;
+      this->YMomentum = 0;
+      this->NbrYMomentumBlocks = 0;
+      this->StateYShift = 0;
+      this->YMomentumBlockSize = 0;
+      this->ComplementaryStateYShift = 0;
+      this->YMomentumMask = 0;
+      this->YMomentumBlockMask = 0;  
+      this->YMomentumFullMask = 0;
+      this->ComplementaryYMomentumFullMask = 0; 
+      
+      this->RescalingFactors = 0;
+      this->NbrStateInOrbit = 0;
+      this->LookUpTableMask = 0;
+      this->LookUpPosition = 0;
     }
 }
 
 // destructor
 //
 
-Spin1_2ChainWithPseudospin::~Spin1_2ChainWithPseudospin () 
+Spin1_2ChainWithPseudospinAnd2DTranslation::~Spin1_2ChainWithPseudospinAnd2DTranslation () 
 {
-  if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
-    {
-      delete[] this->StateDescription;
-      if (this->LookUpTableShift != 0)
-	{
-	  delete[] this->LookUpTableShift;
-	  for (int i = 0; i < this->ChainLength; ++i)
-	    delete[] this->LookUpTable[i];
-	  delete[] this->LookUpTable;
-	}
-    }
+  delete[] this->LookUpTableShift;
+  
+  int CurrentMaximumUpPosition = 2 * this->ChainLength - 1;
+  while (CurrentMaximumUpPosition >=0)
+  {
+    delete[] this->LookUpTable[CurrentMaximumUpPosition];
+    --CurrentMaximumUpPosition;
+  }
+  delete[] this->LookUpTable;
+  
 }
 
 // assignement (without duplicating datas)
@@ -158,7 +228,7 @@ Spin1_2ChainWithPseudospin::~Spin1_2ChainWithPseudospin ()
 // chain = reference on chain to copy
 // return value = reference on current chain
 
-Spin1_2ChainWithPseudospin& Spin1_2ChainWithPseudospin::operator = (const Spin1_2ChainWithPseudospin& chain)
+Spin1_2ChainWithPseudospinAnd2DTranslation& Spin1_2ChainWithPseudospinAnd2DTranslation::operator = (const Spin1_2ChainWithPseudospinAnd2DTranslation& chain)
 {
   if ((this->Flag.Used() == true) && (this->ChainLength != 0) && (this->Flag.Shared() == false))
     {
@@ -197,7 +267,7 @@ Spin1_2ChainWithPseudospin& Spin1_2ChainWithPseudospin::operator = (const Spin1_
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* Spin1_2ChainWithPseudospin::Clone()
+AbstractHilbertSpace* Spin1_2ChainWithPseudospinAnd2DTranslation::Clone()
 {
   return new Spin1_2ChainWithPseudospin (*this);
 }
@@ -207,7 +277,7 @@ AbstractHilbertSpace* Spin1_2ChainWithPseudospin::Clone()
 // index = index of the state to test
 // return value = twice spin projection on (Oz)
 
-int Spin1_2ChainWithPseudospin::TotalSz (int index)
+int Spin1_2ChainWithPseudospinAnd2DTranslation::TotalSz (int index)
 {
   if (this->FixedQuantumNumberFlag == true)
     return this->Sz;
@@ -227,7 +297,7 @@ int Spin1_2ChainWithPseudospin::TotalSz (int index)
 // state = index of the state to be applied on Sz_i operator
 // return value = 0 if prod_i Sz_i = 1, 1 if prod_i Sz_i = -1
 
-unsigned long Spin1_2ChainWithPseudospin::GetParity (int state)
+unsigned long Spin1_2ChainWithPseudospinAnd2DTranslation::GetParity (int state)
 {
   unsigned long TmpState = this->StateDescription[state];
 #ifdef __64_BITS__
@@ -248,7 +318,7 @@ unsigned long Spin1_2ChainWithPseudospin::GetParity (int state)
 // state = index of the state to translate 
 // return value = index of resulting state
 
-int Spin1_2ChainWithPseudospin::TranslateState (int nbrTranslations, int state)
+int Spin1_2ChainWithPseudospinAnd2DTranslation::TranslateState (int nbrTranslations, int state)
 {
   unsigned long TmpState = this->StateDescription[state];
   TmpState = (((TmpState & ((0x1ul << (this->ChainLength - nbrTranslations)) - 1ul)) << nbrTranslations)
@@ -262,7 +332,7 @@ int Spin1_2ChainWithPseudospin::TranslateState (int nbrTranslations, int state)
 // stateDescription = state description
 // return value = corresponding index
 
-int Spin1_2ChainWithPseudospin::FindStateIndex(unsigned long stateDescription)
+int Spin1_2ChainWithPseudospinAnd2DTranslation::FindStateIndex(unsigned long stateDescription)
 {
   int CurrentMaximumUpPosition = 2 * this->ChainLength - 1;
   while ((((stateDescription >> CurrentMaximumUpPosition) & 0x1ul) == 0x0ul) && (CurrentMaximumUpPosition > 0))
@@ -302,12 +372,76 @@ int Spin1_2ChainWithPseudospin::FindStateIndex(unsigned long stateDescription)
 // nbrSites = number of sites
 // return value = Hilbert space dimension
 
-long Spin1_2ChainWithPseudospin::EvaluateHilbertSpaceDimension(int sz, int nbrSites)
+long Spin1_2ChainWithPseudospinAnd2DTranslation::EvaluateHilbertSpaceDimension(int sz, int nbrSites)
 {
   BinomialCoefficients TmpCoefficients (nbrSites);
   long PseudospinContribution = 1l << ((long) this->ChainLength);
   return (TmpCoefficients(nbrSites, (nbrSites + sz) >> 1) * PseudospinContribution);
 }
+
+
+
+// generate all states corresponding to the constraints
+//
+// return value = Hilbert space dimension
+
+long Spin1_2ChainWithPseudospinAnd2DTranslation::GenerateStates()
+{
+  
+  cout << "Intermediary Hilbert space dimension = " << (this->LargeHilbertSpaceDimension) << endl;
+  this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+  this->RawGenerateStates((this->Sz + this->ChainLength) >> 1, this->ChainLength - 1, 0l);
+  long TmpLargeHilbertSpaceDimension = 0l;
+  int NbrTranslationX;
+  int NbrTranslationY;
+#ifdef  __64_BITS__
+  unsigned long Discard = 0xfffffffffffffffful;
+#else
+  unsigned long Discard = 0xfffffffful;
+#endif
+  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+    {
+      if ((this->FindCanonicalForm(this->StateDescription[i], NbrTranslationX, NbrTranslationY) == this->StateDescription[i]))
+	{
+	  if (this->TestMomentumConstraint(this->StateDescription[i]) == true)
+	    {
+	      ++TmpLargeHilbertSpaceDimension;
+	    }
+	  else
+	    {
+	      this->StateDescription[i] = Discard;
+	    }
+	}
+      else
+	{
+	  this->StateDescription[i] = Discard;
+	}
+    }
+  if (TmpLargeHilbertSpaceDimension > 0)
+    {
+      unsigned long* TmpStateDescription = new unsigned long [TmpLargeHilbertSpaceDimension];  
+      this->NbrStateInOrbit = new int [TmpLargeHilbertSpaceDimension];
+      TmpLargeHilbertSpaceDimension = 0l;
+      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+	{
+	  if (this->StateDescription[i] != Discard)
+	    {
+	      TmpStateDescription[TmpLargeHilbertSpaceDimension] = this->StateDescription[i];
+	      this->NbrStateInOrbit[TmpLargeHilbertSpaceDimension] = this->FindOrbitSize(this->StateDescription[i]);
+	      ++TmpLargeHilbertSpaceDimension;
+	    }
+	}
+      delete[] this->StateDescription;
+      this->StateDescription = TmpStateDescription;
+    }
+  else
+    {
+      delete[] this->StateDescription;
+    }
+  return TmpLargeHilbertSpaceDimension;
+}
+
+
 
 // generate all states
 // 
@@ -316,7 +450,7 @@ long Spin1_2ChainWithPseudospin::EvaluateHilbertSpaceDimension(int sz, int nbrSi
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-long Spin1_2ChainWithPseudospin::GenerateStates(int nbrSpinUp, int currentPosition, long pos)
+long Spin1_2ChainWithPseudospinAnd2DTranslation::RawGenerateStates(int nbrSpinUp, int currentPosition, long pos)
 {
   if ((nbrSpinUp == 1) && (currentPosition == 0))
   {
@@ -345,7 +479,7 @@ long Spin1_2ChainWithPseudospin::GenerateStates(int nbrSpinUp, int currentPositi
 	}
 	else
 	{
-	  long TmpPos = this->GenerateStates(nbrSpinUp, currentPosition - 1, pos);
+	  long TmpPos = this->RawGenerateStates(nbrSpinUp, currentPosition - 1, pos);
 // 	  unsigned long Mask = 0x1ul << (2 * currentPosition + 1);
 	  unsigned long Mask = 0x1ul << (2 * currentPosition);
 	  for (long i = pos; i < TmpPos; i++)
@@ -360,7 +494,7 @@ long Spin1_2ChainWithPseudospin::GenerateStates(int nbrSpinUp, int currentPositi
   if (currentPosition < (nbrSpinUp - 1))
     return pos;
   int ReducedCurrentPosition = currentPosition - 1;
-  long TmpPos = this->GenerateStates(nbrSpinUp - 1, ReducedCurrentPosition, pos);
+  long TmpPos = this->RawGenerateStates(nbrSpinUp - 1, ReducedCurrentPosition, pos);
 //   unsigned long Mask = 0x1ul << (2 * currentPosition);
   unsigned long Mask = 0x1ul << (2 * currentPosition);
   for (long i = pos; i < TmpPos; i++)
@@ -375,7 +509,7 @@ long Spin1_2ChainWithPseudospin::GenerateStates(int nbrSpinUp, int currentPositi
     this->StateDescription[i + (TmpPos - pos)] |= (Mask << 0x1ul);
   }
   pos = 2 * TmpPos - pos;
-  TmpPos =  this->GenerateStates(nbrSpinUp, ReducedCurrentPosition, pos);
+  TmpPos =  this->RawGenerateStates(nbrSpinUp, ReducedCurrentPosition, pos);
   for (long i = pos; i < TmpPos; i++)
   {
     this->StateDescription[i + (TmpPos - pos)] = this->StateDescription[i];
@@ -391,7 +525,7 @@ long Spin1_2ChainWithPseudospin::GenerateStates(int nbrSpinUp, int currentPositi
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& Spin1_2ChainWithPseudospin::PrintState (ostream& Str, int state)
+ostream& Spin1_2ChainWithPseudospinAnd2DTranslation::PrintState (ostream& Str, int state)
 {  
   if (state >= this->HilbertSpaceDimension)    
     return Str;
@@ -418,12 +552,11 @@ ostream& Spin1_2ChainWithPseudospin::PrintState (ostream& Str, int state)
 // generate look-up table associated to current Hilbert space
 // 
 // memory = memory size that can be allocated for the look-up table
-// stateMask = an optional mask to apply to each state to focus on the relevant bits
 
-void Spin1_2ChainWithPseudospin::GenerateLookUpTable(unsigned long memory, unsigned long stateMask)
+void Spin1_2ChainWithPseudospinAnd2DTranslation::GenerateLookUpTable(unsigned long memory)
 {
   // evaluate look-up table size
-  memory /= (sizeof(int*) * (2 * this->ChainLength));
+  memory /= (sizeof(int*) * 2 * this->ChainLength);
   this->MaximumLookUpShift = 1;
   while (memory > 0)
     {
@@ -439,17 +572,17 @@ void Spin1_2ChainWithPseudospin::GenerateLookUpTable(unsigned long memory, unsig
   this->LookUpTableShift = new int [2 * this->ChainLength];
   for (int i = 0; i < 2 * this->ChainLength; ++i)
     this->LookUpTable[i] = new int [this->LookUpTableMemorySize + 1];
-  int CurrentPosition = 2 * this->ChainLength - 1;
-  while ((((this->StateDescription[0] >> CurrentPosition) & 0x1ul) == 0x0ul) && (CurrentPosition > 0))
-    --CurrentPosition;
-  int* TmpLookUpTable = this->LookUpTable[CurrentPosition];
-  if (CurrentPosition < this->MaximumLookUpShift)
-    this->LookUpTableShift[CurrentPosition] = 0;
+  int CurrentMaxMomentum = 2 * this->ChainLength;
+  while (((this->StateDescription[0] >> CurrentMaxMomentum) == 0x0ul) && (CurrentMaxMomentum > 0))
+    --CurrentMaxMomentum;
+  int* TmpLookUpTable = this->LookUpTable[CurrentMaxMomentum];
+  if (CurrentMaxMomentum < this->MaximumLookUpShift)
+    this->LookUpTableShift[CurrentMaxMomentum] = 0;
   else
-    this->LookUpTableShift[CurrentPosition] = CurrentPosition + 1 - this->MaximumLookUpShift;
-  int CurrentShift = this->LookUpTableShift[CurrentPosition];
+    this->LookUpTableShift[CurrentMaxMomentum] = CurrentMaxMomentum + 1 - this->MaximumLookUpShift;
+  int CurrentShift = this->LookUpTableShift[CurrentMaxMomentum];
   unsigned long CurrentLookUpTableValue = this->LookUpTableMemorySize;
-  unsigned long TmpLookUpTableValue = (this->StateDescription[0] & stateMask) >> CurrentShift;
+  unsigned long TmpLookUpTableValue = this->StateDescription[0] >> CurrentShift;
   while (CurrentLookUpTableValue > TmpLookUpTableValue)
     {
       TmpLookUpTable[CurrentLookUpTableValue] = 0;
@@ -458,10 +591,10 @@ void Spin1_2ChainWithPseudospin::GenerateLookUpTable(unsigned long memory, unsig
   TmpLookUpTable[CurrentLookUpTableValue] = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     {
-      int TmpCurrentPosition = CurrentPosition;
-      while ((((this->StateDescription[i] >> TmpCurrentPosition) & 0x1ul) == 0x0ul) && (TmpCurrentPosition > 0))
-	--TmpCurrentPosition;
-      if (CurrentPosition != TmpCurrentPosition)
+      int TmpMaxMomentum = CurrentMaxMomentum;
+      while (((this->StateDescription[i] >> TmpMaxMomentum) == 0x0ul) && (TmpMaxMomentum > 0))
+	--TmpMaxMomentum;
+      if (CurrentMaxMomentum != TmpMaxMomentum)
 	{
 	  while (CurrentLookUpTableValue > 0)
 	    {
@@ -469,14 +602,20 @@ void Spin1_2ChainWithPseudospin::GenerateLookUpTable(unsigned long memory, unsig
 	      --CurrentLookUpTableValue;
 	    }
 	  TmpLookUpTable[0] = i;
- 	  CurrentPosition = TmpCurrentPosition;
-	  TmpLookUpTable = this->LookUpTable[CurrentPosition];
-	  if (CurrentPosition < this->MaximumLookUpShift)
-	    this->LookUpTableShift[CurrentPosition] = 0;
+	  --CurrentMaxMomentum;
+	  while (CurrentMaxMomentum > TmpMaxMomentum)
+	    {
+	      this->LookUpTableShift[CurrentMaxMomentum] = -1;
+	      --CurrentMaxMomentum;
+	    }
+ 	  CurrentMaxMomentum = TmpMaxMomentum;
+	  TmpLookUpTable = this->LookUpTable[CurrentMaxMomentum];
+	  if (CurrentMaxMomentum < this->MaximumLookUpShift)
+	    this->LookUpTableShift[CurrentMaxMomentum] = 0;
 	  else
-	    this->LookUpTableShift[CurrentPosition] = CurrentPosition + 1 - this->MaximumLookUpShift;
-	  CurrentShift = this->LookUpTableShift[CurrentPosition];
-	  TmpLookUpTableValue = (this->StateDescription[i] & stateMask) >> CurrentShift;
+	    this->LookUpTableShift[CurrentMaxMomentum] = CurrentMaxMomentum + 1 - this->MaximumLookUpShift;
+	  CurrentShift = this->LookUpTableShift[CurrentMaxMomentum];
+	  TmpLookUpTableValue = this->StateDescription[i] >> CurrentShift;
 	  CurrentLookUpTableValue = this->LookUpTableMemorySize;
 	  while (CurrentLookUpTableValue > TmpLookUpTableValue)
 	    {
@@ -487,8 +626,8 @@ void Spin1_2ChainWithPseudospin::GenerateLookUpTable(unsigned long memory, unsig
 	}
       else
 	{
-	  TmpLookUpTableValue = (this->StateDescription[i] & stateMask) >> CurrentShift;
- 	  if (TmpLookUpTableValue != CurrentLookUpTableValue)
+	  TmpLookUpTableValue = this->StateDescription[i] >> CurrentShift;
+	  if (TmpLookUpTableValue != CurrentLookUpTableValue)
 	    {
 	      while (CurrentLookUpTableValue > TmpLookUpTableValue)
 		{
@@ -505,8 +644,25 @@ void Spin1_2ChainWithPseudospin::GenerateLookUpTable(unsigned long memory, unsig
       --CurrentLookUpTableValue;
     }
   TmpLookUpTable[0] = this->HilbertSpaceDimension - 1;
+  this->ComputeRescalingFactors();
 }
 
+
+// compute the rescaling factors
+//
+
+void Spin1_2ChainWithPseudospinAnd2DTranslation::ComputeRescalingFactors()
+{
+  this->RescalingFactors = new double* [this->ChainLength + 1];
+  for (int i = 1; i <= this->ChainLength; ++i)
+    {
+      this->RescalingFactors[i] = new double [this->ChainLength + 1];
+      for (int j = 1; j <= this->ChainLength; ++j)
+	{
+	  this->RescalingFactors[i][j] = sqrt (((double) i) / ((double) j));
+	}
+    }
+}
 
 
 // return the Bosonic Occupation of a given state in the basis
@@ -514,13 +670,13 @@ void Spin1_2ChainWithPseudospin::GenerateLookUpTable(unsigned long memory, unsig
 // index = index of the state in the basis
 // finalState = reference on the array where the monomial representation has to be stored
 
-void Spin1_2ChainWithPseudospin::GetBosonicOccupation (unsigned int index, int * finalState)
-{
-  for (int i = 0; i < this->ChainLength; i++)
-    {
-      finalState[i] = (this->StateDescription[index] >> ((unsigned long) (2 * i)) )& 0x1ul;
-    }
-}
+// void Spin1_2ChainWithPseudospinAnd2DTranslation::GetBosonicOccupation (unsigned int index, int * finalState)
+// {
+//   for (int i = 0; i < this->ChainLength; i++)
+//     {
+//       finalState[i] = (this->StateDescription[index] >> ((unsigned long) (2 * i)) )& 0x1ul;
+//     }
+// }
 
 
 // return eigenvalue of Sz_i Sz_j associated to a given state (acts only on spin part of many-body state)
@@ -530,7 +686,7 @@ void Spin1_2ChainWithPseudospin::GetBosonicOccupation (unsigned int index, int *
 // state = index of the state to consider
 // return value = corresponding eigenvalue
 
-double Spin1_2ChainWithPseudospin::SziSzj (int i, int j, int state)
+double Spin1_2ChainWithPseudospinAnd2DTranslation::SziSzj (int i, int j, int state)
 {  
   unsigned long Mask = ((0x1ul << (2*i + 1)) | (0x1ul << (2*j + 1)));
   unsigned long tmpState = this->StateDescription[state] & Mask;
@@ -548,11 +704,12 @@ double Spin1_2ChainWithPseudospin::SziSzj (int i, int j, int state)
 // coefficient = reference on double where numerical coefficient has to be stored
 // return value = index of resulting state
 
-int Spin1_2ChainWithPseudospin::SmiSpj (int i, int j, int state, double& coefficient)
+int Spin1_2ChainWithPseudospinAnd2DTranslation::SmiSpj (int i, int j, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
 {  
   unsigned long tmpState = this->StateDescription[state];
   unsigned long State = tmpState;
   unsigned long tmpState2 = tmpState;
+  int tmpOrbitSize = this->NbrStateInOrbit[state];
   tmpState >>= (2*i + 1);
   tmpState &= 0x1ul;
   if (i != j)
@@ -564,7 +721,9 @@ int Spin1_2ChainWithPseudospin::SmiSpj (int i, int j, int state, double& coeffic
       if (tmpState2 == 0x1ul)
 	{
 	  coefficient = 1.0;
-	  return this->FindStateIndex((State | (0x1ul << (2*j + 1))) & ~(0x1ul << (2*i + 1)));
+	  State = ((State | (0x1ul << (2*j + 1))) & ~(0x1ul << (2*i + 1)));
+	  return this->SymmetrizeResult(State, tmpOrbitSize, coefficient, nbrTranslationX, nbrTranslationY);
+// 	  return this->FindStateIndex((State | (0x1ul << (2*j + 1))) & ~(0x1ul << (2*i + 1)));
 	}
       else
 	{
@@ -580,45 +739,7 @@ int Spin1_2ChainWithPseudospin::SmiSpj (int i, int j, int state, double& coeffic
   return this->HilbertSpaceDimension;
 }
 
-// return index of resulting state from application of S+_i S-_j operator on a given state
-//
-// i = position of S+ operator
-// j = position of S- operator
-// state = index of the state to be applied on S+_i S-_j operator
-// coefficient = reference on double where numerical coefficient has to be stored
-// return value = index of resulting state
 
-int Spin1_2ChainWithPseudospin::SpiSmj (int i, int j, int state, double& coefficient)
-{
-  unsigned long tmpState = this->StateDescription[state];
-  unsigned long State = tmpState;
-  unsigned long tmpState2 = tmpState;
-  tmpState >>= (2*j + 1);
-  tmpState &= 0x1ul;
-  if (i != j)
-    {
-      tmpState2 >>= (2*i + 1); 
-      tmpState2 &= 0x1ul;
-      tmpState2 <<= 1;
-      tmpState2 |= tmpState;
-      if (tmpState2 == 0x1ul)
-	{
-	  coefficient = 1.0;
-	  return this->FindStateIndex((State | (0x1ul << (2*i + 1))) & ~(0x1ul << (2*j + 1)));
-	}
-      else
-	{
-	  coefficient = 0.0;
-	  return this->HilbertSpaceDimension;
-	}
-    }
-  if (tmpState == 0x1ul)
-    {
-      coefficient = -0.25;
-      return state;
-    }
-  return this->HilbertSpaceDimension;
-}
 
 // operator acting on pseudospin on site i (off-diagonal part)
 //
@@ -627,16 +748,62 @@ int Spin1_2ChainWithPseudospin::SpiSmj (int i, int j, int state, double& coeffic
 // coefficient = reference on double where numerical coefficient has to be stored
 // return value = index of the resulting state
 
-int Spin1_2ChainWithPseudospin::JOffDiagonali (int i, int state, double& coefficient)
+int Spin1_2ChainWithPseudospinAnd2DTranslation::JOffDiagonali (int i, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
 {
   unsigned long State = this->StateDescription[state];
   coefficient = 1.0;
   unsigned long Tmp = (State >> (2*i)) & 0x1ul;
-  if (Tmp == 0x0ul)
-    return this->FindStateIndex(State | (0x1ul << (2*i)));
+  
+  if (Tmp == 0x0ul)    
+  {
+    State = State | (0x1ul << (2*i));
+    return this->SymmetrizeResult(State, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
+  }
   else
-    return this->FindStateIndex(State & ~(0x1ul << (2*i)));
+  {
+    State = State & ~(0x1ul << (2*i));
+    this->SymmetrizeResult(State, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
+  }
 }
+
+
+// operator acting on pseudospin on site i (off-diagonal part)
+//
+// i = position of pseudospin operator
+// state = index of the state to be applied on JAi operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of the resulting state
+
+int Spin1_2ChainWithPseudospinAnd2DTranslation::JoffiJoffj (int i, int j, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  unsigned long State = this->StateDescription[state];
+  coefficient = 1.0;
+  unsigned long Tmp = (State >> (2*i)) & 0x1ul;
+  unsigned long  Tmp1 = (State >> (2*j)) & 0x1ul;
+  unsigned long tmpState;
+//   this->PrintState(cout, state) << "(" << state << " - " << State << ")" << "  :   " << i << " " << j << " -> ";
+  if (Tmp == 0x0ul)    
+  {
+    tmpState = State | (0x1ul << (2*i));
+//     cout << "*" << tmpState << "*";
+    if (Tmp1 == 0x0ul)
+      State =  tmpState | (0x1ul << (2*j));
+    else
+      State = tmpState & ~(0x1ul << (2*j));
+  }
+  else
+  {
+    tmpState = State & ~(0x1ul << (2*i));
+//     cout << "*" << tmpState << "*";
+    if (Tmp1 == 0x0ul)
+      State =  tmpState | (0x1ul << (2*j));
+    else
+      State = tmpState & ~(0x1ul << (2*j));
+  }
+//   cout << "<" << State << "> ";
+  return this->SymmetrizeResult(State, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
+}
+
 
 // operator acting on pseudospin on site i (off-diagonal part)
 //
@@ -645,11 +812,224 @@ int Spin1_2ChainWithPseudospin::JOffDiagonali (int i, int state, double& coeffic
 // coupling = array where the coupling coefficients are stored
 // return value = numerical coefficient
 
-double Spin1_2ChainWithPseudospin::JDiagonali (int i, int state, double* coupling)
+double Spin1_2ChainWithPseudospinAnd2DTranslation::JDiagonali (int i, int state, double* coupling)
 {
   int Tmp = (int) ((this->StateDescription[state] >> (2*i)) & 0x1ul);
   return coupling[Tmp];
 }
+
+
+// operator acting on pseudospin on site i (off-diagonal) and j(diagonal part)
+//
+// i = position of pseudospin operator
+// j = position of pseudospin operator
+// state = index of the state to be applied on JAi operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of the resulting state
+
+int Spin1_2ChainWithPseudospinAnd2DTranslation::SmiSpjJoffiJj (int i, int j, int state, double* coupling, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  unsigned long tmpState = this->StateDescription[state];
+  unsigned long State = tmpState;
+  unsigned long tmpState2 = tmpState;
+  int tmpOrbitSize = this->NbrStateInOrbit[state];
+  tmpState >>= (2*i + 1);
+  tmpState &= 0x1ul;
+  if (i != j)
+    {
+      tmpState2 >>= (2*j + 1); 
+      tmpState2 &= 0x1ul;
+      tmpState2 <<= 1;
+      tmpState2 |= tmpState;
+      if (tmpState2 == 0x1ul)
+	{
+	  coefficient = 1.0;
+	  State = ((State | (0x1ul << (2*j + 1))) & ~(0x1ul << (2*i + 1)));
+	  int Tmp1 = (int) ((State >> (2*j)) & 0x1ul);
+	  coefficient *= coupling[Tmp1];
+	  
+	  unsigned long Tmp = (State >> (2*i)) & 0x1ul;  
+	  if (Tmp == 0x0ul)    
+	    State = State | (0x1ul << (2*i));
+	  else
+	    State = State & ~(0x1ul << (2*i));	  
+	  return this->SymmetrizeResult(State, tmpOrbitSize, coefficient, nbrTranslationX, nbrTranslationY);
+	}
+      else
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension;
+	}
+    }
+  if (tmpState == 0x0ul)
+    {
+      coefficient = -0.25;
+      int Tmp = (int) ((State >> (2*j)) & 0x1ul);
+      coefficient *= coupling[Tmp];
+      if (Tmp == 0)    
+	State = State | (0x1ul << (2*i));
+      else
+	State = State & ~(0x1ul << (2*i));	  
+      return this->SymmetrizeResult(State, tmpOrbitSize, coefficient, nbrTranslationX, nbrTranslationY);
+    }
+  return this->HilbertSpaceDimension;
+}
+
+
+
+// operator acting on pseudospin on site i (off-diagonal) and j(diagonal part)
+//
+// i = position of pseudospin operator
+// j = position of pseudospin operator
+// state = index of the state to be applied on JAi operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of the resulting state
+
+int Spin1_2ChainWithPseudospinAnd2DTranslation::SmiSpjJiJoffj (int i, int j, int state, double* coupling, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  unsigned long tmpState = this->StateDescription[state];
+  unsigned long State = tmpState;
+  unsigned long tmpState2 = tmpState;
+  int tmpOrbitSize = this->NbrStateInOrbit[state];
+  tmpState >>= (2*i + 1);
+  tmpState &= 0x1ul;
+  if (i != j)
+    {
+      tmpState2 >>= (2*j + 1); 
+      tmpState2 &= 0x1ul;
+      tmpState2 <<= 1;
+      tmpState2 |= tmpState;
+      if (tmpState2 == 0x1ul)
+	{
+	  coefficient = 1.0;
+	  State = ((State | (0x1ul << (2*j + 1))) & ~(0x1ul << (2*i + 1)));
+	  int Tmp1 = (int) ((State >> (2*i)) & 0x1ul);
+	  coefficient *= coupling[Tmp1];
+	  
+	  unsigned long Tmp = (State >> (2*j)) & 0x1ul;  
+	  if (Tmp == 0x0ul)    
+	    State = State | (0x1ul << (2*j));
+	  else
+	    State = State & ~(0x1ul << (2*j));	  
+	  return this->SymmetrizeResult(State, tmpOrbitSize, coefficient, nbrTranslationX, nbrTranslationY);
+	}
+      else
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension;
+	}
+    }
+  if (tmpState == 0x0ul)
+    {
+      coefficient = -0.25;
+      int Tmp = (int) ((State >> (2*j)) & 0x1ul);
+      coefficient *= coupling[Tmp];
+      if (Tmp == 0)    
+	State = State | (0x1ul << (2*i));
+      else
+	State = State & ~(0x1ul << (2*i));	  
+      return this->SymmetrizeResult(State, tmpOrbitSize, coefficient, nbrTranslationX, nbrTranslationY);
+    }
+  return this->HilbertSpaceDimension;
+}
+
+
+
+// operator acting on pseudospin on site i (off-diagonal) and j(diagonal part)
+//
+// i = position of pseudospin operator
+// j = position of pseudospin operator
+// state = index of the state to be applied on JAi operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of the resulting state
+
+int Spin1_2ChainWithPseudospinAnd2DTranslation::SmiSpjJoffiJoffj (int i, int j, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  unsigned long tmpState = this->StateDescription[state];
+  unsigned long State = tmpState;
+  unsigned long tmpState2 = tmpState;
+  unsigned long Tmp = (State >> (2*i)) & 0x1ul;  
+  unsigned long Tmp1 = (State >> (2*j)) & 0x1ul;  
+  int tmpOrbitSize = this->NbrStateInOrbit[state];
+  tmpState >>= (2*i + 1);
+  tmpState &= 0x1ul;
+  if (i != j)
+    {
+      tmpState2 >>= (2*j + 1); 
+      tmpState2 &= 0x1ul;
+      tmpState2 <<= 1;
+      tmpState2 |= tmpState;
+      if (tmpState2 == 0x1ul)
+	{
+	  coefficient = 1.0;
+	  State = ((State | (0x1ul << (2*j + 1))) & ~(0x1ul << (2*i + 1)));
+	  
+	  if (Tmp == 0x0ul)
+	    State = State | (0x1ul << (2*i));
+	  else
+	    State = State & ~(0x1ul << (2*i));
+	  
+	  if (Tmp1 == 0x0ul)
+	    State = State | (0x1ul << (2*j));
+	  else
+	    State = State & ~(0x1ul << (2*j));
+	  return this->SymmetrizeResult(State, tmpOrbitSize, coefficient, nbrTranslationX, nbrTranslationY);
+	}
+      else
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension;
+	}
+    }
+  
+  return this->HilbertSpaceDimension;
+}
+
+// operator acting on pseudospin on site i (off-diagonal) and j(diagonal part)
+//
+// i = position of pseudospin operator
+// j = position of pseudospin operator
+// state = index of the state to be applied on JAi operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of the resulting state
+
+int Spin1_2ChainWithPseudospinAnd2DTranslation::SmiSpjJiJj (int i, int j, int state, double* couplingI, double* couplingJ, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  unsigned long tmpState = this->StateDescription[state];
+  unsigned long State = tmpState;
+  unsigned long tmpState2 = tmpState;
+  int tmpOrbitSize = this->NbrStateInOrbit[state];
+  int Tmp = (int) ((State >> (2*i)) & 0x1ul);
+  int Tmp1 = (int) ((State >> (2*j)) & 0x1ul);
+  
+  tmpState >>= (2*i + 1);
+  tmpState &= 0x1ul;
+  if (i != j)
+    {
+      tmpState2 >>= (2*j + 1); 
+      tmpState2 &= 0x1ul;
+      tmpState2 <<= 1;
+      tmpState2 |= tmpState;
+      if (tmpState2 == 0x1ul)
+	{
+	  coefficient = couplingI[Tmp] * couplingJ[Tmp1];
+	  State = ((State | (0x1ul << (2*j + 1))) & ~(0x1ul << (2*i + 1))); 
+	  return this->SymmetrizeResult(State, tmpOrbitSize, coefficient, nbrTranslationX, nbrTranslationY);
+	}
+      else
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension;
+	}
+    }
+  if (tmpState == 0x0ul)
+    {
+      coefficient = -0.25 * couplingI[Tmp] * couplingJ[Tmp1];
+      return this->SymmetrizeResult(State, tmpOrbitSize, coefficient, nbrTranslationX, nbrTranslationY);
+    }
+  return this->HilbertSpaceDimension;
+}
+
 
 // convert a state defined on a lattice with a number of sites equals to a multiple of three
 //
@@ -657,7 +1037,7 @@ double Spin1_2ChainWithPseudospin::JDiagonali (int i, int state, double* couplin
 // space = pointer to the Hilbert space where state is defined
 // return value = state in the (Kx,Ky) basis
 
-RealVector Spin1_2ChainWithPseudospin::ProjectToEffectiveSubspaceThreeToOne(ComplexVector& state, AbstractSpinChain* space)
+RealVector Spin1_2ChainWithPseudospinAnd2DTranslation::ProjectToEffectiveSubspaceThreeToOne(ComplexVector& state, AbstractSpinChain* space)
 {
   Spin1_2ChainNew* TmpSpace = (Spin1_2ChainNew*) space;
   RealVector TmpVector (this->HilbertSpaceDimension, true);
@@ -761,124 +1141,3 @@ RealVector Spin1_2ChainWithPseudospin::ProjectToEffectiveSubspaceThreeToOne(Comp
   delete[] TmpFlag;
   return TmpVector;
 }
-
-
-// return index of resulting state from application of S-_i S+_j operator on a given state
-//
-// i = position of S- operator
-// j = position of S+ operator
-// state = index of the state to be applied on S-_i S+_j operator
-// coefficient = reference on double where numerical coefficient has to be stored
-// return value = index of resulting state
-
-int Spin1_2ChainWithPseudospin::SmiSpj (int i, int j, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
-{
-  cout << "Caution: using dummy operator Spin1_2ChainWithPseudospin::SmiSpj" << endl;
-  return 0;
-}
-
-
-// operator acting on pseudospin on site i (off-diagonal part)
-//
-// i = position of pseudospin operator
-// state = index of the state to be applied on JAi operator
-// coefficient = reference on double where numerical coefficient has to be stored
-// return value = index of the resulting state
-
-int Spin1_2ChainWithPseudospin::JOffDiagonali (int i, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
-{
-  cout << "Caution: using dummy operator Spin1_2ChainWithPseudospin::JOffDiagonali" << endl;
-  return 0;
-}
-
-// operator acting on pseudospin on site i (off-diagonal part)
-//
-// i = position of pseudospin operator
-// state = index of the state to be applied on JAi operator
-// coefficient = reference on double where numerical coefficient has to be stored
-// return value = index of the resulting state
-
-int Spin1_2ChainWithPseudospin::JoffiJoffj (int i, int j, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
-{
-  cout << "Caution: using dummy operator Spin1_2ChainWithPseudospin::JoffiJoffj" << endl;
-  return 0;
-}
-
-
-// operator acting on pseudospin on site i (off-diagonal) and j(diagonal part)
-//
-// i = position of pseudospin operator
-// j = position of pseudospin operator
-// state = index of the state to be applied on JAi operator
-// coefficient = reference on double where numerical coefficient has to be stored
-// return value = index of the resulting state
-
-int Spin1_2ChainWithPseudospin::JoffiJj (int i, int j, int state, double* coupling, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
-{
-  cout << "Caution: using dummy operator Spin1_2ChainWithPseudospin::Joffij" << endl;
-  return 0;
-}
-
-  
-// operator acting on pseudospin on site i (diagonal) and j (diagonal part) and spin (SpSm)
-//
-// i = position of first spin*pseudospin operator
-// j = position of spin*pseudospin operator
-// state = index of the state to which operator has to be applied
-// couplingI = array of coefficients characterizing the diagonal pseudospin coupling on site i
-// couplingJ = array of coefficients characterizing the diagonal pseudospin coupling on site J
-// coefficient = reference on double where numerical coefficient has to be stored
-// return value = index of the resulting state
-
-int Spin1_2ChainWithPseudospin::SmiSpjJiJj (int i, int j, int state, double* couplingI, double* couplingJ, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
-{
-  cout << "Caution: using dummy operator Spin1_2ChainWithPseudospin::SmiSpjJiJj" << endl;
-  return 0;
-}
-  
-  
-// operator acting on pseudospin on site i (off-diagonal) and j (diagonal part) and spin (SpSm)
-//
-// i = position of first spin*pseudospin operator
-// j = position of spin*pseudospin operator
-// state = index of the state to which operator has to be applied
-// coupling = array of coefficients characterizing the diagonal pseudospin coupling on site j
-// coefficient = reference on double where numerical coefficient has to be stored
-// return value = index of the resulting state
-
-int Spin1_2ChainWithPseudospin::SmiSpjJoffiJj (int i, int j, int state, double* coupling, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
-{
-  cout << "Caution: using dummy operator Spin1_2ChainWithPseudospin::SmiSpjJoffiJj" << endl;
-  return 0;
-}
-  
-// operator acting on pseudospin on site i (diagonal) and j (off-diagonal part) and spin (SpSm)
-//
-// i = position of first spin*pseudospin operator
-// j = position of spin*pseudospin operator
-// state = index of the state to which operator has to be applied
-// coupling = array of coefficients characterizing the diagonal pseudospin coupling on site i
-// coefficient = reference on double where numerical coefficient has to be stored
-// return value = index of the resulting stateDescription
-
-int Spin1_2ChainWithPseudospin::SmiSpjJiJoffj (int i, int j, int state, double* coupling, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
-{
-  cout << "Caution: using dummy operator Spin1_2ChainWithPseudospin::SmiSpjJiJoffj" << endl;
-  return 0;
-}
-  
-// operator acting on pseudospin on site i (off-diagonal) and j (off-diagonal part) and spin (SpSm)
-//
-// i = position of first spin*pseudospin operator
-// j = position of spin*pseudospin operator
-// state = index of the state to which operator has to be applied
-// coefficient = reference on double where numerical coefficient has to be stored
-// return value = index of the resulting stateDescription
-
-int Spin1_2ChainWithPseudospin::SmiSpjJoffiJoffj (int i, int j, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
-{
-  cout << "Caution: using dummy operator Spin1_2ChainWithPseudospin::SmiSpjJoffiJoffj" << endl;
-  return 0;
-}
-  
-  

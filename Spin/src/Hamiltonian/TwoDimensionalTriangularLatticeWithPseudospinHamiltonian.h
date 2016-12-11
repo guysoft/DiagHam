@@ -77,10 +77,17 @@ class TwoDimensionalTriangularLatticeWithPseudospinHamiltonian : public Abstract
 
   // array to store the diagonal contribution of the Hamiltonian
   double* SzSzContributions;
+  
+  bool HermitianSymmetryFlag;
 
  public:
 
-  // constructor from default data
+   
+   // default constructor
+   //
+   TwoDimensionalTriangularLatticeWithPseudospinHamiltonian();
+   
+  // constructor
   //
   // chain = pointer to Hilbert space of the associated system
   // nbrSpinX = number of spin along the x direction
