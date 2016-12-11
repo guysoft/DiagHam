@@ -387,7 +387,6 @@ long Spin1_2ChainWithPseudospinAnd2DTranslation::EvaluateHilbertSpaceDimension(i
 
 long Spin1_2ChainWithPseudospinAnd2DTranslation::GenerateStates()
 {
-  
   cout << "Intermediary Hilbert space dimension = " << (this->LargeHilbertSpaceDimension) << endl;
   this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
   this->RawGenerateStates((this->Sz + this->ChainLength) >> 1, this->ChainLength - 1, 0l);

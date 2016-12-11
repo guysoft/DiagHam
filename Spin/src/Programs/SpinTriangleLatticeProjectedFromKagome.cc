@@ -3,6 +3,7 @@
 
 #include "HilbertSpace/Spin1_2ChainWithPseudospin.h"
 #include "HilbertSpace/Spin1_2ChainWithPseudospinAnd2DTranslation.h"
+#include "HilbertSpace/Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -67,6 +68,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1); 
   (*SystemGroup) += new  SingleIntegerOption ('\n', "initial-sz", "twice the initial sz sector that has to computed", 0);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "nbr-sz", "number of sz value to evaluate (0 for all sz sectors)", 0);
+  (*SystemGroup) += new  BooleanOption ('\n', "disable-szsymmetry", "disable the Sz<->-Sz symmetry");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "sz-parity", "select the  Sz <-> -Sz parity (can be 1 or -1, 0 if both sectors have to be computed", 0);
   (*SystemGroup) += new  SingleDoubleOption ('j', "j-value", "coupling constant value", 1.0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -95,6 +98,7 @@ int main(int argc, char** argv)
   int NbrSpins = NbrSitesX * NbrSitesY;
   double JValue =  Manager.GetDouble("j-value");
   bool NoTranslationFlag = Manager.GetBoolean("no-translation");
+  bool NoSpinInversionFlag = Manager.GetBoolean("disable-szsymmetry");
   
   int nx1 = Manager.GetInteger("nx1");
   int ny1 = Manager.GetInteger("ny1");
@@ -199,6 +203,24 @@ int main(int argc, char** argv)
     MaxYMomentum = 0;
   }
   
+  int MaxParity = 0;
+  int MinParity = 0;
+  if (NoSpinInversionFlag == false)
+  {
+    if ((InitalSzValue == 0) && (MaxSzValue == 0) && (NoTranslationFlag == false))
+    {
+      MaxParity = 1;
+      if (Manager.GetInteger("sz-parity") != 0)
+      {
+	MinParity = (1 - Manager.GetInteger("sz-parity")) / 2;
+	MaxParity = MinParity;
+      }
+    }
+    else
+    {
+      cout << "Work in the Sz = 0 sector to be able to use the Sz symmetry, and activate translation symmetry" << endl;
+    }
+  }
   bool FirstRun = true;
   for (; InitalSzValue <= MaxSzValue; InitalSzValue +=2)
     {
@@ -206,47 +228,56 @@ int main(int argc, char** argv)
       {
 	for (int YMomentum = MinYMomentum; YMomentum <= MaxYMomentum; ++YMomentum)
 	{
-	  cout << "2Sz = " << InitalSzValue << endl; 
-	  if (NoTranslationFlag == true)
-	    Space = new Spin1_2ChainWithPseudospin(NbrSpins, InitalSzValue, 1000000);
-	  else
+	  for (int parity = MinParity; parity <= MaxParity; ++parity)
 	  {
-	    cout << "kx = " << XMomentum << " , ky = " << YMomentum << endl;
-	    Space = new Spin1_2ChainWithPseudospinAnd2DTranslation(NbrSpins, InitalSzValue, XMomentum, NbrSitesX, YMomentum, NbrSitesY, 1000000);
-	  }
-	  cout << "Hilbert space dimension = " << (Space->GetHilbertSpaceDimension()) << endl;
-	  if (Space->GetHilbertSpaceDimension() > 0)
-	  {
-	    Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
-	    TwoDimensionalTriangularLatticeWithPseudospinHamiltonian* Hamiltonian = 0;
-	    char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
-	    char* TmpSzString = new char[64];
+	    cout << "2Sz = " << InitalSzValue << endl; 
 	    if (NoTranslationFlag == true)
-	    {
-	      Hamiltonian = new TwoDimensionalTriangularLatticeWithPseudospinHamiltonian(Space, NbrSitesX, NbrSitesY, JValue, (!Manager.GetBoolean("cylinder")), OffsetReal);
-	      sprintf (TmpEigenstateString, "%s_sz_%d", OutputFileName, InitalSzValue);	   
-	      sprintf (TmpSzString, "%d", InitalSzValue);
-	      GenericRealMainTask Task(&Manager, Space, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
-				   FirstRun, TmpEigenstateString);
-	      MainTaskOperation TaskOperation (&Task);
-	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-	    }
+	      Space = new Spin1_2ChainWithPseudospin(NbrSpins, InitalSzValue, 1000000);
 	    else
 	    {
-	      Hamiltonian = new TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHamiltonian(Space, XMomentum, NbrSitesX, YMomentum, NbrSitesY, JValue, (!Manager.GetBoolean("cylinder")), OffsetReal);
-	      sprintf (TmpEigenstateString, "%s_sz_%d_kx_%d_ky_%d", OutputFileName, InitalSzValue, XMomentum, YMomentum);	   
-	      sprintf (TmpSzString, "%d %d %d", InitalSzValue, XMomentum, YMomentum);
-	      Lanczos.SetComplexAlgorithms();
-	      GenericComplexMainTask Task(&Manager, Space, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
-				   FirstRun, TmpEigenstateString);
-	      MainTaskOperation TaskOperation (&Task);
-	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	      cout << "kx = " << XMomentum << " , ky = " << YMomentum << endl;
+	      if (NoSpinInversionFlag == true)
+		Space = new Spin1_2ChainWithPseudospinAnd2DTranslation(NbrSpins, InitalSzValue, XMomentum, NbrSitesX, YMomentum, NbrSitesY, 1000000);
+	      else
+	      {
+		cout << "SzParity = " << parity << endl;
+		Space = new Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation(NbrSpins, InitalSzValue, parity, XMomentum, NbrSitesX, YMomentum, NbrSitesY, 1000000);
+	      }
 	    }
+	    cout << "Hilbert space dimension = " << (Space->GetHilbertSpaceDimension()) << endl;
+	    if (Space->GetHilbertSpaceDimension() > 0)
+	    {
+	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
+	      TwoDimensionalTriangularLatticeWithPseudospinHamiltonian* Hamiltonian = 0;
+	      char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
+	      char* TmpSzString = new char[64];
+	      if (NoTranslationFlag == true)
+	      {
+		Hamiltonian = new TwoDimensionalTriangularLatticeWithPseudospinHamiltonian(Space, NbrSitesX, NbrSitesY, JValue, (!Manager.GetBoolean("cylinder")), OffsetReal);
+		sprintf (TmpEigenstateString, "%s_sz_%d", OutputFileName, InitalSzValue);	   
+		sprintf (TmpSzString, "%d", InitalSzValue);
+		GenericRealMainTask Task(&Manager, Space, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+				   FirstRun, TmpEigenstateString);
+		MainTaskOperation TaskOperation (&Task);
+		TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	      }
+	      else
+	      {
+// 		Hamiltonian = new TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHamiltonian(Space, XMomentum, NbrSitesX, YMomentum, NbrSitesY, JValue, (!Manager.GetBoolean("cylinder")), OffsetReal);
+// 		sprintf (TmpEigenstateString, "%s_sz_%d_kx_%d_ky_%d", OutputFileName, InitalSzValue, XMomentum, YMomentum);	   
+// 		sprintf (TmpSzString, "%d %d %d", InitalSzValue, XMomentum, YMomentum);
+// 		Lanczos.SetComplexAlgorithms();
+// 		GenericComplexMainTask Task(&Manager, Space, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+// 				   FirstRun, TmpEigenstateString);
+// 		MainTaskOperation TaskOperation (&Task);
+// 		TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	      }
 	   	    
-	    FirstRun = false;
-	    delete Hamiltonian;
-	    delete[] TmpSzString;
-	    delete[] TmpEigenstateString;
+	      FirstRun = false;
+	      delete Hamiltonian;
+	      delete[] TmpSzString;
+	      delete[] TmpEigenstateString;
+	    }
 	  }
 	}
       }
