@@ -123,7 +123,6 @@ Spin1_2ChainWithPseudospinAnd2DTranslation::Spin1_2ChainWithPseudospinAnd2DTrans
 //     for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 //       this->PrintState(cout, i) << endl;
     
-    this->PrintState(cout, 0) << endl;
   }
   
 }
@@ -334,6 +333,10 @@ int Spin1_2ChainWithPseudospinAnd2DTranslation::TranslateState (int nbrTranslati
 
 int Spin1_2ChainWithPseudospinAnd2DTranslation::FindStateIndex(unsigned long stateDescription)
 {
+  if ((stateDescription > this->StateDescription[0]) || (stateDescription < this->StateDescription[this->HilbertSpaceDimension - 1]))
+    return this->HilbertSpaceDimension;
+  
+  
   int CurrentMaximumUpPosition = 2 * this->ChainLength - 1;
   while ((((stateDescription >> CurrentMaximumUpPosition) & 0x1ul) == 0x0ul) && (CurrentMaximumUpPosition > 0))
     --CurrentMaximumUpPosition;
@@ -571,7 +574,8 @@ void Spin1_2ChainWithPseudospinAnd2DTranslation::GenerateLookUpTable(unsigned lo
   this->LookUpTableShift = new int [2 * this->ChainLength];
   for (int i = 0; i < 2 * this->ChainLength; ++i)
     this->LookUpTable[i] = new int [this->LookUpTableMemorySize + 1];
-  int CurrentMaxMomentum = 2 * this->ChainLength;
+  int CurrentMaxMomentum = 2 * this->ChainLength - 1;
+  int TmpMaxMomentum = 2 * this->ChainLength - 1;
   while (((this->StateDescription[0] >> CurrentMaxMomentum) == 0x0ul) && (CurrentMaxMomentum > 0))
     --CurrentMaxMomentum;
   int* TmpLookUpTable = this->LookUpTable[CurrentMaxMomentum];
@@ -780,7 +784,6 @@ int Spin1_2ChainWithPseudospinAnd2DTranslation::JoffiJoffj (int i, int j, int st
   unsigned long Tmp = (State >> (2*i)) & 0x1ul;
   unsigned long  Tmp1 = (State >> (2*j)) & 0x1ul;
   unsigned long tmpState;
-//   this->PrintState(cout, state) << "(" << state << " - " << State << ")" << "  :   " << i << " " << j << " -> ";
   if (Tmp == 0x0ul)    
   {
     tmpState = State | (0x1ul << (2*i));

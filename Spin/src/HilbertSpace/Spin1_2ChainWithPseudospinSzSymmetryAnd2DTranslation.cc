@@ -118,7 +118,7 @@ Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation::Spin1_2ChainWithPseudospin
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->Sz, this->ChainLength);
   this->LargeHilbertSpaceDimension = this->GenerateStates();
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
-//   cout << (this->LargeHilbertSpaceDimension) << endl;
+  cout << "Hilbert space dimension = " << (this->LargeHilbertSpaceDimension) << endl;
   if (this->LargeHilbertSpaceDimension > 0)
     {
       this->GenerateLookUpTable(memory);

@@ -143,14 +143,24 @@ int main(int argc, char** argv)
     if (TiltedFlag)
     {
       if (NoTranslationFlag == false)
-	sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_j_%.6f", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, JValue);
+      {
+	if (NoSpinInversionFlag == false)
+	  sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_j_%.6f", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, JValue);
+	else
+	  sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_noszparity_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_j_%.6f", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, JValue);
+      }
       else
 	sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_notranslation_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_j_%.6f", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, JValue);
     }
     else
     {
       if (NoTranslationFlag == false)
-	sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_x_%d_y_%d_j_%.6f", NbrSitesX, NbrSitesY, JValue);
+      {
+	if (NoSpinInversionFlag == false)
+	  sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_x_%d_y_%d_j_%.6f", NbrSitesX, NbrSitesY, JValue);
+	else
+	  sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_noszparity_x_%d_y_%d_j_%.6f", NbrSitesX, NbrSitesY, JValue);
+      }
       else
 	sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_notranslation_x_%d_y_%d_j_%.6f", NbrSitesX, NbrSitesY, JValue);
     }
@@ -205,9 +215,12 @@ int main(int argc, char** argv)
   
   int MaxParity = 0;
   int MinParity = 0;
+  
   if (NoSpinInversionFlag == false)
   {
-    if ((InitalSzValue == 0) && (MaxSzValue == 0) && (NoTranslationFlag == false))
+    InitalSzValue = 0;
+    MaxSzValue = 0;
+    if (NoTranslationFlag == false)
     {
       MaxParity = 1;
       if (Manager.GetInteger("sz-parity") != 0)
@@ -221,6 +234,7 @@ int main(int argc, char** argv)
       cout << "Work in the Sz = 0 sector to be able to use the Sz symmetry, and activate translation symmetry" << endl;
     }
   }
+  
   bool FirstRun = true;
   for (; InitalSzValue <= MaxSzValue; InitalSzValue +=2)
     {
@@ -263,14 +277,22 @@ int main(int argc, char** argv)
 	      }
 	      else
 	      {
-// 		Hamiltonian = new TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHamiltonian(Space, XMomentum, NbrSitesX, YMomentum, NbrSitesY, JValue, (!Manager.GetBoolean("cylinder")), OffsetReal);
-// 		sprintf (TmpEigenstateString, "%s_sz_%d_kx_%d_ky_%d", OutputFileName, InitalSzValue, XMomentum, YMomentum);	   
-// 		sprintf (TmpSzString, "%d %d %d", InitalSzValue, XMomentum, YMomentum);
-// 		Lanczos.SetComplexAlgorithms();
-// 		GenericComplexMainTask Task(&Manager, Space, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
-// 				   FirstRun, TmpEigenstateString);
-// 		MainTaskOperation TaskOperation (&Task);
-// 		TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+		Hamiltonian = new TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHamiltonian(Space, XMomentum, NbrSitesX, YMomentum, NbrSitesY, JValue, (!Manager.GetBoolean("cylinder")), OffsetReal);
+		if (NoSpinInversionFlag == true)
+		{
+		  sprintf (TmpEigenstateString, "%s_sz_%d_kx_%d_ky_%d", OutputFileName, InitalSzValue, XMomentum, YMomentum);
+		  sprintf (TmpSzString, "%d %d %d", InitalSzValue, XMomentum, YMomentum);
+		}
+		else
+		{
+		   sprintf (TmpEigenstateString, "%s_sz_%d_szsym_%d_kx_%d_ky_%d", OutputFileName, InitalSzValue, (2*parity - 1), XMomentum, YMomentum);
+		   sprintf (TmpSzString, "%d %d %d %d", InitalSzValue, XMomentum, YMomentum, (2*parity - 1));
+		}
+		Lanczos.SetComplexAlgorithms();
+		GenericComplexMainTask Task(&Manager, Space, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+				   FirstRun, TmpEigenstateString);
+		MainTaskOperation TaskOperation (&Task);
+		TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 	      }
 	   	    
 	      FirstRun = false;
