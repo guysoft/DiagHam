@@ -1110,6 +1110,21 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value = normalized state
   virtual RealVector& NormalizeJackToCylinder(RealVector& state, double aspect);
 
+  // normalize from the cylinder geometry to the Jack normalization
+  //
+  // state = reference to the state to unnormalize
+  // aspect = cylinder aspect ratio
+  // reference = set which component as to be normalized to 1
+  // return value = unnormalized state
+  virtual RealVector& NormalizeCylinderToJack(RealVector& state, double aspect, long reference = 0l);
+
+  // normalize a state defined on the sphere geometry with respect to cylinder basis
+  //
+  // state = reference to the state to normalize
+  // aspect = aspect ratio of cylinder
+  // return value = normalized state
+  virtual RealVector& NormalizeSphereToCylinder(RealVector& state, double aspect);
+
   // create a state from its MPS description
   //
   // bMatrices = array that gives the B matrices 

@@ -43,6 +43,7 @@ using std::endl;
 
 class BosonOnSphereShort;
 class FermionOnSphereWithSpin;
+class FermionOnSphereWithSpinTwoLandauLevels;
 
 
 class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
@@ -396,6 +397,21 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // return value = normalized state
   virtual RealVector& NormalizeJackToCylinder(RealVector& state, double aspect);
 
+  // normalize from the cylinder geometry to the Jack normalization
+  //
+  // state = reference to the state to unnormalize
+  // aspect = cylinder aspect ratio
+  // reference = set which component as to be normalized to 1
+  // return value = unnormalized state
+  virtual RealVector& NormalizeCylinderToJack(RealVector& state, double aspect, long reference = 0l);
+
+  // normalize a state defined on the sphere geometry with respect to cylinder basis
+  //
+  // state = reference to the state to normalize
+  // aspect = aspect ratio of cylinder
+  // return value = normalized state
+  virtual RealVector& NormalizeSphereToCylinder(RealVector& state, double aspect);
+
   // Compute the product of a spinful fermionic state with a Van der Monde determinant 
   //
   // fermionicState = reference on the spinful fermionic state
@@ -406,6 +422,18 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // unnormalizedFlag = true if the state should be written in the unnormalized basis
   // architecture = pointer to the architecture
   virtual void SlaterTimeSpinfulFermionicState(RealVector& fermionicState, RealVector& outputVector, FermionOnSphereWithSpin* fermionicSpace, 
+					       int minIndex, int nbrComponents, bool unnormalizedFlag, AbstractArchitecture* architecture);
+
+  // Compute the product of a spinful fermionic state with a Van der Monde determinant 
+  //
+  // fermionicState = reference on the spinful fermionic state
+  // outputVector = reference on the vector where the result will be stored
+  // fermionicSpace = pointer on the Hilbert Space associated to the spinful fermionic state
+  // minIndex = first component to compute
+  // nbrComponents = number of components to compute
+  // unnormalizedFlag = true if the state should be written in the unnormalized basis
+  // architecture = pointer to the architecture
+  virtual void SlaterTimeSpinfulFermionicState(RealVector& fermionicState, RealVector& outputVector, FermionOnSphereWithSpinTwoLandauLevels* fermionicSpace, 
 					       int minIndex, int nbrComponents, bool unnormalizedFlag, AbstractArchitecture* architecture);
 
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
@@ -661,6 +689,19 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   virtual void ReverseVanDerMondeTimesSlater (unsigned long* slaterUp, unsigned long* slaterDown, RealVector& finalState, 
 					      double** threeOrbitalOverlaps, int position);
 
+  // Compute the product of a spinful Slater determinant in two Landau levels with a Van der Monde determinant
+  //
+  // slaterLLLUp = monomial representation of the lowest Landau part of the Slater spin up part
+  // slater2LLUp = monomial representation of the second Landau part of the Slater spin up part
+  // slaterLLLDown = monomial representation of the lowest Landau part  of the Slater spin down part
+  // slater2LLDown = monomial representation of the second Landau part of the Slater spin down part
+  // nbrBosonsLLLUp - number of spin up bosons in the lowest Landau level
+  // nbrBosonsLLLDown - number of spin down bosons in the lowest Landau level
+  // finalState = reference on the vector the produced state will be stored
+  // threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
+  virtual void VanDerMondeTimesSlater (unsigned long* slaterLLLUp, unsigned long* slater2LLUp, unsigned long* slaterLLLDown, unsigned long* slater2LLDown, 
+				       int nbrBosonsLLLUp, int nbrBosonsLLLDown, RealVector& finalState, double*** threeOrbitalOverlaps);
+  
 };
 
 // get the number of orbitals

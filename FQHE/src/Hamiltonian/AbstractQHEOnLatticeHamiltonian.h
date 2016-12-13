@@ -1011,8 +1011,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   
   virtual void HermitianEvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, RealVector* vSources, RealVector* vDestinations, int nbrVectors);
   
-  
-	
+  	
   // core part of the AddMultiply method involving the two-body interaction
   // 
   // particles = pointer to the Hilbert space

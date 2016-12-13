@@ -16,6 +16,7 @@
 
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/StringTools.h"
+#include "GeneralTools/MultiColumnASCIIFile.h"
 
 #include <iostream>
 #include <cstring>
@@ -56,6 +57,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('k', "nbr-flux2", "number of flux quanta for the second sphere", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "inital value for the z projection of the first sphere angular momentum (Lz)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-kz", "inital value for the projection of the first sphere angular momentum (Kz)", 0);
+  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
+  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of Lz sectors to compute (0 if all possible sectors have to be computed)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-kz", "number of Kz sectors to compute (0 if all possible sectors have to be computed)", 0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
@@ -87,10 +90,70 @@ int main(int argc, char** argv)
   int NbrFluxQuanta2 = Manager.GetInteger("nbr-flux2");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   
+  int NbrPseudoPotentials = 0;
+  int* PseudoPotentialAngularMomentum1;
+  int* PseudoPotentialAngularMomentum2;
+  double* PseudoPotentials;
+  char* InteractioName = 0;
+  if (Manager.GetString("interaction-file") == 0)
+    {
+      cout << "no interaction file has been provided, assuming delta interaction" << endl;
+      InteractioName = new char[8];
+      sprintf(InteractioName, "delta");
+      NbrPseudoPotentials = 1;
+      PseudoPotentialAngularMomentum1 = new int[NbrPseudoPotentials];
+      PseudoPotentialAngularMomentum2 = new int[NbrPseudoPotentials];
+      PseudoPotentials = new double[NbrPseudoPotentials];
+      PseudoPotentialAngularMomentum1[0] = 0;
+      PseudoPotentialAngularMomentum2[0] = 0;
+      PseudoPotentials[0] = 1.0;
+    }
+  else
+    {
+      MultiColumnASCIIFile InteractionFile;
+      if (InteractionFile.Parse(Manager.GetString("interaction-file")) == false)
+	{
+	  InteractionFile.DumpErrors(cout);
+	  return -1;
+	}
+      if (InteractionFile.GetNbrColumns() < 3)
+	{
+	  cout << "error, wrong number of columns in " << Manager.GetString("interaction-file") << endl;
+	  return -1;
+	}
+      NbrPseudoPotentials = InteractionFile.GetNbrLines();
+      if (NbrPseudoPotentials <= 0)
+	{
+	  cout << "error, no pseudo-potential defined in " << Manager.GetString("interaction-file") << endl;
+	  return -1;
+	}
+      PseudoPotentialAngularMomentum1 = InteractionFile.GetAsIntegerArray(0);
+      if (PseudoPotentialAngularMomentum1 == 0)
+	{
+	  InteractionFile.DumpErrors(cout);
+	  return -1;	  
+	}
+      PseudoPotentialAngularMomentum2 = InteractionFile.GetAsIntegerArray(1);
+      if (PseudoPotentialAngularMomentum2 == 0)
+	{
+	  InteractionFile.DumpErrors(cout);
+	  return -1;	  
+	}
+      PseudoPotentials = InteractionFile.GetAsDoubleArray(2);
+      if (PseudoPotentials == 0)
+	{
+	  InteractionFile.DumpErrors(cout);
+	  return -1;	  
+	}
+      InteractioName = new char[strlen(Manager.GetString("interaction-file")) + 1];
+      strcpy (InteractioName, Manager.GetString("interaction-file"));
+   }
+
+
   bool FirstRun = true;
 
-  char* OutputName = new char [256];
-  sprintf (OutputName, "bosons_s2xs2_delta_n_%d_2s1_%d_2s2_%d.dat", NbrBosons, NbrFluxQuanta1, NbrFluxQuanta2);
+  char* OutputName = new char [256 + strlen(InteractioName)];
+  sprintf (OutputName, "bosons_s2xs2_%s_n_%d_2s1_%d_2s2_%d.dat", InteractioName, NbrBosons, NbrFluxQuanta1, NbrFluxQuanta2);
 
   int MaxTotalLz = NbrFluxQuanta1 * NbrBosons;
   int MaxTotalKz = NbrFluxQuanta2 * NbrBosons;
@@ -132,7 +195,12 @@ int main(int argc, char** argv)
 	  // 	Space->PrintState(cout, i);
 	  
 	  AbstractQHEHamiltonian* Hamiltonian = 0;
-	  Hamiltonian = new ParticleOnS2xS2DeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta1, NbrFluxQuanta2, Architecture.GetArchitecture(), Memory);
+	  if (Manager.GetString("interaction-file") == 0)	    
+	    Hamiltonian = new ParticleOnS2xS2DeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta1, NbrFluxQuanta2, Architecture.GetArchitecture(), Memory);
+	  else
+	      Hamiltonian = new ParticleOnS2xS2GenericTwoBodyHamiltonian(Space, NbrBosons, NbrFluxQuanta1, NbrFluxQuanta2, 
+									 NbrPseudoPotentials, PseudoPotentialAngularMomentum1, PseudoPotentialAngularMomentum2, 
+									 PseudoPotentials, Architecture.GetArchitecture(), Memory);
       
 	  char* EigenvectorName = 0;
 	  if (Manager.GetBoolean("eigenstate") == true)	

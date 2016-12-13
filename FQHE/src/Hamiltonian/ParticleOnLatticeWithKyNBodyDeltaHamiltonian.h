@@ -263,7 +263,6 @@ class ParticleOnLatticeWithKyNBodyDeltaHamiltonian : public ParticleOnLatticeWit
 };
 
 
-
 // core part of the AddMultiply method involving the n-body interaction
 // 
 // particles = pointer to the Hilbert space

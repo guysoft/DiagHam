@@ -32,6 +32,7 @@
 
 #include "config.h"
 #include "HilbertSpace/FermionOnS2xS2WithExclusionPrinciple.h"
+#include "GeneralTools/ArrayTools.h"
 
 #include <iostream>
 #include <math.h>
@@ -168,6 +169,8 @@ FermionOnS2xS2WithExclusionPrinciple::FermionOnS2xS2WithExclusionPrinciple (int 
 		    --TmpLzMax;
 		  this->StateLzMax[i] = TmpLzMax;
 		}
+	      this->TemporaryCanonicalArray = new unsigned long [this->LargeHilbertSpaceDimension];
+	      this->TemporaryCanonicalArray3x3Block = new unsigned long [this->LargeHilbertSpaceDimension];
 	    }
 	  else
 	    {
@@ -370,10 +373,24 @@ long FermionOnS2xS2WithExclusionPrinciple::GenerateStates(int nbrFermions, int c
 
 bool FermionOnS2xS2WithExclusionPrinciple::HasPauliExclusions(int index, int pauliK, int pauliR)
 {
-  if (this->StateDescription[index] != this->FindCanonical(this->StateDescription[index], 0, 0))
+  this->TemporaryCanonicalArray[0] = this->StateDescription[index];
+  int Tmp = FindCanonical(this->StateDescription[index], 1);
+  if (Tmp <= 0)
     {
       return false;
     }
+  if (this->TemporaryCanonicalArray[Tmp - 1] == this->StateDescription[index])
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+//   if (this->StateDescription[index] != this->FindCanonical(this->StateDescription[index], 0, 0))
+//     {
+//       return false;
+//     }
   return true;
 }
 
@@ -523,4 +540,207 @@ unsigned long FermionOnS2xS2WithExclusionPrinciple::FindCanonical(unsigned long 
 	}      
     }
   return this->FindCanonical(state, xPosition, yPosition + 1);  
+}
+
+// request whether state with given index satisfies a general Pauli exclusion principle
+// index = state index
+// pauliK = number of particles allowed in consecutive orbitals
+// pauliR = number of consecutive orbitals
+
+int FermionOnS2xS2WithExclusionPrinciple::FindCanonical(unsigned long state, int currentPosition)
+{
+  if (this->CheckCoreExclusion(state) == false)
+    {
+      return -1;
+    }  
+  this->TemporaryCanonicalArray3x3Block[0] = state;
+  if (this->FindCanonical3x3Block(state, 1) < 0)
+    {
+      return -1;
+    }
+//   if (this->TemporaryCanonicalArray3x3Block[0] != state)
+//     {
+//       return -1;
+//     }
+
+  unsigned long TmpMaskVertical = (0x3ul << this->NbrSiteY) | (0x3ul << (2 * this->NbrSiteY)) | 0x3ul;
+  unsigned long TmpPattern01_00_10 = (0x1ul << (2 * this->NbrSiteY)) | 0x2ul;
+  unsigned long TmpPattern10_00_01 = (0x2ul << (2 * this->NbrSiteY)) | 0x1ul;
+  for (int i = 2;  i < this->NbrSiteX; ++i)
+    {
+      for (int j = 1;  j < this->NbrSiteY; ++j)
+	{
+	  if ((state & TmpMaskVertical) == TmpPattern01_00_10)
+	    {
+	      unsigned long TmpState = (state & ~TmpMaskVertical) | TmpPattern10_00_01;
+	      int Tmp = SearchInSortedArrayAndInsert<unsigned long>(TmpState, this->TemporaryCanonicalArray, currentPosition);
+	      if (Tmp == 1)
+		{
+		  currentPosition = this->FindCanonical(TmpState, currentPosition + 1);
+		  if (currentPosition < 0)
+		    return -1;		  
+		}
+	    }
+	  else
+	    {
+	      if ((state & TmpMaskVertical) == TmpPattern10_00_01)
+		{
+		  unsigned long TmpState = (state & ~TmpMaskVertical) | TmpPattern01_00_10;
+		  int Tmp = SearchInSortedArrayAndInsert<unsigned long>(TmpState, this->TemporaryCanonicalArray, currentPosition);
+		  if (Tmp == 1)
+		    {
+		      currentPosition = this->FindCanonical(TmpState, currentPosition + 1);
+		      if (currentPosition < 0)
+			return -1;		      
+		    }
+		}
+	    }
+	  TmpMaskVertical <<= 1;
+	  TmpPattern10_00_01 <<= 1;
+	  TmpPattern01_00_10 <<= 1;
+	}
+      TmpMaskVertical <<= 1;
+      TmpPattern10_00_01 <<= 1;
+      TmpPattern01_00_10 <<= 1;
+    }
+  unsigned long TmpMaskHorizontal = (0x7ul << this->NbrSiteY) | 0x7ul;
+  unsigned long TmpPattern100_001 = (0x4ul << this->NbrSiteY) | 0x1ul;
+  unsigned long TmpPattern001_100 = (0x1ul << this->NbrSiteY) | 0x4ul;
+  for (int i = 1;  i < this->NbrSiteX; ++i)
+    {
+      for (int j = 2;  j < this->NbrSiteY; ++j)
+	{
+	  if ((state & TmpMaskHorizontal) == TmpPattern100_001)
+	    {
+	      unsigned long TmpState = (state & ~TmpMaskHorizontal) | TmpPattern001_100;
+	      int Tmp = SearchInSortedArrayAndInsert<unsigned long>(TmpState, this->TemporaryCanonicalArray, currentPosition);
+	      if (Tmp == 1)
+		{
+		  currentPosition = this->FindCanonical(TmpState, currentPosition + 1);
+		  if (currentPosition < 0)
+		    return -1;		      
+		}
+	    }
+	  if ((state & TmpMaskHorizontal) == TmpPattern001_100)
+	    {
+	      unsigned long TmpState = (state & ~TmpMaskHorizontal) | TmpPattern100_001;
+	      int Tmp = SearchInSortedArrayAndInsert<unsigned long>(TmpState, this->TemporaryCanonicalArray, currentPosition);
+	      if (Tmp == 1)
+		{
+		  currentPosition = this->FindCanonical(TmpState, currentPosition + 1);
+		  if (currentPosition < 0)
+		    return -1;		      
+		}
+	    }      
+	  TmpMaskHorizontal <<= 1;
+	  TmpPattern100_001 <<= 1;
+	  TmpPattern001_100 <<= 1;
+	}
+      TmpMaskHorizontal <<= 2;
+      TmpPattern100_001 <<= 2;
+      TmpPattern001_100 <<= 2;
+    }
+//   unsigned long TmpMaskBlock = (0x7ul << (2 * this->NbrSiteY)) | (0x7ul << this->NbrSiteY) | 0x7ul;
+//   unsigned long TmpPattern100_000_001 = (0x4ul << (2 *this->NbrSiteY)) | 0x1ul;
+//   unsigned long TmpPattern001_000_100 = (0x1ul << (2 *this->NbrSiteY)) | 0x4ul;
+//   for (int i = 2;  i < this->NbrSiteX; ++i)
+//     {
+//       for (int j = 2;  j < this->NbrSiteY; ++j)
+// 	{
+// 	  if ((state & TmpMaskBlock) == TmpPattern100_000_001)
+// 	    {
+// 	      unsigned long TmpState = (state & ~TmpMaskBlock) | TmpPattern001_000_100;
+// 	      int Tmp = SearchInSortedArrayAndInsert<unsigned long>(TmpState, this->TemporaryCanonicalArray, currentPosition);
+// 	      if (Tmp == 1)
+// 		{
+// 		  currentPosition = this->FindCanonical(TmpState, currentPosition + 1);
+// 		  if (currentPosition < 0)
+// 		    return -1;		      
+// 		}
+// 	    }
+// 	  if ((state & TmpMaskBlock) == TmpPattern001_000_100)
+// 	    {
+// 	      unsigned long TmpState = (state & ~TmpMaskBlock) | TmpPattern100_000_001;
+// 	      int Tmp = SearchInSortedArrayAndInsert<unsigned long>(TmpState, this->TemporaryCanonicalArray, currentPosition);
+// 	      if (Tmp == 1)
+// 		{
+// 		  currentPosition = this->FindCanonical(TmpState, currentPosition + 1);
+// 		  if (currentPosition < 0)
+// 		    return -1;		      
+// 		}
+// 	    }      
+// 	  TmpMaskBlock <<= 1;
+// 	  TmpPattern100_000_001 <<= 1;
+// 	  TmpPattern001_000_100 <<= 1;
+// 	}
+//       TmpMaskBlock <<= 2;
+//       TmpPattern100_000_001 <<= 2;
+//       TmpPattern001_000_100 <<= 2;
+//     }
+  return currentPosition;
+}
+
+// request whether state with given index satisfies a general Pauli exclusion principle
+// index = state index
+// pauliK = number of particles allowed in consecutive orbitals
+// pauliR = number of consecutive orbitals
+
+int FermionOnS2xS2WithExclusionPrinciple::FindCanonical3x3Block(unsigned long state, int currentPosition)
+{
+  unsigned long TmpMaskBlock = (0x7ul << (2 * this->NbrSiteY)) | (0x7ul << this->NbrSiteY) | 0x7ul;
+  unsigned long TmpPattern100_000_001 = (0x4ul << (2 *this->NbrSiteY)) | 0x1ul;
+  unsigned long TmpPattern001_000_100 = (0x1ul << (2 *this->NbrSiteY)) | 0x4ul;
+
+  unsigned long TmpPattern101_000_001 = (0x5ul << (2 *this->NbrSiteY)) | 0x1ul;
+  unsigned long TmpPattern100_000_101 = (0x4ul << (2 *this->NbrSiteY)) | 0x5ul;
+  unsigned long TmpPattern001_000_101 = (0x1ul << (2 *this->NbrSiteY)) | 0x5ul;
+  unsigned long TmpPattern101_000_100 = (0x5ul << (2 *this->NbrSiteY)) | 0x4ul;
+  for (int i = 2;  i < this->NbrSiteX; ++i)
+    {
+      for (int j = 2;  j < this->NbrSiteY; ++j)
+	{
+	  if (((state & TmpMaskBlock) == TmpPattern101_000_001) || ((state & TmpMaskBlock) == TmpPattern101_000_100) ||
+	      ((state & TmpMaskBlock) == TmpPattern100_000_101) || ((state & TmpMaskBlock) == TmpPattern001_000_101))
+	    {
+	      return -1;
+	    }
+	  if ((state & TmpMaskBlock) == TmpPattern100_000_001)
+	    {
+	      unsigned long TmpState = (state & ~TmpMaskBlock) | TmpPattern001_000_100;
+	      int Tmp = SearchInSortedArrayAndInsert<unsigned long>(TmpState, this->TemporaryCanonicalArray3x3Block, currentPosition);
+	      if (Tmp == 1)
+		{
+		  currentPosition = this->FindCanonical3x3Block(TmpState, currentPosition + 1);
+		  if (currentPosition < 0)
+		    return -1;		      
+		}
+	    }
+	  if ((state & TmpMaskBlock) == TmpPattern001_000_100)
+	    {
+	      unsigned long TmpState = (state & ~TmpMaskBlock) | TmpPattern100_000_001;
+	      int Tmp = SearchInSortedArrayAndInsert<unsigned long>(TmpState, this->TemporaryCanonicalArray3x3Block, currentPosition);
+	      if (Tmp == 1)
+		{
+		  currentPosition = this->FindCanonical3x3Block(TmpState, currentPosition + 1);
+		  if (currentPosition < 0)
+		    return -1;		      
+		}
+	    }      
+	  TmpMaskBlock <<= 1;
+	  TmpPattern100_000_001 <<= 1;
+	  TmpPattern001_000_100 <<= 1; 
+	  TmpPattern101_000_001 <<= 1;
+	  TmpPattern100_000_101 <<= 1;
+	  TmpPattern001_000_101 <<= 1;
+	  TmpPattern101_000_100 <<= 1;
+	}
+      TmpMaskBlock <<= 2;
+      TmpPattern100_000_001 <<= 2;
+      TmpPattern001_000_100 <<= 2;
+      TmpPattern101_000_001 <<= 2;
+      TmpPattern100_000_101 <<= 2;
+      TmpPattern001_000_101 <<= 2;
+      TmpPattern101_000_100 <<= 2;
+    }
+  return currentPosition;
 }

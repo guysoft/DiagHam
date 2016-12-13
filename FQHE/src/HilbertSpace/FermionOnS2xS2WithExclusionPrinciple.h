@@ -44,6 +44,9 @@ class FermionOnS2xS2WithExclusionPrinciple : public FermionOnS2xS2
 
  protected:
 
+  unsigned long* TemporaryCanonicalArray;
+  unsigned long* TemporaryCanonicalArray3x3Block;
+
  public:
 
   // default constructor
@@ -110,16 +113,30 @@ class FermionOnS2xS2WithExclusionPrinciple : public FermionOnS2xS2
   virtual long GenerateStates(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, long pos);
 
   // request whether state with given index satisfies a general Pauli exclusion principle
+  //
   // index = state index
   // pauliK = number of particles allowed in consecutive orbitals
   // pauliR = number of consecutive orbitals
+  // 
   virtual unsigned long FindCanonical(unsigned long state, int xPosition, int yPosition);
+
+  // request whether state with given index satisfies a general Pauli exclusion principle
+  // index = state index
+  // pauliK = number of particles allowed in consecutive orbitals
+  // pauliR = number of consecutive orbitals
+  virtual int FindCanonical(unsigned long state, int currentPosition);
+
+  // request whether state with given index satisfies a general Pauli exclusion principle
+  // index = state index
+  // pauliK = number of particles allowed in consecutive orbitals
+  // pauliR = number of consecutive orbitals
+  virtual int FindCanonical3x3Block(unsigned long state, int currentPosition);
 
   // test if a configuration satisfies the core exclusion principle 
   //
   // state = configuration to test
   // return value = true if the configuration satisfies the core exclusion principle
-  bool CheckCoreExclusion(unsigned long state);
+  virtual bool CheckCoreExclusion(unsigned long state);
 
 };
 

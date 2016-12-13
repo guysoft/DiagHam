@@ -68,6 +68,7 @@ int main(int argc, char** argv)
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the vector into a text file");
   (*OutputGroup) += new BooleanOption ('\n', "txt-separatespin", "for the text output, use the sign convention which separates spins");
   (*OutputGroup) += new BooleanOption ('\n', "normalize", "normalize the state instead of unnormalizing");  
+  (*OutputGroup) += new BooleanOption ('\n', "sphere-normalize", "normalize the state, assumin th einput state is normalized on the sphere geometry");  
   (*OutputGroup) += new SingleDoubleOption  ('\n', "hide-component", "in the test output, hide state components whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -133,9 +134,9 @@ int main(int argc, char** argv)
     }
   else
     {
-      if (Manager.GetBoolean("normalize"))	
+      if ((Manager.GetBoolean("normalize")) || Manager.GetBoolean("sphere-normalize"))
 	{	      
-	  if (strstr(Manager.GetString("input-state"), "_unnormalized_") == 0)
+	  if ((strstr(Manager.GetString("input-state"), "_unnormalized_") == 0) && (strstr(Manager.GetString("input-state"), "_sphere_") == 0))
 	    {
 	      OutputFileName = new char [512];
 	      if (Statistics == true)
@@ -172,13 +173,20 @@ int main(int argc, char** argv)
 		{
 		  sprintf (TmpName, "_cylinder_ratio_%.6f_", Ratio);
 		}
-	      OutputFileName = ReplaceString(Manager.GetString("input-state"), "_unnormalized_", TmpName);
+	      if (strstr(Manager.GetString("input-state"), "_sphere_") == 0)
+		{
+		  OutputFileName = ReplaceString(Manager.GetString("input-state"), "_unnormalized_", TmpName);
+		}
+	      else
+		{
+		  OutputFileName = ReplaceString(Manager.GetString("input-state"), "_sphere_", TmpName);
+		}
 	      delete[] TmpName;
 	    }
 	}      
       else
 	{
-	  //sprintf (OutputFileName, "fermions_unnormalized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
+	  sprintf (OutputFileName, "fermions_unnormalized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
 	  cout<< "Only normalize is implemented." << endl;
 	  return 0;
 	}
@@ -336,21 +344,30 @@ int main(int argc, char** argv)
        }
     }
 
-   if (Manager.GetBoolean("normalize"))
+  if ((Manager.GetBoolean("normalize")) || (Manager.GetBoolean("sphere-normalize")))
      {
        if (Manager.GetBoolean("conformal-limit") == false)
 	 {
-           OutputBasis->NormalizeJackToCylinder(OutputState, Ratio);
+	   if (Manager.GetBoolean("sphere-normalize") == false)
+	     {
+	       OutputBasis->NormalizeJackToCylinder(OutputState, Ratio);
+	     }
+	   else
+	     {
+	       OutputBasis->NormalizeSphereToCylinder(OutputState, Ratio);
+	     }
 	 }
        //else
-	// {
-	  // OutputBasis->ConvertFromConformalLimit(OutputState, Manager.GetInteger("normalization"));
-	// }
+       // {
+       // OutputBasis->ConvertFromConformalLimit(OutputState, Manager.GetInteger("normalization"));
+       // }
      }
-   //else
-   //  OutputBasis->ConvertToUnnormalizedMonomial(OutputState, Manager.GetInteger("normalization"), SymmetryFactor);
+  else
+    {
+      OutputBasis->NormalizeCylinderToJack(OutputState, Ratio, Manager.GetInteger("normalization"));
+    }
   
-
+  
   cout << OutputBasis->GetLargeHilbertSpaceDimension() << " " << OutputState.GetLargeVectorDimension() << endl;
   if (OutputTxtFileName != 0)
     {

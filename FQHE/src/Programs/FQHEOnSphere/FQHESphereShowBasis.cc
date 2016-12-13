@@ -22,6 +22,7 @@
 #include "HilbertSpace/BosonOnSphereWithSU4Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSpinAllSz.h"
 #include "HilbertSpace/FermionOnSphereTwoLandauLevels.h"
+#include "HilbertSpace/FermionOnSphereWithSpinTwoLandauLevels.h"
 #include "HilbertSpace/FermionOnSphereThreeLandauLevels.h"
 #include "HilbertSpace/FermionOnSphereFourLandauLevels.h"
 #include "HilbertSpace/BosonOnSphereTwoLandauLevels.h"
@@ -399,22 +400,29 @@ int main(int argc, char** argv)
 	      {                 
 		if (Manager.GetBoolean("use-pairing") == false)
 		  {
-		    if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
-		      Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
-		    else //either Lz or Sz symmetrized basis
+		    if (TwoLLFlag == false)
 		      {
-			if ((SzSymmetrizedBasis == true)  && (TotalSz == 0) && (LzSymmetrizedBasis == true) && (TotalLz == 0))
+			if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
+			  Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+			else //either Lz or Sz symmetrized basis
 			  {
-			    Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrParticles, NbrFluxQuanta, Manager.GetBoolean("minus-szparity"),
-									    Manager.GetBoolean("minus-lzparity"));
+			    if ((SzSymmetrizedBasis == true)  && (TotalSz == 0) && (LzSymmetrizedBasis == true) && (TotalLz == 0))
+			      {
+				Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrParticles, NbrFluxQuanta, Manager.GetBoolean("minus-szparity"),
+										Manager.GetBoolean("minus-lzparity"));
+			      }
+			    else 
+			      if ((SzSymmetrizedBasis == true)  && (TotalSz == 0))
+				{
+				  Space = new FermionOnSphereWithSpinSzSymmetry(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetBoolean("minus-szparity"));
+				}
+			      else
+				Space = new FermionOnSphereWithSpinLzSymmetry(NbrParticles, NbrFluxQuanta, TotalSz, Manager.GetBoolean("minus-lzparity"));
 			  }
-			else 
-			  if ((SzSymmetrizedBasis == true)  && (TotalSz == 0))
-			    {
-			      Space = new FermionOnSphereWithSpinSzSymmetry(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetBoolean("minus-szparity"));
-			    }
-			  else
-			    Space = new FermionOnSphereWithSpinLzSymmetry(NbrParticles, NbrFluxQuanta, TotalSz, Manager.GetBoolean("minus-lzparity"));
+		      }
+		    else
+		      {
+			Space = new FermionOnSphereWithSpinTwoLandauLevels(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
 		      }
 		  }
 		else

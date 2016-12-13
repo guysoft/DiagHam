@@ -1676,8 +1676,35 @@ void ParticleOnSphere::ConvertToAllLz (ComplexVector& inputState, ParticleOnSphe
 
 RealVector& ParticleOnSphere::NormalizeJackToCylinder(RealVector& state, double aspect)
 {
+  cout << "warning using dummy ParticleOnSphere::NormalizeJackToCylinder" << endl;
   return state;
 }
+
+// normalize from the cylinder geometry to the Jack normalization
+//
+// state = reference to the state to unnormalize
+// aspect = cylinder aspect ratio
+// reference = set which component as to be normalized to 1
+// return value = unnormalized state
+
+RealVector& ParticleOnSphere::NormalizeCylinderToJack(RealVector& state, double aspect, long reference)
+{
+  cout << "warning using dummy ParticleOnSphere::NormalizeCylinderToJack" << endl;
+  return state;
+}
+
+// normalize Jack with respect to cylinder basis
+//
+// state = reference to the Jack state to normalize
+// aspect = aspect ratio of cylinder
+// return value = normalized state
+
+RealVector& ParticleOnSphere::NormalizeSphereToCylinder(RealVector& state, double aspect)
+{
+  cout << "warning using dummy ParticleOnSphere::NormalizeSphereToCylinder" << endl;
+  return state;
+}
+
 
 // create a state from its MPS description
 //

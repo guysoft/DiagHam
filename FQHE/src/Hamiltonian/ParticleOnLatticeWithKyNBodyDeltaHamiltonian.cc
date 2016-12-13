@@ -73,6 +73,7 @@ ParticleOnLatticeWithKyNBodyDeltaHamiltonian::ParticleOnLatticeWithKyNBodyDeltaH
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+
 ParticleOnLatticeWithKyNBodyDeltaHamiltonian::ParticleOnLatticeWithKyNBodyDeltaHamiltonian(ParticleOnLattice* particles, int nbrParticles, int lx, int ly, int kyMax, int nbrFluxQuanta, int nbrBody , double contactInteractionU, double nBodyContactInteraction, bool reverseHopping, double randomPotential, AbstractArchitecture* architecture, unsigned long memory, char* precalculationFileName)
 {
   this->Particles = particles;
