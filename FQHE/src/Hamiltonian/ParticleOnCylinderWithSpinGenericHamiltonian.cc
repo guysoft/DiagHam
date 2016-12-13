@@ -468,8 +468,17 @@ double ParticleOnCylinderWithSpinGenericHamiltonian::EvaluateInteractionCoeffici
 										    double spinFluxM1, double spinFluxM2, double spinFluxM3, double spinFluxM4)
 {
   double Kappa2Factor = (2.0 * M_PI * this->Ratio / ((double) (this->LzMax + 1)));
-  double Coefficient = pseudopotentials[0] * exp (-0.25 * Kappa2Factor * (((double) ((m1 - m2) * (m1 - m2))) + ((double) ((m3 - m4) * (m3 - m4))))) / sqrt(2.0 * M_PI);
-//  double Coefficient = exp (-0.25 * Kappa2Factor * (((double) ((m1 - m3) * (m1 - m3))) + ((double) ((m1 - m4) * (m1 - m4))))) / sqrt(2.0 * M_PI);
+  double Coefficient = 0.0;
+  if ((pseudopotentials[0] != 0.0) && (nbrPseudopotentials > 0))
+    {
+      Coefficient += pseudopotentials[0] * exp (-0.25 * Kappa2Factor * (((double) ((m1 - m2) * (m1 - m2))) + ((double) ((m3 - m4) * (m3 - m4))))) / sqrt(2.0 * M_PI);
+    }
+  if ((pseudopotentials[1] != 0.0) && (nbrPseudopotentials > 1))
+    {
+      Coefficient += pseudopotentials[1] * (((double) ((m1 - m2) * (m4 - m3)))
+					    * exp (-0.25 * Kappa2Factor * (((double) ((m1 - m2) * (m1 - m2))) 
+									  + ((double) ((m3 - m4) * (m3 - m4)))))) * Kappa2Factor / sqrt(this->Ratio * ((double) (this->LzMax + 1)));
+    }
   return Coefficient;
 }
 
