@@ -158,9 +158,11 @@ bool SpinWith2DTranslationInversionFindSystemInfoFromVectorFileName(char* filena
 // return value = true if no error occured
 bool PottsFindSystemInfoFromVectorFileName(char* filename, int& nbrSites, int& qValue);
 
+bool PEPSFindSystemInfoFromVectorFileNameUndescribedSpace(char* filename, int& nbrSpins, int & bondDimension);
+
+bool PEPSFindSystemInfoFromVectorFileNameUndescribedSpace(char* filename, int& nbrSpins,int & bondDimension, int & momentum);
 
 bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz);
-
 
 bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int & momentum);
 
