@@ -18,6 +18,7 @@
 #include "Tools/FQHEWaveFunction/GutzwillerOnLatticeWaveFunction.h"
 
 #include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/SortedComplexUniqueArray.h"
 #include "MathTools/IntegerAlgebraTools.h"
 
 #include "Options/Options.h"
@@ -152,6 +153,8 @@ int main(int argc, char** argv)
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   Manager.StandardProceedings(argv, argc, cout);
+
+  SortedComplexUniqueArray::TestClass(10000);
   
   int NbrParticles = Manager.GetInteger("nbr-particles");
   int Lx = Manager.GetInteger("lx");
@@ -366,6 +369,8 @@ int main(int argc, char** argv)
       Space = new FermionOnLattice(NbrParticles, NbrProjectorStates, 1, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY, /* NbrLayers */ 1);
     }
       
+  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+    Memory = Architecture.GetArchitecture()->GetLocalMemory();
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   
   AbstractQHEOnLatticeHamiltonian* Hamiltonian;

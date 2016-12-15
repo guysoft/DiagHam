@@ -171,7 +171,8 @@ int main(int argc, char** argv)
     }
   ParticleOnLattice* Space = new FermionOnLattice(NbrFermions, Lx, Ly, NbrFluxQuanta, MemorySpace);
 
-  
+  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+    Memory = Architecture.GetArchitecture()->GetLocalMemory();
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   
   AbstractQHEOnLatticeHamiltonian* Hamiltonian;

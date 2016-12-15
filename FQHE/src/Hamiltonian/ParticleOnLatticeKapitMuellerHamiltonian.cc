@@ -44,7 +44,7 @@ using std::endl;
 using std::ostream;
 
 // switch for debugging output:
-#define DEBUG_OUTPUT
+// #define DEBUG_OUTPUT
 
 
 
@@ -196,11 +196,11 @@ void ParticleOnLatticeKapitMuellerHamiltonian::EvaluateInteractionFactors()
 
   // manual parameters, for now
   int images = 5; // number of images of the simulation cell
-  int maxRange = std::sqrt(23./(1.0-this->FluxDensity)); // larger exponents will yields numerical zero
+  int maxRange = std::sqrt(30./(1.0-this->FluxDensity)); // larger exponents will yields numerical zero
   if (this->Range > maxRange)
     {
-      cout << "Testing: range not reduced to new maxRange="<<maxRange<<endl;
-      // this->Range = maxRange;
+      // cout << "Testing: range not reduced to new maxRange="<<maxRange<<endl;
+      this->Range = maxRange;
     }
   images = this->Range / (Lx < Ly? Lx:Ly) + 2;
   Complex amplitude;

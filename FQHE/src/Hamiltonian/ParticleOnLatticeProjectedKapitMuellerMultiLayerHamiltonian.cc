@@ -380,124 +380,239 @@ void ParticleOnLatticeProjectedKapitMuellerMultiLayerHamiltonian::EvaluateIntera
 	  }
     }
 
-  // we have no general four-particle interactions:
-  // first attempt: no optimization for symmetries under pairs of creation / annihilation operators
-
-  if (this->Particles->GetParticleStatistic() == ParticleOnLattice::FermionicStatistic)
-    this->NbrQ12Indices=this->NbrProjectorStates * (this->NbrProjectorStates-1);
-  else
-    this->NbrQ12Indices=this->NbrProjectorStates * this->NbrProjectorStates;
-  
-  this->Q1Value = new int[this->NbrQ12Indices];
-  this->Q2Value = new int[this->NbrQ12Indices];
-  this->NbrQ34Values = new int[this->NbrQ12Indices];
-  this->Q3PerQ12 = new int*[this->NbrQ12Indices];
-  this->Q4PerQ12 = new int*[this->NbrQ12Indices];
-  for (int i=0; i<this->NbrQ12Indices; ++i)
+  bool symmetries = true;
+  if (symmetries == false)
     {
-      this->NbrQ34Values[i] = this->NbrQ12Indices;   
-      this->Q3PerQ12[i] = new int[this->NbrQ12Indices];
-      this->Q4PerQ12[i] = new int[this->NbrQ12Indices];
-    }
-  this->NbrInteractionFactors=this->NbrQ12Indices*this->NbrQ12Indices;
-  this->InteractionFactors = new Complex[this->NbrInteractionFactors];
+      // general two-particle interactions:
+      // first attempt: no optimization for symmetries under pairs of creation / annihilation operators
+
+      if (this->Particles->GetParticleStatistic() == ParticleOnLattice::FermionicStatistic)
+	this->NbrQ12Indices=this->NbrProjectorStates * (this->NbrProjectorStates-1);
+      else
+	this->NbrQ12Indices=this->NbrProjectorStates * this->NbrProjectorStates;
   
-  int tmpNbrInteractionFactors = 0;
-  int tmpQ12Index = 0;
-  bool fermions = this->Particles->GetParticleStatistic() == ParticleOnLattice::FermionicStatistic;
-  Complex tmpSum;
-  cout << "adding interaction terms"<<endl;
-		  
-  bool symmetries = false;
-  for (int n1=0; n1<this->NbrProjectorStates; ++n1)
-    for (int n2=0; n2<this->NbrProjectorStates; ++n2)
-      {
-	if (fermions && n1==n2) {
-	  if (n2 == this->NbrProjectorStates-1) 
-	    break;
-	  else 
-	    ++n2;
+      this->Q1Value = new int[this->NbrQ12Indices];
+      this->Q2Value = new int[this->NbrQ12Indices];
+      this->NbrQ34Values = new int[this->NbrQ12Indices];
+      this->Q3PerQ12 = new int*[this->NbrQ12Indices];
+      this->Q4PerQ12 = new int*[this->NbrQ12Indices];
+      for (int i=0; i<this->NbrQ12Indices; ++i)
+	{
+	  this->NbrQ34Values[i] = this->NbrQ12Indices;   
+	  this->Q3PerQ12[i] = new int[this->NbrQ12Indices];
+	  this->Q4PerQ12[i] = new int[this->NbrQ12Indices];
 	}
-	this->Q1Value[tmpQ12Index] = n1;
-	this->Q2Value[tmpQ12Index] = n2;
-	int tmpQ34Index = 0;
-	int *TmpQ3Values = this->Q3PerQ12[tmpQ12Index];
-	int *TmpQ4Values = this->Q4PerQ12[tmpQ12Index];
-	for (int n3=0; n3<this->NbrProjectorStates; ++n3)
-	  for (int n4=0; n4<this->NbrProjectorStates; ++n4)
-	    {
-	      if (fermions && n3==n4) {
-		if (n4 == this->NbrProjectorStates-1) 
-		  break;
-		else 
-		  ++n4;
-	      }
-	      TmpQ3Values[tmpQ34Index] = n3;
-	      TmpQ4Values[tmpQ34Index] = n4;
-	      
-	      tmpSum = 0.0;
-
-	      // intra-layer interactions
-	      if (this->ContactInteractionU!=0.0)
-		{
-		  for (int i=0; i<this->Lx; ++i)
-		    for (int j=0; j<this->Ly; ++j)
-		      for (int s=0; s<this->NbrLayers; ++s)
-			{
-			  int q = SingleParticleSpace.EncodeQuantumNumber(i, j, s, TranslationPhase); 
-			  // if (q>=this->NbrSites)
-			  //   cout << "Error: exceed number of single body states at i="<<i<<", j"<<j<<", s="<<s<<" -> q="<<q<<" (NbrSites="<<NbrSites<<")"<<endl;
-			  tmpSum += this->ContactInteractionU * Conj(this->OneBodyBasis[n3][q] * this->OneBodyBasis[n4][q])
-			    * this->OneBodyBasis[n1][q] * this->OneBodyBasis[n2][q];
-			  // if (n1==0 && n2==0 && n3==0 && n4==0)
-			  //   cout << "Contribution for n=(0,0,0,0) at q="<<q<<" for (i,j,s)="<<i<<", "<<j<<", "<<s<<") is = "<< Conj(this->OneBodyBasis[n3][q] * this->OneBodyBasis[n4][q])
-			  //     * this->OneBodyBasis[n1][q] * this->OneBodyBasis[n2][q] << endl;
-			}
-		}
-
-	      // inter-layer interactions
-	      if (this->NbrLayers>1 && this->ContactInteractionW!=0.0)
-		{
-		  for (int i=0; i<this->Lx; ++i)
-		    for (int j=0; j<this->Ly; ++j)
-		      for (int s=0; s<this->NbrLayers; ++s)
-			{
-			  int q1 = SingleParticleSpace.EncodeQuantumNumber(i, j, s, TranslationPhase);
-			  for (int s2=s+1; s2<this->NbrLayers; ++s2)
-			    {
-			      int q2 = SingleParticleSpace.EncodeQuantumNumber(i, j, s2, TranslationPhase);
-			      tmpSum += this->ContactInteractionW * Conj(this->OneBodyBasis[n4][q1] * this->OneBodyBasis[n3][q2])
-				* this->OneBodyBasis[n2][q2] * this->OneBodyBasis[n1][q1];
-			    }
-			}
-		}
-	      // cout << this->Q1Value[tmpQ12Index] << " " << this->Q2Value[tmpQ12Index] << " " << TmpQ3Values[tmpQ34Index] << " " << TmpQ4Values[tmpQ34Index] << " " << tmpSum << endl;
-	      
-	      if (Norm(tmpSum) > 10. * MACHINE_PRECISION)  // check for numerically non-zero coefficients
-		this->InteractionFactors[tmpNbrInteractionFactors++] = tmpSum;
-	      else
-		this->InteractionFactors[tmpNbrInteractionFactors++] = 0.0; // waste some time by keeping these coefficients, for now.
-	      ++tmpQ34Index;
-
+      this->NbrInteractionFactors=this->NbrQ12Indices*this->NbrQ12Indices;
+      this->InteractionFactors = new Complex[this->NbrInteractionFactors];
+  
+      int tmpNbrInteractionFactors = 0;
+      int tmpQ12Index = 0;
+      bool fermions = this->Particles->GetParticleStatistic() == ParticleOnLattice::FermionicStatistic;
+      Complex tmpSum;
+      cout << "adding interaction terms"<<endl;
+		  
+      for (int n1=0; n1<this->NbrProjectorStates; ++n1)
+	for (int n2=0; n2<this->NbrProjectorStates; ++n2)
+	  {
+	    if (fermions && n1==n2) {
+	      if (n2 == this->NbrProjectorStates-1) 
+		break;
+	      else 
+		++n2;
 	    }
-	++tmpQ12Index;
-      }
+	    this->Q1Value[tmpQ12Index] = n1;
+	    this->Q2Value[tmpQ12Index] = n2;
+	    int tmpQ34Index = 0;
+	    int *TmpQ3Values = this->Q3PerQ12[tmpQ12Index];
+	    int *TmpQ4Values = this->Q4PerQ12[tmpQ12Index];
+	    for (int n3=0; n3<this->NbrProjectorStates; ++n3)
+	      for (int n4=0; n4<this->NbrProjectorStates; ++n4)
+		{
+		  if (fermions && n3==n4) {
+		    if (n4 == this->NbrProjectorStates-1) 
+		      break;
+		    else 
+		      ++n4;
+		  }
+		  TmpQ3Values[tmpQ34Index] = n3;
+		  TmpQ4Values[tmpQ34Index] = n4;
+	      
+		  tmpSum = 0.0;
 
-  if (tmpQ12Index < NbrQ12Indices)
-    {
-      cout << "Inconsistent count of NbrQ12Indices!"<<endl;
-      exit(1);
+		  // intra-layer interactions
+		  if (this->ContactInteractionU!=0.0)
+		    {
+		      for (int i=0; i<this->Lx; ++i)
+			for (int j=0; j<this->Ly; ++j)
+			  for (int s=0; s<this->NbrLayers; ++s)
+			    {
+			      int q = SingleParticleSpace.EncodeQuantumNumber(i, j, s, TranslationPhase); 
+			      // if (q>=this->NbrSites)
+			      //   cout << "Error: exceed number of single body states at i="<<i<<", j"<<j<<", s="<<s<<" -> q="<<q<<" (NbrSites="<<NbrSites<<")"<<endl;
+			      tmpSum += this->ContactInteractionU * Conj(this->OneBodyBasis[n3][q] * this->OneBodyBasis[n4][q])
+				* this->OneBodyBasis[n1][q] * this->OneBodyBasis[n2][q];
+			      // if (n1==0 && n2==0 && n3==0 && n4==0)
+			      //   cout << "Contribution for n=(0,0,0,0) at q="<<q<<" for (i,j,s)="<<i<<", "<<j<<", "<<s<<") is = "<< Conj(this->OneBodyBasis[n3][q] * this->OneBodyBasis[n4][q])
+			      //     * this->OneBodyBasis[n1][q] * this->OneBodyBasis[n2][q] << endl;
+			    }
+		    }
+
+		  // inter-layer interactions
+		  if (this->NbrLayers>1 && this->ContactInteractionW!=0.0)
+		    {
+		      for (int i=0; i<this->Lx; ++i)
+			for (int j=0; j<this->Ly; ++j)
+			  for (int s=0; s<this->NbrLayers; ++s)
+			    {
+			      int q1 = SingleParticleSpace.EncodeQuantumNumber(i, j, s, TranslationPhase);
+			      for (int s2=s+1; s2<this->NbrLayers; ++s2)
+				{
+				  int q2 = SingleParticleSpace.EncodeQuantumNumber(i, j, s2, TranslationPhase);
+				  tmpSum += this->ContactInteractionW * Conj(this->OneBodyBasis[n4][q1] * this->OneBodyBasis[n3][q2])
+				    * this->OneBodyBasis[n2][q2] * this->OneBodyBasis[n1][q1];
+				}
+			    }
+		    }
+		  // cout << this->Q1Value[tmpQ12Index] << " " << this->Q2Value[tmpQ12Index] << " " << TmpQ3Values[tmpQ34Index] << " " << TmpQ4Values[tmpQ34Index] << " " << tmpSum << endl;
+	      
+		  if (Norm(tmpSum) > 10. * MACHINE_PRECISION)  // check for numerically non-zero coefficients
+		    this->InteractionFactors[tmpNbrInteractionFactors++] = tmpSum;
+		  else
+		    this->InteractionFactors[tmpNbrInteractionFactors++] = 0.0; // waste some time by keeping these coefficients, for now.
+		  ++tmpQ34Index;
+
+		}
+	    ++tmpQ12Index;
+	  }
+
+      if (tmpQ12Index < NbrQ12Indices)
+	{
+	  cout << "Inconsistent count of NbrQ12Indices!"<<endl;
+	  exit(1);
+	}
+        if (this->NbrInteractionFactors > tmpNbrInteractionFactors)
+	  {
+	    Complex *newIFs = new Complex[tmpNbrInteractionFactors];
+	    for (int i=0; i<tmpNbrInteractionFactors; ++i)
+	      newIFs[i] = this->InteractionFactors[i];
+	    delete [] this->InteractionFactors;
+	    this->InteractionFactors = newIFs;
+	  }
+	this->NbrInteractionFactors = tmpNbrInteractionFactors;
+    }
+  else
+    { // matrix elements with symmetries considered:
+
+      if (this->Particles->GetParticleStatistic() == ParticleOnLattice::FermionicStatistic)
+	this->NbrQ12Indices=this->NbrProjectorStates * (this->NbrProjectorStates-1) / 2;
+      else
+	this->NbrQ12Indices=this->NbrProjectorStates * (this->NbrProjectorStates +1) / 2;
+  
+      this->Q1Value = new int[this->NbrQ12Indices];
+      this->Q2Value = new int[this->NbrQ12Indices];
+      this->NbrQ34Values = new int[this->NbrQ12Indices];
+      this->Q3PerQ12 = new int*[this->NbrQ12Indices];
+      this->Q4PerQ12 = new int*[this->NbrQ12Indices];
+      for (int i=0; i<this->NbrQ12Indices; ++i)
+	{
+	  this->NbrQ34Values[i] = this->NbrQ12Indices;   
+	  this->Q3PerQ12[i] = new int[this->NbrQ12Indices];
+	  this->Q4PerQ12[i] = new int[this->NbrQ12Indices];
+	}
+      this->NbrInteractionFactors=this->NbrQ12Indices*this->NbrQ12Indices;
+      this->InteractionFactors = new Complex[this->NbrInteractionFactors];
+  
+      int tmpNbrInteractionFactors = 0;
+      int tmpQ12Index = 0;
+      bool fermions = this->Particles->GetParticleStatistic() == ParticleOnLattice::FermionicStatistic;
+      Complex tmpSum;
+      cout << "adding interaction terms"<<endl;
+
+      int fermionOffset = (fermions ? 1 : 0);
+      int fermionSign = 1-2*fermions;
+      for (int n1=0; n1<this->NbrProjectorStates; ++n1)
+	for (int n2=n1+fermionOffset; n2<this->NbrProjectorStates; ++n2)
+	  {
+	    this->Q1Value[tmpQ12Index] = n1;
+	    this->Q2Value[tmpQ12Index] = n2;
+	    int tmpQ34Index = 0;
+	    int *TmpQ3Values = this->Q3PerQ12[tmpQ12Index];
+	    int *TmpQ4Values = this->Q4PerQ12[tmpQ12Index];
+	    for (int n3=0; n3<this->NbrProjectorStates; ++n3)
+	      for (int n4=n3+fermionOffset; n4<this->NbrProjectorStates; ++n4)
+		{
+		  TmpQ3Values[tmpQ34Index] = n3;
+		  TmpQ4Values[tmpQ34Index] = n4;
+		  tmpSum = 0.0;
+
+		  // intra-layer interactions
+		  if (!fermions && this->ContactInteractionU!=0.0)
+		    {
+		      for (int i=0; i<this->Lx; ++i)
+			for (int j=0; j<this->Ly; ++j)
+			  for (int s=0; s<this->NbrLayers; ++s)
+			    {
+			      int q = SingleParticleSpace.EncodeQuantumNumber(i, j, s, TranslationPhase); 
+			      // if (q>=this->NbrSites)
+			      //   cout << "Error: exceed number of single body states at i="<<i<<", j"<<j<<", s="<<s<<" -> q="<<q<<" (NbrSites="<<NbrSites<<")"<<endl;
+			      // for bosons, this term is repeated four times. for fermions it is zero by Pauli exclusion!
+			      tmpSum += 4.0 * this->ContactInteractionU * Conj(this->OneBodyBasis[n3][q] * this->OneBodyBasis[n4][q]) * this->OneBodyBasis[n1][q] * this->OneBodyBasis[n2][q];
+			      // if (n1==0 && n2==0 && n3==0 && n4==0)
+			      //   cout << "Contribution for n=(0,0,0,0) at q="<<q<<" for (i,j,s)="<<i<<", "<<j<<", "<<s<<") is = "<< Conj(this->OneBodyBasis[n3][q] * this->OneBodyBasis[n4][q])
+			      //     * this->OneBodyBasis[n1][q] * this->OneBodyBasis[n2][q] << endl;
+			    }
+		    }
+
+		  // inter-layer interactions
+		  if (this->NbrLayers>1 && this->ContactInteractionW!=0.0)
+		    {
+		      for (int i=0; i<this->Lx; ++i)
+			for (int j=0; j<this->Ly; ++j)
+			  for (int s=0; s<this->NbrLayers; ++s)
+			    {
+			      int q1 = SingleParticleSpace.EncodeQuantumNumber(i, j, s, TranslationPhase);
+			      for (int s2=s+1; s2<this->NbrLayers; ++s2)
+				{
+				  int q2 = SingleParticleSpace.EncodeQuantumNumber(i, j, s2, TranslationPhase);
+				  tmpSum += this->ContactInteractionW * Conj(this->OneBodyBasis[n4][q1] * this->OneBodyBasis[n3][q2]) * this->OneBodyBasis[n2][q2] * this->OneBodyBasis[n1][q1];
+				  tmpSum += fermionSign * this->ContactInteractionW * Conj(this->OneBodyBasis[n4][q1] * this->OneBodyBasis[n3][q2]) * this->OneBodyBasis[n1][q2] * this->OneBodyBasis[n2][q1];
+				  tmpSum += fermionSign * this->ContactInteractionW * Conj(this->OneBodyBasis[n3][q1] * this->OneBodyBasis[n4][q2]) * this->OneBodyBasis[n2][q2] * this->OneBodyBasis[n1][q1];
+				  tmpSum += this->ContactInteractionW * Conj(this->OneBodyBasis[n3][q1] * this->OneBodyBasis[n4][q2]) * this->OneBodyBasis[n1][q2] * this->OneBodyBasis[n2][q1];
+				}
+			    }
+		    }
+
+		  if (n1==n2) tmpSum *= 0.5;
+		  if (n3==n4) tmpSum *= 0.5;
+
+		  // cout << this->Q1Value[tmpQ12Index] << " " << this->Q2Value[tmpQ12Index] << " " << TmpQ3Values[tmpQ34Index] << " " << TmpQ4Values[tmpQ34Index] << " " << tmpSum << endl;
+	      
+		  if (Norm(tmpSum) > 10. * MACHINE_PRECISION)  // check for numerically non-zero coefficients
+		    this->InteractionFactors[tmpNbrInteractionFactors++] = tmpSum;
+		  else
+		    this->InteractionFactors[tmpNbrInteractionFactors++] = 0.0; // waste some time by keeping these coefficients, for now.
+		  ++tmpQ34Index;
+
+		}
+	    ++tmpQ12Index;
+	  }
+      if (tmpQ12Index < NbrQ12Indices)
+	{
+	  cout << "Inconsistent count of NbrQ12Indices!"<<endl;
+	  exit(1);
+	}
+      if (this->NbrInteractionFactors > tmpNbrInteractionFactors)
+	{
+	  Complex *newIFs = new Complex[tmpNbrInteractionFactors];
+	  for (int i=0; i<tmpNbrInteractionFactors; ++i)
+	    newIFs[i] = this->InteractionFactors[i];
+	  delete [] this->InteractionFactors;
+	  this->InteractionFactors = newIFs;
+	}
+      this->NbrInteractionFactors = tmpNbrInteractionFactors;
     }
 
-  if (this->NbrInteractionFactors > tmpNbrInteractionFactors)
-    {
-      Complex *newIFs = new Complex[tmpNbrInteractionFactors];
-      for (int i=0; i<tmpNbrInteractionFactors; ++i)
-	newIFs[i] = this->InteractionFactors[i];
-      delete [] this->InteractionFactors;
-      this->InteractionFactors = newIFs;
-    }
-  this->NbrInteractionFactors = tmpNbrInteractionFactors;
+
 
 
   // no explicit diagonal terms, here.

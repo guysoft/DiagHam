@@ -191,7 +191,7 @@ ParticleOnLatticeKapitMuellerMultiLayerHamiltonian::ParticleOnLatticeKapitMuelle
 		else
 		  this->BranchShift[index]=1;
 
-		cout << "cut "<<index<<": "<<this->BranchCuts[index]<<" with shift "<<this->BranchShift[index]<<endl;
+		// cout << "cut "<<index<<": "<<this->BranchCuts[index]<<" with shift "<<this->BranchShift[index]<<endl;
 		++index;
 	      }
 	}
@@ -316,11 +316,11 @@ void ParticleOnLatticeKapitMuellerMultiLayerHamiltonian::EvaluateInteractionFact
 
   // manual parameters, for now
   int images = 50; // number of images of the simulation cell
-  int maxRange = std::sqrt(23./(1.0-this->FluxDensity)); // larger exponents will yield numerical zero
+  int maxRange = std::sqrt(30./(1.0-this->FluxDensity)); // larger exponents will yield numerical zero
   if (this->Range > maxRange)
     {
-      cout << "Testing: range not reduced to new maxRange="<<maxRange<<endl;
-      // this->Range = maxRange;
+      // cout << "Testing: range not reduced to new maxRange="<<maxRange<<endl;
+      this->Range = maxRange;
     }
   images = this->Range / (Lx < Ly? Lx:Ly) + 2;
   Complex amplitude;

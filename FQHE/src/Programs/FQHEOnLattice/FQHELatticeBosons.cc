@@ -295,6 +295,8 @@ int main(int argc, char** argv)
        Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY, LandauQuantization, NbrLayers);
     }
       
+  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+    Memory = Architecture.GetArchitecture()->GetLocalMemory();
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   
   AbstractQHEOnLatticeHamiltonian* Hamiltonian;
