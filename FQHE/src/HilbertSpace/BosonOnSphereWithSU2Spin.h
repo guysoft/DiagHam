@@ -420,9 +420,12 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // minIndex = first component to compute
   // nbrComponents = number of components to compute
   // unnormalizedFlag = true if the state should be written in the unnormalized basis
+  // cylinderFlag = true if the state should be written on the cylinder geometry
+  // cylinderPerimeter = cylinder perimeter
   // architecture = pointer to the architecture
   virtual void SlaterTimeSpinfulFermionicState(RealVector& fermionicState, RealVector& outputVector, FermionOnSphereWithSpin* fermionicSpace, 
-					       int minIndex, int nbrComponents, bool unnormalizedFlag, AbstractArchitecture* architecture);
+					       int minIndex, int nbrComponents, bool unnormalizedFlag, bool cylinderFlag, double cylinderPerimeter, 
+					       AbstractArchitecture* architecture);
 
   // Compute the product of a spinful fermionic state with a Van der Monde determinant 
   //
@@ -432,9 +435,12 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // minIndex = first component to compute
   // nbrComponents = number of components to compute
   // unnormalizedFlag = true if the state should be written in the unnormalized basis
+  // cylinderFlag = true if the state should be written on the cylinder geometry
+  // cylinderPerimeter = cylinder perimeter
   // architecture = pointer to the architecture
   virtual void SlaterTimeSpinfulFermionicState(RealVector& fermionicState, RealVector& outputVector, FermionOnSphereWithSpinTwoLandauLevels* fermionicSpace, 
-					       int minIndex, int nbrComponents, bool unnormalizedFlag, AbstractArchitecture* architecture);
+					       int minIndex, int nbrComponents, bool unnormalizedFlag, bool cylinderFlag, double cylinderPerimeter,
+					       AbstractArchitecture* architecture);
 
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
   // 
@@ -701,6 +707,19 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
   virtual void VanDerMondeTimesSlater (unsigned long* slaterLLLUp, unsigned long* slater2LLUp, unsigned long* slaterLLLDown, unsigned long* slater2LLDown, 
 				       int nbrBosonsLLLUp, int nbrBosonsLLLDown, RealVector& finalState, double*** threeOrbitalOverlaps);
+  
+  // Compute the product of a spinful Slater determinant in two Landau levels with a Van der Monde determinant, assuming a reverse flux attachment
+  //
+  // slaterLLLUp = monomial representation of the lowest Landau part of the Slater spin up part
+  // slater2LLUp = monomial representation of the second Landau part of the Slater spin up part
+  // slaterLLLDown = monomial representation of the lowest Landau part  of the Slater spin down part
+  // slater2LLDown = monomial representation of the second Landau part of the Slater spin down part
+  // nbrBosonsLLLUp - number of spin up bosons in the lowest Landau level
+  // nbrBosonsLLLDown - number of spin down bosons in the lowest Landau level
+  // finalState = reference on the vector the produced state will be stored
+  // threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
+  virtual void ReverseVanDerMondeTimesSlater (unsigned long* slaterLLLUp, unsigned long* slater2LLUp, unsigned long* slaterLLLDown, unsigned long* slater2LLDown, 
+					      int nbrBosonsLLLUp, int nbrBosonsLLLDown, RealVector& finalState, double*** threeOrbitalOverlaps);
   
 };
 

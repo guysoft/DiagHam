@@ -45,6 +45,7 @@
 #include "GeneralTools/ArrayTools.h"
 #include "GeneralTools/Permutations.h"
 #include "Architecture/ArchitectureOperation/FQHESphereWithSU2SpinVanDerMondeTimesSlaterOperation.h"
+#include "MathTools/ClebschGordanCoefficients.h"
 
 #include <math.h>
 #include <cstdlib>
@@ -1573,10 +1574,13 @@ RealVector& BosonOnSphereWithSU2Spin::NormalizeSphereToCylinder(RealVector& stat
 // minIndex = first component to compute
 // nbrComponents = number of components to compute
 // unnormalizedFlag = true if the state should be written in the unnormalized basis
+// cylinderFlag = true if the state should be written on the cylinder geometry
+// cylinderPerimeter = cylinder perimeter
 // architecture = pointer to the architecture
 
 void BosonOnSphereWithSU2Spin::SlaterTimeSpinfulFermionicState(RealVector& fermionicState, RealVector& outputVector, FermionOnSphereWithSpin* fermionicSpace, 
-							       int minIndex, int nbrComponents, bool unnormalizedFlag, AbstractArchitecture* architecture)
+							       int minIndex, int nbrComponents, bool unnormalizedFlag, bool cylinderFlag, double cylinderPerimeter,
+							       AbstractArchitecture* architecture)
 {
   outputVector.ClearVector();
   RealVector FinalState (this->GetHilbertSpaceDimension());
@@ -1599,6 +1603,7 @@ void BosonOnSphereWithSU2Spin::SlaterTimeSpinfulFermionicState(RealVector& fermi
 		{
 		  ThreeOrbitalOverlaps[i][j] = 0.5 * (TmpFactor1 + log(Binomials.GetNumericalCoefficient(this->NbrBosons - 1, j)) 
 						      + log(Binomials.GetNumericalCoefficient(fermionicSpace->LzMax, i - j)));
+		  cout << i << " " << j << " : " << exp(ThreeOrbitalOverlaps[i][j]) << endl;
 		}
 	      else
 		{
@@ -1725,10 +1730,13 @@ void BosonOnSphereWithSU2Spin::SlaterTimeSpinfulFermionicState(RealVector& fermi
 // minIndex = first component to compute
 // nbrComponents = number of components to compute
 // unnormalizedFlag = true if the state should be written in the unnormalized basis
+// cylinderFlag = true if the state should be written on the cylinder geometry
+// cylinderPerimeter = cylinder perimeter
 // architecture = pointer to the architecture
 
 void BosonOnSphereWithSU2Spin::SlaterTimeSpinfulFermionicState(RealVector& fermionicState, RealVector& outputVector, FermionOnSphereWithSpinTwoLandauLevels* fermionicSpace, 
-							       int minIndex, int nbrComponents, bool unnormalizedFlag, AbstractArchitecture* architecture)
+							       int minIndex, int nbrComponents, bool unnormalizedFlag, bool cylinderFlag, double cylinderPerimeter, 
+							       AbstractArchitecture* architecture)
 {
   outputVector.ClearVector();
   RealVector FinalState (this->GetHilbertSpaceDimension());
@@ -1739,26 +1747,44 @@ void BosonOnSphereWithSU2Spin::SlaterTimeSpinfulFermionicState(RealVector& fermi
   int MaxIndex = minIndex + nbrComponents;
   FactorialCoefficient Coefficient;	
   double*** ThreeOrbitalOverlaps = new double** [2];
-  ThreeOrbitalOverlaps[0] = new double* [this->LzMax + 1];
-  ThreeOrbitalOverlaps[1] = new double* [this->LzMax + 1];
+  int MaxLambdaLevelIndex = 1;
+  for (int LambdaLevel = 0; LambdaLevel <= MaxLambdaLevelIndex; ++LambdaLevel)
+    {      
+      ThreeOrbitalOverlaps[LambdaLevel] = new double* [this->LzMax + 1];
+    }
 
   if ((this->LzMax + 1) >= this->NbrBosons)
     {
-      BinomialCoefficients Binomials(this->LzMax);
-      for (int i = 0; i <= this->LzMax; ++i)
+      for (int LambdaLevel = 0; LambdaLevel <= MaxLambdaLevelIndex; ++LambdaLevel)
 	{
-	  ThreeOrbitalOverlaps[0][i] = new double [this->NbrBosons];
-	  double TmpFactor1 = log(((double) ((fermionicSpace->LzMax + 1) * this->NbrBosons)) / ((double) (this->LzMax + 1)) / (4.0 * M_PI)) - log(Binomials.GetNumericalCoefficient(this->LzMax, i));
-	  for (int j = 0; (j < this->NbrBosons) && (j <= i); ++j)
+	  int TmpMaxAngularMomentumLambdaLevel = fermionicSpace->LzMax + 2 * (LambdaLevel - MaxLambdaLevelIndex);
+	  double TmpPrefactor = (1.0 - (2.0 * ((double) (LambdaLevel & 1)))) * sqrt (((double) this->NbrBosons) * ((double) (TmpMaxAngularMomentumLambdaLevel + 1)) / (4.0 * M_PI * (this->LzMax + 1)));
+	  
+	  ClebschGordanCoefficients Clebsch(TmpMaxAngularMomentumLambdaLevel, this->NbrBosons - 1);
+	  for (int i = 0; i <= this->LzMax; ++i)
 	    {
-	      if (unnormalizedFlag == false)
+	      ThreeOrbitalOverlaps[LambdaLevel][i] = new double [this->NbrBosons];
+	      for (int j = 0; j < this->NbrBosons; ++j)
 		{
-		  ThreeOrbitalOverlaps[0][i][j] = 0.5 * (TmpFactor1 + log(Binomials.GetNumericalCoefficient(this->NbrBosons - 1, j)) 
-						      + log(Binomials.GetNumericalCoefficient(fermionicSpace->LzMax, i - j)));
-		}
-	      else
-		{
-		  ThreeOrbitalOverlaps[0][i][j] = 0.0;
+		  if (((i - j + LambdaLevel) >= 0) && ((i - j + LambdaLevel) <= TmpMaxAngularMomentumLambdaLevel))
+		    {
+		      if (unnormalizedFlag == false)
+			{
+//			  cout << i << " " << j << " :" << (2 * (i - j + LambdaLevel) - TmpMaxAngularMomentumLambdaLevel) << " " << ((2 * j) - (this->NbrBosons - 1)) <<  endl;		      
+			  ThreeOrbitalOverlaps[LambdaLevel][i][j] = (TmpPrefactor * Clebsch.GetCoefficient(2 * (i - j + LambdaLevel) - TmpMaxAngularMomentumLambdaLevel, (2 * j) - (this->NbrBosons - 1), this->LzMax) 
+								     * Clebsch.GetCoefficient(fermionicSpace->LzMax - 2 * MaxLambdaLevelIndex, this->NbrBosons - 1, this->LzMax));
+//			  cout << LambdaLevel << " " << i << " " << j << " : " << ThreeOrbitalOverlaps[LambdaLevel][i][j] << endl;
+
+			}
+		      else
+			{
+			  ThreeOrbitalOverlaps[LambdaLevel][i][j] = 1.0;
+			}
+		    }
+		  else
+		    {
+		      ThreeOrbitalOverlaps[LambdaLevel][i][j] = 0.0;
+		    }		  
 		}
 	    }
 	}
@@ -1770,7 +1796,7 @@ void BosonOnSphereWithSU2Spin::SlaterTimeSpinfulFermionicState(RealVector& fermi
 	      int TmpNbrBosons2LLUp;
 	      int TmpNbrBosonsLLLDown;
 	      int TmpNbrBosons2LLDown;
-//	      fermionicSpace->ConvertToMonomial(fermionicSpace->StateDescription[i], SlaterUp, SlaterDown);	      
+	      fermionicSpace->ConvertToMonomial(fermionicSpace->StateDescription[i], SlaterLLLUp, Slater2LLUp, SlaterLLLDown, Slater2LLDown, TmpNbrBosonsLLLUp, TmpNbrBosonsLLLDown);	      
 	      this->VanDerMondeTimesSlater(SlaterLLLUp, Slater2LLUp, SlaterLLLDown, Slater2LLDown, TmpNbrBosonsLLLUp, TmpNbrBosonsLLLDown, 
 					   FinalState, ThreeOrbitalOverlaps);
 	      for (int Index = 0; Index < FinalState.GetVectorDimension(); ++Index)
@@ -1800,80 +1826,96 @@ void BosonOnSphereWithSU2Spin::SlaterTimeSpinfulFermionicState(RealVector& fermi
 	    }
 	}
     }
-//   else
-//     {
-//       BinomialCoefficients Binomials(this->NbrBosons);
-//       for (int i = 0; i <= this->LzMax; ++i)
-// 	{
-// 	  ThreeOrbitalOverlaps[i] = new double [this->NbrBosons];
-// 	}
-//       for (int i = 0; i <= fermionicSpace->LzMax; ++i)
-// 	{
-// 	  for (int j = 0; j < this->NbrBosons; ++j)
-// 	    {
-// 	      if (((j - i) >= 0) && ((j - i) <= this->LzMax))
-// 		{
-// 		  if (unnormalizedFlag == false)
-// 		    {
-// 		      ThreeOrbitalOverlaps[j - i][j] = -0.5 * (log(((double) ((fermionicSpace->LzMax + 1) * this->NbrBosons)) / ((double) (this->LzMax + 1)) / (4.0 * M_PI)) 
-// 							       - log(Binomials.GetNumericalCoefficient(this->LzMax, j - i))
-// 							       + log(Binomials.GetNumericalCoefficient(this->NbrBosons - 1, j)) 
-// 							       + log(Binomials.GetNumericalCoefficient(fermionicSpace->LzMax, i)));
-// 		    }
-// 		  else
-// 		    {
-// 		      ThreeOrbitalOverlaps[j - i][j] = 0.0;
-// 		    }
-// 		}
-// 	    }
-// 	}
+   else
+     {
+      for (int LambdaLevel = 0; LambdaLevel <= MaxLambdaLevelIndex; ++LambdaLevel)
+	{
+	  int TmpMaxAngularMomentumLambdaLevel = fermionicSpace->LzMax + 2 * (LambdaLevel - MaxLambdaLevelIndex);
+	  double TmpPrefactor = (1.0 - (2.0 * ((double) (LambdaLevel & 1)))) * sqrt (((double) this->NbrBosons) * ((double) (TmpMaxAngularMomentumLambdaLevel + 1)) / (4.0 * M_PI * (this->LzMax + 1)));
+	  
+	  ClebschGordanCoefficients Clebsch(TmpMaxAngularMomentumLambdaLevel, this->NbrBosons - 1);
+	  for (int i = 0; i <= this->LzMax; ++i)
+	    {
+	      ThreeOrbitalOverlaps[LambdaLevel][i] = new double [this->NbrBosons];
+	      for (int j = 0; j < this->NbrBosons; ++j)
+		{
+		  if (((j - i + LambdaLevel) >= 0) && ((j - i + LambdaLevel) <= TmpMaxAngularMomentumLambdaLevel))
+		    {
+		      if (unnormalizedFlag == false)
+			{
+//			  cout << i << " " << j << " :" << (2 * (i - j + LambdaLevel) - TmpMaxAngularMomentumLambdaLevel) << " " << ((2 * j) - (this->NbrBosons - 1)) <<  endl;		      
+			  ThreeOrbitalOverlaps[LambdaLevel][i][j] = (TmpPrefactor * Clebsch.GetCoefficient(2 * (j - i + LambdaLevel) - TmpMaxAngularMomentumLambdaLevel, (2 * j) - (this->NbrBosons - 1), this->LzMax) 
+								     * Clebsch.GetCoefficient(-(fermionicSpace->LzMax - 2 * MaxLambdaLevelIndex), this->NbrBosons - 1, this->LzMax));
+//			  cout << LambdaLevel << " " << i << " " << j << " : " << ThreeOrbitalOverlaps[LambdaLevel][i][j] << endl;
 
-//       for (long i = minIndex; i < MaxIndex; i++)
-// 	{
-// 	  if (fermionicState[i] != 0.0)
-// 	    {
-// 	      fermionicSpace->ConvertToMonomial(fermionicSpace->StateDescription[i], SlaterUp, SlaterDown);
+			}
+		      else
+			{
+			  ThreeOrbitalOverlaps[LambdaLevel][i][j] = 1.0;
+			}
+		    }
+		  else
+		    {
+		      ThreeOrbitalOverlaps[LambdaLevel][i][j] = 0.0;
+		    }		  
+		}
+	    }
+	}
+       for (long i = minIndex; i < MaxIndex; i++)
+ 	{
+ 	  if (fermionicState[i] != 0.0)
+ 	    {
+	      int TmpNbrBosonsLLLUp;
+	      int TmpNbrBosons2LLUp;
+	      int TmpNbrBosonsLLLDown;
+	      int TmpNbrBosons2LLDown;
+	      fermionicSpace->ConvertToMonomial(fermionicSpace->StateDescription[i], SlaterLLLUp, Slater2LLUp, SlaterLLLDown, Slater2LLDown, TmpNbrBosonsLLLUp, TmpNbrBosonsLLLDown);	      
 
 // 	      FQHESphereWithSU2SpinVanDerMondeTimesSlaterOperation TmpOperation(this, true, SlaterUp, SlaterDown, ThreeOrbitalOverlaps);
 // 	      TmpOperation.ApplyOperation(architecture);
 // 	      FinalState = TmpOperation.GetDestinationVector();
 	      
-// //	      this->ReverseVanDerMondeTimesSlater(SlaterUp, SlaterDown, FinalState, ThreeOrbitalOverlaps);
+	      this->ReverseVanDerMondeTimesSlater(SlaterLLLUp, Slater2LLUp, SlaterLLLDown, Slater2LLDown, TmpNbrBosonsLLLUp, TmpNbrBosonsLLLDown, 
+						  FinalState, ThreeOrbitalOverlaps);
 
 // // 	      for (int j = 0; j < this->NbrBosons; ++j)
 // // 		this->ReverseVanDerMondeTimesSlater(SlaterUp, SlaterDown, FinalState, ThreeOrbitalOverlaps, j);
 
-// 	      for (int Index = 0; Index < FinalState.GetVectorDimension(); ++Index)
-// 		{
-// 		  if (FinalState[Index] != 0.0)
-// 		    {
-// 		      this->FermionToBoson(this->StateDescriptionUp[Index], this->StateDescriptionDown[Index],
-// 					   this->TemporaryStateUp, this->TemporaryStateDown); 
-// 		      Coefficient.SetToOne();
-// 		      for(int p = 0; p <= this->LzMax; ++p)
-// 			{
-// 			  if (this->TemporaryStateUp[p] > 1)
-// 			    Coefficient.FactorialMultiply(this->TemporaryStateUp[p]);
-// 			  if (this->TemporaryStateDown[p] > 1)
-// 			    Coefficient.FactorialMultiply(this->TemporaryStateDown[p]);
-// 			}		  
-// 		      if (unnormalizedFlag == false)
-// 			{
-// 			  outputVector[Index] += sqrt(Coefficient.GetNumericalValue()) * fermionicState[i] * FinalState[Index];
-// 			}
-// 		      else
-// 			{
-// 			  outputVector[Index] += Coefficient.GetNumericalValue() * fermionicState[i] * FinalState[Index];
-// 			}
-// 		    }
-// 		}
-// 	    }
-// 	}
-//     }
-  for (int i = 0; i <= this->LzMax; ++i)
-    {
-      delete[] ThreeOrbitalOverlaps[i];
-    }  
+ 	      for (int Index = 0; Index < FinalState.GetVectorDimension(); ++Index)
+ 		{
+ 		  if (FinalState[Index] != 0.0)
+ 		    {
+ 		      this->FermionToBoson(this->StateDescriptionUp[Index], this->StateDescriptionDown[Index],
+ 					   this->TemporaryStateUp, this->TemporaryStateDown); 
+ 		      Coefficient.SetToOne();
+ 		      for(int p = 0; p <= this->LzMax; ++p)
+ 			{
+ 			  if (this->TemporaryStateUp[p] > 1)
+ 			    Coefficient.FactorialMultiply(this->TemporaryStateUp[p]);
+ 			  if (this->TemporaryStateDown[p] > 1)
+ 			    Coefficient.FactorialMultiply(this->TemporaryStateDown[p]);
+ 			}		  
+ 		      if (unnormalizedFlag == false)
+ 			{
+ 			  outputVector[Index] += sqrt(Coefficient.GetNumericalValue()) * fermionicState[i] * FinalState[Index];
+ 			}
+		      else
+			{
+			  outputVector[Index] += Coefficient.GetNumericalValue() * fermionicState[i] * FinalState[Index];
+			}
+		    }
+		}
+	    }
+	}
+    }
+  for (int LambdaLevel = 0; LambdaLevel <= MaxLambdaLevelIndex; ++LambdaLevel)
+    {      
+      for (int i = 0; i <= this->LzMax; ++i)
+	{
+	  delete[] ThreeOrbitalOverlaps[LambdaLevel][i];
+	}  
+      delete[] ThreeOrbitalOverlaps[LambdaLevel];
+    }
   delete[] ThreeOrbitalOverlaps;
 }
 
@@ -2225,7 +2267,7 @@ void BosonOnSphereWithSU2Spin::ReverseVanDerMondeTimesSlater (unsigned long* sla
     {
       if (TmpHeapArray[Tmp] < Tmp)
 	{
-	  if ((Tmp & 0x1ul) == 0x0ul)
+	  if ((Tmp & 0x1) == 0x0)
 	    {
 	      unsigned long Tmp2 = VanDerMonde[Tmp];
 	      VanDerMonde[Tmp] = VanDerMonde[0];
@@ -2316,62 +2358,95 @@ void BosonOnSphereWithSU2Spin::VanDerMondeTimesSlater (unsigned long* slaterLLLU
   double Sign = 1.0;
   unsigned long Mask = 0ul;
   unsigned long VanDerMonde [this->NbrBosons];
-  unsigned long TmpHeapArray [this->NbrBosons];
-  unsigned long TmpDim = ((unsigned long) this->NbrBosons);
-  for (unsigned long i = 0ul; i < TmpDim; ++i)
+  int TmpHeapArray [this->NbrBosons];
+  int TmpDim = this->NbrBosons;
+  int Tmp = 0;
+  for (int i = 0; i < TmpDim; ++i)
     {
-      VanDerMonde[i] = i;
-      TmpHeapArray[i] = 0ul;
+      VanDerMonde[i] = (unsigned long) i;
+      TmpHeapArray[i] = 0;
     }
   finalState.ClearVector();
 
-
-  double TmpFactorUp = 0.0;
-  bool ChangedUp = false;
-  for (int i = 0; i < nbrBosonsLLLUp; ++i)
+  double TmpFactor = 1.0;
+  bool DiscardFlag = false;
+  for (int i = 0; (i < nbrBosonsLLLUp) && (DiscardFlag == false); ++i)
     {
-      StateUp[i] = slaterLLLUp[i] + VanDerMonde[i];
-      TmpFactorUp += threeOrbitalOverlaps[0][StateUp[i]][VanDerMonde[i]];
+      StateUp[i] = slaterLLLUp[i] + VanDerMonde[i] - 1;
+      if ((StateUp[i] >= 0) && (StateUp[i] <= this->LzMax))
+	{
+	  TmpFactor *= threeOrbitalOverlaps[0][StateUp[i]][VanDerMonde[i]];
+	}
+      else
+	{
+	  DiscardFlag = true;
+	}
     }
-  for (int i = nbrBosonsLLLUp; i < this->NbrBosonsUp; ++i)
+  if (DiscardFlag == false)
     {
-      StateUp[i] = slater2LLUp[i - nbrBosonsLLLUp] + VanDerMonde[i];
-      TmpFactorUp += threeOrbitalOverlaps[1][StateUp[i]][VanDerMonde[i]];
-    }
-  double TmpFactorDown = 0.0;
-  bool ChangedDown = false;
-  for (int i = 0; i < nbrBosonsLLLDown; ++i)
-    {
-      StateDown[i] = slaterLLLDown[i] + VanDerMonde[this->NbrBosonsUp + i];
-      TmpFactorDown += threeOrbitalOverlaps[0][StateDown[i]][VanDerMonde[this->NbrBosonsUp + i]];
-    }
-  for (int i = nbrBosonsLLLDown; i < this->NbrBosonsDown; ++i)
-    {
-      StateDown[i] = slater2LLDown[i - nbrBosonsLLLDown] + VanDerMonde[this->NbrBosonsUp + i];
-      TmpFactorDown += threeOrbitalOverlaps[1][StateDown[i]][VanDerMonde[this->NbrBosonsUp + i]];
+      for (int i = nbrBosonsLLLUp; (i < this->NbrBosonsUp) && (DiscardFlag == false); ++i)
+	{
+	  StateUp[i] = slater2LLUp[i - nbrBosonsLLLUp] + VanDerMonde[i] - 1;
+	  if ((StateUp[i] >= 0) && (StateUp[i] <= this->LzMax))
+	    {
+	      TmpFactor *= threeOrbitalOverlaps[1][StateUp[i]][VanDerMonde[i]];
+	    }
+	  else
+	    {
+	      DiscardFlag = true;
+	    }
+	}
+      if (DiscardFlag == false)
+	{
+	  for (int i = 0; i < (nbrBosonsLLLDown) && (DiscardFlag == false); ++i)
+	    {
+	      StateDown[i] = slaterLLLDown[i] + VanDerMonde[this->NbrBosonsUp + i] - 1;
+	      if ((StateDown[i] >= 0) && (StateDown[i] <= this->LzMax))
+		{
+		  TmpFactor *= threeOrbitalOverlaps[0][StateDown[i]][VanDerMonde[this->NbrBosonsUp + i]];
+		}
+	      else
+		{
+		  DiscardFlag = true;
+		}
+	    }
+	  if (DiscardFlag == false)
+	    {
+	      for (int i = nbrBosonsLLLDown; i < (this->NbrBosonsDown) && (DiscardFlag == false); ++i)
+		{
+		  StateDown[i] = slater2LLDown[i - nbrBosonsLLLDown] + VanDerMonde[this->NbrBosonsUp + i] - 1;
+		  if ((StateDown[i] >= 0) && (StateDown[i] <= this->LzMax))
+		    {
+		      TmpFactor *= threeOrbitalOverlaps[1][StateDown[i]][VanDerMonde[this->NbrBosonsUp + i]];
+		    }
+		  else
+		    {
+		      DiscardFlag = true;
+		    }
+		}
+	      if (DiscardFlag == false)
+		{
+		  this->ConvertFromMonomial(StateUp, StateDown, this->TemporaryStateUp, this->TemporaryStateDown);
+		  this->BosonToFermion(this->TemporaryStateUp, this->TemporaryStateDown, TmpFinalStateUp, TmpFinalStateDown);
+		  int TmpPos = this->FindStateIndex(TmpFinalStateUp, TmpFinalStateDown);
+		  if (TmpPos != this->HilbertSpaceDimension)
+		    {
+		      finalState[TmpPos] += Sign * TmpFactor;
+		    }
+		}
+	    }
+	}
     }
   
-  this->ConvertFromMonomial(StateUp, StateDown, this->TemporaryStateUp, this->TemporaryStateDown);
-  this->BosonToFermion(this->TemporaryStateUp, this->TemporaryStateDown, TmpFinalStateUp, TmpFinalStateDown);
-  int TmpPos = this->FindStateIndex(TmpFinalStateUp, TmpFinalStateDown);
-  if (TmpPos != this->HilbertSpaceDimension)
-    {
-      finalState[TmpPos] += Sign * exp(TmpFactorUp + TmpFactorDown);
-    }
-  ++TmpNbrStates;
-  unsigned long Tmp = 0;
   while (Tmp < TmpDim)
     {
       if (TmpHeapArray[Tmp] < Tmp)
 	{
-	  if ((Tmp & 0x1ul) == 0x0ul)
+	  if ((Tmp & 0x1) == 0x0)
 	    {
 	      unsigned long Tmp2 = VanDerMonde[Tmp];
 	      VanDerMonde[Tmp] = VanDerMonde[0];
 	      VanDerMonde[0] = Tmp2;
-	      if (Tmp >= this->NbrBosonsUp)
-		ChangedDown = true;
-	      ChangedUp = true;
 	      
 	    }
 	  else
@@ -2379,70 +2454,291 @@ void BosonOnSphereWithSU2Spin::VanDerMondeTimesSlater (unsigned long* slaterLLLU
 	      unsigned long Tmp2 = VanDerMonde[Tmp];
 	      VanDerMonde[Tmp] = VanDerMonde[TmpHeapArray[Tmp]];
 	      VanDerMonde[TmpHeapArray[Tmp]] = Tmp2;
-	      if (TmpHeapArray[Tmp] >= this->NbrBosonsUp)
+	    }
+	  Sign *= -1.0;
+	  DiscardFlag = false;
+	  TmpFactor = 1.0;
+	  for (int i = 0; (i < nbrBosonsLLLUp) && (DiscardFlag == false); ++i)
+	    {
+	      StateUp[i] = slaterLLLUp[i] + VanDerMonde[i] - 1;
+	      if ((StateUp[i] >= 0) && (StateUp[i] <= this->LzMax))
 		{
-		  ChangedDown = true;
+		  TmpFactor *= threeOrbitalOverlaps[0][StateUp[i]][VanDerMonde[i]];
 		}
 	      else
 		{
-		  ChangedUp = true;		  
-		  if (Tmp >= this->NbrBosonsUp)
+		  DiscardFlag = true;
+		}
+	    }
+	  if (DiscardFlag == false)
+	    {
+	      for (int i = nbrBosonsLLLUp; (i < this->NbrBosonsUp) && (DiscardFlag == false); ++i)
+		{
+		  StateUp[i] = slater2LLUp[i - nbrBosonsLLLUp] + VanDerMonde[i] - 1;
+		  if ((StateUp[i] >= 0) && (StateUp[i] <= this->LzMax))
 		    {
-		      ChangedDown = true;
+		      TmpFactor *= threeOrbitalOverlaps[1][StateUp[i]][VanDerMonde[i]];
+		    }
+		  else
+		    {
+		      DiscardFlag = true;
+		    }
+		}
+	      if (DiscardFlag == false)
+		{
+		  for (int i = 0; (i < nbrBosonsLLLDown) && (DiscardFlag == false); ++i)
+		    {
+		      StateDown[i] = slaterLLLDown[i] + VanDerMonde[this->NbrBosonsUp + i] - 1;
+		      if ((StateDown[i] >= 0) && (StateDown[i] <= this->LzMax))
+			{
+			  TmpFactor *= threeOrbitalOverlaps[0][StateDown[i]][VanDerMonde[this->NbrBosonsUp + i]];
+			}
+		      else
+			{
+			  DiscardFlag = true;
+			}
+		    }
+		  if (DiscardFlag == false)
+		    {
+		      for (int i = nbrBosonsLLLDown; (i < this->NbrBosonsDown) && (DiscardFlag == false); ++i)
+			{
+			  StateDown[i] = slater2LLDown[i - nbrBosonsLLLDown] + VanDerMonde[this->NbrBosonsUp + i] - 1;
+			  if ((StateDown[i] >= 0) && (StateDown[i] <= this->LzMax))
+			    {
+			      TmpFactor *= threeOrbitalOverlaps[1][StateDown[i]][VanDerMonde[this->NbrBosonsUp + i]];
+			    }
+			  else
+			    {
+			      DiscardFlag = true;
+			    }
+			}
+		      if (DiscardFlag == false)
+			{
+			  this->ConvertFromMonomial(StateUp, StateDown, this->TemporaryStateUp, this->TemporaryStateDown);
+			  this->BosonToFermion(this->TemporaryStateUp, this->TemporaryStateDown, TmpFinalStateUp, TmpFinalStateDown);
+			  int TmpPos = this->FindStateIndex(TmpFinalStateUp, TmpFinalStateDown);
+			  if (TmpPos != this->HilbertSpaceDimension)
+			    {
+			      finalState[TmpPos] += Sign* TmpFactor;
+			    }
+			}
 		    }
 		}
 	    }
-	  if (ChangedUp == true)
-	    {
-	      TmpFactorUp = 0.0;
-	      for (int i = 0; i < nbrBosonsLLLUp; ++i)
-		{
-		  StateUp[i] = slaterLLLUp[i] + VanDerMonde[i];
-		  TmpFactorUp += threeOrbitalOverlaps[0][StateUp[i]][VanDerMonde[i]];
-		}
-	      for (int i = nbrBosonsLLLUp; i < this->NbrBosonsUp; ++i)
-		{
-		  StateUp[i] = slater2LLUp[i - nbrBosonsLLLUp] + VanDerMonde[i];
-		  TmpFactorUp += threeOrbitalOverlaps[1][StateUp[i]][VanDerMonde[i]];
-		}
-	      this->ConvertFromMonomial(StateUp, this->TemporaryStateUp, this->NbrBosonsUp);
-	      TmpFinalStateUp = this->BosonToFermion(this->TemporaryStateUp);
-	      ChangedUp = false;
-	    }
-	  if (ChangedDown == true)
-	    {
-	      TmpFactorDown = 0.0;
-	      for (int i = 0; i < nbrBosonsLLLDown; ++i)
-		{
-		  StateDown[i] = slaterLLLDown[i] + VanDerMonde[this->NbrBosonsUp + i];
-		  TmpFactorDown += threeOrbitalOverlaps[0][StateDown[i]][VanDerMonde[this->NbrBosonsUp + i]];
-		}
-	      for (int i = nbrBosonsLLLDown; i < this->NbrBosonsDown; ++i)
-		{
-		  StateDown[i] = slater2LLDown[i - nbrBosonsLLLDown] + VanDerMonde[this->NbrBosonsUp + i];
-		  TmpFactorDown += threeOrbitalOverlaps[1][StateDown[i]][VanDerMonde[this->NbrBosonsUp + i]];
-		}
-	      this->ConvertFromMonomial(StateDown, this->TemporaryStateDown, this->NbrBosonsDown);
-	      TmpFinalStateDown = this->BosonToFermion(this->TemporaryStateDown);
-	      ChangedDown = false;	      
-	    }
-	  Sign *= -1.0;
-	  int TmpPos = this->FindStateIndex(TmpFinalStateUp, TmpFinalStateDown);
-	  if (TmpPos != this->HilbertSpaceDimension)
-	    {
-	      finalState[TmpPos] += Sign* exp(TmpFactorUp + TmpFactorDown);
-	    }
 	  ++TmpHeapArray[Tmp];
-	  Tmp = 0ul;
+	  Tmp = 0;
 	}
       else
 	{
-	  TmpHeapArray[Tmp]= 0ul;
+	  TmpHeapArray[Tmp]= 0;
 	  ++Tmp;
 	}
     }
 }
 
+// Compute the product of a spinful Slater determinant in two Landau levels with a Van der Monde determinant, assuming a reverse flux attachment
+//
+// slaterLLLUp = monomial representation of the lowest Landau part of the Slater spin up part
+// slater2LLUp = monomial representation of the second Landau part of the Slater spin up part
+// slaterLLLDown = monomial representation of the lowest Landau part  of the Slater spin down part
+// slater2LLDown = monomial representation of the second Landau part of the Slater spin down part
+// nbrBosonsLLLUp - number of spin up bosons in the lowest Landau level
+// nbrBosonsLLLDown - number of spin down bosons in the lowest Landau level
+// finalState = reference on the vector the produced state will be stored
+// threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
+
+void BosonOnSphereWithSU2Spin::ReverseVanDerMondeTimesSlater (unsigned long* slaterLLLUp, unsigned long* slater2LLUp, unsigned long* slaterLLLDown, unsigned long* slater2LLDown, 
+							      int nbrBosonsLLLUp, int nbrBosonsLLLDown, RealVector& finalState, double*** threeOrbitalOverlaps)
+{
+  unsigned long TmpNbrStates = 0;
+  long CoefUp = 1;
+  long CoefDown = 1;
+  unsigned long StateUp [this->NbrBosonsUp];
+  unsigned long StateDown [this->NbrBosonsDown];
+  unsigned long TmpFinalStateUp;
+  unsigned long TmpFinalStateDown;
+  unsigned long TmpState = 0ul;
+  double Sign = 1.0;
+  unsigned long Mask = 0ul;
+  unsigned long VanDerMonde [this->NbrBosons];
+  int TmpHeapArray [this->NbrBosons];
+  int TmpDim = this->NbrBosons;
+  int Tmp = 0;
+  for (int i = 0; i < TmpDim; ++i)
+    {
+      VanDerMonde[i] = (unsigned long) i;
+      TmpHeapArray[i] = 0;
+    }
+  finalState.ClearVector();
+
+  double TmpFactor = 1.0;
+  bool DiscardFlag = false;
+  for (int i = 0; (i < nbrBosonsLLLUp) && (DiscardFlag == false); ++i)
+    {
+      StateUp[i] = VanDerMonde[i] -  slaterLLLUp[i] + 1;
+      if ((StateUp[i] >= 0) && (StateUp[i] <= this->LzMax))
+	{
+	  TmpFactor *= threeOrbitalOverlaps[0][StateUp[i]][VanDerMonde[i]];
+	}
+      else
+	{
+	  DiscardFlag = true;
+	}
+    }
+  if (DiscardFlag == false)
+    {
+      for (int i = nbrBosonsLLLUp; (i < this->NbrBosonsUp) && (DiscardFlag == false); ++i)
+	{
+	  StateUp[i] = VanDerMonde[i] - slater2LLUp[i - nbrBosonsLLLUp] + 1;
+	  if ((StateUp[i] >= 0) && (StateUp[i] <= this->LzMax))
+	    {
+	      TmpFactor *= threeOrbitalOverlaps[1][StateUp[i]][VanDerMonde[i]];
+	    }
+	  else
+	    {
+	      DiscardFlag = true;
+	    }
+	}
+      if (DiscardFlag == false)
+	{
+	  for (int i = 0; i < (nbrBosonsLLLDown) && (DiscardFlag == false); ++i)
+	    {
+	      StateDown[i] = VanDerMonde[this->NbrBosonsUp + i] - slaterLLLDown[i] + 1;
+	      if ((StateDown[i] >= 0) && (StateDown[i] <= this->LzMax))
+		{
+		  TmpFactor *= threeOrbitalOverlaps[0][StateDown[i]][VanDerMonde[this->NbrBosonsUp + i]];
+		}
+	      else
+		{
+		  DiscardFlag = true;
+		}
+	    }
+	  if (DiscardFlag == false)
+	    {
+	      for (int i = nbrBosonsLLLDown; i < (this->NbrBosonsDown) && (DiscardFlag == false); ++i)
+		{
+		  StateDown[i] = VanDerMonde[this->NbrBosonsUp + i] - slater2LLDown[i - nbrBosonsLLLDown] + 1;
+		  if ((StateDown[i] >= 0) && (StateDown[i] <= this->LzMax))
+		    {
+		      TmpFactor *= threeOrbitalOverlaps[1][StateDown[i]][VanDerMonde[this->NbrBosonsUp + i]];
+		    }
+		  else
+		    {
+		      DiscardFlag = true;
+		    }
+		}
+	      if (DiscardFlag == false)
+		{
+		  this->ConvertFromMonomial(StateUp, StateDown, this->TemporaryStateUp, this->TemporaryStateDown);
+		  this->BosonToFermion(this->TemporaryStateUp, this->TemporaryStateDown, TmpFinalStateUp, TmpFinalStateDown);
+		  int TmpPos = this->FindStateIndex(TmpFinalStateUp, TmpFinalStateDown);
+		  if (TmpPos != this->HilbertSpaceDimension)
+		    {
+		      finalState[TmpPos] += Sign * TmpFactor;
+		    }
+		}
+	    }
+	}
+    }
+  
+  while (Tmp < TmpDim)
+    {
+      if (TmpHeapArray[Tmp] < Tmp)
+	{
+	  if ((Tmp & 0x1) == 0x0)
+	    {
+	      unsigned long Tmp2 = VanDerMonde[Tmp];
+	      VanDerMonde[Tmp] = VanDerMonde[0];
+	      VanDerMonde[0] = Tmp2;
+	      
+	    }
+	  else
+	    {
+	      unsigned long Tmp2 = VanDerMonde[Tmp];
+	      VanDerMonde[Tmp] = VanDerMonde[TmpHeapArray[Tmp]];
+	      VanDerMonde[TmpHeapArray[Tmp]] = Tmp2;
+	    }
+	  Sign *= -1.0;
+	  DiscardFlag = false;
+	  TmpFactor = 1.0;
+	  for (int i = 0; (i < nbrBosonsLLLUp) && (DiscardFlag == false); ++i)
+	    {
+	      StateUp[i] = VanDerMonde[i] - slaterLLLUp[i] + 1;
+	      if ((StateUp[i] >= 0) && (StateUp[i] <= this->LzMax))
+		{
+		  TmpFactor *= threeOrbitalOverlaps[0][StateUp[i]][VanDerMonde[i]];
+		}
+	      else
+		{
+		  DiscardFlag = true;
+		}
+	    }
+	  if (DiscardFlag == false)
+	    {
+	      for (int i = nbrBosonsLLLUp; (i < this->NbrBosonsUp) && (DiscardFlag == false); ++i)
+		{
+		  StateUp[i] = VanDerMonde[i] - slater2LLUp[i - nbrBosonsLLLUp] + 1;
+		  if ((StateUp[i] >= 0) && (StateUp[i] <= this->LzMax))
+		    {
+		      TmpFactor *= threeOrbitalOverlaps[1][StateUp[i]][VanDerMonde[i]];
+		    }
+		  else
+		    {
+		      DiscardFlag = true;
+		    }
+		}
+	      if (DiscardFlag == false)
+		{
+		  for (int i = 0; (i < nbrBosonsLLLDown) && (DiscardFlag == false); ++i)
+		    {
+		      StateDown[i] = VanDerMonde[this->NbrBosonsUp + i] - slaterLLLDown[i] + 1;
+		      if ((StateDown[i] >= 0) && (StateDown[i] <= this->LzMax))
+			{
+			  TmpFactor *= threeOrbitalOverlaps[0][StateDown[i]][VanDerMonde[this->NbrBosonsUp + i]];
+			}
+		      else
+			{
+			  DiscardFlag = true;
+			}
+		    }
+		  if (DiscardFlag == false)
+		    {
+		      for (int i = nbrBosonsLLLDown; (i < this->NbrBosonsDown) && (DiscardFlag == false); ++i)
+			{
+			  StateDown[i] = VanDerMonde[this->NbrBosonsUp + i] - slater2LLDown[i - nbrBosonsLLLDown] + 1;
+			  if ((StateDown[i] >= 0) && (StateDown[i] <= this->LzMax))
+			    {
+			      TmpFactor *= threeOrbitalOverlaps[1][StateDown[i]][VanDerMonde[this->NbrBosonsUp + i]];
+			    }
+			  else
+			    {
+			      DiscardFlag = true;
+			    }
+			}
+		      if (DiscardFlag == false)
+			{
+			  this->ConvertFromMonomial(StateUp, StateDown, this->TemporaryStateUp, this->TemporaryStateDown);
+			  this->BosonToFermion(this->TemporaryStateUp, this->TemporaryStateDown, TmpFinalStateUp, TmpFinalStateDown);
+			  int TmpPos = this->FindStateIndex(TmpFinalStateUp, TmpFinalStateDown);
+			  if (TmpPos != this->HilbertSpaceDimension)
+			    {
+			      finalState[TmpPos] += Sign* TmpFactor;
+			    }
+			}
+		    }
+		}
+	    }
+	  ++TmpHeapArray[Tmp];
+	  Tmp = 0;
+	}
+      else
+	{
+	  TmpHeapArray[Tmp]= 0;
+	  ++Tmp;
+	}
+    }
+}
+  
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
 // 
 // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)

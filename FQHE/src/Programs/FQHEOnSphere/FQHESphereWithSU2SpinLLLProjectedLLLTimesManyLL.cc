@@ -2,6 +2,7 @@
 #include "Vector/LongRationalVector.h"
 
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/FermionOnSphereWithSpinTwoLandauLevels.h"
 #include "HilbertSpace/BosonOnSphereWithSU2Spin.h"
 #include "HilbertSpace/BosonOnSphereWithSU2SpinLzSymmetry.h"
 #include "HilbertSpace/BosonOnSphereWithSU2SpinSzSymmetry.h"
@@ -50,13 +51,20 @@ int main(int argc, char** argv)
   Architecture.AddOptionGroup(&Manager);
   
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-ll", "number of lambda levels", 1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "flux-quanta", "if positive or zero, for the number of flux quanta for the lambda levels", -1);
   (*SystemGroup) += new BooleanOption ('\n',"reverse-flux","the fluxes bind to each particle are in the opposite direction than the magnetic field");
+  (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system", 0);
+  (*SystemGroup) += new SingleStringOption  ('\n', "lambda-state", "provide a many-body state for the lambda levels, instead of using filled lambda levels");
   (*SystemGroup) += new BooleanOption ('\n',"disable-szsymmetry","disable the Sz<->-Sz symmetry for the Sz=0 sector");
   (*SystemGroup) += new BooleanOption ('\n',"disable-lzsymmetry","disable the Lz<->-Lz symmetry for the Lz=0 sector");
   (*SystemGroup) += new BooleanOption  ('\n', "minus-szparity", "select the  Sz <-> -Sz symmetric sector with negative parity");
   (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
+  (*SystemGroup) += new SingleDoubleOption  ('r', "aspect-ratio", "aspect ratio of the cylinder", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "cylinder-perimeter", "if non zero, fix the cylinder perimeter (in magnetic length unit) instead of the aspect ratio", 0);
 
   (*OutputGroup) += new BooleanOption ('\n', "normalize", "normalize the projected state assuming the sphere geometry");
+  (*OutputGroup) += new BooleanOption ('\n', "cylinder-normalize", "normalize the projected state assuming the cylinder geometry");
   (*OutputGroup) += new BooleanOption  ('\n', "rational" , "use rational numbers instead of double precision floating point numbers");
   (*OutputGroup) += new SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*OutputGroup) += new SingleIntegerOption ('\n', "outputvector-index", "set the index of the output vector (i.e. the integer in the extention *.xxx.vec)", 0);
@@ -76,25 +84,50 @@ int main(int argc, char** argv)
     }
   
   int NbrParticles  = Manager.GetInteger("nbr-particles");
-  int TotalSz = 0;
+  int TotalSz = Manager.GetInteger("total-sz");;
   int NbrParticleUp = (NbrParticles + TotalSz) / 2;
   int NbrParticleDown = (NbrParticles - TotalSz) / 2;  
-  int NbrLandauLevel = 1;
-  int NbrFluxQuantumLambdaLevels = NbrParticleUp - (NbrLandauLevel * (NbrLandauLevel - 1));
-  if ((NbrFluxQuantumLambdaLevels % NbrLandauLevel) != 0)
+  int NbrLandauLevel = Manager.GetInteger("nbr-ll");
+  int NbrFluxQuantumLambdaLevels = 0;
+  if (Manager.GetInteger("flux-quanta") < 0)
     {
-      cout << "error, the number of particles is not compatible with " <<  NbrLandauLevel << " filled Landau levels" << endl;
-      return -1;
+      if (NbrParticleUp >= NbrParticleDown)
+	NbrFluxQuantumLambdaLevels = NbrParticleUp - (NbrLandauLevel * (NbrLandauLevel - 1));
+      else
+	NbrFluxQuantumLambdaLevels = NbrParticleDown - (NbrLandauLevel * (NbrLandauLevel - 1));
+      if ((NbrFluxQuantumLambdaLevels % NbrLandauLevel) != 0)
+	{
+	  cout << "error, the number of particles is not compatible with " <<  NbrLandauLevel << " filled Landau levels" << endl;
+	  return -1;
+	}
+      NbrFluxQuantumLambdaLevels /= NbrLandauLevel;
+      --NbrFluxQuantumLambdaLevels;
     }
-  NbrFluxQuantumLambdaLevels /= NbrLandauLevel;
-  --NbrFluxQuantumLambdaLevels;
+  else
+    {
+      if (Manager.GetString("lambda-state") == 0)
+	{
+	  cout << "error, --flux-quanta requires to provide an input vector using --lambda-state" << endl;
+	  return -1;
+	}
+      NbrFluxQuantumLambdaLevels = Manager.GetInteger("flux-quanta");
+    }
   int NbrFluxQuanta = (NbrParticles - 1);
   if (Manager.GetBoolean("reverse-flux") == false)
     NbrFluxQuanta += NbrFluxQuantumLambdaLevels;
   else
     NbrFluxQuanta -= NbrFluxQuantumLambdaLevels;
   int TotalLz = 0;
-    
+  double Ratio = Manager.GetDouble("aspect-ratio");
+  double Perimeter = Manager.GetDouble("cylinder-perimeter");
+  if (Perimeter != 0.0)
+    {
+      Ratio = 2.0 * M_PI * (NbrFluxQuanta + 1) / (Perimeter * Perimeter);
+    }
+  else
+    {
+      Perimeter = sqrt(2.0 * M_PI * (NbrFluxQuanta + 1) / Ratio);
+    }    
   bool LzSymmmetryFlag = true;
   if ((TotalLz != 0) || (Manager.GetBoolean("disable-lzsymmetry") == true))
     {
@@ -165,8 +198,6 @@ int main(int argc, char** argv)
     }
 
 
-  FermionOnSphereWithSpin* InputSpace = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuantumLambdaLevels, TotalSz);
-
   BosonOnSphereWithSU2Spin* OutputSpace = 0;
   if (LzSymmmetryFlag == true)
     {
@@ -199,12 +230,37 @@ int main(int argc, char** argv)
     {
       cout << "generating state " << OutputName << endl;
     }
-  RealVector InputVector (InputSpace->GetHilbertSpaceDimension(), true);
   RealVector OutputVector (OutputSpace->GetHilbertSpaceDimension(), true);
-  
-  InputVector[0] = 1.0;
-  OutputSpace->SlaterTimeSpinfulFermionicState(InputVector, OutputVector, InputSpace, 0, InputSpace->GetHilbertSpaceDimension(),
-					       !(Manager.GetBoolean("normalize")), Architecture.GetArchitecture());
+
+  if (NbrLandauLevel == 1)
+    {
+      FermionOnSphereWithSpin* InputSpace = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuantumLambdaLevels, TotalSz);  
+      RealVector InputVector (InputSpace->GetHilbertSpaceDimension(), true);
+      InputVector[0] = 1.0;
+      OutputSpace->SlaterTimeSpinfulFermionicState(InputVector, OutputVector, InputSpace, 0, InputSpace->GetHilbertSpaceDimension(),
+						   !(Manager.GetBoolean("normalize")), Manager.GetBoolean("cylinder-normalize"), Perimeter, Architecture.GetArchitecture());
+      delete InputSpace;
+    }
+  else
+    {
+      FermionOnSphereWithSpinTwoLandauLevels* InputSpace = new FermionOnSphereWithSpinTwoLandauLevels(NbrParticles, TotalLz, NbrFluxQuantumLambdaLevels, TotalSz);  
+      RealVector InputVector (InputSpace->GetHilbertSpaceDimension(), true);
+      if (Manager.GetInteger("flux-quanta") < 0)
+	{
+	  InputVector[0] = 1.0;
+	}
+      else
+	{
+	  if (InputVector.ReadVector(Manager.GetString("lambda-state")) == false)
+	    {
+	      cout << "error, can't read " << Manager.GetString("lambda-state") << endl;
+	      return -1;
+	    }
+	}
+      OutputSpace->SlaterTimeSpinfulFermionicState(InputVector, OutputVector, InputSpace, 0, InputSpace->GetHilbertSpaceDimension(),
+						   !(Manager.GetBoolean("normalize")), Manager.GetBoolean("cylinder-normalize"), Perimeter, Architecture.GetArchitecture());
+      delete InputSpace;
+    }
 
   if (Architecture.GetArchitecture()->CanWriteOnDisk())
     {
@@ -219,7 +275,6 @@ int main(int argc, char** argv)
   delete[] OutputName;
   
   delete OutputSpace;
-  delete InputSpace;
 
   return 0;
 }

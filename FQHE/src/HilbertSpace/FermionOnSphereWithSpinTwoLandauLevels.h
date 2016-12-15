@@ -44,6 +44,8 @@
 
 using std::cout;
 using std::endl;
+using std::dec;
+using std::hex;
 using std::ios;
 using std::ofstream;
 

@@ -108,29 +108,32 @@ FermionOnSphereWithSpinTwoLandauLevels::FermionOnSphereWithSpinTwoLandauLevels (
       exit(1);
     }
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
-  this->GenerateLookUpTable(memory);
-  
+  if (this->LargeHilbertSpaceDimension > 0l)
+    {
+      this->GenerateLookUpTable(memory);
+      
 #ifdef __DEBUG__
-   long UsedMemory = 0;
-   UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
-   cout << "memory requested for Hilbert space = ";
-   if (UsedMemory >= 1024)
-     if (UsedMemory >= 1048576)
-       cout << (UsedMemory >> 20) << "Mo" << endl;
-     else
-       cout << (UsedMemory >> 10) << "ko" <<  endl;
-   else
-     cout << UsedMemory << endl;
-   UsedMemory = this->NbrLzValue * sizeof(int);
-  cout << "memory requested for Hilbert space = ";
-  if (UsedMemory >= 1024l)
-    if (UsedMemory >= 1048576l)
-      cout << (UsedMemory >> 20) << "Mo" << endl;
-    else
-      cout << (UsedMemory >> 10) << "ko" <<  endl;
-  else
-    cout << UsedMemory << endl;
+      long UsedMemory = 0;
+      UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+      cout << "memory requested for Hilbert space = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+      UsedMemory = this->NbrLzValue * sizeof(int);
+      cout << "memory requested for Hilbert space = ";
+      if (UsedMemory >= 1024l)
+	if (UsedMemory >= 1048576l)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
 #endif
+    }
 }
 
 // copy constructor (without duplicating datas)
@@ -244,7 +247,6 @@ long FermionOnSphereWithSpinTwoLandauLevels::GenerateStates(int nbrFermions, int
 {
   if ((nbrFermions < 0) || (totalLz < 0)  || (totalSpin < 0) || (totalSpin > nbrFermions))
     return pos;
-
   if ((nbrFermions == 0) && (totalLz == 0))
       {
 	this->StateDescription[pos] = 0x0ul;
@@ -258,14 +260,14 @@ long FermionOnSphereWithSpinTwoLandauLevels::GenerateStates(int nbrFermions, int
     {
       if (lzMax >= totalLz)
 	{
-	  if (((this->LzMax2LL + this->LzShift2LL) <= totalLz) && (totalLz >= this->LzShift2LL))
+	  if (((this->LzMax2LL + this->LzShift2LL) >= totalLz) && (totalLz >= this->LzShift2LL))
 	    {
-	      this->StateDescription[pos] = 0x1ul << ((4 * totalLz) + 2 + totalSpin);
+	      this->StateDescription[pos] = 0x1ul << ((4 * totalLz) + 1 + (2 * totalSpin));
 	      ++pos;
 	    }
 	  if (((this->LzMaxLLL + this->LzShiftLLL) >= totalLz) && (totalLz >= this->LzShiftLLL))
 	    {
-	      this->StateDescription[pos] = 0x1ul << ((4 * totalLz) + totalSpin);
+	      this->StateDescription[pos] = 0x1ul << ((4 * totalLz) + (2 * totalSpin));
 	      ++pos;
 	    }
 	}
@@ -390,9 +392,9 @@ long FermionOnSphereWithSpinTwoLandauLevels::ShiftedEvaluateHilbertSpaceDimensio
       long Tmp = 0l;
       if (lzMax >= totalLz)
 	{
-	  if (((this->LzMax2LL + this->LzShift2LL) <= totalLz) && (totalLz >= this->LzShift2LL))
+	  if (((this->LzMax2LL + this->LzShift2LL) >= totalLz) && (totalLz >= this->LzShift2LL))
 	    ++Tmp;
-	  if (((this->LzMaxLLL + this->LzShiftLLL) <= totalLz) && (totalLz >= this->LzShiftLLL))
+	  if (((this->LzMaxLLL + this->LzShiftLLL) >= totalLz) && (totalLz >= this->LzShiftLLL))
 	    ++Tmp;
 	}
       return Tmp;
