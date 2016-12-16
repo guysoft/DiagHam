@@ -721,6 +721,20 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   virtual void ReverseVanDerMondeTimesSlater (unsigned long* slaterLLLUp, unsigned long* slater2LLUp, unsigned long* slaterLLLDown, unsigned long* slater2LLDown, 
 					      int nbrBosonsLLLUp, int nbrBosonsLLLDown, RealVector& finalState, double*** threeOrbitalOverlaps);
   
+  // Compute the product of a spinful Slater determinant in two Landau levels with a Van der Monde determinant, assuming a reverse flux attachment
+  //
+  // slaterLLLUp = monomial representation of the lowest Landau part of the Slater spin up part
+  // slater2LLUp = monomial representation of the second Landau part of the Slater spin up part
+  // slaterLLLDown = monomial representation of the lowest Landau part  of the Slater spin down part
+  // slater2LLDown = monomial representation of the second Landau part of the Slater spin down part
+  // nbrBosonsLLLUp - number of spin up bosons in the lowest Landau level
+  // nbrBosonsLLLDown - number of spin down bosons in the lowest Landau level
+  // finalState = reference on the vector the produced state will be stored
+  // threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
+  // position = perform a swap between the last element the one at given position 
+  virtual void ReverseVanDerMondeTimesSlater (unsigned long* slaterLLLUp, unsigned long* slater2LLUp, unsigned long* slaterLLLDown, unsigned long* slater2LLDown, 
+					      int nbrBosonsLLLUp, int nbrBosonsLLLDown, RealVector& finalState, double*** threeOrbitalOverlaps, int position);
+  
 };
 
 // get the number of orbitals

@@ -55,12 +55,21 @@ class FQHESphereWithSU2SpinVanDerMondeTimesSlaterOperation : public AbstractArch
 
   // slaterUp = monomial representation of the Slater spin up part
   unsigned long* SlaterUp;
-  
   // slaterDown = monomial representation of the Slater spin up part
   unsigned long* SlaterDown;
 
+  // slaterUp = monomial representation of the second Landau part of the Slater spin up part
+  unsigned long* Slater2LLUp;
+  // slaterDown = monomial representation of the second Landau part of the Slater spin up part
+  unsigned long* Slater2LLDown;
+
+  // number of spin up bosons in the lowest Landau level 
+  int NbrBosonsLLLUp;
+  // number of spin down bosons in the lowest Landau level
+  int NbrBosonsLLLDown;
+
   // array where the integrals of the three orbital product are stored
-  double** ThreeOrbitalOverlaps;
+  double*** ThreeOrbitalOverlaps;
 
   // index of the first component
   int FirstComponent;
@@ -79,6 +88,22 @@ class FQHESphereWithSU2SpinVanDerMondeTimesSlaterOperation : public AbstractArch
   FQHESphereWithSU2SpinVanDerMondeTimesSlaterOperation(BosonOnSphereWithSU2Spin* space, bool reverseFluxAttachment, unsigned long* slaterUp, unsigned long* slaterDown, 
 						       double** threeOrbitalOverlaps);
     
+  // constructor 
+  //
+  // space = pointer to the Hilbert space
+  // reverseFluxAttachment = use reverse flux attachment
+  // slaterLLLUp = monomial representation of the lowest Landau part of the Slater spin up part
+  // slater2LLUp = monomial representation of the second Landau part of the Slater spin up part
+  // slaterLLLDown = monomial representation of the lowest Landau part  of the Slater spin down part
+  // slater2LLDown = monomial representation of the second Landau part of the Slater spin down part
+  // nbrBosonsLLLUp = number of spin up bosons in the lowest Landau level
+  // nbrBosonsLLLDown = number of spin down bosons in the lowest Landau level
+  // threeOrbitalOverlaps = array where the integrals of the three orbital product are stored  
+  FQHESphereWithSU2SpinVanDerMondeTimesSlaterOperation(BosonOnSphereWithSU2Spin* space, bool reverseFluxAttachment, 
+						       unsigned long* slaterLLLUp, unsigned long* slater2LLUp, 
+						       unsigned long* slaterLLLDown, unsigned long* slater2LLDown, 
+						       int nbrBosonsLLLUp, int nbrBosonsLLLDown, double*** threeOrbitalOverlaps);
+
   // copy constructor 
   //
   // operation = reference on operation to copy

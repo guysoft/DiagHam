@@ -68,6 +68,60 @@ FQHESphereWithSU2SpinVanDerMondeTimesSlaterOperation::FQHESphereWithSU2SpinVanDe
     {
       this->SlaterDown[i] = slaterDown[i];
     }
+  this->Slater2LLUp = 0;
+  this->Slater2LLDown = 0;
+  this->NbrBosonsLLLUp = this->Space->NbrBosonsUp;
+  this->NbrBosonsLLLDown = this->Space->NbrBosonsDown;
+  this->ThreeOrbitalOverlaps = new double**[1];
+  this->ThreeOrbitalOverlaps[0] = threeOrbitalOverlaps;
+  this->ReverseFluxAttachment = reverseFluxAttachment;
+  this->OperationType = AbstractArchitectureOperation::FQHESphereWithSU2SpinVanDerMondeTimesSlater;
+}
+
+// constructor 
+//
+// space = pointer to the Hilbert space
+// reverseFluxAttachment = use reverse flux attachment
+// slaterLLLUp = monomial representation of the lowest Landau part of the Slater spin up part
+// slater2LLUp = monomial representation of the second Landau part of the Slater spin up part
+// slaterLLLDown = monomial representation of the lowest Landau part  of the Slater spin down part
+// slater2LLDown = monomial representation of the second Landau part of the Slater spin down part
+// nbrBosonsLLLUp = number of spin up bosons in the lowest Landau level
+// nbrBosonsLLLDown = number of spin down bosons in the lowest Landau level
+// threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
+
+FQHESphereWithSU2SpinVanDerMondeTimesSlaterOperation::FQHESphereWithSU2SpinVanDerMondeTimesSlaterOperation(BosonOnSphereWithSU2Spin* space, bool reverseFluxAttachment, 
+													   unsigned long* slaterLLLUp, unsigned long* slater2LLUp, 
+													   unsigned long* slaterLLLDown, unsigned long* slater2LLDown, 
+													   int nbrBosonsLLLUp, int nbrBosonsLLLDown, double*** threeOrbitalOverlaps)
+{
+  this->Space = (BosonOnSphereWithSU2Spin*) space->Clone();
+  this->OutputState = RealVector(this->Space->GetHilbertSpaceDimension());
+  this->FirstComponent = 0;
+  this->NbrComponent = this->Space->GetNbrParticles();
+  this->NbrBosonsLLLUp = nbrBosonsLLLUp;
+  this->NbrBosonsLLLDown = nbrBosonsLLLDown;
+  this->SlaterUp = new unsigned long[this->NbrBosonsLLLUp];
+  for (int i = 0; i < this->NbrBosonsLLLUp; ++i)
+    {
+      this->SlaterUp[i] = slaterLLLUp[i];
+    }
+  this->SlaterDown = new unsigned long[this->NbrBosonsLLLDown];
+  for (int i = 0; i < this->NbrBosonsLLLDown; ++i)
+    {
+      this->SlaterDown[i] = slaterLLLDown[i];
+    }
+  this->Slater2LLUp = new unsigned long[this->Space->NbrBosonsUp - this->NbrBosonsLLLUp];
+  for (int i = this->NbrBosonsLLLUp; i < this->Space->NbrBosonsUp; ++i)
+    {
+      this->Slater2LLUp[i - this->NbrBosonsLLLUp] = slater2LLUp[i - this->NbrBosonsLLLUp];
+    }
+  this->Slater2LLDown = new unsigned long[this->Space->NbrBosonsDown - this->NbrBosonsLLLDown];
+  for (int i = this->NbrBosonsLLLDown; i < this->Space->NbrBosonsDown; ++i)
+    {
+      this->Slater2LLDown[i - this->NbrBosonsLLLDown] = slater2LLDown[i - this->NbrBosonsLLLDown];
+    }
+  this->ThreeOrbitalOverlaps = threeOrbitalOverlaps;
   this->ThreeOrbitalOverlaps = threeOrbitalOverlaps;
   this->ReverseFluxAttachment = reverseFluxAttachment;
   this->OperationType = AbstractArchitectureOperation::FQHESphereWithSU2SpinVanDerMondeTimesSlater;
@@ -85,15 +139,35 @@ FQHESphereWithSU2SpinVanDerMondeTimesSlaterOperation::FQHESphereWithSU2SpinVanDe
   this->OutputState = operation.OutputState;
   this->ReverseFluxAttachment = operation.ReverseFluxAttachment;
   this->OperationType = AbstractArchitectureOperation::FQHESphereWithSU2SpinVanDerMondeTimesSlater;	
-  this->SlaterUp = new unsigned long[this->Space->NbrBosonsUp];
-  for (int i = 0; i < this->Space->NbrBosonsUp; ++i)
+  this->NbrBosonsLLLUp = operation.NbrBosonsLLLUp;
+  this->NbrBosonsLLLDown = operation.NbrBosonsLLLDown;
+  this->SlaterUp = new unsigned long[this->NbrBosonsLLLUp];
+  for (int i = 0; i < this->NbrBosonsLLLUp; ++i)
     {
       this->SlaterUp[i] = operation.SlaterUp[i];
     }
-  this->SlaterDown = new unsigned long[this->Space->NbrBosonsDown];
-  for (int i = 0; i < this->Space->NbrBosonsDown; ++i)
+  this->SlaterDown = new unsigned long[this->NbrBosonsLLLDown];
+  for (int i = 0; i < this->NbrBosonsLLLDown; ++i)
     {
       this->SlaterDown[i] = operation.SlaterDown[i];
+    }
+  if (this->Slater2LLUp != 0)
+    {
+      this->Slater2LLUp = new unsigned long[this->Space->NbrBosonsUp - this->NbrBosonsLLLUp];
+      for (int i = this->NbrBosonsLLLUp; i < this->Space->NbrBosonsUp; ++i)
+	{
+	  this->Slater2LLUp[i - this->NbrBosonsLLLUp] = operation.Slater2LLUp[i - this->NbrBosonsLLLUp];
+	}
+      this->Slater2LLDown = new unsigned long[this->Space->NbrBosonsDown - this->NbrBosonsLLLDown];
+      for (int i = this->NbrBosonsLLLDown; i < this->Space->NbrBosonsDown; ++i)
+	{
+	  this->Slater2LLDown[i - this->NbrBosonsLLLDown] = operation.Slater2LLDown[i - this->NbrBosonsLLLDown];
+	}
+    }
+  else
+    {
+      this->Slater2LLUp = 0;
+      this->Slater2LLDown = 0;
     }
   this->ThreeOrbitalOverlaps = operation.ThreeOrbitalOverlaps;
 }
@@ -106,6 +180,11 @@ FQHESphereWithSU2SpinVanDerMondeTimesSlaterOperation::~FQHESphereWithSU2SpinVanD
   delete this->Space;
   delete[] this->SlaterDown;
   delete[] this->SlaterUp;
+  if (this->Slater2LLUp != 0)
+    {
+      delete[] this->Slater2LLUp;
+      delete[] this->Slater2LLDown;
+    }
 }
   
 // set range of indices
@@ -146,17 +225,36 @@ bool FQHESphereWithSU2SpinVanDerMondeTimesSlaterOperation::RawApplyOperation()
 {
   timeval TotalStartingTime;
   gettimeofday (&TotalStartingTime, 0);  
-  if (this->ReverseFluxAttachment == true)
+  if (this->Slater2LLUp != 0)
     {
-      int LastComponent = this->FirstComponent + this->NbrComponent;
-      for (int j = this->FirstComponent; j < LastComponent; ++j)
+      if (this->ReverseFluxAttachment == true)
 	{
-	  this->Space->ReverseVanDerMondeTimesSlater(this->SlaterUp, this->SlaterDown, this->OutputState, this->ThreeOrbitalOverlaps, j);
+	  int LastComponent = this->FirstComponent + this->NbrComponent;
+	  for (int j = this->FirstComponent; j < LastComponent; ++j)
+	    {
+	      this->Space->ReverseVanDerMondeTimesSlater(this->SlaterUp, this->Slater2LLUp, this->SlaterDown, this->Slater2LLDown, this->NbrBosonsLLLUp, this->NbrBosonsLLLDown,
+							 this->OutputState, this->ThreeOrbitalOverlaps, j);
+	    }
+	}
+      else
+	{
+	  cout << "not implemented" << endl;
 	}
     }
   else
     {
-      cout << "not implemented" << endl;
+      if (this->ReverseFluxAttachment == true)
+	{
+	  int LastComponent = this->FirstComponent + this->NbrComponent;
+	  for (int j = this->FirstComponent; j < LastComponent; ++j)
+	    {
+	      this->Space->ReverseVanDerMondeTimesSlater(this->SlaterUp, this->SlaterDown, this->OutputState, this->ThreeOrbitalOverlaps[0], j);
+	    }
+	}
+      else
+	{
+	  cout << "not implemented" << endl;
+	}
     }
   timeval TotalEndingTime;
   gettimeofday (&TotalEndingTime, 0);
