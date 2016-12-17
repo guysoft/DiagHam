@@ -55,7 +55,7 @@ FQHESphereWithSU2SpinVanDerMondeTimesSlaterOperation::FQHESphereWithSU2SpinVanDe
 													   double** threeOrbitalOverlaps)
 {
   this->Space = (BosonOnSphereWithSU2Spin*) space->Clone();
-  this->OutputState = RealVector(this->Space->GetHilbertSpaceDimension());
+  this->OutputState = RealVector(this->Space->GetHilbertSpaceDimension(), true);
   this->FirstComponent = 0;
   this->NbrComponent = this->Space->GetNbrParticles();
   this->SlaterUp = new unsigned long[this->Space->NbrBosonsUp];
@@ -96,7 +96,7 @@ FQHESphereWithSU2SpinVanDerMondeTimesSlaterOperation::FQHESphereWithSU2SpinVanDe
 													   int nbrBosonsLLLUp, int nbrBosonsLLLDown, double*** threeOrbitalOverlaps)
 {
   this->Space = (BosonOnSphereWithSU2Spin*) space->Clone();
-  this->OutputState = RealVector(this->Space->GetHilbertSpaceDimension());
+  this->OutputState = RealVector(this->Space->GetHilbertSpaceDimension(), true);
   this->FirstComponent = 0;
   this->NbrComponent = this->Space->GetNbrParticles();
   this->NbrBosonsLLLUp = nbrBosonsLLLUp;
@@ -151,7 +151,7 @@ FQHESphereWithSU2SpinVanDerMondeTimesSlaterOperation::FQHESphereWithSU2SpinVanDe
     {
       this->SlaterDown[i] = operation.SlaterDown[i];
     }
-  if (this->Slater2LLUp != 0)
+  if (operation.Slater2LLUp != 0)
     {
       this->Slater2LLUp = new unsigned long[this->Space->NbrBosonsUp - this->NbrBosonsLLLUp];
       for (int i = this->NbrBosonsLLLUp; i < this->Space->NbrBosonsUp; ++i)
