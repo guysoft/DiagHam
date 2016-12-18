@@ -7,7 +7,7 @@
 //                                                                            //
 //                         class author: Gunnar Moeller                       //
 //                                                                            //
-//                 class for an array which has unique entries                //
+// class for an array which has unique entries for single-threaded insertion  //
 //                                                                            //
 //                        last modification : 13/02/2008                      //
 //                                                                            //
@@ -41,10 +41,13 @@
 
 using std::cout;
 using std::endl;
+using std::max;
 
+// flag for testing
+#define TESTING_SCUA
 
 // standard constructor
-SortedComplexUniqueArray::SortedComplexUniqueArray(unsigned internalSize, double tolerance)
+SortedComplexUniqueArray::SortedComplexUniqueArray(unsigned internalSize, double tolerance, bool keepSorted)
 {
   this->InternalSize=internalSize;
   this->Tolerance=tolerance;
@@ -55,11 +58,8 @@ SortedComplexUniqueArray::SortedComplexUniqueArray(unsigned internalSize, double
       this->Elements=new Complex[internalSize];
       this->Flag.Initialize();
     }
-#ifdef __SMP__
-  this->BufferMutex = new pthread_mutex_t;
-  pthread_mutex_init(this->BufferMutex, NULL);
-#endif
-  this->Sorted = true;
+  this->Sorted = 0;
+  this->KeepSorted = keepSorted;
 }
 
 SortedComplexUniqueArray::SortedComplexUniqueArray(SortedComplexUniqueArray &array, bool duplicateFlag)
@@ -84,10 +84,7 @@ SortedComplexUniqueArray::SortedComplexUniqueArray(SortedComplexUniqueArray &arr
 	}
     }
   this->Sorted = array.Sorted;
-#ifdef __SMP__
-  this->BufferMutex = new pthread_mutex_t;
-  pthread_mutex_init(this->BufferMutex, NULL);
-#endif
+  this->KeepSorted = array.KeepSorted;
 }
 
 // destructor
@@ -97,10 +94,6 @@ SortedComplexUniqueArray::~SortedComplexUniqueArray()
     {
       delete [] Elements;
     }
-#ifdef __SMP__
-  pthread_mutex_destroy(this->BufferMutex);
-  delete this->BufferMutex;
-#endif
 }
 
 // Insert element
@@ -108,30 +101,9 @@ SortedComplexUniqueArray::~SortedComplexUniqueArray()
 // returns : index of this element  
 unsigned SortedComplexUniqueArray::InsertElement(const Complex& element)
 {
-  this->Sorted=false;
-#ifdef __SMP__
-  pthread_mutex_lock(this->BufferMutex);
-#endif
-  unsigned TmpNbrElements = this->NbrElements; // safely get the current number of elements
-#ifdef __SMP__
-  pthread_mutex_unlock(this->BufferMutex);
-#endif
-  // start searching without locking memory access
-  unsigned i=0;
-  for (; i<TmpNbrElements; ++i)
-    {
-      if (SqrNorm(Elements[i]-element)<this->ToleranceSqr)
-	return i;
-    }
-  // element not found among previously existing entries, but another thread may have added further elements in the meantime.
-#ifdef __SMP__
-  pthread_mutex_lock(this->BufferMutex);
-#endif
-  for (; i<this->NbrElements; ++i)
-    {
-      if (SqrNorm(Elements[i]-element)<this->ToleranceSqr)
-	return i;
-    }
+  unsigned index;
+  if (this->SearchElement(element, index))
+    return index;
   // element not found
   if (NbrElements < InternalSize)
     {
@@ -163,9 +135,15 @@ unsigned SortedComplexUniqueArray::InsertElement(const Complex& element)
 	delete [] tmpElements;
     }
   unsigned Result=NbrElements-1;
-#ifdef __SMP__
-  pthread_mutex_unlock(this->BufferMutex);
-#endif
+  if (this->KeepSorted && this->NbrElements > 2*this->Sorted)
+    {
+      this->SortEntries();
+      if (!this->SearchElement(element, Result))
+	{
+	  cout << "Error: did not find the element that was just inserted"<<endl;
+	  exit(1);
+	}
+    }
   return Result;
 }
 
@@ -175,13 +153,14 @@ unsigned SortedComplexUniqueArray::InsertElement(const Complex& element)
 // return : true if element was found, false otherwise.
 bool SortedComplexUniqueArray::SearchElement(const Complex &value, unsigned &index)
 {
-  if (this->Sorted)
+  unsigned start=0;
+  if (this->Sorted>3)
     {
       unsigned PosMax = this->NbrElements-1;
       unsigned PosMin = 0;
       unsigned PosMid = (PosMin + PosMax) >> 1;
       Complex CurrentState = this->Elements[PosMid];
-      cout << "Searching "<<value<<"...";
+      // cout << "Searching "<<value<<"...";
       while ((PosMin != PosMid) && (SqrNorm(CurrentState - value) >= this->ToleranceSqr))
 	{
 	  if (CurrentState > value)
@@ -199,7 +178,7 @@ bool SortedComplexUniqueArray::SearchElement(const Complex &value, unsigned &ind
       if (SqrNorm(CurrentState - value) < this->ToleranceSqr)
 	{
 	  index = PosMid;
-	  cout << "Found "<<this->Elements[index]<<endl;
+	  // cout << "Found "<<this->Elements[index]<<endl;
 	  return true;
 	}
       else
@@ -207,17 +186,17 @@ bool SortedComplexUniqueArray::SearchElement(const Complex &value, unsigned &ind
 	  index = PosMax; // ?? 
 	  if (this->Elements[PosMax] == value)
 	    {
-	      cout << "Found "<<this->Elements[PosMax]<<endl;
+	      // cout << "Found "<<this->Elements[PosMax]<<endl;
 	      return true;
 	    }
 	  else 
 	    {
-	      cout << "Not found."<<endl;
-	      return false;
+	      // cout << "Not found."<<endl;
+	      start = this->Sorted;
 	    }
 	}
     }
-  else for (unsigned i=0; i<NbrElements; ++i)
+  for (unsigned i=start; i<this->NbrElements; ++i)
     {
       if (SqrNorm(Elements[i]-value)<this->ToleranceSqr)
 	{
@@ -235,9 +214,6 @@ bool SortedComplexUniqueArray::SearchElement(const Complex &value, unsigned &ind
 // internalSize = minimum table size to allocate (only used if disallocating)
 void SortedComplexUniqueArray::Empty(bool disallocate, unsigned internalSize)
 {
-#ifdef __SMP__
-  pthread_mutex_lock(this->BufferMutex);
-#endif
   if (disallocate)
     {
       if ((this->InternalSize!=0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
@@ -248,16 +224,14 @@ void SortedComplexUniqueArray::Empty(bool disallocate, unsigned internalSize)
       this->Elements = new Complex[InternalSize];
     }
   this->NbrElements=0;
-#ifdef __SMP__
-  pthread_mutex_unlock(this->BufferMutex);
-#endif
 }
 
 // apply a simple sort algorithm to the existing entries of the table
 void SortedComplexUniqueArray::SortEntries()
 {
-  if (this->Sorted==true) return;
+  if (this->Sorted==this->NbrElements) return;
   unsigned inc = std::round(NbrElements/2.0);
+  // if (this->Sorted>inc) inc=this->Sorted-1;
   Complex tmpC;
   while (inc > 0)
     {
@@ -274,8 +248,27 @@ void SortedComplexUniqueArray::SortEntries()
 	}
       inc = std::round(inc / 2.2);
     }
-  this->Sorted=true;
+  this->Sorted=this->NbrElements;
+
+#ifdef TESTING_SCUA
+  if (!this->IsSorted())
+    {
+      cout << "Error: sort algorithm left unsorted array."<<endl;
+      exit(1);
+    }
+#endif //TESTING_SCUA
 }
+
+
+// Test if the array is sorted
+bool SortedComplexUniqueArray::IsSorted()
+{
+  for (unsigned i=0; i<this->NbrElements-1; ++i)
+    if (this->Elements[i]>=this->Elements[i+1])
+      return false;
+  return true;
+}
+
 
 // Merge data with another UniqueArray
 void SortedComplexUniqueArray::MergeArray(SortedComplexUniqueArray &a)
@@ -283,9 +276,9 @@ void SortedComplexUniqueArray::MergeArray(SortedComplexUniqueArray &a)
   a.SortEntries();
   this->SortEntries();
 
-  cout << "this ="<<*this<<endl;
-  cout << "a ="<<a << endl;
-  cout << "Merging arrays with "<<this->NbrElements<<" and "<<a.NbrElements<<" entries "<<endl;
+  // cout << "this ="<<*this<<endl;
+  // cout << "a ="<<a << endl;
+  // cout << "Merging arrays with "<<this->NbrElements<<" and "<<a.NbrElements<<" entries "<<endl;
   long newPos = a.NbrElements+this->NbrElements;
   if (newPos > std::numeric_limits<unsigned>::max())
     {
@@ -300,40 +293,40 @@ void SortedComplexUniqueArray::MergeArray(SortedComplexUniqueArray &a)
       // definite insert elements in this-> that are smaller than the next element of a and not within tolerance
       while (myPos < this->NbrElements && this->Elements[myPos] < a.Elements[theirPos] && SqrNorm(this->Elements[myPos] - a.Elements[theirPos]) >= this->ToleranceSqr)
 	{
-	  cout << "Insert this->Elements["<<myPos<<"] at 1 with this->Elements["<<myPos<<"] < a.Elements["<<theirPos<<"]"<<endl;
+	  // cout << "Insert this->Elements["<<myPos<<"] at 1 with this->Elements["<<myPos<<"] < a.Elements["<<theirPos<<"]"<<endl;
 	  newElements[newPos++] = this->Elements[myPos++];
 	}
       // also insert any elements that are equal or approximately equal
       while (SqrNorm(this->Elements[myPos] - a.Elements[theirPos]) < this->ToleranceSqr)
 	{
-	  cout << "Insert this->Elements["<<myPos<<"] at 2"<<endl;
+	  //  cout << "Insert this->Elements["<<myPos<<"] at 2"<<endl;
 	  newElements[newPos++] = this->Elements[myPos++];
 	}
-      cout << "myPos = "<<myPos << " this->NbrElements = "<<this->NbrElements << " this->Elements[myPos]="<<this->Elements[myPos]<<", a.Elements[theirPos] ="<<a.Elements[theirPos]<<endl;
+      // cout << "myPos = "<<myPos << " this->NbrElements = "<<this->NbrElements << " this->Elements[myPos]="<<this->Elements[myPos]<<", a.Elements[theirPos] ="<<a.Elements[theirPos]<<endl;
       if (newPos > 0)
 	{
 	  if (SqrNorm(a.Elements[theirPos] - newElements[newPos-1]) < this->ToleranceSqr)
 	    {
 	      // next element on a is identical within accuracy to the last entry on the new array
-	      cout << "Omitting identical element a.Elements["<<theirPos<<"] at 1"<<endl;
+	      // cout << "Omitting identical element a.Elements["<<theirPos<<"] at 1"<<endl;
 	      // do nothing - counter is increased in loop.
 	    }
 	  else
 	    {
-	      cout << "Insert a.Elements["<<theirPos<<"] at 1"<<endl;
+	      //cout << "Insert a.Elements["<<theirPos<<"] at 1"<<endl;
 	      newElements[newPos++] = a.Elements[theirPos];
 	    }
 	}
       else
 	{
-	  cout << "Insert a.Elements["<<theirPos<<"] at 2"<<endl;
+	  //cout << "Insert a.Elements["<<theirPos<<"] at 2"<<endl;
 	  newElements[newPos++] = a.Elements[theirPos];
 	}
     }
   
   while (myPos < this->NbrElements) //  && this->Elements[myPos] < a.Elements[theirPos] && SqrNorm(this->Elements[myPos] - a.Elements[theirPos]) >= this->ToleranceSqr)
     {
-      cout << "Insert this->Elements["<<myPos<<"] at 3 with this->Elements["<<myPos<<"]"<<endl;
+      // cout << "Insert this->Elements["<<myPos<<"] at 3 with this->Elements["<<myPos<<"]"<<endl;
       newElements[newPos++] = this->Elements[myPos++];
     }
 
@@ -343,7 +336,7 @@ void SortedComplexUniqueArray::MergeArray(SortedComplexUniqueArray &a)
     }
   this->Elements = newElements;
   this->NbrElements = newPos;
-  cout << "Unique entries retained: "<<this->NbrElements<<endl;
+  // cout << "Unique entries retained: "<<this->NbrElements<<endl;
   this->Sorted=true;
 }
 
@@ -361,9 +354,6 @@ void SortedComplexUniqueArray::WriteArray(ofstream &file)
 // file = open stream to read from
 void SortedComplexUniqueArray::ReadArray(ifstream &file)
 {
-#ifdef __SMP__
-  pthread_mutex_lock(this->BufferMutex);
-#endif
   if ( (this->InternalSize!=0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete [] Elements;
@@ -375,17 +365,14 @@ void SortedComplexUniqueArray::ReadArray(ifstream &file)
   this->Elements=new Complex[TmpDimension];
   for (unsigned i = 0; i < this->NbrElements; ++i)
     ReadLittleEndian(file, this->Elements[i]);
-#ifdef __SMP__
-  pthread_mutex_unlock(this->BufferMutex);
-#endif
-
 }
 
 // Test object
-void SortedComplexUniqueArray::TestClass(unsigned samples)
+void SortedComplexUniqueArray::TestClass(unsigned samples, bool keepSorted)
 {
-  SortedComplexUniqueArray a1(samples>>1, 1e-13);
-  SortedComplexUniqueArray a2(samples>>1, 1e-13);
+  double precision = 1e-13;
+  SortedComplexUniqueArray a1(samples>>1, precision, keepSorted);
+  SortedComplexUniqueArray a2(samples>>1, precision, keepSorted);
 
 
   NumRecRandomGenerator gen;
@@ -396,6 +383,17 @@ void SortedComplexUniqueArray::TestClass(unsigned samples)
       a1.InsertElement( Complex(gen.GetRealRandomNumber(),gen.GetRealRandomNumber()) );
       a2.InsertElement( Complex(gen.GetRealRandomNumber(),gen.GetRealRandomNumber()) );
     }
+  // count identical entries
+  unsigned common=0, index;
+  for (int i=0; i<samples; ++i)
+    {
+      if (a2.SearchElement(a1[i],index))
+	{
+	  ++common;
+	  cout << "Random common entry at index "<<index<<endl;
+	}
+    }
+
   // insert other half as same number
   Complex TmpC;
   for (int i=0; i<samples; ++i)
@@ -408,16 +406,6 @@ void SortedComplexUniqueArray::TestClass(unsigned samples)
   
   SortedComplexUniqueArray a3(a1, true);
   SortedComplexUniqueArray a4(a2, true);
-
-  unsigned common=0, index;
-  for (int i=0; i<samples; ++i)
-    {
-      if (a2.SearchElement(a1[i],index))
-	{
-	  ++common;
-	  cout << "Random common entry at index "<<index<<endl;
-	}
-    }
   
   a3.MergeArray(a2);
 
@@ -468,8 +456,7 @@ void SortedComplexUniqueArray::TestClass(unsigned samples)
 	cout << "Discrepancy in search for index "<< index <<" on element " << i << " (array 3)."<<endl;
     }
 
-
-    for (unsigned i=0; i<a4.GetNbrElements(); ++i)
+  for (unsigned i=0; i<a4.GetNbrElements(); ++i)
     {
       if (! a4.SearchElement(a4[i], index))
 	{
@@ -478,6 +465,8 @@ void SortedComplexUniqueArray::TestClass(unsigned samples)
       if (index != i)
 	cout << "Discrepancy in search for index "<< index <<" on element " << i << " (array 4)."<<endl;
     }
+
+    cout << "Tests completed."<<endl;
 
 }
 
