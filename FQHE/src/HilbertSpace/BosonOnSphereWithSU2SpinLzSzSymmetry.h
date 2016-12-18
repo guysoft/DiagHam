@@ -78,6 +78,12 @@ class BosonOnSphereWithSU2SpinLzSzSymmetry :  public BosonOnSphereWithSU2SpinLzS
   // memory = amount of memory granted for precalculations
   BosonOnSphereWithSU2SpinLzSzSymmetry (int nbrBosons, int lzMax, int totalSpin, bool minusSzParity, bool minusLzParity, unsigned long memory = 10000000);
 
+  // constructor from a binary file that describes the Hilbert space
+  // 
+  // fileName = name of the binary file
+  // memory = amount of memory granted for precalculations
+  BosonOnSphereWithSU2SpinLzSzSymmetry (char* fileName, unsigned long memory);
+
   // copy constructor (without duplicating datas)
   //
   // bosons = reference on the hilbert space to copy to copy

@@ -8,6 +8,7 @@
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleStringOption.h"
 
+#include "GeneralTools/StringTools.h"
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/ConfigurationParser.h"
 
@@ -46,7 +47,7 @@ int main(int argc, char** argv)
   Manager += SystemGroup;
   Manager += OutputGroup;
   Manager += MiscGroup;
-  (*SystemGroup) += new SingleStringOption  ('\0', "input-file", "input state file name");
+  (*SystemGroup) += new SingleStringOption  ('i', "input-file", "input state file name");
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total lz value of the system (0 if it has to be guessed from file name)", 0);
@@ -158,6 +159,64 @@ int main(int argc, char** argv)
 	    exit(1);
 	  }
     } 
+      char* OutputFileName = 0;
+      if (Manager.GetString("output-file") != 0)
+	{
+	  OutputFileName = new char[strlen(Manager.GetString("output-file")) + 1];
+	  strcpy (OutputFileName, Manager.GetString("output-file"));
+	}
+      else
+	{
+	  char* TmpOldString = new char [8];
+	  sprintf (TmpOldString, "_su2_");
+	  char* TmpSymString = new char [128];
+	  if (LzSymmetrizedBasis == true)
+	    {
+	      if (SzSymmetrizedBasis == true)
+		{
+		  if (LzMinusParity == false)
+		    {
+		      if (SzMinusParity == false)
+			sprintf (TmpSymString, "_su2_lzsym_1_szsym_1_");
+		      else
+			sprintf (TmpSymString, "_su2_lzsym_1_szsym_-1_");
+		    }
+		  else
+		    {
+		      if (SzMinusParity == false)
+			sprintf (TmpSymString, "_su2_lzsym_-1_szsym_1_");
+		      else
+			sprintf (TmpSymString, "_su2_lzsym_-1_szsym_-1_");
+		    }
+		}
+	      else
+		{		 
+		  if (LzMinusParity == false)
+		    sprintf (TmpSymString, "_su2_lzsym_1_");
+		  else
+		    sprintf (TmpSymString, "_su2_lzsym_-1_");
+		}
+	    }
+	  else
+	    {
+	      if (SzMinusParity == false)
+		sprintf (TmpSymString, "_su2_szsym_1_");
+	      else
+		sprintf (TmpSymString, "_su2_szsym_-1_");
+	    }
+	  if (SymmetrizeFlag)
+	    {
+	      OutputFileName = ReplaceString(Manager.GetString("input-file"), TmpOldString, TmpSymString);
+	    }
+	  else
+	    {
+	      OutputFileName = ReplaceString(Manager.GetString("input-file"), TmpSymString, TmpOldString);
+	    }
+	  if (OutputFileName == 0)
+	    {
+	      cout << "can't guess output file name from " << Manager.GetString("input-file") << endl;
+	    }
+	}
 
   if (Statistics == true)
     {
@@ -228,9 +287,9 @@ int main(int argc, char** argv)
 		delete InitialSpace;
 	      }
 	  }
-      if (OutputState.WriteVector(Manager.GetString("output-file")) == false)
+      if (OutputState.WriteVector(OutputFileName) == false)
 	{
-	  cout << "error while writing output state " << Manager.GetString("output-file") << endl;
+	  cout << "error while writing output state " << OutputFileName << endl;
 	  return -1;
 	}
     }
@@ -279,11 +338,12 @@ int main(int argc, char** argv)
 	    }
 	  OutputState = InitialSpace->ConvertFromNbodyBasis(State, TargetSpace);
 	}
-      if (OutputState.WriteVector(Manager.GetString("output-file")) == false)
+      if (OutputState.WriteVector(OutputFileName) == false)
 	{
-	  cout << "error while writing output state " << Manager.GetString("output-file") << endl;
+	  cout << "error while writing output state " << OutputFileName << endl;
 	  return -1;
 	}
+      delete[] OutputFileName;
       delete InitialSpace;
       delete TargetSpace;
     }

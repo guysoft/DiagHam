@@ -58,6 +58,8 @@ class BosonOnSphereWithSU2SpinSzSymmetry :  public BosonOnSphereWithSU2Spin
   // pointer to the Hilbert space where the result of any operator lies
   BosonOnSphereWithSU2SpinSzSymmetry* TargetSpace;
 
+  // maximum number of states in a given orbit
+  int MaxOrbitSize;
   // number of state in each orbit
   int* NbrStateInOrbit;
   // array containing rescaling factors when passing from one orbit to another
@@ -86,6 +88,12 @@ class BosonOnSphereWithSU2SpinSzSymmetry :  public BosonOnSphereWithSU2Spin
   // minusSzParity = select the  Sz <-> -Sz symmetric sector with negative parity
   // memory = amount of memory granted for precalculations
   BosonOnSphereWithSU2SpinSzSymmetry (int nbrBosons, int totalLz, int lzMax, int totalSpin, bool minusSzParity, unsigned long memory = 10000000);
+
+  // constructor from a binary file that describes the Hilbert space
+  // 
+  // fileName = name of the binary file
+  // memory = amount of memory granted for precalculations
+  BosonOnSphereWithSU2SpinSzSymmetry (char* fileName, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -262,8 +270,19 @@ class BosonOnSphereWithSU2SpinSzSymmetry :  public BosonOnSphereWithSU2Spin
   // return value = converted vector
   virtual RealVector ConvertFromNbodyBasis(RealVector& state, ParticleOnSphereWithSpin* space);
   
+  // save Hilbert space description to disk
+  //
+  // fileName = name of the file where the Hilbert space description has to be saved
+  // return value = true if no error occured
+  virtual bool WriteHilbertSpace (char* fileName);
 
   protected:
+
+  // read Hilbert space description to disk
+  //
+  // fileName = name of the file where the Hilbert space description is stored
+  // return value = true if no error occured
+  virtual bool ReadHilbertSpace (char* fileName);
 
   // generate the Hilbert space with the discrete symmetry constraint
   //
@@ -275,6 +294,10 @@ class BosonOnSphereWithSU2SpinSzSymmetry :  public BosonOnSphereWithSU2Spin
   // stateDescriptionDown = unsigned integer describing the fermionic state for type down particles
   // return value = corresponding index
   virtual int FindStateIndex(unsigned long stateDescriptionUp, unsigned long stateDescriptionDown);
+
+  // compute the rescaling factors
+  //
+  virtual void ComputeRescalingFactors();
 
   // find state index
   //

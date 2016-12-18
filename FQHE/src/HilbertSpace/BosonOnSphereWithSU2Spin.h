@@ -138,6 +138,12 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // memory = amount of memory granted for precalculations
   BosonOnSphereWithSU2Spin (int nbrBosons, int totalLz, int lzMax, int totalSpin, unsigned long memory = 10000000);
 
+  // constructor from a binary file that describes the Hilbert space
+  // 
+  // fileName = name of the binary file
+  // memory = amount of memory granted for precalculations
+  BosonOnSphereWithSU2Spin (char* fileName, unsigned long memory = 10000000);
+
   // copy constructor (without duplicating datas)
   //
   // bosons = reference on the hilbert space to copy to copy
@@ -516,7 +522,19 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // return value = converted vector
   virtual RealVector ConvertFromNbodyBasis(RealVector& state, ParticleOnSphereWithSpin* space);
   
+  // save Hilbert space description to disk
+  //
+  // fileName = name of the file where the Hilbert space description has to be saved
+  // return value = true if no error occured
+  virtual bool WriteHilbertSpace (char* fileName);
+
  protected:
+  
+  // read Hilbert space description to disk
+  //
+  // fileName = name of the file where the Hilbert space description is stored
+  // return value = true if no error occured
+  virtual bool ReadHilbertSpace (char* fileName);
 
   // find state index
   //

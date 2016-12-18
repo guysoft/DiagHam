@@ -136,16 +136,17 @@ void WriteLittleEndian (ofstream& file, ClassName& var)
 // function to read Little Endian encoded variable from a file
 //
 // file = reference on the input file stream
-// var = reference on the variable to store the result
+// var = pointer on the variable array
+// size = number of elements in the array
 
-inline void ReadBlockLittleEndian (ifstream& file, double *var, long size)
+inline void ReadBlockLittleEndian (ifstream& file, double* var, long size)
 {
-  file.read ((char*) var, size*sizeof(double));
+  file.read ((char*) var, size * sizeof(double));
 #ifdef __BIGENDIAN__
 
 #ifdef NAIVE_ENDIAN
   int max = sizeof(double) >> 1;
-  for (int s=0; s<size; ++s)
+  for (long s = 0l; s < size; ++s)
     {
       double TmpVar = var[s];
       unsigned char* TmpBin1 = (unsigned char*) &var;
@@ -162,7 +163,7 @@ inline void ReadBlockLittleEndian (ifstream& file, double *var, long size)
   unsigned long Mask3=0x00ff00ff00ff00fful;
   unsigned long Mask4=0x0000ffff0000fffful;
   unsigned long TmpVar;
-  for (int s=0; s<size; ++s)
+  for (long s = 0l; s < size; ++s)
     {
       TmpVar = (unsigned long) var[s];
       TmpVar = ((TmpVar & Mask3)<< 8) | ((TmpVar >> 8) & Mask3);  // swap bytes
@@ -173,7 +174,7 @@ inline void ReadBlockLittleEndian (ifstream& file, double *var, long size)
   unsigned Mask3=0x00ff00fful;
   unsigned *TmpVar;
   unsigned Swap;
-  for (int s=0; s<size; ++s)
+  for (long s = 0l; s < size; ++s)
     {
       TmpVar =  &(var[s]);
       TmpVar[0] = ((TmpVar[0] & Mask3)<< 8) | ((TmpVar[0] >> 8) & Mask3);  // swap bytes on word 1
@@ -196,14 +197,14 @@ inline void ReadBlockLittleEndian (ifstream& file, double *var, long size)
 // file = reference on the input file stream
 // var = reference on the variable to store the result
 
-inline void ReadBlockLittleEndian (ifstream& file, int *var, long size)
+inline void ReadBlockLittleEndian (ifstream& file, int* var, long size)
 {
   file.read ((char*) var, size*sizeof(int));
 #ifdef __BIGENDIAN__
 
 #ifdef NAIVE_ENDIAN
   int max = sizeof(int) >> 1;
-  for (int s=0; s<size; ++s)
+  for (int s=0; s < size; ++s)
     {
       int TmpVar = var[s];
       unsigned char* TmpBin1 = (unsigned char*) &var;
@@ -231,7 +232,66 @@ inline void ReadBlockLittleEndian (ifstream& file, int *var, long size)
   unsigned Mask3=0x00ff00fful;
   unsigned *TmpVar;
   unsigned Swap;
-  for (int s=0; s<size; ++s)
+  for (long s = 0l; s < size; ++s)
+    {
+      TmpVar =  &(var[s]);
+      TmpVar[0] = ((TmpVar[0] & Mask3)<< 8) | ((TmpVar[0] >> 8) & Mask3);  // swap bytes on word 1
+      TmpVar[0] = ( (TmpVar[0] << 16) | (TmpVar[0] >> 16) ); // swap wydes on word 1
+      TmpVar[1] = ((TmpVar[1] & Mask3)<< 8) | ((TmpVar[1] >> 8) & Mask3);  // swap bytes on word 2
+      TmpVar[1] = ( (TmpVar[1] << 16) | (TmpVar[1] >> 16) ); // swap wydes on word 2
+      Swap = TmpVar[1];
+      TmpVar[1] = TmpVar[0];
+      TmpVar[0] = Swap;
+    }
+#endif // __64_BITS__
+  
+#endif // NAIVE_ENDIAN
+
+#endif // __BIGENDIAN__
+}
+
+// function to read Little Endian encoded variable from a file
+//
+// file = reference on the input file stream
+// var = pointer on the variable array
+// size = number of elements in the array
+
+inline void ReadBlockLittleEndian (ifstream& file, unsigned long* var, long size)
+{
+  file.read ((char*) var, size * sizeof(unsigned long));
+#ifdef __BIGENDIAN__
+
+#ifdef NAIVE_ENDIAN
+  int max = sizeof(unsigned long) >> 1;
+  for (long s = 0l; s < size; ++s)
+    {
+      unsigned long TmpVar = var[s];
+      unsigned char* TmpBin1 = (unsigned char*) &var;
+      unsigned char* TmpBin2 = (unsigned char*) &TmpVar;
+      for (int i = 0; i < max; i++)
+	{
+	  TmpBin1[i] = TmpBin2[sizeof(unsigned long) - i -1];
+	  TmpBin1[sizeof(unsigned long) - i -1] = TmpBin2[i];
+	}
+    }
+#else
+
+#ifdef __64_BITS__
+  unsigned long Mask3=0x00ff00ff00ff00fful;
+  unsigned long Mask4=0x0000ffff0000fffful;
+  unsigned long TmpVar;
+  for (long s = 0l; s < size; ++s)
+    {
+      TmpVar = (unsigned long) var[s];
+      TmpVar = ((TmpVar & Mask3)<< 8) | ((TmpVar >> 8) & Mask3);  // swap bytes
+      TmpVar = ((TmpVar & Mask4)<< 16) | ((TmpVar >> 16) & Mask4);  // swap wydes
+      var[s] = (unsigned long) ( (TmpVar << 32) | (TmpVar >> 32) );
+    }
+#else
+  unsigned Mask3=0x00ff00fful;
+  unsigned *TmpVar;
+  unsigned Swap;
+  for (long s = 0l; s < size; ++s)
     {
       TmpVar =  &(var[s]);
       TmpVar[0] = ((TmpVar[0] & Mask3)<< 8) | ((TmpVar[0] >> 8) & Mask3);  // swap bytes on word 1
@@ -252,12 +312,13 @@ inline void ReadBlockLittleEndian (ifstream& file, int *var, long size)
 // function to write Little Endian encoded variable from a file using 
 //
 // file = reference on the output file stream
-// var = reference on the variable to store the result
+// var = pointer on the variable array
+// size = number of elements in the array
 
 inline void WriteBlockLittleEndian (ofstream& file, double *var, long size)
 {
 #ifdef __BIGENDIAN__
-  for (int s=0; s<size; ++s)
+  for (long s = 0l; s < size; ++s)
     {
       double TmpVar = var[s];
       unsigned char* TmpBin2 = (unsigned char*) &var;
@@ -278,12 +339,13 @@ inline void WriteBlockLittleEndian (ofstream& file, double *var, long size)
 // function to write Little Endian encoded variable from a file using 
 //
 // file = reference on the output file stream
-// var = reference on the variable to store the result
+// var = pointer on the variable array
+// size = number of elements in the array
 
-inline void WriteBlockLittleEndian (ofstream& file, int *var, long size)
+inline void WriteBlockLittleEndian (ofstream& file, int* var, long size)
 {
 #ifdef __BIGENDIAN__
-  for (int s=0; s<size; ++s)
+  for (long s = 0l; s < size; ++s)
     {
       int TmpVar = var[s];
       unsigned char* TmpBin2 = (unsigned char*) &var;
@@ -298,6 +360,33 @@ inline void WriteBlockLittleEndian (ofstream& file, int *var, long size)
     }
 #else
   file.write ((char*) var, size*sizeof(int));
+#endif
+}
+
+// function to write Little Endian encoded variable from a file using 
+//
+// file = reference on the output file stream
+// var = pointer on the variable array
+// size = number of elements in the array
+
+inline void WriteBlockLittleEndian (ofstream& file, unsigned long* var, long size)
+{
+#ifdef __BIGENDIAN__
+  for (long s = 0; s < size; ++s)
+    {
+      int TmpVar = var[s];
+      unsigned char* TmpBin2 = (unsigned char*) &var;
+      unsigned char* TmpBin1 = (unsigned char*) &TmpVar;
+      int max = sizeof(double) >> 1;
+      for (int i = 0; i < max; i++)
+	{
+	  TmpBin1[i] = TmpBin2[sizeof(int) - i -1];
+	  TmpBin1[sizeof(int) - i -1] = TmpBin2[i];
+	}
+      file.write ((char*) &TmpVar, sizeof(unsigned long));
+    }
+#else
+  file.write ((char*) var, size * sizeof(unsigned long));
 #endif
 }
 

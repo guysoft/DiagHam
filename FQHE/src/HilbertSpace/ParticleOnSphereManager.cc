@@ -852,7 +852,14 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
 	    {
 	      if (this->Options->GetBoolean("all-sz"))
 		{
-		  Space = new BosonOnSphereWithSU2SpinSzSymmetry(NbrBosons, totalLz, LzMax, this->Options->GetBoolean("minus-szparity"));
+		  if (this->Options->GetString("load-hilbert") == 0)
+		    {
+		      Space = new BosonOnSphereWithSU2SpinSzSymmetry(NbrBosons, totalLz, LzMax, this->Options->GetBoolean("minus-szparity"));
+		    }
+		  else
+		    {
+		      Space = new BosonOnSphereWithSU2SpinSzSymmetry(this->Options->GetString("load-hilbert"));
+		    }
 		}
 	      else
 		{
@@ -863,7 +870,7 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
 	    {
 	      if (this->Options->GetBoolean("all-sz"))
 		{
-		  if (this->Options->GetInteger("pair-parity")>=0)
+		  if (this->Options->GetInteger("pair-parity") >= 0)
 		    Space = new BosonOnSphereWithSpinAllSz(NbrBosons, totalLz, LzMax, this->Options->GetInteger("pair-parity"), MemorySpace);
 		  else
 		    Space = new BosonOnSphereWithSpinAllSz(NbrBosons, totalLz, LzMax, MemorySpace);
@@ -879,7 +886,14 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
 		    {
 		      if (this->Options->GetBoolean("use-alt"))
 			{
-			  Space = new BosonOnSphereWithSU2Spin(NbrBosons, totalLz, LzMax, SzTotal, MemorySpace);
+			  if (this->Options->GetString("load-hilbert") == 0)
+			    {
+			      Space = new BosonOnSphereWithSU2Spin(NbrBosons, totalLz, LzMax, SzTotal, MemorySpace);
+			    }
+			  else
+			    {
+			      Space = new BosonOnSphereWithSU2Spin(this->Options->GetString("load-hilbert"), MemorySpace);
+			    }
 			}
 		      else
 			{
@@ -900,7 +914,14 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
 		}
 	      else
 		{
-		  Space = new BosonOnSphereWithSU2SpinLzSzSymmetry(NbrBosons, LzMax, SzTotal, this->Options->GetBoolean("minus-szparity"), this->Options->GetBoolean("minus-lzparity"), MemorySpace);
+		  if (this->Options->GetString("load-hilbert") == 0)
+		    {
+		      Space = new BosonOnSphereWithSU2SpinLzSzSymmetry(NbrBosons, LzMax, SzTotal, this->Options->GetBoolean("minus-szparity"), this->Options->GetBoolean("minus-lzparity"), MemorySpace);
+		    }
+		  else
+		    {
+		      Space = new BosonOnSphereWithSU2SpinLzSzSymmetry(this->Options->GetString("load-hilbert"), MemorySpace);
+		    }
 		}
 	    }
 	  else
@@ -911,9 +932,20 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
 		}
 	      else
 		{
-		  Space = new BosonOnSphereWithSU2SpinLzSymmetry(NbrBosons, LzMax, SzTotal, this->Options->GetBoolean("minus-lzparity"));
+		  if (this->Options->GetString("load-hilbert") == 0)
+		    {
+		      Space = new BosonOnSphereWithSU2SpinLzSymmetry(NbrBosons, LzMax, SzTotal, this->Options->GetBoolean("minus-lzparity"));
+		    }
+		  else
+		    {
+		      Space = new BosonOnSphereWithSU2SpinLzSymmetry(this->Options->GetString("load-hilbert"), MemorySpace);
+		    }
 		}
 	    }
+	}
+      if (this->Options->GetString("save-hilbert") != 0)
+	{
+	  Space->WriteHilbertSpace(this->Options->GetString("save-hilbert"));
 	}
       return Space;
     }

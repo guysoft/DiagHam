@@ -237,6 +237,70 @@ BosonOnSphereWithSU2SpinLzSzSymmetry::BosonOnSphereWithSU2SpinLzSzSymmetry (int 
     }
 }
 
+// constructor from a binary file that describes the Hilbert space
+// 
+// fileName = name of the binary file
+// memory = amount of memory granted for precalculations
+
+BosonOnSphereWithSU2SpinLzSzSymmetry::BosonOnSphereWithSU2SpinLzSzSymmetry (char* fileName, unsigned long memory)
+{
+  this->MaxOrbitSize = 4;
+  this->ReadHilbertSpace(fileName);
+
+  this->IncNbrBosons = this->NbrBosons + 1;
+  this->NbrLzValue = this->LzMax + 1;
+  this->LzSymmetryMaxSwapPosition = (this->LzMax - 1) >> 1;
+  this->Flag.Initialize();
+  this->TemporaryStateUp = new unsigned long[this->NbrLzValue];
+  this->TemporaryStateDown = new unsigned long[this->NbrLzValue];
+  this->TemporaryStateSigma[0] = this->TemporaryStateUp;
+  this->TemporaryStateSigma[1] = this->TemporaryStateDown;
+  this->ProdATemporaryStateUp = new unsigned long[this->NbrLzValue];
+  this->ProdATemporaryStateDown = new unsigned long[this->NbrLzValue];
+  this->ProdATemporaryStateSigma[0] = this->ProdATemporaryStateUp;
+  this->ProdATemporaryStateSigma[1] = this->ProdATemporaryStateDown;
+
+  this->NbrBosonsUp = this->NbrBosons + this->TotalSpin;
+  this->NbrBosonsDown = this->NbrBosons - this->TotalSpin;
+  if ((this->NbrBosonsUp < 0) || ((this->NbrBosonsUp & 0x1) != 0) ||
+      (this->NbrBosonsDown < 0) || ((this->NbrBosonsDown & 0x1) != 0))
+    this->LargeHilbertSpaceDimension = 0l;
+  else
+    {
+      this->NbrBosonsUp >>= 1;
+      this->NbrBosonsDown >>= 1;
+      this->NUpLzMax = this->LzMax + this->NbrBosonsUp - 1;
+      this->NDownLzMax = this->LzMax + this->NbrBosonsDown - 1;
+      this->FermionicLzMax = this->NUpLzMax;
+      if (this->NDownLzMax > this->FermionicLzMax)
+	this->FermionicLzMax = this->NDownLzMax;
+    }
+  this->StateDescriptionSigma[0] = this->StateDescriptionUp;
+  this->StateDescriptionSigma[1] = this->StateDescriptionDown;
+
+  cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;  
+
+  this->TargetSpace = this;
+
+  if (this->LargeHilbertSpaceDimension > 0l)
+    {
+      this->GenerateLookUpTable(memory);
+      
+#ifdef __DEBUG__
+      int UsedMemory = 0;
+      UsedMemory += this->HilbertSpaceDimension * (4 * sizeof(unsigned long));
+      cout << "memory requested for Hilbert space = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+      cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+#endif
+    }
+}
+
 // copy constructor (without duplicating datas)
 //
 // bosons = reference on the hilbert space to copy to copy

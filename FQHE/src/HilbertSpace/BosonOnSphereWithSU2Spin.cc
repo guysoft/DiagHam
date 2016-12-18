@@ -44,6 +44,7 @@
 #include "GeneralTools/UnsignedIntegerTools.h"
 #include "GeneralTools/ArrayTools.h"
 #include "GeneralTools/Permutations.h"
+#include "GeneralTools/Endian.h"
 #include "Architecture/ArchitectureOperation/FQHESphereWithSU2SpinVanDerMondeTimesSlaterOperation.h"
 #include "MathTools/ClebschGordanCoefficients.h"
 
@@ -228,6 +229,60 @@ BosonOnSphereWithSU2Spin::BosonOnSphereWithSU2Spin (int nbrBosons, int totalLz, 
   else
     cout << UsedMemory << endl;
 #endif
+}
+
+// constructor from a binary file that describes the Hilbert space
+// 
+// fileName = name of the binary file
+// memory = amount of memory granted for precalculations
+
+BosonOnSphereWithSU2Spin::BosonOnSphereWithSU2Spin (char* fileName, unsigned long memory)
+{
+  this->ReadHilbertSpace(fileName);
+
+  this->NbrLzValue = this->LzMax + 1;
+  this->IncNbrBosons = this->NbrBosons + 1;
+  this->Flag.Initialize();
+ 
+  this->TemporaryStateUp = new unsigned long[this->NbrLzValue];
+  this->TemporaryStateDown = new unsigned long[this->NbrLzValue];
+  this->TemporaryStateSigma[0] = this->TemporaryStateUp;
+  this->TemporaryStateSigma[1] = this->TemporaryStateDown;
+  this->ProdATemporaryStateUp = new unsigned long[this->NbrLzValue];
+  this->ProdATemporaryStateDown = new unsigned long[this->NbrLzValue];
+  this->ProdATemporaryStateSigma[0] = this->ProdATemporaryStateUp;
+  this->ProdATemporaryStateSigma[1] = this->ProdATemporaryStateDown;
+
+  this->NbrBosonsUp = this->NbrBosons + this->TotalSpin;
+  this->NbrBosonsDown = this->NbrBosons - this->TotalSpin;
+  this->NbrBosonsUp >>= 1;
+  this->NbrBosonsDown >>= 1;
+  this->NUpLzMax = this->LzMax + this->NbrBosonsUp - 1;
+  this->NDownLzMax = this->LzMax + this->NbrBosonsDown - 1;
+  this->FermionicLzMax = this->NUpLzMax;
+  if (this->NDownLzMax > this->FermionicLzMax)
+    this->FermionicLzMax = this->NDownLzMax;
+  this->StateDescriptionSigma[0] = this->StateDescriptionUp;
+  this->StateDescriptionSigma[1] = this->StateDescriptionDown;
+  this->TargetSpace = this;
+  this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
+  if (this->LargeHilbertSpaceDimension > 0l)
+    {
+      this->GenerateLookUpTable(memory);
+#ifdef __DEBUG__
+      long UsedMemory = 0;
+      UsedMemory += this->LargeHilbertSpaceDimension * (4l * sizeof(unsigned long));
+      cout << "memory requested for Hilbert space = ";
+      if (UsedMemory >= 1024l)
+	if (UsedMemory >= 1048576l)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+#endif
+    }
 }
 
 // copy constructor (without duplicating datas)
@@ -1044,6 +1099,62 @@ int BosonOnSphereWithSU2Spin::ProdAd (int* m, int* spinIndices, int nbrIndices, 
   return this->FindStateIndex(this->TemporaryStateUp, this->TemporaryStateDown);
 }
 
+// save Hilbert space description to disk
+//
+// fileName = name of the file where the Hilbert space description has to be saved
+// return value = true if no error occured
+
+bool BosonOnSphereWithSU2Spin::WriteHilbertSpace (char* fileName)
+{
+  ofstream File;
+  File.open(fileName, ios::binary | ios::out);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      return false;
+    }
+  WriteLittleEndian(File, this->LargeHilbertSpaceDimension);
+  WriteLittleEndian(File, this->HilbertSpaceDimension);
+  WriteLittleEndian(File, this->NbrBosons);
+  WriteLittleEndian(File, this->LzMax);
+  WriteLittleEndian(File, this->TotalLz);
+  WriteLittleEndian(File, this->TotalSpin);
+  WriteBlockLittleEndian(File, this->StateDescriptionUp, this->LargeHilbertSpaceDimension);
+  WriteBlockLittleEndian(File, this->StateDescriptionDown, this->LargeHilbertSpaceDimension);
+  File.close();
+  return true;
+}
+
+// read Hilbert space description to disk
+//
+// fileName = name of the file where the Hilbert space description is stored
+// return value = true if no error occured
+
+bool BosonOnSphereWithSU2Spin::ReadHilbertSpace (char* fileName)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      this->LargeHilbertSpaceDimension = 0l;
+      this->HilbertSpaceDimension;
+      return false;
+    }
+  ReadLittleEndian(File, this->LargeHilbertSpaceDimension);
+  ReadLittleEndian(File, this->HilbertSpaceDimension);
+  ReadLittleEndian(File, this->NbrBosons);
+  ReadLittleEndian(File, this->LzMax);
+  ReadLittleEndian(File, this->TotalLz);
+  ReadLittleEndian(File, this->TotalSpin);
+  this->StateDescriptionUp = new unsigned long [this->LargeHilbertSpaceDimension];
+  this->StateDescriptionDown = new unsigned long [this->LargeHilbertSpaceDimension];
+  ReadBlockLittleEndian(File, this->StateDescriptionUp, this->LargeHilbertSpaceDimension);
+  ReadBlockLittleEndian(File, this->StateDescriptionDown, this->LargeHilbertSpaceDimension);
+  File.close();
+  return true;
+}
+  
 // convert a state from one SU(2) basis to another, transforming the one body basis in each momentum sector
 //
 // initialState = state to transform  

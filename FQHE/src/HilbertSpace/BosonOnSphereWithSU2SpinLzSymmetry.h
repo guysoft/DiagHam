@@ -55,9 +55,6 @@ class BosonOnSphereWithSU2SpinLzSymmetry :  public BosonOnSphereWithSU2SpinSzSym
   // maximum index to consider when swapping orbitals
   int LzSymmetryMaxSwapPosition;
 
-  // maximum number of states in a given orbit
-  int MaxOrbitSize;
-  
  public:
 
   // default constructor
@@ -81,6 +78,12 @@ class BosonOnSphereWithSU2SpinLzSymmetry :  public BosonOnSphereWithSU2SpinSzSym
   // minusLzParity = select the  Lz <-> -Lz symmetric sector with negative parity
   // memory = amount of memory granted for precalculations
   BosonOnSphereWithSU2SpinLzSymmetry (int nbrBosons, int lzMax, int totalSpin, bool minusLzParity, unsigned long memory = 10000000);
+
+  // constructor from a binary file that describes the Hilbert space
+  // 
+  // fileName = name of the binary file
+  // memory = amount of memory granted for precalculations
+  BosonOnSphereWithSU2SpinLzSymmetry (char* fileName, unsigned long memory);
 
   // copy constructor (without duplicating datas)
   //
@@ -109,7 +112,19 @@ class BosonOnSphereWithSU2SpinLzSymmetry :  public BosonOnSphereWithSU2SpinSzSym
   // return value = converted vector
   virtual RealVector ConvertFromNbodyBasis(RealVector& state, ParticleOnSphereWithSpin* space);
   
+  // save Hilbert space description to disk
+  //
+  // fileName = name of the file where the Hilbert space description has to be saved
+  // return value = true if no error occured
+  virtual bool WriteHilbertSpace (char* fileName);
+
  protected:
+
+  // read Hilbert space description to disk
+  //
+  // fileName = name of the file where the Hilbert space description is stored
+  // return value = true if no error occured
+  virtual bool ReadHilbertSpace (char* fileName);
 
   // generate the Hilbert space with the discrete symmetry constraint
   //

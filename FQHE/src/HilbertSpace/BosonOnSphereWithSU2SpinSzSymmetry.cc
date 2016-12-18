@@ -43,16 +43,19 @@
 #include "GeneralTools/UnsignedIntegerTools.h"
 #include "GeneralTools/ArrayTools.h"
 #include "GeneralTools/Permutations.h"
+#include "GeneralTools/Endian.h"
 
 #include <math.h>
 #include <cstdlib>
 #include <algorithm>
 #include <map>
+#include <fstream>
 
 using std::cout;
 using std::endl;
 using std::hex;
 using std::dec;
+using std::ios;
 
 
 // default constructor
@@ -83,6 +86,7 @@ BosonOnSphereWithSU2SpinSzSymmetry::BosonOnSphereWithSU2SpinSzSymmetry (int nbrB
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
   this->Flag.Initialize();
+  this->MaxOrbitSize = 2;
   this->TemporaryStateUp = new unsigned long[this->NbrLzValue];
   this->TemporaryStateDown = new unsigned long[this->NbrLzValue];
   this->TemporaryStateSigma[0] = this->TemporaryStateUp;
@@ -160,6 +164,7 @@ BosonOnSphereWithSU2SpinSzSymmetry::BosonOnSphereWithSU2SpinSzSymmetry (int nbrB
     this->SzParitySign = -1.0;
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
+  this->MaxOrbitSize = 2;
   this->Flag.Initialize();
   this->TemporaryStateUp = new unsigned long[this->NbrLzValue];
   this->TemporaryStateDown = new unsigned long[this->NbrLzValue];
@@ -225,6 +230,69 @@ BosonOnSphereWithSU2SpinSzSymmetry::BosonOnSphereWithSU2SpinSzSymmetry (int nbrB
     }
 }
 
+// constructor from a binary file that describes the Hilbert space
+// 
+// fileName = name of the binary file
+// memory = amount of memory granted for precalculations
+
+BosonOnSphereWithSU2SpinSzSymmetry::BosonOnSphereWithSU2SpinSzSymmetry (char* fileName, unsigned long memory)
+{
+  this->MaxOrbitSize = 2;
+  this->ReadHilbertSpace(fileName);
+
+  this->IncNbrBosons = this->NbrBosons + 1;
+  this->NbrLzValue = this->LzMax + 1;
+  this->Flag.Initialize();
+  this->TemporaryStateUp = new unsigned long[this->NbrLzValue];
+  this->TemporaryStateDown = new unsigned long[this->NbrLzValue];
+  this->TemporaryStateSigma[0] = this->TemporaryStateUp;
+  this->TemporaryStateSigma[1] = this->TemporaryStateDown;
+  this->ProdATemporaryStateUp = new unsigned long[this->NbrLzValue];
+  this->ProdATemporaryStateDown = new unsigned long[this->NbrLzValue];
+  this->ProdATemporaryStateSigma[0] = this->ProdATemporaryStateUp;
+  this->ProdATemporaryStateSigma[1] = this->ProdATemporaryStateDown;
+
+  this->NbrBosonsUp = this->NbrBosons + this->TotalSpin;
+  this->NbrBosonsDown = this->NbrBosons - this->TotalSpin;
+  if ((this->NbrBosonsUp < 0) || ((this->NbrBosonsUp & 0x1) != 0) ||
+      (this->NbrBosonsDown < 0) || ((this->NbrBosonsDown & 0x1) != 0))
+    this->LargeHilbertSpaceDimension = 0l;
+  else
+    {
+      this->NbrBosonsUp >>= 1;
+      this->NbrBosonsDown >>= 1;
+      this->NUpLzMax = this->LzMax + this->NbrBosonsUp - 1;
+      this->NDownLzMax = this->LzMax + this->NbrBosonsDown - 1;
+      this->FermionicLzMax = this->NUpLzMax;
+      if (this->NDownLzMax > this->FermionicLzMax)
+	this->FermionicLzMax = this->NDownLzMax;
+    }
+  this->StateDescriptionSigma[0] = this->StateDescriptionUp;
+  this->StateDescriptionSigma[1] = this->StateDescriptionDown;
+
+  cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;  
+
+  this->TargetSpace = this;
+
+  if (this->LargeHilbertSpaceDimension > 0l)
+    {
+      this->GenerateLookUpTable(memory);
+      
+#ifdef __DEBUG__
+      int UsedMemory = 0;
+      UsedMemory += this->HilbertSpaceDimension * (4 * sizeof(unsigned long));
+      cout << "memory requested for Hilbert space = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+      cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+#endif
+    }
+}
+
 // copy constructor (without duplicating datas)
 //
 // bosons = reference on the hilbert space to copy to copy
@@ -264,6 +332,7 @@ BosonOnSphereWithSU2SpinSzSymmetry::BosonOnSphereWithSU2SpinSzSymmetry(const Bos
   this->UniqueStateDescriptionSubArraySizeUp = bosons.UniqueStateDescriptionSubArraySizeUp;
   this->NbrUniqueStateDescriptionUp = bosons.NbrUniqueStateDescriptionUp;
   this->FirstIndexUniqueStateDescriptionUp = bosons.FirstIndexUniqueStateDescriptionUp;
+  this->MaxOrbitSize = bosons.MaxOrbitSize;
   if (bosons.TargetSpace != &bosons)
     this->TargetSpace = bosons.TargetSpace;
   else
@@ -334,6 +403,7 @@ BosonOnSphereWithSU2SpinSzSymmetry& BosonOnSphereWithSU2SpinSzSymmetry::operator
   this->StateDescriptionSigma[1] = this->StateDescriptionDown;
   this->NbrUniqueStateDescriptionUp = bosons.NbrUniqueStateDescriptionUp;
   this->FirstIndexUniqueStateDescriptionUp = bosons.FirstIndexUniqueStateDescriptionUp;
+  this->MaxOrbitSize = bosons.MaxOrbitSize;
   if (bosons.TargetSpace != &bosons)
     this->TargetSpace = bosons.TargetSpace;
   else
@@ -429,18 +499,27 @@ void BosonOnSphereWithSU2SpinSzSymmetry::GenerateStatesWithDiscreteSymmetry()
       delete[] this->StateDescriptionDown;
       this->StateDescriptionUp = TmpStateDescriptionUp;
       this->StateDescriptionDown = TmpStateDescriptionDown;
-      this->RescalingFactors = new double*[3];
-      for (int i = 1; i <= 2; ++i)
-	{
-	  this->RescalingFactors[i] = new double[3];
-	  for (int j = 1; j <= 2; ++j)
-	    {
-	      this->RescalingFactors[i][j] = sqrt(((double) i) / ((double) j));
-	    }
-	}
+      this->ComputeRescalingFactors();
     }
   this->LargeHilbertSpaceDimension = TmpHilbertSpaceDimension;
 }
+
+// compute the rescaling factors
+//
+
+void BosonOnSphereWithSU2SpinSzSymmetry::ComputeRescalingFactors()
+{
+  this->RescalingFactors = new double*[this->MaxOrbitSize + 1];
+  for (int i = 1; i <= this->MaxOrbitSize; ++i)
+    {
+      this->RescalingFactors[i] = new double[this->MaxOrbitSize + 1];
+      for (int j = 1; j <= this->MaxOrbitSize; ++j)
+	{
+	  this->RescalingFactors[i][j] = sqrt(((double) i) / ((double) j));
+	}
+    }
+}
+
 
 // find state index
 //
@@ -757,6 +836,68 @@ int BosonOnSphereWithSU2SpinSzSymmetry::ProdAd (int* m, int* spinIndices, int nb
   return this->SymmetrizeAdAdResult(this->TemporaryStateUp, this->TemporaryStateDown, coefficient);  
 }
 
+// save Hilbert space description to disk
+//
+// fileName = name of the file where the Hilbert space description has to be saved
+// return value = true if no error occured
+
+bool BosonOnSphereWithSU2SpinSzSymmetry::WriteHilbertSpace (char* fileName)
+{
+  ofstream File;
+  File.open(fileName, ios::binary | ios::out);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      return false;
+    }
+  WriteLittleEndian(File, this->LargeHilbertSpaceDimension);
+  WriteLittleEndian(File, this->HilbertSpaceDimension);
+  WriteLittleEndian(File, this->NbrBosons);
+  WriteLittleEndian(File, this->LzMax);
+  WriteLittleEndian(File, this->TotalLz);
+  WriteLittleEndian(File, this->TotalSpin);
+  WriteLittleEndian(File, this->SzParitySign);
+  WriteBlockLittleEndian(File, this->StateDescriptionUp, this->LargeHilbertSpaceDimension);
+  WriteBlockLittleEndian(File, this->StateDescriptionDown, this->LargeHilbertSpaceDimension);
+  WriteBlockLittleEndian(File, this->NbrStateInOrbit, this->LargeHilbertSpaceDimension);
+  File.close();
+  return true;
+}
+
+// read Hilbert space description to disk
+//
+// fileName = name of the file where the Hilbert space description is stored
+// return value = true if no error occured
+
+bool BosonOnSphereWithSU2SpinSzSymmetry::ReadHilbertSpace (char* fileName)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      this->LargeHilbertSpaceDimension = 0l;
+      this->HilbertSpaceDimension;
+      return false;
+    }
+  ReadLittleEndian(File, this->LargeHilbertSpaceDimension);
+  ReadLittleEndian(File, this->HilbertSpaceDimension);
+  ReadLittleEndian(File, this->NbrBosons);
+  ReadLittleEndian(File, this->LzMax);
+  ReadLittleEndian(File, this->TotalLz);
+  ReadLittleEndian(File, this->TotalSpin);
+  ReadLittleEndian(File, this->SzParitySign);
+  this->StateDescriptionUp = new unsigned long [this->LargeHilbertSpaceDimension];
+  this->StateDescriptionDown = new unsigned long [this->LargeHilbertSpaceDimension];
+  this->NbrStateInOrbit = new int[this->LargeHilbertSpaceDimension];
+  ReadBlockLittleEndian(File, this->StateDescriptionUp, this->LargeHilbertSpaceDimension);
+  ReadBlockLittleEndian(File, this->StateDescriptionDown, this->LargeHilbertSpaceDimension);
+  ReadBlockLittleEndian(File, this->NbrStateInOrbit, this->LargeHilbertSpaceDimension);
+  this->ComputeRescalingFactors();
+  File.close();
+  return true;
+}
+  
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
 // 
 // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
