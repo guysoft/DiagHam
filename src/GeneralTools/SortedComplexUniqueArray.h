@@ -48,8 +48,7 @@ class SortedComplexUniqueArray
  protected:
   // array with elements
   Complex *Elements;
-  // tolerance for taking elements to be the same, and its square
-  double Tolerance;
+  // tolerance for taking elements to be the same (squared)
   double ToleranceSqr;
   // size of array
   unsigned InternalSize;
@@ -80,11 +79,18 @@ class SortedComplexUniqueArray
   // returns : index of this element  
   unsigned InsertElement(const Complex &element);
 
-  // search entry
+  // search entry using a binary search
   // value = value to be searched for
   // @param[out] index : index of the element, or -1 if not found
   // return : true if element was found, false otherwise.
   bool SearchElement(const Complex &value, unsigned &index);
+
+  // search entry, performing a linear search
+  // value = value to be searched for
+  // @param[out] index : index of the element, or -1 if not found
+  // @param enhanceTolerance : increase tolerance by this factor
+  // return : true if element was found, false otherwise.
+  bool CarefulSearchElement(const Complex &value, unsigned &index, double enhanceTolerance=1.0);
 
   // get number of elements
   unsigned GetNbrElements(){ return NbrElements;}

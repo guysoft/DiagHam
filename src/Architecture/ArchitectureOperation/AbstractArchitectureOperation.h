@@ -70,6 +70,7 @@ class AbstractArchitectureOperation
       SpinOperation = 0x20000,
       FTIOperation = 0x30000,
       QHEParticlePrecalculation = 0x200,
+      QHEParticlePrecalculationWithMatrixElements = 0x201,
       NDMAPPrecalculation = 0x400,
       ScalarSum = 0x800,
       OperatorMatrixElement = 0x801,

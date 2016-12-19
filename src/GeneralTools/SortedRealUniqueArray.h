@@ -34,12 +34,11 @@
 #include "config.h"
 
 #include "GeneralTools/GarbageFlag.h"
+#include "MathTools/Complex.h"
 
 #include <iostream>
 
-#include <pthread.h>
-
-
+using std::ostream;
 using std::ofstream;
 using std::ifstream;
 
@@ -48,32 +47,28 @@ class SortedRealUniqueArray
  protected:
   // array with elements
   double *Elements;
-  // tolerance before elements are taken to be identical
+  // tolerance for taking elements to be the same, and its square
   double Tolerance;
-
   // size of array
   unsigned InternalSize;
   // number of elements stored
   unsigned NbrElements;
 
-  // mutex to lock write access to array Elements
-#ifdef __SMP__
-  pthread_mutex_t* BufferMutex;
-#endif
-
   // garbage flag
   GarbageFlag Flag;
 
-  // flag indicating whether the entries have been sorted
-  bool Sorted;
+  // flag indicating how many entries have been sorted
+  unsigned Sorted;
+
+  // flag indicating whether to keep elements sorted
+  bool KeepSorted;
 
  public:
   // standard constructor
-  // internalSize = minimum table size to allocate
-  SortedRealUniqueArray(unsigned internalSize=128, double tolerance = MACHINE_PRECISION);
+  SortedRealUniqueArray(unsigned internalSize=128, double tolerance = MACHINE_PRECISION, bool keepSorted=true);
 
   // copy constructor
-  SortedRealUniqueArray(SortedRealUniqueArray &array, bool duplicateFlag=false);
+  SortedRealUniqueArray(SortedRealUniqueArray &array, bool duplicateFlag = false);
 
   // destructor
   ~SortedRealUniqueArray();
@@ -81,12 +76,13 @@ class SortedRealUniqueArray
   // Insert element
   // element = new element to be inserted
   // returns : index of this element  
-  unsigned InsertElement(double element);
+  unsigned InsertElement(const double &element);
 
   // search entry
   // value = value to be searched for
-  // returns : index of the element, or -1 if not found
-  unsigned SearchElement(double value);
+  // @param[out] index : index of the element, or -1 if not found
+  // return : true if element was found, false otherwise.
+  bool SearchElement(const double &value, unsigned &index);
 
   // get number of elements
   unsigned GetNbrElements(){ return NbrElements;}
@@ -101,6 +97,12 @@ class SortedRealUniqueArray
 
   // Sort the entries
   void SortEntries();
+  
+  // Test if the array is sorted
+  bool IsSorted();
+  
+  // Merge data with another UniqueArray
+  void MergeArray(SortedRealUniqueArray &a);
 
   // Write to file
   // file = open stream to write to
@@ -109,6 +111,13 @@ class SortedRealUniqueArray
   // Read from file
   // file = open stream to read from
   void ReadArray(ifstream &file);
+   
+  // Test object
+  static void TestClass(unsigned samples=2048, bool keepSorted=true);
+
+  // output stream overload
+  friend ostream& operator << (ostream& Str, const SortedRealUniqueArray &A);
+
 };
 
 

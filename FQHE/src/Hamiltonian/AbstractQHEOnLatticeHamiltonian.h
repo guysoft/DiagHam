@@ -38,6 +38,9 @@
 #include "Hamiltonian/AbstractQHEHamiltonian.h"
 #include "GeneralTools/RealUniqueArray.h"
 #include "GeneralTools/ComplexUniqueArray.h"
+#include "GeneralTools/SortedRealUniqueArray.h"
+#include "GeneralTools/SortedComplexUniqueArray.h"
+
 
 #include <iostream>
 #include <cstdlib>
@@ -54,8 +57,13 @@ using std::endl;
 // switch enabling longer element indices:
 #define ABSTRACTQHEONLATTICEHAMILTONIAN_LONGINDEX
 
+// switch to use sorted unique arrays for matrix entries
+#define ABSTRACTQHEONLATTICEHAMILTONIAN_SORTED
+
 // threshold before something is defined different from zero
 #define LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD 1.71245451764e-13
+
+
 
 class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
 {
@@ -173,11 +181,20 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   ElementIndexType** InteractionPerComponentCoefficientIndex;
   
 
+
+#ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_SORTED
+  // array storing a single copy of each real matrix element value
+  SortedRealUniqueArray RealInteractionCoefficients;
+
+  // array storing a single copy of each real matrix element value
+  SortedComplexUniqueArray ComplexInteractionCoefficients;
+#else
   // array storing a single copy of each real matrix element value
   RealUniqueArray RealInteractionCoefficients;
 
   // array storing a single copy of each real matrix element value
   ComplexUniqueArray ComplexInteractionCoefficients;
+#endif
 
   // number of tasks for load balancing
   int NbrBalancedTasks;
@@ -247,6 +264,10 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // ask if Hamiltonian has any complex matrix elements
   //
   virtual bool IsComplex();
+
+  // count interaction terms
+  // return = number of interaction terms
+  virtual long CountTwoBodyInteractionTerms();
 
   // symmetrize interaction factors to enable hermitian matrix multiplication
   // return = true upon success
@@ -880,6 +901,16 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // return value = number of non-zero matrix element
   virtual long PartialFastMultiplicationMemory(int firstComponent, int nbrComponent);
 
+  // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
+//
+// firstComponent = index of the first component that has to be precalcualted
+// nbrComponent  = number of components that have to be precalcualted
+// realInteractionCoefficients = reference on an object collecting unique real matrix elements for this thread
+// complexInteractionCoefficients = reference on an object collecting unique complex matrix elements for this thread
+// return value = number of non-zero matrix elements
+//
+  virtual long PartialFastMultiplicationMemory(int firstComponent, int nbrComponent, SortedRealUniqueArray &realInteractionCoefficients, SortedComplexUniqueArray &complexInteractionCoefficients);
+
   // enable fast multiplication algorithm
   //
   virtual void EnableFastMultiplication();
@@ -1054,23 +1085,38 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   
   virtual void EvaluateMNTwoBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int index, RealVector* vSources,  RealVector* vDestinations, int nbrVectors, double* tmpCoefficients);
   
-  
+
   // core part of the PartialFastMultiplicationMemory method involving one-body term
-  // 
+  //
   // particles = pointer to the Hilbert space
   // firstComponent = index of the first component that has to be precalcualted
   // lastComponent  = index of the last component that has to be precalcualted
   // memory = reference on the amount of memory required for precalculations
   virtual void EvaluateMNOneBodyFastMultiplicationMemoryComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, long& memory);
-  
-  
+ 
   // core part of the PartialFastMultiplicationMemory method involving two-body term
-  // 
+  //
   // particles = pointer to the Hilbert space
   // firstComponent = index of the first component that has to be precalcualted
   // lastComponent  = index of the last component that has to be precalcualted
   // memory = reference on the amount of memory required for precalculations
   virtual void EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, long& memory);
+  
+  // core part of the PartialFastMultiplicationMemory method involving one-body term - collecting matrix elements
+  // 
+  // particles = pointer to the Hilbert space
+  // firstComponent = index of the first component that has to be precalcualted
+  // lastComponent  = index of the last component that has to be precalcualted
+  // memory = reference on the amount of memory required for precalculations
+  virtual void EvaluateMNOneBodyFastMultiplicationMemoryComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, long& memory, SortedRealUniqueArray &realInteractionCoefficients, SortedComplexUniqueArray &complexInteractionCoefficients);
+  
+  // core part of the PartialFastMultiplicationMemory method involving two-body term - collecting matrix elements
+  // 
+  // particles = pointer to the Hilbert space
+  // firstComponent = index of the first component that has to be precalcualted
+  // lastComponent  = index of the last component that has to be precalcualted
+  // memory = reference on the amount of memory required for precalculations
+  virtual void EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, long& memory, SortedRealUniqueArray &realInteractionCoefficients, SortedComplexUniqueArray &complexInteractionCoefficients);
 	
 };
 
@@ -1089,7 +1135,7 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplication
 	//cout <<"Index " << index<<endl;
   int qi, qf;
   int Index2;
-  int tmpElementPos;
+  unsigned tmpElementPos;
   double Coefficient;
   int Dim = this->Particles->GetHilbertSpaceDimension();
   int AbsoluteIndex = index + this->PrecalculationShift;
@@ -1107,7 +1153,15 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplication
 	  if (fabs(this->HoppingTerms[j].Im)<LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD) // real element
 	    {
 	      indexArray[positionR] = Index2;
+#ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_SORTED
+	      if (!RealInteractionCoefficients.SearchElement(Coefficient*this->HoppingTerms[j].Re, tmpElementPos))
+		{
+		  cout << "Error: element "<<Coefficient*this->HoppingTerms[j].Re<<" not present in array A"<<endl;
+		  exit(1);
+		}
+#else
 	      tmpElementPos = RealInteractionCoefficients.InsertElement(Coefficient*this->HoppingTerms[j].Re);
+#endif
 	      if (tmpElementPos >= this->MaxElementIndex )
 		{
 		  cout << "Error: too many different real matrix elements for fast storage: current index"<< tmpElementPos<<" (Max="<<MaxElementIndex<<")"<<endl;
@@ -1119,7 +1173,15 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplication
 	  else
 	    {
 	      indexArray[positionC] = Index2;
+#ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_SORTED
+	      if (!ComplexInteractionCoefficients.SearchElement(Coefficient*this->HoppingTerms[j], tmpElementPos))
+		{
+		  cout << "Error: element "<<Coefficient*this->HoppingTerms[j]<<" not present in complex array B"<<endl;
+		  exit(1);
+		}
+#else
 	      tmpElementPos = ComplexInteractionCoefficients.InsertElement(Coefficient*this->HoppingTerms[j]);
+#endif
 	      if (tmpElementPos >= this->MaxElementIndex )
 		{
 		  cout << "Error: too many different complex matrix elements for fast storage: current index"<< tmpElementPos<<" (Max="<<MaxElementIndex<<")"<<endl;
@@ -1146,7 +1208,7 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 										 int* indexArray, ElementIndexType* coefficientIndexArray, int& positionR, int & positionC)
 {
   int Index2;
-  int tmpElementPos;
+  unsigned tmpElementPos;
   double Coefficient;
   int Dim = this->Particles->GetHilbertSpaceDimension();
   
@@ -1166,7 +1228,15 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 	      if (fabs(this->InteractionFactors[j].Im)<LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD) // real element
 		{
 		  indexArray[positionR] = Index2;
+#ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_SORTED
+		  if (!RealInteractionCoefficients.SearchElement(Coefficient*this->InteractionFactors[j].Re, tmpElementPos))
+		    {
+		      cout << "Error: element "<<Coefficient*this->HoppingTerms[j]<<" not present in complex array C"<<endl;
+		      exit(1);
+		    }
+#else
 		  tmpElementPos = RealInteractionCoefficients.InsertElement(Coefficient*this->InteractionFactors[j].Re);
+#endif
 		  if (tmpElementPos >= this->MaxElementIndex)
 		    {
 		      cout << "Error: too many different real matrix elements for fast storage: Current index"<< tmpElementPos<<" (Max="<<MaxElementIndex<<")"<<endl;
@@ -1178,8 +1248,15 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 	      else
 		{
 		  indexArray[positionC] = Index2;
-		  tmpElementPos = ComplexInteractionCoefficients.InsertElement
-		    (Coefficient*this->InteractionFactors[j]);
+#ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_SORTED
+		  if (!ComplexInteractionCoefficients.SearchElement(Coefficient*this->InteractionFactors[j], tmpElementPos))
+		    {
+		      cout << "Error: element "<<Coefficient*this->HoppingTerms[j]<<" not present in complex array D"<<endl;
+		      exit(1);
+		    }
+#else
+		  tmpElementPos = ComplexInteractionCoefficients.InsertElement(Coefficient*this->InteractionFactors[j]);
+#endif
 		  if (tmpElementPos >= this->MaxElementIndex)
 		    {
 		      cout << "Error: too many different complex matrix elements for fast storage: Current index"<< tmpElementPos<<" (Max="<<MaxElementIndex<<")"<<endl;
@@ -1215,8 +1292,16 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 		      if (fabs(this->InteractionFactors[ProcessedNbrInteractionFactors].Im)<LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD) 
 			{
 			  indexArray[positionR] = Index2;
+#ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_SORTED
+			  if (!RealInteractionCoefficients.SearchElement(Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors].Re, tmpElementPos))
+			    {
+			      cout << "Error: element "<<Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors].Re<<" not present in array E"<<endl;
+			      exit(1);
+			    }
+#else
 			  tmpElementPos = RealInteractionCoefficients.InsertElement
 			    (Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors].Re);
+#endif
 			  if (tmpElementPos >= this->MaxElementIndex)
 			    {
 			      cout << "Error: too many different real matrix elements for fast storage: Current index"<< tmpElementPos<<" (Max="<<MaxElementIndex<<")"<<endl;
@@ -1228,8 +1313,20 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 		      else
 			{
 			  indexArray[positionC] = Index2;
+#ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_SORTED
+			  if (!ComplexInteractionCoefficients.SearchElement(Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors], tmpElementPos))
+			    {
+			      cout << "Error: element "<<Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors]<<" not present in complex array F"<<endl;
+			      if (ComplexInteractionCoefficients.CarefulSearchElement(Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors], tmpElementPos, 100.))
+				cout << "Careful search successful: "<<tmpElementPos<<endl;
+			      else
+				cout << "Careful search failed, as well."<<endl;
+			      exit(1);
+			    }
+#else
 			  tmpElementPos = ComplexInteractionCoefficients.InsertElement
 			    (Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors]);
+#endif
 			  if (tmpElementPos >= this->MaxElementIndex)
 			    {
 			      cout << "Error: too many different complex matrix elements for fast storage: Current index"<< tmpElementPos<<" (Max="<<MaxElementIndex<<")"<<endl;
@@ -1264,7 +1361,15 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 	Coefficient *= 0.5;
 
 	  indexArray[positionR] = index;
+#ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_SORTED
+	  if (!RealInteractionCoefficients.SearchElement(Coefficient, tmpElementPos))
+	    {
+	      cout << "Error: element "<<Coefficient<<" not present in real array for diagonal terms"<<endl;
+	      exit(1);
+	    }
+#else
 	  tmpElementPos = RealInteractionCoefficients.InsertElement(Coefficient);
+#endif
 	  if (tmpElementPos >= this->MaxElementIndex)
 	    {
 	      cout << "Error: too many different real matrix elements for fast storage: Current index"<< tmpElementPos<<" (Max="<<MaxElementIndex<<")"<<endl;
@@ -2910,8 +3015,9 @@ inline void AbstractQHEOnLatticeHamiltonian::HermitianEvaluateMNTwoBodyAddMultip
     }
 }
 
+
 // core part of the PartialFastMultiplicationMemory method involving two-body term
-// 
+//
 // particles = pointer to the Hilbert space
 // firstComponent = index of the first component that has to be precalcualted
 // lastComponent  = index of the last component that has to be precalcualted
@@ -2922,6 +3028,154 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
   int Index;
   double Coefficient = 0.0;
   int Dim = particles->GetHilbertSpaceDimension();
+  if (this->NbrQ12Indices == 0) // full storage
+    {
+      for (int j = 0; j < NbrInteractionFactors; ++j)
+        {
+          int q1 = this->Q1Value[j];
+          int q2 = this->Q2Value[j];
+          int q3 = this->Q3Value[j];
+          int q4 = this->Q4Value[j];
+          if (fabs(this->InteractionFactors[j].Im) < LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD)
+            {
+              for (int i = firstComponent; i < lastComponent; ++i)
+                {
+                  Index = particles->AdAdAA(i, q1, q2, q3, q4, Coefficient);
+                  if (Index < Dim)
+                    {
+                      ++memory;
+                      ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];
+                    }
+                }
+            }
+          else
+            {
+              for (int i = firstComponent; i < lastComponent; ++i)
+                {
+                  Index = particles->AdAdAA(i, q1, q2, q3, q4, Coefficient);
+                  if (Index < Dim)
+                    {
+                      ++memory;
+                      ++this->NbrComplexInteractionPerComponent[i - this->PrecalculationShift];
+                    }
+                }
+            }
+        }
+    }
+  else // intelligent storage
+    {
+      double Coefficient2;
+      int ProcessedNbrInteractionFactors;
+      int TmpNbrQ34Values;
+      int* TmpQ3Values;
+      int* TmpQ4Values;
+      for (int i = firstComponent; i < lastComponent; ++i)
+        {        
+          ProcessedNbrInteractionFactors = 0;
+          for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
+            {
+              Coefficient = particles->AA(i, this->Q1Value[i12], this->Q2Value[i12]);
+              if (Coefficient != 0.0)
+                {
+                  TmpNbrQ34Values = this->NbrQ34Values[i12];
+                  TmpQ3Values = this->Q3PerQ12[i12];
+                  TmpQ4Values = this->Q4PerQ12[i12];
+                  for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
+                    {
+                      Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
+                      if (Index < Dim)
+                        {
+                          ++memory;
+                          if (fabs(this->InteractionFactors[ProcessedNbrInteractionFactors].Im) < LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD)
+                            ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];
+                          else
+                            ++this->NbrComplexInteractionPerComponent[i - this->PrecalculationShift];
+                          // cout << "4b - connecting :"<<Index<<", "<<i<<": "<<Coefficient<<"*"<<Coefficient2<<"*"<<this->InteractionFactors[ProcessedNbrInteractionFactors]<< " (q's=["<<this->Q1Value[i12]<<", "<<this->Q2Value[i12]<<", "<<TmpQ3Values[i34]<<", "<<TmpQ4Values[i34]<<"])"<<endl;
+                        }
+                      ++ProcessedNbrInteractionFactors;
+                    }
+                }
+              else
+                ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
+            }
+        }
+    }    
+ 
+  // separated diagonal terms as these will be the general rule for contact interactions
+ 
+  if (this->NbrDiagonalInteractionFactors > 0 || this->NbrRhoRhoInteractionFactors > 0)
+    {
+      // assume diagonal terms are non-zero:
+      for (int i = firstComponent; i < lastComponent; ++i)
+        {
+          ++memory;
+          ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];
+        }
+    }
+}
+
+// core part of the PartialFastMultiplicationMemory method involving two-body term
+//
+// particles = pointer to the Hilbert space
+// firstComponent = index of the first component that has to be precalcualted
+// lastComponent  = index of the last component that has to be precalcualted
+// memory = reference on the amount of memory required for precalculations
+
+inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplicationMemoryComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, long& memory)
+{
+  int Index;
+  double Coefficient;
+  int Dim = particles->GetHilbertSpaceDimension();
+  // deal with kinetic energy terms first!      
+  int qi;
+  int qf;
+  for (int j = 0; j < this->NbrHoppingTerms; ++j)
+    {
+      qi = this->KineticQi[j];
+      qf = this->KineticQf[j];
+      if (fabs(this->HoppingTerms[j].Im)<LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD)
+        {
+          for (int i = firstComponent; i < lastComponent; ++i)
+            {
+              Index = particles->AdA(i, qf, qi, Coefficient);
+              if (Index < Dim)
+                {
+                  ++memory;                    
+                  ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];               
+                }
+            }
+        }
+      else
+        {
+          for (int i = firstComponent; i < lastComponent; ++i)
+            {
+              Index = particles->AdA(i, qf, qi, Coefficient);
+             
+              if (Index < Dim)
+                {
+                  ++memory;
+                  ++this->NbrComplexInteractionPerComponent[i - this->PrecalculationShift];
+                }
+            }
+        }
+    }
+}
+
+// core part of the PartialFastMultiplicationMemory method involving two-body term - version collecting matrix elements
+// 
+// particles = pointer to the Hilbert space
+// firstComponent = index of the first component that has to be precalcualted
+// lastComponent  = index of the last component that has to be precalcualted
+// memory = reference on the amount of memory required for precalculations
+// realInteractionCoefficients = reference on an object collecting unique real matrix elements for this thread
+// complexInteractionCoefficients = reference on an object collecting unique complex matrix elements for this thread
+//
+inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, long& memory, SortedRealUniqueArray &realInteractionCoefficients, SortedComplexUniqueArray &complexInteractionCoefficients)
+{
+  int Index;
+  double Coefficient = 0.0;
+  int Dim = particles->GetHilbertSpaceDimension();
+  int tmpElementPos;
   if (this->NbrQ12Indices == 0) // full storage
     {
       for (int j = 0; j < NbrInteractionFactors; ++j) 
@@ -2939,6 +3193,12 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 		    {
 		      ++memory;
 		      ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];
+		      tmpElementPos = realInteractionCoefficients.InsertElement(Coefficient*this->InteractionFactors[j].Re);
+		      if (tmpElementPos >= this->MaxElementIndex)
+			{
+			  cout << "Error: too many different real matrix elements for fast storage: Current index"<< tmpElementPos<<" (Max="<<MaxElementIndex<<")"<<endl;
+			  exit(1);
+			}
 		    }
 		}
 	    }
@@ -2951,6 +3211,12 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 		    {
 		      ++memory;
 		      ++this->NbrComplexInteractionPerComponent[i - this->PrecalculationShift];
+		      tmpElementPos = complexInteractionCoefficients.InsertElement(Coefficient*this->InteractionFactors[j]);
+		      if (tmpElementPos >= this->MaxElementIndex)
+			{
+			  cout << "Error: too many different complex matrix elements for fast storage: Current index"<< tmpElementPos<<" (Max="<<MaxElementIndex<<")"<<endl;
+			  exit(1);
+			}
 		    }
 		}
 	    }
@@ -2980,11 +3246,36 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 		      if (Index < Dim)
 			{
 			  ++memory;
+
+			  if (Norm(Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors]-Complex(0.081133105684164,0.27070294035764)) < 1e-10)
+			    {
+			      cout << "Inserting element" <<Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors]<<endl;
+			    }
+			  
+
 			  if (fabs(this->InteractionFactors[ProcessedNbrInteractionFactors].Im) < LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD)
-			    ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];
+			    {
+			      ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];
+			      tmpElementPos = realInteractionCoefficients.InsertElement
+				(Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors].Re);
+			      if (tmpElementPos >= this->MaxElementIndex)
+				{
+				  cout << "Error: too many different real matrix elements for fast storage: Current index"<< tmpElementPos<<" (Max="<<MaxElementIndex<<")"<<endl;
+				  exit(1);
+				}
+			    }
 			  else
-			    ++this->NbrComplexInteractionPerComponent[i - this->PrecalculationShift];
-			  // cout << "4b - connecting :"<<Index<<", "<<i<<": "<<Coefficient<<"*"<<Coefficient2<<"*"<<this->InteractionFactors[ProcessedNbrInteractionFactors]<< " (q's=["<<this->Q1Value[i12]<<", "<<this->Q2Value[i12]<<", "<<TmpQ3Values[i34]<<", "<<TmpQ4Values[i34]<<"])"<<endl;
+			    {
+			      ++this->NbrComplexInteractionPerComponent[i - this->PrecalculationShift];
+			      // cout << "4b - connecting :"<<Index<<", "<<i<<": "<<Coefficient<<"*"<<Coefficient2<<"*"<<this->InteractionFactors[ProcessedNbrInteractionFactors]<< " (q's=["<<this->Q1Value[i12]<<", "<<this->Q2Value[i12]<<", "<<TmpQ3Values[i34]<<", "<<TmpQ4Values[i34]<<"])"<<endl;
+			      tmpElementPos = complexInteractionCoefficients.InsertElement
+				(Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors]);
+			      if (tmpElementPos >= this->MaxElementIndex)
+				{
+				  cout << "Error: too many different complex matrix elements for fast storage: Current index"<< tmpElementPos<<" (Max="<<MaxElementIndex<<")"<<endl;
+				  exit(1);
+				}
+			    }
 			}
 		      ++ProcessedNbrInteractionFactors;
 		    }
@@ -3004,6 +3295,23 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 	{
 	  ++memory;
 	  ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];
+	  double Coefficient=0.0;
+	  if (NbrDiagonalInteractionFactors!=0.0)
+	    Coefficient += particles->AdAdAADiagonal(i, NbrDiagonalInteractionFactors,
+						     DiagonalInteractionFactors, DiagonalQValues);
+	  if (NbrRhoRhoInteractionFactors!=0.0)
+	    Coefficient += particles->RhoRhoDiagonal(i, NbrRhoRhoInteractionFactors, RhoRhoInteractionFactors, RhoRhoQ12Values);
+	      
+	  // need additional symmetry factor of 1/2 in hermitian mode, as diagonal elements will not be treated separately if stored in memory!
+	  if (this->IsHermitian())
+	    Coefficient *= 0.5;
+
+	  tmpElementPos = realInteractionCoefficients.InsertElement(Coefficient);
+	  if (tmpElementPos >= this->MaxElementIndex)
+	    {
+	      cout << "Error: too many different real matrix elements for fast storage: Current index"<< tmpElementPos<<" (Max="<<MaxElementIndex<<")"<<endl;
+	      exit(1);
+	    }
 	}
     }
 }
@@ -3014,12 +3322,15 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 // firstComponent = index of the first component that has to be precalcualted
 // lastComponent  = index of the last component that has to be precalcualted
 // memory = reference on the amount of memory required for precalculations
-
-inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplicationMemoryComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, long& memory)
+// realInteractionCoefficients = reference on an object collecting unique real matrix elements for this thread
+// complexInteractionCoefficients = reference on an object collecting unique complex matrix elements for this thread
+//
+inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplicationMemoryComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, long& memory, SortedRealUniqueArray &realInteractionCoefficients, SortedComplexUniqueArray &complexInteractionCoefficients)
 {
   int Index;
   double Coefficient;
   int Dim = particles->GetHilbertSpaceDimension();
+  int tmpElementPos;
   // deal with kinetic energy terms first!      
   int qi;
   int qf;
@@ -3036,6 +3347,12 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplication
 		{
 		  ++memory;			
 		  ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];		
+		  tmpElementPos = realInteractionCoefficients.InsertElement(Coefficient*this->HoppingTerms[j].Re);
+		  if (tmpElementPos >= this->MaxElementIndex )
+		    {
+		      cout << "Error: too many different real matrix elements for fast storage: current index"<< tmpElementPos<<" (Max="<<MaxElementIndex<<")"<<endl;
+		      exit(1);
+		    }
 		}
 	    }
 	}
@@ -3049,10 +3366,17 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplication
 		{
 		  ++memory;
 		  ++this->NbrComplexInteractionPerComponent[i - this->PrecalculationShift];
+		  tmpElementPos = complexInteractionCoefficients.InsertElement(Coefficient*this->HoppingTerms[j]);
+		  if (tmpElementPos >= this->MaxElementIndex )
+		    {
+		      cout << "Error: too many different complex matrix elements for fast storage: current index"<< tmpElementPos<<" (Max="<<MaxElementIndex<<")"<<endl;
+		      exit(1);
+		    }
 		}
 	    }
 	}
     }
 }
+
 
 #endif

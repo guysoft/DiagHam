@@ -34,6 +34,9 @@
 
 #include "config.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
+#include "GeneralTools/SortedRealUniqueArray.h"
+#include "GeneralTools/SortedComplexUniqueArray.h"
+
 
 #include <iostream>
 
@@ -48,6 +51,7 @@ class AbstractQHEHamiltonian : public AbstractHamiltonian
 {
 
   friend class QHEParticlePrecalculationOperation;
+  friend class QHEParticlePrecalculationOperationWithMatrixElements;
 
  protected:
   
@@ -143,7 +147,7 @@ class AbstractQHEHamiltonian : public AbstractHamiltonian
   // return value = pointer to the array of vectors where result has been stored
 //  virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 //						     int firstComponent, int nbrComponent);
- 
+  
   // save precalculations in a file
   // 
   // fileName = pointer to a string containg the name of the file where precalculations have to be stored
@@ -168,6 +172,15 @@ class AbstractQHEHamiltonian : public AbstractHamiltonian
   // lastComponent  = index of the last component that has to be precalcualted
   // return value = number of non-zero matrix element
   virtual long PartialFastMultiplicationMemory(int firstComponent, int lastComponent);
+
+  // test the amount of memory needed for fast multiplication algorithm, and keep track of unique matrix entries (partial evaluation)
+  //
+  // firstComponent = index of the first component that has to be precalcualted
+  // lastComponent  = index of the last component that has to be precalcualted
+  // return value = number of non-zero matrix element
+  virtual long PartialFastMultiplicationMemory(int firstComponent, int lastComponent, 
+					       SortedRealUniqueArray &realElements, 
+					       SortedComplexUniqueArray &complexElements);
 
   // enable fast multiplication algorithm
   //

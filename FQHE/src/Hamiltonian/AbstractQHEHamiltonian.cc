@@ -223,6 +223,18 @@ long AbstractQHEHamiltonian::PartialFastMultiplicationMemory(int firstComponent,
 {
   return ((long) -1);
 }
+
+// test the amount of memory needed for fast multiplication algorithm, and keep track of unique matrix entries (partial evaluation)
+//
+// firstComponent = index of the first component that has to be precalcualted
+// lastComponent  = index of the last component that has to be precalcualted
+// return value = number of non-zero matrix element
+long AbstractQHEHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent, 
+					       SortedRealUniqueArray &realElements, 
+					       SortedComplexUniqueArray &complexElements)
+{
+   return ((long) -1);
+}
  
 // enable fast multiplication algorithm
 //

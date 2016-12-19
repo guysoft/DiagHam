@@ -50,7 +50,6 @@ using std::max;
 SortedComplexUniqueArray::SortedComplexUniqueArray(unsigned internalSize, double tolerance, bool keepSorted)
 {
   this->InternalSize=internalSize;
-  this->Tolerance=tolerance;
   this->ToleranceSqr=tolerance*tolerance;
   this->NbrElements=0;
   if (internalSize>0)
@@ -65,7 +64,6 @@ SortedComplexUniqueArray::SortedComplexUniqueArray(unsigned internalSize, double
 SortedComplexUniqueArray::SortedComplexUniqueArray(SortedComplexUniqueArray &array, bool duplicateFlag)
 {
   this->InternalSize=array.InternalSize;
-  this->Tolerance=array.Tolerance;
   this->ToleranceSqr=array.ToleranceSqr;
   this->NbrElements=array.NbrElements;
   if (duplicateFlag == false)
@@ -134,17 +132,29 @@ unsigned SortedComplexUniqueArray::InsertElement(const Complex& element)
       if ((this->InternalSize!=0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
 	delete [] tmpElements;
     }
-  unsigned Result=NbrElements-1;
-  if (this->KeepSorted && this->NbrElements > 2*this->Sorted)
+  index=NbrElements-1;
+  if (this->KeepSorted && this->NbrElements > this->Sorted+12)
     {
       this->SortEntries();
-      if (!this->SearchElement(element, Result))
+      if (!this->SearchElement(element, index))
 	{
 	  cout << "Error: did not find the element that was just inserted"<<endl;
 	  exit(1);
 	}
     }
-  return Result;
+#ifdef TESTING_SCUA
+  unsigned test;
+  if (!this->SearchElement(element, test))
+    {
+      cout << "Error: did not find the element that was just inserted ("<<element<<")"<<endl;
+    }
+  if (test != Result)
+    {
+      cout << "Error: inconsistent indices for the element that was just inserted ("<<element<<")"<<endl;
+    }
+#endif
+
+  return index;
 }
 
 // search entry
@@ -156,7 +166,7 @@ bool SortedComplexUniqueArray::SearchElement(const Complex &value, unsigned &ind
   unsigned start=0;
   if (this->Sorted>3)
     {
-      unsigned PosMax = this->NbrElements-1;
+      unsigned PosMax = this->Sorted - 1;
       unsigned PosMin = 0;
       unsigned PosMid = (PosMin + PosMax) >> 1;
       Complex CurrentState = this->Elements[PosMid];
@@ -184,7 +194,7 @@ bool SortedComplexUniqueArray::SearchElement(const Complex &value, unsigned &ind
       else
 	{
 	  index = PosMax; // ?? 
-	  if (this->Elements[PosMax] == value)
+	  if (SqrNorm(this->Elements[PosMax] - value) < this->ToleranceSqr)
 	    {
 	      // cout << "Found "<<this->Elements[PosMax]<<endl;
 	      return true;
@@ -192,7 +202,7 @@ bool SortedComplexUniqueArray::SearchElement(const Complex &value, unsigned &ind
 	  else 
 	    {
 	      // cout << "Not found."<<endl;
-	      start = this->Sorted;
+	      start = this->Sorted-1;
 	    }
 	}
     }
@@ -208,6 +218,27 @@ bool SortedComplexUniqueArray::SearchElement(const Complex &value, unsigned &ind
   index = 0;
   return false;
 }
+
+// search entry, performing a linear search
+// value = value to be searched for
+// @param[out] index : index of the element, or -1 if not found
+// return : true if element was found, false otherwise.
+bool SortedComplexUniqueArray::CarefulSearchElement(const Complex &value, unsigned &index, double enhanceTolerance)
+{
+  double myTolerance  =  enhanceTolerance*enhanceTolerance*this->ToleranceSqr;
+  for (unsigned i=0; i<this->NbrElements; ++i)
+    {
+      if (SqrNorm(Elements[i]-value)<this->ToleranceSqr)
+	{
+	  index = i;
+	  return true;
+	}
+    }
+  // element not found
+  index = 0;
+  return false;
+}
+
 
 // empty all elements
 // disallocate = flag indicating whether all memory should be unallocated
@@ -265,7 +296,10 @@ bool SortedComplexUniqueArray::IsSorted()
 {
   for (unsigned i=0; i<this->NbrElements-1; ++i)
     if (this->Elements[i]>=this->Elements[i+1])
-      return false;
+      {
+	cout << "Unexpected order at position "<<i<<": (this->Elements["<<i<<"] = "<<this->Elements[i]<<" < this->Elements["<<i+1<<"] = "<<this->Elements[i+1]<<", this->NbrElements="<<this->NbrElements<<endl; 
+	return false;
+      }
   return true;
 }
 

@@ -9,6 +9,8 @@ FilenameTools.cc \
 UnsignedIntegerTools.cc \
 RealUniqueArray.cc \
 ComplexUniqueArray.cc \
+SortedRealUniqueArray.cc \
+SortedComplexUniqueArray.cc \
 SmallIntegerArray.cc \
 StringTools.cc \
 BitMarkers.cc \

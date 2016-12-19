@@ -34,9 +34,11 @@
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "MathTools/Complex.h"
+#include "GeneralTools/StringTools.h"
 
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
+#include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperationWithMatrixElements.h"
 
 #include <iostream>
 #include <sys/time.h>
@@ -218,17 +220,8 @@ void AbstractQHEOnLatticeHamiltonian::SetNbrFluxQuanta(int nbrFluxQuanta)
   else if (EnableFastCalculation)
     {
       int TmpMemory = this->FastMultiplicationMemory(0);
-      if (TmpMemory < 1024)
-	cout  << "fast = " <<  TmpMemory << "b ";
-      else
-	if (TmpMemory < (1 << 20))
-	  cout  << "fast = " << (TmpMemory >> 10) << "kb ";
-	else
-	  if (TmpMemory < (1 << 30))
-	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
-	  else
-	    cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
-      cout << endl;
+      cout  << "fast = ";
+      PrintMemorySize(cout, TmpMemory)<<endl;
       if (AllowedMemory > 0)
 	{
 	  this->EnableFastMultiplication();
@@ -239,7 +232,7 @@ void AbstractQHEOnLatticeHamiltonian::SetNbrFluxQuanta(int nbrFluxQuanta)
 // get Hilbert space on which Hamiltonian acts
 //
 // return value = pointer to used Hilbert space
-
+1
 AbstractHilbertSpace* AbstractQHEOnLatticeHamiltonian::GetHilbertSpace ()
 {
   return this->Particles;
@@ -331,6 +324,25 @@ bool AbstractQHEOnLatticeHamiltonian::IsComplex()
 }
 
 
+// count interaction terms
+// return = number of interaction terms
+long AbstractQHEOnLatticeHamiltonian::CountTwoBodyInteractionTerms()
+{
+
+  if (this->NbrQ12Indices == 0)
+    {
+      return this->NbrInteractionFactors; // full storage, so simple to answer this.
+    }
+  else
+    {
+      // count of interaction factors
+      int CurrentNbrInteractionFactors=0;
+      for (int q12 = 0; q12 < this->NbrQ12Indices; ++q12)
+	CurrentNbrInteractionFactors+=this->NbrQ34Values[q12];
+      return CurrentNbrInteractionFactors;
+    }
+}
+
 // symmetrize interaction factors to enable hermitian matrix multiplication
 // return = true upon success
 bool AbstractQHEOnLatticeHamiltonian::HermitianSymmetrizeInteractionFactors()
@@ -353,6 +365,7 @@ bool AbstractQHEOnLatticeHamiltonian::HermitianSymmetrizeInteractionFactors()
   // single particle terms
   if (NbrHoppingTerms>0)
     {
+      cout << "One-body hopping terms before hermitian symmetry: "<<this->NbrHoppingTerms<<endl;
       int TmpNbrHoppingTerms = 0;
       int *Flags = new int[this->NbrHoppingTerms];
       for (int j = 0; j < NbrHoppingTerms; ++j) 
@@ -389,8 +402,11 @@ bool AbstractQHEOnLatticeHamiltonian::HermitianSymmetrizeInteractionFactors()
       this->KineticQi = TmpQi;
       this->KineticQf = TmpQf; 
       this->NbrHoppingTerms = TmpNbrHoppingTerms;
+      cout << "One-body hopping terms after hermitian symmetry: "<<this->NbrHoppingTerms<<endl;
     }
-  
+
+  cout << "Two-body hopping terms before hermitian symmetry: "<<this->CountTwoBodyInteractionTerms()<<endl;
+
   if (this->NbrQ12Indices == 0)
     {
       if (NbrInteractionFactors>0)
@@ -571,6 +587,9 @@ bool AbstractQHEOnLatticeHamiltonian::HermitianSymmetrizeInteractionFactors()
 	this->InteractionFactors[i]=TmpInteractionFactors[i];
       delete [] TmpInteractionFactors;
     }
+
+  cout << "Two-body hopping terms after hermitian symmetry: "<<this->CountTwoBodyInteractionTerms()<<endl;
+
 
   // diagonal terms are always the same... so we're done
 
@@ -2508,8 +2527,14 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
   gettimeofday (&(TotalStartingTime2), 0);
   cout << "start memory" << endl;
   
+#ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_SORTED
+  QHEParticlePrecalculationOperationWithMatrixElements Operation(this);
+  Operation.ApplyOperation(this->Architecture);
+  Operation.GetMatrixElements(this->RealInteractionCoefficients, this->ComplexInteractionCoefficients);
+#else
   QHEParticlePrecalculationOperation Operation(this);
   Operation.ApplyOperation(this->Architecture);
+#endif
   long Memory = 0;
    
   for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
@@ -2519,7 +2544,11 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
     }
   
   cout << "nbr interaction = " << Memory << endl;
-  
+
+  cout << "Nbr unique real elements: "<<this->RealInteractionCoefficients.GetNbrElements()<<endl;
+  cout << "Nbr unique complex elements: "<<this->ComplexInteractionCoefficients.GetNbrElements()<<endl;
+  cout << "Number of interaction factors: "<<this->NbrInteractionFactors<<endl;
+
   // memory requirement, ignoring the actual storage size of the values of matrix
   // elements, which is assumed small (maybe need to add an estimate, at least)
   long TmpMemory = AllowedMemory - (2*sizeof (ElementIndexType) + sizeof (int*) + sizeof(ElementIndexType*)) * EffectiveHilbertSpaceDimension;
@@ -2569,6 +2598,8 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
     {
       Memory = ((2*sizeof (ElementIndexType) + sizeof (int*) + sizeof(ElementIndexType*)) * EffectiveHilbertSpaceDimension) + (Memory * (sizeof (int) + sizeof(ElementIndexType)));
       this->FastMultiplicationStep = 1;
+      // we could safely delete all interaction factors at this point.
+
     }
 
   cout << "reduction factor=" << this->FastMultiplicationStep << endl;
@@ -2580,8 +2611,6 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
   cout << "final Memory in bytes = " <<Memory<<endl;
   return Memory;    
 }
-
-
 
 // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
 //
@@ -2596,6 +2625,30 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
   int LastComponent =  nbrComponent + firstComponent;
   this->EvaluateMNOneBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
   this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
+  
+  delete TmpParticles;
+  return Memory;
+}
+
+
+// test the amount of memory needed for fast multiplication algorithm (partial evaluation)
+//
+// firstComponent = index of the first component that has to be precalcualted
+// nbrComponent  = number of components that have to be precalcualted
+// realInteractionCoefficients = reference on an object collecting unique real matrix elements for this thread
+// complexInteractionCoefficients = reference on an object collecting unique complex matrix elements for this thread
+// return value = number of non-zero matrix elements
+//
+long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int nbrComponent, SortedRealUniqueArray &realInteractionCoefficients, SortedComplexUniqueArray &complexInteractionCoefficients)
+{
+  long Memory = 0;
+  ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
+  int LastComponent =  nbrComponent + firstComponent;
+  this->EvaluateMNOneBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory, realInteractionCoefficients, complexInteractionCoefficients);
+  this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory, realInteractionCoefficients, complexInteractionCoefficients);
+  // sort all entries when done.
+  realInteractionCoefficients.SortEntries();
+  complexInteractionCoefficients.SortEntries();
   
   delete TmpParticles;
   return Memory;
@@ -2624,7 +2677,7 @@ void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplication()
   // allocate all memory at the outset:
   for (int i = 0; i < ReducedSpaceDimension; ++i)
     {
-			//cout <<"i = "<< i << this->NbrRealInteractionPerComponent[i]<<" "<<this->NbrComplexInteractionPerComponent[i]<<endl;
+      //cout <<"i = "<< i << this->NbrRealInteractionPerComponent[i]<<" "<<this->NbrComplexInteractionPerComponent[i]<<endl;
       this->InteractionPerComponentIndex[i] = new int [this->NbrRealInteractionPerComponent[i] + this->NbrComplexInteractionPerComponent[i]];
       this->InteractionPerComponentCoefficientIndex[i] = new ElementIndexType [this->NbrRealInteractionPerComponent[i]
 									     +this->NbrComplexInteractionPerComponent[i]];
@@ -2692,7 +2745,7 @@ void AbstractQHEOnLatticeHamiltonian::PartialEnableFastMultiplication(int firstC
   // 						this->InteractionPerComponentCoefficientIndex[TotalPos], TotalPos);
   //     }
 
-  cout << "Distinct matrix elements in PartialEnableFastMultiplication: real = "<< RealInteractionCoefficients.GetNbrElements() << ", complex = " << ComplexInteractionCoefficients.GetNbrElements() << endl;
+  cout << "Distinct matrix elements in PartialEnableFastMultiplication: real = "<< RealInteractionCoefficients.GetNbrElements() << " in array ("<<&RealInteractionCoefficients<<"), complex = " << ComplexInteractionCoefficients.GetNbrElements() << " in array ("<<&ComplexInteractionCoefficients<<")"<<endl;
   
   delete TmpParticles;
 }
