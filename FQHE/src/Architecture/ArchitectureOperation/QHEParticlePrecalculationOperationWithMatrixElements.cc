@@ -157,17 +157,18 @@ bool QHEParticlePrecalculationOperationWithMatrixElements::ArchitectureDependent
 	cout << "node "<<mpiNodeNbr<<" ";
       cout << "merged : "<<this->ComplexInteractionCoefficients.GetNbrElements()<<" complex, "<<  this->RealInteractionCoefficients.GetNbrElements()<<" real"<<endl;
     }
-  for (int i = 0; i < architecture->GetNbrThreads(); ++i)
+  if (this->FirstPass ==  true)
     {
-      if (this->FirstPass ==  true)
+      cout << "Memory requirements"<<endl;
+      for (int i = 0; i < architecture->GetNbrThreads(); ++i)
 	{
-	  cout << "Memory requirements"<<endl;
 	  if (mpiNodeNbr>=0)
 	    cout << "node "<<mpiNodeNbr<<" ";
 	  cout << "thread "<<i<<" = "<<TmpOperations[i]->RequiredMemory<<endl;
 	}
-      delete TmpOperations[i];
     }
+  for (int i = 0; i < architecture->GetNbrThreads(); ++i)
+    delete TmpOperations[i];
   delete[] TmpOperations;
   if (Hamiltonian->GetLoadBalancing(TmpNbrThreads, SegmentIndices)==false)
     delete [] SegmentIndices;

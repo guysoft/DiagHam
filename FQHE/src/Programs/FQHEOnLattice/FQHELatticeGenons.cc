@@ -19,6 +19,7 @@
 
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/SortedComplexUniqueArray.h"
+#include "GeneralTools/SortedRealUniqueArray.h"
 #include "MathTools/IntegerAlgebraTools.h"
 
 #include "Options/Options.h"
@@ -154,8 +155,9 @@ int main(int argc, char** argv)
 
   Manager.StandardProceedings(argv, argc, cout);
 
-  SortedComplexUniqueArray::TestClass(10000);
-  
+  // SortedComplexUniqueArray::TestClass(10000, false);
+  // SortedRealUniqueArray::TestClass(100000, false);
+
   int NbrParticles = Manager.GetInteger("nbr-particles");
   int Lx = Manager.GetInteger("lx");
   int Ly = Manager.GetInteger("ly");

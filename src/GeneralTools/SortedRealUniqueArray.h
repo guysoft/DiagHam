@@ -104,6 +104,11 @@ class SortedRealUniqueArray
   // Merge data with another UniqueArray
   void MergeArray(SortedRealUniqueArray &a);
 
+  // Test all entries
+  // search for entries and make sure their indices match the search result
+  // result: true if all entries are found, false otherwise
+  bool TestAllEntries();
+
   // Write to file
   // file = open stream to write to
   void WriteArray(ofstream &file);

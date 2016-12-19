@@ -261,6 +261,7 @@ void SortedRealUniqueArray::SortEntries()
 // Test if the array is sorted
 bool SortedRealUniqueArray::IsSorted()
 {
+  if (this->NbrElements<2) return true;
   for (unsigned i=0; i<this->NbrElements-1; ++i)
     if (this->Elements[i]>=this->Elements[i+1])
       {
@@ -339,6 +340,29 @@ void SortedRealUniqueArray::MergeArray(SortedRealUniqueArray &a)
   this->NbrElements = newPos;
   // cout << "Unique entries retained: "<<this->NbrElements<<endl;
   this->Sorted=true;
+}
+
+// Test all entries
+// search for entries and make sure their indices match the search result
+// result: true if all entries are found, false otherwise
+bool SortedRealUniqueArray::TestAllEntries()
+{
+  unsigned index;
+  bool success=true;
+  for (unsigned i=0; i<this->GetNbrElements(); ++i)
+    {
+      if (! this->SearchElement(this->Elements[i], index))
+	{
+	  cout << "Element " << i << " not found during self-check"<<endl;
+	  success=false;
+	}
+      if (index != i)
+	{
+	  cout << "Discrepancy in search for index "<< index <<" on element " << i << " during self-check."<<endl;
+	  success=false;
+	}
+    }
+  return success;
 }
 
 
