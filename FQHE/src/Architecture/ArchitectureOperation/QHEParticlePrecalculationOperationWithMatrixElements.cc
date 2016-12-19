@@ -131,7 +131,10 @@ bool QHEParticlePrecalculationOperationWithMatrixElements::ArchitectureDependent
     {
       this->RealInteractionCoefficients = TmpOperations[0]->RealInteractionCoefficients;
       this->ComplexInteractionCoefficients = TmpOperations[0]->ComplexInteractionCoefficients;
-      cout << "Merging matrix elements - this could be multi-threaded"<<endl;
+      cout << "Merging matrix elements..."<<endl;
+      if (mpiNodeNbr>=0)
+	cout << "node "<<mpiNodeNbr<<" ";
+      cout << "thread 0 : "<<TmpOperations[0]->ComplexInteractionCoefficients.GetNbrElements()<<" complex, "<<  TmpOperations[0]->RealInteractionCoefficients.GetNbrElements()<<" real"<<endl;
       timeval TotalStartingTime;
       timeval TotalEndingTime;
       gettimeofday (&(TotalStartingTime), 0);
@@ -140,18 +143,25 @@ bool QHEParticlePrecalculationOperationWithMatrixElements::ArchitectureDependent
 	{
 	  this->RealInteractionCoefficients.MergeArray(TmpOperations[i]->RealInteractionCoefficients);
 	  this->ComplexInteractionCoefficients.MergeArray(TmpOperations[i]->ComplexInteractionCoefficients);
+	  if (mpiNodeNbr>=0)
+	    cout << "node "<<mpiNodeNbr<<" ";
+	  cout << "thread "<<i<<" : "<<TmpOperations[i]->ComplexInteractionCoefficients.GetNbrElements()<<" complex, "<<  TmpOperations[i]->RealInteractionCoefficients.GetNbrElements()<<" real"<<endl;
 	}
       gettimeofday (&(TotalEndingTime), 0);
       double Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
 	((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);	          
       this->RealInteractionCoefficients.SortEntries();
       this->ComplexInteractionCoefficients.SortEntries();
-      cout << "Done merging arrays in "<<Dt<<"s"<<endl;
+      cout << "done merging arrays in "<<Dt<<"s"<<endl;
+      if (mpiNodeNbr>=0)
+	cout << "node "<<mpiNodeNbr<<" ";
+      cout << "merged : "<<this->ComplexInteractionCoefficients.GetNbrElements()<<" complex, "<<  this->RealInteractionCoefficients.GetNbrElements()<<" real"<<endl;
     }
   for (int i = 0; i < architecture->GetNbrThreads(); ++i)
     {
       if (this->FirstPass ==  true)
 	{
+	  cout << "Memory requirements"<<endl;
 	  if (mpiNodeNbr>=0)
 	    cout << "node "<<mpiNodeNbr<<" ";
 	  cout << "thread "<<i<<" = "<<TmpOperations[i]->RequiredMemory<<endl;
