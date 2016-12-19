@@ -201,6 +201,13 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 		    delete [] TmpClusterMemoryArray;
 		}
 	    }
+	  else
+	    {
+	      cout << "Errors parsing cluster configuration file " << clusterFileName << endl;
+	      ClusterFile.DumpErrors(cout);
+	      cout << "Aborting calculation."<<endl;
+	      exit(1);
+	    }
 	  if (ErrorFlag == true)
 	    {
 	      cout << "an error occured while opening " << clusterFileName << endl;
@@ -208,14 +215,6 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 	      cout << "switching to one cpu per node mode" << endl;
 	      clusterFileName = 0;
 	    }
-	  
-	}
-      else
-	{
-	  cout << "Errors parsing cluster configuration file " << clusterFileName << endl;
-	  ClusterFile.DumpErrors(cout);
-	  cout << "Aborting calculation."<<endl;
-	  exit(1);
 	}
       if (clusterFileName == 0)
 	for (int i = 0; i < this->NbrMPINodes; ++i)
