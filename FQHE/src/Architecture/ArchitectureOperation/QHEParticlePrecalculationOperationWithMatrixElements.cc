@@ -146,26 +146,16 @@ bool QHEParticlePrecalculationOperationWithMatrixElements::ArchitectureDependent
 	((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);	          
       this->RealInteractionCoefficients.SortEntries();
       this->ComplexInteractionCoefficients.SortEntries();
-
-      // DEBUGGING: testing if all values are present:
-      unsigned tmpElementPos;
-      for (int i = 0; i < architecture->GetNbrThreads(); ++i)
-	{
-	  for (unsigned j=0; j<TmpOperations[i]->RealInteractionCoefficients.GetNbrElements(); ++j)
-	    if (!this->RealInteractionCoefficients.SearchElement(TmpOperations[i]->RealInteractionCoefficients[j], tmpElementPos))
-	      cout << "Missing real entry after merging: thread "<<i<<", entry "<<j<<" with value "<< TmpOperations[i]->RealInteractionCoefficients[j] <<endl;
-	  for (unsigned j=0; j<TmpOperations[i]->ComplexInteractionCoefficients.GetNbrElements(); ++j)
-	    if (!this->ComplexInteractionCoefficients.SearchElement(TmpOperations[i]->ComplexInteractionCoefficients[j], tmpElementPos))
-	      cout << "Missing complex entry after merging: thread "<<i<<", entry "<<j<<" with value "<< TmpOperations[i]->RealInteractionCoefficients[j] <<endl;	  
-	}
-
       cout << "Done merging arrays in "<<Dt<<"s"<<endl;
     }
   for (int i = 0; i < architecture->GetNbrThreads(); ++i)
     {
-      if (mpiNodeNbr>=0)
-	cout << "node "<<mpiNodeNbr<<" ";
-      cout << "thread "<<i<<" = "<<TmpOperations[i]->RequiredMemory<<endl;
+      if (this->FirstPass ==  true)
+	{
+	  if (mpiNodeNbr>=0)
+	    cout << "node "<<mpiNodeNbr<<" ";
+	  cout << "thread "<<i<<" = "<<TmpOperations[i]->RequiredMemory<<endl;
+	}
       delete TmpOperations[i];
     }
   delete[] TmpOperations;

@@ -232,7 +232,7 @@ void AbstractQHEOnLatticeHamiltonian::SetNbrFluxQuanta(int nbrFluxQuanta)
 // get Hilbert space on which Hamiltonian acts
 //
 // return value = pointer to used Hilbert space
-1
+
 AbstractHilbertSpace* AbstractQHEOnLatticeHamiltonian::GetHilbertSpace ()
 {
   return this->Particles;
@@ -2745,7 +2745,7 @@ void AbstractQHEOnLatticeHamiltonian::PartialEnableFastMultiplication(int firstC
   // 						this->InteractionPerComponentCoefficientIndex[TotalPos], TotalPos);
   //     }
 
-  cout << "Distinct matrix elements in PartialEnableFastMultiplication: real = "<< RealInteractionCoefficients.GetNbrElements() << " in array ("<<&RealInteractionCoefficients<<"), complex = " << ComplexInteractionCoefficients.GetNbrElements() << " in array ("<<&ComplexInteractionCoefficients<<")"<<endl;
+  // cout << "Distinct matrix elements in PartialEnableFastMultiplication: real = "<< RealInteractionCoefficients.GetNbrElements() << " in array ("<<&RealInteractionCoefficients<<"), complex = " << ComplexInteractionCoefficients.GetNbrElements() << " in array ("<<&ComplexInteractionCoefficients<<")"<<endl;
   
   delete TmpParticles;
 }

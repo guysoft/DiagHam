@@ -135,9 +135,12 @@ bool QHEParticlePrecalculationOperation::ArchitectureDependentApplyOperation(SMP
   architecture->SendJobs();
   for (int i = 0; i < architecture->GetNbrThreads(); ++i)
     {
-      if (mpiNodeNbr>=0)
-	cout << "node "<<mpiNodeNbr<<" ";
-      cout << "thread "<<i<<" = "<<TmpOperations[i]->RequiredMemory<<endl;
+      if (this->FirstPass ==  true)
+	{
+	  if (mpiNodeNbr>=0)
+	    cout << "node "<<mpiNodeNbr<<" ";
+	  cout << "thread "<<i<<" = "<<TmpOperations[i]->RequiredMemory<<endl;
+	}
       delete TmpOperations[i];
     }
   delete[] TmpOperations;

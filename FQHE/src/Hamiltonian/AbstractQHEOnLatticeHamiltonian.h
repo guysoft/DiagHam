@@ -3246,13 +3246,6 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 		      if (Index < Dim)
 			{
 			  ++memory;
-
-			  if (Norm(Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors]-Complex(0.081133105684164,0.27070294035764)) < 1e-10)
-			    {
-			      cout << "Inserting element" <<Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors]<<endl;
-			    }
-			  
-
 			  if (fabs(this->InteractionFactors[ProcessedNbrInteractionFactors].Im) < LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD)
 			    {
 			      ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];
