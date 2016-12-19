@@ -228,7 +228,7 @@ void SortedRealUniqueArray::Empty(bool disallocate, unsigned internalSize)
 void SortedRealUniqueArray::SortEntries()
 {
   if (this->Sorted==this->NbrElements) return;
-  unsigned inc = std::round(NbrElements/2.0);
+  unsigned inc = std::floor(NbrElements/2.0+0.5);
   // if (this->Sorted>inc) inc=this->Sorted-1;
   double tmpC;
   while (inc > 0)
@@ -244,7 +244,7 @@ void SortedRealUniqueArray::SortEntries()
 	    }
 	  this->Elements[j] = tmpC;
 	}
-      inc = std::round(inc / 2.2);
+      inc = std::floor(inc / 2.2 + 0.5);
     }
   this->Sorted=this->NbrElements;
 
