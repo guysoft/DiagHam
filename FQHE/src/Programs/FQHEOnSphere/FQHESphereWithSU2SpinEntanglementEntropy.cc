@@ -196,22 +196,50 @@ int main(int argc, char** argv)
 		{
 		  if (SzSymmetry == 0)
 		    {		      
-		      Space = new BosonOnSphereWithSU2Spin (NbrParticles, TotalLz, LzMax, TotalSz);
+		      if (Manager.GetString("load-hilbert") == 0)
+			{
+			  Space = new BosonOnSphereWithSU2Spin (NbrParticles, TotalLz, LzMax, TotalSz);
+			}
+		      else
+			{
+			  Space = new BosonOnSphereWithSU2Spin (Manager.GetString("load-hilbert"));
+			}
 		    }
 		  else
 		    {		      
-		      Space = new BosonOnSphereWithSU2SpinSzSymmetry (NbrParticles, TotalLz, LzMax, TotalSz, (SzSymmetry == -1));
+		      if (Manager.GetString("load-hilbert") == 0)
+			{
+			  Space = new BosonOnSphereWithSU2SpinSzSymmetry (NbrParticles, TotalLz, LzMax, TotalSz, (SzSymmetry == -1));
+			}
+		      else
+			{
+			  Space = new BosonOnSphereWithSU2SpinSzSymmetry (Manager.GetString("load-hilbert"));
+			}
 		    }		  
 		}
 	      else
 		{
 		  if (SzSymmetry == 0)
 		    {		      
-		      Space = new BosonOnSphereWithSU2SpinLzSymmetry (NbrParticles, LzMax, TotalSz, (LzSymmetry == -1));
+		      if (Manager.GetString("load-hilbert") == 0)
+			{
+			  Space = new BosonOnSphereWithSU2SpinLzSymmetry (NbrParticles, LzMax, TotalSz, (LzSymmetry == -1));
+			}
+		      else
+			{
+			  Space = new BosonOnSphereWithSU2SpinLzSymmetry (Manager.GetString("load-hilbert"));
+			}
 		    }
 		  else
 		    {		      
-		      Space = new BosonOnSphereWithSU2SpinLzSzSymmetry (NbrParticles, LzMax, TotalSz, (SzSymmetry == -1), (LzSymmetry == -1));
+		      if (Manager.GetString("load-hilbert") == 0)
+			{
+			  Space = new BosonOnSphereWithSU2SpinLzSzSymmetry (NbrParticles, LzMax, TotalSz, (SzSymmetry == -1), (LzSymmetry == -1));
+			}
+		      else
+			{
+			  Space = new BosonOnSphereWithSU2SpinLzSzSymmetry (Manager.GetString("load-hilbert"));
+			}
 		    }
 		}
 	    }

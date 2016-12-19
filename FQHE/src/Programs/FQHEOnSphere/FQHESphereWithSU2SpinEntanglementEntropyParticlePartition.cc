@@ -255,11 +255,25 @@ int main(int argc, char** argv)
 		    {
 		      if (SzSymmetry[i] == 0)
 			{		      
-			  Spaces[i] = new BosonOnSphereWithSU2Spin (NbrParticles, TotalLz[i], LzMax, TotalSz[i]);
+			  if (Manager.GetString("load-hilbert") == 0)
+			    {
+			      Spaces[i] = new BosonOnSphereWithSU2Spin (NbrParticles, TotalLz[i], LzMax, TotalSz[i]);
+			    }
+			  else
+			    {
+			      Spaces[i] = new BosonOnSphereWithSU2Spin (Manager.GetString("load-hilbert"));
+			    }
 			}
 		      else
 			{		      
-			  Spaces[i] = new BosonOnSphereWithSU2SpinSzSymmetry (NbrParticles, TotalLz[i], LzMax, TotalSz[i], (SzSymmetry[i] == -1));
+			  if (Manager.GetString("load-hilbert") == 0)
+			    {
+			      Spaces[i] = new BosonOnSphereWithSU2SpinSzSymmetry (NbrParticles, TotalLz[i], LzMax, TotalSz[i], (SzSymmetry[i] == -1));
+			    }
+			  else
+			    {
+			      Spaces[i] = new BosonOnSphereWithSU2SpinSzSymmetry (Manager.GetString("load-hilbert"));
+			    }
 			}
 
 		    }
@@ -267,11 +281,25 @@ int main(int argc, char** argv)
 		    {
 		      if (SzSymmetry[i] == 0)
 			{		      
-			  Spaces[i] = new BosonOnSphereWithSU2SpinLzSymmetry (NbrParticles, LzMax, TotalSz[i], (LzSymmetry[i] == -1));
+			  if (Manager.GetString("load-hilbert") == 0)
+			    {
+			      Spaces[i] = new BosonOnSphereWithSU2SpinLzSymmetry (NbrParticles, LzMax, TotalSz[i], (LzSymmetry[i] == -1));
+			    }
+			  else
+			    {
+			      Spaces[i] = new BosonOnSphereWithSU2SpinLzSymmetry (Manager.GetString("load-hilbert"));
+			    }
 			}
 		      else
 			{		      
-			  Spaces[i] = new BosonOnSphereWithSU2SpinLzSzSymmetry (NbrParticles, LzMax, TotalSz[i], (SzSymmetry[i] == -1), (LzSymmetry[i] == -1));
+			  if (Manager.GetString("load-hilbert") == 0)
+			    {
+			      Spaces[i] = new BosonOnSphereWithSU2SpinLzSzSymmetry (NbrParticles, LzMax, TotalSz[i], (SzSymmetry[i] == -1), (LzSymmetry[i] == -1));
+			    }
+			  else
+			    {
+			      Spaces[i] = new BosonOnSphereWithSU2SpinLzSzSymmetry (Manager.GetString("load-hilbert"));
+			    }
 			}
 		    }
 		}

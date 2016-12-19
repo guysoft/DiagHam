@@ -83,7 +83,7 @@ class BosonOnSphereWithSU2SpinLzSymmetry :  public BosonOnSphereWithSU2SpinSzSym
   // 
   // fileName = name of the binary file
   // memory = amount of memory granted for precalculations
-  BosonOnSphereWithSU2SpinLzSymmetry (char* fileName, unsigned long memory);
+  BosonOnSphereWithSU2SpinLzSymmetry (char* fileName, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
