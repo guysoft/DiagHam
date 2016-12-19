@@ -210,6 +210,13 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 	    }
 	  
 	}
+      else
+	{
+	  cout << "Errors parsing cluster configuration file " << clusterFileName << endl;
+	  ClusterFile.DumpErrors(cout);
+	  cout << "Aborting calculation."<<endl;
+	  exit(1);
+	}
       if (clusterFileName == 0)
 	for (int i = 0; i < this->NbrMPINodes; ++i)
 	  {

@@ -192,6 +192,7 @@ bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex
     }
   if (this->MasterNodeFlag == true)
     { 
+      cout << "Optimizing typical range"<<endl;
       int* TmpNbrOperationPerIndex = new int [this->MaximumIndices[this->NbrMPINodes - 1] - this->MinimumIndices[0] + 1l];
       long TmpIndex = 0;
       long EffectiveDimension = this->MaximumIndices[0] - this->MinimumIndices[0] + 1l;
@@ -299,7 +300,7 @@ bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex
 
 bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex, int memoryPerOperation, long& minIndex, long& maxIndex)
 {
-  cout << "Warning, SimpleMPIArchitecture::GetOpimizedTypicalRange with memory claculation is not fully supported" << endl;
+  cout << "Warning, SimpleMPIArchitecture::GetOpimizedTypicalRange with memory calculation is not fully supported" << endl;
   return this->GetOptimizedTypicalRange (nbrOperationPerIndex, minIndex, maxIndex);
 }
 
