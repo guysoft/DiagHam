@@ -568,13 +568,37 @@ int main(int argc, char** argv)
 				    {
 				      if (RealSpaceCut == true)
 					{
+					  timeval SVDTotalStartingTime;
+					  timeval SVDTotalEndingTime;
+					  if (ShowTimeFlag == true)
+					    {
+					      gettimeofday (&(SVDTotalStartingTime), 0);
+					    }
 					  PartialEntanglementMatrix = Spaces[i]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz,  SubsystemNbrNUp - SubsystemNbrNDown, GroundStates[i] , true);
+					  if (ShowTimeFlag == true)
+					    {
+					      gettimeofday (&(SVDTotalEndingTime), 0);
+					      double Dt = (double) ((SVDTotalEndingTime.tv_sec - SVDTotalStartingTime.tv_sec) + 
+								    ((SVDTotalEndingTime.tv_usec - SVDTotalStartingTime.tv_usec) / 1000000.0));		      
+					      cout << "particle entanglement matrix evaluated in " << Dt << "s" << endl;
+					    }
 					  if(PartialEntanglementMatrix.GetNbrRow() != 0)
 					    {
+					      if (ShowTimeFlag == true)
+						{
+						  gettimeofday (&(SVDTotalStartingTime), 0);
+						}
 					      Spaces[i]->EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz, SubsystemNbrNUp - SubsystemNbrNDown,
 																	   NbrAOrbitals, WeightAOrbitalsUp, WeightAOrbitalsDown,
 																	   NbrBOrbitals, WeightBOrbitalsUp, WeightBOrbitalsDown,
 																	   PartialEntanglementMatrix);
+					      if (ShowTimeFlag == true)
+						{
+						  gettimeofday (&(SVDTotalEndingTime), 0);
+						  double Dt = (double) ((SVDTotalEndingTime.tv_sec - SVDTotalStartingTime.tv_sec) + 
+									((SVDTotalEndingTime.tv_usec - SVDTotalStartingTime.tv_usec) / 1000000.0));		      
+						  cout << "convertion from particle entanglement matrix to real space entanglement matrix done in " << Dt << "s" << endl;
+						}					      
 					    }
 					}
 				      else
@@ -1029,38 +1053,39 @@ int main(int argc, char** argv)
 						((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
 			  cout << "diagonalization done in " << Dt << "s" << endl;
 			}
-		    }
-		  else
-		    if (ComplexPartialDensityMatrix.GetNbrRow() == 1)
-		      {
-			double TmpValue = ComplexPartialDensityMatrix(0,0);
-			if ((DensityMatrixFileName != 0) && (Architecture.GetArchitecture()->CanWriteOnDisk()))
-			  {
-			    ofstream DensityMatrixFile;
-			    DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
-			    DensityMatrixFile.precision(14);
-			    if (NoSzFlag == false)
-			      {
-				DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalSz << " " << SubsystemNbrNUp << " " 
-						  << SubsystemNbrNDown << " " << SubsystemTotalLz << " " << TmpValue << endl;
-			      }
-			    else
-			      {
-				DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << endl;
-			      }
-			    DensityMatrixFile.close();
-			  }		  
-			if (TmpValue > 1e-14)
-			  {
-			    EntanglementEntropy += TmpValue * log(TmpValue);
-			    DensitySum += TmpValue;
-			  }
-		      }
-		} 
-		  
-		    }
+			}
+		      else
+			{
+			  if (ComplexPartialDensityMatrix.GetNbrRow() == 1)
+			    {
+			      double TmpValue = ComplexPartialDensityMatrix(0,0);
+			      if ((DensityMatrixFileName != 0) && (Architecture.GetArchitecture()->CanWriteOnDisk()))
+				{
+				  ofstream DensityMatrixFile;
+				  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+				  DensityMatrixFile.precision(14);
+				  if (NoSzFlag == false)
+				    {
+				      DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalSz << " " << SubsystemNbrNUp << " " 
+							<< SubsystemNbrNDown << " " << SubsystemTotalLz << " " << TmpValue << endl;
+				    }
+				  else
+				    {
+				      DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << endl;
+				    }
+				  DensityMatrixFile.close();
+				}		  
+			      if (TmpValue > 1e-14)
+				{
+				  EntanglementEntropy += TmpValue * log(TmpValue);
+				  DensitySum += TmpValue;
+				}
+			    }
+			} 
+		    }		  
 		}
 	    }
+	}
       if (Architecture.GetArchitecture()->CanWriteOnDisk())  
 	{
 	  ofstream File;
