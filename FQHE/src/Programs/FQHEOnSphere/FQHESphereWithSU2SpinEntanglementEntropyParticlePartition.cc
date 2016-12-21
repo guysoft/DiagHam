@@ -551,7 +551,7 @@ int main(int argc, char** argv)
 			    {
 			      if (ComplexFlag == false)
 				{
-				  if (SVDFlag == true)
+				  if ((SVDFlag == true) || (RealSpaceCut == true))
 				    {
 				      if (RealSpaceCut == true)
 					{
@@ -559,6 +559,18 @@ int main(int argc, char** argv)
 					  if(PartialEntanglementMatrix.GetNbrRow() != 0)
 					    {
 					      Spaces[i]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz, SubsystemNbrNUp - SubsystemNbrNDown ,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), PartialEntanglementMatrix);
+					      if (SVDFlag == false)
+						{
+						  if (PartialEntanglementMatrix.GetNbrRow() >= PartialEntanglementMatrix.GetNbrColumn())
+						    {
+						      PartialDensityMatrix = RealSymmetricMatrix(PartialEntanglementMatrix);
+						    }
+						  else
+						    {
+						      PartialDensityMatrix = RealSymmetricMatrix(PartialEntanglementMatrix, true);
+						    }
+						  PartialEntanglementMatrix = RealMatrix();
+						}
 					    }
 					}
 				      else
@@ -578,7 +590,7 @@ int main(int argc, char** argv)
 			    {
 			      if (ComplexFlag == false)
 				{
-				  if (SVDFlag == true)
+				  if ((SVDFlag == true) || (RealSpaceCut == true))
 				    {
 				      if (RealSpaceCut == true)
 					{
@@ -606,6 +618,18 @@ int main(int argc, char** argv)
 																	   NbrAOrbitals, WeightAOrbitalsUp, WeightAOrbitalsDown,
 																	   NbrBOrbitals, WeightBOrbitalsUp, WeightBOrbitalsDown,
 																	   PartialEntanglementMatrix);
+					      if (SVDFlag == false)
+						{
+						  if (PartialEntanglementMatrix.GetNbrRow() >= PartialEntanglementMatrix.GetNbrColumn())
+						    {
+						      PartialDensityMatrix = RealSymmetricMatrix(PartialEntanglementMatrix);
+						    }
+						  else
+						    {
+						      PartialDensityMatrix = RealSymmetricMatrix(PartialEntanglementMatrix, true);
+						    }
+						  PartialEntanglementMatrix = RealMatrix();
+						}
 					      if (ShowTimeFlag == true)
 						{
 						  gettimeofday (&(SVDTotalEndingTime), 0);

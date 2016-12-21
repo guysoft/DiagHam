@@ -1026,24 +1026,17 @@ RealMatrix BosonOnSphereWithSU2SpinSzSymmetry::EvaluatePartialEntanglementMatrix
   long TmpNbrNonZeroElements = 0l;
   unsigned long** TmpSubsytemSpaceOccupationNumbersUp = new unsigned long* [SubsytemSpace.GetHilbertSpaceDimension()];
   unsigned long** TmpSubsytemSpaceOccupationNumbersDown = new unsigned long* [SubsytemSpace.GetHilbertSpaceDimension()];
-  unsigned long** TmpSubsytemSpaceMonomialUp = new unsigned long* [SubsytemSpace.GetHilbertSpaceDimension()];
-  unsigned long** TmpSubsytemSpaceMonomialDown = new unsigned long* [SubsytemSpace.GetHilbertSpaceDimension()];
   double* TmpSubsytemLogFactorials = new double [SubsytemSpace.GetHilbertSpaceDimension()];
-  unsigned long* TmpMonomialUp1 = new unsigned long [ComplementaryNbrParticles];
-  unsigned long* TmpMonomialDown1 = new unsigned long [ComplementaryNbrParticles];
-  unsigned long* TmpMonomialUp3 = new unsigned long [this->NbrBosons];
-  unsigned long* TmpMonomialDown3 = new unsigned long [this->NbrBosons];
+  unsigned long* TmpOccupationUp = new unsigned long [this->LzMax + 1];
+  unsigned long* TmpOccupationDown = new unsigned long [this->LzMax + 1];
+  int TmpShift = this->LzMax + 1 - nbrOrbitalA;
 
   for (int i = 0; i < SubsytemSpace.GetHilbertSpaceDimension(); ++i)
     {
       TmpSubsytemSpaceOccupationNumbersUp[i] = new unsigned long [this->NbrLzValue];
       TmpSubsytemSpaceOccupationNumbersDown[i] = new unsigned long [this->NbrLzValue];
-      TmpSubsytemSpaceMonomialUp[i] = new unsigned long [nbrParticleSector];
-      TmpSubsytemSpaceMonomialDown[i] = new unsigned long [nbrParticleSector];
       SubsytemSpace.FermionToBoson(SubsytemSpace.StateDescriptionUp[i], SubsytemSpace.StateDescriptionDown[i], 
-				      TmpSubsytemSpaceOccupationNumbersUp[i], TmpSubsytemSpaceOccupationNumbersDown[i]);
-      SubsytemSpace.ConvertToMonomial(SubsytemSpace.StateDescriptionUp[i], SubsytemSpace.StateDescriptionDown[i], 
-					 TmpSubsytemSpaceMonomialUp[i], TmpSubsytemSpaceMonomialDown[i]);
+				   TmpSubsytemSpaceOccupationNumbersUp[i], TmpSubsytemSpaceOccupationNumbersDown[i]);
       unsigned long* TmpOccupationNumberUp = TmpSubsytemSpaceOccupationNumbersUp[i];
       unsigned long* TmpOccupationNumberDown = TmpSubsytemSpaceOccupationNumbersDown[i];
       double TmpFactor = 0.0;
@@ -1056,13 +1049,6 @@ RealMatrix BosonOnSphereWithSU2SpinSzSymmetry::EvaluatePartialEntanglementMatrix
     }
   for (int MinIndex = 0; MinIndex < ComplementarySubsytemSpace.GetHilbertSpaceDimension(); ++MinIndex)    
     {
-      ComplementarySubsytemSpace.ConvertToMonomial(ComplementarySubsytemSpace.StateDescriptionUp[MinIndex], ComplementarySubsytemSpace.StateDescriptionDown[MinIndex], 
-						   TmpMonomialUp1, TmpMonomialDown1);
-       for (int k = 0; k < ComplementaryNbrParticles; ++k)
-	 {
-	   TmpMonomialUp1[k] += this->LzMax + 1 - nbrOrbitalA;
-	   TmpMonomialDown1[k] += this->LzMax + 1 - nbrOrbitalA;
-	 }   
       ComplementarySubsytemSpace.FermionToBoson(ComplementarySubsytemSpace.StateDescriptionUp[MinIndex], ComplementarySubsytemSpace.StateDescriptionDown[MinIndex],  
 						ComplementarySubsytemSpace.TemporaryStateUp, ComplementarySubsytemSpace.TemporaryStateDown);
       double ComplementarySubsytemSpaceFactorial = 0.0;
@@ -1073,84 +1059,33 @@ RealMatrix BosonOnSphereWithSU2SpinSzSymmetry::EvaluatePartialEntanglementMatrix
 	}
       for (int j = 0; j < SubsytemSpace.GetHilbertSpaceDimension(); ++j)
 	{
-	  unsigned long* TmpMonomialUp2 = TmpSubsytemSpaceMonomialUp[j];
-	  unsigned long* TmpMonomialDown2 = TmpSubsytemSpaceMonomialDown[j];
-	  int TmpIndex2 = 0;
-	  int TmpIndex3 = 0;
-	  int TmpIndex4 = 0;
-	  while ((TmpIndex2 < ComplementarySubsytemSpace.NbrBosonsUp) && (TmpIndex3 < SubsytemSpace.NbrBosonsUp)) 
-	    {
-	      while ((TmpIndex2 < ComplementarySubsytemSpace.NbrBosonsUp) && (TmpMonomialUp2[TmpIndex3] <= TmpMonomialUp1[TmpIndex2]))
-		{
-		  TmpMonomialUp3[TmpIndex4] = TmpMonomialUp1[TmpIndex2];
-		  ++TmpIndex2;
-		  ++TmpIndex4;		  
-		}
-	      if (TmpIndex2 < ComplementarySubsytemSpace.NbrBosonsUp)
-		{
-		  while ((TmpIndex3 < SubsytemSpace.NbrBosonsUp) && (TmpMonomialUp1[TmpIndex2] <= TmpMonomialUp2[TmpIndex3]))
-		    {
-		      TmpMonomialUp3[TmpIndex4] = TmpMonomialUp2[TmpIndex3];
-		      ++TmpIndex3;
-		      ++TmpIndex4;		  
-		    }
-		}
-	    }
-	  while (TmpIndex2 < ComplementarySubsytemSpace.NbrBosonsUp)
-	    {
-	      TmpMonomialUp3[TmpIndex4] = TmpMonomialUp1[TmpIndex2];
-	      ++TmpIndex2;
-	      ++TmpIndex4;		  
-	    }
-	  while (TmpIndex3 < SubsytemSpace.NbrBosonsUp)
-	    {
-	      TmpMonomialUp3[TmpIndex4] = TmpMonomialUp2[TmpIndex3];
-	      ++TmpIndex3;
-	      ++TmpIndex4;		  
-	    }
-	  TmpIndex2 = 0;
-	  TmpIndex3 = 0;
-	  TmpIndex4 = 0;
-	  while ((TmpIndex2 < ComplementarySubsytemSpace.NbrBosonsDown) && (TmpIndex3 < SubsytemSpace.NbrBosonsDown)) 
-	    {
-	      while ((TmpIndex2 < ComplementarySubsytemSpace.NbrBosonsDown) && (TmpMonomialDown2[TmpIndex3] <= TmpMonomialDown1[TmpIndex2]))
-		{
-		  TmpMonomialDown3[TmpIndex4] = TmpMonomialDown1[TmpIndex2];
-		  ++TmpIndex2;
-		  ++TmpIndex4;		  
-		}
-	      if (TmpIndex2 < ComplementarySubsytemSpace.NbrBosonsDown)
-		{
-		  while ((TmpIndex3 < SubsytemSpace.NbrBosonsDown) && (TmpMonomialDown1[TmpIndex2] <= TmpMonomialDown2[TmpIndex3]))
-		    {
-		      TmpMonomialDown3[TmpIndex4] = TmpMonomialDown2[TmpIndex3];
-		      ++TmpIndex3;
-		      ++TmpIndex4;		  
-		    }
-		}
-	    }
-	  while (TmpIndex2 < ComplementarySubsytemSpace.NbrBosonsDown)
-	    {
-	      TmpMonomialDown3[TmpIndex4] = TmpMonomialDown1[TmpIndex2];
-	      ++TmpIndex2;
-	      ++TmpIndex4;		  
-	    }
-	  while (TmpIndex3 < SubsytemSpace.NbrBosonsDown)
-	    {
-	      TmpMonomialDown3[TmpIndex4] = TmpMonomialDown2[TmpIndex3];
-	      ++TmpIndex3;
-	      ++TmpIndex4;		  
-	    }
 
-	  unsigned long TmpStateUp;
-	  unsigned long TmpStateDown;
-	  this->ConvertFromMonomial(TmpMonomialUp3, TmpMonomialDown3, TmpStateUp, TmpStateDown);
+ 	  unsigned long TmpStateUp;
+ 	  unsigned long TmpStateDown;
+	  unsigned long* TmpOccupationArrayUp = TmpSubsytemSpaceOccupationNumbersUp[j];
+	  unsigned long* TmpOccupationArrayDown = TmpSubsytemSpaceOccupationNumbersDown[j];
+	  for (int k = 0; k < nbrOrbitalB; ++k)
+	    {
+	      this->TemporaryStateUp[k] = ComplementarySubsytemSpace.TemporaryStateUp[k];
+	      this->TemporaryStateDown[k] = ComplementarySubsytemSpace.TemporaryStateDown[k];
+	    }
+	  for (int k = TmpShift; k < nbrOrbitalB; ++k)
+	    {
+	      this->TemporaryStateUp[k] += TmpOccupationArrayUp[k - TmpShift];
+	      this->TemporaryStateDown[k] += TmpOccupationArrayDown[k - TmpShift];
+	    }
+	  for (int k = nbrOrbitalB; k <= this->LzMax; ++k)
+	    {
+	      this->TemporaryStateUp[k] = TmpOccupationArrayUp[k - TmpShift];
+	      this->TemporaryStateDown[k] = TmpOccupationArrayDown[k - TmpShift];
+	    }
+	  
 	  double TmpCoefficient = 1.0;
 	  this->ProdATemporaryNbrStateInOrbit = 1;
+	  this->BosonToFermion(this->TemporaryStateUp, this->TemporaryStateDown, TmpStateUp, TmpStateDown);
 	  int TmpPos =  this->SymmetrizeAdAdResult(TmpStateUp, TmpStateDown, TmpCoefficient);  
 	  if (TmpPos != this->HilbertSpaceDimension)
 	    {
-	      this->FermionToBoson(TmpStateUp, TmpStateDown, this->TemporaryStateUp, this->TemporaryStateDown);
 	      double TmpFactorial = 0.0;	      
 	      for (int k = 0; k <= this->LzMax; ++k)
 		{
@@ -1170,13 +1105,9 @@ RealMatrix BosonOnSphereWithSU2SpinSzSymmetry::EvaluatePartialEntanglementMatrix
     {
       delete[] TmpSubsytemSpaceOccupationNumbersUp[i];
       delete[] TmpSubsytemSpaceOccupationNumbersDown[i];
-      delete[] TmpSubsytemSpaceMonomialUp[i];
-      delete[] TmpSubsytemSpaceMonomialDown[i];
     }
   delete[] TmpSubsytemSpaceOccupationNumbersUp;
   delete[] TmpSubsytemSpaceOccupationNumbersDown;
-  delete[] TmpSubsytemSpaceMonomialUp;
-  delete[] TmpSubsytemSpaceMonomialDown;
   delete[] LogFactorials;
   if (TmpNbrNonZeroElements > 0l)
     {
