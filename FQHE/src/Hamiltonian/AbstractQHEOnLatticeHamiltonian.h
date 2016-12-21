@@ -1132,7 +1132,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
 inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnLattice* particles, int index, 
 											  int* indexArray, ElementIndexType* coefficientIndexArray, int& positionR, int & positionC)
 {
-	//cout <<"Index " << index<<endl;
+  //cout <<"Index " << index<<endl;
   int qi, qf;
   int Index2;
   unsigned tmpElementPos;
@@ -1212,7 +1212,7 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
   double Coefficient;
   int Dim = this->Particles->GetHilbertSpaceDimension();
   
-
+  int AbsoluteIndex = index + this->PrecalculationShift;
   // four-fermion interactions:
   if (this->NbrQ12Indices == 0) // full storage
     { 	  
@@ -1222,7 +1222,7 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 	  int q2 = this->Q2Value[j];
 	  int q3 = this->Q3Value[j];
 	  int q4 = this->Q4Value[j];	       
-	  Index2 = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
+	  Index2 = particles->AdAdAA(AbsoluteIndex, q1, q2, q3, q4, Coefficient);
 	  if (Index2 < Dim)
 	    {
 	      if (fabs(this->InteractionFactors[j].Im)<LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD) // real element
@@ -1278,7 +1278,7 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
       int* TmpQ4Values;
       for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
 	{
-	  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
+	  Coefficient = particles->AA(AbsoluteIndex, this->Q1Value[i12], this->Q2Value[i12]);
 	  if (Coefficient != 0.0)
 	    {
 	      TmpNbrQ34Values = this->NbrQ34Values[i12];
@@ -1316,7 +1316,7 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 #ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_SORTED
 			  if (!ComplexInteractionCoefficients.SearchElement(Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors], tmpElementPos))
 			    {
-			      cout << "Error: element "<<Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors]<<" not present in complex array F"<<endl;
+			      cout << "Error: element "<<Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors]<<" not present in complex array F for q1= " << this->Q1Value[i12] << ", q2= "<< this->Q2Value[i12]<<", q3= "<<TmpQ3Values[i34]<<", q4="<<TmpQ4Values[i34]<<endl;
 			      if (ComplexInteractionCoefficients.CarefulSearchElement(Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors], tmpElementPos, 100.))
 				cout << "Careful search successful: "<<tmpElementPos<<endl;
 			      else
@@ -1351,16 +1351,16 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
       Coefficient = 0.0;
 
       if (NbrDiagonalInteractionFactors!=0.0)
-	Coefficient += particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors,
+	Coefficient += particles->AdAdAADiagonal(AbsoluteIndex, NbrDiagonalInteractionFactors,
 				  DiagonalInteractionFactors, DiagonalQValues);
       if (NbrRhoRhoInteractionFactors!=0.0)
-	Coefficient += particles->RhoRhoDiagonal(index, NbrRhoRhoInteractionFactors, RhoRhoInteractionFactors, RhoRhoQ12Values);
+	Coefficient += particles->RhoRhoDiagonal(AbsoluteIndex, NbrRhoRhoInteractionFactors, RhoRhoInteractionFactors, RhoRhoQ12Values);
 
       // need additional symmetry factor of 1/2 in hermitian mode, as diagonal elements will not be treated separately if stored in memory!
       if (this->IsHermitian())
 	Coefficient *= 0.5;
 
-	  indexArray[positionR] = index;
+      indexArray[positionR] = AbsoluteIndex;
 #ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_SORTED
 	  if (!RealInteractionCoefficients.SearchElement(Coefficient, tmpElementPos))
 	    {

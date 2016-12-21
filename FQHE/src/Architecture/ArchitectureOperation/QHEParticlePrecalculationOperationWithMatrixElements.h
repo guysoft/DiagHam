@@ -47,6 +47,9 @@ class QHEParticlePrecalculationOperationWithMatrixElements: public QHEParticlePr
 
  protected:
 
+  // tolerance for considering matrix elements to be identical
+  double Tolerance;
+
   // pointer to hold arrays with unique matrix entries - private to each object, not copied by cloning
   // real entries
   SortedRealUniqueArray RealInteractionCoefficients;
@@ -59,7 +62,8 @@ class QHEParticlePrecalculationOperationWithMatrixElements: public QHEParticlePr
   //
   // hamiltonian = pointer to the hamiltonian to use
   // firstPass = flag to indicate if the operation has to be applied to the first pass of the precalculations
-  QHEParticlePrecalculationOperationWithMatrixElements(AbstractQHEHamiltonian* hamiltonian, bool firstPass = true);
+  // tolerance = tolerance for considering matrix elements to be identical
+  QHEParticlePrecalculationOperationWithMatrixElements(AbstractQHEHamiltonian* hamiltonian, bool firstPass = true, double tolerance = MACHINE_PRECISION);
 
   // copy constructor 
   //

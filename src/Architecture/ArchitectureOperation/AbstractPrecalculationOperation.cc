@@ -115,7 +115,7 @@ bool AbstractPrecalculationOperation::ArchitectureDependentApplyOperation(Simple
   architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
   this->SetIndicesRange(TmpMinimumIndex, (TmpMaximumIndex - TmpMinimumIndex + 1));
   if (architecture->GetLocalArchitecture()->GetArchitectureID() == AbstractArchitecture::SMP)
-    this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture());
+    this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture(), architecture->GetNodeNbr());
   else
     this->RawApplyOperation();
   return true;

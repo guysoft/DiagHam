@@ -33,15 +33,22 @@
 
 #include <sys/time.h>
 
+// debugging switch
+// #define DEBUG_QHE_PRECALC_WME
+
 // constructor 
 //
 // hamiltonian = pointer to the hamiltonian to use
 // firstPass = flag to indicate if the operation has to be applied to the first pass of the precalculations
+// tolerance = tolerance for considering matrix elements to be identical
 
-QHEParticlePrecalculationOperationWithMatrixElements::QHEParticlePrecalculationOperationWithMatrixElements (AbstractQHEHamiltonian* hamiltonian, bool firstPass) :
-  QHEParticlePrecalculationOperation (hamiltonian, firstPass)
+QHEParticlePrecalculationOperationWithMatrixElements::QHEParticlePrecalculationOperationWithMatrixElements (AbstractQHEHamiltonian* hamiltonian, bool firstPass, double tolerance) :
+  QHEParticlePrecalculationOperation (hamiltonian, firstPass),
+  RealInteractionCoefficients (tolerance),
+  ComplexInteractionCoefficients (tolerance)
 {
   this->OperationType = AbstractArchitectureOperation::QHEParticlePrecalculationWithMatrixElements;
+  this->Tolerance = tolerance;
 }
 
 // copy constructor 
@@ -49,9 +56,12 @@ QHEParticlePrecalculationOperationWithMatrixElements::QHEParticlePrecalculationO
 // operation = reference on operation to copy
 
 QHEParticlePrecalculationOperationWithMatrixElements::QHEParticlePrecalculationOperationWithMatrixElements(const QHEParticlePrecalculationOperationWithMatrixElements& operation):
-  QHEParticlePrecalculationOperation(operation)
+  QHEParticlePrecalculationOperation(operation),
+  RealInteractionCoefficients (operation.Tolerance),
+  ComplexInteractionCoefficients (operation.Tolerance)
 {
   this->OperationType = AbstractArchitectureOperation::QHEParticlePrecalculationWithMatrixElements;
+  this->Tolerance = operation.Tolerance;
 }
   
 // destructor
@@ -68,6 +78,7 @@ QHEParticlePrecalculationOperationWithMatrixElements::~QHEParticlePrecalculation
 
 void QHEParticlePrecalculationOperationWithMatrixElements::SetIndicesRange (const int& firstComponent, const int& nbrComponent)
 {
+  // cout << "QHEParticlePrecalculationOperationWithMatrixElements::SetIndicesRange to "<<firstComponent<<" -> "<< firstComponent + nbrComponent<<endl;
   this->FirstComponent = firstComponent;
   this->NbrComponent = nbrComponent;
 }
@@ -87,6 +98,8 @@ AbstractArchitectureOperation* QHEParticlePrecalculationOperationWithMatrixEleme
 
 bool QHEParticlePrecalculationOperationWithMatrixElements::RawApplyOperation()
 {
+  // cout << "RawApplyOperation with "<<  this->FirstComponent << ", "<< this->NbrComponent << endl;
+
   if (this->FirstPass ==  true)
     {
       this->RequiredMemory = this->Hamiltonian->PartialFastMultiplicationMemory(this->FirstComponent, this->NbrComponent, this->RealInteractionCoefficients, this->ComplexInteractionCoefficients);
@@ -107,6 +120,7 @@ bool QHEParticlePrecalculationOperationWithMatrixElements::RawApplyOperation()
 
 bool QHEParticlePrecalculationOperationWithMatrixElements::ArchitectureDependentApplyOperation(SMPArchitecture* architecture, int mpiNodeNbr)
 {
+  // cout << "RawApplyOperation on node "<<mpiNodeNbr<<", firstPass = "<<this->FirstPass<<endl;
   long *SegmentIndices=0;
   int TmpNbrThreads = architecture->GetNbrThreads();
   if (Hamiltonian->GetLoadBalancing(TmpNbrThreads, SegmentIndices)==false)
@@ -152,6 +166,24 @@ bool QHEParticlePrecalculationOperationWithMatrixElements::ArchitectureDependent
 	((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);	          
       this->RealInteractionCoefficients.SortEntries();
       this->ComplexInteractionCoefficients.SortEntries();
+
+#ifdef DEBUG_QHE_PRECALC_WME
+      // DEBUGGING: testing if all values are present:
+      unsigned tmpElementPos;
+      for (int i = 0; i < architecture->GetNbrThreads(); ++i)
+        {
+          for (unsigned j=0; j<TmpOperations[i]->RealInteractionCoefficients.GetNbrElements(); ++j)
+            if (!this->RealInteractionCoefficients.SearchElement(TmpOperations[i]->RealInteractionCoefficients[j], tmpElementPos))
+              cout << "Missing real entry after merging: thread "<<i<<", entry "<<j<<" with value "<< TmpOperations[i]->RealInteractionCoefficients[j] <<endl;
+          for (unsigned j=0; j<TmpOperations[i]->ComplexInteractionCoefficients.GetNbrElements(); ++j)
+            if (!this->ComplexInteractionCoefficients.SearchElement(TmpOperations[i]->ComplexInteractionCoefficients[j], tmpElementPos))
+              cout << "Missing complex entry after merging: thread "<<i<<", entry "<<j<<" with value "<< TmpOperations[i]->RealInteractionCoefficients[j] <<endl;
+        }
+      this->ComplexInteractionCoefficients.TestAllEntries();
+      this->RealInteractionCoefficients.TestAllEntries();
+      cout << "Verified all entries"<<endl;
+#endif // DEBUG_QHE_PRECALC_WME
+
       cout << "done merging arrays in "<<Dt<<"s"<<endl;
       if (mpiNodeNbr>=0)
 	cout << "node "<<mpiNodeNbr<<" ";

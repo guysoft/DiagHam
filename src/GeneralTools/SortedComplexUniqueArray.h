@@ -66,7 +66,7 @@ class SortedComplexUniqueArray
 
  public:
   // standard constructor
-  SortedComplexUniqueArray(unsigned internalSize=128, double tolerance = MACHINE_PRECISION, bool keepSorted=true);
+  SortedComplexUniqueArray(double tolerance = MACHINE_PRECISION, unsigned internalSize=128, bool keepSorted=true);
 
   // copy constructor
   SortedComplexUniqueArray(SortedComplexUniqueArray &array, bool duplicateFlag = false);
@@ -91,6 +91,12 @@ class SortedComplexUniqueArray
   // @param enhanceTolerance : increase tolerance by this factor
   // return : true if element was found, false otherwise.
   bool CarefulSearchElement(const Complex &value, unsigned &index, double enhanceTolerance=1.0);
+
+  // search entry closest to a given value
+  // value = value to be searched for
+  // @param[out] index : index of a nearby element, or the element itself, if found.
+  // return : true if the exact element was found, false otherwise.
+  bool NearbyEntry(const Complex &value, unsigned &index);
 
   // get number of elements
   unsigned GetNbrElements(){ return NbrElements;}

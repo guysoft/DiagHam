@@ -65,7 +65,7 @@ class SortedRealUniqueArray
 
  public:
   // standard constructor
-  SortedRealUniqueArray(unsigned internalSize=128, double tolerance = MACHINE_PRECISION, bool keepSorted=true);
+  SortedRealUniqueArray(double tolerance = MACHINE_PRECISION, unsigned internalSize=128, bool keepSorted=true);
 
   // copy constructor
   SortedRealUniqueArray(SortedRealUniqueArray &array, bool duplicateFlag = false);

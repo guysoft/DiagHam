@@ -373,7 +373,7 @@ bool AbstractQHEOnLatticeHamiltonian::HermitianSymmetrizeInteractionFactors()
 	  M[0] = this->KineticQi[j];
 	  N[0] = this->KineticQf[j];
 	  Flags[j] = this->Particles->CheckOrder(M, N, 1);
-	  cout << "M="<<M[0]<<", N="<<N[0]<<", order: "<<Flags[j]<<" element: "<<HoppingTerms[j]<<endl;
+	  // cout << "M="<<M[0]<<", N="<<N[0]<<", order: "<<Flags[j]<<" element: "<<HoppingTerms[j]<<endl;
 	  if (Flags[j]>0)
 	    ++TmpNbrHoppingTerms;
 	  else if (Flags[j]==0)
@@ -2528,7 +2528,7 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
   cout << "start memory" << endl;
   
 #ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_SORTED
-  QHEParticlePrecalculationOperationWithMatrixElements Operation(this);
+  QHEParticlePrecalculationOperationWithMatrixElements Operation(this, true, /* tolerance = */ 50.*MACHINE_PRECISION);
   Operation.ApplyOperation(this->Architecture);
   Operation.GetMatrixElements(this->RealInteractionCoefficients, this->ComplexInteractionCoefficients);
 #else

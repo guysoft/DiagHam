@@ -47,7 +47,7 @@ using std::max;
 #define TESTING_SRUA
 
 // standard constructor
-SortedRealUniqueArray::SortedRealUniqueArray(unsigned internalSize, double tolerance, bool keepSorted)
+SortedRealUniqueArray::SortedRealUniqueArray(double tolerance, unsigned internalSize, bool keepSorted)
 {
   this->InternalSize=internalSize;
   this->Tolerance=tolerance;

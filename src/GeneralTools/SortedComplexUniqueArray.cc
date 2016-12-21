@@ -47,7 +47,7 @@ using std::max;
 #define TESTING_SCUA
 
 // standard constructor
-SortedComplexUniqueArray::SortedComplexUniqueArray(unsigned internalSize, double tolerance, bool keepSorted)
+SortedComplexUniqueArray::SortedComplexUniqueArray(double tolerance, unsigned internalSize, bool keepSorted)
 {
   this->InternalSize=internalSize;
   this->ToleranceSqr=tolerance*tolerance;
@@ -218,6 +218,77 @@ bool SortedComplexUniqueArray::SearchElement(const Complex &value, unsigned &ind
   index = 0;
   return false;
 }
+
+
+// search entry closest to a given value
+// value = value to be searched for
+// @param[out] index : index of a nearby element, or the element itself, if found.
+// return : true if the exact element was found, false otherwise.
+bool SortedComplexUniqueArray::NearbyEntry(const Complex &value, unsigned &index)
+{
+  unsigned start=0;
+  double distance = 1e300;
+  if (this->Sorted>3)
+    {
+      unsigned PosMax = this->Sorted - 1;
+      unsigned PosMin = 0;
+      unsigned PosMid = (PosMin + PosMax) >> 1;
+      Complex CurrentState = this->Elements[PosMid];
+      // cout << "Searching "<<value<<"...";
+      while ((PosMin != PosMid) && (SqrNorm(CurrentState - value) >= this->ToleranceSqr))
+	{
+	  if (CurrentState > value)
+	    {
+	      PosMax = PosMid;
+	    }
+	  else
+	    {
+	      PosMin = PosMid;
+	    } 
+	  PosMid = (PosMin + PosMax) >> 1;
+	  CurrentState = this->Elements[PosMid];
+	  //cout << "PosMid="<<PosMid<<", CurrentState="<<CurrentState<<", PosMin="<<PosMin<<", PosMax="<<PosMax<< endl;
+	}
+      if (SqrNorm(CurrentState - value) < this->ToleranceSqr)
+	{
+	  index = PosMid;
+	  // cout << "Found "<<this->Elements[index]<<endl;
+	  return true;
+	}
+      else
+	{
+	  index = PosMax; // ?? 
+	  if (SqrNorm(this->Elements[PosMax] - value) < this->ToleranceSqr)
+	    {
+	      // cout << "Found "<<this->Elements[PosMax]<<endl;
+	      return true;
+	    }
+	  else 
+	    {
+	      // cout << "Not found."<<endl;
+	      start = this->Sorted-1;
+	      if ((distance = SqrNorm(this->Elements[PosMax] - value)) > SqrNorm(CurrentState - value))
+		{
+		  index = PosMid;
+		  distance = SqrNorm(CurrentState - value);
+		}
+	      else
+		index = PosMax;
+	    }
+	}
+    }
+  for (unsigned i=start; i<this->NbrElements; ++i)
+    {
+      if (SqrNorm(Elements[i]-value)<distance)
+	{
+	  index = i;
+	  if (SqrNorm(Elements[i]-value)<this->ToleranceSqr)
+	    return true;
+	}
+    }
+  return false;
+}
+
 
 // search entry, performing a linear search
 // value = value to be searched for
