@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "HilbertSpace/BosonOnSphereWithSU2SpinSzSymmetry.h"
+#include "HilbertSpace/FermionOnSphere.h"
 
 #include <iostream>
 
@@ -297,14 +298,32 @@ inline int BosonOnSphereWithSU2SpinLzSymmetry::FindOrbitSize(unsigned long state
 
 inline void BosonOnSphereWithSU2SpinLzSymmetry::ApplyLzSymmetry (unsigned long& stateDescription, int stateLzMax)
 {
-  this->FermionToBoson(stateDescription, stateLzMax, this->TemporaryStateUp);
-  for (int i = 0; i <= this->LzSymmetryMaxSwapPosition; ++i)
-    {
-      unsigned long Tmp = this->TemporaryStateUp[i];
-      this->TemporaryStateUp[i] = this->TemporaryStateUp[this->LzMax - i];
-      this->TemporaryStateUp[this->LzMax - i] = Tmp;
-    }
-  stateDescription = this->BosonToFermion(this->TemporaryStateUp);
+#ifdef __64_BITS__
+  unsigned long TmpState = FermionOnSphereInvertTable[stateDescription & 0xff] << 56;
+  TmpState |= FermionOnSphereInvertTable[(stateDescription >> 8) & 0xff] << 48;
+  TmpState |= FermionOnSphereInvertTable[(stateDescription >> 16) & 0xff] << 40;
+  TmpState |= FermionOnSphereInvertTable[(stateDescription >> 24) & 0xff] << 32;
+  TmpState |= FermionOnSphereInvertTable[(stateDescription >> 32) & 0xff] << 24;
+  TmpState |= FermionOnSphereInvertTable[(stateDescription >> 40) & 0xff] << 16;
+  TmpState |= FermionOnSphereInvertTable[(stateDescription >> 48) & 0xff] << 8;
+  TmpState |= FermionOnSphereInvertTable[stateDescription >> 56]; 
+  TmpState >>= 63 - stateLzMax;
+#else
+  unsigned long TmpState = FermionOnSphereInvertTable[stateDescription & 0xff] << 24;
+  TmpState |= FermionOnSphereInvertTable[(stateDescription >> 8) & 0xff] << 16;
+  TmpState |= FermionOnSphereInvertTable[(stateDescription >> 16) & 0xff] << 8;
+  TmpState |= FermionOnSphereInvertTable[stateDescription >> 24];
+  TmpState >>= 31 - stateLzMax;
+#endif	
+  stateDescription = TmpState;
+/*   this->FermionToBoson(stateDescription, stateLzMax, this->TemporaryStateUp); */
+/*   for (int i = 0; i <= this->LzSymmetryMaxSwapPosition; ++i) */
+/*     { */
+/*       unsigned long Tmp = this->TemporaryStateUp[i]; */
+/*       this->TemporaryStateUp[i] = this->TemporaryStateUp[this->LzMax - i]; */
+/*       this->TemporaryStateUp[this->LzMax - i] = Tmp; */
+/*     } */
+/*   stateDescription = this->BosonToFermion(this->TemporaryStateUp); */
 }
 
 // Apply the Lz<->-Lz operator to both spin components

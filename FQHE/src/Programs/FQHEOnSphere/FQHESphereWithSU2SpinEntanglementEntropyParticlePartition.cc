@@ -67,6 +67,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\0', "ground-file", "name of the file corresponding to the ground state of the whole system");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-na", "minimum size of the particles whose entropy has to be evaluated", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-na", "maximum size of the particles whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
+  
+  (*SystemGroup) += new BooleanOption ('\n', "single-sza", "focus on a single Sza sector");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "only-sza", "if --single-sza is used, provides twice the Sza value", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
   (*SystemGroup) += new BooleanOption ('\n', "no-sz", "indicates that the input states are not Sz eigenstates");
   (*SystemGroup) += new BooleanOption  ('c', "complex", "Assume vectors consist of complex numbers");
@@ -472,7 +475,18 @@ int main(int argc, char** argv)
     {
       double EntanglementEntropy = 0.0;
       double DensitySum = 0.0;
-      for (int SubsystemNbrNUp = 0; SubsystemNbrNUp <= MaxNbrNUp; ++SubsystemNbrNUp)
+      int LocalMinNbrNUp = 0;
+      int LocalMaxNbrNUp = MaxNbrNUp;
+      if (Manager.GetBoolean("single-sza") == true)
+	{
+	  LocalMinNbrNUp = (SubsystemNbrParticles + Manager.GetInteger("only-sza")) /2;
+	  LocalMaxNbrNUp = LocalMinNbrNUp;
+	  if (LocalMaxNbrNUp > MaxNbrNUp)
+	    {
+	      LocalMaxNbrNUp = LocalMinNbrNUp - 1;
+	    }
+	}
+      for (int SubsystemNbrNUp = LocalMinNbrNUp; SubsystemNbrNUp <= LocalMaxNbrNUp; ++SubsystemNbrNUp)
 	{
 	  int SubsystemNbrNDown = SubsystemNbrParticles - SubsystemNbrNUp;
 	  if (((SubsystemNbrNDown >= 0) && (SubsystemNbrNDown <= MaxNbrNDown)) || (NoSzFlag == true))
@@ -597,7 +611,7 @@ int main(int argc, char** argv)
 						  gettimeofday (&(SVDTotalEndingTime), 0);
 						  double Dt = (double) ((SVDTotalEndingTime.tv_sec - SVDTotalStartingTime.tv_sec) + 
 									((SVDTotalEndingTime.tv_usec - SVDTotalStartingTime.tv_usec) / 1000000.0));		      
-						  cout << "convertion from particle entanglement matrix to real space entanglement matrix done in " << Dt << "s" << endl;
+						  cout << "conversion from particle entanglement matrix to real space entanglement matrix done in " << Dt << "s" << endl;
 						}					      
 					    }
 					}
