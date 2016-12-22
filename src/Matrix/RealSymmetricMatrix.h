@@ -51,6 +51,7 @@ using std::ifstream;
 class RealMatrix;
 class RealDiagonalMatrix;
 class BlockDiagonalMatrix;
+class AbstractArchitecture;
 
 
 class RealSymmetricMatrix : public Matrix
@@ -94,6 +95,12 @@ class RealSymmetricMatrix : public Matrix
   // Q = reference on the real matrix
   // transpose = true if Q has to be transposed first (i.e new matrix = Q * Qt)
   RealSymmetricMatrix(const RealMatrix& Q, bool transpose = false);
+
+  // constructor from a real matrix Q (new matrix = Qt * Q) using parellization
+  //
+  // Q = reference on the real matrix
+  // architecture = pointer to the architecture to use parallelized algorithm   
+  RealSymmetricMatrix(const RealMatrix& Q, AbstractArchitecture* architecture);
 
 #ifdef __MPI__
   // constructor from informations sent using MPI

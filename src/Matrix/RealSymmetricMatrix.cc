@@ -167,15 +167,21 @@ RealSymmetricMatrix::RealSymmetricMatrix(const RealMatrix& Q, bool transpose)
     {
       for (int i = 0; i < this->NbrRow; i++)
 	{
-	  this->DiagonalElements[i] = Q.Columns[i][0] * Q.Columns[i][0];
-	  for (int k = 1; k < Q.NbrRow; k++)
-	    this->DiagonalElements[i] += Q.Columns[i][k] * Q.Columns[i][k];
+// 	  this->DiagonalElements[i] = Q.Columns[i][0] * Q.Columns[i][0];
+// 	  for (int k = 1; k < Q.NbrRow; k++)
+// 	    this->DiagonalElements[i] += Q.Columns[i][k] * Q.Columns[i][k];
+// 	  for (int j = i + 1; j < this->NbrRow; j++)
+// 	    {
+// 	      this->OffDiagonalElements[pos] = Q.Columns[j][0] * Q.Columns[i][0];
+// 	      for (int k = 1; k < Q.NbrRow; k++)
+// 		this->OffDiagonalElements[pos] += Q.Columns[j][k] * Q.Columns[i][k];
+// 	      pos++; 
+// 	    }
+	  this->DiagonalElements[i] = Q.Columns[i] * Q.Columns[i];
 	  for (int j = i + 1; j < this->NbrRow; j++)
 	    {
-	      this->OffDiagonalElements[pos] = Q.Columns[j][0] * Q.Columns[i][0];
-	      for (int k = 1; k < Q.NbrRow; k++)
-		this->OffDiagonalElements[pos] += Q.Columns[j][k] * Q.Columns[i][k];
-	      pos++; 
+	      this->OffDiagonalElements[pos] = Q.Columns[j] * Q.Columns[i];
+	      ++pos; 
 	    }
 	}
     }
@@ -202,6 +208,28 @@ RealSymmetricMatrix::RealSymmetricMatrix(const RealMatrix& Q, bool transpose)
 	    }
 	}
     }
+}
+
+// constructor from a real matrix Q (new matrix = Qt * Q) using parellization
+//
+// Q = reference on the real matrix
+// architecture = pointer to the architecture to use parallelized algorithm   
+
+RealSymmetricMatrix::RealSymmetricMatrix(const RealMatrix& Q, AbstractArchitecture* architecture)
+{
+  this->NbrRow = Q.NbrColumn;
+  this->NbrColumn = Q.NbrColumn;
+  this->TrueNbrRow = this->NbrRow;
+  this->TrueNbrColumn = this->NbrColumn;
+  this->Increment = (this->TrueNbrRow - this->NbrRow);
+  this->MatrixType = Matrix::RealElements | Matrix::Symmetric;
+  this->DiagonalGarbageFlag =  new int;
+  *(this->DiagonalGarbageFlag) = 1;
+  this->OffDiagonalGarbageFlag =  new int;
+  *(this->OffDiagonalGarbageFlag) = 1;
+  this->DiagonalElements = new double [this->NbrRow];
+  this->OffDiagonalElements = new double [(this->NbrRow * (this->NbrRow - 1)) / 2];
+  int pos = 0;
 }
 
 #ifdef __MPI__

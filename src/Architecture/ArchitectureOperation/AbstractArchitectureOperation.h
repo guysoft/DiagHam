@@ -76,6 +76,7 @@ class AbstractArchitectureOperation
       OperatorMatrixElement = 0x801,
       MultipleOperatorMatrixElement = 0x802,
       OperatorMultipleMatrixElement = 0x803,
+      HermitianMatrixFromMatrix = 0x804,
       QHEParticleWaveFunction = 0x10800,
       MainTask = 0x1000,
       VectorOperatorMultiply=0x2000,
