@@ -235,8 +235,10 @@ class BosonOnSphereWithSU2SpinSzSymmetry :  public BosonOnSphereWithSU2Spin
   // szSector = Sz sector in which the density matrix has to be evaluated 
   // groundState = reference on the total system ground state
   // removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+  // architecture = pointer to the architecture to use parallelized algorithm 
   // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
-  virtual RealMatrix EvaluatePartialEntanglementMatrixParticlePartition (int nbrParticleSector, int lzSector, int szSector, RealVector& groundState, bool removeBinomialCoefficient = false);
+  virtual RealMatrix EvaluatePartialEntanglementMatrixParticlePartition (int nbrParticleSector, int lzSector, int szSector, RealVector& groundState, 
+									 bool removeBinomialCoefficient = false, AbstractArchitecture* architecture = 0);
    
   // evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using a generic real space partition. 
   // The entanglement matrix is only evaluated in a given Lz sector and computed from precalculated particle entanglement matrix
@@ -347,6 +349,22 @@ class BosonOnSphereWithSU2SpinSzSymmetry :  public BosonOnSphereWithSU2Spin
   // finalState = reference on the vector the produced state will be stored
   // threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
   virtual void ReverseVanDerMondeTimesSlater (unsigned long* slaterUp, unsigned long* slaterDown, RealVector& finalState, double** threeOrbitalOverlaps);
+
+  // core part of the entanglement matrix evaluation for the particle partition
+  // 
+  // minIndex = first index to consider in the complementary Hilbert space
+  // nbrIndex = number of indices to consider in the complementary Hilbert space
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+  // destinationHilbertSpace = pointer to the destination Hilbert space  (i.e. part A)
+  // groundState = reference on the total system ground state
+  // entanglementMatrix = pointer to entanglement matrix
+  // removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+  // return value = number of components that have been added to the entanglement matrix
+  virtual long EvaluatePartialEntanglementMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace, 
+								       ParticleOnSphere* destinationHilbertSpace, RealVector& groundState, RealMatrix* entanglementMatrix, 
+								       bool removeBinomialCoefficient = false);
+   
+
 };
 
 // apply a_n1_sigma1 a_n2_sigma2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call. Sigma is 0 for up and 1 for down

@@ -104,7 +104,8 @@ class AbstractArchitectureOperation
       FQHESphereWithSpinApplyOneBodyTransformationOperation = 0x30006,
       FQHECylinderMultipleJackGeneratorOperation = 0x30007,
       SpinChainMultipleEntanglementSpectrum = 0x30008,
-      FQHESphereWithSU2SpinVanDerMondeTimesSlater = 0x30009
+      FQHESphereWithSU2SpinVanDerMondeTimesSlater = 0x30009,
+      FQHESphereParticleEntanglementMatrixOperation = 0x30010
     };
   
   // destructor

@@ -805,8 +805,10 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // szSector = Sz sector in which the density matrix has to be evaluated 
   // groundState = reference on the total system ground state
   // removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+  // architecture = pointer to the architecture to use parallelized algorithm   
   // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
-  virtual RealMatrix EvaluatePartialEntanglementMatrixParticlePartition (int nbrFermionSector, int lzSector, int szSector, RealVector& groundState, bool removeBinomialCoefficient = false);
+  virtual RealMatrix EvaluatePartialEntanglementMatrixParticlePartition (int nbrFermionSector, int lzSector, int szSector, RealVector& groundState, 
+									 bool removeBinomialCoefficient = false, AbstractArchitecture* architecture = 0);
    
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector.
   // 

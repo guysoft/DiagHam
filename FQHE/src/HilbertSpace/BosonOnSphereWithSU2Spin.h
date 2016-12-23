@@ -475,8 +475,10 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // szSector = Sz sector in which the density matrix has to be evaluated 
   // groundState = reference on the total system ground state
   // removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+  // architecture = pointer to the architecture to use parallelized algorithm 
   // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
-  virtual RealMatrix EvaluatePartialEntanglementMatrixParticlePartition (int nbrParticleSector, int lzSector, int szSector, RealVector& groundState, bool removeBinomialCoefficient = false);
+  virtual RealMatrix EvaluatePartialEntanglementMatrixParticlePartition (int nbrParticleSector, int lzSector, int szSector, RealVector& groundState, 
+									 bool removeBinomialCoefficient = false, AbstractArchitecture* architecture = 0);
    
   // core part of the entanglement matrix evaluation for the particle partition
   // 
@@ -488,7 +490,9 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // entanglementMatrix = pointer to entanglement matrix
   // removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
   // return value = number of components that have been added to the entanglement matrix
-  virtual long EvaluatePartialEntanglementMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace, RealVector& groundState, RealMatrix* entanglementMatrix, bool removeBinomialCoefficient = false);
+  virtual long EvaluatePartialEntanglementMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace, 
+								       ParticleOnSphere* destinationHilbertSpace, RealVector& groundState, RealMatrix* entanglementMatrix, 
+								       bool removeBinomialCoefficient = false);
    
   // evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using a generic real space partition. 
   // The entanglement matrix is only evaluated in a given Lz sector and computed from precalculated particle entanglement matrix

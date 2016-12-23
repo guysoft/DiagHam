@@ -37,6 +37,7 @@
 #ifdef USE_HILBERT_SPACE
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 #endif
+#include "Architecture/ArchitectureOperation/HermitianMatrixFromMatrixOperation.h"
 
 #include <stdlib.h>
 #include <math.h>
@@ -215,7 +216,7 @@ RealSymmetricMatrix::RealSymmetricMatrix(const RealMatrix& Q, bool transpose)
 // Q = reference on the real matrix
 // architecture = pointer to the architecture to use parallelized algorithm   
 
-RealSymmetricMatrix::RealSymmetricMatrix(const RealMatrix& Q, AbstractArchitecture* architecture)
+RealSymmetricMatrix::RealSymmetricMatrix(RealMatrix& Q, AbstractArchitecture* architecture)
 {
   this->NbrRow = Q.NbrColumn;
   this->NbrColumn = Q.NbrColumn;
@@ -229,7 +230,8 @@ RealSymmetricMatrix::RealSymmetricMatrix(const RealMatrix& Q, AbstractArchitectu
   *(this->OffDiagonalGarbageFlag) = 1;
   this->DiagonalElements = new double [this->NbrRow];
   this->OffDiagonalElements = new double [(this->NbrRow * (this->NbrRow - 1)) / 2];
-  int pos = 0;
+  HermitianMatrixFromMatrixOperation TmpOperation(Q, *this);
+  TmpOperation.ApplyOperation(architecture);
 }
 
 #ifdef __MPI__

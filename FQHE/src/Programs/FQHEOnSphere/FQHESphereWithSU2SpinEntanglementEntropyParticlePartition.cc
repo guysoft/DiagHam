@@ -140,6 +140,8 @@ int main(int argc, char** argv)
     {
       RealSpaceCut = true;
     }
+  bool PartialDiagonalization = false;
+
   int* TotalLz = 0;
   int* TotalSz = 0;
   int* LzSymmetry = 0;
@@ -660,7 +662,7 @@ int main(int argc, char** argv)
 		{
 		  if (ComplexFlag == false)
 		    {
-		      if ((SVDFlag == true) || (RealSpaceCut == true))
+		      if ((SVDFlag == true) || (RealSpaceCut == true) || (PartialDiagonalization == true))
 			{
 			  if (RealSpaceCut == true)
 			    {
@@ -668,7 +670,7 @@ int main(int argc, char** argv)
 			      if(PartialEntanglementMatrix.GetNbrRow() != 0)
 				{
 				  Spaces[i]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz, SubsystemNbrNUp - SubsystemNbrNDown ,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), PartialEntanglementMatrix);
-				  if (SVDFlag == false)
+				  if ((SVDFlag == false) && (PartialDiagonalization == false))
 				    {
 				      if (PartialEntanglementMatrix.GetNbrRow() >= PartialEntanglementMatrix.GetNbrColumn())
 					{
@@ -699,7 +701,7 @@ int main(int argc, char** argv)
 		{
 		  if (ComplexFlag == false)
 		    {
-		      if ((SVDFlag == true) || (RealSpaceCut == true))
+		      if ((SVDFlag == true) || (RealSpaceCut == true) || (PartialDiagonalization == true))
 			{
 			  if (RealSpaceCut == true)
 			    {
@@ -709,7 +711,7 @@ int main(int argc, char** argv)
 				{
 				  gettimeofday (&(SVDTotalStartingTime), 0);
 				}
-			      PartialEntanglementMatrix = Spaces[i]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz,  SubsystemNbrNUp - SubsystemNbrNDown, GroundStates[i] , true);
+			      PartialEntanglementMatrix = Spaces[i]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz,  SubsystemNbrNUp - SubsystemNbrNDown, GroundStates[i] , true, Architecture.GetArchitecture());
 			      if (ShowTimeFlag == true)
 				{
 				  gettimeofday (&(SVDTotalEndingTime), 0);
@@ -727,11 +729,11 @@ int main(int argc, char** argv)
 															       NbrAOrbitals, WeightAOrbitalsUp, WeightAOrbitalsDown,
 															       NbrBOrbitals, WeightBOrbitalsUp, WeightBOrbitalsDown,
 															       PartialEntanglementMatrix);
-				  if (SVDFlag == false)
+				  if ((SVDFlag == false) && (PartialDiagonalization == false))
 				    {
 				      if (PartialEntanglementMatrix.GetNbrRow() >= PartialEntanglementMatrix.GetNbrColumn())
 					{
-					  PartialDensityMatrix = RealSymmetricMatrix(PartialEntanglementMatrix);
+					  PartialDensityMatrix = RealSymmetricMatrix(PartialEntanglementMatrix, Architecture.GetArchitecture());
 					}
 				      else
 					{

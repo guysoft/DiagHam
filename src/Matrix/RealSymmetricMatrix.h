@@ -100,7 +100,7 @@ class RealSymmetricMatrix : public Matrix
   //
   // Q = reference on the real matrix
   // architecture = pointer to the architecture to use parallelized algorithm   
-  RealSymmetricMatrix(const RealMatrix& Q, AbstractArchitecture* architecture);
+  RealSymmetricMatrix(RealMatrix& Q, AbstractArchitecture* architecture);
 
 #ifdef __MPI__
   // constructor from informations sent using MPI

@@ -28,4 +28,5 @@ MPOApplyOnTensorOperation.cc \
 TensorVectorContractionOperation.cc \
 OperatorMultipleMatrixElementOperation.cc \
 MatrixFullDiagonalizeOperation.cc \
-MultipleVectorOperatorMultiplyOperation.cc
+MultipleVectorOperatorMultiplyOperation.cc \
+HermitianMatrixFromMatrixOperation.cc

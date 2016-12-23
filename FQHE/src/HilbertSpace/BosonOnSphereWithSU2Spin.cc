@@ -3170,9 +3170,11 @@ RealMatrix BosonOnSphereWithSU2Spin::EvaluatePartialEntanglementMatrix (int subs
 // szSector = Sz sector in which the density matrix has to be evaluated 
 // groundState = reference on the total system ground state
 // removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+// architecture = pointer to the architecture to use parallelized algorithm 
 // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
 
-RealMatrix BosonOnSphereWithSU2Spin::EvaluatePartialEntanglementMatrixParticlePartition (int nbrParticleSector, int lzSector, int szSector, RealVector& groundState, bool removeBinomialCoefficient)
+RealMatrix BosonOnSphereWithSU2Spin::EvaluatePartialEntanglementMatrixParticlePartition (int nbrParticleSector, int lzSector, int szSector, RealVector& groundState,
+											 bool removeBinomialCoefficient, AbstractArchitecture* architecture)
 {
   int nbrOrbitalA = this->LzMax + 1;
   int nbrOrbitalB = this->LzMax + 1;  

@@ -28,4 +28,5 @@ FQHETorusSymmetrizeU1U1StateOperation.cc \
 FQHESphereWithSpinApplyOneBodyTransformationOperation.cc \
 FQHECylinderMultipleJackGeneratorOperation.cc \
 FQHESphereWithSU2SpinVanDerMondeTimesSlaterOperation.cc \
-QHEParticlePrecalculationOperationWithMatrixElements.cc
+QHEParticlePrecalculationOperationWithMatrixElements.cc \
+FQHESphereParticleEntanglementMatrixOperation.cc
