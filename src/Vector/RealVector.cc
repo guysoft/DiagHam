@@ -1693,10 +1693,10 @@ RealVector& RealVector::AddMultiply (const RealSymmetricMatrix&  M, RealVector& 
   this->Localize();
   V.Localize();
   int pos3 = 0;
-  int Inc = M.NbrRow + M.Increment - 2;
+  long Inc = M.NbrRow + M.Increment - 2;
   for (int i = 0; i < M.NbrRow; i++)
     {
-      int pos = i - 1;
+      long pos = i - 1l;
       int pos2 = 0;
       int j = 0;
       for (; j < i; j++)
@@ -1738,11 +1738,11 @@ RealVector& RealVector::AddMultiply (const RealSymmetricMatrix&  M, RealVector& 
   V.Localize();
   int Last = sourceStart + sourceNbrComponent;
   int j;
-  int Inc1 =  this->Dimension - sourceNbrComponent + M.Increment - 2;
+  long Inc1 =  this->Dimension - sourceNbrComponent + M.Increment - 2;
   int Inc2 =  this->Dimension + M.Increment - 2;
   double x;
   int i = 0;
-  int Pos = sourceStart - 1;
+  long Pos = sourceStart - 1;
   for (; i < sourceStart; i++)
     {
       x = 0.0;
@@ -1755,8 +1755,8 @@ RealVector& RealVector::AddMultiply (const RealSymmetricMatrix&  M, RealVector& 
       this->Components[i] += x;
     }
   Inc1 = this->Dimension - Last + M.Increment;
-  int Pos2 = Pos;
-  int Pos3 = Pos;
+  long Pos2 = Pos;
+  long Pos3 = Pos;
   ++Pos2;
   for (; i < Last; ++i)
     {

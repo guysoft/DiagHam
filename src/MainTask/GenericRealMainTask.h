@@ -38,6 +38,7 @@
 #include "MainTask/AbstractMainTask.h"
 #include "MathTools/Complex.h"
 #include "LanczosAlgorithm/LanczosManager.h"
+#include "Matrix/RealDiagonalMatrix.h"
 
 #include <iostream>
 
@@ -72,6 +73,8 @@ class GenericRealMainTask: public AbstractMainTask
   // pointer to Lanczos manager
   LanczosManager *AlgorithmManager;
   
+  // matrix where the eigenvalue will be stored
+  RealDiagonalMatrix EigenvalueMatrix;
 
   // name of the file where hamiltonian precalculations have to be saved (null if no precalculation has to be saved)
   char* SavePrecalculationFileName;
@@ -181,6 +184,11 @@ class GenericRealMainTask: public AbstractMainTask
   //
   void AddOptionGroup(OptionManager *optionManager);
 
+  // get the eigenvalues
+  //
+  // return value = matrix where the eigenvalues are stored
+  virtual RealDiagonalMatrix GetEigenvalues();
+  
  protected:
 
   // write a line of output to the results file
@@ -198,4 +206,14 @@ class GenericRealMainTask: public AbstractMainTask
     
 };
 
+// get the eigenvalues
+//
+// return value = matrix where the eigenvalues are stored
+
+inline RealDiagonalMatrix GenericRealMainTask::GetEigenvalues()
+{
+  this->EigenvalueMatrix.Resize(this->NbrEigenvalue, this->NbrEigenvalue);
+  return this->EigenvalueMatrix;
+}
+  
 #endif

@@ -98,7 +98,7 @@ RealSymmetricMatrix::RealSymmetricMatrix(int dimension, bool zero)
   this->Increment = (this->TrueNbrRow - this->NbrRow);
   this->MatrixType = Matrix::RealElements | Matrix::Symmetric;
   this->DiagonalElements = new double [this->NbrRow];
-  this->OffDiagonalElements = new double [(this->NbrRow * (this->NbrRow - 1)) / 2];
+  this->OffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l];
   if (zero == true)
     {
       int pos = 0;
@@ -162,7 +162,7 @@ RealSymmetricMatrix::RealSymmetricMatrix(const RealMatrix& Q, bool transpose)
   this->OffDiagonalGarbageFlag =  new int;
   *(this->OffDiagonalGarbageFlag) = 1;
   this->DiagonalElements = new double [this->NbrRow];
-  this->OffDiagonalElements = new double [(this->NbrRow * (this->NbrRow - 1)) / 2];
+  this->OffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l];
   int pos = 0;
   if (transpose == false)
     {
@@ -229,7 +229,7 @@ RealSymmetricMatrix::RealSymmetricMatrix(RealMatrix& Q, AbstractArchitecture* ar
   this->OffDiagonalGarbageFlag =  new int;
   *(this->OffDiagonalGarbageFlag) = 1;
   this->DiagonalElements = new double [this->NbrRow];
-  this->OffDiagonalElements = new double [(this->NbrRow * (this->NbrRow - 1)) / 2];
+  this->OffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l];
   HermitianMatrixFromMatrixOperation TmpOperation(Q, *this);
   TmpOperation.ApplyOperation(architecture);
 }

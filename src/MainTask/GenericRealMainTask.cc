@@ -89,9 +89,16 @@ GenericRealMainTask::GenericRealMainTask(OptionManager* options, AbstractHilbert
 					 AbstractHamiltonian* hamiltonian, const char *subspaceStr, const char *subspaceLegend,
 					 double shift, char* outputFileName, bool firstRun, char* eigenvectorFileName, bool fakeComplex)
 {
-  this->OutputFileName = new char [strlen(outputFileName) + 1];
-  strncpy(this->OutputFileName, outputFileName, strlen(outputFileName));
-  this->OutputFileName[strlen(outputFileName)] = '\0';
+  if (outputFileName != 0)
+    {
+      this->OutputFileName = new char [strlen(outputFileName) + 1];
+      strncpy(this->OutputFileName, outputFileName, strlen(outputFileName));
+      this->OutputFileName[strlen(outputFileName)] = '\0';
+    }
+  else
+    {
+      this->OutputFileName = 0;
+    }
   if (eigenvectorFileName == 0)
     {
       this->EigenvectorFileName = 0;
@@ -360,7 +367,8 @@ GenericRealMainTask::GenericRealMainTask(OptionManager* options, AbstractHilbert
 
 GenericRealMainTask::~GenericRealMainTask()
 {
-  delete[] this->OutputFileName;
+  if (this->OutputFileName != 0)
+    delete[] this->OutputFileName;
   if (this->EigenvectorFileName != 0)
     delete[] this->EigenvectorFileName;
   delete [] this->SubspaceStr;
@@ -388,21 +396,24 @@ void GenericRealMainTask::SetArchitecture(AbstractArchitecture* architecture)
 int GenericRealMainTask::ExecuteMainTask()
 {
   ofstream File;
-  if (this->FirstRun == true)
+  if (this->OutputFileName != 0)
     {
-      File.open(this->OutputFileName, ios::binary | ios::out);
-      this->FirstRun = false;
-      File << "# "<<SubspaceLegend;
-      File <<" E";
-      if ((this->EvaluateEigenvectors == true) && (this->ComputeEnergyFlag == true))
-	File << " <H>";
-      File << endl;
+      if (this->FirstRun == true)
+	{
+	  File.open(this->OutputFileName, ios::binary | ios::out);
+	  this->FirstRun = false;
+	  File << "# "<<SubspaceLegend;
+	  File <<" E";
+	  if ((this->EvaluateEigenvectors == true) && (this->ComputeEnergyFlag == true))
+	    File << " <H>";
+	  File << endl;
+	}
+      else
+	{
+	  File.open(this->OutputFileName, ios::binary | ios::out | ios::app);
+	}
+      File.precision(14);
     }
-  else
-    {
-      File.open(this->OutputFileName, ios::binary | ios::out | ios::app);
-    }
-  File.precision(14);
   cout.precision(14);
   cout << "----------------------------------------------------------------" << endl;
   cout << " Hilbert space dimension = " << this->Space->GetHilbertSpaceDimension() << endl;
@@ -410,7 +421,10 @@ int GenericRealMainTask::ExecuteMainTask()
     {
       this->DiagonalizeInHilbertSubspace(this->ReducedHilbertSpaceDescription, File);
       cout << "----------------------------------------------------------------" << endl;
-      File.close(); 
+      if (this->OutputFileName != 0)
+	{
+	  File.close(); 
+	}
       return 0;
     }
   if (this->SavePrecalculationFileName != 0)
@@ -442,11 +456,14 @@ int GenericRealMainTask::ExecuteMainTask()
 	    }
 	  HamiltonianFullDiagonalizeOperation Operation1 (this->Hamiltonian, false, TmpEvaluateEigenvectors, TmpNbrEigenstates);
 	  Operation1.ApplyOperation(this->Architecture);
-	  RealDiagonalMatrix TmpDiag = Operation1.GetDiagonalizedHamiltonian();
+	  this->EigenvalueMatrix = Operation1.GetDiagonalizedHamiltonian();
 	  if ((this->EvaluateEigenvectors == false) && (this->EvaluateAllEigenvectors == false))
 	    {
-	      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
-		this->WriteResult(File, TmpDiag[j] - this->EnergyShift);
+	      if (this->OutputFileName != 0)
+		{
+		  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
+		    this->WriteResult(File, this->EigenvalueMatrix[j] - this->EnergyShift);
+		}
 	    }
 	  else
 	    {
@@ -478,14 +495,23 @@ int GenericRealMainTask::ExecuteMainTask()
 		}
 	      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
 		{
-		  this->WriteResult(File,TmpDiag[j] - this->EnergyShift, false);
+		  if (this->OutputFileName != 0)
+		    {
+		      this->WriteResult(File,this->EigenvalueMatrix[j] - this->EnergyShift, false);
+		    }
 		  if (this->ComputeEnergyFlag == true)
 		    {
 		      RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
 		      this->Hamiltonian->LowLevelMultiply(Eigenstates[j], TmpEigenvector);
-		      File << " " << ((TmpEigenvector * Eigenstates[j]) - this->EnergyShift);
+		      if (this->OutputFileName != 0)
+			{
+			  File << " " << ((TmpEigenvector * Eigenstates[j]) - this->EnergyShift);
+			}
 		    }
-		  File << endl;
+		  if (this->OutputFileName != 0)
+		    {
+		      File << endl;
+		    }
 		}
 	    }
 	}
@@ -499,17 +525,20 @@ int GenericRealMainTask::ExecuteMainTask()
 #ifdef __LAPACK__
 	      if (this->LapackFlag == true)
 		{
-		  RealDiagonalMatrix TmpDiag (this->Hamiltonian->GetHilbertSpaceDimension());
+		  this->EigenvalueMatrix = RealDiagonalMatrix (this->Hamiltonian->GetHilbertSpaceDimension());
 		  if ((this->EvaluateEigenvectors == false) && (this->EvaluateAllEigenvectors == false))
 		    {
-		      HRep.LapackDiagonalize(TmpDiag);
-		      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
-			this->WriteResult(File, TmpDiag[j] - this->EnergyShift);
+		      HRep.LapackDiagonalize(this->EigenvalueMatrix);
+		      if (this->OutputFileName != 0)
+			{
+			  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
+			    this->WriteResult(File, this->EigenvalueMatrix[j] - this->EnergyShift);
+			}
 		    }
 		  else
 		    {
 		      RealMatrix Q(this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
-		      HRep.LapackDiagonalize(TmpDiag, Q);
+		      HRep.LapackDiagonalize(this->EigenvalueMatrix, Q);
 		      if (this->EvaluateAllEigenvectors == true)
 			{
 			  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
@@ -543,14 +572,23 @@ int GenericRealMainTask::ExecuteMainTask()
 		      
 		      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
 			{
-			  this->WriteResult(File,TmpDiag[j] - this->EnergyShift, false);
+			  if (this->OutputFileName != 0)
+			    {
+			      this->WriteResult(File,this->EigenvalueMatrix[j] - this->EnergyShift, false);
+			    }
 			  if (this->ComputeEnergyFlag == true)
 			    {
 			      RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
 			      this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
-			      File << " " << ((TmpEigenvector * Q[j]) - this->EnergyShift);
+			      if (this->OutputFileName != 0)
+				{
+				  File << " " << ((TmpEigenvector * Q[j]) - this->EnergyShift);
+				}
 			    }
-			  File << endl;
+			  if (this->OutputFileName != 0)
+			    {
+			      File << endl;
+			    }
 			}
 		    }
 		}
@@ -563,8 +601,11 @@ int GenericRealMainTask::ExecuteMainTask()
 		      HRep.Householder(TmpTriDiag, 1e-7);
 		      TmpTriDiag.Diagonalize();
 		      TmpTriDiag.SortMatrixUpOrder();
-		      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
-			this->WriteResult(File, TmpTriDiag.DiagonalElement(j) - this->EnergyShift);
+		      if (this->OutputFileName != 0)
+			{
+			  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
+			    this->WriteResult(File, TmpTriDiag.DiagonalElement(j) - this->EnergyShift);
+			}
 		    }
 		  else
 		    {
@@ -604,14 +645,23 @@ int GenericRealMainTask::ExecuteMainTask()
 			}
 		      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
 			{
-			  this->WriteResult(File, TmpTriDiag.DiagonalElement(j) - this->EnergyShift, false);
+			  if (this->OutputFileName != 0)
+			    {
+			      this->WriteResult(File, TmpTriDiag.DiagonalElement(j) - this->EnergyShift, false);
+			    }
 			  if (this->ComputeEnergyFlag == true)
 			    {
 			      RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
 			      this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
-			      File << " " << ((TmpEigenvector * Q[j]) - this->EnergyShift);
+			      if (this->OutputFileName != 0)
+				{
+				  File << " " << ((TmpEigenvector * Q[j]) - this->EnergyShift);
+				}
 			    }
-			  File << endl;
+			  if (this->OutputFileName != 0)
+			    {
+			      File << endl;
+			    }
 			}
 		    }
 #ifdef __LAPACK__
@@ -620,10 +670,13 @@ int GenericRealMainTask::ExecuteMainTask()
 	    }
 	  else
 	    {
-	      this->WriteResult(File, HRep(0, 0)  - this->EnergyShift, false);
-	      if (this->ComputeEnergyFlag == true)
-		File << " " << (HRep(0, 0)  - this->EnergyShift) ;
-	      File << endl;	      
+	      if (this->OutputFileName != 0)
+		{
+		  this->WriteResult(File, HRep(0, 0)  - this->EnergyShift, false);
+		  if (this->ComputeEnergyFlag == true)
+		    File << " " << (HRep(0, 0)  - this->EnergyShift) ;
+		  File << endl;	
+		}      
 	      if (this->EvaluateEigenvectors)
 		{
 		  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
@@ -770,13 +823,19 @@ int GenericRealMainTask::ExecuteMainTask()
 	  if (Usr1Handler.HavePendingSignal())
 	    {
 	      cout << "Terminating Lanczos iteration on user signal"<<endl;
-	      File << "# Lanczos terminated at step "<<CurrentNbrIterLanczos<<" with precision "<<Precision<<endl;
+	      if (this->OutputFileName != 0)
+		{
+		  File << "# Lanczos terminated at step "<<CurrentNbrIterLanczos<<" with precision "<<Precision<<endl;
+		}
 	      TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
 	      TmpMatrix.SortMatrixUpOrder();
 	      for (int i = 0; i < this->NbrEigenvalue; ++i)
 		{
 		  cout << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << " ";
-		  this->WriteResult(File, TmpMatrix.DiagonalElement(i) - this->EnergyShift, true);
+		  if (this->OutputFileName != 0)
+		    {
+		      this->WriteResult(File, TmpMatrix.DiagonalElement(i) - this->EnergyShift, true);
+		    }
 		}
 	      cout << endl;
 	    }
@@ -817,19 +876,29 @@ int GenericRealMainTask::ExecuteMainTask()
       if (CurrentNbrIterLanczos >= this->MaxNbrIterLanczos)
 	{
 	  cout << "too many Lanczos iterations" << endl;
-	  File << "too many Lanczos iterations" << endl;
-	  File.close();
+	  if (this->OutputFileName != 0)
+	    {
+	      File << "too many Lanczos iterations" << endl;
+	      File.close();
+	    }
 	  return 1;
 	}
       GroundStateEnergy = Lowest;
       cout << endl;
       cout << (TmpMatrix.DiagonalElement(0) - this->EnergyShift) << " " << Lowest << " " << Precision << "  Nbr of iterations = " 
 	   << CurrentNbrIterLanczos << endl;
+      this->EigenvalueMatrix = RealDiagonalMatrix(this->NbrEigenvalue);
       for (int i = 0; i < this->NbrEigenvalue; ++i)
 	{
 	  cout << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << " ";
+	  this->EigenvalueMatrix[i] = TmpMatrix.DiagonalElement(i);
 	  if  (this->ComputeEnergyFlag == false)
-	    WriteResult(File, TmpMatrix.DiagonalElement(i) - this->EnergyShift);
+	    {
+	      if (this->OutputFileName != 0)
+		{
+		  WriteResult(File, TmpMatrix.DiagonalElement(i) - this->EnergyShift);
+		}
+	    }
 	}
       cout << endl;
       if ((this->EvaluateEigenvectors == true) && 
@@ -880,7 +949,12 @@ int GenericRealMainTask::ExecuteMainTask()
 	      for (int i = 0; i < this->NbrEigenvalue; ++i)
 		{
 		  if (this->ComputeEnergyFlag == true)
-		    WriteResult(File, TmpMatrix.DiagonalElement(i) - this->EnergyShift, false);
+		    {
+		      if (this->OutputFileName != 0)
+			{
+			  WriteResult(File, TmpMatrix.DiagonalElement(i) - this->EnergyShift, false);
+			}
+		    }
 		  VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[i]), &TmpEigenvector);
 		  Operation1.ApplyOperation(this->Architecture);
 		  cout << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift) << " ";	
@@ -902,12 +976,15 @@ int GenericRealMainTask::ExecuteMainTask()
 		      else
 			Eigenvectors[i].WriteVector(TmpVectorName);
 		    }
-		  if (this->ComputeEnergyFlag == true)
+		  if (this->OutputFileName != 0)
 		    {
-		      File << " " << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift);
+		      if (this->ComputeEnergyFlag == true)
+			{
+			  File << " " << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift);
+			}
+		      if (this->ComputeEnergyFlag == true)
+			File << endl;
 		    }
-		  if (this->ComputeEnergyFlag == true)
-		    File << endl;
 		}
 	      cout << endl;
 	      delete[] TmpVectorName;
@@ -1031,43 +1108,43 @@ void GenericRealMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription
 #ifdef __LAPACK__
       if (this->LapackFlag == true)
 	{
-	  RealDiagonalMatrix TmpDiag (TmpHilbertSpaceDimension);
+	  this->EigenvalueMatrix = RealDiagonalMatrix(TmpHilbertSpaceDimension);
 	  if (this->EvaluateEigenvectors == false)
 	    {
-	      HRep.LapackDiagonalize(TmpDiag);
+	      HRep.LapackDiagonalize(this->EigenvalueMatrix);
 	    }
 	  else
 	    {
 	      RealMatrix TmpEigenvector (TmpHilbertSpaceDimension, TmpHilbertSpaceDimension, true);	      
 	      for (int l = 0; l < TmpHilbertSpaceDimension; ++l)
 		TmpEigenvector(l, l) = 1.0;
-	      HRep.LapackDiagonalize(TmpDiag, TmpEigenvector);
+	      HRep.LapackDiagonalize(this->EigenvalueMatrix, TmpEigenvector);
 	      Basis.Multiply(TmpEigenvector);
 	    }
 	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
 	    {
-	      WriteResult(file, (TmpDiag[j] - this->EnergyShift));
+	      WriteResult(file, (this->EigenvalueMatrix[j] - this->EnergyShift));
 	    }
 	}
       else
 	{
 #endif
-	  RealDiagonalMatrix TmpDiag (TmpHilbertSpaceDimension);
+	  this->EigenvalueMatrix = RealDiagonalMatrix(TmpHilbertSpaceDimension);
 	  if (this->EvaluateEigenvectors == false)
 	    {
-	      HRep.Diagonalize(TmpDiag);
+	      HRep.Diagonalize(this->EigenvalueMatrix);
 	    }
 	  else
 	    {
 	      RealMatrix TmpEigenvector (TmpHilbertSpaceDimension, TmpHilbertSpaceDimension, true);	      
 	      for (int l = 0; l < TmpHilbertSpaceDimension; ++l)
 		TmpEigenvector(l, l) = 1.0;
-	      HRep.Diagonalize(TmpDiag, TmpEigenvector);
+	      HRep.Diagonalize(this->EigenvalueMatrix, TmpEigenvector);
 	      Basis.Multiply(TmpEigenvector);
 	    }
 	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
 	    {
-	      WriteResult(file, (TmpDiag[j] - this->EnergyShift));
+	      WriteResult(file, (this->EigenvalueMatrix[j] - this->EnergyShift));
 	    }
 #ifdef __LAPACK__
 	}
