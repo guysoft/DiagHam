@@ -300,6 +300,7 @@ int main(int argc, char** argv)
       SubsystemNbrParticleSectors = new int[TotalNbrReducedDensityMatrixBlocks];
       SubsystemTotalSzSectors = new int[TotalNbrReducedDensityMatrixBlocks];
       SubsystemTotalLzSectors = new int[TotalNbrReducedDensityMatrixBlocks];
+      SubsystemSzSymmetrySectors = new int[TotalNbrReducedDensityMatrixBlocks];
       TotalNbrReducedDensityMatrixBlocks = 0;
       for (int SubsystemNbrParticles = MinSubsystemNbrParticles; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
 	{
@@ -332,12 +333,23 @@ int main(int argc, char** argv)
 		      SubsystemMaxTotalLz = SubsystemNbrParticles * LzMax;
 		    }
 		  int SubsystemTotalLz = -SubsystemMaxTotalLz; 
-		  for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
+		  int LocalMinSzSymmetrySector = -1;
+		  int LocalMaxSzSymmetrySector = 1;
+		  if ((SubsystemTotalSz != 0) || (SzSymmetry[0] == 0))
 		    {
-		      SubsystemNbrParticleSectors[TotalNbrReducedDensityMatrixBlocks] = SubsystemNbrParticles;
-		      SubsystemTotalSzSectors[TotalNbrReducedDensityMatrixBlocks] = SubsystemTotalSz;
-		      SubsystemTotalLzSectors[TotalNbrReducedDensityMatrixBlocks] = SubsystemTotalLz;
-		      ++TotalNbrReducedDensityMatrixBlocks;
+		      LocalMinSzSymmetrySector = 0;
+		      LocalMaxSzSymmetrySector = 0;
+		    }
+		  for (int SubsystemSzSymmetrySector = LocalMinSzSymmetrySector; SubsystemSzSymmetrySector <= LocalMinSzSymmetrySector; SubsystemSzSymmetrySector += 2)
+		    {
+		      for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
+			{
+			  SubsystemNbrParticleSectors[TotalNbrReducedDensityMatrixBlocks] = SubsystemNbrParticles;
+			  SubsystemTotalSzSectors[TotalNbrReducedDensityMatrixBlocks] = SubsystemTotalSz;
+			  SubsystemTotalLzSectors[TotalNbrReducedDensityMatrixBlocks] = SubsystemTotalLz;
+			  SubsystemSzSymmetrySectors[TotalNbrReducedDensityMatrixBlocks] = SubsystemSzSymmetrySector;
+			  ++TotalNbrReducedDensityMatrixBlocks;
+			}
 		    }
 		}
 	    }
@@ -510,7 +522,7 @@ int main(int argc, char** argv)
       DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out); 
       if (NoSzFlag == false)
 	{
-	  DensityMatrixFile << "#  N    Sz    Nup    Ndown    Lz    lambda";
+	  DensityMatrixFile << "#  N    Sz    Sz<->-Sz    Nup    Ndown    Lz    lambda";
 	}
       else
 	{
@@ -621,6 +633,7 @@ int main(int argc, char** argv)
       int SubsystemNbrParticles = SubsystemNbrParticleSectors[BlockIndex];
       int SubsystemTotalSz = SubsystemTotalSzSectors[BlockIndex];
       int SubsystemTotalLz = SubsystemTotalLzSectors[BlockIndex];
+      int SubsystemSzSymmetrySector = SubsystemSzSymmetrySectors[BlockIndex];
       int SubsystemNbrNUp = (SubsystemNbrParticles + SubsystemTotalSz) / 2;
       int SubsystemNbrNDown = (SubsystemNbrParticles - SubsystemTotalSz) / 2;
       timeval TotalStartingTime;
@@ -632,7 +645,12 @@ int main(int argc, char** argv)
       if (NoSzFlag == false)
 	{
 	  cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Nup=" << SubsystemNbrNUp 
-	       << " subsystem total Ndown=" << SubsystemNbrNDown << " subsystem total Lz=" << SubsystemTotalLz << endl;
+	       << " subsystem total Ndown=" << SubsystemNbrNDown << " subsystem total Lz=" << SubsystemTotalLz;
+	  if (SubsystemSzSymmetrySector != 0)
+	    {
+	      cout << " subsystem Sz<->Sz =" << SubsystemSzSymmetrySector << endl;
+	    }
+	  cout << endl;
 	}
       else
 	{
@@ -716,7 +734,18 @@ int main(int argc, char** argv)
 				{
 				  gettimeofday (&(SVDTotalStartingTime), 0);
 				}
-			      PartialEntanglementMatrix = Spaces[i]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz,  SubsystemNbrNUp - SubsystemNbrNDown, GroundStates[i] , true, Architecture.GetArchitecture());
+			      if (SubsystemSzSymmetrySector == 0)
+				{
+				  PartialEntanglementMatrix = Spaces[i]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, 
+															    SubsystemNbrNUp - SubsystemNbrNDown, 
+															    GroundStates[i] , true, Architecture.GetArchitecture());
+				}
+			      else
+				{
+				  PartialEntanglementMatrix = Spaces[i]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, 
+															    SubsystemNbrNUp - SubsystemNbrNDown, SubsystemSzSymmetrySector,
+															    GroundStates[i] , true, Architecture.GetArchitecture());
+				}
 			      if (ShowTimeFlag == true)
 				{
 				  gettimeofday (&(SVDTotalEndingTime), 0);
@@ -730,11 +759,23 @@ int main(int argc, char** argv)
 				    {
 				      gettimeofday (&(SVDTotalStartingTime), 0);
 				    }
-				  Spaces[i]->EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz, 
-															       SubsystemNbrNUp - SubsystemNbrNDown,
-															       NbrAOrbitals, WeightAOrbitalsUp, WeightAOrbitalsDown,
-															       NbrBOrbitals, WeightBOrbitalsUp, WeightBOrbitalsDown, 
-															       PartialEntanglementMatrix);
+				  if (SubsystemSzSymmetrySector == 0)
+				    {
+				      Spaces[i]->EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz, 
+																   SubsystemNbrNUp - SubsystemNbrNDown, 
+																   NbrAOrbitals, WeightAOrbitalsUp, WeightAOrbitalsDown,
+																   NbrBOrbitals, WeightBOrbitalsUp, WeightBOrbitalsDown, 
+																   PartialEntanglementMatrix);
+				    }
+				  else
+				    {
+				      Spaces[i]->EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz, 
+																   SubsystemNbrNUp - SubsystemNbrNDown, 
+																   SubsystemSzSymmetrySector,
+																   NbrAOrbitals, WeightAOrbitalsUp, WeightAOrbitalsDown,
+																   NbrBOrbitals, WeightBOrbitalsUp, WeightBOrbitalsDown, 
+																   PartialEntanglementMatrix);
+				    }
 				  if (ShowTimeFlag == true)
 				    {
 				      gettimeofday (&(SVDTotalEndingTime), 0);
@@ -771,8 +812,19 @@ int main(int argc, char** argv)
 			    }
 			  else
 			    {
-			      PartialEntanglementMatrix = Spaces[i]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz , 
-															SubsystemNbrNUp - SubsystemNbrNDown, GroundStates[i] , false);
+			      if (SubsystemSzSymmetrySector == 0)
+				{
+				  PartialEntanglementMatrix = Spaces[i]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz , 
+															    SubsystemNbrNUp - SubsystemNbrNDown, GroundStates[i],
+															    false, Architecture.GetArchitecture());
+				}
+ 			      else
+ 				{
+				  PartialEntanglementMatrix = Spaces[i]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz , 
+															    SubsystemNbrNUp - SubsystemNbrNDown, SubsystemSzSymmetrySector,
+															    GroundStates[i],
+															    false, Architecture.GetArchitecture());
+ 				}
 			    }
 			}
 		      else
@@ -1012,7 +1064,7 @@ int main(int argc, char** argv)
 		  if (NoSzFlag == false)
 		    {
 		      for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
-			DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalSz << " " << SubsystemNbrNUp << " " 
+			DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalSz << " " << SubsystemSzSymmetrySector << " " << SubsystemNbrNUp << " " 
 					  <<  SubsystemNbrNDown << " " << SubsystemTotalLz << " " << TmpDiag[i] << endl;
 		    }
 		  else
@@ -1050,7 +1102,7 @@ int main(int argc, char** argv)
 		      DensityMatrixFile.precision(14);
 		      if (NoSzFlag == false)
 			{
-			  DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalSz << " " << SubsystemNbrNUp << " " 
+			  DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalSz << " " << SubsystemSzSymmetrySector << " " << SubsystemNbrNUp << " " 
 					    << SubsystemNbrNDown << " " << SubsystemTotalLz << " " << TmpValue << endl;
 			}
 		      else
@@ -1209,7 +1261,7 @@ int main(int argc, char** argv)
 		  if (NoSzFlag == false)
 		    {
 		      for (int i = 0; i < ComplexPartialDensityMatrix.GetNbrRow(); ++i)
-			DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalSz << " " << SubsystemNbrNUp << " " 
+			DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalSz << " " << SubsystemSzSymmetrySector  << " " << SubsystemNbrNUp << " " 
 					  <<  SubsystemNbrNDown << " " << SubsystemTotalLz << " " << TmpDiag[i] << endl;
 		    }
 		  else

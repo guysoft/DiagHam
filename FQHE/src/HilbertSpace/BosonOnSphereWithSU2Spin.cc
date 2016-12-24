@@ -123,7 +123,7 @@ BosonOnSphereWithSU2Spin::BosonOnSphereWithSU2Spin (int nbrBosons, int totalLz, 
 
 #ifdef __DEBUG__
    long UsedMemory = 0l;
-   UsedMemory += this->LargeHilbertSpaceDimension * (4l * sizeof(unsigned long));
+   UsedMemory += this->LargeHilbertSpaceDimension * (2l * sizeof(unsigned long));
    cout << "memory requested for Hilbert space = ";
    if (UsedMemory >= 1024l)
     if (UsedMemory >= 1048576l)
@@ -219,7 +219,7 @@ BosonOnSphereWithSU2Spin::BosonOnSphereWithSU2Spin (int nbrBosons, int totalLz, 
   
 #ifdef __DEBUG__
   long UsedMemory = 0;
-  UsedMemory += this->LargeHilbertSpaceDimension * (4l * sizeof(unsigned long));
+  UsedMemory += this->LargeHilbertSpaceDimension * (2l * sizeof(unsigned long));
   cout << "memory requested for Hilbert space = ";
   if (UsedMemory >= 1024l)
     if (UsedMemory >= 1048576l)

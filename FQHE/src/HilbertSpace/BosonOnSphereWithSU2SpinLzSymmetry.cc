@@ -218,11 +218,11 @@ BosonOnSphereWithSU2SpinLzSymmetry::BosonOnSphereWithSU2SpinLzSymmetry (int nbrB
       this->GenerateLookUpTable(memory);
       
 #ifdef __DEBUG__
-      int UsedMemory = 0;
-      UsedMemory += this->HilbertSpaceDimension * (4 * sizeof(unsigned long));
+      long UsedMemory = 0l;
+      UsedMemory += this->LargeHilbertSpaceDimension * (2l * sizeof(unsigned long) + sizeof(int));
       cout << "memory requested for Hilbert space = ";
-      if (UsedMemory >= 1024)
-	if (UsedMemory >= 1048576)
+      if (UsedMemory >= 1024l)
+	if (UsedMemory >= 1048576l)
 	  cout << (UsedMemory >> 20) << "Mo" << endl;
 	else
       cout << (UsedMemory >> 10) << "ko" <<  endl;
@@ -282,11 +282,11 @@ BosonOnSphereWithSU2SpinLzSymmetry::BosonOnSphereWithSU2SpinLzSymmetry (char* fi
       this->GenerateLookUpTable(memory);
       
 #ifdef __DEBUG__
-      int UsedMemory = 0;
-      UsedMemory += this->HilbertSpaceDimension * (4 * sizeof(unsigned long));
+      long UsedMemory = 0l;
+      UsedMemory += this->LargeHilbertSpaceDimension * (2l * sizeof(unsigned long) + sizeof(int));
       cout << "memory requested for Hilbert space = ";
-      if (UsedMemory >= 1024)
-	if (UsedMemory >= 1048576)
+      if (UsedMemory >= 1024l)
+	if (UsedMemory >= 1048576l)
 	  cout << (UsedMemory >> 20) << "Mo" << endl;
 	else
       cout << (UsedMemory >> 10) << "ko" <<  endl;

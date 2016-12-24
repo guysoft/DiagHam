@@ -228,11 +228,8 @@ RealSymmetricMatrix::RealSymmetricMatrix(RealMatrix& Q, AbstractArchitecture* ar
   *(this->DiagonalGarbageFlag) = 1;
   this->OffDiagonalGarbageFlag =  new int;
   *(this->OffDiagonalGarbageFlag) = 1;
-  cout << "start allocation diag " << this->NbrRow << endl;
   this->DiagonalElements = new double [this->NbrRow];
-  cout << "start allocation off-diag " << ((((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l) << endl;
   this->OffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l];
-  cout << "start operation" << endl;
   HermitianMatrixFromMatrixOperation TmpOperation(Q, *this);
   TmpOperation.ApplyOperation(architecture);
 }
@@ -341,8 +338,8 @@ RealSymmetricMatrix::RealSymmetricMatrix(Matrix& M)
   this->OffDiagonalGarbageFlag =  new int;
   *(this->OffDiagonalGarbageFlag) = 1;
   this->DiagonalElements = new double [this->NbrRow];
-  this->OffDiagonalElements = new double [(this->NbrRow * (this->NbrRow - 1)) / 2];
-  int pos = 0;
+  this->OffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l];
+  long pos = 0l;
   double Tmp;
   for (int i = 0; i < this->NbrRow; i++)
     {
@@ -470,7 +467,8 @@ void RealSymmetricMatrix::SetMatrixElement(int i, int j, double x)
 	  j = i;
 	  i = tmp;
 	}
-      j -= (i * (i + 1)) / 2 - i * (this->NbrRow + this->Increment - 1) + 1;
+      long Tmp = ((long) j); 
+      Tmp -= (((long) i) * (((long) i) + 1l)) / 2l - ((long) i) * ((long) (this->NbrRow + this->Increment - 1)) + 1l;
       this->OffDiagonalElements[j] = x;
     }
 }
@@ -496,7 +494,8 @@ void RealSymmetricMatrix::SetMatrixElement(int i, int j, const Complex& x)
 	  j = i;
 	  i = tmp;
 	}
-      j -= (i * (i + 1)) / 2 - i * (this->NbrRow + this->Increment - 1) + 1;
+      long Tmp = ((long) j); 
+      Tmp -= (((long) i) * (((long) i) + 1l)) / 2l - ((long) i) * ((long) (this->NbrRow + this->Increment - 1)) + 1l;
       this->OffDiagonalElements[j] = Real(x);
     }
 }
@@ -551,8 +550,9 @@ void RealSymmetricMatrix::GetMatrixElement(int i, int j, double &x) const
 	  j = i;
 	  i = tmp;
 	}
-      j -= (i * (i + 1)) / 2 - i * (this->NbrRow + this->Increment - 1) + 1;
-      x = this->OffDiagonalElements[j];
+      long Tmp = ((long) j); 
+      Tmp -= (((long) i) * (((long) i) + 1l)) / 2l - ((long) i) * ((long) (this->NbrRow + this->Increment - 1)) + 1l;
+      x = this->OffDiagonalElements[Tmp];
     }
 }
 
@@ -578,7 +578,8 @@ void RealSymmetricMatrix::GetMatrixElement(int i, int j, Complex& x) const
 	  j = i;
 	  i = tmp;
 	}
-      j -= (i * (i + 1)) / 2 - i * (this->NbrRow + this->Increment - 1) + 1;
+      long Tmp = ((long) j); 
+      Tmp -= (((long) i) * (((long) i) + 1l)) / 2l - ((long) i) * ((long) (this->NbrRow + this->Increment - 1)) + 1l;
       x.Re = this->OffDiagonalElements[j];
     }
 }
@@ -606,7 +607,8 @@ void RealSymmetricMatrix::AddToMatrixElement(int i, int j, double x)
 	  j = i;
 	  i = tmp;
 	}
-      j -= (i * (i + 1)) / 2 - i * (this->NbrRow + this->Increment - 1) + 1;
+      long Tmp = ((long) j); 
+      Tmp -= (((long) i) * (((long) i) + 1l)) / 2l - ((long) i) * ((long) (this->NbrRow + this->Increment - 1)) + 1l;
       this->OffDiagonalElements[j] += x;
     }
 }

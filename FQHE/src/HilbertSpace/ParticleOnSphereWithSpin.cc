@@ -1172,7 +1172,26 @@ RealMatrix ParticleOnSphereWithSpin::EvaluatePartialEntanglementMatrixParticlePa
   RealMatrix TmpMatrix;
   return TmpMatrix;
 }
-  
+
+// evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. 
+// The entanglement matrix is only evaluated in a given Lz,Sz=0, Sz parity sectors.
+// 
+// nbrParticleSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated
+// szSector = Sz sector in which the density matrix has to be evaluated. It should be equal to zero
+// szParitySector = parity sector for the discrete symmetry Sz<->-Sz
+// groundState = reference on the total system ground state
+// removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
+
+RealMatrix ParticleOnSphereWithSpin::EvaluatePartialEntanglementMatrixParticlePartition (int nbrParticleSector, int lzSector, int szSector, int szParity, RealVector& groundState, 
+											 bool removeBinomialCoefficient, AbstractArchitecture* architecture)
+{
+  RealMatrix TmpMatrix;
+  return TmpMatrix;
+}
+   
 
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector.
 // 
@@ -1252,6 +1271,32 @@ RealMatrix& ParticleOnSphereWithSpin::EvaluateEntanglementMatrixGenericRealSpace
   return entanglementMatrix;
 }
   
+// evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using a generic real space partition. 
+// The entanglement matrix is only evaluated in a given Lz sector and computed from precalculated particle entanglement matrix
+// 
+// nbrParticleSector = number of particles that belong to the subsystem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// szSector = Sz sector in which the density matrix has to be evaluated 
+// szParitySector = parity sector for the discrete symmetry Sz<->-Sz. Can be either -1 or +1
+// nbrOrbitalA = number of orbitals that have to be kept for the A part
+// weightOrbitalAUp = weight of each orbital in the A part with spin up (starting from the leftmost orbital)
+// weightOrbitalADown = weight of each orbital in the A part with spin down (starting from the leftmost orbital)
+// nbrOrbitalB = number of orbitals that have to be kept for the B part
+// weightOrbitalBUp = weight of each orbital in the B part with spin up (starting from the leftmost orbital)
+// weightOrbitalBDown = weight of each orbital in the B part with spin down (starting from the leftmost orbital)
+// entanglementMatrix = reference on the entanglement matrix (will be overwritten)
+// return value = reference on the entanglement matrix
+
+RealMatrix& ParticleOnSphereWithSpin::EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix (int nbrParticleSector, int lzSector, int szSector, int szParity,
+															 int nbrOrbitalA, double* weightOrbitalAUp, 
+															 double* weightOrbitalADown, 
+															 int nbrOrbitalB, double* weightOrbitalBUp, 
+															 double* weightOrbitalBDown, 
+															 RealMatrix& entanglementMatrix)
+{
+  return entanglementMatrix;
+}
+
 // flip all spins of a given state
 // 
 // index = index of the state on which the operator has to be applied
