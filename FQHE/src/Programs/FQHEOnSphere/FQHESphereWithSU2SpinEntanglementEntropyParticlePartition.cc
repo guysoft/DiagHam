@@ -730,12 +730,25 @@ int main(int argc, char** argv)
 				    {
 				      gettimeofday (&(SVDTotalStartingTime), 0);
 				    }
-				  Spaces[i]->EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz, SubsystemNbrNUp - SubsystemNbrNDown,
+				  Spaces[i]->EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz, 
+															       SubsystemNbrNUp - SubsystemNbrNDown,
 															       NbrAOrbitals, WeightAOrbitalsUp, WeightAOrbitalsDown,
-															       NbrBOrbitals, WeightBOrbitalsUp, WeightBOrbitalsDown,
+															       NbrBOrbitals, WeightBOrbitalsUp, WeightBOrbitalsDown, 
 															       PartialEntanglementMatrix);
+				  if (ShowTimeFlag == true)
+				    {
+				      gettimeofday (&(SVDTotalEndingTime), 0);
+				      double Dt = (double) ((SVDTotalEndingTime.tv_sec - SVDTotalStartingTime.tv_sec) + 
+							    ((SVDTotalEndingTime.tv_usec - SVDTotalStartingTime.tv_usec) / 1000000.0));		      
+				      cout << "conversion from particle entanglement matrix to real space entanglement matrix done in " << Dt << "s" << endl;
+				    }					      
+															       
 				  if ((SVDFlag == false) || (PartialDiagonalization == true))
 				    {
+				      if (ShowTimeFlag == true)
+					{
+					  gettimeofday (&(SVDTotalStartingTime), 0);
+					}
 				      if (PartialEntanglementMatrix.GetNbrRow() >= PartialEntanglementMatrix.GetNbrColumn())
 					{
 					  PartialDensityMatrix = RealSymmetricMatrix(PartialEntanglementMatrix, Architecture.GetArchitecture());
@@ -745,14 +758,15 @@ int main(int argc, char** argv)
 					  PartialDensityMatrix = RealSymmetricMatrix(PartialEntanglementMatrix, true);
 					}
 				      PartialEntanglementMatrix = RealMatrix();
+				      if (ShowTimeFlag == true)
+					{
+					  gettimeofday (&(SVDTotalEndingTime), 0);
+					  double Dt = (double) ((SVDTotalEndingTime.tv_sec - SVDTotalStartingTime.tv_sec) + 
+								((SVDTotalEndingTime.tv_usec - SVDTotalStartingTime.tv_usec) / 1000000.0));		      
+					  cout << "conversion from entanglement matrix to reduced density matrix done in " << Dt << "s" << endl;
+					}					      
 				    }
-				  if (ShowTimeFlag == true)
-				    {
-				      gettimeofday (&(SVDTotalEndingTime), 0);
-				      double Dt = (double) ((SVDTotalEndingTime.tv_sec - SVDTotalStartingTime.tv_sec) + 
-							    ((SVDTotalEndingTime.tv_usec - SVDTotalStartingTime.tv_usec) / 1000000.0));		      
-				      cout << "conversion from particle entanglement matrix to real space entanglement matrix done in " << Dt << "s" << endl;
-				    }					      
+
 				}
 			    }
 			  else
@@ -904,9 +918,7 @@ int main(int argc, char** argv)
 		      MainTaskOperation TaskOperation (&Task);
 		      TaskOperation.ApplyOperation(Architecture.GetArchitecture());		      
 		      TmpDiag = Task.GetEigenvalues();
-		      cout << "test 1 " << TmpDiag << endl;
 		      TmpDiag *= -1.0;
-		      cout << "test 2 " << TmpDiag << endl;
 		      delete Hamiltonian;
 		      delete DummyHilbertSpace;
 		    }

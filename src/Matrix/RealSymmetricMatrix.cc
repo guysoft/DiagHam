@@ -228,8 +228,11 @@ RealSymmetricMatrix::RealSymmetricMatrix(RealMatrix& Q, AbstractArchitecture* ar
   *(this->DiagonalGarbageFlag) = 1;
   this->OffDiagonalGarbageFlag =  new int;
   *(this->OffDiagonalGarbageFlag) = 1;
+  cout << "start allocation diag " << this->NbrRow << endl;
   this->DiagonalElements = new double [this->NbrRow];
+  cout << "start allocation off-diag " << ((((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l) << endl;
   this->OffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l];
+  cout << "start operation" << endl;
   HermitianMatrixFromMatrixOperation TmpOperation(Q, *this);
   TmpOperation.ApplyOperation(architecture);
 }
