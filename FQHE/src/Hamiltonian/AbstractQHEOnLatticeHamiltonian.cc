@@ -2533,15 +2533,21 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
   Operation.ApplyOperation(this->Architecture);
   Operation.GetMatrixElements(this->RealInteractionCoefficients, this->ComplexInteractionCoefficients);
 
+  
+  int *TmpInteractionPerComponentIndex = new int[EffectiveHilbertSpaceDimension];
+  for (long i=0; i<EffectiveHilbertSpaceDimension; ++i)
+    TmpInteractionPerComponentIndex[i] = this->NbrRealInteractionPerComponent[i] + this->NbrComplexInteractionPerComponent[i];
   // adapt load balancing for memory:
-  if (this->Architecture->GetOptimizedTypicalRange(this->NbrComplexInteractionPerComponent, MinIndex, MaxIndex, this->RealInteractionCoefficients, this->ComplexInteractionCoefficients) == true)
+  if (this->Architecture->GetOptimizedTypicalRange(TmpInteractionPerComponentIndex, MinIndex, MaxIndex, this->RealInteractionCoefficients, this->ComplexInteractionCoefficients) == true)
     {
       this->PrecalculationShift = (int) MinIndex;
       EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
-      // balance secondary arrays
+      // balance original arrays
+      this->Architecture->RebalanceArray(NbrComplexInteractionPerComponent);
       this->Architecture->RebalanceArray(NbrRealInteractionPerComponent);
       // cout << "distributed calculations successfully reoptimized" << endl;
     }
+  delete [] TmpInteractionPerComponentIndex;
   if (allowedMemory == 0l)
     {
       delete[] this->NbrRealInteractionPerComponent;
