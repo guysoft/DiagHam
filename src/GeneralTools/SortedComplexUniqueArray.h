@@ -48,6 +48,7 @@ using std::ifstream;
 
 class SortedComplexUniqueArray
 {
+ public:
   // define the type of indices - int is best for MPI routines
   typedef int ElementIndexType;
 
@@ -158,9 +159,6 @@ class SortedComplexUniqueArray
   // file = open stream to read from
   void ReadArray(ifstream &file);
    
-  // Test object
-  static void TestClass(ElementIndexType samples=2048, bool keepSorted=true);
-
   // output stream overload
   friend ostream& operator << (ostream& Str, const SortedComplexUniqueArray &A);
 
@@ -200,6 +198,9 @@ class SortedComplexUniqueArray
 #endif // end MPI interface
 
 };
+
+// Test object
+void TestClassSortedComplexUniqueArray(SortedComplexUniqueArray::ElementIndexType samples=2048, bool keepSorted=true);
 
 
 // return array's i-th coordinate (without testing if position is valid)

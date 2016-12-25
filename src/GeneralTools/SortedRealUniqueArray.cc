@@ -32,7 +32,6 @@
 #include "SortedRealUniqueArray.h"
 
 #include "GeneralTools/Endian.h"
-#include "MathTools/RandomNumber/NumRecRandomGenerator.h"
 
 #include <iostream>
 #include <limits>
@@ -44,7 +43,7 @@ using std::endl;
 using std::max;
 
 // flag for testing
-#define TESTING_SRUA
+// #define TESTING_SRUA
 
 // standard constructor
 SortedRealUniqueArray::SortedRealUniqueArray(double tolerance, ElementIndexType internalSize, bool keepSorted)
@@ -462,107 +461,6 @@ void SortedRealUniqueArray::ReadArray(ifstream &file)
     ReadLittleEndian(file, this->Elements[i]);
 }
 
-// Test object
-void SortedRealUniqueArray::TestClass(ElementIndexType samples, bool keepSorted)
-{
-  double precision = 1e-13;
-  SortedRealUniqueArray a1(samples>>1, precision, keepSorted);
-  SortedRealUniqueArray a2(samples>>1, precision, keepSorted);
-
-
-  NumRecRandomGenerator gen;
-  
-  // insert half the elements as independent numbers
-  for (int i=0; i<samples; ++i)
-    {
-      a1.InsertElement( gen.GetRealRandomNumber() );
-      a2.InsertElement( gen.GetRealRandomNumber() );
-    }
-  // count identical entries
-  ElementIndexType common=0, index;
-  for (int i=0; i<samples; ++i)
-    {
-      if (a2.SearchElement(a1[i],index))
-	{
-	  ++common;
-	  cout << "Random common entry at index "<<index<<endl;
-	}
-    }
-
-  // insert other half as same number
-  double Tmp;
-  for (int i=0; i<samples; ++i)
-    {
-      Tmp = gen.GetRealRandomNumber();
-      a1.InsertElement(Tmp);
-      a2.InsertElement(Tmp);
-    }
-  
-  SortedRealUniqueArray a3(a1, true);
-  SortedRealUniqueArray a4(a2, true);
-  
-  a3.MergeArray(a2);
-
-  cout << "Merged array has "<< a3.GetNbrElements() <<" entries"<<endl;
-  
-  if (a3.GetNbrElements() < 3*samples - common)
-    {
-      cout << "Unexpected number of entries in a3: "<< a3.GetNbrElements() << " vs " << 3*samples - common << " expected "<<endl;
-    }
-
-  for (int i=0; i<2*samples; ++i)
-    {
-      a4.InsertElement(a1[i]);
-    }
-
-  cout << "Manually merged array has "<< a4.GetNbrElements() <<" entries"<<endl;
-  
-  if (a4.GetNbrElements() < 3*samples - common)
-    {
-      cout << "Unexpected number of entries in a4: "<< a4.GetNbrElements() << " vs " << 3*samples - common << " expected "<<endl;
-    }
-
-  // check all entries are present:
-  for (ElementIndexType i=0; i<a4.GetNbrElements(); ++i)
-    {
-      if (! a3.SearchElement(a4[i], index))
-	{
-	  cout << "Element " << i << " of array 4, "<<a4[i] << ", missing from array 3"<<endl;
-	}
-    }
-
-  for (ElementIndexType i=0; i<a3.GetNbrElements(); ++i)
-    {
-      if (! a4.SearchElement(a3[i], index))
-	{
-	  cout << "Element "<<i<<" of array 3, "<<a3[i] << ", missing from array 4"<<endl;
-	}
-    }
-
-  // check all entries are found:
-  for (ElementIndexType i=0; i<a3.GetNbrElements(); ++i)
-    {
-      if (! a3.SearchElement(a3[i], index))
-	{
-	  cout << "Element " << i << " not found by search on array 3"<<endl;
-	}
-      if (index != i)
-	cout << "Discrepancy in search for index "<< index <<" on element " << i << " (array 3)."<<endl;
-    }
-
-  for (ElementIndexType i=0; i<a4.GetNbrElements(); ++i)
-    {
-      if (! a4.SearchElement(a4[i], index))
-	{
-	  cout << "Element " << i << " not found by search on array 4"<<endl;
-	}
-      if (index != i)
-	cout << "Discrepancy in search for index "<< index <<" on element " << i << " (array 4)."<<endl;
-    }
-
-    cout << "Tests completed."<<endl;
-
-}
 
 
 // Output Stream overload
@@ -677,5 +575,108 @@ bool SortedRealUniqueArray::MergeAcrossNodes(MPI::Intracomm& communicator)
   bool Rst = this->BroadcastArray(communicator, 0);
   return Rst;
 }
+
+
+// Test object
+void TestClassSortedRealUniqueArray(SortedRealUniqueArray::ElementIndexType samples, bool keepSorted)
+{
+  double randNorm=1.0/(double)RAND_MAX;
+  
+  double precision = 1e-13;
+  SortedRealUniqueArray a1(samples>>1, precision, keepSorted);
+  SortedRealUniqueArray a2(samples>>1, precision, keepSorted);
+  
+  // insert half the elements as independent numbers
+  for (int i=0; i<samples; ++i)
+    {
+      a1.InsertElement( randNorm*(double)std::rand() );
+      a2.InsertElement( randNorm*(double)std::rand() );
+    }
+  // count identical entries
+  SortedRealUniqueArray::ElementIndexType common=0, index;
+  for (int i=0; i<samples; ++i)
+    {
+      if (a2.SearchElement(a1[i],index))
+	{
+	  ++common;
+	  cout << "Random common entry at index "<<index<<endl;
+	}
+    }
+
+  // insert other half as same number
+  double Tmp;
+  for (int i=0; i<samples; ++i)
+    {
+      Tmp = randNorm*(double)std::rand();
+      a1.InsertElement(Tmp);
+      a2.InsertElement(Tmp);
+    }
+  
+  SortedRealUniqueArray a3(a1, true);
+  SortedRealUniqueArray a4(a2, true);
+  
+  a3.MergeArray(a2);
+
+  cout << "Merged array has "<< a3.GetNbrElements() <<" entries"<<endl;
+  
+  if (a3.GetNbrElements() < 3*samples - common)
+    {
+      cout << "Unexpected number of entries in a3: "<< a3.GetNbrElements() << " vs " << 3*samples - common << " expected "<<endl;
+    }
+
+  for (int i=0; i<2*samples; ++i)
+    {
+      a4.InsertElement(a1[i]);
+    }
+
+  cout << "Manually merged array has "<< a4.GetNbrElements() <<" entries"<<endl;
+  
+  if (a4.GetNbrElements() < 3*samples - common)
+    {
+      cout << "Unexpected number of entries in a4: "<< a4.GetNbrElements() << " vs " << 3*samples - common << " expected "<<endl;
+    }
+
+  // check all entries are present:
+  for (SortedRealUniqueArray::ElementIndexType i=0; i<a4.GetNbrElements(); ++i)
+    {
+      if (! a3.SearchElement(a4[i], index))
+	{
+	  cout << "Element " << i << " of array 4, "<<a4[i] << ", missing from array 3"<<endl;
+	}
+    }
+
+  for (SortedRealUniqueArray::ElementIndexType i=0; i<a3.GetNbrElements(); ++i)
+    {
+      if (! a4.SearchElement(a3[i], index))
+	{
+	  cout << "Element "<<i<<" of array 3, "<<a3[i] << ", missing from array 4"<<endl;
+	}
+    }
+
+  // check all entries are found:
+  for (SortedRealUniqueArray::ElementIndexType i=0; i<a3.GetNbrElements(); ++i)
+    {
+      if (! a3.SearchElement(a3[i], index))
+	{
+	  cout << "Element " << i << " not found by search on array 3"<<endl;
+	}
+      if (index != i)
+	cout << "Discrepancy in search for index "<< index <<" on element " << i << " (array 3)."<<endl;
+    }
+
+  for (SortedRealUniqueArray::ElementIndexType i=0; i<a4.GetNbrElements(); ++i)
+    {
+      if (! a4.SearchElement(a4[i], index))
+	{
+	  cout << "Element " << i << " not found by search on array 4"<<endl;
+	}
+      if (index != i)
+	cout << "Discrepancy in search for index "<< index <<" on element " << i << " (array 4)."<<endl;
+    }
+
+    cout << "Tests completed."<<endl;
+
+}
+
 
 #endif

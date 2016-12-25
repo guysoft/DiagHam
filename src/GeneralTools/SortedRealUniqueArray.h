@@ -48,9 +48,12 @@ using std::ifstream;
 
 class SortedRealUniqueArray
 {
- protected:
+ public:
+  
   // define the type of indices - int is best for MPI routines
   typedef int ElementIndexType;
+
+ protected:
 
   // array with elements
   double *Elements;
@@ -144,9 +147,6 @@ class SortedRealUniqueArray
   // file = open stream to read from
   void ReadArray(ifstream &file);
    
-  // Test object
-  static void TestClass(ElementIndexType samples=2048, bool keepSorted=true);
-
   // output stream overload
   friend ostream& operator << (ostream& Str, const SortedRealUniqueArray &A);
 
@@ -196,5 +196,10 @@ inline double& SortedRealUniqueArray::operator [] (ElementIndexType i)
 {
   return this->Elements[i];
 }
+
+
+// Test object
+void TestClassSortedRealUniqueArray(SortedRealUniqueArray::ElementIndexType samples=2048, bool keepSorted=true);
+
 
 #endif

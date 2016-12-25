@@ -32,7 +32,6 @@
 #include "SortedComplexUniqueArray.h"
 
 #include "GeneralTools/Endian.h"
-#include "MathTools/RandomNumber/NumRecRandomGenerator.h"
 
 #include <iostream>
 #include <limits>
@@ -44,7 +43,7 @@ using std::endl;
 using std::max;
 
 // flag for testing
-#define TESTING_SCUA
+//#define TESTING_SCUA
 
 // standard constructor
 SortedComplexUniqueArray::SortedComplexUniqueArray(double tolerance, ElementIndexType internalSize, bool keepSorted)
@@ -569,108 +568,6 @@ void SortedComplexUniqueArray::ReadArray(ifstream &file)
     ReadLittleEndian(file, this->Elements[i]);
 }
 
-// Test object
-void SortedComplexUniqueArray::TestClass(ElementIndexType samples, bool keepSorted)
-{
-  double precision = 1e-13;
-  SortedComplexUniqueArray a1(samples>>1, precision, keepSorted);
-  SortedComplexUniqueArray a2(samples>>1, precision, keepSorted);
-
-
-  NumRecRandomGenerator gen;
-  
-  // insert half the elements as independent numbers
-  for (int i=0; i<samples; ++i)
-    {
-      a1.InsertElement( Complex(gen.GetRealRandomNumber(),gen.GetRealRandomNumber()) );
-      a2.InsertElement( Complex(gen.GetRealRandomNumber(),gen.GetRealRandomNumber()) );
-    }
-  // count identical entries
-  ElementIndexType common=0, index;
-  for (int i=0; i<samples; ++i)
-    {
-      if (a2.SearchElement(a1[i],index))
-	{
-	  ++common;
-	  cout << "Random common entry at index "<<index<<endl;
-	}
-    }
-
-  // insert other half as same number
-  Complex TmpC;
-  for (int i=0; i<samples; ++i)
-    {
-      TmpC.Re=gen.GetRealRandomNumber();
-      TmpC.Im=gen.GetRealRandomNumber();
-      a1.InsertElement(TmpC);
-      a2.InsertElement(TmpC);
-    }
-  
-  SortedComplexUniqueArray a3(a1, true);
-  SortedComplexUniqueArray a4(a2, true);
-  
-  a3.MergeArray(a2);
-
-  cout << "Merged array has "<< a3.GetNbrElements() <<" entries"<<endl;
-  
-  if (a3.GetNbrElements() < 3*samples - common)
-    {
-      cout << "Unexpected number of entries in a3: "<< a3.GetNbrElements() << " vs " << 3*samples - common << " expected "<<endl;
-    }
-
-  for (int i=0; i<2*samples; ++i)
-    {
-      a4.InsertElement(a1[i]);
-    }
-
-  cout << "Manually merged array has "<< a4.GetNbrElements() <<" entries"<<endl;
-  
-  if (a4.GetNbrElements() < 3*samples - common)
-    {
-      cout << "Unexpected number of entries in a4: "<< a4.GetNbrElements() << " vs " << 3*samples - common << " expected "<<endl;
-    }
-
-  // check all entries are present:
-  for (ElementIndexType i=0; i<a4.GetNbrElements(); ++i)
-    {
-      if (! a3.SearchElement(a4[i], index))
-	{
-	  cout << "Element " << i << " of array 4, "<<a4[i] << ", missing from array 3"<<endl;
-	}
-    }
-
-  for (ElementIndexType i=0; i<a3.GetNbrElements(); ++i)
-    {
-      if (! a4.SearchElement(a3[i], index))
-	{
-	  cout << "Element "<<i<<" of array 3, "<<a3[i] << ", missing from array 4"<<endl;
-	}
-    }
-
-  // check all entries are found:
-  for (ElementIndexType i=0; i<a3.GetNbrElements(); ++i)
-    {
-      if (! a3.SearchElement(a3[i], index))
-	{
-	  cout << "Element " << i << " not found by search on array 3"<<endl;
-	}
-      if (index != i)
-	cout << "Discrepancy in search for index "<< index <<" on element " << i << " (array 3)."<<endl;
-    }
-
-  for (ElementIndexType i=0; i<a4.GetNbrElements(); ++i)
-    {
-      if (! a4.SearchElement(a4[i], index))
-	{
-	  cout << "Element " << i << " not found by search on array 4"<<endl;
-	}
-      if (index != i)
-	cout << "Discrepancy in search for index "<< index <<" on element " << i << " (array 4)."<<endl;
-    }
-
-    cout << "Tests completed."<<endl;
-
-}
 
 
 // Output Stream overload
@@ -797,3 +694,108 @@ bool SortedComplexUniqueArray::MergeAcrossNodes(MPI::Intracomm& communicator)
 }
 
 #endif
+
+
+// Test object
+void TestClassSortedComplexUniqueArray(SortedComplexUniqueArray::ElementIndexType samples, bool keepSorted)
+{
+  double randNorm=1.0/(double)RAND_MAX;
+
+  double precision = 1e-13;
+  SortedComplexUniqueArray a1(samples>>1, precision, keepSorted);
+  SortedComplexUniqueArray a2(samples>>1, precision, keepSorted);
+  
+  // insert half the elements as independent numbers
+  for (int i=0; i<samples; ++i)
+    {
+      a1.InsertElement( Complex(randNorm*(double)std::rand(),randNorm*(double)std::rand()) );
+      a2.InsertElement( Complex(randNorm*(double)std::rand(),randNorm*(double)std::rand()) );
+    }
+  // count identical entries
+  SortedComplexUniqueArray::ElementIndexType common=0, index;
+  for (int i=0; i<samples; ++i)
+    {
+      if (a2.SearchElement(a1[i],index))
+	{
+	  ++common;
+	  cout << "Random common entry at index "<<index<<endl;
+	}
+    }
+
+  // insert other half as same number
+  Complex TmpC;
+  for (int i=0; i<samples; ++i)
+    {
+      TmpC.Re=randNorm*(double)std::rand();
+      TmpC.Im=randNorm*(double)std::rand();
+      a1.InsertElement(TmpC);
+      a2.InsertElement(TmpC);
+    }
+  
+  SortedComplexUniqueArray a3(a1, true);
+  SortedComplexUniqueArray a4(a2, true);
+  
+  a3.MergeArray(a2);
+
+  cout << "Merged array has "<< a3.GetNbrElements() <<" entries"<<endl;
+  
+  if (a3.GetNbrElements() < 3*samples - common)
+    {
+      cout << "Unexpected number of entries in a3: "<< a3.GetNbrElements() << " vs " << 3*samples - common << " expected "<<endl;
+    }
+
+  for (int i=0; i<2*samples; ++i)
+    {
+      a4.InsertElement(a1[i]);
+    }
+
+  cout << "Manually merged array has "<< a4.GetNbrElements() <<" entries"<<endl;
+  
+  if (a4.GetNbrElements() < 3*samples - common)
+    {
+      cout << "Unexpected number of entries in a4: "<< a4.GetNbrElements() << " vs " << 3*samples - common << " expected "<<endl;
+    }
+
+  // check all entries are present:
+  for (SortedComplexUniqueArray::ElementIndexType i=0; i<a4.GetNbrElements(); ++i)
+    {
+      if (! a3.SearchElement(a4[i], index))
+	{
+	  cout << "Element " << i << " of array 4, "<<a4[i] << ", missing from array 3"<<endl;
+	}
+    }
+
+  for (SortedComplexUniqueArray::ElementIndexType i=0; i<a3.GetNbrElements(); ++i)
+    {
+      if (! a4.SearchElement(a3[i], index))
+	{
+	  cout << "Element "<<i<<" of array 3, "<<a3[i] << ", missing from array 4"<<endl;
+	}
+    }
+
+  // check all entries are found:
+  for (SortedComplexUniqueArray::ElementIndexType i=0; i<a3.GetNbrElements(); ++i)
+    {
+      if (! a3.SearchElement(a3[i], index))
+	{
+	  cout << "Element " << i << " not found by search on array 3"<<endl;
+	}
+      if (index != i)
+	cout << "Discrepancy in search for index "<< index <<" on element " << i << " (array 3)."<<endl;
+    }
+
+  for (SortedComplexUniqueArray::ElementIndexType i=0; i<a4.GetNbrElements(); ++i)
+    {
+      if (! a4.SearchElement(a4[i], index))
+	{
+	  cout << "Element " << i << " not found by search on array 4"<<endl;
+	}
+      if (index != i)
+	cout << "Discrepancy in search for index "<< index <<" on element " << i << " (array 4)."<<endl;
+    }
+
+    cout << "Tests completed."<<endl;
+
+}
+
+
