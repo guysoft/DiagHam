@@ -5,11 +5,11 @@
 //                                                                            //
 //                  Copyright (C) 2001-2008 Nicolas Regnault                  //
 //                                                                            //
-//                         class author: Gunnar Moeller                       //
+//                         class author: Gunnar Möller                        //
 //                                                                            //
 // class for an array which has unique entries for single-threaded insertion  //
 //                                                                            //
-//                        last modification : 13/02/2008                      //
+//                        last modification : 24/12/2016                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -47,7 +47,7 @@ using std::max;
 #define TESTING_SRUA
 
 // standard constructor
-SortedRealUniqueArray::SortedRealUniqueArray(double tolerance, unsigned internalSize, bool keepSorted)
+SortedRealUniqueArray::SortedRealUniqueArray(double tolerance, ElementIndexType internalSize, bool keepSorted)
 {
   this->InternalSize=internalSize;
   this->Tolerance=tolerance;
@@ -76,7 +76,7 @@ SortedRealUniqueArray::SortedRealUniqueArray(SortedRealUniqueArray &array, bool 
       if (this->InternalSize>0)
 	{
 	  this->Elements=new double[InternalSize];
-	  for (unsigned i=0; i<NbrElements; ++i)
+	  for (ElementIndexType i=0; i<this->NbrElements; ++i)
 	    this->Elements[i]=array.Elements[i];
 	  this->Flag.Initialize();
 	}
@@ -84,6 +84,49 @@ SortedRealUniqueArray::SortedRealUniqueArray(SortedRealUniqueArray &array, bool 
   this->Sorted = array.Sorted;
   this->KeepSorted = array.KeepSorted;
 }
+
+#ifdef __MPI__
+
+// constructor array from informations sent using MPI
+//
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts or sends the array
+// broadcast = true if the vector is broadcasted
+
+SortedRealUniqueArray::SortedRealUniqueArray(MPI::Intracomm& communicator, int id, bool broadcast)
+{
+  int TmpArray[5];
+  if (broadcast == true)
+    communicator.Bcast(TmpArray, 5, MPI::INT, id);      
+  else
+    communicator.Recv(TmpArray, 5, MPI::INT, id, 1);
+  
+  int TmpDimension = TmpArray[0];
+  this->NbrElements = (ElementIndexType) TmpDimension;
+  if (TmpArray[1] != this->UniversalID)
+    {
+      cout << "Unexpected ID in SortedRealUniqueArray::RealUniqueArray - aborting" <<endl;
+      exit(1);
+    }
+  this->Elements = new double [this->NbrElements];
+  this->InternalSize = this->NbrElements;
+  if (TmpArray[2] == 1)
+    for (int i = 0; i < TmpDimension; ++i) 
+      this->Elements[i] = 0.0;
+  else
+    if (TmpArray[2] == 2)
+      {
+	if (broadcast == true)
+	  communicator.Bcast(this->Elements, TmpDimension, MPI::DOUBLE, id);      
+	else
+	  communicator.Recv(this->Elements, TmpDimension, MPI::DOUBLE, id, 1);   
+      }
+  this->Sorted = (ElementIndexType) TmpArray[3];
+  this->KeepSorted = (bool) TmpArray[4];
+  this->Flag.Initialize();
+}
+
+#endif
 
 // destructor
 SortedRealUniqueArray::~SortedRealUniqueArray()
@@ -97,33 +140,33 @@ SortedRealUniqueArray::~SortedRealUniqueArray()
 // Insert element
 // element = new element to be inserted
 // returns : index of this element  
-unsigned SortedRealUniqueArray::InsertElement(const double& element)
+SortedRealUniqueArray::ElementIndexType SortedRealUniqueArray::InsertElement(const double& element)
 {
-  unsigned index;
+  ElementIndexType index;
   if (this->SearchElement(element, index))
     return index;
   // element not found
-  if (NbrElements < InternalSize)
+  if (this->NbrElements < this->InternalSize)
     {
-      this->Elements[NbrElements]=element;
+      this->Elements[this->NbrElements]=element;
       ++NbrElements;      
     }
   else
     {
-      if (this->InternalSize < (std::numeric_limits<unsigned>::max() / 2))
+      if (this->InternalSize < (std::numeric_limits<ElementIndexType>::max() / 2))
 	this->InternalSize*=2;
       else
 	{
-	  if (this->InternalSize == std::numeric_limits<unsigned>::max())
+	  if (this->InternalSize == std::numeric_limits<ElementIndexType>::max())
 	    {
 	      cout << "Array overflow in SortedRealUniqueArray: cannot store more entries"<<endl;
 	      exit(1);
 	    }
 	  else
-	    this->InternalSize = std::numeric_limits<unsigned>::max();
+	    this->InternalSize = std::numeric_limits<ElementIndexType>::max();
 	}
       double *newElements= new double[InternalSize];
-      for (unsigned i=0; i<NbrElements; ++i)
+      for (ElementIndexType i=0; i<this->NbrElements; ++i)
 	newElements[i]=Elements[i];
       newElements[NbrElements]=element;
       ++NbrElements;
@@ -132,7 +175,7 @@ unsigned SortedRealUniqueArray::InsertElement(const double& element)
       if ((this->InternalSize!=0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
 	delete [] tmpElements;
     }
-  unsigned Result=NbrElements-1;
+  ElementIndexType Result=NbrElements-1;
   if (this->KeepSorted && this->NbrElements > this->Sorted + 12)
     {
       this->SortEntries();
@@ -149,14 +192,14 @@ unsigned SortedRealUniqueArray::InsertElement(const double& element)
 // value = value to be searched for
 // @param[out] index : index of the element, if found.
 // return : true if element was found, false otherwise.
-bool SortedRealUniqueArray::SearchElement(const double &value, unsigned &index)
+bool SortedRealUniqueArray::SearchElement(const double &value, ElementIndexType &index)
 {
-  unsigned start=0;
+  ElementIndexType start=0;
   if (this->Sorted>3)
     {
-      unsigned PosMax = this->Sorted - 1;
-      unsigned PosMin = 0;
-      unsigned PosMid = (PosMin + PosMax) >> 1;
+      ElementIndexType PosMax = this->Sorted - 1;
+      ElementIndexType PosMin = 0;
+      ElementIndexType PosMid = (PosMin + PosMax) >> 1;
       double CurrentState = this->Elements[PosMid];
       // cout << "Searching "<<value<<"...";
       while ((PosMin != PosMid) && (fabs(CurrentState - value) >= this->Tolerance))
@@ -194,7 +237,7 @@ bool SortedRealUniqueArray::SearchElement(const double &value, unsigned &index)
 	    }
 	}
     }
-  for (unsigned i=start; i<this->NbrElements; ++i)
+  for (ElementIndexType i=start; i<this->NbrElements; ++i)
     {
       if (fabs(Elements[i]-value)<this->Tolerance)
 	{
@@ -210,7 +253,7 @@ bool SortedRealUniqueArray::SearchElement(const double &value, unsigned &index)
 // empty all elements
 // disallocate = flag indicating whether all memory should be unallocated
 // internalSize = minimum table size to allocate (only used if disallocating)
-void SortedRealUniqueArray::Empty(bool disallocate, unsigned internalSize)
+void SortedRealUniqueArray::Empty(bool disallocate, ElementIndexType internalSize)
 {
   if (disallocate)
     {
@@ -228,15 +271,15 @@ void SortedRealUniqueArray::Empty(bool disallocate, unsigned internalSize)
 void SortedRealUniqueArray::SortEntries()
 {
   if (this->Sorted==this->NbrElements) return;
-  unsigned inc = std::floor(NbrElements/2.0+0.5);
+  ElementIndexType inc = std::floor(NbrElements/2.0+0.5);
   // if (this->Sorted>inc) inc=this->Sorted-1;
   double tmpC;
   while (inc > 0)
     {
-      for (unsigned i = inc; i< NbrElements; ++i)
+      for (ElementIndexType i = inc; i< NbrElements; ++i)
 	{
 	  tmpC = this->Elements[i];
-	  unsigned j = i;
+	  ElementIndexType j = i;
 	  while ((j>=inc) && (this->Elements[j-inc] > tmpC) )
 	    {
 	      this->Elements[j] = this->Elements[j - inc];
@@ -262,7 +305,7 @@ void SortedRealUniqueArray::SortEntries()
 bool SortedRealUniqueArray::IsSorted()
 {
   if (this->NbrElements<2) return true;
-  for (unsigned i=0; i<this->NbrElements-1; ++i)
+  for (ElementIndexType i=0; i<this->NbrElements-1; ++i)
     if (this->Elements[i]>=this->Elements[i+1])
       {
 	cout << "Unexpected order at position "<<i<<": (this->Elements["<<i<<"]<this->Elements["<<i+1<<"]"<<endl; 
@@ -282,15 +325,16 @@ void SortedRealUniqueArray::MergeArray(SortedRealUniqueArray &a)
   // cout << "a ="<<a << endl;
   // cout << "Merging arrays with "<<this->NbrElements<<" and "<<a.NbrElements<<" entries "<<endl;
   long newPos = a.NbrElements+this->NbrElements;
-  if (newPos > std::numeric_limits<unsigned>::max())
+  if (newPos > std::numeric_limits<ElementIndexType>::max())
     {
       cout << "Error merged array size exceeds maximum"<< endl;
       exit(1);
     }
+  ElementIndexType tmpInternalSize = (ElementIndexType)newPos;
   double *newElements = new double[newPos];
   newPos=0;
-  unsigned myPos = 0;
-  for (unsigned theirPos=0; theirPos<a.NbrElements; ++theirPos)
+  ElementIndexType myPos = 0;
+  for (ElementIndexType theirPos=0; theirPos<a.NbrElements; ++theirPos)
     {
       // definite insert elements in this-> that are smaller than the next element of a and not within tolerance
       while (myPos < this->NbrElements && this->Elements[myPos] < a.Elements[theirPos] && fabs(this->Elements[myPos] - a.Elements[theirPos]) >= this->Tolerance)
@@ -299,7 +343,7 @@ void SortedRealUniqueArray::MergeArray(SortedRealUniqueArray &a)
 	  newElements[newPos++] = this->Elements[myPos++];
 	}
       // also insert any elements that are equal or approximately equal
-      while (fabs(this->Elements[myPos] - a.Elements[theirPos]) < this->Tolerance)
+      while (myPos < this->NbrElements && fabs(this->Elements[myPos] - a.Elements[theirPos]) < this->Tolerance)
 	{
 	  //  cout << "Insert this->Elements["<<myPos<<"] at 2"<<endl;
 	  newElements[newPos++] = this->Elements[myPos++];
@@ -331,15 +375,17 @@ void SortedRealUniqueArray::MergeArray(SortedRealUniqueArray &a)
       // cout << "Insert this->Elements["<<myPos<<"] at 3 with this->Elements["<<myPos<<"]"<<endl;
       newElements[newPos++] = this->Elements[myPos++];
     }
-
   if ( (this->InternalSize!=0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete [] Elements;
     }
+  this->Flag = GarbageFlag();
+  this->Flag.Initialize(); // start newly allocated array
+  this->InternalSize = tmpInternalSize;
   this->Elements = newElements;
   this->NbrElements = newPos;
   // cout << "Unique entries retained: "<<this->NbrElements<<endl;
-  this->Sorted=true;
+  this->Sorted=this->NbrElements;
 }
 
 // Test all entries
@@ -347,9 +393,9 @@ void SortedRealUniqueArray::MergeArray(SortedRealUniqueArray &a)
 // result: true if all entries are found, false otherwise
 bool SortedRealUniqueArray::TestAllEntries()
 {
-  unsigned index;
+  ElementIndexType index;
   bool success=true;
-  for (unsigned i=0; i<this->GetNbrElements(); ++i)
+  for (ElementIndexType i=0; i<this->GetNbrElements(); ++i)
     {
       if (! this->SearchElement(this->Elements[i], index))
 	{
@@ -366,12 +412,36 @@ bool SortedRealUniqueArray::TestAllEntries()
 }
 
 
+// Resize array to new internal size
+//
+// dimension = new dimension
+
+void SortedRealUniqueArray::IncreaseInternalSize (ElementIndexType size)
+{
+  if (size <= this->InternalSize) // do nothing if size is sufficient
+    {
+      return;
+    }
+  double* TmpElements = new double [size];
+  for (int i = 0; i < this->NbrElements; i++)
+    TmpElements[i] = this->Elements[i];
+  if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
+    {
+      delete[] this->Elements;
+    }
+  this->InternalSize = size;
+  this->Elements = TmpElements;
+  this->Flag = GarbageFlag();
+  this->Flag.Initialize();
+}
+
+
 // write to file
 // file = open stream to write to
 void SortedRealUniqueArray::WriteArray(ofstream &file)
 {
   WriteLittleEndian(file, this->NbrElements);
-  for (unsigned i = 0; i < this->NbrElements; ++i)
+  for (ElementIndexType i = 0; i < this->NbrElements; ++i)
     WriteLittleEndian(file, this->Elements[i]);  
 }
 
@@ -383,17 +453,17 @@ void SortedRealUniqueArray::ReadArray(ifstream &file)
     {
       delete [] Elements;
     }
-  unsigned TmpDimension;
+  ElementIndexType TmpDimension;
   ReadLittleEndian(file, TmpDimension);
   this->InternalSize=TmpDimension;
   this->NbrElements=TmpDimension;
   this->Elements=new double[TmpDimension];
-  for (unsigned i = 0; i < this->NbrElements; ++i)
+  for (ElementIndexType i = 0; i < this->NbrElements; ++i)
     ReadLittleEndian(file, this->Elements[i]);
 }
 
 // Test object
-void SortedRealUniqueArray::TestClass(unsigned samples, bool keepSorted)
+void SortedRealUniqueArray::TestClass(ElementIndexType samples, bool keepSorted)
 {
   double precision = 1e-13;
   SortedRealUniqueArray a1(samples>>1, precision, keepSorted);
@@ -409,7 +479,7 @@ void SortedRealUniqueArray::TestClass(unsigned samples, bool keepSorted)
       a2.InsertElement( gen.GetRealRandomNumber() );
     }
   // count identical entries
-  unsigned common=0, index;
+  ElementIndexType common=0, index;
   for (int i=0; i<samples; ++i)
     {
       if (a2.SearchElement(a1[i],index))
@@ -453,7 +523,7 @@ void SortedRealUniqueArray::TestClass(unsigned samples, bool keepSorted)
     }
 
   // check all entries are present:
-  for (unsigned i=0; i<a4.GetNbrElements(); ++i)
+  for (ElementIndexType i=0; i<a4.GetNbrElements(); ++i)
     {
       if (! a3.SearchElement(a4[i], index))
 	{
@@ -461,7 +531,7 @@ void SortedRealUniqueArray::TestClass(unsigned samples, bool keepSorted)
 	}
     }
 
-  for (unsigned i=0; i<a3.GetNbrElements(); ++i)
+  for (ElementIndexType i=0; i<a3.GetNbrElements(); ++i)
     {
       if (! a4.SearchElement(a3[i], index))
 	{
@@ -470,7 +540,7 @@ void SortedRealUniqueArray::TestClass(unsigned samples, bool keepSorted)
     }
 
   // check all entries are found:
-  for (unsigned i=0; i<a3.GetNbrElements(); ++i)
+  for (ElementIndexType i=0; i<a3.GetNbrElements(); ++i)
     {
       if (! a3.SearchElement(a3[i], index))
 	{
@@ -480,7 +550,7 @@ void SortedRealUniqueArray::TestClass(unsigned samples, bool keepSorted)
 	cout << "Discrepancy in search for index "<< index <<" on element " << i << " (array 3)."<<endl;
     }
 
-  for (unsigned i=0; i<a4.GetNbrElements(); ++i)
+  for (ElementIndexType i=0; i<a4.GetNbrElements(); ++i)
     {
       if (! a4.SearchElement(a4[i], index))
 	{
@@ -500,8 +570,112 @@ void SortedRealUniqueArray::TestClass(unsigned samples, bool keepSorted)
 
 ostream& operator << (ostream& Str, const SortedRealUniqueArray& A)
 {
-  for (unsigned i = 0; i < A.NbrElements; ++i)
+  for (SortedRealUniqueArray::ElementIndexType i = 0; i < A.NbrElements; ++i)
     Str << A.Elements[i]<<endl;
   return Str;
 }
 
+
+#ifdef __MPI__
+
+// create a new vector on given MPI node which is an exact clone of the sent one but with only part of the data
+// 
+// communicator = reference on the communicator to use
+// id = id of the destination MPI process
+// return value = reference on the current array
+
+void SortedRealUniqueArray::SendClone(MPI::Intracomm& communicator, int id)
+{
+  if (this->NbrElements > std::numeric_limits<int>::max())
+    {
+      cout << "Error: cannot send unique arrays larger than max(int)"<<endl;
+    }
+  int TmpArray[5];
+  TmpArray[0] = (int)this->NbrElements;
+  TmpArray[1] = this->UniversalID; // an ad-hoc number to be checked
+  TmpArray[2] = 2;
+  TmpArray[3] = (int)this->Sorted;
+  TmpArray[4] = (int)this->KeepSorted;
+  communicator.Send(TmpArray, 5, MPI::INT, id, 1); 
+  communicator.Send(this->Elements, NbrElements, MPI::DOUBLE, id, 1); 
+}
+
+// send entries to a given MPI process
+// 
+// communicator = reference on the communicator to use
+// id = id of the destination MPI process
+// return value = reference on the current vector
+
+void SortedRealUniqueArray::SendArray(MPI::Intracomm& communicator, int id)
+{
+  int TmpArray[2] = {(int) this->NbrElements, (int) this->Sorted};
+  communicator.Send(&TmpArray, 2, MPI::INT, id, 1); 
+  // int Acknowledge = 0;
+  // communicator.Recv(&Acknowledge, 1, MPI::INT, id, 1);
+  // if (Acknowledge != 0)
+  //   return;
+  communicator.Send(this->Elements, this->NbrElements, MPI::DOUBLE, id, 1); 
+}
+
+// broadcast the entries of the array on node "id" to all MPI processes associated to the same communicator
+// 
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts the array
+// return value = true if operation was successful
+
+bool SortedRealUniqueArray::BroadcastArray(MPI::Intracomm& communicator,  int id)
+{
+  if (this->NbrElements > std::numeric_limits<int>::max())
+    {
+      cout << "Error: cannot merge unique arrays larger than max(int)"<<endl;
+      return false;
+    }
+  int TmpArray[2] = {(int) this->NbrElements, (int) this->Sorted};
+  communicator.Bcast(&TmpArray, 2, MPI::INT, id);
+  if (TmpArray[0] > this->InternalSize)
+    {
+      this->IncreaseInternalSize(TmpArray[0]);
+    }
+  this->NbrElements = (ElementIndexType) TmpArray[0];
+  this->Sorted = (ElementIndexType) TmpArray[1];
+  communicator.Bcast(this->Elements, this->NbrElements, MPI::DOUBLE, id);
+  return true;
+}
+
+// merge all data on master node and broadcast to clones
+// 
+// communicator = reference on the communicator to use 
+// return = true if successfully merged
+
+bool SortedRealUniqueArray::MergeAcrossNodes(MPI::Intracomm& communicator)
+{
+  if (this->NbrElements > std::numeric_limits<int>::max())
+    {
+      cout << "Error: cannot merge unique arrays larger than max(int)"<<endl;
+    }
+  int TmpNbrElements = (int) this->NbrElements;
+  
+  int Acknowledge = 0;
+  if (communicator.Get_rank() != 0)
+    this->SendClone(communicator, 0);
+  else
+    {
+      int NbrMPINodes = communicator.Get_size();
+      // cout << "Master="<<*this<<"done Master"<<endl;
+      for (int id = 1; id < NbrMPINodes; ++id)
+	{
+	  SortedRealUniqueArray TmpArray(communicator, id);
+	  // cout << "TmpArray["<<id<<"]="<<TmpArray<<"done Slave "<<id<<endl;
+	  this->MergeArray(TmpArray);
+	  if (this->NbrElements > std::numeric_limits<int>::max())
+	    {
+	      cout << "Error: cannot merge unique arrays larger than max(int)"<<endl;
+	      return false;
+	    }
+	}
+    }
+  bool Rst = this->BroadcastArray(communicator, 0);
+  return Rst;
+}
+
+#endif

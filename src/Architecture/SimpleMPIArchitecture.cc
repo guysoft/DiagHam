@@ -38,6 +38,9 @@
 #include "Matrix/RealMatrix.h"
 #include "Matrix/ComplexMatrix.h"
 #include "GeneralTools/StringTools.h"
+#include "GeneralTools/SortedRealUniqueArray.h"
+#include "GeneralTools/SortedComplexUniqueArray.h"
+
 
 #include <sys/time.h>
 #include <string.h>
@@ -62,6 +65,8 @@ SimpleMPIArchitecture::SimpleMPIArchitecture()
 {
   this->MinimumIndices = 0;
   this->MaximumIndices = 0;
+  this->OldMinimumIndices = 0;
+  this->OldMaximumIndices = 0;
   this->AutomaticLoadBalancing = false;
 }
 
@@ -82,6 +87,8 @@ SimpleMPIArchitecture::SimpleMPIArchitecture(char* logFile, bool automaticLoadBa
   this->ClusterPerformanceArray = new double [this->NbrMPINodes];
   this->MinimumIndices = 0;
   this->MaximumIndices = 0;
+  this->OldMinimumIndices = 0;
+  this->OldMaximumIndices = 0;
   if (this->MPIRank != 0)
     {
       this->MasterNodeFlag = false;
@@ -156,6 +163,11 @@ SimpleMPIArchitecture::~SimpleMPIArchitecture()
       delete [] this->MinimumIndices;
       delete [] this->MaximumIndices;
     }
+  if (this->OldMinimumIndices != 0)
+    {
+      delete [] this->OldMinimumIndices;
+      delete [] this->OldMaximumIndices;
+    }
   delete this->LocalArchitecture;
   if (this->ClusterPerformanceArray != 0)
     delete[] this->ClusterPerformanceArray;
@@ -193,6 +205,7 @@ bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex
   if (this->MasterNodeFlag == true)
     { 
       cout << "Optimizing typical range"<<endl;
+      cout << "Before: "<< this->PrintLoadBalancing()<<endl;
       int* TmpNbrOperationPerIndex = new int [this->MaximumIndices[this->NbrMPINodes - 1] - this->MinimumIndices[0] + 1l];
       long TmpIndex = 0;
       long EffectiveDimension = this->MaximumIndices[0] - this->MinimumIndices[0] + 1l;
@@ -249,8 +262,13 @@ bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex
       sprintf (TmpString, "number of operations on node %d = %ld", (this->NbrMPINodes - 1), TrueLocalNbrOperations);	  
       if (this->LogFile != 0)
 	this->AddToLog(TmpString, true);     	  
-      delete[] this->MinimumIndices;
-      delete[] this->MaximumIndices;
+      if (this->OldMinimumIndices != NULL)
+	{
+	  delete[] this->OldMinimumIndices;
+	  delete[] this->OldMaximumIndices;
+	}
+      this->OldMinimumIndices = this->MinimumIndices;
+      this->OldMaximumIndices = this->MaximumIndices;
       this->MinimumIndices = TmpMinimumIndices;
       this->MaximumIndices = TmpMaximumIndices;
 #ifdef __MPI__      
@@ -266,6 +284,8 @@ bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex
       nbrOperationPerIndex = new int [this->MaximumIndices[0] - this->MinimumIndices[0] + 1l];      
       for (long i = this->MinimumIndices[0]; i <= this->MaximumIndices[0]; ++i)
 	nbrOperationPerIndex[i - this->MinimumIndices[0]] = TmpNbrOperationPerIndex[i];
+      cout << "After: "<< this->PrintLoadBalancing() << endl;
+
       delete[] TmpNbrOperationPerIndex;
       delete[] TmpString;
     }
@@ -274,6 +294,16 @@ bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex
       this->SendToMaster(nbrOperationPerIndex, this->MaximumIndices[this->MPIRank] - this->MinimumIndices[this->MPIRank] + 1l);
       int TmpNbrValues = 0;
       delete[] nbrOperationPerIndex;
+      if (this->OldMinimumIndices == NULL)
+	{
+	  this->OldMinimumIndices = new long[this->NbrMPINodes];
+	  this->OldMaximumIndices = new long[this->NbrMPINodes];;
+	}
+      for (int i=0; i<this->NbrMPINodes; ++i)
+	{
+	  this->OldMinimumIndices[i] = this->MinimumIndices[i];
+	  this->OldMaximumIndices[i] = this->MaximumIndices[i];
+	}
 #ifdef __MPI__      
       MPI::COMM_WORLD.Bcast(this->MinimumIndices, 2 * this->NbrMPINodes, MPI::INT, 0);
       MPI::COMM_WORLD.Bcast(this->MaximumIndices, 2 * this->NbrMPINodes, MPI::INT, 0);
@@ -300,9 +330,55 @@ bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex
 
 bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex, int memoryPerOperation, long& minIndex, long& maxIndex)
 {
-  cout << "Warning, SimpleMPIArchitecture::GetOpimizedTypicalRange with memory calculation is not fully supported" << endl;
+  cout << "Warning, SimpleMPIArchitecture::GetOptimizedTypicalRange with memory calculation is not fully supported" << endl;
   return this->GetOptimizedTypicalRange (nbrOperationPerIndex, minIndex, maxIndex);
 }
+
+// get typical range of indices on which the local architecture acts, providing the number of calculations that have to be performed per index
+// and merge lists of unique matrix elements on different nodes.
+//
+// mbrOperationPerIndex = reference on the number of calculations per index. If the return value is true, a new array will be allocated
+// minIndex = reference on the minimum index on which the local architecture can act
+// maxIndex = reference on the maximum index on which the local architecture can act (= minIndex is the 
+//            architecture doesn't support this feature)
+// realEntries = array of real interaction coefficients
+// complexEntries = array of complex interaction coefficients
+// return value = true if the range has been optimized
+bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex, long& minIndex, long& maxIndex, 
+				       SortedRealUniqueArray &realEntries, SortedComplexUniqueArray &complexEntries)
+{
+  bool Flag = true;
+  if (this->AutomaticLoadBalancing == true)
+    {
+#ifdef __MPI__      
+      Flag &= realEntries.MergeAcrossNodes(MPI::COMM_WORLD);
+      Flag &= complexEntries.MergeAcrossNodes(MPI::COMM_WORLD);
+#endif
+      if (Flag) 
+	return this->GetOptimizedTypicalRange (nbrOperationPerIndex, minIndex, maxIndex);
+      else
+	this->GetTypicalRange(minIndex, maxIndex);
+      return false;
+    }
+  else 
+    return this->GetOptimizedTypicalRange (nbrOperationPerIndex, minIndex, maxIndex);
+}
+
+
+// balance an array differently across notes (currently supporting T=int, long)
+//
+// nbrOperationPerIndex = reference on a local array holding one entry per local state prior to last call to GetOptimizedTypicalRange; on return - local array holding data for the new range of the MPIArchitecture
+// return value = true if the array has been rebalanced
+bool SimpleMPIArchitecture::RebalanceArray (int*& array) 
+{
+  return RebalanceArrayImplementation(array);
+}
+
+bool SimpleMPIArchitecture::RebalanceArray (long*& array) {
+  return RebalanceArrayImplementation(array);
+}
+
+
 
 // get the ID of the node that handles a given index
 //
@@ -510,7 +586,7 @@ bool SimpleMPIArchitecture::BroadcastToSlaves(long& value)
 
 // broadcast an integer array from master node to slave nodes
 // 
-// values = array of integesr to broadcast
+// values = array of integers to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
 
@@ -526,7 +602,7 @@ bool SimpleMPIArchitecture::BroadcastToSlaves(int* values, int nbrValues)
 
 // broadcast an integer array from master node to slave nodes
 // 
-// values = array of integesr to broadcast
+// values = array of integers to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
 
@@ -547,7 +623,7 @@ bool SimpleMPIArchitecture::BroadcastToSlaves(long* values, int nbrValues)
 // send an integer array from master node to a given slave node
 // 
 // slaveID = slave ID
-// values = array of integesr to broadcast
+// values = array of integers to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
 
@@ -564,7 +640,7 @@ bool SimpleMPIArchitecture::SendToSlaves(int slaveID, int* values, int nbrValues
 // send an integer array from master node to a given slave node
 // 
 // slaveID = slave ID
-// values = array of integesr to broadcast
+// values = array of integers to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
 
@@ -584,7 +660,7 @@ bool SimpleMPIArchitecture::SendToSlaves(int slaveID, long* values, int nbrValue
 
 // receive an integer array from master node to the given slave node
 // 
-// values = array of integesr to broadcast
+// values = array of integers to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
 
@@ -600,7 +676,7 @@ bool SimpleMPIArchitecture::ReceiveFromMaster(int* values, int& nbrValues)
 
 // receive an integer array from master node to the given slave node
 // 
-// values = array of integesr to broadcast
+// values = array of integers to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
 
@@ -620,7 +696,7 @@ bool SimpleMPIArchitecture::ReceiveFromMaster(long* values, int& nbrValues)
 
 // receive an integer array from master node to the given slave node
 // 
-// values = array of integesr to broadcast
+// values = array of integers to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
 
@@ -636,7 +712,7 @@ bool SimpleMPIArchitecture::ReceiveFromMaster(int* values, long& nbrValues)
 
 // send an integer array from the current slave node to master node
 // 
-// values = array of integesr to broadcast
+// values = array of integers to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
   
@@ -655,7 +731,7 @@ bool SimpleMPIArchitecture::SendToMaster(int* values, int nbrValues)
 
 // send an integer array from the current slave node to master node
 // 
-// values = array of integesr to broadcast
+// values = array of integers to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
   
@@ -678,7 +754,7 @@ bool SimpleMPIArchitecture::SendToMaster(long* values, int nbrValues)
 
 // send an integer array from the current slave node to master node
 // 
-// values = array of integesr to broadcast
+// values = array of integers to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
   
@@ -698,7 +774,7 @@ bool SimpleMPIArchitecture::SendToMaster(int* values, long nbrValues)
 // receive an integer array from master node to the current slave node
 // 
 // slaveID = slave ID
-// values = array of integesr to broadcast
+// values = array of integers to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
 
@@ -715,7 +791,7 @@ bool SimpleMPIArchitecture::ReceiveFromSlave(int slaveID, int* values, int& nbrV
 // receive an integer array from master node to the current slave node
 // 
 // slaveID = slave ID
-// values = array of integesr to broadcast
+// values = array of integers to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
 
@@ -736,7 +812,7 @@ bool SimpleMPIArchitecture::ReceiveFromSlave(int slaveID, long* values, int& nbr
 // receive an integer array from master node to the current slave node
 // 
 // slaveID = slave ID
-// values = array of integesr to broadcast
+// values = array of integers to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
 
@@ -752,7 +828,7 @@ bool SimpleMPIArchitecture::ReceiveFromSlave(int slaveID, int* values, long& nbr
 
 // send a double array from the current slave node to master node
 // 
-// values = array of integesr to broadcast
+// values = array of integers to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
   
@@ -772,7 +848,7 @@ bool SimpleMPIArchitecture::SendToMaster(double* values, int nbrValues)
 // receive a double array from master node to the current slave node
 // 
 // slaveID = slave ID
-// values = array of integesr to broadcast
+// values = array of integers to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
 
@@ -788,7 +864,7 @@ bool SimpleMPIArchitecture::ReceiveFromSlave(int slaveID, double* values, int& n
 
 // send a double array from the current slave node to master node
 // 
-// values = array of integesr to broadcast
+// values = array of integers to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
   
@@ -808,7 +884,7 @@ bool SimpleMPIArchitecture::SendToMaster(double* values, long nbrValues)
 // receive a double array from master node to the current slave node
 // 
 // slaveID = slave ID
-// values = array of integesr to broadcast
+// values = array of integers to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
 
@@ -826,7 +902,7 @@ bool SimpleMPIArchitecture::ReceiveFromSlave(int slaveID, double* values, long& 
 
 // send a double complex array from the current slave node to master node
 // 
-// values = array of integesr to broadcast
+// values = array of integers to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
   
@@ -846,7 +922,7 @@ bool SimpleMPIArchitecture::SendToMaster(doublecomplex* values, int nbrValues)
 // receive a double complex array from master node to the current slave node
 // 
 // slaveID = slave ID
-// values = array of integesr to broadcast
+// values = array of integers to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
 
@@ -862,7 +938,7 @@ bool SimpleMPIArchitecture::ReceiveFromSlave(int slaveID, doublecomplex* values,
 
 // send a double complex array from the current slave node to master node
 // 
-// values = array of integesr to broadcast
+// values = array of integers to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
   
@@ -882,7 +958,7 @@ bool SimpleMPIArchitecture::SendToMaster(doublecomplex* values, long nbrValues)
 // receive a double complex array from master node to the current slave node
 // 
 // slaveID = slave ID
-// values = array of integesr to broadcast
+// values = array of integers to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
 
@@ -915,7 +991,7 @@ bool SimpleMPIArchitecture::BroadcastToSlaves(double& value)
 
 // broadcast a double array from master node to slave nodes
 // 
-// values = array of integesr to broadcast
+// values = array of integers to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
 
@@ -931,7 +1007,7 @@ bool SimpleMPIArchitecture::BroadcastToSlaves(double* values, int nbrValues)
   
 // broadcast a vector on each slave node
 //
-// vector = pointer to the vector tobroadcast  (only usefull for the master node)
+// vector = pointer to the vector tobroadcast  (only useful for the master node)
 // return value = pointer to the broadcasted vector or null pointer if an error occured
 
 Vector* SimpleMPIArchitecture::BroadcastVector(Vector* vector)
@@ -1421,4 +1497,83 @@ bool SimpleMPIArchitecture::ReadVector(RealVector& vector, const char* fileName)
 bool SimpleMPIArchitecture::CanWriteOnDisk()
 {
   return this->IsMasterNode();
+}
+
+
+// balance an array differently across notes (currently supporting T=int, long)
+//
+// nbrOperationPerIndex = reference on a local array holding one entry per local state prior to last call to GetOptimizedTypicalRange; on return - local array holding data for the new range of the MPIArchitecture
+// return value = true if the array has been rebalanced
+template<typename T>
+bool SimpleMPIArchitecture::RebalanceArrayImplementation(T*& array)
+{
+  // don't do anything if the old min/max indices are not set, or are identical to the current ones
+  if (this->OldMaximumIndices == NULL)
+    return false;
+  bool Flag=false;
+  for (int i=0; i<this->NbrMPINodes; ++i)
+    if ( (this->OldMaximumIndices[i] != this->MaximumIndices[i]) || (this->OldMinimumIndices[i] != this->MinimumIndices[i]))
+      {
+	Flag=true;
+	break;
+      }
+  if (Flag == false)
+    return false;
+  // else, rebalance the arrays:
+  if (this->MasterNodeFlag == true)
+    { 
+      // gather full array on Master node
+      T* TmpArray = new T [this->MaximumIndices[this->NbrMPINodes - 1] - this->MinimumIndices[0] + 1l];
+      long TmpIndex = 0;
+      long EffectiveDimension = this->OldMaximumIndices[0] - this->OldMinimumIndices[0] + 1l;
+      long TotalEffectiveDimension = EffectiveDimension;
+      for (long i = 0l; i < EffectiveDimension; ++i)
+	{
+	  TmpArray[this->OldMinimumIndices[0] + i] = array[i];
+	}
+      TmpIndex += EffectiveDimension;      
+      for (int i = 1; i < NbrMPINodes; ++i)
+	{
+	  int TmpNbrElements = (int) (this->OldMaximumIndices[i] - this->OldMinimumIndices[i] + 1);
+	  if (TmpNbrElements < (T) (this->OldMaximumIndices[i] - this->OldMinimumIndices[i] + 1))
+	    {
+	      char errMsg[100] = "Count exceeds int maximum in RebalanceArrayImplementation.";
+	      this->AddToLog(errMsg);	      
+	    }
+	  this->ReceiveFromSlave(i - 1, TmpArray + this->OldMinimumIndices[i], TmpNbrElements);
+	  TotalEffectiveDimension += TmpNbrElements;
+	}
+      // redistribute array according to new load balancing
+      for (int i = 1; i < this->NbrMPINodes; ++i)
+	{
+	  cout << "On node "<<i<<": "<<this->MaximumIndices[i] - this->MinimumIndices[i] + 1l<<endl;
+      
+	  this->SendToSlaves(i - 1, (T*) (TmpArray + this->MinimumIndices[i]), 
+			     (int) (this->MaximumIndices[i] - this->MinimumIndices[i] + 1l));      
+	}
+      delete[] array;
+      array = new T [this->MaximumIndices[0] - this->MinimumIndices[0] + 1l];
+      cout << "On Master node: "<<this->MaximumIndices[0] - this->MinimumIndices[0] + 1l<<endl;
+      for (long i = this->MinimumIndices[0]; i <= this->MaximumIndices[0]; ++i)
+	array[i - this->MinimumIndices[0]] = TmpArray[i];
+      delete[] TmpArray;
+    }
+  else
+    {
+      this->SendToMaster(array, (int)(this->OldMaximumIndices[this->MPIRank] - this->OldMinimumIndices[this->MPIRank] + 1));
+      int TmpNbrElements = (int) (this->MaximumIndices[this->MPIRank] - this->MinimumIndices[this->MPIRank] + 1l);
+      array = new T [TmpNbrElements];
+      this->ReceiveFromMaster(array, TmpNbrElements);
+    }
+  return true;
+}
+
+// print load balancing
+ostream& SimpleMPIArchitecture::PrintLoadBalancing(ostream &Str)
+{
+  Str << "Nodes operating on ranges: ";
+  Str << "["<<this->MinimumIndices[0]<<"->"<<this->MaximumIndices[0]<<"]";
+  for (int i=1; i<this->NbrMPINodes; ++i)
+    Str << ", ["<<this->MinimumIndices[i]<<"->"<<this->MaximumIndices[i]<<"]";
+  return Str;
 }

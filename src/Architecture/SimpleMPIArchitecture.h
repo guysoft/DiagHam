@@ -82,6 +82,11 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // maximum index on which MPI nodes can act
   long* MaximumIndices;
 
+  // array of old minimum indices prior to the latest call to GetOptimizedTypicalRange
+  long* OldMinimumIndices;
+  // array of old maximum indices prior to the latest call to GetOptimizedTypicalRange
+  long* OldMaximumIndices;
+
   // name of the optional log file to allow code profiling on MPI architecture
   char* LogFile;
   // flag to indicate if the log file option is activated
@@ -141,6 +146,26 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   //            architecture doesn't support this feature)
   // return value = true if the range has been optimized
   virtual bool GetOptimizedTypicalRange (int*& nbrOperationPerIndex, int memoryPerOperation, long& minIndex, long& maxIndex);
+
+  // get typical range of indices on which the local architecture acts, providing the number of calculations that have to be performed per index
+  // and merge lists of unique matrix elements on different nodes.
+  //
+  // mbrOperationPerIndex = reference on the number of calculations per index. If the return value is true, a new array will be allocated
+  // minIndex = reference on the minimum index on which the local architecture can act
+  // maxIndex = reference on the maximum index on which the local architecture can act (= minIndex is the 
+  //            architecture doesn't support this feature)
+  // realEntries = array of real interaction coefficients
+  // complexEntries = array of complex interaction coefficients
+  // return value = true if the range has been optimized
+  virtual bool GetOptimizedTypicalRange (int*& nbrOperationPerIndex, long& minIndex, long& maxIndex, 
+					 SortedRealUniqueArray &realEntries, SortedComplexUniqueArray &complexEntries);
+
+  // balance an array differently across notes (currently supporting T=int, long)
+  //
+  // nbrOperationPerIndex = reference on a local array holding one entry per local state prior to last call to GetOptimizedTypicalRange; on return - local array holding data for the new range of the MPIArchitecture
+  // return value = true if the array has been rebalanced
+  virtual bool RebalanceArray (int*& array);
+  virtual bool RebalanceArray (long*& array);
 
   // get the ID of the node that handles a given index
   //
@@ -525,6 +550,18 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // return value = true if no error occurs
   virtual bool ReadVector(RealVector& vector, const char* fileName);
 
+ protected:
+
+  // balance an array differently across notes (currently supporting T=int, long)
+  //
+  // nbrOperationPerIndex = reference on a local array holding one entry per local state prior to last call to GetOptimizedTypicalRange; on return - local array holding data for the new range of the MPIArchitecture
+  // return value = true if the array has been rebalanced
+  template<typename T>
+  bool RebalanceArrayImplementation (T*& array);
+
+  // print load balancing
+  ostream& PrintLoadBalancing(ostream &Str = std::cout);
+
 };
 // indicate if the local node is the master node
 // 
@@ -553,7 +590,7 @@ inline bool SimpleMPIArchitecture::VerboseMode()
   return this->VerboseModeFlag;
 }
 
-// add current vector to the one of the master nide
+// add current vector to the one of the master node
 // 
 // vector = reference on the vector to add (or the destination vector of the master node)
 // return value = reference on the vector

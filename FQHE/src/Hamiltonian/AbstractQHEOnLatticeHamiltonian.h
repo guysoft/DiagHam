@@ -76,7 +76,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
 #ifndef ABSTRACTQHEONLATTICEHAMILTONIAN_LONGINDEX
   typedef unsigned short ElementIndexType;
 #else
-  typedef unsigned ElementIndexType;
+  typedef int ElementIndexType;
 #endif
 
   const ElementIndexType MaxElementIndex;
@@ -1135,7 +1135,7 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplication
   //cout <<"Index " << index<<endl;
   int qi, qf;
   int Index2;
-  unsigned tmpElementPos;
+  ElementIndexType tmpElementPos;
   double Coefficient;
   int Dim = this->Particles->GetHilbertSpaceDimension();
   int AbsoluteIndex = index + this->PrecalculationShift;
@@ -1208,7 +1208,7 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 										 int* indexArray, ElementIndexType* coefficientIndexArray, int& positionR, int & positionC)
 {
   int Index2;
-  unsigned tmpElementPos;
+  ElementIndexType tmpElementPos;
   double Coefficient;
   int Dim = this->Particles->GetHilbertSpaceDimension();
   
@@ -1318,10 +1318,12 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 			    {
 			      cout << "Error: element "<<Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors]<<" not present in complex array F for q1= " << this->Q1Value[i12] << ", q2= "<< this->Q2Value[i12]<<", q3= "<<TmpQ3Values[i34]<<", q4="<<TmpQ4Values[i34]<<endl;
 			      if (ComplexInteractionCoefficients.CarefulSearchElement(Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors], tmpElementPos, 100.))
-				cout << "Careful search successful: "<<tmpElementPos<<endl;
+				cout << "Careful search successful: "<<tmpElementPos<<" with "<<ComplexInteractionCoefficients[tmpElementPos]<<" accuracy = "<< Norm(ComplexInteractionCoefficients[tmpElementPos] - Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors])<<endl;
 			      else
-				cout << "Careful search failed, as well."<<endl;
-			      exit(1);
+				{
+				  cout << "Careful search failed, as well."<<endl;
+				  exit(1);
+				}
 			    }
 #else
 			  tmpElementPos = ComplexInteractionCoefficients.InsertElement

@@ -1285,6 +1285,7 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyFast
   int k = firstComponent;
   firstComponent -= this->PrecalculationShift;
   lastComponent -= this->PrecalculationShift;
+  // cout << "firstComponent="<<firstComponent<<", lastComponent="<< lastComponent<<endl;
   for (int i = firstComponent; i < lastComponent; ++i, ++k)
     {
       TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
@@ -2531,11 +2532,31 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
   QHEParticlePrecalculationOperationWithMatrixElements Operation(this, true, /* tolerance = */ 50.*MACHINE_PRECISION);
   Operation.ApplyOperation(this->Architecture);
   Operation.GetMatrixElements(this->RealInteractionCoefficients, this->ComplexInteractionCoefficients);
+
+  // adapt load balancing for memory:
+  if (this->Architecture->GetOptimizedTypicalRange(this->NbrComplexInteractionPerComponent, MinIndex, MaxIndex, this->RealInteractionCoefficients, this->ComplexInteractionCoefficients) == true)
+    {
+      this->PrecalculationShift = (int) MinIndex;
+      EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+      // balance secondary arrays
+      this->Architecture->RebalanceArray(NbrRealInteractionPerComponent);
+      // cout << "distributed calculations successfully reoptimized" << endl;
+    }
+  if (allowedMemory == 0l)
+    {
+      delete[] this->NbrRealInteractionPerComponent;
+      delete[] this->NbrComplexInteractionPerComponent;
+      this->NbrRealInteractionPerComponent = 0;
+      this->NbrComplexInteractionPerComponent = 0;
+      return 0l;
+    }
+
 #else
   QHEParticlePrecalculationOperation Operation(this);
   Operation.ApplyOperation(this->Architecture);
 #endif
   long Memory = 0;
+  
    
   for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
     {

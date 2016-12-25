@@ -33,6 +33,10 @@
 
 #include "config.h"
 
+#ifdef __MPI__
+#include <mpi.h>
+#endif
+
 #include "GeneralTools/GarbageFlag.h"
 #include "MathTools/Complex.h"
 
@@ -45,30 +49,47 @@ using std::ifstream;
 class SortedRealUniqueArray
 {
  protected:
+  // define the type of indices - int is best for MPI routines
+  typedef int ElementIndexType;
+
   // array with elements
   double *Elements;
   // tolerance for taking elements to be the same, and its square
   double Tolerance;
   // size of array
-  unsigned InternalSize;
+  ElementIndexType InternalSize;
   // number of elements stored
-  unsigned NbrElements;
+  ElementIndexType NbrElements;
 
   // garbage flag
   GarbageFlag Flag;
 
   // flag indicating how many entries have been sorted
-  unsigned Sorted;
+  ElementIndexType Sorted;
+  
+  // Universal ID, for some checking of MPI communications
+  static const int UniversalID = 31415;
 
   // flag indicating whether to keep elements sorted
   bool KeepSorted;
 
  public:
   // standard constructor
-  SortedRealUniqueArray(double tolerance = MACHINE_PRECISION, unsigned internalSize=128, bool keepSorted=true);
+  SortedRealUniqueArray(double tolerance = MACHINE_PRECISION, ElementIndexType internalSize=128, bool keepSorted=true);
 
   // copy constructor
   SortedRealUniqueArray(SortedRealUniqueArray &array, bool duplicateFlag = false);
+
+#ifdef __MPI__
+
+  // constructor array from informations sent using MPI
+  //
+  // communicator = reference on the communicator to use 
+  // id = id of the MPI process which broadcasts or sends the array
+  // broadcast = true if the vector is broadcasted  
+  SortedRealUniqueArray(MPI::Intracomm& communicator, int id, bool broadcast = false);
+
+#endif
 
   // destructor
   ~SortedRealUniqueArray();
@@ -76,24 +97,24 @@ class SortedRealUniqueArray
   // Insert element
   // element = new element to be inserted
   // returns : index of this element  
-  unsigned InsertElement(const double &element);
+  ElementIndexType InsertElement(const double &element);
 
   // search entry
   // value = value to be searched for
   // @param[out] index : index of the element, or -1 if not found
   // return : true if element was found, false otherwise.
-  bool SearchElement(const double &value, unsigned &index);
+  bool SearchElement(const double &value, ElementIndexType &index);
 
   // get number of elements
-  unsigned GetNbrElements(){ return NbrElements;}
+  ElementIndexType GetNbrElements(){ return NbrElements;}
 
   // empty all elements
   // disallocate = flag indicating whether all memory should be unallocated
   // internalSize = minimum table size to allocate (only used if disallocating)
-  void Empty(bool disallocate = false, unsigned internalSize = 100);
+  void Empty(bool disallocate = false, ElementIndexType internalSize = 100);
 
   // Access an element
-  double& operator [] (unsigned i);
+  double& operator [] (ElementIndexType i);
 
   // Sort the entries
   void SortEntries();
@@ -109,6 +130,12 @@ class SortedRealUniqueArray
   // result: true if all entries are found, false otherwise
   bool TestAllEntries();
 
+  // Resize array to new internal size
+  //
+  // dimension = new dimension
+  void IncreaseInternalSize (ElementIndexType size);
+
+
   // Write to file
   // file = open stream to write to
   void WriteArray(ofstream &file);
@@ -118,10 +145,45 @@ class SortedRealUniqueArray
   void ReadArray(ifstream &file);
    
   // Test object
-  static void TestClass(unsigned samples=2048, bool keepSorted=true);
+  static void TestClass(ElementIndexType samples=2048, bool keepSorted=true);
 
   // output stream overload
   friend ostream& operator << (ostream& Str, const SortedRealUniqueArray &A);
+
+#ifdef __MPI__
+
+  // create a new vector on given MPI node which is an exact clone of the sent one but with only part of the data
+  // 
+  // communicator = reference on the communicator to use
+  // id = id of the destination MPI process
+  // return value = reference on the current array
+
+  void SendClone(MPI::Intracomm& communicator, int id);
+
+  // send entries to a given MPI process
+  // 
+  // communicator = reference on the communicator to use
+  // id = id of the destination MPI process
+  // return value = reference on the current vector
+
+  void SendArray(MPI::Intracomm& communicator, int id);
+
+  // broadcast a vector to all MPI processes associated to the same communicator
+  // 
+  // communicator = reference on the communicator to use 
+  // id = id of the MPI process which broadcasts the vector
+  // return value = true if operation was successful
+
+  bool BroadcastArray(MPI::Intracomm& communicator,  int id);
+    
+  // merge all data on master node and broadcast to clones
+  // 
+  // communicator = reference on the communicator to use 
+  // return value = reference on the current vector
+  
+  bool MergeAcrossNodes(MPI::Intracomm& communicator);
+
+#endif // end MPI interface
 
 };
 
@@ -130,7 +192,7 @@ class SortedRealUniqueArray
 //
 // i = coordinate position
 
-inline double& SortedRealUniqueArray::operator [] (unsigned i)
+inline double& SortedRealUniqueArray::operator [] (ElementIndexType i)
 {
   return this->Elements[i];
 }

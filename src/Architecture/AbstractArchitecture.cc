@@ -33,6 +33,8 @@
 #include "Architecture/AbstractArchitecture.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
+#include "GeneralTools/SortedRealUniqueArray.h"
+#include "GeneralTools/SortedComplexUniqueArray.h"
 
 #include <sys/time.h>
 #include <string.h>
@@ -103,6 +105,26 @@ bool AbstractArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex,
   this->GetTypicalRange (minIndex, maxIndex);
   return false;
 }
+
+
+// get typical range of indices on which the local architecture acts, providing the number of calculations that have to be performed per index
+// and merge lists of unique matrix elements on different nodes.
+//
+// mbrOperationPerIndex = reference on the number of calculations per index. If the return value is true, a new array will be allocated
+// minIndex = reference on the minimum index on which the local architecture can act
+// maxIndex = reference on the maximum index on which the local architecture can act (= minIndex is the 
+//            architecture doesn't support this feature)
+// realEntries = array of real interaction coefficients
+// complexEntries = array of complex interaction coefficients
+// return value = true if the range has been optimized
+bool AbstractArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex, long& minIndex, long& maxIndex, 
+				       SortedRealUniqueArray &realEntries, SortedComplexUniqueArray &complexEntries)
+
+{
+  this->GetTypicalRange (minIndex, maxIndex);
+  return false;
+}
+
   
 // get a new real vector with memory alloaction depending on the architecture
 //

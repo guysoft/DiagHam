@@ -46,6 +46,7 @@ using std::ifstream;
 class RealUniqueArray
 {
  protected:
+  
   // array with elements
   double *Elements;
   // size of array
