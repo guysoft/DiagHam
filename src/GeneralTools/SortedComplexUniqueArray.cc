@@ -43,11 +43,13 @@ using std::endl;
 using std::max;
 
 // flag for testing
-//#define TESTING_SCUA
+#define TESTING_SCUA
 
 // standard constructor
 SortedComplexUniqueArray::SortedComplexUniqueArray(double tolerance, ElementIndexType internalSize, bool keepSorted)
 {
+  if (internalSize<=0)
+    internalSize = 4;
   this->InternalSize=internalSize;
   this->ToleranceSqr=tolerance*tolerance;
   this->NbrElements=0;
@@ -145,7 +147,10 @@ SortedComplexUniqueArray::ElementIndexType SortedComplexUniqueArray::InsertEleme
 {
   ElementIndexType index;
   if (this->SearchElement(element, index))
-    return index;
+    {
+      //cout << "Found element"<<element<<" as index "<<index<<endl;
+      return index;
+    }
   // element not found
   if (NbrElements < InternalSize)
     {
@@ -227,7 +232,7 @@ bool SortedComplexUniqueArray::SearchElement(const Complex &value, ElementIndexT
 	    } 
 	  PosMid = (PosMin + PosMax) >> 1;
 	  CurrentState = this->Elements[PosMid];
-	  //cout << "PosMid="<<PosMid<<", CurrentState="<<CurrentState<<", PosMin="<<PosMin<<", PosMax="<<PosMax<< endl;
+	  // cout << "PosMid="<<PosMid<<", CurrentState="<<CurrentState<<", PosMin="<<PosMin<<", PosMax="<<PosMax<< endl;
 	}
       if (SqrNorm(CurrentState - value) < this->ToleranceSqr)
 	{
@@ -250,6 +255,7 @@ bool SortedComplexUniqueArray::SearchElement(const Complex &value, ElementIndexT
 	    }
 	}
     }
+  // cout << "Sequential search from "<<start<<", this->NbrElements="<<this->NbrElements<<endl;
   for (ElementIndexType i=start; i<this->NbrElements; ++i)
     {
       if (SqrNorm(Elements[i]-value)<this->ToleranceSqr)
@@ -259,6 +265,7 @@ bool SortedComplexUniqueArray::SearchElement(const Complex &value, ElementIndexT
 	}
     }
   // element not found
+  // cout << "element not found"<<endl;
   index = 0;
   return false;
 }
@@ -702,14 +709,15 @@ void TestClassSortedComplexUniqueArray(SortedComplexUniqueArray::ElementIndexTyp
   double randNorm=1.0/(double)RAND_MAX;
 
   double precision = 1e-13;
-  SortedComplexUniqueArray a1(samples>>1, precision, keepSorted);
-  SortedComplexUniqueArray a2(samples>>1, precision, keepSorted);
+  SortedComplexUniqueArray a1(precision, samples>>1, keepSorted);
+  SortedComplexUniqueArray a2(precision, samples>>1, keepSorted);
   
   // insert half the elements as independent numbers
   for (int i=0; i<samples; ++i)
     {
       a1.InsertElement( Complex(randNorm*(double)std::rand(),randNorm*(double)std::rand()) );
       a2.InsertElement( Complex(randNorm*(double)std::rand(),randNorm*(double)std::rand()) );
+      // cout << "a1.GetNbrElements()="<<a1.GetNbrElements()<<endl;
     }
   // count identical entries
   SortedComplexUniqueArray::ElementIndexType common=0, index;
@@ -735,6 +743,9 @@ void TestClassSortedComplexUniqueArray(SortedComplexUniqueArray::ElementIndexTyp
   SortedComplexUniqueArray a3(a1, true);
   SortedComplexUniqueArray a4(a2, true);
   
+  cout << "Copied array 3 has "<< a3.GetNbrElements() <<" entries"<<endl;
+  cout << "Copied array 4 has "<< a4.GetNbrElements() <<" entries"<<endl;
+
   a3.MergeArray(a2);
 
   cout << "Merged array has "<< a3.GetNbrElements() <<" entries"<<endl;

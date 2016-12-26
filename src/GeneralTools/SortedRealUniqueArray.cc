@@ -48,6 +48,8 @@ using std::max;
 // standard constructor
 SortedRealUniqueArray::SortedRealUniqueArray(double tolerance, ElementIndexType internalSize, bool keepSorted)
 {
+  if (internalSize<=0)
+    internalSize=4;
   this->InternalSize=internalSize;
   this->Tolerance=tolerance;
   this->NbrElements=0;
@@ -577,14 +579,16 @@ bool SortedRealUniqueArray::MergeAcrossNodes(MPI::Intracomm& communicator)
 }
 
 
+#endif
+
 // Test object
 void TestClassSortedRealUniqueArray(SortedRealUniqueArray::ElementIndexType samples, bool keepSorted)
 {
   double randNorm=1.0/(double)RAND_MAX;
   
   double precision = 1e-13;
-  SortedRealUniqueArray a1(samples>>1, precision, keepSorted);
-  SortedRealUniqueArray a2(samples>>1, precision, keepSorted);
+  SortedRealUniqueArray a1(precision, samples>>1, keepSorted);
+  SortedRealUniqueArray a2(precision, samples>>1, keepSorted);
   
   // insert half the elements as independent numbers
   for (int i=0; i<samples; ++i)
@@ -679,4 +683,4 @@ void TestClassSortedRealUniqueArray(SortedRealUniqueArray::ElementIndexType samp
 }
 
 
-#endif
+
