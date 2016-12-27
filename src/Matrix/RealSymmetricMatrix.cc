@@ -469,7 +469,7 @@ void RealSymmetricMatrix::SetMatrixElement(int i, int j, double x)
 	}
       long Tmp = ((long) j); 
       Tmp -= (((long) i) * (((long) i) + 1l)) / 2l - ((long) i) * ((long) (this->NbrRow + this->Increment - 1)) + 1l;
-      this->OffDiagonalElements[j] = x;
+      this->OffDiagonalElements[Tmp] = x;
     }
 }
 
@@ -496,7 +496,7 @@ void RealSymmetricMatrix::SetMatrixElement(int i, int j, const Complex& x)
 	}
       long Tmp = ((long) j); 
       Tmp -= (((long) i) * (((long) i) + 1l)) / 2l - ((long) i) * ((long) (this->NbrRow + this->Increment - 1)) + 1l;
-      this->OffDiagonalElements[j] = Real(x);
+      this->OffDiagonalElements[Tmp] = Real(x);
     }
 }
 
@@ -580,7 +580,7 @@ void RealSymmetricMatrix::GetMatrixElement(int i, int j, Complex& x) const
 	}
       long Tmp = ((long) j); 
       Tmp -= (((long) i) * (((long) i) + 1l)) / 2l - ((long) i) * ((long) (this->NbrRow + this->Increment - 1)) + 1l;
-      x.Re = this->OffDiagonalElements[j];
+      x.Re = this->OffDiagonalElements[Tmp];
     }
 }
 
@@ -609,7 +609,7 @@ void RealSymmetricMatrix::AddToMatrixElement(int i, int j, double x)
 	}
       long Tmp = ((long) j); 
       Tmp -= (((long) i) * (((long) i) + 1l)) / 2l - ((long) i) * ((long) (this->NbrRow + this->Increment - 1)) + 1l;
-      this->OffDiagonalElements[j] += x;
+      this->OffDiagonalElements[Tmp] += x;
     }
 }
 
@@ -643,8 +643,9 @@ double& RealSymmetricMatrix::operator () (int i, int j)
 	  j = i;
 	  i = tmp;
 	}
-      j -= (i * (i + 1)) / 2 - i * (this->NbrRow + this->Increment - 1) + 1;
-      return this->OffDiagonalElements[j];
+      long Tmp = ((long) j); 
+      Tmp -= (((long) i) * (((long) i) + 1l)) / 2l - ((long) i) * ((long) (this->NbrRow + this->Increment - 1)) + 1l;
+      return this->OffDiagonalElements[Tmp];
     }
 }
 
@@ -665,13 +666,13 @@ void RealSymmetricMatrix::Resize (int nbrRow, int nbrColumn)
       return;
     }
   double* TmpDiag = new double [nbrRow];
-  int Tot = (nbrRow * (nbrRow - 1)) / 2;
+  long Tot = (((long) nbrRow) * (((long) nbrRow) - 1l)) / 2l;
   double* TmpOffDiag = new double [Tot];
   for (int i = 0; i < this->NbrRow; i++)
     TmpDiag [i] = this->DiagonalElements[i];
   for (int i = this->NbrRow; i < nbrRow; i++)
     TmpDiag [i]  = 0.0;
-  int k = 0;
+  long k = 0l;
   int l = 0;
   for (int i = 0; i < (this->NbrRow - 1); i++)
     {
@@ -683,7 +684,7 @@ void RealSymmetricMatrix::Resize (int nbrRow, int nbrColumn)
 	  TmpOffDiag[k++] = 0.0;
 	}      
     }
-  for (int i = this->NbrRow * (this->NbrRow - 1); i < Tot; i++)
+  for (long i = (((long) this->NbrRow) * (((long) this->NbrRow) - 1l)); i < Tot; i++)
     TmpOffDiag[i] = 0.0;
   if (this->OffDiagonalGarbageFlag != 0)
     {
@@ -731,19 +732,19 @@ void RealSymmetricMatrix::ResizeAndClean (int nbrRow, int nbrColumn)
     {
       if (this->NbrRow < nbrRow)
 	{
-	  int Tot = (nbrRow * (nbrRow - 1));
+	  long Tot = (((long) nbrRow) * (((long) nbrRow) - 1l));
 	  for (int i = this->NbrRow; i < nbrRow; i++)
 	    this->DiagonalElements[i] = 0.0;
-	  int k = (this->NbrRow - 1);
+	  long k = (((long) this->NbrRow) - 1l);
 	  for (int i = 0; i < (this->NbrRow - 1); i++)
 	    {
 	      for (int j = this->NbrRow; j < nbrRow; j++)
 		{
 		  this->OffDiagonalElements[k++] = 0.0;
 		}
-	      k += (this->NbrRow - 2 - i);
+	      k += (((long) this->NbrRow) - 2l - ((long) i));
 	    }
-	  for (int i = this->NbrRow * (this->NbrRow - 1); i < Tot; i++)
+	  for (long i = ((long) this->NbrRow) * (((long) this->NbrRow) - 1l); i < Tot; i++)
 	    this->OffDiagonalElements[i] = 0.0;
 	}
       this->NbrRow = nbrRow;
@@ -752,25 +753,25 @@ void RealSymmetricMatrix::ResizeAndClean (int nbrRow, int nbrColumn)
       return;
     }
   double* TmpDiag = new double [nbrRow];
-  int Tot = (nbrRow * (nbrRow - 1)) / 2;
+  long Tot = (((long) nbrRow) * (((long) nbrRow) - 1l)) / 2l;
   double* TmpOffDiag = new double [Tot];
   for (int i = 0; i < this->NbrRow; i++)
     TmpDiag [i] = this->DiagonalElements[i];
   for (int i = this->NbrRow; i < nbrRow; i++)
     TmpDiag [i]  = 0.0;
-  int k = 0;
-  int l = 0;
+  long k = 0l;
+  long l = 0;
   for (int i = 0; i < (this->NbrRow - 1); i++)
     {
       for (int j = i + 1; j < this->NbrRow; j++)
 	TmpOffDiag[k++] = this->OffDiagonalElements[l++];
-      l += this->Increment;
+      l += ((long) this->Increment);
       for (int j = this->NbrRow; j < nbrRow; j++)
 	{
 	  TmpOffDiag[k++] = 0.0;
 	}      
     }
-  for (int i = (this->NbrRow * (this->NbrRow - 1)) / 2; i < Tot; i++)
+  for (long i = (((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l; i < Tot; i++)
     TmpOffDiag[i] = 0.0;
   if (this->OffDiagonalGarbageFlag != 0)
     {

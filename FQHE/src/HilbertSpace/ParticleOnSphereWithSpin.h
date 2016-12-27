@@ -930,6 +930,35 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // nbrComponents = number of consecutive components to compute
   virtual void TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis, long firstComponent = 0l, long nbrComponents = 0l);
 
+  // symmetrized a product of two decoupled states 
+  //
+  // outputVector = reference on the vector which will contain the symmetrized state
+  // leftVector = reference on the vector associated to the first color
+  // rightVector = reference on the vector associated to the second color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // rightSpace = pointer to the Hilbert space of the second color
+  // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+  // return value = symmetrized state
+  virtual RealVector SymmetrizeSU2SU2State (RealVector& leftVector, RealVector& rightVector, ParticleOnSphereWithSpin* leftSpace, 
+					    ParticleOnSphereWithSpin* rightSpace, bool unnormalizedBasisFlag = false, 
+					    AbstractArchitecture* architecture = 0);
+  
+  // symmetrized a product of two decoupled states, core part
+  //
+  // outputVector = reference on the vector which will contain the symmetrized state
+  // leftVector = reference on the vector associated to the first color
+  // rightVector = reference on the vector associated to the second color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // rightSpace = pointer to the Hilbert space of the second color
+  // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+  // firstComponent = index of the first component
+  // nbrComponents = number of components to symmetrize
+  // return value = symmetrized state
+  virtual void SymmetrizeSU2SU2StateCore (RealVector& symmetrizedVector, RealVector& leftVector, RealVector& rightVector, 
+					  ParticleOnSphereWithSpin* leftSpace, ParticleOnSphereWithSpin* rightSpace, 
+					  bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents);
+
+
 };
 
 #endif

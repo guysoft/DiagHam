@@ -40,6 +40,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "show-minmaxlza", "show minimum an maximum Lz value that can be reached");
   (*SystemGroup) += new BooleanOption ('\n', "show-counting", "show degeneracy counting for each Lz value");
   (*SystemGroup) += new BooleanOption ('\n', "particle-entanglement", "compute particle entanglement spectrum");
+  (*SystemGroup) += new BooleanOption ('\n', "discrete-symmetries", "the reduced density matrix spectrum includes discrete symmetry information such as Sz<->-Sz");
   (*SystemGroup) += new BooleanOption ('\n', "ls-sorted", "for the particle entanglement spectrum with su2-spin on the sphere, sort the spectrum with respect to L and S");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -384,7 +385,20 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  int* LzValues = DensityMatrix.GetAsIntegerArray(4);
+	  int* LzValues = 0;
+	  if (Manager.GetBoolean("discrete-symmetries") == false)
+	    {
+	      LzValues = DensityMatrix.GetAsIntegerArray(4);
+	    }
+	  else
+	    {
+	      LzValues = DensityMatrix.GetAsIntegerArray(5);
+	    }
+	  int* SzSymmetryValues = 0;
+	  if (Manager.GetBoolean("discrete-symmetries") == true)
+	    {
+	      SzSymmetryValues = DensityMatrix.GetAsIntegerArray(2);
+	    }
 	  int* SzValues = DensityMatrix.GetAsIntegerArray(1);
 	  int** SzaLzaValueArray = 0;
 	  long Index = 0l;
@@ -394,19 +408,48 @@ int main(int argc, char** argv)
 	  
 	  if (Index < MaxIndex)
 	    {
-	      double* Coefficients = DensityMatrix.GetAsDoubleArray(5);
+	      double* Coefficients = 0;
+	      if (Manager.GetBoolean("discrete-symmetries") == false)
+		{
+		  Coefficients = DensityMatrix.GetAsDoubleArray(5);
+		}
+	      else
+		{
+		  Coefficients = DensityMatrix.GetAsDoubleArray(6);
+		}
 	      char* OutputFileName = Manager.GetString("output");
 	      if (OutputFileName == 0)
 		{
 		  char* TmpExtension = new char[256];
-		  sprintf(TmpExtension, "na_%d.parentspec", NbrParticlesInPartition);
-		  if (strcasestr(Manager.GetString("density-matrix"), "bz2") == 0)
+		  if (strcasestr(Manager.GetString("density-matrix"), "realent") == 0)
 		    {
-		      OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.parent", TmpExtension);
+		      sprintf(TmpExtension, "na_%d.parentspec", NbrParticlesInPartition);
 		    }
 		  else
 		    {
-		      OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.parent.bz2", TmpExtension);
+		      sprintf(TmpExtension, "na_%d.realentspec", NbrParticlesInPartition);
+		    }
+		  if (strcasestr(Manager.GetString("density-matrix"), "bz2") == 0)
+		    {
+		      if (strcasestr(Manager.GetString("density-matrix"), "realent") == 0)
+			{
+			  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.parent", TmpExtension);
+			}
+		      else
+			{
+			  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.realent", TmpExtension);
+			}
+		    }
+		  else
+		    {
+		      if (strcasestr(Manager.GetString("density-matrix"), "realent") == 0)
+			{
+			  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.parent.bz2", TmpExtension);
+			}
+		      else
+			{
+			  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.realent.bz2", TmpExtension);
+			}
 		    }
 		}
 	      ofstream File;
@@ -414,23 +457,52 @@ int main(int argc, char** argv)
 	      File.precision(14);
 	      if (Manager.GetBoolean("ls-sorted") == false)
 		{
-		  File << "# na sz lz lambda -log(lambda)";
+		  if (Manager.GetBoolean("discrete-symmetries") == false)
+		    {
+		      File << "# na sz lz lambda -log(lambda)";
+		    }
+		  else
+		    {
+		      File << "# na sz sz<->-sz lz lambda -log(lambda)";
+		    }
 		  File << endl;
 		  int TmpIndex = Index;
-		  while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
+		  if (Manager.GetBoolean("discrete-symmetries") == false)
 		    {
-		      double Tmp = Coefficients[Index];
-		      if (Tmp > Error)
+		      while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
 			{
-			  int TmpLza = LzValues[Index];
-			  File << NbrParticlesInPartition << " " << (0.5 * SzValues[Index]) << " " << (0.5 * TmpLza) << " " << Tmp << " " << (-log(Tmp));
-			  File << endl;
-			  if (TmpLza < MinLza)
-			    MinLza = TmpLza;
-			  if (TmpLza > MaxLza)
-			    MaxLza = TmpLza;
+			  double Tmp = Coefficients[Index];
+			  if (Tmp > Error)
+			    {
+			      int TmpLza = LzValues[Index];
+			      File << NbrParticlesInPartition << " " << (0.5 * SzValues[Index]) << " " << (0.5 * TmpLza) << " " << Tmp << " " << (-log(Tmp));
+			      File << endl;
+			      if (TmpLza < MinLza)
+				MinLza = TmpLza;
+			      if (TmpLza > MaxLza)
+				MaxLza = TmpLza;
+			    }
+			  ++Index;
 			}
-		      ++Index;
+		    }
+		  else
+		    {
+		      while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
+			{
+			  double Tmp = Coefficients[Index];
+			  if (Tmp > Error)
+			    {
+			      int TmpLza = LzValues[Index];
+			      File << NbrParticlesInPartition << " " << (0.5 * SzValues[Index]) << " " << SzSymmetryValues[Index] << " " 
+				   << (0.5 * TmpLza) << " " << Tmp << " " << (-log(Tmp));
+			      File << endl;
+			      if (TmpLza < MinLza)
+				MinLza = TmpLza;
+			      if (TmpLza > MaxLza)
+				MaxLza = TmpLza;
+			    }
+			  ++Index;
+			}
 		    }
 		  SzaLzaValueArray = new int* [NbrParticlesInPartition + 1];
 		  for (int TmpSza = 0; TmpSza <= NbrParticlesInPartition; ++TmpSza)

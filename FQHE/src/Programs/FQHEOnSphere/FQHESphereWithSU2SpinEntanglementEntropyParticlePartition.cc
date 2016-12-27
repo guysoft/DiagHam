@@ -908,13 +908,14 @@ int main(int argc, char** argv)
 			  if (DensityMatrixFileName == 0)
 			    {
 			      TmpBlockFileName = new char[256];
-			      sprintf (TmpBlockFileName, "densitymatrix_na_%d_lza_%d_sza_%d.mat", SubsystemNbrParticles, SubsystemTotalLz, SubsystemTotalSz);		  
+			      sprintf (TmpBlockFileName, "densitymatrix_na_%d_lza_%d_sza_%d_szasym_%d.mat", SubsystemNbrParticles, SubsystemTotalLz, 
+				       SubsystemTotalSz, SubsystemSzSymmetrySector);		  
 			    }
 			  else
 			    {
 			      TmpBlockFileName = new char[strlen(DensityMatrixFileName) + 256];
-			      sprintf (TmpBlockFileName, "%s_na_%d_lza_%d_sza_%d.mat", DensityMatrixFileName, SubsystemNbrParticles, SubsystemTotalLz, 
-				       SubsystemTotalSz);
+			      sprintf (TmpBlockFileName, "%s_na_%d_lza_%d_sza_%d_szasym_%d.mat", DensityMatrixFileName, SubsystemNbrParticles, SubsystemTotalLz, 
+				       SubsystemTotalSz, SubsystemSzSymmetrySector);
 			    }
 			  if (PartialDensityMatrix.WriteMatrix(TmpBlockFileName) == false)
 			    {

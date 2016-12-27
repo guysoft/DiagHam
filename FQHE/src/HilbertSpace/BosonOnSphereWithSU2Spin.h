@@ -532,6 +532,21 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // return value = true if no error occured
   virtual bool WriteHilbertSpace (char* fileName);
 
+  // symmetrized a product of two decoupled states, core part
+  //
+  // outputVector = reference on the vector which will contain the symmetrized state
+  // leftVector = reference on the vector associated to the first color
+  // rightVector = reference on the vector associated to the second color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // rightSpace = pointer to the Hilbert space of the second color
+  // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+  // firstComponent = index of the first component
+  // nbrComponents = number of components to symmetrize
+  // return value = symmetrized state
+  virtual void SymmetrizeSU2SU2StateCore (RealVector& symmetrizedVector, RealVector& leftVector, RealVector& rightVector, 
+					  ParticleOnSphereWithSpin* leftSpace, ParticleOnSphereWithSpin* rightSpace, 
+					  bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents);
+
  protected:
   
   // read Hilbert space description to disk

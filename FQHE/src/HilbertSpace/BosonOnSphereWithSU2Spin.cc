@@ -3526,3 +3526,74 @@ RealVector BosonOnSphereWithSU2Spin::ConvertFromNbodyBasis(RealVector& state, Pa
   return TmpVector;
 }
   
+// symmetrized a product of two decoupled states, core part
+//
+// outputVector = reference on the vector which will contain the symmetrized state
+// leftVector = reference on the vector associated to the first color
+// rightVector = reference on the vector associated to the second color
+// leftSpace = pointer to the Hilbert space of the first color
+// rightSpace = pointer to the Hilbert space of the second color
+// unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+// firstComponent = index of the first component
+// nbrComponents = number of components to symmetrize
+// return value = symmetrized state
+
+void BosonOnSphereWithSU2Spin::SymmetrizeSU2SU2StateCore (RealVector& symmetrizedVector, RealVector& leftVector, RealVector& rightVector, 
+							  ParticleOnSphereWithSpin* leftSpace, ParticleOnSphereWithSpin* rightSpace, 
+							  bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents)
+{
+  BosonOnSphereWithSU2Spin* TmpRightSpace = (BosonOnSphereWithSU2Spin*) rightSpace;
+  BosonOnSphereWithSU2Spin* TmpLeftSpace = (BosonOnSphereWithSU2Spin*) leftSpace;
+  long LastComponent = long(firstComponent + nbrComponents);
+  double* LogFactorials = new double [this->NbrBosons + 1];
+  LogFactorials[0] = 0.0;
+  LogFactorials[1] = 0.0;
+  for (int i = 2; i <= this->NbrBosons; ++i)
+    {
+      LogFactorials[i] = LogFactorials[i - 1] + log((double) i);
+    }
+  unsigned long TmpFinalStateUp;
+  unsigned long TmpFinalStateDown;
+
+  for (long i = (long) firstComponent; i < LastComponent; ++i)
+    {
+      TmpLeftSpace->FermionToBoson(TmpLeftSpace->StateDescriptionUp[i], TmpLeftSpace->StateDescriptionDown[i], 
+				   TmpLeftSpace->TemporaryStateUp, TmpLeftSpace->TemporaryStateDown);
+      double TmpLogFactor1 = 0.0;
+      for (int k = 0; k <= TmpLeftSpace->LzMax; ++k)
+	{
+	  TmpLogFactor1 -= LogFactorials[TmpLeftSpace->TemporaryStateUp[k]];
+	  TmpLogFactor1 -= LogFactorials[TmpLeftSpace->TemporaryStateDown[k]];
+	}
+      double TmpCoefficient = leftVector[i];
+      for (long j = 0l; j < TmpRightSpace->LargeHilbertSpaceDimension; ++j)
+	{
+	  TmpRightSpace->FermionToBoson(TmpRightSpace->StateDescriptionUp[j], TmpRightSpace->StateDescriptionDown[j], 
+					TmpRightSpace->TemporaryStateUp, TmpRightSpace->TemporaryStateDown);
+	  for (int k = 0; k <= TmpRightSpace->LzMax; ++k)
+	    {
+	      this->TemporaryStateUp[k] = TmpRightSpace->TemporaryStateUp[k] + TmpLeftSpace->TemporaryStateUp[k];
+	      this->TemporaryStateDown[k] = TmpRightSpace->TemporaryStateDown[k] + TmpLeftSpace->TemporaryStateDown[k];
+	    }
+	  this->BosonToFermion(this->TemporaryStateUp, this->TemporaryStateDown, TmpFinalStateUp, TmpFinalStateDown);
+	  int TmpPos = this->FindStateIndex(TmpFinalStateUp, TmpFinalStateDown);
+	  if (TmpPos < this->HilbertSpaceDimension)
+	    {
+	      double TmpLogFactor2 = 0.0;
+	      for (int k = 0; k <= TmpRightSpace->LzMax; ++k)
+		{
+		  TmpLogFactor2 -= LogFactorials[TmpRightSpace->TemporaryStateUp[k]];
+		  TmpLogFactor2 -= LogFactorials[TmpRightSpace->TemporaryStateDown[k]];
+		}
+	      for (int k = 0; k <= this->LzMax; ++k)
+		{
+		  TmpLogFactor2 += LogFactorials[this->TemporaryStateUp[k]];
+		  TmpLogFactor2 += LogFactorials[this->TemporaryStateDown[k]];
+		}
+	      symmetrizedVector[TmpPos] += exp(0.5 * (TmpLogFactor1 + TmpLogFactor2)) * TmpCoefficient * rightVector[j];
+	    }
+	}
+    }
+  delete[] LogFactorials;
+}
+
