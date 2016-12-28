@@ -31,6 +31,7 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
 #include "Vector/ComplexVector.h"
+#include "Architecture/ArchitectureOperation/FQHESphereSymmetrizeU1U1StateOperation.h"
 
 
 #include <iostream>
@@ -1371,8 +1372,12 @@ RealVector ParticleOnSphereWithSpin::SymmetrizeSU2SU2State (RealVector& leftVect
 							    ParticleOnSphereWithSpin* rightSpace, bool unnormalizedBasisFlag, 
 							    AbstractArchitecture* architecture)
 {
-  cout << "warning, using dummy method ParticleOnSphereWithSpin::SymmetrizeSU2SU2State" << endl;
-  RealVector TmpVector;
+  RealVector TmpVector(this->GetHilbertSpaceDimension(), true);
+  FQHESphereSymmetrizeU1U1StateOperation TmpOperation(this, leftSpace, rightSpace, &TmpVector, &leftVector, &rightVector, unnormalizedBasisFlag);
+  TmpOperation.ApplyOperation(architecture);
+//   this->SymmetrizeSU2SU2StateCore(TmpVector, leftVector, rightVector, leftSpace, rightSpace, unnormalizedBasisFlag, 
+// 				  0, leftSpace->GetHilbertSpaceDimension());
+  TmpVector.Normalize();
   return TmpVector;
 }
   

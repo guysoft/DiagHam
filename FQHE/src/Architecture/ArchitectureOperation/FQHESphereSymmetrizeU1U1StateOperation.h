@@ -36,6 +36,7 @@
 #include "Vector/RealVector.h"
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
+#include "HilbertSpace/ParticleOnSphereWithSpin.h"
 
 
 
@@ -47,13 +48,16 @@ class FQHESphereSymmetrizeU1U1StateOperation: public AbstractArchitectureOperati
 
  protected:
   
-  // pointer to the HilbertSpace
-  BosonOnSphereShort * FinalSpace;
-	
-  BosonOnSphereShort * LeftSpace;
-	
-  BosonOnSphereShort * RightSpace;
+  // pointer to the Hilbert spaces for the spinless case
+  BosonOnSphereShort* FinalSpace;	
+  BosonOnSphereShort* LeftSpace;	
+  BosonOnSphereShort* RightSpace;
   
+  // pointer to the Hilbert spaces for the spinfull case
+  ParticleOnSphereWithSpin* FinalSpaceWithSpin;
+  ParticleOnSphereWithSpin* LeftSpaceWithSpin;
+  ParticleOnSphereWithSpin* RightSpaceWithSpin;
+
   // vector where the component are stored
   RealVector* LeftVector;
   
@@ -90,8 +94,8 @@ class FQHESphereSymmetrizeU1U1StateOperation: public AbstractArchitectureOperati
   // leftVector = vector that contains the first state
   // rightVector = vector that contains the second state
   // unnormalizedBasisFlag = true if the states are expressed in the unnormalized basis
-  FQHESphereSymmetrizeU1U1StateOperation( BosonOnSphereShort* finalSpace, BosonOnSphereShort* leftSpace , BosonOnSphereShort* rightSpace , 
-					  RealVector* destinationVector, RealVector* leftVector, RealVector* rightVector,  bool unnormalizedBasisFlag);
+  FQHESphereSymmetrizeU1U1StateOperation(BosonOnSphereShort* finalSpace, BosonOnSphereShort* leftSpace , BosonOnSphereShort* rightSpace , 
+					 RealVector* destinationVector, RealVector* leftVector, RealVector* rightVector,  bool unnormalizedBasisFlag);
   
   
   // constructor for long rational vector input
@@ -106,6 +110,18 @@ class FQHESphereSymmetrizeU1U1StateOperation: public AbstractArchitectureOperati
 					 LongRationalVector* destinationVector, LongRationalVector* leftVector, LongRationalVector* rightVector);
   
   
+  // constructor for spinful states
+  //
+  // finalSpace = pointer to the Hilbert space of the target space
+  // leftSpace = pointer to the Hilbert space of the first state
+  // rightSpace = pointer to the Hilbert space of the second state
+  // destinationVector = vector where the result has to be stored
+  // leftVector = vector that contains the first state
+  // rightVector = vector that contains the second state
+  FQHESphereSymmetrizeU1U1StateOperation(ParticleOnSphereWithSpin* finalSpace, ParticleOnSphereWithSpin* leftSpace, ParticleOnSphereWithSpin* rightSpace, 
+					 RealVector* destinationVector, RealVector* leftVector, RealVector* rightVector,  bool unnormalizedBasisFlag);
+  
+  
   // copy constructor 
   //
   // operation = reference on operation to copy
@@ -115,7 +131,7 @@ class FQHESphereSymmetrizeU1U1StateOperation: public AbstractArchitectureOperati
   //
   // Space= pointer to the HilbertSpace to use
   // architecture = pointer to the distributed architecture to use for communications
-  FQHESphereSymmetrizeU1U1StateOperation( BosonOnSphereShort* space,  SimpleMPIArchitecture* architecture);
+  FQHESphereSymmetrizeU1U1StateOperation(BosonOnSphereShort* space,  SimpleMPIArchitecture* architecture);
   
   // destructor
   //

@@ -60,9 +60,12 @@ FQHESphereSymmetrizeU1U1StateOperation::FQHESphereSymmetrizeU1U1StateOperation(B
 {
   this->FirstComponent = 0;
   this->NbrComponent = leftSpace->GetHilbertSpaceDimension();
-  this->FinalSpace = finalSpace;
-  this->LeftSpace = leftSpace;
-  this->RightSpace = rightSpace;
+  this->FinalSpace = (BosonOnSphereShort*) finalSpace->Clone();
+  this->LeftSpace = (BosonOnSphereShort*) leftSpace->Clone();
+  this->RightSpace = (BosonOnSphereShort*) rightSpace->Clone();
+  this->FinalSpaceWithSpin = 0;
+  this->LeftSpaceWithSpin = 0;
+  this->RightSpaceWithSpin = 0;
   this->LeftVector = leftVector;
   this->RightVector = rightVector;
   this->DestinationVector = destinationVector;
@@ -87,9 +90,12 @@ FQHESphereSymmetrizeU1U1StateOperation::FQHESphereSymmetrizeU1U1StateOperation(B
 {
   this->FirstComponent = 0;
   this->NbrComponent = leftSpace->GetHilbertSpaceDimension();
-  this->FinalSpace = finalSpace;
-  this->LeftSpace = leftSpace;
-  this->RightSpace = rightSpace;
+  this->FinalSpace = (BosonOnSphereShort*) finalSpace->Clone();
+  this->LeftSpace = (BosonOnSphereShort*) leftSpace->Clone();
+  this->RightSpace = (BosonOnSphereShort*) rightSpace->Clone();
+  this->FinalSpaceWithSpin = 0;
+  this->LeftSpaceWithSpin = 0;
+  this->RightSpaceWithSpin = 0;
   this->LeftVector = 0;
   this->RightVector = 0;
   this->DestinationVector = 0;
@@ -97,6 +103,38 @@ FQHESphereSymmetrizeU1U1StateOperation::FQHESphereSymmetrizeU1U1StateOperation(B
   this->RationalRightVector = rightVector;
   this->RationalDestinationVector = destinationVector;
   this->UnnormalizedBasisFlag = true;
+  this->OperationType = AbstractArchitectureOperation::FQHESphereSymmetrizeU1U1StateOperation;
+}
+
+// constructor for spinful states
+//
+// finalSpace = pointer to the Hilbert space of the target space
+// leftSpace = pointer to the Hilbert space of the first state
+// rightSpace = pointer to the Hilbert space of the second state
+// destinationVector = vector where the result has to be stored
+// leftVector = vector that contains the first state
+// rightVector = vector that contains the second state
+// unnormalizedBasisFlag = true if the states are expressed in the unnormalized basis
+
+FQHESphereSymmetrizeU1U1StateOperation::FQHESphereSymmetrizeU1U1StateOperation(ParticleOnSphereWithSpin* finalSpace, ParticleOnSphereWithSpin* leftSpace, ParticleOnSphereWithSpin* rightSpace, 
+									       RealVector* destinationVector , RealVector* leftVector, RealVector* rightVector, 
+									       bool unnormalizedBasisFlag)
+{
+  this->FirstComponent = 0;
+  this->NbrComponent = leftSpace->GetHilbertSpaceDimension();
+  this->FinalSpaceWithSpin = (ParticleOnSphereWithSpin*) finalSpace->Clone();
+  this->LeftSpaceWithSpin = (ParticleOnSphereWithSpin*) leftSpace->Clone();
+  this->RightSpaceWithSpin = (ParticleOnSphereWithSpin*) rightSpace->Clone();
+  this->FinalSpace = 0;
+  this->LeftSpace = 0;
+  this->RightSpace = 0;
+  this->LeftVector = leftVector;
+  this->RightVector = rightVector;
+  this->DestinationVector = destinationVector;
+  this->RationalLeftVector = 0;
+  this->RationalRightVector = 0;
+  this->RationalDestinationVector = 0;
+  this->UnnormalizedBasisFlag = unnormalizedBasisFlag;
   this->OperationType = AbstractArchitectureOperation::FQHESphereSymmetrizeU1U1StateOperation;
 }
 
@@ -108,10 +146,26 @@ FQHESphereSymmetrizeU1U1StateOperation::FQHESphereSymmetrizeU1U1StateOperation(c
 {
   this->FirstComponent = operation.FirstComponent;
   this->NbrComponent = operation.NbrComponent;
+  
+  if (operation.FinalSpace != 0)
+    {
+      this->FinalSpace = (BosonOnSphereShort*) operation.FinalSpace->Clone();
+      this->LeftSpace =  (BosonOnSphereShort*) operation.LeftSpace->Clone();
+      this->RightSpace = (BosonOnSphereShort*) operation.RightSpace->Clone();
+      this->FinalSpaceWithSpin = 0;
+      this->LeftSpaceWithSpin = 0;
+      this->RightSpaceWithSpin = 0;      
+    }
+  else
+    {
+      this->FinalSpaceWithSpin = (ParticleOnSphereWithSpin*) operation.FinalSpaceWithSpin->Clone();
+      this->LeftSpaceWithSpin = (ParticleOnSphereWithSpin*) operation.LeftSpaceWithSpin->Clone();
+      this->RightSpaceWithSpin = (ParticleOnSphereWithSpin*) operation.RightSpaceWithSpin->Clone();
+      this->FinalSpace = 0;
+      this->LeftSpace = 0;
+      this->RightSpace = 0;
+    }
 
-  this->FinalSpace = (BosonOnSphereShort*) operation.FinalSpace->Clone();
-  this->LeftSpace =  (BosonOnSphereShort*) operation.LeftSpace->Clone();
-  this->RightSpace = (BosonOnSphereShort*) operation.RightSpace->Clone();
   this->LeftVector = operation.LeftVector;
   this->RightVector = operation.RightVector;
   this->DestinationVector = operation.DestinationVector;
@@ -127,9 +181,18 @@ FQHESphereSymmetrizeU1U1StateOperation::FQHESphereSymmetrizeU1U1StateOperation(c
 
 FQHESphereSymmetrizeU1U1StateOperation::~FQHESphereSymmetrizeU1U1StateOperation()
 {
-  //delete this->FinalSpace;
-  //delete this->LeftSpace;
-  //delete this->RightSpace;
+  if (this->FinalSpace != 0)
+    {
+      delete this->FinalSpace;
+      delete this->LeftSpace;
+      delete this->RightSpace;
+    }
+  else
+    {
+      delete this->FinalSpaceWithSpin;
+      delete this->LeftSpaceWithSpin;
+      delete this->RightSpaceWithSpin;
+    }
 }
   
 // set range of indices
@@ -171,17 +234,27 @@ bool FQHESphereSymmetrizeU1U1StateOperation::RawApplyOperation()
   timeval TotalStartingTime;
   gettimeofday (&TotalStartingTime, 0);
   
-  if (this->DestinationVector != 0)
+  if (this->FinalSpace != 0)
     {
-      this->FinalSpace->SymmetrizeU1U1StateCore (*this->DestinationVector, (*this->LeftVector), (*this->RightVector), 
-						 LeftSpace,  RightSpace, this->UnnormalizedBasisFlag, this->FirstComponent, this->NbrComponent);
+      if (this->DestinationVector != 0)
+	{
+	  this->FinalSpace->SymmetrizeU1U1StateCore (*this->DestinationVector, (*this->LeftVector), (*this->RightVector), 
+						     this->LeftSpace,  this->RightSpace, this->UnnormalizedBasisFlag, this->FirstComponent, this->NbrComponent);
+	}
+      else
+	{
+	  this->FinalSpace->SymmetrizeU1U1StateCore (*this->RationalDestinationVector ,(*this->RationalLeftVector) , (*this->RationalRightVector),  
+						     this->LeftSpace,  this->RightSpace, this->FirstComponent, this->NbrComponent);
+	}
     }
   else
     {
-       this->FinalSpace->SymmetrizeU1U1StateCore (*this->RationalDestinationVector ,(*this->RationalLeftVector) , (*this->RationalRightVector),  
-						  LeftSpace,  RightSpace, this->FirstComponent, this->NbrComponent);
-   }
-  
+      if (this->DestinationVector != 0)
+	{
+	  this->FinalSpaceWithSpin->SymmetrizeSU2SU2StateCore (*this->DestinationVector, (*this->LeftVector), (*this->RightVector), 
+							       this->LeftSpaceWithSpin,  this->RightSpaceWithSpin, this->UnnormalizedBasisFlag, this->FirstComponent, this->NbrComponent);
+	}      
+    }
   
   
   timeval TotalEndingTime;

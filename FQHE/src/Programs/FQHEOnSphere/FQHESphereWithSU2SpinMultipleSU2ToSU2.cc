@@ -185,7 +185,7 @@ int main(int argc, char** argv)
       TargetSpace = new FermionOnSphereWithSpin(NbrParticles1 + NbrParticles2, TotalLz1 + TotalLz2, NbrFluxQuanta2, TotalSz1 + TotalSz2);	  
     }
 
-  RealVector OutputState = TargetSpace->SymmetrizeSU2SU2State (State1 , State2, Space1, Space2, false, Architecture.GetArchitecture());
+  RealVector OutputState = TargetSpace->SymmetrizeSU2SU2State (State1 , State2, Space1, Space2, false, Architecture.GetArchitecture());  
   if (OutputState.WriteVector(OutputFileName) == false)
     {
       cout << "error while writing output state " << OutputFileName << endl;
