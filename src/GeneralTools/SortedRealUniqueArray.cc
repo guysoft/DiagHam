@@ -122,6 +122,10 @@ SortedRealUniqueArray::SortedRealUniqueArray(MPI::Intracomm& communicator, int i
 	else
 	  communicator.Recv(this->Elements, TmpDimension, MPI::DOUBLE, id, 1);   
       }
+  if (broadcast == true)
+    communicator.Bcast(&this->Tolerance, 1, MPI::DOUBLE, id);      
+  else
+    communicator.Recv(&this->Tolerance, 1, MPI::DOUBLE, id, 1);
   this->Sorted = (ElementIndexType) TmpArray[3];
   this->KeepSorted = (bool) TmpArray[4];
   this->Flag.Initialize();
@@ -497,7 +501,8 @@ void SortedRealUniqueArray::SendClone(MPI::Intracomm& communicator, int id)
   TmpArray[3] = (int)this->Sorted;
   TmpArray[4] = (int)this->KeepSorted;
   communicator.Send(TmpArray, 5, MPI::INT, id, 1); 
-  communicator.Send(this->Elements, NbrElements, MPI::DOUBLE, id, 1); 
+  communicator.Send(this->Elements, NbrElements, MPI::DOUBLE, id, 1);
+  communicator.Send(&this->Tolerance, 1, MPI::DOUBLE, id, 1); 
 }
 
 // send entries to a given MPI process

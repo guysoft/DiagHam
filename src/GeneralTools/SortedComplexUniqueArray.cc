@@ -123,6 +123,10 @@ SortedComplexUniqueArray::SortedComplexUniqueArray(MPI::Intracomm& communicator,
 	else
 	  communicator.Recv(this->Elements, 2*TmpDimension, MPI::DOUBLE, id, 1);   
       }
+  if (broadcast == true)
+    communicator.Bcast(&this->ToleranceSqr, 1, MPI::DOUBLE, id);      
+  else
+    communicator.Recv(&this->ToleranceSqr, 1, MPI::DOUBLE, id, 1);
   this->Sorted = (ElementIndexType) TmpArray[3];
   this->KeepSorted = (bool) TmpArray[4];
   this->Flag.Initialize();
@@ -610,6 +614,7 @@ void SortedComplexUniqueArray::SendClone(MPI::Intracomm& communicator, int id)
   TmpArray[4] = (int)this->KeepSorted;
   communicator.Send(TmpArray, 5, MPI::INT, id, 1); 
   communicator.Send(this->Elements, 2*NbrElements, MPI::DOUBLE, id, 1); 
+  communicator.Send(&this->ToleranceSqr, 1, MPI::DOUBLE, id, 1); 
 }
 
 // send entries to a given MPI process

@@ -57,7 +57,8 @@ using std::endl;
 // switch enabling longer element indices:
 #define ABSTRACTQHEONLATTICEHAMILTONIAN_LONGINDEX
 
-// switch to use sorted unique arrays for matrix entries
+// switch to use sorted unique arrays for matrix entries 
+// (works only with LONGINDEX option, unless SortedRealUniqueArray / SortedComplexUniqueArray are also reconfigured)
 #define ABSTRACTQHEONLATTICEHAMILTONIAN_SORTED
 
 // threshold before something is defined different from zero

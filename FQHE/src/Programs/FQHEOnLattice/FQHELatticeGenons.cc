@@ -121,7 +121,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
   (*SystemGroup) += new SingleStringOption('l',"landau-axis","potential in the Landau gauge along axis","y");
   
-  (*SystemGroup) += new SingleDoubleOption  ('d', "deltaPotential", "Introduce a delta-potential at the origin", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('D', "deltaPotential", "Introduce a delta-potential at the origin", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('R', "randomPotential", "Introduce a random potential at all sites", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "positive-hopping", "choose positive sign of hopping terms", false);
   (*SystemGroup) += new BooleanOption  ('\n', "all-flux", "calculate all values of the flux to test symmetry under n_phi->1-n_phi", false);
@@ -155,8 +155,9 @@ int main(int argc, char** argv)
 
   Manager.StandardProceedings(argv, argc, cout);
 
-  // SortedComplexUniqueArray::TestClass(10000, false);
-  // SortedRealUniqueArray::TestClass(100000, false);
+  // TestClassSortedComplexUniqueArray(10000, false);
+  // TestClassSortedRealUniqueArray(10000, false);
+  // exit(1);
 
   int NbrParticles = Manager.GetInteger("nbr-particles");
   int Lx = Manager.GetInteger("lx");

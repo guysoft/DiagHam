@@ -2529,7 +2529,7 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
   cout << "start memory" << endl;
   
 #ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_SORTED
-  QHEParticlePrecalculationOperationWithMatrixElements Operation(this, true, /* tolerance = */ 50.*MACHINE_PRECISION);
+  QHEParticlePrecalculationOperationWithMatrixElements Operation(this, true, /* tolerance = */ LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD);
   Operation.ApplyOperation(this->Architecture);
   Operation.GetMatrixElements(this->RealInteractionCoefficients, this->ComplexInteractionCoefficients);
 
@@ -2540,11 +2540,34 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
   // adapt load balancing for memory:
   if (this->Architecture->GetOptimizedTypicalRange(TmpInteractionPerComponentIndex, MinIndex, MaxIndex, this->RealInteractionCoefficients, this->ComplexInteractionCoefficients) == true)
     {
+      long OldEffectiveHilbertSpaceDimension = EffectiveHilbertSpaceDimension;
       this->PrecalculationShift = (int) MinIndex;
       EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+#ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_LONGINDEX
       // balance original arrays
       this->Architecture->RebalanceArray(NbrComplexInteractionPerComponent);
       this->Architecture->RebalanceArray(NbrRealInteractionPerComponent);
+#else
+      delete [] TmpInteractionPerComponentIndex;
+      TmpInteractionPerComponentIndex = new int[OldEffectiveHilbertSpaceDimension];
+      for (long i=0; i<OldEffectiveHilbertSpaceDimension; ++i)
+	TmpInteractionPerComponentIndex[i] = (int)NbrComplexInteractionPerComponent[i];
+      this->Architecture->RebalanceArray(TmpInteractionPerComponentIndex);
+      delete [] this->NbrComplexInteractionPerComponent;
+      this->NbrComplexInteractionPerComponent = new ElementIndexType[EffectiveHilbertSpaceDimension];
+      for (long i=0; i<EffectiveHilbertSpaceDimension; ++i)
+	NbrComplexInteractionPerComponent[i] = (ElementIndexType)TmpInteractionPerComponentIndex[i];
+      
+      delete [] TmpInteractionPerComponentIndex;
+      TmpInteractionPerComponentIndex = new int[OldEffectiveHilbertSpaceDimension];
+      for (long i=0; i<OldEffectiveHilbertSpaceDimension; ++i)
+	TmpInteractionPerComponentIndex[i] = (int)NbrRealInteractionPerComponent[i];
+      this->Architecture->RebalanceArray(TmpInteractionPerComponentIndex);
+      delete [] this->NbrRealInteractionPerComponent;
+      this->NbrRealInteractionPerComponent = new ElementIndexType[EffectiveHilbertSpaceDimension];
+      for (long i=0; i<EffectiveHilbertSpaceDimension; ++i)
+	NbrRealInteractionPerComponent[i] = (ElementIndexType)TmpInteractionPerComponentIndex[i];
+#endif
       // cout << "distributed calculations successfully reoptimized" << endl;
     }
   delete [] TmpInteractionPerComponentIndex;
@@ -2560,6 +2583,53 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
 #else
   QHEParticlePrecalculationOperation Operation(this);
   Operation.ApplyOperation(this->Architecture);
+
+  int *TmpInteractionPerComponentIndex = new int[EffectiveHilbertSpaceDimension];
+  for (long i=0; i<EffectiveHilbertSpaceDimension; ++i)
+    TmpInteractionPerComponentIndex[i] = this->NbrRealInteractionPerComponent[i] + this->NbrComplexInteractionPerComponent[i];
+  // adapt load balancing for memory:
+  if (this->Architecture->GetOptimizedTypicalRange(TmpInteractionPerComponentIndex, MinIndex, MaxIndex) == true)
+    {
+      long OldEffectiveHilbertSpaceDimension = EffectiveHilbertSpaceDimension;
+      this->PrecalculationShift = (int) MinIndex;
+      EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+#ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_LONGINDEX
+      // balance original arrays
+      this->Architecture->RebalanceArray(NbrComplexInteractionPerComponent);
+      this->Architecture->RebalanceArray(NbrRealInteractionPerComponent);
+#else
+      delete [] TmpInteractionPerComponentIndex;
+      TmpInteractionPerComponentIndex = new int[OldEffectiveHilbertSpaceDimension];
+      for (long i=0; i<OldEffectiveHilbertSpaceDimension; ++i)
+	TmpInteractionPerComponentIndex[i] = (int)NbrComplexInteractionPerComponent[i];
+      this->Architecture->RebalanceArray(TmpInteractionPerComponentIndex);
+      delete [] this->NbrComplexInteractionPerComponent;
+      this->NbrComplexInteractionPerComponent = new ElementIndexType[EffectiveHilbertSpaceDimension];
+      for (long i=0; i<EffectiveHilbertSpaceDimension; ++i)
+	NbrComplexInteractionPerComponent[i] = (ElementIndexType)TmpInteractionPerComponentIndex[i];
+      
+      delete [] TmpInteractionPerComponentIndex;
+      TmpInteractionPerComponentIndex = new int[OldEffectiveHilbertSpaceDimension];
+      for (long i=0; i<OldEffectiveHilbertSpaceDimension; ++i)
+	TmpInteractionPerComponentIndex[i] = (int)NbrRealInteractionPerComponent[i];
+      this->Architecture->RebalanceArray(TmpInteractionPerComponentIndex);
+      delete [] this->NbrRealInteractionPerComponent;
+      this->NbrRealInteractionPerComponent = new ElementIndexType[EffectiveHilbertSpaceDimension];
+      for (long i=0; i<EffectiveHilbertSpaceDimension; ++i)
+	NbrRealInteractionPerComponent[i] = (ElementIndexType)TmpInteractionPerComponentIndex[i];
+#endif
+      // cout << "distributed calculations successfully reoptimized" << endl;
+    }
+  delete [] TmpInteractionPerComponentIndex;
+  if (allowedMemory == 0l)
+    {
+      delete[] this->NbrRealInteractionPerComponent;
+      delete[] this->NbrComplexInteractionPerComponent;
+      this->NbrRealInteractionPerComponent = 0;
+      this->NbrComplexInteractionPerComponent = 0;
+      return 0l;
+    }
+
 #endif
   long Memory = 0;
   
@@ -2574,7 +2644,7 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
 
   cout << "Nbr unique real elements: "<<this->RealInteractionCoefficients.GetNbrElements()<<endl;
   cout << "Nbr unique complex elements: "<<this->ComplexInteractionCoefficients.GetNbrElements()<<endl;
-  cout << "Number of interaction factors: "<<this->NbrInteractionFactors<<endl;
+  cout << "Number of interaction factors: "<<this->NbrInteractionFactors<<" & diagonal terms: "<< this->NbrDiagonalInteractionFactors <<endl;
 
   // memory requirement, ignoring the actual storage size of the values of matrix
   // elements, which is assumed small (maybe need to add an estimate, at least)

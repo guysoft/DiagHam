@@ -205,7 +205,8 @@ bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex
   if (this->MasterNodeFlag == true)
     { 
       cout << "Optimizing typical range"<<endl;
-      cout << "Before: "<< this->PrintLoadBalancing()<<endl;
+      cout << "Before: ";
+      this->PrintLoadBalancing() << endl;
       int* TmpNbrOperationPerIndex = new int [this->MaximumIndices[this->NbrMPINodes - 1] - this->MinimumIndices[0] + 1l];
       long TmpIndex = 0;
       long EffectiveDimension = this->MaximumIndices[0] - this->MinimumIndices[0] + 1l;
@@ -284,7 +285,8 @@ bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex
       nbrOperationPerIndex = new int [this->MaximumIndices[0] - this->MinimumIndices[0] + 1l];      
       for (long i = this->MinimumIndices[0]; i <= this->MaximumIndices[0]; ++i)
 	nbrOperationPerIndex[i - this->MinimumIndices[0]] = TmpNbrOperationPerIndex[i];
-      cout << "After: "<< this->PrintLoadBalancing() << endl;
+      cout << "After: ";
+      this->PrintLoadBalancing() << endl;
 
       delete[] TmpNbrOperationPerIndex;
       delete[] TmpString;
