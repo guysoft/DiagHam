@@ -648,7 +648,7 @@ bool SortedComplexUniqueArray::BroadcastArray(MPI::Intracomm& communicator,  int
 {
   if (2*this->NbrElements > std::numeric_limits<int>::max())
     {
-      cout << "Error: cannot merge unique arrays larger than max(int)"<<endl;
+      cout << "Error: cannot broadcast unique arrays larger than max(int)"<<endl;
       return false;
     }
   int TmpArray[2] = {(int) this->NbrElements, (int) this->Sorted};
@@ -706,10 +706,10 @@ bool SortedComplexUniqueArray::MergeAcrossNodes(MPI::Intracomm& communicator)
 #endif
 	}
     }
+  bool Rst = this->BroadcastArray(communicator, 0);
 #ifdef TESTING_SCUA
   this->TestAllEntries(OldArray);
 #endif
-  bool Rst = this->BroadcastArray(communicator, 0);
   return Rst;
 }
 
