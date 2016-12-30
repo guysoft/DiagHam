@@ -2579,6 +2579,9 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
       this->NbrComplexInteractionPerComponent = 0;
       return 0l;
     }
+  // fix order of matrix elements, in case any missing entries are found.
+  this->RealInteractionCoefficients.FixOrder();
+  this->ComplexInteractionCoefficients.FixOrder();
 
 #else
   QHEParticlePrecalculationOperation Operation(this);

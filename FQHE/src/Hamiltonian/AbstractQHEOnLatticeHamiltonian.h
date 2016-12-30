@@ -1178,7 +1178,14 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplication
 	      if (!ComplexInteractionCoefficients.SearchElement(Coefficient*this->HoppingTerms[j], tmpElementPos))
 		{
 		  cout << "Error: element "<<Coefficient*this->HoppingTerms[j]<<" not present in complex array B"<<endl;
-		  exit(1);
+		  bool rst = ComplexInteractionCoefficients.NearbyEntry(Coefficient*this->HoppingTerms[j], tmpElementPos);
+		  if (rst)
+		    cout << "Exact nearby entry: "<<ComplexInteractionCoefficients[tmpElementPos]<<endl;
+		  else
+		    {
+		      cout << "Closest entry: "<<ComplexInteractionCoefficients[tmpElementPos]<<" - inserting new hopping element" << endl;
+		      tmpElementPos = ComplexInteractionCoefficients.InsertElement(Coefficient*this->HoppingTerms[j]);
+		    }
 		}
 #else
 	      tmpElementPos = ComplexInteractionCoefficients.InsertElement(Coefficient*this->HoppingTerms[j]);
@@ -1252,8 +1259,8 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 #ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_SORTED
 		  if (!ComplexInteractionCoefficients.SearchElement(Coefficient*this->InteractionFactors[j], tmpElementPos))
 		    {
-		      cout << "Error: element "<<Coefficient*this->HoppingTerms[j]<<" not present in complex array D"<<endl;
-		      exit(1);
+		      cout << "Error: element "<<Coefficient*this->HoppingTerms[j]<<" not present in complex array D - inserting new entry, instead"<<endl;
+		      tmpElementPos = ComplexInteractionCoefficients.InsertElement(Coefficient*this->HoppingTerms[j]);
 		    }
 #else
 		  tmpElementPos = ComplexInteractionCoefficients.InsertElement(Coefficient*this->InteractionFactors[j]);
@@ -1323,7 +1330,15 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 			      else
 				{
 				  cout << "Careful search failed, as well."<<endl;
-				  exit(1);
+				  bool rst = ComplexInteractionCoefficients.NearbyEntry(Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors], tmpElementPos);
+				  if (rst)
+				    cout << "Exact nearby entry: "<<ComplexInteractionCoefficients[tmpElementPos]<<endl;
+				  else
+				    {
+				      cout << "Closest entry: "<<ComplexInteractionCoefficients[tmpElementPos]<<" - inserting new entry, instead"<<endl;
+				      tmpElementPos = ComplexInteractionCoefficients.InsertElement
+					(Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors]);
+				    }
 				}
 			    }
 #else

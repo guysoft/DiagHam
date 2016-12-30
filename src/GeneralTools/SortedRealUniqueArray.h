@@ -76,6 +76,9 @@ class SortedRealUniqueArray
   // flag indicating whether to keep elements sorted
   bool KeepSorted;
 
+  // flag indicating whether current order needs to be preserved
+  bool KeepOrder;
+
  public:
   // standard constructor
   SortedRealUniqueArray(double tolerance = MACHINE_PRECISION, ElementIndexType internalSize=128, bool keepSorted=true);
@@ -110,6 +113,9 @@ class SortedRealUniqueArray
 
   // get number of elements
   ElementIndexType GetNbrElements(){ return NbrElements;}
+
+  // fix the order of elements that are already in the array
+  void FixOrder(){ this->KeepOrder = true;}
 
   // empty all elements
   // disallocate = flag indicating whether all memory should be unallocated

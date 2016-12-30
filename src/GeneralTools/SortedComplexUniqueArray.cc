@@ -60,6 +60,7 @@ SortedComplexUniqueArray::SortedComplexUniqueArray(double tolerance, ElementInde
     }
   this->Sorted = 0;
   this->KeepSorted = keepSorted;
+  this->KeepOrder = false;
 }
 
 SortedComplexUniqueArray::SortedComplexUniqueArray(SortedComplexUniqueArray &array, bool duplicateFlag)
@@ -84,6 +85,7 @@ SortedComplexUniqueArray::SortedComplexUniqueArray(SortedComplexUniqueArray &arr
     }
   this->Sorted = array.Sorted;
   this->KeepSorted = array.KeepSorted;
+  this->KeepOrder = array.KeepOrder;
 }
 
 
@@ -97,11 +99,11 @@ SortedComplexUniqueArray::SortedComplexUniqueArray(SortedComplexUniqueArray &arr
 
 SortedComplexUniqueArray::SortedComplexUniqueArray(MPI::Intracomm& communicator, int id, bool broadcast)
 {
-  int TmpArray[5];
+  int TmpArray[6];
   if (broadcast == true)
-    communicator.Bcast(TmpArray, 5, MPI::INT, id);      
+    communicator.Bcast(TmpArray, 6, MPI::INT, id);      
   else
-    communicator.Recv(TmpArray, 5, MPI::INT, id, 1);
+    communicator.Recv(TmpArray, 6, MPI::INT, id, 1);
   
   int TmpDimension = TmpArray[0];
   this->NbrElements = (ElementIndexType) TmpDimension;
@@ -129,6 +131,7 @@ SortedComplexUniqueArray::SortedComplexUniqueArray(MPI::Intracomm& communicator,
     communicator.Recv(&this->ToleranceSqr, 1, MPI::DOUBLE, id, 1);
   this->Sorted = (ElementIndexType) TmpArray[3];
   this->KeepSorted = (bool) TmpArray[4];
+  this->KeepOrder = (bool) TmpArray[5];
   this->Flag.Initialize();
 }
 
@@ -186,7 +189,7 @@ SortedComplexUniqueArray::ElementIndexType SortedComplexUniqueArray::InsertEleme
 	delete [] tmpElements;
     }
   index=NbrElements-1;
-  if (this->KeepSorted && this->NbrElements > this->Sorted+12)
+  if ((!this->KeepOrder) && this->KeepSorted && this->NbrElements > this->Sorted+12)
     {
       this->SortEntries();
       if (!this->SearchElement(element, index))
@@ -606,13 +609,14 @@ void SortedComplexUniqueArray::SendClone(MPI::Intracomm& communicator, int id)
     {
       cout << "Error: cannot send unique arrays larger than max(int)"<<endl;
     }
-  int TmpArray[5];
+  int TmpArray[6];
   TmpArray[0] = (int)this->NbrElements;
   TmpArray[1] = this->UniversalID; // an ad-hoc number to be checked
   TmpArray[2] = 2;
   TmpArray[3] = (int)this->Sorted;
   TmpArray[4] = (int)this->KeepSorted;
-  communicator.Send(TmpArray, 5, MPI::INT, id, 1); 
+  TmpArray[5] = (int)this->KeepOrder;
+  communicator.Send(TmpArray, 6, MPI::INT, id, 1); 
   communicator.Send(this->Elements, 2*NbrElements, MPI::DOUBLE, id, 1); 
   communicator.Send(&this->ToleranceSqr, 1, MPI::DOUBLE, id, 1); 
 }
@@ -669,6 +673,10 @@ bool SortedComplexUniqueArray::MergeAcrossNodes(MPI::Intracomm& communicator)
   if (2*this->NbrElements > std::numeric_limits<int>::max())
     {
       cout << "Error: cannot merge unique arrays larger than max(int)"<<endl;
+    }
+  if (this->KeepOrder)
+    {
+      cout << "Attention: merge algorithm will scramble order of array entries"<<endl;
     }
   int TmpNbrElements = (int) this->NbrElements;
   
