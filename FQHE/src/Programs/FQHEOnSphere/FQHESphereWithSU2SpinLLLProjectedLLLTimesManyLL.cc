@@ -223,8 +223,25 @@ int main(int argc, char** argv)
 	}
     }
 
-  char* OutputName = new char [512  + strlen(DiscreteSymmetryName)+ strlen(Manager.GetString("interaction-name"))];
-  sprintf (OutputName, "bosons_sphere_su2%s_%s_n_%d_2s_%d_sz_%d_lz_%d.%ld.vec", DiscreteSymmetryName, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta, TotalSz, TotalLz, Manager.GetInteger("outputvector-index"));
+  char* GeometryName = new char[128];
+  if (Manager.GetBoolean("cylinder-normalize") == false)
+    {
+      sprintf (GeometryName, "sphere_su2", Ratio);
+    }
+  else
+    {
+      if (Manager.GetDouble("cylinder-perimeter") > 0.0)	
+	{
+	  sprintf (GeometryName, "cylinder_perimeter_%.6f_su2", Perimeter);
+	}
+      else
+	{
+	  sprintf (GeometryName, "cylinder_ratio_%.6f_su2", Ratio);
+	}
+    }
+  char* OutputName = new char [512  + strlen(DiscreteSymmetryName)+ strlen(Manager.GetString("interaction-name")) + strlen(GeometryName)];
+  sprintf (OutputName, "bosons_%s%s_%s_n_%d_2s_%d_sz_%d_lz_%d.%ld.vec", GeometryName, DiscreteSymmetryName, Manager.GetString("interaction-name"), 
+	   NbrParticles, NbrFluxQuanta, TotalSz, TotalLz, Manager.GetInteger("outputvector-index"));
 
   if (Architecture.GetArchitecture()->CanWriteOnDisk())
     {
@@ -238,7 +255,8 @@ int main(int argc, char** argv)
       RealVector InputVector (InputSpace->GetHilbertSpaceDimension(), true);
       InputVector[0] = 1.0;
       OutputSpace->SlaterTimeSpinfulFermionicState(InputVector, OutputVector, InputSpace, 0, InputSpace->GetHilbertSpaceDimension(),
-						   !(Manager.GetBoolean("normalize")), Manager.GetBoolean("cylinder-normalize"), Perimeter, Architecture.GetArchitecture());
+						   !(Manager.GetBoolean("normalize") | Manager.GetBoolean("cylinder-normalize")), 
+						   Manager.GetBoolean("cylinder-normalize"), Perimeter, Architecture.GetArchitecture());
       delete InputSpace;
     }
   else
@@ -258,13 +276,14 @@ int main(int argc, char** argv)
 	    }
 	}
       OutputSpace->SlaterTimeSpinfulFermionicState(InputVector, OutputVector, InputSpace, 0, InputSpace->GetHilbertSpaceDimension(),
-						   !(Manager.GetBoolean("normalize")), Manager.GetBoolean("cylinder-normalize"), Perimeter, Architecture.GetArchitecture());
+						   !(Manager.GetBoolean("normalize") | Manager.GetBoolean("cylinder-normalize")), 
+						   Manager.GetBoolean("cylinder-normalize"), Perimeter, Architecture.GetArchitecture());
       delete InputSpace;
     }
 
   if (Architecture.GetArchitecture()->CanWriteOnDisk())
     {
-      if (Manager.GetBoolean("normalize") == true)
+      if ((Manager.GetBoolean("normalize") == true) || (Manager.GetBoolean("cylinder-normalize") == true))
 	OutputVector.Normalize();
       if (OutputVector.WriteVector(OutputName) == false)
 	{

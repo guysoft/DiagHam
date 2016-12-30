@@ -1703,22 +1703,49 @@ void BosonOnSphereWithSU2Spin::SlaterTimeSpinfulFermionicState(RealVector& fermi
 
   if ((this->LzMax + 1) >= this->NbrBosons)
     {
-      BinomialCoefficients Binomials(this->LzMax);
-      for (int i = 0; i <= this->LzMax; ++i)
+      if (cylinderFlag == false)
 	{
-	  ThreeOrbitalOverlaps[i] = new double [this->NbrBosons];
-	  double TmpFactor1 = log(((double) ((fermionicSpace->LzMax + 1) * this->NbrBosons)) / ((double) (this->LzMax + 1)) / (4.0 * M_PI)) - log(Binomials.GetNumericalCoefficient(this->LzMax, i));
-	  for (int j = 0; (j < this->NbrBosons) && (j <= i); ++j)
+	  BinomialCoefficients Binomials(this->LzMax);
+	  for (int i = 0; i <= this->LzMax; ++i)
 	    {
-	      if (unnormalizedFlag == false)
+	      ThreeOrbitalOverlaps[i] = new double [this->NbrBosons];
+	      double TmpFactor1 = log(((double) ((fermionicSpace->LzMax + 1) * this->NbrBosons)) / ((double) (this->LzMax + 1)) / (4.0 * M_PI)) - log(Binomials.GetNumericalCoefficient(this->LzMax, i));
+	      for (int j = 0; (j < this->NbrBosons) && (j <= i); ++j)
 		{
-		  ThreeOrbitalOverlaps[i][j] = 0.5 * (TmpFactor1 + log(Binomials.GetNumericalCoefficient(this->NbrBosons - 1, j)) 
-						      + log(Binomials.GetNumericalCoefficient(fermionicSpace->LzMax, i - j)));
-		  cout << i << " " << j << " : " << exp(ThreeOrbitalOverlaps[i][j]) << endl;
+		  if (unnormalizedFlag == false)
+		    {
+		      ThreeOrbitalOverlaps[i][j] = 0.5 * (TmpFactor1 + log(Binomials.GetNumericalCoefficient(this->NbrBosons - 1, j)) 
+							  + log(Binomials.GetNumericalCoefficient(fermionicSpace->LzMax, i - j)));
+		    }
+		  else
+		    {
+		      ThreeOrbitalOverlaps[i][j] = 0.0;
+		    }
 		}
-	      else
+	    }
+	}
+      else
+	{
+	  double TmpShift1 = 0.5 * ((double) this->LzMax);
+	  double TmpShift2 = 0.5 * ((double) (this->NbrBosons - 1));
+	  double TmpShift3 = 0.5 * ((double) fermionicSpace->LzMax);
+	  double SquareMagneticLengthRescaling2 = ((double) this->LzMax) / ((double) (this->NbrBosons - 1));
+	  double SquareMagneticLengthRescaling3 = ((double) this->LzMax) / ((double) fermionicSpace->LzMax);
+	  double TmpFactor = 1.0 / (1.0 + (1.0 / SquareMagneticLengthRescaling2) + (1.0 / SquareMagneticLengthRescaling3));
+	  
+	  for (int i = 0; i <= this->LzMax; ++i)
+	    {
+	      double Kappa2Factor =  2.0 * M_PI / cylinderPerimeter;
+	      Kappa2Factor *= Kappa2Factor;
+	      ThreeOrbitalOverlaps[i] = new double [this->NbrBosons];
+	      for (int j = 0; (j < this->NbrBosons) && (j <= i); ++j)
 		{
-		  ThreeOrbitalOverlaps[i][j] = 0.0;
+		  double TmpK1 = ((double) i) - TmpShift1;
+		  double TmpK2 = ((double) j) - TmpShift2;
+		  double TmpK3 = ((double) (i - j)) - TmpShift3;
+		  ThreeOrbitalOverlaps[i][j] = -0.5 * Kappa2Factor * ((TmpK1 * TmpK1) + SquareMagneticLengthRescaling2 * (TmpK2 * TmpK2)
+								      + SquareMagneticLengthRescaling3 * (TmpK3 * TmpK3)
+								      - TmpFactor * (TmpK1 + TmpK2 + TmpK3) * (TmpK1 + TmpK2 + TmpK3));
 		}
 	    }
 	}
@@ -1742,11 +1769,11 @@ void BosonOnSphereWithSU2Spin::SlaterTimeSpinfulFermionicState(RealVector& fermi
 			  if (this->TemporaryStateDown[p] > 1)
 			    Coefficient.FactorialMultiply(this->TemporaryStateDown[p]);
 			}		  
-		      if (unnormalizedFlag == false)
-			{
-			  outputVector[Index] += sqrt(Coefficient.GetNumericalValue()) * fermionicState[i] * FinalState[Index];
-			}
-		      else
+ 		      if (unnormalizedFlag == false)
+ 			{
+ 			  outputVector[Index] += sqrt(Coefficient.GetNumericalValue()) * fermionicState[i] * FinalState[Index];
+ 			}
+ 		      else
 			{
 			  outputVector[Index] += Coefficient.GetNumericalValue() * fermionicState[i] * FinalState[Index];
 			}
@@ -1757,28 +1784,61 @@ void BosonOnSphereWithSU2Spin::SlaterTimeSpinfulFermionicState(RealVector& fermi
     }
   else
     {
-      BinomialCoefficients Binomials(this->NbrBosons);
-      for (int i = 0; i <= this->LzMax; ++i)
+      if (cylinderFlag == false)
 	{
-	  ThreeOrbitalOverlaps[i] = new double [this->NbrBosons];
-	}
-      for (int i = 0; i <= fermionicSpace->LzMax; ++i)
-	{
-	  for (int j = 0; j < this->NbrBosons; ++j)
+	  BinomialCoefficients Binomials(this->NbrBosons);
+	  for (int i = 0; i <= this->LzMax; ++i)
 	    {
-	      if (((j - i) >= 0) && ((j - i) <= this->LzMax))
+	      ThreeOrbitalOverlaps[i] = new double [this->NbrBosons];
+	    }
+	  for (int i = 0; i <= fermionicSpace->LzMax; ++i)
+	    {
+	      for (int j = 0; j < this->NbrBosons; ++j)
 		{
-		  if (unnormalizedFlag == false)
+		  if (((j - i) >= 0) && ((j - i) <= this->LzMax))
 		    {
-		      ThreeOrbitalOverlaps[j - i][j] = -0.5 * (log(((double) ((fermionicSpace->LzMax + 1) * this->NbrBosons)) / ((double) (this->LzMax + 1)) / (4.0 * M_PI)) 
-							       - log(Binomials.GetNumericalCoefficient(this->LzMax, j - i))
-							       + log(Binomials.GetNumericalCoefficient(this->NbrBosons - 1, j)) 
-							       + log(Binomials.GetNumericalCoefficient(fermionicSpace->LzMax, i)));
+		      if (unnormalizedFlag == false)
+			{
+			  ThreeOrbitalOverlaps[j - i][j] = -0.5 * (log(((double) ((fermionicSpace->LzMax + 1) * this->NbrBosons)) / ((double) (this->LzMax + 1)) / (4.0 * M_PI)) 
+								   - log(Binomials.GetNumericalCoefficient(this->LzMax, j - i))
+								   + log(Binomials.GetNumericalCoefficient(this->NbrBosons - 1, j)) 
+								   + log(Binomials.GetNumericalCoefficient(fermionicSpace->LzMax, i)));
+			}
+		      else
+			{
+			  ThreeOrbitalOverlaps[j - i][j] = 0.0;
+			}
 		    }
-		  else
+		}
+	    }
+	}
+      else
+	{
+	  for (int i = 0; i <= this->LzMax; ++i)
+	    {
+	      ThreeOrbitalOverlaps[i] = new double [this->NbrBosons];
+	    }
+	  double Kappa2Factor =  2.0 * M_PI / cylinderPerimeter;
+	  Kappa2Factor *= Kappa2Factor;
+	  double TmpShift1 = 0.5 * ((double) this->LzMax);
+	  double TmpShift2 = 0.5 * ((double) (this->NbrBosons - 1));
+	  double TmpShift3 = 0.5 * ((double) fermionicSpace->LzMax);
+	  double SquareMagneticLengthRescaling2 = ((double) this->LzMax) / ((double) (this->NbrBosons - 1));
+	  double SquareMagneticLengthRescaling3 = ((double) this->LzMax) / ((double) fermionicSpace->LzMax);
+	  double TmpFactor = 1.0 / (1.0 + (1.0 / SquareMagneticLengthRescaling2) + (1.0 / SquareMagneticLengthRescaling3));
+	  
+	  for (int i = 0; i <= fermionicSpace->LzMax; ++i)
+	    {
+	      for (int j = 0; j < this->NbrBosons; ++j)
+		{
+		  if (((j - i) >= 0) && ((j - i) <= this->LzMax))
 		    {
-//		      ThreeOrbitalOverlaps[j - i][j] = log(Binomials.GetNumericalCoefficient(this->LzMax, j - i));
-		      ThreeOrbitalOverlaps[j - i][j] = 0.0;
+		      double TmpK1 = ((double) j - i) - TmpShift1;
+		      double TmpK2 = ((double) j) - TmpShift2;
+		      double TmpK3 = (((double) i) - TmpShift3);
+		      ThreeOrbitalOverlaps[j - i][j] = -0.5 * Kappa2Factor * ((TmpK1 * TmpK1) + SquareMagneticLengthRescaling2 * (TmpK2 * TmpK2)
+									      + SquareMagneticLengthRescaling3 * (TmpK3 * TmpK3)
+									      - TmpFactor * (TmpK1 + TmpK2 + TmpK3) * (TmpK1 + TmpK2 + TmpK3));
 		    }
 		}
 	    }
