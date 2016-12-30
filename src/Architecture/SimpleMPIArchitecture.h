@@ -160,12 +160,26 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   virtual bool GetOptimizedTypicalRange (int*& nbrOperationPerIndex, long& minIndex, long& maxIndex, 
 					 SortedRealUniqueArray &realEntries, SortedComplexUniqueArray &complexEntries);
 
-  // balance an array differently across notes (currently supporting T=int, long)
+  // load a typical range of indices and the corresponding operations from a previous run of the calculation
   //
-  // nbrOperationPerIndex = reference on a local array holding one entry per local state prior to last call to GetOptimizedTypicalRange; on return - local array holding data for the new range of the MPIArchitecture
+  // nbrOperationPerIndex = reference on the number of calculations per index. If the return value is true, a new array will be allocated
+  // minIndex = reference on the minimum index on which the local architecture can act
+  // maxIndex = reference on the maximum index on which the local architecture can act (= minIndex is the 
+  //            architecture doesn't support this feature)
+  // return value = true if the range has been optimized
+  virtual bool LoadOptimizedTypicalRange (int*& nbrOperationPerIndex, long& minIndex, long& maxIndex, const char* filename="load-profile.dat");
+
+  // balance an array differently across nodes (currently supporting T=int, long)
+  //
+  // array = reference on a local array holding one entry per local state prior to last call to GetOptimizedTypicalRange; on return - local array holding data for the new range of the MPIArchitecture
+  // filename = name of a file to which the data should be saved (on master node)
   // return value = true if the array has been rebalanced
-  virtual bool RebalanceArray (int*& array);
-  virtual bool RebalanceArray (long*& array);
+  virtual bool RebalanceArray (int*& array, const char* filename=NULL);
+  virtual bool RebalanceArray (long*& array, const char* filename=NULL);
+
+  // Load an array from disk
+  virtual bool LoadArray (const char* filename, int*& array);
+  virtual bool LoadArray (const char* filename, long*& array);
 
   // get the ID of the node that handles a given index
   //
@@ -552,12 +566,26 @@ class SimpleMPIArchitecture : public AbstractArchitecture
 
  protected:
 
+  // deduce the load distribution for the given load profile (running on Master node)
+  // totalNbrOperations = total number of operations
+  // nbrOperationPerIndex = number of operations per index
+  // minimumIndices = minimum indices to be determined
+  // maximumIndices = maximum indices to be determined
+  void DeduceLoadDistribution(long totalNbrOperations, int *nbrOperationPerIndex, long *&minimumIndices, long *&maximumIndices);
+
+  // load an array on Master node and distribute among nodes according to current balancing
+  //
+  // array = reference on a local array, to be allocated and filled with the loaded data
+  // return value = true if the array has been rebalanced
+  template<typename T>
+  bool LoadArrayImplementation(T*& array, const char* filename);
+
   // balance an array differently across notes (currently supporting T=int, long)
   //
   // nbrOperationPerIndex = reference on a local array holding one entry per local state prior to last call to GetOptimizedTypicalRange; on return - local array holding data for the new range of the MPIArchitecture
   // return value = true if the array has been rebalanced
   template<typename T>
-  bool RebalanceArrayImplementation (T*& array);
+  bool RebalanceArrayImplementation (T*& array, const char* filename);
 
   // print load balancing
   ostream& PrintLoadBalancing(ostream &Str = std::cout);

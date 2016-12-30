@@ -159,11 +159,13 @@ class SortedComplexUniqueArray
 
   // Write to file
   // file = open stream to write to
-  void WriteArray(ofstream &file);
+  bool WriteArray(const char*filename);
+  bool WriteArray(ofstream &file);
 
   // Read from file
   // file = open stream to read from
-  void ReadArray(ifstream &file);
+  bool ReadArray(const char*filename);
+  bool ReadArray(ifstream &file);
    
   // output stream overload
   friend ostream& operator << (ostream& Str, const SortedComplexUniqueArray &A);

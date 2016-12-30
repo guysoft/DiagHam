@@ -2522,121 +2522,104 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
       this->NbrRealInteractionPerComponent[i] = 0x0;
       this->NbrComplexInteractionPerComponent[i] = 0x0;
     }
+
   timeval TotalStartingTime2;
   timeval TotalEndingTime2;
   double Dt2;
   gettimeofday (&(TotalStartingTime2), 0);
   cout << "start memory" << endl;
-  
-#ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_SORTED
-  QHEParticlePrecalculationOperationWithMatrixElements Operation(this, true, /* tolerance = */ LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD);
-  Operation.ApplyOperation(this->Architecture);
-  Operation.GetMatrixElements(this->RealInteractionCoefficients, this->ComplexInteractionCoefficients);
 
-  
-  int *TmpInteractionPerComponentIndex = new int[EffectiveHilbertSpaceDimension];
-  for (long i=0; i<EffectiveHilbertSpaceDimension; ++i)
-    TmpInteractionPerComponentIndex[i] = this->NbrRealInteractionPerComponent[i] + this->NbrComplexInteractionPerComponent[i];
-  // adapt load balancing for memory:
-  if (this->Architecture->GetOptimizedTypicalRange(TmpInteractionPerComponentIndex, MinIndex, MaxIndex, this->RealInteractionCoefficients, this->ComplexInteractionCoefficients) == true)
+  const char* ComplexFileName = "complex-nbr-interaction.dat";
+  const char* RealFileName = "real-nbr-interaction.dat";
+
+  int *TmpInteractionPerComponentIndex=NULL;
+  if (this->Architecture->LoadOptimizedTypicalRange (TmpInteractionPerComponentIndex, MinIndex, MaxIndex))
     {
-      long OldEffectiveHilbertSpaceDimension = EffectiveHilbertSpaceDimension;
+      delete [] TmpInteractionPerComponentIndex;
       this->PrecalculationShift = (int) MinIndex;
       EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+
 #ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_LONGINDEX
-      // balance original arrays
-      this->Architecture->RebalanceArray(NbrComplexInteractionPerComponent);
-      this->Architecture->RebalanceArray(NbrRealInteractionPerComponent);
+      this->Architecture->LoadArray(ComplexFileName, NbrComplexInteractionPerComponent);
+      this->Architecture->LoadArray(RealFileName, NbrRealInteractionPerComponent);
+      this->RealInteractionCoefficients.ReadArray("real-entries.dat");
+      this->ComplexInteractionCoefficients.ReadArray("complex-entries.dat");
 #else
-      delete [] TmpInteractionPerComponentIndex;
-      TmpInteractionPerComponentIndex = new int[OldEffectiveHilbertSpaceDimension];
-      for (long i=0; i<OldEffectiveHilbertSpaceDimension; ++i)
-	TmpInteractionPerComponentIndex[i] = (int)NbrComplexInteractionPerComponent[i];
-      this->Architecture->RebalanceArray(TmpInteractionPerComponentIndex);
-      delete [] this->NbrComplexInteractionPerComponent;
-      this->NbrComplexInteractionPerComponent = new ElementIndexType[EffectiveHilbertSpaceDimension];
-      for (long i=0; i<EffectiveHilbertSpaceDimension; ++i)
-	NbrComplexInteractionPerComponent[i] = (ElementIndexType)TmpInteractionPerComponentIndex[i];
-      
-      delete [] TmpInteractionPerComponentIndex;
-      TmpInteractionPerComponentIndex = new int[OldEffectiveHilbertSpaceDimension];
-      for (long i=0; i<OldEffectiveHilbertSpaceDimension; ++i)
-	TmpInteractionPerComponentIndex[i] = (int)NbrRealInteractionPerComponent[i];
-      this->Architecture->RebalanceArray(TmpInteractionPerComponentIndex);
-      delete [] this->NbrRealInteractionPerComponent;
-      this->NbrRealInteractionPerComponent = new ElementIndexType[EffectiveHilbertSpaceDimension];
-      for (long i=0; i<EffectiveHilbertSpaceDimension; ++i)
-	NbrRealInteractionPerComponent[i] = (ElementIndexType)TmpInteractionPerComponentIndex[i];
+      cout << "Error: loading of load balancing not implemented for short arrays"<<endl;
+      exit(1);
 #endif
-      // cout << "distributed calculations successfully reoptimized" << endl;
     }
-  delete [] TmpInteractionPerComponentIndex;
+  else
+    {  
+#ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_SORTED
+      QHEParticlePrecalculationOperationWithMatrixElements Operation(this, true, /* tolerance = */ LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD);
+      Operation.ApplyOperation(this->Architecture);
+      Operation.GetMatrixElements(this->RealInteractionCoefficients, this->ComplexInteractionCoefficients);
+#else
+      QHEParticlePrecalculationOperation Operation(this);
+      Operation.ApplyOperation(this->Architecture);
+#endif
+  
+      int *TmpInteractionPerComponentIndex = new int[EffectiveHilbertSpaceDimension];
+      for (long i=0; i<EffectiveHilbertSpaceDimension; ++i)
+	TmpInteractionPerComponentIndex[i] = this->NbrRealInteractionPerComponent[i] + this->NbrComplexInteractionPerComponent[i];
+      // adapt load balancing for memory:
+      if (this->Architecture->GetOptimizedTypicalRange(TmpInteractionPerComponentIndex, MinIndex, MaxIndex, this->RealInteractionCoefficients, this->ComplexInteractionCoefficients) == true)
+	{
+	  long OldEffectiveHilbertSpaceDimension = EffectiveHilbertSpaceDimension;
+	  this->PrecalculationShift = (int) MinIndex;
+	  EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+#ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_LONGINDEX
+	  // balance original arrays
+	  this->Architecture->RebalanceArray(NbrComplexInteractionPerComponent, ComplexFileName);
+	  this->Architecture->RebalanceArray(NbrRealInteractionPerComponent, RealFileName);
+#else
+	  delete [] TmpInteractionPerComponentIndex;
+	  TmpInteractionPerComponentIndex = new int[OldEffectiveHilbertSpaceDimension];
+	  for (long i=0; i<OldEffectiveHilbertSpaceDimension; ++i)
+	    TmpInteractionPerComponentIndex[i] = (int)NbrComplexInteractionPerComponent[i];
+	  this->Architecture->RebalanceArray(TmpInteractionPerComponentIndex, ComplexFileName);
+	  delete [] this->NbrComplexInteractionPerComponent;
+	  this->NbrComplexInteractionPerComponent = new ElementIndexType[EffectiveHilbertSpaceDimension];
+	  for (long i=0; i<EffectiveHilbertSpaceDimension; ++i)
+	    NbrComplexInteractionPerComponent[i] = (ElementIndexType)TmpInteractionPerComponentIndex[i];
+      
+	  delete [] TmpInteractionPerComponentIndex;
+	  TmpInteractionPerComponentIndex = new int[OldEffectiveHilbertSpaceDimension];
+	  for (long i=0; i<OldEffectiveHilbertSpaceDimension; ++i)
+	    TmpInteractionPerComponentIndex[i] = (int)NbrRealInteractionPerComponent[i];
+	  this->Architecture->RebalanceArray(TmpInteractionPerComponentIndex, RealFileName);
+	  delete [] this->NbrRealInteractionPerComponent;
+	  this->NbrRealInteractionPerComponent = new ElementIndexType[EffectiveHilbertSpaceDimension];
+	  for (long i=0; i<EffectiveHilbertSpaceDimension; ++i)
+	    NbrRealInteractionPerComponent[i] = (ElementIndexType)TmpInteractionPerComponentIndex[i];
+#endif
+	  // cout << "distributed calculations successfully reoptimized" << endl;
+	}
+      delete [] TmpInteractionPerComponentIndex;
+
+    } // done precalculating memory size
+  
+  // in case of no memory, delete allocated memory.
   if (allowedMemory == 0l)
     {
       delete[] this->NbrRealInteractionPerComponent;
       delete[] this->NbrComplexInteractionPerComponent;
       this->NbrRealInteractionPerComponent = 0;
       this->NbrComplexInteractionPerComponent = 0;
+      this->RealInteractionCoefficients.Empty();
+      this->ComplexInteractionCoefficients.Empty();
       return 0l;
     }
+
+#ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_LONGINDEX
   // fix order of matrix elements, in case any missing entries are found.
   this->RealInteractionCoefficients.FixOrder();
   this->ComplexInteractionCoefficients.FixOrder();
-
-#else
-  QHEParticlePrecalculationOperation Operation(this);
-  Operation.ApplyOperation(this->Architecture);
-
-  int *TmpInteractionPerComponentIndex = new int[EffectiveHilbertSpaceDimension];
-  for (long i=0; i<EffectiveHilbertSpaceDimension; ++i)
-    TmpInteractionPerComponentIndex[i] = this->NbrRealInteractionPerComponent[i] + this->NbrComplexInteractionPerComponent[i];
-  // adapt load balancing for memory:
-  if (this->Architecture->GetOptimizedTypicalRange(TmpInteractionPerComponentIndex, MinIndex, MaxIndex) == true)
-    {
-      long OldEffectiveHilbertSpaceDimension = EffectiveHilbertSpaceDimension;
-      this->PrecalculationShift = (int) MinIndex;
-      EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
-#ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_LONGINDEX
-      // balance original arrays
-      this->Architecture->RebalanceArray(NbrComplexInteractionPerComponent);
-      this->Architecture->RebalanceArray(NbrRealInteractionPerComponent);
-#else
-      delete [] TmpInteractionPerComponentIndex;
-      TmpInteractionPerComponentIndex = new int[OldEffectiveHilbertSpaceDimension];
-      for (long i=0; i<OldEffectiveHilbertSpaceDimension; ++i)
-	TmpInteractionPerComponentIndex[i] = (int)NbrComplexInteractionPerComponent[i];
-      this->Architecture->RebalanceArray(TmpInteractionPerComponentIndex);
-      delete [] this->NbrComplexInteractionPerComponent;
-      this->NbrComplexInteractionPerComponent = new ElementIndexType[EffectiveHilbertSpaceDimension];
-      for (long i=0; i<EffectiveHilbertSpaceDimension; ++i)
-	NbrComplexInteractionPerComponent[i] = (ElementIndexType)TmpInteractionPerComponentIndex[i];
-      
-      delete [] TmpInteractionPerComponentIndex;
-      TmpInteractionPerComponentIndex = new int[OldEffectiveHilbertSpaceDimension];
-      for (long i=0; i<OldEffectiveHilbertSpaceDimension; ++i)
-	TmpInteractionPerComponentIndex[i] = (int)NbrRealInteractionPerComponent[i];
-      this->Architecture->RebalanceArray(TmpInteractionPerComponentIndex);
-      delete [] this->NbrRealInteractionPerComponent;
-      this->NbrRealInteractionPerComponent = new ElementIndexType[EffectiveHilbertSpaceDimension];
-      for (long i=0; i<EffectiveHilbertSpaceDimension; ++i)
-	NbrRealInteractionPerComponent[i] = (ElementIndexType)TmpInteractionPerComponentIndex[i];
 #endif
-      // cout << "distributed calculations successfully reoptimized" << endl;
-    }
-  delete [] TmpInteractionPerComponentIndex;
-  if (allowedMemory == 0l)
-    {
-      delete[] this->NbrRealInteractionPerComponent;
-      delete[] this->NbrComplexInteractionPerComponent;
-      this->NbrRealInteractionPerComponent = 0;
-      this->NbrComplexInteractionPerComponent = 0;
-      return 0l;
-    }
 
-#endif
+
   long Memory = 0;
-  
-   
   for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
     {
       Memory += this->NbrRealInteractionPerComponent[i];

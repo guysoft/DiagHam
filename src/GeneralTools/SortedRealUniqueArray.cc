@@ -444,18 +444,58 @@ void SortedRealUniqueArray::IncreaseInternalSize (ElementIndexType size)
 }
 
 
+// Write to file
+// filename = file to open and write to
+bool SortedRealUniqueArray::WriteArray(const char*filename)
+{
+  ofstream file;
+  if (filename!=NULL)
+    {
+      file.open(filename, std::ios::out | std::ios::binary );
+      if (file.is_open())
+	return WriteArray(file);
+      cout << "Error writing file "<<filename<<endl;
+      return false;
+    }
+  return false;
+}
+
+
+
 // write to file
 // file = open stream to write to
-void SortedRealUniqueArray::WriteArray(ofstream &file)
+bool SortedRealUniqueArray::WriteArray(ofstream &file)
 {
   WriteLittleEndian(file, this->NbrElements);
+  WriteLittleEndian(file, this->Tolerance);
+  WriteLittleEndian(file, this->Sorted);
+  WriteLittleEndian(file, this->KeepSorted);
+  WriteLittleEndian(file, this->KeepOrder);
   for (ElementIndexType i = 0; i < this->NbrElements; ++i)
-    WriteLittleEndian(file, this->Elements[i]);  
+    WriteLittleEndian(file, this->Elements[i]);
+  return true;
+}
+
+
+// Read from file
+// filename = file to open and read from
+bool SortedRealUniqueArray::ReadArray(const char*filename)
+{
+  ifstream file;
+  if (filename!=NULL)
+    {
+      file.open(filename, std::ios::in | std::ios::binary );
+      if (file.is_open())
+	return ReadArray(file);
+      cout << "Error reading file "<<filename<<endl;
+      return false;
+    }
+  return false;
 }
 
 // Read from file
 // file = open stream to read from
-void SortedRealUniqueArray::ReadArray(ifstream &file)
+bool SortedRealUniqueArray::ReadArray(ifstream &file)
 {
   if ( (this->InternalSize!=0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -463,11 +503,18 @@ void SortedRealUniqueArray::ReadArray(ifstream &file)
     }
   ElementIndexType TmpDimension;
   ReadLittleEndian(file, TmpDimension);
+  ReadLittleEndian(file, this->Tolerance);
+  ReadLittleEndian(file, this->Sorted);
+  ReadLittleEndian(file, this->KeepSorted);
+  ReadLittleEndian(file, this->KeepOrder);
   this->InternalSize=TmpDimension;
   this->NbrElements=TmpDimension;
   this->Elements=new double[TmpDimension];
   for (ElementIndexType i = 0; i < this->NbrElements; ++i)
     ReadLittleEndian(file, this->Elements[i]);
+  this->Flag = GarbageFlag();
+  this->Flag.Initialize(); // start newly allocated array      
+  return true;
 }
 
 

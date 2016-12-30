@@ -227,42 +227,19 @@ bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex
 	{
 	  TotalNbrOperations += (long) TmpNbrOperationPerIndex[i];
 	}
-      char* TmpString = new char [512];
-      sprintf (TmpString, "total number of operations = %ld", TotalNbrOperations);
-      if (this->LogFile != 0)
-	this->AddToLog(TmpString, true);    
-      long* TmpMinimumIndices = new long[this->NbrMPINodes];
-      long* TmpMaximumIndices = new long[this->NbrMPINodes];
-      TmpMinimumIndices[0] = this->MinimumIndices[0];
-      TmpMaximumIndices[this->NbrMPINodes - 1] = this->MaximumIndices[this->NbrMPINodes - 1];
-      long TmpMininumIndex = TmpMinimumIndices[0];
-      long TmpMaximumIndex = TmpMaximumIndices[this->NbrMPINodes - 1];
-      for (int i = 0; i < (this->NbrMPINodes - 1); ++i)
-	{      
-	  long LocalNbrOperations = (long) ((((double) TotalNbrOperations) * this->ClusterPerformanceArray[i]));
-	  if (LocalNbrOperations == 0l)
-	    LocalNbrOperations = 1l;
-	  long TrueLocalNbrOperations = 0l;
-	  while ((TmpMininumIndex <= TmpMaximumIndex) && (TrueLocalNbrOperations < LocalNbrOperations))
-	    {
-	      TrueLocalNbrOperations += (long) TmpNbrOperationPerIndex[TmpMininumIndex];
-	      ++TmpMininumIndex;
-	    }
-	  TmpMaximumIndices[i] = TmpMininumIndex - 1l;
-	  TmpMinimumIndices[i + 1] = TmpMininumIndex;
-	  sprintf (TmpString, "number of operations on node %d = %ld", i, TrueLocalNbrOperations);	  
-	  if (this->LogFile != 0)
-	    this->AddToLog(TmpString, true);     	  
-	}
-      long TrueLocalNbrOperations = 0;
-      while (TmpMininumIndex <= TmpMaximumIndex)
-	{
-	  TrueLocalNbrOperations += TmpNbrOperationPerIndex[TmpMininumIndex];
-	  ++TmpMininumIndex;
-	}
-      sprintf (TmpString, "number of operations on node %d = %ld", (this->NbrMPINodes - 1), TrueLocalNbrOperations);	  
-      if (this->LogFile != 0)
-	this->AddToLog(TmpString, true);     	  
+      // write load profile to disk      
+      ofstream Store("load-profile.dat", std::ios::binary | std::ios::out);
+      long TotalDimension = this->MaximumIndices[this->NbrMPINodes - 1] - this->MinimumIndices[0] + 1l;
+      Store.write((char*) &(TotalDimension), sizeof(long));
+      Store.write((char*) &(TotalNbrOperations), sizeof(long));
+      Store.write((char*) TmpNbrOperationPerIndex, (TotalDimension)*sizeof(int));
+      long CheckMark=(long)(1e12*M_PI);
+      Store.write((char*) &(CheckMark), sizeof(long));
+      // done writing load profile
+
+      long *TmpMinimumIndices, *TmpMaximumIndices;
+      this->DeduceLoadDistribution(TotalNbrOperations, TmpNbrOperationPerIndex, TmpMinimumIndices, TmpMaximumIndices);
+
       if (this->OldMinimumIndices != NULL)
 	{
 	  delete[] this->OldMinimumIndices;
@@ -289,7 +266,6 @@ bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex
       this->PrintLoadBalancing() << endl;
 
       delete[] TmpNbrOperationPerIndex;
-      delete[] TmpString;
     }
   else
     {
@@ -357,7 +333,14 @@ bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex
       Flag &= complexEntries.MergeAcrossNodes(MPI::COMM_WORLD);
 #endif
       if (Flag) 
-	return this->GetOptimizedTypicalRange (nbrOperationPerIndex, minIndex, maxIndex);
+	{
+	  if (this->MasterNodeFlag)
+	    {
+	      realEntries.WriteArray("real-entries.dat");
+	      complexEntries.WriteArray("complex-entries.dat");
+	    }
+	  return this->GetOptimizedTypicalRange (nbrOperationPerIndex, minIndex, maxIndex);
+	}
       else
 	this->GetTypicalRange(minIndex, maxIndex);
       return false;
@@ -366,20 +349,150 @@ bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex
     return this->GetOptimizedTypicalRange (nbrOperationPerIndex, minIndex, maxIndex);
 }
 
-
-// balance an array differently across notes (currently supporting T=int, long)
+// load a typical range of indices and the corresponding operations from a previous run of the calculation
 //
-// nbrOperationPerIndex = reference on a local array holding one entry per local state prior to last call to GetOptimizedTypicalRange; on return - local array holding data for the new range of the MPIArchitecture
-// return value = true if the array has been rebalanced
-bool SimpleMPIArchitecture::RebalanceArray (int*& array) 
+// nbrOperationPerIndex = reference on the number of calculations per index. If the return value is true, a new array will be allocated
+// minIndex = reference on the minimum index on which the local architecture can act
+// maxIndex = reference on the maximum index on which the local architecture can act (= minIndex is the 
+//            architecture doesn't support this feature)
+// return value = true if the range has been optimized
+bool SimpleMPIArchitecture::LoadOptimizedTypicalRange (int*& nbrOperationPerIndex, long& minIndex, long& maxIndex, const char* filename)
 {
-  return RebalanceArrayImplementation(array);
+  if (this->MasterNodeFlag == true)
+    {
+      ifstream Store;
+      Store.open(filename, std::ios::binary | std::ios::in);
+      int Acknowledge=0;
+      if (!Store.is_open())
+	{
+	  this->BroadcastToSlaves(Acknowledge);
+	  return false; // no load pattern found.
+	}
+      
+      // read load balancing information from disk     
+      long TotalDimension;
+      Store.read((char*) &(TotalDimension), sizeof(long));
+      
+      if (TotalDimension != this->MaximumIndices[this->NbrMPINodes - 1] - this->MinimumIndices[0] + 1l)
+	{
+	  cout << "Attention, load profile does not match current dimension - ignoring data"<<endl;
+	  this->BroadcastToSlaves(Acknowledge);
+	  return false;
+	}
+      long TotalNbrOperations;
+      Store.read((char*) &(TotalNbrOperations), sizeof(long));
+      nbrOperationPerIndex = new int[TotalDimension];
+      Store.read((char*) (nbrOperationPerIndex), (TotalDimension)*sizeof(int));
+      long CheckMark;
+      Store.read((char*) &(CheckMark), sizeof(long));
+      if (CheckMark!=(long)(1e12*M_PI))
+	{
+	  cout << "Error reading load profile"<<endl;
+	  this->BroadcastToSlaves(Acknowledge);
+	  return false;
+	}
+      long Sum=0;
+      for (long i=0; i<TotalDimension; ++i)
+	Sum += nbrOperationPerIndex[i];
+      if (TotalNbrOperations!=Sum)
+	{
+	  cout << "Error recovering TotalNbrOperations from file "<<filename<<endl;
+	  this->BroadcastToSlaves(Acknowledge);
+	  return false;
+	}
+      Store.close();
+      // done reading - signal success
+      Acknowledge=1;
+      this->BroadcastToSlaves(Acknowledge);
+
+      long *TmpMinimumIndices, *TmpMaximumIndices;
+      this->DeduceLoadDistribution(TotalNbrOperations, nbrOperationPerIndex, TmpMinimumIndices, TmpMaximumIndices);
+
+      if (this->OldMinimumIndices != NULL)
+	{
+	  delete[] this->OldMinimumIndices;
+	  delete[] this->OldMaximumIndices;
+	}
+      this->OldMinimumIndices = this->MinimumIndices;
+      this->OldMaximumIndices = this->MaximumIndices;
+      this->MinimumIndices = TmpMinimumIndices;
+      this->MaximumIndices = TmpMaximumIndices;
+#ifdef __MPI__      
+      MPI::COMM_WORLD.Bcast(this->MinimumIndices, 2 * this->NbrMPINodes, MPI::INT, 0);
+      MPI::COMM_WORLD.Bcast(this->MaximumIndices, 2 * this->NbrMPINodes, MPI::INT, 0);
+#endif
+      for (int i = 1; i < this->NbrMPINodes; ++i)
+	{
+	  this->SendToSlaves(i - 1, (int*) (nbrOperationPerIndex + this->MinimumIndices[i]), 
+			     (int) (this->MaximumIndices[i] - this->MinimumIndices[i] + 1l));      
+	}
+      int *TmpNbrOperationPerIndex = new int [this->MaximumIndices[0] - this->MinimumIndices[0] + 1l];      
+      for (long i = this->MinimumIndices[0]; i <= this->MaximumIndices[0]; ++i)
+	TmpNbrOperationPerIndex[i - this->MinimumIndices[0]] = nbrOperationPerIndex[i];
+      cout << "Deduced load-balancing from saved profile: ";
+      delete[] nbrOperationPerIndex;
+      nbrOperationPerIndex = TmpNbrOperationPerIndex;
+      this->PrintLoadBalancing() << endl;
+    }
+  else
+    {
+      int Acknowledge=0;
+      this->BroadcastToSlaves(Acknowledge);
+      if (Acknowledge==0)
+	return false; // data could not be loaded successfully.
+      
+      if (this->OldMinimumIndices == NULL)
+	{
+	  this->OldMinimumIndices = new long[this->NbrMPINodes];
+	  this->OldMaximumIndices = new long[this->NbrMPINodes];;
+	}
+      for (int i=0; i<this->NbrMPINodes; ++i)
+	{
+	  this->OldMinimumIndices[i] = this->MinimumIndices[i];
+	  this->OldMaximumIndices[i] = this->MaximumIndices[i];
+	}
+#ifdef __MPI__      
+      MPI::COMM_WORLD.Bcast(this->MinimumIndices, 2 * this->NbrMPINodes, MPI::INT, 0);
+      MPI::COMM_WORLD.Bcast(this->MaximumIndices, 2 * this->NbrMPINodes, MPI::INT, 0);
+#endif
+      int TmpNbrElements = (int) (this->MaximumIndices[this->MPIRank] - this->MinimumIndices[this->MPIRank] + 1l);
+      nbrOperationPerIndex = new int [TmpNbrElements];
+      this->ReceiveFromMaster(nbrOperationPerIndex, TmpNbrElements);      
+    }
+  this->MinimumIndex = this->MinimumIndices[this->MPIRank];
+  this->MaximumIndex = this->MaximumIndices[this->MPIRank];
+  minIndex = this->MinimumIndex;
+  maxIndex = this->MaximumIndex;
+  return true;
 }
 
-bool SimpleMPIArchitecture::RebalanceArray (long*& array) {
-  return RebalanceArrayImplementation(array);
+
+
+// balance an array differently across nodes (currently supporting T=int, long)
+//
+// array = reference on a local array holding one entry per local state prior to last call to GetOptimizedTypicalRange; on return - local array holding data for the new range of the MPIArchitecture
+// filename = name of a file to which the data should be saved (on master node)
+// return value = true if the array has been rebalanced
+bool SimpleMPIArchitecture::RebalanceArray (int*& array, const char* filename) 
+{
+  return RebalanceArrayImplementation(array, filename);
 }
 
+bool SimpleMPIArchitecture::RebalanceArray (long*& array, const char* filename) {
+  return RebalanceArrayImplementation(array, filename);
+}
+
+
+// Load an array from disk
+bool SimpleMPIArchitecture::LoadArray (const char* filename, int*& array)
+{
+  return LoadArrayImplementation(array, filename);
+}
+
+bool SimpleMPIArchitecture::LoadArray (const char* filename, long*& array)
+{
+  return LoadArrayImplementation(array, filename);
+}
 
 
 // get the ID of the node that handles a given index
@@ -1502,12 +1615,59 @@ bool SimpleMPIArchitecture::CanWriteOnDisk()
 }
 
 
-// balance an array differently across notes (currently supporting T=int, long)
+// deduce the load distribution for the given load profile (running on Master node)
+// totalNbrOperations = total number of operations
+// nbrOperationPerIndex = number of operations per index
+// minimumIndices = minimum indices to be determined
+// maximumIndices = maximum indices to be determined
+ void SimpleMPIArchitecture::DeduceLoadDistribution(long totalNbrOperations, int *nbrOperationPerIndex, long *&minimumIndices, long *&maximumIndices)
+{
+  char* TmpString = new char [512];
+  sprintf (TmpString, "total number of operations = %ld", totalNbrOperations);
+  if (this->LogFile != 0)
+    this->AddToLog(TmpString, true);
+
+  minimumIndices = new long[this->NbrMPINodes];
+  maximumIndices = new long[this->NbrMPINodes];
+  minimumIndices[0] = this->MinimumIndices[0];
+  maximumIndices[this->NbrMPINodes - 1] = this->MaximumIndices[this->NbrMPINodes - 1];
+  long TmpMininumIndex = minimumIndices[0];
+  long TmpMaximumIndex = maximumIndices[this->NbrMPINodes - 1];
+  for (int i = 0; i < (this->NbrMPINodes - 1); ++i)
+    {      
+      long LocalNbrOperations = (long) ((((double) totalNbrOperations) * this->ClusterPerformanceArray[i]));
+      if (LocalNbrOperations == 0l)
+	LocalNbrOperations = 1l;
+      long TrueLocalNbrOperations = 0l;
+      while ((TmpMininumIndex <= TmpMaximumIndex) && (TrueLocalNbrOperations < LocalNbrOperations))
+	{
+	  TrueLocalNbrOperations += (long) nbrOperationPerIndex[TmpMininumIndex];
+	  ++TmpMininumIndex;
+	}
+      maximumIndices[i] = TmpMininumIndex - 1l;
+      minimumIndices[i + 1] = TmpMininumIndex;
+      sprintf (TmpString, "number of operations on node %d = %ld", i, TrueLocalNbrOperations);	  
+      if (this->LogFile != 0)
+	this->AddToLog(TmpString, true);     	  
+    }
+  long TrueLocalNbrOperations = 0;
+  while (TmpMininumIndex <= TmpMaximumIndex)
+    {
+      TrueLocalNbrOperations += nbrOperationPerIndex[TmpMininumIndex];
+      ++TmpMininumIndex;
+    }
+  sprintf (TmpString, "number of operations on node %d = %ld", (this->NbrMPINodes - 1), TrueLocalNbrOperations);	  
+  if (this->LogFile != 0)
+    this->AddToLog(TmpString, true);  
+  delete[] TmpString;
+}
+
+// balance an array differently across nodes (currently supporting T=int, long)
 //
 // nbrOperationPerIndex = reference on a local array holding one entry per local state prior to last call to GetOptimizedTypicalRange; on return - local array holding data for the new range of the MPIArchitecture
 // return value = true if the array has been rebalanced
 template<typename T>
-bool SimpleMPIArchitecture::RebalanceArrayImplementation(T*& array)
+bool SimpleMPIArchitecture::RebalanceArrayImplementation(T*& array, const char* filename)
 {
   // don't do anything if the old min/max indices are not set, or are identical to the current ones
   if (this->OldMaximumIndices == NULL)
@@ -1545,6 +1705,24 @@ bool SimpleMPIArchitecture::RebalanceArrayImplementation(T*& array)
 	  this->ReceiveFromSlave(i - 1, TmpArray + this->OldMinimumIndices[i], TmpNbrElements);
 	  TotalEffectiveDimension += TmpNbrElements;
 	}
+
+      if (filename != NULL)
+	{
+	  // write array to disk
+
+	  ofstream Store(filename, std::ios::binary | std::ios::out);
+	  long TotalDimension = this->MaximumIndices[this->NbrMPINodes - 1] - this->MinimumIndices[0] + 1l;
+	  long Sum=0;
+	  for (long i=0; i<TotalDimension; ++i)
+	    Sum += TmpArray[i];
+	  Store.write((char*) &(TotalDimension), sizeof(long));
+	  Store.write((char*) &(Sum), sizeof(long));
+	  Store.write((char*) TmpArray, (TotalDimension)*sizeof(T));
+	  long CheckMark=(long)(1e12*M_PI);
+	  Store.write((char*) &(CheckMark), sizeof(long));
+	  // done writing array
+	}
+
       // redistribute array according to new load balancing
       for (int i = 1; i < this->NbrMPINodes; ++i)
 	{
@@ -1563,6 +1741,85 @@ bool SimpleMPIArchitecture::RebalanceArrayImplementation(T*& array)
   else
     {
       this->SendToMaster(array, (int)(this->OldMaximumIndices[this->MPIRank] - this->OldMinimumIndices[this->MPIRank] + 1));
+      int TmpNbrElements = (int) (this->MaximumIndices[this->MPIRank] - this->MinimumIndices[this->MPIRank] + 1l);
+      array = new T [TmpNbrElements];
+      this->ReceiveFromMaster(array, TmpNbrElements);
+    }
+  return true;
+}
+
+
+
+// load an array on Master node and distribute among nodes according to current balancing
+//
+// array = reference on a local array, to be allocated and filled with the loaded data
+// return value = true if the array has been rebalanced
+template<typename T>
+bool SimpleMPIArchitecture::LoadArrayImplementation(T*& array, const char* filename)
+{
+  if (this->MasterNodeFlag == true)
+    {
+      ifstream Store;
+      Store.open(filename, std::ios::binary | std::ios::in);
+      int Acknowledge=0;
+      if (!Store.is_open())
+	{
+	  this->BroadcastToSlaves(Acknowledge);
+	  return false; // no load pattern found.
+	}
+      
+      // read load balancing information from disk     
+      long TotalDimension;
+      Store.read((char*) &(TotalDimension), sizeof(long));
+      
+      if (TotalDimension != this->MaximumIndices[this->NbrMPINodes - 1] - this->MinimumIndices[0] + 1l)
+	{
+	  cout << "Attention, load profile does not match current dimension - ignoring data"<<endl;
+	  this->BroadcastToSlaves(Acknowledge);
+	  return false;
+	}
+      long CheckSum = 0;
+      Store.read((char*) &(CheckSum), sizeof(long));
+      T *TmpArray = new T[TotalDimension];
+      Store.read((char*) (TmpArray), (TotalDimension)*sizeof(T));
+      long CheckMark;
+      Store.read((char*) &(CheckMark), sizeof(long));
+      if (CheckMark!=((long)(1e12*M_PI)))
+	{
+	  cout << "Error reading load profile"<<endl;
+	  this->BroadcastToSlaves(Acknowledge);
+	  return false;
+	}
+      long Sum=0;
+      for (long i=0; i<TotalDimension; ++i)
+	Sum += TmpArray[i];
+      if (CheckSum!=Sum)
+	{
+	  cout << "Error recovering checksum from file "<<filename<<endl;
+	  this->BroadcastToSlaves(Acknowledge);
+	  return false;
+	}
+      // done reading - signal success
+      Acknowledge=1;
+      this->BroadcastToSlaves(Acknowledge);
+
+      for (int i = 1; i < this->NbrMPINodes; ++i)
+	{
+	  this->SendToSlaves(i - 1, (int*) (TmpArray + this->MinimumIndices[i]), 
+			     (int) (this->MaximumIndices[i] - this->MinimumIndices[i] + 1l));      
+	}
+      array = new T [this->MaximumIndices[0] - this->MinimumIndices[0] + 1l];
+      for (long i = this->MinimumIndices[0]; i <= this->MaximumIndices[0]; ++i)
+	array[i - this->MinimumIndices[0]] = TmpArray[i];
+      delete[] TmpArray;
+    }
+  else
+    {
+      int Acknowledge=0;
+      this->BroadcastToSlaves(Acknowledge);
+      if (Acknowledge==0)
+	return false; // data could not be loaded successfully.
+      
       int TmpNbrElements = (int) (this->MaximumIndices[this->MPIRank] - this->MinimumIndices[this->MPIRank] + 1l);
       array = new T [TmpNbrElements];
       this->ReceiveFromMaster(array, TmpNbrElements);

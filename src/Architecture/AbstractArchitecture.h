@@ -92,7 +92,7 @@ class AbstractArchitecture
 
   // get typical range of indices on which the local architecture acts, providing the number of calculations that have to be performed per index
   //
-  // mbrOperationPerIndex = reference on the number of calculations per index. If the return value is true, a new array will be allocated
+  // nbrOperationPerIndex = reference on the number of calculations per index. If the return value is true, a new array will be allocated
   // minIndex = reference on the minimum index on which the local architecture can act
   // maxIndex = reference on the maximum index on which the local architecture can act (= minIndex is the 
   //            architecture doesn't support this feature)
@@ -101,7 +101,7 @@ class AbstractArchitecture
   
   // get typical range of indices on which the local architecture acts, providing the number of calculations that have to be performed per index
   //
-  // mbrOperationPerIndex = reference on the number of calculations per index. If the return value is true, a new array will be allocated
+  // nbrOperationPerIndex = reference on the number of calculations per index. If the return value is true, a new array will be allocated
   // memoryPerOperation = memory required per operation (in bytes)
   // minIndex = reference on the minimum index on which the local architecture can act
   // maxIndex = reference on the maximum index on which the local architecture can act (= minIndex is the 
@@ -112,7 +112,7 @@ class AbstractArchitecture
     // get typical range of indices on which the local architecture acts, providing the number of calculations that have to be performed per index
   // and merge lists of unique matrix elements on different nodes.
   //
-  // mbrOperationPerIndex = reference on the number of calculations per index. If the return value is true, a new array will be allocated
+  // nbrOperationPerIndex = reference on the number of calculations per index. If the return value is true, a new array will be allocated
   // minIndex = reference on the minimum index on which the local architecture can act
   // maxIndex = reference on the maximum index on which the local architecture can act (= minIndex is the 
   //            architecture doesn't support this feature)
@@ -122,12 +122,27 @@ class AbstractArchitecture
   virtual bool GetOptimizedTypicalRange (int*& nbrOperationPerIndex, long& minIndex, long& maxIndex, 
 					 SortedRealUniqueArray &realEntries, SortedComplexUniqueArray &complexEntries);
 
-  // balance an array differently across notes (currently supporting T=int, long)
+  // load a typical range of indices and the corresponding operations from a previous run of the calculation
   //
-  // nbrOperationPerIndex = reference on a local array holding one entry per local state prior to last call to GetOptimizedTypicalRange; on return - local array holding data for the new range of the MPIArchitecture
+  // nbrOperationPerIndex = reference on the number of calculations per index. If the return value is true, a new array will be allocated
+  // minIndex = reference on the minimum index on which the local architecture can act
+  // maxIndex = reference on the maximum index on which the local architecture can act (= minIndex is the 
+  //            architecture doesn't support this feature)
+  // return value = true if the range has been optimized
+  virtual bool LoadOptimizedTypicalRange (int*& nbrOperationPerIndex, long& minIndex, long& maxIndex, const char* filename="load-profile.dat") {return false;}
+
+  // balance an array differently across nodes (currently supporting T=int, long)
+  //
+  // array = reference on a local array holding one entry per local state prior to last call to GetOptimizedTypicalRange; on return - local array holding data for the new range of the MPIArchitecture
+  // filename = name of a file to which the data should be saved (on master node)
   // return value = true if the array has been rebalanced
-  virtual bool RebalanceArray (int*& array) {return false;}
-  virtual bool RebalanceArray (long*& array) {return false;}
+  virtual bool RebalanceArray (int*& array, const char* filename=0) {return false;}
+  virtual bool RebalanceArray (long*& array, const char* filename=0) {return false;}
+
+  // Load an array from disk
+  // (in format saved by RebalanceArray)
+  virtual bool LoadArray (const char* filename, int*& array) {return false;}
+  virtual bool LoadArray (const char* filename, long*& array) {return false;}
 
   // get a new real vector with memory alloaction depending on the architecture
   //
