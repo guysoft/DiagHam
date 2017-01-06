@@ -64,6 +64,9 @@ class ComplexBasicLanczosAlgorithmWithGroundStateFastDisk : public AbstractLancz
   // flag to indicate that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
   bool ResumeDiskFlag;
 
+  // flag indicating whether the algorithm should return before replaying the Lanczos run (useful for large parallel runs)
+  bool ReturnAtConvergenceFlag;
+
   int Index;
 
   // number of wanted eigenvalues
@@ -83,7 +86,8 @@ class ComplexBasicLanczosAlgorithmWithGroundStateFastDisk : public AbstractLancz
   // maxIter = an approximation of maximal number of iteration
   // diskFlag = use disk storage to increase speed of ground state calculation
   // resumeDiskFlag = indicates that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
-  ComplexBasicLanczosAlgorithmWithGroundStateFastDisk(AbstractArchitecture* architecture, int maxIter = 0, bool diskFlag = false, bool resumeDiskFlag = false);
+  // returnAtConvergenceFlag = flag indicating whether the algorithm should return before replaying the Lanczos run (useful for large parallel runs)
+  ComplexBasicLanczosAlgorithmWithGroundStateFastDisk(AbstractArchitecture* architecture, int maxIter = 0, bool diskFlag = false, bool resumeDiskFlag = false, bool returnAtConvergenceFlag = false);
 
   // copy constructor
   //

@@ -716,6 +716,7 @@ bool SortedComplexUniqueArray::BroadcastArray(MPI::Intracomm& communicator,  int
 
 bool SortedComplexUniqueArray::MergeAcrossNodes(MPI::Intracomm& communicator)
 {
+  if (communicator.Get_size()==1) return true;
   if (2*this->NbrElements > std::numeric_limits<int>::max())
     {
       cout << "Error: cannot merge unique arrays larger than max(int)"<<endl;

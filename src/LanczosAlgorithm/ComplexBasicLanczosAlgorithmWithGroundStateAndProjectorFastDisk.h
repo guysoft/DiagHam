@@ -65,6 +65,9 @@ class ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk : public C
   double* ProjectorEigenvalues;
   // temporary matrix used for the automatic projector subspace generation
   RealTriDiagonalSymmetricMatrix FullDiagonalizedMatrix;
+
+  // flag indicating whether the algorithm should return before replaying the Lanczos run (useful for large parallel runs)
+  bool ReturnAtConvergenceFlag;
   
  public:
 
@@ -78,10 +81,11 @@ class ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk : public C
   // maxIter = an approximation of maximal number of iteration
   // diskFlag = use disk storage to increase speed of ground state calculation
   // resumeDiskFlag = indicates that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
+  // returnAtConvergenceFlag = flag indicating whether the algorithm should return before replaying the Lanczos run (useful for large parallel runs)
   ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk(int nbrProjectors, ComplexVector* projectorVectors, double projectorCoefficient, 
 								  bool indexShiftFlag,
 								  AbstractArchitecture* architecture, 
-								  int maxIter = 0, bool diskFlag = false, bool resumeDiskFlag = false);
+								  int maxIter = 0, bool diskFlag = false, bool resumeDiskFlag = false, bool returnAtConvergenceFlag = false);
 
   // constructor using automatic projector construction 
   //
@@ -93,7 +97,7 @@ class ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk : public C
   // resumeDiskFlag = indicates that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
   ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk(int nbrEigenvalues, double projectorCoefficient,
 								  AbstractArchitecture* architecture, 
-								  int maxIter = 0, bool diskFlag = false, bool resumeDiskFlag = false);
+								  int maxIter = 0, bool diskFlag = false, bool resumeDiskFlag = false, bool returnAtConvergenceFlag=false);
 
   // constructor using both automatic projector construction and an initial set of projectors
   //
@@ -110,7 +114,7 @@ class ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk : public C
 								  int nbrProjectors, ComplexVector* projectorVectors,
 								  double projectorCoefficient, bool indexShiftFlag,
 								  AbstractArchitecture* architecture, 
-								  int maxIter = 0, bool diskFlag = false, bool resumeDiskFlag = false);
+								  int maxIter = 0, bool diskFlag = false, bool resumeDiskFlag = false, bool returnAtConvergenceFlag=false);
   // copy constructor
   //
   // algorithm = algorithm from which new one will be created

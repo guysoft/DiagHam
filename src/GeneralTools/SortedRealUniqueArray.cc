@@ -605,6 +605,7 @@ bool SortedRealUniqueArray::BroadcastArray(MPI::Intracomm& communicator,  int id
 
 bool SortedRealUniqueArray::MergeAcrossNodes(MPI::Intracomm& communicator)
 {
+  if (communicator.Get_size()==1) return true;
   if (this->NbrElements > std::numeric_limits<int>::max())
     {
       cout << "Error: cannot merge unique arrays larger than max(int)"<<endl;

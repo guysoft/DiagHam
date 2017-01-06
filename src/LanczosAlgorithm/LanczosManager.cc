@@ -140,6 +140,7 @@ void LanczosManager::AddOptionGroup(OptionManager* manager)
       (*LanczosGroup) += new SingleDoubleOption ('\n', "addprojector-factor", "set the energy scale factor in front of the projector when using --add-projector", 10.0);
       (*LanczosGroup) += new BooleanOption ('\n', "addprojector-noshift", "do not shift the eigenstate indices when using the --add-projector");
       (*LanczosGroup) += new BooleanOption ('\n', "resume-fastdisk", "resume the fast-disk mode Lanczos algorithm from a stopped one (for example due to computer crash)");
+      (*LanczosGroup) += new BooleanOption ('\n', "noreplay-fastdisk", "do not evaluate eigenvectors in fast-disk mode, exit the code, instead");
     }
 }
 
@@ -169,6 +170,7 @@ AbstractLanczosAlgorithm* LanczosManager::GetLanczosAlgorithm(AbstractArchitectu
       //double LanczosPrecision = ((SingleDoubleOption*) (*(this->Options))["lanczos-precision"])->GetDouble();
       bool FastDiskFlag = this->Options->GetBoolean("fast-disk");
       bool ResumeFastDiskFlag = this->Options->GetBoolean("resume-fastdisk");
+      bool NoReplayFlag = this->Options->GetBoolean("noreplay-fastdisk");
       bool FullReorthogonalizationFlag = this->Options->GetBoolean("force-reorthogonalize");
       bool LapackFlag = false;
       if (((*(this->Options))["use-lapack"])!=NULL)
@@ -251,7 +253,7 @@ AbstractLanczosAlgorithm* LanczosManager::GetLanczosAlgorithm(AbstractArchitectu
 		      if (this->Options->GetString("add-projector") == 0)
 			{
 			  cout << "Using ComplexBasicLanczosAlgorithmWithGroundStateFastDisk" << endl;
-			  this->LanczosAlgorithm = new ComplexBasicLanczosAlgorithmWithGroundStateFastDisk(architecture, MaxNbrIterLanczos , FastDiskFlag, ResumeFastDiskFlag);
+			  this->LanczosAlgorithm = new ComplexBasicLanczosAlgorithmWithGroundStateFastDisk(architecture, MaxNbrIterLanczos , FastDiskFlag, ResumeFastDiskFlag, NoReplayFlag);
 			}
 		      else
 			{
@@ -276,7 +278,7 @@ AbstractLanczosAlgorithm* LanczosManager::GetLanczosAlgorithm(AbstractArchitectu
 														       this->Options->GetDouble("addprojector-factor"), 
 														       !(this->Options->GetBoolean("addprojector-noshift")),
 														       architecture, 
-														       MaxNbrIterLanczos , FastDiskFlag, ResumeFastDiskFlag);
+														       MaxNbrIterLanczos , FastDiskFlag, ResumeFastDiskFlag, NoReplayFlag);
 			  delete[] States;
 			}
 		    }
@@ -310,7 +312,7 @@ AbstractLanczosAlgorithm* LanczosManager::GetLanczosAlgorithm(AbstractArchitectu
 												 this->Options->GetDouble("addprojector-factor"), 
 												 !(this->Options->GetBoolean("addprojector-noshift")),
 												 architecture, 
-												 NbrEigenvalue, MaxNbrIterLanczos );
+												 NbrEigenvalue, MaxNbrIterLanczos);
 			  delete[] States;
 			}
 		    }
@@ -364,7 +366,7 @@ AbstractLanczosAlgorithm* LanczosManager::GetLanczosAlgorithm(AbstractArchitectu
 			      this->LanczosAlgorithm = new ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk(NbrEigenvalue, 
 															   this->Options->GetDouble("addprojector-factor"), 
 															   architecture, 
-															   MaxNbrIterLanczos , FastDiskFlag, ResumeFastDiskFlag);
+															   MaxNbrIterLanczos , FastDiskFlag, ResumeFastDiskFlag, NoReplayFlag);
 			    }
 			  else
 			    {
@@ -390,7 +392,7 @@ AbstractLanczosAlgorithm* LanczosManager::GetLanczosAlgorithm(AbstractArchitectu
 															   this->Options->GetDouble("addprojector-factor"), 
 															   !(this->Options->GetBoolean("addprojector-noshift")),
 															   architecture, 
-															   MaxNbrIterLanczos , FastDiskFlag, ResumeFastDiskFlag);
+															   MaxNbrIterLanczos , FastDiskFlag, ResumeFastDiskFlag, NoReplayFlag);
 			    }
 			}
 		    }

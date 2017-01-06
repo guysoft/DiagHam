@@ -62,11 +62,11 @@ using std::endl;
 // maxIter = an approximation of maximal number of iteration
 // diskFlag = use disk storage to increase speed of ground state calculation
 // resumeDiskFlag = indicates that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
-
+// returnAtConvergenceFlag = flag indicating whether the algorithm should return before replaying the Lanczos run (useful for large parallel runs)
 ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk(int nbrProjectors, ComplexVector* projectorVectors, 
 																 double projectorCoefficient, bool indexShiftFlag, 
 																 AbstractArchitecture* architecture, 
-																 int maxIter, bool diskFlag, bool resumeDiskFlag) 
+																 int maxIter, bool diskFlag, bool resumeDiskFlag, bool returnAtConvergenceFlag) 
 {
   this->Index = 0;
   this->Hamiltonian = 0;
@@ -87,6 +87,7 @@ ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ComplexBasicLan
   this->IndexShiftFlag = indexShiftFlag;
   this->AutomaticProjectorConstructionFlag = false;
   this->ProjectorEigenvalues = 0;
+  this->ReturnAtConvergenceFlag = returnAtConvergenceFlag;
   if (maxIter > 0)
     {
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(maxIter, true);
@@ -111,10 +112,10 @@ ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ComplexBasicLan
 // maxIter = an approximation of maximal number of iteration
 // diskFlag = use disk storage to increase speed of ground state calculation
 // resumeDiskFlag = indicates that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
-
+// returnAtConvergenceFlag = flag indicating whether the algorithm should return before replaying the Lanczos run (useful for large parallel runs)
 ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk(int nbrEigenvalues, double projectorCoefficient,
 																 AbstractArchitecture* architecture, 
-																 int maxIter, bool diskFlag, bool resumeDiskFlag)
+																 int maxIter, bool diskFlag, bool resumeDiskFlag, bool returnAtConvergenceFlag)
 {
   this->Index = 0;
   this->Hamiltonian = 0;
@@ -134,6 +135,7 @@ ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ComplexBasicLan
   this->ProjectorCoefficient = projectorCoefficient;
   this->IndexShiftFlag = false;
   this->AutomaticProjectorConstructionFlag = true;
+  this->ReturnAtConvergenceFlag = returnAtConvergenceFlag;
   if (maxIter > 0)
     {
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(maxIter, true);
@@ -160,12 +162,12 @@ ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ComplexBasicLan
 // maxIter = an approximation of maximal number of iteration
 // diskFlag = use disk storage to increase speed of ground state calculation
 // resumeDiskFlag = indicates that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
-
+// returnAtConvergenceFlag = flag indicating whether the algorithm should return before replaying the Lanczos run (useful for large parallel runs)
 ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk(int nbrEigenvalues,
 																 int nbrProjectors, ComplexVector* projectorVectors,
 																 double projectorCoefficient, bool indexShiftFlag,
 																 AbstractArchitecture* architecture, 
-																 int maxIter, bool diskFlag, bool resumeDiskFlag)
+																 int maxIter, bool diskFlag, bool resumeDiskFlag, bool returnAtConvergenceFlag)
 {
   this->Index = 0;
   this->Hamiltonian = 0;
@@ -187,6 +189,7 @@ ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ComplexBasicLan
   this->ProjectorCoefficient = projectorCoefficient;
   this->IndexShiftFlag = indexShiftFlag;
   this->AutomaticProjectorConstructionFlag = true;
+  this->ReturnAtConvergenceFlag = returnAtConvergenceFlag;
   if (maxIter > 0)
     {
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(maxIter, true);
@@ -226,6 +229,7 @@ ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ComplexBasicLan
   this->NbrEigenvalue = algorithm.NbrEigenvalue;
   this->NbrProjectors = algorithm.NbrProjectors;
   this->InitialNbrProjectors = algorithm.InitialNbrProjectors;
+  this->ReturnAtConvergenceFlag = algorithm.ReturnAtConvergenceFlag;
   if (this->AutomaticProjectorConstructionFlag == false)
     {
       this->ProjectorVectors = new ComplexVector [this->NbrProjectors];
@@ -344,7 +348,7 @@ void ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::Initialize
     }
 }
 
-// get the n first eigenstates (limited to the ground state fro this class, return NULL if nbrEigenstates > 1)
+// get the n first eigenstates (limited to the ground state from this class, return NULL if nbrEigenstates > 1)
 //
 // nbrEigenstates = number of needed eigenstates
 // return value = array containing the eigenstates
@@ -414,6 +418,10 @@ Vector& ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::GetGrou
 
       if (this->DiskFlag == false)
 	{
+	  // save initial vector and current state for possible recovery.
+	  this->InitialState.WriteVector("initialvector");
+	  this->WriteState();
+	  //
 	  double* TmpCoefficient = new double[2];
 	  this->GroundState.Copy(this->InitialState, TmpComponents[0]);
 	  VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->InitialState, &this->V3);
@@ -448,6 +456,11 @@ Vector& ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::GetGrou
 	}
       else
 	{ 
+	  if (this->ReturnAtConvergenceFlag)
+	    {
+	      cout << "returning prior to calculation of eigenstate: state can be obtained with ReplayFastLanczos."<<endl;
+	      exit(0);
+	    }
 	  this->V1.ReadVector("vector.0");	      
 	  this->GroundState.Copy(this->V1, TmpComponents[0]);
 	  char* TmpVectorName = new char [256];
@@ -732,6 +745,7 @@ RealTriDiagonalSymmetricMatrix& ComplexBasicLanczosAlgorithmWithGroundStateAndPr
 
 bool ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::WriteState()
 {
+  system("mv lanczos.dat lanczos.bak");
   ofstream File;
   File.open("lanczos.dat", ios::binary | ios::out);
   WriteLittleEndian(File, this->Index);
@@ -789,7 +803,7 @@ bool ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ReadState(
     {
       ReadLittleEndian(File, this->TridiagonalizedMatrix.UpperDiagonalElement(i));
     }
-  File.close();  
+  File.close();
   char* TmpVectorName = new char [256];
   sprintf(TmpVectorName, "vector.%d", this->Index);
   this->V1.ReadVector(TmpVectorName);

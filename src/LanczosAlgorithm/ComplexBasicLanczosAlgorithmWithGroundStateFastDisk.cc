@@ -65,8 +65,8 @@ ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::ComplexBasicLanczosAlgorith
 // maxIter = an approximation of maximal number of iteration
 // diskFlag = use disk storage to increase speed of ground state calculation
 // resumeDiskFlag = indicates that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
-
-ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::ComplexBasicLanczosAlgorithmWithGroundStateFastDisk(AbstractArchitecture* architecture, int maxIter, bool diskFlag, bool resumeDiskFlag) 
+// returnAtConvergenceFlag = flag indicating whether the algorithm should return before replaying the Lanczos run (useful for large parallel runs)
+ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::ComplexBasicLanczosAlgorithmWithGroundStateFastDisk(AbstractArchitecture* architecture, int maxIter, bool diskFlag, bool resumeDiskFlag, bool returnAtConvergenceFlag) 
 {
   this->Index = 0;
   this->Hamiltonian = 0;
@@ -78,6 +78,7 @@ ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::ComplexBasicLanczosAlgorith
   this->GroundStateFlag = false;
   this->DiskFlag = diskFlag;
   this->ResumeDiskFlag = resumeDiskFlag;
+  this->ReturnAtConvergenceFlag = returnAtConvergenceFlag;
   if (maxIter > 0)
     {
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(maxIter, true);
@@ -110,6 +111,7 @@ ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::ComplexBasicLanczosAlgorith
   this->InitialState = algorithm.InitialState;
   this->GroundState = algorithm.GroundState;
   this->GroundStateFlag = algorithm.GroundStateFlag;
+  this->ReturnAtConvergenceFlag = algorithm.ReturnAtConvergenceFlag;
   this->TridiagonalizedMatrix = algorithm.TridiagonalizedMatrix;
   this->Architecture = algorithm.Architecture;
   this->PreviousLastWantedEigenvalue = algorithm.PreviousLastWantedEigenvalue;
@@ -230,6 +232,10 @@ Vector& ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::GetGroundState()
 
       if (this->DiskFlag == false)
 	{
+	  // save initial vector and current state for possible recovery.
+	  this->InitialState.WriteVector("initialvector");
+	  this->WriteState();
+	  //
 	  double* TmpCoefficient = new double[2];
 	  this->GroundState.Copy(this->InitialState, TmpComponents[0]);
 	  VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->InitialState, &this->V3);
@@ -262,6 +268,11 @@ Vector& ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::GetGroundState()
 	}
       else
 	{ 
+	  if (this->ReturnAtConvergenceFlag)
+	    {
+	      cout << "returning prior to calculation of eigenstate: state can be obtained with ReplayFastLanczos."<<endl;
+	      exit(0);
+	    }
 	  this->V1.ReadVector("vector.0");	      
 	  this->GroundState.Copy(this->V1, TmpComponents[0]);
 	  char* TmpVectorName = new char [256];
@@ -408,6 +419,7 @@ bool ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::TestConvergence ()
 
 bool ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::WriteState()
 {
+  system("mv lanczos.dat lanczos.bak");
   ofstream File;
   File.open("lanczos.dat", ios::binary | ios::out);
   WriteLittleEndian(File, this->Index);

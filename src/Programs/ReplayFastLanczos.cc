@@ -54,6 +54,7 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new  SingleStringOption ('o', "ground-filename", "name of the file where the ground state has to be stored (in default ground.vec.XX, with XX=nbr iteration)", 0);
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-iter", "set a new number of lanczos iteration (0 if the one of the lanczos.dat has to be kept)", 0);
   (*LanczosGroup) += new BooleanOption ('c', "complex-lanczos", "indicate whether a complex Lanczos algorithm was used");
+  (*LanczosGroup) += new BooleanOption  ('\n', "projector-lanczos", "projectors were used in Lanczos algorithm", false);
   (*LanczosGroup) += new BooleanOption  ('\n', "block-lanczos", "use block Lanczos algorithm", false);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -75,10 +76,14 @@ int main(int argc, char** argv)
   double Shift = ((SingleDoubleOption*) Manager["lanczos-shift"])->GetDouble();
   bool EigenstateFlag = Manager.GetBoolean("eigenstate");
   int NbrIter = Manager.GetInteger("nbr-iter");
+  bool ProjectorFlag = Manager.GetBoolean("projector-lanczos");  
   bool BlockLanczosFlag = Manager.GetBoolean("block-lanczos");  
   bool LapackFlag = Manager.GetBoolean("use-lapack");  
-
+  bool AutomaticProjectorConstructionFlag = false;
+  int NbrProjectors;
   int LanczosIndex;
+  int InitialNbrProjectors;
+  double *ProjectorEigenvalues = NULL;
   double PreviousLastWantedEigenvalue;
   int TmpDimension;
   RealTriDiagonalSymmetricMatrix TridiagonalizedMatrix(4000, true);
@@ -109,6 +114,18 @@ int main(int argc, char** argv)
 	  File.open("lanczos.dat", ios::binary | ios::in);
 	  ReadLittleEndian(File, LanczosIndex);
 	  ReadLittleEndian(File, PreviousLastWantedEigenvalue);
+	  if (ProjectorFlag == true)
+	    {
+	      ReadLittleEndian(File, AutomaticProjectorConstructionFlag);
+	      ReadLittleEndian(File, NbrProjectors);
+	      ReadLittleEndian(File, InitialNbrProjectors);
+	      if (ProjectorEigenvalues != 0)
+		{
+		  for (int i = 0; i < NbrProjectors; ++i)
+		    ReadLittleEndian(File, ProjectorEigenvalues[i]);
+		}
+	    }
+
 	  ReadLittleEndian(File, TmpDimension);
 	  TridiagonalizedMatrix.Resize(TmpDimension, TmpDimension);
 	  --TmpDimension;
@@ -329,6 +346,18 @@ int main(int argc, char** argv)
       File.open("lanczos.dat", ios::binary | ios::in);
       ReadLittleEndian(File, LanczosIndex);
       ReadLittleEndian(File, PreviousLastWantedEigenvalue);
+      if (ProjectorFlag == true)
+	{
+	  ReadLittleEndian(File, AutomaticProjectorConstructionFlag);
+	  ReadLittleEndian(File, NbrProjectors);
+	  ReadLittleEndian(File, InitialNbrProjectors);
+	  if (ProjectorEigenvalues != 0)
+	    {
+	      for (int i = 0; i < NbrProjectors; ++i)
+		ReadLittleEndian(File, ProjectorEigenvalues[i]);
+	    }
+	}
+
       ReadLittleEndian(File, TmpDimension);
       TridiagonalizedMatrix.Resize(TmpDimension, TmpDimension);
       --TmpDimension;
