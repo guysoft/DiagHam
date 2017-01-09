@@ -2,6 +2,9 @@
 #include "HilbertSpace/Spin1_2ChainFull.h"
 #include "HilbertSpace/Spin1_2ChainFixedParity.h"
 #include "HilbertSpace/Spin1_2ChainWithTranslations.h"
+#include "HilbertSpace/Spin1_2ChainWithTranslationsAndSzSymmetry.h"
+#include "HilbertSpace/Spin1_2ChainWithTranslationsAndInversionSymmetry.h"
+#include "HilbertSpace/Spin1_2ChainWithTranslationsAndSzInversionSymmetries.h"
 
 #include "HilbertSpace/Spin1Chain.h"
 #include "HilbertSpace/Spin1ChainWithTranslations.h"
@@ -493,12 +496,36 @@ int main(int argc, char** argv)
       AbstractSpinChainWithTranslations* Space = 0;
       switch (SpinValue)
 	{
-	  case 1 :
-	    Space = new Spin1_2ChainWithTranslations (NbrSpins, Momentum, 1, SzValue, 1000000, 1000000);
-	    break;
-	  case 2 :
-	    {
-	      if ((Manager.GetInteger("sz-symmetry") == 0) || (SzValue != 0))
+	case 1 :
+	  {
+	    if ((Manager.GetInteger("inversion-symmetry") != 0) && ((Momentum == 0) || (((NbrSpins & 1) == 0) && (Momentum == (NbrSpins / 2)))))
+	      {
+		if ((Manager.GetInteger("sz-symmetry") != 0) && (SzValue == 0))
+		  {
+		    Space = new Spin1_2ChainWithTranslationsAndSzInversionSymmetries (NbrSpins, Momentum, 1, Manager.GetInteger("inversion-symmetry"), 
+										      Manager.GetInteger("sz-symmetry"), SzValue, 1000000, 1000000);
+		  }
+		else
+		  {
+		    Space = new Spin1_2ChainWithTranslationsAndInversionSymmetry (NbrSpins, Momentum, 1, Manager.GetInteger("inversion-symmetry"), SzValue, 1000000, 1000000);
+		  }
+	      }
+	    else
+	      {
+		if ((Manager.GetInteger("sz-symmetry") != 0) && (SzValue == 0))
+		  {
+		    Space = new Spin1_2ChainWithTranslationsAndSzSymmetry (NbrSpins, Momentum, 1, Manager.GetInteger("sz-symmetry"), SzValue, 1000000, 1000000);
+		  }
+		else
+		  {
+		    Space = new Spin1_2ChainWithTranslations (NbrSpins, Momentum, 1, SzValue, 1000000, 1000000);
+		  }
+	      }
+	  }
+	  break;
+	case 2 :
+	  {
+	    if ((Manager.GetInteger("sz-symmetry") == 0) || (SzValue != 0))
 		{
 		  if ((Manager.GetInteger("inversion-symmetry") != 0) && ((Momentum == 0) || (((NbrSpins & 1) == 0) && (Momentum == (NbrSpins / 2)))))
 		    {
