@@ -1743,9 +1743,10 @@ void BosonOnSphereWithSU2Spin::SlaterTimeSpinfulFermionicState(RealVector& fermi
 		  double TmpK1 = ((double) i) - TmpShift1;
 		  double TmpK2 = ((double) j) - TmpShift2;
 		  double TmpK3 = ((double) (i - j)) - TmpShift3;
-		  ThreeOrbitalOverlaps[i][j] = -0.5 * Kappa2Factor * ((TmpK1 * TmpK1) + SquareMagneticLengthRescaling2 * (TmpK2 * TmpK2)
-								      + SquareMagneticLengthRescaling3 * (TmpK3 * TmpK3)
-								      - TmpFactor * (TmpK1 + TmpK2 + TmpK3) * (TmpK1 + TmpK2 + TmpK3));
+		  ThreeOrbitalOverlaps[i][j] = log(this->ComputeIntegralPhi0Phi0Phi0OnCylinder(TmpK1, 1.0, TmpK2, SquareMagneticLengthRescaling2, TmpK3, SquareMagneticLengthRescaling3, cylinderPerimeter));
+// 		  ThreeOrbitalOverlaps[i][j] = -0.5 * Kappa2Factor * ((TmpK1 * TmpK1) + SquareMagneticLengthRescaling2 * (TmpK2 * TmpK2)
+// 								      + SquareMagneticLengthRescaling3 * (TmpK3 * TmpK3)
+// 								      - TmpFactor * (TmpK1 + TmpK2 + TmpK3) * (TmpK1 + TmpK2 + TmpK3));
 		}
 	    }
 	}
@@ -1823,10 +1824,31 @@ void BosonOnSphereWithSU2Spin::SlaterTimeSpinfulFermionicState(RealVector& fermi
 	  double TmpShift1 = 0.5 * ((double) this->LzMax);
 	  double TmpShift2 = 0.5 * ((double) (this->NbrBosons - 1));
 	  double TmpShift3 = 0.5 * ((double) fermionicSpace->LzMax);
+// 	  double SquareMagneticLengthRescaling2 = ((double) this->LzMax) / ((double) (this->NbrBosons - 1));
+// 	  double SquareMagneticLengthRescaling3 = ((double) this->LzMax) / ((double) fermionicSpace->LzMax);
+// 	  double TmpFactor = 1.0 / (1.0 + (1.0 / SquareMagneticLengthRescaling2) + (1.0 / SquareMagneticLengthRescaling3));
+	  
+// 	  for (int i = 0; i <= fermionicSpace->LzMax; ++i)
+// 	    {
+// 	      for (int j = 0; j < this->NbrBosons; ++j)
+// 		{
+// 		  if (((j - i) >= 0) && ((j - i) <= this->LzMax))
+// 		    {
+// 		      double TmpK1 = ((double) j - i) - TmpShift1;
+// 		      double TmpK2 = ((double) j) - TmpShift2;
+// 		      double TmpK3 = (((double) i) - TmpShift3);
+// 		      ThreeOrbitalOverlaps[j - i][j] = -0.5 * Kappa2Factor * ((TmpK1 * TmpK1) + SquareMagneticLengthRescaling2 * (TmpK2 * TmpK2)
+// 									      + SquareMagneticLengthRescaling3 * (TmpK3 * TmpK3)
+// 									      - TmpFactor * (TmpK1 + TmpK2 + TmpK3) * (TmpK1 + TmpK2 + TmpK3));
+// 		    }
+// 		}
+// 	    }
+	  
+	  Kappa2Factor /= ((double) (fermionicSpace->LzMax + this->NbrBosons - 1)) / ((double) (this->LzMax + 1));
 	  double SquareMagneticLengthRescaling2 = ((double) this->LzMax) / ((double) (this->NbrBosons - 1));
 	  double SquareMagneticLengthRescaling3 = ((double) this->LzMax) / ((double) fermionicSpace->LzMax);
-	  double TmpFactor = 1.0 / (1.0 + (1.0 / SquareMagneticLengthRescaling2) + (1.0 / SquareMagneticLengthRescaling3));
-	  
+	  double TmpFactor = 1.0 / (1.0 + (1.0 / SquareMagneticLengthRescaling2) - (1.0 / SquareMagneticLengthRescaling3));
+	  cout << TmpFactor << " " << fermionicSpace->LzMax << " " << (this->NbrBosons - 1) << endl;
 	  for (int i = 0; i <= fermionicSpace->LzMax; ++i)
 	    {
 	      for (int j = 0; j < this->NbrBosons; ++j)
@@ -1836,9 +1858,10 @@ void BosonOnSphereWithSU2Spin::SlaterTimeSpinfulFermionicState(RealVector& fermi
 		      double TmpK1 = ((double) j - i) - TmpShift1;
 		      double TmpK2 = ((double) j) - TmpShift2;
 		      double TmpK3 = (((double) i) - TmpShift3);
-		      ThreeOrbitalOverlaps[j - i][j] = -0.5 * Kappa2Factor * ((TmpK1 * TmpK1) + SquareMagneticLengthRescaling2 * (TmpK2 * TmpK2)
-									      + SquareMagneticLengthRescaling3 * (TmpK3 * TmpK3)
-									      - TmpFactor * (TmpK1 + TmpK2 + TmpK3) * (TmpK1 + TmpK2 + TmpK3));
+		      ThreeOrbitalOverlaps[j - i][j] = log(this->ComputeIntegralPhi0Phi0Phi0OnCylinder(TmpK2, SquareMagneticLengthRescaling2, TmpK1, 1.0, -TmpK3, SquareMagneticLengthRescaling3, cylinderPerimeter));
+// 		      ThreeOrbitalOverlaps[j - i][j] = -0.5 * Kappa2Factor * ((TmpK1 * TmpK1) + SquareMagneticLengthRescaling2 * (TmpK2 * TmpK2)
+// 									      + SquareMagneticLengthRescaling3 * (TmpK3 * TmpK3)
+// 									      - TmpFactor * (TmpK1 + TmpK2 + TmpK3) * (TmpK1 + TmpK2 + TmpK3));
 		    }
 		}
 	    }
@@ -2089,6 +2112,23 @@ void BosonOnSphereWithSU2Spin::SlaterTimeSpinfulFermionicState(RealVector& fermi
       delete[] ThreeOrbitalOverlaps[LambdaLevel];
     }
   delete[] ThreeOrbitalOverlaps;
+}
+
+// compute the integral \int phi_{k1,0}^* phi_{k2,0} phi_{k3,0} on the cylinder geometry where phi_{k,n} in wavefunction with momentum k and int the n-th LL
+// 
+// k1 = momentum of the first orbital for the phi_{k1,n} wavefunction
+// l1 = square value of magnetic length for the phi_{k1,n} wavefunction
+// k2 = momentum of the first orbital for the phi_{k2,n} wavefunction
+// l2 = square value of magnetic length for the phi_{k2,n} wavefunction
+// k3 = momentum of the first orbital for the phi_{k3,n} wavefunction
+// l3 = square value of magnetic length for the phi_{k3,n} wavefunction
+// perimeter = cylinder perimeter
+// return value = corresponding integral
+
+double BosonOnSphereWithSU2Spin::ComputeIntegralPhi0Phi0Phi0OnCylinder(double k1, double l1, double k2, double l2, double k3, double l3, double perimeter)
+{
+  return  exp (-2.0 * M_PI * M_PI / (perimeter * perimeter) * ((k1 * k1 * l1) + (k2 * k2 * l2) + (k3 * k3 * l3)
+							       - 0.5 * ((k1 + k2 + k3) * (k1 + k2 + k3) * l1))) * sqrt (l1 / perimeter);
 }
 
 // Compute the product of a spinful Slater determinant with a Van der Monde determinant

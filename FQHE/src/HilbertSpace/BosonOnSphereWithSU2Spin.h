@@ -771,7 +771,20 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // position = perform a swap between the last element the one at given position 
   virtual void ReverseVanDerMondeTimesSlater (unsigned long* slaterLLLUp, unsigned long* slater2LLUp, unsigned long* slaterLLLDown, unsigned long* slater2LLDown, 
 					      int nbrBosonsLLLUp, int nbrBosonsLLLDown, RealVector& finalState, double*** threeOrbitalOverlaps, int position);
+
   
+  // compute the integral \int phi_{k1,0}^* phi_{k2,0} phi_{k3,0} on the cylinder geometry where phi_{k,n} in wavefunction with momentum k and int the n-th LL
+  // 
+  // k1 = momentum of the first orbital for the phi_{k1,n} wavefunction
+  // l1 = square value of magnetic length for the phi_{k1,n} wavefunction
+  // k2 = momentum of the first orbital for the phi_{k2,n} wavefunction
+  // l2 = square value of magnetic length for the phi_{k2,n} wavefunction
+  // k3 = momentum of the first orbital for the phi_{k3,n} wavefunction
+  // l3 = square value of magnetic length for the phi_{k3,n} wavefunction
+  // perimeter = cylinder perimeter
+  // return value = corresponding integral
+  virtual double ComputeIntegralPhi0Phi0Phi0OnCylinder(double k1, double l1, double k2, double l2, double k3, double l3, double perimeter);
+
 };
 
 // get the number of orbitals
