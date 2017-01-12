@@ -1014,6 +1014,11 @@ RealMatrix BosonOnSphereWithSU2SpinSzSymmetry::EvaluatePartialEntanglementMatrix
 
   BosonOnSphereWithSU2Spin SubsytemSpace(nbrParticleSector, lzSector, this->LzMax, szSector);
   BosonOnSphereWithSU2Spin ComplementarySubsytemSpace(ComplementaryNbrParticles, ComplementaryLzSector, this->LzMax, ComplementarySzSector);  
+  if ((SubsytemSpace.GetHilbertSpaceDimension() == 0) || (ComplementarySubsytemSpace.GetHilbertSpaceDimension() == 0))
+    {
+      RealMatrix TmpEntanglementMatrixZero;
+      return TmpEntanglementMatrixZero;
+    }
   RealMatrix TmpEntanglementMatrix(SubsytemSpace.GetHilbertSpaceDimension(), ComplementarySubsytemSpace.GetHilbertSpaceDimension(), true);
 
   long TmpNbrNonZeroElements = 0l;
@@ -1074,6 +1079,11 @@ RealMatrix BosonOnSphereWithSU2SpinSzSymmetry::EvaluatePartialEntanglementMatrix
     }
   BosonOnSphereWithSU2SpinSzSymmetry SubsytemSpace(nbrParticleSector, lzSector, this->LzMax, szSector, (szParity < 0));
   BosonOnSphereWithSU2SpinSzSymmetry ComplementarySubsytemSpace(ComplementaryNbrParticles, ComplementaryLzSector, this->LzMax, ComplementarySzSector, (ComplementarySzParity < 0));  
+  if ((SubsytemSpace.GetHilbertSpaceDimension() == 0) || (ComplementarySubsytemSpace.GetHilbertSpaceDimension() == 0))
+    {
+      RealMatrix TmpEntanglementMatrixZero;
+      return TmpEntanglementMatrixZero;
+    }
   RealMatrix TmpEntanglementMatrix(SubsytemSpace.GetHilbertSpaceDimension(), ComplementarySubsytemSpace.GetHilbertSpaceDimension(), true);
 
   long TmpNbrNonZeroElements = 0l;
