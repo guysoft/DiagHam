@@ -106,6 +106,25 @@ class AbstractTightBindingModel
   // return value = reference on the one body transformation matrix
   virtual ComplexMatrix& GetOneBodyMatrix(int momentumIndex) = 0;
 
+  // get the position of a sublattice site
+  //
+  // position = reference on a vector where the answer is supplied
+  // sublatticeIndex = index of the sub-lattice position
+  virtual void GetSublatticeVector(RealVector &position, int sublatticeIndex) = 0;
+
+  // get the lattice vector for translation along the fundamental lattice directions
+  //
+  // latticeVector[out] = reference on a vector where the answer is supplied
+  // numTranslations = vector of the number of translations along each lattice direction, in units of unit cell size
+  virtual void GetLatticeVector(RealVector &position, RealVector &numTranslations) = 0;
+
+  // get the lattice vector for translation along the fundamental lattice directions
+  //
+  // latticeVector[out] = reference on a vector where the answer is supplied
+  // numTranslations = coordinates in terms of lattice vectors
+  // sublatticeIndex = index of the sub-lattice position
+  virtual void GetSitePosition(RealVector &position, RealVector &numTranslations, int sublatticeIndex);
+
   // get the tight binding hamiltonian in real space 
   // 
   // return value = tight binding hamiltonian

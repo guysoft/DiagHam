@@ -59,6 +59,9 @@ class TightBindingModelHofstadterSquare : public Abstract2DTightBindingModel
   Complex LxTranslationPhase;
   Complex LyTranslationPhase;
 
+  // flag indicating whether natural embedding is used.
+  bool UsingNaturalEmbedding;
+
  public:
 
   // default constructor
@@ -82,6 +85,21 @@ class TightBindingModelHofstadterSquare : public Abstract2DTightBindingModel
   ~TightBindingModelHofstadterSquare();
 
 
+  // get the position of a sublattice site
+  //
+  // position = reference on a vector where the answer is supplied
+  // sublatticeIndex = index of the sub-lattice position
+  virtual void GetSublatticeVector(RealVector &position, int sublatticeIndex);
+
+
+  // convert absolute coordinates into lattice coordinates and sublattice index
+  //
+  // position = coordinates of the site to be identified
+  // tx, ty = translations of the site in units of lattice vectors
+  // sublatticeIndex = index of the sub-lattice position (if matching a lattice site; -1 if not found)
+  // return = true if the coordinates correspond to a lattice site
+  virtual bool PositionToLatticeCoordinates(RealVector &position, int &tx, int &ty, int &sublatticeIndex);
+
   // get the eigenstates in real space, using CoreComputeBandStructureWithEmbedding
   // 
   // return value = tight binding eigenvectors
@@ -101,19 +119,28 @@ class TightBindingModelHofstadterSquare : public Abstract2DTightBindingModel
 				  bool bosonFlag, double uPotential, double vPotential);
 
   // returns the single-particle wavefunction according to the definition phi_{n,k}=u_{n,alpha}(k)*exp{i k.r}
+  // deducing the appropriate sublattice value alpha from the position
   //
+  // FunctionValue[out] = return value phi_{nk}(r)
   // Position = overall position vector relative to the origin
-  // Coefficients = u values (i.e. normalised eignvectors of the Hamiltonian matrix)
   // indexK = linearised index of momentum sector
-  // alpha = sublattice index
   // bandIndex = band index
-  // return value = single-particle wavefunction
-  //
-  void GetFunctionValue(RealVector& Position, Complex& Coefficients, int indexK, int alpha, int bandIndex);
+  // return value = single-particle wavefunction in first argument
+  void GetFunctionValue(Complex& FunctionValue, RealVector& Position, int indexK, int bandIndex);
+
+  // returns the single-particle wavefunction according to the definition phi_{n,k}=u_{n,alpha}(k)*exp{i k.r}
+  // defining position in multiples of lattice vectors and sublattice index
+  // 
+  // FunctionValue[out] = return value phi_{nk}(r)
+  // Rx, Ry, alpha = defining position via r=Rx UnitCellX ex + Ry UnitCellY ey + rho_alpha
+  // indexK = linearised index of momentum sector
+  // bandIndex = band index
+  // return value = single-particle wavefunction in first argument
+  void GetFunctionValue(Complex& FunctionValue, int Rx, int Ry, int alpha, int indexK, int bandIndex);
 
   // decode single integer for sublattice index into set of quantum numbers/positions posx, posy
   // index = sublattice index
-  // [out] posx = position along x-direction
+   // [out] posx = position along x-direction
   // [out] posy = position along y-direction
   //
   void DecodeSublatticeIndex(int index, int &posx, int &posy);  
@@ -153,9 +180,14 @@ class TightBindingModelHofstadterSquare : public Abstract2DTightBindingModel
   // numXTranslations = number of translation in the x direction to get back to the unit cell 
   // numXTranslations = number of translation in the y direction to get back to the unit cell
   //
-  int  EncodeSublatticeIndex(int posx, int posy,int & numXTranslations,int &numYTranslations, Complex &translationPhase);
+  int EncodeSublatticeIndex(int posx, int posy,int & numXTranslations,int &numYTranslations, Complex &translationPhase);
 
-  int  GetRealSpaceTightBindingLinearizedIndexSafe(int x, int y, int orbitalIndex, int & numXTranslations, int &numYTranslations);
+  int GetRealSpaceTightBindingLinearizedIndexSafe(int x, int y, int orbitalIndex, int & numXTranslations, int &numYTranslations);
+
+  // obtain dimensions of magnetic unit cell
+  // numX = number of unit cells within MUC along x-direction
+  // numY = number of unit cells within MUC along y-direction
+  void GetMUCDimensions(int &numX, int &numY);
 
 };
 
@@ -261,8 +293,13 @@ inline int  TightBindingModelHofstadterSquare::GetRealSpaceTightBindingLinearize
   return this->GetRealSpaceTightBindingLinearizedIndex(x, y, orbitalIndex);
 }
 
-
-
-
+// obtain dimensions of magnetic unit cell for case of Hofstadter model
+// numX = number of unit cells within MUC along x-direction
+// numY = number of unit cells within MUC along y-direction
+inline void TightBindingModelHofstadterSquare::GetMUCDimensions(int &numX, int &numY)
+{
+    numX=this->UnitCellX;
+    numY=this->UnitCellY;
+}
 
 #endif

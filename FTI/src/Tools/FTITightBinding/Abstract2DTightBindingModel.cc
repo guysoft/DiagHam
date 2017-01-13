@@ -63,6 +63,12 @@ extern "C" void FORTRAN_NAME(dgesv)(const int* n, const int* nrhs, const double*
 Abstract2DTightBindingModel::Abstract2DTightBindingModel()
 {
   this->EmbeddingY = RealVector();
+  this->LatticeVector1.Resize(2);
+  this->LatticeVector1[0] = 1.0;
+  this->LatticeVector1[1] = 0.0;
+  this->LatticeVector2.Resize(2);
+  this->LatticeVector2[0] = 0.0;
+  this->LatticeVector2[1] = 1.0;
   this->TwistAngle = M_PI / 2;
   this->Curvature = NULL;
   this->Chern = NULL;
@@ -85,6 +91,32 @@ Abstract2DTightBindingModel::~Abstract2DTightBindingModel()
   delete[] this->LLLGammaY;
   if (this->ProjectedMomenta != 0)
     delete[] this->ProjectedMomenta;
+}
+
+// get the position of a sublattice site
+//
+// position = reference on a vector where the answer is supplied
+// sublatticeIndex = index of the sub-lattice position
+void Abstract2DTightBindingModel::GetSublatticeVector(RealVector &position, int sublatticeIndex)
+{
+  cout << "Please overload GetSublatticeVector to make sure conventions for positions match the specific implementation"<<endl;
+  if (position.GetVectorDimension()!=2)
+    position.Resize(2);
+  position[0]=EmbeddingX[sublatticeIndex];
+  position[1]=EmbeddingY[sublatticeIndex];
+}
+
+// get the lattice vector for translation along the fundamental lattice directions
+//
+// latticeVector[out] = reference on a vector where the answer is supplied
+// numTranslations = vector of the number of translations along each lattice direction, in units of unit cell size
+void Abstract2DTightBindingModel::GetLatticeVector(RealVector &position, RealVector &numTranslations)
+{
+  if (position.GetVectorDimension()!=2)
+    position.Resize(2);
+  position.ClearVector();
+  position.AddLinearCombination(numTranslations[0], this->LatticeVector1);
+  position.AddLinearCombination(numTranslations[1], this->LatticeVector2);
 }
 
 // write an header that describes the tight binding model

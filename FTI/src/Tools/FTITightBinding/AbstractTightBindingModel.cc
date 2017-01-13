@@ -444,6 +444,41 @@ ComplexMatrix AbstractTightBindingModel::BuildTightBindingNonHermitianHamiltonia
   return TmpHamiltonian;
 }
 
+// get the position of a sublattice site
+//
+// position = reference on a vector where the answer is supplied
+// sublatticeIndex = index of the sub-lattice position
+void AbstractTightBindingModel::GetSublatticeVector(RealVector &position, int sublatticeIndex)
+{
+  cout << "Attention, using dummy method AbstractTightBindingModel::GetSublatticeVector";
+  position.ClearVector();
+  return;
+}
+
+// get the lattice vector for translation along the fundamental lattice directions
+//
+// latticeVector[out] = reference on a vector where the answer is supplied
+// numTranslations = vector of the number of translations along each lattice direction, in units of unit cell size
+void AbstractTightBindingModel::GetLatticeVector(RealVector &position, RealVector &numTranslations)
+{
+  cout << "Attention, using dummy method AbstractTightBindingModel::GetSublatticeVector";
+  position.Copy(numTranslations);
+  return;
+}
+
+// get the lattice vector for translation along the fundamental lattice directions
+//
+// latticeVector[out] = reference on a vector where the answer is supplied
+// numTranslations = coordinates in terms of lattice vectors
+// sublatticeIndex = index of the sub-lattice position
+void AbstractTightBindingModel::GetSitePosition(RealVector &position, RealVector &numTranslations, int sublatticeIndex)
+{
+  this->GetLatticeVector(position, numTranslations);
+  RealVector TmpVector(position.GetVectorDimension());
+  this->GetSublatticeVector(TmpVector, sublatticeIndex);
+  position+=TmpVector;
+}
+
 // get the tight binding hamiltonian in real space 
 // 
 // return value = tight binding hamiltonian

@@ -39,7 +39,9 @@
 using std::cout;
 using std::endl;
 
-//#define DEBUG_OUTPUT
+#include <cassert>
+
+// #define DEBUG_OUTPUT
 
 
 // default constructor
@@ -62,6 +64,12 @@ TightBindingModelHofstadterSquare::TightBindingModelHofstadterSquare(int nbrCell
   this->NbrSiteY = nbrCellY;
   this->UnitCellX = unitCellX;
   this->UnitCellY = unitCellY;
+  this->LatticeVector1.Resize(2);
+  this->LatticeVector1[0] = this->UnitCellX;
+  this->LatticeVector1[1] = 0.0;
+  this->LatticeVector2.Resize(2);
+  this->LatticeVector2[0] = 0.0;
+  this->LatticeVector2[1] = this->UnitCellY;
   this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
   this->GammaX = gammaX;
@@ -92,6 +100,7 @@ TightBindingModelHofstadterSquare::TightBindingModelHofstadterSquare(int nbrCell
   else
     {
       this->SetNoEmbedding();
+      this->UsingNaturalEmbedding=false;
     }
   this->ComputeBandStructure();  
   
@@ -105,6 +114,48 @@ TightBindingModelHofstadterSquare::TightBindingModelHofstadterSquare(int nbrCell
 TightBindingModelHofstadterSquare::~TightBindingModelHofstadterSquare()
 {
 }
+
+// get the position of a sublattice site
+//
+// position = reference on a vector where the answer is supplied
+// sublatticeIndex = index of the sub-lattice position
+void TightBindingModelHofstadterSquare::GetSublatticeVector(RealVector &position, int sublatticeIndex)
+{
+  int x, y;
+  this->DecodeSublatticeIndex(sublatticeIndex, x, y);
+  if (position.GetVectorDimension()!=2)
+    position.Resize(2);
+  position[0]=x;
+  position[1]=y;
+}
+
+
+// convert absolute coordinates into lattice coordinates and sublattice index
+//
+// position = coordinates of the site to be identified
+// tx, ty = translations of the site in units of lattice vectors
+// sublatticeIndex = index of the sub-lattice position (if matching a lattice site; -1 if not found)
+// return = true if the coordinates correspond to a lattice site
+bool TightBindingModelHofstadterSquare::PositionToLatticeCoordinates(RealVector &position, int &tx, int &ty, int &sublatticeIndex)
+{
+  int x = ( int ) ( position[0] );
+  int y = ( int ) ( position[1] );
+  Complex tmpC = 0.0;
+  int alpha = this->EncodeSublatticeIndex (x, y, 0.0, 0.0, tmpC);
+  int subX, subY;
+  this->DecodeSublatticeIndex (alpha, subX, subY );
+  tx=(x-subX)/this->UnitCellX;
+  ty=(y-subY)/this->UnitCellY;
+  // double check that the above algebra is correct:
+  if( ( fabs(tx*this->UnitCellX+subX - position[0]) < 1e-13) && (fabs(ty*this->UnitCellY+subY - position[1]) < 1e-13) )
+    {
+      sublatticeIndex = alpha;
+      return true;
+    }
+  else
+    return false;
+}
+
 
 
 // core part that compute the band structure
@@ -250,6 +301,33 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIn
 #else
 		  TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
 #endif
+#ifdef DEBUG_OUTPUT
+		  ComplexMatrix TmpMatrix2((Matrix&)TmpMatrix);
+		  TmpMatrix2.HermitianTranspose();
+		  if (this->NbrBands < 12)
+		    cout << "U.U^+="<<endl
+			 << TmpMatrix2 * TmpMatrix;
+		  else
+		    {
+		      ComplexMatrix W = TmpMatrix2 * TmpMatrix;
+		      ComplexMatrix I(this->NbrBands, this->NbrBands, true);
+		      I.SetToIdentity();
+		      W-=I;
+		      bool unitary = true;
+		      for (int i = 0; i < this->NbrBands; ++i)
+			for (int j = 0; j < this->NbrBands; ++j)
+			  if (SqrNorm(W[i][j])>1e-26)
+			    {
+			      cout << "U.U^+ deviates from identity at ("<<i<<", "<<j<<") by "<<W[i][j]<<endl;
+			      unitary = false;
+			    }
+		      if (unitary)
+			cout << "U is unitary."<<endl;
+		      else
+			cout << "U deviates from unitarity."<<endl;
+		    }
+#endif
+
 		  this->OneBodyBasis[Index] = TmpMatrix;
 		  for (int i = 0; i < this->NbrBands; ++i)
 		    this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
@@ -446,6 +524,7 @@ void TightBindingModelHofstadterSquare::SetNaturalEmbedding()
 	this->EmbeddingX[sublattice] = i*invX;
 	this->EmbeddingY[sublattice] = j*invY;
       }
+  this->UsingNaturalEmbedding=true;
 }
 
 
@@ -958,25 +1037,46 @@ void TightBindingModelHofstadterSquare::ComputeInteractingOrbitals(int*& nbrInte
     }
 }
 
+// returns the single-particle wavefunction according to the definition phi_{n,k}=u_{n,alpha}(k)*exp{i k.r}
+// deducing the appropriate sublattice value alpha from the position
+//
+// FunctionValue[out] = return value phi_{nk}(r)
+// Position = overall position vector relative to the origin
+// indexK = linearised index of momentum sector
+// bandIndex = band index
+// return value = single-particle wavefunction in first argument
+void TightBindingModelHofstadterSquare::GetFunctionValue(Complex& FunctionValue, RealVector& Position, int indexK, int bandIndex)
+{
+  int x = ( int ) ( Position[0] );
+  int y = ( int ) ( Position[1] );
+  Complex tmpC = 0.0;
+  int alpha = this->EncodeSublatticeIndex (x, y, 0.0, 0.0, tmpC);
+  int subX, subY;
+  this->DecodeSublatticeIndex (alpha, subX, subY );
+  int Rx=(x-subX)/this->UnitCellX;
+  int Ry=(y-subY)/this->UnitCellY;
+  // double check that the above algebra is correct:
+  assert( fabs(Rx*this->UnitCellX+subX - Position[0]) < 1e-13);
+  assert( fabs(Ry*this->UnitCellY+subY - Position[1]) < 1e-13);
+  this->GetFunctionValue(FunctionValue, Rx, Ry, alpha, indexK, bandIndex);
+}
 
 // returns the single-particle wavefunction according to the definition phi_{n,k}=u_{n,alpha}(k)*exp{i k.r}
-//
-// Position = overall position vector relative to the origin
-// Coefficients = u values (i.e. normalised eignvectors of the Hamiltonian matrix)
+// defining position in multiples of lattice vectors and sublattice index
+// 
+// FunctionValue[out] = return value phi_{nk}(r)
+// Rx, Ry, alpha = defining position via r=Rx UnitCellX ex + Ry UnitCellY ey + rho_alpha
 // indexK = linearised index of momentum sector
-// alpha = sublattice index
 // bandIndex = band index
-// return value = single-particle wavefunction
-//
-void TightBindingModelHofstadterSquare::GetFunctionValue(RealVector& Position, Complex& Coefficients, int indexK, int alpha, int bandIndex)
+// return value = single-particle wavefunction in first argument
+void TightBindingModelHofstadterSquare::GetFunctionValue(Complex& FunctionValue, int Rx, int Ry, int alpha, int indexK, int bandIndex)
 {
-  int kx, ky;
-   this->GetLinearizedMomentumIndex(indexK, kx, ky);
-   double Kx=kx*2.0*M_PI/NbrSiteX;
-   double Ky=ky*2.0*M_PI/NbrSiteY;
-
-   double Arg = (Kx * Position[0]) + (Ky * Position[1]);
-   Coefficients = this->GetOneBodyMatrix(indexK).GetMatrixElement(alpha, bandIndex)*Polar(Arg);
-
-   return;
+  int kx=0, ky=0;
+  this->GetLinearizedMomentumIndex(indexK, kx, ky);
+  double Kx=kx*this->KxFactor;
+  double Ky=ky*this->KyFactor;   
+  double Arg = (Kx * (Rx + EmbeddingX[alpha])) + (Ky * (Ry + EmbeddingY[alpha]));
+  FunctionValue = Conj(this->GetOneBodyMatrix(indexK).GetMatrixElement(alpha, bandIndex)*Polar(Arg));
+  //if (i == 0 && alpha == 0 && bandIndex == 0) cout << "===>>> Polar(Arg) = " << Polar(Arg) << " this->GetOneBodyMatrix(i).GetMatrixElement(alpha, bandIndex) = " << this->GetOneBodyMatrix(i).GetMatrixElement(alpha, bandIndex) << endl;
+  return;
 }

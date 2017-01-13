@@ -54,6 +54,8 @@ Abstract1DTightBindingModel::Abstract1DTightBindingModel()
   this->EnergyBandStructure = 0;
   this->OneBodyBasis = 0;
   this->EmbeddingX = RealVector();
+  this->LatticeVector1 = RealVector(1);
+  this->LatticeVector1[0] = 1.0;
 }
 
 // destructor
@@ -73,6 +75,30 @@ Abstract1DTightBindingModel::~Abstract1DTightBindingModel()
 	}
       delete[] this->EnergyBandStructure;
     }
+}
+
+// get the position of a sublattice site
+//
+// position = reference on a vector where the answer is supplied
+// sublatticeIndex = index of the sub-lattice position
+void Abstract1DTightBindingModel::GetSublatticeVector(RealVector &position, int sublatticeIndex)
+{
+  if (position.GetVectorDimension()!=1)
+    position.Resize(1);
+  cout << "Please overload GetSublatticeVector to make sure conventions for positions match the specific implementation"<<endl;
+  position[0]=EmbeddingX[sublatticeIndex];
+}
+
+// get the lattice vector for translation along the fundamental lattice directions
+//
+// latticeVector[out] = reference on a vector where the answer is supplied
+// numTranslations = vector of the number of translations along each lattice direction, in units of unit cell size
+void Abstract1DTightBindingModel::GetLatticeVector(RealVector &position, RealVector &numTranslations)
+{
+  if (position.GetVectorDimension()!=1)
+    position.Resize(1);
+  position.ClearVector();
+  position.AddLinearCombination(numTranslations[0], this->LatticeVector1);
 }
 
 // write an header that describes the tight binding model

@@ -53,6 +53,9 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // boundary condition twisting angle along y
   double GammaY;
 
+  // lattice vector along the 2-direction
+  RealVector LatticeVector2;
+
   // embedding of sublattices relative to the unit cell reference point along y
   RealVector EmbeddingY;
 
@@ -95,6 +98,18 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // destructor
   //
   ~Abstract2DTightBindingModel();
+
+  // get the position of a sublattice site
+  //
+  // position = reference on a vector where the answer is supplied
+  // sublatticeIndex = index of the sub-lattice position
+  virtual void GetSublatticeVector(RealVector &position, int sublatticeIndex);
+
+  // get the lattice vector for translation along the fundamental lattice directions
+  //
+  // latticeVector[out] = reference on a vector where the answer is supplied
+  // numTranslations = vector of the number of translations along each lattice direction, in units of unit cell size
+  virtual void GetLatticeVector(RealVector &position, RealVector &numTranslations);
 
   // get the linearized momentum index
   //
@@ -367,6 +382,11 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // [out] posy = position along y-direction
   //
   virtual void DecodeSublatticeIndex(int index, int &posx, int &posy);
+
+  // obtain dimensions of magnetic unit cell for case of Hofstadter model
+  // numX = number of unit cells within MUC along x-direction
+  // numY = number of unit cells within MUC along y-direction
+  virtual void GetMUCDimensions(int &numX, int &numY);
   
    // compute the index in real space lattice starting from the cartesian coordinates
   //
@@ -764,6 +784,14 @@ inline void Abstract2DTightBindingModel::DecodeSublatticeIndex(int index, int &p
   posy=0;
 }
 
-
+   
+// obtain dimensions of magnetic unit cell for case of Hofstadter model
+// numX = number of unit cells within MUC along x-direction
+// numY = number of unit cells within MUC along y-direction
+inline void Abstract2DTightBindingModel::GetMUCDimensions(int &numX, int &numY) 
+{
+  numX=1;
+  numY=1;
+}
 
 #endif

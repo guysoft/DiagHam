@@ -50,6 +50,9 @@ class Abstract1DTightBindingModel : public AbstractTightBindingModel
   // boundary condition twisting angle along x
   double GammaX;
 
+  // lattice vector along the 1-direction
+  RealVector LatticeVector1;
+
   // embedding of sublattices relative to the unit cell reference point along x
   RealVector EmbeddingX;
 
@@ -179,6 +182,18 @@ class Abstract1DTightBindingModel : public AbstractTightBindingModel
   //
   // return value = number of sites in the x direction
   int GetNbrSiteX();
+
+  // get the position of a sublattice site
+  //
+  // position = reference on a vector where the answer is supplied
+  // sublatticeIndex = index of the sub-lattice position
+  virtual void GetSublatticeVector(RealVector &position, int sublatticeIndex);
+
+  // get the lattice vector for translation along the fundamental lattice directions
+  //
+  // latticeVector[out] = reference on a vector where the answer is supplied
+  // numTranslations = vector of the number of translations along each lattice direction, in units of unit cell size
+  virtual void GetLatticeVector(RealVector &position, RealVector &numTranslations);
 
   // write the energy spectrum in an ASCII file
   //
