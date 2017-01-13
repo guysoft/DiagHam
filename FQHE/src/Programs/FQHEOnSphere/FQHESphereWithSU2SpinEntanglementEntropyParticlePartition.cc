@@ -77,6 +77,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-sza", "if --single-sza is used, provides twice the Sza value", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
   (*SystemGroup) += new BooleanOption ('\n', "no-sz", "indicates that the input states are not Sz eigenstates");
+  (*SystemGroup) += new BooleanOption ('\n', "disable-szsymmetry", "disable the Sz<->-Sz symmetry");
   (*SystemGroup) += new BooleanOption  ('c', "complex", "Assume vectors consist of complex numbers");
   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
   (*SystemGroup) += new SingleStringOption  ('\n', "realspace-cut", "use real space partition instead of particle partition, providing the orbital weights");
@@ -335,14 +336,14 @@ int main(int argc, char** argv)
 		  int SubsystemTotalLz = -SubsystemMaxTotalLz; 
 		  int LocalMinSzSymmetrySector = -1;
 		  int LocalMaxSzSymmetrySector = 1;
-		  if ((SubsystemTotalSz != 0) || (SzSymmetry[0] == 0))
+		  if ((SubsystemTotalSz != 0) || (SzSymmetry[0] == 0) || (Manager.GetBoolean("disable-szsymmetry") == true))
 		    {
 		      LocalMinSzSymmetrySector = 0;
 		      LocalMaxSzSymmetrySector = 0;
 		    }
-		  for (int SubsystemSzSymmetrySector = LocalMinSzSymmetrySector; SubsystemSzSymmetrySector <= LocalMinSzSymmetrySector; SubsystemSzSymmetrySector += 2)
+		  for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
 		    {
-		      for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
+		      for (int SubsystemSzSymmetrySector = LocalMinSzSymmetrySector; SubsystemSzSymmetrySector <= LocalMinSzSymmetrySector; SubsystemSzSymmetrySector += 2)
 			{
 			  SubsystemNbrParticleSectors[TotalNbrReducedDensityMatrixBlocks] = SubsystemNbrParticles;
 			  SubsystemTotalSzSectors[TotalNbrReducedDensityMatrixBlocks] = SubsystemTotalSz;
