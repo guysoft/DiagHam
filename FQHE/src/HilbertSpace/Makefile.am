@@ -182,4 +182,5 @@ BosonOnS2xS2HardcoreNoNearestNeighbors.cc \
 BosonOnSphereShortHardcore.cc \
 BosonOnSquareLatticeMomentumSpaceHardcore.cc \
 FermionOnS2xS2WithExclusionPrinciple.cc \
-FermionOnSphereWithSpinTwoLandauLevels.cc
+FermionOnSphereWithSpinTwoLandauLevels.cc \
+BosonOnS2xS2Long.cc

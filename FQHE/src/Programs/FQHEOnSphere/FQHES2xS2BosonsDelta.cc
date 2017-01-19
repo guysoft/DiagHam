@@ -1,4 +1,5 @@
 #include "HilbertSpace/BosonOnS2xS2.h"
+#include "HilbertSpace/BosonOnS2xS2Long.h"
 #include "HilbertSpace/BosonOnS2xS2HardcoreNoNearestNeighbors.h"
 
 #include "Hamiltonian/ParticleOnS2xS2DeltaHamiltonian.h"
@@ -186,7 +187,18 @@ int main(int argc, char** argv)
       for (int TotalKz = MinTotalKz; TotalKz <= TmpMaxTotalKz; TotalKz += 2)
 	{
 	  ParticleOnSphere* Space = 0;
-	  Space = new BosonOnS2xS2(NbrBosons, NbrFluxQuanta1, NbrFluxQuanta2, TotalLz, TotalKz);
+#ifdef __128_BIT_LONGLONG__
+	  if ((((NbrFluxQuanta1 + 1) * (NbrFluxQuanta2 + 1)) + NbrBosons) <= 63)
+#else
+	  if ((((NbrFluxQuanta1 + 1) * (NbrFluxQuanta2 + 1)) + NbrBosons) <= 31)	    
+#endif
+	    {
+	      Space = new BosonOnS2xS2(NbrBosons, NbrFluxQuanta1, NbrFluxQuanta2, TotalLz, TotalKz);
+	    }
+	  else
+	    {
+	      Space = new BosonOnS2xS2Long(NbrBosons, NbrFluxQuanta1, NbrFluxQuanta2, TotalLz, TotalKz);
+	    }
 
 	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 	  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)

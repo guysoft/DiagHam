@@ -90,6 +90,7 @@ class FermionOnSphereLong :  public ParticleOnSphere
   friend class BosonOn4DSphereLong;
   friend class BosonOnSquareLatticeMomentumSpaceLong;
   friend class BosonOnSphereWithSU4SpinLong;
+  friend class BosonOnS2xS2Long;
 
  protected:
 
