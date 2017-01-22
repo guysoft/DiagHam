@@ -225,7 +225,7 @@ int main(int argc, char** argv)
       MaxParity = 1;
       if (Manager.GetInteger("sz-parity") != 0)
       {
-	MinParity = (1 - Manager.GetInteger("sz-parity")) / 2;
+	MinParity = (1 + Manager.GetInteger("sz-parity")) / 2;
 	MaxParity = MinParity;
       }
     }
