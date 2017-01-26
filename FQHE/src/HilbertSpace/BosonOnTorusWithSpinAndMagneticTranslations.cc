@@ -112,9 +112,11 @@ BosonOnTorusWithSpinAndMagneticTranslations::BosonOnTorusWithSpinAndMagneticTran
   this->TargetSpace = this;
   if (this->LargeHilbertSpaceDimension > 0l)
     {
+      cout  << "Dimension without Kx = " << this->LargeHilbertSpaceDimension << endl;
       this->StateDescriptionUp = new unsigned long[this->LargeHilbertSpaceDimension];
       this->StateDescriptionDown = new unsigned long[this->LargeHilbertSpaceDimension];
       long TmpLargeHilbertSpaceDimension = this->RawGenerateStates(this->NbrBosons, this->KyMax, 0, this->KyMax + this->NbrBosonsUp + 1, this->KyMax + this->NbrBosonsDown + 1, this->NbrBosonsUp, 0l);     
+      cout  << "Sorting temporary Hilbert space" << endl;
       SortDoubleElementArrayDownOrdering<unsigned long>(this->StateDescriptionUp, this->StateDescriptionDown, TmpLargeHilbertSpaceDimension);
       this->LargeHilbertSpaceDimension = this->GenerateStates();
       cout  << "Dimension = " << this->LargeHilbertSpaceDimension << endl;
@@ -1052,7 +1054,7 @@ long BosonOnTorusWithSpinAndMagneticTranslations::EvaluateHilbertSpaceDimension(
     }
   if (currentKy < 0)
     return 0l;
-  long Count = 0;
+  long Count = 0l;
   if (nbrBosons == 1)
     {
       for (int j = currentKy; j >= 0; --j)
@@ -1089,7 +1091,7 @@ long BosonOnTorusWithSpinAndMagneticTranslations::EvaluateHilbertSpaceDimension(
     }
   if (currentKy < 0)
     return 0l;
-  long Count = 0;
+  long Count = 0l;
   if (nbrBosons == 1)
     {
       for (int j = currentKy; j >= 0; --j)

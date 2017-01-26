@@ -2795,69 +2795,69 @@ void SortDoubleElementArrayDownOrdering(ClassName* array1, ClassName* array2, lo
 {
   switch (nbrValue)
     {
-    case 0:
+    case 0l:
       return;
-    case 1:
+    case 1l:
       return;
-    case 2:
+    case 2l:
       {
-	if (DoubleElementLessThan(array1[0], array2[0], array1[1], array2[1]) == true)
+	if (DoubleElementLessThan(array1[0l], array2[0l], array1[1l], array2[1l]) == true)
 	  {
-	    ClassName TmpElement = array1[0];
-	    array1[0] = array1[1];
-	    array1[1] = TmpElement;
-	    TmpElement = array2[0];
-	    array2[0] = array2[1];
-	    array2[1] = TmpElement;
+	    ClassName TmpElement = array1[0l];
+	    array1[0l] = array1[1l];
+	    array1[1l] = TmpElement;
+	    TmpElement = array2[0l];
+	    array2[0l] = array2[1l];
+	    array2[1l] = TmpElement;
 	  }
 	return;
       }
       break;
-    case 3:
+    case 3l:
       {
 	ClassName TmpElement;
-	if (DoubleElementLessThan(array1[0], array2[0], array1[1], array2[1]) == true)
+	if (DoubleElementLessThan(array1[0l], array2[0l], array1[1l], array2[1l]) == true)
 	  {
-	    TmpElement = array1[0];
-	    array1[0] = array1[1];
-	    array1[1] = TmpElement;
-	    TmpElement = array2[0];
-	    array2[0] = array2[1];
-	    array2[1] = TmpElement;
+	    TmpElement = array1[0l];
+	    array1[0l] = array1[1l];
+	    array1[1l] = TmpElement;
+	    TmpElement = array2[0l];
+	    array2[0l] = array2[1l];
+	    array2[1l] = TmpElement;
 	  }
-	if (DoubleElementLessThan(array1[1], array2[1], array1[2], array2[2]) == true)
+	if (DoubleElementLessThan(array1[1l], array2[1l], array1[2l], array2[2l]) == true)
 	  {
-	    TmpElement = array1[1];
-	    array1[1] = array1[2];
-	    array1[2] = TmpElement;
-	    TmpElement = array2[1];
-	    array2[1] = array2[2];
-	    array2[2] = TmpElement;
+	    TmpElement = array1[1l];
+	    array1[1l] = array1[2l];
+	    array1[2l] = TmpElement;
+	    TmpElement = array2[1l];
+	    array2[1l] = array2[2l];
+	    array2[2l] = TmpElement;
 	  }	
-	if (DoubleElementLessThan(array1[0], array2[0], array1[1], array2[1]) == true)
+	if (DoubleElementLessThan(array1[0l], array2[0l], array1[1l], array2[1l]) == true)
 	  {
-	    TmpElement = array1[0];
-	    array1[0] = array1[1];
-	    array1[1] = TmpElement;
-	    TmpElement = array2[0];
-	    array2[0] = array2[1];
-	    array2[1] = TmpElement;
+	    TmpElement = array1[0l];
+	    array1[0l] = array1[1l];
+	    array1[1l] = TmpElement;
+	    TmpElement = array2[0l];
+	    array2[0l] = array2[1l];
+	    array2[1l] = TmpElement;
 	  }
 	return;
       }
       break;
     default:
       {
-	int j = nbrValue - 1;
-	int i = nbrValue >> 1;
+	long j = nbrValue - 1l;
+	long i = nbrValue >> 1;
 	ClassName TmpElement;
-	if (DoubleElementLessThan(array1[0], array2[0], array1[i], array2[i]) == true)
+	if (DoubleElementLessThan(array1[0l], array2[0l], array1[i], array2[i]) == true)
 	  {
-	    TmpElement = array1[0];
-	    array1[0] = array1[i];
+	    TmpElement = array1[0l];
+	    array1[0l] = array1[i];
 	    array1[i] = TmpElement;
-	    TmpElement = array2[0];
-	    array2[0] = array2[i];
+	    TmpElement = array2[0l];
+	    array2[0l] = array2[i];
 	    array2[i] = TmpElement;
 	  }
 	if (DoubleElementLessThan(array1[i], array2[i], array1[j], array2[j]) == true)
@@ -2869,13 +2869,13 @@ void SortDoubleElementArrayDownOrdering(ClassName* array1, ClassName* array2, lo
 	    array2[i] = array2[j];
 	    array2[j] = TmpElement;
 	  }
-	if (DoubleElementLessThan(array1[0], array2[0], array1[i], array2[i]) == true)
+	if (DoubleElementLessThan(array1[0l], array2[0l], array1[i], array2[i]) == true)
 	  {
-	    TmpElement = array1[0];
-	    array1[0] = array1[i];
+	    TmpElement = array1[0l];
+	    array1[0l] = array1[i];
 	    array1[i] = TmpElement;
-	    TmpElement = array2[0];
-	    array2[0] = array2[i];
+	    TmpElement = array2[0l];
+	    array2[0l] = array2[i];
 	    array2[i] = TmpElement;
 	  }
 	--j;
@@ -2885,7 +2885,7 @@ void SortDoubleElementArrayDownOrdering(ClassName* array1, ClassName* array2, lo
 	ClassName Pivot2 = array2[i];
 	array2[i] = array2[j];
 	array2[j] = Pivot2;
-	i = 0;
+	i = 0l;
 	while (true)
 	  {
 	    ++i; 
@@ -2906,12 +2906,12 @@ void SortDoubleElementArrayDownOrdering(ClassName* array1, ClassName* array2, lo
 	    else
 	      break;
 	  }	
-	array1[nbrValue - 2] = array1[i];
+	array1[nbrValue - 2l] = array1[i];
 	array1[i] = Pivot1;
-	array2[nbrValue - 2] = array2[i];
+	array2[nbrValue - 2l] = array2[i];
 	array2[i] = Pivot2;
 	SortDoubleElementArrayDownOrdering(array1, array2, i);
-	SortDoubleElementArrayDownOrdering(&(array1[i + 1]), &(array2[i + 1]), nbrValue - i - 1);	
+	SortDoubleElementArrayDownOrdering(&(array1[i + 1]), &(array2[i + 1]), nbrValue - i - 1l);	
       }
     }
   return;
@@ -2929,11 +2929,11 @@ void SortTripleElementArrayDownOrdering(ClassName* array1, ClassName* array2, Cl
 {
   switch (nbrValue)
     {
-    case 0:
+    case 0l:
       return;
-    case 1:
+    case 1l:
       return;
-    case 2:
+    case 2l:
       {
 	if (TripleElementLessThan(array1[0], array2[0], array3[0], 
 				  array1[1], array2[1], array3[1]) == true)
@@ -2951,7 +2951,7 @@ void SortTripleElementArrayDownOrdering(ClassName* array1, ClassName* array2, Cl
 	return;
       }
       break;
-    case 3:
+    case 3l:
       {
 	ClassName TmpElement;
 	if (TripleElementLessThan(array1[0], array2[0], array3[0], 
@@ -2998,20 +2998,20 @@ void SortTripleElementArrayDownOrdering(ClassName* array1, ClassName* array2, Cl
       break;
     default:
       {
-	int j = nbrValue - 1;
-	int i = nbrValue >> 1;
+	long j = nbrValue - 1l;
+	long i = nbrValue >> 1;
 	ClassName TmpElement;
-	if (TripleElementLessThan(array1[0], array2[0], array3[0], 
+	if (TripleElementLessThan(array1[0l], array2[0l], array3[0l], 
 				  array1[i], array2[i], array3[i]) == true)
 	  {
-	    TmpElement = array1[0];
-	    array1[0] = array1[i];
+	    TmpElement = array1[0l];
+	    array1[0l] = array1[i];
 	    array1[i] = TmpElement;
-	    TmpElement = array2[0];
-	    array2[0] = array2[i];
+	    TmpElement = array2[0l];
+	    array2[0l] = array2[i];
 	    array2[i] = TmpElement;
-	    TmpElement = array3[0];
-	    array3[0] = array3[i];
+	    TmpElement = array3[0l];
+	    array3[0l] = array3[i];
 	    array3[i] = TmpElement;
 	  }
 	if (TripleElementLessThan(array1[i], array2[i], array3[i], 
@@ -3027,17 +3027,17 @@ void SortTripleElementArrayDownOrdering(ClassName* array1, ClassName* array2, Cl
 	    array3[i] = array3[j];
 	    array3[j] = TmpElement;
 	  }
-	if (TripleElementLessThan(array1[0], array2[0], array3[0], 
+	if (TripleElementLessThan(array1[0l], array2[0l], array3[0l], 
 				  array1[i], array2[i], array3[i]) == true)
 	  {
-	    TmpElement = array1[0];
-	    array1[0] = array1[i];
+	    TmpElement = array1[0l];
+	    array1[0l] = array1[i];
 	    array1[i] = TmpElement;
-	    TmpElement = array2[0];
-	    array2[0] = array2[i];
+	    TmpElement = array2[0l];
+	    array2[0l] = array2[i];
 	    array2[i] = TmpElement;
-	    TmpElement = array3[0];
-	    array3[0] = array3[i];
+	    TmpElement = array3[0l];
+	    array3[0l] = array3[i];
 	    array3[i] = TmpElement;
 	  }
 	--j;
@@ -3050,7 +3050,7 @@ void SortTripleElementArrayDownOrdering(ClassName* array1, ClassName* array2, Cl
 	ClassName Pivot3 = array3[i];
 	array3[i] = array3[j];
 	array3[j] = Pivot3;
-	i = 0;
+	i = 0l;
 	while (true)
 	  {
 	    ++i; 
@@ -3076,14 +3076,14 @@ void SortTripleElementArrayDownOrdering(ClassName* array1, ClassName* array2, Cl
 	    else
 	      break;
 	  }	
-	array1[nbrValue - 2] = array1[i];
+	array1[nbrValue - 2l] = array1[i];
 	array1[i] = Pivot1;
-	array2[nbrValue - 2] = array2[i];
+	array2[nbrValue - 2l] = array2[i];
 	array2[i] = Pivot2;
-	array3[nbrValue - 2] = array3[i];
+	array3[nbrValue - 2l] = array3[i];
 	array3[i] = Pivot3;
 	SortTripleElementArrayDownOrdering(array1, array2, array3, i);
-	SortTripleElementArrayDownOrdering(&(array1[i + 1]), &(array2[i + 1]), &(array3[i + 1]), nbrValue - i - 1);	
+	SortTripleElementArrayDownOrdering(&(array1[i + 1]), &(array2[i + 1]), &(array3[i + 1]), nbrValue - i - 1l);	
       }
     }
   return;
