@@ -663,7 +663,7 @@ inline void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Evalua
     }
   else
     {
-      int AbsoluteIndex = index + this->PrecalculationShift;
+      int AbsoluteIndex = index;// + this->PrecalculationShift;
       for (int j = 0; j < this->NbrIntraSectorSums; ++j)
 	{
 	  int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
