@@ -354,7 +354,7 @@ int main(int argc, char** argv)
 	    {
 	      int LzSymmetry = 0;
 	      int SzSymmetry = 0;
-	      if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(StateFileName, NbrParticles, LzMax, TotalLz, TotalSz, LzSymmetry, SzSymmetry, FermionFlag) == false)
+	      if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(StateFileName, NbrParticles, LzMax, TotalLz, TotalSz, SzSymmetry, LzSymmetry, FermionFlag) == false)
 		{
 		  cout << "error while retrieving system parameters from file name " << StateFileName << endl;
 		  return -1;

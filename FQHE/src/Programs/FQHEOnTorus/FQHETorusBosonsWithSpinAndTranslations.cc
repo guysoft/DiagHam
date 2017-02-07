@@ -4,6 +4,7 @@
 #include "Hamiltonian/ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian.h"
 #include "Hamiltonian/ParticleOnTwistedTorusWithSpinAndMagneticTranslationsGenericHamiltonian.h"
 #include "Hamiltonian/ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonianWithPairing.h"
+#include "Hamiltonian/ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -78,6 +79,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new SingleDoubleOption ('\n', "energy-shift", "apply a temporary energy shift used during the diagonalization", -1.0);
+  (*SystemGroup) += new SingleDoubleOption   ('\n', "layer-separation", "for the coulomb interaction, layer separation in magnetic lengths", 0.0);
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 
 						      500);
@@ -111,6 +113,7 @@ int main(int argc, char** argv)
   int YMomentum = Manager.GetInteger("y-momentum");
   double XRatio = Manager.GetDouble("ratio");
   double Angle = Manager.GetDouble("angle");
+  double LayerSeparation = Manager.GetDouble("layer-separation");
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
   char* SavePrecalculationFileName = Manager.GetString("save-precalculation");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
@@ -127,11 +130,16 @@ int main(int argc, char** argv)
   double** PseudoPotentials  = new double*[3];
   double** OneBodyPseudoPotentials  = new double*[3];
   int* NbrPseudoPotentials  = new int[3];
+  bool HaveCoulomb = false;
+  int LandauLevel = 0;
 
   if (Manager.GetString("interaction-file") == 0)
     {
-      cout << "an interaction file has to be provided" << endl;
-      return -1;
+      cout << "warning, no interaction file has been provided. Will use coulomb interaction in the LLL" << endl;
+      LandauLevel = 0;
+      InteractionName = new char[128];
+      sprintf (InteractionName, "coulomb");
+      HaveCoulomb = true;
     }
   else
     {
@@ -145,12 +153,17 @@ int main(int argc, char** argv)
 	  InteractionDefinition.DumpErrors(cout) << endl;
 	  exit(-1);
 	}
-       if (InteractionDefinition["Name"] == NULL)
-	 {
-	   if (Manager.GetString("interaction-name") != 0)
-	     {
-	       InteractionName = new char[strlen(Manager.GetString("interaction-name")) + 1];
-	       sprintf(InteractionName, "%s", Manager.GetString("interaction-name"));
+      if (InteractionDefinition["CoulombLandauLevel"] != NULL)
+	{
+	  LandauLevel = atoi(InteractionDefinition["CoulombLandauLevel"]);
+	  HaveCoulomb = true;
+	}
+      if (InteractionDefinition["Name"] == NULL)
+	{
+	  if (Manager.GetString("interaction-name") != 0)
+	    {
+	      InteractionName = new char[strlen(Manager.GetString("interaction-name")) + 1];
+	      sprintf(InteractionName, "%s", Manager.GetString("interaction-name"));
 	     }
 	   else
 	     {
@@ -367,12 +380,18 @@ int main(int argc, char** argv)
       BosonOnTorusWithSpinAndMagneticTranslations* Space = 0;
       if ((OneBodyPseudoPotentials[2] == 0) && (Manager.GetDouble("pairing") == 0.0))
 	{
-	  Space = new BosonOnTorusWithSpinAndMagneticTranslations (NbrBosons, TotalSpin, MaxMomentum, XMomentum, YMomentum);
-// 	  if (Manager.GetString("save-hilbert") != 0)
-// 	    {	     
-// 	      ((BosonOnTorusWithSpinAndMagneticTranslations*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
-// 	      return 0;
+//  	  if (Manager.GetString("load-hilbert") != 0)
+// 	    {
+	      Space = new BosonOnTorusWithSpinAndMagneticTranslations (NbrBosons, TotalSpin, MaxMomentum, XMomentum, YMomentum);
 // 	    }
+// 	  else
+// 	    {
+// 	    }
+//  	  if (Manager.GetString("save-hilbert") != 0)
+//  	    {	     
+//  	      ((BosonOnTorusWithSpinAndMagneticTranslations*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+//  	      return 0;
+//  	    }
 	}
       else
 	{
@@ -381,58 +400,67 @@ int main(int argc, char** argv)
 
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       AbstractQHEHamiltonian* Hamiltonian = 0;
-      if (Manager.GetDouble("pairing") == 0.0)
+      if (HaveCoulomb == true)
 	{
-	  if (Angle == 0.0)
-	    {
-	      Hamiltonian = new ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian(Space, NbrBosons, MaxMomentum, XMomentum, XRatio,
-												 NbrPseudoPotentials[0], PseudoPotentials[0],
-												 NbrPseudoPotentials[1], PseudoPotentials[1],
-												 NbrPseudoPotentials[2], PseudoPotentials[2],
-												 Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
-												 Architecture.GetArchitecture(), Memory, 0,
-												 OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], 
-												 OneBodyPseudoPotentials[2]);
-	    }
-	  else
-	    {
-	      Hamiltonian = new ParticleOnTwistedTorusWithSpinAndMagneticTranslationsGenericHamiltonian(Space, NbrBosons, MaxMomentum, XMomentum, XRatio, Angle,
-													NbrPseudoPotentials[0], PseudoPotentials[0],
-													NbrPseudoPotentials[1], PseudoPotentials[1],
-													NbrPseudoPotentials[2], PseudoPotentials[2],
-													Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
-													Architecture.GetArchitecture(), Memory, 0,
-													OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], 
-													OneBodyPseudoPotentials[2]);
-	    }
+	  Hamiltonian = new ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian (Space, NbrBosons, 
+											      MaxMomentum, XMomentum, XRatio, LayerSeparation, 
+											      Architecture.GetArchitecture(), Memory);
 	}
       else
-	{
-	  if (Angle == 0.0)
+	{      
+	  if (Manager.GetDouble("pairing") == 0.0)
 	    {
-	      Hamiltonian = new ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonianWithPairing(Space, NbrBosons, MaxMomentum, XMomentum, XRatio,
+	      if (Angle == 0.0)
+		{
+		  Hamiltonian = new ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian(Space, NbrBosons, MaxMomentum, XMomentum, XRatio,
+												     NbrPseudoPotentials[0], PseudoPotentials[0],
+												     NbrPseudoPotentials[1], PseudoPotentials[1],
+												     NbrPseudoPotentials[2], PseudoPotentials[2],
+												     Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
+												     Architecture.GetArchitecture(), Memory, 0,
+												     OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], 
+												     OneBodyPseudoPotentials[2]);
+		}
+	      else
+		{
+		  Hamiltonian = new ParticleOnTwistedTorusWithSpinAndMagneticTranslationsGenericHamiltonian(Space, NbrBosons, MaxMomentum, XMomentum, XRatio, Angle,
 													    NbrPseudoPotentials[0], PseudoPotentials[0],
 													    NbrPseudoPotentials[1], PseudoPotentials[1],
 													    NbrPseudoPotentials[2], PseudoPotentials[2],
-													    Manager.GetDouble("pairing"), 
 													    Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
 													    Architecture.GetArchitecture(), Memory, 0,
 													    OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], 
 													    OneBodyPseudoPotentials[2]);
+		}
 	    }
 	  else
 	    {
-// 	      Hamiltonian = new ParticleOnTwistedTorusWithSpinAndMagneticTranslationsGenericHamiltonianWithPairing(Space, NbrBosons, MaxMomentum, XMomentum, XRatio, Angle,
-// 														   NbrPseudoPotentials[0], PseudoPotentials[0],
-// 														   NbrPseudoPotentials[1], PseudoPotentials[1],
-// 														   NbrPseudoPotentials[2], PseudoPotentials[2],
-// 														   Manager.GetDouble("pairing"), 
-// 														   Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
-// 														   Architecture.GetArchitecture(), Memory, 0,
-// 														   OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], 
-// 														   OneBodyPseudoPotentials[2]);
-	      cout << "error, twisted torus and pairing is not yet supported" << endl;
-	      return -1;
+	      if (Angle == 0.0)
+		{
+		  Hamiltonian = new ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonianWithPairing(Space, NbrBosons, MaxMomentum, XMomentum, XRatio,
+														NbrPseudoPotentials[0], PseudoPotentials[0],
+														NbrPseudoPotentials[1], PseudoPotentials[1],
+														NbrPseudoPotentials[2], PseudoPotentials[2],
+														Manager.GetDouble("pairing"), 
+														Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
+														Architecture.GetArchitecture(), Memory, 0,
+														OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], 
+														OneBodyPseudoPotentials[2]);
+		}
+	      else
+		{
+		  // 	      Hamiltonian = new ParticleOnTwistedTorusWithSpinAndMagneticTranslationsGenericHamiltonianWithPairing(Space, NbrBosons, MaxMomentum, XMomentum, XRatio, Angle,
+		  // 														   NbrPseudoPotentials[0], PseudoPotentials[0],
+		  // 														   NbrPseudoPotentials[1], PseudoPotentials[1],
+		  // 														   NbrPseudoPotentials[2], PseudoPotentials[2],
+		  // 														   Manager.GetDouble("pairing"), 
+		  // 														   Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
+		  // 														   Architecture.GetArchitecture(), Memory, 0,
+		  // 														   OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], 
+		  // 														   OneBodyPseudoPotentials[2]);
+		  cout << "error, twisted torus and pairing is not yet supported" << endl;
+		  return -1;
+		}
 	    }
 	}
       double Shift = Manager.GetDouble("energy-shift");
