@@ -605,6 +605,46 @@ bool SpinWith2DTranslationFindSystemInfoFromVectorFileName(char* filename, int& 
 // xPeriodicity = reference on the number of sites along the x direction
 // yMomentum = reference on the momentum along the y direction
 // yPeriodicity = reference on the number of sites along the y direction
+// return value = true if no error occured
+
+bool SpinTiltedFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& spin, int& offset)
+{
+  if (SpinFindSystemInfoFromFileName(filename, nbrSpins, spin) == false)
+    return false;
+  char* StrNbrParticles;
+  StrNbrParticles = strstr(filename, "_offset_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 8;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  offset = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  else
+    offset = 0;
+}
+
+// try to guess system information from file name for a 2d spin system with translations
+//
+// filename = file name
+// nbrSpins = reference to the number of spins 
+// sz = reference to twice the Sz value
+// spin = reference to twice the spin value per site
+// xMomentum = reference on the momentum along the x direction
+// xPeriodicity = reference on the number of sites along the x direction
+// yMomentum = reference on the momentum along the y direction
+// yPeriodicity = reference on the number of sites along the y direction
 // inversion =  reference on the inversion parity
 // return value = true if no error occured
 bool SpinWith2DTranslationInversionFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& spin, int& xMomentum, int& xPeriodicity,

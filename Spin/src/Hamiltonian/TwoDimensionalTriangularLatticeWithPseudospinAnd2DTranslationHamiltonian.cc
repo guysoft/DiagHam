@@ -227,7 +227,6 @@ ComplexVector& TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHami
 	     {
 		TmpIndex1 = this->GetLinearizedIndex(j - this->Offset, k - 1);
 		TmpIndex2 = this->GetLinearizedIndex(j, k);
-// 		pos = this->Chain->SmiSpj(TmpIndex2, TmpIndex1, i, coef, nbrTranslationsX, nbrTranslationsY);		
 		pos = this->Chain->SmiSpjJiJj(TmpIndex2, TmpIndex1, i, this->PseudospinDiagCouplingElements[0], this->PseudospinDiagCouplingElements[2], coef, nbrTranslationsX, nbrTranslationsY);
 		if (pos != dim)
 		  vDestination[pos] += TmpValue * coef * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
@@ -245,7 +244,6 @@ ComplexVector& TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHami
 		  vDestination[pos] += TmpValue * coef * this->PseudospinCouplingElements[2] * this->PseudospinCouplingElements[0] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
 		
-// 		pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, coef, nbrTranslationsX, nbrTranslationsY);
 		pos = this->Chain->SmiSpjJiJj(TmpIndex1, TmpIndex2, i, this->PseudospinDiagCouplingElements[2], this->PseudospinDiagCouplingElements[0], coef, nbrTranslationsX, nbrTranslationsY);
 		if (pos != dim)
 		  vDestination[pos] += TmpValue * coef * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
@@ -311,7 +309,6 @@ ComplexVector& TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHami
 		if (pos != dim)
 		  vDestination[pos] += TmpValue * coef * this->PseudospinCouplingElements[1] * this->PseudospinCouplingElements[0] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
-// 		pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, coef, nbrTranslationsX, nbrTranslationsY);
 		pos = this->Chain->SmiSpjJiJj(TmpIndex1, TmpIndex2, i, this->PseudospinDiagCouplingElements[1], this->PseudospinDiagCouplingElements[0], coef, nbrTranslationsX, nbrTranslationsY);
 		if (pos != dim)
 		  vDestination[pos] += TmpValue * coef * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
@@ -359,7 +356,6 @@ ComplexVector& TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHami
 	      {
 		TmpIndex1 = this->GetLinearizedIndex(j - 1, k);
 		TmpIndex2 = this->GetLinearizedIndex(j - this->Offset, k - 1);
-// 		pos = this->Chain->SmiSpj(TmpIndex2, TmpIndex1, i, coef, nbrTranslationsX, nbrTranslationsY);
 		pos = this->Chain->SmiSpjJiJj(TmpIndex2, TmpIndex1, i, this->PseudospinDiagCouplingElements[2], this->PseudospinDiagCouplingElements[1], coef, nbrTranslationsX, nbrTranslationsY);
 		if (pos != dim)
 		  vDestination[pos] += TmpValue * coef * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
@@ -376,7 +372,6 @@ ComplexVector& TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHami
 		if (pos != dim)
 		  vDestination[pos] += TmpValue * coef * this->PseudospinCouplingElements[1] * this->PseudospinCouplingElements[2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 
-// 		pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, coef, nbrTranslationsX, nbrTranslationsY);
 		pos = this->Chain->SmiSpjJiJj(TmpIndex1, TmpIndex2, i, this->PseudospinDiagCouplingElements[1], this->PseudospinDiagCouplingElements[2], coef, nbrTranslationsX, nbrTranslationsY);
 		if (pos != dim)
 		  vDestination[pos] += TmpValue * coef * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];

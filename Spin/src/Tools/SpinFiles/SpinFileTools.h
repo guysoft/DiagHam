@@ -62,6 +62,15 @@ bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz
 //
 // filename = file name
 // nbrSpins = reference to the number of spins 
+// spin = reference to twice the spin value per site
+// offset = offset in case of a tilted lattice
+// return value = true if no error occured
+bool SpinTiltedFindSystemInfoFromFileName(char* filename, int& nbrSpins, int& spin, int& offset);
+
+// try to guess system information from file name
+//
+// filename = file name
+// nbrSpins = reference to the number of spins 
 // sz = reference to twice the Sz value
 // spin = reference to twice the spin value per site
 // momentum = reference on the momentum

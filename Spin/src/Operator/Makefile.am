@@ -7,4 +7,6 @@ ChiralExchangeOperator.cc \
 FermionParityOperator.cc \
 PottsNonLocalOccupationNumberOperator.cc \
 SpinS2Operator.cc \
-SpinWith1DTranslationS2Operator.cc
+SpinWith1DTranslationS2Operator.cc \
+BondEnergySpinPseudospinOperator.cc \
+SpinWith2DTranslationSpinSpinCorrelationOperator.cc
