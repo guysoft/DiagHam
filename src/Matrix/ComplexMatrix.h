@@ -717,6 +717,14 @@ class ComplexMatrix : public Matrix
   // return value = reference on real matrix consisting of eigenvalues
   ComplexDiagonalMatrix& LapackDiagonalize (ComplexDiagonalMatrix& M, ComplexMatrix& Q, bool leftFlag = false);
 
+  // Diagonalize a complex skew symmetric matrix and evaluate transformation matrix using the LAPACK library, truncating to single precision (modifying current matrix)
+  //
+  // M = reference on real diagonal matrix of eigenvalues
+  // Q = matrix where transformation matrix has to be stored
+  // leftFlag = compute left eigenvalues/eigenvectors instead of right eigenvalues/eigenvectors
+  // return value = reference on real matrix consisting of eigenvalues
+  ComplexDiagonalMatrix& LapackDiagonalizeSinglePrecision (ComplexDiagonalMatrix& M, ComplexMatrix& Q, bool leftFlag);
+
   // reduce a complex matrix to its Schur form S
   //
   // M = reference on real diagonal matrix of eigenvalues

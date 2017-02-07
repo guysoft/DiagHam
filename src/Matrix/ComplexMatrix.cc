@@ -44,6 +44,8 @@ using std::cout;
 
 #ifdef HAVE_LAPACK
 
+typedef struct { float r, i; } LAcomplex;
+
 // binding to the LAPACK zgesdd function
 //
 extern "C" void FORTRAN_NAME(zgesdd)(const char* jobz, const int* nbrRow, const int* nbrColumn, const doublecomplex* matrix, const int* leadingDimension,
@@ -75,6 +77,12 @@ extern "C" void FORTRAN_NAME(zgehrd)(const int* dimensionN, const int *iLow, con
 				     const doublecomplex* matrixA, const int* leadingDimensionA,
 				     const doublecomplex* tau, const doublecomplex* complexWork,
 				     const int *lComplexWork, const int *info);
+// calculate hessenberg form
+extern "C" void FORTRAN_NAME(cgehrd)(const int* dimensionN, const int *iLow, const int *iHigh,
+				     const LAcomplex* matrixA, const int* leadingDimensionA,
+				     const LAcomplex* tau, const LAcomplex* complexWork,
+				     const int *lComplexWork, const int *info);
+
 // extract eigenvalue
 extern "C" void FORTRAN_NAME(zhseqr)(const char* jobZ, const char* compZ, const int* dimensionN,
 				     const int *iLow, const int *iHigh, const doublecomplex* matrixH,
@@ -119,6 +127,17 @@ extern "C" void FORTRAN_NAME(zgeevx)(const char* balanc,const char* jobVL,const 
 				     const double *absNorm, const double *reciCondVal, const double *reciCondVec, 
 				     const doublecomplex* complexWork, const int *lComplexWork,
 				     const double * realWork, const int *info);
+
+extern "C" void FORTRAN_NAME(cgeevx)(const char* balanc,const char* jobVL,const char* jobVR, const char* sense,
+				     const int* dimensionN, const LAcomplex *matrixA,
+				     const int* leadingDimensionA, const LAcomplex* eigenValues,
+				     const LAcomplex* matrixVL, const int* leadingDimensionVL,
+				     const LAcomplex* matrixVR, const int* leadingDimensionVR,
+				     const int *iLow, const int *iHigh, const double *scale,
+				     const double *absNorm, const double *reciCondVal, const double *reciCondVec, 
+				     const LAcomplex* complexWork, const int *lComplexWork,
+				     const double * realWork, const int *info);
+
 
 #endif
 
@@ -2306,8 +2325,8 @@ Complex ComplexMatrix::LapackDeterminant ()
 #else
   cout << "Warning, using LapackDeterminant without the lapack library" << endl;
   Complex Result(0.0,0.0);
-  return Result;
 #endif
+  return Result;
 }
 
 
@@ -2729,6 +2748,134 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& 
   delete[] complexWork;
   complexWork = new doublecomplex[lComplexWork];
   FORTRAN_NAME(zgeevx)("Balance", &JobVL, &JobVR, "No condition numbers",
+		       &Dim, matrixA, &Dim, Eigenvalues, EigenvectorsL, &TmpLeadingLeftDimension, 
+		       EigenvectorsR, &TmpLeadingRightDimension,
+		       &iLow, &iHigh, scale, &absNorm, reciCondVal, reciCondVec, 
+		       complexWork, &lComplexWork, realWork, &Information);
+  if (Information < 0)
+    {
+      cout << "Illegal argument " << -Information << " in LAPACK function call to zgeevx in ComplexMatrix.cc in LapackDiagonalize, line "<< __LINE__<<endl;
+      exit(1);
+    }
+  if (Information > 0)
+    {
+      cout << "Attention: Only part of eigenvalues converged in LAPACK function call to zgeevx in ComplexMatrix.cc in LapackDiagonalize, line "<< __LINE__<<endl;
+    }
+    
+  // recover values of eigenvalues and eigenvectors
+  if (leftFlag == true)
+    {
+      for (int j = 0;j < this->NbrRow; ++j)
+	{
+	  M.SetMatrixElement(j, j, Eigenvalues[j].r, Eigenvalues[j].i);
+	  for (int i = 0; i < this->NbrRow; ++i)
+	    Q.SetMatrixElement(i, j, EigenvectorsL[i + (j * NbrRow)].r, EigenvectorsL[i + (j * NbrRow)].i);
+	}
+    }
+  else
+    {
+      for (int j = 0; j < this->NbrRow; ++j)
+	{
+	  M.SetMatrixElement(j, j, Eigenvalues[j].r, Eigenvalues[j].i);
+	  for (int i = 0; i < this->NbrRow; ++i)
+	    Q.SetMatrixElement(i, j, EigenvectorsR[i + (j * NbrRow)].r, EigenvectorsR[i + (j * NbrRow)].i);
+	}
+    }
+  
+  delete [] matrixA;
+  delete [] Eigenvalues;
+  delete [] EigenvectorsR;
+  delete [] reciCondVal;
+  delete [] reciCondVec;
+  delete [] scale;
+  delete [] complexWork;
+  delete [] realWork;
+    
+#else
+  cout << "Warning, using ComplexMatrix::LapackDiagonalize without the lapack library" << endl;
+#endif  
+  return M;
+}
+
+
+// Diagonalize a complex skew symmetric matrix and evaluate transformation matrix using the LAPACK library, truncating to single precision (modifying current matrix)
+//
+// M = reference on real diagonal matrix of eigenvalues
+// Q = matrix where transformation matrix has to be stored
+// leftFlag = compute left eigenvalues/eigenvectors instead of right eigenvalues/eigenvectors
+// return value = reference on real matrix consisting of eigenvalues
+
+ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalizeSinglePrecision (ComplexDiagonalMatrix& M, ComplexMatrix& Q, bool leftFlag)
+{
+  if (M.GetNbrColumn() != this->NbrColumn)
+    M.Resize(this->NbrColumn, this->NbrColumn);
+  if (Q.GetNbrColumn() != this->NbrColumn)
+    Q.Resize(this->NbrColumn, this->NbrColumn);
+#ifdef __LAPACK__
+  char JobVL;
+  char JobVR;
+  if (leftFlag == true)
+    {
+      JobVL = 'V';
+      JobVR = 'N';
+    }
+  else
+    {
+      JobVL = 'N';
+      JobVR = 'V';
+    }
+  LAcomplex* matrixA = new LAcomplex [((long) this->NbrColumn) * this->NbrRow];
+  double* scale = new double [this->NbrRow];
+  double* reciCondVal = new double [this->NbrRow];
+  double* reciCondVec = new double [this->NbrRow];
+  LAcomplex* Eigenvalues = new LAcomplex [2 * this->NbrRow];
+  int TmpLeadingLeftDimension;
+  int TmpLeadingRightDimension;
+  if (leftFlag == true)
+    {
+      TmpLeadingLeftDimension = this->NbrColumn;
+      TmpLeadingRightDimension = 1;
+    }
+  else
+    {
+      TmpLeadingRightDimension = this->NbrColumn;
+      TmpLeadingLeftDimension = 1;
+    }
+  LAcomplex* EigenvectorsR = new LAcomplex [((long) this->NbrColumn) * this->NbrRow];
+  LAcomplex* EigenvectorsL = new LAcomplex [((long) this->NbrColumn) * this->NbrRow];
+  Complex* TmpColumn;
+  for (int j = 0; j < this->NbrRow; ++j)
+    {
+      TmpColumn = this->Columns[j].Components;
+      for (int i = 0; i < this->NbrRow; ++i)
+	{
+	  matrixA[i + (j * this->NbrRow)].r = TmpColumn[i].Re; // involves a typecast
+	  matrixA[i + (j * this->NbrRow)].i = TmpColumn[i].Im;
+	}
+    }  
+  int Information = 0;
+  int Dim = this->NbrRow;
+  int iLow = 1;
+  int iHigh = this->NbrRow;
+  LAcomplex* complexWork = new LAcomplex[1];
+  double* realWork = new double[2 * this->NbrRow];
+  double absNorm;
+  int lComplexWork = -1;
+  // workspace query
+  FORTRAN_NAME(cgeevx)("Balance", &JobVL, &JobVR, "No condition numbers",
+		       &Dim, matrixA, &Dim, Eigenvalues, EigenvectorsL, &TmpLeadingLeftDimension, 
+		       EigenvectorsR, &TmpLeadingRightDimension,
+		       &iLow, &iHigh, scale, &absNorm, reciCondVal, reciCondVec, 
+		       complexWork, &lComplexWork, realWork, &Information); 
+  if (Information < 0)
+    {
+      cout << "Illegal argument " << -Information << " in LAPACK function call to zgeevx in ComplexMatrix.cc in LapackDiagonalize, line "<< __LINE__<<endl;
+      exit(1);
+    }
+  lComplexWork=(int)(complexWork[0].r);
+  delete[] complexWork;
+  complexWork = new LAcomplex[lComplexWork];
+  FORTRAN_NAME(cgeevx)("Balance", &JobVL, &JobVR, "No condition numbers",
 		       &Dim, matrixA, &Dim, Eigenvalues, EigenvectorsL, &TmpLeadingLeftDimension, 
 		       EigenvectorsR, &TmpLeadingRightDimension,
 		       &iLow, &iHigh, scale, &absNorm, reciCondVal, reciCondVec, 
