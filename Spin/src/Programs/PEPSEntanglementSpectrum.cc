@@ -131,11 +131,11 @@ int main(int argc, char** argv)
 
 
   if (SubsystemSzSaveEingenstate == -1 ) 	
-	SubsystemSzSaveEingenstate = -1000;
-
+    SubsystemSzSaveEingenstate = -1000;
+  
   if (SubsystemKSaveEingenstate == -1 ) 	
-	SubsystemKSaveEingenstate = -1000;
-
+    SubsystemKSaveEingenstate = -1000;
+  
   int NbrSpaces = 1;
   RealVector* GroundStates = 0;
   ComplexVector * ComplexGroundStates = 0;
@@ -162,32 +162,33 @@ int main(int argc, char** argv)
 	  DegeneratedFile.DumpErrors(cout);
 	  return -1;
 	}
-       NbrSpaces = DegeneratedFile.GetNbrLines();
-       GroundStateFiles = new char* [NbrSpaces];
-
-       for (int i = 0; i < NbrSpaces; ++i)
-	 {
-	   GroundStateFiles[i] = new char [strlen(DegeneratedFile(0, i)) + 1];
-	   strcpy (GroundStateFiles[i], DegeneratedFile(0, i));      	   
-	 }
-
-       if (DegeneratedFile.GetNbrColumns() == 1)
-         {
-           Coefficients = new double[NbrSpaces];
-           for (int i = 0; i < NbrSpaces; ++i)
-             Coefficients[i] = 1.0 / (sqrt((double) NbrSpaces));
-         }
-       else
-	 {
-	   double TmpSum = 0.0;
-	   Coefficients = DegeneratedFile.GetAsDoubleArray(1);
-
-//           for (int i = 0; i < NbrSpaces; ++i)
-//             TmpSum += Coefficients[i];
-	   //           TmpSum = 1.0 / TmpSum;
-//           for (int i = 0; i < NbrSpaces; ++i)
-//             Coefficients[i] *= TmpSum;
-	 }
+      
+      NbrSpaces = DegeneratedFile.GetNbrLines();
+      GroundStateFiles = new char* [NbrSpaces];
+      
+      for (int i = 0; i < NbrSpaces; ++i)
+	{
+	  GroundStateFiles[i] = new char [strlen(DegeneratedFile(0, i)) + 1];
+	  strcpy (GroundStateFiles[i], DegeneratedFile(0, i));      	   
+	}
+      
+      if (DegeneratedFile.GetNbrColumns() == 1)
+	{
+	  Coefficients = new double[NbrSpaces];
+	  for (int i = 0; i < NbrSpaces; ++i)
+	    Coefficients[i] = 1.0 / (sqrt((double) NbrSpaces));
+	}
+      else
+	{
+	  double TmpSum = 0.0;
+	  Coefficients = DegeneratedFile.GetAsDoubleArray(1);
+	  
+	  //           for (int i = 0; i < NbrSpaces; ++i)
+	  //             TmpSum += Coefficients[i];
+	  //           TmpSum = 1.0 / TmpSum;
+	  //           for (int i = 0; i < NbrSpaces; ++i)
+	  //             Coefficients[i] *= TmpSum;
+	}
     }
   
   Spaces = new AbstractDoubledSpinChainWithTranslations * [NbrSpaces];
@@ -386,7 +387,7 @@ int main(int argc, char** argv)
 	      return 0;
 	    }
 	  cout <<"Norm = "<< ComplexGroundStates[i].Norm()<<endl;
-	
+	  
 	  ((DoubledSpin0_1_2_ChainWithTranslations  *) Spaces[i])->NormalizeDensityMatrix(ComplexGroundStates[i]);
 	}
     }
@@ -444,7 +445,6 @@ int main(int argc, char** argv)
 		  
 		  if (PartialDensityMatrix.GetNbrRow() > 1)
 		    {
-
 		      RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
 #ifdef __LAPACK__
 		      if (LapackFlag == true)
@@ -501,11 +501,9 @@ int main(int argc, char** argv)
 	      else
 		{
 		  HermitianMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrix(SubSystemSz, ComplexGroundStates[0])*Coefficients[0];
-		  cout <<PartialDensityMatrix<<endl;
 		  for (int i = 1; i < NbrSpaces; ++i)
 		    {
 		      HermitianMatrix TmpMatrix =  Spaces[i]->EvaluatePartialDensityMatrix(SubSystemSz, ComplexGroundStates[i])*Coefficients[i];
-		      //		  cout << TmpMatrix<<endl;
 		      PartialDensityMatrix += TmpMatrix;
 		    }
 		  
@@ -658,71 +656,71 @@ int main(int argc, char** argv)
 			  HermitianMatrix TmpMatrix =  Spaces[i]->EvaluatePartialDensityMatrix(SubSystemSz, SubSystemK,ComplexGroundStates[i])* Coefficients[i];
 			  PartialDensityMatrix += TmpMatrix;
 			}
-
-		if ((EigenstateFlag == false) || (  SubSystemK != SubsystemKSaveEingenstate)  || (SubSystemSz !=  SubsystemSzSaveEingenstate))
-			      {
-
-			      if (PartialDensityMatrix.GetNbrRow() > 1)
-				{
-				  RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
-#ifdef __LAPACK__
-				  if (LapackFlag == true)
-				    {
-				      PartialDensityMatrix.LapackDiagonalize(TmpDiag);
-				    }
-				  else
-				    {
-				      PartialDensityMatrix.Diagonalize(TmpDiag);
-				    }
-#else
-				  PartialDensityMatrix.Diagonalize(TmpDiag);
-#endif		  
-				  TmpDiag.SortMatrixDownOrder();
-				  if (DensityMatrixFileName != 0)
-				    {
-				      ofstream DensityMatrixFile;
-				      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
-				      DensityMatrixFile.precision(14);
-				      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-					{
-					  TmpDiag[i]*=TmpDiag[i];
-					  DensityMatrixFile <<  SubSystemSz << " " <<  SubSystemK<<" "<<TmpDiag[i] << " "<<-log(TmpDiag[i])<<endl;
-					}
-			      DensityMatrixFile.close();
-			    }
-			  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-			    {
-			      if (TmpDiag[i] > 1e-14)
-				{
-				  EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
-				  DensitySum +=TmpDiag[i];
-				}
-			    }
-			}
-		      else
+		      
+		      if ((EigenstateFlag == false) || ( (SubsystemKSaveEingenstate != -1 ) && ( SubSystemK != SubsystemKSaveEingenstate))  || (( SubsystemSzSaveEingenstate != -1) && (SubSystemSz !=  SubsystemSzSaveEingenstate)))
 			{
-			  if (PartialDensityMatrix.GetNbrRow() == 1)
+
+			  if (PartialDensityMatrix.GetNbrRow() > 1)
 			    {
-			      double TmpValue;
-			      PartialDensityMatrix.GetMatrixElement(0,0,TmpValue);
-			      TmpValue*= TmpValue;
+			      RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
+#ifdef __LAPACK__
+			      if (LapackFlag == true)
+				{
+				  PartialDensityMatrix.LapackDiagonalize(TmpDiag);
+				}
+			      else
+				{
+				  PartialDensityMatrix.Diagonalize(TmpDiag);
+				}
+#else
+			      PartialDensityMatrix.Diagonalize(TmpDiag);
+#endif		  
+			      TmpDiag.SortMatrixDownOrder();
 			      if (DensityMatrixFileName != 0)
 				{
 				  ofstream DensityMatrixFile;
 				  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
 				  DensityMatrixFile.precision(14);
-				  DensityMatrixFile << SubSystemSz << " " <<  SubSystemK<<" "<< TmpValue << " "<<-log(TmpValue)<<endl;
+				  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+				    {
+				      TmpDiag[i]*=TmpDiag[i];
+				      DensityMatrixFile <<  SubSystemSz << " " <<  SubSystemK<<" "<<TmpDiag[i] << " "<<-log(TmpDiag[i])<<endl;
+				    }
 				  DensityMatrixFile.close();
-				}		  
-			      if (TmpValue > 1e-14)
+				}
+			      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
 				{
-				  EntanglementEntropy += TmpValue * log(TmpValue);
-				  DensitySum += TmpValue;
+				  if (TmpDiag[i] > 1e-14)
+				    {
+				      EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
+				      DensitySum +=TmpDiag[i];
+				    }
+				}
+			    }
+			  else
+			    {
+			      if (PartialDensityMatrix.GetNbrRow() == 1)
+				{
+				  double TmpValue;
+				  PartialDensityMatrix.GetMatrixElement(0,0,TmpValue);
+				  TmpValue*= TmpValue;
+				  if (DensityMatrixFileName != 0)
+				    {
+				      ofstream DensityMatrixFile;
+				      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+				      DensityMatrixFile.precision(14);
+				      DensityMatrixFile << SubSystemSz << " " <<  SubSystemK<<" "<< TmpValue << " "<<-log(TmpValue)<<endl;
+				      DensityMatrixFile.close();
+				    }		  
+				  if (TmpValue > 1e-14)
+				    {
+				      EntanglementEntropy += TmpValue * log(TmpValue);
+				      DensitySum += TmpValue;
+				    }
 				}
 			    }
 			}
-		    }
-		else
+		      else
 			{
 		          RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
 			  ComplexMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(),   PartialDensityMatrix.GetNbrRow(), true);
@@ -737,43 +735,40 @@ int main(int argc, char** argv)
 			  PartialDensityMatrix.Diagonalize(TmpDiag, TmpEigenstates);
 #endif
 			  TmpDiag.SortMatrixDownOrder(TmpEigenstates);
-
-
+			  
+			  
 			  ofstream DensityMatrixFile;
 			  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
 			  DensityMatrixFile.precision(14);
 			  char* TmpEigenstateName = new char[512];
 			  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
 			    {
-				  TmpDiag[i]*=TmpDiag[i];
-			           DensityMatrixFile <<  SubSystemSz << " " <<  SubSystemK<<" "<<TmpDiag[i] << " "<<-log(TmpDiag[i])<<endl;
-	   		
-
-			  sprintf (TmpEigenstateName,
-				   "PEPS_Entanglement_spectrum_eigenstate_l_%d_sz_%d_k_%d.%d.vec",ChainLength ,  SubSystemSz, SubSystemK, i);
-			  TmpEigenstates[i].WriteVector(TmpEigenstateName);
+			      TmpDiag[i]*=TmpDiag[i];
+			      DensityMatrixFile <<  SubSystemSz << " " <<  SubSystemK<<" "<<TmpDiag[i] << " "<<-log(TmpDiag[i])<<endl;
+			      
+			      
+			      sprintf (TmpEigenstateName,"PEPS_Entanglement_spectrum_eigenstate_l_%d_sz_%d_k_%d.%d.vec",ChainLength ,  SubSystemSz, SubSystemK, i);
+			      TmpEigenstates[i].WriteVector(TmpEigenstateName);
 			    }
-		  delete[] TmpEigenstateName;
-		  DensityMatrixFile.close();
-		
-	      for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
-		{
-		  if (TmpDiag[i] > 1e-14)
-		    {
-		      EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
-		      DensitySum +=TmpDiag[i];
-		    }
-		}
-
+			  delete[] TmpEigenstateName;
+			  DensityMatrixFile.close();
+			  
+			  for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
+			    {
+			      if (TmpDiag[i] > 1e-14)
+				{
+				  EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
+				  DensitySum +=TmpDiag[i];
+				}
+			    }
 			}
-	}
+		    }
 		  RemainingDensitySum-=DensitySum;
 		  File << SubSystemSz << " " << SubSystemK<<" "<< (-EntanglementEntropy) << " " << DensitySum << " " << (RemainingDensitySum) << endl;
-		
-	 }   
+		}   
+	    }
 	}
     }
-}
   else
     {
       if (TranslationFlag ==false ) 
