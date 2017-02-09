@@ -47,11 +47,12 @@ int GetLinearizedIndex(int xPosition, int yPosition, int atomicIndex, int nbrSpi
 
 int main(int argc, char** argv)
 {
-  OptionManager Manager ("HubbardSuperconductorOrderParameter" , "0.01");
+  OptionManager Manager ("SpinKagomeComputeSpinSpinCorrelations" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
+  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
   ArchitectureManager Architecture;
 
@@ -60,16 +61,19 @@ int main(int argc, char** argv)
   Manager += ToolsGroup;
   Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
+  Manager += PrecalculationGroup;
 
   
   (*SystemGroup) += new SingleStringOption  ('i', "input-state", "name of the file corresponding to the state |Psi_R> (the order parameter being <Psi_L|c^+c^+|Psi_R>");   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
 //   (*SystemGroup) += new BooleanOption ('\n', "only-cc", "compute only the parameters c^+_sigma c^+_sigma' instead of their linear combinations");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Sz symmetry)",0);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Sz symmetry)",0);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type HubbardSuperconductorOrderParameter -h" << endl;
+      cout << "see man page for option syntax or type SpinKagomeComputeSpinSpinCorrelations -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -158,7 +162,12 @@ int main(int argc, char** argv)
    else
    {
       cout << "Create HilbertSpace" << endl;
-      Space = new Spin1_2ChainNewSzSymmetryAnd2DTranslation (NbrSites, SzValue, (1 - SzParitySector)/2, XMomentum, XPeriodicity, YMomentum, YPeriodicity);
+      if (Manager.GetString("load-hilbert") != 0)
+	{
+	  Space = new Spin1_2ChainNewSzSymmetryAnd2DTranslation(Manager.GetString("load-hilbert"));
+	}
+      else
+	Space = new Spin1_2ChainNewSzSymmetryAnd2DTranslation (NbrSites, SzValue, (1 - SzParitySector)/2, XMomentum, XPeriodicity, YMomentum, YPeriodicity);
    }
 
   
@@ -169,7 +178,11 @@ int main(int argc, char** argv)
       return -1;
     }
   
-
+  if (Manager.GetString("save-hilbert") != 0)
+  {
+    Space->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+    return 0;
+  }
  
   ofstream File;
   char* OutputFileName;
