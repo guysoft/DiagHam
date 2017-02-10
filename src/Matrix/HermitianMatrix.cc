@@ -40,7 +40,12 @@
 
 #ifdef __LAPACK__
 
+typedef struct { float r, i; } LAcomplex;
+
 extern "C" void FORTRAN_NAME(zhpev)(const char* jobz, const char* uplo, const int* dimension, const doublecomplex* matrixAP, const double *eigenvalues, const doublecomplex *eigenvectors, const int* leadingDimension, const doublecomplex *work, const doublereal *rwork, const int* information );
+
+extern "C" void FORTRAN_NAME(chpev)(const char* jobz, const char* uplo, const int* dimension, const LAcomplex* matrixAP, const float *eigenvalues, const LAcomplex *eigenvectors, const int* leadingDimension, const LAcomplex *work, const float *rwork, const int* information );
+
 extern "C" void FORTRAN_NAME(zhpevx)(const char* jobz, const char* range, const char* uplo, const int* dimensionN, const doublecomplex* matrixAP, const double *lowerBoundVL, const double *upperBoundVU, const int* lowerIndexIL, const int* upperIndexIU, const double *errorABSTOL, const int* nbrFoundM, const double *eigenvaluesW, const doublecomplex *eigenvectorsZ, const int* leadingDimensionLDZ, const doublecomplex *work, const doublereal *rwork, const int* iwork, const int* ifail, const int* information);
 #endif
 
@@ -1758,7 +1763,7 @@ RealDiagonalMatrix& HermitianMatrix::Diagonalize (RealDiagonalMatrix& M, double 
 // M = reference on real diagonal matrix where result has to be stored
 // Q = matrix where transformation matrix has to be stored
 // err = absolute error on matrix element
-// maxIter = maximum number of iteration to fund an eigenvalue
+// maxIter = maximum number of iteration to find an eigenvalue
 // return value = reference on real tridiagonal symmetric matrix
 
 RealDiagonalMatrix& HermitianMatrix::Diagonalize (RealDiagonalMatrix& M, ComplexMatrix& Q, double err, int maxIter)
@@ -2017,6 +2022,70 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, C
 	Q.SetMatrixElement(j, i, Tmp);
 	++TotalIndex;
       }
+  return M;  
+}
+
+
+// Diagonalize a complex skew symmetric matrix and evaluate transformation matrix using the LAPACK library (modifying current matrix)
+//
+// M = reference on real diagonal matrix of eigenvalues
+// Q = matrix where transformation matrix has to be stored
+// err = absolute error on matrix element
+// maxIter = maximum number of iteration to fund an eigenvalue
+// return value = reference on real matrix consisting of eigenvalues
+RealDiagonalMatrix& HermitianMatrix::LapackDiagonalizeSinglePrecision (RealDiagonalMatrix& M, ComplexMatrix& Q, double err, int maxIter)
+{
+  if (M.GetNbrRow() != this->NbrRow)
+    M.Resize(this->NbrRow, this->NbrColumn);
+  if (Q.GetNbrRow() != this->NbrRow)
+    Q.Resize(this->NbrRow, this->NbrColumn);
+  Complex Tmp;
+
+  LAcomplex *SPLapackMatrix = new LAcomplex [((long) this->NbrRow) * ((long) (this->NbrRow+1)) / 2l];
+  LAcomplex *SPLapackEVMatrix = new LAcomplex[((long) this->NbrRow) * ((long) this->NbrRow)];
+  LAcomplex *SPLapackWorkingArea = new LAcomplex [2*this->NbrRow-1];
+  float *SPLapackRealWorkingArea = new float [3*this->NbrRow-2];
+  float *SPDiagonalElements = new float[M.GetNbrRow()];
+  int SPLapackWorkAreaDimension=this->NbrRow;
+
+  int Information = 0;  
+  const char* Jobz = "V";
+  const char* UpperLower = "U";
+  int TotalIndex = 0;
+  for (int j = 0; j < this->NbrRow; ++j)
+    {
+      for (int i = 0; i < j; ++i)
+	{
+	  this->GetMatrixElement(i,j,Tmp);
+	  LapackMatrix[TotalIndex].r = Tmp.Re;
+	  LapackMatrix[TotalIndex].i = Tmp.Im;
+	  ++TotalIndex;
+	}
+      LapackMatrix[TotalIndex].r = this->DiagonalElements[j];
+      LapackMatrix[TotalIndex].i = 0.0;
+      SPDiagonalElements[j] = M.DiagonalElements[j];
+      ++TotalIndex;      
+    }
+  FORTRAN_NAME(chpev)(Jobz, UpperLower, &this->NbrRow, SPLapackMatrix, SPDiagonalElements, SPLapackEVMatrix, &this->NbrRow, SPLapackWorkingArea, SPLapackRealWorkingArea, &Information);
+  
+  TotalIndex=0;
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      for (int j = 0; j < this->NbrRow; ++j)
+	{
+	  Tmp.Re = LapackEVMatrix[TotalIndex].r;
+	  Tmp.Im = -LapackEVMatrix[TotalIndex].i;
+	  Q.SetMatrixElement(j, i, Tmp);
+	  ++TotalIndex;
+	}
+      M.DiagonalElements[i] = SPDiagonalElements[i];
+    }
+
+  delete [] SPLapackMatrix;
+  delete [] SPLapackEVMatrix;
+  delete [] SPLapackWorkingArea;
+  delete [] SPLapackRealWorkingArea;
+
   return M;  
 }
 

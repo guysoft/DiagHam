@@ -467,6 +467,15 @@ class HermitianMatrix : public Matrix
   // return value = reference on real matrix consisting of eigenvalues
   RealDiagonalMatrix& LapackDiagonalize (RealDiagonalMatrix& M, ComplexMatrix& Q, double err = 1e-7, int maxIter = 50);
 
+  // Diagonalize a complex skew symmetric matrix and evaluate transformation matrix using the LAPACK library (modifying current matrix)
+  //
+  // M = reference on real diagonal matrix of eigenvalues
+  // Q = matrix where transformation matrix has to be stored
+  // err = absolute error on matrix element
+  // maxIter = maximum number of iteration to fund an eigenvalue
+  // return value = reference on real matrix consisting of eigenvalues
+  RealDiagonalMatrix& LapackDiagonalizeSinglePrecision (RealDiagonalMatrix& M, ComplexMatrix& Q, double err, int maxIter);
+
   // Diagonalize selected eigenvalues of a hermitian matrix and evaluate transformation matrix using the LAPACK library (modifying current matrix)
   //
   // M = reference on real diagonal matrix of eigenvalues
