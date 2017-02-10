@@ -64,7 +64,6 @@ class Spin0_1_2_ChainWithTranslations : public AbstractSpinChainWithTranslations
   unsigned long StateMask;
   
 
-
   int DiffSz;
   bool FixedSpinProjectionFlag;
   
@@ -212,7 +211,7 @@ class Spin0_1_2_ChainWithTranslations : public AbstractSpinChainWithTranslations
 
 inline int Spin0_1_2_ChainWithTranslations::TotalSz(int index)
 {
-  return this->GetTotalSz(this->ChainDescription[index]);
+  return this-> DiffSz;
 }
 
 inline unsigned long Spin0_1_2_ChainWithTranslations::FindCanonicalForm(unsigned long state, int& nbrTranslation)

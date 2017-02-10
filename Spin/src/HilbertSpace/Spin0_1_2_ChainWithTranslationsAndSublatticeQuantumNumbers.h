@@ -26,77 +26,96 @@
 //    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.               //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
- 
 
-#ifndef DOUBLEDSPIN0_1_2_CHAINWITHTRANSLATIONSANDZZSYMMETRYANDSUBLATTICEQUANTUMNUMBERS_H
-#define DOUBLEDSPIN0_1_2_CHAINWITHTRANSLATIONSANDZZSYMMETRYANDSUBLATTICEQUANTUMNUMBERS_H 
+
+#ifndef SPIN0_1_2_CHAINWITHTRANSLATIONSANDSUBLATTICEQUANTUMNUMBERS_H
+#define SPIN0_1_2_CHAINWITHTRANSLATIONSANDSUBLATTICEQUANTUMNUMBERS_H
 
 
 #include "config.h"
-#include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry.h"
-
+#include "HilbertSpace/Spin0_1_2_ChainWithTranslations.h"
 
 #include <iostream>
 
 
 using std::ostream;
 
-class DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers : public DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry 
+class Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers : public  Spin0_1_2_ChainWithTranslations
 {
-  friend class Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers;
+  friend class DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers;
  protected:
-  int SubLatticeDifferenceKet;
-  int SubLatticeDifferenceBra;
-  int SubLatticeDifferenceProduct;
+  int SubLatticeDifference;
 
  public:
 
   // default constructor
   //
-  DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers ();
-  
+  Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers ();
+
   // constructor for complete Hilbert space with no restriction on momentum
   //
   // chainLength = number of spin
   // momemtum = total momentum of each state
   // memorySize = memory size in bytes allowed for look-up table
   // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
-  DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (int chainLength,  int diffSz, int zEigenvalueBra, int zEigenvalueKet, int subLatticeDifferenceKet, int subLatticeDifferenceBra, int subLatticeDifferenceProduct, int memorySize, int memorySlice);
-   
+  Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers (int chainLength,  int diffSz, int subLatticeDifference, int memorySize, int memorySlice);
+  Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers (int chainLength,  int subLatticeDifference, int memorySize=100000, int memorySlice=100000);
+  
   // constructor for complete Hilbert space corresponding to a given total spin projection Sz
   //
   // chainLength = number of spin 1
   // momemtum = total momentum of each state
   // sz = twice the value of total Sz component
   // memorySize = memory size in bytes allowed for look-up table
-  DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (int chainLength, int momentum,  int translationStep, int sz, int zEigenvalueBra, int zEigenvalueKet, int subLatticeDifferenceKet, int subLatticeDifferenceBra, int subLatticeDifferenceProduct, int memorySize, int memorySlice);
+  Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers (int chainLength, int momentum,  int translationStep, int sz,  int subLatticeDifference, int memorySize, int memorySlice);
 
   // copy constructor (without duplicating datas)
   //
   // chain = reference on chain to copy
-  DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (const DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers & chain);
-  
+  Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers (const Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers & chain);
+
   // destructor
   //
-  ~DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers ();
+  ~Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers ();
 
   // assignement (without duplicating datas)
   //
   // chain = reference on chain to copy
   // return value = reference on current chain
-  DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers & operator = (const DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers & chain);
+  Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers & operator = (const Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers & chain);
 
   // clone Hilbert space (without duplicating datas)
   //
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
-  HermitianMatrix  EvaluatePartialDensityMatrix (int szSector, int momentumSector, int sublatticeQuantumNumberSector,  int complementarySublatticeQuantumNumberSector, ComplexVector& groundState);
  protected:
+  inline void ComputeDifferenceSubLatticeNumberZero(unsigned long state,  int sublatticeNumber);
 
 };
 
+inline void Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers::ComputeDifferenceSubLatticeNumberZero(unsigned long state,  int sublatticeNumber)
+{
+  unsigned long SourceState =  state;
+  sublatticeNumber = 0;
+  unsigned  int Tmp;
+  for (int p = 0;p < this->ChainLength;p++)
+    {
+      Tmp = SourceState & 0x3ul;
+      if( p%2 == 0 )
+	{
+	  if (Tmp == 2)
+	      sublatticeNumber++;
 
+	}
+      else
+	{
+	  if (Tmp == 2)
+	    sublatticeNumber--;
+	}
+      SourceState >>=1;
+    }
+}
 #endif
 
 

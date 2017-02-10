@@ -899,10 +899,10 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
 	    {
 	      for(int k = 0; k < TmpHilbertSpace.NbrStateInOrbit[j]; k++)
 		{
-		  TmpState=0;
+		  TmpState = 0;
 		  TmpBra = ReferenceBra;
 		  TmpKet = ReferenceKet;
-		  for (int p = 0 ; p <this->ChainLength ; p++)
+		  for (int p = 0 ; p < this->ChainLength ; p++)
 		    {
 		      TmpState+= this->PowerD[p] * this->GetCommonIndexFromBraAndKetIndices(TmpBra &0x3ul, TmpKet &0x3ul);
 		      TmpBra>>=2;
@@ -914,7 +914,7 @@ HermitianMatrix DoubledSpin0_1_2_ChainWithTranslations::EvaluatePartialDensityMa
 		  int Index = this->FindStateIndex (TmpCanonicalState);
 		  if (Index < this->HilbertSpaceDimension ) 
 		    {
-		      double TmpFactor =sqrt( (double) (TmpDestinationHilbertSpace.NbrStateInOrbit[i] * TmpHilbertSpace.NbrStateInOrbit[j] * ( double) this->NbrStateInOrbit[Index])); 
+		      double TmpFactor = sqrt( (double) (TmpDestinationHilbertSpace.NbrStateInOrbit[i] * TmpHilbertSpace.NbrStateInOrbit[j] * ( double) this->NbrStateInOrbit[Index])); 
 		      //	      double TmpFactor=1.0;
 		      double Argument =  2.0 * M_PI * (NbrTranslation * this->Momentum  - t * momentumSector  - k * ComplementaryKSector) /  this->MaxXMomentum ;
 		      HRep.AddToMatrixElement(i,j,groundState[Index]/TmpFactor*Phase(Argument));
@@ -1109,18 +1109,18 @@ void  DoubledSpin0_1_2_ChainWithTranslations::NormalizeDensityMatrix(ComplexVect
   unsigned long SourceState,TmpState;
   unsigned int TmpBra,TmpKet;
   Complex Trace = 0.0;
-  for(int i=0;i < this->HilbertSpaceDimension;i++)
+  for(int i = 0 ; i < this->HilbertSpaceDimension ; i++)
     {
       if ( Norm(sourceVector[i]) > 1e-8 ) 
 	{
 	  TmpState=0;
 	  SourceState = this->ChainDescription[i];
-	  for (int p = 0;p <this->ChainLength;p++)
+	  for (int p = 0; p < this->ChainLength; p++)
 	    {
 	      this->GetBraAndKetIndicesFromCommonIndex(TmpBra,TmpKet, SourceState%9);
 	      TmpState+= this->PowerD[p] * this->GetCommonIndexFromBraAndKetIndices(TmpKet, TmpBra );
 	      SourceState/=9;
-	    }
+	    } 
 	  int Index = this->FindStateIndex (TmpState);
 //	  cout <<endl<<"Index = " << Index<<endl;
 	  if (Index < this->HilbertSpaceDimension ) 
