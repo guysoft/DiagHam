@@ -271,7 +271,6 @@ Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers:: Spin0_1_2_ChainWith
   this->ComplementaryStateShift = 2*(this->ChainLength - translationStep);
 
   this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->ChainLength-1, this->DiffSz);
-  this->ShiftNegativeDiffSz = this->LargeHilbertSpaceDimension;
 
   
   this->ChainDescription = new unsigned long [this->LargeHilbertSpaceDimension];

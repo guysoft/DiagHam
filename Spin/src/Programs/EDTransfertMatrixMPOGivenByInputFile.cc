@@ -81,6 +81,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "left", "compute left eigenvalue");
   (*SystemGroup) += new BooleanOption ('\n', "vison", "add a vison line in both layers");
   (*SystemGroup) += new  SingleIntegerOption ('\n', "sz", "consider a specific value of sz", -1);
+  (*SystemGroup) += new  SingleIntegerOption ('d', "bond-dimension", "enter the bond dimension in mode no spin", -1);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "k", "consider a specific value of k", -1);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "translation-step", "", 1);
 
@@ -275,13 +276,14 @@ int main(int argc, char** argv)
 	      
 	      if (UndescribedHilbertSpaceFlag)
 		{
+int BondDimension = Manager.GetInteger("bond-dimension");
 		  if (TranslationFlag) 
 		    {
-		      Space = new VirtualSpaceTransferMatrixWithTranslations(NbrSites,3,i,TranslationStep,100000,100000);
+		      Space = new VirtualSpaceTransferMatrixWithTranslations(NbrSites, BondDimension,i,TranslationStep,100000,100000);
 		    }
 		  else
 		    {
-		      Space = new VirtualSpaceTransferMatrixWithTranslations(NbrSites,3,100000,100000);
+		      Space = new VirtualSpaceTransferMatrixWithTranslations(NbrSites, BondDimension,100000,100000);
 		    }
 		}
 	      else	      

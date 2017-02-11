@@ -768,12 +768,16 @@ int main(int argc, char** argv)
 			}
 		      else
 			{
-			  for (int  SublatticeQuantumNumberSector = - SubLatticeZeroBra;  SublatticeQuantumNumberSector <  SubLatticeZeroBra+1 ;   SublatticeQuantumNumberSector+=SubLatticeZeroBra)
+			  bool FirstKet = true;
+			  bool FirstBra = true;
+			  for (int  SublatticeQuantumNumberSector = - SubLatticeZeroBra; ( SublatticeQuantumNumberSector <  SubLatticeZeroBra+1)&&( FirstBra  ) ;   SublatticeQuantumNumberSector+=2*SubLatticeZeroBra)
 			    {
-			      for (int  ComplementarySublatticeQuantumNumberSector = - SubLatticeZeroKet;    ComplementarySublatticeQuantumNumberSector <  SubLatticeZeroKet+1 ;     ComplementarySublatticeQuantumNumberSector+=SubLatticeZeroKet)
+			      if (SubLatticeZeroBra ==0 ) 
+				FirstBra =false;
+			      for (int  ComplementarySublatticeQuantumNumberSector = - SubLatticeZeroKet; ( ComplementarySublatticeQuantumNumberSector <  SubLatticeZeroKet+1 )&&( FirstKet );     ComplementarySublatticeQuantumNumberSector+=2*SubLatticeZeroKet)
 				{
-				  
-				  
+				  if (SubLatticeZeroKet == 0)
+				    FirstKet= false;
 				  HermitianMatrix PartialDensityMatrix = ((DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers *) Spaces[0])->EvaluatePartialDensityMatrix(SubSystemSz,SubSystemK, SublatticeQuantumNumberSector , ComplementarySublatticeQuantumNumberSector ,ComplexGroundStates[0])* Coefficients[0];
 				  for (int i = 1; i < NbrSpaces; ++i)
 				    {

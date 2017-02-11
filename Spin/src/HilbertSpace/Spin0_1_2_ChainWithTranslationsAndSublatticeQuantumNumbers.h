@@ -90,11 +90,11 @@ class Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers : public  Spin0
   AbstractHilbertSpace* Clone();
 
  protected:
-  inline void ComputeDifferenceSubLatticeNumberZero(unsigned long state,  int sublatticeNumber);
+  inline void ComputeDifferenceSubLatticeNumberZero(unsigned long state,  int & sublatticeNumber);
 
 };
 
-inline void Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers::ComputeDifferenceSubLatticeNumberZero(unsigned long state,  int sublatticeNumber)
+inline void Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers::ComputeDifferenceSubLatticeNumberZero(unsigned long state,  int & sublatticeNumber)
 {
   unsigned long SourceState =  state;
   sublatticeNumber = 0;
@@ -113,7 +113,7 @@ inline void Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers::ComputeD
 	  if (Tmp == 2)
 	    sublatticeNumber--;
 	}
-      SourceState >>=1;
+      SourceState >>=2;
     }
 }
 #endif

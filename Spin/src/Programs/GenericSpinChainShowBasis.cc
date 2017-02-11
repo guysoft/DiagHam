@@ -16,6 +16,7 @@
 #include "HilbertSpace/DoubledSpin1_2_Chain.h"
 #include "HilbertSpace/Spin0_1_2_ChainWithTranslations.h"
 #include "HilbertSpace/Spin0_1_2_ChainWithTranslationsStaggered.h"
+#include "HilbertSpace/Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers.h"
 #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsStaggered.h"
 //#include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslations.h"
 // #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry.h"
@@ -385,16 +386,22 @@ int main(int argc, char** argv)
       else
 	{
 	  AbstractSpinChain* Space = 0;
-	  if (Manager.GetBoolean( "staggered") == true)
+	  if (	  SubLatticeQuantumNumberFlag == false)
 	    {
-	      Space = new Spin0_1_2_ChainWithTranslationsStaggered ( NbrSpins,  Momentum, SzValue,  1000000, 1000000);
+	      if (Manager.GetBoolean( "staggered") == true)
+		{
+		  Space = new Spin0_1_2_ChainWithTranslationsStaggered ( NbrSpins,  Momentum, SzValue,  1000000, 1000000);
+		}
+	      else
+		{
+		  Space = new Spin0_1_2_ChainWithTranslations ( NbrSpins,  Momentum,  NbrSpins / MaxMomentum, SzValue,  1000000, 1000000);
+		}
 	    }
 	  else
 	    {
-	      Space = new Spin0_1_2_ChainWithTranslations ( NbrSpins,  Momentum,  NbrSpins / MaxMomentum, SzValue,  1000000, 1000000);
+	      Space = new Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers  ( NbrSpins,  Momentum,  NbrSpins / MaxMomentum, SzValue,  Manager.GetInteger("sbra"),  1000000, 1000000);
 	    }
-	  
-	  
+	      
 	  if (Manager.GetString("state") == 0)
 	    {
 	      for (int i = 0; i <  Space->GetHilbertSpaceDimension(); ++i)
