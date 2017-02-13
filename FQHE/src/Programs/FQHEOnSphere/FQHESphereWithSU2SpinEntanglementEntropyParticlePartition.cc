@@ -199,7 +199,7 @@ int main(int argc, char** argv)
       if (NoSzFlag == false)
 	{
 	  if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(GroundStateFiles[i],
-								   NbrParticles, LzMax, TotalLz[i], TotalSz[i], LzSymmetry[i], SzSymmetry[i], Statistics) == false)
+								   NbrParticles, LzMax, TotalLz[i], TotalSz[i], SzSymmetry[i], LzSymmetry[i], Statistics) == false)
 	    {
 	      cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
 	      return -1;
