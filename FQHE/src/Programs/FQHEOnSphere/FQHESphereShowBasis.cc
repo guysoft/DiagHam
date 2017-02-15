@@ -35,12 +35,16 @@
 #include "HilbertSpace/FermionOnCP2Long.h"
 #include "HilbertSpace/FermionOnS2xS2.h"
 #include "HilbertSpace/BosonOnS2xS2.h"
+#include "HilbertSpace/BosonOnS2xS2Long.h"
 #include "HilbertSpace/BosonOnS2xS2HardcoreNoNearestNeighbors.h"
+#include "HilbertSpace/BosonOnS2xS2HardcoreNoNearestNeighborsLong.h"
 #include "HilbertSpace/FermionOnS2xS2WithExclusionPrinciple.h"
 #include "HilbertSpace/QuasiholeOnSphereWithSpinAndPairing.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
+
+#include "GeneralTools/FilenameTools.h"
 
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
@@ -270,7 +274,15 @@ int main(int argc, char** argv)
 			    {
 			      if (Manager.GetBoolean("s2s2-hardcorenonn") == true)
 				{
-				  Space = new BosonOnS2xS2HardcoreNoNearestNeighbors(NbrParticles, NbrFluxQuanta, NbrFluxQuanta2, TotalLz, TotalKz);
+				  if (((NbrFluxQuanta + 1 ) * (NbrFluxQuanta2 + 1)) < 64)
+				    {
+				      Space = new BosonOnS2xS2HardcoreNoNearestNeighbors(NbrParticles, NbrFluxQuanta, NbrFluxQuanta2, TotalLz, TotalKz);
+				    }
+				  else
+				    {
+				      Space = new BosonOnS2xS2HardcoreNoNearestNeighborsLong(NbrParticles, NbrFluxQuanta, NbrFluxQuanta2, TotalLz, TotalKz);
+
+				    }
 				}
 			      else
 				{
@@ -556,7 +568,7 @@ int main(int argc, char** argv)
 	{
 	  OutputFileName = new char[512];
 	  if (Manager.GetBoolean("boson") == true)
-	    if ((SU2SpinFlag == false) && (SU4SpinFlag == false) && (FourDFlag == false) && (CP2Flag == false))
+	    if ((SU2SpinFlag == false) && (SU4SpinFlag == false) && (FourDFlag == false) && (CP2Flag == false) && (S2xS2Flag == false))
 	      sprintf (OutputFileName, "bosons_sphere_n_%d_2s_%d_lz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz);
 	    else
 	      if (SU2SpinFlag == true)
@@ -568,13 +580,18 @@ int main(int argc, char** argv)
 		  if (SU4SpinFlag == true)
 		    sprintf (OutputFileName, "bosons_sphere_su4_n_%d_2s_%d_lz_%d_sz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalSz);
 		  else
-		    if (FourDFlag == true)
-		      sprintf (OutputFileName, "bosons_sphere4d_n_%d_2s_%d_jz_%d_kz_%d.basis", NbrParticles, NbrFluxQuanta, TotalJz, TotalKz);
+		    if (S2xS2Flag == true)
+		      sprintf (OutputFileName, "bosons_s2xs2_n_%d_2s1_%d_2s2_%d_lz_%d_kz_%d.basis", NbrParticles, NbrFluxQuanta, NbrFluxQuanta2, TotalLz, TotalKz);
 		    else
-		      if (SymFlagTzZ3 == false)
-			sprintf (OutputFileName, "bosons_sphereCP2_n_%d_2s_%d_tz_%d_y_%d.basis", NbrParticles, NbrFluxQuanta, TzValue, YValue);
+		      if (FourDFlag == true)
+			sprintf (OutputFileName, "bosons_sphere4d_n_%d_2s_%d_jz_%d_kz_%d.basis", NbrParticles, NbrFluxQuanta, TotalJz, TotalKz);
 		      else
-			sprintf (OutputFileName, "bosons_sphereCP2_tzZ3sym_n_%d_2s_%d_tz_%d_y_%d.basis", NbrParticles, NbrFluxQuanta, TzValue, YValue);
+			{
+			  if (SymFlagTzZ3 == false)
+			    sprintf (OutputFileName, "bosons_sphereCP2_n_%d_2s_%d_tz_%d_y_%d.basis", NbrParticles, NbrFluxQuanta, TzValue, YValue);
+			  else
+			    sprintf (OutputFileName, "bosons_sphereCP2_tzZ3sym_n_%d_2s_%d_tz_%d_y_%d.basis", NbrParticles, NbrFluxQuanta, TzValue, YValue);
+			}
 	  else
 	    if (SU2SpinFlag == true)
 	      sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d_lz_%d_sz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalSz);
@@ -601,6 +618,15 @@ int main(int argc, char** argv)
 			  sprintf(OutputFileName, "fermions_spherecp2_n_%d_2s_%d_tz_%d_y_%d.basis", NbrParticles, NbrFluxQuanta, TzValue, YValue);
 			else
 			  sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d_lz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz);
+	  if (PauliK != 0)
+	    {
+	      char* TmpNewExtension = new char[32];
+	      sprintf (TmpNewExtension, "pauli_%d_%d.basis", PauliK, PauliR);
+	      char* OutputFileName2 = ReplaceExtensionToFileName(OutputFileName, "basis", TmpNewExtension);
+	      delete[] OutputFileName;
+	      delete[] TmpNewExtension;
+	      OutputFileName = OutputFileName2;
+	    }
 	}
       else
 	{
@@ -623,7 +649,7 @@ int main(int argc, char** argv)
 	{
 	  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 	    {
-	      if ((PauliK==0) || (Space->HasPauliExclusions(i,PauliK,PauliR)))
+	      if ((PauliK == 0) || (Space->HasPauliExclusions(i, PauliK, PauliR)))
 		{
 		  if (AddIndex == true) 
 		    File << i << " ";

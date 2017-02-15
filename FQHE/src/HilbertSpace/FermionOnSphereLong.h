@@ -100,6 +100,8 @@ class FermionOnSphereLong :  public ParticleOnSphere
   int IncNbrFermions;
   // momentum total value
   int TotalLz;
+  // momentum total value shifted by LzMax / 2 * NbrFermions
+  int ShiftedTotalLz;
   // maximum Lz value reached by a fermion
   int LzMax;
   // number of Lz values in a state
