@@ -4,6 +4,7 @@
 #include "HilbertSpace/BosonOnTorusWithMagneticTranslationsShort.h"
 #include "HilbertSpace/FermionOnTorus.h"
 #include "HilbertSpace/FermionOnTorusWithMagneticTranslations.h"
+#include "HilbertSpace/BosonOnT2xT2.h"
 
 #include "HilbertSpace/FermionOnTorusWithSpinNew.h"
 #include "HilbertSpace/FermionOnTorusWithSpin.h"
@@ -71,6 +72,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-n4", "number of type 4 particles (only useful in su(4) mode)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "no-translation", "do not consider magnetic translation (only trivial translations along one axis)");
   (*SystemGroup) += new  BooleanOption ('\n', "no-sz", "assume that Sz is not conserved (only useful in su(2) mode)", 0);
+  (*SystemGroup) += new  BooleanOption ('\n', "t2xt2", "consider particles on the T2xT2 geometry");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrflux-2", "number of flux quanta for the second torus on the T2XT2 geometry", 20);
+  (*SystemGroup) += new SingleIntegerOption ('\n', "ky-momentum2", "the total momentum along the y axis for the second torus when using the T2xT2 geometry", 0);  
   (*SystemGroup) += new SingleStringOption ('\n', "state", "name of an optional vector state whose component values can be displayed behind each corresponding n-body state");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "hide-component", "hide state components (and thus the corresponding n-body state) whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
   (*SystemGroup) += new MultipleIntegerOption ('\n', "pauli", "print only states obeying a general Pauli exclusion principle",',');
@@ -327,6 +331,57 @@ int main(int argc, char** argv)
 	  delete Space;
 	  return 0;
 	}	  
+    }
+
+  if (Manager.GetBoolean("t2xt2") == true)
+    {
+      if (Manager.GetBoolean("no-translation") == false)
+	{
+	}
+      else
+	{
+	  ParticleOnSphere* Space = 0;
+	  if (Manager.GetBoolean("boson") == true)
+	    {
+	      Space = new BosonOnT2xT2(NbrParticles, NbrFluxQuanta, Manager.GetInteger("nbrflux-2"), 
+				       Manager.GetInteger("ky-momentum"), Manager.GetInteger("ky-momentum2"));
+	    }
+	  if (Manager.GetString("state") == 0)
+	    {
+	      for (int i = 0; i <  Space->GetHilbertSpaceDimension(); ++i)
+		Space->PrintState(cout, i) << endl;
+	      cout << endl;
+	    }
+	  else
+	    {
+	      int NbrHiddenComponents = 0;
+	      double WeightHiddenComponents = 0.0;
+	      double Normalization = 0.0;
+	      RealVector State;
+	      if (State.ReadVector(Manager.GetString("state")) == false)
+		{
+		  cout << "error while reading " << Manager.GetString("state") << endl;
+		  return -1;
+		}
+	      if (Space->GetHilbertSpaceDimension() != State.GetVectorDimension())
+		{
+		  cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space->GetHilbertSpaceDimension() << ")" << endl;
+		  return -1;
+		}
+	      if (Manager.GetDouble("hide-component") > 0.0)
+		{
+		  double Error = Manager.GetDouble("hide-component");
+		  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		    if (Norm(State[i]) > Error)
+		      Space->PrintState(cout, i) << " : "  << State[i] << endl;;
+		}
+	      else
+		for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		  Space->PrintState(cout, i) << " : "  << State[i] << endl;;
+	    }
+	  delete Space;
+	}
+      return 0;
     }
 
   if (Manager.GetBoolean("su2-spin") == false)

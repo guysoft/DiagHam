@@ -164,4 +164,5 @@ ParticleOnS2xS2DeltaHamiltonian.cc \
 ParticleOnCylinderxCylinderDeltaHamiltonian.cc \
 ParticleOnCylinderxCylinderDeltaTruncatedHamiltonian.cc \
 ParticleOnS2xS2GenericTwoBodyHamiltonian.cc \
-ParticleOnCylinderxCylinderGenericTwoBodyHamiltonian.cc
+ParticleOnCylinderxCylinderGenericTwoBodyHamiltonian.cc \
+ParticleOnT2xT2GenericTwoBodyHamiltonian.cc
