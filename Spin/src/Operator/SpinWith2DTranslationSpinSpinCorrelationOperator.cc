@@ -168,7 +168,6 @@ ComplexVector& SpinWith2DTranslationSpinSpinCorrelationOperator::LowLevelMultipl
  
   for (int i = (int) firstComponent; i < dim; ++i)
     {
-	Complex TmpValue = vSource[i] * 0.5;
 // 	TmpIndex1 = this->GetLinearizedIndex(j - this->Offset, k - 1);
 // 	TmpIndex2 = this->GetLinearizedIndex(j, k);
       

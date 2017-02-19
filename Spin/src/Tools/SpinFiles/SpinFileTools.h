@@ -62,15 +62,6 @@ bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz
 //
 // filename = file name
 // nbrSpins = reference to the number of spins 
-// spin = reference to twice the spin value per site
-// offset = offset in case of a tilted lattice
-// return value = true if no error occured
-bool SpinTiltedFindSystemInfoFromFileName(char* filename, int& nbrSpins, int& spin, int& offset);
-
-// try to guess system information from file name
-//
-// filename = file name
-// nbrSpins = reference to the number of spins 
 // sz = reference to twice the Sz value
 // spin = reference to twice the spin value per site
 // momentum = reference on the momentum
@@ -100,6 +91,16 @@ bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz
 // szSymmetry =  reference on the Sz<->-Sz parity
 // return value = true if no error occured
 bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int& spin, int& momentum, int& inversion, int& szSymmetry);
+
+// try to guess system information from file name
+//
+// filename = file name
+// nbrSpins = reference to the number of spins 
+// spin = reference to twice the spin value per site
+// offset = offset in case of a tilted lattice
+// return value = true if no error occured
+bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int& spin, int& momentum, int& inversion, int& szSymmetry, int& offset);
+
 
 // try to guess system information from file name for a 2d spin system with translations
 //

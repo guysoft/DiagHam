@@ -112,7 +112,12 @@ int main(int argc, char** argv)
 	{
 	  cout << "can't open file " << Manager.GetString("input-state") << endl;
 	  return -1;
-	}      
+	}   
+	
+      SpinFindSystemInfoFromVectorFileName (Manager.GetString("input-state"), NbrSites, SzValue, SpinValue, XMomentum, InversionSector, SzParitySector, Offset);
+      
+//       (char* filename, int& nbrSpins, int& sz, int& spin, int& momentum, int& inversion, int& szSymmetry, int& offset)
+      cout << Offset << endl;
       if (SpinWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrSites, SzValue, SpinValue, XMomentum, XPeriodicity,
 								YMomentum, YPeriodicity) == false)
 	{
@@ -207,19 +212,23 @@ int main(int argc, char** argv)
   File.precision(14);
   cout.precision(14);
   
-  AbstractOperator* Operator;
-  Complex NeighborSpinSpinCorrelation;
+  cout << "NbrSites = " << NbrSites << " " << " XPeriodicity = " << XPeriodicity << " YPeriodicity  = " << YPeriodicity << " Sz = " << SzValue << " SzParitySector = " << SzParitySector << " XMomentum = " << XMomentum << " YMomentum = " << YMomentum << endl;
   
+  AbstractOperator* Operator;
+  Complex* NeighborSpinSpinCorrelation = new Complex [6];
   int** TmpIndices = new int* [6];
   for (int i = 0; i < 6; ++i)
+  {
     TmpIndices[i] = new int[2];
+    NeighborSpinSpinCorrelation[i] = 0.0;
+  }
   
-  File << "# i j E_{AB} E_{BA} E_{BC} E_{CB} E_{AC} E_{CA}" << endl;
+  File << "# E_{AB} E_{BA} E_{BC} E_{CB} E_{AC} E_{CA}" << endl;
+  cout << "# E_{AB} E_{BA} E_{BC} E_{CB} E_{AC} E_{CA}" << endl;
   for (int i = 0; i < XPeriodicity; ++i)
   {
     for (int j = 0; j < YPeriodicity; ++j)
     {
-      
       TmpIndices[0][0] = GetLinearizedIndex(i, j, 0, XPeriodicity, YPeriodicity);
       TmpIndices[0][1] = GetLinearizedIndex(i, j, 1, XPeriodicity, YPeriodicity);
       TmpIndices[1][0] = GetLinearizedIndex(i, j, 1, XPeriodicity, YPeriodicity);
@@ -233,20 +242,29 @@ int main(int argc, char** argv)
       TmpIndices[5][0] = GetLinearizedIndex(i, j, 2, XPeriodicity, YPeriodicity);
       TmpIndices[5][1] = GetLinearizedIndex(i + Offset, j + 1, 0, XPeriodicity, YPeriodicity);
   
-      File << i << " " << j << " " ;
+//       cout << i << " " << j << " " ;
+//       File << i << " " << j << " " ;
       for (int l = 0; l < 6; ++l)
       {
 	Operator = new SpinWith2DTranslationSpinSpinCorrelationOperator(Space, XMomentum, XPeriodicity, YMomentum, YPeriodicity, TmpIndices[l][0], TmpIndices[l][1]);
 	OperatorMatrixElementOperation Operation(Operator, State, State, State.GetVectorDimension());
 	Operation.ApplyOperation(Architecture.GetArchitecture());
-	NeighborSpinSpinCorrelation = Operation.GetScalar();
-	File << Norm(NeighborSpinSpinCorrelation) << " " ;
+	NeighborSpinSpinCorrelation[l] += Operation.GetScalar();
+// 	cout << NeighborSpinSpinCorrelation[l] << " " ;
 	delete Operator;
       }
-      File << endl;
+//       cout << endl;
       
     }
   }
+  
+  for (int l = 0; l < 6; ++l)
+  {
+    File << NeighborSpinSpinCorrelation[l] / (XPeriodicity * YPeriodicity) << " " ;
+    cout << NeighborSpinSpinCorrelation[l] / (XPeriodicity * YPeriodicity) << " " ;
+  }
+  File << endl;
+  cout << endl;
   File.close();
   
 

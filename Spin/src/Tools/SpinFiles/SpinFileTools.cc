@@ -607,15 +607,15 @@ bool SpinWith2DTranslationFindSystemInfoFromVectorFileName(char* filename, int& 
 // yPeriodicity = reference on the number of sites along the y direction
 // return value = true if no error occured
 
-bool SpinTiltedFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& spin, int& offset)
+bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int& spin, int& momentum, int& inversion, int& szSymmetry, int& offset)
 {
-  if (SpinFindSystemInfoFromFileName(filename, nbrSpins, spin) == false)
-    return false;
+  SpinFindSystemInfoFromVectorFileName (filename, nbrSpins, sz, spin, momentum, inversion, szSymmetry);
   char* StrNbrParticles;
-  StrNbrParticles = strstr(filename, "_offset_");
+  StrNbrParticles = strstr(filename, "_off_");
   if (StrNbrParticles != 0)
     {
-      StrNbrParticles += 8;
+      cout << StrNbrParticles << endl;
+      StrNbrParticles += 5;
       int SizeString = 0;
       while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
 	     && (StrNbrParticles[SizeString] <= '9'))
