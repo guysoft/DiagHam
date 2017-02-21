@@ -49,6 +49,15 @@ extern "C" void FORTRAN_NAME(chpev)(const char* jobz, const char* uplo, const in
 extern "C" void FORTRAN_NAME(zhpevx)(const char* jobz, const char* range, const char* uplo, const int* dimensionN, const doublecomplex* matrixAP, const double *lowerBoundVL, const double *upperBoundVU, const int* lowerIndexIL, const int* upperIndexIU, const double *errorABSTOL, const int* nbrFoundM, const double *eigenvaluesW, const doublecomplex *eigenvectorsZ, const int* leadingDimensionLDZ, const doublecomplex *work, const doublereal *rwork, const int* iwork, const int* ifail, const int* information);
 #endif
 
+
+#ifdef __MPACK__
+
+#include <gmp.h>
+#include <mpack/mblas_gmp.h>
+#include <mpack/mlapack_gmp.h>
+
+#endif
+
 /* zhpevx workspace requirements:
    WORK    (workspace) COMPLEX*16 array, dimension (2*N)
    
@@ -2057,12 +2066,12 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalizeSinglePrecision (RealDiago
       for (int i = 0; i < j; ++i)
 	{
 	  this->GetMatrixElement(i,j,Tmp);
-	  LapackMatrix[TotalIndex].r = Tmp.Re;
-	  LapackMatrix[TotalIndex].i = Tmp.Im;
+	  SPLapackMatrix[TotalIndex].r = Tmp.Re;
+	  SPLapackMatrix[TotalIndex].i = Tmp.Im;
 	  ++TotalIndex;
 	}
-      LapackMatrix[TotalIndex].r = this->DiagonalElements[j];
-      LapackMatrix[TotalIndex].i = 0.0;
+      SPLapackMatrix[TotalIndex].r = this->DiagonalElements[j];
+      SPLapackMatrix[TotalIndex].i = 0.0;
       SPDiagonalElements[j] = M.DiagonalElements[j];
       ++TotalIndex;      
     }
@@ -2073,8 +2082,8 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalizeSinglePrecision (RealDiago
     {
       for (int j = 0; j < this->NbrRow; ++j)
 	{
-	  Tmp.Re = LapackEVMatrix[TotalIndex].r;
-	  Tmp.Im = -LapackEVMatrix[TotalIndex].i;
+	  Tmp.Re = SPLapackEVMatrix[TotalIndex].r;
+	  Tmp.Im = -SPLapackEVMatrix[TotalIndex].i;
 	  Q.SetMatrixElement(j, i, Tmp);
 	  ++TotalIndex;
 	}
@@ -2088,6 +2097,82 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalizeSinglePrecision (RealDiago
 
   return M;  
 }
+
+
+#ifdef __MPACK__
+
+// Diagonalize a complex skew symmetric matrix and evaluate transformation matrix using the MPACK library
+//
+// precision = setting to use for arbitrary precision arithmetic (in bits)
+// M = reference on real diagonal matrix of eigenvalues
+// Q = matrix where transformation matrix has to be stored
+// err = absolute error on matrix element
+// maxIter = maximum number of iteration to fund an eigenvalue
+// return value = reference on real matrix consisting of eigenvalues
+RealDiagonalMatrix& HermitianMatrix::LapackDiagonalizeArbitraryPrecision (RealDiagonalMatrix& M, ComplexMatrix& Q, int precision, double err, int maxIter)
+{
+  if (M.GetNbrRow() != this->NbrRow)
+    M.Resize(this->NbrRow, this->NbrColumn);
+  if (Q.GetNbrRow() != this->NbrRow)
+    Q.Resize(this->NbrRow, this->NbrColumn);
+
+  mpackint n = this->NbrRow;
+  mpackint ldz = this->NbrRow;
+  mpackint lwork, info;
+  //initialization of GMP
+  int default_prec = precision;
+  mpf_set_default_prec(default_prec);
+
+  Complex Tmp;
+  mpc_class *APLapackMatrix = new mpc_class [((long) this->NbrRow) * ((long) (this->NbrRow+1)) / 2l];
+  mpc_class *APLapackEVMatrix = new mpc_class[((long) this->NbrRow) * ((long) this->NbrRow)];
+  mpc_class *APLapackWorkingArea = new mpc_class [2*this->NbrRow-1];
+  mpf_class *APLapackRealWorkingArea = new mpf_class [3*this->NbrRow-2];
+  mpf_class *APDiagonalElements = new mpf_class[M.GetNbrRow()];
+  int APLapackWorkAreaDimension=this->NbrRow;
+
+  mpackint Information = 0;  
+  const char* Jobz = "V";
+  const char* UpperLower = "U";
+  int TotalIndex = 0;
+  for (int j = 0; j < this->NbrRow; ++j)
+    {
+      for (int i = 0; i < j; ++i)
+	{
+	  this->GetMatrixElement(i,j,Tmp);
+	  APLapackMatrix[TotalIndex].real() = Tmp.Re;
+	  APLapackMatrix[TotalIndex].imag() = Tmp.Im;
+	  ++TotalIndex;
+	}
+      APLapackMatrix[TotalIndex].real() = this->DiagonalElements[j];
+      APLapackMatrix[TotalIndex].imag() = 0.0;
+      APDiagonalElements[j] = M.DiagonalElements[j];
+      ++TotalIndex;      
+    }
+  Chpev(Jobz, UpperLower, n, APLapackMatrix, APDiagonalElements, APLapackEVMatrix, ldz, APLapackWorkingArea, APLapackRealWorkingArea, &Information);
+  
+  TotalIndex=0;
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      for (int j = 0; j < this->NbrRow; ++j)
+	{
+	  Tmp.Re = APLapackEVMatrix[TotalIndex].real().get_d();
+	  Tmp.Im = -APLapackEVMatrix[TotalIndex].imag().get_d();
+	  Q.SetMatrixElement(j, i, Tmp);
+	  ++TotalIndex;
+	}
+      M.DiagonalElements[i] = APDiagonalElements[i].get_d();
+    }
+
+  delete [] APLapackMatrix;
+  delete [] APLapackEVMatrix;
+  delete [] APLapackWorkingArea;
+  delete [] APLapackRealWorkingArea;
+
+  return M;
+}
+#endif 
+
 
 // Diagonalize selected eigenvalues of a hermitian matrix and evaluate transformation matrix using the LAPACK library (modifying current matrix)
 //

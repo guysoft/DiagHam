@@ -271,7 +271,7 @@ char*  GetExtensionFromFileName(char* fileName, int maxL)
     }
   if (*Extension == '.')
     {
-      char *rst = new char[strlen(Extension)];
+      char *rst = new char[strlen(Extension)+1];
       strcpy(rst,Extension);
       return rst;
     }

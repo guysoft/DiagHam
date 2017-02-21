@@ -119,7 +119,7 @@ AC_MSG_RESULT([${HAVE_PKG_GSL}])
 
 
 USER_DEFINED_GSL=no
-AC_ARG_WITH(gsl-libs,[AC_HELP_STRING([--with-gsl-libs="LIBS"],[GSL libraries @<:@"-lgsl  -lgslcblas"@:>@])],
+AC_ARG_WITH(gsl-libs,[AC_HELP_STRING([--with-gsl-libs="LIBS"],[GSL libraries @<:@"-lgsl -lgslcblas"@:>@])],
 [GSL_LIBS=${withval}
 USER_DEFINED_GSL=yes
 AC_MSG_CHECKING(user-defined GSL libraries)
@@ -171,6 +171,34 @@ if test X${USER_DEFINED_GMP} = Xno && test X${HAVE_PKG_GMP} = Xyes; then
   GMP_LIBS="-lgmp -lgmpxx"
 fi
 
+
+dnl Cheks for mpack arbitrary precision LAPACK library
+
+AC_ARG_ENABLE(mpack, [AC_HELP_STRING([--enable-mpack],[enable mpack support])], [HAVE_PKG_MPACK=$enableval],[HAVE_PKG_MPACK=no])
+
+AC_MSG_CHECKING(whether we are using mpack library)
+AC_MSG_RESULT([${HAVE_PKG_MPACK}])
+
+
+USER_DEFINED_MPACK=no
+AC_ARG_WITH(mpack-libs,[AC_HELP_STRING([--with-mpack-libs="LIBS"],[MPACK libraries @<:@"-lmlapack_gmp -lmblas_gmp"@:>@])],
+[MPACK_LIBS=${withval}
+USER_DEFINED_MPACK=yes
+AC_MSG_CHECKING(user-defined MPACK libraries)
+AC_MSG_RESULT([${MPACK_LIBS}])
+])
+
+if test X${USER_DEFINED_MPACK} = Xno && test X${HAVE_PKG_MPACK} = Xyes; then
+  AC_DEFINE(HAVE_MPACK,,[define if we are using mpack library])
+#  AC_CHECK_LIB(mlapack_gmp,__Chpev,MPACK_LIBS=-lmlapack_gmp,AC_MSG_ERROR([mpack library not found])) # edit this line for a proper check
+  MPACK_LIBS="-lmlapack_gmp -lmblas_gmp"
+fi
+
+if test X${HAVE_PKG_MPACK} = Xyes; then
+  AC_MSG_CHECKING(augmented LAPACK linker commands with MPACK)
+  LAPACK_LIBS="${LAPACK_LIBS} ${MPACK_LIBS}"
+  AC_MSG_RESULT([${LAPACK_LIBS}])
+fi
 
 dnl Cheks for fftw3 library
 
@@ -530,6 +558,7 @@ AC_SUBST(FORTRAN2C_LIBS)
 AC_SUBST(BZ2_LIBS)
 AC_SUBST(GSL_LIBS)
 AC_SUBST(GMP_LIBS)
+AC_SUBST(MPACK_LIBS)
 AC_SUBST(FFTW_LIBS)
 AC_SUBST(INTELMKL_LIBS)
 AC_SUBST(MAYBE_QUANTUMDOTS)
