@@ -273,7 +273,7 @@ public:
   // nbrTranslation = number of translation needed to obtain the canonical form
   // yMomentum = state momentum value in the y direction
   // return value = canonical form of a state description
-  unsigned long FindCanonicalForm(unsigned long stateDescription, int& maxMomentum, int& nbrTranslation);
+  //  virtual unsigned long FindCanonicalForm(unsigned long stateDescription, int& maxMomentum, int& nbrTranslation);
 
   // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to the x momentum constraint
   //
@@ -281,45 +281,45 @@ public:
   // maxMomentum = reference on the maximum momentum value that can be reached by a fermion in the stateDescription state (will be changed to the one of the canonical form)
   // nbrTranslation = number of translation needed to obtain the canonical form
   // return value = canonical form of a state description and -1 in nbrTranslation if the state does not fit the x momentum constraint
-  unsigned long FindCanonicalFormAndTestXMomentumConstraint(unsigned long stateDescription, int& maxMomentum, int& nbrTranslation);
+  //  virtual unsigned long FindCanonicalFormAndTestXMomentumConstraint(unsigned long stateDescription, int& maxMomentum, int& nbrTranslation);
 
  // find how many translations on the x direction are needed to obtain the same state
   //
   // stateDescription = unsigned integer describing the state
   // return value = number of translation needed to obtain the same state
-  int FindNumberXTranslation(unsigned long stateDescription);
+  virtual int FindNumberXTranslation(unsigned long stateDescription);
 
   // test if a state and its translated version can be used to create a state corresponding to the x momentum constraint
   //
   // stateDescription = unsigned integer describing the state
   // return value = true if the state satisfy the x momentum constraint
-  bool TestXMomentumConstraint(unsigned long stateDescription);
+  virtual bool TestXMomentumConstraint(unsigned long stateDescription);
 
   // find canonical form of a state description
   //
   // stateDescription = fermionic representation of the state
   // nbrTranslation = number of translation needed to obtain the canonical form
   // return value = canonical form of a state description (fermionic representation)
-  unsigned long FindCanonicalForm(unsigned long stateDescription, int& nbrTranslation);
+  virtual unsigned long FindCanonicalForm(unsigned long stateDescription, int& nbrTranslation);
  
   // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to the x momentum constraint
   //
   // stateDescription = fermionic representation of the state
   // nbrTranslation = number of translation needed to obtain the canonical form
   // return value = canonical form of a state description (fermionic representation) and -1 in nbrTranslation if the state does not fit the x momentum constraint
-  unsigned long FindCanonicalFormAndTestXMomentumConstraint(unsigned long stateDescription, int& nbrTranslation);
+  virtual unsigned long FindCanonicalFormAndTestXMomentumConstraint(unsigned long stateDescription, int& nbrTranslation);
 
   // apply a single translation to a bosonic state in its fermionic representation
   //
   // stateDescription = state to translate
-  inline void ApplySingleTranslation(unsigned long& stateDescription);
+  virtual void ApplySingleTranslation(unsigned long& stateDescription);
 
   // convert a bosonic state into its fermionic counterpart
   //
   // initialState = reference on the array where initialbosonic  state is stored
   // initialStateLzMax = reference on the initial bosonic state maximum Lz value
   // return value = corresponding fermionic state
-  unsigned long BosonToFermion(unsigned long*& initialState, int& initialStateLzMax);
+  virtual unsigned long BosonToFermion(unsigned long*& initialState, int& initialStateLzMax);
 
   // convert a fermionic state into its bosonic  counterpart
   //
@@ -327,14 +327,14 @@ public:
   // initialStateLzMax = initial fermionic state maximum Lz value
   // finalState = reference on the array where the bosonic state has to be stored
   // finalStateLzMax = reference on the integer where the bosonic state maximum Lz value has to be stored
-  void FermionToBoson(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState, int& finalStateLzMax);
+  virtual void FermionToBoson(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState, int& finalStateLzMax);
 
   // find state index
   //
   // stateDescription = array describing the state
   // lzmax = maximum Lz value reached by a boson in the state
   // return value = corresponding index
-  int FindStateIndex(unsigned long stateDescription, int lzmax);
+  virtual int FindStateIndex(unsigned long stateDescription, int lzmax);
 
   // evaluate Hilbert space dimension
   //
@@ -342,17 +342,17 @@ public:
   // currentKyMax = momentum maximum value for bosons that are still to be placed
   // currentMomentum = current value of the momentum
   // return value = Hilbert space dimension
-  long EvaluateHilbertSpaceDimension(int nbrBosons, int currentKyMax, int currentMomentum);
+  virtual long EvaluateHilbertSpaceDimension(int nbrBosons, int currentKyMax, int currentMomentum);
 
   // generate look-up table associated to current Hilbert space
   // 
   // memeory = memory size that can be allocated for the look-up table
-  void GenerateLookUpTable(int memory);
+  virtual void GenerateLookUpTable(int memory);
 
   // generate all states with both the kx and ky constraint
   // 
   // return value = new dimension of the Hilbert space
-  long GenerateStates();
+  virtual long GenerateStates();
 
   // generate all states corresponding to the ky constraint  without taking care of the kx constraint
   // 
@@ -361,7 +361,7 @@ public:
   // pos = position in StateDescription array where to store states
   // currentMomentum = current value of the momentum
   // return value = position from which new states have to be stored
-  long RawGenerateStates(int nbrBosons, int currentKyMax, long pos, int currentMomentum);
+  virtual long RawGenerateStates(int nbrBosons, int currentKyMax, long pos, int currentMomentum);
 
   // convert a bosonic state to its monomial representation
   //

@@ -5,6 +5,8 @@
 #include "HilbertSpace/FermionOnTorus.h"
 #include "HilbertSpace/FermionOnTorusWithMagneticTranslations.h"
 #include "HilbertSpace/BosonOnT2xT2.h"
+#include "HilbertSpace/BosonOnT2xT2HardcoreNoNearestNeighbors.h"
+#include "HilbertSpace/BosonOnT2xS2WithMagneticTranslationsShort.h"
 
 #include "HilbertSpace/FermionOnTorusWithSpinNew.h"
 #include "HilbertSpace/FermionOnTorusWithSpin.h"
@@ -74,7 +76,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  BooleanOption ('\n', "no-sz", "assume that Sz is not conserved (only useful in su(2) mode)", 0);
   (*SystemGroup) += new  BooleanOption ('\n', "t2xt2", "consider particles on the T2xT2 geometry");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrflux-2", "number of flux quanta for the second torus on the T2XT2 geometry", 20);
-  (*SystemGroup) += new SingleIntegerOption ('\n', "ky-momentum2", "the total momentum along the y axis for the second torus when using the T2xT2 geometry", 0);  
+  (*SystemGroup) += new SingleIntegerOption ('\n', "kymomentum-2", "the total momentum along the y axis for the second torus when using the T2xT2 geometry", 0);  
+  (*SystemGroup) += new BooleanOption  ('\n', "t2t2-hardcorenonn", "consider particles on the S2xS2 geometry, with hardcore contraint and no nearest neighbor");
+  (*SystemGroup) += new  BooleanOption ('\n', "t2xs2", "consider particles on the T2xS2 geometry");
   (*SystemGroup) += new SingleStringOption ('\n', "state", "name of an optional vector state whose component values can be displayed behind each corresponding n-body state");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "hide-component", "hide state components (and thus the corresponding n-body state) whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
   (*SystemGroup) += new MultipleIntegerOption ('\n', "pauli", "print only states obeying a general Pauli exclusion principle",',');
@@ -337,14 +341,25 @@ int main(int argc, char** argv)
     {
       if (Manager.GetBoolean("no-translation") == false)
 	{
+	  cout << "t2xt2 geometry with magnetic translations is not implemented" << endl;
+	  return 0;
 	}
       else
 	{
 	  ParticleOnSphere* Space = 0;
 	  if (Manager.GetBoolean("boson") == true)
 	    {
-	      Space = new BosonOnT2xT2(NbrParticles, NbrFluxQuanta, Manager.GetInteger("nbrflux-2"), 
-				       Manager.GetInteger("ky-momentum"), Manager.GetInteger("ky-momentum2"));
+	      if (Manager.GetBoolean("t2t2-hardcorenonn") == true)
+		{
+		  Space = new BosonOnT2xT2HardcoreNoNearestNeighbors(NbrParticles, NbrFluxQuanta, Manager.GetInteger("nbrflux-2"), 
+								     Manager.GetInteger("ky-momentum"), Manager.GetInteger("kymomentum-2"));
+		}
+	      else
+		{
+		  cout << "toto" << endl;
+		  Space = new BosonOnT2xT2(NbrParticles, NbrFluxQuanta, Manager.GetInteger("nbrflux-2"), 
+					   Manager.GetInteger("ky-momentum"), Manager.GetInteger("kymomentum-2"));
+		}
 	    }
 	  if (Manager.GetString("state") == 0)
 	    {
@@ -370,10 +385,23 @@ int main(int argc, char** argv)
 		}
 	      if (Manager.GetDouble("hide-component") > 0.0)
 		{
+		  int NbrHiddenComponents = 0;
+		  double WeightHiddenComponents = 0.0;
 		  double Error = Manager.GetDouble("hide-component");
 		  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-		    if (Norm(State[i]) > Error)
-		      Space->PrintState(cout, i) << " : "  << State[i] << endl;;
+		    {
+		      if (fabs(State[i]) > Error)
+			{
+			  Space->PrintState(cout, i) << " : "  << State[i] << endl;;
+			}
+		      else
+			{
+			  ++NbrHiddenComponents;
+			  WeightHiddenComponents += State[i] * State[i];
+			}
+		      Normalization += State[i] * State[i];
+		    }
+	      cout << NbrHiddenComponents << " hidden components (square normalization error = " << WeightHiddenComponents << " / " << Normalization << ")" << endl;	  
 		}
 	      else
 		for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
@@ -383,7 +411,63 @@ int main(int argc, char** argv)
 	}
       return 0;
     }
-
+  if (Manager.GetBoolean("t2xs2") == true)
+    {
+      int Ky = Manager.GetInteger("ky-momentum") % NbrFluxQuanta;
+      if (Manager.GetBoolean("no-translation") == false)
+	{
+	  int Kx = Manager.GetInteger("kx-momentum") % MomentumModulo;
+	  ParticleOnTorusWithMagneticTranslations* Space = 0;
+	  if (Manager.GetBoolean("boson") == true)
+	    {
+	      Space = new BosonOnT2xS2WithMagneticTranslationsShort(NbrParticles, NbrFluxQuanta, Kx, Ky, Manager.GetInteger("nbrflux-2"), Manager.GetInteger("kymomentum-2"));
+	    }
+	  else
+	    {
+	      cout << "fermions on T2xS2 and mangnetic translations is not implemented" << endl;
+	      return 0;
+	    }
+	  if (Manager.GetString("state") == 0)
+	    {
+	      for (int i = 0; i <  Space->GetHilbertSpaceDimension(); ++i)
+		Space->PrintState(cout, i) << endl;;
+	      cout << endl;
+	    }
+	  else
+	    {
+	      int NbrHiddenComponents = 0;
+	      double WeightHiddenComponents = 0.0;
+	      double Normalization = 0.0;
+	      ComplexVector State;
+	      if (State.ReadVector(Manager.GetString("state")) == false)
+		{
+		  cout << "error while reading " << Manager.GetString("state") << endl;
+		  return -1;
+		}
+	      if (Space->GetHilbertSpaceDimension() != State.GetVectorDimension())
+		{
+		  cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space->GetHilbertSpaceDimension() << ")" << endl;
+		  return -1;
+		}
+	      if (Manager.GetDouble("hide-component") > 0.0)
+		{
+		  double Error = Manager.GetDouble("hide-component");
+		  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		    if (Norm(State[i]) > Error)
+		      Space->PrintState(cout, i) << " : "  << State[i] << endl;;
+		}
+	      else
+		for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		  Space->PrintState(cout, i) << " : "  << State[i] << endl;
+	    }
+	  delete Space;
+	  return 0;
+	}
+      else
+	{
+	  cout << "t2xs2 geometry without magnetic translations is not implemented" << endl;
+	}
+    }
   if (Manager.GetBoolean("su2-spin") == false)
     {
       if(Manager.GetBoolean("2-ll") == false)

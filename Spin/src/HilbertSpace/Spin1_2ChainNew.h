@@ -107,6 +107,12 @@ class Spin1_2ChainNew : public AbstractSpinChain
   // return value = pointer to cloned Hilbert space
   virtual AbstractHilbertSpace* Clone();
 
+  // get the value of the spin (i.e. S) at a given site
+  // 
+  // site = site index
+  // return value = twice the spin
+  virtual int GetLocalSpin(int site);
+
   // return value of spin projection on (Oz) for a given state
   //
   // index = index of the state to test
@@ -299,6 +305,16 @@ class Spin1_2ChainNew : public AbstractSpinChain
   virtual void GetBosonicOccupation (unsigned int index, int * finalState);
   
 };
+
+// get the value of the spin (i.e. S) at a given site
+// 
+// site = site index
+// return value = twice the spin
+
+inline int Spin1_2ChainNew::GetLocalSpin(int site)
+{
+  return 1;
+}
 
 #endif
 

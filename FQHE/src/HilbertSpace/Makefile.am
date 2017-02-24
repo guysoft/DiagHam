@@ -187,4 +187,6 @@ BosonOnS2xS2Long.cc \
 BosonOnSphereLongHardcore.cc \
 BosonOnSquareLatticeMomentumSpaceHardcoreLong.cc \
 BosonOnS2xS2HardcoreNoNearestNeighborsLong.cc \
-BosonOnT2xT2.cc
+BosonOnT2xT2.cc \
+BosonOnT2xT2HardcoreNoNearestNeighbors.cc \
+BosonOnT2xS2WithMagneticTranslationsShort.cc

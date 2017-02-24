@@ -10,6 +10,7 @@
 #include "Operator/SpinWith1DTranslationS2Operator.h"
 
 #include "HilbertSpace/Spin1_2Chain.h"
+#include "HilbertSpace/Spin1_2ChainNew.h"
 #include "HilbertSpace/Spin1Chain.h"
 #include "HilbertSpace/Spin2Chain.h"
 #include "HilbertSpace/Spin1_2ChainFull.h"

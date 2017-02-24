@@ -81,8 +81,6 @@ int AbstractSpinChain::GetLocalSpin(int site)
   return -1;
 }
 
-
-
 // get the value of the spin (i.e. S) at a given site for a give state
 // 
 // site = site index
