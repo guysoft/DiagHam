@@ -8,6 +8,7 @@
 
 class DMRGFiniteSizeComplexOBCMainTask 
 {
+
  protected:
   const int NbrSites;
   
@@ -19,9 +20,10 @@ class DMRGFiniteSizeComplexOBCMainTask
   int NbrSweep;
   int MaximumBondDimension;
   double PreviousEnergy;
+  
  public:
   
-  DMRGFiniteSizeComplexOBCMainTask(ComplexMPSSite * latticeSite, AbstractMPOperatorOBC * mPOperator, int nbrSites, int NbrSweep,int MaximumBondDimension,  AbstractArchitecture * architecture, LanczosManager* lanczos);
+  DMRGFiniteSizeComplexOBCMainTask(ComplexMPSSite * latticeSite, AbstractMPOperatorOBC * mPOperator, int nbrSites, int NbrSweep, int MaximumBondDimension, AbstractArchitecture * architecture, LanczosManager* lanczos);
   virtual ~DMRGFiniteSizeComplexOBCMainTask();
   void RunAlgorithm();
   

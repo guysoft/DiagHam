@@ -139,71 +139,71 @@ void DMRGFiniteSizeComplexOBCMainTask::OptimizeUsingLanczosLanczosAlgorithm (int
 {
   if (this->MPOperator->GetHilbertSpaceDimension() < 500 )
     {
-    HermitianMatrix HRep (this->MPOperator->GetHilbertSpaceDimension(), true);
-    this->MPOperator->GetHamiltonian(HRep);
-
-    if (this->MPOperator->GetHilbertSpaceDimension() > 1)
-     {
+      HermitianMatrix HRep (this->MPOperator->GetHilbertSpaceDimension(), true);
+      this->MPOperator->GetHamiltonian(HRep);
+      
+      if (this->MPOperator->GetHilbertSpaceDimension() > 1)
+	{
 #ifdef __LAPACK__
-      RealDiagonalMatrix TmpDiag (this->MPOperator->GetHilbertSpaceDimension());
-      ComplexMatrix Q(this->MPOperator->GetHilbertSpaceDimension(), this->MPOperator->GetHilbertSpaceDimension());
-      HRep.LapackDiagonalize(TmpDiag, Q);
-      cout <<"Highest energy = " << TmpDiag[0]<<" change = " <<  (( TmpDiag[0] - this->PreviousEnergy) /this->PreviousEnergy)<< endl;
-      this->LatticeSite[siteIndex].UpdateFromVector(&Q[0]);
-      this->PreviousEnergy = TmpDiag[0];
+	  RealDiagonalMatrix TmpDiag (this->MPOperator->GetHilbertSpaceDimension());
+	  ComplexMatrix Q(this->MPOperator->GetHilbertSpaceDimension(), this->MPOperator->GetHilbertSpaceDimension());
+	  HRep.LapackDiagonalize(TmpDiag, Q);
+	  cout <<"Highest energy = " << TmpDiag[0]<<" change = " <<  (( TmpDiag[0] - this->PreviousEnergy) /this->PreviousEnergy)<< endl;
+	  this->LatticeSite[siteIndex].UpdateFromVector(&Q[0]);
+	  this->PreviousEnergy = TmpDiag[0];
 #endif
-
-}
-}
-else
-{
-  ComplexVector * TmpVector = 0;
-  AbstractArchitecture * MonoProc = new MonoProcessorArchitecture;
-  AbstractLanczosAlgorithm* LanczosAlgorithm = this->AlgorithmManager->GetLanczosAlgorithm(MonoProc, true);
-
-  this->LatticeSite[siteIndex].GetMatrixInVectorForm(TmpVector);
-  LanczosAlgorithm->SetHamiltonian(this->MPOperator);
-  LanczosAlgorithm->InitializeLanczosAlgorithm(*TmpVector);
-  double GroundStateEnergy;
-  double Precision = 1.0;
-  double PreviousLowest = 1e50;
-  double Lowest = PreviousLowest;
-  int CurrentNbrIterLanczos = 0;
-  cout << "Run Lanczos Algorithm" << endl;
-  timeval TotalStartingTime;
-  timeval TotalEndingTime;
-  timeval TotalCurrentTime;
-  double Dt;
-  gettimeofday (&(TotalStartingTime), 0);
-  int StartTimeSecond = TotalStartingTime.tv_sec;
-  LanczosAlgorithm->RunLanczosAlgorithm(3);
-  CurrentNbrIterLanczos = 4;
-  RealTriDiagonalSymmetricMatrix TmpMatrix;  
-  int CurrentTimeSecond = TotalCurrentTime.tv_sec;
-  if ((LanczosAlgorithm->TestConvergence() == true))
+	  
+	}
+    }
+  else
+    {
+      ComplexVector * TmpVector = 0;
+      AbstractArchitecture * MonoProc = new MonoProcessorArchitecture;
+      AbstractLanczosAlgorithm* LanczosAlgorithm = this->AlgorithmManager->GetLanczosAlgorithm(MonoProc, true);
+      
+      this->LatticeSite[siteIndex].GetMatrixInVectorForm(TmpVector);
+      LanczosAlgorithm->SetHamiltonian(this->MPOperator);
+      LanczosAlgorithm->InitializeLanczosAlgorithm(*TmpVector);
+      double GroundStateEnergy;
+      double Precision = 1.0;
+      double PreviousLowest = 1e50;
+      double Lowest = PreviousLowest;
+      int CurrentNbrIterLanczos = 0;
+      cout << "Run Lanczos Algorithm" << endl;
+      timeval TotalStartingTime;
+      timeval TotalEndingTime;
+      timeval TotalCurrentTime;
+      double Dt;
+      gettimeofday (&(TotalStartingTime), 0);
+      int StartTimeSecond = TotalStartingTime.tv_sec;
+      LanczosAlgorithm->RunLanczosAlgorithm(3);
+      CurrentNbrIterLanczos = 4;
+      RealTriDiagonalSymmetricMatrix TmpMatrix;  
+      int CurrentTimeSecond = TotalCurrentTime.tv_sec;
+      if ((LanczosAlgorithm->TestConvergence() == true))
 	{
 	  TmpMatrix.Copy(LanczosAlgorithm->GetDiagonalizedMatrix());
 	  TmpMatrix.SortMatrixUpOrder();
           Lowest = TmpMatrix.DiagonalElement(0);
 	}
-  while ((LanczosAlgorithm->TestConvergence() == false)&&( CurrentNbrIterLanczos < 2000 ))
-  {
-     ++CurrentNbrIterLanczos;
-     LanczosAlgorithm->RunLanczosAlgorithm(1);
-     TmpMatrix.Copy(LanczosAlgorithm->GetDiagonalizedMatrix());
-     TmpMatrix.SortMatrixUpOrder();
-     Lowest = TmpMatrix.DiagonalElement(0);
-     Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
-     PreviousLowest = Lowest; 
-     cout << (TmpMatrix.DiagonalElement(0)) << " " << Lowest << " " << Precision << " ";
-     gettimeofday (&(TotalEndingTime), 0);
-     CurrentTimeSecond = TotalEndingTime.tv_sec;
-     Dt = (double) (TotalEndingTime.tv_sec - TotalCurrentTime.tv_sec) + 
-		((TotalEndingTime.tv_usec - TotalCurrentTime.tv_usec) / 1000000.0);		      
-	      cout << "(" << Dt << " s for step " << CurrentNbrIterLanczos << ")"<< endl;;
+      while ((LanczosAlgorithm->TestConvergence() == false)&&( CurrentNbrIterLanczos < 2000 ))
+	{
+	  ++CurrentNbrIterLanczos;
+	  LanczosAlgorithm->RunLanczosAlgorithm(1);
+	  TmpMatrix.Copy(LanczosAlgorithm->GetDiagonalizedMatrix());
+	  TmpMatrix.SortMatrixUpOrder();
+	  Lowest = TmpMatrix.DiagonalElement(0);
+	  Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
+	  PreviousLowest = Lowest; 
+	  cout << (TmpMatrix.DiagonalElement(0)) << " " << Lowest << " " << Precision << " ";
+	  gettimeofday (&(TotalEndingTime), 0);
+	  CurrentTimeSecond = TotalEndingTime.tv_sec;
+	  Dt = (double) (TotalEndingTime.tv_sec - TotalCurrentTime.tv_sec) + 
+	    ((TotalEndingTime.tv_usec - TotalCurrentTime.tv_usec) / 1000000.0);		      
+	  cout << "(" << Dt << " s for step " << CurrentNbrIterLanczos << ")"<< endl;;
      TotalCurrentTime.tv_usec = TotalEndingTime.tv_usec;
      TotalCurrentTime.tv_sec = TotalEndingTime.tv_sec;
-   }
+	}
       GroundStateEnergy = Lowest;
       cout << endl;
       cout << (TmpMatrix.DiagonalElement(0)) << " " << Lowest << " " << Precision << "  Nbr of iterations = " 
@@ -213,92 +213,92 @@ else
       this->PreviousEnergy = GroundStateEnergy;
       this->LatticeSite[siteIndex].UpdateFromVector(&GroundState);
       this->AlgorithmManager->FreeLanczosAlgorithm();
-}
+    }
 
 }
 
 
 void DMRGFiniteSizeComplexOBCMainTask::TwoSiteOptimizationUsingLanczosLanczosAlgorithm ( ComplexMPSSite * leftSite , ComplexMPSSite * rightSite, RealDiagonalMatrix & singularValues)
 {
-    int Dimension = this->MPOperator->GetTwoSitesHilbertSpaceDimension();
-    cout <<"Dimension = " <<Dimension<<endl;
+  int Dimension = this->MPOperator->GetTwoSitesHilbertSpaceDimension();
+  cout <<"Dimension = " <<Dimension<<endl;
   if (this->MPOperator->GetTwoSitesHilbertSpaceDimension() < 500 )
     {
-    HermitianMatrix HRep (Dimension, true);
-    this->MPOperator->GetTwoSitesHamiltonian(HRep);
-    if (Dimension > 1)
-     {
+      HermitianMatrix HRep (Dimension, true);
+      this->MPOperator->GetTwoSitesHamiltonian(HRep);
+      if (Dimension > 1)
+	{
 #ifdef __LAPACK__
-     RealDiagonalMatrix TmpDiag (Dimension);
-     ComplexMatrix Q(Dimension,Dimension);
-     HRep.LapackDiagonalize(TmpDiag, Q);
-     leftSite->SymmetricUpdateOfTwoSites(rightSite, &Q[0],singularValues);
-     this->PreviousEnergy = TmpDiag[0];
+	  RealDiagonalMatrix TmpDiag (Dimension);
+	  ComplexMatrix Q(Dimension,Dimension);
+	  HRep.LapackDiagonalize(TmpDiag, Q);
+	  leftSite->SymmetricUpdateOfTwoSites(rightSite, &Q[0],singularValues);
+	  this->PreviousEnergy = TmpDiag[0];
 #endif
-}
-}
-else
-{
-  ComplexVector * TmpVector = 0;
-  AbstractArchitecture * MonoProc = new MonoProcessorArchitecture;
-  AbstractLanczosAlgorithm* LanczosAlgorithm = this->AlgorithmManager->GetLanczosAlgorithm(MonoProc, true);
-//  this->LatticeSite[siteIndex].GetMatrixInVectorForm(TmpVector);
-  LanczosAlgorithm->SetHamiltonian(this->MPOperator);
-  LanczosAlgorithm->InitializeLanczosAlgorithm();
-  double GroundStateEnergy;
-  double Precision = 1.0;
-  double PreviousLowest = 1e50;
-  double Lowest = PreviousLowest;
-  int CurrentNbrIterLanczos = 0;
-  cout << "Run Lanczos Algorithm" << endl;
-  timeval TotalStartingTime;
-  timeval TotalEndingTime;
-  timeval TotalCurrentTime;
-  double Dt;
-  gettimeofday (&(TotalStartingTime), 0);
-  int StartTimeSecond = TotalStartingTime.tv_sec;
-  LanczosAlgorithm->RunLanczosAlgorithm(3);
-  CurrentNbrIterLanczos = 4;
-  RealTriDiagonalSymmetricMatrix TmpMatrix;  
-  int CurrentTimeSecond = TotalCurrentTime.tv_sec;
-
-  if ((LanczosAlgorithm->TestConvergence() == true))
-  {
-      TmpMatrix.Copy(LanczosAlgorithm->GetDiagonalizedMatrix());
-      TmpMatrix.SortMatrixUpOrder();
-      Lowest = TmpMatrix.DiagonalElement(0);
-  }
-  while ((LanczosAlgorithm->TestConvergence() == false)&&( CurrentNbrIterLanczos < 2000 ))
-  {
-     ++CurrentNbrIterLanczos;
-     LanczosAlgorithm->RunLanczosAlgorithm(1);
-     TmpMatrix.Copy(LanczosAlgorithm->GetDiagonalizedMatrix());
-     TmpMatrix.SortMatrixUpOrder();
-     Lowest = TmpMatrix.DiagonalElement(0);
-     Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
-     PreviousLowest = Lowest; 
-     cout << (TmpMatrix.DiagonalElement(0)) << " " << Lowest << " " << Precision << " ";
-     gettimeofday (&(TotalEndingTime), 0);
-     CurrentTimeSecond = TotalEndingTime.tv_sec;
-     Dt = (double) (TotalEndingTime.tv_sec - TotalCurrentTime.tv_sec) + 
-		((TotalEndingTime.tv_usec - TotalCurrentTime.tv_usec) / 1000000.0);		      
-	      cout << "(" << Dt << " s for step " << CurrentNbrIterLanczos << ")"<< endl;;
-     TotalCurrentTime.tv_usec = TotalEndingTime.tv_usec;
-     TotalCurrentTime.tv_sec = TotalEndingTime.tv_sec;
-   }
+	}
+    }
+  else
+    {
+      ComplexVector * TmpVector = 0;
+      AbstractArchitecture * MonoProc = new MonoProcessorArchitecture;
+      AbstractLanczosAlgorithm* LanczosAlgorithm = this->AlgorithmManager->GetLanczosAlgorithm(MonoProc, true);
+      //  this->LatticeSite[siteIndex].GetMatrixInVectorForm(TmpVector);
+      LanczosAlgorithm->SetHamiltonian(this->MPOperator);
+      LanczosAlgorithm->InitializeLanczosAlgorithm();
+      double GroundStateEnergy;
+      double Precision = 1.0;
+      double PreviousLowest = 1e50;
+      double Lowest = PreviousLowest;
+      int CurrentNbrIterLanczos = 0;
+      cout << "Run Lanczos Algorithm" << endl;
+      timeval TotalStartingTime;
+      timeval TotalEndingTime;
+      timeval TotalCurrentTime;
+      double Dt;
+      gettimeofday (&(TotalStartingTime), 0);
+      int StartTimeSecond = TotalStartingTime.tv_sec;
+      LanczosAlgorithm->RunLanczosAlgorithm(3);
+      CurrentNbrIterLanczos = 4;
+      RealTriDiagonalSymmetricMatrix TmpMatrix;  
+      int CurrentTimeSecond = TotalCurrentTime.tv_sec;
+      
+      if ((LanczosAlgorithm->TestConvergence() == true))
+	{
+	  TmpMatrix.Copy(LanczosAlgorithm->GetDiagonalizedMatrix());
+	  TmpMatrix.SortMatrixUpOrder();
+	  Lowest = TmpMatrix.DiagonalElement(0);
+	}
+      while ((LanczosAlgorithm->TestConvergence() == false)&&( CurrentNbrIterLanczos < 2000 ))
+	{
+	  ++CurrentNbrIterLanczos;
+	  LanczosAlgorithm->RunLanczosAlgorithm(1);
+	  TmpMatrix.Copy(LanczosAlgorithm->GetDiagonalizedMatrix());
+	  TmpMatrix.SortMatrixUpOrder();
+	  Lowest = TmpMatrix.DiagonalElement(0);
+	  Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
+	  PreviousLowest = Lowest; 
+	  cout << (TmpMatrix.DiagonalElement(0)) << " " << Lowest << " " << Precision << " ";
+	  gettimeofday (&(TotalEndingTime), 0);
+	  CurrentTimeSecond = TotalEndingTime.tv_sec;
+	  Dt = (double) (TotalEndingTime.tv_sec - TotalCurrentTime.tv_sec) + 
+	    ((TotalEndingTime.tv_usec - TotalCurrentTime.tv_usec) / 1000000.0);		      
+	  cout << "(" << Dt << " s for step " << CurrentNbrIterLanczos << ")"<< endl;;
+	  TotalCurrentTime.tv_usec = TotalEndingTime.tv_usec;
+	  TotalCurrentTime.tv_sec = TotalEndingTime.tv_sec;
+	}
       GroundStateEnergy = Lowest;
       cout << endl;
       cout << (TmpMatrix.DiagonalElement(0)) << " " << Lowest << " " << Precision << "  Nbr of iterations = " 
 	   << CurrentNbrIterLanczos << endl;
-//      cout <<LanczosAlgorithm->GetGroundState()<<endl;
+      //      cout <<LanczosAlgorithm->GetGroundState()<<endl;
       ComplexVector GroundState =  *((ComplexVector *) (&LanczosAlgorithm->GetGroundState()));
       
-//      cout <<GroundState<<endl;
+      //      cout <<GroundState<<endl;
       cout <<"Highest energy = " << GroundStateEnergy<<" change = " <<  ((GroundStateEnergy - this->PreviousEnergy) /this->PreviousEnergy)<< endl;
       this->PreviousEnergy = GroundStateEnergy;
       leftSite->SymmetricUpdateOfTwoSites(rightSite, &GroundState,singularValues);
       this->AlgorithmManager-> FreeLanczosAlgorithm();
-}
+    }
 }
 
 
@@ -307,74 +307,73 @@ void DMRGFiniteSizeComplexOBCMainTask::TwoSiteOptimizationUsingLanczosLanczosAlg
 {
   if (this->MPOperator->GetTwoSitesHilbertSpaceDimension() < 500 )
     {
-    int Dimension = this->MPOperator->GetTwoSitesHilbertSpaceDimension();
-    cout <<"Dimension = " <<Dimension<<endl;
-    HermitianMatrix HRep (Dimension, true);
-    this->MPOperator->GetTwoSitesHamiltonian(HRep);
-    if (Dimension > 1)
-     {
+      int Dimension = this->MPOperator->GetTwoSitesHilbertSpaceDimension();
+      cout <<"Dimension = " <<Dimension<<endl;
+      HermitianMatrix HRep (Dimension, true);
+      this->MPOperator->GetTwoSitesHamiltonian(HRep);
+      if (Dimension > 1)
+	{
 #ifdef __LAPACK__
-      RealDiagonalMatrix TmpDiag (Dimension);
-      ComplexMatrix Q(Dimension,Dimension);
-      HRep.LapackDiagonalize(TmpDiag, Q);
-      cout <<"Highest energy = " << TmpDiag[0]<<" change = " <<  (( TmpDiag[0] - this->PreviousEnergy) /this->PreviousEnergy)<< endl;
-     cout <<" Before      this->LatticeSite[0].SymmetricUpdateOfTwoSites(leftSite,rightSite, &Q[0],singularValues)"<<endl;
-     leftSite->SymmetricUpdateOfTwoSites(rightSite, &Q[0],singularValues);
-     this->PreviousEnergy = TmpDiag[0];
-     cout <<" After      this->LatticeSite[0].SymmetricUpdateOfTwoSites(leftSite,rightSite, &Q[0],singularValues)"<<endl;
+	  RealDiagonalMatrix TmpDiag (Dimension);
+	  ComplexMatrix Q(Dimension,Dimension);
+	  HRep.LapackDiagonalize(TmpDiag, Q);
+	  cout <<"Highest energy = " << TmpDiag[0]<<" change = " <<  (( TmpDiag[0] - this->PreviousEnergy) /this->PreviousEnergy)<< endl;
+	  cout <<" Before      this->LatticeSite[0].SymmetricUpdateOfTwoSites(leftSite,rightSite, &Q[0],singularValues)"<<endl;
+	  leftSite->SymmetricUpdateOfTwoSites(rightSite, &Q[0],singularValues);
+	  this->PreviousEnergy = TmpDiag[0];
+	  cout <<" After      this->LatticeSite[0].SymmetricUpdateOfTwoSites(leftSite,rightSite, &Q[0],singularValues)"<<endl;
 #endif
-
-}
-}
-else
-{
-  AbstractArchitecture * MonoProc = new MonoProcessorArchitecture;
-  AbstractLanczosAlgorithm* LanczosAlgorithm = this->AlgorithmManager->GetLanczosAlgorithm(MonoProc, true);
-  LanczosAlgorithm->SetHamiltonian(this->MPOperator);
-  LanczosAlgorithm->InitializeLanczosAlgorithm(*statePredict);
-  double GroundStateEnergy;
-  double Precision = 1.0;
-  double PreviousLowest = 1e50;
-  double Lowest = PreviousLowest;
-  int CurrentNbrIterLanczos = 0;
-  LanczosAlgorithm->SetHamiltonian(this->MPOperator);
-  cout << "Run Lanczos Algorithm" << endl;
-  timeval TotalStartingTime;
-  timeval TotalEndingTime;
-  timeval TotalCurrentTime;
-  double Dt;
-  gettimeofday (&(TotalStartingTime), 0);
-  int StartTimeSecond = TotalStartingTime.tv_sec;
-  LanczosAlgorithm->RunLanczosAlgorithm(3);
-  CurrentNbrIterLanczos = 4;
-  RealTriDiagonalSymmetricMatrix TmpMatrix;  
-  int CurrentTimeSecond = TotalCurrentTime.tv_sec;
-
-  if ((LanczosAlgorithm->TestConvergence() == true))
-  {
-      TmpMatrix.Copy(LanczosAlgorithm->GetDiagonalizedMatrix());
-      TmpMatrix.SortMatrixUpOrder();
-      Lowest = TmpMatrix.DiagonalElement(0);
-  }
-
-  while ((LanczosAlgorithm->TestConvergence() == false)&&( CurrentNbrIterLanczos < 2000 ))
-  {
-     ++CurrentNbrIterLanczos;
-     LanczosAlgorithm->RunLanczosAlgorithm(1);
-     TmpMatrix.Copy(LanczosAlgorithm->GetDiagonalizedMatrix());
-     TmpMatrix.SortMatrixUpOrder();
-     Lowest = TmpMatrix.DiagonalElement(0);
-     Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
-     PreviousLowest = Lowest; 
-     cout << (TmpMatrix.DiagonalElement(0)) << " " << Lowest << " " << Precision << " ";
-     gettimeofday (&(TotalEndingTime), 0);
-     CurrentTimeSecond = TotalEndingTime.tv_sec;
-     Dt = (double) (TotalEndingTime.tv_sec - TotalCurrentTime.tv_sec) + 
-		((TotalEndingTime.tv_usec - TotalCurrentTime.tv_usec) / 1000000.0);		      
-	      cout << "(" << Dt << " s for step " << CurrentNbrIterLanczos << ")"<< endl;;
-     TotalCurrentTime.tv_usec = TotalEndingTime.tv_usec;
-     TotalCurrentTime.tv_sec = TotalEndingTime.tv_sec;
-   }
+	}
+    }
+  else
+    {
+      AbstractArchitecture * MonoProc = new MonoProcessorArchitecture;
+      AbstractLanczosAlgorithm* LanczosAlgorithm = this->AlgorithmManager->GetLanczosAlgorithm(MonoProc, true);
+      LanczosAlgorithm->SetHamiltonian(this->MPOperator);
+      LanczosAlgorithm->InitializeLanczosAlgorithm(*statePredict);
+      double GroundStateEnergy;
+      double Precision = 1.0;
+      double PreviousLowest = 1e50;
+      double Lowest = PreviousLowest;
+      int CurrentNbrIterLanczos = 0;
+      LanczosAlgorithm->SetHamiltonian(this->MPOperator);
+      cout << "Run Lanczos Algorithm" << endl;
+      timeval TotalStartingTime;
+      timeval TotalEndingTime;
+      timeval TotalCurrentTime;
+      double Dt;
+      gettimeofday (&(TotalStartingTime), 0);
+      int StartTimeSecond = TotalStartingTime.tv_sec;
+      LanczosAlgorithm->RunLanczosAlgorithm(3);
+      CurrentNbrIterLanczos = 4;
+      RealTriDiagonalSymmetricMatrix TmpMatrix;  
+      int CurrentTimeSecond = TotalCurrentTime.tv_sec;
+      
+      if ((LanczosAlgorithm->TestConvergence() == true))
+	{
+	  TmpMatrix.Copy(LanczosAlgorithm->GetDiagonalizedMatrix());
+	  TmpMatrix.SortMatrixUpOrder();
+	  Lowest = TmpMatrix.DiagonalElement(0);
+	}
+      
+      while ((LanczosAlgorithm->TestConvergence() == false)&&( CurrentNbrIterLanczos < 2000 ))
+	{
+	  ++CurrentNbrIterLanczos;
+	  LanczosAlgorithm->RunLanczosAlgorithm(1);
+	  TmpMatrix.Copy(LanczosAlgorithm->GetDiagonalizedMatrix());
+	  TmpMatrix.SortMatrixUpOrder();
+	  Lowest = TmpMatrix.DiagonalElement(0);
+	  Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
+	  PreviousLowest = Lowest; 
+	  cout << (TmpMatrix.DiagonalElement(0)) << " " << Lowest << " " << Precision << " ";
+	  gettimeofday (&(TotalEndingTime), 0);
+	  CurrentTimeSecond = TotalEndingTime.tv_sec;
+	  Dt = (double) (TotalEndingTime.tv_sec - TotalCurrentTime.tv_sec) + 
+	    ((TotalEndingTime.tv_usec - TotalCurrentTime.tv_usec) / 1000000.0);		      
+	  cout << "(" << Dt << " s for step " << CurrentNbrIterLanczos << ")"<< endl;;
+	  TotalCurrentTime.tv_usec = TotalEndingTime.tv_usec;
+	  TotalCurrentTime.tv_sec = TotalEndingTime.tv_sec;
+	}
       GroundStateEnergy = Lowest;
       cout << endl;
       cout << (TmpMatrix.DiagonalElement(0)) << " " << Lowest << " " << Precision << "  Nbr of iterations = " 
@@ -383,5 +382,5 @@ else
       cout <<"Highest energy = " << GroundStateEnergy<<" change = " <<  ((GroundStateEnergy - this->PreviousEnergy) /this->PreviousEnergy)<< endl;
       this->PreviousEnergy = GroundStateEnergy;
       leftSite->SymmetricUpdateOfTwoSites(rightSite, &GroundState,singularValues);
-}
+    }
 }

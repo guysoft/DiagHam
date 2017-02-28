@@ -17,7 +17,6 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   unsigned int * IndexValues;
   unsigned int PhysicalDimension;
   unsigned int MPOBondDimension;
-  unsigned int NbrSites;
   AbstractHilbertSpace* HilbertSpace;
   bool IDMRGFlag;
   AbstractMPSSite * Site;

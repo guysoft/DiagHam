@@ -20,7 +20,7 @@ class ComplexMPSSite : public AbstractMPSSite
  public:
 
    ComplexMPSSite();
-   ComplexMPSSite(unsigned int sitePosition, unsigned int physicalDimension,  ComplexMPSSite * siteOnLeft, ComplexMPSSite * siteOnRight , unsigned int bondDimension, AbstractMPOperatorOBC * mPOperator);
+   ComplexMPSSite(unsigned int physicalDimension,  ComplexMPSSite * siteOnLeft, ComplexMPSSite * siteOnRight , unsigned int bondDimension, AbstractMPOperatorOBC * mPOperator);
 
    ~ComplexMPSSite();
 
@@ -46,14 +46,14 @@ class ComplexMPSSite : public AbstractMPSSite
    virtual ComplexVector *  StatePrediction(ComplexMPSSite * rightSite, RealDiagonalMatrix & SingularValues, RealDiagonalMatrix & OldSingularValues);
    void SymmetricUpdateOfTwoSites(ComplexMPSSite * rightSite, ComplexVector * psi, RealDiagonalMatrix & singularValues );
 
-    inline Tensor3<Complex> & GetPreviousL ()const
-{ return (* ((ComplexMPSSite*)this->SiteOnLeft)->L);}
-
+   inline Tensor3<Complex> & GetPreviousL ()const
+     { return (* ((ComplexMPSSite*)this->SiteOnLeft)->L);}
+   
    inline Tensor3<Complex> & GetNextR ()const
      { return (* ((ComplexMPSSite*)this->SiteOnRight)->R);}
    inline ComplexMatrix * GetM() const
      { return this->M;}
-
+   
 };
 
 #endif

@@ -18,7 +18,7 @@ RealMPSSite::RealMPSSite()
   this->R = 0;
 }
 
-RealMPSSite::RealMPSSite(unsigned int sitePosition, unsigned int physicalDimension, RealMPSSite * siteOnLeft, RealMPSSite * siteOnRight , unsigned int bondDimension, AbstractMPOperatorOBC * mPOperator) : AbstractMPSSite (sitePosition, physicalDimension, bondDimension, mPOperator)
+RealMPSSite::RealMPSSite(unsigned int physicalDimension, RealMPSSite * siteOnLeft, RealMPSSite * siteOnRight , unsigned int bondDimension, AbstractMPOperatorOBC * mPOperator) : AbstractMPSSite ( physicalDimension, bondDimension, mPOperator)
 {
   this->SiteOnLeft = siteOnLeft;
   this->SiteOnRight = siteOnRight;

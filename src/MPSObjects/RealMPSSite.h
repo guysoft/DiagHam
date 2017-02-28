@@ -20,7 +20,7 @@ class RealMPSSite : public AbstractMPSSite
  public:
 
    RealMPSSite();
-   RealMPSSite(unsigned int sitePosition, unsigned int physicalDimension,  RealMPSSite * siteOnLeft,  RealMPSSite * siteOnRight , unsigned int bondDimension, AbstractMPOperatorOBC * mPOperator);
+   RealMPSSite(unsigned int physicalDimension,  RealMPSSite * siteOnLeft,  RealMPSSite * siteOnRight , unsigned int bondDimension, AbstractMPOperatorOBC * mPOperator);
 
    ~RealMPSSite();
 

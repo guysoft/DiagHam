@@ -21,14 +21,14 @@ class AbstractMPSSite
    unsigned int BondDimensionLeft;
    unsigned int BondDimensionRight;
    unsigned int MaxBondDimension;
-   unsigned int SitePosition;
+
    
    AbstractMPOperatorOBC * OperatorToBeMinimized;
    
  public:
 
    AbstractMPSSite();
-   AbstractMPSSite(unsigned int sitePosition, unsigned int physicalDimension, unsigned int bondDimension, AbstractMPOperatorOBC * mPOperator);
+   AbstractMPSSite(unsigned int physicalDimension, unsigned int bondDimension, AbstractMPOperatorOBC * mPOperator);
 
    ~AbstractMPSSite();
 
@@ -44,9 +44,9 @@ class AbstractMPSSite
    
    virtual void InitializeWithRandomMatrices() = 0;
    
-//   void InitializeLeft(RealMatrix * newA);
-//   void InitializeRight(RealMatrix * newB);
-//   void UpdateFromVector(RealVector * psi);
+  //   void InitializeLeft(RealMatrix * newA);
+   //   void InitializeRight(RealMatrix * newB);
+   //   void UpdateFromVector(RealVector * psi);
 //   void GetMatrixInVectorForm(RealVector *& resultInvector );          
 
    virtual void BringMInLeftCanonicalForm();
@@ -62,20 +62,20 @@ class AbstractMPSSite
 
    //void SymmetricUpdateOfTwoSites(AbstractMPSSite * leftSite , AbstractMPSSite * rightSite, RealVector * psi, RealDiagonalMatrix & singularValues );
 
-   inline unsigned int GetBondDimensionRight() const
-     {return this-> BondDimensionRight;}
-   
    inline unsigned int GetBondDimensionLeft() const
-     {return this-> BondDimensionLeft;}
+     {return this->BondDimensionLeft;}
+   inline unsigned int GetBondDimensionRight() const
+     {return this->BondDimensionRight;}
+
+   inline void SetLeftSite (AbstractMPSSite *  siteOnLeft) { this->SiteOnLeft = siteOnLeft; };
+   inline void SetRightSite (AbstractMPSSite *  siteOnRight) { this->SiteOnRight = siteOnRight; };   
    
-   inline unsigned int GetSitePosition() const
-      {return this->SitePosition;}
-  inline long int GetVectorOneSiteIndice(int leftIndice, int rightIndice, int physicalIndice) const;
-  inline long int GetVectorTwoSiteIndice(int leftIndice, int rightIndice, int physicalIndice) const;
-  inline void DecodeVectorOneSiteIndice(long int vectorIndice, int& leftIndice, int & rightIndice, int& physicalIndice) const;
-
-  inline void DecodeVectorTwoSiteIndice(long int vectorIndice, int& leftIndice, int & rightIndice, int& physicalIndice) const;
-
+   inline long int GetVectorOneSiteIndice(int leftIndice, int rightIndice, int physicalIndice) const;
+   inline long int GetVectorTwoSiteIndice(int leftIndice, int rightIndice, int physicalIndice) const;
+   inline void DecodeVectorOneSiteIndice(long int vectorIndice, int& leftIndice, int & rightIndice, int& physicalIndice) const;
+   
+   inline void DecodeVectorTwoSiteIndice(long int vectorIndice, int& leftIndice, int & rightIndice, int& physicalIndice) const;
+   
 };
 
 

@@ -9,4 +9,5 @@ AbstractMPSSite.cc \
 RealMPSSite.cc \
 ComplexMPSSite.cc \
 DMRGFiniteSizeRealOBCMainTask.cc \
-DMRGFiniteSizeComplexOBCMainTask.cc 
+DMRGFiniteSizeComplexOBCMainTask.cc \
+DMRGInfiniteSizeComplexMainTask.cc
