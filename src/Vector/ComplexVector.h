@@ -48,7 +48,7 @@ class MathematicaOutput;
 #endif
 class RealMatrix;
 class ComplexMatrix;
-
+class ComplexDiagonalMatrix;
 
 class ComplexVector : public Vector
 {
@@ -72,6 +72,8 @@ class ComplexVector : public Vector
   friend ComplexMatrix operator * (const ComplexMatrix& M1, const ComplexMatrix& M2);
   friend ComplexMatrix operator * (const ComplexMatrix& M1, const RealDiagonalMatrix& M2);
   friend ComplexMatrix operator * (const RealDiagonalMatrix& M1, const ComplexMatrix& M2);
+  friend ComplexMatrix operator * (const ComplexMatrix& M1, const ComplexDiagonalMatrix& M2);
+  friend ComplexMatrix operator * (const ComplexDiagonalMatrix& M1, const ComplexMatrix& M2);
 
   friend ComplexMatrix operator * (const ComplexMatrix& M, double x);
   friend ComplexMatrix operator * (double x, const ComplexMatrix& M);
