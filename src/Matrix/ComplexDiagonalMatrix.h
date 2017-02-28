@@ -217,6 +217,20 @@ class ComplexDiagonalMatrix : public Matrix
   // return value = product result
   friend ComplexDiagonalMatrix operator * (double x, const ComplexDiagonalMatrix& M);
 
+  // multiply two matrices
+  //
+  // M1 = first matrix
+  // M2 = matrix to multiply to M1
+  // return value = product of the two matrices
+  friend ComplexMatrix operator * (const ComplexMatrix  & M1, const ComplexDiagonalMatrix & M2);
+  
+  // multiply two matrices
+  //
+  // M1 = first matrix
+  // M2 = matrix to multiply to M1
+  // return value = product of the two matrices
+  friend ComplexMatrix operator * (const  ComplexDiagonalMatrix & M1, const ComplexMatrix & M2);
+
   // divide a matrix by a real number (right multiplication)
   //
   // M = source matrix

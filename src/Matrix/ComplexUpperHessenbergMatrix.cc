@@ -867,6 +867,7 @@ double ComplexUpperHessenbergMatrix::Det ()
 
 ComplexDiagonalMatrix& ComplexUpperHessenbergMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M, bool leftFlag)
 {
+  cout <<(*this)<<endl;
 #ifdef HAVE_LAPACK
    int Information = 0;
    int WorkingAreaSize = -1;
@@ -913,14 +914,21 @@ ComplexDiagonalMatrix& ComplexUpperHessenbergMatrix::LapackDiagonalize (ComplexD
    double* Scale = new double [this->NbrRow];
    FORTRAN_NAME(zgebal)(&JobBal, &this->NbrRow, TmpMatrix, &this->NbrColumn, &TriangularLowerIndex, &TriangularHigherIndex, 
 			Scale, &Information);
-
+   cout <<Information<<endl;
+   cout <<"this->NbrRow = "<< this->NbrRow<<endl;
+   cout <<" TriangularLowerIndex =  " << TriangularLowerIndex<<endl;
+   cout <<"TriangularHigherIndex = " <<TriangularHigherIndex <<endl;
    FORTRAN_NAME(zhseqr)(&Job, &computeZFlag, &this->NbrRow, &TriangularLowerIndex, &TriangularHigherIndex, 
 			TmpMatrix, &this->NbrColumn, TmpEigenvalues,
 			Dummy, &TmpLeadingDimension, &TmpWorkingArea, &WorkingAreaSize, &Information);
-
+   cout <<"this->NbrRow = "<< this->NbrRow<<endl;
+   cout <<" TriangularLowerIndex =  " << TriangularLowerIndex<<endl;
+   cout <<"TriangularHigherIndex = " <<TriangularHigherIndex <<endl;
    WorkingAreaSize = (int) TmpWorkingArea;
    double* WorkingArea = new double [2 * WorkingAreaSize];
-
+   cout <<"this->NbrRow = "<< this->NbrRow<<endl;
+   cout <<" TriangularLowerIndex =  " << TriangularLowerIndex<<endl;
+   cout <<"TriangularHigherIndex = " <<TriangularHigherIndex <<endl;
    FORTRAN_NAME(zhseqr)(&Job, &computeZFlag, &this->NbrRow, &TriangularLowerIndex, &TriangularHigherIndex, TmpMatrix, &this->NbrRow, 
 			TmpEigenvalues,
 			Dummy, &TmpLeadingDimension, WorkingArea, &WorkingAreaSize, &Information);
@@ -1216,7 +1224,7 @@ ostream& operator << (ostream& Str, const ComplexUpperHessenbergMatrix& P)
 	}
       if (i > 0)
 	{
-	  Str << P.LowerDiagonalElements[i];
+	  Str << P.LowerDiagonalElements[i] << "    ";
 	}
       Str << P.DiagonalElements[i] << "    ";
       for (int j = i + 1; j < P.NbrRow; j++)
