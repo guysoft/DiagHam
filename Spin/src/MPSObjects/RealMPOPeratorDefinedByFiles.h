@@ -13,7 +13,7 @@ class RealMPOPeratorDefinedByFiles : public RealMPOperatorOBC
  public:
 
   RealMPOPeratorDefinedByFiles();
-  RealMPOPeratorDefinedByFiles(int nbrSites, MultiColumnASCIIFile & tensorElementsFile, MultiColumnASCIIFile & boundaryVectorsFile,AbstractArchitecture * architecture = 0); 
+  RealMPOPeratorDefinedByFiles( MultiColumnASCIIFile & tensorElementsFile, MultiColumnASCIIFile & boundaryVectorsFile,AbstractArchitecture * architecture = 0); 
   ~RealMPOPeratorDefinedByFiles();
   
   virtual void InitializeTensorsElements(MultiColumnASCIIFile & tensorElementsFile);

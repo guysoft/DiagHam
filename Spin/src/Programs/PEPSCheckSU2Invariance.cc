@@ -144,12 +144,12 @@ int main(int argc, char** argv)
 	    }
 	}
     }
-  
-  for (int i =0; i <PhysicalDimension; i++)
+    
+    for (int i =0; i <PhysicalDimension; i++)
     {
-      cout <<  ResultSigmaZ[i]<<endl;
-      cout <<  ResultSigmaX[i]<<endl;
-      cout <<  ResultSigmaY[i]<<endl;
+    cout <<  ResultSigmaZ[i]<<endl;
+    cout <<  ResultSigmaX[i]<<endl;
+    cout <<  ResultSigmaY[i]<<endl;
     }
 */
 

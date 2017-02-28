@@ -116,6 +116,7 @@ int main(int argc, char** argv)
   bool UndescribedHilbertSpaceFlag =  Manager.GetBoolean("no-spin");
   bool LeftFlag = Manager.GetBoolean("left");
   MultiColumnASCIIFile TensorsElementsDefinition;
+  int BondDimension = 3;
   if (TensorsElementsDefinition.Parse(Manager.GetString("tensor-file")) == false)
     {
       TensorsElementsDefinition.DumpErrors(cout) << endl;
@@ -363,30 +364,18 @@ int BondDimension = Manager.GetInteger("bond-dimension");
 		  
 		  if (Space->GetHilbertSpaceDimension() > 0 ) 
 		    {
-		      /*		      ComplexVector TestVector(Space->GetHilbertSpaceDimension(),true);
-			ComplexVector DestinationVector(Space->GetHilbertSpaceDimension(),true);
-			for (int p = 0; p < Space->GetHilbertSpaceDimension(); p++)
-			{
-			TestVector.Re(p) = (rand() - 32767) * 0.5;
-			TestVector.Im(p) = (rand() - 32767) * 0.5;
-			}
-			TestVector /=  TestVector.Norm();
-			TransferMatrix->Multiply(TestVector,DestinationVector);
-			if ( fabs(DestinationVector.Norm()) > 1e-14 )
- 			{ */
-
 		      cout <<"Hilbert Space dimension = "<<Space->GetHilbertSpaceDimension()<<endl;
 		      if (UndescribedHilbertSpaceFlag)
 			{
 			  if (TranslationFlag)
 			    {
 			      sprintf(TmpSzString,"%d",i);			  
-			      sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_k_%d",Manager.GetString("peps-name"),NbrSites,i);
+			      sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_d_%d_k_%d",Manager.GetString("peps-name"),NbrSites,BondDimension,i);
 			    }
 			  else
 			    {
 			      sprintf(TmpSzString,"");			  
-			      sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_",Manager.GetString("peps-name"),NbrSites);
+			      sprintf(TmpEigenstateString,"TransfertMatrix_%s_l_%d_d_%d",Manager.GetString("peps-name"),BondDimension,NbrSites);
 			    }
 			}
 		      else

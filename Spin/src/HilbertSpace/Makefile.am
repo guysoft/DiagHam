@@ -52,7 +52,9 @@ Spin2ChainWithTranslationsAndSzSymmetry.cc \
 Spin2ChainWithTranslationsAndInversionSymmetry.cc \
 Spin2ChainWithTranslationsAndSzInversionSymmetries.cc \
 VirtualSpaceTransferMatrixWithTranslations.cc \
+VirtualSpacePEPSWithTranslations.cc \
 Spin1_2ChainWithPseudospinAnd2DTranslation.cc \
 Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation.cc \
 Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers.cc \
 DoubledSpin0_1_2_ChainWithSquareTranslationsAndSublatticeQuantumNumbers.cc
+

@@ -69,7 +69,7 @@ int main(int argc, char** argv)
   int NbrSites = Manager.GetInteger("length");
   int PhysicalDimension = 2;
   int MaxBondDimension = Manager.GetInteger("bond-dimension");;
-  MPOPeratorSixVertexModelTransferMatrixSquare TransferMatrix(NbrSites,Architecture.GetArchitecture());
+  MPOPeratorSixVertexModelTransferMatrixSquare TransferMatrix(Architecture.GetArchitecture());
  
 if(Manager.GetBoolean("print-tensor") == true)
   {
@@ -78,12 +78,12 @@ if(Manager.GetBoolean("print-tensor") == true)
   }
 
   RealMPSSite * Lattice = new RealMPSSite[NbrSites];
-  Lattice[0] = RealMPSSite(0, PhysicalDimension, 0, &Lattice[1], MaxBondDimension,&TransferMatrix);
+  Lattice[0] = RealMPSSite(PhysicalDimension, 0, &Lattice[1], MaxBondDimension,&TransferMatrix);
   for(int i = 1 ; i < NbrSites - 1 ; i++ )
     {
-      Lattice[i] = RealMPSSite(i, PhysicalDimension, &Lattice[i-1], &Lattice[i+1], MaxBondDimension, &TransferMatrix);
+      Lattice[i] = RealMPSSite(PhysicalDimension, &Lattice[i-1], &Lattice[i+1], MaxBondDimension, &TransferMatrix);
     }
-  Lattice[NbrSites-1] = RealMPSSite(NbrSites-1, PhysicalDimension, &Lattice[NbrSites-2], 0, MaxBondDimension,&TransferMatrix);
+  Lattice[NbrSites-1] = RealMPSSite( PhysicalDimension, &Lattice[NbrSites-2], 0, MaxBondDimension,&TransferMatrix);
   int CurrentDimension = 1;
   int NextCurrentDimension = PhysicalDimension;
 

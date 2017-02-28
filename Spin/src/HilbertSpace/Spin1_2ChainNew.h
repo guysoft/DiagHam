@@ -52,6 +52,7 @@ class Spin1_2ChainNew : public AbstractSpinChain
  friend class Spin1_2ChainWithPseudospin;
  friend class Spin1_2ChainWithPseudospinAnd2DTranslation;
  friend class Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation;
+ friend class ComplexPEPSPBC;
  
  protected:
 

@@ -12,10 +12,9 @@ RealMPOPeratorDefinedByFiles::RealMPOPeratorDefinedByFiles()
 
 
 
-RealMPOPeratorDefinedByFiles::RealMPOPeratorDefinedByFiles(int nbrSites, MultiColumnASCIIFile & tensorElementsFile, MultiColumnASCIIFile & boundaryVectorsFile,AbstractArchitecture * architecture)
+RealMPOPeratorDefinedByFiles::RealMPOPeratorDefinedByFiles(MultiColumnASCIIFile & tensorElementsFile, MultiColumnASCIIFile & boundaryVectorsFile,AbstractArchitecture * architecture)
 {
   this->InitializeTensorsElements(tensorElementsFile);
-  this->NbrSites = nbrSites;
   this->InitializeBoundaryVectors(boundaryVectorsFile);
   this->Architecture = architecture;
 }

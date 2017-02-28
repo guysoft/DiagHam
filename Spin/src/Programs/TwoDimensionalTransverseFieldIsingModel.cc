@@ -136,7 +136,7 @@ int main(int argc, char** argv)
     }
   if ((Manager.GetBoolean("use-periodic") == true) && (RandomFieldFlag == false) && (Manager.GetBoolean("disable-momentum") == false))
     Lanczos.SetComplexAlgorithms();
-   
+  
   char* FullOutputFileName = new char [strlen(OutputFileName) + strlen(OutputParameterFileName) + 64];
   sprintf (FullOutputFileName, "%s_%s.dat", OutputFileName, OutputParameterFileName);
   double JzValue = Manager.GetDouble("jz-value");

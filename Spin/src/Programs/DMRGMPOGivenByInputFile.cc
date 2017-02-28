@@ -9,6 +9,7 @@
 
 #include "MPSObjects/DMRGFiniteSizeRealOBCMainTask.h" 
 #include "MPSObjects/DMRGFiniteSizeComplexOBCMainTask.h" 
+#include "MPSObjects/DMRGInfiniteSizeComplexMainTask.h" 
 
 #include "Options/Options.h"
 
@@ -49,6 +50,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "tensor-file", "name of the file containing the eigenstate to be displayed");
   (*SystemGroup) += new SingleStringOption  ('\n', "vector-file", "name of the file containing the eigenstate to be displayed");
   (*SystemGroup) += new BooleanOption ('c', "complex", "use complex version of the code");
+  (*SystemGroup) += new BooleanOption ('c', "idmrg", "use the IDMRG algorithm");
 
   (*MiscGroup) += new  BooleanOption ('\n', "print-tensor", "print the tensor elements", false);
 
@@ -95,81 +97,88 @@ int main(int argc, char** argv)
 
 
   AbstractMPOperatorOBC * TransferMatrix;
-  int NbrSites = Manager.GetInteger("length");
+
   if(ComplexFlag == false)
-     TransferMatrix = new RealMPOPeratorDefinedByFiles(NbrSites,TensorsElementsDefinition,BoundaryVectorsDefinition,Architecture.GetArchitecture());
+    TransferMatrix = new RealMPOPeratorDefinedByFiles(TensorsElementsDefinition,BoundaryVectorsDefinition,Architecture.GetArchitecture());
   else
-     TransferMatrix = new ComplexMPOPeratorDefinedByFiles(NbrSites,TensorsElementsDefinition,BoundaryVectorsDefinition,Architecture.GetArchitecture());
+    TransferMatrix = new ComplexMPOPeratorDefinedByFiles(TensorsElementsDefinition,BoundaryVectorsDefinition,Architecture.GetArchitecture());
 
   int PhysicalDimension = TransferMatrix->GetPhysicalDimension();
-  int MaxBondDimension = Manager.GetInteger("bond-dimension");;
+  int MaxBondDimension = Manager.GetInteger("bond-dimension");
 
- 
-   if(Manager.GetBoolean("print-tensor") == true)
-   {
-     TransferMatrix->PrintTensorElements();
-     return 0;
-   }
-
-  RealMPSSite * Lattice = 0;
-  ComplexMPSSite * ComplexLattice = 0;
-  if(ComplexFlag == false)
-  {
-     Lattice = new RealMPSSite[NbrSites];
-     Lattice[0] = RealMPSSite(0, PhysicalDimension, 0, &Lattice[1], MaxBondDimension,TransferMatrix);
-  for(int i = 1 ; i < NbrSites - 1 ; i++ )
+  if(Manager.GetBoolean("print-tensor") == true)
     {
-      Lattice[i] = RealMPSSite(i, PhysicalDimension, &Lattice[i-1], &Lattice[i+1], MaxBondDimension, TransferMatrix);
+      TransferMatrix->PrintTensorElements();
+      return 0;
     }
-  Lattice[NbrSites-1] = RealMPSSite(NbrSites-1, PhysicalDimension, &Lattice[NbrSites-2], 0, MaxBondDimension,TransferMatrix);
-  }
+
+  if ( (ComplexFlag == true) && ( Manager.GetBoolean("idmrg") ) )
+    {  
+      DMRGInfiniteSizeComplexMainTask Algorithm ( TransferMatrix->GetPhysicalDimension() ,TransferMatrix,MaxBondDimension, Architecture.GetArchitecture(), &Lanczos);
+      Algorithm.RunAlgorithm();      
+    }
   else
-  {
-     ComplexLattice = new ComplexMPSSite[NbrSites];
-     ComplexLattice[0] = ComplexMPSSite(0, PhysicalDimension, 0, &ComplexLattice[1], MaxBondDimension,TransferMatrix);
-  for(int i = 1 ; i < NbrSites - 1 ; i++ )
     {
-      ComplexLattice[i] = ComplexMPSSite(i, PhysicalDimension, &ComplexLattice[i-1], &ComplexLattice[i+1], MaxBondDimension, TransferMatrix);
+      int NbrSites = Manager.GetInteger("length");
+      RealMPSSite * Lattice = 0;
+      ComplexMPSSite * ComplexLattice = 0;
+      if(ComplexFlag == false)
+	{
+	  Lattice = new RealMPSSite[NbrSites];
+	  Lattice[0] = RealMPSSite(PhysicalDimension, 0, &Lattice[1], MaxBondDimension,TransferMatrix);
+	  for(int i = 1 ; i < NbrSites - 1 ; i++ )
+	    {
+	      Lattice[i] = RealMPSSite(PhysicalDimension, &Lattice[i-1], &Lattice[i+1], MaxBondDimension, TransferMatrix);
+	    }
+	  Lattice[NbrSites-1] = RealMPSSite(PhysicalDimension, &Lattice[NbrSites-2], 0, MaxBondDimension,TransferMatrix);
+	}
+      else
+	{
+	  ComplexLattice = new ComplexMPSSite[NbrSites];
+	  ComplexLattice[0] = ComplexMPSSite(PhysicalDimension, 0, &ComplexLattice[1], MaxBondDimension,TransferMatrix);
+	  for(int i = 1 ; i < NbrSites - 1 ; i++ )
+	    {
+	      ComplexLattice[i] = ComplexMPSSite(PhysicalDimension, &ComplexLattice[i-1], &ComplexLattice[i+1], MaxBondDimension, TransferMatrix);
+	    }
+	  ComplexLattice[NbrSites-1] = ComplexMPSSite(PhysicalDimension, &ComplexLattice[NbrSites-2], 0, MaxBondDimension,TransferMatrix);
+	}
+      
+      int CurrentDimension = 1;
+      int NextCurrentDimension = PhysicalDimension;
+      for(int i = 0;  i < (NbrSites>>1) ; i++)
+	{
+	  if(ComplexFlag == false)
+	    {
+	      Lattice[i].SetBondDimension(CurrentDimension,NextCurrentDimension);
+	      Lattice[NbrSites - i - 1].SetBondDimension(NextCurrentDimension,CurrentDimension);
+	    }
+	  else
+	    {
+	      ComplexLattice[i].SetBondDimension(CurrentDimension,NextCurrentDimension);
+	      ComplexLattice[NbrSites - i - 1].SetBondDimension(NextCurrentDimension,CurrentDimension);
+	    }
+	  CurrentDimension = NextCurrentDimension;
+	  NextCurrentDimension *=  PhysicalDimension;
+	  if(NextCurrentDimension > MaxBondDimension)
+	    { 
+	      NextCurrentDimension =   MaxBondDimension;
+	    }	
+	}
+      
+      int NbrSweep = Manager.GetInteger("sweep");
+      
+      if(ComplexFlag == false)
+	{
+	  DMRGFiniteSizeRealOBCMainTask Algorithm (Lattice, TransferMatrix, NbrSites, NbrSweep, MaxBondDimension, Architecture.GetArchitecture(), &Lanczos);
+	  Algorithm.RunAlgorithm();
+	}
+      else
+	{
+	  DMRGFiniteSizeComplexOBCMainTask Algorithm (ComplexLattice, TransferMatrix, NbrSites, NbrSweep, MaxBondDimension, Architecture.GetArchitecture(), &Lanczos);
+	  Algorithm.RunAlgorithm();
+	}
+      
+      delete [] Lattice;
     }
-  ComplexLattice[NbrSites-1] = ComplexMPSSite(NbrSites-1, PhysicalDimension, &ComplexLattice[NbrSites-2], 0, MaxBondDimension,TransferMatrix);
-  }
-
-  int CurrentDimension = 1;
-  int NextCurrentDimension = PhysicalDimension;
-  for(int i = 0;  i < (NbrSites>>1) ; i++)
-  {
-  if(ComplexFlag == false)
-  {
-    Lattice[i].SetBondDimension(CurrentDimension,NextCurrentDimension);
-    Lattice[NbrSites - i - 1].SetBondDimension(NextCurrentDimension,CurrentDimension);
-  }
-  else
-  {
-    ComplexLattice[i].SetBondDimension(CurrentDimension,NextCurrentDimension);
-    cout <<"site " <<i<<" Dimensions " <<CurrentDimension<<" " <<NextCurrentDimension<<endl;
-    ComplexLattice[NbrSites - i - 1].SetBondDimension(NextCurrentDimension,CurrentDimension);
-  }
-   CurrentDimension = NextCurrentDimension;
-   NextCurrentDimension *=  PhysicalDimension;
-   if(NextCurrentDimension > MaxBondDimension)
-     { 
-        NextCurrentDimension =   MaxBondDimension;
-     }	
-  }
-
-  int NbrSweep = Manager.GetInteger("sweep");
-
-  if(ComplexFlag == false)
-  {
-   DMRGFiniteSizeRealOBCMainTask Algorithm (Lattice, TransferMatrix, NbrSites, NbrSweep, MaxBondDimension, Architecture.GetArchitecture(), &Lanczos);
-   Algorithm.RunAlgorithm();
-}
-else
-{
-   DMRGFiniteSizeComplexOBCMainTask Algorithm (ComplexLattice, TransferMatrix, NbrSites, NbrSweep, MaxBondDimension, Architecture.GetArchitecture(), &Lanczos);
-   Algorithm.RunAlgorithm();
-}
-
-  delete [] Lattice;
   return 0;
 }

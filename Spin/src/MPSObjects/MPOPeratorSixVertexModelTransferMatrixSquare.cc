@@ -11,14 +11,12 @@ MPOPeratorSixVertexModelTransferMatrixSquare::MPOPeratorSixVertexModelTransferMa
 
 
 
-MPOPeratorSixVertexModelTransferMatrixSquare::MPOPeratorSixVertexModelTransferMatrixSquare(int nbrSites, AbstractArchitecture * architecture)
+MPOPeratorSixVertexModelTransferMatrixSquare::MPOPeratorSixVertexModelTransferMatrixSquare( AbstractArchitecture * architecture)
 {
   this->PhysicalDimension = 2;
   this->MPOBondDimension = 4; 
   this->InitializeTensorsElements();
-  this->NbrSites = nbrSites;
   this->Architecture = architecture;
-  
   this->LeftVector = new double[this->MPOBondDimension];
   this->RightVector = new double[this->MPOBondDimension];
   this->RightVector[0] = 0;  this->RightVector[1] = 1.0;  this->RightVector[2] = -1.0; this->RightVector[3] = 0;

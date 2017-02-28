@@ -11,7 +11,7 @@ class MPOPeratorSixVertexModelTransferMatrixSquare : public RealMPOperatorOBC
  public:
 
   MPOPeratorSixVertexModelTransferMatrixSquare();
-  MPOPeratorSixVertexModelTransferMatrixSquare(int nbrSites,AbstractArchitecture * architecture  = 0);
+  MPOPeratorSixVertexModelTransferMatrixSquare(AbstractArchitecture * architecture  = 0);
   ~MPOPeratorSixVertexModelTransferMatrixSquare();
   
   virtual void InitializeTensorsElements();

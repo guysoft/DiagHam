@@ -12,10 +12,9 @@ ComplexMPOPeratorDefinedByFiles::ComplexMPOPeratorDefinedByFiles()
 
 
 
-ComplexMPOPeratorDefinedByFiles::ComplexMPOPeratorDefinedByFiles(int nbrSites, MultiColumnASCIIFile & tensorElementsFile, MultiColumnASCIIFile & boundaryVectorsFile, AbstractArchitecture * architecture)
+ComplexMPOPeratorDefinedByFiles::ComplexMPOPeratorDefinedByFiles(MultiColumnASCIIFile & tensorElementsFile, MultiColumnASCIIFile & boundaryVectorsFile, AbstractArchitecture * architecture)
 {
   this->InitializeTensorsElements(tensorElementsFile);
-  this->NbrSites = nbrSites;
   this->InitializeBoundaryVectors(boundaryVectorsFile);
   this->Architecture= architecture;
 }
@@ -33,36 +32,34 @@ ComplexMPOPeratorDefinedByFiles::~ComplexMPOPeratorDefinedByFiles()
 
 void ComplexMPOPeratorDefinedByFiles::InitializeTensorsElements(MultiColumnASCIIFile & tensorElementsFile)
 {
-
- this->NbrNonZeroElements = tensorElementsFile.GetNbrLines();
-
- int* IndexDown  = tensorElementsFile.GetAsIntegerArray (0);
- int* IndexUp = tensorElementsFile.GetAsIntegerArray (1);
- int* IndexLeft = tensorElementsFile.GetAsIntegerArray (2);
- int* IndexRight = tensorElementsFile.GetAsIntegerArray (3);
- this->ElementsValues = tensorElementsFile.GetAsComplexArray (4);
- int TmpPhysicalDimension = 0;
- int TmpMPODimension = 0;
-
-
+  this->NbrNonZeroElements = tensorElementsFile.GetNbrLines();
+  int* IndexLeft = tensorElementsFile.GetAsIntegerArray (0);  
+  int* IndexUp = tensorElementsFile.GetAsIntegerArray (1);
+  int* IndexRight = tensorElementsFile.GetAsIntegerArray (2);
+  int* IndexDown  = tensorElementsFile.GetAsIntegerArray (3);
+  this->ElementsValues = tensorElementsFile.GetAsComplexArray (4);
+  int TmpPhysicalDimension = 0;
+  int TmpMPODimension = 0;
+  
+  
   cout <<"Nbr Non zero Elements = "<<  this->NbrNonZeroElements<<endl;
   this->IndexValues = new unsigned int[this->NbrNonZeroElements];
-
+  
   for(int i = 0 ; i < this->NbrNonZeroElements; i++)
- {
-  if (IndexDown[i] > TmpPhysicalDimension)
-     TmpPhysicalDimension = IndexDown[i];
-  if (IndexLeft[i] > TmpMPODimension)
-     TmpMPODimension = IndexLeft[i];
-}
-
+    {
+      if (IndexDown[i] > TmpPhysicalDimension)
+	TmpPhysicalDimension = IndexDown[i];
+      if (IndexLeft[i] > TmpMPODimension)
+	TmpMPODimension = IndexLeft[i];
+    }
+  
   this->PhysicalDimension = TmpPhysicalDimension+1;
   this->MPOBondDimension =  TmpMPODimension+1;
-
+  
   for(int i = 0 ; i < this->NbrNonZeroElements; i++)
- {
-  this->IndexValues[i] = this->GetTensorIndexFromAllIndices(IndexDown[i],IndexUp[i], IndexLeft[i] ,IndexRight[i]);
-}
+    {
+      this->IndexValues[i] = this->GetTensorIndexFromAllIndices(IndexDown[i],IndexUp[i], IndexLeft[i] ,IndexRight[i]);
+    }
   cout <<" Physical Dimension = " <<  this->PhysicalDimension<<endl;;
   cout <<" MPO Dimension = " <<  this->MPOBondDimension <<endl;;
   delete [] IndexDown;
@@ -81,20 +78,19 @@ void ComplexMPOPeratorDefinedByFiles::InitializeBoundaryVectors(MultiColumnASCII
   else
   {
     if ( boundaryVectorsFile.GetNbrColumns() == 2  )
-{
-     this->LeftVector = boundaryVectorsFile.GetAsComplexArray (0); 
-     this->RightVector = boundaryVectorsFile.GetAsComplexArray (1);
-}
-else
-{
-   if ( boundaryVectorsFile.GetNbrColumns() == 1  )
-{
-     this->LeftVector = boundaryVectorsFile.GetAsComplexArray (0); 
-     this->RightVector = boundaryVectorsFile.GetAsComplexArray (0);
-}
-}
+      {
+	this->LeftVector = boundaryVectorsFile.GetAsComplexArray (0); 
+	this->RightVector = boundaryVectorsFile.GetAsComplexArray (1);
+      }
+    else
+      {
+	if ( boundaryVectorsFile.GetNbrColumns() == 1  )
+	  {
+	    this->LeftVector = boundaryVectorsFile.GetAsComplexArray (0); 
+	    this->RightVector = boundaryVectorsFile.GetAsComplexArray (0);
+	  }
+      }
   }
-
 }
 
 

@@ -24,14 +24,7 @@ class AbstractTransfertMatrixPBC : public AbstractHamiltonian
   int ChainLength;
   int * PowerD;
   
-  /*  bool IDMRGFlag;
-  bool DMRGFlag;
-  AbstractMPSSite * Site;
-  AbstractMPSSite * SiteLeft;
-  AbstractMPSSite * SiteRight;*/
-  
   AbstractArchitecture * Architecture;
-  
   
   double *** ValuesNonZeroTensorElementTopLeft;
   int ** NbrNonZeroTensorElementTopLeft;

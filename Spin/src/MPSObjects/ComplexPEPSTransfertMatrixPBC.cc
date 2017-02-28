@@ -164,8 +164,8 @@ void ComplexPEPSTransfertMatrixPBC::InitializeTensorsElements(MultiColumnASCIIFi
   int* IndexUp = tensorElementsFile.GetAsIntegerArray (2);
   int* IndexRight = tensorElementsFile.GetAsIntegerArray (3);
   int* IndexDown  = tensorElementsFile.GetAsIntegerArray (4);
-
   Complex * ElementsValues = tensorElementsFile.GetAsComplexArray (5);
+
   int TmpPhysicalDimension = 0;
   int TmpMPODimension = 0;
   int VerticalDimension = 0;

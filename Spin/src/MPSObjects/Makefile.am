@@ -9,4 +9,5 @@ AbstractTransfertMatrixPBC.cc \
 TransfertMatrixPBCWithTranslationsFromFile.cc \
 AbstractPEPSTransfertMatrixPBC.cc \
 ComplexPEPSTransfertMatrixPBC.cc \
-ComplexPEPSTransfertMatrixPBCWithTranslations.cc
+ComplexPEPSTransfertMatrixPBCWithTranslations.cc \
+ComplexPEPSPBC.cc
