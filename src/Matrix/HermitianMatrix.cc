@@ -2118,7 +2118,6 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalizeArbitraryPrecision (RealDi
 
   mpackint n = this->NbrRow;
   mpackint ldz = this->NbrRow;
-  mpackint lwork, info;
   //initialization of GMP
   int default_prec = precision;
   mpf_set_default_prec(default_prec);

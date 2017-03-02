@@ -462,8 +462,8 @@ class HermitianMatrix : public Matrix
   //
   // M = reference on real diagonal matrix of eigenvalues
   // Q = matrix where transformation matrix has to be stored
-  // err = absolute error on matrix element
-  // maxIter = maximum number of iteration to fund an eigenvalue
+  // err = absolute error on matrix element (ignored in this call)
+  // maxIter = maximum number of iteration to fund an eigenvalue (ignored in this call)
   // return value = reference on real matrix consisting of eigenvalues
   RealDiagonalMatrix& LapackDiagonalize (RealDiagonalMatrix& M, ComplexMatrix& Q, double err = 1e-7, int maxIter = 50);
 
@@ -471,10 +471,10 @@ class HermitianMatrix : public Matrix
   //
   // M = reference on real diagonal matrix of eigenvalues
   // Q = matrix where transformation matrix has to be stored
-  // err = absolute error on matrix element
-  // maxIter = maximum number of iteration to fund an eigenvalue
+  // err = absolute error on matrix element (ignored in this call)
+  // maxIter = maximum number of iteration to fund an eigenvalue (ignored in this call)
   // return value = reference on real matrix consisting of eigenvalues
-  RealDiagonalMatrix& LapackDiagonalizeSinglePrecision (RealDiagonalMatrix& M, ComplexMatrix& Q, double err, int maxIter);
+  RealDiagonalMatrix& LapackDiagonalizeSinglePrecision (RealDiagonalMatrix& M, ComplexMatrix& Q, double err = 1e-7, int maxIter = 50);
 
 #ifdef __MPACK__
 
@@ -483,10 +483,10 @@ class HermitianMatrix : public Matrix
   // precision = setting to use for arbitrary precision arithmetic
   // M = reference on real diagonal matrix of eigenvalues
   // Q = matrix where transformation matrix has to be stored
-  // err = absolute error on matrix element
-  // maxIter = maximum number of iteration to fund an eigenvalue
+  // err = absolute error on matrix element (ignored in this call)
+  // maxIter = maximum number of iteration to fund an eigenvalue (ignored in this call)
   // return value = reference on real matrix consisting of eigenvalues
-  RealDiagonalMatrix& LapackDiagonalizeArbitraryPrecision (RealDiagonalMatrix& M, ComplexMatrix& Q, int precision, double err, int maxIter);
+  RealDiagonalMatrix& LapackDiagonalizeArbitraryPrecision (RealDiagonalMatrix& M, ComplexMatrix& Q, int precision, double err = 1e-7, int maxIter = 50);
 
 #endif 
 
