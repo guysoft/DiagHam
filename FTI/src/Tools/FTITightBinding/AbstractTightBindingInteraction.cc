@@ -30,6 +30,7 @@
 
 
 #include "config.h"
+#include <iostream>
 
 #include "AbstractTightBindingInteraction.h"
 
@@ -41,6 +42,7 @@
 // dR2 = displacement final site in unit cells along 2-direction
 // s2 = sublattice index of the final site
 // nbrImages = maximum number of images to sum over
-double AbstractTightBindingInteraction::SumToConvergence(int s, int dR1, int dR2, int s2, int nbrImages=300)
+double AbstractTightBindingInteraction::SumToConvergence(int s, int dR1, int dR2, int s2, int nbrImages)
 {
+  std::cout << "Attention, dummy method AbstractTightBindingInteraction::SumToConvergence called"<<std::endl;
 }

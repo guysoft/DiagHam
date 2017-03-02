@@ -1,4 +1,4 @@
- ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //                                                                            //
 //                            DiagHam  version 0.01                           //
@@ -70,8 +70,8 @@ TightBindingModelHofstadterTriangular::TightBindingModelHofstadterTriangular(int
   this->LatticeVector1[0] = this->UnitCellX;
   this->LatticeVector1[1] = 0.0;
   this->LatticeVector1.Resize(2);
-  this->LatticeVector2[0] = 0.0;
-  this->LatticeVector2[1] = this->UnitCellY;
+  this->LatticeVector2[0] = 0.5*this->UnitCellY;
+  this->LatticeVector2[1] = 0.5*sqrt(3.0)*this->UnitCellY;
   this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
   this->GammaX = gammaX;
@@ -115,6 +115,21 @@ TightBindingModelHofstadterTriangular::TightBindingModelHofstadterTriangular(int
 TightBindingModelHofstadterTriangular::~TightBindingModelHofstadterTriangular()
 {
 }
+
+// get the position of a sublattice site
+//
+// position = reference on a vector where the answer is supplied
+// sublatticeIndex = index of the sub-lattice position
+void TightBindingModelHofstadterTriangular::GetSublatticeVector(RealVector &position, int sublatticeIndex)
+{
+  int x1, x2;
+  this->DecodeSublatticeIndex(sublatticeIndex, x1, x2);
+  if (position.GetVectorDimension()!=2)
+    position.Resize(2);
+  position.Copy(this->LatticeVector1, (double)x1/this->UnitCellX);
+  position.AddLinearCombination((double)x2/this->UnitCellY, this->LatticeVector2);
+}
+
 
 
 // core part that compute the band structure

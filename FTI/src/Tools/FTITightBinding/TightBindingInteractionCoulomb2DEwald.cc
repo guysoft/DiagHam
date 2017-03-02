@@ -42,8 +42,11 @@
 #include <cmath>
 #include <cassert>
 
+#ifdef HAVE_ERFC
 using std::erfc;
-using std::sqrt;
+#else
+#define erfc(x)  (1.0-erf(x))
+#endif
 
 // Constructor
 // tightBinding = pointer to the relevant tightBindingModel
@@ -101,7 +104,7 @@ double TightBindingInteractionCoulomb2DEwald::CoulombErfc(double m, double n, Re
   TmpVector.AddLinearCombination(m, BasisVector1, n, BasisVector2);
   double dist=TmpVector.Norm();
   if (dist != 0)
-    return std::erfc(this->Alpha*dist)/dist;
+    return erfc(this->Alpha*dist)/dist;
   else return 0;
 };
 
@@ -111,7 +114,7 @@ double TightBindingInteractionCoulomb2DEwald::FourierTerm(double u, double v, Re
   double kappa=TmpVector.Norm();
   double phase=TmpVector*R; //dot product
   if (kappa > 1e-15) {
-    return 2.0*M_PI/kappa * (1.0+std::cos(phase)) * std::erfc(kappa*this->HalfInvAlpha);
+    return 2.0*M_PI/kappa * (1.0+std::cos(phase)) * erfc(kappa*this->HalfInvAlpha);
   }
   else return 0.0;
 };

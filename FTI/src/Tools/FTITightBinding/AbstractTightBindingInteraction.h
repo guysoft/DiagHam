@@ -44,8 +44,6 @@
 class AbstractTightBindingInteraction
 {
 
- protected:
-
  public:
 
   // type definition for functional dependency of interactions 
@@ -61,7 +59,7 @@ class AbstractTightBindingInteraction
   // dR1 = displacement final site in unit cells along 1-direction
   // dR2 = displacement final site in unit cells along 2-direction
   // s2 = sublattice index of the final site
-  virtual double GetAmplitude(int s, int dR1, int dR2, int s2);
+  virtual double GetAmplitude(int s, int dR1, int dR2, int s2) = 0;
 
  protected:
 
@@ -71,7 +69,7 @@ class AbstractTightBindingInteraction
   // dR2 = displacement final site in unit cells along 2-direction
   // s2 = sublattice index of the final site
   // nbrImages = maximum number of images to sum over
-  virtual double SumToConvergence(int s, int dR1, int dR2, int s2, int nbrImages=300) = 0;
+  virtual double SumToConvergence(int s, int dR1, int dR2, int s2, int nbrImages=300);
 
 };
 

@@ -6,6 +6,7 @@ libFTITightBinding_a_SOURCES=AbstractTightBindingModel.cc \
 Abstract1DTightBindingModel.cc \
 Abstract2DTightBindingModel.cc \
 Abstract3DTightBindingModel.cc \
+AbstractTightBindingInteraction.cc \
 GenericTightBindingModel.cc \
 Generic2DTightBindingModel.cc \
 Generic3DTightBindingModel.cc \
@@ -32,6 +33,7 @@ TightBindingModelChiralCubicLattice.cc \
 TightBindingModelFCCLattice.cc \
 TightBindingModelHopfCubicLattice.cc \
 TightBindingModelHofstadterSquare.cc \
+TightBindingModelHofstadterTriangular.cc \
 TightBindingModelHofstadterTriangularQuarter.cc \
 TightBindingModelThirringOnKagome.cc \
 TightBindingModelOFLSquareLattice.cc \

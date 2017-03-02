@@ -3,7 +3,7 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2012 Nicolas Regnault                  //
+//                  Copyright (C) 2001-2017 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
 //              class authors: Benjamin Huddart & Gunnar Möller               //
@@ -16,7 +16,7 @@
 // Energies in units of 1/(4*pi*epsilon_0*a).                                 //
 // Lattice constant a=1                                                       //
 //                                                                            //
-//                        last modification : 05/08/2016                      //
+//                        last modification : 02/03/2017                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -40,8 +40,13 @@
 #include "Vector/RealVector.h"
 #include <cmath>
 
-using std::erfc;
 using std::sqrt;
+#ifdef HAVE_ERFC
+using std::erfc;
+#else
+#define erfc(x)  (1.0-erf(x))
+#endif
+
 
 // Constructor
 // tightBinding = Tight Binding model, which supplies some of the parameters named, below
@@ -111,7 +116,7 @@ double TightBindingInteractionCoulombForHofstadterLattice::CoulombErfc(double m,
     TmpVector.AddLinearCombination(m*N_sites1, bv1, n*N_sites2, bv2);
   double dist=TmpVector.Norm();
   if (dist != 0) {
-    return std::erfc(alpha*dist)/dist;
+    return erfc(alpha*dist)/dist;
   }
   else return 0;
 };
@@ -122,7 +127,7 @@ double TightBindingInteractionCoulombForHofstadterLattice::FourierTerm(double u,
   double kappa=TmpVector.Norm();
   double phase=TmpVector*r; //dot product
   if (kappa > 1e-15) {
-    return 2.0*M_PI/kappa * (1.0+std::cos(phase)) * std::erfc(kappa*this->HalfInvAlpha);
+    return 2.0*M_PI/kappa * (1.0+std::cos(phase)) * erfc(kappa*this->HalfInvAlpha);
   }
   else return 0;
 };
