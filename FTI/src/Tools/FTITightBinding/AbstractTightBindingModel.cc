@@ -97,6 +97,36 @@ ofstream& AbstractTightBindingModel::WriteHeader(ofstream& output)
   return output; 
 }
 
+// read the header that describes the tight binding model
+// 
+// return value  = size of header that was read.
+int AbstractTightBindingModel::ReadHeader(ifstream& input)
+{
+  int HeaderSize = -1;
+  ReadLittleEndian(input, HeaderSize);
+  return HeaderSize;
+}
+
+
+// write the eigenvalues and eigenstates (if available) to a band structure file
+// output = reference on the output stream
+// return value  = reference on the output stream
+ostream& AbstractTightBindingModel::WriteEigensystem(ofstream& output)
+{
+  for (int idx = 0; idx < this->NbrStatePerBand; ++idx)
+    for (int i = 0; i < this->NbrBands; ++i)
+      {
+	double Tmp = this->GetEnergy(i, idx);
+	WriteLittleEndian(output, Tmp);
+      }
+  if (this->HaveOneBodyBasis() == true)
+    {
+      for (int idx = 0; idx < this->NbrStatePerBand; ++idx)
+	this->GetOneBodyMatrix(idx).WriteMatrix(output);
+    }
+  return output;
+}
+
 // write the energy spectrum in an ASCII file
 //
 // fileName = name of the ASCII file 
@@ -342,17 +372,7 @@ bool AbstractTightBindingModel::WriteBandStructure(char* fileName)
   WriteLittleEndian(File, this->NbrBands);
   WriteLittleEndian(File, this->NbrStatePerBand);
   this->WriteHeader(File);
-  for (int kx = 0; kx < this->NbrStatePerBand; ++kx)
-    for (int i = 0; i < this->NbrBands; ++i)
-      {
-	double Tmp = this->GetEnergy(i, kx);
-	WriteLittleEndian(File, Tmp);
-      }
-  if (this->HaveOneBodyBasis() == true)
-    {
-      for (int kx = 0; kx < this->NbrStatePerBand; ++kx)
-	this->GetOneBodyMatrix(kx).WriteMatrix(File);
-    }
+  this->WriteEigensystem(File);
   File.close();
   return true;
 }
@@ -464,6 +484,23 @@ void AbstractTightBindingModel::GetLatticeVector(RealVector &position, RealVecto
   cout << "Attention, using dummy method AbstractTightBindingModel::GetSublatticeVector";
   position.Copy(numTranslations);
   return;
+}
+
+// get the elementary lattice vector for translation along the n-th fundamental lattice directions
+//
+// latticeVector[out] = reference on a vector where the answer is supplied
+// dimensionIdx = index of lattice dimension, labelled from 0, ..., d-1
+void AbstractTightBindingModel::GetLatticeVector(RealVector &position, int dimensionIdx)
+{
+  int Dim = position.GetVectorDimension();
+  if (dimensionIdx>=0 && dimensionIdx<Dim)
+    {
+      RealVector tmpVector(Dim, true);
+      tmpVector[dimensionIdx] = 1.0;
+      this->GetLatticeVector(position, tmpVector);
+    }
+  cout << "dimensionIdx= "<<dimensionIdx<<" is invalid or position has wrong dimension"<<endl;
+  position.ClearVector();
 }
 
 // get the lattice vector for translation along the fundamental lattice directions

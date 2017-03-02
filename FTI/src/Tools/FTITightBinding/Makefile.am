@@ -55,6 +55,8 @@ TightBindingModelHofstadterFiniteCylinder.cc \
 TightBindingModelKitaevHeisenbergHoneycombLattice.cc \
 TightBindingModelSimpleSquareLattice.cc \
 TightBindingModelKitaevChain.cc \
-TightBindingModelHalfContinuousHofstadterModel.cc
-
+TightBindingModelHalfContinuousHofstadterModel.cc \
+TightBindingInteractionCoulomb2DEwald.cc \
+TightBindingInteractionCoulombForHofstadterLattice.cc \
+TightBindingInteraction2DShortRange.cc
 #TightBindingModelSimpleChainWithConfinementLattice.cc

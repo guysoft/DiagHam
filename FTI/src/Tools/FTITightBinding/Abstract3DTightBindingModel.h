@@ -69,6 +69,11 @@ class Abstract3DTightBindingModel : public Abstract2DTightBindingModel
   //
   ~Abstract3DTightBindingModel();
 
+  // get the size (length / area / volume ... ) of the unit cell
+  //
+  // return value =  size
+  virtual double GetUnitCellSize();
+
   // get the linearized momentum index
   //
   // kx = momentum along the x direction

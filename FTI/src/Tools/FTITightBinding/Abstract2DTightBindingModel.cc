@@ -37,6 +37,7 @@
 #include "GeneralTools/Endian.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
 
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <sys/time.h>
@@ -119,6 +120,59 @@ void Abstract2DTightBindingModel::GetLatticeVector(RealVector &position, RealVec
   position.AddLinearCombination(numTranslations[1], this->LatticeVector2);
 }
 
+// get the elementary lattice vector for translation along the n-th fundamental lattice directions
+//
+// latticeVector[out] = reference on a vector where the answer is supplied
+// dimensionIdx = index of lattice dimension, labelled from 0, ..., d-1
+void Abstract2DTightBindingModel::GetLatticeVector(RealVector &position, int dimensionIdx)
+{
+  if (dimensionIdx==0)
+    position.Copy(this->LatticeVector1);
+  else
+    {
+      if (dimensionIdx==1)
+	position.Copy(this->LatticeVector2);
+      else
+	position.ClearVector();
+    }
+}
+
+// get the reciprocal lattice vector for the n-th fundamental lattice direction
+//
+// latticeVector[out] = reference on a vector where the answer is supplied
+// dimensionIdx = index of lattice dimension, labeled from 0, ..., d-1
+void Abstract2DTightBindingModel::GetReciprocalLatticeVector(RealVector &position, int dimensionIdx)
+{
+  position.Resize(2);
+  double Prefactor = 2.*M_PI/this->GetUnitCellSize();
+  if (dimensionIdx==0)
+    {
+      position[0] = Prefactor * this->LatticeVector2[1];
+      position[1] = -Prefactor * this->LatticeVector2[0];
+    }
+  else
+    {
+      if (dimensionIdx==1)
+	{
+	  position[0] = -Prefactor * this->LatticeVector1[1];
+	  position[1] = Prefactor * this->LatticeVector1[0];
+	}
+      else
+	position.ClearVector();
+    }
+}
+
+
+// get the size (length / area / volume ... ) of the unit cell
+//
+// return value =  size
+double Abstract2DTightBindingModel::GetUnitCellSize()
+{
+  return std::fabs(this->LatticeVector1[0] * this->LatticeVector2[1] - this->LatticeVector1[1] * this->LatticeVector2[0]);
+}
+
+
+
 // write an header that describes the tight binding model
 // 
 // output = reference on the output stream
@@ -178,6 +232,57 @@ ofstream& Abstract2DTightBindingModel::WriteHeader(ofstream& output)
   }
   WriteLittleEndian(output, this->TwistAngle);
   return output; 
+}
+
+// open a file and read a header that describes the tight binding model
+// 
+// return value = size of header that was read (negative if unsuccessful)
+int Abstract2DTightBindingModel::ReadHeader(ifstream &File)
+{
+  int HeaderSize = -1;
+  ReadLittleEndian(File, HeaderSize);
+  int CorrectDimension = 2;
+  int CorrectHeaderSize = (((this->NbrBands + 2) * CorrectDimension + 1) * sizeof(double)) + ((CorrectDimension + 1) * sizeof(int));
+  if (HeaderSize >= CorrectHeaderSize)
+    {
+      int TmpDimension = -1;
+      ReadLittleEndian(File, TmpDimension);
+      HeaderSize -= sizeof(int);
+      if (TmpDimension == CorrectDimension)
+	{
+	  ReadLittleEndian(File, this->NbrSiteX);
+	  ReadLittleEndian(File, this->KxFactor);
+	  ReadLittleEndian(File, this->GammaX);	 
+          this->EmbeddingX.Resize(this->NbrBands);
+          for (int i = 0; i < this->NbrBands; ++i)
+            {
+              double Tmp = 0.0;
+              ReadLittleEndian(File, Tmp);
+              this->EmbeddingX[i] = Tmp;
+            }
+	  ReadLittleEndian(File, this->NbrSiteY);
+	  ReadLittleEndian(File, this->KyFactor);
+	  ReadLittleEndian(File, this->GammaY);	  
+          this->EmbeddingY.Resize(this->NbrBands);
+          for (int i = 0; i < this->NbrBands; ++i)
+            {
+              double Tmp = 0.0;
+              ReadLittleEndian(File, Tmp);
+              this->EmbeddingY[i] = Tmp;
+            }
+	  ReadLittleEndian(File, this->TwistAngle);
+          HeaderSize -= (CorrectHeaderSize - sizeof(int));
+	}
+      else
+	return -1; // no valid header
+      if (HeaderSize > 0) 
+	File.seekg (HeaderSize, std::ios::cur);
+    }
+  else
+    {
+      return -1; // no valid header
+    }
+  return HeaderSize;
 }
 
 // write the energy spectrum in an ASCII file

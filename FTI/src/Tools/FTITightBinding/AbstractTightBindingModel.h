@@ -83,10 +83,25 @@ class AbstractTightBindingModel
   // return value =  number of bands
   virtual int GetNbrBands();
 
+  // get the number of unit cells
+  //
+  // return value =  number of unit cells
+  virtual long GetNbrCells() {return this->GetNbrStatePerBand();}
+
+  // get the number of sites
+  //
+  // return value = number of sites in the simulation cell
+  virtual long GetNbrSites() {return this->GetNbrStatePerBand() * this->GetNbrBands();}
+
   // get the number of states per band
   //
   // return value =  number of states per band
   virtual long GetNbrStatePerBand();
+
+  // get the size (length / area / volume ... ) of the unit cell
+  //
+  // return value =  size
+  virtual double GetUnitCellSize() = 0;
 
   // get the energy at a given momentum of the band structure
   //
@@ -110,13 +125,25 @@ class AbstractTightBindingModel
   //
   // position = reference on a vector where the answer is supplied
   // sublatticeIndex = index of the sub-lattice position
-  virtual void GetSublatticeVector(RealVector &position, int sublatticeIndex) = 0;
+  virtual void GetSublatticeVector(RealVector &position, int sublatticeIndex);
 
   // get the lattice vector for translation along the fundamental lattice directions
   //
   // latticeVector[out] = reference on a vector where the answer is supplied
   // numTranslations = vector of the number of translations along each lattice direction, in units of unit cell size
-  virtual void GetLatticeVector(RealVector &position, RealVector &numTranslations) = 0;
+  virtual void GetLatticeVector(RealVector &position, RealVector &numTranslations);
+
+  // get the elementary lattice vector for translation along the n-th fundamental lattice directions
+  //
+  // latticeVector[out] = reference on a vector where the answer is supplied
+  // dimensionIdx = index of lattice dimension, labeled from 0, ..., d-1
+  virtual void GetLatticeVector(RealVector &position, int dimensionIdx = 0);
+
+  // get the reciprocal lattice vector for the n-th fundamental lattice direction
+  //
+  // latticeVector[out] = reference on a vector where the answer is supplied
+  // dimensionIdx = index of lattice dimension, labeled from 0, ..., d-1
+  virtual void GetReciprocalLatticeVector(RealVector &position, int dimensionIdx = 0) = 0;
 
   // get the lattice vector for translation along the fundamental lattice directions
   //
@@ -209,12 +236,28 @@ class AbstractTightBindingModel
 
  protected:
 
-  // write an header that describes the tight binding model
+  // write a header that describes the tight binding model
   // 
   // output = reference on the output stream
   // return value  = reference on the output stream
   virtual ofstream& WriteHeader(ofstream& output);
   
+  // read the header that describes the tight binding model
+  // 
+  // return value = size of header that was read (negative if unsuccessful)
+  virtual int ReadHeader(ifstream& input);
+
+  // write the eigenvalues and eigenstates (if available) to a band structure file
+  // output = reference on the output stream
+  // return value  = reference on the output stream
+  virtual ostream& WriteEigensystem(ofstream& output);
+
+  // read the eigenvalues and eigenstates from a band structure file
+  // input = input stream from which header was read
+  // HeaderSize = size of header that was read
+  // return value  = size of band structure that was
+  virtual void ReadEigensystem(ifstream& input, int HeaderSize, unsigned long FileSize = 0) = 0;
+
   // write an ASCII header that describes the tight binding model
   // 
   // output = reference on the output stream

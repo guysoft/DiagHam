@@ -101,6 +101,38 @@ void Abstract1DTightBindingModel::GetLatticeVector(RealVector &position, RealVec
   position.AddLinearCombination(numTranslations[0], this->LatticeVector1);
 }
 
+// get the elementary lattice vector for translation along the n-th fundamental lattice directions
+//
+// latticeVector[out] = reference on a vector where the answer is supplied
+// dimensionIdx = index of lattice dimension, labelled from 0, ..., d-1
+void Abstract1DTightBindingModel::GetLatticeVector(RealVector &position, int dimensionIdx)
+{
+  if (dimensionIdx==0)
+    {
+      position.Copy(this->LatticeVector1);
+    }
+  else
+    position.ClearVector();
+}
+
+// get the reciprocal lattice vector for the n-th fundamental lattice direction
+//
+// latticeVector[out] = reference on a vector where the answer is supplied
+// dimensionIdx = index of lattice dimension, labeled from 0, ..., d-1
+void Abstract1DTightBindingModel::GetReciprocalLatticeVector(RealVector &position, int dimensionIdx)
+{
+  double Factor=2.0*M_PI/this->LatticeVector1.Norm();
+  position = this->LatticeVector1.Copy(this->LatticeVector1, Factor);
+}
+
+// get the size (length / area / volume ... ) of the unit cell
+//
+// return value =  size
+double Abstract1DTightBindingModel::GetUnitCellSize()
+{
+  return this->LatticeVector1.Norm();
+}
+
 // write an header that describes the tight binding model
 // 
 // output = reference on the output stream
@@ -116,18 +148,107 @@ ofstream& Abstract1DTightBindingModel::WriteHeader(ofstream& output)
   WriteLittleEndian(output, this->KxFactor);
   WriteLittleEndian(output, this->GammaX);
   if (this->EmbeddingX.GetVectorDimension() != this->NbrBands)
-  {
+    {
       double Tmp = 0.0;
       for (int i = 0; i < this->NbrBands; ++i)
-          WriteLittleEndian(output, Tmp);
-  }
+	WriteLittleEndian(output, Tmp);
+    }
   else
-  {
+    {
       for (int i = 0; i < this->NbrBands; ++i)
-          WriteLittleEndian(output, this->EmbeddingX[i]);
-  }
+	WriteLittleEndian(output, this->EmbeddingX[i]);
+    }
   return output; 
 }
+
+
+// read the header that describes the tight binding model
+// 
+// return value = size of header that was read
+int Abstract1DTightBindingModel::ReadHeader(ifstream& input)
+{
+  int HeaderSize = -1;
+  ReadLittleEndian(input, HeaderSize);
+  int CorrectDimension = 1;
+  int CorrectHeaderSize = (((this->NbrBands + 2) * CorrectDimension) * sizeof(double)) + ((CorrectDimension + 1) * sizeof(int));
+  if (HeaderSize >= CorrectHeaderSize)
+    {
+      int TmpDimension = -1;
+      ReadLittleEndian(input, TmpDimension);
+      HeaderSize -= sizeof(int);
+      if (TmpDimension >= CorrectDimension)
+	{
+	  ReadLittleEndian(input, this->NbrSiteX);
+	  ReadLittleEndian(input, this->KxFactor);
+	  ReadLittleEndian(input, this->GammaX);	  
+          this->EmbeddingX.Resize(this->NbrBands);
+          for (int i = 0; i < this->NbrBands; ++i)
+            {
+              double Tmp = 0.0;
+              ReadLittleEndian(input, Tmp);
+              this->EmbeddingX[i] = Tmp;
+            }
+          HeaderSize -= (CorrectHeaderSize - sizeof(int));
+	}
+      else
+	{
+	  this->NbrSiteX = this->NbrStatePerBand;
+	  this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
+	  this->GammaX = 0.0;
+          this->EmbeddingX = RealVector(this->NbrBands, true);
+	}
+      if (HeaderSize > 0) 
+	input.seekg (HeaderSize, std::ios::cur);
+    }
+  else
+    {
+      this->NbrSiteX = this->NbrStatePerBand;
+      this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
+      this->GammaX = 0.0;
+      input.seekg (HeaderSize, std::ios::cur);
+    }
+  return HeaderSize;
+}
+
+
+// read the eigenvalues and eigenstates from a band structure file
+// input = input stream from which header was read
+// HeaderSize = size of header that was read
+// FileSize = total size of file (recalculate if == 0)
+// return value  = size of band structure that was
+void Abstract1DTightBindingModel::ReadEigensystem(ifstream& input, int HeaderSize, unsigned long FileSize)
+{
+  if (FileSize==0)
+    {
+      unsigned long CurrPos = input.tellg ();
+      input.seekg (0l, std::ios::end);
+      FileSize = input.tellg ();
+    }
+
+  this->EnergyBandStructure = new double*[this->NbrBands];
+  for (int i = 0; i < this->NbrBands; ++i)
+    {
+      this->EnergyBandStructure[i] = new double[this->NbrStatePerBand];
+      for (int j = 0; j < this->NbrStatePerBand; ++j)
+	{
+	  ReadLittleEndian(input, this->EnergyBandStructure[i][j]);
+	}
+    }
+  if (FileSize == ((sizeof(double) * this->NbrStatePerBand * this->NbrBands) + sizeof(long) + sizeof(int) + sizeof(int) + (this->NbrBands * this->NbrBands * sizeof(Complex)) + HeaderSize))
+    {
+      this->OneBodyBasis = 0;
+    }
+  else
+    {
+      this->OneBodyBasis = new ComplexMatrix [this->NbrStatePerBand];
+      for (int j = 0; j < this->NbrStatePerBand; ++j)	
+	{
+	  this->OneBodyBasis[j].ReadMatrix(input);
+	}     
+    }
+}
+
+
 
 // write the energy spectrum in an ASCII file
 //

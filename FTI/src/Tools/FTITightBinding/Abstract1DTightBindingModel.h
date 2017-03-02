@@ -195,6 +195,23 @@ class Abstract1DTightBindingModel : public AbstractTightBindingModel
   // numTranslations = vector of the number of translations along each lattice direction, in units of unit cell size
   virtual void GetLatticeVector(RealVector &position, RealVector &numTranslations);
 
+  // get the elementary lattice vector for translation along the n-th fundamental lattice directions
+  //
+  // latticeVector[out] = reference on a vector where the answer is supplied
+  // dimensionIdx = index of lattice dimension, labelled from 0, ..., d-1
+  virtual void GetLatticeVector(RealVector &position, int dimensionIdx = 0);
+
+  // get the reciprocal lattice vector for the n-th fundamental lattice direction
+  //
+  // latticeVector[out] = reference on a vector where the answer is supplied
+  // dimensionIdx = index of lattice dimension, labeled from 0, ..., d-1
+  virtual void GetReciprocalLatticeVector(RealVector &position, int dimensionIdx = 0);
+
+  // get the size (length / area / volume ... ) of the unit cell
+  //
+  // return value =  size
+  virtual double GetUnitCellSize();
+
   // write the energy spectrum in an ASCII file
   //
   // fileName = name of the ASCII file 
@@ -256,6 +273,17 @@ class Abstract1DTightBindingModel : public AbstractTightBindingModel
   // output = reference on the output stream
   // return value  = reference on the output stream
   virtual ofstream& WriteHeader(ofstream& output);
+
+  // read the header that describes the tight binding model
+  // 
+  // return value = size of header that was read
+  virtual int ReadHeader(ifstream& input);
+
+  // read the eigenvalues and eigenstates from a band structure file
+  // input = input stream from which header was read
+  // HeaderSize = size of header that was read
+  // return value  = size of band structure that was
+  virtual void ReadEigensystem(ifstream& input, int HeaderSize, unsigned long FileSize = 0);
 
   // build the tight binding hamiltonian in real space from the hopping parameters of the unit cell located at the origin, assuming periodic boundary conditions 
   //

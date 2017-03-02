@@ -111,6 +111,23 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // numTranslations = vector of the number of translations along each lattice direction, in units of unit cell size
   virtual void GetLatticeVector(RealVector &position, RealVector &numTranslations);
 
+  // get the elementary lattice vector for translation along the n-th fundamental lattice directions
+  //
+  // latticeVector[out] = reference on a vector where the answer is supplied
+  // dimensionIdx = index of lattice dimension, labeled from 0, ..., d-1
+  void GetLatticeVector(RealVector &position, int dimensionIdx);
+
+  // get the reciprocal lattice vector along the n-th fundamental lattice direction
+  //
+  // latticeVector[out] = reference on a vector where the answer is supplied
+  // dimensionIdx = index of lattice dimension, labeled from 0, ..., d-1
+  virtual void GetReciprocalLatticeVector(RealVector &position, int dimensionIdx = 0);
+
+  // get the size (length / area / volume ... ) of the unit cell
+  //
+  // return value =  size
+  virtual double GetUnitCellSize();
+
   // get the linearized momentum index
   //
   // kx = momentum along the x direction
@@ -471,7 +488,11 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // output = reference on the output stream
   // return value  = reference on the output stream
   virtual ofstream& WriteHeader(ofstream& output);
-  
+
+  // read the header that describes the tight binding model
+  // 
+  // return value = size of header that was read (negative if unsuccessful)
+  virtual int ReadHeader(ifstream& input);
    
   //computes all the values of the momentum projected and stores them in a double array
   //

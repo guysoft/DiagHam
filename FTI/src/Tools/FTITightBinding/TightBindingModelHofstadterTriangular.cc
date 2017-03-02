@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+ ////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //                                                                            //
 //                            DiagHam  version 0.01                           //
@@ -11,6 +11,9 @@
 //                                                                            //
 //                        last modification : 08/05/2012                      //
 //                                                                            //
+//                                                                            //
+//   Note: throughout code x and y refer to directions of basis vectors for   //
+//   triangular lattice (1,0) and (1/2, sqrt(3)/2)                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
 //    it under the terms of the GNU General Public License as published by    //
@@ -30,7 +33,7 @@
 
 
 #include "config.h"
-#include "Tools/FTITightBinding/TightBindingModelHofstadterSquare.h"
+#include "Tools/FTITightBinding/TightBindingModelHofstadterTriangular.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
@@ -39,9 +42,7 @@
 using std::cout;
 using std::endl;
 
-#include <cassert>
-
-// #define DEBUG_OUTPUT
+#define DEBUG_OUTPUT
 
 
 // default constructor
@@ -56,20 +57,19 @@ using std::endl;
 // gammaY = boundary condition twisting angle along y
 // architecture = pointer to the architecture
 // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
-// useEmbedding = flag indicating whether to run calculation with natural embedding (site positions)
-// precision = precision (in bits) used for diagonalization of single particle spectrum (values >64 will draw on GMP)
-TightBindingModelHofstadterSquare::TightBindingModelHofstadterSquare(int nbrCellX, int nbrCellY, int unitCellX, int unitCellY, int nbrFlux, char axis,
-								     double gammaX, double gammaY, 
-								     AbstractArchitecture* architecture, bool storeOneBodyMatrices, bool useEmbedding, int precision)
+TightBindingModelHofstadterTriangular::TightBindingModelHofstadterTriangular(int nbrCellX, int nbrCellY, int unitCellX, int unitCellY, int nbrFlux, char axis,
+									     double gammaX, double gammaY, 
+									     AbstractArchitecture* architecture, bool storeOneBodyMatrices, bool useEmbedding)
 {
   this->NbrSiteX = nbrCellX;
   this->NbrSiteY = nbrCellY;
   this->UnitCellX = unitCellX;
   this->UnitCellY = unitCellY;
+  this->TwistAngle=M_PI/3.0;
   this->LatticeVector1.Resize(2);
   this->LatticeVector1[0] = this->UnitCellX;
   this->LatticeVector1[1] = 0.0;
-  this->LatticeVector2.Resize(2);
+  this->LatticeVector1.Resize(2);
   this->LatticeVector2[0] = 0.0;
   this->LatticeVector2[1] = this->UnitCellY;
   this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
@@ -80,8 +80,6 @@ TightBindingModelHofstadterSquare::TightBindingModelHofstadterSquare(int nbrCell
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
   this->LandauGaugeAxis=axis;
   this->Architecture = architecture;
-  this->Precision = precision;
-  if (precision < 64) this->Precision = (precision < 32 ? 32 : 64);
 
   if (storeOneBodyMatrices == true)
     {
@@ -104,7 +102,6 @@ TightBindingModelHofstadterSquare::TightBindingModelHofstadterSquare(int nbrCell
   else
     {
       this->SetNoEmbedding();
-      this->UsingNaturalEmbedding=false;
     }
   this->ComputeBandStructure();  
   
@@ -115,51 +112,9 @@ TightBindingModelHofstadterSquare::TightBindingModelHofstadterSquare(int nbrCell
 // destructor
 //
 
-TightBindingModelHofstadterSquare::~TightBindingModelHofstadterSquare()
+TightBindingModelHofstadterTriangular::~TightBindingModelHofstadterTriangular()
 {
 }
-
-// get the position of a sublattice site
-//
-// position = reference on a vector where the answer is supplied
-// sublatticeIndex = index of the sub-lattice position
-void TightBindingModelHofstadterSquare::GetSublatticeVector(RealVector &position, int sublatticeIndex)
-{
-  int x, y;
-  this->DecodeSublatticeIndex(sublatticeIndex, x, y);
-  if (position.GetVectorDimension()!=2)
-    position.Resize(2);
-  position[0]=x;
-  position[1]=y;
-}
-
-
-// convert absolute coordinates into lattice coordinates and sublattice index
-//
-// position = coordinates of the site to be identified
-// tx, ty = translations of the site in units of lattice vectors
-// sublatticeIndex = index of the sub-lattice position (if matching a lattice site; -1 if not found)
-// return = true if the coordinates correspond to a lattice site
-bool TightBindingModelHofstadterSquare::PositionToLatticeCoordinates(RealVector &position, int &tx, int &ty, int &sublatticeIndex)
-{
-  int x = ( int ) ( position[0] );
-  int y = ( int ) ( position[1] );
-  Complex tmpC = 0.0;
-  int alpha = this->EncodeSublatticeIndex (x, y, 0.0, 0.0, tmpC);
-  int subX, subY;
-  this->DecodeSublatticeIndex (alpha, subX, subY );
-  tx=(x-subX)/this->UnitCellX;
-  ty=(y-subY)/this->UnitCellY;
-  // double check that the above algebra is correct:
-  if( ( fabs(tx*this->UnitCellX+subX - position[0]) < 1e-13) && (fabs(ty*this->UnitCellY+subY - position[1]) < 1e-13) )
-    {
-      sublatticeIndex = alpha;
-      return true;
-    }
-  else
-    return false;
-}
-
 
 
 // core part that compute the band structure
@@ -167,7 +122,7 @@ bool TightBindingModelHofstadterSquare::PositionToLatticeCoordinates(RealVector 
 // minStateIndex = minimum index of the state to compute
 // nbrStates = number of states to compute
 
-void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIndex, long nbrStates)
+void TightBindingModelHofstadterTriangular::CoreComputeBandStructure(long minStateIndex, long nbrStates)
 {
   if (nbrStates == 0l)
     nbrStates = this->NbrStatePerBand;
@@ -197,12 +152,17 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIn
 		  for (int i=0; i<UnitCellX; ++i)
 		    {
 		      Complex Phase=Polar(1.0,2.0*M_PI*this->FluxDensity*(double)i);
+		      Complex Phase2=Polar(1.0,2.0*M_PI*this->FluxDensity*((double)i-0.5));
+		      Complex Phase3=Polar(1.0,-2.0*M_PI*this->FluxDensity*((double)i+0.5));
 
 		      for (int j=0; j<UnitCellY; ++j)
 			{
+                  
+                  
+			  
 			  int InitialIndex = this->EncodeSublatticeIndex(i, j, K1, K2, TranslationPhase); // initial TranlationPhase always one, so can be discarded
 			  double InitialEmbeddingPhase=this->GetEmbeddingPhase(InitialIndex, K1, K2);
-			  int FinalIndex = this->EncodeSublatticeIndex(i+1, j, K1, K2, TranslationPhase);
+			  int FinalIndex = this->EncodeSublatticeIndex(i-1, j, K1, K2, TranslationPhase);
 			  double FinalEmbeddingPhase=this->GetEmbeddingPhase(FinalIndex, K1, K2);
 			  if (InitialIndex>=FinalIndex)
 			    TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, FinalIndex, -TranslationPhase*Polar(InitialEmbeddingPhase-FinalEmbeddingPhase));
@@ -210,7 +170,7 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIn
 			  cout << "H["<<InitialIndex<<"->"<<FinalIndex<<"]="<<-TranslationPhase<<", embeddingPhase="<<Polar(InitialEmbeddingPhase-FinalEmbeddingPhase)<<endl;
 #endif
 
-			  FinalIndex = this->EncodeSublatticeIndex(i-1, j, K1, K2, TranslationPhase);
+			  FinalIndex = this->EncodeSublatticeIndex(i+1, j, K1, K2, TranslationPhase);
 			  FinalEmbeddingPhase=this->GetEmbeddingPhase(FinalIndex, K1, K2);
 			  if (InitialIndex>=FinalIndex)
 			    TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, FinalIndex, -TranslationPhase*Polar(InitialEmbeddingPhase-FinalEmbeddingPhase));
@@ -218,7 +178,7 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIn
 			  cout << "H["<<InitialIndex<<"->"<<FinalIndex<<"]="<<-TranslationPhase<<", embeddingPhase="<<Polar(InitialEmbeddingPhase-FinalEmbeddingPhase)<<endl;
 #endif
 			  
-			  FinalIndex = this->EncodeSublatticeIndex(i, j+1, K1, K2, TranslationPhase);
+			  FinalIndex = this->EncodeSublatticeIndex(i, j-1, K1, K2, TranslationPhase);
 			  FinalEmbeddingPhase=this->GetEmbeddingPhase(FinalIndex, K1, K2);
 			  if (InitialIndex>=FinalIndex)
 			    TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, FinalIndex, -TranslationPhase*Conj(Phase)*Polar(InitialEmbeddingPhase-FinalEmbeddingPhase));
@@ -226,10 +186,26 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIn
 			  cout << "H["<<InitialIndex<<"->"<<FinalIndex<<"]="<<-TranslationPhase*Conj(Phase)<<", embeddingPhase="<<Polar(InitialEmbeddingPhase-FinalEmbeddingPhase)<<endl;
 #endif
 
-			  FinalIndex = this->EncodeSublatticeIndex(i, j-1, K1, K2, TranslationPhase);
+			  FinalIndex = this->EncodeSublatticeIndex(i, j+1, K1, K2, TranslationPhase);
 			  FinalEmbeddingPhase=this->GetEmbeddingPhase(FinalIndex, K1, K2);
 			  if (InitialIndex>=FinalIndex)
 			    TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, FinalIndex, -TranslationPhase*Phase*Polar(InitialEmbeddingPhase-FinalEmbeddingPhase));
+#ifdef DEBUG_OUTPUT
+			  cout << "H["<<InitialIndex<<"->"<<FinalIndex<<"]="<<-TranslationPhase*Phase<<", embeddingPhase="<<Polar(InitialEmbeddingPhase-FinalEmbeddingPhase)<<endl;
+#endif
+                
+			  FinalIndex = this->EncodeSublatticeIndex(i-1, j+1, K1, K2, TranslationPhase);
+			  FinalEmbeddingPhase=this->GetEmbeddingPhase(FinalIndex, K1, K2);
+			  if (InitialIndex>=FinalIndex)
+			    TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, FinalIndex, -TranslationPhase*Phase2*Polar(InitialEmbeddingPhase-FinalEmbeddingPhase));
+#ifdef DEBUG_OUTPUT
+			  cout << "H["<<InitialIndex<<"->"<<FinalIndex<<"]="<<-TranslationPhase*Conj(Phase)<<", embeddingPhase="<<Polar(InitialEmbeddingPhase-FinalEmbeddingPhase)<<endl;
+#endif
+                
+			  FinalIndex = this->EncodeSublatticeIndex(i+1, j-1, K1, K2, TranslationPhase);
+			  FinalEmbeddingPhase=this->GetEmbeddingPhase(FinalIndex, K1, K2);
+			  if (InitialIndex>=FinalIndex)
+			    TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, FinalIndex, -TranslationPhase*Phase3*Polar(InitialEmbeddingPhase-FinalEmbeddingPhase));
 #ifdef DEBUG_OUTPUT
 			  cout << "H["<<InitialIndex<<"->"<<FinalIndex<<"]="<<-TranslationPhase*Phase<<", embeddingPhase="<<Polar(InitialEmbeddingPhase-FinalEmbeddingPhase)<<endl;
 #endif
@@ -241,9 +217,10 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIn
 		case 'x': { // needs checking
 		  for (int j=0; j<UnitCellY; ++j)
 		    {
-		      Complex Phase=Polar(1.0,-2.0*M_PI*this->FluxDensity*(double)j);
+		      
 		      for (int i=0; i<UnitCellX; ++i)
 			{
+			  Complex Phase=Polar(1.0,-M_PI*this->FluxDensity*((double)j-(double)i)*((double)i+(double)j));
 
 			  int InitialIndex = this->EncodeSublatticeIndex(i, j, K1, K2, TranslationPhase); // TranlationPhase always one, so can be discarded
 			  int FinalIndex = this->EncodeSublatticeIndex(i+1, j, K1, K2, TranslationPhase);
@@ -301,50 +278,10 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIn
 		  TmpMatrix.SetToIdentity();
 		  RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
-		  if (this->Precision==64)
-		    TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
-		  else
-		    if (this->Precision==32)
-		      TmpOneBodyHamiltonian.LapackDiagonalizeSinglePrecision(TmpDiag, TmpMatrix);
-		    else
-#ifdef __MPACK__
-		      TmpOneBodyHamiltonian.LapackDiagonalizeArbitraryPrecision(TmpDiag, TmpMatrix, this->Precision);
-#else
-		      {
-			cout << "Attention - Arbitrary precision Lapack not available! Calling double precision code.";
-			TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
-		      }
-#endif		  
+		  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
 #else
 		  TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
 #endif
-#ifdef DEBUG_OUTPUT
-		  ComplexMatrix TmpMatrix2((Matrix&)TmpMatrix);
-		  TmpMatrix2.HermitianTranspose();
-		  if (this->NbrBands < 12)
-		    cout << "U.U^+="<<endl
-			 << TmpMatrix2 * TmpMatrix;
-		  else
-		    {
-		      ComplexMatrix W = TmpMatrix2 * TmpMatrix;
-		      ComplexMatrix I(this->NbrBands, this->NbrBands, true);
-		      I.SetToIdentity();
-		      W-=I;
-		      bool unitary = true;
-		      for (int i = 0; i < this->NbrBands; ++i)
-			for (int j = 0; j < this->NbrBands; ++j)
-			  if (SqrNorm(W[i][j])>1e-26)
-			    {
-			      cout << "U.U^+ deviates from identity at ("<<i<<", "<<j<<") by "<<W[i][j]<<endl;
-			      unitary = false;
-			    }
-		      if (unitary)
-			cout << "U is unitary."<<endl;
-		      else
-			cout << "U deviates from unitarity."<<endl;
-		    }
-#endif
-
 		  this->OneBodyBasis[Index] = TmpMatrix;
 		  for (int i = 0; i < this->NbrBands; ++i)
 		    this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
@@ -371,7 +308,7 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIn
 // minStateIndex = minimum index of the state to compute
 // nbrStates = number of states to compute
 
-void TightBindingModelHofstadterSquare::CoreComputeBandStructureWithEmbedding(long minStateIndex, long nbrStates)
+void TightBindingModelHofstadterTriangular::CoreComputeBandStructureWithEmbedding(long minStateIndex, long nbrStates)
 {
   /// @note this function is deprecated: CoreComputeBandStructure now uses the embedding set in 2DAbstractTightBindingModel.
   /// @todo calculate single-particle states using Fourier transform with respect to site position
@@ -527,7 +464,7 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructureWithEmbedding(lo
 
 // set natural embedding, i.e., at positions of a uniform lattice
 //
-void TightBindingModelHofstadterSquare::SetNaturalEmbedding()
+void TightBindingModelHofstadterTriangular::SetNaturalEmbedding()
 {
   Complex phase;
   this->EmbeddingX.Resize(UnitCellX*UnitCellY);
@@ -541,12 +478,11 @@ void TightBindingModelHofstadterSquare::SetNaturalEmbedding()
 	this->EmbeddingX[sublattice] = i*invX;
 	this->EmbeddingY[sublattice] = j*invY;
       }
-  this->UsingNaturalEmbedding=true;
 }
 
 
 // nbrFluxQuanta = number of quanta of flux piercing the unit cell
-void TightBindingModelHofstadterSquare::SetNbrFluxQuanta(int nbrFluxQuanta)
+void TightBindingModelHofstadterTriangular::SetNbrFluxQuanta(int nbrFluxQuanta)
 {
   this->NbrFluxQuanta = nbrFluxQuanta;
   this->FluxDensity = ((double)NbrFluxQuanta)/this->NbrBands;
@@ -558,10 +494,12 @@ void TightBindingModelHofstadterSquare::SetNbrFluxQuanta(int nbrFluxQuanta)
     case 'x':
       this->LxTranslationPhase = 1.0;  // no phase for translating in the y-direction in Landau gauge...
       this->LyTranslationPhase = Polar(1.0, 2.0*M_PI*FluxDensity*this->UnitCellY);
+          
       cout << "'x-axis' gauge: LyTranslationPhase= exp(I*"<<2.0*M_PI*FluxDensity*this->UnitCellY<<")="<<LyTranslationPhase<<endl;
       break;
     case 'y':
-      this->LxTranslationPhase = Polar(1.0, -2.0*M_PI*FluxDensity*this->UnitCellX);
+    
+      this->LxTranslationPhase = Polar(1.0, 2.0*M_PI*FluxDensity*this->UnitCellX);
       this->LyTranslationPhase = 1.0;  // no phase for translating in the y-direction in Landau gauge...
       cout << "'y-axis' gauge: LxTranslationPhase= exp(I*"<<-2.0*M_PI*FluxDensity*this->UnitCellX<<")="<<LxTranslationPhase<<endl;
       break;
@@ -580,7 +518,7 @@ void TightBindingModelHofstadterSquare::SetNbrFluxQuanta(int nbrFluxQuanta)
 // KY = current momentum in y-direction
 // translationPhase = phase factor associated with any crossings of unit cell boundary
 //
-int TightBindingModelHofstadterSquare::EncodeSublatticeIndex(int posx, int posy, double KX, double KY, Complex &translationPhase)
+int TightBindingModelHofstadterTriangular::EncodeSublatticeIndex(int posx, int posy, double KX, double KY, Complex &translationPhase)
 {
   /// @note this function overloads a virtual function with the same name, but different signature.
   //cout << "Encoding " << posx<<", "<<posy<<": ";
@@ -631,7 +569,7 @@ int TightBindingModelHofstadterSquare::EncodeSublatticeIndex(int posx, int posy,
   for (int x=1;x<=posx; ++x)
     translationPhase*=tmpPhase;
   translationPhase*=Polar(1.0, KY*numYTranslations);
-//  cout << "tX="<<numXTranslations<< ", tY="<<numYTranslations<<", translationPhase= " <<translationPhase<<endl;
+  //  cout << "tX="<<numXTranslations<< ", tY="<<numYTranslations<<", translationPhase= " <<translationPhase<<endl;
   return rst;
 }
 
@@ -642,7 +580,7 @@ int TightBindingModelHofstadterSquare::EncodeSublatticeIndex(int posx, int posy,
 // 
 // return value = tight binding eigenvectors
 
-ComplexMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingEigenstates()
+ComplexMatrix TightBindingModelHofstadterTriangular::GetRealSpaceTightBindingEigenstates()
 {
   double LogTranslationPhaseX= -2.0*M_PI*this->FluxDensity*this->UnitCellX;
   ComplexMatrix EigenStates(this->NbrBands *  this->NbrStatePerBand,this->NbrBands *  this->NbrStatePerBand ,true);
@@ -655,17 +593,15 @@ ComplexMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingEigenst
     {
       int BandNumber = i/this->NbrStatePerBand;
       int MomentumIndex = i%this->NbrStatePerBand;
-      
+ 
       this->GetLinearizedMomentumIndex(MomentumIndex,Kx,Ky);
-      
+
       K1 = this->KxFactor*(((double) Kx) + this->GammaX);
       K2 = this->KyFactor*(((double) Ky) + this->GammaY);
       for(int j = 0; j <this->NbrBands *  this->NbrStatePerBand;j++) 
 	{ 
 	  this->GetRealSpaceTightBindingLinearizedIndex(j, PosXUnitCell, PosYUnitCell, OrbitalIndex);
-
 	  int TotalPosY = PosYUnitCell*this->UnitCellY + OrbitalIndex/this->UnitCellX;
-
 	  EigenStates[i][j] = this->OneBodyBasis[MomentumIndex][BandNumber][OrbitalIndex] * Phase(K1*PosXUnitCell + K2*PosYUnitCell)* Phase(PosXUnitCell* LogTranslationPhaseX*TotalPosY) ;
 	}
     }
@@ -680,28 +616,28 @@ ComplexMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingEigenst
 
 ComplexMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingEigenstates()
 {
-  ComplexMatrix EigenStates(this->NbrBands *  this->NbrStatePerBand,this->NbrBands *  this->NbrStatePerBand ,true);
-  int Kx;  int Ky;
-  int K1;  int K2;
-  int OrbitalIndex = 0;
-  int UnitCellsX = 0;
-  int UnitCellsY = 0;
-  for(int i = 0; i <this->NbrBands *  this->NbrStatePerBand;i++)
-     {
-        int BandNumber = i/this->NbrStatePerBand;
-        int MomentumIndex = i%this->NbrStatePerBand;
+ComplexMatrix EigenStates(this->NbrBands *  this->NbrStatePerBand,this->NbrBands *  this->NbrStatePerBand ,true);
+int Kx;  int Ky;
+int K1;  int K2;
+int OrbitalIndex = 0;
+int UnitCellsX = 0;
+int UnitCellsY = 0;
+for(int i = 0; i <this->NbrBands *  this->NbrStatePerBand;i++)
+{
+int BandNumber = i/this->NbrStatePerBand;
+int MomentumIndex = i%this->NbrStatePerBand;
  
-   this->GetLinearizedMomentumIndex(MomentumIndex,Kx,Ky);
+this->GetLinearizedMomentumIndex(MomentumIndex,Kx,Ky);
 
-   K1 = this->KxFactor*(((double) Kx) + this->GammaX);
-   K2 = this->KyFactor*(((double) Ky) + this->GammaY);
-  for(int j = 0; j <this->NbrBands *  this->NbrStatePerBand;j++) 
-  { 
-    this->GetRealSpaceTightBindingLinearizedIndex(j, UnitCellsX, UnitCellsY, OrbitalIndex);
-    EigenStates[i][j] = this->OneBodyBasis[MomentumIndex][BandNumber][OrbitalIndex] * Phase(K1*UnitCellsX + K2*UnitCellsY);
-  }
-  }
-  return EigenStates;
+K1 = this->KxFactor*(((double) Kx) + this->GammaX);
+K2 = this->KyFactor*(((double) Ky) + this->GammaY);
+for(int j = 0; j <this->NbrBands *  this->NbrStatePerBand;j++) 
+{ 
+this->GetRealSpaceTightBindingLinearizedIndex(j, UnitCellsX, UnitCellsY, OrbitalIndex);
+EigenStates[i][j] = this->OneBodyBasis[MomentumIndex][BandNumber][OrbitalIndex] * Phase(K1*UnitCellsX + K2*UnitCellsY);
+}
+}
+return EigenStates;
 }
 
 */
@@ -710,14 +646,14 @@ ComplexMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingEigenst
 // 
 // return value = tight binding hamiltonian
 
-HermitianMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingHamiltonian()
+HermitianMatrix TightBindingModelHofstadterTriangular::GetRealSpaceTightBindingHamiltonian()
 {
   int* NbrConnectedOrbitals = new int [this->NbrBands];
   int** OrbitalIndices = new int* [this->NbrBands];
   int** SpatialIndices = new int* [this->NbrBands];
   Complex** HoppingAmplitudes = new Complex* [this->NbrBands];
   for(int i = 0; i < this->NbrBands; i++)
-	NbrConnectedOrbitals[i] = 4;
+    NbrConnectedOrbitals[i] = 4;
   for (int i = 0; i < this->NbrBands; ++i)
     {
       OrbitalIndices[i] = new int[NbrConnectedOrbitals[i]];
@@ -725,10 +661,10 @@ HermitianMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingHamil
       HoppingAmplitudes[i] = new Complex[NbrConnectedOrbitals[i]];
     }
 
-  
+
   int   NumXTranslations;
   int   NumYTranslations;
-  
+
   Complex translationPhase=1.0;
   Complex tmpPhase, tmpPhase2;
   switch (this->LandauGaugeAxis)
@@ -737,102 +673,105 @@ HermitianMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingHamil
 #ifdef DEBUG_OUTPUT
       cout <<" this->LxTranslationPhase  = " << this->LxTranslationPhase<<endl;
 #endif
-      
+
       for (int PosX = 0; PosX <this->UnitCellX; PosX++)
 	{
 	  Complex PhaseY = Phase(2.0*M_PI*this->FluxDensity*(double)PosX);
-	  
+
 	  for (int PosY = 0; PosY <this->UnitCellY; PosY++)
 	    {
-	     int TmpPosition =  this->EncodeSublatticeIndex(PosX, PosY,NumXTranslations,NumYTranslations,translationPhase);
-	     int TmpIndex = 0;
-	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX+1, PosY,NumXTranslations,NumYTranslations,translationPhase);
-	     SpatialIndices[TmpPosition][TmpIndex * 2] = -1*NumXTranslations;
-	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] =  -1*NumYTranslations;
-	     HoppingAmplitudes[TmpPosition][TmpIndex] = -1.0*  Phase(-this->KxFactor * this->GammaX);
+	      int TmpPosition =  this->EncodeSublatticeIndex(PosX, PosY,NumXTranslations,NumYTranslations,translationPhase);
+	      int TmpIndex = 0;
+	      OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX+1, PosY,NumXTranslations,NumYTranslations,translationPhase);
+	      SpatialIndices[TmpPosition][TmpIndex * 2] = -1*NumXTranslations;
+	      SpatialIndices[TmpPosition][(TmpIndex * 2) +1] =  -1*NumYTranslations;
+	      HoppingAmplitudes[TmpPosition][TmpIndex] = -1.0* translationPhase;
 #ifdef DEBUG_OUTPUT
-	     cout <<TmpPosition<< " " << OrbitalIndices[TmpPosition][TmpIndex]<< " " << SpatialIndices[TmpPosition][TmpIndex * 2]<< " " <<SpatialIndices[TmpPosition][(TmpIndex * 2)+1]<<" "<<HoppingAmplitudes[TmpPosition][TmpIndex]<<endl;
+	      cout <<TmpPosition<< " " << OrbitalIndices[TmpPosition][TmpIndex]<< " " << SpatialIndices[TmpPosition][TmpIndex * 2]<< " " <<SpatialIndices[TmpPosition][(TmpIndex * 2)+1]<<" "<<HoppingAmplitudes[TmpPosition][TmpIndex]<<endl;
 #endif
-	     ++TmpIndex;
-	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX, PosY+1,NumXTranslations,NumYTranslations,translationPhase);
-	     SpatialIndices[TmpPosition][TmpIndex * 2] = -1*NumXTranslations;
-	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = -1*NumYTranslations;
-	     HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0*PhaseY*  Phase(-this->KyFactor * this->GammaY);
+	      ++TmpIndex;
+	      OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX, PosY+1,NumXTranslations,NumYTranslations,translationPhase);
+	      SpatialIndices[TmpPosition][TmpIndex * 2] = -1*NumXTranslations;
+	      SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = -1*NumYTranslations;
+	      HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0*Conj(PhaseY)*translationPhase;
 #ifdef DEBUG_OUTPUT
-	     cout <<TmpPosition<< " " << OrbitalIndices[TmpPosition][TmpIndex]<< " " << SpatialIndices[TmpPosition][TmpIndex * 2]<< " " <<SpatialIndices[TmpPosition][(TmpIndex * 2)+1]<<" "<<HoppingAmplitudes[TmpPosition][TmpIndex]<<endl;
+	      cout <<TmpPosition<< " " << OrbitalIndices[TmpPosition][TmpIndex]<< " " << SpatialIndices[TmpPosition][TmpIndex * 2]<< " " <<SpatialIndices[TmpPosition][(TmpIndex * 2)+1]<<" "<<HoppingAmplitudes[TmpPosition][TmpIndex]<<endl;
 #endif
-	     
-	     ++TmpIndex;
-	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX-1, PosY,NumXTranslations,NumYTranslations, translationPhase);
-	     SpatialIndices[TmpPosition][TmpIndex * 2] = -1*NumXTranslations;
-	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = -1*NumYTranslations;
-	     HoppingAmplitudes[TmpPosition][TmpIndex] = -1.0 *  Phase(this->KxFactor * this->GammaX);;
+
+	      ++TmpIndex;
+	      OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX-1, PosY,NumXTranslations,NumYTranslations, translationPhase);
+	      SpatialIndices[TmpPosition][TmpIndex * 2] = -1*NumXTranslations;
+	      SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = -1*NumYTranslations;
+	      HoppingAmplitudes[TmpPosition][TmpIndex] = -1.0* translationPhase;
 #ifdef DEBUG_OUTPUT
-	     cout <<TmpPosition<< " " << OrbitalIndices[TmpPosition][TmpIndex]<< " " << SpatialIndices[TmpPosition][TmpIndex * 2]<< " " <<SpatialIndices[TmpPosition][(TmpIndex * 2)+1]<<" "<<HoppingAmplitudes[TmpPosition][TmpIndex]<<endl;
+	      cout <<TmpPosition<< " " << OrbitalIndices[TmpPosition][TmpIndex]<< " " << SpatialIndices[TmpPosition][TmpIndex * 2]<< " " <<SpatialIndices[TmpPosition][(TmpIndex * 2)+1]<<" "<<HoppingAmplitudes[TmpPosition][TmpIndex]<<endl;
 #endif
-	     ++TmpIndex;
-	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX, PosY-1,NumXTranslations,NumYTranslations, translationPhase);
-	     SpatialIndices[TmpPosition][TmpIndex * 2] = -1*NumXTranslations;
-	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = -1*NumYTranslations;
-	     HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0 * Conj(PhaseY)*  Phase(this->KyFactor * this->GammaY);
+	      ++TmpIndex;
+	      OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX, PosY-1,NumXTranslations,NumYTranslations, translationPhase);
+	      SpatialIndices[TmpPosition][TmpIndex * 2] = -1*NumXTranslations;
+	      SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = -1*NumYTranslations;
+	      HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0 * PhaseY* translationPhase;
 #ifdef DEBUG_OUTPUT
-	     cout <<TmpPosition<< " " << OrbitalIndices[TmpPosition][TmpIndex]<< " " << SpatialIndices[TmpPosition][TmpIndex * 2]<< " " <<SpatialIndices[TmpPosition][(TmpIndex * 2)+1]<<" "<<HoppingAmplitudes[TmpPosition][TmpIndex]<<endl;
+	      cout <<TmpPosition<< " " << OrbitalIndices[TmpPosition][TmpIndex]<< " " << SpatialIndices[TmpPosition][TmpIndex * 2]<< " " <<SpatialIndices[TmpPosition][(TmpIndex * 2)+1]<<" "<<HoppingAmplitudes[TmpPosition][TmpIndex]<<endl;
 #endif
 	    }
-       }
-     break;
-   }
-   case 'x': {
-     for (int PosY=0; PosY<this->UnitCellY; ++PosY)
-       {
-	 Complex PhaseX = Phase(-2.0*M_PI*this->FluxDensity*(double)PosY);
-	 for (int PosX=0; PosX<this->UnitCellX; ++PosX)
-	   {
-	     int TmpPosition =  this->EncodeSublatticeIndex(PosX, PosY,NumXTranslations,NumYTranslations,translationPhase);
-	     int TmpIndex = 0;
-	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX+1, PosY,NumXTranslations,NumYTranslations, translationPhase);
-	     SpatialIndices[TmpPosition][TmpIndex * 2] = NumXTranslations;
-	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = NumYTranslations;
-	     HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0*Conj(PhaseX)*  Phase(-this->KxFactor * this->GammaX);
-	     ++TmpIndex;
-	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX, PosY+1,NumXTranslations,NumYTranslations, translationPhase);
-	     SpatialIndices[TmpPosition][TmpIndex * 2] = NumXTranslations;
-	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = NumYTranslations;
-	     HoppingAmplitudes[TmpPosition][TmpIndex] = -1.0 *  Phase(-this->KyFactor * this->GammaY);
-	     ++TmpIndex;
-	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX-1, PosY,NumXTranslations,NumYTranslations, translationPhase);
-	     SpatialIndices[TmpPosition][TmpIndex * 2] = NumXTranslations;
-	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = NumYTranslations;
-	     HoppingAmplitudes[TmpPosition][TmpIndex] = -1.0 * PhaseX * Phase(this->KxFactor * this->GammaX); ;
-	     ++TmpIndex;
-	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX, PosY-1,NumXTranslations,NumYTranslations, translationPhase);
-	     SpatialIndices[TmpPosition][TmpIndex * 2] = NumXTranslations;
-	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = NumYTranslations;
-	     HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0 *  Phase(-this->KyFactor * this->GammaY);
-	     
-	   }
-       }
-     break;
-   }
-     
-   default:
-     cout << "Invalid Landau quantization axis encountered in TightBindingModelHofstadterSquare."<<endl;
-     exit(1);
-     break;
-   }
- 
- HermitianMatrix TmpMatrix = this->BuildTightBindingHamiltonianRealSpace(NbrConnectedOrbitals, OrbitalIndices, SpatialIndices, HoppingAmplitudes);
- for (int i = 0; i < this->NbrBands; ++i)
-   {
-     delete[] HoppingAmplitudes[i];
-     delete[] SpatialIndices[i];
-     delete[] OrbitalIndices[i];
-   }
- delete[] HoppingAmplitudes;
- delete[] SpatialIndices;
- delete[] OrbitalIndices;
- delete[] NbrConnectedOrbitals;
- return TmpMatrix;
+	}
+      break;
+    }
+
+
+    case 'x': {
+      for (int PosY=0; PosY<this->UnitCellY; ++PosY)
+	{
+	  Complex PhaseX = Phase(-2.0*M_PI*this->FluxDensity*(double)PosY);
+	  for (int PosX=0; PosX<this->UnitCellX; ++PosX)
+	    {
+
+	      int TmpPosition =  this->EncodeSublatticeIndex(PosX, PosY,NumXTranslations,NumYTranslations,translationPhase);
+	      int TmpIndex = 0;
+	      OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX+1, PosY,NumXTranslations,NumYTranslations, translationPhase);
+	      SpatialIndices[TmpPosition][TmpIndex * 2] = NumXTranslations;
+	      SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = NumYTranslations;
+	      HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0*Conj(PhaseX);
+	      ++TmpIndex;
+	      OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX, PosY+1,NumXTranslations,NumYTranslations, translationPhase);
+	      SpatialIndices[TmpPosition][TmpIndex * 2] = NumXTranslations;
+	      SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = NumYTranslations;
+	      HoppingAmplitudes[TmpPosition][TmpIndex] = -1.0;
+	      ++TmpIndex;
+	      OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX-1, PosY,NumXTranslations,NumYTranslations, translationPhase);
+	      SpatialIndices[TmpPosition][TmpIndex * 2] = NumXTranslations;
+	      SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = NumYTranslations;
+	      HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0*PhaseX;
+	      ++TmpIndex;
+	      OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX, PosY-1,NumXTranslations,NumYTranslations, translationPhase);
+	      SpatialIndices[TmpPosition][TmpIndex * 2] = NumXTranslations;
+	      SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = NumYTranslations;
+	      HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0;
+
+	    }
+	}
+      break;
+    }
+
+    default:
+      cout << "Invalid Landau quantization axis encountered in TightBindingModelHofstadterSquare."<<endl;
+      exit(1);
+      break;
+    }
+
+  HermitianMatrix TmpMatrix = this->BuildTightBindingHamiltonianRealSpace(NbrConnectedOrbitals, OrbitalIndices, SpatialIndices, HoppingAmplitudes);
+  for (int i = 0; i < this->NbrBands; ++i)
+    {
+      delete[] HoppingAmplitudes[i];
+      delete[] SpatialIndices[i];
+      delete[] OrbitalIndices[i];
+    }
+  delete[] HoppingAmplitudes;
+  delete[] SpatialIndices;
+  delete[] OrbitalIndices;
+  delete[] NbrConnectedOrbitals;
+  return TmpMatrix;
 }
 
 
@@ -846,7 +785,7 @@ HermitianMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingHamil
 // hoppingAmplitudes = array that gives the hopping amplitudes for each pair of connected orbitals
 // return value = tight binding hamiltonian in real space 
 
-HermitianMatrix  TightBindingModelHofstadterSquare::BuildTightBindingHamiltonianRealSpace(int* nbrConnectedOrbitals, int** orbitalIndices, int** spatialIndices, Complex** hoppingAmplitudes)
+HermitianMatrix  TightBindingModelHofstadterTriangular::BuildTightBindingHamiltonianRealSpace(int* nbrConnectedOrbitals, int** orbitalIndices, int** spatialIndices, Complex** hoppingAmplitudes)
 {
   HermitianMatrix TmpHamiltonian(this->NbrBands * this->NbrSiteX * this->NbrSiteY, true);
   ComplexMatrix TmpHamiltonian2(this->NbrBands * this->NbrSiteX * this->NbrSiteY, true);
@@ -867,8 +806,7 @@ HermitianMatrix  TightBindingModelHofstadterSquare::BuildTightBindingHamiltonian
 		  if (InitialIndex>=FinalIndex)
 		    {
 		      tmpPhase = 1.0;
-
-/*		      int Tmp = orbitalIndices[k][l] - k;
+		      int Tmp = orbitalIndices[k][l] - k;
 		      if( ( (orbitalIndices[k][l]%this->UnitCellX - k%this->UnitCellX) ==0  ) && (spatialIndices[k][l << 1]==0 ) )
 			{
 			  if( spatialIndices[k][(l << 1) + 1] >= 0)
@@ -879,16 +817,33 @@ HermitianMatrix  TightBindingModelHofstadterSquare::BuildTightBindingHamiltonian
 			      for (int p=0; p < i; p++)
 				tmpPhase*=this->LxTranslationPhase;
 			    }
-			}*/
+			}
+
+		      /*                  if( ( (orbitalIndices[k][l]%this->UnitCellX - k%this->UnitCellX) ==0  ) && (spatialIndices[k][l << 1]==0 ) )
+					  {
+					  if( spatialIndices[k][(l << 1) + 1] >= 0)
+					  for (int p=0; p < i; p++)
+					  tmpPhase*=this->LxTranslationPhase;
+					  else
+					  {
+					  for (int p=0; p < i; p++)
+					  tmpPhase*=Conj(this->LxTranslationPhase);
+					  }
+					  }
+
+		      */
 
 		      if( NumXTranslations>0)
-			tmpPhase*= Phase(2.0*M_PI*this->FluxDensity*this->NbrSiteX*this->UnitCellX*(orbitalIndices[k][l]/this->UnitCellX));
-		      if( NumXTranslations<0)
 			tmpPhase*= Phase(-2.0*M_PI*this->FluxDensity*this->NbrSiteX*this->UnitCellX*(orbitalIndices[k][l]/this->UnitCellX));
+		      if( NumXTranslations<0)
+			tmpPhase*= Phase(2.0*M_PI*this->FluxDensity*this->NbrSiteX*this->UnitCellX*(orbitalIndices[k][l]/this->UnitCellX));
 
+      
 		      int TmpX = spatialIndices[k][l << 1] + i;
 		      int TmpY = spatialIndices[k][(l << 1)+1] + j;
 		      TmpHamiltonian.AddToMatrixElement(InitialIndex, FinalIndex, hoppingAmplitudes[k][l]*tmpPhase);
+
+
 #ifdef DEBUG_OUTPUT
 		      cout <<"x = " <<i<< " y = " <<j <<" k = " <<k<< " going to X = " <<  TmpX  << " Y = "<<TmpY<<" index "<< orbitalIndices[k][l]<<" Coefficient" << hoppingAmplitudes[k][l]*tmpPhase<<"NumTranslation X = "<<NumXTranslations <<endl;
 #endif
@@ -900,200 +855,3 @@ HermitianMatrix  TightBindingModelHofstadterSquare::BuildTightBindingHamiltonian
   return TmpHamiltonian;
 }
 
-
-// compute the description of the density-density interaction for the unit cell at the origin
-//
-// nbrInteractingOrbitals = number of orbitals interacting with each orbital within the unit cell at the origin through a density-density term
-// interactingOrbitalsOrbitalIndices = orbital indices of the orbitals interacting with each orbital within the unit cell at the origin through a density-density term
-// interactingOrbitalsSpatialIndices = spatial indices (sorted as 2 consecutive integers) of the orbitals interacting with each orbital within the unit cell at the origin through a density-density term
-// interactingOrbitalsPotentials = intensity of each density-density term 
-// bosonFlag = true if we are dealing with bosons
-// uPotential = nearest neighbor (for fermions) or on-site (for bosons) interaction amplitude
-// vPotential = next nearest neighbor (for fermions) or nearest neighbor (for bosons) interaction amplitude
-
-void TightBindingModelHofstadterSquare::ComputeInteractingOrbitals(int*& nbrInteractingOrbitals, int**& interactingOrbitalsOrbitalIndices,
-							   int**& interactingOrbitalsSpatialIndices, double**& interactingOrbitalsPotentials,
-							   bool bosonFlag, double uPotential, double vPotential)
-{
-  nbrInteractingOrbitals = new int[this->GetNbrBands()];
-  interactingOrbitalsOrbitalIndices = new int*[this->GetNbrBands()];
-  interactingOrbitalsSpatialIndices = new int*[this->GetNbrBands()];
-  interactingOrbitalsPotentials = new double*[this->GetNbrBands()];
-  int p, q;
-  int numXTranslations, numYTranslations;
-  Complex TranslationPhase;
-  if (bosonFlag == false)
-    {
-
-      // bosons
-      // allocate maximum number of interacting orbitals per site
-      for (int s=0; s<this->GetNbrBands(); ++s)       
-	nbrInteractingOrbitals[s] = 4; // four NN interactions
-      if (vPotential != 0.0)
-	for (int s=0; s<this->GetNbrBands(); ++s)       
-	  nbrInteractingOrbitals[s] += 4; // four additional terms for NNN interactions
-      for (int s=0; s<this->GetNbrBands(); ++s)
-	{
-	  interactingOrbitalsOrbitalIndices[s] = new int[nbrInteractingOrbitals[s]];
-	  interactingOrbitalsSpatialIndices[s] = new int[nbrInteractingOrbitals[s] * 2];
-	  interactingOrbitalsPotentials[s] = new double[nbrInteractingOrbitals[s]];
-
-	  nbrInteractingOrbitals[s] = 0;
-      
-	  // define NN interactions
-	  if (uPotential != 0.0)
-	    {
-	      int i,j;
-	      this->DecodeSublatticeIndex(s, i, j);
-
-	      int nbrV = 4;
-	      int dX[4] = {1,-1,0,0};
-	      int dY[4] = {0,0,1,-1};
-	      
-	      for (int nn=0; nn<nbrV; ++nn)
-		{
-		  int s2=this->EncodeSublatticeIndex(i+dX[nn], j+dY[nn], numXTranslations, numYTranslations, TranslationPhase);
-		  if (s2>=s)
-		    {
-		      this->GetRealSpaceIndex(-numXTranslations, -numYTranslations, p , q);
-	      
-		      interactingOrbitalsOrbitalIndices[s][nbrInteractingOrbitals[s]] = s2;
-		      interactingOrbitalsSpatialIndices[s][2 * nbrInteractingOrbitals[s]] = p;
-		      interactingOrbitalsSpatialIndices[s][(2 * nbrInteractingOrbitals[s]) + 1] = q;
-		      if (s==s2)
-			interactingOrbitalsPotentials[s][nbrInteractingOrbitals[s]] = 0.5*uPotential;
-		      else
-			interactingOrbitalsPotentials[s][nbrInteractingOrbitals[s]] = uPotential;
-		      ++nbrInteractingOrbitals[s];
-		    }
-		}
-	    }
-
-
-	  if (vPotential != 0.0)
-	    {
-	      int i,j;
-	      this->DecodeSublatticeIndex(s, i, j);
-
-	      int nbrV = 4;
-	      int dX[4] = {1,-1,0,0};
-	      int dY[4] = {0,0,1,-1};
-	      
-	      for (int nn=0; nn<nbrV; ++nn)
-		{
-		  int s2=this->EncodeSublatticeIndex(i+dX[nn], j+dY[nn], numXTranslations, numYTranslations, TranslationPhase);
-		  if (s2>=s)
-		    {
-		      this->GetRealSpaceIndex(-numXTranslations, -numYTranslations, p , q);
-	      
-		      interactingOrbitalsOrbitalIndices[s][nbrInteractingOrbitals[s]] = s2;
-		      interactingOrbitalsSpatialIndices[s][2 * nbrInteractingOrbitals[s]] = p;
-		      interactingOrbitalsSpatialIndices[s][(2 * nbrInteractingOrbitals[s]) + 1] = q;
-		      if (s==s2)
-			interactingOrbitalsPotentials[s][nbrInteractingOrbitals[s]] = 0.5*vPotential;
-		      else
-			interactingOrbitalsPotentials[s][nbrInteractingOrbitals[s]] = vPotential;
-		      ++nbrInteractingOrbitals[s];
-		    }
-		}
-	    }
-	}
-    }
-  else
-    { // bosons
-      // allocate maximum number of interacting orbitals per site
-      for (int s=0; s<this->GetNbrBands(); ++s)       
-	nbrInteractingOrbitals[s] = 1; // one interaction for onsite term
-      if (vPotential != 0.0)
-	for (int s=0; s<this->GetNbrBands(); ++s)       
-	  nbrInteractingOrbitals[s] += 4; // four terms for NN interactions
-      for (int s=0; s<this->GetNbrBands(); ++s)       
-	{
-	  interactingOrbitalsOrbitalIndices[s] = new int[nbrInteractingOrbitals[s]];
-	  interactingOrbitalsSpatialIndices[s] = new int[nbrInteractingOrbitals[s] * 2];
-	  interactingOrbitalsPotentials[s] = new double[nbrInteractingOrbitals[s]];
-
-	  nbrInteractingOrbitals[s] = 0;
-      
-	  // define onsite interactions
-	  interactingOrbitalsOrbitalIndices[s][nbrInteractingOrbitals[s]] = s;
-	  this->GetRealSpaceIndex(0, 0, p, q);
-	  interactingOrbitalsSpatialIndices[s][2 * nbrInteractingOrbitals[s]] = p;
-	  interactingOrbitalsSpatialIndices[s][(2 * nbrInteractingOrbitals[s]) + 1] = q;
-	  interactingOrbitalsPotentials[s][nbrInteractingOrbitals[s]] = 0.5*uPotential;
-	  ++nbrInteractingOrbitals[s];
-
-	  if (vPotential != 0.0)
-	    {
-	      int i,j;
-	      this->DecodeSublatticeIndex(s, i, j);
-	      
-	      int nbrV = 4;
-	      int dX[4] = {1,-1,0,0};
-	      int dY[4] = {0,0,1,-1};
-	      
-	      for (int nn=0; nn<nbrV; ++nn)
-		{
-		  int s2=this->EncodeSublatticeIndex(i+dX[nn], j+dY[nn], numXTranslations, numYTranslations, TranslationPhase);
-		  if (s2>=s)
-		    {
-		      this->GetRealSpaceIndex(-numXTranslations, -numYTranslations, p , q);
-	      
-		      interactingOrbitalsOrbitalIndices[s][nbrInteractingOrbitals[s]] = s2;
-		      interactingOrbitalsSpatialIndices[s][2 * nbrInteractingOrbitals[s]] = p;
-		      interactingOrbitalsSpatialIndices[s][(2 * nbrInteractingOrbitals[s]) + 1] = q;
-		      if (s==s2)
-			interactingOrbitalsPotentials[s][nbrInteractingOrbitals[s]] = 0.5*vPotential;
-		      else
-			interactingOrbitalsPotentials[s][nbrInteractingOrbitals[s]] = vPotential;
-		      ++nbrInteractingOrbitals[s];
-		    }
-		}
-	    }
-	}
-    }
-}
-
-// returns the single-particle wavefunction according to the definition phi_{n,k}=u_{n,alpha}(k)*exp{i k.r}
-// deducing the appropriate sublattice value alpha from the position
-//
-// FunctionValue[out] = return value phi_{nk}(r)
-// Position = overall position vector relative to the origin
-// indexK = linearised index of momentum sector
-// bandIndex = band index
-// return value = single-particle wavefunction in first argument
-void TightBindingModelHofstadterSquare::GetFunctionValue(Complex& FunctionValue, RealVector& Position, int indexK, int bandIndex)
-{
-  int x = ( int ) ( Position[0] );
-  int y = ( int ) ( Position[1] );
-  Complex tmpC = 0.0;
-  int alpha = this->EncodeSublatticeIndex (x, y, 0.0, 0.0, tmpC);
-  int subX, subY;
-  this->DecodeSublatticeIndex (alpha, subX, subY );
-  int Rx=(x-subX)/this->UnitCellX;
-  int Ry=(y-subY)/this->UnitCellY;
-  // double check that the above algebra is correct:
-  assert( fabs(Rx*this->UnitCellX+subX - Position[0]) < 1e-13);
-  assert( fabs(Ry*this->UnitCellY+subY - Position[1]) < 1e-13);
-  this->GetFunctionValue(FunctionValue, Rx, Ry, alpha, indexK, bandIndex);
-}
-
-// returns the single-particle wavefunction according to the definition phi_{n,k}=u_{n,alpha}(k)*exp{i k.r}
-// defining position in multiples of lattice vectors and sublattice index
-// 
-// FunctionValue[out] = return value phi_{nk}(r)
-// Rx, Ry, alpha = defining position via r=Rx UnitCellX ex + Ry UnitCellY ey + rho_alpha
-// indexK = linearised index of momentum sector
-// bandIndex = band index
-// return value = single-particle wavefunction in first argument
-void TightBindingModelHofstadterSquare::GetFunctionValue(Complex& FunctionValue, int Rx, int Ry, int alpha, int indexK, int bandIndex)
-{
-  int kx=0, ky=0;
-  this->GetLinearizedMomentumIndex(indexK, kx, ky);
-  double Kx=kx*this->KxFactor;
-  double Ky=ky*this->KyFactor;   
-  double Arg = (Kx * (Rx + EmbeddingX[alpha])) + (Ky * (Ry + EmbeddingY[alpha]));
-  FunctionValue = Conj(this->GetOneBodyMatrix(indexK).GetMatrixElement(alpha, bandIndex)*Polar(Arg));
-  //if (i == 0 && alpha == 0 && bandIndex == 0) cout << "===>>> Polar(Arg) = " << Polar(Arg) << " this->GetOneBodyMatrix(i).GetMatrixElement(alpha, bandIndex) = " << this->GetOneBodyMatrix(i).GetMatrixElement(alpha, bandIndex) << endl;
-  return;
-}

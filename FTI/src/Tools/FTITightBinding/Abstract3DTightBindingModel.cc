@@ -54,6 +54,16 @@ Abstract3DTightBindingModel::~Abstract3DTightBindingModel()
 {
 }
 
+// get the size (length / area / volume ... ) of the unit cell
+//
+// return value =  size
+double Abstract3DTightBindingModel::GetUnitCellSize()
+{
+  cout << "Unit cell size (volume) not yet defined in 3D"<<endl;
+  return 0.0;
+}
+
+
 // write an header that describes the tight binding model
 // 
 // output = reference on the output stream

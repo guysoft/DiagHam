@@ -60,6 +60,8 @@ Generic2DTightBindingModel::Generic2DTightBindingModel(char* fileName)
   File.close();
 
   File.open(fileName, ios::binary | ios::in);
+
+  // data written before header5
   ReadLittleEndian(File, this->NbrBands);
   ReadLittleEndian(File, this->NbrStatePerBand);
   this->Inversion.Resize(this->NbrBands, this->NbrBands);
@@ -70,52 +72,10 @@ Generic2DTightBindingModel::Generic2DTightBindingModel(char* fileName)
 	ReadLittleEndian(File, TmpInversion);
 	this->Inversion[i][j] = TmpInversion;
       }
-  int HeaderSize = -1;
-  ReadLittleEndian(File, HeaderSize);
-  int CorrectDimension = 2;
-  int CorrectHeaderSize = (((this->NbrBands + 2) * CorrectDimension + 1) * sizeof(double)) + ((CorrectDimension + 1) * sizeof(int));
-  if (HeaderSize >= CorrectHeaderSize)
-    {
-      int TmpDimension = -1;
-      ReadLittleEndian(File, TmpDimension);
-      HeaderSize -= sizeof(int);
-      if (TmpDimension == CorrectDimension)
-	{
-	  ReadLittleEndian(File, this->NbrSiteX);
-	  ReadLittleEndian(File, this->KxFactor);
-	  ReadLittleEndian(File, this->GammaX);	 
-          this->EmbeddingX.Resize(this->NbrBands);
-          for (int i = 0; i < this->NbrBands; ++i)
-            {
-              double Tmp = 0.0;
-              ReadLittleEndian(File, Tmp);
-              this->EmbeddingX[i] = Tmp;
-            }
-	  ReadLittleEndian(File, this->NbrSiteY);
-	  ReadLittleEndian(File, this->KyFactor);
-	  ReadLittleEndian(File, this->GammaY);	  
-          this->EmbeddingY.Resize(this->NbrBands);
-          for (int i = 0; i < this->NbrBands; ++i)
-            {
-              double Tmp = 0.0;
-              ReadLittleEndian(File, Tmp);
-              this->EmbeddingY[i] = Tmp;
-            }
-	  ReadLittleEndian(File, this->TwistAngle);
-          HeaderSize -= (CorrectHeaderSize - sizeof(int));
-	}
-      else
-	{
-	  cout << "error : " << fileName << " does not contain a valid 2D band structure" << endl;
-	  this->NbrBands = 0;
-	  this->NbrStatePerBand = 0;
-	  File.close();
-	  return;
-	}
-      if (HeaderSize > 0) 
-	File.seekg (HeaderSize, ios::cur);
-    }
-  else
+
+  // processing generic read instructions
+  int HeaderSize = this->ReadHeader(File);
+  if (HeaderSize<0)
     {
       cout << "error : " << fileName << " does not contain a valid 2D band structure" << endl;
       this->NbrBands = 0;
@@ -123,28 +83,9 @@ Generic2DTightBindingModel::Generic2DTightBindingModel(char* fileName)
       File.close();
       return;
     }
-  this->EnergyBandStructure = new double*[this->NbrBands];
-  for (int i = 0; i < this->NbrBands; ++i)
-    {
-      this->EnergyBandStructure[i] = new double[this->NbrStatePerBand];
-      for (int j = 0; j < this->NbrStatePerBand; ++j)
-	{
-	  ReadLittleEndian(File, this->EnergyBandStructure[i][j]);
-	}
-    }
-  if (FileSize == ((sizeof(double) * this->NbrStatePerBand * this->NbrBands) + sizeof(long) + sizeof(int) + sizeof(int) + (this->NbrBands * this->NbrBands * sizeof(Complex)) + HeaderSize))
-    {
-      this->OneBodyBasis = 0;
-    }
-  else
-    {
-      this->OneBodyBasis = new ComplexMatrix [this->NbrStatePerBand];
-      for (int j = 0; j < this->NbrStatePerBand; ++j)	
-	{
-	  this->OneBodyBasis[j].ReadMatrix(File);
-	}     
-    }
+  this->ReadEigensystem(File, HeaderSize, FileSize);
   File.close();
+
   this->Nx1 = this->NbrSiteX;
   this->Ny1 = 0;
   this->Nx2 = 0;
@@ -154,8 +95,6 @@ Generic2DTightBindingModel::Generic2DTightBindingModel(char* fileName)
     this->ProjectedMomenta[i] = new double [2];
   this->ComputeAllProjectedMomenta();
 }
-
-
 
 // destructor
 //
