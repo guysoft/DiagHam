@@ -674,7 +674,7 @@ RealVector operator - (RealVector& V1)
 // V2 = second vector
 // return value = result of scalar product
 
-double operator * (RealVector& V1, RealVector& V2)
+double operator * (const RealVector& V1, const RealVector& V2)
 {
   V1.Localize();
   V2.Localize();
@@ -3555,6 +3555,36 @@ RealVector& RealVector::ReverseVector()
     }
   return *this;
 }
+
+// calculate the cross product of e_z with a two dimensional vector
+RealVector Cross(RealVector& V)
+{
+  if (V.GetVectorDimension()==2)
+    {
+      RealVector Rst(2);
+      Rst[0] = -V[1];
+      Rst[1] = V[0];
+      return Rst;
+    }
+  else return RealVector();
+}
+
+// calculate the cross product of two three-dimensional vectors
+// V1 = first vector
+// V2 = second vector
+RealVector Cross(RealVector& V1, RealVector& V2)
+{
+  if ((V1.GetVectorDimension()==3) && (V2.GetVectorDimension()==3))
+    {
+      RealVector Rst(3);
+      Rst[0] = V1[1]*V2[2] - V1[2]*V2[1];
+      Rst[1] = V1[2]*V2[0] - V1[0]*V2[2];
+      Rst[2] = V1[0]*V2[1] - V1[1]*V2[0];
+      return Rst;
+    }
+  else return RealVector();
+}
+
 
 // Output Stream overload
 //

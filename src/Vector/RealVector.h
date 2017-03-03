@@ -94,6 +94,10 @@ class RealVector : public Vector
   friend RealMatrix operator * (double x, const RealMatrix& M);
   friend RealMatrix operator / (const RealMatrix& M, double x);
   friend RealMatrix operator / (const RealMatrix& M1, const RealDiagonalMatrix& M2);
+
+  friend RealVector Cross(RealVector& V);
+  friend RealVector Cross(RealVector& V1, RealVector& V2);
+
   friend ostream& operator << (ostream& Str, const RealMatrix& P);
 #ifdef USE_OUTPUT
   friend MathematicaOutput& operator << (MathematicaOutput& Str, const RealMatrix& P);
@@ -249,7 +253,7 @@ class RealVector : public Vector
   // V1 = first vector
   // V2 = second vector
   // return value = result of scalar product
-  friend double operator * (RealVector& V1, RealVector& V2);
+  friend double operator * (const RealVector& V1, const RealVector& V2);
 
   // do part of the scalar product between two vectors in a given range of indices
   //
