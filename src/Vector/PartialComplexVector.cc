@@ -168,7 +168,7 @@ PartialComplexVector::PartialComplexVector(MPI::Intracomm& communicator, int id,
   this->VectorType = Vector::ComplexDatas | Vector::PartialData;
   int TmpArray[5];
   if (broadcast == true)
-    communicator.Bcast(TmpArray, 5, MPI::INT, id);      
+    communicator.Bcast(TmpArray, 5, MPI::INT, id);
   else
     communicator.Recv(TmpArray, 5, MPI::INT, id, 1);   
   this->Dimension = TmpArray[0];
@@ -182,17 +182,29 @@ PartialComplexVector::PartialComplexVector(MPI::Intracomm& communicator, int id,
 	this->Components[i] = 0.0;
       }
   else
-    if (TmpArray[2] == 2)
-      {
-	if (broadcast == true)
-	  {
-	    communicator.Bcast(this->Components, 2*this->Dimension, MPI::DOUBLE, id);      
-	  }
-	else
-	  {
-	    communicator.Recv(this->Components, 2*this->Dimension, MPI::DOUBLE, id, 1);   
-	  }
-      }
+    {
+      if (TmpArray[2] == 2)
+	{
+	  if (broadcast == true)
+	    {
+	      communicator.Bcast(this->Components, 2*this->Dimension, MPI::DOUBLE, id);      
+	    }
+	  else
+	    {
+	      communicator.Recv(this->Components, 2*this->Dimension, MPI::DOUBLE, id, 1);   
+	    }
+	}
+      else
+	{
+	  if (TmpArray[2] == 3) // using Scatterv
+	    communicator.Scatterv(/*sendbuf*/ NULL, /* *sendcounts */NULL, /* *displs */ NULL, /*sendtype*/ 0, this->Components, 2*this->Dimension, MPI::DOUBLE, id);
+	  else
+	    {
+	      cout << "Unknown mode for creating scattered data"<<endl;
+	      exit(1);
+	    }
+	}
+    }
   this->TrueDimension = this->Dimension;
   this->Flag.Initialize();
 }

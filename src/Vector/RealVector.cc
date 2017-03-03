@@ -674,7 +674,7 @@ RealVector operator - (RealVector& V1)
 // V2 = second vector
 // return value = result of scalar product
 
-double operator * (const RealVector& V1, const RealVector& V2)
+double operator * (RealVector& V1, RealVector& V2)
 {
   V1.Localize();
   V2.Localize();
@@ -903,7 +903,7 @@ RealVector operator - (RealVector& V1)
 // V2 = second vector
 // return value = result of scalar product
 
-double operator * (RealVector& V1, RealVector& V2)
+double operator * (const RealVector& V1, const RealVector& V2)
 {
   V1.Localize();
   V2.Localize();

@@ -451,6 +451,58 @@ Vector* Vector::ReceivePartialClone(MPI::Intracomm& communicator, int id)
   return 0;
 }
 
+
+// scatter this vector across all MPI nodes with the given load balancing information
+// 
+// communicator = reference on the communicator to use
+// mininumIndices = lowest index for each thread
+// maximumIndices = largest index for each thread
+// id = id of the process to send the vector
+// return value = reference on the current vector
+Vector& Vector::ScatterPartialClones(MPI::Intracomm& communicator, long *mininumIndices, long *maximumIndices, int id)
+{
+  switch (this->VectorType & Vector::DataTypeMask)
+    {
+    case (Vector::RealDatas):
+      return ((RealVector*) this)->ScatterPartialClones(communicator, mininumIndices, maximumIndices, id);
+      break;
+    case (Vector::ComplexDatas):
+      return ((ComplexVector*) this)->ScatterPartialClones(communicator, mininumIndices, maximumIndices, id);
+      break;
+    default:
+      return *this;
+    }
+  return *this;
+}
+
+
+// create a new vector on given MPI node which is an exact clone of the sent one but with only part of the data
+// using efficient implementation with Scatterv
+//
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which scatters the vector
+// return value = pointer to new vector 
+Vector* Vector::ReceiveScatteredClone(MPI::Intracomm& communicator, int id)
+{
+  int Type = this->VectorType;
+  if (id != communicator.Get_rank())
+    {
+      communicator.Recv(&Type, 1, MPI::INT, id, 1);  
+      switch (Type & Vector::DataTypeMask)
+	{
+	case (Vector::RealDatas):
+	  return new PartialRealVector(communicator, id, true);
+	  break;
+	case (Vector::ComplexDatas):
+	  return new PartialComplexVector(communicator, id, true);
+	  break;
+	default:
+	  return 0;
+	}
+    }
+  return 0;
+}
+
 // create a new vector on each MPI node with same size and same type but non-initialized components
 //
 // communicator = reference on the communicator to use 

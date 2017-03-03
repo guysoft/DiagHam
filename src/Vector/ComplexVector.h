@@ -896,6 +896,15 @@ class ComplexVector : public Vector
   // return value = reference on the current vector
   Vector& SendPartialClone(MPI::Intracomm& communicator, int id, int firstComponent, int nbrComponent);
 
+  // scatter this vector across all MPI nodes with the given load balancing information
+  // 
+  // communicator = reference on the communicator to use
+  // mininumIndices = lowest index for each thread
+  // maximumIndices = largest index for each thread
+  // id = id of the process to send the vector
+  // return value = reference on the current vector
+  Vector& ScatterPartialClones(MPI::Intracomm& communicator, long *mininumIndices, long *maximumIndices, int id);
+
   // create a new vector on each MPI node with same size and same type but non-initialized components
   //
   // communicator = reference on the communicator to use 

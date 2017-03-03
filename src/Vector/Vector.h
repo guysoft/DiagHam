@@ -236,12 +236,12 @@ class Vector
 
   // localize the current vector to the current process
   // 
-  virtual void Localize();
+  virtual void Localize() const;
 
   // delocalize the current vector from the current process
   // 
   // transfertFlag = indicates if the current vector datas have to sent to the vector real location
-  virtual void Delocalize(bool transfertFlag = false);
+  virtual void Delocalize(bool transfertFlag = false) const;
 
 #ifdef __MPI__
 
@@ -313,6 +313,24 @@ class Vector
   // zeroFlag = true if all coordinates have to be set to zero
   // return value = pointer to new vector 
   virtual Vector* ReceivePartialClone(MPI::Intracomm& communicator, int id);
+
+  // scatter this vector across all MPI nodes with the given load balancing information
+  // 
+  // communicator = reference on the communicator to use
+  // mininumIndices = lowest index for each thread
+  // maximumIndices = largest index for each thread
+  // id = id of the process to send the vector
+  // return value = reference on the current vector
+  Vector& ScatterPartialClones(MPI::Intracomm& communicator, long *mininumIndices, long *maximumIndices, int id);
+
+  // create a new vector on given MPI node which is an exact clone of the sent one but with only part of the data
+  // using efficient implementation with Scatterv
+  //
+  // communicator = reference on the communicator to use 
+  // id = id of the MPI process which scatters the vector
+  // return value = pointer to new vector 
+  Vector* ReceiveScatteredClone(MPI::Intracomm& communicator, int id);
+
 
   // create a new vector on each MPI node with same size and same type but non-initialized components
   //
@@ -386,7 +404,7 @@ inline void Vector::SetVectorId(int id)
 
 // localize the current vector on the current process
 // 
-inline void Vector::Localize()
+inline void Vector::Localize() const
 {
 }
 
@@ -394,7 +412,7 @@ inline void Vector::Localize()
 // 
 // transfertFlag = indicates if the current vector datas have to sent to the vector real location
 
-inline void Vector::Delocalize(bool transfertFlag)
+inline void Vector::Delocalize(bool transfertFlag) const
 {
 }
 
