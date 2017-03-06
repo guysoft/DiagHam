@@ -34,10 +34,12 @@
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
+#include "GeneralTools/Endian.h"
 
 #include <iostream>
 using std::cout;
 using std::endl;
+using std::ios;
 
 #include <cassert>
 
@@ -112,6 +114,65 @@ TightBindingModelHofstadterSquare::TightBindingModelHofstadterSquare(int nbrCell
   //this->CoreComputeBandStructureWithEmbedding(0, this->GetNbrStatePerBand());
 }
 
+
+// constructor from a saved band structure
+//
+// architecture = pointer to the architecture
+TightBindingModelHofstadterSquare::TightBindingModelHofstadterSquare(char *fileName, AbstractArchitecture *architecture)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "Cannot open the file: " << fileName << endl;
+      return;
+    }
+  File.seekg (0l, ios::end);
+  unsigned long FileSize = File.tellg ();
+  File.close();
+
+  File.open(fileName, ios::binary | ios::in);
+
+  // data written before header5
+  ReadLittleEndian(File, this->NbrBands);
+  ReadLittleEndian(File, this->NbrStatePerBand);
+  this->Inversion.Resize(this->NbrBands, this->NbrBands);
+  for (int i = 0; i < this->NbrBands; ++i)
+    for (int j = 0; j < this->NbrBands; ++j)
+      {
+	Complex TmpInversion = 0.0;
+	ReadLittleEndian(File, TmpInversion);
+	this->Inversion[i][j] = TmpInversion;
+      }
+
+  // processing generic read instructions
+  int HeaderSize = this->ReadHeader(File);
+  if (HeaderSize<0)
+    {
+      cout << "error : " << fileName << " does not contain a valid 2D band structure of a square Hofstadter model" << endl;
+      this->NbrBands = 0;
+      this->NbrStatePerBand = 0;
+      File.close();
+      return;
+    }
+  this->ReadEigensystem(File, HeaderSize, FileSize);
+  File.close();
+
+  this->Nx1 = this->NbrSiteX;
+  this->Ny1 = 0;
+  this->Nx2 = 0;
+  this->Ny2 = this->NbrSiteY;  
+  this->ProjectedMomenta = new double* [this->NbrStatePerBand];
+  for (int i = 0; i < this->NbrStatePerBand; ++i)
+    this->ProjectedMomenta[i] = new double [2];
+  this->ComputeAllProjectedMomenta();
+
+  // additional steps to initialize fields for Hofstadter model:
+  this->Architecture = architecture;
+  this->SetNbrFluxQuanta(this->NbrFluxQuanta);
+}
+
+
 // destructor
 //
 
@@ -133,6 +194,140 @@ void TightBindingModelHofstadterSquare::GetSublatticeVector(RealVector &position
   position[1]=y;
 }
 
+
+// write an header that describes the tight binding model
+// 
+// output = reference on the output stream
+// return value  = reference on the output stream
+
+ofstream& TightBindingModelHofstadterSquare::WriteHeader(ofstream& output)
+{
+  int Dimension = 2;
+
+  int HeaderSize = (((this->NbrBands + 2) * Dimension + 1) * sizeof(double)) + ((Dimension + 1) * sizeof(int));
+  // additional generic fields:
+  HeaderSize += 4*sizeof(double);
+  // additional fields in Hofstadter model square
+  HeaderSize += 4*sizeof(int) + sizeof(char) + sizeof(bool);
+
+  if (this->Inversion.GetNbrRow() == 0)
+    {
+      for (int i = 0; i < this->NbrBands; ++i)
+	for (int j = 0; j < this->NbrBands; ++j)
+          {
+	    Complex TmpInversion = (i == j);
+	    WriteLittleEndian(output, TmpInversion);
+          }
+    }
+  else
+    {
+      for (int i = 0; i < this->NbrBands; ++i)
+	for (int j = 0; j < this->NbrBands; ++j)
+          {
+	    Complex TmpInversion = this->Inversion[i][j];
+	    WriteLittleEndian(output, TmpInversion);
+          }
+    }
+  WriteLittleEndian(output, HeaderSize);
+  WriteLittleEndian(output, Dimension);
+  WriteLittleEndian(output, this->NbrSiteX);
+  WriteLittleEndian(output, this->KxFactor);
+  WriteLittleEndian(output, this->GammaX);
+  if (this->EmbeddingX.GetVectorDimension() != this->NbrBands)
+    {
+      double Tmp = 0.0;
+      for (int i = 0; i < this->NbrBands; ++i)
+	WriteLittleEndian(output, Tmp);
+    }
+  else
+    {
+      for (int i = 0; i < this->NbrBands; ++i)
+	WriteLittleEndian(output, this->EmbeddingX[i]);
+    }
+  WriteLittleEndian(output, this->NbrSiteY);
+  WriteLittleEndian(output, this->KyFactor);
+  WriteLittleEndian(output, this->GammaY);
+  if (this->EmbeddingY.GetVectorDimension() != this->NbrBands)
+    {
+      double Tmp = 0.0;
+      for (int i = 0; i < this->NbrBands; ++i)
+	WriteLittleEndian(output, Tmp);
+    }
+  else
+    {
+      for (int i = 0; i < this->NbrBands; ++i)
+	WriteLittleEndian(output, this->EmbeddingY[i]);
+    }
+  WriteLittleEndian(output, this->TwistAngle);
+  // new generic additional fields
+  // lattice vectors
+  if (this->LatticeVector1.GetVectorDimension() != 2)
+    {
+      double Tmp = 0.0;
+      for (int i = 0; i < 2; ++i)
+	WriteLittleEndian(output, Tmp);
+    }
+  else
+    {
+      for (int i = 0; i < this->NbrBands; ++i)
+	WriteLittleEndian(output, LatticeVector1[i]);
+    }
+  if (this->LatticeVector2.GetVectorDimension() != 2)
+    {
+      double Tmp = 0.0;
+      for (int i = 0; i < 2; ++i)
+	WriteLittleEndian(output, Tmp);
+    }
+  else
+    {
+      for (int i = 0; i < this->NbrBands; ++i)
+	WriteLittleEndian(output, LatticeVector2[i]);
+    }
+  // specific fields defined in Hofstadter models only:
+  WriteLittleEndian(output, this->LandauGaugeAxis); //   char
+  WriteLittleEndian(output, UnitCellX); // int
+  WriteLittleEndian(output, UnitCellY); // int
+  WriteLittleEndian(output, NbrFluxQuanta); // int
+  WriteLittleEndian(output, UsingNaturalEmbedding); // bool
+  WriteLittleEndian(output, Precision); // int
+
+  return output; 
+}
+
+
+// take a stream and read a header that describes the tight binding model
+// 
+// return value = size of header that was read (negative if unsuccessful)
+int TightBindingModelHofstadterSquare::ReadHeader(ifstream &File)
+{
+  // delegate most of the work to the abstract class
+  int HeaderSize = ::Abstract2DTightBindingModel::ReadHeader(File);
+
+  // check size of additional fields
+  if (HeaderSize != 4*sizeof(double) + 4*sizeof(int) + sizeof(char) + sizeof(bool))
+    {
+      cout << "Warning: incorrect header size in TightBindingModelHofstadterSquare"<<endl;
+      return -1;
+    }
+
+  this->LatticeVector1.Resize(2);
+  for (int i = 0; i < this->NbrBands; ++i)
+    ReadLittleEndian(File, LatticeVector1[i]);
+  this->LatticeVector2.Resize(2);
+  for (int i = 0; i < this->NbrBands; ++i)
+    ReadLittleEndian(File, LatticeVector2[i]);
+  HeaderSize -= 4*sizeof (double);
+  // specific fields defined in Hofstadter models only:
+  ReadLittleEndian(File, this->LandauGaugeAxis); //   char
+  HeaderSize -= sizeof (char);
+  ReadLittleEndian(File, UnitCellX); // int
+  ReadLittleEndian(File, UnitCellY); // int
+  ReadLittleEndian(File, NbrFluxQuanta); // int
+  ReadLittleEndian(File, UsingNaturalEmbedding); // bool
+  ReadLittleEndian(File, Precision); // int
+  HeaderSize -= 4*sizeof(int) + sizeof (bool);
+  return HeaderSize;
+}
 
 // convert absolute coordinates into lattice coordinates and sublattice index
 //

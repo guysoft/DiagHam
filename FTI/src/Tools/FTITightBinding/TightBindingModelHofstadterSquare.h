@@ -83,6 +83,12 @@ class TightBindingModelHofstadterSquare : public Abstract2DTightBindingModel
 				    double gammaX, double gammaY, 
 				    AbstractArchitecture* architecture, bool storeOneBodyMatrices = true,  bool useEmbedding = false, int precision = 64);
 
+  // constructor from a saved band structure
+  //
+  // architecture = pointer to the architecture
+  TightBindingModelHofstadterSquare(char *filename, AbstractArchitecture *architecture);
+
+
   // destructor
   //
   ~TightBindingModelHofstadterSquare();
@@ -94,6 +100,16 @@ class TightBindingModelHofstadterSquare : public Abstract2DTightBindingModel
   // sublatticeIndex = index of the sub-lattice position
   virtual void GetSublatticeVector(RealVector &position, int sublatticeIndex);
 
+  // write an header that describes the tight binding model
+  // 
+  // output = reference on the output stream
+  // return value  = reference on the output stream
+  ofstream& WriteHeader(ofstream& output);
+
+  // take a stream and read a header that describes the tight binding model
+  // 
+  // return value = size of header that was read (negative if unsuccessful)
+  int ReadHeader(ifstream &File);
 
   // convert absolute coordinates into lattice coordinates and sublattice index
   //
