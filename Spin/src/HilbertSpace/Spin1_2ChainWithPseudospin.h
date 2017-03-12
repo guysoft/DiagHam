@@ -230,6 +230,28 @@ class Spin1_2ChainWithPseudospin : public Spin1_2ChainNew
   // space = pointer to the Hilbert space where state is defined
   // return value = state in the (Kx,Ky) basis
   virtual RealVector ProjectToEffectiveSubspaceThreeToOne(ComplexVector& state, AbstractSpinChain* space);
+  
+  // convert a state from a SU(2) basis to another one, transforming the one body basis in each momentum sector
+  //
+  // initialState = state to transform  
+  // targetState = vector where the transformed state has to be stored
+  // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+  // firstComponent = index of the first component to compute in initialState
+  // nbrComponents = number of consecutive components to compute
+  void TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, RealMatrix oneBodyBasis, AbstractSpinChain* space, long firstComponent = 0l, long nbrComponents = 0l);
+
+  // recursive part of the convertion from a SU(2) basis to another one, transforming the one body basis in each momentum sector
+  //
+  // targetState = vector where the transformed state has to be stored
+  // coefficient = current coefficient to assign
+  // position = current particle consider in the n-body state
+  // momentumIndices = array that gives the momentum partition of the initial n-body state
+  // initialSU2Indices = array that gives the spin dressing the initial n-body state
+  // currentSU2Indices = array that gives the spin dressing the current transformed n-body state
+  // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+  void TransformOneBodyBasisRecursive(ComplexVector& targetState, Complex coefficient,
+				      int position, int* spinIndices, int* initialPseudospinIndices, int* currentPseudospinIndices, RealMatrix oneBodyBasis);
+
 
  protected:
 

@@ -1,4 +1,5 @@
 #include "Vector/ComplexVector.h"
+#include "Matrix/RealMatrix.h"
 
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/FilenameTools.h"
@@ -240,14 +241,25 @@ int main(int argc, char** argv)
 // 	    }
 // 	}
 //     }
- 
+  RealMatrix Isometry(3, 2, true);
+  
+  Isometry.SetMatrixElement(0, 1, 1.0 / sqrt(6.0));
+  Isometry.SetMatrixElement(1, 1, 1.0 / sqrt(6.0));
+  Isometry.SetMatrixElement(2, 1, -2.0 / sqrt(6.0));
+  Isometry.SetMatrixElement(0, 0, 1.0 / sqrt(2.0));
+  Isometry.SetMatrixElement(1, 0, -1.0 / sqrt(2.0));
+  
+  cout << Isometry << endl;
+  
   for (int i = 0; i < NbrInputStates; ++i)
     {      
       char* VectorOutputName = new char[strlen(InputStateNames[i]) + 64];
       char* OutputName = new char[strlen(InputStateNames[i]) + 64];
       sprintf(VectorOutputName, "%s.proj", InputStateNames[i]);
       sprintf(OutputName, "%s.proj.norm", InputStateNames[i]);
-      RealVector TmpVector = OutputSpace->ProjectToEffectiveSubspaceThreeToOne(InputStates[i], InputSpace);
+      ComplexVector TmpVector(OutputSpace->GetHilbertSpaceDimension());
+      OutputSpace->TransformOneBodyBasis(InputStates[i], TmpVector, Isometry, InputSpace);
+//       RealVector TmpVector = OutputSpace->ProjectToEffectiveSubspaceThreeToOne(InputStates[i], InputSpace);
       
       ofstream File;
       File.open(OutputName, ios::binary | ios::out);

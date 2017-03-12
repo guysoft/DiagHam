@@ -763,6 +763,121 @@ RealVector Spin1_2ChainWithPseudospin::ProjectToEffectiveSubspaceThreeToOne(Comp
 }
 
 
+// convert a state from a SU(2) basis to another one, transforming the one body basis in each momentum sector
+//
+// initialState = state to transform  
+// targetState = vector where the transformed state has to be stored
+// oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+// firstComponent = index of the first component to compute in initialState
+// nbrComponents = number of consecutive components to compute
+
+void Spin1_2ChainWithPseudospin::TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, RealMatrix oneBodyBasis, AbstractSpinChain* space, 
+							 long firstComponent, long nbrComponents)
+{
+  Spin1_2ChainNew* TmpSpace = (Spin1_2ChainNew*) space;
+  int* TmpSpinIndices = new int [this->ChainLength];
+  int* TmpPseudospinIndices = new int [this->ChainLength];
+  int* TmpPseudospinIndices2 = new int [this->ChainLength];
+  targetState.ClearVector();
+  for (long i = 0; i < (TmpSpace->HilbertSpaceDimension); ++i)
+    {
+      unsigned long TmpState = TmpSpace->StateDescription[i];
+      unsigned long Tmp;
+      unsigned long Tmp1;
+      int TmpIndex = 0;
+      bool flag = true;
+      int j;
+      while ((TmpIndex < this->ChainLength) && (flag = true))
+	{
+	  j = this->ChainLength - TmpIndex - 1;
+	  Tmp = (TmpState >> (3 * j)) & 0x7ul;
+	  Tmp1 = (Tmp & 0x1ul) + ((Tmp >> 1) & 0x1ul) + ((Tmp >> 2) & 0x1ul);
+// 	  cout << TmpState << " " << (3*j) << " " << (TmpState >> (3 * j)) << " " << Tmp << " " << Tmp1 << endl;
+	  if ((Tmp == 0x7ul) || (Tmp == 0x0ul))
+	  {
+	    flag = false;
+	    TmpIndex = this->ChainLength;
+	  }
+	  else
+	  {
+	    if (Tmp1 == 0x1ul)
+	      TmpSpinIndices[TmpIndex] = 0;
+	    if (Tmp1 == 0x2ul)
+	      TmpSpinIndices[TmpIndex] = 1;
+	    
+	    if ((Tmp & 0x1ul) == ((Tmp >>1) & 0x1ul))
+	      TmpPseudospinIndices[TmpIndex] = 0;
+	    if ((Tmp & 0x1ul) == ((Tmp >>2) & 0x1ul))
+	      TmpPseudospinIndices[TmpIndex] = 1;
+	    if (((Tmp >>1) & 0x1ul) == ((Tmp >>2) & 0x1ul))
+	      TmpPseudospinIndices[TmpIndex] = 2;
+	    
+	    ++TmpIndex;
+	  }
+	  
+	  
+// 	  cout << TmpState << " " << j << " " << TmpIndex << " " << flag << endl;
+	}
+
+      if (flag == true)
+      {
+// 	for (int k = 0; k < this->ChainLength; ++k)
+// 	  cout <<  TmpPseudospinIndices[k] << endl;
+	this->TransformOneBodyBasisRecursive(targetState, initialState[i], 0, TmpSpinIndices, TmpPseudospinIndices, TmpPseudospinIndices2, oneBodyBasis);
+      }
+//     cout << endl;
+    }
+  delete[] TmpSpinIndices;
+  delete[] TmpPseudospinIndices;
+  delete[] TmpPseudospinIndices2;
+}
+
+// recursive part of the convertion from a state from a SU(2) basis to another one, transforming the one body basis in each momentum sector
+//
+// targetState = vector where the transformed state has to be stored
+// coefficient = current coefficient to assign
+// position = current particle consider in the n-body state
+// momentumIndices = array that gives the momentum partition of the initial n-body state
+// initialSpinIndices = array that gives the spin dressing the initial n-body state
+// currentSpinIndices = array that gives the spin dressing the current transformed n-body state
+// oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+
+void Spin1_2ChainWithPseudospin::TransformOneBodyBasisRecursive(ComplexVector& targetState, Complex coefficient,
+								int position, int* spinIndices, int* initialPseudospinIndices, int* currentPseudospinIndices, RealMatrix oneBodyBasis) 
+{
+//   cout << position << " : " << endl;
+//   for (int i = 0; i < position; ++i)
+//     cout << currentSpinIndices[i] << " ";
+//   cout << endl;
+  if (position == this->ChainLength)
+    {
+      unsigned long TmpState = 0x0ul;
+      unsigned long Mask = 0x0ul;
+      for (int i = 0; i < this->ChainLength; ++i)
+	{
+	  Mask =  (((currentPseudospinIndices[i]) << (2*i)) | ((spinIndices[i]) << (2*i + 1))); // Mask = 00...0100...0 : one fermion state in the second quantized basis
+// 	  cout << i << " mask = " << ((currentPseudospinIndices[i]) << (2*i)) << " " << ((spinIndices[i]) << (2*i + 1)) << " " << Mask << endl;
+	  if ((TmpState & Mask) != 0x0ul)
+	    return;
+	  TmpState |= Mask; //set bit corresponding to the current fermion state to 1 in TmpState
+	}
+      int Index = this->FindStateIndex(TmpState);
+      if (Index < this->HilbertSpaceDimension)
+	{
+	  targetState[Index] += coefficient;
+	}
+      return;      
+    }
+  else
+    {
+      currentPseudospinIndices[position] = 0;
+      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[0][initialPseudospinIndices[position]]), position + 1, spinIndices, initialPseudospinIndices, currentPseudospinIndices, oneBodyBasis);
+      currentPseudospinIndices[position] = 1;
+      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[1][initialPseudospinIndices[position]]), position + 1, spinIndices, initialPseudospinIndices, currentPseudospinIndices, oneBodyBasis);
+    }
+}
+
+
 // return index of resulting state from application of S-_i S+_j operator on a given state
 //
 // i = position of S- operator
