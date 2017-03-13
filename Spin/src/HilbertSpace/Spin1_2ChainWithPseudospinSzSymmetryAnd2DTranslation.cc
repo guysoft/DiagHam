@@ -32,6 +32,7 @@
 
 
 #include "HilbertSpace/Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation.h"
+#include "HilbertSpace/Spin1_2ChainNewSzSymmetryAnd2DTranslation.h"
 #include "HilbertSpace/Spin1_2ChainWithPseudospin.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealMatrix.h"
@@ -595,3 +596,138 @@ void Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation::ComputeRescalingFacto
     }
 }
 
+
+// convert a state from a SU(2) basis to another one, transforming the one body basis in each momentum sector
+//
+// initialState = state to transform  
+// targetState = vector where the transformed state has to be stored
+// oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+// firstComponent = index of the first component to compute in initialState
+// nbrComponents = number of consecutive components to compute
+
+void Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation::TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, RealMatrix oneBodyBasis, AbstractSpinChain* space, 
+							 long firstComponent, long nbrComponents)
+{
+  Spin1_2ChainNewSzSymmetryAnd2DTranslation* TmpSpace = (Spin1_2ChainNewSzSymmetryAnd2DTranslation*) space;
+  int* TmpSpinIndices = new int [this->ChainLength];
+  int* TmpPseudospinIndices = new int [this->ChainLength];
+  int* TmpPseudospinIndices2 = new int [this->ChainLength];
+  targetState.ClearVector();
+  int NbrStateInOrbit;
+  
+  Complex** ExponentialFactors = new Complex*[this->MaxXMomentum];
+  for (int i = 0; i < this->MaxXMomentum; ++i)
+    { 
+      ExponentialFactors[i] = new Complex[this->MaxYMomentum];
+      for (int j = 0; j < this->MaxYMomentum; ++j)
+	{ 
+	  ExponentialFactors[i][j] = Phase(2.0 * M_PI * ((this->XMomentum * ((double) i) / ((double) this->MaxXMomentum))
+							       + (this->YMomentum * ((double) j) / ((double) this->MaxYMomentum))));
+	}
+    }
+
+  for (long i = 0; i < (TmpSpace->HilbertSpaceDimension); ++i)
+    {
+      unsigned long TmpState = TmpSpace->StateDescription[i];
+      unsigned long Tmp;
+      unsigned long Tmp1;
+      int TmpIndex = 0;
+      bool flag = true;
+      int j;
+      while ((TmpIndex < this->ChainLength) && (flag = true))
+	{
+	  j = this->ChainLength - TmpIndex - 1;
+	  Tmp = (TmpState >> (3 * j)) & 0x7ul;
+	  Tmp1 = (Tmp & 0x1ul) + ((Tmp >> 1) & 0x1ul) + ((Tmp >> 2) & 0x1ul);
+// 	  cout << TmpState << " " << (3*j) << " " << (TmpState >> (3 * j)) << " " << Tmp << " " << Tmp1 << endl;
+	  if ((Tmp == 0x7ul) || (Tmp == 0x0ul))
+	  {
+	    flag = false;
+	    TmpIndex = this->ChainLength;
+	  }
+	  else
+	  {
+	    if (Tmp1 == 0x1ul)
+	      TmpSpinIndices[TmpIndex] = 0;
+	    if (Tmp1 == 0x2ul)
+	      TmpSpinIndices[TmpIndex] = 1;
+	    
+	    if ((Tmp & 0x1ul) == ((Tmp >>1) & 0x1ul))
+	      TmpPseudospinIndices[TmpIndex] = 0;
+	    if ((Tmp & 0x1ul) == ((Tmp >>2) & 0x1ul))
+	      TmpPseudospinIndices[TmpIndex] = 1;
+	    if (((Tmp >>1) & 0x1ul) == ((Tmp >>2) & 0x1ul))
+	      TmpPseudospinIndices[TmpIndex] = 2;
+	    
+	    ++TmpIndex;
+	  }
+	  
+	  
+// 	  cout << TmpState << " " << j << " " << TmpIndex << " " << flag << endl;
+	}
+
+      if (flag == true)
+      {
+// 	for (int k = 0; k < this->ChainLength; ++k)
+// 	  cout <<  TmpPseudospinIndices[k] << endl;
+	NbrStateInOrbit = TmpSpace->GetNbrStateinOrbit(i);
+	this->TransformOneBodyBasisRecursive(targetState, initialState[i], 0, TmpSpinIndices, TmpPseudospinIndices, TmpPseudospinIndices2, oneBodyBasis, NbrStateInOrbit, ExponentialFactors);
+      }
+//     cout << endl;
+    }
+  delete[] TmpSpinIndices;
+  delete[] TmpPseudospinIndices;
+  delete[] TmpPseudospinIndices2;
+  for (int i = 0; i < this->MaxXMomentum; ++i)
+    delete[] ExponentialFactors[i];
+  delete[] ExponentialFactors;
+}
+
+// recursive part of the convertion from a state from a SU(2) basis to another one, transforming the one body basis in each momentum sector
+//
+// targetState = vector where the transformed state has to be stored
+// coefficient = current coefficient to assign
+// position = current particle consider in the n-body state
+// momentumIndices = array that gives the momentum partition of the initial n-body state
+// initialSpinIndices = array that gives the spin dressing the initial n-body state
+// currentSpinIndices = array that gives the spin dressing the current transformed n-body state
+// oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+
+void Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation::TransformOneBodyBasisRecursive(ComplexVector& targetState, Complex coefficient,
+								int position, int* spinIndices, int* initialPseudospinIndices, int* currentPseudospinIndices, RealMatrix oneBodyBasis, int nbrStateInOrbit, Complex** ExponentialFactors) 
+{
+//   cout << position << " : " << endl;
+//   for (int i = 0; i < position; ++i)
+//     cout << currentSpinIndices[i] << " ";
+//   cout << endl;
+  if (position == this->ChainLength)
+    {
+      unsigned long TmpState = 0x0ul;
+      unsigned long Mask = 0x0ul;
+      for (int i = 0; i < this->ChainLength; ++i)
+	{
+	  Mask =  (((currentPseudospinIndices[i]) << (2*i)) | ((spinIndices[i]) << (2*i + 1))); // Mask = 00...0100...0 : one fermion state in the second quantized basis
+// 	  cout << i << " mask = " << ((currentPseudospinIndices[i]) << (2*i)) << " " << ((spinIndices[i]) << (2*i + 1)) << " " << Mask << endl;
+	  if ((TmpState & Mask) != 0x0ul)
+	    return;
+	  TmpState |= Mask; //set bit corresponding to the current fermion state to 1 in TmpState
+	}
+      int nbrTranslationX;
+      int nbrTranslationY;
+      double TmpCoefficient = 1.0;
+      int Index = this->SymmetrizeResult(TmpState, nbrStateInOrbit, TmpCoefficient, nbrTranslationX, nbrTranslationY);
+//       cout << TmpCoefficient << endl;
+      if (Index < this->HilbertSpaceDimension)
+	{
+	  targetState[Index] += coefficient * TmpCoefficient * ExponentialFactors[nbrTranslationX][nbrTranslationY];
+	}
+      return;      
+    }
+  else
+    {
+      currentPseudospinIndices[position] = 0;
+      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[0][initialPseudospinIndices[position]]), position + 1, spinIndices, initialPseudospinIndices, currentPseudospinIndices, oneBodyBasis, nbrStateInOrbit, ExponentialFactors);
+      currentPseudospinIndices[position] = 1;
+      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[1][initialPseudospinIndices[position]]), position + 1, spinIndices, initialPseudospinIndices, currentPseudospinIndices, oneBodyBasis, nbrStateInOrbit, ExponentialFactors);
+    }
+}

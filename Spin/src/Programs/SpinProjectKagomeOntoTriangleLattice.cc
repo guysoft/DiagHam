@@ -9,7 +9,9 @@
 #include "Tools/SpinFiles/SpinFileTools.h"
 
 #include "HilbertSpace/Spin1_2ChainNew.h"
+#include "HilbertSpace/Spin1_2ChainNewSzSymmetryAnd2DTranslation.h"
 #include "HilbertSpace/Spin1_2ChainWithPseudospin.h"
+#include "HilbertSpace/Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation.h"
 
 
 
@@ -81,6 +83,10 @@ int main(int argc, char** argv)
   if (Manager.GetString("input-state") != 0)
     {
       NbrInputStates = 1;
+      XMomentum = new int[1];
+      YMomentum = new int[1];
+      InversionSector = new int[1];
+      InversionSector[0] = 0;
       SzValue = new int [1];
       SzParitySector = new int[1];
       SzParitySector[0] = 0;
@@ -89,24 +95,35 @@ int main(int argc, char** argv)
 	  cout << "can't open file " << Manager.GetString("input-state") << endl;
 	  return -1;
 	}      
-      if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrSites, SzValue[0], SpinValue) == false)
+      SpinFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrSites, SzValue[0], SpinValue);
+      
+      if (SpinWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrSites, SzValue[0], SpinValue, XMomentum[0], XPeriodicity,
+								YMomentum[0], YPeriodicity) == false)
 	{
 	  TotalSpinConservedFlag = false;
-	  if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrSites, SpinValue, XMomentum[0], XPeriodicity, 
+	  if (SpinWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrSites, SpinValue, XMomentum[0], XPeriodicity, 
 								    YMomentum[0], YPeriodicity) == false)
 	    {
 	      cout << "error while retrieving system parameters from file name " <<Manager.GetString("input-state")  << endl;
-	      return -1;
+// 	      return -1;
 	    }
-	  
+	  InversionFlag = SpinWith2DTranslationInversionFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrSites, SpinValue, XMomentum[0], XPeriodicity, 
+											 YMomentum[0], YPeriodicity, InversionSector[0]);
+	  if (InversionFlag == false)
+	    cout << "error" << endl;
+	  else
+	    cout << "OK" << " " << InversionSector[0] << endl;
 	}
       else
 	{
+	  InversionFlag = SpinWith2DTranslationInversionFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrSites, SzValue[0], SpinValue, XMomentum[0], XPeriodicity,
+											 YMomentum[0], YPeriodicity, InversionSector[0]);
 	  if (SzValue[0] == 0)
 	  {
-	    SpinFindSystemInfoFromVectorFileName((Manager.GetString("input-state")), NbrSites, SzValue[0], SpinValue);
-	    cout << NbrSites << " " << SzValue[0] << " " << SpinValue << " " << endl;
-	    
+	    SpinFindSystemInfoFromVectorFileName((Manager.GetString("input-state")), NbrSites, SzValue[0], SpinValue, InversionSector[0], SzParitySector[0]);
+	    cout << NbrSites << " " << SzValue[0] << " " << SpinValue << " " << XMomentum[0] << " " << XPeriodicity << " " << YMomentum[0] << " " <<  YPeriodicity << " " << SzParitySector[0] << endl;
+	    if (SzParitySector[0] != 0)
+	      SzSymmetryFlag = true;
 	  }
 	}
     }
@@ -180,7 +197,11 @@ int main(int argc, char** argv)
     }
 
 
-    Spin1_2ChainNew* InputSpace = new Spin1_2ChainNew (NbrSites, SzValue[0], 1000000);
+    AbstractSpinChain* InputSpace;
+    if (SzSymmetryFlag == false)
+      InputSpace = new Spin1_2ChainNew (NbrSites, SzValue[0], 1000000);
+    else
+      InputSpace = new Spin1_2ChainNewSzSymmetryAnd2DTranslation (NbrSites, SzValue[0], (1 - SzParitySector[0])/2, XMomentum[0], XPeriodicity, YMomentum[0], YPeriodicity, 1000000);
 //   AbstractSpinChain** InputSpace = new AbstractSpinChain* [NbrInputStates];
 //   for (int i = 0; i < NbrInputStates; ++i)
 //     {
@@ -216,7 +237,12 @@ int main(int argc, char** argv)
 	}
     }
   
-  Spin1_2ChainWithPseudospin* OutputSpace = new Spin1_2ChainWithPseudospin ((NbrSites / 3), SzValue[0], 1000000);
+  Spin1_2ChainWithPseudospin* OutputSpace;
+  if (SzSymmetryFlag == false)
+    OutputSpace = new Spin1_2ChainWithPseudospin ((NbrSites / 3), SzValue[0], 1000000);
+  else
+    OutputSpace = new Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation((NbrSites / 3), SzValue[0], (1 - SzParitySector[0])/2, XMomentum[0], XPeriodicity, YMomentum[0], YPeriodicity, 1000000);
+  
 //   AbstractSpinChain* OutputSpace = new AbstractSpinChain;
 //   for (int i = 0; i < NbrInputStates; ++i)
 //     {

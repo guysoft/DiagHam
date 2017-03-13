@@ -115,6 +115,9 @@ class Spin1_2ChainNewSzSymmetryAnd2DTranslation : public Spin1_2ChainNewAnd2DTra
   // return value = true if no error occured
   virtual bool WriteHilbertSpace (char* fileName);
   
+  virtual int GetNbrStateinOrbit (int i);
+  
+  
  protected:
 
   // generate all states corresponding to the constraints
@@ -486,6 +489,12 @@ inline int Spin1_2ChainNewSzSymmetryAnd2DTranslation::FindOrbitSize(unsigned lon
 inline void Spin1_2ChainNewSzSymmetryAnd2DTranslation::ApplySzSymmetry(unsigned long& stateDescription)
 {
   stateDescription = (~stateDescription) & (this->SzSymmetryMask);
+}
+
+
+inline int Spin1_2ChainNewSzSymmetryAnd2DTranslation::GetNbrStateinOrbit (int i)
+{
+  return this->NbrStateInOrbit[i];
 }
 
 #endif
