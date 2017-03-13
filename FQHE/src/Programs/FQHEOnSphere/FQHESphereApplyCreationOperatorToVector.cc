@@ -286,42 +286,43 @@ int main(int argc, char** argv)
       int* TmpOrbitals = new int[LzMax];
       for (int i = 0; i < IntialSpace->GetHilbertSpaceDimension(); ++i)
        {
-         //Get the orbital occupancies of the initial vector and construct a representative word
-	     IntialSpace->GetOccupied(i, TmpOrbitals);
+             //Get the orbital occupancies of the initial vector and construct a representative word
+	     //IntialSpace->GetOccupied(i, TmpOrbitals);
 	     //for (int k = 0; k < NbrParticles; k++) cout << TmpOrbitals[k] << " ";
 
-	     unsigned long TmpState = 0x0ul;
-         for (int k = 0; k < NbrParticles; ++k)
-            TmpState |= 0x1ul << (TmpOrbitals[k]);
+	     //unsigned long TmpState = 0x0ul;
+             //for (int k = 0; k < NbrParticles; ++k)
+             //  TmpState |= 0x1ul << (TmpOrbitals[k]);
 
-         //int TmpLzMax = LzMax;
-         //while ((TmpState >> TmpLzMax) == 0x0ul)
-         //  --TmpLzMax;
+            //int TmpLzMax = LzMax;
+            //while ((TmpState >> TmpLzMax) == 0x0ul)
+            //  --TmpLzMax;
 
- 	 //Act with c_M^+
-         TmpCoefficient = 0.0;
-	     TmpState = IntialSpace->A(TmpState, OrbitalNumber, TmpCoefficient);
+ 	    //Act with c_M
+             TmpCoefficient = 0.0;
+	     TmpIndex = IntialSpace->A(i, OrbitalNumber, TmpCoefficient);
+             //cout<<"Tmp index="<<TmpIndex<<endl;
 	     if (TmpCoefficient != 0.0)
 	      {
-             //Get occupied orbitals of new state TmpState
-             int k = 0;
-             for (int l = 0; l <= LzMax; ++l)
-               if ((TmpState >> l) & 0x1ul)
-                  TmpOrbitals[k++] = l;
+                //Get occupied orbitals of new state TmpState
+                //int k = 0;
+                //for (int l = 0; l <= LzMax; ++l)
+                //   if ((TmpState >> l) & 0x1ul)
+                //      TmpOrbitals[k++] = l;
 
-            //Find the new vector in a target Hilbert space 
-            TmpIndex = TargetSpace->FindStateIndex(TmpOrbitals);
-            //cout<<"  i= "<<i<<" ;  ->    Index = " << TmpIndex<<"  ; ";
-	        //TargetSpace->GetOccupied(TmpIndex, TmpOrbitals); 
-  	        //for (int k = 0; k < (NbrParticles+1); k++) cout << TmpOrbitals[k] << " ";
-            //cout<<" coeff= "<<InitialVector[i] * TmpCoefficient;
+               //Find the new vector in a target Hilbert space 
+               //TmpIndex = TargetSpace->FindStateIndex(TmpOrbitals);
+               //cout<<"  i= "<<i<<" ;  ->    Index = " << TmpIndex<<"  ; ";
+	       //TargetSpace->GetOccupied(TmpIndex, TmpOrbitals); 
+  	       //for (int k = 0; k < (NbrParticles-1); k++) cout << TmpOrbitals[k] << " ";
+               //   cout<<" coeff= "<<InitialVector[i] * TmpCoefficient;
 
 	       if (TmpIndex < TargetVector.GetVectorDimension())
 	        {
 	          TargetVector[TmpIndex] += InitialVector[i] * TmpCoefficient;
 	        }
-          }
-         //cout<<endl;
+            }
+            //cout<<endl;
        }
       delete[] TmpOrbitals; 
 
