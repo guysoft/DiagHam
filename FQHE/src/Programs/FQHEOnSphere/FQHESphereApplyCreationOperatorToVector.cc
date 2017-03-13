@@ -65,7 +65,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleStringOption  ('\n', "input-reference", "use a haldane basis with the given reference file for the input file");
   (*SystemGroup) += new SingleStringOption  ('\n', "output-reference", "use a haldane basis with the given reference file for the output file");
-  (*SystemGroup) += new BooleanOption  ('\n', "save-all", "save all states when applying L^- multiple times");
+  (*SystemGroup) += new BooleanOption  ('\n', "annihilate-particle", "annihilate particle instead of creating it");
 
   (*DataGroup) += new SingleStringOption  ('i', "input-file", "input vector file name");
   (*DataGroup) += new SingleStringOption  ('o', "output-file", "output vector file name");
@@ -158,7 +158,12 @@ int main(int argc, char** argv)
       IntialSpace = new BosonOnSphereShort(NbrParticles, Lz, LzMax);
     }
 
+
+  if (Manager.GetBoolean("annihilate-particle") == false)
+   {
+
       cout << "Creating target space for Lz="<<Lz + (2 * OrbitalNumber - LzMax)<<"/2"<<endl;
+
       if (FermionFlag == true)
 	{
 #ifdef __64_BITS__
@@ -236,46 +241,110 @@ int main(int argc, char** argv)
          //cout<<endl;
        }
       delete[] TmpOrbitals; 
- 
-      if (Manager.GetBoolean("save-all") == true)
+	} 	 
+    else //annihilate particle
+    {
+
+      cout << "Creating target space for Lz="<<Lz - (2 * OrbitalNumber - LzMax)<<"/2"<<endl;
+
+      if (FermionFlag == true)
 	{
-	  char* OutputName = new char [strlen(Manager.GetString("interaction-name")) + 256];
-	  if (FermionFlag == true)
+#ifdef __64_BITS__
+	  if (LzMax <= 63)
 	    {
-	      sprintf (OutputName, "fermions_%s_n_%d_2s_%d_lz_%d.0.vec", Manager.GetString("interaction-name"), NbrParticles + 1, LzMax, (Lz + (2 * OrbitalNumber - LzMax)));
+	      TargetSpace = new FermionOnSphere(NbrParticles - 1, Lz - (2 * OrbitalNumber - LzMax), LzMax, MemorySpace);
 	    }
 	  else
 	    {
-	      sprintf (OutputName, "bosons_%s_n_%d_2s_%d_lz_%d.0.vec", Manager.GetString("interaction-name"), NbrParticles + 1, LzMax, (Lz + (2 * OrbitalNumber - LzMax)));
+	      TargetSpace = new FermionOnSphereUnlimited(NbrParticles - 1, Lz - (2 * OrbitalNumber - LzMax), LzMax, MemorySpace);
 	    }
-	  if (TargetVector.WriteVector(OutputName) == false)
+#else
+	  if (LzMax <= 31)
 	    {
-	      cout << "error while writing " << OutputName << endl;
-	      return -1;
+	      TargetSpace = new FermionOnSphere(NbrParticles - 1, Lz - (2 * OrbitalNumber - LzMax), LzMax, MemorySpace);
 	    }
-	  delete[] OutputName;
+	  else
+	    {
+	      TargetSpace = new FermionOnSphereUnlimited(NbrParticles - 1, Lz - (2 * OrbitalNumber - LzMax), LzMax, MemorySpace);
+	    }
+#endif
+	}
+      else
+	{
+	  TargetSpace = new BosonOnSphereShort(NbrParticles - 1, Lz - (2 * OrbitalNumber - LzMax), LzMax);
+	}
+      IntialSpace->SetTargetSpace(TargetSpace);
+      TargetVector = RealVector(TargetSpace->GetHilbertSpaceDimension(), true);
+      if (TargetSpace->GetHilbertSpaceDimension()!=IntialSpace->GetTargetHilbertSpaceDimension())
+	{
+	  cout << "Problem with setting target space"<<endl;
+	  exit(-1);
 	}
 
-  if (Manager.GetBoolean("save-all") == false)
-    {
-      char *OutputName;
-      if (Manager.GetString("output-file")!=NULL)
+      double TmpCoefficient = 0.0;
+      int TmpIndex;
+      int* TmpOrbitals = new int[LzMax];
+      for (int i = 0; i < IntialSpace->GetHilbertSpaceDimension(); ++i)
+       {
+         //Get the orbital occupancies of the initial vector and construct a representative word
+	     IntialSpace->GetOccupied(i, TmpOrbitals);
+	     //for (int k = 0; k < NbrParticles; k++) cout << TmpOrbitals[k] << " ";
+
+	     unsigned long TmpState = 0x0ul;
+         for (int k = 0; k < NbrParticles; ++k)
+            TmpState |= 0x1ul << (TmpOrbitals[k]);
+
+         //int TmpLzMax = LzMax;
+         //while ((TmpState >> TmpLzMax) == 0x0ul)
+         //  --TmpLzMax;
+
+ 	 //Act with c_M^+
+         TmpCoefficient = 0.0;
+	     TmpState = IntialSpace->A(TmpState, OrbitalNumber, TmpCoefficient);
+	     if (TmpCoefficient != 0.0)
+	      {
+             //Get occupied orbitals of new state TmpState
+             int k = 0;
+             for (int l = 0; l <= LzMax; ++l)
+               if ((TmpState >> l) & 0x1ul)
+                  TmpOrbitals[k++] = l;
+
+            //Find the new vector in a target Hilbert space 
+            TmpIndex = TargetSpace->FindStateIndex(TmpOrbitals);
+            //cout<<"  i= "<<i<<" ;  ->    Index = " << TmpIndex<<"  ; ";
+	        //TargetSpace->GetOccupied(TmpIndex, TmpOrbitals); 
+  	        //for (int k = 0; k < (NbrParticles+1); k++) cout << TmpOrbitals[k] << " ";
+            //cout<<" coeff= "<<InitialVector[i] * TmpCoefficient;
+
+	       if (TmpIndex < TargetVector.GetVectorDimension())
+	        {
+	          TargetVector[TmpIndex] += InitialVector[i] * TmpCoefficient;
+	        }
+          }
+         //cout<<endl;
+       }
+      delete[] TmpOrbitals; 
+
+    }	
+
+    char *OutputName;
+    if (Manager.GetString("output-file")!=NULL)
 	{
 	  OutputName = new char[strlen(Manager.GetString("output-file"))+1];
 	  strcpy(OutputName,Manager.GetString("output-file"));
 	}
-      else
+    else
 	{
 	  OutputName = new char[strlen(Manager.GetString("input-file"))+10];
 	  sprintf(OutputName,"%s_Ad",Manager.GetString("input-file"));
 	}  
-      if (TargetVector.WriteVector(OutputName) == false)
+    if (TargetVector.WriteVector(OutputName) == false)
 	{
 	  cout << "error while writing " << OutputName << endl;
 	  return -1;
 	}
-      delete [] OutputName;
-    }
+    delete [] OutputName;
+
   delete IntialSpace;
   return 0;
 }
