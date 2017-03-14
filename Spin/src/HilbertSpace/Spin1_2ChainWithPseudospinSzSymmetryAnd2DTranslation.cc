@@ -637,7 +637,7 @@ void Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation::TransformOneBodyBasis
       while ((TmpIndex < this->ChainLength) && (flag = true))
 	{
 	  j = this->ChainLength - TmpIndex - 1;
-	  Tmp = (TmpState >> (3 * j)) & 0x7ul;
+	  Tmp = (TmpState >> (3 * TmpIndex)) & 0x7ul;
 	  Tmp1 = (Tmp & 0x1ul) + ((Tmp >> 1) & 0x1ul) + ((Tmp >> 2) & 0x1ul);
 // 	  cout << TmpState << " " << (3*j) << " " << (TmpState >> (3 * j)) << " " << Tmp << " " << Tmp1 << endl;
 	  if ((Tmp == 0x7ul) || (Tmp == 0x0ul))

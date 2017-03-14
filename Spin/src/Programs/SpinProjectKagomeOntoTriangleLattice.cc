@@ -197,6 +197,8 @@ int main(int argc, char** argv)
     }
 
 
+    if (SzSymmetryFlag == false)
+      cout << "no szsym" << endl;
     AbstractSpinChain* InputSpace;
     if (SzSymmetryFlag == false)
       InputSpace = new Spin1_2ChainNew (NbrSites, SzValue[0], 1000000);
@@ -275,6 +277,12 @@ int main(int argc, char** argv)
   Isometry.SetMatrixElement(0, 0, 1.0 / sqrt(2.0));
   Isometry.SetMatrixElement(1, 0, -1.0 / sqrt(2.0));
   
+//   Isometry.SetMatrixElement(0, 0, 1.0 / sqrt(6.0));
+//   Isometry.SetMatrixElement(1, 0, 1.0 / sqrt(6.0));
+//   Isometry.SetMatrixElement(2, 0, -2.0 / sqrt(6.0));
+//   Isometry.SetMatrixElement(0, 1, 1.0 / sqrt(2.0));
+//   Isometry.SetMatrixElement(1, 1, -1.0 / sqrt(2.0));
+// //   
   cout << Isometry << endl;
   
   for (int i = 0; i < NbrInputStates; ++i)
