@@ -40,12 +40,14 @@ int main(int argc, char** argv)
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
+  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
   Manager += SystemGroup;
   Manager += ToolsGroup;
   Manager += MiscGroup;
+  Manager += PrecalculationGroup;
 
-  (*SystemGroup) += new SingleStringOption('i', "input-state", "name of the file containing the state defined in the translation invariant basis");
+  (*SystemGroup) += new SingleStringOption('i', "input-state", "name of the file containing the state defined in the translation invariant basis");(*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Sz symmetry)",0);
   (*MiscGroup) += new BooleanOption ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -203,7 +205,15 @@ int main(int argc, char** argv)
     if (SzSymmetryFlag == false)
       InputSpace = new Spin1_2ChainNew (NbrSites, SzValue[0], 1000000);
     else
-      InputSpace = new Spin1_2ChainNewSzSymmetryAnd2DTranslation (NbrSites, SzValue[0], (1 - SzParitySector[0])/2, XMomentum[0], XPeriodicity, YMomentum[0], YPeriodicity, 1000000);
+    {
+      if (Manager.GetString("load-hilbert") != 0)
+      {
+	InputSpace = new Spin1_2ChainNewSzSymmetryAnd2DTranslation(Manager.GetString("load-hilbert"));
+// 		    cout << "2Sz = " << InitalSzValue << " kx = " << XMomentum << " ky = " << YMomentum << " Sz Parity = " << (1 - 2*parity) << endl; 
+      }
+      else
+	InputSpace = new Spin1_2ChainNewSzSymmetryAnd2DTranslation (NbrSites, SzValue[0], (1 - SzParitySector[0])/2, XMomentum[0], XPeriodicity, YMomentum[0], YPeriodicity, 1000000);
+    }
 //   AbstractSpinChain** InputSpace = new AbstractSpinChain* [NbrInputStates];
 //   for (int i = 0; i < NbrInputStates; ++i)
 //     {
