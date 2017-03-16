@@ -673,7 +673,6 @@ void Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation::TransformOneBodyBasis
 	NbrStateInOrbit = TmpSpace->GetNbrStateinOrbit(i);
 	this->TransformOneBodyBasisRecursive(targetState, initialState[i], 0, TmpSpinIndices, TmpPseudospinIndices, TmpPseudospinIndices2, oneBodyBasis, NbrStateInOrbit, ExponentialFactors);
       }
-      cout << "state " << i <<  " / " << (TmpSpace->HilbertSpaceDimension) << " of original hilbert space processed : " << flag << endl;
 //     cout << endl;
     }
   delete[] TmpSpinIndices;
