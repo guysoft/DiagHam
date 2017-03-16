@@ -6,10 +6,10 @@
 //                    Copyright (C) 2001-2014 Nicolas Regnault                //
 //                                                                            //
 //                                                                            //
-//                   class of bosons on the 4D manifold T2 x T2,              //
+//                   class of bosons on the 4D manifold T2 x S2,              //
 // forbidding mutliple orbital occupations and nearest orbital occupations    //
 //                                                                            //
-//                        last modification : 16/02/2016                      //
+//                        last modification : 25/02/2017                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,8 +29,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef BOSONONT2XT2HARDCORENONEARESTNEIGHBORS_H
-#define BOSONONT2XT2HARDCORENONEARESTNEIGHBORS_H
+#ifndef BOSONONT2XS2HARDCORENONEARESTNEIGHBORS_H
+#define BOSONONT2XS2HARDCORENONEARESTNEIGHBORS_H
 
 
 #include "config.h"
@@ -40,42 +40,49 @@
 
 
 
-class BosonOnT2xT2HardcoreNoNearestNeighbors : public BosonOnSquareLatticeMomentumSpaceHardcore
+class BosonOnT2xS2HardcoreNoNearestNeighbors : public BosonOnSquareLatticeMomentumSpaceHardcore
 {
   
  protected:
 
+  // number of flux quanta piercing the torus
+  int NbrFluxQuantumTorus;
+  // number of flux quanta piercing the sphere
+  int NbrFluxQuantumSphere;
+  // projection of the total angular momentum along the z axis, using the disk convention
+  int ShiftedTotalLz;
   
  public:
 
   // default constructor
   // 
-  BosonOnT2xT2HardcoreNoNearestNeighbors ();
+  BosonOnT2xS2HardcoreNoNearestNeighbors ();
 
   // basic constructor
   // 
   // nbrBosons = number of bosons
-  // nbrFluxQuanta1 = number of flux quanta for the first torus
-  // nbrFluxQuanta2 = number of flux quanta for the second torus
-  // totalKy1 = total momentum along y for the first torus
-  // totalKy2 = total momentum along y for the second torus
+  // nbrFluxQuantumTorus = number of flux quanta piercing the torus
+  // kyMomentum = momentum in the y direction for the torus
+  // nbrFluxQuantumSphere = number of flux quanta piercing the sphere
+  // totalLz = projection of the total angular momentum along the z axis for the sphere
   // memory = amount of memory granted for precalculations
-  BosonOnT2xT2HardcoreNoNearestNeighbors (int nbrBosons, int nbrFluxQuanta1, int nbrFluxQuanta2, int totalKy1, int totalKy2, unsigned long memory = 10000000);
+  BosonOnT2xS2HardcoreNoNearestNeighbors (int nbrBosons, int nbrFluxQuantumTorus, int kyMomentum,
+					  int nbrFluxQuantumSphere, int totalLz, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating data)
   //
   // space = reference on the hilbert space to copy
-  BosonOnT2xT2HardcoreNoNearestNeighbors(const BosonOnT2xT2HardcoreNoNearestNeighbors& space);
+  BosonOnT2xS2HardcoreNoNearestNeighbors(const BosonOnT2xS2HardcoreNoNearestNeighbors& space);
 
   // destructor
   //
-  ~BosonOnT2xT2HardcoreNoNearestNeighbors ();
+  ~BosonOnT2xS2HardcoreNoNearestNeighbors ();
 
   // assignement (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  BosonOnT2xT2HardcoreNoNearestNeighbors & operator = (const BosonOnT2xT2HardcoreNoNearestNeighbors & bosons);
+  BosonOnT2xS2HardcoreNoNearestNeighbors & operator = (const BosonOnT2xS2HardcoreNoNearestNeighbors & bosons);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -102,7 +109,7 @@ class BosonOnT2xT2HardcoreNoNearestNeighbors : public BosonOnSquareLatticeMoment
   // pauliK = number of particles allowed in consecutive orbitals
   // pauliR = number of consecutive orbitals
   virtual bool HasPauliExclusions(int index, int pauliK, int pauliR);
-
+ 
   // get the occupation of a given orbital in a state, not assuming the coordinates are valid, assume periodic bounadary condtions along x
   //
   // index = state index
@@ -120,9 +127,8 @@ class BosonOnT2xT2HardcoreNoNearestNeighbors : public BosonOnSquareLatticeMoment
   // currentKy = current momentum along y for a single particle
   // currentTotalKx = current total momentum along x
   // currentTotalKy = current total momentum along y
-  // occupationLastOrbital = occupation of the last orbital at the current kx value
   // return value = Hilbert space dimension
-  virtual long EvaluateHilbertSpaceDimension(int nbrBosons, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, int occupationLastOrbital);
+  virtual long EvaluateHilbertSpaceDimension(int nbrBosons, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy);
 
   // generate all states corresponding to the constraints
   // 
@@ -133,24 +139,9 @@ class BosonOnT2xT2HardcoreNoNearestNeighbors : public BosonOnSquareLatticeMoment
   // currentTotalKx = current total momentum along x
   // currentTotalKy = current total momentum along y
   // currentFermionicPosition = current fermionic position within the state description
-  // occupationLastOrbital = occupation of the last orbital at the current kx value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  virtual long GenerateStates(int nbrBosons, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, int currentFermionicPosition, int occupationLastOrbital, long pos);
-
-  // get a linearized index from the two angular momenta
-  //
-  // lz = z projection of the angular momentum for the first sphere
-  // kz = z projection of the angular momentum for the second sphere
-  // return value = linearized index 
-  virtual int GetLinearizedIndex(int lz, int kz);
-
-  // get the two angular momenta associated to a given linearized index
-  //
-  // index = linearized index 
-  // lz = reference on the z projection of the angular momentum for the first sphere
-  // kz = reference on the  z projection of the angular momentum for the second sphere
-  virtual int GetLinearizedIndex(int index, int& lz, int& kz);
+  virtual long GenerateStates(int nbrBosons, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, int currentFermionicPosition, long pos);
 
   // request whether state with given index satisfies a general Pauli exclusion principle
   // index = state index
@@ -158,29 +149,42 @@ class BosonOnT2xT2HardcoreNoNearestNeighbors : public BosonOnSquareLatticeMoment
   // pauliR = number of consecutive orbitals
   virtual unsigned long FindCanonical(unsigned long state, int xPosition, int yPosition);
 
+  // get a linearized index from the two momenta
+  //
+  // ky = momentum along the y direction for the torus
+  // lz = z projection of the angular momentum for the sphere
+  // return value = linearized index 
+  virtual int GetLinearizedIndex(int ky, int lz);
+
+  // get the two momenta associated to a given linearized index
+  //
+  // index = linearized index 
+  // ky = reference on the momentum along the y direction for the torus
+  // lz = reference on the z projection of the angular momentum for the sphere
+  virtual int GetLinearizedIndex(int index, int& ky, int& lz);
 };
 
-// get a linearized index from the two angular momenta
+// get a linearized index from the two momenta
 //
-// lz = z projection of the angular momentum for the first sphere
-// kz = z projection of the angular momentum for the second sphere
+// ky = momentum along the y direction for the torus
+// lz = z projection of the angular momentum for the sphere
 // return value = linearized index 
 
-inline int BosonOnT2xT2HardcoreNoNearestNeighbors::GetLinearizedIndex(int lz, int kz)
+inline int BosonOnT2xS2HardcoreNoNearestNeighbors::GetLinearizedIndex(int ky, int lz)
 {
-  return ((lz * this->NbrSiteY) + kz);
+  return ((ky * this->NbrSiteY) + lz);
 }
 
-// get the two angular momenta associated to a given linearized index
+// get the two momenta associated to a given linearized index
 //
 // index = linearized index 
-// lz = reference on the z projection of the angular momentum for the first sphere
-// kz = reference on the  z projection of the angular momentum for the second sphere
+// ky = reference on the momentum along the y direction for the torus
+// lz = reference on the z projection of the angular momentum for the sphere
 
-inline int BosonOnT2xT2HardcoreNoNearestNeighbors::GetLinearizedIndex(int index, int& lz, int& kz)
+inline int BosonOnT2xS2HardcoreNoNearestNeighbors::GetLinearizedIndex(int index, int& ky, int& lz)
 {
-  lz = index / this->NbrSiteY;
-  kz = index % this->NbrSiteY;
+  lz = index % this->NbrSiteY;
+  ky = index / this->NbrSiteY;
 }
 
 // get the occupation of a given orbital in a state, not assuming the coordinates are valid
@@ -190,8 +194,12 @@ inline int BosonOnT2xT2HardcoreNoNearestNeighbors::GetLinearizedIndex(int index,
 // yPosition = orbital y coordinates
 // return value = orbital occupation
 
-inline unsigned long BosonOnT2xT2HardcoreNoNearestNeighbors::GetSafeOccupationWithPBC(int index, int xPosition, int yPosition)
+inline unsigned long BosonOnT2xS2HardcoreNoNearestNeighbors::GetSafeOccupationWithPBC(int index, int xPosition, int yPosition)
 {
+  if ((yPosition < 0) || (yPosition >= this->NbrSiteY))
+    {
+      return 0x0ul;      
+    }
   while (xPosition < 0)
     {
       xPosition += this->NbrSiteX;
@@ -200,17 +208,8 @@ inline unsigned long BosonOnT2xT2HardcoreNoNearestNeighbors::GetSafeOccupationWi
     {
       xPosition -= this->NbrSiteX;
     }
-  while (yPosition < 0)
-    {
-      yPosition += this->NbrSiteY;
-    }
-  while (yPosition >= this->NbrSiteY)
-    {
-      yPosition -= this->NbrSiteY;
-    }
   return ((this->StateDescription[index] >> ((xPosition * this->NbrSiteY) + yPosition)) & 0x1ul);
 }
-
 
 #endif
 

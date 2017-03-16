@@ -1,10 +1,8 @@
 #include "HilbertSpace/BosonOnT2xS2WithMagneticTranslationsShort.h"
-#include "HilbertSpace/BosonOnT2xS2.h"
 //#include "HilbertSpace/BosonOnT2xS2WithMagneticTranslations00Long.h"
 //#include "HilbertSpace/BosonOnT2xS2WithMagneticTranslationsShortHardcoreNoNearestNeighbors.h"
 
-#include "Hamiltonian/ParticleOnT2xS2WithMagneticTranslationsGenericTwoBodyHamiltonian.h"
-#include "Hamiltonian/ParticleOnT2xS2GenericTwoBodyHamiltonian.h"
+#include "Hamiltonian/ParticleOnT2xCylinderWithMagneticTranslationsGenericTwoBodyHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -14,7 +12,6 @@
 
 #include "MathTools/IntegerAlgebraTools.h"
 
-#include "MainTask/GenericRealMainTask.h"
 #include "MainTask/GenericComplexMainTask.h"
 
 #include "Options/Options.h"
@@ -42,7 +39,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("FQHET2xS2BosonsTwoBodyGeneric" , "0.01");
+  OptionManager Manager ("FQHET2xCylinderBosonsTwoBodyGeneric" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
@@ -59,13 +56,14 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
   (*SystemGroup) += new SingleIntegerOption  ('l', "nbr-flux1", "number of flux quanta for the torus", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('k', "nbr-flux2", "number of flux quanta for the sphere", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('k', "nbr-flux2", "number of flux quanta for the cylinder", 0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "ratio", "ratio between the width in the x direction and the width in the y direction for the torus", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "cylinderaspect-ratio", "aspect ratio of the cylinder", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "cylinder-perimeter", "if non zero, fix the cylinder perimeter (in magnetic length unit) instead of the aspect ratio", 0);
   (*SystemGroup) += new SingleIntegerOption  ('x', "x-momentum", "constraint on the total torus momentum in the x direction (negative if none)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('y', "y-momentum", "constraint on the total torus momentum in the y direction (negative if none)", -1);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "initial value for the Lz angular momentum on the sphere", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "initial value for the Lz angular momentum on the cylinder", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of Lz sectors to compute (0 if all possible sectors have to be computed)", 0);
-  (*SystemGroup) += new BooleanOption  ('\n', "no-translation", "do not consider magnetic translation (only trivial translations along one axis)");
   (*SystemGroup) += new BooleanOption  ('\n', "full-reducedbz", "calculate all points within the reduced Brillouin zone", false);
   (*SystemGroup) += new SingleStringOption ('\n', "selected-points", "provide a two column ascii file that indicates which momentum sectors have to be computed");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
@@ -84,7 +82,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHET2xS2BosonsTwoBodyGeneric -h" << endl;
+      cout << "see man page for option syntax or type FQHET2xCylinderBosonsTwoBodyGeneric -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -96,26 +94,32 @@ int main(int argc, char** argv)
 
   int NbrBosons = Manager.GetInteger("nbr-particles");
   int NbrFluxQuantumTorus = Manager.GetInteger("nbr-flux1");
-  int NbrFluxQuantumSphere = Manager.GetInteger("nbr-flux2");
+  int NbrFluxQuantumCylinder = Manager.GetInteger("nbr-flux2");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   double Ratio = Manager.GetDouble("ratio");
+  double CylinderRatio = Manager.GetDouble("cylinderaspect-ratio");
+  double CylinderPerimeter = Manager.GetDouble("cylinder-perimeter");
+  if (CylinderPerimeter != 0.0)
+    {
+      CylinderRatio = 2.0 * M_PI * (NbrFluxQuantumCylinder + 1) / (CylinderPerimeter * CylinderPerimeter);
+    }
   
   int NbrPseudoPotentials = 0;
   int* PseudoPotentialMomentumTorus;
-  int* PseudoPotentialMomentumSphere;
+  int* PseudoPotentialMomentumCylinder;
   double* PseudoPotentials;
-  char* InteractioName = 0;
+  char* InteractionName = 0;
   if (Manager.GetString("interaction-file") == 0)
     {
       cout << "no interaction file has been provided, assuming delta interaction" << endl;
-      InteractioName = new char[8];
-      sprintf(InteractioName, "delta");
+      InteractionName = new char[8];
+      sprintf(InteractionName, "delta");
       NbrPseudoPotentials = 1;
       PseudoPotentialMomentumTorus = new int[NbrPseudoPotentials];
-      PseudoPotentialMomentumSphere = new int[NbrPseudoPotentials];
+      PseudoPotentialMomentumCylinder = new int[NbrPseudoPotentials];
       PseudoPotentials = new double[NbrPseudoPotentials];
       PseudoPotentialMomentumTorus[0] = 0;
-      PseudoPotentialMomentumSphere[0] = 0;
+      PseudoPotentialMomentumCylinder[0] = 0;
       PseudoPotentials[0] = 1.0;
     }
   else
@@ -143,8 +147,8 @@ int main(int argc, char** argv)
 	  InteractionFile.DumpErrors(cout);
 	  return -1;	  
 	}
-      PseudoPotentialMomentumSphere = InteractionFile.GetAsIntegerArray(1);
-      if (PseudoPotentialMomentumSphere == 0)
+      PseudoPotentialMomentumCylinder = InteractionFile.GetAsIntegerArray(1);
+      if (PseudoPotentialMomentumCylinder == 0)
 	{
 	  InteractionFile.DumpErrors(cout);
 	  return -1;	  
@@ -155,28 +159,28 @@ int main(int argc, char** argv)
 	  InteractionFile.DumpErrors(cout);
 	  return -1;	  
 	}
-      InteractioName = new char[strlen(Manager.GetString("interaction-file")) + 1];
-      strcpy (InteractioName, Manager.GetString("interaction-file"));
+      InteractionName = new char[strlen(Manager.GetString("interaction-file")) + 1];
+      strcpy (InteractionName, Manager.GetString("interaction-file"));
    }
 
 
   bool FirstRun = true;
 
-  int XMomentum = Manager.GetInteger("x-momentum");
-  char* OutputName = new char [256 + strlen(InteractioName)];
-  if (Manager.GetBoolean("no-translation") == false)
+  char* OutputName = new char [256 + strlen(InteractionName)];
+  if (CylinderPerimeter > 0.0)	
     {
-      sprintf (OutputName, "bosons_t2xs2_ratio_%.6f_%s_n_%d_2s1_%d_2s2_%d.dat", Ratio, InteractioName, NbrBosons, NbrFluxQuantumTorus, NbrFluxQuantumSphere);
+      sprintf (OutputName, "bosons_t2xcylinder_ratio_%.6f_cylperimeter_%.6f_%s_n_%d_2s1_%d_2s2_%d.dat", Ratio, CylinderPerimeter, InteractionName, NbrBosons, 
+	       NbrFluxQuantumTorus, NbrFluxQuantumCylinder);
     }
   else
     {
-      XMomentum = 0;
-      Lanczos.SetRealAlgorithms();
-      sprintf (OutputName, "bosons_kysym_t2xs2_ratio_%.6f_%s_n_%d_2s1_%d_2s2_%d.dat", Ratio, InteractioName, NbrBosons, NbrFluxQuantumTorus, NbrFluxQuantumSphere);
-   }
+      sprintf (OutputName, "bosons_t2xcylinder_ratio_%.6f_cylratio_%.6f_%s_n_%d_2s1_%d_2s2_%d.dat", Ratio, CylinderRatio, InteractionName, NbrBosons, 
+	       NbrFluxQuantumTorus, NbrFluxQuantumCylinder);
+    }
+  int XMomentum = Manager.GetInteger("x-momentum");
   int YMomentum = Manager.GetInteger("y-momentum");
   int MomentumModulo = FindGCD(NbrBosons, NbrFluxQuantumTorus);
-  int MaxTotalLz = NbrFluxQuantumSphere * NbrBosons;
+  int MaxTotalLz = NbrFluxQuantumCylinder * NbrBosons;
   int MinTotalLz = MaxTotalLz & 1;
   if (Manager.GetInteger("initial-lz") != 0)
     {
@@ -252,7 +256,7 @@ int main(int argc, char** argv)
 		  int TmpMax = MomentumModulo;
 		  if ((Ratio == 1.0) && (Manager.GetBoolean("full-reducedbz") == false))
 		    {
-			  int TmpMax = (MomentumModulo + 1) / 2;
+		      int TmpMax = (MomentumModulo + 1) / 2;
 		    }
 		  NbrMomenta = TmpMax * TmpMax * ((MaxTotalLz - MinTotalLz) / 2 + 1);
 		  KxMomenta = new int[NbrMomenta];
@@ -295,119 +299,66 @@ int main(int argc, char** argv)
     }
 
 
-  for (int Pos = 0; Pos < NbrMomenta; ++Pos)
+  for (int Pos = 0;Pos < NbrMomenta; ++Pos)
     {
       int TotalKx = KxMomenta[Pos];
       int TotalKy = KyMomenta[Pos];
       int TotalLz = LzMomenta[Pos];
-      if (Manager.GetBoolean("no-translation") == false)
-	{
-	  cout << "(Kx=" << TotalKx << ", Ky=" << TotalKy << ", Lz=" << TotalLz << ")" << endl;
-	  
-	  ParticleOnTorusWithMagneticTranslations* Space = 0;
+      cout << "(Kx=" << TotalKx << ", Ky=" << TotalKy << ", Lz=" << TotalLz << ")" << endl;
+      
+      ParticleOnTorusWithMagneticTranslations* Space = 0;
 #ifdef __128_BIT_LONGLONG__
-	  if ((((NbrFluxQuantumTorus + 1) * (NbrFluxQuantumSphere + 1)) + NbrBosons) <= 63)
+      if ((((NbrFluxQuantumTorus + 1) * (NbrFluxQuantumCylinder + 1)) + NbrBosons) <= 63)
 #else
-	    if ((((NbrFluxQuantumTorus + 1) * (NbrFluxQuantumSphere + 1)) + NbrBosons) <= 31)	    
+	if ((((NbrFluxQuantumTorus + 1) * (NbrFluxQuantumCylinder + 1)) + NbrBosons) <= 31)	    
 #endif
-	      {
-		Space = new BosonOnT2xS2WithMagneticTranslationsShort(NbrBosons, NbrFluxQuantumTorus, TotalKx, TotalKy, NbrFluxQuantumSphere, TotalLz);
-	      }
-	    else
-	      {
-		Space = 0;
-		//	      Space = new BosonOnT2xS2WithMagneticTranslationsLong(NbrBosons, NbrFluxQuantumTorus, NbrFluxQuantumSphere, TotalKy, TotalLz);
-	      }
-	  if (Space->GetHilbertSpaceDimension() > 0)
-	    {
-	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-	      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
-		Memory = Architecture.GetArchitecture()->GetLocalMemory();
-	      
-	      AbstractQHEHamiltonian* Hamiltonian = 0;
-	      Hamiltonian = new ParticleOnT2xS2WithMagneticTranslationsGenericTwoBodyHamiltonian(Space, NbrBosons, NbrFluxQuantumTorus, TotalKx, Ratio, NbrFluxQuantumSphere,
-												 NbrPseudoPotentials, PseudoPotentialMomentumTorus, PseudoPotentialMomentumSphere, 
-												 PseudoPotentials, Architecture.GetArchitecture(), Memory);
-	      
-	      char* EigenvectorName = 0;
-	      if (Manager.GetBoolean("eigenstate") == true)	
-		{
-		  char* TmpVectorExtension = new char [64];
-		  sprintf (TmpVectorExtension, "_kx_%d_ky_%d_lz_%d", TotalKx, TotalKy, TotalLz);
-		  EigenvectorName = ReplaceString(OutputName, ".dat", TmpVectorExtension);
-		}
-	      
-	      char* ContentPrefix = new char[256];
-	      sprintf (ContentPrefix, "%d %d %d", TotalKx, TotalKy, TotalLz);	  
-	      char* SubspaceLegend = new char[256];
-	      sprintf (SubspaceLegend, "Kx Ky Lz");
-	      
-	      GenericComplexMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, ContentPrefix, SubspaceLegend, 0, OutputName, FirstRun, EigenvectorName);
-	      MainTaskOperation TaskOperation (&Task);	  	 
-	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-	      delete Hamiltonian;
-	      delete Space;
-	      if (EigenvectorName != 0)
-		{
-		  delete[] EigenvectorName;
-		}
-	    }
-	}
-      else
+	  {
+	    Space = new BosonOnT2xS2WithMagneticTranslationsShort(NbrBosons, NbrFluxQuantumTorus, TotalKx, TotalKy, NbrFluxQuantumCylinder, TotalLz);
+	  }
+	else
+	  {
+	    Space = 0;
+	    //	      Space = new BosonOnT2xS2WithMagneticTranslationsLong(NbrBosons, NbrFluxQuantumTorus, NbrFluxQuantumCylinder, TotalKy, TotalLz);
+	  }
+      if (Space->GetHilbertSpaceDimension() > 0)
 	{
-	  cout << "(Ky=" << TotalKy << ", Lz=" << TotalLz << ")" << endl;
+	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+	  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+	    Memory = Architecture.GetArchitecture()->GetLocalMemory();
+	  //       for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+	  // 	Space->PrintState(cout, i);
 	  
-	  ParticleOnSphere* Space = 0;
-#ifdef __128_BIT_LONGLONG__
-	  if ((((NbrFluxQuantumTorus + 1) * (NbrFluxQuantumSphere + 1)) + NbrBosons) <= 63)
-#else
-	    if ((((NbrFluxQuantumTorus + 1) * (NbrFluxQuantumSphere + 1)) + NbrBosons) <= 31)	    
-#endif
-	      {
-		Space = new BosonOnT2xS2(NbrBosons, NbrFluxQuantumTorus, NbrFluxQuantumSphere, TotalKy, TotalLz);
-	      }
-	    else
-	      {
-		Space = 0;
-		//	      Space = new BosonOnT2xS2Long(NbrBosons, NbrFluxQuantumTorus, NbrFluxQuantumSphere, TotalKy, TotalLz);
-	      }
-	  if (Space->GetHilbertSpaceDimension() > 0)
+	  AbstractQHEHamiltonian* Hamiltonian = 0;
+	  Hamiltonian = new ParticleOnT2xCylinderWithMagneticTranslationsGenericTwoBodyHamiltonian(Space, NbrBosons, NbrFluxQuantumTorus, TotalKx, Ratio, 
+												   NbrFluxQuantumCylinder, CylinderRatio,
+												   NbrPseudoPotentials, PseudoPotentialMomentumTorus, PseudoPotentialMomentumCylinder, 
+												   PseudoPotentials, Architecture.GetArchitecture(), Memory);
+	  
+	  char* EigenvectorName = 0;
+	  if (Manager.GetBoolean("eigenstate") == true)	
 	    {
-	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-	      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
-		Memory = Architecture.GetArchitecture()->GetLocalMemory();
-	      
-	      AbstractQHEHamiltonian* Hamiltonian = 0;
-	      Hamiltonian = new ParticleOnT2xS2GenericTwoBodyHamiltonian(Space, NbrBosons, NbrFluxQuantumTorus, Ratio, NbrFluxQuantumSphere,
-									 NbrPseudoPotentials, PseudoPotentialMomentumTorus, PseudoPotentialMomentumSphere, 
-									 PseudoPotentials, Architecture.GetArchitecture(), Memory);
-	      
-	      char* EigenvectorName = 0;
-	      if (Manager.GetBoolean("eigenstate") == true)	
-		{
-		  char* TmpVectorExtension = new char [64];
-		  sprintf (TmpVectorExtension, "_ky_%d_lz_%d", TotalKy, TotalLz);
-		  EigenvectorName = ReplaceString(OutputName, ".dat", TmpVectorExtension);
-		}
-	      
-	      char* ContentPrefix = new char[256];
-	      sprintf (ContentPrefix, "%d %d", TotalKy, TotalLz);	  
-	      char* SubspaceLegend = new char[256];
-	      sprintf (SubspaceLegend, "Ky Lz");
-	      
-	      GenericRealMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, ContentPrefix, SubspaceLegend, 0, OutputName, FirstRun, EigenvectorName);
-	      MainTaskOperation TaskOperation (&Task);	  	 
-	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-	      delete Hamiltonian;
-	      delete Space;
-	      if (EigenvectorName != 0)
-		{
-		  delete[] EigenvectorName;
-		}
+	      char* TmpVectorExtension = new char [64];
+	      sprintf (TmpVectorExtension, "_kx_%d_ky_%d_lz_%d", TotalKx, TotalKy, TotalLz);
+	      EigenvectorName = ReplaceString(OutputName, ".dat", TmpVectorExtension);
 	    }
-	}
-      if (FirstRun == true)
-	FirstRun = false;
+	  
+	  char* ContentPrefix = new char[256];
+	  sprintf (ContentPrefix, "%d %d %d", TotalKx, TotalKy, TotalLz);	  
+	  char* SubspaceLegend = new char[256];
+	  sprintf (SubspaceLegend, "Kx Ky Lz");
+	  
+	  GenericComplexMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, ContentPrefix, SubspaceLegend, 0, OutputName, FirstRun, EigenvectorName);
+	  MainTaskOperation TaskOperation (&Task);	  	 
+	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	  delete Hamiltonian;
+	  delete Space;
+	  if (EigenvectorName != 0)
+	    {
+	      delete[] EigenvectorName;
+	    }
+	  if (FirstRun == true)
+	    FirstRun = false;
+	    }
     }       
   return 0;
 }

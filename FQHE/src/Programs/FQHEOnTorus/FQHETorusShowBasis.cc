@@ -6,7 +6,10 @@
 #include "HilbertSpace/FermionOnTorusWithMagneticTranslations.h"
 #include "HilbertSpace/BosonOnT2xT2.h"
 #include "HilbertSpace/BosonOnT2xT2HardcoreNoNearestNeighbors.h"
+#include "HilbertSpace/BosonOnT2xS2.h"
 #include "HilbertSpace/BosonOnT2xS2WithMagneticTranslationsShort.h"
+#include "HilbertSpace/BosonOnT2xS2HardcoreNoNearestNeighbors.h"
+#include "HilbertSpace/BosonOnT2xS2HardcoreNoNearestNeighborsWithMagneticTranslations.h"
 
 #include "HilbertSpace/FermionOnTorusWithSpinNew.h"
 #include "HilbertSpace/FermionOnTorusWithSpin.h"
@@ -77,8 +80,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  BooleanOption ('\n', "t2xt2", "consider particles on the T2xT2 geometry");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrflux-2", "number of flux quanta for the second torus on the T2XT2 geometry", 20);
   (*SystemGroup) += new SingleIntegerOption ('\n', "kymomentum-2", "the total momentum along the y axis for the second torus when using the T2xT2 geometry", 0);  
-  (*SystemGroup) += new BooleanOption  ('\n', "t2t2-hardcorenonn", "consider particles on the S2xS2 geometry, with hardcore contraint and no nearest neighbor");
+  (*SystemGroup) += new BooleanOption  ('\n', "t2t2-hardcorenonn", "consider particles on the T2xT2 geometry, with hardcore contraint and no nearest neighbor");
   (*SystemGroup) += new  BooleanOption ('\n', "t2xs2", "consider particles on the T2xS2 geometry");
+  (*SystemGroup) += new BooleanOption  ('\n', "t2s2-hardcorenonn", "consider particles on the T2xS2 geometry, with hardcore contraint and no nearest neighbor");
   (*SystemGroup) += new SingleStringOption ('\n', "state", "name of an optional vector state whose component values can be displayed behind each corresponding n-body state");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "hide-component", "hide state components (and thus the corresponding n-body state) whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
   (*SystemGroup) += new MultipleIntegerOption ('\n', "pauli", "print only states obeying a general Pauli exclusion principle",',');
@@ -356,7 +360,6 @@ int main(int argc, char** argv)
 		}
 	      else
 		{
-		  cout << "toto" << endl;
 		  Space = new BosonOnT2xT2(NbrParticles, NbrFluxQuanta, Manager.GetInteger("nbrflux-2"), 
 					   Manager.GetInteger("ky-momentum"), Manager.GetInteger("kymomentum-2"));
 		}
@@ -364,7 +367,8 @@ int main(int argc, char** argv)
 	  if (Manager.GetString("state") == 0)
 	    {
 	      for (int i = 0; i <  Space->GetHilbertSpaceDimension(); ++i)
-		Space->PrintState(cout, i) << endl;
+		if ((PauliK == 0) || (Space->HasPauliExclusions(i, PauliK, PauliR)))
+		  Space->PrintState(cout, i) << endl;
 	      cout << endl;
 	    }
 	  else
@@ -420,7 +424,15 @@ int main(int argc, char** argv)
 	  ParticleOnTorusWithMagneticTranslations* Space = 0;
 	  if (Manager.GetBoolean("boson") == true)
 	    {
-	      Space = new BosonOnT2xS2WithMagneticTranslationsShort(NbrParticles, NbrFluxQuanta, Kx, Ky, Manager.GetInteger("nbrflux-2"), Manager.GetInteger("kymomentum-2"));
+	      if (Manager.GetBoolean("t2s2-hardcorenonn") == true)
+		{
+		  Space = new BosonOnT2xS2HardcoreNoNearestNeighborsWithMagneticTranslations(NbrParticles, NbrFluxQuanta, Kx, Ky,
+											     Manager.GetInteger("nbrflux-2"), Manager.GetInteger("kymomentum-2"));
+		}
+	      else
+		{
+		  Space = new BosonOnT2xS2WithMagneticTranslationsShort(NbrParticles, NbrFluxQuanta, Kx, Ky, Manager.GetInteger("nbrflux-2"), Manager.GetInteger("kymomentum-2"));
+		}
 	    }
 	  else
 	    {
@@ -430,8 +442,8 @@ int main(int argc, char** argv)
 	  if (Manager.GetString("state") == 0)
 	    {
 	      for (int i = 0; i <  Space->GetHilbertSpaceDimension(); ++i)
-		Space->PrintState(cout, i) << endl;;
-	      cout << endl;
+		if ((PauliK == 0) || (Space->HasPauliExclusions(i, PauliK, PauliR)))
+		  Space->PrintState(cout, i) << endl;
 	    }
 	  else
 	    {
@@ -465,7 +477,69 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  cout << "t2xs2 geometry without magnetic translations is not implemented" << endl;
+	  ParticleOnSphere* Space = 0;
+	  if (Manager.GetBoolean("boson") == true)
+	    {
+	      if (Manager.GetBoolean("t2s2-hardcorenonn") == true)
+		{
+		  Space = new BosonOnT2xS2HardcoreNoNearestNeighbors(NbrParticles, NbrFluxQuanta, Manager.GetInteger("ky-momentum"),
+								     Manager.GetInteger("nbrflux-2"), Manager.GetInteger("kymomentum-2"));
+		}
+	      else
+		{
+		  Space = new BosonOnT2xS2(NbrParticles, NbrFluxQuanta, Manager.GetInteger("nbrflux-2"), 
+					   Manager.GetInteger("ky-momentum"), Manager.GetInteger("kymomentum-2"));
+		}
+	    }
+	  if (Manager.GetString("state") == 0)
+	    {
+	      for (int i = 0; i <  Space->GetHilbertSpaceDimension(); ++i)
+		if ((PauliK == 0) || (Space->HasPauliExclusions(i, PauliK, PauliR)))
+		  Space->PrintState(cout, i) << endl;
+	      cout << endl;
+	    }
+	  else
+	    {
+	      int NbrHiddenComponents = 0;
+	      double WeightHiddenComponents = 0.0;
+	      double Normalization = 0.0;
+	      RealVector State;
+	      if (State.ReadVector(Manager.GetString("state")) == false)
+		{
+		  cout << "error while reading " << Manager.GetString("state") << endl;
+		  return -1;
+		}
+	      if (Space->GetHilbertSpaceDimension() != State.GetVectorDimension())
+		{
+		  cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space->GetHilbertSpaceDimension() << ")" << endl;
+		  return -1;
+		}
+	      if (Manager.GetDouble("hide-component") > 0.0)
+		{
+		  int NbrHiddenComponents = 0;
+		  double WeightHiddenComponents = 0.0;
+		  double Error = Manager.GetDouble("hide-component");
+		  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		    {
+		      if (fabs(State[i]) > Error)
+			{
+			  Space->PrintState(cout, i) << " : "  << State[i] << endl;;
+			}
+		      else
+			{
+			  ++NbrHiddenComponents;
+			  WeightHiddenComponents += State[i] * State[i];
+			}
+		      Normalization += State[i] * State[i];
+		    }
+	      cout << NbrHiddenComponents << " hidden components (square normalization error = " << WeightHiddenComponents << " / " << Normalization << ")" << endl;	  
+		}
+	      else
+		for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		  Space->PrintState(cout, i) << " : "  << State[i] << endl;;
+	    }
+	  delete Space;
+	  return 0;
 	}
     }
   if (Manager.GetBoolean("su2-spin") == false)

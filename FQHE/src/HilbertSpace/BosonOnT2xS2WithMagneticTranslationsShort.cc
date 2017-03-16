@@ -119,6 +119,11 @@ BosonOnT2xS2WithMagneticTranslationsShort::BosonOnT2xS2WithMagneticTranslationsS
 	    cout << UsedMemory << endl;
 #endif
 	}
+      else
+	{
+	  this->HilbertSpaceDimension = 0;
+	  this->LargeHilbertSpaceDimension = 0l;
+	}
     }
   else
     {

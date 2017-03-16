@@ -6,10 +6,10 @@
 //                    Copyright (C) 2001-2014 Nicolas Regnault                //
 //                                                                            //
 //                                                                            //
-//                   class of bosons on the 4D manifold T2 x T2               //
+//                   class of bosons on the 4D manifold T2 x S2               //
 // forbidding mutliple orbital occupations and nearest orbital occupations    //
 //                                                                            //
-//                        last modification : 16/02/2016                      //
+//                        last modification : 25/02/2017                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,7 +30,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/BosonOnT2xT2HardcoreNoNearestNeighbors.h"
+#include "HilbertSpace/BosonOnT2xS2HardcoreNoNearestNeighbors.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/ComplexLapackDeterminant.h"
 #include "Vector/RealVector.h"
@@ -59,30 +59,35 @@ using std::ios;
 // default constructor
 // 
 
-BosonOnT2xT2HardcoreNoNearestNeighbors::BosonOnT2xT2HardcoreNoNearestNeighbors ()
+BosonOnT2xS2HardcoreNoNearestNeighbors::BosonOnT2xS2HardcoreNoNearestNeighbors ()
 {
 }
 
 // basic constructor
 // 
 // nbrBosons = number of bosons
-// nbrFluxQuanta1 = number of flux quanta for the first torus
-// nbrFluxQuanta2 = number of flux quanta for the second torus
-// totalKy1 = total momentum along y for the first torus
-// totalKy2 = total momentum along y for the second torus
+// nbrFluxQuantumTorus = number of flux quanta piercing the torus
+// kyMomentum = momentum in the y direction for the torus
+// nbrFluxQuantumSphere = number of flux quanta piercing the sphere
+// totalLz = projection of the total angular momentum along the z axis for the sphere
+// memory = amount of memory granted for precalculations
 
-BosonOnT2xT2HardcoreNoNearestNeighbors::BosonOnT2xT2HardcoreNoNearestNeighbors (int nbrBosons, int nbrFluxQuanta1, int nbrFluxQuanta2, int totalKy1, int totalKy2, unsigned long memory)
+BosonOnT2xS2HardcoreNoNearestNeighbors::BosonOnT2xS2HardcoreNoNearestNeighbors (int nbrBosons, int nbrFluxQuantumTorus, int kyMomentum,
+										int nbrFluxQuantumSphere, int totalLz, unsigned long memory)
 {  
   this->NbrFermions = nbrBosons;
   this->IncNbrFermions = this->NbrFermions + 1;
-  this->TotalLz = 0;
-  this->NbrSiteX =  nbrFluxQuanta1;
-  this->NbrSiteY =  nbrFluxQuanta2;
-  this->KxMomentum = totalKy1;
-  this->KyMomentum = totalKy2;
+  this->TotalLz = totalLz;
+  this->NbrFluxQuantumTorus = nbrFluxQuantumTorus;
+  this->NbrFluxQuantumSphere = nbrFluxQuantumSphere;
+  this->ShiftedTotalLz = (this->TotalLz + (this->NbrFermions * this->NbrFluxQuantumSphere)) / 2;
+  this->NbrSiteX =  this->NbrFluxQuantumTorus;
+  this->NbrSiteY =  this->NbrFluxQuantumSphere + 1;
+  this->KxMomentum = kyMomentum;
+  this->KyMomentum = this->ShiftedTotalLz;
   this->LzMax = this->NbrSiteX * this->NbrSiteY - 1;
   this->NbrLzValue = this->LzMax + 1;
-  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0, 0);
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0);
   cout << "dim = " << this->LargeHilbertSpaceDimension << endl;
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
@@ -93,7 +98,7 @@ BosonOnT2xT2HardcoreNoNearestNeighbors::BosonOnT2xT2HardcoreNoNearestNeighbors (
       this->Flag.Initialize();
       this->TargetSpace = this;
       this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
-      long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0, this->LzMax, 0, 0l);
+      long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0, this->LzMax, 0l);
       if (TmpLargeHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
 	{
 	  cout << "error while generating the Hilbert space : get " << TmpLargeHilbertSpaceDimension << " , should be " << this->LargeHilbertSpaceDimension << endl;
@@ -211,14 +216,17 @@ BosonOnT2xT2HardcoreNoNearestNeighbors::BosonOnT2xT2HardcoreNoNearestNeighbors (
 //
 // bosons = reference on the hilbert space to copy to copy
 
-BosonOnT2xT2HardcoreNoNearestNeighbors::BosonOnT2xT2HardcoreNoNearestNeighbors(const BosonOnT2xT2HardcoreNoNearestNeighbors& bosons)
+BosonOnT2xS2HardcoreNoNearestNeighbors::BosonOnT2xS2HardcoreNoNearestNeighbors(const BosonOnT2xS2HardcoreNoNearestNeighbors& bosons)
 {
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->LargeHilbertSpaceDimension = bosons.LargeHilbertSpaceDimension;
   this->Flag = bosons.Flag;
   this->NbrFermions = bosons.NbrFermions;
   this->IncNbrFermions = bosons.IncNbrFermions;
-  this->TotalLz = bosons.TotalLz;
+  this->TotalLz = bosons.TotalLz; 
+  this->NbrFluxQuantumTorus = bosons.NbrFluxQuantumTorus;
+  this->NbrFluxQuantumSphere = bosons.NbrFluxQuantumSphere;
+  this->ShiftedTotalLz = bosons.ShiftedTotalLz;
   this->NbrSiteX = bosons.NbrSiteX;
   this->NbrSiteY = bosons.NbrSiteY;
   this->LzMax = bosons.LzMax;
@@ -245,7 +253,7 @@ BosonOnT2xT2HardcoreNoNearestNeighbors::BosonOnT2xT2HardcoreNoNearestNeighbors(c
 // destructor
 //
 
-BosonOnT2xT2HardcoreNoNearestNeighbors::~BosonOnT2xT2HardcoreNoNearestNeighbors ()
+BosonOnT2xS2HardcoreNoNearestNeighbors::~BosonOnT2xS2HardcoreNoNearestNeighbors ()
 {
 }
 
@@ -254,7 +262,7 @@ BosonOnT2xT2HardcoreNoNearestNeighbors::~BosonOnT2xT2HardcoreNoNearestNeighbors 
 // fermions = reference on the hilbert space to copy to copy
 // return value = reference on current hilbert space
 
-BosonOnT2xT2HardcoreNoNearestNeighbors & BosonOnT2xT2HardcoreNoNearestNeighbors::operator = (const BosonOnT2xT2HardcoreNoNearestNeighbors & bosons)
+BosonOnT2xS2HardcoreNoNearestNeighbors & BosonOnT2xS2HardcoreNoNearestNeighbors::operator = (const BosonOnT2xS2HardcoreNoNearestNeighbors & bosons)
 {
   if (bosons.TargetSpace != &bosons)
     this->TargetSpace = bosons.TargetSpace;
@@ -266,6 +274,9 @@ BosonOnT2xT2HardcoreNoNearestNeighbors & BosonOnT2xT2HardcoreNoNearestNeighbors:
   this->NbrFermions = bosons.NbrFermions;
   this->IncNbrFermions = bosons.IncNbrFermions;
   this->TotalLz = bosons.TotalLz;
+  this->NbrFluxQuantumTorus = bosons.NbrFluxQuantumTorus;
+  this->NbrFluxQuantumSphere = bosons.NbrFluxQuantumSphere;
+  this->ShiftedTotalLz = bosons.ShiftedTotalLz;
   this->LzMax = bosons.LzMax;
   this->NbrLzValue = bosons.NbrLzValue;
   this->NbrSiteX = bosons.NbrSiteX;
@@ -290,9 +301,9 @@ BosonOnT2xT2HardcoreNoNearestNeighbors & BosonOnT2xT2HardcoreNoNearestNeighbors:
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* BosonOnT2xT2HardcoreNoNearestNeighbors::Clone()
+AbstractHilbertSpace* BosonOnT2xS2HardcoreNoNearestNeighbors::Clone()
 {
-  return new BosonOnT2xT2HardcoreNoNearestNeighbors(*this);
+  return new BosonOnT2xS2HardcoreNoNearestNeighbors(*this);
 }
 
 // generate all states corresponding to the constraints
@@ -304,10 +315,9 @@ AbstractHilbertSpace* BosonOnT2xT2HardcoreNoNearestNeighbors::Clone()
 // currentTotalKy = current total momentum along y
 // currentFermionicPosition = current fermionic position within the state description
 // pos = position in StateDescription array where to store states
-// occupationLastOrbital = occupation of the last orbital at the current kx value
 // return value = position from which new states have to be stored
   
-long BosonOnT2xT2HardcoreNoNearestNeighbors::GenerateStates(int nbrBosons, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, int currentFermionicPosition, int occupationLastOrbital, long pos)
+long BosonOnT2xS2HardcoreNoNearestNeighbors::GenerateStates(int nbrBosons, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, int currentFermionicPosition, long pos)
 {
 
   if (nbrBosons < 0)
@@ -320,7 +330,7 @@ long BosonOnT2xT2HardcoreNoNearestNeighbors::GenerateStates(int nbrBosons, int c
     }
   if (nbrBosons == 0)
     {
-      if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && ((currentTotalKy % this->NbrSiteY) == this->KyMomentum))
+      if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && (currentTotalKy == this->KyMomentum))
 	{
 	  this->StateDescription[pos] = 0x0ul;	  
 	  return (pos + 1l);
@@ -331,32 +341,12 @@ long BosonOnT2xT2HardcoreNoNearestNeighbors::GenerateStates(int nbrBosons, int c
   if (currentKx < 0)
     return pos;
 
-  long TmpPos = 0;
-  if ((currentKy != 0) || (occupationLastOrbital == 0))
-    {
-      if (currentKy == (this->NbrSiteY - 1))
-	{
-	  TmpPos += this->GenerateStates(nbrBosons - 1, currentKx, currentKy - 2, currentTotalKx + currentKx, currentTotalKy + currentKy, currentFermionicPosition - 2, 
-					 1, pos);
-	}
-      else
-	{
-	  TmpPos += this->GenerateStates(nbrBosons - 1, currentKx, currentKy - 2, currentTotalKx + currentKx, currentTotalKy + currentKy, currentFermionicPosition - 2, 
-					 occupationLastOrbital, pos);
-	}
-    }
+  long TmpPos = this->GenerateStates(nbrBosons - 1, currentKx, currentKy - 2, currentTotalKx + currentKx, currentTotalKy + currentKy, currentFermionicPosition - 2, pos);
   unsigned long Mask = 0x1ul << currentFermionicPosition ;
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
 
-  if (currentKy == (this->NbrSiteY - 1))
-    {
-      return this->GenerateStates(nbrBosons, currentKx, currentKy - 1, currentTotalKx, currentTotalKy, currentFermionicPosition - 1, 0, pos);
-    }
-  else
-    {
-      return this->GenerateStates(nbrBosons, currentKx, currentKy - 1, currentTotalKx, currentTotalKy, currentFermionicPosition - 1, occupationLastOrbital, pos);
-    }
+  return this->GenerateStates(nbrBosons, currentKx, currentKy - 1, currentTotalKx, currentTotalKy, currentFermionicPosition - 1, pos);
 };
 
 
@@ -367,10 +357,9 @@ long BosonOnT2xT2HardcoreNoNearestNeighbors::GenerateStates(int nbrBosons, int c
 // currentKy = current momentum along y for a single particle
 // currentTotalKx = current total momentum along x
 // currentTotalKy = current total momentum along y
-// occupationLastOrbital = occupation of the last orbital at the current kx value
 // return value = Hilbert space dimension
 
-long BosonOnT2xT2HardcoreNoNearestNeighbors::EvaluateHilbertSpaceDimension(int nbrBosons, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, int occupationLastOrbital)
+long BosonOnT2xS2HardcoreNoNearestNeighbors::EvaluateHilbertSpaceDimension(int nbrBosons, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy)
 {
   if (nbrBosons < 0)
     return 0l;
@@ -381,7 +370,7 @@ long BosonOnT2xT2HardcoreNoNearestNeighbors::EvaluateHilbertSpaceDimension(int n
     }
   if (nbrBosons == 0)
     {
-      if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && ((currentTotalKy % this->NbrSiteY) == this->KyMomentum))
+      if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && (currentTotalKy == this->KyMomentum))
 	return 1l;
       else	
 	return 0l;
@@ -389,25 +378,8 @@ long BosonOnT2xT2HardcoreNoNearestNeighbors::EvaluateHilbertSpaceDimension(int n
   if (currentKx < 0)
     return 0l;
   long Count = 0;
-  if ((currentKy != 0) || (occupationLastOrbital == 0))
-    {
-      if (currentKy == (this->NbrSiteY - 1))
-	{
-	  Count += this->EvaluateHilbertSpaceDimension(nbrBosons - 1, currentKx, currentKy - 2, currentTotalKx + currentKx, currentTotalKy + currentKy, 1);
-	}
-      else
-	{
-	  Count += this->EvaluateHilbertSpaceDimension(nbrBosons - 1, currentKx, currentKy - 2, currentTotalKx + currentKx, currentTotalKy + currentKy, occupationLastOrbital);
-	}
-    }
-  if (currentKy == (this->NbrSiteY - 1))
-    {
-      Count += this->EvaluateHilbertSpaceDimension(nbrBosons, currentKx, currentKy - 1, currentTotalKx, currentTotalKy, 0);
-    }
-  else
-    {
-      Count += this->EvaluateHilbertSpaceDimension(nbrBosons, currentKx, currentKy - 1, currentTotalKx, currentTotalKy, occupationLastOrbital);
-    }
+  Count += this->EvaluateHilbertSpaceDimension(nbrBosons - 1, currentKx, currentKy - 2, currentTotalKx + currentKx, currentTotalKy + currentKy);
+  Count += this->EvaluateHilbertSpaceDimension(nbrBosons, currentKx, currentKy - 1, currentTotalKx, currentTotalKy);
   return Count;
 }
 
@@ -416,7 +388,7 @@ long BosonOnT2xT2HardcoreNoNearestNeighbors::EvaluateHilbertSpaceDimension(int n
 // pauliK = number of particles allowed in consecutive orbitals
 // pauliR = number of consecutive orbitals
 
-bool BosonOnT2xT2HardcoreNoNearestNeighbors::HasPauliExclusions(int index, int pauliK, int pauliR)
+bool BosonOnT2xS2HardcoreNoNearestNeighbors::HasPauliExclusions(int index, int pauliK, int pauliR)
 {
   unsigned long TmpState = this->StateDescription[index];
   unsigned long TmpMask = (0x3ul << this->NbrSiteY) | 0x3ul;
@@ -425,64 +397,74 @@ bool BosonOnT2xT2HardcoreNoNearestNeighbors::HasPauliExclusions(int index, int p
   int TmpNbrPatterns = 0;
   if (this->NbrSiteX > 2)
     {
-      if (this->NbrSiteY > 2)
+      for (int i = 1; i < this->NbrSiteX; ++i)
 	{
-	  for (int i = 1; i <= this->NbrSiteX; ++i)
+	  for (int j = 1;  j < this->NbrSiteY; ++j)
 	    {
-	      for (int j = 1;  j <= this->NbrSiteY; ++j)
+	      if (((TmpState & TmpMask) == TmpPattern1001) || ((TmpState & TmpMask) == TmpPattern0110))
 		{
-		  unsigned long TmpPattern = ((this->GetSafeOccupationWithPBC(index, i - 1, j - 1)) |
-					      (this->GetSafeOccupationWithPBC(index, i, j - 1) << 1) |
-					      (this->GetSafeOccupationWithPBC(index, i - 1, j) << 2) |
-					      (this->GetSafeOccupationWithPBC(index, i, j) << 3));
-		  if ((TmpPattern == 0x9ul) || (TmpPattern == 0x6ul))
+		  if ((this->GetSafeOccupationWithPBC(index, i - 2, j - 1) != 0x0ul) || (this->GetSafeOccupationWithPBC(index, i - 2, j) != 0x0ul) ||
+		      (this->GetSafeOccupationWithPBC(index, i + 1, j - 1) != 0x0ul) || (this->GetSafeOccupationWithPBC(index, i + 1, j) != 0x0ul) ||
+		      (this->GetSafeOccupationWithPBC(index, i - 1, j - 2) != 0x0ul) || (this->GetSafeOccupationWithPBC(index, i, j - 2) != 0x0ul) ||
+		      (this->GetSafeOccupationWithPBC(index, i - 1, j + 1) != 0x0ul) || (this->GetSafeOccupationWithPBC(index, i, j + 1) != 0x0ul))
 		    {
-		      if ((this->GetSafeOccupationWithPBC(index, i - 2, j - 1) != 0x0ul) || (this->GetSafeOccupationWithPBC(index, i - 2, j) != 0x0ul) ||
-			  (this->GetSafeOccupationWithPBC(index, i + 1, j - 1) != 0x0ul) || (this->GetSafeOccupationWithPBC(index, i + 1, j) != 0x0ul) ||
-			  (this->GetSafeOccupationWithPBC(index, i - 1, j - 2) != 0x0ul) || (this->GetSafeOccupationWithPBC(index, i, j - 2) != 0x0ul) ||
-			  (this->GetSafeOccupationWithPBC(index, i - 1, j + 1) != 0x0ul) || (this->GetSafeOccupationWithPBC(index, i, j + 1) != 0x0ul))
-			{
-			  return false;
-			}
-		      ++TmpNbrPatterns;
+		      return false;
 		    }
+		  ++TmpNbrPatterns;
 		}
+	      TmpMask <<= 1;
+	      TmpPattern0110 <<= 1;
+	      TmpPattern1001 <<= 1;
 	    }
+	  TmpMask <<= 1;
+	  TmpPattern0110 <<= 1;      
+	  TmpPattern1001 <<= 1;
 	}
-      else
+      TmpMask = 0x3ul | (0x3ul << ((this->NbrSiteX - 1) *  this->NbrSiteY));
+      TmpPattern0110 = (0x1ul << ((this->NbrSiteX - 1) *  this->NbrSiteY)) | 0x2ul;
+      TmpPattern1001 = (0x2ul << ((this->NbrSiteX - 1) *  this->NbrSiteY)) | 0x1ul;
+      for (int j = 1;  j < this->NbrSiteY; ++j)
 	{
-	}
+	  if (((TmpState & TmpMask) == TmpPattern1001) || ((TmpState & TmpMask) == TmpPattern0110))
+	    {
+	      if ((this->GetSafeOccupationWithPBC(index, -2, j - 1) != 0x0ul) || (this->GetSafeOccupationWithPBC(index, -2, j) != 0x0ul) ||
+		  (this->GetSafeOccupationWithPBC(index, 1, j - 1) != 0x0ul) || (this->GetSafeOccupationWithPBC(index, 1, j) != 0x0ul) ||
+		  (this->GetSafeOccupationWithPBC(index, -1, j - 2) != 0x0ul) || (this->GetSafeOccupationWithPBC(index, 0, j - 2) != 0x0ul) ||
+		  (this->GetSafeOccupationWithPBC(index, -1, j + 1) != 0x0ul) || (this->GetSafeOccupationWithPBC(index, 0, j + 1) != 0x0ul))
+		{
+		  return false;
+		}
+	      ++TmpNbrPatterns;
+	    }
+	  TmpMask <<= 1;
+	  TmpPattern0110 <<= 1;
+	  TmpPattern1001 <<= 1;
+	}      
     }
   else
     {
-      if (this->NbrSiteY > 2)
+      for (int i = 1; i < this->NbrSiteX; ++i)
 	{
-	  for (int i = 1; i < this->NbrSiteX; ++i)
+	  for (int j = 1;  j < this->NbrSiteY; ++j)
 	    {
-	      for (int j = 1;  j < this->NbrSiteY; ++j)
+	      if (((TmpState & TmpMask) == TmpPattern1001) || ((TmpState & TmpMask) == TmpPattern0110))
 		{
-		  if (((TmpState & TmpMask) == TmpPattern1001) || ((TmpState & TmpMask) == TmpPattern0110))
+		  if ((this->GetSafeOccupation(index, i - 2, j - 1) != 0x0ul) || (this->GetSafeOccupation(index, i - 2, j) != 0x0ul) ||
+		      (this->GetSafeOccupation(index, i + 1, j - 1) != 0x0ul) || (this->GetSafeOccupation(index, i + 1, j) != 0x0ul) ||
+		      (this->GetSafeOccupation(index, i - 1, j - 2) != 0x0ul) || (this->GetSafeOccupation(index, i, j - 2) != 0x0ul) ||
+		      (this->GetSafeOccupation(index, i - 1, j + 1) != 0x0ul) || (this->GetSafeOccupation(index, i, j + 1) != 0x0ul))
 		    {
-		      if ((this->GetSafeOccupation(index, i - 2, j - 1) != 0x0ul) || (this->GetSafeOccupation(index, i - 2, j) != 0x0ul) ||
-			  (this->GetSafeOccupation(index, i + 1, j - 1) != 0x0ul) || (this->GetSafeOccupation(index, i + 1, j) != 0x0ul) ||
-			  (this->GetSafeOccupation(index, i - 1, j - 2) != 0x0ul) || (this->GetSafeOccupation(index, i, j - 2) != 0x0ul) ||
-			  (this->GetSafeOccupation(index, i - 1, j + 1) != 0x0ul) || (this->GetSafeOccupation(index, i, j + 1) != 0x0ul))
-			{
-			  return false;
-			}
-		      ++TmpNbrPatterns;
+		      return false;
 		    }
-		  TmpMask <<= 1;
-		  TmpPattern0110 <<= 1;
-		  TmpPattern1001 <<= 1;
+		  ++TmpNbrPatterns;
 		}
 	      TmpMask <<= 1;
-	      TmpPattern0110 <<= 1;      
+	      TmpPattern0110 <<= 1;
 	      TmpPattern1001 <<= 1;
 	    }
-	}
-      else
-	{
+	  TmpMask <<= 1;
+	  TmpPattern0110 <<= 1;      
+	  TmpPattern1001 <<= 1;
 	}
     }
   if (TmpNbrPatterns > 0)
@@ -500,9 +482,9 @@ bool BosonOnT2xT2HardcoreNoNearestNeighbors::HasPauliExclusions(int index, int p
 // pauliK = number of particles allowed in consecutive orbitals
 // pauliR = number of consecutive orbitals
 
-unsigned long BosonOnT2xT2HardcoreNoNearestNeighbors::FindCanonical(unsigned long state, int xPosition, int yPosition)
+unsigned long BosonOnT2xS2HardcoreNoNearestNeighbors::FindCanonical(unsigned long state, int xPosition, int yPosition)
 {
-  if (yPosition >= this->NbrSiteY)
+  if (yPosition >= (this->NbrSiteY - 1))
     {
       yPosition = 0;
       xPosition++;
@@ -517,38 +499,17 @@ unsigned long BosonOnT2xT2HardcoreNoNearestNeighbors::FindCanonical(unsigned lon
   unsigned long TmpPattern1001;
   if (xPosition == (this->NbrSiteX - 1))
     {
-      if (yPosition == (this->NbrSiteY - 1))
-	{
-	  TmpShift = 0;
-	  TmpMask = ((0x1ul | (0x1ul << (this->NbrSiteY - 1))) 
-		     | ((0x1ul | (0x1ul << (this->NbrSiteY - 1))) << ((this->NbrSiteX - 1) *  this->NbrSiteY)));
-	  TmpPattern0110 = (0x1ul << (this->NbrSiteY - 1)) | (0x1ul << ((this->NbrSiteX - 1) *  this->NbrSiteY));
-	  TmpPattern1001 = 0x1ul | (0x1ul << ((this->NbrSiteX * this->NbrSiteY) - 1));
-	}
-      else
-	{
-	  TmpShift = yPosition;
-	  TmpMask = 0x3ul | (0x3ul << ((this->NbrSiteX - 1) *  this->NbrSiteY));
-	  TmpPattern0110 = (0x1ul << ((this->NbrSiteX - 1) *  this->NbrSiteY)) | 0x2ul;
-	  TmpPattern1001 = (0x2ul << ((this->NbrSiteX - 1) *  this->NbrSiteY)) | 0x1ul;
-	}
+      TmpShift = yPosition;
+      TmpMask = 0x3ul | (0x3ul << ((this->NbrSiteX - 1) *  this->NbrSiteY));
+      TmpPattern0110 = (0x1ul << ((this->NbrSiteX - 1) *  this->NbrSiteY)) | 0x2ul;
+      TmpPattern1001 = (0x2ul << ((this->NbrSiteX - 1) *  this->NbrSiteY)) | 0x1ul;
     }
   else
     {
-      if (yPosition == (this->NbrSiteY - 1))
-	{
-	  TmpShift = (xPosition *  this->NbrSiteY);
-	  TmpMask = 0x1ul | (0x3ul << (this->NbrSiteY - 1)) | (0x1ul << ((2 * this->NbrSiteY) - 1));
-	  TmpPattern0110 = 0x1ul | (0x1ul << ((2 * this->NbrSiteY) - 1));
-	  TmpPattern1001 = 0x3ul << (this->NbrSiteY - 1);
-	}
-      else
-	{
-	  TmpShift = (xPosition *  this->NbrSiteY) + yPosition;
-	  TmpMask = (0x3ul << this->NbrSiteY) | 0x3ul;
-	  TmpPattern0110 = (0x1ul << this->NbrSiteY) | 0x2ul;
-	  TmpPattern1001 = (0x2ul << this->NbrSiteY) | 0x1ul;
-	}
+      TmpShift = (xPosition *  this->NbrSiteY) + yPosition;
+      TmpMask = (0x3ul << this->NbrSiteY) | 0x3ul;
+      TmpPattern0110 = (0x1ul << this->NbrSiteY) | 0x2ul;
+      TmpPattern1001 = (0x2ul << this->NbrSiteY) | 0x1ul;
     }
   TmpMask <<= TmpShift;
   TmpPattern0110 <<= TmpShift;

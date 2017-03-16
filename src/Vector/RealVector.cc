@@ -4295,38 +4295,39 @@ Vector& RealVector::SendPartialClone(MPI::Intracomm& communicator, int id, int f
 // maximumIndices = largest index for each thread
 // id = id of the process to send the vector
 // return value = reference on the current vector
-Vector& RealVector::ScatterPartialClones(MPI::Intracomm& communicator, long *mininumIndices, long *maximumIndices, int id)
-{
-  if (id == communicator.Get_rank())
-    {
-      communicator.Bcast(&this->VectorType, 1, MPI::INT, id);
-      int TmpArray[5];
-      TmpArray[0] = nbrComponent;
-      TmpArray[1] = this->VectorId;
-      TmpArray[2] = 3;
-      TmpArray[3] = firstComponent;
-      TmpArray[4] = this->Dimension;
-      int NbrMPINodes = communicator.Get_size();
-      communicator.Bcast(TmpArray, 5, MPI::INT, id);
-      int *TmpCounts=new int[NbrMPINodes];
-      int *TmpDisplacements=new int[NbrMPINodes];
-      for (int i=0; i<NbrMPINodes; ++i)
-	{
-	  TmpCounts[i] = (int)(maximumIndices[i] - minimumIndices[i] + 1);
-	  if (minimumIndices[i]>std::numeric_limits<int>::max()/2)
-	    {
-	      cout << "Cannot scatter vectors larger than int::max"<<endl;
-	      return *this;
-	    }
-	  TmpDisplacements[i] = (int)minimumIndices[i];
-	}
-      communicator.Scatterv(this->Components, TmpCounts, TmpDisplacements, MPI::DOUBLE, MPI::IN_PLACE, /* recvcount*/ 0, /* recvtype*/ 0, id);
-      delete [] TmpCounts;
-      delete [] TmpDisplacements;
-    }
-  else cout << "Error: ScatterPartialClones should only be called by the process sending data"<<endl;
-  return *this;
-}
+
+// Vector& RealVector::ScatterPartialClones(MPI::Intracomm& communicator, long *mininumIndices, long *maximumIndices, int id)
+// {
+//   if (id == communicator.Get_rank())
+//     {
+//       communicator.Bcast(&this->VectorType, 1, MPI::INT, id);
+//       int TmpArray[5];
+//       TmpArray[0] = nbrComponent;
+//       TmpArray[1] = this->VectorId;
+//       TmpArray[2] = 3;
+//       TmpArray[3] = firstComponent;
+//       TmpArray[4] = this->Dimension;
+//       int NbrMPINodes = communicator.Get_size();
+//       communicator.Bcast(TmpArray, 5, MPI::INT, id);
+//       int *TmpCounts=new int[NbrMPINodes];
+//       int *TmpDisplacements=new int[NbrMPINodes];
+//       for (int i=0; i<NbrMPINodes; ++i)
+// 	{
+// 	  TmpCounts[i] = (int)(maximumIndices[i] - minimumIndices[i] + 1);
+// 	  if (minimumIndices[i]>std::numeric_limits<int>::max()/2)
+// 	    {
+// 	      cout << "Cannot scatter vectors larger than int::max"<<endl;
+// 	      return *this;
+// 	    }
+// 	  TmpDisplacements[i] = (int)minimumIndices[i];
+// 	}
+//       communicator.Scatterv(this->Components, TmpCounts, TmpDisplacements, MPI::DOUBLE, MPI::IN_PLACE, /* recvcount*/ 0, /* recvtype*/ 0, id);
+//       delete [] TmpCounts;
+//       delete [] TmpDisplacements;
+//     }
+//   else cout << "Error: ScatterPartialClones should only be called by the process sending data"<<endl;
+//   return *this;
+// }
 
 
 // create a new vector on each MPI node with same size and same type but non-initialized components
