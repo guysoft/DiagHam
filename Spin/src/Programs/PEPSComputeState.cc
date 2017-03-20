@@ -30,6 +30,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('y',"Ly", "size of the lattice in y direction (only 2 or 4)", 2);
   (*SystemGroup) += new  SingleIntegerOption ('sz',"sz", "sz value", -10000);
   (*SystemGroup) += new BooleanOption ('\n', "block-tensor", "compute the 2*2 blocked tensor (instead of computing the state)");
+
+  (*SystemGroup) += new BooleanOption ('\n', "cylinder", "compute the state on a cylinder");
+  (*SystemGroup) += new SingleStringOption  ('\n', "left-vector", "name of the file containing the left boundary vector (useful only in cylinder mode)");
+  (*SystemGroup) += new SingleStringOption  ('\n', "right-vector", "name of the file containing the right boundary vector (useful only in cylinder mode)");
+
+
 //  (*SystemGroup) += new BooleanOption ('c', "complex", "use complex version of the code");
 
   (*SystemGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -49,6 +55,8 @@ int main(int argc, char** argv)
   int Ly = Manager.GetInteger("Ly");
   int Sz = Manager.GetInteger("sz");
   bool BlockFlag = Manager.GetBoolean("block-tensor");
+  bool CylinderFlag = Manager.GetBoolean("cylinder");
+  
   MultiColumnASCIIFile TensorsElementsDefinition;
   if (TensorsElementsDefinition.Parse(Manager.GetString("tensor-file")) == false)
     {
@@ -56,28 +64,11 @@ int main(int argc, char** argv)
       return -1;
     } 
   
-/*  if (ComplexFlag)
-    {
-      if (TensorsElementsDefinition.GetNbrColumns() != 6)
-	{
-	  cout <<" The tensor file should have 6 columnns"<<endl;
-	}
-    }
-  else
-    {
-      if (TensorsElementsDefinition.GetNbrColumns() != 5)
-	{
-	  cout <<" The tensor file should have 5 columnns"<<endl;
-	}
-    }
-*/
-
   ComplexPEPSPBC PEPS(TensorsElementsDefinition);
   
   if (BlockFlag) 
     {
       PEPS.ComputeBlockTensor();
-//      cout<< "I should have printed"<<endl;
       return 0;
     }
 
@@ -85,29 +76,50 @@ int main(int argc, char** argv)
   char * FullOutputFileName = new char [200];
   sprintf(FullOutputFileName,"PEPS_%s_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Lx,Ly); 
 
-
-  if (Sz ==  -10000) 
+  if (CylinderFlag ==false)
     {
-      char * FullOutputFileName = new char [200];
-      sprintf(FullOutputFileName,"PEPS_%s_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Lx,Ly); 
-  
-      if (Ly == 2 )
+      if (Sz ==  -10000) 
 	{
-	  ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPS (Lx);
-	  State.WriteVector(FullOutputFileName);
+	  char * FullOutputFileName = new char [200];
+	  sprintf(FullOutputFileName,"PEPS_%s_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Lx,Ly); 
+	  
+	  if (Ly == 2 )
+	    {
+	      ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPS (Lx);
+	      State.WriteVector(FullOutputFileName);
+	    }
+	  if (Ly == 4)
+	    {
+	      ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPS (Lx,2);
+	      State.WriteVector(FullOutputFileName);
+	    }
 	}
-      if (Ly == 4)
+      else
 	{
-	  ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPS (Lx,2);
+	  char * FullOutputFileName = new char [200];
+	  sprintf(FullOutputFileName,"PEPS_%s_sz_%d_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Sz,Lx,Ly); 
+	  ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPSSzConstraint (Lx,Ly/2,Sz);
 	  State.WriteVector(FullOutputFileName);
 	}
     }
   else
     {
       char * FullOutputFileName = new char [200];
-      sprintf(FullOutputFileName,"PEPS_%s_sz_%d_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Sz,Lx,Ly); 
-      ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPSSzConstraint (Lx,Ly/2,Sz);
-      State.WriteVector(FullOutputFileName);  
-      
+      sprintf(FullOutputFileName,"PEPS_cylinder_%s_sz_%d_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Sz,Lx,Ly); 
+      ComplexVector LeftVector;
+      if (LeftVector.ReadVector(Manager.GetString("left-vector")) == false)
+	{
+	  cout << "error while reading " << Manager.GetString("left-vector") << endl;
+	  return -1;
+	} 
+
+      ComplexVector RightVector;
+      if (RightVector.ReadVector(Manager.GetString("right-vector")) == false)
+	{
+	  cout << "error while reading " << Manager.GetString("right-vector") << endl;
+	  return -1;
+	} 
+      ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPSSzConstraint (Lx, Ly/2,Sz, ComplexDiagonalMatrix() , LeftVector, RightVector, false,false);
+      State.WriteVector(FullOutputFileName);
     }
 }
