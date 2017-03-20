@@ -409,6 +409,7 @@ Vector* Vector::BroadcastClone(MPI::Intracomm& communicator, int id)
 
 Vector& Vector::SendPartialClone(MPI::Intracomm& communicator, int id, int firstComponent, int nbrComponent)
 {
+  /// @todo can convert this method to virtual method with automatic type cast?
   switch (this->VectorType & Vector::DataTypeMask)
     {
     case (Vector::RealDatas):
@@ -459,15 +460,15 @@ Vector* Vector::ReceivePartialClone(MPI::Intracomm& communicator, int id)
 // maximumIndices = largest index for each thread
 // id = id of the process to send the vector
 // return value = reference on the current vector
-Vector& Vector::ScatterPartialClones(MPI::Intracomm& communicator, long *mininumIndices, long *maximumIndices, int id)
+Vector& Vector::ScatterPartialClones(MPI::Intracomm& communicator, long *minimumIndices, long *maximumIndices, int id)
 {
   switch (this->VectorType & Vector::DataTypeMask)
     {
     case (Vector::RealDatas):
-      return ((RealVector*) this)->ScatterPartialClones(communicator, mininumIndices, maximumIndices, id);
+      return ((RealVector*) this)->ScatterPartialClones(communicator, minimumIndices, maximumIndices, id);
       break;
     case (Vector::ComplexDatas):
-      return ((ComplexVector*) this)->ScatterPartialClones(communicator, mininumIndices, maximumIndices, id);
+      return ((ComplexVector*) this)->ScatterPartialClones(communicator, minimumIndices, maximumIndices, id);
       break;
     default:
       return *this;
@@ -491,10 +492,10 @@ Vector* Vector::ReceiveScatteredClone(MPI::Intracomm& communicator, int id)
       switch (Type & Vector::DataTypeMask)
 	{
 	case (Vector::RealDatas):
-	  return new PartialRealVector(communicator, id, true);
+	  return new PartialRealVector(communicator, id, false);
 	  break;
 	case (Vector::ComplexDatas):
-	  return new PartialComplexVector(communicator, id, true);
+	  return new PartialComplexVector(communicator, id, false);
 	  break;
 	default:
 	  return 0;

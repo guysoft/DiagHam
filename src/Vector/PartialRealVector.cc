@@ -152,7 +152,6 @@ PartialRealVector::PartialRealVector(const PartialRealVector& vector, bool dupli
 // communicator = reference on the communicator to use 
 // id = id of the MPI process which broadcasts or sends the vector
 // broadcast = true if the vector is broadcasted
-
 PartialRealVector::PartialRealVector(MPI::Intracomm& communicator, int id, bool broadcast)
 {
   this->VectorType = Vector::RealDatas | Vector::PartialData;
@@ -176,6 +175,12 @@ PartialRealVector::PartialRealVector(MPI::Intracomm& communicator, int id, bool 
 	  communicator.Bcast(this->Components, this->Dimension, MPI::DOUBLE, id);      
 	else
 	  communicator.Recv(this->Components, this->Dimension, MPI::DOUBLE, id, 1);   
+      }
+    else
+      if (TmpArray[2] == 3)
+      {
+	if (id != communicator.Get_rank())
+	  communicator.Scatterv(NULL, NULL, NULL, MPI::DOUBLE, this->Components, /* recvcount*/ this->Dimension, /* recvtype*/ MPI::DOUBLE, id);
       }
   this->TrueDimension = this->Dimension;
   this->Flag.Initialize();

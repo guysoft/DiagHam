@@ -2439,31 +2439,31 @@ ostream& operator << (ostream& Str, const ComplexVector& P)
     for (long i = 0; i < P.LargeDimension; ++i)
       {
 	Str << P.Components[i]<<endl;
-/*
-	Str << P.Components[i].Re;
-	if (P.Components[i].Im < 0.0)
+	/*
+	  Str << P.Components[i].Re;
+	  if (P.Components[i].Im < 0.0)
 	  Str << P.Components[i].Im << "i    ";
-	else
-	  if (P.Components[i].Im != 0.0)
-	    Str << "+" << P.Components[i].Im << "i    ";
 	  else
-	    Str << "    ";
-	Str << endl;*/
+	  if (P.Components[i].Im != 0.0)
+	  Str << "+" << P.Components[i].Im << "i    ";
+	  else
+	  Str << "    ";
+	  Str << endl;*/
       }
   else
     for (int i = 0; i < P.Dimension; ++i)
       {
 	Str << P.Components[i]<<endl;
-/*
-	Str << P.Components[i].Re;
-	if (P.Components[i].Im < 0.0)
+	/*
+	  Str << P.Components[i].Re;
+	  if (P.Components[i].Im < 0.0)
 	  Str << P.Components[i].Im << "i    ";
-	else
-	  if (P.Components[i].Im != 0.0)
-	    Str << "+" << P.Components[i].Im << "i    ";
 	  else
-	    Str << "    ";
-	Str << endl;*/
+	  if (P.Components[i].Im != 0.0)
+	  Str << "+" << P.Components[i].Im << "i    ";
+	  else
+	  Str << "    ";
+	  Str << endl;*/
       }
   return Str;
 }
@@ -2505,6 +2505,27 @@ ostream& ComplexVector::PrintNonZero(ostream& str, char** componentLabels, doubl
       if (((this->Components[i].Re * this->Components[i].Re) + (this->Components[i].Im * this->Components[i].Im)) > SqrError)
 	{
 	  str << componentLabels[i] << " " << this->Components[i] << endl;
+	}
+    }
+  this->Delocalize();
+  return str;
+}
+
+// compare if any entries differ between the current and a reference vector
+//
+// V = reference vector
+// threshold = threshold for reporting of differences
+// str = stream to log output
+// return value = reference on output stream  
+
+ostream& ComplexVector::CompareVector(ComplexVector& V, double threshold, ostream &str)
+{
+  this->Localize();
+  for (long i = 0; i < this->LargeDimension; ++i)
+    {
+      if ( fabs(this->Components[i].Re - V.Components[i].Re) > threshold || fabs(this->Components[i].Im - V.Components[i].Im) > threshold)
+	{
+	  str << "entry " << i << " " << this->Components[i] <<" " << V.Components[i] << " " << this->Components[i]-V.Components[i] << endl;
 	}
     }
   this->Delocalize();
@@ -3184,43 +3205,45 @@ Vector& ComplexVector::SendPartialClone(MPI::Intracomm& communicator, int id, in
 // scatter this vector across all MPI nodes with the given load balancing information
 // 
 // communicator = reference on the communicator to use
-// mininumIndices = lowest index for each thread
+// minimumIndices = lowest index for each thread
 // maximumIndices = largest index for each thread
 // id = id of the process to send the vector
 // return value = reference on the current vector
+Vector& ComplexVector::ScatterPartialClones(MPI::Intracomm& communicator, long *minimumIndices, long *maximumIndices, int id)
+{
+  if (id == communicator.Get_rank())
+    {
+      communicator.Bcast(&this->VectorType, 1, MPI::INT, id);
 
-// Vector& ComplexVector::ScatterPartialClones(MPI::Intracomm& communicator, long *mininumIndices, long *maximumIndices, int id)
-// {
-//   if (id == communicator.Get_rank())
-//     {
-//       communicator.Bcast(&this->VectorType, 1, MPI::INT, id);
-//       int TmpArray[5];
-//       TmpArray[0] = nbrComponent;
-//       TmpArray[1] = this->VectorId;
-//       TmpArray[2] = 3;
-//       TmpArray[3] = firstComponent;
-//       TmpArray[4] = this->Dimension;
-//       int NbrMPINodes = communicator.Get_size();
-//       communicator.Bcast(TmpArray, 5, MPI::INT, id);
-//       int *TmpCounts=new int[NbrMPINodes];
-//       int *TmpDisplacements=new int[NbrMPINodes];
-//       for (int i=0; i<NbrMPINodes; ++i)
-// 	{
-// 	  TmpCounts[i] = 2*(int)(maximumIndices[i] - minimumIndices[i] + 1);
-// 	  if (minimumIndices[i]>std::numeric_limits<int>::max()/2)
-// 	    {
-// 	      cout << "Cannot scatter vectors larger than int::max"<<endl;
-// 	      return *this;
-// 	    }
-// 	  TmpDisplacements[i] = 2*(int)minimumIndices[i];
-// 	}
-//       communicator.Scatterv(this->Components, TmpCounts, TmpDisplacements, MPI::DOUBLE, MPI::IN_PLACE, /* recvcount*/ 0, /* recvtype*/ 0, id);
-//       delete [] TmpCounts;
-//       delete [] TmpDisplacements;
-//     }
-//   else cout << "Error: ScatterPartialClones should only be called by the process sending data"<<endl;
-//   return *this;
-//}
+      int NbrMPINodes = communicator.Get_size();
+      int *TmpCounts=new int[NbrMPINodes];
+      int *TmpDisplacements=new int[NbrMPINodes];
+      int TmpArray[5];
+      for (int i=0; i<NbrMPINodes; ++i)
+        {
+          TmpCounts[i] = 2*(int)(maximumIndices[i] - minimumIndices[i] + 1);
+          if (TmpCounts[i]>std::numeric_limits<int>::max())
+            {
+              cout << "Cannot scatter vectors larger than int::max"<<endl;
+              return *this;
+            }
+          TmpDisplacements[i] = 2*(int) minimumIndices[i];
+          // send header data on node-by node basis
+          TmpArray[0] = TmpCounts[i];
+          TmpArray[1] = this->VectorId;
+          TmpArray[2] = 3;
+          TmpArray[3] = minimumIndices[i];
+          TmpArray[4] = this->Dimension;
+          communicator.Send(TmpArray, 5, MPI::INT, id, 1);
+        }
+      // send components data via Scatterv, all nodes in one go
+      communicator.Scatterv(this->Components, TmpCounts, TmpDisplacements, MPI::DOUBLE, MPI::IN_PLACE, /* recvcount*/ 0, /* recvtype*/ 0, id);
+      delete [] TmpCounts;
+      delete [] TmpDisplacements;
+    }
+  else cout << "Error: ScatterPartialClones should only be called by the process sending data"<<endl;
+  return *this;
+}
 
 // create a new vector on each MPI node with same size and same type but non-initialized components
 //

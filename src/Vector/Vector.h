@@ -321,7 +321,7 @@ class Vector
   // maximumIndices = largest index for each thread
   // id = id of the process to send the vector
   // return value = reference on the current vector
-  Vector& ScatterPartialClones(MPI::Intracomm& communicator, long *mininumIndices, long *maximumIndices, int id);
+  Vector& ScatterPartialClones(MPI::Intracomm& communicator, long *minimumIndices, long *maximumIndices, int id);
 
   // create a new vector on given MPI node which is an exact clone of the sent one but with only part of the data
   // using efficient implementation with Scatterv

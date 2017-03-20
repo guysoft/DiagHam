@@ -824,6 +824,14 @@ class ComplexVector : public Vector
   // return value = reference on output stream  
   virtual ostream& PrintNonZero(ostream& str, char** componentLabels, double error = MACHINE_PRECISION);
 
+  // compare if any entries differ between the current and a reference vector
+  //
+  // V = reference vector
+  // threshold = threshold for reporting of differences
+  // str = stream to log output
+  // return value = reference on output stream
+  ostream& CompareVector(ComplexVector& V, double threshold=1e-13, ostream &str = std::cout);
+
 #ifdef USE_OUTPUT
   // Mathematica Output Stream overload
   //
@@ -903,7 +911,7 @@ class ComplexVector : public Vector
   // maximumIndices = largest index for each thread
   // id = id of the process to send the vector
   // return value = reference on the current vector
-  //  Vector& ScatterPartialClones(MPI::Intracomm& communicator, long *mininumIndices, long *maximumIndices, int id);
+  Vector& ScatterPartialClones(MPI::Intracomm& communicator, long *mininumIndices, long *maximumIndices, int id);
 
   // create a new vector on each MPI node with same size and same type but non-initialized components
   //
