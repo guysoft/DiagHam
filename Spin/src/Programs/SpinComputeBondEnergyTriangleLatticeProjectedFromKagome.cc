@@ -207,7 +207,7 @@ int main(int argc, char** argv)
 	for (int ny = 0; ny < YPeriodicity; ++ny)
 	{
 	  int TmpIndex1 = GetLinearizedIndex(nx, ny, XPeriodicity, YPeriodicity);
-	  int TmpIndex2 = GetLinearizedIndex(nx + i + j * Offset, ny + j, XPeriodicity, YPeriodicity);
+	  int TmpIndex2 = GetLinearizedIndex(nx + i, ny + j, XPeriodicity, YPeriodicity);
 	  
 	  Operator = new SpinWithPseudospin2DTranslationSpinSpinCorrelationOperator(Space, XMomentum, XPeriodicity, YMomentum, YPeriodicity, TmpIndex1, TmpIndex2);
 	  OperatorMatrixElementOperation Operation(Operator, State, State, State.GetVectorDimension());
