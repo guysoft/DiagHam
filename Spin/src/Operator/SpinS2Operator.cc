@@ -164,7 +164,7 @@ Complex SpinS2Operator::PartialMatrixElement (ComplexVector& V1, ComplexVector& 
       for (int j = 0; j < this->NbrSpin; ++j)
 	{
 	  int TmpLocalSpin = this->Chain->GetLocalSpin(j,i);
-	  cout << TmpLocalSpin <<endl;
+//	  cout << TmpLocalSpin <<endl;
 	  TmpDiagonal += 0.25 * ((double) TmpLocalSpin) * ((double) (TmpLocalSpin + 2));
 //	  cout <<i<< " "<<j<< " "<< TmpLocalSpin<<endl;
 	  for (int k = 0; k < j; ++k)
@@ -175,7 +175,7 @@ Complex SpinS2Operator::PartialMatrixElement (ComplexVector& V1, ComplexVector& 
 		  Tmp += Conj(V1[TmpPos]) * V2[i] * TmpCoef;
 		}
 	      Tmp += 2.0 * Conj(V1[i]) * V2[i] * this->Chain->SziSzj(j, k, i);
-	      cout <<j<<" " <<k<<" "<<i<< " "<<this->Chain->SziSzj(j, k, i)<<endl;
+//	      cout <<j<<" " <<k<<" "<<i<< " "<<this->Chain->SziSzj(j, k, i)<<endl;
 	    }
 	  for (int k = j + 1; k < this->NbrSpin; ++k)
 	    {
