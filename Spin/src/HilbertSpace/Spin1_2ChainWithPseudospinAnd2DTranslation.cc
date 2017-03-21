@@ -736,7 +736,7 @@ int Spin1_2ChainWithPseudospinAnd2DTranslation::SmiSpj (int i, int j, int state,
     }
   if (tmpState == 0x0ul)
     {
-      coefficient = -0.25;
+      coefficient = 1.0;
       return state;
     }
   return this->HilbertSpaceDimension;

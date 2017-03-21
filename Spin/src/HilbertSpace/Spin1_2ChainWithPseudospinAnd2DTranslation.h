@@ -357,6 +357,7 @@ inline int Spin1_2ChainWithPseudospinAnd2DTranslation::SymmetrizeResult(unsigned
      }
 //   else
 //     coefficient = 0.0;
+  cout << "sym result " << nbrTranslationX << " " << nbrTranslationY << endl;
   return TmpIndex;
 }
 
