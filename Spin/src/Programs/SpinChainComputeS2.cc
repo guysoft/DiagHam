@@ -247,7 +247,7 @@ int main(int argc, char** argv)
 	  switch (SpinValue)
 	    {
 	    case 1 :
-	      Space = new Spin1_2Chain (NbrSpins, TotalSz, 1000000);
+	      Space = new Spin1_2ChainNew (NbrSpins, TotalSz, 1000000);
 	      break;
 	    case 2 :
 	      Space = new Spin1Chain (NbrSpins, TotalSz, 1000000);

@@ -87,7 +87,7 @@ int AbstractSpinChain::GetLocalSpin(int site)
 // state = state index in Chain Description
 // return value = twice the spin
 
-int  AbstractSpinChain::GetLocalSpin(int site, int state)
+int AbstractSpinChain::GetLocalSpin(int site, int state)
 {
   return this->GetLocalSpin(site);
 }

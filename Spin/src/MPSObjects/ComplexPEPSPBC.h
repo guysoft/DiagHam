@@ -37,6 +37,7 @@ class ComplexPEPSPBC
 
   virtual ComplexVector ComputeFockSpaceRepresentationOfAPEPS (int lx);
   virtual ComplexVector ComputeFockSpaceRepresentationOfAPEPS (int lx, int lylogtwo);
+  virtual ComplexVector ComputeFockSpaceRepresentationOfAPEPS (int lx, int lylogtwo, ComplexDiagonalMatrix virtualSymmetry, ComplexVector leftVector, ComplexVector rightVector, bool horizontalFlag, bool verticalFlag);
   virtual ComplexVector ComputeFockSpaceRepresentationOfAPEPSSzConstraint (int lx, int lylogtwo,int sz);
   virtual ComplexVector ComputeFockSpaceRepresentationOfAPEPSSzConstraint (int lx, int lylogtwo,int sz, ComplexDiagonalMatrix virtualSymmetry, bool horizontalFlag, bool verticalFlag);
   virtual ComplexVector ComputeFockSpaceRepresentationOfAPEPSSzConstraint (int lx, int lylogtwo,int sz, ComplexDiagonalMatrix virtualSymmetry, ComplexVector leftVector, ComplexVector rightVector, bool horizontalFlag, bool verticalFlag);
