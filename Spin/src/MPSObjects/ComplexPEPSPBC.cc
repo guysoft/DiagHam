@@ -496,7 +496,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 {
   this->PrintTensorElements();
   int Ly = 1;
-  for(int i = 0 ; i <lylogtwo ; i++)
+  for(int i = 0 ; i < lylogtwo ; i++)
     {
       Ly*=2;
     }
@@ -504,7 +504,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
   int StateDimension = 1;
   for(int i =0; i <Lx*Ly;i++)
     {
-      StateDimension*=this->PhysicalDimension;
+      StateDimension *= this->PhysicalDimension;
     }
   
   Spin1_2ChainNew Space (Lx*Ly,sz, 100000); 
@@ -545,7 +545,6 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 		}
 	    }
 	}
-//      cout <<  ColumnMatrix[i]<<endl;
     }
 
   if (Ly == 2 ) 
@@ -591,8 +590,8 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
     }
   else
     {
-      int NbrColumnTwoMatrix=NbrColumnMatrix*NbrColumnMatrix; 
-      int DimColumTwoMatrix = DimColumMatrix*DimColumMatrix;
+      int NbrColumnTwoMatrix = NbrColumnMatrix * NbrColumnMatrix; 
+      int DimColumTwoMatrix = DimColumMatrix * DimColumMatrix;
       
       ComplexMatrix * ColumnTwoMatrix = new ComplexMatrix [NbrColumnTwoMatrix];
       for(int i =0; i < NbrColumnTwoMatrix ;i++)
@@ -646,12 +645,12 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 	      ColumnTwoMatrixWithAZ[i].Copy(ColumnTwoMatrix[i]);
 	    }
 	  
-	  Complex Tmp,Tmp2;
+	  Complex Tmp = 1.0;
 	  ComplexDiagonalMatrix ZFactor (DimColumTwoMatrix,true);
-	  for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumTwoMatrix;  NewIndiceLeft++)
+	  for(int NewIndiceLeft = 0; NewIndiceLeft < DimColumTwoMatrix;  NewIndiceLeft++)
 	    {	  
 	      int TmpNewIndiceLeft = NewIndiceLeft;
-	      for(int p=0; p < Ly; p++)
+	      for(int p = 0; p < Ly; p++)
 		{
 		  Tmp*= virtualSymmetry[TmpNewIndiceLeft% this->MPOBondDimension];
 		  TmpNewIndiceLeft/= this->MPOBondDimension;
@@ -781,7 +780,7 @@ void ComplexPEPSPBC::ComputeBlockTensor ()
 // space = pointer to the Hilbert space where state is defined
 // return value = state in the (Kx,Ky) basis
 
-ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint (int lx, int lylogtwo,int sz, ComplexDiagonalMatrix virtualSymmetry, ComplexVector LeftVector, ComplexVector RightVector, bool horizontalFlag, bool verticalFlag)
+ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint (int lx, int lylogtwo, int sz, ComplexDiagonalMatrix virtualSymmetry, ComplexVector LeftVector, ComplexVector RightVector, bool horizontalFlag, bool verticalFlag)
 {
   this->PrintTensorElements();
   int Ly = 1;
@@ -879,7 +878,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
     }
   else
     {
-      int NbrColumnTwoMatrix=NbrColumnMatrix*NbrColumnMatrix; 
+      int NbrColumnTwoMatrix = NbrColumnMatrix*NbrColumnMatrix; 
       int DimColumTwoMatrix = DimColumMatrix*DimColumMatrix;
       
       ComplexMatrix * ColumnTwoMatrix = new ComplexMatrix [NbrColumnTwoMatrix];
@@ -889,7 +888,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 	}
       Complex Tmp,Tmp2;
       Complex Tmp3 = 1.0;
-      for(int i =0; i < NbrColumnTwoMatrix ;i++)
+      for(int i = 0; i < NbrColumnTwoMatrix ;i++)
 	{
 	  for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumTwoMatrix;  NewIndiceLeft++)
 	    {
@@ -908,7 +907,6 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 		    }
 		}
 	    }
-	  // cout << ColumnTwoMatrix[i]<<endl;
 	}
       
       if (verticalFlag == false)

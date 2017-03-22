@@ -69,9 +69,6 @@ class ComplexPEPSTransfertMatrixPBC : public  AbstractTransfertMatrixPBC
   
   inline void GetBraAndKetIndexFromCommonIndex(unsigned int communIndex,unsigned int & braIndex ,unsigned int & ketIndex);
   inline unsigned int GetCommonIndexFromBraAndKetIndices(unsigned int braIndex, unsigned int ketIndex );
-//  virtual ComplexVector & LowLevelAddMultiplyOnLastSite(unsigned long * oldHilbertSpace, Complex * oldWeigth, ComplexVector & vDestination, int oldHilbertSpaceDimension, int topValue);
-//  virtual int LowLevelAddMultiplyOnAnySite(unsigned long * oldHilbertSpace, Complex * oldWeigth, unsigned long * newHilbertSpace, Complex * newWeigth, int oldHilbertSpaceDimension, int position);
-// virtual int LowLevelAddMultiplyOnFirstSite(ComplexVector & vSource, unsigned long * oldHilbertSpace, unsigned long * newHilbertSpace, Complex * newWeigth, int oldHilbertSpaceDimension, int topIndice);
 
   void LowLevelAddMultiplyOnLastSite(int topValue);
   void LowLevelAddMultiplyOnAnySite(int position);

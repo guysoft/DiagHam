@@ -19,6 +19,7 @@
 #include "MPSObjects/AbstractPEPSTransfertMatrixPBC.h"
 #include "MPSObjects/ComplexPEPSTransfertMatrixPBC.h"
 #include "MPSObjects/ComplexPEPSTransfertMatrixPBCWithTranslations.h"
+#include "MPSObjects/ComplexPEPSABSublatticeTransfertMatrixPBCWithTranslations.h"
 
 #include "MainTask/GenericNonSymmetricMainTask.h"
 #include "MainTask/GenericNonHermitianMainTask.h"
@@ -68,7 +69,8 @@ int main(int argc, char** argv)
   Manager += ToolsGroup;
 
   (*SystemGroup) += new  SingleIntegerOption ('L', "length", "length of the spin chain", 4);
-  (*SystemGroup) += new SingleStringOption  ('\n', "tensor-file", "name of the file containing the eigenstate to be displayed");
+  (*SystemGroup) += new SingleStringOption  ('\n', "tensor-file", "name of the file containing the PEPS");
+  (*SystemGroup) += new SingleStringOption  ('\n', "second-tensor", "name of the file containing the second PEPS (use the sublattice mode)");
   (*SystemGroup) += new SingleStringOption  ('\n', "peps-name", "name of the peps used to form the output file name");
   (*SystemGroup) += new BooleanOption ('\n', "no-spin", "use undescribed hilbert space ");
 
@@ -116,13 +118,24 @@ int main(int argc, char** argv)
   bool UndescribedHilbertSpaceFlag =  Manager.GetBoolean("no-spin");
   bool LeftFlag = Manager.GetBoolean("left");
   MultiColumnASCIIFile TensorsElementsDefinition;
+  MultiColumnASCIIFile TensorsElementsDefinitionB;
   int BondDimension = 3;
   if (TensorsElementsDefinition.Parse(Manager.GetString("tensor-file")) == false)
     {
       TensorsElementsDefinition.DumpErrors(cout) << endl;
       return -1;
     } 
-  
+  bool SublatticeMode = false;
+  if (Manager.GetString("second-tensor")!= 0 ) 
+    {
+      SublatticeMode = true;
+      if (TensorsElementsDefinitionB.Parse(Manager.GetString("second-tensor")) == false)
+	{
+	  TensorsElementsDefinitionB.DumpErrors(cout) << endl;
+	  return -1;
+	} 
+    }
+
   if (DoubledFlag)
     {
       if (TensorsElementsDefinition.GetNbrColumns() != 6)
@@ -156,45 +169,73 @@ int main(int argc, char** argv)
   
 
   AbstractTransfertMatrixPBC *  TransferMatrix =0;
-  if(TranslationFlag == true)
+  if (SublatticeMode) 
     {
-      if(ComplexFlag == true)
+      if(TranslationFlag == true)
 	{
-	  if (DoubledFlag)
+	  if(ComplexFlag == true)
 	    {
-	      TransferMatrix = new  ComplexPEPSTransfertMatrixPBCWithTranslations(TensorsElementsDefinition,Architecture.GetArchitecture());
+	      if (DoubledFlag)
+		{
+		  TransferMatrix = new  ComplexPEPSABSublatticeTransfertMatrixPBCWithTranslations(TensorsElementsDefinition,TensorsElementsDefinition,Architecture.GetArchitecture());
+		}
+	      else
+		{
+		  cout <<"Work only for transfer matrix"<<endl;
+		}
 	    }
 	  else
 	    {
-	      cout <<" Complex transfert Matrix with translations not yet implemented"<<endl;
-	      exit(-1);
+	        cout <<"Work only for complex PEPS"<<endl;
 	    }
 	}
       else
-	TransferMatrix = new TransfertMatrixPBCWithTranslationsFromFile(TensorsElementsDefinition,Architecture.GetArchitecture());
+	{
+	  cout <<"Work only with translation"<<endl;
+	}
     }
   else
     {
-      if (ComplexFlag)
+      if(TranslationFlag == true)
 	{
-	  if (DoubledFlag)
+	  if(ComplexFlag == true)
 	    {
-	      TransferMatrix = new ComplexPEPSTransfertMatrixPBC(TensorsElementsDefinition,&BoundaryConditions,Architecture.GetArchitecture()); 
+	      if (DoubledFlag)
+		{
+		  TransferMatrix = new  ComplexPEPSTransfertMatrixPBCWithTranslations(TensorsElementsDefinition,Architecture.GetArchitecture());
+		}
+	      else
+		{
+		  cout <<" Complex transfert Matrix with translations not yet implemented"<<endl;
+		  exit(-1);
+		}
 	    }
 	  else
-	    {
-	      cout <<" Complex transfert Matrix not yet implemented"<<endl;
-	      exit(-1);
-	    }
+	    TransferMatrix = new TransfertMatrixPBCWithTranslationsFromFile(TensorsElementsDefinition,Architecture.GetArchitecture());
 	}
       else
 	{
-	  if (DoubledFlag)
-	    { 
-	      TransferMatrix = new AbstractPEPSTransfertMatrixPBC(TensorsElementsDefinition,Architecture.GetArchitecture()); 
+	  if (ComplexFlag)
+	    {
+	      if (DoubledFlag)
+		{
+		  TransferMatrix = new ComplexPEPSTransfertMatrixPBC(TensorsElementsDefinition,&BoundaryConditions,Architecture.GetArchitecture()); 
+		}
+	      else
+		{
+		  cout <<" Complex transfert Matrix not yet implemented"<<endl;
+		  exit(-1);
+		}
 	    }
 	  else
-	    TransferMatrix = new AbstractTransfertMatrixPBC(TensorsElementsDefinition,Architecture.GetArchitecture());
+	    {
+	      if (DoubledFlag)
+		{ 
+		  TransferMatrix = new AbstractPEPSTransfertMatrixPBC(TensorsElementsDefinition,Architecture.GetArchitecture()); 
+		}
+	      else
+		TransferMatrix = new AbstractTransfertMatrixPBC(TensorsElementsDefinition,Architecture.GetArchitecture());
+	    }
 	}
     }
   

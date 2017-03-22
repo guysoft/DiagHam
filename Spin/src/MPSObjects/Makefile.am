@@ -10,4 +10,5 @@ TransfertMatrixPBCWithTranslationsFromFile.cc \
 AbstractPEPSTransfertMatrixPBC.cc \
 ComplexPEPSTransfertMatrixPBC.cc \
 ComplexPEPSTransfertMatrixPBCWithTranslations.cc \
-ComplexPEPSPBC.cc
+ComplexPEPSPBC.cc \
+ComplexPEPSABSublatticeTransfertMatrixPBCWithTranslations.cc

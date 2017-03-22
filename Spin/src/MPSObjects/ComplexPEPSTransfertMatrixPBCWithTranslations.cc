@@ -18,59 +18,6 @@ ComplexPEPSTransfertMatrixPBCWithTranslations::~ComplexPEPSTransfertMatrixPBCWit
 {
 }
 
-/*
-ComplexVector& ComplexPEPSTransfertMatrixPBCWithTranslations::LowLevelAddMultiply(ComplexVector & vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
-{
-  cout <<"inside ComplexVector& ComplexPEPSTransfertMatrixPBCWithTranslations::LowLevelAddMultiply(ComplexVector & vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)"<<endl;
-  int LastComponent = firstComponent +  nbrComponent;
-  int * IndiceLeftBra = new int[this->ChainLength];
-  int * IndiceLeftKet = new int[this->ChainLength];
-
-  for (int i = firstComponent ; i  <  LastComponent; i++)
-    {
-      int Dim = 0;
-      ((AbstractDoubledSpinChainWithTranslations * )this->HilbertSpace)->GetBosonicOccupation(i,IndiceLeftBra,IndiceLeftKet);
-      for (int k =0; k < this->HilbertSpace->GetSpinChainLength();k++)
-	{
-	  this->TemporaryArray[k]= this->GetCommonIndexFromBraAndKetIndices(IndiceLeftBra[k],IndiceLeftKet[k]);
-	}
-
-      for (int  IndiceTop = 0 ;  IndiceTop < this->MPOBondDimension *  this->MPOBondDimension;  IndiceTop++)
-	{	  
-	  Dim += this->EvaluateNbrResultingState(IndiceTop,this->ChainLength-1,IndiceTop);
-	}
-
-      Complex * ResultingCoefficient = new Complex [Dim];
-      unsigned long * ResultingIndexBra = new unsigned long[Dim];
-      unsigned long * ResultingIndexKet = new unsigned long[Dim];
-      unsigned long Tmp=0;
-      
-      for (int  IndiceTop = 0 ;  IndiceTop < this->MPOBondDimension *  this->MPOBondDimension ;  IndiceTop++)
-	{	  
-	  Tmp=this->GenerateResultingStateAndCoefficient(IndiceTop,this->ChainLength-1,IndiceTop,ResultingCoefficient,ResultingIndexBra,ResultingIndexKet,Tmp);
-	}
-      int NbrTranslation;
-      unsigned long TmpStateDescritionKet, TmpStateDescritionBra;
-      for (int p = 0; p < Dim; p++)
-	{
-	  ((AbstractDoubledSpinChainWithTranslations * ) this->HilbertSpace)->FindCanonicalForm(ResultingIndexBra[p],ResultingIndexKet[p],TmpStateDescritionBra ,TmpStateDescritionKet, NbrTranslation);
-	  
-	  int Index = ((AbstractDoubledSpinChainWithTranslations * )this->HilbertSpace)->FindStateIndex(TmpStateDescritionBra,TmpStateDescritionKet);
-	  if ( Index < ((AbstractDoubledSpinChainWithTranslations * )this->HilbertSpace)->GetHilbertSpaceDimension() )
-	    {
-	      vDestination[Index] += ResultingCoefficient[p]*vSource[i]* this->ExponentialFactors[NbrTranslation] * ((AbstractDoubledSpinChainWithTranslations *) this->HilbertSpace)->GetRescalingFactor(i,Index); 
-	    }
-	}
-      delete [] ResultingCoefficient; delete [] ResultingIndexBra;  delete [] ResultingIndexKet; 
-    }
-  delete [] IndiceLeftBra;
-  delete [] IndiceLeftKet;
-  return vDestination;
-}
-*/
-
-
-
 void ComplexPEPSTransfertMatrixPBCWithTranslations::SetHilbertSpace(AbstractHilbertSpace * hilbertSpace)
 {
   this->HilbertSpace = (AbstractSpinChain *) hilbertSpace;
@@ -100,59 +47,6 @@ void ComplexPEPSTransfertMatrixPBCWithTranslations::SetHilbertSpace(AbstractHilb
   unsigned long MemoryCost =  (2*this->PowerD[this->ChainLength+1] + 2*this->PowerD[this->ChainLength])*sizeof(Complex);
   cout <<"Memory Cost " <<MemoryCost<<endl;
 }
-
-/*
-ComplexVector* ComplexPEPSTransfertMatrixPBCWithTranslations::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent)
-{
-  int LastComponent = firstComponent +  nbrComponent;
-  int * IndiceLeftBra = new int[this->ChainLength];
-  int * IndiceLeftKet = new int[this->ChainLength];
-
-  for (int i = firstComponent ; i  <  LastComponent; i++)
-    {
-      int Dim = 0;
-      ((AbstractDoubledSpinChainWithTranslations * )this->HilbertSpace)->GetBosonicOccupation(i,IndiceLeftBra,IndiceLeftKet);
-      for (int k =0; k < this->ChainLength ; k++)
-	{
-	  this->TemporaryArray[k]= this->GetCommonIndexFromBraAndKetIndices(IndiceLeftBra[k],IndiceLeftKet[k]);
-	}
-
-      for (int  IndiceTop = 0 ;  IndiceTop < this->MPOBondDimension *  this->MPOBondDimension;  IndiceTop++)
-	{	  
-	  Dim += this->EvaluateNbrResultingState(IndiceTop,this->ChainLength-1,IndiceTop);
-	}
-
-      Complex * ResultingCoefficient = new Complex [Dim];
-      unsigned long * ResultingIndexBra = new unsigned long[Dim];
-      unsigned long * ResultingIndexKet = new unsigned long[Dim];
-      unsigned long Tmp=0;
-      
-      for (int  IndiceTop = 0 ;  IndiceTop < this->MPOBondDimension *  this->MPOBondDimension ;  IndiceTop++)
-	{	  
-	  Tmp=this->GenerateResultingStateAndCoefficient(IndiceTop,this->ChainLength-1,IndiceTop,ResultingCoefficient,ResultingIndexBra,ResultingIndexKet,Tmp);
-	}
-      int NbrTranslation;
-      unsigned long TmpStateDescritionKet, TmpStateDescritionBra;
-      Complex TmpCoef;
-      for (int p = 0; p < Dim; p++)
-	{
-	  ((AbstractDoubledSpinChainWithTranslations * ) this->HilbertSpace)->FindCanonicalForm(ResultingIndexBra[p],ResultingIndexKet[p],TmpStateDescritionBra ,TmpStateDescritionKet, NbrTranslation);
-	  
-	  int Index = ((AbstractDoubledSpinChainWithTranslations * )this->HilbertSpace)->FindStateIndex(TmpStateDescritionBra,TmpStateDescritionKet);
-	  if ( Index < ((AbstractDoubledSpinChainWithTranslations * )this->HilbertSpace)->GetHilbertSpaceDimension() )
-	    {
-	      TmpCoef =  0;//ResultingCoefficient[p]*this->ExponentialFactors[NbrTranslation] * ((AbstractDoubledSpinChainWithTranslations *) this->HilbertSpace)->GetRescalingFactor(i,Index);
-	      for(int t=0; t < nbrVectors; t++)
-		vDestinations[t][Index] += TmpCoef *vSources[t][i];
-	    }
-	}
-      delete [] ResultingCoefficient; delete [] ResultingIndexBra;  delete [] ResultingIndexKet; 
-    }
-  delete [] IndiceLeftBra;
-  delete [] IndiceLeftKet;
-  return vDestinations;
-}
-*/
 
 
 ComplexVector& ComplexPEPSTransfertMatrixPBCWithTranslations::LowLevelAddMultiply(ComplexVector & vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)

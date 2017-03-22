@@ -44,6 +44,7 @@ class AbstractDoubledSpinChainWithTranslations : public AbstractDoubledSpinChain
 {
   
   friend class ComplexPEPSTransfertMatrixPBCWithTranslations;
+  friend class ComplexPEPSABSublatticeTransfertMatrixPBCWithTranslations;
   
  protected:
 
