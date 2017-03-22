@@ -144,7 +144,7 @@ int main(int argc, char** argv)
   double *  Coefficients = 0;
   AbstractDoubledSpinChainWithTranslations ** Spaces = 0;
   bool ComplexFlag = Manager.GetBoolean("complex");
-  bool  SubLatticeQunatumNumbersFlag = Manager.GetBoolean("sublattice-symmetry");
+  bool SubLatticeQuantumNumbersFlag = Manager.GetBoolean("sublattice-symmetry");
 
   int SubLatticeZeroKet, SubLatticeZeroBra, SubLatticeZeroProduct;
   if (Manager.GetString("degenerated-groundstate") == 0)
@@ -252,7 +252,7 @@ int main(int argc, char** argv)
 		}
 	      else
 		{
-		  if (SubLatticeQunatumNumbersFlag == false)
+		  if (SubLatticeQuantumNumbersFlag == false)
 		    {
 		      int ZKet;
 		      int ZBra;
@@ -270,19 +270,17 @@ int main(int argc, char** argv)
 		    }
 		  else
 		    {
-		      int ZKet;
-		      int ZBra;
 		      int Momentum;
 
 		      for (int i = 0; i < NbrSpaces; ++i)
 			{
-			  if (PEPSFindSystemInfoFromVectorFileName(GroundStateFiles[i],ChainLength, Sz, Momentum, ZBra, ZKet, SubLatticeZeroBra, SubLatticeZeroKet, SubLatticeZeroProduct) == false)
+			  if (PEPSFindSystemInfoFromVectorFileName(GroundStateFiles[i],ChainLength, Sz, Momentum,  SubLatticeZeroBra, SubLatticeZeroKet, SubLatticeZeroProduct) == false)
 			    {
 			      cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
 			      return -1;
 			    }
 			  
-			  Spaces[i] = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (ChainLength, Momentum, TranslationStep, Sz, ZBra, ZKet,SubLatticeZeroKet*SubLatticeZeroKet,SubLatticeZeroBra*SubLatticeZeroBra, SubLatticeZeroProduct*SubLatticeZeroKet*SubLatticeZeroBra, 100000,100000);
+			  Spaces[i] = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (ChainLength, Momentum, TranslationStep, Sz, SubLatticeZeroKet*SubLatticeZeroKet,SubLatticeZeroBra*SubLatticeZeroBra, SubLatticeZeroProduct*SubLatticeZeroKet*SubLatticeZeroBra, 100000,100000);
 			}
 		    }
 		}
@@ -651,7 +649,7 @@ int main(int argc, char** argv)
 		    }
 		  else
 		    {
-		      if ( SubLatticeQunatumNumbersFlag == false )
+		      if ( SubLatticeQuantumNumbersFlag == false )
 			{
 			  HermitianMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrix(SubSystemSz,SubSystemK, ComplexGroundStates[0])* Coefficients[0];
 			  for (int i = 1; i < NbrSpaces; ++i)

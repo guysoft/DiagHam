@@ -279,7 +279,7 @@ int main(int argc, char** argv)
 			    Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetry(NbrSpins, Momentum, NbrSpins /MaxMomentum ,  SzValue, Manager.GetInteger("zbra"),Manager.GetInteger("zket"),10000,10000);
 			  else
 			    {
-			      Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (NbrSpins, Momentum, NbrSpins /MaxMomentum  , SzValue, Manager.GetInteger("zbra"),Manager.GetInteger("zket"),  Manager.GetInteger("sket") *  Manager.GetInteger("sket"), Manager.GetInteger("sbra") *  Manager.GetInteger("sbra"), Manager.GetInteger("sket")* Manager.GetInteger("sbra")* Manager.GetInteger("sproduct"), 100000,100000);
+			      Space = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (NbrSpins, Momentum, NbrSpins /MaxMomentum  , SzValue,  Manager.GetInteger("sket") *  Manager.GetInteger("sket"), Manager.GetInteger("sbra") *  Manager.GetInteger("sbra"), Manager.GetInteger("sket")* Manager.GetInteger("sbra")* Manager.GetInteger("sproduct"), 100000,100000);
 			    }
 			}
 		    }
