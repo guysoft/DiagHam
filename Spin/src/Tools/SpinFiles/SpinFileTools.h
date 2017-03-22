@@ -180,7 +180,7 @@ bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz
 
 bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int & momentum, int & valueOfZBra, int & valueOfZKet);
 
-bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int & momentum, int & valueOfZBra, int & valueOfZKet, int & valueSubLatticeZeroBra, int & valueSubLatticeZeroKet, int & valueSubLatticeZeroProduct );
+bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int & momentum, int & valueSubLatticeZeroBra, int & valueSubLatticeZeroKet, int & valueSubLatticeZeroProduct );
 
 
 
