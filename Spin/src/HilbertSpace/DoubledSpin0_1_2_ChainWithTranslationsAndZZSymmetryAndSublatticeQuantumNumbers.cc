@@ -63,14 +63,12 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers::
 // memorySize = memory size in bytes allowed for look-up table
 // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
 
-DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers::DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (int chainLength, int diffSz,  int zEigenvalueBra, int zEigenvalueKet, int subLatticeDifferenceKet, int subLatticeDifferenceBra, int subLatticeDifferenceProduct, int memorySize, int memorySlice) 
+DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers::DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (int chainLength, int diffSz,  int subLatticeDifferenceKet, int subLatticeDifferenceBra, int subLatticeDifferenceProduct, int memorySize, int memorySlice) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
   this->DiffSz = diffSz;
   this->FixedSpinProjectionFlag = true;
-  this->ZEigenvalueBra=zEigenvalueBra;
-  this->ZEigenvalueKet=zEigenvalueKet;
   this->SubLatticeDifferenceKet = subLatticeDifferenceKet;
   this->SubLatticeDifferenceBra = subLatticeDifferenceBra;
   this->SubLatticeDifferenceProduct = subLatticeDifferenceProduct;  
@@ -113,27 +111,19 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers::
   int BraNumber, KetNumber;
   for (long i = 0l; i < TmpHilbertSpaceDimension; ++i)
     {
-      if ((this->ComputeZValueBra(this->ChainDescription[i]) == this->ZEigenvalueBra) &&(this->ComputeZValueKet(this->ChainDescription[i]) == this->ZEigenvalueKet) )
+      this->ComputeDiffereenceSubLatticeNumberZero(this->ChainDescription[i], BraNumber, KetNumber);
+      if ((  BraNumber * BraNumber == this->SubLatticeDifferenceBra ) && ( KetNumber * KetNumber == this->SubLatticeDifferenceKet  ) && (  BraNumber * KetNumber == this->SubLatticeDifferenceProduct ) )
 	{
-	  this->ComputeDiffereenceSubLatticeNumberZero(this->ChainDescription[i], BraNumber, KetNumber);
-	  if ((  BraNumber * BraNumber == this->SubLatticeDifferenceBra ) && ( KetNumber * KetNumber == this->SubLatticeDifferenceKet  ) && (  BraNumber * KetNumber == this->SubLatticeDifferenceProduct ) )
-	    {
-	      ++this->LargeHilbertSpaceDimension;
-	    }
-	  else
-	    {
-	      this->ChainDescription[i] = DicardFlag;
-	    }
-	  
+	  ++this->LargeHilbertSpaceDimension;
 	}
       else
 	{
 	  this->ChainDescription[i] = DicardFlag;
 	}
+      
     }
+  unsigned long* TmpStateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
   
-    unsigned long* TmpStateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
-
   
   this->LargeHilbertSpaceDimension = 0l;
   for (long i = 0l; i < TmpHilbertSpaceDimension; ++i)
@@ -172,15 +162,13 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers::
 // memorySize = memory size in bytes allowed for look-up table
 // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
 
-DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers::DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (int chainLength, int momentum, int translationStep, int diffSz, int zEigenvalueBra, int zEigenvalueKet,  int subLatticeDifferenceKet, int subLatticeDifferenceBra, int subLatticeDifferenceProduct, int memorySize, int memorySlice) 
+DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers::DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (int chainLength, int momentum, int translationStep, int diffSz, int subLatticeDifferenceKet, int subLatticeDifferenceBra, int subLatticeDifferenceProduct, int memorySize, int memorySlice) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
   this->DiffSz = diffSz;
   this->FixedSpinProjectionFlag = true;
   this->Momentum = momentum;
-  this->ZEigenvalueBra=zEigenvalueBra;
-  this->ZEigenvalueKet=zEigenvalueKet;
   this->SubLatticeDifferenceKet = subLatticeDifferenceKet;
   this->SubLatticeDifferenceBra = subLatticeDifferenceBra;
   this->SubLatticeDifferenceProduct = subLatticeDifferenceProduct; 
@@ -205,16 +193,9 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers::
   
   this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->ChainLength-1, this->ChainLength-1, this->DiffSz);
   this->ShiftNegativeDiffSz =   this->LargeHilbertSpaceDimension;
-
-/*  if (this->DiffSz !=0 )
-    this->LargeHilbertSpaceDimension += this->ShiftedEvaluateHilbertSpaceDimension(this->ChainLength-1, this->ChainLength-1, -this->DiffSz);*/
-
   this->ChainDescription = new unsigned long [this->LargeHilbertSpaceDimension];
     
   long TmpHilbertSpaceDimension = GenerateStates(this->ChainLength-1, this->ChainLength-1, this->DiffSz, 0l);
-
-/*  if (this->DiffSz != 0)
-    TmpHilbertSpaceDimension = GenerateStates(this->ChainLength-1, this->ChainLength-1, -this->DiffSz, TmpHilbertSpaceDimension);*/
 
   SortArrayDownOrdering(this->ChainDescription,TmpHilbertSpaceDimension);
   
@@ -242,7 +223,7 @@ DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers::
       if (TmpState  == TmpCanonicalState)
 	{
 	  CurrentNbrStateInOrbit = this->FindNumberTranslation(TmpCanonicalState);
-	  if ((this->CompatibilityWithMomentum[CurrentNbrStateInOrbit] == true)&&(this->ComputeZValueBra(TmpCanonicalState) == this->ZEigenvalueBra) &&(this->ComputeZValueKet(TmpCanonicalState) == this->ZEigenvalueKet) )
+	  if (this->CompatibilityWithMomentum[CurrentNbrStateInOrbit] == true)
 	    {
 	      this->ComputeDiffereenceSubLatticeNumberZero(this->ChainDescription[i], BraNumber, KetNumber);
 	      if ((  BraNumber * BraNumber == this->SubLatticeDifferenceBra ) && ( KetNumber * KetNumber == this->SubLatticeDifferenceKet  ) && (  BraNumber * KetNumber == this->SubLatticeDifferenceProduct ) )

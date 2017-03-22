@@ -108,7 +108,7 @@ DoubledSpin0_1_2_ChainWithSquareTranslationsAndSublatticeQuantumNumbers::Doubled
   for (long i = 0l; i < TmpHilbertSpaceDimension; ++i)
     {
       this->ComputeDiffereenceSubLatticeNumberZero(this->ChainDescription[i], BraNumber, KetNumber);
-      if (( BraNumber == this->SubLatticeDifferenceBra ) && ( KetNumber == this->SubLatticeDifferenceKet  ) )
+      if (( BraNumber == this->SubLatticeDifferenceBra ) && ( KetNumber == this->SubLatticeDifferenceKet ) )
 	{
 	  ++this->LargeHilbertSpaceDimension;
 	}
