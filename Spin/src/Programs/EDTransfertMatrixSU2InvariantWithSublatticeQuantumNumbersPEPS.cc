@@ -208,8 +208,8 @@ int main(int argc, char** argv)
   char * FullOutputFileName = new char [200];
   sprintf(FullOutputFileName,"TransfertMatrix_%s_l_%d.dat",Manager.GetString("peps-name"),NbrSites); 
 
-  int SubLatticeZeroBraMax=NbrSites/2;
-  int SubLatticeZeroKetMax=NbrSites/2;  
+  int SubLatticeZeroBraMax=NbrSites;
+  int SubLatticeZeroKetMax=NbrSites;  
   int SubLatticeZeroBraMin = 0;
   int SubLatticeZeroKetMin = 0;
   int SubLatticeZeroProductIncrement = 2;
@@ -239,9 +239,9 @@ int main(int argc, char** argv)
 	{
 	  cout <<" K = "<<i<<endl;
 	  
-	  for(int  SubLatticeZeroBra =  SubLatticeZeroBraMin; SubLatticeZeroBra<= SubLatticeZeroBraMax; SubLatticeZeroBra+=2)
+	  for(int  SubLatticeZeroBra =  SubLatticeZeroBraMin; SubLatticeZeroBra<= SubLatticeZeroBraMax; SubLatticeZeroBra+=1)
 	    {
-	      for(int SubLatticeZeroKet = SubLatticeZeroKetMin ; SubLatticeZeroKet <= SubLatticeZeroKetMax; SubLatticeZeroKet+=2)
+	      for(int SubLatticeZeroKet = SubLatticeZeroKetMin ; SubLatticeZeroKet <= SubLatticeZeroKetMax; SubLatticeZeroKet+=1)
 		{
 		  for(int SubLatticeZeroProduct = -1; SubLatticeZeroProduct<=1; SubLatticeZeroProduct+=SubLatticeZeroProductIncrement)
 		    {
