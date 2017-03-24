@@ -208,8 +208,8 @@ int main(int argc, char** argv)
   char * FullOutputFileName = new char [200];
   sprintf(FullOutputFileName,"TransfertMatrix_%s_l_%d.dat",Manager.GetString("peps-name"),NbrSites); 
 
-  int SubLatticeZeroBraMax=NbrSites;
-  int SubLatticeZeroKetMax=NbrSites;  
+  int SubLatticeZeroBraMax=NbrSites/2;
+  int SubLatticeZeroKetMax=NbrSites/2;  
   int SubLatticeZeroBraMin = 0;
   int SubLatticeZeroKetMin = 0;
   int SubLatticeZeroProductIncrement = 2;
@@ -232,17 +232,21 @@ int main(int argc, char** argv)
       SubLatticeZeroProductIncrement=3;
     }
   
-  for(int Sz = SzMin; Sz<= SzMax ;Sz+=1)
+
+  for(int  SubLatticeZeroBra =  SubLatticeZeroBraMin; SubLatticeZeroBra<= SubLatticeZeroBraMax; SubLatticeZeroBra+=1)
     {
-      cout <<"Sz = "<<Sz<<endl;
-      for (int i = MinKx; i <= MaxKx; ++i)
+      for(int SubLatticeZeroKet = SubLatticeZeroKetMin ; SubLatticeZeroKet <= SubLatticeZeroKetMax; SubLatticeZeroKet+=1)
 	{
-	  cout <<" K = "<<i<<endl;
-	  
-	  for(int  SubLatticeZeroBra =  SubLatticeZeroBraMin; SubLatticeZeroBra<= SubLatticeZeroBraMax; SubLatticeZeroBra+=1)
+	  SzMax = 2*NbrSites - abs(SubLatticeZeroBra)-abs(SubLatticeZeroKet);
+	  SzMin = - SzMax;
+	  for(int Sz = SzMin; Sz<= SzMax ;Sz+=2)
 	    {
-	      for(int SubLatticeZeroKet = SubLatticeZeroKetMin ; SubLatticeZeroKet <= SubLatticeZeroKetMax; SubLatticeZeroKet+=1)
+	      cout <<"Sz = "<<Sz<<endl;
+	      for (int i = MinKx; i <= MaxKx; ++i)
 		{
+		  cout <<" K = "<<i<<endl;
+		  
+		  
 		  for(int SubLatticeZeroProduct = -1; SubLatticeZeroProduct<=1; SubLatticeZeroProduct+=SubLatticeZeroProductIncrement)
 		    {
 		      if  ( SubLatticeZeroBra  * SubLatticeZeroKet == 0 )

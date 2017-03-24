@@ -35,6 +35,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "left-vector", "name of the file containing the left boundary vector (useful only in cylinder mode)");
   (*SystemGroup) += new SingleStringOption  ('\n', "right-vector", "name of the file containing the right boundary vector (useful only in cylinder mode)");
 
+  (*SystemGroup) += new BooleanOption ('\n', "hstring", "add a horizontal string");
+  (*SystemGroup) += new BooleanOption ('\n', "vstring", "add a vertical  string");
+  (*SystemGroup) += new SingleDoubleOption ('\n',"theta", "angle in the U(1) inserted on the string", 0);
 
 //  (*SystemGroup) += new BooleanOption ('c', "complex", "use complex version of the code");
 
@@ -56,6 +59,9 @@ int main(int argc, char** argv)
   int Sz = Manager.GetInteger("sz");
   bool BlockFlag = Manager.GetBoolean("block-tensor");
   bool CylinderFlag = Manager.GetBoolean("cylinder");
+
+  bool HorinzontalStringFlag = Manager.GetBoolean("hstring");
+  bool VerticalStringFlag = Manager.GetBoolean("vstring");
   
   MultiColumnASCIIFile TensorsElementsDefinition;
   if (TensorsElementsDefinition.Parse(Manager.GetString("tensor-file")) == false)
@@ -73,6 +79,16 @@ int main(int argc, char** argv)
     }
 
 
+  ComplexDiagonalMatrix MatrixOnString(PEPS.GetBondDimension(),true);
+  if ( (HorinzontalStringFlag)|| (VerticalStringFlag ))
+    {
+      double Theta = Manager.GetDouble("theta");
+      MatrixOnString.SetMatrixElement(0,0,Phase(2.0*M_PI*Theta));
+      MatrixOnString.SetMatrixElement(1,1,Phase(2.0*M_PI*Theta));
+      MatrixOnString.SetMatrixElement(2,2,Phase(-2.0*M_PI*3.0*Theta));
+    }
+    
+
   char * FullOutputFileName = new char [200];
   sprintf(FullOutputFileName,"PEPS_%s_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Lx,Ly); 
 
@@ -80,7 +96,6 @@ int main(int argc, char** argv)
     {
       if (Sz ==  -10000) 
 	{
-	  char * FullOutputFileName = new char [200];
 	  sprintf(FullOutputFileName,"PEPS_%s_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Lx,Ly); 
 	  
 	  if (Ly == 2 )
@@ -96,7 +111,6 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  char * FullOutputFileName = new char [200];
 	  sprintf(FullOutputFileName,"PEPS_%s_sz_%d_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Sz,Lx,Ly); 
 	  ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPSSzConstraint (Lx,Ly/2,Sz);
 	  State.WriteVector(FullOutputFileName);
@@ -118,19 +132,16 @@ int main(int argc, char** argv)
 	  return -1;
 	} 
       
-      char * FullOutputFileName = new char [200];
       if (Sz ==  -10000) 
 	{
 	  sprintf(FullOutputFileName,"PEPS_cylinder_%s_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Lx,Ly); 
-	  
-	  ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPS (Lx,Ly/2, ComplexDiagonalMatrix() , LeftVector, RightVector, false,false);
+	  ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPS (Lx,Ly/2, MatrixOnString , LeftVector, RightVector, HorinzontalStringFlag, VerticalStringFlag);
 	  State.WriteVector(FullOutputFileName);
 	}
       else
 	{
 	  sprintf(FullOutputFileName,"PEPS_cylinder_%s_sz_%d_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Sz,Lx,Ly); 
-
-	  ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPSSzConstraint (Lx, Ly/2,Sz, ComplexDiagonalMatrix() , LeftVector, RightVector, false,false);
+	  ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPSSzConstraint (Lx, Ly/2,Sz, MatrixOnString , LeftVector, RightVector, HorinzontalStringFlag, VerticalStringFlag);
 	  State.WriteVector(FullOutputFileName);
 	}
     }
