@@ -1284,6 +1284,7 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
       int TmpNbrQ34Values;
       int* TmpQ3Values;
       int* TmpQ4Values;
+      Complex CElement;
       for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
 	{
 	  Coefficient = particles->AA(AbsoluteIndex, this->Q1Value[i12], this->Q2Value[i12]);
@@ -1299,16 +1300,16 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 		    {
 		      if (fabs(this->InteractionFactors[ProcessedNbrInteractionFactors].Im)<LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD) 
 			{
+			  double Element = Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors].Re;
 			  indexArray[positionR] = Index2;
 #ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_SORTED
-			  if (!RealInteractionCoefficients.SearchElement(Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors].Re, tmpElementPos))
+			  if (!RealInteractionCoefficients.SearchElement(Element, tmpElementPos))
 			    {
-			      cout << "Error: element "<<Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors].Re<<" not present in array E"<<endl;
+			      cout << "Error: element "<<Element<<" not present in array E"<<endl;
 			      exit(1);
 			    }
 #else
-			  tmpElementPos = RealInteractionCoefficients.InsertElement
-			    (Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors].Re);
+			  tmpElementPos = RealInteractionCoefficients.InsertElement(Element);
 #endif
 			  if (tmpElementPos >= this->MaxElementIndex)
 			    {
@@ -1321,29 +1322,28 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 		      else
 			{
 			  indexArray[positionC] = Index2;
+			  CElement = Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors];
 #ifdef ABSTRACTQHEONLATTICEHAMILTONIAN_SORTED
-			  if (!ComplexInteractionCoefficients.SearchElement(Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors], tmpElementPos))
+			  if (!ComplexInteractionCoefficients.SearchElement(CElement, tmpElementPos))
 			    {
-			      cout << "Error: element "<<Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors]<<" not present in complex array F for q1= " << this->Q1Value[i12] << ", q2= "<< this->Q2Value[i12]<<", q3= "<<TmpQ3Values[i34]<<", q4="<<TmpQ4Values[i34]<<endl;
-			      if (ComplexInteractionCoefficients.CarefulSearchElement(Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors], tmpElementPos, 100.))
-				cout << "Careful search successful: "<<tmpElementPos<<" with "<<ComplexInteractionCoefficients[tmpElementPos]<<" accuracy = "<< Norm(ComplexInteractionCoefficients[tmpElementPos] - Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors])<<endl;
+			      cout << "Error: element "<<CElement<<" not present in complex array F for q1= " << this->Q1Value[i12] << ", q2= "<< this->Q2Value[i12]<<", q3= "<<TmpQ3Values[i34]<<", q4="<<TmpQ4Values[i34]<<endl;
+			      if (ComplexInteractionCoefficients.CarefulSearchElement(CElement, tmpElementPos, 100.))
+				cout << "Careful search successful: "<<tmpElementPos<<" with "<<ComplexInteractionCoefficients[tmpElementPos]<<" accuracy = "<< Norm(ComplexInteractionCoefficients[tmpElementPos] - CElement)<<endl;
 			      else
 				{
 				  cout << "Careful search failed, as well."<<endl;
-				  bool rst = ComplexInteractionCoefficients.NearbyEntry(Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors], tmpElementPos);
+				  bool rst = ComplexInteractionCoefficients.NearbyEntry(CElement, tmpElementPos);
 				  if (rst)
 				    cout << "Exact nearby entry: "<<ComplexInteractionCoefficients[tmpElementPos]<<endl;
 				  else
 				    {
 				      cout << "Closest entry: "<<ComplexInteractionCoefficients[tmpElementPos]<<" - inserting new entry, instead"<<endl;
-				      tmpElementPos = ComplexInteractionCoefficients.InsertElement
-					(Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors]);
+				      tmpElementPos = ComplexInteractionCoefficients.InsertElement(CElement);
 				    }
 				}
 			    }
 #else
-			  tmpElementPos = ComplexInteractionCoefficients.InsertElement
-			    (Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors]);
+			  tmpElementPos = ComplexInteractionCoefficients.InsertElement(CElement);
 #endif
 			  if (tmpElementPos >= this->MaxElementIndex)
 			    {
@@ -1453,7 +1453,7 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyAddMultiplyCompone
 	} 
     }
 }
-
+ 
 // core part of the AddMultiply method involving the one-body interaction, including loop on vector components
 // 
 // particles = pointer to the Hilbert space

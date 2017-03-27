@@ -29,6 +29,7 @@
 
 
 #include "Tools/FQHEFiles/FQHEOnTorusFileTools.h"
+#include "GeneralTools/FilenameTools.h"
 
 #include <iostream>
 #include <cstring>
@@ -223,6 +224,33 @@ bool FQHEOnTorusFindSystemInfoFromVectorFileName(char* filename, int& nbrParticl
 bool FQHEOnTorusFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& kyMax, int& kx, int& ky, double& ratio, bool& statistics)
 {
   if (FQHEOnTorusFindSystemInfoFromVectorFileName(filename, nbrParticles, kyMax, kx, ky, statistics) == false)
+    {
+      return false;
+    }
+  char* StrRatio = strstr(filename, "_ratio_");
+  if (StrRatio != 0)
+    {
+      StrRatio += 7;
+      ratio = atof(StrRatio);
+    }
+  else
+    return false;
+  return true;
+}
+
+// try to guess system information from file name
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles 
+// kyMax = reference to the momentum for a single particle
+// ky = reference to the y momentum
+// ratio = reference on the aspect ratio
+// statistics = reference to flag for fermionic statistics
+// return value = true if no error occured
+
+bool FQHEOnTorusFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& kyMax, int& ky, double& ratio, bool& statistics)
+{
+  if (FQHEOnTorusFindSystemInfoFromVectorFileName(filename, nbrParticles, kyMax, ky, statistics) == false)
     {
       return false;
     }
