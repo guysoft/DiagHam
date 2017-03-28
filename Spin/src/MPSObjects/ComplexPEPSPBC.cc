@@ -4,6 +4,7 @@
 #include <sys/time.h>
 #include "GeneralTools/ArrayTools.h"
 #include "HilbertSpace/Spin1_2ChainNew.h"
+#include "HilbertSpace/Spin1_2ChainFull.h"
 
 #include "Matrix/RealDiagonalMatrix.h"
 #include "Matrix/ComplexMatrix.h"
@@ -163,107 +164,29 @@ void ComplexPEPSPBC::PrintTensorElements()
     }
 }
 
-
-// convert a state defined in the real space basis into a state in the (Kx,Ky) basis
-//
-// state = reference on the state to convert
-// space = pointer to the Hilbert space where state is defined
-// return value = state in the (Kx,Ky) basis
-
-ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPS (int lx)
+ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPS (int lx, int lylogtwo, ComplexDiagonalMatrix virtualSymmetryHorizontal, ComplexDiagonalMatrix virtualSymmetryVertical, bool horizontalFlag, bool verticalFlag)
 {
-  this->PrintTensorElements();
-  int Ly = 2;
-
-  int Lx = lx;
-  int StateDimension = 1;
-  for(int i =0; i <Lx*Ly;i++)
-    {
-      StateDimension*=this->PhysicalDimension;
-    }
-  
-  ComplexVector PEPS (StateDimension, true);
-  int NbrColumnMatrix = this->PhysicalDimension*this->PhysicalDimension;
-  
-  int DimColumMatrix = this->MPOBondDimension*  this->MPOBondDimension;
-  ComplexMatrix * ColumnMatrix = new ComplexMatrix[NbrColumnMatrix];
-  
-  for(int i = 0; i < NbrColumnMatrix; i++)
-    {
-      ColumnMatrix[i] = ComplexMatrix(DimColumMatrix,DimColumMatrix,true) ;
-      for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumMatrix;  NewIndiceLeft++)
-	{
-	  for(int TopIndice = 0 ;  TopIndice <   this->MPOBondDimension ;  TopIndice++)
-	    {
-	      for (int NonZeroElementUp =0 ; NonZeroElementUp < this->NbrNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft% this->MPOBondDimension];  NonZeroElementUp++ )
-		{
-		  int NewRightUpTensorIndex = this->IndiceRightNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft% this->MPOBondDimension][NonZeroElementUp];
-		  int NewBottomtUpTensorIndex = this->IndiceBottomNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft% this->MPOBondDimension][NonZeroElementUp];
-		  Complex TmpValues = this->ValuesNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft%this->MPOBondDimension][NonZeroElementUp];
-		  for (int NonZeroElementDown =0 ;NonZeroElementDown <  this->NbrNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/this->MPOBondDimension];  NonZeroElementDown++ )
-		    { 
-		      if (  TopIndice ==  this->IndiceBottomNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/ this->MPOBondDimension][NonZeroElementDown] ) 
-			{
-			  ColumnMatrix[i].AddToMatrixElement(NewIndiceLeft, this->IndiceRightNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/ this->MPOBondDimension][NonZeroElementDown]  *   this->MPOBondDimension + NewRightUpTensorIndex, this->ValuesNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/this->MPOBondDimension][NonZeroElementDown] * TmpValues);
-			}
-		    }
-		}
-	    }
-	}
-      cout <<  ColumnMatrix[i]<<endl;
-    }
-
-
-  
-  for(int i = 0;i < StateDimension; i++)
-    {
-      int TmpI=i;
-      ComplexMatrix TmpResult = ColumnMatrix[i%(this->PhysicalDimension*this->PhysicalDimension)];
-      for(int p =1; p <Lx;p++)
-	{
-	  TmpI/=(this->PhysicalDimension*this->PhysicalDimension);
-	  TmpResult= TmpResult*ColumnMatrix[TmpI%(this->PhysicalDimension*this->PhysicalDimension)];
-	}
-      
-      PEPS[i]= TmpResult.ComplexTr();    
-    }
-  return  PEPS;
-}
-
-
-// convert a state defined in the real space basis into a state in the (Kx,Ky) basis
-//
-// state = reference on the state to convert
-// space = pointer to the Hilbert space where state is defined
-// return value = state in the (Kx,Ky) basis
-
-ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPS (int lx, int lylogtwo)
-{
-  this->PrintTensorElements();
   int Ly = 1;
   for(int i = 0 ; i <lylogtwo ; i++)
     {
       Ly*=2;
     }
   int Lx = lx;
-  int StateDimension = 1;
-  for(int i =0; i <Lx*Ly;i++)
-    {
-      StateDimension*=this->PhysicalDimension;
-    }
   
-  ComplexVector PEPS (StateDimension, true);
+  Spin1_2ChainFull Space (Lx*Ly); 
+  ComplexVector PEPS (Space.GetHilbertSpaceDimension(), true);  
+
   int NbrColumnMatrix=this->PhysicalDimension*this->PhysicalDimension; 
   int DimColumMatrix = this->MPOBondDimension*  this->MPOBondDimension;
-
+  
   ComplexMatrix *** ColumnMatrix = new ComplexMatrix ** [NbrColumnMatrix];
-  for(int i =0; i <  NbrColumnMatrix ;i++)
+  for(int i = 0; i < NbrColumnMatrix ; i++)
     {
       ColumnMatrix[i] = new ComplexMatrix * [this->MPOBondDimension];
-      for(int j=  0 ; j <this->MPOBondDimension;j++)
+      for(int j = 0 ; j < this->MPOBondDimension ; j++)
 	{
 	  ColumnMatrix[i][j] = new ComplexMatrix[this->MPOBondDimension];
-	  for(int k = 0; k < this->MPOBondDimension ; k++)
+	  for(int k = 0 ; k < this->MPOBondDimension ; k++)
 	    {
 	      ColumnMatrix[i][j][k] = ComplexMatrix(DimColumMatrix,DimColumMatrix,true) ;
 	    }
@@ -288,114 +211,6 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPS (int lx, int
 		}
 	    }
 	}
-//      cout <<  ColumnMatrix[i]<<endl;
-    }
-
-  int NbrColumnTwoMatrix=NbrColumnMatrix*NbrColumnMatrix; 
-  int DimColumTwoMatrix = DimColumMatrix*DimColumMatrix;
-  
-  ComplexMatrix * ColumnTwoMatrix = new ComplexMatrix [NbrColumnTwoMatrix];
-  for(int i =0; i < NbrColumnTwoMatrix ;i++)
-    {
-      ColumnTwoMatrix[i] = ComplexMatrix(DimColumTwoMatrix,DimColumTwoMatrix,true);
-    }
-  Complex Tmp,Tmp2;  
-  for(int i =0; i < NbrColumnTwoMatrix ;i++)
-    {
-      for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumTwoMatrix;  NewIndiceLeft++)
-	{
-	  for(int  NewIndiceRight = 0; NewIndiceRight < DimColumTwoMatrix;  NewIndiceRight++)
-	    {
-	      for(int TopIndice = 0; TopIndice <this->MPOBondDimension ;  TopIndice++)
-		{
-		  for(int MiddleIndice = 0;  MiddleIndice <this->MPOBondDimension ;   MiddleIndice++)
-		    {
-
-		      ColumnMatrix[i% NbrColumnMatrix][TopIndice][MiddleIndice].GetMatrixElement(NewIndiceLeft%DimColumMatrix, NewIndiceRight%DimColumMatrix  ,Tmp); 
-		      ColumnMatrix[i/NbrColumnMatrix][MiddleIndice][TopIndice].GetMatrixElement(NewIndiceLeft/DimColumMatrix, NewIndiceRight/DimColumMatrix  ,Tmp2); 
-		      ColumnTwoMatrix[i].AddToMatrixElement(NewIndiceLeft, NewIndiceRight,Tmp*Tmp2);
-		    }
-		}
-	    }
-	}
-    }
-  
-  for(int i = 0;i < StateDimension; i++)
-    {
-      int TmpI=i;
-      ComplexMatrix TmpResult = ColumnTwoMatrix[i%NbrColumnTwoMatrix];
-      for(int p =1; p <Lx;p++)
-	{
-	  TmpI/=NbrColumnTwoMatrix;
-	  TmpResult= TmpResult*ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
-	}
-      PEPS[i]= TmpResult.ComplexTr();    
-    }
-  return  PEPS;
-}
-
-
-
-// convert a state defined in the real space basis into a state in the (Kx,Ky) basis
-//
-// state = reference on the state to convert
-// space = pointer to the Hilbert space where state is defined
-// return value = state in the (Kx,Ky) basis
-
-ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint (int lx, int lylogtwo,int sz)
-{
-  this->PrintTensorElements();
-  int Ly = 1;
-  for(int i = 0 ; i <lylogtwo ; i++)
-    {
-      Ly*=2;
-    }
-  int Lx = lx;
-  int StateDimension = 1;
-  for(int i =0; i <Lx*Ly;i++)
-    {
-      StateDimension*=this->PhysicalDimension;
-    }
-  
-  Spin1_2ChainNew Space (Lx*Ly,sz, 100000); 
-  
-  ComplexVector PEPS (Space.GetHilbertSpaceDimension(), true);
-  int NbrColumnMatrix=this->PhysicalDimension*this->PhysicalDimension; 
-  int DimColumMatrix = this->MPOBondDimension*  this->MPOBondDimension;
-
-  ComplexMatrix *** ColumnMatrix = new ComplexMatrix ** [NbrColumnMatrix];
-  for(int i =0; i <  NbrColumnMatrix ;i++)
-    {
-      ColumnMatrix[i] = new ComplexMatrix * [this->MPOBondDimension];
-      for(int j=  0 ; j <this->MPOBondDimension;j++)
-	{
-	  ColumnMatrix[i][j] = new ComplexMatrix[this->MPOBondDimension];
-	  for(int k = 0; k < this->MPOBondDimension ; k++)
-	    {
-	      ColumnMatrix[i][j][k] = ComplexMatrix(DimColumMatrix,DimColumMatrix,true) ;
-	    }
-	}
-    }
-  
-  for(int i = 0; i < NbrColumnMatrix; i++)
-    {
-      for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumMatrix;  NewIndiceLeft++)
-	{
-	  for(int TopIndice = 0 ;  TopIndice <   this->MPOBondDimension ;  TopIndice++)
-	    {
-	      for (int NonZeroElementUp =0 ; NonZeroElementUp < this->NbrNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft% this->MPOBondDimension];  NonZeroElementUp++ )
-		{
-		  int NewRightUpTensorIndex = this->IndiceRightNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft% this->MPOBondDimension][NonZeroElementUp];
-		  int NewBottomtUpTensorIndex = this->IndiceBottomNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft% this->MPOBondDimension][NonZeroElementUp];
-		  Complex TmpValues = this->ValuesNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft%this->MPOBondDimension][NonZeroElementUp];
-		  for (int NonZeroElementDown =0 ;NonZeroElementDown <  this->NbrNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/this->MPOBondDimension];  NonZeroElementDown++ )
-		    { 
-		      ColumnMatrix[i][TopIndice][this->IndiceBottomNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/ this->MPOBondDimension][NonZeroElementDown]].AddToMatrixElement(NewIndiceLeft, this->IndiceRightNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/ this->MPOBondDimension][NonZeroElementDown]  *   this->MPOBondDimension + NewRightUpTensorIndex, this->ValuesNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/this->MPOBondDimension][NonZeroElementDown] * TmpValues);
-		    }
-		}
-	    }
-	}
-//      cout <<  ColumnMatrix[i]<<endl;
     }
 
   if (Ly == 2 ) 
@@ -403,13 +218,14 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
       int NbrColumnTwoMatrix=NbrColumnMatrix; 
       int DimColumTwoMatrix = DimColumMatrix;
       ComplexMatrix * ColumnTwoMatrix = new ComplexMatrix [NbrColumnTwoMatrix];
-      for(int i =0; i < NbrColumnTwoMatrix ;i++)
+      for(int i = 0 ; i < NbrColumnTwoMatrix ; i++)
 	{
 	  ColumnTwoMatrix[i] = ComplexMatrix(DimColumTwoMatrix,DimColumTwoMatrix,true);
 	}
       
-      Complex Tmp;  
-      for(int i =0; i < NbrColumnTwoMatrix ;i++)
+      Complex Tmp; 
+      Complex Tmp3 = 1.0; 
+      for(int i = 0 ; i < NbrColumnTwoMatrix ; i++)
 	{
 	  for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumTwoMatrix;  NewIndiceLeft++)
 	    {
@@ -417,6 +233,8 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 		{
 		  for(int TopIndice = 0; TopIndice <this->MPOBondDimension ;  TopIndice++)
 		    {
+		      if (horizontalFlag)
+			virtualSymmetryHorizontal.GetMatrixElement(TopIndice,TopIndice,Tmp3);
 		      ColumnMatrix[i][TopIndice][TopIndice].GetMatrixElement(NewIndiceLeft, NewIndiceRight ,Tmp); 
 		      ColumnTwoMatrix[i].AddToMatrixElement(NewIndiceLeft, NewIndiceRight,Tmp);
 		    }
@@ -424,18 +242,57 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 	    }
 	}
       
-      
-      
-      for(int i = 0;i < Space.GetHilbertSpaceDimension(); i++)
+      if (verticalFlag == false)
 	{
-	  int TmpI=Space.StateDescription[i];
-	  ComplexMatrix TmpResult = ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
-	  for(int p =1; p <Lx;p++)
+	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
 	    {
-	      TmpI/=NbrColumnTwoMatrix;
-	      TmpResult= TmpResult*ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
+	      int TmpI = i;
+	      ComplexMatrix TmpResult = ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
+	      for(int p =1; p <Lx;p++)
+		{
+		  TmpI/=NbrColumnTwoMatrix;
+		  TmpResult= TmpResult*ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
+		}
+	      PEPS[i]= TmpResult.ComplexTr();    
 	    }
-	  PEPS[i]= TmpResult.ComplexTr();    
+	}
+      else
+	{
+	  ComplexMatrix * ColumnTwoMatrixWithAZ = new ComplexMatrix [NbrColumnTwoMatrix];
+	  for(int i =0; i < NbrColumnTwoMatrix ;i++)
+	    {
+	      ColumnTwoMatrixWithAZ[i].Copy(ColumnTwoMatrix[i]);
+	    }
+	  
+	  Complex Tmp,Tmp2;
+	  ComplexDiagonalMatrix ZFactor (DimColumTwoMatrix,true);
+	  for(int NewIndiceLeft = 0 ; NewIndiceLeft < DimColumTwoMatrix; NewIndiceLeft++)
+	    {	  
+	      int TmpNewIndiceLeft = NewIndiceLeft;
+	      for(int p = 0 ; p < Ly ; p++)
+		{
+		  Tmp *= virtualSymmetryVertical[TmpNewIndiceLeft% this->MPOBondDimension];
+		  TmpNewIndiceLeft/= this->MPOBondDimension;
+		}
+	      ZFactor[NewIndiceLeft] = Tmp;
+	    }
+	  
+	  for(int i =0; i < NbrColumnTwoMatrix ;i++)
+	    {
+	      ColumnTwoMatrixWithAZ[i]= ZFactor * ColumnTwoMatrix[i];
+	    }
+	  
+	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
+	    {
+	      int TmpI = i;
+	      ComplexMatrix TmpResult = ColumnTwoMatrixWithAZ[TmpI%NbrColumnTwoMatrix];
+	      for(int p =1; p <Lx;p++)
+		{
+		  TmpI/=NbrColumnTwoMatrix;
+		  TmpResult= TmpResult*ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
+		}
+	      PEPS[i]= TmpResult.ComplexTr();    
+	    }
 	}
       return PEPS;
     }
@@ -449,158 +306,9 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 	{
 	  ColumnTwoMatrix[i] = ComplexMatrix(DimColumTwoMatrix,DimColumTwoMatrix,true);
 	}
-      Complex Tmp,Tmp2;  
-      for(int i =0; i < NbrColumnTwoMatrix ;i++)
-	{
-	  for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumTwoMatrix;  NewIndiceLeft++)
-	    {
-	      for(int  NewIndiceRight = 0; NewIndiceRight < DimColumTwoMatrix;  NewIndiceRight++)
-		{
-		  for(int TopIndice = 0; TopIndice <this->MPOBondDimension ;  TopIndice++)
-		    {
-		      for(int MiddleIndice = 0;  MiddleIndice <this->MPOBondDimension ;   MiddleIndice++)
-			{
-			  ColumnMatrix[i% NbrColumnMatrix][TopIndice][MiddleIndice].GetMatrixElement(NewIndiceLeft%DimColumMatrix, NewIndiceRight%DimColumMatrix  ,Tmp); 
-			  ColumnMatrix[i/NbrColumnMatrix][MiddleIndice][TopIndice].GetMatrixElement(NewIndiceLeft/DimColumMatrix, NewIndiceRight/DimColumMatrix  ,Tmp2); 
-			  ColumnTwoMatrix[i].AddToMatrixElement(NewIndiceLeft, NewIndiceRight,Tmp*Tmp2);
-			}
-		    }
-		}
-	    }
-	 // cout << ColumnTwoMatrix[i]<<endl;
-	}
-      
-      for(int i = 0;i < Space.GetHilbertSpaceDimension(); i++)
-	{
-	  int TmpI=Space.StateDescription[i];
-	  ComplexMatrix TmpResult = ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
-	  for(int p =1; p <Lx;p++)
-	    {
-	      TmpI/=NbrColumnTwoMatrix;
-	      TmpResult= TmpResult*ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
-	    }
-	  PEPS[i]= TmpResult.ComplexTr();    
-	}
-      return  PEPS;
-    }
-}
-
-
-// convert a state defined in the real space basis into a state in the (Kx,Ky) basis
-//
-// state = reference on the state to convert
-// space = pointer to the Hilbert space where state is defined
-// return value = state in the (Kx,Ky) basis
-
-ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint (int lx, int lylogtwo,int sz, ComplexDiagonalMatrix virtualSymmetry, bool horizontalFlag, bool verticalFlag)
-{
-  this->PrintTensorElements();
-  int Ly = 1;
-  for(int i = 0 ; i < lylogtwo ; i++)
-    {
-      Ly*=2;
-    }
-  int Lx = lx;
-  int StateDimension = 1;
-  for(int i =0; i <Lx*Ly;i++)
-    {
-      StateDimension *= this->PhysicalDimension;
-    }
-  
-  Spin1_2ChainNew Space (Lx*Ly,sz, 100000); 
-  
-  ComplexVector PEPS (Space.GetHilbertSpaceDimension(), true);
-  int NbrColumnMatrix=this->PhysicalDimension*this->PhysicalDimension; 
-  int DimColumMatrix = this->MPOBondDimension*  this->MPOBondDimension;
-
-  ComplexMatrix *** ColumnMatrix = new ComplexMatrix ** [NbrColumnMatrix];
-  for(int i =0; i <  NbrColumnMatrix ;i++)
-    {
-      ColumnMatrix[i] = new ComplexMatrix * [this->MPOBondDimension];
-      for(int j=  0 ; j <this->MPOBondDimension;j++)
-	{
-	  ColumnMatrix[i][j] = new ComplexMatrix[this->MPOBondDimension];
-	  for(int k = 0; k < this->MPOBondDimension ; k++)
-	    {
-	      ColumnMatrix[i][j][k] = ComplexMatrix(DimColumMatrix,DimColumMatrix,true) ;
-	    }
-	}
-    }
-  
-  for(int i = 0; i < NbrColumnMatrix; i++)
-    {
-      for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumMatrix;  NewIndiceLeft++)
-	{
-	  for(int TopIndice = 0 ;  TopIndice <   this->MPOBondDimension ;  TopIndice++)
-	    {
-	      for (int NonZeroElementUp =0 ; NonZeroElementUp < this->NbrNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft% this->MPOBondDimension];  NonZeroElementUp++ )
-		{
-		  int NewRightUpTensorIndex = this->IndiceRightNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft% this->MPOBondDimension][NonZeroElementUp];
-		  int NewBottomtUpTensorIndex = this->IndiceBottomNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft% this->MPOBondDimension][NonZeroElementUp];
-		  Complex TmpValues = this->ValuesNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft%this->MPOBondDimension][NonZeroElementUp];
-		  for (int NonZeroElementDown =0 ;NonZeroElementDown <  this->NbrNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/this->MPOBondDimension];  NonZeroElementDown++ )
-		    { 
-		      ColumnMatrix[i][TopIndice][this->IndiceBottomNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/ this->MPOBondDimension][NonZeroElementDown]].AddToMatrixElement(NewIndiceLeft, this->IndiceRightNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/ this->MPOBondDimension][NonZeroElementDown]  *   this->MPOBondDimension + NewRightUpTensorIndex, this->ValuesNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/this->MPOBondDimension][NonZeroElementDown] * TmpValues);
-		    }
-		}
-	    }
-	}
-    }
-
-  if (Ly == 2 ) 
-    {
-      int NbrColumnTwoMatrix=NbrColumnMatrix; 
-      int DimColumTwoMatrix = DimColumMatrix;
-      ComplexMatrix * ColumnTwoMatrix = new ComplexMatrix [NbrColumnTwoMatrix];
-      for(int i =0; i < NbrColumnTwoMatrix ;i++)
-	{
-	  ColumnTwoMatrix[i] = ComplexMatrix(DimColumTwoMatrix,DimColumTwoMatrix,true);
-	}
-      
-      Complex Tmp;  
-      for(int i =0; i < NbrColumnTwoMatrix ;i++)
-	{
-	  for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumTwoMatrix;  NewIndiceLeft++)
-	    {
-	      for(int  NewIndiceRight = 0; NewIndiceRight < DimColumTwoMatrix;  NewIndiceRight++)
-		{
-		  for(int TopIndice = 0; TopIndice <this->MPOBondDimension ;  TopIndice++)
-		    {
-		      ColumnMatrix[i][TopIndice][TopIndice].GetMatrixElement(NewIndiceLeft, NewIndiceRight ,Tmp); 
-		      ColumnTwoMatrix[i].AddToMatrixElement(NewIndiceLeft, NewIndiceRight,Tmp);
-		    }
-		}
-	    }
-	}
-      
-      
-      
-      for(int i = 0;i < Space.GetHilbertSpaceDimension(); i++)
-	{
-	  int TmpI=Space.StateDescription[i];
-	  ComplexMatrix TmpResult = ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
-	  for(int p =1; p <Lx;p++)
-	    {
-	      TmpI/=NbrColumnTwoMatrix;
-	      TmpResult= TmpResult*ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
-	    }
-	  PEPS[i]= TmpResult.ComplexTr();    
-	}
-      return PEPS;
-    }
-  else
-    {
-      int NbrColumnTwoMatrix = NbrColumnMatrix * NbrColumnMatrix; 
-      int DimColumTwoMatrix = DimColumMatrix * DimColumMatrix;
-      
-      ComplexMatrix * ColumnTwoMatrix = new ComplexMatrix [NbrColumnTwoMatrix];
-      for(int i =0; i < NbrColumnTwoMatrix ;i++)
-	{
-	  ColumnTwoMatrix[i] = ComplexMatrix(DimColumTwoMatrix,DimColumTwoMatrix,true);
-	}
       Complex Tmp,Tmp2;
       Complex Tmp3 = 1.0;
-      for(int i =0; i < NbrColumnTwoMatrix ;i++)
+      for(int i = 0 ; i < NbrColumnTwoMatrix ; i++)
 	{
 	  for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumTwoMatrix;  NewIndiceLeft++)
 	    {
@@ -613,20 +321,19 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 			  ColumnMatrix[i% NbrColumnMatrix][TopIndice][MiddleIndice].GetMatrixElement(NewIndiceLeft%DimColumMatrix, NewIndiceRight%DimColumMatrix  ,Tmp); 
 			  ColumnMatrix[i/NbrColumnMatrix][MiddleIndice][TopIndice].GetMatrixElement(NewIndiceLeft/DimColumMatrix, NewIndiceRight/DimColumMatrix  ,Tmp2); 
 			  if (horizontalFlag)
-			    virtualSymmetry.GetMatrixElement(MiddleIndice,MiddleIndice,Tmp3);
+			    virtualSymmetryHorizontal.GetMatrixElement(MiddleIndice,MiddleIndice,Tmp3);
 			  ColumnTwoMatrix[i].AddToMatrixElement(NewIndiceLeft, NewIndiceRight,Tmp*Tmp2*Tmp3);
 			}
 		    }
 		}
 	    }
-	  // cout << ColumnTwoMatrix[i]<<endl;
 	}
       
       if (verticalFlag == false)
 	{
-	  for(int i = 0;i < Space.GetHilbertSpaceDimension(); i++)
+	  for(int i = 0; i < Space.GetHilbertSpaceDimension(); i++)
 	    {
-	      int TmpI=Space.StateDescription[i];
+	      int TmpI = i;
 	      ComplexMatrix TmpResult = ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
 	      for(int p =1; p <Lx;p++)
 		{
@@ -645,14 +352,14 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 	      ColumnTwoMatrixWithAZ[i].Copy(ColumnTwoMatrix[i]);
 	    }
 	  
-	  Complex Tmp = 1.0;
+	  Complex Tmp,Tmp2;
 	  ComplexDiagonalMatrix ZFactor (DimColumTwoMatrix,true);
-	  for(int NewIndiceLeft = 0; NewIndiceLeft < DimColumTwoMatrix;  NewIndiceLeft++)
+	  for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumTwoMatrix;  NewIndiceLeft++)
 	    {	  
 	      int TmpNewIndiceLeft = NewIndiceLeft;
-	      for(int p = 0; p < Ly; p++)
+	      for(int p=0; p < Ly; p++)
 		{
-		  Tmp*= virtualSymmetry[TmpNewIndiceLeft% this->MPOBondDimension];
+		  Tmp *= virtualSymmetryVertical[TmpNewIndiceLeft% this->MPOBondDimension];
 		  TmpNewIndiceLeft/= this->MPOBondDimension;
 		}
 	      ZFactor[NewIndiceLeft] = Tmp;
@@ -663,9 +370,144 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 	      ColumnTwoMatrixWithAZ[i]= ZFactor * ColumnTwoMatrix[i];
 	    }
 	  
-	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension(); i++)
+	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
 	    {
-	      int TmpI=Space.StateDescription[i];
+	      int TmpI = i;
+	      ComplexMatrix TmpResult = ColumnTwoMatrixWithAZ[TmpI%NbrColumnTwoMatrix];
+	      for(int p =1; p <Lx;p++)
+		{
+		  TmpI/=NbrColumnTwoMatrix;
+		  TmpResult= TmpResult*ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
+		}
+	      PEPS[i]= TmpResult.ComplexTr();     
+	    }
+	  return  PEPS;
+	}
+    }
+}
+
+
+ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint (int lx, int lylogtwo, int sz, ComplexDiagonalMatrix virtualSymmetryHorizontal, ComplexDiagonalMatrix virtualSymmetryVertical, bool horizontalFlag, bool verticalFlag)
+{
+  int Ly = 1;
+  for(int i = 0 ; i <lylogtwo ; i++)
+    {
+      Ly*=2;
+    }
+  int Lx = lx;
+  
+  Spin1_2ChainNew Space (Lx*Ly,sz, 100000); 
+  ComplexVector PEPS (Space.GetHilbertSpaceDimension(), true);  
+
+  int NbrColumnMatrix=this->PhysicalDimension*this->PhysicalDimension; 
+  int DimColumMatrix = this->MPOBondDimension*  this->MPOBondDimension;
+  
+  ComplexMatrix *** ColumnMatrix = new ComplexMatrix ** [NbrColumnMatrix];
+  for(int i = 0; i < NbrColumnMatrix ; i++)
+    {
+      ColumnMatrix[i] = new ComplexMatrix * [this->MPOBondDimension];
+      for(int j = 0 ; j < this->MPOBondDimension ; j++)
+	{
+	  ColumnMatrix[i][j] = new ComplexMatrix[this->MPOBondDimension];
+	  for(int k = 0 ; k < this->MPOBondDimension ; k++)
+	    {
+	      ColumnMatrix[i][j][k] = ComplexMatrix(DimColumMatrix,DimColumMatrix,true) ;
+	    }
+	}
+    }
+  
+  for(int i = 0; i < NbrColumnMatrix; i++)
+    {
+      for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumMatrix;  NewIndiceLeft++)
+	{
+	  for(int TopIndice = 0 ;  TopIndice <   this->MPOBondDimension ;  TopIndice++)
+	    {
+	      for (int NonZeroElementUp =0 ; NonZeroElementUp < this->NbrNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft% this->MPOBondDimension];  NonZeroElementUp++ )
+		{
+		  int NewRightUpTensorIndex = this->IndiceRightNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft% this->MPOBondDimension][NonZeroElementUp];
+		  int NewBottomtUpTensorIndex = this->IndiceBottomNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft% this->MPOBondDimension][NonZeroElementUp];
+		  Complex TmpValues = this->ValuesNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft%this->MPOBondDimension][NonZeroElementUp];
+		  for (int NonZeroElementDown =0 ;NonZeroElementDown <  this->NbrNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/this->MPOBondDimension];  NonZeroElementDown++ )
+		    { 
+		      ColumnMatrix[i][TopIndice][this->IndiceBottomNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/ this->MPOBondDimension][NonZeroElementDown]].AddToMatrixElement(NewIndiceLeft, this->IndiceRightNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/ this->MPOBondDimension][NonZeroElementDown]  *   this->MPOBondDimension + NewRightUpTensorIndex, this->ValuesNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/this->MPOBondDimension][NonZeroElementDown] * TmpValues);
+		    }
+		}
+	    }
+	}
+    }
+
+  if (Ly == 2 ) 
+    {
+      int NbrColumnTwoMatrix=NbrColumnMatrix; 
+      int DimColumTwoMatrix = DimColumMatrix;
+      ComplexMatrix * ColumnTwoMatrix = new ComplexMatrix [NbrColumnTwoMatrix];
+      for(int i = 0 ; i < NbrColumnTwoMatrix ; i++)
+	{
+	  ColumnTwoMatrix[i] = ComplexMatrix(DimColumTwoMatrix,DimColumTwoMatrix,true);
+	}
+      
+      Complex Tmp; 
+      Complex Tmp3 = 1.0; 
+      for(int i = 0 ; i < NbrColumnTwoMatrix ; i++)
+	{
+	  for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumTwoMatrix;  NewIndiceLeft++)
+	    {
+	      for(int  NewIndiceRight = 0; NewIndiceRight < DimColumTwoMatrix;  NewIndiceRight++)
+		{
+		  for(int TopIndice = 0; TopIndice <this->MPOBondDimension ;  TopIndice++)
+		    {
+		      if (horizontalFlag)
+			virtualSymmetryHorizontal.GetMatrixElement(TopIndice,TopIndice,Tmp3);
+		      ColumnMatrix[i][TopIndice][TopIndice].GetMatrixElement(NewIndiceLeft, NewIndiceRight ,Tmp); 
+		      ColumnTwoMatrix[i].AddToMatrixElement(NewIndiceLeft, NewIndiceRight,Tmp);
+		    }
+		}
+	    }
+	}
+      
+      if (verticalFlag == false)
+	{
+	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
+	    {
+	      int TmpI = i;
+	      ComplexMatrix TmpResult = ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
+	      for(int p =1; p <Lx;p++)
+		{
+		  TmpI/=NbrColumnTwoMatrix;
+		  TmpResult= TmpResult*ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
+		}
+	      PEPS[i]= TmpResult.ComplexTr();    
+	    }
+	}
+      else
+	{
+	  ComplexMatrix * ColumnTwoMatrixWithAZ = new ComplexMatrix [NbrColumnTwoMatrix];
+	  for(int i =0; i < NbrColumnTwoMatrix ;i++)
+	    {
+	      ColumnTwoMatrixWithAZ[i].Copy(ColumnTwoMatrix[i]);
+	    }
+	  
+	  Complex Tmp,Tmp2;
+	  ComplexDiagonalMatrix ZFactor (DimColumTwoMatrix,true);
+	  for(int NewIndiceLeft = 0 ; NewIndiceLeft < DimColumTwoMatrix; NewIndiceLeft++)
+	    {	  
+	      int TmpNewIndiceLeft = NewIndiceLeft;
+	      for(int p = 0 ; p < Ly ; p++)
+		{
+		  Tmp *= virtualSymmetryVertical[TmpNewIndiceLeft% this->MPOBondDimension];
+		  TmpNewIndiceLeft/= this->MPOBondDimension;
+		}
+	      ZFactor[NewIndiceLeft] = Tmp;
+	    }
+	  
+	  for(int i =0; i < NbrColumnTwoMatrix ;i++)
+	    {
+	      ColumnTwoMatrixWithAZ[i]= ZFactor * ColumnTwoMatrix[i];
+	    }
+	  
+	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
+	    {
+	      int TmpI = i;
 	      ComplexMatrix TmpResult = ColumnTwoMatrixWithAZ[TmpI%NbrColumnTwoMatrix];
 	      for(int p =1; p <Lx;p++)
 		{
@@ -673,6 +515,94 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 		  TmpResult= TmpResult*ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
 		}
 	      PEPS[i]= TmpResult.ComplexTr();    
+	    }
+	}
+      return PEPS;
+    }
+  else
+    {
+      int NbrColumnTwoMatrix=NbrColumnMatrix*NbrColumnMatrix; 
+      int DimColumTwoMatrix = DimColumMatrix*DimColumMatrix;
+      
+      ComplexMatrix * ColumnTwoMatrix = new ComplexMatrix [NbrColumnTwoMatrix];
+      for(int i =0; i < NbrColumnTwoMatrix ;i++)
+	{
+	  ColumnTwoMatrix[i] = ComplexMatrix(DimColumTwoMatrix,DimColumTwoMatrix,true);
+	}
+      Complex Tmp,Tmp2;
+      Complex Tmp3 = 1.0;
+      for(int i = 0 ; i < NbrColumnTwoMatrix ; i++)
+	{
+	  for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumTwoMatrix;  NewIndiceLeft++)
+	    {
+	      for(int  NewIndiceRight = 0; NewIndiceRight < DimColumTwoMatrix;  NewIndiceRight++)
+		{
+		  for(int TopIndice = 0; TopIndice <this->MPOBondDimension ;  TopIndice++)
+		    {
+		      for(int MiddleIndice = 0;  MiddleIndice <this->MPOBondDimension ;   MiddleIndice++)
+			{
+			  ColumnMatrix[i% NbrColumnMatrix][TopIndice][MiddleIndice].GetMatrixElement(NewIndiceLeft%DimColumMatrix, NewIndiceRight%DimColumMatrix  ,Tmp); 
+			  ColumnMatrix[i/NbrColumnMatrix][MiddleIndice][TopIndice].GetMatrixElement(NewIndiceLeft/DimColumMatrix, NewIndiceRight/DimColumMatrix  ,Tmp2); 
+			  if (horizontalFlag)
+			    virtualSymmetryHorizontal.GetMatrixElement(MiddleIndice,MiddleIndice,Tmp3);
+			  ColumnTwoMatrix[i].AddToMatrixElement(NewIndiceLeft, NewIndiceRight,Tmp*Tmp2*Tmp3);
+			}
+		    }
+		}
+	    }
+	}
+      
+      if (verticalFlag == false)
+	{
+	  for(int i = 0; i < Space.GetHilbertSpaceDimension(); i++)
+	    {
+	      int TmpI = i;
+	      ComplexMatrix TmpResult = ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
+	      for(int p =1; p <Lx;p++)
+		{
+		  TmpI/=NbrColumnTwoMatrix;
+		  TmpResult= TmpResult*ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
+		}
+	      PEPS[i]= TmpResult.ComplexTr();    
+	    }
+	  return  PEPS;
+	}
+      else
+	{
+	  ComplexMatrix * ColumnTwoMatrixWithAZ = new ComplexMatrix [NbrColumnTwoMatrix];
+	  for(int i =0; i < NbrColumnTwoMatrix ;i++)
+	    {
+	      ColumnTwoMatrixWithAZ[i].Copy(ColumnTwoMatrix[i]);
+	    }
+	  
+	  Complex Tmp,Tmp2;
+	  ComplexDiagonalMatrix ZFactor (DimColumTwoMatrix,true);
+	  for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumTwoMatrix;  NewIndiceLeft++)
+	    {	  
+	      int TmpNewIndiceLeft = NewIndiceLeft;
+	      for(int p=0; p < Ly; p++)
+		{
+		  Tmp *= virtualSymmetryVertical[TmpNewIndiceLeft% this->MPOBondDimension];
+		  TmpNewIndiceLeft/= this->MPOBondDimension;
+		}
+	      ZFactor[NewIndiceLeft] = Tmp;
+	    }
+	  
+	  for(int i =0; i < NbrColumnTwoMatrix ;i++)
+	    {
+	      ColumnTwoMatrixWithAZ[i]= ZFactor * ColumnTwoMatrix[i];
+	    }
+	  
+	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
+	    {
+	      int TmpI = i;
+	      ComplexMatrix TmpResult = ColumnTwoMatrixWithAZ[TmpI%NbrColumnTwoMatrix];
+	      for(int p =1; p <Lx;p++)
+		{
+		  TmpI/=NbrColumnTwoMatrix;
+		  TmpResult= TmpResult*ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
+		}
+	      PEPS[i]= TmpResult.ComplexTr();     
 	    }
 	  return  PEPS;
 	}
@@ -780,7 +710,7 @@ void ComplexPEPSPBC::ComputeBlockTensor ()
 // space = pointer to the Hilbert space where state is defined
 // return value = state in the (Kx,Ky) basis
 
-ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint (int lx, int lylogtwo, int sz, ComplexDiagonalMatrix virtualSymmetry, ComplexVector LeftVector, ComplexVector RightVector, bool horizontalFlag, bool verticalFlag)
+ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint (int lx, int lylogtwo, int sz,  ComplexDiagonalMatrix virtualSymmetryHorizontal, ComplexDiagonalMatrix virtualSymmetryVertical, ComplexVector LeftVector, ComplexVector RightVector, bool horizontalFlag, bool verticalFlag)
 {
   this->PrintTensorElements();
   int Ly = 1;
@@ -789,26 +719,21 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
       Ly*=2;
     }
   int Lx = lx;
-  int StateDimension = 1;
-  for(int i =0; i <Lx*Ly;i++)
-    {
-      StateDimension*=this->PhysicalDimension;
-    }
   
   Spin1_2ChainNew Space (Lx*Ly,sz, 100000); 
-  
-  ComplexVector PEPS (Space.GetHilbertSpaceDimension(), true);
+  ComplexVector PEPS (Space.GetHilbertSpaceDimension(), true);  
+
   int NbrColumnMatrix=this->PhysicalDimension*this->PhysicalDimension; 
   int DimColumMatrix = this->MPOBondDimension*  this->MPOBondDimension;
-
+  
   ComplexMatrix *** ColumnMatrix = new ComplexMatrix ** [NbrColumnMatrix];
-  for(int i =0; i <  NbrColumnMatrix ;i++)
+  for(int i = 0; i < NbrColumnMatrix ; i++)
     {
       ColumnMatrix[i] = new ComplexMatrix * [this->MPOBondDimension];
-      for(int j=  0 ; j <this->MPOBondDimension;j++)
+      for(int j = 0 ; j < this->MPOBondDimension ; j++)
 	{
 	  ColumnMatrix[i][j] = new ComplexMatrix[this->MPOBondDimension];
-	  for(int k = 0; k < this->MPOBondDimension ; k++)
+	  for(int k = 0 ; k < this->MPOBondDimension ; k++)
 	    {
 	      ColumnMatrix[i][j][k] = ComplexMatrix(DimColumMatrix,DimColumMatrix,true) ;
 	    }
@@ -840,13 +765,14 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
       int NbrColumnTwoMatrix=NbrColumnMatrix; 
       int DimColumTwoMatrix = DimColumMatrix;
       ComplexMatrix * ColumnTwoMatrix = new ComplexMatrix [NbrColumnTwoMatrix];
-      for(int i =0; i < NbrColumnTwoMatrix ;i++)
+      for(int i = 0 ; i < NbrColumnTwoMatrix ; i++)
 	{
 	  ColumnTwoMatrix[i] = ComplexMatrix(DimColumTwoMatrix,DimColumTwoMatrix,true);
 	}
       
-      Complex Tmp;  
-      for(int i =0; i < NbrColumnTwoMatrix ;i++)
+      Complex Tmp; 
+      Complex Tmp3 = 1.0; 
+      for(int i = 0 ; i < NbrColumnTwoMatrix ; i++)
 	{
 	  for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumTwoMatrix;  NewIndiceLeft++)
 	    {
@@ -854,6 +780,8 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 		{
 		  for(int TopIndice = 0; TopIndice <this->MPOBondDimension ;  TopIndice++)
 		    {
+		      if (horizontalFlag)
+			virtualSymmetryHorizontal.GetMatrixElement(TopIndice,TopIndice,Tmp3);
 		      ColumnMatrix[i][TopIndice][TopIndice].GetMatrixElement(NewIndiceLeft, NewIndiceRight ,Tmp); 
 		      ColumnTwoMatrix[i].AddToMatrixElement(NewIndiceLeft, NewIndiceRight,Tmp);
 		    }
@@ -861,65 +789,18 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 	    }
 	}
       
-      
-      
-      for(int i = 0;i < Space.GetHilbertSpaceDimension(); i++)
-	{
-	  int TmpI=Space.StateDescription[i];
-	  ComplexMatrix TmpResult = ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
-	  for(int p =1; p <Lx;p++)
-	    {
-	      TmpI/=NbrColumnTwoMatrix;
-	      TmpResult= TmpResult*ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
-	    }
-	  PEPS[i]= TmpResult.ComplexTr();    
-	}
-      return PEPS;
-    }
-  else
-    {
-      int NbrColumnTwoMatrix = NbrColumnMatrix*NbrColumnMatrix; 
-      int DimColumTwoMatrix = DimColumMatrix*DimColumMatrix;
-      
-      ComplexMatrix * ColumnTwoMatrix = new ComplexMatrix [NbrColumnTwoMatrix];
-      for(int i =0; i < NbrColumnTwoMatrix ;i++)
-	{
-	  ColumnTwoMatrix[i] = ComplexMatrix(DimColumTwoMatrix,DimColumTwoMatrix,true);
-	}
-      Complex Tmp,Tmp2;
-      Complex Tmp3 = 1.0;
-      for(int i = 0; i < NbrColumnTwoMatrix ;i++)
-	{
-	  for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumTwoMatrix;  NewIndiceLeft++)
-	    {
-	      for(int  NewIndiceRight = 0; NewIndiceRight < DimColumTwoMatrix;  NewIndiceRight++)
-		{
-		  for(int TopIndice = 0; TopIndice <this->MPOBondDimension ;  TopIndice++)
-		    {
-		      for(int MiddleIndice = 0;  MiddleIndice <this->MPOBondDimension ;   MiddleIndice++)
-			{
-			  ColumnMatrix[i% NbrColumnMatrix][TopIndice][MiddleIndice].GetMatrixElement(NewIndiceLeft%DimColumMatrix, NewIndiceRight%DimColumMatrix  ,Tmp); 
-			  ColumnMatrix[i/NbrColumnMatrix][MiddleIndice][TopIndice].GetMatrixElement(NewIndiceLeft/DimColumMatrix, NewIndiceRight/DimColumMatrix  ,Tmp2); 
-			  if (horizontalFlag)
-			    virtualSymmetry.GetMatrixElement(MiddleIndice,MiddleIndice,Tmp3);
-			  ColumnTwoMatrix[i].AddToMatrixElement(NewIndiceLeft, NewIndiceRight,Tmp*Tmp2*Tmp3);
-			}
-		    }
-		}
-	    }
-	}
-      
       if (verticalFlag == false)
 	{
-	  for(int i = 0;i < Space.GetHilbertSpaceDimension(); i++)
+	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
 	    {
-	      int TmpI=Space.StateDescription[i];
+	      int TmpI = i;
 	      ComplexMatrix TmpResult = ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
 	      for(int p =1; p <Lx;p++)
 		{
 		  TmpI/=NbrColumnTwoMatrix;
 		  TmpResult= TmpResult*ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
 		}
+	      
 	      for(int t = 0; t < LeftVector.GetVectorDimension(); t++)
 		for(int p = 0; p < RightVector.GetVectorDimension(); p++)
 		  {
@@ -927,7 +808,6 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 		    PEPS[i]+= Conj(LeftVector[t])* RightVector[p] * Tmp;    
 		  }
 	    }
-	  return  PEPS;
 	}
       else
 	{
@@ -939,12 +819,12 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 	  
 	  Complex Tmp,Tmp2;
 	  ComplexDiagonalMatrix ZFactor (DimColumTwoMatrix,true);
-	  for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumTwoMatrix;  NewIndiceLeft++)
+	  for(int NewIndiceLeft = 0 ; NewIndiceLeft < DimColumTwoMatrix; NewIndiceLeft++)
 	    {	  
 	      int TmpNewIndiceLeft = NewIndiceLeft;
-	      for(int p=0; p < Ly; p++)
+	      for(int p = 0 ; p < Ly ; p++)
 		{
-		  Tmp*= virtualSymmetry[TmpNewIndiceLeft% this->MPOBondDimension];
+		  Tmp *= virtualSymmetryVertical[TmpNewIndiceLeft% this->MPOBondDimension];
 		  TmpNewIndiceLeft/= this->MPOBondDimension;
 		}
 	      ZFactor[NewIndiceLeft] = Tmp;
@@ -955,124 +835,23 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 	      ColumnTwoMatrixWithAZ[i]= ZFactor * ColumnTwoMatrix[i];
 	    }
 	  
-	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension(); i++)
+	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
 	    {
-	      int TmpI=Space.StateDescription[i];
+	      int TmpI = i;
 	      ComplexMatrix TmpResult = ColumnTwoMatrixWithAZ[TmpI%NbrColumnTwoMatrix];
 	      for(int p =1; p <Lx;p++)
 		{
 		  TmpI/=NbrColumnTwoMatrix;
 		  TmpResult= TmpResult*ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
 		}
-	      PEPS[i]= TmpResult.ComplexTr();    
+	      
+	      for(int t = 0; t < LeftVector.GetVectorDimension(); t++)
+		for(int p = 0; p < RightVector.GetVectorDimension(); p++)
+		  {
+		    TmpResult.GetMatrixElement(t,p,Tmp);
+		    PEPS[i]+= Conj(LeftVector[t])* RightVector[p] * Tmp;    
+		  }
 	    }
-	  return  PEPS;
-	}
-    }
-}
-
-
-
-
-// convert a state defined in the real space basis into a state in the (Kx,Ky) basis
-//
-// state = reference on the state to convert
-// space = pointer to the Hilbert space where state is defined
-// return value = state in the (Kx,Ky) basis
-
-ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPS (int lx, int lylogtwo, ComplexDiagonalMatrix virtualSymmetry, ComplexVector LeftVector, ComplexVector RightVector, bool horizontalFlag, bool verticalFlag)
-{
-  this->PrintTensorElements();
-  int Ly = 1;
-  for(int i = 0 ; i <lylogtwo ; i++)
-    {
-      Ly*=2;
-    }
-  int Lx = lx;
-  int StateDimension = 1;
-  for(int i =0; i <Lx*Ly;i++)
-    {
-      StateDimension*=this->PhysicalDimension;
-    }
-  
-
-
-  ComplexVector PEPS (StateDimension, true);
-  int NbrColumnMatrix=this->PhysicalDimension*this->PhysicalDimension; 
-  int DimColumMatrix = this->MPOBondDimension*  this->MPOBondDimension;
-
-  ComplexMatrix *** ColumnMatrix = new ComplexMatrix ** [NbrColumnMatrix];
-  for(int i =0; i <  NbrColumnMatrix ;i++)
-    {
-      ColumnMatrix[i] = new ComplexMatrix * [this->MPOBondDimension];
-      for(int j=  0 ; j <this->MPOBondDimension;j++)
-	{
-	  ColumnMatrix[i][j] = new ComplexMatrix[this->MPOBondDimension];
-	  for(int k = 0; k < this->MPOBondDimension ; k++)
-	    {
-	      ColumnMatrix[i][j][k] = ComplexMatrix(DimColumMatrix,DimColumMatrix,true) ;
-	    }
-	}
-    }
-  
-  for(int i = 0; i < NbrColumnMatrix; i++)
-    {
-      for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumMatrix;  NewIndiceLeft++)
-	{
-	  for(int TopIndice = 0 ;  TopIndice <   this->MPOBondDimension ;  TopIndice++)
-	    {
-	      for (int NonZeroElementUp =0 ; NonZeroElementUp < this->NbrNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft% this->MPOBondDimension];  NonZeroElementUp++ )
-		{
-		  int NewRightUpTensorIndex = this->IndiceRightNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft% this->MPOBondDimension][NonZeroElementUp];
-		  int NewBottomtUpTensorIndex = this->IndiceBottomNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft% this->MPOBondDimension][NonZeroElementUp];
-		  Complex TmpValues = this->ValuesNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft%this->MPOBondDimension][NonZeroElementUp];
-		  for (int NonZeroElementDown =0 ;NonZeroElementDown <  this->NbrNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/this->MPOBondDimension];  NonZeroElementDown++ )
-		    { 
-		      ColumnMatrix[i][TopIndice][this->IndiceBottomNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/ this->MPOBondDimension][NonZeroElementDown]].AddToMatrixElement(NewIndiceLeft, this->IndiceRightNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/ this->MPOBondDimension][NonZeroElementDown]  *   this->MPOBondDimension + NewRightUpTensorIndex, this->ValuesNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/this->MPOBondDimension][NonZeroElementDown] * TmpValues);
-		    }
-		}
-	    }
-	}
-    }
-
-  if (Ly == 2 ) 
-    {
-      int NbrColumnTwoMatrix=NbrColumnMatrix; 
-      int DimColumTwoMatrix = DimColumMatrix;
-      ComplexMatrix * ColumnTwoMatrix = new ComplexMatrix [NbrColumnTwoMatrix];
-      for(int i =0; i < NbrColumnTwoMatrix ;i++)
-	{
-	  ColumnTwoMatrix[i] = ComplexMatrix(DimColumTwoMatrix,DimColumTwoMatrix,true);
-	}
-      
-      Complex Tmp;  
-      for(int i =0; i < NbrColumnTwoMatrix ;i++)
-	{
-	  for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumTwoMatrix;  NewIndiceLeft++)
-	    {
-	      for(int  NewIndiceRight = 0; NewIndiceRight < DimColumTwoMatrix;  NewIndiceRight++)
-		{
-		  for(int TopIndice = 0; TopIndice <this->MPOBondDimension ;  TopIndice++)
-		    {
-		      ColumnMatrix[i][TopIndice][TopIndice].GetMatrixElement(NewIndiceLeft, NewIndiceRight ,Tmp); 
-		      ColumnTwoMatrix[i].AddToMatrixElement(NewIndiceLeft, NewIndiceRight,Tmp);
-		    }
-		}
-	    }
-	}
-      
-      
-      
-      for(int i = 0;i < StateDimension; i++)
-	{
-	  int TmpI=i;
-	  ComplexMatrix TmpResult = ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
-	  for(int p =1; p <Lx;p++)
-	    {
-	      TmpI/=NbrColumnTwoMatrix;
-	      TmpResult= TmpResult*ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
-	    }
-	  PEPS[i]= TmpResult.ComplexTr();    
 	}
       return PEPS;
     }
@@ -1088,7 +867,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPS (int lx, int
 	}
       Complex Tmp,Tmp2;
       Complex Tmp3 = 1.0;
-      for(int i =0; i < NbrColumnTwoMatrix ;i++)
+      for(int i = 0 ; i < NbrColumnTwoMatrix ; i++)
 	{
 	  for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumTwoMatrix;  NewIndiceLeft++)
 	    {
@@ -1101,18 +880,17 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPS (int lx, int
 			  ColumnMatrix[i% NbrColumnMatrix][TopIndice][MiddleIndice].GetMatrixElement(NewIndiceLeft%DimColumMatrix, NewIndiceRight%DimColumMatrix  ,Tmp); 
 			  ColumnMatrix[i/NbrColumnMatrix][MiddleIndice][TopIndice].GetMatrixElement(NewIndiceLeft/DimColumMatrix, NewIndiceRight/DimColumMatrix  ,Tmp2); 
 			  if (horizontalFlag)
-			    virtualSymmetry.GetMatrixElement(MiddleIndice,MiddleIndice,Tmp3);
+			    virtualSymmetryHorizontal.GetMatrixElement(MiddleIndice,MiddleIndice,Tmp3);
 			  ColumnTwoMatrix[i].AddToMatrixElement(NewIndiceLeft, NewIndiceRight,Tmp*Tmp2*Tmp3);
 			}
 		    }
 		}
 	    }
-	  // cout << ColumnTwoMatrix[i]<<endl;
 	}
       
       if (verticalFlag == false)
 	{
-	  for(int i = 0; i < StateDimension; i++)
+	  for(int i = 0; i < Space.GetHilbertSpaceDimension(); i++)
 	    {
 	      int TmpI = i;
 	      ComplexMatrix TmpResult = ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
@@ -1145,7 +923,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPS (int lx, int
 	      int TmpNewIndiceLeft = NewIndiceLeft;
 	      for(int p=0; p < Ly; p++)
 		{
-		  Tmp *= virtualSymmetry[TmpNewIndiceLeft% this->MPOBondDimension];
+		  Tmp *= virtualSymmetryVertical[TmpNewIndiceLeft% this->MPOBondDimension];
 		  TmpNewIndiceLeft/= this->MPOBondDimension;
 		}
 	      ZFactor[NewIndiceLeft] = Tmp;
@@ -1156,7 +934,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPS (int lx, int
 	      ColumnTwoMatrixWithAZ[i]= ZFactor * ColumnTwoMatrix[i];
 	    }
 	  
-	  for(int i = 0 ; i <  StateDimension ; i++)
+	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
 	    {
 	      int TmpI = i;
 	      ComplexMatrix TmpResult = ColumnTwoMatrixWithAZ[TmpI%NbrColumnTwoMatrix];
@@ -1165,7 +943,268 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPS (int lx, int
 		  TmpI/=NbrColumnTwoMatrix;
 		  TmpResult= TmpResult*ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
 		}
-	      PEPS[i]= TmpResult.ComplexTr();    
+	      
+	      for(int t = 0; t < LeftVector.GetVectorDimension(); t++)
+		for(int p = 0; p < RightVector.GetVectorDimension(); p++)
+		  {
+		    TmpResult.GetMatrixElement(t,p,Tmp);
+		    PEPS[i]+= Conj(LeftVector[t])* RightVector[p] * Tmp;    
+		  }
+	    }
+	  return  PEPS;
+	}
+    }
+
+}
+
+
+
+
+// convert a state defined in the real space basis into a state in the (Kx,Ky) basis
+//
+// state = reference on the state to convert
+// space = pointer to the Hilbert space where state is defined
+// return value = state in the (Kx,Ky) basis
+
+ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPS (int lx, int lylogtwo, ComplexDiagonalMatrix virtualSymmetryHorizontal,  ComplexDiagonalMatrix virtualSymmetryVertical, ComplexVector LeftVector, ComplexVector RightVector, bool horizontalFlag, bool verticalFlag)
+{
+  int Ly = 1;
+  for(int i = 0 ; i <lylogtwo ; i++)
+    {
+      Ly*=2;
+    }
+  
+  int Lx = lx;
+  
+  Spin1_2ChainFull Space (Lx*Ly);   
+  ComplexVector PEPS (Space.GetHilbertSpaceDimension(), true);
+  
+  int NbrColumnMatrix=this->PhysicalDimension*this->PhysicalDimension; 
+  int DimColumMatrix = this->MPOBondDimension*  this->MPOBondDimension;
+  
+  ComplexMatrix *** ColumnMatrix = new ComplexMatrix ** [NbrColumnMatrix];
+  for(int i = 0; i < NbrColumnMatrix ; i++)
+    {
+      ColumnMatrix[i] = new ComplexMatrix * [this->MPOBondDimension];
+      for(int j = 0 ; j < this->MPOBondDimension ; j++)
+	{
+	  ColumnMatrix[i][j] = new ComplexMatrix[this->MPOBondDimension];
+	  for(int k = 0 ; k < this->MPOBondDimension ; k++)
+	    {
+	      ColumnMatrix[i][j][k] = ComplexMatrix(DimColumMatrix,DimColumMatrix,true) ;
+	    }
+	}
+    }
+  
+  for(int i = 0; i < NbrColumnMatrix; i++)
+    {
+      for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumMatrix;  NewIndiceLeft++)
+	{
+	  for(int TopIndice = 0 ;  TopIndice <   this->MPOBondDimension ;  TopIndice++)
+	    {
+	      for (int NonZeroElementUp =0 ; NonZeroElementUp < this->NbrNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft% this->MPOBondDimension];  NonZeroElementUp++ )
+		{
+		  int NewRightUpTensorIndex = this->IndiceRightNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft% this->MPOBondDimension][NonZeroElementUp];
+		  int NewBottomtUpTensorIndex = this->IndiceBottomNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft% this->MPOBondDimension][NonZeroElementUp];
+		  Complex TmpValues = this->ValuesNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft%this->MPOBondDimension][NonZeroElementUp];
+		  for (int NonZeroElementDown =0 ;NonZeroElementDown <  this->NbrNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/this->MPOBondDimension];  NonZeroElementDown++ )
+		    { 
+		      ColumnMatrix[i][TopIndice][this->IndiceBottomNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/ this->MPOBondDimension][NonZeroElementDown]].AddToMatrixElement(NewIndiceLeft, this->IndiceRightNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/ this->MPOBondDimension][NonZeroElementDown]  *   this->MPOBondDimension + NewRightUpTensorIndex, this->ValuesNonZeroTensorElementTopLeft[i/this->PhysicalDimension][NewBottomtUpTensorIndex][NewIndiceLeft/this->MPOBondDimension][NonZeroElementDown] * TmpValues);
+		    }
+		}
+	    }
+	}
+    }
+
+  if (Ly == 2 ) 
+    {
+      int NbrColumnTwoMatrix=NbrColumnMatrix; 
+      int DimColumTwoMatrix = DimColumMatrix;
+      ComplexMatrix * ColumnTwoMatrix = new ComplexMatrix [NbrColumnTwoMatrix];
+      for(int i = 0 ; i < NbrColumnTwoMatrix ; i++)
+	{
+	  ColumnTwoMatrix[i] = ComplexMatrix(DimColumTwoMatrix,DimColumTwoMatrix,true);
+	}
+      
+      Complex Tmp; 
+      Complex Tmp3 = 1.0; 
+      for(int i = 0 ; i < NbrColumnTwoMatrix ; i++)
+	{
+	  for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumTwoMatrix;  NewIndiceLeft++)
+	    {
+	      for(int  NewIndiceRight = 0; NewIndiceRight < DimColumTwoMatrix;  NewIndiceRight++)
+		{
+		  for(int TopIndice = 0; TopIndice <this->MPOBondDimension ;  TopIndice++)
+		    {
+		      if (horizontalFlag)
+			virtualSymmetryHorizontal.GetMatrixElement(TopIndice,TopIndice,Tmp3);
+		      ColumnMatrix[i][TopIndice][TopIndice].GetMatrixElement(NewIndiceLeft, NewIndiceRight ,Tmp); 
+		      ColumnTwoMatrix[i].AddToMatrixElement(NewIndiceLeft, NewIndiceRight,Tmp);
+		    }
+		}
+	    }
+	}
+      
+      if (verticalFlag == false)
+	{
+	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
+	    {
+	      int TmpI = i;
+	      ComplexMatrix TmpResult = ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
+	      for(int p =1; p <Lx;p++)
+		{
+		  TmpI/=NbrColumnTwoMatrix;
+		  TmpResult= TmpResult*ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
+		}
+	      
+	      for(int t = 0; t < LeftVector.GetVectorDimension(); t++)
+		for(int p = 0; p < RightVector.GetVectorDimension(); p++)
+		  {
+		    TmpResult.GetMatrixElement(t,p,Tmp);
+		    PEPS[i]+= Conj(LeftVector[t])* RightVector[p] * Tmp;    
+		  }
+	    }
+	}
+      else
+	{
+	  ComplexMatrix * ColumnTwoMatrixWithAZ = new ComplexMatrix [NbrColumnTwoMatrix];
+	  for(int i =0; i < NbrColumnTwoMatrix ;i++)
+	    {
+	      ColumnTwoMatrixWithAZ[i].Copy(ColumnTwoMatrix[i]);
+	    }
+	  
+	  Complex Tmp,Tmp2;
+	  ComplexDiagonalMatrix ZFactor (DimColumTwoMatrix,true);
+	  for(int NewIndiceLeft = 0 ; NewIndiceLeft < DimColumTwoMatrix; NewIndiceLeft++)
+	    {	  
+	      int TmpNewIndiceLeft = NewIndiceLeft;
+	      for(int p = 0 ; p < Ly ; p++)
+		{
+		  Tmp *= virtualSymmetryVertical[TmpNewIndiceLeft% this->MPOBondDimension];
+		  TmpNewIndiceLeft/= this->MPOBondDimension;
+		}
+	      ZFactor[NewIndiceLeft] = Tmp;
+	    }
+	  
+	  for(int i =0; i < NbrColumnTwoMatrix ;i++)
+	    {
+	      ColumnTwoMatrixWithAZ[i]= ZFactor * ColumnTwoMatrix[i];
+	    }
+	  
+	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
+	    {
+	      int TmpI = i;
+	      ComplexMatrix TmpResult = ColumnTwoMatrixWithAZ[TmpI%NbrColumnTwoMatrix];
+	      for(int p =1; p <Lx;p++)
+		{
+		  TmpI/=NbrColumnTwoMatrix;
+		  TmpResult= TmpResult*ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
+		}
+	      
+	      for(int t = 0; t < LeftVector.GetVectorDimension(); t++)
+		for(int p = 0; p < RightVector.GetVectorDimension(); p++)
+		  {
+		    TmpResult.GetMatrixElement(t,p,Tmp);
+		    PEPS[i]+= Conj(LeftVector[t])* RightVector[p] * Tmp;    
+		  }
+	    }
+	}
+      return PEPS;
+    }
+  else
+    {
+      int NbrColumnTwoMatrix=NbrColumnMatrix*NbrColumnMatrix; 
+      int DimColumTwoMatrix = DimColumMatrix*DimColumMatrix;
+      
+      ComplexMatrix * ColumnTwoMatrix = new ComplexMatrix [NbrColumnTwoMatrix];
+      for(int i =0; i < NbrColumnTwoMatrix ;i++)
+	{
+	  ColumnTwoMatrix[i] = ComplexMatrix(DimColumTwoMatrix,DimColumTwoMatrix,true);
+	}
+      Complex Tmp,Tmp2;
+      Complex Tmp3 = 1.0;
+      for(int i = 0 ; i < NbrColumnTwoMatrix ; i++)
+	{
+	  for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumTwoMatrix;  NewIndiceLeft++)
+	    {
+	      for(int  NewIndiceRight = 0; NewIndiceRight < DimColumTwoMatrix;  NewIndiceRight++)
+		{
+		  for(int TopIndice = 0; TopIndice <this->MPOBondDimension ;  TopIndice++)
+		    {
+		      for(int MiddleIndice = 0;  MiddleIndice <this->MPOBondDimension ;   MiddleIndice++)
+			{
+			  ColumnMatrix[i% NbrColumnMatrix][TopIndice][MiddleIndice].GetMatrixElement(NewIndiceLeft%DimColumMatrix, NewIndiceRight%DimColumMatrix  ,Tmp); 
+			  ColumnMatrix[i/NbrColumnMatrix][MiddleIndice][TopIndice].GetMatrixElement(NewIndiceLeft/DimColumMatrix, NewIndiceRight/DimColumMatrix  ,Tmp2); 
+			  if (horizontalFlag)
+			    virtualSymmetryHorizontal.GetMatrixElement(MiddleIndice,MiddleIndice,Tmp3);
+			  ColumnTwoMatrix[i].AddToMatrixElement(NewIndiceLeft, NewIndiceRight,Tmp*Tmp2*Tmp3);
+			}
+		    }
+		}
+	    }
+	}
+      
+      if (verticalFlag == false)
+	{
+	  for(int i = 0; i < Space.GetHilbertSpaceDimension(); i++)
+	    {
+	      int TmpI = i;
+	      ComplexMatrix TmpResult = ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
+	      for(int p =1; p <Lx;p++)
+		{
+		  TmpI/=NbrColumnTwoMatrix;
+		  TmpResult= TmpResult*ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
+		}
+	      for(int t = 0; t < LeftVector.GetVectorDimension(); t++)
+		for(int p = 0; p < RightVector.GetVectorDimension(); p++)
+		  {
+		    TmpResult.GetMatrixElement(t,p,Tmp);
+		    PEPS[i]+= Conj(LeftVector[t])* RightVector[p] * Tmp;    
+		  }
+	    }
+	  return  PEPS;
+	}
+      else
+	{
+	  ComplexMatrix * ColumnTwoMatrixWithAZ = new ComplexMatrix [NbrColumnTwoMatrix];
+	  for(int i =0; i < NbrColumnTwoMatrix ;i++)
+	    {
+	      ColumnTwoMatrixWithAZ[i].Copy(ColumnTwoMatrix[i]);
+	    }
+	  
+	  Complex Tmp,Tmp2;
+	  ComplexDiagonalMatrix ZFactor (DimColumTwoMatrix,true);
+	  for(int  NewIndiceLeft = 0; NewIndiceLeft < DimColumTwoMatrix;  NewIndiceLeft++)
+	    {	  
+	      int TmpNewIndiceLeft = NewIndiceLeft;
+	      for(int p=0; p < Ly; p++)
+		{
+		  Tmp *= virtualSymmetryVertical[TmpNewIndiceLeft% this->MPOBondDimension];
+		  TmpNewIndiceLeft/= this->MPOBondDimension;
+		}
+	      ZFactor[NewIndiceLeft] = Tmp;
+	    }
+	  
+	  for(int i =0; i < NbrColumnTwoMatrix ;i++)
+	    {
+	      ColumnTwoMatrixWithAZ[i]= ZFactor * ColumnTwoMatrix[i];
+	    }
+	  
+	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
+	    {
+	      int TmpI = i;
+	      ComplexMatrix TmpResult = ColumnTwoMatrixWithAZ[TmpI%NbrColumnTwoMatrix];
+	      for(int p =1; p <Lx;p++)
+		{
+		  TmpI/=NbrColumnTwoMatrix;
+		  TmpResult= TmpResult*ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
+		}
+	      for(int t = 0; t < LeftVector.GetVectorDimension(); t++)
+		for(int p = 0; p < RightVector.GetVectorDimension(); p++)
+		  {
+		    TmpResult.GetMatrixElement(t,p,Tmp);
+		    PEPS[i]+= Conj(LeftVector[t])* RightVector[p] * Tmp;    
+		  }
 	    }
 	  return  PEPS;
 	}

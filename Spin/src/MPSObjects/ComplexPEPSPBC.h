@@ -35,12 +35,11 @@ class ComplexPEPSPBC
   
   inline int GetBondDimension() const {return this->MPOBondDimension; }; 
 
-  virtual ComplexVector ComputeFockSpaceRepresentationOfAPEPS (int lx);
-  virtual ComplexVector ComputeFockSpaceRepresentationOfAPEPS (int lx, int lylogtwo);
-  virtual ComplexVector ComputeFockSpaceRepresentationOfAPEPS (int lx, int lylogtwo, ComplexDiagonalMatrix virtualSymmetry, ComplexVector leftVector, ComplexVector rightVector, bool horizontalFlag, bool verticalFlag);
-  virtual ComplexVector ComputeFockSpaceRepresentationOfAPEPSSzConstraint (int lx, int lylogtwo,int sz);
-  virtual ComplexVector ComputeFockSpaceRepresentationOfAPEPSSzConstraint (int lx, int lylogtwo,int sz, ComplexDiagonalMatrix virtualSymmetry, bool horizontalFlag, bool verticalFlag);
-  virtual ComplexVector ComputeFockSpaceRepresentationOfAPEPSSzConstraint (int lx, int lylogtwo,int sz, ComplexDiagonalMatrix virtualSymmetry, ComplexVector leftVector, ComplexVector rightVector, bool horizontalFlag, bool verticalFlag);
+  virtual ComplexVector ComputeFockSpaceRepresentationOfAPEPS (int lx, int lylogtwo, ComplexDiagonalMatrix virtualSymmetryHorizontal, ComplexDiagonalMatrix virtualSymmetryVertical, bool horizontalFlag, bool verticalFlag);
+  virtual ComplexVector ComputeFockSpaceRepresentationOfAPEPSSzConstraint (int lx, int lylogtwo, int sz, ComplexDiagonalMatrix virtualSymmetryHorizontal, ComplexDiagonalMatrix virtualSymmetryVertical, bool horizontalFlag, bool verticalFlag);
+  
+  virtual ComplexVector ComputeFockSpaceRepresentationOfAPEPSSzConstraint (int lx, int lylogtwo, int sz,  ComplexDiagonalMatrix virtualSymmetryHorizontal, ComplexDiagonalMatrix virtualSymmetryVertical, ComplexVector LeftVector, ComplexVector RightVector, bool horizontalFlag, bool verticalFlag);
+  virtual ComplexVector ComputeFockSpaceRepresentationOfAPEPS (int lx, int lylogtwo, ComplexDiagonalMatrix virtualSymmetryHorizontal,  ComplexDiagonalMatrix virtualSymmetryVertical, ComplexVector LeftVector, ComplexVector RightVector, bool horizontalFlag, bool verticalFlag);
 
   virtual  void ComputeBlockTensor ();
 

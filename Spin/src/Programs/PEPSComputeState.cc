@@ -39,8 +39,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "vstring", "add a vertical  string");
   (*SystemGroup) += new SingleDoubleOption ('\n',"theta", "angle in the U(1) inserted on the string", 0);
 
-//  (*SystemGroup) += new BooleanOption ('c', "complex", "use complex version of the code");
-
   (*SystemGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -97,22 +95,12 @@ int main(int argc, char** argv)
       if (Sz ==  -10000) 
 	{
 	  sprintf(FullOutputFileName,"PEPS_%s_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Lx,Ly); 
-	  
-	  if (Ly == 2 )
-	    {
-	      ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPS (Lx);
-	      State.WriteVector(FullOutputFileName);
-	    }
-	  if (Ly == 4)
-	    {
-	      ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPS (Lx,2);
-	      State.WriteVector(FullOutputFileName);
-	    }
+	  ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPS (Lx,Ly/2, MatrixOnString , MatrixOnString, HorinzontalStringFlag, VerticalStringFlag);
 	}
       else
 	{
 	  sprintf(FullOutputFileName,"PEPS_%s_sz_%d_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Sz,Lx,Ly); 
-	  ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPSSzConstraint (Lx,Ly/2,Sz);
+	  ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPSSzConstraint (Lx,Ly/2,Sz,MatrixOnString , MatrixOnString, HorinzontalStringFlag, VerticalStringFlag);
 	  State.WriteVector(FullOutputFileName);
 	}
     }
@@ -135,13 +123,13 @@ int main(int argc, char** argv)
       if (Sz ==  -10000) 
 	{
 	  sprintf(FullOutputFileName,"PEPS_cylinder_%s_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Lx,Ly); 
-	  ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPS (Lx,Ly/2, MatrixOnString , LeftVector, RightVector, HorinzontalStringFlag, VerticalStringFlag);
+	  ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPS (Lx,Ly/2, MatrixOnString , MatrixOnString, LeftVector, RightVector, HorinzontalStringFlag, VerticalStringFlag);
 	  State.WriteVector(FullOutputFileName);
 	}
       else
 	{
 	  sprintf(FullOutputFileName,"PEPS_cylinder_%s_sz_%d_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Sz,Lx,Ly); 
-	  ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPSSzConstraint (Lx, Ly/2,Sz, MatrixOnString , LeftVector, RightVector, HorinzontalStringFlag, VerticalStringFlag);
+	  ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPSSzConstraint (Lx, Ly/2,Sz, MatrixOnString , MatrixOnString, LeftVector, RightVector, HorinzontalStringFlag, VerticalStringFlag);
 	  State.WriteVector(FullOutputFileName);
 	}
     }
