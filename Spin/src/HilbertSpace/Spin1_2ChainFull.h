@@ -47,6 +47,7 @@ class Spin1_2ChainFull : public Spin1_2Chain
 
   friend class Spin1_2ChainFullAnd2DTranslation;
   friend class Spin1_2ChainFullInversionAnd2DTranslation;
+  friend class ComplexPEPSPBC;
 
  protected:
 

@@ -246,7 +246,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPS (int lx, int
 	{
 	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
 	    {
-	      int TmpI = i;
+	      int TmpI =  Space.StateDescription[i];
 	      ComplexMatrix TmpResult = ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
 	      for(int p =1; p <Lx;p++)
 		{
@@ -284,7 +284,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPS (int lx, int
 	  
 	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
 	    {
-	      int TmpI = i;
+	      int TmpI =  Space.StateDescription[i];
 	      ComplexMatrix TmpResult = ColumnTwoMatrixWithAZ[TmpI%NbrColumnTwoMatrix];
 	      for(int p =1; p <Lx;p++)
 		{
@@ -333,7 +333,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPS (int lx, int
 	{
 	  for(int i = 0; i < Space.GetHilbertSpaceDimension(); i++)
 	    {
-	      int TmpI = i;
+	      int TmpI =  Space.StateDescription[i];
 	      ComplexMatrix TmpResult = ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
 	      for(int p =1; p <Lx;p++)
 		{
@@ -372,7 +372,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPS (int lx, int
 	  
 	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
 	    {
-	      int TmpI = i;
+	      int TmpI =  Space.StateDescription[i];
 	      ComplexMatrix TmpResult = ColumnTwoMatrixWithAZ[TmpI%NbrColumnTwoMatrix];
 	      for(int p =1; p <Lx;p++)
 		{
@@ -422,7 +422,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 	{
 	  for(int TopIndice = 0 ;  TopIndice <   this->MPOBondDimension ;  TopIndice++)
 	    {
-	      for (int NonZeroElementUp =0 ; NonZeroElementUp < this->NbrNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft% this->MPOBondDimension];  NonZeroElementUp++ )
+	      for (int NonZeroElementUp = 0 ; NonZeroElementUp < this->NbrNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft% this->MPOBondDimension];  NonZeroElementUp++ )
 		{
 		  int NewRightUpTensorIndex = this->IndiceRightNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft% this->MPOBondDimension][NonZeroElementUp];
 		  int NewBottomtUpTensorIndex = this->IndiceBottomNonZeroTensorElementTopLeft[i%this->PhysicalDimension][TopIndice][NewIndiceLeft% this->MPOBondDimension][NonZeroElementUp];
@@ -438,7 +438,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 
   if (Ly == 2 ) 
     {
-      int NbrColumnTwoMatrix=NbrColumnMatrix; 
+      int NbrColumnTwoMatrix = NbrColumnMatrix; 
       int DimColumTwoMatrix = DimColumMatrix;
       ComplexMatrix * ColumnTwoMatrix = new ComplexMatrix [NbrColumnTwoMatrix];
       for(int i = 0 ; i < NbrColumnTwoMatrix ; i++)
@@ -456,9 +456,12 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 		{
 		  for(int TopIndice = 0; TopIndice <this->MPOBondDimension ;  TopIndice++)
 		    {
-		      if (horizontalFlag)
-			virtualSymmetryHorizontal.GetMatrixElement(TopIndice,TopIndice,Tmp3);
 		      ColumnMatrix[i][TopIndice][TopIndice].GetMatrixElement(NewIndiceLeft, NewIndiceRight ,Tmp); 
+		      if (horizontalFlag)
+			{
+			  virtualSymmetryHorizontal.GetMatrixElement(TopIndice,TopIndice,Tmp3);
+			  Tmp*=Tmp3;
+			}
 		      ColumnTwoMatrix[i].AddToMatrixElement(NewIndiceLeft, NewIndiceRight,Tmp);
 		    }
 		}
@@ -469,7 +472,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 	{
 	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
 	    {
-	      int TmpI = i;
+	      int TmpI =  Space.StateDescription[i];
 	      ComplexMatrix TmpResult = ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
 	      for(int p =1; p <Lx;p++)
 		{
@@ -507,7 +510,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 	  
 	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
 	    {
-	      int TmpI = i;
+	      int TmpI =  Space.StateDescription[i];
 	      ComplexMatrix TmpResult = ColumnTwoMatrixWithAZ[TmpI%NbrColumnTwoMatrix];
 	      for(int p =1; p <Lx;p++)
 		{
@@ -556,7 +559,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 	{
 	  for(int i = 0; i < Space.GetHilbertSpaceDimension(); i++)
 	    {
-	      int TmpI = i;
+	      int TmpI =  Space.StateDescription[i];
 	      ComplexMatrix TmpResult = ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
 	      for(int p =1; p <Lx;p++)
 		{
@@ -595,9 +598,9 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 	  
 	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
 	    {
-	      int TmpI = i;
+	      int TmpI =  Space.StateDescription[i];
 	      ComplexMatrix TmpResult = ColumnTwoMatrixWithAZ[TmpI%NbrColumnTwoMatrix];
-	      for(int p =1; p <Lx;p++)
+	      for(int p = 1; p <Lx;p++)
 		{
 		  TmpI/=NbrColumnTwoMatrix;
 		  TmpResult= TmpResult*ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
@@ -793,7 +796,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 	{
 	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
 	    {
-	      int TmpI = i;
+	      int TmpI =  Space.StateDescription[i];
 	      ComplexMatrix TmpResult = ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
 	      for(int p =1; p <Lx;p++)
 		{
@@ -837,7 +840,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 	  
 	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
 	    {
-	      int TmpI = i;
+	      int TmpI =  Space.StateDescription[i];
 	      ComplexMatrix TmpResult = ColumnTwoMatrixWithAZ[TmpI%NbrColumnTwoMatrix];
 	      for(int p =1; p <Lx;p++)
 		{
@@ -892,7 +895,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 	{
 	  for(int i = 0; i < Space.GetHilbertSpaceDimension(); i++)
 	    {
-	      int TmpI = i;
+	      int TmpI =  Space.StateDescription[i];
 	      ComplexMatrix TmpResult = ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
 	      for(int p =1; p <Lx;p++)
 		{
@@ -936,7 +939,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 	  
 	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
 	    {
-	      int TmpI = i;
+	      int TmpI =  Space.StateDescription[i];
 	      ComplexMatrix TmpResult = ColumnTwoMatrixWithAZ[TmpI%NbrColumnTwoMatrix];
 	      for(int p =1; p <Lx;p++)
 		{
@@ -1093,7 +1096,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPS (int lx, int
 	  
 	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
 	    {
-	      int TmpI = i;
+	      int TmpI =  Space.StateDescription[i];
 	      ComplexMatrix TmpResult = ColumnTwoMatrixWithAZ[TmpI%NbrColumnTwoMatrix];
 	      for(int p =1; p <Lx;p++)
 		{
@@ -1148,7 +1151,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPS (int lx, int
 	{
 	  for(int i = 0; i < Space.GetHilbertSpaceDimension(); i++)
 	    {
-	      int TmpI = i;
+	      int TmpI =  Space.StateDescription[i];
 	      ComplexMatrix TmpResult = ColumnTwoMatrix[TmpI%NbrColumnTwoMatrix];
 	      for(int p =1; p <Lx;p++)
 		{
@@ -1192,7 +1195,7 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPS (int lx, int
 	  
 	  for(int i = 0 ; i < Space.GetHilbertSpaceDimension() ; i++)
 	    {
-	      int TmpI = i;
+	      int TmpI = Space.StateDescription[i];
 	      ComplexMatrix TmpResult = ColumnTwoMatrixWithAZ[TmpI%NbrColumnTwoMatrix];
 	      for(int p =1; p <Lx;p++)
 		{
