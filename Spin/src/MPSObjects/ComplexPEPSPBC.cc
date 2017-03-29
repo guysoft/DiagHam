@@ -490,10 +490,11 @@ ComplexVector ComplexPEPSPBC::ComputeFockSpaceRepresentationOfAPEPSSzConstraint 
 	      ColumnTwoMatrixWithAZ[i].Copy(ColumnTwoMatrix[i]);
 	    }
 	  
-	  Complex Tmp,Tmp2;
+	  Complex  Tmp2;
 	  ComplexDiagonalMatrix ZFactor (DimColumTwoMatrix,true);
-	  for(int NewIndiceLeft = 0 ; NewIndiceLeft < DimColumTwoMatrix; NewIndiceLeft++)
-	    {	  
+	  for(int NewIndiceLeft = 0 ; NewIndiceLeft < DimColumTwoMatrix ; NewIndiceLeft++)
+	    {
+	      Tmp = 1.0; 
 	      int TmpNewIndiceLeft = NewIndiceLeft;
 	      for(int p = 0 ; p < Ly ; p++)
 		{
