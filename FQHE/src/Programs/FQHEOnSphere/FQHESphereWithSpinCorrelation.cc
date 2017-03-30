@@ -37,6 +37,7 @@
 #include "HilbertSpace/FermionOnSphereWithSpinAllSz.h"
 #include "HilbertSpace/FermionOnSphereWithSpinAllSzLzSymmetry.h"
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
+#include "HilbertSpace/BosonOnSphereWithSU2Spin.h"
 #include "HilbertSpace/BosonOnSphereWithSpinAllSz.h"
 
 #include "Hamiltonian/ParticleOnSphereWithSpinL2Hamiltonian.h"
@@ -95,6 +96,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use Sz <-> -Sz symmetrized version of the basis (only valid if total-sz=0, override auto-detection from file name)");
   (*SystemGroup) += new BooleanOption  ('\n', "minus-szparity", "select the  Sz <-> -Sz symmetric sector with negative parity");
   (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
+  (*SystemGroup) += new BooleanOption  ('\n', "use-alt", "use alternative Hilbert space for  bosonic states");
   (*SystemGroup) += new BooleanOption  ('\n', "show-extracted", "show values extracted from file name");
 //  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
@@ -348,7 +350,16 @@ int main(int argc, char** argv)
 	    Space = new BosonOnSphereWithSpinAllSz (NbrParticles, TotalLz, LzMax, MemorySpace);
 	}
       else
-	Space = new BosonOnSphereWithSpin(NbrParticles, TotalLz, LzMax, TotalSz);
+	{
+	  if (Manager.GetBoolean("use-alt") == false)
+	    {
+	      Space = new BosonOnSphereWithSpin(NbrParticles, TotalLz, LzMax, TotalSz);
+	    }
+	  else
+	    {
+	      Space = new BosonOnSphereWithSU2Spin(NbrParticles, TotalLz, LzMax, TotalSz);
+	    }
+	}
     }
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   

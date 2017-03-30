@@ -604,11 +604,18 @@ void DensityOfStatesParseSpectrumFile(ifstream& inputFile, double*& spectrum, in
   nbrStates += (long) spectrumSize;
   for (int i = 0; i < spectrumSize; ++i)
     {     
-      spectrum[i] = -log(spectrum[i]);
-      if (spectrum[i] < minEnergy)
-	minEnergy = spectrum[i];
-      if (spectrum[i] > maxEnergy)
-	maxEnergy = spectrum[i];
+      if (spectrum[i] > 0.0)
+	{
+	  spectrum[i] = -log(spectrum[i]);
+	  if (spectrum[i] < minEnergy)
+	    minEnergy = spectrum[i];
+	  if (spectrum[i] > maxEnergy)
+	    maxEnergy = spectrum[i];
+	}
+      else
+	{
+	  spectrum[i] = 600.0;
+	}
      }  
 }
 
@@ -634,7 +641,14 @@ void DensityOfStatesParseSpectrumFile(ifstream& inputFile, double*& spectrum, in
   spectrumSize = 0;
   for (int i = 0; i < TmpSpectrumSize; ++i)
     {     
-      TmpSpectrum[i] = -log(TmpSpectrum[i]);
+      if (TmpSpectrum[i] > 0.0)
+	{
+	  TmpSpectrum[i] = -log(TmpSpectrum[i]);
+	}
+      else
+	{
+	  TmpSpectrum[i] = 600.0;
+	}
       if ((TmpSpectrum[i] >= minEnergyCutOff) && (TmpSpectrum[i] <= maxEnergyCutOff))
 	++spectrumSize;
     }
