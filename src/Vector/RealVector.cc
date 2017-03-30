@@ -38,6 +38,7 @@
 #include <fstream>
 #include <iostream>
 #include <cstdlib>
+#include <limits>
 
 #ifdef __MPI__
 #include <mpi.h>
@@ -55,6 +56,8 @@ using std::ofstream;
 using std::ifstream;
 using std::ios;
 using std::endl;
+using std::numeric_limits;
+
 
 
 // default constructor

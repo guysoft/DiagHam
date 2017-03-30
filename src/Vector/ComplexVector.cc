@@ -36,14 +36,16 @@
 #include <iostream>
 #include <cstdlib>
 #include <climits>
+#include <limits>
 
 using std::cout;
 using std::ofstream;
 using std::ifstream;
 using std::ios;
 using std::endl;
+using std::numeric_limits;
 
-  
+
 // default constructor
 //
 
