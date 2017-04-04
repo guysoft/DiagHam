@@ -81,8 +81,7 @@ ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::ParticleOnLatticeRealSpac
   this->NbrParticles = nbrParticles;
   this->NbrSites = nbrSites;
   this->XMomentum = xMomentum;
-  this->MaxXMomentum = maxXMomentum;
-    
+  this->MaxXMomentum = maxXMomentum; 
   this->LzMax = this->NbrSites - 1;
   this->HamiltonianShift = 0.0;
   this->DiagonalElements = 0;
@@ -95,7 +94,7 @@ ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::ParticleOnLatticeRealSpac
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
 //  cout <<" MaxIndex = "<< MaxIndex<<" MinIndex  = "<< MinIndex <<endl;
   this->PrecalculationShift = (int) MinIndex;  
-  this->HermitianSymmetryFlag = true;//true;
+  this->HermitianSymmetryFlag = true;
   
   this->EvaluateExponentialFactors();
   this->EvaluateOneBodyFactorsFromTightBingding(tightBinding);
@@ -147,7 +146,7 @@ void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateExponentialF
   this->ExponentialFactors = new Complex[this->MaxXMomentum];
   for (int i = 0; i < this->MaxXMomentum; ++i)
     { 
-	  this->ExponentialFactors[i] = Phase(2.0 * M_PI * ((this->XMomentum * ((double) i) / ((double) this->MaxXMomentum))));
+      this->ExponentialFactors[i] = Phase(2.0 * M_PI * ((this->XMomentum * ((double) i) / ((double) this->MaxXMomentum))));
     }
 }
 

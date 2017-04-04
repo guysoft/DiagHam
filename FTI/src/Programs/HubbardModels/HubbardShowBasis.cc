@@ -96,9 +96,9 @@ int main(int argc, char** argv)
 
   int NbrParticles = Manager.GetInteger("nbr-particles"); 
   int TotalSz = Manager.GetInteger("total-spin");
-  if ((Manager.GetBoolean("conserve-sz")) && ((TotalSz % 2) != (NbrParticles % 2)))
+  if ((Manager.GetBoolean("conserve-sz")) && ((TotalSz % 2) != (NbrParticles % 2)) && ((TotalSz % 2 +2) != (NbrParticles % 2)))
     {
-      cout << "Number of particles and total spin should have the same parity" << endl;
+      cout << "Number of particles and total spin should have the same parity" << " "<< (TotalSz % 2) << " " << (NbrParticles % 2) <<endl;
       return 0;
     }   
   int NbrSpinUp = (TotalSz + NbrParticles) >> 1;

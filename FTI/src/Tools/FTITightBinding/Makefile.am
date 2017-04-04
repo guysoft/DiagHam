@@ -60,5 +60,6 @@ TightBindingModelKitaevChain.cc \
 TightBindingModelHalfContinuousHofstadterModel.cc \
 TightBindingInteractionCoulomb2DEwald.cc \
 TightBindingInteractionCoulombForHofstadterLattice.cc \
-TightBindingInteraction2DShortRange.cc
+TightBindingInteraction2DShortRange.cc \
+TightBindingModelSSH.cc
 #TightBindingModelSimpleChainWithConfinementLattice.cc

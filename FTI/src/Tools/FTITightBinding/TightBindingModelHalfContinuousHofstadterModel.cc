@@ -68,7 +68,7 @@ TightBindingModelHalfContinuousHofstadterModel::TightBindingModelHalfContinuousH
   this->NbrSiteY = nbrSiteY;
   this->LaserStrength = laserStrength; 
   this->InvMomentum= 1.0/((2.0 * M_PI)*(2.0 * M_PI));
-  this->KxFactor = 2.0 * M_PI  / ((double)  this->Flux *this->NbrSiteX);
+  this->KxFactor = 2.0 * M_PI  / ((double)  this->Flux * this->NbrSiteX);
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
   this->GammaX = gammaX;
   this->GammaY = gammaY;
@@ -228,8 +228,6 @@ void TightBindingModelHalfContinuousHofstadterModel::CoreComputeBandStructure(lo
 		    TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex1, IntermediateIndex,-LaserStrength*Phase(-K2));                         
 		}
 
-	      if((  kx == 0 )&& (  ky == 0 ))
-		cout <<TmpOneBodyHamiltonian<<endl;
               if (this->OneBodyBasis != 0)
                 {
                   ComplexMatrix TmpMatrix(this->NbrBands, this->NbrBands, true);

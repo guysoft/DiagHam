@@ -167,7 +167,6 @@ void ParticleOnLatticeRealSpaceHamiltonian::EvaluateOneBodyFactorsFromTightBingd
 		{
 		  this->OneBodyGenericConnectedSites[i][this->OneBodyGenericNbrConnectedSites[i]] = j;
 		  this->OneBodyGenericInteractionFactors[i][this->OneBodyGenericNbrConnectedSites[i]] = Sign*Tmp;
-
 		  ++this->OneBodyGenericNbrConnectedSites[i];
 		}
 	    }
@@ -197,6 +196,7 @@ void ParticleOnLatticeRealSpaceHamiltonian::EvaluateInteractionFactorsFromDensit
 
   if (this->NbrSectorSums == 0)
     {
+      cout << " I am returning as all interactions are zero! "<<endl;
       return;
     }
   this->NbrSectorIndicesPerSum = new int[this->NbrSectorSums];

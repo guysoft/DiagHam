@@ -4,9 +4,6 @@
 #include "HilbertSpace/BosonOnSquareLatticeWithSU2SpinMomentumSpace.h"
 
 
-#include "Hamiltonian/ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian.h"
-#include "Hamiltonian/ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian.h"
-
 
 #include "Hamiltonian/ParticleOnLatticeKagomeLatticeSingleBandHamiltonian.h"
 #include "Tools/FTITightBinding/TightBindingModelKagomeLattice.h"
@@ -101,23 +98,22 @@ int main(int argc, char** argv)
   int NbrParticles = Manager.GetInteger("nbr-particles"); 
   int NbrSitesX = Manager.GetInteger("nbr-sitex"); 
   int NbrSitesY = Manager.GetInteger("nbr-sitey");
-
+  
   int TotalKx = Manager.GetInteger("kx"); 
   int TotalKy = Manager.GetInteger("ky");
   int NbrPointX = Manager.GetInteger("number-point-x");
   int NbrPointY = Manager.GetInteger("number-point-y");
-
+  
   BosonOnSquareLatticeMomentumSpace * Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY,  TotalKx, TotalKy);
-//   FermionOnSquareLatticeMomentumSpace * Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY,  TotalKx, TotalKy);
-
+  
   int IncNbrPointX =  NbrPointX+3;
   int IncNbrPointY =  NbrPointY+3;
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   int BandIndex =  Manager.GetInteger("band-index");
-
+  
   bool ExportOneBody = true; 
   bool FirstRunFlag = true;
-
+  
   char* StatisticPrefix = new char [16];
   if (Manager.GetBoolean("boson") == false)
     {
@@ -128,63 +124,63 @@ int main(int argc, char** argv)
       sprintf (StatisticPrefix, "bosons");
     }
     
-
+  
   char* StateFilePrefix = new char [256];
   sprintf (StateFilePrefix, "%s_singleband_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
-
+  
   char* FileParameterString = new char [256];
   sprintf (FileParameterString, "t1_%g_t2_%g_l1_%g_l2_%g", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"));
-
+  
   char* EigenstateFile = new char [512];
   char* EigenvalueOutputFile = new char [512];
   char* CommentLine = new char [256];
   sprintf (CommentLine, "eigenvalues\n# kx ky ");
-
+  
   char* FilePrefix = new char [256];
   char* ContentPrefix = new char[256];
   sprintf (ContentPrefix, "%d %d",  TotalKx,  TotalKy);
-
-
- ComplexVector ** BandEigenvectors = new ComplexVector * [NbrSitesX*NbrSitesY];
- for(int i = 0; i <NbrSitesX*NbrSitesY; i++) 
-  BandEigenvectors[i] = new ComplexVector[IncNbrPointX * IncNbrPointY];
-
-
- ComplexVector * ManyBodyState = new ComplexVector [IncNbrPointX * IncNbrPointY];
-
-
- AbstractHamiltonian *  Hamiltonian  = 0;
-
- double TrueGammaX =   ( ( - 1.0) / ( (double) NbrPointX));
- double TrueGammaY =   ( ( - 1.0) / ( (double) NbrPointY));
-
- TightBindingModelKagomeLattice TightBindingModel1 (NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
-					     TrueGammaX,  TrueGammaY , Architecture.GetArchitecture(), ExportOneBody);
-
- for (int Kx = 0; Kx < NbrSitesX; Kx++)
-      for (int Ky = 0; Ky < NbrSitesY; Ky++)
-   {
-     int MomentumIndex = TightBindingModel1.GetLinearizedMomentumIndexSafe(Kx,Ky);
-     BandEigenvectors[MomentumIndex][0] =  TightBindingModel1.GetOneBodyMatrix(MomentumIndex)[BandIndex];
-   }
-
+  
+  
+  ComplexVector ** BandEigenvectors = new ComplexVector * [NbrSitesX*NbrSitesY];
+  for(int i = 0; i <NbrSitesX*NbrSitesY; i++) 
+    BandEigenvectors[i] = new ComplexVector[IncNbrPointX * IncNbrPointY];
+  
+  
+  ComplexVector * ManyBodyState = new ComplexVector [IncNbrPointX * IncNbrPointY];
+  
+  
+  AbstractHamiltonian *  Hamiltonian  = 0;
+  
+  double TrueGammaX =   ( ( - 1.0) / ( (double) NbrPointX));
+  double TrueGammaY =   ( ( - 1.0) / ( (double) NbrPointY));
+  
+  TightBindingModelKagomeLattice TightBindingModel1 (NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
+						     TrueGammaX,  TrueGammaY , Architecture.GetArchitecture(), ExportOneBody);
+  
+  for (int Kx = 0; Kx < NbrSitesX; Kx++)
+    for (int Ky = 0; Ky < NbrSitesY; Ky++)
+      {
+	int MomentumIndex = TightBindingModel1.GetLinearizedMomentumIndexSafe(Kx,Ky);
+	BandEigenvectors[MomentumIndex][0] =  TightBindingModel1.GetOneBodyMatrix(MomentumIndex)[BandIndex];
+      }
+  
   if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
     Memory = Architecture.GetArchitecture()->GetLocalMemory();
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
   Hamiltonian = new ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,Manager.GetDouble("u-potential"),Manager.GetDouble("v-potential"),&TightBindingModel1, true, Architecture.GetArchitecture(), Memory);
-
+  
   if (Manager.GetDouble("v-potential") == 0.0)
-	    {
-		sprintf (EigenvalueOutputFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-        	sprintf (EigenstateFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-
-}
-	      else
-{
-		sprintf (EigenvalueOutputFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-        	sprintf (EigenstateFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-}
-
+    {
+      sprintf (EigenvalueOutputFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+      sprintf (EigenstateFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+      
+    }
+  else
+    {
+      sprintf (EigenvalueOutputFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+      sprintf (EigenstateFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+    }
+  
 
   FirstRunFlag = true;
   GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateFile);
@@ -194,56 +190,56 @@ int main(int argc, char** argv)
   delete Hamiltonian;
   delete[] EigenstateFile;
   delete[] EigenvalueOutputFile;
-
- for (int GammaX = 1; GammaX < IncNbrPointX; GammaX++)
-  {
-    TrueGammaX =   ( ( (double) GammaX - 1.0) / ( (double) NbrPointX));
-    TrueGammaY =   ( (  - 1.0) / ( (double) NbrPointY));
-
-    TightBindingModelKagomeLattice TightBindingModel2 (NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
-					     TrueGammaX,  TrueGammaY , Architecture.GetArchitecture(), ExportOneBody);
-
- for (int Kx = 0; Kx < NbrSitesX; Kx++)
-      for (int Ky = 0; Ky < NbrSitesY; Ky++)
-   {
-     int MomentumIndex = TightBindingModel2.GetLinearizedMomentumIndexSafe(Kx,Ky);
-     BandEigenvectors[MomentumIndex][GammaX*IncNbrPointY] =  TightBindingModel2.GetOneBodyMatrix(MomentumIndex)[BandIndex];
-   }
-
-   for (int LinearizedMomentum = 0; LinearizedMomentum < NbrSitesX * NbrSitesY ; LinearizedMomentum++)
-   {
-     Complex Tmp =  BandEigenvectors[LinearizedMomentum][(GammaX-1)*IncNbrPointY] * BandEigenvectors[LinearizedMomentum][GammaX *IncNbrPointY];
-     BandEigenvectors[LinearizedMomentum][GammaX*IncNbrPointY] *= (Conj(Tmp)/Norm(Tmp));
-   }
-
-  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
-    Memory = Architecture.GetArchitecture()->GetLocalMemory();
-  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
-  Hamiltonian = new ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,Manager.GetDouble("u-potential"),Manager.GetDouble("v-potential"), &TightBindingModel2, true, Architecture.GetArchitecture(), Memory);
-  EigenstateFile = new char [512];
-  EigenvalueOutputFile = new char [512];
-
-
-  if (Manager.GetDouble("v-potential") == 0.0)
+  
+  for (int GammaX = 1; GammaX < IncNbrPointX; GammaX++)
     {
-	sprintf (EigenvalueOutputFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-       	sprintf (EigenstateFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d", StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-   }
-     else
+      TrueGammaX =   ( ( (double) GammaX - 1.0) / ( (double) NbrPointX));
+      TrueGammaY =   ( (  - 1.0) / ( (double) NbrPointY));
+      
+      TightBindingModelKagomeLattice TightBindingModel2 (NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
+							 TrueGammaX,  TrueGammaY , Architecture.GetArchitecture(), ExportOneBody);
+      
+      for (int Kx = 0; Kx < NbrSitesX; Kx++)
+	for (int Ky = 0; Ky < NbrSitesY; Ky++)
+	  {
+	    int MomentumIndex = TightBindingModel2.GetLinearizedMomentumIndexSafe(Kx,Ky);
+	    BandEigenvectors[MomentumIndex][GammaX*IncNbrPointY] =  TightBindingModel2.GetOneBodyMatrix(MomentumIndex)[BandIndex];
+	  }
+      
+      for (int LinearizedMomentum = 0; LinearizedMomentum < NbrSitesX * NbrSitesY ; LinearizedMomentum++)
 	{
-	sprintf (EigenvalueOutputFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-       	sprintf (EigenstateFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+	  Complex Tmp =  BandEigenvectors[LinearizedMomentum][(GammaX-1)*IncNbrPointY] * BandEigenvectors[LinearizedMomentum][GammaX *IncNbrPointY];
+	  BandEigenvectors[LinearizedMomentum][GammaX*IncNbrPointY] *= (Conj(Tmp)/Norm(Tmp));
+	}
+      
+      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+	Memory = Architecture.GetArchitecture()->GetLocalMemory();
+      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
+      Hamiltonian = new ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,Manager.GetDouble("u-potential"),Manager.GetDouble("v-potential"), &TightBindingModel2, true, Architecture.GetArchitecture(), Memory);
+      EigenstateFile = new char [512];
+      EigenvalueOutputFile = new char [512];
+      
+      
+      if (Manager.GetDouble("v-potential") == 0.0)
+	{
+	  sprintf (EigenvalueOutputFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+	  sprintf (EigenstateFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d", StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+	}
+      else
+	{
+	  sprintf (EigenvalueOutputFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+	  sprintf (EigenstateFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
 	}	
-
-  FirstRunFlag = true;
-  GenericComplexMainTask Task1(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateFile);
-  FirstRunFlag = false;
-  MainTaskOperation TaskOperation (&Task1);
-  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-  delete Hamiltonian;
-  delete[] EigenstateFile;
-  delete[] EigenvalueOutputFile;   
-}
+      
+      FirstRunFlag = true;
+      GenericComplexMainTask Task1(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateFile);
+      FirstRunFlag = false;
+      MainTaskOperation TaskOperation (&Task1);
+      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+      delete Hamiltonian;
+      delete[] EigenstateFile;
+      delete[] EigenvalueOutputFile;   
+    }
 
 
     for (int GammaY = 1; GammaY <  IncNbrPointY; GammaY++)
@@ -251,165 +247,161 @@ int main(int argc, char** argv)
        TrueGammaX =   ( ( -1.0) / ( (double) NbrPointX));
        TrueGammaY =   ( ( (double)  GammaY - 1.0) / ( (double) NbrPointY));
 
-    TightBindingModelKagomeLattice TightBindingModel2 (NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
-					     TrueGammaX,  TrueGammaY , Architecture.GetArchitecture(), ExportOneBody);
-
- for (int Kx = 0; Kx < NbrSitesX; Kx++)
-      for (int Ky = 0; Ky < NbrSitesY; Ky++)
-   {
-     int MomentumIndex = TightBindingModel2.GetLinearizedMomentumIndexSafe(Kx,Ky);
-     BandEigenvectors[MomentumIndex][GammaY] =  TightBindingModel2.GetOneBodyMatrix(MomentumIndex)[BandIndex];
-   }
-
-   for (int LinearizedMomentum = 0; LinearizedMomentum < NbrSitesX * NbrSitesY ; LinearizedMomentum++)
-   {
-      Complex Tmp =  BandEigenvectors[LinearizedMomentum][GammaY-1]  * BandEigenvectors[LinearizedMomentum][GammaY];
-      BandEigenvectors[LinearizedMomentum][GammaY] *= (Conj(Tmp)/Norm(Tmp));
-   }
-
-  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
-    Memory = Architecture.GetArchitecture()->GetLocalMemory();
-  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
-  Hamiltonian = new ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,Manager.GetDouble("u-potential"),Manager.GetDouble("v-potential"), &TightBindingModel2, true, Architecture.GetArchitecture(), Memory);
-  EigenstateFile = new char [512];
-  EigenvalueOutputFile = new char [512];
-
-  if (Manager.GetDouble("v-potential") == 0.0)
-    {
-      sprintf (EigenvalueOutputFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-      sprintf (EigenstateFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-    }
-	      else
-    {
-	sprintf (EigenvalueOutputFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-        sprintf (EigenstateFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-    }
-
-  FirstRunFlag = true;
-  GenericComplexMainTask Task1(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateFile);
-  FirstRunFlag = false;
-  MainTaskOperation TaskOperation1 (&Task1);
-  TaskOperation1.ApplyOperation(Architecture.GetArchitecture());
-  delete Hamiltonian;
-  delete[] EigenstateFile;
-  delete[] EigenvalueOutputFile;   
-}
-
-
-    for (int GammaY = 1; GammaY <  IncNbrPointY ; GammaY++)
-     {
-       for (int  GammaX = 1; GammaX < IncNbrPointX; GammaX++)
-       {
-
-       cout << GammaY << " " << GammaX<<endl;
-       TrueGammaX =   ( ( (double) GammaX - 1) / ( (double) NbrPointX));
-       TrueGammaY =   ( ( (double) GammaY - 1) / ( (double) NbrPointY));
-
-    TightBindingModelKagomeLattice TightBindingModel2 (NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
-					     TrueGammaX,  TrueGammaY , Architecture.GetArchitecture(), ExportOneBody);
-
- for (int Kx = 0; Kx < NbrSitesX; Kx++)
-      for (int Ky = 0; Ky < NbrSitesY; Ky++)
-   {
-     int MomentumIndex = TightBindingModel2.GetLinearizedMomentumIndexSafe(Kx,Ky);
-     BandEigenvectors[MomentumIndex][GammaX*IncNbrPointY+ GammaY] =  TightBindingModel2.GetOneBodyMatrix(MomentumIndex)[BandIndex];
-   }
-
-   for (int LinearizedMomentum = 0; LinearizedMomentum < NbrSitesX * NbrSitesY ; LinearizedMomentum++)
-   {
-         Complex Tmp =  BandEigenvectors[LinearizedMomentum][(GammaX-1)*IncNbrPointY + GammaY]  * BandEigenvectors[LinearizedMomentum][GammaX*IncNbrPointY+GammaY];
-         BandEigenvectors[LinearizedMomentum][GammaX*IncNbrPointY + GammaY] *= (Conj(Tmp)/Norm(Tmp));
-   }
-
-  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
-    Memory = Architecture.GetArchitecture()->GetLocalMemory();
-  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
-  Hamiltonian = new ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), &TightBindingModel2, true, Architecture.GetArchitecture(), Memory);
-  EigenstateFile = new char [512];
-  EigenvalueOutputFile = new char [512];
-
-  if (Manager.GetDouble("v-potential") == 0.0)
-  {
-     sprintf (EigenvalueOutputFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-     sprintf (EigenstateFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-  }
-	      else
-{
-	sprintf (EigenvalueOutputFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-       	sprintf (EigenstateFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-}
-
-  FirstRunFlag = true;
-  GenericComplexMainTask Task1(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateFile);
-  FirstRunFlag = false;
-  MainTaskOperation TaskOperation1 (&Task1);
-  TaskOperation1.ApplyOperation(Architecture.GetArchitecture());
-  delete Hamiltonian;
-  delete[] EigenstateFile;
-  delete[] EigenvalueOutputFile;   
-}
-}
-
-
- EigenstateFile = new char [512];
-
-for (int GammaX = 0; GammaX <   IncNbrPointX; GammaX++)
-  {
-    for (int GammaY = 0; GammaY <   IncNbrPointY ; GammaY++)
-    {
-
-     double TrueGammaX =   ( ( (double) GammaX - 1) / ( (double) NbrPointX));
-     double TrueGammaY =   ( ( (double) GammaY - 1) / ( (double) NbrPointY));
-
-	  if (Manager.GetDouble("v-potential") == 0.0)
-	    {
-        	sprintf (EigenstateFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d.0.vec",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-
-}
-	      else
-{
-        	sprintf (EigenstateFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d.0.vec",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-}
-
-      if ( ( ManyBodyState[GammaX*IncNbrPointY+GammaY]).ReadVector(EigenstateFile) == false)
-	{
-	  cout << "error while reading " << EigenstateFile << endl;
-	  return -1;
-	}
-    }
-}
-
-   Complex * OverlapMatrix = 0;
-
-    for (int GammaX = 0; GammaX <  IncNbrPointX-1; GammaX++)
-     {
-       OverlapMatrix = new Complex [NbrSitesX*NbrSitesY];
+       TightBindingModelKagomeLattice TightBindingModel2 (NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
+							  TrueGammaX,  TrueGammaY , Architecture.GetArchitecture(), ExportOneBody);
+       
        for (int Kx = 0; Kx < NbrSitesX; Kx++)
-	      for (int Ky = 0; Ky < NbrSitesY; Ky++)
+	 for (int Ky = 0; Ky < NbrSitesY; Ky++)
 	   {
-	     int MomentumIndex = TightBindingModel1.GetLinearizedMomentumIndexSafe(Kx,Ky);
-	     OverlapMatrix[MomentumIndex] = BandEigenvectors[MomentumIndex][GammaX*IncNbrPointY] * BandEigenvectors[MomentumIndex][(GammaX+1)*IncNbrPointY];
-  //           OverlapMatrix[MomentumIndex] /=Norm(OverlapMatrix[MomentumIndex]);
-	}
-       Complex Tmp = ManyBodyState[GammaX*IncNbrPointY] *  ManyBodyState[(GammaX+1)*IncNbrPointY];
-//       Complex Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[(GammaX+1)*IncNbrPointY],  ManyBodyState[GammaX*IncNbrPointY],OverlapMatrix);
-       ManyBodyState[(GammaX+1)*IncNbrPointY] *= (Conj(Tmp)/Norm(Tmp));
-       delete [] OverlapMatrix ;
+	     int MomentumIndex = TightBindingModel2.GetLinearizedMomentumIndexSafe(Kx,Ky);
+	     BandEigenvectors[MomentumIndex][GammaY] =  TightBindingModel2.GetOneBodyMatrix(MomentumIndex)[BandIndex];
+	   }
+       
+       for (int LinearizedMomentum = 0; LinearizedMomentum < NbrSitesX * NbrSitesY ; LinearizedMomentum++)
+	 {
+	   Complex Tmp =  BandEigenvectors[LinearizedMomentum][GammaY-1]  * BandEigenvectors[LinearizedMomentum][GammaY];
+	   BandEigenvectors[LinearizedMomentum][GammaY] *= (Conj(Tmp)/Norm(Tmp));
+	 }
+       
+       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+	 Memory = Architecture.GetArchitecture()->GetLocalMemory();
+       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
+       Hamiltonian = new ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,Manager.GetDouble("u-potential"),Manager.GetDouble("v-potential"), &TightBindingModel2, true, Architecture.GetArchitecture(), Memory);
+       EigenstateFile = new char [512];
+       EigenvalueOutputFile = new char [512];
+       
+       if (Manager.GetDouble("v-potential") == 0.0)
+	 {
+	   sprintf (EigenvalueOutputFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+	   sprintf (EigenstateFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+	 }
+       else
+	 {
+	   sprintf (EigenvalueOutputFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+	   sprintf (EigenstateFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+	 }
+       
+       FirstRunFlag = true;
+       GenericComplexMainTask Task1(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateFile);
+       FirstRunFlag = false;
+       MainTaskOperation TaskOperation1 (&Task1);
+       TaskOperation1.ApplyOperation(Architecture.GetArchitecture());
+       delete Hamiltonian;
+       delete[] EigenstateFile;
+       delete[] EigenvalueOutputFile;   
      }
-    for (int GammaY = 0; GammaY <  IncNbrPointY-1; GammaY++)
-     {
-       OverlapMatrix = new Complex [NbrSitesX*NbrSitesY];
-       for (int Kx = 0; Kx < NbrSitesX; Kx++)
+    
+    
+    for (int GammaY = 1; GammaY <  IncNbrPointY ; GammaY++)
+      {
+	for (int  GammaX = 1; GammaX < IncNbrPointX; GammaX++)
+	  {
+	    
+	    cout << GammaY << " " << GammaX<<endl;
+	    TrueGammaX =   ( ( (double) GammaX - 1) / ( (double) NbrPointX));
+	    TrueGammaY =   ( ( (double) GammaY - 1) / ( (double) NbrPointY));
+	    
+	    TightBindingModelKagomeLattice TightBindingModel2 (NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
+							       TrueGammaX,  TrueGammaY , Architecture.GetArchitecture(), ExportOneBody);
+	    
+	    for (int Kx = 0; Kx < NbrSitesX; Kx++)
 	      for (int Ky = 0; Ky < NbrSitesY; Ky++)
-	   {
-	     int MomentumIndex = TightBindingModel1.GetLinearizedMomentumIndexSafe(Kx,Ky);
-	     OverlapMatrix[MomentumIndex] = BandEigenvectors[MomentumIndex][GammaY] * BandEigenvectors[MomentumIndex][GammaY+1];
-//             OverlapMatrix[MomentumIndex] /=Norm(OverlapMatrix[MomentumIndex]);
-	}
-         Complex Tmp = ManyBodyState[GammaY] * ManyBodyState[GammaY+1];
-//       Complex Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[GammaY+1],ManyBodyState[GammaY],OverlapMatrix);
-       ManyBodyState[GammaY+1] *= (Conj(Tmp)/Norm(Tmp));
-       delete [] OverlapMatrix ;
+		{
+		  int MomentumIndex = TightBindingModel2.GetLinearizedMomentumIndexSafe(Kx,Ky);
+		  BandEigenvectors[MomentumIndex][GammaX*IncNbrPointY+ GammaY] =  TightBindingModel2.GetOneBodyMatrix(MomentumIndex)[BandIndex];
+		}
+	    
+	    for (int LinearizedMomentum = 0; LinearizedMomentum < NbrSitesX * NbrSitesY ; LinearizedMomentum++)
+	      {
+		Complex Tmp =  BandEigenvectors[LinearizedMomentum][(GammaX-1)*IncNbrPointY + GammaY]  * BandEigenvectors[LinearizedMomentum][GammaX*IncNbrPointY+GammaY];
+		BandEigenvectors[LinearizedMomentum][GammaX*IncNbrPointY + GammaY] *= (Conj(Tmp)/Norm(Tmp));
+	      }
+	    
+	    if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+	      Memory = Architecture.GetArchitecture()->GetLocalMemory();
+	    Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
+	    Hamiltonian = new ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), &TightBindingModel2, true, Architecture.GetArchitecture(), Memory);
+	    EigenstateFile = new char [512];
+	    EigenvalueOutputFile = new char [512];
+	    
+	    if (Manager.GetDouble("v-potential") == 0.0)
+	      {
+		sprintf (EigenvalueOutputFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+		sprintf (EigenstateFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+	      }
+	    else
+	      {
+		sprintf (EigenvalueOutputFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+		sprintf (EigenstateFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+	      }
+	    
+	    FirstRunFlag = true;
+	    GenericComplexMainTask Task1(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateFile);
+	    FirstRunFlag = false;
+	    MainTaskOperation TaskOperation1 (&Task1);
+	    TaskOperation1.ApplyOperation(Architecture.GetArchitecture());
+	    delete Hamiltonian;
+	    delete[] EigenstateFile;
+	    delete[] EigenvalueOutputFile;   
+	  }
+      }
+    
+    
+    EigenstateFile = new char [512];
+
+    for (int GammaX = 0; GammaX <   IncNbrPointX; GammaX++)
+      {
+	for (int GammaY = 0; GammaY <   IncNbrPointY ; GammaY++)
+	  {
+	    
+	    double TrueGammaX =   ( ( (double) GammaX - 1) / ( (double) NbrPointX));
+	    double TrueGammaY =   ( ( (double) GammaY - 1) / ( (double) NbrPointY));
+	    
+	    if (Manager.GetDouble("v-potential") == 0.0)
+	      {
+        	sprintf (EigenstateFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d.0.vec",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+		
+	      }
+	    else
+	      {
+        	sprintf (EigenstateFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d.0.vec",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+	      }
+	    
+	    if ( ( ManyBodyState[GammaX*IncNbrPointY+GammaY]).ReadVector(EigenstateFile) == false)
+	      {
+		cout << "error while reading " << EigenstateFile << endl;
+		return -1;
+	      }
+	  }
+      }
+    
+    Complex * OverlapMatrix = 0;
+    
+    for (int GammaX = 0; GammaX <  IncNbrPointX-1; GammaX++)
+      {
+	OverlapMatrix = new Complex [NbrSitesX*NbrSitesY];
+	for (int Kx = 0; Kx < NbrSitesX; Kx++)
+	  for (int Ky = 0; Ky < NbrSitesY; Ky++)
+	    {
+	      int MomentumIndex = TightBindingModel1.GetLinearizedMomentumIndexSafe(Kx,Ky);
+	      OverlapMatrix[MomentumIndex] = BandEigenvectors[MomentumIndex][GammaX*IncNbrPointY] * BandEigenvectors[MomentumIndex][(GammaX+1)*IncNbrPointY];
+	    }
+	Complex Tmp = ManyBodyState[GammaX*IncNbrPointY] *  ManyBodyState[(GammaX+1)*IncNbrPointY];
+	ManyBodyState[(GammaX+1)*IncNbrPointY] *= (Conj(Tmp)/Norm(Tmp));
+	delete [] OverlapMatrix ;
+      }
+    for (int GammaY = 0; GammaY <  IncNbrPointY-1; GammaY++)
+      {
+	OverlapMatrix = new Complex [NbrSitesX*NbrSitesY];
+	for (int Kx = 0; Kx < NbrSitesX; Kx++)
+	  for (int Ky = 0; Ky < NbrSitesY; Ky++)
+	    {
+	      int MomentumIndex = TightBindingModel1.GetLinearizedMomentumIndexSafe(Kx,Ky);
+	      OverlapMatrix[MomentumIndex] = BandEigenvectors[MomentumIndex][GammaY] * BandEigenvectors[MomentumIndex][GammaY+1];
+	    }
+	Complex Tmp = ManyBodyState[GammaY] * ManyBodyState[GammaY+1];
+	ManyBodyState[GammaY+1] *= (Conj(Tmp)/Norm(Tmp));
+	delete [] OverlapMatrix ;
      }
 
     for (int GammaY = 1; GammaY <  IncNbrPointY ; GammaY++)
@@ -422,18 +414,16 @@ for (int GammaX = 0; GammaX <   IncNbrPointX; GammaX++)
 	   {
 	     int MomentumIndex = TightBindingModel1.GetLinearizedMomentumIndexSafe(Kx,Ky);
 	     OverlapMatrix[MomentumIndex] = BandEigenvectors[MomentumIndex][GammaX*IncNbrPointY+GammaY] * BandEigenvectors[MomentumIndex][(GammaX+1)*IncNbrPointY+GammaY];
-    //         OverlapMatrix[MomentumIndex] /=Norm(OverlapMatrix[MomentumIndex]);
-	}
+	   }
        Complex Tmp = ManyBodyState[GammaX*IncNbrPointY+GammaY] * ManyBodyState[(GammaX+1)*IncNbrPointY+GammaY];
-//       Complex Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma (ManyBodyState[(GammaX+1)*IncNbrPointY+GammaY],ManyBodyState[GammaX*IncNbrPointY+GammaY],OverlapMatrix);
        ManyBodyState[(GammaX+1)*IncNbrPointY+GammaY] *= (Conj(Tmp)/Norm(Tmp));
        delete [] OverlapMatrix ;
        }
      }
-
-
-
-
+    
+    
+    
+    
  Complex ManyBodyChernNumber (0.0);
 
   for (int ShiftedGammaX = 1; ShiftedGammaX <  NbrPointX +1; ShiftedGammaX++)
@@ -444,240 +434,233 @@ for (int GammaX = 0; GammaX <   IncNbrPointX; GammaX++)
        int GammaY = ShiftedGammaY - 1;
 
 
-     int GammaPlusXModulo = (GammaX + 1);
-     int ShiftedGammaPlusXModulo = GammaPlusXModulo+1;
+       int GammaPlusXModulo = (GammaX + 1);
+       int ShiftedGammaPlusXModulo = GammaPlusXModulo+1;
+       
+       int GammaPlusYModulo = (GammaY + 1);
+       int ShiftedGammaPlusYModulo = GammaPlusYModulo+1;
+       
+       int GammaMinusXModulo = (GammaX - 1);
+       int ShiftedGammaMinusXModulo = GammaMinusXModulo+1;
+       
+       int GammaMinusYModulo = (GammaY - 1);
+       int ShiftedGammaMinusYModulo = GammaMinusYModulo+1;
+       
+       
+       Complex * OverlapMatrixPlusPlus = new Complex [NbrSitesX*NbrSitesY];
+       Complex * OverlapMatrixMinusMinus = new Complex [NbrSitesX*NbrSitesY];
+       Complex * OverlapMatrixPlusMinus = new Complex [NbrSitesX*NbrSitesY];
+       Complex * OverlapMatrixMinusPlus = new Complex [NbrSitesX*NbrSitesY];
+       
+       for (int Kx = 0; Kx < NbrSitesX; Kx++)
+	 for (int Ky = 0; Ky < NbrSitesY; Ky++)
+	   {
+	     int MomentumIndex = TightBindingModel1.GetLinearizedMomentumIndexSafe(Kx,Ky);
+	     OverlapMatrixPlusPlus[MomentumIndex] = BandEigenvectors[MomentumIndex][ShiftedGammaPlusXModulo*IncNbrPointY + ShiftedGammaY] * BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaPlusYModulo];
+	     OverlapMatrixMinusMinus[MomentumIndex] = BandEigenvectors[MomentumIndex][ShiftedGammaMinusXModulo*IncNbrPointY + ShiftedGammaY] * BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaMinusYModulo];
+	     OverlapMatrixPlusMinus[MomentumIndex] =  BandEigenvectors[MomentumIndex][ShiftedGammaPlusXModulo*IncNbrPointY + ShiftedGammaY] *  BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaMinusYModulo];
+	     OverlapMatrixMinusPlus[MomentumIndex] =  BandEigenvectors[MomentumIndex][ShiftedGammaMinusXModulo*IncNbrPointY + ShiftedGammaY] *  BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaPlusYModulo];
+	   }
+       
+       
+       Complex Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaMinusYModulo], ManyBodyState[ShiftedGammaPlusXModulo*IncNbrPointY + ShiftedGammaY],OverlapMatrixPlusMinus);
+       ManyBodyChernNumber-= Tmp;
+       cout << " ( " << ShiftedGammaX<< " , " << ShiftedGammaMinusYModulo << " ) -> ( " << ShiftedGammaPlusXModulo << " , " <<ShiftedGammaY<< " ) "<< Tmp<<endl;
 
-     int GammaPlusYModulo = (GammaY + 1);
-     int ShiftedGammaPlusYModulo = GammaPlusYModulo+1;
-
-     int GammaMinusXModulo = (GammaX - 1);
-     int ShiftedGammaMinusXModulo = GammaMinusXModulo+1;
-
-     int GammaMinusYModulo = (GammaY - 1);
-     int ShiftedGammaMinusYModulo = GammaMinusYModulo+1;
-
-
-   Complex * OverlapMatrixPlusPlus = new Complex [NbrSitesX*NbrSitesY];
-   Complex * OverlapMatrixMinusMinus = new Complex [NbrSitesX*NbrSitesY];
-   Complex * OverlapMatrixPlusMinus = new Complex [NbrSitesX*NbrSitesY];
-   Complex * OverlapMatrixMinusPlus = new Complex [NbrSitesX*NbrSitesY];
-
-   for (int Kx = 0; Kx < NbrSitesX; Kx++)
-      for (int Ky = 0; Ky < NbrSitesY; Ky++)
-   {
-     int MomentumIndex = TightBindingModel1.GetLinearizedMomentumIndexSafe(Kx,Ky);
-     OverlapMatrixPlusPlus[MomentumIndex] = BandEigenvectors[MomentumIndex][ShiftedGammaPlusXModulo*IncNbrPointY + ShiftedGammaY] * BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaPlusYModulo];
- //    OverlapMatrixPlusPlus[MomentumIndex] /=Norm(OverlapMatrixPlusPlus[MomentumIndex]);
-     OverlapMatrixMinusMinus[MomentumIndex] = BandEigenvectors[MomentumIndex][ShiftedGammaMinusXModulo*IncNbrPointY + ShiftedGammaY] * BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaMinusYModulo];
-   //  OverlapMatrixMinusMinus[MomentumIndex] /=Norm(OverlapMatrixMinusMinus[MomentumIndex]);
-     OverlapMatrixPlusMinus[MomentumIndex] =  BandEigenvectors[MomentumIndex][ShiftedGammaPlusXModulo*IncNbrPointY + ShiftedGammaY] *  BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaMinusYModulo];
-    // OverlapMatrixPlusMinus[MomentumIndex] /=Norm(OverlapMatrixPlusMinus[MomentumIndex]);
-     OverlapMatrixMinusPlus[MomentumIndex] =  BandEigenvectors[MomentumIndex][ShiftedGammaMinusXModulo*IncNbrPointY + ShiftedGammaY] *  BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaPlusYModulo];
-     // OverlapMatrixMinusPlus[MomentumIndex] /=Norm(OverlapMatrixMinusPlus[MomentumIndex]);
-   }
-
-
-   Complex Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaMinusYModulo], ManyBodyState[ShiftedGammaPlusXModulo*IncNbrPointY + ShiftedGammaY],OverlapMatrixPlusMinus);
-   ManyBodyChernNumber-= Tmp;
-   cout << " ( " << ShiftedGammaX<< " , " << ShiftedGammaMinusYModulo << " ) -> ( " << ShiftedGammaPlusXModulo << " , " <<ShiftedGammaY<< " ) "<< Tmp<<endl;
-
-   Tmp =  Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaPlusYModulo],  ManyBodyState[ShiftedGammaMinusXModulo*IncNbrPointY + ShiftedGammaY], OverlapMatrixMinusPlus);
-   cout << " ( " << ShiftedGammaX<< " , " << ShiftedGammaPlusYModulo << " ) -> ( " << ShiftedGammaMinusXModulo << " , " <<ShiftedGammaY<< " ) "<< Tmp<<endl;
-   ManyBodyChernNumber-= Tmp;   
-
-   Tmp =  Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaPlusYModulo],  ManyBodyState[ShiftedGammaPlusXModulo*IncNbrPointY + ShiftedGammaY],OverlapMatrixPlusPlus);
-   ManyBodyChernNumber+= Tmp;
-      cout << " ( " << ShiftedGammaX<< " , " << ShiftedGammaPlusYModulo << " ) -> ( " << ShiftedGammaPlusXModulo << " , " <<ShiftedGammaY<< " ) "<< Tmp<<endl;
-
-   Tmp =   Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaMinusYModulo],  ManyBodyState[ShiftedGammaMinusXModulo*IncNbrPointY + ShiftedGammaY],OverlapMatrixMinusMinus);
-   ManyBodyChernNumber+= Tmp;
-     cout << " ( " << ShiftedGammaX<< " , " << ShiftedGammaMinusYModulo << " ) -> ( " << ShiftedGammaMinusXModulo << " , " <<ShiftedGammaY<< " ) "<< Tmp<<endl;
-
-
+       Tmp =  Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaPlusYModulo],  ManyBodyState[ShiftedGammaMinusXModulo*IncNbrPointY + ShiftedGammaY], OverlapMatrixMinusPlus);
+       cout << " ( " << ShiftedGammaX<< " , " << ShiftedGammaPlusYModulo << " ) -> ( " << ShiftedGammaMinusXModulo << " , " <<ShiftedGammaY<< " ) "<< Tmp<<endl;
+       ManyBodyChernNumber-= Tmp;   
+       
+       Tmp =  Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaPlusYModulo],  ManyBodyState[ShiftedGammaPlusXModulo*IncNbrPointY + ShiftedGammaY],OverlapMatrixPlusPlus);
+       ManyBodyChernNumber+= Tmp;
+       cout << " ( " << ShiftedGammaX<< " , " << ShiftedGammaPlusYModulo << " ) -> ( " << ShiftedGammaPlusXModulo << " , " <<ShiftedGammaY<< " ) "<< Tmp<<endl;
+       
+       Tmp =   Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaMinusYModulo],  ManyBodyState[ShiftedGammaMinusXModulo*IncNbrPointY + ShiftedGammaY],OverlapMatrixMinusMinus);
+       ManyBodyChernNumber+= Tmp;
+       cout << " ( " << ShiftedGammaX<< " , " << ShiftedGammaMinusYModulo << " ) -> ( " << ShiftedGammaMinusXModulo << " , " <<ShiftedGammaY<< " ) "<< Tmp<<endl;
+       
+       
    delete [] OverlapMatrixPlusPlus;
    delete [] OverlapMatrixMinusMinus;
    delete [] OverlapMatrixMinusPlus;
    delete [] OverlapMatrixPlusMinus;
-
+   
+    }
   }
-}
-
-
-
-
- Complex ManyBodyChernNumberPathIntegral (0.0);
-
+  
+  
+  
+  
+  Complex ManyBodyChernNumberPathIntegral (0.0);
+  
   for (int ShiftedGammaX = 1; ShiftedGammaX <=  NbrPointX + 1; ShiftedGammaX++)
-  {
-     int ShiftedGammaY = 1;
+    {
+      int ShiftedGammaY = 1;
+      
+      int GammaX = ShiftedGammaX - 1; 
+      int GammaY = ShiftedGammaY - 1;
+      
+      
+      int GammaPlusXModulo = (GammaX + 1);
+      int ShiftedGammaPlusX = GammaPlusXModulo+1;
+      
+      int GammaMinusXModulo = (GammaX - 1);
+      int ShiftedGammaMinusX = GammaMinusXModulo+1;
+      
+      
+      Complex * OverlapMatrixPlus = new Complex [NbrSitesX*NbrSitesY];
+      Complex * OverlapMatrixMinus = new Complex [NbrSitesX*NbrSitesY];
+      
+      for (int Kx = 0; Kx < NbrSitesX; Kx++)
+	for (int Ky = 0; Ky < NbrSitesY; Ky++)
+	  {
+	    int MomentumIndex = TightBindingModel1.GetLinearizedMomentumIndexSafe(Kx,Ky);
+	    OverlapMatrixPlus[MomentumIndex] = BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaY] * BandEigenvectors[MomentumIndex][ShiftedGammaPlusX*IncNbrPointY + ShiftedGammaY];
+	    OverlapMatrixMinus[MomentumIndex] = BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaY] * BandEigenvectors[MomentumIndex][ShiftedGammaMinusX*IncNbrPointY + ShiftedGammaY];
+	  }
+      
+      Complex Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY +  ShiftedGammaY], ManyBodyState[ShiftedGammaPlusX*IncNbrPointY + ShiftedGammaY],OverlapMatrixPlus);
+      ManyBodyChernNumberPathIntegral+= Tmp;
+      
+      
+      Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY +  ShiftedGammaY], ManyBodyState[ShiftedGammaMinusX*IncNbrPointY + ShiftedGammaY],OverlapMatrixMinus);
+      
+      ManyBodyChernNumberPathIntegral-= Tmp;   
+      
+      
+      delete [] OverlapMatrixPlus;
+      delete [] OverlapMatrixMinus;
+    }
+  
+  
+  
 
-     int GammaX = ShiftedGammaX - 1; 
-     int GammaY = ShiftedGammaY - 1;
-
-
-     int GammaPlusXModulo = (GammaX + 1);
-     int ShiftedGammaPlusX = GammaPlusXModulo+1;
-
-     int GammaMinusXModulo = (GammaX - 1);
-     int ShiftedGammaMinusX = GammaMinusXModulo+1;
-
- 
-   Complex * OverlapMatrixPlus = new Complex [NbrSitesX*NbrSitesY];
-   Complex * OverlapMatrixMinus = new Complex [NbrSitesX*NbrSitesY];
-
-   for (int Kx = 0; Kx < NbrSitesX; Kx++)
-      for (int Ky = 0; Ky < NbrSitesY; Ky++)
-   {
-     int MomentumIndex = TightBindingModel1.GetLinearizedMomentumIndexSafe(Kx,Ky);
-     OverlapMatrixPlus[MomentumIndex] = BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaY] * BandEigenvectors[MomentumIndex][ShiftedGammaPlusX*IncNbrPointY + ShiftedGammaY];
-     OverlapMatrixMinus[MomentumIndex] = BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaY] * BandEigenvectors[MomentumIndex][ShiftedGammaMinusX*IncNbrPointY + ShiftedGammaY];
-   }
-
-   Complex Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY +  ShiftedGammaY], ManyBodyState[ShiftedGammaPlusX*IncNbrPointY + ShiftedGammaY],OverlapMatrixPlus);
-   ManyBodyChernNumberPathIntegral+= Tmp;
-
-
-   Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY +  ShiftedGammaY], ManyBodyState[ShiftedGammaMinusX*IncNbrPointY + ShiftedGammaY],OverlapMatrixMinus);
-
-   ManyBodyChernNumberPathIntegral-= Tmp;   
-
-
-   delete [] OverlapMatrixPlus;
-   delete [] OverlapMatrixMinus;
-  }
-
-
-
-
-
+  
   for (int ShiftedGammaY = 1; ShiftedGammaY <=  NbrPointY + 1; ShiftedGammaY++)
-  {
-     int ShiftedGammaX =  NbrPointX + 1;
-
-     int GammaX = ShiftedGammaX - 1; 
-     int GammaY = ShiftedGammaY - 1;
-
-
-     int GammaPlusYModulo = (GammaY + 1);
+    {
+      int ShiftedGammaX =  NbrPointX + 1;
+      
+      int GammaX = ShiftedGammaX - 1; 
+      int GammaY = ShiftedGammaY - 1;
+      
+      
+      int GammaPlusYModulo = (GammaY + 1);
      int ShiftedGammaPlusY = GammaPlusYModulo+1;
-
+     
      int GammaMinusYModulo = (GammaY - 1);
      int ShiftedGammaMinusY = GammaMinusYModulo+1;
-
- 
-   Complex * OverlapMatrixPlus = new Complex [NbrSitesX*NbrSitesY];
-   Complex * OverlapMatrixMinus = new Complex [NbrSitesX*NbrSitesY];
-
-   for (int Kx = 0; Kx < NbrSitesX; Kx++)
-      for (int Ky = 0; Ky < NbrSitesY; Ky++)
-   {
-     int MomentumIndex = TightBindingModel1.GetLinearizedMomentumIndexSafe(Kx,Ky);
-     OverlapMatrixPlus[MomentumIndex] = BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaY] * BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaPlusY];
-     OverlapMatrixMinus[MomentumIndex] = BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaY] * BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaMinusY];
-   }
-
-   Complex Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY +  ShiftedGammaY], ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaPlusY],OverlapMatrixPlus);
-   ManyBodyChernNumberPathIntegral+= Tmp;
-
-   Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY +  ShiftedGammaY], ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaMinusY],OverlapMatrixMinus);
-
-   ManyBodyChernNumberPathIntegral-= Tmp;   
-
-
-   delete [] OverlapMatrixPlus;
-   delete [] OverlapMatrixMinus;
-  }
-
- 
-
-   for (int ShiftedGammaX = 1; ShiftedGammaX <=  NbrPointX + 1; ShiftedGammaX++)
-  {
-     int ShiftedGammaY =  NbrPointY + 1;
-
-     int GammaX = ShiftedGammaX - 1; 
-     int GammaY = ShiftedGammaY - 1;
-
-
-     int GammaPlusXModulo = (GammaX + 1);
-     int ShiftedGammaPlusX = GammaPlusXModulo+1;
-
-     int GammaMinusXModulo = (GammaX - 1);
-     int ShiftedGammaMinusX = GammaMinusXModulo+1;
-
- 
-   Complex * OverlapMatrixPlus = new Complex [NbrSitesX*NbrSitesY];
-   Complex * OverlapMatrixMinus = new Complex [NbrSitesX*NbrSitesY];
-
-   for (int Kx = 0; Kx < NbrSitesX; Kx++)
-      for (int Ky = 0; Ky < NbrSitesY; Ky++)
-   {
-     int MomentumIndex = TightBindingModel1.GetLinearizedMomentumIndexSafe(Kx,Ky);
-     OverlapMatrixPlus[MomentumIndex] = BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaY] * BandEigenvectors[MomentumIndex][ShiftedGammaPlusX*IncNbrPointY + ShiftedGammaY];
-     OverlapMatrixMinus[MomentumIndex] = BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaY] * BandEigenvectors[MomentumIndex][ShiftedGammaMinusX*IncNbrPointY + ShiftedGammaY];
-   }
-
-   Complex Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY +  ShiftedGammaY], ManyBodyState[ShiftedGammaPlusX*IncNbrPointY + ShiftedGammaY],OverlapMatrixPlus);
-   ManyBodyChernNumberPathIntegral-= Tmp;
-
-
-   Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY +  ShiftedGammaY], ManyBodyState[ShiftedGammaMinusX*IncNbrPointY + ShiftedGammaY],OverlapMatrixMinus);
-
-   ManyBodyChernNumberPathIntegral+= Tmp;   
-
-
-   delete [] OverlapMatrixPlus;
-   delete [] OverlapMatrixMinus;
-  }
-
-
-
-
+     
+     
+     Complex * OverlapMatrixPlus = new Complex [NbrSitesX*NbrSitesY];
+     Complex * OverlapMatrixMinus = new Complex [NbrSitesX*NbrSitesY];
+     
+     for (int Kx = 0; Kx < NbrSitesX; Kx++)
+       for (int Ky = 0; Ky < NbrSitesY; Ky++)
+	 {
+	   int MomentumIndex = TightBindingModel1.GetLinearizedMomentumIndexSafe(Kx,Ky);
+	   OverlapMatrixPlus[MomentumIndex] = BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaY] * BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaPlusY];
+	   OverlapMatrixMinus[MomentumIndex] = BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaY] * BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaMinusY];
+	 }
+     
+     Complex Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY +  ShiftedGammaY], ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaPlusY],OverlapMatrixPlus);
+     ManyBodyChernNumberPathIntegral+= Tmp;
+     
+     Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY +  ShiftedGammaY], ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaMinusY],OverlapMatrixMinus);
+     
+     ManyBodyChernNumberPathIntegral-= Tmp;   
+     
+     
+     delete [] OverlapMatrixPlus;
+     delete [] OverlapMatrixMinus;
+    }
+  
+  
+  
+  for (int ShiftedGammaX = 1; ShiftedGammaX <=  NbrPointX + 1; ShiftedGammaX++)
+    {
+      int ShiftedGammaY =  NbrPointY + 1;
+      
+      int GammaX = ShiftedGammaX - 1; 
+      int GammaY = ShiftedGammaY - 1;
+      
+      
+      int GammaPlusXModulo = (GammaX + 1);
+      int ShiftedGammaPlusX = GammaPlusXModulo+1;
+      
+      int GammaMinusXModulo = (GammaX - 1);
+      int ShiftedGammaMinusX = GammaMinusXModulo+1;
+      
+      
+      Complex * OverlapMatrixPlus = new Complex [NbrSitesX*NbrSitesY];
+      Complex * OverlapMatrixMinus = new Complex [NbrSitesX*NbrSitesY];
+      
+      for (int Kx = 0; Kx < NbrSitesX; Kx++)
+	for (int Ky = 0; Ky < NbrSitesY; Ky++)
+	  {
+	    int MomentumIndex = TightBindingModel1.GetLinearizedMomentumIndexSafe(Kx,Ky);
+	    OverlapMatrixPlus[MomentumIndex] = BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaY] * BandEigenvectors[MomentumIndex][ShiftedGammaPlusX*IncNbrPointY + ShiftedGammaY];
+	    OverlapMatrixMinus[MomentumIndex] = BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaY] * BandEigenvectors[MomentumIndex][ShiftedGammaMinusX*IncNbrPointY + ShiftedGammaY];
+	  }
+      
+      Complex Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY +  ShiftedGammaY], ManyBodyState[ShiftedGammaPlusX*IncNbrPointY + ShiftedGammaY],OverlapMatrixPlus);
+      ManyBodyChernNumberPathIntegral-= Tmp;
+      
+      
+      Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY +  ShiftedGammaY], ManyBodyState[ShiftedGammaMinusX*IncNbrPointY + ShiftedGammaY],OverlapMatrixMinus);
+      
+      ManyBodyChernNumberPathIntegral+= Tmp;   
+      
+      
+      delete [] OverlapMatrixPlus;
+      delete [] OverlapMatrixMinus;
+    }
+  
   for (int ShiftedGammaY = 1; ShiftedGammaY <=  NbrPointY + 1; ShiftedGammaY++)
-  {
-     int ShiftedGammaX =  1;
+    {
+      int ShiftedGammaX =  1;
+      
+      int GammaX = ShiftedGammaX - 1; 
+      int GammaY = ShiftedGammaY - 1;
+      
+      
+      int GammaPlusYModulo = (GammaY + 1);
+      int ShiftedGammaPlusY = GammaPlusYModulo+1;
+      
+      int GammaMinusYModulo = (GammaY - 1);
+      int ShiftedGammaMinusY = GammaMinusYModulo+1;
+      
+      
+      Complex * OverlapMatrixPlus = new Complex [NbrSitesX*NbrSitesY];
+      Complex * OverlapMatrixMinus = new Complex [NbrSitesX*NbrSitesY];
+      
+      for (int Kx = 0; Kx < NbrSitesX; Kx++)
+	for (int Ky = 0; Ky < NbrSitesY; Ky++)
+	  {
+	    int MomentumIndex = TightBindingModel1.GetLinearizedMomentumIndexSafe(Kx,Ky);
+	    OverlapMatrixPlus[MomentumIndex] = BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaY] * BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaPlusY];
+	    OverlapMatrixMinus[MomentumIndex] = BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaY] * BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaMinusY];
+	  }
+      
+      Complex Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY +  ShiftedGammaY], ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaPlusY],OverlapMatrixPlus);
+      ManyBodyChernNumberPathIntegral-= Tmp;
+      
+      
+      Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY +  ShiftedGammaY], ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaMinusY],OverlapMatrixMinus);
+      
+      ManyBodyChernNumberPathIntegral+= Tmp;   
+      
+      
+      delete [] OverlapMatrixPlus;
+      delete [] OverlapMatrixMinus;
+    }
+  
 
-     int GammaX = ShiftedGammaX - 1; 
-     int GammaY = ShiftedGammaY - 1;
-
-
-     int GammaPlusYModulo = (GammaY + 1);
-     int ShiftedGammaPlusY = GammaPlusYModulo+1;
-
-     int GammaMinusYModulo = (GammaY - 1);
-     int ShiftedGammaMinusY = GammaMinusYModulo+1;
-
- 
-   Complex * OverlapMatrixPlus = new Complex [NbrSitesX*NbrSitesY];
-   Complex * OverlapMatrixMinus = new Complex [NbrSitesX*NbrSitesY];
-
-   for (int Kx = 0; Kx < NbrSitesX; Kx++)
-      for (int Ky = 0; Ky < NbrSitesY; Ky++)
-   {
-     int MomentumIndex = TightBindingModel1.GetLinearizedMomentumIndexSafe(Kx,Ky);
-     OverlapMatrixPlus[MomentumIndex] = BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaY] * BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaPlusY];
-     OverlapMatrixMinus[MomentumIndex] = BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaY] * BandEigenvectors[MomentumIndex][ShiftedGammaX*IncNbrPointY + ShiftedGammaMinusY];
-   }
-
-   Complex Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY +  ShiftedGammaY], ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaPlusY],OverlapMatrixPlus);
-   ManyBodyChernNumberPathIntegral-= Tmp;
-
-
-   Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY +  ShiftedGammaY], ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaMinusY],OverlapMatrixMinus);
-
-   ManyBodyChernNumberPathIntegral+= Tmp;   
-
-
-   delete [] OverlapMatrixPlus;
-   delete [] OverlapMatrixMinus;
-  }
-
-
-
+  
   cout.precision(8);
   ManyBodyChernNumber /=(4.0 * M_PI);
   ManyBodyChernNumberPathIntegral/=(4.0 * M_PI);
   cout << "ManyBodyChernNumber = "<< ManyBodyChernNumber <<" " << Norm(ManyBodyChernNumber)<<" "<< Arg(ManyBodyChernNumber)/ M_PI <<endl; 
-    
+  
   cout << "ManyBodyChernNumberPathIntegral = "<<ManyBodyChernNumberPathIntegral<<" " << Norm(ManyBodyChernNumberPathIntegral)<<" "<< Arg(ManyBodyChernNumberPathIntegral)/ M_PI <<endl;  
 }
 

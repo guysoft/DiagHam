@@ -573,6 +573,7 @@ inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNTwo
 inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNOneBodyAddMultiplyComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent,
 															int step, ComplexVector& vSource, ComplexVector& vDestination)
 {
+  cout << "using inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNOneBodyAddMultiplyComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent,int step, ComplexVector& vSource, ComplexVector& vDestination)"<<endl;
   int Index;
   double Coefficient;
   int NbrTranslationsX;
@@ -647,6 +648,8 @@ inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNOne
 inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNOneBodyAddMultiplyComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent,
 													 int step, ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
 {
+  cout <<"using inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNOneBodyAddMultiplyComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent,int step, ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)"<<endl;
+  
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient = 0.0;
   int Index;
@@ -759,6 +762,8 @@ inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNOne
 inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 
 															       int* indexArray, Complex* coefficientArray, long& position)
 {
+  cout <<"Using inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index,  int* indexArray, Complex* coefficientArray, long& position)"<<endl;
+
   if (this->OneBodyGenericInteractionFactors == 0)
     return;
 
@@ -769,6 +774,7 @@ inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNOne
 
   if (this->HermitianSymmetryFlag == false)
     {
+   cout << "I have (this->HermitianSymmetryFlag == false)"<<endl;
       for (int j = 0; j < this->NbrSites; ++j)
 	{
 	  int TmpNbrConnectedSites = this->OneBodyGenericNbrConnectedSites[j];
@@ -794,6 +800,7 @@ inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNOne
     }
   else
     {
+      cout << "I have (this->HermitianSymmetryFlag == true)"<<endl;
       for (int j = 0; j < this->NbrSites; ++j)
 	{
 	  int TmpNbrConnectedSites = this->OneBodyGenericNbrConnectedSites[j];
@@ -801,28 +808,26 @@ inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNOne
 	  Complex* TmpInteractionFactors = this->OneBodyGenericInteractionFactors[j];
 	  Coefficient = particles->A (index, j);
 	  double TmpCoefficient;
-
+	  
 	  if (Coefficient != 0.0)
-	  {
-	    for (int k = 0; k < TmpNbrConnectedSites; ++k)
-	      {
-
-		TmpCoefficient = Coefficient;
-		Index = particles->Ad (TmpConnectedSites[k], TmpCoefficient, NbrTranslationsX);
-		if (Index <= index)
-		  {
-		    indexArray[position] = Index;
-		    if (Index == index)
-		      {
-			coefficientArray[position] = 0.5 * TmpCoefficient * this->ExponentialFactors[NbrTranslationsX] * TmpInteractionFactors[k];
-		      }
-		    else
-		      {
-			coefficientArray[position] = TmpCoefficient * this->ExponentialFactors[NbrTranslationsX] * TmpInteractionFactors[k];
-		      }
-
-		    ++position;
-		  }
+	    {
+	      for (int k = 0; k < TmpNbrConnectedSites; ++k)
+		{
+		  TmpCoefficient = Coefficient;
+		  Index = particles->Ad (TmpConnectedSites[k], TmpCoefficient, NbrTranslationsX);
+		  if (Index <= index)
+		    {
+		      indexArray[position] = Index;
+		      if (Index == index)
+			{
+			  coefficientArray[position] = 0.5 * TmpCoefficient * this->ExponentialFactors[NbrTranslationsX] * TmpInteractionFactors[k];
+			}
+		      else
+			{
+			  coefficientArray[position] = TmpCoefficient * this->ExponentialFactors[NbrTranslationsX] * TmpInteractionFactors[k];
+			}
+		      ++position;
+		    }
 		}
 	    }
 	}
@@ -848,6 +853,7 @@ inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNOne
   
   if (this->HermitianSymmetryFlag == false)
     {
+      cout << "I have (this->HermitianSymmetryFlag == false)"<<endl;
       for (int i = firstComponent; i < lastComponent; ++i)
 	{
 	  for (int j = 0; j < this->NbrSites; ++j)
@@ -874,6 +880,7 @@ inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNOne
     }
   else
     {
+      cout << "I have (this->HermitianSymmetryFlag == true)"<<endl;
       for (int i = firstComponent; i < lastComponent; ++i)
 	{
 	  for (int j = 0; j < this->NbrSites; ++j)

@@ -42,9 +42,9 @@ class TightBindingModelHaldaneHoneycombLattice : public Abstract2DTightBindingMo
  protected:
 
   // hoping amplitude between neareast neighbor sites
-  double NNHoping;
+  double NNHopping;
   // hoping amplitude between next neareast neighbor sites
-  double NextNNHoping;
+  double NextNNHopping;
   // phase on  next neareast neighbor hopping
   double HaldanePhase;
   
@@ -101,6 +101,10 @@ class TightBindingModelHaldaneHoneycombLattice : public Abstract2DTightBindingMo
   // minStateIndex = minimum index of the state to compute
   // nbrStates = number of states to compute
   virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates);
+
+  // find the orbitals connected to those located at the origin unit cell
+  // 
+  virtual void FindConnectedOrbitals();
 
 };
 
