@@ -9,7 +9,6 @@
 #include "HilbertSpace/DoubledSpin0_1_2_ChainWithSquareTranslationsAndSublatticeQuantumNumbers.h"
 
 
-
 #include "MPSObjects/AbstractTransfertMatrixPBC.h"
 #include "MPSObjects/TransfertMatrixPBCWithTranslationsFromFile.h"
 #include "MPSObjects/AbstractPEPSTransfertMatrixPBC.h"
@@ -239,6 +238,19 @@ int main(int argc, char** argv)
 	{
 	  SzMax = 2*NbrSites - abs(SubLatticeZeroBra)-abs(SubLatticeZeroKet);
 	  SzMin = - SzMax;
+	  if (Manager.GetInteger("sz") != -1 )
+	    {
+	      if( ( Manager.GetInteger("sz") > SzMax) || ( Manager.GetInteger("sz") <  SzMin ))
+		{
+		  SzMin = 2;
+		  SzMax = 0;
+		}
+	      else
+		{
+		  SzMin =  Manager.GetInteger("sz");
+		  SzMax = SzMin;
+		}
+	    }
 	  for(int Sz = SzMin; Sz<= SzMax ;Sz+=2)
 	    {
 	      cout <<"Sz = "<<Sz<<endl;
