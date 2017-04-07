@@ -68,7 +68,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('\n', "nbr-sz", "number of sz value to evaluate (0 for all sz sectors)", 1);
   (*SystemGroup) += new  SingleDoubleOption ('j', "j-value", "coupling constant value for nearest neighbors", 1.0);
   (*SystemGroup) += new  SingleDoubleOption ('a', "anisotropy", "anisotropy between up and down triangles", 1.0);
-  (*SystemGroup) += new  SingleDoubleOption ('a', "break-c3", "amplitude ratio of C3 breaking term (1.0 if C3 is preserved)", 1.0);
+  (*SystemGroup) += new  SingleDoubleOption ('\n', "break-c3", "amplitude ratio of C3 breaking term (1.0 if C3 is preserved)", 1.0);
   (*SystemGroup) += new  SingleDoubleOption ('\n', "easy-plane", "easy plane anisotropy", 1.0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1); 
