@@ -287,12 +287,12 @@ ComplexVector& TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHami
 	     
 	      
 
-	      //AB part
+// 	      AB part
 	      if ((this->NbrSpinX > 1) && (this->PeriodicBoundaryConditions || (j > 0)))
 	      {
 		TmpIndex1 = this->GetLinearizedIndex(j - 1, k);
 		TmpIndex2 = this->GetLinearizedIndex(j, k);
-// 		pos = this->Chain->SmiSpj(TmpIndex2, TmpIndex1, i, coef, nbrTranslationsX, nbrTranslationsY);
+		pos = this->Chain->SmiSpj(TmpIndex2, TmpIndex1, i, coef, nbrTranslationsX, nbrTranslationsY);
 		pos = this->Chain->SmiSpjJiJj(TmpIndex2, TmpIndex1, i, this->PseudospinDiagCouplingElements[0], this->PseudospinDiagCouplingElements[1], coef, nbrTranslationsX, nbrTranslationsY);
 		if (pos != dim)
 		  vDestination[pos] += TmpValue * coef * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
@@ -350,8 +350,8 @@ ComplexVector& TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHami
 		
 		
 	      }
-// 	      
-	      //CB part
+	      
+// 	      CB part
 	      if ((this->NbrSpinX > 1) && ((this->NbrSpinY > 1) || (this->Offset != 0)) && (this->PeriodicBoundaryConditions || (j > 0)))
 	      {
 		TmpIndex1 = this->GetLinearizedIndex(j - 1, k);

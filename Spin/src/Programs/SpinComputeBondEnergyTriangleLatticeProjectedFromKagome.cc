@@ -22,6 +22,7 @@
 
 // #include "Operator/BondEnergySpinPseudospinOperator.h"
 #include "Operator/SpinWithPseudospin2DTranslationSpinSpinCorrelationOperator.h"
+#include "Operator/SpinWith2DTranslationBondBondCorrelationOperator.h"
 
 
 #include <iostream>
@@ -221,6 +222,74 @@ int main(int argc, char** argv)
     }
   }
 
+  File.close();
+  
+  
+  
+  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("input-state"), "vec", "bondbond.dat");
+  if (OutputFileName == 0)
+  {
+    cout << "no vec extension was find in " << Manager.GetString("input-state") << " file name" << endl;
+    return 0;
+  }
+  File.open(OutputFileName, ios::binary | ios::out);
+  File.precision(14);
+  cout.precision(14);
+  
+  File << "# l_0 i j l_{i,j} <S_{0,0} S_{1,0} S_{i,j}S_{i,j,l}}>" << endl;
+  int* TmpIndex2b = new int[3];
+  Complex* BondBondCorrelations = new Complex[3];
+  Complex TmpOnSite;
+//   for (int m = 0; m < 3; ++m)
+//   {
+  for (int i = 0; i < XPeriodicity; ++i)
+  {
+    for (int j = 0; j < YPeriodicity; ++j)
+    {
+      TmpOnSite = 0.0;
+      for (int l = 0; l < 3; ++l)
+	BondBondCorrelations[l] = 0.0;
+      for (int nx = 0; nx < XPeriodicity; ++nx)
+      {
+	for (int ny = 0; ny < YPeriodicity; ++ny)
+	{
+	  int TmpIndex1a = GetLinearizedIndex(nx, ny, XPeriodicity, YPeriodicity);
+	  int TmpIndex1b = GetLinearizedIndex(nx + Offset, ny + 1, XPeriodicity, YPeriodicity);
+	  
+	  int TmpIndex2a = GetLinearizedIndex(nx + i, ny + j, XPeriodicity, YPeriodicity);
+	  TmpIndex2b[0] = GetLinearizedIndex(nx + i + 1, ny + j, XPeriodicity, YPeriodicity);
+	  TmpIndex2b[1] = GetLinearizedIndex(nx + i + Offset, ny + j + 1, XPeriodicity, YPeriodicity);
+	  TmpIndex2b[2] = GetLinearizedIndex(nx + i + 1 - Offset, ny + j - 1, XPeriodicity, YPeriodicity);
+	  
+	
+	  Operator = new SpinWith2DTranslationBondBondCorrelationOperator(Space, XMomentum, XPeriodicity, YMomentum, YPeriodicity, TmpIndex1a, TmpIndex1b, TmpIndex1a, TmpIndex1b);
+	  OperatorMatrixElementOperation Operation(Operator, State, State, State.GetVectorDimension());
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
+	  TmpOnSite += Operation.GetScalar();
+// 	cout << NeighborSpinSpinCorrelation << " " ;
+	  delete Operator;
+	    
+	  
+	  for (int l = 0; l < 3; ++l)
+	  {
+	    Operator = new SpinWith2DTranslationBondBondCorrelationOperator(Space, XMomentum, XPeriodicity, YMomentum, YPeriodicity, TmpIndex1a, TmpIndex1b, TmpIndex2a, TmpIndex2b[l]);
+	    OperatorMatrixElementOperation Operation(Operator, State, State, State.GetVectorDimension());
+	    Operation.ApplyOperation(Architecture.GetArchitecture());
+	    BondBondCorrelations[l] += Operation.GetScalar();
+// 	cout << NeighborSpinSpinCorrelation << " " ;
+	    delete Operator;
+	  }
+	}
+      }
+      cout << (TmpOnSite / (XPeriodicity * YPeriodicity)) << endl;
+      for (int l = 0; l < 3; ++l)
+	File << i << " " << j << " " << l << " " << (BondBondCorrelations[l].Re / (XPeriodicity * YPeriodicity)) << endl;
+    }
+  }
+
+  File.close();
+	  
+	  
 //   ofstream FileFourierTransform;
 //   if ((RightMomentumFlag == true) && (LeftMomentumFlag == true))
 //     {
@@ -235,7 +304,6 @@ int main(int argc, char** argv)
 //     }
 
  
-  File.close();
 //   if ((RightMomentumFlag == true) && (LeftMomentumFlag == true))
 //     {
 //       FileFourierTransform.close();

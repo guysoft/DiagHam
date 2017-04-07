@@ -84,6 +84,17 @@ class TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian : public TwoDimensi
   // hzFactor = amplitudes of the Zeeman term along z
   // periodicBoundaryConditions = true if periodic boundary conditions have to be used
   TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian (AbstractSpinChain* chain, int xMomentum, int nbrSpinX, int yMomentum, int nbrSpinY, double jFactor, double jDownFactor, double jEasyPlaneFactor, double jDownEasyPlaneFactor, int offset = 0, long memory = -1);
+  
+  // constructor from default data
+  //
+  // chain = pointer to Hilbert space of the associated system
+  // nbrSpinX = number of spin along the x direction
+  // nbrSpinY = number of spin along the y direction
+  // jFactor = amplitude of the Ising term
+  // hxFactor = amplitudes of the Zeeman term along x
+  // hzFactor = amplitudes of the Zeeman term along z
+  // periodicBoundaryConditions = true if periodic boundary conditions have to be used
+  TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian (AbstractSpinChain* chain, int xMomentum, int nbrSpinX, int yMomentum, int nbrSpinY, double jFactor, double jDownFactor, double jBreakD3Factor, int offset = 0, long memory = -1);
 
   // destructor
   //

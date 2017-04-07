@@ -68,6 +68,7 @@ TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::TwoDimensionalKagomeLatt
   this->JDownFactor = jDownFactor;
   this->JEasyPlaneFactor = jEasyPlaneFactor;
   this->JDownEasyPlaneFactor = jDownEasyPlaneFactor;
+  this->JBreakD3Factor = 1.0;
   
   this->XMomentum = xMomentum;
   this->YMomentum = yMomentum;
@@ -97,6 +98,43 @@ TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::TwoDimensionalKagomeLatt
       this->EnableFastMultiplication();
     }*/
 }
+
+
+
+// constructor from default data
+//
+// chain = pointer to Hilbert space of the associated system
+// nbrSpinX = number of spin along the x direction
+// nbrSpinY = number of spin along the y direction
+// jFactor = amplitude of the Ising term
+// hxFactor = amplitudes of the Zeeman term along x
+// hzFactor = amplitudes of the Zeeman term along z
+// periodicBoundaryConditions = true if periodic boundary conditions have to be used
+
+TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian (AbstractSpinChain* chain, int xMomentum, int nbrSpinX, int yMomentum, int nbrSpinY, double jFactor, double jDownFactor, double jBreakD3Factor, int offset, long memory)
+{
+  this->Chain = chain;
+  this->NbrSpinX = nbrSpinX;
+  this->NbrSpinY = nbrSpinY;
+  this->NbrSpin = this->NbrSpinX * this->NbrSpinY;
+  this->JFactor = jFactor;
+  this->JDownFactor = jDownFactor;
+  this->JEasyPlaneFactor = jFactor;
+  this->JDownEasyPlaneFactor = jDownFactor;
+  this->JBreakD3Factor = jBreakD3Factor;
+  
+  this->XMomentum = xMomentum;
+  this->YMomentum = yMomentum;
+  
+  this->Offset = offset;
+  this->HermitianSymmetryFlag = true;
+//   this->HermitianSymmetryFlag = false;
+  
+  this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
+  this->EvaluateExponentialFactors();
+  this->EvaluateDiagonalMatrixElements();
+}
+
 
 // destructor
 //
@@ -187,10 +225,10 @@ ComplexVector& TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::LowLevelA
 	      //AB
 	      pos = this->Chain->SmiSpj(TmpIndex2, TmpIndex1, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
 	      if (pos != dim)
-		vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JEasyPlaneFactor * this->JBreakD3Factor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
 	      pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
 	      if (pos != dim)
-		vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JEasyPlaneFactor * this->JBreakD3Factor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
 	      //AC
 	      pos = this->Chain->SmiSpj(TmpIndex3, TmpIndex1, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
 	      if (pos != dim)
@@ -201,10 +239,10 @@ ComplexVector& TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::LowLevelA
 	      //BC
 	      pos = this->Chain->SmiSpj(TmpIndex3, TmpIndex2, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
 	      if (pos != dim)
-		vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JEasyPlaneFactor * this->JBreakD3Factor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
 	      pos = this->Chain->SmiSpj(TmpIndex2, TmpIndex3, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
 	      if (pos != dim)
-		vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JEasyPlaneFactor * this->JBreakD3Factor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
 	      
 	      //downward triangles
 	      if (this->NbrSpinX > 1)
@@ -222,10 +260,10 @@ ComplexVector& TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::LowLevelA
 		//CA
 		pos = this->Chain->SmiSpj(this->GetLinearizedIndex(j - this->Offset, k - 1, 2), this->GetLinearizedIndex(j, k, 0), i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
 		if (pos != dim)
-		  vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JDownEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		  vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JDownEasyPlaneFactor * this->JBreakD3Factor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
 		pos = this->Chain->SmiSpj(this->GetLinearizedIndex(j, k, 0), this->GetLinearizedIndex(j - this->Offset, k - 1, 2), i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
 		if (pos != dim)
-		  vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JDownEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		  vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JDownEasyPlaneFactor * this->JBreakD3Factor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
 		if (this->NbrSpinX > 1)
 		{
 		  //BC
@@ -289,8 +327,8 @@ ComplexVector& TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::Hermitian
 	      pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
 	      if (pos < i)
 	      {
-		vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
-		TmpSum += 0.5 * vSource[pos] * TmpCoefficient * this->JEasyPlaneFactor * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JEasyPlaneFactor * this->JBreakD3Factor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		TmpSum += 0.5 * vSource[pos] * TmpCoefficient * this->JEasyPlaneFactor * this->JBreakD3Factor * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
 	      }
 	      //AC
 	      pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex3, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
@@ -303,8 +341,8 @@ ComplexVector& TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::Hermitian
 	      pos = this->Chain->SmiSpj(TmpIndex2, TmpIndex3, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
 	       if (pos < i)
 	      {
-		vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
-		TmpSum += 0.5 * vSource[pos] * TmpCoefficient * this->JEasyPlaneFactor * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JEasyPlaneFactor * this->JBreakD3Factor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		TmpSum += 0.5 * vSource[pos] * TmpCoefficient * this->JEasyPlaneFactor * this->JBreakD3Factor * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
 	      }
 	      
 	      //downward triangles
@@ -329,8 +367,8 @@ ComplexVector& TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::Hermitian
 		pos = this->Chain->SmiSpj(min(TmpIndex1, TmpIndex2), max(TmpIndex1, TmpIndex2), i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
 		if (pos < i)
 		{
-		  vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JDownEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
-		  TmpSum += 0.5 * vSource[pos] * TmpCoefficient * this->JDownEasyPlaneFactor * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		  vDestination[pos] += 0.5 * vSource[i] * TmpCoefficient * this->JDownEasyPlaneFactor * this->JBreakD3Factor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		  TmpSum += 0.5 * vSource[pos] * TmpCoefficient * this->JDownEasyPlaneFactor * this->JBreakD3Factor * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
 		}
 		if (this->NbrSpinX > 1)
 		{
@@ -408,11 +446,11 @@ ComplexVector* TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::LowLevelM
 	      pos = this->Chain->SmiSpj(TmpIndex2, TmpIndex1, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
 	      if (pos != dim)
 		for (int l = 0; l < nbrVectors; ++l)
-		  vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		  vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JEasyPlaneFactor * this->JBreakD3Factor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
 	      pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
 	      if (pos != dim)
 		for (int l = 0; l < nbrVectors; ++l)
-		  vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		  vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JEasyPlaneFactor * this->JBreakD3Factor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
 	      //AC
 	      pos = this->Chain->SmiSpj(TmpIndex3, TmpIndex1, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
 	      if (pos != dim)
@@ -426,11 +464,11 @@ ComplexVector* TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::LowLevelM
 	      pos = this->Chain->SmiSpj(TmpIndex3, TmpIndex2, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
 	      if (pos != dim)
 		for (int l = 0; l < nbrVectors; ++l)
-		  vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		  vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JEasyPlaneFactor * this->JBreakD3Factor  * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
 	      pos = this->Chain->SmiSpj(TmpIndex2, TmpIndex3, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
 	      if (pos != dim)
 		for (int l = 0; l < nbrVectors; ++l)
-		  vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		  vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JEasyPlaneFactor * this->JBreakD3Factor  * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
 	      
 	      //downward triangles
 	      if (this->NbrSpinX > 1)
@@ -451,11 +489,11 @@ ComplexVector* TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::LowLevelM
 		pos = this->Chain->SmiSpj(this->GetLinearizedIndex(j - this->Offset, k - 1, 2), this->GetLinearizedIndex(j, k, 0), i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
 		if (pos != dim)
 		  for (int l = 0; l < nbrVectors; ++l)
-		  vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JDownEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		  vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JDownEasyPlaneFactor * this->JBreakD3Factor  * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
 		pos = this->Chain->SmiSpj(this->GetLinearizedIndex(j, k, 0), this->GetLinearizedIndex(j - this->Offset, k - 1, 2), i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
 		if (pos != dim)
 		  for (int l = 0; l < nbrVectors; ++l)
-		  vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JDownEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		  vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JDownEasyPlaneFactor  * this->JBreakD3Factor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
 		if (this->NbrSpinX > 1)
 		{
 		  //BC
@@ -527,8 +565,8 @@ ComplexVector* TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::Hermitian
 	      {
 		for (int l = 0; l < nbrVectors; ++l)
 		{
-		  vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
-		  TmpSums[l] += 0.5 * vSources[l][pos] * TmpCoefficient * this->JEasyPlaneFactor * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		  vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JEasyPlaneFactor  * this->JBreakD3Factor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		  TmpSums[l] += 0.5 * vSources[l][pos] * TmpCoefficient * this->JEasyPlaneFactor  * this->JBreakD3Factor * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
 		}
 	      }
 	      //AC
@@ -547,8 +585,8 @@ ComplexVector* TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::Hermitian
 	      {
 		for (int l = 0; l < nbrVectors; ++l)
 		{
-		  vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
-		  TmpSums[l] += 0.5 * vSources[l][pos] * TmpCoefficient * this->JEasyPlaneFactor * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		  vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JEasyPlaneFactor  * this->JBreakD3Factor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		  TmpSums[l] += 0.5 * vSources[l][pos] * TmpCoefficient * this->JEasyPlaneFactor * this->JBreakD3Factor  * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
 		}
 	      }
 	      
@@ -579,8 +617,8 @@ ComplexVector* TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::Hermitian
 		{
 		  for (int l = 0; l < nbrVectors; ++l)
 		  {
-		    vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JDownEasyPlaneFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
-		    TmpSums[l] += 0.5 * vSources[l][pos] * TmpCoefficient * this->JDownEasyPlaneFactor * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		    vDestinations[l][pos] += 0.5 * TmpValues[l] * TmpCoefficient * this->JDownEasyPlaneFactor * this->JBreakD3Factor  * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+		    TmpSums[l] += 0.5 * vSources[l][pos] * TmpCoefficient * this->JDownEasyPlaneFactor  * this->JBreakD3Factor * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
 		  }
 		}
 		if (this->NbrSpinX > 1)
@@ -634,13 +672,13 @@ void TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::EvaluateDiagonalMat
 	      TmpIndex3 = this->GetLinearizedIndex(j, k, 2);
 	      //AB
 	      TmpCoefficient = this->Chain->SziSzj(TmpIndex1, TmpIndex2, i);
-	      this->SzSzContributions[i] += this->JFactor * TmpCoefficient;
+	      this->SzSzContributions[i] += this->JFactor  * this->JBreakD3Factor * TmpCoefficient;
 	      //AC
 	      TmpCoefficient = this->Chain->SziSzj(TmpIndex1, TmpIndex3, i);
 	      this->SzSzContributions[i] += this->JFactor * TmpCoefficient;
 	      //BC
 	      TmpCoefficient = this->Chain->SziSzj(TmpIndex2, TmpIndex3, i);
-	      this->SzSzContributions[i] += this->JFactor * TmpCoefficient;
+	      this->SzSzContributions[i] += this->JFactor  * this->JBreakD3Factor * TmpCoefficient;
 	      
 	      //downward triangles
 	      if (this->NbrSpinX > 1)
@@ -653,7 +691,7 @@ void TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian::EvaluateDiagonalMat
 	      {
 		//CA
 		TmpCoefficient = this->Chain->SziSzj(this->GetLinearizedIndex(j, k, 0), this->GetLinearizedIndex(j - this->Offset, k - 1, 2), i);
-		this->SzSzContributions[i] += this->JDownFactor * TmpCoefficient;
+		this->SzSzContributions[i] += this->JDownFactor  * this->JBreakD3Factor * TmpCoefficient;
 		if (this->NbrSpinX > 1)
 		{
 		  //BC

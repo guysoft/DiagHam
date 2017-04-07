@@ -258,6 +258,7 @@ int main(int argc, char** argv)
     }
   }
   
+  Complex NematicOP = (-NeighborSpinSpinCorrelation[0] + NeighborSpinSpinCorrelation[1] + NeighborSpinSpinCorrelation[2] * Phase( - M_PI / 3.0 ) + NeighborSpinSpinCorrelation[3] *  Phase( 2.0 * M_PI / 3.0 ) + NeighborSpinSpinCorrelation[4]  * Phase( M_PI / 3.0 ) + NeighborSpinSpinCorrelation[5]  * Phase( -2.0 * M_PI / 3.0 )) / (XPeriodicity * YPeriodicity);
   for (int l = 0; l < 6; ++l)
   {
     File << NeighborSpinSpinCorrelation[l] / (XPeriodicity * YPeriodicity) << " " ;
@@ -266,7 +267,7 @@ int main(int argc, char** argv)
   File << endl;
   cout << endl;
   File.close();
-  
+  cout << "C3 OP = " << sqrt(NematicOP.Re*NematicOP.Re + NematicOP.Im*NematicOP.Im) << endl;
 
 //   ofstream FileFourierTransform;
 //   if ((RightMomentumFlag == true) && (LeftMomentumFlag == true))

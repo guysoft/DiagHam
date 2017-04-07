@@ -148,7 +148,7 @@ class Spin1_2ChainWithPseudospinAnd2DTranslation : public Spin1_2ChainWithPseudo
   // return value = corresponding eigenvalue
   virtual double SziSzj (int i, int j, int state);
   
-   // return index of resulting state from application of S-_i S+_j operator on a given state
+  // return index of resulting state from application of S-_i S+_j operator on a given state
   //
   // i = position of S- operator
   // j = position of S+ operator
@@ -202,7 +202,7 @@ class Spin1_2ChainWithPseudospinAnd2DTranslation : public Spin1_2ChainWithPseudo
   // return value = index of the resulting state
   virtual int SmiSpjJiJoffj (int i, int j, int state, double* coupling, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
   
-   // operator acting on pseudospin on site i (off-diagonal) and j(diagonal part)
+  // operator acting on pseudospin on site i (off-diagonal) and j(diagonal part)
   //
   // i = position of pseudospin operator
   // j = position of pseudospin operator
@@ -218,6 +218,15 @@ class Spin1_2ChainWithPseudospinAnd2DTranslation : public Spin1_2ChainWithPseudo
   // coupling = array where the coupling coefficients are stored
   // return value = numerical coefficient
   virtual double JDiagonali (int i, int state, double* coupling);
+  
+  // return index of resulting state from application of S-_i S+_j operator on a given state
+  //
+  // i = position of S- operator
+  // j = position of S+ operator
+  // state = index of the state to be applied on S-_i S+_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of resulting state
+  virtual int SmiSpjSmkSpl (int i, int j, int k, int l, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
     
   // compute the parity (prod_i Sz_i) for a given state
   //

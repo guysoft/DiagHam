@@ -734,15 +734,83 @@ int Spin1_2ChainWithPseudospinAnd2DTranslation::SmiSpj (int i, int j, int state,
 	  return this->HilbertSpaceDimension;
 	}
     }
-  if (tmpState == 0x0ul)
-    {
-      coefficient = 1.0;
-      return state;
-    }
+  coefficient = 0.5;
+  return state;
+//   if (tmpState == 0x0ul)
+//     {
+//       coefficient = 1.0;
+//       return state;
+//     }
   return this->HilbertSpaceDimension;
 }
 
+// return index of resulting state from application of S-_i S+_j operator on a given state
+//
+// i = position of S- operator
+// j = position of S+ operator
+// state = index of the state to be applied on S-_i S+_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
 
+int Spin1_2ChainWithPseudospinAnd2DTranslation::SmiSpjSmkSpl (int i, int j, int k, int l, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{  
+//   cout << i << " " << j << " " << k << " " << l << endl;
+  if (((i == k) && (i !=j)) || ((j == l) && (k != l)))
+    return this->HilbertSpaceDimension;
+  
+  unsigned long tmpState = this->StateDescription[state];
+  unsigned long State = tmpState;
+  unsigned long tmpState2 = tmpState;
+  unsigned long tmpState3 = tmpState;
+  unsigned long tmpState4 = tmpState;
+  int tmpOrbitSize = this->NbrStateInOrbit[state];
+  tmpState >>= (2*i + 1);
+  tmpState &= 0x1ul;
+  
+  tmpState3 >>= (2*k + 1);
+  tmpState3 &= 0x1ul;
+  
+  tmpState4 >>= (2*l + 1); 
+  tmpState4 &= 0x1ul;
+  tmpState4 <<= 1;
+  tmpState4 |= tmpState3;
+  if (i != j)
+    {
+      if (k != l)
+      {
+	tmpState2 >>= (2*j + 1); 
+	tmpState2 &= 0x1ul;
+	tmpState2 <<= 1;
+	tmpState2 |= tmpState;
+	if ((tmpState2 == 0x1ul) && (tmpState4 == 0x1ul))
+	{
+	  coefficient = 1.0;
+	  State = ((State | (0x1ul << (2*j + 1))) & ~(0x1ul << (2*i + 1)));
+	  State = ((State | (0x1ul << (2*l + 1))) & ~(0x1ul << (2*k + 1)));
+	  return this->SymmetrizeResult(State, tmpOrbitSize, coefficient, nbrTranslationX, nbrTranslationY);
+	}
+	else
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension;
+	}  
+      }
+      
+      if ((tmpState2 == 0x1ul) && (tmpState3 == 0x0ul))
+      {
+	coefficient = 1.0;
+	State = ((State | (0x1ul << (2*j + 1))) & ~(0x1ul << (2*i + 1)));
+	return this->SymmetrizeResult(State, tmpOrbitSize, coefficient, nbrTranslationX, nbrTranslationY);
+      }      
+      else
+	return this->HilbertSpaceDimension;
+    }
+  if (tmpState == 0x0ul)
+    {
+      return this->SmiSpj(k, l, state, coefficient, nbrTranslationX, nbrTranslationY);
+    }
+  return this->HilbertSpaceDimension;
+}
 
 // operator acting on pseudospin on site i (off-diagonal part)
 //

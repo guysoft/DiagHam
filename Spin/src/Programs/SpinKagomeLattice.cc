@@ -68,6 +68,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('\n', "nbr-sz", "number of sz value to evaluate (0 for all sz sectors)", 1);
   (*SystemGroup) += new  SingleDoubleOption ('j', "j-value", "coupling constant value for nearest neighbors", 1.0);
   (*SystemGroup) += new  SingleDoubleOption ('a', "anisotropy", "anisotropy between up and down triangles", 1.0);
+  (*SystemGroup) += new  SingleDoubleOption ('a', "break-c3", "amplitude ratio of C3 breaking term (1.0 if C3 is preserved)", 1.0);
   (*SystemGroup) += new  SingleDoubleOption ('\n', "easy-plane", "easy plane anisotropy", 1.0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1); 
@@ -112,6 +113,7 @@ int main(int argc, char** argv)
   double JDownValue = JValue * Manager.GetDouble("anisotropy");
   double JEasyPlane = JValue * Manager.GetDouble("easy-plane");
   double JDownEasyPlane = JEasyPlane * Manager.GetDouble("anisotropy");
+  double JC3Breaking = Manager.GetDouble("break-c3");
   bool NoTranslationFlag = Manager.GetBoolean("no-translation");
   
   int nx1 = Manager.GetInteger("nx1");
@@ -154,17 +156,37 @@ int main(int argc, char** argv)
   char* ParametersName = new char[256];
   if (Manager.GetDouble("anisotropy") == 1.0)
   {
-    if (Manager.GetDouble("easy-plane") == 1.0)
-      sprintf(ParametersName, "heisenberg");
+    if (JC3Breaking == 1.0)
+    {
+      if (Manager.GetDouble("easy-plane") == 1.0)
+	sprintf(ParametersName, "heisenberg");
+      else
+	sprintf(ParametersName, "jx_%.6f_jy_%.6f_jz_%.6f", JEasyPlane, JEasyPlane, JValue);
+    }
     else
-      sprintf(ParametersName, "jx_%.6f_jy_%.6f_jz_%.6f", JEasyPlane, JEasyPlane, JValue);
+    {
+      if (Manager.GetDouble("easy-plane") == 1.0)
+	sprintf(ParametersName, "heisenberg_c3breaking_%.6f", JC3Breaking);
+      else
+	sprintf(ParametersName, "jx_%.6f_jy_%.6f_jz_%.6f_c3breaking_%.6f", JEasyPlane, JEasyPlane, JValue, JC3Breaking);
+    }
   }
   else
   {
-    if (Manager.GetDouble("easy-plane") == 1.0)
-      sprintf(ParametersName, "anisotropy_jup_%.6f_jdown_%.6f", JValue, JDownValue);
+    if (JC3Breaking == 1.0)
+    {
+      if (Manager.GetDouble("easy-plane") == 1.0)
+	sprintf(ParametersName, "anisotropy_jup_%.6f_jdown_%.6f", JValue, JDownValue);
+      else
+	sprintf(ParametersName, "jxup_%.6f_jyup_%.6f_jzup_%.6f_jxdown_%.6f_jydown_%.6f_jzdown_%.6f", JEasyPlane, JEasyPlane, JValue, JDownEasyPlane, JDownEasyPlane, JDownValue);
+    }
     else
-      sprintf(ParametersName, "jxup_%.6f_jyup_%.6f_jzup_%.6f_jxdown_%.6f_jydown_%.6f_jzdown_%.6f", JEasyPlane, JEasyPlane, JValue, JDownEasyPlane, JDownEasyPlane, JDownValue);
+    {
+      if (Manager.GetDouble("easy-plane") == 1.0)
+	sprintf(ParametersName, "anisotropy_jup_%.6f_jdown_%.6f_c3breaking_%.6f", JValue, JDownValue, JC3Breaking);
+      else
+	sprintf(ParametersName, "jxup_%.6f_jyup_%.6f_jzup_%.6f_jxdown_%.6f_jydown_%.6f_jzdown_%.6f_c3breaking_%.6f", JEasyPlane, JEasyPlane, JValue, JDownEasyPlane, JDownEasyPlane, JDownValue, JC3Breaking);
+    }
   }
   
      
@@ -364,7 +386,10 @@ int main(int argc, char** argv)
 	      }
 	      else
 	      {
-		Hamiltonian = new TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian(Space, XMomentum, NbrSitesX, YMomentum, NbrSitesY, JValue, JDownValue, JEasyPlane, JDownEasyPlane, OffsetReal);
+		if (JC3Breaking == 1.0)
+		  Hamiltonian = new TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian(Space, XMomentum, NbrSitesX, YMomentum, NbrSitesY, JValue, JDownValue, JEasyPlane, JDownEasyPlane, OffsetReal);
+		else
+		  Hamiltonian = new TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian(Space, XMomentum, NbrSitesX, YMomentum, NbrSitesY, JValue, JDownValue, JC3Breaking, OffsetReal);
 		if (SzSymmetryFlag == false)
 		{
 		  sprintf (TmpEigenstateString, "%s_sz_%d_kx_%d_ky_%d", OutputFileName, InitalSzValue, XMomentum, YMomentum);

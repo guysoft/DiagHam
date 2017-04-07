@@ -56,6 +56,8 @@ class TwoDimensionalKagomeLatticeHamiltonian : public TwoDimensionalTransverseFi
   double JEasyPlaneFactor;
   // amplitude of the SxSx + SySy term
   double JDownEasyPlaneFactor;
+  //amplitude of the D3 breaking term
+  double JBreakD3Factor;
   
    // flag for implementation of hermitian symmetry
   bool HermitianSymmetryFlag;
