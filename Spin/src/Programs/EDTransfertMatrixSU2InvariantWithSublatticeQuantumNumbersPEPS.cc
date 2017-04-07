@@ -70,11 +70,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "translation", "use translation symmetry");
   (*SystemGroup) += new BooleanOption ('\n', "left", "compute left eigenvalue");
   (*SystemGroup) += new BooleanOption ('\n', "vison", "add a vison line in both layers");
-  (*SystemGroup) += new  SingleIntegerOption ('\n', "sz", "consider a specific value of sz", -1);
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "sz", "consider a specific value of sz", -100);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "k", "consider a specific value of k", -1);
-  (*SystemGroup) += new  SingleIntegerOption ('\n', "sublatticezerobra","consider a specific value of DeltaNo Bra" , -1);
-  (*SystemGroup) += new  SingleIntegerOption ('\n', "sublatticezeroket","consider a specific value of DeltaNo Ket" , -1);
-
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "sublatticezerobra","consider a specific value of DeltaNo Bra" , -100);
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "sublatticezeroket","consider a specific value of DeltaNo Ket" , -100);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "translation-step", "", 1);
   
 #ifdef __LAPACK__
@@ -183,7 +182,7 @@ int main(int argc, char** argv)
 
   char * SubspaceLegend = new char [200];
   char * TmpSzString = new char [200];
-  if (Manager.GetInteger("sz") != -1 )
+  if (Manager.GetInteger("sz") != -100 )
     {
       SzMin = Manager.GetInteger("sz");
       SzMax = SzMin;
@@ -212,23 +211,24 @@ int main(int argc, char** argv)
   int SubLatticeZeroBraMin = 0;
   int SubLatticeZeroKetMin = 0;
   int SubLatticeZeroProductIncrement = 2;
-  if (Manager.GetInteger("sublatticezerobra") != -1 )
-    {
-      SubLatticeZeroBraMax =Manager.GetInteger("sublatticezerobra");
-      SubLatticeZeroBraMin =Manager.GetInteger("sublatticezerobra");
-    }
   
-  if (Manager.GetInteger("sublatticezeroket") != -1 )
-    {
-      SubLatticeZeroKetMax =Manager.GetInteger("sublatticezeroket");
-      SubLatticeZeroKetMin =Manager.GetInteger("sublatticezeroket");
-    }
-
   if (SublatticeMode == true)
     {
-      SubLatticeZeroBraMin=-SubLatticeZeroKetMax;
-      SubLatticeZeroKetMin=-SubLatticeZeroKetMax;
-      SubLatticeZeroProductIncrement=3;
+      SubLatticeZeroBraMin =- SubLatticeZeroKetMax;
+      SubLatticeZeroKetMin =- SubLatticeZeroKetMax;
+      SubLatticeZeroProductIncrement = 3;
+    }
+  
+  if (Manager.GetInteger("sublatticezerobra") != -100 )
+    {
+      SubLatticeZeroBraMax = Manager.GetInteger("sublatticezerobra");
+      SubLatticeZeroBraMin = Manager.GetInteger("sublatticezerobra");
+    }
+  
+  if (Manager.GetInteger("sublatticezeroket") != -100 )
+    {
+      SubLatticeZeroKetMax = Manager.GetInteger("sublatticezeroket");
+      SubLatticeZeroKetMin = Manager.GetInteger("sublatticezeroket");
     }
   
 
