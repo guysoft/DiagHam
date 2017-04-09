@@ -266,9 +266,9 @@ int main(int argc, char** argv)
   }
   File << endl;
   cout << endl;
+  File << "C3 OP = " << sqrt(NematicOP.Re*NematicOP.Re + NematicOP.Im*NematicOP.Im) << endl;
   File.close();
   cout << "C3 OP = " << sqrt(NematicOP.Re*NematicOP.Re + NematicOP.Im*NematicOP.Im) << endl;
-  File << "C3 OP = " << sqrt(NematicOP.Re*NematicOP.Re + NematicOP.Im*NematicOP.Im) << endl;
 
 //   ofstream FileFourierTransform;
 //   if ((RightMomentumFlag == true) && (LeftMomentumFlag == true))
