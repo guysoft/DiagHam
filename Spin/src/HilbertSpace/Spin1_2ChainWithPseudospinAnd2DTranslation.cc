@@ -100,7 +100,9 @@ Spin1_2ChainWithPseudospinAnd2DTranslation::Spin1_2ChainWithPseudospinAnd2DTrans
   for (int i = 0; i < this->NbrYMomentumBlocks; ++i)
       this->YMomentumFullMask |= this->YMomentumMask << (i *  this->YMomentumBlockSize);
   this->ComplementaryYMomentumFullMask = ~this->YMomentumFullMask; 
-
+  
+  this->FillMirrorSymmetryTable();
+  
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->Sz, this->ChainLength);
   this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
   this->LargeHilbertSpaceDimension = this->GenerateStates();
@@ -1210,4 +1212,34 @@ RealVector Spin1_2ChainWithPseudospinAnd2DTranslation::ProjectToEffectiveSubspac
   delete[] Isometry;
   delete[] TmpFlag;
   return TmpVector;
+}
+
+ 
+// initialize the mirror symmetry table
+//
+void Spin1_2ChainWithPseudospinAnd2DTranslation::FillMirrorSymmetryTable()
+{
+  this->MirrorTransformationTable = new int[this->ChainLength];
+  if (this->MaxXMomentum == this->MaxYMomentum)
+  {
+    for (int i = 0; i < this->MaxXMomentum; ++i)
+      for (int j = 0; j < this->MaxYMomentum; ++j)
+	this->MirrorTransformationTable[this->GetLinearizedIndex(i, j)] = this->GetLinearizedIndex(j, i);
+  }
+    
+  if ((this->ChainLength == 12) && (this->MaxXMomentum == 6) && (this->MaxYMomentum == 2))
+  {
+    this->MirrorTransformationTable[this->GetLinearizedIndex(0, 0)] = this->GetLinearizedIndex(0, 0);
+    this->MirrorTransformationTable[this->GetLinearizedIndex(1, 0)] = this->GetLinearizedIndex(2, 1);
+    this->MirrorTransformationTable[this->GetLinearizedIndex(2, 0)] = this->GetLinearizedIndex(4, 0);
+    this->MirrorTransformationTable[this->GetLinearizedIndex(3, 0)] = this->GetLinearizedIndex(0, 1);
+    this->MirrorTransformationTable[this->GetLinearizedIndex(4, 0)] = this->GetLinearizedIndex(2, 0);
+    this->MirrorTransformationTable[this->GetLinearizedIndex(5, 0)] = this->GetLinearizedIndex(4, 1);
+    this->MirrorTransformationTable[this->GetLinearizedIndex(0, 1)] = this->GetLinearizedIndex(3, 0);
+    this->MirrorTransformationTable[this->GetLinearizedIndex(1, 1)] = this->GetLinearizedIndex(5, 1);
+    this->MirrorTransformationTable[this->GetLinearizedIndex(2, 1)] = this->GetLinearizedIndex(1, 0);
+    this->MirrorTransformationTable[this->GetLinearizedIndex(3, 1)] = this->GetLinearizedIndex(3, 1);
+    this->MirrorTransformationTable[this->GetLinearizedIndex(4, 1)] = this->GetLinearizedIndex(5, 0);
+    this->MirrorTransformationTable[this->GetLinearizedIndex(5, 1)] = this->GetLinearizedIndex(1, 1);
+  }
 }

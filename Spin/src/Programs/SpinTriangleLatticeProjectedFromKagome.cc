@@ -99,6 +99,8 @@ int main(int argc, char** argv)
   double JValue =  Manager.GetDouble("j-value");
   bool NoTranslationFlag = Manager.GetBoolean("no-translation");
   bool NoSpinInversionFlag = Manager.GetBoolean("disable-szsymmetry");
+  if (NbrSpins & 1  != 0)
+    NoSpinInversionFlag = true;
   
   int nx1 = Manager.GetInteger("nx1");
   int ny1 = Manager.GetInteger("ny1");

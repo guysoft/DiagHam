@@ -11,4 +11,5 @@ SpinWith1DTranslationS2Operator.cc \
 BondEnergySpinPseudospinOperator.cc \
 SpinWith2DTranslationSpinSpinCorrelationOperator.cc \
 SpinWithPseudospin2DTranslationSpinSpinCorrelationOperator.cc \
-SpinWith2DTranslationBondBondCorrelationOperator.cc
+SpinWith2DTranslationBondBondCorrelationOperator.cc \
+SpinWith2DTranslationMirrorSymmetryOperator.cc

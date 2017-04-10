@@ -291,7 +291,7 @@ class Spin1_2ChainWithPseudospin : public Spin1_2ChainNew
   // index = index of the state in the basis
   // finalState = reference on the array where the monomial representation has to be stored
   virtual void GetBosonicOccupation (unsigned int index, int * finalState);
-  
+    
 };
 
 #endif

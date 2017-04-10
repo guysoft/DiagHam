@@ -53,6 +53,8 @@ class AbstractSpinChain : public AbstractHilbertSpace
  protected:
 
   int ChainLength;
+  // table of indices mapping each spin to the mirror-symmetry conjugate point
+  int* MirrorTransformationTable;
   
  public:
 
@@ -396,6 +398,15 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // sitePosition = position on the chain of the state
   // return integer that code the state
   virtual inline unsigned long EncodeSiteState(int physicalState, int sitePosition);
+  
+  // apply the mirror symmetry to a state
+  //
+  // stateIndex = index of the current state in the Hlibert space
+  // coefficient = coefficient associated with the transformation
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  virtual inline int ApplyMirrorSymmetry(int stateIndex, double& coefficient,
+                                             int& nbrTranslationX, int& nbrTranslationY);
 
 };
 
@@ -423,6 +434,21 @@ inline unsigned long AbstractSpinChain::EncodeSiteState(int physicalState, int s
   cout << "warning, using undefined function AbstractSpinChain::EncodeSiteState(int state, int sitePosition)" << endl;
   return - 1;
 }
+
+// apply the mirror symmetry to a state
+//
+// stateIndex = index of the current state in the Hlibert space
+// coefficient = coefficient associated with the transformation
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+inline int AbstractSpinChain::ApplyMirrorSymmetry(int stateIndex, double& coefficient,
+                                             int& nbrTranslationX, int& nbrTranslationY)
+{
+  cout << "Warning: using dummy function AbstractSpinChain::ApplyMirrorSymmetry" << endl;
+  coefficient = 1.0;
+  return this->HilbertSpaceDimension;
+}
+
 
 #endif
 

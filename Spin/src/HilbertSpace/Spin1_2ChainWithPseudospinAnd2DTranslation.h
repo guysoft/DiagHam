@@ -255,6 +255,17 @@ class Spin1_2ChainWithPseudospinAnd2DTranslation : public Spin1_2ChainWithPseudo
   // space = pointer to the Hilbert space where state is defined
   // return value = state in the (Kx,Ky) basis
   virtual RealVector ProjectToEffectiveSubspaceThreeToOne(ComplexVector& state, AbstractSpinChain* space);
+  
+  // apply the mirror symmetry to a state
+  //
+  // stateIndex = index of the current state in the Hlibert space
+  // coefficient = coefficient associated with the transformation
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  virtual inline int ApplyMirrorSymmetry(int stateIndex, double& coefficient,
+                                             int& nbrTranslationX, int& nbrTranslationY);
+
+  
 
  protected:
 
@@ -336,10 +347,26 @@ class Spin1_2ChainWithPseudospinAnd2DTranslation : public Spin1_2ChainWithPseudo
   // stateDescription = reference on the state description  
   virtual void ApplySingleYTranslation(unsigned long& stateDescription);
   
+  // apply the mirror symmetry to a state description
+  //
+  // stateDescription = reference on the state description  
+  virtual inline void ApplyMirrorSymmetry(unsigned long& stateDescription, int& TmpSign);
+  
+  // get a linearized position index from the 2d coordinates
+  //
+  // xPosition = position along the x direction
+  // yPosition = position along the y direction
+  // return value = linearized index
+  virtual int GetLinearizedIndex(int xPosition, int yPosition);
+  
+  // fill up the table for the mirror symmetry
+  //
+  virtual void FillMirrorSymmetryTable();
+  
   // compute the rescaling factors
   //
   virtual void ComputeRescalingFactors();
-  
+   
 };
 
 // factorized code that is used to symmetrize the result of any operator action
@@ -366,7 +393,7 @@ inline int Spin1_2ChainWithPseudospinAnd2DTranslation::SymmetrizeResult(unsigned
      }
 //   else
 //     coefficient = 0.0;
-  cout << "sym result " << nbrTranslationX << " " << nbrTranslationY << endl;
+//   cout << "sym result " << nbrTranslationX << " " << nbrTranslationY << endl;
   return TmpIndex;
 }
 
@@ -522,7 +549,65 @@ inline void Spin1_2ChainWithPseudospinAnd2DTranslation::ApplySingleYTranslation(
   stateDescription = (((stateDescription & this->ComplementaryYMomentumFullMask) >> this->StateYShift) | ((stateDescription & this->YMomentumFullMask) << this->ComplementaryStateYShift));
 }
 
+// apply the inversion symmetry to a state description
+//
+// stateDescription = reference on the state description
 
+
+inline void Spin1_2ChainWithPseudospinAnd2DTranslation::ApplyMirrorSymmetry(unsigned long& stateDescription, int& TmpSign)
+{
+   unsigned long InitialState = stateDescription;
+   stateDescription = 0x0ul;
+   TmpSign = 1;
+   for (int i =0; i < this->ChainLength; ++i)
+   {
+      stateDescription |= ((InitialState >> (2*i)) & 0x3ul) << (2 * this->MirrorTransformationTable[i]);
+      if (((InitialState >> (2*i)) & 0x1ul) != 0x0ul)
+	TmpSign *= -1;
+   }
+}
+
+
+
+// apply the mirror symmetry to a state
+//
+// stateIndex = index of the current state in the Hlibert space
+// coefficient = coefficient associated with the transformation
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+inline int Spin1_2ChainWithPseudospinAnd2DTranslation::ApplyMirrorSymmetry(int stateIndex, double& coefficient,
+                                             int& nbrTranslationX, int& nbrTranslationY)
+{
+      coefficient = 1.0;
+      unsigned long TmpState = this->StateDescription[stateIndex];
+      int TmpNbrStateInOrbit = this->NbrStateInOrbit[stateIndex];
+      int TmpSign;
+      this->ApplyMirrorSymmetry(TmpState, TmpSign);
+      int TmpIndex = this->SymmetrizeResult(TmpState, TmpNbrStateInOrbit, coefficient, nbrTranslationX, nbrTranslationY);
+      coefficient *= TmpSign;
+      return TmpIndex;
+}
+
+
+
+// get a linearized position index from the 2d coordinates
+//
+// xPosition = position along the x direction
+// yPosition = position along the y direction
+// return value = linearized index
+
+inline int Spin1_2ChainWithPseudospinAnd2DTranslation::GetLinearizedIndex(int xPosition, int yPosition)
+{
+  if (xPosition < 0)
+    xPosition += this->MaxXMomentum;
+  if (xPosition >= this->MaxXMomentum)
+    xPosition -= this->MaxXMomentum;
+  if (yPosition < 0)
+    yPosition += this->MaxYMomentum;
+  if (yPosition >= this->MaxYMomentum)
+    yPosition -= this->MaxYMomentum;
+  return ((xPosition * this->MaxYMomentum) + yPosition);
+}
 #endif
 
 

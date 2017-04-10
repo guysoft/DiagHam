@@ -180,12 +180,12 @@ class Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation : public Spin1_2Chain
   //
   // stateDescription = reference on the state description  
   virtual void ApplySzSymmetry(unsigned long& stateDescription);
-
   
   // compute the rescaling factors
   //
   virtual void ComputeRescalingFactors();
   
+   
 };
 
 // factorized code that is used to symmetrize the result of any operator action
@@ -513,6 +513,8 @@ inline void Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation::ApplySzSymmetr
 {
   stateDescription = ((~stateDescription) & (this->SzSymmetryMask)) | ((stateDescription) & (this->SzSymmetryComplementaryMask));
 }
+
+
 #endif
 
 

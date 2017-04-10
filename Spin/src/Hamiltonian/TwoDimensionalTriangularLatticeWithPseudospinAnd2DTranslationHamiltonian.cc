@@ -228,6 +228,7 @@ ComplexVector& TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHami
 		TmpIndex1 = this->GetLinearizedIndex(j - this->Offset, k - 1);
 		TmpIndex2 = this->GetLinearizedIndex(j, k);
 		pos = this->Chain->SmiSpjJiJj(TmpIndex2, TmpIndex1, i, this->PseudospinDiagCouplingElements[0], this->PseudospinDiagCouplingElements[2], coef, nbrTranslationsX, nbrTranslationsY);
+// 		cout << pos << " " << dim << endl;
 		if (pos != dim)
 		  vDestination[pos] += TmpValue * coef * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		

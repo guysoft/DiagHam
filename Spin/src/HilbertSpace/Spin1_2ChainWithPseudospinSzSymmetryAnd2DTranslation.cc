@@ -115,6 +115,8 @@ Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation::Spin1_2ChainWithPseudospin
   for (int i = 0; i < this->NbrYMomentumBlocks; ++i)
       this->YMomentumFullMask |= this->YMomentumMask << (i *  this->YMomentumBlockSize);
   this->ComplementaryYMomentumFullMask = ~this->YMomentumFullMask; 
+  
+  this->FillMirrorSymmetryTable();
 
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->Sz, this->ChainLength);
   this->LargeHilbertSpaceDimension = this->GenerateStates();
@@ -204,6 +206,7 @@ Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation::Spin1_2ChainWithPseudospin
   ReadLittleEndian(File, this->YMomentumBlockMask);
   ReadLittleEndian(File, this->YMomentumFullMask);
   ReadLittleEndian(File, this->ComplementaryYMomentumFullMask);
+  ReadLittleEndian(File, this->MirrorTransformationTable);
   
   this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
   this->NbrStateInOrbit = new int [this->LargeHilbertSpaceDimension];
@@ -311,6 +314,8 @@ Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation::Spin1_2ChainWithPseudospin
       this->SzSymmetrySector = chain.SzSymmetrySector;
       this->SzSymmetryMask = chain.SzSymmetryMask;
       this->SzSymmetryComplementaryMask = chain.SzSymmetryComplementaryMask;
+      
+      this->MirrorTransformationTable = chain.MirrorTransformationTable;
 
       this->StateDescription = chain.StateDescription;
       this->RescalingFactors = chain.RescalingFactors;
@@ -335,6 +340,7 @@ Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation::Spin1_2ChainWithPseudospin
       this->LookUpTableSize = 0;
       this->SzSymmetrySector = 0.0;
       this->SzSymmetryMask = 0.0;
+      this->MirrorTransformationTable = 0;
     }
 }
 
@@ -343,6 +349,7 @@ Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation::Spin1_2ChainWithPseudospin
 
 Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation::~Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation () 
 {
+  delete[] this->MirrorTransformationTable;
 }
 
 // assignement (without duplicating datas)
@@ -383,6 +390,8 @@ Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation& Spin1_2ChainWithPseudospin
       this->SzSymmetrySector = chain.SzSymmetrySector;
       this->SzSymmetryMask = chain.SzSymmetryMask;
       this->SzSymmetryComplementaryMask = chain.SzSymmetryComplementaryMask;
+      
+      this->MirrorTransformationTable = chain.MirrorTransformationTable;
 
       this->StateDescription = chain.StateDescription;
       this->RescalingFactors = chain.RescalingFactors;
@@ -405,6 +414,7 @@ Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation& Spin1_2ChainWithPseudospin
       this->LookUpPosition = 0;
       this->SzSymmetrySector = 0.0;
       this->SzSymmetryMask = 0.0;
+      this->MirrorTransformationTable = 0;
    }
   return *this;
 }
@@ -455,6 +465,7 @@ bool Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation::WriteHilbertSpace (ch
   WriteLittleEndian(File, this->YMomentumBlockMask);
   WriteLittleEndian(File, this->YMomentumFullMask);
   WriteLittleEndian(File, this->ComplementaryYMomentumFullMask);
+  WriteLittleEndian(File, this->MirrorTransformationTable);
     
   if (this->HilbertSpaceDimension != 0)
     {

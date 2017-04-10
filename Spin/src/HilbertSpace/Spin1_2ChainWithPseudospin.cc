@@ -930,7 +930,7 @@ int Spin1_2ChainWithPseudospin::JoffiJoffj (int i, int j, int state, double& coe
 
 int Spin1_2ChainWithPseudospin::JoffiJj (int i, int j, int state, double* coupling, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
 {
-  cout << "Caution: using dummy operator Spin1_2ChainWithPseudospin::Joffij" << endl;
+  cout << "Caution: using dummy operator Spin1_2ChainWithPseudospin::JoffiJj" << endl;
   return 0;
 }
 
@@ -995,5 +995,3 @@ int Spin1_2ChainWithPseudospin::SmiSpjJoffiJoffj (int i, int j, int state, doubl
   cout << "Caution: using dummy operator Spin1_2ChainWithPseudospin::SmiSpjJoffiJoffj" << endl;
   return 0;
 }
-  
-  
