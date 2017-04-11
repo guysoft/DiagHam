@@ -754,6 +754,50 @@ int Spin1_2ChainWithPseudospinAnd2DTranslation::SmiSpj (int i, int j, int state,
 // coefficient = reference on double where numerical coefficient has to be stored
 // return value = index of resulting state
 
+int Spin1_2ChainWithPseudospinAnd2DTranslation::SziSzjSmkSpl (int i, int j, int k, int l, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{  
+  unsigned long tmpState = this->StateDescription[state];
+  unsigned long State = tmpState;
+  unsigned long tmpState2 = tmpState;
+  int tmpOrbitSize = this->NbrStateInOrbit[state];
+  tmpState >>= (2*k + 1);
+  tmpState &= 0x1ul;
+  if (k != l)
+    {
+      tmpState2 >>= (2*l + 1); 
+      tmpState2 &= 0x1ul;
+      tmpState2 <<= 1;
+      tmpState2 |= tmpState;
+      if (tmpState2 == 0x1ul)
+	{
+	  coefficient = 1.0;
+	  State = ((State | (0x1ul << (2*l + 1))) & ~(0x1ul << (2*k + 1)));
+	  unsigned long Mask = ((0x1ul << (2*i + 1)) | (0x1ul << (2*j + 1)));
+	  unsigned long tmpState = State & Mask;
+	  if ((tmpState == 0x0ul) || (tmpState == Mask))
+	    coefficient = 0.25;
+	  else
+	    coefficient = -0.25;
+	  return this->SymmetrizeResult(State, tmpOrbitSize, coefficient, nbrTranslationX, nbrTranslationY);
+	}
+      else
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension;
+	}
+    }
+  coefficient = 0.5 * this->SziSzj(i, j, state);
+  return state;
+}
+
+// return index of resulting state from application of S-_i S+_j operator on a given state
+//
+// i = position of S- operator
+// j = position of S+ operator
+// state = index of the state to be applied on S-_i S+_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
+
 int Spin1_2ChainWithPseudospinAnd2DTranslation::SmiSpjSmkSpl (int i, int j, int k, int l, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
 {  
 //   cout << i << " " << j << " " << k << " " << l << endl;

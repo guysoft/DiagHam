@@ -149,6 +149,28 @@ class Spin1_2ChainNewAnd2DTranslation : public Spin1_2ChainNew
   // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of resulting state
   virtual int SmiSpj (int i, int j, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
+  // return index of resulting state from application of S-_i S+_j operator on a given state
+  //
+  // i = position of S- operator
+  // j = position of S+ operator
+  // state = index of the state to be applied on S-_i S+_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // return value = index of resulting state
+  virtual int SmiSpjSmkSpl (int i, int j, int k, int l, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
+  // return index of resulting state from application of S-_i S+_j operator on a given state
+  //
+  // i = position of S- operator
+  // j = position of S+ operator
+  // state = index of the state to be applied on S-_i S+_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // return value = index of resulting state
+  virtual int SziSzjSmkSpl (int i, int j, int k, int l, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
   // convert a state defined in the real space basis into a state in the (Kx,Ky) basis
   //

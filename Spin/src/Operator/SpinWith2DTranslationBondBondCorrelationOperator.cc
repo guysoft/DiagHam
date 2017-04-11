@@ -126,49 +126,42 @@ Complex SpinWith2DTranslationBondBondCorrelationOperator::PartialMatrixElement (
   int nbrTranslationsX = 0;
   int nbrTranslationsY = 0;
   
-    
   for (int i = (int) firstComponent; i < dim; ++i)
     {	 
 	TmpCoefficient = this->Chain->SziSzj(this->SiteIndex1, this->SiteIndex2, i);
 	TmpCoefficient1 = this->Chain->SziSzj(this->SiteIndex3, this->SiteIndex4, i);
-// 	Element += Conj(V1[i]) * TmpCoefficient * TmpCoefficient1 * V2[i];
+	Element += Conj(V1[i]) * TmpCoefficient * TmpCoefficient1 * V2[i];
 	
 	
-// 	pos = this->Chain->SmiSpj(this->SiteIndex2, this->SiteIndex1, i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
-// 	if (pos != dim)
-// 	  Element += Conj(V1[pos]) * 0.5 * V2[i] * TmpCoefficient * TmpCoefficient1 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
-// 	pos = this->Chain->SmiSpj(this->SiteIndex1, this->SiteIndex2, i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
-// 	if (pos != dim)
-// 	  Element += Conj(V1[pos]) * 0.5 * V2[i] * TmpCoefficient * TmpCoefficient1 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
-// 	
-// 	
-// 	pos = this->Chain->SmiSpj(this->SiteIndex4, this->SiteIndex3, i, TmpCoefficient1, nbrTranslationsX, nbrTranslationsY);
-// 	if (pos != dim)
-// 	{
-// 	  TmpCoefficient = this->Chain->SziSzj(this->SiteIndex1, this->SiteIndex2, pos);
-// 	  Element += Conj(V1[pos]) * 0.5 * V2[i] * TmpCoefficient * TmpCoefficient1 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
-// 	}
-// 	pos = this->Chain->SmiSpj(this->SiteIndex3, this->SiteIndex4, i, TmpCoefficient1, nbrTranslationsX, nbrTranslationsY);
-// 	if (pos != dim)
-// 	{
-// 	  TmpCoefficient = this->Chain->SziSzj(this->SiteIndex1, this->SiteIndex2, pos);
-// 	  Element += Conj(V1[pos]) * 0.5 * V2[i] * TmpCoefficient * TmpCoefficient1 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
-// 	}
+	pos = this->Chain->SmiSpj(this->SiteIndex2, this->SiteIndex1, i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	if (pos != dim)
+	  Element += Conj(V1[pos]) * 0.5 * V2[i] * TmpCoefficient * TmpCoefficient1 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	pos = this->Chain->SmiSpj(this->SiteIndex1, this->SiteIndex2, i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	if (pos != dim)
+	  Element += Conj(V1[pos]) * 0.5 * V2[i] * TmpCoefficient * TmpCoefficient1 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	
+	pos = this->Chain->SziSzjSmkSpl(this->SiteIndex1, this->SiteIndex2, this->SiteIndex4, this->SiteIndex3, i, TmpCoefficient1, nbrTranslationsX, nbrTranslationsY);
+	if (pos != dim)
+	  Element += Conj(V1[pos]) * 0.5 * V2[i] * TmpCoefficient1 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	
+	pos = this->Chain->SziSzjSmkSpl(this->SiteIndex1, this->SiteIndex2, this->SiteIndex3, this->SiteIndex4, i, TmpCoefficient1, nbrTranslationsX, nbrTranslationsY);
+	if (pos != dim)
+	  Element += Conj(V1[pos]) * 0.5 * V2[i] * TmpCoefficient1 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 	
 	
 	
-// 	pos = this->Chain->SmiSpjSmkSpl(this->SiteIndex1, this->SiteIndex2, this->SiteIndex3, this->SiteIndex4, i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
-// 	if (pos != dim)
-// 	  Element += Conj(V1[pos]) * 0.25 * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	pos = this->Chain->SmiSpjSmkSpl(this->SiteIndex1, this->SiteIndex2, this->SiteIndex3, this->SiteIndex4, i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	if (pos != dim)
+	  Element += Conj(V1[pos]) * 0.25 * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 	pos = this->Chain->SmiSpjSmkSpl(this->SiteIndex1, this->SiteIndex2, this->SiteIndex4, this->SiteIndex3, i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
 	  Element += Conj(V1[pos]) * 0.25 * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 	pos = this->Chain->SmiSpjSmkSpl(this->SiteIndex2, this->SiteIndex1, this->SiteIndex3, this->SiteIndex4, i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
 	  Element += Conj(V1[pos]) * 0.25 * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
-// 	pos = this->Chain->SmiSpjSmkSpl(this->SiteIndex2, this->SiteIndex1, this->SiteIndex4, this->SiteIndex3, i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
-// 	if (pos != dim)
-// 	  Element += Conj(V1[pos]) * 0.25 * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	pos = this->Chain->SmiSpjSmkSpl(this->SiteIndex2, this->SiteIndex1, this->SiteIndex4, this->SiteIndex3, i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	if (pos != dim)
+	  Element += Conj(V1[pos]) * 0.25 * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
     }
   return Element;
 }
@@ -211,18 +204,12 @@ ComplexVector& SpinWith2DTranslationBondBondCorrelationOperator::LowLevelMultipl
 	if (pos != dim)
 	  vDestination[pos] += 0.5 * vSource[i] * coef * TmpCoefficient1 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 	
-	pos = this->Chain->SmiSpj(this->SiteIndex4, this->SiteIndex3, i, coef, nbrTranslationsX, nbrTranslationsY);
+	pos = this->Chain->SziSzjSmkSpl(this->SiteIndex1, this->SiteIndex2, this->SiteIndex4, this->SiteIndex3, i, coef, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
-	{
-	  TmpCoefficient1 = this->Chain->SziSzj(this->SiteIndex1, this->SiteIndex2, pos);
-	  vDestination[pos] += 0.5 * vSource[i] * coef * TmpCoefficient1 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
-	}
-	pos = this->Chain->SmiSpj(this->SiteIndex3, this->SiteIndex4, i, coef, nbrTranslationsX, nbrTranslationsY);
+	  vDestination[pos] += 0.5 * vSource[i] * coef  * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	pos = this->Chain->SziSzjSmkSpl(this->SiteIndex1, this->SiteIndex2, this->SiteIndex3, this->SiteIndex4, i, coef, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
-	{
-	  TmpCoefficient1 = this->Chain->SziSzj(this->SiteIndex1, this->SiteIndex2, pos);
-	  vDestination[pos] += 0.5 * vSource[i] * coef * TmpCoefficient1 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
-	}
+	  vDestination[pos] += 0.5 * vSource[i] * coef * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 	
 	pos = this->Chain->SmiSpjSmkSpl(this->SiteIndex1, this->SiteIndex2, this->SiteIndex3, this->SiteIndex4, i, coef, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)

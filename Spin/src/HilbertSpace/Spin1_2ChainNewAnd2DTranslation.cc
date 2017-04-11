@@ -318,6 +318,126 @@ int Spin1_2ChainNewAnd2DTranslation::SmiSpj (int i, int j, int state, double& co
     }
 }
 
+// return index of resulting state from application of S-_i S+_j operator on a given state
+//
+// i = position of S- operator
+// j = position of S+ operator
+// state = index of the state to be applied on S-_i S+_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of resulting state
+
+int Spin1_2ChainNewAnd2DTranslation::SziSzjSmkSpl (int i, int j, int k, int l, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{  
+  unsigned long State = this->StateDescription[state];
+  if (k != l)
+    {
+      if (((State & (0x1ul << k)) != 0x0ul) || ((State & (0x1ul << l)) == 0x0ul))
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension;
+	}
+      State ^= 0x1ul << k;
+      State |= 0x1ul << l;
+      
+      unsigned long Mask = ((0x1ul << i) | (0x1ul << j));
+      unsigned long tmpState = State & Mask;
+      if ((tmpState == 0x0ul) || (tmpState == Mask))
+	coefficient = 0.25;
+      else
+	coefficient = -0.25;
+      return this->SymmetrizeResult(State, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
+    }
+  else
+    {
+      coefficient = 0.5 * this->SziSzj(i, j, state);
+      return state;
+    }
+}
+
+// return index of resulting state from application of S-_i S+_j operator on a given state
+//
+// i = position of S- operator
+// j = position of S+ operator
+// state = index of the state to be applied on S-_i S+_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of resulting state
+
+int Spin1_2ChainNewAnd2DTranslation::SmiSpjSmkSpl (int i, int j, int k, int l, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{  
+  unsigned long State = this->StateDescription[state];
+  unsigned long Mask = (0x1ul << i) | (0x1ul << j);
+  if ((i != j) && (k != l))
+    {
+      if (((State & (0x1ul << j)) != 0x0ul) || ((State & (0x1ul << i)) == 0x0ul))
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension;
+	}
+      State ^= 0x1ul << i;
+      State |= 0x1ul << j;
+      if (((State & (0x1ul << l)) != 0x0ul) || ((State & (0x1ul << k)) == 0x0ul))
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension;
+	}
+      State ^= 0x1ul << k;
+      State |= 0x1ul << l;
+      coefficient = 1.0;
+      return this->SymmetrizeResult(State, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
+    }
+  if (k == l)
+  {
+    int TmpIndex;
+    if (i != j)
+    {
+      if (((State & (0x1ul << j)) != 0x0ul) || ((State & (0x1ul << i)) == 0x0ul))
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension;
+	}
+      State ^= 0x1ul << i;
+      State |= 0x1ul << j;
+      coefficient = 1.0;
+      TmpIndex = this->SymmetrizeResult(State, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
+      coefficient *= 0.5;
+      return TmpIndex;
+    }
+  else
+    {
+      coefficient = 0.25;
+      return state;
+    }
+  }
+  if (i == j)
+  {
+    int TmpIndex;
+    if (k != l)
+    {
+      if (((State & (0x1ul << l)) != 0x0ul) || ((State & (0x1ul << k)) == 0x0ul))
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension;
+	}
+      State ^= 0x1ul << k;
+      State |= 0x1ul << l;
+      coefficient = 1.0;
+      TmpIndex = this->SymmetrizeResult(State, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
+      coefficient *= 0.5;
+      return TmpIndex;
+    }
+  else
+    {
+      coefficient = 0.25;
+      return state;
+    }
+  }
+}
+
+
 // find state index
 //
 // stateDescription = unsigned longeger describing the state

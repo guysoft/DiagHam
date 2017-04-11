@@ -227,6 +227,15 @@ class Spin1_2ChainWithPseudospinAnd2DTranslation : public Spin1_2ChainWithPseudo
   // coefficient = reference on double where numerical coefficient has to be stored
   // return value = index of resulting state
   virtual int SmiSpjSmkSpl (int i, int j, int k, int l, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
+  // return index of resulting state from application of S-_i S+_j operator on a given state
+  //
+  // i = position of S- operator
+  // j = position of S+ operator
+  // state = index of the state to be applied on S-_i S+_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of resulting state
+  virtual int SziSzjSmkSpl (int i, int j, int k, int l, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
     
   // compute the parity (prod_i Sz_i) for a given state
   //

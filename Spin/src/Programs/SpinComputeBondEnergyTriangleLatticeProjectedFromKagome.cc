@@ -239,14 +239,12 @@ int main(int argc, char** argv)
   File << "# l_0 i j l_{i,j} <S_{0,0} S_{1,0} S_{i,j}S_{i,j,l}}>" << endl;
   int* TmpIndex2b = new int[3];
   Complex* BondBondCorrelations = new Complex[3];
-  Complex TmpOnSite;
 //   for (int m = 0; m < 3; ++m)
 //   {
   for (int i = 0; i < XPeriodicity; ++i)
   {
     for (int j = 0; j < YPeriodicity; ++j)
     {
-      TmpOnSite = 0.0;
       for (int l = 0; l < 3; ++l)
 	BondBondCorrelations[l] = 0.0;
       for (int nx = 0; nx < XPeriodicity; ++nx)
@@ -261,15 +259,6 @@ int main(int argc, char** argv)
 	  TmpIndex2b[1] = GetLinearizedIndex(nx + i + Offset, ny + j + 1, XPeriodicity, YPeriodicity);
 	  TmpIndex2b[2] = GetLinearizedIndex(nx + i + 1 - Offset, ny + j - 1, XPeriodicity, YPeriodicity);
 	  
-	
-	  Operator = new SpinWith2DTranslationBondBondCorrelationOperator(Space, XMomentum, XPeriodicity, YMomentum, YPeriodicity, TmpIndex1a, TmpIndex1b, TmpIndex1a, TmpIndex1b);
-	  OperatorMatrixElementOperation Operation(Operator, State, State, State.GetVectorDimension());
-	  Operation.ApplyOperation(Architecture.GetArchitecture());
-	  TmpOnSite += Operation.GetScalar();
-// 	cout << NeighborSpinSpinCorrelation << " " ;
-	  delete Operator;
-	    
-	  
 	  for (int l = 0; l < 3; ++l)
 	  {
 	    Operator = new SpinWith2DTranslationBondBondCorrelationOperator(Space, XMomentum, XPeriodicity, YMomentum, YPeriodicity, TmpIndex1a, TmpIndex1b, TmpIndex2a, TmpIndex2b[l]);
@@ -281,7 +270,6 @@ int main(int argc, char** argv)
 	  }
 	}
       }
-      cout << (TmpOnSite / (XPeriodicity * YPeriodicity)) << endl;
       for (int l = 0; l < 3; ++l)
 	File << i << " " << j << " " << l << " " << (BondBondCorrelations[l].Re / (XPeriodicity * YPeriodicity)) << endl;
     }
@@ -289,25 +277,6 @@ int main(int argc, char** argv)
 
   File.close();
 	  
-	  
-//   ofstream FileFourierTransform;
-//   if ((RightMomentumFlag == true) && (LeftMomentumFlag == true))
-//     {
-//       char* TmpFileName = ReplaceExtensionToFileName(OutputFileName, "dat", "fourier.dat");
-//       if (TmpFileName == 0)
-// 	{
-// 	  cout << "no dat extension was find in " << OutputFileName << " file name" << endl;
-// 	  return 0;
-// 	}
-//       FileFourierTransform.open(TmpFileName, ios::binary | ios::out);
-//       FileFourierTransform.precision(14);
-//     }
-
- 
-//   if ((RightMomentumFlag == true) && (LeftMomentumFlag == true))
-//     {
-//       FileFourierTransform.close();
-//     }
   return 0;
 }
 

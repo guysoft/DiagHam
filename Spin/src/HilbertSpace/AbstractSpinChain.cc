@@ -367,6 +367,20 @@ int AbstractSpinChain::SmiSpjSmkSpl (int i, int j, int k, int l, int state, doub
   return this->HilbertSpaceDimension;
 }
   
+// return index of resulting state from application of S-_i S+_j operator on a given state
+//
+// i = position of S- operator
+// j = position of S+ operator
+// state = index of the state to be applied on S-_i S+_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of resulting state
+int AbstractSpinChain::SziSzjSmkSpl (int i, int j, int k, int l, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  cout << "Warning: using dummy method AbstractSpinChain::SziSzjSmkSpl" << endl;
+  return this->HilbertSpaceDimension;
+}
   
   
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Sz sector.
