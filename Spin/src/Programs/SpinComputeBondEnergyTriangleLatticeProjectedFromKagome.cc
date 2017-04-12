@@ -196,13 +196,13 @@ int main(int argc, char** argv)
   
   File << "# i j <S_{0,0} S_{i,j}}>" << endl;
   AbstractOperator* Operator;
-  Complex SpinSpinCorrelations;
-  
+  double* SpinSpinCorrelations = new double[NbrSites];  
   for (int i = 0; i < XPeriodicity; ++i)
   {
     for (int j = 0; j < YPeriodicity; ++j)
     {
-      SpinSpinCorrelations = 0.0;
+      int TmpIndex = GetLinearizedIndex(i, j, XPeriodicity, YPeriodicity);
+      Complex TmpSpinSpinCorrelation = 0.0;
       for (int nx = 0; nx < XPeriodicity; ++nx)
       {
 	for (int ny = 0; ny < YPeriodicity; ++ny)
@@ -213,12 +213,13 @@ int main(int argc, char** argv)
 	  Operator = new SpinWithPseudospin2DTranslationSpinSpinCorrelationOperator(Space, XMomentum, XPeriodicity, YMomentum, YPeriodicity, TmpIndex1, TmpIndex2);
 	  OperatorMatrixElementOperation Operation(Operator, State, State, State.GetVectorDimension());
 	  Operation.ApplyOperation(Architecture.GetArchitecture());
-	  SpinSpinCorrelations += Operation.GetScalar();
+	  TmpSpinSpinCorrelation += Operation.GetScalar();
 // 	cout << NeighborSpinSpinCorrelation << " " ;
 	  delete Operator;
 	}
       }
-      File << i << " " << j << " " << (SpinSpinCorrelations.Re / (XPeriodicity * YPeriodicity)) << endl;
+      SpinSpinCorrelations[TmpIndex] = TmpSpinSpinCorrelation.Re / (XPeriodicity * YPeriodicity);
+      File << i << " " << j << " " << SpinSpinCorrelations[TmpIndex] << endl;
     }
   }
 
@@ -270,12 +271,23 @@ int main(int argc, char** argv)
 	  }
 	}
       }
+      
+      TmpIndex2b[0] = GetLinearizedIndex(1, 0, XPeriodicity, YPeriodicity);
+      TmpIndex2b[1] = GetLinearizedIndex(Offset, 1, XPeriodicity, YPeriodicity);
+      TmpIndex2b[2] = GetLinearizedIndex(1 - Offset, - 1, XPeriodicity, YPeriodicity);
       for (int l = 0; l < 3; ++l)
-	File << i << " " << j << " " << l << " " << (BondBondCorrelations[l].Re / (XPeriodicity * YPeriodicity)) << endl;
+      {
+	double ShiftedCorrelation = (BondBondCorrelations[l].Re / (XPeriodicity * YPeriodicity)) - SpinSpinCorrelations[TmpIndex2b[1]] * SpinSpinCorrelations[TmpIndex2b[l]];
+	cout << ShiftedCorrelation << " " << (BondBondCorrelations[l].Re / (XPeriodicity * YPeriodicity)) << endl;
+	File << i << " " << j << " " << l << " " << ShiftedCorrelation << endl;
+      }
     }
   }
 
   File.close();
+  
+  delete[] BondBondCorrelations;
+  delete[] SpinSpinCorrelations;
 	  
   return 0;
 }

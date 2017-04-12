@@ -235,16 +235,16 @@ int main(int argc, char** argv)
     {
       TmpIndices[0][0] = GetLinearizedIndex(i, j, 0, XPeriodicity, YPeriodicity);
       TmpIndices[0][1] = GetLinearizedIndex(i, j, 1, XPeriodicity, YPeriodicity);
-      TmpIndices[1][0] = GetLinearizedIndex(i, j, 1, XPeriodicity, YPeriodicity);
-      TmpIndices[1][1] = GetLinearizedIndex(i + 1, j, 0, XPeriodicity, YPeriodicity);
+      TmpIndices[1][0] = GetLinearizedIndex(i, j, 0, XPeriodicity, YPeriodicity);
+      TmpIndices[1][1] = GetLinearizedIndex(i - 1, j, 1, XPeriodicity, YPeriodicity);
       TmpIndices[2][0] = GetLinearizedIndex(i, j, 1, XPeriodicity, YPeriodicity);
       TmpIndices[2][1] = GetLinearizedIndex(i, j, 2, XPeriodicity, YPeriodicity);
-      TmpIndices[3][0] = GetLinearizedIndex(i, j, 2, XPeriodicity, YPeriodicity);
-      TmpIndices[3][1] = GetLinearizedIndex(i - 1 + Offset, j + 1, 1, XPeriodicity, YPeriodicity);
+      TmpIndices[3][0] = GetLinearizedIndex(i - Offset, j - 1, 2, XPeriodicity, YPeriodicity);
+      TmpIndices[3][1] = GetLinearizedIndex(i - 1, j, 1, XPeriodicity, YPeriodicity);
       TmpIndices[4][0] = GetLinearizedIndex(i, j, 0, XPeriodicity, YPeriodicity);
       TmpIndices[4][1] = GetLinearizedIndex(i, j, 2, XPeriodicity, YPeriodicity);
-      TmpIndices[5][0] = GetLinearizedIndex(i, j, 2, XPeriodicity, YPeriodicity);
-      TmpIndices[5][1] = GetLinearizedIndex(i + Offset, j + 1, 0, XPeriodicity, YPeriodicity);
+      TmpIndices[5][0] = GetLinearizedIndex(i, j, 0, XPeriodicity, YPeriodicity);
+      TmpIndices[5][1] = GetLinearizedIndex(i - Offset, j - 1, 2, XPeriodicity, YPeriodicity);
   
 //       cout << i << " " << j << " " ;
 //       File << i << " " << j << " " ;
@@ -265,8 +265,9 @@ int main(int argc, char** argv)
   Complex NematicOP = (-NeighborSpinSpinCorrelation[0] + NeighborSpinSpinCorrelation[1] + NeighborSpinSpinCorrelation[2] * Phase( - M_PI / 3.0 ) + NeighborSpinSpinCorrelation[3] *  Phase( 2.0 * M_PI / 3.0 ) + NeighborSpinSpinCorrelation[4]  * Phase( M_PI / 3.0 ) + NeighborSpinSpinCorrelation[5]  * Phase( -2.0 * M_PI / 3.0 )) / (XPeriodicity * YPeriodicity);
   for (int l = 0; l < 6; ++l)
   {
-    File << NeighborSpinSpinCorrelation[l] / (XPeriodicity * YPeriodicity) << " " ;
-    cout << NeighborSpinSpinCorrelation[l] / (XPeriodicity * YPeriodicity) << " " ;
+    NeighborSpinSpinCorrelation[l] = NeighborSpinSpinCorrelation[l] / (XPeriodicity * YPeriodicity);
+    File << NeighborSpinSpinCorrelation[l]  << " " ;
+    cout << NeighborSpinSpinCorrelation[l] << " " ;
   }
   File << endl;
   cout << endl;
@@ -312,19 +313,19 @@ int main(int argc, char** argv)
 	  
 	    TmpIndex2[0][0] = GetLinearizedIndex(nx + i, ny + j, 0, XPeriodicity, YPeriodicity);
 	    TmpIndex2[1][0] = GetLinearizedIndex(nx + i, ny + j, 0, XPeriodicity, YPeriodicity);
-	    TmpIndex2[2][0] = GetLinearizedIndex(nx + i, ny + j, 0, XPeriodicity, YPeriodicity);
-	    TmpIndex2[3][0] = GetLinearizedIndex(nx + i, ny + j, 0, XPeriodicity, YPeriodicity);
-	    TmpIndex2[4][0] = GetLinearizedIndex(nx + i, ny + j, 1, XPeriodicity, YPeriodicity);
-	    TmpIndex2[5][0] = GetLinearizedIndex(nx + i, ny + j, 1, XPeriodicity, YPeriodicity);
+	    TmpIndex2[2][0] = GetLinearizedIndex(nx + i, ny + j, 1, XPeriodicity, YPeriodicity);
+	    TmpIndex2[3][0] = GetLinearizedIndex(nx + i - Offset, ny + j - 1, 2, XPeriodicity, YPeriodicity);
+	    TmpIndex2[4][0] = GetLinearizedIndex(nx + i, ny + j, 0, XPeriodicity, YPeriodicity);
+	    TmpIndex2[5][0] = GetLinearizedIndex(nx + i, ny + j, 0, XPeriodicity, YPeriodicity);
 	    
 	    TmpIndex2[0][1] = GetLinearizedIndex(nx + i, ny + j, 1, XPeriodicity, YPeriodicity);
-	    TmpIndex2[1][1] = GetLinearizedIndex(nx + i, ny + j, 2, XPeriodicity, YPeriodicity);
-	    TmpIndex2[2][1] = GetLinearizedIndex(nx + i - 1, ny + j, 1, XPeriodicity, YPeriodicity);
-	    TmpIndex2[3][1] = GetLinearizedIndex(nx + i - Offset, ny + j - 1, 2, XPeriodicity, YPeriodicity);
+	    TmpIndex2[1][1] = GetLinearizedIndex(nx + i - 1, ny + j, 1, XPeriodicity, YPeriodicity);
+	    TmpIndex2[2][1] = GetLinearizedIndex(nx + i, ny + j, 2, XPeriodicity, YPeriodicity);
+	    TmpIndex2[3][1] = GetLinearizedIndex(nx + i - 1, ny + j, 1, XPeriodicity, YPeriodicity);
 	    TmpIndex2[4][1] = GetLinearizedIndex(nx + i, ny + j, 2, XPeriodicity, YPeriodicity);
-	    TmpIndex2[5][1] = GetLinearizedIndex(nx + i + 1 - Offset, ny + j - 1, 2, XPeriodicity, YPeriodicity);
-	  
-	  
+	    TmpIndex2[5][1] = GetLinearizedIndex(nx + i - Offset, ny + j - 1, 2, XPeriodicity, YPeriodicity);
+	    
+	     
 	    for (int l = 0; l < 6; ++l)
 	    {
 	      for (int m = 0; m < 2; ++m)
@@ -339,12 +340,19 @@ int main(int argc, char** argv)
 	  }
 	}
 	for (int l = 0; l < 6; ++l)
-	  File << i << " " << j << " " << l << " " << (BondBondCorrelations[l][0].Re / (XPeriodicity * YPeriodicity)) << " " << (BondBondCorrelations[l][1].Re / (XPeriodicity * YPeriodicity)) << endl;
+// 	  File << i << " " << j << " " << l << " " << ((BondBondCorrelations[l][0].Re )/ (XPeriodicity * YPeriodicity) ) << " " << ((BondBondCorrelations[l][1].Re )/ (XPeriodicity * YPeriodicity)) << endl;
+	  File << i << " " << j << " " << l << " " << (BondBondCorrelations[l][0].Re/ (XPeriodicity * YPeriodicity) - NeighborSpinSpinCorrelation[0].Re * NeighborSpinSpinCorrelation[l].Re) << " " << (BondBondCorrelations[l][1].Re/ (XPeriodicity * YPeriodicity)  - NeighborSpinSpinCorrelation[1].Re * NeighborSpinSpinCorrelation[l].Re) << endl;
       }
     }
 
     File.close();
+    
+  for (int l = 0; l < 6; ++l)
+    delete[] BondBondCorrelations[l];
+  delete[] BondBondCorrelations;
   }
+  
+  
   return 0;
 }
 
