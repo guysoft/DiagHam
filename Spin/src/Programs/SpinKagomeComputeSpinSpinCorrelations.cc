@@ -340,8 +340,11 @@ int main(int argc, char** argv)
 	  }
 	}
 	for (int l = 0; l < 6; ++l)
+	{
 // 	  File << i << " " << j << " " << l << " " << ((BondBondCorrelations[l][0].Re )/ (XPeriodicity * YPeriodicity) ) << " " << ((BondBondCorrelations[l][1].Re )/ (XPeriodicity * YPeriodicity)) << endl;
+	  cout << (BondBondCorrelations[l][0].Re/ (XPeriodicity * YPeriodicity)) << " " << (NeighborSpinSpinCorrelation[0].Re) << " " << (NeighborSpinSpinCorrelation[l].Re) << " " << (NeighborSpinSpinCorrelation[0].Re * NeighborSpinSpinCorrelation[l].Re) << endl;
 	  File << i << " " << j << " " << l << " " << (BondBondCorrelations[l][0].Re/ (XPeriodicity * YPeriodicity) - NeighborSpinSpinCorrelation[0].Re * NeighborSpinSpinCorrelation[l].Re) << " " << (BondBondCorrelations[l][1].Re/ (XPeriodicity * YPeriodicity)  - NeighborSpinSpinCorrelation[1].Re * NeighborSpinSpinCorrelation[l].Re) << endl;
+	}
       }
     }
 

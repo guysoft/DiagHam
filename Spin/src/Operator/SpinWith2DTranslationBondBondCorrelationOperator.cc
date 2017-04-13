@@ -147,7 +147,7 @@ Complex SpinWith2DTranslationBondBondCorrelationOperator::PartialMatrixElement (
 	pos = this->Chain->SziSzjSmkSpl(this->SiteIndex1, this->SiteIndex2, this->SiteIndex3, this->SiteIndex4, i, TmpCoefficient1, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
 	  Element += Conj(V1[pos]) * 0.5 * V2[i] * TmpCoefficient1 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
-	
+// 	
 	
 	
 	pos = this->Chain->SmiSpjSmkSpl(this->SiteIndex1, this->SiteIndex2, this->SiteIndex3, this->SiteIndex4, i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);

@@ -338,8 +338,8 @@ int Spin1_2ChainNewAnd2DTranslation::SziSzjSmkSpl (int i, int j, int k, int l, i
 	  coefficient = 0.0;
 	  return this->HilbertSpaceDimension;
 	}
-      State ^= 0x1ul << k;
-      State |= 0x1ul << l;
+      State ^= 0x1ul << l;
+      State |= 0x1ul << k;
       
       unsigned long Mask = ((0x1ul << i) | (0x1ul << j));
       unsigned long tmpState = State & Mask;
