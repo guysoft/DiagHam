@@ -67,7 +67,8 @@ int main(int argc, char** argv)
   
   (*SystemGroup) += new SingleStringOption  ('i', "input-state", "name of the file corresponding to the state |Psi_R> (the order parameter being <Psi_L|c^+c^+|Psi_R>");   
   (*SystemGroup) += new BooleanOption  ('\n', "bond", "calculate bond-bond correlations");
-//   (*SystemGroup) += new BooleanOption ('\n', "only-cc", "compute only the parameters c^+_sigma c^+_sigma' instead of their linear combinations");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "only-x", "only evalute a given x position (negative if all kx sectors have to be computed)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "only-y", "only evalute a given y position sector (negative if all ky sectors have to be computed)", -1); 
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Sz symmetry)",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Sz symmetry)",0);
@@ -227,6 +228,22 @@ int main(int argc, char** argv)
     NeighborSpinSpinCorrelation[i] = 0.0;
   }
   
+  int MinX = 0;
+  int MaxX = XPeriodicity - 1;
+  int MinY = 0;
+  int MaxY = YPeriodicity - 1;
+  
+  if (Manager.GetInteger("only-x") != -1)
+  {
+    MinX = Manager.GetInteger("only-x");
+    MaxX = Manager.GetInteger("only-x");
+  }
+  if (Manager.GetInteger("only-y") != -1)
+  {
+    MinY = Manager.GetInteger("only-y");
+    MaxY = Manager.GetInteger("only-y");
+  }
+  
   File << "# E_{AB} E_{BA} E_{BC} E_{CB} E_{AC} E_{CA}" << endl;
   cout << "# E_{AB} E_{BA} E_{BC} E_{CB} E_{AC} E_{CA}" << endl;
   for (int i = 0; i < XPeriodicity; ++i)
@@ -296,9 +313,9 @@ int main(int argc, char** argv)
     Complex** BondBondCorrelations = new Complex*[6];
     for (int l = 0; l < 6; ++l)
       BondBondCorrelations[l] = new Complex[2];
-    for (int i = 0; i < XPeriodicity; ++i)
+    for (int i = MinX; i <= MaxX; ++i)
     {
-      for (int j = 0; j < YPeriodicity; ++j)
+      for (int j = MinY; j <= MaxY; ++j)
       {
 	for (int l = 0; l < 6; ++l)
 	  for (int m = 0; m < 2; ++m)
