@@ -149,8 +149,8 @@ Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation::Spin1_2ChainWithPseudospin
 	cout << UsedMemory << endl;
 #endif
     }
-    for (int i = 0; i < this->LargeHilbertSpaceDimension; ++i)
-      this->PrintState(cout, i) << endl;
+//     for (int i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+//       this->PrintState(cout, i) << endl;
 }
 
 
