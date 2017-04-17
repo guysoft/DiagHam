@@ -20,7 +20,8 @@
 #include "HilbertSpace/Spin1_2ChainWithPseudospinAnd2DTranslation.h"
 #include "HilbertSpace/Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation.h"
 
-// #include "Operator/BondEnergySpinPseudospinOperator.h"
+#include "Operator/BondEnergySpinPseudospinOperator.h"
+#include "Operator/SpinWithPseudospin2DTranslationKagomeBondBondCorrelationOperator.h"
 #include "Operator/SpinWithPseudospin2DTranslationSpinSpinCorrelationOperator.h"
 #include "Operator/SpinWith2DTranslationBondBondCorrelationOperator.h"
 
@@ -64,7 +65,8 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   
-  (*SystemGroup) += new SingleStringOption  ('i', "input-state", "name of the file corresponding to the state |Psi_R> (the order parameter being <Psi_L|c^+c^+|Psi_R>");   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
+  (*SystemGroup) += new SingleStringOption  ('i', "input-state", "name of the file corresponding to the state |Psi_R> (the order parameter being <Psi_L|c^+c^+|Psi_R>");   
+  (*SystemGroup) += new BooleanOption  ('\n', "kagome", "compute the true dimer-dimer correlations of the kagome lattice");
 //   (*SystemGroup) += new BooleanOption ('\n', "only-cc", "compute only the parameters c^+_sigma c^+_sigma' instead of their linear combinations");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -95,6 +97,8 @@ int main(int argc, char** argv)
   int NbrInputStates = 0;
   int SpinValue = 1;
   int Offset = 0;
+  
+  bool KagomeDimerFlag = Manager.GetBoolean("kagome");
   
   if (Manager.GetString("input-state") == 0)
     {
@@ -173,6 +177,11 @@ int main(int argc, char** argv)
  
   ofstream File;
   char* OutputFileName;
+  AbstractOperator* Operator;
+  
+  
+  if (KagomeDimerFlag == false)
+  {
   if (Manager.GetString("output-file") != 0)
     {
       OutputFileName = new char [strlen(Manager.GetString("output-file")) + 1];
@@ -195,7 +204,6 @@ int main(int argc, char** argv)
   cout.precision(14);
   
   File << "# i j <S_{0,0} S_{i,j}}>" << endl;
-  AbstractOperator* Operator;
   double* SpinSpinCorrelations = new double[NbrSites];  
   for (int i = 0; i < XPeriodicity; ++i)
   {
@@ -224,8 +232,7 @@ int main(int argc, char** argv)
   }
 
   File.close();
-  
-  
+    
   
   OutputFileName = ReplaceExtensionToFileName(Manager.GetString("input-state"), "vec", "bondbond.dat");
   if (OutputFileName == 0)
@@ -286,8 +293,126 @@ int main(int argc, char** argv)
 
   File.close();
   
+  
   delete[] BondBondCorrelations;
   delete[] SpinSpinCorrelations;
+  }
+  
+  if (KagomeDimerFlag == true)
+  {
+    double* KagomeDimer;
+    int BondIndex;
+    int* TmpIndex1 = new int[6];
+    int* TmpIndex2 = new int[6];
+    KagomeDimer = new double[6];
+    
+    cout.precision(14);
+	
+    for (int l = 0; l < 6 ; ++l)
+    {
+      Complex TmpSpinSpinCorrelation = 0.0;
+      for (int nx = 0; nx < XPeriodicity; ++nx)
+      {
+	for (int ny = 0; ny < YPeriodicity; ++ny)
+	{
+	  int TmpIndex0 = GetLinearizedIndex(nx, ny, XPeriodicity, YPeriodicity);
+	  TmpIndex1[0] = TmpIndex0;
+	  TmpIndex1[1] = TmpIndex0;
+	  TmpIndex1[2] = TmpIndex0;
+	  TmpIndex1[3] = GetLinearizedIndex(nx - 1, ny, XPeriodicity, YPeriodicity);;
+	  TmpIndex1[4] = TmpIndex0;
+	  TmpIndex1[5] = TmpIndex0;
+	  
+	  TmpIndex2[0] = TmpIndex0;
+	  TmpIndex2[1] = GetLinearizedIndex(nx - 1, ny, XPeriodicity, YPeriodicity);
+	  TmpIndex2[2] = TmpIndex0;
+	  TmpIndex2[3] = GetLinearizedIndex(nx - Offset, ny - 1, XPeriodicity, YPeriodicity);
+	  TmpIndex2[4] = TmpIndex0;
+	  TmpIndex2[5] = GetLinearizedIndex(nx - Offset, ny - 1, XPeriodicity, YPeriodicity);
+	  
+	  BondIndex = l / 2;
+	  
+	  Operator = new BondEnergySpinPseudospinOperator(Space, XMomentum, XPeriodicity, YMomentum, YPeriodicity, TmpIndex1[l], TmpIndex2[l], BondIndex);
+	  OperatorMatrixElementOperation Operation(Operator, State, State, State.GetVectorDimension());
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
+	  TmpSpinSpinCorrelation += Operation.GetScalar();
+	  delete Operator;
+	    }
+	  }
+	KagomeDimer[l] = TmpSpinSpinCorrelation.Re / (XPeriodicity * YPeriodicity);
+	cout << KagomeDimer[l] << " " ;
+    }
+    cout << endl;
+    
+    
+    
+    OutputFileName = ReplaceExtensionToFileName(Manager.GetString("input-state"), "vec", "kagomebondbond.dat");
+    if (OutputFileName == 0)
+    {
+      cout << "no vec extension was find in " << Manager.GetString("input-state") << " file name" << endl;
+      return 0;
+    }
+    File.open(OutputFileName, ios::binary | ios::out);
+    File.precision(14);
+    cout.precision(14);
+  
+    File << "# l_0 i j l_{i,j} <S_{0,0} S_{1,0} S_{i,j}S_{i,j,l}}>" << endl;
+    int* TmpIndex2a = new int[6];
+    int* TmpIndex2b = new int[6];
+    Complex* KagomeBondBondCorrelations = new Complex[6];
+    int BondIndex1 = 0;
+  for (int i = 0; i < XPeriodicity; ++i)
+  {
+    for (int j = 0; j < YPeriodicity; ++j)
+    {
+      for (int l = 0; l < 6; ++l)
+	KagomeBondBondCorrelations[l] = 0.0;
+      for (int nx = 0; nx < XPeriodicity; ++nx)
+      {
+	for (int ny = 0; ny < YPeriodicity; ++ny)
+	{
+	  int TmpIndex1 = GetLinearizedIndex(nx, ny, XPeriodicity, YPeriodicity);
+	  
+	  TmpIndex2a[0] = GetLinearizedIndex(i + nx, j + ny, XPeriodicity, YPeriodicity);
+	  TmpIndex2a[1] = TmpIndex2a[0];
+	  TmpIndex2a[2] = TmpIndex2a[0];
+	  TmpIndex2a[3] = GetLinearizedIndex(i + nx - 1, j + ny, XPeriodicity, YPeriodicity);;
+	  TmpIndex2a[4] = TmpIndex2a[0];
+	  TmpIndex2a[5] = TmpIndex2a[0];
+	  
+	  TmpIndex2b[0] = TmpIndex2a[0];
+	  TmpIndex2b[1] = GetLinearizedIndex(i + nx - 1, j + ny, XPeriodicity, YPeriodicity);
+	  TmpIndex2b[2] = TmpIndex2a[0];
+	  TmpIndex2b[3] = GetLinearizedIndex(i + nx - Offset, j + ny - 1, XPeriodicity, YPeriodicity);
+	  TmpIndex2b[4] = TmpIndex2a[0];
+	  TmpIndex2b[5] = GetLinearizedIndex(i + nx - Offset, j + ny - 1, XPeriodicity, YPeriodicity);
+	  
+	  for (int l = 0; l < 6; ++l)
+	  {
+	    Operator = new SpinWithPseudospin2DTranslationKagomeBondBondCorrelationOperator(Space, XMomentum, XPeriodicity, YMomentum, YPeriodicity, TmpIndex1, TmpIndex1, TmpIndex2a[l], TmpIndex2b[l], BondIndex1, l);
+	    OperatorMatrixElementOperation Operation(Operator, State, State, State.GetVectorDimension());
+	    Operation.ApplyOperation(Architecture.GetArchitecture());
+	    KagomeBondBondCorrelations[l] += Operation.GetScalar();
+	    delete Operator;
+	  }
+	}
+      }
+      
+      for (int l = 0; l < 6; ++l)
+      {
+	double ShiftedCorrelation = (KagomeBondBondCorrelations[l].Re / (XPeriodicity * YPeriodicity)) - KagomeDimer[BondIndex1] * KagomeDimer[l];
+	cout << i << " " << j << " " << l << " " << ShiftedCorrelation << " " << (KagomeBondBondCorrelations[l].Re / (XPeriodicity * YPeriodicity));
+	cout << endl;
+	File << i << " " << j << " " << l << " " << ShiftedCorrelation << endl;
+      }
+    }
+  }
+
+  File.close();
+  delete[] KagomeBondBondCorrelations;
+  delete[] KagomeDimer;
+  }
+  
 	  
   return 0;
 }

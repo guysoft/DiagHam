@@ -138,6 +138,15 @@ class Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation : public Spin1_2Chain
   virtual void TransformOneBodyBasisRecursive(ComplexVector& targetState, Complex coefficient,
 				      int position, int* spinIndices, int* initialPseudospinIndices, int* currentPseudospinIndices, RealMatrix oneBodyBasis, int nbrStateInOrbit, Complex** exponentialFactors);
   
+  // factorized code that is used to symmetrize the result of any operator action (for external use)
+  //
+  // i = index of original state (to compute orbit size)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // return value = index of the destination state  
+  virtual int SymmetrizeResult(int i, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
  protected:
    
   // generate all states with constraints
@@ -216,6 +225,34 @@ inline int Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation::SymmetrizeResul
 //     coefficient = 0.0;
   return TmpIndex;
 }
+
+// factorized code that is used to symmetrize the result of any operator action
+//
+// state = reference on the state that has been produced with the operator action
+// i = index of initial state before operations
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of the destination state  
+
+inline int Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation::SymmetrizeResult(int i, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  double TmpSign;
+  unsigned long state = this->FindCanonicalForm(this->TransientState, nbrTranslationX, nbrTranslationY, TmpSign);
+  int TmpIndex = this->FindStateIndex(state);
+  if (TmpIndex < this->HilbertSpaceDimension)
+    {
+      coefficient *= TmpSign;
+      coefficient *= this->RescalingFactors[this->NbrStateInOrbit[i]][this->NbrStateInOrbit[TmpIndex]];
+      nbrTranslationX = (this->MaxXMomentum - nbrTranslationX) % this->MaxXMomentum;
+      nbrTranslationY = (this->MaxYMomentum - nbrTranslationY) % this->MaxYMomentum;
+     }
+//   else
+//     coefficient = 0.0;
+//   cout << "sym result " << nbrTranslationX << " " << nbrTranslationY << endl;
+  return TmpIndex;
+}
+
 
 
 // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint

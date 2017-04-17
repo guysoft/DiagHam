@@ -58,6 +58,9 @@ class Spin1_2ChainWithPseudospinAnd2DTranslation : public Spin1_2ChainWithPseudo
   // momentum in the y direction
   int YMomentum;
   
+  // state description to be kept in cache to perform operations
+  unsigned long TransientState;
+  
   // bit shift that has to applied to perform a translation in the x direction 
   int StateXShift;
   // binary mask for the StateXShift first bits 
@@ -237,6 +240,38 @@ class Spin1_2ChainWithPseudospinAnd2DTranslation : public Spin1_2ChainWithPseudo
   // return value = index of resulting state
   virtual int SziSzjSmkSpl (int i, int j, int k, int l, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
     
+  // give a state description value to this->TransientState
+  //
+  // state = index of the state to convert
+  virtual void InitializeTransientState (int state);
+  
+  // apply SziSzj to transient state and return corresponding coefficient
+  //
+  // i = position of S- operator
+  // j = position of S+ operator
+  // return value = corresponding eigenvalue
+  virtual double SziSzj(int i, int j);
+  
+  // apply S+S- to transient state
+  //
+  // i = position of S- operator
+  // j = position of S+ operator
+  // return value = corresponding eigenvalue
+  virtual double SmiSpj(int i, int j);
+  
+  // apply off-diagonal part of pseudospin operator to the transient state
+  //
+  // i = position of the Joff operator
+  // return value = corresponding eigenvalue
+  virtual double JOffDiagonali(int i);
+  
+  // apply diagonal part of pseudospin operator to the transient state
+  //
+  // i = position of the JDiag operator
+  // coupling = array of coupling coefficients
+  // return value = corresponding eigenvalue
+  virtual double JDiagonali(int i, double* coupling);
+  
   // compute the parity (prod_i Sz_i) for a given state
   //
   // state = index of the state to be applied on Sz_i operator
@@ -273,6 +308,15 @@ class Spin1_2ChainWithPseudospinAnd2DTranslation : public Spin1_2ChainWithPseudo
   // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   virtual inline int ApplyMirrorSymmetry(int stateIndex, double& coefficient,
                                              int& nbrTranslationX, int& nbrTranslationY);
+
+  // factorized code that is used to symmetrize the result of any operator action (for external use)
+  //
+  // i = index of original state (to compute orbit size)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // return value = index of the destination state  
+  virtual int SymmetrizeResult(int i, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
   
 
@@ -315,7 +359,6 @@ class Spin1_2ChainWithPseudospinAnd2DTranslation : public Spin1_2ChainWithPseudo
 //   // finalState = reference on the array where the monomial representation has to be stored
 //   virtual void GetBosonicOccupation (unsigned int index, int * finalState);
   
-  
   // factorized code that is used to symmetrize the result of any operator action
   //
   // state = reference on the state that has been produced with the operator action
@@ -326,7 +369,7 @@ class Spin1_2ChainWithPseudospinAnd2DTranslation : public Spin1_2ChainWithPseudo
   // return value = index of the destination state  
   virtual int SymmetrizeResult(unsigned long& state, int nbrStateInOrbit, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
-  
+   
   // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
   //
   // stateDescription = unsigned integer describing the state
@@ -406,6 +449,34 @@ inline int Spin1_2ChainWithPseudospinAnd2DTranslation::SymmetrizeResult(unsigned
   return TmpIndex;
 }
 
+
+// factorized code that is used to symmetrize the result of any operator action
+//
+// state = reference on the state that has been produced with the operator action
+// i = index of initial state before operations
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of the destination state  
+
+inline int Spin1_2ChainWithPseudospinAnd2DTranslation::SymmetrizeResult(int i, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  unsigned long state = this->FindCanonicalForm(this->TransientState, nbrTranslationX, nbrTranslationY);
+//   int TmpMaxMomentum = this->ChainLength;
+//   while (((state >> TmpMaxMomentum) == 0x0ul) && (TmpMaxMomentum > 0))
+//     --TmpMaxMomentum;
+  int TmpIndex = this->FindStateIndex(state);
+  if (TmpIndex < this->HilbertSpaceDimension)
+    {
+      coefficient *= this->RescalingFactors[this->NbrStateInOrbit[i]][this->NbrStateInOrbit[TmpIndex]];
+      nbrTranslationX = (this->MaxXMomentum - nbrTranslationX) % this->MaxXMomentum;
+      nbrTranslationY = (this->MaxYMomentum - nbrTranslationY) % this->MaxYMomentum;
+     }
+//   else
+//     coefficient = 0.0;
+//   cout << "sym result " << nbrTranslationX << " " << nbrTranslationY << endl;
+  return TmpIndex;
+}
 
 // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
 //

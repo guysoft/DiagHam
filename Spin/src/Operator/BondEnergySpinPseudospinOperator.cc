@@ -149,25 +149,41 @@ Complex BondEnergySpinPseudospinOperator::PartialMatrixElement (ComplexVector& V
   int nbrTranslationsY1;
   int Tmp1;
   int Tmp2;
-  if (this->BondIndex == 0)      //AC
-  {
-    Tmp1 = 0;
-    Tmp2 = 2;
-  }
-  if (this->BondIndex == 1)      //AB
+  if (this->BondIndex == 0)      //AB
   {
     Tmp1 = 0;
     Tmp2 = 1;
   }
-  if (this->BondIndex == 2)      //BC
+  if (this->BondIndex == 1)      //BC
   {
     Tmp1 = 1;
     Tmp2 = 2;
   }
+  if (this->BondIndex == 2)      //AC
+  {
+    Tmp1 = 0;
+    Tmp2 = 2;
+  }
   
+  double** TmpDiagCoupling = new double*[3];
+  for (int l = 0; l < 3; ++l)
+    TmpDiagCoupling[l] = new double[2];
+  double* TmpOffDiagCoupling = new double[3];
   
+  TmpDiagCoupling[0][0] = 0.0;
+  TmpDiagCoupling[0][1] = -0.5;  
+  TmpDiagCoupling[1][0] = -0.75;
+  TmpDiagCoupling[1][1] = 0.25;
+  TmpDiagCoupling[2][0] = 0.0;
+  TmpDiagCoupling[2][1] = -0.5;
+  
+  TmpOffDiagCoupling[0] = sqrt(3) / 4.0;
+  TmpOffDiagCoupling[1] = 0.0;
+  TmpOffDiagCoupling[2] = -sqrt(3.0) / 4.0;
   for (int i = (int) firstComponent; i < dim; ++i)
-    {	 
+    {
+      if (this->SiteIndex1 != this->SiteIndex2)
+      { 
 	Complex TmpValue = V2[i] * 0.5;
 	
 	TmpCoefficient = this->Chain->SziSzj(this->SiteIndex1, this->SiteIndex2, i);
@@ -228,8 +244,23 @@ Complex BondEnergySpinPseudospinOperator::PartialMatrixElement (ComplexVector& V
 	  
 	pos2 = this->Chain->JoffiJoffj(this->SiteIndex1, this->SiteIndex2, i, coef2, nbrTranslationsX, nbrTranslationsY);
 	if (pos2!= dim)
-	  Element += Conj(V1[pos2]) *   2.0 * TmpValue * coef * coef2 * this->PseudospinCouplingElements[Tmp1] * this->PseudospinCouplingElements[Tmp2] *  this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  Element += Conj(V1[pos2]) * 2.0 * TmpValue * coef * coef2 * this->PseudospinCouplingElements[Tmp1] * this->PseudospinCouplingElements[Tmp2] *  this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+      }
+      else
+      {
+	TmpCoefficient = this->Chain->JDiagonali(this->SiteIndex1, i, TmpDiagCoupling[this->BondIndex]);
+	Element += Conj(V1[i]) * V2[i] * TmpCoefficient;
+	
+	pos = this->Chain->JOffDiagonali(this->SiteIndex1, i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	if (pos != dim)
+	  Element += Conj(V1[pos]) * V2[i] * TmpCoefficient * TmpOffDiagCoupling[this->BondIndex] *  this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+      }
     }
+    
+  delete[] TmpOffDiagCoupling;
+  for (int i = 0; i < 3; ++i)
+     delete[] TmpDiagCoupling[i];
+   delete[] TmpDiagCoupling;
   return Element;
 }
 
@@ -245,6 +276,7 @@ Complex BondEnergySpinPseudospinOperator::PartialMatrixElement (ComplexVector& V
 ComplexVector& BondEnergySpinPseudospinOperator::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 						    int firstComponent, int nbrComponent)
 {
+  cout << "Warning: untested method BondEnergySpinPseudospinOperator::LowLevelMultiply" << endl;
   int dim = (int) (firstComponent + nbrComponent);
   Complex TmpCoefficient;
   int pos;
@@ -259,23 +291,43 @@ ComplexVector& BondEnergySpinPseudospinOperator::LowLevelMultiply(ComplexVector&
   int nbrTranslationsY1;
   int Tmp1;
   int Tmp2;
-  if (this->BondIndex == 0)      //AC
-  {
-    Tmp1 = 0;
-    Tmp2 = 2;
-  }
-  if (this->BondIndex == 1)      //AB
+  if (this->BondIndex == 0)      //AB
   {
     Tmp1 = 0;
     Tmp2 = 1;
   }
-  if (this->BondIndex == 2)      //BC
+  if (this->BondIndex == 1)      //BC
   {
     Tmp1 = 1;
     Tmp2 = 2;
   }
+  if (this->BondIndex == 2)      //AC
+  {
+    Tmp1 = 0;
+    Tmp2 = 2;
+  }
+  
+  double** TmpDiagCoupling = new double*[3];
+  for (int l = 0; l < 3; ++l)
+    TmpDiagCoupling[l] = new double[2];
+  double* TmpOffDiagCoupling = new double[3];
+  
+  TmpDiagCoupling[0][0] = 0.0;
+  TmpDiagCoupling[0][1] = -0.5;  
+  TmpDiagCoupling[1][0] = -0.75;
+  TmpDiagCoupling[1][1] = 0.25;
+  TmpDiagCoupling[2][0] = 0.0;
+  TmpDiagCoupling[2][1] = -0.5;
+  
+  TmpOffDiagCoupling[0] = sqrt(3) / 4.0;
+  TmpOffDiagCoupling[1] = 0.0;
+  TmpOffDiagCoupling[2] = -sqrt(3.0) / 4.0;
+  
+  
   for (int i = (int) firstComponent; i < dim; ++i)
     {
+      if (this->SiteIndex1 != this->SiteIndex2)
+      {
 	Complex TmpValue = vSource[i] * 0.5;
 // 	TmpIndex1 = this->GetLinearizedIndex(j - this->Offset, k - 1);
 // 	TmpIndex2 = this->GetLinearizedIndex(j, k);
@@ -340,6 +392,20 @@ ComplexVector& BondEnergySpinPseudospinOperator::LowLevelMultiply(ComplexVector&
 	if (pos2!= dim)
 	  vDestination[pos2] += 2.0 * TmpValue * coef * coef2 * this->PseudospinCouplingElements[Tmp1] * this->PseudospinCouplingElements[Tmp2] *  this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
     }
+    else
+      {
+	coef = this->Chain->JDiagonali(this->SiteIndex1, i, TmpDiagCoupling[this->BondIndex]);
+	vDestination[i] += vSource[i] * coef;
+	
+	pos = this->Chain->JOffDiagonali(this->SiteIndex1, i, coef, nbrTranslationsX, nbrTranslationsY);
+	if (pos != dim)
+	  vDestination[pos] += vSource[i] * coef * TmpOffDiagCoupling[this->BondIndex] *  this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+      }
+    }
+   delete[] TmpOffDiagCoupling;
+   for (int i = 0; i < 3; ++i)
+     delete[] TmpDiagCoupling;
+   delete[] TmpDiagCoupling;
   return vDestination;
 }
 

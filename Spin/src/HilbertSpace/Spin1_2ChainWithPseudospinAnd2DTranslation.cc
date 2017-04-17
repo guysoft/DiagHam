@@ -893,6 +893,13 @@ int Spin1_2ChainWithPseudospinAnd2DTranslation::JOffDiagonali (int i, int state,
 
 int Spin1_2ChainWithPseudospinAnd2DTranslation::JoffiJoffj (int i, int j, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
 {
+  if (i == j)
+  {
+    coefficient = 1.0;
+    nbrTranslationX = 0;
+    nbrTranslationY = 0;
+    return state;
+  }
   unsigned long State = this->StateDescription[state];
   coefficient = 1.0;
   unsigned long Tmp = (State >> (2*i)) & 0x1ul;
@@ -1146,6 +1153,106 @@ int Spin1_2ChainWithPseudospinAnd2DTranslation::SmiSpjJiJj (int i, int j, int st
   return this->HilbertSpaceDimension;
 }
 
+// give a state description value to this->TransientState
+//
+// state = index of the state to convert
+
+void Spin1_2ChainWithPseudospinAnd2DTranslation::InitializeTransientState (int state)
+{
+  this->TransientState = this->StateDescription[state];
+  
+//   cout << "0 " << (this->TransientState) ;
+}
+
+
+// apply SziSzj to transient state and return corresponding coefficient
+//
+// i = position of S- operator
+// j = position of S+ operator
+// return value = corresponding eigenvalue
+
+double Spin1_2ChainWithPseudospinAnd2DTranslation::SziSzj(int i, int j)
+{
+  unsigned long Mask = ((0x1ul << (2*i + 1)) | (0x1ul << (2*j + 1)));
+  unsigned long tmpState = this->TransientState & Mask;
+//   cout << "szsz " << (this->TransientState);
+  if ((tmpState == 0x0ul) || (tmpState == Mask))
+    return 0.25;
+  else
+    return -0.25;
+}
+  
+// apply S+S- to transient state
+//
+// i = position of S- operator
+// j = position of S+ operator
+// return value = corresponding eigenvalue
+
+double Spin1_2ChainWithPseudospinAnd2DTranslation::SmiSpj(int i, int j)
+{
+  unsigned long tmpState = this->TransientState;
+  unsigned long tmpState2 = tmpState;
+  tmpState >>= (2*i + 1);
+  tmpState &= 0x1ul;
+  if (i != j)
+    {
+      tmpState2 >>= (2*j + 1); 
+      tmpState2 &= 0x1ul;
+      tmpState2 <<= 1;
+      tmpState2 |= tmpState;
+      if (tmpState2 == 0x1ul)
+	{
+	  this->TransientState = ((this->TransientState | (0x1ul << (2*j + 1))) & ~(0x1ul << (2*i + 1)));
+//   cout << "smsp " << (this->TransientState) << endl;
+	  
+	  return 1.0;
+	}
+      else
+	{
+	  return 0.0;
+	}
+    }
+  return 0.5;
+//   if (tmpState == 0x0ul)
+//     {
+//       coefficient = 1.0;
+//       return state;
+//     }
+}
+  
+  
+// apply off-diagonal part of pseudospin operator to the transient state
+//
+// i = position of the Joff operator
+// return value = corresponding eigenvalue
+
+double Spin1_2ChainWithPseudospinAnd2DTranslation::JOffDiagonali(int i)
+{
+  unsigned long Tmp = (this->TransientState >> (2*i)) & 0x1ul;
+  
+  if (Tmp == 0x0ul)    
+    this->TransientState = this->TransientState | (0x1ul << (2*i));
+  
+  else
+    this->TransientState = this->TransientState & ~(0x1ul << (2*i));
+
+  
+//   cout << "joff " << (this->TransientState);
+  return 1.0;
+}
+  
+  
+// apply diagonal part of pseudospin operator to the transient state
+//
+// i = position of the JDiag operator
+// coupling = array of coupling coefficients
+// return value = corresponding eigenvalue
+
+double Spin1_2ChainWithPseudospinAnd2DTranslation::JDiagonali(int i, double* coupling)
+{
+  int Tmp = (int) ((this->TransientState >> (2*i)) & 0x1ul);
+  return coupling[Tmp];
+}
 
 // convert a state defined on a lattice with a number of sites equals to a multiple of three
 //
