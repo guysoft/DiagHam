@@ -300,8 +300,8 @@ AbstractHilbertSpace*  DoubledSpin0_1_2_ChainWithSquareTranslationsAndSublattice
   return new  DoubledSpin0_1_2_ChainWithSquareTranslationsAndSublatticeQuantumNumbers (*this);
 }
 
-/*
-HermitianMatrix  DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers::EvaluatePartialDensityMatrix (int szSector, int momentumSector, int sublatticeQuantumNumberSector,  int complementarySublatticeQuantumNumberSector, ComplexVector& groundState)
+
+HermitianMatrix DoubledSpin0_1_2_ChainWithSquareTranslationsAndSublatticeQuantumNumbers::EvaluatePartialDensityMatrix (int szSector, int momentumSector, int sublatticeQuantumNumberSector,  int complementarySublatticeQuantumNumberSector, ComplexVector& groundState)
 {
 
   Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers TmpDestinationHilbertSpace(this->ChainLength, momentumSector ,this->ChainLength / this->MaxXMomentum, szSector,sublatticeQuantumNumberSector, 10000,10000);
@@ -355,7 +355,6 @@ HermitianMatrix  DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublattic
 		  if (Index < this->HilbertSpaceDimension ) 
 		    {
 		      double TmpFactor = sqrt( (double) (TmpDestinationHilbertSpace.NbrStateInOrbit[i] * TmpHilbertSpace.NbrStateInOrbit[j] * ( double) this->NbrStateInOrbit[Index])); 
-		      //	      double TmpFactor=1.0;
 		      double Argument =  2.0 * M_PI * (NbrTranslation * this->Momentum  - t * momentumSector  - k * ComplementaryKSector) /  this->MaxXMomentum ;
 		      HRep.AddToMatrixElement(i,j,groundState[Index]/TmpFactor*Phase(Argument));
 		    }
@@ -399,4 +398,4 @@ HermitianMatrix  DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublattic
   
   return TmpDensityMatrix;
 }
-*/
+

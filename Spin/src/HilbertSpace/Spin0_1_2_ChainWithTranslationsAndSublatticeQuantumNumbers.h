@@ -43,6 +43,7 @@ using std::ostream;
 class Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers : public  Spin0_1_2_ChainWithTranslations
 {
   friend class DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers;
+  friend class DoubledSpin0_1_2_ChainWithSquareTranslationsAndSublatticeQuantumNumbers;
  protected:
   int SubLatticeDifference;
 

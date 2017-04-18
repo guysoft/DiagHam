@@ -179,8 +179,8 @@ bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz
 bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int & valueOfZBra, int & valueOfZKet);
 
 bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int & momentum, int & valueOfZBra, int & valueOfZKet);
-
-bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int & momentum, int & valueSubLatticeZeroBra, int & valueSubLatticeZeroKet, int & valueSubLatticeZeroProduct );
+bool PEPSFindSubLatticeNumbersFromVectorFileName(char* filename, int& nbrSpins, int& sz, int & momentum, int & valueSubLatticeZeroBra, int & valueSubLatticeZeroKet);
+bool PEPSFindSubLatticeNumbersFromVectorFileName(char* filename, int& nbrSpins, int& sz, int & momentum, int & valueSubLatticeZeroBra, int & valueSubLatticeZeroKet, int & valueSubLatticeZeroProduct );
 
 
 

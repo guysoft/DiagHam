@@ -15,6 +15,8 @@
 #include "HilbertSpace/DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers.h"
 
 #include "HilbertSpace/VirtualSpaceTransferMatrixWithTranslations.h"
+#include "HilbertSpace/DoubledSpin0_1_2_ChainWithSquareTranslationsAndSublatticeQuantumNumbers.h"
+
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -68,7 +70,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "staggered", "use the Hilbert space with the staggered Sz symmetry");
   (*SystemGroup) += new BooleanOption  ('\n', "momentum", "compute the momentum resolved entanglement spectrum");
   (*SystemGroup) += new BooleanOption ('\n', "no-spin", "use undescribed hilbert space ");
-  (*SystemGroup) += new  SingleIntegerOption ('\n', "translation-step", "", 1); 
+  (*SystemGroup) += new SingleIntegerOption ('\n', "translation-step", "", 1); 
+  (*SystemGroup) += new BooleanOption ('\n',"ab-peps", "using a PEPS breaking explicitely the single site translation");
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
   (*SystemGroup) += new BooleanOption  ('c', "complex", "states of the density matrix are complex");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
@@ -119,7 +122,8 @@ int main(int argc, char** argv)
   bool SymmetryFlag = Manager.GetBoolean("symmetry"); 
   bool MomentumFlag = Manager.GetBoolean("momentum");
   bool StaggeredFlag = Manager.GetBoolean("staggered");
-  bool UndescribedHilbertSpaceFlag =  Manager.GetBoolean("no-spin");
+  bool UndescribedHilbertSpaceFlag = Manager.GetBoolean("no-spin");
+  bool ABPEPSFlag = Manager.GetBoolean("ab-peps");
 #ifdef __LAPACK__
   bool LapackFlag = Manager.GetBoolean("use-lapack");
 #endif
@@ -271,16 +275,27 @@ int main(int argc, char** argv)
 		  else
 		    {
 		      int Momentum;
-
 		      for (int i = 0; i < NbrSpaces; ++i)
 			{
-			  if (PEPSFindSystemInfoFromVectorFileName(GroundStateFiles[i],ChainLength, Sz, Momentum,  SubLatticeZeroBra, SubLatticeZeroKet, SubLatticeZeroProduct) == false)
+
+			  if (ABPEPSFlag == false) 
 			    {
-			      cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
-			      return -1;
+			      if (PEPSFindSubLatticeNumbersFromVectorFileName(GroundStateFiles[i],ChainLength, Sz, Momentum,  SubLatticeZeroBra, SubLatticeZeroKet, SubLatticeZeroProduct) == false)
+				{
+				  cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
+				  return -1;
+				}
+			      Spaces[i] = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (ChainLength, Momentum, TranslationStep, Sz, SubLatticeZeroKet*SubLatticeZeroKet,SubLatticeZeroBra*SubLatticeZeroBra, SubLatticeZeroProduct*SubLatticeZeroKet*SubLatticeZeroBra, 100000,100000);
 			    }
-			  
-			  Spaces[i] = new DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers (ChainLength, Momentum, TranslationStep, Sz, SubLatticeZeroKet*SubLatticeZeroKet,SubLatticeZeroBra*SubLatticeZeroBra, SubLatticeZeroProduct*SubLatticeZeroKet*SubLatticeZeroBra, 100000,100000);
+			  else
+			    {
+			      if (PEPSFindSubLatticeNumbersFromVectorFileName(GroundStateFiles[i],ChainLength, Sz, Momentum,  SubLatticeZeroBra, SubLatticeZeroKet) == false)
+				{
+				  cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
+				  return -1;
+				}
+			      Spaces[i] = new DoubledSpin0_1_2_ChainWithSquareTranslationsAndSublatticeQuantumNumbers(ChainLength, Momentum, Sz,SubLatticeZeroKet, SubLatticeZeroBra, 100000,100000);
+			    }
 			}
 		    }
 		}

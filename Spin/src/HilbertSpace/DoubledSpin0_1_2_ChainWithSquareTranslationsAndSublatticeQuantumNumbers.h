@@ -87,7 +87,8 @@ class DoubledSpin0_1_2_ChainWithSquareTranslationsAndSublatticeQuantumNumbers : 
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
-  //  HermitianMatrix  EvaluatePartialDensityMatrix (int szSector, int momentumSector, int sublatticeQuantumNumberSector,  int complementarySublatticeQuantumNumberSector, ComplexVector& groundState);
+  HermitianMatrix  EvaluatePartialDensityMatrix (int szSector, int momentumSector, int sublatticeQuantumNumberSector,  int complementarySublatticeQuantumNumberSector, ComplexVector& groundState);
+  
  protected:
 
 };

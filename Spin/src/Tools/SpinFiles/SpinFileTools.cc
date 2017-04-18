@@ -952,12 +952,11 @@ bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz
 
 
 
-bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int & momentum, int & valueSubLatticeZeroBra, int & valueSubLatticeZeroKet, int & valueSubLatticeZeroProduct )
+bool PEPSFindSubLatticeNumbersFromVectorFileName(char* filename, int& nbrSpins, int& sz, int & momentum, int & valueSubLatticeZeroBra, int & valueSubLatticeZeroKet )
 {
   if (PEPSFindSystemInfoFromVectorFileName(filename, nbrSpins, sz, momentum) == false)
    return false;
-  
-  
+   
   char* StrNbrSpins;
   StrNbrSpins = strstr(filename, "_sbra_");
   if (StrNbrSpins != 0)
@@ -1011,7 +1010,15 @@ bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz
       cout << "can't guess the value of S symmetry ket  from file name " << filename << endl;
       return false;            
     }
+  return true;
+}
+
+bool PEPSFindSubLatticeNumbersFromVectorFileName(char* filename, int& nbrSpins, int& sz, int & momentum, int & valueSubLatticeZeroBra, int & valueSubLatticeZeroKet, int & valueSubLatticeZeroProduct) 
+{
+  if (PEPSFindSubLatticeNumbersFromVectorFileName(filename, nbrSpins, sz, momentum, valueSubLatticeZeroBra, valueSubLatticeZeroKet) == false)
+    return false;
   
+  char* StrNbrSpins;  
   StrNbrSpins = strstr(filename, "_sprod_");
   if (StrNbrSpins != 0)
     {
@@ -1040,8 +1047,8 @@ bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz
     }
  
   return true;
-
 }
+
 
 bool PEPSFindSystemInfoFromVectorFileNameUndescribedSpace(char* filename, int& nbrSpins, int& bondDimension)
 {
