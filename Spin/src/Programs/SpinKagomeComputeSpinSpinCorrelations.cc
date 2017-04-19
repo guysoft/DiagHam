@@ -195,6 +195,7 @@ int main(int argc, char** argv)
   }
  
   ofstream File;
+  ofstream File1;
   char* OutputFileName;
   if (Manager.GetString("output-file") != 0)
     {
@@ -212,9 +213,18 @@ int main(int argc, char** argv)
 	      return 0;
 	    }
 	  File.open(OutputFileName, ios::binary | ios::out);
+	  
+	  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("input-state"), "vec", "spinspin.dat");
+	  if (OutputFileName == 0)
+	    {
+	      cout << "no vec extension was find in " << Manager.GetString("input-state") << " file name" << endl;
+	      return 0;
+	    }
+	  File1.open(OutputFileName, ios::binary | ios::out);
 	}
     }
   File.precision(14);
+  File1.precision(14);
   cout.precision(14);
   
   cout << "NbrSites = " << NbrSites << " " << " XPeriodicity = " << XPeriodicity << " YPeriodicity  = " << YPeriodicity << " Sz = " << SzValue << " SzParitySector = " << SzParitySector << " XMomentum = " << XMomentum << " YMomentum = " << YMomentum << endl;
@@ -292,7 +302,40 @@ int main(int argc, char** argv)
   File.close();
   cout << "C3 OP = " << sqrt(NematicOP.Re*NematicOP.Re + NematicOP.Im*NematicOP.Im) << endl;
 
-
+  int* TmpIndex1 = new int[3];
+  for (int i = 0; i < XPeriodicity; ++i)
+  {
+    for (int j = 0; j < YPeriodicity; ++j)
+    {
+      for (int l = 0; l < 3; ++l)
+	NeighborSpinSpinCorrelation[l] = 0.0;
+      for (int nx = 0; nx < XPeriodicity; ++nx)
+      {
+	for (int ny = 0; ny < YPeriodicity; ++ny)
+	{
+	  int TmpIndex = GetLinearizedIndex(nx, ny, 0, XPeriodicity, YPeriodicity);
+	  TmpIndex1[0] = GetLinearizedIndex(nx + i, ny + j, 0, XPeriodicity, YPeriodicity);
+	  TmpIndex1[1] = GetLinearizedIndex(nx + i, ny + j, 1, XPeriodicity, YPeriodicity);
+	  TmpIndex1[2] = GetLinearizedIndex(nx + i, ny + j, 2, XPeriodicity, YPeriodicity);
+	 
+	  for (int l = 0; l < 3; ++l)
+	  {
+	    Operator = new SpinWith2DTranslationSpinSpinCorrelationOperator(Space, XMomentum, XPeriodicity, YMomentum, YPeriodicity, TmpIndex, TmpIndex1[l]);
+	    OperatorMatrixElementOperation Operation(Operator, State, State, State.GetVectorDimension());
+	    Operation.ApplyOperation(Architecture.GetArchitecture());
+	    NeighborSpinSpinCorrelation[l] += Operation.GetScalar();
+// 	cout << NeighborSpinSpinCorrelation[l] << " " ;
+	    delete Operator;
+	  }
+//       cout << endl;
+	}
+      }
+      for (int l = 0; l < 3; ++l)
+	File1 << i << " " << j << " " << l << " " << (NeighborSpinSpinCorrelation[l].Re/(XPeriodicity * YPeriodicity)) << endl;
+    }
+  }
+  delete[] TmpIndex1;
+  
   if (BondFlag == true)
   {
     OutputFileName = ReplaceExtensionToFileName(Manager.GetString("input-state"), "vec", "bondbond.dat");

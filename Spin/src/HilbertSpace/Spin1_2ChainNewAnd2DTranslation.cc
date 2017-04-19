@@ -308,12 +308,9 @@ int Spin1_2ChainNewAnd2DTranslation::SmiSpj (int i, int j, int state, double& co
     }
   else
     {
-      if ((State & (0x1ul << i)) == 0x0ul)
-	{
-	  coefficient = 0.0;
-	  return this->HilbertSpaceDimension;
-	}
-      coefficient = -0.25;
+      nbrTranslationX = 0;
+      nbrTranslationY = 0;
+      coefficient = 0.5;
       return state;
     }
 }
@@ -351,6 +348,8 @@ int Spin1_2ChainNewAnd2DTranslation::SziSzjSmkSpl (int i, int j, int k, int l, i
     }
   else
     {
+      nbrTranslationX = 0;
+      nbrTranslationY = 0;
       coefficient = 0.5 * this->SziSzj(i, j, state);
       return state;
     }

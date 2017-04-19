@@ -61,6 +61,16 @@ SpinWithPseudospin2DTranslationKagomeBondBondCorrelationOperator::SpinWithPseudo
   this->BondIndex1 = bondIndex1;
   this->BondIndex2 = bondIndex2;
   
+  if (((this->BondIndex1 & 1) != 0) && ((this->BondIndex2 & 1) == 0))
+  {
+    this->Index1 = siteIndex3;
+    this->Index2 = siteIndex4;
+    this->Index3 = siteIndex1;
+    this->Index4 = siteIndex2;
+    this->BondIndex1 = bondIndex2;
+    this->BondIndex2 = bondIndex1;
+  }
+  
   // projection of kagome onto the s = 1/2 states on each triangle
   this->PseudospinCouplingElements = new double[3];    
   this->PseudospinCouplingElements[0] = 0.0;
@@ -186,10 +196,30 @@ Complex SpinWithPseudospin2DTranslationKagomeBondBondCorrelationOperator::Partia
     Tmp1 = 0;
     Tmp2 = 2;
   }
-  if (((this->BondIndex1 & 1) != 0) && ((this->BondIndex2 & 1) != 0))
+  
+  int Tmpa1;
+  int Tmpa2;
+  if (TmpBond1 == 0)      //AB
   {
-    cout << "Error: odd value (" << (this->BondIndex1) << ") not implemented" << endl;
+    Tmpa1 = 0;
+    Tmpa2 = 1;
   }
+  if (TmpBond1 == 1)      //BC
+  {
+    Tmpa1 = 1;
+    Tmpa2 = 2;
+  }
+  if (TmpBond1 == 2)      //AC
+  {
+    Tmpa1 = 0;
+    Tmpa2 = 2;
+  }
+  
+  
+//   if (((this->BondIndex1 & 1) != 0) && ((this->BondIndex2 & 1) != 0))
+//   {
+//     cout << "Error: odd value (" << (this->BondIndex1) << ") not implemented" << endl;
+//   }
 	  
   for (int i = (int) firstComponent; i < dim; ++i)
     {
@@ -425,7 +455,1524 @@ Complex SpinWithPseudospin2DTranslationKagomeBondBondCorrelationOperator::Partia
 	    Element += Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsY][nbrTranslationsY];
 	  
 	}
+	if (((this->BondIndex1 & 1) != 0) && ((this->BondIndex2 & 1) != 0))
+	{
+	  //SzSzSzSz
+	  coef = this->Chain->SziSzj(this->Index1, this->Index2, i);
+	  coef *= this->Chain->SziSzj(this->Index3, this->Index4, i);
+	  
+	  //SzSzSzSz JdiagJdiagJJ
+	  coef2 = this->Chain->JDiagonali(this->Index1, i, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  coef2 *= this->Chain->JDiagonali(this->Index2, i, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  
+	  TmpCoefficient = this->Chain->JDiagonali(this->Index3, i, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, i, this->PseudospinDiagCouplingElements[Tmp2]);
+	  Element += Conj(V1[i]) * V2[i] * coef * coef2 * TmpCoefficient;
+	  
+	  TmpCoefficient = this->Chain->JDiagonali(this->Index3, i, this->PseudospinDiagCouplingElements[Tmp1]);
+	  pos = this->Chain->JOffDiagonali(this->Index4, i, TmpCoefficient1, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += Conj(V1[pos]) * V2[i] * coef * coef2 * TmpCoefficient * TmpCoefficient1 * this->PseudospinCouplingElements[Tmp2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  TmpCoefficient = this->Chain->JDiagonali(this->Index4, i, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->JOffDiagonali(this->Index3, i, TmpCoefficient1, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += Conj(V1[pos]) * V2[i] * coef * coef2 * TmpCoefficient * TmpCoefficient1 * this->PseudospinCouplingElements[Tmp1] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  pos = this->Chain->JoffiJoffj(this->Index3, this->Index4, i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += Conj(V1[pos]) * V2[i] * coef * coef2 * TmpCoefficient * this->PseudospinCouplingElements[Tmp1] * this->PseudospinCouplingElements[Tmp2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  
+	  //SzSzSzSz JdiagJoffJJ
+	  this->Chain->InitializeTransientState(i);
+	  coef2 = this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  coef2 *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient = this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += Conj(V1[pos]) * V2[i] * coef * coef2 * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  coef2 = this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  coef2 *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);  
+	  TmpCoefficient = this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *=  this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += Conj(V1[pos]) * V2[i] * coef * coef2 * TmpCoefficient * this->PseudospinCouplingElements[Tmp2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  coef2 = this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  coef2 *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]); 
+	  TmpCoefficient = this->Chain->JDiagonali(this->Index4, i, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += Conj(V1[pos]) * V2[i] * coef * coef2 * TmpCoefficient * this->PseudospinCouplingElements[Tmp1] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  coef2 = this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  coef2 *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient =  this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += Conj(V1[pos]) * V2[i] * coef * coef2 * TmpCoefficient * this->PseudospinCouplingElements[Tmp1] * this->PseudospinCouplingElements[Tmp2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SzSzSzSz JOffJDiagJJ
+	  this->Chain->InitializeTransientState(i);
+	  coef2 = this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  coef2 *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient = this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += Conj(V1[pos]) * V2[i] * coef * coef2 * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  coef2 = this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  coef2 *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);  
+	  TmpCoefficient = this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *=  this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += Conj(V1[pos]) * V2[i] * coef * coef2 * TmpCoefficient * this->PseudospinCouplingElements[Tmp2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  coef2 = this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  coef2 *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]); 
+	  TmpCoefficient = this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += Conj(V1[pos]) * V2[i] * coef * coef2 * TmpCoefficient * this->PseudospinCouplingElements[Tmp1] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  coef2 = this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  coef2 *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient =  this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += Conj(V1[pos]) * V2[i] * coef * coef2 * TmpCoefficient * this->PseudospinCouplingElements[Tmp1] * this->PseudospinCouplingElements[Tmp2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SzSzSzSz JOffJOffJJ
+	  this->Chain->InitializeTransientState(i);
+	  coef2 = this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  coef2 *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient = this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += Conj(V1[pos]) * V2[i] * coef * coef2 * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  coef2 = this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  coef2 *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);  
+	  TmpCoefficient = this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *=  this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += Conj(V1[pos]) * V2[i] * coef * coef2 * TmpCoefficient * this->PseudospinCouplingElements[Tmp2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  coef2 = this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  coef2 *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1); 
+	  TmpCoefficient = this->Chain->JDiagonali(this->Index4, i, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += Conj(V1[pos]) * V2[i] * coef * coef2 * TmpCoefficient * this->PseudospinCouplingElements[Tmp1] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  coef2 = this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  coef2 *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient =  this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += Conj(V1[pos]) * V2[i] * coef * coef2 * TmpCoefficient * this->PseudospinCouplingElements[Tmp1] * this->PseudospinCouplingElements[Tmp2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SzSzSpSm
+	  //SzSzSpSm JDiagJdiagJJ
+	  coef = this->Chain->SziSzj(this->Index1, this->Index2, i);
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SzSzSpSm JDiagJOffJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SzSzSpSm JOffJOffJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SzSzSmSp
+	  //SzSzSmSp JDiagJDiagJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SzSzSpSm JDiagJOffJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SzSzSpSm JOffJDiagJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SzSzSpSm JOffJOffJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * coef * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SmSpSzSz
+	  //SmSpSzSz JDiagJDiagJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SmSpSzSz JDiagJOffJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SmSpSzSz JOffJDiagJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SmSpSzSz JOffJOffJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SpsmSzSz
+	  //SmSpSzSz JDiagJDiagJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SmSpSzSz JDiagJOffJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SmSpSzSz JOffJDiagJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SmSpSzSz JOffJOffJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SziSzj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.5 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+// 	  
+// 	  
+	  //SmSpSmSp
+	  //SmSpSmSp JDiagJDiagJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SmSpSmSp JDiagJOffJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SmSpSmSp JOffJDiagJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SmSpSzSz JOffJOffJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SmSpSpSm
+	  //SmSpSmSp JDiagJDiagJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SmSpSmSp JDiagJOffJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SmSpSmSp JOffJDiagJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SmSpSzSz JOffJOffJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index2, this->Index1);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SmSpSmSp JDiagJDiagJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SmSpSmSp JDiagJOffJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SmSpSmSp JOffJDiagJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SmSpSzSz JOffJOffJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index3, this->Index4);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SmSpSmSp JDiagJDiagJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SmSpSmSp JDiagJOffJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index1, this->PseudospinDiagCouplingElements[Tmpa1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SmSpSmSp JOffJDiagJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index2, this->PseudospinDiagCouplingElements[Tmpa2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  //SmSpSpSm JOffJOffJJ
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index3, this->PseudospinDiagCouplingElements[Tmp1]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->Chain->JDiagonali(this->Index4, this->PseudospinDiagCouplingElements[Tmp2]);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	 
+	  this->Chain->InitializeTransientState(i);
+	  TmpCoefficient = this->Chain->SmiSpj(this->Index1, this->Index2);
+	  TmpCoefficient *= this->Chain->SmiSpj(this->Index4, this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa2] * this->Chain->JOffDiagonali(this->Index2);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmpa1] * this->Chain->JOffDiagonali(this->Index1);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp1] * this->Chain->JOffDiagonali(this->Index3);
+	  TmpCoefficient *= this->PseudospinCouplingElements[Tmp2] * this->Chain->JOffDiagonali(this->Index4);
+	  pos = this->Chain->SymmetrizeResult(i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
+	  if (pos != dim)
+	    Element += 0.25 * Conj(V1[pos]) * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	}
     }
+//   cout << (this->Index1) << " "<< (this->Index2) << " " << (this->Index3) << " " << (this->Index4) << " "  << Tmpa1 << " " << Tmpa2 << " " << Tmp1 << " " << Tmp2 << " -> " << Element << endl;
   return Element;
 }
 

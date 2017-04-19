@@ -58,24 +58,62 @@ BondEnergySpinPseudospinOperator::BondEnergySpinPseudospinOperator(Spin1_2ChainW
   this->SiteIndex2 = siteIndex2;
   this->BondIndex = bondIndex;
   
-  // projection of kagome onto the s = 1/2 states on each triangle
-  this->PseudospinCouplingElements = new double[3];    
-  this->PseudospinCouplingElements[0] = 0.0;
-  this->PseudospinCouplingElements[1] = 1.0/sqrt(3.0);
-  this->PseudospinCouplingElements[2] = -1.0/sqrt(3.0);
+  if (this->BondIndex == 0)      //AB
+  {
+    this->AtomIndex1 = 0;
+    this->AtomIndex2 = 1;
+  }
+  if (this->BondIndex == 1)      //BC
+  {
+    this->AtomIndex1 = 1;
+    this->AtomIndex2 = 2;
+  }
+  if (this->BondIndex == 2)      //AC
+  {
+    this->AtomIndex1 = 0;
+    this->AtomIndex2 = 2;
+  }
   
-  this-> PseudospinDiagCouplingElements = new double*[3];
-  for (int i = 0; i < 3; ++i)
-    this->PseudospinDiagCouplingElements[i] = new double[2];
-  this->PseudospinDiagCouplingElements[0][0] = 1.0;
-  this->PseudospinDiagCouplingElements[0][1] = -1.0/3.0;
   
-  this->PseudospinDiagCouplingElements[1][0] = 0.0;
-  this->PseudospinDiagCouplingElements[1][1] = 2.0/3.0;
+  this->BuildCouplingElementTable();  
+  this->EvaluateExponentialFactors();
   
-  this->PseudospinDiagCouplingElements[2][0] = 0.0;
-  this->PseudospinDiagCouplingElements[2][1] = 2.0/3.0;
+}
+
+// constructor from default datas
+//
+// chain = pointer to the Hilbert space
+// nbrSpin = number of spins
+
+BondEnergySpinPseudospinOperator::BondEnergySpinPseudospinOperator(Spin1_2ChainWithPseudospinAnd2DTranslation* chain, int xMomentum, int nbrSpinX, int yMomentum, int nbrSpinY, int siteIndex1, int siteIndex2, int atomIndex1, int atomIndex2)
+{
+  this->Chain = chain;
+  this->NbrSpinX = nbrSpinX;
+  this->NbrSpinY = nbrSpinY;
+  this->NbrSpin = this->NbrSpinX * this->NbrSpinY;
+  this->XMomentum = xMomentum;
+  this->YMomentum = yMomentum;
   
+  this->SiteIndex1 = siteIndex1;
+  this->SiteIndex2 = siteIndex2;
+  
+  this->AtomIndex1 = atomIndex1;
+  this->AtomIndex2 = atomIndex2;
+  
+  if (this->SiteIndex1 == this->SiteIndex2)
+  {
+    if (this->AtomIndex1 * this->AtomIndex2 != 0)
+      this->BondIndex = 1;
+    else
+    {
+      if ((this->AtomIndex1 == 1) or (this->AtomIndex2 == 1))
+	this->BondIndex = 0;
+      else
+	this->BondIndex = 2;
+    }
+  }
+  
+  this->BuildCouplingElementTable();  
   this->EvaluateExponentialFactors();
   
 }
@@ -93,7 +131,7 @@ BondEnergySpinPseudospinOperator::~BondEnergySpinPseudospinOperator()
 
 AbstractOperator* BondEnergySpinPseudospinOperator::Clone ()
 {
-  return new BondEnergySpinPseudospinOperator(this->Chain, this->XMomentum, this->NbrSpinX, this->YMomentum, this->NbrSpinY, this->SiteIndex1, this->SiteIndex2, this->BondIndex);
+  return new BondEnergySpinPseudospinOperator(this->Chain, this->XMomentum, this->NbrSpinX, this->YMomentum, this->NbrSpinY, this->SiteIndex1, this->SiteIndex2, this->AtomIndex1, this->AtomIndex2);
 }
 
 // set Hilbert space
@@ -147,24 +185,24 @@ Complex BondEnergySpinPseudospinOperator::PartialMatrixElement (ComplexVector& V
   
   int nbrTranslationsX1;
   int nbrTranslationsY1;
-  int Tmp1;
-  int Tmp2;
-  if (this->BondIndex == 0)      //AB
-  {
-    Tmp1 = 0;
-    Tmp2 = 1;
-  }
-  if (this->BondIndex == 1)      //BC
-  {
-    Tmp1 = 1;
-    Tmp2 = 2;
-  }
-  if (this->BondIndex == 2)      //AC
-  {
-    Tmp1 = 0;
-    Tmp2 = 2;
-  }
-  
+//   int Tmp1;
+//   int Tmp2;
+//   if (this->BondIndex == 0)      //AB
+//   {
+//     Tmp1 = 0;
+//     Tmp2 = 1;
+//   }
+//   if (this->BondIndex == 1)      //BC
+//   {
+//     Tmp1 = 1;
+//     Tmp2 = 2;
+//   }
+//   if (this->BondIndex == 2)      //AC
+//   {
+//     Tmp1 = 0;
+//     Tmp2 = 2;
+//   }
+//   
   double** TmpDiagCoupling = new double*[3];
   for (int l = 0; l < 3; ++l)
     TmpDiagCoupling[l] = new double[2];
@@ -187,46 +225,46 @@ Complex BondEnergySpinPseudospinOperator::PartialMatrixElement (ComplexVector& V
 	Complex TmpValue = V2[i] * 0.5;
 	
 	TmpCoefficient = this->Chain->SziSzj(this->SiteIndex1, this->SiteIndex2, i);
-	TmpCoefficient *= this->Chain->JDiagonali(this->SiteIndex1, i, this->PseudospinDiagCouplingElements[Tmp2]);
-	TmpCoefficient *= this->Chain->JDiagonali(this->SiteIndex2, i, this->PseudospinDiagCouplingElements[Tmp1]);
+	TmpCoefficient *= this->Chain->JDiagonali(this->SiteIndex1, i, this->PseudospinDiagCouplingElements[this->AtomIndex2]);
+	TmpCoefficient *= this->Chain->JDiagonali(this->SiteIndex2, i, this->PseudospinDiagCouplingElements[this->AtomIndex1]);
 	Element += Conj(V1[i]) * TmpCoefficient * V2[i];
 	
-	pos = this->Chain->SmiSpjJiJj(this->SiteIndex2, this->SiteIndex1, i, this->PseudospinDiagCouplingElements[Tmp1], this->PseudospinDiagCouplingElements[Tmp2], coef, nbrTranslationsX, nbrTranslationsY);
+	pos = this->Chain->SmiSpjJiJj(this->SiteIndex2, this->SiteIndex1, i, this->PseudospinDiagCouplingElements[this->AtomIndex1], this->PseudospinDiagCouplingElements[this->AtomIndex2], coef, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
 	  Element += Conj(V1[pos]) * TmpValue * coef * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 	
-	pos = this->Chain->SmiSpjJoffiJj(this->SiteIndex2, this->SiteIndex1, i, this->PseudospinDiagCouplingElements[Tmp2], coef, nbrTranslationsX, nbrTranslationsY);
+	pos = this->Chain->SmiSpjJoffiJj(this->SiteIndex2, this->SiteIndex1, i, this->PseudospinDiagCouplingElements[this->AtomIndex2], coef, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
-	  Element += Conj(V1[pos]) * TmpValue * coef * this->PseudospinCouplingElements[Tmp1] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  Element += Conj(V1[pos]) * TmpValue * coef * this->PseudospinCouplingElements[this->AtomIndex1] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 	
-	pos = this->Chain->SmiSpjJiJoffj(this->SiteIndex2, this->SiteIndex1, i, this->PseudospinDiagCouplingElements[Tmp1], coef, nbrTranslationsX, nbrTranslationsY);
+	pos = this->Chain->SmiSpjJiJoffj(this->SiteIndex2, this->SiteIndex1, i, this->PseudospinDiagCouplingElements[this->AtomIndex1], coef, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
-	  Element += Conj(V1[pos]) *  TmpValue * coef * this->PseudospinCouplingElements[Tmp2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  Element += Conj(V1[pos]) *  TmpValue * coef * this->PseudospinCouplingElements[this->AtomIndex2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 	
 	pos = this->Chain->SmiSpjJoffiJoffj(this->SiteIndex2, this->SiteIndex1, i, coef, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
-	  Element += Conj(V1[pos]) *  TmpValue * coef * this->PseudospinCouplingElements[Tmp2] * this->PseudospinCouplingElements[Tmp1] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  Element += Conj(V1[pos]) *  TmpValue * coef * this->PseudospinCouplingElements[this->AtomIndex2] * this->PseudospinCouplingElements[this->AtomIndex1] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
 	
-	pos = this->Chain->SmiSpjJiJj(this->SiteIndex1, this->SiteIndex2, i, this->PseudospinDiagCouplingElements[Tmp2], this->PseudospinDiagCouplingElements[Tmp1], coef, nbrTranslationsX, nbrTranslationsY);
+	pos = this->Chain->SmiSpjJiJj(this->SiteIndex1, this->SiteIndex2, i, this->PseudospinDiagCouplingElements[this->AtomIndex2], this->PseudospinDiagCouplingElements[this->AtomIndex1], coef, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
 	  Element += Conj(V1[pos]) *  TmpValue * coef * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 	
-	pos = this->Chain->SmiSpjJoffiJj(this->SiteIndex1, this->SiteIndex2, i, this->PseudospinDiagCouplingElements[Tmp1], coef, nbrTranslationsX, nbrTranslationsY);
+	pos = this->Chain->SmiSpjJoffiJj(this->SiteIndex1, this->SiteIndex2, i, this->PseudospinDiagCouplingElements[this->AtomIndex1], coef, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
-	  Element += Conj(V1[pos]) *  TmpValue * coef * this->PseudospinCouplingElements[Tmp2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  Element += Conj(V1[pos]) *  TmpValue * coef * this->PseudospinCouplingElements[this->AtomIndex2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 	
-	pos = this->Chain->SmiSpjJiJoffj(this->SiteIndex1, this->SiteIndex2, i, this->PseudospinDiagCouplingElements[Tmp2], coef, nbrTranslationsX, nbrTranslationsY);
+	pos = this->Chain->SmiSpjJiJoffj(this->SiteIndex1, this->SiteIndex2, i, this->PseudospinDiagCouplingElements[this->AtomIndex2], coef, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
-	  Element += Conj(V1[pos]) *   TmpValue * coef * this->PseudospinCouplingElements[Tmp1] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  Element += Conj(V1[pos]) *   TmpValue * coef * this->PseudospinCouplingElements[this->AtomIndex1] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 	
 	pos = this->Chain->SmiSpjJoffiJoffj(this->SiteIndex1, this->SiteIndex2, i, coef, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
-	  Element += Conj(V1[pos]) *   TmpValue * coef * this->PseudospinCouplingElements[Tmp1] * this->PseudospinCouplingElements[Tmp2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  Element += Conj(V1[pos]) *   TmpValue * coef * this->PseudospinCouplingElements[this->AtomIndex1] * this->PseudospinCouplingElements[this->AtomIndex2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
 
 	coef = this->Chain->SziSzj(this->SiteIndex1, this->SiteIndex2, i);
-	TmpCoefficient = coef *  this->Chain->JDiagonali(this->SiteIndex2, i, this->PseudospinDiagCouplingElements[Tmp1]) * this->PseudospinCouplingElements[Tmp2];
+	TmpCoefficient = coef *  this->Chain->JDiagonali(this->SiteIndex2, i, this->PseudospinDiagCouplingElements[this->AtomIndex1]) * this->PseudospinCouplingElements[this->AtomIndex2];
 	if (TmpCoefficient != 0.0)
 	{
 	  pos = this->Chain->JOffDiagonali(this->SiteIndex1, i, coef2, nbrTranslationsX, nbrTranslationsY);
@@ -234,7 +272,7 @@ Complex BondEnergySpinPseudospinOperator::PartialMatrixElement (ComplexVector& V
 	    Element += Conj(V1[pos]) *   2.0 * TmpValue * TmpCoefficient * coef2 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 	}
 	
-	TmpCoefficient = coef *  this->Chain->JDiagonali(this->SiteIndex1, i, this->PseudospinDiagCouplingElements[Tmp2]) * this->PseudospinCouplingElements[Tmp1];
+	TmpCoefficient = coef *  this->Chain->JDiagonali(this->SiteIndex1, i, this->PseudospinDiagCouplingElements[this->AtomIndex2]) * this->PseudospinCouplingElements[this->AtomIndex1];
 	if (TmpCoefficient != 0.0)
 	{
 	  pos = this->Chain->JOffDiagonali(this->SiteIndex2, i, coef2, nbrTranslationsX, nbrTranslationsY);
@@ -244,7 +282,7 @@ Complex BondEnergySpinPseudospinOperator::PartialMatrixElement (ComplexVector& V
 	  
 	pos2 = this->Chain->JoffiJoffj(this->SiteIndex1, this->SiteIndex2, i, coef2, nbrTranslationsX, nbrTranslationsY);
 	if (pos2!= dim)
-	  Element += Conj(V1[pos2]) * 2.0 * TmpValue * coef * coef2 * this->PseudospinCouplingElements[Tmp1] * this->PseudospinCouplingElements[Tmp2] *  this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  Element += Conj(V1[pos2]) * 2.0 * TmpValue * coef * coef2 * this->PseudospinCouplingElements[this->AtomIndex1] * this->PseudospinCouplingElements[this->AtomIndex2] *  this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
       }
       else
       {
@@ -289,24 +327,24 @@ ComplexVector& BondEnergySpinPseudospinOperator::LowLevelMultiply(ComplexVector&
   
   int nbrTranslationsX1;
   int nbrTranslationsY1;
-  int Tmp1;
-  int Tmp2;
-  if (this->BondIndex == 0)      //AB
-  {
-    Tmp1 = 0;
-    Tmp2 = 1;
-  }
-  if (this->BondIndex == 1)      //BC
-  {
-    Tmp1 = 1;
-    Tmp2 = 2;
-  }
-  if (this->BondIndex == 2)      //AC
-  {
-    Tmp1 = 0;
-    Tmp2 = 2;
-  }
-  
+//   int Tmp1;
+//   int Tmp2;
+//   if (this->BondIndex == 0)      //AB
+//   {
+//     Tmp1 = 0;
+//     Tmp2 = 1;
+//   }
+//   if (this->BondIndex == 1)      //BC
+//   {
+//     Tmp1 = 1;
+//     Tmp2 = 2;
+//   }
+//   if (this->BondIndex == 2)      //AC
+//   {
+//     Tmp1 = 0;
+//     Tmp2 = 2;
+//   }
+//   
   double** TmpDiagCoupling = new double*[3];
   for (int l = 0; l < 3; ++l)
     TmpDiagCoupling[l] = new double[2];
@@ -333,46 +371,46 @@ ComplexVector& BondEnergySpinPseudospinOperator::LowLevelMultiply(ComplexVector&
 // 	TmpIndex2 = this->GetLinearizedIndex(j, k);
       
 	TmpCoefficient = this->Chain->SziSzj(this->SiteIndex1, this->SiteIndex2, i);
-	TmpCoefficient *= this->Chain->JDiagonali(this->SiteIndex1, i, this->PseudospinDiagCouplingElements[Tmp2]);
-	TmpCoefficient *= this->Chain->JDiagonali(this->SiteIndex2, i, this->PseudospinDiagCouplingElements[Tmp1]);
+	TmpCoefficient *= this->Chain->JDiagonali(this->SiteIndex1, i, this->PseudospinDiagCouplingElements[this->AtomIndex2]);
+	TmpCoefficient *= this->Chain->JDiagonali(this->SiteIndex2, i, this->PseudospinDiagCouplingElements[this->AtomIndex1]);
 	vDestination[i] += TmpCoefficient * vSource[i];
 	
-	pos = this->Chain->SmiSpjJiJj(this->SiteIndex2, this->SiteIndex1, i, this->PseudospinDiagCouplingElements[Tmp1], this->PseudospinDiagCouplingElements[Tmp2], coef, nbrTranslationsX, nbrTranslationsY);
+	pos = this->Chain->SmiSpjJiJj(this->SiteIndex2, this->SiteIndex1, i, this->PseudospinDiagCouplingElements[this->AtomIndex1], this->PseudospinDiagCouplingElements[this->AtomIndex2], coef, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
 	  vDestination[pos] += TmpValue * coef * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 	
-	pos = this->Chain->SmiSpjJoffiJj(this->SiteIndex2, this->SiteIndex1, i, this->PseudospinDiagCouplingElements[Tmp2], coef, nbrTranslationsX, nbrTranslationsY);
+	pos = this->Chain->SmiSpjJoffiJj(this->SiteIndex2, this->SiteIndex1, i, this->PseudospinDiagCouplingElements[this->AtomIndex2], coef, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
-	  vDestination[pos] += TmpValue * coef * this->PseudospinCouplingElements[Tmp1] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  vDestination[pos] += TmpValue * coef * this->PseudospinCouplingElements[this->AtomIndex1] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 	
-	pos = this->Chain->SmiSpjJiJoffj(this->SiteIndex2, this->SiteIndex1, i, this->PseudospinDiagCouplingElements[Tmp1], coef, nbrTranslationsX, nbrTranslationsY);
+	pos = this->Chain->SmiSpjJiJoffj(this->SiteIndex2, this->SiteIndex1, i, this->PseudospinDiagCouplingElements[this->AtomIndex1], coef, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
-	  vDestination[pos] += TmpValue * coef * this->PseudospinCouplingElements[Tmp2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  vDestination[pos] += TmpValue * coef * this->PseudospinCouplingElements[this->AtomIndex2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 	
 	pos = this->Chain->SmiSpjJoffiJoffj(this->SiteIndex2, this->SiteIndex1, i, coef, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
-	  vDestination[pos] += TmpValue * coef * this->PseudospinCouplingElements[Tmp2] * this->PseudospinCouplingElements[Tmp1] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  vDestination[pos] += TmpValue * coef * this->PseudospinCouplingElements[this->AtomIndex2] * this->PseudospinCouplingElements[this->AtomIndex1] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
 	
-	pos = this->Chain->SmiSpjJiJj(this->SiteIndex1, this->SiteIndex2, i, this->PseudospinDiagCouplingElements[Tmp2], this->PseudospinDiagCouplingElements[Tmp1], coef, nbrTranslationsX, nbrTranslationsY);
+	pos = this->Chain->SmiSpjJiJj(this->SiteIndex1, this->SiteIndex2, i, this->PseudospinDiagCouplingElements[this->AtomIndex2], this->PseudospinDiagCouplingElements[this->AtomIndex1], coef, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
 	  vDestination[pos] += TmpValue * coef * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 	
-	pos = this->Chain->SmiSpjJoffiJj(this->SiteIndex1, this->SiteIndex2, i, this->PseudospinDiagCouplingElements[Tmp1], coef, nbrTranslationsX, nbrTranslationsY);
+	pos = this->Chain->SmiSpjJoffiJj(this->SiteIndex1, this->SiteIndex2, i, this->PseudospinDiagCouplingElements[this->AtomIndex1], coef, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
-	  vDestination[pos] += TmpValue * coef * this->PseudospinCouplingElements[Tmp2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  vDestination[pos] += TmpValue * coef * this->PseudospinCouplingElements[this->AtomIndex2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 	
-	pos = this->Chain->SmiSpjJiJoffj(this->SiteIndex1, this->SiteIndex2, i, this->PseudospinDiagCouplingElements[Tmp2], coef, nbrTranslationsX, nbrTranslationsY);
+	pos = this->Chain->SmiSpjJiJoffj(this->SiteIndex1, this->SiteIndex2, i, this->PseudospinDiagCouplingElements[this->AtomIndex2], coef, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
-	  vDestination[pos] += TmpValue * coef * this->PseudospinCouplingElements[Tmp1] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  vDestination[pos] += TmpValue * coef * this->PseudospinCouplingElements[this->AtomIndex1] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 	
 	pos = this->Chain->SmiSpjJoffiJoffj(this->SiteIndex1, this->SiteIndex2, i, coef, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
-	  vDestination[pos] += TmpValue * coef * this->PseudospinCouplingElements[Tmp1] * this->PseudospinCouplingElements[Tmp2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  vDestination[pos] += TmpValue * coef * this->PseudospinCouplingElements[this->AtomIndex1] * this->PseudospinCouplingElements[this->AtomIndex2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
 
 	coef = this->Chain->SziSzj(this->SiteIndex1, this->SiteIndex2, i);
-	TmpCoefficient = coef *  this->Chain->JDiagonali(this->SiteIndex2, i, this->PseudospinDiagCouplingElements[Tmp1]) * this->PseudospinCouplingElements[Tmp2];
+	TmpCoefficient = coef *  this->Chain->JDiagonali(this->SiteIndex2, i, this->PseudospinDiagCouplingElements[this->AtomIndex1]) * this->PseudospinCouplingElements[this->AtomIndex2];
 	if (TmpCoefficient != 0.0)
 	{
 	  pos = this->Chain->JOffDiagonali(this->SiteIndex1, i, coef2, nbrTranslationsX, nbrTranslationsY);
@@ -380,7 +418,7 @@ ComplexVector& BondEnergySpinPseudospinOperator::LowLevelMultiply(ComplexVector&
 	    vDestination[pos] += 2.0 * TmpValue * TmpCoefficient * coef2 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 	}
 	
-	TmpCoefficient = coef *  this->Chain->JDiagonali(this->SiteIndex1, i, this->PseudospinDiagCouplingElements[Tmp2]) * this->PseudospinCouplingElements[Tmp1];
+	TmpCoefficient = coef *  this->Chain->JDiagonali(this->SiteIndex1, i, this->PseudospinDiagCouplingElements[this->AtomIndex2]) * this->PseudospinCouplingElements[this->AtomIndex1];
 	if (TmpCoefficient != 0.0)
 	{
 	  pos = this->Chain->JOffDiagonali(this->SiteIndex2, i, coef2, nbrTranslationsX, nbrTranslationsY);
@@ -390,7 +428,7 @@ ComplexVector& BondEnergySpinPseudospinOperator::LowLevelMultiply(ComplexVector&
 	  
 	pos2 = this->Chain->JoffiJoffj(this->SiteIndex1, this->SiteIndex2, i, coef2, nbrTranslationsX, nbrTranslationsY);
 	if (pos2!= dim)
-	  vDestination[pos2] += 2.0 * TmpValue * coef * coef2 * this->PseudospinCouplingElements[Tmp1] * this->PseudospinCouplingElements[Tmp2] *  this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	  vDestination[pos2] += 2.0 * TmpValue * coef * coef2 * this->PseudospinCouplingElements[this->AtomIndex1] * this->PseudospinCouplingElements[this->AtomIndex2] *  this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
     }
     else
       {
@@ -427,3 +465,26 @@ void BondEnergySpinPseudospinOperator::EvaluateExponentialFactors()
     }
 }
 
+//build the table with all pseudospin coupling elements
+//
+
+void BondEnergySpinPseudospinOperator::BuildCouplingElementTable()
+{
+  // projection of kagome onto the s = 1/2 states on each triangle
+  this->PseudospinCouplingElements = new double[3];    
+  this->PseudospinCouplingElements[0] = 0.0;
+  this->PseudospinCouplingElements[1] = 1.0/sqrt(3.0);
+  this->PseudospinCouplingElements[2] = -1.0/sqrt(3.0);
+  
+  this-> PseudospinDiagCouplingElements = new double*[3];
+  for (int i = 0; i < 3; ++i)
+    this->PseudospinDiagCouplingElements[i] = new double[2];
+  this->PseudospinDiagCouplingElements[0][0] = 1.0;
+  this->PseudospinDiagCouplingElements[0][1] = -1.0/3.0;
+  
+  this->PseudospinDiagCouplingElements[1][0] = 0.0;
+  this->PseudospinDiagCouplingElements[1][1] = 2.0/3.0;
+  
+  this->PseudospinDiagCouplingElements[2][0] = 0.0;
+  this->PseudospinDiagCouplingElements[2][1] = 2.0/3.0;
+}

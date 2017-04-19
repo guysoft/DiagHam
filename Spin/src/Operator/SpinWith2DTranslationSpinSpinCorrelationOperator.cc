@@ -126,9 +126,7 @@ Complex SpinWith2DTranslationSpinSpinCorrelationOperator::PartialMatrixElement (
   int nbrTranslationsY;
     
   for (int i = (int) firstComponent; i < dim; ++i)
-    {	 
-	Complex TmpValue = V2[i] * 0.5;
-	
+    {
 	TmpCoefficient = this->Chain->SziSzj(this->SiteIndex1, this->SiteIndex2, i);
 	Element += Conj(V1[i]) * TmpCoefficient * V2[i];
 	
@@ -136,6 +134,7 @@ Complex SpinWith2DTranslationSpinSpinCorrelationOperator::PartialMatrixElement (
 	pos = this->Chain->SmiSpj(this->SiteIndex2, this->SiteIndex1, i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
 	  Element += Conj(V1[pos]) * 0.5 * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+	
 	pos = this->Chain->SmiSpj(this->SiteIndex1, this->SiteIndex2, i, TmpCoefficient, nbrTranslationsX, nbrTranslationsY);
 	if (pos != dim)
 	  Element += Conj(V1[pos]) * 0.5 * V2[i] * TmpCoefficient * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];

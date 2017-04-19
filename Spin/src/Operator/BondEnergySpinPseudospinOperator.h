@@ -63,6 +63,10 @@ class BondEnergySpinPseudospinOperator : public AbstractOperator
   
   int SiteIndex2;
   
+  int AtomIndex1;
+  
+  int AtomIndex2;
+  
   int BondIndex;
   
   // number of spin chain along the x direction
@@ -84,6 +88,12 @@ class BondEnergySpinPseudospinOperator : public AbstractOperator
   // nbrSpin = number of spins
   BondEnergySpinPseudospinOperator(Spin1_2ChainWithPseudospinAnd2DTranslation* chain, int xMomentum, int nbrSpinX, int yMomentum, int nbrSpinY, int siteIndex1, int siteIndex2, int bondIndex);
 
+  // constructor from default datas
+  //
+  // chain = pointer to the Hilbert space
+  // nbrSpin = number of spins
+  BondEnergySpinPseudospinOperator(Spin1_2ChainWithPseudospinAnd2DTranslation* chain, int xMomentum, int nbrSpinX, int yMomentum, int nbrSpinY, int siteIndex1, int siteIndex2, int atomIndex1, int atomIndex2);
+  
   // destructor
   //
   ~BondEnergySpinPseudospinOperator();
@@ -133,6 +143,10 @@ protected:
   // evaluate all exponential factors
   //   
   virtual void EvaluateExponentialFactors();
+  
+  // Build the table with all the pseudospin coupling elements
+  //
+  virtual void BuildCouplingElementTable();
 
 };
 
