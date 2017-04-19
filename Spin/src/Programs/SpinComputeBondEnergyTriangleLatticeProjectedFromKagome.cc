@@ -67,6 +67,7 @@ int main(int argc, char** argv)
   
   (*SystemGroup) += new SingleStringOption  ('i', "input-state", "name of the file corresponding to the state |Psi_R> (the order parameter being <Psi_L|c^+c^+|Psi_R>");   
   (*SystemGroup) += new BooleanOption  ('\n', "kagome", "compute the true dimer-dimer correlations of the kagome lattice");
+  (*SystemGroup) += new BooleanOption  ('\n', "bond", "calculate bond-bond correlations");
 //   (*SystemGroup) += new BooleanOption ('\n', "only-cc", "compute only the parameters c^+_sigma c^+_sigma' instead of their linear combinations");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -393,105 +394,104 @@ int main(int argc, char** argv)
     
     File.close();
     
-    
-    OutputFileName = ReplaceExtensionToFileName(Manager.GetString("input-state"), "vec", "kagomebondbond.dat");
-    if (OutputFileName == 0)
+    if (Manager.GetBoolean("bond"))
     {
-      cout << "no vec extension was find in " << Manager.GetString("input-state") << " file name" << endl;
-      return 0;
-    }
-    File.open(OutputFileName, ios::binary | ios::out);
-    File.precision(14);
-    cout.precision(14);
-  
-    File << "# l_0 i j l_{i,j} <S_{0,0} S_{1,0} S_{i,j}S_{i,j,l}}>" << endl;
-    int* TmpIndex2a = new int[6];
-    int* TmpIndex2b = new int[6];
-    Complex** KagomeBondBondCorrelations = new Complex*[6];
-    for (int l = 0; l < 6; ++l)
-      KagomeBondBondCorrelations[l] = new Complex[2];
-    int* TmpIndex1a = new int[2];
-    int* TmpIndex1b = new int[2];
-    int* BondIndex1 = new int[2];
-    
-  for (int i = 0; i < XPeriodicity; ++i)
-  {
-    for (int j = 0; j < YPeriodicity; ++j)
-    {
-      for (int l = 0; l < 6; ++l)
+      OutputFileName = ReplaceExtensionToFileName(Manager.GetString("input-state"), "vec", "kagomebondbond.dat");
+      if (OutputFileName == 0)
       {
-	KagomeBondBondCorrelations[l][0] = 0.0;
-	KagomeBondBondCorrelations[l][1] = 0.0;
+	cout << "no vec extension was find in " << Manager.GetString("input-state") << " file name" << endl;
+	return 0;
       }
-      
-      for (int nx = 0; nx < XPeriodicity; ++nx)
+      File.open(OutputFileName, ios::binary | ios::out);
+      File.precision(14);
+      cout.precision(14);
+  
+      File << "# l_0 i j l_{i,j} <S_{0,0} S_{1,0} S_{i,j}S_{i,j,l}}>" << endl;
+      File << "# Column 3 is wrong!! finish debugging" << endl;
+      int* TmpIndex2a = new int[6];
+      int* TmpIndex2b = new int[6];
+      Complex** KagomeBondBondCorrelations = new Complex*[6];
+      for (int l = 0; l < 6; ++l)
+	KagomeBondBondCorrelations[l] = new Complex[2];
+      int* TmpIndex1a = new int[2];
+      int* TmpIndex1b = new int[2];
+      int* BondIndex1 = new int[2];
+    
+    for (int i = 0; i < XPeriodicity; ++i)
+    {
+      for (int j = 0; j < YPeriodicity; ++j)
       {
-	for (int ny = 0; ny < YPeriodicity; ++ny)
+	for (int l = 0; l < 6; ++l)
 	{
-	  TmpIndex1a[0] = GetLinearizedIndex(nx, ny, XPeriodicity, YPeriodicity);
-	  TmpIndex1b[0] = TmpIndex1a[0];
-	  
-	  TmpIndex1a[1] = TmpIndex1a[0];
-	  TmpIndex1b[1] = GetLinearizedIndex(nx - 1, ny, XPeriodicity, YPeriodicity);
-	  
-	  BondIndex1[0] = 0;
-	  BondIndex1[1] = 1;
-	  
-	  TmpIndex2a[0] = GetLinearizedIndex(i + nx, j + ny, XPeriodicity, YPeriodicity);
-	  TmpIndex2a[1] = TmpIndex2a[0];
-	  TmpIndex2a[2] = TmpIndex2a[0];
-	  TmpIndex2a[3] = GetLinearizedIndex(i + nx - 1, j + ny, XPeriodicity, YPeriodicity);;
-	  TmpIndex2a[4] = TmpIndex2a[0];
-	  TmpIndex2a[5] = TmpIndex2a[0];
-	  
-	  TmpIndex2b[0] = TmpIndex2a[0];
-	  TmpIndex2b[1] = GetLinearizedIndex(i + nx - 1, j + ny, XPeriodicity, YPeriodicity);
-	  TmpIndex2b[2] = TmpIndex2a[0];
-	  TmpIndex2b[3] = GetLinearizedIndex(i + nx - Offset, j + ny - 1, XPeriodicity, YPeriodicity);
-	  TmpIndex2b[4] = TmpIndex2a[0];
-	  TmpIndex2b[5] = GetLinearizedIndex(i + nx - Offset, j + ny - 1, XPeriodicity, YPeriodicity);
-	  
-	  for (int l = 0; l < 6; ++l)
+	  KagomeBondBondCorrelations[l][0] = 0.0;
+	  KagomeBondBondCorrelations[l][1] = 0.0;
+	}
+      
+	for (int nx = 0; nx < XPeriodicity; ++nx)
+	{
+	  for (int ny = 0; ny < YPeriodicity; ++ny)
 	  {
-	    for (int m = 0; m < 2; ++m)
+	    TmpIndex1a[0] = GetLinearizedIndex(nx, ny, XPeriodicity, YPeriodicity);
+	    TmpIndex1b[0] = TmpIndex1a[0];
+	  
+	    TmpIndex1a[1] = TmpIndex1a[0];
+	    TmpIndex1b[1] = GetLinearizedIndex(nx - 1, ny, XPeriodicity, YPeriodicity);
+	  
+	    BondIndex1[0] = 0;
+	    BondIndex1[1] = 1;
+	  
+	    TmpIndex2a[0] = GetLinearizedIndex(i + nx, j + ny, XPeriodicity, YPeriodicity);
+	    TmpIndex2a[1] = TmpIndex2a[0];
+	    TmpIndex2a[2] = TmpIndex2a[0];
+	    TmpIndex2a[3] = GetLinearizedIndex(i + nx - 1, j + ny, XPeriodicity, YPeriodicity);;
+	    TmpIndex2a[4] = TmpIndex2a[0];
+	    TmpIndex2a[5] = TmpIndex2a[0];
+	  
+	    TmpIndex2b[0] = TmpIndex2a[0];
+	    TmpIndex2b[1] = GetLinearizedIndex(i + nx - 1, j + ny, XPeriodicity, YPeriodicity);
+	    TmpIndex2b[2] = TmpIndex2a[0];
+	    TmpIndex2b[3] = GetLinearizedIndex(i + nx - Offset, j + ny - 1, XPeriodicity, YPeriodicity);
+	    TmpIndex2b[4] = TmpIndex2a[0];
+	    TmpIndex2b[5] = GetLinearizedIndex(i + nx - Offset, j + ny - 1, XPeriodicity, YPeriodicity);
+	  
+	    for (int l = 0; l < 6; ++l)
 	    {
-	      if ((l == 1) && (m == 1))
+	      for (int m = 0; m < 2; ++m)
 	      {
-	      cout << m << " : " ;
-	      Operator = new SpinWithPseudospin2DTranslationKagomeBondBondCorrelationOperator(Space, XMomentum, XPeriodicity, YMomentum, YPeriodicity, TmpIndex1a[m], TmpIndex1b[m], TmpIndex2a[l], TmpIndex2b[l], BondIndex1[m], l);
-	      OperatorMatrixElementOperation Operation(Operator, State, State, State.GetVectorDimension());
-	      Operation.ApplyOperation(Architecture.GetArchitecture());
-	      KagomeBondBondCorrelations[l][m] += Operation.GetScalar();
-	      delete Operator;
+		  Operator = new SpinWithPseudospin2DTranslationKagomeBondBondCorrelationOperator(Space, XMomentum, XPeriodicity, YMomentum, YPeriodicity, TmpIndex1a[m], TmpIndex1b[m], TmpIndex2a[l], TmpIndex2b[l], BondIndex1[m], l);
+		  OperatorMatrixElementOperation Operation(Operator, State, State, State.GetVectorDimension());
+		  Operation.ApplyOperation(Architecture.GetArchitecture());
+		  KagomeBondBondCorrelations[l][m] += Operation.GetScalar();
+		  delete Operator;
 	      }
 	    }
 	  }
 	}
-      }
       
-      for (int l = 0; l < 6; ++l)
-      {
-	File << i << " " << j << " " << l ;
-	cout << i << " " << j << " " << l;
-	for (int m = 0; m < 2; ++m)
+	for (int l = 0; l < 6; ++l)
 	{
-	  double ShiftedCorrelation = (KagomeBondBondCorrelations[l][m].Re / (XPeriodicity * YPeriodicity)) - KagomeDimer[BondIndex1[m]] * KagomeDimer[l];
-	  cout << " " << ShiftedCorrelation ;
-	  File << " " << ShiftedCorrelation;
+	  File << i << " " << j << " " << l ;
+	  cout << i << " " << j << " " << l;
+	  for (int m = 0; m < 2; ++m)
+	  {
+	    double ShiftedCorrelation = (KagomeBondBondCorrelations[l][m].Re / (XPeriodicity * YPeriodicity)) - KagomeDimer[BondIndex1[m]] * KagomeDimer[l];
+	    cout << " " << ShiftedCorrelation ;
+	    File << " " << ShiftedCorrelation;
+	  }
+	  File << endl;
+	  cout << endl;
 	}
-	File << endl;
-	cout << endl;
       }
     }
-  }
 
-  File.close();
-  delete[] KagomeBondBondCorrelations;
-  delete[] KagomeDimer;
-  delete[] TmpIndex1a;
-  delete[] TmpIndex1b;
-  delete[] BondIndex1;
+    File.close();
+    delete[] KagomeBondBondCorrelations;
   
+    delete[] TmpIndex1a;
+    delete[] TmpIndex1b;
+    delete[] BondIndex1;
+    }
+  delete[] KagomeDimer;
   }
   
 	  

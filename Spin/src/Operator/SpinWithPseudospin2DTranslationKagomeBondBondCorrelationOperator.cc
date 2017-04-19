@@ -216,10 +216,10 @@ Complex SpinWithPseudospin2DTranslationKagomeBondBondCorrelationOperator::Partia
   }
   
   
-//   if (((this->BondIndex1 & 1) != 0) && ((this->BondIndex2 & 1) != 0))
-//   {
-//     cout << "Error: odd value (" << (this->BondIndex1) << ") not implemented" << endl;
-//   }
+  if (((this->BondIndex1 & 1) != 0) && ((this->BondIndex2 & 1) != 0))
+  {
+    cout << "Warning: odd value (" << (this->BondIndex1) << ") not debugged. To be continued" << endl;
+  }
 	  
   for (int i = (int) firstComponent; i < dim; ++i)
     {
