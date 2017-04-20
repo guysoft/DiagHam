@@ -294,6 +294,7 @@ int main(int argc, char** argv)
 				  cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
 				  return -1;
 				}
+			      cout <<ChainLength<<" "<< Momentum<<" "<< Sz<<" "<<SubLatticeZeroKet<<" "<< SubLatticeZeroBra<<endl;
 			      Spaces[i] = new DoubledSpin0_1_2_ChainWithSquareTranslationsAndSublatticeQuantumNumbers(ChainLength, Momentum, Sz,SubLatticeZeroKet, SubLatticeZeroBra, 100000,100000);
 			    }
 			}
@@ -588,7 +589,7 @@ int main(int argc, char** argv)
       else
 	{
 	  int MaxSubsystemK = ChainLength / TranslationStep;
-	  for (int SubSystemSz=- MaxSubsystemSz; SubSystemSz <=  MaxSubsystemSz; ++ SubSystemSz)
+	  for (int SubSystemSz= -MaxSubsystemSz; SubSystemSz <=  MaxSubsystemSz; ++ SubSystemSz)
 	    {
 	      for (int SubSystemK=0; SubSystemK <MaxSubsystemK ; ++SubSystemK)
 		{
@@ -778,29 +779,60 @@ int main(int argc, char** argv)
 				    }
 				}
 			    }
-			}
+			} 
 		      else
 			{
 			  bool FirstKet = true;
 			  bool FirstBra = true;
-			  for (int  SublatticeQuantumNumberSector = - SubLatticeZeroBra; ( SublatticeQuantumNumberSector <  SubLatticeZeroBra+1)&&( FirstBra  ) ;   SublatticeQuantumNumberSector+=2*SubLatticeZeroBra)
+			  int  SublatticeQuantumNumberSector,   ComplementarySublatticeQuantumNumberSector;
+			  int IncrementBra, IncrementKet;
+			  if (ABPEPSFlag == true)
 			    {
-			      if (SubLatticeZeroBra ==0 ) 
+			      ComplementarySublatticeQuantumNumberSector =  SubLatticeZeroKet;
+			      SublatticeQuantumNumberSector = SubLatticeZeroBra;
+			      IncrementBra = 10;
+			      IncrementKet = 10;
+			    }
+			  else
+			    {
+			      ComplementarySublatticeQuantumNumberSector = - SubLatticeZeroKet;
+			      SublatticeQuantumNumberSector = - SubLatticeZeroBra;
+			      IncrementBra = 2*SubLatticeZeroBra;
+			      IncrementKet = 2*SubLatticeZeroKet;
+			    }
+
+			  
+			  for (; ( SublatticeQuantumNumberSector <  SubLatticeZeroBra+1)&&( FirstBra  ) ;   SublatticeQuantumNumberSector+=IncrementBra)
+			    {
+			      if ((SubLatticeZeroBra ==0 ) || (ABPEPSFlag ) )
 				FirstBra =false;
-			      for (int  ComplementarySublatticeQuantumNumberSector = - SubLatticeZeroKet; ( ComplementarySublatticeQuantumNumberSector <  SubLatticeZeroKet+1 )&&( FirstKet );     ComplementarySublatticeQuantumNumberSector+=2*SubLatticeZeroKet)
+			      
+			      for (; ( ComplementarySublatticeQuantumNumberSector <  SubLatticeZeroKet+1 )&&( FirstKet );     ComplementarySublatticeQuantumNumberSector+=IncrementKet)
 				{
-				  if (SubLatticeZeroKet == 0)
+				  if ((SubLatticeZeroKet == 0) || (ABPEPSFlag) )
 				    FirstKet= false;
-				  HermitianMatrix PartialDensityMatrix = ((DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers *) Spaces[0])->EvaluatePartialDensityMatrix(SubSystemSz,SubSystemK, SublatticeQuantumNumberSector , ComplementarySublatticeQuantumNumberSector ,ComplexGroundStates[0])* Coefficients[0];
-				  for (int i = 1; i < NbrSpaces; ++i)
+				  HermitianMatrix PartialDensityMatrix;
+				  if (ABPEPSFlag == true)
 				    {
-				      HermitianMatrix TmpMatrix =  ((DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers *) Spaces[i])->EvaluatePartialDensityMatrix(SubSystemSz, SubSystemK, SublatticeQuantumNumberSector , ComplementarySublatticeQuantumNumberSector, ComplexGroundStates[i])* Coefficients[i];
-				      PartialDensityMatrix += TmpMatrix;
+				      PartialDensityMatrix = (( DoubledSpin0_1_2_ChainWithSquareTranslationsAndSublatticeQuantumNumbers *) Spaces[0])->EvaluatePartialDensityMatrix(SubSystemSz,SubSystemK, SublatticeQuantumNumberSector , ComplementarySublatticeQuantumNumberSector ,ComplexGroundStates[0])* Coefficients[0];
+				      for (int i = 1; i < NbrSpaces; ++i)
+					{
+					  HermitianMatrix TmpMatrix =  (( DoubledSpin0_1_2_ChainWithSquareTranslationsAndSublatticeQuantumNumbers *) Spaces[i])->EvaluatePartialDensityMatrix(SubSystemSz, SubSystemK, SublatticeQuantumNumberSector , ComplementarySublatticeQuantumNumberSector, ComplexGroundStates[i])* Coefficients[i];
+					  PartialDensityMatrix += TmpMatrix;
+					}
+				    }
+				  else
+				    {			      
+				      PartialDensityMatrix = ((DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers *) Spaces[0])->EvaluatePartialDensityMatrix(SubSystemSz,SubSystemK, SublatticeQuantumNumberSector , ComplementarySublatticeQuantumNumberSector ,ComplexGroundStates[0])* Coefficients[0];
+				      for (int i = 1; i < NbrSpaces; ++i)
+					{
+					  HermitianMatrix TmpMatrix =  ((DoubledSpin0_1_2_ChainWithTranslationsAndZZSymmetryAndSublatticeQuantumNumbers *) Spaces[i])->EvaluatePartialDensityMatrix(SubSystemSz, SubSystemK, SublatticeQuantumNumberSector , ComplementarySublatticeQuantumNumberSector, ComplexGroundStates[i])* Coefficients[i];
+					  PartialDensityMatrix += TmpMatrix;
+					}
 				    }
 				  
 				  if ((EigenstateFlag == false) || ( (SubsystemKSaveEingenstate != -1 ) && ( SubSystemK != SubsystemKSaveEingenstate))  || (( SubsystemSzSaveEingenstate != -1) && (SubSystemSz !=  SubsystemSzSaveEingenstate)))
 				    {
-				      
 				      if (PartialDensityMatrix.GetNbrRow() > 1)
 					{
 					  RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
@@ -903,14 +935,13 @@ int main(int argc, char** argv)
 					    }
 					}
 				    } 
-			  
 				}
 			    }
 			}
 		    }
 		  RemainingDensitySum-=DensitySum;
 		  File << SubSystemSz << " " << SubSystemK<<" "<< (-EntanglementEntropy) << " " << DensitySum << " " << (RemainingDensitySum) << endl;
-		}   
+		}
 	    }
 	}
     }

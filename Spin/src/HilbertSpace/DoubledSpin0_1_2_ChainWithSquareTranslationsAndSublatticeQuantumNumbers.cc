@@ -304,16 +304,16 @@ AbstractHilbertSpace*  DoubledSpin0_1_2_ChainWithSquareTranslationsAndSublattice
 HermitianMatrix DoubledSpin0_1_2_ChainWithSquareTranslationsAndSublatticeQuantumNumbers::EvaluatePartialDensityMatrix (int szSector, int momentumSector, int sublatticeQuantumNumberSector,  int complementarySublatticeQuantumNumberSector, ComplexVector& groundState)
 {
 
-  Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers TmpDestinationHilbertSpace(this->ChainLength, momentumSector ,this->ChainLength / this->MaxXMomentum, szSector,sublatticeQuantumNumberSector, 10000,10000);
-  
-
+  Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers TmpDestinationHilbertSpace(this->ChainLength, momentumSector ,2, szSector,sublatticeQuantumNumberSector, 10000,10000);
+ 
   int ComplementaryKSector = (this->Momentum - momentumSector) %  this->MaxXMomentum;
 
 
   if (ComplementaryKSector < 0)
     ComplementaryKSector +=  this->MaxXMomentum;
   
-  Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers TmpHilbertSpace(this->ChainLength,ComplementaryKSector,this->ChainLength / this->MaxXMomentum,szSector, complementarySublatticeQuantumNumberSector, 10000,10000);
+  Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers TmpHilbertSpace(this->ChainLength,ComplementaryKSector,2 ,szSector, complementarySublatticeQuantumNumberSector, 10000,10000);
+  cout << TmpDestinationHilbertSpace.HilbertSpaceDimension << " "<<TmpHilbertSpace.HilbertSpaceDimension<<endl;
   
   int MaxDimension = TmpDestinationHilbertSpace.HilbertSpaceDimension;
   
