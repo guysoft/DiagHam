@@ -84,6 +84,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('k', "momentum", "momentum sector (for periodic chain)", 0);
   (*SystemGroup) += new SingleStringOption  ('e', "state", "name of the file containing the eigenstate to be displayed");
   (*SystemGroup) += new BooleanOption ('\n', "complex-vector", "the eigenstate to be  displayed is a complex vector");
+
+  (*SystemGroup) += new BooleanOption  ('\n', "save-normalized-vector", "Save the phase-fixed vector for eigenvectors of PEPS transfer matrix");
+
   (*SystemGroup) += new SingleDoubleOption  ('\n', "hide-component", "hide state components (and thus the corresponding n-body state) whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -115,7 +118,7 @@ int main(int argc, char** argv)
   
   if (Manager.GetBoolean("doubled-spinchain"))
     {
-      if (SpinValue==1 )
+      if( (SpinValue==1 ) && ( Manager.GetBoolean("zero-half") == false ) )
 	{
 	  if (Manager.GetBoolean("periodic-chain") == false)
 	    {
@@ -247,6 +250,11 @@ int main(int argc, char** argv)
 			      return 0;
 			    }
 			  ((DoubledSpin0_1_2_ChainWithTranslations *) Space)->NormalizeDensityMatrix(State);
+			  if ( Manager.GetBoolean("save-normalized-vector") == true ) 
+			    {
+			      State.WriteVector(Manager.GetString("state"));
+			    }
+			  
 			  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 			    if (Norm(State[i]) > Error)
 			      Space->PrintState(cout, i) << " : "  << State[i] << endl;
@@ -324,6 +332,12 @@ int main(int argc, char** argv)
 			      return 0;
 			    }
 			  ((DoubledSpin0_1_2_ChainWithTranslations *) Space)->NormalizeDensityMatrix(State);
+			  
+			  if ( Manager.GetBoolean("save-normalized-vector") == true ) 
+			    {
+			      State.WriteVector(Manager.GetString("state"));
+			    }
+			  
 			  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 			    if (Norm(State[i]) > Error)
 			      Space->PrintState(cout, i) << " : "  << State[i] << endl;
