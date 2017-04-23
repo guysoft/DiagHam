@@ -74,6 +74,9 @@ static  unsigned long FermionOnSphereInvertTable[] = {0x0ul, 0x80ul, 0x40ul, 0xc
 						      0xbful, 0x7ful, 0xfful};
 
 
+class BosonOnSphereShort;
+
+
 class FermionOnSphere :  public ParticleOnSphere
 {
 
@@ -1143,6 +1146,21 @@ class FermionOnSphere :  public ParticleOnSphere
   virtual int SymmetrizeSingleStatePeriodicSubsetOrbitals (LongRationalVector& inputVector, int firstOrbitalIndex, int periodicity, 
 							   LongRationalVector*& symmetrizedVectors, int*& nbrParticlesSectors, int*& lzSectors);
   
+  // Compute the product of a fermionic state with a bosonic state, automatically dealing with reverse flux attachement
+  //
+  // bosonicState = reference on the bosonic state
+  // fermionicState = reference on the fermionic state
+  // outputVector = reference on the vector where the result will be stored
+  // bosonicSpace = pointer on the Hilbert Space associated to the bosonic state
+  // fermionicSpace = pointer on the Hilbert Space associated to the fermionic state
+  // minIndex = first component to compute (refering to the bosonic state)
+  // nbrComponents = number of components to compute (refering to the bosonic state)
+  // unnormalizedFlag = true if the state should be written in the unnormalized basis
+  // architecture = pointer to the architecture
+  virtual void BosonicStateTimeFermionicState(RealVector& bosonicState, RealVector& fermionicState, RealVector& outputVector, 
+					      BosonOnSphereShort* bosonicSpace, FermionOnSphere* fermionicSpace,
+					      int minIndex, int nbrComponents, bool unnormalizedFlag, AbstractArchitecture* architecture);
+
  protected:
 
   // find state index
@@ -1204,6 +1222,12 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = fermionic state in its fermionic representation
   virtual unsigned long ConvertFromMonomial(unsigned long* initialState);
 
+  // check if a monomial representation is a valid fermionic state
+  //
+  // initialState = array where the monomial representation is stored (should be sorted)
+  // return value = true if the monomial representation is a valid fermionic state
+  virtual bool CheckValidFermionicMonomial(unsigned long* initialState);
+
   // symmetrize a vector by grouping several orbitals into a single one
   //
   // inputVector = reference on the vector to symmetrize
@@ -1224,6 +1248,22 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = symmetrized state
   virtual void SymmetrizeSingleStatePeriodicSubsetOrbitalCore (LongRationalVector& inputVector, LongRationalVector** symmetrizedVectors, int firstOrbitalIndex, int periodicity, 
 							       unsigned long firstComponent, unsigned long nbrComponents);
+
+  // Compute the product of a Slater determinant with a symmetric monomial
+  //
+  // symmetricMonomial = symmetric monomial
+  // slater = monomial representation of the Slater determinant
+  // finalState = reference on the vector the produced state will be stored
+  // threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
+  virtual void SymmetricMonomialTimesSlater (unsigned long* symmetricMonomial, unsigned long* slater, RealVector& finalState, double** threeOrbitalOverlaps);
+
+  // Compute the product of a Slater determinant with a symmetric monomial, assuming a reverse flux attachment for the symmetric monomial
+  //
+  // symmetricMonomial = symmetric monomial
+  // slater = monomial representation of the Slater determinant
+  // finalState = reference on the vector the produced state will be stored
+  // threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
+  virtual void ReverseSymmetricMonomialTimesSlater (unsigned long* symmetricMonomial, unsigned long* slater, RealVector& finalState, double** threeOrbitalOverlaps);
 
 };
 
@@ -1317,6 +1357,24 @@ inline unsigned long FermionOnSphere::ConvertFromMonomial(unsigned long* initial
     TmpState |= 0x1ul << initialState[j];
   return TmpState;
  }
+
+
+// check if a monomial representation is a valid fermionic state
+//
+// initialState = array where the monomial representation is stored (should be sorted)
+// return value = true if the monomial representation is a valid fermionic state
+
+inline bool FermionOnSphere::CheckValidFermionicMonomial(unsigned long* initialState)
+{
+  for (int i = 1; i < this->NbrFermions; ++i)
+    {
+      if (initialState[i - 1] == initialState[i])
+	{
+	  return false;
+	}
+    }
+  return true;
+}
 
 // print a given state using the most compact notation
 //

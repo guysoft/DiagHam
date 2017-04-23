@@ -2805,7 +2805,7 @@ bool ComplexVector::ReadVector (const char* fileName, long minIndex, long maxInd
 
   if (TmpDimension > 0)
     {
-      if (Length/(std::streampos)sizeof(double) < (std::streampos)TmpDimension)
+      if (Length/(2 * (std::streampos)sizeof(double)) < (std::streampos)TmpDimension)
 	{      
 	  cout << "Error reading complex vector " <<fileName <<": estimated length " << Length/ (2 * sizeof(double)) << " vs dimension " << TmpDimension << endl;
 	  if ((unsigned)TmpDimension*2==Length/sizeof(double))
@@ -2817,8 +2817,8 @@ bool ComplexVector::ReadVector (const char* fileName, long minIndex, long maxInd
       if (minIndex < 0l)      
 	minIndex += TmpDimension;
       this->Resize(maxIndex - minIndex + 1l);
-      File.seekg (minIndex * sizeof(double), ios::cur);
-      ReadBlockLittleEndian(File, &(this->Components[0].Re), 2*this->Dimension);
+      File.seekg (minIndex * 2l * sizeof(double), ios::cur);
+      ReadBlockLittleEndian(File, &(this->Components[0].Re), 2 * this->Dimension);
 //       for (int i = 0; i < this->Dimension; ++i)
 // 	{
 // 	  ReadLittleEndian(File, this->Components[i].Re);
@@ -2834,8 +2834,8 @@ bool ComplexVector::ReadVector (const char* fileName, long minIndex, long maxInd
       if (minIndex < 0l)      
 	minIndex += TmpLargeDimension;
       this->Resize(maxIndex - minIndex + 1l);
-      File.seekg (minIndex * sizeof(double), ios::cur);
-      ReadBlockLittleEndian(File, &(this->Components[0].Re), 2*this->LargeDimension);
+      File.seekg (minIndex * 2l * sizeof(double), ios::cur);
+      ReadBlockLittleEndian(File, &(this->Components[0].Re), 2 * this->LargeDimension);
 //       for (long i = 0; i < this->LargeDimension; ++i)
 // 	{
 // 	  ReadLittleEndian(File, this->Components[i].Re);

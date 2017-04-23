@@ -2754,6 +2754,67 @@ int SearchInSortedArrayAndInsert(ClassName element, ClassName*& array, unsigned 
 }
 
 
+// find an element in an array, if not found insert the element such that the array is still sorted with down ordering
+//
+// element = element to find
+// array = array where to search 
+// nbrValue = number of values in array
+// return value = negative if no value was inserted, otherwise return the position where the value was inserted
+
+template <class ClassName>
+int SearchInDownSortedArrayAndInsert(ClassName element, ClassName*& array, unsigned long nbrValue)
+{
+  if (nbrValue == 0)
+    {
+      array[0] = element;
+      return 1;
+    }
+  
+  unsigned long StartIndex = 0l;
+  unsigned long EndIndex = nbrValue;
+  unsigned long MidIndex;
+  
+  while((EndIndex - StartIndex) > 1)
+    {
+      MidIndex = (StartIndex + EndIndex) >> 1;
+      
+      if(array[MidIndex] == element)
+	{
+	  return -1;
+	}
+      
+      if (array[MidIndex] < element)
+	EndIndex = MidIndex;
+      else
+	StartIndex = MidIndex;
+    }
+  
+  if(array[StartIndex] == element)
+    {
+      return -1;
+    }
+  
+  ++nbrValue;
+  ClassName TmpElement;
+  ClassName TmpElement1;
+  
+  if (array[StartIndex] > element)
+    StartIndex++;
+  
+  TmpElement = array[StartIndex];
+  array[StartIndex] = element;
+  MidIndex = StartIndex;
+
+  for (unsigned long i = StartIndex + 1; i < nbrValue; ++i)
+    {
+      TmpElement1 = array[i];
+      array[i] = TmpElement;
+      TmpElement = TmpElement1;
+    }
+  return MidIndex;
+}
+
+
 // compute the product of occupation number factorial of an array
 //
 // array = array where to search 

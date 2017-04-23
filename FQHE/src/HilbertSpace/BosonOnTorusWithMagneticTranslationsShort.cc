@@ -414,12 +414,23 @@ int BosonOnTorusWithMagneticTranslationsShort::ProdAd (int* m, int nbrIndices, d
   return TmpIndex;
 }
 
+// apply a^+_m a_m operator to a given state
+//
+// index = index of the state on which the operator has to be applied
+// m = index for creation operator
+// return value =  resulting multiplicative factor 
 
-  // apply a_n operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdAd call
-  //
-  // index = index of the state on which the operator has to be applied
-  // n = index for annihilation operator
-  // return value =  multiplicative factor 
+double BosonOnTorusWithMagneticTranslationsShort::AdA (int index, int m)
+{
+  this->FermionToBoson(this->StateDescription[index], this->FermionicMaxMomentum, this->ProdATemporaryState, this->ProdATemporaryStateKyMax);
+  return this->ProdATemporaryState[m];
+}
+
+// apply a_n operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdAd call
+//
+// index = index of the state on which the operator has to be applied
+// n = index for annihilation operator
+// return value =  multiplicative factor 
 
 double BosonOnTorusWithMagneticTranslationsShort::A (int index, int n)
 {

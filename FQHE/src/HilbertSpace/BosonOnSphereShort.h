@@ -58,6 +58,8 @@ class BosonOnSphereFullShort;
 class BosonOnSphereShort :  public ParticleOnSphere
 {
 
+  friend class FermionOnSphere;
+
   friend class BosonOnSphereHaldaneBasisShort;
   friend class BosonOnSphereSymmetricBasisShort;
   friend class BosonOnSphereHaldaneSymmetricBasisShort;

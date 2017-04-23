@@ -30,6 +30,7 @@
 
 #include "config.h"
 #include "HilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/BosonOnSphereShort.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Vector/RealVector.h"
@@ -38,7 +39,9 @@
 #include "GeneralTools/Endian.h"
 #include "GeneralTools/StringTools.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
+#include "GeneralTools/ArrayTools.h"
 #include "MathTools/FactorialCoefficient.h" 
+#include "MathTools/ClebschGordanCoefficients.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -7315,3 +7318,392 @@ void FermionOnSphere::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (LongRation
   delete[] TargetSpaces;
 }
   
+// Compute the product of a Slater determinant with a symmetric monomial
+//
+// symmetricMonomial = symmetric monomial
+// slater = monomial representation of the Slater determinant
+// finalState = reference on the vector the produced state will be stored
+// threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
+
+void FermionOnSphere::SymmetricMonomialTimesSlater (unsigned long* symmetricMonomial, unsigned long* slater, RealVector& finalState, double** threeOrbitalOverlaps)
+{
+  unsigned long TmpNbrStates = 0;
+  long CoefUp = 1;
+  long CoefDown = 1;
+  unsigned long TmpState [this->NbrFermions];
+  unsigned long TmpFinalState;
+  double Sign = 1.0;
+  unsigned long Mask = 0ul;
+  int TmpHeapArray [this->NbrFermions];
+  int TmpDim = this->NbrFermions;
+  for (int i = 0; i < TmpDim; ++i)
+    {
+      TmpHeapArray[i] = 0;
+    }
+  finalState.ClearVector();
+
+  double TmpFactor = 0.0;
+  int Tmp = 0;
+  bool DiscardFlag = false;
+  for (int i = 0; (i < this->NbrFermions) && (DiscardFlag == false); ++i)
+    {
+      TmpState[i] = slater[i] + symmetricMonomial[i];
+      TmpFactor += threeOrbitalOverlaps[TmpState[i]][slater[i]];
+    }
+  int TmpSign = 0;
+  SortArrayDownOrderingPermutation (TmpState, this->NbrFermions, TmpSign);
+  if (this->CheckValidFermionicMonomial(TmpState) == true)
+    {
+      TmpFinalState = this->ConvertFromMonomial(TmpState);
+      int TmpLzMax = this->LzMax;
+      while ((TmpFinalState >> TmpLzMax) == 0x0ul)
+	{
+	  --TmpLzMax;
+	}
+      int TmpPos = this->FindStateIndex(TmpFinalState, TmpLzMax);
+      if (TmpPos != this->HilbertSpaceDimension)
+	{
+	  finalState[TmpPos] += Sign * ((double) (1 - (2 *(TmpSign & 1)))) * exp(TmpFactor);
+	}
+    }
+
+  while (Tmp < TmpDim)
+    {
+      if (TmpHeapArray[Tmp] < Tmp)
+	{
+	  if ((Tmp & 0x1ul) == 0x0ul)
+	    {
+	      unsigned long Tmp2 = slater[Tmp];
+	      slater[Tmp] = slater[0];
+	      slater[0] = Tmp2;
+	      
+	    }
+	  else
+	    {
+	      unsigned long Tmp2 = slater[Tmp];
+	      slater[Tmp] = slater[TmpHeapArray[Tmp]];
+	      slater[TmpHeapArray[Tmp]] = Tmp2;
+	    }
+	  Sign *= -1.0;
+	  DiscardFlag = false;
+	  TmpFactor = 0.0;
+	  for (int i = 0; (i < this->NbrFermions) && (DiscardFlag == false); ++i)
+	    {
+	      TmpState[i] = slater[i] + symmetricMonomial[i];
+	      TmpFactor += threeOrbitalOverlaps[TmpState[i]][slater[i]];
+	    }
+	  int TmpSign = 0;
+	  SortArrayDownOrderingPermutation (TmpState, this->NbrFermions, TmpSign);
+	  if (this->CheckValidFermionicMonomial(TmpState) == true)
+	    {
+	      TmpFinalState = this->ConvertFromMonomial(TmpState);
+	      int TmpLzMax = this->LzMax;
+	      while ((TmpFinalState >> TmpLzMax) == 0x0ul)
+		{
+		  --TmpLzMax;
+		}
+	      int TmpPos = this->FindStateIndex(TmpFinalState, TmpLzMax);
+	      if (TmpPos != this->HilbertSpaceDimension)
+		{
+		  finalState[TmpPos] += Sign * ((double) (1 - (2 * (TmpSign & 1)))) * exp(TmpFactor);
+		}
+	    }
+	  ++TmpHeapArray[Tmp];
+	  Tmp = 0;
+	}
+      else
+	{
+	  TmpHeapArray[Tmp]= 0;
+	  ++Tmp;
+	}
+    }  
+}
+
+// Compute the product of a Slater determinant with a symmetric monomial, assuming a reverse flux attachment for the symmetric monomial
+//
+// symmetricMonomial = symmetric monomial
+// slater = monomial representation of the Slater determinant
+// finalState = reference on the vector the produced state will be stored
+// threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
+
+void FermionOnSphere::ReverseSymmetricMonomialTimesSlater (unsigned long* symmetricMonomial, unsigned long* slater, RealVector& finalState, double** threeOrbitalOverlaps)
+{
+  unsigned long TmpNbrStates = 0;
+  unsigned long TmpState [this->NbrFermions];
+  unsigned long TmpFinalState;
+  double Sign = 1.0;
+  unsigned long Mask = 0ul;
+  int TmpHeapArray [this->NbrFermions];
+  int TmpDim = this->NbrFermions;
+  for (int i = 0; i < TmpDim; ++i)
+    {
+      TmpHeapArray[i] = 0;
+    }
+  finalState.ClearVector();
+
+
+  double TmpFactor = 1.0;
+  int Tmp = 0;
+  bool DiscardFlag = false; 
+ for (int i = 0; (i < this->NbrFermions) && (DiscardFlag == false); ++i)
+    {
+      TmpState[i] = slater[i] - symmetricMonomial[i];
+      if ((TmpState[i] >= 0) && (TmpState[i] <= this->LzMax))
+	{
+	  TmpFactor *= threeOrbitalOverlaps[TmpState[i]][slater[i]];
+	}
+      else
+	{
+	  DiscardFlag = true;
+	}
+    }
+  if (DiscardFlag == false)
+    {
+      int TmpSign = 0;
+      SortArrayDownOrderingPermutation (TmpState, this->NbrFermions, TmpSign);
+      if (this->CheckValidFermionicMonomial(TmpState) == true)
+	{
+	  TmpFinalState = this->ConvertFromMonomial(TmpState);
+	  int TmpLzMax = this->LzMax;
+	  while ((TmpFinalState >> TmpLzMax) == 0x0ul)
+	    {
+	      --TmpLzMax;
+	    }
+	  int TmpPos = this->FindStateIndex(TmpFinalState, TmpLzMax);
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+	      finalState[TmpPos] += Sign * ((double) (1 - (2 * (TmpSign & 1)))) * TmpFactor;
+	    }
+	}
+    }
+
+  while (Tmp < TmpDim)
+    {
+      if (TmpHeapArray[Tmp] < Tmp)
+	{
+	  if ((Tmp & 0x1ul) == 0x0ul)
+	    {
+	      unsigned long Tmp2 = slater[Tmp];
+	      slater[Tmp] = slater[0];
+	      slater[0] = Tmp2;
+	      
+	    }
+	  else
+	    {
+	      unsigned long Tmp2 = slater[Tmp];
+	      slater[Tmp] = slater[TmpHeapArray[Tmp]];
+	      slater[TmpHeapArray[Tmp]] = Tmp2;
+	    }
+	  Sign *= -1.0;
+	  DiscardFlag = false;
+	  TmpFactor = 1.0;
+	  for (int i = 0; (i < this->NbrFermions) && (DiscardFlag == false); ++i)
+	    {
+	      TmpState[i] = slater[i] - symmetricMonomial[i];
+	      if ((TmpState[i] >= 0) && (TmpState[i] <= this->LzMax))
+		{
+		  TmpFactor *= threeOrbitalOverlaps[TmpState[i]][slater[i]];
+		}
+	      else
+		{
+		  DiscardFlag = true;
+		}
+	    }
+	  if (DiscardFlag == false)
+	    {
+	      int TmpSign = 0;
+	      SortArrayDownOrderingPermutation (TmpState, this->NbrFermions, TmpSign);
+	      if (this->CheckValidFermionicMonomial(TmpState) == true)
+		{
+		  TmpFinalState = this->ConvertFromMonomial(TmpState);
+		  int TmpLzMax = this->LzMax;
+		  while ((TmpFinalState >> TmpLzMax) == 0x0ul)
+		    {
+		      --TmpLzMax;
+		    }
+		  int TmpPos = this->FindStateIndex(TmpFinalState, TmpLzMax);
+		  if (TmpPos != this->HilbertSpaceDimension)
+		    {
+		      finalState[TmpPos] += Sign * ((double) (1 - (2 *(TmpSign & 1)))) * TmpFactor;
+		    }
+		}
+	    }
+	  ++TmpHeapArray[Tmp];
+	  Tmp = 0;
+	}
+      else
+	{
+	  TmpHeapArray[Tmp]= 0;
+	  ++Tmp;
+	}
+    }  
+}
+
+// Compute the product of a fermionic state with a bosonic state, automatically dealing with reverse flux attachement
+//
+// bosonicState = reference on the bosonic state
+// fermionicState = reference on the fermionic state
+// outputVector = reference on the vector where the result will be stored
+// bosonicSpace = pointer on the Hilbert Space associated to the bosonic state
+// fermionicSpace = pointer on the Hilbert Space associated to the fermionic state
+// minIndex = first component to compute (refering to the bosonic state)
+// nbrComponents = number of components to compute (refering to the bosonic state)
+// unnormalizedFlag = true if the state should be written in the unnormalized basis
+// architecture = pointer to the architecture
+
+void FermionOnSphere::BosonicStateTimeFermionicState(RealVector& bosonicState, RealVector& fermionicState, RealVector& outputVector, 
+						     BosonOnSphereShort* bosonicSpace, FermionOnSphere* fermionicSpace,
+						     int minIndex, int nbrComponents, bool unnormalizedFlag, AbstractArchitecture* architecture)
+{
+  outputVector.ClearVector();
+  RealVector FinalState (this->GetHilbertSpaceDimension());
+  FactorialCoefficient Coefficient;	
+  int MaxIndex = minIndex + nbrComponents;
+  double** ThreeOrbitalOverlaps = new double* [this->LzMax + 1];
+  unsigned long* TmpSymmetricMonomial = new unsigned long[this->NbrFermions];
+  unsigned long* TmpSlater = new unsigned long[this->NbrFermions];
+  double TmpFactorial [this->NbrFermions + 1];
+  TmpFactorial[0] = 1;
+  TmpFactorial[1] = 1;
+  for (int i = 2; i <= this->NbrFermions; ++i)
+    TmpFactorial[i] = TmpFactorial[i - 1] / sqrt((double) i);
+  if (this->LzMax >= fermionicSpace->LzMax)
+    {
+      BinomialCoefficients Binomials(this->LzMax);
+      for (int i = 0; i <= this->LzMax; ++i)
+	{
+	  ThreeOrbitalOverlaps[i] = new double [fermionicSpace->LzMax + 1];
+	  double TmpFactor1 = log(((double) ((fermionicSpace->LzMax + 1) * (bosonicSpace->LzMax + 1))) / ((double) (this->LzMax + 1)) / (4.0 * M_PI)) - log(Binomials.GetNumericalCoefficient(this->LzMax, i));
+	  for (int j = 0; (j <= fermionicSpace->LzMax) && (j <= i); ++j)
+	    {
+	      if (unnormalizedFlag == false)
+		{
+		  ThreeOrbitalOverlaps[i][j] = 0.5 * (TmpFactor1 + log(Binomials.GetNumericalCoefficient(fermionicSpace->LzMax, j)) 
+						      + log(Binomials.GetNumericalCoefficient(bosonicSpace->LzMax, i - j)));
+		}
+	      else
+		{
+		  ThreeOrbitalOverlaps[i][j] = 0.0;
+		}
+	    }
+	}
+      for (int j = minIndex; j < MaxIndex; ++j)
+	{
+	  if (bosonicState[j] != 0.0)
+	    {
+	      int TmpLzMax = bosonicSpace->FermionBasis->LzMax;
+	      while ((bosonicSpace->FermionBasis->StateDescription[j] >> TmpLzMax) == 0x0ul)
+		{
+		  --TmpLzMax;
+		}
+	      bosonicSpace->ConvertToMonomial(bosonicSpace->FermionBasis->StateDescription[j], TmpLzMax, TmpSymmetricMonomial);
+	      bosonicSpace->FermionToBoson(bosonicSpace->FermionBasis->StateDescription[j], TmpLzMax, bosonicSpace->TemporaryState, 
+					   bosonicSpace->TemporaryStateLzMax);
+	      double TmpFactor = 1.0;
+	      for (int p = 0; p <= bosonicSpace->TemporaryStateLzMax; ++p)
+		{
+		  TmpFactor *= TmpFactorial[bosonicSpace->TemporaryState[p]];
+		}
+	      for (int i = 0; i < fermionicSpace->HilbertSpaceDimension; ++i)
+		{
+		  if (fermionicState[i] != 0.0)
+		    {
+		      fermionicSpace->ConvertToMonomial(fermionicSpace->StateDescription[i], TmpSlater);
+		      this->SymmetricMonomialTimesSlater(TmpSymmetricMonomial, TmpSlater, FinalState, ThreeOrbitalOverlaps);
+		      for (int Index = 0; Index < FinalState.GetVectorDimension(); ++Index)
+			{
+			  if (FinalState[Index] != 0.0)
+			    {
+			      if (unnormalizedFlag == false)
+				{
+				  outputVector[Index] += TmpFactor * bosonicState[j] * fermionicState[i] * FinalState[Index];
+				}
+			      else
+				{
+				  outputVector[Index] += bosonicState[j] * fermionicState[i] * FinalState[Index];
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+  else
+    {
+      BinomialCoefficients Binomials(fermionicSpace->LzMax + 1);
+      for (int i = 0; i <= this->LzMax; ++i)
+	{
+	  ThreeOrbitalOverlaps[i] = new double [fermionicSpace->LzMax + 1];
+	}
+      int TmpMaxAngularMomentumLambdaLevel = bosonicSpace->LzMax;
+      double TmpPrefactor = sqrt (((double) (bosonicSpace->LzMax + 1)) * ((double) (TmpMaxAngularMomentumLambdaLevel + 1)) / (4.0 * M_PI * (this->LzMax + 1)));
+      ClebschGordanCoefficients Clebsch(TmpMaxAngularMomentumLambdaLevel, fermionicSpace->LzMax);
+      for (int i = 0; i <= this->LzMax; ++i)
+	{
+	  for (int j = 0; j <= fermionicSpace->LzMax; ++j)
+	    {
+	      if (((j - i) >= 0) && ((j - i) <= bosonicSpace->LzMax))
+		{
+		  if (unnormalizedFlag == false)
+		    {
+		      ThreeOrbitalOverlaps[i][j] = (TmpPrefactor * Clebsch.GetCoefficient(- 2 * (j - i) + TmpMaxAngularMomentumLambdaLevel, (2 * j) - fermionicSpace->LzMax, this->LzMax) 
+						    * Clebsch.GetCoefficient(-bosonicSpace->LzMax, fermionicSpace->LzMax, this->LzMax));
+		    }
+		  else
+		    {
+		      ThreeOrbitalOverlaps[j - i][j] = 1.0;
+		    }
+		}
+	    }
+	}
+      for (int j = minIndex; j < MaxIndex; ++j)
+	{
+	  if (bosonicState[j] != 0.0)
+	    {
+	      int TmpLzMax = bosonicSpace->FermionBasis->LzMax;
+	      while ((bosonicSpace->FermionBasis->StateDescription[j] >> TmpLzMax) == 0x0ul)
+		{
+		  --TmpLzMax;
+		}
+	      bosonicSpace->ConvertToMonomial(bosonicSpace->FermionBasis->StateDescription[j], TmpLzMax, TmpSymmetricMonomial);
+	      bosonicSpace->FermionToBoson(bosonicSpace->FermionBasis->StateDescription[j], TmpLzMax, bosonicSpace->TemporaryState, 
+					   bosonicSpace->TemporaryStateLzMax);
+	      double TmpFactor = 1.0;
+	      for (int p = 0; p <= bosonicSpace->TemporaryStateLzMax; ++p)
+		{
+		  TmpFactor *= TmpFactorial[bosonicSpace->TemporaryState[p]];
+		}
+	      for (int i = 0; i < fermionicSpace->HilbertSpaceDimension; ++i)
+		{
+		  if (fermionicState[i] != 0.0)
+		    {
+ 		      fermionicSpace->ConvertToMonomial(fermionicSpace->StateDescription[i], TmpSlater);
+  		      this->ReverseSymmetricMonomialTimesSlater(TmpSymmetricMonomial, TmpSlater, FinalState, ThreeOrbitalOverlaps);
+		      if (unnormalizedFlag == false)
+			{
+			  double TmpFactor2 = TmpFactor * bosonicState[j] * fermionicState[i];
+			  for (int Index = 0; Index < FinalState.GetVectorDimension(); ++Index)
+			    {
+			      if (FinalState[Index] != 0.0)
+				{
+				  outputVector[Index] += TmpFactor2 * FinalState[Index];
+				}
+ 			    }
+			}
+		      else
+			{
+			  for (int Index = 0; Index < FinalState.GetVectorDimension(); ++Index)
+			    {
+			      if (FinalState[Index] != 0.0)
+				{
+				  outputVector[Index] += bosonicState[j] * fermionicState[i] * FinalState[Index];
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+}

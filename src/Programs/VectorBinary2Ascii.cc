@@ -152,7 +152,6 @@ int main(int argc, char** argv)
     }
   if (Manager.GetBoolean("rational") == false)
     {
-      cout << "complex " << endl;
       ComplexVector State;
       long TmpVectorDimension = State.ReadVectorDimension(Manager.GetString("input-vector"));
       long MinValue = 0l;

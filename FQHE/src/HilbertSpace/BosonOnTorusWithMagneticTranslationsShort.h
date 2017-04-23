@@ -149,6 +149,42 @@ public:
   // return value = particle statistic
   int GetParticleStatistic();
 
+  // get momemtum value in the y direction of a given state
+  //
+  // index = state index
+  // return value = state momentum in the y direction
+  int GetYMomentumValue(int index);
+
+  // get the number of orbitals
+  //
+  // return value = number of orbitals
+  virtual int GetNbrOrbitals();
+
+  // get the number of particles
+  //
+  // return value = number of particles
+  virtual int GetNbrParticles();
+
+  // get the momentum along the x axis
+  // 
+  // return avlue = momentum along the x axis
+  virtual int GetKxMomentum();
+
+  // get the momentum along the y axis
+  // 
+  // return avlue = momentum along the y axis
+  virtual int GetKyMomentum();
+
+  // get the maximum momentum along the x axis (i.e. the number of momentum sectors)
+  // 
+  // return avlue = maximum momentum along the x axis
+  virtual int GetMaxXMomentum();
+  
+  // get the maximum momentum along the y axis (i.e. the number of momentum sectors)
+  // 
+  // return avlue = maximum momentum along the y axis
+  virtual int GetMaxYMomentum();
+  
   // return a list of all possible quantum numbers 
   //
   // return value = pointer to corresponding quantum number
@@ -221,6 +257,13 @@ public:
   // return value =  multiplicative factor 
   virtual double A (int index, int n);
 
+  // apply a^+_m a_m operator to a given state
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index for creation operator
+  // return value =  resulting multiplicative factor 
+  virtual double AdA (int index, int m);
+  
   // convert a state to its occupation number representation
   //
   // index = index of the state
@@ -429,6 +472,60 @@ inline int BosonOnTorusWithMagneticTranslationsShort::GetParticleStatistic()
   return ParticleOnTorusWithMagneticTranslations::BosonicStatistic;
 }
 
+// get the number of orbitals
+//
+// return value = number of orbitals
+
+inline int BosonOnTorusWithMagneticTranslationsShort::GetNbrOrbitals()
+{
+  return this->MaxMomentum;
+}
+
+// get the number of particles
+//
+// return value = number of particles
+
+inline int BosonOnTorusWithMagneticTranslationsShort::GetNbrParticles()
+{
+  return this->NbrBosons;
+}
+
+// get the momentum along the x axis
+// 
+// return avlue = momentum along the x axis
+
+inline int BosonOnTorusWithMagneticTranslationsShort::GetKxMomentum()
+{
+  return this->KxMomentum;
+}
+
+// get the momentum along the y axis
+// 
+// return avlue = momentum along the y axis
+
+inline int BosonOnTorusWithMagneticTranslationsShort::GetKyMomentum()
+{
+  return this->KyMomentum;
+}
+
+// get the maximum momentum along the x axis (i.e. the number of momentum sectors)
+// 
+// return avlue = maximum momentum along the x axis
+
+inline int BosonOnTorusWithMagneticTranslationsShort::GetMaxXMomentum()
+{
+  return this->MomentumModulo;
+}
+  
+// get the maximum momentum along the y axis (i.e. the number of momentum sectors)
+// 
+// return avlue = maximum momentum along the y axis
+
+inline int BosonOnTorusWithMagneticTranslationsShort::GetMaxYMomentum()
+{
+  return this->MaxMomentum;
+}
+  
 // convert a bosonic state into its fermionic counterpart
 //
 // initialState = reference on the array where initialbosonic  state is stored
