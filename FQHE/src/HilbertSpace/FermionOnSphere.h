@@ -1222,6 +1222,13 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = fermionic state in its fermionic representation
   virtual unsigned long ConvertFromMonomial(unsigned long* initialState);
 
+  // convert a fermionic state from its monomial representation, assuming the monomial is unsorted
+  //
+  // initialState = array where the monomial representation is stored
+  // sign = reference where the sign due to the extra anti-commutation will be stored (0 for +1, 1 for -1)
+  // return value = fermionic state in its fermionic representation
+  virtual unsigned long ConvertFromMonomial(unsigned long* initialState, unsigned long& sign);
+
   // check if a monomial representation is a valid fermionic state
   //
   // initialState = array where the monomial representation is stored (should be sorted)
@@ -1359,6 +1366,35 @@ inline unsigned long FermionOnSphere::ConvertFromMonomial(unsigned long* initial
  }
 
 
+// convert a fermionic state from its monomial representation, assuming the monomial is unsorted
+//
+// initialState = array where the monomial representation is stored
+// sign = reference where the sign due to the extra anti-commutation will be stored (0 for +1, 1 for -1)
+// return value = fermionic state in its fermionic representation
+
+inline unsigned long FermionOnSphere::ConvertFromMonomial(unsigned long* initialState, unsigned long& sign)
+{
+  unsigned long TmpState = 0x0ul;  
+  unsigned long TmpSign;
+  sign = 0x0ul;  
+  for (int j = 0; j < this->NbrFermions; ++j)
+    {
+      TmpSign = TmpState & ((0x1ul << initialState[j]) - 0x1ul);
+#ifdef  __64_BITS__
+      TmpSign ^= TmpSign >> 32;
+#endif
+      TmpSign ^= TmpSign >> 16;
+      TmpSign ^= TmpSign >> 8;
+      TmpSign ^= TmpSign >> 4;
+      TmpSign ^= TmpSign >> 2;
+      TmpSign ^= TmpSign >> 1;
+      sign ^= TmpSign;
+      TmpState |= 0x1ul << initialState[j];
+    }
+  return TmpState;
+ }
+
+
 // check if a monomial representation is a valid fermionic state
 //
 // initialState = array where the monomial representation is stored (should be sorted)
@@ -1366,12 +1402,14 @@ inline unsigned long FermionOnSphere::ConvertFromMonomial(unsigned long* initial
 
 inline bool FermionOnSphere::CheckValidFermionicMonomial(unsigned long* initialState)
 {
-  for (int i = 1; i < this->NbrFermions; ++i)
+  unsigned long Tmp = 0x0ul;
+  for (int i = 0; i < this->NbrFermions; ++i)
     {
-      if (initialState[i - 1] == initialState[i])
+      if ((Tmp & (0x1ul << initialState[i])) != 0x0ul)
 	{
 	  return false;
 	}
+      Tmp |= (0x1ul << initialState[i]);
     }
   return true;
 }

@@ -7429,7 +7429,8 @@ void FermionOnSphere::SymmetricMonomialTimesSlater (unsigned long* symmetricMono
 void FermionOnSphere::ReverseSymmetricMonomialTimesSlater (unsigned long* symmetricMonomial, unsigned long* slater, RealVector& finalState, double** threeOrbitalOverlaps)
 {
   unsigned long TmpNbrStates = 0;
-  unsigned long TmpState [this->NbrFermions];
+//  unsigned long* TmpState = new unsigned long [this->NbrFermions];
+  unsigned long TmpState[this->NbrFermions];
   unsigned long TmpFinalState;
   double Sign = 1.0;
   unsigned long Mask = 0ul;
@@ -7445,11 +7446,12 @@ void FermionOnSphere::ReverseSymmetricMonomialTimesSlater (unsigned long* symmet
   double TmpFactor = 1.0;
   int Tmp = 0;
   bool DiscardFlag = false; 
- for (int i = 0; (i < this->NbrFermions) && (DiscardFlag == false); ++i)
+  for (int i = 0; (i < this->NbrFermions) && (DiscardFlag == false); ++i)
     {
       TmpState[i] = slater[i] - symmetricMonomial[i];
       if ((TmpState[i] >= 0) && (TmpState[i] <= this->LzMax))
 	{
+
 	  TmpFactor *= threeOrbitalOverlaps[TmpState[i]][slater[i]];
 	}
       else
@@ -7459,11 +7461,10 @@ void FermionOnSphere::ReverseSymmetricMonomialTimesSlater (unsigned long* symmet
     }
   if (DiscardFlag == false)
     {
-      int TmpSign = 0;
-      SortArrayDownOrderingPermutation (TmpState, this->NbrFermions, TmpSign);
       if (this->CheckValidFermionicMonomial(TmpState) == true)
 	{
-	  TmpFinalState = this->ConvertFromMonomial(TmpState);
+	  unsigned long TmpSign;
+	  TmpFinalState = this->ConvertFromMonomial(TmpState, TmpSign);
 	  int TmpLzMax = this->LzMax;
 	  while ((TmpFinalState >> TmpLzMax) == 0x0ul)
 	    {
@@ -7472,11 +7473,11 @@ void FermionOnSphere::ReverseSymmetricMonomialTimesSlater (unsigned long* symmet
 	  int TmpPos = this->FindStateIndex(TmpFinalState, TmpLzMax);
 	  if (TmpPos != this->HilbertSpaceDimension)
 	    {
-	      finalState[TmpPos] += Sign * ((double) (1 - (2 * (TmpSign & 1)))) * TmpFactor;
+	      finalState[TmpPos] += Sign * ((double) (1l - (2l * (TmpSign & 1ul)))) * TmpFactor;
 	    }
 	}
     }
-
+  
   while (Tmp < TmpDim)
     {
       if (TmpHeapArray[Tmp] < Tmp)
@@ -7511,11 +7512,10 @@ void FermionOnSphere::ReverseSymmetricMonomialTimesSlater (unsigned long* symmet
 	    }
 	  if (DiscardFlag == false)
 	    {
-	      int TmpSign = 0;
-	      SortArrayDownOrderingPermutation (TmpState, this->NbrFermions, TmpSign);
-	      if (this->CheckValidFermionicMonomial(TmpState) == true)
+  	      if (this->CheckValidFermionicMonomial(TmpState) == true)
 		{
-		  TmpFinalState = this->ConvertFromMonomial(TmpState);
+		  unsigned long TmpSign;
+		  TmpFinalState = this->ConvertFromMonomial(TmpState, TmpSign);
 		  int TmpLzMax = this->LzMax;
 		  while ((TmpFinalState >> TmpLzMax) == 0x0ul)
 		    {
@@ -7524,7 +7524,7 @@ void FermionOnSphere::ReverseSymmetricMonomialTimesSlater (unsigned long* symmet
 		  int TmpPos = this->FindStateIndex(TmpFinalState, TmpLzMax);
 		  if (TmpPos != this->HilbertSpaceDimension)
 		    {
-		      finalState[TmpPos] += Sign * ((double) (1 - (2 *(TmpSign & 1)))) * TmpFactor;
+		      finalState[TmpPos] += Sign * ((double) (1l - (2l *(TmpSign & 1ul)))) * TmpFactor;
 		    }
 		}
 	    }
@@ -7537,6 +7537,7 @@ void FermionOnSphere::ReverseSymmetricMonomialTimesSlater (unsigned long* symmet
 	  ++Tmp;
 	}
     }  
+//  delete[] TmpState;
 }
 
 // Compute the product of a fermionic state with a bosonic state, automatically dealing with reverse flux attachement

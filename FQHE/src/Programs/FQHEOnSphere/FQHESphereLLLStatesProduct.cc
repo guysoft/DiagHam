@@ -89,7 +89,7 @@ int main(int argc, char** argv)
     }
 	
   int NbrVectors;
-  char** VectorFiles = Manager.GetStrings("states",NbrVectors);
+  char** VectorFiles = Manager.GetStrings("states", NbrVectors);
   char* OutputFileName =  Manager.GetString("bin-output");
   char* OutputTxtFileName = ((SingleStringOption*) Manager["txt-output"])->GetString();
   bool FermionFlag = true;
@@ -299,9 +299,9 @@ int main(int argc, char** argv)
     {
       if(FermionFlag1 == true)
 	{
-	  OutputBasis1 = new FermionOnSphere (NbrParticles[0],TotalLz[0], LzMax[0]);
-	  OutputBasis2 = new FermionOnSphere (NbrParticles[1],TotalLz[1], LzMax[1]);
-	  FinalSpace = new BosonOnSphereShort(NbrParticles[0],TotalLz[0]+TotalLz[1],LzMax[0]+LzMax[1]);
+	  OutputBasis1 = new FermionOnSphere (NbrParticles[0], TotalLz[0], LzMax[0]);
+	  OutputBasis2 = new FermionOnSphere (NbrParticles[1], TotalLz[1], LzMax[1]);
+	  FinalSpace = new BosonOnSphereShort(NbrParticles[0], TotalLz[0] + TotalLz[1], LzMax[0] + LzMax[1]);
 	}
       else
 	{
@@ -310,12 +310,12 @@ int main(int argc, char** argv)
 	  if(FermionFlag2 == false)
 	    {
 	      OutputBasis2 = new BosonOnSphereShort(NbrParticles[1], TotalLz[1], LzMax[1]);
-	      FinalSpace = new BosonOnSphereShort(NbrParticles[0],TotalLz[0]+TotalLz[1],LzMax[0]+LzMax[1]);
+	      FinalSpace = new BosonOnSphereShort(NbrParticles[0], TotalLz[0] + TotalLz[1], LzMax[0] + LzMax[1]);
 	    }
 	  else
 	    {
 	      OutputBasis2 = new FermionOnSphere(NbrParticles[1], TotalLz[1], LzMax[1]);
-	      FinalSpace = new FermionOnSphere(NbrParticles[0],TotalLz[0]+TotalLz[1],LzMax[0]+LzMax[1]);
+	      FinalSpace = new FermionOnSphere(NbrParticles[0], TotalLz[0] + TotalLz[1], LzMax[0] + LzMax[1]);
 	    }
 	}
     }
@@ -373,7 +373,7 @@ int main(int argc, char** argv)
   
   OutputVector.WriteVector(OutputFileName);	
   ofstream File;
-  if(OutputTxtFileName!=0)
+  if(OutputTxtFileName != 0)
     {
       File.open(OutputTxtFileName, ios::binary | ios::out);
       File.precision(14);
