@@ -105,7 +105,8 @@ class AbstractArchitectureOperation
       FQHECylinderMultipleJackGeneratorOperation = 0x30007,
       SpinChainMultipleEntanglementSpectrum = 0x30008,
       FQHESphereWithSU2SpinVanDerMondeTimesSlater = 0x30009,
-      FQHESphereParticleEntanglementMatrixOperation = 0x30010
+      FQHESphereParticleEntanglementMatrixOperation = 0x30010,
+      FQHESphereBosonicStateTimesFermionicState = 0x30011
     };
   
   // destructor

@@ -7429,7 +7429,6 @@ void FermionOnSphere::SymmetricMonomialTimesSlater (unsigned long* symmetricMono
 void FermionOnSphere::ReverseSymmetricMonomialTimesSlater (unsigned long* symmetricMonomial, unsigned long* slater, RealVector& finalState, double** threeOrbitalOverlaps)
 {
   unsigned long TmpNbrStates = 0;
-//  unsigned long* TmpState = new unsigned long [this->NbrFermions];
   unsigned long TmpState[this->NbrFermions];
   unsigned long TmpFinalState;
   double Sign = 1.0;
@@ -7461,10 +7460,10 @@ void FermionOnSphere::ReverseSymmetricMonomialTimesSlater (unsigned long* symmet
     }
   if (DiscardFlag == false)
     {
-      if (this->CheckValidFermionicMonomial(TmpState) == true)
-	{
-	  unsigned long TmpSign;
-	  TmpFinalState = this->ConvertFromMonomial(TmpState, TmpSign);
+       if (this->CheckValidFermionicMonomial(TmpState) == true)
+ 	{
+ 	  unsigned long TmpSign;
+ 	  TmpFinalState = this->ConvertFromMonomial(TmpState, TmpSign);
 	  int TmpLzMax = this->LzMax;
 	  while ((TmpFinalState >> TmpLzMax) == 0x0ul)
 	    {
@@ -7512,10 +7511,10 @@ void FermionOnSphere::ReverseSymmetricMonomialTimesSlater (unsigned long* symmet
 	    }
 	  if (DiscardFlag == false)
 	    {
-  	      if (this->CheckValidFermionicMonomial(TmpState) == true)
-		{
-		  unsigned long TmpSign;
-		  TmpFinalState = this->ConvertFromMonomial(TmpState, TmpSign);
+   	      if (this->CheckValidFermionicMonomial(TmpState) == true)
+ 		{
+ 		  unsigned long TmpSign;
+ 		  TmpFinalState = this->ConvertFromMonomial(TmpState, TmpSign);
 		  int TmpLzMax = this->LzMax;
 		  while ((TmpFinalState >> TmpLzMax) == 0x0ul)
 		    {

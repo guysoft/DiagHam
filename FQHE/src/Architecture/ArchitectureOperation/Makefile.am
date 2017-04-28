@@ -29,4 +29,5 @@ FQHESphereWithSpinApplyOneBodyTransformationOperation.cc \
 FQHECylinderMultipleJackGeneratorOperation.cc \
 FQHESphereWithSU2SpinVanDerMondeTimesSlaterOperation.cc \
 QHEParticlePrecalculationOperationWithMatrixElements.cc \
-FQHESphereParticleEntanglementMatrixOperation.cc
+FQHESphereParticleEntanglementMatrixOperation.cc \
+FQHESphereBosonicStateTimesFermionicStateOperation.cc

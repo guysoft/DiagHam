@@ -21,8 +21,7 @@
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
-#include "Architecture/ArchitectureOperation/FQHESphereMonomialsTimesSlaterProjectionOperation.h"
-#include "Architecture/ArchitectureOperation/FQHESphereMultipleMonomialsTimesSlaterProjectionOperation.h"
+#include "Architecture/ArchitectureOperation/FQHESphereBosonicStateTimesFermionicStateOperation.h"
 
 
 #include <iostream>
@@ -215,10 +214,15 @@ int main(int argc, char** argv)
       cout << "generating state " << OutputName << endl;
     }
 
-  RealVector OutputVector (OutputSpace->GetHilbertSpaceDimension(), true);
-  OutputSpace->BosonicStateTimeFermionicState(BosonicInputVector, InputVector, OutputVector, BosonicInputSpace, InputSpace, 0, 
-					      BosonicInputSpace->GetHilbertSpaceDimension(), !(Manager.GetBoolean("normalize")), 
-					      Architecture.GetArchitecture());
+  FQHESphereBosonicStateTimesFermionicStateOperation Operation (BosonicInputVector, InputVector, 
+								BosonicInputSpace, InputSpace, OutputSpace,
+								!(Manager.GetBoolean("normalize")));
+  Operation.ApplyOperation(Architecture.GetArchitecture());
+  RealVector OutputVector = Operation.GetState();
+//   RealVector OutputVector (OutputSpace->GetHilbertSpaceDimension(), true);
+//   OutputSpace->BosonicStateTimeFermionicState(BosonicInputVector, InputVector, OutputVector, BosonicInputSpace, InputSpace, 0, 
+// 					      BosonicInputSpace->GetHilbertSpaceDimension(), !(Manager.GetBoolean("normalize")), 
+// 					      Architecture.GetArchitecture());
   delete InputSpace;
   delete BosonicInputSpace;
 

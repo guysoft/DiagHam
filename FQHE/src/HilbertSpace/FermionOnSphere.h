@@ -1229,6 +1229,13 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = fermionic state in its fermionic representation
   virtual unsigned long ConvertFromMonomial(unsigned long* initialState, unsigned long& sign);
 
+  // convert a fermionic state from its monomial representation, checking it is a valid fermionic state and assuming the monomial is unsorted
+  //
+  // initialState = array where the monomial representation is stored
+  // sign = reference where the sign due to the extra anti-commutation will be stored (0 for +1, 1 for -1)
+  // return value = fermionic state in its fermionic representation
+  virtual bool CheckAndConvertFromMonomial(unsigned long* initialState, unsigned long& sign, unsigned long& finalState);
+
   // check if a monomial representation is a valid fermionic state
   //
   // initialState = array where the monomial representation is stored (should be sorted)
@@ -1413,6 +1420,41 @@ inline bool FermionOnSphere::CheckValidFermionicMonomial(unsigned long* initialS
     }
   return true;
 }
+
+// convert a fermionic state from its monomial representation, checking it is a valid fermionic state and assuming the monomial is unsorted
+//
+// initialState = array where the monomial representation is stored
+// sign = reference where the sign due to the extra anti-commutation will be stored (0 for +1, 1 for -1)
+// return value = fermionic state in its fermionic representation
+
+inline bool FermionOnSphere::CheckAndConvertFromMonomial(unsigned long* initialState, unsigned long& sign, unsigned long& finalState)
+{
+  unsigned long TmpMask;  
+  unsigned long TmpSign;
+  sign = 0x0ul;  
+  finalState = 0x0ul;
+  for (int j = 0; j < this->NbrFermions; ++j)
+    {
+      TmpMask = 0x1ul << initialState[j];
+      if ((finalState & TmpMask) != 0x0ul)
+	{
+	  return false;
+	}
+      TmpSign = finalState & (TmpMask - 0x1ul);
+#ifdef  __64_BITS__
+      TmpSign ^= TmpSign >> 32;
+#endif
+      TmpSign ^= TmpSign >> 16;
+      TmpSign ^= TmpSign >> 8;
+      TmpSign ^= TmpSign >> 4;
+      TmpSign ^= TmpSign >> 2;
+      TmpSign ^= TmpSign >> 1;
+      sign ^= TmpSign;
+      finalState |= TmpMask;
+    }
+  return true;
+ }
+
 
 // print a given state using the most compact notation
 //
