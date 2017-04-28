@@ -159,6 +159,7 @@ class FQHESphereBosonicStateTimesFermionicStateOperation : public AbstractArchit
 
 inline RealVector FQHESphereBosonicStateTimesFermionicStateOperation::GetState ()
 {
+  return this->OutputState;
 }
 
 #endif

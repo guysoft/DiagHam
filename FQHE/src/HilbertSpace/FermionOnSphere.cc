@@ -7555,7 +7555,8 @@ void FermionOnSphere::BosonicStateTimeFermionicState(RealVector& bosonicState, R
 						     BosonOnSphereShort* bosonicSpace, FermionOnSphere* fermionicSpace,
 						     int minIndex, int nbrComponents, bool unnormalizedFlag, AbstractArchitecture* architecture)
 {
-  outputVector.ClearVector();
+  if (nbrComponents == this->GetHilbertSpaceDimension())
+    outputVector.ClearVector();
   RealVector FinalState (this->GetHilbertSpaceDimension());
   FactorialCoefficient Coefficient;	
   int MaxIndex = minIndex + nbrComponents;

@@ -94,13 +94,14 @@ FQHESphereBosonicStateTimesFermionicStateOperation::FQHESphereBosonicStateTimesF
   this->NbrComponent = operation.NbrComponent;
   this->OperationType = AbstractArchitectureOperation::FQHESphereBosonicStateTimesFermionicState;
 
-  this->BosonicState = operation.BosonicState;
-  this->FermionicState = operation.FermionicState;
-
   this->BosonicSpace = (BosonOnSphereShort*) operation.BosonicSpace->Clone();
   this->FermionicSpace = (FermionOnSphere*) operation.FermionicSpace->Clone();
   this->OutputSpace = (FermionOnSphere*) operation.OutputSpace->Clone(); 
   
+  this->BosonicState = operation.BosonicState;
+  this->FermionicState = operation.FermionicState;
+  this->OutputState = RealVector(this->OutputSpace->GetHilbertSpaceDimension(), true);
+
   this->UnnormalizedFlag = operation.UnnormalizedFlag;
 
   this->NbrMPIStage = operation.NbrMPIStage;
@@ -113,6 +114,9 @@ FQHESphereBosonicStateTimesFermionicStateOperation::FQHESphereBosonicStateTimesF
 
 FQHESphereBosonicStateTimesFermionicStateOperation::~FQHESphereBosonicStateTimesFermionicStateOperation()
 {						
+  delete this->BosonicSpace;
+  delete this->FermionicSpace;
+  delete this->OutputSpace; 
 }
   
 // set range of indices
@@ -143,8 +147,8 @@ bool FQHESphereBosonicStateTimesFermionicStateOperation::RawApplyOperation()
 {
   if (this->NbrComponent == 0)
     return true;
-  int LastComponent = this->NbrComponent + this->FirstComponent;
 
+  cout << "processing " << this->FirstComponent << " " << this->NbrComponent << endl;
   this->OutputSpace->BosonicStateTimeFermionicState(this->BosonicState, this->FermionicState, this->OutputState, 
 						    this->BosonicSpace, this->FermionicSpace, this->FirstComponent, 
 						    this->NbrComponent, this->UnnormalizedFlag, 0);
