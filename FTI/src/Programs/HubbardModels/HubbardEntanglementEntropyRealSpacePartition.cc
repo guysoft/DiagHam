@@ -20,6 +20,7 @@
 
 #include "Tools/FTIFiles/FTIHubbardModelFileTools.h"
 
+#include "HilbertSpace/FermionOnLatticeRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
@@ -57,6 +58,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\0', "ground-file", "name of the file corresponding to the ground state of the whole system");
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");  
   (*SystemGroup) += new SingleStringOption  ('\n', "kept-sites", "column-based tesxt file that list sites that have to be kept");
+  (*SystemGroup) += new BooleanOption  ('\n', "no-spin", "use this option for spinless particles");
   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
   (*OutputGroup) += new BooleanOption ('\n', "disable-densitymatrix", "do not save the eigenvalues of the reduced density matrix");
@@ -91,8 +93,9 @@ int main(int argc, char** argv)
   int NbrSites = 0;
   bool Statistics = true;
   bool GutzwillerFlag = false;
-  double* Coefficients = 0;
   bool ShowTimeFlag = Manager.GetBoolean("show-time");
+  double* Coefficients = 0;
+  bool SpinlessFlag = Manager.GetBoolean("no-spin");
   bool FixedTotalSzFlag = false;
   bool TwoDimensionTranslationFlag = false;
   int TotalSz = 0;
@@ -279,10 +282,18 @@ int main(int argc, char** argv)
     {
       if (FixedTotalSzFlag == false)
 	{
-	  if (GutzwillerFlag == false)
-	    Space = new FermionOnLatticeWithSpinRealSpace (NbrParticles, NbrSites);
+	  if (SpinlessFlag)
+	    {
+	      Space = new FermionOnLatticeRealSpace (NbrParticles, NbrSites);
+	      cout <<"creating FermionOnLatticeRealSpace = " <<NbrParticles<<" "<< NbrSites<<endl;
+	    }
 	  else
-	    Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (NbrParticles, NbrSites);
+	    {  
+	      if (GutzwillerFlag == false)
+		Space = new FermionOnLatticeWithSpinRealSpace (NbrParticles, NbrSites);
+	      else
+		Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (NbrParticles, NbrSites);
+	    }
 	}
       else
 	{
@@ -294,7 +305,7 @@ int main(int argc, char** argv)
       if (TwoDimensionTranslationFlag == true)
 	{
 	  ParticleOnSphere* TmpSpace = 0;
-	  if (FixedTotalSzFlag == false)
+	      if (FixedTotalSzFlag == false)
 	    {
 	      if (GutzwillerFlag == false)
 		TmpSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum, XPeriodicity, YMomentum, YPeriodicity);
@@ -345,7 +356,7 @@ int main(int argc, char** argv)
   
 
   int MaxSubsystemNbrParticles = 2 * NbrKeptOrtbitals;
-  if (GutzwillerFlag == true)
+  if ((GutzwillerFlag == true)||( SpinlessFlag))
     {
       MaxSubsystemNbrParticles = NbrKeptOrtbitals;
     }
@@ -371,13 +382,27 @@ int main(int argc, char** argv)
 		  gettimeofday (&(TotalStartingTime), 0);
 		}
 	      ComplexMatrix PartialEntanglementMatrix;
-	      PartialEntanglementMatrix = ((FermionOnLatticeWithSpinRealSpace*) Space)->EvaluatePartialEntanglementMatrix(SubsystemNbrParticles, NbrKeptOrtbitals, KeptOrbitals, GroundStates[0], Architecture.GetArchitecture());
-	      PartialEntanglementMatrix *= Coefficients[0];
-	      for (int i = 1; i < NbrSpaces; ++i)
+	      if( SpinlessFlag == false)
 		{
-		  ComplexMatrix TmpMatrix = ((FermionOnLatticeWithSpinRealSpace*) Space)->EvaluatePartialEntanglementMatrix(SubsystemNbrParticles, NbrKeptOrtbitals, KeptOrbitals, GroundStates[i], Architecture.GetArchitecture());
-		  TmpMatrix *= Coefficients[i];
-		  PartialEntanglementMatrix += TmpMatrix;
+		  PartialEntanglementMatrix = ((FermionOnLatticeWithSpinRealSpace*) Space)->EvaluatePartialEntanglementMatrix(SubsystemNbrParticles, NbrKeptOrtbitals, KeptOrbitals, GroundStates[0], Architecture.GetArchitecture());
+		  PartialEntanglementMatrix *= Coefficients[0];
+		  for (int i = 1; i < NbrSpaces; ++i)
+		    {
+		      ComplexMatrix TmpMatrix = ((FermionOnLatticeWithSpinRealSpace*) Space)->EvaluatePartialEntanglementMatrix(SubsystemNbrParticles, NbrKeptOrtbitals, KeptOrbitals, GroundStates[i], Architecture.GetArchitecture());
+		      TmpMatrix *= Coefficients[i];
+		      PartialEntanglementMatrix += TmpMatrix;
+		    }
+		}
+	      else
+		{
+		  PartialEntanglementMatrix = ((FermionOnLatticeRealSpace*) Space)->EvaluatePartialEntanglementMatrix(SubsystemNbrParticles, NbrKeptOrtbitals, KeptOrbitals, GroundStates[0], Architecture.GetArchitecture());
+		  PartialEntanglementMatrix *= Coefficients[0];
+		  for (int i = 1; i < NbrSpaces; ++i)
+		    {
+		      ComplexMatrix TmpMatrix = ((FermionOnLatticeRealSpace*) Space)->EvaluatePartialEntanglementMatrix(SubsystemNbrParticles, NbrKeptOrtbitals, KeptOrbitals, GroundStates[i], Architecture.GetArchitecture());
+		      TmpMatrix *= Coefficients[i];
+		      PartialEntanglementMatrix += TmpMatrix;
+		    }
 		}
 	      if (ShowTimeFlag == true)
 		{

@@ -899,6 +899,111 @@ bool FTIHofstadterdModelWith2DTranslationFindSystemInfoFromVectorFileName(char* 
   return true;
 }
 
+// try to guess system information from file name
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles 
+// xMomentum = reference on the momentum sector in the x direction
+// yMomentum = reference on the momentum sector in the y direction
+// fluxInUnitCell, = reference on the number of flux in the unit cell
+// nbrUnitCellX = reference on the number of unit cell  in the x direction
+// nbrUnitCellY = reference on the number of unit cell  in the y direction
+// nbrSiteInUnitCellX  = reference on the number of site in each unit cell  in the x direction
+// nbrSiteInUnitCellY  = reference on the number of site in each unit cell  in the y direction
+// statistics = reference on flag for fermionic statistics (true for fermion, false for bosons)
+// gutzwiller = reference on flag  that indicated if the Gutzwiller projection was implemented within the Hilbert space
+// translationFlag = bool indicating if translations are used
+// return value = true if no error occured
+
+bool FTIHofstadterdModelWith2DTranslationFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& xMomentum, int& yMomentum, int & fluxInUnitCell, int& nbrUnitCellX, int& nbrUnitCellY, int& nbrSiteInUnitCellX,int& nbrSiteInUnitCellY, bool& statistics, bool& gutzwiller,  bool& translationFlag)
+{
+  if (FTIHofstadterdModelFindSystemInfoFromVectorFileName(filename, nbrParticles, nbrUnitCellX, nbrUnitCellY, nbrSiteInUnitCellX, nbrSiteInUnitCellY, statistics, gutzwiller) == false) 
+    {
+      return false;
+    }
+
+  char* StrNbrParticles;
+  int SizeString;
+
+  StrNbrParticles = strstr(filename, "_q_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 3;
+      SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  fluxInUnitCell = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "Impossible to obtain the number of flux per unit cell" << filename << endl;
+      return false;            
+    }
+
+  StrNbrParticles = strstr(filename, "_kx_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  xMomentum = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	  translationFlag = true ;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      translationFlag = false;
+      cout << "No translations from file name " << filename << endl;
+      return true;            
+    }
+
+  StrNbrParticles = strstr(filename, "_ky_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  yMomentum = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess y momentum sector from file name " << filename << endl;
+      return false;            
+    }
+  return true;
+}
+
 
 // try to guess system information from file name
 //
@@ -981,6 +1086,98 @@ bool FTIHofstadterModelWithSzFindSystemInfoFromVectorFileName(char* filename,int
 	{
 	  cout << "error while retrieving the minimum number of on-site singlet" << endl;
 	  return false;
+	}
+    }
+  return true;
+}
+
+
+
+// try to guess system information from file name
+//
+// filename = vector file name
+// szValue = reference on the value of the total spin
+// szSymmetry =  reference on the Sz<->-Sz parity, will be non-zero only if the vector is encoded with the Sz<->-Sz symmetry
+// minNbrSinglets = minimum number of on-site singlets
+// usingSzSymmetryFlag = bool indicating if the SzSymmetry is used
+// usingNbrSingletConstraintFlag = bool indicating if the constraint on the number of singlets is used
+// return value = true if no error occured
+
+bool FTIHofstadterModelWithSzFindSystemInfoFromVectorFileName(char* filename,int & szValue, int& szSymmetry, int& minNbrSinglets, bool & usingSzSymmetryFlag, bool & usingNbrSingletConstraintFlag)
+{    
+  char* StrNbrParticles;
+  int SizeString;
+  StrNbrParticles = strstr(filename, "_sz_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && (((StrNbrParticles[SizeString] >= '0') 
+																	&& (StrNbrParticles[SizeString] <= '9')) || (StrNbrParticles[SizeString] != '-')))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  szValue = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess sz value sector from file name " << filename << endl;
+      return false;            
+    }
+  szSymmetry = 0;
+  StrNbrParticles = strstr(filename, "_szsym_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 7;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && 
+	     (((StrNbrParticles[SizeString] >= '0') && (StrNbrParticles[SizeString] <= '9')) || (StrNbrParticles[SizeString] == '-')))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  szSymmetry = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	  usingSzSymmetryFlag = true;
+	}
+      else
+	{
+	  cout << "No Sz<->-Sz parity" << endl;
+	  usingSzSymmetryFlag = false;
+	}
+    }
+  minNbrSinglets = 0;
+  StrNbrParticles = strstr(filename, "_minnbrsinglet_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 15;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && 
+	     (((StrNbrParticles[SizeString] >= '0') && (StrNbrParticles[SizeString] <= '9')) || (StrNbrParticles[SizeString] == '-')))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  minNbrSinglets = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	  usingNbrSingletConstraintFlag = true;
+	}
+      else
+	{
+	  cout << "No minimum number of on-site singlet" << endl;
+	  usingNbrSingletConstraintFlag = false;
 	}
     }
   return true;

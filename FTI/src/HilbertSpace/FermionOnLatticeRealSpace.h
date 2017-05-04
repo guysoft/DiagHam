@@ -151,6 +151,8 @@ class FermionOnLatticeRealSpace : public FermionOnSphere
   // return value = number of components that have been added to the density matrix
   virtual long EvaluatePartialEntanglementMatrixCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
 						      ComplexVector& groundState, ComplexMatrix* entanglementMatrix);
+  virtual long EvaluatePartialEntanglementMatrixZeroParticuleCase (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace, ComplexVector& groundState, ComplexMatrix* entanglementMatrix);
+  virtual long EvaluatePartialEntanglementMatrixMaxParticuleCase (ParticleOnSphere* destinationHilbertSpace, ComplexVector& groundState, ComplexMatrix* entanglementMatrix);
 
 };
 

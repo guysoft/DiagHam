@@ -47,6 +47,7 @@
 #include <math.h>
 #include <cstdlib>
 #include <fstream>
+#include <bitset>
 
 using std::cout;
 using std::endl;
@@ -88,7 +89,7 @@ FermionOnLatticeRealSpace::FermionOnLatticeRealSpace (int nbrFermions, int nbrSi
   this->IncNbrFermions = this->NbrFermions + 1;
   this->TotalLz = 0;
   this->NbrSite = nbrSite;
-  this->LzMax = this->NbrSite - 1;
+  this->LzMax = this->NbrSite;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions);
@@ -105,7 +106,7 @@ FermionOnLatticeRealSpace::FermionOnLatticeRealSpace (int nbrFermions, int nbrSi
       long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrSite - 1, 0l);
       this->StateLzMax = new int [this->LargeHilbertSpaceDimension];  
       int CurrentLzMax = this->NbrLzValue;
-      while (((this->StateDescription[0] >> CurrentLzMax) & 0x1ul) == 0x0ul)
+      while ((((this->StateDescription[0] >> CurrentLzMax) & 0x1ul) == 0x0ul)&&(CurrentLzMax>=0))
 	--CurrentLzMax;
       this->StateLzMax[0] = CurrentLzMax;
       for (long i = 1l; i < this->LargeHilbertSpaceDimension; ++i)
@@ -333,8 +334,7 @@ HermitianMatrix FermionOnLatticeRealSpace::EvaluatePartialDensityMatrixParticleP
 ComplexMatrix FermionOnLatticeRealSpace::EvaluatePartialEntanglementMatrix (int nbrParticleSector, int nbrKeptOrbitals, int* keptOrbitals, ComplexVector& groundState, AbstractArchitecture* architecture)
 {
   int ComplementaryNbrParticles = this->NbrFermions - nbrParticleSector;
-  if ((nbrParticleSector > (2 * nbrKeptOrbitals)) || 
-      (ComplementaryNbrParticles > (2 * (this->NbrSite - nbrKeptOrbitals))))
+  if ((nbrParticleSector >  nbrKeptOrbitals) ||  (ComplementaryNbrParticles > (this->NbrSite - nbrKeptOrbitals) ))
     {
       ComplexMatrix TmpEntanglementMatrix;
       return TmpEntanglementMatrix;
@@ -356,6 +356,45 @@ ComplexMatrix FermionOnLatticeRealSpace::EvaluatePartialEntanglementMatrix (int 
 	  return TmpEntanglementMatrix;
 	}
     }
+  
+  this->KeptOrbitals = new int [nbrKeptOrbitals];
+  for (int i = 0 ; i < nbrKeptOrbitals; ++i) 
+    {
+      this->KeptOrbitals[i] = keptOrbitals[i];
+    }
+  
+  if (nbrParticleSector == 0)
+    {
+      FermionOnLatticeRealSpace ComplementarySpace (this->NbrFermions, this->NbrSite - nbrKeptOrbitals);
+      ComplexMatrix TmpEntanglementMatrix(1, ComplementarySpace.HilbertSpaceDimension, true);
+      long TmpEntanglementMatrixZero = this->EvaluatePartialEntanglementMatrixZeroParticuleCase (0, ComplementarySpace.HilbertSpaceDimension, &ComplementarySpace, groundState, &TmpEntanglementMatrix);
+      if (TmpEntanglementMatrixZero > 0)
+	{
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  ComplexMatrix TmpEntanglementMatrixZero;
+	  return TmpEntanglementMatrixZero;
+	}    
+    }
+
+  if (ComplementaryNbrParticles == 0)
+    {
+      FermionOnLatticeRealSpace SubsytemSpace (this->NbrFermions, nbrKeptOrbitals);
+      ComplexMatrix TmpEntanglementMatrix(SubsytemSpace.HilbertSpaceDimension, 1, true);
+      long TmpEntanglementMatrixZero = this->EvaluatePartialEntanglementMatrixMaxParticuleCase (&SubsytemSpace, groundState, &TmpEntanglementMatrix); 
+      if (TmpEntanglementMatrixZero > 0)
+	{
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  ComplexMatrix TmpEntanglementMatrixZero;
+	  return TmpEntanglementMatrixZero;
+	}    
+    }
+
   if (nbrKeptOrbitals == this->NbrSite)
     {
       if (nbrParticleSector == this->NbrFermions)
@@ -373,20 +412,16 @@ ComplexMatrix FermionOnLatticeRealSpace::EvaluatePartialEntanglementMatrix (int 
 	  return TmpEntanglementMatrix;
 	}
     }
-  this->KeptOrbitals = new int [nbrKeptOrbitals];
-  for (int i = 0 ; i < nbrKeptOrbitals; ++i) 
-    this->KeptOrbitals[i] = keptOrbitals[i];
+
   FermionOnLatticeRealSpace SubsytemSpace (nbrParticleSector, nbrKeptOrbitals);
   FermionOnLatticeRealSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSite - nbrKeptOrbitals);
   ComplexMatrix TmpEntanglementMatrix (SubsytemSpace.GetHilbertSpaceDimension(), ComplementarySpace.HilbertSpaceDimension, true);
-  cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
-
+  
   long TmpEntanglementMatrixZero = this->EvaluatePartialEntanglementMatrixCore(0, ComplementarySpace.HilbertSpaceDimension, &ComplementarySpace, &SubsytemSpace, groundState, &TmpEntanglementMatrix);
-//   FQHESphereParticleEntanglementSpectrumOperation Operation(this, &SubsytemSpace, &ComplementarySpace, groundState, TmpEntanglementMatrix);
-//   Operation.ApplyOperation(architecture);
-//   if (Operation.GetNbrNonZeroMatrixElements() > 0)	
   if (TmpEntanglementMatrixZero > 0)
-     return TmpEntanglementMatrix;
+    {
+      return TmpEntanglementMatrix;
+    }
    else
      {
        ComplexMatrix TmpEntanglementMatrixZero;
@@ -404,9 +439,9 @@ ComplexMatrix FermionOnLatticeRealSpace::EvaluatePartialEntanglementMatrix (int 
 // densityMatrix = reference on the density matrix where result has to stored
 // return value = number of components that have been added to the density matrix
 
-long FermionOnLatticeRealSpace::EvaluatePartialEntanglementMatrixCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
-								       ComplexVector& groundState, ComplexMatrix* entanglementMatrix)
+long FermionOnLatticeRealSpace::EvaluatePartialEntanglementMatrixCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace, ComplexVector& groundState, ComplexMatrix* entanglementMatrix)
 {
+//cout <<"Entering core"<<endl;
   FermionOnLatticeRealSpace* TmpHilbertSpace = (FermionOnLatticeRealSpace*) complementaryHilbertSpace;
   FermionOnLatticeRealSpace* TmpDestinationHilbertSpace = (FermionOnLatticeRealSpace*) destinationHilbertSpace;
   long TmpNbrNonZeroElements = 0;
@@ -418,23 +453,34 @@ long FermionOnLatticeRealSpace::EvaluatePartialEntanglementMatrixCore (int minIn
       if (SearchInArray<int>(i, this->KeptOrbitals, TmpDestinationHilbertSpace->LzMax) < 0)
 	TraceOutOrbitals[TmpIndex++] = i;
     }
-  for (; minIndex < MaxIndex; ++minIndex)    
+/*  for(int i = 0; i <this->LzMax - TmpDestinationHilbertSpace->LzMax;i ++)
+    cout <<TraceOutOrbitals[i]<<" ";
+  cout <<endl;*/
+  for (; minIndex < MaxIndex; ++minIndex) 
     {
       int Pos = 0;
       unsigned long TmpStateCompact = TmpHilbertSpace->StateDescription[minIndex];
       unsigned long TmpState = 0x0ul;
+//      cout <<"TmpStateCompact = "<<std::bitset<16>(TmpStateCompact)<<endl;
       for (int i = 0 ; i < TmpHilbertSpace->LzMax; ++i)
 	TmpState |= (TmpStateCompact >> i) << TraceOutOrbitals[i];
+//      cout <<"TmpState = "<<std::bitset<16>(TmpState)<<endl;
+      
       for (int j = 0; j < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++j)
 	{
 	  unsigned long TmpStateCompact2 = TmpDestinationHilbertSpace->StateDescription[j];
 	  unsigned long TmpState2 = 0x0ul;
 	  for (int i = 0 ; i < TmpDestinationHilbertSpace->LzMax; ++i)
 	    TmpState2 |= ((TmpStateCompact2 >> i) & 0x1ul) << this->KeptOrbitals[i];
+	  
+	//  cout <<"TmpState2 = "<<std::bitset<16>(TmpState2)<<endl;
+      
 	  unsigned long TmpState3 = TmpState | TmpState2;
+
 	  int TmpLzMax = this->LzMax; 
 	  while ((TmpState3 >> TmpLzMax) == 0x0ul)
-	    --TmpLzMax;
+	    --TmpLzMax; 
+//	  cout <<std::bitset<16>(TmpState3)<<" "<<dec<<TmpLzMax<<endl;
 	  int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
 	  if (TmpPos != this->HilbertSpaceDimension)
 	    {
@@ -473,3 +519,80 @@ long FermionOnLatticeRealSpace::EvaluatePartialEntanglementMatrixCore (int minIn
 }
 
 
+long FermionOnLatticeRealSpace::EvaluatePartialEntanglementMatrixZeroParticuleCase (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace, ComplexVector& groundState, ComplexMatrix* entanglementMatrix)
+{
+  FermionOnLatticeRealSpace* TmpHilbertSpace = (FermionOnLatticeRealSpace*) complementaryHilbertSpace;
+  long TmpNbrNonZeroElements = 0;
+  int* TraceOutOrbitals = new int [TmpHilbertSpace->LzMax];
+  int MaxIndex = minIndex + nbrIndex;
+  int TmpIndex = 0;
+  for (int i = 0; i < this->LzMax; ++i)
+    {
+      if (SearchInArray<int>(i, this->KeptOrbitals, this->LzMax - TmpHilbertSpace->LzMax) < 0)
+	TraceOutOrbitals[TmpIndex++] = i;
+    }
+  for (; minIndex < MaxIndex; ++minIndex)    
+    {
+      int Pos = 0;
+      unsigned long TmpStateCompact = TmpHilbertSpace->StateDescription[minIndex];
+      unsigned long TmpState = 0x0ul;
+      for (int i = 0 ; i < TmpHilbertSpace->LzMax; ++i)
+	TmpState |= (TmpStateCompact >> i) << TraceOutOrbitals[i];
+      
+      int TmpLzMax = this->LzMax; 
+      while ((TmpState >> TmpLzMax) == 0x0ul)
+	--TmpLzMax;
+      int TmpPos = this->FindStateIndex(TmpState, TmpLzMax);
+      if (TmpPos != this->HilbertSpaceDimension)
+	{
+	  entanglementMatrix->AddToMatrixElement(0, minIndex,  groundState[TmpPos]);
+	  ++TmpNbrNonZeroElements;
+	}
+    }
+  delete[] TraceOutOrbitals;
+  return TmpNbrNonZeroElements;
+}
+
+
+// core part of the evaluation orbital cut entanglement matrix calculation
+// 
+// minIndex = first index to consider in source Hilbert space
+// nbrIndex = number of indices to consider in source Hilbert space
+// complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+// destinationHilbertSpace = pointer to the destination Hilbert space  (i.e. part A)
+// groundState = reference on the total system ground state
+// densityMatrix = reference on the density matrix where result has to stored
+// return value = number of components that have been added to the density matrix
+
+long FermionOnLatticeRealSpace::EvaluatePartialEntanglementMatrixMaxParticuleCase (ParticleOnSphere* destinationHilbertSpace, ComplexVector& groundState, ComplexMatrix* entanglementMatrix)
+{
+  FermionOnLatticeRealSpace* TmpDestinationHilbertSpace = (FermionOnLatticeRealSpace*) destinationHilbertSpace;
+  long TmpNbrNonZeroElements = 0;
+  int* TraceOutOrbitals = new int [this->LzMax - TmpDestinationHilbertSpace->LzMax];
+  int TmpIndex = 0;
+  for (int i = 0; i < this->LzMax; ++i)
+    {
+      if (SearchInArray<int>(i, this->KeptOrbitals, TmpDestinationHilbertSpace->LzMax) < 0)
+	TraceOutOrbitals[TmpIndex++] = i;
+    }
+  
+  for (int j = 0; j < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++j)
+    {
+      unsigned long TmpStateCompact2 = TmpDestinationHilbertSpace->StateDescription[j];
+      unsigned long TmpState2 = 0x0ul;
+      for (int i = 0 ; i < TmpDestinationHilbertSpace->LzMax; ++i)
+	TmpState2 |= ((TmpStateCompact2 >> i) & 0x1ul) << this->KeptOrbitals[i];
+	  
+      int TmpLzMax = this->LzMax; 
+      while ((TmpState2 >> TmpLzMax) == 0x0ul)
+	--TmpLzMax; 
+      int TmpPos = this->FindStateIndex(TmpState2, TmpLzMax);
+      if (TmpPos != this->HilbertSpaceDimension)
+	{
+	  entanglementMatrix->AddToMatrixElement(j, 0, groundState[TmpPos]);
+	  ++TmpNbrNonZeroElements;
+	}
+    }
+  delete[] TraceOutOrbitals;
+  return TmpNbrNonZeroElements;
+}
