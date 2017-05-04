@@ -302,13 +302,19 @@ int main(int argc, char** argv)
   File.close();
   cout << "C3 OP = " << sqrt(NematicOP.Re*NematicOP.Re + NematicOP.Im*NematicOP.Im) << endl;
 
+  
+  Complex* SpinSpinCorrelation = new Complex [3];
+  for (int i = 0; i < 3; ++i)
+  {
+    SpinSpinCorrelation[i] = 0.0;
+  }
   int* TmpIndex1 = new int[3];
   for (int i = 0; i < XPeriodicity; ++i)
   {
     for (int j = 0; j < YPeriodicity; ++j)
     {
       for (int l = 0; l < 3; ++l)
-	NeighborSpinSpinCorrelation[l] = 0.0;
+	SpinSpinCorrelation[l] = 0.0;
       for (int nx = 0; nx < XPeriodicity; ++nx)
       {
 	for (int ny = 0; ny < YPeriodicity; ++ny)
@@ -323,7 +329,7 @@ int main(int argc, char** argv)
 	    Operator = new SpinWith2DTranslationSpinSpinCorrelationOperator(Space, XMomentum, XPeriodicity, YMomentum, YPeriodicity, TmpIndex, TmpIndex1[l]);
 	    OperatorMatrixElementOperation Operation(Operator, State, State, State.GetVectorDimension());
 	    Operation.ApplyOperation(Architecture.GetArchitecture());
-	    NeighborSpinSpinCorrelation[l] += Operation.GetScalar();
+	    SpinSpinCorrelation[l] += Operation.GetScalar();
 // 	cout << NeighborSpinSpinCorrelation[l] << " " ;
 	    delete Operator;
 	  }
@@ -331,10 +337,11 @@ int main(int argc, char** argv)
 	}
       }
       for (int l = 0; l < 3; ++l)
-	File1 << i << " " << j << " " << l << " " << (NeighborSpinSpinCorrelation[l].Re/(XPeriodicity * YPeriodicity)) << endl;
+	File1 << i << " " << j << " " << l << " " << (SpinSpinCorrelation[l].Re/(XPeriodicity * YPeriodicity)) << endl;
     }
   }
   delete[] TmpIndex1;
+  delete[] SpinSpinCorrelation;
   
   if (BondFlag == true)
   {
