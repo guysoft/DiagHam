@@ -65,6 +65,10 @@ class TwoDimensionalTriangularLatticeWithPseudospinHamiltonian : public Abstract
 
   // amplitude of the Heisenberg term
   double JFactor;
+  //amplitude of the D3 breaking term
+  double JBreakD3Factor;
+  //amplitude of the D3 breaking term
+  double JBreakD3FactorDown;
   
   //amplitude of the off-diagonal coupling between pseudospins
   double* PseudospinCouplingElements;

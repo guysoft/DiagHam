@@ -86,6 +86,17 @@ class TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHamiltonian :
   // hzFactor = amplitudes of the Zeeman term along z
   // periodicBoundaryConditions = true if periodic boundary conditions have to be used
   TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHamiltonian (Spin1_2ChainWithPseudospin* chain, int xMomentum, int nbrSpinX, int yMomentum, int nbrSpinY, double jFactor, bool periodicBoundaryConditions, int offset, long memory = -1);
+  
+  // constructor
+  //
+  // chain = pointer to Hilbert space of the associated system
+  // nbrSpinX = number of spin along the x direction
+  // nbrSpinY = number of spin along the y direction
+  // jFactor = amplitude of the Ising term
+  // hxFactor = amplitudes of the Zeeman term along x
+  // hzFactor = amplitudes of the Zeeman term along z
+  // periodicBoundaryConditions = true if periodic boundary conditions have to be used
+  TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHamiltonian (Spin1_2ChainWithPseudospin* chain, int xMomentum, int nbrSpinX, int yMomentum, int nbrSpinY, double jFactor, double jBreakD3Factor, bool periodicBoundaryConditions, int offset, long memory = -1);
 
   // destructor
   //

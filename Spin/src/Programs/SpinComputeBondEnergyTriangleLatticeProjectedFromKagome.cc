@@ -67,6 +67,7 @@ int main(int argc, char** argv)
   
   (*SystemGroup) += new SingleStringOption  ('i', "input-state", "name of the file corresponding to the state |Psi_R> (the order parameter being <Psi_L|c^+c^+|Psi_R>");   
   (*SystemGroup) += new BooleanOption  ('\n', "kagome", "compute the true dimer-dimer correlations of the kagome lattice");
+  (*SystemGroup) += new BooleanOption  ('\n', "nematic", "only compute the nematic order parameter");
   (*SystemGroup) += new BooleanOption  ('\n', "bond", "calculate bond-bond correlations");
 //   (*SystemGroup) += new BooleanOption ('\n', "only-cc", "compute only the parameters c^+_sigma c^+_sigma' instead of their linear combinations");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
@@ -344,6 +345,30 @@ int main(int argc, char** argv)
 	cout << KagomeDimer[l] << " " ;
     }
     cout << endl;
+    Complex NematicOP = (-KagomeDimer[0] + KagomeDimer[1] + KagomeDimer[2] * Phase( - M_PI / 3.0 ) + KagomeDimer[3] *  Phase( 2.0 * M_PI / 3.0 ) + KagomeDimer[4]  * Phase( M_PI / 3.0 ) + KagomeDimer[5]  * Phase( -2.0 * M_PI / 3.0 ));
+    cout << "C3 OP = " << sqrt(NematicOP.Re*NematicOP.Re + NematicOP.Im*NematicOP.Im) << endl;
+    
+    if (Manager.GetBoolean("nematic"))
+    {
+      if (Manager.GetString("input-state") != 0)
+	{
+	  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("input-state"), "vec", "kagome_neighbor_spinspin.dat");
+	  if (OutputFileName == 0)
+	    {
+	      cout << "no vec extension was find in " << Manager.GetString("input-state") << " file name" << endl;
+	      return 0;
+	    }
+	  File.open(OutputFileName, ios::binary | ios::out);
+	}
+      
+      File.precision(14);
+      for (int l = 0; l < 6; ++l)
+	File << KagomeDimer[l] << " " ;
+      File << endl;
+      File << "C3 OP = " << sqrt(NematicOP.Re*NematicOP.Re + NematicOP.Im*NematicOP.Im) << endl;
+      File.close();
+      return 0;
+    }
     
     if (Manager.GetString("output-file") != 0)
     {

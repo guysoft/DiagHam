@@ -68,6 +68,8 @@ TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHamiltonian::TwoDim
   this->NbrSpin = this->NbrSpinX * this->NbrSpinY;
   this->PeriodicBoundaryConditions = periodicBoundaryConditions;
   this->JFactor = jFactor;
+  this->JBreakD3Factor = 1.0;
+  this->JBreakD3FactorDown = 1.0;
   this->Offset = offset;
   
   this->XMomentum = xMomentum;
@@ -133,6 +135,58 @@ TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHamiltonian::TwoDim
       cout << endl;
       this->EnableFastMultiplication();
     }*/
+}
+
+// constructor from default data
+//
+// chain = pointer to Hilbert space of the associated system
+// nbrSpinX = number of spin along the x direction
+// nbrSpinY = number of spin along the y direction
+// jFactor = amplitude of the Ising term
+// hxFactor = amplitudes of the Zeeman term along x
+// hzFactor = amplitudes of the Zeeman term along z
+// periodicBoundaryConditions = true if periodic boundary conditions have to be used
+
+TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHamiltonian::TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHamiltonian (Spin1_2ChainWithPseudospin* chain, int xMomentum, int nbrSpinX, int yMomentum, int nbrSpinY, double jFactor, double jBreakD3Factor, bool periodicBoundaryConditions, int offset, long memory)
+{ 
+  this->Chain = chain;
+  this->NbrSpinX = nbrSpinX;
+  this->NbrSpinY = nbrSpinY;
+  this->NbrSpin = this->NbrSpinX * this->NbrSpinY;
+  this->PeriodicBoundaryConditions = periodicBoundaryConditions;
+  this->JFactor = jFactor;
+  this->JBreakD3Factor = jBreakD3Factor;
+  this->JBreakD3FactorDown = jBreakD3Factor;
+  this->Offset = offset;
+  
+  this->XMomentum = xMomentum;
+  this->YMomentum = yMomentum;
+  
+//   this->HermitianSymmetryFlag = true;
+  this->HermitianSymmetryFlag = false;
+    
+  // projection of kagome onto the s = 1/2 states on each triangle
+  this->PseudospinCouplingElements = new double[3];    
+  this->PseudospinCouplingElements[0] = 0.0;
+  this->PseudospinCouplingElements[1] = 1.0/sqrt(3.0);
+  this->PseudospinCouplingElements[2] = -1.0/sqrt(3.0);
+  
+  this-> PseudospinDiagCouplingElements = new double*[3];
+  for (int i = 0; i < 3; ++i)
+    this->PseudospinDiagCouplingElements[i] = new double[2];
+  this->PseudospinDiagCouplingElements[0][0] = 1.0;
+  this->PseudospinDiagCouplingElements[0][1] = -1.0/3.0;
+  
+  this->PseudospinDiagCouplingElements[1][0] = 0.0;
+  this->PseudospinDiagCouplingElements[1][1] = 2.0/3.0;
+  
+  this->PseudospinDiagCouplingElements[2][0] = 0.0;
+  this->PseudospinDiagCouplingElements[2][1] = 2.0/3.0;
+  
+  this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
+  this->EvaluateExponentialFactors();
+  this->EvaluateDiagonalMatrixElements();
+
 }
 
 // destructor
@@ -214,6 +268,15 @@ ComplexVector& TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHami
   int nbrTranslationsX1;
   int nbrTranslationsY1;
   
+  double* TmpOffDiagCoupling;
+  if (this->JBreakD3Factor != 1.0)
+  {
+    TmpOffDiagCoupling = new double[3];
+    TmpOffDiagCoupling[0] = sqrt(3) / 4.0;
+    TmpOffDiagCoupling[1] = 0.0;
+    TmpOffDiagCoupling[2] = -sqrt(3.0) / 4.0;
+  }
+  
   for (int i = firstComponent; i < LastComponent; ++i)
     {
       Complex TmpValue = vSource[i] * this->JFactor * 0.5;
@@ -222,6 +285,18 @@ ComplexVector& TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHami
 	{
 	  for (int k = 0; k < this->NbrSpinY; k++)
 	    {
+	      if (this->JBreakD3Factor != 1.0)
+	      {
+		TmpIndex1 = this->GetLinearizedIndex(j, k);
+		pos = this->Chain->JOffDiagonali(TmpIndex1, i, coef2, nbrTranslationsX, nbrTranslationsY);
+		if (pos != dim)
+		{
+		  vDestination[pos] += vSource[i] * TmpOffDiagCoupling[0] * this->JBreakD3Factor * coef2 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		  vDestination[pos] += vSource[i] * TmpOffDiagCoupling[2] * coef2 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		}
+	      }
+	      
+	      
 	      //AC part
 	     if ((this->NbrSpinY > 1) || (this->Offset != 0))
 	     {
@@ -230,36 +305,36 @@ ComplexVector& TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHami
 		pos = this->Chain->SmiSpjJiJj(TmpIndex2, TmpIndex1, i, this->PseudospinDiagCouplingElements[0], this->PseudospinDiagCouplingElements[2], coef, nbrTranslationsX, nbrTranslationsY);
 // 		cout << pos << " " << dim << endl;
 		if (pos != dim)
-		  vDestination[pos] += TmpValue * coef * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		  vDestination[pos] += TmpValue * this->JBreakD3FactorDown * coef * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
 		pos = this->Chain->SmiSpjJoffiJj(TmpIndex2, TmpIndex1, i, this->PseudospinDiagCouplingElements[2], coef, nbrTranslationsX, nbrTranslationsY);
 		if (pos != dim)
-		  vDestination[pos] += TmpValue * coef * this->PseudospinCouplingElements[0] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		  vDestination[pos] += TmpValue * this->JBreakD3FactorDown * coef * this->PseudospinCouplingElements[0] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
 		pos = this->Chain->SmiSpjJiJoffj(TmpIndex2, TmpIndex1, i, this->PseudospinDiagCouplingElements[0], coef, nbrTranslationsX, nbrTranslationsY);
 		if (pos != dim)
-		  vDestination[pos] += TmpValue * coef * this->PseudospinCouplingElements[2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		  vDestination[pos] += TmpValue * this->JBreakD3FactorDown * coef * this->PseudospinCouplingElements[2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
 		pos = this->Chain->SmiSpjJoffiJoffj(TmpIndex2, TmpIndex1, i, coef, nbrTranslationsX, nbrTranslationsY);
 		if (pos != dim)
-		  vDestination[pos] += TmpValue * coef * this->PseudospinCouplingElements[2] * this->PseudospinCouplingElements[0] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		  vDestination[pos] += TmpValue * this->JBreakD3FactorDown * coef * this->PseudospinCouplingElements[2] * this->PseudospinCouplingElements[0] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
 		
 		pos = this->Chain->SmiSpjJiJj(TmpIndex1, TmpIndex2, i, this->PseudospinDiagCouplingElements[2], this->PseudospinDiagCouplingElements[0], coef, nbrTranslationsX, nbrTranslationsY);
 		if (pos != dim)
-		  vDestination[pos] += TmpValue * coef * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		  vDestination[pos] += TmpValue * this->JBreakD3FactorDown * coef * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
 		pos = this->Chain->SmiSpjJoffiJj(TmpIndex1, TmpIndex2, i, this->PseudospinDiagCouplingElements[0], coef, nbrTranslationsX, nbrTranslationsY);
 		if (pos != dim)
-		  vDestination[pos] += TmpValue * coef * this->PseudospinCouplingElements[2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		  vDestination[pos] += TmpValue * this->JBreakD3FactorDown * coef * this->PseudospinCouplingElements[2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
 		pos = this->Chain->SmiSpjJiJoffj(TmpIndex1, TmpIndex2, i, this->PseudospinDiagCouplingElements[2], coef, nbrTranslationsX, nbrTranslationsY);
 		if (pos != dim)
-		  vDestination[pos] += TmpValue * coef * this->PseudospinCouplingElements[0] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		  vDestination[pos] += TmpValue * this->JBreakD3FactorDown * coef * this->PseudospinCouplingElements[0] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
 		pos = this->Chain->SmiSpjJoffiJoffj(TmpIndex1, TmpIndex2, i, coef, nbrTranslationsX, nbrTranslationsY);
 		if (pos != dim)
-		  vDestination[pos] += TmpValue * coef * this->PseudospinCouplingElements[0] * this->PseudospinCouplingElements[2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		  vDestination[pos] +=  TmpValue * this->JBreakD3FactorDown * coef * this->PseudospinCouplingElements[0] * this->PseudospinCouplingElements[2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
 
 		coef = this->Chain->SziSzj(TmpIndex1, TmpIndex2, i);
@@ -268,7 +343,7 @@ ComplexVector& TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHami
 		{
 		  pos = this->Chain->JOffDiagonali(TmpIndex1, i, coef2, nbrTranslationsX, nbrTranslationsY);
 		  if (pos!= dim)
-		    vDestination[pos] += 2.0 * TmpValue * TmpCoefficient * coef2 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		    vDestination[pos] += 2.0 * TmpValue * this->JBreakD3FactorDown * TmpCoefficient * coef2 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		}
 		
 		TmpCoefficient = coef *  this->Chain->JDiagonali(TmpIndex1, i, this->PseudospinDiagCouplingElements[2]) * this->PseudospinCouplingElements[0];
@@ -276,12 +351,12 @@ ComplexVector& TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHami
 		{
 		  pos = this->Chain->JOffDiagonali(TmpIndex2, i, coef2, nbrTranslationsX, nbrTranslationsY);
 		  if (pos!= dim)
-		    vDestination[pos] += 2.0 * TmpValue * TmpCoefficient * coef2 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		    vDestination[pos] += 2.0 * TmpValue * this->JBreakD3FactorDown * TmpCoefficient * coef2 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		}  
 		  
 		pos2 = this->Chain->JoffiJoffj(TmpIndex1, TmpIndex2, i, coef2, nbrTranslationsX, nbrTranslationsY);
 		if (pos2!= dim)
-		  vDestination[pos2] += 2.0 * TmpValue * coef * coef2 * this->PseudospinCouplingElements[0] * this->PseudospinCouplingElements[2] *  this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		  vDestination[pos2] += 2.0 * TmpValue * this->JBreakD3FactorDown * coef * coef2 * this->PseudospinCouplingElements[0] * this->PseudospinCouplingElements[2] *  this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
 		
 	     }
@@ -418,6 +493,8 @@ ComplexVector& TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHami
 	    }
 	}
     }
+  if (this->JBreakD3Factor != 1.0)
+    delete[] TmpOffDiagCoupling;
   return vDestination;
 }
 
@@ -798,6 +875,15 @@ ComplexVector* TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHami
   int nbrTranslationsX;
   int nbrTranslationsY;
   Complex* TmpValues = new Complex[nbrVectors];
+  
+  double* TmpOffDiagCoupling;
+  if (this->JBreakD3Factor != 1.0)
+  {
+    TmpOffDiagCoupling = new double[3];
+    TmpOffDiagCoupling[0] = sqrt(3) / 4.0;
+    TmpOffDiagCoupling[1] = 0.0;
+    TmpOffDiagCoupling[2] = -sqrt(3.0) / 4.0;
+  }
 //   for (int l = 0; l < nbrVectors; ++l)
 //     {
 //       ComplexVector& TmpSource = vSources[l];
@@ -818,6 +904,20 @@ ComplexVector* TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHami
 	{
 	  for (int k = 0; k < this->NbrSpinY; k++)
 	    {
+	      
+	      if (this->JBreakD3Factor != 1.0)
+	      {
+		TmpIndex1 = this->GetLinearizedIndex(j, k);
+		pos = this->Chain->JOffDiagonali(TmpIndex1, i, coef2, nbrTranslationsX, nbrTranslationsY);
+		if (pos != dim)
+		{
+		  for (int l = 0; l < nbrVectors; ++l)
+		  {
+		    vDestinations[l][pos] += vSources[l][i] * TmpOffDiagCoupling[0] * this->JBreakD3Factor * coef2 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		    vDestinations[l][pos] += vSources[l][i] * TmpOffDiagCoupling[2] * coef2 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		  }
+		}
+	      }
 	      //AC part
 	     if ((this->NbrSpinY > 1) || (this->Offset != 0))
 	     {
@@ -827,44 +927,44 @@ ComplexVector* TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHami
 		pos = this->Chain->SmiSpjJiJj(TmpIndex2, TmpIndex1, i, this->PseudospinDiagCouplingElements[0], this->PseudospinDiagCouplingElements[2], coef, nbrTranslationsX, nbrTranslationsY);
 		if (pos != dim)
 		  for (int l = 0; l < nbrVectors; ++l)
-		    vDestinations[l][pos] += TmpValues[l] * coef * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		    vDestinations[l][pos] += TmpValues[l] * this->JBreakD3FactorDown * coef * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
 		pos = this->Chain->SmiSpjJoffiJj(TmpIndex2, TmpIndex1, i, this->PseudospinDiagCouplingElements[2], coef, nbrTranslationsX, nbrTranslationsY);
 		if (pos != dim)
 		  for (int l = 0; l < nbrVectors; ++l)
-		    vDestinations[l][pos] += TmpValues[l] * coef * this->PseudospinCouplingElements[0] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		    vDestinations[l][pos] += TmpValues[l] * this->JBreakD3FactorDown * coef * this->PseudospinCouplingElements[0] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
 		pos = this->Chain->SmiSpjJiJoffj(TmpIndex2, TmpIndex1, i, this->PseudospinDiagCouplingElements[0], coef, nbrTranslationsX, nbrTranslationsY);
 		if (pos != dim)
 		  for (int l = 0; l < nbrVectors; ++l)
-		    vDestinations[l][pos] += TmpValues[l] * coef * this->PseudospinCouplingElements[2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		    vDestinations[l][pos] += TmpValues[l] * this->JBreakD3FactorDown * coef * this->PseudospinCouplingElements[2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
 		pos = this->Chain->SmiSpjJoffiJoffj(TmpIndex2, TmpIndex1, i, coef, nbrTranslationsX, nbrTranslationsY);
 		if (pos != dim)
 		  for (int l = 0; l < nbrVectors; ++l)
-		    vDestinations[l][pos] += TmpValues[l] * coef * this->PseudospinCouplingElements[2] * this->PseudospinCouplingElements[0] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		    vDestinations[l][pos] += TmpValues[l] * this->JBreakD3FactorDown * coef * this->PseudospinCouplingElements[2] * this->PseudospinCouplingElements[0] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
 		
 // 		pos = this->Chain->SmiSpj(TmpIndex1, TmpIndex2, i, coef, nbrTranslationsX, nbrTranslationsY);
 		pos = this->Chain->SmiSpjJiJj(TmpIndex1, TmpIndex2, i, this->PseudospinDiagCouplingElements[2], this->PseudospinDiagCouplingElements[0], coef, nbrTranslationsX, nbrTranslationsY);
 		if (pos != dim)
 		  for (int l = 0; l < nbrVectors; ++l)
-		    vDestinations[l][pos] += TmpValues[l] * coef * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		    vDestinations[l][pos] += TmpValues[l] * this->JBreakD3FactorDown * coef * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
 		pos = this->Chain->SmiSpjJoffiJj(TmpIndex1, TmpIndex2, i, this->PseudospinDiagCouplingElements[0], coef, nbrTranslationsX, nbrTranslationsY);
 		if (pos != dim)
 		  for (int l = 0; l < nbrVectors; ++l)
-		    vDestinations[l][pos] += TmpValues[l] * coef * this->PseudospinCouplingElements[2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		    vDestinations[l][pos] += TmpValues[l] * this->JBreakD3FactorDown * coef * this->PseudospinCouplingElements[2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
 		pos = this->Chain->SmiSpjJiJoffj(TmpIndex1, TmpIndex2, i, this->PseudospinDiagCouplingElements[2], coef, nbrTranslationsX, nbrTranslationsY);
 		if (pos != dim)
 		  for (int l = 0; l < nbrVectors; ++l)
-		    vDestinations[l][pos] += TmpValues[l] * coef * this->PseudospinCouplingElements[0] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		    vDestinations[l][pos] += TmpValues[l] * this->JBreakD3FactorDown * coef * this->PseudospinCouplingElements[0] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
 		pos = this->Chain->SmiSpjJoffiJoffj(TmpIndex1, TmpIndex2, i, coef, nbrTranslationsX, nbrTranslationsY);
 		if (pos != dim)
 		  for (int l = 0; l < nbrVectors; ++l)
-		    vDestinations[l][pos] += TmpValues[l] * coef * this->PseudospinCouplingElements[0] * this->PseudospinCouplingElements[2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		    vDestinations[l][pos] += TmpValues[l] * this->JBreakD3FactorDown * coef * this->PseudospinCouplingElements[0] * this->PseudospinCouplingElements[2] * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		
 
 		coef = this->Chain->SziSzj(TmpIndex1, TmpIndex2, i);
@@ -874,7 +974,7 @@ ComplexVector* TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHami
 		  pos = this->Chain->JOffDiagonali(TmpIndex1, i, coef2, nbrTranslationsX, nbrTranslationsY);
 		  if (pos!= dim)
 		    for (int l = 0; l < nbrVectors; ++l)
-		      vDestinations[l][pos] += 2.0 * TmpValues[l] * TmpCoefficient * coef2 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		      vDestinations[l][pos] += 2.0 * TmpValues[l] * this->JBreakD3FactorDown * TmpCoefficient * coef2 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		}
 		
 		TmpCoefficient = coef *  this->Chain->JDiagonali(TmpIndex1, i, this->PseudospinDiagCouplingElements[2]) * this->PseudospinCouplingElements[0];
@@ -883,13 +983,13 @@ ComplexVector* TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHami
 		  pos = this->Chain->JOffDiagonali(TmpIndex2, i, coef2, nbrTranslationsX, nbrTranslationsY);
 		  if (pos!= dim)
 		    for (int l = 0; l < nbrVectors; ++l)
-		    vDestinations[l][pos] += 2.0 * TmpValues[l] * TmpCoefficient * coef2 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		    vDestinations[l][pos] += 2.0 * TmpValues[l] * this->JBreakD3FactorDown * TmpCoefficient * coef2 * this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 		}  
 		  
 		pos2 = this->Chain->JoffiJoffj(TmpIndex1, TmpIndex2, i, coef2, nbrTranslationsX, nbrTranslationsY);
 		if (pos2!= dim)
 		  for (int l = 0; l < nbrVectors; ++l)
-		    vDestinations[l][pos2] += 2.0 * TmpValues[l] * coef * coef2 * this->PseudospinCouplingElements[0] * this->PseudospinCouplingElements[2] *  this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
+		    vDestinations[l][pos2] += 2.0 * TmpValues[l] * this->JBreakD3FactorDown * coef * coef2 * this->PseudospinCouplingElements[0] * this->PseudospinCouplingElements[2] *  this->ExponentialFactors[nbrTranslationsX][nbrTranslationsY];
 	     }
 	     
 	      
@@ -1046,6 +1146,8 @@ ComplexVector* TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHami
 	}
     }
   delete[] TmpValues;
+  if (this->JBreakD3Factor != 1.0)
+    delete[] TmpOffDiagCoupling;
   return vDestinations;
 }
 
@@ -1058,6 +1160,19 @@ void TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHamiltonian::E
 {
   int dim = this->Chain->GetHilbertSpaceDimension();
   double TmpCoefficient;
+  double** TmpDiagCoupling;
+  if (this->JBreakD3Factor != 1.0)
+  {
+    TmpDiagCoupling = new double*[3];
+    for (int l = 0; l < 3; ++l)
+      TmpDiagCoupling[l] = new double[2];
+    TmpDiagCoupling[0][0] = 0.0;
+    TmpDiagCoupling[0][1] = -0.5;  
+    TmpDiagCoupling[1][0] = -0.75;
+    TmpDiagCoupling[1][1] = 0.25;
+    TmpDiagCoupling[2][0] = 0.0;
+    TmpDiagCoupling[2][1] = -0.5;
+  }
   int TmpIndex1;
   int TmpIndex2;
   int TmpIndex3;
@@ -1069,6 +1184,23 @@ void TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHamiltonian::E
 	{
 	  for (int k = 0; k < this->NbrSpinY; k++)
 	    {
+	      if (this->JBreakD3Factor != 1.0)
+	      {
+		TmpIndex1 = this->GetLinearizedIndex(j, k);
+		
+		//AB up
+		TmpCoefficient = this->Chain->JDiagonali(TmpIndex1, i, TmpDiagCoupling[0]);
+		this->SzSzContributions[i] += TmpCoefficient * this->JBreakD3Factor;
+		
+		//BC up
+		TmpCoefficient = this->Chain->JDiagonali(TmpIndex1, i, TmpDiagCoupling[1]);
+		this->SzSzContributions[i] += TmpCoefficient * this->JBreakD3Factor;
+		
+		//AC up
+		TmpCoefficient = this->Chain->JDiagonali(TmpIndex1, i, TmpDiagCoupling[2]);
+		this->SzSzContributions[i] += TmpCoefficient;
+	      }
+	      
 // 	      AC part
 	      if ((this->NbrSpinY > 1) || (this->Offset != 0))
 	      {
@@ -1077,7 +1209,7 @@ void TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHamiltonian::E
 		TmpCoefficient = this->Chain->SziSzj(TmpIndex1, TmpIndex2, i);
 		TmpCoefficient *= this->Chain->JDiagonali(TmpIndex1, i, this->PseudospinDiagCouplingElements[2]);
 		TmpCoefficient *= this->Chain->JDiagonali(TmpIndex2, i, this->PseudospinDiagCouplingElements[0]);
-		this->SzSzContributions[i] += TmpCoefficient;
+		this->SzSzContributions[i] += TmpCoefficient  * this->JBreakD3Factor;
 	      }
 	      
 // 	      AB part
@@ -1108,6 +1240,12 @@ void TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHamiltonian::E
     for (int i = 0; i < dim; i++)
     {
       this->SzSzContributions[i] *= this->JFactor;
+    }
+    if (this->JBreakD3Factor != 1.0)
+    {
+      for (int i = 0; i < 3; ++i)
+	delete[] TmpDiagCoupling[i];
+      delete[] TmpDiagCoupling;
     }
 }
 

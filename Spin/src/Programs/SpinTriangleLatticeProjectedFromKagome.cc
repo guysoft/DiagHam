@@ -61,6 +61,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nx2", "first coordinate of the second spanning vector of the tilted lattice", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "ny2", "second coordinate of the second spanning vector of the tilted lattice", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "real-offset", "second coordinate in real space of the second spanning vector of the real space lattice (0 if lattice is untilted)", 0);
+  (*SystemGroup) += new  SingleDoubleOption ('\n', "break-c3", "amplitude ratio of C3 breaking term (1.0 if C3 is preserved)", 1.0);
   (*SystemGroup) += new BooleanOption  ('\n', "cylinder", "use periodic boundary in the y direction only");
   (*SystemGroup) += new BooleanOption  ('\n', "force-negativesz", "compute negative Sz sectors");
   (*SystemGroup) += new BooleanOption  ('\n', "no-translation", "do not use the 2D translation symmetry");
@@ -97,6 +98,7 @@ int main(int argc, char** argv)
   int NbrSitesY = Manager.GetInteger("nbr-sitey");
   int NbrSpins = NbrSitesX * NbrSitesY;
   double JValue =  Manager.GetDouble("j-value");
+  double JC3Breaking = Manager.GetDouble("break-c3");
   bool NoTranslationFlag = Manager.GetBoolean("no-translation");
   bool NoSpinInversionFlag = Manager.GetBoolean("disable-szsymmetry");
   if (NbrSpins & 1  != 0)
@@ -138,7 +140,7 @@ int main(int argc, char** argv)
     if (TiltedFlag)
       cout << "Error: tilted boundary conditions not supported for cylinder geometry" << endl;
     else
-      sprintf (OutputFileName, "spin_1_2_triangle_cylinder_pseudospin_x_%d_y_%d_j_%.6f", NbrSitesX, NbrSitesY, JValue);
+      sprintf (OutputFileName, "spin_1_2_triangle_cylinder_pseudospin_n_%d_x_%d_y_%d_j_%.6f", NbrSpins, NbrSitesX, NbrSitesY, JValue);
   }
   else
   {
@@ -147,24 +149,54 @@ int main(int argc, char** argv)
       if (NoTranslationFlag == false)
       {
 	if (NoSpinInversionFlag == false)
-	  sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_j_%.6f", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, JValue);
+	{
+	  if (JC3Breaking == 1.0)
+	    sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_n_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_j_%.6f", NbrSpins, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, JValue);
+	  else
+	    sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_n_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_j_%.6f_c3breaking_%.6f", NbrSpins, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, JValue, JC3Breaking);
+	}
 	else
-	  sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_noszparity_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_j_%.6f", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, JValue);
+	{
+	  if (JC3Breaking == 1.0)
+	    sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_noszparity_n_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_j_%.6f", NbrSpins, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, JValue);
+	  else
+	    sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_noszparity_n_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_j_%.6f_%.6f_c3breaking_%.6f", NbrSpins, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, JValue, JC3Breaking);
+	}
       }
       else
-	sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_notranslation_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_j_%.6f", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, JValue);
+      {
+	if (JC3Breaking == 1.0)
+	  sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_notranslation_n_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_j_%.6f", NbrSpins, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, JValue);
+	else
+	  sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_notranslation_n_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_j_%.6f_c3breaking_%.6f", NbrSpins, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, JValue, JC3Breaking);
+      }
     }
     else
     {
       if (NoTranslationFlag == false)
       {
 	if (NoSpinInversionFlag == false)
-	  sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_x_%d_y_%d_j_%.6f", NbrSitesX, NbrSitesY, JValue);
+	{
+	  if (JC3Breaking == 1.0)
+	    sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_n_%d_x_%d_y_%d_j_%.6f", NbrSpins, NbrSitesX, NbrSitesY, JValue);
+	  else
+	    sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_n_%d_x_%d_y_%d_j_%.6f_c3breaking_%.6f", NbrSpins, NbrSitesX, NbrSitesY, JValue, JC3Breaking);
+	}
 	else
-	  sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_noszparity_x_%d_y_%d_j_%.6f", NbrSitesX, NbrSitesY, JValue);
+	{
+	  if (JC3Breaking == 1.0)
+	    sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_noszparity_n_%d_x_%d_y_%d_j_%.6f", NbrSpins, NbrSitesX, NbrSitesY, JValue);
+	  else
+	    sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_noszparity_n_%d_x_%d_y_%d_j_%.6f_c3breaking_%.6f", NbrSpins, NbrSitesX, NbrSitesY, JValue, JC3Breaking);
+	}
       }
       else
-	sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_notranslation_x_%d_y_%d_j_%.6f", NbrSitesX, NbrSitesY, JValue);
+      {
+	if (JC3Breaking == 1.0)
+	  sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_notranslation_n_%d_x_%d_y_%d_j_%.6f", NbrSpins, NbrSitesX, NbrSitesY, JValue);
+	else
+	  sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_notranslation_n_%d_x_%d_y_%d_j_%.6f_c3breaking_%.6f", NbrSpins, NbrSitesX, NbrSitesY, JValue, JC3Breaking);
+      }
     }
   }
   char* CommentLine = new char [512];
@@ -279,7 +311,10 @@ int main(int argc, char** argv)
 	      }
 	      else
 	      {
-		Hamiltonian = new TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHamiltonian(Space, XMomentum, NbrSitesX, YMomentum, NbrSitesY, JValue, (!Manager.GetBoolean("cylinder")), OffsetReal);
+		if (JC3Breaking == 1.0)
+		  Hamiltonian = new TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHamiltonian(Space, XMomentum, NbrSitesX, YMomentum, NbrSitesY, JValue, (!Manager.GetBoolean("cylinder")), OffsetReal);
+		else
+		  Hamiltonian = new TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHamiltonian(Space, XMomentum, NbrSitesX, YMomentum, NbrSitesY, JValue, JC3Breaking, (!Manager.GetBoolean("cylinder")), OffsetReal);
 		if (NoSpinInversionFlag == true)
 		{
 		  sprintf (TmpEigenstateString, "%s_sz_%d_kx_%d_ky_%d", OutputFileName, InitalSzValue, XMomentum, YMomentum);
