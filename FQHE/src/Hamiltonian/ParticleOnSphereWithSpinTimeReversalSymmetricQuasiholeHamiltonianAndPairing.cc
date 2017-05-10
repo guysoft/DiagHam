@@ -1555,7 +1555,6 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 	      if (TmpCoefficient != 0.0)
 		{
 		  NbrElements = TmpParticles->AuAd(i, lz, TmpLeftIndices, TmpInteractionElements);
-		  cout << i << " " <<  NbrElements << " " << endl;
 		  for (int j = 0; j < NbrElements; ++j)
 		    {
 		      TmpCounting[CurrentNbrCounting] = TmpLeftIndices[j];

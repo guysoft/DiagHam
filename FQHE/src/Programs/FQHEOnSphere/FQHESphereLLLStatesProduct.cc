@@ -96,7 +96,7 @@ int main(int argc, char** argv)
   bool NormalizeFlag = Manager.GetBoolean("normalize");
   bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
 
-  if(NbrVectors == 1)
+  if (NbrVectors == 1)
     {
       int NbrParticles = 0;
       int LzMax = 0;
@@ -130,7 +130,7 @@ int main(int argc, char** argv)
       
       ParticleOnSphere * Space = 0;
       
-      if(FermionFlag == false)
+      if (FermionFlag == false)
 	{
 	  if (HaldaneBasisFlag == false)
 	    {

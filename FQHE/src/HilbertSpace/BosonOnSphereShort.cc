@@ -41,6 +41,7 @@
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "MathTools/BinomialCoefficients.h"
 #include "MathTools/FactorialCoefficient.h" 
+#include "MathTools/ClebschGordanCoefficients.h"
 #include "GeneralTools/StringTools.h"
 #include "GeneralTools/ArrayTools.h"
 #include "GeneralTools/Permutations.h"
@@ -6940,115 +6941,115 @@ void BosonOnSphereShort::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (RealVec
     }
   unsigned long* TmpState = new unsigned long[TargetSpaceNbrOrbitals];
   if (unnormalizedBasisFlag == true)
-  {
-  for (long i = (long) firstComponent; i < LastComponent; ++i)
     {
-      double TmpCoefficient = inputVector[i];
-      this->FermionToBoson(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], 
-			   this->TemporaryState, this->TemporaryStateLzMax);
-      for (int k = this->TemporaryStateLzMax + 1; k <= this->LzMax; ++k)
-	this->TemporaryState[k] = 0x0ul;
-      int TmpTotalLz = 0;
-      int TmpNbrParticles = 0;
-      int Index = 0;
-      for (int k = firstOrbitalIndex; k <= this->LzMax; k += periodicity)
+      for (long i = (long) firstComponent; i < LastComponent; ++i)
 	{
-	  unsigned long& TmpNbrParticles2 = this->TemporaryState[k];
-	  TmpState[Index] = TmpNbrParticles2;
-	  TmpNbrParticles += ((int) TmpNbrParticles2);
-	  TmpTotalLz += Index * ((int) TmpNbrParticles2);
-	  ++Index;
-	}
-       
-      if (TmpNbrParticles > 0)
-	{
-	  if (TargetSpaces[TmpNbrParticles][TmpTotalLz] == 0)
+	  double TmpCoefficient = inputVector[i];
+	  this->FermionToBoson(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], 
+			       this->TemporaryState, this->TemporaryStateLzMax);
+	  for (int k = this->TemporaryStateLzMax + 1; k <= this->LzMax; ++k)
+	    this->TemporaryState[k] = 0x0ul;
+	  int TmpTotalLz = 0;
+	  int TmpNbrParticles = 0;
+	  int Index = 0;
+	  for (int k = firstOrbitalIndex; k <= this->LzMax; k += periodicity)
 	    {
-	      TargetSpaces[TmpNbrParticles][TmpTotalLz] = new BosonOnSphereShort (TmpNbrParticles, 2 * TmpTotalLz - ((TargetSpaceNbrOrbitals - 1) * TmpNbrParticles), 
-										  TargetSpaceNbrOrbitals - 1);
-	      symmetrizedVectors[TmpNbrParticles][TmpTotalLz] = RealVector(TargetSpaces[TmpNbrParticles][TmpTotalLz]->HilbertSpaceDimension, true);
-	    }	  
-	  int TmpLzMax = TargetSpaces[TmpNbrParticles][TmpTotalLz]->LzMax;
-	  while (TmpState[TmpLzMax] == 0x0ul)
-	    --TmpLzMax;
-	  int TmpPos = TargetSpaces[TmpNbrParticles][TmpTotalLz]->FindStateIndex(TargetSpaces[TmpNbrParticles][TmpTotalLz]->BosonToFermion(TmpState, TmpLzMax), 
-										 TmpLzMax + TmpNbrParticles - 1);
-	  if (TmpPos < TargetSpaces[TmpNbrParticles][TmpTotalLz]->HilbertSpaceDimension)
-	    {
-	      symmetrizedVectors[TmpNbrParticles][TmpTotalLz][TmpPos] += TmpCoefficient;
+	      unsigned long& TmpNbrParticles2 = this->TemporaryState[k];
+	      TmpState[Index] = TmpNbrParticles2;
+	      TmpNbrParticles += ((int) TmpNbrParticles2);
+	      TmpTotalLz += Index * ((int) TmpNbrParticles2);
+	      ++Index;
 	    }
-	}
-    }
-  }
-  else
-  {
-    for (long i = (long) firstComponent; i < LastComponent; ++i)
-    {
-      FactorialCoefficient Factorial1;
-      Factorial1.SetToOne();
-      double TmpCoefficient = inputVector[i];
-      this->FermionToBoson(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], 
-			   this->TemporaryState, this->TemporaryStateLzMax);
-      
-      for (int k = this->TemporaryStateLzMax + 1; k <= this->LzMax; ++k)
-	this->TemporaryState[k] = 0x0ul;
-      
-      int TmpTotalLz = 0;
-      int TmpNbrParticles = 0;
-      int Index = 0;
-      for (int k = firstOrbitalIndex; k <= this->LzMax; k += periodicity)
-	{
-	  unsigned long& TmpNbrParticles2 = this->TemporaryState[k];
-	  TmpState[Index] = TmpNbrParticles2;
-	  TmpNbrParticles += ((int) TmpNbrParticles2);
-	  TmpTotalLz += Index * ((int) TmpNbrParticles2);
-	  ++Index;
-	}
-       
-      if (TmpNbrParticles > 0)
-	{
-	  if (TargetSpaces[TmpNbrParticles][TmpTotalLz] == 0)
+	  
+	  if (TmpNbrParticles > 0)
 	    {
-	      TargetSpaces[TmpNbrParticles][TmpTotalLz] = new BosonOnSphereShort (TmpNbrParticles, 2 * TmpTotalLz - ((TargetSpaceNbrOrbitals - 1) * TmpNbrParticles), 
-										  TargetSpaceNbrOrbitals - 1);
-	      symmetrizedVectors[TmpNbrParticles][TmpTotalLz] = RealVector(TargetSpaces[TmpNbrParticles][TmpTotalLz]->HilbertSpaceDimension, true);
-	    }	  
-	  int TmpLzMax = TargetSpaces[TmpNbrParticles][TmpTotalLz]->LzMax;
-	  while (TmpState[TmpLzMax] == 0x0ul)
-	    --TmpLzMax;
-	  int TmpPos = TargetSpaces[TmpNbrParticles][TmpTotalLz]->FindStateIndex(TargetSpaces[TmpNbrParticles][TmpTotalLz]->BosonToFermion(TmpState, TmpLzMax), 
-										 TmpLzMax + TmpNbrParticles - 1);
-	  for (int k = 0; k < TargetSpaceNbrOrbitals; ++k)
-	  {
-	    for (int j = 0; j < this->TemporaryState[k*periodicity + firstOrbitalIndex]; ++j)
-	    {
-	      Factorial1.FactorialDivide(TargetSpaceNbrOrbitals - 1);
-	      Factorial1.FactorialMultiply(k);
-	      Factorial1.FactorialMultiply(TargetSpaceNbrOrbitals - 1 - k);
-	    }
-	    
-	    for (int l = 0; l < periodicity; ++l)
-	      {
-		if ((k * periodicity + l) <= this->LzMax)
+	      if (TargetSpaces[TmpNbrParticles][TmpTotalLz] == 0)
 		{
-		  for (int j = 0; j < this->TemporaryState[k * periodicity + l]; ++j)
-		  {		  
-		    Factorial1.FactorialDivide(periodicity*k + l);
-		    Factorial1.FactorialMultiply(this->LzMax);		  
-		    Factorial1.FactorialDivide(this->LzMax - (periodicity*k + l));
-		    if (l != firstOrbitalIndex)
-		      Factorial1.FactorialDivide(this->TemporaryState[k * periodicity + l]);
-		  }
+		  TargetSpaces[TmpNbrParticles][TmpTotalLz] = new BosonOnSphereShort (TmpNbrParticles, 2 * TmpTotalLz - ((TargetSpaceNbrOrbitals - 1) * TmpNbrParticles), 
+										      TargetSpaceNbrOrbitals - 1);
+		  symmetrizedVectors[TmpNbrParticles][TmpTotalLz] = RealVector(TargetSpaces[TmpNbrParticles][TmpTotalLz]->HilbertSpaceDimension, true);
+		}	  
+	      int TmpLzMax = TargetSpaces[TmpNbrParticles][TmpTotalLz]->LzMax;
+	      while (TmpState[TmpLzMax] == 0x0ul)
+		--TmpLzMax;
+	      int TmpPos = TargetSpaces[TmpNbrParticles][TmpTotalLz]->FindStateIndex(TargetSpaces[TmpNbrParticles][TmpTotalLz]->BosonToFermion(TmpState, TmpLzMax), 
+										     TmpLzMax + TmpNbrParticles - 1);
+	      if (TmpPos < TargetSpaces[TmpNbrParticles][TmpTotalLz]->HilbertSpaceDimension)
+		{
+		  symmetrizedVectors[TmpNbrParticles][TmpTotalLz][TmpPos] += TmpCoefficient;
 		}
-	      }
-	    }
-	  if (TmpPos < TargetSpaces[TmpNbrParticles][TmpTotalLz]->HilbertSpaceDimension)
-	    {
-	      symmetrizedVectors[TmpNbrParticles][TmpTotalLz][TmpPos] += TmpCoefficient*sqrt(Factorial1.GetNumericalValue());
 	    }
 	}
     }
-  }
+  else
+    {
+      for (long i = (long) firstComponent; i < LastComponent; ++i)
+	{
+	  FactorialCoefficient Factorial1;
+	  Factorial1.SetToOne();
+	  double TmpCoefficient = inputVector[i];
+	  this->FermionToBoson(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], 
+			       this->TemporaryState, this->TemporaryStateLzMax);
+	  
+	  for (int k = this->TemporaryStateLzMax + 1; k <= this->LzMax; ++k)
+	    this->TemporaryState[k] = 0x0ul;
+	  
+	  int TmpTotalLz = 0;
+	  int TmpNbrParticles = 0;
+	  int Index = 0;
+	  for (int k = firstOrbitalIndex; k <= this->LzMax; k += periodicity)
+	    {
+	      unsigned long& TmpNbrParticles2 = this->TemporaryState[k];
+	      TmpState[Index] = TmpNbrParticles2;
+	      TmpNbrParticles += ((int) TmpNbrParticles2);
+	      TmpTotalLz += Index * ((int) TmpNbrParticles2);
+	      ++Index;
+	    }
+	  
+	  if (TmpNbrParticles > 0)
+	    {
+	      if (TargetSpaces[TmpNbrParticles][TmpTotalLz] == 0)
+		{
+		  TargetSpaces[TmpNbrParticles][TmpTotalLz] = new BosonOnSphereShort (TmpNbrParticles, 2 * TmpTotalLz - ((TargetSpaceNbrOrbitals - 1) * TmpNbrParticles), 
+										      TargetSpaceNbrOrbitals - 1);
+		  symmetrizedVectors[TmpNbrParticles][TmpTotalLz] = RealVector(TargetSpaces[TmpNbrParticles][TmpTotalLz]->HilbertSpaceDimension, true);
+		}	  
+	      int TmpLzMax = TargetSpaces[TmpNbrParticles][TmpTotalLz]->LzMax;
+	      while (TmpState[TmpLzMax] == 0x0ul)
+		--TmpLzMax;
+	      int TmpPos = TargetSpaces[TmpNbrParticles][TmpTotalLz]->FindStateIndex(TargetSpaces[TmpNbrParticles][TmpTotalLz]->BosonToFermion(TmpState, TmpLzMax), 
+										     TmpLzMax + TmpNbrParticles - 1);
+	      for (int k = 0; k < TargetSpaceNbrOrbitals; ++k)
+		{
+		  for (int j = 0; j < this->TemporaryState[k*periodicity + firstOrbitalIndex]; ++j)
+		    {
+		      Factorial1.FactorialDivide(TargetSpaceNbrOrbitals - 1);
+		      Factorial1.FactorialMultiply(k);
+		      Factorial1.FactorialMultiply(TargetSpaceNbrOrbitals - 1 - k);
+		    }
+		  
+		  for (int l = 0; l < periodicity; ++l)
+		    {
+		      if ((k * periodicity + l) <= this->LzMax)
+			{
+			  for (int j = 0; j < this->TemporaryState[k * periodicity + l]; ++j)
+			    {		  
+			      Factorial1.FactorialDivide(periodicity*k + l);
+			      Factorial1.FactorialMultiply(this->LzMax);		  
+			      Factorial1.FactorialDivide(this->LzMax - (periodicity*k + l));
+			      if (l != firstOrbitalIndex)
+				Factorial1.FactorialDivide(this->TemporaryState[k * periodicity + l]);
+			    }
+			}
+		    }
+		}
+	      if (TmpPos < TargetSpaces[TmpNbrParticles][TmpTotalLz]->HilbertSpaceDimension)
+		{
+		  symmetrizedVectors[TmpNbrParticles][TmpTotalLz][TmpPos] += TmpCoefficient*sqrt(Factorial1.GetNumericalValue());
+		}
+	    }
+	}
+    }
   delete[] TmpState;
   for (int i = 0; i <= this->NbrBosons; ++i)
     {
@@ -7064,3 +7065,318 @@ void BosonOnSphereShort::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (RealVec
     }
   delete[] TargetSpaces;
 }
+
+// Compute the product of two bsonic states, automatically dealing with reverse flux attachement
+//
+// bosonicState1 = reference on the first bosonic state
+// bosonicState2 = reference on the second fermionic state
+// outputVector = reference on the vector where the result will be stored
+// bosonicSpace1 = pointer on the Hilbert Space associated to the first bosonic state
+// bosonicSpace2 = pointer on the Hilbert Space associated to the second bosonic state
+// minIndex = first component to compute (refering to the bosonic state)
+// nbrComponents = number of components to compute (refering to the first bosonic state)
+// unnormalizedFlag = true if the state should be written in the unnormalized basis
+// architecture = pointer to the architecture
+
+void BosonOnSphereShort::BosonicStateTimeBosonicState(RealVector& bosonicState1, RealVector& bosonicState2, RealVector& outputVector, 
+						      BosonOnSphereShort* bosonicSpace1, BosonOnSphereShort* bosonicSpace2,
+						      int minIndex, int nbrComponents, bool unnormalizedFlag, AbstractArchitecture* architecture)
+{
+  if (nbrComponents == this->GetHilbertSpaceDimension())
+    outputVector.ClearVector();
+  RealVector FinalState (this->GetHilbertSpaceDimension());
+  FactorialCoefficient Coefficient;	
+  int MaxIndex = minIndex + nbrComponents;
+  double** ThreeOrbitalOverlaps = new double* [this->LzMax + 1];
+  unsigned long* TmpSymmetricMonomial1 = new unsigned long[this->NbrBosons];
+  unsigned long* TmpSymmetricMonomial2 = new unsigned long[this->NbrBosons];
+  double TmpFactorial [this->NbrBosons + 1];
+  TmpFactorial[0] = 1;
+  TmpFactorial[1] = 1;
+  for (int i = 2; i <= this->NbrBosons; ++i)
+    TmpFactorial[i] = TmpFactorial[i - 1] / sqrt((double) i);
+  if (this->LzMax >= bosonicSpace2->LzMax)
+    {
+      BinomialCoefficients Binomials(this->LzMax);
+      for (int i = 0; i <= this->LzMax; ++i)
+	{
+	  ThreeOrbitalOverlaps[i] = new double [bosonicSpace2->LzMax + 1];
+	  double TmpFactor1 = log(((double) ((bosonicSpace2->LzMax + 1) * (bosonicSpace1->LzMax + 1))) / ((double) (this->LzMax + 1)) / (4.0 * M_PI)) - log(Binomials.GetNumericalCoefficient(this->LzMax, i));
+	  for (int j = 0; (j <= bosonicSpace2->LzMax) && (j <= i); ++j)
+	    {
+	      if (unnormalizedFlag == false)
+		{
+		  ThreeOrbitalOverlaps[i][j] = 0.5 * (TmpFactor1 + log(Binomials.GetNumericalCoefficient(bosonicSpace2->LzMax, j)) 
+						      + log(Binomials.GetNumericalCoefficient(bosonicSpace1->LzMax, i - j)));
+		}
+	      else
+		{
+		  ThreeOrbitalOverlaps[i][j] = 0.0;
+		}
+	    }
+	}
+      for (int j = minIndex; j < MaxIndex; ++j)
+	{
+	  if (bosonicState1[j] != 0.0)
+	    {
+	      int TmpLzMax = bosonicSpace1->FermionBasis->LzMax;
+	      while ((bosonicSpace1->FermionBasis->StateDescription[j] >> TmpLzMax) == 0x0ul)
+		{
+		  --TmpLzMax;
+		}
+	      bosonicSpace1->ConvertToMonomial(bosonicSpace1->FermionBasis->StateDescription[j], TmpLzMax, TmpSymmetricMonomial1);
+	      bosonicSpace1->FermionToBoson(bosonicSpace1->FermionBasis->StateDescription[j], TmpLzMax, bosonicSpace1->TemporaryState, 
+					   bosonicSpace1->TemporaryStateLzMax);
+	      double TmpFactor = 1.0;
+	      for (int p = 0; p <= bosonicSpace1->TemporaryStateLzMax; ++p)
+		{
+		  TmpFactor *= TmpFactorial[bosonicSpace1->TemporaryState[p]];
+		}
+	      for (int i = 0; i < bosonicSpace2->HilbertSpaceDimension; ++i)
+		{
+		  if (bosonicState2[i] != 0.0)
+		    {
+		      int TmpLzMax2 = bosonicSpace2->FermionBasis->LzMax;
+		      while ((bosonicSpace2->FermionBasis->StateDescription[i] >> TmpLzMax2) == 0x0ul)
+			{
+			  --TmpLzMax2;
+			}
+		      bosonicSpace2->ConvertToMonomial(bosonicSpace2->FermionBasis->StateDescription[i], TmpLzMax2, TmpSymmetricMonomial2);
+		      bosonicSpace2->FermionToBoson(bosonicSpace2->FermionBasis->StateDescription[i], TmpLzMax2, bosonicSpace2->TemporaryState, 
+						    bosonicSpace2->TemporaryStateLzMax);
+		      this->SymmetricMonomialTimesSymmetricMonomial(TmpSymmetricMonomial1, TmpSymmetricMonomial2, FinalState, ThreeOrbitalOverlaps);
+		      for (int Index = 0; Index < FinalState.GetVectorDimension(); ++Index)
+			{
+			  if (FinalState[Index] != 0.0)
+			    {
+			      this->FermionToBoson(this->FermionBasis->StateDescription[Index], this->TemporaryState); 
+			      Coefficient.SetToOne();
+			      for(int p = 0; p <= this->LzMax; ++p)
+				{
+				  if (this->TemporaryState[p] > 1)
+				    Coefficient.FactorialMultiply(this->TemporaryState[p]);
+				}		  
+			      for(int p = 0; p <= bosonicSpace1->TemporaryStateLzMax; ++p)
+				{
+				  if (bosonicSpace1->TemporaryState[p] > 1)
+				    Coefficient.FactorialDivide(bosonicSpace1->TemporaryState[p]);
+				}		  
+			      for(int p = 0; p <= bosonicSpace2->TemporaryStateLzMax; ++p)
+				{
+				  if (bosonicSpace2->TemporaryState[p] > 1)
+				    Coefficient.FactorialDivide(bosonicSpace2->TemporaryState[p]);
+				}		  
+			      if (unnormalizedFlag == false)
+				{
+				  outputVector[Index] += sqrt(Coefficient.GetNumericalValue()) * bosonicState1[j] * bosonicState2[i] * FinalState[Index];
+				}
+			      else
+				{
+				  outputVector[Index] += Coefficient.GetNumericalValue() * bosonicState1[j] * bosonicState2[i] * FinalState[Index];
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+  else
+    {
+      BinomialCoefficients Binomials(bosonicSpace2->LzMax + 1);
+      for (int i = 0; i <= this->LzMax; ++i)
+	{
+	  ThreeOrbitalOverlaps[i] = new double [bosonicSpace2->LzMax + 1];
+	}
+      int TmpMaxAngularMomentumLambdaLevel = bosonicSpace1->LzMax;
+      double TmpPrefactor = sqrt (((double) (bosonicSpace1->LzMax + 1)) * ((double) (TmpMaxAngularMomentumLambdaLevel + 1)) / (4.0 * M_PI * (this->LzMax + 1)));
+      ClebschGordanCoefficients Clebsch(TmpMaxAngularMomentumLambdaLevel, bosonicSpace2->LzMax);
+      for (int i = 0; i <= this->LzMax; ++i)
+	{
+	  for (int j = 0; j <= bosonicSpace2->LzMax; ++j)
+	    {
+	      if (((j - i) >= 0) && ((j - i) <= bosonicSpace1->LzMax))
+		{
+		  if (unnormalizedFlag == false)
+		    {
+		      ThreeOrbitalOverlaps[i][j] = (TmpPrefactor * Clebsch.GetCoefficient(- 2 * (j - i) + TmpMaxAngularMomentumLambdaLevel, (2 * j) - bosonicSpace2->LzMax, this->LzMax) 
+						    * Clebsch.GetCoefficient(-bosonicSpace1->LzMax, bosonicSpace2->LzMax, this->LzMax));
+		    }
+		  else
+		    {
+		      ThreeOrbitalOverlaps[j - i][j] = 1.0;
+		    }
+		}
+	    }
+	}
+      for (int j = minIndex; j < MaxIndex; ++j)
+	{
+	  if (bosonicState1[j] != 0.0)
+	    {
+	      int TmpLzMax = bosonicSpace1->FermionBasis->LzMax;
+	      while ((bosonicSpace1->FermionBasis->StateDescription[j] >> TmpLzMax) == 0x0ul)
+		{
+		  --TmpLzMax;
+		}
+	      bosonicSpace1->ConvertToMonomial(bosonicSpace1->FermionBasis->StateDescription[j], TmpLzMax, TmpSymmetricMonomial1);
+	      bosonicSpace1->FermionToBoson(bosonicSpace1->FermionBasis->StateDescription[j], TmpLzMax, bosonicSpace1->TemporaryState, 
+					    bosonicSpace1->TemporaryStateLzMax);
+	      double TmpFactor = 1.0;
+	      for (int p = 0; p <= bosonicSpace1->TemporaryStateLzMax; ++p)
+		{
+		  TmpFactor *= TmpFactorial[bosonicSpace1->TemporaryState[p]];
+		}
+	      for (int i = 0; i < bosonicSpace2->HilbertSpaceDimension; ++i)
+		{
+		  if (bosonicState2[i] != 0.0)
+		    {
+		      int TmpLzMax2 = bosonicSpace2->FermionBasis->LzMax;
+		      while ((bosonicSpace2->FermionBasis->StateDescription[i] >> TmpLzMax2) == 0x0ul)
+			{
+			  --TmpLzMax2;
+			}
+		      bosonicSpace2->ConvertToMonomial(bosonicSpace2->FermionBasis->StateDescription[i], TmpLzMax2, TmpSymmetricMonomial2);
+		      bosonicSpace2->FermionToBoson(bosonicSpace2->FermionBasis->StateDescription[i], TmpLzMax2, bosonicSpace2->TemporaryState, 
+						    bosonicSpace2->TemporaryStateLzMax);
+  		      this->ReverseSymmetricMonomialTimesSymmetricMonomial(TmpSymmetricMonomial1, TmpSymmetricMonomial2, FinalState, ThreeOrbitalOverlaps);
+//		      double TmpFactor2 = TmpFactor * bosonicState1[j] * bosonicState2[i];
+		      double TmpFactor2 = TmpFactor * bosonicState1[j] * bosonicState2[i];
+		      for (int Index = 0; Index < FinalState.GetVectorDimension(); ++Index)
+			{
+			  if (FinalState[Index] != 0.0)
+			    {
+			      this->FermionToBoson(this->FermionBasis->StateDescription[Index], this->TemporaryState); 
+			      Coefficient.SetToOne();
+			      for(int p = 0; p <= this->LzMax; ++p)
+				{
+				  if (this->TemporaryState[p] > 1)
+				    Coefficient.FactorialMultiply(this->TemporaryState[p]);
+				}		  
+			      for(int p = 0; p <= bosonicSpace1->LzMax; ++p)
+				{
+				  if (bosonicSpace1->TemporaryState[p] > 1)
+				    Coefficient.FactorialDivide(bosonicSpace1->TemporaryState[p]);
+				}		  
+			      for(int p = 0; p <= bosonicSpace2->LzMax; ++p)
+				{
+				  if (bosonicSpace2->TemporaryState[p] > 1)
+				    Coefficient.FactorialDivide(bosonicSpace2->TemporaryState[p]);
+				}		  
+			      if (unnormalizedFlag == false)
+				{
+				  outputVector[Index] += sqrt(Coefficient.GetNumericalValue()) * TmpFactor2 * FinalState[Index];
+				}
+			      else
+				{
+				  outputVector[Index] +=  Coefficient.GetNumericalValue() * bosonicState1[j] * bosonicState2[i] * FinalState[Index];
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+}
+
+// Compute the product of two symmetric monomials
+//
+// symmetricMonomial1 = first symmetric monomial
+// symmetricMonomial2 = second symmetric monomial
+// finalState = reference on the vector the produced state will be stored
+// threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
+
+void BosonOnSphereShort::SymmetricMonomialTimesSymmetricMonomial (unsigned long* symmetricMonomial1, unsigned long* symmetricMonomial2, 
+								  RealVector& finalState, double** threeOrbitalOverlaps)
+{
+  unsigned long TmpNbrStates = 0;
+  unsigned long TmpState [this->NbrBosons];
+  unsigned long TmpFinalState;
+  double Sign = 1.0;
+  unsigned long Mask = 0ul;
+  int TmpHeapArray [this->NbrBosons];
+  int TmpDim = this->NbrBosons;
+  for (int i = 0; i < TmpDim; ++i)
+    {
+      TmpHeapArray[i] = 0;
+    }
+  finalState.ClearVector();
+
+  double TmpFactor = 0.0;
+  int Tmp = 0;
+  for (int i = 0; i < this->NbrBosons; ++i)
+    {
+      TmpState[i] = symmetricMonomial2[i] + symmetricMonomial1[i];
+      TmpFactor += threeOrbitalOverlaps[TmpState[i]][symmetricMonomial2[i]];
+    }
+  SortArrayDownOrdering (TmpState, this->NbrBosons);
+  TmpFinalState = this->ConvertFromMonomial(TmpState);
+  int TmpLzMax = this->FermionBasis->LzMax;
+  while ((TmpFinalState >> TmpLzMax) == 0x0ul)
+    {
+      --TmpLzMax;
+    }
+  int TmpPos = this->FindStateIndex(TmpFinalState, TmpLzMax);
+  if (TmpPos != this->HilbertSpaceDimension)
+    {
+      finalState[TmpPos] += exp(TmpFactor);
+    }
+
+  while (Tmp < TmpDim)
+    {
+      if (TmpHeapArray[Tmp] < Tmp)
+	{
+	  if ((Tmp & 0x1ul) == 0x0ul)
+	    {
+	      unsigned long Tmp2 = symmetricMonomial2[Tmp];
+	      symmetricMonomial2[Tmp] = symmetricMonomial2[0];
+	      symmetricMonomial2[0] = Tmp2;
+	      
+	    }
+	  else
+	    {
+	      unsigned long Tmp2 = symmetricMonomial2[Tmp];
+	      symmetricMonomial2[Tmp] = symmetricMonomial2[TmpHeapArray[Tmp]];
+	      symmetricMonomial2[TmpHeapArray[Tmp]] = Tmp2;
+	    }
+	  TmpFactor = 0.0;
+	  for (int i = 0; i < this->NbrBosons; ++i)
+	    {
+	      TmpState[i] = symmetricMonomial2[i] + symmetricMonomial1[i];
+	      TmpFactor += threeOrbitalOverlaps[TmpState[i]][symmetricMonomial2[i]];
+	    }
+	  SortArrayDownOrdering (TmpState, this->NbrBosons);
+	  TmpFinalState = this->ConvertFromMonomial(TmpState);
+	  int TmpLzMax = this->FermionBasis->LzMax;
+	  while ((TmpFinalState >> TmpLzMax) == 0x0ul)
+	    {
+	      --TmpLzMax;
+	    }
+	  int TmpPos = this->FindStateIndex(TmpFinalState, TmpLzMax);
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+	      finalState[TmpPos] += exp(TmpFactor);
+	    }
+	  ++TmpHeapArray[Tmp];
+	  Tmp = 0;
+	}
+      else
+	{
+	  TmpHeapArray[Tmp]= 0;
+	  ++Tmp;
+	}
+    }  
+}
+
+// Compute the product of two symmetric monomials, assuming a reverse flux attachment for the first symmetric monomial
+//
+// symmetricMonomial1 = first symmetric monomial
+// symmetricMonomial2 = second symmetric monomial
+// finalState = reference on the vector the produced state will be stored
+// threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
+
+void BosonOnSphereShort::ReverseSymmetricMonomialTimesSymmetricMonomial (unsigned long* symmetricMonomial1, unsigned long* symmetricMonomial2, \
+									 RealVector& finalState, double** threeOrbitalOverlaps)
+{
+}
+

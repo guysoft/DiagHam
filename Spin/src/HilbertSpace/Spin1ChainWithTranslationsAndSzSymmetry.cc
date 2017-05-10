@@ -148,7 +148,7 @@ Spin1ChainWithTranslationsAndSzSymmetry::Spin1ChainWithTranslationsAndSzSymmetry
   this->ComplementaryStateXShift = (2 * this-> ChainLength) - this->StateXShift;
   this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
 
-  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->Sz, this->ChainLength);
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(0, this->ChainLength);
   this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
   this->RawGenerateStates(0l, this->ChainLength - 1, 0);
   this->LargeHilbertSpaceDimension = this->GenerateStates();

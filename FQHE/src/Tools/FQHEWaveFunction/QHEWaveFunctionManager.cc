@@ -63,6 +63,7 @@
 #include "Tools/FQHEWaveFunction/FQHESphereSymmetrizedSU2ToU1WaveFunction.h"
 #include "Tools/FQHEWaveFunction/SU4HalperinOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/NASSOnSphereWaveFunction.h"
+#include "Tools/FQHEWaveFunction/TPfaffianCandidateOnSphereWaveFunction.h"
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 #include "MathTools/NumericalAnalysis/AntisymmetrizedComplexFunction.h"
 
@@ -159,6 +160,7 @@ ostream& QHEWaveFunctionManager::ShowAvalaibleWaveFunctions (ostream& str)
       str << "  * pairedcf : paired composite fermion wave function at flux 2N-3" << endl;
       str << "  * paired2QH : paired composite fermion wave function with two quasi-holes at flux 2N-2+PC" << endl;
       str << "  * hund : composite fermion state, if half filled highest shell using Hund's rule" << endl;
+      str << "  * tpfaffian : a potential candidate for the t-Pfaffian state" << endl;
     }
   else
     if (this->GeometryID == QHEWaveFunctionManager::DiskGeometry)
@@ -214,7 +216,11 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	}
       if (strcmp (this->Options->GetString("test-wavefunction"), "pfaffian") == 0)
 	{
-	  return new PfaffianOnSphereWaveFunction(this->Options->GetInteger("nbr-particles"));
+	  return new PfaffianOnSphereWaveFunction(this->Options->GetInteger("nbr-particles"), this->Options->GetBoolean("fermion-state"));
+	}
+      if (strcmp (this->Options->GetString("test-wavefunction"), "tpfaffian") == 0)
+	{
+	  return new TPfaffianCandidateOnSphereWaveFunction(this->Options->GetInteger("nbr-particles"));
 	}
       if (strcmp (this->Options->GetString("test-wavefunction"), "pfaffian2qh") == 0)
 	{

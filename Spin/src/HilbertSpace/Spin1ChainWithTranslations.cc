@@ -145,7 +145,7 @@ Spin1ChainWithTranslations::Spin1ChainWithTranslations (int chainLength, int mom
   this->ComplementaryStateXShift = (2 * this-> ChainLength) - this->StateXShift;
   this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
 
-  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->Sz, this->ChainLength);
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(0, this->ChainLength);
   this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
   this->RawGenerateStates(0l, this->ChainLength - 1, 0);
   this->LargeHilbertSpaceDimension = this->GenerateStates();
@@ -1090,7 +1090,7 @@ long Spin1ChainWithTranslations::EvaluateHilbertSpaceDimension(int sz, int nbrSi
 {
   if (nbrSites == 0)
     {
-      if (sz == 0)
+      if (sz == this->Sz)
 	{
 	  return 1l;	  
 	}
@@ -1098,6 +1098,10 @@ long Spin1ChainWithTranslations::EvaluateHilbertSpaceDimension(int sz, int nbrSi
 	{
 	  return 0l;	  
 	}
+    }
+  if (((sz + 2 * nbrSites) < this->Sz) || ((sz - 2 * nbrSites) > this->Sz))
+    {
+      return 0l;
     }
   long TmpDimension = this->EvaluateHilbertSpaceDimension(sz - 2, nbrSites - 1);
   TmpDimension += this->EvaluateHilbertSpaceDimension(sz, nbrSites - 1);
@@ -1150,6 +1154,10 @@ long Spin1ChainWithTranslations::RawGenerateStates(long statePosition, int siteP
 	{
 	  return statePosition;
 	}
+    }
+  if (((currentSz + 2 * sitePosition + 2) < this->Sz) || ((currentSz - 2 * sitePosition - 2) > this->Sz))
+    {
+      return statePosition;
     }
   unsigned long TmpMask = 0x3ul << (sitePosition * 2);
   long TmpPosition = this->RawGenerateStates(statePosition, sitePosition - 1, currentSz + 2);  

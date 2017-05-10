@@ -67,4 +67,5 @@ MaximallyCondensedStateOnLattice.cc \
 NASSOnSphereWaveFunction.cc \
 PfaffianTimesPfaffianState.cc \
 PolarizedProductWavefunction.cc \
-FQHECP2GeneralizedLaughlinWaveFunction.cc
+FQHECP2GeneralizedLaughlinWaveFunction.cc \
+TPfaffianCandidateOnSphereWaveFunction.cc

@@ -989,6 +989,22 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = number of states that have been generated through the symmetrization procedure
   virtual int SymmetrizeSingleStatePeriodicSubsetOrbitals (RealVector& inputVector, int firstOrbitalIndex, int periodicity, bool unnormalizedBasisFlag,
 							   RealVector*& symmetrizedVectors, int*& nbrParticlesSectors, int*& lzSectors);
+
+  // Compute the product of two bsonic states, automatically dealing with reverse flux attachement
+  //
+  // bosonicState1 = reference on the first bosonic state
+  // bosonicState2 = reference on the second fermionic state
+  // outputVector = reference on the vector where the result will be stored
+  // bosonicSpace1 = pointer on the Hilbert Space associated to the first bosonic state
+  // bosonicSpace2 = pointer on the Hilbert Space associated to the second bosonic state
+  // minIndex = first component to compute (refering to the bosonic state)
+  // nbrComponents = number of components to compute (refering to the first bosonic state)
+  // unnormalizedFlag = true if the state should be written in the unnormalized basis
+  // architecture = pointer to the architecture
+  virtual void BosonicStateTimeBosonicState(RealVector& bosonicState1, RealVector& bosonicState2, RealVector& outputVector, 
+					    BosonOnSphereShort* bosonicSpace1, BosonOnSphereShort* bosonicSpace2,
+					    int minIndex, int nbrComponents, bool unnormalizedFlag, AbstractArchitecture* architecture);
+
  protected:
 
   // convert a bosonic state into its fermionic counterpart
@@ -1005,6 +1021,12 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // finalState = reference on the array where the bosonic state has to be stored
   // finalStateLzMax = reference on the integer where the bosonic state maximum Lz value has to be stored
   void FermionToBoson(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState, int& finalStateLzMax);
+
+  // convert a fermionic state into its bosonic counterpart
+  //
+  // initialState = initial fermionic state
+  // finalState = reference on the array where the bosonic state has to be stored
+  void FermionToBoson(unsigned long initialState, unsigned long*& finalState);
 
   // check if a state satisfies a maximum occupation contraint
   //
@@ -1136,6 +1158,23 @@ class BosonOnSphereShort :  public ParticleOnSphere
   virtual void SymmetrizeSingleStatePeriodicSubsetOrbitalCore (RealVector& inputVector, RealVector** symmetrizedVectors, int firstOrbitalIndex, int periodicity, bool unnormalizedBasisFlag,
 							       unsigned long firstComponent, unsigned long nbrComponents);
 
+  // Compute the product of two symmetric monomials
+  //
+  // symmetricMonomial1 = first symmetric monomial
+  // symmetricMonomial2 = second symmetric monomial
+  // finalState = reference on the vector the produced state will be stored
+  // threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
+  virtual void SymmetricMonomialTimesSymmetricMonomial (unsigned long* symmetricMonomial1, unsigned long* symmetricMonomial2, RealVector& finalState, double** threeOrbitalOverlaps);
+
+  // Compute the product of two symmetric monomials, assuming a reverse flux attachment for the first symmetric monomial
+  //
+  // symmetricMonomial1 = first symmetric monomial
+  // symmetricMonomial2 = second symmetric monomial
+  // finalState = reference on the vector the produced state will be stored
+  // threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
+  virtual void ReverseSymmetricMonomialTimesSymmetricMonomial (unsigned long* symmetricMonomial1, unsigned long* symmetricMonomial2, RealVector& finalState, double** threeOrbitalOverlaps);
+
+
 };
 
 // get the particle statistic 
@@ -1203,6 +1242,48 @@ inline void BosonOnSphereShort::FermionToBoson(unsigned long initialState, int i
       initialStateLzMax -= TmpPower;
     }
   --finalStateLzMax;
+}
+
+// convert a fermionic state into its bosonic  counterpart
+//
+// initialState = initial fermionic state
+// finalState = reference on the array where the bosonic state has to be stored
+
+inline void BosonOnSphereShort::FermionToBoson(unsigned long initialState, unsigned long*& finalState)
+{
+  int FinalStateLzMax = 0;
+  int InitialStateLzMax = this->FermionBasis->LzMax;
+  while (InitialStateLzMax >= 0)
+    {
+      unsigned long TmpState = (~initialState - 1ul) ^ (~initialState);
+      TmpState &= ~(TmpState >> 1);
+//      cout << hex << initialState << "  " << TmpState << dec << endl;
+#ifdef  __64_BITS__
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0f0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;      
+      TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;      
+#else
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
+#endif
+//      cout << TmpPower << endl;
+      finalState[FinalStateLzMax] = (unsigned long) TmpPower;
+      ++TmpPower;
+      ++FinalStateLzMax;
+      initialState >>= TmpPower;
+      InitialStateLzMax -= TmpPower;
+    }
+  while (FinalStateLzMax <= this->LzMax)
+    {
+      finalState[FinalStateLzMax] = 0x0ul;
+      ++FinalStateLzMax;
+    }
 }
 
 // check if a state satisfies a maximum occupation contraint

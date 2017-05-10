@@ -7328,8 +7328,6 @@ void FermionOnSphere::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (LongRation
 void FermionOnSphere::SymmetricMonomialTimesSlater (unsigned long* symmetricMonomial, unsigned long* slater, RealVector& finalState, double** threeOrbitalOverlaps)
 {
   unsigned long TmpNbrStates = 0;
-  long CoefUp = 1;
-  long CoefDown = 1;
   unsigned long TmpState [this->NbrFermions];
   unsigned long TmpFinalState;
   double Sign = 1.0;

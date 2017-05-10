@@ -103,11 +103,6 @@ int main(int argc, char** argv)
       cout << "error while retrieving system parameters from file name " << Manager.GetString("state-2") << endl;
       return -1;
     }
-  if (Statistics2 == false)
-    {
-      cout << Manager.GetString("state-2") << " should be fermionic" << endl;
-      return -1;
-    }
 
   if (NbrParticles1 != NbrParticles2)
     {
@@ -180,49 +175,106 @@ int main(int argc, char** argv)
       cout << "can't open vector file " << Manager.GetString("state-2") << endl;
       return -1;      
     }
-  FermionOnSphere* InputSpace = 0;  
+  ParticleOnSphere* InputSpace = 0;  
   if (Manager.GetString("reference-file2") == 0)
     {
-      InputSpace = new FermionOnSphere(NbrParticles2, TotalLz2, NbrFluxQuanta2);  
+      if (Statistics2 == true)
+	{
+	  InputSpace = new FermionOnSphere(NbrParticles2, TotalLz2, NbrFluxQuanta2);  
+	}
+      else
+	{
+	  InputSpace = new BosonOnSphereShort(NbrParticles2, TotalLz2, NbrFluxQuanta2);  
+	}
     }
   else
     {
       int* ReferenceState = 0;
       if (FQHEGetRootPartition(Manager.GetString("reference-file2"), NbrParticles2, NbrFluxQuanta2, ReferenceState) == false)
 	return -1;
-      InputSpace = new FermionOnSphereHaldaneBasis(NbrParticles2, TotalLz2, NbrFluxQuanta2, ReferenceState);              
+      if (Statistics2 == true)
+	{
+	  InputSpace = new FermionOnSphereHaldaneBasis(NbrParticles2, TotalLz2, NbrFluxQuanta2, ReferenceState);              
+	}
+      else
+	{
+	  InputSpace = new BosonOnSphereHaldaneBasisShort(NbrParticles2, TotalLz2, NbrFluxQuanta2, ReferenceState);              
+	}
     }
-  FermionOnSphere* OutputSpace = 0;
-  if (LzSymmmetryFlag == true)
+  ParticleOnSphere* OutputSpace = 0;
+  if (Statistics2 == true)
     {
-      OutputSpace = new FermionOnSphere(NbrParticles1, TotalLzOutputState, NbrFluxQuantumOutputState);
+      if (LzSymmmetryFlag == true)
+	{
+	  OutputSpace = new FermionOnSphere(NbrParticles1, TotalLzOutputState, NbrFluxQuantumOutputState);
+	}
+      else
+	{
+	  OutputSpace = new FermionOnSphere(NbrParticles1, TotalLzOutputState, NbrFluxQuantumOutputState);
+	}
     }
   else
     {
-      OutputSpace = new FermionOnSphere(NbrParticles1, TotalLzOutputState, NbrFluxQuantumOutputState);
+      if (LzSymmmetryFlag == true)
+	{
+	  OutputSpace = new BosonOnSphereShort(NbrParticles1, TotalLzOutputState, NbrFluxQuantumOutputState);
+	}
+      else
+	{
+	  OutputSpace = new BosonOnSphereShort(NbrParticles1, TotalLzOutputState, NbrFluxQuantumOutputState);
+	}
     }
 
   char* GeometryName = new char[128];
-  sprintf (GeometryName, "sphere");
+  if (Manager.GetBoolean("normalize") == true)
+    {
+      sprintf (GeometryName, "sphere");
+    }
+  else
+    {
+      sprintf (GeometryName, "unnormalized");
+    }
 
   char* OutputName = new char [512  + strlen(DiscreteSymmetryName)+ strlen(Manager.GetString("interaction-name")) + strlen(GeometryName)];
-  sprintf (OutputName, "fermions_%s%s_%s_n_%d_2s_%d_lz_%d.%ld.vec", GeometryName, DiscreteSymmetryName, Manager.GetString("interaction-name"), 
-	   NbrParticles1, NbrFluxQuantumOutputState, TotalLzOutputState, Manager.GetInteger("outputvector-index"));
+  if (Statistics2 == true)
+    {
+      sprintf (OutputName, "fermions_%s%s_%s_n_%d_2s_%d_lz_%d.%ld.vec", GeometryName, DiscreteSymmetryName, Manager.GetString("interaction-name"), 
+	       NbrParticles1, NbrFluxQuantumOutputState, TotalLzOutputState, Manager.GetInteger("outputvector-index"));
+    }
+  else
+    {
+      sprintf (OutputName, "bosons_%s%s_%s_n_%d_2s_%d_lz_%d.%ld.vec", GeometryName, DiscreteSymmetryName, Manager.GetString("interaction-name"), 
+	       NbrParticles1, NbrFluxQuantumOutputState, TotalLzOutputState, Manager.GetInteger("outputvector-index"));
+    }
 
   if (Architecture.GetArchitecture()->CanWriteOnDisk())
     {
       cout << "generating state " << OutputName << endl;
     }
 
-  FQHESphereBosonicStateTimesFermionicStateOperation Operation (BosonicInputVector, InputVector, 
-								BosonicInputSpace, InputSpace, OutputSpace,
-								!(Manager.GetBoolean("normalize")));
-  Operation.ApplyOperation(Architecture.GetArchitecture());
-  RealVector OutputVector = Operation.GetState();
-//   RealVector OutputVector (OutputSpace->GetHilbertSpaceDimension(), true);
-//   OutputSpace->BosonicStateTimeFermionicState(BosonicInputVector, InputVector, OutputVector, BosonicInputSpace, InputSpace, 0, 
-// 					      BosonicInputSpace->GetHilbertSpaceDimension(), !(Manager.GetBoolean("normalize")), 
-// 					      Architecture.GetArchitecture());
+
+  RealVector OutputVector;
+  if (Statistics2 == true)
+    {
+      FQHESphereBosonicStateTimesFermionicStateOperation Operation (BosonicInputVector, InputVector, 
+								    BosonicInputSpace, (FermionOnSphere*) InputSpace, (FermionOnSphere*) OutputSpace,
+								    !(Manager.GetBoolean("normalize")));
+      Operation.ApplyOperation(Architecture.GetArchitecture());
+      OutputVector = Operation.GetState();
+    }
+  else
+    {
+      OutputVector = RealVector (OutputSpace->GetHilbertSpaceDimension(), true);
+      ((BosonOnSphereShort*) OutputSpace)->BosonicStateTimeBosonicState(BosonicInputVector, InputVector, OutputVector, 
+									 BosonicInputSpace, (BosonOnSphereShort*) InputSpace,
+									 0, BosonicInputSpace->GetHilbertSpaceDimension(), 
+									 !(Manager.GetBoolean("normalize")), Architecture.GetArchitecture());
+      //       FQHESphereBosonicStateTimesFermionicStateOperation Operation (BosonicInputVector, InputVector, 
+      // 								    BosonicInputSpace, (BosonOnSphereShort*) InputSpace, (BosonOnSphereShort*) OutputSpace,
+      // 								    !(Manager.GetBoolean("normalize")));
+      //       Operation.ApplyOperation(Architecture.GetArchitecture());
+      //       OutputVector = Operation.GetState();
+    }
   delete InputSpace;
   delete BosonicInputSpace;
 
