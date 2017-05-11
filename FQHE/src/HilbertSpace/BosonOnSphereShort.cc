@@ -3892,6 +3892,44 @@ RealVector& BosonOnSphereShort::ConvertFromUnnormalizedMonomial(RealVector& stat
   return state;
 }
 
+// convert a state such that its components are now expressed in the normalized basis, without applying the global normalization to the final state
+//
+// state = reference to the state to convert
+// return value = converted state
+
+RealVector& BosonOnSphereShort::ConvertFromUnnormalizedMonomialNoGlobalNormalization(RealVector& state)
+{
+  unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
+  double* SqrtCoefficients = new double [this->LzMax + 1];
+  BinomialCoefficients Binomials(this->LzMax);
+  for (int k = 0; k <= this->LzMax; ++k)
+    {
+      SqrtCoefficients[k] = sqrt(4.0 * M_PI / (Binomials.GetNumericalCoefficient(this->LzMax, k) * (1.0 + (double) this->LzMax)));
+    }
+  FactorialCoefficient Factorial;
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      this->ConvertToMonomial(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], TmpMonomial);
+
+      double Coefficient = 1.0;
+      for (int k = 0; k < this->NbrBosons; ++k)
+	{
+	  Coefficient *= SqrtCoefficients[TmpMonomial[k]];
+	}
+      Factorial.SetToOne();
+      this->FermionToBoson(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], 
+			   this->TemporaryState, this->TemporaryStateLzMax);
+      for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+	if (this->TemporaryState[k] > 1)
+	  Factorial.FactorialDivide(this->TemporaryState[k]);
+      Coefficient *= sqrt(Factorial.GetNumericalValue());
+      state[i] *= Coefficient;
+    }
+  delete[] TmpMonomial;
+  delete[] SqrtCoefficients;
+  return state;
+}
+
 // convert a state such that its components, given in the conformal limit,  are now expressed in the normalized basis
 //
 // state = reference to the state to convert

@@ -1193,15 +1193,16 @@ RealMatrix Spin1Chain::EvaluatePartialEntanglementMatrix (int nbrSites, int szSe
   RealMatrix TmpEntanglementMatrix(TmpHilbertSpace.HilbertSpaceDimension, TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
 
   int Shift = 2 * nbrSites;
+  unsigned long Mask = (0x1ul << Shift) - 0x1ul;
   int MinIndex = 0;
   int MaxIndex = TmpHilbertSpace.HilbertSpaceDimension;
 
   for (; MinIndex < MaxIndex; ++MinIndex)    
     {
-      unsigned long TmpState = TmpHilbertSpace.StateDescription[MinIndex] << Shift;
+      unsigned long TmpState = (TmpHilbertSpace.StateDescription[MinIndex] << Shift) & 0xfffffffful;
       for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
 	{
-	  unsigned long TmpState2 = TmpState | TmpDestinationHilbertSpace.StateDescription[j];
+	  unsigned long TmpState2 = TmpState | (TmpDestinationHilbertSpace.StateDescription[j] & Mask);
 	  int TmpPos = this->FindStateIndex(TmpState2);
 	  if (TmpPos != this->HilbertSpaceDimension)
 	    {

@@ -71,6 +71,7 @@ int main(int argc, char** argv)
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the vector into a text file");
   (*OutputGroup) += new BooleanOption ('\n', "txt-separatespin", "for the text output, use the sign convention which separates spins");
   (*OutputGroup) += new BooleanOption ('\n', "normalize", "normalize the state instead of unnormalizing");  
+  (*OutputGroup) += new BooleanOption ('\n', "noglobal-normalization", "when normalizing, just restoire the geometry/occupation factors without enforcing the full state to be normalized to one");  
   (*OutputGroup) += new SingleDoubleOption  ('\n', "hide-component", "in the text output, hide state components whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
   (*OutputGroup) += new SingleDoubleOption  ('\n', "hide-inputcomponent", "in the text output, hide state components whose absolute value is lower than a given error in the original normalized state (0 if all components have to be shown", 0.0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
@@ -409,7 +410,14 @@ int main(int argc, char** argv)
      {
        if (Manager.GetBoolean("conformal-limit") == false)
 	 {
-	   OutputBasis->ConvertFromUnnormalizedMonomial(OutputState, Manager.GetInteger("normalization"), SymmetryFactor);
+	   if (Manager.GetBoolean("noglobal-normalization") == false)
+	     {
+	       OutputBasis->ConvertFromUnnormalizedMonomial(OutputState, Manager.GetInteger("normalization"), SymmetryFactor);
+	     }
+	   else
+	     {
+	       OutputBasis->ConvertFromUnnormalizedMonomialNoGlobalNormalization(OutputState);
+	     }
 	 }
        else
 	 {

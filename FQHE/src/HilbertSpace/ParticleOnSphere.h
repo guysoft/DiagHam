@@ -904,6 +904,12 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value = converted state
   virtual RealVector& ConvertFromUnnormalizedMonomial(RealVector& state, long reference = 0, bool symmetryFactor = true);
 
+  // convert a state such that its components are now expressed in the normalized basis, without applying the global normalization to the final state
+  //
+  // state = reference to the state to convert
+  // return value = converted state
+  virtual RealVector& ConvertFromUnnormalizedMonomialNoGlobalNormalization(RealVector& state);
+ 
   // convert a state such that its components are now expressed in the normalized basis, shifting all orbitals
   //
   // state = reference to the state to convert

@@ -443,17 +443,111 @@ int main(int argc, char** argv)
 	    }
 	}
       SpinS2Operator TmpOperator(Space, NbrSpins);
+      int NbrNonDegenerateStates = 0;
+      for (int k = 0; k < NbrDegeneracyIndices; ++k)
+	{
+	  if (Degeneracies[k] == 1)
+	    {
+	      ++NbrNonDegenerateStates;
+	    }
+	}
+      RealVector* TmpNonDegenerateRealEigenstates = new RealVector[NbrNonDegenerateStates];
+      ComplexVector* TmpNonDegenerateComplexEigenstates = new ComplexVector[NbrNonDegenerateStates];
+      Complex* TmpNonDegenerateS2Values = new Complex[NbrNonDegenerateStates];
+      int TmpIndex = 0;
+      NbrNonDegenerateStates = 0;
       if (Manager.GetBoolean("complex") == false)
 	{
-// 	  Complex TmpS2 = TmpOperator.MatrixElement(TmpState, TmpState);
-// 	  cout << "S^2 = " << TmpS2.Re << endl; 
-// 	  cout << "2S = " << (sqrt((4.0 * TmpS2.Re) + 1.0) - 1.0) << " " << round(sqrt((4.0 * TmpS2.Re) + 1.0) - 1.0) << endl; 
+	  for (int k = 0; k < NbrDegeneracyIndices; ++k)
+	    {
+	      if (Degeneracies[k] == 1)
+		{
+		  TmpNonDegenerateRealEigenstates[NbrNonDegenerateStates] = RealEigenstates[TmpIndex];
+		  ++NbrNonDegenerateStates;
+		}
+	      TmpIndex += Degeneracies[k];	  
+	    }
 	}
       else
 	{
-	  // 	  Complex TmpS2 = TmpOperator.MatrixElement(TmpState, TmpState);
-// 	  cout << "<S^2>=" << TmpS2.Re << " <S>=" << (0.5 * (sqrt((4.0 * TmpS2.Re) + 1.0) - 1.0)) << endl;
-// 	  cout << "round(<2S>)=" << round(sqrt((4.0 * TmpS2.Re) + 1.0) - 1.0) << endl; 
+	  for (int k = 0; k < NbrDegeneracyIndices; ++k)
+	    {
+	      if (Degeneracies[k] == 1)
+		{
+		  TmpNonDegenerateComplexEigenstates[NbrNonDegenerateStates] = ComplexEigenstates[TmpIndex];
+		  ++NbrNonDegenerateStates;
+		}
+	      TmpIndex += Degeneracies[k];	  
+	    }
+	}
+      if (Manager.GetBoolean("complex") == false)
+	{
+	  OperatorMultipleMatrixElementOperation TmpOperation (&TmpOperator, TmpNonDegenerateRealEigenstates, TmpNonDegenerateRealEigenstates, NbrNonDegenerateStates);
+	  TmpOperation.ApplyOperation(Architecture.GetArchitecture());
+	  for (int k = 0; k < NbrNonDegenerateStates; ++k)
+	    {
+	      TmpNonDegenerateS2Values[k] = TmpOperation.GetMatrixElement(k);
+	    }
+	}
+      else
+	{
+	  OperatorMultipleMatrixElementOperation TmpOperation (&TmpOperator, TmpNonDegenerateComplexEigenstates, TmpNonDegenerateComplexEigenstates, NbrNonDegenerateStates);
+	  TmpOperation.ApplyOperation(Architecture.GetArchitecture());
+	  for (int k = 0; k < NbrNonDegenerateStates; ++k)
+	    {
+	      TmpNonDegenerateS2Values[k] = TmpOperation.GetMatrixElement(k);
+	    }
+	}
+
+      TmpIndex = 0;
+      NbrNonDegenerateStates = 0;
+      for (int k = 0; k < NbrDegeneracyIndices; ++k)
+	{
+	  if (Degeneracies[k] == 1)
+	    {
+	      S2Values[TmpIndex] = TmpNonDegenerateS2Values[NbrNonDegenerateStates].Re;
+	      ++NbrNonDegenerateStates;
+	    }
+	  else
+	    {
+	      cout << "degeneracy at " << TmpIndex << "(" << Degeneracies[k] << " states)" << endl;
+	      HermitianMatrix S2Matrix(Degeneracies[k], true);
+	      RealVector TmpRealVector;
+	      ComplexVector TmpComplexVector;
+	      if (Manager.GetBoolean("complex") == false)
+		{
+		  RealVector TmpVector(Space->GetHilbertSpaceDimension());
+		  for (int i = 0; i < Degeneracies[k]; ++i)
+		    {		 
+		      TmpOperator.Multiply(RealEigenstates[TmpIndex + i], TmpVector);
+		      for (int j = i; j < Degeneracies[k]; ++j)
+			{
+			  Complex TmpS2 = RealEigenstates[TmpIndex + j] * TmpVector;
+			  S2Matrix.SetMatrixElement(j, i, TmpS2);
+			}
+		    }
+		}
+	      else
+		{
+		  ComplexVector TmpVector(Space->GetHilbertSpaceDimension());
+		  for (int i = 0; i < Degeneracies[k]; ++i)
+		    {		      
+		      TmpOperator.Multiply(ComplexEigenstates[TmpIndex + i], TmpVector);
+		      for (int j = i; j < Degeneracies[k]; ++j)
+			{
+			  Complex TmpS2= ComplexEigenstates[TmpIndex + j] * TmpVector;
+			  S2Matrix.SetMatrixElement(j, i, TmpS2);
+			}
+		    }
+		}	    
+	      RealDiagonalMatrix TmpS2Eigenvalues(Degeneracies[k]);
+	      S2Matrix.LapackDiagonalize(TmpS2Eigenvalues);
+	      for (int i = 0; i < Degeneracies[k]; ++i)
+		{
+		  S2Values[TmpIndex + i] = TmpS2Eigenvalues[i];
+		}
+	    }
+	  TmpIndex += Degeneracies[k];
 	}
     }
   else

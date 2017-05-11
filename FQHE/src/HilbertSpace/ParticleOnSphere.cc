@@ -1394,6 +1394,18 @@ RealVector& ParticleOnSphere::ConvertFromUnnormalizedMonomial(RealVector& state,
   return state;
 }
 
+// convert a state such that its components are now expressed in the normalized basis, without applying the global normalization to the final state
+//
+// state = reference to the state to convert
+// return value = converted state
+
+RealVector& ParticleOnSphere::ConvertFromUnnormalizedMonomialNoGlobalNormalization(RealVector& state)
+{
+  cout << "warning, using dummy method ParticleOnSphere::ConvertFromUnnormalizedMonomialNoGlobalNormalization" << endl;
+  return state;
+}
+ 
+
 // convert a state such that its components are now expressed in the normalized basis, shifting all orbitals
 //
 // state = reference to the state to convert
