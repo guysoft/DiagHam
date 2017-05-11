@@ -230,7 +230,6 @@ Spin1ChainWithTranslations::Spin1ChainWithTranslations (const Spin1ChainWithTran
       this->LookUpTableMemorySize = 0;
       this->LookUpTableShift = 0;
     }
-  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -315,7 +314,6 @@ Spin1ChainWithTranslations& Spin1ChainWithTranslations::operator = (const Spin1C
       this->LookUpTableMemorySize = 0;
       this->LookUpTableShift = 0;
     }
-  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 
