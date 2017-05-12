@@ -26,6 +26,10 @@
 #include "HilbertSpace/Spin2ChainWithTranslationsAndSzSymmetry.h"
 #include "HilbertSpace/Spin2ChainWithTranslationsAndInversionSymmetry.h"
 #include "HilbertSpace/Spin2ChainWithTranslationsAndSzInversionSymmetries.h"
+#include "HilbertSpace/Spin1ChainWithSzSymmetry.h"
+#include "HilbertSpace/Spin1ChainWithInversionSymmetry.h"
+#include "HilbertSpace/Spin1ChainWithSzInversionSymmetries.h"
+
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -146,13 +150,16 @@ int main(int argc, char** argv)
 	  if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue, 
 						   XMomentum, InversionSector, SzSymmetrySector) == false)
 	    {
-	      if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue) == false)
+	      if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue, InversionSector, SzSymmetrySector) == false)
 		{
-		  SzFlag = false;
-		  if (SpinFindSystemInfoFromFileName(Manager.GetString("multiple-states"), NbrSpins, SpinValue) == false)
+		  if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue) == false)
 		    {
-		      cout << "error while retrieving system parameters from file name " << Manager.GetString("multiple-states") << endl;
-		      return -1;
+		      SzFlag = false;
+		      if (SpinFindSystemInfoFromFileName(Manager.GetString("multiple-states"), NbrSpins, SpinValue) == false)
+			{
+			  cout << "error while retrieving system parameters from file name " << Manager.GetString("multiple-states") << endl;
+			  return -1;
+			}
 		    }
 		}
 	    }
@@ -287,12 +294,33 @@ int main(int argc, char** argv)
 	      break;
 	    case 2 :
 	      {
-		Space = new Spin1Chain (NbrSpins, TotalSz, 1000000);
+		if (InversionSector != 0)
+		  {
+		    if (SzSymmetrySector != 0)
+		      {
+			Space = new Spin1ChainWithSzInversionSymmetries (NbrSpins, InversionSector, SzSymmetrySector, TotalSz, 1000000);
+		      }
+		    else
+		      {
+			Space = new Spin1ChainWithInversionSymmetry (NbrSpins, InversionSector, TotalSz, 1000000);
+		      }
+		  }
+		else
+		  {
+		    if (SzSymmetrySector != 0)
+		      {
+			Space = new Spin1ChainWithSzSymmetry (NbrSpins, SzSymmetrySector, TotalSz, 1000000);
+		      }
+		    else
+		      {
+			Space = new Spin1Chain (NbrSpins, TotalSz, 1000000);
+		      }
+		  }
 	      }
 	      break;
 	    case 4 :
 	      {
-		Space = new Spin1Chain (NbrSpins, TotalSz, 1000000);
+		Space = new Spin2Chain (NbrSpins, TotalSz, 1000000);
 	      }
 	      break;
 	    default :

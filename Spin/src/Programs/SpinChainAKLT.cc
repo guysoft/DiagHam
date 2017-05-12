@@ -2,6 +2,9 @@
 
 #include "HilbertSpace/Spin1_2Chain.h"
 #include "HilbertSpace/Spin1Chain.h"
+#include "HilbertSpace/Spin1ChainWithSzSymmetry.h"
+#include "HilbertSpace/Spin1ChainWithInversionSymmetry.h"
+#include "HilbertSpace/Spin1ChainWithSzInversionSymmetries.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -55,6 +58,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('\n', "initial-sz", "twice the initial sz sector that has to computed", 0);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "nbr-sz", "number of sz value to evaluate (0 for all sz sectors)", 0);
   (*SystemGroup) += new  BooleanOption ('\n', "use-periodic", "use periodic boundary conditions");
+  (*SystemGroup) += new  BooleanOption ('\n', "disable-szsymmetry", "disable the Sz<->-Sz symmetry");
+  (*SystemGroup) += new  BooleanOption ('\n', "disable-inversionsymmetry", "disable the inversion symmetry");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -85,12 +90,54 @@ int main(int argc, char** argv)
   if ((SpinValue & 1) == 0)
     {
       sprintf (OutputFileName, "spin_%d_%saklt_n_%d", (SpinValue / 2), BoundaryName, NbrSpins);
-      sprintf (CommentLine, " %s AKLT spin %d chain with %d sites \n# 2Sz ", BoundaryName, (SpinValue / 2), NbrSpins);
+      if (Manager.GetBoolean("disable-szsymmetry") == false)
+	{
+	  if (Manager.GetBoolean("disable-inversionsymmetry") == false)
+	    {
+	      sprintf (CommentLine, " periodic spin %d chain with %d sites \n# 2Sz SzSym InvSym ", (SpinValue / 2), NbrSpins);
+	    }
+	  else
+	    {
+	      sprintf (CommentLine, " periodic spin %d chain with %d sites \n# 2Sz SzSym ", (SpinValue / 2), NbrSpins);
+	    }
+	}
+      else
+	{
+	  if (Manager.GetBoolean("disable-inversionsymmetry") == false)
+	    {
+	      sprintf (CommentLine, " periodic spin %d chain with %d sites \n# 2Sz InvSym ", (SpinValue / 2), NbrSpins);
+	    }
+	  else
+	    {
+	      sprintf (CommentLine, " periodic spin %d chain with %d sites \n# 2Sz ", (SpinValue / 2), NbrSpins);
+	    }
+	}
     }
   else
     {
-      sprintf (OutputFileName, "spin_%d_2_%saklt_n_%d", SpinValue, BoundaryName, NbrSpins);
-      sprintf (CommentLine, " %s AKLT spin %d/2 chain with %d sites \n# 2Sz ", BoundaryName, SpinValue, NbrSpins);
+      sprintf (OutputFileName, "spin_%d_2_periodicaklt_n_%d", SpinValue, NbrSpins);
+      if (Manager.GetBoolean("disable-szsymmetry") == false)
+	{
+	  if (Manager.GetBoolean("disable-inversionsymmetry") == false)
+	    {
+	      sprintf (CommentLine, " periodic spin %d/2 chain with %d sites \n# 2Sz SzSym InvSym ", SpinValue, NbrSpins);
+	    }
+	  else
+	    {
+	      sprintf (CommentLine, " periodic spin %d/2 chain with %d sites \n# 2Sz SzSym ", SpinValue, NbrSpins);
+	    }
+	}
+      else
+	{
+	  if (Manager.GetBoolean("disable-inversionsymmetry") == false)
+	    {
+	      sprintf (CommentLine, " periodic spin %d/2 chain with %d sites \n# 2Sz InvSym ", SpinValue, NbrSpins);
+	    }
+	  else
+	    {
+	      sprintf (CommentLine, " periodic spin %d/2 chain with %d sites \n# 2Sz ", SpinValue, NbrSpins);
+	    }
+	}
     }
   char* FullOutputFileName = new char [strlen(OutputFileName)+ 16];
   sprintf (FullOutputFileName, "%s.dat", OutputFileName);
@@ -106,43 +153,179 @@ int main(int argc, char** argv)
       MaxSzValue = InitalSzValue + ((Manager.GetInteger("nbr-sz") - 1) * 2);
     }
   bool FirstRun = true;
+
+  if ((InitalSzValue == 0) && (Manager.GetBoolean("disable-szsymmetry") == false))
+    {
+      for (int SzSymmetrySector = -1; SzSymmetrySector <= 1; SzSymmetrySector += 2)
+	{
+	  if (Manager.GetBoolean("disable-inversionsymmetry") == false)
+	    {
+	      for (int InversionSymmetrySector = -1; InversionSymmetrySector <= 1; InversionSymmetrySector += 2)
+		{
+		  AbstractSpinChain* Chain = 0;
+		  switch (SpinValue)
+		    {
+		    case 2 :
+		      Chain = new Spin1ChainWithSzInversionSymmetries (NbrSpins, InversionSymmetrySector, SzSymmetrySector, InitalSzValue, 1000000);
+		      break;
+		    default :
+		      {
+			if ((SpinValue & 1) == 0)
+			  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+			else 
+			  cout << "spin " << SpinValue << "/2 are not available" << endl;
+			return -1;
+		      }
+		    }
+		  
+		  if (Chain->GetHilbertSpaceDimension() > 0)
+		    {
+		      cout << "Sz = " << InitalSzValue << ", Sz<->-Sz sector=" << SzSymmetrySector << ", inversion sector=" << InversionSymmetrySector << endl; 
+		      SpinChainAKLTHamiltonian Hamiltonian (Chain, NbrSpins, 1.0, Manager.GetBoolean("use-periodic"));
+		      char* TmpSzString = new char[64];
+		      sprintf (TmpSzString, "%d %d %d", InitalSzValue, SzSymmetrySector, InversionSymmetrySector);
+		      char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
+		      sprintf (TmpEigenstateString, "%s_sz_%d_invsym_%d_szsym_%d", OutputFileName, InitalSzValue, InversionSymmetrySector, SzSymmetrySector);
+		      GenericRealMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+					       FirstRun, TmpEigenstateString);
+		      MainTaskOperation TaskOperation (&Task);
+		      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+		      FirstRun = false;
+		      delete[] TmpSzString;
+		    }
+		  delete Chain;
+		}
+	    }
+	  else
+	    {
+	      AbstractSpinChain* Chain = 0;
+	      switch (SpinValue)
+		{
+		case 2 :
+		  Chain = new Spin1ChainWithSzSymmetry (NbrSpins, SzSymmetrySector, InitalSzValue, 1000000);
+		  break;
+		default :
+		  {
+		    if ((SpinValue & 1) == 0)
+		  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+		    else 
+		      cout << "spin " << SpinValue << "/2 are not available" << endl;
+		    return -1;
+		  }
+		}
+	      
+	      if (Chain->GetHilbertSpaceDimension() > 0)
+		{
+		  cout << "Sz = " << InitalSzValue << ", Sz<->-Sz sector=" << SzSymmetrySector << endl; 
+		  SpinChainAKLTHamiltonian Hamiltonian (Chain, NbrSpins, 1.0, Manager.GetBoolean("use-periodic"));
+		  char* TmpSzString = new char[64];
+		  sprintf (TmpSzString, "%d %d", InitalSzValue, SzSymmetrySector);
+		  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
+		  sprintf (TmpEigenstateString, "%s_sz_%d_szsym_%d", OutputFileName, InitalSzValue, SzSymmetrySector);
+		  GenericRealMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+					   FirstRun, TmpEigenstateString);
+		  MainTaskOperation TaskOperation (&Task);
+		  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+		  FirstRun = false;
+		  delete[] TmpSzString;
+		}
+	      delete Chain;
+	    }
+	}
+      InitalSzValue += 2;
+    }
   for (; InitalSzValue <= MaxSzValue; InitalSzValue +=2)
     {
-      AbstractSpinChain* Chain = 0;
-      switch (SpinValue)
+      if (Manager.GetBoolean("disable-inversionsymmetry") == false)
 	{
-	case 1 :
-	  Chain = new Spin1_2Chain (NbrSpins, InitalSzValue, 1000000);
-	  break;
-	case 2 :
-	  Chain = new Spin1Chain (NbrSpins, InitalSzValue, 1000000);
-	  break;
-	default :
-	  {
-	    if ((SpinValue & 1) == 0)
-	      cout << "spin " << (SpinValue / 2) << " are not available" << endl;
-	    else 
-	      cout << "spin " << SpinValue << "/2 are not available" << endl;
-	    return -1;
-	  }
+	  for (int InversionSymmetrySector = -1; InversionSymmetrySector <= 1; InversionSymmetrySector += 2)
+	    {
+	      AbstractSpinChain* Chain = 0;
+	      switch (SpinValue)
+		{
+		case 2 :
+		  Chain = new Spin1ChainWithInversionSymmetry (NbrSpins, InversionSymmetrySector, InitalSzValue, 1000000);
+	      break;
+		default :
+		  {
+		    if ((SpinValue & 1) == 0)
+		      cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+		    else 
+		      cout << "spin " << SpinValue << "/2 are not available" << endl;
+		    return -1;
+		  }
+		}
+	      
+	      if (Chain->GetHilbertSpaceDimension() > 0)
+		{
+		  cout << "Sz = " << InitalSzValue << ", inversion sector=" << InversionSymmetrySector << endl; 
+		  SpinChainAKLTHamiltonian Hamiltonian (Chain, NbrSpins, 1.0, Manager.GetBoolean("use-periodic"));
+		  char* TmpSzString = new char[64];
+		  if (Manager.GetBoolean("disable-szsymmetry") == false)
+		    {
+		      sprintf (TmpSzString, "%d 0 %d", InitalSzValue, InversionSymmetrySector);
+		    }
+		  else
+		    {
+		      sprintf (TmpSzString, "%d %d", InitalSzValue, InversionSymmetrySector);
+		    }
+		  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
+		  sprintf (TmpEigenstateString, "%s_sz_%d_invsym_%d", OutputFileName, InitalSzValue, InversionSymmetrySector);
+		  GenericRealMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+					   FirstRun, TmpEigenstateString);
+		  MainTaskOperation TaskOperation (&Task);
+		  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+		  FirstRun = false;
+		  delete[] TmpSzString;
+		}
+	      delete Chain;
+	    }
 	}
-      
-      if (Chain->GetHilbertSpaceDimension() > 0)
+      else
 	{
-	  cout << "Sz = " << InitalSzValue << endl; 
-	  SpinChainAKLTHamiltonian Hamiltonian (Chain, NbrSpins, 1.0, Manager.GetBoolean("use-periodic"));
-	  char* TmpSzString = new char[64];
-	  sprintf (TmpSzString, "%d", InitalSzValue);
-	  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
-	  sprintf (TmpEigenstateString, "%s_sz_%d", OutputFileName, InitalSzValue);
-	  GenericRealMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
-				   FirstRun, TmpEigenstateString);
-	  MainTaskOperation TaskOperation (&Task);
-	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-	  FirstRun = false;
-	  delete[] TmpSzString;
+	  AbstractSpinChain* Chain = 0;
+	  switch (SpinValue)
+	    {
+	    case 1 :
+	      Chain = new Spin1_2Chain (NbrSpins, InitalSzValue, 1000000);
+	      break;
+	    case 2 :
+	      Chain = new Spin1Chain (NbrSpins, InitalSzValue, 1000000);
+	      break;
+	    default :
+	      {
+		if ((SpinValue & 1) == 0)
+		  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+		else 
+		  cout << "spin " << SpinValue << "/2 are not available" << endl;
+		return -1;
+	      }
+	    }
+	  
+	  if (Chain->GetHilbertSpaceDimension() > 0)
+	    {
+	      cout << "Sz = " << InitalSzValue << endl; 
+	      SpinChainAKLTHamiltonian Hamiltonian (Chain, NbrSpins, 1.0, Manager.GetBoolean("use-periodic"));
+	      char* TmpSzString = new char[64];
+	      if (Manager.GetBoolean("disable-szsymmetry") == false)
+		{
+		  sprintf (TmpSzString, "%d 0", InitalSzValue);
+		}
+	      else
+		{
+		  sprintf (TmpSzString, "%d", InitalSzValue);
+		}
+	      char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
+	      sprintf (TmpEigenstateString, "%s_sz_%d", OutputFileName, InitalSzValue);
+	      GenericRealMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+				       FirstRun, TmpEigenstateString);
+	      MainTaskOperation TaskOperation (&Task);
+	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	      FirstRun = false;
+	      delete[] TmpSzString;
+	    }
+	  delete Chain;
 	}
-      delete Chain;
     }
   return 0;
 }

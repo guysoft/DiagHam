@@ -138,8 +138,8 @@ RealVector& SpinChainAKLTHamiltonian::LowLevelAddMultiply(RealVector& vSource, R
 {
   int LastComponent = firstComponent + nbrComponent;
   int dim = this->Chain->GetHilbertSpaceDimension();
-  double coef;
-  double coef2;
+  double Coef;
+  double Coef2;
   int pos;
   int pos2;
   int MaxPos = this->NbrSpin - 1;
@@ -150,77 +150,103 @@ RealVector& SpinChainAKLTHamiltonian::LowLevelAddMultiply(RealVector& vSource, R
       // J part of Hamiltonian      
       for (int j = 0; j < MaxPos; ++j)
 	{
-	  pos = this->Chain->SmiSpj(j, j + 1, i, coef);
+	  pos = this->Chain->SmiSpj(j, j + 1, i, Coef);
 	  if (pos != dim)
 	    {
-	      vDestination[pos] += 0.5 * coef * TmpValue;
-	      coef *= this->SquareFactor;
-	      pos2 =  this->Chain->SmiSpj(j, j + 1, pos, coef2);
-	      if (pos2 != dim)
-		{
-		  vDestination[pos2] += 0.25 * coef * coef2 * TmpValue;
-		}
-	      pos2 =  this->Chain->SmiSpj(j + 1, j, pos, coef2);
-	      if (pos2 != dim)
-		{
-		  vDestination[pos2] += 0.25 * coef * coef2 * TmpValue;
-		}
-	      vDestination[pos] += 0.5 * coef * (this->Chain->SziSzj(j, j + 1, i) + this->Chain->SziSzj(j, j + 1, pos)) * TmpValue;
+	      Coef2 = 0.5 * Coef * TmpValue;
+	      vDestination[pos] += Coef2;
+	      Coef2 *= this->SquareFactor;
+	      vDestination[pos] += Coef2 * this->Chain->SziSzj(j, j + 1, i);
 	    }
-	  pos = this->Chain->SmiSpj(j + 1, j, i, coef);
+	  pos = this->Chain->SmiSpjSmiSpj(j, j + 1, j, j+1, i, Coef);
 	  if (pos != dim)
 	    {
-	      vDestination[pos] += 0.5 * coef * TmpValue;
-	      coef *= this->SquareFactor;
-	      pos2 =  this->Chain->SmiSpj(j, j + 1, pos, coef2);
-	      if (pos2 != dim)
-		{
-		  vDestination[pos2] += 0.25 * coef * coef2 * TmpValue;
-		}
-	      pos2 =  this->Chain->SmiSpj(j + 1, j, pos, coef2);
-	      if (pos2 != dim)
-		{
-		  vDestination[pos2] += 0.25 * coef * coef2 * TmpValue;
-		}
-	      vDestination[pos] += 0.5 * coef * (this->Chain->SziSzj(j, j + 1, i) + this->Chain->SziSzj(j, j + 1, pos)) * TmpValue;
+	      vDestination[pos] += (0.25 * this->SquareFactor * Coef) * TmpValue;	      
+	    }	  
+	  pos = this->Chain->SmiSpjSmiSpj(j + 1, j, j, j+1, i, Coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos] += (0.25 * this->SquareFactor * Coef) * TmpValue;	      
+	    }	  
+	  pos = this->Chain->SziSzjSmiSpj(j, j + 1, j, j+1, i, Coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos] += (0.5 * this->SquareFactor * Coef) * TmpValue;	      
+	    }	  
+
+	  pos = this->Chain->SmiSpj(j + 1, j, i, Coef);
+	  if (pos != dim)
+	    {
+	      Coef2 = 0.5 * Coef * TmpValue;
+	      vDestination[pos] += Coef2;
+	      Coef2 *= this->SquareFactor;
+	      vDestination[pos] += Coef2 * this->Chain->SziSzj(j, j + 1, i);
 	    }
+	  pos = this->Chain->SmiSpjSmiSpj(j, j + 1, j + 1, j, i, Coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos] += (0.25 * this->SquareFactor * Coef) * TmpValue;	      
+	    }	  
+	  pos = this->Chain->SmiSpjSmiSpj(j + 1, j, j + 1, j, i, Coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos] += (0.25 * this->SquareFactor * Coef) * TmpValue;	      
+	    }	  
+	  pos = this->Chain->SziSzjSmiSpj(j, j + 1, j + 1, j, i, Coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos] += (0.5 * this->SquareFactor * Coef) * TmpValue;	      
+	    }	  
 	}
       if (this->PeriodicBoundaryConditions == true)
 	{
-	  pos = this->Chain->SmiSpj(MaxPos, 0, i, coef);
+	  pos = this->Chain->SmiSpj(MaxPos, 0, i, Coef);
 	  if (pos != dim)
 	    {
-	      vDestination[pos] += 0.5 * coef * TmpValue;
-	      coef *= this->SquareFactor;
-	      pos2 =  this->Chain->SmiSpj(MaxPos, 0, pos, coef2);
-	      if (pos2 != dim)
-		{
-		  vDestination[pos2] += 0.25 * coef * coef2 * TmpValue;
-		}
-	      pos2 =  this->Chain->SmiSpj(0, MaxPos, pos, coef2);
-	      if (pos2 != dim)
-		{
-		  vDestination[pos2] += 0.25 * coef * coef2 * TmpValue;
-		}
-	      vDestination[pos] += 0.5 * coef * (this->Chain->SziSzj(MaxPos, 0, i) + this->Chain->SziSzj(MaxPos, 0, pos)) * TmpValue;
+	      Coef2 = 0.5 * Coef * TmpValue;
+	      vDestination[pos] += Coef2;
+	      Coef2 *= this->SquareFactor;
+	      vDestination[pos] += Coef2 * this->Chain->SziSzj(MaxPos, 0, i);
 	    }
-	  pos = this->Chain->SmiSpj(0, MaxPos, i, coef);
+	  pos = this->Chain->SmiSpjSmiSpj(MaxPos, 0, MaxPos, 0, i, Coef);
 	  if (pos != dim)
 	    {
-	      vDestination[pos] += 0.5 * coef * TmpValue;
-	      coef *= this->SquareFactor;
-	      pos2 =  this->Chain->SmiSpj(MaxPos, 0, pos, coef2);
-	      if (pos2 != dim)
-		{
-		  vDestination[pos2] += 0.25 * coef * coef2 * TmpValue;
-		}
-	      pos2 =  this->Chain->SmiSpj(0, MaxPos, pos, coef2);
-	      if (pos2 != dim)
-		{
-		  vDestination[pos2] += 0.25 * coef * coef2 * TmpValue;
-		}
-	      vDestination[pos] += 0.5 * coef * (this->Chain->SziSzj(MaxPos, 0, i) + this->Chain->SziSzj(MaxPos, 0, pos)) * TmpValue;
+	      vDestination[pos] += (0.25 * this->SquareFactor * Coef) * TmpValue;	      
+	    }	  
+	  pos = this->Chain->SmiSpjSmiSpj(0, MaxPos, MaxPos, 0, i, Coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos] += (0.25 * this->SquareFactor * Coef) * TmpValue;	      
+	    }	  
+	  pos = this->Chain->SziSzjSmiSpj(0, MaxPos, MaxPos, 0, i, Coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos] += (0.5 * this->SquareFactor * Coef) * TmpValue;	      
+	    }	  
+	  
+	  pos = this->Chain->SmiSpj(0, MaxPos, i, Coef);
+	  if (pos != dim)
+	    {
+	      Coef2 = 0.5 * Coef * TmpValue;
+	      vDestination[pos] += Coef2;
+	      Coef2 *= this->SquareFactor;
+	      vDestination[pos] += Coef2 * this->Chain->SziSzj(MaxPos, 0, i);
 	    }
+	  pos = this->Chain->SmiSpjSmiSpj(MaxPos, 0, 0, MaxPos, i, Coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos] += (0.25 * this->SquareFactor * Coef) * TmpValue;	      
+	    }	  
+	  pos = this->Chain->SmiSpjSmiSpj(0, MaxPos, 0, MaxPos, i, Coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos] += (0.25 * this->SquareFactor * Coef) * TmpValue;	      
+	    }	  
+	  pos = this->Chain->SziSzjSmiSpj(MaxPos, 0, 0, MaxPos, i, Coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos] += (0.5 * this->SquareFactor * Coef) * TmpValue;	      
+	    }	  
 	}
     }
   return vDestination;

@@ -56,5 +56,7 @@ VirtualSpacePEPSWithTranslations.cc \
 Spin1_2ChainWithPseudospinAnd2DTranslation.cc \
 Spin1_2ChainWithPseudospinSzSymmetryAnd2DTranslation.cc \
 Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers.cc \
-DoubledSpin0_1_2_ChainWithSquareTranslationsAndSublatticeQuantumNumbers.cc
-
+DoubledSpin0_1_2_ChainWithSquareTranslationsAndSublatticeQuantumNumbers.cc \
+Spin1ChainWithSzSymmetry.cc \
+Spin1ChainWithInversionSymmetry.cc \
+Spin1ChainWithSzInversionSymmetries.cc

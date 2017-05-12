@@ -27,6 +27,9 @@
 #include "HilbertSpace/Spin2ChainWithTranslationsAndSzSymmetry.h"
 #include "HilbertSpace/Spin2ChainWithTranslationsAndInversionSymmetry.h"
 #include "HilbertSpace/Spin2ChainWithTranslationsAndSzInversionSymmetries.h"
+#include "HilbertSpace/Spin1ChainWithSzSymmetry.h"
+#include "HilbertSpace/Spin1ChainWithInversionSymmetry.h"
+#include "HilbertSpace/Spin1ChainWithSzInversionSymmetries.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -118,14 +121,24 @@ int main(int argc, char** argv)
  
   if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue, XMomentum, InversionSector, SzSymmetrySector) == false)
     {
-      if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue) == false)
+      if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue, InversionSector, SzSymmetrySector) == false)
 	{
-	  SzFlag = false;
-	  if (SpinFindSystemInfoFromFileName(Manager.GetString("multiple-states"), NbrSpins, SpinValue) == false)
+	  if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue) == false)
 	    {
-	      cout << "error while retrieving system parameters from file name " << Manager.GetString("multiple-states") << endl;
-	      return -1;
+	      SzFlag = false;
+	      if (SpinFindSystemInfoFromFileName(Manager.GetString("multiple-states"), NbrSpins, SpinValue) == false)
+		{
+		  cout << "error while retrieving system parameters from file name " << Manager.GetString("multiple-states") << endl;
+		  return -1;
+		}
 	    }
+	}
+      else
+	{
+	  if (InversionSector != 0)
+	    InversionFlag = true;
+	  if (SzSymmetrySector != 0)
+	    SzSymmetryFlag = true;
 	}
     }
   else
@@ -204,28 +217,131 @@ int main(int argc, char** argv)
       int TotalNbrEnergies = SpectrumFile.GetNbrLines();
       if (Momentum1DFlag == false)
 	{
-	  int* TmpSzValues = SpectrumFile.GetAsIntegerArray(0);
-	  double* TmpEnergies = SpectrumFile.GetAsDoubleArray(1);
-	  int TmpIndex = 0; 
-	  while ((TmpIndex < TotalNbrEnergies) && (TmpSzValues[TmpIndex] != TotalSz))
-	    ++TmpIndex;
-	  if (TmpIndex == TotalNbrEnergies)
+	  if (InversionFlag == true)
 	    {
-	      cout << "error, the spectrum has no eigenvalues corresponding to the required quantum numbers" << endl;
-	      return 0;
+	      if (SzSymmetryFlag == true)
+		{
+		  int* TmpSzValues = SpectrumFile.GetAsIntegerArray(0);
+		  int* TmpInvValues = SpectrumFile.GetAsIntegerArray(2);
+		  int* TmpSzSymValues = SpectrumFile.GetAsIntegerArray(1);
+		  double* TmpEnergies = SpectrumFile.GetAsDoubleArray(3);
+		  int TmpIndex = 0; 
+		  while ((TmpIndex < TotalNbrEnergies) && 
+			 ((TmpSzValues[TmpIndex] != TotalSz) || 
+			  (TmpInvValues[TmpIndex] != InversionSector) || (TmpSzSymValues[TmpIndex] != SzSymmetrySector)))
+		    ++TmpIndex;
+		  if (TmpIndex == TotalNbrEnergies)
+		    {
+		      cout << "error, the spectrum has no eigenvalues corresponding to the required quantum numbers" << endl;
+		      return 0;
+		    }
+		  int TmpIndex2 = 0;
+		  while ((TmpIndex < TotalNbrEnergies) && (TmpIndex2 < NbrStates) && 
+			 ((TmpSzValues[TmpIndex] == TotalSz) && 
+			  (TmpInvValues[TmpIndex] == InversionSector) && (TmpSzSymValues[TmpIndex] == SzSymmetrySector)))
+		    {
+		      Spectrum[TmpIndex2] = TmpEnergies[TmpIndex];
+		      ++TmpIndex2;
+		      ++TmpIndex;
+		    }
+		  if (TmpIndex2 < NbrStates)
+		    {
+		      cout << "error, the spectrum has less eigenvalues corresponding to the required quantum numbers (" 
+			   << TmpIndex2 << " vs " << NbrStates << ")" << endl;
+		      return 0;
+		    }
+		}
+	      else
+		{
+		  int* TmpSzValues = SpectrumFile.GetAsIntegerArray(0);
+		  int* TmpInvValues = SpectrumFile.GetAsIntegerArray(1);
+		  double* TmpEnergies = SpectrumFile.GetAsDoubleArray(2);
+		  int TmpIndex = 0; 
+		  while ((TmpIndex < TotalNbrEnergies) && 
+			 ((TmpSzValues[TmpIndex] != TotalSz) ||
+			  (TmpInvValues[TmpIndex] != InversionSector)))
+		    ++TmpIndex;
+		  if (TmpIndex == TotalNbrEnergies)
+		    {
+		      cout << "error, the spectrum has no eigenvalues corresponding to the required quantum numbers" << endl;
+		      return 0;
+		    }
+		  int TmpIndex2 = 0;
+		  while ((TmpIndex < TotalNbrEnergies) && (TmpIndex2 < NbrStates) && 
+			 ((TmpSzValues[TmpIndex] == TotalSz) && 
+			  (TmpInvValues[TmpIndex] == InversionSector)))
+		    {
+		      Spectrum[TmpIndex2] = TmpEnergies[TmpIndex];
+		      ++TmpIndex2;
+		      ++TmpIndex;
+		    }
+		  if (TmpIndex2 < NbrStates)
+		    {
+		      cout << "error, the spectrum has less eigenvalues corresponding to the required quantum numbers (" 
+			   << TmpIndex2 << " vs " << NbrStates << ")" << endl;
+		      return 0;
+		    }
+		}
 	    }
-	  int TmpIndex2 = 0;
-	  while ((TmpIndex < TotalNbrEnergies) && (TmpIndex2 < NbrStates) && (TmpSzValues[TmpIndex] == TotalSz))
+	  else
 	    {
-	      Spectrum[TmpIndex2] = TmpEnergies[TmpIndex];
-	      ++TmpIndex2;
-	      ++TmpIndex;
-	    }
-	  if (TmpIndex2 < NbrStates)
-	    {
-	      cout << "error, the spectrum has less eigenvalues corresponding to the required quantum numbers (" 
-		   << TmpIndex2 << " vs " << NbrStates << ")" << endl;
-	      return 0;
+	      if (SzSymmetryFlag == true)
+		{
+		  int* TmpSzValues = SpectrumFile.GetAsIntegerArray(0);
+		  int* TmpSzSymValues = SpectrumFile.GetAsIntegerArray(1);
+		  double* TmpEnergies = SpectrumFile.GetAsDoubleArray(3);
+		  int TmpIndex = 0; 
+		  while ((TmpIndex < TotalNbrEnergies) && 
+			 ((TmpSzValues[TmpIndex] != TotalSz) || 
+			  (TmpSzSymValues[TmpIndex] != SzSymmetrySector)))
+		    ++TmpIndex;
+		  if (TmpIndex == TotalNbrEnergies)
+		    {
+		      cout << "error, the spectrum has no eigenvalues corresponding to the required quantum numbers" << endl;
+		      return 0;
+		    }
+		  int TmpIndex2 = 0;
+		  while ((TmpIndex < TotalNbrEnergies) && (TmpIndex2 < NbrStates) && 
+			 ((TmpSzValues[TmpIndex] == TotalSz) && 
+			  (TmpSzSymValues[TmpIndex] == SzSymmetrySector)))
+		    {
+		      Spectrum[TmpIndex2] = TmpEnergies[TmpIndex];
+		      ++TmpIndex2;
+		      ++TmpIndex;
+		    }
+		  if (TmpIndex2 < NbrStates)
+		    {
+		      cout << "error, the spectrum has less eigenvalues corresponding to the required quantum numbers (" 
+			   << TmpIndex2 << " vs " << NbrStates << ")" << endl;
+		      return 0;
+		    }
+		}
+	      else
+		{
+		  int* TmpSzValues = SpectrumFile.GetAsIntegerArray(0);
+		  double* TmpEnergies = SpectrumFile.GetAsDoubleArray(1);
+		  int TmpIndex = 0; 
+		  while ((TmpIndex < TotalNbrEnergies) && (TmpSzValues[TmpIndex] != TotalSz))
+		    ++TmpIndex;
+		  if (TmpIndex == TotalNbrEnergies)
+		    {
+		      cout << "error, the spectrum has no eigenvalues corresponding to the required quantum numbers" << endl;
+		      return 0;
+		    }
+		  int TmpIndex2 = 0;
+		  while ((TmpIndex < TotalNbrEnergies) && (TmpIndex2 < NbrStates) && (TmpSzValues[TmpIndex] == TotalSz))
+		    {
+		      Spectrum[TmpIndex2] = TmpEnergies[TmpIndex];
+		      ++TmpIndex2;
+		      ++TmpIndex;
+		    }
+		  if (TmpIndex2 < NbrStates)
+		    {
+		      cout << "error, the spectrum has less eigenvalues corresponding to the required quantum numbers (" 
+			   << TmpIndex2 << " vs " << NbrStates << ")" << endl;
+		      return 0;
+		    }
+		}
 	    }
 	}
       else
@@ -402,44 +518,164 @@ int main(int argc, char** argv)
     {
       AbstractSpinChain* Space;
       
-      if (SzFlag == true)
+      if (InversionFlag == true)
 	{
-	  switch (SpinValue)
+	  if (SzSymmetryFlag == true)
 	    {
-	    case 1 :
-	      Space = new Spin1_2Chain (NbrSpins, TotalSz, 1000000);
-	      break;
-	    case 2 :
-	      Space = new Spin1Chain (NbrSpins, TotalSz, 1000000);
-	      break;
-	    case 4 :
-	      Space = new Spin2Chain (NbrSpins, TotalSz, 1000000);
-	      break;
-	    default :
-	      {
-		if ((SpinValue & 1) == 0)
-		  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
-		else 
-		  cout << "spin " << SpinValue << "/2 are not available" << endl;
-		return -1;
-	      }
+	      if (SzFlag == true)
+		{
+		  switch (SpinValue)
+		    {
+		    case 2 :
+		      Space = new Spin1ChainWithSzInversionSymmetries (NbrSpins, InversionSector, SzSymmetrySector, TotalSz, 1000000);
+		      break;
+		    default :
+		      {
+			if ((SpinValue & 1) == 0)
+			  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+			else 
+			  cout << "spin " << SpinValue << "/2 are not available" << endl;
+			return -1;
+		      }
+		    }
+		}
+	      else
+		{
+		  switch (SpinValue)
+		    {
+		    case 2 :
+		      Space = new Spin1ChainWithSzInversionSymmetries (NbrSpins, InversionSector, SzSymmetrySector, 1000000);
+		      break;
+		    default :
+		      {
+			if ((SpinValue & 1) == 0)
+			  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+			else 
+			  cout << "spin " << SpinValue << "/2 are not available" << endl;
+			return -1;
+		      }
+		    }
+		}
+	    }
+	  else
+	    {
+	      if (SzFlag == true)
+		{
+		  switch (SpinValue)
+		    {
+		    case 2 :
+		      Space = new Spin1ChainWithInversionSymmetry (NbrSpins, InversionSector, TotalSz, 1000000);
+		      break;
+		    default :
+		      {
+			if ((SpinValue & 1) == 0)
+			  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+			else 
+			  cout << "spin " << SpinValue << "/2 are not available" << endl;
+			return -1;
+		      }
+		    }
+		}
+	      else
+		{
+		  switch (SpinValue)
+		    {
+		    case 2 :
+		      Space = new Spin1ChainWithInversionSymmetry (NbrSpins, InversionSector, 1000000);
+		      break;
+		    default :
+		      {
+			if ((SpinValue & 1) == 0)
+			  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+			else 
+			  cout << "spin " << SpinValue << "/2 are not available" << endl;
+			return -1;
+		      }
+		    }
+		}
 	    }
 	}
       else
 	{
-	  switch (SpinValue)
+	  if (SzSymmetryFlag == true)
 	    {
-	    case 1 :
-	      Space = new Spin1_2ChainFull (NbrSpins);
-	      break;
-	    default :
-	      {
-		if ((SpinValue & 1) == 0)
-		  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
-		else 
-		  cout << "spin " << SpinValue << "/2 are not available" << endl;
-		return -1;
-	      }
+	      if (SzFlag == true)
+		{
+		  switch (SpinValue)
+		    {
+		    case 2 :
+		      Space = new Spin1ChainWithSzSymmetry (NbrSpins, SzSymmetrySector, TotalSz, 1000000);
+		      break;
+		    default :
+		      {
+			if ((SpinValue & 1) == 0)
+			  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+			else 
+			  cout << "spin " << SpinValue << "/2 are not available" << endl;
+			return -1;
+		      }
+		    }
+		}
+	      else
+		{
+		  switch (SpinValue)
+		    {
+		    case 2 :
+		      Space = new Spin1ChainWithSzSymmetry (NbrSpins, SzSymmetrySector, 1000000);
+		      break;
+		    default :
+		      {
+			if ((SpinValue & 1) == 0)
+			  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+			else 
+			  cout << "spin " << SpinValue << "/2 are not available" << endl;
+			return -1;
+		      }
+		    }
+		}
+	    }
+	  else
+	    {
+	      if (SzFlag == true)
+		{
+		  switch (SpinValue)
+		    {
+		    case 1 :
+		      Space = new Spin1_2Chain (NbrSpins, TotalSz, 1000000);
+		      break;
+		    case 2 :
+		      Space = new Spin1Chain (NbrSpins, TotalSz, 1000000);
+		      break;
+		    case 4 :
+		      Space = new Spin2Chain (NbrSpins, TotalSz, 1000000);
+		      break;
+		    default :
+		      {
+			if ((SpinValue & 1) == 0)
+			  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+			else 
+			  cout << "spin " << SpinValue << "/2 are not available" << endl;
+			return -1;
+		      }
+		    }
+		}
+	      else
+		{
+		  switch (SpinValue)
+		    {
+		    case 1 :
+		      Space = new Spin1_2ChainFull (NbrSpins);
+		      break;
+		    default :
+		      {
+			if ((SpinValue & 1) == 0)
+			  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+			else 
+			  cout << "spin " << SpinValue << "/2 are not available" << endl;
+			return -1;
+		      }
+		    }
+		}
 	    }
 	}
       SpinS2Operator TmpOperator(Space, NbrSpins);
