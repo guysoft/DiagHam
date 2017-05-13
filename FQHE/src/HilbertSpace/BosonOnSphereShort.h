@@ -1061,6 +1061,19 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = bosonic state in its fermionic representation
   unsigned long ConvertFromMonomial(unsigned long* initialState);
 
+  // convert a bosonic state from its monomial representation, assuming the array is not sorted
+  //
+  // initialState = array where the monomial representation is stored
+  // return value = bosonic state in its fermionic representation
+  unsigned long ConvertFromUnsortedMonomial(unsigned long* initialState);
+ 
+  // convert a bosonic state from its monomial representation, assuming the array is not sorted and find the index of the last occupied orbital
+  //
+  // initialState = array where the monomial representation is stored
+  // maximumLzMax = reference on the index of the last occupied orbital
+  // return value = bosonic state in its fermionic representation
+  unsigned long ConvertFromUnsortedMonomial(unsigned long* initialState, int& maximumLzMax);
+
   // fuse particles two by two in a given monomial
   //
   // index = monomial index
@@ -1417,6 +1430,64 @@ inline unsigned long BosonOnSphereShort::ConvertFromMonomial(unsigned long* init
   for (int i = 0; i < this->NbrBosons; ++i)
     Tmp |= 0x1ul << (initialState[i] + ((unsigned long) (this->NbrBosons - i)) - 1ul);
   return Tmp;
+}
+
+// convert a bosonic state from its monomial representation, assuming the array is not sorted
+//
+// initialState = array where the monomial representation is stored
+// return value = bosonic state in its fermionic representation
+
+inline unsigned long BosonOnSphereShort::ConvertFromUnsortedMonomial(unsigned long* initialState)
+{
+  for (int i = 0; i <= this->LzMax; ++i)
+    this->TemporaryState[i] = 0x0ul;
+  for (int i = 0; i < this->NbrBosons; ++i)
+    this->TemporaryState[initialState[i]]++;
+  unsigned long TmpState = 0x0ul;
+  unsigned long Shift = 0;
+  this->TemporaryStateLzMax = this->LzMax;
+  while (this->TemporaryState[this->TemporaryStateLzMax] == 0x0ul)
+    {
+      --this->TemporaryStateLzMax;
+    }
+  for (int i = 0; i <= this->TemporaryStateLzMax; ++i)
+     {
+      TmpState |= ((1ul << this->TemporaryState[i]) - 1ul) << Shift;
+      Shift += this->TemporaryState[i];
+      ++Shift;
+    }
+  return TmpState;
+}
+
+// convert a bosonic state from its monomial representation, assuming the array is not sorted and find the index of the last occupied orbital
+//
+// initialState = array where the monomial representation is stored
+// maximumLzMax = reference on the index of the last occupied orbital
+// return value = bosonic state in its fermionic representation
+
+inline unsigned long BosonOnSphereShort::ConvertFromUnsortedMonomial(unsigned long* initialState, int& maximumLzMax)
+{
+  for (int i = 0; i <= this->LzMax; ++i)
+    this->TemporaryState[i] = 0x0ul;
+  for (int i = 0; i < this->NbrBosons; ++i)
+    this->TemporaryState[initialState[i]]++;
+  unsigned long TmpState = 0x0ul;
+  unsigned long Shift = 0;
+  this->TemporaryStateLzMax = this->LzMax;
+  while (this->TemporaryState[this->TemporaryStateLzMax] == 0x0ul)
+    {
+      --this->TemporaryStateLzMax;
+    }
+  maximumLzMax = this->TemporaryStateLzMax;
+  maximumLzMax += this->NbrBosons;
+  --maximumLzMax;
+  for (int i = 0; i <= this->TemporaryStateLzMax; ++i)
+     {
+      TmpState |= ((1ul << this->TemporaryState[i]) - 1ul) << Shift;
+      Shift += this->TemporaryState[i];
+      ++Shift;
+    }
+  return TmpState;
 }
 
 

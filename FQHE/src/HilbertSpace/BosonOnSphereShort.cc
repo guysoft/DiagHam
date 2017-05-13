@@ -7383,13 +7383,8 @@ void BosonOnSphereShort::SymmetricMonomialTimesSymmetricMonomial (unsigned long*
 	      TmpState[i] = symmetricMonomial2[i] + symmetricMonomial1[i];
 	      TmpFactor += threeOrbitalOverlaps[TmpState[i]][symmetricMonomial2[i]];
 	    }
-	  SortArrayDownOrdering (TmpState, this->NbrBosons);
-	  TmpFinalState = this->ConvertFromMonomial(TmpState);
-	  int TmpLzMax = this->FermionBasis->LzMax;
-	  while ((TmpFinalState >> TmpLzMax) == 0x0ul)
-	    {
-	      --TmpLzMax;
-	    }
+	  int TmpLzMax;
+	  TmpFinalState = this->ConvertFromUnsortedMonomial(TmpState, TmpLzMax);
 	  int TmpPos = this->FindStateIndex(TmpFinalState, TmpLzMax);
 	  if (TmpPos != this->HilbertSpaceDimension)
 	    {
@@ -7416,5 +7411,6 @@ void BosonOnSphereShort::SymmetricMonomialTimesSymmetricMonomial (unsigned long*
 void BosonOnSphereShort::ReverseSymmetricMonomialTimesSymmetricMonomial (unsigned long* symmetricMonomial1, unsigned long* symmetricMonomial2, \
 									 RealVector& finalState, double** threeOrbitalOverlaps)
 {
+  cout << "BosonOnSphereShort::ReverseSymmetricMonomialTimesSymmetricMonomial is not implemented" << endl;
 }
 
