@@ -66,6 +66,11 @@ class FQHESphereBosonicStateTimesFermionicStateOperation : public AbstractArchit
   // pointer to the Hilbert Space associated to the resulting state
   FermionOnSphere* OutputSpace; 
   
+  // pointer to the Hilbert Space associated to the second bosonic state
+  BosonOnSphereShort* BosonicSpace2;
+  // pointer to the Hilbert Space associated to the resulting state if bosonic
+  BosonOnSphereShort* BosonicOutputSpace; 
+
   // true if the state should be written in the unnormalized basis
   bool UnnormalizedFlag;
 
@@ -91,6 +96,20 @@ class FQHESphereBosonicStateTimesFermionicStateOperation : public AbstractArchit
   // nbrSMPStage = number of stages in which the calculation has to be splitted in SMP mode
   FQHESphereBosonicStateTimesFermionicStateOperation(RealVector& bosonicState, RealVector& fermionicState,
 						     BosonOnSphereShort* bosonicSpace, FermionOnSphere* fermionicSpace, FermionOnSphere* outputSpace, 
+						     bool unnormalizedFlag, int nbrMPIStage = 10, int nbrSMPStage = 10);
+  
+  // constructor 
+  //
+  // bosonicState = reference on the bosonic state
+  // bosonicState2 = reference on the second bosonic state
+  // bosonicSpace = pointer to the Hilbert Space associated to the bosonic state
+  // bosonicSpace = pointer to the Hilbert Space associated to the second bosonic state
+  // outputSpace = pointer to the Hilbert Space associated to the resulting state
+  // unnormalizedFlag = true if the state should be written in the unnormalized basis
+  // nbrMPIStage = number of stages in which the calculation has to be splitted in MPI mode
+  // nbrSMPStage = number of stages in which the calculation has to be splitted in SMP mode
+  FQHESphereBosonicStateTimesFermionicStateOperation(RealVector& bosonicState, RealVector& bosonicState2,
+						     BosonOnSphereShort* bosonicSpace, BosonOnSphereShort* bosonicSpace2, BosonOnSphereShort* outputSpace, 
 						     bool unnormalizedFlag, int nbrMPIStage = 10, int nbrSMPStage = 10);
   
 

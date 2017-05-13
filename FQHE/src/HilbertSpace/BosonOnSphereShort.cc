@@ -7180,43 +7180,55 @@ void BosonOnSphereShort::BosonicStateTimeBosonicState(RealVector& bosonicState1,
 			  --TmpLzMax2;
 			}
 		      bosonicSpace2->ConvertToMonomial(bosonicSpace2->FermionBasis->StateDescription[i], TmpLzMax2, TmpSymmetricMonomial2);
-		      bosonicSpace2->FermionToBoson(bosonicSpace2->FermionBasis->StateDescription[i], TmpLzMax2, bosonicSpace2->TemporaryState, 
-						    bosonicSpace2->TemporaryStateLzMax);
 		      if (unnormalizedFlag == false)
 			{
+			  bosonicSpace2->FermionToBoson(bosonicSpace2->FermionBasis->StateDescription[i], TmpLzMax2, bosonicSpace2->TemporaryState, 
+							bosonicSpace2->TemporaryStateLzMax);
 			  this->SymmetricMonomialTimesSymmetricMonomial(TmpSymmetricMonomial1, TmpSymmetricMonomial2, FinalState, ThreeOrbitalOverlaps);
-			}
-		      else
-			{
-			  this->UnnormalizedSymmetricMonomialTimesSymmetricMonomial(TmpSymmetricMonomial1, TmpSymmetricMonomial2, FinalState);
-			}
-		      for (int Index = 0; Index < FinalState.GetVectorDimension(); ++Index)
-			{
-			  if (FinalState[Index] != 0.0)
+			  for (int Index = 0; Index < FinalState.GetVectorDimension(); ++Index)
 			    {
-			      this->FermionToBoson(this->FermionBasis->StateDescription[Index], this->TemporaryState); 
-			      Coefficient.SetToOne();
-			      for(int p = 0; p <= this->LzMax; ++p)
+			      if (FinalState[Index] != 0.0)
 				{
-				  if (this->TemporaryState[p] > 1)
-				    Coefficient.FactorialMultiply(this->TemporaryState[p]);
-				}		  
-			      for(int p = 0; p <= bosonicSpace1->TemporaryStateLzMax; ++p)
-				{
-				  if (bosonicSpace1->TemporaryState[p] > 1)
-				    Coefficient.FactorialDivide(bosonicSpace1->TemporaryState[p]);
-				}		  
-			      if (unnormalizedFlag == false)
-				{
+				  this->FermionToBoson(this->FermionBasis->StateDescription[Index], this->TemporaryState); 
+				  Coefficient.SetToOne();
+				  for(int p = 0; p <= this->LzMax; ++p)
+				    {
+				      if (this->TemporaryState[p] > 1)
+					Coefficient.FactorialMultiply(this->TemporaryState[p]);
+				    }		  
+				  for(int p = 0; p <= bosonicSpace1->TemporaryStateLzMax; ++p)
+				    {
+				      if (bosonicSpace1->TemporaryState[p] > 1)
+					Coefficient.FactorialDivide(bosonicSpace1->TemporaryState[p]);
+				    }		  
 				  for(int p = 0; p <= bosonicSpace2->TemporaryStateLzMax; ++p)
 				    {
 				      if (bosonicSpace2->TemporaryState[p] > 1)
 					Coefficient.FactorialDivide(bosonicSpace2->TemporaryState[p]);
 				    }		
 				  outputVector[Index] += sqrt(Coefficient.GetNumericalValue()) * bosonicState1[j] * bosonicState2[i] * FinalState[Index];
-				}  
-			      else
+				}
+			    }
+			}
+		      else
+			{
+			  this->UnnormalizedSymmetricMonomialTimesSymmetricMonomial(TmpSymmetricMonomial1, TmpSymmetricMonomial2, FinalState);
+			  for (int Index = 0; Index < FinalState.GetVectorDimension(); ++Index)
+			    {
+			      if (FinalState[Index] != 0.0)
 				{
+				  this->FermionToBoson(this->FermionBasis->StateDescription[Index], this->TemporaryState); 
+				  Coefficient.SetToOne();
+				  for(int p = 0; p <= this->LzMax; ++p)
+				    {
+				      if (this->TemporaryState[p] > 1)
+					Coefficient.FactorialMultiply(this->TemporaryState[p]);
+				    }		  
+				  for(int p = 0; p <= bosonicSpace1->TemporaryStateLzMax; ++p)
+				    {
+				      if (bosonicSpace1->TemporaryState[p] > 1)
+					Coefficient.FactorialDivide(bosonicSpace1->TemporaryState[p]);
+				    }		  
 				  outputVector[Index] += Coefficient.GetNumericalValue() * bosonicState1[j] * bosonicState2[i] * FinalState[Index];
 				}
 			    }
@@ -7390,7 +7402,6 @@ void BosonOnSphereShort::UnnormalizedSymmetricMonomialTimesSymmetricMonomial (un
   unsigned long TmpFinalState;
   int TmpLzMax;
   finalState.ClearVector();
-  int Tmp = 0;
 
   for (int i = 0; i < this->NbrBosons; ++i)
     {
@@ -7410,12 +7421,48 @@ void BosonOnSphereShort::UnnormalizedSymmetricMonomialTimesSymmetricMonomial (un
 	  TmpState[i] = symmetricMonomial2[i] + symmetricMonomial1[i];
 	}
       TmpFinalState = this->ConvertFromUnsortedMonomial(TmpState, TmpLzMax);
-      int TmpPos = this->FindStateIndex(TmpFinalState, TmpLzMax);
+      TmpPos = this->FindStateIndex(TmpFinalState, TmpLzMax);
       if (TmpPos != this->HilbertSpaceDimension)
 	{
 	  finalState[TmpPos]++;
 	}
     }
+}
+
+// Compute the product of two symmetric monomials, assuming an unnormalized basis
+//
+// symmetricMonomial1 = first symmetric monomial
+// symmetricMonomial2 = second symmetric monomial
+// finalStateConfigurations = fermionic configurations that are generated durig the multiplication
+// finalStateWeights = weights associated to each generated fermionic configurations
+// return value = number of generated fermionic configurations
+
+int BosonOnSphereShort::UnnormalizedSymmetricMonomialTimesSymmetricMonomial (unsigned long* symmetricMonomial1, unsigned long* symmetricMonomial2, 
+									     unsigned long* finalStateConfigurations, double* finalStateWeights)
+{
+  int TmpArraySize = 0;
+  unsigned long TmpState [this->NbrBosons];
+  unsigned long TmpFinalState;
+  int TmpLzMax;
+  int Tmp = 0;
+
+  for (int i = 0; i < this->NbrBosons; ++i)
+    {
+      TmpState[i] = symmetricMonomial2[i] + symmetricMonomial1[i];
+    }
+  TmpFinalState = this->ConvertFromUnsortedMonomial(TmpState);
+  TmpArraySize += SearchInArrayAndSetWeight(TmpFinalState, finalStateConfigurations, finalStateWeights, TmpArraySize, 1.0);
+
+  while (std::prev_permutation(symmetricMonomial2, symmetricMonomial2 + this->NbrBosons))
+    {
+      for (int i = 0; i < this->NbrBosons; ++i)
+	{
+	  TmpState[i] = symmetricMonomial2[i] + symmetricMonomial1[i];
+	}
+      TmpFinalState = this->ConvertFromUnsortedMonomial(TmpState);
+      TmpArraySize += SearchInArrayAndSetWeight(TmpFinalState, finalStateConfigurations, finalStateWeights, TmpArraySize, 1.0);
+    }
+  return TmpArraySize;
 }
 
 // Compute the product of two symmetric monomials, assuming a reverse flux attachment for the first symmetric monomial

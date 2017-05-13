@@ -68,10 +68,48 @@ FQHESphereBosonicStateTimesFermionicStateOperation::FQHESphereBosonicStateTimesF
   this->BosonicSpace = (BosonOnSphereShort*) bosonicSpace->Clone();
   this->FermionicSpace = (FermionOnSphere*) fermionicSpace->Clone();
   this->OutputSpace = (FermionOnSphere*) outputSpace->Clone(); 
-  
+  this->BosonicSpace2 = 0;
+  this->BosonicOutputSpace = 0;
+
   this->BosonicState = bosonicState;
   this->FermionicState = fermionicState;
   this->OutputState = RealVector(this->OutputSpace->GetHilbertSpaceDimension(), true);
+
+  this->UnnormalizedFlag = unnormalizedFlag;
+
+  this->FirstComponent = 0;
+  this->NbrComponent = this->BosonicSpace->GetHilbertSpaceDimension();
+
+  this->OperationType = AbstractArchitectureOperation::FQHESphereBosonicStateTimesFermionicState;
+  this->NbrMPIStage = nbrMPIStage;
+  this->NbrSMPStage = nbrSMPStage;
+  this->SMPStages = new int[1]; 
+}
+
+// constructor 
+//
+// bosonicState = reference on the bosonic state
+// bosonicState2 = reference on the second bosonic state
+// bosonicSpace = pointer to the Hilbert Space associated to the bosonic state
+// bosonicSpace = pointer to the Hilbert Space associated to the second bosonic state
+// outputSpace = pointer to the Hilbert Space associated to the resulting state
+// unnormalizedFlag = true if the state should be written in the unnormalized basis
+// nbrMPIStage = number of stages in which the calculation has to be splitted in MPI mode
+// nbrSMPStage = number of stages in which the calculation has to be splitted in SMP mode
+
+FQHESphereBosonicStateTimesFermionicStateOperation::FQHESphereBosonicStateTimesFermionicStateOperation(RealVector& bosonicState, RealVector& bosonicState2,
+												       BosonOnSphereShort* bosonicSpace, BosonOnSphereShort* bosonicSpace2, BosonOnSphereShort* outputSpace, 
+												       bool unnormalizedFlag, int nbrMPIStage, int nbrSMPStage)
+{
+  this->BosonicSpace = (BosonOnSphereShort*) bosonicSpace->Clone();
+  this->FermionicSpace = 0;
+  this->OutputSpace = 0; 
+  this->BosonicSpace2 = (BosonOnSphereShort*) bosonicSpace2->Clone();
+  this->BosonicOutputSpace = (BosonOnSphereShort*) outputSpace->Clone();
+
+  this->BosonicState = bosonicState;
+  this->FermionicState = bosonicState2;
+  this->OutputState = RealVector(this->BosonicOutputSpace->GetHilbertSpaceDimension(), true);
 
   this->UnnormalizedFlag = unnormalizedFlag;
 
@@ -95,12 +133,25 @@ FQHESphereBosonicStateTimesFermionicStateOperation::FQHESphereBosonicStateTimesF
   this->OperationType = AbstractArchitectureOperation::FQHESphereBosonicStateTimesFermionicState;
 
   this->BosonicSpace = (BosonOnSphereShort*) operation.BosonicSpace->Clone();
-  this->FermionicSpace = (FermionOnSphere*) operation.FermionicSpace->Clone();
-  this->OutputSpace = (FermionOnSphere*) operation.OutputSpace->Clone(); 
+  if (this->FermionicSpace != 0)
+    {
+      this->FermionicSpace = (FermionOnSphere*) operation.FermionicSpace->Clone();
+      this->OutputSpace = (FermionOnSphere*) operation.OutputSpace->Clone(); 
+      this->BosonicSpace2 = 0;
+      this->BosonicOutputSpace = 0;
+      this->OutputState = RealVector(this->OutputSpace->GetHilbertSpaceDimension(), true);
+    }
+  else
+    {
+      this->FermionicSpace = 0;
+      this->OutputSpace = 0;
+      this->BosonicSpace2 = (BosonOnSphereShort*) operation.BosonicSpace2->Clone();
+      this->BosonicOutputSpace = (BosonOnSphereShort*) operation.BosonicOutputSpace->Clone(); 
+      this->OutputState = RealVector(this->BosonicOutputSpace->GetHilbertSpaceDimension(), true);
+    }
   
   this->BosonicState = operation.BosonicState;
   this->FermionicState = operation.FermionicState;
-  this->OutputState = RealVector(this->OutputSpace->GetHilbertSpaceDimension(), true);
 
   this->UnnormalizedFlag = operation.UnnormalizedFlag;
 
@@ -115,8 +166,16 @@ FQHESphereBosonicStateTimesFermionicStateOperation::FQHESphereBosonicStateTimesF
 FQHESphereBosonicStateTimesFermionicStateOperation::~FQHESphereBosonicStateTimesFermionicStateOperation()
 {						
   delete this->BosonicSpace;
-  delete this->FermionicSpace;
-  delete this->OutputSpace; 
+  if (this->FermionicSpace != 0)
+    {
+      delete this->FermionicSpace;
+      delete this->OutputSpace; 
+    }
+  else
+    {
+      delete this->BosonicSpace2;
+      delete this->BosonicOutputSpace;
+    }
 }
   
 // set range of indices
@@ -149,9 +208,18 @@ bool FQHESphereBosonicStateTimesFermionicStateOperation::RawApplyOperation()
     return true;
 
   cout << "processing " << this->FirstComponent << " " << this->NbrComponent << endl;
-  this->OutputSpace->BosonicStateTimeFermionicState(this->BosonicState, this->FermionicState, this->OutputState, 
-						    this->BosonicSpace, this->FermionicSpace, this->FirstComponent, 
-						    this->NbrComponent, this->UnnormalizedFlag, 0);
+  if (this->FermionicSpace != 0)
+    {
+      this->OutputSpace->BosonicStateTimeFermionicState(this->BosonicState, this->FermionicState, this->OutputState, 
+							this->BosonicSpace, this->FermionicSpace, this->FirstComponent, 
+							this->NbrComponent, this->UnnormalizedFlag, 0);
+    }
+  else
+    {
+       this->BosonicOutputSpace->BosonicStateTimeBosonicState(this->BosonicState, this->FermionicState, this->OutputState, 
+							      this->BosonicSpace, this->BosonicSpace2, this->FirstComponent, 
+							      this->NbrComponent, this->UnnormalizedFlag, 0);
+   }
   return true;
 }
 

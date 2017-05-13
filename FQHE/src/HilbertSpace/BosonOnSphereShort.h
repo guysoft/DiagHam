@@ -1192,6 +1192,16 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // finalState = reference on the vector the produced state will be stored
   virtual void UnnormalizedSymmetricMonomialTimesSymmetricMonomial (unsigned long* symmetricMonomial1, unsigned long* symmetricMonomial2, RealVector& finalState);
   
+  // Compute the product of two symmetric monomials, assuming an unnormalized basis
+  //
+  // symmetricMonomial1 = first symmetric monomial
+  // symmetricMonomial2 = second symmetric monomial
+  // finalStateConfigurations = fermionic configurations that are generated durig the multiplication
+  // finalStateWeights = weights associated to each generated fermionic configurations
+  // return value = number of generated fermionic configurations
+  virtual int UnnormalizedSymmetricMonomialTimesSymmetricMonomial (unsigned long* symmetricMonomial1, unsigned long* symmetricMonomial2, 
+								   unsigned long* finalStateConfigurations, double* finalStateWeights);
+
   // Compute the product of two symmetric monomials, assuming a reverse flux attachment for the first symmetric monomial
   //
   // symmetricMonomial1 = first symmetric monomial

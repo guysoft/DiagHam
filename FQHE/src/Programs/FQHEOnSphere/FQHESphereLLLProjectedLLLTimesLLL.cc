@@ -264,11 +264,16 @@ int main(int argc, char** argv)
     }
   else
     {
-      OutputVector = RealVector (OutputSpace->GetHilbertSpaceDimension(), true);
-      ((BosonOnSphereShort*) OutputSpace)->BosonicStateTimeBosonicState(BosonicInputVector, InputVector, OutputVector, 
-									 BosonicInputSpace, (BosonOnSphereShort*) InputSpace,
-									 0, BosonicInputSpace->GetHilbertSpaceDimension(), 
-									 !(Manager.GetBoolean("normalize")), Architecture.GetArchitecture());
+      FQHESphereBosonicStateTimesFermionicStateOperation Operation (BosonicInputVector, InputVector, 
+								    BosonicInputSpace, (BosonOnSphereShort*) InputSpace, (BosonOnSphereShort*) OutputSpace,
+								    !(Manager.GetBoolean("normalize")));
+      Operation.ApplyOperation(Architecture.GetArchitecture());
+      OutputVector = Operation.GetState();
+//       OutputVector = RealVector (OutputSpace->GetHilbertSpaceDimension(), true);
+//       ((BosonOnSphereShort*) OutputSpace)->BosonicStateTimeBosonicState(BosonicInputVector, InputVector, OutputVector, 
+// 									 BosonicInputSpace, (BosonOnSphereShort*) InputSpace,
+// 									 0, BosonicInputSpace->GetHilbertSpaceDimension(), 
+// 									 !(Manager.GetBoolean("normalize")), Architecture.GetArchitecture());
       //       FQHESphereBosonicStateTimesFermionicStateOperation Operation (BosonicInputVector, InputVector, 
       // 								    BosonicInputSpace, (BosonOnSphereShort*) InputSpace, (BosonOnSphereShort*) OutputSpace,
       // 								    !(Manager.GetBoolean("normalize")));
