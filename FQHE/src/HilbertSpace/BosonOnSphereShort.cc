@@ -7381,7 +7381,7 @@ void BosonOnSphereShort::SymmetricMonomialTimesSymmetricMonomial (unsigned long*
 	  TmpFactor += threeOrbitalOverlaps[TmpState[i]][symmetricMonomial2[i]];
 	}
       TmpFinalState = this->ConvertFromUnsortedMonomial(TmpState, TmpLzMax);
-      int TmpPos = this->FindStateIndex(TmpFinalState, TmpLzMax);
+      TmpPos = this->FindStateIndex(TmpFinalState, TmpLzMax);
       if (TmpPos != this->HilbertSpaceDimension)
 	{
 	  finalState[TmpPos] += exp(TmpFactor);
@@ -7398,29 +7398,65 @@ void BosonOnSphereShort::SymmetricMonomialTimesSymmetricMonomial (unsigned long*
 void BosonOnSphereShort::UnnormalizedSymmetricMonomialTimesSymmetricMonomial (unsigned long* symmetricMonomial1, unsigned long* symmetricMonomial2, 
 									      RealVector& finalState)
 {
-  unsigned long TmpState [this->NbrBosons];
+  int TmpState [this->LzMax + 1];
+  int IntSymmetricMonomial1 [this->NbrBosons];
+  int IntSymmetricMonomial2 [this->NbrBosons];
   unsigned long TmpFinalState;
   int TmpLzMax;
   finalState.ClearVector();
 
+  for (int i = 0; i <= this->LzMax; ++i)
+    TmpState[i] = 0;
   for (int i = 0; i < this->NbrBosons; ++i)
     {
-      TmpState[i] = symmetricMonomial2[i] + symmetricMonomial1[i];
+      IntSymmetricMonomial1[i] = (int) symmetricMonomial1[i];
+      IntSymmetricMonomial2[i] = (int) symmetricMonomial2[i];
+      TmpState[IntSymmetricMonomial1[i] + IntSymmetricMonomial2[i]]++;
     }
-  TmpFinalState = this->ConvertFromUnsortedMonomial(TmpState, TmpLzMax);
+  TmpLzMax = this->LzMax;
+  while (TmpState[TmpLzMax] == 0)
+    {
+      --TmpLzMax;
+    }
+  int Shift = 0;
+  TmpFinalState = 0x0ul;
+  for (int i = 0; i <= TmpLzMax; ++i)
+     {
+      TmpFinalState |= ((1ul << TmpState[i]) - 1ul) << Shift;
+      Shift += TmpState[i];
+      ++Shift;
+    }
+  TmpLzMax += this->NbrBosons;
+  --TmpLzMax;
   int TmpPos = this->FindStateIndex(TmpFinalState, TmpLzMax);
   if (TmpPos != this->HilbertSpaceDimension)
     {
       finalState[TmpPos]++;
     }
 
-  while (std::prev_permutation(symmetricMonomial2, symmetricMonomial2 + this->NbrBosons))
+  while (std::prev_permutation(IntSymmetricMonomial2, IntSymmetricMonomial2 + this->NbrBosons))
     {
+      for (int i = 0; i <= this->LzMax; ++i)
+	TmpState[i] = 0;
       for (int i = 0; i < this->NbrBosons; ++i)
 	{
-	  TmpState[i] = symmetricMonomial2[i] + symmetricMonomial1[i];
+	  TmpState[IntSymmetricMonomial2[i] + IntSymmetricMonomial1[i]]++;
 	}
-      TmpFinalState = this->ConvertFromUnsortedMonomial(TmpState, TmpLzMax);
+      TmpLzMax = this->LzMax;
+      while (TmpState[TmpLzMax] == 0)
+	{
+	  --TmpLzMax;
+	}
+      Shift = 0;
+      TmpFinalState = 0x0ul;
+      for (int i = 0; i <= TmpLzMax; ++i)
+	{
+	  TmpFinalState |= ((1ul << TmpState[i]) - 1ul) << Shift;
+	  Shift += TmpState[i];
+	  ++Shift;
+	}
+      TmpLzMax += this->NbrBosons;
+      --TmpLzMax;
       TmpPos = this->FindStateIndex(TmpFinalState, TmpLzMax);
       if (TmpPos != this->HilbertSpaceDimension)
 	{
@@ -7428,6 +7464,37 @@ void BosonOnSphereShort::UnnormalizedSymmetricMonomialTimesSymmetricMonomial (un
 	}
     }
 }
+// {
+//   unsigned long TmpState [this->NbrBosons];
+//   unsigned long TmpFinalState;
+//   int TmpLzMax;
+//   finalState.ClearVector();
+
+//   for (int i = 0; i < this->NbrBosons; ++i)
+//     {
+//       TmpState[i] = symmetricMonomial2[i] + symmetricMonomial1[i];
+//     }
+//   TmpFinalState = this->ConvertFromUnsortedMonomial(TmpState, TmpLzMax);
+//   int TmpPos = this->FindStateIndex(TmpFinalState, TmpLzMax);
+//   if (TmpPos != this->HilbertSpaceDimension)
+//     {
+//       finalState[TmpPos]++;
+//     }
+
+//   while (std::prev_permutation(symmetricMonomial2, symmetricMonomial2 + this->NbrBosons))
+//     {
+//       for (int i = 0; i < this->NbrBosons; ++i)
+// 	{
+// 	  TmpState[i] = symmetricMonomial2[i] + symmetricMonomial1[i];
+// 	}
+//       TmpFinalState = this->ConvertFromUnsortedMonomial(TmpState, TmpLzMax);
+//       TmpPos = this->FindStateIndex(TmpFinalState, TmpLzMax);
+//       if (TmpPos != this->HilbertSpaceDimension)
+// 	{
+// 	  finalState[TmpPos]++;
+// 	}
+//     }
+// }
 
 // Compute the product of two symmetric monomials, assuming an unnormalized basis
 //

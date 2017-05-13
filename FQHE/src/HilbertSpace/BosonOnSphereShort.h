@@ -1489,7 +1489,7 @@ inline unsigned long BosonOnSphereShort::ConvertFromUnsortedMonomial(unsigned lo
   for (int i = 0; i < this->NbrBosons; ++i)
     this->TemporaryState[initialState[i]]++;
   unsigned long TmpState = 0x0ul;
-  unsigned long Shift = 0;
+  unsigned long Shift = 0x0ul;
   this->TemporaryStateLzMax = this->LzMax;
   while (this->TemporaryState[this->TemporaryStateLzMax] == 0x0ul)
     {
