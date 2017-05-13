@@ -133,7 +133,7 @@ FQHESphereBosonicStateTimesFermionicStateOperation::FQHESphereBosonicStateTimesF
   this->OperationType = AbstractArchitectureOperation::FQHESphereBosonicStateTimesFermionicState;
 
   this->BosonicSpace = (BosonOnSphereShort*) operation.BosonicSpace->Clone();
-  if (this->FermionicSpace != 0)
+  if (operation.FermionicSpace != 0)
     {
       this->FermionicSpace = (FermionOnSphere*) operation.FermionicSpace->Clone();
       this->OutputSpace = (FermionOnSphere*) operation.OutputSpace->Clone(); 
