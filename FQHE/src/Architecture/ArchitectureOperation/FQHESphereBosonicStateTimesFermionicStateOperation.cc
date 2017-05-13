@@ -57,13 +57,14 @@ using std::endl;
 // fermionicSpace = pointer to the Hilbert Space associated to the fermionic state
 // outputSpace = pointer to the Hilbert Space associated to the resulting state
 // unnormalizedFlag = true if the state should be written in the unnormalized basis
+// storePartialProducts = if non 0, use it as a prefix to store the partial results
 // nbrMPIStage = number of stages in which the calculation has to be splitted in MPI mode
 // nbrSMPStage = number of stages in which the calculation has to be splitted in SMP mode
 
 
 FQHESphereBosonicStateTimesFermionicStateOperation::FQHESphereBosonicStateTimesFermionicStateOperation(RealVector& bosonicState, RealVector& fermionicState,
 												       BosonOnSphereShort* bosonicSpace, FermionOnSphere* fermionicSpace, FermionOnSphere* outputSpace, 
-												       bool unnormalizedFlag, int nbrMPIStage, int nbrSMPStage)
+												       bool unnormalizedFlag, char* storePartialProducts, int nbrMPIStage, int nbrSMPStage)
 {
   this->BosonicSpace = (BosonOnSphereShort*) bosonicSpace->Clone();
   this->FermionicSpace = (FermionOnSphere*) fermionicSpace->Clone();
@@ -84,6 +85,16 @@ FQHESphereBosonicStateTimesFermionicStateOperation::FQHESphereBosonicStateTimesF
   this->NbrMPIStage = nbrMPIStage;
   this->NbrSMPStage = nbrSMPStage;
   this->SMPStages = new int[1]; 
+
+  if (storePartialProducts != 0)
+    {
+      this->StorePartialProductPrefix = new char[strlen(storePartialProducts) + 1];
+      strcpy (this->StorePartialProductPrefix, storePartialProducts);
+    }
+  else
+    {
+      this->StorePartialProductPrefix = 0;
+    }
 }
 
 // constructor 
@@ -94,12 +105,13 @@ FQHESphereBosonicStateTimesFermionicStateOperation::FQHESphereBosonicStateTimesF
 // bosonicSpace = pointer to the Hilbert Space associated to the second bosonic state
 // outputSpace = pointer to the Hilbert Space associated to the resulting state
 // unnormalizedFlag = true if the state should be written in the unnormalized basis
+// storePartialProducts = if non 0, use it as a prefix to store the partial results
 // nbrMPIStage = number of stages in which the calculation has to be splitted in MPI mode
 // nbrSMPStage = number of stages in which the calculation has to be splitted in SMP mode
 
 FQHESphereBosonicStateTimesFermionicStateOperation::FQHESphereBosonicStateTimesFermionicStateOperation(RealVector& bosonicState, RealVector& bosonicState2,
 												       BosonOnSphereShort* bosonicSpace, BosonOnSphereShort* bosonicSpace2, BosonOnSphereShort* outputSpace, 
-												       bool unnormalizedFlag, int nbrMPIStage, int nbrSMPStage)
+												       bool unnormalizedFlag, char* storePartialProducts, int nbrMPIStage, int nbrSMPStage)
 {
   this->BosonicSpace = (BosonOnSphereShort*) bosonicSpace->Clone();
   this->FermionicSpace = 0;
@@ -120,6 +132,16 @@ FQHESphereBosonicStateTimesFermionicStateOperation::FQHESphereBosonicStateTimesF
   this->NbrMPIStage = nbrMPIStage;
   this->NbrSMPStage = nbrSMPStage;
   this->SMPStages = new int[1]; 
+
+  if (storePartialProducts != 0)
+    {
+      this->StorePartialProductPrefix = new char[strlen(storePartialProducts) + 1];
+      strcpy (this->StorePartialProductPrefix, storePartialProducts);
+    }
+  else
+    {
+      this->StorePartialProductPrefix = 0;
+    }
 }
 
 // copy constructor 
@@ -158,6 +180,16 @@ FQHESphereBosonicStateTimesFermionicStateOperation::FQHESphereBosonicStateTimesF
   this->NbrMPIStage = operation.NbrMPIStage;
   this->NbrSMPStage = operation.NbrSMPStage;
   this->SMPStages = operation.SMPStages;
+
+  if (operation.StorePartialProductPrefix != 0)
+    {
+      this->StorePartialProductPrefix = new char[strlen(operation.StorePartialProductPrefix) + 1];
+      strcpy (this->StorePartialProductPrefix, operation.StorePartialProductPrefix);
+    }
+  else
+    {
+      this->StorePartialProductPrefix = 0;
+    }
 }
 
 // destructor
@@ -208,18 +240,46 @@ bool FQHESphereBosonicStateTimesFermionicStateOperation::RawApplyOperation()
     return true;
 
   cout << "processing " << this->FirstComponent << " " << this->NbrComponent << endl;
-  if (this->FermionicSpace != 0)
+  if (this->StorePartialProductPrefix == 0)
     {
-      this->OutputSpace->BosonicStateTimeFermionicState(this->BosonicState, this->FermionicState, this->OutputState, 
-							this->BosonicSpace, this->FermionicSpace, this->FirstComponent, 
-							this->NbrComponent, this->UnnormalizedFlag, 0);
+      if (this->FermionicSpace != 0)
+	{
+	  this->OutputSpace->BosonicStateTimeFermionicState(this->BosonicState, this->FermionicState, this->OutputState, 
+							    this->BosonicSpace, this->FermionicSpace, this->FirstComponent, 
+							    this->NbrComponent, this->UnnormalizedFlag, 0);
+	}
+      else
+	{
+	  this->BosonicOutputSpace->BosonicStateTimeBosonicState(this->BosonicState, this->FermionicState, this->OutputState, 
+								 this->BosonicSpace, this->BosonicSpace2, this->FirstComponent, 
+								 this->NbrComponent, this->UnnormalizedFlag, 0);
+	}
     }
   else
     {
-       this->BosonicOutputSpace->BosonicStateTimeBosonicState(this->BosonicState, this->FermionicState, this->OutputState, 
-							      this->BosonicSpace, this->BosonicSpace2, this->FirstComponent, 
-							      this->NbrComponent, this->UnnormalizedFlag, 0);
-   }
+      RealVector TmpVector (this->BosonicState.GetVectorDimension());      
+      char* TmpFileName =  new char[strlen(this->StorePartialProductPrefix) + 100];
+      for (int i = 0; i < this->NbrComponent; ++i)
+	{	  
+	  TmpVector[this->FirstComponent + i] = 1.0;
+	  this->OutputState.ClearVector();
+	  if (this->FermionicSpace != 0)
+	    {
+	      this->OutputSpace->BosonicStateTimeFermionicState(this->BosonicState, this->FermionicState, this->OutputState, 
+								this->BosonicSpace, this->FermionicSpace, this->FirstComponent + i, 
+								1, this->UnnormalizedFlag, 0);
+	    }
+	  else
+	    {
+	      this->BosonicOutputSpace->BosonicStateTimeBosonicState(this->BosonicState, this->FermionicState, this->OutputState, 
+								     this->BosonicSpace, this->BosonicSpace2, this->FirstComponent + i, 
+								     1, this->UnnormalizedFlag, 0);
+	    }
+	  sprintf (TmpFileName, "%s.%d.vec", this->StorePartialProductPrefix, (int) (this->FirstComponent + i));
+	  this->OutputState.WriteVector(TmpFileName);
+	}
+      delete[] TmpFileName;
+    }
   return true;
 }
 

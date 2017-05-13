@@ -7133,6 +7133,7 @@ void BosonOnSphereShort::BosonicStateTimeBosonicState(RealVector& bosonicState1,
   TmpFactorial[1] = 1;
   for (int i = 2; i <= this->NbrBosons; ++i)
     TmpFactorial[i] = TmpFactorial[i - 1] / sqrt((double) i);
+  
   if (this->LzMax >= bosonicSpace2->LzMax)
     {
       BinomialCoefficients Binomials(this->LzMax);
@@ -7153,6 +7154,12 @@ void BosonOnSphereShort::BosonicStateTimeBosonicState(RealVector& bosonicState1,
 		}
 	    }
 	}
+
+      double TmpLogFactorial [this->NbrBosons + 1];
+      TmpLogFactorial[0] = 0;
+      TmpLogFactorial[1] = 0;
+      for (int i = 2; i <= this->NbrBosons; ++i)
+	TmpLogFactorial[i] = TmpLogFactorial[i - 1] + log((double) i);
       for (int j = minIndex; j < MaxIndex; ++j)
 	{
 	  if (bosonicState1[j] != 0.0)
@@ -7165,10 +7172,10 @@ void BosonOnSphereShort::BosonicStateTimeBosonicState(RealVector& bosonicState1,
 	      bosonicSpace1->ConvertToMonomial(bosonicSpace1->FermionBasis->StateDescription[j], TmpLzMax, TmpSymmetricMonomial1);
 	      bosonicSpace1->FermionToBoson(bosonicSpace1->FermionBasis->StateDescription[j], TmpLzMax, bosonicSpace1->TemporaryState, 
 					   bosonicSpace1->TemporaryStateLzMax);
-	      double TmpFactor = 1.0;
+	      double TmpFactor = 0.0;
 	      for (int p = 0; p <= bosonicSpace1->TemporaryStateLzMax; ++p)
 		{
-		  TmpFactor *= TmpFactorial[bosonicSpace1->TemporaryState[p]];
+		  TmpFactor -= TmpLogFactorial[bosonicSpace1->TemporaryState[p]];
 		}
 	      for (int i = 0; i < bosonicSpace2->HilbertSpaceDimension; ++i)
 		{
@@ -7218,18 +7225,12 @@ void BosonOnSphereShort::BosonicStateTimeBosonicState(RealVector& bosonicState1,
 			      if (FinalState[Index] != 0.0)
 				{
 				  this->FermionToBoson(this->FermionBasis->StateDescription[Index], this->TemporaryState); 
-				  Coefficient.SetToOne();
-				  for(int p = 0; p <= this->LzMax; ++p)
+				  double TmpFactor2 = TmpFactor;
+				  for (int p = 0; p <= this->LzMax; ++p)
 				    {
-				      if (this->TemporaryState[p] > 1)
-					Coefficient.FactorialMultiply(this->TemporaryState[p]);
-				    }		  
-				  for(int p = 0; p <= bosonicSpace1->TemporaryStateLzMax; ++p)
-				    {
-				      if (bosonicSpace1->TemporaryState[p] > 1)
-					Coefficient.FactorialDivide(bosonicSpace1->TemporaryState[p]);
-				    }		  
-				  outputVector[Index] += Coefficient.GetNumericalValue() * bosonicState1[j] * bosonicState2[i] * FinalState[Index];
+				      TmpFactor2 += TmpLogFactorial[this->TemporaryState[p]];
+				    }
+				  outputVector[Index] += exp(TmpFactor2) * bosonicState1[j] * bosonicState2[i] * FinalState[Index];
 				}
 			    }
 			}

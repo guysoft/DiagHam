@@ -15,6 +15,7 @@
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
+#include "GeneralTools/StringTools.h"
 
 #include "MathTools/BinomialCoefficients.h"
 
@@ -61,6 +62,7 @@ int main(int argc, char** argv)
   (*OutputGroup) += new BooleanOption  ('\n', "rational" , "use rational numbers instead of double precision floating point numbers");
   (*OutputGroup) += new SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*OutputGroup) += new SingleIntegerOption ('\n', "outputvector-index", "set the index of the output vector (i.e. the integer in the extention *.xxx.vec)", 0);
+  (*OutputGroup) += new BooleanOption  ('\n', "save-partial" , "save the partial results");
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
@@ -253,12 +255,18 @@ int main(int argc, char** argv)
     }
 
 
+  char* PartialProductPrefix = 0;
+  if (Manager.GetBoolean("save-partial") == true)
+    {
+      PartialProductPrefix = ReplaceString(Manager.GetString("state-2"), ".vec", "_partialllltimeslll");
+    }
+
   RealVector OutputVector;
   if (Statistics2 == true)
     {
       FQHESphereBosonicStateTimesFermionicStateOperation Operation (BosonicInputVector, InputVector, 
 								    BosonicInputSpace, (FermionOnSphere*) InputSpace, (FermionOnSphere*) OutputSpace,
-								    !(Manager.GetBoolean("normalize")));
+								    !(Manager.GetBoolean("normalize")), PartialProductPrefix);
       Operation.ApplyOperation(Architecture.GetArchitecture());
       OutputVector = Operation.GetState();
     }
@@ -266,24 +274,14 @@ int main(int argc, char** argv)
     {
       FQHESphereBosonicStateTimesFermionicStateOperation Operation (BosonicInputVector, InputVector, 
 								    BosonicInputSpace, (BosonOnSphereShort*) InputSpace, (BosonOnSphereShort*) OutputSpace,
-								    !(Manager.GetBoolean("normalize")));
+								    !(Manager.GetBoolean("normalize")), PartialProductPrefix);
       Operation.ApplyOperation(Architecture.GetArchitecture());
       OutputVector = Operation.GetState();
-//       OutputVector = RealVector (OutputSpace->GetHilbertSpaceDimension(), true);
-//       ((BosonOnSphereShort*) OutputSpace)->BosonicStateTimeBosonicState(BosonicInputVector, InputVector, OutputVector, 
-// 									 BosonicInputSpace, (BosonOnSphereShort*) InputSpace,
-// 									 0, BosonicInputSpace->GetHilbertSpaceDimension(), 
-// 									 !(Manager.GetBoolean("normalize")), Architecture.GetArchitecture());
-      //       FQHESphereBosonicStateTimesFermionicStateOperation Operation (BosonicInputVector, InputVector, 
-      // 								    BosonicInputSpace, (BosonOnSphereShort*) InputSpace, (BosonOnSphereShort*) OutputSpace,
-      // 								    !(Manager.GetBoolean("normalize")));
-      //       Operation.ApplyOperation(Architecture.GetArchitecture());
-      //       OutputVector = Operation.GetState();
     }
   delete InputSpace;
   delete BosonicInputSpace;
 
-  if (Architecture.GetArchitecture()->CanWriteOnDisk())
+  if ((Architecture.GetArchitecture()->CanWriteOnDisk()) && (Manager.GetBoolean( "save-partial") == false))
     {
       if (Manager.GetBoolean("normalize") == true)
 	OutputVector.Normalize();
