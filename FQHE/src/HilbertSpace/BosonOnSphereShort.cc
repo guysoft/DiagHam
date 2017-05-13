@@ -7182,7 +7182,14 @@ void BosonOnSphereShort::BosonicStateTimeBosonicState(RealVector& bosonicState1,
 		      bosonicSpace2->ConvertToMonomial(bosonicSpace2->FermionBasis->StateDescription[i], TmpLzMax2, TmpSymmetricMonomial2);
 		      bosonicSpace2->FermionToBoson(bosonicSpace2->FermionBasis->StateDescription[i], TmpLzMax2, bosonicSpace2->TemporaryState, 
 						    bosonicSpace2->TemporaryStateLzMax);
-		      this->SymmetricMonomialTimesSymmetricMonomial(TmpSymmetricMonomial1, TmpSymmetricMonomial2, FinalState, ThreeOrbitalOverlaps);
+		      if (unnormalizedFlag == false)
+			{
+			  this->SymmetricMonomialTimesSymmetricMonomial(TmpSymmetricMonomial1, TmpSymmetricMonomial2, FinalState, ThreeOrbitalOverlaps);
+			}
+		      else
+			{
+			  this->UnnormalizedSymmetricMonomialTimesSymmetricMonomial(TmpSymmetricMonomial1, TmpSymmetricMonomial2, FinalState);
+			}
 		      for (int Index = 0; Index < FinalState.GetVectorDimension(); ++Index)
 			{
 			  if (FinalState[Index] != 0.0)
@@ -7199,15 +7206,15 @@ void BosonOnSphereShort::BosonicStateTimeBosonicState(RealVector& bosonicState1,
 				  if (bosonicSpace1->TemporaryState[p] > 1)
 				    Coefficient.FactorialDivide(bosonicSpace1->TemporaryState[p]);
 				}		  
-			      for(int p = 0; p <= bosonicSpace2->TemporaryStateLzMax; ++p)
-				{
-				  if (bosonicSpace2->TemporaryState[p] > 1)
-				    Coefficient.FactorialDivide(bosonicSpace2->TemporaryState[p]);
-				}		  
 			      if (unnormalizedFlag == false)
 				{
+				  for(int p = 0; p <= bosonicSpace2->TemporaryStateLzMax; ++p)
+				    {
+				      if (bosonicSpace2->TemporaryState[p] > 1)
+					Coefficient.FactorialDivide(bosonicSpace2->TemporaryState[p]);
+				    }		
 				  outputVector[Index] += sqrt(Coefficient.GetNumericalValue()) * bosonicState1[j] * bosonicState2[i] * FinalState[Index];
-				}
+				}  
 			      else
 				{
 				  outputVector[Index] += Coefficient.GetNumericalValue() * bosonicState1[j] * bosonicState2[i] * FinalState[Index];
@@ -7330,8 +7337,7 @@ void BosonOnSphereShort::SymmetricMonomialTimesSymmetricMonomial (unsigned long*
   unsigned long TmpNbrStates = 0;
   unsigned long TmpState [this->NbrBosons];
   unsigned long TmpFinalState;
-  double Sign = 1.0;
-  unsigned long Mask = 0ul;
+  int TmpLzMax;
   int TmpHeapArray [this->NbrBosons];
   int TmpDim = this->NbrBosons;
   for (int i = 0; i < TmpDim; ++i)
@@ -7347,58 +7353,69 @@ void BosonOnSphereShort::SymmetricMonomialTimesSymmetricMonomial (unsigned long*
       TmpState[i] = symmetricMonomial2[i] + symmetricMonomial1[i];
       TmpFactor += threeOrbitalOverlaps[TmpState[i]][symmetricMonomial2[i]];
     }
-  SortArrayDownOrdering (TmpState, this->NbrBosons);
-  TmpFinalState = this->ConvertFromMonomial(TmpState);
-  int TmpLzMax = this->FermionBasis->LzMax;
-  while ((TmpFinalState >> TmpLzMax) == 0x0ul)
-    {
-      --TmpLzMax;
-    }
+  TmpFinalState = this->ConvertFromUnsortedMonomial(TmpState, TmpLzMax);
   int TmpPos = this->FindStateIndex(TmpFinalState, TmpLzMax);
   if (TmpPos != this->HilbertSpaceDimension)
     {
       finalState[TmpPos] += exp(TmpFactor);
     }
 
-  while (Tmp < TmpDim)
+  while (std::prev_permutation(symmetricMonomial2, symmetricMonomial2 + this->NbrBosons))
     {
-      if (TmpHeapArray[Tmp] < Tmp)
+      TmpFactor = 0.0;
+      for (int i = 0; i < this->NbrBosons; ++i)
 	{
-	  if ((Tmp & 0x1ul) == 0x0ul)
-	    {
-	      unsigned long Tmp2 = symmetricMonomial2[Tmp];
-	      symmetricMonomial2[Tmp] = symmetricMonomial2[0];
-	      symmetricMonomial2[0] = Tmp2;
-	      
-	    }
-	  else
-	    {
-	      unsigned long Tmp2 = symmetricMonomial2[Tmp];
-	      symmetricMonomial2[Tmp] = symmetricMonomial2[TmpHeapArray[Tmp]];
-	      symmetricMonomial2[TmpHeapArray[Tmp]] = Tmp2;
-	    }
-	  TmpFactor = 0.0;
-	  for (int i = 0; i < this->NbrBosons; ++i)
-	    {
-	      TmpState[i] = symmetricMonomial2[i] + symmetricMonomial1[i];
-	      TmpFactor += threeOrbitalOverlaps[TmpState[i]][symmetricMonomial2[i]];
-	    }
-	  int TmpLzMax;
-	  TmpFinalState = this->ConvertFromUnsortedMonomial(TmpState, TmpLzMax);
-	  int TmpPos = this->FindStateIndex(TmpFinalState, TmpLzMax);
-	  if (TmpPos != this->HilbertSpaceDimension)
-	    {
-	      finalState[TmpPos] += exp(TmpFactor);
-	    }
-	  ++TmpHeapArray[Tmp];
-	  Tmp = 0;
+	  TmpState[i] = symmetricMonomial2[i] + symmetricMonomial1[i];
+	  TmpFactor += threeOrbitalOverlaps[TmpState[i]][symmetricMonomial2[i]];
 	}
-      else
+      TmpFinalState = this->ConvertFromUnsortedMonomial(TmpState, TmpLzMax);
+      int TmpPos = this->FindStateIndex(TmpFinalState, TmpLzMax);
+      if (TmpPos != this->HilbertSpaceDimension)
 	{
-	  TmpHeapArray[Tmp]= 0;
-	  ++Tmp;
+	  finalState[TmpPos] += exp(TmpFactor);
 	}
-    }  
+    }
+}
+
+// Compute the product of two symmetric monomials, assuming an unnormalized basis
+//
+// symmetricMonomial1 = first symmetric monomial
+// symmetricMonomial2 = second symmetric monomial
+// finalState = reference on the vector the produced state will be stored
+
+void BosonOnSphereShort::UnnormalizedSymmetricMonomialTimesSymmetricMonomial (unsigned long* symmetricMonomial1, unsigned long* symmetricMonomial2, 
+									      RealVector& finalState)
+{
+  unsigned long TmpState [this->NbrBosons];
+  unsigned long TmpFinalState;
+  int TmpLzMax;
+  finalState.ClearVector();
+  int Tmp = 0;
+
+  for (int i = 0; i < this->NbrBosons; ++i)
+    {
+      TmpState[i] = symmetricMonomial2[i] + symmetricMonomial1[i];
+    }
+  TmpFinalState = this->ConvertFromUnsortedMonomial(TmpState, TmpLzMax);
+  int TmpPos = this->FindStateIndex(TmpFinalState, TmpLzMax);
+  if (TmpPos != this->HilbertSpaceDimension)
+    {
+      finalState[TmpPos]++;
+    }
+
+  while (std::prev_permutation(symmetricMonomial2, symmetricMonomial2 + this->NbrBosons))
+    {
+      for (int i = 0; i < this->NbrBosons; ++i)
+	{
+	  TmpState[i] = symmetricMonomial2[i] + symmetricMonomial1[i];
+	}
+      TmpFinalState = this->ConvertFromUnsortedMonomial(TmpState, TmpLzMax);
+      int TmpPos = this->FindStateIndex(TmpFinalState, TmpLzMax);
+      if (TmpPos != this->HilbertSpaceDimension)
+	{
+	  finalState[TmpPos]++;
+	}
+    }
 }
 
 // Compute the product of two symmetric monomials, assuming a reverse flux attachment for the first symmetric monomial
@@ -7408,7 +7425,7 @@ void BosonOnSphereShort::SymmetricMonomialTimesSymmetricMonomial (unsigned long*
 // finalState = reference on the vector the produced state will be stored
 // threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
 
-void BosonOnSphereShort::ReverseSymmetricMonomialTimesSymmetricMonomial (unsigned long* symmetricMonomial1, unsigned long* symmetricMonomial2, \
+void BosonOnSphereShort::ReverseSymmetricMonomialTimesSymmetricMonomial (unsigned long* symmetricMonomial1, unsigned long* symmetricMonomial2,
 									 RealVector& finalState, double** threeOrbitalOverlaps)
 {
   cout << "BosonOnSphereShort::ReverseSymmetricMonomialTimesSymmetricMonomial is not implemented" << endl;

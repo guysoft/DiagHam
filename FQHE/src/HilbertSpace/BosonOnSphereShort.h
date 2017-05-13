@@ -1185,6 +1185,13 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // threeOrbitalOverlaps = array where the integrals of the three orbital product are stored
   virtual void SymmetricMonomialTimesSymmetricMonomial (unsigned long* symmetricMonomial1, unsigned long* symmetricMonomial2, RealVector& finalState, double** threeOrbitalOverlaps);
 
+  // Compute the product of two symmetric monomials, assuming an unnormalized basis
+  //
+  // symmetricMonomial1 = first symmetric monomial
+  // symmetricMonomial2 = second symmetric monomial
+  // finalState = reference on the vector the produced state will be stored
+  virtual void UnnormalizedSymmetricMonomialTimesSymmetricMonomial (unsigned long* symmetricMonomial1, unsigned long* symmetricMonomial2, RealVector& finalState);
+  
   // Compute the product of two symmetric monomials, assuming a reverse flux attachment for the first symmetric monomial
   //
   // symmetricMonomial1 = first symmetric monomial
