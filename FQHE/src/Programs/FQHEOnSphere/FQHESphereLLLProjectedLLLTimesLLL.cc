@@ -53,6 +53,7 @@ int main(int argc, char** argv)
   
   (*SystemGroup) += new SingleStringOption  ('1', "state-1", "vector file that corresponds to the first state (should be bosonic)");
   (*SystemGroup) += new SingleStringOption  ('2', "state-2", "vector file that corresponds to the second state");
+  (*SystemGroup) += new SingleStringOption  ('\n', "multiple-states1", "provide a list of of first states, only available when using the --reload-projection option");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file1", "use a squeezed basis for the first state described by a given root configuration");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file2", "use a squeezed basis for the first state described by a given root configuration");
   (*SystemGroup) += new BooleanOption ('\n', "reverse-flux", "the fluxes bind to each particle are in the opposite direction than the magnetic field");
@@ -79,6 +80,16 @@ int main(int argc, char** argv)
       return 0;
     }
   
+  if ((Manager.GetString("multiple-states1") != 0) && (Manager.GetBoolean("reload-projection") == false))
+    {
+      cout << "--multiple-states1 requires the --reload-projection option" << endl;
+      return -1;
+    }
+
+  char** State1FileNames = 0;
+  char** OutputNames = 0;
+
+  int NbrStates1 = 0;
   int NbrParticles1 = 0; 
   int NbrFluxQuanta1 = 0; 
   int TotalLz1 = 0;
@@ -89,15 +100,67 @@ int main(int argc, char** argv)
   int TotalLz2 = 0;
   bool Statistics2 = true;
 
-  if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("state-1"),
-						   NbrParticles1, NbrFluxQuanta1, TotalLz1, Statistics1) == false)
+  if (Manager.GetString("multiple-states1") == 0)
     {
-      cout << "error while retrieving system parameters from file name " << Manager.GetString("state-1") << endl;
-      return -1;
+      NbrStates1 = 1;
+      State1FileNames = new char*[NbrStates1];
+      State1FileNames[0] = new char[strlen(Manager.GetString("state-1")) + 1];
+      strcpy (State1FileNames[0], Manager.GetString("state-1"));
+      if (FQHEOnSphereFindSystemInfoFromVectorFileName(State1FileNames[0],
+						       NbrParticles1, NbrFluxQuanta1, TotalLz1, Statistics1) == false)
+	{
+	  cout << "error while retrieving system parameters from file name " << State1FileNames[0] << endl;
+	  return -1;
+	}
     }
+  else
+    {
+      MultiColumnASCIIFile InputFile;
+      if (InputFile.Parse(Manager.GetString("multiple-states1")) == false)
+	{
+	  InputFile.DumpErrors(cout);
+	  return -1;
+	}
+      NbrStates1 = InputFile.GetNbrLines();
+      State1FileNames = new char*[NbrStates1];
+      OutputNames = new char*[NbrStates1];
+      State1FileNames[0] = new char[strlen(InputFile(0, 0)) + 1];
+      strcpy (State1FileNames[0], InputFile(0, 0));
+      OutputNames[0] = new char[strlen(InputFile(1, 0)) + 1];
+      strcpy (OutputNames[0], InputFile(1, 0));
+      if (FQHEOnSphereFindSystemInfoFromVectorFileName(InputFile(0, 0),
+						       NbrParticles1, NbrFluxQuanta1, TotalLz1, Statistics1) == false)
+	{
+	  cout << "error while retrieving system parameters from file name " << InputFile(0, 0) << endl;
+	  return -1;
+	}
+      for (int i = 1; i < NbrStates1; ++i)
+	{
+	  int TmpNbrParticles = 0;
+	  int TmpNbrFluxQuanta = 0; 
+	  int TmpTotalLz = 0;
+	  bool TmpStatistics = true;
+	  if (FQHEOnSphereFindSystemInfoFromVectorFileName(InputFile(0, i), TmpNbrParticles, TmpNbrFluxQuanta, TmpTotalLz, TmpStatistics) == false)
+	    {
+	      cout << "error while retrieving system parameters from file name " << InputFile(0, i)  << endl;
+	      return -1;
+	    }
+	  if ((TmpNbrParticles != NbrParticles1) || (TmpNbrFluxQuanta != NbrFluxQuanta1) || 
+	      (TmpTotalLz != TotalLz1) || (TmpStatistics != Statistics1))
+	    {
+	      cout << "error system parameters of  " << InputFile(0, i)  << " do not match those of " << InputFile(0, 0) << endl;
+	      return -1;
+	    }
+	  State1FileNames[i] = new char[strlen(InputFile(0, i)) + 1];
+	  strcpy (State1FileNames[i], InputFile(0, i));	  
+	  OutputNames[i] = new char[strlen(InputFile(1, i)) + 1];
+	  strcpy (OutputNames[i], InputFile(1, i));
+ 	}
+   }
+
   if (Statistics1 == true)
     {
-      cout << Manager.GetString("state-1") << " should be bosonic" << endl;
+      cout << State1FileNames[0] << " should be bosonic" << endl;
       return -1;
     }
   if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("state-2"),
@@ -109,7 +172,7 @@ int main(int argc, char** argv)
 
   if (NbrParticles1 != NbrParticles2)
     {
-      cout << Manager.GetString("state-1") << " and " << Manager.GetString("state-2") << " have a different number of particles" << endl;
+      cout << State1FileNames[0] << " and " << Manager.GetString("state-2") << " have a different number of particles" << endl;
       return -1;
     }
 
@@ -121,7 +184,7 @@ int main(int argc, char** argv)
       TotalLzOutputState = TotalLz2 - TotalLz1;
       if (NbrFluxQuantumOutputState < 0)
 	{
-	  cout << "the number of flux quanta of " << Manager.GetString("state-1") << " should be lower than " << Manager.GetString("state-2") << endl;
+	  cout << "the number of flux quanta of " << State1FileNames[0] << " should be lower than " << Manager.GetString("state-2") << endl;
 	  return -1;
 	}      
     }
@@ -153,12 +216,6 @@ int main(int argc, char** argv)
 	}
     }
 
-  RealVector BosonicInputVector;
-  if (BosonicInputVector.ReadVector (Manager.GetString("state-1")) == false)
-    {
-      cout << "can't open vector file " << Manager.GetString("state-1") << endl;
-      return -1;      
-    }
   BosonOnSphereShort* BosonicInputSpace = 0;
   if (Manager.GetString("reference-file1") == 0)
     {
@@ -244,26 +301,32 @@ int main(int argc, char** argv)
       PartialProductPrefix = ReplaceString(Manager.GetString("state-2"), ".vec", "_partialllltimeslll");
     }
 
-  char* OutputName = new char [512  + strlen(DiscreteSymmetryName)+ strlen(Manager.GetString("interaction-name")) + strlen(GeometryName)];
-  if (Statistics2 == true)
-    {
-      sprintf (OutputName, "fermions_%s%s_%s_n_%d_2s_%d_lz_%d.%ld.vec", GeometryName, DiscreteSymmetryName, Manager.GetString("interaction-name"), 
-	       NbrParticles1, NbrFluxQuantumOutputState, TotalLzOutputState, Manager.GetInteger("outputvector-index"));
-    }
-  else
-    {
-      sprintf (OutputName, "bosons_%s%s_%s_n_%d_2s_%d_lz_%d.%ld.vec", GeometryName, DiscreteSymmetryName, Manager.GetString("interaction-name"), 
-	       NbrParticles1, NbrFluxQuantumOutputState, TotalLzOutputState, Manager.GetInteger("outputvector-index"));
-    }
 
-  if (Architecture.GetArchitecture()->CanWriteOnDisk())
-    {
-      cout << "generating state " << OutputName << endl;
-    }
 
   RealVector OutputVector;
+  RealVector BosonicInputVector;
   if (Manager.GetBoolean("reload-projection") == false)
     {
+      char* OutputName = new char [512  + strlen(DiscreteSymmetryName)+ strlen(Manager.GetString("interaction-name")) + strlen(GeometryName)];
+      if (Statistics2 == true)
+	{
+	  sprintf (OutputName, "fermions_%s%s_%s_n_%d_2s_%d_lz_%d.%ld.vec", GeometryName, DiscreteSymmetryName, Manager.GetString("interaction-name"), 
+		   NbrParticles1, NbrFluxQuantumOutputState, TotalLzOutputState, Manager.GetInteger("outputvector-index"));
+	}
+      else
+	{
+	  sprintf (OutputName, "bosons_%s%s_%s_n_%d_2s_%d_lz_%d.%ld.vec", GeometryName, DiscreteSymmetryName, Manager.GetString("interaction-name"), 
+		   NbrParticles1, NbrFluxQuantumOutputState, TotalLzOutputState, Manager.GetInteger("outputvector-index"));
+	}
+      if (Architecture.GetArchitecture()->CanWriteOnDisk())
+	{
+	  cout << "generating state " << OutputName << endl;
+	}
+      if (BosonicInputVector.ReadVector (State1FileNames[0]) == false)
+	{
+	  cout << "can't open vector file " << State1FileNames[0] << endl;
+	  return -1;      
+	}
       if (Statistics2 == true)
 	{
 	  FQHESphereBosonicStateTimesFermionicStateOperation Operation (BosonicInputVector, InputVector, 
@@ -280,13 +343,23 @@ int main(int argc, char** argv)
 	  Operation.ApplyOperation(Architecture.GetArchitecture());
 	  OutputVector = Operation.GetState();
 	}
+      if ((Architecture.GetArchitecture()->CanWriteOnDisk()) && (Manager.GetBoolean( "save-partial") == false))
+	{
+	  if (Manager.GetBoolean("normalize") == true)
+	    OutputVector.Normalize();
+	  if (OutputVector.WriteVector(OutputName) == false)
+	    {
+	      cout << "can't write " << OutputName << endl;
+	    }
+	}
+      delete[] OutputName;
     }
   else
     {
-      RealMatrix TmpTransformationMatrix (OutputSpace->GetHilbertSpaceDimension(), BosonicInputVector.GetVectorDimension());
+      RealMatrix TmpTransformationMatrix (OutputSpace->GetHilbertSpaceDimension(), BosonicInputSpace->GetHilbertSpaceDimension());
+      cout << "reading " << BosonicInputSpace->GetHilbertSpaceDimension() << " projection states" << endl;
       char* TmpString = new char[strlen(PartialProductPrefix) + 100];
-      cout << "reading " << BosonicInputVector.GetVectorDimension() << " projection states" << endl;
-     for (int i = 0; i < BosonicInputVector.GetVectorDimension(); ++i)
+      for (int i = 0; i < BosonicInputSpace->GetHilbertSpaceDimension(); ++i)
 	{
 	  sprintf(TmpString, "%s.%d.vec", PartialProductPrefix, i);
 	  if (TmpTransformationMatrix[i].ReadVector(TmpString) == false)
@@ -295,26 +368,39 @@ int main(int argc, char** argv)
 	      return -1;
 	    }	  
 	}
-      OutputVector = RealVector (OutputSpace->GetHilbertSpaceDimension(), true);
-      OutputVector.Multiply(TmpTransformationMatrix, BosonicInputVector);
       delete[] TmpString;
-    }
-
-  delete InputSpace;
-  delete BosonicInputSpace;
-
-  if ((Architecture.GetArchitecture()->CanWriteOnDisk()) && (Manager.GetBoolean( "save-partial") == false))
-    {
-      if (Manager.GetBoolean("normalize") == true)
-	OutputVector.Normalize();
-      if (OutputVector.WriteVector(OutputName) == false)
+      for (int i = 0; i < NbrStates1; ++i)
 	{
-	  cout << "can't write " << OutputName << endl;
+	  if (BosonicInputVector.ReadVector (State1FileNames[i]) == false)
+	    {
+	      cout << "can't open vector file " << State1FileNames[i] << endl;
+	      return -1;      
+	    }
+	  if (Architecture.GetArchitecture()->CanWriteOnDisk())
+	    {
+	      cout << "generating state " << OutputNames[i] << endl;
+	    }
+	  if (BosonicInputVector.ReadVector (State1FileNames[i]) == false)
+	    {
+	      cout << "can't open vector file " << State1FileNames[i] << endl;
+	      return -1;      
+	    }
+	  OutputVector = RealVector (OutputSpace->GetHilbertSpaceDimension(), true);
+	  OutputVector.Multiply(TmpTransformationMatrix, BosonicInputVector);
+	  if (Architecture.GetArchitecture()->CanWriteOnDisk())
+	    {
+	      if (Manager.GetBoolean("normalize") == true)
+		OutputVector.Normalize();
+	      if (OutputVector.WriteVector(OutputNames[i]) == false)
+		{
+		  cout << "can't write " << OutputNames[i] << endl;
+		}
+	    }
 	}
     }
 
-  delete[] OutputName;
-  
+  delete InputSpace;
+  delete BosonicInputSpace;  
   delete OutputSpace;
 
   return 0;
