@@ -265,13 +265,13 @@ bool FQHESphereBosonicStateTimesFermionicStateOperation::RawApplyOperation()
 	  this->OutputState.ClearVector();
 	  if (this->FermionicSpace != 0)
 	    {
-	      this->OutputSpace->BosonicStateTimeFermionicState(this->BosonicState, this->FermionicState, this->OutputState, 
+	      this->OutputSpace->BosonicStateTimeFermionicState(TmpVector, this->FermionicState, this->OutputState, 
 								this->BosonicSpace, this->FermionicSpace, this->FirstComponent + i, 
 								1, this->UnnormalizedFlag, 0);
 	    }
 	  else
 	    {
-	      this->BosonicOutputSpace->BosonicStateTimeBosonicState(this->BosonicState, this->FermionicState, this->OutputState, 
+	      this->BosonicOutputSpace->BosonicStateTimeBosonicState(TmpVector, this->FermionicState, this->OutputState, 
 								     this->BosonicSpace, this->BosonicSpace2, this->FirstComponent + i, 
 								     1, this->UnnormalizedFlag, 0);
 	    }

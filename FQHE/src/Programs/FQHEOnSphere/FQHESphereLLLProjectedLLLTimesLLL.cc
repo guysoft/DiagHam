@@ -58,6 +58,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "reverse-flux", "the fluxes bind to each particle are in the opposite direction than the magnetic field");
   (*SystemGroup) += new BooleanOption ('\n',"disable-lzsymmetry","disable the Lz<->-Lz symmetry for the Lz=0 sector");
   (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
+  (*SystemGroup) += new BooleanOption  ('\n', "reload-projection", "relaod all the required projection data from disk instead of generating them");
   (*OutputGroup) += new BooleanOption ('\n', "normalize", "normalize the projected state assuming the sphere geometry");
   (*OutputGroup) += new BooleanOption  ('\n', "rational" , "use rational numbers instead of double precision floating point numbers");
   (*OutputGroup) += new SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
@@ -237,6 +238,12 @@ int main(int argc, char** argv)
       sprintf (GeometryName, "unnormalized");
     }
 
+  char* PartialProductPrefix = 0;
+  if ((Manager.GetBoolean("save-partial") == true) || (Manager.GetBoolean("reload-projection") == true))
+    {
+      PartialProductPrefix = ReplaceString(Manager.GetString("state-2"), ".vec", "_partialllltimeslll");
+    }
+
   char* OutputName = new char [512  + strlen(DiscreteSymmetryName)+ strlen(Manager.GetString("interaction-name")) + strlen(GeometryName)];
   if (Statistics2 == true)
     {
@@ -254,30 +261,45 @@ int main(int argc, char** argv)
       cout << "generating state " << OutputName << endl;
     }
 
-
-  char* PartialProductPrefix = 0;
-  if (Manager.GetBoolean("save-partial") == true)
-    {
-      PartialProductPrefix = ReplaceString(Manager.GetString("state-2"), ".vec", "_partialllltimeslll");
-    }
-
   RealVector OutputVector;
-  if (Statistics2 == true)
+  if (Manager.GetBoolean("reload-projection") == false)
     {
-      FQHESphereBosonicStateTimesFermionicStateOperation Operation (BosonicInputVector, InputVector, 
-								    BosonicInputSpace, (FermionOnSphere*) InputSpace, (FermionOnSphere*) OutputSpace,
-								    !(Manager.GetBoolean("normalize")), PartialProductPrefix);
-      Operation.ApplyOperation(Architecture.GetArchitecture());
-      OutputVector = Operation.GetState();
+      if (Statistics2 == true)
+	{
+	  FQHESphereBosonicStateTimesFermionicStateOperation Operation (BosonicInputVector, InputVector, 
+									BosonicInputSpace, (FermionOnSphere*) InputSpace, (FermionOnSphere*) OutputSpace,
+									!(Manager.GetBoolean("normalize")), PartialProductPrefix);
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
+	  OutputVector = Operation.GetState();
+	}
+      else
+	{
+	  FQHESphereBosonicStateTimesFermionicStateOperation Operation (BosonicInputVector, InputVector, 
+									BosonicInputSpace, (BosonOnSphereShort*) InputSpace, (BosonOnSphereShort*) OutputSpace,
+									!(Manager.GetBoolean("normalize")), PartialProductPrefix);
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
+	  OutputVector = Operation.GetState();
+	}
     }
   else
     {
-      FQHESphereBosonicStateTimesFermionicStateOperation Operation (BosonicInputVector, InputVector, 
-								    BosonicInputSpace, (BosonOnSphereShort*) InputSpace, (BosonOnSphereShort*) OutputSpace,
-								    !(Manager.GetBoolean("normalize")), PartialProductPrefix);
-      Operation.ApplyOperation(Architecture.GetArchitecture());
-      OutputVector = Operation.GetState();
+      RealMatrix TmpTransformationMatrix (OutputSpace->GetHilbertSpaceDimension(), BosonicInputVector.GetVectorDimension());
+      char* TmpString = new char[strlen(PartialProductPrefix) + 100];
+      cout << "reading " << BosonicInputVector.GetVectorDimension() << " projection states" << endl;
+     for (int i = 0; i < BosonicInputVector.GetVectorDimension(); ++i)
+	{
+	  sprintf(TmpString, "%s.%d.vec", PartialProductPrefix, i);
+	  if (TmpTransformationMatrix[i].ReadVector(TmpString) == false)
+	    {
+	      cout << "error, can't read " << TmpString << endl;
+	      return -1;
+	    }	  
+	}
+      OutputVector = RealVector (OutputSpace->GetHilbertSpaceDimension(), true);
+      OutputVector.Multiply(TmpTransformationMatrix, BosonicInputVector);
+      delete[] TmpString;
     }
+
   delete InputSpace;
   delete BosonicInputSpace;
 
