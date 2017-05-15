@@ -23,6 +23,7 @@
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 #include "Architecture/ArchitectureOperation/FQHESphereBosonicStateTimesFermionicStateOperation.h"
+#include "Architecture/ArchitectureOperation/MatrixMatrixMultiplyOperation.h"
 
 
 #include <iostream>
@@ -369,29 +370,28 @@ int main(int argc, char** argv)
 	    }	  
 	}
       delete[] TmpString;
+      RealMatrix TmpBosonicInputVectorMatrix (BosonicInputSpace->GetHilbertSpaceDimension(), NbrStates1);
       for (int i = 0; i < NbrStates1; ++i)
 	{
-	  if (BosonicInputVector.ReadVector (State1FileNames[i]) == false)
+	  if (TmpBosonicInputVectorMatrix[i].ReadVector(State1FileNames[i]) == false)
 	    {
 	      cout << "can't open vector file " << State1FileNames[i] << endl;
 	      return -1;      
 	    }
+	}
+      MatrixMatrixMultiplyOperation TmpOperation (&TmpTransformationMatrix, &TmpBosonicInputVectorMatrix);
+      TmpOperation.ApplyOperation(Architecture.GetArchitecture());
+      for (int i = 0; i < NbrStates1; ++i)
+	{
 	  if (Architecture.GetArchitecture()->CanWriteOnDisk())
 	    {
 	      cout << "generating state " << OutputNames[i] << endl;
 	    }
-	  if (BosonicInputVector.ReadVector (State1FileNames[i]) == false)
-	    {
-	      cout << "can't open vector file " << State1FileNames[i] << endl;
-	      return -1;      
-	    }
-	  OutputVector = RealVector (OutputSpace->GetHilbertSpaceDimension(), true);
-	  OutputVector.Multiply(TmpTransformationMatrix, BosonicInputVector);
 	  if (Architecture.GetArchitecture()->CanWriteOnDisk())
 	    {
 	      if (Manager.GetBoolean("normalize") == true)
 		OutputVector.Normalize();
-	      if (OutputVector.WriteVector(OutputNames[i]) == false)
+	      if (TmpTransformationMatrix[i].WriteVector(OutputNames[i]) == false)
 		{
 		  cout << "can't write " << OutputNames[i] << endl;
 		}
