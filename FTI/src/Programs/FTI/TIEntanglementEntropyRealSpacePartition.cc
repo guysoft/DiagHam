@@ -76,6 +76,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "use-approximation", "use a saddle appoximation to evaluate the entanglement entropy");
   (*SystemGroup) += new BooleanOption ('\n', "use-rational", "use rational number to overcome accuracy issues");
   (*SystemGroup) += new BooleanOption ('\n', "disable-ytranslation", "do not use the translation along y even if the cut preserves this symmetry");
+  (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
+  (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-chernnumber", "compute the Chern number of the fully filled band (only available in singleparticle-spectrum mode)");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -168,6 +170,8 @@ int main(int argc, char** argv)
 									Manager.GetInteger("folding"), Manager.GetDouble("mu-s"), 
 									Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), 
 									true);
+      if (Manager.GetBoolean("singleparticle-chernnumber") == true)
+	cout << "Chern number = " << ((Abstract2DTightBindingModel*) TightBindingModel)->ComputeChernNumber(0) << endl;
     }
   else
     {
@@ -175,6 +179,12 @@ int main(int argc, char** argv)
 										Manager.GetInteger("folding"), Manager.GetDouble("mu-s"), 
 										Manager.GetDouble("gamma-x"), false,  Architecture.GetArchitecture(), true);
     }      
+  if (Manager.GetBoolean("singleparticle-spectrum") == true)
+    {
+      char* EigenvalueOutputFile = new char [strlen(FilePrefix) + 64];
+      sprintf (EigenvalueOutputFile, "%s.dat", FilePrefix);
+      TightBindingModel->WriteAsciiSpectrum(EigenvalueOutputFile);
+    }
   double* TightBindingModelEnergies = 0;
   int* TightBindingModelLinearizedMomenta = 0;
   int* TightBindingModelBandIndices = 0;

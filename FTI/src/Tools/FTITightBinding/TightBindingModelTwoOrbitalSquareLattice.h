@@ -66,7 +66,7 @@ public:
     // gammaX = boundary condition twisting angle along x
     // gammaY = boundary condition twisting angle along y
     // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
-    TightBindingModelTwoOrbitalSquareLattice(int nbrSiteX, int nbrSiteY, int t1, int t2, int t3, int foldingFactor, double mus, double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
+    TightBindingModelTwoOrbitalSquareLattice(int nbrSiteX, int nbrSiteY, double t1, double t2, double t3, int foldingFactor, double mus, double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
 
     // destructor
     //
