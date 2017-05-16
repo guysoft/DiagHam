@@ -14,8 +14,6 @@
 #include "Operator/ParticleOnSphereDensityDensityOperator.h"
 #include "Operator/ParticleOnSphereDensityOperator.h"
 
-#include "Tools/FTITightBinding/TightBindingModelHofstadterSquare.h"
-
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
