@@ -324,14 +324,35 @@ int main(int argc, char** argv)
 	      if (OutputFileName == 0)
 		{
 		  char* TmpExtension = new char[256];
-		  sprintf(TmpExtension, "na_%d.parentspec", NbrParticlesInPartition);
-		  if (strcasestr(Manager.GetString("density-matrix"), "bz2") == 0)
+		  if (strcasestr(Manager.GetString("density-matrix"), "realent") == 0)
 		    {
-		      OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.parent", TmpExtension);
+		      sprintf(TmpExtension, "na_%d.parentspec", NbrParticlesInPartition);
 		    }
 		  else
 		    {
-		      OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.parent.bz2", TmpExtension);
+		      sprintf(TmpExtension, "na_%d.realentspec", NbrParticlesInPartition);
+		    }
+		  if (strcasestr(Manager.GetString("density-matrix"), "bz2") == 0)
+		    {
+		      if (strcasestr(Manager.GetString("density-matrix"), "realent") == 0)
+			{
+			  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.parent", TmpExtension);
+			}
+		      else
+			{
+			  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.realent", TmpExtension);
+			}
+		    }
+		  else
+		    {
+		      if (strcasestr(Manager.GetString("density-matrix"), "realent") == 0)
+			{
+			  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.parent.bz2", TmpExtension);
+			}
+		      else
+			{
+			  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.realent.bz2", TmpExtension);
+			}
 		    }
 		}
 	      ofstream File;
