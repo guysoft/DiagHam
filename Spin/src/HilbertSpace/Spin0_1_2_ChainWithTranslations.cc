@@ -27,7 +27,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-
+#include <bitset>
 #include "HilbertSpace/Spin0_1_2_ChainWithTranslations.h"
 #include "GeneralTools/ArrayTools.h"
 
@@ -604,9 +604,56 @@ double Spin0_1_2_ChainWithTranslations::TotalSzSz (int index)
 
 double Spin0_1_2_ChainWithTranslations::SziSzj (int i, int j, int state)
 {
-  cout <<"Calling undefined function double Spin0_1_2_ChainWithTranslations::SziSzj (int i, int j, int state)"<<endl;
-  return 0.0;
+  int TmpState = this->ChainDescription[state];
+  int TmpI =  (( TmpState >> (i << 1) ) & 0x03ul );
+  int TmpJ =  (( TmpState >> (j << 1) ) & 0x03ul );
+
+  if ( ( TmpI == 2 ) ||  ( TmpJ == 2 ) )
+    return 0.0;
+  else
+    {
+      if ( TmpI == TmpJ )
+	return 0.25;      
+      else
+	return -0.25;      
+    }
 }
+
+// return index of resulting state from application of S-_i S+_j operator on a given state
+//
+// i = position of S- operator
+// j = position of S+ operator
+// state = index of the state to be applied on S-_i S+_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state 
+
+int Spin0_1_2_ChainWithTranslations::SmiSpj (int i, int j, int state, double& coefficient)
+{
+  int TmpState = this->ChainDescription[state];
+  int TmpI =  (( TmpState >> (i << 1) ) & 0x03ul );
+  int TmpJ =  (( TmpState >> (j << 1) ) & 0x03ul );
+  
+  if ( ( TmpI == 1 ) && ( TmpJ == 0 ) )
+    {
+//      std::bitset<8> x (TmpState);
+      coefficient = 1.0;
+      unsigned long Mask = (0x1ul << (2*i)) | (0x1ul << (2*j));
+      TmpState ^= Mask;
+//      std::bitset<8> t (Mask);
+//      std::bitset<8> y (TmpState);
+//      cout <<x<<" " <<y<<" "<<t<<endl;
+      return this->FindStateIndex(TmpState);
+    }
+  else
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension; 
+    }
+  
+}
+
+
+
 
 int Spin0_1_2_ChainWithTranslations::SpiSpj (int i, int j, int state, double& coefficient, int& nbrTranslation)
 {
@@ -671,7 +718,7 @@ void Spin0_1_2_ChainWithTranslations::CreatePrecalculationTable()
       this->CompatibilityWithMomentum[i] = true;
     else
       this->CompatibilityWithMomentum[i] = false;
-
+ 
   this->RescalingFactors = new double* [TmpPeriodicity + 1];
   for (int i = 1; i <= TmpPeriodicity; ++i)
     {
@@ -738,4 +785,20 @@ int Spin0_1_2_ChainWithTranslations::FindStateIndex(unsigned long state)
   if (this->ChainDescription[HighPos] == state ) 
     return HighPos;   
   return this->HilbertSpaceDimension;
+}
+
+
+// get the value of the spin (i.e. S) at a given site
+// 
+// site = site index
+// return value = twice the spin
+
+int Spin0_1_2_ChainWithTranslations::GetLocalSpin (int site, int state)
+{
+  int TmpI = (( this->ChainDescription[state] >> (site << 1) ) & 0x03ul );
+  if (TmpI == 2)
+    return 0.0;
+  else
+    return 1.0;
+
 }

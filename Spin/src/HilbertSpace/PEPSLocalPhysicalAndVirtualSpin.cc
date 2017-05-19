@@ -40,9 +40,9 @@ using std::dec;
 
 
 
-PEPSLocalPhysicalAndVirtualSpin::PEPSLocalPhysicalAndVirtualSpin (int physicalSpinValue, int nbrVirtualSpinRepresentation, int * tableOfVirtualSpinRepresentations, int sz)
+PEPSLocalPhysicalAndVirtualSpin::PEPSLocalPhysicalAndVirtualSpin (int numberSpin, int physicalSpinValue, int nbrVirtualSpinRepresentation, int * tableOfVirtualSpinRepresentations, int sz)
 {
-  this->ChainLength = 5;
+  this->ChainLength =  numberSpin;
   this->Sz = sz;
   this->PhysicalSpinValue  = physicalSpinValue;
   this->NbrVirtualSpinRepresentation =  nbrVirtualSpinRepresentation;
@@ -71,9 +71,9 @@ PEPSLocalPhysicalAndVirtualSpin::PEPSLocalPhysicalAndVirtualSpin (int physicalSp
 	}
     }
 
-  PowerOfNbrSpinStatesForVirtualSpins = new int[5];
+  PowerOfNbrSpinStatesForVirtualSpins = new int[this->ChainLength];
   PowerOfNbrSpinStatesForVirtualSpins[0] = 1;
-  for(int i = 1; i < 5; i++)
+  for(int i = 1 ; i < this->ChainLength ; i++)
     {
       PowerOfNbrSpinStatesForVirtualSpins[i] = PowerOfNbrSpinStatesForVirtualSpins[i-1] * NbrSpinStatesForVirtualSpins;
     }
@@ -82,7 +82,7 @@ PEPSLocalPhysicalAndVirtualSpin::PEPSLocalPhysicalAndVirtualSpin (int physicalSp
   int TmpHilbertSpaceDimension = 0;
   for(int i =0 ; i <  this->PhysicalSpinValue+1; i++)
     {
-      TmpHilbertSpaceDimension+=this->EvaluateHilbertSpaceDimension(4,this->Sz- (2*i - this->PhysicalSpinValue));
+      TmpHilbertSpaceDimension+=this->EvaluateHilbertSpaceDimension(this->ChainLength -1,this->Sz- (2*i - this->PhysicalSpinValue));
     }
   this->HilbertSpaceDimension = TmpHilbertSpaceDimension;
   this->StateDescription = new unsigned long[TmpHilbertSpaceDimension];
@@ -91,7 +91,7 @@ PEPSLocalPhysicalAndVirtualSpin::PEPSLocalPhysicalAndVirtualSpin (int physicalSp
   TmpHilbertSpaceDimension = 0;
   for(int i =0 ; i <   this->PhysicalSpinValue+1; i++)
     {
-      TmpHilbertSpaceDimension=this->GeneratesStates(4,this->Sz- (2*i - this->PhysicalSpinValue), i * PowerOfNbrSpinStatesForVirtualSpins[4], TmpHilbertSpaceDimension);
+      TmpHilbertSpaceDimension=this->GeneratesStates(this->ChainLength -1,this->Sz- (2*i - this->PhysicalSpinValue), i * PowerOfNbrSpinStatesForVirtualSpins[this->ChainLength - 1], TmpHilbertSpaceDimension);
     }  
   if (TmpHilbertSpaceDimension !=   this->HilbertSpaceDimension ) 
     {
@@ -101,17 +101,17 @@ PEPSLocalPhysicalAndVirtualSpin::PEPSLocalPhysicalAndVirtualSpin (int physicalSp
 
 AbstractHilbertSpace* PEPSLocalPhysicalAndVirtualSpin::Clone()
 {
-  return new PEPSLocalPhysicalAndVirtualSpin(this->PhysicalSpinValue, this->NbrVirtualSpinRepresentation, this->TableOfVirtualSpinRepresentations,this->Sz);
+  return new PEPSLocalPhysicalAndVirtualSpin(this->ChainLength ,this->PhysicalSpinValue, this->NbrVirtualSpinRepresentation, this->TableOfVirtualSpinRepresentations,this->Sz);
 }
 
 PEPSLocalPhysicalAndVirtualSpin::~PEPSLocalPhysicalAndVirtualSpin()
 {
-  delete [] StateDescription;
-  delete [] TableOfVirtualSpinRepresentations;
-  delete [] TableOfSzValuesForVirtualSpin;
-  delete [] TableOfSValuesForVirtualSpin;
-  delete [] PowerOfNbrSpinStatesForVirtualSpins;
-  delete[]  this->TableOfSzValuesForPhysicalSpin;
+  delete [] this->StateDescription;
+  delete [] this->TableOfVirtualSpinRepresentations;
+  delete [] this->TableOfSzValuesForVirtualSpin;
+  delete [] this->TableOfSValuesForVirtualSpin;
+  delete [] this->PowerOfNbrSpinStatesForVirtualSpins;
+  delete [] this->TableOfSzValuesForPhysicalSpin;
 }
 
 
@@ -155,8 +155,9 @@ int PEPSLocalPhysicalAndVirtualSpin::GeneratesStates(int nbrVirtualSpinToBeAttri
   
   for(int i =0; i <this->NbrSpinStatesForVirtualSpins;i++)
     {
-      pos=this->GeneratesStates(nbrVirtualSpinToBeAttributed-1, szToBeRealized-this->TableOfSzValuesForVirtualSpin[i],beginningOfStateRepresentation+i * PowerOfNbrSpinStatesForVirtualSpins[nbrVirtualSpinToBeAttributed-1],pos );
+      pos = this->GeneratesStates(nbrVirtualSpinToBeAttributed-1, szToBeRealized-this->TableOfSzValuesForVirtualSpin[i],beginningOfStateRepresentation+i * PowerOfNbrSpinStatesForVirtualSpins[nbrVirtualSpinToBeAttributed-1],pos );
     }
+  
   return pos;  
 }
 
@@ -187,18 +188,14 @@ ostream& PEPSLocalPhysicalAndVirtualSpin::PrintState (ostream& Str, int state)
     return Str;
   
   unsigned long TmpState = this->StateDescription[state];
-  int DSpin = TmpState %this->PowerOfNbrSpinStatesForVirtualSpins[1];
-  TmpState/=this->PowerOfNbrSpinStatesForVirtualSpins[1];
-  int RSpin = TmpState %this->PowerOfNbrSpinStatesForVirtualSpins[1];
-  TmpState/=this->PowerOfNbrSpinStatesForVirtualSpins[1];
-  int USpin = TmpState %this->PowerOfNbrSpinStatesForVirtualSpins[1];
-  TmpState/=this->PowerOfNbrSpinStatesForVirtualSpins[1];
-  int LSpin = TmpState %this->PowerOfNbrSpinStatesForVirtualSpins[1];
-  TmpState/=this->PowerOfNbrSpinStatesForVirtualSpins[1];
   
-  int PhysicalSpin = TmpState;
-
-  Str<<this->StateDescription[state]<<" "<<PhysicalSpin<<" "<< LSpin<<" "<< USpin<<" "<< RSpin<<" "<< DSpin<<" "<<this->FindStateIndex(this->StateDescription[state])<<endl;
+  int ArrayRepresentation[this->ChainLength];
+  this->ConvertFromIntegerToArray(TmpState ,ArrayRepresentation);
+  
+  for(int i = 0 ; i < this->ChainLength; i++)
+    {
+      Str << ArrayRepresentation[i]<<" ";
+    }
   
   return Str;
 }
@@ -245,11 +242,10 @@ int PEPSLocalPhysicalAndVirtualSpin::GetLocalSpin(int site, int state)
 {
   if (site ==0)
     return this->PhysicalSpinValue;
-  int LocalIndexSite =  (this->StateDescription[state]/this->PowerOfNbrSpinStatesForVirtualSpins[this->ChainLength-1 - site])%this->PowerOfNbrSpinStatesForVirtualSpins[1];
+  int LocalIndexSite =  (this->StateDescription[state]/this->PowerOfNbrSpinStatesForVirtualSpins[this->ChainLength - 1 - site])%this->PowerOfNbrSpinStatesForVirtualSpins[1];
 //  cout << site<< " "<<state << " " <<this->TableOfSValuesForVirtualSpin[LocalIndexSite]<<endl;
   return  this->TableOfSValuesForVirtualSpin[LocalIndexSite];
 }
-
 
 
 
@@ -267,19 +263,20 @@ double PEPSLocalPhysicalAndVirtualSpin::SziSzj (int i, int j, int state)
   int LocalIndexSiteJ  =  (TmpState/this->PowerOfNbrSpinStatesForVirtualSpins[this->ChainLength - 1 - j])%this->PowerOfNbrSpinStatesForVirtualSpins[1]; 
 //  cout <<i<< " "<<j<< " "<<state<< " "<<this->TableOfSzValuesForVirtualSpin[LocalIndexSiteI] *  this->TableOfSzValuesForVirtualSpin[LocalIndexSiteJ]*0.25<<endl
   
-    if (i==0 ) 
+  if (i==0 ) 
     {
-      LocalIndexSiteI =  TmpState/this->PowerOfNbrSpinStatesForVirtualSpins[4];
+      LocalIndexSiteI =  TmpState/this->PowerOfNbrSpinStatesForVirtualSpins[this->ChainLength-1];
       if (j==0 ) 
 	{
-	  LocalIndexSiteJ =  TmpState/this->PowerOfNbrSpinStatesForVirtualSpins[4];
+	  LocalIndexSiteJ =  TmpState/this->PowerOfNbrSpinStatesForVirtualSpins[this->ChainLength-1];
 	  return this->TableOfSzValuesForPhysicalSpin[LocalIndexSiteI] *   this->TableOfSzValuesForPhysicalSpin[LocalIndexSiteJ]*0.25; 
 	}
       return  this->TableOfSzValuesForPhysicalSpin[LocalIndexSiteI] *  this->TableOfSzValuesForVirtualSpin[LocalIndexSiteJ]*0.25; 
     }
+    
   if (j==0)
     {
-      LocalIndexSiteJ =  TmpState/this->PowerOfNbrSpinStatesForVirtualSpins[4];
+      LocalIndexSiteJ =  TmpState/this->PowerOfNbrSpinStatesForVirtualSpins[this->ChainLength-1];
       return  this->TableOfSzValuesForPhysicalSpin[LocalIndexSiteJ] *  this->TableOfSzValuesForVirtualSpin[LocalIndexSiteI]*0.25; 
     }
   
@@ -306,7 +303,7 @@ int PEPSLocalPhysicalAndVirtualSpin::SmiSpj (int i, int j, int state, double& co
   
   if  (i==0 )
     {
-      LocalIndexSiteI =  TmpState/this->PowerOfNbrSpinStatesForVirtualSpins[4];
+      LocalIndexSiteI =  TmpState/this->PowerOfNbrSpinStatesForVirtualSpins[this->ChainLength-1];
       CoefI =  (this->PhysicalSpinValue * (this->PhysicalSpinValue + 2) -  (  this->TableOfSzValuesForPhysicalSpin[LocalIndexSiteI] * ( this->TableOfSzValuesForPhysicalSpin[LocalIndexSiteI] - 2 ) ));
     }
   else
@@ -314,7 +311,7 @@ int PEPSLocalPhysicalAndVirtualSpin::SmiSpj (int i, int j, int state, double& co
 
  if  (j==0 )
    {
-     LocalIndexSiteJ =  TmpState/this->PowerOfNbrSpinStatesForVirtualSpins[4];
+     LocalIndexSiteJ =  TmpState/this->PowerOfNbrSpinStatesForVirtualSpins[this->ChainLength-1];
      CoefJ =  (this->PhysicalSpinValue * (this->PhysicalSpinValue + 2) -  (  this->TableOfSzValuesForPhysicalSpin[LocalIndexSiteJ] * ( this->TableOfSzValuesForPhysicalSpin[LocalIndexSiteJ] + 2 ) ));
 
    }
@@ -338,15 +335,22 @@ int PEPSLocalPhysicalAndVirtualSpin::SmiSpj (int i, int j, int state, double& co
 // coefficient = reference on double where numerical coefficient has to be stored
 // return value = index of resulting state 
 
-void PEPSLocalPhysicalAndVirtualSpin::ApplyC4Rotation (ComplexVector & initialState, ComplexVector &  FinalState)
+void PEPSLocalPhysicalAndVirtualSpin::ApplyRotation (ComplexVector & initialState, ComplexVector &  FinalState)
 {
-  for( int i =0 ; i < this->HilbertSpaceDimension; i++)
+  int ArrayRepresentation[this->ChainLength];
+  
+  for( int i = 0 ; i < this->HilbertSpaceDimension; i++)
     {
-      int TmpState = this->StateDescription[i];
-      int PhysicalSpin = TmpState /  this->PowerOfNbrSpinStatesForVirtualSpins[this->ChainLength-1];
-      int LeftSpin = (TmpState /  this->PowerOfNbrSpinStatesForVirtualSpins[this->ChainLength-2]) % this->PowerOfNbrSpinStatesForVirtualSpins[1];
-      TmpState = (TmpState % this->PowerOfNbrSpinStatesForVirtualSpins[this->ChainLength-2]) *  this->PowerOfNbrSpinStatesForVirtualSpins[1] +  LeftSpin +  PhysicalSpin *  this->PowerOfNbrSpinStatesForVirtualSpins[this->ChainLength-1];
-      FinalState[this->FindStateIndex(TmpState)] =  initialState[i];
+      this->ConvertFromIntegerToArray(this->StateDescription[i], ArrayRepresentation);
+
+      int Tmp = ArrayRepresentation[1];
+      for(int j = 1 ; j < this->ChainLength - 1; j++)
+	{
+	  ArrayRepresentation[j] = ArrayRepresentation[j+1];
+	}
+      ArrayRepresentation[this->ChainLength-1] = Tmp;
+      
+      FinalState[this->FindStateIndex(this->ConvertFromArrayToInteger(ArrayRepresentation))] =  initialState[i];
     }
 }
 
@@ -361,18 +365,21 @@ void PEPSLocalPhysicalAndVirtualSpin::ApplyC4Rotation (ComplexVector & initialSt
 
 void PEPSLocalPhysicalAndVirtualSpin::ApplyHReflexion (ComplexVector & initialState, ComplexVector &  FinalState)
 {
-  for( int i =0 ; i < this->HilbertSpaceDimension; i++)
+  int ArrayRepresentation[this->ChainLength];
+  for(int i = 0 ; i < this->HilbertSpaceDimension; i++)
     {
-      int TmpState = this->StateDescription[i];
-      int USpin =  (TmpState /  this->PowerOfNbrSpinStatesForVirtualSpins[2]) % this->PowerOfNbrSpinStatesForVirtualSpins[1];
-      int DSpin = (TmpState % this->PowerOfNbrSpinStatesForVirtualSpins[1]);
-
-      TmpState =  TmpState + ( (DSpin - USpin) *  this->PowerOfNbrSpinStatesForVirtualSpins[2] )   + (USpin - DSpin) ;
-      FinalState[this->FindStateIndex(TmpState)] =  initialState[i];
+      this->ConvertFromIntegerToArray(this->StateDescription[i], ArrayRepresentation);
+      
+      for (int t = 0 ; t < (this->ChainLength-1)/2 ; t++)
+	{
+	  int Tmp = ArrayRepresentation[t+2];
+	  ArrayRepresentation[t+2] = ArrayRepresentation[this->ChainLength - 1 - t];
+	  ArrayRepresentation[this->ChainLength - 1 - t] = Tmp;
+	}
+      
+      FinalState[this->FindStateIndex(this->ConvertFromArrayToInteger(ArrayRepresentation))] =  initialState[i];
     }
 }
-
-
 
 // return index of resulting state from application of S-_i S+_j operator on a given state
 //
@@ -381,66 +388,35 @@ void PEPSLocalPhysicalAndVirtualSpin::ApplyHReflexion (ComplexVector & initialSt
 // state = index of the state to be applied on S-_i S+_j operator
 // coefficient = reference on double where numerical coefficient has to be stored
 // return value = index of resulting state 
-void PEPSLocalPhysicalAndVirtualSpin::ApplyVReflexion (ComplexVector & initialState, ComplexVector &  FinalState)
-{
-  for( int i =0 ; i < this->HilbertSpaceDimension; i++)
-    {
-      int TmpState = this->StateDescription[i];
-      int LSpin =  (TmpState /  this->PowerOfNbrSpinStatesForVirtualSpins[3]) % this->PowerOfNbrSpinStatesForVirtualSpins[1];
-      int RSpin =  (TmpState /  this->PowerOfNbrSpinStatesForVirtualSpins[1]) % this->PowerOfNbrSpinStatesForVirtualSpins[1]; 
 
-      TmpState =  TmpState + ( ( RSpin -  LSpin) *  this->PowerOfNbrSpinStatesForVirtualSpins[3])   +  ( ( LSpin -  RSpin) *  this->PowerOfNbrSpinStatesForVirtualSpins[1]) ;
-      FinalState[this->FindStateIndex(TmpState)] =  initialState[i];
-    }
-}
-
-
-
-// return index of resulting state from application of S-_i S+_j operator on a given state
-//
-// i = position of S- operator
-// j = position of S+ operator
-// state = index of the state to be applied on S-_i S+_j operator
-// coefficient = reference on double where numerical coefficient has to be stored
-// return value = index of resulting state 
 void PEPSLocalPhysicalAndVirtualSpin::ApplyDXReflexion (ComplexVector & initialState, ComplexVector &  FinalState)
 {
-  for( int i =0 ; i < this->HilbertSpaceDimension; i++)
+  if ( ( this->ChainLength -1 )% 2 != 0)
     {
-      int TmpState = this->StateDescription[i];
-
-      int LSpin =  (TmpState /  this->PowerOfNbrSpinStatesForVirtualSpins[3]) % this->PowerOfNbrSpinStatesForVirtualSpins[1];
-      int RSpin =  (TmpState /  this->PowerOfNbrSpinStatesForVirtualSpins[1]) % this->PowerOfNbrSpinStatesForVirtualSpins[1]; 
-      int USpin =  (TmpState /  this->PowerOfNbrSpinStatesForVirtualSpins[2]) % this->PowerOfNbrSpinStatesForVirtualSpins[1];
-      int DSpin = (TmpState % this->PowerOfNbrSpinStatesForVirtualSpins[1]);
-
-      TmpState =  TmpState + ( ( DSpin -  LSpin) *  this->PowerOfNbrSpinStatesForVirtualSpins[3])   +   ( (RSpin - USpin) *  this->PowerOfNbrSpinStatesForVirtualSpins[2] ) +  ( ( USpin -  RSpin) *  this->PowerOfNbrSpinStatesForVirtualSpins[1])  + (LSpin - DSpin) ;
-
-      FinalState[this->FindStateIndex(TmpState)] =  initialState[i];
+      cout << "Diagonal Reflexion is not a symmetry of the tensor"<<endl;
+      return ;
     }
-}
-
-
-// return index of resulting state from application of S-_i S+_j operator on a given state
-//
-// i = position of S- operator
-// j = position of S+ operator
-// state = index of the state to be applied on S-_i S+_j operator
-// coefficient = reference on double where numerical coefficient has to be stored
-// return value = index of resulting state 
-void PEPSLocalPhysicalAndVirtualSpin::ApplyDMinusXReflexion (ComplexVector & initialState, ComplexVector &  FinalState)
-{
-  for( int i =0 ; i < this->HilbertSpaceDimension; i++)
+  
+  int ArrayRepresentation[this->ChainLength];
+  
+  for( int i = 0 ; i < this->HilbertSpaceDimension; i++)
     {
-      int TmpState = this->StateDescription[i];
-
-      int LSpin =  (TmpState /  this->PowerOfNbrSpinStatesForVirtualSpins[3]) % this->PowerOfNbrSpinStatesForVirtualSpins[1];
-      int RSpin =  (TmpState /  this->PowerOfNbrSpinStatesForVirtualSpins[1]) % this->PowerOfNbrSpinStatesForVirtualSpins[1]; 
-      int USpin =  (TmpState /  this->PowerOfNbrSpinStatesForVirtualSpins[2]) % this->PowerOfNbrSpinStatesForVirtualSpins[1];
-      int DSpin = (TmpState % this->PowerOfNbrSpinStatesForVirtualSpins[1]);
-
-      TmpState =  TmpState + ( ( USpin -  LSpin) *  this->PowerOfNbrSpinStatesForVirtualSpins[3])   +   ( (LSpin - USpin) *  this->PowerOfNbrSpinStatesForVirtualSpins[2] ) +  ( ( DSpin -  RSpin) *  this->PowerOfNbrSpinStatesForVirtualSpins[1])  + (RSpin - DSpin) ;
+      this->ConvertFromIntegerToArray(this->StateDescription[i], ArrayRepresentation);
       
-      FinalState[this->FindStateIndex(TmpState)] =  initialState[i];
+      for (int t = 1 ; t <= (this->ChainLength-1)/2 ; t++)
+	{
+	  int Tmp = ArrayRepresentation[t];
+	  ArrayRepresentation[t] = ArrayRepresentation[this->ChainLength - t];
+	  ArrayRepresentation[this->ChainLength -  t] = Tmp;
+	}
+
+/*      if ( i ==0)
+	{
+	  for(int p = 0 ; p <this->ChainLength ; p++)
+	    cout <<ArrayRepresentation[p]<<" ";
+	  cout <<endl;
+	}*/
+      FinalState[this->FindStateIndex(this->ConvertFromArrayToInteger(ArrayRepresentation))] =  initialState[i];
+
     }
 }

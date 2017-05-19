@@ -69,7 +69,7 @@ class PEPSLocalPhysicalAndVirtualSpin : public AbstractSpinChain
   
   // virtual destructor
   //
-  PEPSLocalPhysicalAndVirtualSpin (int physicalSpinValue, int nbrVirtualSpinRepresentation, int * tableOfVirtualSpinRepresentations,int sz);
+  PEPSLocalPhysicalAndVirtualSpin (int numberSpin, int physicalSpinValue, int nbrVirtualSpinRepresentation, int * tableOfVirtualSpinRepresentations,int sz);
   
   
   //  virtual destructor
@@ -111,11 +111,12 @@ class PEPSLocalPhysicalAndVirtualSpin : public AbstractSpinChain
   // return value = index of resulting state 
   virtual int SmiSpj (int i, int j, int state, double& coefficient);
 
-  void ApplyDMinusXReflexion (ComplexVector & initialState, ComplexVector &  FinalState);    
+
   void ApplyDXReflexion (ComplexVector & initialState, ComplexVector &  FinalState);
-  void ApplyVReflexion (ComplexVector & initialState, ComplexVector &  FinalState);
+
+
   void ApplyHReflexion (ComplexVector & initialState, ComplexVector &  FinalState);
-  void ApplyC4Rotation (ComplexVector & initialState, ComplexVector &  FinalState);
+  void ApplyRotation (ComplexVector & initialState, ComplexVector &  FinalState);
 
  protected:
   
@@ -129,9 +130,30 @@ class PEPSLocalPhysicalAndVirtualSpin : public AbstractSpinChain
   
   int EvaluateHilbertSpaceDimension(int nbrVirtualSpinToBeAttributed, int szToBeRealized);
   
-
+  inline  unsigned long ConvertFromArrayToInteger(int * spinConfiguration) ;
+  inline  void ConvertFromIntegerToArray(unsigned long state, int * spinConfiguration);
 };
 
+unsigned long PEPSLocalPhysicalAndVirtualSpin::ConvertFromArrayToInteger(int * spinConfiguration)
+{
+  unsigned long Tmp = 0x0ul;
+
+  for (int i =0 ; i < this->ChainLength;i++)
+    Tmp+= spinConfiguration[i] * this->PowerOfNbrSpinStatesForVirtualSpins[this->ChainLength - 1 - i];
+  return Tmp;
+}
+
+
+void PEPSLocalPhysicalAndVirtualSpin::ConvertFromIntegerToArray(unsigned long state, int * spinConfiguration)
+{
+  for(int i = 0 ; i < this->ChainLength; i++)
+    {
+      spinConfiguration[this->ChainLength - 1 - i] = state %this->PowerOfNbrSpinStatesForVirtualSpins[1];
+      state /= this->PowerOfNbrSpinStatesForVirtualSpins[1];
+    }
+}
+
 #endif
+
 
 

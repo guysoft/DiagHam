@@ -1,8 +1,20 @@
 #include "Options/Options.h"
 
 #include "GeneralTools/MultiColumnASCIIFile.h"
+#include "HilbertSpace/Spin0_1_2_ChainWithTranslations.h"
 
+
+#include "Matrix/RealTriDiagonalSymmetricMatrix.h"
+#include "Matrix/RealSymmetricMatrix.h"
+#include "Matrix/RealMatrix.h"
+#include "Matrix/RealDiagonalMatrix.h"
+#include "Matrix/HermitianMatrix.h"
 #include "Matrix/ComplexMatrix.h"
+
+#include "Operator/SpinS2Operator.h"
+
+
+
 #include "MPSObjects/ComplexPEPSPBC.h"
 #include <iostream>
 #include <stdlib.h>
@@ -96,41 +108,91 @@ int main(int argc, char** argv)
 	{
 	  sprintf(FullOutputFileName,"PEPS_%s_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Lx,Ly); 
 	  ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPS (Lx,Ly/2, MatrixOnString , MatrixOnString, HorinzontalStringFlag, VerticalStringFlag);
+  cout <<State<<endl;
+
 	}
       else
 	{
 	  sprintf(FullOutputFileName,"PEPS_%s_sz_%d_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Sz,Lx,Ly); 
 	  ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPSSzConstraint (Lx,Ly/2,Sz,MatrixOnString , MatrixOnString, HorinzontalStringFlag, VerticalStringFlag);
 	  State.WriteVector(FullOutputFileName);
+  cout <<State<<endl;
+
 	}
     }
   else
     {
-      ComplexVector LeftVector;
-      if (LeftVector.ReadVector(Manager.GetString("left-vector")) == false)
+
+      /*      Spin0_1_2_ChainWithTranslations Space  (Ly,100000,100000);
+	      int NbrStates = Space.GetHilbertSpaceDimension();
+      HermitianMatrix S2Matrix(NbrStates, true);
+      SpinS2Operator TmpOperator(&Space, Ly);
+      TmpOperator.GetOperator(S2Matrix) ;
+      cout <<S2Matrix<<endl;
+      RealDiagonalMatrix TmpS2Eigenvalues(NbrStates);
+      ComplexMatrix TmpBasis (NbrStates, NbrStates);
+      TmpBasis.SetToIdentity();
+      S2Matrix.LapackDiagonalize(TmpS2Eigenvalues, TmpBasis);
+      int NbrS0State = 0;
+      for (int i = 0; i < NbrStates; ++i)
 	{
-	  cout << "error while reading " << Manager.GetString("left-vector") << endl;
-	  return -1;
-	} 
-      
-      ComplexVector RightVector;
-      if (RightVector.ReadVector(Manager.GetString("right-vector")) == false)
-	{
-	  cout << "error while reading " << Manager.GetString("right-vector") << endl;
-	  return -1;
-	} 
-      
-      if (Sz ==  -10000) 
-	{
-	  sprintf(FullOutputFileName,"PEPS_cylinder_%s_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Lx,Ly); 
-	  ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPS (Lx,Ly/2, MatrixOnString , MatrixOnString, LeftVector, RightVector, HorinzontalStringFlag, VerticalStringFlag);
-	  State.WriteVector(FullOutputFileName);
+	  double TmpS2 = TmpS2Eigenvalues[i];
+	  cout << "<S^2>=" << TmpS2 << " <S>=" << (0.5 * (sqrt((4.0 * TmpS2) + 1.0) - 1.0)) << endl;
+	  cout << "round(<2S>)=" <<  round(sqrt((4.0 * TmpS2) + 1.0) - 1.0) << endl; 
+	  if ( fabs(TmpS2) < 1e-7  ) 
+	    NbrS0State++;
 	}
-      else
+      cout << " Number of S = 0 boundary states : " <<  NbrS0State <<endl;
+
+    for (int i = 0; i <  NbrS0State; i++)
 	{
-	  sprintf(FullOutputFileName,"PEPS_cylinder_%s_sz_%d_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Sz,Lx,Ly); 
-	  ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPSSzConstraint (Lx, Ly/2,Sz, MatrixOnString , MatrixOnString, LeftVector, RightVector, HorinzontalStringFlag, VerticalStringFlag);
-	  State.WriteVector(FullOutputFileName);
+	  cout <<"i = "<< i <<endl;
+	  cout << TmpBasis[i]<<endl;
+	  
+	  if (Sz ==  -10000) 
+	    {
+	      sprintf(FullOutputFileName,"PEPS_cylinder_%s_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Lx,Ly); 
+	      ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPS (Lx,Ly/2, MatrixOnString , MatrixOnString,  TmpBasis[i],  TmpBasis[i], HorinzontalStringFlag, VerticalStringFlag);
+	      State.WriteVector(FullOutputFileName);
+	      cout <<State<<endl;
+	    }
+	  else
+	    {
+	      sprintf(FullOutputFileName,"PEPS_cylinder_%s_sz_%d_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Sz,Lx,Ly); 
+	      ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPSSzConstraint (Lx, Ly/2,Sz, MatrixOnString , MatrixOnString,  TmpBasis[i],  TmpBasis[i], HorinzontalStringFlag, VerticalStringFlag);
+	      State.WriteVector(FullOutputFileName);
+	      cout <<State<<endl;
+	    }
 	}
+    */
+    
+    ComplexVector LeftVector;
+    if (LeftVector.ReadVector(Manager.GetString("left-vector")) == false)
+      {
+	cout << "error while reading " << Manager.GetString("left-vector") << endl;
+	return -1;
+      } 
+    
+    ComplexVector RightVector;
+    if (RightVector.ReadVector(Manager.GetString("right-vector")) == false)
+      {
+	cout << "error while reading " << Manager.GetString("right-vector") << endl;
+	return -1;
+      } 
+    
+    if (Sz ==  -10000) 
+      {
+	sprintf(FullOutputFileName,"PEPS_cylinder_%s_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Lx,Ly); 
+	ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPS (Lx,Ly/2, MatrixOnString , MatrixOnString, LeftVector, RightVector, HorinzontalStringFlag, VerticalStringFlag);
+	State.WriteVector(FullOutputFileName);
+	cout <<State<<endl;
+      }
+    else
+      {
+	sprintf(FullOutputFileName,"PEPS_cylinder_%s_sz_%d_lx_%d_ly_%d.vec",Manager.GetString("peps-name"),Sz,Lx,Ly); 
+	ComplexVector State = PEPS.ComputeFockSpaceRepresentationOfAPEPSSzConstraint (Lx, Ly/2,Sz, MatrixOnString , MatrixOnString, LeftVector, RightVector, HorinzontalStringFlag, VerticalStringFlag);
+	State.WriteVector(FullOutputFileName);
+	cout <<State<<endl;
+      }
     }
 }

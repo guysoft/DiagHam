@@ -67,6 +67,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  BooleanOption ('\n', "staggered", "use the double spin chain HilbertSpace");
   (*SystemGroup) += new  SingleIntegerOption ('\n', "parity", "parity of the spin chain", 0);
   (*SystemGroup) += new  BooleanOption ('\n', "periodic-chain", "consider periodic instead of open chain", false);
+  (*SystemGroup) += new  BooleanOption ('\n', "no-sz", "don't consider sz quantum number (only available for certain chains up to now)", false);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "max-momentum", "max momentum in the periodic case (should be a divisor of the number of sites)", -1);  
   (*SystemGroup) += new  SingleIntegerOption ('\n', "sz-symmetry", "set the Sz<->-Sz symmetry sector (0 if it should not be used)", 0);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "inversion-symmetry", "set the inversion symmetry sector (0 if it should not be used)", 0);
@@ -112,7 +113,7 @@ int main(int argc, char** argv)
   double Error = Manager.GetDouble("hide-component");
   bool SymmetryFlag = Manager.GetBoolean("symmetry"); 
   bool SubLatticeQuantumNumberFlag =  Manager.GetBoolean("sublatticeQN"); 
-
+  bool NoSzQuantumNumberFlag =  Manager.GetBoolean("no-sz"); 
   if  (SubLatticeQuantumNumberFlag == true )
     SymmetryFlag = true;
   
@@ -354,13 +355,17 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("periodic-chain") == false)
 	{
 	  AbstractSpinChain* Space = 0;
+
 	  if (Manager.GetBoolean( "staggered") == true)
 	    {
 	      Space = new Spin0_1_2_ChainWithTranslationsStaggered ( NbrSpins, SzValue,  1000000, 1000000);
 	    }
 	  else
 	    {
-	      Space = new Spin0_1_2_ChainWithTranslations ( NbrSpins, SzValue,  1000000, 1000000);
+	      if (NoSzQuantumNumberFlag == true )
+		Space = new Spin0_1_2_ChainWithTranslations ( NbrSpins,  1000000, 1000000);
+	      else
+		Space = new Spin0_1_2_ChainWithTranslations ( NbrSpins, SzValue,  1000000, 1000000);
 	    }
 	  
 	  if (Manager.GetString("state") == 0)

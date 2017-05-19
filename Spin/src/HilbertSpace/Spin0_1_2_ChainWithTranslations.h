@@ -142,6 +142,11 @@ class Spin0_1_2_ChainWithTranslations : public AbstractSpinChainWithTranslations
 
   virtual int FindStateIndex(unsigned long stateDescription);
 
+
+  virtual int SmiSpj (int i, int j, int state, double& coefficient);
+  virtual int GetLocalSpin(int site, int state);
+
+
  protected:
 
   // return value of twice spin projection on (Oz) for a given state
