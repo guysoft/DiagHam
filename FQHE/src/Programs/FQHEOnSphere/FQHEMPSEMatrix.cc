@@ -382,18 +382,20 @@ int main(int argc, char** argv)
 	  EMatrixIndexString = new char* [TmpBMatrixDimension * TmpRightBMatrixDimension];
 	  int TmpPLevelLeft;
 	  int TmpQLeft;
+	  int TmpCFTSectorLeft;
 	  int TmpPLevelRight;
 	  int TmpQRight;
+	  int TmpCFTSectorRight;	  
 	  for (int i = 0; i < TmpBMatrixDimension; ++i)
 	    {
-	      MPSLeftMatrix->GetChargeAndPLevelFromMatrixIndex(i, TmpPLevelLeft, TmpQLeft);
+	      MPSLeftMatrix->GetCFTSectorChargeAndPLevelFromMatrixIndex(i, TmpCFTSectorLeft, TmpPLevelLeft, TmpQLeft);
 	      for (int j = 0; j < TmpRightBMatrixDimension; ++j)
 		{
-		  MPSRightMatrix->GetChargeAndPLevelFromMatrixIndex(j, TmpPLevelRight, TmpQRight);
+		  MPSRightMatrix->GetCFTSectorChargeAndPLevelFromMatrixIndex(j, TmpCFTSectorRight, TmpPLevelRight, TmpQRight);
 		  EMatrixIndexString[(i * TmpRightBMatrixDimension) + j] = new char [128];
 		  sprintf (EMatrixIndexString[(i * TmpRightBMatrixDimension) + j], 
-			   "(Q=%d, P=%d, i=%d)x(Q=%d, P=%d, j=%d)", TmpQLeft, TmpPLevelLeft, i,
-			   TmpQRight, TmpPLevelRight, j);
+			   "(x=%d, Q=%d, P=%d, i=%d)x(x=%d, Q=%d, P=%d, j=%d)", TmpCFTSectorLeft, TmpQLeft, TmpPLevelLeft, i,
+			   TmpCFTSectorRight, TmpQRight, TmpPLevelRight, j);
 		}
 	    }
 	}

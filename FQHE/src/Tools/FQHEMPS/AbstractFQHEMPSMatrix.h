@@ -311,6 +311,14 @@ class AbstractFQHEMPSMatrix
   // qValue = reference on the charge index
   virtual void GetChargeAndPLevelFromMatrixIndex(int index, int& pLevel, int& qValue);
 
+  // compute the CFT sector, the level and the charge index of a given matrix index
+  //
+  // index = matrix index
+  // sector = reference on the CFT sector
+  // pLevel = reference on the level
+  // qValue = reference on the charge index
+  virtual void GetCFTSectorChargeAndPLevelFromMatrixIndex(int index, int& sector, int& pLevel, int& qValue);
+
   // get the boundary indices of the MPS representation
   //
   // rowIndex = matrix row index
@@ -436,6 +444,21 @@ inline void AbstractFQHEMPSMatrix::GetChargeAndPLevelFromMatrixIndex(int index, 
   pLevel = -1;
   qValue = -1;
 }
+
+
+// compute the CFT sector, the level and the charge index of a given matrix index
+//
+// index = matrix index
+// sector = reference on the CFT sector
+// pLevel = reference on the level
+// qValue = reference on the charge index
+
+inline void AbstractFQHEMPSMatrix::GetCFTSectorChargeAndPLevelFromMatrixIndex(int index, int& sector, int& pLevel, int& qValue)
+{
+  sector = 0;
+  this->GetChargeAndPLevelFromMatrixIndex(index, pLevel, qValue);
+}
+
 
 // get the degeneracy of the transfer matrix largest eigenvalue
 // 

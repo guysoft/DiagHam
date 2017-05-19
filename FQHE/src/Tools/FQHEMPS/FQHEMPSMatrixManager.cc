@@ -47,6 +47,7 @@
 #include "Tools/FQHEMPS/FQHEMPSSymmetrizedStateMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSTwistedSymmetrizedStateMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSFixedBondDimensionMatrix.h"
+#include "Tools/FQHEMPS/FQHEMPSPHPfaffianMatrix.h"
 
 #include "Matrix/SparseRealMatrix.h"
 #include "Matrix/SparseComplexMatrix.h"
@@ -125,6 +126,7 @@ void FQHEMPSMatrixManager::AddOptionGroup(OptionManager* manager, const char* co
   (*SystemGroup) += new BooleanOption  ('\n', "optimized-k2", "used an optimized version of the (k=2,r) series of clustered states");
   (*SystemGroup) += new BooleanOption  ('\n', "n1-superconformal", "consider the N=1 superconformal states (requires a cft description)");
   (*SystemGroup) += new BooleanOption  ('\n', "rr-3", "consider the k= 3 Read-Rezayi state");
+  (*SystemGroup) += new BooleanOption  ('\n', "ph-pfaffian", "PH-Pfaffian state");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "r-index", "r index of the (k,r) clustered state", 2);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "boson-truncation", "maximum occupation for a given orbital", 1);
@@ -504,7 +506,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 	    }
 	  else
 	    {
-	      if (this->Options->GetBoolean("n1-superconformal") != 0)
+	      if (this->Options->GetBoolean("n1-superconformal") == true)
 		{
 		  if (importBMatrices != 0)
 		    {
@@ -524,30 +526,55 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 		}
 	      else
 		{
-		  if (importBMatrices != 0)
+		  if (this->Options->GetBoolean("ph-pfaffian") == true)
 		    {
-		      MPSMatrix = new FQHEMPSLaughlinMatrix(this->Options->GetInteger("laughlin-index"), 
-							    this->Options->GetInteger("p-truncation"), 
-							    importBMatrices, 
-							    this->Options->GetBoolean("trim-qsector"),
-							    CylinderFlag, Kappa);
-		    }
-		  else
-		    {
-		      if (this->TorusFlag == false)
+		      if (importBMatrices != 0)
 			{
-			  MPSMatrix = new FQHEMPSLaughlinMatrix(this->Options->GetInteger("laughlin-index"), 
-								this->Options->GetInteger("p-truncation"), NbrBMatrices,
-								this->Options->GetBoolean("boson"), 
-								this->Options->GetBoolean("trim-qsector"),CylinderFlag, Kappa);
+			  MPSMatrix = 0;
+// 			  MPSMatrix = new FQHEMPSPHPfaffianMatrix(this->Options->GetInteger("laughlin-index") - 1, 
+// 								  this->Options->GetInteger("p-truncation"),importBMatrices, 
+// 								  this->Options->GetBoolean("boson") | this->TorusFlag, 
+// 								  this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa,
+// 								  this->TorusFlag, NbrFluxQuanta, this->Options->GetDouble("aspect-ratio"), 
+// 								  TorusAngle, TorusFluxInsertion);
 			}
 		      else
 			{
+			  MPSMatrix = new FQHEMPSPHPfaffianMatrix(this->Options->GetInteger("laughlin-index") - 1, this->Options->GetInteger("p-truncation"), NbrBMatrices,
+								  this->Options->GetString("matrices-cft"), this->Options->GetBoolean("boson") | this->TorusFlag,
+								  !(this->Options->GetBoolean("use-nonrational")), 
+								  this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, 
+								  this->TorusFlag, NbrFluxQuanta, this->Options->GetDouble("aspect-ratio"), 
+								  TorusAngle, TorusFluxInsertion, architecture);
+			}
+		    }
+		  else
+		    {
+		      if (importBMatrices != 0)
+			{
 			  MPSMatrix = new FQHEMPSLaughlinMatrix(this->Options->GetInteger("laughlin-index"), 
-								this->Options->GetInteger("p-truncation"), NbrBMatrices,
-								true, this->Options->GetBoolean("trim-qsector"),
-								NbrFluxQuanta, this->Options->GetDouble("aspect-ratio"), 
-								TorusAngle, TorusFluxInsertion);
+								this->Options->GetInteger("p-truncation"), 
+								importBMatrices, 
+								this->Options->GetBoolean("trim-qsector"),
+								CylinderFlag, Kappa);
+			}
+		      else
+			{
+			  if (this->TorusFlag == false)
+			    {
+			      MPSMatrix = new FQHEMPSLaughlinMatrix(this->Options->GetInteger("laughlin-index"), 
+								    this->Options->GetInteger("p-truncation"), NbrBMatrices,
+								    this->Options->GetBoolean("boson"), 
+								    this->Options->GetBoolean("trim-qsector"),CylinderFlag, Kappa);
+			    }
+			  else
+			    {
+			      MPSMatrix = new FQHEMPSLaughlinMatrix(this->Options->GetInteger("laughlin-index"), 
+								    this->Options->GetInteger("p-truncation"), NbrBMatrices,
+								    true, this->Options->GetBoolean("trim-qsector"),
+								    NbrFluxQuanta, this->Options->GetDouble("aspect-ratio"), 
+								    TorusAngle, TorusFluxInsertion);
+			    }
 			}
 		    }
 		}
@@ -720,11 +747,24 @@ void  FQHEMPSMatrixManager::ShowBMatrices(const char* bMatrixSymbol, AbstractFQH
       TmpIndexString = new char* [TmpBMatrixDimension];
       int TmpPLevel;
       int TmpQ;
-      for (int i = 0; i < TmpBMatrixDimension; ++i)
+      if (bMatrix->GetNbrCFTSectors() == 1)
 	{
-	  bMatrix->GetChargeAndPLevelFromMatrixIndex(i, TmpPLevel, TmpQ);
-	  TmpIndexString[i] = new char [128];
-	  sprintf (TmpIndexString[i], "(Q=%d, P=%d, i=%d)", TmpQ, TmpPLevel, i);
+	  for (int i = 0; i < TmpBMatrixDimension; ++i)
+	    {
+	      bMatrix->GetChargeAndPLevelFromMatrixIndex(i, TmpPLevel, TmpQ);
+	      TmpIndexString[i] = new char [128];
+	      sprintf (TmpIndexString[i], "(Q=%d, P=%d, i=%d)", TmpQ, TmpPLevel, i);
+	    }
+	}
+      else
+	{
+	  int TmpCFTSector;
+	  for (int i = 0; i < TmpBMatrixDimension; ++i)
+	    {
+	      bMatrix->GetCFTSectorChargeAndPLevelFromMatrixIndex(i, TmpCFTSector, TmpPLevel, TmpQ);
+	      TmpIndexString[i] = new char [128];
+	      sprintf (TmpIndexString[i], "(x=%d, Q=%d, P=%d, i=%d)", TmpCFTSector, TmpQ, TmpPLevel, i);
+	    }
 	}
     }
   if (this->Options->GetBoolean("show-bmatrices"))

@@ -328,6 +328,14 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // return value = array that contains the auxiliary space indices related to the selected topological sector
   virtual int* GetTopologicalSectorIndices(int topologicalSector, int& nbrIndices);
   
+  // compute the CFT sector, the level and the charge index of a given matrix index
+  //
+  // index = matrix index
+  // sector = reference on the CFT sector
+  // pLevel = reference on the level
+  // qValue = reference on the charge index
+  virtual void GetCFTSectorChargeAndPLevelFromMatrixIndex(int index, int& sector, int& pLevel, int& qValue);
+
  protected:
 
   // load the specific informations from the file header
@@ -632,5 +640,37 @@ inline int  FQHEMPSClustered2RMatrix::GetNbrCFTSectors()
   return this->NbrCFTSectors;
 }
 
+// compute the CFT sector, the level and the charge index of a given matrix index
+//
+// index = matrix index
+// sector = reference on the CFT sector
+// pLevel = reference on the level
+// qValue = reference on the charge index
+
+inline void FQHEMPSClustered2RMatrix::GetCFTSectorChargeAndPLevelFromMatrixIndex(int index, int& sector, int& pLevel, int& qValue)
+{
+  pLevel = 0;
+  sector = 0;
+  qValue = 0;
+  int MinIndexDistance = this->RealBMatrices->GetNbrRow();
+  for (int p = 0; p <= this->PLevel; ++p)
+    {
+      for (int x = 0; x < this->NbrCFTSectors; ++x)
+	{
+	  for (int q = this->NInitialValuePerPLevelCFTSector[p][x]; q <= this->NLastValuePerPLevelCFTSector[p][x]; ++q)
+	    {
+	      int TmpIndexDistance = index - this->StartingIndexPerPLevelCFTSectorQValue[p][x][q - this->NInitialValuePerPLevelCFTSector[p][x]];
+	      if ((TmpIndexDistance >= 0) && (TmpIndexDistance < MinIndexDistance))
+		{
+		  MinIndexDistance = TmpIndexDistance;
+		  pLevel = p;
+		  sector = x;
+		  qValue = q;
+		}
+	    }
+	}
+      
+    }
+}
 
 #endif

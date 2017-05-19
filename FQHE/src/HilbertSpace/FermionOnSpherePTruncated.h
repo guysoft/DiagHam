@@ -105,8 +105,8 @@ class FermionOnSpherePTruncated :  public FermionOnSphere
   // memory = amount of memory that can be use to precompute matrix multiplications  
   // initialIndex = initial index to compute
   // nbrComponents = number of components to compute
-  void CreateStateFromMPSDescription (SparseRealMatrix* bMatrices, RealVector& state, int mPSRowIndex, int mPSColumnIndex, 
-				      long memory = 0l, long initialIndex = 0l, long nbrComponents = 0l);
+  virtual void CreateStateFromMPSDescription (SparseRealMatrix* bMatrices, RealVector& state, int mPSRowIndex, int mPSColumnIndex, 
+					      long memory = 0l, long initialIndex = 0l, long nbrComponents = 0l);
 
   // create a state from its MPS description, inclusing additional quasihole matrices
   //

@@ -128,53 +128,68 @@ int main(int argc, char** argv)
       NbrQuasiholes = InputQuasiholePosition.GetNbrLines();
    }
 
-  ParticleOnSphere* Space = 0;
-  if (Manager.GetBoolean("boson") == true)
-    {
-      Space = new BosonOnSpherePTruncated(NbrParticles, TotalLz, NbrFluxQuanta, 
-					  Manager.GetInteger("p-truncation"), Manager.GetInteger("boson-truncation"), ReferenceState);
-    }
-  else
-    {
-#ifdef __64_BITS__
-	  if (NbrFluxQuanta <= 62)
-#else
-	  if (NbrFluxQuanta <= 30)
-#endif
-	    {
-	      Space = new FermionOnSpherePTruncated(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("p-truncation"), ReferenceState);
-	    }
-	  else
-	    {
-#ifdef __128_BIT_LONGLONG__
-	      if (NbrFluxQuanta <= 126)
-#else
-		if (NbrFluxQuanta <= 62)
-#endif
-		  {
-		    Space = 0;//new FermionOnSpherePTruncatedLong(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("p-truncation"), ReferenceState);
-		  }
-		else
-		  {
-#ifdef __128_BIT_LONGLONG__
-		    cout << "cannot generate an Hilbert space when nbr-flux > 126" << endl;
-#else
-		    cout << "cannot generate an Hilbert space when nbr-flux > 62" << endl;
-#endif
-		    return 0;
-		  }
-	    }
-
-   }
-
-  cout << "Hilbert space dimension : " << Space->GetLargeHilbertSpaceDimension() << endl;
-
-
   AbstractFQHEMPSMatrix* MPSMatrix = MPSMatrixManager.GetMPSMatrices(NbrFluxQuanta, Architecture.GetArchitecture()); 
   if (Manager.GetBoolean("only-export"))
     {
       return 0;
     }
+
+
+  ParticleOnSphere* Space = 0;
+  if (ReferenceState == 0)
+    {
+      NbrParticles = MPSMatrix->GetMatrixNaturalNbrParticles(NbrFluxQuanta, Manager.GetBoolean("use-padding"));
+      TotalLz = 0;
+      if (Manager.GetBoolean("boson") == true)
+	{
+	  Space = new BosonOnSphereShort(NbrParticles, TotalLz, NbrFluxQuanta);
+	}
+      else
+	{
+	  Space = new FermionOnSphere(NbrParticles, TotalLz, NbrFluxQuanta);
+	}
+    }
+  else
+    {
+      if (Manager.GetBoolean("boson") == true)
+	{
+	  Space = new BosonOnSpherePTruncated(NbrParticles, TotalLz, NbrFluxQuanta, 
+					      Manager.GetInteger("p-truncation"), Manager.GetInteger("boson-truncation"), ReferenceState);
+	}
+      else
+	{
+#ifdef __64_BITS__
+	  if (NbrFluxQuanta <= 62)
+#else
+	    if (NbrFluxQuanta <= 30)
+#endif
+	      {
+		Space = new FermionOnSpherePTruncated(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("p-truncation"), ReferenceState);
+	      }
+	    else
+	      {
+#ifdef __128_BIT_LONGLONG__
+		if (NbrFluxQuanta <= 126)
+#else
+		  if (NbrFluxQuanta <= 62)
+#endif
+		    {
+		      Space = 0;//new FermionOnSpherePTruncatedLong(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("p-truncation"), ReferenceState);
+		    }
+		  else
+		    {
+#ifdef __128_BIT_LONGLONG__
+		      cout << "cannot generate an Hilbert space when nbr-flux > 126" << endl;
+#else
+		      cout << "cannot generate an Hilbert space when nbr-flux > 62" << endl;
+#endif
+		      return 0;
+		    }
+	      }	  
+	}
+    }
+      
+  cout << "Hilbert space dimension : " << Space->GetLargeHilbertSpaceDimension() << endl;
 
   int MPSRowIndex = 0;
   int MPSColumnIndex = 0;
