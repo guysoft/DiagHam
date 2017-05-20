@@ -113,6 +113,13 @@ class FQHEMPSPHPfaffianMatrix : public FQHEMPSClustered2RMatrix
   // architecture = architecture to use for precalculation
   virtual void CreateBMatrices (const char* cftDirectory, AbstractArchitecture* architecture);
 
+  // get the boundary indices of the MPS representation
+  //
+  // rowIndex = matrix row index
+  // columnIndex = matrix column index
+  // padding = assume that the state has the estra padding
+  virtual void GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding = false);
+
  protected:
 
 
