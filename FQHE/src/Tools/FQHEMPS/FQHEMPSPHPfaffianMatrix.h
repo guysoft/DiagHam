@@ -48,6 +48,9 @@ class FQHEMPSPHPfaffianMatrix : public FQHEMPSClustered2RMatrix
 
   friend class FQHEMPSEvaluateCFTOperation;
 
+  // shift to apply to the p level to get a positive index
+  int PLevelShift;
+
  public:
   
   // default constructor 
