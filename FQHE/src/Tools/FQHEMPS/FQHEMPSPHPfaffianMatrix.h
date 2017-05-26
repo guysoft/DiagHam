@@ -122,10 +122,44 @@ class FQHEMPSPHPfaffianMatrix : public FQHEMPSClustered2RMatrix
 
  protected:
 
+  // compute the various arrays required to convert from quantum numbers and local indices to a global linearized index
+  //
+  // return value = dimension of the B matrix
+  virtual int ComputeLinearizedIndexArrays();
+
+  // compute the linearized index of the B matrix for the (k=2,r) clustered states
+  //
+  // pLevel = current total level
+  // cftSector = CFT sector
+  // qValue = charge index (i.e. Q)
+  // chargeSectorLevel = level for the charge sector
+  // chargeSectorIndex = index of the charge sector
+  // cftSectorIndex = index within the current CFT sector and corresponding level (pLevel - chargeSectorLevel)
+  // return value = linearized index
+  virtual int Get2RMatrixIndexV2(int pLevel, int cftSector, int qValue, 
+				 int chargeSectorLevel, int chargeSectorIndex, int cftSectorIndex);
+
 
 };
 
   
+// compute the linearized index of the B matrix for the (k=2,r) clustered states
+//
+// pLevel = current total level
+// cftSector = CFT sector
+// qValue = charge index (i.e. Q)
+// chargeSectorLevel = level for the charge sector
+// chargeSectorIndex = index of the charge sector
+// cftSectorIndex = index within the current CFT sector and corresponding level (pLevel - chargeSectorLevel)
+// return value = linearized index
+
+inline int FQHEMPSPHPfaffianMatrix::Get2RMatrixIndexV2(int pLevel, int cftSector, int qValue, 
+						       int chargeSectorLevel, int chargeSectorIndex, int cftSectorIndex)
+{
+  return (this->StartingIndexPerPLevelCFTSectorQValueU1Sector[pLevel][cftSector][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][cftSector]][chargeSectorLevel] 
+	  + (this->NeutralSectorDimension[cftSector][this->PLevelShift + chargeSectorLevel - pLevel] * chargeSectorIndex) + cftSectorIndex);
+}
+
 
 
 #endif

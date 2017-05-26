@@ -57,6 +57,9 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // number of CFT sectors
   int NbrCFTSectors;
 
+  // maixmum number of descendants for the neutral sector (if negative, should consider PLevel)
+  int NeutralSectorMaxPLevel;
+
   // number of U(1) mode at a given level 
   int* U1BasisDimension;		  
 

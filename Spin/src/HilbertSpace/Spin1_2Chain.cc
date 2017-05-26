@@ -1027,7 +1027,6 @@ ostream& Spin1_2Chain::PrintState (ostream& Str, int state)
 	Str << "- ";
       Mask <<= 1;
     }
-  Str << " " << hex << this->StateDescription[state] << dec;
   return Str;
 }
 

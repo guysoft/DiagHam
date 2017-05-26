@@ -66,7 +66,7 @@ int main(int argc, char** argv)
   (*OutputGroup) += new SingleIntegerOption  ('\n', "nbr-points", "number of points along the cylinder axis", 400);  
   (*OutputGroup) += new SingleDoubleOption  ('\n', "offset", "additional length along the cylinder axis on each side of the [-Lx/2,Lx/2] region where the density should be computed", 5.0);
   (*OutputGroup) += new BooleanOption ('\n', "disable-binary", "do not export the orbital occupation matrices in binary format");
-  (*SystemGroup) += new SingleStringOption ('o', "output", "store charge imbalance eigenvalues in a file");
+  (*OutputGroup) += new SingleStringOption ('o', "output", "store charge imbalance eigenvalues in a file");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 0);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
@@ -663,7 +663,12 @@ int main(int argc, char** argv)
       ofstream File;
       File.precision(14);
       File.open(OutputFileName, ios::binary | ios::out);
-
+      File << "# x";
+      for (int i = 0; i < NbrInputStates; ++i)
+	{   
+	  File << " rho_{u," << i << "}(x) Q_{u," << i << "}(x) rho_{d," << i << "}(x) Q_{d," << i << "}(x) rho_{u+d," << i << "}(x) Q_{u+d," << i << "}(x)";
+	}
+      File << endl;
       if (Perimeter == 0.0)
 	{
 	  Perimeter = sqrt(2.0 * M_PI * (LzMax + 1) * Ratio);

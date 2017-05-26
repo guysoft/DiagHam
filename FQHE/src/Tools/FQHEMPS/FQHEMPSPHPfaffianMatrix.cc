@@ -91,6 +91,7 @@ FQHEMPSPHPfaffianMatrix::FQHEMPSPHPfaffianMatrix(int laughlinIndex, int pLevel, 
     }
   this->PLevel = 2 * pLevel;
   this->PLevelShift = pLevel;
+  this->NeutralSectorMaxPLevel = this->PLevelShift;
   this->CylinderFlag = cylinderFlag;
   this->UseRationalFlag = useRational;
   this->UniformChargeIndexRange = !trimChargeIndices;
@@ -161,6 +162,7 @@ FQHEMPSPHPfaffianMatrix::FQHEMPSPHPfaffianMatrix(int laughlinIndex, int pLevel, 
   this->UniformChargeIndexRange = !trimChargeIndices;
   this->PLevel = 2 * pLevel;
   this->PLevelShift = pLevel;
+  this->NeutralSectorMaxPLevel = this->PLevelShift;
   this->CylinderFlag = cylinderFlag;
   this->Kappa = kappa;
   this->TorusFlag = torusFlag;
@@ -233,32 +235,32 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 
   double WeightIdentityNumerical = this->WeightIdentity.GetNumericalValue();
   double WeightPsiNumerical = this->WeightPsi.GetNumericalValue();
-  long* Partition = new long[2 * (this->PLevel + 1)];
-  unsigned long* TmpPartition = new unsigned long [this->PLevel + 2];
+  long* Partition = new long[2 * (this->PLevelShift + 1)];
+  unsigned long* TmpPartition = new unsigned long [this->PLevelShift + 2];
 
-  BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [this->PLevel + 1];
-  RealSymmetricMatrix* ScalarProductIdentity = new RealSymmetricMatrix[this->PLevel + 1];
-  RealSymmetricMatrix* ScalarProductPsi = new RealSymmetricMatrix[this->PLevel + 1];
-  LongRationalMatrix* RationalScalarProductIdentity = new LongRationalMatrix[this->PLevel + 1];
-  LongRationalMatrix* RationalScalarProductPsi = new LongRationalMatrix[this->PLevel + 1];
-  RealMatrix** MatrixPsi01 = new RealMatrix*[this->PLevel + 1];
-  RealMatrix** MatrixPsi10 = new RealMatrix*[this->PLevel + 1];
-  LongRationalMatrix** RationalMatrixPsi01 = new LongRationalMatrix*[this->PLevel + 1];
-  LongRationalMatrix** RationalMatrixPsi10 = new LongRationalMatrix*[this->PLevel + 1];
-  RealMatrix* OrthogonalBasisIdentityLeft = new RealMatrix[this->PLevel + 1];
-  RealMatrix* OrthogonalBasisPsiLeft = new RealMatrix[this->PLevel + 1];
-  RealMatrix* OrthogonalBasisIdentityRight = new RealMatrix[this->PLevel + 1];
-  RealMatrix* OrthogonalBasisPsiRight = new RealMatrix[this->PLevel + 1];
+  BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [this->PLevelShift + 1];
+  RealSymmetricMatrix* ScalarProductIdentity = new RealSymmetricMatrix[this->PLevelShift + 1];
+  RealSymmetricMatrix* ScalarProductPsi = new RealSymmetricMatrix[this->PLevelShift + 1];
+  LongRationalMatrix* RationalScalarProductIdentity = new LongRationalMatrix[this->PLevelShift + 1];
+  LongRationalMatrix* RationalScalarProductPsi = new LongRationalMatrix[this->PLevelShift + 1];
+  RealMatrix** MatrixPsi01 = new RealMatrix*[this->PLevelShift + 1];
+  RealMatrix** MatrixPsi10 = new RealMatrix*[this->PLevelShift + 1];
+  LongRationalMatrix** RationalMatrixPsi01 = new LongRationalMatrix*[this->PLevelShift + 1];
+  LongRationalMatrix** RationalMatrixPsi10 = new LongRationalMatrix*[this->PLevelShift + 1];
+  RealMatrix* OrthogonalBasisIdentityLeft = new RealMatrix[this->PLevelShift + 1];
+  RealMatrix* OrthogonalBasisPsiLeft = new RealMatrix[this->PLevelShift + 1];
+  RealMatrix* OrthogonalBasisIdentityRight = new RealMatrix[this->PLevelShift + 1];
+  RealMatrix* OrthogonalBasisPsiRight = new RealMatrix[this->PLevelShift + 1];
 
-  LongRational** RationalMultiplicityFactor = new LongRational*[this->PLevel + 1];
-  double** MultiplicityFactor = new double*[this->PLevel + 1];
-  for (int i = 0; i <= this->PLevel; ++i)
+  LongRational** RationalMultiplicityFactor = new LongRational*[this->PLevelShift + 1];
+  double** MultiplicityFactor = new double*[this->PLevelShift + 1];
+  for (int i = 0; i <= this->PLevelShift; ++i)
     {
-      U1BosonBasis[i] = new BosonOnDiskShort (i, i, this->PLevel + 1);
-      MatrixPsi01[i] = new RealMatrix[this->PLevel + 1];
-      MatrixPsi10[i] = new RealMatrix[this->PLevel + 1];
-      RationalMatrixPsi01[i] = new LongRationalMatrix[this->PLevel + 1];
-      RationalMatrixPsi10[i] = new LongRationalMatrix[this->PLevel + 1];
+      U1BosonBasis[i] = new BosonOnDiskShort (i, i, this->PLevelShift + 1);
+      MatrixPsi01[i] = new RealMatrix[this->PLevelShift + 1];
+      MatrixPsi10[i] = new RealMatrix[this->PLevelShift + 1];
+      RationalMatrixPsi01[i] = new LongRationalMatrix[this->PLevelShift + 1];
+      RationalMatrixPsi10[i] = new LongRationalMatrix[this->PLevelShift + 1];
       RationalMultiplicityFactor[i] = new LongRational[U1BosonBasis[i]->GetHilbertSpaceDimension()];
       MultiplicityFactor[i] = new double[U1BosonBasis[i]->GetHilbertSpaceDimension()];
       for (int j = 0; j < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++j)
@@ -286,7 +288,7 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
       TmpScalarProductIdentityFileName = new char[512 + strlen(cftDirectory)];
       TmpScalarProductPsiFileName = new char[512 + strlen(cftDirectory)];
     }
-  for (int i = 0; i <= this->PLevel; ++i)
+  for (int i = 0; i <= this->PLevelShift; ++i)
     {
       cout << "Level = " <<  i << endl;
       if (cftDirectory != 0)
@@ -313,11 +315,11 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
   this->RescaleFullScalarProductMatrix(RationalScalarProductIdentity, ScalarProductIdentity, RationalMultiplicityFactor, MultiplicityFactor);
   this->RescaleFullScalarProductMatrix(RationalScalarProductPsi, ScalarProductPsi, RationalMultiplicityFactor, MultiplicityFactor);
 
-  this->U1BasisDimension = new int [this->PLevel + 1];	
+  this->U1BasisDimension = new int [this->PLevelShift + 1];	
   this->NeutralSectorDimension = new int* [2];
-  this->NeutralSectorDimension[0] = new int [this->PLevel + 1];
-  this->NeutralSectorDimension[1] = new int [this->PLevel + 1];
-  for (int i = 0; i <= this->PLevel; ++i)
+  this->NeutralSectorDimension[0] = new int [this->PLevelShift + 1];
+  this->NeutralSectorDimension[1] = new int [this->PLevelShift + 1];
+  for (int i = 0; i <= this->PLevelShift; ++i)
     {
       this->NeutralSectorDimension[0][i] = OrthogonalBasisIdentityLeft[i].GetNbrColumn();
       this->NeutralSectorDimension[1][i] = OrthogonalBasisPsiLeft[i].GetNbrColumn();
@@ -347,9 +349,9 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
   cout << "B matrix size = " << MatrixSize << endl;
 
   cout << "computing Psi matrix elements" << endl;
-  for (int j = 0; j <= this->PLevel; ++j)
+  for (int j = 0; j <= this->PLevelShift; ++j)
     {
-      for (int i = 0; i <= this->PLevel; ++i)
+      for (int i = 0; i <= this->PLevelShift; ++i)
 	{
 	  cout << "Levels = " <<  i << " " << j << endl;
 	  if (cftDirectory != 0)
@@ -395,7 +397,7 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
     {
       for (int p = 0; p <= this->PLevelShift; ++p)
 	{
-	  if (((this->PLevelShift + p + n) <= this->PLevel)  && ((this->PLevelShift + p + n) >= 0))
+	  if (((this->PLevelShift + p - n) <= this->PLevel)  && ((this->PLevelShift + p - n) >= 0))
 	    {
 	      BosonOnDiskShort* TmpSpaceCharged = U1BosonBasis[p];
 	      BosonOnDiskShort* TmpSpaceNeutral = U1BosonBasis[n];
@@ -407,23 +409,23 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 	      RealSymmetricMatrix& TmpScalarProductPsi = ScalarProductPsi[n];
 	      for (int ChargedIndex = 0; ChargedIndex < TmpSpaceCharged->GetHilbertSpaceDimension(); ++ChargedIndex)
 		{	      
-		  for (int j = this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p + n][0] + 1; j <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p + n][0]; ++j)
+		  for (int j = this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p - n][0] + 1; j <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p - n][0]; ++j)
 		    {
 		      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentityLeft.GetNbrColumn(); ++NeutralIndex1)
 			{
 			  for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentityLeft.GetNbrColumn(); ++NeutralIndex2)
 			    {
-			      ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(this->PLevelShift + p + n, 0, j - 1, p, ChargedIndex, NeutralIndex1)];
+			      ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(this->PLevelShift + p - n, 0, j - 1, p, ChargedIndex, NeutralIndex1)];
 			    }
 			}
 		    }
-		  for (int j = this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p + n][1] + 1; j <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p + n][1]; ++j)
+		  for (int j = this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p - n][1] + 1; j <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p - n][1]; ++j)
 		    {
 		      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex1)
 			{
 			  for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex2)
 			    {
-			      ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(this->PLevelShift + p + n, 1, j - 1, p, ChargedIndex, NeutralIndex1)];
+			      ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(this->PLevelShift + p - n, 1, j - 1, p, ChargedIndex, NeutralIndex1)];
 			    }
 			}
 		    }
@@ -446,7 +448,7 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
     {
       for (int p = 0; p <= this->PLevelShift; ++p)
 	{
-	  if (((this->PLevelShift + p + n) <= this->PLevel)  && ((this->PLevelShift + p + n) >= 0))
+	  if (((this->PLevelShift + p - n) <= this->PLevel)  && ((this->PLevelShift + p - n) >= 0))
 	    {
 	      BosonOnDiskShort* TmpSpaceCharged = U1BosonBasis[p];
 	      BosonOnDiskShort* TmpSpaceNeutral = U1BosonBasis[n];
@@ -458,7 +460,7 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 	      RealSymmetricMatrix& TmpScalarProductPsi = ScalarProductPsi[n];
 	      for (int ChargedIndex = 0; ChargedIndex < TmpSpaceCharged->GetHilbertSpaceDimension(); ++ChargedIndex)
 		{	      
-		  for (int j = this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p + n][0] + 1; j <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p + n][0]; ++j)
+		  for (int j = this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p - n][0] + 1; j <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p - n][0]; ++j)
 		    {
 		      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentityLeft.GetNbrColumn(); ++NeutralIndex1)
 			{
@@ -478,7 +480,7 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 				{
 				  if (this->CylinderFlag)
 				    {
-				      Tmp *= exp(-this->Kappa * this->Kappa * (WeightIdentityNumerical +  ((double) (this->PLevelShift + p + n))
+				      Tmp *= exp(-this->Kappa * this->Kappa * (WeightIdentityNumerical +  ((double) (this->PLevelShift + p - n))
 									       + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (4.0 * QValue))
 									       + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (4.0 * QValue))));
 				    }			      
@@ -486,27 +488,27 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 				    {
 				      if (this->TorusFlag)
 					{
-					  Tmp *= exp(-this->Kappa * this->Kappa * (WeightIdentityNumerical +  ((double) (p + n))
+					  Tmp *= exp(-this->Kappa * this->Kappa * (WeightIdentityNumerical +  ((double) (p - n))
 										   + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (4.0 * QValue))
 										   + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (4.0 * QValue))));
 					}
 				    }
 				  
-				  BMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(this->PLevelShift + p + n, 0, j - 1, p, ChargedIndex, NeutralIndex1),
-								this->Get2RMatrixIndexV2(this->PLevelShift + p + n, 0, j, p, ChargedIndex, NeutralIndex2), Tmp);
+				  BMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(this->PLevelShift + p - n, 0, j - 1, p, ChargedIndex, NeutralIndex1),
+								this->Get2RMatrixIndexV2(this->PLevelShift + p - n, 0, j, p, ChargedIndex, NeutralIndex2), Tmp);
 				}
 			      else
 				{
-				  Complex Tmp2 = Tmp * exp(this->TauFactor * (WeightIdentityNumerical +  ((double) (p + n))
+				  Complex Tmp2 = Tmp * exp(this->TauFactor * (WeightIdentityNumerical +  ((double) (p - n))
 									      + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (4.0 * QValue))
 									      + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (4.0 * QValue))));
-				  TmpComplexBMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(this->PLevelShift + p + n, 0, j - 1, p, ChargedIndex, NeutralIndex1),
-									  this->Get2RMatrixIndexV2(this->PLevelShift + p + n, 0, j, p, ChargedIndex, NeutralIndex2), Tmp2);
+				  TmpComplexBMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(this->PLevelShift + p - n, 0, j - 1, p, ChargedIndex, NeutralIndex1),
+									  this->Get2RMatrixIndexV2(this->PLevelShift + p - n, 0, j, p, ChargedIndex, NeutralIndex2), Tmp2);
 				}
 			    }
 			}
 		    }
-		  for (int j = this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p + n][1] + 1; j <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p + n][1]; ++j)
+		  for (int j = this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p - n][1] + 1; j <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p - n][1]; ++j)
 		    {
 		      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex1)
 			{
@@ -526,7 +528,7 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 				{
 				  if (this->CylinderFlag)
 				    {
-				      Tmp *= exp(-this->Kappa * this->Kappa * (WeightPsiNumerical +  ((double) (p + n))
+				      Tmp *= exp(-this->Kappa * this->Kappa * (WeightPsiNumerical +  ((double) (p - n))
 									       + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (4.0 * QValue))
 									       + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (4.0 * QValue))));
 				    }			      
@@ -534,21 +536,21 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 				    {
 				      if (this->TorusFlag)
 					{
-					  Tmp *= exp(-this->Kappa * this->Kappa * (WeightPsiNumerical +  ((double) (p + n))
+					  Tmp *= exp(-this->Kappa * this->Kappa * (WeightPsiNumerical +  ((double) (p - n))
 										   + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (4.0 * QValue))
 										   + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (4.0 * QValue))));
 					}
 				    }
-				  BMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(this->PLevelShift + p + n, 1, j - 1, p, ChargedIndex, NeutralIndex1),
-								this->Get2RMatrixIndexV2(this->PLevelShift + p + n, 1, j, p, ChargedIndex, NeutralIndex2), Tmp);
+				  BMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(this->PLevelShift + p - n, 1, j - 1, p, ChargedIndex, NeutralIndex1),
+								this->Get2RMatrixIndexV2(this->PLevelShift + p - n, 1, j, p, ChargedIndex, NeutralIndex2), Tmp);
 				}
 			      else
 				{
-				  Complex Tmp2 = Tmp * exp(this->TauFactor * (WeightPsiNumerical +  ((double) (p + n))
+				  Complex Tmp2 = Tmp * exp(this->TauFactor * (WeightPsiNumerical +  ((double) (p - n))
 									      + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (4.0 * QValue))
 									      + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (4.0 * QValue))));
-				  TmpComplexBMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(this->PLevelShift + p + n, 1, j - 1, p, ChargedIndex, NeutralIndex1),
-									  this->Get2RMatrixIndexV2(this->PLevelShift + p + n, 1, j, p, ChargedIndex, NeutralIndex2), Tmp2);
+				  TmpComplexBMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(this->PLevelShift + p - n, 1, j - 1, p, ChargedIndex, NeutralIndex1),
+									  this->Get2RMatrixIndexV2(this->PLevelShift + p - n, 1, j, p, ChargedIndex, NeutralIndex2), Tmp2);
 				}
 			    }
 			}
@@ -571,7 +573,7 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 	{
 	  for (int p = 0; p <= this->PLevelShift; ++p)
 	    {
-	      if (((this->PLevelShift + p + n) <= this->PLevel) && ((this->PLevelShift + p + n) >= 0))
+	      if (((this->PLevelShift + p - n) <= this->PLevel) && ((this->PLevelShift + p - n) >= 0))
 		{
 		  BosonOnDiskShort* TmpSpaceCharged1 = U1BosonBasis[p];
 		  BosonOnDiskShort* TmpSpaceNeutral1 = U1BosonBasis[n];
@@ -581,7 +583,7 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 		    {
 		      for (int q = 0; q <= this->PLevelShift; ++q)
 			{
-			  if (((this->PLevelShift + q + m) <= this->PLevel) && ((this->PLevelShift + q + m) >= 0))
+			  if (((this->PLevelShift + q - m) <= this->PLevel) && ((this->PLevelShift + q - m) >= 0))
 			    {
 			      BosonOnDiskShort* TmpSpaceCharged2 = U1BosonBasis[q];
 			      BosonOnDiskShort* TmpSpaceNeutral2 = U1BosonBasis[m];
@@ -598,30 +600,30 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 				      TmpSpaceCharged2->GetOccupationNumber(ChargedIndex2, Partition2);
 				      int N2;
 				      int N1;
-				      N2 = (2 * ((q + m) - (p + n)) + this->RIndex + 1 + NValueShift) / 2;
+				      N2 = (2 * ((q - m) - (p - n)) + this->RIndex + 1 + NValueShift) / 2;
 				      N1 = N2 + QValue - 1;
-				      if (((N1 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p + n][0]) && (N1 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p + n][0]))
-					  && ((N2 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + q + m][1]) && (N2 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + q + m][1])))
+				      if (((N1 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p - n][0]) && (N1 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p - n][0]))
+					  && ((N2 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + q - m][1]) && (N2 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + q - m][1])))
 					{ 
 					  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
 					    {
 					      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsi2.GetNbrColumn(); ++NeutralIndex2)
 						{
-						  ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(this->PLevelShift + p + n, 0, N1, p, ChargedIndex1, NeutralIndex1)];
+						  ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(this->PLevelShift + p - n, 0, N1, p, ChargedIndex1, NeutralIndex1)];
 						}
 					    }
 					  
 					}
-				      N2 = (2 * ((q + m) - (p + n)) + 1 + NValueShift) / 2;
+				      N2 = (2 * ((q - m) - (p - n)) + 1 + NValueShift) / 2;
 				      N1 = N2 + QValue - 1;
-				      if (((N1 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p + n][1]) && (N1 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p + n][1]))
-					  && ((N2 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + q + m][0]) && (N2 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + q + m][0])))
+				      if (((N1 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p - n][1]) && (N1 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p - n][1]))
+					  && ((N2 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + q - m][0]) && (N2 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + q - m][0])))
 					{ 
 					  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi1.GetNbrColumn(); ++NeutralIndex1)
 					    {
 					      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentity2.GetNbrColumn(); ++NeutralIndex2)
 						{
-						  ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(this->PLevelShift + p + n, 1, N1, p, ChargedIndex1, NeutralIndex1)];
+						  ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(this->PLevelShift + p - n, 1, N1, p, ChargedIndex1, NeutralIndex1)];
 						}
 					    }
 					}
@@ -639,7 +641,7 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 	{
 	  for (int p = 0; p <= this->PLevelShift; ++p)
 	    {
-	      if (((this->PLevelShift + p + n) <= this->PLevel) && ((this->PLevelShift + p + n) >= 0))
+	      if (((this->PLevelShift + p - n) <= this->PLevel) && ((this->PLevelShift + p - n) >= 0))
 		{
 		  BosonOnDiskShort* TmpSpaceCharged1 = U1BosonBasis[p];
 		  BosonOnDiskShort* TmpSpaceNeutral1 = U1BosonBasis[n];
@@ -649,7 +651,7 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 		    {
 		      for (int q = 0; q <= this->PLevelShift; ++q)
 			{
-			  if (((this->PLevelShift + q + m) <= this->PLevel) && ((this->PLevelShift + q + m) >= 0))
+			  if (((this->PLevelShift + q - m) <= this->PLevel) && ((this->PLevelShift + q - m) >= 0))
 			    {
 			      BosonOnDiskShort* TmpSpaceCharged2 = U1BosonBasis[q];
 			      BosonOnDiskShort* TmpSpaceNeutral2 = U1BosonBasis[m];
@@ -666,10 +668,10 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 				      TmpSpaceCharged2->GetOccupationNumber(ChargedIndex2, Partition2);
 				      int N2;
 				      int N1;
-				      N2 = (2 * ((q + m) - (p + n)) + this->RIndex + 1 + NValueShift) / 2;
+				      N2 = (2 * ((q - m) - (p - n)) + this->RIndex + 1 + NValueShift) / 2;
 				      N1 = N2 + QValue - 1;
-				      if (((N1 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p + n][0]) && (N1 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p + n][0]))
-					  && ((N2 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + q + m][1]) && (N2 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + q + m][1])))
+				      if (((N1 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p - n][0]) && (N1 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p - n][0]))
+					  && ((N2 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + q - m][1]) && (N2 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + q - m][1])))
 					{ 
 					  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
 					    {
@@ -685,21 +687,21 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 							}
 						      Tmp += TmpOrthogonalBasisIdentity1(NeutralIndex3, NeutralIndex1) * Tmp1;
 						    }
-						  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, this->PLevelShift + p + n, this->PLevelShift + q + m, Coef);
+						  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, p, q, Coef);
 						  if (this->CylinderFlag)
-						    Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (WeightIdentityNumerical + WeightPsiNumerical + ((double) ((p + n) + (q + m)))
+						    Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (WeightIdentityNumerical + WeightPsiNumerical + ((double) ((p - n) + (q - m)))
 												   + ((N1 - 0.5 * NValueShift) * (N1 - 0.5 * NValueShift) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))
 												   + (((N2 - 0.5 * NValueShift) * (N2 - 0.5 * NValueShift)) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))));
-						  BMatrices[1].SetMatrixElement(this->Get2RMatrixIndexV2(this->PLevelShift + p + n, 0, N1, p, ChargedIndex1, NeutralIndex1),
-										this->Get2RMatrixIndexV2(this->PLevelShift + q + m, 1, N2, q, ChargedIndex2, NeutralIndex2), Tmp);
+						  BMatrices[1].SetMatrixElement(this->Get2RMatrixIndexV2(this->PLevelShift + p - n, 0, N1, p, ChargedIndex1, NeutralIndex1),
+										this->Get2RMatrixIndexV2(this->PLevelShift + q - m, 1, N2, q, ChargedIndex2, NeutralIndex2), Tmp);
 						}
 					      
 					    }
 					}
-				      N2 = (2 * ((q + m) - (p + n)) + 1 + NValueShift) / 2;
+				      N2 = (2 * ((q - m) - (p - n)) + 1 + NValueShift) / 2;
 				      N1 = N2 + QValue - 1;
-				      if (((N1 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p + n][1]) && (N1 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p + n][1]))
-					  && ((N2 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + q + m][0]) && (N2 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + q + m][0])))
+				      if (((N1 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p - n][1]) && (N1 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p - n][1]))
+					  && ((N2 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + q - m][0]) && (N2 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + q - m][0])))
 					{ 
 					  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi1.GetNbrColumn(); ++NeutralIndex1)
 					    {
@@ -715,13 +717,13 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 							}
 						      Tmp += TmpOrthogonalBasisPsi1(NeutralIndex3, NeutralIndex1) * Tmp1;
 						    }
-						  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, this->PLevelShift + p + n, this->PLevelShift + q + m, Coef);
+						  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, p, q, Coef);
 						  if (this->CylinderFlag)
-						    Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (WeightIdentityNumerical + WeightPsiNumerical + ((double) ((p + n) + (q + m)))
+						    Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (WeightIdentityNumerical + WeightPsiNumerical + ((double) ((p - n) + (q - m)))
 												   + ((N1 - 0.5 * NValueShift) * (N1 - 0.5 * NValueShift) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))
 												   + (((N2 - 0.5 * NValueShift) * (N2 - 0.5 * NValueShift)) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))));
-						  BMatrices[1].SetMatrixElement(this->Get2RMatrixIndexV2(this->PLevelShift + p + n, 1, N1, p, ChargedIndex1, NeutralIndex1),
-										this->Get2RMatrixIndexV2(this->PLevelShift + q + m, 0, N2, q, ChargedIndex2, NeutralIndex2), Tmp);
+						  BMatrices[1].SetMatrixElement(this->Get2RMatrixIndexV2(this->PLevelShift + p - n, 1, N1, p, ChargedIndex1, NeutralIndex1),
+										this->Get2RMatrixIndexV2(this->PLevelShift + q - m, 0, N2, q, ChargedIndex2, NeutralIndex2), Tmp);
 						}
 					    }
 					}
@@ -747,7 +749,7 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 	{
 	  for (int p = 0; p <= this->PLevelShift; ++p)
 	    {
-	      if (((this->PLevelShift + p + n) <= this->PLevel) && ((this->PLevelShift + p + n) >= 0))
+	      if (((this->PLevelShift + p - n) <= this->PLevel) && ((this->PLevelShift + p - n) >= 0))
 		{
 		  BosonOnDiskShort* TmpSpaceCharged1 = U1BosonBasis[p];
 		  BosonOnDiskShort* TmpSpaceNeutral1 = U1BosonBasis[n];
@@ -757,7 +759,7 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 		    {
 		      for (int q = 0; q <= this->PLevelShift; ++q)
 			{
-			  if (((this->PLevelShift + q + m) <= this->PLevel) && ((this->PLevelShift + q + m) >= 0))
+			  if (((this->PLevelShift + q - m) <= this->PLevel) && ((this->PLevelShift + q - m) >= 0))
 			    {
 			      BosonOnDiskShort* TmpSpaceCharged2 = U1BosonBasis[q];
 			      BosonOnDiskShort* TmpSpaceNeutral2 = U1BosonBasis[m];
@@ -774,30 +776,30 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 				      TmpSpaceCharged2->GetOccupationNumber(ChargedIndex2, Partition2);
 				      int N2;
 				      int N1;
-				      N2 = (2 * ((q + m) - (p + n)) + this->RIndex + 1 + NValueShift) / 2;
+				      N2 = (2 * ((q - m) - (p - n)) + this->RIndex + 1 + NValueShift) / 2;
 				      N1 = N2 + QValue;
-				      if (((N1 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p + n][0]) && (N1 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p + n][0]))
-					  && ((N2 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + q + m][1]) && (N2 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + q + m][1])))
+				      if (((N1 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p - n][0]) && (N1 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p - n][0]))
+					  && ((N2 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + q - m][1]) && (N2 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + q - m][1])))
 					{ 
 					  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
 					    {
 					      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsi2.GetNbrColumn(); ++NeutralIndex2)
 						{
-						  ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(this->PLevelShift + p + n, 0, N1, p, ChargedIndex1, NeutralIndex1)];
+						  ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(this->PLevelShift + p - n, 0, N1, p, ChargedIndex1, NeutralIndex1)];
 						}
 					    }
 					  
 					}
-				      N2 = (2 * ((q + m) - (p + n)) + 1 + NValueShift) / 2;
+				      N2 = (2 * ((q - m) - (p - n)) + 1 + NValueShift) / 2;
 				      N1 = N2 + QValue;
-				      if (((N1 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p + n][1]) && (N1 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p + n][1]))
-					  && ((N2 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + q + m][0]) && (N2 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + q + m][0])))
+				      if (((N1 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p - n][1]) && (N1 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p - n][1]))
+					  && ((N2 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + q - m][0]) && (N2 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + q - m][0])))
 					{ 
 					  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi1.GetNbrColumn(); ++NeutralIndex1)
 					    {
 					      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentity2.GetNbrColumn(); ++NeutralIndex2)
 						{
-						  ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(this->PLevelShift + p + n, 1, N1, p, ChargedIndex1, NeutralIndex1)];
+						  ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(this->PLevelShift + p - n, 1, N1, p, ChargedIndex1, NeutralIndex1)];
 						}
 					    }
 					}
@@ -815,7 +817,7 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 	{
 	  for (int p = 0; p <= this->PLevelShift; ++p)
 	    {
-	      if (((this->PLevelShift + p + n) <= this->PLevel) && ((this->PLevelShift + p + n) >= 0))
+	      if (((this->PLevelShift + p - n) <= this->PLevel) && ((this->PLevelShift + p - n) >= 0))
 		{
 		  BosonOnDiskShort* TmpSpaceCharged1 = U1BosonBasis[p];
 		  BosonOnDiskShort* TmpSpaceNeutral1 = U1BosonBasis[n];
@@ -825,7 +827,7 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 		    {
 		      for (int q = 0; q <= this->PLevelShift; ++q)
 			{
-			  if (((this->PLevelShift + q + m) <= this->PLevel) && ((this->PLevelShift + q + m) >= 0))
+			  if (((this->PLevelShift + q - m) <= this->PLevel) && ((this->PLevelShift + q - m) >= 0))
 			    {
 			      BosonOnDiskShort* TmpSpaceCharged2 = U1BosonBasis[q];
 			      BosonOnDiskShort* TmpSpaceNeutral2 = U1BosonBasis[m];
@@ -842,10 +844,10 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 				      TmpSpaceCharged2->GetOccupationNumber(ChargedIndex2, Partition2);
 				      int N2;
 				      int N1;
-				      N2 = (2 * ((q + m) - (p + n)) + this->RIndex + 1 + NValueShift) / 2;
+				      N2 = (2 * ((q - m) - (p - n)) + this->RIndex + 1 + NValueShift) / 2;
 				      N1 = N2 + QValue;
-				      if (((N1 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p + n][0]) && (N1 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p + n][0]))
-					  && ((N2 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + q + m][1]) && (N2 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + q + m][1])))
+				      if (((N1 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p - n][0]) && (N1 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p - n][0]))
+					  && ((N2 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + q - m][1]) && (N2 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + q - m][1])))
 					{ 
 					  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
 					    {
@@ -861,17 +863,17 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 							}
 						      Tmp += TmpOrthogonalBasisIdentity1(NeutralIndex3, NeutralIndex1) * Tmp1;
 						    }
-						  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, this->PLevelShift + p + n, this->PLevelShift + q + m, Coef);
-						  V0Matrix.SetMatrixElement(this->Get2RMatrixIndexV2(this->PLevelShift + p + n, 0, N1, p, ChargedIndex1, NeutralIndex1),
-									    this->Get2RMatrixIndexV2(this->PLevelShift + q + m, 1, N2, q, ChargedIndex2, NeutralIndex2), Tmp);
+						  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, p, q, Coef);
+						  V0Matrix.SetMatrixElement(this->Get2RMatrixIndexV2(this->PLevelShift + p - n, 0, N1, p, ChargedIndex1, NeutralIndex1),
+									    this->Get2RMatrixIndexV2(this->PLevelShift + q - m, 1, N2, q, ChargedIndex2, NeutralIndex2), Tmp);
 						}
 					      
 					    }
 					}
-				      N2 = (2 * ((q + m) - (p + n)) + 1 + NValueShift) / 2;
+				      N2 = (2 * ((q - m) - (p - n)) + 1 + NValueShift) / 2;
 				      N1 = N2 + QValue;
-				      if (((N1 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p + n][1]) && (N1 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p + n][1]))
-					  && ((N2 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + q + m][0]) && (N2 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + q + m][0])))
+				      if (((N1 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p - n][1]) && (N1 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p - n][1]))
+					  && ((N2 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + q - m][0]) && (N2 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + q - m][0])))
 					{ 
 					  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi1.GetNbrColumn(); ++NeutralIndex1)
 					    {
@@ -887,9 +889,9 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 							}
 						      Tmp += TmpOrthogonalBasisPsi1(NeutralIndex3, NeutralIndex1) * Tmp1;
 						    }
-						  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, this->PLevelShift + p + n, this->PLevelShift + q + m, Coef);
-						  V0Matrix.SetMatrixElement(this->Get2RMatrixIndexV2(this->PLevelShift + p + n, 1, N1, p, ChargedIndex1, NeutralIndex1),
-									    this->Get2RMatrixIndexV2(this->PLevelShift + q + m, 0, N2, q, ChargedIndex2, NeutralIndex2), Tmp);
+						  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, p, q, Coef);
+						  V0Matrix.SetMatrixElement(this->Get2RMatrixIndexV2(this->PLevelShift + p - n, 1, N1, p, ChargedIndex1, NeutralIndex1),
+									    this->Get2RMatrixIndexV2(this->PLevelShift + q - m, 0, N2, q, ChargedIndex2, NeutralIndex2), Tmp);
 						}
 					    }
 					}
@@ -951,7 +953,7 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
   
   delete[] ScalarProductIdentity;
   delete[] ScalarProductPsi;
-  for (int i = 0; i <= this->PLevel; ++i)
+  for (int i = 0; i <= this->PLevelShift; ++i)
     {
       delete[] MatrixPsi01[i];
       delete[] MatrixPsi10[i];
@@ -971,6 +973,73 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
   delete[] MultiplicityFactor;
 }
 
+// compute the various arrays required to convert from quantum numbers and local indices to a global linearized index
+//
+// return value = dimension of the B matrix
+
+int FQHEMPSPHPfaffianMatrix::ComputeLinearizedIndexArrays()
+{
+  this->NbrNValuesPerPLevelCFTSector = new int* [this->PLevel + 1];
+  this->NInitialValuePerPLevelCFTSector = new int* [this->PLevel + 1];
+  this->NLastValuePerPLevelCFTSector = new int* [this->PLevel + 1];     
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      this->NbrNValuesPerPLevelCFTSector[i] = new int [this->NbrCFTSectors];
+      this->NInitialValuePerPLevelCFTSector[i] = new int [this->NbrCFTSectors];
+      this->NLastValuePerPLevelCFTSector[i] = new int [this->NbrCFTSectors];
+      for (int l = 0; l < this->NbrCFTSectors; ++l)
+	{
+	  this->ComputeChargeIndexRange(i, l, this->NInitialValuePerPLevelCFTSector[i][l], this->NLastValuePerPLevelCFTSector[i][l]);
+	  this->NbrNValuesPerPLevelCFTSector[i][l] =  this->NLastValuePerPLevelCFTSector[i][l] - this->NInitialValuePerPLevelCFTSector[i][l] + 1;
+	}
+    }
+
+  this->StartingIndexPerPLevelCFTSectorQValue = new int** [this->PLevel + 1];
+  this->NbrIndexPerPLevelCFTSectorQValue = new int** [this->PLevel + 1];
+  this->StartingIndexPerPLevelCFTSectorQValueU1Sector = new int*** [this->PLevel + 1];
+  this->NbrIndexPerPLevelCFTSectorQValueU1Sector = new int*** [this->PLevel + 1];
+  int TotalIndex = 0;
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      this->StartingIndexPerPLevelCFTSectorQValue[i] = new int* [this->NbrCFTSectors];
+      this->NbrIndexPerPLevelCFTSectorQValue[i] = new int* [this->NbrCFTSectors];
+      this->StartingIndexPerPLevelCFTSectorQValueU1Sector[i] = new int** [this->NbrCFTSectors];
+      this->NbrIndexPerPLevelCFTSectorQValueU1Sector[i] = new int** [this->NbrCFTSectors];
+      for (int l = 0; l < this->NbrCFTSectors; ++l)
+	{
+	  this->StartingIndexPerPLevelCFTSectorQValue[i][l] = new int [this->NbrNValuesPerPLevelCFTSector[i][l]];
+	  this->NbrIndexPerPLevelCFTSectorQValue[i][l] = new int [this->NbrNValuesPerPLevelCFTSector[i][l]];
+	  this->StartingIndexPerPLevelCFTSectorQValueU1Sector[i][l] = new int* [this->NbrNValuesPerPLevelCFTSector[i][l]];
+	  this->NbrIndexPerPLevelCFTSectorQValueU1Sector[i][l] = new int* [this->NbrNValuesPerPLevelCFTSector[i][l]];
+	  for (int j = this->NInitialValuePerPLevelCFTSector[i][l];  j <= this->NLastValuePerPLevelCFTSector[i][l]; ++j)
+	    {
+	      this->StartingIndexPerPLevelCFTSectorQValue[i][l][j - this->NInitialValuePerPLevelCFTSector[i][l]] = TotalIndex;
+	      this->StartingIndexPerPLevelCFTSectorQValueU1Sector[i][l][j - this->NInitialValuePerPLevelCFTSector[i][l]] = new int [i + 1];
+	      this->NbrIndexPerPLevelCFTSectorQValueU1Sector[i][l][j - this->NInitialValuePerPLevelCFTSector[i][l]] = new int [i + 1];
+	      int TmpMinChargePSector = i - this->PLevelShift;
+	      if (TmpMinChargePSector < 0)
+		{
+		  TmpMinChargePSector = 0;
+		}
+	      int TmpMaxChargePSector = i;
+	      if (TmpMaxChargePSector > this->PLevelShift)
+		{
+		  TmpMaxChargePSector = this->PLevelShift;
+		}
+	      for (int k = TmpMinChargePSector; k <= TmpMaxChargePSector; ++k)
+		{
+		  this->StartingIndexPerPLevelCFTSectorQValueU1Sector[i][l][j - this->NInitialValuePerPLevelCFTSector[i][l]][k] = TotalIndex;
+		  int Tmp = this->U1BasisDimension[k] * this->NeutralSectorDimension[l][i - k];
+		  this->NbrIndexPerPLevelCFTSectorQValueU1Sector[i][l][j - this->NInitialValuePerPLevelCFTSector[i][l]][k] = Tmp;
+		  TotalIndex += Tmp;	      
+		}
+	      this->NbrIndexPerPLevelCFTSectorQValue[i][l][j - this->NInitialValuePerPLevelCFTSector[i][l]] = TotalIndex - this->StartingIndexPerPLevelCFTSectorQValue[i][l][j - this->NInitialValuePerPLevelCFTSector[i][l]];
+	    }
+	}
+    }
+  return TotalIndex;
+}
+
 // get the boundary indices of the MPS representation
 //
 // rowIndex = matrix row index
@@ -979,6 +1048,7 @@ void FQHEMPSPHPfaffianMatrix::CreateBMatrices (const char* cftDirectory, Abstrac
 
 void FQHEMPSPHPfaffianMatrix::GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding)
 {
+  cout << "test" << endl;
   int MinQ;
   int MaxQ;
   this->GetChargeIndexRange(this->PLevelShift, MinQ, MaxQ);
