@@ -35,5 +35,6 @@ FullReorthogonalizedComplexBlockLanczosAlgorithmWithDiskStorage.cc \
 ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk.cc \
 ComplexBasicLanczosAlgorithmWithProjector.cc \
 ComplexBasicLanczosAlgorithmWithGroundStateAndProjector.cc \
-LanczosManager.cc
+LanczosManager.cc \
+ComplexArnoldiCPMapsAlgorithm.cc
 #ComplexBasicLanczosAlgorithmDiskWithGroundState.cc
