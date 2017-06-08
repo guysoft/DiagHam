@@ -67,9 +67,19 @@ extern "C" void FORTRAN_NAME(zgetri)(const int* dimensionM, const doublecomplex*
 				     const int* leadingDimensionA, const int *ipiv, const doublecomplex* workingArea, 
 				     const int* workingAreaSize, const int *info);
 
+// binding to the LAPACK cgeqrf routine for matrix QR  decomposition
+//
+extern "C" void FORTRAN_NAME(zgeqrf) (const int* dimensionM, const int *  dimensionN,  const doublecomplex * matrixA,
+				      const int* leadingDimensionA,  const doublecomplex * TAU,  const doublecomplex * WORK, const int * LWORK,
+				      const int * INFO );
+extern "C" void FORTRAN_NAME(zungqr) (const int* dimensionM, const int *  dimensionN, const int *  dimensionK ,  const doublecomplex * matrixA,
+				      const int* leadingDimensionA,  const doublecomplex * TAU,  const doublecomplex * WORK, const int * LWORK,
+				      const int * INFO );
+
+
 // sequence of routines to be called for diagonalization via Hessenberg matrix QR decomposition
 // balance (optional)
-extern "C" void FORTRAN_NAME(zgebal)(const char* jobz, const int* dimensionN, const doublecomplex* matrixA,
+extern "C" void FORTRAN_NAME(zgebal)(const char* jobz, const int* dimensionN, const doublecomplex * matrixA,
 				     const int* leadingDimensionA, const int *iLow, const int *iHigh,
 				     const double *scale, const int *info);
 // calculate hessenberg form
@@ -3111,7 +3121,7 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackSchurForm (ComplexDiagonalMatrix& M,
 // 
 // lowerMatrix = reference on the matrix where the lower triangular matrix will be stored
 // upperMatrix = reference on the matrix where the upper triangular matrix will be stored
-// return value = array that  describe the additional row permutation
+// return value = array that describes the additional row permutation
 
 int* ComplexMatrix::LapackLUDecomposition(ComplexLowerTriangularMatrix& lowerMatrix, ComplexUpperTriangularMatrix& upperMatrix)
 {
@@ -3182,7 +3192,124 @@ int* ComplexMatrix::LapackLUDecomposition(ComplexLowerTriangularMatrix& lowerMat
   return 0;
 #endif  
 }
+
+
+void ComplexMatrix::QRDecompositionFromLapack (ComplexMatrix & Q, ComplexMatrix & R)
+{
+#ifdef __LAPACK__
+  cout <<*this<<endl;
+  doublecomplex* TmpMatrix = new doublecomplex [((long) this->NbrRow) * ((long) this->NbrColumn)];
+
+  long Pos = 0l;
+  for (int j = 0; j < this->NbrColumn;++j)
+    {
+      for (int i = 0; i < this->NbrRow; ++i)
+	{
+	  TmpMatrix[Pos].r = this->Columns[j][i].Re;
+	  TmpMatrix[Pos].i = this->Columns[j][i].Im;
+	  ++Pos;
+	}
+    }
+  int DimensionRow = this->NbrRow;
+  int DimensionColumn =  this->NbrColumn;
+  doublecomplex * Tau = new doublecomplex [DimensionRow];
+  int Information = 0;
+
+  int LWork=-1;
+  doublecomplex * IWork = new doublecomplex[DimensionRow] ;
+
+//  FORTRAN_NAME(zgeqrf)(&DimensionRow, &DimensionColumn, TmpMatrix, &DimensionRow, Tau, IWork, &LWork, &Information);
   
+/*  for(int i =0 ; i < DimensionRow; i++)
+    cout <<IWork[i].r << " "<<IWork[i].i <<endl;
+  if (Information < 0)
+    {
+      cout << "Illegal argument " << -Information << " in LAPACK function call to zhseqr in ComplexMatrix.cc in LapackDiagonalize, line "<< __LINE__<<endl;
+      exit(1);
+    }
+  */
+  
+  doublecomplex * complexWork = new doublecomplex[this->NbrRow * this->NbrColumn];
+  int lComplexWork = this->NbrRow * this->NbrColumn;
+  
+  
+  FORTRAN_NAME(zgeqrf)(&DimensionRow, &DimensionColumn, TmpMatrix, &DimensionRow, Tau, complexWork, &lComplexWork, &Information);
+
+  Complex Tmp;
+  for (int j = 0; j < this->NbrColumn;++j)
+    {
+      for (int i = 0; i < j; ++i)
+	{
+	  Tmp.Re = TmpMatrix[i+this->NbrRow *j].r;
+	  Tmp.Im = TmpMatrix[i+this->NbrRow *j].i;
+	  R.SetMatrixElement(i ,j, Tmp);
+ 	}
+      Tmp.Re = TmpMatrix[j*(1+this->NbrRow)].r;
+      Tmp.Im = TmpMatrix[j*(1+this->NbrRow)].i;
+      R.SetMatrixElement(j ,j, Tmp);
+    }
+
+  
+  int MinimumRowColumn = DimensionRow ;
+  if (DimensionColumn <  MinimumRowColumn)
+    MinimumRowColumn = DimensionColumn;
+					 
+  FORTRAN_NAME(zungqr) (&DimensionRow, &DimensionColumn, &MinimumRowColumn, TmpMatrix, &DimensionRow, Tau, complexWork, &lComplexWork, &Information); 
+  
+  delete[] complexWork;
+  
+   Pos = 0;
+  for (int j = 0; j < this->NbrColumn;++j)
+    {
+      for (int i = 0; i < j; ++i)
+	{
+	  Tmp.Re = TmpMatrix[Pos].r;
+	  Tmp.Im = TmpMatrix[Pos].i;
+	  Q.SetMatrixElement(i ,j, Tmp);
+	  ++Pos;
+ 	}
+      Tmp.Re = TmpMatrix[Pos].r;
+      Tmp.Im = TmpMatrix[Pos].i;
+      Q.SetMatrixElement(j ,j, Tmp);
+      ++Pos;
+      for (int i = j + 1 ; i < this->NbrRow; ++i)
+	{
+	  Tmp.Re = TmpMatrix[Pos].r;
+	  Tmp.Im = TmpMatrix[Pos].i;
+	  Q.SetMatrixElement(i ,j, Tmp);
+	  ++Pos;
+	}
+    }
+
+  for(int i = 0 ; i <  this->NbrColumn ; i++)
+    {
+      R.GetMatrixElement(i ,i,Tmp);
+      if ( Tmp.Re < 0 )
+	{
+	  for(int j = 0 ; j <  this->NbrRow ; j++)
+	    {
+	      R.GetMatrixElement(j ,i,Tmp);
+	      R.SetMatrixElement(j ,i,Tmp * -1.0);
+	      Q.GetMatrixElement(i ,j,Tmp);
+	      Q.SetMatrixElement(i ,j, Tmp * -1.0);
+	      Q(i,j) *=-1;
+	    }
+	}
+    }
+  
+  cout <<R<<endl;
+  cout <<Q<<endl;
+  
+#else
+  cout << "Warning, using ComplexMatrix::QRDecompositionFromLapack without the lapack library" << endl;
+  return 0;
+#endif  
+  
+
+}
+ 
+
+ 
 // invert the current matrix using the LAPACK library
 // 
 
@@ -3219,6 +3346,7 @@ void ComplexMatrix::LapackInvert()
   int WorkingAreaSize = -1;
   doublecomplex TmpWorkingArea;
   FORTRAN_NAME(zgetri)(&DimensionM, TmpMatrix, &DimensionM , PermutationArray, &TmpWorkingArea, &WorkingAreaSize, &Information);
+
   WorkingAreaSize = (int) TmpWorkingArea.r;
   doublecomplex* WorkingArea = new doublecomplex [WorkingAreaSize];
   FORTRAN_NAME(zgetri)(&DimensionM, TmpMatrix, &DimensionM , PermutationArray, WorkingArea, &WorkingAreaSize, &Information); 
@@ -3260,6 +3388,33 @@ ComplexMatrix& ComplexMatrix::RandomUnitaryMatrix()
   return *this;
 }
 
+ // compute the Frobenius norm of the current matrix 
+ //
+ // return value = value of the norm
+
+double ComplexMatrix::FrobeniusNorm()
+{
+  double Tmp = 0.0;
+  for(int i =0; i < this->NbrColumn; i++)
+    Tmp += this->Columns[i].SqrNorm();
+  return sqrt(Tmp);
+}
+
+// compute the Frobenius scalar product of two matrices
+//
+// return value = value of the scalar product
+Complex FrobeniusScalarProduct(ComplexMatrix & matrixA, ComplexMatrix & matrixB)
+{
+  Complex Tmp = 0.0;
+  for(int i =0 ; i < matrixA.NbrRow; i++)
+    {
+      for(int j =0 ; j < matrixA.NbrRow; j++)
+	{
+	  Tmp+= Conj(matrixA.Columns[j][i]) *  matrixB.Columns[j][i];
+	}
+    }
+  return Tmp;
+}
 
 #ifdef __MPI__
 

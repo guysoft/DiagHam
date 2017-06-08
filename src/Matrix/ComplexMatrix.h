@@ -334,7 +334,6 @@ class ComplexMatrix : public Matrix
   // return value = product of the two matrices
   friend ComplexMatrix operator * (const  ComplexDiagonalMatrix & M1, const ComplexMatrix & M2);
   
-
   // multiply a complex matrix with a complex upper triangular matrix
   //
   // m1 = complex matrix
@@ -420,7 +419,6 @@ class ComplexMatrix : public Matrix
   // x = real number to use
   // return value = division result
   friend ComplexMatrix operator / (const ComplexMatrix& M1, const RealDiagonalMatrix& M2);
-
 
   // add another complex matrices
   //
@@ -524,6 +522,16 @@ class ComplexMatrix : public Matrix
   //
   // return value = number of non-zero matrix elements
   virtual long ComputeNbrNonZeroMatrixElements();
+
+  // compute the Frobenius norm of the current matrix 
+  //
+  // return value = value of the norm
+  double FrobeniusNorm();
+
+  // compute the Frobenius scalar product of two matrices
+  //
+  // return value = value of the scalar product
+  friend Complex FrobeniusScalarProduct (ComplexMatrix & matrixA, ComplexMatrix & matrixB);
 
   // apply a sequence of row permutations
   //
@@ -754,6 +762,16 @@ class ComplexMatrix : public Matrix
   // upperMatrix = reference on the matrix where the upper triangular matrix will be stored
   // return value = array that  describe the additional row permutation
   int* LapackLUDecomposition(ComplexLowerTriangularMatrix& lowerMatrix, ComplexUpperTriangularMatrix& upperMatrix);
+
+  // perform QR decomposition of the current matrix
+  //
+  // 
+  // Q = matrix where unitary matrix has to be stored
+  // R = matrix where upper triangular matrix has to be stored
+  // return value = reference on real matrix consisting of eigenvalues
+  void QRDecompositionFromLapack (ComplexMatrix & Q, ComplexMatrix & R);
+  
+
 
   // invert the current matrix using the LAPACK library
   // 
