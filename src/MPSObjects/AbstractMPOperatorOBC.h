@@ -11,8 +11,8 @@ class AbstractMPSSite;
 
 class AbstractMPOperatorOBC : public AbstractHamiltonian
 {
- protected:
 
+ protected:
   unsigned int NbrNonZeroElements;
   unsigned int * IndexValues;
   unsigned int PhysicalDimension;
