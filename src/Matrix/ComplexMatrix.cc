@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //                                                                            //
 //                            DiagHam  version 0.01                           //
@@ -3197,7 +3197,6 @@ int* ComplexMatrix::LapackLUDecomposition(ComplexLowerTriangularMatrix& lowerMat
 void ComplexMatrix::QRDecompositionFromLapack (ComplexMatrix & Q, ComplexMatrix & R)
 {
 #ifdef __LAPACK__
-  cout <<*this<<endl;
   doublecomplex* TmpMatrix = new doublecomplex [((long) this->NbrRow) * ((long) this->NbrColumn)];
 
   long Pos = 0l;
@@ -3217,17 +3216,6 @@ void ComplexMatrix::QRDecompositionFromLapack (ComplexMatrix & Q, ComplexMatrix 
 
   int LWork=-1;
   doublecomplex * IWork = new doublecomplex[DimensionRow] ;
-
-//  FORTRAN_NAME(zgeqrf)(&DimensionRow, &DimensionColumn, TmpMatrix, &DimensionRow, Tau, IWork, &LWork, &Information);
-  
-/*  for(int i =0 ; i < DimensionRow; i++)
-    cout <<IWork[i].r << " "<<IWork[i].i <<endl;
-  if (Information < 0)
-    {
-      cout << "Illegal argument " << -Information << " in LAPACK function call to zhseqr in ComplexMatrix.cc in LapackDiagonalize, line "<< __LINE__<<endl;
-      exit(1);
-    }
-  */
   
   doublecomplex * complexWork = new doublecomplex[this->NbrRow * this->NbrColumn];
   int lComplexWork = this->NbrRow * this->NbrColumn;
@@ -3258,7 +3246,7 @@ void ComplexMatrix::QRDecompositionFromLapack (ComplexMatrix & Q, ComplexMatrix 
   
   delete[] complexWork;
   
-   Pos = 0;
+  Pos = 0;
   for (int j = 0; j < this->NbrColumn;++j)
     {
       for (int i = 0; i < j; ++i)
@@ -3281,31 +3269,35 @@ void ComplexMatrix::QRDecompositionFromLapack (ComplexMatrix & Q, ComplexMatrix 
 	}
     }
 
-  for(int i = 0 ; i <  this->NbrColumn ; i++)
+
+
+  cout <<Q<< " " <<R <<endl;
+
+  cout << Q*R<<endl;
+  
+  for(int i = 0 ; i <  R.NbrColumn ; i++)
     {
       R.GetMatrixElement(i ,i,Tmp);
+      cout <<Tmp<<endl;
       if ( Tmp.Re < 0 )
 	{
-	  for(int j = 0 ; j <  this->NbrRow ; j++)
+	  for(int j = 0 ; j <  R.NbrRow ; j++)
 	    {
-	      R.GetMatrixElement(j ,i,Tmp);
-	      R.SetMatrixElement(j ,i,Tmp * -1.0);
-	      Q.GetMatrixElement(i ,j,Tmp);
-	      Q.SetMatrixElement(i ,j, Tmp * -1.0);
-	      Q(i,j) *=-1;
+	      Q.GetMatrixElement(j ,i, Tmp);
+	      Q.SetMatrixElement(j ,i, -1.0*Tmp);
+	      R.GetMatrixElement(i ,j, Tmp);
+	      R.SetMatrixElement(i ,j, -1.0*Tmp);
 	    }
 	}
     }
-  
-  cout <<R<<endl;
-  cout <<Q<<endl;
+
+  cout <<Q<< " " <<R <<endl;
+  cout << Q*R<<endl;
   
 #else
   cout << "Warning, using ComplexMatrix::QRDecompositionFromLapack without the lapack library" << endl;
   return 0;
 #endif  
-  
-
 }
  
 
