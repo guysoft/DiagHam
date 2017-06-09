@@ -15,11 +15,17 @@ LeftOrthonormalizeAlgorithm::LeftOrthonormalizeAlgorithm (ComplexMatrix * mps, u
   this->PhysicalDimension = physicalDimension;
   this->Accuracy = accuracy;
   this->CenterMatrix = initialGuess;
+  this->MpsInLeftForm = new ComplexMatrix[this->PhysicalDimension];
+  for(int i = 0; i < this->PhysicalDimension; i++)
+    this->MpsInLeftForm[i] = ComplexMatrix(this->Mps[0].GetNbrRow(),this->Mps[0].GetNbrColumn() ,true);
 }
 
 
 LeftOrthonormalizeAlgorithm::~LeftOrthonormalizeAlgorithm()
 {
+/*  for(int i = 0; i < this->PhysicalDimension; i++)
+    delete this->MpsInLeftForm[i];*/
+  delete [] this->MpsInLeftForm;
 }
 
 void LeftOrthonormalizeAlgorithm::RunAlgorithm()
@@ -30,35 +36,53 @@ void LeftOrthonormalizeAlgorithm::RunAlgorithm()
   TmpUpperTriangular/= TmpUpperTriangular.FrobeniusNorm();
   
   for(int i = 0; i < PhysicalDimension; i++)
-    this->MpsInLeftForm[i] = TmpUpperTriangular * this->Mps[i];
+    {
+      this->MpsInLeftForm[i] = TmpUpperTriangular * this->Mps[i];
+      cout <<this->MpsInLeftForm[i]<<endl;
+    }
   
   this->OldCenterMatrix = TmpUpperTriangular;
 
-  ComplexMatrix ACenter (this->MpsInLeftForm[0].GetNbrRow() * PhysicalDimension, this->MpsInLeftForm[0].GetNbrColumn());
+  ComplexMatrix ACenter (this->MpsInLeftForm[0].GetNbrRow() * PhysicalDimension, this->MpsInLeftForm[0].GetNbrColumn(),true);
+//  cout <<this->MpsInLeftForm[0].GetNbrRow() * PhysicalDimension<<" "<<  this->MpsInLeftForm[0].GetNbrColumn() <<endl;
   
   for(int i = 0; i < ACenter.GetNbrRow() ; i++)
     {
       for(int j = 0; j <  ACenter.GetNbrColumn() ; j++)
 	{
-	  ACenter.SetMatrixElement(i,j, this->MpsInLeftForm[i/this->MpsInLeftForm[i].GetNbrRow()].GetMatrixElement(i%this->MpsInLeftForm[i].GetNbrRow(),j));
+//	  cout << this->MpsInLeftForm[i/this->MpsInLeftForm[0].GetNbrRow()].GetMatrixElement(i%this->MpsInLeftForm[0].GetNbrRow(),j) <<endl;
+	  ACenter.SetMatrixElement(i,j, this->MpsInLeftForm[i/this->MpsInLeftForm[0].GetNbrRow()].GetMatrixElement(i%this->MpsInLeftForm[0].GetNbrRow(),j));
 	}
     }
   
-  ComplexMatrix TmpUnitary2 (this->MpsInLeftForm[0].GetNbrRow() * PhysicalDimension, this->MpsInLeftForm[0].GetNbrColumn());
-  
-  ACenter.QRDecompositionFromLapack (TmpUnitary2, this->CenterMatrix);
-  
-  for(int i = 0; i < ACenter.GetNbrRow() ; i++)
-    {
-      for(int j = 0; j <  ACenter.GetNbrColumn() ; j++)
-	{
-	  this->MpsInLeftForm[i/this->MpsInLeftForm[i].GetNbrRow()].SetMatrixElement(i%this->MpsInLeftForm[i].GetNbrRow(),j , TmpUnitary2.GetMatrixElement(i,j));
-	}
-    }
+  cout << ACenter<<endl;
 
+  ComplexMatrix TmpUnitary2 (ACenter.GetNbrRow(), ACenter.GetNbrRow(), true);
+  
+  ACenter.QRDecompositionFromLapack (TmpUnitary2,this->CenterMatrix);
+  
+  cout <<"After   ACenter.QRDecompositionFromLapack (TmpUnitary2, this->CenterMatrix)"<<endl;
+  
+  cout << this->CenterMatrix<<endl;
+  cout <<TmpUnitary2<<endl;
+
+  for(int i = 0; i < ACenter.GetNbrRow() ; i++)
+    {
+      for(int j = 0; j < this->MpsInLeftForm[0].GetNbrColumn() ; j++)
+	{
+	  this->MpsInLeftForm[i/this->MpsInLeftForm[0].GetNbrRow()].SetMatrixElement(i%this->MpsInLeftForm[0].GetNbrRow(),j , TmpUnitary2.GetMatrixElement(i,j));
+	}
+    }
+  
+  for(int i = 0; i < PhysicalDimension; i++)
+    {
+      cout <<this->MpsInLeftForm[i]<<endl;
+    }
+  
   this->Eigenvalue = this->CenterMatrix.FrobeniusNorm();
   this->CenterMatrix/=  this->Eigenvalue;
   double ActualAccuracy = (this->CenterMatrix - this->OldCenterMatrix).FrobeniusNorm();
+  cout <<"Actual Accuracy = " << ActualAccuracy<<endl;
   while( ActualAccuracy > this->Accuracy )
     {
       CompletelyPositiveMap Map (this->PhysicalDimension, this->Mps, this->MpsInLeftForm);

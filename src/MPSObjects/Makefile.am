@@ -10,4 +10,6 @@ RealMPSSite.cc \
 ComplexMPSSite.cc \
 DMRGFiniteSizeRealOBCMainTask.cc \
 DMRGFiniteSizeComplexOBCMainTask.cc \
-DMRGInfiniteSizeComplexMainTask.cc
+DMRGInfiniteSizeComplexMainTask.cc \
+CompletelyPositiveMap.cc \
+LeftOrthonormalizeAlgorithm.cc
