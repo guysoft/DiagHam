@@ -293,15 +293,25 @@ int main(int argc, char** argv)
   double UFinal = Manager.GetDouble("u-final");
   double Tau = Manager.GetDouble("tau");
   double FinalTime = Manager.GetDouble("final-time");
-  double TimeStep = FinalTime/ NbrSteps;
+  double TimeStep = FinalTime/ ((double)NbrSteps);
   double UPotential;
   
   char* OutputNamePrefix = new char [512];
-  strcpy(OutputNamePrefix,StateFileName);
-  
-  RemoveExtensionFromFileName(OutputNamePrefix,".vec");
+  OutputNamePrefix =  RemoveExtensionFromFileName(StateFileName,".vec");
+
   char * ParameterString = new char [512];
   sprintf(ParameterString,"uf_%f_tau_%f_tf_%f_nstep_%d",UFinal,Tau,FinalTime,NbrSteps);
+  char * EnergyNameFile = 0;
+  ofstream FileEnergy;
+  if (Manager.GetBoolean("compute-energy"))
+    {
+      EnergyNameFile = new char[512];
+      sprintf (EnergyNameFile, "%s_%s_energy.dat", OutputNamePrefix,ParameterString);
+
+      FileEnergy.open(EnergyNameFile, ios::out);
+      FileEnergy.precision(14);
+      FileEnergy << "# t E "<< endl;
+    }
   
   for(int i = 0 ; i < NbrSteps; i++)
     {
@@ -342,7 +352,7 @@ int main(int argc, char** argv)
       TmpExpansionOrder = 0;
       TmpCoefficient = 1.0;
       cout << "Computing state " << (i + 1) << "/" <<  NbrSteps << " at t = " << (TimeStep * i) <<" with Interaction "<< UPotential  <<endl;
-      while ( ((fabs(TmpNorm) > 1e-8 ) || (TmpExpansionOrder < 1)) && (TmpExpansionOrder <= Manager.GetInteger("iter-max")))
+      while ( ((fabs(TmpNorm) > 1e-14 ) || (TmpExpansionOrder < 1)) && (TmpExpansionOrder <= Manager.GetInteger("iter-max")))
 	{
 	  TmpExpansionOrder += 1;
 	  TmpCoefficient = -TmpCoefficient * TimeStep * Complex(0.0, 1.0) / ((double) TmpExpansionOrder);
@@ -360,6 +370,16 @@ int main(int argc, char** argv)
       sprintf (OutputName, "%s_%s.%d.vec",OutputNamePrefix,ParameterString,i);
       TmpInitialState.WriteVector(OutputName);      
       delete [] OutputName;
+
+      if (Manager.GetBoolean("compute-energy"))
+	{
+	  VectorHamiltonianMultiplyOperation Operation (Hamiltonian, (&TmpInitialState), (&TmpState));
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
+	  Complex Energy = (TmpInitialState) * (TmpState);
+	  FileEnergy <<  (TimeStep * i) << " " << Energy << endl;
+	  cout << "E = " << Energy << endl;
+	}
+      
       delete  Hamiltonian;
     }  
   delete[] OutputNamePrefix;
