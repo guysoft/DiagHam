@@ -50,7 +50,7 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
-  (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sites", "total number of sites (if negative, guess it from the geometry file)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-unitcells", "total number of unit cells", 4);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "delta", "hopping anisotropy",0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "cylinder", "use open boundary conditions");
   (*SystemGroup) += new BooleanOption  ('\n', "no-translation" , "don't use translation symmetry");
@@ -81,14 +81,14 @@ int main(int argc, char** argv)
     }
 
   int NbrParticles = Manager.GetInteger("nbr-particles"); 
-  int NbrSites = Manager.GetInteger("nbr-sites"); 
+  int NbrUnitCells = Manager.GetInteger("nbr-unitcells"); 
   bool CylinderFlag = Manager.GetBoolean("cylinder");
   bool NoTranslationFlag  = Manager.GetBoolean("no-translation");
   char* StatisticPrefix = new char [64];
   sprintf (StatisticPrefix, "fermions_ssh");
   
   char* FilePrefix = new char [256];
-  sprintf (FilePrefix, "%s_x_%d_n_%d", StatisticPrefix, NbrSites, NbrParticles);
+  sprintf (FilePrefix, "%s_x_%d_n_%d_ns_%d", StatisticPrefix, NbrUnitCells, NbrParticles, (2 * NbrUnitCells));
   
   char* FileParameterString = new char [256];
   if (CylinderFlag)
@@ -106,11 +106,11 @@ int main(int argc, char** argv)
   
   bool FirstRunFlag = true;
 
-  TightBindingModelSSH TightBindingModel (NbrSites,  Manager.GetDouble("delta"), CylinderFlag, Architecture.GetArchitecture(), true);
+  TightBindingModelSSH TightBindingModel (NbrUnitCells,  Manager.GetDouble("delta"), CylinderFlag, Architecture.GetArchitecture(), true);
   HermitianMatrix TightBindingModelMatrix = TightBindingModel.GetRealSpaceTightBindingHamiltonian();
   
-  RealSymmetricMatrix DensityDensity (2*NbrSites,true); 
-  int MaxMomentum = NbrSites;
+  RealSymmetricMatrix DensityDensity (2 * NbrUnitCells, true); 
+  int MaxMomentum = NbrUnitCells;
   if ((CylinderFlag)|| (NoTranslationFlag))
     MaxMomentum = 1;
   
@@ -122,9 +122,9 @@ int main(int argc, char** argv)
       AbstractHamiltonian* Hamiltonian = 0;
 
       if ((CylinderFlag)|| (NoTranslationFlag))
-	Space = new   FermionOnLatticeRealSpace (NbrParticles, 2*NbrSites); 
+	Space = new   FermionOnLatticeRealSpace (NbrParticles, 2*NbrUnitCells); 
       else
-	Space = new  FermionOnLatticeRealSpaceAnd1DTranslation (NbrParticles, 2*NbrSites, Momentum, MaxMomentum);
+	Space = new  FermionOnLatticeRealSpaceAnd1DTranslation (NbrParticles, 2*NbrUnitCells, Momentum, MaxMomentum);
       
       cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
@@ -132,9 +132,9 @@ int main(int argc, char** argv)
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       
       if ((CylinderFlag)|| (NoTranslationFlag))
-	Hamiltonian = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, 2*NbrSites, TightBindingModelMatrix,DensityDensity, Architecture.GetArchitecture(), Memory);
+	Hamiltonian = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, 2 * NbrUnitCells, TightBindingModelMatrix,DensityDensity, Architecture.GetArchitecture(), Memory);
       else
-	Hamiltonian = new ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian (Space, NbrParticles, 2*NbrSites, Momentum, MaxMomentum, TightBindingModelMatrix,DensityDensity,Architecture.GetArchitecture(),  Memory);
+	Hamiltonian = new ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian (Space, NbrParticles, 2 * NbrUnitCells, Momentum, MaxMomentum, TightBindingModelMatrix,DensityDensity,Architecture.GetArchitecture(),  Memory);
       
       char* ContentPrefix = new char[256];
       if ((CylinderFlag)|| (NoTranslationFlag))

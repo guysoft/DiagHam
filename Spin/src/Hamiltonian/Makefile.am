@@ -56,4 +56,6 @@ TwoDimensionalTriangularRareEarthHamiltonian.cc \
 SpinChainAKLTP3P4HamiltonianWithTranslations.cc \
 SpinChainAKLTP3P4RealHamiltonianWithTranslations.cc \
 TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHamiltonian.cc \
-Unconventional3DToricCodeHamiltonian.cc
+Unconventional3DToricCodeHamiltonian.cc \
+ShastrySutherlandHamiltonian.cc \
+ShastrySutherlandAnd2DTranslationHamiltonian.cc
