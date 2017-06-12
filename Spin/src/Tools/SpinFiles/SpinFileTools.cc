@@ -489,6 +489,77 @@ bool SpinWith2DTranslationInversionFindSystemInfoFromVectorFileName(char* filena
 // xPeriodicity = reference on the number of sites along the x direction
 // yMomentum = reference on the momentum along the y direction
 // yPeriodicity = reference on the number of sites along the y direction
+// inversion =  reference on the inversion parity
+// szSymmetry =  reference on the Sz<->-Sz parity
+// return value = true if no error occured
+
+bool SpinWith2DTranslationFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int& spin, int& xMomentum, int& xPeriodicity,
+							   int& yMomentum, int& yPeriodicity, int& inversion, int& szSymmetry)
+{
+  if (SpinWith2DTranslationFindSystemInfoFromVectorFileName(filename, nbrSpins, sz, spin, xMomentum, xPeriodicity,
+							    yMomentum, yPeriodicity) == false)
+    {
+      return false;
+    }
+  inversion = 0;
+  szSymmetry = 0;
+  char* StrNbrParticles = strstr(filename, "_invsym_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 8;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && 
+	     (((StrNbrParticles[SizeString] >= '0') && (StrNbrParticles[SizeString] <= '9')) || (StrNbrParticles[SizeString] == '-')))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  inversion = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	{
+	  cout << "error while retrieving the inversion parity" << endl;
+	  return false;
+	}
+    }
+  StrNbrParticles = strstr(filename, "_szsym_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 7;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && 
+	     (((StrNbrParticles[SizeString] >= '0') && (StrNbrParticles[SizeString] <= '9')) || (StrNbrParticles[SizeString] == '-')))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  szSymmetry = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	{
+	  cout << "error while retrieving the Sz<->-Sz parity" << endl;
+	  return false;
+	}
+    }
+  return true;
+}
+
+// try to guess system information from file name for a 2d spin system with translations
+//
+// filename = file name
+// nbrSpins = reference to the number of spins 
+// sz = reference to twice the Sz value
+// spin = reference to twice the spin value per site
+// xMomentum = reference on the momentum along the x direction
+// xPeriodicity = reference on the number of sites along the x direction
+// yMomentum = reference on the momentum along the y direction
+// yPeriodicity = reference on the number of sites along the y direction
 // return value = true if no error occured
 
 bool SpinWith2DTranslationFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& spin, int& xMomentum, int& xPeriodicity,

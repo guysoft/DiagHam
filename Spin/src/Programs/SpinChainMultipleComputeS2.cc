@@ -8,6 +8,7 @@
 
 #include "Operator/SpinS2Operator.h"
 #include "Operator/SpinWith1DTranslationS2Operator.h"
+#include "Operator/SpinWith2DTranslationS2Operator.h"
 
 #include "HilbertSpace/Spin1_2Chain.h"
 #include "HilbertSpace/Spin1Chain.h"
@@ -20,6 +21,8 @@
 #include "HilbertSpace/Spin1ChainWithTranslations.h"
 #include "HilbertSpace/Spin1_2ChainFullAnd2DTranslation.h"
 #include "HilbertSpace/Spin1_2ChainFullInversionAnd2DTranslation.h"
+#include "HilbertSpace/Spin1_2ChainNewAnd2DTranslation.h"
+#include "HilbertSpace/Spin1_2ChainNewSzSymmetryAnd2DTranslation.h"
 #include "HilbertSpace/Spin1ChainWithTranslationsAndSzSymmetry.h"
 #include "HilbertSpace/Spin1ChainWithTranslationsAndInversionSymmetry.h"
 #include "HilbertSpace/Spin1ChainWithTranslationsAndSzInversionSymmetries.h"
@@ -111,30 +114,46 @@ int main(int argc, char** argv)
   int TotalSz = 0;
   bool SzFlag = true;
   bool Momentum1DFlag = false;
+  bool Momentum2DFlag = false;
   bool InversionFlag = false;  
   bool SzSymmetryFlag = false;  
   int XMomentum = 0;
   int XPeriodicity = 0;
+  int YMomentum = 0;
+  int YPeriodicity = 0;
   int InversionSector = 0;
   int SzSymmetrySector = 0;
   double Error = 1e-12;
  
-  if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue, XMomentum, InversionSector, SzSymmetrySector) == false)
+  if (SpinWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue, XMomentum, XPeriodicity,
+							    YMomentum, YPeriodicity) == false)
     {
-      if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue, InversionSector, SzSymmetrySector) == false)
+      if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue, XMomentum, InversionSector, SzSymmetrySector) == false)
 	{
-	  if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue) == false)
+	  if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue, InversionSector, SzSymmetrySector) == false)
 	    {
-	      SzFlag = false;
-	      if (SpinFindSystemInfoFromFileName(Manager.GetString("multiple-states"), NbrSpins, SpinValue) == false)
+	      if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue) == false)
 		{
-		  cout << "error while retrieving system parameters from file name " << Manager.GetString("multiple-states") << endl;
-		  return -1;
+		  SzFlag = false;
+		  if (SpinFindSystemInfoFromFileName(Manager.GetString("multiple-states"), NbrSpins, SpinValue) == false)
+		    {
+		      cout << "error while retrieving system parameters from file name " << Manager.GetString("multiple-states") << endl;
+		      return -1;
+		    }
 		}
+	    }
+	  else
+	    {
+	      if (InversionSector != 0)
+		InversionFlag = true;
+	      if (SzSymmetrySector != 0)
+		SzSymmetryFlag = true;
 	    }
 	}
       else
 	{
+	  XPeriodicity = NbrSpins;
+	  Momentum1DFlag = true;	      
 	  if (InversionSector != 0)
 	    InversionFlag = true;
 	  if (SzSymmetrySector != 0)
@@ -143,15 +162,16 @@ int main(int argc, char** argv)
     }
   else
     {
-      XPeriodicity = NbrSpins;
-      Momentum1DFlag = true;	      
+      SpinWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("multiple-states"), NbrSpins, TotalSz, SpinValue, XMomentum, XPeriodicity,
+							    YMomentum, YPeriodicity, InversionSector, SzSymmetrySector);
+      SzFlag = true;
+      Momentum2DFlag = true;
       if (InversionSector != 0)
 	InversionFlag = true;
       if (SzSymmetrySector != 0)
 	SzSymmetryFlag = true;
     }
-  
-  if (Momentum1DFlag == false)
+  if ((Momentum1DFlag == false) && (Momentum2DFlag == false))
     {
       if (SzFlag == true)
 	cout << "N=" << NbrSpins << " Sz=" <<  TotalSz << " 2s=" << SpinValue << endl;
@@ -160,10 +180,20 @@ int main(int argc, char** argv)
     }
   else
     {
-      if (SzFlag == true)
-	cout << "N=" << NbrSpins << " Sz=" <<  TotalSz << " 2s=" << SpinValue << " kx=" << XMomentum;
+      if (Momentum2DFlag == false)
+	{
+	  if (SzFlag == true)
+	    cout << "N=" << NbrSpins << " Sz=" <<  TotalSz << " 2s=" << SpinValue << " kx=" << XMomentum;
+	  else
+	    cout << "N=" << NbrSpins << " 2s=" << SpinValue << " kx=" << XMomentum;
+	}
       else
-	cout << "N=" << NbrSpins << " 2s=" << SpinValue << " kx=" << XMomentum;
+	{
+	  if (SzFlag == true)
+	    cout << "N=" << NbrSpins << " Sz=" <<  TotalSz << " 2s=" << SpinValue << " kx=" << XMomentum << " ky=" << YMomentum;
+	  else
+	    cout << "N=" << NbrSpins << " 2s=" << SpinValue << " kx=" << XMomentum << " ky=" << YMomentum;
+	}
       if ((InversionFlag == true) && (InversionSector != 0))
 	{
 	  cout << " inversion=" << InversionSector;
@@ -215,7 +245,7 @@ int main(int argc, char** argv)
 	}      
       Spectrum = new double[NbrStates];
       int TotalNbrEnergies = SpectrumFile.GetNbrLines();
-      if (Momentum1DFlag == false)
+      if ((Momentum1DFlag == false) && (Momentum2DFlag == false))
 	{
 	  if (InversionFlag == true)
 	    {
@@ -346,135 +376,279 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  if (InversionFlag == true)
+	  if (Momentum2DFlag == false)
 	    {
-	      if (SzSymmetryFlag == true)
+	      // 1d with translation case
+	      if (InversionFlag == true)
 		{
-		  int* TmpSzValues = SpectrumFile.GetAsIntegerArray(0);
-		  int* TmpKValues = SpectrumFile.GetAsIntegerArray(1);
-		  int* TmpInvValues = SpectrumFile.GetAsIntegerArray(3);
-		  int* TmpSzSymValues = SpectrumFile.GetAsIntegerArray(2);
-		  double* TmpEnergies = SpectrumFile.GetAsDoubleArray(4);
-		  int TmpIndex = 0; 
-		  while ((TmpIndex < TotalNbrEnergies) && 
-			 ((TmpSzValues[TmpIndex] != TotalSz) || (TmpKValues[TmpIndex] != XMomentum) || 
+		  if (SzSymmetryFlag == true)
+		    {
+		      int* TmpSzValues = SpectrumFile.GetAsIntegerArray(0);
+		      int* TmpKValues = SpectrumFile.GetAsIntegerArray(1);
+		      int* TmpInvValues = SpectrumFile.GetAsIntegerArray(3);
+		      int* TmpSzSymValues = SpectrumFile.GetAsIntegerArray(2);
+		      double* TmpEnergies = SpectrumFile.GetAsDoubleArray(4);
+		      int TmpIndex = 0; 
+		      while ((TmpIndex < TotalNbrEnergies) && 
+			     ((TmpSzValues[TmpIndex] != TotalSz) || (TmpKValues[TmpIndex] != XMomentum) || 
 			  (TmpInvValues[TmpIndex] != InversionSector) || (TmpSzSymValues[TmpIndex] != SzSymmetrySector)))
-		    ++TmpIndex;
-		  if (TmpIndex == TotalNbrEnergies)
-		    {
-		      cout << "error, the spectrum has no eigenvalues corresponding to the required quantum numbers" << endl;
-		      return 0;
+			++TmpIndex;
+		      if (TmpIndex == TotalNbrEnergies)
+			{
+			  cout << "error, the spectrum has no eigenvalues corresponding to the required quantum numbers" << endl;
+			  return 0;
+			}
+		      int TmpIndex2 = 0;
+		      while ((TmpIndex < TotalNbrEnergies) && (TmpIndex2 < NbrStates) && 
+			     ((TmpSzValues[TmpIndex] == TotalSz) && (TmpKValues[TmpIndex] == XMomentum) && 
+			      (TmpInvValues[TmpIndex] == InversionSector) && (TmpSzSymValues[TmpIndex] == SzSymmetrySector)))
+			{
+			  Spectrum[TmpIndex2] = TmpEnergies[TmpIndex];
+			  ++TmpIndex2;
+			  ++TmpIndex;
+			}
+		      if (TmpIndex2 < NbrStates)
+			{
+			  cout << "error, the spectrum has less eigenvalues corresponding to the required quantum numbers (" 
+			       << TmpIndex2 << " vs " << NbrStates << ")" << endl;
+			  return 0;
+			}
 		    }
-		  int TmpIndex2 = 0;
-		  while ((TmpIndex < TotalNbrEnergies) && (TmpIndex2 < NbrStates) && 
-			 ((TmpSzValues[TmpIndex] == TotalSz) && (TmpKValues[TmpIndex] == XMomentum) && 
-			  (TmpInvValues[TmpIndex] == InversionSector) && (TmpSzSymValues[TmpIndex] == SzSymmetrySector)))
+		  else
 		    {
-		      Spectrum[TmpIndex2] = TmpEnergies[TmpIndex];
-		      ++TmpIndex2;
-		      ++TmpIndex;
-		    }
-		  if (TmpIndex2 < NbrStates)
-		    {
-		      cout << "error, the spectrum has less eigenvalues corresponding to the required quantum numbers (" 
+		      int* TmpSzValues = SpectrumFile.GetAsIntegerArray(0);
+		      int* TmpKValues = SpectrumFile.GetAsIntegerArray(1);
+		      int* TmpInvValues = SpectrumFile.GetAsIntegerArray(2);
+		      double* TmpEnergies = SpectrumFile.GetAsDoubleArray(3);
+		      int TmpIndex = 0; 
+		      while ((TmpIndex < TotalNbrEnergies) && 
+			     ((TmpSzValues[TmpIndex] != TotalSz) || (TmpKValues[TmpIndex] != XMomentum) || 
+			      (TmpInvValues[TmpIndex] != InversionSector)))
+			++TmpIndex;
+		      if (TmpIndex == TotalNbrEnergies)
+			{
+			  cout << "error, the spectrum has no eigenvalues corresponding to the required quantum numbers" << endl;
+			  return 0;
+			}
+		      int TmpIndex2 = 0;
+		      while ((TmpIndex < TotalNbrEnergies) && (TmpIndex2 < NbrStates) && 
+			     ((TmpSzValues[TmpIndex] == TotalSz) && (TmpKValues[TmpIndex] == XMomentum) && 
+			      (TmpInvValues[TmpIndex] == InversionSector)))
+			{
+			  Spectrum[TmpIndex2] = TmpEnergies[TmpIndex];
+			  ++TmpIndex2;
+			  ++TmpIndex;
+			}
+		      if (TmpIndex2 < NbrStates)
+			{
+			  cout << "error, the spectrum has less eigenvalues corresponding to the required quantum numbers (" 
 			   << TmpIndex2 << " vs " << NbrStates << ")" << endl;
-		      return 0;
+			  return 0;
+			}
 		    }
 		}
 	      else
 		{
-		  int* TmpSzValues = SpectrumFile.GetAsIntegerArray(0);
-		  int* TmpKValues = SpectrumFile.GetAsIntegerArray(1);
-		  int* TmpInvValues = SpectrumFile.GetAsIntegerArray(2);
-		  double* TmpEnergies = SpectrumFile.GetAsDoubleArray(3);
-		  int TmpIndex = 0; 
-		  while ((TmpIndex < TotalNbrEnergies) && 
-			 ((TmpSzValues[TmpIndex] != TotalSz) || (TmpKValues[TmpIndex] != XMomentum) || 
-			  (TmpInvValues[TmpIndex] != InversionSector)))
-		    ++TmpIndex;
-		  if (TmpIndex == TotalNbrEnergies)
+		  if (SzSymmetryFlag == true)
 		    {
-		      cout << "error, the spectrum has no eigenvalues corresponding to the required quantum numbers" << endl;
-		      return 0;
+		      int* TmpSzValues = SpectrumFile.GetAsIntegerArray(0);
+		      int* TmpKValues = SpectrumFile.GetAsIntegerArray(1);
+		      int* TmpSzSymValues = SpectrumFile.GetAsIntegerArray(2);
+		      double* TmpEnergies = SpectrumFile.GetAsDoubleArray(4);
+		      int TmpIndex = 0; 
+		      while ((TmpIndex < TotalNbrEnergies) && 
+			     ((TmpSzValues[TmpIndex] != TotalSz) || (TmpKValues[TmpIndex] != XMomentum) || 
+			      (TmpSzSymValues[TmpIndex] != SzSymmetrySector)))
+			++TmpIndex;
+		      if (TmpIndex == TotalNbrEnergies)
+			{
+			  cout << "error, the spectrum has no eigenvalues corresponding to the required quantum numbers" << endl;
+			  return 0;
+			}
+		      int TmpIndex2 = 0;
+		      while ((TmpIndex < TotalNbrEnergies) && (TmpIndex2 < NbrStates) && 
+			     ((TmpSzValues[TmpIndex] == TotalSz) && (TmpKValues[TmpIndex] == XMomentum) && 
+			      (TmpSzSymValues[TmpIndex] == SzSymmetrySector)))
+			{
+			  Spectrum[TmpIndex2] = TmpEnergies[TmpIndex];
+			  ++TmpIndex2;
+			  ++TmpIndex;
+			}
+		      if (TmpIndex2 < NbrStates)
+			{
+			  cout << "error, the spectrum has less eigenvalues corresponding to the required quantum numbers (" 
+			       << TmpIndex2 << " vs " << NbrStates << ")" << endl;
+			  return 0;
+			}
 		    }
-		  int TmpIndex2 = 0;
-		  while ((TmpIndex < TotalNbrEnergies) && (TmpIndex2 < NbrStates) && 
-			 ((TmpSzValues[TmpIndex] == TotalSz) && (TmpKValues[TmpIndex] == XMomentum) && 
-			  (TmpInvValues[TmpIndex] == InversionSector)))
+		  else
 		    {
-		      Spectrum[TmpIndex2] = TmpEnergies[TmpIndex];
-		      ++TmpIndex2;
-		      ++TmpIndex;
-		    }
-		  if (TmpIndex2 < NbrStates)
-		    {
-		      cout << "error, the spectrum has less eigenvalues corresponding to the required quantum numbers (" 
-			   << TmpIndex2 << " vs " << NbrStates << ")" << endl;
-		      return 0;
+		      int* TmpSzValues = SpectrumFile.GetAsIntegerArray(0);
+		      int* TmpKValues = SpectrumFile.GetAsIntegerArray(1);
+		      double* TmpEnergies = SpectrumFile.GetAsDoubleArray(2);
+		      int TmpIndex = 0; 
+		      while ((TmpIndex < TotalNbrEnergies) && 
+			     ((TmpSzValues[TmpIndex] != TotalSz) || (TmpKValues[TmpIndex] != XMomentum)))
+			++TmpIndex;
+		      if (TmpIndex == TotalNbrEnergies)
+			{
+			  cout << "error, the spectrum has no eigenvalues corresponding to the required quantum numbers" << endl;
+			  return 0;
+			}
+		      int TmpIndex2 = 0;
+		      while ((TmpIndex < TotalNbrEnergies) && (TmpIndex2 < NbrStates) && 
+			     ((TmpSzValues[TmpIndex] == TotalSz) && (TmpKValues[TmpIndex] == XMomentum)))
+			{
+			  Spectrum[TmpIndex2] = TmpEnergies[TmpIndex];
+			  ++TmpIndex2;
+			  ++TmpIndex;
+			}
+		      if (TmpIndex2 < NbrStates)
+			{
+			  cout << "error, the spectrum has less eigenvalues corresponding to the required quantum numbers (" 
+			       << TmpIndex2 << " vs " << NbrStates << ")" << endl;
+			  return 0;
+			}
 		    }
 		}
 	    }
 	  else
 	    {
-	      if (SzSymmetryFlag == true)
+	      // 2d with translation case
+	      if (InversionFlag == true)
 		{
-		  int* TmpSzValues = SpectrumFile.GetAsIntegerArray(0);
-		  int* TmpKValues = SpectrumFile.GetAsIntegerArray(1);
-		  int* TmpSzSymValues = SpectrumFile.GetAsIntegerArray(2);
-		  double* TmpEnergies = SpectrumFile.GetAsDoubleArray(4);
-		  int TmpIndex = 0; 
-		  while ((TmpIndex < TotalNbrEnergies) && 
-			 ((TmpSzValues[TmpIndex] != TotalSz) || (TmpKValues[TmpIndex] != XMomentum) || 
-			  (TmpSzSymValues[TmpIndex] != SzSymmetrySector)))
-		    ++TmpIndex;
-		  if (TmpIndex == TotalNbrEnergies)
+		  if (SzSymmetryFlag == true)
 		    {
-		      cout << "error, the spectrum has no eigenvalues corresponding to the required quantum numbers" << endl;
-		      return 0;
+		      int* TmpSzValues = SpectrumFile.GetAsIntegerArray(0);
+		      int* TmpKxValues = SpectrumFile.GetAsIntegerArray(1);
+		      int* TmpKyValues = SpectrumFile.GetAsIntegerArray(2);
+		      int* TmpInvValues = SpectrumFile.GetAsIntegerArray(3);
+		      int* TmpSzSymValues = SpectrumFile.GetAsIntegerArray(4);
+		      double* TmpEnergies = SpectrumFile.GetAsDoubleArray(5);
+		      int TmpIndex = 0; 
+		      while ((TmpIndex < TotalNbrEnergies) && 
+			     ((TmpSzValues[TmpIndex] != TotalSz) || (TmpKxValues[TmpIndex] != XMomentum) || (TmpKyValues[TmpIndex] != YMomentum) || 
+			  (TmpInvValues[TmpIndex] != InversionSector) || (TmpSzSymValues[TmpIndex] != SzSymmetrySector)))
+			++TmpIndex;
+		      if (TmpIndex == TotalNbrEnergies)
+			{
+			  cout << "error, the spectrum has no eigenvalues corresponding to the required quantum numbers" << endl;
+			  return 0;
+			}
+		      int TmpIndex2 = 0;
+		      while ((TmpIndex < TotalNbrEnergies) && (TmpIndex2 < NbrStates) && 
+			     ((TmpSzValues[TmpIndex] == TotalSz) && (TmpKxValues[TmpIndex] == XMomentum) && (TmpKyValues[TmpIndex] == YMomentum) && 
+			      (TmpInvValues[TmpIndex] == InversionSector) && (TmpSzSymValues[TmpIndex] == SzSymmetrySector)))
+			{
+			  Spectrum[TmpIndex2] = TmpEnergies[TmpIndex];
+			  ++TmpIndex2;
+			  ++TmpIndex;
+			}
+		      if (TmpIndex2 < NbrStates)
+			{
+			  cout << "error, the spectrum has less eigenvalues corresponding to the required quantum numbers (" 
+			       << TmpIndex2 << " vs " << NbrStates << ")" << endl;
+			  return 0;
+			}
 		    }
-		  int TmpIndex2 = 0;
-		  while ((TmpIndex < TotalNbrEnergies) && (TmpIndex2 < NbrStates) && 
-			 ((TmpSzValues[TmpIndex] == TotalSz) && (TmpKValues[TmpIndex] == XMomentum) && 
-			  (TmpSzSymValues[TmpIndex] == SzSymmetrySector)))
+		  else
 		    {
-		      Spectrum[TmpIndex2] = TmpEnergies[TmpIndex];
-		      ++TmpIndex2;
-		      ++TmpIndex;
-		    }
-		  if (TmpIndex2 < NbrStates)
-		    {
-		      cout << "error, the spectrum has less eigenvalues corresponding to the required quantum numbers (" 
+		      int* TmpSzValues = SpectrumFile.GetAsIntegerArray(0);
+		      int* TmpKxValues = SpectrumFile.GetAsIntegerArray(1);
+		      int* TmpKyValues = SpectrumFile.GetAsIntegerArray(2);
+		      int* TmpInvValues = SpectrumFile.GetAsIntegerArray(3);
+		      double* TmpEnergies = SpectrumFile.GetAsDoubleArray(5);
+		      int TmpIndex = 0; 
+		      while ((TmpIndex < TotalNbrEnergies) && 
+			     ((TmpSzValues[TmpIndex] != TotalSz) || (TmpKxValues[TmpIndex] != XMomentum) || (TmpKyValues[TmpIndex] != YMomentum) ||
+			      (TmpInvValues[TmpIndex] != InversionSector)))
+			++TmpIndex;
+		      if (TmpIndex == TotalNbrEnergies)
+			{
+			  cout << "error, the spectrum has no eigenvalues corresponding to the required quantum numbers" << endl;
+			  return 0;
+			}
+		      int TmpIndex2 = 0;
+		      while ((TmpIndex < TotalNbrEnergies) && (TmpIndex2 < NbrStates) && 
+			     ((TmpSzValues[TmpIndex] == TotalSz) && (TmpKxValues[TmpIndex] == XMomentum) && (TmpKyValues[TmpIndex] == YMomentum) && 
+			      (TmpInvValues[TmpIndex] == InversionSector)))
+			{
+			  Spectrum[TmpIndex2] = TmpEnergies[TmpIndex];
+			  ++TmpIndex2;
+			  ++TmpIndex;
+			}
+		      if (TmpIndex2 < NbrStates)
+			{
+			  cout << "error, the spectrum has less eigenvalues corresponding to the required quantum numbers (" 
 			   << TmpIndex2 << " vs " << NbrStates << ")" << endl;
-		      return 0;
+			  return 0;
+			}
 		    }
 		}
 	      else
 		{
-		  int* TmpSzValues = SpectrumFile.GetAsIntegerArray(0);
-		  int* TmpKValues = SpectrumFile.GetAsIntegerArray(1);
-		  double* TmpEnergies = SpectrumFile.GetAsDoubleArray(2);
-		  int TmpIndex = 0; 
-		  while ((TmpIndex < TotalNbrEnergies) && 
-			 ((TmpSzValues[TmpIndex] != TotalSz) || (TmpKValues[TmpIndex] != XMomentum)))
-		    ++TmpIndex;
-		  if (TmpIndex == TotalNbrEnergies)
+		  if (SzSymmetryFlag == true)
 		    {
-		      cout << "error, the spectrum has no eigenvalues corresponding to the required quantum numbers" << endl;
-		      return 0;
+		      int* TmpSzValues = SpectrumFile.GetAsIntegerArray(0);
+		      int* TmpKxValues = SpectrumFile.GetAsIntegerArray(1);
+		      int* TmpKyValues = SpectrumFile.GetAsIntegerArray(2);
+		      int* TmpSzSymValues = SpectrumFile.GetAsIntegerArray(3);
+		      double* TmpEnergies = SpectrumFile.GetAsDoubleArray(4);
+		      int TmpIndex = 0; 
+		      while ((TmpIndex < TotalNbrEnergies) && 
+			     ((TmpSzValues[TmpIndex] != TotalSz) || (TmpKxValues[TmpIndex] != XMomentum) || (TmpKyValues[TmpIndex] != YMomentum) || 
+			      (TmpSzSymValues[TmpIndex] != SzSymmetrySector)))
+			++TmpIndex;
+		      if (TmpIndex == TotalNbrEnergies)
+			{
+			  cout << "error, the spectrum has no eigenvalues corresponding to the required quantum numbers" << endl;
+			  return 0;
+			}
+		      int TmpIndex2 = 0;
+		      while ((TmpIndex < TotalNbrEnergies) && (TmpIndex2 < NbrStates) && 
+			     ((TmpSzValues[TmpIndex] == TotalSz) && (TmpKxValues[TmpIndex] == XMomentum) && (TmpKyValues[TmpIndex] != YMomentum) || 
+			      (TmpSzSymValues[TmpIndex] == SzSymmetrySector)))
+			{
+			  Spectrum[TmpIndex2] = TmpEnergies[TmpIndex];
+			  ++TmpIndex2;
+			  ++TmpIndex;
+			}
+		      if (TmpIndex2 < NbrStates)
+			{
+			  cout << "error, the spectrum has less eigenvalues corresponding to the required quantum numbers (" 
+			       << TmpIndex2 << " vs " << NbrStates << ")" << endl;
+			  return 0;
+			}
 		    }
-		  int TmpIndex2 = 0;
-		  while ((TmpIndex < TotalNbrEnergies) && (TmpIndex2 < NbrStates) && 
-			 ((TmpSzValues[TmpIndex] == TotalSz) && (TmpKValues[TmpIndex] == XMomentum)))
+		  else
 		    {
-		      Spectrum[TmpIndex2] = TmpEnergies[TmpIndex];
-		      ++TmpIndex2;
-		      ++TmpIndex;
-		    }
-		  if (TmpIndex2 < NbrStates)
-		    {
-		      cout << "error, the spectrum has less eigenvalues corresponding to the required quantum numbers (" 
-			   << TmpIndex2 << " vs " << NbrStates << ")" << endl;
-		      return 0;
+		      int* TmpSzValues = SpectrumFile.GetAsIntegerArray(0);
+		      int* TmpKxValues = SpectrumFile.GetAsIntegerArray(1);
+		      int* TmpKyValues = SpectrumFile.GetAsIntegerArray(2);
+		      double* TmpEnergies = SpectrumFile.GetAsDoubleArray(3);
+		      int TmpIndex = 0; 
+		      while ((TmpIndex < TotalNbrEnergies) && 
+			     ((TmpSzValues[TmpIndex] != TotalSz) || (TmpKxValues[TmpIndex] != XMomentum) || (TmpKyValues[TmpIndex] != YMomentum)))
+			++TmpIndex;
+		      if (TmpIndex == TotalNbrEnergies)
+			{
+			  cout << "error, the spectrum has no eigenvalues corresponding to the required quantum numbers" << endl;
+			  return 0;
+			}
+		      int TmpIndex2 = 0;
+		      while ((TmpIndex < TotalNbrEnergies) && (TmpIndex2 < NbrStates) && 
+			     ((TmpSzValues[TmpIndex] == TotalSz) && (TmpKxValues[TmpIndex] == XMomentum) && (TmpKyValues[TmpIndex] == YMomentum)))
+			{
+			  Spectrum[TmpIndex2] = TmpEnergies[TmpIndex];
+			  ++TmpIndex2;
+			  ++TmpIndex;
+			}
+		      if (TmpIndex2 < NbrStates)
+			{
+			  cout << "error, the spectrum has less eigenvalues corresponding to the required quantum numbers (" 
+			       << TmpIndex2 << " vs " << NbrStates << ")" << endl;
+			  return 0;
+			}
 		    }
 		}
 	    }
@@ -514,7 +688,7 @@ int main(int argc, char** argv)
   
   double* S2Values = new double[NbrStates];
   
-  if (Momentum1DFlag == false)
+  if ((Momentum1DFlag == false) && (Momentum2DFlag == false))
     {
       AbstractSpinChain* Space;
       
@@ -788,226 +962,408 @@ int main(int argc, char** argv)
     }
   else
     {      
-      AbstractSpinChainWithTranslations* Space = 0;
-      if (SzFlag == true)
+      if (Momentum2DFlag == false)
 	{
-	  switch (SpinValue)
+	  AbstractSpinChainWithTranslations* Space = 0;
+	  if (SzFlag == true)
 	    {
-	    case 1 :
-	      {
-		if (InversionFlag == true)
-		  {
-		    if (SzSymmetryFlag == true)
-		      {
-			Space = new Spin1_2ChainWithTranslationsAndSzInversionSymmetries (NbrSpins, XMomentum, 1, InversionSector, SzSymmetrySector, TotalSz, 1000000, 1000000);
-		      }
-		    else
-		      {
-			Space = new Spin1_2ChainWithTranslationsAndInversionSymmetry (NbrSpins, XMomentum, 1, InversionSector, TotalSz, 1000000, 1000000);
-		      }
-		  }
-		else
-		  {
-		    if (SzSymmetryFlag == true)
-		      {
-			Space = new Spin1_2ChainWithTranslationsAndSzSymmetry (NbrSpins, XMomentum, 1, SzSymmetrySector, TotalSz, 1000000, 1000000);
-		      }
-		    else
-		      {
-			Space = new Spin1_2ChainWithTranslations (NbrSpins, XMomentum, 1, TotalSz, 1000000, 1000000);
-		      }
-		  }
-	      }
-	      break;
-	    case 2 :
-	      {
-		if (InversionFlag == true)
-		  {
-		    if (SzSymmetryFlag == true)
-		      {
-			Space = new Spin1ChainWithTranslationsAndSzInversionSymmetries (NbrSpins, XMomentum, InversionSector, SzSymmetrySector, TotalSz);
-		      }
-		    else
-		      {
-			Space = new Spin1ChainWithTranslationsAndInversionSymmetry (NbrSpins, XMomentum, InversionSector, TotalSz);
-		      }
-		  }
-		else
-		  {
-		    if (SzSymmetryFlag == true)
-		      {
-			Space = new Spin1ChainWithTranslationsAndSzSymmetry (NbrSpins, XMomentum, SzSymmetrySector, TotalSz);
-		      }
-		    else
-		      {
-			Space = new Spin1ChainWithTranslations (NbrSpins, XMomentum, TotalSz);
-		      }
-		  }
-	      }
-	      break;
-	    case 4 :
-	      {
-		if (InversionFlag == true)
-		  {
-		    if (SzSymmetryFlag == true)
-		      {
-			Space = new Spin2ChainWithTranslationsAndSzInversionSymmetries (NbrSpins, XMomentum, InversionSector, SzSymmetrySector, TotalSz);
-		      }
-		    else
-		      {
-			Space = new Spin2ChainWithTranslationsAndInversionSymmetry (NbrSpins, XMomentum, InversionSector, TotalSz);
-		      }
-		  }
-		else
-		  {
-		    if (SzSymmetryFlag == true)
-		      {
-			Space = new Spin2ChainWithTranslationsAndSzSymmetry (NbrSpins, XMomentum, SzSymmetrySector, TotalSz);
-		      }
-		    else
-		      {
-			Space = new Spin2ChainWithTranslations (NbrSpins, XMomentum, TotalSz);
-		      }
-		  }
-	      }
-	      break;
-	    default :
-	      {
-		if ((SpinValue & 1) == 0)
-		  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
-		else 
-		  cout << "spin " << SpinValue << "/2 are not available" << endl;
-		return -1;
-	      }
-	    }
-	}
-      else
-	{
-	}
-      
-      if (RealEigenstates.GetNbrColumn() != 0)
-	{
-	  if (RealEigenstates.GetNbrRow() != Space->GetHilbertSpaceDimension())
-	    {
-	      cout << "dimension mismatch between the eigenstates (" << RealEigenstates.GetNbrRow() << ") and the Hilbert space (" << Space->GetHilbertSpaceDimension() << ")" << endl;
-	      return 0;
-	    }
-	}
-      else
-	{
-	  if (ComplexEigenstates.GetNbrRow() != Space->GetHilbertSpaceDimension())
-	    {
-	      cout << "dimension mismatch between the eigenstates (" << ComplexEigenstates.GetNbrRow() << ") and the Hilbert space (" << Space->GetHilbertSpaceDimension() << ")" << endl;
-	      return 0;
-	    }
-	}
-      
-      SpinWith1DTranslationS2Operator TmpOperator(Space, NbrSpins);
-      int NbrNonDegenerateStates = 0;
-      for (int k = 0; k < NbrDegeneracyIndices; ++k)
-	{
-	  if (Degeneracies[k] == 1)
-	    {
-	      ++NbrNonDegenerateStates;
-	    }
-	}
-      RealVector* TmpNonDegenerateRealEigenstates = new RealVector[NbrNonDegenerateStates];
-      ComplexVector* TmpNonDegenerateComplexEigenstates = new ComplexVector[NbrNonDegenerateStates];
-      Complex* TmpNonDegenerateS2Values = new Complex[NbrNonDegenerateStates];
-      int TmpIndex = 0;
-      NbrNonDegenerateStates = 0;
-      if (Manager.GetBoolean("complex") == false)
-	{
-	  for (int k = 0; k < NbrDegeneracyIndices; ++k)
-	    {
-	      if (Degeneracies[k] == 1)
+	      switch (SpinValue)
 		{
-		  TmpNonDegenerateRealEigenstates[NbrNonDegenerateStates] = RealEigenstates[TmpIndex];
-		  ++NbrNonDegenerateStates;
-		}
-	      TmpIndex += Degeneracies[k];	  
+		case 1 :
+		  {
+		    if (InversionFlag == true)
+		      {
+			if (SzSymmetryFlag == true)
+			  {
+			    Space = new Spin1_2ChainWithTranslationsAndSzInversionSymmetries (NbrSpins, XMomentum, 1, InversionSector, SzSymmetrySector, TotalSz, 1000000, 1000000);
+			  }
+			else
+			  {
+			    Space = new Spin1_2ChainWithTranslationsAndInversionSymmetry (NbrSpins, XMomentum, 1, InversionSector, TotalSz, 1000000, 1000000);
+			  }
+		      }
+		    else
+		      {
+			if (SzSymmetryFlag == true)
+			  {
+			    Space = new Spin1_2ChainWithTranslationsAndSzSymmetry (NbrSpins, XMomentum, 1, SzSymmetrySector, TotalSz, 1000000, 1000000);
+			  }
+			else
+			  {
+			    Space = new Spin1_2ChainWithTranslations (NbrSpins, XMomentum, 1, TotalSz, 1000000, 1000000);
+			  }
+		      }
+		  }
+		  break;
+		case 2 :
+		  {
+		    if (InversionFlag == true)
+		      {
+			if (SzSymmetryFlag == true)
+			  {
+			    Space = new Spin1ChainWithTranslationsAndSzInversionSymmetries (NbrSpins, XMomentum, InversionSector, SzSymmetrySector, TotalSz);
+			  }
+			else
+			  {
+			    Space = new Spin1ChainWithTranslationsAndInversionSymmetry (NbrSpins, XMomentum, InversionSector, TotalSz);
+			  }
+		      }
+		    else
+		      {
+			if (SzSymmetryFlag == true)
+			  {
+			    Space = new Spin1ChainWithTranslationsAndSzSymmetry (NbrSpins, XMomentum, SzSymmetrySector, TotalSz);
+			  }
+			else
+			  {
+			    Space = new Spin1ChainWithTranslations (NbrSpins, XMomentum, TotalSz);
+			  }
+		      }
+		  }
+		  break;
+		case 4 :
+		  {
+		    if (InversionFlag == true)
+		      {
+			if (SzSymmetryFlag == true)
+			  {
+			    Space = new Spin2ChainWithTranslationsAndSzInversionSymmetries (NbrSpins, XMomentum, InversionSector, SzSymmetrySector, TotalSz);
+			  }
+			else
+			  {
+			    Space = new Spin2ChainWithTranslationsAndInversionSymmetry (NbrSpins, XMomentum, InversionSector, TotalSz);
+			  }
+		      }
+		    else
+		      {
+			if (SzSymmetryFlag == true)
+			  {
+			    Space = new Spin2ChainWithTranslationsAndSzSymmetry (NbrSpins, XMomentum, SzSymmetrySector, TotalSz);
+			  }
+			else
+			  {
+			    Space = new Spin2ChainWithTranslations (NbrSpins, XMomentum, TotalSz);
+			  }
+		      }
+		  }
+		  break;
+		default :
+		  {
+		    if ((SpinValue & 1) == 0)
+		      cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+		    else 
+		      cout << "spin " << SpinValue << "/2 are not available" << endl;
+		    return -1;
+		  }
 	    }
-	}
-      else
-	{
-	  for (int k = 0; k < NbrDegeneracyIndices; ++k)
-	    {
-	      if (Degeneracies[k] == 1)
-		{
-		  TmpNonDegenerateComplexEigenstates[NbrNonDegenerateStates] = ComplexEigenstates[TmpIndex];
-		  ++NbrNonDegenerateStates;
-		}
-	      TmpIndex += Degeneracies[k];	  
-	    }
-	}
-      if (Manager.GetBoolean("complex") == false)
-	{
-	  OperatorMultipleMatrixElementOperation TmpOperation (&TmpOperator, TmpNonDegenerateRealEigenstates, TmpNonDegenerateRealEigenstates, NbrNonDegenerateStates);
-	  TmpOperation.ApplyOperation(Architecture.GetArchitecture());
-	  for (int k = 0; k < NbrNonDegenerateStates; ++k)
-	    {
-	      TmpNonDegenerateS2Values[k] = TmpOperation.GetMatrixElement(k);
-	    }
-	}
-      else
-	{
-	  OperatorMultipleMatrixElementOperation TmpOperation (&TmpOperator, TmpNonDegenerateComplexEigenstates, TmpNonDegenerateComplexEigenstates, NbrNonDegenerateStates);
-	  TmpOperation.ApplyOperation(Architecture.GetArchitecture());
-	  for (int k = 0; k < NbrNonDegenerateStates; ++k)
-	    {
-	      TmpNonDegenerateS2Values[k] = TmpOperation.GetMatrixElement(k);
-	    }
-	}
-
-      TmpIndex = 0;
-      NbrNonDegenerateStates = 0;
-      for (int k = 0; k < NbrDegeneracyIndices; ++k)
-	{
-	  if (Degeneracies[k] == 1)
-	    {
-	      S2Values[TmpIndex] = TmpNonDegenerateS2Values[NbrNonDegenerateStates].Re;
-	      ++NbrNonDegenerateStates;
 	    }
 	  else
 	    {
-	      cout << "degeneracy at " << TmpIndex << "(" << Degeneracies[k] << " states)" << endl;
-	      HermitianMatrix S2Matrix(Degeneracies[k], true);
-	      RealVector TmpRealVector;
-	      ComplexVector TmpComplexVector;
-	      if (Manager.GetBoolean("complex") == false)
+	    }
+	  
+	  if (RealEigenstates.GetNbrColumn() != 0)
+	    {
+	      if (RealEigenstates.GetNbrRow() != Space->GetHilbertSpaceDimension())
 		{
-		  RealVector TmpVector(Space->GetHilbertSpaceDimension());
-		  for (int i = 0; i < Degeneracies[k]; ++i)
-		    {		 
-		      TmpOperator.Multiply(RealEigenstates[TmpIndex + i], TmpVector);
-		      for (int j = i; j < Degeneracies[k]; ++j)
-			{
-			  Complex TmpS2 = RealEigenstates[TmpIndex + j] * TmpVector;
-			  S2Matrix.SetMatrixElement(j, i, TmpS2);
-			}
+		  cout << "dimension mismatch between the eigenstates (" << RealEigenstates.GetNbrRow() << ") and the Hilbert space (" << Space->GetHilbertSpaceDimension() << ")" << endl;
+		  return 0;
+		}
+	    }
+	  else
+	    {
+	      if (ComplexEigenstates.GetNbrRow() != Space->GetHilbertSpaceDimension())
+		{
+		  cout << "dimension mismatch between the eigenstates (" << ComplexEigenstates.GetNbrRow() << ") and the Hilbert space (" << Space->GetHilbertSpaceDimension() << ")" << endl;
+		  return 0;
+		}
+	    }
+	  
+	  SpinWith1DTranslationS2Operator TmpOperator(Space, NbrSpins);
+	  int NbrNonDegenerateStates = 0;
+	  for (int k = 0; k < NbrDegeneracyIndices; ++k)
+	    {
+	      if (Degeneracies[k] == 1)
+		{
+		  ++NbrNonDegenerateStates;
+		}
+	    }
+	  RealVector* TmpNonDegenerateRealEigenstates = new RealVector[NbrNonDegenerateStates];
+	  ComplexVector* TmpNonDegenerateComplexEigenstates = new ComplexVector[NbrNonDegenerateStates];
+	  Complex* TmpNonDegenerateS2Values = new Complex[NbrNonDegenerateStates];
+	  int TmpIndex = 0;
+	  NbrNonDegenerateStates = 0;
+	  if (Manager.GetBoolean("complex") == false)
+	    {
+	      for (int k = 0; k < NbrDegeneracyIndices; ++k)
+		{
+		  if (Degeneracies[k] == 1)
+		    {
+		      TmpNonDegenerateRealEigenstates[NbrNonDegenerateStates] = RealEigenstates[TmpIndex];
+		      ++NbrNonDegenerateStates;
 		    }
+		  TmpIndex += Degeneracies[k];	  
+		}
+	    }
+	  else
+	    {
+	      for (int k = 0; k < NbrDegeneracyIndices; ++k)
+		{
+		  if (Degeneracies[k] == 1)
+		    {
+		      TmpNonDegenerateComplexEigenstates[NbrNonDegenerateStates] = ComplexEigenstates[TmpIndex];
+		      ++NbrNonDegenerateStates;
+		    }
+		  TmpIndex += Degeneracies[k];	  
+		}
+	    }
+	  if (Manager.GetBoolean("complex") == false)
+	    {
+	      OperatorMultipleMatrixElementOperation TmpOperation (&TmpOperator, TmpNonDegenerateRealEigenstates, TmpNonDegenerateRealEigenstates, NbrNonDegenerateStates);
+	      TmpOperation.ApplyOperation(Architecture.GetArchitecture());
+	      for (int k = 0; k < NbrNonDegenerateStates; ++k)
+		{
+		  TmpNonDegenerateS2Values[k] = TmpOperation.GetMatrixElement(k);
+		}
+	    }
+	  else
+	    {
+	      OperatorMultipleMatrixElementOperation TmpOperation (&TmpOperator, TmpNonDegenerateComplexEigenstates, TmpNonDegenerateComplexEigenstates, NbrNonDegenerateStates);
+	      TmpOperation.ApplyOperation(Architecture.GetArchitecture());
+	      for (int k = 0; k < NbrNonDegenerateStates; ++k)
+		{
+		  TmpNonDegenerateS2Values[k] = TmpOperation.GetMatrixElement(k);
+		}
+	    }
+	  
+	  TmpIndex = 0;
+	  NbrNonDegenerateStates = 0;
+	  for (int k = 0; k < NbrDegeneracyIndices; ++k)
+	    {
+	      if (Degeneracies[k] == 1)
+		{
+		  S2Values[TmpIndex] = TmpNonDegenerateS2Values[NbrNonDegenerateStates].Re;
+		  ++NbrNonDegenerateStates;
 		}
 	      else
 		{
-		  ComplexVector TmpVector(Space->GetHilbertSpaceDimension());
-		  for (int i = 0; i < Degeneracies[k]; ++i)
-		    {		      
-		      TmpOperator.Multiply(ComplexEigenstates[TmpIndex + i], TmpVector);
-		      for (int j = i; j < Degeneracies[k]; ++j)
-			{
-			  Complex TmpS2= ComplexEigenstates[TmpIndex + j] * TmpVector;
-			  S2Matrix.SetMatrixElement(j, i, TmpS2);
+		  cout << "degeneracy at " << TmpIndex << "(" << Degeneracies[k] << " states)" << endl;
+		  HermitianMatrix S2Matrix(Degeneracies[k], true);
+		  RealVector TmpRealVector;
+		  ComplexVector TmpComplexVector;
+		  if (Manager.GetBoolean("complex") == false)
+		    {
+		      RealVector TmpVector(Space->GetHilbertSpaceDimension());
+		      for (int i = 0; i < Degeneracies[k]; ++i)
+			{		 
+			  TmpOperator.Multiply(RealEigenstates[TmpIndex + i], TmpVector);
+			  for (int j = i; j < Degeneracies[k]; ++j)
+			    {
+			      Complex TmpS2 = RealEigenstates[TmpIndex + j] * TmpVector;
+			      S2Matrix.SetMatrixElement(j, i, TmpS2);
+			    }
 			}
 		    }
-		}	    
-	      RealDiagonalMatrix TmpS2Eigenvalues(Degeneracies[k]);
-	      S2Matrix.LapackDiagonalize(TmpS2Eigenvalues);
-	      for (int i = 0; i < Degeneracies[k]; ++i)
+		  else
+		    {
+		      ComplexVector TmpVector(Space->GetHilbertSpaceDimension());
+		      for (int i = 0; i < Degeneracies[k]; ++i)
+			{		      
+			  TmpOperator.Multiply(ComplexEigenstates[TmpIndex + i], TmpVector);
+			  for (int j = i; j < Degeneracies[k]; ++j)
+			    {
+			      Complex TmpS2= ComplexEigenstates[TmpIndex + j] * TmpVector;
+			      S2Matrix.SetMatrixElement(j, i, TmpS2);
+			    }
+			}
+		    }	    
+		  RealDiagonalMatrix TmpS2Eigenvalues(Degeneracies[k]);
+		  S2Matrix.LapackDiagonalize(TmpS2Eigenvalues);
+		  for (int i = 0; i < Degeneracies[k]; ++i)
+		    {
+		      S2Values[TmpIndex + i] = TmpS2Eigenvalues[i];
+		    }
+		}
+	      TmpIndex += Degeneracies[k];
+	    }
+	}
+      else
+	{
+	  // 2d with translation case
+	  AbstractSpinChain* Space = 0;
+	  if (SzFlag == true)
+	    {
+	      switch (SpinValue)
 		{
-		  S2Values[TmpIndex + i] = TmpS2Eigenvalues[i];
+		case 1 :
+		  {
+		    if (InversionFlag == true)
+		      {
+// 			if (SzSymmetryFlag == true)
+// 			  {
+// 			    Space = new Spin1_2ChainWithTranslationsAndSzInversionSymmetries (NbrSpins, XMomentum, 1, InversionSector, SzSymmetrySector, TotalSz, 1000000, 1000000);
+// 			  }
+// 			else
+// 			  {
+// 			    Space = new Spin1_2ChainWithTranslationsAndInversionSymmetry (NbrSpins, XMomentum, 1, InversionSector, TotalSz, 1000000, 1000000);
+// 			  }
+		      }
+		    else
+		      {
+			if (SzSymmetryFlag == true)
+			  {
+			    Space = new Spin1_2ChainNewSzSymmetryAnd2DTranslation (NbrSpins, TotalSz, SzSymmetrySector,  XMomentum, XPeriodicity, 
+										   YMomentum, YPeriodicity);
+			  }
+			else
+			  {
+			    Space = new Spin1_2ChainNewAnd2DTranslation (NbrSpins, TotalSz, XMomentum, XPeriodicity, YMomentum, YPeriodicity);
+			  }
+		      }
+		  }
+		  break;
+		default :
+		  {
+		    if ((SpinValue & 1) == 0)
+		      cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+		    else 
+		      cout << "spin " << SpinValue << "/2 are not available" << endl;
+		    return -1;
+		  }
 		}
 	    }
-	  TmpIndex += Degeneracies[k];
+	  else
+	    {
+	      if ((SpinValue & 1) == 0)
+		cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+	      else 
+		cout << "spin " << SpinValue << "/2 are not available" << endl;
+	      return -1;
+	    }
+	  
+	  if (RealEigenstates.GetNbrColumn() != 0)
+	    {
+	      if (RealEigenstates.GetNbrRow() != Space->GetHilbertSpaceDimension())
+		{
+		  cout << "dimension mismatch between the eigenstates (" << RealEigenstates.GetNbrRow() << ") and the Hilbert space (" << Space->GetHilbertSpaceDimension() << ")" << endl;
+		  return 0;
+		}
+	    }
+	  else
+	    {
+	      if (ComplexEigenstates.GetNbrRow() != Space->GetHilbertSpaceDimension())
+		{
+		  cout << "dimension mismatch between the eigenstates (" << ComplexEigenstates.GetNbrRow() << ") and the Hilbert space (" << Space->GetHilbertSpaceDimension() << ")" << endl;
+		  return 0;
+		}
+	    }
+
+	  SpinWith2DTranslationS2Operator TmpOperator(Space, NbrSpins, XMomentum, XPeriodicity, YMomentum, YPeriodicity);
+	  int NbrNonDegenerateStates = 0;
+	  for (int k = 0; k < NbrDegeneracyIndices; ++k)
+	    {
+	      if (Degeneracies[k] == 1)
+		{
+		  ++NbrNonDegenerateStates;
+		}
+	    }
+	  RealVector* TmpNonDegenerateRealEigenstates = new RealVector[NbrNonDegenerateStates];
+	  ComplexVector* TmpNonDegenerateComplexEigenstates = new ComplexVector[NbrNonDegenerateStates];
+	  Complex* TmpNonDegenerateS2Values = new Complex[NbrNonDegenerateStates];
+	  int TmpIndex = 0;
+	  NbrNonDegenerateStates = 0;
+	  if (Manager.GetBoolean("complex") == false)
+	    {
+	      for (int k = 0; k < NbrDegeneracyIndices; ++k)
+		{
+		  if (Degeneracies[k] == 1)
+		    {
+		      TmpNonDegenerateRealEigenstates[NbrNonDegenerateStates] = RealEigenstates[TmpIndex];
+		      ++NbrNonDegenerateStates;
+		    }
+		  TmpIndex += Degeneracies[k];	  
+		}
+	    }
+	  else
+	    {
+	      for (int k = 0; k < NbrDegeneracyIndices; ++k)
+		{
+		  if (Degeneracies[k] == 1)
+		    {
+		      TmpNonDegenerateComplexEigenstates[NbrNonDegenerateStates] = ComplexEigenstates[TmpIndex];
+		      ++NbrNonDegenerateStates;
+		    }
+		  TmpIndex += Degeneracies[k];	  
+		}
+	    }
+	  if (Manager.GetBoolean("complex") == false)
+	    {
+	      OperatorMultipleMatrixElementOperation TmpOperation (&TmpOperator, TmpNonDegenerateRealEigenstates, TmpNonDegenerateRealEigenstates, NbrNonDegenerateStates);
+	      TmpOperation.ApplyOperation(Architecture.GetArchitecture());
+	      for (int k = 0; k < NbrNonDegenerateStates; ++k)
+		{
+		  TmpNonDegenerateS2Values[k] = TmpOperation.GetMatrixElement(k);
+		}
+	    }
+	  else
+	    {
+	      OperatorMultipleMatrixElementOperation TmpOperation (&TmpOperator, TmpNonDegenerateComplexEigenstates, TmpNonDegenerateComplexEigenstates, NbrNonDegenerateStates);
+	      TmpOperation.ApplyOperation(Architecture.GetArchitecture());
+	      for (int k = 0; k < NbrNonDegenerateStates; ++k)
+		{
+		  TmpNonDegenerateS2Values[k] = TmpOperation.GetMatrixElement(k);
+		}
+	    }
+	  
+	  TmpIndex = 0;
+	  NbrNonDegenerateStates = 0;
+	  for (int k = 0; k < NbrDegeneracyIndices; ++k)
+	    {
+	      if (Degeneracies[k] == 1)
+		{
+		  S2Values[TmpIndex] = TmpNonDegenerateS2Values[NbrNonDegenerateStates].Re;
+		  ++NbrNonDegenerateStates;
+		}
+	      else
+		{
+		  cout << "degeneracy at " << TmpIndex << "(" << Degeneracies[k] << " states)" << endl;
+		  HermitianMatrix S2Matrix(Degeneracies[k], true);
+		  RealVector TmpRealVector;
+		  ComplexVector TmpComplexVector;
+		  if (Manager.GetBoolean("complex") == false)
+		    {
+		      RealVector TmpVector(Space->GetHilbertSpaceDimension());
+		      for (int i = 0; i < Degeneracies[k]; ++i)
+			{		 
+			  TmpOperator.Multiply(RealEigenstates[TmpIndex + i], TmpVector);
+			  for (int j = i; j < Degeneracies[k]; ++j)
+			    {
+			      Complex TmpS2 = RealEigenstates[TmpIndex + j] * TmpVector;
+			      S2Matrix.SetMatrixElement(j, i, TmpS2);
+			    }
+			}
+		    }
+		  else
+		    {
+		      ComplexVector TmpVector(Space->GetHilbertSpaceDimension());
+		      for (int i = 0; i < Degeneracies[k]; ++i)
+			{		      
+			  TmpOperator.Multiply(ComplexEigenstates[TmpIndex + i], TmpVector);
+			  for (int j = i; j < Degeneracies[k]; ++j)
+			    {
+			      Complex TmpS2= ComplexEigenstates[TmpIndex + j] * TmpVector;
+			      S2Matrix.SetMatrixElement(j, i, TmpS2);
+			    }
+			}
+		    }	    
+		  RealDiagonalMatrix TmpS2Eigenvalues(Degeneracies[k]);
+		  S2Matrix.LapackDiagonalize(TmpS2Eigenvalues);
+		  for (int i = 0; i < Degeneracies[k]; ++i)
+		    {
+		      S2Values[TmpIndex + i] = TmpS2Eigenvalues[i];
+		    }
+		}
+	      TmpIndex += Degeneracies[k];
+	    }
 	}
     }
   if (Spectrum == 0)
@@ -1026,32 +1382,60 @@ int main(int argc, char** argv)
       File.open(OutputFileName, ios::out);
       File.precision(14);
       char* LinePrefix = new char[512];
-      if (Momentum1DFlag == false)
+      if ((Momentum1DFlag == false) && (Momentum2DFlag == false))
 	{
 	  sprintf (LinePrefix, "%d ", TotalSz);
 	}
       else
 	{
-	  if (InversionFlag == true)
+	  if (Momentum2DFlag == false)
 	    {
-	      if (SzSymmetryFlag == true)
+	      if (InversionFlag == true)
 		{
-		  sprintf (LinePrefix, "%d %d %d %d ", TotalSz, XMomentum, SzSymmetrySector, InversionSector);
+		  if (SzSymmetryFlag == true)
+		    {
+		      sprintf (LinePrefix, "%d %d %d %d ", TotalSz, XMomentum, SzSymmetrySector, InversionSector);
+		    }
+		  else
+		    {
+		      sprintf (LinePrefix, "%d %d %d ", TotalSz, XMomentum, InversionSector);
+		    }
 		}
 	      else
 		{
-		  sprintf (LinePrefix, "%d %d %d ", TotalSz, XMomentum, InversionSector);
+		  if (SzSymmetryFlag == true)
+		    {
+		      sprintf (LinePrefix, "%d %d %d ", TotalSz, XMomentum, SzSymmetrySector);
+		    }
+		  else
+		    {
+		      sprintf (LinePrefix, "%d %d ", TotalSz, XMomentum);
+		    }
 		}
 	    }
 	  else
 	    {
-	      if (SzSymmetryFlag == true)
+	      if (InversionFlag == true)
 		{
-		  sprintf (LinePrefix, "%d %d %d ", TotalSz, XMomentum, SzSymmetrySector);
+		  if (SzSymmetryFlag == true)
+		    {
+		      sprintf (LinePrefix, "%d %d %d %d %d ", TotalSz, XMomentum, YMomentum, SzSymmetrySector, InversionSector);
+		    }
+		  else
+		    {
+		      sprintf (LinePrefix, "%d %d %d %d ", TotalSz, XMomentum, YMomentum, InversionSector);
+		    }
 		}
 	      else
 		{
-		  sprintf (LinePrefix, "%d %d ", TotalSz, XMomentum);
+		  if (SzSymmetryFlag == true)
+		    {
+		      sprintf (LinePrefix, "%d %d %d %d ", TotalSz, XMomentum, YMomentum, SzSymmetrySector);
+		    }
+		  else
+		    {
+		      sprintf (LinePrefix, "%d %d %d ", TotalSz, XMomentum, YMomentum);
+		    }
 		}
 	    }
 	}

@@ -247,7 +247,7 @@ ComplexVector& ShastrySutherlandAnd2DTranslationHamiltonian::LowLevelAddMultiply
  		{
  		  vDestination[pos] += (coef * this->HalfJpFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpValue;
  		}
- 	      pos = this->Chain->SmiSpj(Index0, Index3, i, coef, NbrTranslationsX, NbrTranslationsY);
+ 	      pos = this->Chain->SmiSpj(Index3, Index0, i, coef, NbrTranslationsX, NbrTranslationsY);
  	      if (pos != dim)
  		{
  		  vDestination[pos] += (coef * this->HalfJpFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpValue;
