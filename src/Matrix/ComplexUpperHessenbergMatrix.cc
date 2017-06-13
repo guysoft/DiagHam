@@ -306,7 +306,7 @@ ComplexUpperHessenbergMatrix& ComplexUpperHessenbergMatrix::Copy (ComplexUpperHe
     }
   if (matrix.Flag.Used() == true)
     {
-      this->Flag = matrix.Flag;
+      this->Flag.Initialize();
       this->NbrRow = matrix.NbrRow;
       this->NbrColumn = matrix.NbrColumn;
       this->TrueNbrRow = matrix.TrueNbrRow;
