@@ -59,4 +59,6 @@ Spin0_1_2_ChainWithTranslationsAndSublatticeQuantumNumbers.cc \
 DoubledSpin0_1_2_ChainWithSquareTranslationsAndSublatticeQuantumNumbers.cc \
 Spin1ChainWithSzSymmetry.cc \
 Spin1ChainWithInversionSymmetry.cc \
-Spin1ChainWithSzInversionSymmetries.cc
+Spin1ChainWithSzInversionSymmetries.cc \
+Spin1_2ChainNewSzSymmetryGenericInversionAnd2DTranslation.cc \
+Spin1_2ChainNewGenericInversionAnd2DTranslation.cc

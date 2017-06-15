@@ -5,6 +5,8 @@
 #include "HilbertSpace/Spin1_2ChainNew.h"
 #include "HilbertSpace/Spin1_2ChainNewAnd2DTranslation.h"
 #include "HilbertSpace/Spin1_2ChainNewSzSymmetryAnd2DTranslation.h"
+#include "HilbertSpace/Spin1_2ChainNewGenericInversionAnd2DTranslation.h"
+
 #include "HilbertSpace/Spin1_2ChainMirrorSymmetry.h"
 #include "HilbertSpace/Spin1_2ChainFull.h"
 #include "HilbertSpace/Spin1_2ChainFullAnd2DTranslation.h"
@@ -38,6 +40,28 @@
 using std::cout;
 using std::endl;
 using std::ofstream;
+
+
+// get a linearized position index from the 2d coordinates
+//
+// xPosition = unit cell position along the x direction
+// yPosition = unit cell position along the y direction
+// index = site index within the unit cell
+// nbrUnitCellX = number of unit cells along the x direction
+// nbrUnitCellY = number of unit cells along the y direction
+// return value = linearized index
+int ShastrySutherlandModelGetLinearizedIndex(int xPosition, int yPosition, int index, int nbrUnitCellX, int nbrUnitCellY);
+
+// get 2d coordinates from a linearized position index
+//
+// index = linearized index
+// xPosition = reference on the unit cell position along the x direction
+// yPosition = reference on the unit cell position along the y direction
+// orbitalIndex = reference on the site index within the unit cell
+// nbrUnitCellX = number of unit cells along the x direction
+// nbrUnitCellY = number of unit cells along the y direction
+// return value = linearized index
+void ShastrySutherlandModelGet2DCoordinates(int index, int& xPosition, int& yPosition, int& orbitalIndex, int nbrUnitCellX, int nbrUnitCellY);
 
 
 int main(int argc, char** argv)
@@ -101,7 +125,38 @@ int main(int argc, char** argv)
   char* CommentLine = new char [512];
   char* BoundaryName = new char [16];
   sprintf (OutputFileName, "spin_1_2_shastrysutherland_n_%d_x_%d_y_%d", NbrSpins, NbrSitesX, NbrSitesY);
-  sprintf (CommentLine, " ising with %d unit cells in the x direction, %d unit cells in the y direction \n#", NbrSitesX, NbrSitesY);
+
+
+  if (Manager.GetBoolean("disable-momentum") == false)
+    {
+      if (Manager.GetBoolean("disable-szsymmetry") == false)
+	{
+	  if (Manager.GetBoolean("disable-inversion") == false)
+	    {
+	      sprintf (CommentLine, " ising with %d unit cells in the x direction, %d unit cells in the y direction \n# 2Sz Kx Ky SzSym InvSym ", NbrSitesX, NbrSitesY);
+	    }
+	  else
+	    {
+	      sprintf (CommentLine, " ising with %d unit cells in the x direction, %d unit cells in the y direction \n# 2Sz Kx Ky SzSym ", NbrSitesX, NbrSitesY);
+	    }
+	}
+      else
+	{
+	  if (Manager.GetBoolean("disable-inversion") == false)
+	    {
+	      sprintf (CommentLine, " ising with %d unit cells in the x direction, %d unit cells in the y direction \n# 2Sz Kx Ky InvSym ", NbrSitesX, NbrSitesY);
+	    }
+	  else
+	    {
+	      sprintf (CommentLine, " ising with %d unit cells in the x direction, %d unit cells in the y direction \n# 2Sz Kx Ky ", NbrSitesX, NbrSitesY);
+	    }
+	}
+    }
+  else
+    {
+      sprintf (CommentLine, " ising with %d unit cells in the x direction, %d unit cells in the y direction \n# 2Sz", NbrSitesX, NbrSitesY);
+    }
+
 
   char* OutputParameterFileName = new char [256];
   sprintf (OutputParameterFileName + strlen(OutputParameterFileName), "j_%.6f_jp_%.6f", Manager.GetDouble("j-value"), Manager.GetDouble("jp-value"));
@@ -120,6 +175,29 @@ int main(int argc, char** argv)
   if (Manager.GetInteger("nbr-sz") > 0)
     {
       MaxSzValue = InitalSzValue + ((Manager.GetInteger("nbr-sz") - 1) * 2);
+    }
+
+  int* InversionTable  = new int[NbrSpins];
+  for (int i = 0; i < NbrSpins; ++i)
+    {
+      int XValue;
+      int YValue;
+      int Index;
+      ShastrySutherlandModelGet2DCoordinates(i, XValue, YValue, Index, NbrSitesX, NbrSitesY);
+      cout << "mapping under inversion site " << i << " (" << XValue << ", " << YValue << ", " << Index << ") to site ";
+      int GlobalXIndex = 2 * XValue + (Index / 2);
+      int GlobalYIndex = 2 * YValue + (Index % 2);  
+      GlobalXIndex = 1 - GlobalXIndex;
+      if (GlobalXIndex < 0)
+	GlobalXIndex += 2 * NbrSitesX;
+      GlobalYIndex = 1 - GlobalYIndex;
+      if (GlobalYIndex < 0)
+	GlobalYIndex += 2 * NbrSitesY;
+      XValue = GlobalXIndex / 2;
+      YValue = GlobalYIndex / 2;
+      Index = (2 * (GlobalXIndex % 2)) + (GlobalYIndex % 2);
+      InversionTable[i] = ShastrySutherlandModelGetLinearizedIndex(XValue, YValue, Index, NbrSitesX, NbrSitesY);
+      cout << InversionTable[i] << " (" << XValue << ", " << YValue << ", " << Index << ")" << endl;
     }
 
   if (Manager.GetBoolean("disable-momentum") == false)
@@ -174,84 +252,156 @@ int main(int argc, char** argv)
 	{ 
 	  for (int MomentumSector = 0; MomentumSector < NbrMomenta; ++MomentumSector)
 	    {
-// 	  int TmpInvXMomenta = (NbrSitesX - XMomenta[MomentumSector]) % NbrSitesX;
-// 	  int TmpInvYMomenta = (NbrSitesY - YMomenta[MomentumSector]) % NbrSitesY;
-// 	  int MaxInversionSector = -1;
-// 	  if ((TmpInvXMomenta == XMomenta[MomentumSector]) && (TmpInvYMomenta == YMomenta[MomentumSector]) && (Manager.GetBoolean("disable-inversion") == false))
-// 	    {
-// 	      MaxInversionSector = 1;
-// 	    }
-// 	  for (int InversionSector = -1; InversionSector <= MaxInversionSector; InversionSector += 2)
-// 	    {
-	      int MaxSzSymmetrySector = 1;
-	      if ((Manager.GetBoolean("disable-szsymmetry") == true) || (TotalSz != 0))
+	      int TmpInvXMomenta = (NbrSitesX - XMomenta[MomentumSector]) % NbrSitesX;
+	      int TmpInvYMomenta = (NbrSitesY - YMomenta[MomentumSector]) % NbrSitesY;
+	      int MaxInversionSector = -1;
+	      if ((TmpInvXMomenta == XMomenta[MomentumSector]) && (TmpInvYMomenta == YMomenta[MomentumSector]) && (Manager.GetBoolean("disable-inversion") == false))
 		{
-		  MaxSzSymmetrySector = -1;
+		  MaxInversionSector = 1;
 		}
-	      for (int SzSymmetrySector = -1; SzSymmetrySector <= MaxSzSymmetrySector; SzSymmetrySector += 2)
+	      for (int InversionSector = -1; InversionSector <= MaxInversionSector; InversionSector += 2)
 		{
-		  cout << "-------------------------------------------" << endl;
-		  cout << "sz=" << TotalSz << "  kx=" << XMomenta[MomentumSector] << "  ky=" << YMomenta[MomentumSector];
-		  if (MaxSzSymmetrySector != -1)
+		  int MaxSzSymmetrySector = 1;
+		  if ((Manager.GetBoolean("disable-szsymmetry") == true) || (TotalSz != 0))
 		    {
-		      cout << " Sz<->-Sz sector=" << SzSymmetrySector;
+		      MaxSzSymmetrySector = -1;
 		    }
-		  cout << endl; 
-		  AbstractSpinChain* Chain = 0;
-		  if (MaxSzSymmetrySector == -1)
+		  for (int SzSymmetrySector = -1; SzSymmetrySector <= MaxSzSymmetrySector; SzSymmetrySector += 2)
 		    {
-		      Chain = new Spin1_2ChainNewAnd2DTranslation (NbrSpins, TotalSz, XMomenta[MomentumSector], NbrSitesX, YMomenta[MomentumSector], NbrSitesY);
-		    }
-		  else
-		    {
-		      Chain = new Spin1_2ChainNewSzSymmetryAnd2DTranslation (NbrSpins, TotalSz, SzSymmetrySector, XMomenta[MomentumSector], NbrSitesX, 
-									     YMomenta[MomentumSector], NbrSitesY);
-		    }
-		  if (Chain->GetHilbertSpaceDimension() > 0)
-		    {
-		      Architecture.GetArchitecture()->SetDimension(Chain->GetHilbertSpaceDimension());	
-		      ShastrySutherlandAnd2DTranslationHamiltonian* Hamiltonian = 0;
-		      Hamiltonian = new ShastrySutherlandAnd2DTranslationHamiltonian(Chain, XMomenta[MomentumSector], NbrSitesX, 
-										     YMomenta[MomentumSector], NbrSitesY, 
-										     Manager.GetDouble("j-value"), Manager.GetDouble("jp-value"));
-		      
-		      char* TmpEigenstateString = new char[strlen(OutputFileName) + strlen(OutputParameterFileName) + 64];
+		      cout << "-------------------------------------------" << endl;
+		      cout << "sz=" << TotalSz << "  kx=" << XMomenta[MomentumSector] << "  ky=" << YMomenta[MomentumSector];
+		      if (MaxSzSymmetrySector != -1)
+			{
+			  cout << " Sz<->-Sz sector=" << SzSymmetrySector;
+			}
+		      if (MaxInversionSector != -1)
+			{
+			  cout << " inversion sector=" << InversionSector;
+			}
+		      cout << endl; 
+		      AbstractSpinChain* Chain = 0;
 		      if (MaxSzSymmetrySector == -1)
 			{
-			  sprintf (TmpEigenstateString, "%s_%s_kx_%d_ky_%d_sz_%d", OutputFileName, OutputParameterFileName, XMomenta[MomentumSector], 
-				   YMomenta[MomentumSector], TotalSz);
-			}
-		      else
-			{
-			  sprintf (TmpEigenstateString, "%s_%s_kx_%d_ky_%d_szsym_%d_sz_%d", OutputFileName, OutputParameterFileName, XMomenta[MomentumSector], YMomenta[MomentumSector], SzSymmetrySector, TotalSz);
-			}
-		      char* TmpString = new char[32];
-		      if (Manager.GetBoolean("disable-szsymmetry") == true)
-			{
-			  sprintf (TmpString, "%d %d %d", TotalSz, XMomenta[MomentumSector], YMomenta[MomentumSector]);
-			}
-		      else
-			{
-			  if (MaxSzSymmetrySector == -1)
+			  if (MaxInversionSector == -1)
 			    {
-			      sprintf (TmpString, "%d %d %d 0", TotalSz, XMomenta[MomentumSector], YMomenta[MomentumSector]);
+			      Chain = new Spin1_2ChainNewAnd2DTranslation (NbrSpins, TotalSz, XMomenta[MomentumSector], NbrSitesX, YMomenta[MomentumSector], NbrSitesY);
 			    }
 			  else
 			    {
-			      sprintf (TmpString, "%d %d %d %d", TotalSz, XMomenta[MomentumSector], YMomenta[MomentumSector], 
-				       SzSymmetrySector);
+			      Chain = new Spin1_2ChainNewGenericInversionAnd2DTranslation (NbrSpins, TotalSz, InversionSector, InversionTable, 
+											   XMomenta[MomentumSector], NbrSitesX, YMomenta[MomentumSector], NbrSitesY);
 			    }
 			}
-		      GenericComplexMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpString, CommentLine, 0.0,  FullOutputFileName,
-						  FirstRun, TmpEigenstateString);
-		      MainTaskOperation TaskOperation (&Task);
-		      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-		      FirstRun = false;
-		      delete Hamiltonian;
-		      delete[] TmpString;
-		      delete[] TmpEigenstateString;
+		      else
+			{
+			  Chain = new Spin1_2ChainNewSzSymmetryAnd2DTranslation (NbrSpins, TotalSz, SzSymmetrySector, XMomenta[MomentumSector], NbrSitesX, 
+										 YMomenta[MomentumSector], NbrSitesY);
+			}
+		      if (Chain->GetHilbertSpaceDimension() > 0)
+			{
+			  Architecture.GetArchitecture()->SetDimension(Chain->GetHilbertSpaceDimension());	
+			  ShastrySutherlandAnd2DTranslationHamiltonian* Hamiltonian = 0;
+			  Hamiltonian = new ShastrySutherlandAnd2DTranslationHamiltonian(Chain, XMomenta[MomentumSector], NbrSitesX, 
+											 YMomenta[MomentumSector], NbrSitesY, 
+											 Manager.GetDouble("j-value"), Manager.GetDouble("jp-value"));
+			  
+			  char* TmpEigenstateString = new char[strlen(OutputFileName) + strlen(OutputParameterFileName) + 64];
+			  if (MaxSzSymmetrySector == -1)
+			    {
+			      if (MaxInversionSector == -1)
+				{
+				  sprintf (TmpEigenstateString, "%s_%s_kx_%d_ky_%d_sz_%d", OutputFileName, OutputParameterFileName, XMomenta[MomentumSector], 
+					   YMomenta[MomentumSector], TotalSz);
+				}
+			      else
+				{
+				  sprintf (TmpEigenstateString, "%s_%s_kx_%d_ky_%d_invsym_%d_sz_%d", OutputFileName, OutputParameterFileName, XMomenta[MomentumSector], YMomenta[MomentumSector], InversionSector, TotalSz);
+				}
+			    }
+			  else
+			    {
+			      if (MaxInversionSector == -1)
+				{
+				  sprintf (TmpEigenstateString, "%s_%s_kx_%d_ky_%d_szsym_%d_sz_%d", OutputFileName, OutputParameterFileName, XMomenta[MomentumSector], YMomenta[MomentumSector], SzSymmetrySector, TotalSz);
+				}
+			      else
+				{
+				  sprintf (TmpEigenstateString, "%s_%s_kx_%d_ky_%d_invsym_%d_szsym_%d_sz_%d", OutputFileName, OutputParameterFileName, XMomenta[MomentumSector], YMomenta[MomentumSector], InversionSector, SzSymmetrySector, TotalSz);
+				}
+			    }
+			  char* TmpString = new char[32];
+			  if (Manager.GetBoolean("disable-szsymmetry") == true)
+			    {
+			      if (Manager.GetBoolean("disable-inversion") == true)
+				{
+				  sprintf (TmpString, "%d %d %d", TotalSz, XMomenta[MomentumSector], YMomenta[MomentumSector]);
+				}
+			      else
+				{
+				  if (MaxInversionSector == -1)
+				    {
+				      sprintf (TmpString, "%d %d %d 0", TotalSz, XMomenta[MomentumSector], YMomenta[MomentumSector]);
+				    }
+				  else
+				    {
+				      sprintf (TmpString, "%d %d %d %d", TotalSz, XMomenta[MomentumSector], YMomenta[MomentumSector], 
+					       InversionSector);
+				    }
+				}
+			    }
+			  else
+			    {
+			      if (Manager.GetBoolean("disable-inversion") == true)
+				{
+				  if (MaxSzSymmetrySector == -1)
+				    {
+				      sprintf (TmpString, "%d %d %d 0", TotalSz, XMomenta[MomentumSector], YMomenta[MomentumSector]);
+				    }
+				  else
+				    {
+				      sprintf (TmpString, "%d %d %d %d", TotalSz, XMomenta[MomentumSector], YMomenta[MomentumSector], 
+					       SzSymmetrySector);
+				    }
+				}
+			      else
+				{
+				  if (MaxSzSymmetrySector == -1)
+				    {
+				      if (MaxInversionSector == -1)
+					{
+					  sprintf (TmpString, "%d %d %d 0 0", TotalSz, XMomenta[MomentumSector], YMomenta[MomentumSector]);
+					}
+				      else
+					{
+					  sprintf (TmpString, "%d %d %d 0 %d", TotalSz, XMomenta[MomentumSector], YMomenta[MomentumSector], InversionSector);
+					}
+				    }
+				  else
+				    {
+				      if (MaxInversionSector == -1)
+					{
+					  sprintf (TmpString, "%d %d %d %d 0", TotalSz, XMomenta[MomentumSector], YMomenta[MomentumSector], 
+						   SzSymmetrySector);
+					}
+				      else
+					{
+					  sprintf (TmpString, "%d %d %d %d %d", TotalSz, XMomenta[MomentumSector], YMomenta[MomentumSector], 
+						   SzSymmetrySector, InversionSector);
+					}
+				    }
+				}
+			    }
+			  GenericComplexMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpString, CommentLine, 0.0,  FullOutputFileName,
+						      FirstRun, TmpEigenstateString);
+			  MainTaskOperation TaskOperation (&Task);
+			  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+			  FirstRun = false;
+			  delete Hamiltonian;
+			  delete[] TmpString;
+			  delete[] TmpEigenstateString;
+			}
+		      delete Chain;
 		    }
-		  delete Chain;
 		}
  	    }
 	}      
@@ -287,5 +437,49 @@ int main(int argc, char** argv)
   delete[] OutputFileName;
   delete[] CommentLine;
   delete[] FullOutputFileName;
+  delete[] InversionTable;
   return 0;
+}
+
+
+// get a linearized position index from the 2d coordinates
+//
+// xPosition = unit cell position along the x direction
+// yPosition = unit cell position along the y direction
+// index = site index within the unit cell
+// nbrUnitCellX = number of unit cells along the x direction
+// nbrUnitCellY = number of unit cells along the y direction
+// return value = linearized index
+
+inline int ShastrySutherlandModelGetLinearizedIndex(int xPosition, int yPosition, int index, int nbrUnitCellX, int nbrUnitCellY)
+{
+  while (xPosition < 0)
+    {
+      xPosition += nbrUnitCellX;
+    }
+  while (yPosition < 0)
+    {
+      yPosition += nbrUnitCellY;
+    }
+  xPosition %= nbrUnitCellX;
+  yPosition %= nbrUnitCellY;
+  return (((xPosition * nbrUnitCellY) + yPosition) * 4) + index;
+}
+
+// get 2d coordinates from a linearized position index
+//
+// index = linearized index
+// xPosition = reference on the unit cell position along the x direction
+// yPosition = reference on the unit cell position along the y direction
+// orbitalIndex = reference on the site index within the unit cell
+// nbrUnitCellX = number of unit cells along the x direction
+// nbrUnitCellY = number of unit cells along the y direction
+// return value = linearized index
+
+inline void ShastrySutherlandModelGet2DCoordinates(int index, int& xPosition, int& yPosition, int& orbitalIndex, int nbrUnitCellX, int nbrUnitCellY)
+{
+  orbitalIndex = index % 4;
+  yPosition = index / 4;
+  xPosition = yPosition / nbrUnitCellY;
+  yPosition %= nbrUnitCellY;
 }
