@@ -7747,3 +7747,45 @@ void FermionOnSphere::CreateStateFromMPSDescription (SparseRealMatrix* bMatrices
     }
 }
 
+
+// create a state from its site-dependent MPS description
+//
+// bMatrices = array that gives the site-dependent MPS
+// state = reference to vector that will contain the state description
+// mPSRowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
+// mPSColumnIndex = column index of the MPS element that has to be evaluated
+// initialIndex = initial index to compute
+// nbrComponents = number of components to compute
+
+void FermionOnSphere::CreateStateFromSiteDependentMPSDescription (SparseRealMatrix** bMatrices, RealVector& state, int mPSRowIndex, int mPSColumnIndex, 
+						 long initialIndex, long nbrComponents)
+{
+  long MaxIndex = initialIndex + nbrComponents;
+  if ((nbrComponents == 0l) || (MaxIndex > this->LargeHilbertSpaceDimension))
+    {
+      MaxIndex = this->LargeHilbertSpaceDimension;
+    }
+  RealVector TmpVector (bMatrices[0][1].GetNbrRow());
+  RealVector TmpVector2 (bMatrices[0][1].GetNbrRow());
+
+  for (long i = initialIndex; i < MaxIndex; ++i)
+    {
+      if (((i - initialIndex) % 10000) == 0)
+	cout << "Completed " << (i - initialIndex) << " out of " << (MaxIndex - initialIndex) << endl; 
+      TmpVector.ClearVector();
+      TmpVector[mPSRowIndex] = 1.0;
+      unsigned long TmpStateDescription = this->StateDescription[i];
+      for (int j = this->LzMax; j >= 0; --j)
+	{
+	  if (((TmpStateDescription >> j) & 0x1ul) != 0x0ul)
+	    {
+	      bMatrices[j][1].RightMultiply(TmpVector, TmpVector2);
+	      RealVector TmpVector3 = TmpVector;
+	      TmpVector = TmpVector2;
+	      TmpVector2 = TmpVector3;
+	    }
+	} 
+      state[i] = TmpVector[mPSColumnIndex];
+    }
+}
+

@@ -596,3 +596,25 @@ ostream& AbstractFQHEMPSMatrix::PrintPhysicalIndex(ostream& str, int index)
   delete[] TmpConfiguration;
 }
 
+// get the array where the site-dependent matrices are stored
+//
+// nbrFluxQuanta = number of flux quanta in the finite size system
+// return value = pointer to the array of matrices (first entry being the orbital index, the second being the occupation number)
+
+SparseRealMatrix** AbstractFQHEMPSMatrix::GetSiteDependentMatrices(int nbrFluxQuanta)
+{
+  cout << "site dependent real MPS is not available for " << this->GetName() << endl;
+  return 0;
+}
+
+// get the array where the site-dependent matrices are stored
+//
+// nbrFluxQuanta = number of flux quanta in the finite size system
+// return value = pointer to the array of matrices (first entry being the orbital index, the second being the occupation number)
+
+SparseComplexMatrix** AbstractFQHEMPSMatrix::GetSiteDependentComplexMatrices()
+{
+  cout << "site dependent complex MPS is not available for " << this->GetName() << endl;
+  return 0;
+}
+

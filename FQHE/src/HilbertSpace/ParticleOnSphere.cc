@@ -1750,6 +1750,7 @@ RealVector& ParticleOnSphere::NormalizeSphereToCylinder(RealVector& state, doubl
 void ParticleOnSphere::CreateStateFromMPSDescription (SparseRealMatrix* bMatrices, RealVector& state, int mPSRowIndex, int mPSColumnIndex, 
 						      long memory, long initialIndex, long nbrComponents)
 {
+  cout << "warning using dummy ParticleOnSphere::CreateStateFromMPSDescription" << endl;
 }
 
 // create a state from its MPS description, inclusing additional quasihole matrices
@@ -1766,6 +1767,22 @@ void  ParticleOnSphere::CreateStateFromMPSDescription (SparseRealMatrix* bMatric
 						      ComplexVector& state, int mPSRowIndex, int mPSColumnIndex, 
 						      long memory, long initialIndex, long nbrComponents)
 {
+  cout << "warning using dummy ParticleOnSphere::CreateStateFromMPSDescription" << endl;
+}
+
+// create a state from its site-dependent MPS description
+//
+// bMatrices = array that gives the site-dependent MPS
+// state = reference to vector that will contain the state description
+// mPSRowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
+// mPSColumnIndex = column index of the MPS element that has to be evaluated
+// initialIndex = initial index to compute
+// nbrComponents = number of components to compute
+
+void ParticleOnSphere::CreateStateFromSiteDependentMPSDescription (SparseRealMatrix** bMatrices, RealVector& state, int mPSRowIndex, int mPSColumnIndex, 
+								   long initialIndex, long nbrComponents)
+{
+  cout << "warning using dummy ParticleOnSphere::CreateStateFromSiteDependentMPSDescription" << endl;
 }
 
 // convert a state defined in the Ky basis into a state in the (Kx,Ky) basis

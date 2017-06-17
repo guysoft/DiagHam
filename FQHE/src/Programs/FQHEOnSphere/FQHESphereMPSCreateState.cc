@@ -65,6 +65,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption ('\n', "nbr-fluxquanta", "set the total number of flux quanta and deduce the root partition instead of using the reference-file", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "row-index", "manually specify the MPS row index (overrides default)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "column-index", "manually specify the MPS column index (overrides default)", -1);
+  (*SystemGroup) += new BooleanOption ('n', "site-dependent", "use the site dependent version of the MPS");
+
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "precalculation-blocksize", " indicates the size of the block (i.e. number of B matrices) for precalculations", 1);
   (*OutputGroup) += new BooleanOption ('n', "normalize-sphere", "express the MPS in the normalized sphere basis");
   (*OutputGroup) += new BooleanOption ('\n', "normalize-jack", "use the Jack normalization, forcing the first component to be 1");
@@ -198,12 +200,10 @@ int main(int argc, char** argv)
   MPSMatrix->GetChargeIndexRange(0, MinQ, MaxQ);
   MPSMatrix->GetMatrixBoundaryIndices(MPSRowIndex, MPSColumnIndex, Manager.GetBoolean("use-padding"));
   if (Manager.GetInteger("row-index") != -1)
-      MPSRowIndex = Manager.GetInteger("row-index");
+    MPSRowIndex = Manager.GetInteger("row-index");
   if (Manager.GetInteger("column-index") != -1)
-      MPSColumnIndex = Manager.GetInteger("column-index");
+    MPSColumnIndex = Manager.GetInteger("column-index");
   cout << "MPSRowIndex=" << MPSRowIndex << " MPSColumnIndex=" << MPSColumnIndex << endl;
-  SparseRealMatrix* SparseBMatrices = MPSMatrix->GetMatrices();
-  cout << "B matrix size = " << SparseBMatrices[0].GetNbrRow() << "x" << SparseBMatrices[0].GetNbrColumn() << endl;
 
   SparseComplexMatrix* SparseQuasiholeBMatrices = 0;
   if (NbrQuasiholes > 0)
@@ -224,20 +224,44 @@ int main(int argc, char** argv)
   else
     State = RealVector(Space->GetHilbertSpaceDimension(), true);
 
-
-  if (NbrQuasiholes > 0)
+  if (Manager.GetBoolean("site-dependent") == false)
     {
-      FQHEMPSCreateStateOperation Operation(Space, SparseBMatrices, SparseQuasiholeBMatrices, NbrQuasiholes, &ComplexState, MPSRowIndex, MPSColumnIndex,
-					    Manager.GetInteger("precalculation-blocksize"));
-      Operation.ApplyOperation(Architecture.GetArchitecture());
+      SparseRealMatrix* SparseBMatrices = MPSMatrix->GetMatrices();
+      cout << "B matrix size = " << SparseBMatrices[0].GetNbrRow() << "x" << SparseBMatrices[0].GetNbrColumn() << endl;
+      if (NbrQuasiholes > 0)
+	{
+	  FQHEMPSCreateStateOperation Operation(Space, SparseBMatrices, SparseQuasiholeBMatrices, NbrQuasiholes, &ComplexState, MPSRowIndex, MPSColumnIndex,
+						Manager.GetInteger("precalculation-blocksize"));
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
+	}
+      else
+	{
+	  FQHEMPSCreateStateOperation Operation(Space, SparseBMatrices, &State, MPSRowIndex, MPSColumnIndex,
+						Manager.GetInteger("precalculation-blocksize"));
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
+	}
     }
   else
     {
-      FQHEMPSCreateStateOperation Operation(Space, SparseBMatrices, &State, MPSRowIndex, MPSColumnIndex,
-					    Manager.GetInteger("precalculation-blocksize"));
-      Operation.ApplyOperation(Architecture.GetArchitecture());
+      SparseRealMatrix** SparseBMatrices = MPSMatrix->GetSiteDependentMatrices(NbrFluxQuanta);
+      if (SparseBMatrices == 0)
+	{
+	  return 0;
+	}
+      int MaxOccupation = Manager.GetInteger("boson-truncation");
+      int TmpIndex = 0;
+      while ((TmpIndex <= MaxOccupation) && (SparseBMatrices[0][TmpIndex].GetNbrColumn() == 0))
+	{
+	  ++TmpIndex;
+	}
+      if (TmpIndex > MaxOccupation)
+	{
+	  cout << "site-dependent MPS is not compatible with the boson truncation " << MaxOccupation << endl;
+	  return 0;
+	}
+      cout << "B matrix size = " << SparseBMatrices[0][TmpIndex].GetNbrRow() << "x" << SparseBMatrices[0][TmpIndex].GetNbrColumn() << endl;
+      
     }
-
   if (Architecture.GetArchitecture()->CanWriteOnDisk() == true)
     {
       if (Manager.GetBoolean("normalize-sphere"))
