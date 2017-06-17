@@ -943,60 +943,10 @@ int main(int argc, char** argv)
 	      if (Manager.GetBoolean("complex") == false)
 		{
 		  SolveS2Degeneracy(RealEigenstates, TmpIndex, Degeneracies[k], S2Values, &TmpOperator);
-// 		  RealSymmetricMatrix S2Matrix(Degeneracies[k], true);
-// 		  RealVector TmpRealVector;
-// 		  RealVector TmpVector(Space->GetHilbertSpaceDimension());
-// 		  RealVector* TmpBasis = new RealVector[Degeneracies[k]];	      		  
-// 		  for (int i = 0; i < Degeneracies[k]; ++i)
-// 		    {		 
-// 		      TmpBasis[i] = RealEigenstates[TmpIndex + i];
-// 		      TmpOperator.Multiply(RealEigenstates[TmpIndex + i], TmpVector);
-// 		      for (int j = i; j < Degeneracies[k]; ++j)
-// 			{
-// 			  Complex TmpS2 = RealEigenstates[TmpIndex + j] * TmpVector;
-// 			  S2Matrix.SetMatrixElement(j, i, TmpS2.Re);
-// 			}
-// 		    }
-// 		  RealDiagonalMatrix TmpS2Eigenvalues(Degeneracies[k]);
-// 		  RealMatrix TmpS2Eigenstates(Degeneracies[k], Degeneracies[k], true);	      
-// 		  RealMatrix TmpBasis2 (TmpBasis, Degeneracies[k]);
-// 		  TmpS2Eigenstates.SetToIdentity();
-// 		  S2Matrix.LapackDiagonalize(TmpS2Eigenvalues, TmpS2Eigenstates);
-// 		  for (int i = 0; i < Degeneracies[k]; ++i)
-// 		    {
-// 		      S2Values[TmpIndex + i] = TmpS2Eigenvalues[i];
-// 		    }
-// 		  TmpBasis2.Multiply(TmpS2Eigenstates);
-// 		  delete[] TmpBasis;
 		}
 	      else
 		{
 		  SolveS2Degeneracy(ComplexEigenstates, TmpIndex, Degeneracies[k], S2Values, &TmpOperator);
-// 		  ComplexVector TmpComplexVector;
-// 		  HermitianMatrix S2Matrix(Degeneracies[k], true);
-// 		  ComplexVector TmpVector(Space->GetHilbertSpaceDimension());
-// 		  ComplexVector* TmpBasis = new ComplexVector[Degeneracies[k]];	      		  
-// 		  for (int i = 0; i < Degeneracies[k]; ++i)
-// 		    {		      
-// 		      TmpBasis[i] = ComplexEigenstates[TmpIndex + i];
-// 		      TmpOperator.Multiply(ComplexEigenstates[TmpIndex + i], TmpVector);
-// 		      for (int j = i; j < Degeneracies[k]; ++j)
-// 			{
-// 			  Complex TmpS2= ComplexEigenstates[TmpIndex + j] * TmpVector;
-// 			  S2Matrix.SetMatrixElement(j, i, TmpS2);
-// 			}
-// 		    }
-// 		  RealDiagonalMatrix TmpS2Eigenvalues(Degeneracies[k]);
-// 		  ComplexMatrix TmpS2Eigenstates(Degeneracies[k], Degeneracies[k], true);	      
-// 		  ComplexMatrix TmpBasis2 (TmpBasis, Degeneracies[k]);
-// 		  TmpS2Eigenstates.SetToIdentity();
-// 		  S2Matrix.LapackDiagonalize(TmpS2Eigenvalues, TmpS2Eigenstates);
-// 		  for (int i = 0; i < Degeneracies[k]; ++i)
-// 		    {
-// 		      S2Values[TmpIndex + i] = TmpS2Eigenvalues[i];
-// 		    }
-// 		  TmpBasis2.Multiply(TmpS2Eigenstates);
-// 		  delete[] TmpBasis;
 		}	    
 	    }
 	  TmpIndex += Degeneracies[k];
@@ -1195,37 +1145,11 @@ int main(int argc, char** argv)
 		  if (Manager.GetBoolean("complex") == false)
 		    {
 		      SolveS2Degeneracy(RealEigenstates, TmpIndex, Degeneracies[k], S2Values, &TmpOperator);
-// 		      RealVector TmpVector(Space->GetHilbertSpaceDimension());
-// 		      for (int i = 0; i < Degeneracies[k]; ++i)
-// 			{		 
-// 			  TmpOperator.Multiply(RealEigenstates[TmpIndex + i], TmpVector);
-// 			  for (int j = i; j < Degeneracies[k]; ++j)
-// 			    {
-// 			      Complex TmpS2 = RealEigenstates[TmpIndex + j] * TmpVector;
-// 			      S2Matrix.SetMatrixElement(j, i, TmpS2);
-// 			    }
-// 			}
 		    }
 		  else
 		    {
 		      SolveS2Degeneracy(ComplexEigenstates, TmpIndex, Degeneracies[k], S2Values, &TmpOperator);
-// 		      ComplexVector TmpVector(Space->GetHilbertSpaceDimension());
-// 		      for (int i = 0; i < Degeneracies[k]; ++i)
-// 			{		      
-// 			  TmpOperator.Multiply(ComplexEigenstates[TmpIndex + i], TmpVector);
-// 			  for (int j = i; j < Degeneracies[k]; ++j)
-// 			    {
-// 			      Complex TmpS2= ComplexEigenstates[TmpIndex + j] * TmpVector;
-// 			      S2Matrix.SetMatrixElement(j, i, TmpS2);
-// 			    }
-// 			}
 		    }	    
-// 		  RealDiagonalMatrix TmpS2Eigenvalues(Degeneracies[k]);
-// 		  S2Matrix.LapackDiagonalize(TmpS2Eigenvalues);
-// 		  for (int i = 0; i < Degeneracies[k]; ++i)
-// 		    {
-// 		      S2Values[TmpIndex + i] = TmpS2Eigenvalues[i];
-// 		    }
 		}
 	      TmpIndex += Degeneracies[k];
 	    }
@@ -1376,37 +1300,11 @@ int main(int argc, char** argv)
 		  if (Manager.GetBoolean("complex") == false)
 		    {
 		      SolveS2Degeneracy(RealEigenstates, TmpIndex, Degeneracies[k], S2Values, &TmpOperator);
-// 		      RealVector TmpVector(Space->GetHilbertSpaceDimension());
-// 		      for (int i = 0; i < Degeneracies[k]; ++i)
-// 			{		 
-// 			  TmpOperator.Multiply(RealEigenstates[TmpIndex + i], TmpVector);
-// 			  for (int j = i; j < Degeneracies[k]; ++j)
-// 			    {
-// 			      Complex TmpS2 = RealEigenstates[TmpIndex + j] * TmpVector;
-// 			      S2Matrix.SetMatrixElement(j, i, TmpS2);
-// 			    }
-// 			}
 		    }
 		  else
 		    {
 		      SolveS2Degeneracy(ComplexEigenstates, TmpIndex, Degeneracies[k], S2Values, &TmpOperator);
-// 		      ComplexVector TmpVector(Space->GetHilbertSpaceDimension());
-// 		      for (int i = 0; i < Degeneracies[k]; ++i)
-// 			{		      
-// 			  TmpOperator.Multiply(ComplexEigenstates[TmpIndex + i], TmpVector);
-// 			  for (int j = i; j < Degeneracies[k]; ++j)
-// 			    {
-// 			      Complex TmpS2= ComplexEigenstates[TmpIndex + j] * TmpVector;
-// 			      S2Matrix.SetMatrixElement(j, i, TmpS2);
-// 			    }
-// 			}
 		    }	    
-// 		  RealDiagonalMatrix TmpS2Eigenvalues(Degeneracies[k]);
-// 		  S2Matrix.LapackDiagonalize(TmpS2Eigenvalues);
-// 		  for (int i = 0; i < Degeneracies[k]; ++i)
-// 		    {
-// 		      S2Values[TmpIndex + i] = TmpS2Eigenvalues[i];
-// 		    }
 		}
 	      TmpIndex += Degeneracies[k];
 	    }
