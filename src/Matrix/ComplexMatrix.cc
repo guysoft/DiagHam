@@ -3296,7 +3296,6 @@ void ComplexMatrix::QRDecompositionFromLapack (ComplexMatrix & Q, ComplexMatrix 
   
 #else
   cout << "Warning, using ComplexMatrix::QRDecompositionFromLapack without the lapack library" << endl;
-  return 0;
 #endif  
 }
  
