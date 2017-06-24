@@ -72,6 +72,18 @@ using std::ios;
 using std::ofstream;
 
 
+// try to guess system information from file name
+//
+// filename = vector file name
+// tauI = reference to the value of tau
+// tfI = 
+// nbrstepI = number of steps in previous simulation
+// stepI = reference to the number of steps already done
+// return value = true if no error occured
+
+bool FTITimeEvolutionFindSystemInfoFromVectorFileName (char* filename, double& tauI, double& tfI, int& nbrStepI,int& stepI, double& uFinalI);
+
+
 int main(int argc, char** argv)
 {
   OptionManager Manager ("FCIHofstadterModelTimeEvolution" , "0.01");
@@ -93,10 +105,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "complex", "initial vector is a complex vector");
   (*SystemGroup) += new BooleanOption  ('\n', "compute-energy", "compute the energy of each time-evolved vector");
   
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "u-final", "final value of the onsite potential strength", -1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "u-final", "final value of the onsite potential strength", -10.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "tau", "time where the final value of U is reached", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "final-time", "time where the code stops", 10.0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-steps", "number of points to evaluate", 1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "save-period", "save time-evolved state every n steps", 1);
 
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
@@ -127,11 +140,26 @@ int main(int argc, char** argv)
   bool StatisticFlag;
   bool GutzwillerFlag;
   bool TranslationFlag;
-  bool UsingConstraintMinNbrSinglets;
+  bool UsingConstraintMinNbrSinglets = false;
   char Axis ='y';
   bool SzSymmetryFlag;
   if (Manager.GetBoolean("landau-x"))
     Axis ='x';
+  
+  bool ResumeFlag = false;
+  double TauI;
+  double TfI;
+  int NbrStepI;
+  int StepI;
+  double UFinalI;
+  
+  int NbrSteps = Manager.GetInteger("nbr-steps");
+  int SavePeriod = Manager.GetInteger("save-period");
+  double UFinal = Manager.GetDouble("u-final");
+  double Tau = Manager.GetDouble("tau");
+  double FinalTime = Manager.GetDouble("final-time");
+  double TimeStep = FinalTime/ ((double)NbrSteps);
+  double UPotential;
   
   
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
@@ -157,6 +185,17 @@ int main(int argc, char** argv)
       return -1;
     }
 
+  if (FTITimeEvolutionFindSystemInfoFromVectorFileName(StateFileName, TauI, TfI, NbrStepI, StepI, UFinalI))
+  {
+    ResumeFlag = true;
+    cout << "tau = " << Tau << ", tf = " << TfI << ", NbrSteps = " << NbrStepI << ", initial step = " << StepI << ", U final = " << UFinalI << endl;
+    UFinal = UFinalI;
+    Tau = TauI;
+    NbrSteps = NbrStepI;
+    FinalTime = TfI;
+    TimeStep = FinalTime/ ((double)NbrSteps);
+  }
+  
   Abstract2DTightBindingModel *TightBindingModel;
   
   TightBindingModel = new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true, false);
@@ -284,20 +323,18 @@ int main(int argc, char** argv)
     Memory = Architecture.GetArchitecture()->GetLocalMemory();
       
 
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "u-final", "final value of the onsite potential strength", -1.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "tau", "time where the final value of U is reached", 1.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "final-time", "time where the code stops", 10.0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-steps", "number of points to evaluate", 1);
-  
-  int NbrSteps = Manager.GetInteger("nbr-steps");
-  double UFinal = Manager.GetDouble("u-final");
-  double Tau = Manager.GetDouble("tau");
-  double FinalTime = Manager.GetDouble("final-time");
-  double TimeStep = FinalTime/ ((double)NbrSteps);
-  double UPotential;
-  
   char* OutputNamePrefix = new char [512];
-  OutputNamePrefix =  RemoveExtensionFromFileName(StateFileName,".vec");
+  if (ResumeFlag == false)
+  {
+    OutputNamePrefix =  RemoveExtensionFromFileName(StateFileName,".vec");
+    StepI = -1;
+  }
+  else
+  {
+    char* ParameterStringPreviousSimulation = new char[512];
+    sprintf(ParameterStringPreviousSimulation,"_uf_%f_tau_%f_tf_%f_nstep_%d.%d.vec",UFinal,TauI, TfI, NbrStepI, StepI);
+    OutputNamePrefix = RemoveExtensionFromFileName(StateFileName, ParameterStringPreviousSimulation);
+  }
 
   char * ParameterString = new char [512];
   sprintf(ParameterString,"uf_%f_tau_%f_tf_%f_nstep_%d",UFinal,Tau,FinalTime,NbrSteps);
@@ -306,14 +343,18 @@ int main(int argc, char** argv)
   if (Manager.GetBoolean("compute-energy"))
     {
       EnergyNameFile = new char[512];
-      sprintf (EnergyNameFile, "%s_%s_energy.dat", OutputNamePrefix,ParameterString);
+      if (ResumeFlag == false)
+	sprintf (EnergyNameFile, "%s_%s_energy.dat", OutputNamePrefix,ParameterString);
+      else
+	sprintf (EnergyNameFile, "%s_%s_energy.resume.dat", OutputNamePrefix,ParameterString);
 
       FileEnergy.open(EnergyNameFile, ios::out);
       FileEnergy.precision(14);
       FileEnergy << "# t E "<< endl;
     }
   
-  for(int i = 0 ; i < NbrSteps; i++)
+  
+  for(int i = StepI + 1 ; i < NbrSteps; i++)
     {
       double UPotential =  UFinal/ Tau * TimeStep * i;
       if ( fabs(UPotential) > fabs(UFinal) ) 
@@ -366,10 +407,13 @@ int main(int argc, char** argv)
 	  cout << "Norm = " << Norm << " +/- " << TmpNorm << " for step " << TmpExpansionOrder << endl;      
 	} 
 
-      char* OutputName = new char [strlen(OutputNamePrefix)+ strlen(ParameterString) + 16];
-      sprintf (OutputName, "%s_%s.%d.vec",OutputNamePrefix,ParameterString,i);
-      TmpInitialState.WriteVector(OutputName);      
-      delete [] OutputName;
+      if ((i % SavePeriod) == 0)
+      {
+	char* OutputName = new char [strlen(OutputNamePrefix)+ strlen(ParameterString) + 16];
+	sprintf (OutputName, "%s_%s.%d.vec",OutputNamePrefix,ParameterString,i);
+	TmpInitialState.WriteVector(OutputName);      
+	delete [] OutputName;
+      }
 
       if (Manager.GetBoolean("compute-energy"))
 	{
@@ -388,3 +432,127 @@ int main(int argc, char** argv)
   return 0;
 }
 
+
+// try to guess system information from file name
+//
+// filename = vector file name
+// tauI = reference to the value of tau
+// tfI = 
+// nbrstepI = number of steps in previous simulation
+// stepI = reference to the number of steps already done
+// return value = true if no error occured
+
+bool FTITimeEvolutionFindSystemInfoFromVectorFileName (char* filename, double& tauI, double& tfI, int& nbrStepI,int& stepI, double& uFinalI)
+{
+  char* StrTau;
+  StrTau = strstr(filename, "_tau_");
+  if (StrTau != 0)
+    {
+      StrTau += 5;
+      int SizeString = 0;
+      while ((StrTau[SizeString] != '\0') && (StrTau[SizeString] != '_') && (StrTau[SizeString] <= '9'))
+	++SizeString;
+      if ((StrTau[SizeString] == '_') && (SizeString != 0))
+	{
+          char TmpChar = StrTau[SizeString];
+	  StrTau[SizeString] = '\0';
+	  tauI = atoi(StrTau);
+// 	  cout << "tau = " << tauI << endl;
+	  StrTau[SizeString] = TmpChar;
+	  StrTau += SizeString;
+	}
+      else
+	StrTau = 0;
+    }
+  if (StrTau == 0)
+    {
+      return false;            
+    }
+  StrTau = strstr(filename, "_tf_");
+  if (StrTau != 0)
+    {
+      StrTau += 4;
+      int SizeString = 0;
+      while ((StrTau[SizeString] != '\0') && (StrTau[SizeString] != '_') && (StrTau[SizeString] <= '9'))
+	++SizeString;
+      if ((StrTau[SizeString] == '_') && (SizeString != 0))
+	{
+          char TmpChar = StrTau[SizeString];
+	  StrTau[SizeString] = '\0';
+	  tfI = atoi(StrTau);
+// 	  cout << "tfi = " << tfI << endl;
+	  StrTau[SizeString] = TmpChar;
+	  StrTau += SizeString;
+	}
+      else
+	StrTau = 0;
+    }
+  if (StrTau == 0)
+    {
+      return false;
+    }
+  StrTau = strstr(filename, "_nstep_");
+  if (StrTau != 0)
+    {
+      StrTau += 7;
+      int SizeString = 0;
+      while ((StrTau[SizeString] != '\0') && (StrTau[SizeString] != '.') && (StrTau[SizeString] >= '0') 
+	     && (StrTau[SizeString] <= '9'))
+	++SizeString;
+      if ((StrTau[SizeString] == '.') && (SizeString != 0))
+	{
+          char TmpChar = StrTau[SizeString];
+	  StrTau[SizeString] = '\0';
+	  nbrStepI = atoi(StrTau);
+// 	  cout << "NbrStepI = " << nbrStepI << endl;
+	  StrTau[SizeString] = TmpChar;
+	  StrTau += SizeString;
+	}
+      else
+	StrTau = 0;
+      
+      StrTau += 1;
+      SizeString = 0;
+      while ((StrTau[SizeString] != '\0') && (StrTau[SizeString] != '.') 
+	     && (StrTau[SizeString] <= '9'))
+	++SizeString;
+      if ((StrTau[SizeString] == '.') && (SizeString != 0))
+	{
+          char TmpChar = StrTau[SizeString];
+	  StrTau[SizeString] = '\0';
+	  stepI = atoi(StrTau);
+// 	  cout << "stepI  = " << stepI << endl;
+	  StrTau[SizeString] = TmpChar;
+	  StrTau += SizeString;
+	}
+      else
+	StrTau = 0;
+    }
+  if (StrTau == 0)
+    {
+      return false;
+    }
+  
+  
+  StrTau = strstr(filename, "_uf_");
+  if (StrTau != 0)
+    {
+      StrTau += 4;
+      int SizeString = 0;
+      while ((StrTau[SizeString] != '\0') && (StrTau[SizeString] != '_') && (StrTau[SizeString] <= '9'))
+	++SizeString;
+      if ((StrTau[SizeString] == '_') && (SizeString != 0))
+	{
+          char TmpChar = StrTau[SizeString];
+	  StrTau[SizeString] = '\0';
+	  uFinalI = atoi(StrTau);
+// 	  cout << "tau = " << tauI << endl;
+	  StrTau[SizeString] = TmpChar;
+	  StrTau += SizeString;
+	}
+      else
+	StrTau = 0;
+    }
+  
+  return true;
+}
