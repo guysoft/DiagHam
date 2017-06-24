@@ -160,7 +160,7 @@ int main(int argc, char** argv)
 	  if (JC3Breaking == 1.0)
 	    sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_noszparity_n_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_j_%.6f", NbrSpins, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, JValue);
 	  else
-	    sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_noszparity_n_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_j_%.6f_%.6f_c3breaking_%.6f", NbrSpins, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, JValue, JC3Breaking);
+	    sprintf (OutputFileName, "spin_1_2_triangle_pseudospin_noszparity_n_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_j_%.6f_c3breaking_%.6f", NbrSpins, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, JValue, JC3Breaking);
 	}
       }
       else
