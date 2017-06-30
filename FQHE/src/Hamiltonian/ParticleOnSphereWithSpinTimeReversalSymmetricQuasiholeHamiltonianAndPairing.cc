@@ -138,6 +138,13 @@ ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::Par
       cout << endl;
       this->EnableFastMultiplication();
     }
+  else
+    {
+      if (this->Architecture->HasAutoLoadBalancing())
+	{
+	  this->FastMultiplicationMemory(0l);
+	}
+    }
 }
 
 // destructor
@@ -1543,6 +1550,7 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
   int CurrentNbrCounting = 0;
   for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
     {
+      int TmpShiftedIndex = i + this->PrecalculationShift;
       for (int k = 0; k < CurrentNbrCounting; ++k)
 	TmpCounting[k] = 0;
       CurrentNbrCounting = 0;
@@ -1554,7 +1562,7 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 	      TmpCoefficient = this->OneBodyInteractionFactorsPairing[lz];
 	      if (TmpCoefficient != 0.0)
 		{
-		  NbrElements = TmpParticles->AuAd(i, lz, TmpLeftIndices, TmpInteractionElements);
+		  NbrElements = TmpParticles->AuAd(TmpShiftedIndex, lz, TmpLeftIndices, TmpInteractionElements);
 		  for (int j = 0; j < NbrElements; ++j)
 		    {
 		      TmpCounting[CurrentNbrCounting] = TmpLeftIndices[j];
@@ -1562,15 +1570,15 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 		      ++CurrentNbrCounting;
 		    }
 		  if (this->HermitianSymmetryFlag == false)
-		  {
-		    NbrElements = TmpParticles->AduAdd(i, lz, TmpLeftIndices, TmpInteractionElements);
-		    for (int j = 0; j < NbrElements; ++j)
-		      {
-			TmpCounting[CurrentNbrCounting] = TmpLeftIndices[j];
-			TmpCoefficients[CurrentNbrCounting] = TmpCoefficient * TmpInteractionElements[j];
-			++CurrentNbrCounting;
-		      }
-		   }
+		    {
+		      NbrElements = TmpParticles->AduAdd(TmpShiftedIndex, lz, TmpLeftIndices, TmpInteractionElements);
+		      for (int j = 0; j < NbrElements; ++j)
+			{
+			  TmpCounting[CurrentNbrCounting] = TmpLeftIndices[j];
+			  TmpCoefficients[CurrentNbrCounting] = TmpCoefficient * TmpInteractionElements[j];
+			  ++CurrentNbrCounting;
+			}
+		    }
 		}
 	    }
 	}
@@ -1582,18 +1590,20 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 	    {
 	      if (this->OneBodyInteractionFactorsupup[lz] != 0.0)
 		{
-		  NbrElements = TmpParticles->AduAu(i, lz, TmpLeftIndices, TmpInteractionElements);
+		  NbrElements = TmpParticles->AduAu(TmpShiftedIndex, lz, TmpLeftIndices, TmpInteractionElements);
 		  for (int j = 0; j < NbrElements; ++j)
 		    {
 		      if (this->HermitianSymmetryFlag == false)
-			CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, this->OneBodyInteractionFactorsupup[lz] * TmpInteractionElements[j]);
-		      else
-		      {
-			if (TmpLeftIndices[j] < i)
+			{
 			  CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, this->OneBodyInteractionFactorsupup[lz] * TmpInteractionElements[j]);
-			if (TmpLeftIndices[j] == i)
-			  CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, this->OneBodyInteractionFactorsupup[lz] * TmpInteractionElements[j] * 0.5);
-		      }
+			}
+		      else
+			{
+			  if (TmpLeftIndices[j] < TmpShiftedIndex)
+			    CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, this->OneBodyInteractionFactorsupup[lz] * TmpInteractionElements[j]);
+			  if (TmpLeftIndices[j] == TmpShiftedIndex)
+			    CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, this->OneBodyInteractionFactorsupup[lz] * TmpInteractionElements[j] * 0.5);
+			}
 		    }
 		}
 	    }
@@ -1604,18 +1614,20 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 	    {
 	      if (this->OneBodyInteractionFactorsdowndown[lz] != 0.0)
 		{
-		  NbrElements = TmpParticles->AddAd(i, lz, TmpLeftIndices, TmpInteractionElements);
+		  NbrElements = TmpParticles->AddAd(TmpShiftedIndex, lz, TmpLeftIndices, TmpInteractionElements);
 		  for (int j = 0; j < NbrElements; ++j)
 		    {
 		      if (this->HermitianSymmetryFlag == false)
-			CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, this->OneBodyInteractionFactorsdowndown[lz] * TmpInteractionElements[j]);
-		      else
-		      {
-			if (TmpLeftIndices[j] < i)
+			{
 			  CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, this->OneBodyInteractionFactorsdowndown[lz] * TmpInteractionElements[j]);
-			if (TmpLeftIndices[j] == i)
-			  CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, this->OneBodyInteractionFactorsdowndown[lz] * TmpInteractionElements[j] * 0.5);
-		      }
+			}
+		      else
+			{
+			  if (TmpLeftIndices[j] < TmpShiftedIndex)
+			    CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, this->OneBodyInteractionFactorsdowndown[lz] * TmpInteractionElements[j]);
+			  if (TmpLeftIndices[j] == TmpShiftedIndex)
+			    CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpLeftIndices[j], TmpCounting, TmpCoefficients, CurrentNbrCounting, this->OneBodyInteractionFactorsdowndown[lz] * TmpInteractionElements[j] * 0.5);
+			}
 		    }
 		}
 	    }
@@ -1623,7 +1635,7 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
       
       if (this->ChargingEnergy != 0.0)
 	{
-	  int TmpTotalNbrParticles = TmpParticles->GetTotalNumberOfParticles(i);
+	  int TmpTotalNbrParticles = TmpParticles->GetTotalNumberOfParticles(TmpShiftedIndex);
 	  if (TmpTotalNbrParticles != this->AverageNumberParticles)
 	    {
 	      ChargeContribution = (double) (TmpTotalNbrParticles - this->AverageNumberParticles);
@@ -1631,7 +1643,7 @@ void ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing
 	      ChargeContribution *= this->ChargingEnergy;
 	      if (this->HermitianSymmetryFlag)
 		ChargeContribution *= 0.5;
-	      CurrentNbrCounting += SearchInArrayAndSetWeight<int>(i, TmpCounting, TmpCoefficients, CurrentNbrCounting, ChargeContribution);
+	      CurrentNbrCounting += SearchInArrayAndSetWeight<int>(TmpShiftedIndex, TmpCounting, TmpCoefficients, CurrentNbrCounting, ChargeContribution);
 	    }
 	}
       for (int j = 0; j < CurrentNbrCounting; ++j)
@@ -2836,4 +2848,172 @@ ComplexVector* ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonian
 bool ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::IsHermitian()
 {
   return this->HermitianSymmetryFlag;
+}
+
+// get the preferred distribution over parallel execution in N tasks for parallel Hamiltonian-Vector multiplication
+//
+// nbrThreads = number of threads requested
+// segmentIndices = array returning the reference to an array of the first index of each of the segments
+// return value = true if no error occured
+
+bool ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::GetLoadBalancing(int nbrTasks, long* &segmentIndices)
+{
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+
+  if ((this->NbrInteractionPerComponent != 0) && (this->FastMultiplicationStep != 0))
+    {
+      int ReducedSpaceDimension  = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+
+      if ((this->LoadBalancingArray == 0) || (this->NbrBalancedTasks != nbrTasks))
+	{
+	  if (LoadBalancingArray!=0)
+	    delete [] LoadBalancingArray;
+	  long *SegmentSize = new long[nbrTasks];
+	  this->LoadBalancingArray = new long[nbrTasks+1];
+	  this->NbrBalancedTasks = nbrTasks;
+	  long TmpNbrElement = 0;
+	  for (int i=0; i < ReducedSpaceDimension; ++i)
+	    TmpNbrElement += this->NbrInteractionPerComponent[i];
+	  long TmpNbrPerSegment = TmpNbrElement / nbrTasks;
+	  TmpNbrElement = 0;
+	  int Pos=0;
+	  this->LoadBalancingArray[0] = MinIndex;
+	  for (int i = 0; i < ReducedSpaceDimension; ++i)
+	    {
+	      TmpNbrElement += this->NbrInteractionPerComponent[i];
+	      if (TmpNbrElement > TmpNbrPerSegment)
+		{
+		  SegmentSize[Pos] = TmpNbrElement;
+		  this->LoadBalancingArray[Pos + 1]= MinIndex + (i * this->FastMultiplicationStep);
+		  TmpNbrElement = 0;
+		  ++Pos;
+		}
+	    }
+	  while (Pos < (nbrTasks - 1))
+	    {
+	      LoadBalancingArray[Pos + 1] = MaxIndex + 1;
+	      SegmentSize[Pos] = 0;
+	      ++Pos;
+	    }
+	  LoadBalancingArray[nbrTasks] = MaxIndex + 1;
+	  SegmentSize[nbrTasks - 1] = TmpNbrElement;
+	  
+	  cout << "LoadBalancingArray=[ ("<< LoadBalancingArray[1] - LoadBalancingArray[0] <<", "<<SegmentSize[0]<<")";
+	  for (int i = 1; i < nbrTasks; ++i)
+	    cout <<" ("<< LoadBalancingArray[i+1] - LoadBalancingArray[i] << ", " << SegmentSize[i] << ")";
+	  cout << "]"<< endl;
+	  delete [] SegmentSize;
+	}
+    }
+  else
+    {
+      return false;
+    }
+  segmentIndices = this->LoadBalancingArray;
+  return true;
+}
+
+// test the amount of memory needed for fast multiplication algorithm
+//
+// allowedMemory = amount of memory that cam be allocated for fast multiplication
+// return value = amount of memory needed
+
+long ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairing::FastMultiplicationMemory(long allowedMemory)
+{
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+  
+  this->NbrInteractionPerComponent = new int [EffectiveHilbertSpaceDimension];
+  for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
+    this->NbrInteractionPerComponent[i] = 0;
+  timeval TotalStartingTime2;
+  timeval TotalEndingTime2;
+  double Dt2;
+  gettimeofday (&(TotalStartingTime2), 0);
+  cout << "start" << endl;
+
+  QHEParticlePrecalculationOperation Operation(this);
+  Operation.ApplyOperation(this->Architecture);
+
+  if (this->Architecture->GetOptimizedTypicalRange(this->NbrInteractionPerComponent, MinIndex, MaxIndex) == true)
+    {
+      this->PrecalculationShift = (int) MinIndex;
+      EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+      cout << "distributed calculations have been reoptimized" << endl;
+    }  
+  if (allowedMemory == 0l)
+    {
+      delete[] this->NbrInteractionPerComponent;
+      this->NbrInteractionPerComponent = 0;
+      return 0l;
+    }
+
+  long Memory = 0;
+  for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
+    Memory += this->NbrInteractionPerComponent[i];  
+
+  cout << "nbr interaction = " << Memory << endl;
+  long TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * EffectiveHilbertSpaceDimension;
+  if ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(double)))) < Memory))
+    {
+      this->FastMultiplicationStep = 1;
+      int ReducedSpaceDimension  = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+      while ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(double)))) < Memory))
+	{
+	  ++this->FastMultiplicationStep;
+	  ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+	  if (EffectiveHilbertSpaceDimension != (ReducedSpaceDimension * this->FastMultiplicationStep))
+	    ++ReducedSpaceDimension;
+	  TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension;
+	  Memory = 0;
+	  for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
+	    Memory += this->NbrInteractionPerComponent[i];
+	}
+      Memory = ((sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension) + (Memory * (sizeof (int) + sizeof(double)));
+      long ResidualMemory = allowedMemory - Memory;
+      if (ResidualMemory > 0)
+	{
+	  if (this->DiskStorageFlag == false)
+	    {
+	      int TotalReducedSpaceDimension = ReducedSpaceDimension;
+	      int* TmpNbrInteractionPerComponent = new int [TotalReducedSpaceDimension];
+	      int i = 0;
+	      int Pos = 0;
+	      for (; i < ReducedSpaceDimension; ++i)
+		{
+		  TmpNbrInteractionPerComponent[i] = this->NbrInteractionPerComponent[Pos];
+		  Pos += this->FastMultiplicationStep;
+		}
+	      delete[] this->NbrInteractionPerComponent;
+	      this->NbrInteractionPerComponent = TmpNbrInteractionPerComponent;
+	    }
+	}
+      else
+	if (this->DiskStorageFlag == false)
+	  {
+	    int* TmpNbrInteractionPerComponent = new int [ReducedSpaceDimension];
+	    for (int i = 0; i < ReducedSpaceDimension; ++i)
+	      TmpNbrInteractionPerComponent[i] = this->NbrInteractionPerComponent[i * this->FastMultiplicationStep];
+	    delete[] this->NbrInteractionPerComponent;
+	    this->NbrInteractionPerComponent = TmpNbrInteractionPerComponent;
+	  }
+    }
+  else
+    {
+      Memory = ((sizeof (int*) + sizeof (int) + sizeof(double*)) * EffectiveHilbertSpaceDimension) + (Memory * (sizeof (int) + sizeof(double)));
+      this->FastMultiplicationStep = 1;
+    }
+
+  cout << "reduction factor=" << this->FastMultiplicationStep << endl;
+  gettimeofday (&(TotalEndingTime2), 0);
+  cout << "------------------------------------------------------------------" << endl << endl;;
+  Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
+    ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
+  cout << "time = " << Dt2 << endl;
+  return Memory;
 }

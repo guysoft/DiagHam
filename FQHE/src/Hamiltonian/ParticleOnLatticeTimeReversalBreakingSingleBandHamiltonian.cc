@@ -874,7 +874,7 @@ bool ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::GetLoadBalancin
 	  long TmpNbrPerSegment = TmpNbrElement / ((long) nbrTasks);
 	  TmpNbrElement = 0l;
 	  int Pos = 0;
-	  this->LoadBalancingArray[0]=MinIndex;
+	  this->LoadBalancingArray[0] = MinIndex;
 	  for (int i = 0; i < ReducedSpaceDimension; ++i)
 	    {
 	      TmpNbrElement += NbrInteractionPerComponent[i];

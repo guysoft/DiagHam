@@ -1079,3 +1079,147 @@ void FQHEMPSLaughlinMatrix::GetPhysicalIndex(int index, unsigned long* configura
 {  
   configuration[0] = this->PhysicalIndices[index];
 }
+
+// get the array where the site-dependent matrices are stored
+//
+// nbrFluxQuanta = number of flux quanta in the finite size system
+// return value = pointer to the array of matrices (first entry being the orbital index, the second being the occupation number)
+
+SparseRealMatrix** FQHEMPSLaughlinMatrix::GetSiteDependentMatrices(int nbrFluxQuanta)
+{
+  cout << "FQHEMPSLaughlinMatrix::GetSiteDependentMatrices is not properly implemented" << endl;
+
+  int TmpNbrOrbitals = nbrFluxQuanta;
+  if (this->TorusFlag == false)
+    {
+      ++TmpNbrOrbitals;
+    }
+
+  SparseRealMatrix** BMatrices = new SparseRealMatrix*[TmpNbrOrbitals];
+  for (int i = 0; i < TmpNbrOrbitals; ++i)
+    {
+      BMatrices[i] = new SparseRealMatrix[this->NbrBMatrices];
+    }
+
+  BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [this->PLevel + 1];
+
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      U1BosonBasis[i] = new BosonOnDiskShort(i, i, this->PLevel + 1);
+    }
+  this->TotalStartingIndexPerPLevel = new int [this->PLevel + 1];
+  this->NbrIndicesPerPLevel = new int [this->PLevel + 1];
+  this->NbrNValuesPerPLevel = new int [this->PLevel + 1];
+  this->NInitialValuePerPLevel = new int [this->PLevel + 1];
+  this->NLastValuePerPLevel = new int [this->PLevel + 1];
+  this->TotalStartingIndexPerPLevel[0] = 0;
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      this->ComputeChargeIndexRange(i, this->NInitialValuePerPLevel[i], this->NLastValuePerPLevel[i]);
+      this->NbrNValuesPerPLevel[i] =  this->NLastValuePerPLevel[i] - this->NInitialValuePerPLevel[i] + 1;
+    }
+  this->NbrIndicesPerPLevel[0] = U1BosonBasis[0]->GetHilbertSpaceDimension() * this->NbrNValuesPerPLevel[0];
+  for (int i = 1; i <= this->PLevel; ++i)
+    {
+      this->TotalStartingIndexPerPLevel[i] = this->TotalStartingIndexPerPLevel[i - 1] + this->NbrIndicesPerPLevel[i - 1];
+      this->NbrIndicesPerPLevel[i] = U1BosonBasis[i]->GetHilbertSpaceDimension()  * this->NbrNValuesPerPLevel[i];
+    }
+  int MatrixSize = this->NbrIndicesPerPLevel[this->PLevel] + this->TotalStartingIndexPerPLevel[this->PLevel];
+  cout << "B matrix size = " << MatrixSize << "x" << MatrixSize << endl;
+  unsigned long* Partition1 = new unsigned long [this->PLevel + 2];
+  unsigned long* Partition2 = new unsigned long [this->PLevel + 2];
+  FactorialCoefficient Coef;
+  
+  
+  
+  for (int OrbitalIndex = 0; OrbitalIndex < TmpNbrOrbitals; ++OrbitalIndex)
+    {
+      int* TmpNbrElementPerRow = new int[MatrixSize];
+      for (int i = 0; i < MatrixSize; ++i)
+	TmpNbrElementPerRow[i] = 0;
+      for (int i = 0; i <= this->PLevel; ++i)
+	{
+	  BosonOnDiskShort* TmpSpace1 = U1BosonBasis[i];
+	  for (int j = 0; j <= this->PLevel; ++j)
+	    {
+	      if ((j - i) == OrbitalIndex)
+		{
+		  BosonOnDiskShort* TmpSpace2 = U1BosonBasis[j];
+		  int N2 = (j - i) + this->NValueGlobalShift;
+		  int N1 = N2 + (this->LaughlinIndex);
+		  if (((N1 >= this->NInitialValuePerPLevel[i]) && (N1 <= this->NLastValuePerPLevel[i]))
+		      && ((N2 >= this->NInitialValuePerPLevel[j]) && (N2 <= this->NLastValuePerPLevel[j])))
+		    { 
+		      for (int k1 = 0; k1 < TmpSpace1->GetHilbertSpaceDimension(); ++k1)
+			{
+			  for (int k2 = 0; k2 < TmpSpace2->GetHilbertSpaceDimension(); ++k2)
+			    {
+			      ++TmpNbrElementPerRow[this->GetMatrixIndex(i, k1, N1)];
+			    }
+			}
+		    }
+		}
+	    }
+	}
+      SparseRealMatrix V0Matrix(MatrixSize, MatrixSize, TmpNbrElementPerRow);
+      for (int i = 0; i <= this->PLevel; ++i)
+	{
+	  BosonOnDiskShort* TmpSpace1 = U1BosonBasis[i];
+	  for (int j = 0; j <= this->PLevel; ++j)
+	    {
+	      if ((j - i) == OrbitalIndex)
+		{
+		  BosonOnDiskShort* TmpSpace2 = U1BosonBasis[j];
+		  int N2 = (j - i) + this->NValueGlobalShift;
+		  int N1 = N2 + (this->LaughlinIndex);
+		  if (((N1 >= this->NInitialValuePerPLevel[i]) && (N1 <= this->NLastValuePerPLevel[i]))
+		      && ((N2 >= this->NInitialValuePerPLevel[j]) && (N2 <= this->NLastValuePerPLevel[j])))
+		    { 
+		      for (int k1 = 0; k1 < TmpSpace1->GetHilbertSpaceDimension(); ++k1)
+			{
+			  TmpSpace1->GetOccupationNumber(k1, Partition1);
+			  for (int k2 = 0; k2 < TmpSpace2->GetHilbertSpaceDimension(); ++k2)
+			    {
+			      TmpSpace2->GetOccupationNumber(k2, Partition2);
+			      double Tmp = this->CreateLaughlinAMatrixElement(this->LaughlinIndex, 1, Partition1, Partition2, i, j, Coef);
+			      V0Matrix.SetMatrixElement(this->GetMatrixIndex(i, k1, N1), this->GetMatrixIndex(j, k2, N2), Tmp);
+			    }
+			}
+		    }
+		}
+	    }
+	}
+      BMatrices[OrbitalIndex][1] = V0Matrix;
+    }
+  
+  delete[] Partition1;
+  delete[] Partition2;
+
+//   int TmpNbrBMatrices = 0;
+//   for (int m = 1; m < this->NbrBMatrices; ++m)
+//     {
+//       BMatrices[m] = MemoryEfficientMultiply(BMatrices[m - 1], V0Matrix);
+//       if (BMatrices[m].GetNbrRow() > 0)
+// 	{
+// 	  ++TmpNbrBMatrices;
+// 	  if ((this->CylinderFlag) || (this->TorusFlag))
+// 	    BMatrices[m] /= sqrt((double) m);
+// 	}
+//     }
+
+//   TmpNbrBMatrices = 0;
+
+//   for (int i = 0; i < this->NbrBMatrices; ++i)
+//     {
+//       if (BMatrices[i].GetNbrRow() > 0)
+// 	this->RealBMatrices[TmpNbrBMatrices++] = BMatrices[i];
+//     }
+//   delete[] BMatrices;
+
+  for (int i = 0; i <= this->PLevel; ++i)
+    delete U1BosonBasis[i];
+  delete[] U1BosonBasis;
+
+  return BMatrices;
+}
+

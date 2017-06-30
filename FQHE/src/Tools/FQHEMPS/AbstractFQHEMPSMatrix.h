@@ -130,7 +130,7 @@ class AbstractFQHEMPSMatrix
   //
   // nbrFluxQuanta = number of flux quanta in the finite size system
   // return value = pointer to the array of matrices (first entry being the orbital index, the second being the occupation number)
-  virtual SparseComplexMatrix** GetSiteDependentComplexMatrices();
+  virtual SparseComplexMatrix** GetSiteDependentComplexMatrices(int nbrFluxQuanta);
 
   // get the edge matrix for localized quasiholes, with normal ordering
   //

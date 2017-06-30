@@ -261,6 +261,12 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   // configuration = array where the description of the physical index will be stored
   virtual void GetPhysicalIndex(int index, unsigned long* configuration);
 
+  // get the array where the site-dependent matrices are stored
+  //
+  // nbrFluxQuanta = number of flux quanta in the finite size system
+  // return value = pointer to the array of matrices (first entry being the orbital index, the second being the occupation number)
+  virtual SparseRealMatrix** GetSiteDependentMatrices(int nbrFluxQuanta);
+
  protected:
 
   // load the specific informations from the file header

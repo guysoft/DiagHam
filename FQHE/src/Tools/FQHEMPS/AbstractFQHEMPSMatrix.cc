@@ -612,7 +612,7 @@ SparseRealMatrix** AbstractFQHEMPSMatrix::GetSiteDependentMatrices(int nbrFluxQu
 // nbrFluxQuanta = number of flux quanta in the finite size system
 // return value = pointer to the array of matrices (first entry being the orbital index, the second being the occupation number)
 
-SparseComplexMatrix** AbstractFQHEMPSMatrix::GetSiteDependentComplexMatrices()
+SparseComplexMatrix** AbstractFQHEMPSMatrix::GetSiteDependentComplexMatrices(int nbrFluxQuanta)
 {
   cout << "site dependent complex MPS is not available for " << this->GetName() << endl;
   return 0;

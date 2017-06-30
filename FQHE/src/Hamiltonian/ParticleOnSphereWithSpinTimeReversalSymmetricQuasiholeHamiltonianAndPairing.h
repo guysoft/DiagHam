@@ -124,9 +124,15 @@ class ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairin
   // return value = corresponding matrix elementdimension
   virtual int GetHilbertSpaceDimension ();
   
-   // ask if Hamiltonian implements hermitian symmetry operations
+  // ask if Hamiltonian implements hermitian symmetry operations
   //
   virtual bool IsHermitian();
+
+  // get the preferred distribution over parallel execution in N tasks for parallel Hamiltonian-Vector multiplication
+  // nbrThreads = number of threads requested
+  // segmentIndices = array returning the reference to an array of the first index of each of the segments
+  //
+  virtual bool GetLoadBalancing(int nbrTasks, long* &segmentIndices);
 
  protected:
  
@@ -335,6 +341,12 @@ class ParticleOnSphereWithSpinTimeReversalSymmetricQuasiholeHamiltonianAndPairin
   // nbrComponent  = number of components that has to be precalcualted
   virtual void PartialEnableFastMultiplication(int firstComponent, int nbrComponent);
   
+  // test the amount of memory needed for fast multiplication algorithm
+  //
+  // allowedMemory = amount of memory that cam be allocated for fast multiplication
+  // return value = amount of memory needed
+  virtual long FastMultiplicationMemory(long allowedMemory);
+
 };
 
 // return dimension of Hilbert space where Hamiltonian acts
