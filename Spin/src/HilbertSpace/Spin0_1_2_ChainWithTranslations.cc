@@ -225,14 +225,8 @@ Spin0_1_2_ChainWithTranslations::Spin0_1_2_ChainWithTranslations (int chainLengt
   this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->ChainLength-1, this->DiffSz);
   this->ShiftNegativeDiffSz = this->LargeHilbertSpaceDimension;
 
-/*  if (this->DiffSz !=0 )
-    this->LargeHilbertSpaceDimension += this->ShiftedEvaluateHilbertSpaceDimension(this->ChainLength-1, -this->DiffSz);*/
-  
   this->ChainDescription = new unsigned long [this->LargeHilbertSpaceDimension];
   long TmpHilbertSpaceDimension = GenerateStates(this->ChainLength-1, this->DiffSz, 0l);
-
-/*  if (this->DiffSz != 0)
-    TmpHilbertSpaceDimension = GenerateStates(this->ChainLength-1, -this->DiffSz, TmpHilbertSpaceDimension);*/
 
   SortArrayDownOrdering(this->ChainDescription ,TmpHilbertSpaceDimension);
   
@@ -253,20 +247,15 @@ Spin0_1_2_ChainWithTranslations::Spin0_1_2_ChainWithTranslations (int chainLengt
   for (long i = 0l; i < TmpHilbertSpaceDimension; ++i)
     {
       TmpState = this->ChainDescription[i];
-//      TmpStateBis = this->ChainDescription[i];
-
-      //      this->ApplySingleXTranslation(TmpState);
-//      cout << TmpState<<" ";
       this->FindCanonicalForm(TmpState,TmpCanonicalState,NbrTranslation);
-//      cout << TmpCanonicalState <<" "<<NbrTranslation<<endl;
-      
+     
       if (TmpState  == TmpCanonicalState)
 	{
-	  CurrentNbrStateInOrbit = this->FindNumberTranslation(TmpCanonicalState);
-	  if (this->CompatibilityWithMomentum[CurrentNbrStateInOrbit] == true)
-	    {
-	      ++this->LargeHilbertSpaceDimension;
-	    }
+	  //CurrentNbrStateInOrbit = this->FindNumberTranslation(TmpCanonicalState)
+	  if (this->TestMomentumConstraint(TmpCanonicalState) == true){
+	      //	  if (this->CompatibilityWithMomentum[CurrentNbrStateInOrbit] == true){
+	    ++this->LargeHilbertSpaceDimension;
+	  }
 	  else
 	    {
 	      this->ChainDescription[i] = DicardFlag;
@@ -787,6 +776,16 @@ int Spin0_1_2_ChainWithTranslations::FindStateIndex(unsigned long state)
   return this->HilbertSpaceDimension;
 }
 
+
+
+//  test if the state and its translated version can be used to create a state corresponding to the momentum constraint
+//
+// state = unsigned integer describing the state
+// return value = true if the state satisfies the momentum constraint
+bool Spin0_1_2_ChainWithTranslations::TestMomentumConstraint(unsigned long state) 
+{
+  return this->CompatibilityWithMomentum[this->FindNumberTranslation(state)];
+}
 
 // get the value of the spin (i.e. S) at a given site
 // 
