@@ -153,6 +153,18 @@ class ParticleOnCylinderPermanentTimes221State : public AbstractQHEOnCylinderThr
   ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 								  int firstComponent, int nbrComponent);
 
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+
+  ComplexVector& HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+								  int firstComponent, int nbrComponent);
+
   // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
   //
   // firstComponent = index of the first component that has to be precalcualted

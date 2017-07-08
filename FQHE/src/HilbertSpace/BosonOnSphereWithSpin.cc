@@ -98,7 +98,7 @@ BosonOnSphereWithSpin::BosonOnSphereWithSpin (int nbrBosons, int totalLz, int lz
     {
       TmpLzMax = this->ShiftedTotalLz;	  
     }
-  //  int TmpDim = this->GenerateStates(this->NbrBosonsUp, this->NbrBosonsDown, TmpLzMax, TmpLzMax, this->ShiftedTotalLz, 0);
+  //int TmpDim = this->GenerateStates(this->NbrBosonsUp, this->NbrBosonsDown, TmpLzMax, TmpLzMax, this->ShiftedTotalLz, 0);
   long TmpDim = GenerateStates(this->NbrBosonsUp, this->NbrBosonsDown, this->LzMax, this->TotalLz);
   
   if (TmpDim != this->HilbertSpaceDimension)

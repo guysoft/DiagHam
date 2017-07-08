@@ -575,7 +575,7 @@ Complex ParticleOnCylinderPermanentTimes221State::EvaluateInteractionCoefficient
   else
     {
        Coefficient.Re += 9.0 * (-Xr - Xs) * (-Xrp - Xsp) * exp(-Sigma) * exp(-Sigmap);
-       Coefficient.Re += 3.0 * (-Xr*Xr - Xs * Xs - 4.0 * Xr * Xs) * (-Xrp*Xrp - Xsp * Xsp - 4.0 * Xrp * Xsp)  * exp(-Sigma) * exp(-Sigmap);
+       Coefficient.Re += 3.0 * (-Xr*Xr - Xs * Xs - 4.0 * Xr * Xs) * (-Xrp*Xrp - Xsp * Xsp - 4.0 * Xrp * Xsp)  * exp(-Sigma) * exp(-Sigmap); 
     }
 
   return (Coefficient *  (2.0/3.0) * sqrt(M_PI) * sqrt(3.0 * M_PI)/(2.0 * M_PI * this->Ratio * this->NbrLzValue));
@@ -623,6 +623,7 @@ Complex ParticleOnCylinderPermanentTimes221State::EvaluateInteractionCoefficient
   return (Coefficient *  (2.0/3.0) * sqrt(M_PI) * sqrt(3.0 * M_PI)/(2.0 * M_PI * this->Ratio * this->NbrLzValue));
  
 }
+
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and add result to another vector, low level function (no architecture optimization)
 //
@@ -639,6 +640,717 @@ ComplexVector& ParticleOnCylinderPermanentTimes221State::LowLevelAddMultiply(Com
   int Dim = this->Particles->GetHilbertSpaceDimension();
   double Shift = this->EnergyShift;
   double Coefficient, Coefficient2;
+
+  //cout << "ParticleOnCylinderPermanentTimes221State::LowLevelAddMultiply"<<endl;
+
+  if (this->FastMultiplicationFlag == false)
+    {
+      //cout<<"Flagfalse"<<endl;
+
+      int Index;
+      int m1;
+      int m2;
+      int m3;
+      int m4;
+      int m5;
+      int m6;
+      int TmpA[3];
+      int TmpC[3];
+      int TmpSpinA[3];
+      int TmpSpinC[3];
+      int TmpA2b[2];
+      int TmpC2b[2];
+      int TmpSpinA2b[2];
+      int TmpSpinC2b[2];
+
+      Complex TmpInteraction;
+      ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles->Clone();
+
+      for (int j = 0; j < this->NbrInteractionFactorsIntra; ++j) 
+	{
+
+          //UPUP
+
+	  TmpC2b[0] = this->M1ValueIntra[j];
+	  TmpC2b[1] = this->M2ValueIntra[j];
+	  TmpA2b[0] = this->M3ValueIntra[j];
+	  TmpA2b[1] = this->M4ValueIntra[j];
+
+	  TmpSpinC2b[0] = 0;
+	  TmpSpinC2b[1] = 0;
+	  TmpSpinA2b[0] = 0;
+	  TmpSpinA2b[1] = 0;
+
+	  TmpInteraction = this->InteractionFactorsIntra[j];
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      Coefficient2 = TmpParticles->ProdA(i, TmpA2b, TmpSpinA2b, 2);
+              if (Coefficient2 != 0.0)
+                {
+                   Index = TmpParticles->ProdAd(TmpC2b, TmpSpinC2b, 2, Coefficient);
+  	           if (Index < Dim)
+                    {
+		      vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
+                      //TmpParticles->PrintState(cout,i);cout<<" ";TmpParticles->PrintState(cout,Index);
+                      //cout<<" "<<TmpC[0]<<" "<<TmpC[1]<<" "<<TmpC[2]<<" "<<TmpA[0]<<" "<<TmpA[1]<<" "<<TmpA[2]<<endl;
+                    }
+                } 
+	    }
+
+
+          //DOWNDOWN
+
+	  TmpC2b[0] = this->M1ValueIntra[j];
+	  TmpC2b[1] = this->M2ValueIntra[j];
+	  TmpA2b[0] = this->M3ValueIntra[j];
+	  TmpA2b[1] = this->M4ValueIntra[j];
+
+	  TmpSpinC2b[0] = 1;
+	  TmpSpinC2b[1] = 1;
+	  TmpSpinA2b[0] = 1;
+	  TmpSpinA2b[1] = 1;
+
+	  TmpInteraction = this->InteractionFactorsIntra[j];
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      Coefficient2 = TmpParticles->ProdA(i, TmpA2b, TmpSpinA2b, 2);
+              if (Coefficient2 != 0.0)
+                {
+                   Index = TmpParticles->ProdAd(TmpC2b, TmpSpinC2b, 2, Coefficient);
+  	           if (Index < Dim)
+                    {
+		      vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
+                      //TmpParticles->PrintState(cout,i);cout<<" ";TmpParticles->PrintState(cout,Index);
+                      //cout<<" "<<TmpC[0]<<" "<<TmpC[1]<<" "<<TmpC[2]<<" "<<TmpA[0]<<" "<<TmpA[1]<<" "<<TmpA[2]<<endl;
+                    }
+                } 
+	    }
+
+
+	} //j
+
+      for (int j = 0; j < this->NbrInteractionFactorsInter; ++j) 
+	{
+
+          //UPDOWN
+
+	  TmpC2b[0] = this->M1ValueInter[j];
+	  TmpC2b[1] = this->M2ValueInter[j];
+	  TmpA2b[0] = this->M3ValueInter[j];
+	  TmpA2b[1] = this->M4ValueInter[j];
+
+	  TmpSpinC2b[0] = 0;
+	  TmpSpinC2b[1] = 1;
+	  TmpSpinA2b[0] = 0;
+	  TmpSpinA2b[1] = 1;
+
+	  TmpInteraction = this->InteractionFactorsInter[j];
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      Coefficient2 = TmpParticles->ProdA(i, TmpA2b, TmpSpinA2b, 2);
+              if (Coefficient2 != 0.0)
+                {
+                   Index = TmpParticles->ProdAd(TmpC2b, TmpSpinC2b, 2, Coefficient);
+  	           if (Index < Dim)
+                    {
+		      vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
+                      //TmpParticles->PrintState(cout,i);cout<<" ";TmpParticles->PrintState(cout,Index);
+                      //cout<<" "<<TmpC[0]<<" "<<TmpC[1]<<" "<<TmpC[2]<<" "<<TmpA[0]<<" "<<TmpA[1]<<" "<<TmpA[2]<<endl;
+                    }
+                } 
+	    }
+
+	} //j
+
+
+      for (int j = 0; j < this->NbrInteractionFactors12; ++j) 
+	{
+
+          //UPUPDOWN 
+
+	  TmpC[0] = this->M1Value12[j];
+	  TmpC[1] = this->M2Value12[j];
+	  TmpC[2] = this->M3Value12[j];
+	  TmpA[0] = this->M4Value12[j];
+	  TmpA[1] = this->M5Value12[j];
+	  TmpA[2] = this->M6Value12[j];
+
+	  TmpSpinC[0] = 0;
+	  TmpSpinC[1] = 0;
+	  TmpSpinC[2] = 1;
+	  TmpSpinA[0] = 1;
+	  TmpSpinA[1] = 0;
+	  TmpSpinA[2] = 0;
+          
+	  TmpInteraction = this->InteractionFactors12[j];
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 3);
+              if (Coefficient2 != 0.0)
+                {
+                   Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 3, Coefficient);
+  	           if (Index < Dim)
+                    {
+		      vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
+                      //TmpParticles->PrintState(cout,i);cout<<" ";TmpParticles->PrintState(cout,Index);
+                      //cout<<" "<<TmpC[0]<<" "<<TmpC[1]<<" "<<TmpC[2]<<" "<<TmpA[0]<<" "<<TmpA[1]<<" "<<TmpA[2]<<endl;
+                    }
+                } 
+	    }
+
+
+          //DOWNDOWNUP 
+
+	  TmpC[0] = this->M1Value12[j];
+	  TmpC[1] = this->M2Value12[j];
+	  TmpC[2] = this->M3Value12[j];
+	  TmpA[0] = this->M4Value12[j];
+	  TmpA[1] = this->M5Value12[j];
+	  TmpA[2] = this->M6Value12[j];
+
+	  TmpSpinC[0] = 1;
+	  TmpSpinC[1] = 1;
+	  TmpSpinC[2] = 0;
+	  TmpSpinA[0] = 0;
+	  TmpSpinA[1] = 1;
+	  TmpSpinA[2] = 1;
+          
+	  TmpInteraction = this->InteractionFactors12[j];
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 3);
+              if (Coefficient2 != 0.0)
+                {
+                   Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 3, Coefficient);
+  	           if (Index < Dim)
+                    {
+		      vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
+                      //TmpParticles->PrintState(cout,i);cout<<" ";TmpParticles->PrintState(cout,Index);
+                      //cout<<"DDU "<<TmpC[0]<<" "<<TmpC[1]<<" "<<TmpC[2]<<" "<<TmpA[0]<<" "<<TmpA[1]<<" "<<TmpA[2]<<endl;
+                    }
+                } 
+	    }
+
+	} //j
+
+      for (int j = 0; j < this->NbrInteractionFactors32; ++j) 
+	{
+
+          //UPUPUP
+
+	  TmpC[0] = this->M1Value32[j];
+	  TmpC[1] = this->M2Value32[j];
+	  TmpC[2] = this->M3Value32[j];
+	  TmpA[0] = this->M4Value32[j];
+	  TmpA[1] = this->M5Value32[j];
+	  TmpA[2] = this->M6Value32[j];
+
+	  TmpSpinC[0] = 0;
+	  TmpSpinC[1] = 0;
+	  TmpSpinC[2] = 0;
+	  TmpSpinA[0] = 0;
+	  TmpSpinA[1] = 0;
+	  TmpSpinA[2] = 0;
+          
+	  TmpInteraction = this->InteractionFactors32[j];
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 3);
+              if (Coefficient2 != 0.0)
+                {
+                   Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 3, Coefficient);
+  	           if (Index < Dim)
+                    {
+		      vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
+                      //TmpParticles->PrintState(cout,i);cout<<" ";TmpParticles->PrintState(cout,Index);
+                      //cout<<" "<<TmpC[0]<<" "<<TmpC[1]<<" "<<TmpC[2]<<" "<<TmpA[0]<<" "<<TmpA[1]<<" "<<TmpA[2]<<endl;
+                    }
+                } 
+	    }
+
+
+          //DOWNDOWNDOWN
+
+	  TmpC[0] = this->M1Value32[j];
+	  TmpC[1] = this->M2Value32[j];
+	  TmpC[2] = this->M3Value32[j];
+	  TmpA[0] = this->M4Value32[j];
+	  TmpA[1] = this->M5Value32[j];
+	  TmpA[2] = this->M6Value32[j];
+
+	  TmpSpinC[0] = 1;
+	  TmpSpinC[1] = 1;
+	  TmpSpinC[2] = 1;
+	  TmpSpinA[0] = 1;
+	  TmpSpinA[1] = 1;
+	  TmpSpinA[2] = 1;
+          
+	  TmpInteraction = this->InteractionFactors32[j];
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 3);
+              if (Coefficient2 != 0.0)
+                {
+                   Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 3, Coefficient);
+  	           if (Index < Dim)
+                    {
+		      vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
+                      //TmpParticles->PrintState(cout,i);cout<<" ";TmpParticles->PrintState(cout,Index);
+                      //cout<<"DDU "<<TmpC[0]<<" "<<TmpC[1]<<" "<<TmpC[2]<<" "<<TmpA[0]<<" "<<TmpA[1]<<" "<<TmpA[2]<<endl;
+                    }
+                } 
+	    }
+
+	} //j
+
+      for (int i = firstComponent; i < LastComponent; ++i)
+	{
+	 vDestination[i] += this->EnergyShift * vSource[i];
+	}
+
+      //One-body terms
+      double TmpUp, TmpDown; 
+      for (int i = firstComponent; i < LastComponent; ++i)
+	  { 
+            Complex TmpDiagonal(0, 0);
+ 	    for (int j = 0; j <= this->MaxMomentum; ++j) 
+	      {
+                TmpUp = TmpParticles->AduAu(i, j); 
+                TmpDown = TmpParticles->AddAd(i, j); 
+                if (this->OneBodyUpUp != 0)
+			TmpDiagonal += this->OneBodyUpUp[j] * TmpUp;
+                if (this->OneBodyDownDown != 0)
+			TmpDiagonal += this->OneBodyDownDown[j] * TmpDown;
+                if (this->OneBodyUpDown != 0)
+			TmpDiagonal += this->OneBodyUpDown[j] * TmpUp * TmpDown;
+	      }
+
+           //TmpUp = TmpParticles->AduAu(i, this->MaxMomentum); 
+           //TmpDown = TmpParticles->AddAd(i, this->MaxMomentum); 
+           //if ((TmpUp==0) && (TmpDown==0))
+           //    TmpDiagonal += 1000.0;
+           //if ((TmpUp==1) && (TmpDown==1))
+           //   TmpDiagonal += 1000.0;
+  
+           //TmpUp = TmpParticles->AduAu(i, 0); 
+           //TmpDown = TmpParticles->AddAd(i, 0); 
+           //if ((TmpUp==0) && (TmpDown==0))
+           //    TmpDiagonal += 1000.0;
+           //if ((TmpUp==1) && (TmpDown==1))
+           //    TmpDiagonal += 1000.0;
+
+ 
+	    vDestination[i] += (TmpDiagonal * vSource[i]);
+	  }
+
+
+/*
+         for (int i = firstComponent; i < LastComponent; ++i)
+	  { 
+ 	    for (int j = 0; j < this->MaxMomentum; ++j) 
+	      {
+                Index = TmpParticles->AduAd(i, j, j+1, Coefficient); 
+	        if (Index < Dim)
+ 		  vDestination[Index] += Coefficient * 100.0 * vSource[i];
+
+                Index = TmpParticles->AddAu(i, j+1, j, Coefficient); 
+	        if (Index < Dim)
+ 		  vDestination[Index] += Coefficient * 100.0 * vSource[i];
+	      }
+           }
+
+*/
+
+
+      delete TmpParticles;
+    }
+  else
+    {
+      if (this->FastMultiplicationStep == 1)
+	{
+	  int* TmpIndexArray;
+	  Complex* TmpCoefficientArray; 
+	  int j;
+	  int TmpNbrInteraction;
+          ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles->Clone();
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      TmpNbrInteraction = this->NbrInteractionPerComponent[i];
+	      TmpIndexArray = this->InteractionPerComponentIndex[i];
+	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
+	      for (j = 0; j < TmpNbrInteraction; ++j)
+               { 
+		  vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * vSource[i];
+               }
+	      vDestination[i] += Shift * vSource[i];
+	    }
+
+
+        //One-body terms
+        double TmpUp, TmpDown; 
+        for (int i = firstComponent; i < LastComponent; ++i)
+	  { 
+            Complex TmpDiagonal(0, 0);;
+ 	    for (int j = 0; j <= this->MaxMomentum; ++j) 
+	      {
+                TmpUp = TmpParticles->AduAu(i, j); 
+                TmpDown = TmpParticles->AddAd(i, j); 
+                if (this->OneBodyUpUp != 0)
+			TmpDiagonal += this->OneBodyUpUp[j] * TmpUp;
+                if (this->OneBodyDownDown != 0)
+			TmpDiagonal += this->OneBodyDownDown[j] * TmpDown;
+                if (this->OneBodyUpDown != 0)
+			TmpDiagonal += this->OneBodyUpDown[j] * TmpUp * TmpDown;
+	      }
+	    vDestination[i] += (TmpDiagonal * vSource[i]);
+	  }
+
+        
+          delete TmpParticles;
+	}
+      else
+	{
+	  cout << "Mixed case not working. " << endl;
+	  exit(1);
+          /*
+          int* TmpIndexArray;
+	  Complex* TmpCoefficientArray; 
+	  int j;
+	  int TmpNbrInteraction;
+	  int Pos = firstComponent / this->FastMultiplicationStep; 
+	  int PosMod = firstComponent % this->FastMultiplicationStep;
+	  ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles->Clone();
+	  if (PosMod != 0)
+	    {
+	      ++Pos;
+	      PosMod = this->FastMultiplicationStep - PosMod;
+	    }
+	  for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+	    {
+	      TmpNbrInteraction = this->NbrInteractionPerComponent[Pos];
+	      TmpIndexArray = this->InteractionPerComponentIndex[Pos];
+	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[Pos];
+	      for (j = 0; j < TmpNbrInteraction; ++j)
+               {
+		  vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * vSource[i];
+                  if (TmpIndexArray[j] < i)
+                     vDestination[i] += vSource[TmpIndexArray[j]] * Conj(TmpCoefficientArray[j]);
+               }
+	      vDestination[i] += Shift * vSource[i];
+	      ++Pos;
+	    }
+
+
+        //One-body terms
+        double TmpUp, TmpDown; 
+        for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+	  { 
+            Complex TmpDiagonal(0, 0);;
+ 	    for (int j = 0; j <= this->MaxMomentum; ++j) 
+	      {
+                TmpUp = TmpParticles->AduAu(i, j); 
+                TmpDown = TmpParticles->AddAd(i, j); 
+                if (this->OneBodyUpUp != 0)
+			TmpDiagonal += this->OneBodyUpUp[j] * TmpUp;
+                if (this->OneBodyDownDown != 0)
+			TmpDiagonal += this->OneBodyDownDown[j] * TmpDown;
+                if (this->OneBodyUpDown != 0)
+			TmpDiagonal += this->OneBodyUpDown[j] * TmpUp * TmpDown;
+	      }
+	    vDestination[i] += (TmpDiagonal * vSource[i]);
+	  }
+
+
+	  int Index;
+	  int m1;
+	  int m2;
+	  int m3;
+	  int m4;
+          int m5;
+          int m6;
+          int TmpA[3];
+          int TmpC[3];
+          int TmpSpinA[3];
+          int TmpSpinC[3];
+          int TmpA2b[2];
+          int TmpC2b[2];
+          int TmpSpinA2b[2];
+          int TmpSpinC2b[2];
+
+	  Complex TmpInteraction;
+
+	  for (int k = 0; k < this->FastMultiplicationStep; ++k)
+	    if (PosMod != k)
+	      {		
+
+	      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+		{
+
+	          //UPUP
+
+		  TmpC2b[0] = this->M1Value[j];
+		  TmpC2b[1] = this->M2Value[j];
+		  TmpA2b[0] = this->M3Value[j];
+		  TmpA2b[1] = this->M4Value[j];
+
+		  TmpSpinC2b[0] = 0;
+		  TmpSpinC2b[1] = 0;
+		  TmpSpinA2b[0] = 0;
+		  TmpSpinA2b[1] = 0;
+
+		  TmpInteraction = this->InteractionFactors[j];
+		  for (int i = firstComponent; i < LastComponent; ++i)
+		    {
+		      Coefficient2 = TmpParticles->ProdA(i, TmpA2b, TmpSpinA2b, 2);
+	              if (Coefficient2 != 0.0)
+	                {
+	                   Index = TmpParticles->ProdAd(TmpC2b, TmpSpinC2b, 2, Coefficient);
+	  	           if (Index <= i)
+	                    {
+			      vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
+	                      //TmpParticles->PrintState(cout,i);cout<<" ";TmpParticles->PrintState(cout,Index);
+	                      //cout<<" "<<TmpC[0]<<" "<<TmpC[1]<<" "<<TmpC[2]<<" "<<TmpA[0]<<" "<<TmpA[1]<<" "<<TmpA[2]<<endl;
+	                      if (Index < i)
+	                        vDestination[i] += Coefficient * Coefficient2 * Conj(TmpInteraction) * vSource[Index];
+	                    }
+	                } 
+		    }
+
+
+	          //DOWNDOWN
+
+		  TmpC2b[0] = this->M1Value[j];
+		  TmpC2b[1] = this->M2Value[j];
+		  TmpA2b[0] = this->M3Value[j];
+		  TmpA2b[1] = this->M4Value[j];
+
+		  TmpSpinC2b[0] = 1;
+		  TmpSpinC2b[1] = 1;
+		  TmpSpinA2b[0] = 1;
+		  TmpSpinA2b[1] = 1;
+
+		  TmpInteraction = this->InteractionFactors[j];
+		  for (int i = firstComponent; i < LastComponent; ++i)
+		    {
+		      Coefficient2 = TmpParticles->ProdA(i, TmpA2b, TmpSpinA2b, 2);
+	              if (Coefficient2 != 0.0)
+	                {
+	                   Index = TmpParticles->ProdAd(TmpC2b, TmpSpinC2b, 2, Coefficient);
+	  	           if (Index <= i)
+	                    {
+			      vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
+	                      //TmpParticles->PrintState(cout,i);cout<<" ";TmpParticles->PrintState(cout,Index);
+	                      //cout<<" "<<TmpC[0]<<" "<<TmpC[1]<<" "<<TmpC[2]<<" "<<TmpA[0]<<" "<<TmpA[1]<<" "<<TmpA[2]<<endl;
+	                      if (Index < i)
+	                        vDestination[i] += Coefficient * Coefficient2 * Conj(TmpInteraction) * vSource[Index];
+	                    }
+	                } 
+		    }
+	
+	
+		} //j
+
+	      for (int j = 0; j < this->NbrInteractionFactors12; ++j) 
+		{
+
+	          //UPUPDOWN 
+
+		  TmpC[0] = this->M1Value12[j];
+		  TmpC[1] = this->M2Value12[j];
+		  TmpC[2] = this->M3Value12[j];
+		  TmpA[0] = this->M4Value12[j];
+		  TmpA[1] = this->M5Value12[j];
+		  TmpA[2] = this->M6Value12[j];
+
+		  TmpSpinC[0] = 0;
+		  TmpSpinC[1] = 0;
+		  TmpSpinC[2] = 1;
+		  TmpSpinA[0] = 1;
+		  TmpSpinA[1] = 0;
+		  TmpSpinA[2] = 0;
+          
+		  TmpInteraction = this->InteractionFactors12[j];
+		  for (int i = firstComponent; i < LastComponent; ++i)
+		    {
+		      Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 3);
+	              if (Coefficient2 != 0.0)
+	                {
+	                   Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 3, Coefficient);
+	  	           if (Index <= i)
+	                    {
+			      vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
+	                      //TmpParticles->PrintState(cout,i);cout<<" ";TmpParticles->PrintState(cout,Index);
+	                      //cout<<" "<<TmpC[0]<<" "<<TmpC[1]<<" "<<TmpC[2]<<" "<<TmpA[0]<<" "<<TmpA[1]<<" "<<TmpA[2]<<endl;
+	                      if (Index < i)
+	                        vDestination[i] += Coefficient * Coefficient2 * Conj(TmpInteraction) * vSource[Index];
+	                    }
+	                } 
+		    }
+
+
+	          //DOWNDOWNUP 
+
+		  TmpC[0] = this->M1Value12[j];
+		  TmpC[1] = this->M2Value12[j];
+		  TmpC[2] = this->M3Value12[j];
+		  TmpA[0] = this->M4Value12[j];
+		  TmpA[1] = this->M5Value12[j];
+		  TmpA[2] = this->M6Value12[j];
+
+		  TmpSpinC[0] = 1;
+		  TmpSpinC[1] = 1;
+		  TmpSpinC[2] = 0;
+		  TmpSpinA[0] = 0;
+		  TmpSpinA[1] = 1;
+		  TmpSpinA[2] = 1;
+	          
+		  TmpInteraction = this->InteractionFactors12[j];
+		  for (int i = firstComponent; i < LastComponent; ++i)
+		    {
+		      Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 3);
+	              if (Coefficient2 != 0.0)
+	                {
+	                   Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 3, Coefficient);
+	  	           if (Index <= i)
+	                    {
+			      vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
+	                      //TmpParticles->PrintState(cout,i);cout<<" ";TmpParticles->PrintState(cout,Index);
+	                      //cout<<"DDU "<<TmpC[0]<<" "<<TmpC[1]<<" "<<TmpC[2]<<" "<<TmpA[0]<<" "<<TmpA[1]<<" "<<TmpA[2]<<endl;
+	                      if (Index < i)
+	                        vDestination[i] += Coefficient * Coefficient2 * Conj(TmpInteraction) * vSource[Index];
+	                    }
+	                } 
+		    }
+	
+		} //j
+
+	      for (int j = 0; j < this->NbrInteractionFactors32; ++j) 
+		{
+
+	          //UPUPUP
+
+		  TmpC[0] = this->M1Value32[j];
+		  TmpC[1] = this->M2Value32[j];
+		  TmpC[2] = this->M3Value32[j];
+		  TmpA[0] = this->M4Value32[j];
+		  TmpA[1] = this->M5Value32[j];
+		  TmpA[2] = this->M6Value32[j];
+
+		  TmpSpinC[0] = 0;
+		  TmpSpinC[1] = 0;
+		  TmpSpinC[2] = 0;
+		  TmpSpinA[0] = 0;
+		  TmpSpinA[1] = 0;
+		  TmpSpinA[2] = 0;
+          
+		  TmpInteraction = this->InteractionFactors32[j];
+		  for (int i = firstComponent; i < LastComponent; ++i)
+		    {
+		      Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 3);
+	              if (Coefficient2 != 0.0)
+	                {
+	                   Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 3, Coefficient);
+	  	           if (Index <= i)
+	                    {
+			      vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
+	                      //TmpParticles->PrintState(cout,i);cout<<" ";TmpParticles->PrintState(cout,Index);
+	                      //cout<<" "<<TmpC[0]<<" "<<TmpC[1]<<" "<<TmpC[2]<<" "<<TmpA[0]<<" "<<TmpA[1]<<" "<<TmpA[2]<<endl;
+	                      if (Index < i)
+	                        vDestination[i] += Coefficient * Coefficient2 * Conj(TmpInteraction) * vSource[Index];
+	                    }
+	                } 
+		    }
+
+
+	          //DOWNDOWNDOWN
+
+		  TmpC[0] = this->M1Value32[j];
+		  TmpC[1] = this->M2Value32[j];
+		  TmpC[2] = this->M3Value32[j];
+		  TmpA[0] = this->M4Value32[j];
+		  TmpA[1] = this->M5Value32[j];
+		  TmpA[2] = this->M6Value32[j];
+
+		  TmpSpinC[0] = 1;
+		  TmpSpinC[1] = 1;
+		  TmpSpinC[2] = 1;
+		  TmpSpinA[0] = 1;
+		  TmpSpinA[1] = 1;
+		  TmpSpinA[2] = 1;
+          
+		  TmpInteraction = this->InteractionFactors32[j];
+		  for (int i = firstComponent; i < LastComponent; ++i)
+		    {
+		      Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 3);
+	              if (Coefficient2 != 0.0)
+	                {
+	                   Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 3, Coefficient);
+	  	           if (Index <= i)
+	                    {
+			      vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
+	                      //TmpParticles->PrintState(cout,i);cout<<" ";TmpParticles->PrintState(cout,Index);
+	                      //cout<<"DDU "<<TmpC[0]<<" "<<TmpC[1]<<" "<<TmpC[2]<<" "<<TmpA[0]<<" "<<TmpA[1]<<" "<<TmpA[2]<<endl;
+	                      if (Index < i)
+	                        vDestination[i] += Coefficient * Coefficient2 * Conj(TmpInteraction) * vSource[Index];
+	                    }
+	                } 
+		    }
+	
+		} //j
+
+		for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
+		  {
+		    vDestination[i] += this->EnergyShift * vSource[i];
+		  }
+
+              //One-body terms
+              double TmpUp, TmpDown; 
+              for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+	        { 
+                  Complex TmpDiagonal(0, 0);;
+ 	          for (int j = 0; j <= this->MaxMomentum; ++j) 
+	            {
+                       TmpUp = TmpParticles->AduAu(i, j); 
+                       TmpDown = TmpParticles->AddAd(i, j); 
+                       if (this->OneBodyUpUp != 0)
+	  		   TmpDiagonal += this->OneBodyUpUp[j] * TmpUp;
+                       if (this->OneBodyDownDown != 0)
+			   TmpDiagonal += this->OneBodyDownDown[j] * TmpDown;
+                       if (this->OneBodyUpDown != 0)
+			   TmpDiagonal += this->OneBodyUpDown[j] * TmpUp * TmpDown;
+	            }
+	          vDestination[i] += (TmpDiagonal * vSource[i]);
+	        }
+
+                
+	      }
+	  delete TmpParticles;
+         */
+	}
+   }
+  
+
+  return vDestination;
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+ComplexVector& ParticleOnCylinderPermanentTimes221State::HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+								  int firstComponent, int nbrComponent)
+{
+  int LastComponent = firstComponent + nbrComponent;
+  int Dim = this->Particles->GetHilbertSpaceDimension();
+  double Shift = this->EnergyShift;
+  double Coefficient, Coefficient2;
+
+  //cout << "ParticleOnCylinderPermanentTimes221State::HermitianLowLevelAddMultiply" << endl;
 
   if (this->FastMultiplicationFlag == false)
     {
@@ -1345,6 +2057,7 @@ ComplexVector& ParticleOnCylinderPermanentTimes221State::LowLevelAddMultiply(Com
 
   return vDestination;
 }
+
 
 // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
 //
