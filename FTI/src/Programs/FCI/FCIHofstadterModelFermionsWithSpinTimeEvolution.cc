@@ -59,6 +59,7 @@
 #include "MainTask/GenericComplexMainTask.h"
 
 #include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/MultiColumnASCIIFile.h"
 
 #include <iostream>
 #include <cstring>
@@ -71,7 +72,6 @@ using std::endl;
 using std::ios;
 using std::ofstream;
 
-
 // try to guess system information from file name
 //
 // filename = vector file name
@@ -83,6 +83,16 @@ using std::ofstream;
 
 bool FTITimeEvolutionFindSystemInfoFromVectorFileName (char* filename, double& tauI, double& tfI, int& nbrStepI,int& stepI, double& uFinalI);
 
+// create file containing the necessary energies for time-evolution with Hilbert-space truncation
+//
+// statisticPrefixEnergy
+// kx = momentum along x
+// ky = momentum along y
+// sz = total magnetization
+// szParity = parity under spin-inversion
+// truncationIndex = number of low-energy states that are conserved for the time-evolution
+
+char* FTITimeEvolutionCreateTruncatedEnergyFile (char* statisticPrefixEnergy, double gammaX, double gammaY, int kx, int ky, int sz, int szParity, int truncationIndex, double uFinal, double tau, double finalTime, int nbrSteps, bool createFile);
 
 int main(int argc, char** argv)
 {
@@ -109,7 +119,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "tau", "time where the final value of U is reached", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "final-time", "time where the code stops", 10.0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-steps", "number of points to evaluate", 1);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "save-period", "save time-evolved state every n steps", 1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "save-period", "save time-evolved state every n steps, save only final step if negative", 1);
+  
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "truncate-basis", "if positive, use a truncated instantaneous basis with this number of states. Vector names are guessed from the name of the initial state. A path to the energy spectra and to the vectors has to be provided", 0);
+  (*SystemGroup) += new SingleStringOption ('\n', "energy-path", "name of the folder where energy spectra are stored for truncated time-evolution");
+  (*SystemGroup) += new SingleStringOption ('\n', "state-path", "name of the folder where vectors are stored for truncated time-evolution");
+  (*SystemGroup) += new BooleanOption  ('\n', "preprocess-energy", "create energy file for truncated time-evolution");
 
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
@@ -146,6 +161,8 @@ int main(int argc, char** argv)
   if (Manager.GetBoolean("landau-x"))
     Axis ='x';
   
+  int TruncationIndex = Manager.GetInteger("truncate-basis");
+  
   bool ResumeFlag = false;
   double TauI;
   double TfI;
@@ -160,6 +177,10 @@ int main(int argc, char** argv)
   double FinalTime = Manager.GetDouble("final-time");
   double TimeStep = FinalTime/ ((double)NbrSteps);
   double UPotential;
+  
+  double GammaX = Manager.GetDouble("gamma-x");
+  double GammaY = Manager.GetDouble("gamma-y");
+  int NbrStepsTau = (int) (NbrSteps * Tau / FinalTime) + 1;    
   
   
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
@@ -195,6 +216,71 @@ int main(int argc, char** argv)
     FinalTime = TfI;
     TimeStep = FinalTime/ ((double)NbrSteps);
   }
+    
+  char*** EigenstateFile = 0;
+  char* StatisticPrefix = 0;
+  double** Energies = 0;
+  char* EnergyFileName = 0;
+  if (TruncationIndex > 0)
+  {
+    EigenstateFile = new char** [NbrStepsTau];
+    for (int i = 0; i < NbrStepsTau; ++i)
+    {
+      EigenstateFile[i] = new char* [TruncationIndex];
+      for (int j = 0; j < TruncationIndex; ++j)
+	EigenstateFile[i][j] = new char[strlen(Manager.GetString("state-path")) + 512];
+    }
+    
+    StatisticPrefix = new char [128];
+    Energies = new double*[TruncationIndex];
+    
+    
+    int lenPrefixState = 0;
+    if (MinNbrSinglets <= 0 )
+      lenPrefixState += sprintf (StatisticPrefix + lenPrefixState, "fermions_su2");
+    else
+      lenPrefixState += sprintf (StatisticPrefix + lenPrefixState, "fermions_su2_minnbrsinglet_%d", MinNbrSinglets);
+    
+    lenPrefixState +=  sprintf (StatisticPrefix + lenPrefixState, "_realspace_hofstadter_X_%d_Y_%d_q_%d_n_%d_x_%d_y_%d", UnitCellX, UnitCellY, FluxPerCell, NbrParticles, NbrCellX, NbrCellY);
+    
+    
+    char* StatisticPrefixEnergy = new char[strlen(Manager.GetString("energy-path")) + strlen(StatisticPrefix) + 2];
+    sprintf(StatisticPrefixEnergy, "%s/%s", Manager.GetString("energy-path"), StatisticPrefix);
+    EnergyFileName = FTITimeEvolutionCreateTruncatedEnergyFile(StatisticPrefixEnergy, GammaX, GammaY, Kx, Ky, Sz, SzSymmetry, TruncationIndex, UFinal, Tau, FinalTime, NbrSteps, Manager.GetBoolean("preprocess-energy"));
+    delete[] StatisticPrefixEnergy;
+    if (EnergyFileName == 0)
+    {
+      cout << "Energies could not all be retrieved for truncated time-evolution" << endl;
+      return -1;
+    }
+    
+    for(int i = 0 ; i < NbrStepsTau; i++)
+    {
+      double UPotential =  UFinal/ Tau * TimeStep * i;
+      if (i == 0)
+	UPotential = 0.0;
+      for (int j = 0; j < TruncationIndex; ++j)
+      {
+	sprintf (EigenstateFile[i][j],"%s/%s_u_%g_gx_%g_gy_%g_sz_%d_szsym_%d_kx_%d_ky_%d.%d.vec", Manager.GetString("state-path"), StatisticPrefix, UPotential, GammaX, GammaY, Sz, SzSymmetry, Kx, Ky, j);
+	if (IsFile(EigenstateFile[i][j]) == false)
+	{
+	  cout << "state " << EigenstateFile[i][j] << " does not exist or can't be opened" << endl;
+	  return -1;           
+	}
+      }
+    }
+    
+    MultiColumnASCIIFile InputEnergies;
+    if (InputEnergies.Parse(EnergyFileName) == false)
+    {
+      InputEnergies.DumpErrors(cout) << endl;
+      return -1;
+    }
+    for (int j = 0; j < TruncationIndex; ++j)
+      Energies[j] = InputEnergies.GetAsDoubleArray(j + 1);
+  }
+  
+  
   
   Abstract2DTightBindingModel *TightBindingModel;
   
@@ -339,12 +425,19 @@ int main(int argc, char** argv)
   char * ParameterString = new char [512];
   sprintf(ParameterString,"uf_%f_tau_%f_tf_%f_nstep_%d",UFinal,Tau,FinalTime,NbrSteps);
   char * EnergyNameFile = 0;
+  char* NormFileName = 0;
   ofstream FileEnergy;
-  if (Manager.GetBoolean("compute-energy"))
+  ofstream FileNorm;
+  if ((Manager.GetBoolean("compute-energy")) || (TruncationIndex > 0))
     {
       EnergyNameFile = new char[512];
       if (ResumeFlag == false)
-	sprintf (EnergyNameFile, "%s_%s_energy.dat", OutputNamePrefix,ParameterString);
+      {
+	if (TruncationIndex == 0)
+	  sprintf (EnergyNameFile, "%s_%s_energy.dat", OutputNamePrefix,ParameterString);
+	else
+	  sprintf (EnergyNameFile, "%s_truncatedbasis_%d_%s_energy.dat", OutputNamePrefix, TruncationIndex, ParameterString);
+      }
       else
 	sprintf (EnergyNameFile, "%s_%s_energy.resume.dat", OutputNamePrefix,ParameterString);
 
@@ -352,34 +445,47 @@ int main(int argc, char** argv)
       FileEnergy.precision(14);
       FileEnergy << "# t E "<< endl;
     }
+  if (TruncationIndex > 0)
+  {
+    NormFileName = new char[512];
+    sprintf (NormFileName, "%s_truncatedbasis_%d_%s_norm.dat", OutputNamePrefix, TruncationIndex, ParameterString);
+    FileNorm.open(NormFileName, ios::out);
+    FileNorm.precision(14);
+    FileNorm << "# t Norm "<< endl;
+  }
   
-  
+  bool FinalHamiltonian = false;
   for(int i = StepI + 1 ; i < NbrSteps; i++)
     {
       double UPotential =  UFinal/ Tau * TimeStep * i;
       if ( fabs(UPotential) > fabs(UFinal) ) 
 	UPotential = UFinal ;
+      
       for (int p = 0; p < NbrSites; ++p)
 	{
 	  DensityDensityInteractionupdown.SetMatrixElement(p, p, UPotential);
 	}
       
-      if (TranslationFlag)
-	{
-	  Hamiltonian = new ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian((ParticleOnSphereWithSpin  *)  Space, NbrParticles, NbrSites, Kx, NbrCellX, Ky,  NbrCellY,
+      if ((FinalHamiltonian == false) && ((TruncationIndex == 0) || (Manager.GetBoolean("compute-energy")) || (i == NbrStepsTau)))
+      {
+	cout << "build H" << endl;
+	if (TranslationFlag)
+	  {
+	    Hamiltonian = new ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian((ParticleOnSphereWithSpin  *)  Space, NbrParticles, NbrSites, Kx, NbrCellX, Ky,  NbrCellY,
 											  TightBindingMatrix, TightBindingMatrix,
 											  DensityDensityInteractionupup, DensityDensityInteractiondowndown, 
 											  DensityDensityInteractionupdown, 
 											  Architecture.GetArchitecture(), Memory);
-	}
-      else
-	{
-	  Hamiltonian = new ParticleOnLatticeWithSpinRealSpaceHamiltonian((ParticleOnSphereWithSpin  *)  Space, NbrParticles, NbrSites,
+	  }
+	else
+	  {
+	    Hamiltonian = new ParticleOnLatticeWithSpinRealSpaceHamiltonian((ParticleOnSphereWithSpin  *)  Space, NbrParticles, NbrSites,
 									  TightBindingMatrix, TightBindingMatrix,
 									  DensityDensityInteractionupup, DensityDensityInteractiondowndown, 
 									  DensityDensityInteractionupdown, 
 									  Architecture.GetArchitecture(), Memory);
-	}
+	  }
+      }
 
       double Norm;
       int TmpExpansionOrder;
@@ -390,32 +496,62 @@ int main(int argc, char** argv)
       TmpState.Copy(TmpInitialState);
       Norm = TmpState.Norm();
       double TmpNorm = 1.0;
-      TmpExpansionOrder = 0;
-      TmpCoefficient = 1.0;
       cout << "Computing state " << (i + 1) << "/" <<  NbrSteps << " at t = " << (TimeStep * i) <<" with Interaction "<< UPotential  <<endl;
-      while ( ((fabs(TmpNorm) > 1e-14 ) || (TmpExpansionOrder < 1)) && (TmpExpansionOrder <= Manager.GetInteger("iter-max")))
+      
+      if (TruncationIndex == 0)
+      {
+	TmpExpansionOrder = 0;
+	TmpCoefficient = 1.0;
+	while ( ((fabs(TmpNorm) > 1e-14 ) || (TmpExpansionOrder < 1)) && (TmpExpansionOrder <= Manager.GetInteger("iter-max")))
+	  {
+	    TmpExpansionOrder += 1;
+	    TmpCoefficient = -TmpCoefficient * TimeStep * Complex(0.0, 1.0) / ((double) TmpExpansionOrder);
+	    VectorHamiltonianMultiplyOperation Operation (Hamiltonian, (&TmpState), (&TmpState1));
+	    Operation.ApplyOperation(Architecture.GetArchitecture());
+	    TmpState.Copy(TmpState1);
+	    TmpNorm = sqrt(TmpCoefficient.Re*TmpCoefficient.Re + TmpCoefficient.Im*TmpCoefficient.Im) * TmpState.Norm();
+	    AddComplexLinearCombinationOperation Operation1 (&TmpInitialState, &TmpState1, 1, &TmpCoefficient);
+	    Operation1.ApplyOperation(Architecture.GetArchitecture());
+	    Norm = TmpInitialState.Norm();
+	    cout << "Norm = " << Norm << " +/- " << TmpNorm << " for step " << TmpExpansionOrder << endl;      
+	  } 
+      }
+      else
+      {
+	int TmpIndex = i;
+	if (TmpIndex > NbrStepsTau - 1)
+	  TmpIndex = NbrStepsTau - 1;
+	TmpState1.ClearVector();
+	Complex TmpOverlap;
+	for (int j = 0; j < TruncationIndex; ++j)
 	{
-	  TmpExpansionOrder += 1;
-	  TmpCoefficient = -TmpCoefficient * TimeStep * Complex(0.0, 1.0) / ((double) TmpExpansionOrder);
-	  VectorHamiltonianMultiplyOperation Operation (Hamiltonian, (&TmpState), (&TmpState1));
+	  TmpState.ReadVector(EigenstateFile[TmpIndex][j]);
+	  TmpOverlap = TmpState * TmpInitialState;
+	  TmpNorm = sqrt(TmpOverlap.Re*TmpOverlap.Re + TmpOverlap.Im*TmpOverlap.Im);
+	  TmpCoefficient = TmpOverlap * Phase(- TimeStep * Energies[j][TmpIndex]);
+	  AddComplexLinearCombinationOperation Operation (&TmpState1, &TmpState, 1, &TmpCoefficient);
 	  Operation.ApplyOperation(Architecture.GetArchitecture());
-	  TmpState.Copy(TmpState1);
-	  TmpNorm = sqrt(TmpCoefficient.Re*TmpCoefficient.Re + TmpCoefficient.Im*TmpCoefficient.Im) * TmpState.Norm();
-	  AddComplexLinearCombinationOperation Operation1 (&TmpInitialState, &TmpState1, 1, &TmpCoefficient);
-	  Operation1.ApplyOperation(Architecture.GetArchitecture());
-	  Norm = TmpInitialState.Norm();
-	  cout << "Norm = " << Norm << " +/- " << TmpNorm << " for step " << TmpExpansionOrder << endl;      
-	} 
+	  Norm = TmpState1.Norm();
+	  cout << "Norm = " << Norm << " +/- " << TmpNorm << " for vector " << j << endl;  
+	}
+	 
+	FileNorm <<  (TimeStep * i) << " " << Norm << endl;
+	TmpInitialState.Copy(TmpState1);
+	TmpInitialState.Normalize();
+      }
 
       if ((i % SavePeriod) == 0)
       {
-	char* OutputName = new char [strlen(OutputNamePrefix)+ strlen(ParameterString) + 16];
-	sprintf (OutputName, "%s_%s.%d.vec",OutputNamePrefix,ParameterString,i);
+	char* OutputName = new char [strlen(OutputNamePrefix)+ strlen(ParameterString) + 32];
+	if (TruncationIndex == 0)
+	  sprintf (OutputName, "%s_%s.%d.vec",OutputNamePrefix,ParameterString,i);
+	else
+	  sprintf (OutputName, "%s_%s_truncatedbasis_%d.%d.vec",OutputNamePrefix,ParameterString, TruncationIndex, i);
 	TmpInitialState.WriteVector(OutputName);      
 	delete [] OutputName;
       }
 
-      if (Manager.GetBoolean("compute-energy"))
+      if ((Manager.GetBoolean("compute-energy")) || ((TruncationIndex > 0) && (i >= NbrStepsTau)))
 	{
 	  VectorHamiltonianMultiplyOperation Operation (Hamiltonian, (&TmpInitialState), (&TmpState));
 	  Operation.ApplyOperation(Architecture.GetArchitecture());
@@ -423,12 +559,41 @@ int main(int argc, char** argv)
 	  FileEnergy <<  (TimeStep * i) << " " << Energy << endl;
 	  cout << "E = " << Energy << endl;
 	}
+      if (UPotential == UFinal) 
+	FinalHamiltonian = true;
       
-      delete  Hamiltonian;
+      if ((FinalHamiltonian == false) && (Hamiltonian != 0))
+	delete  Hamiltonian;
     }  
   delete[] OutputNamePrefix;
   delete[]  ParameterString;
   delete TightBindingModel;
+  if (EnergyNameFile != 0)
+    delete[] EnergyNameFile;
+  if (NormFileName != 0)
+    delete[] NormFileName;
+  
+  if (EigenstateFile != 0)
+  {
+    for(int i = StepI + 1 ; i < NbrStepsTau; i++)
+    {
+      for (int j = 0; j < TruncationIndex; ++j)
+	delete[] EigenstateFile[i][j];
+      delete[] EigenstateFile[i];
+    }
+    delete[] EigenstateFile;
+  }
+  
+  if (StatisticPrefix != 0)
+    delete[] StatisticPrefix;
+  
+  if (Energies != 0)
+  {
+    for (int i = 0; i < TruncationIndex; ++i)
+      delete[] Energies[i];
+    delete[] Energies;
+  }
+  
   return 0;
 }
 
@@ -457,7 +622,6 @@ bool FTITimeEvolutionFindSystemInfoFromVectorFileName (char* filename, double& t
           char TmpChar = StrTau[SizeString];
 	  StrTau[SizeString] = '\0';
 	  tauI = atoi(StrTau);
-// 	  cout << "tau = " << tauI << endl;
 	  StrTau[SizeString] = TmpChar;
 	  StrTau += SizeString;
 	}
@@ -555,4 +719,65 @@ bool FTITimeEvolutionFindSystemInfoFromVectorFileName (char* filename, double& t
     }
   
   return true;
+}
+
+
+// create file containing the necessary energies for time-evolution with Hilbert-space truncation
+//
+// statisticPrefixEnergy
+// kx = momentum along x
+// ky = momentum along y
+// sz = total magnetization
+// szParity = parity under spin-inversion
+// truncationIndex = number of low-energy states that are conserved for the time-evolution
+char* FTITimeEvolutionCreateTruncatedEnergyFile (char* statisticPrefixEnergy, double gammaX, double gammaY, int kx, int ky, int sz, int szParity, int truncationIndex, double uFinal, double tau, double finalTime, int nbrSteps, bool createFile)
+{
+  char* SpectrumFileName = new char[256 + strlen(statisticPrefixEnergy)];
+  double uFactor = uFinal/ tau * finalTime / ((double) nbrSteps);
+  sprintf(SpectrumFileName, "%s_gx_%g_gy_%g_sz_%d_szsym_%d_kx_%d_ky_%d_uf_%f_tau_%f_tf_%f_nstep_%d_truncatedbasis_%d.energies.dat", statisticPrefixEnergy, gammaX, gammaY, sz, szParity, kx, ky, uFinal, tau, finalTime, nbrSteps, truncationIndex);
+  if (createFile == false)
+    return SpectrumFileName;
+  
+  char* TmpFileName = new char[256 + strlen(statisticPrefixEnergy)];
+  ofstream EnergyFile;
+  EnergyFile.open(SpectrumFileName, ios::out);
+  int lineIndex;
+  int nbrEnergies;
+  for(int i = 0 ; i < nbrSteps; i++)
+    {
+      double UPotential =  uFactor * i;
+      if (i == 0)
+	UPotential = 0.0;
+      if ( fabs(UPotential) > fabs(uFinal) ) 
+	UPotential = uFinal ;
+      EnergyFile << UPotential << " ";
+      sprintf(TmpFileName, "%s_u_%g_gx_%g_gy_%g.dat", statisticPrefixEnergy, UPotential, gammaX, gammaY);
+      MultiColumnASCIIFile TmpFile;
+      if (TmpFile.Parse(TmpFileName) == false)
+      {
+	TmpFile.DumpErrors(cout) << endl;
+	return 0;
+      }
+      lineIndex = 0;
+      while ((atoi(TmpFile(0, lineIndex)) != sz) || (atoi(TmpFile(1, lineIndex)) != szParity) || (atoi(TmpFile(2, lineIndex)) != kx) || (atoi(TmpFile(3, lineIndex)) != ky))
+	++lineIndex;
+     
+      nbrEnergies = 0;
+      for (int j = 0; j < truncationIndex;  ++j)
+      {
+	if ((atoi(TmpFile(0, lineIndex)) == sz) && (atoi(TmpFile(1, lineIndex)) == szParity) && (atoi(TmpFile(2, lineIndex)) == kx) && (atoi(TmpFile(3, lineIndex)) == ky))
+	{
+	  EnergyFile << TmpFile(4, lineIndex) << " ";
+	  ++nbrEnergies;
+	}
+	++lineIndex;
+      }
+      EnergyFile << endl;    
+      if (nbrEnergies < truncationIndex)
+	return 0;
+    }
+    
+  EnergyFile.close();
+  delete[] TmpFileName;
+  return SpectrumFileName;
 }
