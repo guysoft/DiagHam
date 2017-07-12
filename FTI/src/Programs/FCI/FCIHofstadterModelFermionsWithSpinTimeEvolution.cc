@@ -467,7 +467,7 @@ int main(int argc, char** argv)
 	  DensityDensityInteractionupdown.SetMatrixElement(p, p, UPotential);
 	}
       
-      if ((FinalHamiltonian == false) && ((TruncationIndex == 0) || (Manager.GetBoolean("compute-energy")) || (i == NbrStepsTau)))
+      if ((FinalHamiltonian == false) && ((TruncationIndex == 0) || (Manager.GetBoolean("compute-energy")) || (i == NbrStepsTau - 1)))
       {
 	cout << "build H" << endl;
 	if (TranslationFlag)
@@ -535,9 +535,9 @@ int main(int argc, char** argv)
 	  Norm = TmpState1.Norm();
 	  cout << "Norm = " << Norm << " +/- " << TmpNorm << " for vector " << j << endl;  
 	}
-	 
-	FileNorm <<  (TimeStep * i) << " " << Norm << endl;
-	FinalNorm *= Norm;
+	
+	FinalNorm *= Norm; 
+	FileNorm <<  (TimeStep * i) << " " << Norm << " " << FinalNorm << endl;
 	TmpInitialState.Copy(TmpState1);
 	TmpInitialState.Normalize();
       }
@@ -564,7 +564,7 @@ int main(int argc, char** argv)
       if (UPotential == UFinal) 
 	FinalHamiltonian = true;
       
-      if ((FinalHamiltonian == false) && (Hamiltonian != 0))
+      if (((FinalHamiltonian == false) && (Hamiltonian != 0)) || (i == NbrSteps - 1))
 	delete  Hamiltonian;
     }  
   delete[] OutputNamePrefix;
