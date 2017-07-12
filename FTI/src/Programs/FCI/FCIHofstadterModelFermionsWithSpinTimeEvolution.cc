@@ -455,6 +455,7 @@ int main(int argc, char** argv)
   }
   
   bool FinalHamiltonian = false;
+  double FinalNorm = 1.0;
   for(int i = StepI + 1 ; i < NbrSteps; i++)
     {
       double UPotential =  UFinal/ Tau * TimeStep * i;
@@ -536,11 +537,12 @@ int main(int argc, char** argv)
 	}
 	 
 	FileNorm <<  (TimeStep * i) << " " << Norm << endl;
+	FinalNorm *= Norm;
 	TmpInitialState.Copy(TmpState1);
 	TmpInitialState.Normalize();
       }
 
-      if ((i % SavePeriod) == 0)
+      if ((((i % SavePeriod) == 0) && (SavePeriod >= 0)) || ((SavePeriod < 0) && (i == NbrSteps - 1)))
       {
 	char* OutputName = new char [strlen(OutputNamePrefix)+ strlen(ParameterString) + 32];
 	if (TruncationIndex == 0)
