@@ -218,9 +218,7 @@ int main(int argc, char** argv)
   }
     
   char*** EigenstateFile = 0;
-  char* StatisticPrefix = 0;
   double** Energies = 0;
-  char* EnergyFileName = 0;
   if (TruncationIndex > 0)
   {
     EigenstateFile = new char** [NbrStepsTau];
@@ -231,9 +229,8 @@ int main(int argc, char** argv)
 	EigenstateFile[i][j] = new char[strlen(Manager.GetString("state-path")) + 512];
     }
     
-    StatisticPrefix = new char [128];
+    char* StatisticPrefix = new char [128];
     Energies = new double*[TruncationIndex];
-    
     
     int lenPrefixState = 0;
     if (MinNbrSinglets <= 0 )
@@ -246,7 +243,7 @@ int main(int argc, char** argv)
     
     char* StatisticPrefixEnergy = new char[strlen(Manager.GetString("energy-path")) + strlen(StatisticPrefix) + 2];
     sprintf(StatisticPrefixEnergy, "%s/%s", Manager.GetString("energy-path"), StatisticPrefix);
-    EnergyFileName = FTITimeEvolutionCreateTruncatedEnergyFile(StatisticPrefixEnergy, GammaX, GammaY, Kx, Ky, Sz, SzSymmetry, TruncationIndex, UFinal, Tau, FinalTime, NbrSteps, Manager.GetBoolean("preprocess-energy"));
+    char* EnergyFileName = FTITimeEvolutionCreateTruncatedEnergyFile(StatisticPrefixEnergy, GammaX, GammaY, Kx, Ky, Sz, SzSymmetry, TruncationIndex, UFinal, Tau, FinalTime, NbrSteps, Manager.GetBoolean("preprocess-energy"));
     delete[] StatisticPrefixEnergy;
     if (EnergyFileName == 0)
     {
@@ -270,6 +267,8 @@ int main(int argc, char** argv)
       }
     }
     
+    delete[] StatisticPrefix;
+    
     MultiColumnASCIIFile InputEnergies;
     if (InputEnergies.Parse(EnergyFileName) == false)
     {
@@ -278,6 +277,7 @@ int main(int argc, char** argv)
     }
     for (int j = 0; j < TruncationIndex; ++j)
       Energies[j] = InputEnergies.GetAsDoubleArray(j + 1);
+    delete[] EnergyFileName;
   }
   
   
@@ -420,6 +420,7 @@ int main(int argc, char** argv)
     char* ParameterStringPreviousSimulation = new char[512];
     sprintf(ParameterStringPreviousSimulation,"_uf_%f_tau_%f_tf_%f_nstep_%d.%d.vec",UFinal,TauI, TfI, NbrStepI, StepI);
     OutputNamePrefix = RemoveExtensionFromFileName(StateFileName, ParameterStringPreviousSimulation);
+    delete[] ParameterStringPreviousSimulation;
   }
 
   char * ParameterString = new char [512];
@@ -570,6 +571,7 @@ int main(int argc, char** argv)
   delete[] OutputNamePrefix;
   delete[]  ParameterString;
   delete TightBindingModel;
+  delete Space;
   if (EnergyNameFile != 0)
     delete[] EnergyNameFile;
   if (NormFileName != 0)
@@ -585,10 +587,7 @@ int main(int argc, char** argv)
     }
     delete[] EigenstateFile;
   }
-  
-  if (StatisticPrefix != 0)
-    delete[] StatisticPrefix;
-  
+   
   if (Energies != 0)
   {
     for (int i = 0; i < TruncationIndex; ++i)
