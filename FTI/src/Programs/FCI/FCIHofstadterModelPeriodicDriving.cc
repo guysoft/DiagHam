@@ -435,8 +435,8 @@ int main(int argc, char** argv)
     {
       t = i * TimeStep;
       
-      TmpGammaX = GammaX + Sign * EField * cos(Omega * t) / (Omega * M_PI);
-      TmpGammaY = GammaY - EField * sin(Omega * t) / (Omega * M_PI);
+      TmpGammaX = GammaX + Sign * EField * cos(2.0 * M_PI * Omega * t) / (Omega * M_PI);
+      TmpGammaY = GammaY - EField * sin(2.0 * M_PI * Omega * t) / (Omega * M_PI);
       
       TightBindingModel = new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, TmpGammaX, TmpGammaY, Architecture.GetArchitecture(), true, false);
       TightBindingMatrix[i] = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
@@ -552,7 +552,7 @@ int main(int argc, char** argv)
 	TmpInitialState.Normalize();
       }
 
-      if ((((i % SavePeriod) == 0) && (SavePeriod >= 0)) || ((SavePeriod < 0) && (i == NbrSteps - 1)))
+      if ((((i % SavePeriod) == 0) && (SavePeriod >= 0)) || ((SavePeriod < 0) && (i >= NbrSteps - NbrSamples)))
       {
 	char* OutputName = new char [strlen(OutputNamePrefix)+ strlen(ParameterString) + 32];
 	if (TruncationIndex == 0)
