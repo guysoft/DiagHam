@@ -56,6 +56,9 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 5);
+  (*SystemGroup) += new BooleanOption  ('\n', "restrict-polarization", "restrict number of particles in each Landau level (provided by nbrparticles-up and nbrparticles-down)");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrparticles-up", "number of particles in N=1 LL", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrparticles-down", "number of particles in N=0 LL", 0);  
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 8);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system", 0);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "l2");
@@ -87,7 +90,9 @@ int main(int argc, char** argv)
       return 0;
     }
 
-
+  bool PolarizationFlag = Manager.GetBoolean("restrict-polarization");  
+  int NbrParticlesUp = Manager.GetInteger("nbrparticles-up");
+  int NbrParticlesDown = Manager.GetInteger("nbrparticles-down");
   int NbrParticles = Manager.GetInteger("nbr-particles");
   int LzMax = Manager.GetInteger("lzmax");
   int TotalLz  = Manager.GetInteger("total-lz");
@@ -107,7 +112,10 @@ int main(int argc, char** argv)
   ParticleOnSphereWithSpin* Space = 0;
   if (Manager.GetBoolean("boson") == false)
     {
-      Space = new FermionOnSphereTwoLandauLevels (NbrParticles, TotalLz, LzMaxUp, LzMaxDown);
+      if (PolarizationFlag) 
+          Space = new FermionOnSphereTwoLandauLevels(NbrParticlesUp, NbrParticlesDown, TotalLz, LzMaxUp, LzMaxDown);
+      else
+          Space = new FermionOnSphereTwoLandauLevels(NbrParticles, TotalLz, LzMaxUp, LzMaxDown);
     }
   else
     {

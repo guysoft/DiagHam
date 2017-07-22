@@ -110,6 +110,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "total-y", "three time the quantum number of the system associated to the Y generator (only useful in su(3) mode)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "su4-spin", "consider particles with SU(4) spin");
   (*SystemGroup) += new BooleanOption  ('\n', "2-ll", "consider particles within two Landau levels");
+  (*SystemGroup) += new BooleanOption  ('\n', "restrict-polarization", "restrict number of particles in each Landau level (provided by nbrparticles-up and nbrparticles-down)");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrparticles-up", "number of particles in N=1 LL", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrparticles-down", "number of particles in N=0 LL", 0);  
   (*SystemGroup) += new BooleanOption  ('\n', "3-ll", "consider particles within three Landau levels");
   (*SystemGroup) += new BooleanOption  ('\n', "4-ll", "consider particles within four Landau levels");
   (*SystemGroup) += new SingleIntegerOption  ('i', "total-isosz", "twice the z component of the total isospin of the system (only usefull in su(4) mode)", 0);
@@ -507,7 +510,12 @@ int main(int argc, char** argv)
 		Space = new FermionOnSphereWithSU4Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, TotalIz, TotalPz);	    
 	      else
 		if (TwoLLFlag == true)
-		  Space = new FermionOnSphereTwoLandauLevels(NbrParticles, TotalLz, NbrFluxQuanta + 2, NbrFluxQuanta);	    
+                  {
+                    if (Manager.GetBoolean("restrict-polarization")) 
+                      Space = new FermionOnSphereTwoLandauLevels( Manager.GetInteger("nbrparticles-up"),  Manager.GetInteger("nbrparticles-down"), TotalLz, NbrFluxQuanta + 2, NbrFluxQuanta);	    
+                    else
+	  	      Space = new FermionOnSphereTwoLandauLevels(NbrParticles, TotalLz, NbrFluxQuanta + 2, NbrFluxQuanta);	    
+                  }
 		else
 		  if (ThreeLLFlag == true)
 		    Space = new FermionOnSphereThreeLandauLevels(NbrParticles, TotalLz, NbrFluxQuanta);	 
