@@ -120,9 +120,11 @@ int main(int argc, char** argv)
        PseudoPotentials = new double*[9];
        for (int i = 0; i < 9; ++i)
 	 PseudoPotentials[i] = new double [LzMaxUp + 1];
-       if (FQHESphereSU2GetPseudopotentials(Manager.GetString("interaction-file"), LzMax, PseudoPotentials,
-					   OneBodyPotentialUpUp, OneBodyPotentialDownDown) == false)
-	 return -1;
+       if ( !FQHESphereTwoLandauLevelGetPseudopotentials(Manager.GetString("interaction-file"), LzMax, PseudoPotentials) ) 
+	 {
+	   cout << "There were problems encountered when attempting to read the pseudopotential file: " << Manager.GetString("interaction-file") << endl;
+	   return -1;
+	 }	  
      }
 
    char* OutputNameLz = new char [256 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];

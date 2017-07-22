@@ -88,8 +88,13 @@ ParticleOnSphereTwoLandauLevelHamiltonian::ParticleOnSphereTwoLandauLevelHamilto
   for (int j = 0; j < 2; ++j)
     {
       this->PseudoPotentials[j] = new double [this->NbrLzValue];
+      cout << "Pseudo type "<<j<<endl;
       for (int i = 0; i < this->NbrLzValue; ++i)
-	this->PseudoPotentials[j][i] = pseudoPotential[j][this->LzMax - i];
+	{
+          this->PseudoPotentials[j][i] = pseudoPotential[j][this->LzMax - i];
+          cout << this->PseudoPotentials[j][i] << " ";
+        }
+      cout<<endl;
     }
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.0;

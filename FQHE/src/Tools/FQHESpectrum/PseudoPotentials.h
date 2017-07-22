@@ -120,6 +120,12 @@ double* GetMonomialPseudopotentials(int nbrFlux, int exponentN, bool onlyOdd, bo
 // l1, l2, l3, l4 = Landau level indices (0 for lowest LL, 1 for first excited LL)
 double* EvaluateGrapheneBilayerPseudopotentials(int nbrFlux, int& nbrPseudopotentials, int l1, int l2, int l3, int l4, bool verbose = true);
 
+// ZP: Not very fast but it works... CAUTION: Pseudopotentials are not normalized in any particularly nice way, but they will produce a zero energy GS at nu=2/5 with cyclotron energy=0
+//
+// Uses the formula: V_L = sum_{j=max(|l1-l3|,|l2-l4|)}^{min(l1+l3,l2+l4)} sum_{m1=max(-l1,-l2)}^{min(l1,l2)} sum_{m2=max(-l3,-l4)}^{min(l3,l4)} 
+//                           (2j+1) * (-1)^(m2-m1+l1+l2+l3+l4)
+//                         <l1,m1; l2,-m1| L,0> <l3,m2; l4,-m2| L,0> <l3,Q; j,0| l1,Q> <l4,Q; j,0| l2,Q> <l1,-m1; j,-(m2-m1)| l3,-m2> <l2,m1; j,(m2-m1)| l4,m2>
+//
 // evalute pseudopotentials for delta interaction with two Landau levels on Sphere
 //
 // nbrFlux = number of flux quanta (i.e. twice the maximum momentum on LLL)
@@ -127,12 +133,30 @@ double* EvaluateGrapheneBilayerPseudopotentials(int nbrFlux, int& nbrPseudopoten
 // return value = array that conatins the pseudopotentials
 double** Evaluate2LLSphereDeltaPseudopotentials(int nbrFlux, bool quiet);
 
-
-// evalute pseudopotentials for Coulomb interaction with two Landau levels on Sphere
+// ZP: Not very fast but it works... CAUTION: Pseudopotentials are not normalized in any particularly nice way, but they will produce a zero energy GS at nu=2/5 with cyclotron energy=0
+//
+// Uses the formula: V_L = sum_{j=max(|l1-l3|,|l2-l4|)}^{min(l1+l3,l2+l4)} sum_{m1=max(-l1,-l2)}^{min(l1,l2)} sum_{m2=max(-l3,-l4)}^{min(l3,l4)} 
+//                           (-j(j+1)/Q) * (2j+1) * (-1)^(m2-m1+l1+l2+l3+l4)
+//                         <l1,m1; l2,-m1| L,0> <l3,m2; l4,-m2| L,0> <l3,Q; j,0| l1,Q> <l4,Q; j,0| l2,Q> <l1,-m1; j,-(m2-m1)| l3,-m2> <l2,m1; j,(m2-m1)| l4,m2>
+//
+// evalute pseudopotentials for delta interaction with two Landau levels on Sphere
 //
 // nbrFlux = number of flux quanta (i.e. twice the maximum momentum on LLL)
 // quiet = indicate whether Coulomb Pseudopotentials should be printed on screen
 // return value = array that conatins the pseudopotentials
+double** Evaluate2LLSphereLaplacianDeltaPseudopotentials(int nbrFlux, bool quiet);
+
+// ZP: Not very fast but it works... 
+//
+// Uses the formula: V_L = sum_{j=max(|l1-l3|,|l2-l4|)}^{min(l1+l3,l2+l4)} sum_{m1=max(-l1,-l2)}^{min(l1,l2)} sum_{m2=max(-l3,-l4)}^{min(l3,l4)} 
+//                           (1/sqrt(Q)) * (-1)^(m2-m1+l1+l2+l3+l4)
+//                         <l1,m1; l2,-m1| L,0> <l3,m2; l4,-m2| L,0> <l3,Q; j,0| l1,Q> <l4,Q; j,0| l2,Q> <l1,-m1; j,-(m2-m1)| l3,-m2> <l2,m1; j,(m2-m1)| l4,m2>
+//
+// evalute pseudopotentials for Coulomb interaction with two Landau levels on sphere
+//
+// nbrFlux = number of flux quanta (i.e. twice the maximum momentum on LLL)
+// quiet = indicate whether Coulomb Pseudopotentials should be printed on screen
+// return value = array that contains the pseudopotentials
 double** Evaluate2LLSphereCoulombPseudopotentials(int nbrFlux, bool quiet);
 
 // evalute pseudopotentials for Coulomb interaction, with triangular quantum well confinement, on Sphere 

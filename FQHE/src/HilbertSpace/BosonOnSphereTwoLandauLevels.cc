@@ -77,6 +77,150 @@ BosonOnSphereTwoLandauLevels::BosonOnSphereTwoLandauLevels()
 {
 }
 
+// basic constructor with contraint on the number of particles per Landau level
+// 
+// nbrBosonsUp = number of bosons in N=1 LL
+// nbrBosonsDown = number of bosons in N=0 LL
+// totalLz = twice the momentum total value
+// lzMaxUp = twice the maximum Lz value reached by a boson with a spin up
+// lzMaxDown = twice the maximum Lz value reached by a boson with a spin down
+// memory = amount of memory granted for precalculations
+
+BosonOnSphereTwoLandauLevels::BosonOnSphereTwoLandauLevels (int nbrBosonsUp, int nbrBosonsDown, int totalLz, int lzMaxUp, int lzMaxDown, unsigned long memory)
+{
+  this->NbrBosons = nbrBosonsUp + nbrBosonsDown;
+  this->IncNbrBosons = this->NbrBosons + 1;
+  this->TotalLz = totalLz;
+  this->TotalSpin = 0; 
+  this->NbrBosonsUp = nbrBosonsUp;
+  this->NbrBosonsDown = nbrBosonsDown;
+  this->LzMaxUp = lzMaxUp;
+  this->LzMaxDown = lzMaxDown;
+  if (this->LzMaxUp >= this->LzMaxDown) //we assume this is the case and take it that the lower Landau level is labelled down.
+    {
+      this->LzMax = this->LzMaxUp;
+      //not sure of following shifts. Everything should be shifted by lzMaxUp 
+      this->LzShiftUp = 0; 
+      this->LzShiftDown = (this->LzMaxUp - this->LzMaxDown) >> 1;
+    }
+  else 
+    {
+      cout << "lzMaxUp should be greater than lzMaxdown!" << endl;
+      this->LzMax = this->LzMaxDown;
+      this->LzShiftDown = 0;
+      this->LzShiftUp = (this->LzMaxDown - this->LzMaxUp) >> 1;
+    }
+      
+  this->UpStateShift = this->NbrBosons + lzMaxDown;
+  this->LzTotalShift = this->LzMaxDown + this->LzMaxUp;
+  this->NbrLzValue = this->LzMaxUp + this->LzMaxDown + 2;
+  this->MaximumSignLookUp = 16;
+  this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrBosons, 0, (this->TotalLz + (this->NbrBosons * this->LzMax)) >> 1);
+  if (this->LargeHilbertSpaceDimension >= (1l << 30))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  this->Flag.Initialize();
+  this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
+  this->StateLzMax = new int [this->HilbertSpaceDimension];  //this will store two values, the index of the split beween Landau levels and the maximum lowest bit used. 
+  this->TemporaryState = new unsigned long [this->NbrLzValue]; //to keep bosonic description in
+  this->ProdATemporaryState = new unsigned long [this->NbrLzValue]; //to keep bosonic description in
+  int TmpDimension = this->GenerateStates(this->NbrBosons, 0, (this->TotalLz + (this->NbrBosons * this->LzMax)) >> 1, 0);
+  if (TmpDimension != this->HilbertSpaceDimension)
+    {
+      cout << "Mismatch in State-count and State Generation in BosonOnSphereTwoLandauLevels! " << this->HilbertSpaceDimension << " " << TmpDimension  << endl;
+  for (int i = 0; i < TmpDimension; ++i)
+    this->PrintState(cout, i) << endl;
+       exit(1);
+    }
+  
+   cout << "Full HS dim= "<<this->HilbertSpaceDimension<<endl;
+   int NewHilbertSpaceDimension = 0;
+   int TmpNbrUp, TmpNbrDown;
+   unsigned long* FlagArray = new unsigned long [this->HilbertSpaceDimension];
+   unsigned long* NewStateDescription = new unsigned long [this->HilbertSpaceDimension];
+   int* NewStateLzMax = new int [this->HilbertSpaceDimension];
+   
+   for (int i = 0; i < this->HilbertSpaceDimension; i++)
+      {
+
+          //this->PrintState(cout, i);
+         
+         TmpNbrUp = 0; TmpNbrDown = 0;
+         for (int j = 0; j <= this->LzMax; j++)
+              TmpNbrUp += this->AduAu(i, j);
+         for (int j = 1; j < this->LzMax; j++)   
+              TmpNbrDown += this->AddAd(i, j);
+
+          if (TmpNbrUp + TmpNbrDown != this->NbrBosons)   
+            { 
+             cout << "NbrUp= "<<TmpNbrUp<<" "<<TmpNbrDown<<endl; 
+             exit(2);
+            }   
+          if ((TmpNbrUp == this->NbrBosonsUp) && (TmpNbrDown == this->NbrBosonsDown))
+            {
+               FlagArray[i] = 1;
+               NewStateDescription[i] = StateDescription[i];
+               NewStateLzMax[i] = StateLzMax[i];
+               NewHilbertSpaceDimension++;
+            }  
+          else
+            {
+               FlagArray[i] = 0; 
+               NewStateDescription[i] = 0;
+               NewStateLzMax[i] = 0;
+            } 
+      }
+
+    delete[] this->StateLzMax;
+    delete[] this->StateDescription;
+
+
+    this->StateDescription = new unsigned long [NewHilbertSpaceDimension];
+    this->StateLzMax = new int [NewHilbertSpaceDimension];
+    int counter = 0;  
+    for (int i = 0; i < this->HilbertSpaceDimension; i++)
+      if (FlagArray[i] > 0)
+          {
+            this->StateDescription[counter] = NewStateDescription[i];
+            this->StateLzMax[counter] = NewStateLzMax[i];
+            counter++;  
+          } 
+
+    this->HilbertSpaceDimension = NewHilbertSpaceDimension;
+    cout << "Reduced HilbertSpaceDimension= "<<this->HilbertSpaceDimension<<endl;
+
+
+
+  //  this->HilbertSpaceDimension = this->GenerateStates(this->NbrBosonsUp, this->NbrBosonsDown, this->LzMaxUp, this->LzMaxDown, );
+  //this->GenerateLookUpTable(memory);
+  
+#ifdef __DEBUG__
+  this->LookUpTableMemorySize = 0;
+  long UsedMemory = 0;
+  UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+  /*cout << "memory requested for Hilbert space = ";
+  if (UsedMemory >= 1024)
+    if (UsedMemory >= 1048576)
+      cout << (UsedMemory >> 20) << "Mo" << endl;
+    else
+      cout << (UsedMemory >> 10) << "ko" <<  endl;
+  else
+    cout << UsedMemory << endl;
+  UsedMemory = this->NbrLzValue * sizeof(int);
+  UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+  cout << "memory requested for lookup table = ";
+  if (UsedMemory >= 1024)
+    if (UsedMemory >= 1048576)
+      cout << (UsedMemory >> 20) << "Mo" << endl;
+    else
+      cout << (UsedMemory >> 10) << "ko" <<  endl;
+  else
+    cout << UsedMemory << endl;*/
+
+#endif
+}
+
 // basic constructor with no contraint on the number of particles per spin component
 // 
 // nbrBosons = number of bosons

@@ -69,6 +69,16 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   //
   FermionOnSphereTwoLandauLevels();
   
+  // basic constructor with contraint on the number of particles per Landau level component
+  // 
+  // nbrFermionsUp = number of fermions in level N=1
+  // nbrFermionsDown = number of fermions in level N=0
+  // totalLz = twice the momentum total value
+  // lzMaxUp = twice the maximum Lz value reached by a fermion with a spin up
+  // lzMaxDown = twice the maximum Lz value reached by a fermion with a spin down
+  // memory = amount of memory granted for precalculations
+  FermionOnSphereTwoLandauLevels (int nbrFermionsUp, int nbrFermionsDown, int totalLz, int lzMaxUp, int lzMaxDown, unsigned long memory = 10000000);
+
   // basic constructor with no contraint on the number of particles per spin component
   // 
   // nbrFermions = number of fermions

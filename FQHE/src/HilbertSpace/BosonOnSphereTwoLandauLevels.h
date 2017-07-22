@@ -133,6 +133,16 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   //
   BosonOnSphereTwoLandauLevels();
 
+  // basic constructor with contraint on the number of particles per Landau level
+  // 
+  // nbrBosonsUp = number of bosons in N=1 LL
+  // nbrBosonsDown = number of bosons in N=0 LL
+  // totalLz = twice the momentum total value
+  // lzMaxUp = twice the maximum Lz value reached by a boson with a spin up
+  // lzMaxDown = twice the maximum Lz value reached by a boson with a spin down
+  // memory = amount of memory granted for precalculations
+  BosonOnSphereTwoLandauLevels (int nbrBosonsUp, int nbrBosonsDown, int totalLz, int lzMaxUp, int lzMaxDown, unsigned long memory = 10000000);
+
   // basic constructor with no contraint on the number of particles per spin component
   // 
   // nbrBosons = number of bosons

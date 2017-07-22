@@ -385,11 +385,11 @@ bool FQHESphereSU2GetPseudopotentialsWithPairing (char* fileName, int lzMax, dou
 bool FQHESphereTwoLandauLevelGetPseudopotentials (char* fileName, int lzMax, double** pseudoPotentials)
 {
   // these are the labels of the arrays as they will be in the file.
-  string PseudoLabels[9] = {"PseudopotentialsUpUpUpUp","PseudopotentialsUpUpDownDown","PseudopotentialsUpUpUpDown",
+  string PseudoLabels[10] = {"PseudopotentialsUpUpUpUp","PseudopotentialsUpUpDownDown","PseudopotentialsUpUpUpDown",
 			    "PseudopotentialsDownDownUpUp","PseudopotentialsDownDownDownDown","PseudopotentialsDownDownUpDown",
-			    "PseudopotentialsUpDownUpUp","PseudopotentialsUpDownDownDown","PseudopotentialsUpDownUpDown"};
+			    "PseudopotentialsUpDownUpUp","PseudopotentialsUpDownDownDown","PseudopotentialsUpDownUpDown","PseudopotentialsUpDownDownUp"};
   // these are the lenghts of the arrays corresponding to the labels above. 			    
-  int PseudoLengths[9] = { lzMax+3, lzMax+1, lzMax+1, lzMax+1, lzMax+1, lzMax, lzMax+1, lzMax, lzMax+1}; 
+  int PseudoLengths[10] = { lzMax+3, lzMax+1, lzMax+1, lzMax+1, lzMax+1, lzMax, lzMax+1, lzMax, lzMax+1, lzMax+1}; 
   
   
   ConfigurationParser InteractionDefinition;
@@ -400,7 +400,7 @@ bool FQHESphereTwoLandauLevelGetPseudopotentials (char* fileName, int lzMax, dou
     }
   int TmpNbrPseudoPotentials;
   double* TmpPseudoPotentials;
-  for ( int Idx = 0 ; Idx < 9 ; Idx++ ) 
+  for ( int Idx = 0 ; Idx < 10; Idx++ ) 
     {
       if (InteractionDefinition.GetAsDoubleArray(PseudoLabels[Idx].c_str(), ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
 	{

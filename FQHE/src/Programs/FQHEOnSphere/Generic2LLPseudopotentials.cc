@@ -39,7 +39,7 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
   
   (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-flux", "number of flux quanta (i.e. twice the maximum momentum for a single particle on LLL)", 8);
-  (*SystemGroup) += new SingleStringOption ('\n', "interaction-type", "type of interaction to generate pseudo-potentials for (delta or coulomb support at pressent). Default: delta", "delta");
+  (*SystemGroup) += new SingleStringOption ('\n', "interaction-type", "type of interaction to generate pseudo-potentials for (delta, laplaciandelta or coulomb support at pressent). Default: delta", "delta");
   (*SystemGroup) += new SingleStringOption ('\n', "interaction-name", "name to use to identify pseudo-potential file. Default is the interaction-type which by default is delta", "default");
   (*SystemGroup) += new SingleDoubleOption  ('c', "odd-factor", "factor to use to multiply odd pseudopotential terms by (ie terms with odd numbers acting on upper and lower levels).", 1.0);   
   
@@ -61,12 +61,13 @@ int main(int argc, char** argv)
   char *InteractionName = Manager.GetString("interaction-name");
   double OddFactor = Manager.GetDouble("odd-factor");
   
-  int LzMaxUp = NbrFluxQuanta + 2;
-  int LzMaxDown = NbrFluxQuanta + 1;
+  int TwoQ = NbrFluxQuanta;
+  int LzMaxUp = TwoQ + 2;
+  int LzMaxDown = TwoQ;
   
-  if ( strcmp(InteractionType, "delta") != 0 && strcmp(InteractionType, "coulomb") != 0 )
+  if ( strcmp(InteractionType, "delta") != 0 && strcmp(InteractionType, "laplaciandelta") != 0 && strcmp(InteractionType, "coulomb") != 0 )
     {
-      cout << InteractionType << " unsupported at pressent. Please choose either delta or coulomb." << endl;
+      cout << InteractionType << " unsupported at pressent. Please choose either delta, laplacian-delta or coulomb." << endl;
       return -1;
     }
     
@@ -75,19 +76,14 @@ int main(int argc, char** argv)
       strcpy(InteractionName, InteractionType);
     }    
   
-  ClebschGordanCoefficients ClebschDownDown (LzMaxDown - 1, LzMaxDown - 1);
-  ClebschGordanCoefficients ClebschUpUp (LzMaxUp, LzMaxUp);
-  ClebschGordanCoefficients ClebschUpDown (LzMaxUp, LzMaxDown - 1);
-  ClebschGordanCoefficients ClebshDownUp (LzMaxDown - 1, LzMaxUp);
-  
   // these are the labels of the arrays as they will be in the file.
-  string PseudoLabels[9] = {"PseudopotentialsUpUpUpUp","PseudopotentialsUpUpDownDown","PseudopotentialsUpUpUpDown",
+  string PseudoLabels[10] = {"PseudopotentialsUpUpUpUp","PseudopotentialsUpUpDownDown","PseudopotentialsUpUpUpDown",
 			    "PseudopotentialsDownDownUpUp","PseudopotentialsDownDownDownDown","PseudopotentialsDownDownUpDown",
-			    "PseudopotentialsUpDownUpUp","PseudopotentialsUpDownDownDown","PseudopotentialsUpDownUpDown"};
+			    "PseudopotentialsUpDownUpUp","PseudopotentialsUpDownDownDown","PseudopotentialsUpDownUpDown", "PseudopotentialsUpDownDownUp"};
 			    
-  double *Factors = new double[9];
+  double *Factors = new double[10];
   
-  for ( int i = 0 ; i < 9 ; i++ ) Factors[i] = 1.0;
+  for ( int i = 0 ; i < 10 ; i++ ) Factors[i] = 1.0;
   //now multiply odd terms by odd factors.
   Factors[2] *= OddFactor; 
   Factors[5] *= OddFactor;
@@ -95,12 +91,17 @@ int main(int argc, char** argv)
   Factors[7] *= OddFactor;
   
   // these are the lenghts of the arrays corresponding to the labels above. 			    
-  int PseudoLengths[9] = { LzMaxUp + 1, LzMaxUp - 1 , LzMaxUp - 1, LzMaxUp - 1, LzMaxUp - 1, LzMaxUp - 2, LzMaxUp - 1, LzMaxUp - 2, LzMaxUp - 1};   
+  int PseudoLengths[10] = {TwoQ + 3, TwoQ + 1, TwoQ + 1, TwoQ + 1, TwoQ + 1, TwoQ, TwoQ + 1, TwoQ, TwoQ + 1, TwoQ + 1}; 
+
   double **PseudoPotentialArrays;        
   if ( strcmp(InteractionType, "delta") == 0 ) 
     {     
       PseudoPotentialArrays = Evaluate2LLSphereDeltaPseudopotentials(NbrFluxQuanta, true);
     }
+  else if (strcmp(InteractionType, "laplaciandelta") == 0)
+    {
+      PseudoPotentialArrays = Evaluate2LLSphereLaplacianDeltaPseudopotentials(NbrFluxQuanta, true);
+    }  
   else if ( strcmp(InteractionType, "coulomb") == 0 ) 
     {
       PseudoPotentialArrays = Evaluate2LLSphereCoulombPseudopotentials(NbrFluxQuanta, true);
@@ -113,12 +114,12 @@ int main(int argc, char** argv)
     
   stringstream ss;
   ss.str("");
-  ss << "pseudopotential_2ll_" << InteractionName << "_s_" << NbrFluxQuanta << ".dat" ;  
+  ss << "pseudopotential_2ll_" << InteractionName << "_2s_" << NbrFluxQuanta << ".dat" ;  
   ofstream File;
   File.open(ss.str().c_str(), ios::binary | ios::out);
   File.precision(14);
   
-  for ( int j = 0; j < 9 ; j++ ) 
+  for ( int j = 0; j < 10; j++ ) 
     {
       File << PseudoLabels[j]<< "=";	
       for (int i = 0; i < PseudoLengths[j] ; ++i)
@@ -128,7 +129,7 @@ int main(int argc, char** argv)
   File << endl;      
   File.close();
       
-  for ( int i = 0 ; i < 9 ; i++ ) 
+  for ( int i = 0 ; i < 10; i++ ) 
     {
       delete [] PseudoPotentialArrays[i];
     }

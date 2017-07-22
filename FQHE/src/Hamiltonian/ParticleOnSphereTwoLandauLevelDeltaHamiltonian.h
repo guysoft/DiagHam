@@ -110,7 +110,62 @@ class ParticleOnSphereTwoLandauLevelDeltaHamiltonian : public AbstractQHEOnSpher
   //
   // return value = pointer to cloned hamiltonian
   AbstractHamiltonian* Clone ();
-  
+
+  // evaluate a particular delta interaction factor  <Q,l1,m1; Q,l2,m2|V|Q,l3,m3; Q,l4,m4> in front of c_{l1,m1}^+ c_{l2,m2}^+ c_{l4,m4} c_{l3,m3}
+  //
+  // <Q,l1,m1; Q,l2,m2|V_C|Q,l3,m3; Q,l4,m4> = Sum[-L(L+1)/Q (-1)^(2Q-j1-j2-M)SL[-Q,l1,-j1,0,L,-M,Q,l3,j3]SL[-Q,l2,-j2,0,L,M,Q,l4,j4],{L,Max[Abs[l1-l3],Abs[l2-l4]],Min[l1+l3,l2+l4]}]
+  //
+  // Q = max angular momentum on LLL.
+  // l1 = LL of m1, 0 or 1 supported.
+  // m1 = angular momentum of first operator.
+  // l2 = LL of m2, 0 or 1 supported.
+  // m2 = angular momentum of second operator.
+  // l3 = LL of m3, 0 or 1 supported.
+  // m3 = angular momentum of third operator.
+  // l4 = LL of m4, 0 or 1 supported.	
+  // m4 = angular momentum of fourth operator.
+  //
+  // return value = interaction factor  <Q,l1,m1; Q,l2,m2|V|Q,l3,m3; Q,l4,m4>
+
+  double CalculateLaplacianDeltaInteractionFactor(int Twol1,int Twom1,int Twol2,int Twom2,int Twol3,int Twom3,int Twol4,int Twom4);
+
+  // evaluate a particular Coulomb interaction factor  <Q,l1,m1; Q,l2,m2|V_C|Q,l3,m3; Q,l4,m4> in front of c_{l1,m1}^+ c_{l2,m2}^+ c_{l4,m4} c_{l3,m3}
+  //
+  // <Q,l1,m1; Q,l2,m2|V_C|Q,l3,m3; Q,l4,m4> = Sum[4Pi/Sqrt[Q] 1/(2L+1)(-1)^(2Q-j1-j2-M)SL[-Q,l1,-j1,0,L,-M,Q,l3,j3]SL[-Q,l2,-j2,0,L,M,Q,l4,j4],{L,Max[Abs[l1-l3],Abs[l2-l4]],Min[l1+l3,l2+l4]}]
+  //
+  // Q = max angular momentum on LLL.
+  // l1 = LL of m1, 0 or 1 supported.
+  // m1 = angular momentum of first operator.
+  // l2 = LL of m2, 0 or 1 supported.
+  // m2 = angular momentum of second operator.
+  // l3 = LL of m3, 0 or 1 supported.
+  // m3 = angular momentum of third operator.
+  // l4 = LL of m4, 0 or 1 supported.	
+  // m4 = angular momentum of fourth operator.
+  //
+  // return value = interaction factor  <Q,l1,m1; Q,l2,m2|V_C|Q,l3,m3; Q,l4,m4>
+
+  double CalculateCoulombInteractionFactor(int Twol1,int Twom1,int Twol2,int Twom2,int Twol3,int Twom3,int Twol4,int Twom4);
+
+  // evaluate a particular SL interaction factor needed by CalculateCoulombInteractionFactor
+  //
+  // SL(Q1,l1,m1;Q2,l2,m2;Q3=-Q1-Q2,l3,m3=-m1-m3) = (-1)^(l1+l2+l3)Sqrt[(2l1+1)(2l2+1)(2l3+1)/(4Pi)]ThreeJSymbol[{l1,-alpha1},{l2,-alpha2},{l3,-alpha3}]ThreeJSymbol[{l1,Q1},{l2,Q2},{l3,Q3}]
+  //
+  // Q = max angular momentum on LLL.
+  // l1 = LL of m1, 0 or 1 supported.
+  // m1 = angular momentum of first operator.
+  // l2 = LL of m2, 0 or 1 supported.
+  // m2 = angular momentum of second operator.
+  // l3 = LL of m3, 0 or 1 supported.
+  // m3 = angular momentum of third operator.
+  // l4 = LL of m4, 0 or 1 supported.	
+  // m4 = angular momentum of fourth operator.
+  //
+  // return value = interaction factor with delta interaction
+
+  double CalculateSLFactor(int TwoQ1,int Twol1,int Twom1,int TwoQ2,int Twol2,int Twom2,int TwoQ3,int Twol3,int Twom3);
+
+  /*  
   // evaluate a particular interaction factor <l1,m1,l2,m2|\delta|l3,m3,l4.m4>
   //
   // Q = max angular momentum on LLL.
@@ -142,6 +197,8 @@ class ParticleOnSphereTwoLandauLevelDeltaHamiltonian : public AbstractQHEOnSpher
   //
   // return value = value of beta function with args x,y
   static double CalculateBetaFunction(long x, long y);
+
+  */
  
  protected:
  
@@ -192,7 +249,7 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyAdd
   int Index;
 
   if ( this->Particles->GetParticleStatistic() == ParticleOnSphere::BosonicStatistic ) 
-    {      
+    {  
       // Annihilation operators acting on first LL (UpUp)
       for (int j = 0; j < this->NbrUpUpSectorSums; ++j) 
 	{
@@ -343,6 +400,7 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyAdd
 		}
 	    }
 	}
+
     } 
   else if ( this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic ) 
     {  
@@ -362,7 +420,12 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyAdd
 		    {
 		      Index = particles->AduAdu(this->UpUpSectorIndicesPerSum[j][k << 1], this->UpUpSectorIndicesPerSum[j][(k << 1) + 1], Coefficient);
 		      if (Index < Dim)
-			  vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
+			  {
+			     vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
+                             //cout<<"i= "<<index<<"| "; particles->PrintState(cout,index); cout<<"a+a+aa "<< this->UpUpSectorIndicesPerSum[j][k << 1]<<" "<<this->UpUpSectorIndicesPerSum[j][(k << 1) + 1]<<" "<< this->UpUpSectorIndicesPerSum[j][i << 1] << " "<< this->UpUpSectorIndicesPerSum[j][(i << 1) + 1] << " "; 
+                             //cout<<" --> Index="<<Index<<"| "; particles->PrintState(cout,Index);
+                             //cout<<" Coeff= "<<Coefficient3*Coefficient/vSource[index]<<endl;  
+                          }
 		      ++TmpInteractionFactor;
 		    }
 		      
@@ -441,9 +504,7 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyAdd
 		  }
 	    }
 	}
-	
-	    
-	    
+		    
       // Annihilation operators acting on LLL (DownDown)
       for (int j = 0; j < this->NbrDownDownSectorSums; ++j) 
 	{
@@ -473,7 +534,10 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyAdd
 		      Index = particles->AddAdd(this->DownDownSectorIndicesPerSum[j][k << 1], this->DownDownSectorIndicesPerSum[j][(k << 1) + 1], Coefficient);
 		      if (Index < Dim)
 			{				      
-			  vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;			  
+			  vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
+                          //cout<<"i= "<<index<<"| "; particles->PrintState(cout,index); cout<<"a+a+aa "<< this->UpUpSectorIndicesPerSum[j][k << 1]<<" "<<this->UpUpSectorIndicesPerSum[j][(k << 1) + 1]<<" "<< this->UpUpSectorIndicesPerSum[j][i << 1] << " "<< this->UpUpSectorIndicesPerSum[j][(i << 1) + 1] << " "; 
+                          //cout<<" --> Index="<<Index<<"| "; particles->PrintState(cout,Index);
+                          //cout<<" Coeff= "<<Coefficient3*Coefficient/vSource[index]<<endl;  			  
 			}
 		      ++TmpInteractionFactor;
 		    }	  
@@ -659,7 +723,7 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyFas
 		    }
 		}
 	    }
-	} 
+	}
     }
   else if ( this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic ) 
     {

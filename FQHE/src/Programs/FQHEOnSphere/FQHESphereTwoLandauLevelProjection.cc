@@ -53,6 +53,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the inital momentum projection for the system (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "max lz value a fermions in the LLL can have (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new BooleanOption  ('u', "unnormalized", "leave the vector unormalized at the end");
+  (*SystemGroup) += new SingleStringOption  ('\n', "statistics", "particle statistics (bosons or fermions, try to guess it from file name if not defined)");
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the result of the projection into a binary file");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the result of the projection into a text file");
   
@@ -76,6 +77,9 @@ int main(int argc, char** argv)
   
   int TotalLz=Manager.GetInteger("total-lz");
   bool FermionFlag = false;
+  if (((SingleStringOption*) Manager["statistics"])->GetString() == 0)
+    FermionFlag = true;
+
   char * StateName= Manager.GetString("state");
   char* OutputFileName = ((SingleStringOption*) Manager["bin-output"])->GetString();
   char* OutputTxtFileName = ((SingleStringOption*) Manager["txt-output"])->GetString();
@@ -115,13 +119,14 @@ int main(int argc, char** argv)
       int LzMaxUp = LzMax + (2 * LandauLevelIndexDifference);
       
       int LzMaxDown = LzMax;
-      
+   
+      cout << "LzMaxUp= " << LzMaxUp << " LzMaxDown= " << LzMaxDown << endl;  
       ParticleOnSphereWithSpin* Space = new FermionOnSphereTwoLandauLevels (NbrParticles, TotalLz, LzMaxUp, LzMaxDown);
       
       if (Space->GetHilbertSpaceDimension() != GroundState.GetVectorDimension())
 	{
 	  cout <<Space->GetHilbertSpaceDimension()<<" "<<GroundState.GetVectorDimension()<<endl;
-	  cout << "Number of rows of the vector is not equal to the Hilbert space dimension!";
+	  cout << "Number of rows of the vector is not equal to the Hilbert space dimension!" << endl;
 	  return -1;
 	}
       
