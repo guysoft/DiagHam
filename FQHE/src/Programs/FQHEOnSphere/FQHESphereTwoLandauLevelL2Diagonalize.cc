@@ -5,7 +5,7 @@
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
-
+#include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 #include "LanczosAlgorithm/LanczosManager.h"
 
 #include "MainTask/QHEOnSphereMainTask.h"
@@ -19,7 +19,7 @@
 #include "Options/SingleStringOption.h"
 
 #include "GeneralTools/ConfigurationParser.h"
-
+#include "GeneralTools/FilenameTools.h"
 #include <iostream>
 #include <cstring>
 #include <stdlib.h>
@@ -73,6 +73,7 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
+  (*MiscGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -110,19 +111,47 @@ int main(int argc, char** argv)
     }
   else
     {
-      cout << "bosons implementation not fully tested" << endl;
+      cout << "bosons implementation not working" << endl;
+      exit(2);
       Space = new BosonOnSphereTwoLandauLevels (NbrParticles, TotalLz, LzMaxUp, LzMaxDown);      
     }
 
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
     Memory = Architecture.GetArchitecture()->GetLocalMemory();
-  AbstractQHEOnSphereHamiltonian* Hamiltonian = new ParticleOnSphereTwoLandauLevelL2Hamiltonian(Space, NbrParticles, LzMax, TotalLz,
+  AbstractQHEOnSphereHamiltonian* Hamiltonian = new ParticleOnSphereTwoLandauLevelL2Hamiltonian(Space, NbrParticles, LzMax+2, TotalLz,Manager.GetDouble("l2-factor"),
 												Architecture.GetArchitecture(), 
-												Manager.GetDouble("l2-factor"),
 												Memory, DiskCacheFlag,
-												LoadPrecalculationFileName);
-  
+												LoadPrecalculationFileName, false);
+
+   if (Manager.GetString("energy-expectation") != 0 )
+    {
+      char* StateFileName = Manager.GetString("energy-expectation");
+      if (IsFile(StateFileName) == false)
+       {
+         cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
+         return -1;           
+       }
+      RealVector State;
+      if (State.ReadVector(StateFileName) == false)
+      {
+        cout << "error while reading " << StateFileName << endl;
+        return -1;
+      }
+     if (State.GetVectorDimension()!=Space->GetHilbertSpaceDimension())
+      {
+        cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
+        return -1;
+      }
+     RealVector TmpState(Space->GetHilbertSpaceDimension());
+     VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
+     Operation.ApplyOperation(Architecture.GetArchitecture());
+     double EnergyValue = State*TmpState;
+     cout << "< L^2 > = "<<EnergyValue<<endl;
+     cout << "L = "<<0.5*(sqrt(4.0 * EnergyValue + 1.0) - 1.0)<<endl;
+     return 0;
+   }
+
   double Shift = Manager.GetDouble("energy-shift");
   Hamiltonian->ShiftHamiltonian(Shift);
   char* EigenvectorName = 0;
@@ -142,6 +171,6 @@ int main(int argc, char** argv)
   delete Hamiltonian;
   if (FirstRun == true)
     FirstRun = false;
-
+  delete Space;
   return 0;
 }
