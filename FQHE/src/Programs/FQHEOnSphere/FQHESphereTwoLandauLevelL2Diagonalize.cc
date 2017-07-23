@@ -108,6 +108,8 @@ int main(int argc, char** argv)
     sprintf (OutputNameLz, "bosons_%s_n_%d_2s_%d_lz.dat", Manager.GetString("interaction-name"), NbrParticles, LzMax);
   int LzMaxUp = LzMax + 2;
   int LzMaxDown = LzMax;
+  cout << "Total Lz = " << TotalLz << endl;
+  cout << "Warning: this code will not run correctly if TotalLz is not defined!" << endl;
 
   ParticleOnSphereWithSpin* Space = 0;
   if (Manager.GetBoolean("boson") == false)
@@ -155,13 +157,14 @@ int main(int argc, char** argv)
      VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
      Operation.ApplyOperation(Architecture.GetArchitecture());
      double EnergyValue = State*TmpState;
-     cout << "< L^2 > = "<<EnergyValue<<endl;
-     cout << "L = "<<0.5*(sqrt(4.0 * EnergyValue + 1.0) - 1.0)<<endl;
+     double Shift = 0.25 * TotalLz * TotalLz - 0.5 * TotalLz;
+     cout << "< L^2 > = " << (EnergyValue + Shift) << endl;
+     cout << "L = "<<0.5*(sqrt(4.0 * (EnergyValue + Shift) + 1.0) - 1.0)<<endl;
      return 0;
    }
 
-  double Shift = Manager.GetDouble("energy-shift");
-  Hamiltonian->ShiftHamiltonian(Shift);
+  double Shift = -(0.25 * TotalLz * TotalLz - 0.5 * TotalLz); //Manager.GetDouble("energy-shift");
+  //Hamiltonian->ShiftHamiltonian(Shift);
   char* EigenvectorName = 0;
   if (Manager.GetBoolean("eigenstate") == true)	
     {

@@ -170,20 +170,26 @@ int main(int argc, char** argv)
   
   int  L = InitialLz;
 
-  if (NbrLz > 0)
-   {
-     Max = L + (2 * (NbrLz - 1));
-   }
-    
-  if ((abs(Max) & 1) != (InitialLz & 1)) //since total Lz goes in steps of 2 make sure we start at the right parity.
+  if (L < -Max)
+    L = -Max;
+  else
+    if (L > Max)
+      L = Max;
+  if ((abs(Max) & 1) != (abs(InitialLz) & 1))
     L += 1;
-  
   if (GroundFlag == true)
-    Max = L;
-
-  
+      Max = L;
+  else
+    {
+      if (NbrLz > 0)
+	{
+	  Max = L + (2 * (NbrLz - 1));
+	}
+    }
+ 
   for (; L <= Max; L += 2)
     {
+      cout << "Lz="<<L<<endl;
       // create space.
       ParticleOnSphereWithSpin* Space = 0;
       if (PolarizationFlag) 

@@ -209,6 +209,77 @@ FermionOnSphereTwoLandauLevels::FermionOnSphereTwoLandauLevels (int nbrFermionsU
     cout << UsedMemory << endl;
 
 #endif
+
+/*
+  this->NbrFermions = nbrFermionsUp + nbrFermionsDown;
+  this->IncNbrFermions = this->NbrFermions + 1;
+  this->TotalLz = totalLz;
+  this->TotalSpin = 0;
+  this->NbrFermionsUp = nbrFermionsUp;
+  this->NbrFermionsDown = nbrFermionsDown;
+  this->LzMaxUp = lzMaxUp;
+  this->LzMaxDown = lzMaxDown;
+  if (this->LzMaxUp >= this->LzMaxDown)
+    {
+      this->LzMax = this->LzMaxUp;
+      this->LzShiftUp = 0;
+      this->LzShiftDown = (this->LzMaxUp - this->LzMaxDown) >> 1;
+    }
+  else
+    {
+      this->LzMax = this->LzMaxDown;
+      this->LzShiftDown = 0;
+      this->LzShiftUp = (this->LzMaxDown - this->LzMaxUp) >> 1;
+    }
+  this->LzTotalShift = this->LzMaxDown + this->LzMaxUp;
+  this->NbrLzValue = this->LzMax + 1;
+  this->MaximumSignLookUp = 16;
+  this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermionsUp, this->NbrFermionsDown, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1);
+  cout << this->LargeHilbertSpaceDimension<<endl;
+	exit(2);
+  if (this->LargeHilbertSpaceDimension >= (1l << 30))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  this->Flag.Initialize();
+  this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
+  this->StateHighestBit = new int [this->HilbertSpaceDimension];  
+  int TmpDimension = this->GenerateFullStates(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 0);
+  if (TmpDimension != this->HilbertSpaceDimension)
+    {
+      cout << "Mismatch in State-count and State Generation in FermionOnSphereTwoLandauLevels! " << this->HilbertSpaceDimension << " " << TmpDimension  << endl;
+  for (int i = 0; i < TmpDimension; ++i)
+    this->PrintState(cout, i) << endl;
+       exit(1);
+    }
+
+  //  this->HilbertSpaceDimension = this->GenerateStates(this->NbrFermionsUp, this->NbrFermionsDown, this->LzMaxUp, this->LzMaxDown, );
+  this->GenerateLookUpTable(memory);
+  
+#ifdef __DEBUG__
+  long UsedMemory = 0;
+  UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+  cout << "memory requested for Hilbert space = ";
+  if (UsedMemory >= 1024)
+    if (UsedMemory >= 1048576)
+      cout << (UsedMemory >> 20) << "Mo" << endl;
+    else
+      cout << (UsedMemory >> 10) << "ko" <<  endl;
+  else
+    cout << UsedMemory << endl;
+  UsedMemory = this->NbrLzValue * sizeof(int);
+  UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+  cout << "memory requested for lookup table = ";
+  if (UsedMemory >= 1024)
+    if (UsedMemory >= 1048576)
+      cout << (UsedMemory >> 20) << "Mo" << endl;
+    else
+      cout << (UsedMemory >> 10) << "ko" <<  endl;
+  else
+    cout << UsedMemory << endl;
+
+#endif
+*/
 }
 
 // basic constructor with no contraint on the number of particles per spin component
