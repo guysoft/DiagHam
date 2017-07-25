@@ -96,6 +96,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption('\n', "initial-state", "name of the file containing the initial vector upon which e^{-iHt} acts");  
   (*SystemGroup) += new BooleanOption  ('\n', "compute-energy", "compute the energy of each time-evolved vector");
   (*SystemGroup) += new BooleanOption  ('\n', "store-hamiltonian", "store all hamiltonians instead of recomputing them for each period");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-hamiltonian", "number of hamiltonians to store (equal to number of samples if negative and store-hamiltonian is true)", -1);
   
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "amplitude of on-site interaction (if hard core constraint not implemented)", -10.0);
   
@@ -151,14 +152,19 @@ int main(int argc, char** argv)
   double Sign = Manager.GetDouble("omega") / Omega;
   double EField = Manager.GetDouble("e-field");
   
-  bool ResumeFlag = false;
-  bool StoreAllHamiltonians = Manager.GetBoolean("store-hamiltonian");
-  
   int NbrSamples = Manager.GetInteger("nbr-samples");
   int NbrPeriods = Manager.GetInteger("nbr-periods");
   int SavePeriod = Manager.GetInteger("save-period");
   double TimePeriod = 1.0 / ((double) Omega);
   double TimeStep = TimePeriod / ((double) NbrSamples);
+  
+  bool ResumeFlag = false;
+  bool StoreHamiltonians = Manager.GetBoolean("store-hamiltonian");
+  int NbrStoredHamiltonians = Manager.GetInteger("nbr-hamiltonian");
+  if (NbrStoredHamiltonians < 0)
+    NbrStoredHamiltonians = NbrSamples;
+  if (StoreHamiltonians == false)
+    NbrStoredHamiltonians = 0;
   
   int StepI;
   
@@ -421,15 +427,10 @@ int main(int argc, char** argv)
   
   HermitianMatrix* TightBindingMatrix = new HermitianMatrix [NbrSamples];
   AbstractQHEHamiltonian** Hamiltonian;
-  
-  if (StoreAllHamiltonians)
-  {
-    Hamiltonian = new AbstractQHEHamiltonian* [NbrSamples];
-  }
+  if (NbrStoredHamiltonians == NbrSamples)
+    Hamiltonian= new AbstractQHEHamiltonian* [NbrStoredHamiltonians];
   else
-  {
-    Hamiltonian = new AbstractQHEHamiltonian* [1];
-  }
+    Hamiltonian= new AbstractQHEHamiltonian* [NbrStoredHamiltonians + 1];
   
   for(int i = 0 ; i < NbrSamples; i++)
     {
@@ -442,7 +443,7 @@ int main(int argc, char** argv)
       TightBindingMatrix[i] = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
       delete TightBindingModel;
       
-      if (StoreAllHamiltonians)
+      if (i < NbrStoredHamiltonians)
       {
 	cout << "build H for t = " << t << " + T" << endl;
 	if (SpinFlag)
@@ -467,7 +468,7 @@ int main(int argc, char** argv)
       }    
     }  
    
-   if (StoreAllHamiltonians)
+   if (NbrStoredHamiltonians == NbrSamples)
     delete[] TightBindingMatrix;
   
   int TmpIndex;
@@ -487,11 +488,11 @@ int main(int argc, char** argv)
       double TmpNorm = 1.0;
       cout << "Computing state " << (i + 1) << "/" <<  NbrSteps << " at t = " << t << endl;
       
-      if (StoreAllHamiltonians == false)
+      if (NbrStoredHamiltonians < NbrSamples)
       {
 	if (SpinFlag)
 	{
-	  Hamiltonian[0] = new ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian((ParticleOnSphereWithSpin  *)  Space, NbrParticles, NbrSites, Kx, NbrCellX, Ky,  NbrCellY,
+	  Hamiltonian[NbrStoredHamiltonians] = new ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian((ParticleOnSphereWithSpin  *)  Space, NbrParticles, NbrSites, Kx, NbrCellX, Ky,  NbrCellY,
 											  TightBindingMatrix[TmpIndex], TightBindingMatrix[TmpIndex],
 											  DensityDensityInteractionupup, DensityDensityInteractiondowndown, 
 											  DensityDensityInteractionupdown, 
@@ -501,11 +502,11 @@ int main(int argc, char** argv)
 	{
 	  if (TranslationFlag)
 	  {
-	    Hamiltonian[0] = new ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian (Space, NbrParticles, NbrSites, Kx,  NbrCellX, Ky,  NbrCellY, 	PhaseTranslationX, PhaseTranslationY, TightBindingMatrix[TmpIndex], DensityDensityInteraction, Architecture.GetArchitecture(), Memory);
+	    Hamiltonian[NbrStoredHamiltonians] = new ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian (Space, NbrParticles, NbrSites, Kx,  NbrCellX, Ky,  NbrCellY, 	PhaseTranslationX, PhaseTranslationY, TightBindingMatrix[TmpIndex], DensityDensityInteraction, Architecture.GetArchitecture(), Memory);
 	  }
 	  else
 	  {
-	    Hamiltonian[0] = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, NbrSites, TightBindingMatrix[TmpIndex], DensityDensityInteraction, Architecture.GetArchitecture(), Memory);
+	    Hamiltonian[NbrStoredHamiltonians] = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, NbrSites, TightBindingMatrix[TmpIndex], DensityDensityInteraction, Architecture.GetArchitecture(), Memory);
 	  }
 	}
 	TmpIndex = 0;
@@ -572,13 +573,13 @@ int main(int argc, char** argv)
 	  cout << "E = " << Energy << endl;
 	}
       
-      if (StoreAllHamiltonians == false)
-	delete  Hamiltonian[0];
+      if (NbrStoredHamiltonians < NbrSamples)
+	delete  Hamiltonian[NbrStoredHamiltonians];
     }  
     
-  if (StoreAllHamiltonians)
+  if (StoreHamiltonians)
   {
-    for (int i = 0; i < NbrSamples; ++i)
+    for (int i = 0; i < NbrStoredHamiltonians; ++i)
       delete Hamiltonian[i];
     delete[] Hamiltonian;
   }
