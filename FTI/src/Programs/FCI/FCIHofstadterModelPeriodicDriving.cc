@@ -154,8 +154,7 @@ int main(int argc, char** argv)
   int NbrSamples = Manager.GetInteger("nbr-samples");
   int NbrPeriods = Manager.GetInteger("nbr-periods");
   int SavePeriod = Manager.GetInteger("save-period");
-  double TimePeriod = 1.0 / ((double) Omega);
-//   double TimePeriod = 2.0 * M_PI / ((double) Omega);
+  double TimePeriod = 2.0 * M_PI / ((double) Omega);
   double TimeStep = TimePeriod / ((double) NbrSamples);
   
   bool ResumeFlag = false;
@@ -446,11 +445,11 @@ int main(int argc, char** argv)
     {
       t = i * TimeStep;
       
-      TmpGammaX = GammaX + Sign * EField * cos(2.0 * M_PI * Omega * t) / (Omega * M_PI);
-      TmpGammaY = GammaY - EField * sin(2.0 * M_PI * Omega * t) / (Omega * M_PI);
+//       TmpGammaX = GammaX + Sign * EField * cos(2.0 * M_PI * Omega * t) / (Omega * M_PI);
+//       TmpGammaY = GammaY - EField * sin(2.0 * M_PI * Omega * t) / (Omega * M_PI);
       
-//       TmpGammaX = GammaX + Sign * EField * cos(Omega * t) / (Omega * M_PI);
-//       TmpGammaY = GammaY - EField * sin(Omega * t) / (Omega * M_PI);
+      TmpGammaX = GammaX + Sign * EField * cos(Omega * t) / (Omega * M_PI);
+      TmpGammaY = GammaY - EField * sin(Omega * t) / (Omega * M_PI);
       
       TightBindingModel = new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, TmpGammaX, TmpGammaY, Architecture.GetArchitecture(), true, false);
       TightBindingMatrix[i] = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
