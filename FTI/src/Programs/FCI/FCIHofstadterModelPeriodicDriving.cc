@@ -95,17 +95,16 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleStringOption('\n', "initial-state", "name of the file containing the initial vector upon which e^{-iHt} acts");  
   (*SystemGroup) += new BooleanOption  ('\n', "compute-energy", "compute the energy of each time-evolved vector");
-  (*SystemGroup) += new BooleanOption  ('\n', "store-hamiltonian", "store all hamiltonians instead of recomputing them for each period");
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-hamiltonian", "number of hamiltonians to store (equal to number of samples if negative and store-hamiltonian is true)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-hamiltonian", "number of hamiltonians to store (equal to number of samples if 0)", 1);
   
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "amplitude of on-site interaction (if hard core constraint not implemented)", -10.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "amplitude of on-site interaction (if hard core constraint not implemented)", 0.0);
   
   (*SystemGroup) += new SingleDoubleOption  ('\n', "omega", "frequency of drive", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "e-field", "amplitude of the driving field", 1.0);
   
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-periods", "number of periods to do the time-evolution with", 10);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-samples", "number of points to evaluate per period", 10);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "save-period", "save time-evolved state every n periods, save only final step if negative", 1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "save-period", "save time-evolved state every n periods, save only final step if negative, save nothing if 0", 0);
   
   (*SystemGroup) += new SingleIntegerOption  ('\n', "truncate-basis", "if positive, use a truncated instantaneous basis with this number of states. Vector names are guessed from the name of the initial state. A path to the energy spectra and to the vectors has to be provided", 0);
   (*SystemGroup) += new SingleStringOption ('\n', "energy-path", "name of the folder where energy spectra are stored for truncated time-evolution");
@@ -156,15 +155,13 @@ int main(int argc, char** argv)
   int NbrPeriods = Manager.GetInteger("nbr-periods");
   int SavePeriod = Manager.GetInteger("save-period");
   double TimePeriod = 1.0 / ((double) Omega);
+//   double TimePeriod = 2.0 * M_PI / ((double) Omega);
   double TimeStep = TimePeriod / ((double) NbrSamples);
   
   bool ResumeFlag = false;
-  bool StoreHamiltonians = Manager.GetBoolean("store-hamiltonian");
   int NbrStoredHamiltonians = Manager.GetInteger("nbr-hamiltonian");
-  if (NbrStoredHamiltonians < 0)
+  if (NbrStoredHamiltonians == 0)
     NbrStoredHamiltonians = NbrSamples;
-  if (StoreHamiltonians == false)
-    NbrStoredHamiltonians = 0;
   
   int StepI;
   
@@ -225,6 +222,7 @@ int main(int argc, char** argv)
     return -1;
   }
   
+  cout << NbrCellX << " " << NbrCellY << " " << UnitCellX << " " << UnitCellY << " " << FluxPerCell << " " << GammaX << " " << GammaY << endl;
   
   
   Abstract2DTightBindingModel *TightBindingModel;
@@ -331,7 +329,7 @@ int main(int argc, char** argv)
   }
 
   
-  ComplexVector TmpInitialState (Space->GetHilbertSpaceDimension());
+  ComplexVector TmpInitialState;
   ComplexVector InputState;
   if (InputState.ReadVector(StateFileName) == false)
   {
@@ -343,7 +341,8 @@ int main(int argc, char** argv)
     cout << "error: vector and Hilbert-space have unequal dimensions " << InputState.GetVectorDimension() << " "<< Space->GetHilbertSpaceDimension() << endl;
     return -1;
   }
-  TmpInitialState = InputState;
+  
+  TmpInitialState.Copy(InputState);
   
   
 
@@ -387,8 +386,10 @@ int main(int argc, char** argv)
   char * ParameterString = new char [512];
   sprintf(ParameterString,"E_%f_omega_%f_nbrSamples_%d_nbrPeriods_%d", EField, Manager.GetDouble("omega"), NbrSamples, NbrPeriods);
   char * EnergyNameFile = 0;
+  char* EnergyNameFile0 = 0;
   char* NormFileName = 0;
   ofstream FileEnergy;
+  ofstream FileEnergy0;
   ofstream FileNorm;
   if ((Manager.GetBoolean("compute-energy")) || (TruncationIndex > 0))
     {
@@ -407,14 +408,22 @@ int main(int argc, char** argv)
       FileEnergy.precision(14);
       FileEnergy << "# t E "<< endl;
     }
-  if (TruncationIndex > 0)
-  {
+ 
+    EnergyNameFile0 = new char[512];
+    sprintf (EnergyNameFile0, "%s_%s_H0_energy.dat", OutputNamePrefix, ParameterString);
+    FileEnergy0.open(EnergyNameFile0, ios::out);
+    FileEnergy0.precision(14);
+    FileEnergy0 << "# t E "<< endl;
+    
     NormFileName = new char[512];
-    sprintf (NormFileName, "%s_truncatedbasis_%d_%s_norm.dat", OutputNamePrefix, TruncationIndex, ParameterString);
+    if (TruncationIndex > 0)
+      sprintf (NormFileName, "%s_truncatedbasis_%d_%s_norm.dat", OutputNamePrefix, TruncationIndex, ParameterString);
+    else
+      sprintf (NormFileName, "%s_%s_overlap.dat", OutputNamePrefix,ParameterString);
     FileNorm.open(NormFileName, ios::out);
     FileNorm.precision(14);
-    FileNorm << "# t Norm "<< endl;
-  }
+    FileNorm << "# t Norm " << endl;
+  
   
   double FinalNorm = 1.0;
   int NbrSteps = NbrSamples * NbrPeriods;
@@ -424,6 +433,7 @@ int main(int argc, char** argv)
   double FluxDensity =  (((double) FluxPerCell)/( (double) (UnitCellX*UnitCellY)));
   double PhaseTranslationX = 2.0* M_PI * FluxDensity * UnitCellX;
   double PhaseTranslationY = 0.0;
+  Complex TmpEnergy;
   
   HermitianMatrix* TightBindingMatrix = new HermitianMatrix [NbrSamples];
   AbstractQHEHamiltonian** Hamiltonian;
@@ -438,6 +448,9 @@ int main(int argc, char** argv)
       
       TmpGammaX = GammaX + Sign * EField * cos(2.0 * M_PI * Omega * t) / (Omega * M_PI);
       TmpGammaY = GammaY - EField * sin(2.0 * M_PI * Omega * t) / (Omega * M_PI);
+      
+//       TmpGammaX = GammaX + Sign * EField * cos(Omega * t) / (Omega * M_PI);
+//       TmpGammaY = GammaY - EField * sin(Omega * t) / (Omega * M_PI);
       
       TightBindingModel = new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, TmpGammaX, TmpGammaY, Architecture.GetArchitecture(), true, false);
       TightBindingMatrix[i] = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
@@ -472,7 +485,8 @@ int main(int argc, char** argv)
     delete[] TightBindingMatrix;
   
   int TmpIndex;
-  for(int i = StepI + 1 ; i < NbrSteps; i++)
+  Complex TmpOverlap;
+  for(int i = StepI + 1; i < NbrSteps; i++)
     {
       t = i * TimeStep;
       TmpIndex = i % NbrSamples;
@@ -488,7 +502,7 @@ int main(int argc, char** argv)
       double TmpNorm = 1.0;
       cout << "Computing state " << (i + 1) << "/" <<  NbrSteps << " at t = " << t << endl;
       
-      if (NbrStoredHamiltonians < NbrSamples)
+      if (TmpIndex >= NbrStoredHamiltonians)
       {
 	if (SpinFlag)
 	{
@@ -509,9 +523,9 @@ int main(int argc, char** argv)
 	    Hamiltonian[NbrStoredHamiltonians] = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, NbrSites, TightBindingMatrix[TmpIndex], DensityDensityInteraction, Architecture.GetArchitecture(), Memory);
 	  }
 	}
-	TmpIndex = 0;
+	TmpIndex = NbrStoredHamiltonians;
       }
-      
+	  
       if (TruncationIndex == 0)
       {
 	TmpExpansionOrder = 0;
@@ -534,7 +548,6 @@ int main(int argc, char** argv)
       {
 	int TmpIndex = i;
 	TmpState1.ClearVector();
-	Complex TmpOverlap;
 	for (int j = 0; j < TruncationIndex; ++j)
 	{
 	  TmpState.ReadVector(EigenstateFile[TmpIndex][j]);
@@ -553,7 +566,7 @@ int main(int argc, char** argv)
 	TmpInitialState.Normalize();
       }
 
-      if ((((i % SavePeriod) == 0) && (SavePeriod >= 0)) || ((SavePeriod < 0) && (i >= NbrSteps - NbrSamples)))
+      if ((SavePeriod != 0) && ((((i % SavePeriod) == 0) && (SavePeriod > 0)) || ((SavePeriod < 0) && (i >= NbrSteps - NbrSamples))))
       {
 	char* OutputName = new char [strlen(OutputNamePrefix)+ strlen(ParameterString) + 32];
 	if (TruncationIndex == 0)
@@ -570,19 +583,36 @@ int main(int argc, char** argv)
 	  Operation.ApplyOperation(Architecture.GetArchitecture());
 	  Complex Energy = (TmpInitialState) * (TmpState);
 	  FileEnergy <<  (TimeStep * i) << " " << Energy.Re << endl;
-	  cout << "E = " << Energy << endl;
+	  cout << "E(t) = " << Energy << endl;
+// 	  if (i == 0)
+// 	  {
+// 	    HermitianMatrix HamiltonianMatrix (Space->GetHilbertSpaceDimension(), true);
+// 	    Hamiltonian[i]->GetHamiltonian(HamiltonianMatrix);
+// 	    cout << i << " " <<  HamiltonianMatrix << endl;
+// 	  }
+// 	  
+	  VectorHamiltonianMultiplyOperation Operation1 (Hamiltonian[0], (&TmpInitialState), (&TmpState));
+	  Operation1.ApplyOperation(Architecture.GetArchitecture());
+	  TmpEnergy = TmpInitialState * TmpState;
+	  FileEnergy0 << (TimeStep * i) << " " << (TmpEnergy.Re) << endl;
+	  cout << "E_0 = " << (TmpEnergy.Re) << endl;
+	  
 	}
       
-      if (NbrStoredHamiltonians < NbrSamples)
+      TmpOverlap = InputState * TmpInitialState;
+      cout << TmpOverlap << endl;
+      FileNorm << (TimeStep * i) << " " << (sqrt(TmpOverlap.Re*TmpOverlap.Re + TmpOverlap.Im*TmpOverlap.Im)) << endl;
+      
+      
+      
+      if (TmpIndex == NbrStoredHamiltonians)
 	delete  Hamiltonian[NbrStoredHamiltonians];
     }  
     
-  if (StoreHamiltonians)
-  {
-    for (int i = 0; i < NbrStoredHamiltonians; ++i)
-      delete Hamiltonian[i];
+  
+   for (int i = 0; i < NbrStoredHamiltonians; ++i)
+     delete Hamiltonian[i];
     delete[] Hamiltonian;
-  }
   
   delete[] OutputNamePrefix;
   delete[]  ParameterString;
@@ -591,6 +621,8 @@ int main(int argc, char** argv)
     delete[] EnergyNameFile;
   if (NormFileName != 0)
     delete[] NormFileName;
+  if (EnergyNameFile0 != 0)
+    delete[] EnergyNameFile0;
     
   return 0;
 }
