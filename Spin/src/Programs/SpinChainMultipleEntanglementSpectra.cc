@@ -103,6 +103,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "la", "subsystem size (negative if half of the system has to be considered)", -1);
   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");  
   (*OutputGroup) += new BooleanOption ('\n', "show-entropies", "show the entangelement entropy and trace of the reduced density matrix for each state");
+  (*OutputGroup) += new BooleanOption ('\n', "export-entropies", "export in a text file the entangelement entropy and trace of the reduced density matrix for each state");
   (*OutputGroup) += new BooleanOption ('\n', "counting", "count the number of non zero eigenvalues for each entanglement spectrum");
   (*OutputGroup) += new SingleDoubleOption ('\n', "counting-error", "error below which an eigenvalue is consideredto be eual to zero", 1e-28);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -253,6 +254,8 @@ int main(int argc, char** argv)
   char* TmpExtenstion = new char[32];
   sprintf(TmpExtenstion, "_la_%d.full.ent", SubsystemSize);
   char* DensityMatrixFileName = ReplaceExtensionToFileName(Manager.GetString("multiple-states"), ".mat", TmpExtenstion);
+  sprintf(TmpExtenstion, "_la_%d.ent", SubsystemSize);
+  char* EntropyFileName = ReplaceExtensionToFileName(Manager.GetString("multiple-states"), ".mat", TmpExtenstion);
 
   int MinIndex = Manager.GetInteger("min-multiplestates");
   int MaxIndex = Manager.GetInteger("max-multiplestates");
@@ -628,6 +631,13 @@ int main(int argc, char** argv)
     {
       cout << "# state_index entropy trace" << endl;
     }
+  if (Manager.GetBoolean("export-entropies"))
+    {
+      ofstream FileEntropy;
+      FileEntropy.open(EntropyFileName, ios::binary | ios::out);
+      FileEntropy << "# Index S_A Tr_A(rho_A)" << endl;
+      FileEntropy.close();
+    }
   for (int Index = MinIndex; Index <= MaxIndex; ++Index)
     {
       double TmpEntanglementEntropy = 0.0;
@@ -648,7 +658,17 @@ int main(int argc, char** argv)
 	    }
 	}
       if (Manager.GetBoolean("show-entropies"))
-	cout << Index << " " << TmpEntanglementEntropy << " " << TmpTrace << endl;
+	{
+	  cout << Index << " " << TmpEntanglementEntropy << " " << TmpTrace << endl;
+	}
+      if (Manager.GetBoolean("export-entropies"))
+	{
+	  ofstream FileEntropy;
+	  FileEntropy.open(EntropyFileName, ios::binary | ios::out | ios::app);
+	  FileEntropy.precision(14);
+	  FileEntropy << Index << " " << TmpEntanglementEntropy << " " << TmpTrace << endl;
+	  FileEntropy.close();
+	}
     }
   File.close();
 
