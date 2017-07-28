@@ -65,7 +65,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption ('\n', "nbr-fluxquanta", "set the total number of flux quanta and deduce the root partition instead of using the reference-file", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "row-index", "manually specify the MPS row index (overrides default)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "column-index", "manually specify the MPS column index (overrides default)", -1);
-  (*SystemGroup) += new BooleanOption ('n', "site-dependent", "use the site dependent version of the MPS");
+  (*SystemGroup) += new BooleanOption ('\n', "site-dependent", "use the site dependent version of the MPS");
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "precalculation-blocksize", " indicates the size of the block (i.e. number of B matrices) for precalculations", 1);
   (*OutputGroup) += new BooleanOption ('n', "normalize-sphere", "express the MPS in the normalized sphere basis");
@@ -243,7 +243,15 @@ int main(int argc, char** argv)
     }
   else
     {
-      SparseRealMatrix** SparseBMatrices = MPSMatrix->GetSiteDependentMatrices(NbrFluxQuanta);
+      SparseRealMatrix** SparseBMatrices = 0;
+      if (Manager.GetBoolean("normalize-sphere"))
+	{
+	  SparseBMatrices = MPSMatrix->GetSphereSiteDependentMatrices(NbrFluxQuanta);
+	}
+      else
+	{
+	  SparseBMatrices = MPSMatrix->GetSiteDependentMatrices(NbrFluxQuanta);
+	}
       if (SparseBMatrices == 0)
 	{
 	  return 0;
@@ -260,15 +268,22 @@ int main(int argc, char** argv)
 	  return 0;
 	}
       cout << "B matrix size = " << SparseBMatrices[0][TmpIndex].GetNbrRow() << "x" << SparseBMatrices[0][TmpIndex].GetNbrColumn() << endl;
-      
+      Space->CreateStateFromSiteDependentMPSDescription(SparseBMatrices, State, MPSRowIndex, MPSColumnIndex, 0l, Space->GetHilbertSpaceDimension());
     }
   if (Architecture.GetArchitecture()->CanWriteOnDisk() == true)
     {
       if (Manager.GetBoolean("normalize-sphere"))
 	{
-	  if (NbrQuasiholes == 0)
+	  if (Manager.GetBoolean("site-dependent") == false)
 	    {
-	      Space->ConvertFromUnnormalizedMonomial(State);
+	      if (NbrQuasiholes == 0)
+		{
+		  Space->ConvertFromUnnormalizedMonomial(State);
+		}
+	    }
+	  else
+	    {
+	      State /= State.Norm();
 	    }
 	}
       else

@@ -7773,19 +7773,30 @@ void FermionOnSphere::CreateStateFromSiteDependentMPSDescription (SparseRealMatr
       if (((i - initialIndex) % 10000) == 0)
 	cout << "Completed " << (i - initialIndex) << " out of " << (MaxIndex - initialIndex) << endl; 
       TmpVector.ClearVector();
-      TmpVector[mPSRowIndex] = 1.0;
+      TmpVector[mPSColumnIndex] = 1.0;
       unsigned long TmpStateDescription = this->StateDescription[i];
       for (int j = this->LzMax; j >= 0; --j)
 	{
 	  if (((TmpStateDescription >> j) & 0x1ul) != 0x0ul)
-	    {
+	    {	      
 	      bMatrices[j][1].RightMultiply(TmpVector, TmpVector2);
 	      RealVector TmpVector3 = TmpVector;
 	      TmpVector = TmpVector2;
 	      TmpVector2 = TmpVector3;
 	    }
+	  else
+	    {
+	      if (bMatrices[j][0].GetNbrRow() > 0)
+		{
+		  bMatrices[j][0].RightMultiply(TmpVector, TmpVector2);
+		  RealVector TmpVector3 = TmpVector;
+		  TmpVector = TmpVector2;
+		  TmpVector2 = TmpVector3;		  
+		}
+	    }
+
 	} 
-      state[i] = TmpVector[mPSColumnIndex];
+      state[i] = TmpVector[mPSRowIndex];
     }
 }
 

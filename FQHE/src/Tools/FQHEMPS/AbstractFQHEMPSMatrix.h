@@ -132,6 +132,18 @@ class AbstractFQHEMPSMatrix
   // return value = pointer to the array of matrices (first entry being the orbital index, the second being the occupation number)
   virtual SparseComplexMatrix** GetSiteDependentComplexMatrices(int nbrFluxQuanta);
 
+  // get the array where the site-dependent matrices for the geometry are stored
+  //
+  // nbrFluxQuanta = number of flux quanta in the finite size system
+  // return value = pointer to the array of matrices (first entry being the orbital index, the second being the occupation number)
+  virtual SparseRealMatrix** GetSphereSiteDependentMatrices(int nbrFluxQuanta);
+
+  // get the array where the site-dependent matrices for the geometry are stored
+  //
+  // nbrFluxQuanta = number of flux quanta in the finite size system
+  // return value = pointer to the array of matrices (first entry being the orbital index, the second being the occupation number)
+  virtual SparseComplexMatrix** GetSphereSiteDependentComplexMatrices(int nbrFluxQuanta);
+
   // get the edge matrix for localized quasiholes, with normal ordering
   //
   // nbrQuasiholes = number of quasiholes

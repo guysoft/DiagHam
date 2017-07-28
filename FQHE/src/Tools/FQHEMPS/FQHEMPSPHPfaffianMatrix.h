@@ -51,6 +51,12 @@ class FQHEMPSPHPfaffianMatrix : public FQHEMPSClustered2RMatrix
   // shift to apply to the p level to get a positive index
   int PLevelShift;
 
+  // path to the CFT data (required when using site dependent MPS)
+  char *CFTDirectory;
+  // pointer to the architecture (required when using site dependent MPS)
+  AbstractArchitecture* Architecture;
+
+
  public:
   
   // default constructor 
@@ -127,6 +133,12 @@ class FQHEMPSPHPfaffianMatrix : public FQHEMPSClustered2RMatrix
   // minQ = reference on the lowest charge index
   // maxQ = reference on the lowest charge index
   virtual void ComputeChargeIndexRange(int pLevel, int cftSector, int& minQ, int& maxQ);
+
+  // get the array where the site-dependent matrices for the geometry are stored
+  //
+  // nbrFluxQuanta = number of flux quanta in the finite size system
+  // return value = pointer to the array of matrices (first entry being the orbital index, the second being the occupation number)
+  virtual SparseRealMatrix** GetSphereSiteDependentMatrices(int nbrFluxQuanta);
 
  protected:
 

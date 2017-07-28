@@ -36,6 +36,7 @@
 #include "Matrix/RealMatrix.h"
 #include "Matrix/ComplexMatrix.h"
 #include "GeneralTools/Endian.h"
+#include "MathTools/BinomialCoefficients.h"
 
 #include <fstream>
 
@@ -616,5 +617,57 @@ SparseComplexMatrix** AbstractFQHEMPSMatrix::GetSiteDependentComplexMatrices(int
 {
   cout << "site dependent complex MPS is not available for " << this->GetName() << endl;
   return 0;
+}
+
+// get the array where the site-dependent matrices for the geometry are stored
+//
+// nbrFluxQuanta = number of flux quanta in the finite size system
+// return value = pointer to the array of matrices (first entry being the orbital index, the second being the occupation number)
+
+SparseRealMatrix** AbstractFQHEMPSMatrix::GetSphereSiteDependentMatrices(int nbrFluxQuanta)
+{
+  BinomialCoefficients TmpCoef (nbrFluxQuanta);
+  SparseRealMatrix** TmpMatrices = new SparseRealMatrix*[nbrFluxQuanta + 1];
+  SparseRealMatrix* TmpSiteIndependentMatrices = this->GetMatrices();
+  for (int i = 0; i <= nbrFluxQuanta; ++i)
+    {
+      TmpMatrices[i] = new  SparseRealMatrix[this->NbrBMatrices];
+      double TmpFactorialCoefficent = 1.0;
+      TmpMatrices[i][0].Copy(TmpSiteIndependentMatrices[0]);
+      for (int j = 1; j < this->NbrBMatrices; ++j)
+	{
+	  TmpMatrices[i][j].Copy(TmpSiteIndependentMatrices[j]);
+	  TmpFactorialCoefficent /= sqrt((double) j);
+	  TmpMatrices[i][j] *= (pow(TmpCoef.GetNumericalCoefficient(nbrFluxQuanta, i), -0.5 * ((double) j))
+				* TmpFactorialCoefficent);
+	}
+    }
+  return TmpMatrices;
+}
+
+// get the array where the site-dependent matrices for the geometry are stored
+//
+// nbrFluxQuanta = number of flux quanta in the finite size system
+// return value = pointer to the array of matrices (first entry being the orbital index, the second being the occupation number)
+
+SparseComplexMatrix** AbstractFQHEMPSMatrix::GetSphereSiteDependentComplexMatrices(int nbrFluxQuanta)
+{
+  BinomialCoefficients TmpCoef (nbrFluxQuanta);
+  SparseComplexMatrix** TmpMatrices = new SparseComplexMatrix*[nbrFluxQuanta + 1];
+  SparseComplexMatrix* TmpSiteIndependentMatrices = this->GetComplexMatrices();
+  for (int i = 0; i <= nbrFluxQuanta; ++i)
+    {
+      TmpMatrices[i] = new  SparseComplexMatrix[this->NbrBMatrices];
+      double TmpFactorialCoefficent = 1.0;
+      TmpMatrices[i][0].Copy(TmpSiteIndependentMatrices[0]);
+      for (int j = 1; i < this->NbrBMatrices; ++j)
+	{
+	  TmpMatrices[i][j].Copy(TmpSiteIndependentMatrices[j]);
+	  TmpFactorialCoefficent /= sqrt((double) j);
+	  TmpMatrices[i][j] *= (pow(TmpCoef.GetNumericalCoefficient(nbrFluxQuanta, i), 0.5 * ((double) j))
+				* TmpFactorialCoefficent);
+	}
+    }
+  return TmpMatrices;
 }
 
