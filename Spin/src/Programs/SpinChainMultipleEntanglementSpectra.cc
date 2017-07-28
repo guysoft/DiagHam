@@ -60,6 +60,7 @@
 
 
 using std::cout;
+using std::cin;
 using std::endl;
 using std::ofstream;
 using std::ifstream;
@@ -548,7 +549,7 @@ int main(int argc, char** argv)
       EntanglementSpectra[(TmpSzA - MinSzA) / 2] = new double*[NbrStates];
     }
   int* EntanglementSpectrumDimension = new int[((MaxSzA - MinSzA) / 2) + 1];
-  
+
   timeval TotalStartingTime;
   timeval TotalEndingTime;
   if ((Manager.GetBoolean("complex") == false) && (Momentum2DFlag == false))

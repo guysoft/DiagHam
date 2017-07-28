@@ -143,8 +143,8 @@ Spin1Chain::Spin1Chain (int chainLength, int sz, int memorySize)
 	  cout << (UsedMemory >> 10) << "ko" <<  endl;
       else
 	cout << UsedMemory << endl;
-      UsedMemory = this->ChainLength * sizeof(int);
-      UsedMemory += this->ChainLength * this->LookUpTableMemorySize * sizeof(int);
+      UsedMemory = 2 * this->ChainLength * sizeof(int);
+      UsedMemory += 2 * this->ChainLength * (this->LookUpTableMemorySize + 1) * sizeof(int);
       cout << "memory requested for lookup table = ";
       if (UsedMemory >= 1024)
 	if (UsedMemory >= 1048576)
@@ -203,6 +203,10 @@ Spin1Chain::~Spin1Chain ()
   if ((this->ChainLength != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true) && (this->LargeHilbertSpaceDimension != 0l))
     {
       delete[] this->StateDescription;
+      delete[] this->LookUpTableShift;
+      int TmpMaxBitPosition = 2 * this->ChainLength;
+      for (int i = 0; i < TmpMaxBitPosition; ++i)
+	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;
     }
 }
@@ -217,6 +221,10 @@ Spin1Chain& Spin1Chain::operator = (const Spin1Chain& chain)
   if ((this->ChainLength != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->StateDescription;
+      delete[] this->LookUpTableShift;
+      int TmpMaxBitPosition = 2 * this->ChainLength;
+      for (int i = 0; i < TmpMaxBitPosition; ++i)
+	this->LookUpTable[i];
       delete[] this->LookUpTable;
     }  
   this->Flag = chain.Flag;
@@ -374,7 +382,9 @@ void Spin1Chain::GenerateLookUpTable(unsigned long memory)
   this->LookUpTable = new int* [TmpMaxBitPosition];
   this->LookUpTableShift = new int [TmpMaxBitPosition];
   for (int i = 0; i < TmpMaxBitPosition; ++i)
-    this->LookUpTable[i] = new int [this->LookUpTableMemorySize + 1];
+    {
+      this->LookUpTable[i] = new int [this->LookUpTableMemorySize + 1];
+    }
   int CurrentMaxMomentum = TmpMaxBitPosition;
   while (((this->StateDescription[0] >> CurrentMaxMomentum) == 0x0ul) && (CurrentMaxMomentum > 0))
     --CurrentMaxMomentum;

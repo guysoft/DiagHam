@@ -179,10 +179,10 @@ bool SpinChainMultipleEntanglementSpectrumOperation::RawApplyOperation()
       for (int Index = this->FirstState; Index < LastState; ++Index)
 	{
 	  RealMatrix PartialEntanglementMatrix;
-	  if (this->SubsystemSites == 0)
-	    PartialEntanglementMatrix = this->Space->EvaluatePartialEntanglementMatrix(this->SubsystemSize, this->SubsystemSz, this->RealEigenstates[Index]);
-	  else
-	    PartialEntanglementMatrix = this->Space->EvaluatePartialEntanglementMatrix(this->SubsystemSites, this->SubsystemSize, this->SubsystemSz, this->RealEigenstates[Index]);
+ 	  if (this->SubsystemSites == 0)
+ 	    PartialEntanglementMatrix = this->Space->EvaluatePartialEntanglementMatrix(this->SubsystemSize, this->SubsystemSz, this->RealEigenstates[Index]);
+ 	  else
+ 	    PartialEntanglementMatrix = this->Space->EvaluatePartialEntanglementMatrix(this->SubsystemSites, this->SubsystemSize, this->SubsystemSz, this->RealEigenstates[Index]);
 	  if ((PartialEntanglementMatrix.GetNbrRow() > 1) && (PartialEntanglementMatrix.GetNbrColumn() > 1))
 	    {
 	      double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition();

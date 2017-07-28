@@ -241,6 +241,10 @@ Spin1ChainWithTranslations::~Spin1ChainWithTranslations ()
     {
       if (this->LargeHilbertSpaceDimension > 0l)
 	{
+	  delete[] this->LookUpTableShift;
+	  int TmpMaxBitPosition = 2 * this->ChainLength;
+	  for (int i = 0; i < TmpMaxBitPosition; ++i)
+	    delete[] this->LookUpTable[i];
 	  delete[] this->LookUpTable;
 	  delete[] this->StateDescription;
 	}
