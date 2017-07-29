@@ -137,7 +137,7 @@ int main(int argc, char** argv)
   bool StatisticFlag;
   bool GutzwillerFlag;
   bool TranslationFlag;
-  bool SpinFlag;
+  bool SpinFlag = false;
   bool SzSymmetryFlag = false;
   int Sz;
   int SzSymmetry;
@@ -202,6 +202,8 @@ int main(int argc, char** argv)
       cout << "fermion" << endl;
     else
       cout << "boson" << endl;
+    if (SpinFlag)
+      cout << "spin" << endl;
 //   if (FTITimeEvolutionFindSystemInfoFromVectorFileName(StateFileName, NbrSamples, NbrPeriods, Omega, EField))
 //   {
 //     ResumeFlag = true;
@@ -470,6 +472,8 @@ int main(int argc, char** argv)
 	{
 	  if (TranslationFlag)
 	  {
+	    cout << NbrParticles << " " << NbrSites << " " << Kx << " " << NbrCellX << " " << Ky << " " << NbrCellY << endl;
+	    
 	    Hamiltonian[i] = new ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian (Space, NbrParticles, NbrSites, Kx,  NbrCellX, Ky,  NbrCellY, PhaseTranslationX, PhaseTranslationY, TightBindingMatrix[i], DensityDensityInteraction, Architecture.GetArchitecture(), Memory);
 	  }
 	  else
