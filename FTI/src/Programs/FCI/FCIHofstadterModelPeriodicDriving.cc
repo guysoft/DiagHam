@@ -161,6 +161,8 @@ int main(int argc, char** argv)
   int NbrStoredHamiltonians = Manager.GetInteger("nbr-hamiltonian");
   if (NbrStoredHamiltonians == 0)
     NbrStoredHamiltonians = NbrSamples;
+  if (NbrStoredHamiltonians < 0)
+    NbrStoredHamiltonians = 0;
   
   int StepI;
   
