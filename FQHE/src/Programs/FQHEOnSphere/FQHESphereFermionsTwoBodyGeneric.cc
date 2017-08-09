@@ -1,5 +1,6 @@
 #include "HilbertSpace/ParticleOnSphereManager.h"
 #include "HilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/FermionOnSphereFull.h"
 #include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
 #include "Hamiltonian/ParticleOnSphereGenericHamiltonian.h"
@@ -35,12 +36,13 @@
 #include <math.h>
 #include <sys/time.h>
 #include <stdio.h>
-
+#include <fstream>
 
 using std::ios;
 using std::cout;
 using std::endl;
 using std::ofstream;
+
 
 
 int main(int argc, char** argv)
@@ -69,7 +71,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
+  (*SystemGroup) += new BooleanOption  ('\n', "general-onebody", "add a general one-body potential (of type c_m^+ c_n, for all combinations of m, n); should be used with option all-lz");
+  (*SystemGroup) += new  SingleStringOption ('\n', "onebody-potential", "file specifying general one-body potential (each row gives m, n, U_{mn})", "unknown");
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
+  (*SystemGroup) += new BooleanOption  ('\n', "all-lz", "use full Hilbert space (all Lz sectors)");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
   (*SystemGroup) += new BooleanOption ('\n', "l2-only", "compose Hamiltonian only of L2 terms");
@@ -169,6 +174,66 @@ int main(int argc, char** argv)
 	}
     }
 
+  int* OneBodyMValues = 0;
+  int* OneBodyNValues = 0;
+  double* OneBodyPotentialValues = 0;
+  int NbrGeneralOneBodyPotentials;
+  bool HaveGeneralOneBodyPotentials = Manager.GetBoolean("general-onebody");
+
+  if (HaveGeneralOneBodyPotentials)
+   {
+     cout << "Using general one-body pseudopotentials U_{mn} c_m^+ c_n " << endl;
+     cout << "Warning: should be used with all-lz option because the potential does not conserve Lz!" << endl;
+ 
+     std::ifstream infile(Manager.GetString("onebody-potential"));
+     if (infile.is_open()) 
+      {
+        int m1, m2;
+        double Um1m2Re, Um1m2Im;
+        int NbrTerms = 0; 
+        while (infile >> m1 >> m2 >> Um1m2Re >> Um1m2Im)
+         {  
+           if (fabs(Um1m2Re) > 1e-12)
+             NbrTerms++; 
+	   if (fabs(Um1m2Im) > 1e-12)
+  	     {
+               cout << "One body potential has imaginary part... exiting." << endl;
+	       exit(1);
+             }
+         }
+        //cout << "Number of one-body terms: " << NbrTerms << endl;
+
+        OneBodyMValues = new int[NbrTerms];
+        OneBodyNValues = new int[NbrTerms];
+        OneBodyPotentialValues = new double[NbrTerms];
+        NbrGeneralOneBodyPotentials = NbrTerms;
+
+	NbrTerms = 0;
+        infile.clear();
+        infile.seekg(0, ios::beg);
+        while (infile >> m1 >> m2 >> Um1m2Re >> Um1m2Im)
+         {     
+	   if (fabs(Um1m2Re) > 1e-12)
+            {
+              OneBodyMValues[NbrTerms] = m1;
+              OneBodyNValues[NbrTerms] = m2;
+              OneBodyPotentialValues[NbrTerms] = Um1m2Re;
+              NbrTerms++; 
+            }
+	   if (fabs(Um1m2Im) > 1e-12)
+  	     {
+               cout << "One body potential has imaginary part... exiting." << endl;
+	       exit(1);
+             }
+         }
+   
+        //for (int i = 0; i < NbrTerms; i++)
+        //  cout << OneBodyMValues[i] << " " << OneBodyNValues[i] << " : " << OneBodyPotentialValues[i] << " ; ";
+        //cout << endl; 
+      }
+    infile.close();
+   }
+
 
   char* OutputNameLz = new char [256 + strlen(InteractionName)];
   char* ExtraTerms = new char[50];
@@ -196,10 +261,22 @@ int main(int argc, char** argv)
 	  Max = L + (2 * (NbrLz - 1));
 	}
     }
+
+  if (Manager.GetBoolean("all-lz")) 
+   {
+     Max = L;
+   }
+
   for (; L <= Max; L += 2)
     {
       cout << "Lz="<<L<<endl;
-      ParticleOnSphere* Space = (FermionOnSphere*) ParticleManager.GetHilbertSpace(L);
+      ParticleOnSphere* Space;
+
+      if (Manager.GetBoolean("all-lz")) 
+          Space = new FermionOnSphereFull(NbrParticles, LzMax);
+      else
+          Space = (FermionOnSphere*) ParticleManager.GetHilbertSpace(L);
+
       if (Space==0) return 0; // happens if we wrote the Hilbert space to disk, for instance!
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       AbstractQHEHamiltonian* Hamiltonian = 0;
@@ -215,21 +292,31 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  if (OneBodyPotentials == 0)
-	    Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrParticles, LzMax, PseudoPotentials,
+	  if (HaveGeneralOneBodyPotentials)
+              Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrParticles, LzMax, PseudoPotentials, OneBodyPotentials,
+                                                                 NbrGeneralOneBodyPotentials, OneBodyMValues, OneBodyNValues, OneBodyPotentialValues,
 								 Manager.GetDouble("l2-factor"),
 								 Architecture.GetArchitecture(), 
 								 Memory, DiskCacheFlag,
 								 LoadPrecalculationFileName,
 								 !Manager.GetBoolean("no-hermitian"));
-	  else
-	    Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrParticles, LzMax, PseudoPotentials, OneBodyPotentials,
+          else
+           { 
+  	     if (OneBodyPotentials == 0)
+	       Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrParticles, LzMax, PseudoPotentials,
 								 Manager.GetDouble("l2-factor"),
 								 Architecture.GetArchitecture(), 
 								 Memory, DiskCacheFlag,
 								 LoadPrecalculationFileName,
 								 !Manager.GetBoolean("no-hermitian"));
-	  
+	    else	
+              Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrParticles, LzMax, PseudoPotentials, OneBodyPotentials,
+								 Manager.GetDouble("l2-factor"),
+								 Architecture.GetArchitecture(), 
+								 Memory, DiskCacheFlag,
+								 LoadPrecalculationFileName,
+								 !Manager.GetBoolean("no-hermitian"));
+          }	  
 	  Shift = - 0.5 * ((double) (NbrParticles * NbrParticles)) / (0.5 * ((double) LzMax));
 	}
       
@@ -311,6 +398,12 @@ int main(int argc, char** argv)
 	FirstRun = false;
     }
   delete [] PseudoPotentials;
+  if (HaveGeneralOneBodyPotentials)
+   {
+     delete[] OneBodyMValues;
+     delete[] OneBodyNValues;
+     delete[] OneBodyPotentialValues;
+   }
   delete [] OutputNameLz;
   delete [] ExtraTerms;
   return 0;

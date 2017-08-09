@@ -236,7 +236,7 @@ FermionOnSphereTwoLandauLevels::FermionOnSphereTwoLandauLevels (int nbrFermionsU
   this->MaximumSignLookUp = 16;
   this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermionsUp, this->NbrFermionsDown, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1);
   cout << this->LargeHilbertSpaceDimension<<endl;
-	exit(2);
+
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
@@ -244,7 +244,12 @@ FermionOnSphereTwoLandauLevels::FermionOnSphereTwoLandauLevels (int nbrFermionsU
   this->Flag.Initialize();
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateHighestBit = new int [this->HilbertSpaceDimension];  
-  int TmpDimension = this->GenerateFullStates(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 0);
+  int TmpDimension = this->GenerateStates(this->NbrFermionsUp, this->NbrFermionsDown, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 0);
+  cout << "TmpDim= " << TmpDimension << endl;
+  for (int i = 0; i < TmpDimension; ++i)
+    this->PrintState(cout, i) << endl;
+  exit(2);
+
   if (TmpDimension != this->HilbertSpaceDimension)
     {
       cout << "Mismatch in State-count and State Generation in FermionOnSphereTwoLandauLevels! " << this->HilbertSpaceDimension << " " << TmpDimension  << endl;
@@ -1289,11 +1294,14 @@ long FermionOnSphereTwoLandauLevels::ShiftedEvaluateHilbertSpaceDimension(int nb
   if ((lzMax <= (this->LzMaxUp + this->LzShiftUp)) && (lzMax >= this->LzShiftUp))
     {
       if ((lzMax <= (this->LzMaxDown + this->LzShiftDown)) && (lzMax >= this->LzShiftDown))
-	       Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrFermionsUp - 1, nbrFermionsDown - 1, lzMax - 1, totalLz - (2 * lzMax));
+	 Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrFermionsUp - 1, nbrFermionsDown - 1, lzMax - 1, totalLz - (2 * lzMax));
+
       Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrFermionsUp - 1, nbrFermionsDown, lzMax - 1, totalLz - lzMax);
     }
+
   if ((lzMax <= (this->LzMaxDown + this->LzShiftDown)) && (lzMax >= this->LzShiftDown))
     Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrFermionsUp, nbrFermionsDown - 1, lzMax - 1, totalLz - lzMax);
+
   Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrFermionsUp, nbrFermionsDown, lzMax- 1, totalLz);
 
   return Tmp;

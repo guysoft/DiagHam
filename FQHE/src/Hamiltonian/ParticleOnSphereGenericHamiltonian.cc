@@ -232,6 +232,155 @@ ParticleOnSphereGenericHamiltonian::ParticleOnSphereGenericHamiltonian(ParticleO
     }
 }
 
+// constructor with general one body terms c_m^+ c_n
+//
+// particles = Hilbert space associated to the system
+// nbrParticles = number of particles
+// lzmax = maximum Lz value reached by a particle in the state
+// architecture = architecture to use for precalculation
+// pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction)
+// oneBodyPotentials = array with the coefficient in front of each one body term (ordered such that the first element corresponds to the one of a+_-s a_-s)
+// nbrGeneralOneBodyPotentials = number of general one-body potentials c_m^+ c_n
+// oneBodyMValues = array with indices m of c_m^+
+// oneBodyNValues = array with indicies n of c_n
+// oneBodyPotentialValues = array with values U_{mn} in front of c_m^+ c_n
+// l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
+// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+// onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
+// precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+// hermitianFlag = flag to indicate if hermitian symmetry of Hamiltonian shall be used
+ParticleOnSphereGenericHamiltonian::ParticleOnSphereGenericHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
+								       double* pseudoPotential, double* oneBodyPotentials, 
+                                                                       int nbrGeneralOneBodyPotentials, int* oneBodyMValues, int* oneBodyNValues, double* oneBodyPotentialValues, 
+                                                                       double l2Factor,
+								       AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag,
+								       char* precalculationFileName, bool hermitianFlag)
+{
+  //cout << "General one-body PPs constructor " << nbrGeneralOneBodyPotentials << endl;
+  this->Particles = particles;
+  this->LzMax = lzmax;
+  this->NbrLzValue = this->LzMax + 1;
+  this->NbrParticles = nbrParticles;
+  this->FastMultiplicationFlag = false;
+  this->Architecture = architecture;
+  this->PseudoPotential = new double [this->NbrLzValue];
+  for (int i = 0; i < this->NbrLzValue; ++i)
+    this->PseudoPotential[i] = pseudoPotential[this->LzMax - i];
+  this->OneBodyTermFlag = false; //set it to false in order to first generate 2-body terms
+  this->EvaluateInteractionFactors();
+  //now proceed to generate full one-body potentials
+  this->OneBodyTermFlag = true;
+
+  this->OneBodyPotentials = new double [this->NbrLzValue];
+  if (oneBodyPotentials == 0)
+    for (int i = 0; i < this->NbrLzValue; ++i)
+      this->OneBodyPotentials[i] = 0.0;
+  else
+    for (int i = 0; i < this->NbrLzValue; ++i)
+      this->OneBodyPotentials[i] = oneBodyPotentials[i];
+
+  this->NbrOneBodyInteractionFactors = 0;
+  for (int i = 0; i <= this->LzMax; ++i)
+    if (this->OneBodyPotentials[i] != 0)
+      ++this->NbrOneBodyInteractionFactors;
+  this->NbrOneBodyInteractionFactors += nbrGeneralOneBodyPotentials;
+  cout << "Total number of one-body terms= " << this->NbrOneBodyInteractionFactors << endl;
+
+  if (this->NbrOneBodyInteractionFactors != 0)
+    {
+      double Sign = 1.0;
+      if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+	Sign = -1.0;
+      this->OneBodyMValues = new int[this->NbrOneBodyInteractionFactors];
+      this->OneBodyNValues = new int[this->NbrOneBodyInteractionFactors];
+      this->OneBodyInteractionFactors = new double[this->NbrOneBodyInteractionFactors];
+      this->NbrOneBodyInteractionFactors = 0;
+      for (int i = 0; i <= this->LzMax; ++i)
+	if (this->OneBodyPotentials[i] != 0)
+	  {
+	    this->OneBodyMValues[this->NbrOneBodyInteractionFactors] = i;
+	    this->OneBodyNValues[this->NbrOneBodyInteractionFactors] = i;
+	    //cout << this->OneBodyPotentials[i] << " ";
+	    this->OneBodyInteractionFactors[this->NbrOneBodyInteractionFactors] = this->OneBodyPotentials[i] * Sign;
+	    ++this->NbrOneBodyInteractionFactors;
+	  }
+      for (int i = 0; i < nbrGeneralOneBodyPotentials; ++i)
+	  {
+	    this->OneBodyMValues[this->NbrOneBodyInteractionFactors] = oneBodyMValues[i];
+	    this->OneBodyNValues[this->NbrOneBodyInteractionFactors] = oneBodyNValues[i];
+	    this->OneBodyInteractionFactors[this->NbrOneBodyInteractionFactors] = oneBodyPotentialValues[i] * Sign;
+            ++this->NbrOneBodyInteractionFactors;
+	  }         
+      for (int i = 0; i < this->NbrOneBodyInteractionFactors; ++i)
+        cout << this->OneBodyMValues[i] << " " << this->OneBodyNValues[i] << " : " << this->OneBodyInteractionFactors[i] << " ; ";
+      cout << endl;
+    }
+  else
+   {
+     delete[] this->OneBodyPotentials;
+     this->OneBodyTermFlag = false;
+   }
+
+  this->HamiltonianShift = 0.0;
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
+  this->DiskStorageFlag = onDiskCacheFlag;
+  this->Memory = memory;
+  if (hermitianFlag)
+    this->HermitianSymmetrizeInteractionFactors();
+  if (precalculationFileName == 0)
+    {
+      if (memory > 0)
+	{
+	  long TmpMemory = this->FastMultiplicationMemory(memory);
+	  if (TmpMemory < 1024)
+	    cout  << "fast = " <<  TmpMemory << "b ";
+	  else
+	    if (TmpMemory < (1 << 20))
+	      cout  << "fast = " << (TmpMemory >> 10) << "kb ";
+	    else
+	  if (TmpMemory < (1 << 30))
+	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
+	  else
+	    {
+	      cout  << "fast = " << (TmpMemory >> 30) << ".";
+	      TmpMemory -= ((TmpMemory >> 30) << 30);
+	      TmpMemory *= 100l;
+	      TmpMemory >>= 30;
+	      if (TmpMemory < 10l)
+		cout << "0";
+	      cout  << TmpMemory << " Gb ";
+	    }
+	  if (this->DiskStorageFlag == false)
+	    {
+	      this->EnableFastMultiplication();
+	    }
+	  else
+	    {
+	      char* TmpFileName = this->Architecture->GetTemporaryFileName();
+	      this->EnableFastMultiplicationWithDiskStorage(TmpFileName);	      
+	      delete[] TmpFileName;
+	    }
+	}
+    }
+  else
+    this->LoadPrecalculation(precalculationFileName);
+
+  if (l2Factor != 0.0)
+    {
+      this->L2Operator = new ParticleOnSphereL2Hamiltonian(this->Particles, this->NbrParticles, this->LzMax,
+							   this->Particles->GetLzValue() , this->Architecture, l2Factor,
+							   /*memory*/ -1, /* fixedLz */ true, /* onDiskCacheFlag */ false,
+							   /*precalculationFileName */ 0, hermitianFlag);
+    }
+  else
+    {
+      this->L2Operator = 0;
+    }
+}
+
 // destructor
 //
 

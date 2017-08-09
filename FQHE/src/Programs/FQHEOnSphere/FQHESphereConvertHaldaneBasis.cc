@@ -8,6 +8,7 @@
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneHugeBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
+#include "HilbertSpace/FermionOnSphereFull.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneBasisLong.h"
@@ -65,7 +66,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "rational" , "use rational numbers instead of double precision floating point numbers");
   (*SystemGroup) += new BooleanOption  ('\n', "target-haldane", "target space is also a Haldane squeezed basis instead of the full n-body basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "target-referencefile", "definition of the target reference state");
+  (*SystemGroup) += new BooleanOption  ('\n', "target-full", "target space is full Hilbert space (all Lz sectors)");
   (*SystemGroup) += new BooleanOption  ('\n', "target-ptruncated", "target space is also a p-truncated basis instead of the full n-body basis");
+
   (*SystemGroup) += new SingleIntegerOption ('\n', "target-ptruncation", "p-truncation for the target basis (if --target-ptruncated is used)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support (only available when both the source and target spaces are squeezed basis)");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
@@ -350,7 +353,12 @@ int main(int argc, char** argv)
           if (Manager.GetBoolean("target-haldane") == false)
 	    {
 	      if (Manager.GetBoolean("target-ptruncated") == false)
-	        TargetSpace = new FermionOnSphere (NbrParticles, TotalLz, NbrFluxQuanta);
+               { 
+                 if (Manager.GetBoolean("target-full") == false)
+	           TargetSpace = new FermionOnSphere (NbrParticles, TotalLz, NbrFluxQuanta);
+                 else
+	           TargetSpace = new FermionOnSphereFull (NbrParticles, NbrFluxQuanta);
+               }
 	      else
 		{
 		  int* TargetReferenceState = 0;

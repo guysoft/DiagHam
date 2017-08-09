@@ -342,12 +342,25 @@ bool AbstractQHEOnSphereHamiltonian::HermitianSymmetrizeInteractionFactors()
 	    }
 	}
       double *TmpOneBodyInteractionFactors = new double[TmpNbrOneBodyInteractionFactors];
+      int *TmpOneBodyMValues = new int[TmpNbrOneBodyInteractionFactors];
+      int *TmpOneBodyNValues = new int[TmpNbrOneBodyInteractionFactors];
       int Pos=0;
       for (int j = 0; j < this->NbrOneBodyInteractionFactors; ++j)
 	if (Flags[j]>=0)
-	  TmpOneBodyInteractionFactors[Pos++]=this->OneBodyInteractionFactors[j];
+          { 
+	    TmpOneBodyInteractionFactors[Pos]=this->OneBodyInteractionFactors[j];
+	    TmpOneBodyMValues[Pos]=this->OneBodyMValues[j];
+	    TmpOneBodyNValues[Pos]=this->OneBodyNValues[j];
+            Pos++;
+          }
       delete [] this->OneBodyInteractionFactors;
+      delete [] this->OneBodyMValues;      
+      delete [] this->OneBodyNValues;
+
       this->OneBodyInteractionFactors = TmpOneBodyInteractionFactors;
+      this->OneBodyMValues = TmpOneBodyMValues;
+      this->OneBodyNValues = TmpOneBodyNValues;
+      this->NbrOneBodyInteractionFactors = TmpNbrOneBodyInteractionFactors;
     }
 
   delete [] M;
@@ -2655,6 +2668,9 @@ RealVector& AbstractQHEOnSphereHamiltonian::HermitianLowLevelAddMultiply(RealVec
 		    {
 		      vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
 		      vDestination[i] += Coefficient * TmpInteraction * vSource[Index];
+		      //TmpParticles->PrintState(cout, i);
+                      //cout << " ;  " << m1 << " " << m2 << " --> "; TmpParticles->PrintState(cout, Index); cout << " Coeff= "<<Coefficient << " "<< TmpInteraction<<endl;  
+                      //exit(2);
 		    }
 		}
 	    }

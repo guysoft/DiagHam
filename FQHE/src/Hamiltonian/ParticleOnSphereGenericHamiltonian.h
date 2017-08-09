@@ -95,6 +95,30 @@ class ParticleOnSphereGenericHamiltonian : public AbstractQHEOnSphereHamiltonian
 				     double* pseudoPotential, double* oneBodyPotentials, double l2Factor,
 				     AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag,
 				     char* precalculationFileName, bool hermitianFlag = false);
+
+  // constructor with general one body terms c_m^+ c_n
+  //
+  // particles = Hilbert space associated to the system
+  // nbrParticles = number of particles
+  // lzmax = maximum Lz value reached by a particle in the state
+  // architecture = architecture to use for precalculation
+  // pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction)
+  // oneBodyPotentials = array with the coefficient in front of each one body term (ordered such that the first element corresponds to the one of a+_-s a_-s)
+  // nbrGeneralOneBodyPotentials = number of general one-body potentials c_m^+ c_n
+  // oneBodyMValues = array with indices m of c_m^+
+  // oneBodyNValues = array with indicies n of c_n
+  // oneBodyPotentialValues = array with values U_{mn} in front of c_m^+ c_n
+  // l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
+  // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+  // hermitianFlag = flag to indicate if hermitian symmetry of Hamiltonian shall be used
+  ParticleOnSphereGenericHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
+				     double* pseudoPotential, double* oneBodyPotentials, 
+                                     int nbrGeneralOneBodyPotentials, int* oneBodyMValues, int* oneBodyNValues, double* oneBodyPotentialValues, 
+                                     double l2Factor,
+				     AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag,
+				     char* precalculationFileName, bool hermitianFlag = false);
     
   // destructor
   //
