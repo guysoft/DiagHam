@@ -25,6 +25,7 @@
 
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/FermionOnSphereFull.h"
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
 
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
@@ -60,6 +61,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz", "twice the total lz value of the system for the initial state", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "all-lz", "use full Hilbert space (all Lz sectors)");
   (*SystemGroup) += new SingleStringOption  ('s', "statistics", "particle statistics (boson or fermion, try to guess it from file name if not defined)");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "orbital-number", "number of the orbital where a particle will be created (0, 1, 2, ..., lzmax)", 0);
 
@@ -130,9 +132,14 @@ int main(int argc, char** argv)
   long MemorySpace = 9l << 20;
   ParticleOnSphere* IntialSpace;
   ParticleOnSphere* TargetSpace;
-  cout << "Creating space for Lz="<<Lz<<"/2"<<endl;
+  cout << "Creating initial space"<<endl;
   if (FermionFlag == true)
     {
+     if (Manager.GetBoolean("all-lz")) 
+          IntialSpace = new FermionOnSphereFull(NbrParticles, LzMax);
+     else
+      {
+         cout << "initial space Lz="<<Lz<<"/2"<<endl;
 #ifdef __64_BITS__
       if (LzMax <= 63)
 	{
@@ -152,6 +159,7 @@ int main(int argc, char** argv)
 	  IntialSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax, MemorySpace);
 	}
 #endif
+     }
     }
   else
     {
@@ -161,11 +169,15 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("annihilate-particle") == false)
    {
+         cout << "Creating target space"<<endl;
 
-      cout << "Creating target space for Lz="<<Lz + (2 * OrbitalNumber - LzMax)<<"/2"<<endl;
-
-      if (FermionFlag == true)
-	{
+         if (FermionFlag == true)
+	 {
+           if (Manager.GetBoolean("all-lz"))              
+              TargetSpace = new FermionOnSphereFull(NbrParticles + 1, LzMax);
+          else
+           {
+             cout << "target Lz="<<Lz + (2 * OrbitalNumber - LzMax)<<"/2"<<endl;
 #ifdef __64_BITS__
 	  if (LzMax <= 63)
 	    {
@@ -185,6 +197,7 @@ int main(int argc, char** argv)
 	      TargetSpace = new FermionOnSphereUnlimited(NbrParticles + 1, Lz + (2 * OrbitalNumber - LzMax), LzMax, MemorySpace);
 	    }
 #endif
+         }
 	}
       else
 	{
@@ -197,6 +210,8 @@ int main(int argc, char** argv)
 	  cout << "Problem with setting target space"<<endl;
 	  exit(-1);
 	}
+
+      cout << "Initial dim= " << IntialSpace->GetHilbertSpaceDimension() << " Target dim= " << TargetSpace->GetHilbertSpaceDimension() << endl;
 
       double TmpCoefficient = 0.0;
       int TmpIndex;
@@ -245,10 +260,16 @@ int main(int argc, char** argv)
     else //annihilate particle
     {
 
-      cout << "Creating target space for Lz="<<Lz - (2 * OrbitalNumber - LzMax)<<"/2"<<endl;
+      cout << "Creating target space "<<endl;
 
       if (FermionFlag == true)
 	{
+
+           if (Manager.GetBoolean("all-lz"))              
+              TargetSpace = new FermionOnSphereFull(NbrParticles - 1, LzMax);
+           else
+           {
+              cout << "target space Lz="<<Lz - (2 * OrbitalNumber - LzMax)<<"/2"<<endl;
 #ifdef __64_BITS__
 	  if (LzMax <= 63)
 	    {
@@ -268,6 +289,7 @@ int main(int argc, char** argv)
 	      TargetSpace = new FermionOnSphereUnlimited(NbrParticles - 1, Lz - (2 * OrbitalNumber - LzMax), LzMax, MemorySpace);
 	    }
 #endif
+         }  
 	}
       else
 	{
@@ -280,6 +302,8 @@ int main(int argc, char** argv)
 	  cout << "Problem with setting target space"<<endl;
 	  exit(-1);
 	}
+
+      cout << "Initial dim= " << IntialSpace->GetHilbertSpaceDimension() << " Target dim= " << TargetSpace->GetHilbertSpaceDimension() << endl;
 
       double TmpCoefficient = 0.0;
       int TmpIndex;
