@@ -74,6 +74,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  BooleanOption  ('\n', "redundant-kymomenta", "Calculate all subspaces up to Ky  = MaxMomentum-1", false);
   (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the two torus lengths", 1.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "twisted", "angle between cycles of torus (units of pi)", 0.5);
+  (*SystemGroup) += new BooleanOption  ('\n', "use-coulomb", "use Coulomb interaction", false);
+  (*SystemGroup) += new SingleIntegerOption ('\n', "landau-level", "index of Landau level", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "add-wigner", "consider the energy contribution from the Wigner crystal", false);
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
@@ -100,20 +102,20 @@ int main(int argc, char** argv)
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   bool FirstRun = true;
   double Angle = Manager.GetDouble("twisted");
-  int LandauLevel = 0;
-  bool HaveCoulomb = false;
+  int LandauLevel = Manager.GetInteger("landau-level");
+  bool HaveCoulomb = Manager.GetBoolean("use-coulomb");
   char* InteractionName=0;
   double* PseudoPotentials;
   int NbrPseudoPotentials = 0;
-  if (Manager.GetString("interaction-file") == 0)
+  if ((Manager.GetString("interaction-file") == 0) && (HaveCoulomb == false))
     {
       cout << "an interaction file has to be provided" << endl;
       return -1;
     }
-  else
+  else if (!(Manager.GetString("interaction-file") == 0))
     {
       if (FQHETorusGetPseudopotentials(Manager.GetString("interaction-file"), HaveCoulomb, LandauLevel, NbrPseudoPotentials, PseudoPotentials, InteractionName) == false)
-	return -1;
+      return -1;
     }
   char* OutputNameLz = new char [256];
   if (Manager.GetString("interaction-name")!=NULL)

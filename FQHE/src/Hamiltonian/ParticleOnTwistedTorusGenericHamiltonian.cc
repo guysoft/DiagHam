@@ -85,6 +85,14 @@ ParticleOnTwistedTorusGenericHamiltonian::ParticleOnTwistedTorusGenericHamiltoni
   this->MaxMomentum = maxMomentum;
   this->Angle = M_PI*angle;
   this->Ratio = ratio;
+  // calculate some convenient lattice geometry parameters
+  this->CosTheta = cos(this->Angle);
+  this->SinTheta = sqrt(1.0 - this->CosTheta * this->CosTheta);
+  this->Lx = sqrt(2.0 * M_PI * (double)this->MaxMomentum * this->Ratio/this->SinTheta);
+  this->Ly = sqrt(2.0 * M_PI * (double)this->MaxMomentum / (this->Ratio * this->SinTheta));
+  this->Gx = 2.0 * M_PI / this->Lx;
+  this->Gy = 2.0 * M_PI / this->Ly;
+ 
   this->LandauLevel = landauLevel;
   this->NbrPseudopotentials = nbrPseudopotentials;
   if (this->NbrPseudopotentials>0)
@@ -92,7 +100,7 @@ ParticleOnTwistedTorusGenericHamiltonian::ParticleOnTwistedTorusGenericHamiltoni
       this->Pseudopotentials = pseudopotentials;
       this->LaguerreM=new Polynomial[NbrPseudopotentials];
       for (int i=0; i<NbrPseudopotentials; ++i)
-	this->LaguerreM[i]=LaguerrePolynomial(i);
+	    this->LaguerreM[i]=LaguerrePolynomial(i);
     }
   else
     {
@@ -171,8 +179,60 @@ void ParticleOnTwistedTorusGenericHamiltonian::EvaluateInteractionFactors()
   long TotalNbrInteractionFactors = 0;
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
-      cout << "Case of fermionic statistics is not defined"<<endl;
-      exit(-1);
+      this->NbrSectorSums = this->MaxMomentum;
+      this->NbrSectorIndicesPerSum = new int[this->NbrSectorSums];
+      for (int i = 0; i < this->NbrSectorSums; ++i)
+	    	this->NbrSectorIndicesPerSum[i] = 0;      
+      for (int m1 = 0; m1 < this->MaxMomentum; ++m1)
+		for (int m2 = 0; m2 < m1; ++m2)
+	  		++this->NbrSectorIndicesPerSum[(m1 + m2) % this->MaxMomentum];
+      this->SectorIndicesPerSum = new int* [this->NbrSectorSums];
+      for (int i = 0; i < this->NbrSectorSums; ++i)
+	   {
+	     if (this->NbrSectorIndicesPerSum[i]  > 0)
+	      {
+	        this->SectorIndicesPerSum[i] = new int[2 * this->NbrSectorIndicesPerSum[i]];      
+	        this->NbrSectorIndicesPerSum[i] = 0;
+	      }
+	   }
+      for (int m1 = 0; m1 < this->MaxMomentum; ++m1)
+	    for (int m2 = 0; m2 < m1; ++m2)
+	     {
+	       int TmpSum = (m1 + m2) % this->MaxMomentum;
+	       this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = m1;
+	       this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = m2;
+	       ++this->NbrSectorIndicesPerSum[TmpSum];    
+	     }
+
+      this->InteractionFactors = new Complex* [this->NbrSectorSums];
+      for (int i = 0; i < this->NbrSectorSums; ++i)
+	   {
+	      this->InteractionFactors[i] = new Complex[this->NbrSectorIndicesPerSum[i] * this->NbrSectorIndicesPerSum[i]];
+	      int Index = 0;
+	      for (int j1 = 0; j1 < this->NbrSectorIndicesPerSum[i]; ++j1)
+	        {
+	          int Index1 = this->SectorIndicesPerSum[i][j1 << 1];
+	          int Index2 = this->SectorIndicesPerSum[i][(j1 << 1) + 1];
+	          for (int j2 = 0; j2 < this->NbrSectorIndicesPerSum[i]; ++j2)
+		       {
+		         int Index3 = this->SectorIndicesPerSum[i][j2 << 1];
+		         int Index4 = this->SectorIndicesPerSum[i][(j2 << 1) + 1];
+		         int TotalMomentum=Index1+Index2-Index3-Index4;
+		         if (TotalMomentum<0)
+		            TotalMomentum+=this->MaxMomentum;
+		         if( (TotalMomentum % this->MaxMomentum) == 0)
+		          {
+                     this->InteractionFactors[i][Index] = (this->EvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
+					      + this->EvaluateInteractionCoefficient(Index2, Index1, Index4, Index3)
+					      - this->EvaluateInteractionCoefficient(Index1, Index2, Index4, Index3)
+					      - this->EvaluateInteractionCoefficient(Index2, Index1, Index3, Index4));
+
+		            TotalNbrInteractionFactors++;
+		            ++Index;
+		          }
+		        }
+	        }
+	    }
     }
   // Bosonic case
   else
@@ -220,65 +280,32 @@ void ParticleOnTwistedTorusGenericHamiltonian::EvaluateInteractionFactors()
 		    TotalMomentum+=this->MaxMomentum;
 		  if( (TotalMomentum % this->MaxMomentum) == 0)
 		    {
-		      // cout << "Term "<<Index1<<", "<<Index2<<", "<<Index3<<", "<<Index4<<" sum"<<TotalMomentum<<endl;
-		      // Calculation of H_FQHE
-		      if (fabs(this->Angle-M_PI/2.0)<1e-14)
-			{
-			  double sumUFQHE = 0.0;
-			  if (Index2 < Index1)
-			    {
-			      if (Index3 != Index4)
-				{
-				  sumUFQHE = (this->RectangularEvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
-					      + this->RectangularEvaluateInteractionCoefficient(Index2, Index1, Index4, Index3)
-					      + this->RectangularEvaluateInteractionCoefficient(Index1, Index2, Index4, Index3)
-					      + this->RectangularEvaluateInteractionCoefficient(Index2, Index1, Index3, Index4));
-				}
-			      else
-				sumUFQHE = (this->RectangularEvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
-					    + this->RectangularEvaluateInteractionCoefficient(Index2, Index1, Index3, Index4));
-			      
-			    }
-			  else
-			    if (Index1 == Index2)
-			      {
-				if (Index3 != Index4)
-				  sumUFQHE = (this->RectangularEvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
-					      + this->RectangularEvaluateInteractionCoefficient(Index1, Index2, Index4, Index3));
-				else
-				  sumUFQHE = this->RectangularEvaluateInteractionCoefficient(Index1, Index2, Index3, Index4);
-			      }
-			  this->InteractionFactors[i][Index] = sumUFQHE ;
-			}
-		      else
-			{
 			  Complex sumUFQHE = 0.0;
 			  if (Index2 < Index1)
 			    {
 			      if (Index3 != Index4)
 				{
-				  sumUFQHE = (this->TwistedEvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
-					      + this->TwistedEvaluateInteractionCoefficient(Index2, Index1, Index4, Index3)
-					      + this->TwistedEvaluateInteractionCoefficient(Index1, Index2, Index4, Index3)
-					      + this->TwistedEvaluateInteractionCoefficient(Index2, Index1, Index3, Index4));
+				  sumUFQHE = (this->EvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
+					      + this->EvaluateInteractionCoefficient(Index2, Index1, Index4, Index3)
+					      + this->EvaluateInteractionCoefficient(Index1, Index2, Index4, Index3)
+					      + this->EvaluateInteractionCoefficient(Index2, Index1, Index3, Index4));
 				}
 			      else
-				sumUFQHE = (this->TwistedEvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
-					    + this->TwistedEvaluateInteractionCoefficient(Index2, Index1, Index3, Index4));
-			      
+				sumUFQHE = (this->EvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
+					    + this->EvaluateInteractionCoefficient(Index2, Index1, Index3, Index4));			      
 			    }
 			  else
 			    if (Index1 == Index2)
 			      {
 				if (Index3 != Index4)
-				  sumUFQHE = (this->TwistedEvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
-					      + this->TwistedEvaluateInteractionCoefficient(Index1, Index2, Index4, Index3));
+				  sumUFQHE = (this->EvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
+					      + this->EvaluateInteractionCoefficient(Index1, Index2, Index4, Index3));
 				else
-				  sumUFQHE = this->TwistedEvaluateInteractionCoefficient(Index1, Index2, Index3, Index4);
+				  sumUFQHE = this->EvaluateInteractionCoefficient(Index1, Index2, Index3, Index4);
 			      }
 			  this->InteractionFactors[i][Index] = sumUFQHE ;
 			  
-			}
+			
 		      TotalNbrInteractionFactors++;
 		      ++Index;
 		    }
@@ -289,6 +316,123 @@ void ParticleOnTwistedTorusGenericHamiltonian::EvaluateInteractionFactors()
   
 }
 
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
+//
+// m1 = first index
+// m2 = second index
+// m3 = third index
+// m4 = fourth index
+// return value = numerical coefficient
+
+Complex ParticleOnTwistedTorusGenericHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4)
+{
+  Complex Sum(0.0, 0.0);
+  double N1;
+  double N2 = (double)(m1 - m4);
+  double Q2, Qx, Qy;
+  double Xj13 = this->Gy * (double)(m1 - m3);
+  Complex Coefficient(1.0,0.0);
+  double PrecisionPos, PrecisionNeg, Precision;
+  Complex Phase;
+
+  while (((fabs(Sum.Re) + fabs(Coefficient.Re)) != fabs(Sum.Re)) || ((fabs(Sum.Im) + fabs(Coefficient.Im)) != fabs(Sum.Im)))
+    {
+      Qx = 0.0;
+      Qy = this->Gy * N2;
+      Qy /= this->SinTheta;
+      Q2 = Qx * Qx + Qy * Qy;
+
+	  Coefficient.Re = this->GetVofQ(0.5 * Q2);
+	  Coefficient.Im = 0.0;  	
+	  if (Q2 == 0.0)
+	  	Precision = 1.0;
+	  else
+  	   Precision = Coefficient.Re;
+
+      N1 = 1.0;
+      while ((fabs(Coefficient.Re) + fabs(Precision)) != fabs(Coefficient.Re))
+	{
+      //Sum over positive N1
+       Qx = this->Gx * N1;
+       Qy = this->Gy * N2 - this->Gx * N1 * this->CosTheta;
+       Qy /= this->SinTheta;
+       Q2 = Qx * Qx + Qy * Qy;
+
+       PrecisionPos = this->GetVofQ(0.5 * Q2);          
+       Phase.Re = cos(Qx * Xj13/this->SinTheta);
+       Phase.Im =  -sin(Qx * Xj13/this->SinTheta);
+       Coefficient += (PrecisionPos * Phase);
+
+       //Sum over negative N1
+       Qx = -this->Gx * N1;
+       Qy = this->Gy * N2 + this->Gx * N1 * this->CosTheta;
+       Qy /= this->SinTheta;
+       Q2 = Qx * Qx + Qy * Qy;
+	
+       PrecisionNeg = this->GetVofQ(0.5 * Q2);   
+       Phase.Re = cos(Qx * Xj13/this->SinTheta);
+       Phase.Im = -sin(Qx * Xj13/this->SinTheta);
+       Coefficient += (PrecisionNeg * Phase);
+      //Increment N1
+       N1 += 1.0;
+       Precision = PrecisionPos + PrecisionNeg;
+	}
+      Sum += Coefficient;
+      N2 += (double)this->MaxMomentum;
+    }
+
+  N2 = (double) (m1 - m4 - this->MaxMomentum);
+  Coefficient = Sum;	    
+  while (((fabs(Sum.Re) + fabs(Coefficient.Re)) != fabs(Sum.Re)) || ((fabs(Sum.Im) + fabs(Coefficient.Im)) != fabs(Sum.Im)))
+    {
+      Qx = 0.0;
+      Qy = this->Gy * N2;
+      Qy /= this->SinTheta;
+      Q2 = Qx * Qx + Qy * Qy;
+
+	  Coefficient.Re = this->GetVofQ(0.5 * Q2);
+	  Coefficient.Im = 0.0;
+	  if (Q2 == 0.0)
+	  	Precision = 1.0;
+	  else
+  	   Precision = Coefficient.Re;
+
+      N1 = 1.0;
+      while ((fabs(Coefficient.Re) + fabs(Precision)) != fabs(Coefficient.Re))
+	{
+       //Sum over positive N1
+       Qx = this->Gx * N1;
+       Qy = this->Gy * N2 - this->Gx * N1 * this->CosTheta;
+       Qy /= this->SinTheta;
+       Q2 = Qx * Qx + Qy * Qy;
+
+       PrecisionPos = this->GetVofQ(0.5 * Q2);
+       Phase.Re = cos(Qx * Xj13/this->SinTheta);
+       Phase.Im = -sin(Qx * Xj13/this->SinTheta);
+       Coefficient += (PrecisionPos * Phase);
+
+       //Sum over negative N1
+       Qx = -this->Gx * N1;
+       Qy = this->Gy * N2 + this->Gx * N1 * this->CosTheta;
+       Qy /= this->SinTheta;
+       Q2 = Qx * Qx + Qy * Qy;
+
+       PrecisionNeg = this->GetVofQ(0.5 * Q2); 
+       Phase.Re = cos(Qx * Xj13/this->SinTheta);
+       Phase.Im = -sin(Qx * Xj13/this->SinTheta);
+       Coefficient += (PrecisionNeg * Phase);
+       //Increment N1
+       N1 += 1.0;
+       Precision = PrecisionPos + PrecisionNeg;
+	}
+      Sum += Coefficient;
+      N2 -= (double)this->MaxMomentum;
+    }
+ return (Sum / (4.0 * M_PI * (double)this->MaxMomentum));
+}
+
+
+/*
 // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
 //
 // m1 = first index
@@ -456,7 +600,7 @@ Complex ParticleOnTwistedTorusGenericHamiltonian::TwistedEvaluateInteractionCoef
     }
   return (Sum / (8.0 * M_PI * this->MaxMomentum));
 }
-
+*/
 
 // get fourier transform of interaction
 // Q2_half = one half of q² value
@@ -466,16 +610,13 @@ double ParticleOnTwistedTorusGenericHamiltonian::GetVofQ(double Q2_half)
   double Q2=2.0*Q2_half;
   if ((this->HaveCoulomb)&&(Q2_half!=0.0))
     {
-      //cout << "branch 1 : Ln="<<this->FormFactor.GetValue(Q2_half)<<" Ln2="<<GETSQR(this->FormFactor(Q2_half))<<", exp="<<exp(-Q2_half)<<" 1/Q="<<1.0/sqrt(Q2)<<" ";
-      //this->FormFactor.PrintValue(cout, Q2_half)<<" ";
-      Result=GETSQR(this->FormFactor(Q2_half)) / sqrt(Q2);
+      Result=GETSQR(this->FormFactor(Q2_half)) * (2.0 * M_PI)/ sqrt(Q2);
     }
   else
     Result=0.0;
-  for (int i=0; i<NbrPseudopotentials; ++i)
-    if (this->Pseudopotentials[i]!=0.0)
-      Result += 2.0*this->Pseudopotentials[i]*this->LaguerreM[i].PolynomialEvaluate(Q2);
-  //cout <<"V("<<2*Q2_half<<")="<<Result<<" LL="<<this->LandauLevel<<endl;
+    for (int i=0; i<NbrPseudopotentials; ++i)
+      if (this->Pseudopotentials[i]!=0.0)
+        Result += 2.0 * (2.0 * M_PI) * this->Pseudopotentials[i]*this->LaguerreM[i].PolynomialEvaluate(Q2);
   return Result * exp(-Q2_half);
 }
 

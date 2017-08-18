@@ -61,10 +61,21 @@ class ParticleOnTwistedTorusGenericHamiltonian : public ParticleOnLatticeTimeRev
   double Ratio;
   // energy of wigner crystal reference
   double WignerEnergy;
-
+  // cosine of the torus angle
+  double CosTheta;
+  // sine of the torus angle
+  double SinTheta;
+  // length of torus along x-direction
+  double Lx;
+  // length of torus along y-direction
+  double Ly;
+  // reciprocal lattice vector x-direction
+  double Gx;
+  // reciprocal lattice vector y-direction
+  double Gy;
   // landau Level index
   int LandauLevel;
-
+  
   // Number of Pseudopotential
   int NbrPseudopotentials;
 
@@ -123,7 +134,7 @@ class ParticleOnTwistedTorusGenericHamiltonian : public ParticleOnLatticeTimeRev
   // m3 = third index
   // m4 = fourth index
   // return value = numerical coefficient
-  double RectangularEvaluateInteractionCoefficient(int m1, int m2, int m3, int m4);
+  //double RectangularEvaluateInteractionCoefficient(int m1, int m2, int m3, int m4);
 
   // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
   //
@@ -132,8 +143,16 @@ class ParticleOnTwistedTorusGenericHamiltonian : public ParticleOnLatticeTimeRev
   // m3 = third index
   // m4 = fourth index
   // return value = numerical coefficient
-  Complex TwistedEvaluateInteractionCoefficient(int m1, int m2, int m3, int m4);
+  //Complex TwistedEvaluateInteractionCoefficient(int m1, int m2, int m3, int m4);
 
+  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
+  //
+  // m1 = first index
+  // m2 = second index
+  // m3 = third index
+  // m4 = fourth index
+  // return value = numerical coefficient
+  Complex EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4);
   
   // get fourier transform of interaction
   // Q2_half = one half of q² value
