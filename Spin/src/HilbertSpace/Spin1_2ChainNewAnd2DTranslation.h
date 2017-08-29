@@ -89,15 +89,6 @@ class Spin1_2ChainNewAnd2DTranslation : public Spin1_2ChainNew
   // number of state in each orbit
   int* NbrStateInOrbit;
 
-  // maximum shift used for searching a position in the look-up table
-  int MaximumLookUpShift;
-  // memory used for the look-up table in a given maxMomentum sector
-  int LookUpTableMemorySize;
-  // shift used in each maxMomentum sector
-  int* LookUpTableShift;
-  // look-up table with two entries : the first one used maxMomentum value of the state an the second 
-  int** LookUpTable;
-  
   unsigned long LookUpTableMask;
   int LookUpPosition;
   int LookUpTableSize;

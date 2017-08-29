@@ -311,6 +311,7 @@ Spin1_2ChainNewSzSymmetryAnd2DTranslation::Spin1_2ChainNewSzSymmetryAnd2DTransla
       this->LookUpTableMask = chain.LookUpTableMask;
       this->LookUpPosition = chain.LookUpPosition;
       this->LookUpTableSize = chain.LookUpTableSize;
+      this->LookUpTableShift = chain.LookUpTableShift;
       this->FixedQuantumNumberFlag = chain.FixedQuantumNumberFlag;      
     }
   else
@@ -325,6 +326,7 @@ Spin1_2ChainNewSzSymmetryAnd2DTranslation::Spin1_2ChainNewSzSymmetryAnd2DTransla
       this->LookUpTableMask = 0;
       this->LookUpPosition = 0;
       this->LookUpTableSize = 0;
+      this->LookUpTableShift = 0;
       this->SzSymmetrySector = 0.0;
       this->SzSymmetryMask = 0.0;
     }
@@ -384,6 +386,7 @@ Spin1_2ChainNewSzSymmetryAnd2DTranslation& Spin1_2ChainNewSzSymmetryAnd2DTransla
       this->LookUpTableMask = chain.LookUpTableMask;
       this->LookUpPosition = chain.LookUpPosition;
       this->LookUpTableSize = chain.LookUpTableSize;
+      this->LookUpTableShift = chain.LookUpTableShift;
       this->FixedQuantumNumberFlag = chain.FixedQuantumNumberFlag;      
     }
   else
@@ -396,6 +399,7 @@ Spin1_2ChainNewSzSymmetryAnd2DTranslation& Spin1_2ChainNewSzSymmetryAnd2DTransla
       this->LookUpTable = 0;
       this->LookUpTableMask = 0;
       this->LookUpPosition = 0;
+      this->LookUpTableShift = 0;
       this->SzSymmetrySector = 0.0;
       this->SzSymmetryMask = 0.0;
    }
