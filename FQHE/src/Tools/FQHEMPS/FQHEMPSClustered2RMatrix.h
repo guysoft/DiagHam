@@ -339,6 +339,32 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // qValue = reference on the charge index
   virtual void GetCFTSectorChargeAndPLevelFromMatrixIndex(int index, int& sector, int& pLevel, int& qValue);
 
+  // compute the CFT sector, the level and the charge index of a given matrix index
+  //
+  // index = matrix index
+  // cftSector = reference on the CFT sector
+  // pLevel = reference on the level
+  // qValue = reference on the charge index
+  // chargeSectorLevel = reference on the U(1) charge sector level
+  // neutralSectorLevel = reference on the neutral sector level
+  // chargeSectorIndex = index of the U(1) charge sector within its current level
+  // neutralSectorIndex = index of the neutral sector within its current level
+  virtual void GetCFTSectorChargeAndPLevelFromMatrixIndex(int index, int& cftSector, int& pLevel, int& qValue, int& chargeSectorLevel, 
+							  int& neutralSectorLevel, int& chargeSectorIndex, int& neutralSectorIndex);
+
+  // print a given state of the auxiliary space
+  //
+  // str = reference on the output stream
+  // index = index of the state
+  // return value = reference on the output stream
+  virtual ostream& PrintAuxiliarySpaceState(ostream& str, int index);
+
+  // get the label associated to a given state of the auxiliary space
+  //
+  // index = auxiliary space index
+  // return value = string containing the label
+  virtual char* GetAuxiliarySpaceLabel(int index);
+
  protected:
 
   // load the specific informations from the file header
@@ -674,6 +700,59 @@ inline void FQHEMPSClustered2RMatrix::GetCFTSectorChargeAndPLevelFromMatrixIndex
 	}
       
     }
+}
+
+// compute the CFT sector, the level and the charge index of a given matrix index
+//
+// index = matrix index
+// sector = reference on the CFT sector
+// pLevel = reference on the level
+// qValue = reference on the charge index
+// chargeSectorLevel = reference on the U(1) charge sector level
+// neutralSectorLevel = reference on the neutral sector level
+// chargeSectorIndex = index of the U(1) charge sector within its current level
+// neutralSectorIndex = index of the neutral sector within its current level
+
+inline void FQHEMPSClustered2RMatrix::GetCFTSectorChargeAndPLevelFromMatrixIndex(int index, int& cftSector, int& pLevel, int& qValue, int& chargeSectorLevel, 
+										 int& neutralSectorLevel, int& chargeSectorIndex, int& neutralSectorIndex)
+{
+  cout << "warning, untested code" << endl;
+  pLevel = 0;
+  cftSector = 0;
+  qValue = 0;
+  chargeSectorLevel = 0;
+  neutralSectorLevel = 0;
+  chargeSectorIndex = 0;
+  neutralSectorIndex = 0;
+  int MinIndexDistance = this->RealBMatrices->GetNbrRow();
+  for (int p = 0; p <= this->PLevel; ++p)
+    {
+      for (int x = 0; x < this->NbrCFTSectors; ++x)
+	{
+	  for (int q = this->NInitialValuePerPLevelCFTSector[p][x]; q <= this->NLastValuePerPLevelCFTSector[p][x]; ++q)
+	    {
+	      int TmpIndexDistance = index - this->StartingIndexPerPLevelCFTSectorQValue[p][x][q - this->NInitialValuePerPLevelCFTSector[p][x]];
+	      if ((TmpIndexDistance >= 0) && (TmpIndexDistance <= MinIndexDistance))
+		{
+		  MinIndexDistance = TmpIndexDistance;
+		  pLevel = p;
+		  cftSector = x;
+		  qValue = q;
+		}
+	    }
+	}     
+    }  	
+  for (int TmpChargeLevel = 0; TmpChargeLevel <= pLevel; ++TmpChargeLevel)
+    {
+      if (this->StartingIndexPerPLevelCFTSectorQValueU1Sector[pLevel][cftSector][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][cftSector]][TmpChargeLevel] <= index)
+	{
+	  chargeSectorLevel = TmpChargeLevel;
+	}
+    }
+  index -= this->StartingIndexPerPLevelCFTSectorQValueU1Sector[pLevel][cftSector][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][cftSector]][chargeSectorLevel];
+  neutralSectorLevel = pLevel - chargeSectorLevel;
+  chargeSectorIndex = index / this->NeutralSectorDimension[cftSector][neutralSectorLevel];
+  neutralSectorIndex = index % this->NeutralSectorDimension[cftSector][neutralSectorLevel];		  		  
 }
 
 #endif

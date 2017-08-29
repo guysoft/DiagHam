@@ -671,3 +671,27 @@ SparseComplexMatrix** AbstractFQHEMPSMatrix::GetSphereSiteDependentComplexMatric
   return TmpMatrices;
 }
 
+
+// get the label associated to a given state of the auxiliary space
+//
+// index = auxiliary space index
+// return value = string containing the label
+
+char* AbstractFQHEMPSMatrix::GetAuxiliarySpaceLabel(int index)
+{
+  char* TmpString = new char [128];
+  int TmpQ = 0;
+  int TmpPLevel = 0;
+  int TmpCFTSector = 0;
+  if (this->GetNbrCFTSectors() == 1)
+    {
+      this->GetChargeAndPLevelFromMatrixIndex(index, TmpPLevel, TmpQ);
+      sprintf (TmpString, "(Q=%d, P=%d, i=%d)", TmpQ, TmpPLevel, index);
+    }
+  else
+    {
+      this->GetCFTSectorChargeAndPLevelFromMatrixIndex(index, TmpCFTSector, TmpPLevel, TmpQ);
+      sprintf (TmpString, "(x=%d, Q=%d, P=%d, i=%d)", TmpCFTSector, TmpQ, TmpPLevel, index);
+    }
+  return TmpString;
+}

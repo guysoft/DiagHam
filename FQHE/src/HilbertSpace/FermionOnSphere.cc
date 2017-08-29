@@ -7758,15 +7758,15 @@ void FermionOnSphere::CreateStateFromMPSDescription (SparseRealMatrix* bMatrices
 // nbrComponents = number of components to compute
 
 void FermionOnSphere::CreateStateFromSiteDependentMPSDescription (SparseRealMatrix** bMatrices, RealVector& state, int mPSRowIndex, int mPSColumnIndex, 
-						 long initialIndex, long nbrComponents)
+								  long initialIndex, long nbrComponents)
 {
   long MaxIndex = initialIndex + nbrComponents;
   if ((nbrComponents == 0l) || (MaxIndex > this->LargeHilbertSpaceDimension))
     {
       MaxIndex = this->LargeHilbertSpaceDimension;
     }
-  RealVector TmpVector (bMatrices[0][1].GetNbrRow());
-  RealVector TmpVector2 (bMatrices[0][1].GetNbrRow());
+  RealVector TmpVector (bMatrices[0][0].GetNbrRow());
+  RealVector TmpVector2 (bMatrices[0][0].GetNbrRow());
 
   for (long i = initialIndex; i < MaxIndex; ++i)
     {
@@ -7779,10 +7779,18 @@ void FermionOnSphere::CreateStateFromSiteDependentMPSDescription (SparseRealMatr
 	{
 	  if (((TmpStateDescription >> j) & 0x1ul) != 0x0ul)
 	    {	      
-	      bMatrices[j][1].RightMultiply(TmpVector, TmpVector2);
-	      RealVector TmpVector3 = TmpVector;
-	      TmpVector = TmpVector2;
-	      TmpVector2 = TmpVector3;
+	      if (bMatrices[j][1].GetNbrRow() == 0)
+		{
+		  TmpVector[mPSRowIndex] = 0.0;
+		  j = -1;
+		}
+	      else
+		{
+		  bMatrices[j][1].RightMultiply(TmpVector, TmpVector2);
+		  RealVector TmpVector3 = TmpVector;
+		  TmpVector = TmpVector2;
+		  TmpVector2 = TmpVector3;
+		}
 	    }
 	  else
 	    {

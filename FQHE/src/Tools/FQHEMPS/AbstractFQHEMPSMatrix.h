@@ -384,8 +384,14 @@ class AbstractFQHEMPSMatrix
   // index = index of the state
   // return value = reference on the output stream
   virtual ostream& PrintAuxiliarySpaceState(ostream& str, int index);
+ 
+  // get the label associated to a given state of the auxiliary space
+  //
+  // index = auxiliary space index
+  // return value = string containing the label
+  virtual char* GetAuxiliarySpaceLabel(int index);
 
- protected:
+protected:
 
   // load the specific informations from the file header
   // 

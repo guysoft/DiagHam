@@ -915,6 +915,67 @@ SparseRealMatrix SparseRealMatrixLinearCombination(const double& x1, const Spars
   return TmpMatrix;
 }
 
+// create the linear combination of several matrices
+//
+// nbrMatrices = number of matrices that should be added
+// prefactors = array of prefactors
+// matrices = array of matrices
+// return value = linear combination
+
+SparseRealMatrix SparseRealMatrixLinearCombination(int nbrMatrices, double* prefactors, SparseRealMatrix* matrices)
+{
+  if (nbrMatrices <= 0)
+    {
+      return SparseRealMatrix();
+    }
+  if (nbrMatrices == 1)
+    {
+      SparseRealMatrix TmpMatrix;
+      TmpMatrix.Copy(matrices[0]);
+      TmpMatrix *= prefactors[0];
+      return TmpMatrix;
+    }
+  int TmpNbrRow = matrices[0].GetNbrRow();
+  if (TmpNbrRow == 0)
+    {
+      return SparseRealMatrix();
+    }
+  for (int i = 1 ; i < nbrMatrices; ++i)
+    {
+      if (TmpNbrRow != matrices[i].GetNbrRow())
+	{
+	  return SparseRealMatrix();
+	}
+    }
+  if (nbrMatrices == 2)
+    {
+      return SparseRealMatrixLinearCombination(prefactors[0], matrices[0], prefactors[1], matrices[1]);
+    }
+
+  int TmpNbrMatrices = nbrMatrices / 2;
+  if ((nbrMatrices & 1) != 0)
+    ++TmpNbrMatrices;
+  SparseRealMatrix* TmpMatrices = new SparseRealMatrix[TmpNbrMatrices];
+  double* TmpPrefactors = new double[TmpNbrMatrices]; 
+  if ((nbrMatrices & 1) != 0)
+    --TmpNbrMatrices;
+  for (int i = 0 ; i < TmpNbrMatrices; ++i)
+    {
+      TmpMatrices[i] = SparseRealMatrixLinearCombination(prefactors[2 * i], matrices[2 * i], prefactors[2 * i + 1], matrices[2 * i + 1]);
+      TmpPrefactors[i] = 1.0;
+    }
+  if ((nbrMatrices & 1) != 0)
+    {
+      ++TmpNbrMatrices;
+      TmpMatrices[TmpNbrMatrices - 1] = matrices[nbrMatrices - 1];
+      TmpPrefactors[TmpNbrMatrices - 1] = prefactors[nbrMatrices - 1];
+    }
+  SparseRealMatrix TmpMatrix = SparseRealMatrixLinearCombination(TmpNbrMatrices, TmpPrefactors, TmpMatrices);
+  delete[] TmpMatrices;
+  delete[] TmpPrefactors;
+  return TmpMatrix;
+}
+
 // multiply a matrix by a real number
 //
 // x = real number to use

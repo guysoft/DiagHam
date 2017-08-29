@@ -255,6 +255,13 @@ class SparseRealMatrix : public Matrix
    // return value = linear combination
   friend SparseRealMatrix SparseRealMatrixLinearCombination(const double& x1, const SparseRealMatrix& matrix1, const double& x2, const SparseRealMatrix& matrix2);
 
+  // create the linear combination of several matrices
+  //
+  // nbrMatrices = number of matrices that should be added
+  // prefactors = array of prefactors
+  // matrices = array of matrices
+  // return value = linear combination
+  friend SparseRealMatrix SparseRealMatrixLinearCombination(int nbrMatrices, double* prefactors, SparseRealMatrix* matrices);
   // multiply a matrix by a real number
   //
   // x = real number to use

@@ -140,6 +140,19 @@ class FQHEMPSPHPfaffianMatrix : public FQHEMPSClustered2RMatrix
   // return value = pointer to the array of matrices (first entry being the orbital index, the second being the occupation number)
   virtual SparseRealMatrix** GetSphereSiteDependentMatrices(int nbrFluxQuanta);
 
+  // compute the CFT sector, the level and the charge index of a given matrix index
+  //
+  // index = matrix index
+  // cftSector = reference on the CFT sector
+  // pLevel = reference on the level
+  // qValue = reference on the charge index
+  // chargeSectorLevel = reference on the U(1) charge sector level
+  // neutralSectorLevel = reference on the neutral sector level
+  // chargeSectorIndex = index of the U(1) charge sector within its current level
+  // neutralSectorIndex = index of the neutral sector within its current level
+  virtual void GetCFTSectorChargeAndPLevelFromMatrixIndex(int index, int& cftSector, int& pLevel, int& qValue, int& chargeSectorLevel, 
+							  int& neutralSectorLevel, int& chargeSectorIndex, int& neutralSectorIndex);
+
  protected:
 
   // compute the various arrays required to convert from quantum numbers and local indices to a global linearized index
@@ -180,6 +193,74 @@ inline int FQHEMPSPHPfaffianMatrix::Get2RMatrixIndexV2(int pLevel, int cftSector
 	  + (this->NeutralSectorDimension[cftSector][this->PLevelShift + chargeSectorLevel - pLevel] * chargeSectorIndex) + cftSectorIndex);
 }
 
+
+// compute the CFT sector, the level and the charge index of a given matrix index
+//
+// index = matrix index
+// sector = reference on the CFT sector
+// pLevel = reference on the level
+// qValue = reference on the charge index
+// chargeSectorLevel = reference on the U(1) charge sector level
+// neutralSectorLevel = reference on the neutral sector level
+// chargeSectorIndex = index of the U(1) charge sector within its current level
+// neutralSectorIndex = index of the neutral sector within its current level
+
+inline void FQHEMPSPHPfaffianMatrix::GetCFTSectorChargeAndPLevelFromMatrixIndex(int index, int& cftSector, int& pLevel, int& qValue, int& chargeSectorLevel, 
+										 int& neutralSectorLevel, int& chargeSectorIndex, int& neutralSectorIndex)
+{
+  pLevel = 0;
+  cftSector = 0;
+  qValue = 0;
+  chargeSectorLevel = 0;
+  neutralSectorLevel = 0;
+  chargeSectorIndex = 0;
+  neutralSectorIndex = 0;
+  int MinIndexDistance = this->RealBMatrices->GetNbrRow();
+  for (int p = 0; p <= this->PLevel; ++p)
+    {
+      for (int x = 0; x < this->NbrCFTSectors; ++x)
+	{
+	  for (int q = this->NInitialValuePerPLevelCFTSector[p][x]; q <= this->NLastValuePerPLevelCFTSector[p][x]; ++q)
+	    {
+	      int TmpIndexDistance = index - this->StartingIndexPerPLevelCFTSectorQValue[p][x][q - this->NInitialValuePerPLevelCFTSector[p][x]];
+	      if ((TmpIndexDistance >= 0) && (TmpIndexDistance <= MinIndexDistance))
+		{
+		  MinIndexDistance = TmpIndexDistance;
+		  pLevel = p;
+		  cftSector = x;
+		  qValue = q;
+		}
+	    }
+	}     
+    }  	
+  MinIndexDistance = this->RealBMatrices->GetNbrRow();
+  int TmpMinChargePSector = pLevel - this->PLevelShift;
+  if (TmpMinChargePSector < 0)
+    {
+      TmpMinChargePSector = 0;
+    }
+  int TmpMaxChargePSector = pLevel;
+  if (TmpMaxChargePSector > this->PLevelShift)
+    {
+      TmpMaxChargePSector = this->PLevelShift;
+    }
+  for (int TmpChargeLevel = TmpMinChargePSector; TmpChargeLevel <= TmpMaxChargePSector; ++TmpChargeLevel)
+    {
+      int TmpIndexDistance = index - this->StartingIndexPerPLevelCFTSectorQValueU1Sector[pLevel][cftSector][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][cftSector]][TmpChargeLevel];
+      if ((TmpIndexDistance >= 0) && (TmpIndexDistance < MinIndexDistance))
+	{
+	  if (this->NeutralSectorDimension[cftSector][this->PLevelShift + TmpChargeLevel - pLevel] > 0)
+	    {
+	      MinIndexDistance = TmpIndexDistance;
+	      chargeSectorLevel = TmpChargeLevel;
+	    }
+	}
+    }
+  index -= this->StartingIndexPerPLevelCFTSectorQValueU1Sector[pLevel][cftSector][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][cftSector]][chargeSectorLevel];
+  neutralSectorLevel = (this->PLevelShift + chargeSectorLevel) - pLevel;
+  chargeSectorIndex = index / this->NeutralSectorDimension[cftSector][neutralSectorLevel];  
+  neutralSectorIndex = index % this->NeutralSectorDimension[cftSector][neutralSectorLevel];		  		    
+}
 
 
 #endif

@@ -3883,3 +3883,48 @@ int* FQHEMPSClustered2RMatrix::GetTopologicalSectorIndices(int topologicalSector
   return TmpIndices;
 }
   
+// print a given state of the auxiliary space
+//
+// str = reference on the output stream
+// index = index of the state
+// return value = reference on the output stream
+
+ostream& FQHEMPSClustered2RMatrix::PrintAuxiliarySpaceState(ostream& str, int index)
+{
+  int TmpPLevel;
+  int TmpQ;
+  int TmpSector;
+  int TmpChargeSectorLevel;
+  int TmpNeutralSectorLevel;
+  int TmpChargeSectorIndex;
+  int TmpNeutralSectorIndex;
+  this->GetCFTSectorChargeAndPLevelFromMatrixIndex(index, TmpSector, TmpPLevel, TmpQ, TmpChargeSectorLevel, TmpNeutralSectorLevel, 
+						   TmpChargeSectorIndex, TmpNeutralSectorIndex);
+  str << "|" << index << ": x=" << TmpSector << " Q=" << TmpQ << " P=" << TmpPLevel 
+      << " : P_mu=" << TmpChargeSectorLevel << " mu=" << TmpChargeSectorIndex 
+      << " : P_l=" << TmpNeutralSectorLevel << " l=" << TmpNeutralSectorIndex << ">";
+  return str;
+}
+
+// get the label associated to a given state of the auxiliary space
+//
+// index = auxiliary space index
+// return value = string containing the label
+
+char* FQHEMPSClustered2RMatrix::GetAuxiliarySpaceLabel(int index)
+{
+  int TmpPLevel;
+  int TmpQ;
+  int TmpCFTSector;
+  int TmpChargeSectorLevel;
+  int TmpNeutralSectorLevel;
+  int TmpChargeSectorIndex;
+  int TmpNeutralSectorIndex;
+  this->GetCFTSectorChargeAndPLevelFromMatrixIndex(index, TmpCFTSector, TmpPLevel, TmpQ, TmpChargeSectorLevel, TmpNeutralSectorLevel, 
+						   TmpChargeSectorIndex, TmpNeutralSectorIndex);
+  char* TmpString = new char [256];
+  sprintf (TmpString, "(x=%d, Q=%d, P=%d, P_mu=%d, mu=%d, P_l=%d, l=%d, i=%d)", TmpCFTSector, TmpQ, TmpPLevel, 
+	   TmpChargeSectorLevel, TmpChargeSectorIndex, TmpNeutralSectorLevel, TmpNeutralSectorIndex, index);
+  return TmpString;
+}
+
