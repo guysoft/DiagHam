@@ -7791,6 +7791,11 @@ void FermionOnSphere::CreateStateFromSiteDependentMPSDescription (SparseRealMatr
 		  TmpVector = TmpVector2;
 		  TmpVector2 = TmpVector3;
 		}
+	      if ((i == 3) || (i == 4))
+		{
+		  cout << "index = " << i << " B[1] " << j << endl;
+		  TmpVector.PrintNonZero(cout) << endl;
+		}
 	    }
 	  else
 	    {
@@ -7801,8 +7806,12 @@ void FermionOnSphere::CreateStateFromSiteDependentMPSDescription (SparseRealMatr
 		  TmpVector = TmpVector2;
 		  TmpVector2 = TmpVector3;		  
 		}
+	      if ((i == 3) || (i == 4))
+		{
+		  cout << "index = " << i << " B[0] " << j << endl;
+		  TmpVector.PrintNonZero(cout) << endl;
+		}
 	    }
-
 	} 
       state[i] = TmpVector[mPSRowIndex];
     }

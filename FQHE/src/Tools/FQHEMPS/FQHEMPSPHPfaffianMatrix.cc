@@ -1640,10 +1640,10 @@ SparseRealMatrix** FQHEMPSPHPfaffianMatrix::GetSphereSiteDependentMatrices(int n
   unsigned long* Partition1 = new unsigned long [this->PLevel + 2];
   unsigned long* Partition2 = new unsigned long [this->PLevel + 2];
 
-//   for (int i = 0; i < MatrixSize; ++i)
-//     {
-//       this->PrintAuxiliarySpaceState(cout, i) << endl;
-//     }
+//    for (int i = 0; i < MatrixSize; ++i)
+//      {
+//        this->PrintAuxiliarySpaceState(cout, i) << endl;
+//      }
 
   int NbrV0MatrixIndices = (2 * this->PLevelShift) + 2;
   int V0MatrixIndexShift = this->PLevelShift + 1;
@@ -1831,11 +1831,12 @@ SparseRealMatrix** FQHEMPSPHPfaffianMatrix::GetSphereSiteDependentMatrices(int n
 		}
 	    }
  	  V0Matrices[V0MatrixIndex] = V0Matrix;
-// 	  cout << "V0[" << V0MatrixIndex << "] = " << endl;
+ 	  cout << "V0[" << V0MatrixIndex << "] = " << endl;
 // 	  V0Matrices[V0MatrixIndex].PrintNonZero(cout, TmpLabels, TmpLabels) << endl;
 	}
     }
 
+  cout.precision(14);
   double** TmpProjectorCoefficients = new double*[nbrFluxQuanta + 1];
   BinomialCoefficients TmpCoef (nbrFluxQuanta);
   for (int i = 0; i <= nbrFluxQuanta; ++i)
@@ -1847,6 +1848,9 @@ SparseRealMatrix** FQHEMPSPHPfaffianMatrix::GetSphereSiteDependentMatrices(int n
 	    {
 	      TmpProjectorCoefficients[i][V0MatrixIndex] = (sqrt(4.0 * M_PI / ((double) (nbrFluxQuanta + 1)) * TmpCoef(nbrFluxQuanta, i)) 
 							    / TmpCoef(nbrFluxQuanta, i - (V0MatrixIndex - V0MatrixIndexShift)));
+	      cout << i << " " << V0MatrixIndex << " : " << TmpProjectorCoefficients[i][V0MatrixIndex] << endl;
+// 	      TmpProjectorCoefficients[i][V0MatrixIndex] = (TmpCoef(nbrFluxQuanta, i)
+// 							    / sqrt(TmpCoef(nbrFluxQuanta, i - (V0MatrixIndex - V0MatrixIndexShift))));
 	    }
 	  else
 	    {
@@ -1884,8 +1888,8 @@ SparseRealMatrix** FQHEMPSPHPfaffianMatrix::GetSphereSiteDependentMatrices(int n
 //	      TmpMatrices[i][m] = MemoryEfficientMultiply(TmpMatrices[i][m - 1], TmpV0Matrix);
 	      TmpMatrices[i][m] = MemoryEfficientMultiply(TmpV0Matrix, TmpMatrices[i][m - 1]);
 	    }
-// 	  cout << "B[1," << i << "] = " << endl;
-// 	  TmpMatrices[i][1].PrintNonZero(cout) << endl;
+ 	  cout << "B[1," << i << "] = " << endl;
+//  	  TmpMatrices[i][1].PrintNonZero(cout, TmpLabels, TmpLabels) << endl;
 	}
     }
   delete[] TmpMatrices2;

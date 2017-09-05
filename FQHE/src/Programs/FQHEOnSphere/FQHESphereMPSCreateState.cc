@@ -269,6 +269,7 @@ int main(int argc, char** argv)
 	}
       cout << "B matrix size = " << SparseBMatrices[0][TmpIndex].GetNbrRow() << "x" << SparseBMatrices[0][TmpIndex].GetNbrColumn() << endl;
       Space->CreateStateFromSiteDependentMPSDescription(SparseBMatrices, State, MPSRowIndex, MPSColumnIndex, 0l, Space->GetHilbertSpaceDimension());
+      cout << State << endl;
     }
   if (Architecture.GetArchitecture()->CanWriteOnDisk() == true)
     {
