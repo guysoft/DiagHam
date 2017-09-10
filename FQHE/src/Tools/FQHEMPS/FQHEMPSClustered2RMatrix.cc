@@ -59,6 +59,8 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix()
   this->BosonicVersion = false;
   this->TwistedTorusFlag = false;
   this->NeutralSectorMaxPLevel = -1;
+  this->CFTDirectory = 0;
+  this->Architecture = 0;
 }
 
 // constructor
@@ -166,6 +168,8 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex
   this->BMatrixOutputName = new char[256]; 
   sprintf(this->BMatrixOutputName, "clustered_k_2_r_%d", this->RIndex);
   this->CreateBMatrices(0, architecture);
+  this->CFTDirectory = 0;
+  this->Architecture = architecture;
 }
 
 // constructor 
@@ -247,6 +251,16 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex
   this->BMatrixOutputName = new char[256]; 
   sprintf(this->BMatrixOutputName, "clustered_k_2_r_%d", this->RIndex);
   this->CreateBMatrices(cftDirectory, architecture);
+  if (cftDirectory != 0)
+    {
+      this->CFTDirectory = new char [strlen(cftDirectory) + 1];
+      strcpy (this->CFTDirectory, cftDirectory);
+    }
+  else
+    {
+      this->CFTDirectory = 0;
+    }
+  this->Architecture = architecture;
 }
 
 
@@ -358,6 +372,16 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int pLevel, int nbrBMatrices,
 	  this->CreateBMatrices(StateDefinition["CFTMatrixDirectory"], architecture);
 	}
     }
+  if (StateDefinition["CFTMatrixDirectory"] != 0)
+    {
+      this->CFTDirectory = new char [strlen(StateDefinition["CFTMatrixDirectory"]) + 1];
+      strcpy (this->CFTDirectory, StateDefinition["CFTMatrixDirectory"]);
+    }
+  else
+    {
+      this->CFTDirectory = 0;
+    }
+  this->Architecture = architecture;
 }
 
 // constructor from stored B matrices
@@ -428,6 +452,10 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex
 FQHEMPSClustered2RMatrix::~FQHEMPSClustered2RMatrix()
 {
   delete[] this->BMatrixOutputName;
+  if (this->CFTDirectory != 0)
+    {
+      delete[] this->CFTDirectory;
+    }
 }
   
 // get the filling factor of the state associated the B matrices 
@@ -2547,6 +2575,11 @@ void FQHEMPSClustered2RMatrix::GetMatrixBoundaryIndices(int& rowIndex, int& colu
   this->GetChargeIndexRange(0, MinQ, MaxQ);
   if (padding == true)
     {
+//       These lines should be activated in order for FQHEMPSClustered2RMatrix::GetSphereSiteDependentMatrices to work
+//       You also need a root configuration such as 11001100
+//       rowIndex = 2 * this->PLevel  + 1 - MinQ;
+//       columnIndex = rowIndex;
+//       return;
       if (this->BosonicVersion == false)
 	{
 	  if ((this->RIndex & 1) == 0)
@@ -3926,5 +3959,567 @@ char* FQHEMPSClustered2RMatrix::GetAuxiliarySpaceLabel(int index)
   sprintf (TmpString, "(x=%d, Q=%d, P=%d, P_mu=%d, mu=%d, P_l=%d, l=%d, i=%d)", TmpCFTSector, TmpQ, TmpPLevel, 
 	   TmpChargeSectorLevel, TmpChargeSectorIndex, TmpNeutralSectorLevel, TmpNeutralSectorIndex, index);
   return TmpString;
+}
+
+// get the array where the site-dependent matrices for the geometry are stored
+//
+// nbrFluxQuanta = number of flux quanta in the finite size system
+// return value = pointer to the array of matrices (first entry being the orbital index, the second being the occupation number)
+
+SparseRealMatrix** FQHEMPSClustered2RMatrix::GetSphereSiteDependentMatrices(int nbrFluxQuanta)
+{
+  // this code is not intended to be efficient but the code is closer to the PH Pfaffian code
+  
+  LongRational CentralCharge12 (this->CentralCharge);
+  cout << "central charge = " << CentralCharge12 << endl;
+  CentralCharge12 /= 12l;
+
+  double CentralCharge12Numerical = CentralCharge12.GetNumericalValue();
+  double WeightPrimaryFieldMatrixElementNumerical = this->WeightPrimaryFieldMatrixElement.GetNumericalValue();
+
+  double WeightIdentityNumerical = this->WeightIdentity.GetNumericalValue();
+  double WeightPsiNumerical = this->WeightPsi.GetNumericalValue();
+  long* Partition = new long[2 * (this->PLevel + 1)];
+  unsigned long* TmpPartition = new unsigned long [this->PLevel + 2];
+
+  BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [this->PLevel + 1];
+  RealSymmetricMatrix* ScalarProductIdentity = new RealSymmetricMatrix[this->PLevel + 1];
+  RealSymmetricMatrix* ScalarProductPsi = new RealSymmetricMatrix[this->PLevel + 1];
+  LongRationalMatrix* RationalScalarProductIdentity = new LongRationalMatrix[this->PLevel + 1];
+  LongRationalMatrix* RationalScalarProductPsi = new LongRationalMatrix[this->PLevel + 1];
+  RealMatrix** MatrixPsi01 = new RealMatrix*[this->PLevel + 1];
+  RealMatrix** MatrixPsi10 = new RealMatrix*[this->PLevel + 1];
+  LongRationalMatrix** RationalMatrixPsi01 = new LongRationalMatrix*[this->PLevel + 1];
+  LongRationalMatrix** RationalMatrixPsi10 = new LongRationalMatrix*[this->PLevel + 1];
+  RealMatrix* OrthogonalBasisIdentityLeft = new RealMatrix[this->PLevel + 1];
+  RealMatrix* OrthogonalBasisPsiLeft = new RealMatrix[this->PLevel + 1];
+  RealMatrix* OrthogonalBasisIdentityRight = new RealMatrix[this->PLevel + 1];
+  RealMatrix* OrthogonalBasisPsiRight = new RealMatrix[this->PLevel + 1];
+
+  LongRational** RationalMultiplicityFactor = new LongRational*[this->PLevel + 1];
+  double** MultiplicityFactor = new double*[this->PLevel + 1];
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      U1BosonBasis[i] = new BosonOnDiskShort (i, i, this->PLevel + 1);
+      MatrixPsi01[i] = new RealMatrix[this->PLevel + 1];
+      MatrixPsi10[i] = new RealMatrix[this->PLevel + 1];
+      RationalMatrixPsi01[i] = new LongRationalMatrix[this->PLevel + 1];
+      RationalMatrixPsi10[i] = new LongRationalMatrix[this->PLevel + 1];
+      RationalMultiplicityFactor[i] = new LongRational[U1BosonBasis[i]->GetHilbertSpaceDimension()];
+      MultiplicityFactor[i] = new double[U1BosonBasis[i]->GetHilbertSpaceDimension()];
+      for (int j = 0; j < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++j)
+	{
+	  U1BosonBasis[i]->GetOccupationNumber(j, TmpPartition);	    
+	  RationalMultiplicityFactor[i][j] = 1l;
+	  MultiplicityFactor[i][j] = 1.0;
+ 	  for (int k = 1; k <= i; ++k)
+ 	    if (TmpPartition[k] > 1ul)
+	      {
+		RationalMultiplicityFactor[i][j].FactorialDivide(TmpPartition[k]);
+		double Tmp = 1.0;
+		for (unsigned long l = 2l; l <= TmpPartition[k]; ++l)
+		  Tmp *=  (double) l;
+		MultiplicityFactor[i][j] /= Tmp;
+	      }
+	}
+    }
+
+  cout << "weight: " <<   this->WeightIdentity << " " << this->WeightPsi << endl;
+  char* TmpScalarProductIdentityFileName = 0; 
+  char* TmpScalarProductPsiFileName = 0;
+  if (this->CFTDirectory != 0)
+    {
+      TmpScalarProductIdentityFileName = new char[512 + strlen(this->CFTDirectory)];
+      TmpScalarProductPsiFileName = new char[512 + strlen(this->CFTDirectory)];
+    }
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      cout << "Level = " <<  i << endl;
+      if (this->CFTDirectory != 0)
+	{
+	  if (this->UseRationalFlag == true)
+	    {
+	      sprintf (TmpScalarProductIdentityFileName, "%s/cft_%s_scalarproducts_identity_level_%d.dat", this->CFTDirectory, this->BMatrixOutputName, i);
+	      sprintf (TmpScalarProductPsiFileName, "%s/cft_%s_scalarproducts_psi_level_%d.dat", this->CFTDirectory, this->BMatrixOutputName, i);
+	    }
+	  else
+	    {
+	      sprintf (TmpScalarProductIdentityFileName, "%s/cft_%s_num_scalarproducts_identity_level_%d.dat", this->CFTDirectory, this->BMatrixOutputName, i);
+	      sprintf (TmpScalarProductPsiFileName, "%s/cft_%s_num_scalarproducts_psi_level_%d.dat", this->CFTDirectory, this->BMatrixOutputName, i);
+	    }
+	}
+      this->ComputeFullScalarProductMatrix(this->CFTDirectory, TmpScalarProductIdentityFileName, this->Architecture, RationalScalarProductIdentity, ScalarProductIdentity, i, U1BosonBasis,
+					   CentralCharge12, CentralCharge12Numerical, this->WeightIdentity, WeightIdentityNumerical, "identity",
+					   OrthogonalBasisIdentityLeft, OrthogonalBasisIdentityRight, RationalMultiplicityFactor, MultiplicityFactor);
+      this->ComputeFullScalarProductMatrix(this->CFTDirectory, TmpScalarProductPsiFileName, this->Architecture, RationalScalarProductPsi, ScalarProductPsi, i, U1BosonBasis,
+					   CentralCharge12, CentralCharge12Numerical, this->WeightPsi, WeightPsiNumerical, "psi",
+					   OrthogonalBasisPsiLeft, OrthogonalBasisPsiRight, RationalMultiplicityFactor, MultiplicityFactor);
+      cout << "---------------------------------" << endl;
+    }
+  this->RescaleFullScalarProductMatrix(RationalScalarProductIdentity, ScalarProductIdentity, RationalMultiplicityFactor, MultiplicityFactor);
+  this->RescaleFullScalarProductMatrix(RationalScalarProductPsi, ScalarProductPsi, RationalMultiplicityFactor, MultiplicityFactor);
+
+  this->U1BasisDimension = new int [this->PLevel + 1];	
+  this->NeutralSectorDimension = new int* [2];
+  this->NeutralSectorDimension[0] = new int [this->PLevel + 1];
+  this->NeutralSectorDimension[1] = new int [this->PLevel + 1];
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      this->NeutralSectorDimension[0][i] = OrthogonalBasisIdentityLeft[i].GetNbrColumn();
+      this->NeutralSectorDimension[1][i] = OrthogonalBasisPsiLeft[i].GetNbrColumn();
+      this->U1BasisDimension[i] = U1BosonBasis[i]->GetHilbertSpaceDimension();
+    }
+
+  int NValueShift;
+  int QValue;
+  int QValueDenominator;
+  double ExtraCylinderFactor = 1.0;
+
+  QValue = this->LaughlinIndex - 1 + (this->RIndex / 2);
+  cout << "this->LaughlinIndex = " << this->LaughlinIndex  << " " << QValue << endl;
+// PH-Pfaffian values
+//  this->NbrNValue = 4 * this->PLevel + 3 + this->RIndex;
+//  NValueShift = 4 * this->PLevel + 2 + this->LaughlinIndex;
+// Pfaffian values
+  this->NbrNValue = 4 * this->PLevel + 5;
+  NValueShift = 4 * this->PLevel + 2;
+  QValueDenominator = 1;
+
+  int MatrixSize = this->ComputeLinearizedIndexArrays();
+  cout << "B matrix size = " << MatrixSize << endl;
+
+  cout << "computing Psi matrix elements" << endl;
+  for (int j = 0; j <= this->PLevel; ++j)
+    {
+      for (int i = 0; i <= this->PLevel; ++i)
+	{
+	  cout << "Levels = " <<  i << " " << j << endl;
+	  if (this->CFTDirectory != 0)
+	    {
+	      if (this->UseRationalFlag == true)
+		{
+		  sprintf (TmpScalarProductIdentityFileName, "%s/cft_%s_matrixelement_identitypsi_level_%d_%d.dat", this->CFTDirectory, this->BMatrixOutputName, i, j);
+		  sprintf (TmpScalarProductPsiFileName, "%s/cft_%s_matrixelement_psiidentity_level_%d_%d.dat", this->CFTDirectory, this->BMatrixOutputName, i, j);
+		}
+	      else
+		{
+		  sprintf (TmpScalarProductIdentityFileName, "%s/cft_%s_num_matrixelement_identitypsi_level_%d_%d.dat", this->CFTDirectory, this->BMatrixOutputName, i, j);
+		  sprintf (TmpScalarProductPsiFileName, "%s/cft_%s_num_matrixelement_psiidentity_level_%d_%d.dat", this->CFTDirectory, this->BMatrixOutputName, i, j);
+		}
+	    }
+	  this->ComputeFullMatrixElements(this->CFTDirectory, TmpScalarProductIdentityFileName, this->Architecture, 
+					  RationalMatrixPsi01, MatrixPsi01, i, j, U1BosonBasis, 
+					  CentralCharge12, CentralCharge12Numerical, 
+					  this->WeightIdentity, WeightIdentityNumerical, 
+					  this->WeightPsi, WeightPsiNumerical,
+					  this->WeightPrimaryFieldMatrixElement, WeightPrimaryFieldMatrixElementNumerical);
+	  this->ComputeFullMatrixElements(this->CFTDirectory, TmpScalarProductPsiFileName, this->Architecture, 
+					  RationalMatrixPsi10, MatrixPsi10, i, j, U1BosonBasis, 
+					  CentralCharge12, CentralCharge12Numerical, 
+					  this->WeightPsi, WeightPsiNumerical, 
+					  this->WeightIdentity, WeightIdentityNumerical,
+					  this->WeightPrimaryFieldMatrixElement, WeightPrimaryFieldMatrixElementNumerical);
+	}
+    }
+  this->RescaleFullMatrixElements(RationalMatrixPsi01, MatrixPsi01, RationalMultiplicityFactor, MultiplicityFactor, this->MatrixElementNormalization);
+  this->RescaleFullMatrixElements(RationalMatrixPsi10, MatrixPsi10, RationalMultiplicityFactor, MultiplicityFactor, this->MatrixElementNormalization);
+
+  cout << "building B matrices" << endl;
+
+  char** TmpLabels = new char* [MatrixSize];
+  for (int i = 0; i < MatrixSize; ++i)
+    {
+      TmpLabels[i] = this->GetAuxiliarySpaceLabel(i);
+    }
+
+  SparseRealMatrix TmpB0Matrix;
+  SparseRealMatrix* BMatrices = 0;
+  SparseComplexMatrix* TmpComplexBMatrices = 0;
+  int* TmpNbrElementPerRow = new int[MatrixSize];
+  for (int i = 0; i < MatrixSize; ++i)
+    TmpNbrElementPerRow[i] = 0;
+
+  // B^[0]  matrix evaluation
+  for (int n = 0; n <= this->PLevel; ++n)
+    {
+      for (int p = 0; p <= this->PLevel; ++p)
+	{
+	  if (((p + n) <= this->PLevel)  && ((p + n) >= 0))
+	    {
+	      BosonOnDiskShort* TmpSpaceCharged = U1BosonBasis[p];
+	      BosonOnDiskShort* TmpSpaceNeutral = U1BosonBasis[n];
+	      RealMatrix& TmpOrthogonalBasisIdentityLeft = OrthogonalBasisIdentityLeft[n];
+	      RealMatrix& TmpOrthogonalBasisPsiLeft = OrthogonalBasisPsiLeft[n];
+	      RealMatrix& TmpOrthogonalBasisIdentityRight = OrthogonalBasisIdentityRight[n];
+	      RealMatrix& TmpOrthogonalBasisPsiRight = OrthogonalBasisPsiRight[n];
+	      RealSymmetricMatrix& TmpScalarProductIdentity = ScalarProductIdentity[n];
+	      RealSymmetricMatrix& TmpScalarProductPsi = ScalarProductPsi[n];
+	      for (int ChargedIndex = 0; ChargedIndex < TmpSpaceCharged->GetHilbertSpaceDimension(); ++ChargedIndex)
+		{	      
+		  for (int j = this->NInitialValuePerPLevelCFTSector[p + n][0] + 1; j <= this->NLastValuePerPLevelCFTSector[p + n][0]; ++j)
+		    {
+		      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentityLeft.GetNbrColumn(); ++NeutralIndex1)
+			{
+			  for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentityLeft.GetNbrColumn(); ++NeutralIndex2)
+			    {
+			      ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(p + n, 0, j - 1, p, ChargedIndex, NeutralIndex1)];
+			    }
+			}
+		    }
+		  for (int j = this->NInitialValuePerPLevelCFTSector[p + n][1] + 1; j <= this->NLastValuePerPLevelCFTSector[p + n][1]; ++j)
+		    {
+		      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex1)
+			{
+			  for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex2)
+			    {
+			      ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(p + n, 1, j - 1, p, ChargedIndex, NeutralIndex1)];
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+  BMatrices = new SparseRealMatrix[this->NbrBMatrices];
+  TmpB0Matrix = SparseRealMatrix(MatrixSize, MatrixSize, TmpNbrElementPerRow);
+
+  for (int n = 0; n <= this->PLevel; ++n)
+    {
+      for (int p = 0; p <= this->PLevel; ++p)
+	{
+	  if (((p + n) <= this->PLevel)  && ((p + n) >= 0))
+	    {
+	      BosonOnDiskShort* TmpSpaceCharged = U1BosonBasis[p];
+	      BosonOnDiskShort* TmpSpaceNeutral = U1BosonBasis[n];
+	      RealMatrix& TmpOrthogonalBasisIdentityLeft = OrthogonalBasisIdentityLeft[n];
+	      RealMatrix& TmpOrthogonalBasisPsiLeft = OrthogonalBasisPsiLeft[n];
+	      RealMatrix& TmpOrthogonalBasisIdentityRight = OrthogonalBasisIdentityRight[n];
+	      RealMatrix& TmpOrthogonalBasisPsiRight = OrthogonalBasisPsiRight[n];
+	      RealSymmetricMatrix& TmpScalarProductIdentity = ScalarProductIdentity[n];
+	      RealSymmetricMatrix& TmpScalarProductPsi = ScalarProductPsi[n];
+	      for (int ChargedIndex = 0; ChargedIndex < TmpSpaceCharged->GetHilbertSpaceDimension(); ++ChargedIndex)
+		{	      
+		  for (int j = this->NInitialValuePerPLevelCFTSector[p + n][0] + 1; j <= this->NLastValuePerPLevelCFTSector[p + n][0]; ++j)
+		    {
+		      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentityLeft.GetNbrColumn(); ++NeutralIndex1)
+			{
+			  for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentityLeft.GetNbrColumn(); ++NeutralIndex2)
+			    {
+			      double Tmp = 0.0;
+			      for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral->GetHilbertSpaceDimension(); ++NeutralIndex3)
+				{
+				  double Tmp1 = 0.0;			      
+				  for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral->GetHilbertSpaceDimension(); ++NeutralIndex4)
+				    {
+				      Tmp1 += TmpScalarProductIdentity(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisIdentityRight(NeutralIndex4, NeutralIndex2);				  
+				    }
+				  Tmp += TmpOrthogonalBasisIdentityLeft(NeutralIndex3, NeutralIndex1) * Tmp1;
+				}
+			      TmpB0Matrix.SetMatrixElement(this->Get2RMatrixIndexV2(p + n, 0, j - 1, p, ChargedIndex, NeutralIndex1),
+							    this->Get2RMatrixIndexV2(p + n, 0, j, p, ChargedIndex, NeutralIndex2), Tmp);
+			    }
+			}
+		    }
+		  for (int j = this->NInitialValuePerPLevelCFTSector[p + n][1] + 1; j <= this->NLastValuePerPLevelCFTSector[p + n][1]; ++j)
+		    {
+		      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex1)
+			{
+			  for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex2)
+			    {
+			      double Tmp = 0.0;
+			      for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral->GetHilbertSpaceDimension(); ++NeutralIndex3)
+				{
+				  double Tmp1 = 0.0;			      
+				  for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral->GetHilbertSpaceDimension(); ++NeutralIndex4)
+				    {
+				      Tmp1 += TmpScalarProductPsi(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisPsiRight(NeutralIndex4, NeutralIndex2);				  
+				    }
+				  Tmp += TmpOrthogonalBasisPsiLeft(NeutralIndex3, NeutralIndex1) * Tmp1;
+				}
+			      TmpB0Matrix.SetMatrixElement(this->Get2RMatrixIndexV2(p + n, 1, j - 1, p, ChargedIndex, NeutralIndex1),
+							    this->Get2RMatrixIndexV2(p + n, 1, j, p, ChargedIndex, NeutralIndex2), Tmp);
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+  
+  // B^[1]  matrix evaluation
+  for (int i = 0; i < MatrixSize; ++i)
+    TmpNbrElementPerRow[i] = 0;
+  FactorialCoefficient Coef;
+  unsigned long* Partition1 = new unsigned long [this->PLevel + 2];
+  unsigned long* Partition2 = new unsigned long [this->PLevel + 2];
+
+//   for (int i = 0; i < MatrixSize; ++i)
+//     {
+//       this->PrintAuxiliarySpaceState(cout, i) << endl;
+//     }
+
+  int NbrV0MatrixIndices = (2 * this->PLevel) + 2;
+// PH-Pfaffian values
+//   int V0MatrixIndexShift = this->PLevelShift + 1;
+// Pfaffian values
+  int V0MatrixIndexShift = this->PLevel;
+  SparseRealMatrix* V0Matrices = new SparseRealMatrix[NbrV0MatrixIndices];
+
+  for (int V0MatrixIndex = 0; V0MatrixIndex < NbrV0MatrixIndices; ++V0MatrixIndex)
+    {
+      for (int i = 0; i < MatrixSize; ++i)
+	TmpNbrElementPerRow[i] = 0;
+      long TmpTotalNbrElements = 0l;
+      for (int n = 0; n <= this->PLevel; ++n)
+	{
+	  for (int p = 0; p <= this->PLevel; ++p)
+	    {
+	      if (((p + n) <= this->PLevel) && ((p + n) >= 0))
+		{
+		  BosonOnDiskShort* TmpSpaceCharged1 = U1BosonBasis[p];
+		  BosonOnDiskShort* TmpSpaceNeutral1 = U1BosonBasis[n];
+		  RealMatrix& TmpOrthogonalBasisIdentity1 = OrthogonalBasisIdentityLeft[n];
+		  RealMatrix& TmpOrthogonalBasisPsi1 = OrthogonalBasisPsiLeft[n];
+		  for (int m = 0; m <= this->PLevel; ++m)
+		    {
+		      for (int q = 0; q <= this->PLevel; ++q)
+			{
+			  if (((q + m) <= this->PLevel) && ((q + m) >= 0))
+			    {
+			      BosonOnDiskShort* TmpSpaceCharged2 = U1BosonBasis[q];
+			      BosonOnDiskShort* TmpSpaceNeutral2 = U1BosonBasis[m];
+			      RealMatrix& TmpOrthogonalBasisIdentity2 = OrthogonalBasisIdentityRight[m];
+			      RealMatrix& TmpOrthogonalBasisPsi2 = OrthogonalBasisPsiRight[m];
+			      RealMatrix& TmpMatrixPsi01 = MatrixPsi01[n][m];
+			      RealMatrix& TmpMatrixPsi10 = MatrixPsi10[n][m];	
+			      
+			      for (int ChargedIndex1 = 0; ChargedIndex1 < TmpSpaceCharged1->GetHilbertSpaceDimension(); ++ChargedIndex1)
+				{	      
+				  TmpSpaceCharged1->GetOccupationNumber(ChargedIndex1, Partition1);
+				  for (int ChargedIndex2 = 0; ChargedIndex2 < TmpSpaceCharged2->GetHilbertSpaceDimension(); ++ChargedIndex2)
+				    {	      
+				      TmpSpaceCharged2->GetOccupationNumber(ChargedIndex2, Partition2);
+				      int N2;
+				      int N1;
+				      N2 = (2 * ((q + m) - (p + n))  + 2 + NValueShift) / 2;
+				      N1 = N2 + QValue;
+				      if (((N1 >= this->NInitialValuePerPLevelCFTSector[p + n][0]) && (N1 <= this->NLastValuePerPLevelCFTSector[p + n][0]))
+					  && ((N2 >= this->NInitialValuePerPLevelCFTSector[q + m][1]) && (N2 <= this->NLastValuePerPLevelCFTSector[q + m][1]))
+					  && ((V0MatrixIndex - V0MatrixIndexShift) == (m - n + 1)))
+					{ 
+					  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
+					    {
+					      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsi2.GetNbrColumn(); ++NeutralIndex2)
+						{
+						  ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(p + n, 0, N1, p, ChargedIndex1, NeutralIndex1)];
+						  ++TmpTotalNbrElements;
+						}
+					    }
+					  
+					}
+				      N2 = (2 * ((q + m) - (p + n)) + NValueShift) / 2;
+				      N1 = N2 + QValue;
+				      if (((N1 >= this->NInitialValuePerPLevelCFTSector[p + n][1]) && (N1 <= this->NLastValuePerPLevelCFTSector[p + n][1]))
+					  && ((N2 >= this->NInitialValuePerPLevelCFTSector[q + m][0]) && (N2 <= this->NLastValuePerPLevelCFTSector[q + m][0]))
+					  && ((V0MatrixIndex - V0MatrixIndexShift) == (m - n)))
+					{ 
+					  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi1.GetNbrColumn(); ++NeutralIndex1)
+					    {
+					      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentity2.GetNbrColumn(); ++NeutralIndex2)
+						{
+						  ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(p + n, 1, N1, p, ChargedIndex1, NeutralIndex1)];
+						  ++TmpTotalNbrElements;
+						}
+					    }
+					}
+				    }
+				}
+			    }
+			}
+		    }
+		}	      
+	    }
+	}
+      
+      if (TmpTotalNbrElements > 0l)
+	{
+	  SparseRealMatrix V0Matrix (MatrixSize, MatrixSize, TmpNbrElementPerRow);
+	  for (int n = 0; n <= this->PLevel; ++n)
+	    {
+	      for (int p = 0; p <= this->PLevel; ++p)
+		{
+		  if (((p + n) <= this->PLevel) && ((p + n) >= 0))
+		    {
+		      BosonOnDiskShort* TmpSpaceCharged1 = U1BosonBasis[p];
+		      BosonOnDiskShort* TmpSpaceNeutral1 = U1BosonBasis[n];
+		      RealMatrix& TmpOrthogonalBasisIdentity1 = OrthogonalBasisIdentityLeft[n];
+		      RealMatrix& TmpOrthogonalBasisPsi1 = OrthogonalBasisPsiLeft[n];
+		      for (int m = 0; m <= this->PLevel; ++m)
+			{
+			  for (int q = 0; q <= this->PLevel; ++q)
+			    {
+			      if (((q + m) <= this->PLevel) && ((q + m) >= 0))
+				{
+				  double TmpProjectionFactor = 1.0;
+				  if (this->CylinderFlag)
+				    {
+				      TmpProjectionFactor = exp (this->Kappa * this->Kappa * ((double) ((n - m) * (n - m))));
+				    }
+				  BosonOnDiskShort* TmpSpaceCharged2 = U1BosonBasis[q];
+				  BosonOnDiskShort* TmpSpaceNeutral2 = U1BosonBasis[m];
+				  RealMatrix& TmpOrthogonalBasisIdentity2 = OrthogonalBasisIdentityRight[m];
+				  RealMatrix& TmpOrthogonalBasisPsi2 = OrthogonalBasisPsiRight[m];
+				  RealMatrix& TmpMatrixPsi01 = MatrixPsi01[n][m];
+				  RealMatrix& TmpMatrixPsi10 = MatrixPsi10[n][m];	
+				  
+				  for (int ChargedIndex1 = 0; ChargedIndex1 < TmpSpaceCharged1->GetHilbertSpaceDimension(); ++ChargedIndex1)
+				    {	      
+				      TmpSpaceCharged1->GetOccupationNumber(ChargedIndex1, Partition1);
+				      for (int ChargedIndex2 = 0; ChargedIndex2 < TmpSpaceCharged2->GetHilbertSpaceDimension(); ++ChargedIndex2)
+					{	      
+					  TmpSpaceCharged2->GetOccupationNumber(ChargedIndex2, Partition2);
+					  int N2;
+					  int N1;
+					  N2 = (2 * ((q + m) - (p + n)) + 2 + NValueShift) / 2;
+					  N1 = N2 + QValue;
+					  if (((N1 >= this->NInitialValuePerPLevelCFTSector[p + n][0]) && (N1 <= this->NLastValuePerPLevelCFTSector[p + n][0]))
+					      && ((N2 >= this->NInitialValuePerPLevelCFTSector[q + m][1]) && (N2 <= this->NLastValuePerPLevelCFTSector[q + m][1]))
+					      && ((V0MatrixIndex - V0MatrixIndexShift) == (m - n + 1)))
+					    { 
+					      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
+						{
+						  for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsi2.GetNbrColumn(); ++NeutralIndex2)
+						    {
+						      double Tmp = 0.0;
+						      for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral1->GetHilbertSpaceDimension(); ++NeutralIndex3)
+							{
+							  double Tmp1 = 0.0;			      
+							  for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral2->GetHilbertSpaceDimension(); ++NeutralIndex4)
+							    {
+							      Tmp1 += TmpMatrixPsi01(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisPsi2(NeutralIndex4, NeutralIndex2);				  
+							    }
+							  Tmp += TmpOrthogonalBasisIdentity1(NeutralIndex3, NeutralIndex1) * Tmp1;
+							}
+						      Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, p, q, Coef);
+						      Tmp *= TmpProjectionFactor;
+						      V0Matrix.SetMatrixElement(this->Get2RMatrixIndexV2(p + n, 0, N1, p, ChargedIndex1, NeutralIndex1),
+										this->Get2RMatrixIndexV2(q + m, 1, N2, q, ChargedIndex2, NeutralIndex2), Tmp);
+						    }
+						  
+						}
+					    }
+					  N2 = (2 * ((q + m) - (p + n)) + NValueShift) / 2;
+					  N1 = N2 + QValue;
+					  if (((N1 >= this->NInitialValuePerPLevelCFTSector[p + n][1]) && (N1 <= this->NLastValuePerPLevelCFTSector[p + n][1]))
+					      && ((N2 >= this->NInitialValuePerPLevelCFTSector[q + m][0]) && (N2 <= this->NLastValuePerPLevelCFTSector[q + m][0]))
+					      && ((V0MatrixIndex - V0MatrixIndexShift) == (m - n)))
+					    { 
+					      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi1.GetNbrColumn(); ++NeutralIndex1)
+						{
+						  for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentity2.GetNbrColumn(); ++NeutralIndex2)
+						    {
+						      double Tmp = 0.0;
+						      for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral1->GetHilbertSpaceDimension(); ++NeutralIndex3)
+							{
+							  double Tmp1 = 0.0;			      
+							  for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral2->GetHilbertSpaceDimension(); ++NeutralIndex4)
+							    {
+							      Tmp1 += TmpMatrixPsi10(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisIdentity2(NeutralIndex4, NeutralIndex2);				  
+							    }
+							  Tmp += TmpOrthogonalBasisPsi1(NeutralIndex3, NeutralIndex1) * Tmp1;
+							}
+						      Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, p, q, Coef);
+						      Tmp *= TmpProjectionFactor;
+						      V0Matrix.SetMatrixElement(this->Get2RMatrixIndexV2(p + n, 1, N1, p, ChargedIndex1, NeutralIndex1),
+										this->Get2RMatrixIndexV2(q + m, 0, N2, q, ChargedIndex2, NeutralIndex2), Tmp);
+						    }
+						}
+					    }
+					}
+				    }
+				}
+			    }
+			}	 
+		    }     
+		}
+	    }
+ 	  V0Matrices[V0MatrixIndex] = V0Matrix;
+//  	  cout << "V0[" << V0MatrixIndex << "] = " << endl;
+//  	  V0Matrices[V0MatrixIndex].PrintNonZero(cout, TmpLabels, TmpLabels) << endl;
+	}
+    }
+
+  cout.precision(14);
+  double** TmpProjectorCoefficients = new double*[nbrFluxQuanta + 1];
+  BinomialCoefficients TmpCoef (nbrFluxQuanta);
+  for (int i = 0; i <= nbrFluxQuanta; ++i)
+    {
+      TmpProjectorCoefficients[i] = new double[NbrV0MatrixIndices];
+      for (int V0MatrixIndex = 0; V0MatrixIndex < NbrV0MatrixIndices; ++V0MatrixIndex)
+	{
+	  TmpProjectorCoefficients[i][V0MatrixIndex] = 1.0 / (sqrt(4.0 * M_PI / ((double) (nbrFluxQuanta + 1)) * TmpCoef(nbrFluxQuanta, i)));
+	}
+    }
+
+
+  SparseRealMatrix** TmpMatrices = new SparseRealMatrix*[nbrFluxQuanta + 1];
+  SparseRealMatrix* TmpMatrices2 = new SparseRealMatrix[NbrV0MatrixIndices];
+  double* TmpCoefficients = new double[NbrV0MatrixIndices];
+  for (int i = 0; i <= nbrFluxQuanta; ++i)
+    {
+      TmpMatrices[i] = new  SparseRealMatrix[this->NbrBMatrices];
+      TmpMatrices[i][0] = TmpB0Matrix;
+      int TmpNbrV0Matrices = 0;
+      for (int m = 0; m < NbrV0MatrixIndices; ++m)
+	{
+	  if ((TmpProjectorCoefficients[i][m] != 0.0) && (V0Matrices[m].GetNbrRow() > 0))
+	    {
+	      TmpMatrices2[TmpNbrV0Matrices] = V0Matrices[m];
+	      TmpCoefficients[TmpNbrV0Matrices] = TmpProjectorCoefficients[i][m];
+	      ++TmpNbrV0Matrices;
+	    }
+	}
+      if (TmpNbrV0Matrices > 0)
+	{
+	  SparseRealMatrix TmpV0Matrix = SparseRealMatrixLinearCombination(TmpNbrV0Matrices, TmpCoefficients, TmpMatrices2);
+	  for (int m = 1; m < this->NbrBMatrices; ++m)
+	    {
+	      TmpMatrices[i][m] = MemoryEfficientMultiply(TmpMatrices[i][m - 1], TmpV0Matrix);
+	    }
+//  	  cout << "B[1," << i << "] = " << endl;
+//   	  TmpMatrices[i][1].PrintNonZero(cout, TmpLabels, TmpLabels) << endl;
+	}
+    }
+  delete[] TmpMatrices2;
+  delete[] TmpCoefficients;
+  
+  for (int i = 0; i <= nbrFluxQuanta; ++i)
+    {
+      delete[] TmpProjectorCoefficients[i];
+    }
+  delete[] TmpProjectorCoefficients;
+
+  delete[] ScalarProductIdentity;
+  delete[] ScalarProductPsi;
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      delete[] MatrixPsi01[i];
+      delete[] MatrixPsi10[i];
+      delete U1BosonBasis[i];
+      delete[] RationalMultiplicityFactor[i];
+      delete[] MultiplicityFactor[i];
+    }
+  delete[] TmpNbrElementPerRow;
+  delete[] U1BosonBasis;
+  delete[] MatrixPsi01;
+  delete[] MatrixPsi10;
+  delete[] OrthogonalBasisIdentityLeft;
+  delete[] OrthogonalBasisPsiLeft;
+  delete[] OrthogonalBasisIdentityRight;
+  delete[] OrthogonalBasisPsiRight;
+  delete[] RationalMultiplicityFactor;
+  delete[] MultiplicityFactor;
+  return TmpMatrices;
 }
 

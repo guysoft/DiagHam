@@ -220,10 +220,6 @@ FQHEMPSPHPfaffianMatrix::FQHEMPSPHPfaffianMatrix(int laughlinIndex, int pLevel, 
 
 FQHEMPSPHPfaffianMatrix::~FQHEMPSPHPfaffianMatrix()
 {
-  if (this->CFTDirectory != 0)
-    {
-      delete[] this->CFTDirectory;
-    }
 }
   
 // get the number of particles that fit the root configuration once the number of flux quanta is fixed
@@ -900,13 +896,13 @@ void FQHEMPSPHPfaffianMatrix::GetMatrixBoundaryIndices(int& rowIndex, int& colum
     {
       if (this->BosonicVersion == false)
 	{
-	  rowIndex = this->StartingIndexPerPLevelCFTSectorQValue[this->PLevelShift][0][this->PLevel + (this->RIndex / 2) - MinQ];
-//	  rowIndex = this->PLevel + (this->RIndex / 2) - MinQ;
+	  rowIndex = this->StartingIndexPerPLevelCFTSectorQValue[this->PLevelShift][0][(2 * this->PLevelShift + 2) - MinQ];
+//	  rowIndex = (2 * this->PLevelShift + 2) - MinQ;
 	  columnIndex = rowIndex;
 	}
       else
 	{
-	  rowIndex = this->StartingIndexPerPLevelCFTSectorQValue[this->PLevelShift][0][(2 * this->PLevelShift + 3) - MinQ];
+	  rowIndex = this->StartingIndexPerPLevelCFTSectorQValue[this->PLevelShift][0][(2 * this->PLevelShift + 2) - MinQ];
 	  columnIndex = rowIndex;
 	}
     }
@@ -1466,9 +1462,9 @@ SparseRealMatrix** FQHEMPSPHPfaffianMatrix::GetSphereSiteDependentMatrices(int n
   int QValueDenominator;
   double ExtraCylinderFactor = 1.0;
 
-  QValue = this->LaughlinIndex - 1 + (this->RIndex / 2);
-  this->NbrNValue = 4 * this->PLevelShift + 3 + this->RIndex;
-  NValueShift = 4 * this->PLevelShift + 4 + this->LaughlinIndex;
+  QValue = 2;
+  this->NbrNValue = 4 * this->PLevelShift + 5;
+  NValueShift = 4 * this->PLevelShift + 4;
   QValueDenominator = 1;
 
   int MatrixSize = this->ComputeLinearizedIndexArrays();
@@ -1685,12 +1681,13 @@ SparseRealMatrix** FQHEMPSPHPfaffianMatrix::GetSphereSiteDependentMatrices(int n
 				      TmpSpaceCharged2->GetOccupationNumber(ChargedIndex2, Partition2);
 				      int N2;
 				      int N1;
-				      N2 = (2 * ((q - m) - (p - n)) - this->LaughlinIndex - 2 + NValueShift) / 2;
+				      N2 = (2 * ((q - m) - (p - n)) - 2 + NValueShift) / 2;
 				      N1 = N2 + QValue;
 				      if (((N1 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p - n][0]) && (N1 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p - n][0]))
 					  && ((N2 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + q - m][1]) && (N2 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + q - m][1]))
 					  && ((V0MatrixIndex - V0MatrixIndexShift) == (n - m - 1)))
 					{ 
+//					  cout << "x1=0 x2=1 q=" << q << " m=" << m << " p=" << p << " n=" << n << " N2=" << N2 << " N1=" << N1 << " " << " NValueShift=" << NValueShift << endl;
 					  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
 					    {
 					      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsi2.GetNbrColumn(); ++NeutralIndex2)
@@ -1701,12 +1698,13 @@ SparseRealMatrix** FQHEMPSPHPfaffianMatrix::GetSphereSiteDependentMatrices(int n
 					    }
 					  
 					}
-				      N2 = (2 * ((q - m) - (p - n)) - this->LaughlinIndex + NValueShift) / 2;
+				      N2 = (2 * ((q - m) - (p - n)) + NValueShift) / 2;
 				      N1 = N2 + QValue;
 				      if (((N1 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p - n][1]) && (N1 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p - n][1]))
 					  && ((N2 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + q - m][0]) && (N2 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + q - m][0]))
 					  && ((V0MatrixIndex - V0MatrixIndexShift) == (n - m)))
 					{ 
+//					  cout << "x1=1 x2=0 q=" << q << " m=" << m << " p=" << p << " n=" << n << " N2=" << N2 << " N1=" << N1 << " " << " NValueShift=" << NValueShift << endl;
 					  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi1.GetNbrColumn(); ++NeutralIndex1)
 					    {
 					      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentity2.GetNbrColumn(); ++NeutralIndex2)
@@ -1764,14 +1762,12 @@ SparseRealMatrix** FQHEMPSPHPfaffianMatrix::GetSphereSiteDependentMatrices(int n
 					  TmpSpaceCharged2->GetOccupationNumber(ChargedIndex2, Partition2);
 					  int N2;
 					  int N1;
-//					  N2 = (2 * ((q - m) - (p - n)) - this->RIndex - 1 + NValueShift) / 2;
-					  N2 = (2 * ((q - m) - (p - n)) - this->LaughlinIndex - 2 + NValueShift) / 2;
+					  N2 = (2 * ((q - m) - (p - n)) - 2 + NValueShift) / 2;
 					  N1 = N2 + QValue;
 					  if (((N1 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p - n][0]) && (N1 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p - n][0]))
 					      && ((N2 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + q - m][1]) && (N2 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + q - m][1]))
 					      && ((V0MatrixIndex - V0MatrixIndexShift) == (n - m - 1)))
 					    { 
-//					      cout << "q=" << q << " m=" << m << " p=" << p << " n=" << n << " N2=" << N2 << " N1=" << N1 << " " << (2 * ((q - m) - (p - n)) - this->LaughlinIndex - 2 + NValueShift) << " " << NValueShift << endl;
 					      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
 						{
 						  for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsi2.GetNbrColumn(); ++NeutralIndex2)
@@ -1794,8 +1790,7 @@ SparseRealMatrix** FQHEMPSPHPfaffianMatrix::GetSphereSiteDependentMatrices(int n
 						  
 						}
 					    }
-//					  N2 = (2 * ((q - m) - (p - n)) + 1 + NValueShift) / 2;
-					  N2 = (2 * ((q - m) - (p - n)) - this->LaughlinIndex + NValueShift) / 2;
+					  N2 = (2 * ((q - m) - (p - n)) + NValueShift) / 2;
 					  N1 = N2 + QValue;
 					  if (((N1 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + p - n][1]) && (N1 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + p - n][1]))
 					      && ((N2 >= this->NInitialValuePerPLevelCFTSector[this->PLevelShift + q - m][0]) && (N2 <= this->NLastValuePerPLevelCFTSector[this->PLevelShift + q - m][0]))
@@ -1831,8 +1826,8 @@ SparseRealMatrix** FQHEMPSPHPfaffianMatrix::GetSphereSiteDependentMatrices(int n
 		}
 	    }
  	  V0Matrices[V0MatrixIndex] = V0Matrix;
- 	  cout << "V0[" << V0MatrixIndex << "] = " << endl;
-// 	  V0Matrices[V0MatrixIndex].PrintNonZero(cout, TmpLabels, TmpLabels) << endl;
+//  	  cout << "V0[" << V0MatrixIndex << "] = " << endl;
+//  	  V0Matrices[V0MatrixIndex].PrintNonZero(cout, TmpLabels, TmpLabels) << endl;
 	}
     }
 
@@ -1844,11 +1839,13 @@ SparseRealMatrix** FQHEMPSPHPfaffianMatrix::GetSphereSiteDependentMatrices(int n
       TmpProjectorCoefficients[i] = new double[NbrV0MatrixIndices];
       for (int V0MatrixIndex = 0; V0MatrixIndex < NbrV0MatrixIndices; ++V0MatrixIndex)
 	{
-	  if (((i - (V0MatrixIndex - V0MatrixIndexShift)) >= 0) && ((i - (V0MatrixIndex - V0MatrixIndexShift)) <= nbrFluxQuanta))
+	  if (((i + (V0MatrixIndex - V0MatrixIndexShift)) >= 0) && ((i + (V0MatrixIndex - V0MatrixIndexShift)) <= nbrFluxQuanta))
 	    {
-	      TmpProjectorCoefficients[i][V0MatrixIndex] = (sqrt(4.0 * M_PI / ((double) (nbrFluxQuanta + 1)) * TmpCoef(nbrFluxQuanta, i)) 
-							    / TmpCoef(nbrFluxQuanta, i - (V0MatrixIndex - V0MatrixIndexShift)));
-	      cout << i << " " << V0MatrixIndex << " : " << TmpProjectorCoefficients[i][V0MatrixIndex] << endl;
+// 	      TmpProjectorCoefficients[i][V0MatrixIndex] =  (sqrt(4.0 * M_PI / ((double) (nbrFluxQuanta + 1)) * TmpCoef(nbrFluxQuanta, i)) 
+// 							     / TmpCoef(nbrFluxQuanta, i + (V0MatrixIndex - V0MatrixIndexShift)));
+	      TmpProjectorCoefficients[i][V0MatrixIndex] =  (sqrt(4.0 * M_PI / ((double) (nbrFluxQuanta + 1)) * TmpCoef(nbrFluxQuanta, i)) 
+							     / TmpCoef(nbrFluxQuanta, i + (V0MatrixIndex - V0MatrixIndexShift)));
+//	      cout << i << " " << V0MatrixIndex << " : " << TmpProjectorCoefficients[i][V0MatrixIndex] << endl;
 // 	      TmpProjectorCoefficients[i][V0MatrixIndex] = (TmpCoef(nbrFluxQuanta, i)
 // 							    / sqrt(TmpCoef(nbrFluxQuanta, i - (V0MatrixIndex - V0MatrixIndexShift))));
 	    }
@@ -1885,11 +1882,10 @@ SparseRealMatrix** FQHEMPSPHPfaffianMatrix::GetSphereSiteDependentMatrices(int n
 	  SparseRealMatrix TmpV0Matrix = SparseRealMatrixLinearCombination(TmpNbrV0Matrices, TmpCoefficients, TmpMatrices2);
 	  for (int m = 1; m < this->NbrBMatrices; ++m)
 	    {
-//	      TmpMatrices[i][m] = MemoryEfficientMultiply(TmpMatrices[i][m - 1], TmpV0Matrix);
-	      TmpMatrices[i][m] = MemoryEfficientMultiply(TmpV0Matrix, TmpMatrices[i][m - 1]);
+	      TmpMatrices[i][m] = MemoryEfficientMultiply(TmpMatrices[i][m - 1], TmpV0Matrix);
 	    }
- 	  cout << "B[1," << i << "] = " << endl;
-//  	  TmpMatrices[i][1].PrintNonZero(cout, TmpLabels, TmpLabels) << endl;
+//   	  cout << "B[1," << i << "] = " << endl;
+//    	  TmpMatrices[i][1].PrintNonZero(cout, TmpLabels, TmpLabels) << endl;
 	}
     }
   delete[] TmpMatrices2;

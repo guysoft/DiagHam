@@ -105,6 +105,11 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // dimensions of each CFT sector at a given level
   int** NeutralSectorDimension;
 
+  // path to the CFT data (required when using site dependent MPS)
+  char *CFTDirectory;
+  // pointer to the architecture (required when using site dependent MPS)
+  AbstractArchitecture* Architecture;
+
  public:
   
   // default constructor 
@@ -364,6 +369,12 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // index = auxiliary space index
   // return value = string containing the label
   virtual char* GetAuxiliarySpaceLabel(int index);
+
+  // get the array where the site-dependent matrices for the geometry are stored
+  //
+  // nbrFluxQuanta = number of flux quanta in the finite size system
+  // return value = pointer to the array of matrices (first entry being the orbital index, the second being the occupation number)
+  virtual SparseRealMatrix** GetSphereSiteDependentMatrices(int nbrFluxQuanta);
 
  protected:
 
@@ -716,7 +727,6 @@ inline void FQHEMPSClustered2RMatrix::GetCFTSectorChargeAndPLevelFromMatrixIndex
 inline void FQHEMPSClustered2RMatrix::GetCFTSectorChargeAndPLevelFromMatrixIndex(int index, int& cftSector, int& pLevel, int& qValue, int& chargeSectorLevel, 
 										 int& neutralSectorLevel, int& chargeSectorIndex, int& neutralSectorIndex)
 {
-  cout << "warning, untested code" << endl;
   pLevel = 0;
   cftSector = 0;
   qValue = 0;

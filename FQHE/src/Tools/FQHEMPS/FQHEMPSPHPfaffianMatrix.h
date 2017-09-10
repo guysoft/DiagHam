@@ -51,11 +51,6 @@ class FQHEMPSPHPfaffianMatrix : public FQHEMPSClustered2RMatrix
   // shift to apply to the p level to get a positive index
   int PLevelShift;
 
-  // path to the CFT data (required when using site dependent MPS)
-  char *CFTDirectory;
-  // pointer to the architecture (required when using site dependent MPS)
-  AbstractArchitecture* Architecture;
-
 
  public:
   
