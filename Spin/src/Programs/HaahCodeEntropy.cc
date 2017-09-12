@@ -49,6 +49,21 @@ unsigned long BuildHamiltonianZTermMask (int x, int y, int z, int nbrSiteX, int 
 // return value = linearized index
 int GetHaahCodeLinearizedIndex (int x, int y, int z, int spinIndex, int nbrSiteX, int nbrSiteY, int nbrSiteZ);
 
+// get the parity of spin 0 for a given configuration
+//
+// state = binary encoded configuration
+// return value = parity (either 0 or 1)
+unsigned long GetSpin0Parity(unsigned long state);
+
+// get the parity of spin 1 for a given configuration
+//
+// state = binary encoded configuration
+// return value = parity (either 0 or 1)
+unsigned long GetSpin1Parity(unsigned long state);
+
+
+template <class ClassName>
+void SortArrayUpOrderingAndRemoveDuplicates(ClassName*& array, long& nbrValues);
 
 int main(int argc, char** argv)
 {
@@ -110,48 +125,11 @@ int main(int argc, char** argv)
   GroundState[0l] = 0x0ul;
   GroundStateDimension = 1l;
 
-  // avoid the double counting of configurations when having PBC and only two sites
-  int EffectiveNbrSitesX = NbrSitesX;
-  if (EffectiveNbrSitesX == 2)
+ for (int x = 0; x < NbrSitesX; ++x)
     {
-      EffectiveNbrSitesX = 1;
-    }
-  int EffectiveNbrSitesY = NbrSitesY;
-  if (EffectiveNbrSitesY == 2)
-    {
-      EffectiveNbrSitesY = 1;
-    }
-  int EffectiveNbrSitesZ = NbrSitesZ;
-  if (EffectiveNbrSitesZ == 2)
-    {
-      EffectiveNbrSitesZ = 1;
-    }
-
-  int MaximumNumberZTerms = EffectiveNbrSitesX * EffectiveNbrSitesY * EffectiveNbrSitesZ;
-
-  unsigned long ProductZTerm = 0x0ul;
-  for (int x = 0; x < EffectiveNbrSitesX; ++x)
-    {
-      for (int y = 0; y < EffectiveNbrSitesY; ++y)
+      for (int y = 0; y < NbrSitesY; ++y)
 	{
-	  for (int z = 0; z < EffectiveNbrSitesZ; ++z)
-	    {
-	      ProductZTerm ^= BuildHamiltonianZTermMask(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
-	    }
-	}
-    }
-  if (ProductZTerm == 0x0ul)
-    {
-      --MaximumNumberZTerms;
-      cout << "product of all the z term is equal to the identity" << endl;
-    }
-
-  int NumberZTerms = 0;
-  for (int x = 0; (x < EffectiveNbrSitesX) && (NumberZTerms < MaximumNumberZTerms); ++x)
-    {
-      for (int y = 0; (y < EffectiveNbrSitesY) && (NumberZTerms < MaximumNumberZTerms); ++y)
-	{
-	  for (int z = 0; (z < EffectiveNbrSitesZ) && (NumberZTerms < MaximumNumberZTerms); ++z)
+	  for (int z = 0; z < NbrSitesZ; ++z)
 	    {
 	      unsigned long TmpMask = BuildHamiltonianZTermMask(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
 	      for (long i = 0l; i < GroundStateDimension; ++i)
@@ -159,10 +137,12 @@ int main(int argc, char** argv)
 		  GroundState[i + GroundStateDimension] = GroundState[i] ^ TmpMask;
 		}
 	      GroundStateDimension *= 2l;
-	      ++NumberZTerms; 
 	    }	  
 	}      
     }
+  SortArrayUpOrderingAndRemoveDuplicates(GroundState, GroundStateDimension);
+
+
   double GroundStateNormalizationCoefficient = 1.0 / sqrt((double) GroundStateDimension);
   double GroundStateSqrNormalizationCoefficient = 1.0 / ((double) GroundStateDimension);
   cout << GroundStateDimension << " components generated for the groundstate" << endl;
@@ -189,52 +169,83 @@ int main(int argc, char** argv)
       RegionAHilbertSpaceDimension += SearchInSortedArrayAndInsert(GroundState[i] & RegionAMask, RegionAHilbertSpace, RegionAHilbertSpaceDimension);
     }
   cout << "Hilbert space dimension for the A region = " << RegionAHilbertSpaceDimension << endl;
-
-  cout << "Building the entanglement matrix" << endl;
   unsigned long* RegionBConfigurations = new unsigned long[GroundStateDimension];
   int* RegionAIndices = new int[GroundStateDimension];
-  for (long i = 0l; i < GroundStateDimension; ++i)
-    {
-      RegionBConfigurations[i] = GroundState[i] & RegionBMask;
-      RegionAIndices[i] = SearchInArray(GroundState[i] & RegionAMask, RegionAHilbertSpace, RegionAHilbertSpaceDimension);
-    }
-  SortArrayDownOrdering(RegionBConfigurations, RegionAIndices, GroundStateDimension);
+  double* FullReducedDensityMatrixEigenvalues = new double[GroundStateDimension];
+  long FullReducedDensityMatrixNbrEigenvalues = 0;
+  unsigned long* RegionAHilbertSpaceFixedParities = new unsigned long[RegionAHilbertSpaceDimension];
 
-  cout << "Building the reduced density matrix" << endl;
-  RealSymmetricMatrix ReducedDensityMatrix (RegionAHilbertSpaceDimension, true);
-  long TmpIndex = 0l;
-  while (TmpIndex < GroundStateDimension)
+  for (unsigned long TmpParity = 0x0ul; TmpParity <= 0x3ul; ++TmpParity)
     {
-      long TmpIndex2 = TmpIndex + 1l;
-      while ((TmpIndex2 < GroundStateDimension) && (RegionBConfigurations[TmpIndex] == RegionBConfigurations[TmpIndex2]))
+      long RegionAHilbertSpaceDimensionFixedParities = 0l;
+      for  (long i = 0l; i < RegionAHilbertSpaceDimension; ++i)
 	{
-	  ++TmpIndex2;
-	}
-      for (long i = TmpIndex; i < TmpIndex2; ++i)
-	{
-	  for (long j= TmpIndex; j < TmpIndex2; ++j)
+	  unsigned long Tmp = RegionAHilbertSpace[i];
+	  if (((GetSpin1Parity(Tmp) << 1) | GetSpin0Parity(Tmp)) == TmpParity)
 	    {
-	      if (RegionAIndices[i] <= RegionAIndices[j])
-		{
-		  ReducedDensityMatrix.AddToMatrixElement(RegionAIndices[i], RegionAIndices[j], GroundStateSqrNormalizationCoefficient);
-		}
+	      RegionAHilbertSpaceFixedParities[RegionAHilbertSpaceDimensionFixedParities] = Tmp;
+	      ++RegionAHilbertSpaceDimensionFixedParities;
 	    }
 	}
-      TmpIndex = TmpIndex2;
+
+       if (RegionAHilbertSpaceDimensionFixedParities > 0)
+	 {
+	   cout << "Building the entanglement matrix for the parity sector " << TmpParity << endl;
+	   long RegionBHilbertSpaceDimensionFixedParities = 0l;
+	   for (long i = 0l; i < GroundStateDimension; ++i)
+	     {
+	       int Tmp = SearchInArray(GroundState[i] & RegionAMask, RegionAHilbertSpaceFixedParities, RegionAHilbertSpaceDimensionFixedParities);
+	       if (Tmp >= 0)
+		 {
+		   RegionBConfigurations[RegionBHilbertSpaceDimensionFixedParities] = GroundState[i] & RegionBMask;
+		   RegionAIndices[RegionBHilbertSpaceDimensionFixedParities] = Tmp;
+		   ++RegionBHilbertSpaceDimensionFixedParities;
+		 }
+	     }
+	  SortArrayDownOrdering(RegionBConfigurations, RegionAIndices, RegionBHilbertSpaceDimensionFixedParities);
+	  
+	  cout << "Building the reduced density matrix" << endl;
+	  RealSymmetricMatrix ReducedDensityMatrix (RegionAHilbertSpaceDimensionFixedParities, true);
+	  long TmpIndex = 0l;
+	  while (TmpIndex < RegionBHilbertSpaceDimensionFixedParities)
+	    {
+	      long TmpIndex2 = TmpIndex + 1l;
+	      while ((TmpIndex2 < RegionBHilbertSpaceDimensionFixedParities) && (RegionBConfigurations[TmpIndex] == RegionBConfigurations[TmpIndex2]))
+		{
+		  ++TmpIndex2;
+		}
+	      for (long i = TmpIndex; i < TmpIndex2; ++i)
+		{
+		  for (long j= TmpIndex; j < TmpIndex2; ++j)
+		    {
+		      if (RegionAIndices[i] <= RegionAIndices[j])
+			{
+			  ReducedDensityMatrix.AddToMatrixElement(RegionAIndices[i], RegionAIndices[j], GroundStateSqrNormalizationCoefficient);
+			}
+		    }
+		}
+	      TmpIndex = TmpIndex2;
+	    }
+	  cout << "Diagonalizing the reduced density matrix (" << RegionAHilbertSpaceDimensionFixedParities << "x" << RegionAHilbertSpaceDimensionFixedParities << ")" << endl;
+	  RealDiagonalMatrix ReducedDensityMatrixEigenvalues(ReducedDensityMatrix.GetNbrRow(), true);
+	  ReducedDensityMatrix.LapackDiagonalize(ReducedDensityMatrixEigenvalues);
+	  for (long i = 0l; i < ReducedDensityMatrixEigenvalues.GetNbrRow(); ++i)
+	    {
+	      FullReducedDensityMatrixEigenvalues[FullReducedDensityMatrixNbrEigenvalues] = ReducedDensityMatrixEigenvalues[i];
+	      ++FullReducedDensityMatrixNbrEigenvalues;
+	    }
+	}
     }
-  cout << "Diagonalizing the reduced density matrix" << endl;
-  RealDiagonalMatrix ReducedDensityMatrixEigenvalues(RegionAHilbertSpaceDimension, true);
-  ReducedDensityMatrix.LapackDiagonalize(ReducedDensityMatrixEigenvalues);
 
   double ReducedDensityMatrixTrace = 0.0;
   double ReducedDensityMatrixEntanglementEntropy = 0.0;
   long ReducedDensityMatrixNbrNonZeroEigenvalues = 0l;
-  for (long i = 0l; i < RegionAHilbertSpaceDimension; ++i)
+  for (long i = 0l; i < FullReducedDensityMatrixNbrEigenvalues; ++i)
     {
-      ReducedDensityMatrixTrace += ReducedDensityMatrixEigenvalues[i];
-      if (ReducedDensityMatrixEigenvalues[i] > 0.0)
+      ReducedDensityMatrixTrace += FullReducedDensityMatrixEigenvalues[i];
+      if (FullReducedDensityMatrixEigenvalues[i] > 0.0)
 	{
-	  ReducedDensityMatrixEntanglementEntropy -= ReducedDensityMatrixEigenvalues[i] * log(ReducedDensityMatrixEigenvalues[i]);
+	  ReducedDensityMatrixEntanglementEntropy -= FullReducedDensityMatrixEigenvalues[i] * log(FullReducedDensityMatrixEigenvalues[i]);
 	  ReducedDensityMatrixNbrNonZeroEigenvalues++;
 	}
     }
@@ -242,6 +253,8 @@ int main(int argc, char** argv)
   cout << "Number of non zero eigenvalues for the reduced density matrix = " << ReducedDensityMatrixNbrNonZeroEigenvalues << endl;
   cout << "Entangement entropy = " << (ReducedDensityMatrixEntanglementEntropy / log(2.0)) << " * log 2" << endl;
    
+  delete[] RegionBConfigurations;
+  delete[] RegionAIndices;
   delete[] GroundState;
 
   return 0;
@@ -259,7 +272,7 @@ int main(int argc, char** argv)
 // nbrSiteZ = number of sites along the z direction for the full system
 // return value = linearized index
 
-int GetHaahCodeLinearizedIndex (int x, int y, int z, int spinIndex, int nbrSiteX, int nbrSiteY, int nbrSiteZ)
+inline int GetHaahCodeLinearizedIndex (int x, int y, int z, int spinIndex, int nbrSiteX, int nbrSiteY, int nbrSiteZ)
 {
   return (spinIndex + 2 * ((z % nbrSiteZ) + nbrSiteZ * ((y % nbrSiteY) + nbrSiteY * (x % nbrSiteX))));  
 }
@@ -277,14 +290,84 @@ int GetHaahCodeLinearizedIndex (int x, int y, int z, int spinIndex, int nbrSiteX
 unsigned long BuildHamiltonianZTermMask (int x, int y, int z, int nbrSiteX, int nbrSiteY, int nbrSiteZ)
 {
   unsigned long TmpMask = 0x0ul;
-  TmpMask |= 0x1ul << GetHaahCodeLinearizedIndex(x,     y,     z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask |= 0x1ul << GetHaahCodeLinearizedIndex(x + 1, y,     z,     0, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask |= 0x1ul << GetHaahCodeLinearizedIndex(x + 1, y + 1, z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask |= 0x1ul << GetHaahCodeLinearizedIndex(x,     y,     z + 1, 0, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask |= 0x1ul << GetHaahCodeLinearizedIndex(x + 1, y,     z + 1, 0, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask |= 0x1ul << GetHaahCodeLinearizedIndex(x + 1, y,     z + 1, 1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask |= 0x1ul << GetHaahCodeLinearizedIndex(x,     y + 1, z + 1, 1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask |= 0x1ul << GetHaahCodeLinearizedIndex(x + 1, y + 1, z + 1, 0, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x,     y,     z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x + 1, y,     z,     0, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x + 1, y + 1, z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x,     y,     z + 1, 0, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x + 1, y,     z + 1, 0, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x + 1, y,     z + 1, 1, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x,     y + 1, z + 1, 1, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x + 1, y + 1, z + 1, 0, nbrSiteX, nbrSiteY, nbrSiteZ);
   return TmpMask;
 }
 
+// get the parity of spin 0 for a given configuration
+//
+// state = binary encoded configuration
+// return value = parity (either 0 or 1)
+
+inline unsigned long GetSpin0Parity(unsigned long state)
+{
+  state &= 0x5555555555555555ul;
+  state ^= state >> 32;
+  state ^= state >> 16;
+  state ^= state >> 8;
+  state ^= state >> 4;
+  state ^= state >> 2;
+  state ^= state >> 1;
+  return (state &0x1ul);
+}
+
+// get the parity of spin 1 for a given configuration
+//
+// state = binary encoded configuration
+// return value = parity (either 0 or 1)
+
+inline unsigned long GetSpin1Parity(unsigned long state)
+{
+  state &= 0xaaaaaaaaaaaaaaaaul;
+  state ^= state >> 32;
+  state ^= state >> 16;
+  state ^= state >> 8;
+  state ^= state >> 4;
+  state ^= state >> 2;
+  state ^= state >> 1;
+  return (state &0x1ul);
+}
+
+template <class ClassName>
+void SortArrayUpOrderingAndRemoveDuplicates(ClassName*& array,  long& nbrValues)
+{
+  SortArrayUpOrdering(array, nbrValues);
+  long NbrDistinctValues = 0;
+  long TmpIndex = 0l;
+  while (TmpIndex < nbrValues)
+    {
+      long TmpIndex2 = TmpIndex + 1l;
+      while ((TmpIndex2 < nbrValues) && (array[TmpIndex] == array[TmpIndex2]))
+	{
+	  ++TmpIndex2;
+	}
+      ++NbrDistinctValues;
+      TmpIndex = TmpIndex2;
+    }
+  ClassName* TmpArray = new ClassName[NbrDistinctValues];
+  NbrDistinctValues = 0;
+  TmpIndex = 0l;
+  while (TmpIndex < nbrValues)
+    {
+      long TmpIndex2 = TmpIndex + 1l;
+      while ((TmpIndex2 < nbrValues) && (array[TmpIndex] == array[TmpIndex2]))
+	{
+	  ++TmpIndex2;
+	}
+      TmpArray[NbrDistinctValues] = array[TmpIndex];
+      ++NbrDistinctValues;
+      TmpIndex = TmpIndex2;
+    }
+
+  delete[] array;  
+  array = TmpArray;
+  nbrValues = NbrDistinctValues;
+  return;
+}
