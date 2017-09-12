@@ -126,11 +126,32 @@ int main(int argc, char** argv)
     {
       EffectiveNbrSitesZ = 1;
     }
+
+  int MaximumNumberZTerms = EffectiveNbrSitesX * EffectiveNbrSitesY * EffectiveNbrSitesZ;
+
+  unsigned long ProductZTerm = 0x0ul;
   for (int x = 0; x < EffectiveNbrSitesX; ++x)
     {
       for (int y = 0; y < EffectiveNbrSitesY; ++y)
 	{
 	  for (int z = 0; z < EffectiveNbrSitesZ; ++z)
+	    {
+	      ProductZTerm ^= BuildHamiltonianZTermMask(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
+	    }
+	}
+    }
+  if (ProductZTerm == 0x0ul)
+    {
+      --MaximumNumberZTerms;
+      cout << "product of all the z term is equal to the identity" << endl;
+    }
+
+  int NumberZTerms = 0;
+  for (int x = 0; (x < EffectiveNbrSitesX) && (NumberZTerms < MaximumNumberZTerms); ++x)
+    {
+      for (int y = 0; (y < EffectiveNbrSitesY) && (NumberZTerms < MaximumNumberZTerms); ++y)
+	{
+	  for (int z = 0; (z < EffectiveNbrSitesZ) && (NumberZTerms < MaximumNumberZTerms); ++z)
 	    {
 	      unsigned long TmpMask = BuildHamiltonianZTermMask(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
 	      for (long i = 0l; i < GroundStateDimension; ++i)
@@ -138,6 +159,7 @@ int main(int argc, char** argv)
 		  GroundState[i + GroundStateDimension] = GroundState[i] ^ TmpMask;
 		}
 	      GroundStateDimension *= 2l;
+	      ++NumberZTerms; 
 	    }	  
 	}      
     }
