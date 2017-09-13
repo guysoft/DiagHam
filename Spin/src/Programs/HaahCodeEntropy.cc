@@ -5,6 +5,7 @@
 #include "LanczosAlgorithm/LanczosManager.h"
 
 #include "GeneralTools/ArrayTools.h"
+#include "GeneralTools/MultiColumnASCIIFile.h"
 
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
@@ -110,6 +111,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbra-sitex", "number of sites along the x direction for the region A", 2);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbra-sitey", "number of sites along the y direction for the region A", 2);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbra-sitez", "number of sites along the z direction for the region A", 2);
+  (*SystemGroup) += new SingleStringOption  ('\n', "kept-sites", "column-based text file that list sites/spins that have to be kept");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -203,17 +205,45 @@ int main(int argc, char** argv)
       gettimeofday (&(StartingTime), 0);
       int RegionANbrSites = NbrSitesXA * NbrSitesYA * NbrSitesZA;
       unsigned long RegionAMask = 0x0ul;  
-      for (int x = 0; x < NbrSitesXA; ++x)
-	{
-	  for (int y = 0; y < NbrSitesYA; ++y)
+
+      if (Manager.GetString("kept-sites") == 0)
+	{	  
+	  for (int x = 0; x < NbrSitesXA; ++x)
 	    {
-	      for (int z = 0; z < NbrSitesZA; ++z)
+	      for (int y = 0; y < NbrSitesYA; ++y)
 		{
-		  RegionAMask |= 0x1ul << GetHaahCodeLinearizedIndex(x, y, z, 0, NbrSitesX, NbrSitesY, NbrSitesZ);
-		  RegionAMask |= 0x1ul << GetHaahCodeLinearizedIndex(x, y, z, 1, NbrSitesX, NbrSitesY, NbrSitesZ);
+		  for (int z = 0; z < NbrSitesZA; ++z)
+		    {
+		      RegionAMask |= 0x1ul << GetHaahCodeLinearizedIndex(x, y, z, 0, NbrSitesX, NbrSitesY, NbrSitesZ);
+		      RegionAMask |= 0x1ul << GetHaahCodeLinearizedIndex(x, y, z, 1, NbrSitesX, NbrSitesY, NbrSitesZ);
+		    }
 		}
 	    }
 	}
+      else
+	{
+	  MultiColumnASCIIFile KeptOrbitalFile;
+	  if (KeptOrbitalFile.Parse(Manager.GetString("kept-sites")) == false)
+	    {
+	      KeptOrbitalFile.DumpErrors(cout);
+	      return -1;
+	    }
+	  if (KeptOrbitalFile.GetNbrColumns() < 3)
+	    {
+	      cout << "error," << Manager.GetString("kept-sites") << " should contain at least 3 columns" << endl;
+	      return 0;
+	    }
+	  RegionANbrSites = KeptOrbitalFile.GetNbrLines();
+	  int* TmpKeptSpinX = KeptOrbitalFile.GetAsIntegerArray(0);
+	  int* TmpKeptSpinY = KeptOrbitalFile.GetAsIntegerArray(1);
+	  int* TmpKeptSpinZ = KeptOrbitalFile.GetAsIntegerArray(2);
+	  int* TmpKeptSpinIndex = KeptOrbitalFile.GetAsIntegerArray(3);
+	  for (int i = 0; i < RegionANbrSites; ++i)
+	    {
+	      RegionAMask |= 0x1ul << GetHaahCodeLinearizedIndex(TmpKeptSpinX[i], TmpKeptSpinY[i], TmpKeptSpinZ[i], TmpKeptSpinIndex[i], NbrSitesX, NbrSitesY, NbrSitesZ);	      
+	    }
+	}
+
       unsigned long RegionBMask = ((0x1ul << (2 * TotalNbrSites)) - 0x1ul) & (~RegionAMask);
       
       unsigned long* RegionAHilbertSpace = new unsigned long[GroundStateDimension];
@@ -365,17 +395,44 @@ int main(int argc, char** argv)
       gettimeofday (&(StartingTime), 0);
       int RegionANbrSites = NbrSitesXA * NbrSitesYA * NbrSitesZA;
       ULONGLONG RegionAMask = ((ULONGLONG) 0x0ul);  
-      for (int x = 0; x < NbrSitesXA; ++x)
-	{
-	  for (int y = 0; y < NbrSitesYA; ++y)
+      if (Manager.GetString("kept-sites") == 0)
+	{	  
+	  for (int x = 0; x < NbrSitesXA; ++x)
 	    {
-	      for (int z = 0; z < NbrSitesZA; ++z)
+	      for (int y = 0; y < NbrSitesYA; ++y)
 		{
-		  RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x, y, z, 0, NbrSitesX, NbrSitesY, NbrSitesZ);
-		  RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x, y, z, 1, NbrSitesX, NbrSitesY, NbrSitesZ);
+		  for (int z = 0; z < NbrSitesZA; ++z)
+		    {
+		      RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x, y, z, 0, NbrSitesX, NbrSitesY, NbrSitesZ);
+		      RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x, y, z, 1, NbrSitesX, NbrSitesY, NbrSitesZ);
+		    }
 		}
 	    }
 	}
+      else
+	{
+	  MultiColumnASCIIFile KeptOrbitalFile;
+	  if (KeptOrbitalFile.Parse(Manager.GetString("kept-sites")) == false)
+	    {
+	      KeptOrbitalFile.DumpErrors(cout);
+	      return -1;
+	    }
+	  if (KeptOrbitalFile.GetNbrColumns() < 3)
+	    {
+	      cout << "error," << Manager.GetString("kept-sites") << " should contain at least 3 columns" << endl;
+	      return 0;
+	    }
+	  RegionANbrSites = KeptOrbitalFile.GetNbrLines();
+	  int* TmpKeptSpinX = KeptOrbitalFile.GetAsIntegerArray(0);
+	  int* TmpKeptSpinY = KeptOrbitalFile.GetAsIntegerArray(1);
+	  int* TmpKeptSpinZ = KeptOrbitalFile.GetAsIntegerArray(2);
+	  int* TmpKeptSpinIndex = KeptOrbitalFile.GetAsIntegerArray(3);
+	  for (int i = 0; i < RegionANbrSites; ++i)
+	    {
+	      RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(TmpKeptSpinX[i], TmpKeptSpinY[i], TmpKeptSpinZ[i], TmpKeptSpinIndex[i], NbrSitesX, NbrSitesY, NbrSitesZ);	      
+	    }
+	}
+
       ULONGLONG RegionBMask = ((((ULONGLONG) 0x1ul) << (2 * TotalNbrSites)) - ((ULONGLONG) 0x1ul)) & (~RegionAMask);
       
       ULONGLONG* RegionAHilbertSpace = new ULONGLONG[GroundStateDimension];
