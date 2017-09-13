@@ -3414,4 +3414,46 @@ void SortQuadElementArrayDownOrdering(ClassName* array1, ClassName* array2, Clas
 }
 
 
+// Sort an array from the smallest element to the largest, removing all the duplicate elements and resizing the array if needed
+//
+// array = reference to the array pointer
+// nbrValues = reference on the number of elements (it will be modified to indicate the number of distinct elements
+
+template <class ClassName>
+void SortArrayUpOrderingAndRemoveDuplicates(ClassName*& array,  long& nbrValues)
+{
+  SortArrayUpOrdering(array, nbrValues);
+  long NbrDistinctValues = 0;
+  long TmpIndex = 0l;
+  while (TmpIndex < nbrValues)
+    {
+      long TmpIndex2 = TmpIndex + 1l;
+      while ((TmpIndex2 < nbrValues) && (array[TmpIndex] == array[TmpIndex2]))
+	{
+	  ++TmpIndex2;
+	}
+      ++NbrDistinctValues;
+      TmpIndex = TmpIndex2;
+    }
+  ClassName* TmpArray = new ClassName[NbrDistinctValues];
+  NbrDistinctValues = 0;
+  TmpIndex = 0l;
+  while (TmpIndex < nbrValues)
+    {
+      long TmpIndex2 = TmpIndex + 1l;
+      while ((TmpIndex2 < nbrValues) && (array[TmpIndex] == array[TmpIndex2]))
+	{
+	  ++TmpIndex2;
+	}
+      TmpArray[NbrDistinctValues] = array[TmpIndex];
+      ++NbrDistinctValues;
+      TmpIndex = TmpIndex2;
+    }
+
+  delete[] array;  
+  array = TmpArray;
+  nbrValues = NbrDistinctValues;
+  return;
+}
+
 #endif
