@@ -619,9 +619,23 @@ int main(int argc, char** argv)
       RegionAHilbertSpaceDimension = 0l;
 
       ULONGLONG TmpConfiguration;
-      for (long i = 0l; i < GroundStateDimension; ++i)
+      long GrayCode = 0l;
+      long ChangedBit;
+      int ChangedBitIndex;      
+      RegionAHilbertSpaceDimension += SearchInSortedArrayAndInsert(InitialGroundState & RegionAMask, RegionAHilbertSpace, 
+								   RegionAHilbertSpaceDimension);
+      TmpConfiguration = InitialGroundState;
+      for (long i = 1l; i < GroundStateDimension; ++i)
 	{
-	  ApplyHamiltonianZTermMaskLongLong(InitialGroundState, TmpConfiguration, i, HamiltonianZTermMasks, MaximumNumberZTerms);
+	  ChangedBit = (i ^ (i >> 1)) ^ GrayCode;
+	  GrayCode = i ^ (i >> 1);
+	  ChangedBitIndex  = ((ChangedBit & 0xffffffff00000000l) != 0x0ul) << 5;
+	  ChangedBitIndex |= ((ChangedBit & 0xffff0000ffff0000l) != 0x0ul) << 4;
+	  ChangedBitIndex |= ((ChangedBit & 0xff00ff00ff00ff00l) != 0x0ul) << 3;
+	  ChangedBitIndex |= ((ChangedBit & 0xf0f0f0f0f0f0f0f0l) != 0x0ul) << 2;
+	  ChangedBitIndex |= ((ChangedBit & 0xccccccccccccccccl) != 0x0ul) << 1;
+	  ChangedBitIndex |= ((ChangedBit & 0xaaaaaaaaaaaaaaaal) != 0x0ul);
+	  TmpConfiguration ^= HamiltonianZTermMasks[ChangedBitIndex];
 	  RegionAHilbertSpaceDimension += SearchInSortedArrayAndInsert(TmpConfiguration & RegionAMask, RegionAHilbertSpace, RegionAHilbertSpaceDimension);
 	}
       ULONGLONG* TmpArray = new ULONGLONG[RegionAHilbertSpaceDimension]; 
@@ -664,9 +678,26 @@ int main(int argc, char** argv)
 	      cout << "Building the entanglement matrix" << endl;
 	      gettimeofday (&(StartingTime), 0);
 	      long RegionBHilbertSpaceDimensionFixedParities = 0l;
-	      for (long i = 0l; i < GroundStateDimension; ++i)
+	      int Tmp = SearchInArray(InitialGroundState & RegionAMask, RegionAHilbertSpaceFixedParities, RegionAHilbertSpaceDimensionFixedParities);
+	      if (Tmp >= 0)
 		{
-		  ApplyHamiltonianZTermMaskLongLong(InitialGroundState, TmpConfiguration, i, HamiltonianZTermMasks, MaximumNumberZTerms);
+		  RegionBConfigurations[RegionBHilbertSpaceDimensionFixedParities] = InitialGroundState & RegionBMask;
+		  RegionAIndices[RegionBHilbertSpaceDimensionFixedParities] = Tmp;
+		  ++RegionBHilbertSpaceDimensionFixedParities;
+		}
+	      GrayCode = 0l;
+	      TmpConfiguration = InitialGroundState;
+	      for (long i = 1l; i < GroundStateDimension; ++i)
+		{
+		  ChangedBit = (i ^ (i >> 1)) ^ GrayCode;
+		  GrayCode = i ^ (i >> 1);
+		  ChangedBitIndex  = ((ChangedBit & 0xffffffff00000000l) != 0x0ul) << 5;
+		  ChangedBitIndex |= ((ChangedBit & 0xffff0000ffff0000l) != 0x0ul) << 4;
+		  ChangedBitIndex |= ((ChangedBit & 0xff00ff00ff00ff00l) != 0x0ul) << 3;
+		  ChangedBitIndex |= ((ChangedBit & 0xf0f0f0f0f0f0f0f0l) != 0x0ul) << 2;
+		  ChangedBitIndex |= ((ChangedBit & 0xccccccccccccccccl) != 0x0ul) << 1;
+		  ChangedBitIndex |= ((ChangedBit & 0xaaaaaaaaaaaaaaaal) != 0x0ul);
+		  TmpConfiguration ^= HamiltonianZTermMasks[ChangedBitIndex];
 		  int Tmp = SearchInArray(TmpConfiguration & RegionAMask, RegionAHilbertSpaceFixedParities, RegionAHilbertSpaceDimensionFixedParities);
 		  if (Tmp >= 0)
 		    {
@@ -806,15 +837,15 @@ unsigned long BuildHamiltonianZTermMask (int x, int y, int z, int nbrSiteX, int 
 
 ULONGLONG BuildHamiltonianZTermMaskLongLong (int x, int y, int z, int nbrSiteX, int nbrSiteY, int nbrSiteZ)
 {
-  ULONGLONG TmpMask = 0x0ul;
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x,     y,     z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x + 1, y,     z,     0, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x + 1, y + 1, z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x,     y,     z + 1, 0, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x + 1, y,     z + 1, 0, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x + 1, y,     z + 1, 1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x,     y + 1, z + 1, 1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x + 1, y + 1, z + 1, 0, nbrSiteX, nbrSiteY, nbrSiteZ);
+  ULONGLONG TmpMask = ((ULONGLONG) 0x0ul);
+  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x,     y,     z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x + 1, y,     z,     0, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= ((ULONGLONG) 0x1u)l << GetHaahCodeLinearizedIndex(x + 1, y + 1, z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x,     y,     z + 1, 0, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x + 1, y,     z + 1, 0, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x + 1, y,     z + 1, 1, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x,     y + 1, z + 1, 1, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x + 1, y + 1, z + 1, 0, nbrSiteX, nbrSiteY, nbrSiteZ);
   return TmpMask;
 }
 
