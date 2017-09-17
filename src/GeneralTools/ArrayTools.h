@@ -430,72 +430,72 @@ void SortArrayDownOrdering(ClassName* array, int* integerArray, long nbrValue)
 {
   switch (nbrValue)
     {
-    case 0:
+    case 0l:
       return;
-    case 1:
+    case 1l:
       return;
-    case 2:
+    case 2l:
       {
-	if (array[0] < array[1])
+	if (array[0l] < array[1l])
 	  {
-	    ClassName TmpElement = array[0];
-	    array[0] = array[1];
-	    array[1] = TmpElement;
-	    int TmpElement2 = integerArray[0];
-	    integerArray[0] = integerArray[1];
-	    integerArray[1] = TmpElement2;
+	    ClassName TmpElement = array[0l];
+	    array[0l] = array[1l];
+	    array[1l] = TmpElement;
+	    int TmpElement2 = integerArray[0l];
+	    integerArray[0l] = integerArray[1l];
+	    integerArray[1l] = TmpElement2;
 	  }
 	return;
       }
       break;
-    case 3:
+    case 3l:
       {
 	ClassName TmpElement;
 	int TmpElement2;
-	if (array[0] < array[1])
+	if (array[0l] < array[1l])
 	  {
-	    TmpElement = array[0];
-	    array[0] = array[1];
-	    array[1] = TmpElement;
-	    TmpElement2 = integerArray[0];
-	    integerArray[0] = integerArray[1];
-	    integerArray[1] = TmpElement2;
+	    TmpElement = array[0l];
+	    array[0l] = array[1l];
+	    array[1l] = TmpElement;
+	    TmpElement2 = integerArray[0l];
+	    integerArray[0l] = integerArray[1l];
+	    integerArray[1l] = TmpElement2;
 	  }
-	if (array[1] < array[2])
+	if (array[1l] < array[2l])
 	  {
-	    TmpElement = array[1];
-	    array[1] = array[2];
-	    array[2] = TmpElement;
-	    TmpElement2 = integerArray[1];
-	    integerArray[1] = integerArray[2];
-	    integerArray[2] = TmpElement2;
+	    TmpElement = array[1l];
+	    array[1l] = array[2l];
+	    array[2l] = TmpElement;
+	    TmpElement2 = integerArray[1l];
+	    integerArray[1l] = integerArray[2l];
+	    integerArray[2l] = TmpElement2;
 	  }	
-	if (array[0] < array[1])
+	if (array[0l] < array[1l])
 	  {
-	    TmpElement = array[0];
-	    array[0] = array[1];
-	    array[1] = TmpElement;
-	    TmpElement2 = integerArray[0];
-	    integerArray[0] = integerArray[1];
-	    integerArray[1] = TmpElement2;
+	    TmpElement = array[0l];
+	    array[0l] = array[1l];
+	    array[1l] = TmpElement;
+	    TmpElement2 = integerArray[0l];
+	    integerArray[0l] = integerArray[1l];
+	    integerArray[1l] = TmpElement2;
 	  }	
 	return;
       }
       break;
     default:
       {
-	int j = nbrValue - 1;
-	int i = nbrValue >> 1;
+	long j = nbrValue - 1l;
+	long i = nbrValue >> 1;
 	ClassName TmpElement;
 	int TmpElement2;
-	if (array[0] <  array[i])
+	if (array[0l] <  array[i])
 	  {
 	    TmpElement = array[i];
-	    array[i] = array[0];
-	    array[0] = TmpElement;
+	    array[i] = array[0l];
+	    array[0l] = TmpElement;
 	    TmpElement2 = integerArray[i];
-	    integerArray[i] = integerArray[0];
-	    integerArray[0] = TmpElement2;
+	    integerArray[i] = integerArray[0l];
+	    integerArray[0l] = TmpElement2;
 	  }
 	if (array[i] <  array[j])
 	  {
@@ -506,14 +506,14 @@ void SortArrayDownOrdering(ClassName* array, int* integerArray, long nbrValue)
 	    integerArray[i] = integerArray[j];
 	    integerArray[j] = TmpElement2;
 	  }
-	if (array[0] <  array[i])
+	if (array[0l] <  array[i])
 	  {
 	    TmpElement = array[i];
-	    array[i] = array[0];
-	    array[0] = TmpElement;
+	    array[i] = array[0l];
+	    array[0l] = TmpElement;
 	    TmpElement2 = integerArray[i];
-	    integerArray[i] = integerArray[0];
-	    integerArray[0] = TmpElement2;
+	    integerArray[i] = integerArray[0l];
+	    integerArray[0l] = TmpElement2;
 	  }
 	--j;
 	ClassName Pivot = array[i];
@@ -522,7 +522,7 @@ void SortArrayDownOrdering(ClassName* array, int* integerArray, long nbrValue)
 	array[j] = Pivot;
 	integerArray[i] = integerArray[j];
 	integerArray[j] = Pivot2;	    
-	i = 0;
+	i = 0l;
 	while (true)
 	  {
 	    while (array[++i] > Pivot);
@@ -539,12 +539,12 @@ void SortArrayDownOrdering(ClassName* array, int* integerArray, long nbrValue)
 	    else
 	      break;
 	  }	
-	array[nbrValue - 2] = array[i];
+	array[nbrValue - 2l] = array[i];
 	array[i] = Pivot;
-	integerArray[nbrValue - 2] = integerArray[i];
+	integerArray[nbrValue - 2l] = integerArray[i];
 	integerArray[i] = Pivot2;
 	SortArrayDownOrdering(array, integerArray, i);
-	SortArrayDownOrdering(&(array[i + 1]), &(integerArray[i + 1]), nbrValue - i - 1);	
+	SortArrayDownOrdering(&(array[i + 1l]), &(integerArray[i + 1l]), nbrValue - i - 1l);	
       }
     }
   return;
