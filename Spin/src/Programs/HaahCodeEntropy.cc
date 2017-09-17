@@ -840,7 +840,7 @@ ULONGLONG BuildHamiltonianZTermMaskLongLong (int x, int y, int z, int nbrSiteX, 
   ULONGLONG TmpMask = ((ULONGLONG) 0x0ul);
   TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x,     y,     z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
   TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x + 1, y,     z,     0, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= ((ULONGLONG) 0x1u)l << GetHaahCodeLinearizedIndex(x + 1, y + 1, z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x + 1, y + 1, z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
   TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x,     y,     z + 1, 0, nbrSiteX, nbrSiteY, nbrSiteZ);
   TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x + 1, y,     z + 1, 0, nbrSiteX, nbrSiteY, nbrSiteZ);
   TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x + 1, y,     z + 1, 1, nbrSiteX, nbrSiteY, nbrSiteZ);
@@ -899,7 +899,7 @@ inline ULONGLONG GetSpin0Parity(ULONGLONG state)
   state ^= state >> 4;
   state ^= state >> 2;
   state ^= state >> 1;
-  return (state &0x1ul);
+  return (state & ((ULONGLONG) 0x1ul));
 }
 
 // get the parity of spin 1 for a given configuration
@@ -917,7 +917,7 @@ inline ULONGLONG GetSpin1Parity(ULONGLONG state)
   state ^= state >> 4;
   state ^= state >> 2;
   state ^= state >> 1;
-  return (state &0x1ul);
+  return (state & ((ULONGLONG) 0x1ul));
 }
 
 inline ULONGLONG ApplyHamiltonianZTermMaskLongLong(ULONGLONG& initialGroundState, ULONGLONG& finalGroundState, long& configurationIndex, ULONGLONG* hamiltonianZTermMasks, int numberZTerms)
