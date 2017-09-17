@@ -199,17 +199,17 @@ void SortArrayDownOrdering(ClassName* array, long nbrValue)
 {
   switch (nbrValue)
     {
-    case 0:
+    case 0l:
       return;
-    case 1:
+    case 1l:
       return;
-    case 2:
+    case 2l:
       {
-	if (array[0] < array[1])
+	if (array[0l] < array[1l])
 	  {
-	    ClassName TmpElement = array[0];
-	    array[0] = array[1];
-	    array[1] = TmpElement;
+	    ClassName TmpElement = array[0l];
+	    array[0l] = array[1l];
+	    array[1l] = TmpElement;
 	  }
 	return;
       }
@@ -217,37 +217,37 @@ void SortArrayDownOrdering(ClassName* array, long nbrValue)
     case 3:
       {
 	ClassName TmpElement;
-	if (array[0] < array[1])
+	if (array[0l] < array[1l])
 	  {
-	    TmpElement = array[0];
-	    array[0] = array[1];
-	    array[1] = TmpElement;
+	    TmpElement = array[0l];
+	    array[0l] = array[1l];
+	    array[1l] = TmpElement;
 	  }
-	if (array[1] < array[2])
+	if (array[1l] < array[2l])
 	  {
-	    TmpElement = array[1];
-	    array[1] = array[2];
-	    array[2] = TmpElement;
+	    TmpElement = array[1l];
+	    array[1l] = array[2l];
+	    array[2l] = TmpElement;
 	  }	
-	if (array[0] < array[1])
+	if (array[0l] < array[1l])
 	  {
-	    TmpElement = array[0];
-	    array[0] = array[1];
-	    array[1] = TmpElement;
+	    TmpElement = array[0l];
+	    array[0l] = array[1l];
+	    array[1l] = TmpElement;
 	  }	
 	return;
       }
       break;
     default:
       {
-	int j = nbrValue - 1;
-	int i = nbrValue >> 1;
+	long j = nbrValue - 1l;
+	long i = nbrValue >> 1;
 	ClassName TmpElement;
-	if (array[0] <  array[i])
+	if (array[0l] <  array[i])
 	  {
 	    TmpElement = array[i];
-	    array[i] = array[0];
-	    array[0] = TmpElement;
+	    array[i] = array[0l];
+	    array[0l] = TmpElement;
 	  }
 	if (array[i] <  array[j])
 	  {
@@ -255,17 +255,17 @@ void SortArrayDownOrdering(ClassName* array, long nbrValue)
 	    array[i] = array[j];
 	    array[j] = TmpElement;
 	  }
-	if (array[0] <  array[i])
+	if (array[0l] <  array[i])
 	  {
 	    TmpElement = array[i];
-	    array[i] = array[0];
-	    array[0] = TmpElement;
+	    array[i] = array[0l];
+	    array[0l] = TmpElement;
 	  }
 	--j;
 	ClassName Pivot = array[i];
 	array[i] = array[j];
 	array[j] = Pivot;
-	i = 0;
+	i = 0l;
 	while (true)
 	  {
 	    while (array[++i] > Pivot);
@@ -279,10 +279,10 @@ void SortArrayDownOrdering(ClassName* array, long nbrValue)
 	    else
 	      break;
 	  }	
-	array[nbrValue - 2] = array[i];
+	array[nbrValue - 2l] = array[i];
 	array[i] = Pivot;
 	SortArrayDownOrdering(array, i);
-	SortArrayDownOrdering(&(array[i + 1]), nbrValue - i - 1);	
+	SortArrayDownOrdering(&(array[i + 1l]), nbrValue - i - 1l);	
       }
     }
   return;

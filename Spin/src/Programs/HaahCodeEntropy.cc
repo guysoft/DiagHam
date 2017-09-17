@@ -649,8 +649,9 @@ int main(int argc, char** argv)
       double DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
 			   ((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
       cout << "Hilbert space dimension for the A region = " << RegionAHilbertSpaceDimension << " (done in " << DeltaTime << "s)" << endl;
-      ULONGLONG* RegionBConfigurations = new ULONGLONG[GroundStateDimension / 2l];
-      int* RegionAIndices = new int[GroundStateDimension / 2l];
+      long MaxNbrRegionBConfigurations = GroundStateDimension / 2l;
+      ULONGLONG* RegionBConfigurations = new ULONGLONG[MaxNbrRegionBConfigurations];
+      int* RegionAIndices = new int[MaxNbrRegionBConfigurations];
       FullReducedDensityMatrixEigenvalues = new double[RegionAHilbertSpaceDimension];
       FullReducedDensityMatrixNbrEigenvalues = 0;
       ULONGLONG* RegionAHilbertSpaceFixedParities = new ULONGLONG[RegionAHilbertSpaceDimension];
@@ -706,6 +707,12 @@ int main(int argc, char** argv)
 		      ++RegionBHilbertSpaceDimensionFixedParities;
 		    }
 		}
+	      gettimeofday (&(EndingTime), 0);	      
+	      DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
+			    ((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
+	      cout << "done in " << DeltaTime << "s"  << endl;
+	      gettimeofday (&(StartingTime), 0);
+	      cout << "sorting " << RegionBHilbertSpaceDimensionFixedParities << " elements" << endl;
 	      SortArrayDownOrdering(RegionBConfigurations, RegionAIndices, RegionBHilbertSpaceDimensionFixedParities);
 	      gettimeofday (&(EndingTime), 0);	      
 	      DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
