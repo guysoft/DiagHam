@@ -242,6 +242,10 @@ FactorialCoefficient& FactorialCoefficient::operator /= (FactorialCoefficient& y
 
 FactorialCoefficient& FactorialCoefficient::Power2Multiply (long power)
 {
+  if (power < 0)
+    {
+      return this->Power2Divide(-power);
+    }
   int i;
   for (i = 0; (i <= this->DenominatorPosition) && (power > 0); ++i)
     {
@@ -306,6 +310,10 @@ FactorialCoefficient& FactorialCoefficient::PowerNMultiply (long n, long power)
 
 FactorialCoefficient& FactorialCoefficient::Power2Divide (long power)
 {
+  if (power < 0)
+    {
+      return this->Power2Multiply(-power);
+    }
   int i;
   for (i = 0; (i <= this->NumeratorPosition) && (power > 0); ++i)
     {

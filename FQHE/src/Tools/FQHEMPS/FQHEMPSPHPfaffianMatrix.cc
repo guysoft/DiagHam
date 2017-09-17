@@ -36,6 +36,7 @@
 #include "HilbertSpace/BosonOnDiskShort.h"
 #include "Architecture/ArchitectureOperation/FQHEMPSEvaluateCFTOperation.h"
 #include "MathTools/BinomialCoefficients.h"
+#include "MathTools/FactorialCoefficient.h"
 
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/Endian.h"
@@ -1636,10 +1637,10 @@ SparseRealMatrix** FQHEMPSPHPfaffianMatrix::GetSphereSiteDependentMatrices(int n
   unsigned long* Partition1 = new unsigned long [this->PLevel + 2];
   unsigned long* Partition2 = new unsigned long [this->PLevel + 2];
 
-//    for (int i = 0; i < MatrixSize; ++i)
-//      {
-//        this->PrintAuxiliarySpaceState(cout, i) << endl;
-//      }
+  for (int i = 0; i < MatrixSize; ++i)
+    {
+      this->PrintAuxiliarySpaceState(cout, i) << endl;
+    }
 
   int NbrV0MatrixIndices = (2 * this->PLevelShift) + 2;
   int V0MatrixIndexShift = this->PLevelShift + 1;
@@ -1826,41 +1827,78 @@ SparseRealMatrix** FQHEMPSPHPfaffianMatrix::GetSphereSiteDependentMatrices(int n
 		}
 	    }
  	  V0Matrices[V0MatrixIndex] = V0Matrix;
-//  	  cout << "V0[" << V0MatrixIndex << "] = " << endl;
-//  	  V0Matrices[V0MatrixIndex].PrintNonZero(cout, TmpLabels, TmpLabels) << endl;
+  	  cout << "V0[" << V0MatrixIndex << "] = " << endl;
+  	  V0Matrices[V0MatrixIndex].PrintNonZero(cout, TmpLabels, TmpLabels) << endl;
 	}
     }
 
   cout.precision(14);
   double** TmpProjectorCoefficients = new double*[nbrFluxQuanta + 1];
-  BinomialCoefficients TmpCoef (nbrFluxQuanta);
-  for (int i = 0; i <= nbrFluxQuanta; ++i)
+  if (true)
     {
-      TmpProjectorCoefficients[i] = new double[NbrV0MatrixIndices];
-      for (int V0MatrixIndex = 0; V0MatrixIndex < NbrV0MatrixIndices; ++V0MatrixIndex)
+      BinomialCoefficients TmpCoef (nbrFluxQuanta);
+      for (int i = 0; i <= nbrFluxQuanta; ++i)
 	{
-	  if (((i + (V0MatrixIndex - V0MatrixIndexShift)) >= 0) && ((i + (V0MatrixIndex - V0MatrixIndexShift)) <= nbrFluxQuanta))
+	  TmpProjectorCoefficients[i] = new double[NbrV0MatrixIndices];
+	  for (int V0MatrixIndex = 0; V0MatrixIndex < NbrV0MatrixIndices; ++V0MatrixIndex)
 	    {
-// 	      TmpProjectorCoefficients[i][V0MatrixIndex] =  (sqrt(4.0 * M_PI / ((double) (nbrFluxQuanta + 1)) * TmpCoef(nbrFluxQuanta, i)) 
-// 							     / TmpCoef(nbrFluxQuanta, i + (V0MatrixIndex - V0MatrixIndexShift)));
-	      TmpProjectorCoefficients[i][V0MatrixIndex] =  (sqrt(4.0 * M_PI / ((double) (nbrFluxQuanta + 1)) * TmpCoef(nbrFluxQuanta, i)) 
-							     / TmpCoef(nbrFluxQuanta, i + (V0MatrixIndex - V0MatrixIndexShift)));
-//	      cout << i << " " << V0MatrixIndex << " : " << TmpProjectorCoefficients[i][V0MatrixIndex] << endl;
-// 	      TmpProjectorCoefficients[i][V0MatrixIndex] = (TmpCoef(nbrFluxQuanta, i)
-// 							    / sqrt(TmpCoef(nbrFluxQuanta, i - (V0MatrixIndex - V0MatrixIndexShift))));
+	      if (((i + (V0MatrixIndex - V0MatrixIndexShift)) >= 0) && ((i + (V0MatrixIndex - V0MatrixIndexShift)) <= nbrFluxQuanta))
+		{
+		  TmpProjectorCoefficients[i][V0MatrixIndex] =  (sqrt(4.0 * M_PI / ((double) (nbrFluxQuanta + 1)) * TmpCoef(nbrFluxQuanta, i)) 
+								 / TmpCoef(nbrFluxQuanta, i + (V0MatrixIndex - V0MatrixIndexShift)));
+		}
+	      else
+		{
+		  TmpProjectorCoefficients[i][V0MatrixIndex] = 0.0;
+		}
 	    }
-	  else
-	    {
-	      TmpProjectorCoefficients[i][V0MatrixIndex] = 0.0;
-	    }
-//	  cout << i << " " << V0MatrixIndex << " " << (V0MatrixIndex - V0MatrixIndexShift) << " : " << TmpProjectorCoefficients[i][V0MatrixIndex] << endl;
 	}
     }
+  else
+    {
+//       FactorialCoefficient TmpCoef;
+//       for (int i = 0; i <= nbrFluxQuanta; ++i)
+// 	{
+// 	  TmpProjectorCoefficients[i] = new double[NbrV0MatrixIndices];
+// 	  for (int V0MatrixIndex = 0; V0MatrixIndex < NbrV0MatrixIndices; ++V0MatrixIndex)
+// 	    {
+// 	      if ((i + (V0MatrixIndex - V0MatrixIndexShift)) >= 0)
+// 		{
+// 		  TmpCoef.SetToOne();
+// 		  TmpCoef.FactorialMultiply(i + (V0MatrixIndex - V0MatrixIndexShift));
+// 		  TmpCoef.FactorialMultiply(i + (V0MatrixIndex - V0MatrixIndexShift));
+// 		  TmpCoef.FactorialDivide(i);
+// 		  TmpCoef.Power2Multiply (2 * (i + (V0MatrixIndex - V0MatrixIndexShift)) - i);
+// 		  cout << i << " " << V0MatrixIndex << " : " << TmpCoef << endl;
+// 		  TmpProjectorCoefficients[i][V0MatrixIndex] =  sqrt(2.0 * M_PI * TmpCoef.GetNumericalValue());
+// 		}
+// 	      else
+// 		{
+// 		  TmpProjectorCoefficients[i][V0MatrixIndex] = 0.0;
+// 		}
+// 	    }
+// 	}
 
+
+      // cylinder
+//       double Perimeter = 5.0;
+//       this->Kappa =  (2.0 * M_PI) / Perimeter;
+//       for (int i = 0; i <= nbrFluxQuanta; ++i)
+// 	 {
+//  	  TmpProjectorCoefficients[i] = new double[NbrV0MatrixIndices];
+//  	  for (int V0MatrixIndex = 0; V0MatrixIndex < NbrV0MatrixIndices; ++V0MatrixIndex)
+//  	    {
+// 	      TmpProjectorCoefficients[i][V0MatrixIndex] =  exp (0.5 * this->Kappa * this->Kappa * ((double) ((2 * (i + V0MatrixIndex - V0MatrixIndexShift) - nbrFluxQuanta) * 
+// 													      (2 * (i + V0MatrixIndex - V0MatrixIndexShift) - nbrFluxQuanta)
+// 													      - ((2 * i  - nbrFluxQuanta) * (2 * i - nbrFluxQuanta)))));
+// 	    }
+// 	 }
+      
+    }
 
   SparseRealMatrix** TmpMatrices = new SparseRealMatrix*[nbrFluxQuanta + 1];
   SparseRealMatrix* TmpMatrices2 = new SparseRealMatrix[NbrV0MatrixIndices];
-  double* TmpCoefficients = new double[NbrV0MatrixIndices];
+  double* TmpCoefficients  = new double[NbrV0MatrixIndices];
   for (int i = 0; i <= nbrFluxQuanta; ++i)
     {
       TmpMatrices[i] = new  SparseRealMatrix[this->NbrBMatrices];
@@ -1884,8 +1922,8 @@ SparseRealMatrix** FQHEMPSPHPfaffianMatrix::GetSphereSiteDependentMatrices(int n
 	    {
 	      TmpMatrices[i][m] = MemoryEfficientMultiply(TmpMatrices[i][m - 1], TmpV0Matrix);
 	    }
-//   	  cout << "B[1," << i << "] = " << endl;
-//    	  TmpMatrices[i][1].PrintNonZero(cout, TmpLabels, TmpLabels) << endl;
+   	  cout << "B[1," << i << "] = " << endl;
+    	  TmpMatrices[i][1].PrintNonZero(cout, TmpLabels, TmpLabels) << endl;
 	}
     }
   delete[] TmpMatrices2;

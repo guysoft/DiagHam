@@ -85,6 +85,8 @@ ULONGLONG GetSpin0Parity(ULONGLONG state);
 // return value = parity (either 0 or 1)
 ULONGLONG GetSpin1Parity(ULONGLONG state);
 
+ULONGLONG ApplyHamiltonianZTermMaskLongLong(ULONGLONG& initialGroundState, ULONGLONG& finalGroundState, long& configurationIndex, ULONGLONG* hamiltonianZTermMasks, int numberZTerms);
+
 
 int main(int argc, char** argv)
 {
@@ -112,6 +114,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbra-sitey", "number of sites along the y direction for the region A", 2);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbra-sitez", "number of sites along the z direction for the region A", 2);
   (*SystemGroup) += new SingleStringOption  ('\n', "kept-sites", "column-based text file that list sites/spins that have to be kept");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "gs-parity", "select the ground state parity sector", 0);
+  (*SystemGroup) += new  BooleanOption ('\n', "low-memory", "use a slower but less memory demanding algorithm", 0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -160,239 +164,414 @@ int main(int argc, char** argv)
       --MaximumNumberZTerms;
       cout << "product of all the z term is equal to the identity" << endl;
     }
-  long GroundStateDimension = 2l << MaximumNumberZTerms;
+  long GroundStateDimension = 1l << MaximumNumberZTerms;
   timeval StartingTime;
   timeval EndingTime;  
 
-  if (TotalNbrSpins <= 64)
+
+  if (Manager.GetBoolean("low-memory") == false)
     {
-      gettimeofday (&(StartingTime), 0);
-      unsigned long* GroundState = new unsigned long[GroundStateDimension];
-      
-      GroundState[0l] = 0x0ul;
-      GroundStateDimension = 1l;
-      
-      for (int x = 0; (x < NbrSitesX) && (MaximumNumberZTerms > 0); ++x)
-	{
-	  for (int y = 0; (y < NbrSitesY) && (MaximumNumberZTerms > 0); ++y)
-	    {
-	      for (int z = 0; (z < NbrSitesZ) && (MaximumNumberZTerms > 0); ++z)
-		{
-		  unsigned long TmpMask = BuildHamiltonianZTermMask(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
-		  for (long i = 0l; i < GroundStateDimension; ++i)
-		    {
-		      GroundState[i + GroundStateDimension] = GroundState[i] ^ TmpMask;
-		    }
-		  GroundStateDimension *= 2l;
-		  --MaximumNumberZTerms;
-		}	  
-	    }      
-	}
-      gettimeofday (&(EndingTime), 0);
-      double DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
-			   ((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
-      cout << GroundStateDimension << " intermediate components generated for the groundstate (done in " << DeltaTime << "s)" << endl;
-      gettimeofday (&(StartingTime), 0);
-      SortArrayUpOrderingAndRemoveDuplicates(GroundState, GroundStateDimension);
-      gettimeofday (&(EndingTime), 0);
-      DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
-		    ((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
-      cout << GroundStateDimension << " distinct components generated for the groundstate (done in " << DeltaTime << "s)" << endl;      
-      
-      double GroundStateNormalizationCoefficient = 1.0 / sqrt((double) GroundStateDimension);
-      double GroundStateSqrNormalizationCoefficient = 1.0 / ((double) GroundStateDimension);
-      
-      gettimeofday (&(StartingTime), 0);
-      int RegionANbrSites = NbrSitesXA * NbrSitesYA * NbrSitesZA;
-      unsigned long RegionAMask = 0x0ul;  
-
-      if (Manager.GetString("kept-sites") == 0)
-	{	  
-	  for (int x = 0; x < NbrSitesXA; ++x)
-	    {
-	      for (int y = 0; y < NbrSitesYA; ++y)
-		{
-		  for (int z = 0; z < NbrSitesZA; ++z)
-		    {
-		      RegionAMask |= 0x1ul << GetHaahCodeLinearizedIndex(x, y, z, 0, NbrSitesX, NbrSitesY, NbrSitesZ);
-		      RegionAMask |= 0x1ul << GetHaahCodeLinearizedIndex(x, y, z, 1, NbrSitesX, NbrSitesY, NbrSitesZ);
-		    }
-		}
-	    }
-	}
-      else
-	{
-	  MultiColumnASCIIFile KeptOrbitalFile;
-	  if (KeptOrbitalFile.Parse(Manager.GetString("kept-sites")) == false)
-	    {
-	      KeptOrbitalFile.DumpErrors(cout);
-	      return -1;
-	    }
-	  if (KeptOrbitalFile.GetNbrColumns() < 3)
-	    {
-	      cout << "error," << Manager.GetString("kept-sites") << " should contain at least 3 columns" << endl;
-	      return 0;
-	    }
-	  RegionANbrSites = KeptOrbitalFile.GetNbrLines();
-	  int* TmpKeptSpinX = KeptOrbitalFile.GetAsIntegerArray(0);
-	  int* TmpKeptSpinY = KeptOrbitalFile.GetAsIntegerArray(1);
-	  int* TmpKeptSpinZ = KeptOrbitalFile.GetAsIntegerArray(2);
-	  int* TmpKeptSpinIndex = KeptOrbitalFile.GetAsIntegerArray(3);
-	  for (int i = 0; i < RegionANbrSites; ++i)
-	    {
-	      RegionAMask |= 0x1ul << GetHaahCodeLinearizedIndex(TmpKeptSpinX[i], TmpKeptSpinY[i], TmpKeptSpinZ[i], TmpKeptSpinIndex[i], NbrSitesX, NbrSitesY, NbrSitesZ);	      
-	    }
-	}
-
-      unsigned long RegionBMask = ((0x1ul << (2 * TotalNbrSites)) - 0x1ul) & (~RegionAMask);
-      
-      unsigned long* RegionAHilbertSpace = new unsigned long[GroundStateDimension];
-      long RegionAHilbertSpaceDimension = 0l;
-      for (long i = 0l; i < GroundStateDimension; ++i)
-	{
-	  RegionAHilbertSpaceDimension += SearchInSortedArrayAndInsert(GroundState[i] & RegionAMask, RegionAHilbertSpace, RegionAHilbertSpaceDimension);
-	}
-      unsigned long* TmpArray = new unsigned long[RegionAHilbertSpaceDimension]; 
-      for (long i = 0l; i < RegionAHilbertSpaceDimension; ++i)
-	{
-	  TmpArray[i] = RegionAHilbertSpace[i];
-	}
-      delete[] RegionAHilbertSpace;
-      RegionAHilbertSpace = TmpArray;
-      gettimeofday (&(EndingTime), 0);
-      DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
-		    ((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
-      cout << "Hilbert space dimension for the A region = " << RegionAHilbertSpaceDimension << " (done in " << DeltaTime << "s)" << endl;
-      unsigned long* RegionBConfigurations = new unsigned long[GroundStateDimension];
-      int* RegionAIndices = new int[GroundStateDimension];
-      FullReducedDensityMatrixEigenvalues = new double[RegionAHilbertSpaceDimension];
-      FullReducedDensityMatrixNbrEigenvalues = 0;
-      unsigned long* RegionAHilbertSpaceFixedParities = new unsigned long[RegionAHilbertSpaceDimension];
-      
-      for (unsigned long TmpParity = 0x0ul; TmpParity <= 0x3ul; ++TmpParity)
+      if (TotalNbrSpins <= 64)
 	{
 	  gettimeofday (&(StartingTime), 0);
-	  long RegionAHilbertSpaceDimensionFixedParities = 0l;
-	  for  (long i = 0l; i < RegionAHilbertSpaceDimension; ++i)
+	  unsigned long* GroundState = new unsigned long[GroundStateDimension];
+	  
+	  GroundState[0l] = (unsigned long) Manager.GetInteger("gs-parity");
+	  GroundStateDimension = 1l;
+	  
+	  for (int x = 0; (x < NbrSitesX) && (MaximumNumberZTerms > 0); ++x)
 	    {
-	      unsigned long Tmp = RegionAHilbertSpace[i];
-	      if (((GetSpin1Parity(Tmp) << 1) | GetSpin0Parity(Tmp)) == TmpParity)
+	      for (int y = 0; (y < NbrSitesY) && (MaximumNumberZTerms > 0); ++y)
 		{
-		  RegionAHilbertSpaceFixedParities[RegionAHilbertSpaceDimensionFixedParities] = Tmp;
-		  ++RegionAHilbertSpaceDimensionFixedParities;
-		}
+		  for (int z = 0; (z < NbrSitesZ) && (MaximumNumberZTerms > 0); ++z)
+		    {
+		      unsigned long TmpMask = BuildHamiltonianZTermMask(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
+		      for (long i = 0l; i < GroundStateDimension; ++i)
+			{
+			  GroundState[i + GroundStateDimension] = GroundState[i] ^ TmpMask;
+			}
+		      GroundStateDimension *= 2l;
+		      --MaximumNumberZTerms;
+		    }	  
+		}      
 	    }
-	  gettimeofday (&(EndingTime), 0);	      
+	  gettimeofday (&(EndingTime), 0);
+	  double DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
+			       ((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
+	  cout << GroundStateDimension << " intermediate components generated for the groundstate (done in " << DeltaTime << "s)" << endl;
+	  gettimeofday (&(StartingTime), 0);
+	  SortArrayUpOrderingAndRemoveDuplicates(GroundState, GroundStateDimension);
+	  gettimeofday (&(EndingTime), 0);
 	  DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
 			((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
-	  cout << "Hilbert space dimension for the region A in  the parity sector = " << ((unsigned long) TmpParity) << " (done in " << DeltaTime << "s)"  << endl;
+	  cout << GroundStateDimension << " distinct components generated for the groundstate (done in " << DeltaTime << "s)" << endl;      
 	  
-	  if (RegionAHilbertSpaceDimensionFixedParities > 0)
-	    {
-	      cout << "Building the entanglement matrix" << endl;
-	      gettimeofday (&(StartingTime), 0);
-	      long RegionBHilbertSpaceDimensionFixedParities = 0l;
-	      for (long i = 0l; i < GroundStateDimension; ++i)
+	  double GroundStateNormalizationCoefficient = 1.0 / sqrt((double) GroundStateDimension);
+	  double GroundStateSqrNormalizationCoefficient = 1.0 / ((double) GroundStateDimension);
+	  
+	  gettimeofday (&(StartingTime), 0);
+	  int RegionANbrSites = NbrSitesXA * NbrSitesYA * NbrSitesZA;
+	  unsigned long RegionAMask = 0x0ul;  
+	  
+	  if (Manager.GetString("kept-sites") == 0)
+	    {	  
+	      for (int x = 0; x < NbrSitesXA; ++x)
 		{
-		  int Tmp = SearchInArray(GroundState[i] & RegionAMask, RegionAHilbertSpaceFixedParities, RegionAHilbertSpaceDimensionFixedParities);
-		  if (Tmp >= 0)
+		  for (int y = 0; y < NbrSitesYA; ++y)
 		    {
-		      RegionBConfigurations[RegionBHilbertSpaceDimensionFixedParities] = GroundState[i] & RegionBMask;
-		      RegionAIndices[RegionBHilbertSpaceDimensionFixedParities] = Tmp;
-		      ++RegionBHilbertSpaceDimensionFixedParities;
-		    }
-		}
-	      SortArrayDownOrdering(RegionBConfigurations, RegionAIndices, RegionBHilbertSpaceDimensionFixedParities);
-	      
-	      gettimeofday (&(EndingTime), 0);	      
-	      DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
-			    ((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
-	      cout << "done in " << DeltaTime << "s"  << endl;
-	      gettimeofday (&(StartingTime), 0);
-	      cout << "Building the reduced density matrix" << endl;
-	      RealSymmetricMatrix ReducedDensityMatrix (RegionAHilbertSpaceDimensionFixedParities, true);
-	      long TmpIndex = 0l;
-	      while (TmpIndex < RegionBHilbertSpaceDimensionFixedParities)
-		{
-		  long TmpIndex2 = TmpIndex + 1l;
-		  while ((TmpIndex2 < RegionBHilbertSpaceDimensionFixedParities) && (RegionBConfigurations[TmpIndex] == RegionBConfigurations[TmpIndex2]))
-		    {
-		      ++TmpIndex2;
-		    }
-		  for (long i = TmpIndex; i < TmpIndex2; ++i)
-		    {
-		      for (long j= TmpIndex; j < TmpIndex2; ++j)
+		      for (int z = 0; z < NbrSitesZA; ++z)
 			{
-			  if (RegionAIndices[i] <= RegionAIndices[j])
-			    {
-			      ReducedDensityMatrix.AddToMatrixElement(RegionAIndices[i], RegionAIndices[j], GroundStateSqrNormalizationCoefficient);
-			    }
+			  RegionAMask |= 0x1ul << GetHaahCodeLinearizedIndex(x, y, z, 0, NbrSitesX, NbrSitesY, NbrSitesZ);
+			  RegionAMask |= 0x1ul << GetHaahCodeLinearizedIndex(x, y, z, 1, NbrSitesX, NbrSitesY, NbrSitesZ);
 			}
 		    }
-		  TmpIndex = TmpIndex2;
-		}
-	      gettimeofday (&(EndingTime), 0);	      
-	      DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
-			    ((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
-	      cout << "done in " << DeltaTime << "s"  << endl;
-	      gettimeofday (&(StartingTime), 0);
-	      cout << "Diagonalizing the reduced density matrix (" << RegionAHilbertSpaceDimensionFixedParities << "x" << RegionAHilbertSpaceDimensionFixedParities << ")" << endl;
-	      RealDiagonalMatrix ReducedDensityMatrixEigenvalues(ReducedDensityMatrix.GetNbrRow(), true);
-	      ReducedDensityMatrix.LapackDiagonalize(ReducedDensityMatrixEigenvalues);
-	      gettimeofday (&(EndingTime), 0);	      
-	      DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
-			    ((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
-	      cout << "done in " << DeltaTime << "s"  << endl;
-	      for (long i = 0l; i < ReducedDensityMatrixEigenvalues.GetNbrRow(); ++i)
-		{
-		  FullReducedDensityMatrixEigenvalues[FullReducedDensityMatrixNbrEigenvalues] = ReducedDensityMatrixEigenvalues[i];
-		  ++FullReducedDensityMatrixNbrEigenvalues;
 		}
 	    }
+	  else
+	    {
+	      MultiColumnASCIIFile KeptOrbitalFile;
+	      if (KeptOrbitalFile.Parse(Manager.GetString("kept-sites")) == false)
+		{
+		  KeptOrbitalFile.DumpErrors(cout);
+		  return -1;
+		}
+	      if (KeptOrbitalFile.GetNbrColumns() < 3)
+		{
+		  cout << "error," << Manager.GetString("kept-sites") << " should contain at least 3 columns" << endl;
+		  return 0;
+		}
+	      RegionANbrSites = KeptOrbitalFile.GetNbrLines();
+	      int* TmpKeptSpinX = KeptOrbitalFile.GetAsIntegerArray(0);
+	      int* TmpKeptSpinY = KeptOrbitalFile.GetAsIntegerArray(1);
+	      int* TmpKeptSpinZ = KeptOrbitalFile.GetAsIntegerArray(2);
+	      int* TmpKeptSpinIndex = KeptOrbitalFile.GetAsIntegerArray(3);
+	      for (int i = 0; i < RegionANbrSites; ++i)
+		{
+		  RegionAMask |= 0x1ul << GetHaahCodeLinearizedIndex(TmpKeptSpinX[i], TmpKeptSpinY[i], TmpKeptSpinZ[i], TmpKeptSpinIndex[i], NbrSitesX, NbrSitesY, NbrSitesZ);	      
+		}
+	    }
+	  
+	  unsigned long RegionBMask = ((0x1ul << (2 * TotalNbrSites)) - 0x1ul) & (~RegionAMask);
+	  
+	  unsigned long* RegionAHilbertSpace = new unsigned long[GroundStateDimension];
+	  long RegionAHilbertSpaceDimension = 0l;
+	  for (long i = 0l; i < GroundStateDimension; ++i)
+	    {
+	      RegionAHilbertSpaceDimension += SearchInSortedArrayAndInsert(GroundState[i] & RegionAMask, RegionAHilbertSpace, RegionAHilbertSpaceDimension);
+	    }
+	  unsigned long* TmpArray = new unsigned long[RegionAHilbertSpaceDimension]; 
+	  for (long i = 0l; i < RegionAHilbertSpaceDimension; ++i)
+	    {
+	      TmpArray[i] = RegionAHilbertSpace[i];
+	    }
+	  delete[] RegionAHilbertSpace;
+	  RegionAHilbertSpace = TmpArray;
+	  gettimeofday (&(EndingTime), 0);
+	  DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
+			((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
+	  cout << "Hilbert space dimension for the A region = " << RegionAHilbertSpaceDimension << " (done in " << DeltaTime << "s)" << endl;
+	  unsigned long* RegionBConfigurations = new unsigned long[GroundStateDimension];
+	  int* RegionAIndices = new int[GroundStateDimension];
+	  FullReducedDensityMatrixEigenvalues = new double[RegionAHilbertSpaceDimension];
+	  FullReducedDensityMatrixNbrEigenvalues = 0;
+	  unsigned long* RegionAHilbertSpaceFixedParities = new unsigned long[RegionAHilbertSpaceDimension];
+	  
+	  for (unsigned long TmpParity = 0x0ul; TmpParity <= 0x3ul; ++TmpParity)
+	    {
+	      gettimeofday (&(StartingTime), 0);
+	      long RegionAHilbertSpaceDimensionFixedParities = 0l;
+	      for  (long i = 0l; i < RegionAHilbertSpaceDimension; ++i)
+		{
+		  unsigned long Tmp = RegionAHilbertSpace[i];
+		  if (((GetSpin1Parity(Tmp) << 1) | GetSpin0Parity(Tmp)) == TmpParity)
+		    {
+		      RegionAHilbertSpaceFixedParities[RegionAHilbertSpaceDimensionFixedParities] = Tmp;
+		      ++RegionAHilbertSpaceDimensionFixedParities;
+		    }
+		}
+	      gettimeofday (&(EndingTime), 0);	      
+	      DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
+			    ((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
+	      cout << "Hilbert space dimension for the region A in  the parity sector = " << ((unsigned long) TmpParity) << " (done in " << DeltaTime << "s)"  << endl;
+	      
+	      if (RegionAHilbertSpaceDimensionFixedParities > 0)
+		{
+		  cout << "Building the entanglement matrix" << endl;
+		  gettimeofday (&(StartingTime), 0);
+		  long RegionBHilbertSpaceDimensionFixedParities = 0l;
+		  for (long i = 0l; i < GroundStateDimension; ++i)
+		    {
+		      int Tmp = SearchInArray(GroundState[i] & RegionAMask, RegionAHilbertSpaceFixedParities, RegionAHilbertSpaceDimensionFixedParities);
+		      if (Tmp >= 0)
+			{
+			  RegionBConfigurations[RegionBHilbertSpaceDimensionFixedParities] = GroundState[i] & RegionBMask;
+			  RegionAIndices[RegionBHilbertSpaceDimensionFixedParities] = Tmp;
+			  ++RegionBHilbertSpaceDimensionFixedParities;
+			}
+		    }
+		  SortArrayDownOrdering(RegionBConfigurations, RegionAIndices, RegionBHilbertSpaceDimensionFixedParities);
+		  
+		  gettimeofday (&(EndingTime), 0);	      
+		  DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
+				((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
+		  cout << "done in " << DeltaTime << "s"  << endl;
+		  gettimeofday (&(StartingTime), 0);
+		  cout << "Building the reduced density matrix" << endl;
+		  RealSymmetricMatrix ReducedDensityMatrix (RegionAHilbertSpaceDimensionFixedParities, true);
+		  long TmpIndex = 0l;
+		  while (TmpIndex < RegionBHilbertSpaceDimensionFixedParities)
+		    {
+		      long TmpIndex2 = TmpIndex + 1l;
+		      while ((TmpIndex2 < RegionBHilbertSpaceDimensionFixedParities) && (RegionBConfigurations[TmpIndex] == RegionBConfigurations[TmpIndex2]))
+			{
+			  ++TmpIndex2;
+			}
+		      for (long i = TmpIndex; i < TmpIndex2; ++i)
+			{
+			  for (long j= TmpIndex; j < TmpIndex2; ++j)
+			    {
+			      if (RegionAIndices[i] <= RegionAIndices[j])
+				{
+				  ReducedDensityMatrix.AddToMatrixElement(RegionAIndices[i], RegionAIndices[j], GroundStateSqrNormalizationCoefficient);
+				}
+			    }
+			}
+		      TmpIndex = TmpIndex2;
+		    }
+		  gettimeofday (&(EndingTime), 0);	      
+		  DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
+				((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
+		  cout << "done in " << DeltaTime << "s"  << endl;
+		  gettimeofday (&(StartingTime), 0);
+		  cout << "Diagonalizing the reduced density matrix (" << RegionAHilbertSpaceDimensionFixedParities << "x" << RegionAHilbertSpaceDimensionFixedParities << ")" << endl;
+		  RealDiagonalMatrix ReducedDensityMatrixEigenvalues(ReducedDensityMatrix.GetNbrRow(), true);
+		  ReducedDensityMatrix.LapackDiagonalize(ReducedDensityMatrixEigenvalues);
+		  gettimeofday (&(EndingTime), 0);	      
+		  DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
+				((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
+		  cout << "done in " << DeltaTime << "s"  << endl;
+		  for (long i = 0l; i < ReducedDensityMatrixEigenvalues.GetNbrRow(); ++i)
+		    {
+		      FullReducedDensityMatrixEigenvalues[FullReducedDensityMatrixNbrEigenvalues] = ReducedDensityMatrixEigenvalues[i];
+		      ++FullReducedDensityMatrixNbrEigenvalues;
+		    }
+		}
+	    }
+	  delete[] RegionBConfigurations;
+	  delete[] RegionAIndices;
+	  delete[] GroundState;
+	}      
+      else
+	{
+	  gettimeofday (&(StartingTime), 0);
+	  ULONGLONG* GroundState = new ULONGLONG[GroundStateDimension];
+	  
+	  GroundState[0l] = ((ULONGLONG) Manager.GetInteger("gs-parity"));
+	  GroundStateDimension = 1l;
+	  
+	  for (int x = 0; (x < NbrSitesX) && (MaximumNumberZTerms > 0); ++x)
+	    {
+	      for (int y = 0; (y < NbrSitesY) && (MaximumNumberZTerms > 0); ++y)
+		{
+		  for (int z = 0; (z < NbrSitesZ) && (MaximumNumberZTerms > 0); ++z)
+		    {
+		      ULONGLONG TmpMask = BuildHamiltonianZTermMaskLongLong(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
+		      for (long i = 0l; i < GroundStateDimension; ++i)
+			{
+			  GroundState[i + GroundStateDimension] = GroundState[i] ^ TmpMask;
+			}
+		      GroundStateDimension *= 2l;
+		      --MaximumNumberZTerms;
+		    }	  
+		}      
+	    }
+	  gettimeofday (&(EndingTime), 0);
+	  double DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
+			       ((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
+	  cout << GroundStateDimension << " intermediate components generated for the groundstate (done in " << DeltaTime << "s)" << endl;
+	  gettimeofday (&(StartingTime), 0);
+	  SortArrayUpOrderingAndRemoveDuplicates(GroundState, GroundStateDimension);
+	  gettimeofday (&(EndingTime), 0);
+	  DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
+			((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
+	  cout << GroundStateDimension << " distinct components generated for the groundstate (done in " << DeltaTime << "s)" << endl;
+	  
+	  double GroundStateNormalizationCoefficient = 1.0 / sqrt((double) GroundStateDimension);
+	  double GroundStateSqrNormalizationCoefficient = 1.0 / ((double) GroundStateDimension);
+	  
+	  gettimeofday (&(StartingTime), 0);
+	  int RegionANbrSites = NbrSitesXA * NbrSitesYA * NbrSitesZA;
+	  ULONGLONG RegionAMask = ((ULONGLONG) 0x0ul);  
+	  if (Manager.GetString("kept-sites") == 0)
+	    {	  
+	      for (int x = 0; x < NbrSitesXA; ++x)
+		{
+		  for (int y = 0; y < NbrSitesYA; ++y)
+		    {
+		      for (int z = 0; z < NbrSitesZA; ++z)
+			{
+			  RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x, y, z, 0, NbrSitesX, NbrSitesY, NbrSitesZ);
+			  RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x, y, z, 1, NbrSitesX, NbrSitesY, NbrSitesZ);
+			}
+		    }
+		}
+	    }
+	  else
+	    {
+	      MultiColumnASCIIFile KeptOrbitalFile;
+	      if (KeptOrbitalFile.Parse(Manager.GetString("kept-sites")) == false)
+		{
+		  KeptOrbitalFile.DumpErrors(cout);
+		  return -1;
+		}
+	      if (KeptOrbitalFile.GetNbrColumns() < 3)
+		{
+		  cout << "error," << Manager.GetString("kept-sites") << " should contain at least 3 columns" << endl;
+		  return 0;
+		}
+	      RegionANbrSites = KeptOrbitalFile.GetNbrLines();
+	      int* TmpKeptSpinX = KeptOrbitalFile.GetAsIntegerArray(0);
+	      int* TmpKeptSpinY = KeptOrbitalFile.GetAsIntegerArray(1);
+	      int* TmpKeptSpinZ = KeptOrbitalFile.GetAsIntegerArray(2);
+	      int* TmpKeptSpinIndex = KeptOrbitalFile.GetAsIntegerArray(3);
+	      for (int i = 0; i < RegionANbrSites; ++i)
+		{
+		  RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(TmpKeptSpinX[i], TmpKeptSpinY[i], TmpKeptSpinZ[i], TmpKeptSpinIndex[i], NbrSitesX, NbrSitesY, NbrSitesZ);	      
+		}
+	    }
+	  
+	  ULONGLONG RegionBMask = ((((ULONGLONG) 0x1ul) << (2 * TotalNbrSites)) - ((ULONGLONG) 0x1ul)) & (~RegionAMask);
+	  
+	  ULONGLONG* RegionAHilbertSpace = new ULONGLONG[GroundStateDimension];
+	  long RegionAHilbertSpaceDimension = 0l;
+	  for (long i = 0l; i < GroundStateDimension; ++i)
+	    {
+	      RegionAHilbertSpaceDimension += SearchInSortedArrayAndInsert(GroundState[i] & RegionAMask, RegionAHilbertSpace, RegionAHilbertSpaceDimension);
+	    }
+	  ULONGLONG* TmpArray = new ULONGLONG[RegionAHilbertSpaceDimension]; 
+	  for (long i = 0l; i < RegionAHilbertSpaceDimension; ++i)
+	    {
+	      TmpArray[i] = RegionAHilbertSpace[i];
+	    }
+	  delete[] RegionAHilbertSpace;
+	  RegionAHilbertSpace = TmpArray;
+	  gettimeofday (&(EndingTime), 0);
+	  DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
+			((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
+	  cout << "Hilbert space dimension for the A region = " << RegionAHilbertSpaceDimension << " (done in " << DeltaTime << "s)" << endl;
+	  ULONGLONG* RegionBConfigurations = new ULONGLONG[GroundStateDimension];
+	  int* RegionAIndices = new int[GroundStateDimension];
+	  FullReducedDensityMatrixEigenvalues = new double[RegionAHilbertSpaceDimension];
+	  FullReducedDensityMatrixNbrEigenvalues = 0;
+	  ULONGLONG* RegionAHilbertSpaceFixedParities = new ULONGLONG[RegionAHilbertSpaceDimension];
+	  
+	  for (ULONGLONG TmpParity = ((ULONGLONG) 0x0ul); TmpParity <= ((ULONGLONG) 0x3ul); ++TmpParity)
+	    {
+	      gettimeofday (&(StartingTime), 0);
+	      long RegionAHilbertSpaceDimensionFixedParities = 0l;
+	      for  (long i = 0l; i < RegionAHilbertSpaceDimension; ++i)
+		{
+		  ULONGLONG Tmp = RegionAHilbertSpace[i];
+		  if (((GetSpin1Parity(Tmp) << 1) | GetSpin0Parity(Tmp)) == TmpParity)
+		    {
+		      RegionAHilbertSpaceFixedParities[RegionAHilbertSpaceDimensionFixedParities] = Tmp;
+		      ++RegionAHilbertSpaceDimensionFixedParities;
+		    }
+		}
+	      gettimeofday (&(EndingTime), 0);	      
+	      DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
+			    ((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
+	      cout << "Hilbert space dimension for the region A in  the parity sector = " << ((unsigned long) TmpParity) << " (done in " << DeltaTime << "s)"  << endl;
+	      
+	      if (RegionAHilbertSpaceDimensionFixedParities > 0)
+		{
+		  cout << "Building the entanglement matrix" << endl;
+		  gettimeofday (&(StartingTime), 0);
+		  long RegionBHilbertSpaceDimensionFixedParities = 0l;
+		  for (long i = 0l; i < GroundStateDimension; ++i)
+		    {
+		      int Tmp = SearchInArray(GroundState[i] & RegionAMask, RegionAHilbertSpaceFixedParities, RegionAHilbertSpaceDimensionFixedParities);
+		      if (Tmp >= 0)
+			{
+			  RegionBConfigurations[RegionBHilbertSpaceDimensionFixedParities] = GroundState[i] & RegionBMask;
+			  RegionAIndices[RegionBHilbertSpaceDimensionFixedParities] = Tmp;
+			  ++RegionBHilbertSpaceDimensionFixedParities;
+			}
+		    }
+		  SortArrayDownOrdering(RegionBConfigurations, RegionAIndices, RegionBHilbertSpaceDimensionFixedParities);
+		  gettimeofday (&(EndingTime), 0);	      
+		  DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
+				((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
+		  cout << "done in " << DeltaTime << "s"  << endl;
+		  gettimeofday (&(StartingTime), 0);
+		  cout << "Building the reduced density matrix" << endl;
+		  
+		  RealSymmetricMatrix ReducedDensityMatrix (RegionAHilbertSpaceDimensionFixedParities, true);
+		  long TmpIndex = 0l;
+		  while (TmpIndex < RegionBHilbertSpaceDimensionFixedParities)
+		    {
+		      long TmpIndex2 = TmpIndex + 1l;
+		      while ((TmpIndex2 < RegionBHilbertSpaceDimensionFixedParities) && (RegionBConfigurations[TmpIndex] == RegionBConfigurations[TmpIndex2]))
+			{
+			  ++TmpIndex2;
+			}
+		      for (long i = TmpIndex; i < TmpIndex2; ++i)
+			{
+			  for (long j= TmpIndex; j < TmpIndex2; ++j)
+			    {
+			      if (RegionAIndices[i] <= RegionAIndices[j])
+				{
+				  ReducedDensityMatrix.AddToMatrixElement(RegionAIndices[i], RegionAIndices[j], GroundStateSqrNormalizationCoefficient);
+				}
+			    }
+			}
+		      TmpIndex = TmpIndex2;
+		    }
+		  gettimeofday (&(EndingTime), 0);	      
+		  DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
+				((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
+		  cout << "done in " << DeltaTime << "s"  << endl;
+		  gettimeofday (&(StartingTime), 0);
+		  cout << "Diagonalizing the reduced density matrix (" << RegionAHilbertSpaceDimensionFixedParities << "x" << RegionAHilbertSpaceDimensionFixedParities << ")" << endl;
+		  RealDiagonalMatrix ReducedDensityMatrixEigenvalues(ReducedDensityMatrix.GetNbrRow(), true);
+		  ReducedDensityMatrix.LapackDiagonalize(ReducedDensityMatrixEigenvalues);
+		  gettimeofday (&(EndingTime), 0);	      
+		  DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
+				((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
+		  cout << "done in " << DeltaTime << "s"  << endl;
+		  for (long i = 0l; i < ReducedDensityMatrixEigenvalues.GetNbrRow(); ++i)
+		    {
+		      FullReducedDensityMatrixEigenvalues[FullReducedDensityMatrixNbrEigenvalues] = ReducedDensityMatrixEigenvalues[i];
+		      ++FullReducedDensityMatrixNbrEigenvalues;
+		    }
+		}
+	    }
+	  delete[] RegionBConfigurations;
+	  delete[] RegionAIndices;
+	  delete[] GroundState;
 	}
-      delete[] RegionBConfigurations;
-      delete[] RegionAIndices;
-      delete[] GroundState;
-    }      
+    }
   else
     {
       gettimeofday (&(StartingTime), 0);
-      ULONGLONG* GroundState = new ULONGLONG[GroundStateDimension];
-      
-      GroundState[0l] = ((ULONGLONG) 0x0ul);
-      GroundStateDimension = 1l;
-      
-      for (int x = 0; (x < NbrSitesX) && (MaximumNumberZTerms > 0); ++x)
-	{
-	  for (int y = 0; (y < NbrSitesY) && (MaximumNumberZTerms > 0); ++y)
-	    {
-	      for (int z = 0; (z < NbrSitesZ) && (MaximumNumberZTerms > 0); ++z)
-		{
-		  ULONGLONG TmpMask = BuildHamiltonianZTermMaskLongLong(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
-		  for (long i = 0l; i < GroundStateDimension; ++i)
-		    {
-		      GroundState[i + GroundStateDimension] = GroundState[i] ^ TmpMask;
-		    }
-		  GroundStateDimension *= 2l;
-		  --MaximumNumberZTerms;
-		}	  
-	    }      
-	}
-      gettimeofday (&(EndingTime), 0);
-      double DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
-			   ((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
-      cout << GroundStateDimension << " intermediate components generated for the groundstate (done in " << DeltaTime << "s)" << endl;
-      gettimeofday (&(StartingTime), 0);
-      SortArrayUpOrderingAndRemoveDuplicates(GroundState, GroundStateDimension);
-      gettimeofday (&(EndingTime), 0);
-      DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
-		    ((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
-      cout << GroundStateDimension << " distinct components generated for the groundstate (done in " << DeltaTime << "s)" << endl;
-
+      ULONGLONG InitialGroundState = ((ULONGLONG) Manager.GetInteger("gs-parity"));
       double GroundStateNormalizationCoefficient = 1.0 / sqrt((double) GroundStateDimension);
       double GroundStateSqrNormalizationCoefficient = 1.0 / ((double) GroundStateDimension);
       
-      gettimeofday (&(StartingTime), 0);
+      ULONGLONG* HamiltonianZTermMasks = new ULONGLONG[MaximumNumberZTerms];
+      int TmpIndex = 0;
+      for (int x = 0; (x < NbrSitesX) && (TmpIndex < MaximumNumberZTerms); ++x)
+	{
+	  for (int y = 0; (y < NbrSitesY) && (TmpIndex < MaximumNumberZTerms); ++y)
+	    {
+	      for (int z = 0; (z < NbrSitesZ) && (TmpIndex < MaximumNumberZTerms); ++z)
+		{
+		  HamiltonianZTermMasks[TmpIndex] = BuildHamiltonianZTermMaskLongLong(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
+		  ++TmpIndex;
+		}	  
+	    }      
+	}
+      
       int RegionANbrSites = NbrSitesXA * NbrSitesYA * NbrSitesZA;
       ULONGLONG RegionAMask = ((ULONGLONG) 0x0ul);  
       if (Manager.GetString("kept-sites") == 0)
@@ -432,14 +611,18 @@ int main(int argc, char** argv)
 	      RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(TmpKeptSpinX[i], TmpKeptSpinY[i], TmpKeptSpinZ[i], TmpKeptSpinIndex[i], NbrSitesX, NbrSitesY, NbrSitesZ);	      
 	    }
 	}
-
-      ULONGLONG RegionBMask = ((((ULONGLONG) 0x1ul) << (2 * TotalNbrSites)) - ((ULONGLONG) 0x1ul)) & (~RegionAMask);
       
-      ULONGLONG* RegionAHilbertSpace = new ULONGLONG[GroundStateDimension];
-      long RegionAHilbertSpaceDimension = 0l;
+      ULONGLONG RegionBMask = ((((ULONGLONG) 0x1ul) << (2 * TotalNbrSites)) - ((ULONGLONG) 0x1ul)) & (~RegionAMask);
+
+      long RegionAHilbertSpaceDimension = 2l << (2 * RegionANbrSites);
+      ULONGLONG* RegionAHilbertSpace = new ULONGLONG[RegionAHilbertSpaceDimension];
+      RegionAHilbertSpaceDimension = 0l;
+
+      ULONGLONG TmpConfiguration;
       for (long i = 0l; i < GroundStateDimension; ++i)
 	{
-	  RegionAHilbertSpaceDimension += SearchInSortedArrayAndInsert(GroundState[i] & RegionAMask, RegionAHilbertSpace, RegionAHilbertSpaceDimension);
+	  ApplyHamiltonianZTermMaskLongLong(InitialGroundState, TmpConfiguration, i, HamiltonianZTermMasks, MaximumNumberZTerms);
+	  RegionAHilbertSpaceDimension += SearchInSortedArrayAndInsert(TmpConfiguration & RegionAMask, RegionAHilbertSpace, RegionAHilbertSpaceDimension);
 	}
       ULONGLONG* TmpArray = new ULONGLONG[RegionAHilbertSpaceDimension]; 
       for (long i = 0l; i < RegionAHilbertSpaceDimension; ++i)
@@ -449,15 +632,15 @@ int main(int argc, char** argv)
       delete[] RegionAHilbertSpace;
       RegionAHilbertSpace = TmpArray;
       gettimeofday (&(EndingTime), 0);
-      DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
-		    ((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
+      double DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
+			   ((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
       cout << "Hilbert space dimension for the A region = " << RegionAHilbertSpaceDimension << " (done in " << DeltaTime << "s)" << endl;
-      ULONGLONG* RegionBConfigurations = new ULONGLONG[GroundStateDimension];
-      int* RegionAIndices = new int[GroundStateDimension];
+      ULONGLONG* RegionBConfigurations = new ULONGLONG[GroundStateDimension / 2l];
+      int* RegionAIndices = new int[GroundStateDimension / 2l];
       FullReducedDensityMatrixEigenvalues = new double[RegionAHilbertSpaceDimension];
       FullReducedDensityMatrixNbrEigenvalues = 0;
       ULONGLONG* RegionAHilbertSpaceFixedParities = new ULONGLONG[RegionAHilbertSpaceDimension];
-      
+	  
       for (ULONGLONG TmpParity = ((ULONGLONG) 0x0ul); TmpParity <= ((ULONGLONG) 0x3ul); ++TmpParity)
 	{
 	  gettimeofday (&(StartingTime), 0);
@@ -483,10 +666,11 @@ int main(int argc, char** argv)
 	      long RegionBHilbertSpaceDimensionFixedParities = 0l;
 	      for (long i = 0l; i < GroundStateDimension; ++i)
 		{
-		  int Tmp = SearchInArray(GroundState[i] & RegionAMask, RegionAHilbertSpaceFixedParities, RegionAHilbertSpaceDimensionFixedParities);
+		  ApplyHamiltonianZTermMaskLongLong(InitialGroundState, TmpConfiguration, i, HamiltonianZTermMasks, MaximumNumberZTerms);
+		  int Tmp = SearchInArray(TmpConfiguration & RegionAMask, RegionAHilbertSpaceFixedParities, RegionAHilbertSpaceDimensionFixedParities);
 		  if (Tmp >= 0)
 		    {
-		      RegionBConfigurations[RegionBHilbertSpaceDimensionFixedParities] = GroundState[i] & RegionBMask;
+		      RegionBConfigurations[RegionBHilbertSpaceDimensionFixedParities] = TmpConfiguration & RegionBMask;
 		      RegionAIndices[RegionBHilbertSpaceDimensionFixedParities] = Tmp;
 		      ++RegionBHilbertSpaceDimensionFixedParities;
 		    }
@@ -498,7 +682,7 @@ int main(int argc, char** argv)
 	      cout << "done in " << DeltaTime << "s"  << endl;
 	      gettimeofday (&(StartingTime), 0);
 	      cout << "Building the reduced density matrix" << endl;
-
+	      
 	      RealSymmetricMatrix ReducedDensityMatrix (RegionAHilbertSpaceDimensionFixedParities, true);
 	      long TmpIndex = 0l;
 	      while (TmpIndex < RegionBHilbertSpaceDimensionFixedParities)
@@ -541,22 +725,27 @@ int main(int argc, char** argv)
 	}
       delete[] RegionBConfigurations;
       delete[] RegionAIndices;
-      delete[] GroundState;
     }
-
   double ReducedDensityMatrixTrace = 0.0;
   double ReducedDensityMatrixEntanglementEntropy = 0.0;
   long ReducedDensityMatrixNbrNonZeroEigenvalues = 0l;
   for (long i = 0l; i < FullReducedDensityMatrixNbrEigenvalues; ++i)
     {
       ReducedDensityMatrixTrace += FullReducedDensityMatrixEigenvalues[i];
+    }
+  for (long i = 0l; i < FullReducedDensityMatrixNbrEigenvalues; ++i)
+    {
+      FullReducedDensityMatrixEigenvalues[i] /= ReducedDensityMatrixTrace;
+    }
+  for (long i = 0l; i < FullReducedDensityMatrixNbrEigenvalues; ++i)
+    {
       if (FullReducedDensityMatrixEigenvalues[i] > 0.0)
 	{
 	  ReducedDensityMatrixEntanglementEntropy -= FullReducedDensityMatrixEigenvalues[i] * log(FullReducedDensityMatrixEigenvalues[i]);
 	  ReducedDensityMatrixNbrNonZeroEigenvalues++;
 	}
     }
-  cout << "Trace of the reduced density matrix = " << ReducedDensityMatrixTrace << endl;
+  cout << "Trace of the reduced density matrix before normalization = " << ReducedDensityMatrixTrace << endl;
   cout << "Number of non zero eigenvalues for the reduced density matrix = " << ReducedDensityMatrixNbrNonZeroEigenvalues << endl;
   cout << "Entangement entropy = " << (ReducedDensityMatrixEntanglementEntropy / log(2.0)) << " * log 2" << endl;
    
@@ -700,3 +889,14 @@ inline ULONGLONG GetSpin1Parity(ULONGLONG state)
   return (state &0x1ul);
 }
 
+inline ULONGLONG ApplyHamiltonianZTermMaskLongLong(ULONGLONG& initialGroundState, ULONGLONG& finalGroundState, long& configurationIndex, ULONGLONG* hamiltonianZTermMasks, int numberZTerms)
+{
+  finalGroundState = initialGroundState;
+  for (int i = 0; i < numberZTerms; ++i)
+    {
+      if (((configurationIndex >> i) & 0x1ul) != 0x0ul)
+	{
+	  finalGroundState ^= hamiltonianZTermMasks[i];
+	}
+    }
+}
