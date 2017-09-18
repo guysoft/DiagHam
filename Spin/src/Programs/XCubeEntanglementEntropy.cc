@@ -27,7 +27,7 @@ using std::dec;
 using std::ofstream;
 
 
-// build the binary mask for for a Hamiltonian Z term 
+// build the binary mask for for a Hamiltonian type 1 Z term  i.e. all operators in the (x,y) plane
 // 
 // x = x coordinate of the cube lower front leftmost corner
 // y = y coordinate of the cube lower front leftmost corner
@@ -36,9 +36,9 @@ using std::ofstream;
 // nbrSiteY = number of sites along the y direction for the full system
 // nbrSiteZ = number of sites along the z direction for the full system
 // return value = binary mask for for a Hamiltonian Z term 
-unsigned long BuildHamiltonianZTermMask (int x, int y, int z, int nbrSiteX, int nbrSiteY, int nbrSiteZ);
+unsigned long BuildHamiltonianZTerm1Mask (int x, int y, int z, int nbrSiteX, int nbrSiteY, int nbrSiteZ);
 
-// build the binary mask for for a Hamiltonian Z term  (unsigned long long version)
+// build the binary mask for for a Hamiltonian type 2 Z term  i.e. all operators in the (y,z) plane
 // 
 // x = x coordinate of the cube lower front leftmost corner
 // y = y coordinate of the cube lower front leftmost corner
@@ -47,7 +47,29 @@ unsigned long BuildHamiltonianZTermMask (int x, int y, int z, int nbrSiteX, int 
 // nbrSiteY = number of sites along the y direction for the full system
 // nbrSiteZ = number of sites along the z direction for the full system
 // return value = binary mask for for a Hamiltonian Z term 
-ULONGLONG BuildHamiltonianZTermMaskLongLong (int x, int y, int z, int nbrSiteX, int nbrSiteY, int nbrSiteZ);
+unsigned long BuildHamiltonianZTerm2Mask (int x, int y, int z, int nbrSiteX, int nbrSiteY, int nbrSiteZ);
+
+// build the binary mask for for a Hamiltonian type 1 Z term, i.e. all operators in the (x,y) plane  (unsigned long long version)
+// 
+// x = x coordinate of the cube lower front leftmost corner
+// y = y coordinate of the cube lower front leftmost corner
+// z = z coordinate of the cube lower front leftmost corner
+// nbrSiteX = number of sites along the x direction for the full system
+// nbrSiteY = number of sites along the y direction for the full system
+// nbrSiteZ = number of sites along the z direction for the full system
+// return value = binary mask for for a Hamiltonian Z term 
+ULONGLONG BuildHamiltonianZTerm1MaskLongLong (int x, int y, int z, int nbrSiteX, int nbrSiteY, int nbrSiteZ);
+
+// build the binary mask for for a Hamiltonian type 2 Z term, i.e. all operators in the (y,z) plane  (unsigned long long version)
+// 
+// x = x coordinate of the cube lower front leftmost corner
+// y = y coordinate of the cube lower front leftmost corner
+// z = z coordinate of the cube lower front leftmost corner
+// nbrSiteX = number of sites along the x direction for the full system
+// nbrSiteY = number of sites along the y direction for the full system
+// nbrSiteZ = number of sites along the z direction for the full system
+// return value = binary mask for for a Hamiltonian Z term 
+ULONGLONG BuildHamiltonianZTerm2MaskLongLong (int x, int y, int z, int nbrSiteX, int nbrSiteY, int nbrSiteZ);
 
 // build the linearized index from the spin coordinates
 //
@@ -61,29 +83,18 @@ ULONGLONG BuildHamiltonianZTermMaskLongLong (int x, int y, int z, int nbrSiteX, 
 // return value = linearized index
 int GetHaahCodeLinearizedIndex (int x, int y, int z, int spinIndex, int nbrSiteX, int nbrSiteY, int nbrSiteZ);
 
-// get the parity of spin 0 for a given configuration
+// get the spin parity for a given configuration
 //
 // state = binary encoded configuration
 // return value = parity (either 0 or 1)
-unsigned long GetSpin0Parity(unsigned long state);
+unsigned long GetSpinParity(unsigned long state);
 
-// get the parity of spin 1 for a given configuration
+// get the spin parity for a given configuration
 //
 // state = binary encoded configuration
 // return value = parity (either 0 or 1)
-unsigned long GetSpin1Parity(unsigned long state);
+ULONGLONG GetSpinParity(ULONGLONG state);
 
-// get the parity of spin 0 for a given configuration
-//
-// state = binary encoded configuration
-// return value = parity (either 0 or 1)
-ULONGLONG GetSpin0Parity(ULONGLONG state);
-
-// get the parity of spin 1 for a given configuration
-//
-// state = binary encoded configuration
-// return value = parity (either 0 or 1)
-ULONGLONG GetSpin1Parity(ULONGLONG state);
 
 
 int main(int argc, char** argv)
@@ -91,7 +102,7 @@ int main(int argc, char** argv)
   cout.precision(14); 
 
   // some running options and help
-  OptionManager Manager ("HaahCodeEntropy" , "0.01");
+  OptionManager Manager ("XCubeEntanglementEntropy" , "0.01");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
@@ -124,7 +135,7 @@ int main(int argc, char** argv)
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type HaahCodeEntropy -h" << endl;
+      cout << "see man page for option syntax or type XCubeEntanglementEntropy -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -141,11 +152,11 @@ int main(int argc, char** argv)
   int NbrSitesZA = Manager.GetInteger("nbra-sitez");
 
   int TotalNbrSites = NbrSitesX * NbrSitesY * NbrSitesZ;
-  int TotalNbrSpins = 2 * TotalNbrSites;
+  int TotalNbrSpins = 3 * TotalNbrSites;
   double* FullReducedDensityMatrixEigenvalues;
   long FullReducedDensityMatrixNbrEigenvalues;
 
-  int MaximumNumberZTerms = NbrSitesX * NbrSitesY * NbrSitesZ;
+  int MaximumNumberZTerms = 2 * NbrSitesX * NbrSitesY * NbrSitesZ;
   ULONGLONG ProductZTerm = 0x0ul;
   for (int x = 0; x < NbrSitesX; ++x)
     {
@@ -153,14 +164,15 @@ int main(int argc, char** argv)
         {
           for (int z = 0; z < NbrSitesZ; ++z)
             {
-              ProductZTerm ^= BuildHamiltonianZTermMaskLongLong(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
+              ProductZTerm ^= BuildHamiltonianZTerm1MaskLongLong(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
+              ProductZTerm ^= BuildHamiltonianZTerm2MaskLongLong(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
             }
         }
     }
   if (ProductZTerm == ((ULONGLONG) 0x0ul))
     {
       --MaximumNumberZTerms;
-      cout << "product of all the z term is equal to the identity" << endl;
+      cout << "product of all the type 1 z term is equal to the identity" << endl;
     }
   long GroundStateDimension = 1l << MaximumNumberZTerms;
   timeval StartingTime;
@@ -183,7 +195,23 @@ int main(int argc, char** argv)
 		{
 		  for (int z = 0; (z < NbrSitesZ) && (MaximumNumberZTerms > 0); ++z)
 		    {
-		      unsigned long TmpMask = BuildHamiltonianZTermMask(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
+		      unsigned long TmpMask = BuildHamiltonianZTerm1Mask(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
+		      for (long i = 0l; i < GroundStateDimension; ++i)
+			{
+			  GroundState[i + GroundStateDimension] = GroundState[i] ^ TmpMask;
+			}
+		      GroundStateDimension *= 2l;
+		      --MaximumNumberZTerms;
+		    }	  
+		}      
+	    }
+	  for (int x = 0; (x < NbrSitesX) && (MaximumNumberZTerms > 0); ++x)
+	    {
+	      for (int y = 0; (y < NbrSitesY) && (MaximumNumberZTerms > 0); ++y)
+		{
+		  for (int z = 0; (z < NbrSitesZ) && (MaximumNumberZTerms > 0); ++z)
+		    {
+		      unsigned long TmpMask = BuildHamiltonianZTerm2Mask(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
 		      for (long i = 0l; i < GroundStateDimension; ++i)
 			{
 			  GroundState[i + GroundStateDimension] = GroundState[i] ^ TmpMask;
@@ -221,6 +249,7 @@ int main(int argc, char** argv)
 			{
 			  RegionAMask |= 0x1ul << GetHaahCodeLinearizedIndex(x, y, z, 0, NbrSitesX, NbrSitesY, NbrSitesZ);
 			  RegionAMask |= 0x1ul << GetHaahCodeLinearizedIndex(x, y, z, 1, NbrSitesX, NbrSitesY, NbrSitesZ);
+			  RegionAMask |= 0x1ul << GetHaahCodeLinearizedIndex(x, y, z, 2, NbrSitesX, NbrSitesY, NbrSitesZ);
 			}
 		    }
 		}
@@ -249,7 +278,7 @@ int main(int argc, char** argv)
 		}
 	    }
 	  
-	  unsigned long RegionBMask = ((0x1ul << (2 * TotalNbrSites)) - 0x1ul) & (~RegionAMask);
+	  unsigned long RegionBMask = ((0x1ul << (TotalNbrSpins)) - 0x1ul) & (~RegionAMask);
 	  
 	  unsigned long* RegionAHilbertSpace = new unsigned long[GroundStateDimension];
 	  long RegionAHilbertSpaceDimension = 0l;
@@ -274,14 +303,14 @@ int main(int argc, char** argv)
 	  FullReducedDensityMatrixNbrEigenvalues = 0;
 	  unsigned long* RegionAHilbertSpaceFixedParities = new unsigned long[RegionAHilbertSpaceDimension];
 	  
-	  for (unsigned long TmpParity = 0x0ul; TmpParity <= 0x3ul; ++TmpParity)
+	  for (unsigned long TmpParity = 0x0ul; TmpParity <= 0x1ul; ++TmpParity)
 	    {
 	      gettimeofday (&(StartingTime), 0);
 	      long RegionAHilbertSpaceDimensionFixedParities = 0l;
 	      for  (long i = 0l; i < RegionAHilbertSpaceDimension; ++i)
 		{
 		  unsigned long Tmp = RegionAHilbertSpace[i];
-		  if (((GetSpin1Parity(Tmp) << 1) | GetSpin0Parity(Tmp)) == TmpParity)
+		  if (GetSpinParity(Tmp) == TmpParity)
 		    {
 		      RegionAHilbertSpaceFixedParities[RegionAHilbertSpaceDimensionFixedParities] = Tmp;
 		      ++RegionAHilbertSpaceDimensionFixedParities;
@@ -373,7 +402,23 @@ int main(int argc, char** argv)
 		{
 		  for (int z = 0; (z < NbrSitesZ) && (MaximumNumberZTerms > 0); ++z)
 		    {
-		      ULONGLONG TmpMask = BuildHamiltonianZTermMaskLongLong(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
+		      ULONGLONG TmpMask = BuildHamiltonianZTerm1MaskLongLong(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
+		      for (long i = 0l; i < GroundStateDimension; ++i)
+			{
+			  GroundState[i + GroundStateDimension] = GroundState[i] ^ TmpMask;
+			}
+		      GroundStateDimension *= 2l;
+		      --MaximumNumberZTerms;
+		    }	  
+		}      
+	    }
+	  for (int x = 0; (x < NbrSitesX) && (MaximumNumberZTerms > 0); ++x)
+	    {
+	      for (int y = 0; (y < NbrSitesY) && (MaximumNumberZTerms > 0); ++y)
+		{
+		  for (int z = 0; (z < NbrSitesZ) && (MaximumNumberZTerms > 0); ++z)
+		    {
+		      ULONGLONG TmpMask = BuildHamiltonianZTerm2MaskLongLong(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
 		      for (long i = 0l; i < GroundStateDimension; ++i)
 			{
 			  GroundState[i + GroundStateDimension] = GroundState[i] ^ TmpMask;
@@ -410,6 +455,7 @@ int main(int argc, char** argv)
 			{
 			  RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x, y, z, 0, NbrSitesX, NbrSitesY, NbrSitesZ);
 			  RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x, y, z, 1, NbrSitesX, NbrSitesY, NbrSitesZ);
+			  RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x, y, z, 2, NbrSitesX, NbrSitesY, NbrSitesZ);
 			}
 		    }
 		}
@@ -438,7 +484,7 @@ int main(int argc, char** argv)
 		}
 	    }
 	  
-	  ULONGLONG RegionBMask = ((((ULONGLONG) 0x1ul) << (2 * TotalNbrSites)) - ((ULONGLONG) 0x1ul)) & (~RegionAMask);
+	  ULONGLONG RegionBMask = ((((ULONGLONG) 0x1ul) << (TotalNbrSpins)) - ((ULONGLONG) 0x1ul)) & (~RegionAMask);
 	  
 	  ULONGLONG* RegionAHilbertSpace = new ULONGLONG[GroundStateDimension];
 	  long RegionAHilbertSpaceDimension = 0l;
@@ -463,14 +509,14 @@ int main(int argc, char** argv)
 	  FullReducedDensityMatrixNbrEigenvalues = 0;
 	  ULONGLONG* RegionAHilbertSpaceFixedParities = new ULONGLONG[RegionAHilbertSpaceDimension];
 	  
-	  for (ULONGLONG TmpParity = ((ULONGLONG) 0x0ul); TmpParity <= ((ULONGLONG) 0x3ul); ++TmpParity)
+	  for (ULONGLONG TmpParity = ((ULONGLONG) 0x0ul); TmpParity <= ((ULONGLONG) 0x1ul); ++TmpParity)
 	    {
 	      gettimeofday (&(StartingTime), 0);
 	      long RegionAHilbertSpaceDimensionFixedParities = 0l;
 	      for  (long i = 0l; i < RegionAHilbertSpaceDimension; ++i)
 		{
 		  ULONGLONG Tmp = RegionAHilbertSpace[i];
-		  if (((GetSpin1Parity(Tmp) << 1) | GetSpin0Parity(Tmp)) == TmpParity)
+		  if (GetSpinParity(Tmp) == TmpParity)
 		    {
 		      RegionAHilbertSpaceFixedParities[RegionAHilbertSpaceDimensionFixedParities] = Tmp;
 		      ++RegionAHilbertSpaceDimensionFixedParities;
@@ -564,8 +610,19 @@ int main(int argc, char** argv)
 	    {
 	      for (int z = 0; (z < NbrSitesZ) && (TmpIndex < MaximumNumberZTerms); ++z)
 		{
-		  HamiltonianZTermMasks[TmpIndex] = BuildHamiltonianZTermMaskLongLong(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
-		  ++TmpIndex;
+		  HamiltonianZTermMasks[TmpIndex] = BuildHamiltonianZTerm1MaskLongLong(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
+		  TmpIndex++;
+		}	  
+	    }      
+	}
+      for (int x = 0; (x < NbrSitesX) && (TmpIndex < MaximumNumberZTerms); ++x)
+	{
+	  for (int y = 0; (y < NbrSitesY) && (TmpIndex < MaximumNumberZTerms); ++y)
+	    {
+	      for (int z = 0; (z < NbrSitesZ) && (TmpIndex < MaximumNumberZTerms); ++z)
+		{
+		  HamiltonianZTermMasks[TmpIndex] = BuildHamiltonianZTerm2MaskLongLong(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
+		  TmpIndex++;
 		}	  
 	    }      
 	}
@@ -582,6 +639,7 @@ int main(int argc, char** argv)
 		    {
 		      RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x, y, z, 0, NbrSitesX, NbrSitesY, NbrSitesZ);
 		      RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x, y, z, 1, NbrSitesX, NbrSitesY, NbrSitesZ);
+		      RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x, y, z, 2, NbrSitesX, NbrSitesY, NbrSitesZ);
 		    }
 		}
 	    }
@@ -610,9 +668,9 @@ int main(int argc, char** argv)
 	    }
 	}
       
-      ULONGLONG RegionBMask = ((((ULONGLONG) 0x1ul) << (2 * TotalNbrSites)) - ((ULONGLONG) 0x1ul)) & (~RegionAMask);
+      ULONGLONG RegionBMask = ((((ULONGLONG) 0x1ul) << (TotalNbrSpins)) - ((ULONGLONG) 0x1ul)) & (~RegionAMask);
 
-      long RegionAHilbertSpaceDimension = 1l << (2 * RegionANbrSites);
+      long RegionAHilbertSpaceDimension = 1l << (3 * RegionANbrSites);
       ULONGLONG* RegionAHilbertSpace = new ULONGLONG[RegionAHilbertSpaceDimension];
       RegionAHilbertSpaceDimension = 0l;
 
@@ -654,14 +712,14 @@ int main(int argc, char** argv)
       FullReducedDensityMatrixNbrEigenvalues = 0;
       ULONGLONG* RegionAHilbertSpaceFixedParities = new ULONGLONG[RegionAHilbertSpaceDimension];
 	  
-      for (ULONGLONG TmpParity = ((ULONGLONG) 0x0ul); TmpParity <= ((ULONGLONG) 0x3ul); ++TmpParity)
+      for (ULONGLONG TmpParity = ((ULONGLONG) 0x0ul); TmpParity <= ((ULONGLONG) 0x1ul); ++TmpParity)
 	{
 	  gettimeofday (&(StartingTime), 0);
 	  long RegionAHilbertSpaceDimensionFixedParities = 0l;
 	  for  (long i = 0l; i < RegionAHilbertSpaceDimension; ++i)
 	    {
 	      ULONGLONG Tmp = RegionAHilbertSpace[i];
-	      if (((GetSpin1Parity(Tmp) << 1) | GetSpin0Parity(Tmp)) == TmpParity)
+	      if (GetSpinParity(Tmp) == TmpParity)
 		{
 		  RegionAHilbertSpaceFixedParities[RegionAHilbertSpaceDimensionFixedParities] = Tmp;
 		  ++RegionAHilbertSpaceDimensionFixedParities;
@@ -803,10 +861,10 @@ int main(int argc, char** argv)
 
 inline int GetHaahCodeLinearizedIndex (int x, int y, int z, int spinIndex, int nbrSiteX, int nbrSiteY, int nbrSiteZ)
 {
-  return (spinIndex + 2 * ((z % nbrSiteZ) + nbrSiteZ * ((y % nbrSiteY) + nbrSiteY * (x % nbrSiteX))));  
+  return (spinIndex + 3 * (((z + nbrSiteZ) % nbrSiteZ) + nbrSiteZ * (((y + nbrSiteY) % nbrSiteY) + nbrSiteY * ((x + nbrSiteX) % nbrSiteX))));  
 }
 
-// build the binary mask for for a Hamiltonian Z term 
+// build the binary mask for for a Hamiltonian 1 Z term  i.e. all operators in the (x,y) plane
 // 
 // x = x coordinate of the cube lower front leftmost corner
 // y = y coordinate of the cube lower front leftmost corner
@@ -816,21 +874,37 @@ inline int GetHaahCodeLinearizedIndex (int x, int y, int z, int spinIndex, int n
 // nbrSiteZ = number of sites along the z direction for the full system
 // return value = binary mask for for a Hamiltonian Z term 
 
-unsigned long BuildHamiltonianZTermMask (int x, int y, int z, int nbrSiteX, int nbrSiteY, int nbrSiteZ)
+unsigned long BuildHamiltonianZTerm1Mask (int x, int y, int z, int nbrSiteX, int nbrSiteY, int nbrSiteZ)
+{
+  unsigned long TmpMask = 0x0ul;
+  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x,     y,     z,     0, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x    , y,     z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x - 1, y,     z,     0, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x    , y - 1, z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
+  return TmpMask;
+}
+
+// build the binary mask for for a Hamiltonian 2 Z term  i.e. all operators in the (y,z) plane
+// 
+// x = x coordinate of the cube lower front leftmost corner
+// y = y coordinate of the cube lower front leftmost corner
+// z = z coordinate of the cube lower front leftmost corner
+// nbrSiteX = number of sites along the x direction for the full system
+// nbrSiteY = number of sites along the y direction for the full system
+// nbrSiteZ = number of sites along the z direction for the full system
+// return value = binary mask for for a Hamiltonian Z term 
+
+unsigned long BuildHamiltonianZTerm2Mask (int x, int y, int z, int nbrSiteX, int nbrSiteY, int nbrSiteZ)
 {
   unsigned long TmpMask = 0x0ul;
   TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x,     y,     z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x + 1, y,     z,     0, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x + 1, y + 1, z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x,     y,     z + 1, 0, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x + 1, y,     z + 1, 0, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x + 1, y,     z + 1, 1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x,     y + 1, z + 1, 1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x + 1, y + 1, z + 1, 0, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x    , y,     z,     2, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x    , y - 1, z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x    , y    , z - 1, 2, nbrSiteX, nbrSiteY, nbrSiteZ);
   return TmpMask;
 }
 
-// build the binary mask for for a Hamiltonian Z term  (unsigned long long version)
+// build the binary mask for for a Hamiltonian type 2 Z term, i.e. all operators in the (x,y) plane (unsigned long long version)
 // 
 // x = x coordinate of the cube lower front leftmost corner
 // y = y coordinate of the cube lower front leftmost corner
@@ -840,28 +914,43 @@ unsigned long BuildHamiltonianZTermMask (int x, int y, int z, int nbrSiteX, int 
 // nbrSiteZ = number of sites along the z direction for the full system
 // return value = binary mask for for a Hamiltonian Z term 
 
-ULONGLONG BuildHamiltonianZTermMaskLongLong (int x, int y, int z, int nbrSiteX, int nbrSiteY, int nbrSiteZ)
+ULONGLONG BuildHamiltonianZTerm1MaskLongLong (int x, int y, int z, int nbrSiteX, int nbrSiteY, int nbrSiteZ)
 {
   ULONGLONG TmpMask = ((ULONGLONG) 0x0ul);
-  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x,     y,     z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x + 1, y,     z,     0, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x + 1, y + 1, z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x,     y,     z + 1, 0, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x + 1, y,     z + 1, 0, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x + 1, y,     z + 1, 1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x,     y + 1, z + 1, 1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x + 1, y + 1, z + 1, 0, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x,     y,     z,     0, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x    , y,     z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x - 1, y,     z,     0, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x    , y - 1, z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
   return TmpMask;
 }
 
-// get the parity of spin 0 for a given configuration
+// build the binary mask for for a Hamiltonian type 2 Z term, i.e. all operators in the (y,z) plane (unsigned long long version)
+// 
+// x = x coordinate of the cube lower front leftmost corner
+// y = y coordinate of the cube lower front leftmost corner
+// z = z coordinate of the cube lower front leftmost corner
+// nbrSiteX = number of sites along the x direction for the full system
+// nbrSiteY = number of sites along the y direction for the full system
+// nbrSiteZ = number of sites along the z direction for the full system
+// return value = binary mask for for a Hamiltonian Z term 
+
+ULONGLONG BuildHamiltonianZTerm2MaskLongLong (int x, int y, int z, int nbrSiteX, int nbrSiteY, int nbrSiteZ)
+{
+  ULONGLONG TmpMask = ((ULONGLONG) 0x0ul);
+  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x,     y,     z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x    , y,     z,     2, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x    , y - 1, z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x    , y    , z - 1, 2, nbrSiteX, nbrSiteY, nbrSiteZ);
+  return TmpMask;
+}
+
+// get the spin parity for a given configuration
 //
 // state = binary encoded configuration
 // return value = parity (either 0 or 1)
 
-inline unsigned long GetSpin0Parity(unsigned long state)
+inline unsigned long GetSpinParity(unsigned long state)
 {
-  state &= 0x5555555555555555ul;
   state ^= state >> 32;
   state ^= state >> 16;
   state ^= state >> 8;
@@ -871,33 +960,14 @@ inline unsigned long GetSpin0Parity(unsigned long state)
   return (state &0x1ul);
 }
 
-// get the parity of spin 1 for a given configuration
+// get the spin parity for a given configuration
 //
 // state = binary encoded configuration
 // return value = parity (either 0 or 1)
 
-inline unsigned long GetSpin1Parity(unsigned long state)
+inline ULONGLONG GetSpinParity(ULONGLONG state)
 {
-  state &= 0xaaaaaaaaaaaaaaaaul;
-  state ^= state >> 32;
-  state ^= state >> 16;
-  state ^= state >> 8;
-  state ^= state >> 4;
-  state ^= state >> 2;
-  state ^= state >> 1;
-  return (state &0x1ul);
-}
-
-
-// get the parity of spin 0 for a given configuration
-//
-// state = binary encoded configuration
-// return value = parity (either 0 or 1)
-
-inline ULONGLONG GetSpin0Parity(ULONGLONG state)
-{
-  state &= (((ULONGLONG) 0x5555555555555555ul) << 32) | ((ULONGLONG) 0x5555555555555555ul);
-  state ^= state >> 64;
+ state ^= state >> 64;
   state ^= state >> 32;
   state ^= state >> 16;
   state ^= state >> 8;
@@ -907,21 +977,4 @@ inline ULONGLONG GetSpin0Parity(ULONGLONG state)
   return (state & ((ULONGLONG) 0x1ul));
 }
 
-// get the parity of spin 1 for a given configuration
-//
-// state = binary encoded configuration
-// return value = parity (either 0 or 1)
-
-inline ULONGLONG GetSpin1Parity(ULONGLONG state)
-{
-  state &= (((ULONGLONG) 0xaaaaaaaaaaaaaaaaul) << 32) | ((ULONGLONG) 0xaaaaaaaaaaaaaaaaul);
-  state ^= state >> 64;
-  state ^= state >> 32;
-  state ^= state >> 16;
-  state ^= state >> 8;
-  state ^= state >> 4;
-  state ^= state >> 2;
-  state ^= state >> 1;
-  return (state & ((ULONGLONG) 0x1ul));
-}
 
