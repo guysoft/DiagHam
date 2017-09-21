@@ -324,6 +324,7 @@ void ParticleOnTorusThreeBodyHardcoreHamiltonian::EvaluateInteractionFactors()
 			}
 		    }
 
+                 cout << TmpMIndices2[0]<<" "<<TmpMIndices2[1]<<" "<<TmpMIndices2[2]<<" "<<TmpNIndices2[0]<<" "<<TmpNIndices2[1]<<" "<<TmpNIndices2[2] << " "<<TmpInteraction2 <<endl; 
 		  //		  TmpInteraction2 *= TmpSymmetryFactors[i];// * TmpSymmetryFactors[j];
 		  
 		  for (int l = 0; l < 3; ++l)

@@ -5,6 +5,7 @@
 
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/FilenameTools.h"
+#include "Operator/ParticleOnSphereWithSpinDensityOperator.h"
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
@@ -52,6 +53,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particule (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the inital momentum projection for the system (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "max lz value a fermions in the LLL can have (override autodetection from input file name if non zero)", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "get-weight", "calculate the weight of the state in N=0 and N=1 LL");
   (*SystemGroup) += new BooleanOption  ('u', "unnormalized", "leave the vector unormalized at the end");
   (*SystemGroup) += new SingleStringOption  ('\n', "statistics", "particle statistics (bosons or fermions, try to guess it from file name if not defined)");
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the result of the projection into a binary file");
@@ -133,6 +135,27 @@ int main(int argc, char** argv)
       FermionOnSphere * FinalSpace=new FermionOnSphere(NbrParticles,TotalLz,LzMaxDown);
       
       RealVector OutputVector(FinalSpace->GetHilbertSpaceDimension(),true);
+
+
+      if (Manager.GetBoolean("get-weight") == true)
+       {
+         Complex N0 (0.0, 0.0), N1 (0.0, 0.0); 
+         cout<<"Fermion weights: ";
+
+	 int Dim = ((FermionOnSphereTwoLandauLevels*) Space)->GetHilbertSpaceDimension();
+         cout << "Dim= "<<Dim<<endl;
+	 for (int i = 0; i < Dim; i++)
+          {
+            int LLOccupation [2] = {0, 0};
+            ((FermionOnSphereTwoLandauLevels*) Space)->LandauLevelOccupationNumber(i, LLOccupation);
+            N0 += pow(GroundState[i], 2.0) * LLOccupation[0];  
+            N1 += pow(GroundState[i], 2.0) * LLOccupation[1];  
+          } 
+
+        cout<<"<N0>= "<<N0.Re<<" <N1>= "<<N1.Re<<" <N0>+<N1>= "<<N0.Re+N1.Re<<endl;
+        return 0;
+       }
+
       
       ((FermionOnSphereTwoLandauLevels*) Space)->ProjectionInTheLowestLevel(GroundState,OutputVector,FinalSpace);
       
@@ -153,13 +176,13 @@ int main(int argc, char** argv)
 	}
       File.close();
     }
-  else 
+  else //bosons...
     {
       int LzMaxUp = LzMax + (2 * LandauLevelIndexDifference);
       
       int LzMaxDown = LzMax;
       
-      
+      cout << "LzMaxUp= " << LzMaxUp << " LzMaxDown= " << LzMaxDown << endl;   
       ParticleOnSphereWithSpin* Space = new BosonOnSphereTwoLandauLevels(NbrParticles, TotalLz, LzMaxUp, LzMaxDown);
       
       if (Space->GetHilbertSpaceDimension() != GroundState.GetVectorDimension())
@@ -176,6 +199,25 @@ int main(int argc, char** argv)
 	    }*/
       
       BosonOnSphereShort * FinalSpace=new BosonOnSphereShort(NbrParticles,TotalLz,LzMaxDown);
+
+     if (Manager.GetBoolean("get-weight") == true)
+       {
+         Complex N0 (0.0, 0.0), N1 (0.0, 0.0); 
+         cout<<"Boson weights: ";
+
+	 int Dim = ((BosonOnSphereTwoLandauLevels*) Space)->GetHilbertSpaceDimension();
+         cout << "Dim= "<<Dim<<endl;
+	 for (int i = 0; i < Dim; i++)
+          {
+            int LLOccupation [2] = {0, 0};
+            ((BosonOnSphereTwoLandauLevels*) Space)->LandauLevelOccupationNumber(i, LLOccupation);
+            N0 += pow(GroundState[i], 2.0) * LLOccupation[0];  
+            N1 += pow(GroundState[i], 2.0) * LLOccupation[1];  
+          }
+
+        cout<<"<N0>= "<<N0.Re<<" <N1>= "<<N1.Re<<" <N0>+<N1>= "<<N0.Re+N1.Re<<endl;
+        return 0;
+       }
       
       RealVector OutputVector(FinalSpace->GetHilbertSpaceDimension(),true);
       
