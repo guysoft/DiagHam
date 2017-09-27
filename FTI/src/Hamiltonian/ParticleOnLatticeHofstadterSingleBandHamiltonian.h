@@ -60,6 +60,8 @@ class ParticleOnLatticeHofstadterSingleBandHamiltonian : public ParticleOnLattic
   double UPotential;
   // second nearest neighbor density-density potential strength
   double VPotential;
+  // added one-body potential
+  double** OneBodyPotential;
 
   // index of the band to be filled
   int BandIndex;
@@ -86,6 +88,21 @@ class ParticleOnLatticeHofstadterSingleBandHamiltonian : public ParticleOnLattic
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   ParticleOnLatticeHofstadterSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellsX, int nbrCellsY, int bandIndex, double uPotential, double vPotential,  Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  
+  // constructor with added potential
+  //
+  // particles = Hilbert space associated to the system
+  // nbrParticles = number of particles
+  // nbrCellsX = number of sites in the x direction
+  // nbrCellsY = number of sites in the y direction
+  // bandIndex = index of band to consider
+  // uPotential = strength of the repulsive two body neareast neighbor interaction
+  // vPotential = strength of the repulsive two body second nearest neighbor interactio
+  // tightBindingModel = pointer to the tight binding model
+  // oneBodyPotential = additional potential
+  // architecture = architecture to use for precalculation
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  ParticleOnLatticeHofstadterSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellsX, int nbrCellsY, int bandIndex, double uPotential, double vPotential,  Abstract2DTightBindingModel* tightBindingModel, double** oneBodyPotential, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //

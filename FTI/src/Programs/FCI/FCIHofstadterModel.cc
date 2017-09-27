@@ -116,6 +116,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive onsite(boson) or NN (fermion) potential strength", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive NN(boson) or NNN (fermion) potential strength", 0.0);
   
+  (*SystemGroup) += new SingleDoubleOption  ('e', "periodic-potential", "strength of an additional periodic potential", 0.0);
+  
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "tunnelling along a selected direction (t=1 along others)", 1.0);
   
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
@@ -173,6 +175,8 @@ int main(int argc, char** argv)
   int UnitCellY = Manager.GetInteger("unit-celly");
   
   int FluxPerCell = Manager.GetInteger("flux-per-cell");
+  
+  double PeriodicPotentialStrength = Manager.GetDouble("periodic-potential");
   
   int MinBand = Manager.GetInteger("band-min");
   int MaxBand = Manager.GetInteger("band-max");
@@ -336,10 +340,12 @@ int main(int argc, char** argv)
     }
   else
     {
-      if (((Manager.GetBoolean("flat-band") == false)&&(Manager.GetBoolean("hardcore") == false ))||(Manager.GetDouble("v-potential")!=0.0))
+      if (((Manager.GetBoolean("flat-band") == false)&&(Manager.GetBoolean("hardcore") == false ))||(Manager.GetDouble("v-potential")!=0.0)||(PeriodicPotentialStrength != 0.0))
 	lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_u_%g",Manager.GetDouble("u-potential"));
       if (Manager.GetDouble("v-potential")!=0.0)
 	lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_v_%g",Manager.GetDouble("v-potential"));
+      if (PeriodicPotentialStrength!=0.0)
+	lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_epsilon_%g",PeriodicPotentialStrength);
       
       lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_gx_%g_gy_%g", Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
       if (EmbeddingFlag)
@@ -550,7 +556,26 @@ int main(int argc, char** argv)
 			      Hamiltonian = new ParticleOnLatticeHofstadterSingleBandGenericHamiltonian(Space, NbrParticles, NbrCellX, NbrCellY, MaxBand, CoulombInteraction, TightBindingModel, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 			    }
 			  else
-			    Hamiltonian = new ParticleOnLatticeHofstadterSingleBandHamiltonian(Space, NbrParticles, NbrCellX, NbrCellY, MaxBand, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), TightBindingModel, Manager.GetBoolean("flat-band"),Architecture.GetArchitecture(), Memory);
+			  {
+			    if (PeriodicPotentialStrength == 0)
+			      Hamiltonian = new ParticleOnLatticeHofstadterSingleBandHamiltonian(Space, NbrParticles, NbrCellX, NbrCellY, MaxBand, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), TightBindingModel, Manager.GetBoolean("flat-band"),Architecture.GetArchitecture(), Memory);
+			    else
+			    {
+			      double** PeriodicOneBodyPotential = new double* [NbrCellX];
+			      double KxFactor = 2.0 * M_PI / ((double) (NbrCellX));
+			      double KyFactor = 2.0 * M_PI / ((double) (NbrCellY));
+			      for (int kx = 0; kx < NbrCellX; ++kx)
+			      {
+				PeriodicOneBodyPotential[kx] = new double[NbrCellY];
+				for (int ky = 0; ky < NbrCellY; ++ky)
+				  PeriodicOneBodyPotential[kx][ky] = - PeriodicPotentialStrength * (cos((double) kx * KxFactor) + cos((double) ky * KyFactor));
+			      }
+			      Hamiltonian = new ParticleOnLatticeHofstadterSingleBandHamiltonian(Space, NbrParticles, NbrCellX, NbrCellY, MaxBand, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), TightBindingModel, PeriodicOneBodyPotential, Manager.GetBoolean("flat-band"),Architecture.GetArchitecture(), Memory);
+			      for (int kx = 0; kx < NbrCellX; ++kx)
+				delete[] PeriodicOneBodyPotential[kx];
+			      delete[] PeriodicOneBodyPotential;
+			    }      
+			  }
 			}
 		      else
 			{

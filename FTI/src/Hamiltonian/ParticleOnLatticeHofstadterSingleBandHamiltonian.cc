@@ -86,6 +86,56 @@ ParticleOnLatticeHofstadterSingleBandHamiltonian::ParticleOnLatticeHofstadterSin
   this->FlatBand = flatBandFlag;
   this->UPotential = uPotential;
   this->VPotential = vPotential;
+  this->OneBodyPotential = 0;
+  this->BandIndex = bandIndex;
+  this->Architecture = architecture;
+  this->Memory = memory;
+  this->OneBodyInteractionFactors = 0;
+  this->FastMultiplicationFlag = false;
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
+  this->EvaluateInteractionFactors();
+  if (memory > 0)
+    {
+      long TmpMemory = this->FastMultiplicationMemory(memory);
+      cout << "fast = ";
+      PrintMemorySize(cout, TmpMemory)<< endl;
+      this->EnableFastMultiplication();
+    }
+}
+
+
+// constructor
+//
+// particles = Hilbert space associated to the system
+// nbrParticles = number of particles
+// nbrCellX = number of sites in the x direction
+// nbrCellY = number of sites in the y direction
+// bandIndex = index of band to consider
+// uPotential = strength of the repulsive two body neareast neighbor interaction
+// vPotential = strength of the repulsive two body second nearest neighbor interaction
+// flatBandFlag = use flat band model
+// architecture = architecture to use for precalculation
+// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+
+ParticleOnLatticeHofstadterSingleBandHamiltonian::ParticleOnLatticeHofstadterSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, int nbrCellY, int bandIndex, double uPotential, double vPotential,  Abstract2DTightBindingModel* tightBindingModel, double** oneBodyPotential,  bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+{
+  this->Particles = particles;
+  this->NbrParticles = nbrParticles;
+  this->NbrSiteX = nbrCellX;
+  this->NbrSiteY = nbrCellY;
+  this->LzMax = nbrCellX * nbrCellY - 1;
+  this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
+  this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
+  
+  this->HamiltonianShift = 0.0;
+  this->TightBindingModel = tightBindingModel;
+  this->FlatBand = flatBandFlag;
+  this->UPotential = uPotential;
+  this->VPotential = vPotential;
+  this->OneBodyPotential = oneBodyPotential;
   this->BandIndex = bandIndex;
   this->Architecture = architecture;
   this->Memory = memory;
@@ -120,7 +170,7 @@ void ParticleOnLatticeHofstadterSingleBandHamiltonian::EvaluateInteractionFactor
   long TotalNbrInteractionFactors = 0;
   int NbrSublattices = TightBindingModel->GetNbrBands();
   ComplexMatrix* OneBodyBasis = new ComplexMatrix[this->TightBindingModel->GetNbrStatePerBand()];
-  if (this->FlatBand == false)
+  if ((this->FlatBand == false) || (this->OneBodyPotential != 0))
     {
       this->OneBodyInteractionFactors = new double [this->TightBindingModel->GetNbrStatePerBand()];
     }
@@ -130,6 +180,8 @@ void ParticleOnLatticeHofstadterSingleBandHamiltonian::EvaluateInteractionFactor
 	int Index = this->TightBindingModel->GetLinearizedMomentumIndex(kx, ky);
 	if (this->FlatBand == false)
 	  this->OneBodyInteractionFactors[Index] = this->TightBindingModel->GetEnergy(BandIndex, Index);
+	if (this->OneBodyPotential != 0)
+	  this->OneBodyInteractionFactors[Index] = this->OneBodyPotential[kx][ky] / ((double) (this->NbrSiteX * this->NbrSiteY));
 	OneBodyBasis[Index] =  this->TightBindingModel->GetOneBodyMatrix(Index);
       }
 
@@ -140,11 +192,11 @@ void ParticleOnLatticeHofstadterSingleBandHamiltonian::EvaluateInteractionFactor
       }
 
   double FactorU = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
-  if (this->FlatBand == false)
+  if ((this->FlatBand == false) || (this->OneBodyPotential != 0))
     FactorU *= this->UPotential;
   double FactorV = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
 
-  if (FactorU==0.0 && FactorV==0.0)
+  if (FactorU==0.0 && FactorV==0.0 && (this->OneBodyPotential == 0))
     {
       std::cerr << "Error: HofstadterHamiltonian created with interaction zero - set non-zero --u-potential or --v-potential"<<std::endl;
       exit(1);

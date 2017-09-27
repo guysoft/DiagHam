@@ -102,6 +102,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "omega", "frequency of drive", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "e-field", "amplitude of the driving field", 1.0);
   
+  (*SystemGroup) += new BooleanOption  ('\n', "compute-FGR", "compute the absorption rate from Fermi's Golden rule");
+  (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-chernnumber", "compute the Chern number of the fully filled band (only available in singleparticle-spectrum mode)");
+  
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-periods", "number of periods to do the time-evolution with", 10);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-samples", "number of points to evaluate per period", 10);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "save-period", "save time-evolved state every n periods, save only final step if negative, save nothing if 0", 0);
@@ -231,7 +234,11 @@ int main(int argc, char** argv)
   Abstract2DTightBindingModel *TightBindingModel;
   
   TightBindingModel = new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, GammaX, GammaY, Architecture.GetArchitecture(), true, false);
-  
+  if (Manager.GetBoolean("singleparticle-chernnumber") == true)
+  {
+      cout << "Chern number = " << TightBindingModel->ComputeChernNumber(0) << endl;
+      return 0;
+  }
   
   ParticleOnSphere* Space = 0;  
   int NbrSites = TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand();
