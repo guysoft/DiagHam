@@ -106,6 +106,9 @@ int main(int argc, char** argv)
   // double* OneBodyPotentials = 0;
   double* FourBodyPotentials = 0;
   int TmpNbrFourBodyPseudoPotentials = 0;
+  double* ThreeBodyPotentials = 0;
+  int TmpNbrThreeBodyPseudoPotentials = 0;
+
   if (((SingleStringOption*) Manager["interaction-file"])->GetString() == 0)
     {
       cout << "an interaction file has to be provided" << endl;
@@ -133,6 +136,7 @@ int main(int argc, char** argv)
 	      return -1;	  
 	    }
 	}
+      InteractionDefinition.GetAsDoubleArray("ThreebodyPseudopotentials", ' ', ThreeBodyPotentials, TmpNbrThreeBodyPseudoPotentials);
     }
 
   char* OutputNameLz = new char [256 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
@@ -181,11 +185,20 @@ int main(int argc, char** argv)
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
       if (PseudoPotentials == 0)
-	Hamiltonian = new ParticleOnSphereGenericFourBodyHamiltonian(Space, NbrParticles, LzMax, FourBodyPotentials, TmpNbrFourBodyPseudoPotentials - 1,
+        {
+          if (ThreeBodyPotentials == 0) 
+	     Hamiltonian = new ParticleOnSphereGenericFourBodyHamiltonian(Space, NbrParticles, LzMax, FourBodyPotentials, TmpNbrFourBodyPseudoPotentials - 1,
 								      ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
 								      Architecture.GetArchitecture(), 
 								      Memory, DiskCacheFlag,
 								      LoadPrecalculationFileName);
+         else
+	     Hamiltonian = new ParticleOnSphereGenericFourBodyHamiltonian(Space, NbrParticles, LzMax, FourBodyPotentials, TmpNbrFourBodyPseudoPotentials - 1, ThreeBodyPotentials, TmpNbrThreeBodyPseudoPotentials - 1,
+								      ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
+								      Architecture.GetArchitecture(), 
+								      Memory, DiskCacheFlag,
+								      LoadPrecalculationFileName);
+       }
       else
 	Hamiltonian = new ParticleOnSphereGenericFourBodyHamiltonian(Space, NbrParticles, LzMax, FourBodyPotentials, TmpNbrFourBodyPseudoPotentials - 1,
 								      ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), PseudoPotentials,
