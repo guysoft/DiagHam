@@ -27,61 +27,33 @@ using std::dec;
 using std::ofstream;
 
 
-// build the binary mask for for a Hamiltonian type 1 Z term  i.e. all operators in the (x,y) plane
+// build the binary mask for for a Hamiltonian Z term
 // 
 // x = x coordinate of the cube lower front leftmost corner
 // y = y coordinate of the cube lower front leftmost corner
-// z = z coordinate of the cube lower front leftmost corner
 // nbrSiteX = number of sites along the x direction for the full system
 // nbrSiteY = number of sites along the y direction for the full system
-// nbrSiteZ = number of sites along the z direction for the full system
 // return value = binary mask for for a Hamiltonian Z term 
-unsigned long BuildHamiltonianZTerm1Mask (int x, int y, int z, int nbrSiteX, int nbrSiteY, int nbrSiteZ);
+unsigned long BuildHamiltonianZTermMask (int x, int y, int nbrSiteX, int nbrSiteY);
 
-// build the binary mask for for a Hamiltonian type 2 Z term  i.e. all operators in the (y,z) plane
+// build the binary mask for for a Hamiltonian Z term (unsigned long long version)
 // 
 // x = x coordinate of the cube lower front leftmost corner
 // y = y coordinate of the cube lower front leftmost corner
-// z = z coordinate of the cube lower front leftmost corner
 // nbrSiteX = number of sites along the x direction for the full system
 // nbrSiteY = number of sites along the y direction for the full system
-// nbrSiteZ = number of sites along the z direction for the full system
 // return value = binary mask for for a Hamiltonian Z term 
-unsigned long BuildHamiltonianZTerm2Mask (int x, int y, int z, int nbrSiteX, int nbrSiteY, int nbrSiteZ);
-
-// build the binary mask for for a Hamiltonian type 1 Z term, i.e. all operators in the (x,y) plane  (unsigned long long version)
-// 
-// x = x coordinate of the cube lower front leftmost corner
-// y = y coordinate of the cube lower front leftmost corner
-// z = z coordinate of the cube lower front leftmost corner
-// nbrSiteX = number of sites along the x direction for the full system
-// nbrSiteY = number of sites along the y direction for the full system
-// nbrSiteZ = number of sites along the z direction for the full system
-// return value = binary mask for for a Hamiltonian Z term 
-ULONGLONG BuildHamiltonianZTerm1MaskLongLong (int x, int y, int z, int nbrSiteX, int nbrSiteY, int nbrSiteZ);
-
-// build the binary mask for for a Hamiltonian type 2 Z term, i.e. all operators in the (y,z) plane  (unsigned long long version)
-// 
-// x = x coordinate of the cube lower front leftmost corner
-// y = y coordinate of the cube lower front leftmost corner
-// z = z coordinate of the cube lower front leftmost corner
-// nbrSiteX = number of sites along the x direction for the full system
-// nbrSiteY = number of sites along the y direction for the full system
-// nbrSiteZ = number of sites along the z direction for the full system
-// return value = binary mask for for a Hamiltonian Z term 
-ULONGLONG BuildHamiltonianZTerm2MaskLongLong (int x, int y, int z, int nbrSiteX, int nbrSiteY, int nbrSiteZ);
+ULONGLONG BuildHamiltonianZTermMaskLongLong (int x, int y, int nbrSiteX, int nbrSiteY);
 
 // build the linearized index from the spin coordinates
 //
 // x = x coordinate of the cube lower front leftmost corner
 // y = y coordinate of the cube lower front leftmost corner
-// z = z coordinate of the cube lower front leftmost corner
 // spinIndex = index of the spin we want to address (either 0 or 1)
 // nbrSiteX = number of sites along the x direction for the full system
 // nbrSiteY = number of sites along the y direction for the full system
-// nbrSiteZ = number of sites along the z direction for the full system
 // return value = linearized index
-int GetHaahCodeLinearizedIndex (int x, int y, int z, int spinIndex, int nbrSiteX, int nbrSiteY, int nbrSiteZ);
+int Get2DToricCodeLinearizedIndex (int x, int y, int spinIndex, int nbrSiteX, int nbrSiteYZ);
 
 // get the spin parity for a given configuration
 //
@@ -102,7 +74,7 @@ int main(int argc, char** argv)
   cout.precision(14); 
 
   // some running options and help
-  OptionManager Manager ("XCubeEntanglementEntropy" , "0.01");
+  OptionManager Manager ("2DToricCodeEntanglementEntropy" , "0.01");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
@@ -118,10 +90,8 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sitex", "number of sites along the x direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
-  (*SystemGroup) += new SingleIntegerOption  ('z', "nbr-sitez", "number of sites along the z direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbra-sitex", "number of sites along the x direction for the region A", 2);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbra-sitey", "number of sites along the y direction for the region A", 2);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbra-sitez", "number of sites along the z direction for the region A", 2);
   (*SystemGroup) += new SingleStringOption  ('\n', "kept-sites", "column-based text file that list sites/spins that have to be kept");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "gs-parity", "select the ground state parity sector", 0);
   (*SystemGroup) += new  BooleanOption ('\n', "low-memory", "use a slower but less memory demanding algorithm", 0);
@@ -135,7 +105,7 @@ int main(int argc, char** argv)
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type XCubeEntanglementEntropy -h" << endl;
+      cout << "see man page for option syntax or type 2DToricCodeEntanglementEntropy -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -146,17 +116,15 @@ int main(int argc, char** argv)
 
   int NbrSitesX = Manager.GetInteger("nbr-sitex");
   int NbrSitesY = Manager.GetInteger("nbr-sitey");
-  int NbrSitesZ = Manager.GetInteger("nbr-sitez");
   int NbrSitesXA = Manager.GetInteger("nbra-sitex");
   int NbrSitesYA = Manager.GetInteger("nbra-sitey");
-  int NbrSitesZA = Manager.GetInteger("nbra-sitez");
 
-  int TotalNbrSites = NbrSitesX * NbrSitesY * NbrSitesZ;
-  int TotalNbrSpins = 3 * TotalNbrSites;
+  int TotalNbrSites = NbrSitesX * NbrSitesY;
+  int TotalNbrSpins = 2 * TotalNbrSites;
   double* FullReducedDensityMatrixEigenvalues;
   long FullReducedDensityMatrixNbrEigenvalues;
 
-  int MaximumNumberZTerms = (NbrSitesZ * (NbrSitesX * NbrSitesY - 1)) + (NbrSitesX * (NbrSitesY * NbrSitesZ - 1));
+  int MaximumNumberZTerms = (NbrSitesX * NbrSitesY - 1);
 
   long GroundStateDimension = 1l << MaximumNumberZTerms;
   timeval StartingTime;
@@ -173,40 +141,21 @@ int main(int argc, char** argv)
 	  GroundState[0l] = (unsigned long) Manager.GetInteger("gs-parity");
 	  GroundStateDimension = 1l;
 	  
-	  for (int z = 0; (z < NbrSitesZ) && (MaximumNumberZTerms > 0); ++z)
+	  int TmpMaximumNumberZTerms = NbrSitesX * NbrSitesY - 1;
+	  for (int x = 0; (x < NbrSitesX) && (TmpMaximumNumberZTerms > 0); ++x)
 	    {
-	      int TmpMaximumNumberZTerms = NbrSitesX * NbrSitesY - 1;
-	      for (int x = 0; (x < NbrSitesX) && (TmpMaximumNumberZTerms > 0); ++x)
-		{
-		  for (int y = 0; (y < NbrSitesY) && (TmpMaximumNumberZTerms > 0); ++y)
-		    {
-		      unsigned long TmpMask = BuildHamiltonianZTerm1Mask(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
-		      for (long i = 0l; i < GroundStateDimension; ++i)
-			{
-			  GroundState[i + GroundStateDimension] = GroundState[i] ^ TmpMask;
-			}
-		      GroundStateDimension *= 2l;
-		      --TmpMaximumNumberZTerms;
-		    }	  
-		}      
-	    }
-	  for (int x = 0; x < NbrSitesX; ++x)
-	    {
-	      int TmpMaximumNumberZTerms = NbrSitesY * NbrSitesZ - 1;
 	      for (int y = 0; (y < NbrSitesY) && (TmpMaximumNumberZTerms > 0); ++y)
 		{
-		  for (int z = 0; (z < NbrSitesZ) && (TmpMaximumNumberZTerms > 0); ++z)
+		  unsigned long TmpMask = BuildHamiltonianZTermMask(x, y, NbrSitesX, NbrSitesY);
+		  for (long i = 0l; i < GroundStateDimension; ++i)
 		    {
-		      unsigned long TmpMask = BuildHamiltonianZTerm2Mask(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
-		      for (long i = 0l; i < GroundStateDimension; ++i)
-			{
-			  GroundState[i + GroundStateDimension] = GroundState[i] ^ TmpMask;
-			}
-		      GroundStateDimension *= 2l;
-		      --TmpMaximumNumberZTerms;
-		    }	  
+		      GroundState[i + GroundStateDimension] = GroundState[i] ^ TmpMask;
+		    }
+		  GroundStateDimension *= 2l;
+		  --TmpMaximumNumberZTerms;
 		}      
 	    }
+
 	  gettimeofday (&(EndingTime), 0);
 	  double DeltaTime  = ((double) (EndingTime.tv_sec - StartingTime.tv_sec) + 
 			       ((EndingTime.tv_usec - StartingTime.tv_usec) / 1000000.0));
@@ -222,7 +171,7 @@ int main(int argc, char** argv)
 	  double GroundStateSqrNormalizationCoefficient = 1.0 / ((double) GroundStateDimension);
 	  
 	  gettimeofday (&(StartingTime), 0);
-	  int RegionANbrSites = NbrSitesXA * NbrSitesYA * NbrSitesZA;
+	  int RegionANbrSites = NbrSitesXA * NbrSitesYA;
 	  unsigned long RegionAMask = 0x0ul;  
 	  
 	  if (Manager.GetString("kept-sites") == 0)
@@ -231,12 +180,8 @@ int main(int argc, char** argv)
 		{
 		  for (int y = 0; y < NbrSitesYA; ++y)
 		    {
-		      for (int z = 0; z < NbrSitesZA; ++z)
-			{
-			  RegionAMask |= 0x1ul << GetHaahCodeLinearizedIndex(x, y, z, 0, NbrSitesX, NbrSitesY, NbrSitesZ);
-			  RegionAMask |= 0x1ul << GetHaahCodeLinearizedIndex(x, y, z, 1, NbrSitesX, NbrSitesY, NbrSitesZ);
-			  RegionAMask |= 0x1ul << GetHaahCodeLinearizedIndex(x, y, z, 2, NbrSitesX, NbrSitesY, NbrSitesZ);
-			}
+		      RegionAMask |= 0x1ul << Get2DToricCodeLinearizedIndex(x, y, 0, NbrSitesX, NbrSitesY);
+		      RegionAMask |= 0x1ul << Get2DToricCodeLinearizedIndex(x, y, 1, NbrSitesX, NbrSitesY);
 		    }
 		}
 	    }
@@ -256,11 +201,10 @@ int main(int argc, char** argv)
 	      RegionANbrSites = KeptOrbitalFile.GetNbrLines();
 	      int* TmpKeptSpinX = KeptOrbitalFile.GetAsIntegerArray(0);
 	      int* TmpKeptSpinY = KeptOrbitalFile.GetAsIntegerArray(1);
-	      int* TmpKeptSpinZ = KeptOrbitalFile.GetAsIntegerArray(2);
-	      int* TmpKeptSpinIndex = KeptOrbitalFile.GetAsIntegerArray(3);
+	      int* TmpKeptSpinIndex = KeptOrbitalFile.GetAsIntegerArray(2);
 	      for (int i = 0; i < RegionANbrSites; ++i)
 		{
-		  RegionAMask |= 0x1ul << GetHaahCodeLinearizedIndex(TmpKeptSpinX[i], TmpKeptSpinY[i], TmpKeptSpinZ[i], TmpKeptSpinIndex[i], NbrSitesX, NbrSitesY, NbrSitesZ);	      
+		  RegionAMask |= 0x1ul << Get2DToricCodeLinearizedIndex(TmpKeptSpinX[i], TmpKeptSpinY[i], TmpKeptSpinIndex[i], NbrSitesX, NbrSitesY);	      
 		}
 	    }
 	  
@@ -382,38 +326,18 @@ int main(int argc, char** argv)
 	  GroundState[0l] = ((ULONGLONG) Manager.GetInteger("gs-parity"));
 	  GroundStateDimension = 1l;
 	  
-	  for (int z = 0; (z < NbrSitesZ) && (MaximumNumberZTerms > 0); ++z)
+	  int TmpMaximumNumberZTerms = NbrSitesX * NbrSitesY - 1;
+	  for (int x = 0; (x < NbrSitesX) && (TmpMaximumNumberZTerms > 0); ++x)
 	    {
-	      int TmpMaximumNumberZTerms = NbrSitesX * NbrSitesY - 1;
-	      for (int x = 0; (x < NbrSitesX) && (TmpMaximumNumberZTerms > 0); ++x)
-		{
-		  for (int y = 0; (y < NbrSitesY) && (TmpMaximumNumberZTerms > 0); ++y)
-		    {
-		      ULONGLONG TmpMask = BuildHamiltonianZTerm1MaskLongLong(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
-		      for (long i = 0l; i < GroundStateDimension; ++i)
-			{
-			  GroundState[i + GroundStateDimension] = GroundState[i] ^ TmpMask;
-			}
-		      GroundStateDimension *= 2l;
-		      --TmpMaximumNumberZTerms;
-		    }	  
-		}      
-	    }
-	  for (int x = 0; x < NbrSitesX; ++x)
-	    {
-	      int TmpMaximumNumberZTerms = NbrSitesY * NbrSitesZ - 1;
 	      for (int y = 0; (y < NbrSitesY) && (TmpMaximumNumberZTerms > 0); ++y)
 		{
-		  for (int z = 0; (z < NbrSitesZ) && (TmpMaximumNumberZTerms > 0); ++z)
+		  ULONGLONG TmpMask = BuildHamiltonianZTermMaskLongLong(x, y, NbrSitesX, NbrSitesY);
+		  for (long i = 0l; i < GroundStateDimension; ++i)
 		    {
-		      ULONGLONG TmpMask = BuildHamiltonianZTerm2MaskLongLong(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
-		      for (long i = 0l; i < GroundStateDimension; ++i)
-			{
-			  GroundState[i + GroundStateDimension] = GroundState[i] ^ TmpMask;
-			}
-		      GroundStateDimension *= 2l;
-		      --TmpMaximumNumberZTerms;
-		    }	  
+		      GroundState[i + GroundStateDimension] = GroundState[i] ^ TmpMask;
+		    }
+		  GroundStateDimension *= 2l;
+		  --TmpMaximumNumberZTerms;
 		}      
 	    }
 	  gettimeofday (&(EndingTime), 0);
@@ -431,7 +355,7 @@ int main(int argc, char** argv)
 	  double GroundStateSqrNormalizationCoefficient = 1.0 / ((double) GroundStateDimension);
 	  
 	  gettimeofday (&(StartingTime), 0);
-	  int RegionANbrSites = NbrSitesXA * NbrSitesYA * NbrSitesZA;
+	  int RegionANbrSites = NbrSitesXA * NbrSitesYA;
 	  ULONGLONG RegionAMask = ((ULONGLONG) 0x0ul);  
 	  if (Manager.GetString("kept-sites") == 0)
 	    {	  
@@ -439,12 +363,8 @@ int main(int argc, char** argv)
 		{
 		  for (int y = 0; y < NbrSitesYA; ++y)
 		    {
-		      for (int z = 0; z < NbrSitesZA; ++z)
-			{
-			  RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x, y, z, 0, NbrSitesX, NbrSitesY, NbrSitesZ);
-			  RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x, y, z, 1, NbrSitesX, NbrSitesY, NbrSitesZ);
-			  RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x, y, z, 2, NbrSitesX, NbrSitesY, NbrSitesZ);
-			}
+		      RegionAMask |= ((ULONGLONG) 0x1ul) << Get2DToricCodeLinearizedIndex(x, y, 0, NbrSitesX, NbrSitesY);
+		      RegionAMask |= ((ULONGLONG) 0x1ul) << Get2DToricCodeLinearizedIndex(x, y, 1, NbrSitesX, NbrSitesY);
 		    }
 		}
 	    }
@@ -464,11 +384,10 @@ int main(int argc, char** argv)
 	      RegionANbrSites = KeptOrbitalFile.GetNbrLines();
 	      int* TmpKeptSpinX = KeptOrbitalFile.GetAsIntegerArray(0);
 	      int* TmpKeptSpinY = KeptOrbitalFile.GetAsIntegerArray(1);
-	      int* TmpKeptSpinZ = KeptOrbitalFile.GetAsIntegerArray(2);
-	      int* TmpKeptSpinIndex = KeptOrbitalFile.GetAsIntegerArray(3);
+	      int* TmpKeptSpinIndex = KeptOrbitalFile.GetAsIntegerArray(2);
 	      for (int i = 0; i < RegionANbrSites; ++i)
 		{
-		  RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(TmpKeptSpinX[i], TmpKeptSpinY[i], TmpKeptSpinZ[i], TmpKeptSpinIndex[i], NbrSitesX, NbrSitesY, NbrSitesZ);	      
+		  RegionAMask |= ((ULONGLONG) 0x1ul) << Get2DToricCodeLinearizedIndex(TmpKeptSpinX[i], TmpKeptSpinY[i], TmpKeptSpinIndex[i], NbrSitesX, NbrSitesY);	      
 		}
 	    }
 	  
@@ -594,31 +513,15 @@ int main(int argc, char** argv)
 	  
 	  unsigned long* HamiltonianZTermMasks = new unsigned long[MaximumNumberZTerms];
 	  int TmpIndex = 0;
-	  for (int z = 0; (z < NbrSitesZ) && (MaximumNumberZTerms > 0); ++z)
+	  int TmpMaximumNumberZTerms = NbrSitesX * NbrSitesY - 1;
+	  for (int x = 0; (x < NbrSitesX) && (TmpMaximumNumberZTerms > 0); ++x)
 	    {
-	      int TmpMaximumNumberZTerms = NbrSitesX * NbrSitesY - 1;
-	      for (int x = 0; (x < NbrSitesX) && (TmpMaximumNumberZTerms > 0); ++x)
-		{
-		  for (int y = 0; (y < NbrSitesY) && (TmpMaximumNumberZTerms > 0); ++y)
-		    {
-		      HamiltonianZTermMasks[TmpIndex] = BuildHamiltonianZTerm1Mask(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
-		      TmpIndex++;
-		      --TmpMaximumNumberZTerms;
-		    }	  
-		}      
-	    }
-	  for (int x = 0; x < NbrSitesX; ++x)
-	    {
-	      int TmpMaximumNumberZTerms = NbrSitesY * NbrSitesZ - 1;
 	      for (int y = 0; (y < NbrSitesY) && (TmpMaximumNumberZTerms > 0); ++y)
 		{
-		  for (int z = 0; (z < NbrSitesZ) && (TmpMaximumNumberZTerms > 0); ++z)
-		    {
-		      HamiltonianZTermMasks[TmpIndex] = BuildHamiltonianZTerm2Mask(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
-		      TmpIndex++;
-		      --TmpMaximumNumberZTerms;
-		    }	  
-		}      
+		  HamiltonianZTermMasks[TmpIndex] = BuildHamiltonianZTermMask(x, y, NbrSitesX, NbrSitesY);
+		  TmpIndex++;
+		  --TmpMaximumNumberZTerms;
+		}	  
 	    }
 	  ULONGLONG ProductZTerm = 0x0ul;
 	  for (int i = 0; i < MaximumNumberZTerms; ++i)
@@ -631,7 +534,7 @@ int main(int argc, char** argv)
 	      cout << "product of all the type 1 z term is equal to the identity" << endl;
 	    }
 	  
-	  int RegionANbrSites = NbrSitesXA * NbrSitesYA * NbrSitesZA;
+	  int RegionANbrSites = NbrSitesXA * NbrSitesYA;
 	  unsigned long RegionAMask = 0x0ul;  
 	  if (Manager.GetString("kept-sites") == 0)
 	    {	  
@@ -639,12 +542,8 @@ int main(int argc, char** argv)
 		{
 		  for (int y = 0; y < NbrSitesYA; ++y)
 		    {
-		      for (int z = 0; z < NbrSitesZA; ++z)
-			{
-			  RegionAMask |= 0x1ul << GetHaahCodeLinearizedIndex(x, y, z, 0, NbrSitesX, NbrSitesY, NbrSitesZ);
-			  RegionAMask |= 0x1ul << GetHaahCodeLinearizedIndex(x, y, z, 1, NbrSitesX, NbrSitesY, NbrSitesZ);
-			  RegionAMask |= 0x1ul << GetHaahCodeLinearizedIndex(x, y, z, 2, NbrSitesX, NbrSitesY, NbrSitesZ);
-			}
+		      RegionAMask |= 0x1ul << Get2DToricCodeLinearizedIndex(x, y, 0, NbrSitesX, NbrSitesY);
+		      RegionAMask |= 0x1ul << Get2DToricCodeLinearizedIndex(x, y, 1, NbrSitesX, NbrSitesY);
 		    }
 		}
 	    }
@@ -664,17 +563,16 @@ int main(int argc, char** argv)
 	      RegionANbrSites = KeptOrbitalFile.GetNbrLines();
 	      int* TmpKeptSpinX = KeptOrbitalFile.GetAsIntegerArray(0);
 	      int* TmpKeptSpinY = KeptOrbitalFile.GetAsIntegerArray(1);
-	      int* TmpKeptSpinZ = KeptOrbitalFile.GetAsIntegerArray(2);
-	      int* TmpKeptSpinIndex = KeptOrbitalFile.GetAsIntegerArray(3);
+	      int* TmpKeptSpinIndex = KeptOrbitalFile.GetAsIntegerArray(2);
 	      for (int i = 0; i < RegionANbrSites; ++i)
 		{
-		  RegionAMask |= 0x1ul << GetHaahCodeLinearizedIndex(TmpKeptSpinX[i], TmpKeptSpinY[i], TmpKeptSpinZ[i], TmpKeptSpinIndex[i], NbrSitesX, NbrSitesY, NbrSitesZ);	      
+		  RegionAMask |= 0x1ul << Get2DToricCodeLinearizedIndex(TmpKeptSpinX[i], TmpKeptSpinY[i], TmpKeptSpinIndex[i], NbrSitesX, NbrSitesY);	      
 		}
 	    }
 	  
 	  unsigned long RegionBMask = ((0x1ul << (TotalNbrSpins)) - 0x1ul) & (~RegionAMask);
 	  
-	  long RegionAHilbertSpaceDimension = 1l << (3 * RegionANbrSites);
+	  long RegionAHilbertSpaceDimension = 1l << (2 * RegionANbrSites);
 	  unsigned long* RegionAHilbertSpace = new unsigned long[RegionAHilbertSpaceDimension];
 	  RegionAHilbertSpaceDimension = 0l;
 	  
@@ -833,34 +731,18 @@ int main(int argc, char** argv)
 	  
 	  ULONGLONG* HamiltonianZTermMasks = new ULONGLONG[MaximumNumberZTerms];
 	  int TmpIndex = 0;
-	  for (int z = 0; (z < NbrSitesZ) && (MaximumNumberZTerms > 0); ++z)
+	  int TmpMaximumNumberZTerms = NbrSitesX * NbrSitesY - 1;
+	  for (int x = 0; (x < NbrSitesX) && (TmpMaximumNumberZTerms > 0); ++x)
 	    {
-	      int TmpMaximumNumberZTerms = NbrSitesX * NbrSitesY - 1;
-	      for (int x = 0; (x < NbrSitesX) && (TmpMaximumNumberZTerms > 0); ++x)
-		{
-		  for (int y = 0; (y < NbrSitesY) && (TmpMaximumNumberZTerms > 0); ++y)
-		    {
-		      HamiltonianZTermMasks[TmpIndex] = BuildHamiltonianZTerm1MaskLongLong(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
-		      TmpIndex++;
-		      --TmpMaximumNumberZTerms;
-		    }	  
-		}      
-	    }
-	  for (int x = 0; x < NbrSitesX; ++x)
-	    {
-	      int TmpMaximumNumberZTerms = NbrSitesY * NbrSitesZ - 1;
 	      for (int y = 0; (y < NbrSitesY) && (TmpMaximumNumberZTerms > 0); ++y)
 		{
-		  for (int z = 0; (z < NbrSitesZ) && (TmpMaximumNumberZTerms > 0); ++z)
-		    {
-		      HamiltonianZTermMasks[TmpIndex] = BuildHamiltonianZTerm2MaskLongLong(x, y, z, NbrSitesX, NbrSitesY, NbrSitesZ);
-		      TmpIndex++;
-		      --TmpMaximumNumberZTerms;
-		    }	  
+		  HamiltonianZTermMasks[TmpIndex] = BuildHamiltonianZTermMaskLongLong(x, y, NbrSitesX, NbrSitesY);
+		  TmpIndex++;
+		  --TmpMaximumNumberZTerms;
 		}      
 	    }
 	  
-	  int RegionANbrSites = NbrSitesXA * NbrSitesYA * NbrSitesZA;
+	  int RegionANbrSites = NbrSitesXA * NbrSitesYA;
 	  ULONGLONG RegionAMask = ((ULONGLONG) 0x0ul);  
 	  if (Manager.GetString("kept-sites") == 0)
 	    {	  
@@ -868,12 +750,8 @@ int main(int argc, char** argv)
 		{
 		  for (int y = 0; y < NbrSitesYA; ++y)
 		    {
-		      for (int z = 0; z < NbrSitesZA; ++z)
-			{
-			  RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x, y, z, 0, NbrSitesX, NbrSitesY, NbrSitesZ);
-			  RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x, y, z, 1, NbrSitesX, NbrSitesY, NbrSitesZ);
-			  RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x, y, z, 2, NbrSitesX, NbrSitesY, NbrSitesZ);
-			}
+		      RegionAMask |= ((ULONGLONG) 0x1ul) << Get2DToricCodeLinearizedIndex(x, y, 0, NbrSitesX, NbrSitesY);
+		      RegionAMask |= ((ULONGLONG) 0x1ul) << Get2DToricCodeLinearizedIndex(x, y, 1, NbrSitesX, NbrSitesY);
 		    }
 		}
 	    }
@@ -893,17 +771,16 @@ int main(int argc, char** argv)
 	      RegionANbrSites = KeptOrbitalFile.GetNbrLines();
 	      int* TmpKeptSpinX = KeptOrbitalFile.GetAsIntegerArray(0);
 	      int* TmpKeptSpinY = KeptOrbitalFile.GetAsIntegerArray(1);
-	      int* TmpKeptSpinZ = KeptOrbitalFile.GetAsIntegerArray(2);
-	      int* TmpKeptSpinIndex = KeptOrbitalFile.GetAsIntegerArray(3);
+	      int* TmpKeptSpinIndex = KeptOrbitalFile.GetAsIntegerArray(2);
 	      for (int i = 0; i < RegionANbrSites; ++i)
 		{
-		  RegionAMask |= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(TmpKeptSpinX[i], TmpKeptSpinY[i], TmpKeptSpinZ[i], TmpKeptSpinIndex[i], NbrSitesX, NbrSitesY, NbrSitesZ);	      
+		  RegionAMask |= ((ULONGLONG) 0x1ul) << Get2DToricCodeLinearizedIndex(TmpKeptSpinX[i], TmpKeptSpinY[i], TmpKeptSpinIndex[i], NbrSitesX, NbrSitesY);	      
 		}
 	    }
 	  
 	  ULONGLONG RegionBMask = ((((ULONGLONG) 0x1ul) << (TotalNbrSpins)) - ((ULONGLONG) 0x1ul)) & (~RegionAMask);
 	  
-	  long RegionAHilbertSpaceDimension = 1l << (3 * RegionANbrSites);
+	  long RegionAHilbertSpaceDimension = 1l << (2 * RegionANbrSites);
 	  ULONGLONG* RegionAHilbertSpace = new ULONGLONG[RegionAHilbertSpaceDimension];
 	  RegionAHilbertSpaceDimension = 0l;
 	  
@@ -1086,95 +963,49 @@ int main(int argc, char** argv)
 //
 // x = x coordinate of the cube lower front leftmost corner
 // y = y coordinate of the cube lower front leftmost corner
-// z = z coordinate of the cube lower front leftmost corner
 // spinIndex = index of the spin we want to address (either 0 or 1)
 // nbrSiteX = number of sites along the x direction for the full system
 // nbrSiteY = number of sites along the y direction for the full system
-// nbrSiteZ = number of sites along the z direction for the full system
 // return value = linearized index
 
-inline int GetHaahCodeLinearizedIndex (int x, int y, int z, int spinIndex, int nbrSiteX, int nbrSiteY, int nbrSiteZ)
+inline int Get2DToricCodeLinearizedIndex (int x, int y, int spinIndex, int nbrSiteX, int nbrSiteY)
 {
-  return (spinIndex + 3 * (((z + nbrSiteZ) % nbrSiteZ) + nbrSiteZ * (((y + nbrSiteY) % nbrSiteY) + nbrSiteY * ((x + nbrSiteX) % nbrSiteX))));  
+  return (spinIndex + 2 * (((y + nbrSiteY) % nbrSiteY) + nbrSiteY * ((x + nbrSiteX) % nbrSiteX)));  
 }
 
-// build the binary mask for for a Hamiltonian 1 Z term  i.e. all operators in the (x,y) plane
+// build the binary mask for for a Hamiltonian Z term
 // 
 // x = x coordinate of the cube lower front leftmost corner
 // y = y coordinate of the cube lower front leftmost corner
-// z = z coordinate of the cube lower front leftmost corner
 // nbrSiteX = number of sites along the x direction for the full system
 // nbrSiteY = number of sites along the y direction for the full system
-// nbrSiteZ = number of sites along the z direction for the full system
 // return value = binary mask for for a Hamiltonian Z term 
 
-unsigned long BuildHamiltonianZTerm1Mask (int x, int y, int z, int nbrSiteX, int nbrSiteY, int nbrSiteZ)
+unsigned long BuildHamiltonianZTermMask (int x, int y, int nbrSiteX, int nbrSiteY)
 {
   unsigned long TmpMask = 0x0ul;
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x,     y,     z,     0, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x    , y,     z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x - 1, y,     z,     0, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x    , y - 1, z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= 0x1ul << Get2DToricCodeLinearizedIndex(x,     y,     0, nbrSiteX, nbrSiteY);
+  TmpMask ^= 0x1ul << Get2DToricCodeLinearizedIndex(x    , y,     1, nbrSiteX, nbrSiteY);
+  TmpMask ^= 0x1ul << Get2DToricCodeLinearizedIndex(x - 1, y,     0, nbrSiteX, nbrSiteY);
+  TmpMask ^= 0x1ul << Get2DToricCodeLinearizedIndex(x    , y - 1, 1, nbrSiteX, nbrSiteY);
   return TmpMask;
 }
 
-// build the binary mask for for a Hamiltonian 2 Z term  i.e. all operators in the (y,z) plane
+// build the binary mask for for a Hamiltonian Z term (unsigned long long version)
 // 
 // x = x coordinate of the cube lower front leftmost corner
 // y = y coordinate of the cube lower front leftmost corner
-// z = z coordinate of the cube lower front leftmost corner
 // nbrSiteX = number of sites along the x direction for the full system
 // nbrSiteY = number of sites along the y direction for the full system
-// nbrSiteZ = number of sites along the z direction for the full system
 // return value = binary mask for for a Hamiltonian Z term 
 
-unsigned long BuildHamiltonianZTerm2Mask (int x, int y, int z, int nbrSiteX, int nbrSiteY, int nbrSiteZ)
-{
-  unsigned long TmpMask = 0x0ul;
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x,     y,     z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x    , y,     z,     2, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x    , y - 1, z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= 0x1ul << GetHaahCodeLinearizedIndex(x    , y    , z - 1, 2, nbrSiteX, nbrSiteY, nbrSiteZ);
-  return TmpMask;
-}
-
-// build the binary mask for for a Hamiltonian type 2 Z term, i.e. all operators in the (x,y) plane (unsigned long long version)
-// 
-// x = x coordinate of the cube lower front leftmost corner
-// y = y coordinate of the cube lower front leftmost corner
-// z = z coordinate of the cube lower front leftmost corner
-// nbrSiteX = number of sites along the x direction for the full system
-// nbrSiteY = number of sites along the y direction for the full system
-// nbrSiteZ = number of sites along the z direction for the full system
-// return value = binary mask for for a Hamiltonian Z term 
-
-ULONGLONG BuildHamiltonianZTerm1MaskLongLong (int x, int y, int z, int nbrSiteX, int nbrSiteY, int nbrSiteZ)
+ULONGLONG BuildHamiltonianZTermMaskLongLong (int x, int y, int nbrSiteX, int nbrSiteY)
 {
   ULONGLONG TmpMask = ((ULONGLONG) 0x0ul);
-  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x,     y,     z,     0, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x    , y,     z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x - 1, y,     z,     0, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x    , y - 1, z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  return TmpMask;
-}
-
-// build the binary mask for for a Hamiltonian type 2 Z term, i.e. all operators in the (y,z) plane (unsigned long long version)
-// 
-// x = x coordinate of the cube lower front leftmost corner
-// y = y coordinate of the cube lower front leftmost corner
-// z = z coordinate of the cube lower front leftmost corner
-// nbrSiteX = number of sites along the x direction for the full system
-// nbrSiteY = number of sites along the y direction for the full system
-// nbrSiteZ = number of sites along the z direction for the full system
-// return value = binary mask for for a Hamiltonian Z term 
-
-ULONGLONG BuildHamiltonianZTerm2MaskLongLong (int x, int y, int z, int nbrSiteX, int nbrSiteY, int nbrSiteZ)
-{
-  ULONGLONG TmpMask = ((ULONGLONG) 0x0ul);
-  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x,     y,     z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x    , y,     z,     2, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x    , y - 1, z,     1, nbrSiteX, nbrSiteY, nbrSiteZ);
-  TmpMask ^= ((ULONGLONG) 0x1ul) << GetHaahCodeLinearizedIndex(x    , y    , z - 1, 2, nbrSiteX, nbrSiteY, nbrSiteZ);
+  TmpMask ^= ((ULONGLONG) 0x1ul) << Get2DToricCodeLinearizedIndex(x,     y,     0, nbrSiteX, nbrSiteY);
+  TmpMask ^= ((ULONGLONG) 0x1ul) << Get2DToricCodeLinearizedIndex(x    , y,     1, nbrSiteX, nbrSiteY);
+  TmpMask ^= ((ULONGLONG) 0x1ul) << Get2DToricCodeLinearizedIndex(x - 1, y,     0, nbrSiteX, nbrSiteY);
+  TmpMask ^= ((ULONGLONG) 0x1ul) << Get2DToricCodeLinearizedIndex(x    , y - 1, 1, nbrSiteX, nbrSiteY);
   return TmpMask;
 }
 
@@ -1201,7 +1032,7 @@ inline unsigned long GetSpinParity(unsigned long state)
 
 inline ULONGLONG GetSpinParity(ULONGLONG state)
 {
- state ^= state >> 64;
+  state ^= state >> 64;
   state ^= state >> 32;
   state ^= state >> 16;
   state ^= state >> 8;
