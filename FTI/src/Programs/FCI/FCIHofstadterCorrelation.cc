@@ -273,7 +273,7 @@ int main(int argc, char** argv)
 		int Index2 = (kx * NbrCellY) + ky;
 		int Index = tightBindingModel.GetLinearizedMomentumIndex(kx, ky);
 		assert(Index == Index2);
-		File << kx << " " << ky << " " << PrecalculatedValues_rhorho[Index].Re << endl;
+		File << kx << " " << ky << " " << PrecalculatedValues_rho[Index].Re << endl;
 	      }
 	  File.close();
 	}
