@@ -24,6 +24,7 @@ using std::cout;
 using std::endl;
 using std::hex;
 using std::dec;
+using std::ios;
 using std::ofstream;
 
 
@@ -131,6 +132,7 @@ int main(int argc, char** argv)
 #ifdef __SCALAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-scalapack", "use SCALAPACK libraries instead of DiagHam or LAPACK libraries");
 #endif
+  (*OutputGroup) += new BooleanOption  ('\n', "export-entspectrum", "export the spectrum of reduced density matrix in an ASCII file");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -1072,6 +1074,34 @@ int main(int argc, char** argv)
 	  ReducedDensityMatrixEntanglementEntropy -= FullReducedDensityMatrixEigenvalues[i] * log(FullReducedDensityMatrixEigenvalues[i]);
 	  ReducedDensityMatrixNbrNonZeroEigenvalues++;
 	}
+    }
+  if (Manager.GetBoolean("export-entspectrum") == true)
+    {
+      char* ReducedDensityMatrixOutputFileName = 0;
+      if (Manager.GetString("kept-sites") != 0)
+	{
+	  ReducedDensityMatrixOutputFileName = new char[256 + strlen(Manager.GetString("kept-sites"))];
+	  sprintf(ReducedDensityMatrixOutputFileName, "xcube_entspectrum_x_%d_y_%d_z_%d_%s.dat", NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetString("kept-sites"));
+	}
+      else
+	{
+	  ReducedDensityMatrixOutputFileName = new char[512];
+	  sprintf(ReducedDensityMatrixOutputFileName, "xcube_entspectrum_x_%d_y_%d_z_%d_xa_%d_ya_%d_za_%d.dat", NbrSitesX, NbrSitesY, NbrSitesZ, NbrSitesXA, NbrSitesYA, NbrSitesZA);
+	}
+      ofstream File;
+      File.open(ReducedDensityMatrixOutputFileName, ios::binary | ios::out);
+      File.precision(14);
+      File << "# Trace of the reduced density matrix before normalization = " << ReducedDensityMatrixTrace << endl;
+      File << "# Number of non zero eigenvalues for the reduced density matrix = " << ReducedDensityMatrixNbrNonZeroEigenvalues << endl;
+      File << "# Entangement entropy = " << (ReducedDensityMatrixEntanglementEntropy / log(2.0)) << " * log 2" << endl;
+      for (long i = 0l; i < FullReducedDensityMatrixNbrEigenvalues; ++i)
+	{
+	  if (FullReducedDensityMatrixEigenvalues[i] > 0.0)
+	    {
+	      File << FullReducedDensityMatrixEigenvalues[i] << endl;
+	    }
+	}
+      File.close();
     }
   cout << "Trace of the reduced density matrix before normalization = " << ReducedDensityMatrixTrace << endl;
   cout << "Number of non zero eigenvalues for the reduced density matrix = " << ReducedDensityMatrixNbrNonZeroEigenvalues << endl;
