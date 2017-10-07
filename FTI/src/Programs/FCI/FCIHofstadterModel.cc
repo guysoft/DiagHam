@@ -568,7 +568,7 @@ int main(int argc, char** argv)
 			      {
 				PeriodicOneBodyPotential[kx] = new double[NbrCellY];
 				for (int ky = 0; ky < NbrCellY; ++ky)
-				  PeriodicOneBodyPotential[kx][ky] = - PeriodicPotentialStrength * (cos((double) kx * KxFactor) + cos((double) ky * KyFactor));
+				  PeriodicOneBodyPotential[kx][ky] = - PeriodicPotentialStrength * (cos(((double) kx  + Manager.GetDouble("gamma-x"))* KxFactor) + cos(((double) ky + Manager.GetDouble("gamma-y"))* KyFactor));
 			      }
 			      Hamiltonian = new ParticleOnLatticeHofstadterSingleBandHamiltonian(Space, NbrParticles, NbrCellX, NbrCellY, MaxBand, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), TightBindingModel, PeriodicOneBodyPotential, Manager.GetBoolean("flat-band"),Architecture.GetArchitecture(), Memory);
 			      for (int kx = 0; kx < NbrCellX; ++kx)
