@@ -56,6 +56,7 @@ using std::cos;
 ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ParticleOnLatticeKagomeLatticeSingleBandHamiltonian()
 {
   this->BandIndex = 0;
+  this->WPotential = 0.0;
 }
 
 // constructor
@@ -64,13 +65,16 @@ ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ParticleOnLatticeKagomeLatt
 // nbrParticles = number of particles
 // nbrCellX = number of sites in the x direction
 // nbrCellY = number of sites in the y direction
-// uPotential = strength of the repulsive two body neareast neighbor interaction
-// vPotential = strength of the repulsive two body second nearest neighbor interaction
+// uPotential = strength of the repulsive two body neareast neighbor interaction (or on-site density-density potential for bosons)
+// vPotential = strength of the repulsive two body second nearest neighbor interaction (or nearest neighbor density-density potential for bosons)
+// wPotential = strength of the repulsive two body third nearest neighbor interaction (or next nearest neighbor density-density potential for bosons)
 // flatBandFlag = use flat band model
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, int nbrCellY, double uPotential, double vPotential,  Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, int nbrCellY, 
+													 double uPotential, double vPotential, double wPotential,  
+													 Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -85,6 +89,7 @@ ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ParticleOnLatticeKagomeLatt
   this->FlatBand = flatBandFlag;
   this->UPotential = uPotential;
   this->VPotential = vPotential;
+  this->WPotential = wPotential;
   this->BandIndex = 0;
   this->Architecture = architecture;
   this->Memory = memory;
@@ -263,6 +268,7 @@ void ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::EvaluateInteractionFac
       if ((this->FlatBand == false) || (this->VPotential != 0.0))
 	FactorU *= this->UPotential;
       double FactorV = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+      double FactorW = this->WPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
 
       this->InteractionFactors = new Complex* [this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
@@ -316,6 +322,24 @@ void ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::EvaluateInteractionFac
 		      this->InteractionFactors[i][Index] += FactorV * (Conj(OneBodyBasis[Index2][BandIndex][1]) * OneBodyBasis[Index3][BandIndex][1] * Conj(OneBodyBasis[Index1][BandIndex][2]) * OneBodyBasis[Index4][BandIndex][2]) * this->ComputeTwoBodyMatrixElementBC(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
 		      this->InteractionFactors[i][Index] += FactorV * (Conj(OneBodyBasis[Index1][BandIndex][1]) * OneBodyBasis[Index4][BandIndex][1] * Conj(OneBodyBasis[Index2][BandIndex][2]) * OneBodyBasis[Index3][BandIndex][2]) * this->ComputeTwoBodyMatrixElementBC(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
 		      this->InteractionFactors[i][Index] += FactorV * (Conj(OneBodyBasis[Index2][BandIndex][1]) * OneBodyBasis[Index4][BandIndex][1] * Conj(OneBodyBasis[Index1][BandIndex][2]) * OneBodyBasis[Index3][BandIndex][2]) * this->ComputeTwoBodyMatrixElementBC(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
+		    }
+
+		  if (this->WPotential != 0.0)
+		    {
+		      this->InteractionFactors[i][Index] += FactorW * (Conj(OneBodyBasis[Index1][BandIndex][0]) * OneBodyBasis[Index3][BandIndex][0] * Conj(OneBodyBasis[Index2][BandIndex][1]) * OneBodyBasis[Index4][BandIndex][1]) * this->ComputeTwoBodyMatrixElementABNNN(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+		      this->InteractionFactors[i][Index] += FactorW * (Conj(OneBodyBasis[Index2][BandIndex][0]) * OneBodyBasis[Index3][BandIndex][0] * Conj(OneBodyBasis[Index1][BandIndex][1]) * OneBodyBasis[Index4][BandIndex][1]) * this->ComputeTwoBodyMatrixElementABNNN(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
+		      this->InteractionFactors[i][Index] += FactorW * (Conj(OneBodyBasis[Index1][BandIndex][0]) * OneBodyBasis[Index4][BandIndex][0] * Conj(OneBodyBasis[Index2][BandIndex][1]) * OneBodyBasis[Index3][BandIndex][1]) * this->ComputeTwoBodyMatrixElementABNNN(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
+		      this->InteractionFactors[i][Index] += FactorW * (Conj(OneBodyBasis[Index2][BandIndex][0]) * OneBodyBasis[Index4][BandIndex][0] * Conj(OneBodyBasis[Index1][BandIndex][1]) * OneBodyBasis[Index3][BandIndex][1]) * this->ComputeTwoBodyMatrixElementABNNN(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
+		      
+		      this->InteractionFactors[i][Index] += FactorW * (Conj(OneBodyBasis[Index1][BandIndex][0]) * OneBodyBasis[Index3][BandIndex][0] * Conj(OneBodyBasis[Index2][BandIndex][2]) * OneBodyBasis[Index4][BandIndex][2]) * this->ComputeTwoBodyMatrixElementACNNN(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+		      this->InteractionFactors[i][Index] += FactorW * (Conj(OneBodyBasis[Index2][BandIndex][0]) * OneBodyBasis[Index3][BandIndex][0] * Conj(OneBodyBasis[Index1][BandIndex][2]) * OneBodyBasis[Index4][BandIndex][2]) * this->ComputeTwoBodyMatrixElementACNNN(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
+		      this->InteractionFactors[i][Index] += FactorW * (Conj(OneBodyBasis[Index1][BandIndex][0]) * OneBodyBasis[Index4][BandIndex][0] * Conj(OneBodyBasis[Index2][BandIndex][2]) * OneBodyBasis[Index3][BandIndex][2]) * this->ComputeTwoBodyMatrixElementACNNN(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
+		      this->InteractionFactors[i][Index] += FactorW * (Conj(OneBodyBasis[Index2][BandIndex][0]) * OneBodyBasis[Index4][BandIndex][0] * Conj(OneBodyBasis[Index1][BandIndex][2]) * OneBodyBasis[Index3][BandIndex][2]) * this->ComputeTwoBodyMatrixElementACNNN(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
+		      
+		      this->InteractionFactors[i][Index] += FactorW * (Conj(OneBodyBasis[Index1][BandIndex][1]) * OneBodyBasis[Index3][BandIndex][1] * Conj(OneBodyBasis[Index2][BandIndex][2]) * OneBodyBasis[Index4][BandIndex][2]) * this->ComputeTwoBodyMatrixElementBCNNN(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+		      this->InteractionFactors[i][Index] += FactorW * (Conj(OneBodyBasis[Index2][BandIndex][1]) * OneBodyBasis[Index3][BandIndex][1] * Conj(OneBodyBasis[Index1][BandIndex][2]) * OneBodyBasis[Index4][BandIndex][2]) * this->ComputeTwoBodyMatrixElementBCNNN(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
+		      this->InteractionFactors[i][Index] += FactorW * (Conj(OneBodyBasis[Index1][BandIndex][1]) * OneBodyBasis[Index4][BandIndex][1] * Conj(OneBodyBasis[Index2][BandIndex][2]) * OneBodyBasis[Index3][BandIndex][2]) * this->ComputeTwoBodyMatrixElementBCNNN(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
+		      this->InteractionFactors[i][Index] += FactorW * (Conj(OneBodyBasis[Index2][BandIndex][1]) * OneBodyBasis[Index4][BandIndex][1] * Conj(OneBodyBasis[Index1][BandIndex][2]) * OneBodyBasis[Index3][BandIndex][2]) * this->ComputeTwoBodyMatrixElementBCNNN(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
 		    }
 		  
 		  if (Index3 == Index4)
@@ -394,6 +418,69 @@ Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatri
 }
 
 
+// compute the matrix element for the two body interaction between two sites A and B in the next nearest neighbor interaction
+//
+// k1a = creation momentum along x for the A site
+// k1b = creation momentum along y for the A site
+// k2a = creation momentum along x for the B site
+// k2b = creation momentum along y for the B site
+// k3a = annihilation momentum along x for the A site
+// k3b = annihilation momentum along y for the A site
+// k4a = annihilation momentum along x for the B site
+// k4b = annihilation momentum along y for the B site
+// return value = corresponding matrix element
+
+Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementABNNN(int k1a, int k1b, int k2a, int k2b, int k3a, int k3b, int k4a, int k4b)
+{
+  Complex Tmp = 2.0 * cos (0.5 * (this->TightBindingModel->GetProjectedMomentum(k4a, k4b, 0) - this->TightBindingModel->GetProjectedMomentum(k2a, k2b, 0))
+			   - (this->TightBindingModel->GetProjectedMomentum(k4a, k4b, 1) - this->TightBindingModel->GetProjectedMomentum(k2a, k2b, 1)));
+  return Tmp;
+}
+
+// compute the matrix element for the two body interaction between two sites A and C in the next nearest neighbor interaction
+//
+// k1a = creation momentum along x for the A site
+// k1b = creation momentum along y for the A site
+// k2a = creation momentum along x for the C site
+// k2b = creation momentum along y for the C site
+// k3a = annihilation momentum along x for the A site
+// k3b = annihilation momentum along y for the A site
+// k4a = annihilation momentum along x for the C site
+// k4b = annihilation momentum along y for the C site
+// return value = corresponding matrix element
+
+Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementACNNN(int k1a, int k1b, int k2a, int k2b, int k3a, int k3b, int k4a, int k4b)
+{
+  Complex Tmp = 2.0 * cos ((this->TightBindingModel->GetProjectedMomentum(k4a, k4b, 0) - this->TightBindingModel->GetProjectedMomentum(k2a, k2b, 0))
+			   - 0.5 * (this->TightBindingModel->GetProjectedMomentum(k4a, k4b, 1) - this->TightBindingModel->GetProjectedMomentum(k2a, k2b, 1)));
+  return Tmp;
+}
+
+// compute the matrix element for the two body interaction between two sites B and C in the next nearest neighbor interaction
+//
+// k1a = creation momentum along x for the B site
+// k1b = creation momentum along y for the B site
+// k2a = creation momentum along x for the C site
+// k2b = creation momentum along y for the C site
+// k3a = annihilation momentum along x for the B site
+// k3b = annihilation momentum along y for the B site
+// k4a = annihilation momentum along x for the C site
+// k4b = annihilation momentum along y for the C site
+// return value = corresponding matrix element
+
+Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementBCNNN(int k1a, int k1b, int k2a, int k2b, int k3a, int k3b, int k4a, int k4b)
+{
+//   Complex Tmp = 2.0 * cos (0.5 * (this->TightBindingModel->GetProjectedMomentum(k4a, k4b, 0) - this->TightBindingModel->GetProjectedMomentum(k2a, k2b, 0)
+// 				  + this->TightBindingModel->GetProjectedMomentum(k3a, k3b, 0) - this->TightBindingModel->GetProjectedMomentum(k1a, k1b, 0))
+// 			   + 0.5 * (this->TightBindingModel->GetProjectedMomentum(k4a, k4b, 1) - this->TightBindingModel->GetProjectedMomentum(k2a, k2b, 1)
+// 				    + this->TightBindingModel->GetProjectedMomentum(k3a, k3b, 1) - this->TightBindingModel->GetProjectedMomentum(k1a, k1b, 1)));
+  Complex Tmp = 2.0 * cos ((this->TightBindingModel->GetProjectedMomentum(k4a, k4b, 0) - this->TightBindingModel->GetProjectedMomentum(k2a, k2b, 0))
+			   + 0.5 * (this->TightBindingModel->GetProjectedMomentum(k4a, k4b, 1) - this->TightBindingModel->GetProjectedMomentum(k2a, k2b, 1))
+			   + 0.5 * (this->TightBindingModel->GetProjectedMomentum(k3a, k3b, 0) - this->TightBindingModel->GetProjectedMomentum(k1a, k1b, 0)));
+  return Tmp;
+}
+
+
 // compute the matrix element for on-site two body interaction involving A sites
 //
 // return value = corresponding matrix element
@@ -417,7 +504,8 @@ Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatri
 
 Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSiteBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
-  return Phase(0.5 * (this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 0) + this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 0) - this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 0) - this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 0) ));
+  return Phase(0.5 * (this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 0) + this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 0) 
+		      - this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 0) - this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 0) ));
 //   return Phase(0.5 * this->KxFactor * ((double) (kx4 + kx3 - kx2 -kx1)));
 }
 

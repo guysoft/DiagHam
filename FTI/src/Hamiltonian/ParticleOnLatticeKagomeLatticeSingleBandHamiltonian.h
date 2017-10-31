@@ -53,10 +53,12 @@ class ParticleOnLatticeKagomeLatticeSingleBandHamiltonian : public ParticleOnLat
  protected:
   
   
-  // nearest neighbor density-density potential strength
+  // nearest neighbor density-density potential strength (or on-site density-density potential for bosons)
   double UPotential;
-  // second nearest neighbor density-density potential strength
+  // second nearest neighbor density-density potential strength (or nearest neighbor density-density potential for bosons)
   double VPotential;
+  // third nearest neighbor density-density potential strength (or next nearest neighbor density-density potential for bosons)
+  double WPotential;
 
   // index of the band to be filled
   int BandIndex;
@@ -78,10 +80,12 @@ class ParticleOnLatticeKagomeLatticeSingleBandHamiltonian : public ParticleOnLat
   // nbrSiteY = number of sites in the y direction
   // uPotential = strength of the repulsive two body neareast neighbor interaction
   // vPotential = strength of the repulsive two body second nearest neighbor interactio
+  // wPotential = strength of the repulsive two body third nearest neighbor interaction (or next nearest neighbor density-density potential for bosons)
   // tightBindingModel = pointer to the tight binding model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential,  Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double wPotential,
+						      Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
@@ -156,6 +160,45 @@ class ParticleOnLatticeKagomeLatticeSingleBandHamiltonian : public ParticleOnLat
   // ky4 = second annihilation momentum along y for the C site
   // return value = corresponding matrix element
   virtual Complex ComputeTwoBodyMatrixElementOnSiteCC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+
+  // compute the matrix element for the two body interaction between two sites A and B in the next nearest neighbor interaction
+  //
+  // k1a = creation momentum along x for the B site
+  // k1b = creation momentum along y for the B site
+  // k2a = creation momentum along x for the C site
+  // k2b = creation momentum along y for the C site
+  // k3a = annihilation momentum along x for the B site
+  // k3b = annihilation momentum along y for the B site
+  // k4a = annihilation momentum along x for the C site
+  // k4b = annihilation momentum along y for the C site
+  // return value = corresponding matrix element
+  virtual Complex ComputeTwoBodyMatrixElementABNNN(int k1a, int k1b, int k2a, int k2b, int k3a, int k3b, int k4a, int k4b);
+
+  // compute the matrix element for the two body interaction between two sites A and C in the next nearest neighbor interaction
+  //
+  // k1a = creation momentum along x for the B site
+  // k1b = creation momentum along y for the B site
+  // k2a = creation momentum along x for the C site
+  // k2b = creation momentum along y for the C site
+  // k3a = annihilation momentum along x for the B site
+  // k3b = annihilation momentum along y for the B site
+  // k4a = annihilation momentum along x for the C site
+  // k4b = annihilation momentum along y for the C site
+  // return value = corresponding matrix element
+  virtual Complex ComputeTwoBodyMatrixElementACNNN(int k1a, int k1b, int k2a, int k2b, int k3a, int k3b, int k4a, int k4b);
+
+  // compute the matrix element for the two body interaction between two sites B and C in the next nearest neighbor interaction
+  //
+  // k1a = creation momentum along x for the B site
+  // k1b = creation momentum along y for the B site
+  // k2a = creation momentum along x for the C site
+  // k2b = creation momentum along y for the C site
+  // k3a = annihilation momentum along x for the B site
+  // k3b = annihilation momentum along y for the B site
+  // k4a = annihilation momentum along x for the C site
+  // k4b = annihilation momentum along y for the C site
+  // return value = corresponding matrix element
+  virtual Complex ComputeTwoBodyMatrixElementBCNNN(int k1a, int k1b, int k2a, int k2b, int k3a, int k3b, int k4a, int k4b);
 
 };
 
