@@ -61,6 +61,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('\n', "nbr-sz", "number of sz value to evaluate (0 for all sz sectors)", 0);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "momentum", "if non negative, only consider a given momentum sector", -1);
   (*SystemGroup) += new  SingleDoubleOption ('\n', "additional-quadratic", "coefficient in front of the additional quadratic term (0 being the pure AKLT hamiltonian)", 0.0);
+  (*SystemGroup) += new  SingleDoubleOption ('\n', "linear-factor", "if different from 1.0, set the coefficient in front of the Heisenberg term", 1.0);
+  (*SystemGroup) += new  SingleDoubleOption ('\n', "quadratic-factor", "if --linear-factor is different from 1.0, set the coefficient in front of the quadratic term", 0.0);
   (*SystemGroup) += new  BooleanOption ('\n', "disable-szsymmetry", "disable the Sz<->-Sz symmetry");
   (*SystemGroup) += new  BooleanOption ('\n', "disable-inversionsymmetry", "disable the inversion symmetry");
   (*SystemGroup) += new  BooleanOption ('\n', "disable-realhamiltonian", "do not use a real Hamiltonian at the inversion symmetric points");
@@ -99,7 +101,15 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  sprintf (OutputFileName, "spin_%d_periodicaklt_n_%d", (SpinValue / 2), NbrSpins);
+	  if (Manager.GetDouble("linear-factor") != 1.0)
+	    {
+	      sprintf (OutputFileName, "spin_%d_periodicaklt_linear_%.6f_quadratic_%.6f_n_%d", (SpinValue / 2), 
+		       Manager.GetDouble("linear-factor"),  Manager.GetDouble("quadratic-factor"), NbrSpins);
+	    }
+	  else
+	    {
+	      sprintf (OutputFileName, "spin_%d_periodicaklt_n_%d", (SpinValue / 2), NbrSpins);
+	    }
 	}
       if (Manager.GetBoolean("disable-szsymmetry") == false)
 	{
@@ -216,21 +226,42 @@ int main(int argc, char** argv)
 			  if (Manager.GetBoolean("disable-realhamiltonian") == false)
 			    {
 			      Lanczos.SetRealAlgorithms();
-			      SpinChainAKLTRealHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins, 
-											1.0 + 3.0 * Manager.GetDouble("additional-quadratic"));
-			      GenericRealMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
-							  FirstRun, TmpEigenstateString);
+			      SpinChainAKLTRealHamiltonianWithTranslations* Hamiltonian = 0;
+			      if (Manager.GetDouble("linear-factor") == 1.0)
+				{
+				  Hamiltonian = new SpinChainAKLTRealHamiltonianWithTranslations(Chain, NbrSpins, 
+												 1.0 + 3.0 * Manager.GetDouble("additional-quadratic"));
+				}
+			      else
+				{
+				  Hamiltonian = new SpinChainAKLTRealHamiltonianWithTranslations(Chain, NbrSpins, Manager.GetDouble("linear-factor"),
+												 Manager.GetDouble("quadratic-factor"));
+				}
+			      GenericRealMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+						       FirstRun, TmpEigenstateString);
 			      MainTaskOperation TaskOperation (&Task);
 			      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 			      Lanczos.SetComplexAlgorithms();
+			      delete Hamiltonian;
 			    }
 			  else
 			    {
-			      SpinChainAKLTHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins);
-			      GenericComplexMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+			      SpinChainAKLTHamiltonianWithTranslations* Hamiltonian;
+			      if(Manager.GetDouble("linear-factor") == 1.0)
+				{ 
+				  Hamiltonian = new SpinChainAKLTHamiltonianWithTranslations  (Chain, NbrSpins, 
+											       1.0 + 3.0 * Manager.GetDouble("additional-quadratic"));
+				}
+			      else
+				{
+				  Hamiltonian = new SpinChainAKLTHamiltonianWithTranslations (Chain, NbrSpins, Manager.GetDouble("linear-factor"),
+											      Manager.GetDouble("quadratic-factor"));
+				}
+			      GenericComplexMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
 							  FirstRun, TmpEigenstateString);
 			      MainTaskOperation TaskOperation (&Task);
 			      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+			      delete Hamiltonian;
 			    }
 			  FirstRun = false;
 			  delete[] TmpSzString;
@@ -270,14 +301,24 @@ int main(int argc, char** argv)
 			}
 		      char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
 		      sprintf (TmpEigenstateString, "%s_sz_%d_szsym_%d_k_%d", OutputFileName, InitalSzValue, SzSymmetrySector, Momentum);
-		      SpinChainAKLTHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins, 
-									    1.0 + 3.0 * Manager.GetDouble("additional-quadratic"));
-		      GenericComplexMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+		      SpinChainAKLTHamiltonianWithTranslations* Hamiltonian = 0;
+		      if(Manager.GetDouble("linear-factor") == 1.0)
+			{			  
+			  Hamiltonian = new SpinChainAKLTHamiltonianWithTranslations(Chain, NbrSpins, 
+										     1.0 + 3.0 * Manager.GetDouble("additional-quadratic"));
+			}
+		      else
+			{
+			  Hamiltonian = new SpinChainAKLTHamiltonianWithTranslations(Chain, NbrSpins, Manager.GetDouble("linear-factor"),
+										     Manager.GetDouble("quadratic-factor"));
+			}
+		      GenericComplexMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
 						  FirstRun, TmpEigenstateString);
 		      MainTaskOperation TaskOperation (&Task);
 		      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 		      FirstRun = false;
 		      delete[] TmpSzString;
+		      delete Hamiltonian;
 		    }
 		  delete Chain;
 		}
@@ -326,20 +367,42 @@ int main(int argc, char** argv)
 		      if (Manager.GetBoolean("disable-realhamiltonian") == false)
 			{
 			  Lanczos.SetRealAlgorithms();
-			  SpinChainAKLTRealHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins);
-			  GenericRealMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+			  SpinChainAKLTRealHamiltonianWithTranslations* Hamiltonian = 0;
+			  if (Manager.GetDouble("linear-factor") == 1.0)
+			    {
+			      Hamiltonian = new SpinChainAKLTRealHamiltonianWithTranslations(Chain, NbrSpins, 
+											     1.0 + 3.0 * Manager.GetDouble("additional-quadratic"));
+			    }
+			  else
+			    {
+			      Hamiltonian = new SpinChainAKLTRealHamiltonianWithTranslations(Chain, NbrSpins, Manager.GetDouble("linear-factor"),
+											     Manager.GetDouble("quadratic-factor"));
+			    }
+			  GenericRealMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
 						   FirstRun, TmpEigenstateString);
 			  MainTaskOperation TaskOperation (&Task);
 			  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 			  Lanczos.SetComplexAlgorithms();
+			  delete Hamiltonian;
 			}
 		      else
 			{
-			  SpinChainAKLTHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins);
-			  GenericComplexMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+			  SpinChainAKLTHamiltonianWithTranslations* Hamiltonian ;
+			  if (Manager.GetDouble("linear-factor") == 1.0)
+			    {
+			      Hamiltonian = new SpinChainAKLTHamiltonianWithTranslations(Chain, NbrSpins, 
+											 1.0 + 3.0 * Manager.GetDouble("additional-quadratic"));
+			    }
+			  else
+			    {
+			      Hamiltonian = new SpinChainAKLTHamiltonianWithTranslations(Chain, NbrSpins, Manager.GetDouble("linear-factor"),
+											 Manager.GetDouble("quadratic-factor"));
+			    }
+			  GenericComplexMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
 						      FirstRun, TmpEigenstateString);
 			  MainTaskOperation TaskOperation (&Task);
 			  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+			  delete Hamiltonian;
 			}
 		      FirstRun = false;
 		      delete[] TmpSzString;
@@ -372,7 +435,17 @@ int main(int argc, char** argv)
 		{
 		  Architecture.GetArchitecture()->SetDimension(Chain->GetHilbertSpaceDimension());	
 		  cout << "2Sz = " << InitalSzValue << ", K = " << Momentum << endl; 
-		  SpinChainAKLTHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins);
+		  SpinChainAKLTHamiltonianWithTranslations* Hamiltonian = 0;
+		  if (Manager.GetDouble("linear-factor") == 1.0)
+		    {
+		      Hamiltonian = new SpinChainAKLTHamiltonianWithTranslations(Chain, NbrSpins, 
+										 1.0 + 3.0 * Manager.GetDouble("additional-quadratic"));
+		    }
+		  else
+		    {
+		      Hamiltonian = new SpinChainAKLTHamiltonianWithTranslations(Chain, NbrSpins, Manager.GetDouble("linear-factor"),
+										 Manager.GetDouble("quadratic-factor"));
+		    }
 		  char* TmpSzString = new char[64];
 		  if (Manager.GetBoolean("disable-inversionsymmetry") == false)
 		    {
@@ -398,12 +471,13 @@ int main(int argc, char** argv)
 		    }
 		  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
 		  sprintf (TmpEigenstateString, "%s_sz_%d_k_%d", OutputFileName, InitalSzValue, Momentum);
-		  GenericComplexMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+		  GenericComplexMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
 					      FirstRun, TmpEigenstateString);
 		  MainTaskOperation TaskOperation (&Task);
 		  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 		  FirstRun = false;
 		  delete[] TmpSzString;
+		  delete Hamiltonian;
 		}
 	      delete Chain;
 	    }

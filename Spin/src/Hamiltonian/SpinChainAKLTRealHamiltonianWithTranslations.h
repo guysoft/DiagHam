@@ -51,18 +51,29 @@ class SpinChainAKLTRealHamiltonianWithTranslations : public SpinChainRealHamilto
   // numerical factor in front of the 1/3 (S_i S_i+1)^2 term
   double SquareFactor;
 
+  // numerical factor in front of the (S_i S_i+1) term
+  double LinearFactor;
+
  public:
 
   // default constructor
   //
   SpinChainAKLTRealHamiltonianWithTranslations();
 
-  // constructor from default datas
+  // constructor from default data
   //
   // chain = pointer to Hilbert space of the associated system
   // nbrSpin = number of spin
   // squareFactor = numerical factor in front of the 1/3 (S_i S_i+1)^2 term
   SpinChainAKLTRealHamiltonianWithTranslations(AbstractSpinChainWithTranslations* chain, int nbrSpin, double squareFactor = 1.0);
+
+  // constructor from default data
+  //
+  // chain = pointer to Hilbert space of the associated system
+  // nbrSpin = number of spin
+  // linearFactor = numerical factor in front of the (S_i S_i+1) term
+  // quadraticFactor = numerical factor in front of the (S_i S_i+1)^2 term
+  SpinChainAKLTRealHamiltonianWithTranslations(AbstractSpinChainWithTranslations* chain, int nbrSpin, double linearFactor, double quadraticFactor);
 
   // destructor
   //

@@ -66,7 +66,29 @@ SpinChainAKLTRealHamiltonianWithTranslations::SpinChainAKLTRealHamiltonianWithTr
   this->J = 1.0;
   this->HalfJ = this->J * 0.5;
   this->Jz = this->J;
+  this->LinearFactor = 1.0;
   this->SquareFactor = squareFactor / 3.0;
+  this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
+  this->EvaluateDiagonalMatrixElements();
+  this->EvaluateCosinusTable();
+}
+
+// constructor from default datas
+//
+// chain = pointer to Hilbert space of the associated system
+// nbrSpin = number of spin
+// linearFactor = numerical factor in front of the (S_i S_i+1) term
+// quadraticFactor = numerical factor in front of the (S_i S_i+1)^2 term
+
+SpinChainAKLTRealHamiltonianWithTranslations::SpinChainAKLTRealHamiltonianWithTranslations(AbstractSpinChainWithTranslations* chain, int nbrSpin, double linearFactor, double quadraticFactor)
+{
+  this->Chain = chain;
+  this->NbrSpin = nbrSpin;
+  this->J = 1.0;
+  this->HalfJ = this->J * 0.5;
+  this->Jz = this->J;
+  this->LinearFactor = linearFactor;
+  this->SquareFactor = quadraticFactor;
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateDiagonalMatrixElements();
   this->EvaluateCosinusTable();
@@ -191,7 +213,7 @@ RealVector& SpinChainAKLTRealHamiltonianWithTranslations::LowLevelAddMultiply(Re
 	  if (pos != dim)
 	    {
 	      Coef2 = 0.5 * Coef * TmpValue;
-	      vDestination[pos] += Coef2 * this->ExponentialTable[NbrTranslation];
+	      vDestination[pos] += Coef2 * this->LinearFactor * this->ExponentialTable[NbrTranslation];
 	      Coef2 *= this->SquareFactor;
 	      vDestination[pos] += Coef2 * this->ExponentialTable[NbrTranslation] * this->Chain->SziSzj(j, j + 1, i);
 	    }
@@ -215,7 +237,7 @@ RealVector& SpinChainAKLTRealHamiltonianWithTranslations::LowLevelAddMultiply(Re
 	  if (pos != dim)
 	    {
 	      Coef2 = 0.5 * Coef * TmpValue;
-	      vDestination[pos] += Coef2 * this->ExponentialTable[NbrTranslation];
+	      vDestination[pos] += Coef2 * this->LinearFactor * this->ExponentialTable[NbrTranslation];
 	      Coef2 *= this->SquareFactor;
 	      vDestination[pos] += Coef2 * this->Chain->SziSzj(j, j + 1, i) * this->ExponentialTable[NbrTranslation];
 	    }
@@ -240,7 +262,7 @@ RealVector& SpinChainAKLTRealHamiltonianWithTranslations::LowLevelAddMultiply(Re
       if (pos != dim)
 	{
 	  Coef2 = 0.5 * Coef * TmpValue;
-	  vDestination[pos] += Coef2 * this->ExponentialTable[NbrTranslation];
+	  vDestination[pos] += Coef2 * this->LinearFactor * this->ExponentialTable[NbrTranslation];
 	  Coef2 *= this->SquareFactor;
 	  vDestination[pos] += Coef2 * this->Chain->SziSzj(MaxPos, 0, i) * this->ExponentialTable[NbrTranslation];
 	}
@@ -264,7 +286,7 @@ RealVector& SpinChainAKLTRealHamiltonianWithTranslations::LowLevelAddMultiply(Re
       if (pos != dim)
 	{
 	  Coef2 = 0.5 * Coef * TmpValue;
-	  vDestination[pos] += Coef2 * this->ExponentialTable[NbrTranslation];
+	  vDestination[pos] += Coef2 * this->LinearFactor * this->ExponentialTable[NbrTranslation];
 	  Coef2 *= this->SquareFactor;
 	  vDestination[pos] += Coef2 * this->Chain->SziSzj(MaxPos, 0, i) * this->ExponentialTable[NbrTranslation];
 	}
@@ -323,7 +345,7 @@ RealVector* SpinChainAKLTRealHamiltonianWithTranslations::LowLevelMultipleMultip
 	  pos = this->Chain->SmiSpj(j, j + 1, i, Coef, NbrTranslation);
 	  if (pos != dim)
 	    {
-	      TmpCoef = 0.5 * Coef * this->ExponentialTable[NbrTranslation] * (1.0 + (this->SquareFactor * this->Chain->SziSzj(j, j + 1, i)));
+	      TmpCoef = 0.5 * Coef * this->ExponentialTable[NbrTranslation] * (this->LinearFactor + (this->SquareFactor * this->Chain->SziSzj(j, j + 1, i)));
 	      for (int k = 0; k < nbrVectors; ++k)
 		{
 		  vDestinations[k][pos] += TmpCoef * TmpValues[k];
@@ -360,7 +382,7 @@ RealVector* SpinChainAKLTRealHamiltonianWithTranslations::LowLevelMultipleMultip
 	  pos = this->Chain->SmiSpj(j + 1, j, i, Coef, NbrTranslation);
 	  if (pos != dim)
 	    { 
-	      TmpCoef = 0.5 * Coef * this->ExponentialTable[NbrTranslation] * (1.0 + (this->SquareFactor * this->Chain->SziSzj(j, j + 1, i)));
+	      TmpCoef = 0.5 * Coef * this->ExponentialTable[NbrTranslation] * (this->LinearFactor + (this->SquareFactor * this->Chain->SziSzj(j, j + 1, i)));
 	      for (int k = 0; k < nbrVectors; ++k)
 		{
 		  vDestinations[k][pos] += TmpCoef * TmpValues[k];
@@ -398,7 +420,7 @@ RealVector* SpinChainAKLTRealHamiltonianWithTranslations::LowLevelMultipleMultip
       pos = this->Chain->SmiSpj(MaxPos, 0, i, Coef, NbrTranslation);
       if (pos != dim)
 	{
-	  TmpCoef = 0.5 * Coef * this->ExponentialTable[NbrTranslation] * (1.0 + (this->SquareFactor * this->Chain->SziSzj(MaxPos, 0, i)));
+	  TmpCoef = 0.5 * Coef * this->ExponentialTable[NbrTranslation] * (this->LinearFactor + (this->SquareFactor * this->Chain->SziSzj(MaxPos, 0, i)));
 	  for (int k = 0; k < nbrVectors; ++k)
 	    {
 	      vDestinations[k][pos] += TmpCoef * TmpValues[k];
@@ -435,7 +457,7 @@ RealVector* SpinChainAKLTRealHamiltonianWithTranslations::LowLevelMultipleMultip
       pos = this->Chain->SmiSpj(0, MaxPos, i, Coef, NbrTranslation);
       if (pos != dim)
 	{
-	  TmpCoef = 0.5 * Coef * this->ExponentialTable[NbrTranslation] * (1.0 + this->SquareFactor * this->Chain->SziSzj(MaxPos, 0, i));
+	  TmpCoef = 0.5 * Coef * this->ExponentialTable[NbrTranslation] * (this->LinearFactor + this->SquareFactor * this->Chain->SziSzj(MaxPos, 0, i));
 	  for (int k = 0; k < nbrVectors; ++k)
 	    {
 	      vDestinations[k][pos] += TmpCoef * TmpValues[k];
@@ -487,10 +509,10 @@ void SpinChainAKLTRealHamiltonianWithTranslations::EvaluateDiagonalMatrixElement
       for (int j = 0; j < MaxSite; j++)
 	{
 	  Tmp = this->Chain->SziSzj(j, j + 1, i);
-	  this->SzSzContributions[i] += (1.0 + (this->SquareFactor * Tmp)) * Tmp;
+	  this->SzSzContributions[i] += (this->LinearFactor + (this->SquareFactor * Tmp)) * Tmp;
 	}
       Tmp = this->Chain->SziSzj(MaxSite, 0, i);
-      this->SzSzContributions[i] += (1.0 + (this->SquareFactor * Tmp)) * Tmp;
+      this->SzSzContributions[i] += (this->LinearFactor + (this->SquareFactor * Tmp)) * Tmp;
     }
 }
 
