@@ -15,6 +15,18 @@
 #include "HilbertSpace/Spin1_2ChainNew.h"
 #include "HilbertSpace/Spin1_2ChainNewAnd2DTranslation.h"
 #include "HilbertSpace/Spin1_2ChainNewSzSymmetryAnd2DTranslation.h"
+#include "HilbertSpace/Spin1_2ChainWithTranslations.h"
+#include "HilbertSpace/Spin1_2ChainWithTranslationsAndSzSymmetry.h"
+#include "HilbertSpace/Spin1_2ChainWithTranslationsAndInversionSymmetry.h"
+#include "HilbertSpace/Spin1_2ChainWithTranslationsAndSzInversionSymmetries.h"
+#include "HilbertSpace/Spin1ChainWithTranslations.h"
+#include "HilbertSpace/Spin1ChainWithTranslationsAndSzSymmetry.h"
+#include "HilbertSpace/Spin1ChainWithTranslationsAndInversionSymmetry.h"
+#include "HilbertSpace/Spin1ChainWithTranslationsAndSzInversionSymmetries.h"
+#include "HilbertSpace/Spin2ChainWithTranslations.h"
+#include "HilbertSpace/Spin2ChainWithTranslationsAndSzSymmetry.h"
+#include "HilbertSpace/Spin2ChainWithTranslationsAndInversionSymmetry.h"
+#include "HilbertSpace/Spin2ChainWithTranslationsAndSzInversionSymmetries.h"
 
 
 
@@ -101,31 +113,61 @@ int main(int argc, char** argv)
       if (SpinWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrSites, SzValue[0], SpinValue, XMomentum[0], XPeriodicity,
 								YMomentum[0], YPeriodicity) == false)
 	{
-	  TotalSpinConservedFlag = false;
+	  TotalSpinConservedFlag = true;
 	  if (SpinWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrSites, SpinValue, XMomentum[0], XPeriodicity, 
 								    YMomentum[0], YPeriodicity) == false)
 	    {
-	      cout << "error while retrieving system parameters from file name " <<Manager.GetString("input-state")  << endl;
-	      return -1;
-	    }
-	  InversionFlag = SpinWith2DTranslationInversionFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrSites, SpinValue, XMomentum[0], XPeriodicity, 
-											 YMomentum[0], YPeriodicity, InversionSector[0]);
-	  if (InversionFlag == false)
-	    cout << "error" << endl;
+	      YPeriodicity = 0;
+	      if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrSites, SzValue[0], SpinValue, XMomentum[0], InversionSector[0], SzParitySector[0]) == false)
+		{
+		  if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrSites, SzValue[0], SpinValue, XMomentum[0]) == false)
+		    {
+		      if (SpinFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrSites, SzValue[0], SpinValue) == false)
+			{
+			  TotalSpinConservedFlag = false;
+			  if (SpinFindSystemInfoFromFileName(Manager.GetString("input-state"), NbrSites, SpinValue) == false)
+			    {
+			      cout << "error while retrieving system parameters from file name " << Manager.GetString("input-state") << endl;
+			      return -1;
+			    }
+			}
+		    }
+		  else
+		    {
+		      XPeriodicity = NbrSites;
+		    }
+		}
+	      else
+		{
+		  XPeriodicity = NbrSites;
+		  if (InversionSector[0] != 0)
+		    InversionFlag = true;
+		  if (SzParitySector[0] != 0)
+		    SzSymmetryFlag = true;
+		}
+	    }	  
 	  else
-	    cout << "OK" << " " << InversionSector[0] << endl;
+	    {
+	      InversionFlag = SpinWith2DTranslationInversionFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrSites, SpinValue, XMomentum[0], XPeriodicity, 
+											     YMomentum[0], YPeriodicity, InversionSector[0]);
+	      if (InversionFlag == false)
+		{
+		  cout << "error while retrieving system parameters from file name " <<Manager.GetString("input-state")  << endl;
+		  return -1;
+		}
+	    }
 	}
       else
 	{
 	  InversionFlag = SpinWith2DTranslationInversionFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrSites, SzValue[0], SpinValue, XMomentum[0], XPeriodicity,
 											 YMomentum[0], YPeriodicity, InversionSector[0]);
 	  if (SzValue[0] == 0)
-	  {
-	    SpinFindSystemInfoFromVectorFileName((Manager.GetString("input-state")), NbrSites, SzValue[0], SpinValue, InversionSector[0], SzParitySector[0]);
-	    cout << NbrSites << " " << SzValue[0] << " " << SpinValue << " " << XMomentum[0] << " " << XPeriodicity << " " << YMomentum[0] << " " <<  YPeriodicity << " " << SzParitySector[0] << endl;
-	    if (SzParitySector[0] != 0)
-	      SzSymmetryFlag = true;
-	  }
+	    {
+	      SpinFindSystemInfoFromVectorFileName((Manager.GetString("input-state")), NbrSites, SzValue[0], SpinValue, InversionSector[0], SzParitySector[0]);
+	      cout << NbrSites << " " << SzValue[0] << " " << SpinValue << " " << XMomentum[0] << " " << XPeriodicity << " " << YMomentum[0] << " " <<  YPeriodicity << " " << SzParitySector[0] << endl;
+	      if (SzParitySector[0] != 0)
+		SzSymmetryFlag = true;
+	    }
 	}
     }
   else
@@ -144,12 +186,6 @@ int main(int argc, char** argv)
       for (int i = 0; i < NbrInputStates; ++i)
 	{
 	  InversionSector[i] = 0;
-	  // 	if ((FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(DegenerateFile(0,i), NbrParticles, NbrSites, XMomentum[i], YMomentum[i],  XPeriodicity, YPeriodicity, Statistics, GutzwillerFlag) == false) && (FTIHubbardModelWith1DTranslationFindSystemInfoFromVectorFileName(DegenerateFile(0,i), NbrParticles, NbrSites, XMomentum[i], XPeriodicity, Statistics, GutzwillerFlag) == false))
-	  // 	  {
-	  // 	    cout << "error while retrieving system parameters from file name " << DegenerateFile(0, i) << endl;
-	  // 	    return -1;
-	  // 	  }
-	  // 	  TotalSpinConservedFlag = FTIHubbardModelWithSzFindSystemInfoFromVectorFileName (DegenerateFile(0, i), NbrParticles, NbrSites, SzValue[i], Statistics, GutzwillerFlag);
 	}
       
     }
@@ -244,6 +280,84 @@ int main(int argc, char** argv)
 	    {
 	      switch (SpinValue)
 		{
+		case 1 :
+		  {
+		    if (InversionFlag == true)
+		      {
+			if (SzSymmetryFlag == true)
+			  {
+			    InputSpace[i] = new Spin1_2ChainWithTranslationsAndSzInversionSymmetries (NbrSites, XMomentum[i], 1, InversionSector[i], SzParitySector[i], SzValue[i], 1000000, 1000000);
+			  }
+			else
+			  {
+			    InputSpace[i] = new Spin1_2ChainWithTranslationsAndInversionSymmetry (NbrSites, XMomentum[i], 1, InversionSector[i], SzValue[i], 1000000, 1000000);
+			  }
+		      }
+		    else
+		      {
+			if (SzSymmetryFlag == true)
+			  {
+			    InputSpace[i] = new Spin1_2ChainWithTranslationsAndSzSymmetry (NbrSites, XMomentum[i], 1, SzParitySector[i], SzValue[i], 1000000, 1000000);
+			  }
+			else
+			  {
+			    InputSpace[i] = new Spin1_2ChainWithTranslations (NbrSites, XMomentum[i], 1, SzValue[i], 1000000, 1000000);
+			  }
+		      }
+		  }
+		  break;
+		case 2 :
+		  {
+		    if (InversionFlag == true)
+		      {
+			if (SzSymmetryFlag == true)
+			  {
+			    InputSpace[i] = new Spin1ChainWithTranslationsAndSzInversionSymmetries (NbrSites, XMomentum[i], InversionSector[i], SzParitySector[i], SzValue[i]);
+			  }
+			else
+			  {
+			    InputSpace[i] = new Spin1ChainWithTranslationsAndInversionSymmetry (NbrSites, XMomentum[i], InversionSector[i], SzValue[i]);
+			  }
+		      }
+		    else
+		      {
+			if (SzSymmetryFlag == true)
+			  {
+			    InputSpace[i] = new Spin1ChainWithTranslationsAndSzSymmetry (NbrSites, XMomentum[i], SzParitySector[i], SzValue[i]);
+			  }
+			else
+			  {
+			    InputSpace[i] = new Spin1ChainWithTranslations (NbrSites, XMomentum[i], SzValue[i]);
+			  }
+		      }
+		  }
+		  break;
+		case 4 :
+		  {
+		    if (InversionFlag == true)
+		      {
+			if (SzSymmetryFlag == true)
+			  {
+			    InputSpace[i] = new Spin2ChainWithTranslationsAndSzInversionSymmetries (NbrSites, XMomentum[i], InversionSector[i], SzParitySector[i], SzValue[i]);
+			  }
+			else
+			  {
+			    InputSpace[i] = new Spin2ChainWithTranslationsAndInversionSymmetry (NbrSites, XMomentum[i], InversionSector[i], SzValue[i]);
+			  }
+		      }
+		    else
+		      {
+			if (SzSymmetryFlag == true)
+			  {
+			    InputSpace[i] = new Spin2ChainWithTranslationsAndSzSymmetry (NbrSites, XMomentum[i], SzParitySector[i], SzValue[i]);
+			  }
+			else
+			  {
+			    InputSpace[i] = new Spin2ChainWithTranslations (NbrSites, XMomentum[i], SzValue[i]);
+			  }
+		      }
+		  }
+		  break;
 		default :
 		  {
 		    if ((SpinValue & 1) == 0)
@@ -381,7 +495,28 @@ int main(int argc, char** argv)
       if (YPeriodicity == 0)
 	{
 	  sprintf (XPeriodicityString, "_x_%d", XPeriodicity);
-	  sprintf (XMomentumString, "_kx_%d", XMomentum[i]);
+	  if (strstr(InputStateNames[i], "_kx_") == 0)
+	    {
+	      if (SzSymmetryFlag == false)
+		{
+		  sprintf (XMomentumString, "_k_%d", XMomentum[i]);
+		}
+	      else
+		{
+		  sprintf (XMomentumString, "_szsym_%d_k_%d", SzParitySector[i], XMomentum[i]);
+		}
+	    }
+	  else
+	    {
+	      if (SzSymmetryFlag == false)
+		{
+		  sprintf (XMomentumString, "_kx_%d", XMomentum[i]);
+		}
+	      else
+		{
+		  sprintf (XMomentumString, "_szsym_%d_kx_%d", SzParitySector[i], XMomentum[i]);
+		}
+	    }
 	}
       else
 	{
@@ -393,7 +528,13 @@ int main(int argc, char** argv)
 	}
       
       char* VectorOutputName = ReplaceString(InputStateNames[i], XMomentumString, "");
-      ComplexVector TmpVector = InputSpace[i]->ConvertFromKxKyBasis(InputStates[i], OutputSpace[i]);
+      if (VectorOutputName == 0)
+	{
+	  cout << "can't replace pattern " << XMomentumString << " in file name " << InputStateNames[i] << endl;
+	  return -1;
+	}
+      ComplexVector TmpVector;
+      TmpVector = InputSpace[i]->ConvertFromKxKyBasis(InputStates[i], OutputSpace[i]);
       char* Extension = new char[256];
       sprintf (Extension, "%d.vec", i);
       VectorOutputName = ReplaceExtensionToFileName(VectorOutputName, "vec", Extension);

@@ -290,6 +290,20 @@ class Spin1ChainWithTranslations : public AbstractSpinChainWithTranslations
   // return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
   virtual ComplexMatrix EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
 
+  // convert a state defined in the real space basis into a state in the (Kx,Ky) basis
+  //
+  // state = reference on the state to convert
+  // space = pointer to the Hilbert space where state is defined
+  // return value = state in the (Kx,Ky) basis
+  virtual ComplexVector ConvertToKxKyBasis(ComplexVector& state, AbstractSpinChain* space);
+
+  // convert a state defined in the (Kx,Ky) basis into a state in the real space basis
+  //
+  // state = reference on the state to convert
+  // space = pointer to the Hilbert space where state is defined
+  // return value = state in the (Kx,Ky) basis
+  virtual ComplexVector ConvertFromKxKyBasis(ComplexVector& state, AbstractSpinChain* space);
+
  protected:
 
   // factorized code that is used to symmetrize the result of any operator action

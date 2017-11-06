@@ -1420,3 +1420,57 @@ ComplexMatrix Spin1ChainWithTranslations::EvaluatePartialEntanglementMatrix (int
   return TmpEntanglementMatrix;
 }
 
+// convert a state defined in the real space basis into a state in the (Kx,Ky) basis
+//
+// state = reference on the state to convert
+// space = pointer to the Hilbert space where state is defined
+// return value = state in the (Kx,Ky) basis
+
+ComplexVector Spin1ChainWithTranslations::ConvertToKxKyBasis(ComplexVector& state, AbstractSpinChain* space)
+{
+  Spin1Chain* TmpSpace = (Spin1Chain*) space;
+  ComplexVector TmpVector (this->HilbertSpaceDimension, true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState = this->StateDescription[i];
+      int Pos = TmpSpace->FindStateIndex(TmpState);
+      if (Pos < TmpSpace->HilbertSpaceDimension)
+	{
+	  TmpVector[i] =  state[Pos] * sqrt((double) this->NbrStateInOrbit[i]);
+	}
+    }
+  return TmpVector;
+}
+
+// convert a state defined in the (Kx,Ky) basis into a state in the real space basis
+//
+// state = reference on the state to convert
+// space = pointer to the Hilbert space where state is defined
+// return value = state in the (Kx,Ky) basis
+
+ComplexVector Spin1ChainWithTranslations::ConvertFromKxKyBasis(ComplexVector& state, AbstractSpinChain* space)
+{
+  Spin1Chain* TmpSpace = (Spin1Chain*) space;
+  ComplexVector TmpVector (TmpSpace->HilbertSpaceDimension, true);
+  Complex* FourrierCoefficients = new Complex [this->MaxXMomentum];  
+  for (int i = 0; i < this->MaxXMomentum; ++i)
+    {
+      FourrierCoefficients[i] = Phase (-2.0 * M_PI * ((double) (i * this->Momentum) / ((double) this->MaxXMomentum)));
+    }
+   
+  int NbrTranslations;
+  double TmpCoefficient;
+  for (int i = 0; i < TmpSpace->HilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState = TmpSpace->StateDescription[i];
+      TmpCoefficient = 1.0;
+      int Pos = this->SymmetrizeResult(TmpState, 1, TmpCoefficient, NbrTranslations);
+      if (Pos < this->HilbertSpaceDimension)
+	{
+	  TmpVector[i] =  (state[Pos] * TmpCoefficient * FourrierCoefficients[NbrTranslations]);
+	}
+    }
+  delete[] FourrierCoefficients;
+  return TmpVector;
+}
+  
