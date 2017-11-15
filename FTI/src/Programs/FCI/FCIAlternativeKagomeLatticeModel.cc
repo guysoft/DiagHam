@@ -62,10 +62,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "ny2", "second coordinate of the second spanning vector of the tilted lattice", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "offset", "second coordinate in momentum space of the second spanning vector of the reciprocal lattice (0 if lattice is untilted or if Ny = 1)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive two-body nearest neighbor potential strength", 1.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive two-body nearest next neighbor potential strength", 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "w-potential", "repulsive three-body nearest neighbor potential strength", 1.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "s-potential", "repulsive three-body next-to-nearest neighbor potential strength", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive nearest neighbor potential strength (or on-site density-density potential for bosons)", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive next nearest neighbor potential strength (or nearest neighbor density-density potential for bosons)", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "w-potential", "repulsive next next nearest neighbor potential strength (or next nearest neighbor density-density potential for bosons)", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "3bw-potential", "repulsive three-body nearest neighbor potential strength", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "3bs-potential", "repulsive three-body next-to-nearest neighbor potential strength", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "three-body", "use a three-body interaction in addition to a two-body interaction");
   (*SystemGroup) += new BooleanOption  ('\n', "four-body", "use a four-body interaction in addition to a two-body interaction");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t1", "nearest neighbor hoping amplitude", 1.0);
@@ -129,7 +130,7 @@ int main(int argc, char** argv)
 	  cout << "Boundary conditions define a lattice that has a number of sites different from NbrSiteX * NbrSiteY - should have (nx1*ny2 - nx2*ny1) = NbrSiteX * NbrSiteY " << endl;
 	  return 0;
 	}
-      if (((offset*ny2 - ny1) % NbrSiteX) != 0 || ((nx1 - offset*nx2) % NbrSiteX != 0))
+      if ((((offset*ny2 - ny1) % NbrSiteX) != 0) || (((nx1 - offset*nx2) % NbrSiteX) != 0))
 	{
 	  cout << "Tilted lattice not properly defined. Should have ((offset*ny2 - ny1) % NbrSiteX) = 0 and ((nx1 - offset*nx2) % NbrSiteX = 0) to verify momentum conservation" << endl;
 	  return 0;
@@ -161,12 +162,19 @@ int main(int argc, char** argv)
 	  lenFilePrefix += sprintf (FilePrefix, "%s_singleband_fourbody_kagome_band_%d_n_%d_x_%d_y_%d", StatisticPrefix, BandIndex, NbrParticles, NbrSiteX, NbrSiteY);
 	}
     }
-  
-  lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_u_%f_v_%f", Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"));
+ 
+  if (Manager.GetDouble("w-potential") == 0.0)
+    {
+      lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_u_%f_v_%f", Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"));
+    }
+  else
+    {
+      lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_u_%f_v_%f_w_%f", Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"));
+    }
   if ((Manager.GetBoolean("three-body") == true || Manager.GetBoolean("four-body") == true))
-    lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_w_%f", Manager.GetDouble("w-potential"));
+    lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_3bw_%f", Manager.GetDouble("3bw-potential"));
   if ((Manager.GetBoolean("three-body") == true || Manager.GetBoolean("four-body") == true))
-    lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_s_%f", Manager.GetDouble("s-potential"));
+    lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_3bs_%f", Manager.GetDouble("3bs-potential"));
   
   char* FileParameterString = new char [256];
   sprintf (FileParameterString, "t1_%g_t2_%g_l1_%g_l2_%g", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"));
@@ -287,6 +295,7 @@ int main(int argc, char** argv)
             {
 	      Hamiltonian = new ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, TightBindingModel,
 											       Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
+											       Manager.GetDouble("w-potential"), 
 											       BandIndex, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
             }
 	  else
@@ -294,7 +303,7 @@ int main(int argc, char** argv)
 	      if (Manager.GetBoolean("three-body") == true)
                 {
 		  Hamiltonian = new ParticleOnLatticeAlternativeKagomeLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, TightBindingModel,
-													    Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("s-potential"),
+													    Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("3bw-potential"), Manager.GetDouble("3bs-potential"),
 													    BandIndex, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
                 }
 	      else

@@ -55,10 +55,12 @@ protected:
     // index of the band that has to be partially filled
     int BandIndex;
 
-    // nearest neighbor density-density potential strength
+    // nearest neighbor density-density potential strength (or on-site density-density potential for bosons)
     double UPotential;
-    // second nearest neighbor density-density potential strength
+    // second nearest neighbor density-density potential strength (or nearest neighbor density-density potential for bosons)
     double VPotential;
+    // third nearest neighbor density-density potential strength (or next nearest neighbor density-density potential for bosons)
+    double WPotential;
 
     // use flat band model
     bool FlatBand;
@@ -76,16 +78,19 @@ public:
     // nbrSiteX = number of sites in the x direction
     // nbrSiteY = number of sites in the y direction
     // tightBindingModel = pointer to the tight binding model
-    // uPotential = strength of the repulsive two body nearest neighbor interaction
-    // vPotential = strength of the repulsive two body second nearest neighbor interaction
+    // uPotential = strength of the repulsive two body neareast neighbor interaction
+    // vPotential = strength of the repulsive two body second nearest neighbor interactio
+    // wPotential = strength of the repulsive two body third nearest neighbor interaction (or next nearest neighbor density-density potential for bosons)
     // gammaX = boundary condition twisting angle along x
     // gammaY = boundary condition twisting angle along y
     // bandIndex = index of the band that has to be partially filled
     // flatBandFlag = use flat band model
     // architecture = architecture to use for precalculation
     // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-    ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, Abstract2DTightBindingModel* tightBindingModel,
-            double uPotential, double vPotential, int bandIndex, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+    ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
+								   Abstract2DTightBindingModel* tightBindingModel,
+								   double uPotential, double vPotential, double wPotential, int bandIndex, bool flatBandFlag, 
+								   AbstractArchitecture* architecture, long memory = -1);
 
     // destructor
     //
