@@ -60,6 +60,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  BooleanOption ('\n', "use-periodic", "use periodic boundary conditions");
   (*SystemGroup) += new  BooleanOption ('\n', "disable-szsymmetry", "disable the Sz<->-Sz symmetry");
   (*SystemGroup) += new  BooleanOption ('\n', "disable-inversionsymmetry", "disable the inversion symmetry");
+  (*SystemGroup) += new  SingleDoubleOption ('\n', "additional-quadratic", "coefficient in front of the additional quadratic term (0 being the pure AKLT hamiltonian)", 0.0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -89,53 +90,69 @@ int main(int argc, char** argv)
     sprintf (BoundaryName, "closed");
   if ((SpinValue & 1) == 0)
     {
-      sprintf (OutputFileName, "spin_%d_%saklt_n_%d", (SpinValue / 2), BoundaryName, NbrSpins);
+      if (Manager.GetDouble("additional-quadratic") != 0.0)
+	{
+	  sprintf (OutputFileName, "spin_%d_%saklt_quadratic_%.6f_n_%d", (SpinValue / 2), BoundaryName, 
+		   Manager.GetDouble("additional-quadratic"), NbrSpins);
+	}
+      else
+	{
+	  sprintf (OutputFileName, "spin_%d_%saklt_n_%d", (SpinValue / 2), BoundaryName, NbrSpins);
+	}
       if (Manager.GetBoolean("disable-szsymmetry") == false)
 	{
 	  if (Manager.GetBoolean("disable-inversionsymmetry") == false)
 	    {
-	      sprintf (CommentLine, " periodic spin %d chain with %d sites \n# 2Sz SzSym InvSym ", (SpinValue / 2), NbrSpins);
+	      sprintf (CommentLine, " %s spin %d chain with %d sites \n# 2Sz SzSym InvSym ", BoundaryName, (SpinValue / 2), NbrSpins);
 	    }
 	  else
 	    {
-	      sprintf (CommentLine, " periodic spin %d chain with %d sites \n# 2Sz SzSym ", (SpinValue / 2), NbrSpins);
+	      sprintf (CommentLine, " %s spin %d chain with %d sites \n# 2Sz SzSym ", BoundaryName, (SpinValue / 2), NbrSpins);
 	    }
 	}
       else
 	{
 	  if (Manager.GetBoolean("disable-inversionsymmetry") == false)
 	    {
-	      sprintf (CommentLine, " periodic spin %d chain with %d sites \n# 2Sz InvSym ", (SpinValue / 2), NbrSpins);
+	      sprintf (CommentLine, " %s spin %d chain with %d sites \n# 2Sz InvSym ", BoundaryName, (SpinValue / 2), NbrSpins);
 	    }
 	  else
 	    {
-	      sprintf (CommentLine, " periodic spin %d chain with %d sites \n# 2Sz ", (SpinValue / 2), NbrSpins);
+	      sprintf (CommentLine, " %s spin %d chain with %d sites \n# 2Sz ", BoundaryName, (SpinValue / 2), NbrSpins);
 	    }
 	}
     }
   else
     {
-      sprintf (OutputFileName, "spin_%d_2_periodicaklt_n_%d", SpinValue, NbrSpins);
+      if (Manager.GetDouble("additional-quadratic") != 0.0)
+	{
+	  sprintf (OutputFileName, "spin_%d_2_%saklt_quadratic_%.6f_n_%d", SpinValue, BoundaryName, 
+		   Manager.GetDouble("additional-quadratic"), NbrSpins);
+	}
+      else
+	{
+	  sprintf (OutputFileName, "spin_%d_2_%saklt_n_%d", SpinValue, BoundaryName, NbrSpins);
+	}
       if (Manager.GetBoolean("disable-szsymmetry") == false)
 	{
 	  if (Manager.GetBoolean("disable-inversionsymmetry") == false)
 	    {
-	      sprintf (CommentLine, " periodic spin %d/2 chain with %d sites \n# 2Sz SzSym InvSym ", SpinValue, NbrSpins);
+	      sprintf (CommentLine, " %s spin %d/2 chain with %d sites \n# 2Sz SzSym InvSym ", BoundaryName, SpinValue, NbrSpins);
 	    }
 	  else
 	    {
-	      sprintf (CommentLine, " periodic spin %d/2 chain with %d sites \n# 2Sz SzSym ", SpinValue, NbrSpins);
+	      sprintf (CommentLine, " %s spin %d/2 chain with %d sites \n# 2Sz SzSym ", BoundaryName, SpinValue, NbrSpins);
 	    }
 	}
       else
 	{
 	  if (Manager.GetBoolean("disable-inversionsymmetry") == false)
 	    {
-	      sprintf (CommentLine, " periodic spin %d/2 chain with %d sites \n# 2Sz InvSym ", SpinValue, NbrSpins);
+	      sprintf (CommentLine, " %s spin %d/2 chain with %d sites \n# 2Sz InvSym ", BoundaryName, SpinValue, NbrSpins);
 	    }
 	  else
 	    {
-	      sprintf (CommentLine, " periodic spin %d/2 chain with %d sites \n# 2Sz ", SpinValue, NbrSpins);
+	      sprintf (CommentLine, " %s spin %d/2 chain with %d sites \n# 2Sz ", BoundaryName, SpinValue, NbrSpins);
 	    }
 	}
     }
@@ -181,7 +198,7 @@ int main(int argc, char** argv)
 		  if (Chain->GetHilbertSpaceDimension() > 0)
 		    {
 		      cout << "Sz = " << InitalSzValue << ", Sz<->-Sz sector=" << SzSymmetrySector << ", inversion sector=" << InversionSymmetrySector << endl; 
-		      SpinChainAKLTHamiltonian Hamiltonian (Chain, NbrSpins, 1.0, Manager.GetBoolean("use-periodic"));
+		      SpinChainAKLTHamiltonian Hamiltonian (Chain, NbrSpins, 1.0 + 3.0 * Manager.GetDouble("additional-quadratic"), Manager.GetBoolean("use-periodic"));
 		      char* TmpSzString = new char[64];
 		      sprintf (TmpSzString, "%d %d %d", InitalSzValue, SzSymmetrySector, InversionSymmetrySector);
 		      char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
@@ -217,7 +234,7 @@ int main(int argc, char** argv)
 	      if (Chain->GetHilbertSpaceDimension() > 0)
 		{
 		  cout << "Sz = " << InitalSzValue << ", Sz<->-Sz sector=" << SzSymmetrySector << endl; 
-		  SpinChainAKLTHamiltonian Hamiltonian (Chain, NbrSpins, 1.0, Manager.GetBoolean("use-periodic"));
+		  SpinChainAKLTHamiltonian Hamiltonian (Chain, NbrSpins, 1.0 + 3.0 * Manager.GetDouble("additional-quadratic"), Manager.GetBoolean("use-periodic"));
 		  char* TmpSzString = new char[64];
 		  sprintf (TmpSzString, "%d %d", InitalSzValue, SzSymmetrySector);
 		  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
@@ -259,7 +276,7 @@ int main(int argc, char** argv)
 	      if (Chain->GetHilbertSpaceDimension() > 0)
 		{
 		  cout << "Sz = " << InitalSzValue << ", inversion sector=" << InversionSymmetrySector << endl; 
-		  SpinChainAKLTHamiltonian Hamiltonian (Chain, NbrSpins, 1.0, Manager.GetBoolean("use-periodic"));
+		  SpinChainAKLTHamiltonian Hamiltonian (Chain, NbrSpins, 1.0 + 3.0 * Manager.GetDouble("additional-quadratic"), Manager.GetBoolean("use-periodic"));
 		  char* TmpSzString = new char[64];
 		  if (Manager.GetBoolean("disable-szsymmetry") == false)
 		    {
@@ -305,7 +322,7 @@ int main(int argc, char** argv)
 	  if (Chain->GetHilbertSpaceDimension() > 0)
 	    {
 	      cout << "Sz = " << InitalSzValue << endl; 
-	      SpinChainAKLTHamiltonian Hamiltonian (Chain, NbrSpins, 1.0, Manager.GetBoolean("use-periodic"));
+	      SpinChainAKLTHamiltonian Hamiltonian (Chain, NbrSpins, 1.0 + 3.0 * Manager.GetDouble("additional-quadratic"), Manager.GetBoolean("use-periodic"));
 	      char* TmpSzString = new char[64];
 	      if (Manager.GetBoolean("disable-szsymmetry") == false)
 		{
