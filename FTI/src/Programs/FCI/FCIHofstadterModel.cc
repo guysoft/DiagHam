@@ -117,6 +117,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive NN(boson) or NNN (fermion) potential strength", 0.0);
   
   (*SystemGroup) += new SingleDoubleOption  ('e', "periodic-potential", "strength of an additional periodic potential", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "on-site chemical potential (enlarges unit cell by factor of 2 in X direction)", 0.0);
+  (*SystemGroup) += new  BooleanOption  ('\n', "enlarge-cell", "enlarge unit cell by factor of 2 in X direction without changing the flux density", false);
   
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "tunnelling along a selected direction (t=1 along others)", 1.0);
   
@@ -177,6 +179,10 @@ int main(int argc, char** argv)
   int FluxPerCell = Manager.GetInteger("flux-per-cell");
   
   double PeriodicPotentialStrength = Manager.GetDouble("periodic-potential");
+  double MuPotential = Manager.GetDouble("mu-s");
+  bool EnlargeCellXFlag = Manager.GetBoolean("enlarge-cell");
+  if (MuPotential != 0.0)
+    EnlargeCellXFlag = true;
   
   int MinBand = Manager.GetInteger("band-min");
   int MaxBand = Manager.GetInteger("band-max");
@@ -269,7 +275,8 @@ int main(int argc, char** argv)
 	      else
 		lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_b_%d-%d", MinBand, MaxBand);
 	    }
-	  
+	  if (EnlargeCellXFlag == true)
+	    lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_Xeff_%d", (2 * UnitCellX));
 	  if (Manager.GetBoolean("landau-x"))
 	    lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_landau-x");
 	}
@@ -346,6 +353,8 @@ int main(int argc, char** argv)
 	lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_v_%g",Manager.GetDouble("v-potential"));
       if (PeriodicPotentialStrength!=0.0)
 	lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_epsilon_%g",PeriodicPotentialStrength);
+      if (MuPotential != 0.0)
+	lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_mus_%g", MuPotential);
       
       lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_gx_%g_gy_%g", Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
       if (EmbeddingFlag)
@@ -362,7 +371,12 @@ int main(int argc, char** argv)
       
       Abstract2DTightBindingModel *TightBindingModel;
       if (Manager.GetBoolean("triangular")==false)
-	TightBindingModel= new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody, EmbeddingFlag, Precision);
+      {
+	if ((MuPotential == 0.0) && (EnlargeCellXFlag == false))
+	  TightBindingModel= new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody, EmbeddingFlag, Precision);
+	else
+	  TightBindingModel= new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, MuPotential, 2*UnitCellX, Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody, EmbeddingFlag, Precision);
+      }
       else
 	TightBindingModel= new TightBindingModelHofstadterTriangular(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody, EmbeddingFlag);
       
@@ -448,8 +462,13 @@ int main(int argc, char** argv)
   
 
   Abstract2DTightBindingModel *TightBindingModel;
-  if (Manager.GetBoolean("triangular") == false)
-    TightBindingModel= new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true, EmbeddingFlag, Precision);
+  if (Manager.GetBoolean("triangular")==false)
+      {
+	if ((MuPotential == 0.0) && (EnlargeCellXFlag == false))
+	  TightBindingModel= new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true, EmbeddingFlag, Precision);
+	else
+	  TightBindingModel= new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, MuPotential, 2*UnitCellX, Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true, EmbeddingFlag, Precision);
+      }
   else
     TightBindingModel= new TightBindingModelHofstadterTriangular(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis,
 								 Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true, EmbeddingFlag);
