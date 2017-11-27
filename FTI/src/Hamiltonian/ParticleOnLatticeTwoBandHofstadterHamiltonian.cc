@@ -630,7 +630,7 @@ void ParticleOnLatticeTwoBandHofstadterHamiltonian::EvaluateInteractionFactors()
 			  if (Index3 == Index4)
 			    Tmp *= 0.5;
 			  (*TmpInteractionFactor) = 2.0*Tmp;
-
+  
 			  if (this->VPotential != 0.0)		    
 			    {
 			      cout<< "VPotential yet needs to be implemented!"<<endl;
@@ -730,8 +730,6 @@ void ParticleOnLatticeTwoBandHofstadterHamiltonian::EvaluateInteractionFactors()
 		      for (int j = 0; j < this->NbrIntraSectorSums; ++j)
 			{
 			  InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j] = new Complex [this->NbrInterSectorIndicesPerSum[j] * this->NbrInterSectorIndicesPerSum[j]];
-// 			  int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
-// 			  TmpIndices = this->IntraSectorIndicesPerSum[j];
 			  int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
 			  TmpIndices2 = this->InterSectorIndicesPerSum[j];
 			  for (int i1 = 0; i1 < Lim2; i1 += 2)
@@ -765,11 +763,11 @@ void ParticleOnLatticeTwoBandHofstadterHamiltonian::EvaluateInteractionFactors()
       //  upup upup coefficient
       this->InteractionFactorsupupupup = InteractionFactorsSigma[0][0][0][0];
       //  upup downdown coefficient
-      this->InteractionFactorsupupdowndown = InteractionFactorsSigma[1][1][0][0];
+      this->InteractionFactorsupupdowndown = InteractionFactorsSigma[0][0][1][1];
       //  downdown downdown coefficient
       this->InteractionFactorsdowndowndowndown = InteractionFactorsSigma[1][1][1][1];
       //  downdown upup coefficient
-      this->InteractionFactorsdowndownupup = InteractionFactorsSigma[0][0][1][1];
+      this->InteractionFactorsdowndownupup = InteractionFactorsSigma[1][1][0][0];
 
       //  updown upup coefficient
       this->InteractionFactorsupdownupup = InteractionFactorsSigma[0][1][0][0];
@@ -785,7 +783,6 @@ void ParticleOnLatticeTwoBandHofstadterHamiltonian::EvaluateInteractionFactors()
       this->InteractionFactorsupdownupdown = InteractionFactorsSigma[0][1][0][1];
 
     }
-  
 
   delete[] OneBodyBasis;
   cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;

@@ -416,7 +416,6 @@ void ParticleOnLatticeHofstadterSingleBandHamiltonian::EvaluateInteractionFactor
 		    Tmp *= 0.5;
 
 		  this->InteractionFactors[i][Index] = 2.0 * FactorU * Tmp;
-		  
 		  if (this->VPotential != 0.0)		    
 		    {
 		      int xI, yI, dRx, dRy, sF;
