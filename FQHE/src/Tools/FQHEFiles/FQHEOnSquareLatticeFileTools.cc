@@ -596,3 +596,47 @@ bool FQHEOnSquareLatticeFindSystemInfoFromVectorFileName_Hofstadter(char* filena
   FilenamePenultimateDotIntegerSearch(NbrState, filename);
   return true;
 }
+
+
+// try to guess system information from file name for a Hofstadter lattice model
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles 
+// NbrCellX = number of magnetic unit cells along X
+// NbrCellY = number of magnetic unit cells along Y
+// Interaction = onsite interaction
+// FluxPerCell = number of flux quanta per unit cell
+// NbrState = number of the eigenstate
+// Statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// Hardcore = flag indicating hard-core bosons
+// EmbeddingFlag = flag indicating whether embedding is used
+// Axis = character indicating axis of Landau gauge
+// GammaX = periodic boundary conditions along X
+// GammaY = periodic boundary conditions along Y
+// MomentumX = momentum along x-direction
+// MomentumY = momentum along y-direction
+// UnitCellX = size of magnetic unit cell along x
+// UnitCellY = size of magnetic unit cell along y
+// enlargeCell = true if unit cell contains 2 * FluxPerCell magnetic fluxes
+// muS = amplitude of the symmetry-breaking on-site potential
+// nbrBands = number of bands that have to be considered
+// return value = true if no error occured
+// 
+bool FQHEOnSquareLatticeFindSystemInfoFromVectorFileName_Hofstadter(char* filename, int& NbrParticles, int& NbrCellX, int& NbrCellY, double& Interaction, int& FluxPerCell, int& NbrState, bool& Statistics, bool& Hardcore, bool& EmbeddingFlag, char& Axis, double& GammaX, double& GammaY, int& MomentumX, int& MomentumY, int& UnitCellX, int& UnitCellY, bool& enlargeCell, double& muS, int& nbrBands)
+{
+  if (FQHEOnSquareLatticeFindSystemInfoFromVectorFileName_Hofstadter(filename, NbrParticles, NbrCellX, NbrCellY, Interaction, FluxPerCell, NbrState, Statistics, Hardcore, EmbeddingFlag, Axis, GammaX, GammaY, MomentumX, MomentumY, UnitCellX, UnitCellY) == false)
+    return false;
+    
+  FilenameBooleanSearch (enlargeCell, filename, "_Xeff_");
+  if (enlargeCell == false)
+    return false;
+  FilenameDoubleSearch (muS, filename, "_mus_");
+  bool multipleBands = false;
+  FilenameBooleanSearch (multipleBands, filename, "_b_0-");
+  if (multipleBands)
+    FilenameIntegerSearch (nbrBands, filename, "_b_0-");
+  else
+    nbrBands = 0;
+  ++nbrBands;
+  return true;  
+}
