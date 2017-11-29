@@ -119,6 +119,9 @@ int main(int argc, char** argv)
   int NbrBands = 1;
   bool EnlargeCell = false;
   double MuPotential = 0.0;
+  double t1 = 0.0;
+  double t2 = 0.0;
+  
   
   if (FQHEOnSquareLatticeFindSystemInfoFromVectorFileName_Hofstadter(Manager.GetString("state"), NbrParticles, NbrCellX, NbrCellY, Interaction, FluxPerCell, NbrState, Statistics, Hardcore, EmbeddingFlag, Axis, GammaX, GammaY, MomentumX, MomentumY, UnitCellX, UnitCellY, EnlargeCell, MuPotential, NbrBands) == false)
     {
@@ -131,7 +134,10 @@ int main(int argc, char** argv)
    
   int FullUnitCellX = UnitCellX;
   if (EnlargeCell)
+  {
     FullUnitCellX = 2 * UnitCellX;
+    cout << "Warning: autodetect of t1 and t2 not implemented" << endl;
+  }
 
   cout << setw(20) << std::left << "Statistics" << setw(20) << std::left << Statistics << endl;
   cout << setw(20) << std::left << "UnitCellX" << setw(20) << std::left << UnitCellX << endl;
@@ -183,7 +189,7 @@ int main(int argc, char** argv)
   if (EnlargeCell == false)
     tightBindingModel = new TightBindingModelHofstadterSquare (NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, GammaX, GammaY, Architecture.GetArchitecture(), true, EmbeddingFlag);
   else
-    tightBindingModel = new TightBindingModelHofstadterSquare (NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, MuPotential, FullUnitCellX, Axis, GammaX, GammaY, Architecture.GetArchitecture(), true, EmbeddingFlag);
+    tightBindingModel = new TightBindingModelHofstadterSquare (NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, MuPotential, FullUnitCellX, t1, t2, Axis, GammaX, GammaY, Architecture.GetArchitecture(), true, EmbeddingFlag);
 
   if (DensityFlag == false)
     {
