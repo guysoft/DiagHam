@@ -24,6 +24,8 @@
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 
+#include "HilbertSpace/BosonOnSquareLatticeWithSU2SpinMomentumSpace.h"
+
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/OperatorMatrixElementOperation.h"
@@ -67,7 +69,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "k-space", "compute the density/correlation in momentum space", false);
   (*SystemGroup) += new SingleIntegerOption  ('x', "reference-x", "x-coordinate or reference site", 0);
   (*SystemGroup) += new SingleIntegerOption  ('y', "reference-y", "y-coordinate or reference site", 0);
-
+  
   (*PlotOptionGroup) += new SingleStringOption ('\n', "output", "output file name (default output name replace the .vec extension of the input file with .rho or .rhorho)", 0);
   (*PlotOptionGroup) += new SingleIntegerOption ('\n', "nbr-samplesx", "number of samples along the x direction", 100, true, 10);
   (*PlotOptionGroup) += new SingleIntegerOption ('\n', "nbr-samplesy", "number of samples along the y direction", 100, true, 10);
@@ -114,12 +116,22 @@ int main(int argc, char** argv)
   int NbrSamplesY = Manager.GetInteger("nbr-samplesy");
   bool DensityFlag = Manager.GetBoolean("density");
   bool Statistics = true;
-
-  if (FQHEOnSquareLatticeFindSystemInfoFromVectorFileName_Hofstadter(Manager.GetString("state"), NbrParticles, NbrCellX, NbrCellY, Interaction, FluxPerCell, NbrState, Statistics, Hardcore, EmbeddingFlag, Axis, GammaX, GammaY, MomentumX, MomentumY, UnitCellX, UnitCellY) == false)
+  int NbrBands = 1;
+  bool EnlargeCell = false;
+  double MuPotential = 0.0;
+  
+  if (FQHEOnSquareLatticeFindSystemInfoFromVectorFileName_Hofstadter(Manager.GetString("state"), NbrParticles, NbrCellX, NbrCellY, Interaction, FluxPerCell, NbrState, Statistics, Hardcore, EmbeddingFlag, Axis, GammaX, GammaY, MomentumX, MomentumY, UnitCellX, UnitCellY, EnlargeCell, MuPotential, NbrBands) == false)
     {
-      cout << "error while retrieving system parameters from file name " << Manager.GetString("state") << endl;
-      return -1;
+      if (FQHEOnSquareLatticeFindSystemInfoFromVectorFileName_Hofstadter(Manager.GetString("state"), NbrParticles, NbrCellX, NbrCellY, Interaction, FluxPerCell, NbrState, Statistics, Hardcore, EmbeddingFlag, Axis, GammaX, GammaY, MomentumX, MomentumY, UnitCellX, UnitCellY) == false)
+      {
+	cout << "error while retrieving system parameters from file name " << Manager.GetString("state") << endl;
+	return -1;
+      }
     }
+   
+  int FullUnitCellX = UnitCellX;
+  if (EnlargeCell)
+    FullUnitCellX = 2 * UnitCellX;
 
   cout << setw(20) << std::left << "Statistics" << setw(20) << std::left << Statistics << endl;
   cout << setw(20) << std::left << "UnitCellX" << setw(20) << std::left << UnitCellX << endl;
@@ -137,12 +149,24 @@ int main(int argc, char** argv)
   cout << setw(20) << std::left << "MomentumX" << setw(20) << std::left << MomentumX << endl;
   cout << setw(20) << std::left << "MomentumY" << setw(20) << std::left << MomentumY << endl;
   cout << setw(20) << std::left << "NbrState" << setw(20) << std::left << NbrState << endl;
+  cout << setw(20) << std::left << "NbrBands" << setw(20) << std::left << NbrBands << endl;
+  cout << setw(20) << std::left << "Mus" << setw(20) << std::left << MuPotential << endl;
 
   ParticleOnSphere* Space = 0;
   if (Statistics == true)
     Space = new FermionOnSquareLatticeMomentumSpace(NbrParticles, NbrCellX, NbrCellY, MomentumX, MomentumY);
   else
-    Space = new BosonOnSquareLatticeMomentumSpace(NbrParticles, NbrCellX, NbrCellY, MomentumX, MomentumY);
+  {
+    switch(NbrBands)
+    {
+      case 1:
+	Space = new BosonOnSquareLatticeMomentumSpace(NbrParticles, NbrCellX, NbrCellY, MomentumX, MomentumY);
+	break;
+      case 2:
+	Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace(NbrParticles, NbrCellX, NbrCellY, MomentumX, MomentumY);
+	break;
+    }
+  }
   ComplexVector ComplexState;
   if (ComplexState.ReadVector (Manager.GetString("state")) == false)
     {
@@ -155,7 +179,11 @@ int main(int argc, char** argv)
   int NbrPrecalculatedValues = 0;
 
   // use tight binding model to provide function basis and mappings of momenta
-  TightBindingModelHofstadterSquare tightBindingModel(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, GammaX, GammaY, Architecture.GetArchitecture(), true, EmbeddingFlag);
+  TightBindingModelHofstadterSquare *tightBindingModel;
+  if (EnlargeCell == false)
+    tightBindingModel = new TightBindingModelHofstadterSquare (NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, GammaX, GammaY, Architecture.GetArchitecture(), true, EmbeddingFlag);
+  else
+    tightBindingModel = new TightBindingModelHofstadterSquare (NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, MuPotential, FullUnitCellX, Axis, GammaX, GammaY, Architecture.GetArchitecture(), true, EmbeddingFlag);
 
   if (DensityFlag == false)
     {
@@ -195,10 +223,10 @@ int main(int argc, char** argv)
 			    {
 			      if (((ky1 + ky2 - ky3 - ky4) % NbrCellY) == 0)
 				{
-				  int Index1 = tightBindingModel.GetLinearizedMomentumIndex(kx1, ky1);
-				  int Index2 = tightBindingModel.GetLinearizedMomentumIndex(kx2, ky2);
-				  int Index3 = tightBindingModel.GetLinearizedMomentumIndex(kx3, ky3);
-				  int Index4 = tightBindingModel.GetLinearizedMomentumIndex(kx4, ky4);
+				  int Index1 = tightBindingModel->GetLinearizedMomentumIndex(kx1, ky1);
+				  int Index2 = tightBindingModel->GetLinearizedMomentumIndex(kx2, ky2);
+				  int Index3 = tightBindingModel->GetLinearizedMomentumIndex(kx3, ky3);
+				  int Index4 = tightBindingModel->GetLinearizedMomentumIndex(kx4, ky4);
 				  ParticleOnSphereDensityDensityOperator Operator (Space, Index1, Index2, Index3, Index4);
 				  PrecalculatedValues_rhorho[NbrPrecalculatedValues] = Operator.MatrixElement(ComplexState, ComplexState);
 				  PrecalculatedIndices[(NbrPrecalculatedValues << 2)] = Index1;
@@ -229,7 +257,7 @@ int main(int argc, char** argv)
   for (int kx =0; kx < NbrCellX; ++kx)
     for (int ky = 0; ky < NbrCellY; ++ky)
       {
-	int Index = tightBindingModel.GetLinearizedMomentumIndex(kx, ky);
+	int Index = tightBindingModel->GetLinearizedMomentumIndex(kx, ky);
 	ParticleOnSphereDensityOperator Operator (Space, Index);	    
 	PrecalculatedValues_rho[Index] = Operator.MatrixElement(ComplexState, ComplexState);
       }
@@ -271,7 +299,7 @@ int main(int argc, char** argv)
 	    for (int ky = 0; ky < NbrCellY; ++ky)
 	      {
 		int Index2 = (kx * NbrCellY) + ky;
-		int Index = tightBindingModel.GetLinearizedMomentumIndex(kx, ky);
+		int Index = tightBindingModel->GetLinearizedMomentumIndex(kx, ky);
 		assert(Index == Index2);
 		File << kx << " " << ky << " " << PrecalculatedValues_rho[Index].Re << endl;
 	      }
@@ -282,13 +310,13 @@ int main(int argc, char** argv)
 
   //
   int TotalNbrMomenta = NbrCellX * NbrCellY;
-  int NbrSublattices = UnitCellX * UnitCellY;
+  int NbrSublattices = FullUnitCellX * UnitCellY;
   Complex* Coefficients = new Complex[TotalNbrMomenta];
   Complex* Coefficients2 = new Complex[TotalNbrMomenta];
   Position[0] = Manager.GetInteger("reference-x");
   Position[1] = Manager.GetInteger("reference-y");
   for (int i = 0; i < TotalNbrMomenta; ++i){
-    tightBindingModel.GetFunctionValue(Coefficients[i], Position, i, 0); 
+    tightBindingModel->GetFunctionValue(Coefficients[i], Position, i, 0); 
   }
     
   //routine to calculate the two-particle correlation function of the form <psi|n_i n_0|psi> - <psi|n_i|psi><psi|n_0|psi>, with <psi|n_0|psi>(<psi|n_0|psi>-1) at the origin
@@ -310,16 +338,17 @@ int main(int argc, char** argv)
 	  NumTranslations[1]=Rjy;
 	  for (int alphaJ=0; alphaJ < NbrSublattices; ++alphaJ) // sublattice for r_j
 	    {
-	      tightBindingModel.GetSitePosition(Position, NumTranslations, alphaJ);
+	      tightBindingModel->GetSitePosition(Position, NumTranslations, alphaJ);
               
               Complex TmpValue = 0.0; //<psi|n_i n_0|psi>
+              
+              for (int i = 0; i < TotalNbrMomenta; ++i)
+	      {
+		tightBindingModel->GetFunctionValue(Coefficients2[i], Rjx, Rjy, alphaJ, i, 0);
+	      }
 	      
 	      if (DensityFlag == false)
 		{
-		  for (int i = 0; i < TotalNbrMomenta; ++i)
-		    {
-		      tightBindingModel.GetFunctionValue(Coefficients2[i], Rjx, Rjy, alphaJ, i, 0);
-		    }
 		  for (int i = 0; i < NbrPrecalculatedValues; ++i)
 		    {
 		      TmpValue += DensityPrefactor * Normalisation2*(PrecalculatedValues_rhorho[i] 
@@ -334,26 +363,26 @@ int main(int argc, char** argv)
 		{
 		  for (int i = 0; i < TotalNbrMomenta; ++i) 
 		    {
-		      TmpValue += PrecalculatedValues_rho[i] * SqrNorm(Coefficients[i]);
+		      TmpValue += PrecalculatedValues_rho[i] * SqrNorm(Coefficients2[i]);
 		    }
 		  TmpValue *= Normalisation;
 		}
               cout << Position[0] << " " << Position[1] << " " << TmpValue.Re << endl;
-	      Correlations[tightBindingModel.GetRealSpaceTightBindingLinearizedIndex(Rjx, Rjy, alphaJ)] = TmpValue.Re;
+	      Correlations[tightBindingModel->GetRealSpaceTightBindingLinearizedIndex(Rjx, Rjy, alphaJ)] = TmpValue.Re;
 	      assert (fabs(TmpValue.Im)<1e-12);
             }
 	}
     }
   // output in format suitable for Gnuplot:
   int tx, ty, subl;
-  for (int x=0; x< NbrCellX*UnitCellX; ++x)
+  for (int x=0; x< NbrCellX*FullUnitCellX; ++x)
     {
       Position[0]=x;
       for (int y=0; y< NbrCellY*UnitCellY; ++y)
 	{
 	  Position[1]=y;
-	  tightBindingModel.PositionToLatticeCoordinates(Position, tx, ty, subl);
-	  File << Position[0] << " " << Position[1] << " " << Correlations[tightBindingModel.GetRealSpaceTightBindingLinearizedIndex(tx, ty, subl)] << endl;
+	  tightBindingModel->PositionToLatticeCoordinates(Position, tx, ty, subl);
+	  File << Position[0] << " " << Position[1] << " " << Correlations[tightBindingModel->GetRealSpaceTightBindingLinearizedIndex(tx, ty, subl)] << endl;
 	}
       File << endl;
     }

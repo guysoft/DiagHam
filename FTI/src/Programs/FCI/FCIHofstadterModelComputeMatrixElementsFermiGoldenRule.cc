@@ -157,19 +157,19 @@ int main(int argc, char** argv)
 	TmpGammaIndex = GammaX + GammaY * NbrPointX;
 	TrueGammaX =   ( ( (double) GammaX) / ( (double) NbrPointX));
 	TrueGammaY =   ( ( (double) GammaY) / ( (double) NbrPointY));
-// 	TightBindingModel = new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, TrueGammaX, TrueGammaY, Architecture.GetArchitecture(), ExportOneBody, EmbeddingFlag, Precision);
+	TightBindingModel = new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, TrueGammaX, TrueGammaY, Architecture.GetArchitecture(), ExportOneBody, EmbeddingFlag, Precision);
 	
 	
-	double HaldanePhi;
-
-  if (Manager.GetBoolean("phase-in-pi"))
-    HaldanePhi = M_PI*Manager.GetDouble("phi");
-  else
-    HaldanePhi = Manager.GetDouble("phi");
-	TightBindingModel = new TightBindingModelHaldaneHoneycombLattice (NbrCellX, NbrCellY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
-								  HaldanePhi, Manager.GetDouble("mu-s"), TrueGammaX, TrueGammaY, Architecture.GetArchitecture(), ExportOneBody);
-	
-	
+// 	double HaldanePhi;
+// 
+//   if (Manager.GetBoolean("phase-in-pi"))
+//     HaldanePhi = M_PI*Manager.GetDouble("phi");
+//   else
+//     HaldanePhi = Manager.GetDouble("phi");
+// 	TightBindingModel = new TightBindingModelHaldaneHoneycombLattice (NbrCellX, NbrCellY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
+// 								  HaldanePhi, Manager.GetDouble("mu-s"), TrueGammaX, TrueGammaY, Architecture.GetArchitecture(), ExportOneBody);
+// 	
+// 	
 	
 	OneBodyBasis[TmpGammaIndex] = new ComplexMatrix[NbrStatesPerBand];
 	for (int i = 0; i < NbrBands; ++i)

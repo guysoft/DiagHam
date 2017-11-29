@@ -60,6 +60,10 @@ class TightBindingModelHofstadterSquare : public Abstract2DTightBindingModel
   double MuS;
   // number of sites in cell in x-direction after adding symmetry breaking staggered potential
   int FullUnitCellX;
+  //amplitude of the periodic potential with one magnetic flux per period
+  double T1;
+  //amplitude of the periodic potential with one half magnetic flux per period
+  double T2;
 
   // flag indicating whether natural embedding is used.
   bool UsingNaturalEmbedding;
@@ -96,6 +100,8 @@ class TightBindingModelHofstadterSquare : public Abstract2DTightBindingModel
   // nbrFlux = number of flux quanta per unit cell
   // muS = amplitude of staggered potential
   // fullUnitCellX = number of sites in full unit cell in x direction
+  // t1 = amplitude of one magnetic flux potential
+  // t2 = amplitude of half flux potential
   // axis = direction of Landau gauge within cell ('x' or 'y')
   // gammaX = boundary condition twisting angle along x
   // gammaY = boundary condition twisting angle along y
@@ -103,7 +109,7 @@ class TightBindingModelHofstadterSquare : public Abstract2DTightBindingModel
   // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
   // useEmbedding = flag indicating whether to run calculation with natural embedding (site positions)
   // precision = precision (in bits) used for diagonalization of single particle spectrum (values >64 will draw on GMP)
-  TightBindingModelHofstadterSquare(int nbrCellX, int nbrCellY, int unitCellX, int unitCellY, int nbrFlux, double muS, int fullUnitCellX, char axis,
+  TightBindingModelHofstadterSquare(int nbrCellX, int nbrCellY, int unitCellX, int unitCellY, int nbrFlux, double muS, int fullUnitCellX, double t1, double t2, char axis,
 				    double gammaX, double gammaY, 
 				    AbstractArchitecture* architecture, bool storeOneBodyMatrices = true,  bool useEmbedding = false, int precision = 64);
 
