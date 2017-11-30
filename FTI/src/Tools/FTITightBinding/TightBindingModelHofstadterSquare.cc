@@ -523,8 +523,14 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIn
 			  cout << "H["<<InitialIndex<<"->"<<FinalIndex<<"]="<<-TranslationPhase*Phase<<", embeddingPhase="<<Polar(InitialEmbeddingPhase-FinalEmbeddingPhase)<<endl;
 #endif
 			  
-			  if (this->T1 != 0)
+			  if ((this->T1 != 0) && (i == 0) && (j == 0))
 			  {
+// 			    if ((i == 0) && (j == 0))
+// 			      TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, InitialIndex, -this->T1);
+// 			    if ((i == 1) && (j == 1))
+// 			      TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, InitialIndex, this->T1);
+			    
+			    
 			    FinalIndex = this->EncodeSublatticeIndex(i + this->UnitCellX, j, K1, K2, TranslationPhase);
 			    FinalEmbeddingPhase=this->GetEmbeddingPhase(FinalIndex, K1, K2);
 			    if (InitialIndex>=FinalIndex)
@@ -543,22 +549,25 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIn
 			    FinalIndex = this->EncodeSublatticeIndex(i, j + this->UnitCellY, K1, K2, TranslationPhase);
 			    FinalEmbeddingPhase=this->GetEmbeddingPhase(FinalIndex, K1, K2);
 			    if (InitialIndex>=FinalIndex)
-			      TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, FinalIndex, -TranslationPhase*this->T1*Polar(InitialEmbeddingPhase-FinalEmbeddingPhase));
+			      TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, FinalIndex, -TranslationPhase*this->T1*Conj(Phase2) * Polar(InitialEmbeddingPhase-FinalEmbeddingPhase));
 #ifdef DEBUG_OUTPUT
-			    cout << "H["<<InitialIndex<<"->"<<FinalIndex<<"]="<<-TranslationPhase*this->T1<<", embeddingPhase="<<Polar(InitialEmbeddingPhase-FinalEmbeddingPhase)<<endl;
+			    cout << "H["<<InitialIndex<<"->"<<FinalIndex<<"]="<<-TranslationPhase*this->T1*Conj(Phase2) <<", embeddingPhase="<<Polar(InitialEmbeddingPhase-FinalEmbeddingPhase)<<endl;
 #endif
 			    
 			    FinalIndex = this->EncodeSublatticeIndex(i, j - this->UnitCellY, K1, K2, TranslationPhase);
 			    FinalEmbeddingPhase=this->GetEmbeddingPhase(FinalIndex, K1, K2);
 			    if (InitialIndex>=FinalIndex)
-			      TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, FinalIndex, -TranslationPhase*this->T1*Polar(InitialEmbeddingPhase-FinalEmbeddingPhase));
+			      TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, FinalIndex, -TranslationPhase*this->T1*Phase2 * Polar(InitialEmbeddingPhase-FinalEmbeddingPhase));
 #ifdef DEBUG_OUTPUT
-			    cout << "H["<<InitialIndex<<"->"<<FinalIndex<<"]="<<-TranslationPhase*this->T1<<", embeddingPhase="<<Polar(InitialEmbeddingPhase-FinalEmbeddingPhase)<<endl;
+			    cout << "H["<<InitialIndex<<"->"<<FinalIndex<<"]="<<-TranslationPhase*this->T1 * Phase2 <<", embeddingPhase="<<Polar(InitialEmbeddingPhase-FinalEmbeddingPhase)<<endl;
 #endif
 			  }
 			  
-			  if ((this->T2 != 0) && ((this->UnitCellX % 2 ) == 0))
+			  if ((this->T2 != 0) && ((this->UnitCellX % 2 ) == 0) && (i % (this->UnitCellX / 2) == 0) && (j == 0))
 			  {
+// 			    if ((i % (this->UnitCellX / 2) == 0) && (j == 0))
+// 			      TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, InitialIndex, -this->T2);
+			    
 			    FinalIndex = this->EncodeSublatticeIndex(i + this->UnitCellX / 2, j, K1, K2, TranslationPhase);
 			    FinalEmbeddingPhase=this->GetEmbeddingPhase(FinalIndex, K1, K2);
 			    if (InitialIndex>=FinalIndex)
@@ -580,7 +589,7 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIn
 			    if (InitialIndex>=FinalIndex)
 			      TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, FinalIndex, -TranslationPhase*this->T2*Conj(Phase2)*Polar(InitialEmbeddingPhase-FinalEmbeddingPhase));
 #ifdef DEBUG_OUTPUT
-			    cout << "H["<<InitialIndex<<"->"<<FinalIndex<<"]="<<-TranslationPhase*this->T2<<", embeddingPhase="<<Polar(InitialEmbeddingPhase-FinalEmbeddingPhase)<<endl;
+			    cout << "H["<<InitialIndex<<"->"<<FinalIndex<<"]="<<-TranslationPhase*this->T2*Conj(Phase2)<<", embeddingPhase="<<Polar(InitialEmbeddingPhase-FinalEmbeddingPhase)<<endl;
 #endif
 			    
 			    FinalIndex = this->EncodeSublatticeIndex(i, j - this->UnitCellY, K1, K2, TranslationPhase);
@@ -588,7 +597,7 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIn
 			    if (InitialIndex>=FinalIndex)
 			      TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, FinalIndex, -TranslationPhase*this->T2*Phase2*Polar(InitialEmbeddingPhase-FinalEmbeddingPhase));
 #ifdef DEBUG_OUTPUT
-			    cout << "H["<<InitialIndex<<"->"<<FinalIndex<<"]="<<-TranslationPhase*this->T2<<", embeddingPhase="<<Polar(InitialEmbeddingPhase-FinalEmbeddingPhase)<<endl;
+			    cout << "H["<<InitialIndex<<"->"<<FinalIndex<<"]="<<-TranslationPhase*this->T2*Phase2<<", embeddingPhase="<<Polar(InitialEmbeddingPhase-FinalEmbeddingPhase)<<endl;
 #endif
 			  }
 			}
