@@ -523,7 +523,7 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIn
 			  cout << "H["<<InitialIndex<<"->"<<FinalIndex<<"]="<<-TranslationPhase*Phase<<", embeddingPhase="<<Polar(InitialEmbeddingPhase-FinalEmbeddingPhase)<<endl;
 #endif
 			  
-			  if ((this->T1 != 0) && (i == 0) && (j == 0))
+			  if ((this->T1 != 0) && ((i % this->UnitCellX)== 0) && (j == 0))
 			  {
 // 			    if ((i == 0) && (j == 0))
 // 			      TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, InitialIndex, -this->T1);
@@ -563,7 +563,7 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIn
 #endif
 			  }
 			  
-			  if ((this->T2 != 0) && ((this->UnitCellX % 2 ) == 0) && (i % (this->UnitCellX / 2) == 0) && (j == 0))
+			  if ((this->T2 != 0) && ((this->UnitCellX % 2 ) == 0) && (i % (this->UnitCellX / 2) == 1))
 			  {
 // 			    if ((i % (this->UnitCellX / 2) == 0) && (j == 0))
 // 			      TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, InitialIndex, -this->T2);
@@ -602,6 +602,7 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIn
 			  }
 			}
 		    }
+// 			  cout << TmpOneBodyHamiltonian << endl;
 		  break;
 		}
 
