@@ -125,7 +125,7 @@ MathematicaOutput& operator << (MathematicaOutput& Out, const long double& x)
 
 MathematicaOutput& operator << (MathematicaOutput& Out, ostream& Str) 
 {
-  Out.File << Str;
+//  Out.File << Str;
   return Out;
 }
 
@@ -137,7 +137,7 @@ MathematicaOutput& operator << (MathematicaOutput& Out, ostream& Str)
 
 ostream& operator << (ostream& Str, MathematicaOutput& Out)
 {
-  Str << Out.File;
+//  Str << Out.File;
   return Str;
 }
 
