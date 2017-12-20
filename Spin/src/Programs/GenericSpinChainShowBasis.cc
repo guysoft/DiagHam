@@ -465,10 +465,17 @@ int main(int argc, char** argv)
 	{
 	case 1 :
 	  {
-	    if (Manager.GetBoolean("fixed-parity") == false)
-	      Space = new Spin1_2Chain (NbrSpins, SzValue, 1000000);
+	    if (NoSzQuantumNumberFlag == false)
+	      {
+		if (Manager.GetBoolean("fixed-parity") == false)
+		  Space = new Spin1_2Chain (NbrSpins, SzValue, 1000000);
+		else
+		  Space = new Spin1_2ChainFixedParity (NbrSpins, Manager.GetInteger("parity"));
+	      }
 	    else
-	      Space = new Spin1_2ChainFixedParity (NbrSpins, Manager.GetInteger("parity"));
+	      {
+		Space = new Spin1_2ChainFull (NbrSpins);
+	      }
 	  }
 	  break;
 	case 2 :
