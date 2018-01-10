@@ -135,6 +135,26 @@ class ParticleOnLatticeWithSpinFullRealSpaceHamiltonian : public ParticleOnLatti
 						    RealSymmetricMatrix& densityDensityupdown, RealSymmetricMatrix& sxSx,
 						    RealSymmetricMatrix& sySy, RealSymmetricMatrix& szSz, RealAntisymmetricMatrix& sxSy,
 						    AbstractArchitecture* architecture, long memory = -1);
+  
+  // constructor with symmetric SxSy, SySz and SxSz terms
+  //
+  // particles = Hilbert space associated to the system
+  // nbrParticles = number of particles
+  // nbrSites = number of sites
+  // tightBinding = hamiltonian corresponding to the tight-binding model in real space, orbitals with even indices (resp. odd indices) are considered as spin up (resp. spin down)
+  // densityDensityupup = matrix that gives the amplitude of each density-density interaction term between particles with spin up
+  // densityDensitydowndown = matrix that gives the amplitude of each density-density interaction term between particles with spin down
+  // densityDensityupdown = matrix that gives the amplitude of each density-density interaction term between particles with spin up and down
+  // sxSx = matrix that gives the amplitude of each Sx_i Sx_j term
+  // sySy = matrix that gives the amplitude of each Sy_i Sy_j term
+  // szSz = matrix that gives the amplitude of each Sz_i Sz_j term
+  // architecture = architecture to use for precalculation
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  ParticleOnLatticeWithSpinFullRealSpaceHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSites, 
+						    HermitianMatrix& tightBinding, RealSymmetricMatrix& densityDensityupup, RealSymmetricMatrix& densityDensitydowndown, 
+						    RealSymmetricMatrix& densityDensityupdown, RealSymmetricMatrix& sxSx,
+						    RealSymmetricMatrix& sySy, RealSymmetricMatrix& szSz, RealSymmetricMatrix& sxSy, RealSymmetricMatrix& sySz, RealSymmetricMatrix& sxSz,
+						    AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
@@ -213,6 +233,15 @@ class ParticleOnLatticeWithSpinFullRealSpaceHamiltonian : public ParticleOnLatti
   virtual void EvaluateInteractionFactorsFromDensityDensityAndHeisenberg (RealSymmetricMatrix& densityDensityupup, RealSymmetricMatrix& densityDensitydowndown, 
 									  RealSymmetricMatrix& densityDensityupdown, RealSymmetricMatrix& sxSx,
 									  RealSymmetricMatrix& sySy, RealSymmetricMatrix& szSz, RealAntisymmetricMatrix& sxSy);
+  
+  // evaluate the two body interaction factors from a generic density-density interaction and a generic spin-spin interaction with cross terms SxSy, SxSz and SySz
+  //
+  // densityDensityupup = matrix that gives the amplitude of each density-density interaction term for particles with spin up
+  // densityDensitydowndown = matrix that gives the amplitude of each density-density interaction term between particles with spin down
+  // densityDensityupup = matrix that gives the amplitude of each density-density interaction term for particles with opposite spins
+  virtual void EvaluateInteractionFactorsFromDensityDensityAndHeisenberg (RealSymmetricMatrix& densityDensityupup, RealSymmetricMatrix& densityDensitydowndown, 
+									  RealSymmetricMatrix& densityDensityupdown, RealSymmetricMatrix& sxSx,
+									  RealSymmetricMatrix& sySy, RealSymmetricMatrix& szSz, RealSymmetricMatrix& sxSy, RealSymmetricMatrix& sySz, RealSymmetricMatrix& sxSz);
   
 };
 

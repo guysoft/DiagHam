@@ -47,6 +47,13 @@ class TightBindingModelKitaevHeisenbergHoneycombLattice : public Abstract2DTight
   double KineticFactorAnisotropic;
   // phase of the anisotropic hoping amplitude between neareast neighbor sitesc(in pi units)
   double KineticFactorAnisotropicPhase;
+  
+  // amplitude of the magnetic field along the x direction
+  double HFieldX;
+  // amplitude of the magnetic field along the y direction
+  double HFieldY;
+  // amplitude of the magnetic field along the z direction
+  double HFieldZ;
 
  public:
 
@@ -61,6 +68,22 @@ class TightBindingModelKitaevHeisenbergHoneycombLattice : public Abstract2DTight
   // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
   TightBindingModelKitaevHeisenbergHoneycombLattice(int nbrSiteX, int nbrSiteY, double t, double tPrime, double tPrimePhase, 
 						    AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
+  
+  // constructor with magnetic field
+  //
+  // nbrSiteX = number of sites in the x direction
+  // nbrSiteY = number of sites in the y direction
+  // t = isotropic hoping amplitude between neareast neighbor sites
+  // tPrime = anisotropic hoping amplitude between next neareast neighbor sites
+  // tPrimePhase = additional phase for the anisotropic hoping amplitude between neareast neighbor sitesc(in pi units)
+  // hX = amplitude of the magnetic field along the x direction
+  // hY = amplitude of the magnetic field along the y direction
+  // hZ = amplitude of the magnetic field along the z direction
+  // architecture = pointer to the architecture
+  // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
+  TightBindingModelKitaevHeisenbergHoneycombLattice(int nbrSiteX, int nbrSiteY, double t, double tPrime, double tPrimePhase, double hX, double hY, double hZ,
+						    AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
+  
   // destructor
   //
   ~TightBindingModelKitaevHeisenbergHoneycombLattice();

@@ -129,6 +129,32 @@ class ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian : public
 								    RealSymmetricMatrix& densityDensityupdown, RealSymmetricMatrix& sxSx,
 								    RealSymmetricMatrix& sySy, RealSymmetricMatrix& szSz, RealAntisymmetricMatrix& sxSy,
 								    AbstractArchitecture* architecture, long memory = -1);
+  
+  // constructor
+  //
+  // particles = Hilbert space associated to the system
+  // nbrParticles = number of particles
+  // nbrSites = number of sites
+  // xMomentum = momentum sector in the x direction
+  // maxXMomentum = number of momentum sectors in the x direction
+  // yMomentum = momentum sector in the x direction
+  // maxYMomentum = number of momentum sectors in the x direction
+  // tightBinding = hamiltonian corresponding to the tight-binding model in real space, orbitals with even indices (resp. odd indices) are considered as spin up (resp. spin down)
+  // densityDensityupup = matrix that gives the amplitude of each density-density interaction term between particles with spin up
+  // densityDensitydowndown = matrix that gives the amplitude of each density-density interaction term between particles with spin down
+  // densityDensityupdown = matrix that gives the amplitude of each density-density interaction term between particles with spin up and down
+  // sxSx = matrix that gives the amplitude of each Sx_i Sx_j term
+  // sySy = matrix that gives the amplitude of each Sy_i Sy_j term
+  // szSz = matrix that gives the amplitude of each Sz_i Sz_j term
+  // architecture = architecture to use for precalculation
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSites, 
+								    int xMomentum, int maxXMomentum, int yMomentum, int maxYMomentum, 
+								    HermitianMatrix& tightBinding,
+								    RealSymmetricMatrix& densityDensityupup, RealSymmetricMatrix& densityDensitydowndown, 
+								    RealSymmetricMatrix& densityDensityupdown, RealSymmetricMatrix& sxSx,
+								    RealSymmetricMatrix& sySy, RealSymmetricMatrix& szSz, RealSymmetricMatrix& sxSy, RealSymmetricMatrix& sySz, RealSymmetricMatrix& sxSz,
+								    AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
@@ -240,6 +266,24 @@ class ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian : public
   // lastComponent  = index of the last component that has to be precalcualted
   // memory = reference on the amount of memory required for precalculations
   virtual void EvaluateMNOneBodyFastMultiplicationMemoryComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent, long& memory);
+  
+   // core part of the AddMultiply method involving the /*three*/-body interaction
+  // 
+  // particles = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+//   virtual void EvaluateMNThreeBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector& vSource, ComplexVector& vDestination);
+
+  // core part of the AddMultiply method involving the three-body interaction for a set of vectors
+  // 
+  // particles = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // tmpCoefficients = a temporary array whose size is nbrVectors
+//   virtual void EvaluateMNThreeBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients);
 
   // evaluate all exponential factors
   //   
@@ -2311,5 +2355,92 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::E
 	}
     }
 }
+
+
+// // core part of the AddMultiply method involving the two-body interaction
+// // 
+// // particles = pointer to the Hilbert space
+// // index = index of the component on which the Hamiltonian has to act on
+// // vSource = vector to be multiplied
+// // vDestination = vector at which result has to be added
+// 
+// inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::EvaluateMNThreeBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
+// {
+//   int Dim = particles->GetHilbertSpaceDimension();
+//   double Coefficient;
+//   double Coefficient3;
+//   Complex Coefficient4;
+//   int* TmpIndices;
+//   int* TmpIndices2;
+//   Complex* TmpInteractionFactor;
+//   int Index;
+//   int NbrTranslationsX;
+//   int NbrTranslationsY;
+//   for (int j = 0; j < this->NbrIntraSectorSums; ++j)
+//     {
+//       int Lim = 3 * this->NbrThreeBodySectorIndicesPerSum[j];
+//       TmpIndices = this->ThreeBodySectorIndicesPerSum[j];
+//       for (int i1 = 0; i1 < Lim; i1 += 3)
+// 	{
+// 	  Coefficient3 = particles->AuAuAu(index, TmpIndices[i1], TmpIndices[i1 + 1], TmpIndices[i1 + 2]);
+// 	  if (Coefficient3 != 0.0)
+// 	    {
+// 	      TmpInteractionFactor = &(this->InteractionFactorsupdowndownupupup[j][(i1 * Lim) / 9]);
+// 	      Coefficient4 = vSource[index];
+// 	      Coefficient4 *= Coefficient3;
+// 	      Index = particles->AduAddAdd(TmpIndices[i1], TmpIndices[i1 + 1], TmpIndices[i1 + 2], Coefficient, NbrTranslationsX, NbrTranslationsY);
+// 	      if (Index < Dim)
+// 		{
+// 		  vDestination[Index] += (Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor)) * Coefficient4;
+// 		}
+// 	      ++TmpInteractionFactor;
+// 	    }
+// 	    
+// 	  Coefficient3 = particles->AuAuAd(index, TmpIndices[i1], TmpIndices[i1 + 1], TmpIndices[i1 + 2]);
+// 	  if (Coefficient3 != 0.0)
+// 	    {
+// 	      TmpInteractionFactor = &(this->InteractionFactorsupdownupupupdown[j][(i1 * Lim) / 9]);
+// 	      Coefficient4 = vSource[index];
+// 	      Coefficient4 *= Coefficient3;
+// 	      Index = particles->AduAduAdd(TmpIndices[i1], TmpIndices[i1 + 2], TmpIndices[i1 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+// 	      if (Index < Dim)
+// 		{
+// 		  vDestination[Index] += (Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor)) * Coefficient4;
+// 		}
+// 	      ++TmpInteractionFactor;
+// 	    }
+// 	    
+// 	  Coefficient3 = particles->AuAuAd(index, TmpIndices[i1], TmpIndices[i1 + 2], TmpIndices[i1 + 1]);
+// 	  if (Coefficient3 != 0.0)
+// 	    {
+// 	      TmpInteractionFactor = &(this->InteractionFactorsupupdownupdownup[j][(i1 * Lim) / 9]);
+// 	      Coefficient4 = vSource[index];
+// 	      Coefficient4 *= Coefficient3;
+// 	      Index = particles->AduAduAdd(TmpIndices[i1], TmpIndices[i1 + 1], TmpIndices[i1 + 2], Coefficient, NbrTranslationsX, NbrTranslationsY);
+// 	      if (Index < Dim)
+// 		{
+// 		  vDestination[Index] += (Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor)) * Coefficient4;
+// 		}
+// 	      ++TmpInteractionFactor;
+// 	    }
+// 	  
+// 	  Coefficient3 = particles->AuAdAd(index, TmpIndices[i1], TmpIndices[i1 + 1], TmpIndices[i1 + 2]);
+// 	  if (Coefficient3 != 0.0)
+// 	    {
+// 	      TmpInteractionFactor = &(this->InteractionFactorsupupupupdowndownF[j][(i1 * Lim) / 9]);
+// 	      Coefficient4 = vSource[index];
+// 	      Coefficient4 *= Coefficient3;
+// 	      Index = particles->AduAduAdu(TmpIndices[i1], TmpIndices[i1 + 1], TmpIndices[i1 + 2], Coefficient, NbrTranslationsX, NbrTranslationsY);
+// 	      if (Index < Dim)
+// 		{
+// 		  vDestination[Index] += (Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor)) * Coefficient4;
+// 		}
+// 	      ++TmpInteractionFactor;
+// 	    }
+// 	  
+// 	}
+//       
+//     }
+// }
 
 #endif

@@ -480,6 +480,11 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // nbrOccupiedMomenta = number of occupied momenta
   // return value = matrix where the values of the two point correlation function will be stored (using the linearized position index as entry)
   virtual HermitianMatrix EvaluateFullMixedTwoPointCorrelationFunctionWithK(int maxX, int ky, int* occupiedMomenta, int* bandIndices, int nbrOccupiedMomenta);
+  
+  //  get all the parameters of the tight-binding Hamiltonian
+  //
+  // tParameters = pointer to the array containing the parameters
+  virtual void GetTightBindingParameters(double* tParameters);
 
  protected:
 
@@ -815,4 +820,11 @@ inline void Abstract2DTightBindingModel::GetMUCDimensions(int &numX, int &numY)
   numY=1;
 }
 
+//  get all the parameters of the tight-binding Hamiltonian
+//
+// tParameters = pointer to the array containing the parameters
+inline void Abstract2DTightBindingModel::GetTightBindingParameters(double* tParameters)
+{
+  std::cout <<"using dummy Abstract2DTightBindingModel::GetTightBindingParameters(double* tParameters)"<<std::endl;
+}
 #endif

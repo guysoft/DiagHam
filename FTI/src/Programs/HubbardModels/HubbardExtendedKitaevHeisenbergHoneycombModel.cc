@@ -17,6 +17,7 @@
 #include "Hamiltonian/ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeWithSpinFullRealSpaceHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian.h"
 
 #include "Tools/FTITightBinding/TightBindingModelKitaevHeisenbergHoneycombLattice.h"
@@ -81,8 +82,13 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "jK", "strength of the neareast neighbor Kitaev interaction", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "jG", "strength of the neareast neighbor Heisenberg interaction", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "j3", "strength of the neareast neighbor Kitaev interaction", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "3-spin", "strength of the three-spin interaction term", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "hx", "amplitude of magnetic field", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "hy", "amplitude of magnetic field", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "hz", "amplitude of magnetic field", 0.0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1); 
+  (*SystemGroup) += new BooleanOption  ('\n', "no-translation", "do not use translation symmetry to compute the spectrum");
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebody", "export the one-body information (band structure and eigenstates) in a binary file");
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebodytext", "export the one-body information (band structure and eigenstates) in an ASCII text file");
@@ -120,6 +126,7 @@ int main(int argc, char** argv)
   bool GutzwillerFlag = Manager.GetBoolean("gutzwiller");
   bool SpinFlag = Manager.GetBoolean("spin");
   bool SzSymmetryFlag = Manager.GetBoolean("szsymmetrized-basis");
+  bool TranslationFlag = !Manager.GetBoolean("no-translation");
   int* SitesA = 0;
   int* SitesB = 0;
   int* BondTypes = 0;
@@ -131,9 +138,9 @@ int main(int argc, char** argv)
     NbrParticles = NbrSites;  
   }
   
-  if ((Manager.GetDouble("jG") != 0.0) || (Manager.GetDouble("j3") != 0.0))
+  if (Manager.GetDouble("j3") != 0.0)
   {
-    cout << "Error. jG and j3 terms are not implemented." << endl;
+    cout << "Error. j3 terms are not implemented." << endl;
     return -1;
   }
  
@@ -194,12 +201,12 @@ int main(int argc, char** argv)
   if (SpinFlag == false)
   {
     sprintf (FilePrefix, "%s_honeycomb_x_%d_y_%d_n_%d_ns_%d", StatisticPrefix, NbrSitesX, NbrSitesY, NbrParticles, NbrSites);
-    sprintf (FileParameterString, "t_%.6f_tK_%.6f_tKphi_%.6f_j1_%.6f_j2_%.6f_jG_%.6f_j3_%.6f", Manager.GetDouble("isotropic-t"), Manager.GetDouble("anisotropic-t"), Manager.GetDouble("anisotropic-phase"), Manager.GetDouble("j1"), Manager.GetDouble("jK"), Manager.GetDouble("jG"), Manager.GetDouble("j3"));
+    sprintf (FileParameterString, "t_%.6f_tK_%.6f_tKphi_%.6f_j1_%.6f_j2_%.6f_jG_%.6f_j3_%.6f_hx_%.6f_hy_%.6f_hz_%.6f", Manager.GetDouble("isotropic-t"), Manager.GetDouble("anisotropic-t"), Manager.GetDouble("anisotropic-phase"), Manager.GetDouble("j1"), Manager.GetDouble("jK"), Manager.GetDouble("jG"), Manager.GetDouble("j3"), Manager.GetDouble("hx"), Manager.GetDouble("hy"), Manager.GetDouble("hz"));
   }
   else
   {
     sprintf (FilePrefix, "%s_honeycomb_x_%d_y_%d_ns_%d", StatisticPrefix, NbrSitesX, NbrSitesY, NbrSites);
-    sprintf (FileParameterString, "j1_%.6f_jK_%.6f_jG_%.6f_j3_%.6f", Manager.GetDouble("j1"), Manager.GetDouble("jK"), Manager.GetDouble("jG"), Manager.GetDouble("j3"));
+    sprintf (FileParameterString, "j1_%.6f_jK_%.6f_jG_%.6f_j3_%.6f_hx_%.6f_hy_%.6f_hz_%.6f", Manager.GetDouble("j1"), Manager.GetDouble("jK"), Manager.GetDouble("jG"), Manager.GetDouble("j3"), Manager.GetDouble("hx"), Manager.GetDouble("hy"), Manager.GetDouble("hz"));
   }
   
   
@@ -227,7 +234,7 @@ int main(int argc, char** argv)
       if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true))
 	ExportOneBody = true;
       TightBindingModel = new TightBindingModelKitaevHeisenbergHoneycombLattice (NbrSitesX, NbrSitesY, Manager.GetDouble("isotropic-t"), Manager.GetDouble("anisotropic-t"), 
-										 Manager.GetDouble("anisotropic-phase"), Architecture.GetArchitecture(), ExportOneBody);
+										 Manager.GetDouble("anisotropic-phase"), Manager.GetDouble("hx"), Manager.GetDouble("hy"), Manager.GetDouble("hz"), Architecture.GetArchitecture(), ExportOneBody);
 //       TightBindingModel->TestRealSpaceTightBindingHamiltonian();
 //       cout << TightBindingModel->GetRealSpaceTightBindingNonHermitianHamiltonian() << endl;
       TightBindingModel->WriteAsciiSpectrum(EigenvalueOutputFile);
@@ -254,7 +261,7 @@ int main(int argc, char** argv)
   if (Manager.GetString("import-onebody") == 0)
     {
       TightBindingModel = new TightBindingModelKitaevHeisenbergHoneycombLattice (NbrSitesX, NbrSitesY, Manager.GetDouble("isotropic-t"), Manager.GetDouble("anisotropic-t"), 
-										 Manager.GetDouble("anisotropic-phase"), Architecture.GetArchitecture(), true);
+										 Manager.GetDouble("anisotropic-phase"), Manager.GetDouble("hx"), Manager.GetDouble("hy"), Manager.GetDouble("hz"), Architecture.GetArchitecture(), true);
       char* BandStructureOutputFile = new char [1024];
       sprintf (BandStructureOutputFile, "%s_%s_tightbinding.dat", FilePrefix, FileParameterString);
       TightBindingModel->WriteBandStructure(BandStructureOutputFile);
@@ -278,6 +285,11 @@ int main(int argc, char** argv)
   RealSymmetricMatrix SxSxInteraction(NbrSites, true);
   RealSymmetricMatrix SySyInteraction(NbrSites, true);
   RealSymmetricMatrix SzSzInteraction(NbrSites, true);
+  
+  RealSymmetricMatrix SxSyInteraction(NbrSites, true);
+  RealSymmetricMatrix SySzInteraction(NbrSites, true);
+  RealSymmetricMatrix SxSzInteraction(NbrSites, true);
+  
   // beware : the factor 4.0 is for compatibility reasons with the other Kitaev-Heisenberg code
 //   double TmpJ1 = 4.0 * Manager.GetDouble("j1");
 //   double TmpJ2 = 4.0 * Manager.GetDouble("j2");
@@ -285,6 +297,7 @@ int main(int argc, char** argv)
   
   double TmpJ1 = Manager.GetDouble("j1");
   double TmpJK = Manager.GetDouble("jK");
+  double TmpJG = Manager.GetDouble("jG");
   for (int i = 0; i < NbrSitesX; ++i)
     {
       for (int j = 0; j < NbrSitesY; ++j)
@@ -295,6 +308,7 @@ int main(int argc, char** argv)
 					     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2) >> 1,  TmpJ1 + TmpJK);
 	  SzSzInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0) >> 1,
 					     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2) >> 1,  TmpJ1);
+// 	  SxSzInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0) >> 1, 					     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2) >> 1,  TmpJG);
 					     
 	  SxSxInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0) >> 1,
 					     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i - 1, j + 1, 2) >> 1,  TmpJ1);
@@ -302,6 +316,7 @@ int main(int argc, char** argv)
 					     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i - 1, j + 1, 2) >> 1,  TmpJ1);
 	  SzSzInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0) >> 1,
 					     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i - 1, j + 1, 2) >> 1,  TmpJ1 + TmpJK);
+// 	  SxSyInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0) >> 1,					     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i - 1, j + 1, 2) >> 1,  TmpJG);
 
 	  SxSxInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2) >> 1,
 					     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j, 0) >> 1,  TmpJ1 + TmpJK);
@@ -309,6 +324,7 @@ int main(int argc, char** argv)
 					     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j, 0) >> 1,  TmpJ1);
 	  SzSzInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2) >> 1,
 					     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j, 0) >> 1,  TmpJ1);
+	  SySzInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2) >> 1, 					     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j, 0) >> 1,  TmpJG);
 	}
     }
   bool FirstRunFlag = true;
@@ -320,6 +336,11 @@ int main(int argc, char** argv)
       MaxXMomentum = Manager.GetInteger("only-kx");
       MinXMomentum = MaxXMomentum;
     }
+  if (TranslationFlag == false)
+  {
+    MinXMomentum = 0;
+    MaxXMomentum = 0;
+  }
   for (int XMomentum = MinXMomentum; XMomentum <= MaxXMomentum; ++XMomentum)
     {
       int MinYMomentum = 0;
@@ -329,6 +350,11 @@ int main(int argc, char** argv)
 	  MaxYMomentum = Manager.GetInteger("only-ky");
 	  MinYMomentum = MaxYMomentum;
 	}
+      if (TranslationFlag == false)
+      {
+	MinYMomentum = 0;
+	MaxYMomentum = 0;
+      }
       for (int YMomentum = MinYMomentum; YMomentum <= MaxYMomentum; ++YMomentum)
 	{
 	  int SzParitySector = -1;
@@ -356,8 +382,13 @@ int main(int argc, char** argv)
 		    Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum, NbrSitesX,
 										   YMomentum, NbrSitesY);
 		  else
-		    Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum, NbrSitesX,
+		  {
+		    if (TranslationFlag)
+		      Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum, NbrSitesX,
 													  YMomentum, NbrSitesY);
+		    else
+		      Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (NbrParticles, NbrSites);
+		  }
 		}
 	      else
 		{
@@ -383,18 +414,21 @@ int main(int argc, char** argv)
 	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 	      
 	      HermitianMatrix TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
-	      Hamiltonian = new ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian(Space, NbrParticles, NbrSites,XMomentum, NbrSitesX,
+	      if (TranslationFlag)
+		Hamiltonian = new ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian(Space, NbrParticles, NbrSites,XMomentum, NbrSitesX,
 												  YMomentum, NbrSitesY, TightBindingMatrix,
 												  DensityDensityInteractionupup, DensityDensityInteractiondowndown, 
 												  DensityDensityInteractionupdown, SxSxInteraction,
-												  SySyInteraction, SzSzInteraction,
+												  SySyInteraction, SzSzInteraction, SxSyInteraction,
+												  SySzInteraction, SxSzInteraction,
 												  Architecture.GetArchitecture(), Memory);
-// 	      Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian(Space, NbrParticles, NbrSites, NbrBonds, SitesA, 
-// 												     SitesB, BondTypes, XMomentum, NbrSitesX, YMomentum, NbrSitesY,
-// 												     Manager.GetDouble("isotropic-t"), 
-// 												     Manager.GetDouble("anisotropic-t"), Manager.GetDouble("u-potential"), 
-// 												     Manager.GetDouble("j1"), Manager.GetDouble("j2"), 
-// 												     Architecture.GetArchitecture(), Memory);
+	      else
+		Hamiltonian = new ParticleOnLatticeWithSpinFullRealSpaceHamiltonian(Space, NbrParticles, NbrSites,TightBindingMatrix,
+												  DensityDensityInteractionupup, DensityDensityInteractiondowndown, 
+												  DensityDensityInteractionupdown, SxSxInteraction,
+												  SySyInteraction, SzSzInteraction, SxSyInteraction,
+												  SySzInteraction, SxSzInteraction,
+												  Architecture.GetArchitecture(), Memory);
 		  
 	      char* ContentPrefix = new char[256];
 	      if (SzSymmetryFlag == false)
@@ -407,14 +441,20 @@ int main(int argc, char** argv)
 		}
 	      char* EigenstateOutputFile;
 	      char* TmpExtention = new char [512];
-	      if (SzSymmetryFlag == false)
-		{
-		  sprintf (TmpExtention, "_kx_%d_ky_%d", XMomentum, YMomentum);
-		}
+	      if (TranslationFlag)
+	      {
+		if (SzSymmetryFlag == false)
+		  {
+		    sprintf (TmpExtention, "_kx_%d_ky_%d", XMomentum, YMomentum);
+		  }
+		else
+		  {
+		    sprintf (TmpExtention, "_szp_%d_kx_%d_ky_%d", SzParitySector, XMomentum, YMomentum);
+		  }
+	      }
 	      else
-		{
-		  sprintf (TmpExtention, "_szp_%d_kx_%d_ky_%d", SzParitySector, XMomentum, YMomentum);
-		}
+		sprintf (TmpExtention, "");
+		
 	      EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
 	      
 	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);

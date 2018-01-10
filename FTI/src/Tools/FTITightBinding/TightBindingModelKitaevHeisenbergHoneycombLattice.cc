@@ -66,6 +66,65 @@ TightBindingModelKitaevHeisenbergHoneycombLattice::TightBindingModelKitaevHeisen
   this->KineticFactorIsotropic = t;
   this->KineticFactorAnisotropic = tPrime;
   this->KineticFactorAnisotropicPhase = tPrimePhase;
+  this->HFieldX = 0.0;
+  this->HFieldY = 0.0;
+  this->HFieldZ = 0.0;
+  this->GammaX = 0.0;
+  this->GammaY = 0.0;
+  this->NbrBands = 4;
+  this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
+  this->Architecture = architecture;
+  
+  this->ComputeAllProjectedMomenta();
+  
+  if (storeOneBodyMatrices == true)
+    {
+      this->OneBodyBasis = new ComplexMatrix [this->NbrStatePerBand];
+    }
+  else
+    {
+      this->OneBodyBasis = 0;
+    }
+  this->EnergyBandStructure = new double*[this->NbrBands];
+  for (int i = 0; i < this->NbrBands; ++i)
+    {
+      this->EnergyBandStructure[i] = new double[this->NbrStatePerBand];
+    }
+  this->FindConnectedOrbitals();
+  this->ComputeBandStructure();
+}
+
+
+// default constructor
+//
+// nbrSiteX = number of sites in the x direction
+// nbrSiteY = number of sites in the y direction
+// t = isotropic hoping amplitude between neareast neighbor sites
+// tPrime = anisotropic hoping amplitude between neareast neighbor sites
+// tPrimePhase = additional phase for the anisotropic hoping amplitude between neareast neighbor sitesc(in pi units)
+// hX = amplitude of the magnetic field along the x direction
+// hY = amplitude of the magnetic field along the y direction
+// hZ = amplitude of the magnetic field along the z direction
+// architecture = pointer to the architecture
+// storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
+
+TightBindingModelKitaevHeisenbergHoneycombLattice::TightBindingModelKitaevHeisenbergHoneycombLattice(int nbrSiteX, int nbrSiteY, double t, double tPrime, double tPrimePhase, double hX, double hY, double hZ,
+												     AbstractArchitecture* architecture, bool storeOneBodyMatrices)
+{
+  this->NbrSiteX = nbrSiteX;
+  this->NbrSiteY = nbrSiteY;
+  this->Nx1 = this->NbrSiteX;
+  this->Ny1 = 0;
+  this->Nx2 = 0;
+  this->Ny2 = this->NbrSiteY;
+  this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
+  this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
+  this->KineticFactorIsotropic = t;
+  this->KineticFactorAnisotropic = tPrime;
+  this->KineticFactorAnisotropicPhase = tPrimePhase;
+  this->HFieldX = hX;
+  this->HFieldY = hY;
+  this->HFieldZ = hZ;
   this->GammaX = 0.0;
   this->GammaY = 0.0;
   this->NbrBands = 4;
@@ -110,10 +169,15 @@ void TightBindingModelKitaevHeisenbergHoneycombLattice::FindConnectedOrbitals()
       this->ConnectedOrbitalIndices = new int* [this->NbrBands];
       this->ConnectedOrbitalSpatialIndices = new int* [this->NbrBands];
       this->ConnectedOrbitalHoppingAmplitudes = new Complex* [this->NbrBands];
-      this->NbrConnectedOrbitals[0] = 5;
-      this->NbrConnectedOrbitals[1] = 5;
-      this->NbrConnectedOrbitals[2] = 5;
-      this->NbrConnectedOrbitals[3] = 5;
+      for (int i = 0; i < 4; ++i)
+	this->NbrConnectedOrbitals[i] = 5;
+      if ((this->HFieldX != 0.0) || (this->HFieldY != 0.0))
+	for (int i = 0; i < 4; ++i)
+	  this->NbrConnectedOrbitals[i] += 1;
+      if (this->HFieldZ != 0.0)
+	for (int i = 0; i < 4; ++i)
+	  this->NbrConnectedOrbitals[i] += 1;
+	
       for (int i = 0; i < this->NbrBands; ++i)
 	{
 	  this->ConnectedOrbitalIndices[i] = new int[this->NbrConnectedOrbitals[i]];
@@ -148,6 +212,22 @@ void TightBindingModelKitaevHeisenbergHoneycombLattice::FindConnectedOrbitals()
        this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) + 1] = 0;
        this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = TmpAnisotropicFactor;
        ++TmpIndex;
+       if ((this->HFieldX != 0.0) || (this->HFieldY != 0.0))
+       {
+	this->ConnectedOrbitalIndices[0][TmpIndex] = 1;
+	this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] = 0;
+	this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) + 1] = 0;
+	this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = 0.5 * Complex(this->HFieldX, this->HFieldY);
+	++TmpIndex;
+       }
+       if (this->HFieldZ != 0.0)
+       {
+	this->ConnectedOrbitalIndices[0][TmpIndex] = 0;
+	this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] = 0;
+	this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) + 1] = 0;
+	this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = 0.5 * this->HFieldZ;
+	++TmpIndex;
+       }
 
        // site A, down spin
        TmpIndex = 0;
@@ -176,6 +256,22 @@ void TightBindingModelKitaevHeisenbergHoneycombLattice::FindConnectedOrbitals()
        this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) + 1] = 0;
        this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = TmpAnisotropicFactor;
        ++TmpIndex;
+       if ((this->HFieldX != 0.0) || (this->HFieldY != 0.0))
+       {
+	this->ConnectedOrbitalIndices[1][TmpIndex] = 0;
+	this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] = 0;
+	this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) + 1] = 0;
+	this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = 0.5 * Complex(this->HFieldX, -this->HFieldY);
+	++TmpIndex;
+       }
+       if (this->HFieldZ != 0.0)
+       {
+	this->ConnectedOrbitalIndices[1][TmpIndex] = 1;
+	this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] = 0;
+	this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) + 1] = 0;
+	this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = -0.5 * this->HFieldZ;
+	++TmpIndex;
+       }
 
        // site B, up spin
        TmpIndex = 0;
@@ -204,6 +300,22 @@ void TightBindingModelKitaevHeisenbergHoneycombLattice::FindConnectedOrbitals()
        this->ConnectedOrbitalSpatialIndices[2][(TmpIndex * 2) + 1] = 0;
        this->ConnectedOrbitalHoppingAmplitudes[2][TmpIndex] = Conj(TmpAnisotropicFactor);
        ++TmpIndex;
+       if ((this->HFieldX != 0.0) || (this->HFieldY != 0.0))
+       {
+	this->ConnectedOrbitalIndices[2][TmpIndex] = 3;
+	this->ConnectedOrbitalSpatialIndices[2][TmpIndex * 2] = 0;
+	this->ConnectedOrbitalSpatialIndices[2][(TmpIndex * 2) + 1] = 0;
+	this->ConnectedOrbitalHoppingAmplitudes[2][TmpIndex] = 0.5 * Complex(this->HFieldX, this->HFieldY);
+	++TmpIndex;
+       }
+       if (this->HFieldZ != 0.0)
+       {
+	this->ConnectedOrbitalIndices[2][TmpIndex] = 2;
+	this->ConnectedOrbitalSpatialIndices[2][TmpIndex * 2] = 0;
+	this->ConnectedOrbitalSpatialIndices[2][(TmpIndex * 2) + 1] = 0;
+	this->ConnectedOrbitalHoppingAmplitudes[2][TmpIndex] = 0.5 * this->HFieldZ;
+	++TmpIndex;
+       }
 
        // site B, down spin
        TmpIndex = 0;
@@ -232,6 +344,22 @@ void TightBindingModelKitaevHeisenbergHoneycombLattice::FindConnectedOrbitals()
        this->ConnectedOrbitalSpatialIndices[3][(TmpIndex * 2) + 1] = 0;
        this->ConnectedOrbitalHoppingAmplitudes[3][TmpIndex] = Conj(TmpAnisotropicFactor);
        ++TmpIndex;
+       if ((this->HFieldX != 0.0) || (this->HFieldY != 0.0))
+       {
+	this->ConnectedOrbitalIndices[3][TmpIndex] = 2;
+	this->ConnectedOrbitalSpatialIndices[3][TmpIndex * 2] = 0;
+	this->ConnectedOrbitalSpatialIndices[3][(TmpIndex * 2) + 1] = 0;
+	this->ConnectedOrbitalHoppingAmplitudes[3][TmpIndex] = 0.5 * Complex(this->HFieldX, -this->HFieldY);
+	++TmpIndex;
+       }
+       if (this->HFieldZ != 0.0)
+       {
+	this->ConnectedOrbitalIndices[3][TmpIndex] = 3;
+	this->ConnectedOrbitalSpatialIndices[3][TmpIndex * 2] = 0;
+	this->ConnectedOrbitalSpatialIndices[3][(TmpIndex * 2) + 1] = 0;
+	this->ConnectedOrbitalHoppingAmplitudes[3][TmpIndex] = -0.5 * this->HFieldZ;
+	++TmpIndex;
+       }
 
     }
 }
