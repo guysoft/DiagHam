@@ -98,12 +98,6 @@ class TightBindingModelCheckerboardLattice : public Abstract2DTightBindingModel
   // destructor
   //
   ~TightBindingModelCheckerboardLattice();
-  
-  // get all the parameters of tight-binding Hamiltonian
-  //
-  //tParameters = pointer to the array containing the parameters
-  // nbrParameters = number of parameters in the array
-  virtual void GetTightBindingParameters(double* tParameters);
 
  protected :
 
@@ -119,19 +113,5 @@ class TightBindingModelCheckerboardLattice : public Abstract2DTightBindingModel
 
 };
 
-// get all the parameters of tight-binding Hamiltonian
-//
-//tParameters = pointer to the array containing the parameters
-inline void TightBindingModelCheckerboardLattice::GetTightBindingParameters(double* tParameters)
-{
-  tParameters = new double[6];
-  
-  tParameters[0] = this->NNHoping;
-  tParameters[1] = this->NextNNHoping;
-  tParameters[2] = this->SecondNextNNHoping;
-  tParameters[3] = this->MuS;
-  tParameters[4] = this->GammaX;
-  tParameters[5] = this->GammaY;
-}
 
 #endif

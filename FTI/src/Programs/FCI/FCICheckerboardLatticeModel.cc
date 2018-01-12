@@ -533,13 +533,13 @@ int main(int argc, char** argv)
 	      char* EigenstateOutputFile = new char [512];
 	      if ((Manager.GetBoolean("real-space") == false) || (Manager.GetBoolean("no-translation") == false))
 		{
-		  sprintf (EigenstateOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_gx_%f_gy_%f_kx_%d_ky_%d", FilePrefix, 
-			   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
+		  sprintf (EigenstateOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f_kx_%d_ky_%d", FilePrefix, 
+			   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"),  Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
 		}
 	      else
 		{
-		  sprintf (EigenstateOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f", FilePrefix, 
-			   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"));
+		  sprintf (EigenstateOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_tpp_%f", FilePrefix, 
+			   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"));
 		}
 	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 	      FirstRunFlag = false;

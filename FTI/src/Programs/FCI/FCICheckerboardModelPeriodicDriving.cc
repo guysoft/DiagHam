@@ -97,9 +97,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption('\n', "initial-state", "name of the file containing the initial vector upon which e^{-iHt} acts");  
   (*SystemGroup) += new BooleanOption  ('\n', "compute-energy", "compute the energy of each time-evolved vector");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-hamiltonian", "number of hamiltonians to store (equal to number of samples if 0)", 1);
-  
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "amplitude of on-site interaction (if hard core constraint not implemented)", 0.0);
-  
+    
   (*SystemGroup) += new SingleDoubleOption  ('\n', "omega", "frequency of drive", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "e-field", "amplitude of the driving field", 1.0);
   
@@ -139,7 +137,6 @@ int main(int argc, char** argv)
   int Sz;
   int SzSymmetry;
  
-  double UPotential = Manager.GetDouble("u-potential");
   int TruncationIndex = Manager.GetInteger("truncate-basis");
   
   double Omega = fabs(Manager.GetDouble("omega"));
@@ -160,14 +157,6 @@ int main(int argc, char** argv)
     NbrStoredHamiltonians = 0;
   
   int StepI;
-  
-  double GammaX;
-  double GammaY;
-  double t1;
-  double t2;
-  double tpp;
-  double muS;
-  
   
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   if (Manager.GetString("initial-state") == 0)
@@ -192,30 +181,31 @@ int main(int argc, char** argv)
 											     NbrSiteX, NbrSiteY, StatisticFlag, GutzwillerFlag);
     
 	
-//   TotalSpinConservedFlag = FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(StateFileName, NbrParticles, NbrSites, TotalSpin, StatisticFlag, GutzwillerFlag);
-
   
-//   if (FTIHofstadterdModelWith2DTranslationFindSystemInfoFromVectorFileName(StateFileName, NbrParticles, Kx, Ky, FluxPerCell , NbrCellX,  NbrCellY, UnitCellX, UnitCellY,  StatisticFlag, GutzwillerFlag, TranslationFlag) == false )
-//     {
-//       return -1;
-//     }
-// 
-//   int MinNbrSinglets;
-//   bool UsingConstraintMinNbrSinglets;
-//   if (StatisticFlag)
-//   {
-//     if (FTIHofstadterModelWithSzFindSystemInfoFromVectorFileName(StateFileName, Sz, SzSymmetry, MinNbrSinglets, SzSymmetryFlag, UsingConstraintMinNbrSinglets) == false)
-//     {
-//       return -1;
-//     }
-//     SpinFlag = true;
-//     cout << Sz << " "  << SzSymmetryFlag << endl;
-//   }
+  double GammaX = 0.0;
+  double GammaY = 0.0;
+  double t1 = 0.0;
+  double t2 = 0.0;
+  double tpp = 0.0;
+  double muS = 0.0;
+  double UPotential = 0.0;
+  double VPotential = 0.0;
+  
+  if ( !FilenameDoubleSearch(t1, StateFileName, "_t1_") || (!FilenameDoubleSearch(t2, StateFileName, "_t2_")) || (!FilenameDoubleSearch(tpp, StateFileName, "_tpp_")) || (!FilenameDoubleSearch(UPotential, StateFileName, "_u_")) || (!FilenameDoubleSearch(VPotential, StateFileName, "_v_")))
+    return -1;
+   
+  if (fabs(t2 - (1.0 - 0.5 * M_SQRT2)) < 1.0e-5)
+    t2 = 1.0 - 0.5 * M_SQRT2;
+  if (fabs(tpp - 0.5 * (M_SQRT2 - 1.0)) < 1.0e-5)
+    tpp = 0.5 * (M_SQRT2 - 1.0);
+  
+  if (!FilenameDoubleSearch(muS, StateFileName, "_muS_"))
+    muS = 0.0;
     
-    if (StatisticFlag)
-      cout << "fermion" << endl;
-    else
-      cout << "boson" << endl;
+  if (StatisticFlag)
+    cout << "fermion" << endl;
+  else
+  cout << "boson" << endl;
           
   char*** EigenstateFile = 0;
   double** Energies = 0;
@@ -227,37 +217,18 @@ int main(int argc, char** argv)
   
   cout << NbrParticles << " " << NbrSites << " " << NbrSiteX << " " << NbrSiteY << " " << Kx << " " << Ky << " " << GammaX << " " << GammaY << endl;
   
+  cout << "t1 = " << t1 << " t2 = " << t2 << " tpp = " << tpp << " U = " << UPotential << " V = " << VPotential << endl;
   
   Abstract2DTightBindingModel *TightBindingModel;
-  char* TightBindingFileName = new char [512];
-  char* TmpExtention = new char [512];
-  sprintf (TmpExtention, "_gx_%f_gy_%f_kx_%d_ky_%d.0.vec", GammaX, GammaY, Kx, Ky);
-  TightBindingFileName = ReplaceExtensionToFileName(StateFileName, TmpExtention, "_tightbinding.dat");
-  if (IsFile(TightBindingFileName) == false)
-    {
-      cout << "state " << TightBindingFileName << " does not exist or can't be opened" << endl;
-      return -1;           
-    }
-  TightBindingModel = new Generic2DTightBindingModel(TightBindingFileName); 
-  
+  TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSiteX, NbrSiteY, t1, t2, tpp, muS, GammaX, GammaY, Architecture.GetArchitecture(), true, false);
+    
   if (Manager.GetBoolean("singleparticle-chernnumber") == true)
   {
       cout << "Chern number = " << TightBindingModel->ComputeChernNumber(0) << endl;
       return 0;
   }
   
-  double* tParameters;
-  TightBindingModel->GetTightBindingParameters(tParameters);
-  t1 = tParameters[0];
-  t2 = tParameters[1];
-  tpp = tParameters[2];
-  muS = tParameters[3];
-  GammaX = tParameters[4];
-  GammaY = tParameters[5];
-  
-  delete[] tParameters;
   ParticleOnSphere* Space = 0;  
-//   int NbrSites = TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand();
   
   if (StatisticFlag)
   {
@@ -274,21 +245,17 @@ int main(int argc, char** argv)
       {
 	if (NbrSites <= 63 ) 
 	  {
-// 	    Space = new BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation(NbrParticles, UnitCellX*NbrCellX, UnitCellY*NbrCellY, Kx, NbrCellX, Ky,  NbrCellY);
 	    
 	    Space = new BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Kx, NbrSiteX, Ky, NbrSiteY);
 	  }
 	else
 	  {
 	    cout << "Number of orbitals is larger than 64" << endl;
-	    return -1;
-// 	    Space = new BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslationLong(NbrParticles, UnitCellX*NbrCellX, UnitCellY*NbrCellY, Kx, NbrCellX, Ky,  NbrCellY);      
+	    return -1;     
 	  }
       }
       else
       {
-// 	Space = new BosonOnLatticeRealSpaceOneOrbitalPerSiteAnd2DTranslation(NbrParticles, UnitCellX*NbrCellX, UnitCellY*NbrCellY, Kx, NbrCellX, Ky,  NbrCellY); 
-	
 	Space = new BosonOnLatticeRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Kx, NbrSiteX, Ky, NbrSiteY);
       }
     }
@@ -387,7 +354,7 @@ int main(int argc, char** argv)
     sprintf (EnergyNameFile0, "%s_%s_H0_energy.dat", OutputNamePrefix, ParameterString);
     FileEnergy0.open(EnergyNameFile0, ios::out);
     FileEnergy0.precision(14);
-    FileEnergy0 << "# t E "<< endl;
+    FileEnergy0 << "# t E " << endl;
     
     NormFileName = new char[512];
     if (TruncationIndex > 0)
@@ -435,14 +402,11 @@ int main(int argc, char** argv)
 	  {
 	    cout << NbrParticles << " " << NbrSites << " " << Kx << " " << NbrSiteX << " " << Ky << " " << NbrSiteY << endl;
 	    
-	    Hamiltonian[i] = new ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
-											       Kx, NbrSiteX, Ky, NbrSiteY,
-											       TightBindingMatrix[i], DensityDensityInteraction,
-											       Architecture.GetArchitecture(), Memory);
+	    Hamiltonian[i] = new ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian (Space, NbrParticles, NbrSites, Kx, NbrSiteX, Ky, NbrSiteY, TightBindingMatrix[i], DensityDensityInteraction, Architecture.GetArchitecture(), Memory);
 	  }
 	  else
 	  {
-	    Hamiltonian[i] = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
+	    Hamiltonian[i] = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, NbrSites, 
 									       TightBindingMatrix[i], DensityDensityInteraction,
 									       Architecture.GetArchitecture(), Memory);
 	  }
@@ -476,20 +440,16 @@ int main(int argc, char** argv)
 
 	  if (TranslationFlag)
 	  {
-	    Hamiltonian[NbrStoredHamiltonians] = new ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
+	    Hamiltonian[NbrStoredHamiltonians] = new ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian (Space, NbrParticles, NbrSites, 
 											       Kx, NbrSiteX, Ky, NbrSiteY,
 											       TightBindingMatrix[TmpIndex], DensityDensityInteraction,
 											       Architecture.GetArchitecture(), Memory);
-	    
-// 	    Hamiltonian[NbrStoredHamiltonians] = new ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian (Space, NbrParticles, NbrSites, Kx,  NbrSiteX, Ky,  NbrSiteY, 	PhaseTranslationX, PhaseTranslationY, TightBindingMatrix[TmpIndex], DensityDensityInteraction, Architecture.GetArchitecture(), Memory);
 	  }
 	  else
 	  {
-	    Hamiltonian[NbrStoredHamiltonians] = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
+	    Hamiltonian[NbrStoredHamiltonians] = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, NbrSites, 
 									       TightBindingMatrix[TmpIndex], DensityDensityInteraction,
 									       Architecture.GetArchitecture(), Memory);
-	    
-// 	    Hamiltonian[NbrStoredHamiltonians] = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, NbrSites, TightBindingMatrix[TmpIndex], DensityDensityInteraction, Architecture.GetArchitecture(), Memory);
 	  }
 
 	TmpIndex = NbrStoredHamiltonians;
