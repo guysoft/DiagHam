@@ -104,9 +104,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "compute-FGR", "compute the absorption rate from Fermi's Golden rule");
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-chernnumber", "compute the Chern number of the fully filled band (only available in singleparticle-spectrum mode)");
   
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-periods", "number of periods to do the time-evolution with", 10);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-periods", "number of periods to do the time-evolution with", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-samples", "number of points to evaluate per period", 10);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "save-period", "save time-evolved state every n periods, save only final step if negative, save nothing if 0", 0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "time-step", "time step for the time evolution", 0.1);
   
   (*SystemGroup) += new SingleIntegerOption  ('\n', "truncate-basis", "if positive, use a truncated instantaneous basis with this number of states. Vector names are guessed from the name of the initial state. A path to the energy spectra and to the vectors has to be provided", 0);
   (*SystemGroup) += new SingleStringOption ('\n', "energy-path", "name of the folder where energy spectra are stored for truncated time-evolution");
@@ -133,9 +134,6 @@ int main(int argc, char** argv)
   bool StatisticFlag;
   bool GutzwillerFlag;
   bool TranslationFlag;
-  bool SzSymmetryFlag = false;
-  int Sz;
-  int SzSymmetry;
  
   int TruncationIndex = Manager.GetInteger("truncate-basis");
   
@@ -148,6 +146,7 @@ int main(int argc, char** argv)
   int SavePeriod = Manager.GetInteger("save-period");
   double TimePeriod = 2.0 * M_PI / ((double) Omega);
   double TimeStep = TimePeriod / ((double) NbrSamples);
+  double TimeF;
   
   bool ResumeFlag = false;
   int NbrStoredHamiltonians = Manager.GetInteger("nbr-hamiltonian");
@@ -155,6 +154,14 @@ int main(int argc, char** argv)
     NbrStoredHamiltonians = NbrSamples;
   if (NbrStoredHamiltonians < 0)
     NbrStoredHamiltonians = 0;
+  
+  if (NbrPeriods == 0)
+  {
+    cout << "Working with a time step not commensurate with the period of time-evolution" << endl;
+    TimeStep = Manager.GetDouble("time-step");
+    TimeF = TimeStep * NbrSamples;
+    NbrStoredHamiltonians = 0;
+  }
   
   int StepI;
   
@@ -319,13 +326,21 @@ int main(int argc, char** argv)
   else
   {
     char* ParameterStringPreviousSimulation = new char[512];
-    sprintf(ParameterStringPreviousSimulation,"E_%f_omega_%f_nbrSamples_%d_nbrPeriods_%d.%d.vec", EField, Manager.GetDouble("omega"), NbrSamples, NbrPeriods);
+    if (NbrPeriods != 0)
+      sprintf(ParameterStringPreviousSimulation,"E_%f_omega_%f_nbrSamples_%d_nbrPeriods_%d.%d.vec", EField, Manager.GetDouble("omega"), NbrSamples, NbrPeriods);
+    else
+      sprintf(ParameterStringPreviousSimulation,"E_%f_omega_%f_timeF_%f_timeStep_%f.%d.vec", EField, Manager.GetDouble("omega"), TimeF, TimeStep);
+    
     OutputNamePrefix = RemoveExtensionFromFileName(StateFileName, ParameterStringPreviousSimulation);
     delete[] ParameterStringPreviousSimulation;
   }
 
   char * ParameterString = new char [512];
-  sprintf(ParameterString,"E_%f_omega_%f_nbrSamples_%d_nbrPeriods_%d", EField, Manager.GetDouble("omega"), NbrSamples, NbrPeriods);
+  if (NbrPeriods != 0)
+    sprintf(ParameterString,"E_%f_omega_%f_nbrSamples_%d_nbrPeriods_%d", EField, Manager.GetDouble("omega"), NbrSamples, NbrPeriods);
+  else
+    sprintf(ParameterString,"E_%f_omega_%f_timeF_%f_timeStep_%f", EField, Manager.GetDouble("omega"), TimeF, TimeStep);
+  
   char * EnergyNameFile = 0;
   char* EnergyNameFile0 = 0;
   char* NormFileName = 0;
@@ -368,6 +383,8 @@ int main(int argc, char** argv)
   
   double FinalNorm = 1.0;
   int NbrSteps = NbrSamples * NbrPeriods;
+  if (NbrPeriods == 0)
+    NbrSteps = NbrSamples;
   double TmpGammaX;
   double TmpGammaY;
   double t;
