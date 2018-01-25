@@ -286,6 +286,87 @@ ComplexVector& SpinChainHamiltonianWithTranslations::LowLevelAddMultiply(Complex
   return vDestination;
 }
  
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and store result in another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* SpinChainHamiltonianWithTranslations::LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+									      int firstComponent, int nbrComponent)
+{
+  double Coef;
+  int NbrTranslation;
+  int pos;
+  int MaxPos = this->NbrSpin - 1;
+  int Last = firstComponent + nbrComponent;
+  for (int i = firstComponent; i < Last; i++)
+    {
+      for (int k = 0; k < nbrVectors; ++k)
+	{
+	  vDestinations[k].Re(i) += this->SzSzContributions[i] * vSources[k].Re(i);
+	  vDestinations[k].Im(i) += this->SzSzContributions[i] * vSources[k].Im(i);
+	}
+      for (int j = 0; j < MaxPos; j++)
+	{
+	  pos = this->Chain->SmiSpj(j, j + 1, i, Coef, NbrTranslation);
+	  if (pos != this->Chain->GetHilbertSpaceDimension())
+	    {
+	      Coef *= this->HalfJ;
+	      for (int k = 0; k < nbrVectors; ++k)
+		{
+		  vDestinations[k].Re(pos) += Coef * ((vSources[k].Re(i) * this->CosinusTable[NbrTranslation]) -
+						      (vSources[k].Im(i) * this->SinusTable[NbrTranslation]));
+		  vDestinations[k].Im(pos) += Coef * ((vSources[k].Re(i) * this->SinusTable[NbrTranslation]) +
+						      (vSources[k].Im(i) * this->CosinusTable[NbrTranslation]));
+		}
+	    }
+	  pos = this->Chain->SmiSpj(j + 1, j, i, Coef, NbrTranslation);
+	  if (pos != this->Chain->GetHilbertSpaceDimension())
+	    {
+	      Coef *= this->HalfJ;
+	      for (int k = 0; k < nbrVectors; ++k)
+		{
+		  vDestinations[k].Re(pos) += Coef * ((vSources[k].Re(i) * this->CosinusTable[NbrTranslation]) -
+						      (vSources[k].Im(i) * this->SinusTable[NbrTranslation]));
+		  vDestinations[k].Im(pos) += Coef * ((vSources[k].Re(i) * this->SinusTable[NbrTranslation]) +
+						      (vSources[k].Im(i) * this->CosinusTable[NbrTranslation]));
+		}
+	    }
+	}    
+      pos = this->Chain->SmiSpj(MaxPos, 0, i, Coef, NbrTranslation);
+      if (pos != this->Chain->GetHilbertSpaceDimension())
+	{
+	  Coef *= this->HalfJ;
+	  for (int k = 0; k < nbrVectors; ++k)
+	    {
+	      vDestinations[k].Re(pos) += Coef * ((vSources[k].Re(i) * this->CosinusTable[NbrTranslation]) -
+						  (vSources[k].Im(i) * this->SinusTable[NbrTranslation]));
+	      vDestinations[k].Im(pos) += Coef * ((vSources[k].Re(i) * this->SinusTable[NbrTranslation]) +
+						  (vSources[k].Im(i) * this->CosinusTable[NbrTranslation]));
+	    }
+	}
+      pos = this->Chain->SmiSpj(0, MaxPos, i, Coef, NbrTranslation);
+      if (pos != this->Chain->GetHilbertSpaceDimension())
+	{
+	  Coef *= this->HalfJ;
+	  for (int k = 0; k < nbrVectors; ++k)
+	    {
+	      vDestinations[k].Re(pos) += Coef * ((vSources[k].Re(i) * this->CosinusTable[NbrTranslation]) -
+						  (vSources[k].Im(i) * this->SinusTable[NbrTranslation]));
+	      vDestinations[k].Im(pos) += Coef * ((vSources[k].Re(i) * this->SinusTable[NbrTranslation]) +
+						  (vSources[k].Im(i) * this->CosinusTable[NbrTranslation]));
+	    }
+	}      
+    }
+  return vDestinations;
+}
+
+
 // return a list of left interaction operators
 //
 // return value = list of left interaction operators
