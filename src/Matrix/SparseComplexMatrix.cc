@@ -2287,6 +2287,119 @@ SparseComplexMatrix TensorProductWithConjugation (const SparseComplexMatrix& mat
   return TmpMatrix;  
 }
 
+// matrix-vector multiplication action to the right (i.e. v^h M)
+//
+// inputVector = vector that will be multiplied
+// outputVector = vector where the result will be stored
+
+void SparseComplexMatrix::RightMultiply (ComplexVector& inputVector, ComplexVector& outputVector)
+{
+  if ((this->NbrRow != inputVector.GetVectorDimension()) || (outputVector.GetVectorDimension() != this->NbrColumn))
+    {
+      cout << "error, cannot conjugate the matrices" << endl;
+      return; 
+    }
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      Complex& Tmp = outputVector[i];
+      Tmp = 0.0;
+      long MinPos =  this->RowPointers[i];
+      if (MinPos >= 0l)
+	{
+	  long MaxPos = this->RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      Tmp += this->MatrixElements[MinPos] * Conj(inputVector[this->ColumnIndices[MinPos]]);
+	    }	    
+	}
+    }
+}
+
+// matrix-vector multiplication action to the right including a global scaling factor (i.e. alpha v^h M)
+//
+// coefficient = global multiplicative coefficient 
+// inputVector = vector that will be multiplied
+// outputVector = vector where the result will be stored
+
+void SparseComplexMatrix::RightMultiply (double coefficient, ComplexVector& inputVector, ComplexVector& outputVector)
+{
+  if ((this->NbrRow != inputVector.GetVectorDimension()) || (outputVector.GetVectorDimension() != this->NbrColumn))
+    {
+      cout << "error, cannot conjugate the matrices" << endl;
+      return; 
+    }
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      Complex& Tmp = outputVector[i];
+      Tmp = 0.0;
+      long MinPos =  this->RowPointers[i];
+      if (MinPos >= 0l)
+	{
+	  long MaxPos = this->RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      Tmp += this->MatrixElements[MinPos] * Conj(inputVector[this->ColumnIndices[MinPos]]);
+	    }	    
+	}
+      Tmp *= coefficient;
+    }
+}
+
+// matrix-vector multiplication action to the right (i.e. v^h M), adding the result to another vector
+//
+// inputVector = vector that will be multiplied
+// outputVector = vector where the result will be added
+
+void SparseComplexMatrix::RightAddMultiply (ComplexVector& inputVector, ComplexVector& outputVector)
+{
+  if ((this->NbrRow != inputVector.GetVectorDimension()) || (outputVector.GetVectorDimension() != this->NbrColumn))
+    {
+      cout << "error, cannot conjugate the matrices" << endl;
+      return; 
+    }
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      Complex& Tmp = outputVector[i];
+      long MinPos =  this->RowPointers[i];
+      if (MinPos >= 0l)
+	{
+	  long MaxPos = this->RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      Tmp += this->MatrixElements[MinPos] * Conj(inputVector[this->ColumnIndices[MinPos]]);
+	    }	    
+	}
+    }
+}
+
+// matrix-vector multiplication action to the right including a global scaling factor (i.e. alpha v^h M), adding the result to another vector
+//
+// coefficient = global multiplicative coefficient 
+// inputVector = vector that will be multiplied
+// outputVector = vector where the result will be added
+
+void SparseComplexMatrix::RightAddMultiply (double coefficient, ComplexVector& inputVector, ComplexVector& outputVector)
+{
+  if ((this->NbrRow != inputVector.GetVectorDimension()) || (outputVector.GetVectorDimension() != this->NbrColumn))
+    {
+      cout << "error, cannot conjugate the matrices" << endl;
+      return; 
+    }
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      Complex& Tmp = outputVector[i];
+      long MinPos =  this->RowPointers[i];
+      if (MinPos >= 0l)
+	{
+	  long MaxPos = this->RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      Tmp += coefficient * this->MatrixElements[MinPos] * Conj(inputVector[this->ColumnIndices[MinPos]]);
+	    }	    
+	}
+    }
+}
+
 // compute the hermitian transpose of the current matrix
 //
 // return value = hermitian transposed matrix
