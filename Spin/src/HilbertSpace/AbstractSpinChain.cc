@@ -589,4 +589,49 @@ void AbstractSpinChain::GetBosonicOccupation (unsigned int index, int * finalSta
   cout << "warning, using undefined function AbstractSpinChain::GetBosonicOccupation" << endl;
 }
 
+// create a state from its MPS description
+//
+// bMatrices = array that gives the B matrices 
+// state = reference to vector that will contain the state description
+// mPSRowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
+// mPSColumnIndex = column index of the MPS element that has to be evaluated
+// initialIndex = initial index to compute
+// nbrComponents = number of components to compute
+
+void AbstractSpinChain::CreateStateFromMPSDescription (SparseRealMatrix* bMatrices, RealVector& state, int mPSRowIndex, int mPSColumnIndex, 
+						       long initialIndex, long nbrComponents)
+{
+  cout << "warning, using undefined function AbstractSpinChain::CreateStateFromMPSDescription" << endl;
+}
+
+// create a state from its MPS description
+//
+// bMatrices = array that gives the B matrices 
+// state = reference to vector that will contain the state description
+// mPSRowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
+// mPSColumnIndex = column index of the MPS element that has to be evaluated
+// initialIndex = initial index to compute
+// nbrComponents = number of components to compute
+
+void AbstractSpinChain::CreateStateFromMPSDescription (SparseComplexMatrix* bMatrices, ComplexVector& state, int mPSRowIndex, int mPSColumnIndex, 
+						       long initialIndex, long nbrComponents)
+{
+  cout << "warning, using undefined function AbstractSpinChain::CreateStateFromMPSDescription" << endl;
+}
+
+// create a state from its MPS description
+//
+// bMatrices = array that gives the B matrices 
+// state = reference to vector that will contain the state description
+// mPSRowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
+// mPSColumnIndex = column index of the MPS element that has to be evaluated
+// initialIndex = initial index to compute
+// nbrComponents = number of components to compute
+
+void AbstractSpinChain::CreateStateFromMPSDescription (ComplexMatrix* bMatrices, ComplexVector& state, int mPSRowIndex, int mPSColumnIndex, 
+						       long initialIndex, long nbrComponents)
+{
+  cout << "warning, using undefined function AbstractSpinChain::CreateStateFromMPSDescription" << endl;
+}
+
 

@@ -149,6 +149,28 @@ class Spin1_2ChainFull : public Spin1_2Chain
   // return value = entanglement matrix of the subsystem (return a zero dimension matrix if the entanglement matrix is equal to zero)
   virtual ComplexMatrix EvaluatePartialEntanglementMatrix (int* sites, int nbrSites, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
 
+  // create a state from its MPS description
+  //
+  // bMatrices = array that gives the B matrices 
+  // state = reference to vector that will contain the state description
+  // mPSRowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
+  // mPSColumnIndex = column index of the MPS element that has to be evaluated
+  // initialIndex = initial index to compute
+  // nbrComponents = number of components to compute
+  virtual void CreateStateFromMPSDescription (SparseComplexMatrix* bMatrices, ComplexVector& state, int mPSRowIndex, int mPSColumnIndex, 
+					      long initialIndex = 0l, long nbrComponents = 0l);
+
+  // create a state from its MPS description
+  //
+  // bMatrices = array that gives the B matrices 
+  // state = reference to vector that will contain the state description
+  // mPSRowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
+  // mPSColumnIndex = column index of the MPS element that has to be evaluated
+  // initialIndex = initial index to compute
+  // nbrComponents = number of components to compute
+  virtual void CreateStateFromMPSDescription (ComplexMatrix* bMatrices, ComplexVector& state, int mPSRowIndex, int mPSColumnIndex, 
+					      long initialIndex = 0l, long nbrComponents = 0l);
+
  protected:
 
   // find state index

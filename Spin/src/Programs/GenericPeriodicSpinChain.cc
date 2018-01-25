@@ -42,7 +42,7 @@ int main(int argc, char** argv)
   OptionGroup* SystemGroup = new OptionGroup ("system options");
 
   ArchitectureManager Architecture;
-  LanczosManager Lanczos(false);
+  LanczosManager Lanczos(true);
 
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);

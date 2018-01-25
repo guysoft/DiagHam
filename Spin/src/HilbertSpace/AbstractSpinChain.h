@@ -35,6 +35,7 @@
 #include "config.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
 #include "Vector/RealVector.h"
+#include "Vector/ComplexVector.h"
 #include "Matrix/ComplexMatrix.h"
 
 
@@ -43,6 +44,8 @@ class AbstractArchitecture;
 class RealSymmetricMatrix;
 class HermitianMatrix;
 class ComplexMatrix;
+class SparseRealMatrix;
+class SparseComplexMatrix;
 
 using std::cout;
 using std::endl;
@@ -440,6 +443,39 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   virtual inline int ApplyMirrorSymmetry(int stateIndex, double& coefficient,
                                              int& nbrTranslationX, int& nbrTranslationY);
+
+  // create a state from its MPS description
+  //
+  // bMatrices = array that gives the B matrices 
+  // state = reference to vector that will contain the state description
+  // mPSRowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
+  // mPSColumnIndex = column index of the MPS element that has to be evaluated
+  // initialIndex = initial index to compute
+  // nbrComponents = number of components to compute
+  virtual void CreateStateFromMPSDescription (SparseRealMatrix* bMatrices, RealVector& state, int mPSRowIndex, int mPSColumnIndex, 
+					      long initialIndex = 0l, long nbrComponents = 0l);
+
+  // create a state from its MPS description
+  //
+  // bMatrices = array that gives the B matrices 
+  // state = reference to vector that will contain the state description
+  // mPSRowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
+  // mPSColumnIndex = column index of the MPS element that has to be evaluated
+  // initialIndex = initial index to compute
+  // nbrComponents = number of components to compute
+  virtual void CreateStateFromMPSDescription (SparseComplexMatrix* bMatrices, ComplexVector& state, int mPSRowIndex, int mPSColumnIndex, 
+					      long initialIndex = 0l, long nbrComponents = 0l);
+
+  // create a state from its MPS description
+  //
+  // bMatrices = array that gives the B matrices 
+  // state = reference to vector that will contain the state description
+  // mPSRowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
+  // mPSColumnIndex = column index of the MPS element that has to be evaluated
+  // initialIndex = initial index to compute
+  // nbrComponents = number of components to compute
+  virtual void CreateStateFromMPSDescription (ComplexMatrix* bMatrices, ComplexVector& state, int mPSRowIndex, int mPSColumnIndex, 
+					      long initialIndex = 0l, long nbrComponents = 0l);
 
 };
 

@@ -1,6 +1,7 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealMatrix.h"
+#include "Matrix/SparseComplexMatrix.h"
 
 #include "Hamiltonian/SpinChainAKLTStabilizerHamiltonian.h"
 
@@ -155,9 +156,53 @@ int main(int argc, char** argv)
       delete[] TmpEigenstateString;
     }
 
+  // test code for the MPS of the stabilizer code 
+
+//   ComplexMatrix* MPSMatrices = new ComplexMatrix [2];
+//   MPSMatrices[0] = ComplexMatrix(2, 2);
+//   MPSMatrices[1] = ComplexMatrix(2, 2);
+
+//   MPSMatrices[0].SetMatrixElement(0 ,0, Phase(M_PI * 0.75) / M_SQRT2);
+//   MPSMatrices[0].SetMatrixElement(1 ,0, 1.0 / M_SQRT2);
+//   MPSMatrices[0].SetMatrixElement(0 ,1, 1.0 / M_SQRT2);
+//   MPSMatrices[0].SetMatrixElement(1 ,1, Phase(-M_PI * 0.75) / M_SQRT2);
+
+//   MPSMatrices[1].SetMatrixElement(0 ,0, Phase(-M_PI * 0.25) / M_SQRT2);
+//   MPSMatrices[1].SetMatrixElement(1 ,0, 1.0 / M_SQRT2);
+//   MPSMatrices[1].SetMatrixElement(0 ,1, 1.0 / M_SQRT2);
+//   MPSMatrices[1].SetMatrixElement(1 ,1, Phase(M_PI * 0.25) / M_SQRT2);
+
+
+//   cout << MPSMatrices[0] << endl;
+//   cout << MPSMatrices[1] << endl;
+
+
+//   ComplexVector TmpState (Chain->GetHilbertSpaceDimension(), true);
+//   Chain->CreateStateFromMPSDescription(MPSMatrices, TmpState, -1, -1);
+//   TmpState.Normalize();
+//   TmpState.WriteVector("vector_pbc.vec");
+//   Chain->CreateStateFromMPSDescription(MPSMatrices, TmpState, 0, 0);
+//   TmpState.Normalize();
+//   TmpState.WriteVector("vector_obc_0_0.vec");
+//   Chain->CreateStateFromMPSDescription(MPSMatrices, TmpState, 0, 1);
+//   TmpState.Normalize();
+//   TmpState.WriteVector("vector_obc_0_1.vec");
+//   Chain->CreateStateFromMPSDescription(MPSMatrices, TmpState, 1, 0);
+//   TmpState.Normalize();
+//   TmpState.WriteVector("vector_obc_1_0.vec");
+//   Chain->CreateStateFromMPSDescription(MPSMatrices, TmpState, 1, 1);
+//   TmpState.Normalize();
+//   TmpState.WriteVector("vector_obc_1_1.vec");
+//   for (int i = 0; i < Chain->GetHilbertSpaceDimension(); ++i)
+//     Chain->PrintState (cout, i) << " : " << TmpState[i] << endl;
+
   delete Chain;
   delete[] OutputFileName;
   delete[] CommentLine;
   delete[] FullOutputFileName;
+
+
+  
+
   return 0;
 }

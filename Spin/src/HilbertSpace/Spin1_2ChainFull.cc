@@ -37,6 +37,7 @@
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "MathTools/BinomialCoefficients.h"
+#include "Matrix/SparseComplexMatrix.h"
 
 #include <math.h>
 #include <iostream>
@@ -521,5 +522,153 @@ ComplexMatrix Spin1_2ChainFull::EvaluatePartialEntanglementMatrix (int* sites, i
 	}
     }
   return TmpEntanglementMatrix;
+}
+
+// create a state from its MPS description
+//
+// bMatrices = array that gives the B matrices 
+// state = reference to vector that will contain the state description
+// mPSRowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
+// mPSColumnIndex = column index of the MPS element that has to be evaluated
+// initialIndex = initial index to compute
+// nbrComponents = number of components to compute
+
+void Spin1_2ChainFull::CreateStateFromMPSDescription (SparseComplexMatrix* bMatrices, ComplexVector& state, int mPSRowIndex, int mPSColumnIndex, 
+						      long initialIndex, long nbrComponents)
+{
+
+  ComplexVector TmpVector1 (bMatrices->GetNbrColumn());
+  ComplexVector TmpVector2 (bMatrices->GetNbrColumn());
+  unsigned long MinIndex = (unsigned long) initialIndex;
+  unsigned long MaxIndex = (unsigned long) this->LargeHilbertSpaceDimension;
+  if (nbrComponents > 0)
+    {
+      MaxIndex = MinIndex + ((unsigned long) nbrComponents);
+    }
+  if (mPSRowIndex >= 0)
+    {
+      for (; MinIndex < MaxIndex; ++MinIndex)    
+	{
+	  state[(long) MinIndex] = 0.0;
+	  TmpVector1.ClearVector();
+	  TmpVector1[mPSColumnIndex] = 1.0;
+	  for (int i =  this->ChainLength - 1 ; i >= 0; --i)
+	    {
+	      if ((MinIndex & (0x1ul << i)) == 0x0ul)
+		{
+		  bMatrices[0].RightMultiply(TmpVector1, TmpVector2);
+		}
+	      else
+		{
+		  bMatrices[1].RightMultiply(TmpVector1, TmpVector2);
+		}
+	      ComplexVector TmpVector3 = TmpVector2;
+	      TmpVector2 = TmpVector1;
+	      TmpVector1 = TmpVector3;
+	    }
+	  state[(long) MinIndex] = TmpVector1[mPSRowIndex];
+	}
+    }
+  else
+    {
+      for (; MinIndex < MaxIndex; ++MinIndex)    
+	{
+	  state[(long) MinIndex] = 0.0;
+	  for (int j = 0; j < bMatrices->GetNbrColumn(); ++j)
+	    {
+	      TmpVector1.ClearVector();
+	      TmpVector1[j] = 1.0;
+	      for (int i =  this->ChainLength - 1 ; i >= 0; --i)
+		{
+		  if ((MinIndex & (0x1ul << i)) == 0x0ul)
+		    {
+		      bMatrices[0].RightMultiply(TmpVector1, TmpVector2);
+		    }
+		  else
+		    {
+		      bMatrices[1].RightMultiply(TmpVector1, TmpVector2);
+		    }
+		  ComplexVector TmpVector3 = TmpVector2;
+		  TmpVector2 = TmpVector1;
+		  TmpVector1 = TmpVector3;
+		}
+	      state[(long) MinIndex] += TmpVector1[j];
+	    }
+	}
+    }
+}
+
+// create a state from its MPS description
+//
+// bMatrices = array that gives the B matrices 
+// state = reference to vector that will contain the state description
+// mPSRowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
+// mPSColumnIndex = column index of the MPS element that has to be evaluated
+// initialIndex = initial index to compute
+// nbrComponents = number of components to compute
+
+void Spin1_2ChainFull::CreateStateFromMPSDescription (ComplexMatrix* bMatrices, ComplexVector& state, int mPSRowIndex, int mPSColumnIndex, 
+						      long initialIndex, long nbrComponents)
+{
+
+  ComplexVector TmpVector1 (bMatrices->GetNbrColumn());
+  ComplexVector TmpVector2 (bMatrices->GetNbrColumn());
+  unsigned long MinIndex = (unsigned long) initialIndex;
+  unsigned long MaxIndex = (unsigned long) this->LargeHilbertSpaceDimension;
+  if (nbrComponents > 0)
+    {
+      MaxIndex = MinIndex + ((unsigned long) nbrComponents);
+    }
+  if (mPSRowIndex >= 0)
+    {
+      for (; MinIndex < MaxIndex; ++MinIndex)    
+	{
+	  state[(long) MinIndex] = 0.0;
+	  TmpVector1.ClearVector();
+	  TmpVector1[mPSColumnIndex] = 1.0;
+	  for (int i = 0; i < this->ChainLength; ++i)
+	    {
+	      if ((MinIndex & (0x1ul << i)) == 0x0ul)
+		{
+		  TmpVector2.Multiply(bMatrices[0], TmpVector1);
+		}
+	      else
+		{
+		  TmpVector2.Multiply(bMatrices[1], TmpVector1);
+		}
+	      ComplexVector TmpVector3 = TmpVector2;
+	      TmpVector2 = TmpVector1;
+	      TmpVector1 = TmpVector3;
+	    }
+	  state[(long) MinIndex] = TmpVector1[mPSRowIndex];
+	}
+    }
+  else
+    {
+      for (; MinIndex < MaxIndex; ++MinIndex)    
+	{
+	  state[(long) MinIndex] = 0.0;
+	  for (int j = 0; j < bMatrices->GetNbrColumn(); ++j)
+	    {
+	      TmpVector1.ClearVector();
+	      TmpVector1[j] = 1.0;
+	      for (int i = 0; i < this->ChainLength; ++i)
+		{
+		  if ((MinIndex & (0x1ul << i)) == 0x0ul)
+		    {
+		      TmpVector2.Multiply(bMatrices[0], TmpVector1);
+		    }
+		  else
+		    {
+		      TmpVector2.Multiply(bMatrices[1], TmpVector1);
+		    }
+		  ComplexVector TmpVector3 = TmpVector2;
+		  TmpVector2 = TmpVector1;
+		  TmpVector1 = TmpVector3;
+		}
+	      state[(long) MinIndex] += TmpVector1[j];
+	    }
+	}
+    }
 }
 
