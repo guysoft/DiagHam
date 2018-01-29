@@ -455,7 +455,7 @@ RationalPolynomial RationalPolynomial::DerivatePolynomial ()
       for (long i = 1; i <= this->Degree; i++)
 	Coef[i-1] = (this->Coefficient[i] * i);
       RationalPolynomial P (this->Degree - 1, Coef);
-      delete Coef;
+      // delete Coef;
       return P;
     }
   return RationalPolynomial();
