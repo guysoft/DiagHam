@@ -8,9 +8,9 @@
 //                                                                            //
 //                                                                            //
 //                class of SU(3) spin chain with Sz contraint                 //
-//                               and 2d translations                          //
+//                       2d translations and Tz symmetry                      //
 //                                                                            //
-//                        last modification : 06/02/2018                      //
+//                        last modification : 07/02/2018                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,7 +30,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "HilbertSpace/SU3SpinChainAnd2DTranslation.h"
+#include "HilbertSpace/SU3SpinChain2DTranslationAndTzSymmetry.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealMatrix.h"
 #include "Matrix/ComplexMatrix.h"
@@ -53,7 +53,7 @@ using std::endl;
 // default constructor
 //
 
-SU3SpinChainAnd2DTranslation::SU3SpinChainAnd2DTranslation ()
+SU3SpinChain2DTranslationAndTzSymmetry::SU3SpinChain2DTranslationAndTzSymmetry ()
 {
   this->Flag.Initialize();
   this->ChainLength = 0;
@@ -61,6 +61,7 @@ SU3SpinChainAnd2DTranslation::SU3SpinChainAnd2DTranslation ()
   this->LargeHilbertSpaceDimension = 0l;
   this->Tz = 0;
   this->Y = 0;
+  this->TzSymmetrySector = 0;
   this->StateDescription = 0;
   this->LookUpTable = 0;
   this->LookUpTableMask = 0;
@@ -75,7 +76,7 @@ SU3SpinChainAnd2DTranslation::SU3SpinChainAnd2DTranslation ()
 // maxYMomentum = number of sites in the y direction
 // memory = amount of memory granted for precalculations
 
-SU3SpinChainAnd2DTranslation::SU3SpinChainAnd2DTranslation (int nbrSite, int tz, int y, int xMomentum, int maxXMomentum, int yMomentum, int maxYMomentum, unsigned long memory) 
+SU3SpinChain2DTranslationAndTzSymmetry::SU3SpinChain2DTranslationAndTzSymmetry (int nbrSite, int tz, int y, int xMomentum, int maxXMomentum, int yMomentum, int maxYMomentum, int tzSymmetrySector, unsigned long memory) 
 {
   this->Flag.Initialize();
   this->MaxXMomentum = maxXMomentum;
@@ -87,6 +88,15 @@ SU3SpinChainAnd2DTranslation::SU3SpinChainAnd2DTranslation (int nbrSite, int tz,
   this->Tz = tz;
   this->Y = y;
   this->FixedSpinProjectionFlag = true;
+  if (tzSymmetrySector == 1)
+    {
+      this->TzSymmetrySector = 1.0;
+    }
+  else
+    {
+      this->TzSymmetrySector = -1.0;
+    }
+  this->TzSymmetryMask = (0x1ul << (2 * this-> ChainLength)) - 0x1ul;
     
   this->StateXShift = 2 * (this->ChainLength / this->MaxXMomentum);
   this->ComplementaryStateXShift = (2 * this-> ChainLength) - this->StateXShift;
@@ -154,7 +164,7 @@ SU3SpinChainAnd2DTranslation::SU3SpinChainAnd2DTranslation (int nbrSite, int tz,
 //
 // chain = reference on chain to copy
 
-SU3SpinChainAnd2DTranslation::SU3SpinChainAnd2DTranslation (const SU3SpinChainAnd2DTranslation& chain)
+SU3SpinChain2DTranslationAndTzSymmetry::SU3SpinChain2DTranslationAndTzSymmetry (const SU3SpinChain2DTranslationAndTzSymmetry& chain)
 {
   this->Flag = chain.Flag;
   if (chain.ChainLength != 0)
@@ -199,6 +209,7 @@ SU3SpinChainAnd2DTranslation::SU3SpinChainAnd2DTranslation (const SU3SpinChainAn
       this->LargeHilbertSpaceDimension = 0;
       this->Tz = 0;
       this->Y = 0;
+      this->TzSymmetrySector = 0;
       this->StateDescription = 0;
       this->LookUpTable = 0;
       this->LookUpTableMask = 0;
@@ -210,7 +221,7 @@ SU3SpinChainAnd2DTranslation::SU3SpinChainAnd2DTranslation (const SU3SpinChainAn
 // destructor
 //
 
-SU3SpinChainAnd2DTranslation::~SU3SpinChainAnd2DTranslation () 
+SU3SpinChain2DTranslationAndTzSymmetry::~SU3SpinChain2DTranslationAndTzSymmetry () 
 {
 }
 
@@ -219,7 +230,7 @@ SU3SpinChainAnd2DTranslation::~SU3SpinChainAnd2DTranslation ()
 // chain = reference on chain to copy
 // return value = reference on current chain
 
-SU3SpinChainAnd2DTranslation& SU3SpinChainAnd2DTranslation::operator = (const SU3SpinChainAnd2DTranslation& chain)
+SU3SpinChain2DTranslationAndTzSymmetry& SU3SpinChain2DTranslationAndTzSymmetry::operator = (const SU3SpinChain2DTranslationAndTzSymmetry& chain)
 {
   if ((this->Flag.Used() == true) && (this->ChainLength != 0) && (this->Flag.Shared() == false))
     {
@@ -250,6 +261,7 @@ SU3SpinChainAnd2DTranslation& SU3SpinChainAnd2DTranslation::operator = (const SU
 
       this->Tz = chain.Tz;
       this->Y = chain.Y;
+      this->TzSymmetrySector = chain.TzSymmetrySector;
 
       this->StateDescription = chain.StateDescription;
       this->RescalingFactors = chain.RescalingFactors;
@@ -267,6 +279,7 @@ SU3SpinChainAnd2DTranslation& SU3SpinChainAnd2DTranslation::operator = (const SU
       this->HilbertSpaceDimension = 0;
       this->Tz = 0;
       this->Y = 0;
+      this->TzSymmetrySector = 0;
       this->StateDescription = 0;
       this->LookUpTable = 0;
       this->LookUpTableMask = 0;
@@ -279,93 +292,18 @@ SU3SpinChainAnd2DTranslation& SU3SpinChainAnd2DTranslation::operator = (const SU
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* SU3SpinChainAnd2DTranslation::Clone()
+AbstractHilbertSpace* SU3SpinChain2DTranslationAndTzSymmetry::Clone()
 {
-  return new SU3SpinChainAnd2DTranslation (*this);
+  return new SU3SpinChain2DTranslationAndTzSymmetry (*this);
 }
 
-// return index of resulting state from application of Pij operator on a given state
-//
-// i = position of S- operator
-// j = position of S+ operator
-// state = index of the state to be applied onPij operator
-// coefficient = reference on double where numerical coefficient has to be stored
-// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
-// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
-// return value = index of resulting state
 
-int SU3SpinChainAnd2DTranslation::Pij (int i, int j, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
-{  
-  unsigned long tmpState = this->StateDescription[state];
-  unsigned long TmpMask1 = ((tmpState >> (i << 1)) & 0x3ul) ;
-  unsigned long TmpMask2 = ((tmpState >> (j << 1)) & 0x3ul);
-  coefficient = 1.0;
-  nbrTranslationX = 0;
-  nbrTranslationY = 0;
-  
-  if (TmpMask1 == TmpMask2)
-    return state;
-  
-  unsigned long TmpMask3 = 0x3ul << (i << 1);
-  unsigned long TmpMask4 = 0x3ul << (j << 1);
-  
-  
-  tmpState &= (~(TmpMask3));
-  tmpState &= (~(TmpMask4));
-  
-  tmpState |= (TmpMask1 << (j << 1));
-  tmpState |= (TmpMask2 << (i << 1));
-  
-//   cout << (this->StateDescription[state]) << " " << tmpState << " " ;
-  return this->SymmetrizeResult(tmpState, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
- 
-}
-
-// find state index
-//
-// stateDescription = unsigned longeger describing the state
-// maxMomentum = maximum Lz value reached by a fermion in the state
-// return value = corresponding index
-
-int SU3SpinChainAnd2DTranslation::FindStateIndex(unsigned long stateDescription, int maxMomentum)
-{
-  if ((stateDescription > this->StateDescription[0]) || (stateDescription < this->StateDescription[this->HilbertSpaceDimension - 1]))
-    return this->HilbertSpaceDimension;
-  if (this->LookUpTableShift[maxMomentum] < 0)
-    return this->HilbertSpaceDimension;
-  long PosMax = stateDescription >> this->LookUpTableShift[maxMomentum];
-  long PosMin = this->LookUpTable[maxMomentum][PosMax];
-  PosMax = this->LookUpTable[maxMomentum][PosMax + 1];
-  long PosMid = (PosMin + PosMax) >> 1;
-  unsigned long CurrentState = this->StateDescription[PosMid];
-  while ((PosMax != PosMid) && (CurrentState != stateDescription))
-    {
-      if (CurrentState > stateDescription)
-	{
-	  PosMax = PosMid;
-	}
-      else
-	{
-	  PosMin = PosMid;
-	} 
-      PosMid = (PosMin + PosMax) >> 1;
-      CurrentState = this->StateDescription[PosMid];
-    }
-
-  if (CurrentState == stateDescription)
-    return PosMid;
-  else
-    if ((this->StateDescription[PosMin] != stateDescription) && (this->StateDescription[PosMax] != stateDescription))
-      return this->HilbertSpaceDimension;
-    else
-      return PosMin;
-}
 
 // generate all states corresponding to the constraints
 //
 // return value = Hilbert space dimension
 
-long SU3SpinChainAnd2DTranslation::GenerateStates()
+long SU3SpinChain2DTranslationAndTzSymmetry::GenerateStates()
 {
   this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
   this->RawGenerateStates(0l, this->ChainLength - 1, 0, 0);
@@ -377,9 +315,10 @@ long SU3SpinChainAnd2DTranslation::GenerateStates()
 #else
   unsigned long Discard = 0xfffffffful;
 #endif
+  double TmpSign;
   for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
     {
-      if ((this->FindCanonicalForm(this->StateDescription[i], NbrTranslationX, NbrTranslationY) == this->StateDescription[i]))
+      if ((this->FindCanonicalForm(this->StateDescription[i], NbrTranslationX, NbrTranslationY, TmpSign) == this->StateDescription[i]))
 	{
 	  if (this->TestMomentumConstraint(this->StateDescription[i]) == true)
 	    {
@@ -419,185 +358,19 @@ long SU3SpinChainAnd2DTranslation::GenerateStates()
   return TmpLargeHilbertSpaceDimension;
 }
  
- /*
-// generate look-up table associated to current Hilbert space
-// 
-// memory = memory size that can be allocated for the look-up table
-
-void SU3SpinChainAnd2DTranslation::GenerateLookUpTable(unsigned long memory)
-{
-  
-  int TmpMaxBitPosition = 2 * this->ChainLength;
-  // evaluate look-up table size
-  memory /= (sizeof(int*) * TmpMaxBitPosition);
-  this->MaximumLookUpShift = 1;
-  while (memory > 0)
-    {
-      memory >>= 1;
-      ++this->MaximumLookUpShift;
-    }
-  if (this->MaximumLookUpShift > TmpMaxBitPosition)
-    this->MaximumLookUpShift = TmpMaxBitPosition;
-  this->LookUpTableMemorySize = 1 << this->MaximumLookUpShift;
-
-  // construct  look-up tables for searching states
-  this->LookUpTable = new int* [TmpMaxBitPosition];
-  this->LookUpTableShift = new int [TmpMaxBitPosition];
-  for (int i = 0; i <TmpMaxBitPosition; ++i)
-    this->LookUpTable[i] = new int [this->LookUpTableMemorySize + 1];
-  int CurrentMaxMomentum = TmpMaxBitPosition;
-  while (((this->StateDescription[0] >> CurrentMaxMomentum) == 0x0ul) && (CurrentMaxMomentum > 0))
-    --CurrentMaxMomentum;
-  int* TmpLookUpTable = this->LookUpTable[CurrentMaxMomentum];
-  if (CurrentMaxMomentum < this->MaximumLookUpShift)
-    this->LookUpTableShift[CurrentMaxMomentum] = 0;
-  else
-    this->LookUpTableShift[CurrentMaxMomentum] = CurrentMaxMomentum + 1 - this->MaximumLookUpShift;
-  int CurrentShift = this->LookUpTableShift[CurrentMaxMomentum];
-  unsigned long CurrentLookUpTableValue = this->LookUpTableMemorySize;
-  unsigned long TmpLookUpTableValue = this->StateDescription[0] >> CurrentShift;
-  while (CurrentLookUpTableValue > TmpLookUpTableValue)
-    {
-      TmpLookUpTable[CurrentLookUpTableValue] = 0;
-      --CurrentLookUpTableValue;
-    }
-  TmpLookUpTable[CurrentLookUpTableValue] = 0;
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    {
-      int TmpMaxMomentum = CurrentMaxMomentum;
-      while (((this->StateDescription[i] >> TmpMaxMomentum) == 0x0ul) && (TmpMaxMomentum > 0))
-	--TmpMaxMomentum;
-      if (CurrentMaxMomentum != TmpMaxMomentum)
-	{
-	  while (CurrentLookUpTableValue > 0)
-	    {
-	      TmpLookUpTable[CurrentLookUpTableValue] = i;
-	      --CurrentLookUpTableValue;
-	    }
-	  TmpLookUpTable[0] = i;
-	  --CurrentMaxMomentum;
-	  while (CurrentMaxMomentum > TmpMaxMomentum)
-	    {
-	      this->LookUpTableShift[CurrentMaxMomentum] = -1;
-	      --CurrentMaxMomentum;
-	    }
- 	  CurrentMaxMomentum = TmpMaxMomentum;
-	  TmpLookUpTable = this->LookUpTable[CurrentMaxMomentum];
-	  if (CurrentMaxMomentum < this->MaximumLookUpShift)
-	    this->LookUpTableShift[CurrentMaxMomentum] = 0;
-	  else
-	    this->LookUpTableShift[CurrentMaxMomentum] = CurrentMaxMomentum + 1 - this->MaximumLookUpShift;
-	  CurrentShift = this->LookUpTableShift[CurrentMaxMomentum];
-	  TmpLookUpTableValue = this->StateDescription[i] >> CurrentShift;
-	  CurrentLookUpTableValue = this->LookUpTableMemorySize;
-	  while (CurrentLookUpTableValue > TmpLookUpTableValue)
-	    {
-	      TmpLookUpTable[CurrentLookUpTableValue] = i;
-	      --CurrentLookUpTableValue;
-	    }
-	  TmpLookUpTable[CurrentLookUpTableValue] = i;
-	}
-      else
-	{
-	  TmpLookUpTableValue = this->StateDescription[i] >> CurrentShift;
-	  if (TmpLookUpTableValue != CurrentLookUpTableValue)
-	    {
-	      while (CurrentLookUpTableValue > TmpLookUpTableValue)
-		{
-		  TmpLookUpTable[CurrentLookUpTableValue] = i;
-		  --CurrentLookUpTableValue;
-		}
-	      TmpLookUpTable[CurrentLookUpTableValue] = i;
-	    }
-	}
-    }
-  while (CurrentLookUpTableValue > 0)
-    {
-      TmpLookUpTable[CurrentLookUpTableValue] = this->HilbertSpaceDimension - 1;
-      --CurrentLookUpTableValue;
-    }
-  TmpLookUpTable[0] = this->HilbertSpaceDimension - 1;
-}*/
-
+ 
 // compute the rescaling factors
 //
 
-void SU3SpinChainAnd2DTranslation::ComputeRescalingFactors()
+void SU3SpinChain2DTranslationAndTzSymmetry::ComputeRescalingFactors()
 {
-  this->RescalingFactors = new double* [this->ChainLength + 1];
-  for (int i = 1; i <= this->ChainLength; ++i)
+  this->RescalingFactors = new double* [2*this->ChainLength + 1];
+  for (int i = 1; i <= 2*this->ChainLength; ++i)
     {
-      this->RescalingFactors[i] = new double [this->ChainLength + 1];
-      for (int j = 1; j <= this->ChainLength; ++j)
+      this->RescalingFactors[i] = new double [2*this->ChainLength + 1];
+      for (int j = 1; j <= 2*this->ChainLength; ++j)
 	{
 	  this->RescalingFactors[i][j] = sqrt (((double) i) / ((double) j));
 	}
     }
 }
-
-// convert a state defined in the real space basis into a state in the (Kx,Ky) basis
-//
-// state = reference on the state to convert
-// space = pointer to the Hilbert space where state is defined
-// return value = state in the (Kx,Ky) basis
-
-ComplexVector SU3SpinChainAnd2DTranslation::ConvertToKxKyBasis(ComplexVector& state, AbstractSpinChain* space)
-{
-  SU3SpinChain* TmpSpace = (SU3SpinChain*) space;
-  ComplexVector TmpVector (this->HilbertSpaceDimension, true);
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    {
-      unsigned long TmpState = this->StateDescription[i];
-      int Pos = TmpSpace->FindStateIndex(TmpState);
-      if (Pos < TmpSpace->HilbertSpaceDimension)
-	{
-	  TmpVector[i] =  state[Pos] * sqrt((double) this->NbrStateInOrbit[i]);
-	}
-    }
-  return TmpVector;
-}
-
-// convert a state defined in the (Kx,Ky) basis into a state in the real space basis
-//
-// state = reference on the state to convert
-// space = pointer to the Hilbert space where state is defined
-// return value = state in the (Kx,Ky) basis
-
-ComplexVector SU3SpinChainAnd2DTranslation::ConvertFromKxKyBasis(ComplexVector& state, AbstractSpinChain* space)
-{
-  SU3SpinChain* TmpSpace = (SU3SpinChain*) space;
-  ComplexVector TmpVector (TmpSpace->HilbertSpaceDimension, true);
-  Complex** FourrierCoefficients = new Complex* [this->MaxXMomentum];
-  
-  for (int i = 0; i < this->MaxXMomentum; ++i)
-    {
-      FourrierCoefficients[i] = new Complex [this->MaxYMomentum];
-      for (int j = 0; j < this->MaxYMomentum; ++j)
-	{
-	  FourrierCoefficients[i][j] = Phase (-2.0 * M_PI * ((double) (i * this->XMomentum) / ((double) this->MaxXMomentum) + (double) (j * this->YMomentum) / ((double) this->MaxYMomentum)));
-	}
-    }
-  
-  for (int i = 0; i < TmpSpace->HilbertSpaceDimension; ++i)
-    {
-      int NbrTranslationX;
-      int NbrTranslationY;
-      unsigned long TmpState = TmpSpace->StateDescription[i];
-      TmpState = this->FindCanonicalForm(TmpState, NbrTranslationX, NbrTranslationY);
-      NbrTranslationX = (this->MaxXMomentum - NbrTranslationX) % this->MaxXMomentum;
-      NbrTranslationY = (this->MaxYMomentum - NbrTranslationY) % this->MaxYMomentum;
-      int TmpMaxMomentum = 2*this->ChainLength;
-      while (((TmpState >> TmpMaxMomentum) == 0x0ul) && (TmpMaxMomentum > 0))
-	--TmpMaxMomentum;
-      
-      int Pos = this->FindStateIndex(TmpState, TmpMaxMomentum);
-      if (Pos < this->HilbertSpaceDimension)
-	{
-	  TmpVector[i] =  (state[Pos] * FourrierCoefficients[NbrTranslationX][NbrTranslationY] / sqrt((double) this->NbrStateInOrbit[Pos]));
-	}
-    }
-  delete[] FourrierCoefficients;
-  return TmpVector;
-}
-  
-

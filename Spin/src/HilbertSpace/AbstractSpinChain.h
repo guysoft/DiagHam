@@ -313,6 +313,17 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // state = index of the state to consider
   // return value = index of resulting state
   virtual int Pij (int i, int j, int state);
+  
+  // return index of resulting state from application of Pij operator (permutation of two spins) on a given state
+  //
+  // i = position of S- operator
+  // j = position of S+ operator
+  // state = index of the state to be applied on Pij operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // return value = index of resulting state
+  virtual int Pij (int i, int j, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
   // find state index
   //

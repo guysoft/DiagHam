@@ -1,8 +1,12 @@
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "Hamiltonian/TwoDimensionalSquareLatticeSU3Hamiltonian.h"
+#include "Hamiltonian/TwoDimensionalSquareLatticeSU3And2DTranslationHamiltonian.h"
+
 
 #include "HilbertSpace/AbstractSpinChain.h"
 #include "HilbertSpace/SU3SpinChain.h"
+#include "HilbertSpace/SU3SpinChainAnd2DTranslation.h"
+#include "HilbertSpace/SU3SpinChain2DTranslationAndTzSymmetry.h"
 
 
 #include "Architecture/ArchitectureManager.h"
@@ -70,8 +74,8 @@ int main(int argc, char** argv)
   
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1); 
-  (*SystemGroup) += new  BooleanOption ('\n', "disable-szsymmetry", "disable the Sz<->-Sz symmetry");
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "sz-parity", "select the  Sz <-> -Sz parity (can be 1 or -1, 0 if both sectors have to be computed", 0);
+  (*SystemGroup) += new  BooleanOption ('\n', "disable-tzsymmetry", "disable the Sz<->-Sz symmetry");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "tz-parity", "select the  Sz <-> -Sz parity (can be 1 or -1, 0 if both sectors have to be computed", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nx1", "first coordinate of the first spanning vector of the tilted lattice", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "ny1", "second coordinate of the first spanning vector of the tilted lattice", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nx2", "first coordinate of the second spanning vector of the tilted lattice", 0);
@@ -114,7 +118,10 @@ int main(int argc, char** argv)
   bool XPeriodicFlag = true;
   bool YPeriodicFlag = true;
   if (Manager.GetBoolean("cylinder"))
+  {
     XPeriodicFlag = false;
+    NoTranslationFlag = true;
+  }
   if (Manager.GetBoolean("stripe"))
   {
     XPeriodicFlag = false;
@@ -155,30 +162,57 @@ int main(int argc, char** argv)
     NoTranslationFlag = true;
   }
   
-    
+  bool TzSymmetryFlag = false;
+  int MaxParity = 0;
+  int MinParity = 0;
+  if (Manager.GetBoolean("disable-tzsymmetry") == false)
+  {
+    if ((Manager.GetInteger("only-tz") == 0) && (NoTranslationFlag == false))
+    {
+      TzSymmetryFlag = true;
+      MaxParity = 1;
+      if (Manager.GetInteger("tz-parity") != 0)
+      {
+	MinParity = (1 - Manager.GetInteger("tz-parity")) / 2;
+	MaxParity = MinParity;
+      }
+    }
+    else
+    {
+      cout << "Work in the Tz = 0 sector to be able to use the Sz symmetry, and activate translation symmetry" << endl;
+    }
+  }
   
   char* ParametersName = new char[256];
   sprintf(ParametersName, "heisenberg");
   
   char* OutputFileName = new char [512];
   if (Manager.GetBoolean("cylinder"))
-    sprintf (OutputFileName, "spin_SU_3_cylinder_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
+    sprintf (OutputFileName, "spin_SU3_cylinder_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
   else
   {
     if (Manager.GetBoolean("stripe"))
-      sprintf (OutputFileName, "spin_SU_3_stripe_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
+      sprintf (OutputFileName, "spin_SU3_stripe_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
     else
     {
       if (NoTranslationFlag == false)
-	if (TiltedFlag == false)
-	  sprintf (OutputFileName, "spin_SU_3_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
+      {
+	if (TzSymmetryFlag)
+	  if (TiltedFlag == false)
+	    sprintf (OutputFileName, "spin_SU3_tzsym_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
+	  else
+	    sprintf (OutputFileName, "spin_SU3_tzsym_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_%s", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, ParametersName);
 	else
-	  sprintf (OutputFileName, "spin_SU_3_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_%s", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, ParametersName);
+	  if (TiltedFlag == false)
+	    sprintf (OutputFileName, "spin_SU3_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
+	  else
+	    sprintf (OutputFileName, "spin_SU3_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_%s", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, ParametersName);
+      }
       else
 	if (TiltedFlag == false)
-	  sprintf (OutputFileName, "spin_SU_3_notranslation_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
+	  sprintf (OutputFileName, "spin_SU3_notranslation_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
 	else
-	  sprintf (OutputFileName, "spin_SU_3_notranslation_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_%s", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, ParametersName);
+	  sprintf (OutputFileName, "spin_SU3_notranslation_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_%s", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, ParametersName);
     }
   }
   
@@ -215,26 +249,7 @@ int main(int argc, char** argv)
     MaxYMomentum = 0;
   }
   
-  bool SzSymmetryFlag = false;
-  int MaxParity = 0;
-  int MinParity = 0;
-//   if (Manager.GetBoolean("disable-szsymmetry") == false)
-//   {
-//     if ((InitalSzValue == 0) && (MaxSzValue == 0) && (NoTranslationFlag == false))
-//     {
-//       SzSymmetryFlag = true;
-//       MaxParity = 1;
-//       if (Manager.GetInteger("sz-parity") != 0)
-//       {
-// 	MinParity = (1 - Manager.GetInteger("sz-parity")) / 2;
-// 	MaxParity = MinParity;
-//       }
-//     }
-//     else
-//     {
-//       cout << "Work in the Sz = 0 sector to be able to use the Sz symmetry, and activate translation symmetry" << endl;
-//     }
-//   }
+  
     
   bool InversionSymmetryFlag = false;
   int MaxInversionParity = 0;
@@ -257,13 +272,13 @@ int main(int argc, char** argv)
 //       cout << "Work in the Sz = 0 sector to be able to use the Sz symmetry" << endl;
 //     }
   }
-    
+  int tzSym;
   char* CommentLine = new char [512];
   if (NoTranslationFlag)
     sprintf (CommentLine, "SU(3) spin system with %d sites in the x direction, %d sites in the y direction \n# Tz Y", NbrSitesX, NbrSitesY);
   else
   {
-    if (SzSymmetryFlag == false)
+    if (TzSymmetryFlag == false)
       sprintf (CommentLine, "SU(3) spin system with %d sites in the x direction, %d sites in the y direction \n# Tz Y kx ky", NbrSitesX, NbrSitesY);
     else
       sprintf (CommentLine, "SU(3) spin system with %d sites in the x direction, %d sites in the y direction \n# Tz Y kx ky szsym", NbrSitesX, NbrSitesY);
@@ -301,29 +316,66 @@ int main(int argc, char** argv)
 	{
 	  tz = r - s;
 	  y = 3*(r + s) - 2*NbrSpins;
-	  cout << "(tz,y) = (" << tz << "," << y << ")" << endl; 
-	  Space = new SU3SpinChain (NbrSpins, tz, y, 1000000);
 	  
-	  
-	  if (Space->GetHilbertSpaceDimension() > 0)
+      
+	  for (int XMomentum = MinXMomentum; XMomentum <= MaxXMomentum; ++XMomentum)
+	  {
+	    for (int YMomentum = MinYMomentum; YMomentum <= MaxYMomentum; ++YMomentum)
 	    {
-	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-	      char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
-	      char* TmpSzString = new char[64];
-	      AbstractHamiltonian* Hamiltonian = 0;
-	      if (NoTranslationFlag)
+	      for (int tzSymmetrySector = MinParity; tzSymmetrySector <= MaxParity; ++tzSymmetrySector)
 	      {
-		Hamiltonian = new TwoDimensionalSquareLatticeSU3Hamiltonian(Space, NbrSitesX, NbrSitesY, JValue, JExchangeValue, XPeriodicFlag, YPeriodicFlag, OffsetReal);
-		sprintf (TmpEigenstateString, "%s_tz_%d_y_%d", OutputFileName, tz, y);
-		sprintf (TmpSzString, "%d %d", tz, y);
+		cout << "(tz,y) = (" << tz << "," << y << ") (kx, ky) = (" << XMomentum << "," << YMomentum << ")" << endl; 
+		tzSym = 1 - 2 * tzSymmetrySector;
+		if (TzSymmetryFlag)
+		  cout << "Tz parity = " << tzSym << endl;
+		if (NoTranslationFlag)
+		  Space = new SU3SpinChain (NbrSpins, tz, y, 1000000);
+		else
+		{
+		  if (!TzSymmetryFlag)
+		    Space = new SU3SpinChainAnd2DTranslation (NbrSpins, tz, y, XMomentum, NbrSitesX, YMomentum, NbrSitesY);
+		  else
+		    Space = new SU3SpinChain2DTranslationAndTzSymmetry (NbrSpins, tz, y, XMomentum, NbrSitesX, YMomentum, NbrSitesY, tzSymmetrySector);
+		}
+	  
+		cout << (Space->GetHilbertSpaceDimension()) << endl;
+		if (Space->GetHilbertSpaceDimension() > 0)
+		  {
+		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+		  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
+		  char* TmpSzString = new char[64];
+		  AbstractHamiltonian* Hamiltonian = 0;
+		  if (NoTranslationFlag)
+		  {
+		    Hamiltonian = new TwoDimensionalSquareLatticeSU3Hamiltonian(Space, NbrSitesX, NbrSitesY, JValue, JExchangeValue, XPeriodicFlag, YPeriodicFlag, OffsetReal);
+		    sprintf (TmpEigenstateString, "%s_tz_%d_y_%d", OutputFileName, tz, y);
+		    sprintf (TmpSzString, "%d %d", tz, y);
 		
-		GenericRealMainTask Task(&Manager, Space, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+		    GenericRealMainTask Task(&Manager, Space, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
 				   FirstRun, TmpEigenstateString);
-		MainTaskOperation TaskOperation (&Task);
-		TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-	      }
-	      else
-	      {/*
+		    MainTaskOperation TaskOperation (&Task);
+		    TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+		  }
+		  else
+		  {
+		    Hamiltonian = new TwoDimensionalSquareLatticeSU3And2DTranslationHamiltonian(Space, XMomentum, NbrSitesX, YMomentum, NbrSitesY, JValue, JExchangeValue, OffsetReal);
+		    if (!TzSymmetryFlag)
+		    {
+		      sprintf (TmpEigenstateString, "%s_tz_%d_y_%d_kx_%d_ky_%d", OutputFileName, tz, y, XMomentum, YMomentum);
+		      sprintf (TmpSzString, "%d %d %d %d", tz, y, XMomentum, YMomentum);
+		    }
+		    else
+		     {
+		      sprintf (TmpEigenstateString, "%s_tz_%d_y_%d_tzsym_%d_kx_%d_ky_%d", OutputFileName, tz, y, tzSym, XMomentum, YMomentum);
+		      sprintf (TmpSzString, "%d %d %d %d %d", tz, y, XMomentum, YMomentum, tzSym);
+		     } 
+		
+		    Lanczos.SetComplexAlgorithms();
+		    GenericComplexMainTask Task(&Manager, Space, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+				   FirstRun, TmpEigenstateString);
+		    MainTaskOperation TaskOperation (&Task);
+		    TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+		/*
 		if (JC3Breaking == 1.0)
 		  Hamiltonian = new TwoDimensionalKagomeLatticeAnd2DTranslationHamiltonian(Space, XMomentum, NbrSitesX, YMomentum, NbrSitesY, JValue, JDownValue, JEasyPlane, JDownEasyPlane, OffsetReal);
 		else
@@ -358,9 +410,11 @@ int main(int argc, char** argv)
 	      delete[] TmpSzString;
 	      delete[] TmpEigenstateString;
 	    }
-	  
-	}
+	  }
+	    }
+      }	  
     }
+   }
 //     for (int XMomentum = MinXMomentum; XMomentum <= MaxXMomentum; ++XMomentum)
 //     {
 //       for (int YMomentum = MinYMomentum; YMomentum <= MaxYMomentum; ++YMomentum)

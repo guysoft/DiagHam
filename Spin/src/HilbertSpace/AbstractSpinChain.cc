@@ -426,6 +426,22 @@ int AbstractSpinChain::Pij (int i, int j, int state)
   cout << "Warning: using dummy method AbstractSpinChain::PiPj" << endl;
   return this->HilbertSpaceDimension;
 }
+
+// return index of resulting state from application of Pij operator on a given state
+//
+// i = position of S- operator
+// j = position of S+ operator
+// state = index of the state to be applied on Pij operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of resulting state
+
+int AbstractSpinChain::Pij (int i, int j, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  cout << "warning : using dummy method AbstractSpinChain::Pij" << endl;
+  return this->HilbertSpaceDimension;
+}
   
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Sz sector.
 // 

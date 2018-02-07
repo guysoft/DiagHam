@@ -60,4 +60,5 @@ Unconventional3DToricCodeHamiltonian.cc \
 ShastrySutherlandHamiltonian.cc \
 ShastrySutherlandAnd2DTranslationHamiltonian.cc \
 SpinChainAKLTStabilizerHamiltonian.cc \
-TwoDimensionalSquareLatticeSU3Hamiltonian.cc
+TwoDimensionalSquareLatticeSU3Hamiltonian.cc \
+TwoDimensionalSquareLatticeSU3And2DTranslationHamiltonian.cc
