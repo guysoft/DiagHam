@@ -415,6 +415,18 @@ int AbstractSpinChain::SziSzjSmkSpl (int i, int j, int k, int l, int state, doub
 }
   
   
+// return index of resulting state from application of two-site exchange operator on a given state
+//
+// i = first position
+// j = second position
+// state = index of the state to consider
+// return value = index of resulting state
+int AbstractSpinChain::Pij (int i, int j, int state)
+{
+  cout << "Warning: using dummy method AbstractSpinChain::PiPj" << endl;
+  return this->HilbertSpaceDimension;
+}
+  
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Sz sector.
 // 
 // nbrSites = number of sites that are part of the A subsystem 

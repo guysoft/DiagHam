@@ -59,4 +59,5 @@ TwoDimensionalTriangularLatticeWithPseudospinAnd2DTranslationHamiltonian.cc \
 Unconventional3DToricCodeHamiltonian.cc \
 ShastrySutherlandHamiltonian.cc \
 ShastrySutherlandAnd2DTranslationHamiltonian.cc \
-SpinChainAKLTStabilizerHamiltonian.cc
+SpinChainAKLTStabilizerHamiltonian.cc \
+TwoDimensionalSquareLatticeSU3Hamiltonian.cc

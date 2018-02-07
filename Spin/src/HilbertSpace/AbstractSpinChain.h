@@ -305,6 +305,14 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of resulting state
   virtual int SziSzjSmkSpl (int i, int j, int k, int l, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
+  // return index of resulting state from application of two-site exchange operator on a given state
+  //
+  // i = first position
+  // j = second position
+  // state = index of the state to consider
+  // return value = index of resulting state
+  virtual int Pij (int i, int j, int state);
 
   // find state index
   //
