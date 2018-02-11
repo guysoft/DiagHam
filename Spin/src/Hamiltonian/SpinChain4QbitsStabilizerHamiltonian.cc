@@ -6,10 +6,10 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//              class of spin chain hamiltonian for the AKLT model            //
-//                         written as a stabilizer code                       //
+//                  class of spin chain hamiltonian for the                   //
+//                            4 qbits stabilizer code                         //
 //                                                                            //
-//                        last modification : 20/12/2017                      //
+//                        last modification : 28/01/2018                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "Hamiltonian/SpinChainAKLTStabilizerHamiltonian.h"
+#include "Hamiltonian/SpinChain4QbitsStabilizerHamiltonian.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
@@ -46,24 +46,13 @@ using std::endl;
 using std::ostream;
 
 
-// default constructor
-//
-
-SpinChainAKLTStabilizerHamiltonian::SpinChainAKLTStabilizerHamiltonian()
-{
-  this->Chain = 0;
-  this->NbrSpin = 0;
-  this->PeriodicBoundaryConditions = false;
-  this->HamiltonianShift = 0.0;  
-}
-
 // constructor from default data
 //
 // chain = reference on Hilbert space of the associated system
 // nbrSpin = number of spin
 // periodicBoundaryConditions = true if periodic boundary conditions have to be used
 
-SpinChainAKLTStabilizerHamiltonian::SpinChainAKLTStabilizerHamiltonian(AbstractSpinChain* chain, int nbrSpin, bool periodicBoundaryConditions)
+SpinChain4QbitsStabilizerHamiltonian::SpinChain4QbitsStabilizerHamiltonian(AbstractSpinChain* chain, int nbrSpin, bool periodicBoundaryConditions)
 {
   this->Chain = chain;
   this->NbrSpin = nbrSpin;
@@ -74,56 +63,10 @@ SpinChainAKLTStabilizerHamiltonian::SpinChainAKLTStabilizerHamiltonian(AbstractS
 // destructor
 //
 
-SpinChainAKLTStabilizerHamiltonian::~SpinChainAKLTStabilizerHamiltonian() 
+SpinChain4QbitsStabilizerHamiltonian::~SpinChain4QbitsStabilizerHamiltonian() 
 {
 }
 
-// set Hilbert space
-//
-// hilbertSpace = pointer to Hilbert space to use
-
-void SpinChainAKLTStabilizerHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
-{
-  this->Chain = (AbstractSpinChain*) hilbertSpace;
-}
-
-// get Hilbert space on which Hamiltonian acts
-//
-// return value = pointer to used Hilbert space
-
-AbstractHilbertSpace* SpinChainAKLTStabilizerHamiltonian::GetHilbertSpace ()
-{
-  return this->Chain;
-}
-
-// set chain
-// 
-// chain = reference on Hilbert space of the associated system
-// return value = reference on current Hamiltonian
-
-SpinChainAKLTStabilizerHamiltonian& SpinChainAKLTStabilizerHamiltonian::SetChain(AbstractSpinChain* chain)
-{  
-  this->Chain = chain;
-  return *this;  
-}
-
-// return dimension of Hilbert space where Hamiltonian acts
-//
-// return value = corresponding matrix elementdimension
-
-int SpinChainAKLTStabilizerHamiltonian::GetHilbertSpaceDimension ()
-{
-  return this->Chain->GetHilbertSpaceDimension();
-}
-
-// shift Hamiltonian from a given energy
-//
-// shift = shift value
-
-void SpinChainAKLTStabilizerHamiltonian::ShiftHamiltonian (double shift)
-{
-}
-  
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and add result to another vector, low level function (no architecture optimization)
 //
@@ -133,56 +76,141 @@ void SpinChainAKLTStabilizerHamiltonian::ShiftHamiltonian (double shift)
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& SpinChainAKLTStabilizerHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-								    int firstComponent, int nbrComponent)
+RealVector& SpinChain4QbitsStabilizerHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+								      int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   int dim = this->Chain->GetHilbertSpaceDimension();
   double TmpCoefficient1;
   double TmpCoefficient2;
+  double TmpCoefficient3;
   int pos;
-  int MaxPos = this->NbrSpin - 2;
+  int pos2;
+  int MaxPos = this->NbrSpin - 3;
   for (int i = firstComponent; i < LastComponent; ++i)
     {
       double TmpValue = -2.0 * vSource[i];
       vDestination[i] += this->HamiltonianShift;
       for (int j = 0; j < MaxPos; ++j)
 	{
-	  TmpCoefficient1 = this->Chain->SziSzj(j, j + 2, i);
+	  TmpCoefficient1 = this->Chain->SziSzj(j, j + 3, i);
  	  pos = this->Chain->Spi(j + 1, i, TmpCoefficient2);
  	  if (pos != dim)
  	    {
- 	      vDestination[pos] += TmpValue * TmpCoefficient1 * TmpCoefficient2;
+	      pos2 = this->Chain->Spi(j + 2, pos, TmpCoefficient3);
+	      if (pos2 != dim)
+		{
+		  vDestination[pos2] += TmpValue * TmpCoefficient1 * TmpCoefficient2 * TmpCoefficient3;
+		}
+	      pos2 = this->Chain->Smi(j + 2, pos, TmpCoefficient3);
+	      if (pos2 != dim)
+		{
+		  vDestination[pos2] += TmpValue * TmpCoefficient1 * TmpCoefficient2 * TmpCoefficient3;
+		}
  	    }
  	  pos = this->Chain->Smi(j + 1, i, TmpCoefficient2);
  	  if (pos != dim)
  	    {
- 	      vDestination[pos] += TmpValue * TmpCoefficient1 * TmpCoefficient2;
+	      pos2 = this->Chain->Spi(j + 2, pos, TmpCoefficient3);
+	      if (pos2 != dim)
+		{
+		  vDestination[pos2] += TmpValue * TmpCoefficient1 * TmpCoefficient2 * TmpCoefficient3;
+		}
+	      pos2 = this->Chain->Smi(j + 2, pos, TmpCoefficient3);
+	      if (pos2 != dim)
+		{
+		  vDestination[pos2] += TmpValue * TmpCoefficient1 * TmpCoefficient2 * TmpCoefficient3;
+		}
  	    }
 	}
       if (this->PeriodicBoundaryConditions == true)
 	{
-	  TmpCoefficient1 = this->Chain->SziSzj(this->NbrSpin - 2, 0, i);
+	  TmpCoefficient1 = this->Chain->SziSzj(this->NbrSpin - 3, 0, i);
+ 	  pos = this->Chain->Spi(this->NbrSpin - 2, i, TmpCoefficient2);
+ 	  if (pos != dim)
+ 	    {
+	      pos2 = this->Chain->Spi(this->NbrSpin - 1, pos, TmpCoefficient3);
+	      if (pos2 != dim)
+		{
+		  vDestination[pos2] += TmpValue * TmpCoefficient1 * TmpCoefficient2 * TmpCoefficient3;
+		}
+	      pos2 = this->Chain->Smi(this->NbrSpin - 1, pos, TmpCoefficient3);
+	      if (pos2 != dim)
+		{
+		  vDestination[pos2] += TmpValue * TmpCoefficient1 * TmpCoefficient2 * TmpCoefficient3;
+		}
+ 	    }
+ 	  pos = this->Chain->Smi(this->NbrSpin - 2, i, TmpCoefficient2);
+ 	  if (pos != dim)
+ 	    {
+	      pos2 = this->Chain->Spi(this->NbrSpin - 1, pos, TmpCoefficient3);
+	      if (pos2 != dim)
+		{
+		  vDestination[pos2] += TmpValue * TmpCoefficient1 * TmpCoefficient2 * TmpCoefficient3;
+		}
+	      pos2 = this->Chain->Smi(this->NbrSpin - 1, pos, TmpCoefficient3);
+	      if (pos2 != dim)
+		{
+		  vDestination[pos2] += TmpValue * TmpCoefficient1 * TmpCoefficient2 * TmpCoefficient3;
+		}
+ 	    }
+	  TmpCoefficient1 = this->Chain->SziSzj(this->NbrSpin - 2, 1, i);
  	  pos = this->Chain->Spi(this->NbrSpin - 1, i, TmpCoefficient2);
  	  if (pos != dim)
  	    {
- 	      vDestination[pos] += TmpValue * TmpCoefficient1 * TmpCoefficient2;
+	      pos2 = this->Chain->Spi(0, pos, TmpCoefficient3);
+	      if (pos2 != dim)
+		{
+		  vDestination[pos2] += TmpValue * TmpCoefficient1 * TmpCoefficient2 * TmpCoefficient3;
+		}
+	      pos2 = this->Chain->Smi(0, pos, TmpCoefficient3);
+	      if (pos2 != dim)
+		{
+		  vDestination[pos2] += TmpValue * TmpCoefficient1 * TmpCoefficient2 * TmpCoefficient3;
+		}
  	    }
  	  pos = this->Chain->Smi(this->NbrSpin - 1, i, TmpCoefficient2);
  	  if (pos != dim)
  	    {
- 	      vDestination[pos] += TmpValue * TmpCoefficient1 * TmpCoefficient2;
+	      pos2 = this->Chain->Spi(0, pos, TmpCoefficient3);
+	      if (pos2 != dim)
+		{
+		  vDestination[pos2] += TmpValue * TmpCoefficient1 * TmpCoefficient2 * TmpCoefficient3;
+		}
+	      pos2 = this->Chain->Smi(0, pos, TmpCoefficient3);
+	      if (pos2 != dim)
+		{
+		  vDestination[pos2] += TmpValue * TmpCoefficient1 * TmpCoefficient2 * TmpCoefficient3;
+		}
  	    }
-	  TmpCoefficient1 = this->Chain->SziSzj(this->NbrSpin - 1, 1, i);
+	  TmpCoefficient1 = this->Chain->SziSzj(this->NbrSpin - 1, 2, i);
  	  pos = this->Chain->Spi(0, i, TmpCoefficient2);
  	  if (pos != dim)
  	    {
- 	      vDestination[pos] += TmpValue * TmpCoefficient1 * TmpCoefficient2;
+	      pos2 = this->Chain->Spi(1, pos, TmpCoefficient3);
+	      if (pos2 != dim)
+		{
+		  vDestination[pos2] += TmpValue * TmpCoefficient1 * TmpCoefficient2 * TmpCoefficient3;
+		}
+	      pos2 = this->Chain->Smi(1, pos, TmpCoefficient3);
+	      if (pos2 != dim)
+		{
+		  vDestination[pos2] += TmpValue * TmpCoefficient1 * TmpCoefficient2 * TmpCoefficient3;
+		}
  	    }
  	  pos = this->Chain->Smi(0, i, TmpCoefficient2);
  	  if (pos != dim)
  	    {
- 	      vDestination[pos] += TmpValue * TmpCoefficient1 * TmpCoefficient2;
+	      pos2 = this->Chain->Spi(1, pos, TmpCoefficient3);
+	      if (pos2 != dim)
+		{
+		  vDestination[pos2] += TmpValue * TmpCoefficient1 * TmpCoefficient2 * TmpCoefficient3;
+		}
+	      pos2 = this->Chain->Smi(1, pos, TmpCoefficient3);
+	      if (pos2 != dim)
+		{
+		  vDestination[pos2] += TmpValue * TmpCoefficient1 * TmpCoefficient2 * TmpCoefficient3;
+		}
  	    }
 	}
     }

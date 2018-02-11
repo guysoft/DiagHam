@@ -61,4 +61,5 @@ ShastrySutherlandHamiltonian.cc \
 ShastrySutherlandAnd2DTranslationHamiltonian.cc \
 SpinChainAKLTStabilizerHamiltonian.cc \
 TwoDimensionalSquareLatticeSU3Hamiltonian.cc \
-TwoDimensionalSquareLatticeSU3And2DTranslationHamiltonian.cc
+TwoDimensionalSquareLatticeSU3And2DTranslationHamiltonian.cc \
+SpinChain4QbitsStabilizerHamiltonian.cc

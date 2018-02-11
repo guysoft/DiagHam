@@ -18,4 +18,5 @@ FQHEMPSTwistedSymmetrizedStateMatrix.cc \
 FQHEMPSFixedBondDimensionMatrix.cc \
 AbstractFQHEMPOMatrix.cc \
 FQHEMPODensityOperator.cc \
-FQHEMPSPHPfaffianMatrix.cc
+FQHEMPSPHPfaffianMatrix.cc \
+FQHEMPSTJPHPfaffianMatrix.cc

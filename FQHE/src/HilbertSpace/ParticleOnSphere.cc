@@ -264,6 +264,19 @@ double ParticleOnSphere::ProdAL (int index, int* n, int nbrIndices)
   return 0.0;
 }
 
+// apply Prod_i a_ni operator to a given state
+//
+// index = index of the state on which the operator has to be applied
+// n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphere::ProdA (int index, int* n, int nbrIndices, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
 // apply a^+_m1 a^+_m2 operator to the state produced using AA method (without destroying it)
 //
 // m1 = first index for creation operator
@@ -372,6 +385,18 @@ int ParticleOnSphere::ProdAdL (int* m, int nbrIndices, double& coefficient)
   return this->HilbertSpaceDimension;
 }
 
+// apply Prod_i a^+_ni operator to a given state
+//
+// index = index of the state on which the operator has to be applied
+// n = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation operators
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphere::ProdAd (int index, int* n, int nbrIndices, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
 
 // apply a^+_m a_m operator to a given state 
 //

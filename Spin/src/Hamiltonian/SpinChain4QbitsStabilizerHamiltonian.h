@@ -6,10 +6,10 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//              class of spin chain hamiltonian for the AKLT model            //
-//                         written as a stabilizer code                       //
+//                  class of spin chain hamiltonian for the                   //
+//                            4 qbits stabilizer code                         //
 //                                                                            //
-//                        last modification : 20/12/2017                      //
+//                        last modification : 28/01/2018                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,13 +29,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SPINCHAINAKLTSTABILIZERHAMILTONIAN_H
-#define SPINCHAINAKLTSTABILIZERHAMILTONIAN_H
+#ifndef SPINCHAIN4QBITSSTABILIZERHAMILTONIAN_H
+#define SPINCHAIN4QBITSSTABILIZERHAMILTONIAN_H
 
 
 #include "config.h"
 #include "HilbertSpace/AbstractSpinChain.h"
-#include "Hamiltonian/AbstractHamiltonian.h"
+#include "Hamiltonian/SpinChainAKLTStabilizerHamiltonian.h"
 
 
 #include <iostream>
@@ -45,70 +45,28 @@ using std::ostream;
 class MathematicaOutput;
 
 
-class SpinChainAKLTStabilizerHamiltonian : public AbstractHamiltonian
+class SpinChain4QbitsStabilizerHamiltonian : public SpinChainAKLTStabilizerHamiltonian
 {
 
  protected:
   
-  //pointer to Hilbert space of the associated system
-  AbstractSpinChain* Chain;
-
-  // flag to indicate if  periodic boundary conditions should be used
-  bool PeriodicBoundaryConditions;
-
-  // length of the spin chain
-  int NbrSpin;
-
-  // global shift of the Hamiltonian
-  double HamiltonianShift;
-
  public:
-
-  // default constructor
-  //
-  SpinChainAKLTStabilizerHamiltonian();
 
   // constructor from default data
   //
   // chain = pointer to Hilbert space of the associated system
   // nbrSpin = number of spin
    // periodicBoundaryConditions = true if periodic boundary conditions have to be used
-  SpinChainAKLTStabilizerHamiltonian(AbstractSpinChain* chain, int nbrSpin, bool periodicBoundaryConditions = false);
+  SpinChain4QbitsStabilizerHamiltonian(AbstractSpinChain* chain, int nbrSpin, bool periodicBoundaryConditions = false);
 
   // destructor
   //
-  ~SpinChainAKLTStabilizerHamiltonian();
+  ~SpinChain4QbitsStabilizerHamiltonian();
 
   // clone hamiltonian without duplicating datas
   //
   // return value = pointer to cloned hamiltonian
   AbstractHamiltonian* Clone ();
-
-  // set chain
-  // 
-  // chain = pointer on Hilbert space of the associated system
-  // return value = reference on current Hamiltonian
-  SpinChainAKLTStabilizerHamiltonian& SetChain(AbstractSpinChain* chain);
-
-  // set Hilbert space
-  //
-  // hilbertSpace = pointer to Hilbert space to use
-  void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
-
-  // get Hilbert space on which Hamiltonian acts
-  //
-  // return value = pointer to used Hilbert space
-  AbstractHilbertSpace* GetHilbertSpace ();
-
-  // return dimension of Hilbert space where Hamiltonian acts
-  //
-  // return value = corresponding matrix elementdimension
-  int GetHilbertSpaceDimension ();
-  
-  // shift Hamiltonian from a given energy
-  //
-  // shift = shift value
-  void ShiftHamiltonian (double shift);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)

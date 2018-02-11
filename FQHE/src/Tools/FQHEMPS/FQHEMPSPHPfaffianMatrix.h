@@ -46,6 +46,8 @@ class AbstractArchitecture;
 class FQHEMPSPHPfaffianMatrix : public FQHEMPSClustered2RMatrix
 {
 
+ protected:
+
   friend class FQHEMPSEvaluateCFTOperation;
 
   // shift to apply to the p level to get a positive index
