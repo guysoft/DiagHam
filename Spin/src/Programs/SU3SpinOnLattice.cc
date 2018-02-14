@@ -188,33 +188,34 @@ int main(int argc, char** argv)
   
   char* OutputFileName = new char [512];
   if (Manager.GetBoolean("cylinder"))
-    sprintf (OutputFileName, "spin_SU3_cylinder_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
+    sprintf (OutputFileName, "spin_SU3_cylinder_x_%d_y_%d_%s_j4_%.6f", NbrSitesX, NbrSitesY, ParametersName, JExchangeValue);
   else
   {
     if (Manager.GetBoolean("stripe"))
-      sprintf (OutputFileName, "spin_SU3_stripe_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
+      sprintf (OutputFileName, "spin_SU3_stripe_x_%d_y_%d_%s_j4_%.6f", NbrSitesX, NbrSitesY, ParametersName, JExchangeValue);
     else
     {
       if (NoTranslationFlag == false)
       {
 	if (TzSymmetryFlag)
 	  if (TiltedFlag == false)
-	    sprintf (OutputFileName, "spin_SU3_tzsym_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
+	    sprintf (OutputFileName, "spin_SU3_tzsym_x_%d_y_%d_%s_j4_%.6f", NbrSitesX, NbrSitesY, ParametersName, JExchangeValue);
 	  else
-	    sprintf (OutputFileName, "spin_SU3_tzsym_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_%s", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, ParametersName);
+	    sprintf (OutputFileName, "spin_SU3_tzsym_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_%s_j4_%.6f", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, ParametersName, JExchangeValue);
 	else
 	  if (TiltedFlag == false)
-	    sprintf (OutputFileName, "spin_SU3_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
+	    sprintf (OutputFileName, "spin_SU3_x_%d_y_%d_%s_j4_%.6f", NbrSitesX, NbrSitesY, ParametersName, JExchangeValue);
 	  else
-	    sprintf (OutputFileName, "spin_SU3_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_%s", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, ParametersName);
+	    sprintf (OutputFileName, "spin_SU3_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_%s_j4_%.6f", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, ParametersName, JExchangeValue);
       }
       else
 	if (TiltedFlag == false)
-	  sprintf (OutputFileName, "spin_SU3_notranslation_x_%d_y_%d_%s", NbrSitesX, NbrSitesY, ParametersName);
+	  sprintf (OutputFileName, "spin_SU3_notranslation_x_%d_y_%d_%s_j4_%.6f", NbrSitesX, NbrSitesY, ParametersName, JExchangeValue);
 	else
-	  sprintf (OutputFileName, "spin_SU3_notranslation_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_%s", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, ParametersName);
+	  sprintf (OutputFileName, "spin_SU3_notranslation_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d_off_%d_%s_j4_%.6f", NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, OffsetReal, ParametersName, JExchangeValue);
     }
   }
+  
   
   char* FullOutputFileName = new char [strlen(OutputFileName)+ 16];
   sprintf (FullOutputFileName, "%s.dat", OutputFileName);

@@ -163,6 +163,8 @@ ComplexVector& TwoDimensionalSquareLatticeSU3And2DTranslationHamiltonian::LowLev
   int pos;
   int TmpIndex;
   int TmpIndex1;
+  int TmpIndex2;
+  int TmpIndex3;
   
   double TmpCoefficient;
   int NbrTranslationsX;
@@ -185,6 +187,18 @@ ComplexVector& TwoDimensionalSquareLatticeSU3And2DTranslationHamiltonian::LowLev
 	      pos = this->Chain->Pij(TmpIndex1, TmpIndex, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
 	      if (pos != dim)
 		vDestination[pos] += vSource[i] * TmpCoefficient * this->JFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+	      
+	      
+	      TmpIndex1 = this->GetLinearizedIndexSafe (j + 1, k);
+	      TmpIndex2 = this->GetLinearizedIndexSafe (j + 1 - this->Offset, k + 1);
+	      TmpIndex3 = this->GetLinearizedIndexSafe (j - this->Offset, k + 1);
+	      pos = this->Chain->Pijkl(TmpIndex, TmpIndex1, TmpIndex2, TmpIndex3, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+	      if (pos != dim)
+		vDestination[pos] += vSource[i]* TmpCoefficient * this->JSquareExchangeFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+	      
+	      pos = this->Chain->Pijkl(TmpIndex, TmpIndex3, TmpIndex2, TmpIndex1, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+	      if (pos != dim)
+		vDestination[pos] += vSource[i]* TmpCoefficient * this->JSquareExchangeFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
 	    }
 	}
     }
@@ -211,6 +225,8 @@ ComplexVector& TwoDimensionalSquareLatticeSU3And2DTranslationHamiltonian::Hermit
   int pos;
   int TmpIndex;
   int TmpIndex1;
+  int TmpIndex2;
+  int TmpIndex3;
   double TmpCoefficient;
   Complex TmpSum;
   int NbrTranslationsX;
@@ -244,8 +260,18 @@ ComplexVector& TwoDimensionalSquareLatticeSU3And2DTranslationHamiltonian::Hermit
 	      if (pos == i)
 		TmpSum += vSource[pos] * TmpCoefficient * this->JFactor * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
 	      
-	      }
 	      
+	      TmpIndex1 = this->GetLinearizedIndexSafe (j + 1, k);
+	      TmpIndex2 = this->GetLinearizedIndexSafe (j + 1 - this->Offset, k + 1);
+	      TmpIndex3 = this->GetLinearizedIndexSafe (j - this->Offset, k + 1);
+	      pos = this->Chain->Pijkl(TmpIndex, TmpIndex1, TmpIndex2, TmpIndex3, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+	      if (pos < dim)
+		vDestination[pos] += vSource[i]* TmpCoefficient * this->JSquareExchangeFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+	      
+	      pos = this->Chain->Pijkl(TmpIndex, TmpIndex3, TmpIndex2, TmpIndex1, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+	      if (pos < dim)
+		vDestination[pos] += vSource[i]* TmpCoefficient * this->JSquareExchangeFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+	      }
 	    }
       vDestination[i] += (this->SzSzContributions[i] * vSource[i] + TmpSum);
     }
@@ -271,6 +297,8 @@ ComplexVector* TwoDimensionalSquareLatticeSU3And2DTranslationHamiltonian::LowLev
   int pos;
   int TmpIndex;
   int TmpIndex1;
+  int TmpIndex2;
+  int TmpIndex3;
   double TmpCoefficient;
   int NbrTranslationsX;
   int NbrTranslationsY;
@@ -308,6 +336,18 @@ ComplexVector* TwoDimensionalSquareLatticeSU3And2DTranslationHamiltonian::LowLev
 		for (int l = 0; l < nbrVectors; ++l)
 		  vDestinations[l][pos] += TmpValues[l] * TmpCoefficient * this->JFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
 	      
+	      
+	      TmpIndex1 = this->GetLinearizedIndexSafe (j + 1, k);
+	      TmpIndex2 = this->GetLinearizedIndexSafe (j + 1 - this->Offset, k + 1);
+	      TmpIndex3 = this->GetLinearizedIndexSafe (j - this->Offset, k + 1);
+	      pos = this->Chain->Pijkl(TmpIndex, TmpIndex1, TmpIndex2, TmpIndex3, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+	      if (pos != dim)
+		for (int l = 0; l < nbrVectors; ++l)
+		  vDestinations[l][pos] += TmpValues[l] * TmpCoefficient * this->JSquareExchangeFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+	      pos = this->Chain->Pijkl(TmpIndex, TmpIndex3, TmpIndex2, TmpIndex1, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+	      if (pos != dim)
+		for (int l = 0; l < nbrVectors; ++l)
+		  vDestinations[l][pos] += TmpValues[l] * TmpCoefficient * this->JSquareExchangeFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
 	    }
 	}
     }
@@ -335,6 +375,8 @@ ComplexVector* TwoDimensionalSquareLatticeSU3And2DTranslationHamiltonian::Hermit
   int pos;
   int TmpIndex;
   int TmpIndex1;
+  int TmpIndex2;
+  int TmpIndex3;
   double TmpCoefficient;
   int NbrTranslationsX;
   int NbrTranslationsY;
@@ -370,6 +412,23 @@ ComplexVector* TwoDimensionalSquareLatticeSU3And2DTranslationHamiltonian::Hermit
 		  vDestinations[l][pos] += TmpValues[l] * TmpCoefficient * this->JFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
 		  TmpSums[l] += vSources[l][pos] * TmpCoefficient * this->JFactor * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
 		}
+	      if (pos == i)
+		for (int l = 0; l < nbrVectors; ++l)
+		  TmpSums[l] += vSources[l][pos] * TmpCoefficient * this->JFactor * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		
+		
+	      TmpIndex1 = this->GetLinearizedIndexSafe (j + 1, k);
+	      TmpIndex2 = this->GetLinearizedIndexSafe (j + 1 - this->Offset, k + 1);
+	      TmpIndex3 = this->GetLinearizedIndexSafe (j - this->Offset, k + 1);
+	      pos = this->Chain->Pijkl(TmpIndex, TmpIndex1, TmpIndex2, TmpIndex3, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+	      if (pos < dim)
+		for (int l = 0; l < nbrVectors; ++l)
+		  vDestinations[l][pos] += TmpValues[l] * TmpCoefficient * this->JSquareExchangeFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+	
+	      pos = this->Chain->Pijkl(TmpIndex, TmpIndex3, TmpIndex2, TmpIndex1, i, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+	      if (pos < dim)
+		for (int l = 0; l < nbrVectors; ++l)
+		  vDestinations[l][pos] += TmpValues[l] * TmpCoefficient * this->JSquareExchangeFactor * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
 	    }
 	}
 	      

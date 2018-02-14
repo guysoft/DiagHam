@@ -88,7 +88,7 @@ SU3SpinChain::SU3SpinChain (int chainLength, int tz, int y, int memorySize)
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
 //   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 //   {
-//     cout << (this->StateDescription[i]) << " : " ;
+//     cout << (i) << " : " ;
 //     this->PrintState(cout, i);
 //     cout << endl;
 //   }
@@ -480,36 +480,38 @@ int SU3SpinChain::Pij (int i, int j, int state)
 }
 
 
-// // return index of resulting state from application of four-site exchange operator on a given state
-// //
-// // i = first position
-// // j = second position
-// // state = index of the state to consider
-// // return value = index of resulting state
-// 
-// int SU3SpinChain::Pijkl (int i, int j, int k, int l, int state)
-// {
-//   unsigned long tmpState = this->StateDescription[state];
-//   unsigned long TmpMask1 = ((tmpState >> (i << 1)) & 0x3ul) ;
-//   unsigned long TmpMask2 = ((tmpState >> (j << 1)) & 0x3ul);
-//   unsigned long TmpMask3 = ((tmpState >> (k << 1)) & 0x3ul) ;
-//   unsigned long TmpMask4 = ((tmpState >> (l << 1)) & 0x3ul);
-//   
-//   if ((TmpMask1 == TmpMask2) && (TmpMask2 == TmpMask3) && (TmpMask3 == TmpMask4))
-//     return state;
-//   
-//   tmpState &= (0x0ul << (i << 1));
-//   tmpState &= (0x0ul << (j << 1));
-//   tmpState &= (0x0ul << (k << 1));
-//   tmpState &= (0x0ul << (l << 1));
-//   
-//   tmpState |= (TmpMask1 << (l << 1));
-//   tmpState |= (TmpMask2 << (i << 1));
-//   tmpState |= (TmpMask3 << (j << 1));
-//   tmpState |= (TmpMask4 << (k << 1));
-//   
-//   return this->SymmetrizeResult(tmpState);
-// }
+// return index of resulting state from application of four-site exchange operator on a given state
+//
+// i = first position
+// j = second position
+// state = index of the state to consider
+// return value = index of resulting state
+
+int SU3SpinChain::Pijkl (int i, int j, int k, int l, int state)
+{
+  unsigned long tmpState = this->StateDescription[state];
+  unsigned long TmpMask1 = ((tmpState >> (i << 1)) & 0x3ul);
+  unsigned long TmpMask2 = ((tmpState >> (j << 1)) & 0x3ul);
+  unsigned long TmpMask3 = ((tmpState >> (k << 1)) & 0x3ul) ;
+  unsigned long TmpMask4 = ((tmpState >> (l << 1)) & 0x3ul);
+  
+  if ((TmpMask1 == TmpMask2) && (TmpMask2 == TmpMask3) && (TmpMask3 == TmpMask4))
+    return state;
+  
+  
+  unsigned long TmpMask = (0x3ul << (i << 1)) | (0x3ul << (j << 1)) | (0x3ul << (k << 1)) | (0x3ul << (l << 1)); 
+  
+  tmpState &= (~TmpMask);
+  
+  tmpState |= (TmpMask1 << (j << 1));
+  tmpState |= (TmpMask2 << (k << 1));
+  tmpState |= (TmpMask3 << (l << 1));
+  tmpState |= (TmpMask4 << (i << 1));
+  
+  double TmpCoefficient;
+//   cout << (this->StateDescription[state]) << " " << tmpState << " " ;
+  return this->SymmetrizeResult(tmpState, TmpCoefficient);
+}
 
 // return eigenvalue of Sz_i Sz_j associated to a given state
 //

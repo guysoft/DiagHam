@@ -421,9 +421,23 @@ int AbstractSpinChain::SziSzjSmkSpl (int i, int j, int k, int l, int state, doub
 // j = second position
 // state = index of the state to consider
 // return value = index of resulting state
+
 int AbstractSpinChain::Pij (int i, int j, int state)
 {
-  cout << "Warning: using dummy method AbstractSpinChain::PiPj" << endl;
+  cout << "Warning: using dummy method AbstractSpinChain::Pij" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// return index of resulting state from application of four-site exchange operator on a given state
+//
+// i = first position
+// j = second position
+// state = index of the state to consider
+// return value = index of resulting state
+
+int AbstractSpinChain::Pijkl (int i, int j, int k, int l, int state)
+{
+  cout << "Warning: using dummy method AbstractSpinChain::Pijkl" << endl;
   return this->HilbertSpaceDimension;
 }
 
@@ -440,6 +454,19 @@ int AbstractSpinChain::Pij (int i, int j, int state)
 int AbstractSpinChain::Pij (int i, int j, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
 {
   cout << "warning : using dummy method AbstractSpinChain::Pij" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// return index of resulting state from application of four-site exchange operator on a given state
+//
+// i = first position
+// j = second position
+// state = index of the state to consider
+// return value = index of resulting state
+
+int AbstractSpinChain::Pijkl (int i, int j, int k, int l, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  cout << "warning : using dummy method AbstractSpinChain::Pijkl" << endl;
   return this->HilbertSpaceDimension;
 }
   

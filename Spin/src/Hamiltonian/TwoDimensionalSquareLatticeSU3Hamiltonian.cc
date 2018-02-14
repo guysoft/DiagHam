@@ -79,7 +79,6 @@ TwoDimensionalSquareLatticeSU3Hamiltonian::TwoDimensionalSquareLatticeSU3Hamilto
   
   this->Offset = offset;
   
-  this->HermitianSymmetryFlag = true;
   this->HermitianSymmetryFlag = false;
   
   // diagonal terms
@@ -150,6 +149,8 @@ RealVector& TwoDimensionalSquareLatticeSU3Hamiltonian::LowLevelAddMultiply(RealV
   int pos;
   int TmpIndex;
   int TmpIndex1;
+  int TmpIndex2;
+  int TmpIndex3;
   
   int MaxPosX = this->NbrSpinX;
   if (!this->PeriodicBoundaryConditionsX)
@@ -184,7 +185,26 @@ RealVector& TwoDimensionalSquareLatticeSU3Hamiltonian::LowLevelAddMultiply(RealV
 	      pos = this->Chain->Pij(TmpIndex, TmpIndex1, i);
 	      vDestination[pos] += vSource[i] * this->JFactor;
 	    }
-	 }     
+	 }
+	 
+      if (this->JSquareExchangeFactor != 0.0)
+      {
+// 	cout << MaxPosX << " " << MaxPosY << endl;
+	for (int j = 0; j < MaxPosX; j++)
+	{
+	  for (int k = 0; k < MaxPosY; k++)
+	    {
+	      TmpIndex = this->GetLinearizedIndexSafe (j, k);
+	      TmpIndex1 = this->GetLinearizedIndexSafe (j + 1, k);
+	      TmpIndex2 = this->GetLinearizedIndexSafe (j + 1 - this->Offset, k + 1);
+	      TmpIndex3 = this->GetLinearizedIndexSafe (j - this->Offset, k + 1);
+	      pos = this->Chain->Pijkl(TmpIndex, TmpIndex1, TmpIndex2, TmpIndex3, i);
+	      vDestination[pos] += vSource[i] * this->JSquareExchangeFactor;
+	      pos = this->Chain->Pijkl(TmpIndex, TmpIndex3, TmpIndex2, TmpIndex1, i);
+	      vDestination[pos] += vSource[i] * this->JSquareExchangeFactor;
+	    }
+	 }
+	}
       }
 
 //   for (int i = firstComponent; i <LastComponent; ++i)
@@ -210,6 +230,8 @@ RealVector& TwoDimensionalSquareLatticeSU3Hamiltonian::HermitianLowLevelAddMulti
   int pos;
   int TmpIndex;
   int TmpIndex1;
+  int TmpIndex2;
+  int TmpIndex3;
   double TmpSum;
   
   int MaxPosX = this->NbrSpinX;
@@ -230,8 +252,13 @@ RealVector& TwoDimensionalSquareLatticeSU3Hamiltonian::HermitianLowLevelAddMulti
 	      TmpIndex1 = this->GetLinearizedIndexSafe(j + 1, k);
 	      
 	      pos = this->Chain->Pij(TmpIndex, TmpIndex1, i);
-	      vDestination[pos] += 0.5 * vSource[i] * this->JFactor;
-	      TmpSum += vSource[pos] * this->JFactor;
+	      if (pos < i)
+	      {
+		vDestination[pos] += vSource[i] * this->JFactor;
+		TmpSum += vSource[pos] * this->JFactor;
+	      }
+	      if (pos == i)
+		TmpSum += vSource[pos] * this->JFactor;
 	    }     
 	 }
       for (int j = 0; j < this->NbrSpinX; j++)
@@ -242,11 +269,36 @@ RealVector& TwoDimensionalSquareLatticeSU3Hamiltonian::HermitianLowLevelAddMulti
 	      TmpIndex1 = this->GetLinearizedIndexSafe(j - this->Offset, k + 1);
 	      
 	      pos = this->Chain->Pij(TmpIndex, TmpIndex1, i);
-	      vDestination[pos] += 0.5 * vSource[i] * this->JFactor;
-	      TmpSum += vSource[pos] * this->JFactor;
+	      if (pos < i)
+	      {
+		vDestination[pos] += vSource[i] * this->JFactor;
+		TmpSum += vSource[pos] * this->JFactor;
+	      }
+	      if (pos == i)
+		TmpSum += vSource[pos] * this->JFactor;
 	    }     
 	 }
-      vDestination[i] += (this->SzSzContributions[i] * vSource[i] + 0.5 * TmpSum);
+      if (this->JSquareExchangeFactor != 0.0)
+      {
+	for (int j = 0; j < MaxPosX; j++)
+	{
+	  for (int k = 0; k < MaxPosY; k++)
+	    {
+	      TmpIndex = this->GetLinearizedIndexSafe (j, k);
+	      TmpIndex1 = this->GetLinearizedIndexSafe (j + 1, k);
+	      TmpIndex2 = this->GetLinearizedIndexSafe (j + 1 - this->Offset, k + 1);
+	      TmpIndex3 = this->GetLinearizedIndexSafe (j - this->Offset, k + 1);
+	      pos = this->Chain->Pijkl(TmpIndex, TmpIndex1, TmpIndex2, TmpIndex3, i);
+	      if (pos < dim)
+	      	vDestination[pos] += vSource[i] * this->JSquareExchangeFactor;
+	      
+	      pos = this->Chain->Pijkl(TmpIndex, TmpIndex3, TmpIndex2, TmpIndex1, i);
+	      if (pos < dim)
+		vDestination[pos] += vSource[i] * this->JSquareExchangeFactor;
+	    }
+	  }
+	}
+      vDestination[i] += (this->SzSzContributions[i] * vSource[i] + TmpSum);
     }
   return vDestination;
 }
@@ -269,9 +321,10 @@ RealVector* TwoDimensionalSquareLatticeSU3Hamiltonian::LowLevelMultipleAddMultip
   int dim = this->Chain->GetHilbertSpaceDimension();
   int pos;
   
+  int TmpIndex;
   int TmpIndex1;
   int TmpIndex2;
-  int TmpIndex;
+  int TmpIndex3;
   
   int MaxPosX = this->NbrSpinX;
   if (!this->PeriodicBoundaryConditionsX)
@@ -323,6 +376,26 @@ RealVector* TwoDimensionalSquareLatticeSU3Hamiltonian::LowLevelMultipleAddMultip
 
 	  }
 	}
+	
+      if (this->JSquareExchangeFactor != 0.0)
+      {
+	for (int j = 0; j < MaxPosX; j++)
+	{
+	  for (int k = 0; k < MaxPosY; k++)
+	    {
+	      TmpIndex = this->GetLinearizedIndexSafe (j, k);
+	      TmpIndex1 = this->GetLinearizedIndexSafe (j + 1, k);
+	      TmpIndex2 = this->GetLinearizedIndexSafe (j + 1 - this->Offset, k + 1);
+	      TmpIndex3 = this->GetLinearizedIndexSafe (j - this->Offset, k + 1);
+	      pos = this->Chain->Pijkl(TmpIndex, TmpIndex1, TmpIndex2, TmpIndex3, i);
+	      for (int l = 0; l < nbrVectors; ++l)
+		vDestinations[l][pos] += TmpValues[l] * this->JSquareExchangeFactor;
+	      pos = this->Chain->Pijkl(TmpIndex, TmpIndex3, TmpIndex2, TmpIndex1, i);
+	      for (int l = 0; l < nbrVectors; ++l)
+		vDestinations[l][pos] += TmpValues[l] * this->JSquareExchangeFactor;
+	    }
+	 }	
+	}
       }
   delete[] TmpValues;
   return vDestinations;
@@ -347,9 +420,10 @@ RealVector* TwoDimensionalSquareLatticeSU3Hamiltonian::HermitianLowLevelMultiple
   int dim = this->Chain->GetHilbertSpaceDimension();
   int pos;
   
+  int TmpIndex;
   int TmpIndex1;
   int TmpIndex2;
-  int TmpIndex;
+  int TmpIndex3;
   
   int MaxPosX = this->NbrSpinX;
   if (!this->PeriodicBoundaryConditionsX)
@@ -365,7 +439,7 @@ RealVector* TwoDimensionalSquareLatticeSU3Hamiltonian::HermitianLowLevelMultiple
     {
       for (int l = 0; l < nbrVectors; ++l)
 	{
-	  TmpValues[l] = 0.5 * vSources[l][i];
+	  TmpValues[l] = vSources[l][i];
 	  TmpSums[l] = 0.0;
 	}
       for (int j = 0; j < MaxPosX; j++)
@@ -377,11 +451,17 @@ RealVector* TwoDimensionalSquareLatticeSU3Hamiltonian::HermitianLowLevelMultiple
 	      
 	      
 	      pos = this->Chain->Pij(TmpIndex, TmpIndex1, i);
-	      for (int l = 0; l < nbrVectors; ++l)
+	      if (pos < i)
 	      {
-		vDestinations[l][pos] += TmpValues[l] * this->JFactor;
-		TmpSums[l] += vSources[l][pos] * this->JFactor;
+		for (int l = 0; l < nbrVectors; ++l)
+		{
+		  vDestinations[l][pos] += TmpValues[l] * this->JFactor;
+		  TmpSums[l] += vSources[l][pos] * this->JFactor;
+		}
 	      }
+	      if (pos == i)
+		for (int l = 0; l < nbrVectors; ++l)
+		  TmpSums[l] += vSources[l][pos] * this->JFactor;
 	    }
 	}
 	
@@ -394,16 +474,49 @@ RealVector* TwoDimensionalSquareLatticeSU3Hamiltonian::HermitianLowLevelMultiple
 	      
 	      
 	      pos = this->Chain->Pij(TmpIndex, TmpIndex1, i);
-	      for (int l = 0; l < nbrVectors; ++l)
+	      if (pos < i)
 	      {
-		vDestinations[l][pos] += TmpValues[l] * this->JFactor;
-		TmpSums[l] += vSources[l][pos] * this->JFactor;
+		for (int l = 0; l < nbrVectors; ++l)
+		{
+		  vDestinations[l][pos] += TmpValues[l] * this->JFactor;
+		  TmpSums[l] += vSources[l][pos] * this->JFactor;
+		}
 	      }
+	      if (pos == i)
+		for (int l = 0; l < nbrVectors; ++l)
+		  TmpSums[l] += vSources[l][pos] * this->JFactor;
 	    }
 	}
 	      
+      if (this->JSquareExchangeFactor != 0.0)
+      {
+	for (int j = 0; j < MaxPosX; j++)
+	{
+	  for (int k = 0; k < MaxPosY; k++)
+	    {
+	      TmpIndex = this->GetLinearizedIndexSafe (j, k);
+	      TmpIndex1 = this->GetLinearizedIndexSafe (j + 1, k);
+	      TmpIndex2 = this->GetLinearizedIndexSafe (j + 1 - this->Offset, k + 1);
+	      TmpIndex3 = this->GetLinearizedIndexSafe (j - this->Offset, k + 1);
+	      pos = this->Chain->Pijkl(TmpIndex, TmpIndex1, TmpIndex2, TmpIndex3, i);
+	      if (pos < dim)
+	      {
+		for (int l = 0; l < nbrVectors; ++l)
+		  vDestinations[l][pos] += TmpValues[l] * this->JSquareExchangeFactor;
+	      }
+		
+	      pos = this->Chain->Pijkl(TmpIndex, TmpIndex3, TmpIndex2, TmpIndex1, i);
+	      if (pos < dim)
+	      {
+		for (int l = 0; l < nbrVectors; ++l)
+		  vDestinations[l][pos] += TmpValues[l] * this->JSquareExchangeFactor;
+	      }
+	    }
+	 }
+	}
+	
 	for (int l = 0; l < nbrVectors; ++l)
-	  vDestinations[l][i] += (0.5 * TmpSums[l]);
+	  vDestinations[l][i] += (TmpSums[l]);
     }
   delete[] TmpValues;
   delete[] TmpSums;

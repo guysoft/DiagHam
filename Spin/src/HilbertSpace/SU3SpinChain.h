@@ -135,6 +135,14 @@ class SU3SpinChain : public AbstractSpinChain
   // return value = index of resulting state
   virtual int Pij (int i, int j, int state);
   
+  // return index of resulting state from application of four-site exchange operator on a given state
+  //
+  // i = first position
+  // j = second position
+  // state = index of the state to consider
+  // return value = index of resulting state
+  virtual int Pijkl (int i, int j, int k, int l, int state);
+  
   // return eigenvalue of Sz_i associated to a given state
   //
   // i = first position

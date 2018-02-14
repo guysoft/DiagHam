@@ -136,6 +136,14 @@ class SU3SpinChainAnd2DTranslation : public SU3SpinChain
   // return value = index of resulting state
   virtual int Pij (int i, int j, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
   
+  // return index of resulting state from application of four-site exchange operator on a given state
+  //
+  // i = first position
+  // j = second position
+  // state = index of the state to consider
+  // return value = index of resulting state
+  virtual int Pijkl (int i, int j, int k, int l, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
   // convert a state defined in the real space basis into a state in the (Kx,Ky) basis
   //
   // state = reference on the state to convert
@@ -203,11 +211,6 @@ class SU3SpinChainAnd2DTranslation : public SU3SpinChain
   //
   // stateDescription = reference on the state description  
   virtual void ApplySingleYTranslation(unsigned long& stateDescription);
-
-  // generate look-up table associated to current Hilbert space
-  // 
-  // memory = memory size that can be allocated for the look-up table
-//   virtual void GenerateLookUpTable(unsigned long memory);
   
   // compute the rescaling factors
   //

@@ -316,9 +316,44 @@ int SU3SpinChainAnd2DTranslation::Pij (int i, int j, int state, double& coeffici
   tmpState |= (TmpMask1 << (j << 1));
   tmpState |= (TmpMask2 << (i << 1));
   
-//   cout << (this->StateDescription[state]) << " " << tmpState << " " ;
   return this->SymmetrizeResult(tmpState, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
  
+}
+
+
+// return index of resulting state from application of four-site exchange operator on a given state
+//
+// i = first position
+// j = second position
+// state = index of the state to consider
+// return value = index of resulting state
+
+int SU3SpinChainAnd2DTranslation::Pijkl (int i, int j, int k, int l, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  unsigned long tmpState = this->StateDescription[state];
+  unsigned long TmpMask1 = ((tmpState >> (i << 1)) & 0x3ul) ;
+  unsigned long TmpMask2 = ((tmpState >> (j << 1)) & 0x3ul);
+  unsigned long TmpMask3 = ((tmpState >> (k << 1)) & 0x3ul) ;
+  unsigned long TmpMask4 = ((tmpState >> (l << 1)) & 0x3ul);
+  coefficient = 1.0;
+  nbrTranslationX = 0;
+  nbrTranslationY = 0;
+  
+  if ((TmpMask1 == TmpMask2) && (TmpMask2 == TmpMask3) && (TmpMask3 == TmpMask4))
+    return state;
+  
+  
+  unsigned long TmpMask = (0x3ul << (i << 1)) | (0x3ul << (j << 1)) | (0x3ul << (k << 1)) | (0x3ul << (l << 1)); 
+  
+  tmpState &= (~TmpMask);
+  
+  tmpState |= (TmpMask1 << (j << 1));
+  tmpState |= (TmpMask2 << (k << 1));
+  tmpState |= (TmpMask3 << (l << 1));
+  tmpState |= (TmpMask4 << (i << 1));
+  
+  double TmpCoefficient;
+  return this->SymmetrizeResult(tmpState, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
 }
 
 // find state index
@@ -419,106 +454,6 @@ long SU3SpinChainAnd2DTranslation::GenerateStates()
   return TmpLargeHilbertSpaceDimension;
 }
  
- /*
-// generate look-up table associated to current Hilbert space
-// 
-// memory = memory size that can be allocated for the look-up table
-
-void SU3SpinChainAnd2DTranslation::GenerateLookUpTable(unsigned long memory)
-{
-  
-  int TmpMaxBitPosition = 2 * this->ChainLength;
-  // evaluate look-up table size
-  memory /= (sizeof(int*) * TmpMaxBitPosition);
-  this->MaximumLookUpShift = 1;
-  while (memory > 0)
-    {
-      memory >>= 1;
-      ++this->MaximumLookUpShift;
-    }
-  if (this->MaximumLookUpShift > TmpMaxBitPosition)
-    this->MaximumLookUpShift = TmpMaxBitPosition;
-  this->LookUpTableMemorySize = 1 << this->MaximumLookUpShift;
-
-  // construct  look-up tables for searching states
-  this->LookUpTable = new int* [TmpMaxBitPosition];
-  this->LookUpTableShift = new int [TmpMaxBitPosition];
-  for (int i = 0; i <TmpMaxBitPosition; ++i)
-    this->LookUpTable[i] = new int [this->LookUpTableMemorySize + 1];
-  int CurrentMaxMomentum = TmpMaxBitPosition;
-  while (((this->StateDescription[0] >> CurrentMaxMomentum) == 0x0ul) && (CurrentMaxMomentum > 0))
-    --CurrentMaxMomentum;
-  int* TmpLookUpTable = this->LookUpTable[CurrentMaxMomentum];
-  if (CurrentMaxMomentum < this->MaximumLookUpShift)
-    this->LookUpTableShift[CurrentMaxMomentum] = 0;
-  else
-    this->LookUpTableShift[CurrentMaxMomentum] = CurrentMaxMomentum + 1 - this->MaximumLookUpShift;
-  int CurrentShift = this->LookUpTableShift[CurrentMaxMomentum];
-  unsigned long CurrentLookUpTableValue = this->LookUpTableMemorySize;
-  unsigned long TmpLookUpTableValue = this->StateDescription[0] >> CurrentShift;
-  while (CurrentLookUpTableValue > TmpLookUpTableValue)
-    {
-      TmpLookUpTable[CurrentLookUpTableValue] = 0;
-      --CurrentLookUpTableValue;
-    }
-  TmpLookUpTable[CurrentLookUpTableValue] = 0;
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    {
-      int TmpMaxMomentum = CurrentMaxMomentum;
-      while (((this->StateDescription[i] >> TmpMaxMomentum) == 0x0ul) && (TmpMaxMomentum > 0))
-	--TmpMaxMomentum;
-      if (CurrentMaxMomentum != TmpMaxMomentum)
-	{
-	  while (CurrentLookUpTableValue > 0)
-	    {
-	      TmpLookUpTable[CurrentLookUpTableValue] = i;
-	      --CurrentLookUpTableValue;
-	    }
-	  TmpLookUpTable[0] = i;
-	  --CurrentMaxMomentum;
-	  while (CurrentMaxMomentum > TmpMaxMomentum)
-	    {
-	      this->LookUpTableShift[CurrentMaxMomentum] = -1;
-	      --CurrentMaxMomentum;
-	    }
- 	  CurrentMaxMomentum = TmpMaxMomentum;
-	  TmpLookUpTable = this->LookUpTable[CurrentMaxMomentum];
-	  if (CurrentMaxMomentum < this->MaximumLookUpShift)
-	    this->LookUpTableShift[CurrentMaxMomentum] = 0;
-	  else
-	    this->LookUpTableShift[CurrentMaxMomentum] = CurrentMaxMomentum + 1 - this->MaximumLookUpShift;
-	  CurrentShift = this->LookUpTableShift[CurrentMaxMomentum];
-	  TmpLookUpTableValue = this->StateDescription[i] >> CurrentShift;
-	  CurrentLookUpTableValue = this->LookUpTableMemorySize;
-	  while (CurrentLookUpTableValue > TmpLookUpTableValue)
-	    {
-	      TmpLookUpTable[CurrentLookUpTableValue] = i;
-	      --CurrentLookUpTableValue;
-	    }
-	  TmpLookUpTable[CurrentLookUpTableValue] = i;
-	}
-      else
-	{
-	  TmpLookUpTableValue = this->StateDescription[i] >> CurrentShift;
-	  if (TmpLookUpTableValue != CurrentLookUpTableValue)
-	    {
-	      while (CurrentLookUpTableValue > TmpLookUpTableValue)
-		{
-		  TmpLookUpTable[CurrentLookUpTableValue] = i;
-		  --CurrentLookUpTableValue;
-		}
-	      TmpLookUpTable[CurrentLookUpTableValue] = i;
-	    }
-	}
-    }
-  while (CurrentLookUpTableValue > 0)
-    {
-      TmpLookUpTable[CurrentLookUpTableValue] = this->HilbertSpaceDimension - 1;
-      --CurrentLookUpTableValue;
-    }
-  TmpLookUpTable[0] = this->HilbertSpaceDimension - 1;
-}*/
-
 // compute the rescaling factors
 //
 
