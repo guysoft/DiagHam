@@ -67,6 +67,7 @@ int main(int argc, char** argv)
   
   (*SystemGroup) += new BooleanOption  ('\n', "force-negativetz", "compute negative Tz sectors");
   (*SystemGroup) += new BooleanOption  ('\n', "no-translation", "do not use 2d translations");
+  (*SystemGroup) += new BooleanOption  ('\n', "all-k", "compute all momentum sectors, including thos erelated by symmetry");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-tz", " only evaluate one jz sector (negative if all sectors have to be computed) ", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-y", "only evaluate one kz sector (negative if all sectors have to be computed)", 0);
   (*SystemGroup) += new  SingleDoubleOption ('j', "j-value", "coupling constant value for nearest neighbors", 1.0);
@@ -114,6 +115,7 @@ int main(int argc, char** argv)
   double JValue =  Manager.GetDouble("j-value");
   double JExchangeValue = Manager.GetDouble("j4-value");
   bool NoTranslationFlag = Manager.GetBoolean("no-translation");
+  bool AllMomentumSectors = Manager.GetBoolean("all-k");
   
   bool XPeriodicFlag = true;
   bool YPeriodicFlag = true;
@@ -227,7 +229,9 @@ int main(int argc, char** argv)
   
   bool FirstRun = true;
   int MinXMomentum = 0;
-  int MaxXMomentum = NbrSitesX - 1;
+  int MaxXMomentum = NbrSitesX / 2;
+  if (AllMomentumSectors)
+    MaxXMomentum = NbrSitesX - 1;
   
   if (Manager.GetInteger("only-kx") >= 0)
     {
@@ -235,7 +239,9 @@ int main(int argc, char** argv)
       MinXMomentum = MaxXMomentum;
     }
   int MinYMomentum = 0;
-  int MaxYMomentum = NbrSitesY - 1;
+  int MaxYMomentum = NbrSitesY / 2;
+  if (AllMomentumSectors)
+    MaxYMomentum = NbrSitesY - 1;
   if (Manager.GetInteger("only-ky") >= 0)
   {
     MaxYMomentum = Manager.GetInteger("only-ky");
