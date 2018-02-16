@@ -533,6 +533,10 @@ int main(int argc, char** argv)
 			    }
 			  else
 			    {
+			      char* ExclusionOutputFile = new char [1024];
+			      sprintf (ExclusionOutputFile, "%s_%s_exclusion.dat", FilePrefix, FileParameterString);
+			      ofstream ExclusionFile;
+			      ExclusionFile.open(ExclusionOutputFile);
 			      int TmpIndex = TightBindingModel->GetNbrBands();
 			      int* NbrExcludedSites = new int[TmpIndex];
 			      int** ExcludedSites = new int*[TmpIndex];
@@ -542,14 +546,23 @@ int main(int argc, char** argv)
 			      ExcludedSites[TmpIndex][0] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(0, 0, 1);				      
 			      ExcludedSites[TmpIndex][1] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(0, -1, 1);				      
 			      ExcludedSites[TmpIndex][2] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(-1, 0, 1);				      
-			      ExcludedSites[TmpIndex][3] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(-1, -1, 1);				      
+			      ExcludedSites[TmpIndex][3] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(-1, -1, 1);	
+			      ExclusionFile << "0 0 1 " << TmpIndex << " " << ExcludedSites[TmpIndex][0] << endl;
+			      ExclusionFile << "0 -1 1 " << TmpIndex << " " << ExcludedSites[TmpIndex][1] << endl;
+			      ExclusionFile << "-1 0 1 " << TmpIndex << " " << ExcludedSites[TmpIndex][2] << endl;
+			      ExclusionFile << "-1 -1 1 " << TmpIndex << " " << ExcludedSites[TmpIndex][3] << endl;
 			      ++TmpIndex;
 			      NbrExcludedSites[TmpIndex] = 4;
 			      ExcludedSites[TmpIndex] = new int[NbrExcludedSites[TmpIndex]];
 			      ExcludedSites[TmpIndex][0] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(0, 0, 0);				      
 			      ExcludedSites[TmpIndex][1] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(1, 0, 0);				      
 			      ExcludedSites[TmpIndex][2] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(0, 1, 0);				      
-			      ExcludedSites[TmpIndex][3] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(1, 0, 0);				      
+			      ExcludedSites[TmpIndex][3] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(1, 1, 0);				      
+			      ExclusionFile << "0 0 0 " << TmpIndex << " " << ExcludedSites[TmpIndex][0] << endl;
+			      ExclusionFile << "1 0 0 " << TmpIndex << " " << ExcludedSites[TmpIndex][1] << endl;
+			      ExclusionFile << "0 1 0 " << TmpIndex << " " << ExcludedSites[TmpIndex][2] << endl;
+			      ExclusionFile << "1 1 0 " << TmpIndex << " " << ExcludedSites[TmpIndex][3] << endl;
+			      ExclusionFile.close();
 			      ++TmpIndex;
 
 			      Space = new FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 

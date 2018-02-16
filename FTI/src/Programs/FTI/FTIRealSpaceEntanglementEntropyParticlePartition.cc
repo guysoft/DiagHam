@@ -32,7 +32,8 @@
 #include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationLong.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslationMinNbrSingletsLong.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSingletsLong.h"
-
+#include "HilbertSpace/FermionOnSquareLatticeRealSpaceNNExclusion.h"
+#include "HilbertSpace/FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion.h"
 
 
 #include "HilbertSpace/BosonOnLatticeRealSpace.h"
@@ -81,6 +82,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "hofstadter", "the file name uses Hofstadter model convention");
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "particles have a SU(2) spin");
   (*SystemGroup) += new SingleStringOption ('\n', "selected-blocks", "provide a column formatted ascii file that indicates which block of the reduced density matrix should be computed");
+  (*SystemGroup) += new SingleStringOption ('\n', "exclusion-file", "name of the file that describes an exclusion principle (beyond the gutzwiller projection)"); 
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
   (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
@@ -391,13 +393,57 @@ int main(int argc, char** argv)
 	    {
 	      if (SU2SpinFlag == false)
 		{
-		  if (TwoDTranslationFlag == false)
+		  if (GutzwillerFlag == false)
 		    {
-		      Spaces[TmpIndex] = new FermionOnLatticeRealSpace (NbrParticles, NbrSites);
+		      if (TwoDTranslationFlag == false)
+			{
+			  Spaces[TmpIndex] = new FermionOnLatticeRealSpace (NbrParticles, NbrSites);
+			}
+		      else
+			{
+			  Spaces[TmpIndex] = new FermionOnLatticeRealSpaceAnd2DTranslation (NbrParticles, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+			}
 		    }
 		  else
 		    {
-		      Spaces[TmpIndex] = new FermionOnLatticeRealSpaceAnd2DTranslation (NbrParticles, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+		      if (TwoDTranslationFlag == false)
+			{
+			  Spaces[TmpIndex] = new FermionOnSquareLatticeRealSpaceNNExclusion (NbrParticles, NbrSites, NbrSiteY);
+			}
+		      else
+			{
+			  MultiColumnASCIIFile ExclusionFile;
+			  if (ExclusionFile.Parse(Manager.GetString("exclusion-file")) == false)
+			    {
+			      ExclusionFile.DumpErrors(cout);
+			      return -1;
+			    }
+			  int NbrExclusionRules = ExclusionFile.GetNbrLines();
+			  int* TmpOrbitalIndices = ExclusionFile.GetAsIntegerArray(3);
+			  int* TmpLinearizedIndices = ExclusionFile.GetAsIntegerArray(4);
+			  int TmpNbrSitesPerUnitCell = NbrSites / (NbrSiteX * NbrSiteY);
+			  int* NbrExcludedSites = new int[TmpNbrSitesPerUnitCell];
+			  int** ExcludedSites = new int*[TmpNbrSitesPerUnitCell];
+			  for (int k = 0; k < TmpNbrSitesPerUnitCell; ++k)
+			    {
+			      NbrExcludedSites[k] = 0;
+			    }
+			  for (int k = 0; k < NbrExclusionRules; ++k)
+			    {
+			      NbrExcludedSites[TmpOrbitalIndices[k]]++;
+			    }
+			  for (int k = 0; k < TmpNbrSitesPerUnitCell; ++k)
+			    {
+			      ExcludedSites[k] = new int[NbrExcludedSites[k]];
+			      NbrExcludedSites[k] = 0;
+			    }
+			  for (int k = 0; k < NbrExclusionRules; ++k)
+			    {
+			      ExcludedSites[TmpOrbitalIndices[k]][NbrExcludedSites[TmpOrbitalIndices[k]]] = TmpLinearizedIndices[k];
+			      NbrExcludedSites[TmpOrbitalIndices[k]]++;
+			    }			  
+			  Spaces[TmpIndex] = new FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion (NbrParticles, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY, ExcludedSites, NbrExcludedSites);
+			}		      
 		    }
 		}
 	      else
