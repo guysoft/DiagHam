@@ -36,6 +36,7 @@
 
 #include "config.h"
 #include "HilbertSpace/FermionOnLatticeRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeRealSpaceWithExclusion.h"
 
 #include <iostream>
 #include <bitset>
@@ -75,6 +76,23 @@ class  FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion : public FermionOn
 							  int yMomentum, int maxYMomentum, int** excludedSites,
 							  int* nbrExcludedSites, unsigned long memory = 10000000);
 
+  // constructor from prebuilt exclusion rules
+  // 
+  // nbrFermions = number of fermions
+  // nbrSite = total number of sites 
+  // xMomentum = momentum sector in the x direction
+  // xTranslation = translation that has to be applied on the site index to connect two sites with a translation in the x direction
+  // yMomentum = momentum sector in the y direction
+  // yPeriodicity = periodicity in the y direction with respect to site numbering 
+  // excludedSiteMasks = masks used to detected excluded sites around a given position
+  // excludedSiteCenters = masks used to indicate the site around which a given exclusion rule is defined
+  // nbrExcludedSiteMasks = number of masks in ExcludedSiteMasks
+  // memory = amount of memory granted for precalculations
+  FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion (int nbrFermions, int nbrSite, int xMomentum,  int maxXMomentum,
+							  int yMomentum,  int maxYMomentum, unsigned long* excludedSiteMasks,
+							  unsigned long* excludedSiteCenters, int nbrExcludedSiteMasks,
+							  unsigned long memory = 10000000);
+
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
@@ -95,6 +113,21 @@ class  FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion : public FermionOn
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given momentum sector.
+  // 
+  // nbrParticleSector = number of particles that belong to the subsytem 
+  // kxSector = subsystem momentum along the x direction
+  // kySector = subsystem momentum along the x direction
+  // groundState = reference on the total system ground state  
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
+
+  // get an Hilbert space without the translation symmetries, but preserving any other properties
+  //
+  // return value = Hilbert space without translations
+  virtual FermionOnLatticeRealSpace* GetHilbertSpaceWithoutTranslations();
+
  protected:
 
   // generate all states corresponding to the constraints
@@ -103,6 +136,16 @@ class  FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion : public FermionOn
   virtual long GenerateStates();
 
 };
+
+// get an Hilbert space without the translation symmetries, but preserving any other properties
+//
+// return value = Hilbert space without translations
+
+inline FermionOnLatticeRealSpace* FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion::GetHilbertSpaceWithoutTranslations()
+{
+  return new FermionOnLatticeRealSpaceWithExclusion(this->NbrFermions, this->NbrSite, 
+						    this->ExcludedSiteMasks, this->ExcludedSiteCenters, this->NbrExcludedSiteMasks);
+}
 
 
 #endif

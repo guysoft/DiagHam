@@ -34,6 +34,7 @@
 #include "config.h"
 #include "HilbertSpace/FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion.h"
 #include "HilbertSpace/FermionOnLatticeRealSpace.h"
+#include "HilbertSpace/FermionOnLatticeRealSpaceWithExclusion.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
@@ -66,23 +67,9 @@ using std::ios;
 
 FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion::FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion ()
 {
-  this->NbrFermions = 0;
-  this->IncNbrFermions = this->NbrFermions + 1;
-  this->MaxMomentum = 0;
-  this->NbrSite = 0;
-  this->MomentumModulo = 1;
-  this->XMomentum = 0; 
-  this->YMomentum = 0;
-  this->StateShift = 2 * (this->MaxMomentum / this->MomentumModulo);
-  this->MomentumIncrement = (this->NbrFermions * this->StateShift/2) % this->MomentumModulo;
-  this->ComplementaryStateShift = 2 * this->MaxMomentum - this->StateShift;
-  this->MomentumMask = ((unsigned long) 1);
-  this->MaximumSignLookUp = 0;
-  this->LargeHilbertSpaceDimension = 0l;
-  this->HilbertSpaceDimension = 0;
-  this->StateDescription = 0;
-  this->StateMaxMomentum = 0;  
-  this->LargeHilbertSpaceDimension = 0;
+  this->NbrExcludedSiteMasks = 0;
+  this->ExcludedSiteMasks = 0;
+  this->ExcludedSiteCenters = 0;
 }
 
 // basic constructor
@@ -137,7 +124,6 @@ FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion::FermionOnLatticeRealSpac
   this->NbrExcludedSiteMasks = this->StateYShift * this->MaxYMomentum * this->MaxXMomentum;
   this->ExcludedSiteMasks = new unsigned long [this->NbrExcludedSiteMasks];
   this->ExcludedSiteCenters = new unsigned long [this->NbrExcludedSiteMasks];
-  cout <<"this->StateYShift = " << this->StateYShift << endl;
   this->NbrExcludedSiteMasks = 0;
   for (int k = 0; k < this->StateYShift; ++k)
     {
@@ -174,6 +160,121 @@ FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion::FermionOnLatticeRealSpac
 	      ++this->NbrExcludedSiteMasks;
 	    }
 	}      
+    }
+
+  this->MaximumSignLookUp = 16;
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions);
+  cout << "intermediate Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
+  if (this->LargeHilbertSpaceDimension >= (1l << 30))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  if (this->LargeHilbertSpaceDimension > 0l)
+    {
+      this->Flag.Initialize();
+      this->GenerateSignLookUpTable();
+      this->LargeHilbertSpaceDimension  = this->GenerateStates();
+      this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+      cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
+      if (this->LargeHilbertSpaceDimension > 0l)
+	{
+	  this->StateMaxMomentum = new int [this->LargeHilbertSpaceDimension];  
+	  int CurrentMaxMomentum = this->MaxMomentum;
+	  while (((this->StateDescription[0] >> CurrentMaxMomentum) & 0x1ul) == 0x0ul)
+	    --CurrentMaxMomentum;
+	  this->StateMaxMomentum[0] = CurrentMaxMomentum;
+	  for (long i = 1l; i < this->LargeHilbertSpaceDimension; ++i)
+	    {
+	      while (((this->StateDescription[i] >> CurrentMaxMomentum) & 0x1ul) == 0x0ul)
+		--CurrentMaxMomentum;
+	      this->StateMaxMomentum[i] = CurrentMaxMomentum;
+	    }
+	  this->GenerateLookUpTable(memory);
+	  
+#ifdef __DEBUG__
+	  long UsedMemory = 0;
+	  UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+	  cout << "memory requested for Hilbert space = ";
+	  if (UsedMemory >= 1024)
+	    if (UsedMemory >= 1048576)
+	      cout << (UsedMemory >> 20) << "Mo" << endl;
+	    else
+	      cout << (UsedMemory >> 10) << "ko" <<  endl;
+	  else
+	    cout << UsedMemory << endl;
+	  UsedMemory = this->NbrMomentum * sizeof(int);
+	  UsedMemory += this->NbrMomentum * this->LookUpTableMemorySize * sizeof(int);
+	  cout << "memory requested for lookup table = ";
+	  if (UsedMemory >= 1024)
+	    if (UsedMemory >= 1048576)
+	      cout << (UsedMemory >> 20) << "Mo" << endl;
+	    else
+	      cout << (UsedMemory >> 10) << "ko" <<  endl;
+	  else
+	    cout << UsedMemory << endl;
+#endif
+	}
+    }
+}
+
+// constructor from prebuilt exclusion rules
+// 
+// nbrFermions = number of fermions
+// nbrSite = total number of sites 
+// xMomentum = momentum sector in the x direction
+// xTranslation = translation that has to be applied on the site index to connect two sites with a translation in the x direction
+// yMomentum = momentum sector in the y direction
+// yPeriodicity = periodicity in the y direction with respect to site numbering 
+// excludedSiteMasks = masks used to detected excluded sites around a given position
+// excludedSiteCenters = masks used to indicate the site around which a given exclusion rule is defined
+// nbrExcludedSiteMasks = number of masks in ExcludedSiteMasks
+// memory = amount of memory granted for precalculations
+
+FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion::FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion (int nbrFermions, int nbrSite, int xMomentum,  int maxXMomentum,
+														int yMomentum,  int maxYMomentum, unsigned long* excludedSiteMasks,
+														unsigned long* excludedSiteCenters, int nbrExcludedSiteMasks,
+														unsigned long memory)
+{  
+  this->NbrFermions = nbrFermions;
+  this->IncNbrFermions = this->NbrFermions + 1;
+  this->NbrSite = nbrSite;
+  this->MaxMomentum =  this->NbrSite;
+  this->NbrMomentum = this->MaxMomentum + 1;
+  this->MaxXMomentum =  maxXMomentum;
+  this->MomentumModulo =  this->MaxXMomentum;
+
+  this->MomentumIncrement = (this->NbrFermions * this->StateShift / 2) % this->MomentumModulo;
+  this->ComplementaryStateShift = 2 * this->MaxMomentum - this->StateShift;
+  this->MomentumMask = (0x1ul << this->StateShift) - 0x1ul;
+
+  this->XMomentum = xMomentum % this->MaxXMomentum;
+  this->StateXShift = this->NbrSite / this->MaxXMomentum;
+  this->ComplementaryStateXShift = this->MaxMomentum - this->StateXShift;
+  this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
+
+  this->MaxYMomentum =  maxYMomentum;
+  this->YMomentum = yMomentum % this->MaxYMomentum;
+  this->NbrYMomentumBlocks = this->NbrSite / this->StateXShift;
+  this->StateYShift = (this->NbrSite / (this->MaxYMomentum * this->MaxXMomentum));
+  this->YMomentumBlockSize = this->StateYShift * this->MaxYMomentum;
+  this->ComplementaryStateYShift = this->YMomentumBlockSize - this->StateYShift;
+  this->YMomentumMask = (0x1ul << this->StateYShift) - 0x1ul;
+  this->YMomentumBlockMask = (0x1ul << this->YMomentumBlockSize) - 0x1ul;  
+  this->YMomentumFullMask = 0x0ul;
+  for (int i = 0; i < this->NbrYMomentumBlocks; ++i)
+    {
+      this->YMomentumFullMask |= this->YMomentumMask << (i *  this->YMomentumBlockSize);
+    }
+  this->ComplementaryYMomentumFullMask = ~this->YMomentumFullMask; 
+  this->NbrFermionsParity = (~((unsigned long) this->NbrFermions)) & 0x1ul;
+
+  this->NbrExcludedSiteMasks = nbrExcludedSiteMasks;
+  this->ExcludedSiteMasks = new unsigned long [this->NbrExcludedSiteMasks];
+  this->ExcludedSiteCenters = new unsigned long [this->NbrExcludedSiteMasks];
+  for (int k = 0; k < this->NbrExcludedSiteMasks; ++k)
+    {
+      this->ExcludedSiteCenters[k] = excludedSiteCenters[k];
+      this->ExcludedSiteMasks[k] = excludedSiteMasks[k];
     }
 
   this->MaximumSignLookUp = 16;
@@ -268,6 +369,15 @@ FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion::FermionOnLatticeRealSpac
   this->ComplementaryStateShift = fermions.ComplementaryStateShift;
   this->MomentumMask = fermions.MomentumMask;
 
+  this->NbrExcludedSiteMasks = fermions.NbrExcludedSiteMasks;
+  this->ExcludedSiteMasks = new unsigned long [this->NbrExcludedSiteMasks];
+  this->ExcludedSiteCenters = new unsigned long [this->NbrExcludedSiteMasks];
+  for (int i = 0; i < this->NbrExcludedSiteMasks; ++i)
+    {
+      this->ExcludedSiteMasks[i] = fermions.ExcludedSiteMasks[i];
+      this->ExcludedSiteCenters[i] = fermions.ExcludedSiteCenters[i];
+    }
+
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
@@ -297,6 +407,8 @@ FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion::FermionOnLatticeRealSpac
 
 FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion::~FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion ()
 {
+  delete[] this->ExcludedSiteMasks;
+  delete[] this->ExcludedSiteCenters;
 }
 
 // assignement (without duplicating datas)
@@ -323,6 +435,9 @@ FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion& FermionOnLatticeRealSpac
 	delete[] this->RescalingFactors[i];
       delete[] this->RescalingFactors;
       delete[] this->NbrStateInOrbit;
+
+      delete[] this->ExcludedSiteMasks;
+      delete[] this->ExcludedSiteCenters;
     }
   this->NbrFermions = fermions.NbrFermions;  
   this->IncNbrFermions = fermions.IncNbrFermions;
@@ -355,6 +470,15 @@ FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion& FermionOnLatticeRealSpac
   this->StateShift = fermions.StateShift;
   this->ComplementaryStateShift = fermions.ComplementaryStateShift;
   this->MomentumMask = fermions.MomentumMask;
+
+  this->NbrExcludedSiteMasks = fermions.NbrExcludedSiteMasks;
+  this->ExcludedSiteMasks = new unsigned long [this->NbrExcludedSiteMasks];
+  this->ExcludedSiteCenters = new unsigned long [this->NbrExcludedSiteMasks];
+  for (int i = 0; i < this->NbrExcludedSiteMasks; ++i)
+    {
+      this->ExcludedSiteMasks[i] = fermions.ExcludedSiteMasks[i];
+      this->ExcludedSiteCenters[i] = fermions.ExcludedSiteCenters[i];
+    }
 
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->LargeHilbertSpaceDimension = this->LargeHilbertSpaceDimension;
@@ -461,4 +585,65 @@ long FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion::GenerateStates()
   this->StateDescription = TmpStateDescription;
   return TmpLargeHilbertSpaceDimension;
 }
+
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given momentum sector.
+// 
+// nbrParticleSector = number of particles that belong to the subsytem 
+// kxSector = kx sector in which the density matrix has to be evaluated 
+// kySector = kx sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+HermitianMatrix FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, ComplexVector& groundState, AbstractArchitecture* architecture)
+{
+  if (nbrParticleSector == 0)
+    {
+      if ((kxSector == 0) && (kySector == 0))
+	{
+	  HermitianMatrix TmpDensityMatrix(1, true);
+	  TmpDensityMatrix(0, 0) = 1.0;
+	  return TmpDensityMatrix;
+	}
+    }
+  if (nbrParticleSector == this->NbrFermions)
+    {
+      if ((kxSector == this->XMomentum) && (kySector == this->YMomentum))
+	{
+	  HermitianMatrix TmpDensityMatrix(1, true);
+	  TmpDensityMatrix(0, 0) = 1.0;
+	  return TmpDensityMatrix;
+	}
+    }
+  int ComplementaryNbrParticles = this->NbrFermions - nbrParticleSector;
+  int ComplementaryKxMomentum = (this->XMomentum - kxSector);
+  if (ComplementaryKxMomentum < 0)
+    ComplementaryKxMomentum += this->MaxXMomentum;
+  int ComplementaryKyMomentum = (this->YMomentum - kySector);
+  if (ComplementaryKyMomentum < 0)
+    ComplementaryKyMomentum += this->MaxYMomentum;
+  FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion SubsytemSpace (nbrParticleSector, this->NbrSite, kxSector, this->MaxXMomentum, kySector, this->MaxYMomentum,
+									this->ExcludedSiteMasks, this->ExcludedSiteCenters, this->NbrExcludedSiteMasks);
+  HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
+  FermionOnLatticeRealSpaceWithExclusion ComplementarySpace (ComplementaryNbrParticles, this->NbrSite,
+							     this->ExcludedSiteMasks, this->ExcludedSiteCenters, this->NbrExcludedSiteMasks);
+  cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
+  FQHETorusParticleEntanglementSpectrumOperation Operation(this, &SubsytemSpace, (ParticleOnTorusWithMagneticTranslations*) &ComplementarySpace, groundState, TmpDensityMatrix);
+  Operation.ApplyOperation(architecture);
+  cout << "nbr matrix elements non zero = " << Operation.GetNbrNonZeroMatrixElements() << endl;
+  if (Operation.GetNbrNonZeroMatrixElements() > 0)	
+    {
+      if (Operation.GetMatrix().GetNbrRow() != TmpDensityMatrix.GetNbrRow())
+	{
+	  TmpDensityMatrix = Operation.GetMatrix();
+	}
+      return TmpDensityMatrix;
+    }
+  else
+    {
+      HermitianMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
+}
+
 

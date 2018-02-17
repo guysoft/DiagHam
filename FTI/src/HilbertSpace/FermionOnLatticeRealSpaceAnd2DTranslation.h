@@ -36,6 +36,7 @@
 
 #include "config.h"
 #include "HilbertSpace/FermionOnTorusWithMagneticTranslations.h"
+#include "HilbertSpace/FermionOnLatticeRealSpace.h"
 
 #include <iostream>
 #include <bitset>
@@ -163,6 +164,11 @@ class  FermionOnLatticeRealSpaceAnd2DTranslation : public FermionOnTorusWithMagn
   // architecture = pointer to the architecture to use parallelized algorithm 
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
+
+  // get an Hilbert space without the translation symmetries, but preserving any other properties
+  //
+  // return value = Hilbert space without translations
+  virtual FermionOnLatticeRealSpace* GetHilbertSpaceWithoutTranslations();
 
  protected:
 
@@ -524,6 +530,15 @@ inline unsigned long FermionOnLatticeRealSpaceAnd2DTranslation::GetSignAndApplyS
     }
   stateDescription = TmpState;
   return TmpSign;
+}
+
+// get an Hilbert space without the translation symmetries, but preserving any other properties
+//
+// return value = Hilbert space without translations
+
+inline FermionOnLatticeRealSpace* FermionOnLatticeRealSpaceAnd2DTranslation::GetHilbertSpaceWithoutTranslations()
+{
+  return new FermionOnLatticeRealSpace(this->NbrFermions, this->NbrSite);
 }
 
 #endif

@@ -86,19 +86,6 @@ class FermionOnLatticeRealSpace : public FermionOnSphere
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
-  // print a given State
-  //
-  // Str = reference on current output stream 
-  // state = ID of the state to print
-  // return value = reference on current output stream 
-  // virtual ostream& PrintState (ostream& Str, int state);
-
-  // find state index from a string
-  //
-  // stateDescription = string describing the state
-  // return value = corresponding index, -1 if an error occured
-  // virtual int FindStateIndex(char* stateDescription);
-
   // evaluate the orbital cut entanglement matrix. The entanglement matrix is only evaluated for fixed number of particles
   // 
   // nbrParticleSector = number of particles that belong to the subsytem 

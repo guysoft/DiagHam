@@ -882,8 +882,7 @@ long FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixPart
 {
   FermionOnLatticeRealSpaceAnd2DTranslation* TmpDestinationHilbertSpace =  (FermionOnLatticeRealSpaceAnd2DTranslation*) destinationHilbertSpace;
   FermionOnLatticeRealSpace* TmpHilbertSpace = (FermionOnLatticeRealSpace*) complementaryHilbertSpace;
-  FermionOnLatticeRealSpace* TmpDestinationFullHilbertSpace = new FermionOnLatticeRealSpace(TmpDestinationHilbertSpace->NbrFermions,
-											    TmpDestinationHilbertSpace->NbrSite);
+  FermionOnLatticeRealSpace* TmpDestinationFullHilbertSpace = TmpDestinationHilbertSpace->GetHilbertSpaceWithoutTranslations();
   int* TmpStatePosition = new int [TmpHilbertSpace->GetLargeHilbertSpaceDimension()];
   int* TmpStatePosition2 = new int [TmpHilbertSpace->GetLargeHilbertSpaceDimension()];
   Complex* TmpStateCoefficient = new Complex [TmpHilbertSpace->GetLargeHilbertSpaceDimension()];
