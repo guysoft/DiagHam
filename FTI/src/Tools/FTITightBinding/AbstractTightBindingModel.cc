@@ -446,7 +446,14 @@ void AbstractTightBindingModel::ComputeBandStructure()
 
 HermitianMatrix AbstractTightBindingModel::BuildTightBindingHamiltonianRealSpace(int* nbrConnectedOrbitals, int** orbitalIndices, int** spatialIndices, Complex** hoppingAmplitudes)
 {
-  HermitianMatrix TmpHamiltonian;
+  HermitianMatrix TmpHamiltonian (this->NbrBands, true);
+  for (int i = 0; i < this->NbrBands; ++i)
+    {
+      for (int j = 0; j < nbrConnectedOrbitals[i]; ++j)
+	{
+	  TmpHamiltonian.AddToMatrixElement(i, orbitalIndices[i][j], hoppingAmplitudes[i][j]);
+	}
+    }
   return TmpHamiltonian;
 }
 
@@ -572,5 +579,26 @@ bool AbstractTightBindingModel::TestRealSpaceTightBindingHamiltonian()
 void AbstractTightBindingModel::FindConnectedOrbitals()
 {
    cout << "warning, tight binding model does not have access to connected orbitals" << endl; 
+}
+
+// read the eigenvalues and eigenstates from a band structure file
+//
+// input = input stream from which header was read
+// HeaderSize = size of header that was read
+// return value  = size of band structure that was
+
+void AbstractTightBindingModel::ReadEigensystem(ifstream& input, int HeaderSize, unsigned long FileSize)
+{
+  cout << "warning using dummy method AbstractTightBindingModel::ReadEigensystem" << endl;
+}
+
+// get the reciprocal lattice vector for the n-th fundamental lattice direction
+//
+// latticeVector[out] = reference on a vector where the answer is supplied
+// dimensionIdx = index of lattice dimension, labeled from 0, ..., d-1
+
+void AbstractTightBindingModel::GetReciprocalLatticeVector(RealVector &position, int dimensionIdx)
+{
+  cout << "warning using dummy method AbstractTightBindingModel::GetReciprocalLatticeVector" << endl;
 }
 

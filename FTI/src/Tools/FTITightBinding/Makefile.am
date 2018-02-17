@@ -61,5 +61,5 @@ TightBindingModelHalfContinuousHofstadterModel.cc \
 TightBindingInteractionCoulomb2DEwald.cc \
 TightBindingInteractionCoulombForHofstadterLattice.cc \
 TightBindingInteraction2DShortRange.cc \
-TightBindingModelSSH.cc
-#TightBindingModelSimpleChainWithConfinementLattice.cc
+TightBindingModelSSH.cc \
+TightBindingModelCheckerboardLatticeFullOBC.cc

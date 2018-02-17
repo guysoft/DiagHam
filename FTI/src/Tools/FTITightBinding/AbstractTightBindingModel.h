@@ -143,7 +143,7 @@ class AbstractTightBindingModel
   //
   // latticeVector[out] = reference on a vector where the answer is supplied
   // dimensionIdx = index of lattice dimension, labeled from 0, ..., d-1
-  virtual void GetReciprocalLatticeVector(RealVector &position, int dimensionIdx = 0) = 0;
+  virtual void GetReciprocalLatticeVector(RealVector &position, int dimensionIdx = 0);
 
   // get the lattice vector for translation along the fundamental lattice directions
   //
@@ -248,15 +248,17 @@ class AbstractTightBindingModel
   virtual int ReadHeader(ifstream& input);
 
   // write the eigenvalues and eigenstates (if available) to a band structure file
+  //
   // output = reference on the output stream
   // return value  = reference on the output stream
   virtual ostream& WriteEigensystem(ofstream& output);
 
   // read the eigenvalues and eigenstates from a band structure file
+  //
   // input = input stream from which header was read
   // HeaderSize = size of header that was read
   // return value  = size of band structure that was
-  virtual void ReadEigensystem(ifstream& input, int HeaderSize, unsigned long FileSize = 0) = 0;
+  virtual void ReadEigensystem(ifstream& input, int HeaderSize, unsigned long FileSize = 0);
 
   // write an ASCII header that describes the tight binding model
   // 
