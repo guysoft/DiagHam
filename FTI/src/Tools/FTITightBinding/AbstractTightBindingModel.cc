@@ -33,6 +33,11 @@
 #include "Architecture/ArchitectureOperation/FTIComputeBandStructureOperation.cc"
 #include "GeneralTools/Endian.h"
 #include "GeneralTools/OrderedList.h"
+#include "Matrix/ComplexMatrix.h"
+#include "Matrix/ComplexDiagonalMatrix.h"
+#include "Matrix/RealDiagonalMatrix.h"
+#include "Matrix/RealMatrix.h"
+
 #include <sys/time.h>
 #include <fstream>
 
@@ -51,6 +56,8 @@ AbstractTightBindingModel::AbstractTightBindingModel()
   this->ConnectedOrbitalIndices = 0;
   this->ConnectedOrbitalSpatialIndices = 0;
   this->ConnectedOrbitalHoppingAmplitudes = 0;
+  this->EnergyBandStructure = 0;
+  this->OneBodyBasis = 0;
 }
 
 
@@ -71,6 +78,18 @@ AbstractTightBindingModel::~AbstractTightBindingModel()
       delete[] this->ConnectedOrbitalSpatialIndices;
       delete[] this->ConnectedOrbitalHoppingAmplitudes;
       delete[] this->NbrConnectedOrbitals;
+    }
+  if (this->OneBodyBasis != 0)
+    {
+      delete[] this->OneBodyBasis;
+    }
+  if (this->EnergyBandStructure != 0)
+    {
+      for (int i = 0; i < this->NbrBands; ++i)
+	{
+	  delete[] this->EnergyBandStructure[i];
+	}
+      delete[] this->EnergyBandStructure;
     }
 }
 
@@ -136,6 +155,7 @@ bool AbstractTightBindingModel::WriteAsciiSpectrum(char* fileName)
 {
   ofstream File;
   File.open(fileName);
+  File.precision(14);
   this->WriteASCIIHeader(File, '#');
   File << "# index";
   for (int i = 0; i < this->NbrBands; ++i)
@@ -434,6 +454,55 @@ void AbstractTightBindingModel::ComputeBandStructure()
   double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +
 		(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
   cout << "One-body diagonalization done in " << Dt << " s" << endl;
+}
+
+// core part that compute the band structure
+//
+// minStateIndex = minimum index of the state to compute
+// nbrStates = number of states to compute
+
+void AbstractTightBindingModel::CoreComputeBandStructure(long minStateIndex, long nbrStates)
+{
+  this->FindConnectedOrbitals();
+  if (this->NbrConnectedOrbitals != 0)
+    {
+      if (nbrStates == 0l)
+	nbrStates = this->NbrStatePerBand;
+
+      HermitianMatrix TmpOneBodyHamiltonian = this->BuildTightBindingHamiltonianRealSpace(this->NbrConnectedOrbitals, this->ConnectedOrbitalIndices,
+											  this->ConnectedOrbitalSpatialIndices, this->ConnectedOrbitalHoppingAmplitudes);
+      if (this->OneBodyBasis != 0)
+	{
+	  ComplexMatrix TmpMatrix(this->NbrBands, this->NbrBands, true);
+	  TmpMatrix.SetToIdentity();
+	  RealDiagonalMatrix TmpDiag;
+#ifdef __LAPACK__
+	  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
+#else
+	  TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
+#endif
+	  this->OneBodyBasis[0] = TmpMatrix;
+	  for (int i = 0; i < this->NbrBands; ++i)
+	    {
+	      this->EnergyBandStructure[i][0] = TmpDiag(i, i);
+	    }
+	}
+      else
+	{
+	  RealDiagonalMatrix TmpDiag;
+#ifdef __LAPACK__
+	  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
+#else
+	  TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
+#endif
+	  for (int i = 0; i < this->NbrBands; ++i)
+	    this->EnergyBandStructure[i][0] = TmpDiag(i, i);
+	}
+    }
+  else
+    {
+      cout << "error, using dummy AbstractTightBindingModel::CoreComputeBandStructure" << endl;
+    }
 }
 
 // build the tight binding hamiltonian in real space from the hopping parameters of the unit cell located at the origin, assuming periodic boundary conditions 

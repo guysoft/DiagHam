@@ -68,6 +68,13 @@ class AbstractTightBindingModel
   // array that gives the hopping amplitudes for each pair of connected orbitals
   Complex** ConnectedOrbitalHoppingAmplitudes;
 
+  // One body eigenstate basis associated to each point of the band structure, the array index corresponds to the linearized momentum
+  ComplexMatrix* OneBodyBasis;
+
+  // energy spectrum of the band structure, first index is the band index, second index is the linearized momentum
+  double** EnergyBandStructure;
+
+ 
  public:
 
   // default constructor
@@ -275,7 +282,7 @@ class AbstractTightBindingModel
   //
   // minStateIndex = minimum index of the state to compute
   // nbrStates = number of states to compute
-  virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates) = 0;
+  virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates);
 
   // find the orbitals connected to those located at the origin unit cell
   // 

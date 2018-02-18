@@ -51,8 +51,6 @@ using std::cout;
 
 Abstract1DTightBindingModel::Abstract1DTightBindingModel()
 {
-  this->EnergyBandStructure = 0;
-  this->OneBodyBasis = 0;
   this->EmbeddingX = RealVector();
   this->LatticeVector1 = RealVector(1);
   this->LatticeVector1[0] = 1.0;
@@ -63,18 +61,6 @@ Abstract1DTightBindingModel::Abstract1DTightBindingModel()
 
 Abstract1DTightBindingModel::~Abstract1DTightBindingModel()
 {
-  if (this->OneBodyBasis != 0)
-    {
-      delete[] this->OneBodyBasis;
-    }
-  if (this->EnergyBandStructure != 0)
-    {
-      for (int i = 0; i < this->NbrBands; ++i)
-	{
-	  delete[] this->EnergyBandStructure[i];
-	}
-      delete[] this->EnergyBandStructure;
-    }
 }
 
 // get the position of a sublattice site

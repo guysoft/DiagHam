@@ -156,7 +156,11 @@ int main(int argc, char** argv)
   int NbrParticles = Manager.GetInteger("nbr-particles"); 
   int NbrSitesX = Manager.GetInteger("nbr-sitex"); 
   int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
-  int NbrSites = 2*NbrSitesX * NbrSitesY;
+  int NbrSites = 2 * NbrSitesX * NbrSitesY;
+  if (Manager.GetBoolean("full-obc") == true)
+    {
+      NbrSites = NbrSitesX * NbrSitesY;
+    }
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   int nx1 = Manager.GetInteger("nx1");
   int ny1 = Manager.GetInteger("ny1");
@@ -170,10 +174,12 @@ int main(int argc, char** argv)
     Offset = 0;
   bool TiltedFlag = true;
   if ( ((nx1 == 0) && (ny1 == 0)) || ((nx2 == 0) && (ny2 == 0)) )
-    TiltedFlag = false;
+    {
+      TiltedFlag = false;
+    }
   else
     {
-      if ((nx1*ny2 - nx2*ny1) != NbrSitesX * NbrSitesY)
+      if ((nx1 * ny2 - nx2 * ny1) != (NbrSitesX * NbrSitesY))
 	{
 	  cout << "Boundary conditions define a lattice that has a number of sites different from NbrSiteX * NbrSiteY - should have (nx1*ny2 - nx2*ny1) = NbrSiteX * NbrSiteY " << endl;
 	  return 0;
@@ -195,13 +201,13 @@ int main(int argc, char** argv)
       cout << "Using tilted boundary conditions" << endl;
     }
   if (TiltedFlag == true)
-  {
-    if (((Manager.GetBoolean("three-body") == true) || (Manager.GetBoolean("four-body") == true) || (Manager.GetBoolean("five-body"))) && (Manager.GetBoolean("real-space") == false))
     {
-      cout << "Tilted lattice is only supported for the projected code with two body interaction" << endl;
-      return 0;
+      if (((Manager.GetBoolean("three-body") == true) || (Manager.GetBoolean("four-body") == true) || (Manager.GetBoolean("five-body"))) && (Manager.GetBoolean("real-space") == false))
+	{
+	  cout << "Tilted lattice is only supported for the projected code with two body interaction" << endl;
+	  return 0;
+	}
     }
-  }
   char* StatisticPrefix = new char [16];
   if (Manager.GetBoolean("boson") == false)
     {
@@ -211,16 +217,26 @@ int main(int argc, char** argv)
     {
       sprintf (StatisticPrefix, "bosons");
     }
-  
-  char* FilePrefix = new char [512];
+
+  char* GeometryPrefix = new char [512];
+  if (Manager.GetBoolean("full-obc") == true)
+    {
+      sprintf(GeometryPrefix, "checkerboardlattice_fullobc");
+    }
+  else
+    {
+      sprintf(GeometryPrefix, "checkerboardlattice");
+    }
+
+  char* FilePrefix = new char [512 + strlen(GeometryPrefix) + strlen(StatisticPrefix)];
   if (Manager.GetBoolean("single-band") == false)
     {
       if (Manager.GetBoolean("real-space") == false)
 	{
 	  if (TiltedFlag == false)
-	    sprintf (FilePrefix, "%s_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+	    sprintf (FilePrefix, "%s_%s_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, GeometryPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 	  else
-	    sprintf (FilePrefix, "%s_checkerboardlatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+	    sprintf (FilePrefix, "%s_%s_tilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, GeometryPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
 	}
       else
 	{
@@ -229,16 +245,16 @@ int main(int argc, char** argv)
 	     if (Manager.GetBoolean ("gutzwiller") == false)
 	       {
 		 if (TiltedFlag == false)
-		   sprintf (FilePrefix, "%s_realspace_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+		   sprintf (FilePrefix, "%s_realspace_%s_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, GeometryPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 		 else
-		   sprintf (FilePrefix, "%s_realspace_checkerboardlatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+		   sprintf (FilePrefix, "%s_realspace_%s_tilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, GeometryPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
 	       }
 	     else
 	       {
 		 if (TiltedFlag == false)
-		   sprintf (FilePrefix, "%s_realspace_gutzwiller_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+		   sprintf (FilePrefix, "%s_realspace_gutzwiller_%s_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, GeometryPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 		 else
-		   sprintf (FilePrefix, "%s_realspace_gutzwiller_checkerboardlatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+		   sprintf (FilePrefix, "%s_realspace_gutzwiller_%s_tilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, GeometryPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
 	       }
 	   }
 	 else
@@ -246,16 +262,16 @@ int main(int argc, char** argv)
 	     if (Manager.GetBoolean ("gutzwiller") == false)
 	       {
 		 if (TiltedFlag == false)
-		   sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+		   sprintf (FilePrefix, "%s_realspace_notranslation_%s_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, GeometryPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 		 else
-		   sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+		   sprintf (FilePrefix, "%s_realspace_notranslation_%s_tilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, GeometryPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
 	       }
 	     else
 	       {
 		 if (TiltedFlag == false)
-		   sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+		   sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_%s_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, GeometryPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 		 else
-		   sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_checkerboardlatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+		   sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_%s_tilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, GeometryPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
 	       }
 	   }
 	}
@@ -265,61 +281,87 @@ int main(int argc, char** argv)
       if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
 	{ 
 	  if (TiltedFlag == false)
-	    sprintf (FilePrefix, "%s_singleband_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+	    sprintf (FilePrefix, "%s_singleband_%s_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, GeometryPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 	  else
-	    sprintf (FilePrefix, "%s_singleband_checkerboardlatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+	    sprintf (FilePrefix, "%s_singleband_%s_tilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, GeometryPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
 	}
       else
 	{
 	  if (Manager.GetBoolean("three-body") == true)
 	    {
-	      sprintf (FilePrefix, "%s_singleband_threebody_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles,  NbrSites, NbrSitesX, NbrSitesY);
+	      sprintf (FilePrefix, "%s_singleband_threebody_%s_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, GeometryPrefix, NbrParticles,  NbrSites, NbrSitesX, NbrSitesY);
 	    }
 	  else
 	    {
 	      if (Manager.GetBoolean("four-body") == true)
 		{
-		  sprintf (FilePrefix, "%s_singleband_fourbody_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+		  sprintf (FilePrefix, "%s_singleband_fourbody_%s_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, GeometryPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 		}
 	      else
 		{
-		  sprintf (FilePrefix, "%s_singleband_fivebody_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+		  sprintf (FilePrefix, "%s_singleband_fivebody_%s_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, GeometryPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 		}
 	    }
 	}
     }
   char* CommentLine = new char [256];
-  sprintf (CommentLine, "eigenvalues\n# kx ky ");
+
+  if (Manager.GetBoolean("full-obc") == true)
+    {
+      sprintf (CommentLine, "eigenvalues\n# ");
+    }
+  else
+    {
+      sprintf (CommentLine, "eigenvalues\n# kx ky ");
+    }
+
   char* FileParameterString = new char [256];
   sprintf (FileParameterString, "t1_%f_t2_%f_tpp_%f", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"));
 
-  char* EigenvalueOutputFile = new char [512];
-  if (Manager.GetString("eigenvalue-file")!=0)
-    strcpy(EigenvalueOutputFile, Manager.GetString("eigenvalue-file"));
+  char* EigenvalueOutputFile = new char [512 + strlen(FilePrefix)];
+  if (Manager.GetString("eigenvalue-file") != 0)
+    {
+      strcpy(EigenvalueOutputFile, Manager.GetString("eigenvalue-file"));
+    }
   else
     {
-      if (Manager.GetBoolean("single-band") == false)
+      if (Manager.GetBoolean("full-obc") == true)
 	{
 	  if (Manager.GetDouble("mu-s") == 0.0)
-	    sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
-	  else
-	    sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
-	}
-      else
-	{
-	  if (Manager.GetBoolean("flat-band") == true)
 	    {
-	      if (Manager.GetDouble("mu-s") == 0.0)
-		sprintf (EigenvalueOutputFile, "%s_v_%f_%s_gx_%f_gy_%f.dat",FilePrefix, Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
-	      else
-		sprintf (EigenvalueOutputFile, "%s_v_%f_%s_gx_%f_gy_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+	      sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s.dat", FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString);
 	    }
 	  else
 	    {
+	      sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_mus_%f.dat", FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString,
+		       Manager.GetDouble("mu-s"));
+	    }
+	}
+      else
+	{
+	  if (Manager.GetBoolean("single-band") == false)
+	    {
 	      if (Manager.GetDouble("mu-s") == 0.0)
-		sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f.dat", FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	      else
-		sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+		sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f_mus_%f.dat", FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+	    }
+	  else
+	    {
+	      if (Manager.GetBoolean("flat-band") == true)
+		{
+		  if (Manager.GetDouble("mu-s") == 0.0)
+		    sprintf (EigenvalueOutputFile, "%s_v_%f_%s_gx_%f_gy_%f.dat", FilePrefix, Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		  else
+		    sprintf (EigenvalueOutputFile, "%s_v_%f_%s_gx_%f_gy_%f_mus_%f.dat", FilePrefix, Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+		}
+	      else
+		{
+		  if (Manager.GetDouble("mu-s") == 0.0)
+		    sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f.dat", FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		  else
+		    sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f_mus_%f.dat", FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+		}
 	    }
 	}
     }
@@ -342,7 +384,7 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("full-obc") == true)
 	{
 	  TightBindingModelOBC = new TightBindingModelCheckerboardLatticeFullOBC (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"),  
-										  Manager.GetDouble("mu-s"), Architecture.GetArchitecture(), ExportOneBody);
+										  Manager.GetDouble("mu-s"), 0, ExportOneBody);
 	  TightBindingModelOBC->WriteAsciiSpectrum(EigenvalueOutputFile);
 	  if (ExportOneBody == true)
 	    {
@@ -419,7 +461,7 @@ int main(int argc, char** argv)
       MinKy = Manager.GetInteger("only-ky");
       MaxKy = MinKy;
     }
-  if(Manager.GetBoolean("no-translation") == true)
+  if ((Manager.GetBoolean("no-translation") == true) || (Manager.GetBoolean("full-obc") == true))
     {  
       MaxKx = 0;
       MaxKy = 0;
@@ -428,18 +470,29 @@ int main(int argc, char** argv)
   
   if (Manager.GetString("import-onebody") == 0)
     {
-      if (TiltedFlag == false)
+      if (Manager.GetBoolean("full-obc") == true)
 	{
-	  TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true, !(Manager.GetBoolean("single-band")));
+	  TightBindingModelOBC = new TightBindingModelCheckerboardLatticeFullOBC (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"),  
+										  Manager.GetDouble("mu-s"), 0, true);
+	  char* BandStructureOutputFile = new char [1024];
+	  sprintf (BandStructureOutputFile, "%s_%s_tightbinding.dat", FilePrefix, FileParameterString);
+	  TightBindingModelOBC->WriteBandStructure(BandStructureOutputFile);
 	}
       else
 	{
-	  TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, Offset,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), OffsetReal, true, !(Manager.GetBoolean("single-band")));
+	  if (TiltedFlag == false)
+	    {
+	      TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true, !(Manager.GetBoolean("single-band")));
+	    }
+	  else
+	    {
+	      TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, Offset,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), OffsetReal, true, !(Manager.GetBoolean("single-band")));
+	    }
+	  
+	  char* BandStructureOutputFile = new char [1024];
+	  sprintf (BandStructureOutputFile, "%s_%s_tightbinding.dat", FilePrefix, FileParameterString);
+	  TightBindingModel->WriteBandStructure(BandStructureOutputFile);
 	}
-      
-      char* BandStructureOutputFile = new char [1024];
-      sprintf (BandStructureOutputFile, "%s_%s_tightbinding.dat", FilePrefix, FileParameterString);
-      TightBindingModel->WriteBandStructure(BandStructureOutputFile);
     }
   else
     {
@@ -463,9 +516,13 @@ int main(int argc, char** argv)
 	      int** InteractingOrbitalsOrbitalIndices;
 	      int** InteractingOrbitalsSpatialIndices;
 	      double** InteractingOrbitalsPotentials;
-	      FCICheckerboardLatticeModelEdgeStatesComputeInteractingOrbitals(NbrInteractingOrbitals, InteractingOrbitalsOrbitalIndices, 
-									      InteractingOrbitalsSpatialIndices, InteractingOrbitalsPotentials,
-									      Manager.GetBoolean("boson"), Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), TightBindingModel);
+	      if (Manager.GetBoolean("full-obc") == false)
+		{
+		  FCICheckerboardLatticeModelEdgeStatesComputeInteractingOrbitals(NbrInteractingOrbitals, InteractingOrbitalsOrbitalIndices, 
+										  InteractingOrbitalsSpatialIndices, InteractingOrbitalsPotentials,
+										  Manager.GetBoolean("boson"), Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
+										  TightBindingModel);
+		}
 	      if (Manager.GetBoolean("real-space") == false)
 		{
 		  if (Manager.GetBoolean("boson") == false)
@@ -503,21 +560,24 @@ int main(int argc, char** argv)
 	      else
 		{
 		  ParticleOnSphere* Space = 0;
-		  RealSymmetricMatrix DensityDensityInteraction(TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), true);
-		  for (int x = 0; x < NbrSitesX; ++x)
+		  RealSymmetricMatrix DensityDensityInteraction(NbrSites, true);
+		  if (Manager.GetBoolean("full-obc") == false)
 		    {
-		      for (int y = 0; y < NbrSitesY; ++y)
+		      for (int x = 0; x < NbrSitesX; ++x)
 			{
-			  for (int OrbitalIndex = 0; OrbitalIndex < TightBindingModel->GetNbrBands(); ++OrbitalIndex)
+			  for (int y = 0; y < NbrSitesY; ++y)
 			    {
-			      for (int k = 0; k < NbrInteractingOrbitals[OrbitalIndex]; ++k)
+			      for (int OrbitalIndex = 0; OrbitalIndex < TightBindingModel->GetNbrBands(); ++OrbitalIndex)
 				{
-				  DensityDensityInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, OrbitalIndex), 
-									     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x + InteractingOrbitalsSpatialIndices[OrbitalIndex][2 * k], 
-																	    y + InteractingOrbitalsSpatialIndices[OrbitalIndex][(2 * k) + 1], 
-																	    InteractingOrbitalsOrbitalIndices[OrbitalIndex][k]), 
-									     InteractingOrbitalsPotentials[OrbitalIndex][k]);
-				  
+				  for (int k = 0; k < NbrInteractingOrbitals[OrbitalIndex]; ++k)
+				    {
+				      DensityDensityInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, OrbitalIndex), 
+										   TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x + InteractingOrbitalsSpatialIndices[OrbitalIndex][2 * k], 
+																		  y + InteractingOrbitalsSpatialIndices[OrbitalIndex][(2 * k) + 1], 
+																		  InteractingOrbitalsOrbitalIndices[OrbitalIndex][k]), 
+										   InteractingOrbitalsPotentials[OrbitalIndex][k]);
+				      
+				    }
 				}
 			    }
 			}
@@ -526,37 +586,56 @@ int main(int argc, char** argv)
 		    {
 		      if (Manager.GetBoolean ("gutzwiller") == false)
 			{
-			  if (Manager.GetBoolean("no-translation") == true)
-			    Space = new BosonOnLatticeRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
+			  if ((Manager.GetBoolean("no-translation") == true) || (Manager.GetBoolean("full-obc") == true))
+			    {
+			      Space = new BosonOnLatticeRealSpace(NbrParticles, NbrSites);
+			    }
 			  else
-			    Space = new BosonOnLatticeRealSpaceAnd2DTranslation(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
-										i, NbrSitesX, j, NbrSitesY);
+			    {
+			      Space = new BosonOnLatticeRealSpaceAnd2DTranslation(NbrParticles, NbrSites, 
+										  i, NbrSitesX, j, NbrSitesY);
+			    }
 			}
 		      else
 			{
-			  if (Manager.GetBoolean("no-translation") == true)
-			    Space = new BosonOnLatticeGutzwillerProjectionRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
+			  if ((Manager.GetBoolean("no-translation") == true) || (Manager.GetBoolean("full-obc") == true))
+			    {
+			      Space = new BosonOnLatticeGutzwillerProjectionRealSpace(NbrParticles, NbrSites);
+			    }
 			  else
-			    Space = new BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation(NbrParticles, 
-												    TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
-												    i, NbrSitesX, j, NbrSitesY);
+			    {
+			      Space = new BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation(NbrParticles, 
+												      NbrSites, 
+												      i, NbrSitesX, j, NbrSitesY);
+			    }
 			}
 		    }
 		  else
 		    {
 		      if (Manager.GetBoolean ("gutzwiller") == false)
 			{
-			  if (Manager.GetBoolean("no-translation") == true)
-			    Space = new FermionOnLatticeRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
+			  if ((Manager.GetBoolean("no-translation") == true) || ((Manager.GetBoolean("full-obc") == true)))
+			    {
+			      Space = new FermionOnLatticeRealSpace(NbrParticles, NbrSites);
+			    }
 			  else
-			    Space = new FermionOnLatticeRealSpaceAnd2DTranslation(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
-										  i, NbrSitesX, j, NbrSitesY);
+			    {
+			      Space = new FermionOnLatticeRealSpaceAnd2DTranslation(NbrParticles, NbrSites, 
+										    i, NbrSitesX, j, NbrSitesY);
+			    }
 			}
 		      else
 			{
-			  if (Manager.GetBoolean("no-translation") == true)
+			  if ((Manager.GetBoolean("no-translation") == true) || (Manager.GetBoolean("full-obc") == true))
 			    {
-			      Space = new FermionOnSquareLatticeRealSpaceNNExclusion(NbrParticles, TightBindingModel->GetNbrBands() * NbrSitesX, NbrSitesY);
+			      if (Manager.GetBoolean("full-obc") == true)
+				{
+				  Space = new FermionOnSquareLatticeRealSpaceNNExclusion(NbrParticles, NbrSitesX, NbrSitesY);
+				}
+			      else
+				{
+				  Space = new FermionOnSquareLatticeRealSpaceNNExclusion(NbrParticles, TightBindingModel->GetNbrBands() * NbrSitesX, NbrSitesY);
+				}
 			    }
 			  else
 			    {
@@ -592,7 +671,7 @@ int main(int argc, char** argv)
 			      ExclusionFile.close();
 			      ++TmpIndex;
 
-			      Space = new FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
+			      Space = new FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion(NbrParticles, NbrSites, 
 												 i, NbrSitesX, j, NbrSitesY, ExcludedSites, NbrExcludedSites);			      
 			      for (int i = 0; i < TmpIndex; ++i)
 				{				  
@@ -605,25 +684,40 @@ int main(int argc, char** argv)
 		    }
 		  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-		  HermitianMatrix TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
-		  if (Manager.GetBoolean("no-translation") == true)
+		  HermitianMatrix TightBindingMatrix;
+		  if (Manager.GetBoolean("full-obc") == true)
 		    {
-		      Hamiltonian = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
+		      TightBindingMatrix = TightBindingModelOBC->GetRealSpaceTightBindingHamiltonian();
+		    }
+		  else
+		    {
+		      TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
+		    }
+		  if ((Manager.GetBoolean("no-translation") == true) || (Manager.GetBoolean("full-obc") == true))
+		    {
+		      Hamiltonian = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, NbrSites, 
 									       TightBindingMatrix, DensityDensityInteraction,
 									       Architecture.GetArchitecture(), Memory);
 		    }
 		  else
 		    {
-		      Hamiltonian = new ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
+		      Hamiltonian = new ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian (Space, NbrParticles, NbrSites, 
 											       i, NbrSitesX, j, NbrSitesY,
 											       TightBindingMatrix, DensityDensityInteraction,
 											       Architecture.GetArchitecture(), Memory);
 		    }
 		}
 	      char* ContentPrefix = new char[256];
-	      sprintf (ContentPrefix, "%d %d", i, j);
+	      if (Manager.GetBoolean("full-obc") == true)
+		{
+		  sprintf (ContentPrefix, "");
+		}
+	      else
+		{
+		  sprintf (ContentPrefix, "%d %d", i, j);
+		}
 	      char* EigenstateOutputFile = new char [512];
-	      if ((Manager.GetBoolean("real-space") == false) || (Manager.GetBoolean("no-translation") == false))
+	      if ((Manager.GetBoolean("real-space") == false) || ((Manager.GetBoolean("no-translation") == false) && (Manager.GetBoolean("full-obc") == false)))
 		{
 		  sprintf (EigenstateOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f_kx_%d_ky_%d", FilePrefix, 
 			   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"),  Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
@@ -751,8 +845,8 @@ int main(int argc, char** argv)
 // tightBindingModel = tight binding model
 
 void FCICheckerboardLatticeModelEdgeStatesComputeInteractingOrbitals(int*& nbrInteractingOrbitals, int**& interactingOrbitalsOrbitalIndices,
-							   int**& interactingOrbitalsSpatialIndices, double**& interactingOrbitalsPotentials,
-							   bool bosonFlag, double uPotential, double vPotential, Abstract2DTightBindingModel* tightBindingModel)
+								     int**& interactingOrbitalsSpatialIndices, double**& interactingOrbitalsPotentials,
+								     bool bosonFlag, double uPotential, double vPotential, Abstract2DTightBindingModel* tightBindingModel)
 {
   nbrInteractingOrbitals = new int[2];
   interactingOrbitalsOrbitalIndices = new int*[2];

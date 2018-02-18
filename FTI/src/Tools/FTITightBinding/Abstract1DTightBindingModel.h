@@ -56,12 +56,6 @@ class Abstract1DTightBindingModel : public AbstractTightBindingModel
   // embedding of sublattices relative to the unit cell reference point along x
   RealVector EmbeddingX;
 
-  // One body eigenstate basis associated to each point of the band structure, the array index corresponds to the linearized momentum
-  ComplexMatrix* OneBodyBasis;
-
-  // energy spectrum of the band structure, first index is the band index, second index is the linearized momentum
-  double** EnergyBandStructure;
-
  public:
 
   // default constructor

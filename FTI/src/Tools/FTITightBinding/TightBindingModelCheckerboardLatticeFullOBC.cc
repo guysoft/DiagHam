@@ -66,8 +66,15 @@ TightBindingModelCheckerboardLatticeFullOBC::TightBindingModelCheckerboardLattic
   this->NbrStatePerBand = 1;
   this->Architecture = architecture;
   
-  this->EnergyBandStructure = new double[this->NbrBands];
-
+  this->EnergyBandStructure = new double*[this->NbrBands];
+  for (int i = 0; i < this->NbrBands; ++i)
+    {
+      this->EnergyBandStructure[i] = new double[1];
+    }
+  if (storeOneBodyMatrices == true)
+    {
+      this->OneBodyBasis = new ComplexMatrix[1];
+    }
   this->FindConnectedOrbitals();
   this->ComputeBandStructure();
 }
@@ -79,16 +86,6 @@ TightBindingModelCheckerboardLatticeFullOBC::TightBindingModelCheckerboardLattic
 
 TightBindingModelCheckerboardLatticeFullOBC::~TightBindingModelCheckerboardLatticeFullOBC()
 {
-}
-
-// core part that compute the band structure
-//
-// minStateIndex = minimum index of the state to compute
-// nbrStates = number of states to compute
-
-void TightBindingModelCheckerboardLatticeFullOBC::CoreComputeBandStructure(long minStateIndex, long nbrStates)
-{
-  this->CoreComputeBandStructure(minStateIndex, nbrStates);
 }
 
 // find the orbitals connected to those located at the origin unit cell
@@ -105,7 +102,7 @@ void TightBindingModelCheckerboardLatticeFullOBC::FindConnectedOrbitals()
   this->ConnectedOrbitalHoppingAmplitudes = new Complex* [this->NbrBands];
   for (int x = 0; x < this->NbrSiteX; ++x)
     {
-      for (int y = 0; y < this->NbrSiteY; ++x)
+      for (int y = 0; y < this->NbrSiteY; ++y)
 	{
 	  int TmpLinearizedCoordinate = this->GetRealSpaceTightBindingLinearizedIndex(x, y);
 	  this->NbrConnectedOrbitals[TmpLinearizedCoordinate] = 0;
@@ -113,7 +110,7 @@ void TightBindingModelCheckerboardLatticeFullOBC::FindConnectedOrbitals()
     }
   for (int x = 0; x < this->NbrSiteX; ++x)
     {
-      for (int y = 0; y < this->NbrSiteY; ++x)
+      for (int y = 0; y < this->NbrSiteY; ++y)
 	{
 	  int TmpLinearizedCoordinate = this->GetRealSpaceTightBindingLinearizedIndex(x, y);
 	  this->NbrConnectedOrbitals[TmpLinearizedCoordinate]++;
@@ -140,7 +137,7 @@ void TightBindingModelCheckerboardLatticeFullOBC::FindConnectedOrbitals()
     }
   for (int x = 0; x < this->NbrSiteX; ++x)
     {
-      for (int y = 0; y < this->NbrSiteY; ++x)
+      for (int y = 0; y < this->NbrSiteY; ++y)
 	{
 	  if (((x + y) & 1) == 0)
 	    {
@@ -218,5 +215,24 @@ void TightBindingModelCheckerboardLatticeFullOBC::FindConnectedOrbitals()
 	    }
 	}
     }
+}
+
+// write the energy spectrum in an ASCII file
+//
+// fileName = name of the ASCII file 
+// return value = true if no error occured
+
+bool TightBindingModelCheckerboardLatticeFullOBC::WriteAsciiSpectrum(char* fileName)
+{
+  ofstream File;
+  File.open(fileName);
+  File.precision(14);
+  this->WriteASCIIHeader(File, '#');
+  File << "# Energy";
+  File << endl;
+  for (int i = 0; i < this->NbrBands; ++i)
+    File << this->GetEnergy(i, 0) << endl;
+  File.close();
+  return true;
 }
 

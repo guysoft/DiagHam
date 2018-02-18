@@ -55,12 +55,6 @@ class TightBindingModelCheckerboardLatticeFullOBC : public AbstractTightBindingM
   // four times the sublattice staggered chemical potential 
   double MuS;
 
-  // One body eigenstate basis associated to each point of the band structure
-  ComplexMatrix OneBodyBasis;
-
-  // energy spectrum of the band structure
-  double* EnergyBandStructure;
-
 
  public:
 
@@ -128,13 +122,13 @@ class TightBindingModelCheckerboardLatticeFullOBC : public AbstractTightBindingM
   // return value = reference on the one body transformation matrix
   virtual ComplexMatrix& GetOneBodyMatrix(int momentumIndex);
 
- protected :
-
-  // core part that compute the band structure
+  // write the energy spectrum in an ASCII file
   //
-  // minStateIndex = minimum index of the state to compute
-  // nbrStates = number of states to compute
-  virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates);
+  // fileName = name of the ASCII file 
+  // return value = true if no error occured
+  virtual bool WriteAsciiSpectrum(char* fileName);
+
+ protected :
 
   // find the orbitals connected to those located at the origin unit cell
   // 
@@ -203,7 +197,7 @@ inline double TightBindingModelCheckerboardLatticeFullOBC::GetUnitCellSize()
 
 inline double TightBindingModelCheckerboardLatticeFullOBC::GetEnergy(int bandIndex, int momentumIndex)
 {
-  return this->EnergyBandStructure[bandIndex];
+  return this->EnergyBandStructure[bandIndex][0];
 }
 
 // ask if the one body transformation matrices are available
@@ -212,7 +206,7 @@ inline double TightBindingModelCheckerboardLatticeFullOBC::GetEnergy(int bandInd
 
 inline bool TightBindingModelCheckerboardLatticeFullOBC::HaveOneBodyBasis()
 {
-  if (this->OneBodyBasis.GetNbrRow() > 0)
+  if (this->OneBodyBasis != 0)
     {
       return true;
     }
@@ -229,7 +223,7 @@ inline bool TightBindingModelCheckerboardLatticeFullOBC::HaveOneBodyBasis()
 
 inline ComplexMatrix& TightBindingModelCheckerboardLatticeFullOBC::GetOneBodyMatrix(int momentumIndex)
 {
-  return this->OneBodyBasis;
+  return this->OneBodyBasis[0];
 }
 
 
