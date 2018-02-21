@@ -44,6 +44,7 @@
 #include "MainTask/GenericComplexMainTask.h"
 
 #include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/MultiColumnASCIIFile.h"
 
 #include <iostream>
 #include <cstring>
@@ -126,6 +127,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "real-space", "use the real space representation when considering the system with all bands");
   (*SystemGroup) += new BooleanOption  ('\n', "no-translation", "use the real space representation when considering the system with all bandswithout the translations");
   (*SystemGroup) += new BooleanOption  ('\n', "full-obc", "use full open boundary conditions");
+  (*SystemGroup) += new SingleStringOption  ('\n', "confining-potential", "ascii file describing an additional confining potential when using full OBC");
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "confining-scale", "multiply the confining potential by some global scale", 1.0);
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
@@ -316,9 +319,15 @@ int main(int argc, char** argv)
     }
 
   char* FileParameterString = new char [256];
-  sprintf (FileParameterString, "t1_%f_t2_%f_tpp_%f", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"));
-
-  char* EigenvalueOutputFile = new char [512 + strlen(FilePrefix)];
+  if (Manager.GetString("confining-potential") == 0)
+    {
+      sprintf (FileParameterString, "t1_%f_t2_%f_mus_%f", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("mu-s"));
+    }
+  else
+    {
+      sprintf (FileParameterString, "confining_%f_t1_%f_t2_%f_mus_%f", Manager.GetDouble("confining-scale"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("mu-s"));
+    }
+  char* EigenvalueOutputFile = new char [512 + strlen(FilePrefix) + strlen(FileParameterString)];
   if (Manager.GetString("eigenvalue-file") != 0)
     {
       strcpy(EigenvalueOutputFile, Manager.GetString("eigenvalue-file"));
@@ -327,40 +336,23 @@ int main(int argc, char** argv)
     {
       if (Manager.GetBoolean("full-obc") == true)
 	{
-	  if (Manager.GetDouble("mu-s") == 0.0)
-	    {
-	      sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s.dat", FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString);
-	    }
-	  else
-	    {
-	      sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_mus_%f.dat", FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString,
-		       Manager.GetDouble("mu-s"));
-	    }
+	  sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s.dat", FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString);
 	}
       else
 	{
 	  if (Manager.GetBoolean("single-band") == false)
 	    {
-	      if (Manager.GetDouble("mu-s") == 0.0)
-		sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f.dat", FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
-	      else
-		sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f_mus_%f.dat", FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+	      sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f.dat", FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	    }
 	  else
 	    {
-	      if (Manager.GetBoolean("flat-band") == true)
-		{
-		  if (Manager.GetDouble("mu-s") == 0.0)
-		    sprintf (EigenvalueOutputFile, "%s_v_%f_%s_gx_%f_gy_%f.dat", FilePrefix, Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
-		  else
-		    sprintf (EigenvalueOutputFile, "%s_v_%f_%s_gx_%f_gy_%f_mus_%f.dat", FilePrefix, Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+              if (Manager.GetBoolean("flat-band") == true)
+                {
+		  sprintf (EigenvalueOutputFile, "%s_v_%f_%s_gx_%f_gy_%f.dat", FilePrefix, Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 		}
 	      else
 		{
-		  if (Manager.GetDouble("mu-s") == 0.0)
-		    sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f.dat", FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
-		  else
-		    sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f_mus_%f.dat", FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+		  sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f.dat", FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 		}
 	    }
 	}
@@ -383,8 +375,38 @@ int main(int argc, char** argv)
 	ExportOneBody = true;
       if (Manager.GetBoolean("full-obc") == true)
 	{
-	  TightBindingModelOBC = new TightBindingModelCheckerboardLatticeFullOBC (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"),  
-										  Manager.GetDouble("mu-s"), 0, ExportOneBody);
+	  if (Manager.GetString("confining-potential") == 0)
+	    {
+	      TightBindingModelOBC = new TightBindingModelCheckerboardLatticeFullOBC (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"),  
+										      Manager.GetDouble("mu-s"), 0, ExportOneBody);
+	    }
+	  else
+	    {
+	      MultiColumnASCIIFile ConfiningPotentialFile;
+	      if (ConfiningPotentialFile.Parse(Manager.GetString("confining-potential")) == false)
+		{
+		  ConfiningPotentialFile.DumpErrors(cout);
+		  return -1;
+		}
+	      int NbrNonZeroConfiningPotentials = ConfiningPotentialFile.GetNbrLines();
+	      if ((NbrNonZeroConfiningPotentials == 0) || (ConfiningPotentialFile.GetNbrColumns() < 3))
+		{
+		}
+	      int* ConfiningPotentialXCoordinates = ConfiningPotentialFile.GetAsIntegerArray(0);
+	      int* ConfiningPotentialYCoordinates = ConfiningPotentialFile.GetAsIntegerArray(1);
+	      double* ConfiningPotentials = ConfiningPotentialFile.GetAsDoubleArray(2);
+	      if (Manager.GetDouble("confining-scale") != 1.0)
+		{
+		  for (int i = 0; i < NbrNonZeroConfiningPotentials; ++i)
+		    {
+		      ConfiningPotentials[i] *= Manager.GetDouble("confining-scale");
+		    }
+		}
+	      TightBindingModelOBC = new TightBindingModelCheckerboardLatticeFullOBC (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"),  
+										      Manager.GetDouble("mu-s"), ConfiningPotentialXCoordinates, ConfiningPotentialYCoordinates,
+										      ConfiningPotentials, NbrNonZeroConfiningPotentials,
+										      0, ExportOneBody);
+	    }
 	  TightBindingModelOBC->WriteAsciiSpectrum(EigenvalueOutputFile);
 	  if (ExportOneBody == true)
 	    {
@@ -472,8 +494,31 @@ int main(int argc, char** argv)
     {
       if (Manager.GetBoolean("full-obc") == true)
 	{
-	  TightBindingModelOBC = new TightBindingModelCheckerboardLatticeFullOBC (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"),  
-										  Manager.GetDouble("mu-s"), 0, true);
+	  if (Manager.GetString("confining-potential") == 0)
+	    {
+	      TightBindingModelOBC = new TightBindingModelCheckerboardLatticeFullOBC (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"),  
+										      Manager.GetDouble("mu-s"), 0, true);
+	    }
+	  else
+	    {
+	      MultiColumnASCIIFile ConfiningPotentialFile;
+	      if (ConfiningPotentialFile.Parse(Manager.GetString("confining-potential")) == false)
+		{
+		  ConfiningPotentialFile.DumpErrors(cout);
+		  return -1;
+		}
+	      int NbrNonZeroConfiningPotentials = ConfiningPotentialFile.GetNbrLines();
+	      if ((NbrNonZeroConfiningPotentials == 0) || (ConfiningPotentialFile.GetNbrColumns() < 3))
+		{
+		}
+	      int* ConfiningPotentialXCoordinates = ConfiningPotentialFile.GetAsIntegerArray(0);
+	      int* ConfiningPotentialYCoordinates = ConfiningPotentialFile.GetAsIntegerArray(1);
+	      double* ConfiningPotentials = ConfiningPotentialFile.GetAsDoubleArray(2);
+	      TightBindingModelOBC = new TightBindingModelCheckerboardLatticeFullOBC (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"),  
+										      Manager.GetDouble("mu-s"), ConfiningPotentialXCoordinates, ConfiningPotentialYCoordinates,
+										      ConfiningPotentials, NbrNonZeroConfiningPotentials,
+										      0, true);
+	    }
 	  char* BandStructureOutputFile = new char [1024];
 	  sprintf (BandStructureOutputFile, "%s_%s_tightbinding.dat", FilePrefix, FileParameterString);
 	  TightBindingModelOBC->WriteBandStructure(BandStructureOutputFile);

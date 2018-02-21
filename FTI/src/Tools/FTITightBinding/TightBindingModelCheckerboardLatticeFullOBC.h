@@ -55,6 +55,13 @@ class TightBindingModelCheckerboardLatticeFullOBC : public AbstractTightBindingM
   // four times the sublattice staggered chemical potential 
   double MuS;
 
+  // linearized coordiantes of the confining potential
+  int* ConfiningPotentialCoordinates;
+  // amplitudes of the confining potential on each sites
+  double* ConfiningPotentialAmplitudes;
+  // number of sites where there the confining potential has a non-zero amplitude
+  int NbrConfiningPotentials;
+
 
  public:
 
@@ -64,13 +71,29 @@ class TightBindingModelCheckerboardLatticeFullOBC : public AbstractTightBindingM
   // nbrSiteY = number of sites in the y direction 
   // t1 = hoping amplitude between neareast neighbor sites
   // t2 = hoping amplitude between next neareast neighbor sites
-  // t2p = hoping amplitude between second next neareast neighbor sites
   // mus = sublattice chemical potential on A sites
-  // gammaX = boundary condition twisting angle along x
-  // gammaY = boundary condition twisting angle along y
   // architecture = pointer to the architecture
   // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
   TightBindingModelCheckerboardLatticeFullOBC(int nbrSiteX, int nbrSiteY, double t1, double t2, double mus, 
+					      AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
+  
+
+  // constructor with an additional confining potential
+  //
+  // nbrSiteX = number of sites in the x direction
+  // nbrSiteY = number of sites in the y direction 
+  // t1 = hoping amplitude between neareast neighbor sites
+  // t2 = hoping amplitude between next neareast neighbor sites
+  // mus = sublattice chemical potential on A sites
+  // confiningPotentialXCoordinates = x coordiantes of the confining potential
+  // confiningPotentialYCoordinates = y coordiantes of the confining potential
+  // confiningPotentialAmplitudes = amplitudes of the confining potential on each sites
+  // nbrConfiningPotentials = number of sites where there the confining potential has a non-zero amplitude
+  // architecture = pointer to the architecture
+  // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
+  TightBindingModelCheckerboardLatticeFullOBC(int nbrSiteX, int nbrSiteY, double t1, double t2, double mus,
+					      int* confiningPotentialXCoordinates, int* confiningPotentialYCoordinates, 
+					      double* confiningPotentialAmplitudes, int nbrConfiningPotentials,
 					      AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
   
 

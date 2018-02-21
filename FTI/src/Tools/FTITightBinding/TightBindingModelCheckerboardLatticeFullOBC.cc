@@ -34,6 +34,7 @@
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
+#include "GeneralTools/ArrayTools.h"
 
 #include <iostream>
 
@@ -52,7 +53,6 @@ using std::ostream;
 // mus = sublattice chemical potential on A sites
 // architecture = pointer to the architecture
 // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
-// blochFormFlag = use the Bloch form instead of the the traditional form
 
 TightBindingModelCheckerboardLatticeFullOBC::TightBindingModelCheckerboardLatticeFullOBC(int nbrSiteX, int nbrSiteY, double t1, double t2, double mus, 
 											 AbstractArchitecture* architecture, bool storeOneBodyMatrices)
@@ -75,17 +75,75 @@ TightBindingModelCheckerboardLatticeFullOBC::TightBindingModelCheckerboardLattic
     {
       this->OneBodyBasis = new ComplexMatrix[1];
     }
+  this->NbrConfiningPotentials = 0;
+  this->ConfiningPotentialCoordinates = 0;
+  this->ConfiningPotentialAmplitudes = 0;
+
   this->FindConnectedOrbitals();
   this->ComputeBandStructure();
 }
 
+// constructor with an additional confining potential
+//
+// nbrSiteX = number of sites in the x direction
+// nbrSiteY = number of sites in the y direction 
+// t1 = hoping amplitude between neareast neighbor sites
+// t2 = hoping amplitude between next neareast neighbor sites
+// mus = sublattice chemical potential on A sites
+// confiningPotentialXCoordinates = x coordiantes of the confining potential
+// confiningPotentialYCoordinates = y coordiantes of the confining potential
+// confiningPotentialAmplitudes = amplitudes of the confining potential on each sites
+// nbrConfiningPotentials = number of sites where there the confining potential has a non-zero amplitude
+// architecture = pointer to the architecture
+// storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
 
+TightBindingModelCheckerboardLatticeFullOBC::TightBindingModelCheckerboardLatticeFullOBC(int nbrSiteX, int nbrSiteY, double t1, double t2, double mus,
+											 int* confiningPotentialXCoordinates, int* confiningPotentialYCoordinates, 
+											 double* confiningPotentialAmplitudes, int nbrConfiningPotentials,
+											 AbstractArchitecture* architecture, bool storeOneBodyMatrices)
+{
+  this->NbrSiteX = nbrSiteX;
+  this->NbrSiteY = nbrSiteY;
+  this->NNHopping = t1;
+  this->NextNNHopping = t2;
+  this->MuS = mus;
+  this->NbrBands = this->NbrSiteX * this->NbrSiteY;
+  this->NbrStatePerBand = 1;
+  this->Architecture = architecture;
+  
+  this->EnergyBandStructure = new double*[this->NbrBands];
+  for (int i = 0; i < this->NbrBands; ++i)
+    {
+      this->EnergyBandStructure[i] = new double[1];
+    }
+  if (storeOneBodyMatrices == true)
+    {
+      this->OneBodyBasis = new ComplexMatrix[1];
+    }
+
+  this->NbrConfiningPotentials = nbrConfiningPotentials;
+  this->ConfiningPotentialCoordinates = new int [this->NbrConfiningPotentials];
+  this->ConfiningPotentialAmplitudes = new double [this->NbrConfiningPotentials];
+  for (int i = 0; i < this->NbrConfiningPotentials; ++i)
+    {
+      this->ConfiningPotentialCoordinates[i] = this->GetRealSpaceTightBindingLinearizedIndex(confiningPotentialXCoordinates[i], confiningPotentialYCoordinates[i]);
+      this->ConfiningPotentialAmplitudes[i] = confiningPotentialAmplitudes[i];
+    }
+  SortArrayDownOrdering<int>(this->ConfiningPotentialCoordinates, this->ConfiningPotentialAmplitudes, this->NbrConfiningPotentials);
+  this->FindConnectedOrbitals();
+  this->ComputeBandStructure();
+}
 
 // destructor
 //
 
 TightBindingModelCheckerboardLatticeFullOBC::~TightBindingModelCheckerboardLatticeFullOBC()
 {
+  if (this->NbrConfiningPotentials != 0)
+    {
+      delete[] this->ConfiningPotentialCoordinates;
+      delete[] this->ConfiningPotentialAmplitudes;
+    }
 }
 
 // find the orbitals connected to those located at the origin unit cell
@@ -146,6 +204,14 @@ void TightBindingModelCheckerboardLatticeFullOBC::FindConnectedOrbitals()
 	      this->ConnectedOrbitalIndices[TmpLinearizedCoordinate][this->NbrConnectedOrbitals[TmpLinearizedCoordinate]] = TmpLinearizedCoordinate;
 	      this->ConnectedOrbitalSpatialIndices[TmpLinearizedCoordinate][this->NbrConnectedOrbitals[TmpLinearizedCoordinate]] = 0;
 	      this->ConnectedOrbitalHoppingAmplitudes[TmpLinearizedCoordinate][this->NbrConnectedOrbitals[TmpLinearizedCoordinate]] = this->MuS;
+	      if (this->NbrConfiningPotentials > 0)
+		{
+		  int TmpConfiningPosition = SearchInArrayDownOrdering<int>(TmpLinearizedCoordinate, this->ConfiningPotentialCoordinates, this->NbrConfiningPotentials);
+		  if (TmpConfiningPosition != this->NbrConfiningPotentials)
+		    {
+		      this->ConnectedOrbitalHoppingAmplitudes[TmpLinearizedCoordinate][this->NbrConnectedOrbitals[TmpLinearizedCoordinate]] += this->ConfiningPotentialAmplitudes[TmpConfiningPosition];
+		    }
+		}
 	      ++this->NbrConnectedOrbitals[TmpLinearizedCoordinate];
 	      if (this->GetRealSpaceTightBindingLinearizedIndexSafe(x + 1, y + 1) >= 0)
 		{
@@ -183,6 +249,14 @@ void TightBindingModelCheckerboardLatticeFullOBC::FindConnectedOrbitals()
 	      this->ConnectedOrbitalIndices[TmpLinearizedCoordinate][this->NbrConnectedOrbitals[TmpLinearizedCoordinate]] = TmpLinearizedCoordinate;
 	      this->ConnectedOrbitalSpatialIndices[TmpLinearizedCoordinate][this->NbrConnectedOrbitals[TmpLinearizedCoordinate]] = 0;
 	      this->ConnectedOrbitalHoppingAmplitudes[TmpLinearizedCoordinate][this->NbrConnectedOrbitals[TmpLinearizedCoordinate]] = -this->MuS;
+	      if (this->NbrConfiningPotentials > 0)
+		{
+		  int TmpConfiningPosition = SearchInArrayDownOrdering<int>(TmpLinearizedCoordinate, this->ConfiningPotentialCoordinates, this->NbrConfiningPotentials);
+		  if (TmpConfiningPosition != this->NbrConfiningPotentials)
+		    {
+		      this->ConnectedOrbitalHoppingAmplitudes[TmpLinearizedCoordinate][this->NbrConnectedOrbitals[TmpLinearizedCoordinate]] += this->ConfiningPotentialAmplitudes[TmpConfiningPosition];
+		    }
+		}
 	      ++this->NbrConnectedOrbitals[TmpLinearizedCoordinate];
 	      if (this->GetRealSpaceTightBindingLinearizedIndexSafe(x + 1, y + 1) >= 0)
 		{
