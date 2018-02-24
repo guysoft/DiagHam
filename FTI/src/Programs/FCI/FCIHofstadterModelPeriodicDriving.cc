@@ -380,7 +380,10 @@ int main(int argc, char** argv)
   }
 
   char * ParameterString = new char [512];
-  sprintf(ParameterString,"E_%f_omega_%f_nbrSamples_%d_nbrPeriods_%d", EField, Manager.GetDouble("omega"), NbrSamples, NbrPeriods);
+  if (NbrPeriods != 0)
+    sprintf(ParameterString,"E_%f_omega_%f_nbrSamples_%d_nbrPeriods_%d", EField, Manager.GetDouble("omega"), NbrSamples, NbrPeriods);
+  else
+    sprintf(ParameterString,"E_%f_omega_%f_timeF_%f_timeStep_%f", EField, Manager.GetDouble("omega"), TimeF, TimeStep);
   char * EnergyNameFile = 0;
   char* EnergyNameFile0 = 0;
   char* NormFileName = 0;
