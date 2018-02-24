@@ -325,14 +325,15 @@ int main(int argc, char** argv)
   }
   else
   {
-    char* ParameterStringPreviousSimulation = new char[512];
-    if (NbrPeriods != 0)
-      sprintf(ParameterStringPreviousSimulation,"E_%f_omega_%f_nbrSamples_%d_nbrPeriods_%d.%d.vec", EField, Manager.GetDouble("omega"), NbrSamples, NbrPeriods);
-    else
-      sprintf(ParameterStringPreviousSimulation,"E_%f_omega_%f_timeF_%f_timeStep_%f.%d.vec", EField, Manager.GetDouble("omega"), TimeF, TimeStep);
-    
-    OutputNamePrefix = RemoveExtensionFromFileName(StateFileName, ParameterStringPreviousSimulation);
-    delete[] ParameterStringPreviousSimulation;
+    cout << "Resume option is not implemented" << endl;
+//     char* ParameterStringPreviousSimulation = new char[512];
+//     if (NbrPeriods != 0)
+//       sprintf(ParameterStringPreviousSimulation,"E_%f_omega_%f_nbrSamples_%d_nbrPeriods_%d.%d.vec", EField, Manager.GetDouble("omega"), NbrSamples, NbrPeriods);
+//     else
+//       sprintf(ParameterStringPreviousSimulation,"E_%f_omega_%f_timeF_%f_timeStep_%f.%d.vec", EField, Manager.GetDouble("omega"), TimeF, TimeStep);
+//     
+//     OutputNamePrefix = RemoveExtensionFromFileName(StateFileName, ParameterStringPreviousSimulation);
+//     delete[] ParameterStringPreviousSimulation;
   }
 
   char * ParameterString = new char [512];
@@ -406,7 +407,8 @@ int main(int argc, char** argv)
       
       TmpGammaX = GammaX - EField * NbrSiteX * sin(Omega * t) / (Omega * M_PI);
       TmpGammaY = GammaY + Sign * NbrSiteY * EField * cos(Omega * t) / (Omega * M_PI);
-            
+      cout << "(gx, gy) = " << TmpGammaX << " " << TmpGammaY << endl;
+      
       TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSiteX, NbrSiteY, t1, t2, tpp, muS, TmpGammaX, TmpGammaY, Architecture.GetArchitecture(), true, false);
       TightBindingMatrix[i] = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
       delete TightBindingModel;
@@ -451,7 +453,6 @@ int main(int argc, char** argv)
       Norm = TmpState.Norm();
       double TmpNorm = 1.0;
       cout << "Computing state " << (i + 1) << "/" <<  NbrSteps << " at t = " << t << endl;
-      
       if (TmpIndex >= NbrStoredHamiltonians)
       {
 
@@ -546,7 +547,7 @@ int main(int argc, char** argv)
 	}
       
       TmpOverlap = InputState * TmpInitialState;
-      cout << TmpOverlap << endl;
+      cout << TmpOverlap <<  " " << (sqrt(TmpOverlap.Re*TmpOverlap.Re + TmpOverlap.Im*TmpOverlap.Im)) << endl;
       FileNorm << (TimeStep * i) << " " << (sqrt(TmpOverlap.Re*TmpOverlap.Re + TmpOverlap.Im*TmpOverlap.Im)) << endl;
       
       

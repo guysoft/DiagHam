@@ -65,17 +65,6 @@ using std::endl;
 using std::ios;
 using std::ofstream;
 
-// try to guess system information from file name
-//
-// filename = vector file name
-// tauI = reference to the value of tau
-// tfI = 
-// nbrstepI = number of steps in previous simulation
-// stepI = reference to the number of steps already done
-// return value = true if no error occured
-
-bool FTITimeEvolutionFindSystemInfoFromVectorFileName (char* filename, double& eFieldI, double& omegaI, int& nbrSamplesI,int& nbrPeriodsI, int& stepI);
-
 int main(int argc, char** argv)
 {
   OptionManager Manager ("FCIHofstadterModelPeriodicDriving" , "0.01");
@@ -105,9 +94,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "compute-FGR", "compute the absorption rate from Fermi's Golden rule");
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-chernnumber", "compute the Chern number of the fully filled band (only available in singleparticle-spectrum mode)");
   
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-periods", "number of periods to do the time-evolution with", 10);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-periods", "number of periods to do the time-evolution with", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-samples", "number of points to evaluate per period", 10);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "save-period", "save time-evolved state every n periods, save only final step if negative, save nothing if 0", 0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "time-step", "time step for the time evolution", 0.1);
   
   (*SystemGroup) += new SingleIntegerOption  ('\n', "truncate-basis", "if positive, use a truncated instantaneous basis with this number of states. Vector names are guessed from the name of the initial state. A path to the energy spectra and to the vectors has to be provided", 0);
   (*SystemGroup) += new SingleStringOption ('\n', "energy-path", "name of the folder where energy spectra are stored for truncated time-evolution");
@@ -159,6 +149,7 @@ int main(int argc, char** argv)
   int SavePeriod = Manager.GetInteger("save-period");
   double TimePeriod = 2.0 * M_PI / ((double) Omega);
   double TimeStep = TimePeriod / ((double) NbrSamples);
+  double TimeF;
   
   bool ResumeFlag = false;
   int NbrStoredHamiltonians = Manager.GetInteger("nbr-hamiltonian");
@@ -166,6 +157,14 @@ int main(int argc, char** argv)
     NbrStoredHamiltonians = NbrSamples;
   if (NbrStoredHamiltonians < 0)
     NbrStoredHamiltonians = 0;
+  
+  if (NbrPeriods == 0)
+  {
+    cout << "Working with a time step not commensurate with the period of time-evolution" << endl;
+    TimeStep = Manager.GetDouble("time-step");
+    TimeF = TimeStep * NbrSamples;
+    NbrStoredHamiltonians = 0;
+  }
   
   int StepI;
   
@@ -209,16 +208,7 @@ int main(int argc, char** argv)
       cout << "boson" << endl;
     if (SpinFlag)
       cout << "spin" << endl;
-//   if (FTITimeEvolutionFindSystemInfoFromVectorFileName(StateFileName, NbrSamples, NbrPeriods, Omega, EField))
-//   {
-//     ResumeFlag = true;
-//     cout << "tau = " << Tau << ", tf = " << TfI << ", NbrSteps = " << NbrStepI << ", initial step = " << StepI << ", U final = " << UFinalI << endl;
-//     UFinal = UFinalI;
-//     Tau = TauI;
-//     NbrSteps = NbrStepI;
-//     FinalTime = TfI;
-//     TimeStep = FinalTime/ ((double)NbrSteps);
-//   }
+
     
   char*** EigenstateFile = 0;
   double** Energies = 0;
@@ -234,14 +224,9 @@ int main(int argc, char** argv)
   Abstract2DTightBindingModel *TightBindingModel;
   
   TightBindingModel = new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, GammaX, GammaY, Architecture.GetArchitecture(), true, false);
-  if (Manager.GetBoolean("singleparticle-chernnumber") == true)
-  {
-      cout << "Chern number = " << TightBindingModel->ComputeChernNumber(0) << endl;
-      return 0;
-  }
   
   ParticleOnSphere* Space = 0;  
-  int NbrSites = TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand();
+  int NbrSites = NbrCellX * NbrCellY * UnitCellX * UnitCellY;
   
   if (StatisticFlag)
   {
@@ -387,10 +372,11 @@ int main(int argc, char** argv)
   }
   else
   {
-    char* ParameterStringPreviousSimulation = new char[512];
-    sprintf(ParameterStringPreviousSimulation,"E_%f_omega_%f_nbrSamples_%d_nbrPeriods_%d.%d.vec", EField, Manager.GetDouble("omega"), NbrSamples, NbrPeriods);
-    OutputNamePrefix = RemoveExtensionFromFileName(StateFileName, ParameterStringPreviousSimulation);
-    delete[] ParameterStringPreviousSimulation;
+    cout << "Resume option is not implemented" << endl;
+//     char* ParameterStringPreviousSimulation = new char[512];
+//     sprintf(ParameterStringPreviousSimulation,"E_%f_omega_%f_nbrSamples_%d_nbrPeriods_%d.%d.vec", EField, Manager.GetDouble("omega"), NbrSamples, NbrPeriods);
+//     OutputNamePrefix = RemoveExtensionFromFileName(StateFileName, ParameterStringPreviousSimulation);
+//     delete[] ParameterStringPreviousSimulation;
   }
 
   char * ParameterString = new char [512];
@@ -437,6 +423,8 @@ int main(int argc, char** argv)
   
   double FinalNorm = 1.0;
   int NbrSteps = NbrSamples * NbrPeriods;
+  if (NbrPeriods == 0)
+    NbrSteps = NbrSamples;
   double TmpGammaX;
   double TmpGammaY;
   double t;
@@ -445,6 +433,7 @@ int main(int argc, char** argv)
   double PhaseTranslationY = 0.0;
   Complex TmpEnergy;
   
+  delete TightBindingModel;
   HermitianMatrix* TightBindingMatrix = new HermitianMatrix [NbrSamples];
   AbstractQHEHamiltonian** Hamiltonian;
   if (NbrStoredHamiltonians == NbrSamples)
@@ -456,13 +445,10 @@ int main(int argc, char** argv)
     {
       t = i * TimeStep;
       
-//       TmpGammaX = GammaX + Sign * EField * cos(2.0 * M_PI * Omega * t) / (Omega * M_PI);
-//       TmpGammaY = GammaY - EField * sin(2.0 * M_PI * Omega * t) / (Omega * M_PI);
-      
       TmpGammaX = GammaX - EField * NbrCellX * sin(Omega * t) / (Omega * M_PI);
       TmpGammaY = GammaY + Sign * NbrCellY * EField * cos(Omega * t) / (Omega * M_PI);
       
-      TightBindingModel = new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, TmpGammaX, TmpGammaY, Architecture.GetArchitecture(), true, false);
+      TightBindingModel = new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, TmpGammaX, TmpGammaY, Architecture.GetArchitecture(), true, false);      
       TightBindingMatrix[i] = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
       delete TightBindingModel;
       
@@ -596,13 +582,7 @@ int main(int argc, char** argv)
 	  Complex Energy = (TmpInitialState) * (TmpState);
 	  FileEnergy <<  (TimeStep * i) << " " << Energy.Re << endl;
 	  cout << "E(t) = " << Energy << endl;
-// 	  if (i == 0)
-// 	  {
-// 	    HermitianMatrix HamiltonianMatrix (Space->GetHilbertSpaceDimension(), true);
-// 	    Hamiltonian[i]->GetHamiltonian(HamiltonianMatrix);
-// 	    cout << i << " " <<  HamiltonianMatrix << endl;
-// 	  }
-// 	  
+	  
 	  VectorHamiltonianMultiplyOperation Operation1 (Hamiltonian[0], (&TmpInitialState), (&TmpState));
 	  Operation1.ApplyOperation(Architecture.GetArchitecture());
 	  TmpEnergy = TmpInitialState * TmpState;
@@ -640,125 +620,3 @@ int main(int argc, char** argv)
 }
 
 
-// try to guess system information from file name
-//
-// filename = vector file name
-// tauI = reference to the value of tau
-// tfI = 
-// nbrstepI = number of steps in previous simulation
-// stepI = reference to the number of steps already done
-// return value = true if no error occured
-
-bool FTITimeEvolutionFindSystemInfoFromVectorFileName (char* filename, double& eFieldI, double& omegaI, int& nbrSamplesI,int& nbrPeriodsI, int& stepI)
-{
-//   char* StrTau;
-//   StrTau = strstr(filename, "_tau_");
-//   if (StrTau != 0)
-//     {
-//       StrTau += 5;
-//       int SizeString = 0;
-//       while ((StrTau[SizeString] != '\0') && (StrTau[SizeString] != '_') && (StrTau[SizeString] <= '9'))
-// 	++SizeString;
-//       if ((StrTau[SizeString] == '_') && (SizeString != 0))
-// 	{
-//           char TmpChar = StrTau[SizeString];
-// 	  StrTau[SizeString] = '\0';
-// 	  tauI = atoi(StrTau);
-// 	  StrTau[SizeString] = TmpChar;
-// 	  StrTau += SizeString;
-// 	}
-//       else
-// 	StrTau = 0;
-//     }
-//   if (StrTau == 0)
-//     {
-//       return false;            
-//     }
-//   StrTau = strstr(filename, "_tf_");
-//   if (StrTau != 0)
-//     {
-//       StrTau += 4;
-//       int SizeString = 0;
-//       while ((StrTau[SizeString] != '\0') && (StrTau[SizeString] != '_') && (StrTau[SizeString] <= '9'))
-// 	++SizeString;
-//       if ((StrTau[SizeString] == '_') && (SizeString != 0))
-// 	{
-//           char TmpChar = StrTau[SizeString];
-// 	  StrTau[SizeString] = '\0';
-// 	  tfI = atoi(StrTau);
-// // 	  cout << "tfi = " << tfI << endl;
-// 	  StrTau[SizeString] = TmpChar;
-// 	  StrTau += SizeString;
-// 	}
-//       else
-// 	StrTau = 0;
-//     }
-//   if (StrTau == 0)
-//     {
-//       return false;
-//     }
-//   StrTau = strstr(filename, "_nstep_");
-//   if (StrTau != 0)
-//     {
-//       StrTau += 7;
-//       int SizeString = 0;
-//       while ((StrTau[SizeString] != '\0') && (StrTau[SizeString] != '.') && (StrTau[SizeString] >= '0') 
-// 	     && (StrTau[SizeString] <= '9'))
-// 	++SizeString;
-//       if ((StrTau[SizeString] == '.') && (SizeString != 0))
-// 	{
-//           char TmpChar = StrTau[SizeString];
-// 	  StrTau[SizeString] = '\0';
-// 	  nbrStepI = atoi(StrTau);
-// // 	  cout << "NbrStepI = " << nbrStepI << endl;
-// 	  StrTau[SizeString] = TmpChar;
-// 	  StrTau += SizeString;
-// 	}
-//       else
-// 	StrTau = 0;
-//       
-//       StrTau += 1;
-//       SizeString = 0;
-//       while ((StrTau[SizeString] != '\0') && (StrTau[SizeString] != '.') 
-// 	     && (StrTau[SizeString] <= '9'))
-// 	++SizeString;
-//       if ((StrTau[SizeString] == '.') && (SizeString != 0))
-// 	{
-//           char TmpChar = StrTau[SizeString];
-// 	  StrTau[SizeString] = '\0';
-// 	  stepI = atoi(StrTau);
-// // 	  cout << "stepI  = " << stepI << endl;
-// 	  StrTau[SizeString] = TmpChar;
-// 	  StrTau += SizeString;
-// 	}
-//       else
-// 	StrTau = 0;
-//     }
-//   if (StrTau == 0)
-//     {
-//       return false;
-//     }
-//   
-//   
-//   StrTau = strstr(filename, "_uf_");
-//   if (StrTau != 0)
-//     {
-//       StrTau += 4;
-//       int SizeString = 0;
-//       while ((StrTau[SizeString] != '\0') && (StrTau[SizeString] != '_') && (StrTau[SizeString] <= '9'))
-// 	++SizeString;
-//       if ((StrTau[SizeString] == '_') && (SizeString != 0))
-// 	{
-//           char TmpChar = StrTau[SizeString];
-// 	  StrTau[SizeString] = '\0';
-// 	  uFinalI = atoi(StrTau);
-// // 	  cout << "tau = " << tauI << endl;
-// 	  StrTau[SizeString] = TmpChar;
-// 	  StrTau += SizeString;
-// 	}
-//       else
-// 	StrTau = 0;
-//     }
-  
-  return true;
-}

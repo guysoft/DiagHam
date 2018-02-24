@@ -1099,7 +1099,7 @@ HermitianMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingHamil
   int** SpatialIndices = new int* [this->NbrBands];
   Complex** HoppingAmplitudes = new Complex* [this->NbrBands];
   for(int i = 0; i < this->NbrBands; i++)
-	NbrConnectedOrbitals[i] = 4;
+	NbrConnectedOrbitals[i] = 5;
   for (int i = 0; i < this->NbrBands; ++i)
     {
       OrbitalIndices[i] = new int[NbrConnectedOrbitals[i]];
@@ -1167,6 +1167,7 @@ HermitianMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingHamil
 	     cout <<TmpPosition<< " " << OrbitalIndices[TmpPosition][TmpIndex]<< " " << SpatialIndices[TmpPosition][TmpIndex * 2]<< " " <<SpatialIndices[TmpPosition][(TmpIndex * 2)+1]<<" "<<HoppingAmplitudes[TmpPosition][TmpIndex]<<endl;
 #endif
 	     ++TmpIndex;
+	     
 	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX, PosY-1,NumXTranslations,NumYTranslations, translationPhase);
 	     SpatialIndices[TmpPosition][TmpIndex * 2] = -1*NumXTranslations;
 	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] = -1*NumYTranslations;
