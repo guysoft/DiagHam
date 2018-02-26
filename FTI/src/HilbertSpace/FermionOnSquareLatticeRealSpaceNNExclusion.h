@@ -117,6 +117,13 @@ class FermionOnSquareLatticeRealSpaceNNExclusion : public FermionOnLatticeRealSp
   // return value = position from which new states have to be stored
   virtual long GenerateStates(int nbrFermions, int currentSite, int currentSiteY, unsigned long previousXConfiguration, unsigned long currentXConfiguration, long pos);
 
+  // find state index
+  //
+  // stateDescription = unsigned integer describing the state
+  // lzmax = maximum Lz value reached by a fermion in the state
+  // return value = corresponding index
+  int FindStateIndex(unsigned long stateDescription, int lzmax);
+
 };
 
 

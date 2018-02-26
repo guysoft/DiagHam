@@ -514,6 +514,13 @@ int main(int argc, char** argv)
 	      int* ConfiningPotentialXCoordinates = ConfiningPotentialFile.GetAsIntegerArray(0);
 	      int* ConfiningPotentialYCoordinates = ConfiningPotentialFile.GetAsIntegerArray(1);
 	      double* ConfiningPotentials = ConfiningPotentialFile.GetAsDoubleArray(2);
+	      if (Manager.GetDouble("confining-scale") != 1.0)
+		{
+		  for (int i = 0; i < NbrNonZeroConfiningPotentials; ++i)
+		    {
+		      ConfiningPotentials[i] *= Manager.GetDouble("confining-scale");
+		    }
+		}
 	      TightBindingModelOBC = new TightBindingModelCheckerboardLatticeFullOBC (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"),  
 										      Manager.GetDouble("mu-s"), ConfiningPotentialXCoordinates, ConfiningPotentialYCoordinates,
 										      ConfiningPotentials, NbrNonZeroConfiningPotentials,

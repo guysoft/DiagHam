@@ -84,7 +84,7 @@ FermionOnSquareLatticeRealSpaceNNExclusion::FermionOnSquareLatticeRealSpaceNNExc
   this->NbrSitesX = nbrSitesX;
   this->NbrSitesY = nbrSitesY;  
   this->NbrSite = this->NbrSitesX * this->NbrSitesY;
-  this->LzMax = this->NbrSite;
+  this->LzMax = this->NbrSite - 1;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrSite - 1, this->NbrSitesY - 1, 0x0ul, 0x0ul);
@@ -99,31 +99,38 @@ FermionOnSquareLatticeRealSpaceNNExclusion::FermionOnSquareLatticeRealSpaceNNExc
       this->TargetSpace = this;
       this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
       long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrSite - 1, this->NbrSitesY - 1, 0x0ul, 0x0ul, 0l);
-
-      unsigned long TmpMask = (0x1ul << this->NbrSitesY) - 0x1ul;
-      long TmpDim = 0;
-      for (long i = 0l; i < TmpLargeHilbertSpaceDimension; ++i)
-	{
-	  bool Flag = false;
-	  unsigned long Tmp = this->StateDescription[i];
-	  for (int j = 1; (j < this->NbrSitesX) && (Flag == false); ++j)
-	    {
-	      if (((Tmp & (Tmp >> this->NbrSitesY)) & TmpMask) != 0x0ul)
-		{
-		  Flag = true;
-		}
-	      Tmp >>= this->NbrSitesY;
-	    }
-	  if (Flag == false)
-	    {
-	      ++TmpDim;
-	    }
-	}
-      cout << "reduced dim = " << TmpDim << endl;
+      
+//       for (long i = 1l; i < TmpLargeHilbertSpaceDimension; ++i)
+// 	{
+// 	  if (this->StateDescription[i - 1] < this->StateDescription[i])
+// 	    {
+// 	      cout << i << " " << this->StateDescription[i - 1] << " " << this->StateDescription[i] << endl;
+// 	    }
+// 	}
+//       unsigned long TmpMask = (0x1ul << this->NbrSitesY) - 0x1ul;
+//       long TmpDim = 0;
+//       for (long i = 0l; i < TmpLargeHilbertSpaceDimension; ++i)
+// 	{
+// 	  bool Flag = false;
+// 	  unsigned long Tmp = this->StateDescription[i];
+// 	  for (int j = 1; (j < this->NbrSitesX) && (Flag == false); ++j)
+// 	    {
+// 	      if (((Tmp & (Tmp >> this->NbrSitesY)) & TmpMask) != 0x0ul)
+// 		{
+// 		  Flag = true;
+// 		}
+// 	      Tmp >>= this->NbrSitesY;
+// 	    }
+// 	  if (Flag == false)
+// 	    {
+// 	      ++TmpDim;
+// 	    }
+// 	}
+//       cout << "reduced dim = " << TmpDim << endl;
 
       this->StateLzMax = new int [this->LargeHilbertSpaceDimension];  
       int CurrentLzMax = this->NbrLzValue;
-      while ((((this->StateDescription[0] >> CurrentLzMax) & 0x1ul) == 0x0ul) && (CurrentLzMax>=0))
+      while ((((this->StateDescription[0] >> CurrentLzMax) & 0x1ul) == 0x0ul) && (CurrentLzMax >= 0))
 	--CurrentLzMax;
       this->StateLzMax[0] = CurrentLzMax;
       for (long i = 1l; i < this->LargeHilbertSpaceDimension; ++i)
@@ -138,6 +145,15 @@ FermionOnSquareLatticeRealSpaceNNExclusion::FermionOnSquareLatticeRealSpaceNNExc
 	}
       this->GenerateLookUpTable(memory);
       
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	{
+	  if (this->FindStateIndex(this->StateDescription[i],  this->StateLzMax[i]) != i)
+	    {
+	      cout << i << " " << this->FindStateIndex(this->StateDescription[i],  this->StateLzMax[i]) << endl;
+	    }
+	}
+
+
 #ifdef __DEBUG__
       long UsedMemory = 0;
       UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
@@ -352,6 +368,45 @@ ostream& FermionOnSquareLatticeRealSpaceNNExclusion::PrintState (ostream& Str, i
       Str << "| ";
     }
   return Str;
+}
+
+// find state index
+//
+// stateDescription = unsigned integer describing the state
+// lzmax = maximum Lz value reached by a fermion in the state
+// return value = corresponding index
+
+int FermionOnSquareLatticeRealSpaceNNExclusion::FindStateIndex(unsigned long stateDescription, int lzmax)
+{
+  if ((stateDescription > this->StateDescription[0]) || (stateDescription < this->StateDescription[this->HilbertSpaceDimension - 1]))
+    {
+      return this->HilbertSpaceDimension;
+    }
+  long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
+  long PosMin = this->LookUpTable[lzmax][PosMax];
+  PosMax = this->LookUpTable[lzmax][PosMax + 1];
+  long PosMid = (PosMin + PosMax) >> 1;
+  unsigned long CurrentState = this->StateDescription[PosMid];
+  while ((PosMax != PosMid) && (CurrentState != stateDescription))
+    {
+      if (CurrentState > stateDescription)
+	{
+	  PosMax = PosMid;
+	}
+      else
+	{
+	  PosMin = PosMid;
+	} 
+      PosMid = (PosMin + PosMax) >> 1;
+      CurrentState = this->StateDescription[PosMid];
+    }
+  if (CurrentState == stateDescription)
+    return PosMid;
+  else
+    if ((this->StateDescription[PosMin] != stateDescription) && (this->StateDescription[PosMax] != stateDescription))
+      return this->HilbertSpaceDimension;
+    else
+      return PosMin;
 }
 
 
