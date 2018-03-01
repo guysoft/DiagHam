@@ -805,6 +805,23 @@ int main(int argc, char** argv)
 					      ExclusionFile << x << " " << y << " " << x << " " << (y + 1) << " " << TmpIndex << " " << ExcludedSites[TmpIndex][1] << endl;
 					    }
 					}
+				      for (int x = 0; x < (NbrSitesX - 1); ++x)
+					{
+					  TmpIndex = ((TightBindingModelCheckerboardLatticeFullOBC*) TightBindingModelOBC)->GetRealSpaceTightBindingLinearizedIndexSafe(x, NbrSitesY - 1);
+					  NbrExcludedSites[TmpIndex] = 1;					  
+					  ExcludedSites[TmpIndex] = new int[1];					  
+					  ExcludedSites[TmpIndex][0] = ((TightBindingModelCheckerboardLatticeFullOBC*) TightBindingModelOBC)->GetRealSpaceTightBindingLinearizedIndexSafe(x + 1, NbrSitesY - 1);
+					  ExclusionFile << x << " " << (NbrSitesY - 1) << " " << (x + 1) << " " << (NbrSitesY - 1) << " " << TmpIndex << " " << ExcludedSites[TmpIndex][0] << endl;
+					}
+				      for (int y = 0; y < (NbrSitesY - 1); ++y)
+					{
+					  TmpIndex = ((TightBindingModelCheckerboardLatticeFullOBC*) TightBindingModelOBC)->GetRealSpaceTightBindingLinearizedIndexSafe(NbrSitesX - 1, y);
+					  NbrExcludedSites[TmpIndex] = 1;					  
+					  ExcludedSites[TmpIndex] = new int[1];					  
+					  ExcludedSites[TmpIndex][0] = ((TightBindingModelCheckerboardLatticeFullOBC*) TightBindingModelOBC)->GetRealSpaceTightBindingLinearizedIndexSafe(NbrSitesX - 1, y + 1);
+					  ExclusionFile << (NbrSitesX - 1) << " " << y << " " << (NbrSitesX - 1) << " " << (y + 1) << " " << TmpIndex << " " << ExcludedSites[TmpIndex][0] << endl;
+					}
+
 				      ExclusionFile.close();
 				      Space = new FermionOnSquareLatticeRealSpaceAndC4SymmetryWithExclusion(NbrParticles, NbrSitesX, i, ExcludedSites, NbrExcludedSites);
 				    }
