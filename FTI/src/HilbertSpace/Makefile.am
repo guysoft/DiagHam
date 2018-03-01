@@ -37,4 +37,6 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslationMinNbrSingletsLong.cc \
 FermionOnLatticeRealSpaceFixedZNParity.cc \
 FermionOnSquareLatticeRealSpaceNNExclusion.cc \
 FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion.cc \
-FermionOnLatticeRealSpaceWithExclusion.cc
+FermionOnLatticeRealSpaceWithExclusion.cc \
+FermionOnSquareLatticeRealSpaceAndC4Symmetry.cc \
+FermionOnSquareLatticeRealSpaceAndC4SymmetryWithExclusion.cc

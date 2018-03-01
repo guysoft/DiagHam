@@ -137,14 +137,14 @@ class ParticleOnTorusWithMagneticTranslations :  public ParticleOnSphere
   // i = operator index
   // M = matrix where representation has to be stored
   // return value = corresponding matrix
-  Matrix& A (int i, Matrix& M);
+  virtual Matrix& A (int i, Matrix& M);
 
   // return matrix representation ofthw creation operator a^+_i
   //
   // i = operator index
   // M = matrix where representation has to be stored
   // return value = corresponding matrix
-  Matrix& Ad (int i, Matrix& M);
+  virtual Matrix& Ad (int i, Matrix& M);
 
   // get the C2 symmetric state of a given state 
   //

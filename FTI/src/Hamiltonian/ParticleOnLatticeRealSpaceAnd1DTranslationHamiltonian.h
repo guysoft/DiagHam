@@ -762,8 +762,6 @@ inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNOne
 inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 
 															       int* indexArray, Complex* coefficientArray, long& position)
 {
-  cout <<"Using inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index,  int* indexArray, Complex* coefficientArray, long& position)"<<endl;
-
   if (this->OneBodyGenericInteractionFactors == 0)
     return;
 
@@ -774,7 +772,6 @@ inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNOne
 
   if (this->HermitianSymmetryFlag == false)
     {
-   cout << "I have (this->HermitianSymmetryFlag == false)"<<endl;
       for (int j = 0; j < this->NbrSites; ++j)
 	{
 	  int TmpNbrConnectedSites = this->OneBodyGenericNbrConnectedSites[j];
@@ -800,7 +797,6 @@ inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNOne
     }
   else
     {
-      cout << "I have (this->HermitianSymmetryFlag == true)"<<endl;
       for (int j = 0; j < this->NbrSites; ++j)
 	{
 	  int TmpNbrConnectedSites = this->OneBodyGenericNbrConnectedSites[j];
@@ -853,7 +849,6 @@ inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNOne
   
   if (this->HermitianSymmetryFlag == false)
     {
-      cout << "I have (this->HermitianSymmetryFlag == false)"<<endl;
       for (int i = firstComponent; i < lastComponent; ++i)
 	{
 	  for (int j = 0; j < this->NbrSites; ++j)
@@ -880,7 +875,6 @@ inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNOne
     }
   else
     {
-      cout << "I have (this->HermitianSymmetryFlag == true)"<<endl;
       for (int i = firstComponent; i < lastComponent; ++i)
 	{
 	  for (int j = 0; j < this->NbrSites; ++j)

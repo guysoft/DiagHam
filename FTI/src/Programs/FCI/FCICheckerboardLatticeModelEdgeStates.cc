@@ -4,6 +4,8 @@
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpaceLong.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
+#include "HilbertSpace/FermionOnSquareLatticeRealSpaceAndC4Symmetry.h"
+#include "HilbertSpace/FermionOnSquareLatticeRealSpaceAndC4SymmetryWithExclusion.h"
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/BosonOnSquareLatticeWithSU2SpinMomentumSpace.h"
 
@@ -24,6 +26,7 @@
 
 #include "Hamiltonian/ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeRealSpaceHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeGenericDensityDensityInteractionSingleBandHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian.h"
  
@@ -31,6 +34,7 @@
 #include "Tools/FTITightBinding/Generic2DTightBindingModel.h"
 #include "Tools/FTITightBinding/TightBindingModel2DAtomicLimitLattice.h"
 #include "Tools/FTITightBinding/TightBindingModelCheckerboardLatticeFullOBC.h"
+#include "Tools/FTITightBinding/TightBindingModelCheckerboardLatticeFullOBCC4Symmetry.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -125,7 +129,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "flatband-gap", "when using the flat band model with two bands, set the one-body gap between the two bands", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "real-space", "use the real space representation when considering the system with all bands");
-  (*SystemGroup) += new BooleanOption  ('\n', "no-translation", "use the real space representation when considering the system with all bandswithout the translations");
+  (*SystemGroup) += new BooleanOption  ('\n', "no-translation", "use the real space representation when considering the system with all bands without the translations");
+  (*SystemGroup) += new BooleanOption  ('\n', "no-c4symmetry", "disable the C4 symmetry (C4 symmetry is only available when using --real-space)");
   (*SystemGroup) += new BooleanOption  ('\n', "full-obc", "use full open boundary conditions");
   (*SystemGroup) += new SingleStringOption  ('\n', "confining-potential", "ascii file describing an additional confining potential when using full OBC");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "confining-scale", "multiply the confining potential by some global scale", 1.0);
@@ -311,7 +316,14 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("full-obc") == true)
     {
-      sprintf (CommentLine, "eigenvalues\n# ");
+      if ((Manager.GetBoolean("no-c4symmetry") == false) && (NbrSitesX == NbrSitesY))
+	{
+	  sprintf (CommentLine, "eigenvalues\n# c4 ");
+	}
+      else
+	{
+	  sprintf (CommentLine, "eigenvalues\n# ");
+	}
     }
   else
     {
@@ -377,8 +389,16 @@ int main(int argc, char** argv)
 	{
 	  if (Manager.GetString("confining-potential") == 0)
 	    {
-	      TightBindingModelOBC = new TightBindingModelCheckerboardLatticeFullOBC (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"),  
-										      Manager.GetDouble("mu-s"), 0, ExportOneBody);
+	      if ((Manager.GetBoolean("no-c4symmetry") == true) || (NbrSitesX != NbrSitesY))
+		{
+		  TightBindingModelOBC = new TightBindingModelCheckerboardLatticeFullOBC (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"),  
+											  Manager.GetDouble("mu-s"), 0, ExportOneBody);
+		}
+	      else
+		{
+		  TightBindingModelOBC = new TightBindingModelCheckerboardLatticeFullOBCC4Symmetry (NbrSitesX, Manager.GetDouble("t1"), Manager.GetDouble("t2"),  
+												    Manager.GetDouble("mu-s"), 0, ExportOneBody);
+		}
 	    }
 	  else
 	    {
@@ -402,10 +422,21 @@ int main(int argc, char** argv)
 		      ConfiningPotentials[i] *= Manager.GetDouble("confining-scale");
 		    }
 		}
-	      TightBindingModelOBC = new TightBindingModelCheckerboardLatticeFullOBC (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"),  
-										      Manager.GetDouble("mu-s"), ConfiningPotentialXCoordinates, ConfiningPotentialYCoordinates,
-										      ConfiningPotentials, NbrNonZeroConfiningPotentials,
-										      0, ExportOneBody);
+	      if ((Manager.GetBoolean("no-c4symmetry") == true) || (NbrSitesX != NbrSitesY))
+		{
+		  TightBindingModelOBC = new TightBindingModelCheckerboardLatticeFullOBC (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"),  
+											  Manager.GetDouble("mu-s"), ConfiningPotentialXCoordinates, ConfiningPotentialYCoordinates,
+											  ConfiningPotentials, NbrNonZeroConfiningPotentials,
+											  0, ExportOneBody);
+		}
+	      else
+		{
+		  TightBindingModelOBC = new TightBindingModelCheckerboardLatticeFullOBCC4Symmetry (NbrSitesX, Manager.GetDouble("t1"), Manager.GetDouble("t2"),  
+												    Manager.GetDouble("mu-s"), ConfiningPotentialXCoordinates, ConfiningPotentialYCoordinates,
+												    ConfiningPotentials, NbrNonZeroConfiningPotentials,
+												    0, ExportOneBody);
+		}
+
 	    }
 	  TightBindingModelOBC->WriteAsciiSpectrum(EigenvalueOutputFile);
 	  if (ExportOneBody == true)
@@ -485,8 +516,17 @@ int main(int argc, char** argv)
     }
   if ((Manager.GetBoolean("no-translation") == true) || (Manager.GetBoolean("full-obc") == true))
     {  
-      MaxKx = 0;
-      MaxKy = 0;
+      if ((Manager.GetBoolean("no-c4symmetry") == true) || (NbrSitesX != NbrSitesY))
+	{
+	  MaxKx = 0;
+	  MaxKy = 0;
+	}
+      else
+	{
+	  MinKx %= 4;
+	  MaxKx = 3;
+	  MaxKy = 0;
+	}
     }
 
   
@@ -496,8 +536,16 @@ int main(int argc, char** argv)
 	{
 	  if (Manager.GetString("confining-potential") == 0)
 	    {
-	      TightBindingModelOBC = new TightBindingModelCheckerboardLatticeFullOBC (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"),  
-										      Manager.GetDouble("mu-s"), 0, true);
+	      if ((Manager.GetBoolean("no-c4symmetry") == true) || (NbrSitesX != NbrSitesY))
+		{
+		  TightBindingModelOBC = new TightBindingModelCheckerboardLatticeFullOBC (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"),  
+											  Manager.GetDouble("mu-s"), 0, true);
+		}
+	      else
+		{
+		  TightBindingModelOBC = new TightBindingModelCheckerboardLatticeFullOBCC4Symmetry (NbrSitesX, Manager.GetDouble("t1"), Manager.GetDouble("t2"),  
+												    Manager.GetDouble("mu-s"), 0, true);
+		}
 	    }
 	  else
 	    {
@@ -521,10 +569,20 @@ int main(int argc, char** argv)
 		      ConfiningPotentials[i] *= Manager.GetDouble("confining-scale");
 		    }
 		}
-	      TightBindingModelOBC = new TightBindingModelCheckerboardLatticeFullOBC (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"),  
-										      Manager.GetDouble("mu-s"), ConfiningPotentialXCoordinates, ConfiningPotentialYCoordinates,
-										      ConfiningPotentials, NbrNonZeroConfiningPotentials,
-										      0, true);
+	      if ((Manager.GetBoolean("no-c4symmetry") == true) || (NbrSitesX != NbrSitesY))
+		{
+		  TightBindingModelOBC = new TightBindingModelCheckerboardLatticeFullOBC (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"),  
+											  Manager.GetDouble("mu-s"), ConfiningPotentialXCoordinates, ConfiningPotentialYCoordinates,
+											  ConfiningPotentials, NbrNonZeroConfiningPotentials,
+											  0, true);
+		}
+	      else
+		{
+		  TightBindingModelOBC = new TightBindingModelCheckerboardLatticeFullOBCC4Symmetry (NbrSitesX, Manager.GetDouble("t1"), Manager.GetDouble("t2"),  
+												    Manager.GetDouble("mu-s"), ConfiningPotentialXCoordinates, ConfiningPotentialYCoordinates,
+												    ConfiningPotentials, NbrNonZeroConfiningPotentials,
+												    0, true);
+		}
 	    }
 	  char* BandStructureOutputFile = new char [1024];
 	  sprintf (BandStructureOutputFile, "%s_%s_tightbinding.dat", FilePrefix, FileParameterString);
@@ -557,7 +615,17 @@ int main(int argc, char** argv)
     {
       for (int j = MinKy; j <= MaxKy; ++j)
 	{
-	  cout << "(kx=" << i << ",ky=" << j << ") : " << endl;
+	  if ((Manager.GetBoolean("no-translation") == true) || (Manager.GetBoolean("full-obc") == true))
+	    {  
+	      if ((Manager.GetBoolean("no-c4symmetry") == false) && (NbrSitesX == NbrSitesY))
+		{
+		  cout << "c4=" << i << " : " << endl;		  
+		}
+	    }
+	  else
+	    {
+	      cout << "(kx=" << i << ",ky=" << j << ") : " << endl;
+	    }
  	  if (Manager.GetBoolean("single-band") == false)
  	    {
 	      ParticleOnSphereWithSpin* Space = 0;
@@ -634,6 +702,23 @@ int main(int argc, char** argv)
 			    }
 			}
 		    }
+		  else
+		    {
+// 		      for (int x = 0; x < (NbrSitesX - 1); ++x)
+// 			{
+// 			  for (int y = 0; y < (NbrSitesY - 1); ++y)
+// 			    {
+// 			      for (int k = 0; k < NbrInteractingOrbitals[OrbitalIndex]; ++k)
+// 				{
+// 				  DensityDensityInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y), 
+// 									       TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y), 
+// 									       InteractingOrbitalsPotentials[OrbitalIndex][k]);
+				      
+// 				    }
+// 				}
+// 			    }
+// 			}
+		    }
 		  if (Manager.GetBoolean("boson") == true)
 		    {
 		      if (Manager.GetBoolean ("gutzwiller") == false)
@@ -668,7 +753,14 @@ int main(int argc, char** argv)
 			{
 			  if ((Manager.GetBoolean("no-translation") == true) || ((Manager.GetBoolean("full-obc") == true)))
 			    {
-			      Space = new FermionOnLatticeRealSpace(NbrParticles, NbrSites);
+			      if ((Manager.GetBoolean("no-c4symmetry") == true) || (NbrSitesX != NbrSitesY))
+				{
+				  Space = new FermionOnLatticeRealSpace(NbrParticles, NbrSites);
+				}
+			      else
+				{
+				  Space = new FermionOnSquareLatticeRealSpaceAndC4Symmetry(NbrParticles, NbrSitesX, i);
+				}
 			    }
 			  else
 			    {
@@ -682,7 +774,40 @@ int main(int argc, char** argv)
 			    {
 			      if (Manager.GetBoolean("full-obc") == true)
 				{
-				  Space = new FermionOnSquareLatticeRealSpaceNNExclusion(NbrParticles, NbrSitesX, NbrSitesY);
+				  if ((Manager.GetBoolean("no-c4symmetry") == true) || (NbrSitesX != NbrSitesY))
+				    {
+				      Space = new FermionOnSquareLatticeRealSpaceNNExclusion(NbrParticles, NbrSitesX, NbrSitesY);
+				    }
+				  else
+				    {
+				      char* ExclusionOutputFile = new char [1024];
+				      sprintf (ExclusionOutputFile, "%s_%s_obc_exclusion.dat", FilePrefix, FileParameterString);
+				      ofstream ExclusionFile;
+				      ExclusionFile.open(ExclusionOutputFile);
+				      int TmpIndex = NbrSitesX * NbrSitesY;
+				      int* NbrExcludedSites = new int[TmpIndex];
+				      int** ExcludedSites = new int*[TmpIndex];
+				      for (int l = 0; l < TmpIndex; ++l)
+					{
+					  NbrExcludedSites[l] = 0;
+					  ExcludedSites[l] = 0;
+					}
+				      for (int x = 0; x < (NbrSitesX - 1); ++x)
+					{
+					  for (int y = 0; y < (NbrSitesX - 1); ++y)
+					    {
+					      TmpIndex = ((TightBindingModelCheckerboardLatticeFullOBC*) TightBindingModelOBC)->GetRealSpaceTightBindingLinearizedIndexSafe(x, y);
+					      NbrExcludedSites[TmpIndex] = 2;					  
+					      ExcludedSites[TmpIndex] = new int[2];					  
+					      ExcludedSites[TmpIndex][0] = ((TightBindingModelCheckerboardLatticeFullOBC*) TightBindingModelOBC)->GetRealSpaceTightBindingLinearizedIndexSafe(x + 1, y);
+					      ExcludedSites[TmpIndex][1] = ((TightBindingModelCheckerboardLatticeFullOBC*) TightBindingModelOBC)->GetRealSpaceTightBindingLinearizedIndexSafe(x, y + 1);
+					      ExclusionFile << x << " " << y << " " << (x + 1) << " " << y << " " << TmpIndex << " " << ExcludedSites[TmpIndex][0] << endl;
+					      ExclusionFile << x << " " << y << " " << x << " " << (y + 1) << " " << TmpIndex << " " << ExcludedSites[TmpIndex][1] << endl;
+					    }
+					}
+				      ExclusionFile.close();
+				      Space = new FermionOnSquareLatticeRealSpaceAndC4SymmetryWithExclusion(NbrParticles, NbrSitesX, i, ExcludedSites, NbrExcludedSites);
+				    }
 				}
 			      else
 				{
@@ -747,9 +872,18 @@ int main(int argc, char** argv)
 		    }
 		  if ((Manager.GetBoolean("no-translation") == true) || (Manager.GetBoolean("full-obc") == true))
 		    {
-		      Hamiltonian = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, NbrSites, 
-									       TightBindingMatrix, DensityDensityInteraction,
-									       Architecture.GetArchitecture(), Memory);
+		      if ((Manager.GetBoolean("no-c4symmetry") == true) || (NbrSitesX != NbrSitesY))
+			{
+			  Hamiltonian = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, NbrSites, 
+										   TightBindingMatrix, DensityDensityInteraction,
+										   Architecture.GetArchitecture(), Memory);
+			}
+		      else
+			{
+			  Hamiltonian = new ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian (Space, NbrParticles, NbrSites, 
+												   i, 4, TightBindingMatrix, DensityDensityInteraction,
+												   Architecture.GetArchitecture(), Memory);
+			}
 		    }
 		  else
 		    {
@@ -762,23 +896,41 @@ int main(int argc, char** argv)
 	      char* ContentPrefix = new char[256];
 	      if (Manager.GetBoolean("full-obc") == true)
 		{
-		  sprintf (ContentPrefix, "");
+		  if (Manager.GetBoolean("full-obc") == true)
+		    {
+		      if ((Manager.GetBoolean("no-c4symmetry") == false) && (NbrSitesX == NbrSitesY))
+			{
+			  sprintf (ContentPrefix, "%d", i);
+			}
+		      else
+			{
+			  sprintf (ContentPrefix, "");
+			}
+		    }
 		}
 	      else
 		{
 		  sprintf (ContentPrefix, "%d %d", i, j);
 		}
-	      char* EigenstateOutputFile = new char [512];
+	      char* EigenstateOutputFileExtension = new char [512];
 	      if ((Manager.GetBoolean("real-space") == false) || ((Manager.GetBoolean("no-translation") == false) && (Manager.GetBoolean("full-obc") == false)))
 		{
-		  sprintf (EigenstateOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f_kx_%d_ky_%d", FilePrefix, 
-			   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"),  Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
+		  sprintf (EigenstateOutputFileExtension, "_kx_%d_ky_%d", i, j);
 		}
 	      else
 		{
-		  sprintf (EigenstateOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_tpp_%f", FilePrefix, 
-			   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"));
+		  if ((Manager.GetBoolean("no-c4symmetry") == false) && (NbrSitesX == NbrSitesY))
+		    {
+		      sprintf (EigenstateOutputFileExtension, "_c4_%d", i);
+		    }
+		  else
+		    {
+		      sprintf (EigenstateOutputFileExtension, "");
+		    }
 		}
+	      char* EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", EigenstateOutputFileExtension);
+	      delete[] EigenstateOutputFileExtension;
+
 	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 	      FirstRunFlag = false;
 	      MainTaskOperation TaskOperation (&Task);

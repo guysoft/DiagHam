@@ -43,8 +43,30 @@ using std::endl;
 using std::ostream;
 
 
-
 // default constructor
+//
+
+TightBindingModelCheckerboardLatticeFullOBC::TightBindingModelCheckerboardLatticeFullOBC()
+{
+  this->NbrSiteX = 0;
+  this->NbrSiteY = 0;
+  this->NNHopping = 0.0;
+  this->NextNNHopping = 0.0;
+  this->MuS = 0.0;
+  this->NbrBands = 0;
+  this->NbrStatePerBand = 0;
+  this->Architecture = 0;
+  
+  this->EnergyBandStructure = 0;
+  this->OneBodyBasis = 0;
+  this->NbrConfiningPotentials = 0;
+  this->ConfiningPotentialCoordinates = 0;
+  this->ConfiningPotentialAmplitudes = 0;
+}
+
+
+
+// basic constructor
 //
 // nbrSiteX = number of sites in the x direction
 // nbrSiteY = number of sites in the y direction
