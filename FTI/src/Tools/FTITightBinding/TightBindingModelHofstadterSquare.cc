@@ -69,6 +69,7 @@ TightBindingModelHofstadterSquare::TightBindingModelHofstadterSquare(int nbrCell
   this->UnitCellX = unitCellX;
   this->UnitCellY = unitCellY;
   this->FullUnitCellX = this->UnitCellX;
+  this->FullUnitCellY = this->UnitCellY;
   this->LatticeVector1.Resize(2);
   this->LatticeVector1[0] = this->UnitCellX;
   this->LatticeVector1[1] = 0.0;
@@ -84,6 +85,8 @@ TightBindingModelHofstadterSquare::TightBindingModelHofstadterSquare(int nbrCell
   this->MuS = 0.0;
   this->T1 = 0.0;
   this->T2 = 0.0;
+  this->Delta = 0.0;
+  this->M = 0.0;
   this->LandauGaugeAxis=axis;
   this->Architecture = architecture;
   this->Precision = precision;
@@ -146,6 +149,7 @@ TightBindingModelHofstadterSquare::TightBindingModelHofstadterSquare(int nbrCell
   this->UnitCellX = unitCellX;
   this->UnitCellY = unitCellY;
   this->FullUnitCellX = fullUnitCellX;
+  this->FullUnitCellY = this->UnitCellY;
   this->LatticeVector1.Resize(2);
   this->LatticeVector1[0] = this->FullUnitCellX;
   this->LatticeVector1[1] = 0.0;
@@ -155,6 +159,8 @@ TightBindingModelHofstadterSquare::TightBindingModelHofstadterSquare(int nbrCell
   this->MuS = muS;
   this->T1 = t1;
   this->T2 = t2;
+  this->Delta = 0.0;
+  this->M = 0.0;
   this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
   this->GammaX = gammaX;
@@ -195,6 +201,86 @@ TightBindingModelHofstadterSquare::TightBindingModelHofstadterSquare(int nbrCell
   //this->CoreComputeBandStructureWithEmbedding(0, this->GetNbrStatePerBand());
 }
 
+// constructor with staggered chemical potential and periodic potentials
+//
+// nbrCellsX = number of unit cells in the x direction
+// nbrCellsY = number of unit cella in the y direction
+// unitCellX = number of sites in unit cell in x direction
+// unitCellY = number of sites in unit cell in y direction
+// nbrFlux = number of flux quanta per unit cell
+// muS = amplitude of staggered potential
+// fullUnitCellX = number of sites in full unit cell in x direction
+// t1 = amplitude of one magnetic flux potential
+// t2 = amplitude of half flux potential
+// axis = direction of Landau gauge within cell ('x' or 'y')
+// gammaX = boundary condition twisting angle along x
+// gammaY = boundary condition twisting angle along y
+// architecture = pointer to the architecture
+// storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
+// useEmbedding = flag indicating whether to run calculation with natural embedding (site positions)
+// precision = precision (in bits) used for diagonalization of single particle spectrum (values >64 will draw on GMP)
+TightBindingModelHofstadterSquare::TightBindingModelHofstadterSquare(int nbrCellX, int nbrCellY, int unitCellX, int unitCellY, int nbrFlux, int fullUnitCellX, int fullUnitCellY, double delta, double M, char axis, double gammaX, double gammaY, 
+								     AbstractArchitecture* architecture, bool storeOneBodyMatrices, bool useEmbedding, int precision)
+{
+  this->NbrSiteX = nbrCellX;
+  this->NbrSiteY = nbrCellY;
+  this->UnitCellX = unitCellX;
+  this->UnitCellY = unitCellY;
+  this->FullUnitCellX = fullUnitCellX;
+  this->FullUnitCellY = fullUnitCellY;
+  this->LatticeVector1.Resize(2);
+  this->LatticeVector1[0] = this->FullUnitCellX;
+  this->LatticeVector1[1] = 0.0;
+  this->LatticeVector2.Resize(2);
+  this->LatticeVector2[0] = 0.0;
+  this->LatticeVector2[1] = this->UnitCellY;
+  this->MuS = 0.0;
+  this->T1 = 0.0;
+  this->T2 = 0.0;
+  this->Delta = delta;
+  this->M = M;
+  this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
+  this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
+  this->GammaX = gammaX;
+  this->GammaY = gammaY;
+  this->NbrBands = this->FullUnitCellX * this->UnitCellY;
+  this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
+  this->LandauGaugeAxis=axis;
+  this->Architecture = architecture;
+  this->Precision = precision;
+  if (precision < 64) this->Precision = (precision < 32 ? 32 : 64);
+
+  if (storeOneBodyMatrices == true)
+    {
+      this->OneBodyBasis = new ComplexMatrix [this->NbrStatePerBand];
+    }
+  else
+    {
+      this->OneBodyBasis = 0;
+    }
+  this->EnergyBandStructure = new double*[this->NbrBands];
+  for (int i = 0; i < this->NbrBands; ++i)
+    {
+      this->EnergyBandStructure[i] = new double[this->NbrStatePerBand];
+    }
+  this->SetNbrFluxQuanta(nbrFlux);
+  if (useEmbedding == true)
+    {
+      this->SetNaturalEmbedding();
+    }
+  else
+    {
+      this->SetNoEmbedding();
+      this->UsingNaturalEmbedding=false;
+    }
+  this->ComputeBandStructure();  
+  
+  //or else, use explicitly hardcoded embedding
+  //this->CoreComputeBandStructureWithEmbedding(0, this->GetNbrStatePerBand());
+}
+
+
+
 // constructor from a saved band structure
 //
 // architecture = pointer to the architecture
@@ -219,6 +305,8 @@ TightBindingModelHofstadterSquare::TightBindingModelHofstadterSquare(char *fileN
   ReadLittleEndian(File, this->MuS);
   ReadLittleEndian(File, this->T1);
   ReadLittleEndian(File, this->T2);
+  ReadLittleEndian(File, this->Delta);
+  ReadLittleEndian(File, this->M);
   ReadLittleEndian(File, this->FullUnitCellX);
   this->Inversion.Resize(this->NbrBands, this->NbrBands);
   for (int i = 0; i < this->NbrBands; ++i)
@@ -377,6 +465,8 @@ ofstream& TightBindingModelHofstadterSquare::WriteHeader(ofstream& output)
   WriteLittleEndian(output, this->MuS);
   WriteLittleEndian(output, this->T1);
   WriteLittleEndian(output, this->T2);
+  WriteLittleEndian(output, this->Delta);
+  WriteLittleEndian(output, this->M);
   WriteLittleEndian(output, this->FullUnitCellX);
 
   return output; 
@@ -458,6 +548,8 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIn
   double K1;
   double K2;
   double TmpSign;
+  double TmpSignDelta;
+  double TmpSignM;
   //int sublXf, sublYf; // final site sublattice positions
   for (int kx = 0; kx < this->NbrSiteX; ++kx)
     {
@@ -483,12 +575,18 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructure(long minStateIn
 		      Complex Phase=Polar(1.0,2.0*M_PI*this->FluxDensity*(double) (i));
 		      Complex Phase2=Polar(1.0,this->UnitCellY*2.0*M_PI*this->FluxDensity*(double) (i));
 
-		      for (int j=0; j<UnitCellY; ++j)
+		      for (int j=0; j<this->FullUnitCellY; ++j)
 			{
 			  int InitialIndex = this->EncodeSublatticeIndex(i, j, K1, K2, TranslationPhase); // initial TranlationPhase always one, so can be discarded
 			  
 			  if ((this->MuS != 0.0) && (i == 0) && (j == 0))
 			    TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, InitialIndex, -this->MuS);
+			  
+			  TmpSignDelta = 0.5 * (pow(-1.0, i), pow(-1.0, j));
+			  TmpSignM = pow(-1.0, (i + j));
+			  if ((this->Delta != 0.0) || (this->M != 0.0))
+			    TmpOneBodyHamiltonian.AddToMatrixElement(InitialIndex, InitialIndex, TmpSignDelta * this->Delta + TmpSignM * this->M);
+			  
 			  
 			  double InitialEmbeddingPhase=this->GetEmbeddingPhase(InitialIndex, K1, K2);
 			  int FinalIndex = this->EncodeSublatticeIndex(i+1, j, K1, K2, TranslationPhase);
@@ -1114,6 +1212,8 @@ HermitianMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingHamil
   Complex translationPhase=1.0;
   Complex tmpPhase, tmpPhase2;
   double TmpSign;
+  double TmpSignDelta;
+  double TmpSignM;
   switch (this->LandauGaugeAxis)
     {
     case 'y': {
@@ -1133,10 +1233,13 @@ HermitianMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingHamil
 	     TmpSign = pow(-1.0, PosY);
 	      if (PosX >= this->UnitCellX)
 		TmpSign *= -1.0;
+	     TmpSignDelta = 0.5 * (pow(-1.0, PosX), pow(-1.0, PosY));
+	     TmpSignM = pow(-1.0, (PosX + PosY));
+	     
 	     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(PosX, PosY,NumXTranslations,NumYTranslations,translationPhase);
 	     SpatialIndices[TmpPosition][TmpIndex * 2] = -1*NumXTranslations;
 	     SpatialIndices[TmpPosition][(TmpIndex * 2) +1] =  -1*NumYTranslations;
-	     HoppingAmplitudes[TmpPosition][TmpIndex] = this->MuS * TmpSign;
+	     HoppingAmplitudes[TmpPosition][TmpIndex] = this->MuS * TmpSign + this->Delta * TmpSignDelta + this->M * TmpSignM;
 #ifdef DEBUG_OUTPUT
 	     cout <<TmpPosition<< " " << OrbitalIndices[TmpPosition][TmpIndex]<< " " << SpatialIndices[TmpPosition][TmpIndex * 2]<< " " <<SpatialIndices[TmpPosition][(TmpIndex * 2)+1]<<" "<<HoppingAmplitudes[TmpPosition][TmpIndex]<<endl;
 #endif

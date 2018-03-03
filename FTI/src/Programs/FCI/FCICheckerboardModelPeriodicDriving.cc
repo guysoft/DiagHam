@@ -5,12 +5,12 @@
 #include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpace.h"
 #include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslationLong.h"
+#include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation.h"
 #include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslationLong.h"
 
 
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpace.h"
-#include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpaceLong.h"
@@ -97,6 +97,14 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption('\n', "initial-state", "name of the file containing the initial vector upon which e^{-iHt} acts");  
   (*SystemGroup) += new BooleanOption  ('\n', "compute-energy", "compute the energy of each time-evolved vector");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-hamiltonian", "number of hamiltonians to store (equal to number of samples if 0)", 1);
+  
+//   (*SystemGroup) += new SingleIntegerOption  ('\n', "nx1", "first coordinate of the first spanning vector of the tilted lattice", 0);
+//   (*SystemGroup) += new SingleIntegerOption  ('\n', "ny1", "second coordinate of the first spanning vector of the tilted lattice", 0);
+//   (*SystemGroup) += new SingleIntegerOption  ('\n', "nx2", "first coordinate of the second spanning vector of the tilted lattice", 0);
+//   (*SystemGroup) += new SingleIntegerOption  ('\n', "ny2", "second coordinate of the second spanning vector of the tilted lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "real-offset", "second coordinate in real space of the second spanning vector of the real space lattice (0 if lattice is untilted)", 0);
+  
+  
     
   (*SystemGroup) += new SingleDoubleOption  ('\n', "omega", "frequency of drive", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "e-field", "amplitude of the driving field", 1.0);
@@ -135,6 +143,20 @@ int main(int argc, char** argv)
   bool GutzwillerFlag;
   bool TranslationFlag;
  
+  
+//   int nx1 = Manager.GetInteger("nx1");
+//   int ny1 = Manager.GetInteger("ny1");
+//   int nx2 = Manager.GetInteger("nx2");
+//   int ny2 = Manager.GetInteger("ny2");
+  int OffsetReal = Manager.GetInteger("real-offset");
+  int nx1 = 0;
+  int ny1 = 0;
+  int nx2 = 0;
+  int ny2 = 0;
+  int Offset = 0;
+  bool TiltedFlag = true;
+  
+  
   int TruncationIndex = Manager.GetInteger("truncate-basis");
   
   double Omega = fabs(Manager.GetDouble("omega"));
@@ -198,8 +220,13 @@ int main(int argc, char** argv)
   double UPotential = 0.0;
   double VPotential = 0.0;
   
-  if ( !FilenameDoubleSearch(t1, StateFileName, "_t1_") || (!FilenameDoubleSearch(t2, StateFileName, "_t2_")) || (!FilenameDoubleSearch(tpp, StateFileName, "_tpp_")) || (!FilenameDoubleSearch(UPotential, StateFileName, "_u_")) || (!FilenameDoubleSearch(VPotential, StateFileName, "_v_")))
+  if ( !FilenameDoubleSearch(t1, StateFileName, "_t1_") || (!FilenameDoubleSearch(t2, StateFileName, "_t2_")) || (!FilenameDoubleSearch(tpp, StateFileName, "_tpp_")))
     return -1;
+  
+  if (!FilenameDoubleSearch(UPotential, StateFileName, "_u_"))
+    UPotential = 0.0;
+  if (!FilenameDoubleSearch(VPotential, StateFileName, "_v_"))
+    VPotential = 0.0;
    
   if (fabs(t2 - (1.0 - 0.5 * M_SQRT2)) < 1.0e-5)
     t2 = 1.0 - 0.5 * M_SQRT2;
@@ -213,6 +240,9 @@ int main(int argc, char** argv)
     cout << "fermion" << endl;
   else
   cout << "boson" << endl;
+  
+  if (!FilenameIntegerSearch(nx1, StateFileName, "_nx1_") || !FilenameIntegerSearch(ny1, StateFileName, "_ny1_") || !FilenameIntegerSearch(nx2, StateFileName, "_nx2_") || !FilenameIntegerSearch(ny2, StateFileName, "_ny2_"))
+    TiltedFlag = false;
           
   char*** EigenstateFile = 0;
   double** Energies = 0;
@@ -225,9 +255,14 @@ int main(int argc, char** argv)
   cout << NbrParticles << " " << NbrSites << " " << NbrSiteX << " " << NbrSiteY << " " << Kx << " " << Ky << " " << GammaX << " " << GammaY << endl;
   
   cout << "t1 = " << t1 << " t2 = " << t2 << " tpp = " << tpp << " U = " << UPotential << " V = " << VPotential << endl;
-  
+  if (TiltedFlag)
+    cout << "nx1 = " << nx1 << " ny1 = " << ny1 << " nx2 = " << nx2 << " ny2 = " << ny2 << " OffsetReal = " << OffsetReal << endl;
   Abstract2DTightBindingModel *TightBindingModel;
-  TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSiteX, NbrSiteY, t1, t2, tpp, muS, GammaX, GammaY, Architecture.GetArchitecture(), true, false);
+  if (!TiltedFlag)
+    TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSiteX, NbrSiteY, t1, t2, tpp, muS, GammaX, GammaY, Architecture.GetArchitecture(), true, false);
+  else
+    TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSiteX, NbrSiteY, nx1, ny1, nx2, ny2, Offset, t1, t2, tpp, 
+							     muS, GammaX, GammaY, Architecture.GetArchitecture(), OffsetReal, true);
     
   if (Manager.GetBoolean("singleparticle-chernnumber") == true)
   {
@@ -322,6 +357,7 @@ int main(int argc, char** argv)
   {
     OutputNamePrefix =  RemoveExtensionFromFileName(StateFileName,".vec");
     StepI = -1;
+    cout << OutputNamePrefix << endl;
   }
   else
   {
@@ -361,6 +397,7 @@ int main(int argc, char** argv)
       else
 	sprintf (EnergyNameFile, "%s_%s_energy.resume.dat", OutputNamePrefix,ParameterString);
 
+      cout << EnergyNameFile << endl;
       FileEnergy.open(EnergyNameFile, ios::out);
       FileEnergy.precision(14);
       FileEnergy << "# t E "<< endl;
@@ -409,7 +446,11 @@ int main(int argc, char** argv)
       TmpGammaY = GammaY + Sign * NbrSiteY * EField * cos(Omega * t) / (Omega * M_PI);
       cout << "(gx, gy) = " << TmpGammaX << " " << TmpGammaY << endl;
       
-      TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSiteX, NbrSiteY, t1, t2, tpp, muS, TmpGammaX, TmpGammaY, Architecture.GetArchitecture(), true, false);
+      if (!TiltedFlag)
+	TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSiteX, NbrSiteY, t1, t2, tpp, muS, TmpGammaX, TmpGammaY, Architecture.GetArchitecture(), true, false);
+      else
+	TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSiteX, NbrSiteY, nx1, ny1, nx2, ny2, Offset, t1, t2, tpp, 
+							     muS, TmpGammaX, TmpGammaY, Architecture.GetArchitecture(), OffsetReal, true);
       TightBindingMatrix[i] = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
       delete TightBindingModel;
       
@@ -556,6 +597,13 @@ int main(int argc, char** argv)
 	delete  Hamiltonian[NbrStoredHamiltonians];
     }  
     
+   
+   FileNorm.close();
+   if (Manager.GetBoolean("compute-energy"))
+   {
+    FileEnergy.close();
+    FileEnergy0.close();
+   }
   
    for (int i = 0; i < NbrStoredHamiltonians; ++i)
      delete Hamiltonian[i];
