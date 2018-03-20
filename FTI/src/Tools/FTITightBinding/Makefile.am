@@ -63,5 +63,10 @@ TightBindingInteractionCoulombForHofstadterLattice.cc \
 TightBindingInteraction2DShortRange.cc \
 TightBindingModelSSH.cc \
 TightBindingModelCheckerboardLatticeFullOBC.cc \
-TightBindingModelCheckerboardLatticeFullOBCC4Symmetry.cc
-
+TightBindingModelCheckerboardLatticeFullOBCC4Symmetry.cc \
+TightBindingModelSquareLatticeFullOBCAndFullC4Symmetry.cc \
+TightBindingModelCheckerboardLatticeFullOBCAndFullC4Symmetry.cc \
+TightBindingModelSimpleC4QuadrupoleFullOBC.cc \
+TightBindingModelSimpleC4Quadrupole.cc \
+TightBindingModelSimpleC4QuadrupoleFullOBCAndFullC4Symmetry.cc \
+TightBindingModelSimpleC4QuadrupoleFullOBCC4Symmetry.cc

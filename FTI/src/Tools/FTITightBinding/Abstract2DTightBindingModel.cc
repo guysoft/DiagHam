@@ -1534,7 +1534,7 @@ void Abstract2DTightBindingModel::ComputeAllProjectedMomenta()
     {
       for (int ky = 0; ky < this->NbrSiteY; ++ky)
 	{
-	  double kx_trans = kx + this->Offset*ky + this->GammaX;
+	  double kx_trans = kx + this->Offset * ky + this->GammaX;
 	  double ky_trans = ky + this->GammaY;
 	  projectedMomentum1 = 2.0 * M_PI * ((double) kx_trans * (double) this->Ny2 - (double) ky_trans * (double) this->Ny1) / ((double) (this->NbrSiteX * this->NbrSiteY));
 	  projectedMomentum2 = 2.0 * M_PI * ((double) kx_trans * (double) (-this->Nx2) + (double) ky_trans * (double)this->Nx1) / ((double) (this->NbrSiteX * this->NbrSiteY));
@@ -1649,23 +1649,23 @@ ComplexMatrix Abstract2DTightBindingModel::BuildTightBindingNonHermitianHamilton
 HermitianMatrix Abstract2DTightBindingModel::BuildTightBindingHamiltonianReciprocalSpace(int kx, int ky, int* nbrConnectedOrbitals, int** orbitalIndices, 
 											 int** spatialIndices, Complex** hoppingAmplitudes)
 {
-   HermitianMatrix TmpHamiltonian(this->NbrBands, true);
-   double TmpKx = this->GetProjectedMomentum(kx, ky, 0);
-   double TmpKy = this->GetProjectedMomentum(kx, ky, 1);
-   int p;
-   int q;
-   
-   for (int k = 0; k < this->NbrBands; ++k)
-     {
-       for (int l = 0; l < nbrConnectedOrbitals[k]; ++l)
-	 {
-	   this->GetRealSpaceIndex(spatialIndices[k][l << 1], spatialIndices[k][(l << 1) + 1], p, q);
-	   double TmpPhase = ((TmpKx * ((double) p)) 
+  HermitianMatrix TmpHamiltonian(this->NbrBands, true);
+  double TmpKx = this->GetProjectedMomentum(kx, ky, 0);
+  double TmpKy = this->GetProjectedMomentum(kx, ky, 1);
+  int p;
+  int q;
+  
+  for (int k = 0; k < this->NbrBands; ++k)
+    {
+      for (int l = 0; l < nbrConnectedOrbitals[k]; ++l)
+	{
+	  this->GetRealSpaceIndex(spatialIndices[k][l << 1], spatialIndices[k][(l << 1) + 1], p, q);
+	  double TmpPhase = ((TmpKx * ((double) p)) 
 			      + (TmpKy * ((double) q)));
-	   if (k >= orbitalIndices[k][l])
-	     TmpHamiltonian.AddToMatrixElement(k, orbitalIndices[k][l], Conj(hoppingAmplitudes[k][l]) * Phase(TmpPhase));
-	 }
-     }
+	  if (k >= orbitalIndices[k][l])
+	    TmpHamiltonian.AddToMatrixElement(k, orbitalIndices[k][l], Conj(hoppingAmplitudes[k][l]) * Phase(TmpPhase));
+	}
+    }
   return TmpHamiltonian; 
 }
 
