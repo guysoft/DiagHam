@@ -37,6 +37,8 @@
 
 #include <stdlib.h>
 
+#define DEBUG_HERMITIAN_MATRIX
+
 
 #ifdef __LAPACK__
 
@@ -49,6 +51,13 @@ extern "C" void FORTRAN_NAME(chpev)(const char* jobz, const char* uplo, const in
 extern "C" void FORTRAN_NAME(zhpevx)(const char* jobz, const char* range, const char* uplo, const int* dimensionN, const doublecomplex* matrixAP, const double *lowerBoundVL, const double *upperBoundVU, const int* lowerIndexIL, const int* upperIndexIU, const double *errorABSTOL, const int* nbrFoundM, const double *eigenvaluesW, const doublecomplex *eigenvectorsZ, const int* leadingDimensionLDZ, const doublecomplex *work, const doublereal *rwork, const int* iwork, const int* ifail, const int* information);
 #endif
 
+/* zhpevx workspace requirements:
+   WORK    (workspace) COMPLEX*16 array, dimension (2*N)
+   
+   RWORK   (workspace) DOUBLE PRECISION array, dimension (7*N)
+   
+   IWORK   (workspace) INTEGER array, dimension (5*N)
+*/
 
 #ifdef __MPACK__
 
@@ -57,14 +66,6 @@ extern "C" void FORTRAN_NAME(zhpevx)(const char* jobz, const char* range, const 
 #include <mpack/mlapack_gmp.h>
 
 #endif
-
-/* zhpevx workspace requirements:
-   WORK    (workspace) COMPLEX*16 array, dimension (2*N)
-   
-   RWORK   (workspace) DOUBLE PRECISION array, dimension (7*N)
-   
-   IWORK   (workspace) INTEGER array, dimension (5*N)
-*/
 
 using std::cout;
 using std::endl;
@@ -2031,6 +2032,11 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, C
 	Q.SetMatrixElement(j, i, Tmp);
 	++TotalIndex;
       }
+
+#ifdef DEBUG_HERMITIAN_MATRIX
+  this->TestEigenSystem(Q, M, this->NbrRow < 25);
+#endif
+  
   return M;  
 }
 
@@ -2116,14 +2122,18 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalizeArbitraryPrecision (RealDi
   if (Q.GetNbrRow() != this->NbrRow)
     Q.Resize(this->NbrRow, this->NbrColumn);
 
-  mpackint n = this->NbrRow;
-  mpackint ldz = this->NbrRow;
-  //initialization of GMP
   int default_prec = precision;
   mpf_set_default_prec(default_prec);
 
+  mpackint n = this->NbrRow;
+  mpackint ldz = this->NbrRow;
+  //initialization of GMP
+
   Complex Tmp;
   mpc_class *APLapackMatrix = new mpc_class [((long) this->NbrRow) * ((long) (this->NbrRow+1)) / 2l];
+  cout << "Diagonalizing matrix of dimension D="<<n<<endl;
+  for (long i=0; i<((long) this->NbrRow) * ((long) (this->NbrRow+1)) / 2l; ++i)
+    cout << "Precision = "<<APLapackMatrix[i].real().get_prec ()<<endl;
   mpc_class *APLapackEVMatrix = new mpc_class[((long) this->NbrRow) * ((long) this->NbrRow)];
   mpc_class *APLapackWorkingArea = new mpc_class [2*this->NbrRow-1];
   mpf_class *APLapackRealWorkingArea = new mpf_class [3*this->NbrRow-2];
@@ -2170,7 +2180,184 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalizeArbitraryPrecision (RealDi
 
   return M;
 }
+
+
+// Diagonalize a complex skew symmetric matrix and evaluate transformation matrix using the MPACK library for the full matrix storage based on the ZHEEV method
+//
+// precision = setting to use for arbitrary precision arithmetic (in bits)
+// M = reference on real diagonal matrix of eigenvalues
+// Q = matrix where transformation matrix has to be stored
+// err = absolute error on matrix element
+// maxIter = maximum number of iteration to fund an eigenvalue
+// return value = reference on real matrix consisting of eigenvalues
+RealDiagonalMatrix& HermitianMatrix::LapackDiagonalizeArbitraryPrecisionFullMatrix (RealDiagonalMatrix& M, ComplexMatrix& Q, int precision, double err, int maxIter)
+{
+  if (M.GetNbrRow() != this->NbrRow)
+    M.Resize(this->NbrRow, this->NbrColumn);
+  if (Q.GetNbrRow() != this->NbrRow)
+    Q.Resize(this->NbrRow, this->NbrColumn);
+
+  int default_prec = precision;
+  mpf_set_default_prec(default_prec);
+
+  mpackint n = this->NbrRow;
+  mpackint lwork = -1;
+  mpackint ldz = this->NbrRow;
+  //initialization of GMP
+
+  Complex Tmp;
+  mpc_class *APLapackMatrix = new mpc_class [(long) this->NbrRow * (long) (this->NbrRow)];
+  mpc_class *APLapackWorkingArea = new mpc_class [(long) (2*this->NbrRow) -1];
+  mpf_class *APLapackRealWorkingArea = new mpf_class [3*this->NbrRow-2];
+  mpf_class *APEigenvalues = new mpf_class[M.GetNbrRow()];
+  int APLapackWorkAreaDimension=this->NbrRow;
+
+  mpackint Information = 0;  
+  const char* Jobz = "V";
+  const char* UpperLower = "U";
+
+  // query optimal workspace size
+  Cheev ( Jobz, UpperLower, n, APLapackMatrix, n, APEigenvalues, APLapackWorkingArea, lwork, APLapackRealWorkingArea, &Information);
+
+  // reallocate work memory, if necessary
+  long work_size = (long) APLapackWorkingArea[0].real().get_d();
+  if (work_size != ((long) 2*this->NbrRow) -1)
+    {
+      delete [] APLapackWorkingArea;
+      APLapackWorkingArea = new mpc_class [work_size];
+      lwork = work_size;
+    }
+   
+  for (int j = 0; j < this->NbrRow; ++j)
+    {
+      for (int i = 0; i < j; ++i)
+	{
+	  this->GetMatrixElement(i,j,Tmp);
+	  APLapackMatrix[j*this->NbrRow + i].real() = Tmp.Re;
+	  APLapackMatrix[j*this->NbrRow + i].imag() = Tmp.Im;
+	  // APLapackMatrix[i*this->NbrRow + j].real() = Tmp.Re;
+	  // APLapackMatrix[i*this->NbrRow + j].imag() = -Tmp.Im;
+	}
+      APLapackMatrix[j*this->NbrRow + j].real() = this->DiagonalElements[j];
+      APLapackMatrix[j*this->NbrRow + j].imag() = 0.0;
+    }
+  // launch diagonalization
+  Cheev ( Jobz, UpperLower, n, APLapackMatrix, n, APEigenvalues, APLapackWorkingArea, lwork, APLapackRealWorkingArea, &Information);
+  
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      for (int j = 0; j < this->NbrRow; ++j)
+	{
+	  Tmp.Re = APLapackMatrix[i*this->NbrRow + j].real().get_d();
+	  Tmp.Im = -APLapackMatrix[i*this->NbrRow + j].imag().get_d();
+	  Q.SetMatrixElement(j, i, Tmp);
+	}
+      M.DiagonalElements[i] = APEigenvalues[i].get_d();
+      cout << "Norm of vector "<<i<<" = "<<Q[i].Norm()<<endl;
+      cout << "Eigenvalue / vector "<<i<<"="<< M[i]<<endl<<Q[i]<<endl;
+    }
+
+  delete [] APLapackMatrix;
+  delete [] APEigenvalues;
+  delete [] APLapackWorkingArea;
+  delete [] APLapackRealWorkingArea;
+
+#ifdef DEBUG_HERMITIAN_MATRIX
+  // test output
+  this->TestEigenSystem(Q, M, this->NbrRow < 25);
+#endif
+
+  return M;
+}
+
+
 #endif 
+
+// Call the appropriate function for diagonalizing the matrix with the given accuracy
+//
+// M = reference on real diagonal matrix of eigenvalues
+// Q = matrix where transformation matrix has to be stored
+// precision = setting to use for arbitrary precision arithmetic
+// err = absolute error on matrix element (ignored in this call)
+// maxIter = maximum number of iteration to fund an eigenvalue (ignored in this call)
+// return value = reference on real matrix consisting of eigenvalues
+RealDiagonalMatrix& HermitianMatrix::LapackDiagonalizeSelectPrecision (RealDiagonalMatrix& M, ComplexMatrix& Q, int precision, double err, int maxIter)
+{
+#ifdef __LAPACK__
+  if (precision<=32)
+    return this->LapackDiagonalizeSinglePrecision(M, Q);
+  else
+    {
+      if (precision<=64)
+	return this->LapackDiagonalize(M, Q);
+      else
+#ifdef __MPACK__
+	//TmpOneBodyHamiltonian.LapackDiagonalizeArbitraryPrecision(M, Q, precision);
+	return this->LapackDiagonalizeArbitraryPrecisionFullMatrix(M, Q, precision);
+#else
+      {
+	cout << "Attention - Arbitrary precision Lapack not available! Calling double precision code.";
+	return this->LapackDiagonalize(M, Q);
+      }
+#endif
+    }		  
+#else
+
+  if (precision<=64)
+    return this->Diagonalize(M, Q);
+  else
+#ifdef __MPACK__
+    //TmpOneBodyHamiltonian.LapackDiagonalizeArbitraryPrecision(M, Q, precision);
+    return this->LapackDiagonalizeArbitraryPrecisionFullMatrix(M, Q, precision);
+#else
+    {
+      cout << "Attention - Arbitrary precision MPack not available! Calling DiagHam's native double precision code.";
+      return this->Diagonalize(M, Q);
+    }
+#endif
+#endif
+}
+
+
+// test whether the eigenvalues and eigenvectors differ between double and the given arbitrary precision
+// precision = arbitrary precision to be used.
+// threshold = threshold for differences to be reported
+// output = stream to write comments to
+ostream& HermitianMatrix::TestAccuracy(int precision, double threshold, ostream& output)
+{
+  if (precision==64) return output;
+  ComplexMatrix EV1(this->NbrColumn, this->NbrRow), EV2(this->NbrColumn, this->NbrRow);
+  RealDiagonalMatrix D1(this->NbrRow), D2(this->NbrRow);
+  this->LapackDiagonalizeSelectPrecision(D1, EV1, precision);
+  this->LapackDiagonalize(D2, EV2);
+
+  bool differences=false;
+  output << "Testing accuracy:"<<endl;
+  for (int i=0; i<this->NbrRow; ++i)
+    {
+      long idx, idx2;
+      EV1[i].SetStandardPhase(idx);
+      EV2[i].SetStandardPhase(idx2);
+      if (idx != idx2)
+	output << "Warning: Eigenvectors' phases set according to different entries: "<<idx<<", "<<idx2<<", with magnitudes"<<Norm(EV1[i][idx])<<", "<<Norm(EV1[i][idx]) << endl;
+      if (fabs(Norm(EV1[i]*EV2[i])-1.0)>threshold)
+	{
+	  output << "Eigenvectors "<<i<<" have non-trivial scalar product: "<<Norm(EV1[i]*EV2[i])<<endl;
+	  differences=true;
+	}
+      EV1[i].CompareVector(EV2[i], threshold, output);
+      if (fabs(D1[i]-D2[i])>threshold)
+	{
+	  output << "Eigenvalues "<<i<<" differ: "<<fabs(D1[i]-D2[i])<<endl;
+	  differences=true;
+	}      
+    }
+  if (differences)
+    output << "Differences found for accuracy 64 and "<<precision<<endl;
+  else 
+    output << "Equal to within "<<threshold<<endl;
+  return output;
+}
 
 
 // Diagonalize selected eigenvalues of a hermitian matrix and evaluate transformation matrix using the LAPACK library (modifying current matrix)
@@ -2642,6 +2829,88 @@ Matrix* HermitianMatrix::BroadcastEmptyClone(MPI::Intracomm& communicator, int i
 
 #endif
 
+// test if the given matrices form an orthogonal eigensystem
+ostream& HermitianMatrix::TestEigenSystem(ComplexMatrix &evecs, RealDiagonalMatrix &evals, bool verbose, ostream&output)
+{
+  Complex Tmp;
+  if (verbose)
+    for (int i = 0; i < this->NbrRow; ++i)
+      {
+	output << "Norm of vector "<<i<<" = "<<evecs[i].Norm()<<endl;
+	output << "Eigenvalue / vector "<<i<<"="<< evals[i]<<endl<<evecs[i]<<endl;
+      }
 
+  // test output
+  ComplexMatrix EVTranspose;
+  EVTranspose.Copy(evecs);
+  EVTranspose.HermitianTranspose();
+  ComplexMatrix APrime;
+  APrime = evecs * evals * EVTranspose;
+
+  Complex Tmp2;
+  bool difference=false;
+  for (int i = 0; i < this->NbrRow; ++i)
+    for (int j = 0; j < this->NbrRow; ++j)
+      {
+	this->GetMatrixElement(j, i, Tmp);
+	APrime.GetMatrixElement(j, i, Tmp2);
+	if (Norm (Tmp-Tmp2)>1e-12)
+	  {
+	    output << "Elements "<<i<<", "<<j<<" differ!"<<endl;
+	    difference=true;
+	  }
+      }
+  if (difference)
+    output << "A="<<endl<<*this<<"Q D Q^+="<<APrime;
+  else
+    output << "Matrix reconstituted in basis of eigenvectors"<<endl;
+
+  APrime = EVTranspose * evecs;
+  difference = false;
+  for (int i = 0; i < this->NbrRow; ++i)
+    for (int j = 0; j < this->NbrRow; ++j)
+      {
+	APrime.GetMatrixElement(j, i, Tmp);
+	if (i!=j && Norm (Tmp)>1e-12)
+	  {	    
+	    output << "evecs*evecs^+ not identity on "<<i<<", "<<j<<"."<<endl;
+	    difference = true;
+	  }
+	if (i==j && Norm (Tmp-1.0)>1e-12)
+	  {
+	    output << "evecs*evecs^+ not identity on "<<i<<", "<<j<<"."<<endl;
+	    difference = true;
+	  }
+
+      }
+
+  if (difference)
+    output << "Q^+.Q="<<APrime;
+  else
+    output << "Q^+.Q=1"<<endl;
+  // test orthogonality
+  difference = false;
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      for (int j = 0; j < i; ++j)
+	{
+	  // output << "Scalar product ["<<i<<", "<<j<<"] ="<< evecs[i] * evecs[j] <<endl;
+	  if (Norm(evecs[i] * evecs[j]) > 1e-12)
+	    {
+	      difference = true;
+	      output << "Eigenvectors ["<<i<<", "<<j<<"] not orthogonal"<<endl;
+	    }
+	}
+      if (fabs(Norm(evecs[i] * evecs[i]) -1.0) > 1e-12)
+	{
+	  difference = true;
+	  output << "Eigenvectors ["<<i<<"] not normalized"<<endl;
+	}
+    }
+  if (difference == false)
+    output << "Eigenvectors orthonormal"<<endl;
+  
+  return output;
+}
 
 

@@ -1158,7 +1158,7 @@ void SimpleMPIArchitecture::BroadcastVector(int nodeID, Vector& vector)
 
 // scatter a vector upon each slave node
 //
-// vector = pointer to the vector to scatter  (only usefull for the master node)
+// vector = pointer to the vector to scatter  (only useful for the master node)
 // return value = pointer to the broadcasted vector or null pointer if an error occured
 
 Vector* SimpleMPIArchitecture::ScatterVector(Vector* vector)
@@ -1187,9 +1187,34 @@ Vector* SimpleMPIArchitecture::ScatterVector(Vector* vector)
   return 0;
 }
 
+
+// scatter a vector onto slave nodes, using the scatterV function
+//
+// vector = pointer to the vector to scatter  (only useful for the master node)
+// return value = pointer to the broadcasted vector or null pointer if an error occured
+
+Vector* SimpleMPIArchitecture::ScatterVectorNew(Vector* vector)
+{
+#ifdef __MPI__
+  int TmpIndices[2];
+  if ((this->MasterNodeFlag) && (vector != 0))    
+    {
+      vector->ScatterPartialClones(MPI::COMM_WORLD, this->MinimumIndices, this->MaximumIndices, 0);
+      return vector;
+    }
+  else
+    if (this->MasterNodeFlag == false)
+      {
+	Vector TmpVector;
+	return TmpVector.ReceiveScatteredClone(MPI::COMM_WORLD, 0);
+      }
+#endif  
+  return 0;
+}
+
 // broadcast a vector type and allocate a vector based on it on each slave node
 //
-// vector = pointer to the vector to be used as reference (only usefull for the master node)
+// vector = pointer to the vector to be used as reference (only useful for the master node)
 // return value = pointer to the cloned vector or null pointer if an error occured
 
 Vector* SimpleMPIArchitecture::BroadcastVectorType(Vector* vector)
@@ -1213,7 +1238,7 @@ Vector* SimpleMPIArchitecture::BroadcastVectorType(Vector* vector)
 // broadcast an array of vectors on each slave node
 //
 // nbrVectors = reference on the number of vectors to broadcast or get
-// vector = pointer to the vector tobroadcast  (only usefull for the master node)
+// vector = pointer to the vector tobroadcast  (only useful for the master node)
 // return value =  pointer to the array of broadcasted vectors or null pointer if an error occured null pointer if an error occured
 
 Vector** SimpleMPIArchitecture::BroadcastVectorArray(int& nbrVectors, Vector* vector)
@@ -1257,7 +1282,7 @@ Vector** SimpleMPIArchitecture::BroadcastVectorArray(int& nbrVectors, Vector* ve
 // broadcast vector type and allocate an array of vectors based on it on each slave node
 //
 // nbrVectors = reference on the number of vectors to broadcast or get
-// vector = pointer to the vector to be used as reference (only usefull for the master node)
+// vector = pointer to the vector to be used as reference (only useful for the master node)
 // return value =  pointer to the array of cloned vector or null pointer if an error occurednull pointer if an error occured
 
 Vector** SimpleMPIArchitecture::BroadcastVectorTypeArray(int& nbrVectors, Vector* vector)
@@ -1286,7 +1311,7 @@ Vector** SimpleMPIArchitecture::BroadcastVectorTypeArray(int& nbrVectors, Vector
 // scatter an array of vectors upon each slave node
 //
 // nbrVectors = reference on the number of vectors to broadcast or get
-// vector = pointer to the vector to be used as reference (only usefull for the master node)
+// vector = pointer to the vector to be used as reference (only useful for the master node)
 // return value = pointer to the broadcasted vector or null pointer if an error occured
 
 Vector** SimpleMPIArchitecture::ScatterVectorArray(int& nbrVectors, Vector* vector)
@@ -1363,7 +1388,7 @@ void SimpleMPIArchitecture::BroadcastMatrix(Matrix& matrix)
 
 // broadcast a matrix on each slave node
 //
-// matrix = pointer to the matrix tobroadcast  (only usefull for the master node)
+// matrix = pointer to the matrix tobroadcast  (only useful for the master node)
 // return value = pointer to the broadcasted matrix or null pointer if an error occured
 
 Matrix* SimpleMPIArchitecture::BroadcastMatrix(Matrix* matrix)
@@ -1399,7 +1424,7 @@ void SimpleMPIArchitecture::BroadcastMatrix(int nodeID, Matrix& matrix)
 // broadcast an array of matrix on each slave node
 //
 // nbrMatrices = reference on the number of matrices to broadcast or get
-// matrix = pointer to the matrix to broadcast  (only usefull for the master node)
+// matrix = pointer to the matrix to broadcast  (only useful for the master node)
 // return value =  pointer to the array of broadcasted matrices or null pointer if an error occured null pointer if an error occured
 
 Matrix** SimpleMPIArchitecture::BroadcastMatrixArray(int& nbrMatrices, Matrix* matrix)

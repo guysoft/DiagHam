@@ -120,6 +120,13 @@ class AbstractHilbertSpace
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state) = 0;
 
+  // test that all states can be found
+  //
+  // Str = reference on current output stream 
+  // return value = reference on current output stream 
+  virtual ostream& TestFindAllStates (ostream& Str);
+
+
 };
 
 // return Hilbert space dimension
@@ -141,6 +148,16 @@ inline long AbstractHilbertSpace::GetLargeHilbertSpaceDimension()
     return this->LargeHilbertSpaceDimension;
 /*   else */
 /*     return (long)this->HilbertSpaceDimension; */
+}
+
+// test that all states can be found
+//
+// Str = reference on current output stream 
+// return value = reference on current output stream 
+inline ostream& AbstractHilbertSpace::TestFindAllStates (ostream& Str)
+{
+  Str << "The test for search accuracy has not been implemented in this HilbertSpace." << std::endl;
+  return Str;
 }
 
 #endif

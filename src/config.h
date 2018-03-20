@@ -96,6 +96,11 @@ typedef struct { doublereal r, i; } doublecomplex;
 #define __GMP__
 #endif
 
+// MPACK flag
+#ifdef HAVE_MPACK
+#define __MPACK__
+#endif
+
 // FFTW flag
 #ifdef HAVE_FFTW
 #define __FFTW__

@@ -488,7 +488,33 @@ class HermitianMatrix : public Matrix
   // return value = reference on real matrix consisting of eigenvalues
   RealDiagonalMatrix& LapackDiagonalizeArbitraryPrecision (RealDiagonalMatrix& M, ComplexMatrix& Q, int precision, double err = 1e-7, int maxIter = 50);
 
+  // Diagonalize a complex skew symmetric matrix and evaluate transformation matrix using the MPACK library for the full matrix storage based on the ZHEEV method
+  //
+  // precision = setting to use for arbitrary precision arithmetic (in bits)
+  // M = reference on real diagonal matrix of eigenvalues
+  // Q = matrix where transformation matrix has to be stored
+  // err = absolute error on matrix element
+  // maxIter = maximum number of iteration to fund an eigenvalue
+  // return value = reference on real matrix consisting of eigenvalues
+  RealDiagonalMatrix& LapackDiagonalizeArbitraryPrecisionFullMatrix (RealDiagonalMatrix& M, ComplexMatrix& Q, int precision, double err = 1e-7, int maxIter = 50);
+
 #endif 
+
+  // Call the appropriate function for diagonalizing the matrix with the given accuracy
+  //
+  // M = reference on real diagonal matrix of eigenvalues
+  // Q = matrix where transformation matrix has to be stored
+  // precision = setting to use for arbitrary precision arithmetic
+  // err = absolute error on matrix element (ignored in this call)
+  // maxIter = maximum number of iteration to fund an eigenvalue (ignored in this call)
+  // return value = reference on real matrix consisting of eigenvalues
+  RealDiagonalMatrix& LapackDiagonalizeSelectPrecision (RealDiagonalMatrix& M, ComplexMatrix& Q, int precision, double err = 1e-7, int maxIter = 50);
+
+  // test whether the eigenvalues and eigenvectors differ between double and the given arbitrary precision
+  // precision = arbitrary precision to be used.
+  // threshold = threshold for differences to be reported
+  // output = stream to write comments to
+  ostream& TestAccuracy(int precision, double threshold=1e-12, ostream& output=std::cout);
 
   // Diagonalize selected eigenvalues of a hermitian matrix and evaluate transformation matrix using the LAPACK library (modifying current matrix)
   //
@@ -578,6 +604,13 @@ class HermitianMatrix : public Matrix
   // P = matrix to print
   // return value = reference on output stream
   friend MathematicaOutput& operator << (MathematicaOutput& Str, const HermitianMatrix& P);
+
+ protected:
+
+  // test if the eigensystem is orthonormal
+  // evecs = eigenvectors
+  // evals = eigenvalues
+  ostream& TestEigenSystem(ComplexMatrix &evecs, RealDiagonalMatrix &evals, bool verbose = true, ostream& output=std::cout);
 
 };
 

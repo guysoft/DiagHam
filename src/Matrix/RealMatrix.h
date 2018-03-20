@@ -43,7 +43,7 @@
 #include "MathTools/Complex.h"
 
 #include <iostream>
-
+#include <cassert>
 
 using std::ostream;
 
@@ -545,6 +545,7 @@ inline double& RealMatrix::operator () (int i, int j)
 
 inline RealVector& RealMatrix::operator [] (int i)
 {
+  assert(i<this->NbrColumn);
   return this->Columns[i];
 }
 

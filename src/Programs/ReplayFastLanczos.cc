@@ -100,6 +100,11 @@ int main(int argc, char** argv)
       ifstream File;
       int LanczosIndex;
       File.open("lanczos.dat", ios::binary | ios::in);
+      if (!File.is_open())
+	{
+	  cout << "No disk storage found: Could not open file lanczos.dat"<<endl;
+	  exit(-1);
+	}
       ReadLittleEndian(File, LanczosIndex);
       File.close();
       OutputName = new char[30];
@@ -112,6 +117,11 @@ int main(int argc, char** argv)
 	{
 	  ifstream File;
 	  File.open("lanczos.dat", ios::binary | ios::in);
+	  if (!File.is_open())
+	    {
+	      cout << "No disk storage found: Could not open file lanczos.dat"<<endl;
+	      exit(-1);
+	    }
 	  ReadLittleEndian(File, LanczosIndex);
 	  ReadLittleEndian(File, PreviousLastWantedEigenvalue);
 	  if (ProjectorFlag == true)
@@ -167,7 +177,7 @@ int main(int argc, char** argv)
 	    {
 	      RealMatrix TmpEigenvector (TridiagonalizedMatrix.GetNbrRow(), TridiagonalizedMatrix.GetNbrRow(), true);
 	      for (int i = 0; i < TridiagonalizedMatrix.GetNbrRow(); ++i)
-		TmpEigenvector(i, i) = 1.0;  
+		TmpEigenvector(i, i) = 1.0;
 	      RealTriDiagonalSymmetricMatrix SortedDiagonalizedMatrix (TridiagonalizedMatrix.GetNbrRow());
 	      SortedDiagonalizedMatrix.Copy(TridiagonalizedMatrix);
 	      SortedDiagonalizedMatrix.Diagonalize(TmpEigenvector);
@@ -201,6 +211,11 @@ int main(int argc, char** argv)
 	{
 	  ifstream File;
 	  File.open("lanczos.dat", ios::binary | ios::in);
+	  if (!File.is_open())
+	    {
+	      cout << "No disk storage found: Could not open file lanczos.dat"<<endl;
+	      exit(-1);
+	    }	  
 	  int NbrEigenvalue = 0;
 	  int BlockSize = 0;
 	  int MaximumNumberIteration = 0;
@@ -344,6 +359,11 @@ int main(int argc, char** argv)
     {
       ifstream File;
       File.open("lanczos.dat", ios::binary | ios::in);
+      if (!File.is_open())
+	{
+	  cout << "No disk storage found: Could not open file lanczos.dat"<<endl;
+	  exit(-1);
+	}
       ReadLittleEndian(File, LanczosIndex);
       ReadLittleEndian(File, PreviousLastWantedEigenvalue);
       if (ProjectorFlag == true)

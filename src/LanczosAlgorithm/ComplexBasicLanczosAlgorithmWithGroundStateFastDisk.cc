@@ -419,7 +419,8 @@ bool ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::TestConvergence ()
 
 bool ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::WriteState()
 {
-  system("mv lanczos.dat lanczos.bak");
+  if (this->Index > 1)
+    system("mv lanczos.dat lanczos.bak");
   ofstream File;
   File.open("lanczos.dat", ios::binary | ios::out);
   WriteLittleEndian(File, this->Index);

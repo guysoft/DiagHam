@@ -13,6 +13,9 @@ AC_PROG_INSTALL
 
 dnl Checks for libraries.
 AC_CHECK_LIB(m, cos,MATH_LIBS="-lm",AC_MSG_WARN(math lib not found))
+# check if erfc is implemented
+AC_CHECK_FUNC(erfc) 
+
 AC_CHECK_LIB(pthread, pthread_create,THREAD_LIBS="-lpthread",AC_MSG_WARN(pthread lib not found : can't use SMP))
 
 dnl Checks for header files.
