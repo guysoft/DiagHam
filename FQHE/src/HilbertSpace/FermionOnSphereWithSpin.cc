@@ -2169,7 +2169,13 @@ void FermionOnSphereWithSpin::GenerateLookUpTable(unsigned long memory)
       --CurrentLookUpTableValue;
     }
   TmpLookUpTable[0] = this->HilbertSpaceDimension - 1;
+  this->GenerateSignLookUpTable();
+}
 
+// generate look-up table for sign calculation
+// 
+void FermionOnSphereWithSpin::GenerateSignLookUpTable()
+{
   // look-up tables for evaluating sign when applying creation/annihilation operators
   int Size = 1 << this->MaximumSignLookUp;
   this->SignLookUpTable = new double [Size];

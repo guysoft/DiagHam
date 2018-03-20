@@ -92,6 +92,28 @@ class ParticleOnTorus :  public ParticleOnSphere
   // return value = corresponding matrix
   virtual Matrix& Ad (int i, Matrix& M) = 0;
 
+  // apply an annihilation operator a_i and return the index in the target space
+  //
+  // i = state index
+  // m = index of annihilation operator
+  // return value = index in the target space
+  virtual int A (int i, int m, double &coefficient) 
+  { std::cout << "Need to implement operator A" << std::endl; return this->GetHilbertSpaceDimension(); }
+
+  // apply a creation operator a_i and return the index in the target space
+  //
+  // i = state index
+  // m = index of annihilation operator
+  // return value = index in the target space
+  virtual int Ad (int i, int m, double &coefficient)
+  { std::cout << "Need to implement operator Ad" << std::endl; return this->GetHilbertSpaceDimension();}
+
+
+  // get a pointer to the target space
+  // return value = target space
+  ParticleOnTorus* GetTargetSpace()
+  { std::cout << "No target space implemented in this Hilbert space" << std::endl; return NULL;}
+
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Ky sector.
   // 
   // nbrBosonSector = number of particles that belong to the subsytem 

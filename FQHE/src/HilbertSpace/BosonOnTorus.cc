@@ -506,6 +506,58 @@ Matrix& BosonOnTorus::Ad (int i, Matrix& M)
   return M;
 }
 
+// apply an annihilation operator a_i and return the index in the target space
+//
+// i = state index
+// n = index of annihilation operator
+// coefficient = will be multiplied by the prefactor of the bosonic ladder operator
+// return value = index in the target space
+int BosonOnTorus::A (int index, int n, double &coefficient)
+{
+  int CurrentLzMax = this->StateMaxMomentum[index];
+  int* State = this->StateDescription[index];
+  if ((n > CurrentLzMax) || (State[n] == 0))
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  int NewLzMax = CurrentLzMax;
+  if ((NewLzMax == n) && (State[n] == 1))
+    while (this->TemporaryState[NewLzMax] == 0)
+      --NewLzMax;
+  int i = 0;
+  for (; i <= CurrentLzMax; ++i)
+    this->TemporaryState[i] = State[i];
+  for (; i <= NewLzMax; ++i)
+    this->TemporaryState[i] = 0;
+  coefficient *= sqrt(this->TemporaryState[n]);
+  --this->TemporaryState[n];
+  return this->TargetSpace->FindStateIndex(this->TemporaryState, NewLzMax);
+}
+
+// apply a creation operator a_i and return the index in the target space
+//
+// index = state index
+// m = index of annihilation operator
+// coefficient = will be multiplied by the prefactor of the bosonic ladder operator
+// return value = index in the target space
+int BosonOnTorus::Ad (int index, int m, double &coefficient)
+{
+  int CurrentLzMax = this->StateMaxMomentum[index];
+  int* State = this->StateDescription[index];
+  int NewLzMax = (CurrentLzMax < m ? m : CurrentLzMax);
+  int i = 0;
+  for (; i <= CurrentLzMax; ++i)
+    this->TemporaryState[i] = State[i];
+  for (; i <= NewLzMax; ++i)
+    this->TemporaryState[i] = 0;
+  ++this->TemporaryState[m];
+  coefficient *= this->TemporaryState[m];
+  coefficient = sqrt(coefficient);
+  return this->TargetSpace->FindStateIndex(this->TemporaryState, NewLzMax);
+}
+
+
 // find state index
 //
 // stateDescription = array describing the state

@@ -722,6 +722,10 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // memory = memory size that can be allocated for the look-up table
   virtual void GenerateLookUpTable(unsigned long memory);
 
+  // generate look-up table for sign calculation
+  // 
+  virtual void GenerateSignLookUpTable();
+
   // generate all states corresponding to the constraints
   // 
   // nbrFermions = number of fermions

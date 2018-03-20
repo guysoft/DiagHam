@@ -479,6 +479,57 @@ Matrix& BosonOnTorusShort::Ad (int i, Matrix& M)
   return M;
 }
 
+// apply an annihilation operator a_i and return the index in the target space
+//
+// index = state index
+// n = index of annihilation operator
+// coefficient = will be multiplied by the prefactor of the bosonic ladder operator
+// return value = index in the target space
+int BosonOnTorusShort::A (int index, int n, double &coefficient)
+{
+  int CurrentLzMax = this->StateKyMax[index];
+  if (n > CurrentLzMax)
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }    
+  this->FermionToBoson(this->StateDescription[index], CurrentLzMax + this->NbrBosons - 1, this->TemporaryState, this->TemporaryStateKyMax);
+  if (this->TemporaryState[n] == 0)
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  this->TemporaryStateKyMax = CurrentLzMax;
+  for (int i = CurrentLzMax + 1; i <= this->TemporaryStateKyMax; ++i)
+    this->TemporaryState[i] = 0;
+  coefficient *= sqrt(this->TemporaryState[n]);
+  --this->TemporaryState[n];
+  while (this->TemporaryState[this->TemporaryStateKyMax] == 0x0ul)
+    --this->TemporaryStateKyMax;
+  return this->TargetSpace->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), this->TemporaryStateKyMax + this->NbrBosons - 1);
+}
+
+// apply a creation operator a_i and return the index in the target space
+//
+// index = state index
+// m = index of creation operator
+// coefficient = will be multiplied by the prefactor of the bosonic ladder operator
+// return value = index in the target space
+int BosonOnTorusShort::Ad (int index, int m, double &coefficient)
+{
+  int CurrentLzMax = this->StateKyMax[index];
+  this->FermionToBoson(this->StateDescription[index], CurrentLzMax + this->NbrBosons - 1, this->TemporaryState, this->TemporaryStateKyMax);
+  this->TemporaryStateKyMax = CurrentLzMax;
+  if (this->TemporaryStateKyMax < m)
+    this->TemporaryStateKyMax = m;
+  for (int i = CurrentLzMax + 1; i <= this->TemporaryStateKyMax; ++i)
+    this->TemporaryState[i] = 0;
+  ++this->TemporaryState[m];
+  coefficient *= sqrt(this->TemporaryState[m]);
+  return this->TargetSpace->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), this->TemporaryStateKyMax + this->NbrBosons - 1);
+}
+
+
 // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
 //
 // index = index of the state on which the operator has to be applied

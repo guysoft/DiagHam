@@ -876,6 +876,75 @@ Matrix& FermionOnTorus::Ad (int i, Matrix& M)
   return M;
 }
 
+
+// apply an annihilation operator a_i and return the index in the target space
+//
+// i = state index
+// n = index of annihilation operator
+// coefficient = will be multiplied by the prefactor of the bosonic ladder operator
+// return value = index in the target space
+int FermionOnTorus::A (int index, int n, double &coefficient)
+{
+  int StateLzMax = this->StateKyMax[index];
+  unsigned long State = this->StateDescription[index];
+  if ((n > StateLzMax) || ((State & (((unsigned long) (0x1)) << n)) == 0))
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  int NewLzMax = StateLzMax;
+  unsigned long TmpState = State;
+  coefficient = this->SignLookUpTable[(TmpState >> n) & this->SignLookUpTableMask[n]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n + 16))  & this->SignLookUpTableMask[n + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(TmpState >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#endif
+  TmpState &= ~(((unsigned long) (0x1)) << n);
+  if ((TmpState != 0x0ul))
+    {
+      while ((TmpState >> NewLzMax) == 0)
+	--NewLzMax;
+    }
+  else
+    NewLzMax = 0;  
+  return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
+}
+
+// apply a creation operator a_i and return the index in the target space
+//
+// i = state index
+// m = index of annihilation operator
+// coefficient = will be multiplied by the prefactor of the bosonic ladder operator
+// return value = index in the target space
+int FermionOnTorus::Ad (int index, int m, double &coefficient)
+{
+  int NewLzMax = this->StateKyMax[index];
+  unsigned long TmpState = this->StateDescription[index];
+  if ((TmpState & (((unsigned long) (0x1)) << m))!= 0)
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  if (m > NewLzMax)
+    {
+      NewLzMax = m;
+    }
+  else
+    {
+      coefficient *= this->SignLookUpTable[(TmpState >> m) & this->SignLookUpTableMask[m]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 16))  & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+    }
+
+  TmpState |= (((unsigned long) (0x1)) << m);  
+  return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
+}
+
+
 // find state index
 //
 // stateDescription = unsigned longeger describing the state

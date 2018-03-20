@@ -210,6 +210,27 @@ class BosonOnTorus :  public ParticleOnTorus
   // return value = corresponding matrix
   Matrix& Ad (int i, Matrix& M);
 
+  // apply an annihilation operator a_i and return the index in the target space
+  //
+  // i = state index
+  // m = index of annihilation operator
+  // coefficient = will be multiplied by the prefactor of the bosonic ladder operator
+  // return value = index in the target space
+  virtual int A (int i, int m, double &coefficient);
+
+  // apply a creation operator a_i and return the index in the target space
+  //
+  // i = state index
+  // m = index of annihilation operator
+  // coefficient = will be multiplied by the prefactor of the bosonic ladder operator
+  // return value = index in the target space
+  virtual int Ad (int i, int m, double &coefficient);
+
+  // get a pointer to the target space
+  // return value = target space
+  ParticleOnTorus* GetTargetSpace()
+  { return (ParticleOnTorus*) this->TargetSpace;}
+
   // print a given State
   //
   // Str = reference on current output stream 
