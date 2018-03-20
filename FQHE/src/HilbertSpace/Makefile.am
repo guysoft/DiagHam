@@ -113,7 +113,6 @@ FermionOnCubicLatticeWithSpinMomentumSpace.cc \
 FermionOnHyperCubicLatticeWithSpinMomentumSpace.cc \
 FermionOnCubicLatticeWithSU4SpinMomentumSpace.cc \
 BosonOnSquareLatticeMomentumSpace.cc \
-BosonOnSquareLatticeWithSpinMomentumSpace.cc \
 FermionOnSphereWithSU4SpinLong.cc \
 FermionOnCubicLatticeWithSU4SpinMomentumSpaceLong.cc \
 FermionOnSquareLatticeWithSU4SpinMomentumSpace.cc \
@@ -193,5 +192,4 @@ BosonOnT2xT2HardcoreNoNearestNeighbors.cc \
 BosonOnT2xS2WithMagneticTranslationsShort.cc \
 BosonOnT2xS2HardcoreNoNearestNeighbors.cc \
 BosonOnT2xS2HardcoreNoNearestNeighborsWithMagneticTranslations.cc \
-BosonOnT2xS2.cc \
-BosonOnSquareLatticeWithSpinMomentumSpaceNew.cc
+BosonOnT2xS2.cc
