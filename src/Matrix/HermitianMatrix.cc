@@ -37,7 +37,7 @@
 
 #include <stdlib.h>
 
-#define DEBUG_HERMITIAN_MATRIX
+//#define DEBUG_HERMITIAN_MATRIX
 
 
 #ifdef __LAPACK__
@@ -2830,6 +2830,8 @@ Matrix* HermitianMatrix::BroadcastEmptyClone(MPI::Intracomm& communicator, int i
 #endif
 
 // test if the given matrices form an orthogonal eigensystem
+//
+
 ostream& HermitianMatrix::TestEigenSystem(ComplexMatrix &evecs, RealDiagonalMatrix &evals, bool verbose, ostream&output)
 {
   Complex Tmp;
