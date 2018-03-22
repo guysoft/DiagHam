@@ -38,7 +38,8 @@
 using std::cout;
 using std::endl;
 
-// constructor from default datas
+
+// constructor from default data
 //
 // particle = hilbert space associated to the particles
 // creationMomentumIndex = momentum index of the leftmost creation operator (from 0 to 2S)
@@ -55,6 +56,18 @@ ParticleOnSphereWithSpinDensityOperator::ParticleOnSphereWithSpinDensityOperator
   this->CreationSymmetryIndex = creationSymmetryIndex;
   this->AnnihilationMomentumIndex = annihilationMomentumIndex;
   this->AnnihilationSymmetryIndex = annihilationSymmetryIndex;
+}
+
+// copy constructor
+//
+
+ParticleOnSphereWithSpinDensityOperator::ParticleOnSphereWithSpinDensityOperator(ParticleOnSphereWithSpinDensityOperator& oper)
+{
+  this->Particle = (ParticleOnSphereWithSpin*) (oper.Particle->Clone());
+  this->CreationMomentumIndex = oper.CreationMomentumIndex;
+  this->CreationSymmetryIndex = oper.CreationSymmetryIndex;
+  this->AnnihilationMomentumIndex = oper.AnnihilationMomentumIndex;
+  this->AnnihilationSymmetryIndex = oper.AnnihilationSymmetryIndex;
 }
 
 // destructor

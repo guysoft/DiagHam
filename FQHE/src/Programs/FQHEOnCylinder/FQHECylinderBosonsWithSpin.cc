@@ -208,16 +208,30 @@ int main(int argc, char** argv)
 	    }
 	}
     }
-  char* GeometryName = new char[128];
-  if (Perimeter > 0.0)	
+  char* GeometryName = new char[256];
+  if (Manager.GetInteger("nbrspin-polarized") == 0)
     {
-      sprintf (GeometryName, "cylinder_perimeter_%.6f_su2", Perimeter);
+      if (Perimeter > 0.0)	
+	{
+	  sprintf (GeometryName, "cylinder_perimeter_%.6f_su2", Perimeter);
+	}
+      else
+	{
+	  sprintf (GeometryName, "cylinder_ratio_%.6f_su2", Ratio);
+	}
     }
   else
     {
-      sprintf (GeometryName, "cylinder_ratio_%.6f_su2", Ratio);
+      if (Perimeter > 0.0)	
+	{
+	  sprintf (GeometryName, "cylinder_perimeter_%.6f_su2_polarized_%ld", Perimeter, Manager.GetInteger("nbrspin-polarized"));
+	}
+      else
+	{
+	  sprintf (GeometryName, "cylinder_ratio_%.6f_su2_polarized_%ld", Ratio, Manager.GetInteger("nbrspin-polarized"));
+	}
     }
-    char* OutputName = new char [512 + strlen(DiscreteSymmetryName) + strlen(GeometryName )+ strlen(Manager.GetString("interaction-name"))];
+  char* OutputName = new char [512 + strlen(DiscreteSymmetryName) + strlen(GeometryName )+ strlen(Manager.GetString("interaction-name"))];
   if (OneBodyPseudoPotentials[2] == 0)
     {
       if ((Manager.GetDouble("spinup-flux") == 0.0) && (Manager.GetDouble("spindown-flux") == 0.0))
@@ -276,48 +290,51 @@ int main(int argc, char** argv)
       double Shift = 0.0;
       ParticleOnSphereWithSpin* Space = 0;
       Space = (ParticleOnSphereWithSpin*) ParticleManager.GetHilbertSpace(L*LSign);
-      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
-        Memory = Architecture.GetArchitecture()->GetLocalMemory();
-      if (Manager.GetBoolean("show-space"))
-	for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-	  Space->PrintState(cout, i) << endl;
-
-      AbstractQHEOnSphereWithSpinHamiltonian* Hamiltonian;
-      Hamiltonian = new ParticleOnCylinderWithSpinGenericHamiltonian(Space, NbrBosons, LzMax, Ratio,
-								     NbrPseudoPotentials[0], PseudoPotentials[0],
-								     NbrPseudoPotentials[1], PseudoPotentials[1],
-								     NbrPseudoPotentials[2], PseudoPotentials[2],
-								     Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
-								     Architecture.GetArchitecture(), Memory, 0, OneBodyPseudoPotentials[0], 
-								     OneBodyPseudoPotentials[1], OneBodyPseudoPotentials[2]);
+      if (Space->GetHilbertSpaceDimension() > 0)
+	{
+	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+	  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+	    Memory = Architecture.GetArchitecture()->GetLocalMemory();
+	  if (Manager.GetBoolean("show-space"))
+	    for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+	      Space->PrintState(cout, i) << endl;
 	  
-     
-      Hamiltonian->ShiftHamiltonian(Shift);
-      if (SavePrecalculationFileName != 0)
-	{
-	  Hamiltonian->SavePrecalculation(SavePrecalculationFileName);
+	  AbstractQHEOnSphereWithSpinHamiltonian* Hamiltonian;
+	  Hamiltonian = new ParticleOnCylinderWithSpinGenericHamiltonian(Space, NbrBosons, LzMax, Ratio,
+									 NbrPseudoPotentials[0], PseudoPotentials[0],
+									 NbrPseudoPotentials[1], PseudoPotentials[1],
+									 NbrPseudoPotentials[2], PseudoPotentials[2],
+									 Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
+									 Architecture.GetArchitecture(), Memory, 0, OneBodyPseudoPotentials[0], 
+									 OneBodyPseudoPotentials[1], OneBodyPseudoPotentials[2]);
+	  
+	  
+	  Hamiltonian->ShiftHamiltonian(Shift);
+	  if (SavePrecalculationFileName != 0)
+	    {
+	      Hamiltonian->SavePrecalculation(SavePrecalculationFileName);
+	    }
+	  char* EigenvectorName = 0;
+	  if (Manager.GetBoolean("eigenstate") == true)	
+	    {
+	      char* TmpName = RemoveExtensionFromFileName(OutputName, ".dat");
+	      EigenvectorName = new char [32 + strlen(TmpName)];
+	      sprintf (EigenvectorName, "%s_lz_%d", TmpName, L);
+	      delete[] TmpName;
+	    }
+	  QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L*LSign, Shift, OutputName, FirstRun, EigenvectorName, LzMax);
+	  MainTaskOperation TaskOperation (&Task);
+	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	  delete Hamiltonian;
+	  if (EigenvectorName != 0)
+	    {
+	      delete[] EigenvectorName;
+	      EigenvectorName = 0;
+	    }
+	  if (FirstRun == true)
+	    FirstRun = false;
 	}
-      char* EigenvectorName = 0;
-      if (Manager.GetBoolean("eigenstate") == true)	
-	{
-	  char* TmpName = RemoveExtensionFromFileName(OutputName, ".dat");
-	  EigenvectorName = new char [32 + strlen(TmpName)];
-	  sprintf (EigenvectorName, "%s_lz_%d", TmpName, L);
-	  delete[] TmpName;
-	}
-      QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L*LSign, Shift, OutputName, FirstRun, EigenvectorName, LzMax);
-      MainTaskOperation TaskOperation (&Task);
-      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-      delete Hamiltonian;
       delete Space;      
-      if (EigenvectorName != 0)
-	{
-	  delete[] EigenvectorName;
-	  EigenvectorName = 0;
-	}
-      if (FirstRun == true)
-	FirstRun = false;
     }
   delete[] OutputName;
   return 0;

@@ -469,11 +469,11 @@ double ParticleOnCylinderWithSpinGenericHamiltonian::EvaluateInteractionCoeffici
 {
   double Kappa2Factor = (2.0 * M_PI * this->Ratio / ((double) (this->LzMax + 1)));
   double Coefficient = 0.0;
-  if ((pseudopotentials[0] != 0.0) && (nbrPseudopotentials > 0))
+  if ((nbrPseudopotentials > 0) && (pseudopotentials[0] != 0.0))
     {
       Coefficient += pseudopotentials[0] * exp (-0.25 * Kappa2Factor * (((double) ((m1 - m2) * (m1 - m2))) + ((double) ((m3 - m4) * (m3 - m4))))) / sqrt(2.0 * M_PI);
     }
-  if ((pseudopotentials[1] != 0.0) && (nbrPseudopotentials > 1))
+  if (((nbrPseudopotentials > 1) && pseudopotentials[1] != 0.0))
     {
       Coefficient += pseudopotentials[1] * (((double) ((m1 - m2) * (m4 - m3)))
 					    * exp (-0.25 * Kappa2Factor * (((double) ((m1 - m2) * (m1 - m2))) 

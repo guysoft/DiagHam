@@ -496,6 +496,10 @@ int BosonOnSphereWithSU2Spin::FindStateIndex(unsigned long stateDescriptionUp, u
 {
   int PosMin = 0;
   int PosMax = this->NbrUniqueStateDescriptionUp - 1;
+  if ((stateDescriptionUp > this->UniqueStateDescriptionUp[PosMin]) || (stateDescriptionUp < this->UniqueStateDescriptionUp[PosMax]))
+    {
+      return this->HilbertSpaceDimension;
+    }
   int PosMid = (PosMin + PosMax) >> 1;
   unsigned long CurrentState = this->UniqueStateDescriptionUp[PosMid];
   while ((PosMax > PosMin) && (CurrentState != stateDescriptionUp))
@@ -512,7 +516,11 @@ int BosonOnSphereWithSU2Spin::FindStateIndex(unsigned long stateDescriptionUp, u
        CurrentState = this->UniqueStateDescriptionUp[PosMid];
     }
   if (CurrentState != stateDescriptionUp)
-    PosMid = PosMax;
+    {
+      PosMid = PosMax;
+      if (this->UniqueStateDescriptionUp[PosMid] != stateDescriptionUp)
+	return this->HilbertSpaceDimension;
+     }
 
   PosMin = this->FirstIndexUniqueStateDescriptionUp[PosMid];
   PosMax = PosMin + this->UniqueStateDescriptionSubArraySizeUp[PosMid] - 1;
@@ -531,10 +539,12 @@ int BosonOnSphereWithSU2Spin::FindStateIndex(unsigned long stateDescriptionUp, u
        PosMid = (PosMin + PosMax) >> 1;
        CurrentState = this->StateDescriptionDown[PosMid];
     }
-  if (CurrentState != stateDescriptionDown)
-    return PosMax;
-  else
+  if (CurrentState == stateDescriptionDown)
     return PosMid;
+  if ( this->StateDescriptionDown[PosMax] != stateDescriptionDown)
+    return this->HilbertSpaceDimension;
+  else
+    return PosMax;
 }
 
 
@@ -3601,6 +3611,49 @@ RealMatrix& BosonOnSphereWithSU2Spin::EvaluateEntanglementMatrixGenericRealSpace
   
   return entanglementMatrix;
 }
+
+// evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using a generic real space partition breaking the momentum conservation. 
+// The entanglement matrix is computed from precalculated particle entanglement matrices in each momentum sector
+// 
+// nbrParticleSector = number of particles that belong to the subsytem 
+// szSector = Sz sector in which the density matrix has to be evaluated 
+// nbrOrbitalA = number of orbitals that have to be kept for the A part
+// nbrConnectedOrbitalAUp = number of orbitals connected to a given one by the A part real space cut (for the spin up)
+// nbrConnectedOrbitalADown = number of orbitals connected to a given one by the A part real space cut (for the spin down)
+// connectedOrbitalAUp = orbitals taht connected to a given one by the A part real space cut (for the spin up)
+// connectedOrbitalADown = orbitals taht connected to a given one by the A part real space cut (for the spin down)
+// weightOrbitalAUp = weight of each orbital in the A part with spin up (starting from the leftmost orbital)
+// weightOrbitalADown = weight of each orbital in the A part with spin down (starting from the leftmost orbital)
+// nbrOrbitalB = number of orbitals that have to be kept for the B part
+// nbrConnectedOrbitalBUp = number of orbitals connected to a given one by the B part real space cut (for the spin up)
+// nbrConnectedOrbitalBDown = number of orbitals connected to a given one by the B part real space cut (for the spin down)
+// connectedOrbitalBUp = orbitals taht connected to a given one by the B part real space cut (for the spin up)
+// connectedOrbitalBDown = orbitals taht connected to a given one by the B part real space cut (for the spin down)
+// weightOrbitalBUp = weight of each orbital in the B part with spin up (starting from the leftmost orbital)
+// weightOrbitalBDown = weight of each orbital in the B part with spin down (starting from the leftmost orbital)
+// nbrEntanglementMatrices = number of available entanglement matrices with a fixed moementum
+// entanglementMatrixLzSectors = momentum sector of each entanglement matrix
+// entanglementMatrices = array containing the entanglement matrices with a fixed moementum
+// return value = real space entanglement matrix
+
+RealMatrix BosonOnSphereWithSU2Spin::EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix (int nbrParticleSector, int szSector,
+															int nbrOrbitalA, int* nbrConnectedOrbitalAUp, int* nbrConnectedOrbitalADown,
+															int** connectedOrbitalAUp, int** connectedOrbitalADown, 
+															double** weightOrbitalAUp, double** weightOrbitalADown, 
+															int nbrOrbitalB, int* connectedOrbitalBUp, int* connectedOrbitalBDown, 
+															double** weightOrbitalBUp, double** weightOrbitalBDown, 
+															int nbrEntanglementMatrices, int* entanglementMatrixLzSectors,
+															RealMatrix* entanglementMatrices)
+{
+  int TotalNbrRow = 0;
+  int TotalNbrColumn = 0;
+
+  RealMatrix TmpEntanglementMatrix (TotalNbrRow, TotalNbrColumn, true);
+
+  return TmpEntanglementMatrix;
+}
+
+
 
 // convert a given state from a generic basis from the current Sz subspace basis
 //

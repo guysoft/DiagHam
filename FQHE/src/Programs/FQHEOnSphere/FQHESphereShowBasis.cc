@@ -18,6 +18,7 @@
 #include "HilbertSpace/BosonOnSphereWithSU2SpinSzSymmetry.h"
 #include "HilbertSpace/BosonOnSphereWithSU2SpinLzSymmetry.h"
 #include "HilbertSpace/BosonOnSphereWithSU2SpinLzSzSymmetry.h"
+#include "HilbertSpace/BosonOnSphereWithSU2SpinPartialPolarization.h"
 #include "HilbertSpace/BosonOnSphereWithSU3Spin.h"
 #include "HilbertSpace/BosonOnSphereWithSU4Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSpinAllSz.h"
@@ -103,6 +104,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "all-sz", "consider particles with SU(2) spin all Sz components");
   (*SystemGroup) += new BooleanOption  ('\n', "add-index", "add index of the Hilbert space vectors");
   (*SystemGroup) += new BooleanOption  ('\n', "add-szvalue", "add Sz value to each Hilbert space vector (valid only for all-sz)");
+  (*SystemGroup) += new SingleIntegerOption ('\n', "nbrspin-polarized", "number of orbitals which ar fully spin up polarized (from the one with the lowest momentum)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "use-pairing", "only fix Sz and not the number of particles");
   (*SystemGroup) += new BooleanOption  ('\n', "su3-spin", "consider particles with SU(3) spin");
   (*SystemGroup) += new BooleanOption  ('\n', "quasiholes", "consider fermions with spin, where only the (k, r) partitions are admitted for each spin -- only available in use-pairing fermionic mode");
@@ -321,32 +323,40 @@ int main(int argc, char** argv)
 		{
 		  if (AllSzFlag == false)
 		    {
-		      if (Manager.GetBoolean("use-alt") == false)
-			{		       
-			  Space = new BosonOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+		      if (Manager.GetInteger("nbrspin-polarized") > 0)
+			{
+			  Space = new BosonOnSphereWithSU2SpinPartialPolarization(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, 
+										  (int) Manager.GetInteger("nbrspin-polarized"));
 			}
 		      else
-			{		       
-			  if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
-			    {
-			      Space = new BosonOnSphereWithSU2Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);				
+			{
+			  if (Manager.GetBoolean("use-alt") == false)
+			    {		       
+			      Space = new BosonOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
 			    }
 			  else
-			    {
-			      if ((SzSymmetrizedBasis == true)  && (TotalSz == 0) && (LzSymmetrizedBasis == true) && (TotalLz == 0))
+			    {		       
+			      if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
 				{
-				  Space = new BosonOnSphereWithSU2SpinLzSzSymmetry(NbrParticles, NbrFluxQuanta, TotalSz, Manager.GetBoolean("minus-szparity"),
-										  Manager.GetBoolean("minus-lzparity"));
+				  Space = new BosonOnSphereWithSU2Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);				
 				}
-			      else 
+			      else
 				{
-				  if ((SzSymmetrizedBasis == true)  && (TotalSz == 0))
+				  if ((SzSymmetrizedBasis == true)  && (TotalSz == 0) && (LzSymmetrizedBasis == true) && (TotalLz == 0))
 				    {
-				      Space = new BosonOnSphereWithSU2SpinSzSymmetry(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, Manager.GetBoolean("minus-szparity"));
+				      Space = new BosonOnSphereWithSU2SpinLzSzSymmetry(NbrParticles, NbrFluxQuanta, TotalSz, Manager.GetBoolean("minus-szparity"),
+										       Manager.GetBoolean("minus-lzparity"));
 				    }
-				  else
+				  else 
 				    {
-				      Space = new BosonOnSphereWithSU2SpinLzSymmetry(NbrParticles, NbrFluxQuanta, TotalSz, Manager.GetBoolean("minus-lzparity"));
+				      if ((SzSymmetrizedBasis == true)  && (TotalSz == 0))
+					{
+				      Space = new BosonOnSphereWithSU2SpinSzSymmetry(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, Manager.GetBoolean("minus-szparity"));
+					}
+				      else
+					{
+					  Space = new BosonOnSphereWithSU2SpinLzSymmetry(NbrParticles, NbrFluxQuanta, TotalSz, Manager.GetBoolean("minus-lzparity"));
+					}
 				    }
 				}
 			    }

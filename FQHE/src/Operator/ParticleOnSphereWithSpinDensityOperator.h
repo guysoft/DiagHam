@@ -58,7 +58,7 @@ class ParticleOnSphereWithSpinDensityOperator : public AbstractOperator
   
  public:
   
-  // constructor from default datas
+  // constructor from default data
   //
   // particle = hilbert space associated to the particles
   // creationMomentumIndex = momentum index of the leftmost creation operator (from 0 to 2S)
@@ -67,6 +67,10 @@ class ParticleOnSphereWithSpinDensityOperator : public AbstractOperator
   // annihilationSymmetryIndex = symmetry index of the annihilation operator (0 for down, 1 for up)
   ParticleOnSphereWithSpinDensityOperator(ParticleOnSphereWithSpin* particle,  int creationMomentumIndex, int creationSymmetryIndex,
 					  int annihilationMomentumIndex, int annihilationSymmetryIndex);
+
+  // copy constructor
+  //
+  ParticleOnSphereWithSpinDensityOperator(ParticleOnSphereWithSpinDensityOperator& oper);
 
   // destructor
   //
