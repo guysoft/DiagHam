@@ -471,6 +471,16 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // return value = matrix where the values of the two point correlation function will be stored (using the linearized position index as entry)
   virtual HermitianMatrix EvaluateFullTwoPointCorrelationFunction(int maxX, int maxY, int* occupiedMomenta, int nbrOccupiedMomenta, int bandIndex);
 
+  // evaluate the two point correlation function in a given region
+  //
+  // maxX = x coordinate of the region upper right corner 
+  // maxY = y coordinate of the region upper right corner 
+  // occupiedMomenta = array that gives all the occupied momenta (as linearized indices)
+  // bandIndices = indices of the band corresponding ot each occupied state
+  // nbrOccupiedStates = number of occupied states
+  // return value = matrix where the values of the two point correlation function will be stored (using the linearized position index as entry)
+  virtual HermitianMatrix EvaluateFullTwoPointCorrelationFunction(int maxX, int maxY, int* occupiedMomenta, int* bandIndices, int nbrOccupiedStates);
+
   // evaluate the mixed two point correlation function in a given region, assuming translation invariance along one direction
   //
   // maxX = length along the borken translation direction of the region 

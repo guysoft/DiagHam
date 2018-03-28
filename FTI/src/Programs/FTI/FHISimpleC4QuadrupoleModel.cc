@@ -112,7 +112,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
-  (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-chernnumber", "compute the chern number (only in singleparticle-spectrum mode)");
+  (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-es", "compute the singleparticle entanglement spectrum");
+  (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-ent", "compute the entanglement entropy for all the cuts up to es-nbrsitex x es-nbrsitey");
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "es-nbrsitex", "number of unit sites in the x direction for region where the es has to be computed (0 if half of nbr-sitex)", 0);  
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "es-nbrsitey", "number of unit sites in the y direction for region where the es has to be computed (0 if half of nbr-sitey)", 0);  
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebody", "export the one-body information (band structure and eigenstates) in a binary file");
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebodytext", "export the one-body information (band structure and eigenstates) in an ASCII text file");
   (*SystemGroup) += new SingleStringOption  ('\n', "export-onebodyname", "optional file name for the one-body information output");
@@ -286,10 +289,11 @@ int main(int argc, char** argv)
 
   Abstract2DTightBindingModel* TightBindingModel = 0;
   AbstractTightBindingModel* TightBindingModelOBC = 0;
-  if (Manager.GetBoolean("singleparticle-spectrum") == true)
+  if ((Manager.GetBoolean("singleparticle-spectrum") == true) || (Manager.GetBoolean("singleparticle-es") == true) || (Manager.GetBoolean("singleparticle-ent") == true))
     {
       bool ExportOneBody = false;
-      if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("singleparticle-chernnumber") == true))
+      if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) 
+	  || (Manager.GetBoolean("singleparticle-es") == true) || (Manager.GetBoolean("singleparticle-ent") == true))
 	ExportOneBody = true;
       if (Manager.GetBoolean("full-obc") == true)
 	{
@@ -350,7 +354,7 @@ int main(int argc, char** argv)
 	  TightBindingModelOBC->WriteAsciiSpectrum(EigenvalueOutputFile);
 	  if (ExportOneBody == true)
 	    {
-	      char* BandStructureOutputFile = new char [512];
+	      char* BandStructureOutputFile = new char [512 + strlen(FilePrefix)];
 	      if (Manager.GetString("export-onebodyname") != 0)
 		strcpy(BandStructureOutputFile, Manager.GetString("export-onebodyname"));
 	      else
@@ -378,9 +382,101 @@ int main(int argc, char** argv)
 	  double DirectBandGap = TightBindingModel->ComputeDirectBandGap(1);
 	  cout << "Spread = " << BandSpread << "  Direct Gap = " << DirectBandGap  << "  Flattening = " << (BandSpread / DirectBandGap) << endl;
 	  cout << "Lowest band gap = " << TightBindingModel->ComputeDirectBandGap(0) << endl;
-	  if (Manager.GetBoolean("singleparticle-chernnumber") == true)
+	  if ((Manager.GetBoolean("singleparticle-es") == true) || (Manager.GetBoolean("singleparticle-ent") == true))
 	    {
-	      cout << "Chern number = " << TightBindingModel->ComputeChernNumber(0) << endl;
+	      int NbrSitesXA = Manager.GetInteger("es-nbrsitex");
+	      if (NbrSitesXA == 0)
+		{
+		  NbrSitesXA = NbrSitesX / 2;
+		}
+	      int NbrSitesYA = Manager.GetInteger("es-nbrsitey");
+	      if (NbrSitesYA == 0)
+		{
+		  NbrSitesYA = NbrSitesY / 2;
+		}
+	      if (Manager.GetBoolean("singleparticle-ent") == true)
+		{
+		  if (NbrSitesYA < NbrSitesXA)
+		    {
+		      NbrSitesYA = NbrSitesXA;
+		    }
+		  else
+		    {
+		      NbrSitesXA = NbrSitesYA;
+		    }
+		}
+	      int TmpNbrStates = 2 * TightBindingModel->GetNbrStatePerBand();
+	      int* OccupiedMomenta = new int [TmpNbrStates];
+	      int* BandIndices = new int [TmpNbrStates];
+	      TmpNbrStates = 0;
+	      for (int x = 0; x < NbrSitesX; ++x)
+		{
+		  for (int y = 0; y < NbrSitesY; ++y)
+		    {		  
+		      OccupiedMomenta[TmpNbrStates] = TightBindingModel->GetLinearizedMomentumIndex(x, y);
+		      BandIndices[TmpNbrStates] = 0;
+		      TmpNbrStates++;
+		      OccupiedMomenta[TmpNbrStates] = TightBindingModel->GetLinearizedMomentumIndex(x, y);
+		      BandIndices[TmpNbrStates] = 1;
+		      TmpNbrStates++;
+		    }
+		}
+	      
+
+	      if (Manager.GetBoolean("singleparticle-ent") == true)
+		{
+		  char* EntanglementEnergiesOutputFile = new char [512 + strlen(FilePrefix) + strlen(FileParameterString)];
+		  sprintf (EntanglementEnergiesOutputFile, "%s_%s_singleparticle_nxa_%d_nya_%d.ent", FilePrefix, FileParameterString, NbrSitesXA, NbrSitesYA);
+		  ofstream File;
+		  File.open(EntanglementEnergiesOutputFile, ios::binary | ios::out);
+		  File.precision(14);
+		  File << "# nbr_sites_xa S_A" << endl;
+		  for (int TmpNbrSitesA = 2; TmpNbrSitesA <= NbrSitesXA; ++TmpNbrSitesA)
+		    {
+		      HermitianMatrix TmpEntanglementHamiltonian = TightBindingModel->EvaluateFullTwoPointCorrelationFunction(TmpNbrSitesA, TmpNbrSitesA, 
+															      OccupiedMomenta, BandIndices, TmpNbrStates);
+		      RealDiagonalMatrix OneBodyEntanglementEnergies(TmpNbrSitesA * TmpNbrSitesA, true);
+#ifdef __LAPACK__
+		      TmpEntanglementHamiltonian.LapackDiagonalize(OneBodyEntanglementEnergies);
+#else
+		      TmpEntanglementHamiltonian.Diagonalize(OneBodyEntanglementEnergies);
+#endif
+		      double TmpEntropy = 0;
+		      for (int i = 0; i <  OneBodyEntanglementEnergies.GetNbrRow(); ++i)
+			{
+			  if ((OneBodyEntanglementEnergies[i] > 1e-12) && (OneBodyEntanglementEnergies[i] < (1.0 - 1e-12)))
+			    {
+			      TmpEntropy -= (OneBodyEntanglementEnergies[i] * log(OneBodyEntanglementEnergies[i]) 
+					     + (1.0 - OneBodyEntanglementEnergies[i]) * log(1.0 - OneBodyEntanglementEnergies[i]));
+			    }			  
+			}
+		      File << TmpNbrSitesA << " " << TmpEntropy << endl;
+		    }
+		  File.close();	      
+		  delete[] EntanglementEnergiesOutputFile;
+		}
+	      else
+		{
+		  HermitianMatrix TmpEntanglementHamiltonian = TightBindingModel->EvaluateFullTwoPointCorrelationFunction(NbrSitesXA, NbrSitesYA, 
+															  OccupiedMomenta, BandIndices, TmpNbrStates);
+		  RealDiagonalMatrix OneBodyEntanglementEnergies(NbrSitesXA * NbrSitesYA, true);
+#ifdef __LAPACK__
+		  TmpEntanglementHamiltonian.LapackDiagonalize(OneBodyEntanglementEnergies);
+#else
+		  TmpEntanglementHamiltonian.Diagonalize(OneBodyEntanglementEnergies);
+#endif
+		  char* EntanglementEnergiesOutputFile = new char [512 + strlen(FilePrefix) + strlen(FileParameterString)];
+		  sprintf (EntanglementEnergiesOutputFile, "%s_%s_singleparticle_es_nxa_%d_nya_%d.dat", FilePrefix, FileParameterString, NbrSitesXA, NbrSitesYA);
+		  ofstream File;
+		  File.open(EntanglementEnergiesOutputFile, ios::binary | ios::out);
+		  File.precision(14);
+		  for (int i = 0; i <  OneBodyEntanglementEnergies.GetNbrRow(); ++i)
+		    {
+		      File << OneBodyEntanglementEnergies[i] << endl;
+		    }
+		  File.close();	      
+		  delete[] EntanglementEnergiesOutputFile;
+		}
 	    }
 	  if (ExportOneBody == true)
 	    {
@@ -741,27 +837,50 @@ int main(int argc, char** argv)
 			      NbrExcludedSites[TmpIndex] = 4;
 			      ExcludedSites[TmpIndex] = new int[NbrExcludedSites[TmpIndex]];
 			      ExcludedSites[TmpIndex][0] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(0, 0, 1);				      
-			      ExcludedSites[TmpIndex][1] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(0, -1, 1);				      
+			      ExcludedSites[TmpIndex][1] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(0, -1, 3);				      
 			      ExcludedSites[TmpIndex][2] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(-1, 0, 1);				      
-			      ExcludedSites[TmpIndex][3] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(-1, -1, 1);	
+			      ExcludedSites[TmpIndex][3] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(0, 0, 3);	
 			      ExclusionFile << "0 0 1 " << TmpIndex << " " << ExcludedSites[TmpIndex][0] << endl;
-			      ExclusionFile << "0 -1 1 " << TmpIndex << " " << ExcludedSites[TmpIndex][1] << endl;
+			      ExclusionFile << "0 -1 3 " << TmpIndex << " " << ExcludedSites[TmpIndex][1] << endl;
 			      ExclusionFile << "-1 0 1 " << TmpIndex << " " << ExcludedSites[TmpIndex][2] << endl;
-			      ExclusionFile << "-1 -1 1 " << TmpIndex << " " << ExcludedSites[TmpIndex][3] << endl;
+			      ExclusionFile << "0 0 3 " << TmpIndex << " " << ExcludedSites[TmpIndex][3] << endl;
 			      ++TmpIndex;
 			      NbrExcludedSites[TmpIndex] = 4;
 			      ExcludedSites[TmpIndex] = new int[NbrExcludedSites[TmpIndex]];
 			      ExcludedSites[TmpIndex][0] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(0, 0, 0);				      
 			      ExcludedSites[TmpIndex][1] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(1, 0, 0);				      
-			      ExcludedSites[TmpIndex][2] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(0, 1, 0);				      
-			      ExcludedSites[TmpIndex][3] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(1, 1, 0);				      
+			      ExcludedSites[TmpIndex][2] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(0, 0, 2);				      
+			      ExcludedSites[TmpIndex][3] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(0, -1, 2);				      
 			      ExclusionFile << "0 0 0 " << TmpIndex << " " << ExcludedSites[TmpIndex][0] << endl;
 			      ExclusionFile << "1 0 0 " << TmpIndex << " " << ExcludedSites[TmpIndex][1] << endl;
-			      ExclusionFile << "0 1 0 " << TmpIndex << " " << ExcludedSites[TmpIndex][2] << endl;
-			      ExclusionFile << "1 1 0 " << TmpIndex << " " << ExcludedSites[TmpIndex][3] << endl;
+			      ExclusionFile << "0 0 2 " << TmpIndex << " " << ExcludedSites[TmpIndex][2] << endl;
+			      ExclusionFile << "0 -1 2 " << TmpIndex << " " << ExcludedSites[TmpIndex][3] << endl;
 			      ExclusionFile.close();
 			      ++TmpIndex;
-
+			      NbrExcludedSites[TmpIndex] = 4;
+			      ExcludedSites[TmpIndex] = new int[NbrExcludedSites[TmpIndex]];
+			      ExcludedSites[TmpIndex][0] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(0, 0, 3);				      
+			      ExcludedSites[TmpIndex][1] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(1, 0, 3);				      
+			      ExcludedSites[TmpIndex][2] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(0, 1, 1);				      
+			      ExcludedSites[TmpIndex][3] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(0, 0, 1);				      
+			      ExclusionFile << "0 0 3 " << TmpIndex << " " << ExcludedSites[TmpIndex][0] << endl;
+			      ExclusionFile << "1 0 3 " << TmpIndex << " " << ExcludedSites[TmpIndex][1] << endl;
+			      ExclusionFile << "0 1 1 " << TmpIndex << " " << ExcludedSites[TmpIndex][2] << endl;
+			      ExclusionFile << "0 0 1 " << TmpIndex << " " << ExcludedSites[TmpIndex][3] << endl;
+			      ExclusionFile.close();
+			      ++TmpIndex;
+			      NbrExcludedSites[TmpIndex] = 4;
+			      ExcludedSites[TmpIndex] = new int[NbrExcludedSites[TmpIndex]];
+			      ExcludedSites[TmpIndex][0] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(0, 0, 2);				      
+			      ExcludedSites[TmpIndex][1] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(0, 0, 0);				      
+			      ExcludedSites[TmpIndex][2] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(0, 1, 0);				      
+			      ExcludedSites[TmpIndex][3] = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(-1, 0, 2);				      
+			      ExclusionFile << "0 0 2 " << TmpIndex << " " << ExcludedSites[TmpIndex][0] << endl;
+			      ExclusionFile << "0 0 0 " << TmpIndex << " " << ExcludedSites[TmpIndex][1] << endl;
+			      ExclusionFile << "0 1 0 " << TmpIndex << " " << ExcludedSites[TmpIndex][2] << endl;
+			      ExclusionFile << "-1 0 2 " << TmpIndex << " " << ExcludedSites[TmpIndex][3] << endl;
+			      ExclusionFile.close();
+			      ++TmpIndex;
 			      Space = new FermionOnLatticeRealSpaceAnd2DTranslationWithExclusion(NbrParticles, NbrSites, 
 												 i, NbrSitesX, j, NbrSitesY, ExcludedSites, NbrExcludedSites);			      
 			      for (int i = 0; i < TmpIndex; ++i)
@@ -966,27 +1085,35 @@ void FHISimpleC4QuadrupoleModelComputeInteractingOrbitals(int*& nbrInteractingOr
 							  int**& interactingOrbitalsSpatialIndices, double**& interactingOrbitalsPotentials,
 							  bool bosonFlag, double uPotential, double vPotential, Abstract2DTightBindingModel* tightBindingModel)
 {
-  nbrInteractingOrbitals = new int[2];
-  interactingOrbitalsOrbitalIndices = new int*[2];
-  interactingOrbitalsSpatialIndices = new int*[2];
-  interactingOrbitalsPotentials = new double*[2];
+  nbrInteractingOrbitals = new int[4];
+  interactingOrbitalsOrbitalIndices = new int*[4];
+  interactingOrbitalsSpatialIndices = new int*[4];
+  interactingOrbitalsPotentials = new double*[4];
   int p;
   int q;
   if (bosonFlag == false)
     {
-      nbrInteractingOrbitals[0] = 1;
-      nbrInteractingOrbitals[1] = 3;
-      if (vPotential != 0.0)
-	{
-	  nbrInteractingOrbitals[0] += 2;
-	  nbrInteractingOrbitals[1] += 2;
-	}
+      nbrInteractingOrbitals[0] = 2;
+      nbrInteractingOrbitals[1] = 2;
+      nbrInteractingOrbitals[2] = 2;
+      nbrInteractingOrbitals[3] = 2;
+//       if (vPotential != 0.0)
+// 	{
+// 	  nbrInteractingOrbitals[0] += 2;
+// 	  nbrInteractingOrbitals[1] += 2;
+// 	}
       interactingOrbitalsOrbitalIndices[0] = new int[nbrInteractingOrbitals[0]];
       interactingOrbitalsSpatialIndices[0] = new int[nbrInteractingOrbitals[0] * 2];
       interactingOrbitalsPotentials[0] = new double[nbrInteractingOrbitals[0]];
       interactingOrbitalsOrbitalIndices[1] = new int[nbrInteractingOrbitals[1]];
       interactingOrbitalsSpatialIndices[1] = new int[nbrInteractingOrbitals[1] * 2];
       interactingOrbitalsPotentials[1] = new double[nbrInteractingOrbitals[1]];
+      interactingOrbitalsOrbitalIndices[2] = new int[nbrInteractingOrbitals[2]];
+      interactingOrbitalsSpatialIndices[2] = new int[nbrInteractingOrbitals[2] * 2];
+      interactingOrbitalsPotentials[2] = new double[nbrInteractingOrbitals[2]];
+      interactingOrbitalsOrbitalIndices[3] = new int[nbrInteractingOrbitals[3]];
+      interactingOrbitalsSpatialIndices[3] = new int[nbrInteractingOrbitals[3] * 2];
+      interactingOrbitalsPotentials[3] = new double[nbrInteractingOrbitals[3]];
 
       int Index = 0;
       interactingOrbitalsOrbitalIndices[0][Index] = 1;
@@ -995,71 +1122,109 @@ void FHISimpleC4QuadrupoleModelComputeInteractingOrbitals(int*& nbrInteractingOr
       interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
       interactingOrbitalsPotentials[0][Index] = uPotential;
       ++Index;
-      if (vPotential != 0.0)
-	{
-	  interactingOrbitalsOrbitalIndices[0][Index] = 0;
-	  tightBindingModel->GetRealSpaceIndex(1, 0, p, q);
-	  interactingOrbitalsSpatialIndices[0][2 * Index] = p;
-	  interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
-	  interactingOrbitalsPotentials[0][Index] = vPotential;
-	  ++Index;	  
-	  interactingOrbitalsOrbitalIndices[0][Index] = 0;
-	  tightBindingModel->GetRealSpaceIndex(0, 1, p, q);
-	  interactingOrbitalsSpatialIndices[0][2 * Index] = p;
-	  interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
-	  interactingOrbitalsPotentials[0][Index] = vPotential;
-	  ++Index;	  
-	}
+      interactingOrbitalsOrbitalIndices[0][Index] = 3;
+      tightBindingModel->GetRealSpaceIndex(0, 0, p, q);
+      interactingOrbitalsSpatialIndices[0][2 * Index] = p;
+      interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
+      interactingOrbitalsPotentials[0][Index] = uPotential;
+      ++Index;
+//       if (vPotential != 0.0)
+// 	{
+// 	  interactingOrbitalsOrbitalIndices[0][Index] = 0;
+// 	  tightBindingModel->GetRealSpaceIndex(1, 0, p, q);
+// 	  interactingOrbitalsSpatialIndices[0][2 * Index] = p;
+// 	  interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
+// 	  interactingOrbitalsPotentials[0][Index] = vPotential;
+// 	  ++Index;	  
+// 	  interactingOrbitalsOrbitalIndices[0][Index] = 0;
+// 	  tightBindingModel->GetRealSpaceIndex(0, 1, p, q);
+// 	  interactingOrbitalsSpatialIndices[0][2 * Index] = p;
+// 	  interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
+// 	  interactingOrbitalsPotentials[0][Index] = vPotential;
+// 	  ++Index;	  
+// 	}
       Index = 0;
+      interactingOrbitalsOrbitalIndices[1][Index] = 2;
+      tightBindingModel->GetRealSpaceIndex(0, 0, p, q);
+      interactingOrbitalsSpatialIndices[1][2 * Index] = p;
+      interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
+      interactingOrbitalsPotentials[1][Index] = uPotential;		  
+      ++Index;
       interactingOrbitalsOrbitalIndices[1][Index] = 0;
       tightBindingModel->GetRealSpaceIndex(1, 0, p, q);
       interactingOrbitalsSpatialIndices[1][2 * Index] = p;
       interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
       interactingOrbitalsPotentials[1][Index] = uPotential;		  
       ++Index;
-      interactingOrbitalsOrbitalIndices[1][Index] = 0;
+
+      Index = 0;
+      interactingOrbitalsOrbitalIndices[2][Index] = 3;
+      tightBindingModel->GetRealSpaceIndex(1, 0, p, q);
+      interactingOrbitalsSpatialIndices[2][2 * Index] = p;
+      interactingOrbitalsSpatialIndices[2][(2 * Index) + 1] = q;
+      interactingOrbitalsPotentials[2][Index] = uPotential;		  
+      ++Index;
+      interactingOrbitalsOrbitalIndices[2][Index] = 1;
       tightBindingModel->GetRealSpaceIndex(0, 1, p, q);
-      interactingOrbitalsSpatialIndices[1][2 * Index] = p;
-      interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
-      interactingOrbitalsPotentials[1][Index] = uPotential;		  
+      interactingOrbitalsSpatialIndices[2][2 * Index] = p;
+      interactingOrbitalsSpatialIndices[2][(2 * Index) + 1] = q;
+      interactingOrbitalsPotentials[2][Index] = uPotential;		  
       ++Index;
-      interactingOrbitalsOrbitalIndices[1][Index] = 0;
-      tightBindingModel->GetRealSpaceIndex(1, 1, p, q);
-      interactingOrbitalsSpatialIndices[1][2 * Index] = p;
-      interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
-      interactingOrbitalsPotentials[1][Index] = uPotential;		  
+
+      Index = 0;
+      interactingOrbitalsOrbitalIndices[3][Index] = 2;
+      tightBindingModel->GetRealSpaceIndex(0, 0, p, q);
+      interactingOrbitalsSpatialIndices[3][2 * Index] = p;
+      interactingOrbitalsSpatialIndices[3][(2 * Index) + 1] = q;
+      interactingOrbitalsPotentials[3][Index] = uPotential;		  
       ++Index;
-      if (vPotential != 0.0)
-	{
-	  interactingOrbitalsOrbitalIndices[1][Index] = 1;
-	  tightBindingModel->GetRealSpaceIndex(1, 0, p, q);
-	  interactingOrbitalsSpatialIndices[1][2 * Index] = p;
-	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
-	  interactingOrbitalsPotentials[1][Index] = vPotential;
-	  ++Index;	  
-	  interactingOrbitalsOrbitalIndices[1][Index] = 1;
-	  tightBindingModel->GetRealSpaceIndex(0, 1, p, q);
-	  interactingOrbitalsSpatialIndices[1][2 * Index] = p;
-	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
-	  interactingOrbitalsPotentials[1][Index] = vPotential;
-	  ++Index;	  
-	}
+      interactingOrbitalsOrbitalIndices[3][Index] = 0;
+      tightBindingModel->GetRealSpaceIndex(0, 1, p, q);
+      interactingOrbitalsSpatialIndices[3][2 * Index] = p;
+      interactingOrbitalsSpatialIndices[3][(2 * Index) + 1] = q;
+      interactingOrbitalsPotentials[3][Index] = uPotential;		  
+      ++Index;
+
+
+//       if (vPotential != 0.0)
+// 	{
+// 	  interactingOrbitalsOrbitalIndices[1][Index] = 1;
+// 	  tightBindingModel->GetRealSpaceIndex(1, 0, p, q);
+// 	  interactingOrbitalsSpatialIndices[1][2 * Index] = p;
+// 	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
+// 	  interactingOrbitalsPotentials[1][Index] = vPotential;
+// 	  ++Index;	  
+// 	  interactingOrbitalsOrbitalIndices[1][Index] = 1;
+// 	  tightBindingModel->GetRealSpaceIndex(0, 1, p, q);
+// 	  interactingOrbitalsSpatialIndices[1][2 * Index] = p;
+// 	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
+// 	  interactingOrbitalsPotentials[1][Index] = vPotential;
+// 	  ++Index;	  
+// 	}
     }
   else
     {
       nbrInteractingOrbitals[0] = 1;
       nbrInteractingOrbitals[1] = 1;
-      if (vPotential != 0.0)
-	{
-	  nbrInteractingOrbitals[0] += 1;
-	  nbrInteractingOrbitals[1] += 3;
-	}
+      nbrInteractingOrbitals[2] = 1;
+      nbrInteractingOrbitals[3] = 1;
+//       if (vPotential != 0.0)
+// 	{
+// 	  nbrInteractingOrbitals[0] += 1;
+// 	  nbrInteractingOrbitals[1] += 3;
+// 	}
       interactingOrbitalsOrbitalIndices[0] = new int[nbrInteractingOrbitals[0]];
       interactingOrbitalsSpatialIndices[0] = new int[nbrInteractingOrbitals[0] * 2];
       interactingOrbitalsPotentials[0] = new double[nbrInteractingOrbitals[0]];
       interactingOrbitalsOrbitalIndices[1] = new int[nbrInteractingOrbitals[1]];
       interactingOrbitalsSpatialIndices[1] = new int[nbrInteractingOrbitals[1] * 2];
       interactingOrbitalsPotentials[1] = new double[nbrInteractingOrbitals[1]];
+      interactingOrbitalsOrbitalIndices[2] = new int[nbrInteractingOrbitals[2]];
+      interactingOrbitalsSpatialIndices[2] = new int[nbrInteractingOrbitals[2] * 2];
+      interactingOrbitalsPotentials[2] = new double[nbrInteractingOrbitals[2]];
+      interactingOrbitalsOrbitalIndices[3] = new int[nbrInteractingOrbitals[3]];
+      interactingOrbitalsSpatialIndices[3] = new int[nbrInteractingOrbitals[3] * 2];
+      interactingOrbitalsPotentials[3] = new double[nbrInteractingOrbitals[3]];
   
       int Index = 0;
       interactingOrbitalsOrbitalIndices[0][Index] = 0;
@@ -1068,14 +1233,14 @@ void FHISimpleC4QuadrupoleModelComputeInteractingOrbitals(int*& nbrInteractingOr
       interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
       interactingOrbitalsPotentials[0][Index] = 0.5 * uPotential;
       ++Index;
-      if (vPotential != 0.0)
-	{
-	  interactingOrbitalsOrbitalIndices[0][Index] = 1;
-	  tightBindingModel->GetRealSpaceIndex(0, 0, p, q);
-	  interactingOrbitalsSpatialIndices[0][2 * Index] = p;
-	  interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
-	  interactingOrbitalsPotentials[0][Index] = vPotential;	  
-	}
+//       if (vPotential != 0.0)
+// 	{
+// 	  interactingOrbitalsOrbitalIndices[0][Index] = 1;
+// 	  tightBindingModel->GetRealSpaceIndex(0, 0, p, q);
+// 	  interactingOrbitalsSpatialIndices[0][2 * Index] = p;
+// 	  interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
+// 	  interactingOrbitalsPotentials[0][Index] = vPotential;	  
+// 	}
       Index = 0;
       interactingOrbitalsOrbitalIndices[1][Index] = 1;
       tightBindingModel->GetRealSpaceIndex(0, 0, p, q);
@@ -1083,26 +1248,40 @@ void FHISimpleC4QuadrupoleModelComputeInteractingOrbitals(int*& nbrInteractingOr
       interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
       interactingOrbitalsPotentials[1][Index] = 0.5 * uPotential;
       ++Index;
-      if (vPotential != 0.0)
-	{
-	  interactingOrbitalsOrbitalIndices[1][Index] = 0;
-	  tightBindingModel->GetRealSpaceIndex(1, 0, p, q);
-	  interactingOrbitalsSpatialIndices[1][2 * Index] = p;
-	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
-	  interactingOrbitalsPotentials[1][Index] = vPotential;		  
-	  ++Index;
-	  interactingOrbitalsOrbitalIndices[1][Index] = 0;
-	  tightBindingModel->GetRealSpaceIndex(0, 1, p, q);
-	  interactingOrbitalsSpatialIndices[1][2 * Index] = p;
-	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
-	  interactingOrbitalsPotentials[1][Index] = vPotential;		  
-	  ++Index;
-	  interactingOrbitalsOrbitalIndices[1][Index] = 0;
-	  tightBindingModel->GetRealSpaceIndex(1, 1, p, q);
-	  interactingOrbitalsSpatialIndices[1][2 * Index] = p;
-	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
-	  interactingOrbitalsPotentials[1][Index] = vPotential;		  
-	  ++Index;
-	}
+      Index = 0;
+      interactingOrbitalsOrbitalIndices[2][Index] = 2;
+      tightBindingModel->GetRealSpaceIndex(0, 0, p, q);
+      interactingOrbitalsSpatialIndices[2][2 * Index] = p;
+      interactingOrbitalsSpatialIndices[2][(2 * Index) + 1] = q;
+      interactingOrbitalsPotentials[2][Index] = 0.5 * uPotential;
+      ++Index;
+      Index = 0;
+      interactingOrbitalsOrbitalIndices[3][Index] = 3;
+      tightBindingModel->GetRealSpaceIndex(0, 0, p, q);
+      interactingOrbitalsSpatialIndices[3][2 * Index] = p;
+      interactingOrbitalsSpatialIndices[3][(2 * Index) + 1] = q;
+      interactingOrbitalsPotentials[3][Index] = 0.5 * uPotential;
+      ++Index;
+//       if (vPotential != 0.0)
+// 	{
+// 	  interactingOrbitalsOrbitalIndices[1][Index] = 0;
+// 	  tightBindingModel->GetRealSpaceIndex(1, 0, p, q);
+// 	  interactingOrbitalsSpatialIndices[1][2 * Index] = p;
+// 	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
+// 	  interactingOrbitalsPotentials[1][Index] = vPotential;		  
+// 	  ++Index;
+// 	  interactingOrbitalsOrbitalIndices[1][Index] = 0;
+// 	  tightBindingModel->GetRealSpaceIndex(0, 1, p, q);
+// 	  interactingOrbitalsSpatialIndices[1][2 * Index] = p;
+// 	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
+// 	  interactingOrbitalsPotentials[1][Index] = vPotential;		  
+// 	  ++Index;
+// 	  interactingOrbitalsOrbitalIndices[1][Index] = 0;
+// 	  tightBindingModel->GetRealSpaceIndex(1, 1, p, q);
+// 	  interactingOrbitalsSpatialIndices[1][2 * Index] = p;
+// 	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
+// 	  interactingOrbitalsPotentials[1][Index] = vPotential;		  
+// 	  ++Index;
+// 	}
     }
 }

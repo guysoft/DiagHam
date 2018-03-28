@@ -25,9 +25,21 @@ double FQHECylinderComputeSharpRealSpaceCutCoefficient (double orbitalIndex, dou
 // orbitalIndex = index of the orbital (can be negative, zero-th orbital being centered at x=0)
 // perimeter = cylinder perimeter
 // cutInitialPosition = leftmost x position of the cut
-// cutFinalPosition = leftmost x position of the cut
+// cutFinalPosition = rightmost x position of the cut
 // return value = square of the orbital weight
 double FQHECylinderComputeSharpRealSpaceCutCoefficient (double orbitalIndex, double perimeter, double cutInitialPosition, double cutFinalPosition);
+
+// compute the weight for a sharp real space cut with patch having a finite length along the cylinder axis 
+// and a finite width (centered around y=0)
+//
+// orbitalIndex1 = index of the first orbital (can be negative, zero-th orbital being centered at x=0)
+// orbitalIndex2 = index of the second orbital (can be negative, zero-th orbital being centered at x=0)
+// perimeter = cylinder perimeter
+// cutInitialPosition = leftmost x position of the cut
+// cutFinalPosition = rightmost x position of the cut
+// width = patch width along the cylinder perimeter
+// return value = square of the orbital weight
+double FQHECylinderComputeSharpRealSpaceCutCoefficient (double orbitalIndex1, double orbitalIndex2, double perimeter, double cutInitialPosition, double cutFinalPosition, double width);
 
 int main(int argc, char** argv)
 {
@@ -88,8 +100,17 @@ int main(int argc, char** argv)
       double CutLength = 0.0;
       if (Manager.GetString("output-file") == 0)
 	{
-	  OutputFile = new char[512];
-	  sprintf (OutputFile, "realspace_cylinder_l_%.6f_perimeter_%.6f_2s_%d.dat", CutPosition, Perimeter, NbrFluxQuanta);
+	  if (Manager.GetBoolean("finite-patch") == true)
+	    {
+	      OutputFile = new char[512];
+	      sprintf (OutputFile, "realspace_cylinder_l_%.6f_perimeter_%.6f_xcenter_%.6f_length_%.6f_2s_%d.dat", CutPosition, Perimeter, 
+		       Manager.GetDouble("patch-center"), Manager.GetDouble("patch-length"), NbrFluxQuanta);
+	    }
+	  else
+	    {
+	      OutputFile = new char[512];
+	      sprintf (OutputFile, "realspace_cylinder_l_%.6f_perimeter_%.6f_2s_%d.dat", CutPosition, Perimeter, NbrFluxQuanta);
+	    }
 	}
       else
 	{
@@ -190,6 +211,63 @@ int main(int argc, char** argv)
       File.close();
       delete[] Coefficients;
     }
+  else
+    {
+      double CutPosition = Manager.GetDouble("patch-center");
+      double CutLength = Manager.GetDouble("patch-length");
+      double CutWidth = Manager.GetDouble("patch-width");
+      if (Manager.GetString("output-file") == 0)
+	{
+	  OutputFile = new char[512];
+	  sprintf (OutputFile, "realspace_cylinder_l_%.6f_perimeter_%.6f_xcenter_%.6f_length_%.6f_width_%.6f_2s_%d.dat", CutPosition, Perimeter, 
+		   CutPosition, CutLength, CutWidth, NbrFluxQuanta);
+	}
+      else
+	{
+	  OutputFile = new char[strlen(Manager.GetString("output-file")) + 1];
+	  strcpy (OutputFile, Manager.GetString("output-file"));
+	}
+
+      ofstream File;
+      File.open(OutputFile, ios::binary | ios::out);
+      File.precision(14);
+      File << "# real space coefficients for a sharp cut centered at x=" << CutPosition << " and of length=" << CutLength << " and width=" << CutWidth << " on ";
+      if (NbrFluxQuanta == 0)
+	{
+	  File << "an infinite cylinder with perimeter L=" << Perimeter;
+	}
+      else
+	{
+	  File << "a cylinder with perimeter L=" << Perimeter << " and N_phi=" << NbrFluxQuanta;
+	}
+      File << endl;
+      if (NbrFluxQuanta == 0)
+	{
+	}
+      else
+	{
+	  for (int i = 0; i <= NbrFluxQuanta; ++i)
+	    {
+	      for (int j = 0; j <= NbrFluxQuanta; ++j)
+		{
+		  double TmpCoefficient = 0.0;
+		  if (i != j)
+		    {
+		      TmpCoefficient = FQHECylinderComputeSharpRealSpaceCutCoefficient(((double) i) - 0.5 * ((double) NbrFluxQuanta), 
+										       ((double) j) - 0.5 * ((double) NbrFluxQuanta), Perimeter, 
+										       CutPosition - (0.5 * CutLength), CutPosition + (0.5 * CutLength), CutWidth);
+		    }
+		  else
+		    {
+		      TmpCoefficient = (CutWidth / Perimeter) *  FQHECylinderComputeSharpRealSpaceCutCoefficient(((double) i) - 0.5 * ((double) NbrFluxQuanta), Perimeter, 
+														 CutPosition - (0.5 * CutLength), CutPosition + (0.5 * CutLength));
+		    }
+		  File << i << " " << j << " " << TmpCoefficient << endl;
+		}
+	    }
+	}
+      File.close();
+    }
   return 0;
 }
 
@@ -211,10 +289,30 @@ double FQHECylinderComputeSharpRealSpaceCutCoefficient (double orbitalIndex, dou
 // orbitalIndex = index of the orbital (can be negative, zero-th orbital being centered at x=0)
 // perimeter = cylinder perimeter
 // cutInitialPosition = leftmost x position of the cut
-// cutFinalPosition = leftmost x position of the cut
+// cutFinalPosition = rightmost x position of the cut
 // return value = square of the orbital weight
 
 double FQHECylinderComputeSharpRealSpaceCutCoefficient (double orbitalIndex, double perimeter, double cutInitialPosition, double cutFinalPosition)
 {  
-  return (0.5 * (erf((orbitalIndex * 2.0 * M_PI / perimeter) - cutInitialPosition) + erf(cutFinalPosition - (orbitalIndex * 2.0 * M_PI / perimeter))));
+  return (0.5 * (erf(cutFinalPosition - (orbitalIndex * 2.0 * M_PI / perimeter))
+		 - erf(cutInitialPosition - (orbitalIndex * 2.0 * M_PI / perimeter))));
+}
+
+// compute the weight for a sharp real space cut with patch having a finite length along the cylinder axis 
+// and a finite width (centered around y=0)
+//
+// orbitalIndex1 = index of the first orbital (can be negative, zero-th orbital being centered at x=0)
+// orbitalIndex2 = index of the second orbital (can be negative, zero-th orbital being centered at x=0)
+// perimeter = cylinder perimeter
+// cutInitialPosition = leftmost x position of the cut
+// cutFinalPosition = rightmost x position of the cut
+// width = patch width along the cylinder perimeter
+// return value = square of the orbital weight
+
+double FQHECylinderComputeSharpRealSpaceCutCoefficient (double orbitalIndex1, double orbitalIndex2, double perimeter, double cutInitialPosition, double cutFinalPosition, double width)
+{  
+  return (0.5 * (erf(cutFinalPosition - (orbitalIndex1 + orbitalIndex2) * M_PI / perimeter)
+		 - erf(cutInitialPosition - (orbitalIndex1 + orbitalIndex2) * M_PI / perimeter))
+	  * exp (-(M_PI * M_PI) / (perimeter * perimeter) * (orbitalIndex1 - orbitalIndex2) * (orbitalIndex1 - orbitalIndex2))
+	  * sin (M_PI * width / perimeter * (orbitalIndex1 - orbitalIndex2)) / (M_PI * (orbitalIndex1 - orbitalIndex2)));
 }
