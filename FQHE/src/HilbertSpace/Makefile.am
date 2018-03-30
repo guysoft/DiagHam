@@ -193,4 +193,5 @@ BosonOnT2xS2WithMagneticTranslationsShort.cc \
 BosonOnT2xS2HardcoreNoNearestNeighbors.cc \
 BosonOnT2xS2HardcoreNoNearestNeighborsWithMagneticTranslations.cc \
 BosonOnT2xS2.cc \
-BosonOnSphereWithSU2SpinPartialPolarization.cc
+BosonOnSphereWithSU2SpinPartialPolarization.cc \
+BosonOnSphereWithSU2SpinAllLz.cc

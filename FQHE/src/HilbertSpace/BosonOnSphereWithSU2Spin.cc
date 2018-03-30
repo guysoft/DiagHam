@@ -30,6 +30,7 @@
 
 #include "config.h"
 #include "HilbertSpace/BosonOnSphereWithSU2Spin.h"
+#include "HilbertSpace/BosonOnSphereWithSU2SpinAllLz.h"
 #include "HilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
@@ -3648,7 +3649,52 @@ RealMatrix BosonOnSphereWithSU2Spin::EvaluateEntanglementMatrixGenericRealSpaceP
   int TotalNbrRow = 0;
   int TotalNbrColumn = 0;
 
-  RealMatrix TmpEntanglementMatrix (TotalNbrRow, TotalNbrColumn, true);
+  int ComplementaryNbrParticles = this->NbrBosons - nbrParticleSector;
+  int ComplementarySzSector = this->TotalSpin - szSector;
+
+  BosonOnSphereWithSU2SpinAllLz* TotalSubsytemSpace = new BosonOnSphereWithSU2SpinAllLz(nbrParticleSector, nbrOrbitalA - 1, szSector);
+  BosonOnSphereWithSU2SpinAllLz* TotalComplementarySubsytemSpace = new BosonOnSphereWithSU2SpinAllLz(ComplementaryNbrParticles, nbrOrbitalB - 1, ComplementarySzSector);
+
+  BosonOnSphereWithSU2Spin** SubsytemSpaces = new BosonOnSphereWithSU2Spin* [nbrEntanglementMatrices];
+  BosonOnSphereWithSU2Spin** ComplementarySubsytemSpaces = new BosonOnSphereWithSU2Spin* [nbrEntanglementMatrices];
+  int TotalLzDisk = ConvertLzFromSphereToDisk(this->TotalLz, this->NbrBosons, this->LzMax);  
+  
+  for (int i = 0; i < nbrEntanglementMatrices; ++i)
+    {
+      int LzADisk = ConvertLzFromSphereToDisk(entanglementMatrixLzSectors[i], nbrParticleSector, nbrOrbitalA - 1);
+      int LzBDisk = (TotalLzDisk - LzADisk) - ComplementaryNbrParticles * (this->LzMax + 1 - nbrOrbitalB);
+      int ComplementaryLzSector = ConvertLzFromDiskToSphere(LzBDisk, ComplementaryNbrParticles, nbrOrbitalB - 1);
+      SubsytemSpaces[i] = new BosonOnSphereWithSU2Spin(nbrParticleSector, entanglementMatrixLzSectors[i], nbrOrbitalA - 1, szSector);
+      ComplementarySubsytemSpaces[i] = new BosonOnSphereWithSU2Spin(ComplementaryNbrParticles, ComplementaryLzSector, nbrOrbitalB - 1, ComplementarySzSector);
+    }
+
+  RealMatrix TmpEntanglementMatrix (TotalSubsytemSpace->GetHilbertSpaceDimension(), TotalComplementarySubsytemSpace->GetHilbertSpaceDimension(), true);
+
+  
+  for (int i = 0; i < nbrEntanglementMatrices; ++i)
+    {
+      for (int TmpSubsytemIndex = 0; TmpSubsytemIndex <  SubsytemSpaces[i]->GetHilbertSpaceDimension(); ++TmpSubsytemIndex)
+	{
+	  int TmpA = TotalSubsytemSpace->FindStateIndex(SubsytemSpaces[i]->StateDescriptionUp[TmpSubsytemIndex], 
+							SubsytemSpaces[i]->StateDescriptionDown[TmpSubsytemIndex]);
+	  for (int TmpComplementarySubsytemIndex = 0; TmpComplementarySubsytemIndex <  ComplementarySubsytemSpaces[i]->GetHilbertSpaceDimension(); ++TmpComplementarySubsytemIndex)
+	    {
+	      double TmpElement;
+	      entanglementMatrices[i].GetMatrixElement(TmpSubsytemIndex, TmpComplementarySubsytemIndex, TmpElement);
+	      int TmpB = TotalComplementarySubsytemSpace->FindStateIndex(ComplementarySubsytemSpaces[i]->StateDescriptionUp[TmpComplementarySubsytemIndex], 
+									 ComplementarySubsytemSpaces[i]->StateDescriptionDown[TmpComplementarySubsytemIndex]);
+	      TmpEntanglementMatrix.SetMatrixElement(TmpA, TmpB, TmpElement);
+	    }
+	}
+    }
+
+  for (int i = 0; i < nbrEntanglementMatrices; ++i)
+    {
+      delete SubsytemSpaces[i];
+      delete ComplementarySubsytemSpaces[i];
+    }
+  delete[] SubsytemSpaces;
+  delete[] ComplementarySubsytemSpaces;
 
   return TmpEntanglementMatrix;
 }

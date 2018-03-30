@@ -80,6 +80,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "laughlin-exponent", "start the Haldane algorithm from Laughlin state with exponent m)", -1);
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
+  (*SystemGroup) += new SingleDoubleOption ('\n', "energy-shift", "apply a temporary energy shift used during the diagonalization", 0.0);
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "s2-memory", "amount of memory that can be allocated for fast multiplication of s2 term (in Mbytes)", 500);
@@ -287,7 +288,7 @@ int main(int argc, char** argv)
     }
   for (; L <= Max; L += 2)
     {
-      double Shift = 0.0;
+      double Shift = Manager.GetDouble("energy-shift");
       ParticleOnSphereWithSpin* Space = 0;
       Space = (ParticleOnSphereWithSpin*) ParticleManager.GetHilbertSpace(L*LSign);
       if (Space->GetHilbertSpaceDimension() > 0)

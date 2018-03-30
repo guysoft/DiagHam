@@ -81,6 +81,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('c', "complex", "Assume vectors consist of complex numbers");
   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
   (*SystemGroup) += new SingleStringOption  ('\n', "realspace-cut", "use real space partition instead of particle partition, providing the orbital weights");
+  (*SystemGroup) += new BooleanOption  ('\n', "symbreak-patch", "when using real space partition, assume a patch that breaks all spatial symmetries");
   (*SystemGroup) += new BooleanOption  ('\n', "use-alt", "use alternative Hilbert space for  bosonic states");
   (*SystemGroup) += new SingleStringOption ('\n', "selected-blocks", "provide a column formatted ascii file that indicates which block of the reduced density matrix should be computed");
   (*SystemGroup) += new BooleanOption ('\n', "partial-es", "only compute the first few entanglement energues per quantum number sector");
@@ -143,9 +144,22 @@ int main(int argc, char** argv)
   bool NoSzFlag = Manager.GetBoolean("no-sz");
   bool ComplexFlag = Manager.GetBoolean("complex");
   bool RealSpaceCut = false;
+  bool SymmetryBreakingPatch = false;
   if (Manager.GetString("realspace-cut") != 0)
     {
       RealSpaceCut = true;
+      if (Manager.GetBoolean("symbreak-patch"))
+	{
+	  SymmetryBreakingPatch = true;
+	}
+    }
+  else
+    {
+      if (Manager.GetBoolean("symbreak-patch"))
+	{
+	  cout << "error, --symbreak-patch should be used with --realspace-cut" << endl;
+	  return -1;
+	}
     }
   bool PartialDiagonalization = Manager.GetBoolean("partial-es");
   int* TotalLz = 0;
