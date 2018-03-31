@@ -290,7 +290,7 @@ int main(int argc, char** argv)
     {
       double Shift = Manager.GetDouble("energy-shift");
       ParticleOnSphereWithSpin* Space = 0;
-      Space = (ParticleOnSphereWithSpin*) ParticleManager.GetHilbertSpace(L*LSign);
+      Space = (ParticleOnSphereWithSpin*) ParticleManager.GetHilbertSpace(L * LSign);
       if (Space->GetHilbertSpaceDimension() > 0)
 	{
 	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
@@ -320,7 +320,7 @@ int main(int argc, char** argv)
 	    {
 	      char* TmpName = RemoveExtensionFromFileName(OutputName, ".dat");
 	      EigenvectorName = new char [32 + strlen(TmpName)];
-	      sprintf (EigenvectorName, "%s_lz_%d", TmpName, L);
+	      sprintf (EigenvectorName, "%s_lz_%d", TmpName, (L * LSign));
 	      delete[] TmpName;
 	    }
 	  QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L*LSign, Shift, OutputName, FirstRun, EigenvectorName, LzMax);

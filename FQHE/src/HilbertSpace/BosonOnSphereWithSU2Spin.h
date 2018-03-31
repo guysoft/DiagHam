@@ -539,7 +539,8 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
 													int nbrOrbitalA, int* nbrConnectedOrbitalAUp, int* nbrConnectedOrbitalADown,
 													int** connectedOrbitalAUp, int** connectedOrbitalADown, 
 													double** weightOrbitalAUp, double** weightOrbitalADown, 
-													int nbrOrbitalB, int* connectedOrbitalBUp, int* connectedOrbitalBDown, 
+													int nbrOrbitalB, int* nbrConnectedOrbitalBUp, int* nbrConnectedOrbitalBDown, 
+													int** connectedOrbitalBUp, int** connectedOrbitalBDown, 
 													double** weightOrbitalBUp, double** weightOrbitalBDown, 
 													int nbrEntanglementMatrices, int* entanglementMatrixLzSectors,
 													RealMatrix* entanglementMatrices);
