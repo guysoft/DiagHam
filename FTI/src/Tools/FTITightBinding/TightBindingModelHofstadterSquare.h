@@ -36,6 +36,11 @@
 #include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
 
 
+
+#include <iostream>
+using std::cout;
+using std::endl;
+
 class TightBindingModelHofstadterSquare : public Abstract2DTightBindingModel
 {
  protected:
@@ -343,6 +348,8 @@ inline void TightBindingModelHofstadterSquare::DecodeSublatticeIndex(int index, 
 //
 inline int  TightBindingModelHofstadterSquare::GetRealSpaceTightBindingLinearizedIndexSafe(int x, int y, int orbitalIndex, int & numXTranslations, int &numYTranslations)
 {
+  
+  cout << (this->NbrSiteX) << endl;
   numXTranslations=0;
   numYTranslations=0;
   orbitalIndex %= this->NbrBands;

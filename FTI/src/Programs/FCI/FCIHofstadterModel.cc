@@ -410,10 +410,10 @@ int main(int argc, char** argv)
       Abstract2DTightBindingModel *TightBindingModel;
       if (Manager.GetBoolean("triangular")==false)
       {
-	if ((MuPotential == 0.0) && (EnlargeCellXFlag == false) && (T1 == 0.0) && (T2 == 0.0) && (delta == 0.0) && (M == 0.0))
+	if ((MuPotential == 0.0) && (EnlargeCellXFlag == false) && (EnlargeCellYFlag == false) && (T1 == 0.0) && (T2 == 0.0) && (delta == 0.0) && (M == 0.0))
 	  TightBindingModel= new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody, EmbeddingFlag, Precision);
 	else
-	  if ((delta == 0.0) && (M == 0.0))
+	  if ((EnlargeCellYFlag == false) && (delta == 0.0) && (M == 0.0))
 	    TightBindingModel= new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, MuPotential, FullUnitCellX, T1, T2, Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody, EmbeddingFlag, Precision);
 	  else
 	  {
@@ -514,10 +514,11 @@ int main(int argc, char** argv)
   Abstract2DTightBindingModel *TightBindingModel;
   if (Manager.GetBoolean("triangular")==false)
       {
-	if ((MuPotential == 0.0) && (EnlargeCellXFlag == false) && (T1 == 0.0) && (T2 == 0.0))
+	if ((MuPotential == 0.0) && (EnlargeCellXFlag == false) && (EnlargeCellYFlag == false) && (T1 == 0.0) && (T2 == 0.0))
 	  TightBindingModel= new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true, EmbeddingFlag, Precision);
 	else
-	  if ((delta == 0.0) && (M == 0.0))
+	{
+	  if ((EnlargeCellYFlag == false) && (delta == 0.0) && (M == 0.0))
 	    TightBindingModel= new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, MuPotential, FullUnitCellX, T1, T2, Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true, EmbeddingFlag, Precision);
 	  else
 	  {
@@ -528,7 +529,7 @@ int main(int argc, char** argv)
 	    }
 	    TightBindingModel= new TightBindingModelHofstadterSquare(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, FullUnitCellX, FullUnitCellY, delta, M, Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true, EmbeddingFlag, Precision);
 	  }
-	  
+	}	  
       }
   else
     TightBindingModel= new TightBindingModelHofstadterTriangular(NbrCellX, NbrCellY, UnitCellX, UnitCellY, FluxPerCell, Axis,

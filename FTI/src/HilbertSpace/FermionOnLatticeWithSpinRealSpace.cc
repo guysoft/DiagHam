@@ -310,7 +310,7 @@ ostream& FermionOnLatticeWithSpinRealSpace::PrintState (ostream& Str, int state)
 {
   unsigned long TmpState = this->StateDescription[state];
   unsigned long Tmp;
-  for (int i = 0; i < this->LzMax; ++i)
+  for (int i = 0; i <= this->LzMax; ++i)
     {
       Tmp = (TmpState >> (i << 1)) & 03ul;
       switch (Tmp)

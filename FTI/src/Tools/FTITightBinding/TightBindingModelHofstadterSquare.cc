@@ -233,7 +233,7 @@ TightBindingModelHofstadterSquare::TightBindingModelHofstadterSquare(int nbrCell
   this->LatticeVector1[1] = 0.0;
   this->LatticeVector2.Resize(2);
   this->LatticeVector2[0] = 0.0;
-  this->LatticeVector2[1] = this->UnitCellY;
+  this->LatticeVector2[1] = this->FullUnitCellY;
   this->MuS = 0.0;
   this->T1 = 0.0;
   this->T2 = 0.0;
@@ -243,7 +243,7 @@ TightBindingModelHofstadterSquare::TightBindingModelHofstadterSquare(int nbrCell
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
   this->GammaX = gammaX;
   this->GammaY = gammaY;
-  this->NbrBands = this->FullUnitCellX * this->UnitCellY;
+  this->NbrBands = this->FullUnitCellX * this->FullUnitCellY;
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
   this->LandauGaugeAxis=axis;
   this->Architecture = architecture;
@@ -308,6 +308,7 @@ TightBindingModelHofstadterSquare::TightBindingModelHofstadterSquare(char *fileN
   ReadLittleEndian(File, this->Delta);
   ReadLittleEndian(File, this->M);
   ReadLittleEndian(File, this->FullUnitCellX);
+  ReadLittleEndian(File, this->FullUnitCellY);
   this->Inversion.Resize(this->NbrBands, this->NbrBands);
   for (int i = 0; i < this->NbrBands; ++i)
     for (int j = 0; j < this->NbrBands; ++j)
@@ -468,6 +469,7 @@ ofstream& TightBindingModelHofstadterSquare::WriteHeader(ofstream& output)
   WriteLittleEndian(output, this->Delta);
   WriteLittleEndian(output, this->M);
   WriteLittleEndian(output, this->FullUnitCellX);
+  WriteLittleEndian(output, this->FullUnitCellY);
 
   return output; 
 }
@@ -522,9 +524,9 @@ bool TightBindingModelHofstadterSquare::PositionToLatticeCoordinates(RealVector 
   int subX, subY;
   this->DecodeSublatticeIndex (alpha, subX, subY );
   tx=(x-subX)/this->FullUnitCellX;
-  ty=(y-subY)/this->UnitCellY;
+  ty=(y-subY)/this->FullUnitCellY;
   // double check that the above algebra is correct:
-  if( ( fabs(tx*this->FullUnitCellX+subX - position[0]) < 1e-13) && (fabs(ty*this->UnitCellY+subY - position[1]) < 1e-13) )
+  if( ( fabs(tx*this->FullUnitCellX+subX - position[0]) < 1e-13) && (fabs(ty*this->FullUnitCellY+subY - position[1]) < 1e-13) )
     {
       sublatticeIndex = alpha;
       return true;
@@ -871,7 +873,7 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructureWithEmbedding(lo
 	      cout << "Sector kx="<<kx<<", ky="<<ky<<" (KX="<<K1<<", KY="<<K2<<")"<<endl;
 #endif
               Complex PhaseEmbeddingX =  Phase(K1/((double)this->FullUnitCellX));
-              Complex PhaseEmbeddingY =  Phase(K2/((double)this->UnitCellY));
+              Complex PhaseEmbeddingY =  Phase(K2/((double)this->FullUnitCellY));
 	      // construct magnetic unit cell:
 	      
 	      HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
@@ -1008,12 +1010,12 @@ void TightBindingModelHofstadterSquare::CoreComputeBandStructureWithEmbedding(lo
 void TightBindingModelHofstadterSquare::SetNaturalEmbedding()
 {
   Complex phase;
-  this->EmbeddingX.Resize(this->FullUnitCellX*this->UnitCellY);
-  this->EmbeddingY.Resize(this->FullUnitCellX*this->UnitCellY);
+  this->EmbeddingX.Resize(this->FullUnitCellX*this->FullUnitCellY);
+  this->EmbeddingY.Resize(this->FullUnitCellX*this->FullUnitCellY);
   double invX = 1.0/((double)this->FullUnitCellX);
-  double invY = 1.0/((double)this->UnitCellY);
+  double invY = 1.0/((double)this->FullUnitCellY);
   for (int i=0; i<this->FullUnitCellX; ++i)
-    for (int j=0; j<this->UnitCellY; ++j)
+    for (int j=0; j<this->FullUnitCellY; ++j)
       {
 	int sublattice = this->EncodeSublatticeIndex(i,j,0.0,0.0,phase);
 	this->EmbeddingX[sublattice] = i*invX;
@@ -1075,12 +1077,12 @@ int TightBindingModelHofstadterSquare::EncodeSublatticeIndex(int posx, int posy,
     }
   while (posy<0)
     {
-      posy+=this->UnitCellY;
+      posy+=this->FullUnitCellY;
       ++numYTranslations;      
     }
-  while (posy>=this->UnitCellY)
+  while (posy>=this->FullUnitCellY)
     {
-      posy-=this->UnitCellY;
+      posy-=this->FullUnitCellY;
       --numYTranslations;
     }
     
@@ -1144,7 +1146,7 @@ ComplexMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingEigenst
 	{ 
 	  this->GetRealSpaceTightBindingLinearizedIndex(j, PosXUnitCell, PosYUnitCell, OrbitalIndex);
 
-	  int TotalPosY = PosYUnitCell*this->UnitCellY + OrbitalIndex/this->FullUnitCellX;
+	  int TotalPosY = PosYUnitCell*this->FullUnitCellY + OrbitalIndex/this->FullUnitCellX;
 
 	  EigenStates[i][j] = this->OneBodyBasis[MomentumIndex][BandNumber][OrbitalIndex] * Phase(K1*PosXUnitCell + K2*PosYUnitCell)* Phase(PosXUnitCell* LogTranslationPhaseX*TotalPosY) ;
 	}
@@ -1225,7 +1227,7 @@ HermitianMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingHamil
 	{
 	  Complex PhaseY = Phase(2.0*M_PI*this->FluxDensity*(double)PosX);
 	  
-	  for (int PosY = 0; PosY <this->UnitCellY; PosY++)
+	  for (int PosY = 0; PosY <this->FullUnitCellY; PosY++)
 	    {
 	     int TmpPosition =  this->EncodeSublatticeIndex(PosX, PosY,NumXTranslations,NumYTranslations,translationPhase);
 	     int TmpIndex = 0;
@@ -1283,7 +1285,7 @@ HermitianMatrix TightBindingModelHofstadterSquare::GetRealSpaceTightBindingHamil
      break;
    }
    case 'x': {
-     for (int PosY=0; PosY<this->UnitCellY; ++PosY)
+     for (int PosY=0; PosY<this->FullUnitCellY; ++PosY)
        {
 	 Complex PhaseX = Phase(-2.0*M_PI*this->FluxDensity*(double)PosY);
 	 for (int PosX=0; PosX<this->FullUnitCellX; ++PosX)
@@ -1579,10 +1581,10 @@ void TightBindingModelHofstadterSquare::GetFunctionValue(Complex& FunctionValue,
   int subX, subY;
   this->DecodeSublatticeIndex (alpha, subX, subY );
   int Rx=(x-subX)/this->FullUnitCellX;
-  int Ry=(y-subY)/this->UnitCellY;
+  int Ry=(y-subY)/this->FullUnitCellY;
   // double check that the above algebra is correct:
   assert( fabs(Rx*this->FullUnitCellX+subX - Position[0]) < 1e-13);
-  assert( fabs(Ry*this->UnitCellY+subY - Position[1]) < 1e-13);
+  assert( fabs(Ry*this->FullUnitCellY+subY - Position[1]) < 1e-13);
   this->GetFunctionValue(FunctionValue, Rx, Ry, alpha, indexK, bandIndex);
 }
 
