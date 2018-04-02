@@ -3653,7 +3653,8 @@ RealMatrix BosonOnSphereWithSU2Spin::EvaluateEntanglementMatrixGenericRealSpaceP
   int ComplementaryNbrParticles = this->NbrBosons - nbrParticleSector;
   int ComplementarySzSector = this->TotalSpin - szSector;
 
-  BosonOnSphereWithSU2SpinAllLz* TotalSubsytemSpace = new BosonOnSphereWithSU2SpinAllLz(nbrParticleSector, nbrOrbitalA - 1, szSector);
+
+  BosonOnSphereWithSU2SpinAllLz* TotalSubsystemSpace = new BosonOnSphereWithSU2SpinAllLz(nbrParticleSector, nbrOrbitalA - 1, szSector);
   BosonOnSphereWithSU2SpinAllLz* TotalComplementarySubsytemSpace = new BosonOnSphereWithSU2SpinAllLz(ComplementaryNbrParticles, nbrOrbitalB - 1, ComplementarySzSector);
 
   BosonOnSphereWithSU2Spin** SubsytemSpaces = new BosonOnSphereWithSU2Spin* [nbrEntanglementMatrices];
@@ -3669,33 +3670,219 @@ RealMatrix BosonOnSphereWithSU2Spin::EvaluateEntanglementMatrixGenericRealSpaceP
       ComplementarySubsytemSpaces[i] = new BosonOnSphereWithSU2Spin(ComplementaryNbrParticles, ComplementaryLzSector, nbrOrbitalB - 1, ComplementarySzSector);
     }
 
-  RealMatrix TmpEntanglementMatrix (TotalSubsytemSpace->GetHilbertSpaceDimension(), TotalComplementarySubsytemSpace->GetHilbertSpaceDimension(), true);
+  RealMatrix TmpEntanglementMatrix (TotalSubsystemSpace->GetHilbertSpaceDimension(), TotalComplementarySubsytemSpace->GetHilbertSpaceDimension(), true);
 
-  
+  unsigned long* TmpComplementaryMonomialUp1 = new unsigned long [ComplementaryNbrParticles];
+  unsigned long* TmpComplementaryMonomialDown1 = new unsigned long [ComplementaryNbrParticles];
+  unsigned long* TmpComplementaryMonomialUp2 = new unsigned long [ComplementaryNbrParticles];
+  unsigned long* TmpComplementaryMonomialDown2 = new unsigned long [ComplementaryNbrParticles];
+  unsigned long* TmpMonomialUp1 = new unsigned long [nbrParticleSector];
+  unsigned long* TmpMonomialDown1 = new unsigned long [nbrParticleSector];
+  unsigned long* TmpMonomialUp2 = new unsigned long [nbrParticleSector];
+  unsigned long* TmpMonomialDown2 = new unsigned long [nbrParticleSector];
+
+  int SubsytemNbrUp = SubsytemSpaces[0]->NbrBosonsUp;
+  int SubsytemNbrDown = SubsytemSpaces[0]->NbrBosonsDown;
+  int ComplementarySubsytemNbrUp = ComplementarySubsytemSpaces[0]->NbrBosonsUp;
+  int ComplementarySubsytemNbrDown = ComplementarySubsytemSpaces[0]->NbrBosonsDown;
+  RealMatrix TmpSubsytemPermanentMatrixUp (SubsytemNbrUp, SubsytemNbrUp);
+  RealMatrix TmpSubsytemPermanentMatrixDown (SubsytemNbrDown, SubsytemNbrDown);
+  RealMatrix TmpComplementarySubsytemPermanentMatrixUp (ComplementarySubsytemNbrUp, ComplementarySubsytemNbrUp);
+  RealMatrix TmpComplementarySubsytemPermanentMatrixDown (ComplementarySubsytemNbrDown, ComplementarySubsytemNbrDown);
+
+  double* LogFactorials = new double[this->NbrBosons + 1];
+  LogFactorials[0] = 0.0;
+  LogFactorials[1] = 0.0;
+  for (int i = 2 ; i <= this->NbrBosons; ++i)
+    LogFactorials[i] = LogFactorials[i - 1] + log((double) i); 
+
+  double* TotalSubsytemOccupationFactors = new double[TotalSubsystemSpace->GetHilbertSpaceDimension()];
+  unsigned long* TmpSubsytemSpaceOccupationNumbersUp = new unsigned long [TotalSubsystemSpace->NbrLzValue];
+  unsigned long* TmpSubsytemSpaceOccupationNumbersDown = new unsigned long [TotalSubsystemSpace->NbrLzValue];
+  for (int i = 0; i < TotalSubsystemSpace->HilbertSpaceDimension; ++i)
+    {
+      TotalSubsystemSpace->FermionToBoson(TotalSubsystemSpace->StateDescriptionUp[i], TotalSubsystemSpace->StateDescriptionDown[i], 
+					  TmpSubsytemSpaceOccupationNumbersUp, TmpSubsytemSpaceOccupationNumbersDown);
+      double TmpFactor = 0.0;
+      for (int k = 0; k <= TotalSubsystemSpace->LzMax; ++k)
+	{
+	  TmpFactor += LogFactorials[TmpSubsytemSpaceOccupationNumbersUp[k]];
+	  TmpFactor += LogFactorials[TmpSubsytemSpaceOccupationNumbersDown[k]];
+	}
+      TotalSubsytemOccupationFactors[i] = TmpFactor;      
+    }
+  double* TotalComplementarySubsytemOccupationFactors = new double[TotalComplementarySubsytemSpace->GetHilbertSpaceDimension()];
+  unsigned long* TmpComplementarySubsytemSpaceOccupationNumbersUp = new unsigned long [TotalComplementarySubsytemSpace->NbrLzValue];
+  unsigned long* TmpComplementarySubsytemSpaceOccupationNumbersDown = new unsigned long [TotalComplementarySubsytemSpace->NbrLzValue];
+  for (int i = 0; i <  TotalComplementarySubsytemSpace->GetHilbertSpaceDimension(); ++i)
+    {
+      TotalComplementarySubsytemSpace->FermionToBoson(TotalComplementarySubsytemSpace->StateDescriptionUp[i], TotalComplementarySubsytemSpace->StateDescriptionDown[i], 
+						      TmpComplementarySubsytemSpaceOccupationNumbersUp, TmpComplementarySubsytemSpaceOccupationNumbersDown);
+      double TmpFactor = 0.0;
+      for (int k = 0; k <= TotalComplementarySubsytemSpace->LzMax; ++k)
+	{
+	  TmpFactor += LogFactorials[TmpComplementarySubsytemSpaceOccupationNumbersUp[k]];
+	  TmpFactor += LogFactorials[TmpComplementarySubsytemSpaceOccupationNumbersDown[k]];
+	}
+      TotalComplementarySubsytemOccupationFactors[i] = TmpFactor;      
+    }
+  double** TotalAllSubsytemOccupationFactors = new double*[nbrEntanglementMatrices];
+  double** TotalAllComplementarySubsytemOccupationFactors = new double*[nbrEntanglementMatrices];
   for (int i = 0; i < nbrEntanglementMatrices; ++i)
     {
+      TotalAllComplementarySubsytemOccupationFactors[i] = new double[ComplementarySubsytemSpaces[i]->GetHilbertSpaceDimension()];
+      for (int TmpComplementarySubsytemIndex = 0; TmpComplementarySubsytemIndex <  ComplementarySubsytemSpaces[i]->GetHilbertSpaceDimension(); ++TmpComplementarySubsytemIndex)
+	{
+	  ComplementarySubsytemSpaces[i]->FermionToBoson(ComplementarySubsytemSpaces[i]->StateDescriptionUp[TmpComplementarySubsytemIndex], 
+							 ComplementarySubsytemSpaces[i]->StateDescriptionDown[TmpComplementarySubsytemIndex], 
+							 TmpComplementarySubsytemSpaceOccupationNumbersUp, TmpComplementarySubsytemSpaceOccupationNumbersDown);
+	  double TmpFactor = 0.0;
+	  for (int k = 0; k <= ComplementarySubsytemSpaces[i]->LzMax; ++k)
+	    {
+	      TmpFactor += LogFactorials[TmpComplementarySubsytemSpaceOccupationNumbersUp[k]];
+	      TmpFactor += LogFactorials[TmpComplementarySubsytemSpaceOccupationNumbersDown[k]];
+	    }
+	  TotalAllComplementarySubsytemOccupationFactors[i][TmpComplementarySubsytemIndex] = TmpFactor;      
+	}
+      TotalAllSubsytemOccupationFactors[i] = new double[SubsytemSpaces[i]->GetHilbertSpaceDimension()];
       for (int TmpSubsytemIndex = 0; TmpSubsytemIndex <  SubsytemSpaces[i]->GetHilbertSpaceDimension(); ++TmpSubsytemIndex)
 	{
-	  int TmpA = TotalSubsytemSpace->FindStateIndex(SubsytemSpaces[i]->StateDescriptionUp[TmpSubsytemIndex], 
-							SubsytemSpaces[i]->StateDescriptionDown[TmpSubsytemIndex]);
-	  for (int TmpComplementarySubsytemIndex = 0; TmpComplementarySubsytemIndex <  ComplementarySubsytemSpaces[i]->GetHilbertSpaceDimension(); ++TmpComplementarySubsytemIndex)
+	  SubsytemSpaces[i]->FermionToBoson(SubsytemSpaces[i]->StateDescriptionUp[TmpSubsytemIndex], 
+					    SubsytemSpaces[i]->StateDescriptionDown[TmpSubsytemIndex], 
+					    TmpSubsytemSpaceOccupationNumbersUp, TmpSubsytemSpaceOccupationNumbersDown);
+	  double TmpFactor = 0.0;
+	  for (int k = 0; k <= SubsytemSpaces[i]->LzMax; ++k)
 	    {
-	      double TmpElement;
-	      entanglementMatrices[i].GetMatrixElement(TmpSubsytemIndex, TmpComplementarySubsytemIndex, TmpElement);
-	      int TmpB = TotalComplementarySubsytemSpace->FindStateIndex(ComplementarySubsytemSpaces[i]->StateDescriptionUp[TmpComplementarySubsytemIndex], 
-									 ComplementarySubsytemSpaces[i]->StateDescriptionDown[TmpComplementarySubsytemIndex]);
-	      TmpEntanglementMatrix.SetMatrixElement(TmpA, TmpB, TmpElement);
+	      TmpFactor += LogFactorials[TmpSubsytemSpaceOccupationNumbersUp[k]];
+	      TmpFactor += LogFactorials[TmpSubsytemSpaceOccupationNumbersDown[k]];
 	    }
+	  TotalAllSubsytemOccupationFactors[i][TmpSubsytemIndex] = TmpFactor;      
 	}
     }
 
+
+
+  for (int i = 0; i < nbrEntanglementMatrices; ++i)
+    {
+      RealMatrix TmpComplementaryTransformationMatrix (ComplementarySubsytemSpaces[i]->GetHilbertSpaceDimension(), TotalComplementarySubsytemSpace->GetHilbertSpaceDimension(), true);
+      for (int TmpComplementarySubsytemIndex = 0; TmpComplementarySubsytemIndex <  ComplementarySubsytemSpaces[i]->GetHilbertSpaceDimension(); ++TmpComplementarySubsytemIndex)
+	{
+	  ComplementarySubsytemSpaces[i]->ConvertToMonomial(ComplementarySubsytemSpaces[i]->StateDescriptionUp[TmpComplementarySubsytemIndex],
+							    ComplementarySubsytemSpaces[i]->StateDescriptionDown[TmpComplementarySubsytemIndex],
+							    TmpComplementaryMonomialUp1, TmpComplementaryMonomialDown1);
+	  for (int TmpTotalComplementarySubsytemIndex = 0; TmpTotalComplementarySubsytemIndex <  TotalComplementarySubsytemSpace->GetHilbertSpaceDimension(); ++TmpTotalComplementarySubsytemIndex)
+	    {
+	      TotalComplementarySubsytemSpace->ConvertToMonomial(TotalComplementarySubsytemSpace->StateDescriptionUp[TmpTotalComplementarySubsytemIndex],
+								 TotalComplementarySubsytemSpace->StateDescriptionDown[TmpTotalComplementarySubsytemIndex],
+								 TmpComplementaryMonomialUp2, TmpComplementaryMonomialDown2);
+	      double Tmp = 1.0;
+	      if (ComplementarySubsytemNbrUp > 0)
+		{
+		  TmpComplementarySubsytemPermanentMatrixUp.ClearMatrix();
+		  for (int j = 0; j < ComplementarySubsytemNbrUp; ++j)
+		    {
+		      for (int k = 0; k < ComplementarySubsytemNbrUp; ++k)
+			{
+			  int TmpIndex = SearchInArray<int>(TmpComplementaryMonomialUp2[k], connectedOrbitalBUp[TmpComplementaryMonomialUp1[j]], 
+							    nbrConnectedOrbitalBUp[TmpComplementaryMonomialUp1[j]]);
+			  if (TmpIndex >= 0)
+			    {
+			      TmpComplementarySubsytemPermanentMatrixUp.SetMatrixElement(j, k, weightOrbitalBUp[TmpComplementaryMonomialUp1[j]][TmpIndex]);
+			    }
+			}
+		    }
+		  Tmp *= TmpComplementarySubsytemPermanentMatrixUp.Permanent();
+		}
+	      if (ComplementarySubsytemNbrDown > 0)
+		{
+		  TmpComplementarySubsytemPermanentMatrixDown.ClearMatrix();
+		  for (int j = 0; j < ComplementarySubsytemNbrDown; ++j)
+		    {
+		      for (int k = 0; k < ComplementarySubsytemNbrDown; ++k)
+			{
+			  int TmpIndex = SearchInArray<int>(TmpComplementaryMonomialDown2[k], connectedOrbitalBDown[TmpComplementaryMonomialDown1[j]], 
+							    nbrConnectedOrbitalBDown[TmpComplementaryMonomialDown1[j]]);
+			  if (TmpIndex >= 0)
+			    {
+			      TmpComplementarySubsytemPermanentMatrixDown.SetMatrixElement(j, k, weightOrbitalBDown[TmpComplementaryMonomialDown1[j]][TmpIndex]);
+			    }
+			}
+		    }
+		   Tmp *= TmpComplementarySubsytemPermanentMatrixDown.Permanent();
+		}
+	      Tmp *= exp(-0.5 * (TotalComplementarySubsytemOccupationFactors[TmpTotalComplementarySubsytemIndex] 
+				 +  + TotalAllComplementarySubsytemOccupationFactors[i][TmpComplementarySubsytemIndex]));
+	      TmpComplementaryTransformationMatrix.SetMatrixElement(TmpComplementarySubsytemIndex, TmpTotalComplementarySubsytemIndex, Tmp);
+	    }
+	}
+      RealMatrix TmpTransformationMatrix (TotalSubsystemSpace->GetHilbertSpaceDimension(), SubsytemSpaces[i]->GetHilbertSpaceDimension(), true);
+      for (int TmpSubsytemIndex = 0; TmpSubsytemIndex <  SubsytemSpaces[i]->GetHilbertSpaceDimension(); ++TmpSubsytemIndex)
+	{
+	  SubsytemSpaces[i]->ConvertToMonomial(SubsytemSpaces[i]->StateDescriptionUp[TmpSubsytemIndex],
+					      SubsytemSpaces[i]->StateDescriptionDown[TmpSubsytemIndex],
+					      TmpMonomialUp1, TmpMonomialDown1);
+	  for (int TmpTotalSubsytemIndex = 0; TmpTotalSubsytemIndex <  TotalSubsystemSpace->GetHilbertSpaceDimension(); ++TmpTotalSubsytemIndex)
+	    {
+	      TotalSubsystemSpace->ConvertToMonomial(TotalSubsystemSpace->StateDescriptionUp[TmpTotalSubsytemIndex],
+						    TotalSubsystemSpace->StateDescriptionDown[TmpTotalSubsytemIndex],
+						    TmpMonomialUp2, TmpMonomialDown2);
+	      double Tmp = 1.0;
+	      if (SubsytemNbrUp > 0)
+		{
+		  TmpSubsytemPermanentMatrixUp.ClearMatrix();
+		  for (int j = 0; j < SubsytemNbrUp; ++j)
+		    {
+		      for (int k = 0; k < SubsytemNbrUp; ++k)
+			{
+			  int TmpIndex = SearchInArray<int>(TmpMonomialUp2[k], connectedOrbitalAUp[TmpMonomialUp1[j]], 
+							    nbrConnectedOrbitalAUp[TmpMonomialUp1[j]]);
+			  if (TmpIndex >= 0)
+			    {
+			      TmpSubsytemPermanentMatrixUp.SetMatrixElement(j, k, weightOrbitalAUp[TmpMonomialUp1[j]][TmpIndex]);
+			    }
+			}
+		    }
+		  Tmp *= TmpSubsytemPermanentMatrixUp.Permanent();
+		}
+	      if (SubsytemNbrDown > 0)
+		{
+		  TmpSubsytemPermanentMatrixDown.ClearMatrix();
+		  for (int j = 0; j < SubsytemNbrDown; ++j)
+		    {
+		      for (int k = 0; k < SubsytemNbrDown; ++k)
+			{
+			  int TmpIndex = SearchInArray<int>(TmpMonomialDown2[k], connectedOrbitalADown[TmpMonomialDown1[j]], 
+							    nbrConnectedOrbitalADown[TmpMonomialDown1[j]]);
+			  if (TmpIndex >= 0)
+			    {
+			      TmpSubsytemPermanentMatrixDown.SetMatrixElement(j, k, weightOrbitalADown[TmpMonomialDown1[j]][TmpIndex]);
+			    }
+			}
+		    }
+		  Tmp *= TmpSubsytemPermanentMatrixDown.Permanent();
+		}
+	      Tmp *= exp(-0.5 * (TotalSubsytemOccupationFactors[TmpTotalSubsytemIndex] + TotalAllSubsytemOccupationFactors[i][TmpSubsytemIndex]));
+	      TmpTransformationMatrix.SetMatrixElement(TmpTotalSubsytemIndex, TmpSubsytemIndex, Tmp);
+	    }
+	}
+      RealMatrix TmpMatrix = entanglementMatrices[i] * TmpComplementaryTransformationMatrix;
+      TmpEntanglementMatrix.AddMultiply (TmpTransformationMatrix, TmpMatrix);
+    }
+  
   for (int i = 0; i < nbrEntanglementMatrices; ++i)
     {
       delete SubsytemSpaces[i];
       delete ComplementarySubsytemSpaces[i];
+      delete[] TotalAllSubsytemOccupationFactors[i];
+      delete[] TotalAllComplementarySubsytemOccupationFactors[i];
     }
   delete[] SubsytemSpaces;
   delete[] ComplementarySubsytemSpaces;
+  delete[] TotalSubsytemOccupationFactors;
+  delete[] TotalComplementarySubsytemOccupationFactors;
+  delete[] TotalAllSubsytemOccupationFactors;
+  delete[] TotalAllComplementarySubsytemOccupationFactors;
+  delete[] LogFactorials;
 
   return TmpEntanglementMatrix;
 }

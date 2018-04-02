@@ -389,7 +389,7 @@ AbstractHilbertSpace* BosonOnSphereWithSU2SpinAllLz::Clone()
 // return value = position from which new states have to be stored
 
 long BosonOnSphereWithSU2SpinAllLz::GenerateStates(int nbrBosons, int lzMaxUp, int lzMaxDown, 
-					      int nbrNUp, int nbrNDown, long pos)
+						   int nbrNUp, int nbrNDown, long pos)
 {
   if ((nbrBosons < 0) || (nbrNUp < 0) || (nbrNDown < 0))
     return pos;
@@ -451,7 +451,7 @@ long BosonOnSphereWithSU2SpinAllLz::GenerateStates(int nbrBosons, int lzMaxUp, i
 // return value = position from which new states have to be stored
 
 long BosonOnSphereWithSU2SpinAllLz::GenerateStates(int nbrBosons, int lzMax, 
-					      int currentFermionicPositionUp, int currentFermionicPositionDown, long pos)
+						   int currentFermionicPositionUp, int currentFermionicPositionDown, long pos)
 {
   if (nbrBosons < 0)
     return pos;
@@ -492,7 +492,7 @@ long BosonOnSphereWithSU2SpinAllLz::GenerateStates(int nbrBosons, int lzMax,
 // return value = Hilbert space dimension
 
 long BosonOnSphereWithSU2SpinAllLz::ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, 
-								    int nbrNUp, int nbrNDown)
+									 int nbrNUp, int nbrNDown)
 {
   if ((nbrBosons < 0) || (nbrNUp < 0) || (nbrNDown < 0))
     return 0l;
@@ -502,13 +502,17 @@ long BosonOnSphereWithSU2SpinAllLz::ShiftedEvaluateHilbertSpaceDimension(int nbr
     return 0l;
   if (nbrBosons == 1)
     {
-      return 1l;
+      return (long) (lzMax + 1);
     }
   long Tmp = 0l;
   for (int i = nbrNUp; i >= 0; --i)
-    for (int j = nbrNDown; j >= 0; --j)
-      Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons - (i + j), lzMax - 1, 
-							nbrNUp - i, nbrNDown - j);
+    {
+      for (int j = nbrNDown; j >= 0; --j)
+	{	  
+ 	  Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons - (i + j), lzMax - 1, 
+ 							    nbrNUp - i, nbrNDown - j);
+	}
+    }
   return  Tmp;
 }
 
@@ -528,7 +532,7 @@ long BosonOnSphereWithSU2SpinAllLz::ShiftedEvaluateHilbertSpaceDimension(int nbr
     return 0l;
   if (nbrBosons == 1)
     {
-      return 2l;
+      return (long) (2 * (lzMax + 1));
     }
   long Tmp = 0l;
   for (int i = nbrBosons; i >= 0; --i)

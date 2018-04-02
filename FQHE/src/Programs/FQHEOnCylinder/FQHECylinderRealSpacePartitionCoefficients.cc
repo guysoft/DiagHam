@@ -1,3 +1,7 @@
+#include "Matrix/RealSymmetricMatrix.h"
+#include "Matrix/RealDiagonalMatrix.h"
+#include "Matrix/RealMatrix.h"
+
 #include "Options/Options.h"
 
 #include <iostream>
@@ -59,6 +63,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "patch-length", "length of the patch along the cylinder axis", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "patch-width", "width of the patch along the cylinder perimeter (0 if it should extend along the whole cylinder perimeter)", 0.0);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "optional output file name (default is realspace_cylinder_l_*_perimeter_*_2s_*.dat)");
+  (*OutputGroup) += new BooleanOption ('\n', "column-output", "when having a cut preserving the translation along the cylinder perimeter, use a column formatted output instead of a single line");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -139,7 +144,6 @@ int main(int argc, char** argv)
 	{
 	  File << "a cylinder with perimeter L=" << Perimeter << " and N_phi=" << NbrFluxQuanta;
 	}
-      File << endl << "OrbitalSquareWeights =";
       int NbrCoefficients = 0;
       double* Coefficients = 0;
       if (NbrFluxQuanta == 0)
@@ -205,9 +209,31 @@ int main(int argc, char** argv)
 		}
 	    }
 	}
-      for (int i = 0; i < NbrCoefficients; ++i)
-	File << " " << Coefficients[i];
-      File << endl;
+      if (Manager.GetBoolean("column-output") == false)
+	{
+	  File << endl << "OrbitalSquareWeights =";
+	  for (int i = 0; i < NbrCoefficients; ++i)
+	    File << " " << Coefficients[i];
+	  File << endl;
+	}
+      else
+	{
+	  File << endl;
+	  for (int i = 0; i < NbrCoefficients; ++i)
+	    {
+	      for (int j = 0; j < NbrCoefficients; ++j)
+		{
+		  if (i == j)
+		    {
+		      File << i << " " << j << " " << sqrt(Coefficients[i]) << " " << sqrt(1.0 - Coefficients[i]) << endl;
+		    }
+		  else
+		    {
+		      File << i << " " << j << " " << 0.0 << " " << 0.0 << endl;
+		    }
+		}
+	    }
+	}
       File.close();
       delete[] Coefficients;
     }
@@ -246,23 +272,43 @@ int main(int argc, char** argv)
 	}
       else
 	{
+	  RealSymmetricMatrix TmpOverlapMatrix (NbrFluxQuanta + 1, true);
+	  for (int i = 0; i <= NbrFluxQuanta; ++i)
+	    {
+	      TmpOverlapMatrix.SetMatrixElement(i, i, (CutWidth / Perimeter) *  FQHECylinderComputeSharpRealSpaceCutCoefficient(((double) i) - 0.5 * ((double) NbrFluxQuanta), Perimeter, 
+																CutPosition - (0.5 * CutLength), CutPosition + (0.5 * CutLength)));
+	      for (int j = i + 1; j <= NbrFluxQuanta; ++j)
+		{
+		  TmpOverlapMatrix.SetMatrixElement(i, j, FQHECylinderComputeSharpRealSpaceCutCoefficient(((double) i) - 0.5 * ((double) NbrFluxQuanta), 
+													  ((double) j) - 0.5 * ((double) NbrFluxQuanta), Perimeter, 
+													  CutPosition - (0.5 * CutLength), CutPosition + (0.5 * CutLength), CutWidth));
+		}
+	    }
+	  cout << TmpOverlapMatrix << endl;
+	  RealMatrix TmpTransformationMatrix1 (NbrFluxQuanta + 1, NbrFluxQuanta + 1);
+	  TmpTransformationMatrix1.SetToIdentity();
+	  RealDiagonalMatrix TmpDiag1 = RealDiagonalMatrix(NbrFluxQuanta + 1, NbrFluxQuanta + 1);  
+	  RealDiagonalMatrix TmpDiag2 = RealDiagonalMatrix(NbrFluxQuanta + 1, NbrFluxQuanta + 1);  
+#ifdef __LAPACK__
+	  TmpOverlapMatrix.LapackDiagonalize(TmpDiag1, TmpTransformationMatrix1);
+#else
+	  TmpOverlapMatrix.Diagonalize(TmpDiag1, TmpTransformationMatrix1);
+#endif 	  
+	  RealMatrix TmpTransformationMatrix2 = TmpTransformationMatrix1.DuplicateAndTranspose();
+	  for (int i = 0; i <= NbrFluxQuanta; ++i)
+	    {
+	      TmpDiag2[i] = sqrt(1.0 - TmpDiag1[i]);	      
+	      TmpDiag1[i] = sqrt(TmpDiag1[i]);
+	    }
 	  for (int i = 0; i <= NbrFluxQuanta; ++i)
 	    {
 	      for (int j = 0; j <= NbrFluxQuanta; ++j)
 		{
-		  double TmpCoefficient = 0.0;
-		  if (i != j)
-		    {
-		      TmpCoefficient = FQHECylinderComputeSharpRealSpaceCutCoefficient(((double) i) - 0.5 * ((double) NbrFluxQuanta), 
-										       ((double) j) - 0.5 * ((double) NbrFluxQuanta), Perimeter, 
-										       CutPosition - (0.5 * CutLength), CutPosition + (0.5 * CutLength), CutWidth);
-		    }
-		  else
-		    {
-		      TmpCoefficient = (CutWidth / Perimeter) *  FQHECylinderComputeSharpRealSpaceCutCoefficient(((double) i) - 0.5 * ((double) NbrFluxQuanta), Perimeter, 
-														 CutPosition - (0.5 * CutLength), CutPosition + (0.5 * CutLength));
-		    }
-		  File << i << " " << j << " " << TmpCoefficient << endl;
+		  double Tmp1;
+		  double Tmp2;
+		  TmpTransformationMatrix1.GetMatrixElement(i, j, Tmp1);
+		  TmpTransformationMatrix2.GetMatrixElement(i, j, Tmp2);
+		  File << i << " " << j << " " << Tmp1 << " " << Tmp2 << " " << TmpDiag1[i] << endl;
 		}
 	    }
 	}

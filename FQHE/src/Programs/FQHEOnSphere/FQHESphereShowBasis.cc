@@ -19,6 +19,7 @@
 #include "HilbertSpace/BosonOnSphereWithSU2SpinLzSymmetry.h"
 #include "HilbertSpace/BosonOnSphereWithSU2SpinLzSzSymmetry.h"
 #include "HilbertSpace/BosonOnSphereWithSU2SpinPartialPolarization.h"
+#include "HilbertSpace/BosonOnSphereWithSU2SpinAllLz.h"
 #include "HilbertSpace/BosonOnSphereWithSU3Spin.h"
 #include "HilbertSpace/BosonOnSphereWithSU4Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSpinAllSz.h"
@@ -338,7 +339,14 @@ int main(int argc, char** argv)
 			    {		       
 			      if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
 				{
-				  Space = new BosonOnSphereWithSU2Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);				
+				  if (AllLzFlag == true)
+				    {
+				      Space = new BosonOnSphereWithSU2SpinAllLz(NbrParticles, NbrFluxQuanta, TotalSz);
+				    }
+				  else
+				    {
+				      Space = new BosonOnSphereWithSU2Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+				    }
 				}
 			      else
 				{

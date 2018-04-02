@@ -293,6 +293,13 @@ class RealMatrix : public Matrix
   // return value = reference on current matrix
   RealMatrix& Multiply (const RealMatrix& M);
 
+  // multiply two matrices and add the result to the current one
+  //
+  // M1 = left matrix 
+  // M2 = right matrix 
+  // return value = reference on current matrix
+  RealMatrix& AddMultiply (const RealMatrix  & M1, const RealMatrix & M2);
+
   // multiply a matrix to the right by another matrix without using temporary matrix and in a given range of indices
   // beware the matrix is not resized after multiplication in order the operation to be thread safe
   //

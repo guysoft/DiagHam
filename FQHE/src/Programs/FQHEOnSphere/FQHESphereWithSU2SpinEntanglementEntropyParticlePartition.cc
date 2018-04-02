@@ -587,7 +587,7 @@ int main(int argc, char** argv)
   double* WeightBOrbitalsDown = 0;
   int NbrAOrbitals = LzMax + 1;
   int NbrBOrbitals = LzMax + 1;
-  if (Manager.GetString("realspace-cut") != 0)
+  if ((Manager.GetString("realspace-cut") != 0) && (SymmetryBreakingPatch == false))
     {
       ConfigurationParser RealSpaceWeights;
       if (RealSpaceWeights.Parse(Manager.GetString("realspace-cut")) == false)
@@ -653,12 +653,160 @@ int main(int argc, char** argv)
       int** ConnectedOrbitalADown = new int*[NbrAOrbitals];
       double** FullWeightAOrbitalsUp = new double*[NbrAOrbitals]; 
       double** FullWeightAOrbitalsDown = new double*[NbrAOrbitals];
-      int* NbrConnectedOrbitalBUp = new int[NbrAOrbitals];
-      int* NbrConnectedOrbitalBDown = new int[NbrAOrbitals]; 
-      int** ConnectedOrbitalBUp = new int*[NbrAOrbitals];
-      int** ConnectedOrbitalBDown = new int*[NbrAOrbitals];
-      double** FullWeightBOrbitalsUp = new double*[NbrAOrbitals]; 
-      double** FullWeightBOrbitalsDown = new double*[NbrAOrbitals];
+      int* NbrConnectedOrbitalBUp = new int[NbrBOrbitals];
+      int* NbrConnectedOrbitalBDown = new int[NbrBOrbitals]; 
+      int** ConnectedOrbitalBUp = new int*[NbrBOrbitals];
+      int** ConnectedOrbitalBDown = new int*[NbrBOrbitals];
+      double** FullWeightBOrbitalsUp = new double*[NbrBOrbitals]; 
+      double** FullWeightBOrbitalsDown = new double*[NbrBOrbitals];
+
+      MultiColumnASCIIFile RealSpaceWeightFile;
+      if (RealSpaceWeightFile.Parse(Manager.GetString("realspace-cut")) == false)
+        {
+          RealSpaceWeightFile.DumpErrors(cout);
+          return -1;
+        }
+      if (RealSpaceWeightFile.GetNbrColumns() != 4)
+        {
+          cout << "error, wrong number of columns in " << Manager.GetString("realspace-cut") << endl;
+          return -1;
+        }
+      int TmpNbrWeigths = RealSpaceWeightFile.GetNbrLines();
+      int* TmpIndices1 = RealSpaceWeightFile.GetAsIntegerArray(0);
+      if (TmpIndices1 == 0)
+        {
+          RealSpaceWeightFile.DumpErrors(cout);
+          return -1;      
+        }
+      int* TmpIndices2 = RealSpaceWeightFile.GetAsIntegerArray(1);
+      if (TmpIndices1 == 0)
+        {
+          RealSpaceWeightFile.DumpErrors(cout);
+          return -1;      
+        }
+      double* TmpAWeights = RealSpaceWeightFile.GetAsDoubleArray(2);
+      if (TmpAWeights == 0)
+        {
+          RealSpaceWeightFile.DumpErrors(cout);
+          return -1;      
+        }
+      double* TmpBWeights = RealSpaceWeightFile.GetAsDoubleArray(3);
+      if (TmpBWeights == 0)
+        {
+          RealSpaceWeightFile.DumpErrors(cout);
+          return -1;      
+        }
+      for (int i = 0; i < NbrAOrbitals; ++i)
+	{
+  	  NbrConnectedOrbitalAUp[i] = 0;
+	}
+      
+      for (int i = 0; i < TmpNbrWeigths; ++i)
+	{
+  	  NbrConnectedOrbitalAUp[TmpIndices1[i]]++;
+	}
+      for (int i = 0; i < NbrAOrbitals; ++i)
+	{
+	  NbrConnectedOrbitalADown[i] = NbrConnectedOrbitalAUp[i];
+	  if (NbrConnectedOrbitalAUp[i] > 0)
+	    {
+	      ConnectedOrbitalAUp[i] = new int [NbrConnectedOrbitalAUp[i]];
+	      ConnectedOrbitalADown[i] = new int [NbrConnectedOrbitalADown[i]];
+	      FullWeightAOrbitalsUp[i] = new double [NbrConnectedOrbitalAUp[i]];
+	      FullWeightAOrbitalsDown[i] = new double [NbrConnectedOrbitalADown[i]];
+	      NbrConnectedOrbitalAUp[i] = 0;
+	      NbrConnectedOrbitalADown[i] = 0;
+	    }
+	  else
+	    {
+	      ConnectedOrbitalAUp[i] = 0;
+	      ConnectedOrbitalADown[i] = 0;
+	      FullWeightAOrbitalsUp[i] = 0;
+	      FullWeightAOrbitalsDown[i] = 0;
+	    }
+	}
+      for (int i = 0; i < TmpNbrWeigths; ++i)
+	{
+	  ConnectedOrbitalAUp[TmpIndices1[i]][NbrConnectedOrbitalAUp[TmpIndices1[i]]] = TmpIndices2[i];
+	  FullWeightAOrbitalsUp[TmpIndices1[i]][NbrConnectedOrbitalAUp[TmpIndices1[i]]] = TmpAWeights[i];
+	  NbrConnectedOrbitalAUp[TmpIndices1[i]]++;
+	  ConnectedOrbitalADown[TmpIndices1[i]][NbrConnectedOrbitalADown[TmpIndices1[i]]] = TmpIndices2[i];
+	  FullWeightAOrbitalsDown[TmpIndices1[i]][NbrConnectedOrbitalADown[TmpIndices1[i]]] = TmpAWeights[i];
+	  NbrConnectedOrbitalADown[TmpIndices1[i]]++;
+	}
+      for (int i = 0; i < NbrBOrbitals; ++i)
+	{
+	  NbrConnectedOrbitalBUp[i] = 0;
+	}
+      
+      for (int i = 0; i < TmpNbrWeigths; ++i)
+	{
+	  NbrConnectedOrbitalBUp[TmpIndices1[i]]++;
+	}
+      for (int i = 0; i < NbrBOrbitals; ++i)
+	{
+	  NbrConnectedOrbitalBDown[i] = NbrConnectedOrbitalBUp[i];
+	  if (NbrConnectedOrbitalBUp[i] > 0)
+	    {
+	      ConnectedOrbitalBUp[i] = new int [NbrConnectedOrbitalBUp[i]];
+	      ConnectedOrbitalBDown[i] = new int [NbrConnectedOrbitalBDown[i]];
+	      FullWeightBOrbitalsUp[i] = new double [NbrConnectedOrbitalBUp[i]];
+	      FullWeightBOrbitalsDown[i] = new double [NbrConnectedOrbitalBDown[i]];
+	      NbrConnectedOrbitalBUp[i] = 0;
+	      NbrConnectedOrbitalBDown[i] = 0;
+	    }
+	  else
+	    {
+	      ConnectedOrbitalBUp[i] = 0;
+	      ConnectedOrbitalBDown[i] = 0;
+	      FullWeightBOrbitalsUp[i] = 0;
+	      FullWeightBOrbitalsDown[i] = 0;
+	    }
+	}
+      for (int i = 0; i < TmpNbrWeigths; ++i)
+	{
+	  ConnectedOrbitalBUp[TmpIndices1[i]][NbrConnectedOrbitalBUp[TmpIndices1[i]]] = TmpIndices2[i];
+	  FullWeightBOrbitalsUp[TmpIndices1[i]][NbrConnectedOrbitalBUp[TmpIndices1[i]]] = TmpBWeights[i];
+  	  NbrConnectedOrbitalBUp[TmpIndices1[i]]++;
+	  ConnectedOrbitalBDown[TmpIndices1[i]][NbrConnectedOrbitalBDown[TmpIndices1[i]]] = TmpIndices2[i];
+	  FullWeightBOrbitalsDown[TmpIndices1[i]][NbrConnectedOrbitalBDown[TmpIndices1[i]]] = TmpBWeights[i];
+  	  NbrConnectedOrbitalBDown[TmpIndices1[i]]++;
+	}
+
+
+//       for (int i = 0; i < NbrAOrbitals; ++i)
+// 	{
+// 	  NbrConnectedOrbitalAUp[i] = 1;
+// 	  NbrConnectedOrbitalADown[i] = 1;
+// 	  ConnectedOrbitalAUp[i] = new int [NbrConnectedOrbitalAUp[i]];
+// 	  ConnectedOrbitalADown[i] = new int [NbrConnectedOrbitalADown[i]];
+// 	  FullWeightAOrbitalsUp[i] = new double [NbrConnectedOrbitalAUp[i]];
+// 	  FullWeightAOrbitalsDown[i] = new double [NbrConnectedOrbitalADown[i]];
+// 	  for (int j = 0; j < NbrConnectedOrbitalAUp[i]; ++j)
+// 	    {
+// 	      ConnectedOrbitalAUp[i][j] = i;
+// 	      ConnectedOrbitalADown[i][j] = i;
+// 	      FullWeightAOrbitalsUp[i][j] = WeightAOrbitalsUp[i];
+// 	      FullWeightAOrbitalsDown[i][j] = WeightAOrbitalsDown[i];
+// 	    }
+// 	}
+//       for (int i = 0; i < NbrBOrbitals; ++i)
+// 	{
+// 	  NbrConnectedOrbitalBUp[i] = 1;
+// 	  NbrConnectedOrbitalBDown[i] = 1;
+// 	  ConnectedOrbitalBUp[i] = new int [NbrConnectedOrbitalBUp[i]];
+// 	  ConnectedOrbitalBDown[i] = new int [NbrConnectedOrbitalBDown[i]];
+// 	  FullWeightBOrbitalsUp[i] = new double [NbrConnectedOrbitalBUp[i]];
+// 	  FullWeightBOrbitalsDown[i] = new double [NbrConnectedOrbitalBDown[i]];
+// 	  for (int j = 0; j < NbrConnectedOrbitalBUp[i]; ++j)
+// 	    {
+// 	      ConnectedOrbitalBUp[i][j] = i;
+// 	      ConnectedOrbitalBDown[i][j] = i;
+// 	      FullWeightBOrbitalsUp[i][j] = WeightBOrbitalsUp[i];
+// 	      FullWeightBOrbitalsDown[i][j] = WeightBOrbitalsDown[i];
+// 	    }
+// 	}
+
 
       for (int SubsystemNbrParticles = MinSubsystemNbrParticles; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
 	{
@@ -696,7 +844,7 @@ int main(int argc, char** argv)
 		  int TmpNbrNonZeroEntanglementMatrices = 0;
 		  for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
 		    {
-		      cout << "computing PES entanglement matrix for NA=" << SubsystemNbrParticles << " NAup=" << SubsystemNbrNUp << " NAdown=" << SubsystemNbrNDown << " 2LzA=" <<  SubsystemMaxTotalLz << endl;
+		      cout << "computing PES entanglement matrix for NA=" << SubsystemNbrParticles << " NAup=" << SubsystemNbrNUp << " NAdown=" << SubsystemNbrNDown << " 2LzA=" << SubsystemTotalLz  << endl;
 		      timeval SVDTotalStartingTime;
 		      timeval SVDTotalEndingTime;
 		      if (ShowTimeFlag == true)
@@ -704,8 +852,8 @@ int main(int argc, char** argv)
 			  gettimeofday (&(SVDTotalStartingTime), 0);
 			}
 		      TmpEntanglementMatrices[TmpIndex] = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, 
-															 SubsystemNbrNUp - SubsystemNbrNDown, 
-															 GroundStates[0], true, Architecture.GetArchitecture());
+															SubsystemNbrNUp - SubsystemNbrNDown, 
+															GroundStates[0], true, Architecture.GetArchitecture());
 		      if (ShowTimeFlag == true)
 			{
 			  gettimeofday (&(SVDTotalEndingTime), 0);
@@ -723,6 +871,7 @@ int main(int argc, char** argv)
 		  int* TmpEntanglementMatrixLzSectors = new int [TmpNbrNonZeroEntanglementMatrices];
 		  TmpNbrNonZeroEntanglementMatrices = 0;
 		  TmpIndex = 0;
+		  SubsystemTotalLz = -SubsystemMaxTotalLz; 
 		  for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
 		    {
 		      if (TmpEntanglementMatrices[TmpIndex].GetNbrRow() > 0)

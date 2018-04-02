@@ -877,6 +877,37 @@ RealMatrix& RealMatrix::Multiply (const RealMatrix& M)
   return *this;
 }
 
+
+// multiply two matrices and add the result to the current one
+//
+// M1 = left matrix 
+// M2 = right matrix 
+// return value = reference on current matrix
+
+RealMatrix& RealMatrix::AddMultiply (const RealMatrix  & M1, const RealMatrix & M2)
+{
+  if ((M1.NbrRow != this->NbrRow) || (M2.NbrColumn != this->NbrColumn))
+    {
+      cout << "incompatible matrix dimensions in RealMatrix::AddMultiply" << endl;
+      return *this;
+    }
+  for (int i = 0; i < M2.NbrColumn; i++)
+    {
+      for (int j = 0; j < M1.NbrRow; j++)
+	{
+	  double Tmp = 0.0;
+	  for (int k = 0; k < M2.NbrRow; k++)
+	    {	
+	      Tmp += M1.Columns[k].Components[j] * M2.Columns[i].Components[k];
+	    }
+	  this->Columns[i].Components[j] += Tmp;
+	}
+    }  
+  return *this;
+}
+
+
+
 // multiply a matrix to the right by another matrix without using temporary matrix and in a given range of indices
 // beware the matrix is not resized after multiplication in order the operation to be thread safe
 //
