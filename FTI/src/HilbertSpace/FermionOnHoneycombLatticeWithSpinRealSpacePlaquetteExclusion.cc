@@ -67,6 +67,9 @@ FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusion::FermionOnHoneycomb
 {
   this->NbrSitesX = 0;
   this->NbrSitesY = 0;
+  this->ListIndicesPerPlaquette = 0;
+  this->LargerIndicesInPlaquette = 0;
+  this->NbrLargerIndicesInPlaquette = 0;
 }
 
 // basic constructor
@@ -93,19 +96,7 @@ FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusion::FermionOnHoneycomb
   
   
   this->InitializeHexagonArrays();
-  
-//   for (int TmpIndex = 0; TmpIndex < this->NbrSite; ++TmpIndex)
-//   {
-//     for (int i = 0; i < 3; ++i)
-//     {
-//       cout << TmpIndex << " , " << i << " : " ;
-//       int Tmp = this->NbrLargerIndicesInPlaquette[TmpIndex][i];
-//       for (int j = 0; j < Tmp; ++j)
-// 	cout << (this->LargerIndicesInPlaquette[TmpIndex][i][j]) << " " ;      
-//       cout << endl;
-//     }
-//   }
-  
+   
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrSite - 1, 0x0ul);
   cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
   unsigned long TmpUnfilteredDimension = (FermionOnLatticeWithSpinRealSpace::EvaluateHilbertSpaceDimension(this->NbrFermions));
@@ -126,25 +117,7 @@ FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusion::FermionOnHoneycomb
 	  cout << "error while generating the Hilbert space, " << TmpLargeHilbertSpaceDimension << " generated states, should be " << this->LargeHilbertSpaceDimension << endl;
 	}
       this->GenerateLookUpTable(memory);
-      
-      
-// //       test the consistency of the constraint
-//       int TmpHilbertSpaceDimension = 0;
-//       for (int i = 0; i < TmpLargeHilbertSpaceDimension; ++i)
-//       {
-// 	int TmpCharge = 0;
-// 	int TmpCharge1;
-// 	for (int j = 0; j < this->NbrSite; ++j)
-// 	{
-// 	  TmpCharge1 = this->FindMaximumChargeSurroundingPlaquettes(j, this->StateDescription[i]);
-// 	  if (TmpCharge1 > TmpCharge)
-// 	    TmpCharge = TmpCharge1;
-// 	}
-// 	if (TmpCharge < 7)
-// 	  TmpHilbertSpaceDimension += 1;
-//       }
-//       cout << "filtered Hilbert space dim = " << TmpHilbertSpaceDimension << endl;
-      
+            
       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 	{
 	  if (FindStateIndex(this->StateDescription[i],  this->StateHighestBit[i]) != i)
@@ -298,9 +271,31 @@ FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusion::FermionOnHoneycomb
   this->NbrSite = fermions.NbrSite;
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
-  this->ListIndicesPerPlaquette = fermions.ListIndicesPerPlaquette;
-  this->NbrLargerIndicesInPlaquette = fermions.NbrLargerIndicesInPlaquette;
-  this->LargerIndicesInPlaquette = fermions.LargerIndicesInPlaquette;
+  this->ListIndicesPerPlaquette = new int*[(this->NbrSite >> 1)];
+  for (int i = 0; i < (this->NbrSite >> 1); ++i)
+  {
+    this->ListIndicesPerPlaquette[i] = new int[6];
+    for (int j = 0; j < 6; ++j)
+      this->ListIndicesPerPlaquette[i][j] = fermions.ListIndicesPerPlaquette[i][j];   
+  }
+  
+  this->NbrLargerIndicesInPlaquette = new int*[this->NbrLzValue];
+  this->LargerIndicesInPlaquette = new int**[this->NbrLzValue];
+  for (int i = 0; i < this->NbrLzValue; ++i)
+  {
+    this->NbrLargerIndicesInPlaquette[i] = new int[3];
+    this->LargerIndicesInPlaquette[i] = new int*[3];
+    for (int j = 0; j < 3; ++j)
+    {
+      this->NbrLargerIndicesInPlaquette[i][j] = fermions.NbrLargerIndicesInPlaquette[i][j];
+      if (this->NbrLargerIndicesInPlaquette[i][j] != 0)
+	this->LargerIndicesInPlaquette[i][j] = new int[this->NbrLargerIndicesInPlaquette[i][j]];
+      else
+	this->LargerIndicesInPlaquette[i][j] = 0;
+      for (int k = 0; k < this->NbrLargerIndicesInPlaquette[i][j]; ++k)
+	this->LargerIndicesInPlaquette[i][j][k] = fermions.LargerIndicesInPlaquette[i][j][k];
+    }
+  }
   this->StateDescription = fermions.StateDescription;
   this->StateHighestBit = fermions.StateHighestBit;
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
@@ -327,9 +322,11 @@ FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusion::~FermionOnHoneycom
   
   for (int i = 0; i < this->NbrLzValue; ++i)
   {
-    delete[] this->NbrLargerIndicesInPlaquette[i];
     for (int j = 0; j < 3; ++j)
-      delete[] this->LargerIndicesInPlaquette[i][j];
+      if (this->LargerIndicesInPlaquette[i][j] != 0)
+	delete[] this->LargerIndicesInPlaquette[i][j];
+    
+    delete[] this->NbrLargerIndicesInPlaquette[i];
     delete[] this->LargerIndicesInPlaquette[i];
   }
   delete[] this->NbrLargerIndicesInPlaquette;
@@ -363,9 +360,31 @@ FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusion& FermionOnHoneycomb
   this->NbrSitesY = fermions.NbrSitesY;  
   this->NbrSite = fermions.NbrSite;
   this->NbrLzValue = fermions.NbrLzValue;
-  this->ListIndicesPerPlaquette = fermions.ListIndicesPerPlaquette;
-  this->NbrLargerIndicesInPlaquette = fermions.NbrLargerIndicesInPlaquette;
-  this->LargerIndicesInPlaquette = fermions.LargerIndicesInPlaquette;
+  this->ListIndicesPerPlaquette = new int*[(this->NbrSite >> 1)];
+  for (int i = 0; i < (this->NbrSite >> 1); ++i)
+  {
+    this->ListIndicesPerPlaquette[i] = new int[6];
+    for (int j = 0; j < 6; ++j)
+      this->ListIndicesPerPlaquette[i][j] = fermions.ListIndicesPerPlaquette[i][j];   
+  }
+  
+  this->NbrLargerIndicesInPlaquette = new int*[this->NbrLzValue];
+  this->LargerIndicesInPlaquette = new int**[this->NbrLzValue];
+  for (int i = 0; i < this->NbrLzValue; ++i)
+  {
+    this->NbrLargerIndicesInPlaquette[i] = new int[3];
+    this->LargerIndicesInPlaquette[i] = new int*[3];
+    for (int j = 0; j < 3; ++j)
+    {
+      this->NbrLargerIndicesInPlaquette[i][j] = fermions.NbrLargerIndicesInPlaquette[i][j];
+      if (this->NbrLargerIndicesInPlaquette[i][j] != 0)
+	this->LargerIndicesInPlaquette[i][j] = new int[this->NbrLargerIndicesInPlaquette[i][j]];
+      else
+	this->LargerIndicesInPlaquette[i][j] = 0;
+      for (int k = 0; k < this->NbrLargerIndicesInPlaquette[i][j]; ++k)
+	this->LargerIndicesInPlaquette[i][j][k] = fermions.LargerIndicesInPlaquette[i][j][k];
+    }
+  }
   this->StateDescription = fermions.StateDescription;
   this->StateHighestBit = fermions.StateHighestBit;
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
@@ -434,7 +453,10 @@ void FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusion::InitializeHex
       if (tmpFlag)
       {
 	this->NbrLargerIndicesInPlaquette[i][tmp] = tmpNbrIndex;
-	this->LargerIndicesInPlaquette[i][tmp] = new int[this->NbrLargerIndicesInPlaquette[i][tmp]];
+	if (tmpNbrIndex > 0)
+	  this->LargerIndicesInPlaquette[i][tmp] = new int[this->NbrLargerIndicesInPlaquette[i][tmp]];
+	else
+	  this->LargerIndicesInPlaquette[i][tmp] = 0;
 	++tmp;
       }
     }

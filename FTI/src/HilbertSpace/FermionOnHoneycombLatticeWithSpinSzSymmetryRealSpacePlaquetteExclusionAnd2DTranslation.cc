@@ -219,9 +219,31 @@ FermionOnHoneycombLatticeWithSpinSzSymmetryRealSpacePlaquetteExclusionAnd2DTrans
   this->SzFlag = fermions.SzFlag;
   this->NbrSite = fermions.NbrSite;
   this->NbrFermionsParity = fermions.NbrFermionsParity;
-  this->ListIndicesPerPlaquette = fermions.ListIndicesPerPlaquette;
-  this->NbrLargerIndicesInPlaquette = fermions.NbrLargerIndicesInPlaquette;
-  this->LargerIndicesInPlaquette = fermions.LargerIndicesInPlaquette;
+  this->ListIndicesPerPlaquette = new int*[(this->NbrSite >> 1)];
+  for (int i = 0; i < (this->NbrSite >> 1); ++i)
+  {
+    this->ListIndicesPerPlaquette[i] = new int[6];
+    for (int j = 0; j < 6; ++j)
+      this->ListIndicesPerPlaquette[i][j] = fermions.ListIndicesPerPlaquette[i][j];   
+  }
+  
+  this->NbrLargerIndicesInPlaquette = new int*[this->NbrSite];
+  this->LargerIndicesInPlaquette = new int**[this->NbrSite];
+  for (int i = 0; i < this->NbrSite; ++i)
+  {
+    this->NbrLargerIndicesInPlaquette[i] = new int[3];
+    this->LargerIndicesInPlaquette[i] = new int*[3];
+    for (int j = 0; j < 3; ++j)
+    {
+      this->NbrLargerIndicesInPlaquette[i][j] = fermions.NbrLargerIndicesInPlaquette[i][j];
+      if (this->NbrLargerIndicesInPlaquette[i][j] != 0)
+	this->LargerIndicesInPlaquette[i][j] = new int[this->NbrLargerIndicesInPlaquette[i][j]];
+      else
+	this->LargerIndicesInPlaquette[i][j] = 0;
+      for (int k = 0; k < this->NbrLargerIndicesInPlaquette[i][j]; ++k)
+	this->LargerIndicesInPlaquette[i][j][k] = fermions.LargerIndicesInPlaquette[i][j][k];
+    }
+  }
 
   this->NbrSitePerUnitCell = fermions.NbrSitePerUnitCell;
   this->MaxXMomentum = fermions.MaxXMomentum;
@@ -335,9 +357,31 @@ FermionOnHoneycombLatticeWithSpinSzSymmetryRealSpacePlaquetteExclusionAnd2DTrans
   this->SzFlag = fermions.SzFlag;
   this->NbrSite = fermions.NbrSite;
   this->NbrFermionsParity = fermions.NbrFermionsParity;
-  this->ListIndicesPerPlaquette = fermions.ListIndicesPerPlaquette;
-  this->NbrLargerIndicesInPlaquette = fermions.NbrLargerIndicesInPlaquette;
-  this->LargerIndicesInPlaquette = fermions.LargerIndicesInPlaquette;
+  this->ListIndicesPerPlaquette = new int*[(this->NbrSite >> 1)];
+  for (int i = 0; i < (this->NbrSite >> 1); ++i)
+  {
+    this->ListIndicesPerPlaquette[i] = new int[6];
+    for (int j = 0; j < 6; ++j)
+      this->ListIndicesPerPlaquette[i][j] = fermions.ListIndicesPerPlaquette[i][j];   
+  }
+  
+  this->NbrLargerIndicesInPlaquette = new int*[this->NbrSite];
+  this->LargerIndicesInPlaquette = new int**[this->NbrSite];
+  for (int i = 0; i < this->NbrSite; ++i)
+  {
+    this->NbrLargerIndicesInPlaquette[i] = new int[3];
+    this->LargerIndicesInPlaquette[i] = new int*[3];
+    for (int j = 0; j < 3; ++j)
+    {
+      this->NbrLargerIndicesInPlaquette[i][j] = fermions.NbrLargerIndicesInPlaquette[i][j];
+      if (this->NbrLargerIndicesInPlaquette[i][j] != 0)
+	this->LargerIndicesInPlaquette[i][j] = new int[this->NbrLargerIndicesInPlaquette[i][j]];
+      else
+	this->LargerIndicesInPlaquette[i][j] = 0;
+      for (int k = 0; k < this->NbrLargerIndicesInPlaquette[i][j]; ++k)
+	this->LargerIndicesInPlaquette[i][j][k] = fermions.LargerIndicesInPlaquette[i][j][k];
+    }
+  }
 
   this->NbrSitePerUnitCell = fermions.NbrSitePerUnitCell;
   this->MaxXMomentum = fermions.MaxXMomentum;

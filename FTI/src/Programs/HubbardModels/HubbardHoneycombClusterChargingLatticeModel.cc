@@ -312,10 +312,6 @@ int main(int argc, char** argv)
       }
     }
 
-  RealSymmetricMatrix SxSxInteraction(NbrSites, true);
-  RealSymmetricMatrix SySyInteraction(NbrSites, true);
-  RealSymmetricMatrix SzSzInteraction(NbrSites, true);
-
   bool FirstRunFlag = true;
   ParticleOnSphereWithSpin* Space = 0;
   AbstractHamiltonian* Hamiltonian = 0;
@@ -326,9 +322,7 @@ int main(int argc, char** argv)
       {
 	cout << "Spin flip symmetry not implemented in the absence of 2D translations" << endl;
 	return 0;
-      }
-      
-      
+      }      
       
       if (ClusterExclusionFlag == false)
 	Space = new FermionOnLatticeWithSpinRealSpace (NbrParticles, TotalSz, NbrSites);
@@ -341,6 +335,7 @@ int main(int argc, char** argv)
 	  
       HermitianMatrix TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
       cout << TightBindingMatrix << endl;
+      
       Hamiltonian = new ParticleOnLatticeWithSpinRealSpaceHamiltonian(Space, NbrParticles, NbrSites,
 									  TightBindingMatrix, TightBindingMatrix,
 									  DensityDensityInteractionupup, DensityDensityInteractiondowndown, 
@@ -427,43 +422,43 @@ int main(int argc, char** argv)
 		    }
 		  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 		    Memory = Architecture.GetArchitecture()->GetLocalMemory();
-// 		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-// 		  
-// 		  HermitianMatrix TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
-// 		  Hamiltonian = new ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian(Space, NbrParticles, NbrSites,XMomentum, NbrSitesX, YMomentum, NbrSitesY, TightBindingMatrix, TightBindingMatrix, DensityDensityInteractionupup, DensityDensityInteractiondowndown,DensityDensityInteractionupdown, Architecture.GetArchitecture(), Memory);
-// 		  
-// 		  char* ContentPrefix = new char[256];
-// 		  if (SzSymmetryFlag == false)
-// 		    {
-// 		      sprintf (ContentPrefix, "%d %d %d", XMomentum, YMomentum, TotalSz);
-// 		    }
-// 		  else
-// 		    {
-// 		      sprintf (ContentPrefix, "%d %d %d %d", XMomentum, YMomentum, TotalSz, SzParitySector);
-// 		    }
-// 		  char* EigenstateOutputFile;
-// 		  char* TmpExtention = new char [512];
-// 		  if (SzSymmetryFlag == false)
-// 		    {
-// 		      sprintf (TmpExtention, "_kx_%d_ky_%d_sz_%d", XMomentum, YMomentum, TotalSz);
-// 		    }
-// 		  else
-// 		    {
-// 		      sprintf (TmpExtention, "_szp_%d_kx_%d_ky_%d_sz_%d", SzParitySector, XMomentum, YMomentum, TotalSz);
-// 		    }
-// 		  char* TmpExtentionSpectrum = new char [32];
-// 		  sprintf (TmpExtentionSpectrum, "_sz_%d.dat", TotalSz);
-// 		  EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, TmpExtentionSpectrum, TmpExtention);
-// 		  
-// 		  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
-// 		  FirstRunFlag = false;
-// 		  MainTaskOperation TaskOperation (&Task);
-// 		  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+		  
+		  HermitianMatrix TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
+		  Hamiltonian = new ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian(Space, NbrParticles, NbrSites,XMomentum, NbrSitesX, YMomentum, NbrSitesY, TightBindingMatrix, TightBindingMatrix, DensityDensityInteractionupup,  DensityDensityInteractiondowndown,DensityDensityInteractionupdown, Architecture.GetArchitecture(), Memory);
+		  
+		  char* ContentPrefix = new char[256];
+		  if (SzSymmetryFlag == false)
+		    {
+		      sprintf (ContentPrefix, "%d %d %d", XMomentum, YMomentum, TotalSz);
+		    }
+		  else
+		    {
+		      sprintf (ContentPrefix, "%d %d %d %d", XMomentum, YMomentum, TotalSz, SzParitySector);
+		    }
+		  char* EigenstateOutputFile;
+		  char* TmpExtention = new char [512];
+		  if (SzSymmetryFlag == false)
+		    {
+		      sprintf (TmpExtention, "_kx_%d_ky_%d_sz_%d", XMomentum, YMomentum, TotalSz);
+		    }
+		  else
+		    {
+		      sprintf (TmpExtention, "_szp_%d_kx_%d_ky_%d_sz_%d", SzParitySector, XMomentum, YMomentum, TotalSz);
+		    }
+		  char* TmpExtentionSpectrum = new char [32];
+		  sprintf (TmpExtentionSpectrum, "_sz_%d.dat", TotalSz);
+		  EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, TmpExtentionSpectrum, TmpExtention);
+		  
+		  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
+		  FirstRunFlag = false;
+		  MainTaskOperation TaskOperation (&Task);
+		  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 		  cout << "------------------------------------" << endl;
-// 		  delete Hamiltonian;
+		  delete Hamiltonian;
 		  delete Space;
-// 		  delete[] EigenstateOutputFile;
-// 		  delete[] ContentPrefix;
+		  delete[] EigenstateOutputFile;
+		  delete[] ContentPrefix;
 		}
 	    }
 	}
