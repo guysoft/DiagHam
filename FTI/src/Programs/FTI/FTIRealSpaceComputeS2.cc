@@ -20,6 +20,7 @@
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnHoneycombLatticeWithSpinSzSymmetryRealSpacePlaquetteExclusionAnd2DTranslation.h"
 
 #include "Operator/ParticleOnLatticeRealSpaceWithSpinAnd2DTranslationS2Operator.h"
 
@@ -74,6 +75,7 @@ int main(int argc, char** argv)
   int NbrSites = 0;
   bool Statistics = true;
   bool GutzwillerFlag = false;
+  bool ClusterExclusionFlag = false;
   int NbrStates = 0;
   int MomentumFlag = false;
   int KxMomentum = 0;
@@ -82,6 +84,8 @@ int main(int argc, char** argv)
   int YPeriodicity = 0;
   bool FixedSzFlag = false;
   int TotalSz = 0;
+  bool SzSymmetryFlag = false;
+  int SzParity = 0;
 
   if ((Manager.GetString("input-state") == 0) && (Manager.GetString("degenerate-states") == 0))
     {
@@ -96,36 +100,59 @@ int main(int argc, char** argv)
 	  cout << "can't open file " << Manager.GetString("input-state") << endl;
 	  return -1;
 	}
-      if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, TotalSz,
+      if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, TotalSz, SzParity,
+									   KxMomentum, KyMomentum, XPeriodicity, YPeriodicity, 
+									   Statistics, GutzwillerFlag, ClusterExclusionFlag) == false)
+	{
+	  if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, TotalSz,
+									   KxMomentum, KyMomentum, XPeriodicity, YPeriodicity, 
+									   Statistics, GutzwillerFlag, ClusterExclusionFlag) == false)
+	    {
+	      if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, TotalSz,
 									   KxMomentum, KyMomentum, XPeriodicity, YPeriodicity, 
 									   Statistics, GutzwillerFlag) == false)
-	{
-	  if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites,
+	      {
+		if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites,
 									       KxMomentum, KyMomentum, XPeriodicity, YPeriodicity, 
 									       Statistics, GutzwillerFlag) == false)
-	    {	  
-	      if (FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, TotalSz, Statistics, GutzwillerFlag) == false)
-		{
-		  if (FTIHubbardModelFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, Statistics, GutzwillerFlag) == false)
+		{	  
+		  if (FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, TotalSz, Statistics, GutzwillerFlag) == false)
+		  {
+		    if (FTIHubbardModelFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, Statistics, GutzwillerFlag) == 	false)
+		      {
+			cout << "error while retrieving system parameters from file name " << Manager.GetString("input-state") << endl;
+			return -1;
+		      }
+		  }
+		    else
 		    {
-		      cout << "error while retrieving system parameters from file name " << Manager.GetString("input-state") << endl;
-		      return -1;
+		      FixedSzFlag = true;
 		    }
 		}
 	      else
 		{
-		  FixedSzFlag = true;
+		  MomentumFlag = true;
 		}
 	    }
 	  else
 	    {
+	      FixedSzFlag = true;
 	      MomentumFlag = true;
 	    }
+	  }
+	  else
+	  {
+	    MomentumFlag = true;
+	    FixedSzFlag = true;
+	    ClusterExclusionFlag = true;
+	  }
 	}
-      else
+	else
 	{
-	  FixedSzFlag = true;
 	  MomentumFlag = true;
+	  FixedSzFlag = true;
+	  ClusterExclusionFlag = true;
+	  SzSymmetryFlag = true;
 	}
     }
   else
@@ -247,7 +274,18 @@ int main(int argc, char** argv)
 	  if (Statistics == true)
 	    {
 	      if (GutzwillerFlag == false)
-		InputSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, TotalSz, NbrSites, KxMomentum, XPeriodicity, KyMomentum, YPeriodicity);
+	      {
+		if (ClusterExclusionFlag == false)
+		  InputSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, TotalSz, NbrSites, KxMomentum, XPeriodicity, KyMomentum, YPeriodicity);
+		else
+		{
+		  bool MinusParitySector = true;
+		  if (SzParity == 1)
+		    MinusParitySector = false;
+		  InputSpace = new FermionOnHoneycombLatticeWithSpinSzSymmetryRealSpacePlaquetteExclusionAnd2DTranslation (NbrParticles, TotalSz, NbrSites, MinusParitySector, KxMomentum, XPeriodicity, KyMomentum, YPeriodicity);
+		}
+		
+	      }
 	      else
 		InputSpace = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, TotalSz, NbrSites, KxMomentum, XPeriodicity, KyMomentum, YPeriodicity);
 	    }

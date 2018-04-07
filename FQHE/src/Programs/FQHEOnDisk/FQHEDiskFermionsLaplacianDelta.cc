@@ -53,6 +53,7 @@ int main(int argc, char** argv)
   // some running options and help
   OptionManager Manager ("QHEFermionsLaplacianDelta" , "0.01");
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
+  OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
@@ -62,6 +63,7 @@ int main(int argc, char** argv)
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
   Manager += LanczosGroup;
+  Manager += ToolsGroup;
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
 
@@ -95,6 +97,8 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new SingleDoubleOption ('\n', "lanczos-precision", "define Lanczos precision for eigenvalues (0 if automatically defined by the program)", 0);
   (*LanczosGroup) += new  BooleanOption ('\n', "fast-disk", "use disk storage to increase speed of ground state calculation and decrease memory footprint when using Lanczos algorithm");
   (*LanczosGroup) += new  BooleanOption ('\n', "resume-fastdisk", "resume the fast-disk mode Lanczos algorithm from a stopped one (for example due to computer crash)");
+  
+  (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the Hamiltonian");
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);

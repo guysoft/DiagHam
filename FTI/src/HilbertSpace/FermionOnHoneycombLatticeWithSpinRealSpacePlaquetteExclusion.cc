@@ -70,6 +70,7 @@ FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusion::FermionOnHoneycomb
   this->ListIndicesPerPlaquette = 0;
   this->LargerIndicesInPlaquette = 0;
   this->NbrLargerIndicesInPlaquette = 0;
+  this->SzFlag = false;
 }
 
 // basic constructor
@@ -81,6 +82,7 @@ FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusion::FermionOnHoneycomb
 
 FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusion::FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusion (int nbrFermions, int nbrSitesX, int nbrSitesY, unsigned long memory)
 {  
+  this->SzFlag = false;
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->TotalLz = 0;
@@ -117,12 +119,13 @@ FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusion::FermionOnHoneycomb
 	  cout << "error while generating the Hilbert space, " << TmpLargeHilbertSpaceDimension << " generated states, should be " << this->LargeHilbertSpaceDimension << endl;
 	}
       this->GenerateLookUpTable(memory);
-            
+         
+      
       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 	{
-	  if (FindStateIndex(this->StateDescription[i],  this->StateHighestBit[i]) != i)
+	  if (this->FindStateIndex(this->StateDescription[i],  this->StateHighestBit[i]) != i)
 	    {
-	      cout << i << " " << FindStateIndex(this->StateDescription[i],  this->StateHighestBit[i]) << endl;
+	      cout << i << " " << this->FindStateIndex(this->StateDescription[i],  this->StateHighestBit[i]) << endl;
 	    }
 	}
 
@@ -201,6 +204,24 @@ FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusion::FermionOnHoneycomb
 	}
       this->GenerateLookUpTable(memory);
       
+//       for (int i = 0; i < this->NbrSite; ++i)
+//       {
+// 	for (int j = 0; j  <this->NbrSite; ++j)
+// 	{
+// 	  double Tmpcoef = this->AuAd(453, i, j);
+// 	  double Tmpcoef1;
+// 	  int Index = this->AduAdd(i, j, Tmpcoef1);
+// 	  if (Index == 453)
+// 	    cout << i << " " << j << " : " << Tmpcoef << " " << Tmpcoef1 << " " << Index << endl;
+// 	}
+//       }
+//       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+//       {
+// 	  cout << i << " : " ;
+// 	  this->PrintState(cout, i);
+// 	  cout << endl;
+//       }
+//       
 //       this->StateDescription = new unsigned long [TmpUnfilteredDimension];
 //       FermionOnLatticeWithSpinRealSpace::GenerateStates(this->NbrFermions, this->NbrSite - 1, this->NbrFermionsUp, 0l); 
 // //       test the consistency of the constraint
@@ -220,13 +241,13 @@ FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusion::FermionOnHoneycomb
 //       }
 //       cout << "filtered Hilbert space dim = " << TmpHilbertSpaceDimension << endl;
       
-//       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-// 	{
-// 	  if (FindStateIndex(this->StateDescription[i],  this->StateHighestBit[i]) != i)
-// 	    {
-// 	      cout << i << " " << FindStateIndex(this->StateDescription[i],  this->StateHighestBit[i]) << endl;
-// 	    }
-// 	}
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	{
+	  if (this->FindStateIndex(this->StateDescription[i],  this->StateHighestBit[i]) != i)
+	    {
+	      cout << i << " " << this->FindStateIndex(this->StateDescription[i],  this->StateHighestBit[i]) << endl;
+	    }
+	}
 
 
 #ifdef __DEBUG__
@@ -417,10 +438,10 @@ void FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusion::InitializeHex
       this->ListIndicesPerPlaquette[TmpIndex] = new int[6];
       this->ListIndicesPerPlaquette[TmpIndex][0] = this->FindSiteIndex(0, i, j);
       this->ListIndicesPerPlaquette[TmpIndex][1] = this->FindSiteIndex(1, i, j);
-      this->ListIndicesPerPlaquette[TmpIndex][2] = this->FindSiteIndex(0, i, j + 1);
+      this->ListIndicesPerPlaquette[TmpIndex][2] = this->FindSiteIndex(0, i + 1, j);
       this->ListIndicesPerPlaquette[TmpIndex][3] = this->FindSiteIndex(1, i + 1, j - 1);
-      this->ListIndicesPerPlaquette[TmpIndex][4] = this->FindSiteIndex(0, i + 1, j);
-      this->ListIndicesPerPlaquette[TmpIndex][5] = this->FindSiteIndex(1, i + 1, j);
+      this->ListIndicesPerPlaquette[TmpIndex][4] = this->FindSiteIndex(0, i + 1, j - 1);
+      this->ListIndicesPerPlaquette[TmpIndex][5] = this->FindSiteIndex(1, i, j - 1);
       
     }
   }
@@ -686,3 +707,41 @@ int FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusion::FindMaximumCha
   }
   return TmpCharge;
 }
+
+// find state index
+//
+// stateDescription = unsigned integer describing the state
+// lzmax = maximum Lz value reached by a fermion in the state
+// return value = corresponding index
+
+int FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusion::FindStateIndex(unsigned long stateDescription, int lzmax)
+{
+  long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
+  cout << lzmax << endl;
+  long PosMin = this->LookUpTable[lzmax][PosMax];
+  PosMax = this->LookUpTable[lzmax][PosMax + 1];
+  long PosMid = (PosMin + PosMax) >> 1;
+  unsigned long CurrentState = this->StateDescription[PosMid];
+  while ((PosMax != PosMid) && (CurrentState != stateDescription))
+    {
+      if (CurrentState > stateDescription)
+	{
+	  PosMax = PosMid;
+	}
+      else
+	{
+	  PosMin = PosMid;
+	} 
+      PosMid = (PosMin + PosMax) >> 1;
+      CurrentState = this->StateDescription[PosMid];
+    }
+  if (CurrentState == stateDescription)
+    return PosMid;
+  else
+  {
+    if (this->StateDescription[PosMin] == stateDescription)
+      return PosMin;
+    else
+      return this->HilbertSpaceDimension;
+  }
+}  

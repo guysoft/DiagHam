@@ -174,6 +174,12 @@ FermionOnHoneycombLatticeWithSpinSzSymmetryRealSpacePlaquetteExclusionAnd2DTrans
       this->LargeHilbertSpaceDimension  = this->GenerateStates();
       this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
       cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
+//       for (int i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+//       {
+// 	this->PrintState(cout, i);
+// 	cout << endl;
+//       }
+      
       if (this->LargeHilbertSpaceDimension > 0l)
 	{
 	  this->GenerateLookUpTable(memory);	  
@@ -562,10 +568,10 @@ void FermionOnHoneycombLatticeWithSpinSzSymmetryRealSpacePlaquetteExclusionAnd2D
       this->ListIndicesPerPlaquette[TmpIndex] = new int[6];
       this->ListIndicesPerPlaquette[TmpIndex][0] = this->GetLinearizedIndexSafe(i, j, 0);
       this->ListIndicesPerPlaquette[TmpIndex][1] = this->GetLinearizedIndexSafe(i, j, 1);
-      this->ListIndicesPerPlaquette[TmpIndex][2] = this->GetLinearizedIndexSafe(i, j + 1, 0);
+      this->ListIndicesPerPlaquette[TmpIndex][2] = this->GetLinearizedIndexSafe(i + 1, j, 0);
       this->ListIndicesPerPlaquette[TmpIndex][3] = this->GetLinearizedIndexSafe(i + 1, j - 1, 1);
-      this->ListIndicesPerPlaquette[TmpIndex][4] = this->GetLinearizedIndexSafe(i + 1, j, 0);
-      this->ListIndicesPerPlaquette[TmpIndex][5] = this->GetLinearizedIndexSafe(i + 1, j, 1);
+      this->ListIndicesPerPlaquette[TmpIndex][4] = this->GetLinearizedIndexSafe(i + 1, j - 1 , 0);
+      this->ListIndicesPerPlaquette[TmpIndex][5] = this->GetLinearizedIndexSafe(i, j - 1, 1);
       
     }
   }

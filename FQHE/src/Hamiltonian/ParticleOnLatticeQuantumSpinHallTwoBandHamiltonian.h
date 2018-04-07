@@ -1044,8 +1044,12 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 	{
 	  int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
 	  TmpIndices = this->IntraSectorIndicesPerSum[j];
-	  int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
-	  TmpIndices2 = this->InterSectorIndicesPerSum[j];
+	  int Lim2 = 0;
+	  if (j < this->NbrInterSectorSums)
+	  {
+	    Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
+	    TmpIndices2 = this->InterSectorIndicesPerSum[j];
+	  }
 	  for (int i1 = 0; i1 < Lim; i1 += 2)
 	    {
 	      Coefficient3 = particles->AuAu(index, TmpIndices[i1], TmpIndices[i1 + 1]);
@@ -1160,7 +1164,10 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			}
 		      ++TmpInteractionFactor;
 		    }
-		  TmpInteractionFactor = &(this->InteractionFactorsupdowndowndown[j][(i1 * Lim2) >> 2]);
+		  if (j < this->NbrInterSectorSums)
+		  {
+		    TmpInteractionFactor = &(this->InteractionFactorsupdowndowndown[j][(i1 * Lim2) >> 2]);
+		  }
 		  for (int i2 = 0; i2 < Lim2; i2 += 2)
 		    {
 		      Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient);
@@ -1230,7 +1237,10 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			}
 		      ++TmpInteractionFactor;
 		    }
-		  TmpInteractionFactor = &(this->InteractionFactorsupdownupdown[j][(i1 * Lim2) >> 2]);
+		  if (j < this->NbrInterSectorSums)
+		  {
+		    TmpInteractionFactor = &(this->InteractionFactorsupdownupdown[j][(i1 * Lim2) >> 2]);
+		  }
 		  for (int i2 = 0; i2 < Lim2; i2 += 2)
 		    {
 		      Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient);
@@ -1283,8 +1293,12 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 	    {
 	      int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
 	      TmpIndices = this->IntraSectorIndicesPerSum[j];
-	      int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
-	      TmpIndices2 = this->InterSectorIndicesPerSum[j];
+	      int Lim2 = 0;
+	      if (j < this->NbrInterSectorSums)
+	      {
+		Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
+		TmpIndices2 = this->InterSectorIndicesPerSum[j];
+	      }
 	      for (int i1 = 0; i1 < Lim; i1 += 2)
 		{
 		  Coefficient3 = particles->AuAu(i, TmpIndices[i1], TmpIndices[i1 + 1]);
@@ -1312,7 +1326,10 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			    }
 			  ++TmpInteractionFactor;
 			}
-		      TmpInteractionFactor = &(this->InteractionFactorsupdownupup[j][(i1 * Lim2) >> 2]);
+		      if (j < this->NbrInterSectorSums)
+		      {
+			TmpInteractionFactor = &(this->InteractionFactorsupdownupup[j][(i1 * Lim2) >> 2]);
+		      }
 		      for (int i2 = 0; i2 < Lim2; i2 += 2)
 			{
 			  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient);
@@ -1349,7 +1366,10 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			    }
 			  ++TmpInteractionFactor;
 			}
-		      TmpInteractionFactor = &(this->InteractionFactorsupdowndowndown[j][(i1 * Lim2) >> 2]);
+		      if (j < this->NbrInterSectorSums)
+		      {
+			TmpInteractionFactor = &(this->InteractionFactorsupdowndowndown[j][(i1 * Lim2) >> 2]);
+		      }
 		      for (int i2 = 0; i2 < Lim2; i2 += 2)
 			{
 			  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient);
@@ -1389,7 +1409,10 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			    }
 			  ++TmpInteractionFactor;
 			}
+		      if (j < this->NbrInterSectorSums)
+		      {
 		      TmpInteractionFactor = &(this->InteractionFactorsupdownupdown[j][(i1 * Lim2) >> 2]);
+		      }
 		      for (int i2 = 0; i2 < Lim2; i2 += 2)
 			{
 			  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient);
@@ -1413,8 +1436,12 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 	    {
 	      int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
 	      TmpIndices = this->IntraSectorIndicesPerSum[j];
-	      int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
-	      TmpIndices2 = this->InterSectorIndicesPerSum[j];
+	      int Lim2 = 0;
+	      if (j < this->NbrInterSectorSums)
+	      {
+		Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
+		TmpIndices2 = this->InterSectorIndicesPerSum[j];
+	      }
 	      for (int i1 = 0; i1 < Lim; i1 += 2)
 		{
 		  Coefficient3 = particles->AuAu(i, TmpIndices[i1], TmpIndices[i1 + 1]);
@@ -1442,8 +1469,11 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			    }
 			  ++TmpInteractionFactor;
 			}
-		      TmpInteractionFactor = &(this->InteractionFactorsupdownupup[j][(i1 * Lim2) >> 2]);
-		      for (int i2 = 0; i2 < Lim2; i2 += 2)
+		      
+		      if (j < this->NbrInterSectorSums)
+		      {
+			TmpInteractionFactor = &(this->InteractionFactorsupdownupup[j][(i1 * Lim2) >> 2]);
+			for (int i2 = 0; i2 < Lim2; i2 += 2)
 			{
 			  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient);
 			  if (Index <= i)
@@ -1453,6 +1483,7 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			    }
 			  ++TmpInteractionFactor;
 			}
+		      }
 		    }
 		  Coefficient3 = particles->AdAd(i, TmpIndices[i1], TmpIndices[i1 + 1]);
 		  if (Coefficient3 != 0.0)
@@ -1479,17 +1510,23 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			    }
 			  ++TmpInteractionFactor;
 			}
-		      TmpInteractionFactor = &(this->InteractionFactorsupdowndowndown[j][(i1 * Lim2) >> 2]);
-		      for (int i2 = 0; i2 < Lim2; i2 += 2)
-			{
-			  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient);
-			  if (Index <= i)
-			    {
-			      ++memory;
-			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-			    }
-			  ++TmpInteractionFactor;
-			}
+		      if (j < this->NbrInterSectorSums)
+		      {
+			TmpInteractionFactor = &(this->InteractionFactorsupdowndowndown[j][(i1 * Lim2) >> 2]);
+			for (int i2 = 0; i2 < Lim2; i2 += 2)
+			  {
+// 			    cout << i << " " ;
+// 			    particles->PrintState(cout, i);
+// 			    cout << " " << TmpIndices[i1] << " " << TmpIndices[i1 + 1] << " "  << TmpIndices2[i2] << " " << TmpIndices2[i2 + 1] << endl;
+			    Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient);
+			    if (Index <= i)
+			      {
+				++memory;
+				++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			      }
+			    ++TmpInteractionFactor;
+			  }
+		      }
 		    }
 		}
 	      for (int i1 = 0; i1 < Lim2; i1 += 2)

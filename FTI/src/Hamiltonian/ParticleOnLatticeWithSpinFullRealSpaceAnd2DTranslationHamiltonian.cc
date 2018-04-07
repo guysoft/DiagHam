@@ -123,7 +123,6 @@ ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::ParticleOnLat
   this->EvaluateExponentialFactors();
   this->EvaluateOneBodyFactorsFromTightBingding(tightBinding);
   
-  cout << "constructor" << endl;
   this->EvaluateInteractionFactorsFromDensityDensityAndHeisenberg(densityDensityupup, densityDensitydowndown, densityDensityupdown, sxSx, sySy, szSz);
   
 //   cout << this->InteractionFactorsupup[0][0] << endl;
@@ -304,8 +303,6 @@ ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::ParticleOnLat
   
   this->EvaluateExponentialFactors();
   this->EvaluateOneBodyFactorsFromTightBingding(tightBinding);
-  
-  cout << "constructor" << endl;
   this->EvaluateInteractionFactorsFromDensityDensityAndHeisenberg(densityDensityupup, densityDensitydowndown, densityDensityupdown, sxSx, sySy, szSz, sxSy, sySz, sxSz);
   
 //   cout << this->InteractionFactorsupup[0][0] << endl;

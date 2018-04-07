@@ -742,6 +742,7 @@ int FermionOnSphereWithSpin::AddAd (int index, int m, int n, double& coefficient
 #endif
     }
   State |= (0x1ul << m);
+  cout << State << " " << NewLargestBit << endl;
   return this->TargetSpace->FindStateIndex(State, NewLargestBit);
 }
 
