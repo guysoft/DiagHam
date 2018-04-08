@@ -535,13 +535,27 @@ int main(int argc, char** argv)
     {
       ofstream DensityMatrixFile;
       DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out); 
-      if (NoSzFlag == false)
+      if (SymmetryBreakingPatch == false)
 	{
-	  DensityMatrixFile << "#  N    Sz    Sz<->-Sz    Nup    Ndown    Lz    lambda";
+	  if (NoSzFlag == false)
+	    {
+	      DensityMatrixFile << "#  N    Sz    Sz<->-Sz    Nup    Ndown    Lz    lambda";
+	    }
+	  else
+	    {
+	      DensityMatrixFile << "#  N    Lz    lambda";
+	    }
 	}
       else
 	{
-	  DensityMatrixFile << "#  N    Lz    lambda";
+	  if (NoSzFlag == false)
+	    {
+	      DensityMatrixFile << "#  N    Sz    Nup    Ndown    lambda";
+	    }
+	  else
+	    {
+	      DensityMatrixFile << "#  N    lambda";
+	    }
 	}
       DensityMatrixFile << endl;
       DensityMatrixFile.close();
@@ -579,7 +593,8 @@ int main(int argc, char** argv)
     }
   cout.precision(14);
 
-  double TotalTrace = 0;
+  double TotalTrace = 0.0;
+  double TotalEntanglementEntropy = 0.0;
 
   double* WeightAOrbitalsUp = 0;
   double* WeightBOrbitalsUp = 0;
@@ -899,6 +914,7 @@ int main(int argc, char** argv)
 		    {
 		      gettimeofday (&(TotalStartingTime), 0);
 		    }
+//		  cout << PartialEntanglementMatrix << endl;
 		  double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition();
 		  if (ShowTimeFlag == true)
 		    {
@@ -907,7 +923,6 @@ int main(int argc, char** argv)
 					    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
 		      cout << "singular value decomposition done in " << Dt << "s" << endl;
 		    }
-		  
 		  int TmpDimension = PartialEntanglementMatrix.GetNbrColumn();
 		  if (TmpDimension > PartialEntanglementMatrix.GetNbrRow())
 		    {
@@ -1653,7 +1668,10 @@ int main(int argc, char** argv)
 	  File << SubsystemNbrParticles << " " << (-EntanglementEntropies[SubsystemNbrParticles - MinSubsystemNbrParticles]) 
 	       << " " << DensitySums[SubsystemNbrParticles - MinSubsystemNbrParticles] << " " << (1.0 - DensitySums[SubsystemNbrParticles - MinSubsystemNbrParticles]) << endl;
 	  if (RealSpaceCut == true)
-	    TotalTrace += DensitySums[SubsystemNbrParticles - MinSubsystemNbrParticles];
+	    {
+	      TotalTrace += DensitySums[SubsystemNbrParticles - MinSubsystemNbrParticles];
+	      TotalEntanglementEntropy -= EntanglementEntropies[SubsystemNbrParticles - MinSubsystemNbrParticles];
+	    }
 	}
       File.close();
     }
@@ -1663,8 +1681,9 @@ int main(int argc, char** argv)
       ofstream File;
       File.open(OutputFileName, ios::binary | ios::out | ios::app);
       File.precision(14);
-      cout <<" Total density matrix trace is equal to "<< TotalTrace<<endl;
-      File << "# Total density matrix trace is equal to "<< TotalTrace<<endl;
+      cout <<" Total density matrix trace is equal to " << TotalTrace << endl;
+      File << "# Total density matrix trace = " << TotalTrace << endl;
+      File << "# Total entanglement entropy = " << TotalEntanglementEntropy << endl;
       File.close();
     }
 }

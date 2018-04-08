@@ -64,6 +64,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "patch-width", "width of the patch along the cylinder perimeter (0 if it should extend along the whole cylinder perimeter)", 0.0);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "optional output file name (default is realspace_cylinder_l_*_perimeter_*_2s_*.dat)");
   (*OutputGroup) += new BooleanOption ('\n', "column-output", "when having a cut preserving the translation along the cylinder perimeter, use a column formatted output instead of a single line");
+  (*OutputGroup) += new BooleanOption ('\n', "show-overlap", " show the overlap for the region A  when using a finite size patch");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -284,31 +285,45 @@ int main(int argc, char** argv)
 													  CutPosition - (0.5 * CutLength), CutPosition + (0.5 * CutLength), CutWidth));
 		}
 	    }
-	  cout << TmpOverlapMatrix << endl;
+	  if (Manager.GetBoolean("show-overlap") == true)
+	    {
+	      cout.precision(14);
+	      cout << TmpOverlapMatrix << endl;
+	    }
 	  RealMatrix TmpTransformationMatrix1 (NbrFluxQuanta + 1, NbrFluxQuanta + 1);
 	  TmpTransformationMatrix1.SetToIdentity();
-	  RealDiagonalMatrix TmpDiag1 = RealDiagonalMatrix(NbrFluxQuanta + 1, NbrFluxQuanta + 1);  
-	  RealDiagonalMatrix TmpDiag2 = RealDiagonalMatrix(NbrFluxQuanta + 1, NbrFluxQuanta + 1);  
+	  RealDiagonalMatrix TmpDiag1 = RealDiagonalMatrix(NbrFluxQuanta + 1, true);  
+	  RealDiagonalMatrix TmpDiag2 = RealDiagonalMatrix(NbrFluxQuanta + 1, true);  
 #ifdef __LAPACK__
 	  TmpOverlapMatrix.LapackDiagonalize(TmpDiag1, TmpTransformationMatrix1);
 #else
 	  TmpOverlapMatrix.Diagonalize(TmpDiag1, TmpTransformationMatrix1);
 #endif 	  
-	  RealMatrix TmpTransformationMatrix2 = TmpTransformationMatrix1.DuplicateAndTranspose();
 	  for (int i = 0; i <= NbrFluxQuanta; ++i)
 	    {
 	      TmpDiag2[i] = sqrt(1.0 - TmpDiag1[i]);	      
 	      TmpDiag1[i] = sqrt(TmpDiag1[i]);
 	    }
+// 	  cout << TmpTransformationMatrix1 << endl;
+// 	  cout << TmpDiag1 <<endl;
+	  RealMatrix TmpTransformationMatrix2 = TmpTransformationMatrix1.DuplicateAndTranspose();
+ 	  RealMatrix TmpTransformationMatrix3 = TmpTransformationMatrix1 * TmpDiag2;
+	  for (int i = 0; i < TmpTransformationMatrix1.GetNbrColumn(); ++i)
+	    {
+	      TmpTransformationMatrix1[i] *= TmpDiag1[i];
+	    }
+	  RealMatrix TmpTransformationMatrix4 = TmpTransformationMatrix1 * TmpTransformationMatrix2;
+	  RealMatrix TmpTransformationMatrix5 = TmpTransformationMatrix3 * TmpTransformationMatrix2;
+//	  cout << TmpTransformationMatrix4 << endl;
 	  for (int i = 0; i <= NbrFluxQuanta; ++i)
 	    {
 	      for (int j = 0; j <= NbrFluxQuanta; ++j)
 		{
 		  double Tmp1;
 		  double Tmp2;
-		  TmpTransformationMatrix1.GetMatrixElement(i, j, Tmp1);
-		  TmpTransformationMatrix2.GetMatrixElement(i, j, Tmp2);
-		  File << i << " " << j << " " << Tmp1 << " " << Tmp2 << " " << TmpDiag1[i] << endl;
+		  TmpTransformationMatrix4.GetMatrixElement(i, j, Tmp1);
+		  TmpTransformationMatrix5.GetMatrixElement(i, j, Tmp2);
+		  File << i << " " << j << " " << Tmp1 << " " << Tmp2 << endl;
 		}
 	    }
 	}

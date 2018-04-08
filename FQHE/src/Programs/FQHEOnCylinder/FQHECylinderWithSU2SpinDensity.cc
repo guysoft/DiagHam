@@ -14,6 +14,7 @@
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
 #include "HilbertSpace/BosonOnSphereWithSU2Spin.h"
 #include "HilbertSpace/BosonOnSphereWithSpinAllSz.h"
+#include "HilbertSpace/BosonOnSphereWithSU2SpinPartialPolarization.h"
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
@@ -110,6 +111,7 @@ int main(int argc, char** argv)
   double Ratio = 0.0;
   double Perimeter = 0.0;
   int LandauLevel = 0;
+  int NbrPolarizedOrbitals = 0;
   int NbrInputStates = 0;
   char** InputStateNames = 0;
 
@@ -126,6 +128,10 @@ int main(int argc, char** argv)
 	{
 	  cout << "error while retrieving system parameters from file name " << Manager.GetString("input-state")  << endl;
 	  return -1;
+	}
+      if (FQHEOnSphereWithSpinFindSystemPolarizationFromFileName(Manager.GetString("input-state"), NbrPolarizedOrbitals) == false)
+	{
+	  cout << "error while retrieving system parameters from file name " << Manager.GetString("input-state")  << endl;
 	}
       NbrInputStates = 1;
       InputStateNames = new char*[NbrInputStates];
@@ -153,6 +159,10 @@ int main(int argc, char** argv)
 	    {
 	      cout << "error while retrieving system parameters from file name " << InputStateNames[i] << endl;
 	      return -1;
+	    }
+	  if (FQHEOnSphereWithSpinFindSystemPolarizationFromFileName(InputStateNames[i], NbrPolarizedOrbitals) == false)
+	    {
+	      cout << "error while retrieving system parameters from file name " << Manager.GetString("input-state")  << endl;
 	    }
 	}
     }
@@ -297,13 +307,20 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  if (Manager.GetBoolean("use-alt") == false)
+	  if (NbrPolarizedOrbitals == 0)
 	    {
-	      Space = new BosonOnSphereWithSpin(NbrParticles, TotalKy, KyMax, TotalSz);
+	      if (Manager.GetBoolean("use-alt") == false)
+		{
+		  Space = new BosonOnSphereWithSpin(NbrParticles, TotalKy, KyMax, TotalSz);
+		}
+	      else
+		{
+		  Space = new BosonOnSphereWithSU2Spin(NbrParticles, TotalKy, KyMax, TotalSz);
+		}
 	    }
 	  else
 	    {
-	      Space = new BosonOnSphereWithSU2Spin(NbrParticles, TotalKy, KyMax, TotalSz);
+	      Space = new BosonOnSphereWithSU2SpinPartialPolarization(NbrParticles, TotalKy, KyMax, TotalSz, NbrPolarizedOrbitals);
 	    }
 	}
     }

@@ -102,6 +102,13 @@ bool FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(char* filename, int& n
 bool FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& lzMax, int& lz, int& sz, 
 							  int& szSymmetry, int& lzSymmetry, bool& statistics);
 
+// try to guess system spin polarization from file name for system suth an SU(2) degree of freedom
+//
+// filename = vector file name
+// nbrPolarizedOrbitals = reference to the number of orbitals that are fullly polarized
+// return value = true if no error occured
+bool FQHEOnSphereWithSpinFindSystemPolarizationFromFileName(char* filename, int& nbrPolarizedOrbitals);
+
 // try to guess system information from file name for system with an SU(3) degree of freedom and discrete symmetries
 //
 // filename = vector file name

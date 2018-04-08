@@ -3865,6 +3865,10 @@ RealMatrix BosonOnSphereWithSU2Spin::EvaluateEntanglementMatrixGenericRealSpaceP
 	      TmpTransformationMatrix.SetMatrixElement(TmpTotalSubsytemIndex, TmpSubsytemIndex, Tmp);
 	    }
 	}
+//       cout << "processing " << i << endl;
+//       cout << entanglementMatrices[i] << endl;
+//       cout << TmpComplementaryTransformationMatrix << endl;
+//       cout << TmpTransformationMatrix << endl;
       RealMatrix TmpMatrix = entanglementMatrices[i] * TmpComplementaryTransformationMatrix;
       TmpEntanglementMatrix.AddMultiply (TmpTransformationMatrix, TmpMatrix);
     }

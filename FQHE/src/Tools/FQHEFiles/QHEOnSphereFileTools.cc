@@ -428,6 +428,95 @@ bool FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(char* filename, int& n
       lzSymmetryMinusParity = true;
       return true;
     }
+  char* StrNbrParticles = strstr(filename, "_szsym_");  
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 7;
+      int SizeString = 0;
+      if (StrNbrParticles[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  int SzSymmetry = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles += SizeString;
+	  if (SzSymmetry == 1)
+	    {
+	      szSymmetry = true;
+	      szSymmetryMinusParity = false;	      
+	    }
+	  else
+	    {
+	      szSymmetry = true;
+	      szSymmetryMinusParity = true;	      
+	    }
+	}
+      else
+	StrNbrParticles = 0;
+      if (StrNbrParticles == 0)
+	{
+	  cout << "can't guess the Sz<->-Sz sector from file name " << filename << endl;
+	  return false;            
+	}
+    }
+  StrNbrParticles = strstr(filename, "_lzsym_");
+  lzSymmetry = 0;
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 7;
+      int SizeString = 0;
+      if (StrNbrParticles[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  int LzSymmetry = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles += SizeString;
+	  if (LzSymmetry == 1)
+	    {
+	      lzSymmetry = true;
+	      lzSymmetryMinusParity = false;	      
+	    }
+	  else
+	    {
+	      lzSymmetry = true;
+	      lzSymmetryMinusParity = true;	      
+	    }
+	}
+      else
+	StrNbrParticles = 0;
+      if (StrNbrParticles == 0)
+	{
+	  cout << "can't guess the Lz<->-Lz sector from file name " << filename << endl;
+	  return false;            
+	}
+    }
+  if (strstr(filename, "_szsym_") != 0)
+    {
+      char* StrNbrParticles = strstr(filename, "_szsym_");
+      szSymmetry = true;
+      szSymmetryMinusParity = false;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  int Tmp = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles += SizeString;
+	}
+    }
+  
   return true;
   
 }
@@ -618,6 +707,41 @@ bool FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(char* filename, int& n
   return true;
 }
 
+
+// try to guess system spin polarization from file name for system suth an SU(2) degree of freedom
+//
+// filename = vector file name
+// nbrPolarizedOrbitals = reference to the number of orbitals that are fullly polarized
+// return value = true if no error occured
+
+bool FQHEOnSphereWithSpinFindSystemPolarizationFromFileName(char* filename, int& nbrPolarizedOrbitals)
+{
+  char* StrNbrParticles = strstr(filename, "_polarized_");
+  nbrPolarizedOrbitals = 0;
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 11;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  nbrPolarizedOrbitals = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+      if (StrNbrParticles == 0)
+	{
+	  cout << "can't guess any spin polarized region from file name " << filename << endl;
+	  return false;            
+	}
+    }
+  return true;
+}
 
 // try to guess system information from file name for system with an SU(3) degree of freedom and discrete symmetries
 //
