@@ -115,6 +115,7 @@ int main(int argc, char** argv)
   
   (*SystemGroup) += new SingleDoubleOption  ('D', "deltaPotential", "Introduce a delta-potential at the origin", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('R', "randomPotential", "Introduce a random potential at all sites", 0.0);
+  (*SystemGroup) += new BooleanOption ('\n', "cylinder", "Consider a cylinder geometry (only for delta Hamiltonian)");
   (*SystemGroup) += new BooleanOption  ('\n', "positive-hopping", "choose positive sign of hopping terms", false);
   (*SystemGroup) += new BooleanOption  ('\n', "all-flux", "calculate all values of the flux to test symmetry under n_phi->1-n_phi", false);
   (*SystemGroup) += new SingleDoubleOption  ('K', "Kapit-Mueller", "Use the Kapit-Mueller hoppings with the argument being the maximum range", -1.0);
@@ -303,8 +304,7 @@ int main(int argc, char** argv)
   if (Manager.GetDouble("Kapit-Mueller")<=0.0)
     Hamiltonian = new ParticleOnLatticeDeltaHamiltonian(Space, NbrBosons, Lx, Ly, NbrFluxQuanta, ContactU, ReverseHopping, Delta,
 							Random, Architecture.GetArchitecture(), NbrBody, Memory, LoadPrecalculationFileName,
-							!Manager.GetBoolean("no-hermitian"));
-  
+							!Manager.GetBoolean("no-hermitian"), Manager.GetBoolean("cylinder"));  
   else
     {
       if (NbrLayers>1)
