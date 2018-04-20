@@ -102,8 +102,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('R', "randomPotential", "Introduce a random potential at all sites", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "positive-hopping", "choose positive sign of hopping terms", false);
   (*SystemGroup) += new BooleanOption  ('\n', "all-flux", "calculate all values of the flux to test symmetry under n_phi->1-n_phi", false);
+  (*SystemGroup) += new BooleanOption ('\n', "cylinder", "Consider a cylinder geometry (only for delta Hamiltonian)");
   (*SystemGroup) += new MultipleDoubleOption  ('\n', "external-parameters", "External parameters to override any parameters given in lattice definition",',','_');
-  
+
+  (*PrecalculationGroup) += new BooleanOption ('\n', "no-hermitian", "do not use hermitian symmetry of the hamiltonian");  
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
@@ -164,10 +166,14 @@ int main(int argc, char** argv)
       if (Random!=0.0)
 	sprintf(deltaString,"R_%g_",Random);
       sprintf(interactionStr,"_u_%g", ContactU);
+      int offset2;
+      offset2 = sprintf(OutputName,"fermions_lattice_");
+      if (Manager.GetBoolean("cylinder"))
+	offset2 += sprintf(OutputName+offset2,"cyl_");
       if (NbrFluxValues == 1)
-	sprintf (OutputName, "fermions_lattice_n_%d_x_%d_y_%d%s_%s%sq_%d.dat", NbrFermions, Lx, Ly, interactionStr, reverseHoppingString, deltaString, NbrFluxQuanta);
+	sprintf (OutputName+offset2, "n_%d_x_%d_y_%d%s_%s%sq_%d.dat", NbrFermions, Lx, Ly, interactionStr, reverseHoppingString, deltaString, NbrFluxQuanta);
       else
-	sprintf (OutputName, "fermions_lattice_n_%d_x_%d_y_%d%s_%s%sq.dat", NbrFermions, Lx, Ly, interactionStr, reverseHoppingString, deltaString);
+	sprintf (OutputName+offset2, "n_%d_x_%d_y_%d%s_%s%sq.dat", NbrFermions, Lx, Ly, interactionStr, reverseHoppingString, deltaString);
     }
   ParticleOnLattice* Space = new FermionOnLattice(NbrFermions, Lx, Ly, NbrFluxQuanta, MemorySpace);
 
@@ -177,7 +183,8 @@ int main(int argc, char** argv)
   
   AbstractQHEOnLatticeHamiltonian* Hamiltonian;
   Hamiltonian = new ParticleOnLatticeDeltaHamiltonian(Space, NbrFermions, Lx, Ly, NbrFluxQuanta, ContactU,
-						      ReverseHopping, Delta, Random, Architecture.GetArchitecture(),NbrBody, Memory, LoadPrecalculationFileName);
+						      ReverseHopping, Delta, Random, Architecture.GetArchitecture(),NbrBody, Memory, 
+						      LoadPrecalculationFileName, !Manager.GetBoolean("no-hermitian"), Manager.GetBoolean("cylinder"));
 
   if (Manager.GetString("energy-expectation") != 0 )
 	{
@@ -217,7 +224,11 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("eigenstate"))	
 	{
 	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "fermions_lattice_n_%d_x_%d_y_%d%s_%s%sq_%d", NbrFermions, Lx, Ly, interactionStr, reverseHoppingString, deltaString, NbrFluxQuanta);
+	  int offset;
+	  offset = sprintf(EigenvectorName,"fermions_lattice_");
+	  if (Manager.GetBoolean("cylinder"))
+	      offset += sprintf(EigenvectorName+offset,"cyl_");
+	  sprintf (EigenvectorName+offset, "n_%d_x_%d_y_%d%s_%s%sq_%d", NbrFermions, Lx, Ly, interactionStr, reverseHoppingString, deltaString, NbrFluxQuanta);
 	}
       QHEOnLatticeMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, NbrFluxQuanta, 0.0, OutputName, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);

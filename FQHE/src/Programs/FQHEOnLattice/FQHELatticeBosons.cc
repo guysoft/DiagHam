@@ -276,10 +276,14 @@ int main(int argc, char** argv)
 	    {
 	      sprintf(interactionStr,"%s_s_%g_%g",interactionStr,SolenoidX,SolenoidY);
 	    }
+      int offset2;
+      offset2 = sprintf(OutputName,"bosons_lattice_");
+      if (Manager.GetBoolean("cylinder"))
+	  offset2 += sprintf(OutputName+offset2,"cyl_");
       if (NbrFluxValues == 1)
-	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq_%d.dat", NbrBosons, Lx, Ly, interactionStr, auxArguments, deltaString, NbrFluxQuanta);
+	sprintf (OutputName+offset2, "n_%d_x_%d_y_%d%s_%s%sq_%d.dat", NbrBosons, Lx, Ly, interactionStr, auxArguments, deltaString, NbrFluxQuanta);
       else
-	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq.dat", NbrBosons, Lx, Ly, interactionStr, auxArguments, deltaString);
+	sprintf (OutputName+offset2, "n_%d_x_%d_y_%d%s_%s%sq.dat", NbrBosons, Lx, Ly, interactionStr, auxArguments, deltaString);
     }
   ParticleOnLattice* Space;
   if (NbrBosons>1)
@@ -420,8 +424,12 @@ int main(int argc, char** argv)
       if ((Manager.GetBoolean("eigenstate")||(Manager.GetBoolean("optimize-condensate"))))
 	{
 	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq_%d", NbrBosons, Lx, Ly, interactionStr, auxArguments, deltaString, NbrFluxQuanta);
-	}
+	  int offset;
+	  offset = sprintf(EigenvectorName,"bosons_lattice_");
+	  if (Manager.GetBoolean("cylinder"))
+	      offset += sprintf(EigenvectorName+offset,"cyl_");
+	  sprintf (EigenvectorName+offset, "n_%d_x_%d_y_%d%s_%s%sq_%d", NbrBosons, Lx, Ly, interactionStr, auxArguments, deltaString, NbrFluxQuanta);
+	      }
       if (Manager.GetBoolean("optimize-condensate"))
 	{
 	  char *ParameterName = new char[strlen(EigenvectorName)+10];
