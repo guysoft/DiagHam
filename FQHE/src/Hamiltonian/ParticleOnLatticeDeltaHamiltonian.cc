@@ -34,6 +34,7 @@
 #include "Output/MathematicaOutput.h"
 #include "MathTools/RandomNumber/NumRecRandomGenerator.h"
 #include "Architecture/AbstractArchitecture.h"
+#include "GeneralTools/StringTools.h"
 
 #include <iostream>
 using std::cout;
@@ -53,7 +54,7 @@ using std::ostream;
 // lx = length of simulation cell in x-direction
 // ly = length of simulation cell in y-direction
 // nbrFluxQuanta = number of flux quanta piercing the simulation cell
-// contactInteractionU = strength of on-site delta interaction
+// contactInteractionU = strength of on-site delta interaction for bosons / NN interaction for fermions
 // reverseHopping = flag to indicate if sign of hopping terms should be reversed
 // deltaPotential = strength of a delta potential at site (0,0)
 // architecture = architecture to use for precalculation
@@ -94,17 +95,7 @@ ParticleOnLatticeDeltaHamiltonian::ParticleOnLatticeDeltaHamiltonian(ParticleOnL
       if (memory > 0)
 	{
 	  long TmpMemory = this->FastMultiplicationMemory(memory);
-	  if (TmpMemory < 1024)
-	    cout  << "fast = " <<  TmpMemory << "b ";
-	  else
-	    if (TmpMemory < (1 << 20))
-	      cout  << "fast = " << (TmpMemory >> 10) << "kb ";
-	    else
-	      if (TmpMemory < (1 << 30))
-		cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
-	      else
-		cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
-	  cout << endl;
+	  PrintMemorySize(cout, TmpMemory) << endl;
 	  if (memory > 0)
 	    {
 	      this->EnableFastMultiplication();
@@ -344,6 +335,7 @@ void ParticleOnLatticeDeltaHamiltonian::EvaluateInteractionFactors()
     {
       cout << "adding interaction terms"<<endl;
       this->NbrDiagonalInteractionFactors = this->NbrSites;
+      this->NbrRhoRhoInteractionFactors = 0;
       this->DiagonalInteractionFactors = new double[NbrDiagonalInteractionFactors];
       this->DiagonalQValues=new int[NbrDiagonalInteractionFactors];
       for (int i=0; i<NbrDiagonalInteractionFactors; ++i)
@@ -354,6 +346,36 @@ void ParticleOnLatticeDeltaHamiltonian::EvaluateInteractionFactors()
     }
   else // no such interactions
     {
-      NbrDiagonalInteractionFactors=0;
-    }  
+      if (this->Particles->GetParticleStatistic() == ParticleOnLattice::FermionicStatistic)
+	{FQ
+	  std::cout << "Initializing fermions"<<std::endl;
+	  this->NbrDiagonalInteractionFactors=0;
+	  this->NbrRhoRhoInteractionFactors = 2*this->NbrSites - this->Ly * (this->CylinderGeometry==true);
+	  this->RhoRhoInteractionFactors = new double[this->NbrRhoRhoInteractionFactors];
+	  this->RhoRhoQ12Values = new int[2*this->NbrRhoRhoInteractionFactors];
+	  int Qi, posQ=0, posU=0;
+	  Complex TranslationPhase;
+	  for (int i=0; i<Lx; ++i)
+	    for (int j=0; j<Ly; ++j)
+	      {
+		Qi = Particles->EncodeQuantumNumber(i, j, 0, TranslationPhase);
+		// horizontal interactions
+		if (!this->CylinderGeometry || i < Lx-1)
+		  {		    
+		    this->RhoRhoQ12Values[posQ++]=Qi;
+		    this->RhoRhoQ12Values[posQ++]=Particles->EncodeQuantumNumber(i+1, j, 0, TranslationPhase);
+		    this->RhoRhoInteractionFactors[posU++]=this->ContactInteractionU;
+		  }
+		// vertical interactions
+		this->RhoRhoQ12Values[posQ++]=Qi;
+		this->RhoRhoQ12Values[posQ++]=Particles->EncodeQuantumNumber(i, j+1, 0, TranslationPhase);
+		this->RhoRhoInteractionFactors[posU++]=this->ContactInteractionU;
+	      }
+	}
+      else
+	{
+	  this->NbrRhoRhoInteractionFactors=0;
+	  this->NbrDiagonalInteractionFactors=0;
+	}
+    }
 }
