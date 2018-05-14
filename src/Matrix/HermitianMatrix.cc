@@ -1840,6 +1840,7 @@ RealDiagonalMatrix& HermitianMatrix::Diagonalize (RealDiagonalMatrix& M, Complex
 // err = absolute error on matrix element
 // maxIter = maximum number of iteration to fund an eigenvalue
 // return value = reference on real matrix consisting of eigenvalues
+
 RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, double err, int maxIter)
 {
   if (M.GetNbrRow() != this->NbrRow)
@@ -1897,6 +1898,7 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, d
 // err = absolute error on matrix element
 // maxIter = maximum number of iteration to fund an eigenvalue
 // return value = reference on real matrix consisting of eigenvalues
+
 RealDiagonalMatrix& HermitianMatrix::LapackPartialDiagonalize (RealDiagonalMatrix& M, int nMin, int nMax, double err, int maxIter)
 {
   if (M.GetNbrRow() != this->NbrRow)
@@ -1974,6 +1976,7 @@ RealDiagonalMatrix& HermitianMatrix::LapackPartialDiagonalize (RealDiagonalMatri
 // err = absolute error on matrix element
 // maxIter = maximum number of iteration to fund an eigenvalue
 // return value = reference on real matrix consisting of eigenvalues
+
 RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, ComplexMatrix& Q, double err, int maxIter)
 {
   if (M.GetNbrRow() != this->NbrRow)
@@ -2048,6 +2051,7 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, C
 // err = absolute error on matrix element
 // maxIter = maximum number of iteration to fund an eigenvalue
 // return value = reference on real matrix consisting of eigenvalues
+
 RealDiagonalMatrix& HermitianMatrix::LapackDiagonalizeSinglePrecision (RealDiagonalMatrix& M, ComplexMatrix& Q, double err, int maxIter)
 {
   if (M.GetNbrRow() != this->NbrRow)
@@ -2115,6 +2119,7 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalizeSinglePrecision (RealDiago
 // err = absolute error on matrix element
 // maxIter = maximum number of iteration to fund an eigenvalue
 // return value = reference on real matrix consisting of eigenvalues
+
 RealDiagonalMatrix& HermitianMatrix::LapackDiagonalizeArbitraryPrecision (RealDiagonalMatrix& M, ComplexMatrix& Q, int precision, double err, int maxIter)
 {
   if (M.GetNbrRow() != this->NbrRow)

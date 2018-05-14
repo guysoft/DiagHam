@@ -77,6 +77,20 @@ void FHISimpleC4QuadrupoleModelComputeInteractingOrbitals (int*& nbrInteractingO
 							   int**& interactingOrbitalsSpatialIndices, double**& interactingOrbitalsPotentials,
 							   bool bosonFlag, double uPotential, double vPotential, Abstract2DTightBindingModel* tightBindingModel);
 
+// compute the description of the density-density interaction for a single site when haing open boundary conditions
+//
+// nbrInteractingOrbitals = number of orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsOrbitalIndices = orbital indices of the orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsSpatialIndices = spatial indices (sorted as 2 consecutive integers) of the orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsPotentials = intensity of each density-density term 
+// bosonFlag = true if we are dealing with bosons
+// uPotential = nearest neighbor (for fermions) or on-site (for bosons) interaction amplitude
+// vPotential = next nearest neighbor (for fermions) or nearest neighbor (for bosons) interaction amplitude
+// tightBindingModel = tight binding model
+void FHISimpleC4QuadrupoleModelComputeInteractingOrbitalsFullOBC (int*& nbrInteractingOrbitals, int**& interactingOrbitalsOrbitalIndices,
+								  int**& interactingOrbitalsSpatialIndices, double**& interactingOrbitalsPotentials,
+								  bool bosonFlag, double uPotential, double vPotential, Abstract2DTightBindingModel* tightBindingModel);
+
 
 int main(int argc, char** argv)
 {
@@ -641,6 +655,14 @@ int main(int argc, char** argv)
 								       Manager.GetDouble("v-potential"), 
 								       TightBindingModel);
 		}
+	      else
+		{
+		  FHISimpleC4QuadrupoleModelComputeInteractingOrbitalsFullOBC(NbrInteractingOrbitals, InteractingOrbitalsOrbitalIndices, 
+									      InteractingOrbitalsSpatialIndices, InteractingOrbitalsPotentials,
+									      Manager.GetBoolean("boson"), Manager.GetDouble("u-potential"), 
+									      Manager.GetDouble("v-potential"), 
+									      TightBindingModel);
+		}
 	      if (Manager.GetBoolean("real-space") == false)
 		{
 		  if (Manager.GetBoolean("boson") == false)
@@ -697,20 +719,22 @@ int main(int argc, char** argv)
 		    }
 		  else
 		    {
-// 		      for (int x = 0; x < (NbrSitesX - 1); ++x)
-// 			{
-// 			  for (int y = 0; y < (NbrSitesY - 1); ++y)
-// 			    {
-// 			      for (int k = 0; k < NbrInteractingOrbitals[OrbitalIndex]; ++k)
-// 				{
-// 				  DensityDensityInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y), 
-// 									       TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y), 
-// 									       InteractingOrbitalsPotentials[OrbitalIndex][k]);
-				      
-// 				    }
-// 				}
-// 			    }
-// 			}
+ 		      for (int x = 0; x < NbrSitesX; ++x)
+ 			{
+ 			  for (int y = 0; y < NbrSitesY; ++y)
+ 			    {
+ 			      for (int k = 0; k < NbrInteractingOrbitals[0]; ++k)
+ 				{
+				  int TmpIndex = ((TightBindingModelSimpleC4QuadrupoleFullOBC*) TightBindingModelOBC)->GetRealSpaceTightBindingLinearizedIndexSafe(x + InteractingOrbitalsSpatialIndices[0][2 * k],
+																				   y + InteractingOrbitalsSpatialIndices[0][(2 * k) + 1]);
+				  if (TmpIndex >= 0)
+				    {
+				      DensityDensityInteraction.AddToMatrixElement(((TightBindingModelSimpleC4QuadrupoleFullOBC*) TightBindingModelOBC)->GetRealSpaceTightBindingLinearizedIndexSafe(x, y), TmpIndex, 
+										   InteractingOrbitalsPotentials[0][k]);
+				    }
+				}
+ 			    }
+ 			}
 		    }
 		  if (Manager.GetBoolean("boson") == true)
 		    {
@@ -1098,10 +1122,10 @@ void FHISimpleC4QuadrupoleModelComputeInteractingOrbitals(int*& nbrInteractingOr
       nbrInteractingOrbitals[2] = 2;
       nbrInteractingOrbitals[3] = 2;
 //       if (vPotential != 0.0)
-// 	{
-// 	  nbrInteractingOrbitals[0] += 2;
-// 	  nbrInteractingOrbitals[1] += 2;
-// 	}
+//      {
+//        nbrInteractingOrbitals[0] += 2;
+//        nbrInteractingOrbitals[1] += 2;
+//      }
       interactingOrbitalsOrbitalIndices[0] = new int[nbrInteractingOrbitals[0]];
       interactingOrbitalsSpatialIndices[0] = new int[nbrInteractingOrbitals[0] * 2];
       interactingOrbitalsPotentials[0] = new double[nbrInteractingOrbitals[0]];
@@ -1129,32 +1153,32 @@ void FHISimpleC4QuadrupoleModelComputeInteractingOrbitals(int*& nbrInteractingOr
       interactingOrbitalsPotentials[0][Index] = uPotential;
       ++Index;
 //       if (vPotential != 0.0)
-// 	{
-// 	  interactingOrbitalsOrbitalIndices[0][Index] = 0;
-// 	  tightBindingModel->GetRealSpaceIndex(1, 0, p, q);
-// 	  interactingOrbitalsSpatialIndices[0][2 * Index] = p;
-// 	  interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
-// 	  interactingOrbitalsPotentials[0][Index] = vPotential;
-// 	  ++Index;	  
-// 	  interactingOrbitalsOrbitalIndices[0][Index] = 0;
-// 	  tightBindingModel->GetRealSpaceIndex(0, 1, p, q);
-// 	  interactingOrbitalsSpatialIndices[0][2 * Index] = p;
-// 	  interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
-// 	  interactingOrbitalsPotentials[0][Index] = vPotential;
-// 	  ++Index;	  
-// 	}
+//      {
+//        interactingOrbitalsOrbitalIndices[0][Index] = 0;
+//        tightBindingModel->GetRealSpaceIndex(1, 0, p, q);
+//        interactingOrbitalsSpatialIndices[0][2 * Index] = p;
+//        interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
+//        interactingOrbitalsPotentials[0][Index] = vPotential;
+//        ++Index;       
+//        interactingOrbitalsOrbitalIndices[0][Index] = 0;
+//        tightBindingModel->GetRealSpaceIndex(0, 1, p, q);
+//        interactingOrbitalsSpatialIndices[0][2 * Index] = p;
+//        interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
+//        interactingOrbitalsPotentials[0][Index] = vPotential;
+//        ++Index;       
+//      }
       Index = 0;
       interactingOrbitalsOrbitalIndices[1][Index] = 2;
       tightBindingModel->GetRealSpaceIndex(0, 0, p, q);
       interactingOrbitalsSpatialIndices[1][2 * Index] = p;
       interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
-      interactingOrbitalsPotentials[1][Index] = uPotential;		  
+      interactingOrbitalsPotentials[1][Index] = uPotential;              
       ++Index;
       interactingOrbitalsOrbitalIndices[1][Index] = 0;
       tightBindingModel->GetRealSpaceIndex(1, 0, p, q);
       interactingOrbitalsSpatialIndices[1][2 * Index] = p;
       interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
-      interactingOrbitalsPotentials[1][Index] = uPotential;		  
+      interactingOrbitalsPotentials[1][Index] = uPotential;              
       ++Index;
 
       Index = 0;
@@ -1162,13 +1186,13 @@ void FHISimpleC4QuadrupoleModelComputeInteractingOrbitals(int*& nbrInteractingOr
       tightBindingModel->GetRealSpaceIndex(1, 0, p, q);
       interactingOrbitalsSpatialIndices[2][2 * Index] = p;
       interactingOrbitalsSpatialIndices[2][(2 * Index) + 1] = q;
-      interactingOrbitalsPotentials[2][Index] = uPotential;		  
+      interactingOrbitalsPotentials[2][Index] = uPotential;              
       ++Index;
       interactingOrbitalsOrbitalIndices[2][Index] = 1;
       tightBindingModel->GetRealSpaceIndex(0, 1, p, q);
       interactingOrbitalsSpatialIndices[2][2 * Index] = p;
       interactingOrbitalsSpatialIndices[2][(2 * Index) + 1] = q;
-      interactingOrbitalsPotentials[2][Index] = uPotential;		  
+      interactingOrbitalsPotentials[2][Index] = uPotential;              
       ++Index;
 
       Index = 0;
@@ -1176,31 +1200,31 @@ void FHISimpleC4QuadrupoleModelComputeInteractingOrbitals(int*& nbrInteractingOr
       tightBindingModel->GetRealSpaceIndex(0, 0, p, q);
       interactingOrbitalsSpatialIndices[3][2 * Index] = p;
       interactingOrbitalsSpatialIndices[3][(2 * Index) + 1] = q;
-      interactingOrbitalsPotentials[3][Index] = uPotential;		  
+      interactingOrbitalsPotentials[3][Index] = uPotential;              
       ++Index;
       interactingOrbitalsOrbitalIndices[3][Index] = 0;
       tightBindingModel->GetRealSpaceIndex(0, 1, p, q);
       interactingOrbitalsSpatialIndices[3][2 * Index] = p;
       interactingOrbitalsSpatialIndices[3][(2 * Index) + 1] = q;
-      interactingOrbitalsPotentials[3][Index] = uPotential;		  
+      interactingOrbitalsPotentials[3][Index] = uPotential;              
       ++Index;
 
 
 //       if (vPotential != 0.0)
-// 	{
-// 	  interactingOrbitalsOrbitalIndices[1][Index] = 1;
-// 	  tightBindingModel->GetRealSpaceIndex(1, 0, p, q);
-// 	  interactingOrbitalsSpatialIndices[1][2 * Index] = p;
-// 	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
-// 	  interactingOrbitalsPotentials[1][Index] = vPotential;
-// 	  ++Index;	  
-// 	  interactingOrbitalsOrbitalIndices[1][Index] = 1;
-// 	  tightBindingModel->GetRealSpaceIndex(0, 1, p, q);
-// 	  interactingOrbitalsSpatialIndices[1][2 * Index] = p;
-// 	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
-// 	  interactingOrbitalsPotentials[1][Index] = vPotential;
-// 	  ++Index;	  
-// 	}
+//      {
+//        interactingOrbitalsOrbitalIndices[1][Index] = 1;
+//        tightBindingModel->GetRealSpaceIndex(1, 0, p, q);
+//        interactingOrbitalsSpatialIndices[1][2 * Index] = p;
+//        interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
+//        interactingOrbitalsPotentials[1][Index] = vPotential;
+//        ++Index;       
+//        interactingOrbitalsOrbitalIndices[1][Index] = 1;
+//        tightBindingModel->GetRealSpaceIndex(0, 1, p, q);
+//        interactingOrbitalsSpatialIndices[1][2 * Index] = p;
+//        interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
+//        interactingOrbitalsPotentials[1][Index] = vPotential;
+//        ++Index;       
+//      }
     }
   else
     {
@@ -1209,10 +1233,10 @@ void FHISimpleC4QuadrupoleModelComputeInteractingOrbitals(int*& nbrInteractingOr
       nbrInteractingOrbitals[2] = 1;
       nbrInteractingOrbitals[3] = 1;
 //       if (vPotential != 0.0)
-// 	{
-// 	  nbrInteractingOrbitals[0] += 1;
-// 	  nbrInteractingOrbitals[1] += 3;
-// 	}
+//      {
+//        nbrInteractingOrbitals[0] += 1;
+//        nbrInteractingOrbitals[1] += 3;
+//      }
       interactingOrbitalsOrbitalIndices[0] = new int[nbrInteractingOrbitals[0]];
       interactingOrbitalsSpatialIndices[0] = new int[nbrInteractingOrbitals[0] * 2];
       interactingOrbitalsPotentials[0] = new double[nbrInteractingOrbitals[0]];
@@ -1225,7 +1249,7 @@ void FHISimpleC4QuadrupoleModelComputeInteractingOrbitals(int*& nbrInteractingOr
       interactingOrbitalsOrbitalIndices[3] = new int[nbrInteractingOrbitals[3]];
       interactingOrbitalsSpatialIndices[3] = new int[nbrInteractingOrbitals[3] * 2];
       interactingOrbitalsPotentials[3] = new double[nbrInteractingOrbitals[3]];
-  
+ 
       int Index = 0;
       interactingOrbitalsOrbitalIndices[0][Index] = 0;
       tightBindingModel->GetRealSpaceIndex(0, 0, p, q);
@@ -1234,13 +1258,13 @@ void FHISimpleC4QuadrupoleModelComputeInteractingOrbitals(int*& nbrInteractingOr
       interactingOrbitalsPotentials[0][Index] = 0.5 * uPotential;
       ++Index;
 //       if (vPotential != 0.0)
-// 	{
-// 	  interactingOrbitalsOrbitalIndices[0][Index] = 1;
-// 	  tightBindingModel->GetRealSpaceIndex(0, 0, p, q);
-// 	  interactingOrbitalsSpatialIndices[0][2 * Index] = p;
-// 	  interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
-// 	  interactingOrbitalsPotentials[0][Index] = vPotential;	  
-// 	}
+//      {
+//        interactingOrbitalsOrbitalIndices[0][Index] = 1;
+//        tightBindingModel->GetRealSpaceIndex(0, 0, p, q);
+//        interactingOrbitalsSpatialIndices[0][2 * Index] = p;
+//        interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
+//        interactingOrbitalsPotentials[0][Index] = vPotential;  
+//      }
       Index = 0;
       interactingOrbitalsOrbitalIndices[1][Index] = 1;
       tightBindingModel->GetRealSpaceIndex(0, 0, p, q);
@@ -1263,25 +1287,113 @@ void FHISimpleC4QuadrupoleModelComputeInteractingOrbitals(int*& nbrInteractingOr
       interactingOrbitalsPotentials[3][Index] = 0.5 * uPotential;
       ++Index;
 //       if (vPotential != 0.0)
+//      {
+//        interactingOrbitalsOrbitalIndices[1][Index] = 0;
+//        tightBindingModel->GetRealSpaceIndex(1, 0, p, q);
+//        interactingOrbitalsSpatialIndices[1][2 * Index] = p;
+//        interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
+//        interactingOrbitalsPotentials[1][Index] = vPotential;          
+//        ++Index;
+//        interactingOrbitalsOrbitalIndices[1][Index] = 0;
+//        tightBindingModel->GetRealSpaceIndex(0, 1, p, q);
+//        interactingOrbitalsSpatialIndices[1][2 * Index] = p;
+//        interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
+//        interactingOrbitalsPotentials[1][Index] = vPotential;          
+//        ++Index;
+//        interactingOrbitalsOrbitalIndices[1][Index] = 0;
+//        tightBindingModel->GetRealSpaceIndex(1, 1, p, q);
+//        interactingOrbitalsSpatialIndices[1][2 * Index] = p;
+//        interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
+//        interactingOrbitalsPotentials[1][Index] = vPotential;          
+//        ++Index;
+//      }
+    }
+}
+
+// compute the description of the density-density interaction for a single site when haing open boundary conditions
+//
+// nbrInteractingOrbitals = number of orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsOrbitalIndices = orbital indices of the orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsSpatialIndices = spatial indices (sorted as 2 consecutive integers) of the orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsPotentials = intensity of each density-density term 
+// bosonFlag = true if we are dealing with bosons
+// uPotential = nearest neighbor (for fermions) or on-site (for bosons) interaction amplitude
+// vPotential = next nearest neighbor (for fermions) or nearest neighbor (for bosons) interaction amplitude
+// tightBindingModel = tight binding model
+
+void FHISimpleC4QuadrupoleModelComputeInteractingOrbitalsFullOBC (int*& nbrInteractingOrbitals, int**& interactingOrbitalsOrbitalIndices,
+								  int**& interactingOrbitalsSpatialIndices, double**& interactingOrbitalsPotentials,
+								  bool bosonFlag, double uPotential, double vPotential, Abstract2DTightBindingModel* tightBindingModel)
+{
+  nbrInteractingOrbitals = new int[1];
+  interactingOrbitalsOrbitalIndices = new int*[1];
+  interactingOrbitalsSpatialIndices = new int*[1];
+  interactingOrbitalsPotentials = new double*[1];
+  int p;
+  int q;
+  if (bosonFlag == false)
+    {
+      nbrInteractingOrbitals[0] = 4;
+//       if (vPotential != 0.0)
 // 	{
-// 	  interactingOrbitalsOrbitalIndices[1][Index] = 0;
-// 	  tightBindingModel->GetRealSpaceIndex(1, 0, p, q);
-// 	  interactingOrbitalsSpatialIndices[1][2 * Index] = p;
-// 	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
-// 	  interactingOrbitalsPotentials[1][Index] = vPotential;		  
-// 	  ++Index;
-// 	  interactingOrbitalsOrbitalIndices[1][Index] = 0;
-// 	  tightBindingModel->GetRealSpaceIndex(0, 1, p, q);
-// 	  interactingOrbitalsSpatialIndices[1][2 * Index] = p;
-// 	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
-// 	  interactingOrbitalsPotentials[1][Index] = vPotential;		  
-// 	  ++Index;
-// 	  interactingOrbitalsOrbitalIndices[1][Index] = 0;
-// 	  tightBindingModel->GetRealSpaceIndex(1, 1, p, q);
-// 	  interactingOrbitalsSpatialIndices[1][2 * Index] = p;
-// 	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
-// 	  interactingOrbitalsPotentials[1][Index] = vPotential;		  
-// 	  ++Index;
+// 	  nbrInteractingOrbitals[0] += 2;
+// 	  nbrInteractingOrbitals[1] += 2;
 // 	}
+      interactingOrbitalsOrbitalIndices[0] = new int[nbrInteractingOrbitals[0]];
+      interactingOrbitalsSpatialIndices[0] = new int[nbrInteractingOrbitals[0] * 2];
+      interactingOrbitalsPotentials[0] = new double[nbrInteractingOrbitals[0]];
+
+      int Index = 0;
+      interactingOrbitalsOrbitalIndices[0][Index] = 0;
+      interactingOrbitalsSpatialIndices[0][2 * Index] = 1;
+      interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = 0;
+      interactingOrbitalsPotentials[0][Index] = uPotential;
+      ++Index;
+      interactingOrbitalsOrbitalIndices[0][Index] = 0;
+      interactingOrbitalsSpatialIndices[0][2 * Index] = 0;
+      interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = 1;
+      interactingOrbitalsPotentials[0][Index] = uPotential;
+      ++Index;
+      interactingOrbitalsOrbitalIndices[0][Index] = 0;
+      interactingOrbitalsSpatialIndices[0][2 * Index] = -1;
+      interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = 0;
+      interactingOrbitalsPotentials[0][Index] = uPotential;
+      ++Index;
+      interactingOrbitalsOrbitalIndices[0][Index] = 0;
+      interactingOrbitalsSpatialIndices[0][2 * Index] = 0;
+      interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = -1;
+      interactingOrbitalsPotentials[0][Index] = uPotential;
+      ++Index;
+    }
+  else
+    {
+      nbrInteractingOrbitals[0] = 1;
+      if (vPotential != 0.0)
+	{
+	  nbrInteractingOrbitals[0] += 2;
+ 	}
+      interactingOrbitalsOrbitalIndices[0] = new int[nbrInteractingOrbitals[0]];
+      interactingOrbitalsSpatialIndices[0] = new int[nbrInteractingOrbitals[0] * 2];
+      interactingOrbitalsPotentials[0] = new double[nbrInteractingOrbitals[0]];
+  
+      int Index = 0;
+      interactingOrbitalsOrbitalIndices[0][Index] = 0;
+      interactingOrbitalsSpatialIndices[0][2 * Index] = 0;
+      interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = 0;
+      interactingOrbitalsPotentials[0][Index] = 0.5 * uPotential;
+      ++Index;
+      if (vPotential != 0.0)
+ 	{
+	  interactingOrbitalsOrbitalIndices[0][Index] = 0;
+	  interactingOrbitalsSpatialIndices[0][2 * Index] = 1;
+	  interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = 0;
+	  interactingOrbitalsPotentials[0][Index] = uPotential;
+	  ++Index;
+	  interactingOrbitalsOrbitalIndices[0][Index] = 0;
+	  interactingOrbitalsSpatialIndices[0][2 * Index] = 0;
+	  interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = 1;
+	  interactingOrbitalsPotentials[0][Index] = uPotential;
+	  ++Index;
+ 	}
     }
 }

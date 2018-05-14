@@ -529,6 +529,7 @@ class HermitianMatrix : public Matrix
 
 
  private:
+
   int LapackWorkAreaDimension;
   int LapackEVsRequested;
   bool LapackWorkAreaForPartialDiag;
@@ -538,6 +539,7 @@ class HermitianMatrix : public Matrix
   double *LapackRealWorkingArea;
   int *LapackIntWorkingArea;
   int *LapackFailedToConverge;
+
 #endif
 
 #ifdef __MPI__
