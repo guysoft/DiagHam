@@ -50,7 +50,7 @@ class TightBindingModelHofstadterSquare : public Abstract2DTightBindingModel
   // number of sites in cell in x-direction
   int UnitCellX;
   // number of sites in cell in y-direction
-  int  UnitCellY;
+  int UnitCellY;
 
   // number of flux quanta in cell (cancelled by opposite flux)
   int NbrFluxQuanta;

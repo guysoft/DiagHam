@@ -36,6 +36,7 @@
 
 #include "MainTask/QHEOnDiskMainTask.h"
 #include "LanczosAlgorithm/LanczosManager.h"
+#include "Vector/Vector.h"
 
 #include <iostream>
 using std::ofstream;
@@ -62,6 +63,16 @@ class FQHEOnTorusMainTask: public QHEOnDiskMainTask
   bool MultiplicityFlag;
   // value of multiplicity
   int Multiplicity;
+  // pointer to an externally provided initial vector
+  Vector *ExplicitInitialVector;
+  // calculate spectral response at every so many steps
+  int SpectralResponseInterval;
+  // 
+  double SpectralResponseEpsilon;
+  //
+  double SpectralResponseOmegaMin;
+  //
+  double SpectralResponseOmegaMax;
 
   // pointer to Lanczos manager
   LanczosManager* AlgorithmManager;
@@ -80,9 +91,10 @@ class FQHEOnTorusMainTask: public QHEOnDiskMainTask
   // firstRun = flag that indicates if it the first time the main task is used
   // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
   // kxValue = set the Kx value (-1 if the hamiltonian does not handle the Kx symmetry)
+  // explicitInitialVector = an optional pointer to an initial vector to be used in the Lanczos run, overriding command line arguments
   FQHEOnTorusMainTask(OptionManager* options, AbstractHilbertSpace* space, LanczosManager* lanczos, 
 		      AbstractQHEHamiltonian* hamiltonian, int kyValue, double shift, char* outputFileName,
-		      bool firstRun = true, char* eigenvectorFileName = 0, int kxValue = -1);
+		      bool firstRun = true, char* eigenvectorFileName = 0, int kxValue = -1, Vector *explicitInitialVector=NULL);
   
   // destructor
   //  

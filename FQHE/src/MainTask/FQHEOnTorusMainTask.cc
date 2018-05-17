@@ -34,6 +34,7 @@
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 
+#include "Vector/RealVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealMatrix.h"
@@ -89,10 +90,10 @@ using std::ofstream;
 // firstRun = flag that indicates if it the first time the main task is used
 // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
 // kxValue = set the Kx value (-1 if the hamiltonian does not handle the Kx symmetry)
-
+// explicitInitialVector = an optional pointer to an initial vector to be used in the Lanczos run, overriding command line arguments
 FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbertSpace* space, LanczosManager* lanczos, 
 					 AbstractQHEHamiltonian* hamiltonian, int kyValue, double shift, char* outputFileName,
-					 bool firstRun, char* eigenvectorFileName, int kxValue)
+					 bool firstRun, char* eigenvectorFileName, int kxValue, Vector *explicitInitialVector)
 {
   this->OutputFileName = new char [strlen(outputFileName) + 1];
   strncpy(this->OutputFileName, outputFileName, strlen(outputFileName));
@@ -143,7 +144,12 @@ FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbert
       this->SizeBlockLanczos = ((SingleIntegerOption*) (*options)["block-size"])->GetInteger();
     }
   this->VectorMemory = ((SingleIntegerOption*) (*options)["nbr-vector"])->GetInteger();
-  this->SavePrecalculationFileName = ((SingleStringOption*) (*options)["save-precalculation"])->GetString();
+  if ((*options)["save-precalculation"] != 0)
+    {
+      this->SavePrecalculationFileName = ((SingleStringOption*) (*options)["save-precalculation"])->GetString();
+    }
+    else
+      SavePrecalculationFileName=0;
   this->FullReorthogonalizationFlag = ((BooleanOption*) (*options)["force-reorthogonalize"])->GetBoolean();
   this->EvaluateEigenvectors = ((BooleanOption*) (*options)["eigenstate"])->GetBoolean();
   this->EigenvectorConvergence = ((BooleanOption*) (*options)["eigenstate-convergence"])->GetBoolean();
@@ -161,6 +167,7 @@ FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbert
     {
       this->InitialVectorFileName = 0;
     }
+  ExplicitInitialVector=explicitInitialVector;
   if ((*options)["initial-blockvectors"] != 0)
     {
       this->InitialBlockVectorFileName = ((SingleStringOption*) (*options)["initial-blockvectors"])->GetString();
@@ -171,11 +178,43 @@ FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbert
     }
   if ((*options)["partial-lanczos"] != 0)
     {
-      this->PartialLanczos = ((BooleanOption*) (*options)["partial-lanczos"])->GetBoolean();
+      this->PartialLanczos = options->GetBoolean("partial-lanczos");
     }
   else
     {
       this->PartialLanczos = false;
+    }
+  if ((*options)["sr-interval"] != 0)
+    {
+      this->SpectralResponseInterval = options->GetInteger("sr-interval");
+    }
+  else
+    {
+      this->SpectralResponseInterval = false;
+    }
+  if ((*options)["sr-epsilon"] != 0)
+    {
+      this-> SpectralResponseEpsilon = options->GetDouble("sr-epsilon");
+    }
+  else
+    {
+      this->SpectralResponseEpsilon = false;
+    }
+  if ((*options)["sr-omega-min"] != 0)
+    {
+      this-> SpectralResponseOmegaMin = options->GetDouble("sr-omega-min");
+    }
+  else
+    {
+      this->SpectralResponseOmegaMin = false;
+    }
+  if ((*options)["sr-omega-max"] != 0)
+    {
+      this-> SpectralResponseOmegaMax = options->GetDouble("sr-omega-max");
+    }
+  else
+    {
+      this->SpectralResponseOmegaMax = false;
     }
   if ((*options)["use-lapack"] != 0)
     {
@@ -575,13 +614,18 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 	    {
 	      if (this->BlockLanczosFlag == false)
 		{
-		  if (this->InitialVectorFileName == 0)
+		  if ((ExplicitInitialVector == 0) && (this->InitialVectorFileName == 0))
 		    Lanczos->InitializeLanczosAlgorithm();
 		  else
-		    {	   
-		      RealVector InitialVector;
-		      InitialVector.ReadVector(this->InitialVectorFileName);
-		      Lanczos->InitializeLanczosAlgorithm(InitialVector);
+		    {
+			  if (ExplicitInitialVector != 0)
+				Lanczos->InitializeLanczosAlgorithm(*ExplicitInitialVector);
+		      else
+				{
+					RealVector InitialVector;
+					InitialVector.ReadVector(this->InitialVectorFileName);
+					Lanczos->InitializeLanczosAlgorithm(InitialVector);
+				}
 		    }
 		}
 	      else
@@ -657,6 +701,15 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 		  TotalCurrentTime.tv_sec = TotalEndingTime.tv_sec;
 		}
 	      cout << endl;
+	      if ((SpectralResponseInterval > 0)&&(CurrentNbrIterLanczos%SpectralResponseInterval == 0))
+	        {
+		  char* TmpName = new char [strlen(this->EigenvectorFileName) + 16];
+                  sprintf (TmpName, "%s.omega_%g-%g_eps_%g.ni_%d.sr", this->EigenvectorFileName,SpectralResponseOmegaMin, SpectralResponseOmegaMax, SpectralResponseEpsilon, CurrentNbrIterLanczos);
+	          ofstream File(TmpName, ios::out); 
+         	  Lanczos->SampleSpectralResponse(File, SpectralResponseOmegaMin, SpectralResponseOmegaMax, SpectralResponseEpsilon);
+		  File.close();
+		  delete [] TmpName;
+		}
 	    }
 	  if ((Lanczos->TestConvergence() == true) && (CurrentNbrIterLanczos == 0))
 	    {
@@ -709,7 +762,6 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 			  VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(Eigenvectors[this->NbrEigenvalue - 1]), &TmpEigenvector);
 			  Operation1.ApplyOperation(this->Architecture);
 			  Scalar = TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1];
-			  Scalar = TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1];
 			  Precision = fabs((Scalar - TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1)) / TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1));		  
 			  cout << (TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->EnergyShift) << " " << (Scalar - this->EnergyShift) << " " 
 			       << Precision << " ";
@@ -759,6 +811,15 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 		  cout << "eigenvectors can't be computed" << endl;
 		}
 	    }
+	    if (SpectralResponseInterval != 0)
+	      {
+	          char* TmpName = new char [strlen(this->EigenvectorFileName) + 16];
+		  sprintf (TmpName, "%s.omega_%g-%g_eps_%g.sr", this->EigenvectorFileName,SpectralResponseOmegaMin, SpectralResponseOmegaMax, SpectralResponseEpsilon);
+		  ofstream File(TmpName, ios::out); 
+		  Lanczos->SampleSpectralResponse(File, SpectralResponseOmegaMin, SpectralResponseOmegaMax, SpectralResponseEpsilon);
+		  File.close();
+		  delete [] TmpName;
+		}
 	  gettimeofday (&(TotalEndingTime), 0);
 	  cout << "------------------------------------------------------------------" << endl << endl;;
 	  Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 

@@ -265,6 +265,26 @@ bool FQHEOnTorusFindSystemInfoFromVectorFileName(char* filename, int& nbrParticl
   return true;
 }
 
+// try to guess system information from file name
+//
+// filename = vector file name
+// NbrParticles = reference to the number of particles 
+// NbrFluxQuanta (kyMax) = reference to the momentum for a single particle
+// Momentum (ky) = reference to the y momentum
+// Ratio = reference on the aspect ratio
+// Statistics = reference to flag for fermionic statistics
+// return value = true if no error occured
+
+bool FQHEOnTorusFindSystemInfoFromVectorFileName_SpectralResponse(char* filename, int& NbrParticles, int& NbrFluxQuanta, int& Momentum, double& Ratio, bool& Statistics)
+{
+  FilenameStatisticsCheck(Statistics, filename);
+  FilenameIntegerSearch(NbrParticles, filename, "_n_");
+  FilenameIntegerSearch(NbrFluxQuanta, filename, "_2s_");
+  FilenameIntegerSearch(Momentum, filename, "_ky_");
+  FilenameDoubleSearch(Ratio, filename, "_ratio_");
+  return true;
+}
+
 // try to guess system information from file name for system suth an SU(2) degree of freedom
 //
 // filename = vector file name

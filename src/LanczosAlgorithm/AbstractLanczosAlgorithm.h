@@ -36,6 +36,7 @@
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "MathTools/Complex.h"
+#include "Matrix/ComplexMatrix.h" //added by ba340
 
 class RealVector;
 class ComplexVector;
@@ -154,6 +155,19 @@ class AbstractLanczosAlgorithm
   //
   // return value = index shift
   virtual int EigenstateIndexShift();
+  
+  // evaluate spectral response
+  //
+  // final_term = term at which continued fraction ends
+  // omega = input angular frequency
+  // term_start = term at which continued fraction starts (default=0)
+  // epsilon = small parameter to avoid poles (default=10^-10)
+  // return value = spectral response Green's function
+  virtual Complex EvaluateSpectralResponse(double omega, const double epsilon=1E-10, int final_term=-1, int term_start=0);
+  
+  // sample the spectral response and write to file
+  virtual void SampleSpectralResponse(std::ostream &Str, double omegaMin, double omegaMax, double epsilon, int nbrPoints=100);
+  
 
  protected:
   
