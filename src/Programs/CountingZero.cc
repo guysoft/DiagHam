@@ -56,7 +56,7 @@ int main(int argc, char** argv)
   int MaxMagnitude = -500;
   int MinMagnitude = 499;
   int MagnitudeShift = 500;
-  int* NbrComponentPerMagnitude = new int [1000];
+  long* NbrComponentPerMagnitude = new long [1000];
   double* WeightPerMagnitude = new double [1000];
   for (int i = 0; i < 1000; ++i)
     {
@@ -120,12 +120,14 @@ int main(int argc, char** argv)
  
   if (Manager.GetBoolean("histogram"))
     {
-      cout << "# magnitude nbr_components weight sum_weight" << endl;
+      cout << "# magnitude nbr_components sum_nbr_components weight sum_weight" << endl;
       double TmpSum = 0.0;
+      long TmpSumNbr = 0l;
       for (int i = MaxMagnitude; i >= MinMagnitude; --i)
 	{
 	  TmpSum += WeightPerMagnitude[MagnitudeShift + i];
-	  cout << i << " " << NbrComponentPerMagnitude[MagnitudeShift + i] <<  " " 
+	  TmpSumNbr += NbrComponentPerMagnitude[MagnitudeShift + i];
+	  cout << i << " " << NbrComponentPerMagnitude[MagnitudeShift + i] << " " << TmpSumNbr << " " 
 	       << WeightPerMagnitude[MagnitudeShift + i] << " " << TmpSum << endl;
 	}
     }
