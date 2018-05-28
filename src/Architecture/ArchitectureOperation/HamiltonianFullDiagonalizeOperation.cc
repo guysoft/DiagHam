@@ -292,7 +292,7 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
       cout << "nbr of nodes per row = " << NbrNodePerRow << endl;
       cout << "nbr of nodes per column = " << NbrNodePerColumn << endl;
     }
- FORTRAN_NAME(sl_init) (&Context, &NbrNodePerRow, &NbrNodePerColumn);
+  FORTRAN_NAME(sl_init) (&Context, &NbrNodePerRow, &NbrNodePerColumn);
   
   int LocalNodeRow;
   int LocalNodeColumn;

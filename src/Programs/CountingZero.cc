@@ -37,6 +37,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('i', "input-vector", "name of the file containing the binary vector");
   (*SystemGroup) += new SingleDoubleOption  ('e', "error", "rounding error (for floattig point vectors)", 1e-14);
   (*SystemGroup) +=  new BooleanOption  ('r', "rational", "input vectors are rational vectors");
+  (*SystemGroup) +=  new BooleanOption  ('\n', "histogram", "compute the number of components whithin each order of magnitude");
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -52,6 +53,16 @@ int main(int argc, char** argv)
     }
   
   double Error = Manager.GetDouble("error");
+  int MaxMagnitude = -500;
+  int MinMagnitude = 499;
+  int MagnitudeShift = 500;
+  int* NbrComponentPerMagnitude = new int [1000];
+  double* WeightPerMagnitude = new double [1000];
+  for (int i = 0; i < 1000; ++i)
+    {
+      NbrComponentPerMagnitude[i] = 0;
+      WeightPerMagnitude[i] = 0.0;
+    }
 
   if (Manager.GetString("input-vector") == 0)
     {
@@ -84,11 +95,46 @@ int main(int argc, char** argv)
 	}
       Dimension = State.GetLargeVectorDimension();
       for (long i = 0; i < Dimension; ++i)
-	if (fabs(State[i]) < Error)
-	  ++Count;
+	{
+	  if (fabs(State[i]) < Error)
+	    {
+	      ++Count;
+	    }
+	  int TmpMagnitude = (int) (log10(fabs(State[i])));
+	  if (fabs(State[i]) < 1.0)
+	    {
+	      TmpMagnitude--;
+	    }
+	  if (MaxMagnitude < TmpMagnitude)
+	    {
+	      MaxMagnitude = TmpMagnitude;
+	    }
+	  if (MinMagnitude > TmpMagnitude)
+	    {
+	      MinMagnitude = TmpMagnitude;
+	    }
+	  NbrComponentPerMagnitude[TmpMagnitude + MagnitudeShift]++;
+	  WeightPerMagnitude[TmpMagnitude + MagnitudeShift] += State[i] * State[i];	  
+	}
     }
-
-  cout << Count << " / " << Dimension << " (" << ((((double) Count) * 100.0) / ((double) Dimension)) << "%)" << endl; 
+ 
+  if (Manager.GetBoolean("histogram"))
+    {
+      cout << "# magnitude nbr_components weight sum_weight" << endl;
+      double TmpSum = 0.0;
+      for (int i = MaxMagnitude; i >= MinMagnitude; --i)
+	{
+	  TmpSum += WeightPerMagnitude[MagnitudeShift + i];
+	  cout << i << " " << NbrComponentPerMagnitude[MagnitudeShift + i] <<  " " 
+	       << WeightPerMagnitude[MagnitudeShift + i] << " " << TmpSum << endl;
+	}
+    }
+  else
+    {
+      cout << Count << " / " << Dimension << " (" << ((((double) Count) * 100.0) / ((double) Dimension)) << "%)" << endl; 
+    }
+  delete[] NbrComponentPerMagnitude;
+  delete[] WeightPerMagnitude;
 
   return 0;
 }
