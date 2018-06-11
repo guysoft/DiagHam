@@ -99,6 +99,8 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
   
   (*MiscGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
+  (*MiscGroup) += new SingleStringOption('\n', "conjugate-vector", "name of the file containing the state vector that will be used for inner product with H|psi_0>, where psi_0 is provided by --energy-expectation");
+
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -274,8 +276,8 @@ int main(int argc, char** argv)
 	  Shift = - 0.5 * ((double) (NbrParticles * NbrParticles)) / (0.5 * ((double) LzMax));
 	}
       
-      if (Manager.GetString("energy-expectation") != 0 )
-	{
+    if (Manager.GetString("energy-expectation") != 0 )
+	   {
 	  char* StateFileName = Manager.GetString("energy-expectation");
 	  if (IsFile(StateFileName) == false)
 	    {
@@ -293,14 +295,46 @@ int main(int argc, char** argv)
 	      cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
 	      return -1;
 	    }
-	  RealVector TmpState(Space->GetHilbertSpaceDimension());
-	  VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
-	  Operation.ApplyOperation(Architecture.GetArchitecture());
-	  double EnergyValue = State*TmpState;
-	  cout << "< Energy > = "<<EnergyValue<<endl;
-	  cout << "< shifted energy > = "<<EnergyValue + Shift<<endl;
-	  return 0;
-	}
+
+	  //RealVector TmpState(Space->GetHilbertSpaceDimension());
+	  //VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
+	  //Operation.ApplyOperation(Architecture.GetArchitecture());
+	  //double EnergyValue = State*TmpState;
+	  //cout << "< Energy > = "<<EnergyValue<<endl;
+	  //cout << "< shifted energy > = "<<EnergyValue + Shift<<endl;
+	  //return 0;
+
+      RealVector BraState;
+      char* BraStateFileName = Manager.GetString("conjugate-vector");
+      if (IsFile(BraStateFileName) == false)
+          {
+            cout << "state " << BraStateFileName << " does not exist or can't be opened" << endl;
+            return -1;           
+          }
+      if (BraState.ReadVector(BraStateFileName) == false)
+          {
+            cout << "error while reading " << BraStateFileName << endl;
+            return -1;
+          }
+      if (BraState.GetVectorDimension() != Space->GetHilbertSpaceDimension())
+        {
+        cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
+        return -1;
+        }
+
+      double Overlap = BraState * State;
+      cout << "< " << BraStateFileName << " | H | " << StateFileName << " > "<< " overlap= " << Overlap  << endl; 
+      RealVector TmpState(Space->GetHilbertSpaceDimension());
+      VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
+      Operation.ApplyOperation(Architecture.GetArchitecture());
+      double EnergyValue;
+      if (BraStateFileName == StateFileName)  
+        EnergyValue = State * TmpState;
+          else
+        EnergyValue = BraState * TmpState;        
+      cout << "<Energy>= "<< (EnergyValue) << endl;
+      return 0;
+	 }
       
       Hamiltonian->ShiftHamiltonian(Shift);
 //       AbstractQHEHamiltonian *Projector=NULL;
