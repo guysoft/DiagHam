@@ -303,7 +303,7 @@ int main(int argc, char** argv)
 		      cout << "can't read " << HamiltonianFile(0, i) << endl;
 		      return -1;
 		    }
-		  if (TmpH.GetNbrRow() != HRepReal.GetNbrRow())
+		  if (TmpH.GetNbrRow() != HRep.GetNbrRow())
 		    {
 		      cout << "error, " << HamiltonianFile(0, i) << " and " << HamiltonianFile(0, 0) 
 			   << " do not have the same size" << endl;
