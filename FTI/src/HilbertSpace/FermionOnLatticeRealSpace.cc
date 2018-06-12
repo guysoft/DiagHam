@@ -146,18 +146,6 @@ FermionOnLatticeRealSpace::FermionOnLatticeRealSpace (int nbrFermions, int nbrSi
     }
 }
 
-// basic constructor when Sz is preserved
-// 
-// nbrFermions = number of fermions
-//nbrSite = number of sites
-// nbrSpinUp = number of particles with spin up
-// memory = amount of memory granted for precalculations
-
-// FermionOnSquareLatticeWithSpinMomentumSpace::FermionOnSquareLatticeWithSpinMomentumSpace (int nbrFermions, int nbrSpinUp, int nbrSite, unsigned long memory)
-// {
-//   
-// }
-
 // copy constructor (without duplicating datas)
 //
 // fermions = reference on the hilbert space to copy to copy

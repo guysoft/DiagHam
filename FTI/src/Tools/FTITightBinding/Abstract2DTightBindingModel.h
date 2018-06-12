@@ -157,7 +157,37 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // ky = reference on the momentum along the y direction
   // return value = inearized momentum index
   virtual void GetLinearizedMomentumIndexSafe(int index, int& kx, int& ky);
-
+  
+  // get the linearized momentum index
+  //
+  // kx = momentum along the x direction
+  // ky = momentum along the y direction
+  // return value = linearized momentum index
+  virtual int GetLinearizedMomentumIndexSuperlattice(int kx, int ky);
+  
+  // get momentum value from a linearized momentum index
+  //
+  // index = linearized momentum index
+  // kx = reference on the momentum along the x direction
+  // ky = reference on the momentum along the y direction
+  // return value = inearized momentum index
+  virtual void GetLinearizedMomentumIndexSuperlattice(int index, int& kx, int& ky);
+  
+  // get the linearized momentum index, without assuming k to be in the first BZ
+  //
+  // kx = momentum along the x direction
+  // ky = momentum along the y direction
+  // return value = linearized momentum index
+  virtual int GetLinearizedMomentumIndexSuperlatticeSafe(int kx, int ky);
+  
+  // get momentum value from a linearized momentum index, without assuming k to be in the first BZ
+  //
+  // index = linearized momentum index
+  // kx = reference on the momentum along the x direction
+  // ky = reference on the momentum along the y direction
+  // return value = inearized momentum index
+  virtual void GetLinearizedMomentumIndexSuperlatticeSafe(int index, int& kx, int& ky);
+  
   // get the index of the real space tight binding model from the real space coordinates
   //
   // x = x coordinate of the unit cell
@@ -197,6 +227,12 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // fileName = name of the ASCII file 
   // return value = true if no error occured
   virtual bool WriteAsciiSpectrum(char* fileName);
+  
+  // write the energy spectrum in an ASCII file in a single column
+  //
+  // fileName = name of the ASCII file 
+  // return value = true if no error occured
+  virtual bool WriteAsciiSpectrumColumn(char* fileName);
 
   // write the energy spectrum in an ASCII file, focusing on lines connecting the high symmetry points
   //
@@ -490,7 +526,23 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // nbrOccupiedMomenta = number of occupied momenta
   // return value = matrix where the values of the two point correlation function will be stored (using the linearized position index as entry)
   virtual HermitianMatrix EvaluateFullMixedTwoPointCorrelationFunctionWithK(int maxX, int ky, int* occupiedMomenta, int* bandIndices, int nbrOccupiedMomenta);
-
+  
+   // compute the form factor for the density operator 
+  // 
+  // kx = momentum along x of annihilation operator
+  // ky = momentum along y of creation operator
+  // qx = momentum transfer along x direction
+  // qy = momentum transfer along y direction
+  // valleyIndex = valley index of density operator
+  virtual Complex ComputeDensityFormFactor(int kx, int ky, int qx, int qy, int valleyIndex);
+  
+  // evaluate the norm of a momentum space vector
+  //
+  // kx = component of momentum along first Bravais vector
+  // ky = component of momentum along second Bravais vector
+  // return value = norm of vector
+  virtual double EvaluateNormQ(int kx, int ky);
+  
  protected:
 
   // write an header that describes the tight binding model
@@ -601,6 +653,55 @@ inline void Abstract2DTightBindingModel::GetLinearizedMomentumIndexSafe(int inde
   index %= n;
   kx = index / this->NbrSiteY;
   ky = index % this->NbrSiteY;
+}
+
+
+// get the linearized momentum index
+//
+// kx = momentum along the x direction
+// ky = momentum along the y direction
+// return value = linearized momentum index
+
+inline int Abstract2DTightBindingModel::GetLinearizedMomentumIndexSuperlattice(int kx, int ky)
+{
+    std::cout <<"using dummy Abstract2DTightBindingModel::GetLinearizedMomentumIndexSuperlattice"<<std::endl;
+    return -1;
+}
+
+// get momentum value from a linearized momentum index
+//
+// index = linearized momentum index
+// kx = reference on the momentum along the x direction
+// ky = reference on the momentum along the y direction
+// return value = inearized momentum index
+
+inline void Abstract2DTightBindingModel::GetLinearizedMomentumIndexSuperlattice(int index, int& kx, int& ky)
+{
+    std::cout <<"using dummy Abstract2DTightBindingModel::GetLinearizedMomentumIndexSuperlattice"<<std::endl;
+}
+
+// get the linearized momentum index, without assuming k to be in the first BZ
+//
+// kx = momentum along the x direction
+// ky = momentum along the y direction
+// return value = linearized momentum index
+
+inline int Abstract2DTightBindingModel::GetLinearizedMomentumIndexSuperlatticeSafe(int kx, int ky)
+{
+    std::cout <<"using dummy Abstract2DTightBindingModel::GetLinearizedMomentumIndexSuperlatticeSafe"<<std::endl;
+    return -1;
+}
+
+// get momentum value from a linearized momentum index, without assuming k to be in the first BZ
+//
+// index = linearized momentum index
+// kx = reference on the momentum along the x direction
+// ky = reference on the momentum along the y direction
+// return value = inearized momentum index
+
+inline void Abstract2DTightBindingModel::GetLinearizedMomentumIndexSuperlatticeSafe(int index, int& kx, int& ky)
+{
+    std::cout <<"using dummy Abstract2DTightBindingModel::GetLinearizedMomentumIndexSuperlatticeSafe"<<std::endl;
 }
 
 // get the index of the real space tight binding model from the real space coordinates
@@ -823,6 +924,18 @@ inline void Abstract2DTightBindingModel::GetMUCDimensions(int &numX, int &numY)
 {
   numX=1;
   numY=1;
+}
+
+// evaluate the norm of a momentum space vector
+//
+// kx = component of momentum along first Bravais vector
+// ky = component of momentum along second Bravais vector
+// return value = norm of vector
+inline double Abstract2DTightBindingModel::EvaluateNormQ(int kx, int ky)
+{
+    double Kx = this->KxFactor * ((double) kx);
+    double Ky = this->KyFactor * ((double) ky);
+    return sqrt(Kx*Kx + Ky*Ky);
 }
 
 #endif

@@ -70,6 +70,7 @@ FermionOnLatticeRealSpaceAnd2DTranslation::FermionOnLatticeRealSpaceAnd2DTransla
   this->IncNbrFermions = this->NbrFermions + 1;
   this->MaxMomentum = 0;
   this->NbrSite = 0;
+  this->NbrSitePerUnitCell = 0;
   this->MomentumModulo = 1;
   this->XMomentum = 0; 
   this->YMomentum = 0;
@@ -116,6 +117,7 @@ FermionOnLatticeRealSpaceAnd2DTranslation::FermionOnLatticeRealSpaceAnd2DTransla
   this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
 
   this->MaxYMomentum =  maxYMomentum;
+  this->NbrSitePerUnitCell = this->NbrSite /  (this->MaxYMomentum * this->MaxXMomentum);
   this->YMomentum = yMomentum % this->MaxYMomentum;
   this->NbrYMomentumBlocks = this->NbrSite / this->StateXShift;
   this->StateYShift = (this->NbrSite / (this->MaxYMomentum * this->MaxXMomentum));
@@ -228,6 +230,7 @@ FermionOnLatticeRealSpaceAnd2DTranslation::FermionOnLatticeRealSpaceAnd2DTransla
   this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateMaxMomentum = fermions.StateMaxMomentum;
+  this->NbrSitePerUnitCell = fermions.NbrSitePerUnitCell;
 
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
   this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
@@ -316,6 +319,7 @@ FermionOnLatticeRealSpaceAnd2DTranslation& FermionOnLatticeRealSpaceAnd2DTransla
   this->LargeHilbertSpaceDimension = this->LargeHilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateMaxMomentum = fermions.StateMaxMomentum;
+  this->NbrSitePerUnitCell = fermions.NbrSitePerUnitCell;
 
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
   this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;

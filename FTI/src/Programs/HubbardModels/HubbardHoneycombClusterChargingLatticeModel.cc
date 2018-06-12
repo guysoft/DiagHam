@@ -11,6 +11,10 @@
 #include "HilbertSpace/FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusionAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnHoneycombLatticeWithSpinSzSymmetryRealSpacePlaquetteExclusionAnd2DTranslation.h"
 
+#include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
+
 #include "Hamiltonian/ParticleOnLatticeWithSpinRealSpaceHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeWithSpinFullRealSpaceHamiltonian.h"
@@ -47,15 +51,6 @@ using std::endl;
 using std::ios;
 using std::ofstream;
 
-
-// find linearized index associated with lattice coordinates
-//
-// siteAlpha = A or B site of honeycomb lattice
-// siteX = coordinate along X axis
-// siteY = coordinate along Y axis
-// return value = linearized index
-//
-int FindSiteIndex(int siteAlpha, int siteX, int siteY, int NbrSitesX, int NbrSitesY);
 
 int main(int argc, char** argv)
 {
@@ -286,13 +281,21 @@ int main(int argc, char** argv)
   RealSymmetricMatrix SzSzInteraction(NbrSites, true);  
   
   int TmpIndex1;
-  double JHeisenberg = 4.0 * StrongCouplingSecondOrder;
-  double OnSitePotential = UPotential / 9.0;
-  double NNUPotential = 2.0*UPotential/9.0;
+  double JHeisenberg = 0.0;
+  double OnSitePotential = 4.0 * UPotential / 3.0;
+  double NNUPotential = 4.0*UPotential/9.0;
   double NNNUPotential = 2.0*UPotential/9.0;
   double NNNNUPotential = 2.0*UPotential/9.0;
+  
+  // test
+//   OnSitePotential = 0.0;
+  NNUPotential = 0.0;
+  NNNUPotential = 0.0;
+  NNNNUPotential = 0.0;
+  
   if (ClusterExclusionFlag)
   {
+    JHeisenberg = 4.0 * StrongCouplingSecondOrder;
     OnSitePotential = 0.0;
     NNUPotential = StrongCouplingSecondOrder;
     NNNUPotential = 0.0;
@@ -303,53 +306,64 @@ int main(int argc, char** argv)
       {
 	for (int siteY = 0; siteY < NbrSitesY; ++siteY)
 	{
+// for (int siteX = 1; siteX < 2; ++siteX)
+//       {
+// 	for (int siteY = 0; siteY < 1; ++siteY)
+// 	{
 	  TmpIndex1 = TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, 0);
 	  
 // 	  On-site interaction
-	  DensityDensityInteractionupdown.SetMatrixElement(TmpIndex1, TmpIndex1, OnSitePotential);
-	  DensityDensityInteractionupdown.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, 1), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, 1), OnSitePotential);
+	  
+	  DensityDensityInteractionupup.AddToMatrixElement(TmpIndex1, TmpIndex1, OnSitePotential);
+	  DensityDensityInteractionupup.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, 1), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, 1), OnSitePotential);
+	  
+	  DensityDensityInteractiondowndown.AddToMatrixElement(TmpIndex1, TmpIndex1, OnSitePotential);
+	  DensityDensityInteractiondowndown.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, 1), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, 1), OnSitePotential);
+	  
+	  DensityDensityInteractionupdown.AddToMatrixElement(TmpIndex1, TmpIndex1, OnSitePotential);
+	  DensityDensityInteractionupdown.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, 1), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, 1), OnSitePotential);
 	  
 // 	  NN interaction
-	  DensityDensityInteractionupup.SetMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, 1), NNUPotential);
-	  DensityDensityInteractionupup.SetMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY - 1, 1), NNUPotential);
-	  DensityDensityInteractionupup.SetMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX -1, siteY, 1), NNUPotential);
+	  DensityDensityInteractionupup.AddToMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, 1), NNUPotential);
+	  DensityDensityInteractionupup.AddToMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY - 1, 1), NNUPotential);
+	  DensityDensityInteractionupup.AddToMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX -1, siteY, 1), NNUPotential);
 	  
-	  DensityDensityInteractiondowndown.SetMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, 1), NNUPotential);
-	  DensityDensityInteractiondowndown.SetMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY - 1, 1), NNUPotential);
-	  DensityDensityInteractiondowndown.SetMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX -1, siteY, 1), NNUPotential);
+	  DensityDensityInteractiondowndown.AddToMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, 1), NNUPotential);
+	  DensityDensityInteractiondowndown.AddToMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY - 1, 1), NNUPotential);
+	  DensityDensityInteractiondowndown.AddToMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX -1, siteY, 1), NNUPotential);
 	 
-	  DensityDensityInteractionupdown.SetMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, 1), NNUPotential);
-	  DensityDensityInteractionupdown.SetMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY - 1, 1), NNUPotential);
-	  DensityDensityInteractionupdown.SetMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX -1, siteY, 1), NNUPotential);
+	  DensityDensityInteractionupdown.AddToMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, 1), NNUPotential);
+	  DensityDensityInteractionupdown.AddToMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY - 1, 1), NNUPotential);
+	  DensityDensityInteractionupdown.AddToMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX -1, siteY, 1), NNUPotential);
 	  
 // 	  NNN interaction
 	  for (int alpha = 0; alpha < 2; ++alpha)
 	  {
-	    DensityDensityInteractionupup.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, alpha), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX + 1, siteY, alpha), NNNUPotential);
-	    DensityDensityInteractionupup.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, alpha), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX + 1, siteY - 1, alpha), NNNUPotential);
-	    DensityDensityInteractionupup.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, alpha), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY - 1, alpha), NNNUPotential);
+	    DensityDensityInteractionupup.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, alpha), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX + 1, siteY, alpha), NNNUPotential);
+	    DensityDensityInteractionupup.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, alpha), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX + 1, siteY - 1, alpha), NNNUPotential);
+	    DensityDensityInteractionupup.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, alpha), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY - 1, alpha), NNNUPotential);
 	    
-	    DensityDensityInteractiondowndown.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, alpha), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX + 1, siteY, alpha), NNNUPotential);
-	    DensityDensityInteractiondowndown.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, alpha), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX + 1, siteY - 1, alpha), NNNUPotential);
-	    DensityDensityInteractiondowndown.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, alpha), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY - 1, alpha), NNNUPotential);
+	    DensityDensityInteractiondowndown.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, alpha), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX + 1, siteY, alpha), NNNUPotential);
+	    DensityDensityInteractiondowndown.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, alpha), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX + 1, siteY - 1, alpha), NNNUPotential);
+	    DensityDensityInteractiondowndown.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, alpha), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY - 1, alpha), NNNUPotential);
 	    
-	    DensityDensityInteractionupdown.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, alpha), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX + 1, siteY, alpha), NNNUPotential);
-	    DensityDensityInteractionupdown.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, alpha), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX + 1, siteY - 1, alpha), NNNUPotential);
-	    DensityDensityInteractionupdown.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, alpha), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY - 1, alpha), NNNUPotential);
+	    DensityDensityInteractionupdown.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, alpha), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX + 1, siteY, alpha), NNNUPotential);
+	    DensityDensityInteractionupdown.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, alpha), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX + 1, siteY - 1, alpha), NNNUPotential);
+	    DensityDensityInteractionupdown.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY, alpha), TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX, siteY - 1, alpha), NNNUPotential);
 	  }
 	  
 // 	  NNNN interaction
-	  DensityDensityInteractionupup.SetMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX + 1, siteY - 1, 1), NNNNUPotential);
-	  DensityDensityInteractionupup.SetMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX - 1, siteY - 1, 1), NNNNUPotential);
-	  DensityDensityInteractionupup.SetMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX - 1, siteY + 1, 1), NNNNUPotential);
+	  DensityDensityInteractionupup.AddToMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX + 1, siteY - 1, 1), NNNNUPotential);
+	  DensityDensityInteractionupup.AddToMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX - 1, siteY - 1, 1), NNNNUPotential);
+	  DensityDensityInteractionupup.AddToMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX - 1, siteY + 1, 1), NNNNUPotential);
 	  
-	  DensityDensityInteractiondowndown.SetMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX + 1, siteY - 1, 1), NNNNUPotential);
-	  DensityDensityInteractiondowndown.SetMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX - 1, siteY - 1, 1), NNNNUPotential);
-	  DensityDensityInteractiondowndown.SetMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX - 1, siteY + 1, 1), NNNNUPotential);
+	  DensityDensityInteractiondowndown.AddToMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX + 1, siteY - 1, 1), NNNNUPotential);
+	  DensityDensityInteractiondowndown.AddToMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX - 1, siteY - 1, 1), NNNNUPotential);
+	  DensityDensityInteractiondowndown.AddToMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX - 1, siteY + 1, 1), NNNNUPotential);
 	  
-	  DensityDensityInteractionupdown.SetMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX + 1, siteY - 1, 1), NNNNUPotential);
-	  DensityDensityInteractionupdown.SetMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX - 1, siteY - 1, 1), NNNNUPotential);
-	  DensityDensityInteractionupdown.SetMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX - 1, siteY + 1, 1), NNNNUPotential);
+	  DensityDensityInteractionupdown.AddToMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX + 1, siteY - 1, 1), NNNNUPotential);
+	  DensityDensityInteractionupdown.AddToMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX - 1, siteY - 1, 1), NNNNUPotential);
+	  DensityDensityInteractionupdown.AddToMatrixElement(TmpIndex1, TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(siteX - 1, siteY + 1, 1), NNNNUPotential);
 	  
 	  
 	  SxSxInteraction.AddToMatrixElement(TmpIndex1,
@@ -376,7 +390,7 @@ int main(int argc, char** argv)
       }
 
 //   cout << (TightBindingModel->GetRealSpaceTightBindingHamiltonian()) << endl;
-//   cout << DensityDensityInteractionupup << endl;
+  cout << DensityDensityInteractionupdown << endl;
     
   bool FirstRunFlag = true;
   ParticleOnSphereWithSpin* Space = 0;
@@ -490,8 +504,6 @@ int main(int argc, char** argv)
 		}
 	      for (; SzParitySector <= MaxSzParitySector; SzParitySector += 2)
 		{
-// 		  ParticleOnSphereWithSpin* Space = 0;
-// 		  AbstractHamiltonian* Hamiltonian = 0;
 		  if (SzSymmetryFlag == false)
 		    {
 		      cout << "Kx = " << XMomentum << "  Ky = " << YMomentum << "  Sz = " << TotalSz <<  endl;
@@ -520,24 +532,25 @@ int main(int argc, char** argv)
 		  
 		  if (ClusterExclusionFlag == false)
 		  {
-		    HermitianMatrix TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
+// 		    HermitianMatrix TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
+		    HermitianMatrix TightBindingMatrix (NbrSites, true);
 		    Hamiltonian = new ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian(Space, NbrParticles, NbrSites,XMomentum, NbrSitesX, YMomentum, NbrSitesY, TightBindingMatrix, TightBindingMatrix, DensityDensityInteractionupup, DensityDensityInteractiondowndown,DensityDensityInteractionupdown, Architecture.GetArchitecture(), Memory);	
 		  }
       
 		else
 		{
 		  HermitianMatrix TightBindingMatrix(2*NbrSites, true);
-		  HermitianMatrix TightBindingMatrixOneSpin = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
-		  Complex Tmp;
-		  for (int i = 0; i <  NbrSites; ++i)
-		  {
-		    for (int j = 0; j <  NbrSites; ++j)
-		    {
-		      TightBindingMatrixOneSpin.GetMatrixElement(i, j, Tmp);
-		      TightBindingMatrix.SetMatrixElement(2 * i, 2 * j, Tmp);
-		      TightBindingMatrix.SetMatrixElement(2 * i + 1, 2 * j + 1, Tmp);
-		    }
-		  }
+// 		  HermitianMatrix TightBindingMatrixOneSpin = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
+// 		  Complex Tmp;
+// 		  for (int i = 0; i <  NbrSites; ++i)
+// 		  {
+// 		    for (int j = 0; j <  NbrSites; ++j)
+// 		    {
+// 		      TightBindingMatrixOneSpin.GetMatrixElement(i, j, Tmp);
+// 		      TightBindingMatrix.SetMatrixElement(2 * i, 2 * j, Tmp);
+// 		      TightBindingMatrix.SetMatrixElement(2 * i + 1, 2 * j + 1, Tmp);
+// 		    }
+// 		  }
 		  Hamiltonian = new ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian(Space, NbrParticles, NbrSites,XMomentum, NbrSitesX,
 												  YMomentum, NbrSitesY, TightBindingMatrix,
 												  DensityDensityInteractionupup, DensityDensityInteractiondowndown, 
@@ -585,29 +598,4 @@ int main(int argc, char** argv)
 	}
     }  
   return 0;
-}
-
-
-// find linearized index associated with lattice coordinates
-//
-// siteAlpha = A or B site of honeycomb lattice
-// siteX = coordinate along X axis
-// siteY = coordinate along Y axis
-// return value = linearized index
-//
-int FindSiteIndex(int siteAlpha, int siteX, int siteY, int NbrSitesX, int NbrSitesY)
-{
-  if (siteX < 0)
-    siteX += NbrSitesX;
-  if (siteX >= NbrSitesX)
-    siteX -= NbrSitesX;
-  
-  if (siteY < 0)
-    siteY += NbrSitesY;
-  if (siteY >= NbrSitesY)
-    siteY -= NbrSitesY;
-  
-  int TmpIndex = siteAlpha + 2 * (NbrSitesY * siteX + siteY);
-  
-  return TmpIndex;
 }

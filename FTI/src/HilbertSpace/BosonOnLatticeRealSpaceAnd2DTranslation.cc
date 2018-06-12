@@ -121,6 +121,7 @@ BosonOnLatticeRealSpaceAnd2DTranslation::BosonOnLatticeRealSpaceAnd2DTranslation
   this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
 
   this->MaxYMomentum = maxYMomentum;
+  this->NbrSitePerUnitCell = this->NbrSite / (this->MaxXMomentum * this->MaxYMomentum);
   this->KyMomentum = yMomentum % this->MaxYMomentum;
   this->NbrYMomentumBlocks = this->MaxXMomentum;
   this->StateYShift = (this->NbrSite / (this->MaxXMomentum * this->MaxYMomentum));
@@ -210,6 +211,7 @@ BosonOnLatticeRealSpaceAnd2DTranslation::BosonOnLatticeRealSpaceAnd2DTranslation
   this->StateShift = bosons.StateShift;
   this->ComplementaryStateShift = bosons.ComplementaryStateShift;
   this->LastMomentumMask = bosons.LastMomentumMask;
+  this->NbrSitePerUnitCell = bosons.NbrSitePerUnitCell;
 
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->StateDescription = bosons.StateDescription;
@@ -278,7 +280,8 @@ BosonOnLatticeRealSpaceAnd2DTranslation& BosonOnLatticeRealSpaceAnd2DTranslation
   this->StateShift = bosons.StateShift;
   this->ComplementaryStateShift = bosons.ComplementaryStateShift;
   this->LastMomentumMask = bosons.LastMomentumMask;
-
+  this->NbrSitePerUnitCell = bosons.NbrSitePerUnitCell;
+  
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->StateDescription = bosons.StateDescription;
   this->StateXShift = bosons.StateXShift;

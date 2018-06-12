@@ -314,6 +314,33 @@ bool Abstract2DTightBindingModel::WriteAsciiSpectrum(char* fileName)
   return true;
 }
 
+
+
+// write the energy spectrum in an ASCII file
+//
+// fileName = name of the ASCII file 
+// return value = true if no error occured
+
+bool Abstract2DTightBindingModel::WriteAsciiSpectrumColumn(char* fileName)
+{
+  ofstream File;
+  File.precision(14);
+  File.open(fileName);
+  this->WriteASCIIHeader(File, '#');
+  File << "# kx    ky   E" << endl;
+  for (int kx = 0; kx < this->NbrSiteX; ++kx)
+    {
+      for (int ky = 0; ky < this->NbrSiteY; ++ky)
+	{
+	  int LinearizedMomentumIndex = this->GetLinearizedMomentumIndex(kx, ky);	  
+	  for (int i = 0; i < this->NbrBands; ++i)
+          File << kx << " " << ky << " " << this->EnergyBandStructure[i][LinearizedMomentumIndex] << endl;
+	}
+    }
+  File.close();
+  return true;
+}
+
 // write the energy spectrum in an ASCII file, focusing on lines connecting the high symmetry points
 //
 // fileName = name of the ASCII file 
@@ -2185,4 +2212,19 @@ HermitianMatrix Abstract2DTightBindingModel::EvaluateFullMixedTwoPointCorrelatio
   delete[] TmpFormFactors;
   EntanglementHamiltonian /= ((double) (this->NbrSiteX));
   return EntanglementHamiltonian;
+}
+
+
+// compute the form factor for the density operator 
+// 
+// kx = momentum along x of annihilation operator
+// ky = momentum along y of creation operator
+// qx = momentum transfer along x direction
+// qy = momentum transfer along y direction
+// valleyIndex = valley index of density operator
+
+Complex Abstract2DTightBindingModel::ComputeDensityFormFactor(int kx, int ky, int qx, int qy, int valleyIndex)
+{
+    cout << "Warning: using dummy method Abstract2DTightBindingModel::ComputeDensityFormFactor" << endl;
+    return 0.0;
 }

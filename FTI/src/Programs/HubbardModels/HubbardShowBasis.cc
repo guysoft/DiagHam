@@ -24,6 +24,9 @@
 #include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpace.h"
 #include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpaceAnd1DTranslation.h"
 #include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusion.h"
+#include "HilbertSpace/FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusionAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnHoneycombLatticeWithSpinSzSymmetryRealSpacePlaquetteExclusionAnd2DTranslation.h"
 
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
@@ -72,6 +75,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n',  "max-ymomentum", "number of momentum in the y direction",2);
   (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use the Sz <-> -Sz symmetry");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "sz-parity", "select the  Sz <-> -Sz parity (can be 1 or -1)", 1);
+  (*SystemGroup) += new BooleanOption  ('\n', "cluster-exclusion", "restrict Hilbert space to plaquettes with at most 6 particles");
   
   (*SystemGroup) += new BooleanOption  ('\n', "add-index", "add index of the Hilbert space vectors");
   
@@ -112,6 +116,9 @@ int main(int argc, char** argv)
   bool ComplexFlag = Manager.GetBoolean("complex-vector");
   
   int NbrOrbitals;
+  
+  int NbrSitesX = Manager.GetInteger("max-xmomentum");
+  int NbrSitesY = Manager.GetInteger("max-ymomentum");
   
   ParticleOnSphere* Space = 0;
   if (Manager.GetBoolean("boson") == true)
@@ -201,10 +208,20 @@ int main(int argc, char** argv)
 		{
 		  if (Manager.GetBoolean("gutzwiller") == false)
 		    {
-		      if (Manager.GetBoolean("conserve-sz") == false)
-			Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, NbrSites); 
+		      if (Manager.GetBoolean("cluster-exclusion") == false)
+		      {
+			if (Manager.GetBoolean("conserve-sz") == false)
+			  Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, NbrSites); 
+			else
+			  Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, TotalSz, NbrSites);
+		      }
 		      else
-			Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, TotalSz, NbrSites);
+		      {
+			if (Manager.GetBoolean("conserve-sz") == false)
+			  Space = new FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusion (NbrParticles, NbrSitesX, NbrSitesY);
+			else
+			  Space = new FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusion (NbrParticles, TotalSz, NbrSitesX, NbrSitesY);
+		      }
 		    }
 		  else
 		    {
@@ -226,28 +243,45 @@ int main(int argc, char** argv)
 		{
 		  if (Manager.GetBoolean("gutzwiller") == false)
 		    {
-		      unsigned long memory = 10000000;
-		      if (Manager.GetBoolean("conserve-sz") == false)
-			{
-			  Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("max-xmomentum"),
+		      if (Manager.GetBoolean("cluster-exclusion") == false)
+		      {
+			unsigned long memory = 10000000;
+			if (Manager.GetBoolean("conserve-sz") == false)
+			  {
+			    Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("max-xmomentum"),
 										    Manager.GetInteger("y-momentum"), Manager.GetInteger("max-ymomentum"));
-			}
-		      else
-			{
-			  if (Manager.GetBoolean("szsymmetrized-basis") == false)
-			    {
-			      Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation(NbrParticles, TotalSz, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("max-xmomentum"),
+			  }
+			else
+			  {
+			    if (Manager.GetBoolean("szsymmetrized-basis") == false)
+			      {
+				Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation(NbrParticles, TotalSz, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("max-xmomentum"),
 											    Manager.GetInteger("y-momentum"), Manager.GetInteger("max-ymomentum"), memory);
-			    }
-			  else
-			    {
-			      bool MinusParitySector = true;
-			      if (Manager.GetInteger("sz-parity") == 1)
-				MinusParitySector = false;
-			      Space = new  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles,TotalSz, NbrSites, MinusParitySector, Manager.GetInteger("x-momentum"),  Manager.GetInteger("max-xmomentum"), Manager.GetInteger("y-momentum"), Manager.GetInteger("max-ymomentum"));
+			      }
+			    else
+			      {
+				bool MinusParitySector = true;
+				if (Manager.GetInteger("sz-parity") == 1)
+				  MinusParitySector = false;
+				Space = new  FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles,TotalSz, NbrSites, MinusParitySector, Manager.GetInteger("x-momentum"),  Manager.GetInteger("max-xmomentum"), Manager.GetInteger("y-momentum"), Manager.GetInteger("max-ymomentum"));
 			      
-			    }
+			      }
+			  }
+		      }
+		      else
+		      {
+			if (Manager.GetBoolean("szsymmetrized-basis") == false)
+			{
+			  Space = new FermionOnHoneycombLatticeWithSpinRealSpacePlaquetteExclusionAnd2DTranslation (NbrParticles, TotalSz, NbrSites, Manager.GetInteger("x-momentum"),  Manager.GetInteger("max-xmomentum"), Manager.GetInteger("y-momentum"), Manager.GetInteger("max-ymomentum"));
 			}
+			else
+			{
+			  bool MinusParitySector = true;
+			  if (Manager.GetInteger("sz-parity") == 1)
+			    MinusParitySector = false;
+			  Space = new FermionOnHoneycombLatticeWithSpinSzSymmetryRealSpacePlaquetteExclusionAnd2DTranslation (NbrParticles, TotalSz, NbrSites, MinusParitySector, Manager.GetInteger("x-momentum"),  Manager.GetInteger("max-xmomentum"), Manager.GetInteger("y-momentum"), Manager.GetInteger("max-ymomentum"));
+			}
+		      }
 		    }
 		  else
 		    {

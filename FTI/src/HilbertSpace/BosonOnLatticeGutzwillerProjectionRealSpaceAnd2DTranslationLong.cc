@@ -117,6 +117,7 @@ BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslationLong::BosonOnLatticeG
   this->XMomentumMask = (((ULONGLONG) 0x1ul) << this->StateXShift) - ((ULONGLONG) 0x1ul);
 
   this->MaxYMomentum = maxYMomentum;
+  this->NbrSitePerUnitCell = this->NbrSite / (this->MaxXMomentum * this->MaxYMomentum);
   this->YMomentum = yMomentum % this->MaxYMomentum;
   this->NbrYMomentumBlocks = this->MaxXMomentum;
   this->StateYShift = (this->NbrSite / (this->MaxXMomentum * this->MaxYMomentum));
@@ -222,6 +223,7 @@ BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslationLong::BosonOnLatticeG
   this->StateShift = bosons.StateShift;
   this->ComplementaryStateShift = bosons.ComplementaryStateShift;
   this->MomentumMask = bosons.MomentumMask;
+  this->NbrSitePerUnitCell = bosons.NbrSitePerUnitCell;
 
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->StateDescription = bosons.StateDescription;
@@ -300,6 +302,7 @@ BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslationLong& BosonOnLatticeG
   this->StateShift = bosons.StateShift;
   this->ComplementaryStateShift = bosons.ComplementaryStateShift;
   this->MomentumMask = bosons.MomentumMask;
+  this->NbrSitePerUnitCell = bosons.NbrSitePerUnitCell;
 
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->StateDescription = bosons.StateDescription;

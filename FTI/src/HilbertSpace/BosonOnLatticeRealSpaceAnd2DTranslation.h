@@ -48,6 +48,8 @@ class BosonOnLatticeRealSpaceAnd2DTranslation : public BosonOnTorusWithMagneticT
   
   // total number of sites
   int NbrSite;
+  // number of sites per unit cell
+  int NbrSitePerUnitCell;
   
   
   int NbrMomentum;

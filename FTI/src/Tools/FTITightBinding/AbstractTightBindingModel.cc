@@ -141,7 +141,10 @@ ostream& AbstractTightBindingModel::WriteEigensystem(ofstream& output)
   if (this->HaveOneBodyBasis() == true)
     {
       for (int idx = 0; idx < this->NbrStatePerBand; ++idx)
+      {
+//           cout << idx <<  " "  << endl;
 	this->GetOneBodyMatrix(idx).WriteMatrix(output);
+      }
     }
   return output;
 }

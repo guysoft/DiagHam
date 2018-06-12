@@ -49,6 +49,8 @@ class  FermionOnLatticeRealSpaceAnd2DTranslation : public FermionOnTorusWithMagn
 
   // total number of sites
   int NbrSite;
+  // number of sites per unit cell
+  int NbrSitePerUnitCell;
   
   // number of momentum sectors in the x direction 
   int MaxXMomentum;
@@ -169,6 +171,31 @@ class  FermionOnLatticeRealSpaceAnd2DTranslation : public FermionOnTorusWithMagn
   //
   // return value = Hilbert space without translations
   virtual FermionOnLatticeRealSpace* GetHilbertSpaceWithoutTranslations();
+  
+  
+  // get the linearized index (e.g. used for the creation/annihilation operators) from the lattice position, sanitizing the input data first
+  // 
+  // xPosition = x coordinate of the unit cell
+  // yPosition = y coordinate of the unit cell
+  // orbitalIndex = index of the orbital within the unit cell
+  // return value = linearized index
+  virtual int GetLinearizedIndexSafe(int xPosition, int yPosition, int orbitalIndex);
+
+  // get the linearized index (e.g. used for the creation/annihilation operators) from the lattice position
+  // 
+  // xPosition = x coordinate of the unit cell
+  // yPosition = y coordinate of the unit cell
+  // orbitalIndex = index of the orbital within the unit cell
+  // return value = linearized index
+  virtual int GetLinearizedIndex(int xPosition, int yPosition, int orbitalIndex);
+
+  // get the lattice position from the linearized index (e.g. used for the creation/annihilation operators)
+  // 
+  // index = linearized index
+  // xPosition = reference on the x coordinate of the unit cell
+  // yPosition =reference on the  y coordinate of the unit cell
+  // orbitalIndex = reference on the index of the orbital within the unit cell
+  virtual void GetLinearizedIndex(int index, int& xPosition, int& yPosition, int& orbitalIndex);
 
  protected:
 
@@ -539,6 +566,55 @@ inline unsigned long FermionOnLatticeRealSpaceAnd2DTranslation::GetSignAndApplyS
 inline FermionOnLatticeRealSpace* FermionOnLatticeRealSpaceAnd2DTranslation::GetHilbertSpaceWithoutTranslations()
 {
   return new FermionOnLatticeRealSpace(this->NbrFermions, this->NbrSite);
+}
+
+
+// get the linearized index (e.g. used for the creation/annihilation operators) from the lattice position, sanitizing the input data first
+// 
+// xPosition = x coordinate of the unit cell
+// yPosition = y coordinate of the unit cell
+// orbitalIndex = index of the orbital within the unit cell
+// return value = linearized index
+
+inline int FermionOnLatticeRealSpaceAnd2DTranslation::GetLinearizedIndexSafe(int xPosition, int yPosition, int orbitalIndex)
+{
+  orbitalIndex %= this->NbrSitePerUnitCell;
+  if (orbitalIndex < 0)
+    orbitalIndex +=  this->NbrSitePerUnitCell;
+  xPosition %= this->MaxXMomentum;
+  if (xPosition < 0)
+    xPosition +=  this->MaxXMomentum;
+  yPosition %= this->MaxYMomentum;
+  if (yPosition < 0)
+    yPosition +=  this->MaxYMomentum;
+  return this->GetLinearizedIndex(xPosition, yPosition, orbitalIndex); 
+}
+
+// get the linearized index (e.g. used for the creation/annihilation operators) from the lattice position
+// 
+// xPosition = x coordinate of the unit cell
+// yPosition = y coordinate of the unit cell
+// orbitalIndex = index of the orbital within the unit cell
+// return value = linearized index
+
+inline int FermionOnLatticeRealSpaceAnd2DTranslation::GetLinearizedIndex(int xPosition, int yPosition, int orbitalIndex)
+{
+  return (((xPosition * this->MaxYMomentum) + yPosition) * this->NbrSitePerUnitCell) + orbitalIndex;
+}
+
+// get the lattice position from the linearized index (e.g. used for the creation/annihilation operators)
+// 
+// index = linearized index
+// xPosition = reference on the x coordinate of the unit cell
+// yPosition =reference on the  y coordinate of the unit cell
+// orbitalIndex = reference on the index of the orbital within the unit cell
+
+inline void FermionOnLatticeRealSpaceAnd2DTranslation::GetLinearizedIndex(int index, int& xPosition, int& yPosition, int& orbitalIndex)
+{
+  orbitalIndex = index % this->NbrSitePerUnitCell;
+  index /= this->NbrSitePerUnitCell;
+  xPosition = index / this->MaxYMomentum;
+  yPosition = index % this->MaxYMomentum;
 }
 
 #endif
