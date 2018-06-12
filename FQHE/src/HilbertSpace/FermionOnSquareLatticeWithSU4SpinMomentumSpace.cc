@@ -84,7 +84,6 @@ FermionOnSquareLatticeWithSU4SpinMomentumSpace::FermionOnSquareLatticeWithSU4Spi
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0);
-  cout << "Dim full = " << (this->LargeHilbertSpaceDimension) << endl;
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
@@ -175,7 +174,7 @@ FermionOnSquareLatticeWithSU4SpinMomentumSpace::FermionOnSquareLatticeWithSU4Spi
 	  cout << "error while generating the Hilbert space " << this->LargeHilbertSpaceDimension << " " << TmpLargeHilbertSpaceDimension << endl;
 	}
 //       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-// 	this->PrintState(cout, i) << " " << hex << this->StateDescription[i] << dec << endl;
+// 	this->PrintState(cout, i) << endl;
       this->GenerateLookUpTable(memory);
       
 #ifdef __DEBUG__

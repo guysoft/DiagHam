@@ -74,6 +74,9 @@ class FQHEOnTorusMainTask: public QHEOnDiskMainTask
   //
   double SpectralResponseOmegaMax;
 
+  //  if non-zero, store the Hamiltonian as a binary file
+  char* ExportBinaryHamiltonian;
+  
   // pointer to Lanczos manager
   LanczosManager* AlgorithmManager;
 

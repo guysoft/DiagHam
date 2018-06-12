@@ -61,6 +61,11 @@ using std::ostream;
 #define M1_12 0.08333333333333333
 
 
+//default constructor
+
+ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian::ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian (){
+}
+
 // constructor from pseudopotentials
 //
 // particles = Hilbert space associated to the system
@@ -775,6 +780,7 @@ void ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericH
 {
   this->HamiltonianShift = shift;
 }
+
 
 // get all the indices that should appear in the annihilation/creation operators
 //

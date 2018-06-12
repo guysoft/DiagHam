@@ -51,7 +51,10 @@ class Polynomial;
 class ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian : public ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian
   {
   public:
-
+      
+  // default constructor    
+  ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian();
+      
   // constructor from pseudopotentials
   //
   // particles = Hilbert space associated to the system

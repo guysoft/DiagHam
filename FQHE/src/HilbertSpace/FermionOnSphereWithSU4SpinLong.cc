@@ -982,7 +982,7 @@ void FermionOnSphereWithSU4SpinLong::GenerateLookUpTable(unsigned long memory)
     }
   if (this->MaximumLookUpShift > MaxHighestBit)
     this->MaximumLookUpShift = MaxHighestBit;
-  this->LookUpTableMemorySize = 1 << this->MaximumLookUpShift;
+  this->LookUpTableMemorySize = ((ULONGLONG) 0x1ul) << this->MaximumLookUpShift;
 
   // construct  look-up tables for searching states
   this->LookUpTable = new int* [MaxHighestBit + 1];
@@ -1045,7 +1045,7 @@ void FermionOnSphereWithSU4SpinLong::GenerateLookUpTable(unsigned long memory)
 	    }
 	}
     }
-  while (CurrentLookUpTableValue > 0)
+  while (CurrentLookUpTableValue > ((ULONGLONG) 0x0ul))
     {
       TmpLookUpTable[CurrentLookUpTableValue] = this->HilbertSpaceDimension - 1;
       --CurrentLookUpTableValue;
@@ -1351,7 +1351,7 @@ Complex FermionOnSphereWithSU4SpinLong::EvaluateWaveFunction (RealVector& state,
       TmpStateDescription = this->StateDescription[k];
       while (Pos < this->NbrFermions)
 	{
-	  if ((TmpStateDescription & 0x3l) != 0x0l)
+	  if ((TmpStateDescription & ((ULONGLONG) 0x3l)) != ((ULONGLONG) 0x0l))
 	    {
 	      Indices[Pos] = Lz;
 	      ++Pos;

@@ -81,6 +81,11 @@ class ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian : public 
 
  public:
 
+  // default constructor
+  //
+  // 
+  ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian();
+     
   // constructor from default datas
   //
   // particles = Hilbert space associated to the system
@@ -141,7 +146,7 @@ class ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian : public 
   // shift = shift value
   void ShiftHamiltonian (double shift);
 
- private:
+ protected:
  
   // evaluate all interaction factors
   //   
@@ -155,25 +160,25 @@ class ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian : public 
   // m4 = fourth index
   // layerSeparation = separation of layers
   // return value = numerical coefficient
-  double EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, double layerSeparation=0.0);
+  virtual double EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, double layerSeparation=0.0);
 
   // get fourier transform of interaction
   // Q2_half = one half of q² value
   // layerSeparation = layer separation
-  double GetVofQ(double Q2_half, double layerSeparation=0.0);
+  virtual double GetVofQ(double Q2_half, double layerSeparation=0.0);
 
   
   // evaluate Wigner crystal energy per particle
   //
   // return value = Wigner crystal energy per particle
-  double EvaluateWignerCrystalEnergy ();
+  virtual double EvaluateWignerCrystalEnergy ();
 
   // evaluate Misra function (integral of t^n exp (-xt) between 1 and +inf)
   //
   // n = index of the Misra function
   // x = point where the function has to be evaluated (> 0)
   // return value = value of the n-Misra function at x
-  double MisraFunction (double n, double x);
+  virtual double MisraFunction (double n, double x);
 
   // evaluate part of the integral needed in the Misra function (integral of t^n exp (-xt) between min and max)
   //
@@ -183,7 +188,7 @@ class ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian : public 
   // max = upper bound of the integral
   // nbrSubdivision = number of subdivision used for the integral
   // return value = value of the integral
-  double PartialMisraFunction (double n, double x, double min, double max, int nbrSubdivision);
+  virtual double PartialMisraFunction (double n, double x, double min, double max, int nbrSubdivision);
 
 };
 

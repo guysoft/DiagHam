@@ -95,7 +95,7 @@ class FermionOnSphereWithSU4SpinLong :  public ParticleOnSphereWithSU4Spin
   // maximum shift used for searching a position in the look-up table
   int MaximumLookUpShift;
   // memory used for the look-up table in a given lzmax sector
-  unsigned long LookUpTableMemorySize;
+  ULONGLONG LookUpTableMemorySize;
   // shift used in each lzmax sector
   int* LookUpTableShift;
   // look-up table with two entries : the first one used lzmax value of the state an the second 
@@ -749,7 +749,7 @@ inline int FermionOnSphereWithSU4SpinLong::GenericAdA(int index, int m, int n, d
 inline double FermionOnSphereWithSU4SpinLong::GenericAA(int index, int n1, int n2)
 {
   this->ProdATemporaryState = this->StateDescription[index];
- if (((this->ProdATemporaryState & (((ULONGLONG) 0x1ul) << n1)) == 0) || ((this->ProdATemporaryState & (((ULONGLONG) 0x1ul) << n2)) == 0) || (n1 == n2))
+ if (((this->ProdATemporaryState & (((ULONGLONG) 0x1ul) << n1)) == ((ULONGLONG) 0x0ul)) || ((this->ProdATemporaryState & (((ULONGLONG) 0x1ul) << n2)) == ((ULONGLONG) 0x0ul)) || (n1 == n2))
     return 0.0;
   this->ProdALzMax = this->StateHighestBit[index];
   double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n2) & this->SignLookUpTableMask[n2]];
@@ -795,7 +795,7 @@ inline double FermionOnSphereWithSU4SpinLong::GenericAA(int index, int n1, int n
 inline int FermionOnSphereWithSU4SpinLong::GenericAdAd(int m1, int m2, double& coefficient)
 {
   ULONGLONG TmpState = this->ProdATemporaryState;
-  if (((TmpState & (((ULONGLONG) 0x1ul) << m1)) != 0) || ((TmpState & (((ULONGLONG) 0x1ul) << m2)) != 0) || (m1 == m2))
+  if (((TmpState & (((ULONGLONG) 0x1ul) << m1)) != ((ULONGLONG) 0x0ul)) || ((TmpState & (((ULONGLONG) 0x1ul) << m2)) != ((ULONGLONG) 0x0ul)) || (m1 == m2))
     return this->HilbertSpaceDimension;
   int NewLzMax = this->ProdALzMax;
   coefficient = 1.0;

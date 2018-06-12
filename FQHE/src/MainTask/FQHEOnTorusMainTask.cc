@@ -326,7 +326,32 @@ FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbert
 		}
 	    }
 	}
-    }  
+    } 
+  this->ExportBinaryHamiltonian = 0;
+  if (((*options)["export-binhamiltonian"] != 0) && (options->GetString("export-binhamiltonian") != 0)) 
+    {
+      if (this->ReducedHilbertSpaceDescription == 0)
+	{
+        if (RealFlag)  
+        {
+            RealSymmetricMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), true);
+            this->Hamiltonian->GetHamiltonian(HRep);
+            HRep.WriteMatrix(options->GetString("export-binhamiltonian"));	
+        }
+        else
+        {
+            HermitianMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), true);
+            this->Hamiltonian->GetHamiltonian(HRep);
+            HRep.WriteMatrix(options->GetString("export-binhamiltonian"));	  
+        }
+	}
+      else
+	{
+	  this->ExportBinaryHamiltonian = new char [strlen(options->GetString("export-binhamiltonian")) + 1];
+	  strcpy (this->ExportBinaryHamiltonian, options->GetString("export-binhamiltonian"));
+	}
+    }
+    
   if (((*options)["test-hermitian"] != 0) && (options->GetBoolean("test-hermitian") == true))
     {
       if (RealFlag)  

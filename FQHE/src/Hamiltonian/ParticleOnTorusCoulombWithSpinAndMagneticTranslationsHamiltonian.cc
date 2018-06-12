@@ -59,6 +59,47 @@ using std::ostream;
 #define M1_12 0.08333333333333333
 
 
+// default constructor
+//
+
+ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian()
+{
+    
+  this->Particles = 0;
+  this->LzMax = 0;
+  this->NbrLzValue = 0;
+  this->NbrParticles = 0;
+  this->MomentumModulo = 0;
+  this->Ratio = 0.0;
+  this->InvRatio = 0.0;
+  this->MaxMomentum = 0;
+  this->XMomentum = 0;
+  
+  this->FastMultiplicationFlag = false;
+  this->HermitianSymmetryFlag = false;//true;
+  this->Ratio = 0;  
+  this->InvRatio = 0;
+  this->SpinFluxUp = 0;
+  this->SpinFluxDown = 0;
+  this->HamiltonianShift = 0.0;
+  this->Architecture = 0;
+  this->PrecalculationShift = 0;  
+
+  this->NbrPseudopotentialsUpUp = 0;
+  this->PseudopotentialsUpUp = 0;
+  this->NbrPseudopotentialsDownDown = 0;
+  this->PseudopotentialsDownDown = 0;
+  this->NbrPseudopotentialsUpDown = 0;
+  this->PseudopotentialsUpDown = 0;
+  
+  this->MaxNbrPseudopotentials = 0;
+  this->LaguerrePolynomials = 0;
+  this->OneBodyInteractionFactorsupup = 0;
+  this->OneBodyInteractionFactorsdowndown = 0;
+  this->OneBodyInteractionFactorsupdown = 0;
+
+}
+
 // constructor from default datas
 //
 // particles = Hilbert space associated to the system
@@ -78,7 +119,8 @@ ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::ParticleOnToru
   this->Particles = particles;
   this->MaxMomentum = maxMomentum;
   this->XMomentum = xMomentum;
-  this->NbrLzValue = this->MaxMomentum + 1;
+  this->LzMax = maxMomentum - 1;
+  this->NbrLzValue = this->LzMax + 1;
   this->NbrParticles = nbrParticles;
   this->MomentumModulo = FindGCD(this->NbrParticles, this->MaxMomentum);
   this->FastMultiplicationFlag = false;
@@ -86,8 +128,8 @@ ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::ParticleOnToru
   this->Ratio = ratio;  
   this->InvRatio = 1.0 / ratio;
   this->LayerSeparation=layerSeparation;
-  double WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
-  // double WignerEnergy = 0.0;
+//   double WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
+  double WignerEnergy = 0.0;
   this->SpinFluxUp = 0.0;
   this->SpinFluxDown = 0.0;
   this->Architecture = architecture;
@@ -512,7 +554,7 @@ void ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateI
 
 double ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, double layerSeparation)
 {
-  if ((m1==m2)&&(m1==m3)&&(m1==m4)) return 0.5;
+//   if ((m1==m2)&&(m1==m3)&&(m1==m4)) return 0.5;
   double Coefficient = 1.0;
   double PIOnM = M_PI / ((double) this->MaxMomentum);
   double Factor =  - ((double) (m1-m3)) * PIOnM * 2.0;

@@ -40,6 +40,14 @@ using std::cout;
 using std::endl;
 
 
+
+// default constructor
+//
+
+ParticleOnSphereDensityOperator::ParticleOnSphereDensityOperator()
+{
+}
+
 // constructor from default datas
 //
 // particle = hilbert space associated to the particles

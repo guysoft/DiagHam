@@ -10,6 +10,7 @@
 #include "HilbertSpace/FermionOnTorusWithSpinAndTimeReversalSymmetricMagneticTranslations.h"
 #include "Hamiltonian/ParticleOnTorusCoulombHamiltonian.h"
 #include "Hamiltonian/ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian.h"
+#include "Hamiltonian/ParticleOnTorusCoulombWithSpinAndMagneticTranslationsTimeReversalSymmetricHamiltonian.h"
 #include "Hamiltonian/ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian.h"
 #include "Hamiltonian/ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian.h"
 
@@ -79,6 +80,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('y', "y-momentum", "constraint on the total momentum in the y direction (negative if none)", -1);
   (*SystemGroup) += new SingleDoubleOption   ('r', "ratio", 
 					      "ratio between lengths along the x and y directions (-1 if has to be taken equal to nbr-particles/4)", 1.0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "landau-level", "landau level index", 0);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new SingleDoubleOption   ('d', "layerSeparation", 
 					      "for bilayer simulations: layer separation in magnetic lengths", 0.0);
@@ -97,6 +99,7 @@ int main(int argc, char** argv)
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
   (*ToolsGroup) += new BooleanOption  ('\n', "test-hermitian", "test if the hamiltonian is hermitian");
+  (*ToolsGroup) += new SingleStringOption  ('\n', "export-binhamiltonian", "export the hamiltonian as a binary file");
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -179,6 +182,7 @@ int main(int argc, char** argv)
     }
   else
     {
+      OneBodyPseudoPotentials[2] = 0;
       LandauLevel = Manager.GetInteger("landau-level");
       InteractionName = new char[128];
       sprintf (InteractionName, "coulomb");
@@ -189,10 +193,20 @@ int main(int argc, char** argv)
   char* OutputName = new char [512];
   if (OneBodyPseudoPotentials[2] == 0)
     {
-      if (Manager.GetBoolean("time-reversal") == false)
-	sprintf (OutputName, "fermions_torus_su2_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", InteractionName, NbrFermions, MaxMomentum, TotalSpin, XRatio);
-      else
-	sprintf (OutputName, "fermions_torus_timereversal_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", InteractionName, NbrFermions, MaxMomentum, TotalSpin, XRatio);
+        if (LayerSeparation == 0.0)
+        {
+            if (Manager.GetBoolean("time-reversal") == false)
+                sprintf (OutputName, "fermions_torus_su2_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", InteractionName, NbrFermions, MaxMomentum, TotalSpin, XRatio);
+            else
+                sprintf (OutputName, "fermions_torus_timereversal_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", InteractionName, NbrFermions, MaxMomentum, TotalSpin, XRatio);
+        }
+        else
+         {
+            if (Manager.GetBoolean("time-reversal") == false)
+                sprintf (OutputName, "fermions_torus_su2_%s_n_%d_2s_%d_d_%f_sz_%d_ratio_%f.dat", InteractionName, NbrFermions, MaxMomentum, LayerSeparation, TotalSpin, XRatio);
+            else
+                sprintf (OutputName, "fermions_torus_timereversal_%s_n_%d_2s_%d_d_%f_sz_%d_ratio_%f.dat", InteractionName, NbrFermions, MaxMomentum, LayerSeparation, TotalSpin, XRatio);
+        }   
     }
   else
     {
@@ -209,7 +223,7 @@ int main(int argc, char** argv)
     MomentumModulo = FindGCD(NbrFermions, MaxMomentum);
   else
   {
-   MomentumModulo = MaxMomentum; 
+   MomentumModulo = FindGCD(abs(TotalSpin), MaxMomentum); 
   }
   int XMaxMomentum = (MomentumModulo - 1);
   if (XMomentum < 0)
@@ -270,7 +284,12 @@ int main(int argc, char** argv)
 	AbstractQHEHamiltonian* Hamiltonian = 0;
 	if (HaveCoulomb == true)
 	  {
-	    Hamiltonian = new ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian (TotalSpace, NbrFermions, 
+          if (Manager.GetBoolean("time-reversal") == false)
+            Hamiltonian = new ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian (TotalSpace, NbrFermions, 
+												MaxMomentum, XMomentum, XRatio, LayerSeparation, 
+												Architecture.GetArchitecture(), Memory);
+          else
+            Hamiltonian = new ParticleOnTorusCoulombWithSpinAndMagneticTranslationsTimeReversalSymmetricHamiltonian (TotalSpace, NbrFermions, 
 												MaxMomentum, XMomentum, XRatio, LayerSeparation, 
 												Architecture.GetArchitecture(), Memory);
 	  }

@@ -76,6 +76,8 @@ ParticleOnTorusCoulombWithSpinHamiltonian::ParticleOnTorusCoulombWithSpinHamilto
   if (particles->GetHilbertSpaceDimension()>0)
     this->WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
   else this->WignerEnergy = 0;
+  
+  this->WignerEnergy = 0;
   cout << "Wigner Energy = " << WignerEnergy << endl;
   this->EvaluateInteractionFactors();
   if (memory > 0)

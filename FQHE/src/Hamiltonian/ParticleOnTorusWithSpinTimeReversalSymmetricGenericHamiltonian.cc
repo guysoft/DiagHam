@@ -253,7 +253,9 @@ void ParticleOnTorusWithSpinTimeReversalSymmetricGenericHamiltonian::EvaluateInt
 	this->InterSectorIndicesPerSum[TmpIndex][1 + (this->NbrInterSectorIndicesPerSum[TmpIndex] << 1)] = m2;
 	++this->NbrInterSectorIndicesPerSum[TmpIndex];
       }
-
+    
+  
+  
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
       this->NbrIntraSectorSums = this->NbrLzValue;
@@ -334,6 +336,12 @@ void ParticleOnTorusWithSpinTimeReversalSymmetricGenericHamiltonian::EvaluateInt
 												    this->SpinFluxUp, this->SpinFluxDown, this->SpinFluxUp, this->SpinFluxDown)
 							      -this->EvaluateInteractionCoefficientUpDown(m2, m1, m3, m4, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown,
 												    this->SpinFluxDown, this->SpinFluxUp, this->SpinFluxDown, this->SpinFluxUp));
+          
+//           this->InteractionFactorsupdown[i][Index] = -this->EvaluateInteractionCoefficientUpUp(m1, ((this->NbrLzValue-m2) % (this->NbrLzValue)), ((this->NbrLzValue-m4) % (this->NbrLzValue)), m3, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown,
+// 												    this->SpinFluxUp, this->SpinFluxDown, this->SpinFluxUp, this->SpinFluxDown);
+//           this->InteractionFactorsupdown[i][Index] -= this->EvaluateInteractionCoefficientUpUp(m2, ((this->NbrLzValue-m1) % (this->NbrLzValue)), ((this->NbrLzValue-m3) % (this->NbrLzValue)), m4, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown,
+// 												    this->SpinFluxUp, this->SpinFluxDown, this->SpinFluxUp, this->SpinFluxDown);
+          
 // 		  cout << m1 << " " << m2 << " " << m4 << " " << m3 <<  " " << this->InteractionFactorsupdown[i][Index] << endl;
 // 		  cout << m2 << " " << m1 << " " << m3 << " " << m4 << " " << this->InteractionFactorsupdown[i][Index] << endl;
 		  ++TotalNbrInteractionFactors;

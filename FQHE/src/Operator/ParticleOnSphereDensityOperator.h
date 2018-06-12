@@ -58,6 +58,10 @@ class ParticleOnSphereDensityOperator : public AbstractOperator
   
  public:
   
+  // default constructor
+  //
+  ParticleOnSphereDensityOperator();
+   
   // constructor from default datas
   //
   // particle = hilbert space associated to the particles
