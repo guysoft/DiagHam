@@ -158,7 +158,7 @@ int main(int argc, char** argv)
   }
   else
   {
-      sprintf(InteractionPrefix, "coulomb_n_%d_x_%d_y_%d_u_%f_nx_%d_ny_%d_U_%f_d_%f_kappa_%f_gx_%f_gy_%f", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), NbrSamplesX, NbrSamplesY, UVoltage, ScreeningDistance, Manager.GetDouble("kappa"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+      sprintf(InteractionPrefix, "coulomb_n_%d_x_%d_y_%d_nx_%d_ny_%d_U_%f_d_%f_kappa_%f_gx_%f_gy_%f", NbrParticles, NbrSitesX, NbrSitesY, NbrSamplesX, NbrSamplesY, UVoltage, ScreeningDistance, Manager.GetDouble("kappa"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
   }
  
   
