@@ -280,7 +280,7 @@ int main(int argc, char** argv)
       for (int j = MinKy; j <= MaxKy; ++j)
         {
 	      int MinSz = -NbrParticles;
-	      int MaxSz = NbrParticles;
+	      int MaxSz = 0;
 	      if (Manager.GetBoolean("fixed-sz") == true)
             {
                 MinSz = Manager.GetInteger("sz-value");
@@ -289,7 +289,7 @@ int main(int argc, char** argv)
 	      
 	      
 	      int MinVz = -NbrParticles;
-	      int MaxVz = NbrParticles;
+	      int MaxVz = 0;
 	      if (Manager.GetBoolean("fixed-vz") == true)
             {
                 MinVz = Manager.GetInteger("vz-value");
