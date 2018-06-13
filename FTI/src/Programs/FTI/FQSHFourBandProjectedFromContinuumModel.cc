@@ -133,7 +133,8 @@ int main(int argc, char** argv)
   int NbrBZX = Manager.GetInteger("truncate-qx");
   int NbrBZY = Manager.GetInteger("truncate-qy");
   double UVoltage = Manager.GetDouble("u-voltage");
-  double UPotential = 36780.0 / Manager.GetDouble("kappa");
+  double latticeConstant = 58.8;
+  double UPotential = 36780.0 / (latticeConstant * Manager.GetDouble("kappa"));
   double ScreeningDistance = Manager.GetDouble("screening-distance");
       
 
