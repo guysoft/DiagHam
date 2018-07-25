@@ -49,6 +49,10 @@ class MathematicaOutput;
 
 class ParticleOnCylinderThreeBodyLaplacianDeltaHamiltonian : public AbstractQHEOnCylinderThreeBodyHamiltonian
 {
+ protected:
+  
+  double HypermetricTheta1;
+  double HypermetricTheta2;
 
  public:
 
@@ -58,13 +62,15 @@ class ParticleOnCylinderThreeBodyLaplacianDeltaHamiltonian : public AbstractQHEO
   // nbrParticles = number of particles
   // maxMomentum = maximum Lz value reached by a particle in the state
   // ratio = ratio between the width in the x direction and the width in the y direction
+  // theta1 = hypermetric angle theta1
+  // theta2 = hypermetric angle theta2
   // confinement = amplitude of the quadratic confinement potential
   // electricFieldParameter = amplitude of the electric field along the cylinder
   // bFieldfParameter = amplitude of the magnetic field (to set the energy scale)
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnCylinderThreeBodyLaplacianDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum, double ratio, double confinement, double electricFieldParameter, double bFieldParameter,
+  ParticleOnCylinderThreeBodyLaplacianDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum, double ratio, double theta1, double theta2, double confinement, double electricFieldParameter, double bFieldParameter,
 					   AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0);
 
   // destructor

@@ -54,13 +54,14 @@ using std::ostream;
 
 #define M1_12 0.08333333333333333
 
-
 // constructor from default datas
 //
 // particles = Hilbert space associated to the system
 // nbrParticles = number of particles
 // maxMomentum = maximum Lz value reached by a particle in the state
 // ratio = ratio between the width in the x direction and the width in the y direction
+// theta1 = hypermetric angle theta1
+// theta2 = hypermetric angle theta2
 // confinement = amplitude of the quadratic confinement potential
 // electricFieldParameter = amplitude of the electric field along the cylinder
 // bFieldfParameter = amplitude of the magnetic field (to set the energy scale)
@@ -69,7 +70,7 @@ using std::ostream;
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnCylinderThreeBodyLaplacianDeltaHamiltonian::ParticleOnCylinderThreeBodyLaplacianDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum,
-										   double ratio, double confinement, double electricFieldParameter, double bFieldParameter, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
+										   double ratio, double theta1, double theta2, double confinement, double electricFieldParameter, double bFieldParameter, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
 {
   this->Particles = particles;
   this->MaxMomentum = maxMomentum;
@@ -78,6 +79,8 @@ ParticleOnCylinderThreeBodyLaplacianDeltaHamiltonian::ParticleOnCylinderThreeBod
   this->FastMultiplicationFlag = false;
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
+  this->HypermetricTheta1 = theta1;
+  this->HypermetricTheta2 = theta2;
   this->Architecture = architecture;
   this->Confinement = confinement;
   this->ElectricField = electricFieldParameter;
@@ -354,6 +357,12 @@ Complex ParticleOnCylinderThreeBodyLaplacianDeltaHamiltonian::EvaluateInteractio
 
   Complex Coefficient(0,0);
 
+  if ((this->HypermetricTheta1 != 0.0) || (this->HypermetricTheta2 != 0.0))
+   {
+     cout << "Hypermetric for fermions not implemented. " << endl;
+     exit(2);
+   }
+
   if (this->ElectricField == 0)
    {
      GaussianExp = Xr * Xr + Xs * Xs + Xr * Xs;
@@ -402,9 +411,22 @@ Complex ParticleOnCylinderThreeBodyLaplacianDeltaHamiltonian::EvaluateInteractio
 
   if (this->ElectricField == 0)
    {
-     GaussianExp = Xr * Xr + Xs * Xs + Xr * Xs + Xrp * Xrp + Xsp * Xsp + Xrp * Xsp;
-     Coefficient.Re = exp(-GaussianExp);
-     Coefficient.Im = 0.0;
+     if ((this->HypermetricTheta1 == 0.0) && (this->HypermetricTheta2 == 0.0))
+       {
+         GaussianExp = Xr * Xr + Xs * Xs + Xr * Xs + Xrp * Xrp + Xsp * Xsp + Xrp * Xsp;
+         Coefficient.Re = exp(-GaussianExp);
+         Coefficient.Im = 0.0;
+       }
+     else //Hypermetric case
+       {
+         double GammaPlus = exp(-2.0*this->HypermetricTheta1) + 3.0 * exp(-2.0*this->HypermetricTheta2);
+         double GammaMinus = exp(-2.0*this->HypermetricTheta1) - 3.0 * exp(-2.0*this->HypermetricTheta2);
+
+	 GaussianExp = -0.25 * (GammaPlus * Xr * Xr + GammaPlus * Xs * Xs - 2.0 * GammaMinus * Xr * Xs)
+		       -0.25 * (GammaPlus * Xrp * Xrp + GammaPlus * Xsp * Xsp - 2.0 * GammaMinus * Xrp * Xsp);
+         Coefficient.Re = exp(GaussianExp) * exp(-this->HypermetricTheta1-this->HypermetricTheta2);
+         Coefficient.Im = 0.0;
+       } 
 
      return (Coefficient * (2.0/3.0) * sqrt(M_PI) * sqrt(3.0 * M_PI)/(2.0 * M_PI * this->Ratio * this->NbrLzValue));
    }

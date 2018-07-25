@@ -74,6 +74,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption ('y', "ky-momentum", "constraint on the total momentum along y-axis (negative if none)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-ky", "number of Ky values to evaluate", -1);
   (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the height and length of the cylinder (LH=2pi r N_{orb})", 1.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "theta1", "hypermetric angle theta1 for case A", 0.0);  
+  (*SystemGroup) += new SingleDoubleOption ('\n', "theta2", "hypermetric angle theta2 for case A", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "confinement-potential", "amplitude of the quadratic confinement potential", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "electric-field", "parameter for the value of the electric field applied along the cylinder (a=eEl_B^2/hbar omega_c", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "b-field", "parameter for the value of the magnetic field [in T] when also the electric field is present (needed to set the scale for the kinetic term)", 0.0);
@@ -111,6 +113,12 @@ int main(int argc, char** argv)
   int Momentum = ((SingleIntegerOption*) Manager["ky-momentum"])->GetInteger();
   int NbrKy = Manager.GetInteger("nbr-ky");
   double XRatio = ((SingleDoubleOption*) Manager["ratio"])->GetDouble();
+  double HypermetricTheta1 = ((SingleDoubleOption*) Manager["theta1"])->GetDouble();
+  double HypermetricTheta2 = ((SingleDoubleOption*) Manager["theta2"])->GetDouble();
+  if ((HypermetricTheta1 != 0.0) || (HypermetricTheta2 != 0.0))
+    {
+      cout << "Hypermetric: theta1= " << HypermetricTheta1 << " theta2= " << HypermetricTheta2 << endl;
+    }
   double Confinement = ((SingleDoubleOption*) Manager["confinement-potential"])->GetDouble();
   if (Confinement != 0.0)
     {
@@ -177,7 +185,7 @@ int main(int argc, char** argv)
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
 
-      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnCylinderThreeBodyLaplacianDeltaHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, Confinement, ElectricFieldParameter, BFieldParameter, Architecture.GetArchitecture(), Memory);
+      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnCylinderThreeBodyLaplacianDeltaHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, HypermetricTheta1, HypermetricTheta2, Confinement, ElectricFieldParameter, BFieldParameter, Architecture.GetArchitecture(), Memory);
 
 
       double Shift = -10.0;
