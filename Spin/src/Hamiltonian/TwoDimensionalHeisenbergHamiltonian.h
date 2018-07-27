@@ -138,7 +138,7 @@ class TwoDimensionalHeisenbergHamiltonian : public AbstractHamiltonian
  
   // evaluate all matrix elements
   //   
-  void EvaluateDiagonalMatrixElements();
+  virtual void EvaluateDiagonalMatrixElements();
 
   // get a linearized position index from the 2d coordinates
   //

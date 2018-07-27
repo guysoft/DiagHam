@@ -64,4 +64,8 @@ Spin1_2ChainNewSzSymmetryGenericInversionAnd2DTranslation.cc \
 Spin1_2ChainNewGenericInversionAnd2DTranslation.cc \
 SU3SpinChain.cc \
 SU3SpinChainAnd2DTranslation.cc \
-SU3SpinChain2DTranslationAndTzSymmetry.cc
+SU3SpinChain2DTranslationAndTzSymmetry.cc \
+Spin3_2Chain.cc \
+Spin3_2ChainAnd2DTranslation.cc \
+Spin3_2ChainSzSymmetryAnd2DTranslation.cc
+

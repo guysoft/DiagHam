@@ -275,6 +275,21 @@ int AbstractSpinChain::SpiSmjSzk (int i, int j, int k, int state, double& coeffi
   return this->HilbertSpaceDimension;
 }
 
+// return index of resulting state from application of S-_i S+_j Sz_k operator on a given state
+//
+// i = position of S- operator
+// j = position of S+ operator
+// k = position of Sz operator
+// state = index of the state to be applied on S-_i S+_j Sz_k operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
+
+int AbstractSpinChain::SmiSpiSzk (int i, int j, int k, int state, double& coefficient)
+{
+  cout << "warning : SmiSpjSzk is not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
 // return index of resulting state from application of S+_i operator on a given state
 //
 // i = position of S+ operator

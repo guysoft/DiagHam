@@ -5,6 +5,7 @@
 #include "HilbertSpace/Spin1ChainWithSzSymmetry.h"
 #include "HilbertSpace/Spin1ChainWithInversionSymmetry.h"
 #include "HilbertSpace/Spin1ChainWithSzInversionSymmetries.h"
+#include "HilbertSpace/Spin3_2Chain.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -308,6 +309,9 @@ int main(int argc, char** argv)
 	      break;
 	    case 2 :
 	      Chain = new Spin1Chain (NbrSpins, InitalSzValue, 1000000);
+	      break;
+	    case 3 :
+	      Chain = new Spin3_2Chain (NbrSpins, InitalSzValue, 1000000);
 	      break;
 	    default :
 	      {
