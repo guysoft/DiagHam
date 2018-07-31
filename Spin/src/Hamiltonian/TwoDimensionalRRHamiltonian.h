@@ -206,7 +206,7 @@ inline void TwoDimensionalRRHamiltonian::EvaluateOffDiagonalPowerHeisenbergContr
       TmpValue2 *= TmpValue3;
       vDestination[pos] += (this->J2Factor + (this->J3Factor * TmpValue3)) * TmpValue2;
       TmpValue2 *= this->Chain->SziSzj(i, j, pos); 
-      vDestination[pos] += this->J3Factor * TmpValue2; 
+      vDestination[pos] +=  this->J3Factor * TmpValue2; 
     }
   pos = this->Chain->SmiSpjSmiSpj(i, j, i, j, index, TmpCoefficient);
   if (pos != dimension)
@@ -214,19 +214,19 @@ inline void TwoDimensionalRRHamiltonian::EvaluateOffDiagonalPowerHeisenbergContr
       double TmpValue2 = 0.25 * TmpCoefficient * coefficient;
       vDestination[pos] += this->J2Factor * TmpValue2;	      
       double TmpValue3 = this->Chain->SziSzj(i, j, index);
-      vDestination[pos] += this->J3Factor * TmpValue2 * TmpValue3;
+      vDestination[pos] +=  this->J3Factor * TmpValue2 * TmpValue3;
       int pos2 = this->Chain->SmiSpj(i, j, pos, TmpCoefficient2);
       if (pos2 != dimension)
 	{
-	  vDestination[pos2] += 0.5 * this->J3Factor * TmpValue2 * TmpCoefficient2;
+	  vDestination[pos2] +=  0.5 * this->J3Factor * TmpValue2 * TmpCoefficient2;
 	}
       pos2 = this->Chain->SmiSpj(j, i, pos, TmpCoefficient2);
       if (pos2 != dimension)
 	{
-	  vDestination[pos2] += 0.5 * this->J3Factor * TmpValue2 * TmpCoefficient2;
+	  vDestination[pos2] +=  0.5 * this->J3Factor * TmpValue2 * TmpCoefficient2;
 	}
       TmpValue2 *= this->Chain->SziSzj(i, j, pos);
-      vDestination[pos] += this->J3Factor * TmpValue2;  
+      vDestination[pos] +=  this->J3Factor * TmpValue2;  
     }	  
   pos = this->Chain->SmiSpjSmiSpj(j, i, i, j, index, TmpCoefficient);
   if (pos != dimension)
@@ -234,19 +234,19 @@ inline void TwoDimensionalRRHamiltonian::EvaluateOffDiagonalPowerHeisenbergContr
       double TmpValue2 = 0.25 * TmpCoefficient * coefficient;
       vDestination[pos] += this->J2Factor * TmpValue2;	      
       double TmpValue3 = this->Chain->SziSzj(i, j, index);
-      vDestination[pos] += this->J3Factor * TmpValue2 * TmpValue3;
+      vDestination[pos] +=  this->J3Factor * TmpValue2 * TmpValue3;
       int pos2 = this->Chain->SmiSpj(i, j, pos, TmpCoefficient2);
       if (pos2 != dimension)
 	{
-	  vDestination[pos2] += 0.5 * this->J3Factor * TmpValue2 * TmpCoefficient2;
+	  vDestination[pos2] +=  0.5 * this->J3Factor * TmpValue2 * TmpCoefficient2;
 	}
       pos2 = this->Chain->SmiSpj(j, i, pos, TmpCoefficient2);
       if (pos2 != dimension)
 	{
-	  vDestination[pos2] += 0.5 * this->J3Factor * TmpValue2 * TmpCoefficient2;
+	  vDestination[pos2] +=  0.5 * this->J3Factor * TmpValue2 * TmpCoefficient2;
 	}
       TmpValue2 *= this->Chain->SziSzj(i, j, pos);
-      vDestination[pos] += this->J3Factor * TmpValue2;   
+      vDestination[pos] +=  this->J3Factor * TmpValue2;   
     }	  
   pos = this->Chain->SziSzjSmiSpj(i, j, i, j, index, TmpCoefficient);
   if (pos != dimension)
@@ -256,15 +256,15 @@ inline void TwoDimensionalRRHamiltonian::EvaluateOffDiagonalPowerHeisenbergContr
       int pos2 = this->Chain->SmiSpj(i, j, pos, TmpCoefficient2);
       if (pos2 != dimension)
 	{
-	  vDestination[pos2] += 0.5 * this->J3Factor * TmpValue2 * TmpCoefficient2;
+	  vDestination[pos2] +=  0.5 * this->J3Factor * TmpValue2 * TmpCoefficient2;
 	}
       pos2 = this->Chain->SmiSpj(j, i, pos, TmpCoefficient2);
       if (pos2 != dimension)
 	{
-	  vDestination[pos2] += 0.5 * this->J3Factor * TmpValue2 * TmpCoefficient2;
+	  vDestination[pos2] +=  0.5 * this->J3Factor * TmpValue2 * TmpCoefficient2;
 	}
       TmpValue2 *= this->Chain->SziSzj(i, j, pos);
-      vDestination[pos] += this->J3Factor * TmpValue2;
+      vDestination[pos] +=  this->J3Factor * TmpValue2;
     }	  
 }
 
@@ -290,7 +290,7 @@ inline void TwoDimensionalRRHamiltonian::EvaluateOffDiagonalPowerHeisenbergContr
       TmpValue2 *= TmpValue3;
       vDestination[pos] += (this->J2Factor + (this->J3Factor * TmpValue3)) * TmpValue2;
       TmpValue2 *= this->Chain->SziSzj(i, j, pos); 
-      vDestination[pos] += this->J3Factor * TmpValue2; 
+      vDestination[pos] +=  this->J3Factor * TmpValue2; 
     }
   pos = this->Chain->SmiSpjSmiSpj(i, j, i, j, index, TmpCoefficient);
   if (pos != dimension)
@@ -298,19 +298,19 @@ inline void TwoDimensionalRRHamiltonian::EvaluateOffDiagonalPowerHeisenbergContr
       Complex TmpValue2 = (0.25 * TmpCoefficient) * coefficient;
       vDestination[pos] += this->J2Factor * TmpValue2;	      
       double TmpValue3 = this->Chain->SziSzj(i, j, index);
-      vDestination[pos] += this->J3Factor * TmpValue2 * TmpValue3;
+      vDestination[pos] +=  this->J3Factor * TmpValue2 * TmpValue3;
       int pos2 = this->Chain->SmiSpj(i, j, pos, TmpCoefficient2);
       if (pos2 != dimension)
 	{
-	  vDestination[pos2] += (0.5 * this->J3Factor * TmpCoefficient2) * TmpValue2;
+	  vDestination[pos2] +=  (0.5 * this->J3Factor * TmpCoefficient2) * TmpValue2;
 	}
       pos2 = this->Chain->SmiSpj(j, i, pos, TmpCoefficient2);
       if (pos2 != dimension)
 	{
-	  vDestination[pos2] += (0.5 * this->J3Factor * TmpCoefficient2) * TmpValue2;
+	  vDestination[pos2] +=  (0.5 * this->J3Factor * TmpCoefficient2) * TmpValue2;
 	}
       TmpValue2 *= this->Chain->SziSzj(i, j, pos);
-      vDestination[pos] += this->J3Factor * TmpValue2;  
+      vDestination[pos] +=  this->J3Factor * TmpValue2;  
     }	  
   pos = this->Chain->SmiSpjSmiSpj(j, i, i, j, index, TmpCoefficient);
   if (pos != dimension)
@@ -318,19 +318,19 @@ inline void TwoDimensionalRRHamiltonian::EvaluateOffDiagonalPowerHeisenbergContr
       Complex TmpValue2 = (0.25 * TmpCoefficient) * coefficient;
       vDestination[pos] += this->J2Factor * TmpValue2;	      
       double TmpValue3 = this->Chain->SziSzj(i, j, index);
-      vDestination[pos] += this->J3Factor * TmpValue2 * TmpValue3;
+      vDestination[pos] +=  this->J3Factor * TmpValue2 * TmpValue3;
       int pos2 = this->Chain->SmiSpj(i, j, pos, TmpCoefficient2);
       if (pos2 != dimension)
 	{
-	  vDestination[pos2] += (0.5 * this->J3Factor * TmpCoefficient2) * TmpValue2;
+	  vDestination[pos2] +=  (0.5 * this->J3Factor * TmpCoefficient2) * TmpValue2;
 	}
       pos2 = this->Chain->SmiSpj(j, i, pos, TmpCoefficient2);
       if (pos2 != dimension)
 	{
-	  vDestination[pos2] += (0.5 * this->J3Factor * TmpCoefficient2) * TmpValue2;
+	  vDestination[pos2] +=  (0.5 * this->J3Factor * TmpCoefficient2) * TmpValue2;
 	}
       TmpValue2 *= this->Chain->SziSzj(i, j, pos);
-      vDestination[pos] += this->J3Factor * TmpValue2;   
+      vDestination[pos] +=  this->J3Factor * TmpValue2;   
     }	  
   pos = this->Chain->SziSzjSmiSpj(i, j, i, j, index, TmpCoefficient);
   if (pos != dimension)
@@ -340,15 +340,15 @@ inline void TwoDimensionalRRHamiltonian::EvaluateOffDiagonalPowerHeisenbergContr
       int pos2 = this->Chain->SmiSpj(i, j, pos, TmpCoefficient2);
       if (pos2 != dimension)
 	{
-	  vDestination[pos2] += (0.5 * this->J3Factor * TmpCoefficient2) * TmpValue2;
+	  vDestination[pos2] +=  (0.5 * this->J3Factor * TmpCoefficient2) * TmpValue2;
 	}
       pos2 = this->Chain->SmiSpj(j, i, pos, TmpCoefficient2);
       if (pos2 != dimension)
 	{
-	  vDestination[pos2] += (0.5 * this->J3Factor * TmpCoefficient2) * TmpValue2;
+	  vDestination[pos2] +=  (0.5 * this->J3Factor * TmpCoefficient2) * TmpValue2;
 	}
       TmpValue2 *= this->Chain->SziSzj(i, j, pos);
-      vDestination[pos] += this->J3Factor * TmpValue2;
+      vDestination[pos] +=  this->J3Factor * TmpValue2;
     }	  
 }
 

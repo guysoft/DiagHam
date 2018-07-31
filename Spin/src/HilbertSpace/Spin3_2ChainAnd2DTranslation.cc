@@ -352,10 +352,12 @@ int Spin3_2ChainAnd2DTranslation::SmiSpj (int i, int j, int state, double& coeff
   return this->SymmetrizeResult(State, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
 }
 
-// return index of resulting state from application of S-_i S+_j operator on a given state
+// return index of resulting state from application of Sz_i Sz_j S-_k S+_l operator on a given state
 //
-// i = position of S- operator
-// j = position of S+ operator
+// i = position of the first Sz operator
+// j = position of the second Sz operator
+// k = position of S- operator
+// l = position of S+ operator
 // state = index of the state to be applied on S-_i S+_j operator
 // coefficient = reference on double where numerical coefficient has to be stored
 // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
@@ -364,39 +366,103 @@ int Spin3_2ChainAnd2DTranslation::SmiSpj (int i, int j, int state, double& coeff
 
 int Spin3_2ChainAnd2DTranslation::SziSzjSmkSpl (int i, int j, int k, int l, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
 {  
-  return this->HilbertSpaceDimension;
-  unsigned long State = this->StateDescription[state];
-  if (k != l)
+  unsigned long TmpState = this->StateDescription[state];
+  l *= 2;
+  switch ((TmpState >> l) & 0x3ul)
     {
-      if (((State & (0x1ul << k)) != 0x0ul) || ((State & (0x1ul << l)) == 0x0ul))
-	{
-	  coefficient = 0.0;
-	  return this->HilbertSpaceDimension;
-	}
-      State ^= 0x1ul << l;
-      State |= 0x1ul << k;
-      
-      unsigned long Mask = ((0x1ul << i) | (0x1ul << j));
-      unsigned long tmpState = State & Mask;
-      if ((tmpState == 0x0ul) || (tmpState == Mask))
-	coefficient = 0.25;
-      else
-	coefficient = -0.25;
-      return this->SymmetrizeResult(State, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
-    }
-  else
+    case 0x3ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient = M_SQRT3;
+	TmpState |= (0x1ul << l);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient = 2.0;
+	TmpState &= ~(0x1ul << l);
+	TmpState |= (0x2ul << l);
+      }
+      break;
+    case 0x0ul:
+      {
+	coefficient = M_SQRT3;
+	TmpState |= (0x1ul << l);
+      }
+      break;
+    }	  
+  k *= 2;
+  switch ((TmpState >> k) & 0x3ul)
     {
-      nbrTranslationX = 0;
-      nbrTranslationY = 0;
-      coefficient = 0.5 * this->SziSzj(i, j, state);
-      return state;
-    }
+    case 0x3ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << k);
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient *= 2.0;
+	TmpState &= ~(0x2ul << k);
+	TmpState |= (0x1ul << k);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << k);
+      }
+      break;
+    case 0x0ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+    }	   
+  j *= 2;
+  switch ((TmpState >> j) & 0x3ul)
+    {
+    case 0x3ul:
+      coefficient *= 1.5;
+      break;
+    case 0x2ul:
+      coefficient *= 0.5;
+      break;
+    case 0x1ul:
+      coefficient *= -0.5;
+      break;
+    case 0x0ul:
+      coefficient *= -1.5;
+      break;
+    }  
+  i *= 2;
+  switch ((TmpState >> i) & 0x3ul)
+    {
+    case 0x3ul:
+      coefficient *= 1.5;
+      break;
+    case 0x2ul:
+      coefficient *= 0.5;
+      break;
+    case 0x1ul:
+      coefficient *= -0.5;
+      break;
+    case 0x0ul:
+      coefficient *= -1.5;
+      break;
+    }  
+  return this->SymmetrizeResult(TmpState, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
 }
 
-// return index of resulting state from application of S-_i S+_j operator on a given state
+// return index of resulting state from application of S-_i S+_j S-_k S+_l operator on a given state
 //
-// i = position of S- operator
-// j = position of S+ operator
+// i = position of the first S- operator
+// j = position of the first S+ operator
+// k = position of the second S- operator
+// l = position of the second S+ operator
 // state = index of the state to be applied on S-_i S+_j operator
 // coefficient = reference on double where numerical coefficient has to be stored
 // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
@@ -405,74 +471,859 @@ int Spin3_2ChainAnd2DTranslation::SziSzjSmkSpl (int i, int j, int k, int l, int 
 
 int Spin3_2ChainAnd2DTranslation::SmiSpjSmkSpl (int i, int j, int k, int l, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
 {  
-  return this->HilbertSpaceDimension;
-  unsigned long State = this->StateDescription[state];
-  unsigned long Mask = (0x1ul << i) | (0x1ul << j);
-  if ((i != j) && (k != l))
+  unsigned long TmpState = this->StateDescription[state];
+  l *= 2;
+  switch ((TmpState >> l) & 0x3ul)
     {
-      if (((State & (0x1ul << j)) != 0x0ul) || ((State & (0x1ul << i)) == 0x0ul))
-	{
-	  coefficient = 0.0;
-	  return this->HilbertSpaceDimension;
-	}
-      State ^= 0x1ul << i;
-      State |= 0x1ul << j;
-      if (((State & (0x1ul << l)) != 0x0ul) || ((State & (0x1ul << k)) == 0x0ul))
-	{
-	  coefficient = 0.0;
-	  return this->HilbertSpaceDimension;
-	}
-      State ^= 0x1ul << k;
-      State |= 0x1ul << l;
-      coefficient = 1.0;
-      return this->SymmetrizeResult(State, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
-    }
-  if (k == l)
+    case 0x3ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient = M_SQRT3;
+	TmpState |= (0x1ul << l);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient = 2.0;
+	TmpState &= ~(0x1ul << l);
+	TmpState |= (0x2ul << l);
+      }
+      break;
+    case 0x0ul:
+      {
+	coefficient = M_SQRT3;
+	TmpState |= (0x1ul << l);
+      }
+      break;
+    }	  
+  k *= 2;
+  switch ((TmpState >> k) & 0x3ul)
     {
-      int TmpIndex;
-      if (i != j)
-	{
-	  if (((State & (0x1ul << j)) != 0x0ul) || ((State & (0x1ul << i)) == 0x0ul))
-	    {
-	      coefficient = 0.0;
-	      return this->HilbertSpaceDimension;
-	    }
-	  State ^= 0x1ul << i;
-	  State |= 0x1ul << j;
-	  coefficient = 1.0;
-	  TmpIndex = this->SymmetrizeResult(State, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
-	  coefficient *= 0.5;
-	  return TmpIndex;
-	}
-      else
-	{
-	  coefficient = 0.25;
-	  return state;
-	}
-    }
-  if (i == j)
+    case 0x3ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << k);
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient *= 2.0;
+	TmpState &= ~(0x2ul << k);
+	TmpState |= (0x1ul << k);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << k);
+      }
+      break;
+    case 0x0ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+    }	   
+  j *= 2;
+  switch ((TmpState >> j) & 0x3ul)
     {
-      int TmpIndex;
-      if (k != l)
-	{
-	  if (((State & (0x1ul << l)) != 0x0ul) || ((State & (0x1ul << k)) == 0x0ul))
-	    {
-	      coefficient = 0.0;
-	      return this->HilbertSpaceDimension;
-	    }
-	  State ^= 0x1ul << k;
-	  State |= 0x1ul << l;
-	  coefficient = 1.0;
-	  TmpIndex = this->SymmetrizeResult(State, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
-	  coefficient *= 0.5;
-	  return TmpIndex;
-	}
-      else
-	{
-	  coefficient = 0.25;
-	  return state;
-	}
-    }
+    case 0x3ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState |= (0x1ul << j);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient *= 2.0;
+	TmpState &= ~(0x1ul << j);
+	TmpState |= (0x2ul << j);
+      }
+      break;
+    case 0x0ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState |= (0x1ul << j);
+      }
+      break;
+    }	  
+  i *= 2;
+  switch ((TmpState >> i) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << i);
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient *= 2.0;
+	TmpState &= ~(0x2ul << i);
+	TmpState |= (0x1ul << i);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << i);
+      }
+      break;
+    case 0x0ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+    }	  
+  return this->SymmetrizeResult(TmpState, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
+}
+
+
+// return index of resulting state from application of S-z_i Sz_j Sz_k Sz_l S-_m S+_n operator on a given state
+//
+// i = position of the first Sz operator
+// j = position of the second Sz operator
+// k = position of the third Sz operator
+// l = position of the fourth Sz operator
+// m = position of the first S- operator
+// n = position of the first S+ operator
+// state = index of the state to be applied on the Sz_i Sz_j Sz_k Sz_l S-_m S+_n operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of resulting state
+
+int Spin3_2ChainAnd2DTranslation::SziSzjSzkSzlSmmSpn (int i, int j, int k, int l, int m, int n, int state, double& coefficient, 
+						      int& nbrTranslationX, int& nbrTranslationY)
+{  
+  unsigned long TmpState = this->StateDescription[state];
+  n *= 2;
+  switch ((TmpState >> n) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient = M_SQRT3;
+	TmpState |= (0x1ul << n);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient = 2.0;
+	TmpState &= ~(0x1ul << n);
+	TmpState |= (0x2ul << n);
+      }
+      break;
+    case 0x0ul:
+      {
+	coefficient = M_SQRT3;
+	TmpState |= (0x1ul << n);
+      }
+      break;
+    }	  
+  m *= 2;
+  switch ((TmpState >> m) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << m);
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient *= 2.0;
+	TmpState &= ~(0x2ul << m);
+	TmpState |= (0x1ul << m);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << m);
+      }
+      break;
+    case 0x0ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+    }	   
+  l *= 2;
+  switch ((TmpState >> l) & 0x3ul)
+    {
+    case 0x3ul:
+      coefficient *= 1.5;
+      break;
+    case 0x2ul:
+      coefficient *= 0.5;
+      break;
+    case 0x1ul:
+      coefficient *= -0.5;
+      break;
+    case 0x0ul:
+      coefficient *= -1.5;
+      break;
+    }  
+  k *= 2;
+  switch ((TmpState >> k) & 0x3ul)
+    {
+    case 0x3ul:
+      coefficient *= 1.5;
+      break;
+    case 0x2ul:
+      coefficient *= 0.5;
+      break;
+    case 0x1ul:
+      coefficient *= -0.5;
+      break;
+    case 0x0ul:
+      coefficient *= -1.5;
+      break;
+    }  
+  j *= 2;
+  switch ((TmpState >> j) & 0x3ul)
+    {
+    case 0x3ul:
+      coefficient *= 1.5;
+      break;
+    case 0x2ul:
+      coefficient *= 0.5;
+      break;
+    case 0x1ul:
+      coefficient *= -0.5;
+      break;
+    case 0x0ul:
+      coefficient *= -1.5;
+      break;
+    }  
+  i *= 2;
+  switch ((TmpState >> i) & 0x3ul)
+    {
+    case 0x3ul:
+      coefficient *= 1.5;
+      break;
+    case 0x2ul:
+      coefficient *= 0.5;
+      break;
+    case 0x1ul:
+      coefficient *= -0.5;
+      break;
+    case 0x0ul:
+      coefficient *= -1.5;
+      break;
+    }  
+  return this->SymmetrizeResult(TmpState, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
+}
+  
+// return index of resulting state from application of Sz_i Sz_j S-_k S+_l S-_m S+_n operator on a given state
+//
+// i = position of the first Sz operator
+// j = position of the second Sz operator
+// k = position of the first S- operator
+// l = position of the first S+ operator
+// m = position of the second S- operator
+// n = position of the second S+ operator
+// state = index of the state to be applied on the Sz_i Sz_j S-_k S+_l S-_m S+_n operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of resulting state
+
+int Spin3_2ChainAnd2DTranslation::SziSzjSmkSplSmmSpn (int i, int j, int k, int l, int m, int n, int state, double& coefficient, 
+						      int& nbrTranslationX, int& nbrTranslationY)
+{  
+  unsigned long TmpState = this->StateDescription[state];
+  n *= 2;
+  switch ((TmpState >> n) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient = M_SQRT3;
+	TmpState |= (0x1ul << n);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient = 2.0;
+	TmpState &= ~(0x1ul << n);
+	TmpState |= (0x2ul << n);
+      }
+      break;
+    case 0x0ul:
+      {
+	coefficient = M_SQRT3;
+	TmpState |= (0x1ul << n);
+      }
+      break;
+    }	  
+  m *= 2;
+  switch ((TmpState >> m) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << m);
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient *= 2.0;
+	TmpState &= ~(0x2ul << m);
+	TmpState |= (0x1ul << m);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << m);
+      }
+      break;
+    case 0x0ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+    }	   
+  l *= 2;
+  switch ((TmpState >> l) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState |= (0x1ul << l);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient *= 2.0;
+	TmpState &= ~(0x1ul << l);
+	TmpState |= (0x2ul << l);
+      }
+      break;
+    case 0x0ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState |= (0x1ul << l);
+      }
+      break;
+    }	  
+  k *= 2;
+  switch ((TmpState >> k) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << k);
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient *= 2.0;
+	TmpState &= ~(0x2ul << k);
+	TmpState |= (0x1ul << k);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << k);
+      }
+      break;
+    case 0x0ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+    }	   
+  j *= 2;
+  switch ((TmpState >> j) & 0x3ul)
+    {
+    case 0x3ul:
+      coefficient *= 1.5;
+      break;
+    case 0x2ul:
+      coefficient *= 0.5;
+      break;
+    case 0x1ul:
+      coefficient *= -0.5;
+      break;
+    case 0x0ul:
+      coefficient *= -1.5;
+      break;
+    }  
+  i *= 2;
+  switch ((TmpState >> i) & 0x3ul)
+    {
+    case 0x3ul:
+      coefficient *= 1.5;
+      break;
+    case 0x2ul:
+      coefficient *= 0.5;
+      break;
+    case 0x1ul:
+      coefficient *= -0.5;
+      break;
+    case 0x0ul:
+      coefficient *= -1.5;
+      break;
+    }  
+  return this->SymmetrizeResult(TmpState, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
+}
+
+// return index of resulting state from application of S-_i S+_j Sz_k Sz_l S-_m S+_n operator on a given state
+//
+// i = position of the first S- operator
+// j = position of the first S+ operator
+// k = position of the first Sz operator
+// l = position of the second Sz operator
+// m = position of the second S- operator
+// n = position of the second S+ operator
+// state = index of the state to be applied on the S-_i S+_j Sz_k Sz_l S-_m S+_n operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of resulting state
+
+int Spin3_2ChainAnd2DTranslation::SmiSpjSzkSzlSmmSpn (int i, int j, int k, int l, int m, int n, int state, double& coefficient, 
+						      int& nbrTranslationX, int& nbrTranslationY)
+{
+  unsigned long TmpState = this->StateDescription[state];
+  n *= 2;
+  switch ((TmpState >> n) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient = M_SQRT3;
+	TmpState |= (0x1ul << n);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient = 2.0;
+	TmpState &= ~(0x1ul << n);
+	TmpState |= (0x2ul << n);
+      }
+      break;
+    case 0x0ul:
+      {
+	coefficient = M_SQRT3;
+	TmpState |= (0x1ul << n);
+      }
+      break;
+    }	  
+  m *= 2;
+  switch ((TmpState >> m) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << m);
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient *= 2.0;
+	TmpState &= ~(0x2ul << m);
+	TmpState |= (0x1ul << m);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << m);
+      }
+      break;
+    case 0x0ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+    }	   
+  l *= 2;
+  switch ((TmpState >> l) & 0x3ul)
+    {
+    case 0x3ul:
+      coefficient *= 1.5;
+      break;
+    case 0x2ul:
+      coefficient *= 0.5;
+      break;
+    case 0x1ul:
+      coefficient *= -0.5;
+      break;
+    case 0x0ul:
+      coefficient *= -1.5;
+      break;
+    }  
+  k *= 2;
+  switch ((TmpState >> k) & 0x3ul)
+    {
+    case 0x3ul:
+      coefficient *= 1.5;
+      break;
+    case 0x2ul:
+      coefficient *= 0.5;
+      break;
+    case 0x1ul:
+      coefficient *= -0.5;
+      break;
+    case 0x0ul:
+      coefficient *= -1.5;
+      break;
+    }  
+  j *= 2;
+  switch ((TmpState >> j) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState |= (0x1ul << j);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient *= 2.0;
+	TmpState &= ~(0x1ul << j);
+	TmpState |= (0x2ul << j);
+      }
+      break;
+    case 0x0ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState |= (0x1ul << j);
+      }
+      break;
+    }	  
+  i *= 2;
+  switch ((TmpState >> i) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << i);
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient *= 2.0;
+	TmpState &= ~(0x2ul << i);
+	TmpState |= (0x1ul << i);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << i);
+      }
+      break;
+    case 0x0ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+    }	  
+  return this->SymmetrizeResult(TmpState, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
+}
+  
+// return index of resulting state from application of S-_i S+_j S-_k S+_l S-_m S+_n operator on a given state
+//
+// i = position of the first S- operator
+// j = position of the first S+ operator
+// k = position of the second S- operator
+// l = position of the second S+ operator
+// m = position of the third S- operator
+// n = position of the third S+ operator
+// state = index of the state to be applied on S-_i S+_j S-_k S+_l S-_m S+_n operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of resulting state
+
+int Spin3_2ChainAnd2DTranslation::SmiSpjSmkSplSmmSpn (int i, int j, int k, int l, int m, int n, int state, double& coefficient, 
+						      int& nbrTranslationX, int& nbrTranslationY)
+{
+  unsigned long TmpState = this->StateDescription[state];
+  n *= 2;
+  switch ((TmpState >> n) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient = M_SQRT3;
+	TmpState |= (0x1ul << n);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient = 2.0;
+	TmpState &= ~(0x1ul << n);
+	TmpState |= (0x2ul << n);
+      }
+      break;
+    case 0x0ul:
+      {
+	coefficient = M_SQRT3;
+	TmpState |= (0x1ul << n);
+      }
+      break;
+    }	  
+  m *= 2;
+  switch ((TmpState >> m) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << m);
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient *= 2.0;
+	TmpState &= ~(0x2ul << m);
+	TmpState |= (0x1ul << m);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << m);
+      }
+      break;
+    case 0x0ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+    }	   
+  l *= 2;
+  switch ((TmpState >> l) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState |= (0x1ul << l);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient *= 2.0;
+	TmpState &= ~(0x1ul << l);
+	TmpState |= (0x2ul << l);
+      }
+      break;
+    case 0x0ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState |= (0x1ul << l);
+      }
+      break;
+    }	  
+  k *= 2;
+  switch ((TmpState >> k) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << k);
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient *= 2.0;
+	TmpState &= ~(0x2ul << k);
+	TmpState |= (0x1ul << k);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << k);
+      }
+      break;
+    case 0x0ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+    }	   
+  j *= 2;
+  switch ((TmpState >> j) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState |= (0x1ul << j);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient *= 2.0;
+	TmpState &= ~(0x1ul << j);
+	TmpState |= (0x2ul << j);
+      }
+      break;
+    case 0x0ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState |= (0x1ul << j);
+      }
+      break;
+    }	  
+  i *= 2;
+  switch ((TmpState >> i) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << i);
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient *= 2.0;
+	TmpState &= ~(0x2ul << i);
+	TmpState |= (0x1ul << i);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << i);
+      }
+      break;
+    case 0x0ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+    }	  
+  return this->SymmetrizeResult(TmpState, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
+}
+
+// return index of resulting state from application of S+_i S-_j Sz_k operator on a given state
+//
+// i = position of S+ operator
+// j = position of S- operator
+// k = position of Sz operator
+// state = index of the state to be applied on S+_i S-_j Sz_k operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of resulting state
+
+int Spin3_2ChainAnd2DTranslation::SpiSmjSzk (int i, int j, int k, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  unsigned long TmpState = this->StateDescription[state];
+  k *= 2;
+  switch ((TmpState >> k) & 0x3ul)
+    {
+    case 0x3ul:
+      coefficient = 1.5;
+      break;
+    case 0x2ul:
+      coefficient = 0.5;
+      break;
+    case 0x1ul:
+      coefficient = -0.5;
+      break;
+    case 0x0ul:
+      coefficient = -1.5;
+      break;
+    }  
+  j *= 2;
+  switch ((TmpState >> j) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << j);
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient *= 2.0;
+	TmpState &= ~(0x2ul << j);
+	TmpState |= (0x1ul << j);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState &= ~(0x1ul << j);
+      }
+      break;
+    case 0x0ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+    }	  
+  i *= 2;
+  switch ((TmpState >> i) & 0x3ul)
+    {
+    case 0x3ul:
+      {
+	return this->HilbertSpaceDimension;
+      }
+      break;
+    case 0x2ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState |= (0x1ul << i);
+      }
+      break;
+    case 0x1ul:
+      {
+	coefficient *= 2.0;
+	TmpState &= ~(0x1ul << i);
+	TmpState |= (0x2ul << i);
+      }
+      break;
+    case 0x0ul:
+      {
+	coefficient *= M_SQRT3;
+	TmpState |= (0x1ul << i);
+      }
+      break;
+    }	  
+  return this->SymmetrizeResult(TmpState, this->NbrStateInOrbit[state], coefficient, nbrTranslationX, nbrTranslationY);
 }
 
 

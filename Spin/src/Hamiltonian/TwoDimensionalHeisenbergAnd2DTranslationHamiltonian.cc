@@ -46,6 +46,23 @@ using std::endl;
 using std::ostream;
 
 
+// default constructor
+//
+
+TwoDimensionalHeisenbergAnd2DTranslationHamiltonian::TwoDimensionalHeisenbergAnd2DTranslationHamiltonian()
+{
+  this->Chain = 0;
+  this->XMomentum = 0;
+  this->YMomentum = 0;
+  this->NbrSpinX = 0;
+  this->NbrSpinY = 0;
+  this->NbrSpin = 0;
+  this->JFactor = 0.0;
+  this->JzFactor = 0.0;
+  this->HalfJFactor = 0.0;
+  this->SzSzContributions = 0;
+}
+
 // constructor from default data
 //
 // chain = pointer to Hilbert space of the associated system

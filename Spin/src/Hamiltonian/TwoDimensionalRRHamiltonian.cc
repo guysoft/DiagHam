@@ -62,7 +62,7 @@ TwoDimensionalRRHamiltonian::TwoDimensionalRRHamiltonian()
 // j1Factor = amplitude of the Heisenberg coupling between nearest neighbors
 // j2Factor = amplitude of the (S_i S_j)^2 nearest neighbor coupling
 // j3Factor = amplitude of the (S_i S_j)^3 nearest neighbor coupling
-// jChFactor = amplitude of the chiral term
+// jcFactor = amplitude of the chiral term
 // periodicBoundaryConditions = assume periodic boundary conditions
 
 TwoDimensionalRRHamiltonian::TwoDimensionalRRHamiltonian(AbstractSpinChain* chain, int nbrSpinX, int nbrSpinY, double j1Factor, 

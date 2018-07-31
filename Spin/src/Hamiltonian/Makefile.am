@@ -65,4 +65,5 @@ TwoDimensionalSquareLatticeSU3And2DTranslationHamiltonian.cc \
 SpinChain4QbitsStabilizerHamiltonian.cc \
 TwoDimensionalHeisenbergHamiltonian.cc \
 TwoDimensionalHeisenbergAnd2DTranslationHamiltonian.cc \
-TwoDimensionalRRHamiltonian.cc
+TwoDimensionalRRHamiltonian.cc \
+TwoDimensionalRRAnd2DTranslationHamiltonian.cc

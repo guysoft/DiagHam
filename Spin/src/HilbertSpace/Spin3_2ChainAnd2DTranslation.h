@@ -144,10 +144,12 @@ class Spin3_2ChainAnd2DTranslation : public Spin3_2Chain
   // return value = index of resulting state
   virtual int SmiSpj (int i, int j, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
   
-  // return index of resulting state from application of S-_i S+_j operator on a given state
+  // return index of resulting state from application of S-_i S+_j S-_k S+_l operator on a given state
   //
-  // i = position of S- operator
-  // j = position of S+ operator
+  // i = position of the first S- operator
+  // j = position of the first S+ operator
+  // k = position of the second S- operator
+  // l = position of the second S+ operator
   // state = index of the state to be applied on S-_i S+_j operator
   // coefficient = reference on double where numerical coefficient has to be stored
   // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
@@ -155,16 +157,94 @@ class Spin3_2ChainAnd2DTranslation : public Spin3_2Chain
   // return value = index of resulting state
   virtual int SmiSpjSmkSpl (int i, int j, int k, int l, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
   
-  // return index of resulting state from application of S-_i S+_j operator on a given state
+  // return index of resulting state from application of Sz_i Sz_j S-_k S+_l operator on a given state
   //
-  // i = position of S- operator
-  // j = position of S+ operator
-  // state = index of the state to be applied on S-_i S+_j operator
+  // i = position of the first Sz operator
+  // j = position of the second Sz operator
+  // k = position of S- operator
+  // l = position of S+ operator
+  // state = index of the state to be applied on Sz_i Sz_j S-_k S+_l operator
   // coefficient = reference on double where numerical coefficient has to be stored
   // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
   // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of resulting state
   virtual int SziSzjSmkSpl (int i, int j, int k, int l, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+
+  // return index of resulting state from application of S-_i S+_j S-_k S+_l S-_m S+_n operator on a given state
+  //
+  // i = position of the first S- operator
+  // j = position of the first S+ operator
+  // k = position of the second S- operator
+  // l = position of the second S+ operator
+  // m = position of the third S- operator
+  // n = position of the third S+ operator
+  // state = index of the state to be applied on S-_i S+_j S-_k S+_l S-_m S+_n operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // return value = index of resulting state
+  virtual int SmiSpjSmkSplSmmSpn (int i, int j, int k, int l, int m, int n, int state, double& coefficient, 
+				  int& nbrTranslationX, int& nbrTranslationY);
+
+  // return index of resulting state from application of S-_i S+_j Sz_k Sz_l S-_m S+_n operator on a given state
+  //
+  // i = position of the first S- operator
+  // j = position of the first S+ operator
+  // k = position of the first Sz operator
+  // l = position of the second Sz operator
+  // m = position of the second S- operator
+  // n = position of the second S+ operator
+  // state = index of the state to be applied on the S-_i S+_j Sz_k Sz_l S-_m S+_n operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // return value = index of resulting state
+  virtual int SmiSpjSzkSzlSmmSpn (int i, int j, int k, int l, int m, int n, int state, double& coefficient, 
+				  int& nbrTranslationX, int& nbrTranslationY);
+  
+  // return index of resulting state from application of Sz_i Sz_j S-_k S+_l S-_m S+_n operator on a given state
+  //
+  // i = position of the first Sz operator
+  // j = position of the second Sz operator
+  // k = position of the first S- operator
+  // l = position of the first S+ operator
+  // m = position of the second S- operator
+  // n = position of the second S+ operator
+  // state = index of the state to be applied on the Sz_i Sz_j S-_k S+_l S-_m S+_n operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // return value = index of resulting state
+  virtual int SziSzjSmkSplSmmSpn (int i, int j, int k, int l, int m, int n, int state, double& coefficient, 
+				  int& nbrTranslationX, int& nbrTranslationY);
+  
+  // return index of resulting state from application of S-z_i Sz_j Sz_k Sz_l S-_m S+_n operator on a given state
+  //
+  // i = position of the first Sz operator
+  // j = position of the second Sz operator
+  // k = position of the third Sz operator
+  // l = position of the fourth Sz operator
+  // m = position of the first S- operator
+  // n = position of the first S+ operator
+  // state = index of the state to be applied on the Sz_i Sz_j Sz_k Sz_l S-_m S+_n operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // return value = index of resulting state
+  virtual int SziSzjSzkSzlSmmSpn (int i, int j, int k, int l, int m, int n, int state, double& coefficient, 
+				  int& nbrTranslationX, int& nbrTranslationY);
+  
+  // return index of resulting state from application of S+_i S-_j Sz_k operator on a given state
+  //
+  // i = position of S+ operator
+  // j = position of S- operator
+  // k = position of Sz operator
+  // state = index of the state to be applied on S+_i S-_j Sz_k operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // return value = index of resulting state
+  virtual int SpiSmjSzk (int i, int j, int k, int state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
   // convert a state defined in the real space basis into a state in the (Kx,Ky) basis
   //

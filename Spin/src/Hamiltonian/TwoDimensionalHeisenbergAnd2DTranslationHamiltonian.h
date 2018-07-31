@@ -80,6 +80,10 @@ class TwoDimensionalHeisenbergAnd2DTranslationHamiltonian : public AbstractHamil
 
  public:
 
+  // default constructor
+  //
+  TwoDimensionalHeisenbergAnd2DTranslationHamiltonian();
+
   // constructor from default data
   //
   // chain = pointer to Hilbert space of the associated system
@@ -148,7 +152,7 @@ class TwoDimensionalHeisenbergAnd2DTranslationHamiltonian : public AbstractHamil
  
   // evaluate all matrix elements
   //   
-  void EvaluateDiagonalMatrixElements();
+  virtual void EvaluateDiagonalMatrixElements();
 
   // evaluate all exponential factors
   //   

@@ -1,6 +1,7 @@
 #include "Hamiltonian/TwoDimensionalHeisenbergHamiltonian.h"
 #include "Hamiltonian/TwoDimensionalHeisenbergAnd2DTranslationHamiltonian.h"
 #include "Hamiltonian/TwoDimensionalRRHamiltonian.h"
+#include "Hamiltonian/TwoDimensionalRRAnd2DTranslationHamiltonian.h"
 
 #include "HilbertSpace/Spin3_2Chain.h"
 #include "HilbertSpace/Spin3_2ChainAnd2DTranslation.h"
@@ -306,9 +307,14 @@ int main(int argc, char** argv)
 			{
 			  Architecture.GetArchitecture()->SetDimension(Chain->GetHilbertSpaceDimension());	
 			  TwoDimensionalHeisenbergAnd2DTranslationHamiltonian* Hamiltonian = 0;
-			  Hamiltonian = new TwoDimensionalHeisenbergAnd2DTranslationHamiltonian(Chain, XMomenta[MomentumSector], NbrSitesX, 
-												YMomenta[MomentumSector], NbrSitesY, 
-												Manager.GetDouble("j1-value"), Manager.GetDouble("j1-value"));
+// 			  Hamiltonian = new TwoDimensionalHeisenbergAnd2DTranslationHamiltonian(Chain, XMomenta[MomentumSector], NbrSitesX, 
+// 												YMomenta[MomentumSector], NbrSitesY, 
+// 												Manager.GetDouble("j1-value"), Manager.GetDouble("j1-value"));
+			  Hamiltonian = new TwoDimensionalRRAnd2DTranslationHamiltonian(Chain, XMomenta[MomentumSector], NbrSitesX, 
+											YMomenta[MomentumSector], NbrSitesY, Manager.GetDouble("j1-value"), 
+											Manager.GetDouble("j2-value"), Manager.GetDouble("j3-value"),
+											Manager.GetDouble("jc-value"));
+
 			  
 			  char* TmpEigenstateString = new char[strlen(OutputFileName) + strlen(OutputParameterFileName) + 64];
 			  if (MaxSzSymmetrySector == -1)
