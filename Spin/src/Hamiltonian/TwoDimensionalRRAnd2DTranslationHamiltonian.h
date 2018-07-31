@@ -269,54 +269,54 @@ inline void TwoDimensionalRRAnd2DTranslationHamiltonian::EvaluateOffDiagonalChir
     {
       TmpCoefficient *= 0.5;
       TmpCoefficient *= this->JcFactor;
-      Complex& Tmp = vDestination[pos];
-      vDestination[pos].Re -= TmpCoefficient * coefficient.Im;
-      vDestination[pos].Im += TmpCoefficient * coefficient.Re;
+      Complex Tmp = coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+      vDestination[pos].Re -= TmpCoefficient * Tmp.Im;
+      vDestination[pos].Im += TmpCoefficient * Tmp.Re;
     }
   pos = this->Chain->SpiSmjSzk(i, k, j, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
   if (pos != dimension)
     {
       TmpCoefficient *= 0.5;
       TmpCoefficient *= this->JcFactor;
-      Complex& Tmp = vDestination[pos];
-      vDestination[pos].Re += TmpCoefficient * coefficient.Im;
-      vDestination[pos].Im -= TmpCoefficient * coefficient.Re;
+      Complex Tmp = coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+      vDestination[pos].Re += TmpCoefficient * Tmp.Im;
+      vDestination[pos].Im -= TmpCoefficient * Tmp.Re;
     }
   pos = this->Chain->SpiSmjSzk(j, k, i, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
   if (pos != dimension)
     {
       TmpCoefficient *= 0.5;
       TmpCoefficient *= this->JcFactor;
-      Complex& Tmp = vDestination[pos];
-      vDestination[pos].Re -= TmpCoefficient * coefficient.Im;
-      vDestination[pos].Im += TmpCoefficient * coefficient.Re;
+      Complex Tmp = coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+      vDestination[pos].Re -= TmpCoefficient * Tmp.Im;
+      vDestination[pos].Im += TmpCoefficient * Tmp.Re;
     }
   pos = this->Chain->SpiSmjSzk(k, j, i, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
   if (pos != dimension)
     {
       TmpCoefficient *= 0.5;
       TmpCoefficient *= this->JcFactor;
-      Complex& Tmp = vDestination[pos];
-      vDestination[pos].Re += TmpCoefficient * coefficient.Im;
-      vDestination[pos].Im -= TmpCoefficient * coefficient.Re;
+      Complex Tmp = coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+      vDestination[pos].Re += TmpCoefficient * Tmp.Im;
+      vDestination[pos].Im -= TmpCoefficient * Tmp.Re;
     }
   pos = this->Chain->SpiSmjSzk(k, i, j, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
   if (pos != dimension)
     {
       TmpCoefficient *= 0.5;
       TmpCoefficient *= this->JcFactor;
-      Complex& Tmp = vDestination[pos];
-      vDestination[pos].Re -= TmpCoefficient * coefficient.Im;
-      vDestination[pos].Im += TmpCoefficient * coefficient.Re;
+      Complex Tmp = coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+      vDestination[pos].Re -= TmpCoefficient * Tmp.Im;
+      vDestination[pos].Im += TmpCoefficient * Tmp.Re;
     }
   pos = this->Chain->SpiSmjSzk(j, i, k, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
   if (pos != dimension)
     {
       TmpCoefficient *= 0.5;
       TmpCoefficient *= this->JcFactor;
-      Complex& Tmp = vDestination[pos];
-      vDestination[pos].Re += TmpCoefficient * coefficient.Im;
-      vDestination[pos].Im -= TmpCoefficient * coefficient.Re;
+      Complex Tmp = coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
+      vDestination[pos].Re += TmpCoefficient * Tmp.Im;
+      vDestination[pos].Im -= TmpCoefficient * Tmp.Re;
     }
 }
 
