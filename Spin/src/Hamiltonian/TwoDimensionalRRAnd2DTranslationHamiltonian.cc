@@ -95,7 +95,7 @@ TwoDimensionalRRAnd2DTranslationHamiltonian::TwoDimensionalRRAnd2DTranslationHam
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
-  this->HermitianSymmetryFlag = false;//true;
+  this->HermitianSymmetryFlag = true;
   this->EvaluateExponentialFactors();
   this->EvaluateDiagonalMatrixElements();
   if (memory == 0l)

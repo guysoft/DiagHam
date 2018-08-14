@@ -36,6 +36,7 @@
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealAntisymmetricMatrix.h"
 #include "MathTools/Complex.h"
+#include "Architecture/ArchitectureOperation/GenericHamiltonianPrecalculationOperation.h"
 #include "Output/MathematicaOutput.h"
 
 #include <iostream>
@@ -827,9 +828,9 @@ long TwoDimensionalHeisenbergAnd2DTranslationHamiltonian::FastMultiplicationMemo
   gettimeofday (&(TotalStartingTime2), 0);
   cout << "start" << endl;
 
-//   QHEParticlePrecalculationOperation Operation(this);
-//   Operation.ApplyOperation(this->Architecture);
-  this->PartialFastMultiplicationMemory(0, this->Chain->GetHilbertSpaceDimension());
+  GenericHamiltonianPrecalculationOperation Operation(this);
+  Operation.ApplyOperation(this->Architecture);
+  //  this->PartialFastMultiplicationMemory(0, this->Chain->GetHilbertSpaceDimension());
 
  
   if (this->Architecture->GetOptimizedTypicalRange(this->NbrInteractionPerComponent, MinIndex, MaxIndex) == true)
@@ -950,9 +951,9 @@ void TwoDimensionalHeisenbergAnd2DTranslationHamiltonian::EnableFastMultiplicati
       this->InteractionPerComponentCoefficient[i] = new Complex [this->NbrInteractionPerComponent[i]];
     }
 
-//   QHEParticlePrecalculationOperation Operation(this, false);
-//   Operation.ApplyOperation(this->Architecture);
-  this->PartialEnableFastMultiplication(0, this->Chain->GetHilbertSpaceDimension());
+  GenericHamiltonianPrecalculationOperation Operation(this, false);
+  Operation.ApplyOperation(this->Architecture);
+  //  this->PartialEnableFastMultiplication(0, this->Chain->GetHilbertSpaceDimension());
 
   this->FastMultiplicationFlag = true;
   gettimeofday (&(TotalEndingTime2), 0);
