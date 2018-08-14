@@ -59,6 +59,8 @@ class TwoDimensionalRRHamiltonian : public TwoDimensionalHeisenbergHamiltonian
   double J3Factor;
   // amplitude of the chiral term
   double JcFactor;
+  // half the amplitude of the chiral term
+  double HalfJcFactor;
 
   // assume periodic boundary conditions
   bool PeriodicBoundaryConditions;
@@ -368,54 +370,42 @@ inline void TwoDimensionalRRHamiltonian::EvaluateOffDiagonalChiralContribution(i
   int pos = this->Chain->SpiSmjSzk(i, j, k, index, TmpCoefficient);
   if (pos != dimension)
     {
-      TmpCoefficient *= 0.5;
-      TmpCoefficient *= this->JcFactor;
-      Complex& Tmp = vDestination[pos];
+      TmpCoefficient *= this->HalfJcFactor;
       vDestination[pos].Re -= TmpCoefficient * coefficient.Im;
       vDestination[pos].Im += TmpCoefficient * coefficient.Re;
     }
   pos = this->Chain->SpiSmjSzk(i, k, j, index, TmpCoefficient);
   if (pos != dimension)
     {
-      TmpCoefficient *= 0.5;
-      TmpCoefficient *= this->JcFactor;
-      Complex& Tmp = vDestination[pos];
+      TmpCoefficient *= this->HalfJcFactor;
       vDestination[pos].Re += TmpCoefficient * coefficient.Im;
       vDestination[pos].Im -= TmpCoefficient * coefficient.Re;
     }
   pos = this->Chain->SpiSmjSzk(j, k, i, index, TmpCoefficient);
   if (pos != dimension)
     {
-      TmpCoefficient *= 0.5;
-      TmpCoefficient *= this->JcFactor;
-      Complex& Tmp = vDestination[pos];
+      TmpCoefficient *= this->HalfJcFactor;
       vDestination[pos].Re -= TmpCoefficient * coefficient.Im;
       vDestination[pos].Im += TmpCoefficient * coefficient.Re;
     }
   pos = this->Chain->SpiSmjSzk(k, j, i, index, TmpCoefficient);
   if (pos != dimension)
     {
-      TmpCoefficient *= 0.5;
-      TmpCoefficient *= this->JcFactor;
-      Complex& Tmp = vDestination[pos];
+      TmpCoefficient *= this->HalfJcFactor;
       vDestination[pos].Re += TmpCoefficient * coefficient.Im;
       vDestination[pos].Im -= TmpCoefficient * coefficient.Re;
     }
   pos = this->Chain->SpiSmjSzk(k, i, j, index, TmpCoefficient);
   if (pos != dimension)
     {
-      TmpCoefficient *= 0.5;
-      TmpCoefficient *= this->JcFactor;
-      Complex& Tmp = vDestination[pos];
+      TmpCoefficient *= this->HalfJcFactor;
       vDestination[pos].Re -= TmpCoefficient * coefficient.Im;
       vDestination[pos].Im += TmpCoefficient * coefficient.Re;
     }
   pos = this->Chain->SpiSmjSzk(j, i, k, index, TmpCoefficient);
   if (pos != dimension)
     {
-      TmpCoefficient *= 0.5;
-      TmpCoefficient *= this->JcFactor;
-      Complex& Tmp = vDestination[pos];
+      TmpCoefficient *= this->HalfJcFactor;
       vDestination[pos].Re += TmpCoefficient * coefficient.Im;
       vDestination[pos].Im -= TmpCoefficient * coefficient.Re;
     }

@@ -36,6 +36,7 @@
 #include "config.h"
 #include "HilbertSpace/AbstractSpinChain.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
+#include "Architecture/AbstractArchitecture.h"
 
 
 #include <iostream>
@@ -50,6 +51,9 @@ class TwoDimensionalHeisenbergAnd2DTranslationHamiltonian : public AbstractHamil
 
  protected:
   
+  // architecture used for precalculation
+  AbstractArchitecture* Architecture;
+
   //pointer to Hilbert space of the associated system
   AbstractSpinChain* Chain;
 
@@ -78,6 +82,30 @@ class TwoDimensionalHeisenbergAnd2DTranslationHamiltonian : public AbstractHamil
   //array containing all the phase factors that are needed when computing matrix elements
   Complex** ExponentialFactors;
 
+  // shift to apply to go from precalculation index to the corresponding index in the HilbertSpace
+  int PrecalculationShift;
+
+  // flag for fast multiplication algorithm
+  bool FastMultiplicationFlag;
+  // step between each precalculated index
+  int FastMultiplicationStep;
+
+  // stored interactions per component
+  int *NbrInteractionPerComponent;
+
+  // number of tasks for load balancing
+  int NbrBalancedTasks;
+  // load balancing array for parallelisation, indicating starting indices
+  long* LoadBalancingArray;
+
+  // indices of matrix elements per component
+  int **InteractionPerComponentIndex;
+  // coefficients of matrix elements per component
+  Complex** InteractionPerComponentCoefficient;
+
+  // flag for implementation of hermitian symmetry
+  bool HermitianSymmetryFlag;
+  
  public:
 
   // default constructor
@@ -93,8 +121,10 @@ class TwoDimensionalHeisenbergAnd2DTranslationHamiltonian : public AbstractHamil
   // nbrSpinY = number of spin along the y direction
   // jFactor = Heisenberg XX coupling constant between nearest neighbors
   // jzFactor = Heisenberg Z coupling constant between nearest neighbors
+  // architecture = architecture to use for precalculation
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   TwoDimensionalHeisenbergAnd2DTranslationHamiltonian(AbstractSpinChain* chain, int xMomentum, int nbrSpinX, int yMomentum, int nbrSpinY, 
-						    double jFactor, double jzFactor);
+						      double jFactor, double jzFactor, AbstractArchitecture* architecture, long memory = -1l);
 
   // destructor
   //
@@ -104,6 +134,10 @@ class TwoDimensionalHeisenbergAnd2DTranslationHamiltonian : public AbstractHamil
   //
   // return value = pointer to cloned hamiltonian
   AbstractHamiltonian* Clone ();
+
+  // ask if Hamiltonian implements hermitian symmetry operations
+  //
+  virtual bool IsHermitian();
 
   // set Hilbert space
   //
@@ -148,6 +182,29 @@ class TwoDimensionalHeisenbergAnd2DTranslationHamiltonian : public AbstractHamil
   virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 						     int firstComponent, int nbrComponent);
 
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual ComplexVector& HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+						      int firstComponent, int nbrComponent);
+ 
+  // multiply a et of vectors by the current hamiltonian for a given range of indices 
+  // and add result to another et of vectors, low level function (no architecture optimization)
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual ComplexVector* HermitianLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+							      int firstComponent, int nbrComponent);
+
  protected:
  
   // evaluate all matrix elements
@@ -171,6 +228,70 @@ class TwoDimensionalHeisenbergAnd2DTranslationHamiltonian : public AbstractHamil
   // yPosition = unit cell position along the y direction
   // return value = linearized index
   virtual int GetSafeLinearizedIndex(int xPosition, int yPosition);
+
+  // evaluate all interaction factors
+  //   
+  //  virtual void EvaluateInteractionFactors();
+
+  // test the amount of memory needed for fast multiplication algorithm
+  //
+  // allowedMemory = amount of memory that cam be allocated for fast multiplication
+  // return value = amount of memory needed
+  virtual long FastMultiplicationMemory(long allowedMemory);
+
+  // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
+  //
+  // firstComponent = index of the first component that has to be precalcualted
+  // lastComponent  = index of the last component that has to be precalcualted
+  // return value = number of non-zero matrix element
+  virtual long PartialFastMultiplicationMemory(int firstComponent, int lastComponent);
+
+  // enable fast multiplication algorithm
+  //
+  virtual void EnableFastMultiplication();
+
+  // enable fast multiplication algorithm (partial evaluation)
+  //
+  // firstComponent = index of the first component that has to be precalcualted
+  // nbrComponent  = index of the last component that has to be precalcualted
+  virtual void PartialEnableFastMultiplication(int firstComponent, int nbrComponent);
+
+  // core part of the FastMultiplication method
+  // 
+  // chain = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // indexArray = array where indices connected to the index-th component through the Hamiltonian
+  // coefficientArray = array of the numerical coefficients related to the indexArray
+  // position = reference on the current position in arrays indexArray and coefficientArray  
+  virtual void EvaluateFastMultiplicationComponent(AbstractSpinChain* chain, int index, 
+						   int* indexArray, Complex* coefficientArray, long& position);
+
+  // core part of the PartialFastMultiplicationMemory
+  // 
+  // chain = pointer to the Hilbert space
+  // firstComponent = index of the first component that has to be precalcualted
+  // lastComponent  = index of the last component that has to be precalcualted
+  // memory = reference on the amount of memory required for precalculations  
+  virtual void EvaluateFastMultiplicationMemoryComponent(AbstractSpinChain* chain, int firstComponent, int lastComponent, long& memory);
+
+  // core part of the AddMultiply method
+  // 
+  // chain = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added  
+  virtual void HermitianEvaluateAddMultiplyComponent(AbstractSpinChain* chain, int index, ComplexVector& vSource, ComplexVector& vDestination);
+
+  // core part of the AddMultiply method for a set of vectors
+  // 
+  // chain = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // tmpCoefficients = a temporary array whose size is nbrVectors
+  virtual void HermitianEvaluateAddMultiplyComponent(AbstractSpinChain* chain, int index, ComplexVector* vSources, 
+						     ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients);
 
 };
 

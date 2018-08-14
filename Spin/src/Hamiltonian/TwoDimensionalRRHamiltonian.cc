@@ -78,6 +78,7 @@ TwoDimensionalRRHamiltonian::TwoDimensionalRRHamiltonian(AbstractSpinChain* chai
   this->J2Factor = j2Factor;
   this->J3Factor = j3Factor;
   this->JcFactor = jcFactor;
+  this->HalfJcFactor = 0.5 * this->JcFactor;
   this->PeriodicBoundaryConditions = periodicBoundaryConditions;
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateDiagonalMatrixElements();

@@ -181,6 +181,8 @@ Spin3_2ChainAnd2DTranslation::Spin3_2ChainAnd2DTranslation (const Spin3_2ChainAn
       this->LookUpTableMask = chain.LookUpTableMask;
       this->LookUpPosition = chain.LookUpPosition;
       this->LookUpTableSize = chain.LookUpTableSize;
+      this->LookUpTableShift = chain.LookUpTableShift;
+
       this->FixedQuantumNumberFlag = chain.FixedQuantumNumberFlag;      
     }
   else
@@ -195,6 +197,7 @@ Spin3_2ChainAnd2DTranslation::Spin3_2ChainAnd2DTranslation (const Spin3_2ChainAn
       this->LookUpTableMask = 0;
       this->LookUpPosition = 0;
       this->LookUpTableSize = 0;
+      this->LookUpTableShift = 0;
     }
 }
 

@@ -58,6 +58,8 @@ class TwoDimensionalRRAnd2DTranslationHamiltonian : public TwoDimensionalHeisenb
   double J3Factor;
   // amplitude of the chiral term
   double JcFactor;
+  // half the amplitude of the chiral term
+  double HalfJcFactor;
 
  public:
 
@@ -76,8 +78,11 @@ class TwoDimensionalRRAnd2DTranslationHamiltonian : public TwoDimensionalHeisenb
   // j2Factor = amplitude of the (S_i S_j)^2 nearest neighbor coupling
   // j3Factor = amplitude of the (S_i S_j)^3 nearest neighbor coupling
   // jcFactor = amplitude of the chiral term
+  // architecture = architecture to use for precalculation
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   TwoDimensionalRRAnd2DTranslationHamiltonian(AbstractSpinChain* chain, int xMomentum, int nbrSpinX, int yMomentum, int nbrSpinY, 
-					      double j1Factor, double j2Factor, double j3Factor, double jcFactor);
+					      double j1Factor, double j2Factor, double j3Factor, double jcFactor, 
+					      AbstractArchitecture* architecture, long memory = -1l);
 
   // destructor
   //
@@ -117,6 +122,25 @@ class TwoDimensionalRRAnd2DTranslationHamiltonian : public TwoDimensionalHeisenb
   //   
   void EvaluateDiagonalMatrixElements();
 
+  // core part of the AddMultiply method
+  // 
+  // chain = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added  
+  virtual void HermitianEvaluateAddMultiplyComponent(AbstractSpinChain* chain, int index, ComplexVector& vSource, ComplexVector& vDestination);
+
+  // core part of the AddMultiply method for a set of vectors
+  // 
+  // chain = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // tmpCoefficients = a temporary array whose size is nbrVectors
+  virtual void HermitianEvaluateAddMultiplyComponent(AbstractSpinChain* chain, int index, ComplexVector* vSources, 
+						     ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients);
+
   // evaluate the off-diagonal contribution for one type of Hamiltonian terms ( all (S_i S_j)^n )
   //
   // i = linearized position of the first spin
@@ -126,6 +150,17 @@ class TwoDimensionalRRAnd2DTranslationHamiltonian : public TwoDimensionalHeisenb
   // vDestination = vector at which result has to be added
   // coefficient = global multiplicative coefficient
   virtual void EvaluateOffDiagonalPowerHeisenbergContribution(int i, int j, int index, int dimension, ComplexVector& vDestination, Complex& coefficient);
+
+  // evaluate the off-diagonal contribution for one type of Hamiltonian terms ( all (S_i S_j)^n )
+  //
+  // i = linearized position of the first spin
+  // j = linearized position of the second spin
+  // index = index of the many-body state to act on
+  // dimension = total Hilbert space dimension
+  // vDestinations = vectors to which results have to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // coefficients = global multiplicative coefficients
+  virtual void EvaluateOffDiagonalPowerHeisenbergContribution(int i, int j, int index, int dimension, ComplexVector* vDestinations, int nbrVectors, Complex* coefficients);
 
   // evaluate the off-diagonal chiral contribution for a single term ( S_i (S_j ^ S_k) )
   //
@@ -138,186 +173,103 @@ class TwoDimensionalRRAnd2DTranslationHamiltonian : public TwoDimensionalHeisenb
   // coefficient = global multiplicative coefficient
   virtual void EvaluateOffDiagonalChiralContribution(int i, int j, int k, int index, int dimension, ComplexVector& vDestination, Complex& coefficient);
 
+  // evaluate the off-diagonal chiral contribution for a single term ( S_i (S_j ^ S_k) )
+  //
+  // i = linearized position of the first spin
+  // j = linearized position of the second spin
+  // k = linearized position of the second spin
+  // index = index of the many-body state to act on
+  // dimension = total Hilbert space dimension
+  // vDestinations = vectors to which results have to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // coefficients = global multiplicative coefficients
+  virtual void EvaluateOffDiagonalChiralContribution(int i, int j, int k, int index, int dimension, ComplexVector* vDestinations, int nbrVectors, Complex* coefficients);
+
+  // evaluate the off-diagonal contribution for one type of Hamiltonian terms ( all (S_i S_j)^n )
+  //
+  // chain = pointer to the Hilbert space
+  // i = linearized position of the first spin
+  // j = linearized position of the second spin
+  // index = index of the many-body state to act on
+  // vSource = vector  to be multiplied
+  // vDestination = vector to which result has to be added
+  virtual void HermitianEvaluateOffDiagonalPowerHeisenbergContribution(AbstractSpinChain* chain, int i, int j, int index, ComplexVector& vSource, ComplexVector& vDestination);
+
+  // evaluate the off-diagonal chiral contribution for a single term ( S_i (S_j ^ S_k) )
+  //
+  // chain = pointer to the Hilbert space
+  // i = linearized position of the first spin
+  // j = linearized position of the second spin
+  // k = linearized position of the second spin
+  // index = index of the many-body state to act on
+  // vSource = vector  to be multiplied
+  // vDestination = vector to which result has to be added
+  virtual void HermitianEvaluateOffDiagonalChiralContribution(AbstractSpinChain* chain, int i, int j, int k, int index, ComplexVector& vSource, ComplexVector& vDestination);
+
+  // core part of the FastMultiplication method
+  // 
+  // chain = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // indexArray = array where indices connected to the index-th component through the Hamiltonian
+  // coefficientArray = array of the numerical coefficients related to the indexArray
+  // position = reference on the current position in arrays indexArray and coefficientArray  
+  virtual void EvaluateFastMultiplicationComponent(AbstractSpinChain* chain, int index, 
+						   int* indexArray, Complex* coefficientArray, long& position);
+
+  // core part of the PartialFastMultiplication for all Hamiltonian terms (S_i S_j)^n 
+  //
+  // chain = pointer to the Hilbert space
+  // i = linearized position of the first spin
+  // j = linearized position of the second spin
+  // index = index of the many-body state to act on
+  // indexArray = array where indices connected to the index-th component through the Hamiltonian
+  // coefficientArray = array of the numerical coefficients related to the indexArray
+  // position = reference on the current position in arrays indexArray and coefficientArray  
+  virtual void CoreEvaluateFastMultiplicationComponentPowerHeisenberg(AbstractSpinChain* chain, int i, int j, int index, 
+									    int* indexArray, Complex* coefficientArray, long& position);
+
+  //  core part of the PartialFastMultiplication for a single term ( S_i (S_j ^ S_k) )
+  //
+  // chain = pointer to the Hilbert space
+  // i = linearized position of the first spin
+  // j = linearized position of the second spin
+  // k = linearized position of the second spin
+  // index = index of the many-body state to act on
+  // indexArray = array where indices connected to the index-th component through the Hamiltonian
+  // coefficientArray = array of the numerical coefficients related to the indexArray
+  // position = reference on the current position in arrays indexArray and coefficientArray  
+  virtual void CoreEvaluateFastMultiplicationComponentChiral(AbstractSpinChain* chain, int i, int j, int k, int index, 
+								   int* indexArray, Complex* coefficientArray, long& position);
+
+  // core part of the PartialFastMultiplicationMemory
+  // 
+  // chain = pointer to the Hilbert space
+  // firstComponent = index of the first component that has to be precalcualted
+  // lastComponent  = index of the last component that has to be precalcualted
+  // memory = reference on the amount of memory required for precalculations  
+  virtual void EvaluateFastMultiplicationMemoryComponent(AbstractSpinChain* chain, int firstComponent, int lastComponent, long& memory);
+
+  // core part of the PartialFastMultiplicationMemory for all Hamiltonian terms (S_i S_j)^n 
+  //
+  // chain = pointer to the Hilbert space
+  // i = linearized position of the first spin
+  // j = linearized position of the second spin
+  // index = index of the many-body state to act on
+  // nbrInteractionPerComponent = array that contains the number of interaction per component
+  // memory = reference on the amount of memory required for precalculations  
+  virtual void CoreEvaluateFastMultiplicationMemoryComponentPowerHeisenberg(AbstractSpinChain* chain, int i, int j, int index, int* nbrInteractionPerComponent, long& memory);             
+
+  //  core part of the PartialFastMultiplicationMemory for a single term ( S_i (S_j ^ S_k) )
+  //
+  // chain = pointer to the Hilbert space
+  // i = linearized position of the first spin
+  // j = linearized position of the second spin
+  // k = linearized position of the second spin
+  // index = index of the many-body state to act on
+  // nbrInteractionPerComponent = array that contains the number of interaction per component
+  // memory = reference on the amount of memory required for precalculations  
+  virtual void CoreEvaluateFastMultiplicationMemoryComponentChiral(AbstractSpinChain* chain, int i, int j, int k, int index, int* nbrInteractionPerComponent, long& memory);
+
 };
-
-// evaluate the off-diagonal contribution for one type of Hamiltonian terms ( all (S_i S_j)^n )
-//
-// i = linearized position of the first spin
-// j = linearized position of the second spin
-// index = index of the many-body state to act on
-// dimension = total Hilbert space dimension
-// vDestination = vector at which result has to be added
-// coefficient = global multiplicative coefficient
-
-inline void TwoDimensionalRRAnd2DTranslationHamiltonian::EvaluateOffDiagonalPowerHeisenbergContribution(int i, int j, int index, int dimension, ComplexVector& vDestination, Complex& coefficient)
-{
-  double TmpCoefficient;
-  double TmpCoefficient2;
-  int NbrTranslationsX;
-  int NbrTranslationsY;
-  int pos = this->Chain->SmiSpj(i, j, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
-  if (pos != dimension)
-    {
-      Complex TmpValue2 = (0.5 * TmpCoefficient) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * coefficient;
-      vDestination[pos] += this->J1Factor * TmpValue2;
-      double TmpValue3 = this->Chain->SziSzj(i, j, index);
-      TmpValue2 *= TmpValue3;
-      vDestination[pos] += (this->J2Factor + (this->J3Factor * TmpValue3)) * TmpValue2;
-    }
-
-  pos = this->Chain->SmiSpjSmkSpl(i, j, i, j, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
-  if (pos != dimension)
-    {
-      Complex TmpValue2 = (0.25 * TmpCoefficient) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * coefficient;
-      vDestination[pos] += this->J2Factor * TmpValue2;	      
-      double TmpValue3 = this->Chain->SziSzj(i, j, index);
-      vDestination[pos] +=  this->J3Factor * TmpValue2 * TmpValue3;
-    }
-  pos = this->Chain->SmiSpjSmkSpl(j, i, i, j, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
-  if (pos != dimension)
-    {
-      Complex TmpValue2 = (0.25 * TmpCoefficient) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * coefficient;
-      vDestination[pos] += this->J2Factor * TmpValue2;	      
-      double TmpValue3 = this->Chain->SziSzj(i, j, index);
-      vDestination[pos] +=  this->J3Factor * TmpValue2 * TmpValue3;
-    }
-  pos = this->Chain->SziSzjSmkSpl(i, j, i, j, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
-  if (pos != dimension)
-    {
-      Complex TmpValue2 = (0.5 * TmpCoefficient) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * coefficient;
-      vDestination[pos] += this->J2Factor * TmpValue2;	      
-      double TmpValue3 = this->Chain->SziSzj(i, j, index);
-      vDestination[pos] +=  this->J3Factor * TmpValue2 * TmpValue3;
-    }
-
-  pos = this->Chain->SmiSpjSmkSplSmmSpn(i, j, i, j, i, j, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
-  if (pos != dimension)
-    {
-      Complex TmpValue2 =  (0.125 * TmpCoefficient) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * coefficient;
-      vDestination[pos] += this->J3Factor * TmpValue2;	      
-    }
-  pos = this->Chain->SmiSpjSmkSplSmmSpn(j, i, i, j, i, j, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
-  if (pos != dimension)
-    {
-      Complex TmpValue2 =  (0.125 * TmpCoefficient) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * coefficient;
-      vDestination[pos] += this->J3Factor * TmpValue2;	      
-    }
-  pos = this->Chain->SmiSpjSmkSplSmmSpn(i, j, j, i, i, j, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
-  if (pos != dimension)
-    {
-      Complex TmpValue2 =  (0.125 * TmpCoefficient) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * coefficient;
-      vDestination[pos] += this->J3Factor * TmpValue2;	      
-    }
-  pos = this->Chain->SmiSpjSmkSplSmmSpn(j, i, j, i, i, j, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
-  if (pos != dimension)
-    {
-      Complex TmpValue2 =  (0.125 * TmpCoefficient) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * coefficient;
-      vDestination[pos] += this->J3Factor * TmpValue2;	      
-    }
-
-  pos = this->Chain->SziSzjSmkSplSmmSpn(i, j, i, j, i, j, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
-  if (pos != dimension)
-    {
-      Complex TmpValue2 = (0.25 * TmpCoefficient) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * coefficient;
-      vDestination[pos] +=  this->J3Factor * TmpValue2;	      
-    }
-  pos = this->Chain->SziSzjSmkSplSmmSpn(i, j, j, i, i, j, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
-  if (pos != dimension)
-    {
-      Complex TmpValue2 = (0.25 * TmpCoefficient) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * coefficient;
-      vDestination[pos] +=  this->J3Factor * TmpValue2;	      
-    }
-
-  pos = this->Chain->SmiSpjSzkSzlSmmSpn(i, j, i, j, i, j, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
-  if (pos != dimension)
-    {
-      Complex TmpValue2 = (0.25 * TmpCoefficient) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * coefficient;
-      vDestination[pos] +=  this->J3Factor * TmpValue2;	      
-    }
-  pos = this->Chain->SmiSpjSzkSzlSmmSpn(j, i, i, j, i, j, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
-  if (pos != dimension)
-    {
-      Complex TmpValue2 = (0.25 * TmpCoefficient) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * coefficient;
-      vDestination[pos] +=  this->J3Factor * TmpValue2;	      
-    }
-
-  pos = this->Chain->SziSzjSzkSzlSmmSpn(i, j, i, j, i, j, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
-  if (pos != dimension)
-    {
-      Complex TmpValue2 = (0.5 * TmpCoefficient) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * coefficient;
-      vDestination[pos] +=  this->J3Factor * TmpValue2;	      
-    }
-}
-
-// evaluate the off-diagonal chiral contribution for a single term ( S_i (S_j ^ S_k) )
-//
-// i = linearized position of the first spin
-// j = linearized position of the second spin
-// k = linearized position of the second spin
-// index = index of the many-body state to act on
-// dimension = total Hilbert space dimension
-// vDestination = vector at which result has to be added
-// coefficient = global multiplicative coefficient
-
-inline void TwoDimensionalRRAnd2DTranslationHamiltonian::EvaluateOffDiagonalChiralContribution(int i, int j, int k, int index, int dimension, ComplexVector& vDestination, Complex& coefficient)
-{
-  double TmpCoefficient;
-  int NbrTranslationsX;
-  int NbrTranslationsY;
-  int pos = this->Chain->SpiSmjSzk(i, j, k, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
-  if (pos != dimension)
-    {
-      TmpCoefficient *= 0.5;
-      TmpCoefficient *= this->JcFactor;
-      Complex Tmp = coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
-      vDestination[pos].Re -= TmpCoefficient * Tmp.Im;
-      vDestination[pos].Im += TmpCoefficient * Tmp.Re;
-    }
-  pos = this->Chain->SpiSmjSzk(i, k, j, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
-  if (pos != dimension)
-    {
-      TmpCoefficient *= 0.5;
-      TmpCoefficient *= this->JcFactor;
-      Complex Tmp = coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
-      vDestination[pos].Re += TmpCoefficient * Tmp.Im;
-      vDestination[pos].Im -= TmpCoefficient * Tmp.Re;
-    }
-  pos = this->Chain->SpiSmjSzk(j, k, i, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
-  if (pos != dimension)
-    {
-      TmpCoefficient *= 0.5;
-      TmpCoefficient *= this->JcFactor;
-      Complex Tmp = coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
-      vDestination[pos].Re -= TmpCoefficient * Tmp.Im;
-      vDestination[pos].Im += TmpCoefficient * Tmp.Re;
-    }
-  pos = this->Chain->SpiSmjSzk(k, j, i, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
-  if (pos != dimension)
-    {
-      TmpCoefficient *= 0.5;
-      TmpCoefficient *= this->JcFactor;
-      Complex Tmp = coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
-      vDestination[pos].Re += TmpCoefficient * Tmp.Im;
-      vDestination[pos].Im -= TmpCoefficient * Tmp.Re;
-    }
-  pos = this->Chain->SpiSmjSzk(k, i, j, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
-  if (pos != dimension)
-    {
-      TmpCoefficient *= 0.5;
-      TmpCoefficient *= this->JcFactor;
-      Complex Tmp = coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
-      vDestination[pos].Re -= TmpCoefficient * Tmp.Im;
-      vDestination[pos].Im += TmpCoefficient * Tmp.Re;
-    }
-  pos = this->Chain->SpiSmjSzk(j, i, k, index, TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
-  if (pos != dimension)
-    {
-      TmpCoefficient *= 0.5;
-      TmpCoefficient *= this->JcFactor;
-      Complex Tmp = coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY];
-      vDestination[pos].Re += TmpCoefficient * Tmp.Im;
-      vDestination[pos].Im -= TmpCoefficient * Tmp.Re;
-    }
-}
 
 #endif

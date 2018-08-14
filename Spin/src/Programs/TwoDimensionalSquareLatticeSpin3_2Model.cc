@@ -67,6 +67,7 @@ int main(int argc, char** argv)
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
+  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
   ArchitectureManager Architecture;
   LanczosManager Lanczos;
@@ -74,6 +75,7 @@ int main(int argc, char** argv)
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
   Lanczos.AddOptionGroup(&Manager);
+  Manager += PrecalculationGroup;
   Manager += OutputGroup;
   Manager += ToolsGroup;
   Manager += MiscGroup;
@@ -93,6 +95,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  BooleanOption ('\n', "disable-inversion", "disable the inversion symmetry quantum number");
   (*SystemGroup) += new  BooleanOption ('\n', "disable-szsymmetry", "disable the Sz<->-Sz symmetry");
   (*SystemGroup) += new  BooleanOption ('\n', "use-obc", "use open boundary conditions");
+  (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -116,6 +119,7 @@ int main(int argc, char** argv)
   int NbrSitesX = Manager.GetInteger("nbr-sitex");
   int NbrSitesY = Manager.GetInteger("nbr-sitey");
   int NbrSpins = NbrSitesX * NbrSitesY;
+  long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   
   char* OutputFileName = new char [512];
   char* CommentLine = new char [512];
@@ -309,11 +313,12 @@ int main(int argc, char** argv)
 			  TwoDimensionalHeisenbergAnd2DTranslationHamiltonian* Hamiltonian = 0;
 // 			  Hamiltonian = new TwoDimensionalHeisenbergAnd2DTranslationHamiltonian(Chain, XMomenta[MomentumSector], NbrSitesX, 
 // 												YMomenta[MomentumSector], NbrSitesY, 
-// 												Manager.GetDouble("j1-value"), Manager.GetDouble("j1-value"));
+// 												Manager.GetDouble("j1-value"), Manager.GetDouble("j1-value"),
+//			  Architecture.GetArchitecture(), Memory);
 			  Hamiltonian = new TwoDimensionalRRAnd2DTranslationHamiltonian(Chain, XMomenta[MomentumSector], NbrSitesX, 
 											YMomenta[MomentumSector], NbrSitesY, Manager.GetDouble("j1-value"), 
 											Manager.GetDouble("j2-value"), Manager.GetDouble("j3-value"),
-											Manager.GetDouble("jc-value"));
+											Manager.GetDouble("jc-value"), Architecture.GetArchitecture(), Memory);
 
 			  
 			  char* TmpEigenstateString = new char[strlen(OutputFileName) + strlen(OutputParameterFileName) + 64];
