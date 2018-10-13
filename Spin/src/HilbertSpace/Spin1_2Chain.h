@@ -48,6 +48,7 @@ class Spin1_2Chain : public AbstractSpinChain
   friend class DoubledSpin1_2_ChainWithTranslations_alternative;
   friend class Spin1_2ChainWithTranslationsAndSzSymmetry;
   friend class Spin1_2ChainWithTranslationsAndInversionSymmetry;
+  friend class Spin1_2ChainWithTranslations;
 
  protected:
 
