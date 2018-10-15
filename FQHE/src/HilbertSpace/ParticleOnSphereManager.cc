@@ -45,6 +45,7 @@
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasisLong.h"
 #include "HilbertSpace/FermionOnSphereHaldaneHugeBasis.h"
 #include "HilbertSpace/FermionOnSphereWithSpinAndPairing.h"
+#include "HilbertSpace/FermionOnSphereWithSpinPartialPolarization.h"
 
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "HilbertSpace/FermionOnSphereWithSpinLong.h"
@@ -619,7 +620,15 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
 		if (LzMax <= 15)
 #endif
 		  {
-		    Space = new FermionOnSphereWithSpin(NbrFermions, totalLz, LzMax, SzTotal, MemorySpace);
+		      if (this->Options->GetInteger("nbrspin-polarized") > 0)
+			{
+			  Space = new FermionOnSphereWithSpinPartialPolarization(NbrFermions, totalLz, LzMax, SzTotal, 
+										 (int) this->Options->GetInteger("nbrspin-polarized"), MemorySpace);
+			}
+		      else
+			{
+			  Space = new FermionOnSphereWithSpin(NbrFermions, totalLz, LzMax, SzTotal, MemorySpace);
+			}
 		  }
 		else
 		  {

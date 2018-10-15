@@ -133,7 +133,7 @@ AC_MSG_RESULT([${GSL_LIBS}])
 
 if test X${USER_DEFINED_GSL} = Xno && test X${HAVE_PKG_GSL} = Xyes; then
   AC_DEFINE(HAVE_GSL,,[define if we are using gsl library])
-  AC_CHECK_LIB(gsl,gsl_blas_dgemm,GSL_LIBS=-lgsl,AC_MSG_ERROR([gsl library not found]))
+  AC_CHECK_LIB(gsl,gsl_blas_dgemm,GSL_LIBS="-lgsl -lgslcblas",AC_MSG_ERROR([gsl library not found]),"-lgslcblas")
   GSL_LIBS="-lgsl -lgslcblas"
 fi
 
@@ -350,7 +350,7 @@ if test X${HAVE_PKG_SCALAPACK} = Xyes; then
  AC_DEFINE(HAVE_SCALAPACK,,[define if we are using SCALAPACK])
  AC_LANG_PUSH([Fortran])
  if test X${USER_DEFINED_SCALAPACK} = Xno; then
-    AC_CHECK_LIB(scalapack, pdsytrd, [HAVE_PKG_SCALAPACK=$enableval; SCALAPACK_LIBS="-lscalapack"], AC_MSG_ERROR(SCALAPACK lib not found), ${SCALAPACK_LIBDIR} -lmpi -lblas -llapack)
+    AC_CHECK_LIB(scalapack, pdsytrd, [HAVE_PKG_SCALAPACK=$enableval; SCALAPACK_LIBS="-lscalapack"], AC_MSG_ERROR(SCALAPACK lib not found), ${SCALAPACK_LIBDIR} -lblas -llapack)
  fi
  AC_LANG_POP([Fortran])
  if test X${USER_DEFINED_LAPACK} = Xno; then

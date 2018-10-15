@@ -115,25 +115,28 @@ FermionOnSphereWithSpin::FermionOnSphereWithSpin (int nbrFermions, int totalLz, 
 
   this->Flag.Initialize();
   this->TargetSpace = this;
-  this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
-  this->StateHighestBit = new int [this->LargeHilbertSpaceDimension];  
-//   if (this->GenerateStates(this->NbrFermions, this->LzMax, this->TotalLz, this->TotalSpin) != this->HilbertSpaceDimension)
-//     {
-//       cout << "Mismatch in State-count and State Generation in FermionOnSphereWithSpin!" << endl;
-//       exit(1);
-//     }
-
- if (this->NbrFermions > 0)
+  if (this->LargeHilbertSpaceDimension > 0l)
     {
-      this->HilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
-							 (this->TotalSpin + this->NbrFermions) >> 1, 0l);
-      this->GenerateLookUpTable(memory);
+      this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+      this->StateHighestBit = new int [this->LargeHilbertSpaceDimension];  
+      
+      if (this->NbrFermions > 0)
+	{
+	  this->HilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
+							     (this->TotalSpin + this->NbrFermions) >> 1, 0l);
+	  this->GenerateLookUpTable(memory);
+	}
+      else
+	{
+	  this->StateDescription[0] = 0x0ul; 
+	}
     }
- else
-   {
-     this->StateDescription[0] = 0x0ul; 
-   }
-
+  else
+    {
+      this->StateDescription = 0;
+      this->StateHighestBit = 0;
+      this->LookUpTableMemorySize = 0;
+    }
 //   for (int i=0; i<HilbertSpaceDimension; ++i)
 //     PrintState(cout, i)<<endl;
    
@@ -1724,6 +1727,10 @@ int FermionOnSphereWithSpin::CarefulFindStateIndex(unsigned long stateDescriptio
 
 int FermionOnSphereWithSpin::FindStateIndex(unsigned long stateDescription, int lzmax)
 {
+  if ((stateDescription > this->StateDescription[0]) || (stateDescription < this->StateDescription[this->HilbertSpaceDimension - 1]))
+    {
+      return this->HilbertSpaceDimension;
+    }
   long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
   long PosMin = this->LookUpTable[lzmax][PosMax];
   PosMax = this->LookUpTable[lzmax][PosMax + 1];
@@ -1745,7 +1752,10 @@ int FermionOnSphereWithSpin::FindStateIndex(unsigned long stateDescription, int 
   if (CurrentState == stateDescription)
     return PosMid;
   else
-    return PosMin;
+    if ((this->StateDescription[PosMin] != stateDescription) && (this->StateDescription[PosMax] != stateDescription))
+      return this->HilbertSpaceDimension;
+    else
+      return PosMin;
 }  
 
 // find state index from a string
@@ -2097,8 +2107,8 @@ void FermionOnSphereWithSpin::GenerateLookUpTable(unsigned long memory)
       memory >>= 1;
       ++this->MaximumLookUpShift;
     }
-  if (this->MaximumLookUpShift > 2*this->NbrLzValue)
-    this->MaximumLookUpShift = 2*this->NbrLzValue;
+  if (this->MaximumLookUpShift > (2 * this->NbrLzValue))
+    this->MaximumLookUpShift = (2 * this->NbrLzValue);
   this->LookUpTableMemorySize = 1 << this->MaximumLookUpShift;
 
   // construct  look-up tables for searching states
@@ -2134,7 +2144,22 @@ void FermionOnSphereWithSpin::GenerateLookUpTable(unsigned long memory)
 	      --CurrentLookUpTableValue;
 	    }
 	  TmpLookUpTable[0] = i;
- 	  CurrentLargestBit = CurrentHighestBit;
+	  CurrentLargestBit--;
+	  while (CurrentLargestBit > CurrentHighestBit)
+	    {
+	      if (CurrentLargestBit < this->MaximumLookUpShift)
+		this->LookUpTableShift[CurrentLargestBit] = 0;
+	      else
+		this->LookUpTableShift[CurrentLargestBit] = CurrentLargestBit + 1 - this->MaximumLookUpShift;
+	      TmpLookUpTable = this->LookUpTable[CurrentLargestBit];
+	      CurrentLookUpTableValue = this->LookUpTableMemorySize;
+	      while (CurrentLookUpTableValue > 0x0ul)
+		{
+		  TmpLookUpTable[CurrentLookUpTableValue] = i;
+		  --CurrentLookUpTableValue;
+		}
+	      CurrentLargestBit--;
+	    }
 	  TmpLookUpTable = this->LookUpTable[CurrentLargestBit];
 	  if (CurrentLargestBit < this->MaximumLookUpShift)
 	    this->LookUpTableShift[CurrentLargestBit] = 0;

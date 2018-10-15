@@ -503,7 +503,7 @@ int main(int argc, char** argv)
 			      else
 				{
 				  OutputState /= OutputState.Norm(); 
-				  if ("subset-symmetrization" == false)
+				  if (Manager.GetBoolean("subset-symmetrization") == false)
 				    {
 				      if (Manager.GetString("output-file") == 0)
 					{
@@ -656,7 +656,7 @@ int main(int argc, char** argv)
 			  LongRational RootCoef = RationalOutputState[RootPosition];
 			  RationalOutputState /= RootCoef; 
 			  
-			  if ("subset-symmetrization" == false)
+			  if (Manager.GetBoolean("subset-symmetrization") == false)
 			    {
 			    if (Manager.GetString("output-file") == 0)
 			      {
@@ -786,7 +786,7 @@ int main(int argc, char** argv)
 			{
 			  LongRational RootCoef = RationalOutputState[RootPosition];
 			  RationalOutputState /= RootCoef; 
-			  if ("subset-symmetrization" == false)
+			  if (Manager.GetBoolean("subset-symmetrization") == false)
 			    {
 			      if (Manager.GetString("output-file") == 0)
 				{

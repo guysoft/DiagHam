@@ -13,6 +13,7 @@
 #include "HilbertSpace/FermionOnSphereWithSU4Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSU3Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/FermionOnSphereWithSpinPartialPolarization.h"
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
 #include "HilbertSpace/BosonOnSphereWithSU2Spin.h"
 #include "HilbertSpace/BosonOnSphereWithSU2SpinSzSymmetry.h"
@@ -436,7 +437,17 @@ int main(int argc, char** argv)
 		    if (TwoLLFlag == false)
 		      {
 			if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
-			  Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+			  {
+			    if (Manager.GetInteger("nbrspin-polarized") > 0)
+			      {
+				Space = new FermionOnSphereWithSpinPartialPolarization(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, 
+											(int) Manager.GetInteger("nbrspin-polarized"));
+			      }
+			    else
+			      {
+				Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+			      }
+			  }
 			else //either Lz or Sz symmetrized basis
 			  {
 			    if ((SzSymmetrizedBasis == true)  && (TotalSz == 0) && (LzSymmetrizedBasis == true) && (TotalLz == 0))
