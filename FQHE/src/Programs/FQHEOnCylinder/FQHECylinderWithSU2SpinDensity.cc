@@ -11,6 +11,7 @@
 #include "HilbertSpace/FermionOnSphereWithSpinLzSymmetryLong.h"
 #include "HilbertSpace/FermionOnSphereWithSpinAllSz.h"
 #include "HilbertSpace/FermionOnSphereWithSpinAllSzLzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSpinPartialPolarization.h"
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
 #include "HilbertSpace/BosonOnSphereWithSU2Spin.h"
 #include "HilbertSpace/BosonOnSphereWithSpinAllSz.h"
@@ -200,7 +201,14 @@ int main(int argc, char** argv)
 	    if (KyMax <= 15)
 #endif
 	      {
-		Space = new FermionOnSphereWithSpin(NbrParticles, TotalKy, KyMax, TotalSz);
+		if (NbrPolarizedOrbitals == 0)
+		  {
+		    Space = new FermionOnSphereWithSpin(NbrParticles, TotalKy, KyMax, TotalSz);
+		  }
+		else
+		  {
+		    Space = new FermionOnSphereWithSpinPartialPolarization(NbrParticles, TotalKy, KyMax, TotalSz, NbrPolarizedOrbitals);
+		  }
 	      }
 	    else
 	      {
