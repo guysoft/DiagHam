@@ -42,7 +42,6 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
   (*SystemGroup) += new SingleStringOption  ('\0', "input-file", "input state file name");
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
-  (*SystemGroup) += new SingleStringOption  ('\n', "reference-state", "reference state to start the Haldane algorithm from (can be laughlin, pfaffian or readrezayi3)", "laughlin");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
@@ -109,18 +108,9 @@ int main(int argc, char** argv)
 	{
 	  if ((SymmetrizedBasis == false) || (TotalLz != 0))
 	    {
-	      if (BergholtzFlag == false)
-		{
-		  FermionOnSphere InputSpace (NbrParticles, TotalLz, LzMax, MemorySpace);
-		  FermionOnSphere OutputSpace (NbrHoles, TotalLz, LzMax, MemorySpace);
-		  HoleState = InputSpace.ParticleHoleSymmetrize(State, OutputSpace);
-		}
-	      else
-		{
-		  FermionOnSphere InputSpace (NbrParticles, TotalLz, LzMax, MemorySpace);
-		  FermionOnSphere OutputSpace (NbrHoles, TotalLz, LzMax, MemorySpace);
-		  HoleState = InputSpace.ParticleHoleSymmetrize(State, OutputSpace);
-		}	      
+	      FermionOnSphere InputSpace (NbrParticles, TotalLz, LzMax, MemorySpace);
+	      FermionOnSphere OutputSpace (NbrHoles, -TotalLz, LzMax, MemorySpace);
+	      HoleState = InputSpace.ParticleHoleSymmetrize(State, OutputSpace);
 	    }
 	  else
 	    {
@@ -135,32 +125,8 @@ int main(int argc, char** argv)
       int* ReferenceState = 0;
       if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
 	{
-	  ReferenceState = new int[LzMax + 1];
-	  for (int i = 0; i <= LzMax; ++i)
-	    ReferenceState[i] = 0;
-	  if (strcasecmp(((SingleStringOption*) Manager["reference-state"])->GetString(), "laughlin") == 0)
-	    for (int i = 0; i <= LzMax; i += 3)
-	      ReferenceState[i] = 1;
-	  else
-	    if (strcasecmp(((SingleStringOption*) Manager["reference-state"])->GetString(), "pfaffian") == 0)
-	      for (int i = 0; i <= LzMax; i += 4)
-		{
-		  ReferenceState[i] = 1;
-		  ReferenceState[i + 1] = 1;
-		}
-	    else
-	      if (strcasecmp(((SingleStringOption*) Manager["reference-state"])->GetString(), "readrezayi3") == 0)
-		for (int i = 0; i <= LzMax; i += 5)
-		  {
-		    ReferenceState[i] = 1;
-		    ReferenceState[i + 1] = 1;
-		    ReferenceState[i + 2] = 1;
-		  }
-	      else
-		{
-		  cout << "unknown reference state " << ((SingleStringOption*) Manager["reference-state"])->GetString() << endl;
-		  return -1;
-		}
+	  cout << "a --reference-file is needed when using the --haldane option" << endl;
+	  return -1;
 	}
       else
 	{
@@ -203,7 +169,7 @@ int main(int argc, char** argv)
 	  else
 	    {
 	      FermionOnSphereHaldaneBasis InputSpace (NbrParticles, TotalLz, LzMax, ReferenceState, MemorySpace);
-	      FermionOnSphere OutputSpace (NbrHoles, TotalLz, LzMax, MemorySpace);
+	      FermionOnSphere OutputSpace (NbrHoles, -TotalLz, LzMax, MemorySpace);
 	      HoleState = InputSpace.ParticleHoleSymmetrize(State, OutputSpace);
 	    }
 	}
@@ -243,15 +209,7 @@ int main(int argc, char** argv)
 	  return -1;
 	} 
       strncpy (OutputFileName + 15, InputFileName + 9, (TagPosition - InputFileName - 9));
-      sprintf (OutputFileName + 6 + (TagPosition - InputFileName), "_n_%d", NbrHoles);
-      long TmpPos = strlen (OutputFileName);
-      TagPosition = strcasestr(InputFileName, "_2s_");
-      if (TagPosition == 0)
-	{
-	  cout << "no default output name can be built from " << InputFileName << endl;
-	  return -1;
-	}      
-      strcpy (OutputFileName + TmpPos, TagPosition);
+      sprintf (OutputFileName + 6 + (TagPosition - InputFileName), "_n_%d_2s_%d_lz_%d.0.vec", NbrHoles, LzMax, -TotalLz);
       HoleState.WriteVector(OutputFileName);
     }
   else
