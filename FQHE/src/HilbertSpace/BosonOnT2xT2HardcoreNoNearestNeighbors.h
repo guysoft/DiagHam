@@ -150,7 +150,7 @@ class BosonOnT2xT2HardcoreNoNearestNeighbors : public BosonOnSquareLatticeMoment
   // index = linearized index 
   // lz = reference on the z projection of the angular momentum for the first sphere
   // kz = reference on the  z projection of the angular momentum for the second sphere
-  virtual int GetLinearizedIndex(int index, int& lz, int& kz);
+  virtual void GetLinearizedIndex(int index, int& lz, int& kz);
 
   // request whether state with given index satisfies a general Pauli exclusion principle
   // index = state index
@@ -177,7 +177,7 @@ inline int BosonOnT2xT2HardcoreNoNearestNeighbors::GetLinearizedIndex(int lz, in
 // lz = reference on the z projection of the angular momentum for the first sphere
 // kz = reference on the  z projection of the angular momentum for the second sphere
 
-inline int BosonOnT2xT2HardcoreNoNearestNeighbors::GetLinearizedIndex(int index, int& lz, int& kz)
+inline void BosonOnT2xT2HardcoreNoNearestNeighbors::GetLinearizedIndex(int index, int& lz, int& kz)
 {
   lz = index / this->NbrSiteY;
   kz = index % this->NbrSiteY;

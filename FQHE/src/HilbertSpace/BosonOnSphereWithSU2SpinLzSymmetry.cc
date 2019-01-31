@@ -111,7 +111,15 @@ BosonOnSphereWithSU2SpinLzSymmetry::BosonOnSphereWithSU2SpinLzSymmetry (int nbrB
   this->StateDescriptionSigma[0] = this->StateDescriptionUp;
   this->StateDescriptionSigma[1] = this->StateDescriptionDown;
   long TmpHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->LzMax, (this->TotalLz + (this->NbrBosons * this->LzMax)) >> 1, 
-						       this->FermionicLzMax, this->FermionicLzMax, 0l);
+						       this->LzMax + this->NbrBosons + 1, this->LzMax + this->NbrBosons + 1, 0l);
+  for (long i = 0; i < TmpHilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState = this->StateDescriptionUp[i];
+      int TmpNbrUps = this->ComputeNbrParticles(this->StateDescriptionUp[i]);
+      this->StateDescriptionUp[i] >>= this->NbrBosons - TmpNbrUps; 
+      this->StateDescriptionDown[i] >>= TmpNbrUps; 
+    }
+  SortDoubleElementArrayDownOrdering<unsigned long>(this->StateDescriptionUp, this->StateDescriptionDown, TmpHilbertSpaceDimension);
 
   if (TmpHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
     {

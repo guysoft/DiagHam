@@ -881,10 +881,17 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
 	    {
 	      if (this->Options->GetBoolean("all-sz"))
 		{
-		  if (this->Options->GetInteger("pair-parity") >= 0)
-		    Space = new BosonOnSphereWithSpinAllSz(NbrBosons, totalLz, LzMax, this->Options->GetInteger("pair-parity"), MemorySpace);
+		  if (this->Options->GetBoolean("use-alt"))
+		    {
+		      Space = new BosonOnSphereWithSU2Spin(NbrBosons, totalLz, LzMax);
+		    }
 		  else
-		    Space = new BosonOnSphereWithSpinAllSz(NbrBosons, totalLz, LzMax, MemorySpace);
+		    {
+		      if (this->Options->GetInteger("pair-parity") >= 0)
+			Space = new BosonOnSphereWithSpinAllSz(NbrBosons, totalLz, LzMax, this->Options->GetInteger("pair-parity"), MemorySpace);
+		      else
+			Space = new BosonOnSphereWithSpinAllSz(NbrBosons, totalLz, LzMax, MemorySpace);
+		    }
 		}
 	      else
 		{

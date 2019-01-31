@@ -142,7 +142,7 @@ class BosonOnS2xS2 : public BosonOnSquareLatticeMomentumSpace
   // index = linearized index 
   // lz = reference on the z projection of the angular momentum for the first sphere
   // kz = reference on the  z projection of the angular momentum for the second sphere
-  virtual int GetLinearizedIndex(int index, int& lz, int& kz);
+  virtual void GetLinearizedIndex(int index, int& lz, int& kz);
 
 };
 
@@ -163,7 +163,7 @@ inline int BosonOnS2xS2::GetLinearizedIndex(int lz, int kz)
 // lz = reference on the z projection of the angular momentum for the first sphere
 // kz = reference on the  z projection of the angular momentum for the second sphere
 
-inline int BosonOnS2xS2::GetLinearizedIndex(int index, int& lz, int& kz)
+inline void BosonOnS2xS2::GetLinearizedIndex(int index, int& lz, int& kz)
 {
   lz = index / this->NbrSiteY;
   kz = index % this->NbrSiteY;

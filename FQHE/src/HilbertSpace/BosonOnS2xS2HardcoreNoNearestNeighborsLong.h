@@ -151,7 +151,7 @@ class BosonOnS2xS2HardcoreNoNearestNeighborsLong : public BosonOnSquareLatticeMo
   // index = linearized index 
   // lz = reference on the z projection of the angular momentum for the first sphere
   // kz = reference on the  z projection of the angular momentum for the second sphere
-  virtual int GetLinearizedIndex(int index, int& lz, int& kz);
+  virtual void GetLinearizedIndex(int index, int& lz, int& kz);
 
   // request whether state with given index satisfies a general Pauli exclusion principle
   // index = state index
@@ -178,7 +178,7 @@ inline int BosonOnS2xS2HardcoreNoNearestNeighborsLong::GetLinearizedIndex(int lz
 // lz = reference on the z projection of the angular momentum for the first sphere
 // kz = reference on the  z projection of the angular momentum for the second sphere
 
-inline int BosonOnS2xS2HardcoreNoNearestNeighborsLong::GetLinearizedIndex(int index, int& lz, int& kz)
+inline void BosonOnS2xS2HardcoreNoNearestNeighborsLong::GetLinearizedIndex(int index, int& lz, int& kz)
 {
   lz = index / this->NbrSiteY;
   kz = index % this->NbrSiteY;

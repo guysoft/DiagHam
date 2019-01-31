@@ -154,7 +154,7 @@ class BosonOnT2xS2WithMagneticTranslationsShort :  public BosonOnTorusWithMagnet
   // index = linearized index 
   // ky = reference on the momentum along the y direction for the torus
   // lz = reference on the z projection of the angular momentum for the sphere
-  virtual int GetLinearizedIndex(int index, int& ky, int& lz);
+  virtual void GetLinearizedIndex(int index, int& ky, int& lz);
 
 };
 
@@ -175,7 +175,7 @@ inline int BosonOnT2xS2WithMagneticTranslationsShort::GetLinearizedIndex(int ky,
 // ky = reference on the momentum along the y direction for the torus
 // lz = reference on the z projection of the angular momentum for the sphere
 
-inline int BosonOnT2xS2WithMagneticTranslationsShort::GetLinearizedIndex(int index, int& ky, int& lz)
+inline void BosonOnT2xS2WithMagneticTranslationsShort::GetLinearizedIndex(int index, int& ky, int& lz)
 {
   lz = index % this->NbrLzValues;
   ky = index / this->NbrLzValues;

@@ -105,8 +105,17 @@ BosonOnSphereWithSU2Spin::BosonOnSphereWithSU2Spin (int nbrBosons, int totalLz, 
   this->StateDescriptionSigma[0] = this->StateDescriptionUp;
   this->StateDescriptionSigma[1] = this->StateDescriptionDown;
   long TmpHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->LzMax, (this->TotalLz + (this->NbrBosons * this->LzMax)) >> 1, 
-						       this->FermionicLzMax, this->FermionicLzMax, 0l);
+						       this->LzMax + this->NbrBosons + 1, this->LzMax + this->NbrBosons + 1, 0l);
 
+  for (long i = 0; i < TmpHilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState = this->StateDescriptionUp[i];
+      int TmpNbrUps = this->ComputeNbrParticles(this->StateDescriptionUp[i]);
+      this->StateDescriptionUp[i] >>= this->NbrBosons - TmpNbrUps; 
+      this->StateDescriptionDown[i] >>= TmpNbrUps; 
+    }
+  SortDoubleElementArrayDownOrdering<unsigned long>(this->StateDescriptionUp, this->StateDescriptionDown, TmpHilbertSpaceDimension);
+  
   if (TmpHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
     {
       cout << TmpHilbertSpaceDimension << " " << this->LargeHilbertSpaceDimension << endl;
@@ -184,8 +193,6 @@ BosonOnSphereWithSU2Spin::BosonOnSphereWithSU2Spin (int nbrBosons, int totalLz, 
   this->StateDescriptionSigma[1] = this->StateDescriptionDown;
   long TmpHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->LzMax, this->LzMax, (this->TotalLz + (this->NbrBosons * this->LzMax)) >> 1, 
 						       this->NbrBosonsUp, this->NbrBosonsDown, 0l);
-//   for (int i = 0; i < TmpHilbertSpaceDimension; ++i)
-//     cout << i << " : " << hex << this->StateDescriptionUp[i] << " " << this->StateDescriptionDown[i] << dec << endl;
   if (TmpHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
     {
       cout << TmpHilbertSpaceDimension << " " << this->LargeHilbertSpaceDimension << endl;
@@ -671,13 +678,18 @@ long BosonOnSphereWithSU2Spin::GenerateStates(int nbrBosons, int lzMaxUp, int lz
 long BosonOnSphereWithSU2Spin::GenerateStates(int nbrBosons, int lzMax, int totalLz, 
 					      int currentFermionicPositionUp, int currentFermionicPositionDown, long pos)
 {
-  if ((nbrBosons < 0) || (totalLz < 0))
-    return pos;
-  if ((nbrBosons == 0) && (totalLz == 0))
+  if (nbrBosons == 0)
     {
-      this->StateDescriptionUp[pos] = 0x0ul;
-      this->StateDescriptionDown[pos] = 0x0ul;
-      return (pos + 1l);
+      if (totalLz == 0)
+	{
+	  this->StateDescriptionUp[pos] = 0x0ul;
+	  this->StateDescriptionDown[pos] = 0x0ul;
+	  return (pos + 1l);
+	}
+      else
+	{
+	  return pos;
+	}
     }
   if (lzMax < 0)
     return pos;

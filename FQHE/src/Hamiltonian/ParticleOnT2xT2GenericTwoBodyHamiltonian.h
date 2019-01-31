@@ -129,7 +129,7 @@ class ParticleOnT2xT2GenericTwoBodyHamiltonian : public AbstractQHEOnSphereFullH
   // index = linearized index 
   // lz = reference on the z projection of the angular momentum for the first sphere
   // kz = reference on the  z projection of the angular momentum for the second sphere
-  virtual int GetLinearizedIndex(int index, int& lz, int& kz);
+  virtual void GetLinearizedIndex(int index, int& lz, int& kz);
 
   // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
   //
@@ -180,7 +180,7 @@ inline int ParticleOnT2xT2GenericTwoBodyHamiltonian::GetLinearizedIndex(int lz, 
 // lz = reference on the z projection of the angular momentum for the first sphere
 // kz = reference on the  z projection of the angular momentum for the second sphere
 
-inline int ParticleOnT2xT2GenericTwoBodyHamiltonian::GetLinearizedIndex(int index, int& lz, int& kz)
+inline void ParticleOnT2xT2GenericTwoBodyHamiltonian::GetLinearizedIndex(int index, int& lz, int& kz)
 {
   lz = index / this->NbrFluxQuanta2;
   kz = index % this->NbrFluxQuanta2;

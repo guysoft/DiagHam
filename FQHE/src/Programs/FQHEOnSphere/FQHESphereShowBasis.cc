@@ -323,44 +323,70 @@ int main(int argc, char** argv)
 	    {
 	      if (SU2SpinFlag == true)
 		{
-		  if (AllSzFlag == false)
+		  if (Manager.GetInteger("nbrspin-polarized") > 0)
 		    {
-		      if (Manager.GetInteger("nbrspin-polarized") > 0)
-			{
-			  Space = new BosonOnSphereWithSU2SpinPartialPolarization(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, 
-										  (int) Manager.GetInteger("nbrspin-polarized"));
+		      Space = new BosonOnSphereWithSU2SpinPartialPolarization(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, 
+									      (int) Manager.GetInteger("nbrspin-polarized"));
+		    }
+		  else
+		    {
+		      if (Manager.GetBoolean("use-alt") == false)
+			{		       
+			  Space = new BosonOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
 			}
 		      else
-			{
-			  if (Manager.GetBoolean("use-alt") == false)
-			    {		       
-			      Space = new BosonOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
-			    }
-			  else
-			    {		       
-			      if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
+			{		       
+			  if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
+			    {
+			      if (AllLzFlag == true)
 				{
-				  if (AllLzFlag == true)
+				  Space = new BosonOnSphereWithSU2SpinAllLz(NbrParticles, NbrFluxQuanta, TotalSz);
+				}
+			      else
+				{
+				  if (AllSzFlag == true)
 				    {
-				      Space = new BosonOnSphereWithSU2SpinAllLz(NbrParticles, NbrFluxQuanta, TotalSz);
+				      Space = new BosonOnSphereWithSU2Spin(NbrParticles, TotalLz, NbrFluxQuanta);
 				    }
 				  else
 				    {
 				      Space = new BosonOnSphereWithSU2Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
 				    }
 				}
-			      else
+			    }
+			  else
+			    {
+			      if ((SzSymmetrizedBasis == true)  && (TotalSz == 0) && (LzSymmetrizedBasis == true) && (TotalLz == 0))
 				{
-				  if ((SzSymmetrizedBasis == true)  && (TotalSz == 0) && (LzSymmetrizedBasis == true) && (TotalLz == 0))
+				  if (AllSzFlag == true)
 				    {
-				      Space = new BosonOnSphereWithSU2SpinLzSzSymmetry(NbrParticles, NbrFluxQuanta, TotalSz, Manager.GetBoolean("minus-szparity"),
+				      Space = new BosonOnSphereWithSU2SpinLzSzSymmetry(NbrParticles, NbrFluxQuanta, Manager.GetBoolean("minus-szparity"),
 										       Manager.GetBoolean("minus-lzparity"));
 				    }
-				  else 
+				  else
 				    {
-				      if ((SzSymmetrizedBasis == true)  && (TotalSz == 0))
+				      Space = new BosonOnSphereWithSU2SpinLzSzSymmetry(NbrParticles, NbrFluxQuanta, TotalSz, Manager.GetBoolean("minus-szparity"),
+										       Manager.GetBoolean("minus-lzparity"));					  
+				    }
+				}
+			      else 
+				{
+				  if ((SzSymmetrizedBasis == true)  && (TotalSz == 0))
+				    {
+				      if (AllSzFlag == true)
 					{
-				      Space = new BosonOnSphereWithSU2SpinSzSymmetry(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, Manager.GetBoolean("minus-szparity"));
+					  Space = new BosonOnSphereWithSU2SpinSzSymmetry(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetBoolean("minus-szparity"));
+					}
+				      else
+					{
+					  Space = new BosonOnSphereWithSU2SpinSzSymmetry(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, Manager.GetBoolean("minus-szparity"));
+					}
+				    }
+				  else
+				    {
+				      if (AllSzFlag == true)
+					{
+					  Space = new BosonOnSphereWithSU2SpinLzSymmetry(NbrParticles, NbrFluxQuanta, Manager.GetBoolean("minus-lzparity"));
 					}
 				      else
 					{
@@ -370,10 +396,6 @@ int main(int argc, char** argv)
 				}
 			    }
 			}
-		    }
-		  else
-		    {
-		      Space = new BosonOnSphereWithSpinAllSz(NbrParticles, TotalLz, NbrFluxQuanta);
 		    }
 		}
 	      else

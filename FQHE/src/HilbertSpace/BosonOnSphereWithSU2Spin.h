@@ -818,7 +818,13 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // return value = corresponding integral
   virtual double ComputeIntegralPhi0Phi0Phi0OnCylinder(double k1, double l1, double k2, double l2, double k3, double l3, double perimeter);
 
-};
+  // compute the number of particles in a given state
+  //
+  // stateDescription = unsigned integer describing the state
+  // return value = number of particles
+  virtual int ComputeNbrParticles(unsigned long stateDescription);
+
+  };
 
 // get the number of orbitals
 //
@@ -1197,6 +1203,22 @@ inline int BosonOnSphereWithSU2Spin::FindStateIndex(unsigned long*& stateDescrip
   unsigned long Tmp2;
   this->BosonToFermion(stateDescriptionUp, stateDescriptionDown, Tmp1, Tmp2);
   return this->FindStateIndex(Tmp1, Tmp2);
+}
+
+// compute the number of particles in a given state
+//
+// stateDescription = unsigned integer describing the state
+// return value = number of particles
+
+inline int BosonOnSphereWithSU2Spin::ComputeNbrParticles(unsigned long stateDescription)
+{
+  unsigned long TmpNbrParticle = 0l;
+  while(stateDescription != 0x0ul) 
+    {
+      TmpNbrParticle += (stateDescription & 0x1ul);
+      stateDescription >>= 1;
+    }
+  return (int) TmpNbrParticle;
 }
 
 #endif

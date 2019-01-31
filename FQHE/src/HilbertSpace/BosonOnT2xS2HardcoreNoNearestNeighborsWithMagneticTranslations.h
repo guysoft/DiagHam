@@ -210,7 +210,7 @@ class BosonOnT2xS2HardcoreNoNearestNeighborsWithMagneticTranslations : public Fe
   // index = linearized index 
   // ky = reference on the momentum along the y direction for the torus
   // lz = reference on the z projection of the angular momentum for the sphere
-  virtual int GetLinearizedIndex(int index, int& ky, int& lz);
+  virtual void GetLinearizedIndex(int index, int& ky, int& lz);
 
 };
 
@@ -231,7 +231,7 @@ inline int BosonOnT2xS2HardcoreNoNearestNeighborsWithMagneticTranslations::GetLi
 // ky = reference on the momentum along the y direction for the torus
 // lz = reference on the z projection of the angular momentum for the sphere
 
-inline int BosonOnT2xS2HardcoreNoNearestNeighborsWithMagneticTranslations::GetLinearizedIndex(int index, int& ky, int& lz)
+inline void BosonOnT2xS2HardcoreNoNearestNeighborsWithMagneticTranslations::GetLinearizedIndex(int index, int& ky, int& lz)
 {
   lz = index % this->NbrOrbitalSphere;
   ky = index / this->NbrOrbitalSphere;

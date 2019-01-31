@@ -161,7 +161,7 @@ class BosonOnT2xS2HardcoreNoNearestNeighbors : public BosonOnSquareLatticeMoment
   // index = linearized index 
   // ky = reference on the momentum along the y direction for the torus
   // lz = reference on the z projection of the angular momentum for the sphere
-  virtual int GetLinearizedIndex(int index, int& ky, int& lz);
+  virtual void GetLinearizedIndex(int index, int& ky, int& lz);
 };
 
 // get a linearized index from the two momenta
@@ -181,7 +181,7 @@ inline int BosonOnT2xS2HardcoreNoNearestNeighbors::GetLinearizedIndex(int ky, in
 // ky = reference on the momentum along the y direction for the torus
 // lz = reference on the z projection of the angular momentum for the sphere
 
-inline int BosonOnT2xS2HardcoreNoNearestNeighbors::GetLinearizedIndex(int index, int& ky, int& lz)
+inline void BosonOnT2xS2HardcoreNoNearestNeighbors::GetLinearizedIndex(int index, int& ky, int& lz)
 {
   lz = index % this->NbrSiteY;
   ky = index / this->NbrSiteY;

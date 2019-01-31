@@ -104,7 +104,7 @@ class ParticleOnS2xS2DeltaHamiltonian : public AbstractQHEOnSphereFullHamiltonia
   // index = linearized index 
   // lz = reference on the z projection of the angular momentum for the first sphere
   // kz = reference on the  z projection of the angular momentum for the second sphere
-  virtual int GetLinearizedIndex(int index, int& lz, int& kz);
+  virtual void GetLinearizedIndex(int index, int& lz, int& kz);
 
 };
 
@@ -125,7 +125,7 @@ inline int ParticleOnS2xS2DeltaHamiltonian::GetLinearizedIndex(int lz, int kz)
 // lz = reference on the z projection of the angular momentum for the first sphere
 // kz = reference on the  z projection of the angular momentum for the second sphere
 
-inline int ParticleOnS2xS2DeltaHamiltonian::GetLinearizedIndex(int index, int& lz, int& kz)
+inline void ParticleOnS2xS2DeltaHamiltonian::GetLinearizedIndex(int index, int& lz, int& kz)
 {
   lz = index / this->NbrLzValues2;
   kz = index % this->NbrLzValues2;

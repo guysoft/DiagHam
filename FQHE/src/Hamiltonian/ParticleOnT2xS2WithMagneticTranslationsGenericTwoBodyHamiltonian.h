@@ -183,7 +183,7 @@ class ParticleOnT2xS2WithMagneticTranslationsGenericTwoBodyHamiltonian : public 
   // index = linearized index 
   // ky = reference on the momentum along the y direction for the torus
   // lz = reference on the z projection of the angular momentum for the sphere
-  virtual int GetLinearizedIndex(int index, int& ky, int& lz);
+  virtual void GetLinearizedIndex(int index, int& ky, int& lz);
 
   // get all the indices that should appear in the annihilation/creation operators
   //
@@ -208,7 +208,7 @@ inline int ParticleOnT2xS2WithMagneticTranslationsGenericTwoBodyHamiltonian::Get
 // ky = reference on the momentum along the y direction for the torus
 // lz = reference on the z projection of the angular momentum for the sphere
 
-inline int ParticleOnT2xS2WithMagneticTranslationsGenericTwoBodyHamiltonian::GetLinearizedIndex(int index, int& ky, int& lz)
+inline void ParticleOnT2xS2WithMagneticTranslationsGenericTwoBodyHamiltonian::GetLinearizedIndex(int index, int& ky, int& lz)
 {
   lz = index % this->NbrLzValues;
   ky = index / this->NbrLzValues;
