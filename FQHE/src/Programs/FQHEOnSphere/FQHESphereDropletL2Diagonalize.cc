@@ -69,9 +69,13 @@ int main(int argc, char** argv)
   Manager += ToolsGroup;
   Manager += MiscGroup;
 
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-fluxes", "number of fluxes in a droplet", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-particles", "max number of particles in a droplet", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-holes", "max number of holes in a droplet", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-fluxes1", "number of fluxes in a droplet", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-particles1", "max number of particles in a droplet", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-holes1", "max number of holes in a droplet", 0);
+
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-fluxes2", "secondary condition for number of fluxes in a droplet", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-particles2", "secondary condition for  max number of particles in a droplet", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-holes2", "secondary condition for max number of holes in a droplet", 0);
 
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system", 0);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "l2");
@@ -101,9 +105,13 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  int NbrFluxes = Manager.GetInteger("nbr-fluxes");
-  int MaxNbrParticles = Manager.GetInteger("max-particles");
-  int MaxNbrHoles = Manager.GetInteger("max-holes");
+  int NbrFluxes1 = Manager.GetInteger("nbr-fluxes1");
+  int MaxNbrParticles1 = Manager.GetInteger("max-particles1");
+  int MaxNbrHoles1 = Manager.GetInteger("max-holes1");
+
+  int NbrFluxes2 = Manager.GetInteger("nbr-fluxes2");
+  int MaxNbrParticles2 = Manager.GetInteger("max-particles2");
+  int MaxNbrHoles2 = Manager.GetInteger("max-holes2");
 
   int NbrParticles = Manager.GetInteger("nbr-particles");
   int LzMax = Manager.GetInteger("lzmax");
@@ -119,7 +127,7 @@ int main(int argc, char** argv)
   else
     sprintf (OutputNameLz, "bosons_%s_n_%d_2s_%d_lz.dat", Manager.GetString("interaction-name"), NbrParticles, LzMax);
 
-  ParticleOnSphere* Space = new FermionOnSphereDroplet(NbrParticles, TotalLz, LzMax, NbrFluxes, MaxNbrParticles, MaxNbrHoles, Memory); 
+  ParticleOnSphere* Space = new FermionOnSphereDroplet(NbrParticles, TotalLz, LzMax, NbrFluxes1, MaxNbrParticles1, MaxNbrHoles1, NbrFluxes2, MaxNbrParticles2, MaxNbrHoles2, Memory); 
 
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   if (Architecture.GetArchitecture()->GetLocalMemory() > 0)

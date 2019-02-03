@@ -68,14 +68,25 @@ FermionOnSphereDroplet::FermionOnSphereDroplet()
 // 
 // nbrFermions = number of fermions
 // totalLz = reference on twice the momentum total value
-// lzMax = twice the maximum Lz value reached by a fermion
+// lzMax = maximum Lz value reached by a fermion
+// nbrFluxes1 = condition for the number of fluxes in a droplet
+// maxNbrParticles1 = condition for the max number of particles in a droplet
+// maxNbrHoles1 = condition for the max number of holes in a droplet
+// nbrFluxes2 = secondary condition for the number of fluxes in a droplet
+// maxNbrParticles2 = secondary condition for the max number of particles in a droplet
+// maxNbrHoles2 = secondary condition for the max number of holes in a droplet
 // memory = amount of memory granted for precalculations
 
-FermionOnSphereDroplet::FermionOnSphereDroplet (int nbrFermions, int totalLz, int lzMax, int nbrFluxes, int maxNbrParticles, int maxNbrHoles, unsigned long memory)
+FermionOnSphereDroplet::FermionOnSphereDroplet (int nbrFermions, int totalLz, int lzMax, int nbrFluxes1, int maxNbrParticles1, int maxNbrHoles1, int nbrFluxes2, int maxNbrParticles2, int maxNbrHoles2, unsigned long memory)
 {  
-  this->NbrFluxes = nbrFluxes;
-  this->MaxNbrParticles = maxNbrParticles;
-  this->MaxNbrHoles = maxNbrHoles;
+  this->NbrFluxes1 = nbrFluxes1;
+  this->MaxNbrParticles1 = maxNbrParticles1;
+  this->MaxNbrHoles1 = maxNbrHoles1;
+
+  this->NbrFluxes2 = nbrFluxes2;
+  this->MaxNbrParticles2 = maxNbrParticles2;
+  this->MaxNbrHoles2 = maxNbrHoles2;
+
   this->TargetSpace = this;
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
@@ -126,11 +137,25 @@ FermionOnSphereDroplet::FermionOnSphereDroplet (int nbrFermions, int totalLz, in
   int TruncatedNewHilbertSpaceDimension = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
    {
-     int TmpNbrParticles = 0;
-     for (int k = 0; k < this->NbrFluxes; k++)
-      TmpNbrParticles += this->AdA(i, k); 
-     
-     if ( (TmpNbrParticles <= this->MaxNbrParticles) && ((this->NbrFluxes - TmpNbrParticles) <= this->MaxNbrHoles) )
+     int TmpNbrParticles1 = 0;
+     for (int k = 0; k < this->NbrFluxes1; k++)
+      TmpNbrParticles1 += this->AdA(i, k);      
+
+     bool Test1 = true;
+     if (this->NbrFluxes1 > 0)
+       if ( (TmpNbrParticles1 > this->MaxNbrParticles1) || ((this->NbrFluxes1 - TmpNbrParticles1) > this->MaxNbrHoles1) )
+	 Test1 = false;
+
+     int TmpNbrParticles2 = 0;
+     for (int k = 0; k < this->NbrFluxes2; k++)
+      TmpNbrParticles2 += this->AdA(i, k);      
+
+     bool Test2 = true;
+     if (this->NbrFluxes2 > 0)
+       if ( (TmpNbrParticles2 > this->MaxNbrParticles2) || ((this->NbrFluxes2 - TmpNbrParticles2) > this->MaxNbrHoles2) )
+	 Test2 = false;
+
+     if (Test1 && Test2)
        TruncatedNewHilbertSpaceDimension++;
      //else
      //  {
@@ -163,11 +188,26 @@ FermionOnSphereDroplet::FermionOnSphereDroplet (int nbrFermions, int totalLz, in
   TruncatedNewHilbertSpaceDimension = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
      {
-       int TmpNbrParticles = 0;
-       for (int k = 0; k < this->NbrFluxes; k++)
-         TmpNbrParticles += this->AdA(i, k); 
-     
-       if ( (TmpNbrParticles <= this->MaxNbrParticles) && ((this->NbrFluxes - TmpNbrParticles) <= this->MaxNbrHoles) )
+
+      int TmpNbrParticles1 = 0;
+      for (int k = 0; k < this->NbrFluxes1; k++)
+       TmpNbrParticles1 += this->AdA(i, k);      
+
+      bool Test1 = true;
+      if (this->NbrFluxes1 > 0)
+        if ( (TmpNbrParticles1 > this->MaxNbrParticles1) || ((this->NbrFluxes1 - TmpNbrParticles1) > this->MaxNbrHoles1) )
+	  Test1 = false;
+
+      int TmpNbrParticles2 = 0;
+      for (int k = 0; k < this->NbrFluxes2; k++)
+       TmpNbrParticles2 += this->AdA(i, k);      
+
+      bool Test2 = true;
+      if (this->NbrFluxes2 > 0)
+        if ( (TmpNbrParticles2 > this->MaxNbrParticles2) || ((this->NbrFluxes2 - TmpNbrParticles2) > this->MaxNbrHoles2) )
+	 Test2 = false;
+
+      if (Test1 && Test2)
          {
            TmpStateDescription2[TruncatedNewHilbertSpaceDimension] = this->StateDescription[i];
            TmpStateLzMax2[TruncatedNewHilbertSpaceDimension] = this->StateLzMax[i];
@@ -226,9 +266,15 @@ FermionOnSphereDroplet::FermionOnSphereDroplet(const FermionOnSphereDroplet& fer
     this->TargetSpace = fermions.TargetSpace;
   else
     this->TargetSpace = this;
-  this->NbrFluxes = fermions.NbrFluxes;
-  this->MaxNbrParticles = fermions.MaxNbrParticles;
-  this->MaxNbrHoles = fermions.MaxNbrHoles;
+
+  this->NbrFluxes1 = fermions.NbrFluxes1;
+  this->MaxNbrParticles1 = fermions.MaxNbrParticles1;
+  this->MaxNbrHoles1 = fermions.MaxNbrHoles1;
+
+  this->NbrFluxes2 = fermions.NbrFluxes2;
+  this->MaxNbrParticles2 = fermions.MaxNbrParticles2;
+  this->MaxNbrHoles2 = fermions.MaxNbrHoles2;
+
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
@@ -297,9 +343,15 @@ FermionOnSphereDroplet& FermionOnSphereDroplet::operator = (const FermionOnSpher
   else
     this->TargetSpace = this;
   this->NbrFermions = fermions.NbrFermions;
-  this->NbrFluxes = fermions.NbrFluxes;
-  this->MaxNbrParticles = fermions.MaxNbrParticles;
-  this->MaxNbrHoles = fermions.MaxNbrHoles;
+
+  this->NbrFluxes1 = fermions.NbrFluxes1;
+  this->MaxNbrParticles1 = fermions.MaxNbrParticles1;
+  this->MaxNbrHoles1 = fermions.MaxNbrHoles1;
+
+  this->NbrFluxes2 = fermions.NbrFluxes2;
+  this->MaxNbrParticles2 = fermions.MaxNbrParticles2;
+  this->MaxNbrHoles2 = fermions.MaxNbrHoles2;
+
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
   this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;

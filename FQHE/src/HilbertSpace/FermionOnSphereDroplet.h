@@ -54,9 +54,13 @@ class FermionOnSphereDroplet :  public FermionOnSphere
 
  protected:
 
-  int NbrFluxes;
-  int MaxNbrHoles;
-  int MaxNbrParticles;
+  int NbrFluxes1;
+  int MaxNbrHoles1;
+  int MaxNbrParticles1;
+
+  int NbrFluxes2;
+  int MaxNbrHoles2;
+  int MaxNbrParticles2;
 
  public:
 
@@ -69,9 +73,14 @@ class FermionOnSphereDroplet :  public FermionOnSphere
   // nbrFermions = number of fermions
   // totalLz = reference on twice the momentum total value
   // lzMax = maximum Lz value reached by a fermion
+  // nbrFluxes1 = condition for the number of fluxes in a droplet
+  // maxNbrParticles1 = condition for the max number of particles in a droplet
+  // maxNbrHoles1 = condition for the max number of holes in a droplet
+  // nbrFluxes2 = secondary condition for the number of fluxes in a droplet
+  // maxNbrParticles2 = secondary condition for the max number of particles in a droplet
+  // maxNbrHoles2 = secondary condition for the max number of holes in a droplet
   // memory = amount of memory granted for precalculations
-  // referenceState = array that describes the reference state to start from
-  FermionOnSphereDroplet (int nbrFermions, int totalLz, int lzMax, int nbrFluxes, int maxNbrParticles, int maxNbrHoles, unsigned long memory = 10000000);
+  FermionOnSphereDroplet (int nbrFermions, int totalLz, int lzMax, int nbrFluxes1, int maxNbrParticles1, int maxNbrHoles1, int nbrFluxes2, int maxNbrParticles2, int maxNbrHoles2, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //

@@ -45,9 +45,15 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "number of flux quanta", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system", -1);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-fluxes", "number of fluxes in a droplet", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-particles", "max number of particles in a droplet", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-holes", "max number of holes in a droplet", 0);
+ 
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-fluxes1", "number of fluxes in a droplet", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-particles1", "max number of particles in a droplet", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-holes1", "max number of holes in a droplet", 0);
+
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-fluxes2", "secondary condition for number of fluxes in a droplet", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-particles2", "secondary condition for  max number of particles in a droplet", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-holes2", "secondary condition for max number of holes in a droplet", 0);
+
   (*SystemGroup) += new BooleanOption  ('f', "fermion", "use fermionic statistics", false);
   (*SystemGroup) += new BooleanOption  ('b', "boson", "use bosonic statistics", false);
   (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support (only available when both the source and target spaces are squeezed basis)");
@@ -80,9 +86,13 @@ int main(int argc, char** argv)
   int LzMax = Manager.GetInteger("lzmax"); 
   int TotalLz  = Manager.GetInteger("total-lz");
 
-  int NbrFluxes = Manager.GetInteger("nbr-fluxes");
-  int MaxNbrParticles = Manager.GetInteger("max-particles");
-  int MaxNbrHoles = Manager.GetInteger("max-holes");
+  int NbrFluxes1 = Manager.GetInteger("nbr-fluxes1");
+  int MaxNbrParticles1 = Manager.GetInteger("max-particles1");
+  int MaxNbrHoles1 = Manager.GetInteger("max-holes1");
+
+  int NbrFluxes2 = Manager.GetInteger("nbr-fluxes2");
+  int MaxNbrParticles2 = Manager.GetInteger("max-particles2");
+  int MaxNbrHoles2 = Manager.GetInteger("max-holes2");
 
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
@@ -110,7 +120,7 @@ int main(int argc, char** argv)
     }
 
 
-  FermionOnSphereDroplet* InputSpace = new FermionOnSphereDroplet(NbrParticles, TotalLz, LzMax, NbrFluxes, MaxNbrParticles, MaxNbrHoles, Memory);
+  FermionOnSphereDroplet* InputSpace = new FermionOnSphereDroplet(NbrParticles, TotalLz, LzMax, NbrFluxes1, MaxNbrParticles1, MaxNbrHoles1, NbrFluxes2, MaxNbrParticles2, MaxNbrHoles2, Memory);
 
   FermionOnSphere* OutputSpace = new FermionOnSphere(NbrParticles, TotalLz, LzMax, Memory);
 
