@@ -83,6 +83,7 @@ ParticleOnSphereL2Hamiltonian::ParticleOnSphereL2Hamiltonian(ParticleOnSphere* p
   else
     this->HamiltonianShift = 0;
   this->EvaluateInteractionFactors();  
+
   long MinIndex;
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);

@@ -195,4 +195,5 @@ BosonOnT2xS2HardcoreNoNearestNeighborsWithMagneticTranslations.cc \
 BosonOnT2xS2.cc \
 BosonOnSphereWithSU2SpinPartialPolarization.cc \
 BosonOnSphereWithSU2SpinAllLz.cc \
-FermionOnSphereWithSpinPartialPolarization.cc
+FermionOnSphereWithSpinPartialPolarization.cc \
+FermionOnSphereDroplet.cc 

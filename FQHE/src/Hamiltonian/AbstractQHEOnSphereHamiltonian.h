@@ -603,7 +603,7 @@ inline void AbstractQHEOnSphereHamiltonian::EvaluateMNTwoBodyFastMultiplicationC
 		      indexArray[Pos] = Index;
 		      coefficientArray[Pos] = Coefficient * Coefficient2 * this->InteractionFactors[ReducedNbrInteractionFactors];
 // 		      cout << (this->M1Value[m1]*2 - this->LzMax) << " " << (this->M2Value[m1]*2 - this->LzMax) << " " << (m3*2 - this->LzMax) << " " << (this->M1Value[m1] + this->M2Value[m1] - m3) << " " << coefficientArray[Pos] << endl;
-	      cout << index << " -> " << (this->M1Value[m1]) << " " << (this->M2Value[m1]) << " " << (TmpM3Values[m3]) << " " << (SumIndices - TmpM3Values[m3]) << " : " << (Coefficient) << " " << (Coefficient2) << endl;
+	      //cout << index << " -> " << (this->M1Value[m1]) << " " << (this->M2Value[m1]) << " " << (TmpM3Values[m3]) << " " << (SumIndices - TmpM3Values[m3]) << " : " << (Coefficient) << " " << (Coefficient2) << endl;
 		      ++Pos;
 		    }		      
 		  ++ReducedNbrInteractionFactors;
