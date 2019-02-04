@@ -50,6 +50,29 @@ using std::endl;
 // rotationMatrices =  matrices describing the one-body tranformation per orbital
 // inputSpace = pointer to the Hilbert space
 
+FQHESphereWithSpinApplyOneBodyTransformationOperation::FQHESphereWithSpinApplyOneBodyTransformationOperation(RealVector* inputState, RealVector* outputState, 
+													     RealMatrix* rotationMatrices, 
+													     ParticleOnSphereWithSpin* inputSpace)
+{
+  this->InputSpace =  (ParticleOnSphereWithSpin*) inputSpace->Clone();
+  this->RealInputState = inputState;
+  this->RealOutputState = outputState;
+  this->RealRotationMatrices = rotationMatrices;
+  this->InputState = 0;
+  this->OutputState = 0;
+  this->RotationMatrices = 0;
+  this->FirstComponent = 0l;
+  this->NbrComponent = this->InputSpace->GetLargeHilbertSpaceDimension();
+  this->OperationType = AbstractArchitectureOperation::FQHESphereWithSpinApplyOneBodyTransformationOperation;
+}
+
+// constructor 
+//
+// inputState = vector where the initial state is stored
+// outputState = vector where the rotated state is stored
+// rotationMatrices =  matrices describing the one-body tranformation per orbital
+// inputSpace = pointer to the Hilbert space
+
 FQHESphereWithSpinApplyOneBodyTransformationOperation::FQHESphereWithSpinApplyOneBodyTransformationOperation(ComplexVector* inputState, ComplexVector* outputState, 
 													     ComplexMatrix* rotationMatrices, 
 													     ParticleOnSphereWithSpin* inputSpace)
@@ -58,6 +81,9 @@ FQHESphereWithSpinApplyOneBodyTransformationOperation::FQHESphereWithSpinApplyOn
   this->InputState = inputState;
   this->OutputState = outputState;
   this->RotationMatrices = rotationMatrices;
+  this->RealInputState = 0;
+  this->RealOutputState = 0;
+  this->RealRotationMatrices = 0;
   this->FirstComponent = 0l;
   this->NbrComponent = this->InputSpace->GetLargeHilbertSpaceDimension();
   this->OperationType = AbstractArchitectureOperation::FQHESphereWithSpinApplyOneBodyTransformationOperation;
@@ -75,6 +101,9 @@ FQHESphereWithSpinApplyOneBodyTransformationOperation::FQHESphereWithSpinApplyOn
   this->InputState = operation.InputState;
   this->OutputState = operation.OutputState;
   this->RotationMatrices = operation.RotationMatrices;
+  this->RealInputState = operation.RealInputState;
+  this->RealOutputState = operation.RealOutputState;
+  this->RealRotationMatrices = operation.RealRotationMatrices;
   this->OperationType = AbstractArchitectureOperation::FQHESphereWithSpinApplyOneBodyTransformationOperation;	
 }
 
@@ -123,8 +152,15 @@ AbstractArchitectureOperation* FQHESphereWithSpinApplyOneBodyTransformationOpera
 bool FQHESphereWithSpinApplyOneBodyTransformationOperation::RawApplyOperation()
 {
   timeval TotalStartingTime;
-  gettimeofday (&TotalStartingTime, 0);  
-  this->InputSpace->TransformOneBodyBasis(*(this->InputState), *(this->OutputState), this->RotationMatrices, this->FirstComponent, this->NbrComponent);
+  gettimeofday (&TotalStartingTime, 0);
+  if (this->RealOutputState == 0)
+    {
+      this->InputSpace->TransformOneBodyBasis(*(this->InputState), *(this->OutputState), this->RotationMatrices, this->FirstComponent, this->NbrComponent);
+    }
+  else
+    {
+      this->InputSpace->TransformOneBodyBasis(*(this->RealInputState), *(this->RealOutputState), this->RealRotationMatrices, this->FirstComponent, this->NbrComponent);
+    }
   timeval TotalEndingTime;
   gettimeofday (&TotalEndingTime, 0);
   double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +

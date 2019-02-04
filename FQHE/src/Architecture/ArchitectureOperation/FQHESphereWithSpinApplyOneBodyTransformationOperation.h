@@ -55,6 +55,14 @@ class FQHESphereWithSpinApplyOneBodyTransformationOperation : public AbstractArc
   // matrices describing the one-body tranformation per orbital
   ComplexMatrix* RotationMatrices;
 
+  // vector where the initial state is stored (real case)
+  RealVector* RealInputState;
+  // vector where the rotated state is stored (real case)
+  RealVector* RealOutputState;
+  
+  // matrices describing the one-body tranformation per orbital (real case)
+  RealMatrix* RealRotationMatrices;
+
   // index of the first component
   long FirstComponent;
   // number of component 
@@ -62,6 +70,15 @@ class FQHESphereWithSpinApplyOneBodyTransformationOperation : public AbstractArc
   
  public:
   
+  // constructor 
+  //
+  // inputState = vector where the initial state is stored
+  // outputState = vector where the rotated state is stored
+  // rotationMatrices =  matrices describing the one-body tranformation per orbital
+  // inputSpace = pointer to the Hilbert space
+  FQHESphereWithSpinApplyOneBodyTransformationOperation(RealVector* inputState, RealVector* outputState, RealMatrix* rotationMatrices,
+							ParticleOnSphereWithSpin* inputSpace);
+    
   // constructor 
   //
   // inputState = vector where the initial state is stored

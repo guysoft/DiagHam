@@ -1186,6 +1186,58 @@ bool BosonOnSphereWithSU2Spin::ReadHilbertSpace (char* fileName)
 // firstComponent = index of the first component to compute in initialState
 // nbrComponents = number of consecutive components to compute
 
+void BosonOnSphereWithSU2Spin::TransformOneBodyBasis(RealVector& initialState, RealVector& targetState, RealMatrix* oneBodyBasis, long firstComponent, long nbrComponents)
+{
+  int* TmpMomentumIndices = new int [this->NbrBosons];
+  int* TmpSU2Indices = new int [this->NbrBosons];
+  int* TmpSU2Indices2 = new int [this->NbrBosons];
+  double* OccupationCoefficientArray = new double [this->NbrBosons + 1];
+  OccupationCoefficientArray[0] = 0.0;
+  for (int i = 1; i <= this->NbrBosons; ++i)
+    OccupationCoefficientArray[i] = OccupationCoefficientArray[i - 1] + 0.5 * log((double) i);
+  targetState.ClearVector();
+  long LastComponent = firstComponent + nbrComponents;
+  if (nbrComponents == 0)
+    LastComponent = this->LargeHilbertSpaceDimension;
+  for (long i = firstComponent; i < LastComponent; ++i)
+    {
+      this->FermionToBoson(this->StateDescriptionUp[i], this->StateDescriptionDown[i],
+			   this->TemporaryStateUp, this->TemporaryStateDown); 
+      double OccupationCoefficient = 0.0;
+      int TmpIndex = 0;
+      for (int j = this->LzMax; j >= 0; --j)
+	{
+	  for (int l = 0; l < this->TemporaryStateDown[j]; ++l)
+	    {
+	      TmpMomentumIndices[TmpIndex] = j;
+	      TmpSU2Indices[TmpIndex] = 1;
+	      ++TmpIndex;	      
+	    }
+	  for (int l = 0; l < this->TemporaryStateUp[j]; ++l)
+	    {
+	      TmpMomentumIndices[TmpIndex] = j;
+	      TmpSU2Indices[TmpIndex] = 0;
+	      ++TmpIndex;	      
+	    }
+	  OccupationCoefficient -= OccupationCoefficientArray[this->TemporaryStateUp[j]];
+	  OccupationCoefficient -= OccupationCoefficientArray[this->TemporaryStateDown[j]];
+	}
+      this->TransformOneBodyBasisRecursive(targetState, initialState[i], 0, TmpMomentumIndices, TmpSU2Indices, TmpSU2Indices2, oneBodyBasis, OccupationCoefficient, OccupationCoefficientArray);
+    }
+  delete[] OccupationCoefficientArray;
+  delete[] TmpMomentumIndices;
+  delete[] TmpSU2Indices;
+  delete[] TmpSU2Indices2;
+}
+
+// convert a state from one SU(2) basis to another, transforming the one body basis in each momentum sector
+//
+// initialState = state to transform  
+// targetState = vector where the transformed state has to be stored
+// oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+// firstComponent = index of the first component to compute in initialState
+// nbrComponents = number of consecutive components to compute
+
 void BosonOnSphereWithSU2Spin::TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis, long firstComponent, long nbrComponents)
 {
   int* TmpMomentumIndices = new int [this->NbrBosons];
@@ -1290,6 +1342,63 @@ ComplexMatrix BosonOnSphereWithSU2Spin::TransformationMatrixOneBodyBasis(Complex
 // occupationCoefficient = invert of the coefficient that comes from the initial state occupation number 
 // occupationCoefficientArray = array that provides 1/2 ln (N!)
 
+void BosonOnSphereWithSU2Spin::TransformOneBodyBasisRecursive(RealVector& targetState, double coefficient,
+							      int position, int* momentumIndices, int* initialSU2Indices, int* currentSU2Indices, RealMatrix* oneBodyBasis,
+							      double occupationCoefficient, double* occupationCoefficientArray) 
+{
+  if (position == this->NbrBosons)
+    {
+      for (int i = 0; i <= this->LzMax; ++i)
+	{
+	  this->TemporaryStateUp[i] = 0ul;
+	  this->TemporaryStateDown[i] = 0ul;
+	}
+      for (int i = 0; i < this->NbrBosons; ++i)
+	{
+	  switch (currentSU2Indices[i])
+	    {
+	    case 0:
+	      this->TemporaryStateUp[momentumIndices[i]]++;
+	      break;
+	    case 1:
+	      this->TemporaryStateDown[momentumIndices[i]]++;
+	      break;
+	    }
+	}
+      int Index = this->FindStateIndex(this->TemporaryStateUp, this->TemporaryStateDown);
+      if (Index < this->HilbertSpaceDimension)
+	{
+	  
+	  for (int i = 0; i <= this->LzMax; ++i)
+	    {
+	      occupationCoefficient += occupationCoefficientArray[this->TemporaryStateUp[i]];
+	      occupationCoefficient += occupationCoefficientArray[this->TemporaryStateDown[i]];
+	    }
+	  targetState[Index] += coefficient * exp (occupationCoefficient);
+	}
+      return;      
+    }
+  else
+    {
+      currentSU2Indices[position] = 0;
+      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][1 - initialSU2Indices[position]][1]), position + 1, momentumIndices, initialSU2Indices, currentSU2Indices, oneBodyBasis, occupationCoefficient, occupationCoefficientArray);
+      currentSU2Indices[position] = 1;
+      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][1 - initialSU2Indices[position]][0]), position + 1, momentumIndices, initialSU2Indices, currentSU2Indices, oneBodyBasis, occupationCoefficient, occupationCoefficientArray);
+    }
+}
+
+// recursive part of the convertion from a state from one SU(2) basis to another, transforming the one body basis in each momentum sector
+//
+// targetState = vector where the transformed state has to be stored
+// coefficient = current coefficient to assign
+// position = current particle consider in the n-body state
+// momentumIndices = array that gives the momentum partition of the initial n-body state
+// initialSU2Indices = array that gives the spin dressing the initial n-body state
+// currentSU2Indices = array that gives the spin dressing the current transformed n-body state
+// oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+// occupationCoefficient = invert of the coefficient that comes from the initial state occupation number 
+// occupationCoefficientArray = array that provides 1/2 ln (N!)
+
 void BosonOnSphereWithSU2Spin::TransformOneBodyBasisRecursive(ComplexVector& targetState, Complex coefficient,
 							      int position, int* momentumIndices, int* initialSU2Indices, int* currentSU2Indices, ComplexMatrix* oneBodyBasis,
 							      double occupationCoefficient, double* occupationCoefficientArray) 
@@ -1372,6 +1481,58 @@ ComplexMatrix BosonOnSphereWithSU2Spin::TransformationMatrixSU2ToU1(BosonOnSpher
 	}
     }
   return TmpMatrix;
+}
+
+// convert state of a SU(2) Hilbert space with fixed Sz to a SU(2) space with all sz sectors
+//
+// state = state that needs to be projected
+// su2space = SU(2) space with fixed sz of the input state
+// return value = input state expression in the SU(2) basis
+
+RealVector BosonOnSphereWithSU2Spin::SU2ToSU2AllSz(RealVector& state, ParticleOnSphereWithSpin* su2space)
+{
+  RealVector TmpVector (this->LargeHilbertSpaceDimension, true);
+  BosonOnSphereWithSU2Spin* InputSpace = (BosonOnSphereWithSU2Spin*) su2space;
+  unsigned long TmpStateUp;
+  unsigned long TmpStateDown;
+  for (long i = 0; i < InputSpace->LargeHilbertSpaceDimension; ++i)
+    {
+      this->FermionToBoson(InputSpace->StateDescriptionUp[i], InputSpace->NUpLzMax, this->ProdATemporaryStateUp);
+      this->FermionToBoson(InputSpace->StateDescriptionDown[i], InputSpace->NDownLzMax, this->ProdATemporaryStateDown);
+      this->TargetSpace->BosonToFermion(this->ProdATemporaryStateUp, this->ProdATemporaryStateDown, TmpStateUp, TmpStateDown);
+      int TmpIndex = this->TargetSpace->FindStateIndex(TmpStateUp, TmpStateDown);
+      if (TmpIndex < this->HilbertSpaceDimension)
+	{
+	  TmpVector[TmpIndex] = state[i];
+	}
+    }
+  return TmpVector;
+}
+
+// convert state of a SU(2) Hilbert space with fixed Sz to a SU(2) space with all sz sectors
+//
+// state = state that needs to be projected
+// su2space = SU(2) space with fixed sz of the input state
+// return value = input state expression in the SU(2) basis
+
+ComplexVector BosonOnSphereWithSU2Spin::SU2ToSU2AllSz(ComplexVector& state, ParticleOnSphereWithSpin* su2space)
+{
+  ComplexVector TmpVector (this->LargeHilbertSpaceDimension, true);
+  BosonOnSphereWithSU2Spin* InputSpace = (BosonOnSphereWithSU2Spin*) su2space;
+  unsigned long TmpStateUp;
+  unsigned long TmpStateDown;
+  for (long i = 0; i < InputSpace->LargeHilbertSpaceDimension; ++i)
+    {
+      this->FermionToBoson(InputSpace->StateDescriptionUp[i], InputSpace->NUpLzMax, this->ProdATemporaryStateUp);
+      this->FermionToBoson(InputSpace->StateDescriptionDown[i], InputSpace->NDownLzMax, this->ProdATemporaryStateDown);
+      this->TargetSpace->BosonToFermion(this->ProdATemporaryStateUp, this->ProdATemporaryStateDown, TmpStateUp, TmpStateDown);
+      int TmpIndex = this->TargetSpace->FindStateIndex(TmpStateUp, TmpStateDown);
+      if (TmpIndex < this->HilbertSpaceDimension)
+	{
+	  TmpVector[TmpIndex] = state[i];
+	}
+    }
+  return TmpVector;
 }
 
 // convert a state such that its components are now expressed in the unnormalized basis
