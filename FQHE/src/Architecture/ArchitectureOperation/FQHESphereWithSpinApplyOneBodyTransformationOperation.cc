@@ -135,6 +135,15 @@ void FQHESphereWithSpinApplyOneBodyTransformationOperation::SetDestinationVector
   this->OutputState = destinationVector;
 }
 
+// set destination vector 
+// 
+// vector where the result has to be stored
+
+void FQHESphereWithSpinApplyOneBodyTransformationOperation::SetDestinationVector (RealVector* destinationVector)
+{
+  this->RealOutputState = destinationVector;
+}
+
 
 // clone operation
 //
@@ -188,10 +197,17 @@ bool FQHESphereWithSpinApplyOneBodyTransformationOperation::ArchitectureDependen
       TmpOperations[i] = (FQHESphereWithSpinApplyOneBodyTransformationOperation*) this->Clone();
       architecture->SetThreadOperation(TmpOperations[i], i);
     }
-  
-  for( int i = 1; i <  architecture->GetNbrThreads() ; i++)
-    TmpOperations[i]->SetDestinationVector((ComplexVector*) this->OutputState->EmptyClone(true));
 
+  if (this->RealOutputState == 0)
+    {
+      for( int i = 1; i <  architecture->GetNbrThreads() ; i++)
+	TmpOperations[i]->SetDestinationVector((ComplexVector*) this->OutputState->EmptyClone(true));
+    }
+  else
+    {
+      for( int i = 1; i <  architecture->GetNbrThreads() ; i++)
+	TmpOperations[i]->SetDestinationVector((RealVector*) this->RealOutputState->EmptyClone(true));
+    }
   for( int i = 0; i <  ReducedNbrThreads ; i++)
     {
       TmpOperations[i]->SetIndicesRange(TmpFirstComponent, Step);
@@ -205,7 +221,14 @@ bool FQHESphereWithSpinApplyOneBodyTransformationOperation::ArchitectureDependen
 
   for (int i = 1; i < architecture->GetNbrThreads(); i++)
     {
-      (*this->OutputState) += (*TmpOperations[i]->OutputState);
+      if (this->RealOutputState == 0)
+	{
+	  (*this->OutputState) += (*TmpOperations[i]->OutputState);
+	}
+      else
+	{
+	  (*this->RealOutputState) += (*TmpOperations[i]->RealOutputState);
+	}	
       delete  TmpOperations[i]->OutputState;
       delete TmpOperations[i];
     }

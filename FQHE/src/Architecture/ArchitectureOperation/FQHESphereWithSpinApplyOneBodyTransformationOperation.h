@@ -102,6 +102,11 @@ class FQHESphereWithSpinApplyOneBodyTransformationOperation : public AbstractArc
   // vector where the result has to be stored
   void SetDestinationVector (ComplexVector* DestinationVector);
   
+  // set destination vector 
+  // 
+  // vector where the result has to be stored
+  void SetDestinationVector (RealVector* DestinationVector);
+  
   // get destination vector 
   // 
   // return value = pointer to destination vector
