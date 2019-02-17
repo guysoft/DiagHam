@@ -170,6 +170,18 @@ int main(int argc, char** argv)
   char* TmpOutputSzString = new char [32];
   sprintf (TmpOutputSzString, "syrotation_%.6f", Theta);
   char* OutputFileName = ReplaceString(Manager.GetString("input-state"), TmpInputSzString, TmpOutputSzString);
+  if (OutputFileName == 0)
+    {
+      OutputFileName = new char[256];
+      if (Statistics == false)
+	{
+	  sprintf(OutputFileName, "bosons_su2_dummy_n_%d_2s_%d_syrotation_%.6f_lz_%d.0.vec", NbrParticles, NbrFluxQuanta, Theta, TotalLz);
+	}
+      else
+	{
+	  sprintf(OutputFileName, "fermions_su2_dummy_n_%d_2s_%d_syrotation_%.6f_lz_%d.0.vec", NbrParticles, NbrFluxQuanta, Theta, TotalLz);
+	}
+    }
   if (Manager.GetBoolean("szsymmetrized-basis"))
     {
       char* TmpSzSymmetryString = new char [32];
