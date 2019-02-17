@@ -194,6 +194,17 @@ int main(int argc, char** argv)
 	  sprintf (TmpSzSymmetryString, "_su2_szsym_1_");
 	}
       char* OutputFileName2 = ReplaceString(OutputFileName, "_su2_", TmpSzSymmetryString);
+      if (OutputFileName2 == 0)
+	{
+	  if (Statistics == false)
+	    {
+	      sprintf(OutputFileName2, "bosons_%s_dummy_n_%d_2s_%d_syrotation_%.6f_lz_%d.0.vec", TmpSzSymmetryString, NbrParticles, NbrFluxQuanta, Theta, TotalLz);
+	    }
+	  else
+	    {
+	      sprintf(OutputFileName2, "fermions_%s_dummy_n_%d_2s_%d_syrotation_%.6f_lz_%d.0.vec", TmpSzSymmetryString, NbrParticles, NbrFluxQuanta, Theta, TotalLz);
+	    }
+	}
       delete[] OutputFileName;
       OutputFileName = OutputFileName2;
     }
