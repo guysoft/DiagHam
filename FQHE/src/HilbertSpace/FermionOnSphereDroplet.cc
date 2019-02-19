@@ -155,8 +155,10 @@ FermionOnSphereDroplet::FermionOnSphereDroplet (int nbrFermions, int totalLz, in
        if ( (TmpNbrParticles2 > this->MaxNbrParticles2) || ((this->NbrFluxes2 - TmpNbrParticles2) > this->MaxNbrHoles2) )
 	 Test2 = false;
 
-     if (Test1 && Test2)
-       TruncatedNewHilbertSpaceDimension++;
+     //Needed for 3/7 state with (2,1,2) and (6,3,6) condition	
+     //if ( ((Test1 == true) && (Test2==false)) || ((Test1 == false) && (Test2==true)) || ((Test1 == true) && (Test2==true)) )
+       if (Test1 && Test2)	
+         TruncatedNewHilbertSpaceDimension++;
      //else
      //  {
      //	cout<<"Reject: "; this->PrintState(cout,i); cout<<endl;
@@ -207,7 +209,9 @@ FermionOnSphereDroplet::FermionOnSphereDroplet (int nbrFermions, int totalLz, in
         if ( (TmpNbrParticles2 > this->MaxNbrParticles2) || ((this->NbrFluxes2 - TmpNbrParticles2) > this->MaxNbrHoles2) )
 	 Test2 = false;
 
-      if (Test1 && Test2)
+     //Needed for 3/7 state with (2,1,2) and (6,3,6) condition	
+     //if ( ((Test1 == true) && (Test2==false)) || ((Test1 == false) && (Test2==true)) || ((Test1 == true) && (Test2==true)) )
+       if (Test1 && Test2)
          {
            TmpStateDescription2[TruncatedNewHilbertSpaceDimension] = this->StateDescription[i];
            TmpStateLzMax2[TruncatedNewHilbertSpaceDimension] = this->StateLzMax[i];
@@ -223,8 +227,8 @@ FermionOnSphereDroplet::FermionOnSphereDroplet (int nbrFermions, int totalLz, in
 
    cout << " After truncation: dim= " << this->HilbertSpaceDimension << endl;
 
-  delete[] this->StateDescription;
-  delete[] this->StateLzMax;
+  //delete[] this->StateDescription;
+  //delete[] this->StateLzMax;
   this->StateDescription = TmpStateDescription2;
   this->StateLzMax = TmpStateLzMax2;
 //***********************************************************************************

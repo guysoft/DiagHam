@@ -333,28 +333,36 @@ Complex ParticleOnCylinderFourBodyDeltaHamiltonian::EvaluateInteractionCoefficie
 
   double GaussianExp;
 
-  Complex Coefficient(0,0);
+  Complex Coefficient(0.0 , 0.0);
 
   if (this->ElectricField == 0)
    {
-     int rtimes4 = (3.0 * m1 - m2 - m3 - m4);
-     int stimes4 = (3.0 * m2 - m1 - m3 - m4);
-     int ttimes4 = (3.0 * m3 - m1 - m2 - m4);
+     //Momentum 0, delta interaction
+     GaussianExp = Xr * Xr + Xs * Xs + Xt * Xt + Xr * Xs + Xr * Xt + Xs * Xt;
+     GaussianExp += Xrp * Xrp + Xsp * Xsp + Xtp * Xtp + Xrp * Xsp + Xrp * Xtp + Xsp * Xtp;
+     Coefficient += exp(-GaussianExp);
 
-     int rptimes4 = (3.0 * m5 - m6 - m7 - m8);
-     int sptimes4 = (3.0 * m6 - m5 - m7 - m8);
-     int tptimes4 = (3.0 * m7 - m5 - m6 - m8);
+     //Interaction for "Gaffnian" 3/7	
 
-     if ((rtimes4*rtimes4+stimes4*stimes4+ttimes4*ttimes4+rtimes4*stimes4+rtimes4*ttimes4+stimes4*ttimes4+rptimes4*rptimes4+sptimes4*sptimes4+tptimes4*tptimes4+rptimes4*sptimes4+rptimes4*tptimes4+sptimes4*tptimes4) <= 16)
-        { 
-          GaussianExp = Xr * Xr + Xs * Xs + Xt * Xt + Xr * Xs + Xr * Xt + Xs * Xt;
-          GaussianExp += Xrp * Xrp + Xsp * Xsp + Xtp * Xtp + Xrp * Xsp + Xrp * Xtp + Xsp * Xtp;
-          Coefficient.Re = exp(-GaussianExp);
-        }
-     else 
-          Coefficient.Re = 0.0;
+     //Momentum 2
+     //double W2 = (8.0/3.0) * (Xr * Xr + Xs * Xs + Xt * Xt + Xr * Xs + Xr * Xt + Xs * Xt);
+     //double Wp2 = (8.0/3.0) * (Xrp * Xrp + Xsp * Xsp + Xtp * Xtp + Xrp * Xsp + Xrp * Xtp + Xsp * Xtp);
+     //Coefficient += (1.5 * (-1.0 + 0.5 * W2) * (-1.0 + 0.5 * Wp2)) * exp(-GaussianExp);
 
-     Coefficient.Im = 0.0;
+     //Momentum 3; had to divide by extra factor sqrt(3) wrt to PRX paper
+     //double S3 = - Xs * Xt * (Xr + Xs + Xt) - Xr * Xt * (Xr + Xs + Xt) - Xr * Xs * (Xr + Xs + Xt) - Xr * Xs * Xt; 
+     //double Sp3 = - Xsp * Xtp * (Xrp + Xsp + Xtp) - Xrp * Xtp * (Xrp + Xsp + Xtp) - Xrp * Xsp * (Xrp + Xsp + Xtp) - Xrp * Xsp * Xtp; 
+     //Coefficient += (8.0 * S3 * Sp3)/sqrt(3.0) * exp(-GaussianExp);
+
+     //Momentum 4, first sector
+     //Coefficient += (1.0/64.0) * 0.3 * (20.0 - 20.0 * W2 + 3.0 * W2 * W2) * (20.0 - 20.0 * Wp2 + 3.0 * Wp2 * Wp2) * exp(-GaussianExp);
+
+     //Momentum 4, second sector
+     //double S4 = - Xr * Xs * Xt * (Xr + Xs + Xt);
+     //double Sp4 = - Xrp * Xsp * Xtp * (Xrp + Xsp + Xtp);
+
+     //Coefficient += 0.2 * ((-3.0/32.0) * W2 * W2 + (40.0/3.0) * S4) * ((-3.0/32.0) * Wp2 * Wp2 + (40.0/3.0) * Sp4) * exp(-GaussianExp);
+     
 
      return (Coefficient * (M_PI/3.0) * sqrt(4.0 * M_PI)/pow(Length, 3.0));
    }
