@@ -82,7 +82,8 @@ class SpinChainRealHamiltonianWithTranslations : public AbstractHamiltonian
   // chain = pointer to Hilbert space of the associated system
   // nbrSpin = number of spin
   // j = coupling constants between spins
-  SpinChainRealHamiltonianWithTranslations(AbstractSpinChainWithTranslations* chain, int nbrSpin, double j);
+  // nnCoupling = term to add to ZZ nearest-neighbour interaction
+  SpinChainRealHamiltonianWithTranslations(AbstractSpinChainWithTranslations* chain, int nbrSpin, double j, double nnCoupling);
 
   // destructor
   //

@@ -57,14 +57,20 @@ SpinChainRealHamiltonianWithTranslations::SpinChainRealHamiltonianWithTranslatio
 // chain = reference on Hilbert space of the associated system
 // nbrSpin = number of spin
 // j = coupling constant between spin
+// nnCoupling = term to add to ZZ nearest-neighbour interaction
 
-SpinChainRealHamiltonianWithTranslations::SpinChainRealHamiltonianWithTranslations(AbstractSpinChainWithTranslations* chain, int nbrSpin, double j)
+SpinChainRealHamiltonianWithTranslations::SpinChainRealHamiltonianWithTranslations(AbstractSpinChainWithTranslations* chain, int nbrSpin, double j, double nnCoupling)
 {
   this->Chain = chain;
   this->NbrSpin = nbrSpin;
   this->J = j;
   this->HalfJ = this->J * 0.5;
   this->Jz = this->J;
+  if (nnCoupling != 0)
+    {
+      this->Jz += nnCoupling;
+      cout << "Adjusting ZZ interaction: " << this->Jz << endl;
+    }
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateDiagonalMatrixElements();
   this->EvaluateCosinusTable();
