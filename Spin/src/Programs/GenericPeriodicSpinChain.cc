@@ -69,6 +69,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  BooleanOption ('\n', "disable-realhamiltonian", "do not use a real Hamiltonian at the inversion symmetric points");
   (*SystemGroup) += new  SingleDoubleOption ('j', "j-value", "coupling constant value", 1.0);
   (*SystemGroup) += new  SingleDoubleOption ('\n', "nn-coupling", "add the term to ZZ nearest-neighbour interaction [will be j+nn-coupling]", 0.0);
+  (*SystemGroup) += new  SingleDoubleOption ('\n', "nnn-coupling", "next-nearest-neighbour interaction", 0.0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -150,6 +151,7 @@ int main(int argc, char** argv)
   sprintf (FullOutputFileName, "%s.dat", OutputFileName);
   double JValue =  Manager.GetDouble("j-value");
   double NNCoupling =  Manager.GetDouble("nn-coupling");
+  double NNNCoupling =  Manager.GetDouble("nnn-coupling");
 
   int MaxSzValue = NbrSpins * SpinValue;
   int InitalSzValue = MaxSzValue & 1;
@@ -211,7 +213,7 @@ int main(int argc, char** argv)
 			  if (Manager.GetBoolean("disable-realhamiltonian") == false)
 			    {
 			      Lanczos.SetRealAlgorithms();
-			      SpinChainRealHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins, JValue, NNCoupling);
+			      SpinChainRealHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins, JValue, NNCoupling, NNNCoupling);
 			      GenericRealMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
 							  FirstRun, TmpEigenstateString);
 			      MainTaskOperation TaskOperation (&Task);
@@ -220,7 +222,7 @@ int main(int argc, char** argv)
 			    }
 			  else
 			    {
-			      SpinChainHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins, JValue, NNCoupling);
+			      SpinChainHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins, JValue, NNCoupling, NNNCoupling);
 			      GenericComplexMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
 							  FirstRun, TmpEigenstateString);
 			      MainTaskOperation TaskOperation (&Task);
@@ -267,7 +269,7 @@ int main(int argc, char** argv)
 			}
 		      char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
 		      sprintf (TmpEigenstateString, "%s_sz_%d_szsym_%d_k_%d", OutputFileName, InitalSzValue, SzSymmetrySector, Momentum);
-		      SpinChainHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins, JValue, NNCoupling);
+		      SpinChainHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins, JValue, NNCoupling, NNNCoupling);
 		      GenericComplexMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
 						  FirstRun, TmpEigenstateString);
 		      MainTaskOperation TaskOperation (&Task);
@@ -325,7 +327,7 @@ int main(int argc, char** argv)
 		      if (Manager.GetBoolean("disable-realhamiltonian") == false)
 			{
 			  Lanczos.SetRealAlgorithms();
-			  SpinChainRealHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins, JValue, NNCoupling);
+			  SpinChainRealHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins, JValue, NNCoupling, NNNCoupling);
 			  GenericRealMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
 						   FirstRun, TmpEigenstateString);
 			  MainTaskOperation TaskOperation (&Task);
@@ -334,7 +336,7 @@ int main(int argc, char** argv)
 			}
 		      else
 			{
-			  SpinChainHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins, JValue, NNCoupling);
+			  SpinChainHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins, JValue, NNCoupling, NNNCoupling);
 			  GenericComplexMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
 						      FirstRun, TmpEigenstateString);
 			  MainTaskOperation TaskOperation (&Task);
@@ -374,7 +376,7 @@ int main(int argc, char** argv)
 		{
 		  Architecture.GetArchitecture()->SetDimension(Chain->GetHilbertSpaceDimension());	
 		  cout << "2Sz = " << InitalSzValue << ", K = " << Momentum << endl; 
-		  SpinChainHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins, JValue, NNCoupling);
+		  SpinChainHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins, JValue, NNCoupling, NNNCoupling);
 		  char* TmpSzString = new char[64];
 		  if (Manager.GetBoolean("disable-inversionsymmetry") == false)
 		    {

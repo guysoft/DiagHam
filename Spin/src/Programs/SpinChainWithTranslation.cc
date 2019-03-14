@@ -68,7 +68,7 @@ int main(int argc, char** argv)
 	Architecture = new MonoProcessorArchitecture;
       else
 	Architecture = new SMPArchitecture(NbrProcessor);
-      SpinChainHamiltonianWithTranslations Hamiltonian(&Space, NbrSpin, 1.0, 0.0);
+      SpinChainHamiltonianWithTranslations Hamiltonian(&Space, NbrSpin, 1.0, 0.0, 0.0);
       if (Hamiltonian.GetHilbertSpaceDimension() < 200)
 	{
 	  HermitianMatrix HRep2 (Hamiltonian.GetHilbertSpaceDimension());

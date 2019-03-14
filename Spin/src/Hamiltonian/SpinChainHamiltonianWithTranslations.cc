@@ -58,8 +58,9 @@ SpinChainHamiltonianWithTranslations::SpinChainHamiltonianWithTranslations()
 // nbrSpin = number of spin
 // j = coupling constant between spin
 // nnCoupling = term to add to ZZ nearest-neighbour interaction
+// nnnCoupling = nearest-neighbour interaction in Z direction
 
-SpinChainHamiltonianWithTranslations::SpinChainHamiltonianWithTranslations(AbstractSpinChainWithTranslations* chain, int nbrSpin, double j, double nnCoupling)
+SpinChainHamiltonianWithTranslations::SpinChainHamiltonianWithTranslations(AbstractSpinChainWithTranslations* chain, int nbrSpin, double j, double nnCoupling, double nnnCoupling)
 {
   this->Chain = chain;
   this->NbrSpin = nbrSpin;
@@ -71,6 +72,11 @@ SpinChainHamiltonianWithTranslations::SpinChainHamiltonianWithTranslations(Abstr
       this->Jz += nnCoupling;
       cout << "Adjusting ZZ interaction: " << this->Jz << endl;
     }
+
+  this->NNNCoupling = nnnCoupling;
+  if (this->NNNCoupling != 0)
+    cout << "Adding NNN interaction: " << this->NNNCoupling << endl;
+
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateDiagonalMatrixElements();
   this->EvaluateCosinusTable();
@@ -427,6 +433,13 @@ void SpinChainHamiltonianWithTranslations::EvaluateDiagonalMatrixElements()
 	}
       this->SzSzContributions[i] += this->Chain->SziSzj(this->NbrSpin - 1, 0, i);
       this->SzSzContributions[i] *= this->Jz;
+      if (this->NNNCoupling != 0)
+        {
+          for (int j = 0; j < (this->NbrSpin - 2); j++)
+   	     this->SzSzContributions[i] += this->NNNCoupling * this->Chain->SziSzj(j, j + 2, i);
+   	  this->SzSzContributions[i] += this->NNNCoupling * this->Chain->SziSzj(this->NbrSpin - 2, 0, i);
+   	  this->SzSzContributions[i] += this->NNNCoupling * this->Chain->SziSzj(this->NbrSpin - 1, 1, i);
+        }
     }
 }
 
