@@ -178,6 +178,7 @@ int main(int argc, char** argv)
 		  //   {
 		  //     Chain->PrintState(cout, i) << endl;
 		  //   }
+		  Architecture.GetArchitecture()->SetDimension(Chain->GetHilbertSpaceDimension());
 		  char* TmpString = new char[64];
 		  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
 		  if (Manager.GetBoolean("disable-inversionsymmetry") == false)
