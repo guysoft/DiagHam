@@ -67,5 +67,10 @@ SU3SpinChainAnd2DTranslation.cc \
 SU3SpinChain2DTranslationAndTzSymmetry.cc \
 Spin3_2Chain.cc \
 Spin3_2ChainAnd2DTranslation.cc \
-Spin3_2ChainSzSymmetryAnd2DTranslation.cc
-
+Spin3_2ChainSzSymmetryAnd2DTranslation.cc \
+PairHoppingP1AsSpin1Chain.cc \
+PairHoppingP2AsSpin1Chain.cc \
+PairHoppingP1AsSpin1ChainWithTranslations.cc \
+PairHoppingP2AsSpin1ChainWithTranslations.cc \
+PairHoppingP1AsSpin1ChainWithTranslationsAndInversionSzSymmetry.cc \
+PairHoppingP2AsSpin1ChainWithTranslationsAndInversionSzSymmetry.cc

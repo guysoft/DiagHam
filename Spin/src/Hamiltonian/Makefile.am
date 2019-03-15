@@ -66,4 +66,7 @@ SpinChain4QbitsStabilizerHamiltonian.cc \
 TwoDimensionalHeisenbergHamiltonian.cc \
 TwoDimensionalHeisenbergAnd2DTranslationHamiltonian.cc \
 TwoDimensionalRRHamiltonian.cc \
-TwoDimensionalRRAnd2DTranslationHamiltonian.cc
+TwoDimensionalRRAnd2DTranslationHamiltonian.cc \
+PairHoppingHamiltonian.cc \
+PairHoppingHamiltonianWithTranslations.cc \
+PairHoppingRealHamiltonianWithTranslations.cc
