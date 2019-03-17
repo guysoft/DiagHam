@@ -57,8 +57,15 @@ class PairHoppingP2AsSpin1Chain : public  PairHoppingP1AsSpin1Chain
   friend class Spin1ChainWithTranslationsAndSzSymmetry;
   friend class Spin1ChainWithTranslationsAndInversionSymmetry;
   friend class Spin1ChainWithSzSymmetry;
+  friend class PairHoppingP1AsSpin1ChainWithTranslations;
+  friend class PairHoppingP2AsSpin1ChainWithTranslations;
 
  protected:
+
+  // number of minuses in the lefttmost unit cell
+  int NbrMinusLeft;
+  // number of pluses in the rightmost unit cell
+  int NbrPlusRight;
 
 public:
 
@@ -71,8 +78,16 @@ public:
   // chainLength = number of spin / group of 2p+1 orbitals
   // periodicBoundaryConditions = true if the system uses periodic boundary conditions
   // memorySize = memory size in bytes allowed for look-up table
-  PairHoppingP2AsSpin1Chain (int chainLength, bool periodicBoundaryConditions = false, int memorySize = -1);
+  // useForEntanglementMatrix = true if the hilbert space has to be generated for the entanglement matrix calculations
+  PairHoppingP2AsSpin1Chain (int chainLength, bool periodicBoundaryConditions = false, int memorySize = -1, bool useForEntanglementMatrix = false);
 
+  // constructor for the Hilbert space, fixing the number of pluses in the rightmost unit cell and the number of minuses in the leftmost unit cell
+  //
+  // chainLength = number of spin / group of 2p+1 orbitals
+  // nbrPlusRight = number of pluses in the rightmost unit cell
+  // nbrMinusLeft = number of minuses in the lefttmost unit cell
+  PairHoppingP2AsSpin1Chain (int chainLength, int nbrPlusRight, int nbrMinusLeft, int memorySize = -1);
+  
   // copy constructor (without duplicating datas)
   //
   // chain = reference on chain to copy

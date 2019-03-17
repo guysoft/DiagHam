@@ -30,6 +30,7 @@
 
 
 #include "HilbertSpace/PairHoppingP2AsSpin1ChainWithTranslations.h"
+#include "HilbertSpace/PairHoppingP2AsSpin1Chain.h"
 #include "HilbertSpace/Spin1Chain.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealMatrix.h"
@@ -489,7 +490,6 @@ long PairHoppingP2AsSpin1ChainWithTranslations::GenerateStates()
   int TmpNbrMinusTable[] = {2, -1, 1, -1, -1, -1, -1, -1, 1, -1, 0, 0, 1, -1, 0, 0};
   int TmpNbrPlusTable[] =  {0, -1, 0, -1, -1, -1, -1, -1, 0, -1, 0, 1, 1, -1, 1, 2};
   int TmpLastUnitCellShift = (this->ChainLength - 2) * 2;
-  long Test = 0l;
   for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
     {
       if (TmpNbrPlusTable[(this->StateDescription[i] >> TmpLastUnitCellShift) & 0xf] != TmpNbrMinusTable[this->StateDescription[i]  & 0xf])
@@ -498,7 +498,6 @@ long PairHoppingP2AsSpin1ChainWithTranslations::GenerateStates()
 	}
       else
 	{
-	  Test++;
 	  if ((this->FindCanonicalForm(this->StateDescription[i], NbrTranslationX, InversionSzSymmetrySign) == this->StateDescription[i]))
 	    {
 	      if (this->TestMomentumConstraint(this->StateDescription[i]) == true)
@@ -541,3 +540,152 @@ long PairHoppingP2AsSpin1ChainWithTranslations::GenerateStates()
   return TmpLargeHilbertSpaceDimension;
 }
 
+// evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
+// 
+// nbrSites = number of sites that are part of the A subsytem 
+// szSector = Sz sector in which the density matrix has to be evaluated  (fixing the boundray unit cells to nbr left minuses= szSector / (pValue + 1), nbr right pluses = szSector % (pValue + 1))
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+
+RealMatrix PairHoppingP2AsSpin1ChainWithTranslations::EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture)
+{
+  if (nbrSites == 0)
+    {
+      if (szSector == 0)
+	{
+	  ComplexMatrix TmpEntanglementMatrix(1, 1);
+	  Complex Tmp(1.0, 0.0);
+	  TmpEntanglementMatrix.SetMatrixElement(0, 0, Tmp);
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  ComplexMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;
+	}
+    }
+  int TmpNbrMinusLeft = szSector / 3;
+  int TmpNbrPlusRight = szSector % 3;
+  PairHoppingP2AsSpin1Chain TmpDestinationHilbertSpace(nbrSites, TmpNbrPlusRight, TmpNbrMinusLeft, 1000000);
+  PairHoppingP2AsSpin1Chain TmpHilbertSpace(this->ChainLength - nbrSites, TmpNbrMinusLeft, TmpNbrPlusRight, 1000000);
+
+  RealMatrix TmpEntanglementMatrix(TmpHilbertSpace.HilbertSpaceDimension, TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
+  int Shift = 2 * nbrSites;
+  int MinIndex = 0;
+  int MaxIndex = TmpHilbertSpace.HilbertSpaceDimension;
+  int TmpNbrTranslation;
+  int TmpNbrTranslationToIdentity;
+  double* TmpPhases = new double [2 * this->MaxXMomentum];
+  double Coef = 2.0 * M_PI * ((double) this->Momentum) / ((double) this->MaxXMomentum);
+  for (int i = 0; i < (2 * this->MaxXMomentum); ++i)
+    {
+      TmpPhases[i] = cos(Coef * ((double) i));
+    }
+
+  unsigned long Mask1 = (0x1ul << Shift) - 0x1ul;
+  unsigned long Mask2;
+#ifdef  __64_BITS__
+  if (this->ChainLength < 32)
+#else
+  if (this->ChainLength < 16)   
+#endif
+    {
+      Mask2 = (0x1ul << (2 * this->ChainLength)) - 0x1ul;      
+    }
+  else
+    {
+      Mask2 = ~0x0ul;
+    }
+  for (; MinIndex < MaxIndex; ++MinIndex)    
+    {
+      unsigned long TmpState = TmpHilbertSpace.StateDescription[MinIndex] << Shift;
+      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpState2 = (TmpState | (TmpDestinationHilbertSpace.StateDescription[j] & Mask1)) & Mask2;
+	  double Coefficient = 1.0;
+	  int TmpPos = this->SymmetrizeResult(TmpState2, 1, Coefficient, TmpNbrTranslation);
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+	      TmpEntanglementMatrix.AddToMatrixElement(MinIndex, j, groundState[TmpPos] * TmpPhases[TmpNbrTranslation]  * Coefficient);
+	    }
+	}
+    }
+  delete[] TmpPhases;
+  return TmpEntanglementMatrix;
+}
+
+// evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
+// 
+// nbrSites = number of sites that are part of the A subsytem 
+// szSector = Sz sector in which the density matrix has to be evaluated  (fixing the boundray unit cells to nbr left minuses= szSector / (pValue + 1), nbr right pluses = szSector % (pValue + 1))
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+
+ComplexMatrix PairHoppingP2AsSpin1ChainWithTranslations::EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture)
+{
+  if (nbrSites == 0)
+    {
+      if (szSector == 0)
+	{
+	  ComplexMatrix TmpEntanglementMatrix(1, 1);
+	  Complex Tmp(1.0, 0.0);
+	  TmpEntanglementMatrix.SetMatrixElement(0, 0, Tmp);
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  ComplexMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;
+	}
+    }
+  int TmpNbrMinusLeft = szSector / 3;
+  int TmpNbrPlusRight = szSector % 3;
+  PairHoppingP2AsSpin1Chain TmpDestinationHilbertSpace(nbrSites, TmpNbrPlusRight, TmpNbrMinusLeft, 1000000);
+  PairHoppingP2AsSpin1Chain TmpHilbertSpace(this->ChainLength - nbrSites, TmpNbrMinusLeft, TmpNbrPlusRight, 1000000);
+
+  ComplexMatrix TmpEntanglementMatrix(TmpHilbertSpace.HilbertSpaceDimension, TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
+  int Shift = 2 * nbrSites;
+  int MinIndex = 0;
+  int MaxIndex = TmpHilbertSpace.HilbertSpaceDimension;
+  int TmpNbrTranslation;
+  int TmpNbrTranslationToIdentity;
+  Complex* TmpPhases = new Complex [2 * this->MaxXMomentum];
+  double Coef = 2.0 * M_PI * ((double) this->Momentum) / ((double) this->MaxXMomentum);
+  for (int i = 0; i < (2 * this->MaxXMomentum); ++i)
+    {
+      TmpPhases[i] = Phase(Coef * ((double) i));
+    }
+
+  unsigned long Mask1 = (0x1ul << Shift) - 0x1ul;
+  unsigned long Mask2;
+#ifdef  __64_BITS__
+  if (this->ChainLength < 32)
+#else
+  if (this->ChainLength < 16)   
+#endif
+    {
+      Mask2 = (0x1ul << (2 * this->ChainLength)) - 0x1ul;      
+    }
+  else
+    {
+      Mask2 = ~0x0ul;
+    }
+  for (; MinIndex < MaxIndex; ++MinIndex)    
+    {
+      unsigned long TmpState = TmpHilbertSpace.StateDescription[MinIndex] << Shift;
+      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpState2 = (TmpState | (TmpDestinationHilbertSpace.StateDescription[j] & Mask1)) & Mask2;
+	  double Coefficient = 1.0;
+	  int TmpPos = this->SymmetrizeResult(TmpState2, 1, Coefficient, TmpNbrTranslation);
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+	      TmpEntanglementMatrix.AddToMatrixElement(MinIndex, j, groundState[TmpPos] * TmpPhases[TmpNbrTranslation]  * Coefficient);
+	    }
+	}
+    }
+  delete[] TmpPhases;
+  return TmpEntanglementMatrix;
+}

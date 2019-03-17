@@ -54,6 +54,7 @@ using std::dec;
 PairHoppingP1AsSpin1Chain::PairHoppingP1AsSpin1Chain () 
 {
   this->PeriodicBoundaryConditions = false;
+  this->UseForEntanglementMatrix = false;
 }
 
 // constructor for complete Hilbert space
@@ -61,14 +62,16 @@ PairHoppingP1AsSpin1Chain::PairHoppingP1AsSpin1Chain ()
 // chainLength = number of spin / group of 2p+1 orbitals
 // periodicBoundaryConditions = true if the system uses periodic boundary conditions
 // memorySize = memory size in bytes allowed for look-up table
+// useForEntanglementMatrix = true if the hilbert space has to be generated for the entanglement matrix calculations
 
-PairHoppingP1AsSpin1Chain::PairHoppingP1AsSpin1Chain (int chainLength, bool periodicBoundaryConditions, int memorySize) 
+PairHoppingP1AsSpin1Chain::PairHoppingP1AsSpin1Chain (int chainLength, bool periodicBoundaryConditions, int memorySize, bool useForEntanglementMatrix) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
   this->FixedSpinProjectionFlag = false;
   this->PeriodicBoundaryConditions = periodicBoundaryConditions;
-
+  this->UseForEntanglementMatrix = useForEntanglementMatrix;
+  
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(0, 0);
 
   this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
@@ -125,6 +128,7 @@ PairHoppingP1AsSpin1Chain::PairHoppingP1AsSpin1Chain (const PairHoppingP1AsSpin1
       this->Sz = chain.Sz;
       this->FixedSpinProjectionFlag = chain.FixedSpinProjectionFlag;
       this->PeriodicBoundaryConditions = chain.PeriodicBoundaryConditions;
+      this->UseForEntanglementMatrix = chain.UseForEntanglementMatrix;
     }
   else
     {
@@ -135,6 +139,7 @@ PairHoppingP1AsSpin1Chain::PairHoppingP1AsSpin1Chain (const PairHoppingP1AsSpin1
       this->Sz = 0;
       this->FixedSpinProjectionFlag = false;
       this->PeriodicBoundaryConditions = false;
+      this->UseForEntanglementMatrix = false;
 
       this->LookUpTable = 0;
       this->MaximumLookUpShift = 0;
@@ -177,6 +182,7 @@ PairHoppingP1AsSpin1Chain& PairHoppingP1AsSpin1Chain::operator = (const PairHopp
       this->Sz = chain.Sz;
       this->FixedSpinProjectionFlag = chain.FixedSpinProjectionFlag;
       this->PeriodicBoundaryConditions = chain.PeriodicBoundaryConditions;
+      this->UseForEntanglementMatrix = chain.UseForEntanglementMatrix;
 
       this->LookUpTable = chain.LookUpTable;
       this->MaximumLookUpShift = chain.MaximumLookUpShift;
@@ -192,6 +198,7 @@ PairHoppingP1AsSpin1Chain& PairHoppingP1AsSpin1Chain::operator = (const PairHopp
       this->Sz = 0;
       this->FixedSpinProjectionFlag = false;
       this->PeriodicBoundaryConditions = false;
+      this->UseForEntanglementMatrix = false;
  
       this->LookUpTable = 0;
       this->MaximumLookUpShift = 0;
@@ -318,19 +325,26 @@ long PairHoppingP1AsSpin1Chain::GenerateStates()
     }
   else
     {
-      int TmpLastUnitCellShift = (this->ChainLength - 1) * 2;
-      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+       if (this->UseForEntanglementMatrix == false)
 	{
-	  if (((this->StateDescription[i] & 0x3ul) == 0x0ul) ||
-	      (((this->StateDescription[i] >> TmpLastUnitCellShift) & 0x3ul) == 0x3ul))
+	  int TmpLastUnitCellShift = (this->ChainLength - 1) * 2;
+	  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
 	    {
-	      this->StateDescription[i] = TmpDiscardMask;
-	    }
-	  else
-	    {
-	      ++TmpHilbertSpaceDimension;
+	      if (((this->StateDescription[i] & 0x3ul) == 0x0ul) ||
+		  (((this->StateDescription[i] >> TmpLastUnitCellShift) & 0x3ul) == 0x3ul))
+		{
+		  this->StateDescription[i] = TmpDiscardMask;
+		}
+	      else
+		{
+		  ++TmpHilbertSpaceDimension;
+		}
 	    }
 	}
+       else
+	 {
+	   TmpHilbertSpaceDimension = this->LargeHilbertSpaceDimension;
+	 }
     }
   if (TmpHilbertSpaceDimension > 0l)
     {

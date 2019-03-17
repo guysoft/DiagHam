@@ -54,6 +54,8 @@ using std::dec;
 PairHoppingP2AsSpin1Chain::PairHoppingP2AsSpin1Chain () 
 {
   this->PeriodicBoundaryConditions = false;
+  this->NbrMinusLeft = -1;
+  this->NbrPlusRight = -1;
 }
 
 // constructor for complete Hilbert space
@@ -61,16 +63,19 @@ PairHoppingP2AsSpin1Chain::PairHoppingP2AsSpin1Chain ()
 // chainLength = number of spin / group of 2p+1 orbitals
 // periodicBoundaryConditions = true if the system uses periodic boundary conditions
 // memorySize = memory size in bytes allowed for look-up table
+// useForEntanglementMatrix = true if the hilbert space has to be generated for the entanglement matrix calculations
 
-PairHoppingP2AsSpin1Chain::PairHoppingP2AsSpin1Chain (int chainLength, bool periodicBoundaryConditions, int memorySize) 
+PairHoppingP2AsSpin1Chain::PairHoppingP2AsSpin1Chain (int chainLength, bool periodicBoundaryConditions, int memorySize, bool useForEntanglementMatrix) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
   this->FixedSpinProjectionFlag = false;
   this->PeriodicBoundaryConditions = periodicBoundaryConditions;
+  this->UseForEntanglementMatrix = useForEntanglementMatrix;
+  this->NbrMinusLeft = -1;
+  this->NbrPlusRight = -1;
 
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(0, 0);
-  cout << this->LargeHilbertSpaceDimension << endl;
   
   this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
   this->RawGenerateStates(0l, 0, 0);
@@ -104,6 +109,57 @@ PairHoppingP2AsSpin1Chain::PairHoppingP2AsSpin1Chain (int chainLength, bool peri
     }
 }
 
+// constructor for the Hilbert space, fixing the number of pluses in the rightmost unit cell and the number of minuses in the leftmost unit cell
+//
+// chainLength = number of spin / group of 2p+1 orbitals
+// nbrPlusRight = number of pluses in the rightmost unit cell
+// nbrMinusLeft = number of minuses in the lefttmost unit cell
+
+PairHoppingP2AsSpin1Chain::PairHoppingP2AsSpin1Chain (int chainLength, int nbrPlusRight, int nbrMinusLeft, int memorySize)
+{
+  this->Flag.Initialize();
+  this->ChainLength = chainLength;
+  this->FixedSpinProjectionFlag = false;
+  this->PeriodicBoundaryConditions = false;
+  this->UseForEntanglementMatrix = true;
+  this->NbrMinusLeft = nbrMinusLeft;
+  this->NbrPlusRight = nbrPlusRight;
+    
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(0, 0);
+  
+  this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+  this->RawGenerateStates(0l, 0, 0);
+  this->LargeHilbertSpaceDimension = this->GenerateStates();
+  this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  if (this->LargeHilbertSpaceDimension > 0l)
+    {
+      this->GenerateLookUpTable(memorySize);
+#ifdef __DEBUG__
+      long UsedMemory = 0;
+      UsedMemory +=  this->LargeHilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+      cout << "memory requested for Hilbert space = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+      UsedMemory = this->ChainLength * sizeof(int);
+      UsedMemory += this->ChainLength * this->LookUpTableMemorySize * sizeof(int);
+      cout << "memory requested for lookup table = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+#endif
+    }
+}
+
+
 // copy constructor (without duplicating datas)
 //
 // chain = reference on chain to copy
@@ -126,6 +182,7 @@ PairHoppingP2AsSpin1Chain::PairHoppingP2AsSpin1Chain (const PairHoppingP2AsSpin1
       this->Sz = chain.Sz;
       this->FixedSpinProjectionFlag = chain.FixedSpinProjectionFlag;
       this->PeriodicBoundaryConditions = chain.PeriodicBoundaryConditions;
+      this->UseForEntanglementMatrix = chain.UseForEntanglementMatrix;
     }
   else
     {
@@ -136,6 +193,7 @@ PairHoppingP2AsSpin1Chain::PairHoppingP2AsSpin1Chain (const PairHoppingP2AsSpin1
       this->Sz = 0;
       this->FixedSpinProjectionFlag = false;
       this->PeriodicBoundaryConditions = false;
+      this->UseForEntanglementMatrix = false;
 
       this->LookUpTable = 0;
       this->MaximumLookUpShift = 0;
@@ -178,6 +236,7 @@ PairHoppingP2AsSpin1Chain& PairHoppingP2AsSpin1Chain::operator = (const PairHopp
       this->Sz = chain.Sz;
       this->FixedSpinProjectionFlag = chain.FixedSpinProjectionFlag;
       this->PeriodicBoundaryConditions = chain.PeriodicBoundaryConditions;
+      this->UseForEntanglementMatrix = chain.UseForEntanglementMatrix;
 
       this->LookUpTable = chain.LookUpTable;
       this->MaximumLookUpShift = chain.MaximumLookUpShift;
@@ -193,6 +252,7 @@ PairHoppingP2AsSpin1Chain& PairHoppingP2AsSpin1Chain::operator = (const PairHopp
       this->Sz = 0;
       this->FixedSpinProjectionFlag = false;
       this->PeriodicBoundaryConditions = false;
+      this->UseForEntanglementMatrix = false;
  
       this->LookUpTable = 0;
       this->MaximumLookUpShift = 0;
@@ -382,17 +442,43 @@ long PairHoppingP2AsSpin1Chain::GenerateStates()
     }
   else
     {
-      int TmpLastUnitCellShift = (this->ChainLength - 2) * 2;
-      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+      if (this->UseForEntanglementMatrix == false)
 	{
-	  if ((TmpNbrPlusTable[(this->StateDescription[i] >> TmpLastUnitCellShift) & 0xf] != 0) ||
-	      (TmpNbrMinusTable[this->StateDescription[i]  & 0xf] != 0))
+	  int TmpLastUnitCellShift = (this->ChainLength - 2) * 2;
+	  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
 	    {
-	      this->StateDescription[i] = TmpDiscardMask;
+	      if ((TmpNbrPlusTable[(this->StateDescription[i] >> TmpLastUnitCellShift) & 0xf] != 0) ||
+		  (TmpNbrMinusTable[this->StateDescription[i]  & 0xf] != 0))
+		{
+		  this->StateDescription[i] = TmpDiscardMask;
+		}
+	      else
+		{
+		  ++TmpHilbertSpaceDimension;
+		}
+	    }
+	}
+      else
+	{
+	  if ((this->NbrMinusLeft != - 1) && (this->NbrPlusRight != -1))
+	    {
+	      int TmpLastUnitCellShift = (this->ChainLength - 2) * 2;
+	      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+		{
+		  if ((TmpNbrPlusTable[(this->StateDescription[i] >> TmpLastUnitCellShift) & 0xf] != this->NbrPlusRight) ||
+		      (TmpNbrMinusTable[this->StateDescription[i]  & 0xf] != this->NbrMinusLeft))
+		    {
+		      this->StateDescription[i] = TmpDiscardMask;
+		    }
+		  else
+		    {
+		      ++TmpHilbertSpaceDimension;
+		    }
+		}
 	    }
 	  else
 	    {
-	      ++TmpHilbertSpaceDimension;
+	      TmpHilbertSpaceDimension = this->LargeHilbertSpaceDimension;
 	    }
 	}
     }

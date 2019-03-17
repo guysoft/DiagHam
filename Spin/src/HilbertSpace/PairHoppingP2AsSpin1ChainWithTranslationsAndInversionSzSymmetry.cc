@@ -92,7 +92,18 @@ PairHoppingP2AsSpin1ChainWithTranslationsAndInversionSzSymmetry::PairHoppingP2As
     this->InversionUnshift = this->InversionShift;
   else
     this->InversionUnshift = this->InversionShift - 2;
-  this->SzSymmetryMask = (0x1ul << (2 * this-> ChainLength)) - 0x1ul;
+#ifdef __64_BITS__
+  if (this-> ChainLength < 32)
+#else
+  if (this-> ChainLength < 16)
+#endif
+    {
+      this->SzSymmetryMask = (0x1ul << (2 * this-> ChainLength)) - 0x1ul;
+    }
+  else
+    {
+      this->SzSymmetryMask  = ~0x0ul;
+    }
 
   this->MaxXMomentum = this->ChainLength >> 1;
   this->StateXShift = 2 * (this->ChainLength / this->MaxXMomentum);
@@ -100,6 +111,7 @@ PairHoppingP2AsSpin1ChainWithTranslationsAndInversionSzSymmetry::PairHoppingP2As
   this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
 
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(0, 0);
+
   this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
   this->RawGenerateStates(0l, 0, 0);
 

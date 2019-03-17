@@ -999,6 +999,22 @@ int Spin1ChainWithTranslations::SziSzjSmiSpj (int i1, int j1, int i2, int j2, in
   return this->HilbertSpaceDimension;
 }
 
+
+// find state index
+//
+// stateDescription = state description
+// return value = corresponding index
+
+int Spin1ChainWithTranslations::FindStateIndex(unsigned long stateDescription)
+{
+  int TmpMaxBitPosition = (this->ChainLength << 1) - 1;
+  while ((TmpMaxBitPosition >= 0) && (((stateDescription >> TmpMaxBitPosition) & 0x1ul) == 0x0ul))
+    {
+      --TmpMaxBitPosition;
+    }
+  return this->FindStateIndex(stateDescription, TmpMaxBitPosition);
+}
+
 // find state index
 //
 // stateDescription = state description
@@ -1252,7 +1268,7 @@ void Spin1ChainWithTranslations::GenerateLookUpTable(unsigned long memory)
   this->LookUpTableShift = new int [TmpMaxBitPosition];
   for (int i = 0; i < TmpMaxBitPosition; ++i)
     this->LookUpTable[i] = new int [this->LookUpTableMemorySize + 1];
-  int CurrentMaxMomentum = TmpMaxBitPosition;
+  int CurrentMaxMomentum = TmpMaxBitPosition - 1;
   while (((this->StateDescription[0] >> CurrentMaxMomentum) == 0x0ul) && (CurrentMaxMomentum > 0))
     --CurrentMaxMomentum;
   int* TmpLookUpTable = this->LookUpTable[CurrentMaxMomentum];

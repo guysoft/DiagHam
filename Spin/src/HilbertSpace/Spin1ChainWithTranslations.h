@@ -272,6 +272,13 @@ class Spin1ChainWithTranslations : public AbstractSpinChainWithTranslations
   // stateDescription = state description
   // maxBitPosition = maximum bit set to one in stateDescription
   // return value = corresponding index
+  virtual int FindStateIndex(unsigned long stateDescription);
+
+  // find state index
+  //
+  // stateDescription = state description
+  // maxBitPosition = maximum bit set to one in stateDescription
+  // return value = corresponding index
   virtual int FindStateIndex(unsigned long stateDescription, int maxBitPosition);
 
   // print a given State

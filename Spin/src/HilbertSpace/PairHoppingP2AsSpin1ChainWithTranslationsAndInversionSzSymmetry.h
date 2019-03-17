@@ -150,7 +150,7 @@ inline int PairHoppingP2AsSpin1ChainWithTranslationsAndInversionSzSymmetry::Symm
 {
   double TmpSign;
   state = this->FindCanonicalForm(state, nbrTranslations, TmpSign);
-  int TmpMaxMomentum = 2 * this->ChainLength;
+  int TmpMaxMomentum = 2 * this->ChainLength - 1;
   while (((state >> TmpMaxMomentum) == 0x0ul) && (TmpMaxMomentum > 0))
     --TmpMaxMomentum;
   int TmpIndex = this->FindStateIndex(state, TmpMaxMomentum);
