@@ -374,6 +374,7 @@ int main(int argc, char** argv)
 	    {
 	      StateVectors[i + NbrVectors] = VectorsAsAMatrix[i];
 	    }
+	  NbrVectors += VectorsAsAMatrix.GetNbrColumn();
 	  Complex sp = 0.0;
 	  Complex TotalOverlap = 0.0;
 	  ComplexMatrix OverlapMatrix;
@@ -492,6 +493,7 @@ int main(int argc, char** argv)
 	    {
 	      StateVectors[i + NbrVectors] = VectorsAsAMatrix[i];
 	    }
+	  NbrVectors += VectorsAsAMatrix.GetNbrColumn();
 	  double TotalOverlap = 0.0;
 	  double sp = 0.0;
 	  RealMatrix OverlapMatrix;
