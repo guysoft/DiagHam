@@ -64,7 +64,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleDoubleOption ('t', "time-step", "time step", 0.1);
   (*SystemGroup) += new  SingleIntegerOption ('T', "nbr-timesteps", "number of time steps", 100);
   (*OutputGroup) += new BooleanOption  ('\n', "use-root", "us the root state instead of the z2 state as the initial state");
-  (*OutputGroup) += new BooleanOption  ('\n', "store-state", "store all the states generated at each time step in a single binary matrix file");
+  (*OutputGroup) += new BooleanOption  ('\n', "store-states", "store all the states generated at each time step in a single binary matrix file");
+  (*OutputGroup) += new BooleanOption  ('\n', "store-initialstate", "store all the initial state");
   (*OutputGroup) += new BooleanOption  ('\n', "disable-entropy", "do not evaluate the entanglement entropy  at each time step");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -182,8 +183,15 @@ int main(int argc, char** argv)
 	  return -1;       
 	}
       InitialState[InitialStateIndex] = 1.0;
+      if (Manager.GetBoolean("store-initialstate") == true)
+	{
+	  char* InitialStateOutputFileName = new char [strlen(OutputFileName)+ 64];
+	  sprintf (InitialStateOutputFileName, "%s.0.vec", OutputFileName);
+	  InitialState.WriteVector(InitialStateOutputFileName);
+	  delete[] InitialStateOutputFileName;	  
+	}      
       ComplexMatrix AllStates;
-      if (Manager.GetBoolean("store-state") == true)
+      if (Manager.GetBoolean("store-states") == true)
 	{
 	  AllStates = ComplexMatrix (Chain->GetHilbertSpaceDimension(), NbrTimeSteps + 1);
 	  AllStates[0].Copy(InitialState);
@@ -280,12 +288,12 @@ int main(int argc, char** argv)
 	  File << CurrentTime << " " << SqrNorm(TmpTotalState * InitialState) << " " <<  EntanglementEntropy << " " << ReducedDensityMatrixTrace << " " << NbrIterations <<  " " << TmpNorm << " " << DeltaTime << endl;
 	  CurrentTime += TimeStep;
 	  TmpTotalState /= TmpTotalState.Norm();
-	  if (Manager.GetBoolean("store-state") == true)
+	  if (Manager.GetBoolean("store-states") == true)
 	    {
 	      AllStates[Index].Copy(TmpTotalState);
 	    }
 	}
-      if (Manager.GetBoolean("store-state") == true)
+      if (Manager.GetBoolean("store-states") == true)
 	{
 	  AllStates.WriteMatrix(StateOutputFileName);
 	}
