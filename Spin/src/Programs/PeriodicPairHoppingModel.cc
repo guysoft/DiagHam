@@ -5,6 +5,8 @@
 
 #include "HilbertSpace/PairHoppingP1AsSpin1ChainWithTranslationsLong.h"
 #include "HilbertSpace/PairHoppingP2AsSpin1ChainWithTranslationsLong.h"
+#include "HilbertSpace/PairHoppingP1AsSpin1ChainWithTranslationsAndInversionSzSymmetryLong.h"
+#include "HilbertSpace/PairHoppingP2AsSpin1ChainWithTranslationsAndInversionSzSymmetryLong.h"
 
 #include "Hamiltonian/PairHoppingHamiltonianWithTranslations.h"
 #include "Hamiltonian/PairHoppingRealHamiltonianWithTranslations.h"
@@ -144,10 +146,28 @@ int main(int argc, char** argv)
 		  switch (PValue)
 		    {
 		    case 1 :
-		      Chain = new PairHoppingP1AsSpin1ChainWithTranslationsAndInversionSzSymmetry (NbrSpins, Momentum, InversionSymmetrySector);
+		      {
+			if (NbrSpins <= 32)
+			  {
+			    Chain = new PairHoppingP1AsSpin1ChainWithTranslationsAndInversionSzSymmetry (NbrSpins, Momentum, InversionSymmetrySector);
+			  }
+			else
+			  {
+			    Chain = new PairHoppingP1AsSpin1ChainWithTranslationsAndInversionSzSymmetryLong (NbrSpins, Momentum, InversionSymmetrySector);
+			  }
+		      }
 		      break;
 		    case 2 :
-		      Chain = new PairHoppingP2AsSpin1ChainWithTranslationsAndInversionSzSymmetry (NbrSpins, Momentum, InversionSymmetrySector);
+		      {
+			if (NbrSpins <= 32)
+			  {
+			    Chain = new PairHoppingP2AsSpin1ChainWithTranslationsAndInversionSzSymmetry (NbrSpins, Momentum, InversionSymmetrySector);
+			  }
+			else
+			  {
+			    Chain = new PairHoppingP2AsSpin1ChainWithTranslationsAndInversionSzSymmetryLong (NbrSpins, Momentum, InversionSymmetrySector);
+			  }
+		      }
 		      break;
 		    default :
 		      {

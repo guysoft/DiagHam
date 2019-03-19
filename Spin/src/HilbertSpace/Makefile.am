@@ -79,4 +79,6 @@ Spin1ChainWithTranslationsLong.cc \
 PairHoppingP1AsSpin1ChainLong.cc \
 PairHoppingP1AsSpin1ChainWithTranslationsLong.cc \
 PairHoppingP2AsSpin1ChainLong.cc \
-PairHoppingP2AsSpin1ChainWithTranslationsLong.cc
+PairHoppingP2AsSpin1ChainWithTranslationsLong.cc \
+PairHoppingP1AsSpin1ChainWithTranslationsAndInversionSzSymmetryLong.cc \
+PairHoppingP2AsSpin1ChainWithTranslationsAndInversionSzSymmetryLong.cc
