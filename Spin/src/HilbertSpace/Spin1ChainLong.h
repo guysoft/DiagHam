@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                            class of spin 1 chain                           //
+//                class of spin 1 chain for more than 32 spins                //
 //                                                                            //
-//                        last modification : 04/04/2001                      //
+//                        last modification : 18/03/2019                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SPIN1CHAIN_H
-#define SPIN1CHAIN_H
+#ifndef SPIN1CHAINLONG_H
+#define SPIN1CHAINLONG_H
 
 
 #include "config.h"
@@ -50,14 +50,10 @@ class SubspaceSpaceConverter;
 class AbstractQuantumNumber;
 
 
-class Spin1Chain : public AbstractSpinChain
+class Spin1ChainLong : public AbstractSpinChain
 {
 
-  friend class Spin1ChainWithTranslations;
-  friend class Spin1ChainWithTranslationsAndSzSymmetry;
-  friend class Spin1ChainWithTranslationsAndInversionSymmetry;
-  friend class Spin1ChainWithSzSymmetry;
-  friend class Spin1ChainWithTranslationsLong;
+ friend class Spin1ChainWithTranslationsLong;
   
  protected:
 
@@ -75,41 +71,41 @@ class Spin1Chain : public AbstractSpinChain
   // look-up table with two entries : the first one used maxMomentum value of the state an the second 
   int** LookUpTable;
 
-  unsigned long* StateDescription;
+  ULONGLONG* StateDescription;
 
  public:
 
   // default constructor
   //
-  Spin1Chain ();
+  Spin1ChainLong ();
 
   // constructor for complete Hilbert space with no restriction on total spin projection Sz
   //
   // chainLength = number of spin
   // memorySize = memory size in bytes allowed for look-up table
-  Spin1Chain (int chainLength, int memorySize);
+  Spin1ChainLong (int chainLength, int memorySize);
 
   // constructor for complete Hilbert space corresponding to a given total spin projection Sz
   //
   // chainLength = number of spin 1
   // sz = twice the value of total Sz component
   // memorySize = memory size in bytes allowed for look-up table
-  Spin1Chain (int chainLength, int sz, int memorySize) ;
+  Spin1ChainLong (int chainLength, int sz, int memorySize) ;
 
   // copy constructor (without duplicating datas)
   //
   // chain = reference on chain to copy
-  Spin1Chain (const Spin1Chain& chain);
+  Spin1ChainLong (const Spin1ChainLong& chain);
 
   // destructor
   //
-  virtual ~Spin1Chain ();
+  virtual ~Spin1ChainLong ();
 
   // assignement (without duplicating datas)
   //
   // chain = reference on chain to copy
   // return value = reference on current chain
-  Spin1Chain& operator = (const Spin1Chain& chain);
+  Spin1ChainLong& operator = (const Spin1ChainLong& chain);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -270,14 +266,14 @@ class Spin1Chain : public AbstractSpinChain
   //
   // state = state description
   // return value = corresponding index
-  virtual int FindStateIndex(unsigned long state);
+  virtual int FindStateIndex(ULONGLONG state);
 
   // find state index
   //
   // stateDescription = state description
   // maxBitPosition = maximum bit set to one in stateDescription
   // return value = corresponding index
-  virtual int FindStateIndex(unsigned long stateDescription, int maxBitPosition);
+  virtual int FindStateIndex(ULONGLONG stateDescription, int maxBitPosition);
 
   // print a given State
   //
@@ -326,9 +322,9 @@ class Spin1Chain : public AbstractSpinChain
   // lookUpTableSize = look-Up table size
   // lookUpTablePosition = last position described by the look-Up table
   // lookUpTableMask = look-Up table mask  
-  Spin1Chain (int hilbertSpaceDimension, unsigned long* chainDescription, int chainLength, 
+  Spin1ChainLong (int hilbertSpaceDimension, ULONGLONG* chainDescription, int chainLength, 
 	      int sz, bool fixedQuantumNumberFlag, int* lookUpTable, int lookUpTableSize, 
-	      int lookUpPosition, unsigned long lookUpTableMask);
+	      int lookUpPosition, ULONGLONG lookUpTableMask);
   
 
   // factorized code that is used to symmetrize the result of any operator action
@@ -336,7 +332,7 @@ class Spin1Chain : public AbstractSpinChain
   // state = state that has been produced with the operator action
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state  
-  virtual int SymmetrizeResult(unsigned long state, double& coefficient);
+  virtual int SymmetrizeResult(ULONGLONG state, double& coefficient);
 
   // evaluate Hilbert space dimension
   //
@@ -378,7 +374,7 @@ class Spin1Chain : public AbstractSpinChain
 // site = site index
 // return value = twice the spin
 
-inline int Spin1Chain::GetLocalSpin(int site)
+inline int Spin1ChainLong::GetLocalSpin(int site)
 {
   return 2;
 }
@@ -388,10 +384,10 @@ inline int Spin1Chain::GetLocalSpin(int site)
 // stateDescription = state description
 // return value = corresponding index
 
-inline int Spin1Chain::FindStateIndex(unsigned long stateDescription)
+inline int Spin1ChainLong::FindStateIndex(ULONGLONG stateDescription)
 {
   int TmpMaxBitPosition = this->ChainLength << 1;
-  while ((TmpMaxBitPosition > 0) && ((stateDescription >> TmpMaxBitPosition) == 0x0ul))
+  while ((TmpMaxBitPosition > 0) && ((stateDescription >> TmpMaxBitPosition) == ((ULONGLONG) 0x0ul)))
     {
       --TmpMaxBitPosition;
     }
@@ -404,7 +400,7 @@ inline int Spin1Chain::FindStateIndex(unsigned long stateDescription)
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state  
 
-inline int Spin1Chain::SymmetrizeResult(unsigned long state, double& coefficient)
+inline int Spin1ChainLong::SymmetrizeResult(ULONGLONG state, double& coefficient)
 {
   return this->FindStateIndex(state);
 }

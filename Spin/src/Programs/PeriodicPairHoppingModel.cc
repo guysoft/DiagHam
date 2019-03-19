@@ -3,6 +3,9 @@
 #include "HilbertSpace/PairHoppingP1AsSpin1ChainWithTranslationsAndInversionSzSymmetry.h"
 #include "HilbertSpace/PairHoppingP2AsSpin1ChainWithTranslationsAndInversionSzSymmetry.h"
 
+#include "HilbertSpace/PairHoppingP1AsSpin1ChainWithTranslationsLong.h"
+#include "HilbertSpace/PairHoppingP2AsSpin1ChainWithTranslationsLong.h"
+
 #include "Hamiltonian/PairHoppingHamiltonianWithTranslations.h"
 #include "Hamiltonian/PairHoppingRealHamiltonianWithTranslations.h"
 
@@ -134,7 +137,7 @@ int main(int argc, char** argv)
 	{
 	  for (int InversionSymmetrySector = MinInversionSymmetrySector; InversionSymmetrySector <= MaxInversionSymmetrySector; InversionSymmetrySector += 2)
 	    {
-	      PairHoppingP1AsSpin1ChainWithTranslations* Chain = 0;
+	      AbstractSpinChainWithTranslations* Chain = 0;
 	      if (Manager.GetBoolean("disable-inversionsymmetry") == false)
 		{
 		  cout << "K=" << Momentum <<" IP=" << InversionSymmetrySector << endl;
@@ -159,10 +162,28 @@ int main(int argc, char** argv)
 		  switch (PValue)
 		    {
 		    case 1 :
-		      Chain = new PairHoppingP1AsSpin1ChainWithTranslations (NbrSpins, Momentum, 1000000);
+		      {
+			if (NbrSpins <= 32)
+			  {
+			    Chain = new PairHoppingP1AsSpin1ChainWithTranslations (NbrSpins, Momentum, 1000000);
+			  }
+			else
+			  {
+			    Chain = new PairHoppingP1AsSpin1ChainWithTranslationsLong (NbrSpins, Momentum, 1000000);
+			  }
+		      }
 		      break;
 		    case 2 :
-		      Chain = new PairHoppingP2AsSpin1ChainWithTranslations (NbrSpins, Momentum, 1000000);
+		      {
+			if (NbrSpins <= 32)
+			  {
+			    Chain = new PairHoppingP2AsSpin1ChainWithTranslations (NbrSpins, Momentum, 1000000);
+			  }
+			else
+			  {
+			    Chain = new PairHoppingP2AsSpin1ChainWithTranslationsLong (NbrSpins, Momentum, 1000000);
+			  }
+		      }
 		      break;
 		    default :
 		      {
@@ -174,6 +195,7 @@ int main(int argc, char** argv)
 	      
 	      if (Chain->GetHilbertSpaceDimension() > 0)
 		{
+		  cout << "Hilbert space dimension = " << Chain->GetLargeHilbertSpaceDimension() << endl;	  
 		  // for (int i = 0; i < Chain->GetHilbertSpaceDimension(); ++i)
 		  //   {
 		  //     Chain->PrintState(cout, i) << endl;
@@ -221,14 +243,32 @@ int main(int argc, char** argv)
       else
 	{
 	  cout << "K=" << Momentum << endl;
-	  PairHoppingP1AsSpin1ChainWithTranslations* Chain = 0;
+	  AbstractSpinChainWithTranslations* Chain = 0;
 	  switch (PValue)
 	    {
 	    case 1 :
-	      Chain = new PairHoppingP1AsSpin1ChainWithTranslations (NbrSpins, Momentum, 1000000);
+	      {
+		if (NbrSpins <= 32)
+		  {
+		    Chain = new PairHoppingP1AsSpin1ChainWithTranslations (NbrSpins, Momentum, 1000000);
+		  }
+		else
+		  {
+		    Chain = new PairHoppingP1AsSpin1ChainWithTranslationsLong (NbrSpins, Momentum, 1000000);
+		  }
+	      }
 	      break;
 	    case 2 :
-	      Chain = new PairHoppingP2AsSpin1ChainWithTranslations (NbrSpins, Momentum, 1000000);
+	      {
+		if (NbrSpins <= 32)
+		  {
+		    Chain = new PairHoppingP2AsSpin1ChainWithTranslations (NbrSpins, Momentum, 1000000);
+		  }
+		else
+		  {
+		    Chain = new PairHoppingP2AsSpin1ChainWithTranslationsLong (NbrSpins, Momentum, 1000000);
+		  }
+	      }
 	      break;
 	    default :
 	      {

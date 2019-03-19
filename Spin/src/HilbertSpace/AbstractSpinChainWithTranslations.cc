@@ -269,3 +269,17 @@ int AbstractSpinChainWithTranslations::Spin4Projector (int  i, int j, int state,
   cout << "warning, using dummy method AbstractSpinChainWithTranslations::Spin4Projector" << endl;
   return 0;
 }
+
+// find the canonical form of a state
+//
+// state = state description
+// nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
+// return value = canonical form of the state
+
+unsigned long AbstractSpinChainWithTranslations::FindCanonicalForm(unsigned long state, int& nbrTranslation)
+{
+  cout << "warning, using dummy method AbstractSpinChainWithTranslations::FindCanonicalForm" << endl;
+  nbrTranslation = 0;
+  return state;
+}
+

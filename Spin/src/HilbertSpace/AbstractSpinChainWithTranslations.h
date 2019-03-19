@@ -311,7 +311,7 @@ class AbstractSpinChainWithTranslations : public AbstractSpinChain
   // state = state description
   // nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
   // return value = canonical form of the state
-  virtual unsigned long FindCanonicalForm(unsigned long state, int& nbrTranslation) = 0;
+  virtual unsigned long FindCanonicalForm(unsigned long state, int& nbrTranslation);
 
   
   //return the scaling factor when going from state i to state j
