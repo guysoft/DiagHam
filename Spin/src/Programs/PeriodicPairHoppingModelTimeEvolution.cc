@@ -28,6 +28,8 @@
 
 #include "Options/Options.h"
 
+#include "config.h"
+
 
 #include <iostream>
 #include <stdlib.h>
@@ -182,27 +184,53 @@ int main(int argc, char** argv)
       PairHoppingHamiltonianWithTranslations* Hamiltonian = 0;
       Hamiltonian = new PairHoppingHamiltonianWithTranslations(Chain, NbrSpins, PValue);
       ComplexVector InitialState (Chain->GetLargeHilbertSpaceDimension(), true);
-      unsigned long InitialConfiguration = 0x0ul;
       timeval StartingTime;
       timeval EndingTime;  
-      if (Manager.GetBoolean("use-root") == true)
+      int InitialStateIndex = 0;
+      if (NbrSpins <= 32)
 	{
-	  for (int i = 0; i < NbrSpins; ++i)
+	  unsigned long InitialConfiguration = 0x0ul;
+	  if (Manager.GetBoolean("use-root") == true)
 	    {
-	      InitialConfiguration |= (0x2ul) << (i << 1);
-	    }
-	}
-      else
-	{
-	  for (int i = 0; i < (NbrSpins / PValue); i += 2)
-	    {
-	      for (int j = 0; j < PValue; ++j)
+	      for (int i = 0; i < NbrSpins; ++i)
 		{
-		  InitialConfiguration |= (0x3ul) << (((i * PValue) + j) << 1);
+		  InitialConfiguration |= (0x2ul) << (i << 1);
 		}
 	    }
+	  else
+	    {
+	      for (int i = 0; i < (NbrSpins / PValue); i += 2)
+		{
+		  for (int j = 0; j < PValue; ++j)
+		    {
+		      InitialConfiguration |= (0x3ul) << (((i * PValue) + j) << 1);
+		    }
+		}
+	    }
+	  InitialStateIndex = ((PairHoppingP1AsSpin1ChainWithTranslations*) Chain)->FindStateIndex(InitialConfiguration);
 	}
-      int InitialStateIndex = Chain->FindStateIndex(InitialConfiguration);
+      else
+ 	{
+	  ULONGLONG InitialConfiguration = ((ULONGLONG) 0x0ul);
+	  if (Manager.GetBoolean("use-root") == true)
+	    {
+	      for (int i = 0; i < NbrSpins; ++i)
+		{
+		  InitialConfiguration |= ((ULONGLONG) 0x2ul) << (i << 1);
+		}
+	    }
+	  else
+	    {
+	      for (int i = 0; i < (NbrSpins / PValue); i += 2)
+		{
+		  for (int j = 0; j < PValue; ++j)
+		    {
+		      InitialConfiguration |= ((ULONGLONG) 0x3ul) << (((i * PValue) + j) << 1);
+		    }
+		}
+	    }
+	  InitialStateIndex = ((PairHoppingP1AsSpin1ChainWithTranslationsLong*) Chain)->FindStateIndex(InitialConfiguration);
+	}
       if (InitialStateIndex == Chain->GetHilbertSpaceDimension())
 	{
 	  cout << "error while retrieving the initial configuration index" << endl;
