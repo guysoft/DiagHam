@@ -75,9 +75,9 @@ PairHoppingP2AsSpin1ChainWithTranslations::PairHoppingP2AsSpin1ChainWithTranslat
   this->ComplementaryStateXShift = (2 * this-> ChainLength) - this->StateXShift;
   this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
 
-  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(0, 0);
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(0, 0, 0);
   this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
-  this->RawGenerateStates(0l, 0, 0);
+  this->RawGenerateStates(0l, 0, 0, 0);
   this->LargeHilbertSpaceDimension = this->GenerateStates();
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
   if (this->LargeHilbertSpaceDimension > 0l)
@@ -336,49 +336,57 @@ int PairHoppingP2AsSpin1ChainWithTranslations::PlusMinusOperator (int leftUnitCe
 // evaluate Hilbert space dimension
 //
 // previousNbrPlus = number of +1 spins in the previous unit cell
+// initialNbrMinus = number of -1 spins in the first unit cell
 // sitePosition = site on chain where spin has to be changed
 // return value = Hilbert space dimension
 
-long PairHoppingP2AsSpin1ChainWithTranslations::EvaluateHilbertSpaceDimension(int previousNbrPlus, int sitePosition)
+long PairHoppingP2AsSpin1ChainWithTranslations::EvaluateHilbertSpaceDimension(int previousNbrPlus, int initialNbrMinus, int sitePosition)
 {
   if (sitePosition == this->ChainLength)
     {
-      return 1l;	  
+      if (previousNbrPlus == initialNbrMinus)
+	{
+	  return 1l;
+	}
+      else
+	{
+	  return 0l;
+	}
     }
   long TmpDimension = 0l;
   if (sitePosition != 0)
     {
       if (previousNbrPlus == 2)
 	{
-	  TmpDimension += this->EvaluateHilbertSpaceDimension(0, sitePosition + 2);
+	  TmpDimension += this->EvaluateHilbertSpaceDimension(0, initialNbrMinus, sitePosition + 2);
 	}
       else
 	{
 	  if (previousNbrPlus == 1)
 	    {
-	      TmpDimension += this->EvaluateHilbertSpaceDimension(0, sitePosition + 2);
-	      TmpDimension += this->EvaluateHilbertSpaceDimension(0, sitePosition + 2);
-	      TmpDimension += this->EvaluateHilbertSpaceDimension(1, sitePosition + 2);
+	      TmpDimension += this->EvaluateHilbertSpaceDimension(0, initialNbrMinus, sitePosition + 2);
+	      TmpDimension += this->EvaluateHilbertSpaceDimension(0, initialNbrMinus, sitePosition + 2);
+	      TmpDimension += this->EvaluateHilbertSpaceDimension(1, initialNbrMinus, sitePosition + 2);
 	    }
 	  else
 	    {
-	      TmpDimension += this->EvaluateHilbertSpaceDimension(0, sitePosition + 2);
-	      TmpDimension += this->EvaluateHilbertSpaceDimension(1, sitePosition + 2);
-	      TmpDimension += this->EvaluateHilbertSpaceDimension(1, sitePosition + 2);
-	      TmpDimension += this->EvaluateHilbertSpaceDimension(2, sitePosition + 2);
+	      TmpDimension += this->EvaluateHilbertSpaceDimension(0, initialNbrMinus, sitePosition + 2);
+	      TmpDimension += this->EvaluateHilbertSpaceDimension(1, initialNbrMinus, sitePosition + 2);
+	      TmpDimension += this->EvaluateHilbertSpaceDimension(1, initialNbrMinus, sitePosition + 2);
+	      TmpDimension += this->EvaluateHilbertSpaceDimension(2, initialNbrMinus, sitePosition + 2);
 	    }
 	}
     }
   else
     {
-      TmpDimension += this->EvaluateHilbertSpaceDimension(0, 2);
-      TmpDimension += this->EvaluateHilbertSpaceDimension(0, 2);
-      TmpDimension += this->EvaluateHilbertSpaceDimension(0, 2);
-      TmpDimension += this->EvaluateHilbertSpaceDimension(0, 2);
-      TmpDimension += this->EvaluateHilbertSpaceDimension(1, 2);
-      TmpDimension += this->EvaluateHilbertSpaceDimension(1, 2);
-      TmpDimension += this->EvaluateHilbertSpaceDimension(1, 2);
-      TmpDimension += this->EvaluateHilbertSpaceDimension(2, 2);
+      TmpDimension += this->EvaluateHilbertSpaceDimension(0, 2, 2);
+      TmpDimension += this->EvaluateHilbertSpaceDimension(0, 1, 2);
+      TmpDimension += this->EvaluateHilbertSpaceDimension(0, 1, 2);
+      TmpDimension += this->EvaluateHilbertSpaceDimension(0, 0, 2);
+      TmpDimension += this->EvaluateHilbertSpaceDimension(1, 1, 2);
+      TmpDimension += this->EvaluateHilbertSpaceDimension(1, 0, 2);
+      TmpDimension += this->EvaluateHilbertSpaceDimension(1, 0, 2);
+      TmpDimension += this->EvaluateHilbertSpaceDimension(2, 0, 2);
     }
   return TmpDimension;
 }
@@ -387,55 +395,63 @@ long PairHoppingP2AsSpin1ChainWithTranslations::EvaluateHilbertSpaceDimension(in
 //
 // statePosition = position for the new states
 // previousNbrPlus = number of +1 spins in the previous unit cell
+// initialNbrMinus = number of -1 spins in the first unit cell
 // sitePosition = site on chain where spin has to be changed
 // return value = number of generated states
 
-long PairHoppingP2AsSpin1ChainWithTranslations::RawGenerateStates(long statePosition, int previousNbrPlus, int sitePosition) 
+long PairHoppingP2AsSpin1ChainWithTranslations::RawGenerateStates(long statePosition, int previousNbrPlus, int initialNbrMinus, int sitePosition) 
 {
   if (sitePosition == this->ChainLength)
     {
-      this->StateDescription[statePosition] = 0x0ul;
-      return (statePosition + 1l);
+      if (previousNbrPlus == initialNbrMinus)
+	{
+	  this->StateDescription[statePosition] = 0x0ul;
+	  return (statePosition + 1l);
+	}
+      else
+	{
+	  return statePosition;
+	}
     }
   if (sitePosition != 0)
     {
       if (previousNbrPlus == 2)
 	{
-	  statePosition = this->RawGenerateStates(statePosition, 0, sitePosition + 2);
+	  statePosition = this->RawGenerateStates(statePosition, 0, initialNbrMinus, sitePosition + 2);
 	}
       else
 	{
 	  if (previousNbrPlus == 1)
 	    {
 	      unsigned long TmpMask = 0x2ul << (sitePosition * 2);
-	      long TmpPosition = this->RawGenerateStates(statePosition, 0, sitePosition + 2);
+	      long TmpPosition = this->RawGenerateStates(statePosition, 0, initialNbrMinus, sitePosition + 2);
 	      for (; statePosition < TmpPosition; ++statePosition)
 		this->StateDescription[statePosition] |= TmpMask;
 	      TmpMask = 0x8ul << (sitePosition * 2);
-	      TmpPosition = this->RawGenerateStates(statePosition, 0, sitePosition + 2);
+	      TmpPosition = this->RawGenerateStates(statePosition, 0, initialNbrMinus, sitePosition + 2);
 	      for (; statePosition < TmpPosition; ++statePosition)
 		this->StateDescription[statePosition] |= TmpMask;
 	      TmpMask = 0xcul << (sitePosition * 2);
-	      TmpPosition = this->RawGenerateStates(statePosition, 1, sitePosition + 2);
+	      TmpPosition = this->RawGenerateStates(statePosition, 1, initialNbrMinus, sitePosition + 2);
 	      for (; statePosition < TmpPosition; ++statePosition)
 		this->StateDescription[statePosition] |= TmpMask;
 	    }
 	  else
 	    {
 	      unsigned long TmpMask = 0xaul << (sitePosition * 2);
-	      long TmpPosition = this->RawGenerateStates(statePosition, 0, sitePosition + 2);
+	      long TmpPosition = this->RawGenerateStates(statePosition, 0, initialNbrMinus, sitePosition + 2);
 	      for (; statePosition < TmpPosition; ++statePosition)
 		this->StateDescription[statePosition] |= TmpMask;
 	      TmpMask = 0xbul << (sitePosition * 2);
-	      TmpPosition = this->RawGenerateStates(statePosition, 1, sitePosition + 2);
+	      TmpPosition = this->RawGenerateStates(statePosition, 1, initialNbrMinus, sitePosition + 2);
 	      for (; statePosition < TmpPosition; ++statePosition)
 		this->StateDescription[statePosition] |= TmpMask;
 	      TmpMask = 0xeul << (sitePosition * 2);
-	      TmpPosition = this->RawGenerateStates(statePosition, 1, sitePosition + 2);
+	      TmpPosition = this->RawGenerateStates(statePosition, 1, initialNbrMinus, sitePosition + 2);
 	      for (; statePosition < TmpPosition; ++statePosition)
 		this->StateDescription[statePosition] |= TmpMask;
 	      TmpMask = 0xful << (sitePosition * 2);
-	      TmpPosition = this->RawGenerateStates(statePosition, 2, sitePosition + 2);
+	      TmpPosition = this->RawGenerateStates(statePosition, 2, initialNbrMinus, sitePosition + 2);
 	      for (; statePosition < TmpPosition; ++statePosition)
 		this->StateDescription[statePosition] |= TmpMask;
 	    }
@@ -443,33 +459,33 @@ long PairHoppingP2AsSpin1ChainWithTranslations::RawGenerateStates(long statePosi
     }
   else
     {
-      statePosition = this->RawGenerateStates(statePosition, 0, 2);
+      statePosition = this->RawGenerateStates(statePosition, 0, 2, 2);
       unsigned long TmpMask = 0x2ul << (sitePosition * 2);
-      long TmpPosition = this->RawGenerateStates(statePosition, 0, 2);
+      long TmpPosition = this->RawGenerateStates(statePosition, 0, 1, 2);
       for (; statePosition < TmpPosition; ++statePosition)
 	this->StateDescription[statePosition] |= TmpMask;
       TmpMask = 0x8ul << (sitePosition * 2);
-      TmpPosition = this->RawGenerateStates(statePosition, 0, 2);
+      TmpPosition = this->RawGenerateStates(statePosition, 0, 1, 2);
       for (; statePosition < TmpPosition; ++statePosition)
 	this->StateDescription[statePosition] |= TmpMask;
       TmpMask = 0xaul << (sitePosition * 2);
-      TmpPosition = this->RawGenerateStates(statePosition, 0, 2);
+      TmpPosition = this->RawGenerateStates(statePosition, 0, 0, 2);
       for (; statePosition < TmpPosition; ++statePosition)
 	this->StateDescription[statePosition] |= TmpMask;
       TmpMask = 0xbul << (sitePosition * 2);
-      TmpPosition = this->RawGenerateStates(statePosition, 1, 2);
+      TmpPosition = this->RawGenerateStates(statePosition, 1, 0, 2);
       for (; statePosition < TmpPosition; ++statePosition)
 	this->StateDescription[statePosition] |= TmpMask;
       TmpMask = 0xcul << (sitePosition * 2);
-      TmpPosition = this->RawGenerateStates(statePosition, 1, 2);
+      TmpPosition = this->RawGenerateStates(statePosition, 1, 1, 2);
       for (; statePosition < TmpPosition; ++statePosition)
 	this->StateDescription[statePosition] |= TmpMask;
       TmpMask = 0xeul << (sitePosition * 2);
-      TmpPosition = this->RawGenerateStates(statePosition, 1, 2);
+      TmpPosition = this->RawGenerateStates(statePosition, 1, 0, 2);
       for (; statePosition < TmpPosition; ++statePosition)
 	this->StateDescription[statePosition] |= TmpMask;
       TmpMask = 0xful << (sitePosition * 2);
-      TmpPosition = this->RawGenerateStates(statePosition, 2, 2);
+      TmpPosition = this->RawGenerateStates(statePosition, 2, 0, 2);
       for (; statePosition < TmpPosition; ++statePosition)
 	this->StateDescription[statePosition] |= TmpMask;
     }

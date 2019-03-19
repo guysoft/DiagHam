@@ -84,37 +84,37 @@ PairHoppingP2AsSpin1ChainWithTranslationsAndInversionSzSymmetryLong::PairHopping
     {
       this->InversionSector = -1.0;
     }
-#ifdef __64_BITS__
-  this->InversionShift = 32 - ((this->ChainLength >> 1) << 1);
+#ifdef __128_BIT_LONGLONG__
+  this->InversionShift = 64 - ((this->ChainLength >> 1) << 1);
 #else
-  this->InversionShift = 16 - ((this->ChainLength >> 1) << 1);
+  this->InversionShift = 32 - ((this->ChainLength >> 1) << 1);
 #endif
   if ((this->ChainLength & 1) == 0)
     this->InversionUnshift = this->InversionShift;
   else
     this->InversionUnshift = this->InversionShift - 2;
-#ifdef __64_BITS__
-  if (this-> ChainLength < 32)
+#ifdef __128_BIT_LONGLONG__
+  if (this-> ChainLength < 128)
 #else
-  if (this-> ChainLength < 16)
+  if (this-> ChainLength < 64)
 #endif
     {
-      this->SzSymmetryMask = (0x1ul << (2 * this-> ChainLength)) - 0x1ul;
+      this->SzSymmetryMask = (((ULONGLONG) 0x1ul) << (2 * this-> ChainLength)) - ((ULONGLONG) 0x1ul);
     }
   else
     {
-      this->SzSymmetryMask  = ~0x0ul;
+      this->SzSymmetryMask  = ~((ULONGLONG) 0x0ul);
     }
 
   this->MaxXMomentum = this->ChainLength >> 1;
   this->StateXShift = 2 * (this->ChainLength / this->MaxXMomentum);
   this->ComplementaryStateXShift = (2 * this-> ChainLength) - this->StateXShift;
-  this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
+  this->XMomentumMask = (((ULONGLONG) 0x1ul) << this->StateXShift) - ((ULONGLONG) 0x1ul);
 
-  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(0, 0);
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(0, 0, 0);
 
   this->StateDescription = new ULONGLONG [this->LargeHilbertSpaceDimension];
-  this->RawGenerateStates(0l, 0, 0);
+  this->RawGenerateStates(0l, 0, 0, 0);
 
   // for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
   //   {

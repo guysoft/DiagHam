@@ -2,6 +2,12 @@
 #include "HilbertSpace/PairHoppingP2AsSpin1ChainWithTranslations.h"
 #include "HilbertSpace/PairHoppingP1AsSpin1ChainWithTranslationsAndInversionSzSymmetry.h"
 #include "HilbertSpace/PairHoppingP2AsSpin1ChainWithTranslationsAndInversionSzSymmetry.h"
+
+#include "HilbertSpace/PairHoppingP1AsSpin1ChainWithTranslationsLong.h"
+#include "HilbertSpace/PairHoppingP2AsSpin1ChainWithTranslationsLong.h"
+#include "HilbertSpace/PairHoppingP1AsSpin1ChainWithTranslationsAndInversionSzSymmetryLong.h"
+#include "HilbertSpace/PairHoppingP2AsSpin1ChainWithTranslationsAndInversionSzSymmetryLong.h"
+
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 
 #include "Hamiltonian/PairHoppingHamiltonianWithTranslations.h"
@@ -133,20 +139,40 @@ int main(int argc, char** argv)
   File.precision(14);
   File << "# periodic pair hopping model with p=" << PValue << " in spin 1 language with " << NbrSpins << " sites K=" << Momentum << " InvSym=" << InversionSymmetrySector << endl;
   File << "# time fidelity S_A Tr(rho_A) nbr_iter state_norm computation_time" << endl;
-  PairHoppingP1AsSpin1ChainWithTranslations* Chain = 0;
-  switch (PValue)
+  AbstractSpinChainWithTranslations* Chain = 0;
+  if (NbrSpins <= 32)
     {
-    case 1 :
-      Chain = new PairHoppingP1AsSpin1ChainWithTranslationsAndInversionSzSymmetry (NbrSpins, Momentum, InversionSymmetrySector);
-      break;
-    case 2 :
-      Chain = new PairHoppingP2AsSpin1ChainWithTranslationsAndInversionSzSymmetry (NbrSpins, Momentum, InversionSymmetrySector);
-      break;
-    default :
-      {
-	cout << "p value > 2 are not available" << endl;
-	return -1;
-      }
+      switch (PValue)
+	{
+	case 1 :
+	  Chain = new PairHoppingP1AsSpin1ChainWithTranslationsAndInversionSzSymmetry (NbrSpins, Momentum, InversionSymmetrySector);
+	  break;
+	case 2 :
+	  Chain = new PairHoppingP2AsSpin1ChainWithTranslationsAndInversionSzSymmetry (NbrSpins, Momentum, InversionSymmetrySector);
+	  break;
+	default :
+	  {
+	    cout << "p value > 2 are not available" << endl;
+	    return -1;
+	  }
+	}
+    }
+  else
+    {
+      switch (PValue)
+	{
+	case 1 :
+	  Chain = new PairHoppingP1AsSpin1ChainWithTranslationsAndInversionSzSymmetryLong (NbrSpins, Momentum, InversionSymmetrySector);
+	  break;
+	case 2 :
+	  Chain = new PairHoppingP2AsSpin1ChainWithTranslationsAndInversionSzSymmetryLong (NbrSpins, Momentum, InversionSymmetrySector);
+	  break;
+	default :
+	  {
+	    cout << "p value > 2 are not available" << endl;
+	    return -1;
+	  }
+	}
     }
   cout << "Hilbert space dimension = " <<  Chain->GetHilbertSpaceDimension() << endl;
   

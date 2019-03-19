@@ -131,17 +131,19 @@ class PairHoppingP2AsSpin1ChainWithTranslationsLong : public PairHoppingP1AsSpin
   // evaluate Hilbert space dimension
   //
   // previousSpin = value of the previous spin (0 for -1, 1 for 0 and 2 for +1)
+  // initialNbrMinus = number of -1 spins in the first unit cell
   // sitePosition = site on chain where spin has to be changed
   // return value = Hilbert space dimension
-  virtual long EvaluateHilbertSpaceDimension(int previousSpin, int sitePosition);
+  virtual long EvaluateHilbertSpaceDimension(int previousSpin, int initialNbrMinus, int sitePosition);
 
   // generate all states with neither constraint from boundary conditions nor discrete symmtry constraint
   //
   // statePosition = position for the new states
   // previousSpin = value of the previous spin (0 for -1, 1 for 0 and 2 for +1)
+  // initialNbrMinus = number of -1 spins in the first unit cell
   // sitePosition = site on chain where spin has to be changed
   // return value = number of generated states
-  virtual long RawGenerateStates(long statePosition, int previousSpin, int sitePosition);
+  virtual long RawGenerateStates(long statePosition, int previousSpin, int initialNbrMinus, int sitePosition);
 
   // generate all states with constraints 
   //

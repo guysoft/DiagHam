@@ -337,16 +337,16 @@ inline void PairHoppingP1AsSpin1ChainWithTranslationsAndInversionSzSymmetryLong:
   TmpState |= PairHoppingAsSpin1ChainWithTranslationsInversionTableLong[((unsigned long) (InitialState >> 96)) & 0xfful] << 24;
   TmpState |= PairHoppingAsSpin1ChainWithTranslationsInversionTableLong[((unsigned long) (InitialState >> 104)) & 0xfful] << 16;
   TmpState |= PairHoppingAsSpin1ChainWithTranslationsInversionTableLong[((unsigned long) (InitialState >> 112)) & 0xfful] << 8;
-  TmpState |= PairHoppingAsSpin1ChainWithTranslationsInversionTableLong[((unsigned long) InitialState) >> 120]; 
+  TmpState |= PairHoppingAsSpin1ChainWithTranslationsInversionTableLong[(unsigned long) (InitialState >> 120)]; 
 #else
-  ULONGLONG TmpState = PairHoppingAsSpin1ChainWithTranslationsInversionTableLong[(unsigned long) InitialState) & 0xfful] << 56;
-  TmpState |= PairHoppingAsSpin1ChainWithTranslationsInversionTableLong[(unsigned long) (InitialState >> 8)) & 0xfful] << 48;
-  TmpState |= PairHoppingAsSpin1ChainWithTranslationsInversionTableLong[(unsigned long) (InitialState >> 16)) & 0xfful] << 40;
-  TmpState |= PairHoppingAsSpin1ChainWithTranslationsInversionTableLong[(unsigned long) (InitialState >> 24)) & 0xfful] << 32;
-  TmpState |= PairHoppingAsSpin1ChainWithTranslationsInversionTableLong[(unsigned long) (InitialState >> 32)) & 0xfful] << 24;
-  TmpState |= PairHoppingAsSpin1ChainWithTranslationsInversionTableLong[(unsigned long) (InitialState >> 40)) & 0xfful] << 16;
-  TmpState |= PairHoppingAsSpin1ChainWithTranslationsInversionTableLong[(unsigned long) (InitialState >> 48)) & 0xfful] << 8;
-  TmpState |= PairHoppingAsSpin1ChainWithTranslationsInversionTableLong[(unsigned long) InitialState) >> 56];
+  ULONGLONG TmpState = PairHoppingAsSpin1ChainWithTranslationsInversionTableLong[((unsigned long) InitialState) & 0xfful] << 56;
+  TmpState |= PairHoppingAsSpin1ChainWithTranslationsInversionTableLong[((unsigned long) (InitialState >> 8)) & 0xfful] << 48;
+  TmpState |= PairHoppingAsSpin1ChainWithTranslationsInversionTableLong[((unsigned long) (InitialState >> 16)) & 0xfful] << 40;
+  TmpState |= PairHoppingAsSpin1ChainWithTranslationsInversionTableLong[((unsigned long) (InitialState >> 24)) & 0xfful] << 32;
+  TmpState |= PairHoppingAsSpin1ChainWithTranslationsInversionTableLong[((unsigned long) (InitialState >> 32)) & 0xfful] << 24;
+  TmpState |= PairHoppingAsSpin1ChainWithTranslationsInversionTableLong[((unsigned long) (InitialState >> 40)) & 0xfful] << 16;
+  TmpState |= PairHoppingAsSpin1ChainWithTranslationsInversionTableLong[((unsigned long) (InitialState >> 48)) & 0xfful] << 8;
+  TmpState |= PairHoppingAsSpin1ChainWithTranslationsInversionTableLong[(unsigned long) (InitialState >> 56)];
 #endif	
   TmpState >>= this->InversionUnshift;
   TmpState &= this->SzSymmetryMask;
