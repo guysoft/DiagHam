@@ -651,6 +651,36 @@ void PairHoppingHamiltonianWithTranslations::EvaluateFastMultiplicationComponent
       else
 	{
 	  PairHoppingP1AsSpin1ChainWithTranslationsLong* TmpSpace = (PairHoppingP1AsSpin1ChainWithTranslationsLong*) this->Chain->Clone();
+	  for (int j = 1; j < NbrUnitCells; ++j)
+	    {
+	      TmpIndex = TmpSpace->PlusMinusOperator(j - 1, j, AbsoluteIndex, Coef, NbrTranslation);
+	      if (TmpIndex != Dim)
+		{
+		  indexArray[position] = TmpIndex;
+		  coefficientArray[position] = Coef * this->ExponentialTable[NbrTranslation];
+		  ++position;
+		}
+	    }
+	  TmpIndex = TmpSpace->PlusMinusOperator(NbrUnitCells - 1, 0, AbsoluteIndex, Coef, NbrTranslation);
+	  if (TmpIndex != Dim)
+	    {
+	      indexArray[position] = TmpIndex;
+	      coefficientArray[position] = Coef * this->ExponentialTable[NbrTranslation];
+	      ++position;
+	    }
+	  for (int j = 0; j < NbrUnitCells; ++j)
+	    {
+	      for (int p = 1; p < this->PValue; ++p)
+		{
+		  TmpIndex = TmpSpace->SwapOperator(j, p - 1, AbsoluteIndex, Coef, NbrTranslation);
+		  if (TmpIndex != Dim)
+		    {
+		      indexArray[position] = TmpIndex;
+		      coefficientArray[position] = Coef * this->ExponentialTable[NbrTranslation];
+		      ++position;
+		    }
+		}
+	    }
 	}
     }
   else
@@ -704,6 +734,48 @@ void PairHoppingHamiltonianWithTranslations::EvaluateFastMultiplicationComponent
       else
 	{
 	  PairHoppingP1AsSpin1ChainWithTranslationsLong* TmpSpace = (PairHoppingP1AsSpin1ChainWithTranslationsLong*) this->Chain->Clone();
+	  for (int j = 1; j < NbrUnitCells; ++j)
+	    {
+	      TmpIndex = TmpSpace->PlusMinusOperator(j - 1, j, AbsoluteIndex, Coef, NbrTranslation);
+	      if (TmpIndex <= AbsoluteIndex)
+		{
+		  indexArray[position] = TmpIndex;
+		  coefficientArray[position] = Coef * this->ExponentialTable[NbrTranslation];
+		  if (TmpIndex == AbsoluteIndex)
+		    {
+		      coefficientArray[position] *= 0.5;
+		    }
+		  ++position;
+		}
+	    }
+	  TmpIndex = TmpSpace->PlusMinusOperator(NbrUnitCells - 1, 0, AbsoluteIndex, Coef, NbrTranslation);
+	  if (TmpIndex <= AbsoluteIndex)
+	    {
+	      indexArray[position] = TmpIndex;
+	      coefficientArray[position] = Coef * this->ExponentialTable[NbrTranslation];
+	      if (TmpIndex == AbsoluteIndex)
+		{
+		  coefficientArray[position] *= 0.5;
+		}
+	      ++position;
+	    }
+	  for (int j = 0; j < NbrUnitCells; ++j)
+	    {
+	      for (int p = 1; p < this->PValue; ++p)
+		{
+		  TmpIndex = TmpSpace->SwapOperator(j, p - 1, AbsoluteIndex, Coef, NbrTranslation);
+		  if (TmpIndex <= AbsoluteIndex)
+		    {
+		      indexArray[position] = TmpIndex;
+		      coefficientArray[position] = Coef * this->ExponentialTable[NbrTranslation];
+		      if (TmpIndex == AbsoluteIndex)
+			{
+			  coefficientArray[position] *= 0.5;
+			}
+		      ++position;
+		    }
+		}
+	    }
 	}
     }   
 }
