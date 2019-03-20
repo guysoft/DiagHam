@@ -68,7 +68,10 @@ public:
   // chain = pointer to Hilbert space of the associated system
   // nbrSpin = number of spin
   // pValue = value that defines the filling factor p/(2p+1)
-  PairHoppingHamiltonianWithTranslations(AbstractSpinChainWithTranslations* chain, int nbrSpin, int pValue);
+  // architecture = architecture to use for precalculation
+  // memory = maximum amount of memory that can be allocated for fast multiplication
+  PairHoppingHamiltonianWithTranslations(AbstractSpinChainWithTranslations* chain, int nbrSpin, int pValue,
+					 AbstractArchitecture* architecture, long memory);
 
   // destructor
   //
@@ -108,9 +111,38 @@ public:
 						  int firstComponent, int nbrComponent);
 
  
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual ComplexVector& HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+						      int firstComponent, int nbrComponent);
+ 
  protected:
  
-   // evaluate all cosinus/sinus that are needed when computing matrix elements
+ // core part of the FastMultiplication method
+  // 
+  // chain = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // indexArray = array where indices connected to the index-th component through the Hamiltonian
+  // coefficientArray = array of the numerical coefficients related to the indexArray
+  // position = reference on the current position in arrays indexArray and coefficientArray  
+  virtual void EvaluateFastMultiplicationComponent(AbstractSpinChain* chain, int index, 
+						   int* indexArray, Complex* coefficientArray, long& position);
+
+  // core part of the PartialFastMultiplicationMemory
+  // 
+  // chain = pointer to the Hilbert space
+  // firstComponent = index of the first component that has to be precalcualted
+  // lastComponent  = index of the last component that has to be precalcualted
+  // memory = reference on the amount of memory required for precalculations  
+  virtual void EvaluateFastMultiplicationMemoryComponent(AbstractSpinChain* chain, int firstComponent, int lastComponent, long& memory);
+
+  // evaluate all cosinus/sinus that are needed when computing matrix elements
   //
   void EvaluateCosinusTable();
 

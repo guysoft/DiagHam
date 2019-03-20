@@ -54,6 +54,7 @@ int main(int argc, char** argv)
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
+  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
   ArchitectureManager Architecture;
   LanczosManager Lanczos(true);
@@ -61,6 +62,7 @@ int main(int argc, char** argv)
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
   Lanczos.AddOptionGroup(&Manager);
+  Manager += PrecalculationGroup;
   Manager += OutputGroup;
   Manager += ToolsGroup;
   Manager += MiscGroup;
@@ -75,6 +77,7 @@ int main(int argc, char** argv)
   (*OutputGroup) += new BooleanOption  ('\n', "store-states", "store all the states generated at each time step in a single binary matrix file");
   (*OutputGroup) += new BooleanOption  ('\n', "store-initialstate", "store all the initial state");
   (*OutputGroup) += new BooleanOption  ('\n', "disable-entropy", "do not evaluate the entanglement entropy  at each time step");
+  (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -99,6 +102,8 @@ int main(int argc, char** argv)
       return -1;
     }
   int SubsystemSize = (((NbrSpins / PValue) / 2)) * PValue;
+
+  long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
   int NbrTimeSteps =  Manager.GetInteger("nbr-timesteps");
   double TimeStep = Manager.GetDouble("time-step");
@@ -182,7 +187,7 @@ int main(int argc, char** argv)
     {
       Architecture.GetArchitecture()->SetDimension(Chain->GetHilbertSpaceDimension());
       PairHoppingHamiltonianWithTranslations* Hamiltonian = 0;
-      Hamiltonian = new PairHoppingHamiltonianWithTranslations(Chain, NbrSpins, PValue);
+      Hamiltonian = new PairHoppingHamiltonianWithTranslations(Chain, NbrSpins, PValue, Architecture.GetArchitecture(), Memory);
       ComplexVector InitialState (Chain->GetLargeHilbertSpaceDimension(), true);
       timeval StartingTime;
       timeval EndingTime;  

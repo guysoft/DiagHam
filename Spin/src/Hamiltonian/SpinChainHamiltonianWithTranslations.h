@@ -35,6 +35,7 @@
 #include "config.h"
 #include "HilbertSpace/AbstractSpinChainWithTranslations.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
+#include "Architecture/AbstractArchitecture.h"
 
 #include <iostream>
 
@@ -50,6 +51,10 @@ class SpinChainHamiltonianWithTranslations : public AbstractHamiltonian
 
  protected:
   
+  // architecture used for precalculation
+  AbstractArchitecture* Architecture;
+
+  // pointer to the Hilbert space
   AbstractSpinChainWithTranslations* Chain;
 
   // coupling constant between spin in the xx and yy direction 
@@ -74,6 +79,30 @@ class SpinChainHamiltonianWithTranslations : public AbstractHamiltonian
   //array containing all the complex phase that are needed when computing matrix elements
   Complex* ExponentialTable;
 
+  // shift to apply to go from precalculation index to the corresponding index in the HilbertSpace
+  int PrecalculationShift;
+
+  // flag for fast multiplication algorithm
+  bool FastMultiplicationFlag;
+  // step between each precalculated index
+  int FastMultiplicationStep;
+
+  // stored interactions per component
+  int *NbrInteractionPerComponent;
+
+  // number of tasks for load balancing
+  int NbrBalancedTasks;
+  // load balancing array for parallelisation, indicating starting indices
+  long* LoadBalancingArray;
+
+  // indices of matrix elements per component
+  int **InteractionPerComponentIndex;
+  // coefficients of matrix elements per component
+  Complex** InteractionPerComponentCoefficient;
+
+  // flag for implementation of hermitian symmetry
+  bool HermitianSymmetryFlag;
+  
  public:
 
   // default constructor
@@ -97,6 +126,10 @@ class SpinChainHamiltonianWithTranslations : public AbstractHamiltonian
   //
   // return value = pointer to cloned hamiltonian
   AbstractHamiltonian* Clone ();
+
+  // ask if Hamiltonian implements hermitian symmetry operations
+  //
+  virtual bool IsHermitian();
 
   // set chain
   // 
@@ -177,22 +210,49 @@ class SpinChainHamiltonianWithTranslations : public AbstractHamiltonian
   // return value = list of right interaction operators
   List<Matrix*> RightInteractionOperators();  
 
-  // Output Stream overload
-  //
-  // Str = reference on output stream
-  // H = Hamiltonian to print
-  // return value = reference on output stream
-  friend ostream& operator << (ostream& Str, SpinChainHamiltonianWithTranslations& H);
-
-  // Mathematica Output Stream overload
-  //
-  // Str = reference on Mathematica output stream
-  // H = Hamiltonian to print
-  // return value = reference on output stream
-  friend MathematicaOutput& operator << (MathematicaOutput& Str, SpinChainHamiltonianWithTranslations& H);
-
  protected:
  
+  // test the amount of memory needed for fast multiplication algorithm
+  //
+  // allowedMemory = amount of memory that cam be allocated for fast multiplication
+  // return value = amount of memory needed
+  virtual long FastMultiplicationMemory(long allowedMemory);
+
+  // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
+  //
+  // firstComponent = index of the first component that has to be precalcualted
+  // lastComponent  = index of the last component that has to be precalcualted
+  // return value = number of non-zero matrix element
+  virtual long PartialFastMultiplicationMemory(int firstComponent, int lastComponent);
+
+  // enable fast multiplication algorithm
+  //
+  virtual void EnableFastMultiplication();
+
+  // enable fast multiplication algorithm (partial evaluation)
+  //
+  // firstComponent = index of the first component that has to be precalcualted
+  // nbrComponent  = index of the last component that has to be precalcualted
+  virtual void PartialEnableFastMultiplication(int firstComponent, int nbrComponent);
+
+  // core part of the FastMultiplication method
+  // 
+  // chain = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // indexArray = array where indices connected to the index-th component through the Hamiltonian
+  // coefficientArray = array of the numerical coefficients related to the indexArray
+  // position = reference on the current position in arrays indexArray and coefficientArray  
+  virtual void EvaluateFastMultiplicationComponent(AbstractSpinChain* chain, int index, 
+						   int* indexArray, Complex* coefficientArray, long& position);
+
+  // core part of the PartialFastMultiplicationMemory
+  // 
+  // chain = pointer to the Hilbert space
+  // firstComponent = index of the first component that has to be precalcualted
+  // lastComponent  = index of the last component that has to be precalcualted
+  // memory = reference on the amount of memory required for precalculations  
+  virtual void EvaluateFastMultiplicationMemoryComponent(AbstractSpinChain* chain, int firstComponent, int lastComponent, long& memory);
+
   // evaluate all cosinus/sinus that are needed when computing matrix elements
   //
   void EvaluateCosinusTable();
@@ -202,5 +262,13 @@ class SpinChainHamiltonianWithTranslations : public AbstractHamiltonian
   void EvaluateDiagonalMatrixElements();
 
 };
+
+// ask if Hamiltonian implements hermitian symmetry operations
+//
+
+inline bool SpinChainHamiltonianWithTranslations::IsHermitian()
+{
+  return this->HermitianSymmetryFlag;
+}
 
 #endif

@@ -36,8 +36,10 @@
 #include "Matrix/RealAntisymmetricMatrix.h"
 #include "MathTools/Complex.h"
 #include "Output/MathematicaOutput.h"
+#include "Architecture/ArchitectureOperation/GenericHamiltonianPrecalculationOperation.h"
 
 #include <iostream>
+#include <sys/time.h>
 
 
 using std::cout;
@@ -50,6 +52,16 @@ using std::ostream;
 
 SpinChainHamiltonianWithTranslations::SpinChainHamiltonianWithTranslations()
 {
+  this->PrecalculationShift = 0;
+  this->FastMultiplicationFlag = false;
+  this->FastMultiplicationStep = 1;
+  this->NbrInteractionPerComponent = 0;
+  this->NbrBalancedTasks = 0;
+  this->LoadBalancingArray = 0;
+  this->InteractionPerComponentIndex = 0;
+  this->InteractionPerComponentCoefficient = 0;
+  this->HermitianSymmetryFlag = false;
+  this->Architecture = 0;
 }
 
 // constructor from default datas
@@ -91,6 +103,25 @@ SpinChainHamiltonianWithTranslations::~SpinChainHamiltonianWithTranslations()
   delete[] this->CosinusTable;
   delete[] this->SinusTable;
   delete[] this->ExponentialTable;
+  if (this->FastMultiplicationFlag == true)
+    {
+      long MinIndex;
+      long MaxIndex;
+      this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+      int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+      int ReducedDim = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+      if ((ReducedDim * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
+	++ReducedDim;
+      for (int i = 0; i < ReducedDim; ++i)
+	{
+	  if (this->NbrInteractionPerComponent[i] > 0)
+	    {
+	      delete[] this->InteractionPerComponentIndex[i];
+	      delete[] this->InteractionPerComponentCoefficient[i];
+	    }
+	}
+      delete[] this->InteractionPerComponentCoefficient;
+    }
 }
 
 // set Hilbert space
@@ -443,75 +474,225 @@ void SpinChainHamiltonianWithTranslations::EvaluateDiagonalMatrixElements()
     }
 }
 
-// Output Stream overload
+// test the amount of memory needed for fast multiplication algorithm
 //
-// Str = reference on output stream
-// H = Hamiltonian to print
-// return value = reference on output stream
+// allowedMemory = amount of memory that cam be allocated for fast multiplication
+// return value = amount of memory needed
 
-ostream& operator << (ostream& Str, SpinChainHamiltonianWithTranslations& H) 
+long SpinChainHamiltonianWithTranslations::FastMultiplicationMemory(long allowedMemory)
 {
-  ComplexVector TmpV2 (H.Chain->GetHilbertSpaceDimension(), true);
-  ComplexVector* TmpV = new ComplexVector [H.Chain->GetHilbertSpaceDimension()];
-  for (int i = 0; i < H.Chain->GetHilbertSpaceDimension(); i++)
+  if (this->Architecture == 0)
     {
-      TmpV[i] = ComplexVector(H.Chain->GetHilbertSpaceDimension());
-      if (i > 0)
-	{
-	  TmpV2.Re(i - 1) = 0.0;
-	  TmpV2.Im(i - 1) = 0.0;
-	}
-      TmpV2.Re(i) = 1.0;
-      TmpV2.Im(i) = 0.0;
-      ((AbstractHamiltonian*) &H)->LowLevelMultiply (TmpV2, TmpV[i]);
+      cout << "error, your architecture was not set. You cannot use fast-multiplication" << endl;
+      return 0l;
     }
-  for (int i = 0; i < H.Chain->GetHilbertSpaceDimension(); i++)
+  else
     {
-      for (int j = 0; j < H.Chain->GetHilbertSpaceDimension(); j++)
+      long MinIndex;
+      long MaxIndex;
+      this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+      int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+      this->NbrInteractionPerComponent = new int [EffectiveHilbertSpaceDimension];
+      for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
+	this->NbrInteractionPerComponent[i] = 0;
+      timeval TotalStartingTime2;
+      timeval TotalEndingTime2;
+      double Dt2;
+      gettimeofday (&(TotalStartingTime2), 0);
+      cout << "start" << endl;
+      
+      GenericHamiltonianPrecalculationOperation Operation(this);
+      Operation.ApplyOperation(this->Architecture);
+ 
+      if (this->Architecture->GetOptimizedTypicalRange(this->NbrInteractionPerComponent, MinIndex, MaxIndex) == true)
 	{
-	  Str << "(" << TmpV[j].Re(i) << ", " << TmpV[j].Im(i) << ")    ";
+	  this->PrecalculationShift = (int) MinIndex;
+	  EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+	  cout << "distributed calculations have been reoptimized" << endl;
+	}  
+      if (allowedMemory == 0l)
+	{
+	  delete[] this->NbrInteractionPerComponent;
+	  this->NbrInteractionPerComponent = 0;
+	  return 0l;
 	}
-      Str << endl;
+      long Memory = 0;
+      for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
+	{
+	  Memory += this->NbrInteractionPerComponent[i];
+	}
+      cout << "nbr interaction = " << Memory << endl;
+      long TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(Complex*)) * EffectiveHilbertSpaceDimension;
+      if ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(Complex)))) < Memory))
+	{
+	  this->FastMultiplicationStep = 1;
+	  int ReducedSpaceDimension  = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+	  while ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(Complex)))) < Memory))
+	    {
+	      ++this->FastMultiplicationStep;
+	      ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+	      if (this->Chain->GetHilbertSpaceDimension() != (ReducedSpaceDimension * this->FastMultiplicationStep))
+		++ReducedSpaceDimension;
+	      TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(Complex*)) * ReducedSpaceDimension;
+	      Memory = 0;
+	      for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
+		Memory += this->NbrInteractionPerComponent[i];
+	    }
+	  Memory = ((sizeof (int*) + sizeof (int) + sizeof(Complex*)) * ReducedSpaceDimension) + (Memory * (sizeof (int) + sizeof(Complex)));
+	  long ResidualMemory = allowedMemory - Memory;
+	  if (ResidualMemory > 0)
+	    {
+	      int TotalReducedSpaceDimension = ReducedSpaceDimension;
+	      int* TmpNbrInteractionPerComponent = new int [TotalReducedSpaceDimension];
+	      int i = 0;
+	      int Pos = 0;
+	      for (; i < ReducedSpaceDimension; ++i)
+		{
+		  TmpNbrInteractionPerComponent[i] = this->NbrInteractionPerComponent[Pos];
+		  Pos += this->FastMultiplicationStep;
+		}
+	      delete[] this->NbrInteractionPerComponent;
+	      this->NbrInteractionPerComponent = TmpNbrInteractionPerComponent;
+	    }
+	  else
+	    {
+	      int* TmpNbrInteractionPerComponent = new int [ReducedSpaceDimension];
+	      for (int i = 0; i < ReducedSpaceDimension; ++i)
+		TmpNbrInteractionPerComponent[i] = this->NbrInteractionPerComponent[i * this->FastMultiplicationStep];
+	      delete[] this->NbrInteractionPerComponent;
+	      this->NbrInteractionPerComponent = TmpNbrInteractionPerComponent;
+	    }
+	}
+      else
+	{
+	  Memory = ((sizeof (int*) + sizeof (int) + sizeof(Complex*)) * EffectiveHilbertSpaceDimension) + (Memory * (sizeof (int) + sizeof(Complex)));
+	  this->FastMultiplicationStep = 1;
+	}
+      
+      cout << "reduction factor=" << this->FastMultiplicationStep << endl;
+      gettimeofday (&(TotalEndingTime2), 0);
+      cout << "------------------------------------------------------------------" << endl << endl;;
+      Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
+	((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
+      cout << "time = " << Dt2 << endl;
+      return Memory;
     }
-  return Str;
 }
 
-// Mathematica Output Stream overload
+// test the amount of memory needed for fast multiplication algorithm (partial evaluation)
 //
-// Str = reference on Mathematica output stream
-// H = Hamiltonian to print
-// return value = reference on output stream
+// firstComponent = index of the first component that has to be precalcualted
+// lastComponent  = index of the last component that has to be precalcualted
+// return value = number of non-zero matrix element
 
-MathematicaOutput& operator << (MathematicaOutput& Str, SpinChainHamiltonianWithTranslations& H) 
+long SpinChainHamiltonianWithTranslations::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
 {
-  ComplexVector TmpV2 (H.Chain->GetHilbertSpaceDimension(), true);
-  ComplexVector* TmpV = new ComplexVector [H.Chain->GetHilbertSpaceDimension()];
-  for (int i = 0; i < H.Chain->GetHilbertSpaceDimension(); i++)
+  long Memory = 0l;
+  AbstractSpinChainWithTranslations* TmpSpinChain = (AbstractSpinChainWithTranslations*) this->Chain->Clone();
+  int LastComponent = lastComponent + firstComponent;
+  this->EvaluateFastMultiplicationMemoryComponent(TmpSpinChain, firstComponent, LastComponent, Memory);
+  delete TmpSpinChain;
+  return Memory;
+}
+
+// enable fast multiplication algorithm
+//
+
+void SpinChainHamiltonianWithTranslations::EnableFastMultiplication()
+{
+  if (this->Architecture == 0)
     {
-      TmpV[i] = ComplexVector(H.Chain->GetHilbertSpaceDimension());
-      if (i > 0)
-	TmpV2[i - 1] = 0.0;
-      TmpV2[i] = 1.0;
-      ((AbstractHamiltonian*) &H)->LowLevelMultiply (TmpV2, TmpV[i]);
+      cout << "error, your architecture was not set. You cannot use fast-multiplication" << endl;
     }
-  Str << "{";
-  for (int i = 0; i < (H.Chain->GetHilbertSpaceDimension() - 1); i++)
+  else
     {
-      Str << "{";
-      for (int j = 0; j < (H.Chain->GetHilbertSpaceDimension() - 1); j++)
+      long MinIndex;
+      long MaxIndex;
+      this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+      int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+      int* TmpIndexArray;
+      Complex* TmpCoefficientArray;
+      long Pos;
+      timeval TotalStartingTime2;
+      timeval TotalEndingTime2;
+      double Dt2;
+      gettimeofday (&(TotalStartingTime2), 0);
+      int ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+      if ((ReducedSpaceDimension * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
+	++ReducedSpaceDimension;
+      this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
+      this->InteractionPerComponentCoefficient = new Complex* [ReducedSpaceDimension];
+      
+      for (int i = 0; i < ReducedSpaceDimension; ++i)
 	{
-	  Str << TmpV[j][i] << ",";
+	  this->InteractionPerComponentIndex[i] = new int [this->NbrInteractionPerComponent[i]];
+	  this->InteractionPerComponentCoefficient[i] = new Complex [this->NbrInteractionPerComponent[i]];
 	}
-      Str << TmpV[H.Chain->GetHilbertSpaceDimension() - 1][i];
-      Str << "},";
+      
+      GenericHamiltonianPrecalculationOperation Operation(this, false);
+      Operation.ApplyOperation(this->Architecture);
+      
+      this->FastMultiplicationFlag = true;
+      gettimeofday (&(TotalEndingTime2), 0);
+      cout << "------------------------------------------------------------------" << endl << endl;;
+      Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
+	((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
+      cout << "time = " << Dt2 << endl;
     }
-  Str << "{";
-  for (int j = 0; j < (H.Chain->GetHilbertSpaceDimension() - 1); j++)
+}
+
+// enable fast multiplication algorithm (partial evaluation)
+//
+// firstComponent = index of the first component that has to be precalcualted
+// nbrComponent  = index of the last component that has to be precalcualted
+
+void SpinChainHamiltonianWithTranslations::PartialEnableFastMultiplication(int firstComponent, int nbrComponent)
+{  
+  int LastComponent = nbrComponent + firstComponent;
+  AbstractSpinChainWithTranslations* TmpSpinChain = (AbstractSpinChainWithTranslations*) this->Chain->Clone();
+
+  firstComponent -= this->PrecalculationShift;
+  LastComponent -= this->PrecalculationShift;
+  long Pos = firstComponent / this->FastMultiplicationStep; 
+  int PosMod = firstComponent % this->FastMultiplicationStep;
+  if (PosMod != 0)
     {
-      Str << TmpV[j][H.Chain->GetHilbertSpaceDimension() - 1] << ",";
+      ++Pos;
+      PosMod = this->FastMultiplicationStep - PosMod;
     }
-  Str << TmpV[H.Chain->GetHilbertSpaceDimension() - 1][H.Chain->GetHilbertSpaceDimension() - 1];
-  Str << "}}";
-  return Str;
+  for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+    {
+      long TotalPos = 0;
+      this->EvaluateFastMultiplicationComponent(TmpSpinChain, i, this->InteractionPerComponentIndex[Pos], 
+						this->InteractionPerComponentCoefficient[Pos], TotalPos);
+      ++Pos;
+    }
+  delete TmpSpinChain;
+}
+
+// core part of the FastMultiplication method
+// 
+// chain = pointer to the Hilbert space
+// index = index of the component on which the Hamiltonian has to act on
+// indexArray = array where indices connected to the index-th component through the Hamiltonian
+// coefficientArray = array of the numerical coefficients related to the indexArray
+// position = reference on the current position in arrays indexArray and coefficientArray  
+
+void SpinChainHamiltonianWithTranslations::EvaluateFastMultiplicationComponent(AbstractSpinChain* chain, int index, 
+									       int* indexArray, Complex* coefficientArray, long& position)
+{
+  cout << "using dummy SpinChainHamiltonianWithTranslations::EvaluateFastMultiplicationComponent" << endl;
+}
+
+// core part of the PartialFastMultiplicationMemory
+// 
+// chain = pointer to the Hilbert space
+// firstComponent = index of the first component that has to be precalcualted
+// lastComponent  = index of the last component that has to be precalcualted
+// memory = reference on the amount of memory required for precalculations  
+
+void SpinChainHamiltonianWithTranslations::EvaluateFastMultiplicationMemoryComponent(AbstractSpinChain* chain, int firstComponent, int lastComponent, long& memory)
+{
+  cout << "using dummy SpinChainHamiltonianWithTranslations::EvaluateFastMultiplicationMemoryComponent" << endl;
 }
 

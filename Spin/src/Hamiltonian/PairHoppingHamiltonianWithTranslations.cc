@@ -60,8 +60,11 @@ PairHoppingHamiltonianWithTranslations::PairHoppingHamiltonianWithTranslations()
 // chain = reference on Hilbert space of the associated system
 // nbrSpin = number of spin
 // pValue = value that defines the filling factor p/(2p+1)
+// architecture = architecture to use for precalculation
+// memory = maximum amount of memory that can be allocated for fast multiplication
 
-PairHoppingHamiltonianWithTranslations::PairHoppingHamiltonianWithTranslations(AbstractSpinChainWithTranslations* chain, int nbrSpin, int pValue)
+PairHoppingHamiltonianWithTranslations::PairHoppingHamiltonianWithTranslations(AbstractSpinChainWithTranslations* chain, int nbrSpin, int pValue,
+									       AbstractArchitecture* architecture, long memory)
 {
   this->Chain = chain;
   this->NbrSpin = nbrSpin;
@@ -72,6 +75,32 @@ PairHoppingHamiltonianWithTranslations::PairHoppingHamiltonianWithTranslations(A
   this->Jz = this->J;
   this->SzSzContributions = new double [1];
   this->EvaluateCosinusTable();
+  this->Architecture = architecture;
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
+  this->HermitianSymmetryFlag = true;
+  if (memory == 0l)
+    {
+      this->FastMultiplicationFlag = false;
+    }
+  else
+    {
+      long TmpMemory = this->FastMultiplicationMemory(memory);
+      if (TmpMemory < 1024l)
+	cout  << "fast = " <<  TmpMemory << "b ";
+      else
+	if (TmpMemory < (1l << 20))
+	  cout  << "fast = " << (TmpMemory >> 10) << "kb ";
+	else
+	  if (TmpMemory < (1l << 30))
+	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
+	  else
+	    cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
+      cout << endl;
+      this->EnableFastMultiplication();
+   }
 }
 
 // destructor
@@ -120,84 +149,267 @@ void PairHoppingHamiltonianWithTranslations::ShiftHamiltonian (double shift)
 ComplexVector& PairHoppingHamiltonianWithTranslations::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 									     int firstComponent, int nbrComponent)
 {
-  double Coef;
-  Complex Coef2;
-  double Coef3;
-  int NbrTranslation;
-  int NbrTranslation2;
-  int pos;
-  int pos2;
-  int MaxPos = this->NbrSpin - 1;
-  int Last = firstComponent + nbrComponent;
-  int dim = this->Chain->GetHilbertSpaceDimension();
-  int NbrUnitCells = this->NbrSpin / this->PValue;
-  if (this->NbrSpin <= 32)
+  int LastComponent = firstComponent + nbrComponent;
+  if (this->FastMultiplicationFlag == false)
     {
-      PairHoppingP1AsSpin1ChainWithTranslations* TmpSpace = (PairHoppingP1AsSpin1ChainWithTranslations*) this->Chain->Clone();
-      for (int i = firstComponent; i < Last; i++)
+      int dim = this->Chain->GetHilbertSpaceDimension();
+      double Coef;
+      Complex Coef2;
+      double Coef3;
+      int NbrTranslation;
+      int NbrTranslation2;
+      int pos;
+      int pos2;
+      int MaxPos = this->NbrSpin - 1;
+      int NbrUnitCells = this->NbrSpin / this->PValue;
+      if (this->NbrSpin <= 32)
 	{
-	  Complex TmpValue = vSource[i];
-	  vDestination[i] += this-> GlobalEnergyShift * TmpValue;
-	  for (int j = 1; j < NbrUnitCells; ++j)
+	  PairHoppingP1AsSpin1ChainWithTranslations* TmpSpace = (PairHoppingP1AsSpin1ChainWithTranslations*) this->Chain->Clone();
+	  for (int i = firstComponent; i < LastComponent; i++)
 	    {
-	      pos = TmpSpace->PlusMinusOperator(j - 1, j, i, Coef, NbrTranslation);
-	      if (pos != dim)
+	      Complex TmpValue = vSource[i];
+	      vDestination[i] += this-> GlobalEnergyShift * TmpValue;
+	      for (int j = 1; j < NbrUnitCells; ++j)
 		{
-		  vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
-		}
-	    }
-	  pos = TmpSpace->PlusMinusOperator(NbrUnitCells - 1, 0, i, Coef, NbrTranslation);
-	  if (pos != dim)
-	    {
-	      vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
-	    }
-	  for (int j = 0; j < NbrUnitCells; ++j)
-	    {
-	      for (int p = 1; p < this->PValue; ++p)
-		{
-		  pos = TmpSpace->SwapOperator(j, p - 1, i, Coef, NbrTranslation);
+		  pos = TmpSpace->PlusMinusOperator(j - 1, j, i, Coef, NbrTranslation);
 		  if (pos != dim)
 		    {
 		      vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
 		    }
 		}
+	      pos = TmpSpace->PlusMinusOperator(NbrUnitCells - 1, 0, i, Coef, NbrTranslation);
+	      if (pos != dim)
+		{
+		  vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
+		}
+	      for (int j = 0; j < NbrUnitCells; ++j)
+		{
+		  for (int p = 1; p < this->PValue; ++p)
+		    {
+		      pos = TmpSpace->SwapOperator(j, p - 1, i, Coef, NbrTranslation);
+		      if (pos != dim)
+			{
+			  vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
+			}
+		    }
+		}
 	    }
+	  delete TmpSpace;
 	}
-      delete TmpSpace;
+      else
+	{
+	  PairHoppingP1AsSpin1ChainWithTranslationsLong* TmpSpace = (PairHoppingP1AsSpin1ChainWithTranslationsLong*) this->Chain->Clone();
+	  for (int i = firstComponent; i < LastComponent; i++)
+	    {
+	      Complex TmpValue = vSource[i];
+	      vDestination[i] += this-> GlobalEnergyShift * TmpValue;
+	      for (int j = 1; j < NbrUnitCells; ++j)
+		{
+		  pos = TmpSpace->PlusMinusOperator(j - 1, j, i, Coef, NbrTranslation);
+		  if (pos != dim)
+		    {
+		      vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
+		    }
+		}
+	      pos = TmpSpace->PlusMinusOperator(NbrUnitCells - 1, 0, i, Coef, NbrTranslation);
+	      if (pos != dim)
+		{
+		  vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
+		}
+	      for (int j = 0; j < NbrUnitCells; ++j)
+		{
+		  for (int p = 1; p < this->PValue; ++p)
+		    {
+		      pos = TmpSpace->SwapOperator(j, p - 1, i, Coef, NbrTranslation);
+		      if (pos != dim)
+			{
+			  vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
+			}
+		    }
+		}
+	    }
+	  delete TmpSpace;
+	}
     }
   else
     {
-      PairHoppingP1AsSpin1ChainWithTranslationsLong* TmpSpace = (PairHoppingP1AsSpin1ChainWithTranslationsLong*) this->Chain->Clone();
-      for (int i = firstComponent; i < Last; i++)
+      if (this->FastMultiplicationStep == 1)
 	{
-	  Complex TmpValue = vSource[i];
-	  vDestination[i] += this-> GlobalEnergyShift * TmpValue;
-	  for (int j = 1; j < NbrUnitCells; ++j)
+	  int* TmpIndexArray;
+	  Complex* TmpCoefficientArray; 
+	  int j;
+	  int TmpNbrInteraction;
+	  int k = firstComponent;
+	  Complex Coefficient;
+	  firstComponent -= this->PrecalculationShift;
+	  LastComponent -= this->PrecalculationShift;
+	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
-	      pos = TmpSpace->PlusMinusOperator(j - 1, j, i, Coef, NbrTranslation);
-	      if (pos != dim)
+	      TmpNbrInteraction = this->NbrInteractionPerComponent[i];
+	      TmpIndexArray = this->InteractionPerComponentIndex[i];
+	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
+	      Coefficient = vSource[k];
+	      for (j = 0; j < TmpNbrInteraction; ++j)
 		{
-		  vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
+		  vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
 		}
-	    }
-	  pos = TmpSpace->PlusMinusOperator(NbrUnitCells - 1, 0, i, Coef, NbrTranslation);
-	  if (pos != dim)
-	    {
-	      vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
-	    }
-	  for (int j = 0; j < NbrUnitCells; ++j)
-	    {
-	      for (int p = 1; p < this->PValue; ++p)
-		{
-		  pos = TmpSpace->SwapOperator(j, p - 1, i, Coef, NbrTranslation);
-		  if (pos != dim)
-		    {
-		      vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
-		    }
-		}
+	      vDestination[k++] += this-> GlobalEnergyShift * Coefficient;
 	    }
 	}
-      delete TmpSpace;
+    }
+  return vDestination;
+}
+ 
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+ComplexVector& PairHoppingHamiltonianWithTranslations::HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+										    int firstComponent, int nbrComponent)
+{
+  int LastComponent = firstComponent + nbrComponent;
+  if (this->FastMultiplicationFlag == false)
+    {
+      int dim = this->Chain->GetHilbertSpaceDimension();
+      double Coef;
+      Complex Coef2;
+      double Coef3;
+      int NbrTranslation;
+      int NbrTranslation2;
+      int pos;
+      int pos2;
+      int MaxPos = this->NbrSpin - 1;
+      int NbrUnitCells = this->NbrSpin / this->PValue;
+      if (this->NbrSpin <= 32)
+	{
+	  PairHoppingP1AsSpin1ChainWithTranslations* TmpSpace = (PairHoppingP1AsSpin1ChainWithTranslations*) this->Chain->Clone();
+	  for (int i = firstComponent; i < LastComponent; i++)
+	    {
+	      Complex TmpValue = vSource[i];
+	      Complex TmpSum = 0.0;
+	      vDestination[i] += this-> GlobalEnergyShift * TmpValue;
+	      for (int j = 1; j < NbrUnitCells; ++j)
+		{
+		  pos = TmpSpace->PlusMinusOperator(j - 1, j, i, Coef, NbrTranslation);
+		  if (pos <= i)
+		    {
+		      vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
+		      if (pos < i)
+			{
+			  TmpSum += Coef * Conj(this->ExponentialTable[NbrTranslation])  * TmpValue;
+			}
+		    }
+		}
+	      pos = TmpSpace->PlusMinusOperator(NbrUnitCells - 1, 0, i, Coef, NbrTranslation);
+	      if (pos <= i)
+		{
+		  vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
+		  if (pos < i)
+		    {
+		      TmpSum += Coef * Conj(this->ExponentialTable[NbrTranslation])  * TmpValue;
+		    }
+		}
+	      for (int j = 0; j < NbrUnitCells; ++j)
+		{
+		  for (int p = 1; p < this->PValue; ++p)
+		    {
+		      pos = TmpSpace->SwapOperator(j, p - 1, i, Coef, NbrTranslation);
+		      if (pos <= i)
+			{
+			  vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
+			  if (pos < i)
+			    {
+			      TmpSum += Coef * Conj(this->ExponentialTable[NbrTranslation])  * TmpValue;
+			    }
+			}
+		    }
+		}
+	      vDestination[i] += TmpSum;
+	    }
+	  delete TmpSpace;
+	}
+      else
+	{
+	  PairHoppingP1AsSpin1ChainWithTranslationsLong* TmpSpace = (PairHoppingP1AsSpin1ChainWithTranslationsLong*) this->Chain->Clone();
+	  for (int i = firstComponent; i < LastComponent; i++)
+	    {
+	      Complex TmpValue = vSource[i];
+	      Complex TmpSum = 0.0;
+	      vDestination[i] += this-> GlobalEnergyShift * TmpValue;
+	      for (int j = 1; j < NbrUnitCells; ++j)
+		{
+		  pos = TmpSpace->PlusMinusOperator(j - 1, j, i, Coef, NbrTranslation);
+		  if (pos <= i)
+		    {
+		      vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
+		      if (pos < i)
+			{
+			  TmpSum += Coef * Conj(this->ExponentialTable[NbrTranslation])  * TmpValue;
+			}
+		    }
+		}
+	      pos = TmpSpace->PlusMinusOperator(NbrUnitCells - 1, 0, i, Coef, NbrTranslation);
+	      if (pos <= i)
+		{
+		  vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
+		  if (pos < i)
+		    {
+		      TmpSum += Coef * Conj(this->ExponentialTable[NbrTranslation])  * TmpValue;
+		    }
+		}
+	      for (int j = 0; j < NbrUnitCells; ++j)
+		{
+		  for (int p = 1; p < this->PValue; ++p)
+		    {
+		      pos = TmpSpace->SwapOperator(j, p - 1, i, Coef, NbrTranslation);
+		      if (pos <= i)
+			{
+			  vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
+			  if (pos < i)
+			    {
+			      TmpSum += Coef * Conj(this->ExponentialTable[NbrTranslation])  * TmpValue;
+			    }
+			}
+		    }
+		}
+	      vDestination[i] += TmpSum;
+	    }
+	  delete TmpSpace;
+	}
+    }
+  else
+    {
+      if (this->FastMultiplicationStep == 1)
+	{
+	  int* TmpIndexArray;
+	  Complex* TmpCoefficientArray; 
+	  int j;
+	  int TmpNbrInteraction;
+	  int k = firstComponent;
+	  Complex Coefficient;
+	  firstComponent -= this->PrecalculationShift;
+	  LastComponent -= this->PrecalculationShift;
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      TmpNbrInteraction = this->NbrInteractionPerComponent[i];
+	      TmpIndexArray = this->InteractionPerComponentIndex[i];
+	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
+	      Coefficient = vSource[k];
+	      Complex TmpSum = 0.0;
+	      for (j = 0; j < TmpNbrInteraction; ++j)
+		{
+		  TmpSum += Conj(TmpCoefficientArray[j]) * vSource[TmpIndexArray[j]];
+		  vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
+		}
+	      TmpSum += this->GlobalEnergyShift * Coefficient;
+	      vDestination[k++] += TmpSum;
+	    }
+	}
     }
   return vDestination;
 }
@@ -215,54 +427,33 @@ ComplexVector& PairHoppingHamiltonianWithTranslations::LowLevelAddMultiply(Compl
 ComplexVector* PairHoppingHamiltonianWithTranslations::LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 										  int firstComponent, int nbrComponent)
 {
-  double Coef;
-  double Coef3;
-  int NbrTranslation;
-  int NbrTranslation2;
-  int pos;
-  int pos2;
-  int MaxPos = this->NbrSpin - 1;
-  int Last = firstComponent + nbrComponent;
-  int dim = this->Chain->GetHilbertSpaceDimension();
-  Complex* TmpValues = new Complex[nbrVectors];
-  Complex TmpCoef;
-  int NbrUnitCells = this->NbrSpin / this->PValue;
-  if (this->NbrSpin <= 32)
+  int LastComponent = firstComponent + nbrComponent;
+  if (this->FastMultiplicationFlag == false)
     {
-      PairHoppingP1AsSpin1ChainWithTranslations* TmpSpace = (PairHoppingP1AsSpin1ChainWithTranslations*) this->Chain->Clone();
-      for (int i = firstComponent; i < Last; i++)
+      double Coef;
+      double Coef3;
+      int NbrTranslation;
+      int NbrTranslation2;
+      int pos;
+      int pos2;
+      int MaxPos = this->NbrSpin - 1;
+      int dim = this->Chain->GetHilbertSpaceDimension();
+      Complex* TmpValues = new Complex[nbrVectors];
+      Complex TmpCoef;
+      int NbrUnitCells = this->NbrSpin / this->PValue;
+      if (this->NbrSpin <= 32)
 	{
-	  for (int k = 0; k < nbrVectors; ++k)
+	  PairHoppingP1AsSpin1ChainWithTranslations* TmpSpace = (PairHoppingP1AsSpin1ChainWithTranslations*) this->Chain->Clone();
+	  for (int i = firstComponent; i < LastComponent; i++)
 	    {
-	      TmpValues[k] = vSources[k][i];
-	      vDestinations[k][i] += this->GlobalEnergyShift * TmpValues[k];
-	    }
-	  for (int j = 1; j < NbrUnitCells; ++j)
-	    {
-	      pos = TmpSpace->PlusMinusOperator(j - 1, j, i, Coef, NbrTranslation);
-	      if (pos != dim)
-		{
-		  TmpCoef = Coef * this->ExponentialTable[NbrTranslation];
-		  for (int k = 0; k < nbrVectors; ++k)
-		    {
-		      vDestinations[k][pos] += TmpCoef * TmpValues[k];
-		    }
-		}
-	    }
-	  pos = TmpSpace->PlusMinusOperator(NbrUnitCells - 1, 0, i, Coef, NbrTranslation);
-	  if (pos != dim)
-	    {
-	      TmpCoef = Coef * this->ExponentialTable[NbrTranslation];
 	      for (int k = 0; k < nbrVectors; ++k)
 		{
-		  vDestinations[k][pos] += TmpCoef * TmpValues[k];
+		  TmpValues[k] = vSources[k][i];
+		  vDestinations[k][i] += this->GlobalEnergyShift * TmpValues[k];
 		}
-	    }
-	  for (int j = 0; j < NbrUnitCells; ++j)
-	    {
-	      for (int p = 1; p < this->PValue; ++p)
+	      for (int j = 1; j < NbrUnitCells; ++j)
 		{
-		  pos = TmpSpace->SwapOperator(j, p - 1, i, Coef, NbrTranslation);
+		  pos = TmpSpace->PlusMinusOperator(j - 1, j, i, Coef, NbrTranslation);
 		  if (pos != dim)
 		    {
 		      TmpCoef = Coef * this->ExponentialTable[NbrTranslation];
@@ -272,60 +463,411 @@ ComplexVector* PairHoppingHamiltonianWithTranslations::LowLevelMultipleMultiply(
 			}
 		    }
 		}
-	    }
-	}      
-      delete TmpSpace;
+	      pos = TmpSpace->PlusMinusOperator(NbrUnitCells - 1, 0, i, Coef, NbrTranslation);
+	      if (pos != dim)
+		{
+		  TmpCoef = Coef * this->ExponentialTable[NbrTranslation];
+		  for (int k = 0; k < nbrVectors; ++k)
+		    {
+		      vDestinations[k][pos] += TmpCoef * TmpValues[k];
+		    }
+		}
+	      for (int j = 0; j < NbrUnitCells; ++j)
+		{
+		  for (int p = 1; p < this->PValue; ++p)
+		    {
+		      pos = TmpSpace->SwapOperator(j, p - 1, i, Coef, NbrTranslation);
+		      if (pos != dim)
+			{
+			  TmpCoef = Coef * this->ExponentialTable[NbrTranslation];
+			  for (int k = 0; k < nbrVectors; ++k)
+			    {
+			      vDestinations[k][pos] += TmpCoef * TmpValues[k];
+			    }
+			}
+		    }
+		}
+	    }      
+	  delete TmpSpace;
+	}
+      else
+	{
+	  PairHoppingP1AsSpin1ChainWithTranslationsLong* TmpSpace = (PairHoppingP1AsSpin1ChainWithTranslationsLong*) this->Chain->Clone();
+	  for (int i = firstComponent; i < LastComponent; i++)
+	    {
+	      for (int k = 0; k < nbrVectors; ++k)
+		{
+		  TmpValues[k] = vSources[k][i];
+		  vDestinations[k][i] += this->GlobalEnergyShift * TmpValues[k];
+		}
+	      for (int j = 1; j < NbrUnitCells; ++j)
+		{
+		  pos = TmpSpace->PlusMinusOperator(j - 1, j, i, Coef, NbrTranslation);
+		  if (pos != dim)
+		    {
+		      TmpCoef = Coef * this->ExponentialTable[NbrTranslation];
+		      for (int k = 0; k < nbrVectors; ++k)
+			{
+			  vDestinations[k][pos] += TmpCoef * TmpValues[k];
+		    }
+		    }
+		}
+	      pos = TmpSpace->PlusMinusOperator(NbrUnitCells - 1, 0, i, Coef, NbrTranslation);
+	      if (pos != dim)
+		{
+		  TmpCoef = Coef * this->ExponentialTable[NbrTranslation];
+		  for (int k = 0; k < nbrVectors; ++k)
+		    {
+		      vDestinations[k][pos] += TmpCoef * TmpValues[k];
+		    }
+		}
+	      for (int j = 0; j < NbrUnitCells; ++j)
+		{
+		  for (int p = 1; p < this->PValue; ++p)
+		    {
+		      pos = TmpSpace->SwapOperator(j, p - 1, i, Coef, NbrTranslation);
+		      if (pos != dim)
+			{
+			  TmpCoef = Coef * this->ExponentialTable[NbrTranslation];
+			  for (int k = 0; k < nbrVectors; ++k)
+			    {
+			      vDestinations[k][pos] += TmpCoef * TmpValues[k];
+			    }
+			}
+		    }
+		}
+	    }      
+	  delete TmpSpace;
+	}    
+      delete[] TmpValues;
     }
   else
     {
-      PairHoppingP1AsSpin1ChainWithTranslationsLong* TmpSpace = (PairHoppingP1AsSpin1ChainWithTranslationsLong*) this->Chain->Clone();
-      for (int i = firstComponent; i < Last; i++)
+     if (this->FastMultiplicationStep == 1)
 	{
-	  for (int k = 0; k < nbrVectors; ++k)
+	  int* TmpIndexArray;
+	  Complex Coefficient;
+	  Complex* Coefficient2 = new Complex [nbrVectors];
+	  Complex* TmpCoefficientArray; 
+	  int j;
+	  int Pos;
+	  int TmpNbrInteraction;
+	  int k = firstComponent;
+	  firstComponent -= this->PrecalculationShift;
+	  LastComponent -= this->PrecalculationShift;
+	  Complex* TmpSum = new Complex [nbrVectors];
+	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
-	      TmpValues[k] = vSources[k][i];
-	      vDestinations[k][i] += this->GlobalEnergyShift * TmpValues[k];
-	    }
-	  for (int j = 1; j < NbrUnitCells; ++j)
-	    {
-	      pos = TmpSpace->PlusMinusOperator(j - 1, j, i, Coef, NbrTranslation);
-	      if (pos != dim)
+	      TmpNbrInteraction = this->NbrInteractionPerComponent[i];
+	      TmpIndexArray = this->InteractionPerComponentIndex[i];
+	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
+	      for (int l = 0; l < nbrVectors; ++l)
 		{
-		  TmpCoef = Coef * this->ExponentialTable[NbrTranslation];
-		  for (int k = 0; k < nbrVectors; ++k)
+		  TmpSum[l] = 0.0;
+		  Coefficient2[l] = vSources[l][k];
+		}
+	      for (j = 0; j < TmpNbrInteraction; ++j)
+		{
+		  Pos = TmpIndexArray[j];
+		  Coefficient = TmpCoefficientArray[j];
+		  for (int l = 0; l < nbrVectors; ++l)
 		    {
-		      vDestinations[k][pos] += TmpCoef * TmpValues[k];
+		      vDestinations[l][Pos] +=  Coefficient * Coefficient2[l];
+		      TmpSum[l] += Conj(Coefficient) * vSources[l][Pos];
 		    }
 		}
-	    }
-	  pos = TmpSpace->PlusMinusOperator(NbrUnitCells - 1, 0, i, Coef, NbrTranslation);
-	  if (pos != dim)
-	    {
-	      TmpCoef = Coef * this->ExponentialTable[NbrTranslation];
-	      for (int k = 0; k < nbrVectors; ++k)
+	      for (int l = 0; l < nbrVectors; ++l)
 		{
-		  vDestinations[k][pos] += TmpCoef * TmpValues[k];
+		  TmpSum[l] += this->GlobalEnergyShift * Coefficient2[l];
+		  vDestinations[l][k] += TmpSum[l];
 		}
+	      ++k;
+	    }
+	  delete[] Coefficient2;
+	  delete[] TmpSum;
+	}
+    }
+  return vDestinations;
+}
+ 
+// core part of the FastMultiplication method
+// 
+// chain = pointer to the Hilbert space
+// index = index of the component on which the Hamiltonian has to act on
+// indexArray = array where indices connected to the index-th component through the Hamiltonian
+// coefficientArray = array of the numerical coefficients related to the indexArray
+// position = reference on the current position in arrays indexArray and coefficientArray  
+
+void PairHoppingHamiltonianWithTranslations::EvaluateFastMultiplicationComponent(AbstractSpinChain* chain, int index, 
+										 int* indexArray, Complex* coefficientArray, long& position)
+{
+  double Coef;
+  Complex Coef2;
+  double Coef3;
+  int NbrTranslation;
+  int NbrTranslation2;
+  int TmpIndex;
+  int pos2;
+  int MaxPos = this->NbrSpin - 1;
+  int Dim = chain->GetHilbertSpaceDimension();
+  int NbrUnitCells = this->NbrSpin / this->PValue;
+  int AbsoluteIndex = index + this->PrecalculationShift;
+  if (this->HermitianSymmetryFlag == false)
+    {
+      if (this->NbrSpin <= 32)
+	{
+	  PairHoppingP1AsSpin1ChainWithTranslations* TmpSpace = (PairHoppingP1AsSpin1ChainWithTranslations*) chain;
+	  for (int j = 1; j < NbrUnitCells; ++j)
+	    {
+	      TmpIndex = TmpSpace->PlusMinusOperator(j - 1, j, AbsoluteIndex, Coef, NbrTranslation);
+	      if (TmpIndex != Dim)
+		{
+		  indexArray[position] = TmpIndex;
+		  coefficientArray[position] = Coef * this->ExponentialTable[NbrTranslation];
+		  ++position;
+		}
+	    }
+	  TmpIndex = TmpSpace->PlusMinusOperator(NbrUnitCells - 1, 0, AbsoluteIndex, Coef, NbrTranslation);
+	  if (TmpIndex != Dim)
+	    {
+	      indexArray[position] = TmpIndex;
+	      coefficientArray[position] = Coef * this->ExponentialTable[NbrTranslation];
+	      ++position;
 	    }
 	  for (int j = 0; j < NbrUnitCells; ++j)
 	    {
 	      for (int p = 1; p < this->PValue; ++p)
 		{
-		  pos = TmpSpace->SwapOperator(j, p - 1, i, Coef, NbrTranslation);
-		  if (pos != dim)
+		  TmpIndex = TmpSpace->SwapOperator(j, p - 1, AbsoluteIndex, Coef, NbrTranslation);
+		  if (TmpIndex != Dim)
 		    {
-		      TmpCoef = Coef * this->ExponentialTable[NbrTranslation];
-		      for (int k = 0; k < nbrVectors; ++k)
+		      indexArray[position] = TmpIndex;
+		      coefficientArray[position] = Coef * this->ExponentialTable[NbrTranslation];
+		      ++position;
+		    }
+		}
+	    }
+	}
+      else
+	{
+	  PairHoppingP1AsSpin1ChainWithTranslationsLong* TmpSpace = (PairHoppingP1AsSpin1ChainWithTranslationsLong*) this->Chain->Clone();
+	}
+    }
+  else
+     {
+      if (this->NbrSpin <= 32)
+	{
+	  PairHoppingP1AsSpin1ChainWithTranslations* TmpSpace = (PairHoppingP1AsSpin1ChainWithTranslations*) chain;
+	  for (int j = 1; j < NbrUnitCells; ++j)
+	    {
+	      TmpIndex = TmpSpace->PlusMinusOperator(j - 1, j, AbsoluteIndex, Coef, NbrTranslation);
+	      if (TmpIndex <= AbsoluteIndex)
+		{
+		  indexArray[position] = TmpIndex;
+		  coefficientArray[position] = Coef * this->ExponentialTable[NbrTranslation];
+		  if (TmpIndex == AbsoluteIndex)
+		    {
+		      coefficientArray[position] *= 0.5;
+		    }
+		  ++position;
+		}
+	    }
+	  TmpIndex = TmpSpace->PlusMinusOperator(NbrUnitCells - 1, 0, AbsoluteIndex, Coef, NbrTranslation);
+	  if (TmpIndex <= AbsoluteIndex)
+	    {
+	      indexArray[position] = TmpIndex;
+	      coefficientArray[position] = Coef * this->ExponentialTable[NbrTranslation];
+	      if (TmpIndex == AbsoluteIndex)
+		{
+		  coefficientArray[position] *= 0.5;
+		}
+	      ++position;
+	    }
+	  for (int j = 0; j < NbrUnitCells; ++j)
+	    {
+	      for (int p = 1; p < this->PValue; ++p)
+		{
+		  TmpIndex = TmpSpace->SwapOperator(j, p - 1, AbsoluteIndex, Coef, NbrTranslation);
+		  if (TmpIndex <= AbsoluteIndex)
+		    {
+		      indexArray[position] = TmpIndex;
+		      coefficientArray[position] = Coef * this->ExponentialTable[NbrTranslation];
+		      if (TmpIndex == AbsoluteIndex)
 			{
-			  vDestinations[k][pos] += TmpCoef * TmpValues[k];
+			  coefficientArray[position] *= 0.5;
+			}
+		      ++position;
+		    }
+		}
+	    }
+	}
+      else
+	{
+	  PairHoppingP1AsSpin1ChainWithTranslationsLong* TmpSpace = (PairHoppingP1AsSpin1ChainWithTranslationsLong*) this->Chain->Clone();
+	}
+    }   
+}
+
+// core part of the PartialFastMultiplicationMemory
+// 
+// chain = pointer to the Hilbert space
+// firstComponent = index of the first component that has to be precalcualted
+// lastComponent  = index of the last component that has to be precalcualted
+// memory = reference on the amount of memory required for precalculations  
+
+void PairHoppingHamiltonianWithTranslations::EvaluateFastMultiplicationMemoryComponent(AbstractSpinChain* chain, int firstComponent, int lastComponent, long& memory)
+{
+  double Coef;
+  Complex Coef2;
+  double Coef3;
+  int NbrTranslation;
+  int NbrTranslation2;
+  int TmpIndex;
+  int TmpIndex2;
+  int MaxPos = this->NbrSpin - 1;
+  int Dim = chain->GetHilbertSpaceDimension();
+  int NbrUnitCells = this->NbrSpin / this->PValue;
+  if (this->HermitianSymmetryFlag == false)
+    {
+      if (this->NbrSpin <= 32)
+	{
+	  PairHoppingP1AsSpin1ChainWithTranslations* TmpSpace = (PairHoppingP1AsSpin1ChainWithTranslations*) chain;
+	  for (int i = firstComponent; i < lastComponent; i++)
+	    {
+	      for (int j = 1; j < NbrUnitCells; ++j)
+		{
+		  TmpIndex = TmpSpace->PlusMinusOperator(j - 1, j, i, Coef, NbrTranslation);
+		  if (TmpIndex < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];		     
+		    }
+		}
+	      TmpIndex = TmpSpace->PlusMinusOperator(NbrUnitCells - 1, 0, i, Coef, NbrTranslation);
+	      if (TmpIndex < Dim)
+		{
+		  ++memory;
+		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];		     
+		}
+	      for (int j = 0; j < NbrUnitCells; ++j)
+		{
+		  for (int p = 1; p < this->PValue; ++p)
+		    {
+		      TmpIndex = TmpSpace->SwapOperator(j, p - 1, i, Coef, NbrTranslation);
+		      if (TmpIndex < Dim)
+			{
+			  ++memory;
+			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];		     
 			}
 		    }
 		}
 	    }
-	}      
-      delete TmpSpace;
-    }    
-  delete[] TmpValues;
-  return vDestinations;
+	}
+      else
+	{
+	  PairHoppingP1AsSpin1ChainWithTranslationsLong* TmpSpace = (PairHoppingP1AsSpin1ChainWithTranslationsLong*) this->Chain->Clone();
+	  for (int i = firstComponent; i < lastComponent; i++)
+	    {
+	      for (int j = 1; j < NbrUnitCells; ++j)
+		{
+		  TmpIndex = TmpSpace->PlusMinusOperator(j - 1, j, i, Coef, NbrTranslation);
+		  if (TmpIndex < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];		     
+		    }
+		}
+	      TmpIndex = TmpSpace->PlusMinusOperator(NbrUnitCells - 1, 0, i, Coef, NbrTranslation);
+	      if (TmpIndex < Dim)
+		{
+		  ++memory;
+		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];		     
+		}
+	      for (int j = 0; j < NbrUnitCells; ++j)
+		{
+		  for (int p = 1; p < this->PValue; ++p)
+		    {
+		      TmpIndex = TmpSpace->SwapOperator(j, p - 1, i, Coef, NbrTranslation);
+		      if (TmpIndex < Dim)
+			{
+			  ++memory;
+			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];		     
+			}
+		    }
+		}
+	    }
+	}
+    }
+  else
+    {
+     if (this->NbrSpin <= 32)
+	{
+	  PairHoppingP1AsSpin1ChainWithTranslations* TmpSpace = (PairHoppingP1AsSpin1ChainWithTranslations*) chain;
+	  for (int i = firstComponent; i < lastComponent; i++)
+	    {
+	      for (int j = 1; j < NbrUnitCells; ++j)
+		{
+		  TmpIndex = TmpSpace->PlusMinusOperator(j - 1, j, i, Coef, NbrTranslation);
+		  if (TmpIndex <= i)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];		     
+		    }
+		}
+	      TmpIndex = TmpSpace->PlusMinusOperator(NbrUnitCells - 1, 0, i, Coef, NbrTranslation);
+	      if (TmpIndex <= i)
+		{
+		  ++memory;
+		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];		     
+		}
+	      for (int j = 0; j < NbrUnitCells; ++j)
+		{
+		  for (int p = 1; p < this->PValue; ++p)
+		    {
+		      TmpIndex = TmpSpace->SwapOperator(j, p - 1, i, Coef, NbrTranslation);
+		      if (TmpIndex <= i)
+			{
+			  ++memory;
+			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];		     
+			}
+		    }
+		}
+	    }
+	}
+      else
+	{
+	  PairHoppingP1AsSpin1ChainWithTranslationsLong* TmpSpace = (PairHoppingP1AsSpin1ChainWithTranslationsLong*) this->Chain->Clone();
+	  for (int i = firstComponent; i < lastComponent; i++)
+	    {
+	      for (int j = 1; j < NbrUnitCells; ++j)
+		{
+		  TmpIndex = TmpSpace->PlusMinusOperator(j - 1, j, i, Coef, NbrTranslation);
+		  if (TmpIndex <= i)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];		     
+		    }
+		}
+	      TmpIndex = TmpSpace->PlusMinusOperator(NbrUnitCells - 1, 0, i, Coef, NbrTranslation);
+	      if (TmpIndex <= i)
+		{
+		  ++memory;
+		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];		     
+		}
+	      for (int j = 0; j < NbrUnitCells; ++j)
+		{
+		  for (int p = 1; p < this->PValue; ++p)
+		    {
+		      TmpIndex = TmpSpace->SwapOperator(j, p - 1, i, Coef, NbrTranslation);
+		      if (TmpIndex <= i)
+			{
+			  ++memory;
+			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];		     
+			}
+		    }
+		}
+	    }
+	}
+     }
 }
- 
+

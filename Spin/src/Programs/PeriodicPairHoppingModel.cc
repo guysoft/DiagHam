@@ -48,6 +48,7 @@ int main(int argc, char** argv)
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
+ OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
   ArchitectureManager Architecture;
   LanczosManager Lanczos(true);
@@ -55,6 +56,7 @@ int main(int argc, char** argv)
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
   Lanczos.AddOptionGroup(&Manager);
+  Manager += PrecalculationGroup;
   Manager += OutputGroup;
   Manager += ToolsGroup;
   Manager += MiscGroup;
@@ -65,6 +67,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('\n', "set-inversionsymmetry", "if non zero, set the inversion symmetry sector", 0);
   (*SystemGroup) += new  BooleanOption ('\n', "disable-inversionsymmetry", "disable the inversion symmetry");
   (*SystemGroup) += new  BooleanOption ('\n', "disable-realhamiltonian", "do not use a real Hamiltonian at the inversion symmetric points");
+  (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -119,6 +122,8 @@ int main(int argc, char** argv)
       InitialMomentum =  Manager.GetInteger("momentum");
       MaxMomentum = InitialMomentum + 1;
     }
+
+  long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
   int MinInversionSymmetrySector = -1;
   int MaxInversionSymmetrySector = 1;
@@ -249,7 +254,7 @@ int main(int argc, char** argv)
 		  else
 		    {
 		      PairHoppingHamiltonianWithTranslations* Hamiltonian = 0;
-		      Hamiltonian = new PairHoppingHamiltonianWithTranslations(Chain, NbrSpins, PValue);
+		      Hamiltonian = new PairHoppingHamiltonianWithTranslations(Chain, NbrSpins, PValue, Architecture.GetArchitecture(), Memory);
 		      GenericComplexMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpString, CommentLine, 0.0,  FullOutputFileName,
 						  FirstRun, TmpEigenstateString);
 		      MainTaskOperation TaskOperation (&Task);
@@ -302,7 +307,7 @@ int main(int argc, char** argv)
 	      cout << "Hilbert space dimension = " << Chain->GetLargeHilbertSpaceDimension() << endl;	  
 	      Architecture.GetArchitecture()->SetDimension(Chain->GetHilbertSpaceDimension());	
 	      PairHoppingHamiltonianWithTranslations* Hamiltonian = 0;
-	      Hamiltonian = new PairHoppingHamiltonianWithTranslations(Chain, NbrSpins, PValue);
+	      Hamiltonian = new PairHoppingHamiltonianWithTranslations(Chain, NbrSpins, PValue, Architecture.GetArchitecture(), Memory);
 	      char* TmpString = new char[64];
 	      if (Manager.GetBoolean("disable-inversionsymmetry") == false)
 		{
