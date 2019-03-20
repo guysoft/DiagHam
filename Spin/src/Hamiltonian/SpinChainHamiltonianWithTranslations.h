@@ -210,6 +210,13 @@ class SpinChainHamiltonianWithTranslations : public AbstractHamiltonian
   // return value = list of right interaction operators
   List<Matrix*> RightInteractionOperators();  
 
+  // get the preferred distribution over parallel execution in N tasks for parallel Hamiltonian-Vector multiplication
+  //
+  // nbrThreads = number of threads requested
+  // segmentIndices = array returning the reference to an array of the first index of each of the segments
+  // return value = true if no error occured
+  virtual bool GetLoadBalancing(int nbrTasks, long* &segmentIndices);
+    
  protected:
  
   // test the amount of memory needed for fast multiplication algorithm
