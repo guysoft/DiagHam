@@ -68,11 +68,13 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
   
   (*SystemGroup) += new  SingleIntegerOption ('p', "p-value", "value that defines the filling factor p/(2p+1)", 1);
-  (*SystemGroup) += new  SingleIntegerOption ('n', "nbr-spin", "number of spins", 10);
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "nbr-spin", "number of spins", 10);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "momentum", "momentum sector", 0);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "inversion-symmetry", "set the inversion symmetry sector (+1 or -1)", 1);
   (*SystemGroup) += new  SingleDoubleOption ('t', "time-step", "time step", 0.1);
   (*SystemGroup) += new  SingleIntegerOption ('T', "nbr-timesteps", "number of time steps", 100);
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "max-nbriterations", "maximum number of iterations when performing the time evolution", 100);
+  (*SystemGroup) += new  SingleDoubleOption ('\n', "norm-accuracy", "accuracy required when computing the state norm at a given time t", 1e-13);
   (*OutputGroup) += new BooleanOption  ('\n', "use-root", "us the root state instead of the z2 state as the initial state");
   (*OutputGroup) += new BooleanOption  ('\n', "store-states", "store all the states generated at each time step in a single binary matrix file");
   (*OutputGroup) += new BooleanOption  ('\n', "store-initialstate", "store all the initial state");
@@ -107,8 +109,8 @@ int main(int argc, char** argv)
 
   int NbrTimeSteps =  Manager.GetInteger("nbr-timesteps");
   double TimeStep = Manager.GetDouble("time-step");
-  int MaxNbrIterations = 100;
-  double NormConvergence = 1e-13;
+  int MaxNbrIterations = Manager.GetInteger("max-nbriterations");
+  double NormConvergence = Manager.GetDouble("norm-accuracy");
 
   bool FirstRun = true;
   int Momentum = Manager.GetInteger("momentum");
