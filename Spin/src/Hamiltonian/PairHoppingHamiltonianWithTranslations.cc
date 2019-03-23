@@ -60,27 +60,32 @@ PairHoppingHamiltonianWithTranslations::PairHoppingHamiltonianWithTranslations()
 // chain = reference on Hilbert space of the associated system
 // nbrSpin = number of spin
 // pValue = value that defines the filling factor p/(2p+1)
+// electrostaticPerturbation1 = first electrostatic perturbation 
+// electrostaticPerturbation2 = second electrostatic perturbation 
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication
 
 PairHoppingHamiltonianWithTranslations::PairHoppingHamiltonianWithTranslations(AbstractSpinChainWithTranslations* chain, int nbrSpin, int pValue,
+									       double electrostaticPerturbation1, double electrostaticPerturbation2,
 									       AbstractArchitecture* architecture, long memory)
 {
   this->Chain = chain;
   this->NbrSpin = nbrSpin;
   this->PValue = pValue;
-  this->GlobalEnergyShift = 0.0;
   this->J = 1.0;
   this->HalfJ = this->J * 0.5;
   this->Jz = this->J;
-  this->SzSzContributions = new double [1];
+  this->ElectrostaticPerturbation1 = electrostaticPerturbation1;
+  this->ElectrostaticPerturbation2 = electrostaticPerturbation2;
   this->EvaluateCosinusTable();
   this->Architecture = architecture;
   long MinIndex;
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->SzSzContributions = new double [MaxIndex - MinIndex + 1];
   this->PrecalculationShift = (int) MinIndex;  
   this->HermitianSymmetryFlag = true;
+  this->EvaluateDiagonalMatrixElements();
   if (memory == 0l)
     {
       this->FastMultiplicationFlag = false;
@@ -128,13 +133,62 @@ void PairHoppingHamiltonianWithTranslations::EvaluateCosinusTable()
     }
 }
 
+// evaluate diagonal matrix elements
+// 
+
+void PairHoppingHamiltonianWithTranslations::EvaluateDiagonalMatrixElements()
+{
+  int Dim = this->Chain->GetHilbertSpaceDimension();
+
+  if ((this->ElectrostaticPerturbation1 == 0.0) && (this->ElectrostaticPerturbation2 == 0.0))
+    {
+      for (int i = 0; i < Dim; i++)
+	{
+	  this->SzSzContributions[i] = 0.0;
+	}
+    }
+  else
+    {
+      PairHoppingP1AsSpin1ChainWithTranslations* TmpSpace = (PairHoppingP1AsSpin1ChainWithTranslations*) this->Chain->Clone();
+      int NbrUnitCells = this->NbrSpin / this->PValue;
+      for (int i = 0; i < Dim; i++)
+	{
+	  double Tmp = 0.0;
+	  for (int j = 1; j < NbrUnitCells; ++j)
+	    {
+	      Tmp += this->ElectrostaticPerturbation1 * TmpSpace->ZPlus(j * this->PValue - 1, i) * TmpSpace->ZMinus(j * this->PValue, i);
+	    }	
+	  Tmp += this->ElectrostaticPerturbation1 * TmpSpace->ZPlus(this->NbrSpin - 1, i) * TmpSpace->ZMinus(0, i);
+	  for (int j = 0; j < NbrUnitCells; ++j)
+	    {
+	      for (int p = 1; p < this->PValue; ++p)
+		{
+		  Tmp += this->ElectrostaticPerturbation1 * TmpSpace->ZPlus(j * this->PValue + p - 1, i) * TmpSpace->Z0(j * this->PValue + p, i);
+		  Tmp += this->ElectrostaticPerturbation1 * TmpSpace->Z0(j * this->PValue + p - 1, i) * TmpSpace->ZMinus(j * this->PValue + p, i);
+		  Tmp += this->ElectrostaticPerturbation2 * TmpSpace->ZPlus(j * this->PValue + p - 1, i) * TmpSpace->ZPlus(j * this->PValue + p, i);
+		  Tmp += this->ElectrostaticPerturbation2 * TmpSpace->Z0(j * this->PValue + p - 1, i) * TmpSpace->Z0(j * this->PValue + p, i);
+		  Tmp += this->ElectrostaticPerturbation2 * TmpSpace->ZMinus(j * this->PValue + p - 1, i) * TmpSpace->ZMinus(j * this->PValue + p, i);
+		}
+	    }
+	  this->SzSzContributions[i] = Tmp;
+	}
+      delete TmpSpace;
+    }
+}
+
 // shift Hamiltonian from a given energy
 //
 // shift = shift value
 
 void PairHoppingHamiltonianWithTranslations::ShiftHamiltonian (double shift)
 {
-  this->GlobalEnergyShift = shift;
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  for (long i = MinIndex; i <= MaxIndex; ++i)
+    {
+      this->SzSzContributions[i - MinIndex] += shift;
+    }
 }
   
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -168,7 +222,7 @@ ComplexVector& PairHoppingHamiltonianWithTranslations::LowLevelAddMultiply(Compl
 	  for (int i = firstComponent; i < LastComponent; i++)
 	    {
 	      Complex TmpValue = vSource[i];
-	      vDestination[i] += this-> GlobalEnergyShift * TmpValue;
+	      vDestination[i] += this->SzSzContributions[i] * TmpValue;
 	      for (int j = 1; j < NbrUnitCells; ++j)
 		{
 		  pos = TmpSpace->PlusMinusOperator(j - 1, j, i, Coef, NbrTranslation);
@@ -202,7 +256,7 @@ ComplexVector& PairHoppingHamiltonianWithTranslations::LowLevelAddMultiply(Compl
 	  for (int i = firstComponent; i < LastComponent; i++)
 	    {
 	      Complex TmpValue = vSource[i];
-	      vDestination[i] += this-> GlobalEnergyShift * TmpValue;
+	      vDestination[i] += this->SzSzContributions[i] * TmpValue;
 	      for (int j = 1; j < NbrUnitCells; ++j)
 		{
 		  pos = TmpSpace->PlusMinusOperator(j - 1, j, i, Coef, NbrTranslation);
@@ -253,7 +307,7 @@ ComplexVector& PairHoppingHamiltonianWithTranslations::LowLevelAddMultiply(Compl
 		{
 		  vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
 		}
-	      vDestination[k++] += this-> GlobalEnergyShift * Coefficient;
+	      vDestination[k++] += this->SzSzContributions[k] * Coefficient;
 	    }
 	}
     }
@@ -292,7 +346,7 @@ ComplexVector& PairHoppingHamiltonianWithTranslations::HermitianLowLevelAddMulti
 	    {
 	      Complex TmpValue = vSource[i];
 	      Complex TmpSum = 0.0;
-	      vDestination[i] += this-> GlobalEnergyShift * TmpValue;
+	      vDestination[i] += this->SzSzContributions[i] * TmpValue;
 	      for (int j = 1; j < NbrUnitCells; ++j)
 		{
 		  pos = TmpSpace->PlusMinusOperator(j - 1, j, i, Coef, NbrTranslation);
@@ -301,7 +355,7 @@ ComplexVector& PairHoppingHamiltonianWithTranslations::HermitianLowLevelAddMulti
 		      vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
 		      if (pos < i)
 			{
-			  TmpSum += Coef * Conj(this->ExponentialTable[NbrTranslation])  * TmpValue;
+			  TmpSum += Coef * Conj(this->ExponentialTable[NbrTranslation]) * vSource[pos];
 			}
 		    }
 		}
@@ -311,7 +365,7 @@ ComplexVector& PairHoppingHamiltonianWithTranslations::HermitianLowLevelAddMulti
 		  vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
 		  if (pos < i)
 		    {
-		      TmpSum += Coef * Conj(this->ExponentialTable[NbrTranslation])  * TmpValue;
+		      TmpSum += Coef * Conj(this->ExponentialTable[NbrTranslation]) * vSource[pos];
 		    }
 		}
 	      for (int j = 0; j < NbrUnitCells; ++j)
@@ -324,7 +378,7 @@ ComplexVector& PairHoppingHamiltonianWithTranslations::HermitianLowLevelAddMulti
 			  vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
 			  if (pos < i)
 			    {
-			      TmpSum += Coef * Conj(this->ExponentialTable[NbrTranslation])  * TmpValue;
+			      TmpSum += Coef * Conj(this->ExponentialTable[NbrTranslation])  * vSource[pos];
 			    }
 			}
 		    }
@@ -340,7 +394,7 @@ ComplexVector& PairHoppingHamiltonianWithTranslations::HermitianLowLevelAddMulti
 	    {
 	      Complex TmpValue = vSource[i];
 	      Complex TmpSum = 0.0;
-	      vDestination[i] += this-> GlobalEnergyShift * TmpValue;
+	      vDestination[i] += this->SzSzContributions[i] * TmpValue;
 	      for (int j = 1; j < NbrUnitCells; ++j)
 		{
 		  pos = TmpSpace->PlusMinusOperator(j - 1, j, i, Coef, NbrTranslation);
@@ -349,7 +403,7 @@ ComplexVector& PairHoppingHamiltonianWithTranslations::HermitianLowLevelAddMulti
 		      vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
 		      if (pos < i)
 			{
-			  TmpSum += Coef * Conj(this->ExponentialTable[NbrTranslation])  * TmpValue;
+			  TmpSum += Coef * Conj(this->ExponentialTable[NbrTranslation])  *  vSource[pos];
 			}
 		    }
 		}
@@ -359,7 +413,7 @@ ComplexVector& PairHoppingHamiltonianWithTranslations::HermitianLowLevelAddMulti
 		  vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
 		  if (pos < i)
 		    {
-		      TmpSum += Coef * Conj(this->ExponentialTable[NbrTranslation])  * TmpValue;
+		      TmpSum += Coef * Conj(this->ExponentialTable[NbrTranslation])  * vSource[pos];
 		    }
 		}
 	      for (int j = 0; j < NbrUnitCells; ++j)
@@ -372,7 +426,7 @@ ComplexVector& PairHoppingHamiltonianWithTranslations::HermitianLowLevelAddMulti
 			  vDestination[pos] += Coef * this->ExponentialTable[NbrTranslation]  * TmpValue;
 			  if (pos < i)
 			    {
-			      TmpSum += Coef * Conj(this->ExponentialTable[NbrTranslation])  * TmpValue;
+			      TmpSum += Coef * Conj(this->ExponentialTable[NbrTranslation])  * vSource[pos];
 			    }
 			}
 		    }
@@ -406,7 +460,7 @@ ComplexVector& PairHoppingHamiltonianWithTranslations::HermitianLowLevelAddMulti
 		  TmpSum += Conj(TmpCoefficientArray[j]) * vSource[TmpIndexArray[j]];
 		  vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
 		}
-	      TmpSum += this->GlobalEnergyShift * Coefficient;
+	      TmpSum += this->SzSzContributions[k] * Coefficient;
 	      vDestination[k++] += TmpSum;
 	    }
 	}
@@ -449,7 +503,7 @@ ComplexVector* PairHoppingHamiltonianWithTranslations::LowLevelMultipleMultiply(
 	      for (int k = 0; k < nbrVectors; ++k)
 		{
 		  TmpValues[k] = vSources[k][i];
-		  vDestinations[k][i] += this->GlobalEnergyShift * TmpValues[k];
+		  vDestinations[k][i] += this->SzSzContributions[i] * TmpValues[k];
 		}
 	      for (int j = 1; j < NbrUnitCells; ++j)
 		{
@@ -498,7 +552,7 @@ ComplexVector* PairHoppingHamiltonianWithTranslations::LowLevelMultipleMultiply(
 	      for (int k = 0; k < nbrVectors; ++k)
 		{
 		  TmpValues[k] = vSources[k][i];
-		  vDestinations[k][i] += this->GlobalEnergyShift * TmpValues[k];
+		  vDestinations[k][i] += this->SzSzContributions[i] * TmpValues[k];
 		}
 	      for (int j = 1; j < NbrUnitCells; ++j)
 		{
@@ -578,7 +632,7 @@ ComplexVector* PairHoppingHamiltonianWithTranslations::LowLevelMultipleMultiply(
 		}
 	      for (int l = 0; l < nbrVectors; ++l)
 		{
-		  TmpSum[l] += this->GlobalEnergyShift * Coefficient2[l];
+		  TmpSum[l] += this->SzSzContributions[k] * Coefficient2[l];
 		  vDestinations[l][k] += TmpSum[l];
 		}
 	      ++k;

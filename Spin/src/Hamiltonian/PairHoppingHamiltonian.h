@@ -33,7 +33,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/PairHoppingP1AsSpin1Chain.h"
+#include "HilbertSpace/AbstractSpinChain.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 
 
@@ -50,7 +50,7 @@ class PairHoppingHamiltonian : public AbstractHamiltonian
  protected:
   
   // pointer to the Hilbert space of the system
-  PairHoppingP1AsSpin1Chain* Chain;
+  AbstractSpinChain* Chain;
 
   // value that defines the filling factor p/(2p+1)
   int PValue;
@@ -72,7 +72,7 @@ public:
   // nbrSpin = number of spins
   // pValue = value that defines the filling factor p/(2p+1)
   // periodicBoundaryConditions = true if periodic boundary conditions have to be used
-  PairHoppingHamiltonian(PairHoppingP1AsSpin1Chain* chain, int nbrSpin, int pValue, bool periodicBoundaryConditions = false);
+  PairHoppingHamiltonian(AbstractSpinChain* chain, int nbrSpin, int pValue, bool periodicBoundaryConditions = false);
 
   // destructor
   //

@@ -107,6 +107,27 @@ class PairHoppingP1AsSpin1ChainWithTranslations : public Spin1ChainWithTranslati
   // return value = index of resulting state 
   virtual int PlusMinusOperator (int leftUnitCellCoordinate, int rightUnitCellCoordinate, int state, double& coefficient, int& nbrTranslation);  
   
+  // apply the Z_0 operator (i.e the projector on |0><0|) on a given site
+  //
+  // globalSiteIndex = global index of the site
+  // state = index of the state on which the operator has to be applied
+  // return value = numerical coefficient once the projection is applied
+  virtual double Z0 (int globalSiteIndex, int state);
+
+  // apply the Z_+ operator (i.e the projector on |+><+|) on a given site
+  //
+  // globalSiteIndex = global index of the site
+  // state = index of the state on which the operator has to be applied
+  // return value = numerical coefficient once the projection is applied
+  virtual double ZPlus (int globalSiteIndex, int state);
+
+  // apply the Z_- operator (i.e the projector on |-><-|) on a given site
+  //
+  // globalSiteIndex = global index of the site
+  // state = index of the state on which the operator has to be applied
+  // return value = numerical coefficient once the projection is applied
+  virtual double ZMinus (int globalSiteIndex, int state);
+
   // evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
   // 
   // nbrSites = number of sites that are part of the A subsytem 
@@ -158,6 +179,60 @@ class PairHoppingP1AsSpin1ChainWithTranslations : public Spin1ChainWithTranslati
 inline unsigned long PairHoppingP1AsSpin1ChainWithTranslations::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslations, double& szSymmetrySign)
 {
   return this->Spin1ChainWithTranslations::FindCanonicalForm(stateDescription, nbrTranslations);
+}
+
+// apply the Z_0 operator (i.e the projector on |0><0|) on a given site
+//
+// globalSiteIndex = global index of the site
+// state = index of the state on which the operator has to be applied
+// return value = numerical coefficient once the projection is applied
+
+inline double PairHoppingP1AsSpin1ChainWithTranslations::Z0 (int globalSiteIndex, int state)
+{
+  if (((this->StateDescription[state] >> (globalSiteIndex * 2)) & 0x3ul) == 0x2ul)
+    {
+      return 1.0;
+    }
+  else
+    {
+      return 0.0;
+    }
+}
+
+// apply the Z_+ operator (i.e the projector on |+><+|) on a given site
+//
+// globalSiteIndex = global index of the site
+// state = index of the state on which the operator has to be applied
+// return value = numerical coefficient once the projection is applied
+
+inline double PairHoppingP1AsSpin1ChainWithTranslations::ZPlus (int globalSiteIndex, int state)
+{
+  if (((this->StateDescription[state] >> (globalSiteIndex * 2)) & 0x3ul) == 0x3ul)
+    {
+      return 1.0;
+    }
+  else
+    {
+      return 0.0;
+    }
+}
+
+// apply the Z_- operator (i.e the projector on |-><-|) on a given site
+//
+// globalSiteIndex = global index of the site
+// state = index of the state on which the operator has to be applied
+// return value = numerical coefficient once the projection is applied
+
+inline double PairHoppingP1AsSpin1ChainWithTranslations::ZMinus (int globalSiteIndex, int state)
+{
+  if (((this->StateDescription[state] >> (globalSiteIndex * 2)) & 0x3ul) == 0x0ul)
+    {
+      return 1.0;
+    }
+  else
+    {
+      return 0.0;
+    }
 }
 
 #endif

@@ -67,6 +67,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('\n', "set-inversionsymmetry", "if non zero, set the inversion symmetry sector", 0);
   (*SystemGroup) += new  BooleanOption ('\n', "disable-inversionsymmetry", "disable the inversion symmetry");
   (*SystemGroup) += new  BooleanOption ('\n', "disable-realhamiltonian", "do not use a real Hamiltonian at the inversion symmetric points");
+  (*SystemGroup) += new  SingleDoubleOption ('\n', "v1-0", "strength of the first electrostatic coupling", 0.0);
+  (*SystemGroup) += new  SingleDoubleOption ('\n', "v2-0", "strength of the second electrostatic coupling", 0.0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -96,6 +98,8 @@ int main(int argc, char** argv)
       cout << "--nbr-spin (here " << NbrSpins << ") should be a multiple of --p-value (here " << PValue << ")" << endl;
       return -1;
     }
+  double V10 = Manager.GetDouble("v1-0");
+  double V20 = Manager.GetDouble("v2-0");
 
   char* OutputFileName = new char [512];
   char* CommentLine = new char [512];
@@ -254,7 +258,7 @@ int main(int argc, char** argv)
 		  else
 		    {
 		      PairHoppingHamiltonianWithTranslations* Hamiltonian = 0;
-		      Hamiltonian = new PairHoppingHamiltonianWithTranslations(Chain, NbrSpins, PValue, Architecture.GetArchitecture(), Memory);
+		      Hamiltonian = new PairHoppingHamiltonianWithTranslations(Chain, NbrSpins, PValue, V10, V20, Architecture.GetArchitecture(), Memory);
 		      GenericComplexMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpString, CommentLine, 0.0,  FullOutputFileName,
 						  FirstRun, TmpEigenstateString);
 		      MainTaskOperation TaskOperation (&Task);
@@ -307,7 +311,7 @@ int main(int argc, char** argv)
 	      cout << "Hilbert space dimension = " << Chain->GetLargeHilbertSpaceDimension() << endl;	  
 	      Architecture.GetArchitecture()->SetDimension(Chain->GetHilbertSpaceDimension());	
 	      PairHoppingHamiltonianWithTranslations* Hamiltonian = 0;
-	      Hamiltonian = new PairHoppingHamiltonianWithTranslations(Chain, NbrSpins, PValue, Architecture.GetArchitecture(), Memory);
+	      Hamiltonian = new PairHoppingHamiltonianWithTranslations(Chain, NbrSpins, PValue, V10, V20, Architecture.GetArchitecture(), Memory);
 	      char* TmpString = new char[64];
 	      if (Manager.GetBoolean("disable-inversionsymmetry") == false)
 		{

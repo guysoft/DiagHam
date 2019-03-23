@@ -36,6 +36,8 @@
 #include "Matrix/RealAntisymmetricMatrix.h"
 #include "MathTools/Complex.h"
 #include "Output/MathematicaOutput.h"
+#include "HilbertSpace/PairHoppingP1AsSpin1Chain.h"
+#include "HilbertSpace/PairHoppingP1AsSpin1ChainLong.h"
 
 #include <iostream>
 
@@ -52,7 +54,7 @@ using std::ostream;
 // pValue = value that defines the filling factor p/(2p+1)
 // periodicBoundaryConditions = true if periodic boundary conditions have to be used
 
-PairHoppingHamiltonian::PairHoppingHamiltonian(PairHoppingP1AsSpin1Chain* chain, int nbrSpin, int pValue, bool periodicBoundaryConditions)
+PairHoppingHamiltonian::PairHoppingHamiltonian(AbstractSpinChain* chain, int nbrSpin, int pValue, bool periodicBoundaryConditions)
 {
   this->Chain = chain;
   this->NbrSpin = nbrSpin;
@@ -135,38 +137,80 @@ RealVector& PairHoppingHamiltonian::LowLevelAddMultiply(RealVector& vSource, Rea
   int pos2;
   int MaxPos = this->NbrSpin - 1;
   int NbrUnitCells = this->NbrSpin / this->PValue;
-  for (int i = firstComponent; i < LastComponent; ++i)
+  if (this->NbrSpin <= 32)
     {
-      double TmpValue = vSource[i];
-      vDestination[i] += this->GlobalEnergyShift * TmpValue;
-      for (int j = 1; j < NbrUnitCells; ++j)
+      PairHoppingP1AsSpin1Chain* TmpSpace = (PairHoppingP1AsSpin1Chain*) this->Chain->Clone();
+      for (int i = firstComponent; i < LastComponent; ++i)
 	{
-	  pos = this->Chain->PlusMinusOperator(j - 1, j, i);
-	  if (pos != dim)
+	  double TmpValue = vSource[i];
+	  vDestination[i] += this->GlobalEnergyShift * TmpValue;
+	  for (int j = 1; j < NbrUnitCells; ++j)
 	    {
-	      vDestination[pos] += TmpValue;
-	    }
-	}
-      if (this->PeriodicBoundaryConditions == true)
-	{
-	  pos = this->Chain->PlusMinusOperator(NbrUnitCells - 1, 0, i);
-	  if (pos != dim)
-	    {
-	      vDestination[pos] += TmpValue;
-	    }
-	}      
-      for (int j = 0; j < NbrUnitCells; ++j)
-	{
-	  for (int p = 1; p < this->PValue; ++p)
-	    {
-	      pos = this->Chain->SwapOperator(j, p - 1, i);
+	      pos = TmpSpace->PlusMinusOperator(j - 1, j, i);
 	      if (pos != dim)
 		{
 		  vDestination[pos] += TmpValue;
 		}
 	    }
+	  if (this->PeriodicBoundaryConditions == true)
+	    {
+	      pos = TmpSpace->PlusMinusOperator(NbrUnitCells - 1, 0, i);
+	      if (pos != dim)
+		{
+		  vDestination[pos] += TmpValue;
+		}
+	    }      
+	  for (int j = 0; j < NbrUnitCells; ++j)
+	    {
+	      for (int p = 1; p < this->PValue; ++p)
+		{
+		  pos = TmpSpace->SwapOperator(j, p - 1, i);
+		  if (pos != dim)
+		    {
+		      vDestination[pos] += TmpValue;
+		    }
+		}
+	    }
 	}
-    }
+      delete TmpSpace;
+   }
+  else
+    {
+      PairHoppingP1AsSpin1ChainLong* TmpSpace = (PairHoppingP1AsSpin1ChainLong*) this->Chain->Clone();
+      for (int i = firstComponent; i < LastComponent; ++i)
+	{
+	  double TmpValue = vSource[i];
+	  vDestination[i] += this->GlobalEnergyShift * TmpValue;
+	  for (int j = 1; j < NbrUnitCells; ++j)
+	    {
+	      pos = TmpSpace->PlusMinusOperator(j - 1, j, i);
+	      if (pos != dim)
+		{
+		  vDestination[pos] += TmpValue;
+		}
+	    }
+	  if (this->PeriodicBoundaryConditions == true)
+	    {
+	      pos = TmpSpace->PlusMinusOperator(NbrUnitCells - 1, 0, i);
+	      if (pos != dim)
+		{
+		  vDestination[pos] += TmpValue;
+		}
+	    }      
+	  for (int j = 0; j < NbrUnitCells; ++j)
+	    {
+	      for (int p = 1; p < this->PValue; ++p)
+		{
+		  pos = TmpSpace->SwapOperator(j, p - 1, i);
+		  if (pos != dim)
+		    {
+		      vDestination[pos] += TmpValue;
+		    }
+		}
+	    }
+	}
+      delete TmpSpace;
+   }
   return vDestination;
 }
 

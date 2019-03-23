@@ -3,6 +3,9 @@
 #include "HilbertSpace/PairHoppingP1AsSpin1Chain.h"
 #include "HilbertSpace/PairHoppingP2AsSpin1Chain.h"
 
+#include "HilbertSpace/PairHoppingP1AsSpin1ChainLong.h"
+#include "HilbertSpace/PairHoppingP2AsSpin1ChainLong.h"
+
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
@@ -128,16 +131,30 @@ int main(int argc, char** argv)
     }
   else
     {
-      PairHoppingP1AsSpin1Chain* Chain = 0;
+      AbstractSpinChain* Chain = 0;
       if (PValue == 1)
 	{
-	  Chain = new PairHoppingP1AsSpin1Chain (NbrSpins, Manager.GetBoolean("use-periodic"), 1000000);
+	  if (NbrSpins <= 32)
+	    {
+	      Chain = new PairHoppingP1AsSpin1Chain (NbrSpins, Manager.GetBoolean("use-periodic"), 1000000);
+	    }
+	  else
+	    {
+	      Chain = new PairHoppingP1AsSpin1ChainLong (NbrSpins, Manager.GetBoolean("use-periodic"), 1000000);
+	    }
 	}
       else
 	{
 	  if (PValue == 2)
 	    {
-	      Chain = new PairHoppingP2AsSpin1Chain (NbrSpins, Manager.GetBoolean("use-periodic"), 1000000);
+	      if (NbrSpins <= 32)
+		{
+		  Chain = new PairHoppingP2AsSpin1Chain (NbrSpins, Manager.GetBoolean("use-periodic"), 1000000);
+		}
+	      else
+		{
+		  Chain = new PairHoppingP2AsSpin1ChainLong (NbrSpins, Manager.GetBoolean("use-periodic"), 1000000);
+		}		
 	    }	  
 	}
       if (Chain->GetLargeHilbertSpaceDimension() > 0l)

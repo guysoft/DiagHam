@@ -74,7 +74,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleDoubleOption ('t', "time-step", "time step", 0.1);
   (*SystemGroup) += new  SingleIntegerOption ('T', "nbr-timesteps", "number of time steps", 100);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "max-nbriterations", "maximum number of iterations when performing the time evolution", 100);
-  (*SystemGroup) += new  SingleDoubleOption ('\n', "norm-accuracy", "accuracy required when computing the state norm at a given time t", 1e-13);
+  (*SystemGroup) += new  SingleDoubleOption ('\n', "norm-accuracy", "accuracy required when computing the state norm at a given time t", 1e-13); 
+  (*SystemGroup) += new  SingleDoubleOption ('\n', "v1-0", "strength of the first electrostatic coupling", 0.0);
+  (*SystemGroup) += new  SingleDoubleOption ('\n', "v2-0", "strength of the second electrostatic coupling", 0.0);
   (*OutputGroup) += new BooleanOption  ('\n', "use-root", "us the root state instead of the z2 state as the initial state");
   (*OutputGroup) += new BooleanOption  ('\n', "store-states", "store all the states generated at each time step in a single binary matrix file");
   (*OutputGroup) += new BooleanOption  ('\n', "store-initialstate", "store all the initial state");
@@ -111,7 +113,8 @@ int main(int argc, char** argv)
   double TimeStep = Manager.GetDouble("time-step");
   int MaxNbrIterations = Manager.GetInteger("max-nbriterations");
   double NormConvergence = Manager.GetDouble("norm-accuracy");
-
+  double V10 = Manager.GetDouble("v1-0");
+  double V20 = Manager.GetDouble("v2-0");
   bool FirstRun = true;
   int Momentum = Manager.GetInteger("momentum");
   if  (!((Momentum == 0) || ((((NbrSpins / PValue) & 1) == 0) && (Momentum == ((NbrSpins / PValue) >> 1)))))
@@ -123,13 +126,27 @@ int main(int argc, char** argv)
 
   
   char* OutputFileName = new char [512];
-  if (Manager.GetBoolean("use-root") == true)
+  if ((V10 != 0.0) || (V20 != 0.0))
     {
-      sprintf (OutputFileName, "spin_1_periodicpairhopping_p_%d_timeevol_root_n_%d_invsym_%d_k_%d", PValue, NbrSpins, InversionSymmetrySector, Momentum);
+      if (Manager.GetBoolean("use-root") == true)
+	{
+	  sprintf (OutputFileName, "spin_1_periodicpairhopping_p_%d_timeevol_root_v10_%.6f_v20_%.6f_n_%d_invsym_%d_k_%d", PValue, V10, V20, NbrSpins, InversionSymmetrySector, Momentum);
+	}
+      else
+	{
+	  sprintf (OutputFileName, "spin_1_periodicpairhopping_p_%d_timeevol_z2_v10_%.6f_v20_%.6f_n_%d_invsym_%d_k_%d", PValue, V10, V20, NbrSpins, InversionSymmetrySector, Momentum);
+	}
     }
   else
     {
-      sprintf (OutputFileName, "spin_1_periodicpairhopping_p_%d_timeevol_z2_n_%d_invsym_%d_k_%d", PValue, NbrSpins, InversionSymmetrySector, Momentum);
+      if (Manager.GetBoolean("use-root") == true)
+	{
+	  sprintf (OutputFileName, "spin_1_periodicpairhopping_p_%d_timeevol_root_n_%d_invsym_%d_k_%d", PValue, NbrSpins, InversionSymmetrySector, Momentum);
+	}
+      else
+	{
+	  sprintf (OutputFileName, "spin_1_periodicpairhopping_p_%d_timeevol_z2_n_%d_invsym_%d_k_%d", PValue, NbrSpins, InversionSymmetrySector, Momentum);
+	}
     }
   
   char* FullOutputFileName = new char [strlen(OutputFileName)+ 64];
@@ -189,7 +206,7 @@ int main(int argc, char** argv)
     {
       Architecture.GetArchitecture()->SetDimension(Chain->GetHilbertSpaceDimension());
       PairHoppingHamiltonianWithTranslations* Hamiltonian = 0;
-      Hamiltonian = new PairHoppingHamiltonianWithTranslations(Chain, NbrSpins, PValue, Architecture.GetArchitecture(), Memory);
+      Hamiltonian = new PairHoppingHamiltonianWithTranslations(Chain, NbrSpins, PValue, V10, V20, Architecture.GetArchitecture(), Memory);
       ComplexVector InitialState (Chain->GetLargeHilbertSpaceDimension(), true);
       timeval StartingTime;
       timeval EndingTime;  

@@ -53,9 +53,11 @@ class PairHoppingHamiltonianWithTranslations : public SpinChainHamiltonianWithTr
   
   // value that defines the filling factor p/(2p+1)
   int PValue;
-  
-  // optional global energy shift
-  double GlobalEnergyShift;
+
+  // first electrostatic perturbation 
+  double ElectrostaticPerturbation1;
+  // second electrostatic perturbation 
+  double ElectrostaticPerturbation2;
 
 public:
 
@@ -68,9 +70,12 @@ public:
   // chain = pointer to Hilbert space of the associated system
   // nbrSpin = number of spin
   // pValue = value that defines the filling factor p/(2p+1)
+  // electrostaticPerturbation1 = first electrostatic perturbation 
+  // electrostaticPerturbation2 = second electrostatic perturbation 
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication
   PairHoppingHamiltonianWithTranslations(AbstractSpinChainWithTranslations* chain, int nbrSpin, int pValue,
+					  double electrostaticPerturbation1, double electrostaticPerturbation2,
 					 AbstractArchitecture* architecture, long memory);
 
   // destructor
@@ -145,6 +150,10 @@ public:
   // evaluate all cosinus/sinus that are needed when computing matrix elements
   //
   void EvaluateCosinusTable();
+
+  // evaluate all matrix elements
+  //   
+  void EvaluateDiagonalMatrixElements();
 
 };
 
