@@ -377,6 +377,18 @@ int PairHoppingP1AsSpin1Chain::SwapOperator (int unitCellCoordinate, int siteInd
   return this->HilbertSpaceDimension;
 }
 
+// apply the swap operator within the unit cell with a constraint of the unit cell parity
+//
+// unitCellCoordinate = coordinate of the unit cell
+// siteIndex = index of the leftmost site within the unit cell
+// state = index of the state on which the operator has to be applied
+// return value = index of resulting state 
+
+int PairHoppingP1AsSpin1Chain::SwapOperatorPlus (int unitCellCoordinate, int siteIndex, int state)
+{
+  return this->HilbertSpaceDimension;
+}
+
 // apply the operator coupling neighboring unit cells
 //
 // leftUnitCellCoordinate = coordinate of the left unit cell
@@ -404,6 +416,38 @@ int PairHoppingP1AsSpin1Chain::PlusMinusOperator (int leftUnitCellCoordinate, in
       TmpStateDescription |= 0x2ul << leftUnitCellCoordinate;
       TmpStateDescription &= ~(0x3ul << rightUnitCellCoordinate);
       TmpStateDescription |= 0x2ul << rightUnitCellCoordinate;            
+      return this->FindStateIndex(TmpStateDescription);
+    }
+  return this->HilbertSpaceDimension;
+}
+
+// apply the operator coupling neighboring unit cells with a constraint of the unit cell parity
+//
+// leftUnitCellCoordinate = coordinate of the left unit cell
+// rightUnitCellCoordinate = coordinate of the right unit cell
+// state = index of the state on which the operator has to be applied
+// return value = index of resulting state 
+
+int PairHoppingP1AsSpin1Chain::PlusMinusOperatorPlus (int leftUnitCellCoordinate, int rightUnitCellCoordinate, int state)
+{
+  unsigned long TmpStateDescription = this->StateDescription[state];
+  leftUnitCellCoordinate <<= 1;
+  rightUnitCellCoordinate <<= 1;
+  unsigned long Tmp = ((TmpStateDescription >> leftUnitCellCoordinate) & 0x3ul) | (((TmpStateDescription >> rightUnitCellCoordinate) & 0x3ul) << 2);
+  if (((leftUnitCellCoordinate & 2) == 0) && (Tmp == 0x3ul))
+    {
+      TmpStateDescription &= ~(0x3ul << leftUnitCellCoordinate);
+      TmpStateDescription |= 0x2ul << leftUnitCellCoordinate;
+      TmpStateDescription &= ~(0x3ul << rightUnitCellCoordinate);
+      TmpStateDescription |= 0x2ul << rightUnitCellCoordinate;            
+      return this->FindStateIndex(TmpStateDescription);
+    }
+  if (((leftUnitCellCoordinate & 2) != 0) && (Tmp == 0xaul))
+    {
+      TmpStateDescription &= ~(0x3ul << leftUnitCellCoordinate);
+      TmpStateDescription |= 0x3ul << leftUnitCellCoordinate;
+      TmpStateDescription &= ~(0x3ul << rightUnitCellCoordinate);
+      TmpStateDescription |= 0x0ul << rightUnitCellCoordinate;
       return this->FindStateIndex(TmpStateDescription);
     }
   return this->HilbertSpaceDimension;

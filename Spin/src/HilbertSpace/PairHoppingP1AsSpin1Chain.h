@@ -110,6 +110,14 @@ public:
   // return value = index of resulting state 
   virtual int SwapOperator (int unitCellCoordinate, int siteIndex, int state);
 
+  // apply the swap operator within the unit cell with a constraint of the unit cell parity
+  //
+  // unitCellCoordinate = coordinate of the unit cell
+  // siteIndex = index of the leftmost site within the unit cell
+  // state = index of the state on which the operator has to be applied
+  // return value = index of resulting state 
+  virtual int SwapOperatorPlus (int unitCellCoordinate, int siteIndex, int state);
+
   // apply the operator coupling neighboring unit cells
   //
   // leftUnitCellCoordinate = coordinate of the left unit cell
@@ -117,6 +125,14 @@ public:
   // state = index of the state on which the operator has to be applied
   // return value = index of resulting state 
   virtual int PlusMinusOperator (int leftUnitCellCoordinate, int rightUnitCellCoordinate, int state);  
+  
+  // apply the operator coupling neighboring unit cells with a constraint of the unit cell parity
+  //
+  // leftUnitCellCoordinate = coordinate of the left unit cell
+  // rightUnitCellCoordinate = coordinate of the right unit cell
+  // state = index of the state on which the operator has to be applied
+  // return value = index of resulting state 
+  virtual int PlusMinusOperatorPlus (int leftUnitCellCoordinate, int rightUnitCellCoordinate, int state);  
   
  protected:
 
