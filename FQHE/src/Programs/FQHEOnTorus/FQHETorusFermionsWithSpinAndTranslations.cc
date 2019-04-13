@@ -8,6 +8,8 @@
 #include "HilbertSpace/FermionOnTorusWithSpinAndMagneticTranslations.h"
 #include "HilbertSpace/FermionOnTorusWithSpinAndMagneticTranslationsLong.h"
 #include "HilbertSpace/FermionOnTorusWithSpinAndTimeReversalSymmetricMagneticTranslations.h"
+#include "HilbertSpace/SubspaceSpaceConverter.h"
+
 #include "Hamiltonian/ParticleOnTorusCoulombHamiltonian.h"
 #include "Hamiltonian/ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian.h"
 #include "Hamiltonian/ParticleOnTorusCoulombWithSpinAndMagneticTranslationsTimeReversalSymmetricHamiltonian.h"
@@ -24,14 +26,15 @@
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 
 #include "GeneralTools/ListIterator.h"
-#include "MathTools/IntegerAlgebraTools.h"
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/MultiColumnASCIIFile.h"
+
+#include "MathTools/IntegerAlgebraTools.h"
 
 #include "Tools/FQHEFiles/FQHETorusPseudopotentialTools.h"
 
 #include "QuantumNumber/AbstractQuantumNumber.h"
-#include "HilbertSpace/SubspaceSpaceConverter.h"
 
 #include "Options/Options.h"
 
@@ -84,7 +87,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new SingleDoubleOption   ('d', "layerSeparation", 
 					      "for bilayer simulations: layer separation in magnetic lengths", 0.0);
-  (*SystemGroup) += new  BooleanOption  ('\n', "redundantYMomenta", "Calculate all subspaces up to YMomentum = MaxMomentum-1", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "all-points", "calculate all points", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "full-reducedbz", "calculate all points within the reduced Brillouin zone", false);
+  (*SystemGroup) += new SingleStringOption ('\n', "selected-points", "provide a two column ascii file that indicates which momentum sectors have to be computed");
   (*SystemGroup) += new SingleDoubleOption ('\n', "spinup-flux", "inserted flux for particles with spin up (in 2pi / N_phi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "spindown-flux", "inserted flux for particles with spin down (in 2pi / N_phi unit)", 0.0);
   (*SystemGroup) += new  BooleanOption  ('\n', "time-reversal", "Use model with time reversal symmetry", false);
@@ -220,98 +225,190 @@ int main(int argc, char** argv)
 
   int MomentumModulo;
   if (Manager.GetBoolean("time-reversal") == false)
-    MomentumModulo = FindGCD(NbrFermions, MaxMomentum);
+    {
+      MomentumModulo = FindGCD(NbrFermions, MaxMomentum);
+    }
   else
-  {
-   MomentumModulo = FindGCD(abs(TotalSpin), MaxMomentum); 
-  }
-  int XMaxMomentum = (MomentumModulo - 1);
-  if (XMomentum < 0)
-    XMomentum = 0;
+    {
+      MomentumModulo = FindGCD(abs(TotalSpin), MaxMomentum); 
+    }
+
+  int YMaxMomentum = (MomentumModulo - 1);
+  int NbrMomenta;
+  int* XMomenta;
+  int* YMomenta;
+  bool GenerateMomenta = false;
+  if ((XMomentum >= 0) && (YMomentum >= 0))
+    {
+      NbrMomenta = 1;
+      XMomenta = new int[1];
+      YMomenta = new int[1];
+      XMomenta[0] = XMomentum;
+      YMomenta[0] = YMomentum;
+    }
   else
-    XMaxMomentum = XMomentum;
-  int YMaxMomentum;
-  if (Manager.GetBoolean("redundantYMomenta"))
-    YMaxMomentum = (MaxMomentum - 1);
-  else
-    YMaxMomentum = (MomentumModulo - 1);
-  if (YMomentum < 0)
-    YMomentum = 0;
-  else
-    YMaxMomentum = YMomentum; 
+    {
+      if (Manager.GetString("selected-points") == 0)
+	{
+	  if (Manager.GetBoolean("all-points"))
+	    {
+	      NbrMomenta = MaxMomentum * MomentumModulo;
+	      XMomenta = new int[NbrMomenta];
+	      YMomenta = new int[NbrMomenta];
+	      NbrMomenta = 0;
+	      for (int x = 0; x < MomentumModulo; ++x)
+		{
+		  for (int y = 0; y < MaxMomentum; ++y)
+		    {
+		      XMomenta[NbrMomenta] = x;
+		      YMomenta[NbrMomenta] = y;
+		      NbrMomenta++;
+		    }
+		}
+	    }
+	  else
+	    {
+	      if (XMomentum >= 0)
+		{
+		  NbrMomenta = MaxMomentum;
+		  XMomenta = new int[NbrMomenta];
+		  YMomenta = new int[NbrMomenta];
+		  NbrMomenta = 0;
+		  for (int y = 0; y < MaxMomentum; ++y)
+		    {
+		      XMomenta[NbrMomenta] = XMomentum;
+		      YMomenta[NbrMomenta] = y;
+		      NbrMomenta++;
+		    }
+		}
+	      else
+		{
+		  if (YMomentum >= 0)
+		    {
+		      NbrMomenta = MomentumModulo;
+		      XMomenta = new int[NbrMomenta];
+		      YMomenta = new int[NbrMomenta];
+		      NbrMomenta = 0;
+		      for (int x = 0; x < MomentumModulo; ++x)
+			{
+			  XMomenta[NbrMomenta] = x;
+			  YMomenta[NbrMomenta] = YMomentum;
+			  NbrMomenta++;
+			}
+		    }
+		  else
+		    {
+		      int TmpMax = MomentumModulo;
+		      if ((XRatio == 1.0) && (Manager.GetBoolean("full-reducedbz") == false))
+			{
+			  int TmpMax = (MomentumModulo + 1) / 2;
+			}
+		      NbrMomenta = TmpMax * TmpMax;
+		      XMomenta = new int[NbrMomenta];
+		      YMomenta = new int[NbrMomenta];
+		      NbrMomenta = 0;
+		      for (int x = 0; x < TmpMax; ++x)
+			{
+			  for (int y = 0; y < TmpMax; ++y)
+			    {
+			      XMomenta[NbrMomenta] = x;
+			      YMomenta[NbrMomenta] = y;
+			      NbrMomenta++;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+      else
+	{
+	  MultiColumnASCIIFile MomentumFile;
+	  if (MomentumFile.Parse(Manager.GetString("selected-points")) == false)
+	    {
+	      MomentumFile.DumpErrors(cout);
+	      return -1;
+	    }
+	  NbrMomenta = MomentumFile.GetNbrLines();
+	  XMomenta = MomentumFile.GetAsIntegerArray(0);
+	  YMomenta = MomentumFile.GetAsIntegerArray(1);
+	}
+    }
 
   bool FirstRun=true;
-  for (; XMomentum <= XMaxMomentum; ++XMomentum)
-    for (int YMomentum2 = YMomentum; YMomentum2 <= YMaxMomentum; ++YMomentum2)
-      {     
-	cout << "----------------------------------------------------------------" << endl;
-	cout << " Ratio = " << XRatio << endl;
-	ParticleOnTorusWithSpinAndMagneticTranslations* TotalSpace = 0;
-	if (Manager.GetBoolean("time-reversal") == false)
-	  {
+  for (int Pos = 0;Pos < NbrMomenta; ++Pos)
+    {
+      XMomentum = XMomenta[Pos];
+      YMomentum = YMomenta[Pos];
+      cout << "----------------------------------------------------------------" << endl;
+      cout << " Ratio = " << XRatio << endl;
+      ParticleOnTorusWithSpinAndMagneticTranslations* TotalSpace = 0;
+      if (Manager.GetBoolean("time-reversal") == false)
+	{
 #ifdef __64_BITS__
-	    if (MaxMomentum < 31)
+	  if (MaxMomentum < 31)
 #else
 	    if (MaxMomentum < 15)
 #endif
 	      {
 		if (OneBodyPseudoPotentials[2] == 0)
 		  {
-		    TotalSpace = new FermionOnTorusWithSpinAndMagneticTranslations (NbrFermions, TotalSpin, MaxMomentum, XMomentum, YMomentum2);	
+		    TotalSpace = new FermionOnTorusWithSpinAndMagneticTranslations (NbrFermions, TotalSpin, MaxMomentum, XMomentum, YMomentum);	
 		  }
 		else
 		  {
-		    TotalSpace = new FermionOnTorusWithSpinAndMagneticTranslations (NbrFermions, MaxMomentum, XMomentum, YMomentum2);	
+		    TotalSpace = new FermionOnTorusWithSpinAndMagneticTranslations (NbrFermions, MaxMomentum, XMomentum, YMomentum);	
 		  }
 	      }
 	    else
 	      {
 		if (OneBodyPseudoPotentials[2] == 0)
 		  {
-		    TotalSpace = new FermionOnTorusWithSpinAndMagneticTranslationsLong (NbrFermions, TotalSpin, MaxMomentum, XMomentum, YMomentum2);	
+		    TotalSpace = new FermionOnTorusWithSpinAndMagneticTranslationsLong (NbrFermions, TotalSpin, MaxMomentum, XMomentum, YMomentum);	
 		  }
 		else
 		  {
-		    TotalSpace = new FermionOnTorusWithSpinAndMagneticTranslationsLong (NbrFermions, MaxMomentum, XMomentum, YMomentum2);	
+		    TotalSpace = new FermionOnTorusWithSpinAndMagneticTranslationsLong (NbrFermions, MaxMomentum, XMomentum, YMomentum);	
 		  }
 	      }
-	  }
-	else
-	  TotalSpace = new FermionOnTorusWithSpinAndTimeReversalSymmetricMagneticTranslations (NbrFermions, TotalSpin, MaxMomentum, XMomentum, YMomentum2);
-	cout << " Total Hilbert space dimension = " << TotalSpace->GetHilbertSpaceDimension() << endl;
-	cout << "momentum = (" << XMomentum << "," << YMomentum2 << ")" << endl;
-	Architecture.GetArchitecture()->SetDimension(TotalSpace->GetHilbertSpaceDimension());	
-	AbstractQHEHamiltonian* Hamiltonian = 0;
-	if (HaveCoulomb == true)
-	  {
+	}
+      else
+	{
+	  TotalSpace = new FermionOnTorusWithSpinAndTimeReversalSymmetricMagneticTranslations (NbrFermions, TotalSpin, MaxMomentum, XMomentum, YMomentum);
+	}
+      cout << " Total Hilbert space dimension = " << TotalSpace->GetHilbertSpaceDimension() << endl;
+      cout << "momentum = (" << XMomentum << "," << YMomentum << ")" << endl;
+      Architecture.GetArchitecture()->SetDimension(TotalSpace->GetHilbertSpaceDimension());	
+      AbstractQHEHamiltonian* Hamiltonian = 0;
+      if (HaveCoulomb == true)
+	{
           if (Manager.GetBoolean("time-reversal") == false)
             Hamiltonian = new ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian (TotalSpace, NbrFermions, 
 												MaxMomentum, XMomentum, XRatio, LayerSeparation, 
 												Architecture.GetArchitecture(), Memory);
           else
             Hamiltonian = new ParticleOnTorusCoulombWithSpinAndMagneticTranslationsTimeReversalSymmetricHamiltonian (TotalSpace, NbrFermions, 
-												MaxMomentum, XMomentum, XRatio, LayerSeparation, 
-												Architecture.GetArchitecture(), Memory);
-	  }
-	else
-	  {
-	    if (Manager.GetBoolean("time-reversal") == false)
-	      Hamiltonian = new ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian (TotalSpace, NbrFermions, 
+														     MaxMomentum, XMomentum, XRatio, LayerSeparation, 
+														     Architecture.GetArchitecture(), Memory);
+	}
+      else
+	{
+	  if (Manager.GetBoolean("time-reversal") == false)
+	    Hamiltonian = new ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian (TotalSpace, NbrFermions, 
 												MaxMomentum, XMomentum, XRatio,
 												NbrPseudoPotentials[0], PseudoPotentials[0],
 												NbrPseudoPotentials[1], PseudoPotentials[1],
 												NbrPseudoPotentials[2], PseudoPotentials[2],
 												Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
 												Architecture.GetArchitecture(), Memory, 0, OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], OneBodyPseudoPotentials[2]);
-	      else
-		Hamiltonian = new ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian (TotalSpace, NbrFermions, 
-												MaxMomentum, XMomentum, XRatio,
-												NbrPseudoPotentials[0], PseudoPotentials[0],
-												NbrPseudoPotentials[1], PseudoPotentials[1],
-												NbrPseudoPotentials[2], PseudoPotentials[2],
-												Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
-												Architecture.GetArchitecture(), Memory, 0, OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], OneBodyPseudoPotentials[2]);
-	  }
+	  else
+	    Hamiltonian = new ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian (TotalSpace, NbrFermions, 
+														     MaxMomentum, XMomentum, XRatio,
+														     NbrPseudoPotentials[0], PseudoPotentials[0],
+														     NbrPseudoPotentials[1], PseudoPotentials[1],
+														     NbrPseudoPotentials[2], PseudoPotentials[2],
+														     Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
+														     Architecture.GetArchitecture(), Memory, 0, OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], OneBodyPseudoPotentials[2]);
+	}
 	char* EigenvectorName = 0;
 	if (Manager.GetBoolean("eigenstate"))	
 	  {
@@ -322,7 +419,7 @@ int main(int argc, char** argv)
 	  }
 	double Shift = -10.0;
 	Hamiltonian->ShiftHamiltonian(Shift);      
-	FQHEOnTorusMainTask Task (&Manager, TotalSpace, &Lanczos, Hamiltonian, YMomentum2, Shift, OutputName, FirstRun, EigenvectorName, XMomentum);
+	FQHEOnTorusMainTask Task (&Manager, TotalSpace, &Lanczos, Hamiltonian, YMomentum, Shift, OutputName, FirstRun, EigenvectorName, XMomentum);
 	Task.SetKxValue(XMomentum);
 	MainTaskOperation TaskOperation (&Task);
 	TaskOperation.ApplyOperation(Architecture.GetArchitecture());
@@ -334,7 +431,7 @@ int main(int argc, char** argv)
 	  FirstRun = false;
 	delete Hamiltonian;
 	delete TotalSpace;
-      }
+    }
   File.close();
   delete[] OutputName;
   return 0;

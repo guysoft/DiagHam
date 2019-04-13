@@ -1981,6 +1981,7 @@ ostream& FermionOnTorusWithSpinAndMagneticTranslations::PrintState (ostream& Str
 //      {
 //        Str << "  error";
 //      }
+//  Str << " orbit size = " << this->NbrStateInOrbit[state];
   return Str;
 }
 
