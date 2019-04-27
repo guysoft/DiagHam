@@ -176,6 +176,7 @@ void ParticleOnSphereManager::AddOptionGroup(OptionManager* manager, const char*
 	(*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use Sz <-> -Sz symmetrized version of the basis (only valid if total-sz=0)");
 	(*SystemGroup) += new BooleanOption  ('\n', "minus-szparity", "select the  Sz <-> -Sz symmetric sector with negative parity");
 	(*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
+	(*SystemGroup) += new SingleIntegerOption ('\n', "nbrspin-polarized", "number of orbitals which ar fully spin up polarized (from the one with the lowest momentum)", 0);
 	if (this->FermionFlag == true) // symmetrized bases not defined for bosons at the moment
 	  {
 	    (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
@@ -184,7 +185,6 @@ void ParticleOnSphereManager::AddOptionGroup(OptionManager* manager, const char*
 	if (this->BosonFlag == true)
 	  {
 	    // boson options
-	    (*SystemGroup) += new SingleIntegerOption ('\n', "nbrspin-polarized", "number of orbitals which ar fully spin up polarized (from the one with the lowest momentum)", 0);
 	    (*SystemGroup) += new BooleanOption  ('\n', "all-sz", "use Hilbert-space with all values of sz");
 	    (*SystemGroup) += new SingleIntegerOption  ('\n', "pair-parity", "parity for N_up as compared to int(N/2) (0=same, 1=different, -1=none)", -1);
 	    (*PrecalculationGroup) += new BooleanOption  ('\n', "use-old", "use full integer representation of bosonic states (slow)");
