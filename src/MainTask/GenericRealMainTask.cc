@@ -519,7 +519,6 @@ int GenericRealMainTask::ExecuteMainTask()
 #endif
 	  RealSymmetricMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), true);
 	  this->Hamiltonian->GetHamiltonian(HRep);
-	  cout << HRep << endl;
 	  if (this->Hamiltonian->GetHilbertSpaceDimension() > 1)
 	    {
 #ifdef __LAPACK__
