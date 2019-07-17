@@ -82,6 +82,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "sma");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "kx", "momentum along x direction of the density operator (negative if none)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "ky", "momentum along y direction of the density operator (negative if none)", -1);  
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "sma-spin", "0 to act with rho_down, 1 to evaluate rho_up", 0);
   (*SystemGroup) += new SingleDoubleOption   ('r', "ratio", 
 					      "ratio between lengths along the x and y directions (-1 if has to be taken equal to nbr-particles/4)", -1);
   (*SystemGroup) += new BooleanOption ('\n', "compute-bilinears", "compute the action of all the bilinear operators on the ground state"); 
@@ -138,6 +139,7 @@ int main(int argc, char** argv)
     }
   cout << endl;
 
+  int SMASpin = Manager.GetInteger("sma-spin");
   int Kx = Manager.GetInteger("kx");
   int MaxKx = Kx +1; 
   int Ky = Manager.GetInteger("ky");
@@ -241,7 +243,7 @@ int main(int argc, char** argv)
 	  for (int m = 0; m < MaxMomentum; ++m)
 	    {
 	      cout << "computing c^+_"<< ((m + Ky) % MaxMomentum) << " c_" << m << " |Psi>" << endl;
-	      ParticleOnSphereWithSpinDensityOperator TmpOperator(TotalSpace, (m + Ky) % MaxMomentum, 0, m, 0);
+	      ParticleOnSphereWithSpinDensityOperator TmpOperator(TotalSpace, (m + Ky) % MaxMomentum, SMASpin, m, SMASpin);
 	      VectorOperatorMultiplyOperation Operation(&TmpOperator, &InputState, &TmpState);
 	      Operation.ApplyOperation(Architecture.GetArchitecture());
 	      char* OutputNameLz = new char [strlen(OutputNamePrefix)+ 16];
@@ -255,7 +257,7 @@ int main(int argc, char** argv)
 	  for (int m = 0; m < MaxMomentum; ++m)
 	    {
 	      cout << "computing c^+_"<< ((m + Ky) % MaxMomentum) << " c_" << m << " |Psi>" << endl;
-	      ParticleOnSphereWithSpinDensityOperator TmpOperator(TotalSpace, (m + Ky) % MaxMomentum, 0, m, 0);
+	      ParticleOnSphereWithSpinDensityOperator TmpOperator(TotalSpace, (m + Ky) % MaxMomentum, SMASpin, m, SMASpin);
 	      VectorOperatorMultiplyOperation Operation(&TmpOperator, &ComplexInputState, &TmpState);
 	      Operation.ApplyOperation(Architecture.GetArchitecture());
 	      char* OutputNameLz = new char [strlen(OutputNamePrefix)+ 16];
