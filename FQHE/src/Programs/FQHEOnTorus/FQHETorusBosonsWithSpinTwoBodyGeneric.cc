@@ -16,6 +16,7 @@
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
+#include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 
 #include "GeneralTools/ListIterator.h"
 #include "MathTools/IntegerAlgebraTools.h"
@@ -72,6 +73,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption ('\n', "spindown-flux", "inserted flux for particles with spin down (in 2pi / N_phi unit)", 0.0);
   (*SystemGroup) += new SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
+
   (*SystemGroup) += new BooleanOption  ('\n', "redundant-kymomenta", "Calculate all subspaces up to Ky  = MaxMomentum-1", false);
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
@@ -86,6 +88,8 @@ int main(int argc, char** argv)
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
 
+  (*MiscGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
+  (*MiscGroup) += new SingleStringOption('\n', "conjugate-vector", "name of the file containing the state vector that will be used for inner product with H|psi_0>, where psi_0 is provided by --energy-expectation");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -183,6 +187,62 @@ int main(int argc, char** argv)
 											  Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
 											  Architecture.GetArchitecture(), Memory, 0, OneBodyPseudoPotentials[0], 
 											  OneBodyPseudoPotentials[1], OneBodyPseudoPotentials[2]);
+
+
+      if (Manager.GetString("energy-expectation") != 0 )
+	  {
+	    char* StateFileName = Manager.GetString("energy-expectation");
+	    if (IsFile(StateFileName) == false)
+	      {
+	        cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
+	        return -1;           
+	      }
+	    RealVector State;
+	    if (State.ReadVector(StateFileName) == false)
+	      {
+	        cout << "error while reading " << StateFileName << endl;
+	        return -1;
+	      }
+	    if (State.GetVectorDimension()!=Space->GetHilbertSpaceDimension())
+      	     {
+	        cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
+        	return -1;
+      	     }
+
+	  RealVector BraState;
+          char* BraStateFileName = Manager.GetString("conjugate-vector");
+          if (IsFile(BraStateFileName) == false)
+          {
+            cout << "state " << BraStateFileName << " does not exist or can't be opened" << endl;
+            return -1;           
+          }
+          if (BraState.ReadVector(BraStateFileName) == false)
+          {
+            cout << "error while reading " << BraStateFileName << endl;
+            return -1;
+                }
+          if (BraState.GetVectorDimension()!=Space->GetHilbertSpaceDimension())
+	      {
+        	cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
+        	return -1;
+      	      }
+
+          double Overlap = BraState*State;
+          cout << "< " << BraStateFileName << " | H | " << StateFileName << " > "<< " overlap= " << Overlap  << endl; 
+	  RealVector TmpState(Space->GetHilbertSpaceDimension());
+	  VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
+  	  Operation.ApplyOperation(Architecture.GetArchitecture());
+          double EnergyValue;
+ 	  if (BraStateFileName == StateFileName)  
+	        EnergyValue = State * TmpState;
+           else
+  	        EnergyValue = BraState * TmpState;        
+           cout << "<Energy>= "<< EnergyValue << endl;
+           return 0;
+	  }
+
+
+
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
