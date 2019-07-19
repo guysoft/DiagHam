@@ -87,9 +87,7 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
-
-  (*MiscGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
-  (*MiscGroup) += new SingleStringOption('\n', "conjugate-vector", "name of the file containing the state vector that will be used for inner product with H|psi_0>, where psi_0 is provided by --energy-expectation");
+  (*ToolsGroup) += new BooleanOption  ('\n', "force-complex", "enforce calculation with complex numbers");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -188,62 +186,10 @@ int main(int argc, char** argv)
 											  Architecture.GetArchitecture(), Memory, 0, OneBodyPseudoPotentials[0], 
 											  OneBodyPseudoPotentials[1], OneBodyPseudoPotentials[2]);
 
-
-      if (Manager.GetString("energy-expectation") != 0 )
-	  {
-	    char* StateFileName = Manager.GetString("energy-expectation");
-	    if (IsFile(StateFileName) == false)
-	      {
-	        cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
-	        return -1;           
-	      }
-	    RealVector State;
-	    if (State.ReadVector(StateFileName) == false)
-	      {
-	        cout << "error while reading " << StateFileName << endl;
-	        return -1;
-	      }
-	    if (State.GetVectorDimension()!=Space->GetHilbertSpaceDimension())
-      	     {
-	        cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
-        	return -1;
-      	     }
-
-	  RealVector BraState;
-          char* BraStateFileName = Manager.GetString("conjugate-vector");
-          if (IsFile(BraStateFileName) == false)
-          {
-            cout << "state " << BraStateFileName << " does not exist or can't be opened" << endl;
-            return -1;           
-          }
-          if (BraState.ReadVector(BraStateFileName) == false)
-          {
-            cout << "error while reading " << BraStateFileName << endl;
-            return -1;
-                }
-          if (BraState.GetVectorDimension()!=Space->GetHilbertSpaceDimension())
-	      {
-        	cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
-        	return -1;
-      	      }
-
-          double Overlap = BraState*State;
-          cout << "< " << BraStateFileName << " | H | " << StateFileName << " > "<< " overlap= " << Overlap  << endl; 
-	  RealVector TmpState(Space->GetHilbertSpaceDimension());
-	  VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
-  	  Operation.ApplyOperation(Architecture.GetArchitecture());
-          double EnergyValue;
- 	  if (BraStateFileName == StateFileName)  
-	        EnergyValue = State * TmpState;
-           else
-  	        EnergyValue = BraState * TmpState;        
-           cout << "<Energy>= "<< EnergyValue << endl;
-           return 0;
-	  }
-
-
-
       double Shift = -10.0;
+      if (((BooleanOption*) Manager["force-complex"])->GetBoolean() == true)
+        Shift = 0.0;
+
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
       if ( Manager.GetBoolean("eigenstate") == true)	
@@ -254,6 +200,9 @@ int main(int argc, char** argv)
 	}
       
       FQHEOnTorusMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, YMomentum2, Shift, OutputName, FirstRun, EigenvectorName);
+      if (((BooleanOption*) Manager["force-complex"])->GetBoolean() == true)
+	 Task.ForceComplex();
+      	
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       if (EigenvectorName != 0)
