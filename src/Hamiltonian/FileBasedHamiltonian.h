@@ -78,7 +78,8 @@ class FileBasedHamiltonian : public AbstractHamiltonian
   // symmetricFlag = hamiltonian is stored using only the upper or lower triangular part
   // fortranIndices = indicates that indices use fortran convention (i.e. 1 based)
   // nbrSkippedLines = number of lines to skip in the input file
-  FileBasedHamiltonian(char* fileName, int elementColumnIndex = 0, bool symmetricFlag = false, bool fortranIndices = false, int nbrSkippedLines = 0);
+  // nosortRowIndices = if true, assume that the row indices are sorted from the smallest to the largest
+  FileBasedHamiltonian(char* fileName, int elementColumnIndex = 0, bool symmetricFlag = false, bool fortranIndices = false, int nbrSkippedLines = 0, bool nosortRowIndices = false);
 
   // destructor
   //

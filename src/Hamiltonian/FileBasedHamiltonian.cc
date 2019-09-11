@@ -34,6 +34,7 @@
 #include "Vector/ComplexVector.h"
 #include "GeneralTools/StringTools.h"
 #include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/ArrayTools.h"
 #include "HilbertSpace/UndescribedHilbertSpace.h"
 
 
@@ -51,8 +52,9 @@ using std::endl;
 // symmetricFlag = hamiltonian is stored using only the upper or lower triangular part
 // fortranIndices = indicates that indices use fortran convention (i.e. 1 based)
 // nbrSkippedLines = number of lines to skip in the input file
+// nosortRowIndices = if true, assume that the row indices are sorted from the smallest to the largest
 
-FileBasedHamiltonian::FileBasedHamiltonian(char* fileName, int elementColumnIndex, bool symmetricFlag, bool fortranIndices, int nbrSkippedLines)
+FileBasedHamiltonian::FileBasedHamiltonian(char* fileName, int elementColumnIndex, bool symmetricFlag, bool fortranIndices, int nbrSkippedLines, bool nosortRowIndices)
 {
   this->NbrElements = GetFileNbrLines(fileName);
   this->SymmetricStorageFlag = symmetricFlag;
@@ -123,6 +125,10 @@ FileBasedHamiltonian::FileBasedHamiltonian(char* fileName, int elementColumnInde
 	  ++HamiltonianDimension;
 	}
       this->HilbertSpace = new UndescribedHilbertSpace(HamiltonianDimension);
+    }
+  if (nosortRowIndices == false)
+    {
+      SortArrayUpOrdering<double>(this->RowIndices, this->ColumnIndices, this->MatrixElements, this->NbrElements);
     }
 }
 

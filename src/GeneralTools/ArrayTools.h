@@ -1789,6 +1789,167 @@ void SortArrayUpOrdering(double* array, ClassName* coarray1, ClassName* coarray2
   return;
 }
 
+// up ordering array of doubles using quick sort, and sort element of two secondary arrays in the same manner
+//
+// array = array of integers
+// coarray1 = first secondary array to sort
+// coarray2 = second secondary array to sort
+// nbrValue = nbr of value in the array
+
+template <class ClassName>
+void SortArrayUpOrdering(int* array, int* coarray1, ClassName* coarray2, long nbrValue)
+{
+  switch (nbrValue)
+    {
+    case 0:
+      return;
+    case 1:
+      return;
+    case 2:
+      {
+	if (array[0] > array[1])
+	  {
+	    int TmpElement = array[0];
+	    array[0] = array[1];
+	    array[1] = TmpElement;
+	    TmpElement = coarray1[0];
+	    coarray1[0] = coarray1[1]; 
+	    coarray1[1] = TmpElement;
+	    ClassName TmpElement2 = coarray2[0];
+	    coarray2[0] = coarray2[1];
+	    coarray2[1] = TmpElement2;
+	  }
+	return;
+      }
+      break;
+    case 3:
+      {
+	int TmpElement;
+	ClassName TmpElement2;
+	if (array[0] > array[1])
+	  {
+	    TmpElement = array[0];
+	    array[0] = array[1];
+	    array[1] = TmpElement;
+	    TmpElement = coarray1[0];
+	    coarray1[0] = coarray1[1];
+	    coarray1[1] = TmpElement;
+	    TmpElement2 = coarray2[0];
+	    coarray2[0] = coarray2[1];
+	    coarray2[1] = TmpElement2;
+	  }
+	if (array[1] > array[2])
+	  {
+	    TmpElement = array[1];
+	    array[1] = array[2];
+	    array[2] = TmpElement;
+	    TmpElement = coarray1[1];
+	    coarray1[1] = coarray1[2];
+	    coarray1[2] = TmpElement;
+	    TmpElement2 = coarray2[1];
+	    coarray2[1] = coarray2[2];
+	    coarray2[2] = TmpElement2;
+	  }	
+	if (array[0] > array[1])
+	  {
+	    TmpElement = array[0];
+	    array[0] = array[1];
+	    array[1] = TmpElement;
+	    TmpElement = coarray1[0];
+	    coarray1[0] = coarray1[1];
+	    coarray1[1] = TmpElement;
+	    TmpElement2 = coarray2[0];
+	    coarray2[0] = coarray2[1];
+	    coarray2[1] = TmpElement2;
+	  }	
+	return;
+      }
+      break;
+    default:
+      {
+	int j = nbrValue - 1;
+	int i = nbrValue >> 1;
+	int TmpElement;
+	ClassName TmpElement2;
+	if (array[0] >  array[i])
+	  {
+	    TmpElement = array[i];
+	    array[i] = array[0];
+	    array[0] = TmpElement;
+	    TmpElement = coarray1[i];
+	    coarray1[i] = coarray1[0];
+	    coarray1[0] = TmpElement;
+	    TmpElement2 = coarray2[i];
+	    coarray2[i] = coarray2[0];
+	    coarray2[0] = TmpElement2;
+	  }
+	if (array[i] >  array[j])
+	  {
+	    TmpElement = array[i];
+	    array[i] = array[j];
+	    array[j] = TmpElement;
+	    TmpElement = coarray1[i];
+	    coarray1[i] = coarray1[j];
+	    coarray1[j] = TmpElement;
+	    TmpElement2 = coarray2[i];
+	    coarray2[i] = coarray2[j];
+	    coarray2[j] = TmpElement2;
+	  }
+	if (array[0] >  array[i])
+	  {
+	    TmpElement = array[i];
+	    array[i] = array[0];
+	    array[0] = TmpElement;
+	    TmpElement = coarray1[i];
+	    coarray1[i] = coarray1[0];
+	    coarray1[0] = TmpElement;
+	    TmpElement2 = coarray2[i];
+	    coarray2[i] = coarray2[0];
+	    coarray2[0] = TmpElement2;
+	  }
+	--j;
+	int Pivot = array[i];
+	array[i] = array[j];
+	array[j] = Pivot;
+	int Pivot2 = coarray1[i];
+	coarray1[i] = coarray1[j];
+	coarray1[j] = Pivot2;
+	ClassName Pivot3 = coarray2[i];
+	coarray2[i] = coarray2[j];
+	coarray2[j] = Pivot3;
+	i = 0;
+	while (true)
+	  {
+	    while (array[++i] < Pivot);
+	    while (array[--j] > Pivot);
+	    if (i < j)
+	      {
+		TmpElement = array[i];
+		array[i] = array[j];
+		array[j] = TmpElement;	    
+		TmpElement = coarray1[i];
+		coarray1[i] = coarray1[j];
+		coarray1[j] = TmpElement;	    
+		TmpElement2 = coarray2[i];
+		coarray2[i] = coarray2[j];
+		coarray2[j] = TmpElement2;	    
+	      }
+	    else
+	      break;
+	  }	
+	array[nbrValue - 2] = array[i];
+	array[i] = Pivot;
+	coarray1[nbrValue - 2] = coarray1[i];
+	coarray1[i] = Pivot2;
+	coarray2[nbrValue - 2] = coarray2[i];
+	coarray2[i] = Pivot3;
+	SortArrayUpOrdering(array, coarray1, coarray2, i);
+	SortArrayUpOrdering(&(array[i + 1]), &(coarray1[i + 1]), &(coarray2[i + 1]), nbrValue - i - 1);	
+      }
+    }
+  return;
+}
+
 // merge a list of arrays in a smart way i.e. using as less as possible temporary storage 
 //
 // arrayList = list of arrays to merge (list will be deleted after use and memory associate to each array free)

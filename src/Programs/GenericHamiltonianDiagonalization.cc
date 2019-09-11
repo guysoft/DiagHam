@@ -71,6 +71,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('\n', "add-diagonal", "add a diagonal contribution to the hamiltonian");
   (*SystemGroup) += new SingleIntegerOption ('\n', "column-diagonal", "indicates which column has to be used in --add-diagonal", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");  
+  (*SystemGroup) += new BooleanOption  ('s', "nosort-rowindices", "do not sort the row indices, assuming they are already sorted from the smallest to the largest");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "prefix to use for output file names", "dummy");
   (*OutputGroup) += new SingleStringOption ('\n', "eigenstate-file", "prefix to use for the eigenstate output file names", "dummy");
 #ifdef __LAPACK__
@@ -124,11 +125,11 @@ int main(int argc, char** argv)
     {
       if (ComplexFlag == false)
 	{
-	  Hamiltonian  = new FileBasedHamiltonian(Manager.GetString("hamiltonian"), Manager.GetInteger("data-column"), false, Manager.GetBoolean("fortran"), Manager.GetInteger("skip-lines"));
+	  Hamiltonian  = new FileBasedHamiltonian(Manager.GetString("hamiltonian"), Manager.GetInteger("data-column"), false, Manager.GetBoolean("fortran"), Manager.GetInteger("skip-lines"), Manager.GetBoolean("nosort-rowindices"));
 	}
       else
 	{
-	  Hamiltonian  = new FileBasedHermitianHamiltonian(Manager.GetString("hamiltonian"), Manager.GetInteger("data-column"), false, Manager.GetBoolean("fortran"), Manager.GetInteger("skip-lines"));
+	  Hamiltonian  = new FileBasedHermitianHamiltonian(Manager.GetString("hamiltonian"), Manager.GetInteger("data-column"), false, Manager.GetBoolean("fortran"), Manager.GetInteger("skip-lines"), Manager.GetBoolean("nosort-rowindices"));
 	}
       
       Architecture.GetArchitecture()->SetDimension(Hamiltonian->GetHilbertSpaceDimension());	
