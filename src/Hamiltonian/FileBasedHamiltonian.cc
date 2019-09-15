@@ -235,8 +235,7 @@ RealVector& FileBasedHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealV
 	StartingIndex = LastIndex;
       while ((StartingIndex >= 0l) && (this->RowIndices[StartingIndex] == firstComponent))
 	--StartingIndex;
-      if (StartingIndex < 0l)
-	StartingIndex = 0l;
+      ++StartingIndex;
       while ((StartingIndex < this->NbrElements) && (this->RowIndices[StartingIndex] < LastComponent))
 	{
 	  vDestination[this->ColumnIndices[StartingIndex]] += this->MatrixElements[StartingIndex] * vSource[this->RowIndices[StartingIndex]];
@@ -281,8 +280,7 @@ RealVector* FileBasedHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSourc
 	StartingIndex = LastIndex;
       while ((StartingIndex >= 0l) && (this->RowIndices[StartingIndex] == firstComponent))
 	--StartingIndex;
-      if (StartingIndex < 0l)
-	StartingIndex = 0l;
+      ++StartingIndex;
       double TmpMatrixElement;
       int InputIndex;
       int OutputIndex;
