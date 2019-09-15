@@ -617,6 +617,7 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 		}
 	      else
 		{
+		  InputVector.ClearVector();
 		  InputVector[j - 1] = 1.0;
 		  this->Hamiltonian->Multiply(InputVector, OutputVector, j - 1, 1);
 		}
