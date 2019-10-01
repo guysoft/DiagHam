@@ -71,8 +71,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('\n', "add-diagonal", "add a diagonal contribution to the hamiltonian");
   (*SystemGroup) += new SingleIntegerOption ('\n', "column-diagonal", "indicates which column has to be used in --add-diagonal", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");  
-  (*SystemGroup) += new BooleanOption  ('s', "nosort-rowindices", "do not sort the row indices, assuming they are already sorted from the smallest to the largest");
-  (*OutputGroup) += new SingleStringOption ('o', "output-file", "prefix to use for output file names", "dummy");
+  (*SystemGroup) += new BooleanOption  ('s', "nosort-rowindices", "do not sort the row indices, assuming they are already sorted from the smallest to the largest"); 
+  (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
+ (*OutputGroup) += new SingleStringOption ('o', "output-file", "prefix to use for output file names", "dummy");
   (*OutputGroup) += new SingleStringOption ('\n', "eigenstate-file", "prefix to use for the eigenstate output file names", "dummy");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
