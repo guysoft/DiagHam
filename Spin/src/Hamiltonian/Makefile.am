@@ -69,4 +69,6 @@ TwoDimensionalRRHamiltonian.cc \
 TwoDimensionalRRAnd2DTranslationHamiltonian.cc \
 PairHoppingHamiltonian.cc \
 PairHoppingHamiltonianWithTranslations.cc \
-PairHoppingRealHamiltonianWithTranslations.cc
+PairHoppingRealHamiltonianWithTranslations.cc \
+SpinChainOBrienFendleyHamiltonianWithTranslations.cc \
+SpinChainOBrienFendleyRealHamiltonianWithTranslations.cc
