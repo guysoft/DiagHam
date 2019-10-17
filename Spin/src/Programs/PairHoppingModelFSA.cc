@@ -1,9 +1,10 @@
 #include "HilbertSpace/PairHoppingP1AsSpin1Chain.h"
 #include "HilbertSpace/PairHoppingP2AsSpin1Chain.h"
-#include "HilbertSpace/PairHoppingP3AsSpin1Chain.h"
+#include "HilbertSpace/PairHoppingGenericPAsSpin1Chain.h"
 
 #include "HilbertSpace/PairHoppingP1AsSpin1ChainLong.h"
 #include "HilbertSpace/PairHoppingP2AsSpin1ChainLong.h"
+#include "HilbertSpace/PairHoppingGenericPAsSpin1ChainLong.h"
 
 #include "Hamiltonian/PairHoppingHamiltonian.h"
 
@@ -111,13 +112,9 @@ int main(int argc, char** argv)
 	case 2 :
 	  Chain = new PairHoppingP2AsSpin1Chain (NbrSpins, true, 1000000);
 	  break;
-	case 3 :
-	  Chain = new PairHoppingP3AsSpin1Chain (NbrSpins, true, 1000000);
-	  break;
 	default :
 	  {
-	    cout << "p value > 3 are not available" << endl;
-	    return -1;
+	    Chain = new PairHoppingGenericPAsSpin1Chain (NbrSpins, PValue, true, 1000000);
 	  }
 	}
     }
@@ -133,8 +130,7 @@ int main(int argc, char** argv)
 	  break;
 	default :
 	  {
-	    cout << "p value > 2 are not available" << endl;
-	    return -1;
+	    Chain = new PairHoppingGenericPAsSpin1ChainLong (NbrSpins, PValue, true, 1000000);
 	  }
 	}
     }

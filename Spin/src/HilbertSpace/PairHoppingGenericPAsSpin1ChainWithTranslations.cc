@@ -30,7 +30,7 @@
 
 
 #include "HilbertSpace/PairHoppingGenericPAsSpin1ChainWithTranslations.h"
-#include "HilbertSpace/PairHoppingP3AsSpin1Chain.h"
+#include "HilbertSpace/PairHoppingGenericPAsSpin1Chain.h"
 #include "HilbertSpace/Spin1Chain.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealMatrix.h"
@@ -607,8 +607,8 @@ RealMatrix PairHoppingGenericPAsSpin1ChainWithTranslations::EvaluatePartialEntan
     }
   int TmpNbrMinusLeft = szSector / (this->UnitCellSize + 1);
   int TmpNbrPlusRight = szSector % (this->UnitCellSize + 1);
-  PairHoppingP3AsSpin1Chain TmpDestinationHilbertSpace(nbrSites, TmpNbrPlusRight, TmpNbrMinusLeft, 1000000);
-  PairHoppingP3AsSpin1Chain TmpHilbertSpace(this->ChainLength - nbrSites, TmpNbrMinusLeft, TmpNbrPlusRight, 1000000);
+  PairHoppingGenericPAsSpin1Chain TmpDestinationHilbertSpace(nbrSites, this->UnitCellSize, TmpNbrPlusRight, TmpNbrMinusLeft, 1000000);
+  PairHoppingGenericPAsSpin1Chain TmpHilbertSpace(this->ChainLength - nbrSites, this->UnitCellSize, TmpNbrMinusLeft, TmpNbrPlusRight, 1000000);
 
   RealMatrix TmpEntanglementMatrix(TmpHilbertSpace.HilbertSpaceDimension, TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
   int Shift = 2 * nbrSites;
@@ -682,8 +682,8 @@ ComplexMatrix PairHoppingGenericPAsSpin1ChainWithTranslations::EvaluatePartialEn
     }
   int TmpNbrMinusLeft = szSector / (this->UnitCellSize + 1);
   int TmpNbrPlusRight = szSector % (this->UnitCellSize + 1);
-  PairHoppingP3AsSpin1Chain TmpDestinationHilbertSpace(nbrSites, TmpNbrPlusRight, TmpNbrMinusLeft, 1000000);
-  PairHoppingP3AsSpin1Chain TmpHilbertSpace(this->ChainLength - nbrSites, TmpNbrMinusLeft, TmpNbrPlusRight, 1000000);
+  PairHoppingGenericPAsSpin1Chain TmpDestinationHilbertSpace(nbrSites, this->UnitCellSize, TmpNbrPlusRight, TmpNbrMinusLeft, 1000000);
+  PairHoppingGenericPAsSpin1Chain TmpHilbertSpace(this->ChainLength - nbrSites, this->UnitCellSize, TmpNbrMinusLeft, TmpNbrPlusRight, 1000000);
 
   ComplexMatrix TmpEntanglementMatrix(TmpHilbertSpace.HilbertSpaceDimension, TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
   int Shift = 2 * nbrSites;

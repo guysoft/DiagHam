@@ -6,7 +6,7 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                         class of pair hopping p=3                          //
+//                      class of pair hopping with generic p                  //
 //                     Hilbert space written as spin 1 chain                  //
 //                                                                            //
 //                        last modification : 03/10/2019                      //
@@ -29,8 +29,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PAIRHOPPINGP3SPIN1CHAIN_H
-#define PAIRHOPPINGP3SPIN1CHAIN_H
+#ifndef PAIRHOPPINGGENERICPSPIN1CHAIN_H
+#define PAIRHOPPINGGENERICPSPIN1CHAIN_H
 
 
 #include "config.h"
@@ -50,7 +50,7 @@ class SubspaceSpaceConverter;
 class AbstractQuantumNumber;
 
 
-class PairHoppingP3AsSpin1Chain : public  PairHoppingP2AsSpin1Chain
+class PairHoppingGenericPAsSpin1Chain : public  PairHoppingP2AsSpin1Chain
 {
 
   friend class Spin1ChainWithTranslations;
@@ -87,37 +87,38 @@ class PairHoppingP3AsSpin1Chain : public  PairHoppingP2AsSpin1Chain
 
   // default constructor
   //
-  PairHoppingP3AsSpin1Chain ();
+  PairHoppingGenericPAsSpin1Chain ();
 
   // constructor for complete Hilbert space
   //
   // chainLength = number of spin / group of 2p+1 orbitals
+  // pValue = p value
   // periodicBoundaryConditions = true if the system uses periodic boundary conditions
   // memorySize = memory size in bytes allowed for look-up table
   // useForEntanglementMatrix = true if the hilbert space has to be generated for the entanglement matrix calculations
-  PairHoppingP3AsSpin1Chain (int chainLength, bool periodicBoundaryConditions = false, int memorySize = -1, bool useForEntanglementMatrix = false);
+  PairHoppingGenericPAsSpin1Chain (int chainLength, int pValue, bool periodicBoundaryConditions = false, int memorySize = -1, bool useForEntanglementMatrix = false);
 
   // constructor for the Hilbert space, fixing the number of pluses in the rightmost unit cell and the number of minuses in the leftmost unit cell
   //
   // chainLength = number of spin / group of 2p+1 orbitals
   // nbrPlusRight = number of pluses in the rightmost unit cell
   // nbrMinusLeft = number of minuses in the lefttmost unit cell
-  PairHoppingP3AsSpin1Chain (int chainLength, int nbrPlusRight, int nbrMinusLeft, int memorySize = -1);
+  PairHoppingGenericPAsSpin1Chain (int chainLength, int nbrPlusRight, int nbrMinusLeft, int memorySize = -1);
   
   // copy constructor (without duplicating datas)
   //
   // chain = reference on chain to copy
-  PairHoppingP3AsSpin1Chain (const PairHoppingP3AsSpin1Chain& chain);
+  PairHoppingGenericPAsSpin1Chain (const PairHoppingGenericPAsSpin1Chain& chain);
 
   // destructor
   //
-  virtual ~PairHoppingP3AsSpin1Chain ();
+  virtual ~PairHoppingGenericPAsSpin1Chain ();
 
   // assignement (without duplicating datas)
   //
   // chain = reference on chain to copy
   // return value = reference on current chain
-  PairHoppingP3AsSpin1Chain& operator = (const PairHoppingP3AsSpin1Chain& chain);
+  PairHoppingGenericPAsSpin1Chain& operator = (const PairHoppingGenericPAsSpin1Chain& chain);
 
   // clone Hilbert space (without duplicating datas)
   //

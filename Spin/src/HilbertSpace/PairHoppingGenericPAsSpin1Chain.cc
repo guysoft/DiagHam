@@ -6,7 +6,7 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                         class of pair hopping p=3                          //
+//                      class of pair hopping with generic p                  //
 //                     Hilbert space written as spin 1 chain                  //
 //                                                                            //
 //                        last modification : 03/11/2019                      //
@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "HilbertSpace/PairHoppingP3AsSpin1Chain.h"
+#include "HilbertSpace/PairHoppingGenericPAsSpin1Chain.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealMatrix.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
@@ -51,7 +51,7 @@ using std::dec;
 // default constructor
 //
 
-PairHoppingP3AsSpin1Chain::PairHoppingP3AsSpin1Chain () 
+PairHoppingGenericPAsSpin1Chain::PairHoppingGenericPAsSpin1Chain () 
 {
   this->PeriodicBoundaryConditions = false;
   this->NbrMinusLeft = -1;
@@ -68,11 +68,12 @@ PairHoppingP3AsSpin1Chain::PairHoppingP3AsSpin1Chain ()
 // constructor for complete Hilbert space
 //
 // chainLength = number of spin / group of 2p+1 orbitals
+// pValue = p value
 // periodicBoundaryConditions = true if the system uses periodic boundary conditions
 // memorySize = memory size in bytes allowed for look-up table
 // useForEntanglementMatrix = true if the hilbert space has to be generated for the entanglement matrix calculations
 
-PairHoppingP3AsSpin1Chain::PairHoppingP3AsSpin1Chain (int chainLength, bool periodicBoundaryConditions, int memorySize, bool useForEntanglementMatrix) 
+PairHoppingGenericPAsSpin1Chain::PairHoppingGenericPAsSpin1Chain (int chainLength, int pValue, bool periodicBoundaryConditions, int memorySize, bool useForEntanglementMatrix) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
@@ -81,7 +82,7 @@ PairHoppingP3AsSpin1Chain::PairHoppingP3AsSpin1Chain (int chainLength, bool peri
   this->UseForEntanglementMatrix = useForEntanglementMatrix;
   this->NbrMinusLeft = -1;
   this->NbrPlusRight = -1;
-  this->UnitCellSize = 3;
+  this->UnitCellSize = pValue;
   this->FirstUnitCellMask = (0x1ul << (this->UnitCellSize << 1)) - 0x1ul;
 
   this->GenerateAllPossibleUnitCells();
@@ -124,7 +125,7 @@ PairHoppingP3AsSpin1Chain::PairHoppingP3AsSpin1Chain (int chainLength, bool peri
 // nbrPlusRight = number of pluses in the rightmost unit cell
 // nbrMinusLeft = number of minuses in the lefttmost unit cell
 
-PairHoppingP3AsSpin1Chain::PairHoppingP3AsSpin1Chain (int chainLength, int nbrPlusRight, int nbrMinusLeft, int memorySize)
+PairHoppingGenericPAsSpin1Chain::PairHoppingGenericPAsSpin1Chain (int chainLength, int nbrPlusRight, int nbrMinusLeft, int memorySize)
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
@@ -176,7 +177,7 @@ PairHoppingP3AsSpin1Chain::PairHoppingP3AsSpin1Chain (int chainLength, int nbrPl
 //
 // chain = reference on chain to copy
 
-PairHoppingP3AsSpin1Chain::PairHoppingP3AsSpin1Chain (const PairHoppingP3AsSpin1Chain& chain) 
+PairHoppingGenericPAsSpin1Chain::PairHoppingGenericPAsSpin1Chain (const PairHoppingGenericPAsSpin1Chain& chain) 
 {
   this->Flag = chain.Flag;
   if (chain.ChainLength != 0)
@@ -229,7 +230,7 @@ PairHoppingP3AsSpin1Chain::PairHoppingP3AsSpin1Chain (const PairHoppingP3AsSpin1
 // destructor
 //
 
-PairHoppingP3AsSpin1Chain::~PairHoppingP3AsSpin1Chain () 
+PairHoppingGenericPAsSpin1Chain::~PairHoppingGenericPAsSpin1Chain () 
 {
   if (this->NbrPossibleUnitCellsPerNbrMinus != 0)
     {
@@ -254,7 +255,7 @@ PairHoppingP3AsSpin1Chain::~PairHoppingP3AsSpin1Chain ()
 // chain = reference on chain to copy
 // return value = reference on current chain
 
-PairHoppingP3AsSpin1Chain& PairHoppingP3AsSpin1Chain::operator = (const PairHoppingP3AsSpin1Chain& chain)
+PairHoppingGenericPAsSpin1Chain& PairHoppingGenericPAsSpin1Chain::operator = (const PairHoppingGenericPAsSpin1Chain& chain)
 {
   if ((this->ChainLength != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -334,9 +335,9 @@ PairHoppingP3AsSpin1Chain& PairHoppingP3AsSpin1Chain::operator = (const PairHopp
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* PairHoppingP3AsSpin1Chain::Clone()
+AbstractHilbertSpace* PairHoppingGenericPAsSpin1Chain::Clone()
 {
-  return new PairHoppingP3AsSpin1Chain (*this);
+  return new PairHoppingGenericPAsSpin1Chain (*this);
 }
 
 // evaluate Hilbert space dimension
@@ -345,7 +346,7 @@ AbstractHilbertSpace* PairHoppingP3AsSpin1Chain::Clone()
 // sitePosition = site on chain where spin has to be changed
 // return value = Hilbert space dimension
 
-long PairHoppingP3AsSpin1Chain::EvaluateHilbertSpaceDimension(int previousNbrPlus, int sitePosition)
+long PairHoppingGenericPAsSpin1Chain::EvaluateHilbertSpaceDimension(int previousNbrPlus, int sitePosition)
 {
   if (sitePosition == this->ChainLength)
     {
@@ -376,7 +377,7 @@ long PairHoppingP3AsSpin1Chain::EvaluateHilbertSpaceDimension(int previousNbrPlu
 // sitePosition = site on chain where spin has to be changed
 // return value = number of generated states
 
-long PairHoppingP3AsSpin1Chain::RawGenerateStates(long statePosition, int previousNbrPlus, int sitePosition) 
+long PairHoppingGenericPAsSpin1Chain::RawGenerateStates(long statePosition, int previousNbrPlus, int sitePosition) 
 {
   if (sitePosition == this->ChainLength)
     {
@@ -411,7 +412,7 @@ long PairHoppingP3AsSpin1Chain::RawGenerateStates(long statePosition, int previo
 //
 // return value = Hilbert space dimension
 
-long PairHoppingP3AsSpin1Chain::GenerateStates()
+long PairHoppingGenericPAsSpin1Chain::GenerateStates()
 {
   cout << "p=" << this->UnitCellSize << " has " << this->NbrPossibleUnitCells << " possible unit cells" << endl;
   long TmpHilbertSpaceDimension = 0l;
@@ -523,10 +524,12 @@ long PairHoppingP3AsSpin1Chain::GenerateStates()
 // state = index of the state on which the operator has to be applied
 // return value = index of resulting state 
 
-int PairHoppingP3AsSpin1Chain::SwapOperator (int unitCellCoordinate, int siteIndex, int state)
+int PairHoppingGenericPAsSpin1Chain::SwapOperator (int unitCellCoordinate, int siteIndex, int state)
 {
   unsigned long TmpStateDescription = this->StateDescription[state];
-  unitCellCoordinate *= this->UnitCellSize << 1;
+  unitCellCoordinate *= this->UnitCellSize;
+  unitCellCoordinate += siteIndex;
+  unitCellCoordinate *= 2;
   unsigned long Tmp = (TmpStateDescription >> unitCellCoordinate) & this->FirstUnitCellMask;
   switch (Tmp)
     {
@@ -569,12 +572,14 @@ int PairHoppingP3AsSpin1Chain::SwapOperator (int unitCellCoordinate, int siteInd
 // state = index of the state on which the operator has to be applied
 // return value = index of resulting state 
 
-int PairHoppingP3AsSpin1Chain::SwapOperatorPlus (int unitCellCoordinate, int siteIndex, int state)
+int PairHoppingGenericPAsSpin1Chain::SwapOperatorPlus (int unitCellCoordinate, int siteIndex, int state)
 {
   unsigned long TmpStateDescription = this->StateDescription[state];
   if ((unitCellCoordinate & 1) == 0)
     {
-      unitCellCoordinate *= this->UnitCellSize << 1;
+      unitCellCoordinate *= this->UnitCellSize;
+      unitCellCoordinate += siteIndex;
+      unitCellCoordinate *= 2;
       unsigned long Tmp = (TmpStateDescription >> unitCellCoordinate) & this->FirstUnitCellMask;
       switch (Tmp)
 	{
@@ -596,7 +601,9 @@ int PairHoppingP3AsSpin1Chain::SwapOperatorPlus (int unitCellCoordinate, int sit
     }
   else
     {
-      unitCellCoordinate *= this->UnitCellSize << 1;
+      unitCellCoordinate *= this->UnitCellSize;
+      unitCellCoordinate += siteIndex;
+      unitCellCoordinate *= 2;
       unsigned long Tmp = (TmpStateDescription >> unitCellCoordinate) & this->FirstUnitCellMask;
       switch (Tmp)
 	{
@@ -626,12 +633,12 @@ int PairHoppingP3AsSpin1Chain::SwapOperatorPlus (int unitCellCoordinate, int sit
 // state = index of the state on which the operator has to be applied
 // return value = index of resulting state 
 
-int PairHoppingP3AsSpin1Chain::PlusMinusOperator (int leftUnitCellCoordinate, int rightUnitCellCoordinate, int state)
+int PairHoppingGenericPAsSpin1Chain::PlusMinusOperator (int leftUnitCellCoordinate, int rightUnitCellCoordinate, int state)
 {
   unsigned long TmpStateDescription = this->StateDescription[state];
-  leftUnitCellCoordinate *= this->UnitCellSize << 1;
-  leftUnitCellCoordinate += (this->UnitCellSize - 1) << 1;
-  rightUnitCellCoordinate *= this->UnitCellSize << 1;
+  leftUnitCellCoordinate *= 2 * this->UnitCellSize;
+  leftUnitCellCoordinate += 2 * (this->UnitCellSize - 1);
+  rightUnitCellCoordinate *= 2 * this->UnitCellSize;
   unsigned long Tmp = ((TmpStateDescription >> leftUnitCellCoordinate) & 0x3ul) | (((TmpStateDescription >> rightUnitCellCoordinate) & 0x3ul) << 2);
   if (Tmp == 0xaul)
     {
@@ -659,14 +666,14 @@ int PairHoppingP3AsSpin1Chain::PlusMinusOperator (int leftUnitCellCoordinate, in
 // state = index of the state on which the operator has to be applied
 // return value = index of resulting state 
 
-int PairHoppingP3AsSpin1Chain::PlusMinusOperatorPlus (int leftUnitCellCoordinate, int rightUnitCellCoordinate, int state)
+int PairHoppingGenericPAsSpin1Chain::PlusMinusOperatorPlus (int leftUnitCellCoordinate, int rightUnitCellCoordinate, int state)
 {
   unsigned long TmpStateDescription = this->StateDescription[state];
   if ((rightUnitCellCoordinate & 1) == 0)
     {
-      leftUnitCellCoordinate *= this->UnitCellSize << 1;
-      leftUnitCellCoordinate += (this->UnitCellSize - 1) << 1;
-      rightUnitCellCoordinate *= this->UnitCellSize << 1;
+      leftUnitCellCoordinate *= 2 * this->UnitCellSize;
+      leftUnitCellCoordinate += 2 * (this->UnitCellSize - 1);
+      rightUnitCellCoordinate *= 2 * this->UnitCellSize;
       unsigned long Tmp = ((TmpStateDescription >> leftUnitCellCoordinate) & 0x3ul) | (((TmpStateDescription >> rightUnitCellCoordinate) & 0x3ul) << 2);
       if (Tmp == 0xaul)
 	{
@@ -699,7 +706,7 @@ int PairHoppingP3AsSpin1Chain::PlusMinusOperatorPlus (int leftUnitCellCoordinate
 // generate all the posible unit cells 
 //
 
-void PairHoppingP3AsSpin1Chain::GenerateAllPossibleUnitCells()
+void PairHoppingGenericPAsSpin1Chain::GenerateAllPossibleUnitCells()
 {
   unsigned long TmpMaxNbrPossibleUnitCells = 0x3ul;
   for (int i = 1; i < this->UnitCellSize; ++i)
