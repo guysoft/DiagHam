@@ -1,12 +1,16 @@
 #include "HilbertSpace/PairHoppingP1AsSpin1ChainWithTranslations.h"
 #include "HilbertSpace/PairHoppingP2AsSpin1ChainWithTranslations.h"
+#include "HilbertSpace/PairHoppingGenericPAsSpin1ChainWithTranslations.h"
 #include "HilbertSpace/PairHoppingP1AsSpin1ChainWithTranslationsAndInversionSzSymmetry.h"
 #include "HilbertSpace/PairHoppingP2AsSpin1ChainWithTranslationsAndInversionSzSymmetry.h"
+#include "HilbertSpace/PairHoppingGenericPAsSpin1ChainWithTranslationsAndInversionSzSymmetry.h"
 
 #include "HilbertSpace/PairHoppingP1AsSpin1ChainWithTranslationsLong.h"
 #include "HilbertSpace/PairHoppingP2AsSpin1ChainWithTranslationsLong.h"
+#include "HilbertSpace/PairHoppingGenericPAsSpin1ChainWithTranslationsLong.h"
 #include "HilbertSpace/PairHoppingP1AsSpin1ChainWithTranslationsAndInversionSzSymmetryLong.h"
 #include "HilbertSpace/PairHoppingP2AsSpin1ChainWithTranslationsAndInversionSzSymmetryLong.h"
+#include "HilbertSpace/PairHoppingGenericPAsSpin1ChainWithTranslationsAndInversionSzSymmetryLong.h"
 
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 
@@ -178,8 +182,7 @@ int main(int argc, char** argv)
 	  break;
 	default :
 	  {
-	    cout << "p value > 2 are not available" << endl;
-	    return -1;
+	    Chain = new PairHoppingGenericPAsSpin1ChainWithTranslationsAndInversionSzSymmetry (NbrSpins, Momentum, InversionSymmetrySector, PValue);
 	  }
 	}
     }
@@ -195,8 +198,8 @@ int main(int argc, char** argv)
 	  break;
 	default :
 	  {
-	    cout << "p value > 2 are not available" << endl;
-	    return -1;
+	    Chain = new PairHoppingGenericPAsSpin1ChainWithTranslationsAndInversionSzSymmetryLong (NbrSpins, Momentum, InversionSymmetrySector, PValue);
+	    break;
 	  }
 	}
     }

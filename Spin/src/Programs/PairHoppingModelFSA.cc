@@ -112,7 +112,7 @@ int main(int argc, char** argv)
 	  Chain = new PairHoppingP2AsSpin1Chain (NbrSpins, true, 1000000);
 	  break;
 	case 3 :
-	  Chain = new PairHoppingP2AsSpin1Chain (NbrSpins, true, 1000000);
+	  Chain = new PairHoppingP3AsSpin1Chain (NbrSpins, true, 1000000);
 	  break;
 	default :
 	  {
@@ -139,6 +139,7 @@ int main(int argc, char** argv)
 	}
     }
   cout << "Hilbert space dimension = " <<  Chain->GetHilbertSpaceDimension() << endl;
+  return 0;
   
   if (Chain->GetHilbertSpaceDimension() > 0)
     {

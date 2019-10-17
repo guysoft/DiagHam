@@ -1,12 +1,16 @@
 #include "HilbertSpace/PairHoppingP1AsSpin1ChainWithTranslations.h"
 #include "HilbertSpace/PairHoppingP2AsSpin1ChainWithTranslations.h"
+#include "HilbertSpace/PairHoppingGenericPAsSpin1ChainWithTranslations.h"
 #include "HilbertSpace/PairHoppingP1AsSpin1ChainWithTranslationsAndInversionSzSymmetry.h"
 #include "HilbertSpace/PairHoppingP2AsSpin1ChainWithTranslationsAndInversionSzSymmetry.h"
+#include "HilbertSpace/PairHoppingGenericPAsSpin1ChainWithTranslationsAndInversionSzSymmetry.h"
 
 #include "HilbertSpace/PairHoppingP1AsSpin1ChainWithTranslationsLong.h"
 #include "HilbertSpace/PairHoppingP2AsSpin1ChainWithTranslationsLong.h"
+#include "HilbertSpace/PairHoppingGenericPAsSpin1ChainWithTranslationsLong.h"
 #include "HilbertSpace/PairHoppingP1AsSpin1ChainWithTranslationsAndInversionSzSymmetryLong.h"
 #include "HilbertSpace/PairHoppingP2AsSpin1ChainWithTranslationsAndInversionSzSymmetryLong.h"
+#include "HilbertSpace/PairHoppingGenericPAsSpin1ChainWithTranslationsAndInversionSzSymmetryLong.h"
 
 #include "Hamiltonian/PairHoppingHamiltonianWithTranslations.h"
 #include "Hamiltonian/PairHoppingRealHamiltonianWithTranslations.h"
@@ -180,8 +184,14 @@ int main(int argc, char** argv)
 		      break;
 		    default :
 		      {
-			cout << "p value > 2 are not available" << endl;
-			return -1;
+			if (NbrSpins <= 32)
+			  {
+			    Chain = new PairHoppingGenericPAsSpin1ChainWithTranslationsAndInversionSzSymmetry (NbrSpins, Momentum, InversionSymmetrySector, PValue);
+			  }
+			else
+			  {
+			    Chain = new PairHoppingGenericPAsSpin1ChainWithTranslationsAndInversionSzSymmetryLong (NbrSpins, Momentum, InversionSymmetrySector, PValue);
+			  }
 		      }
 		    }
 		}
@@ -216,8 +226,14 @@ int main(int argc, char** argv)
 		      break;
 		    default :
 		      {
-			cout << "p value > 2 are not available" << endl;
-			return -1;
+			if (NbrSpins <= 32)
+			  {
+			    Chain = new PairHoppingGenericPAsSpin1ChainWithTranslations (NbrSpins, Momentum, PValue, 1000000);
+			  }
+			else
+			  {
+			    Chain = new PairHoppingGenericPAsSpin1ChainWithTranslationsLong (NbrSpins, Momentum, PValue, 1000000);
+			  }
 		      }
 		    }
 		}
@@ -225,10 +241,6 @@ int main(int argc, char** argv)
 	      if (Chain->GetHilbertSpaceDimension() > 0)
 		{
 		  cout << "Hilbert space dimension = " << Chain->GetLargeHilbertSpaceDimension() << endl;	  
-		  // for (int i = 0; i < Chain->GetHilbertSpaceDimension(); ++i)
-		  //   {
-		  //     Chain->PrintState(cout, i) << endl;
-		  //   }
 		  Architecture.GetArchitecture()->SetDimension(Chain->GetHilbertSpaceDimension());
 		  char* TmpString = new char[64];
 		  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
@@ -301,8 +313,14 @@ int main(int argc, char** argv)
 	      break;
 	    default :
 	      {
-		cout << "p value > 2 are not available" << endl;
-		return -1;
+		if (NbrSpins <= 32)
+		  {
+		    Chain = new PairHoppingGenericPAsSpin1ChainWithTranslations (NbrSpins, Momentum, PValue, 1000000);
+		  }
+		else
+		  {
+		    Chain = new PairHoppingGenericPAsSpin1ChainWithTranslationsLong (NbrSpins, Momentum, PValue, 1000000);
+		  }
 	      }
 	    }
 	  

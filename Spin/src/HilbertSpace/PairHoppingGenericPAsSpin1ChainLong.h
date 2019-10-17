@@ -6,10 +6,11 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                         class of pair hopping p=3                          //
+//                      class of pair hopping with generic p                  //
 //                     Hilbert space written as spin 1 chain                  //
+//                             for more than 32 spins                         //
 //                                                                            //
-//                        last modification : 03/10/2019                      //
+//                        last modification : 17/10/2019                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,12 +30,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PAIRHOPPINGP3SPIN1CHAIN_H
-#define PAIRHOPPINGP3SPIN1CHAIN_H
+#ifndef PAIRHOPPINGGENERICPSPIN1CHAINLONG_H
+#define PAIRHOPPINGGENERICPSPIN1CHAINLONG_H
 
 
 #include "config.h"
-#include "HilbertSpace/PairHoppingP2AsSpin1Chain.h"
+#include "HilbertSpace/PairHoppingP2AsSpin1ChainLong.h"
 
 #include <iostream>
 
@@ -50,74 +51,73 @@ class SubspaceSpaceConverter;
 class AbstractQuantumNumber;
 
 
-class PairHoppingP3AsSpin1Chain : public  PairHoppingP2AsSpin1Chain
+class PairHoppingGenericPAsSpin1ChainLong : public  PairHoppingP2AsSpin1ChainLong
 {
 
-  friend class Spin1ChainWithTranslations;
-  friend class Spin1ChainWithTranslationsAndSzSymmetry;
-  friend class Spin1ChainWithTranslationsAndInversionSymmetry;
-  friend class Spin1ChainWithSzSymmetry;
-  friend class PairHoppingP1AsSpin1ChainWithTranslations;
-  friend class PairHoppingGenericPAsSpin1ChainWithTranslations;
-
+  friend class Spin1ChainWithTranslationsLong;
+  friend class PairHoppingP1AsSpin1ChainWithTranslationsLong;
+  friend class PairHoppingP2AsSpin1ChainWithTranslationsLong;
+  friend class PairHoppingGenericPAsSpin1ChainWithTranslationsLong;
+  
  protected:
 
   // number of spin 1 per unit cell
   int UnitCellSize;
 
   // mask to isolate the first unit cell
-  unsigned long FirstUnitCellMask;
+  ULONGLONG FirstUnitCellMask;
 
   // number of possible unit cells satisfying the pair hopping constraints
   int NbrPossibleUnitCells;
   // possible unit cells satisfying the pair hopping constraints
-  unsigned long* PossibleUnitCells;
+  ULONGLONG* PossibleUnitCells;
   // number of plusses for each possible unit cells satisfying the pair hopping constraints
   int* PossibleUnitCellsNbrPlus;
   
   // number of possible unit cells satisfying the pair hopping constraints for each possible number of minuses
   int* NbrPossibleUnitCellsPerNbrMinus;
   // possible unit cells satisfying the pair hopping constraints for each possible number of minuses
-  unsigned long** PossibleUnitCellsPerNbrMinus;
+  ULONGLONG** PossibleUnitCellsPerNbrMinus;
   // number of plusses for each possible unit cells satisfying the pair hopping constraints for each possible number of minuses
   int** PossibleUnitCellsNbrPlusPerNbrMinus;
-  
-  
- public:
+
+public:
 
   // default constructor
   //
-  PairHoppingP3AsSpin1Chain ();
+  PairHoppingGenericPAsSpin1ChainLong ();
 
   // constructor for complete Hilbert space
   //
   // chainLength = number of spin / group of 2p+1 orbitals
+  // pValue = p value
   // periodicBoundaryConditions = true if the system uses periodic boundary conditions
   // memorySize = memory size in bytes allowed for look-up table
   // useForEntanglementMatrix = true if the hilbert space has to be generated for the entanglement matrix calculations
-  PairHoppingP3AsSpin1Chain (int chainLength, bool periodicBoundaryConditions = false, int memorySize = -1, bool useForEntanglementMatrix = false);
+  PairHoppingGenericPAsSpin1ChainLong (int chainLength, int pValue, bool periodicBoundaryConditions = false, int memorySize = -1, bool useForEntanglementMatrix = false);
 
   // constructor for the Hilbert space, fixing the number of pluses in the rightmost unit cell and the number of minuses in the leftmost unit cell
   //
   // chainLength = number of spin / group of 2p+1 orbitals
+  // pValue = p value
   // nbrPlusRight = number of pluses in the rightmost unit cell
   // nbrMinusLeft = number of minuses in the lefttmost unit cell
-  PairHoppingP3AsSpin1Chain (int chainLength, int nbrPlusRight, int nbrMinusLeft, int memorySize = -1);
+  PairHoppingGenericPAsSpin1ChainLong (int chainLength, int pValue, int nbrPlusRight, int nbrMinusLeft, int memorySize = -1);
   
   // copy constructor (without duplicating datas)
   //
   // chain = reference on chain to copy
-  PairHoppingP3AsSpin1Chain (const PairHoppingP3AsSpin1Chain& chain);
+  PairHoppingGenericPAsSpin1ChainLong (const PairHoppingGenericPAsSpin1ChainLong& chain);
 
   // destructor
   //
-  virtual ~PairHoppingP3AsSpin1Chain ();
+  virtual ~PairHoppingGenericPAsSpin1ChainLong ();
 
   // assignement (without duplicating datas)
   //
   // chain = reference on chain to copy
   // return value = reference on current chain
-  PairHoppingP3AsSpin1Chain& operator = (const PairHoppingP3AsSpin1Chain& chain);
+  PairHoppingGenericPAsSpin1ChainLong& operator = (const PairHoppingGenericPAsSpin1ChainLong& chain);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -132,14 +132,6 @@ class PairHoppingP3AsSpin1Chain : public  PairHoppingP2AsSpin1Chain
   // return value = index of resulting state 
   virtual int SwapOperator (int unitCellCoordinate, int siteIndex, int state);
 
-  // apply the swap operator within the unit cell with a constraint of the unit cell parity
-  //
-  // unitCellCoordinate = coordinate of the unit cell
-  // siteIndex = index of the leftmost site within the unit cell
-  // state = index of the state on which the operator has to be applied
-  // return value = index of resulting state 
-  virtual int SwapOperatorPlus (int unitCellCoordinate, int siteIndex, int state);
-
   // apply the operator coupling neighboring unit cells
   //
   // leftUnitCellCoordinate = coordinate of the left unit cell
@@ -148,15 +140,7 @@ class PairHoppingP3AsSpin1Chain : public  PairHoppingP2AsSpin1Chain
   // return value = index of resulting state 
   virtual int PlusMinusOperator (int leftUnitCellCoordinate, int rightUnitCellCoordinate, int state);  
   
-  // apply the operator coupling neighboring unit cells with a constraint of the unit cell parity
-  //
-  // leftUnitCellCoordinate = coordinate of the left unit cell
-  // rightUnitCellCoordinate = coordinate of the right unit cell
-  // state = index of the state on which the operator has to be applied
-  // return value = index of resulting state 
-  virtual int PlusMinusOperatorPlus (int leftUnitCellCoordinate, int rightUnitCellCoordinate, int state);  
-
-protected:
+ protected:
 
   // evaluate Hilbert space dimension
   //
@@ -177,11 +161,11 @@ protected:
   //
   // return value = number of generated states
   virtual long GenerateStates();
-
+ 
   // generate all the posible unit cells 
   //
   virtual void GenerateAllPossibleUnitCells();
-
+ 
 };
 
 #endif

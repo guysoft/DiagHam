@@ -6,10 +6,10 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                         class of pair hopping p=3                          //
-//                     Hilbert space written as spin 1 chain                  //
+//                      class of pair hopping with generic p                  //
+//            Hilbert space written as spin 1 chain with translations         //
 //                                                                            //
-//                        last modification : 03/10/2019                      //
+//                        last modification : 16/10/2019                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,12 +29,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PAIRHOPPINGP3SPIN1CHAIN_H
-#define PAIRHOPPINGP3SPIN1CHAIN_H
+#ifndef PAIRHOPPINGGENERICPSPIN1CHAINWITHTRANSLATIONS_H
+#define PAIRHOPPINGGENERICPSPIN1CHAINWITHTRANSLATIONS_H
 
 
 #include "config.h"
-#include "HilbertSpace/PairHoppingP2AsSpin1Chain.h"
+#include "HilbertSpace/PairHoppingP2AsSpin1ChainWithTranslations.h"
 
 #include <iostream>
 
@@ -44,21 +44,13 @@ using std::ostream;
 
 class HermitianMatrix;
 class RealMatrix;
-class ComplexMatrix;
 class Matrix;
 class SubspaceSpaceConverter;
 class AbstractQuantumNumber;
 
 
-class PairHoppingP3AsSpin1Chain : public  PairHoppingP2AsSpin1Chain
+class PairHoppingGenericPAsSpin1ChainWithTranslations : public PairHoppingP2AsSpin1ChainWithTranslations
 {
-
-  friend class Spin1ChainWithTranslations;
-  friend class Spin1ChainWithTranslationsAndSzSymmetry;
-  friend class Spin1ChainWithTranslationsAndInversionSymmetry;
-  friend class Spin1ChainWithSzSymmetry;
-  friend class PairHoppingP1AsSpin1ChainWithTranslations;
-  friend class PairHoppingGenericPAsSpin1ChainWithTranslations;
 
  protected:
 
@@ -74,6 +66,8 @@ class PairHoppingP3AsSpin1Chain : public  PairHoppingP2AsSpin1Chain
   unsigned long* PossibleUnitCells;
   // number of plusses for each possible unit cells satisfying the pair hopping constraints
   int* PossibleUnitCellsNbrPlus;
+  // number of plusses for each possible unit cells satisfying the pair hopping constraints
+  int* PossibleUnitCellsNbrMinus;
   
   // number of possible unit cells satisfying the pair hopping constraints for each possible number of minuses
   int* NbrPossibleUnitCellsPerNbrMinus;
@@ -82,42 +76,34 @@ class PairHoppingP3AsSpin1Chain : public  PairHoppingP2AsSpin1Chain
   // number of plusses for each possible unit cells satisfying the pair hopping constraints for each possible number of minuses
   int** PossibleUnitCellsNbrPlusPerNbrMinus;
   
-  
  public:
 
   // default constructor
   //
-  PairHoppingP3AsSpin1Chain ();
+  PairHoppingGenericPAsSpin1ChainWithTranslations ();
 
   // constructor for complete Hilbert space
   //
-  // chainLength = number of spin / group of 2p+1 orbitals
-  // periodicBoundaryConditions = true if the system uses periodic boundary conditions
-  // memorySize = memory size in bytes allowed for look-up table
-  // useForEntanglementMatrix = true if the hilbert space has to be generated for the entanglement matrix calculations
-  PairHoppingP3AsSpin1Chain (int chainLength, bool periodicBoundaryConditions = false, int memorySize = -1, bool useForEntanglementMatrix = false);
+  // chainLength = number of spin 1
+  // momemtum = total momentum of each state
+  // pValue = p value
+  // memory = amount of memory granted for precalculations
+  PairHoppingGenericPAsSpin1ChainWithTranslations (int chainLength, int momentum, int pValue, unsigned long memory = 10000000);
 
-  // constructor for the Hilbert space, fixing the number of pluses in the rightmost unit cell and the number of minuses in the leftmost unit cell
-  //
-  // chainLength = number of spin / group of 2p+1 orbitals
-  // nbrPlusRight = number of pluses in the rightmost unit cell
-  // nbrMinusLeft = number of minuses in the lefttmost unit cell
-  PairHoppingP3AsSpin1Chain (int chainLength, int nbrPlusRight, int nbrMinusLeft, int memorySize = -1);
-  
   // copy constructor (without duplicating datas)
   //
   // chain = reference on chain to copy
-  PairHoppingP3AsSpin1Chain (const PairHoppingP3AsSpin1Chain& chain);
+  PairHoppingGenericPAsSpin1ChainWithTranslations (const PairHoppingGenericPAsSpin1ChainWithTranslations& chain);
 
   // destructor
   //
-  virtual ~PairHoppingP3AsSpin1Chain ();
+  ~PairHoppingGenericPAsSpin1ChainWithTranslations ();
 
   // assignement (without duplicating datas)
   //
   // chain = reference on chain to copy
   // return value = reference on current chain
-  PairHoppingP3AsSpin1Chain& operator = (const PairHoppingP3AsSpin1Chain& chain);
+  PairHoppingGenericPAsSpin1ChainWithTranslations& operator = (const PairHoppingGenericPAsSpin1ChainWithTranslations& chain);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -129,49 +115,57 @@ class PairHoppingP3AsSpin1Chain : public  PairHoppingP2AsSpin1Chain
   // unitCellCoordinate = coordinate of the unit cell
   // siteIndex = index of the leftmost site within the unit cell
   // state = index of the state on which the operator has to be applied
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of resulting state 
-  virtual int SwapOperator (int unitCellCoordinate, int siteIndex, int state);
-
-  // apply the swap operator within the unit cell with a constraint of the unit cell parity
-  //
-  // unitCellCoordinate = coordinate of the unit cell
-  // siteIndex = index of the leftmost site within the unit cell
-  // state = index of the state on which the operator has to be applied
-  // return value = index of resulting state 
-  virtual int SwapOperatorPlus (int unitCellCoordinate, int siteIndex, int state);
+  virtual int SwapOperator (int unitCellCoordinate, int siteIndex, int state, double& coefficient, int& nbrTranslation);
 
   // apply the operator coupling neighboring unit cells
   //
   // leftUnitCellCoordinate = coordinate of the left unit cell
   // rightUnitCellCoordinate = coordinate of the right unit cell
   // state = index of the state on which the operator has to be applied
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of resulting state 
-  virtual int PlusMinusOperator (int leftUnitCellCoordinate, int rightUnitCellCoordinate, int state);  
+  virtual int PlusMinusOperator (int leftUnitCellCoordinate, int rightUnitCellCoordinate, int state, double& coefficient, int& nbrTranslation);  
   
-  // apply the operator coupling neighboring unit cells with a constraint of the unit cell parity
-  //
-  // leftUnitCellCoordinate = coordinate of the left unit cell
-  // rightUnitCellCoordinate = coordinate of the right unit cell
-  // state = index of the state on which the operator has to be applied
-  // return value = index of resulting state 
-  virtual int PlusMinusOperatorPlus (int leftUnitCellCoordinate, int rightUnitCellCoordinate, int state);  
-
-protected:
+  // evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
+  // 
+  // nbrSites = number of sites that are part of the A subsytem 
+  // szSector = Sz sector in which the density matrix has to be evaluated  (fixing the boundray unit cells to nbr left minuses= szSector / (pValue + 1), nbr right pluses = szSector % (pValue + 1))
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+  virtual RealMatrix EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture = 0);
+    
+  // evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
+  // 
+  // nbrSites = number of sites that are part of the A subsytem 
+  // szSector = Sz sector in which the density matrix has to be evaluated  (fixing the boundray unit cells to nbr left minuses= szSector / (pValue + 1), nbr right pluses = szSector % (pValue + 1))
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+  virtual ComplexMatrix EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
+    
+ protected:
 
   // evaluate Hilbert space dimension
   //
   // previousSpin = value of the previous spin (0 for -1, 1 for 0 and 2 for +1)
+  // initialNbrMinus = number of -1 spins in the first unit cell
   // sitePosition = site on chain where spin has to be changed
   // return value = Hilbert space dimension
-  virtual long EvaluateHilbertSpaceDimension(int previousSpin, int sitePosition);
+  virtual long EvaluateHilbertSpaceDimension(int previousSpin, int initialNbrMinus, int sitePosition);
 
   // generate all states with neither constraint from boundary conditions nor discrete symmtry constraint
   //
   // statePosition = position for the new states
   // previousSpin = value of the previous spin (0 for -1, 1 for 0 and 2 for +1)
+  // initialNbrMinus = number of -1 spins in the first unit cell
   // sitePosition = site on chain where spin has to be changed
   // return value = number of generated states
-  virtual long RawGenerateStates(long statePosition, int previousSpin, int sitePosition);
+  virtual long RawGenerateStates(long statePosition, int previousSpin, int initialNbrMinus, int sitePosition);
 
   // generate all states with constraints 
   //
@@ -183,6 +177,7 @@ protected:
   virtual void GenerateAllPossibleUnitCells();
 
 };
+
 
 #endif
 

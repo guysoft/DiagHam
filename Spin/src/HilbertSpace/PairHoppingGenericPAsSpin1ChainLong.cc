@@ -6,10 +6,11 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                         class of pair hopping p=3                          //
+//                      class of pair hopping with generic p                  //
 //                     Hilbert space written as spin 1 chain                  //
+//                             for more than 32 spins                         //
 //                                                                            //
-//                        last modification : 03/11/2019                      //
+//                        last modification : 17/10/2019                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,7 +30,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "HilbertSpace/PairHoppingP3AsSpin1Chain.h"
+#include "HilbertSpace/PairHoppingGenericPAsSpin1ChainLong.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealMatrix.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
@@ -51,13 +52,13 @@ using std::dec;
 // default constructor
 //
 
-PairHoppingP3AsSpin1Chain::PairHoppingP3AsSpin1Chain () 
+PairHoppingGenericPAsSpin1ChainLong::PairHoppingGenericPAsSpin1ChainLong () 
 {
   this->PeriodicBoundaryConditions = false;
   this->NbrMinusLeft = -1;
   this->NbrPlusRight = -1;
   this->UnitCellSize = 3;
-  this->FirstUnitCellMask = (0x1ul << (this->UnitCellSize << 1)) - 0x1ul;
+  this->FirstUnitCellMask = (((ULONGLONG) 0x1ul) << (this->UnitCellSize << 1)) - ((ULONGLONG) 0x1ul);
   this->PossibleUnitCellsPerNbrMinus = 0;
   this->NbrPossibleUnitCellsPerNbrMinus = 0;
   this->PossibleUnitCellsNbrPlusPerNbrMinus = 0;
@@ -68,11 +69,12 @@ PairHoppingP3AsSpin1Chain::PairHoppingP3AsSpin1Chain ()
 // constructor for complete Hilbert space
 //
 // chainLength = number of spin / group of 2p+1 orbitals
+// pValue = p value
 // periodicBoundaryConditions = true if the system uses periodic boundary conditions
 // memorySize = memory size in bytes allowed for look-up table
 // useForEntanglementMatrix = true if the hilbert space has to be generated for the entanglement matrix calculations
 
-PairHoppingP3AsSpin1Chain::PairHoppingP3AsSpin1Chain (int chainLength, bool periodicBoundaryConditions, int memorySize, bool useForEntanglementMatrix) 
+PairHoppingGenericPAsSpin1ChainLong::PairHoppingGenericPAsSpin1ChainLong (int chainLength, int pValue, bool periodicBoundaryConditions, int memorySize, bool useForEntanglementMatrix) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
@@ -81,12 +83,13 @@ PairHoppingP3AsSpin1Chain::PairHoppingP3AsSpin1Chain (int chainLength, bool peri
   this->UseForEntanglementMatrix = useForEntanglementMatrix;
   this->NbrMinusLeft = -1;
   this->NbrPlusRight = -1;
-  this->UnitCellSize = 3;
-  this->FirstUnitCellMask = (0x1ul << (this->UnitCellSize << 1)) - 0x1ul;
+  this->UnitCellSize = pValue;
+  this->FirstUnitCellMask = (((ULONGLONG) 0x1ul) << (this->UnitCellSize << 1)) - ((ULONGLONG) 0x1ul);
 
   this->GenerateAllPossibleUnitCells();
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(0, 0);
-  this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+  
+  this->StateDescription = new ULONGLONG [this->LargeHilbertSpaceDimension];
   this->RawGenerateStates(0l, 0, 0);
   this->LargeHilbertSpaceDimension = this->GenerateStates();
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
@@ -95,7 +98,7 @@ PairHoppingP3AsSpin1Chain::PairHoppingP3AsSpin1Chain (int chainLength, bool peri
       this->GenerateLookUpTable(memorySize);
 #ifdef __DEBUG__
       long UsedMemory = 0;
-      UsedMemory +=  this->LargeHilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+      UsedMemory +=  this->LargeHilbertSpaceDimension * (sizeof(ULONGLONG) + sizeof(int));
       cout << "memory requested for Hilbert space = ";
       if (UsedMemory >= 1024)
 	if (UsedMemory >= 1048576)
@@ -121,10 +124,11 @@ PairHoppingP3AsSpin1Chain::PairHoppingP3AsSpin1Chain (int chainLength, bool peri
 // constructor for the Hilbert space, fixing the number of pluses in the rightmost unit cell and the number of minuses in the leftmost unit cell
 //
 // chainLength = number of spin / group of 2p+1 orbitals
+// pValue = p value
 // nbrPlusRight = number of pluses in the rightmost unit cell
 // nbrMinusLeft = number of minuses in the lefttmost unit cell
 
-PairHoppingP3AsSpin1Chain::PairHoppingP3AsSpin1Chain (int chainLength, int nbrPlusRight, int nbrMinusLeft, int memorySize)
+PairHoppingGenericPAsSpin1ChainLong::PairHoppingGenericPAsSpin1ChainLong (int chainLength, int pValue, int nbrPlusRight, int nbrMinusLeft, int memorySize)
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
@@ -133,13 +137,13 @@ PairHoppingP3AsSpin1Chain::PairHoppingP3AsSpin1Chain (int chainLength, int nbrPl
   this->UseForEntanglementMatrix = true;
   this->NbrMinusLeft = nbrMinusLeft;
   this->NbrPlusRight = nbrPlusRight;
-  this->UnitCellSize = 3;
-  this->FirstUnitCellMask = (0x1ul << (this->UnitCellSize << 1)) - 0x1ul;
-  this->GenerateAllPossibleUnitCells();
-  
+  this->UnitCellSize = pValue;
+  this->FirstUnitCellMask = (((ULONGLONG) 0x1ul) << (this->UnitCellSize << 1)) - ((ULONGLONG) 0x1ul);
+
+  this->GenerateAllPossibleUnitCells();    
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(0, 0);
   
-  this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+  this->StateDescription = new ULONGLONG [this->LargeHilbertSpaceDimension];
   this->RawGenerateStates(0l, 0, 0);
   this->LargeHilbertSpaceDimension = this->GenerateStates();
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
@@ -148,7 +152,7 @@ PairHoppingP3AsSpin1Chain::PairHoppingP3AsSpin1Chain (int chainLength, int nbrPl
       this->GenerateLookUpTable(memorySize);
 #ifdef __DEBUG__
       long UsedMemory = 0;
-      UsedMemory +=  this->LargeHilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+      UsedMemory +=  this->LargeHilbertSpaceDimension * (sizeof(ULONGLONG) + sizeof(int));
       cout << "memory requested for Hilbert space = ";
       if (UsedMemory >= 1024)
 	if (UsedMemory >= 1048576)
@@ -176,7 +180,7 @@ PairHoppingP3AsSpin1Chain::PairHoppingP3AsSpin1Chain (int chainLength, int nbrPl
 //
 // chain = reference on chain to copy
 
-PairHoppingP3AsSpin1Chain::PairHoppingP3AsSpin1Chain (const PairHoppingP3AsSpin1Chain& chain) 
+PairHoppingGenericPAsSpin1ChainLong::PairHoppingGenericPAsSpin1ChainLong (const PairHoppingGenericPAsSpin1ChainLong& chain) 
 {
   this->Flag = chain.Flag;
   if (chain.ChainLength != 0)
@@ -195,11 +199,11 @@ PairHoppingP3AsSpin1Chain::PairHoppingP3AsSpin1Chain (const PairHoppingP3AsSpin1
       this->FixedSpinProjectionFlag = chain.FixedSpinProjectionFlag;
       this->PeriodicBoundaryConditions = chain.PeriodicBoundaryConditions;
       this->UseForEntanglementMatrix = chain.UseForEntanglementMatrix;
-
+ 
       this->UnitCellSize =  chain.UnitCellSize;
       this->FirstUnitCellMask = chain.FirstUnitCellMask;
       this->GenerateAllPossibleUnitCells();
-    }
+   }
   else
     {
       this->HilbertSpaceDimension = 0;
@@ -229,7 +233,7 @@ PairHoppingP3AsSpin1Chain::PairHoppingP3AsSpin1Chain (const PairHoppingP3AsSpin1
 // destructor
 //
 
-PairHoppingP3AsSpin1Chain::~PairHoppingP3AsSpin1Chain () 
+PairHoppingGenericPAsSpin1ChainLong::~PairHoppingGenericPAsSpin1ChainLong () 
 {
   if (this->NbrPossibleUnitCellsPerNbrMinus != 0)
     {
@@ -254,7 +258,7 @@ PairHoppingP3AsSpin1Chain::~PairHoppingP3AsSpin1Chain ()
 // chain = reference on chain to copy
 // return value = reference on current chain
 
-PairHoppingP3AsSpin1Chain& PairHoppingP3AsSpin1Chain::operator = (const PairHoppingP3AsSpin1Chain& chain)
+PairHoppingGenericPAsSpin1ChainLong& PairHoppingGenericPAsSpin1ChainLong::operator = (const PairHoppingGenericPAsSpin1ChainLong& chain)
 {
   if ((this->ChainLength != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -334,9 +338,9 @@ PairHoppingP3AsSpin1Chain& PairHoppingP3AsSpin1Chain::operator = (const PairHopp
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* PairHoppingP3AsSpin1Chain::Clone()
+AbstractHilbertSpace* PairHoppingGenericPAsSpin1ChainLong::Clone()
 {
-  return new PairHoppingP3AsSpin1Chain (*this);
+  return new PairHoppingGenericPAsSpin1ChainLong (*this);
 }
 
 // evaluate Hilbert space dimension
@@ -345,7 +349,7 @@ AbstractHilbertSpace* PairHoppingP3AsSpin1Chain::Clone()
 // sitePosition = site on chain where spin has to be changed
 // return value = Hilbert space dimension
 
-long PairHoppingP3AsSpin1Chain::EvaluateHilbertSpaceDimension(int previousNbrPlus, int sitePosition)
+long PairHoppingGenericPAsSpin1ChainLong::EvaluateHilbertSpaceDimension(int previousNbrPlus, int sitePosition)
 {
   if (sitePosition == this->ChainLength)
     {
@@ -376,7 +380,7 @@ long PairHoppingP3AsSpin1Chain::EvaluateHilbertSpaceDimension(int previousNbrPlu
 // sitePosition = site on chain where spin has to be changed
 // return value = number of generated states
 
-long PairHoppingP3AsSpin1Chain::RawGenerateStates(long statePosition, int previousNbrPlus, int sitePosition) 
+long PairHoppingGenericPAsSpin1ChainLong::RawGenerateStates(long statePosition, int previousNbrPlus, int sitePosition) 
 {
   if (sitePosition == this->ChainLength)
     {
@@ -387,7 +391,7 @@ long PairHoppingP3AsSpin1Chain::RawGenerateStates(long statePosition, int previo
     {
       for (int i = 0; i < this->NbrPossibleUnitCellsPerNbrMinus[previousNbrPlus]; ++i)
 	{
-	  unsigned long TmpMask = this->PossibleUnitCellsPerNbrMinus[previousNbrPlus][i] << (sitePosition * 2);
+	  ULONGLONG TmpMask = this->PossibleUnitCellsPerNbrMinus[previousNbrPlus][i] << (sitePosition * 2);
 	  long TmpPosition = this->RawGenerateStates(statePosition, this->PossibleUnitCellsNbrPlusPerNbrMinus[previousNbrPlus][i], sitePosition + this->UnitCellSize);
 	  for (; statePosition < TmpPosition; ++statePosition)
 	    this->StateDescription[statePosition] |= TmpMask;	  
@@ -397,7 +401,7 @@ long PairHoppingP3AsSpin1Chain::RawGenerateStates(long statePosition, int previo
     {
       for (int i = 0; i < this->NbrPossibleUnitCells; ++i)
 	{
-	  unsigned long TmpMask = this->PossibleUnitCells[i];
+	  ULONGLONG TmpMask = this->PossibleUnitCells[i];
 	  long TmpPosition = this->RawGenerateStates(statePosition, this->PossibleUnitCellsNbrPlus[i], this->UnitCellSize);
 	  for (; statePosition < TmpPosition; ++statePosition)
 	    this->StateDescription[statePosition] |= TmpMask;	  
@@ -411,11 +415,11 @@ long PairHoppingP3AsSpin1Chain::RawGenerateStates(long statePosition, int previo
 //
 // return value = Hilbert space dimension
 
-long PairHoppingP3AsSpin1Chain::GenerateStates()
+long PairHoppingGenericPAsSpin1ChainLong::GenerateStates()
 {
-  cout << "p=" << this->UnitCellSize << " has " << this->NbrPossibleUnitCells << " possible unit cells" << endl;
+ cout << "p=" << this->UnitCellSize << " has " << this->NbrPossibleUnitCells << " possible unit cells" << endl;
   long TmpHilbertSpaceDimension = 0l;
-  unsigned long TmpDiscardMask = ~0x0ul;
+  ULONGLONG TmpDiscardMask = ~((ULONGLONG) 0x0ul);
   int TmpNbrBitsPerUnitCell = 1 << (this->UnitCellSize << 1);
   int* TmpNbrMinusTable = new int[TmpNbrBitsPerUnitCell];
   int* TmpNbrPlusTable = new int[TmpNbrBitsPerUnitCell];
@@ -440,11 +444,12 @@ long PairHoppingP3AsSpin1Chain::GenerateStates()
 	    }
 	}      
     }
+
   if (this->PeriodicBoundaryConditions == true)
     {
       for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
 	{
-	  if (TmpNbrPlusTable[(this->StateDescription[i] >> TmpLastUnitCellShift) & this->FirstUnitCellMask] != TmpNbrMinusTable[this->StateDescription[i]  & this->FirstUnitCellMask])
+	  if (TmpNbrPlusTable[(this->StateDescription[i] >> TmpLastUnitCellShift) & 0xf] != TmpNbrMinusTable[this->StateDescription[i]  & 0xf])
 	    {
 	      this->StateDescription[i] = TmpDiscardMask;
 	    }
@@ -460,8 +465,8 @@ long PairHoppingP3AsSpin1Chain::GenerateStates()
 	{
 	  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
 	    {
-	      if ((TmpNbrPlusTable[(this->StateDescription[i] >> TmpLastUnitCellShift) & this->FirstUnitCellMask] != 0) ||
-		  (TmpNbrMinusTable[this->StateDescription[i]  & this->FirstUnitCellMask] != 0))
+	      if ((TmpNbrPlusTable[(this->StateDescription[i] >> TmpLastUnitCellShift) & 0xf] != 0) ||
+		  (TmpNbrMinusTable[this->StateDescription[i]  & 0xf] != 0))
 		{
 		  this->StateDescription[i] = TmpDiscardMask;
 		}
@@ -477,8 +482,8 @@ long PairHoppingP3AsSpin1Chain::GenerateStates()
 	    {
 	      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
 		{
-		  if ((TmpNbrPlusTable[(this->StateDescription[i] >> TmpLastUnitCellShift) & this->FirstUnitCellMask] != this->NbrPlusRight) ||
-		      (TmpNbrMinusTable[this->StateDescription[i]  & this->FirstUnitCellMask] != this->NbrMinusLeft))
+		  if ((TmpNbrPlusTable[(this->StateDescription[i] >> TmpLastUnitCellShift) & 0xf] != this->NbrPlusRight) ||
+		      (TmpNbrMinusTable[this->StateDescription[i]  & 0xf] != this->NbrMinusLeft))
 		    {
 		      this->StateDescription[i] = TmpDiscardMask;
 		    }
@@ -496,7 +501,7 @@ long PairHoppingP3AsSpin1Chain::GenerateStates()
     }
   if (TmpHilbertSpaceDimension > 0l)
     {
-      unsigned long* TmpStateDescription = new unsigned long [TmpHilbertSpaceDimension];
+      ULONGLONG* TmpStateDescription = new ULONGLONG [TmpHilbertSpaceDimension];
       TmpHilbertSpaceDimension = 0l;
       for  (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
 	{
@@ -506,7 +511,7 @@ long PairHoppingP3AsSpin1Chain::GenerateStates()
 	      ++TmpHilbertSpaceDimension;
 	    }
 	}
-      SortArrayDownOrdering<unsigned long>(TmpStateDescription, TmpHilbertSpaceDimension);
+      SortArrayDownOrdering<ULONGLONG>(TmpStateDescription, TmpHilbertSpaceDimension);
       delete[] this->StateDescription;
       this->StateDescription = TmpStateDescription;
     }
@@ -523,99 +528,44 @@ long PairHoppingP3AsSpin1Chain::GenerateStates()
 // state = index of the state on which the operator has to be applied
 // return value = index of resulting state 
 
-int PairHoppingP3AsSpin1Chain::SwapOperator (int unitCellCoordinate, int siteIndex, int state)
+int PairHoppingGenericPAsSpin1ChainLong::SwapOperator (int unitCellCoordinate, int siteIndex, int state)
 {
-  unsigned long TmpStateDescription = this->StateDescription[state];
-  unitCellCoordinate *= this->UnitCellSize << 1;
-  unsigned long Tmp = (TmpStateDescription >> unitCellCoordinate) & this->FirstUnitCellMask;
+  ULONGLONG TmpStateDescription = this->StateDescription[state];
+  unitCellCoordinate *= this->UnitCellSize;
+  unitCellCoordinate += siteIndex;
+  unitCellCoordinate *= 2;
+  ULONGLONG Tmp = (TmpStateDescription >> unitCellCoordinate) & ((ULONGLONG) 0xful);
   switch (Tmp)
     {
-    case 0xbul:
+    case ((ULONGLONG) 0xbul):
       {
-	TmpStateDescription &= ~(0xful << unitCellCoordinate);
-	TmpStateDescription |= 0xeul << unitCellCoordinate;
+	TmpStateDescription &= ~(((ULONGLONG) 0xful) << unitCellCoordinate);
+	TmpStateDescription |= ((ULONGLONG) 0xeul) << unitCellCoordinate;
 	return this->FindStateIndex(TmpStateDescription);
       }
       break;
-    case 0xeul:
+    case ((ULONGLONG) 0xeul):
       {
-	TmpStateDescription &= ~(0xful << unitCellCoordinate);
-	TmpStateDescription |= 0xbul << unitCellCoordinate;
+	TmpStateDescription &= ~(((ULONGLONG) 0xful) << unitCellCoordinate);
+	TmpStateDescription |= ((ULONGLONG) 0xbul) << unitCellCoordinate;
 	return this->FindStateIndex(TmpStateDescription);
       }
       break;
-    case 0x2ul:
+    case ((ULONGLONG) 0x2ul):
       {
-	TmpStateDescription &= ~(0xful << unitCellCoordinate);
-	TmpStateDescription |= 0x8ul << unitCellCoordinate;
+	TmpStateDescription &= ~(((ULONGLONG) 0xful) << unitCellCoordinate);
+	TmpStateDescription |= ((ULONGLONG) 0x8ul) << unitCellCoordinate;
 	return this->FindStateIndex(TmpStateDescription);
       }
       break;
-    case 0x8ul:
+    case ((ULONGLONG) 0x8ul):
       {
-	TmpStateDescription &= ~(0xful << unitCellCoordinate);
-	TmpStateDescription |= 0x2ul << unitCellCoordinate;
+	TmpStateDescription &= ~(((ULONGLONG) 0xful) << unitCellCoordinate);
+	TmpStateDescription |= ((ULONGLONG) 0x2ul) << unitCellCoordinate;
 	return this->FindStateIndex(TmpStateDescription);
       }
       break;
     }  
-  return this->HilbertSpaceDimension;
-}
-
-// apply the swap operator within the unit cell with a constraint of the unit cell parity
-//
-// unitCellCoordinate = coordinate of the unit cell
-// siteIndex = index of the leftmost site within the unit cell
-// state = index of the state on which the operator has to be applied
-// return value = index of resulting state 
-
-int PairHoppingP3AsSpin1Chain::SwapOperatorPlus (int unitCellCoordinate, int siteIndex, int state)
-{
-  unsigned long TmpStateDescription = this->StateDescription[state];
-  if ((unitCellCoordinate & 1) == 0)
-    {
-      unitCellCoordinate *= this->UnitCellSize << 1;
-      unsigned long Tmp = (TmpStateDescription >> unitCellCoordinate) & this->FirstUnitCellMask;
-      switch (Tmp)
-	{
-	case 0xbul:
-	  {
-	    TmpStateDescription &= ~(0xful << unitCellCoordinate);
-	    TmpStateDescription |= 0xeul << unitCellCoordinate;
-	    return this->FindStateIndex(TmpStateDescription);
-	  }
-	  break;
-	case 0x8ul:
-	  {
-	    TmpStateDescription &= ~(0xful << unitCellCoordinate);
-	    TmpStateDescription |= 0x2ul << unitCellCoordinate;
-	    return this->FindStateIndex(TmpStateDescription);
-	  }
-	  break;
-	}
-    }
-  else
-    {
-      unitCellCoordinate *= this->UnitCellSize << 1;
-      unsigned long Tmp = (TmpStateDescription >> unitCellCoordinate) & this->FirstUnitCellMask;
-      switch (Tmp)
-	{
-	case 0xeul:
-	  {
-	    TmpStateDescription &= ~(0xful << unitCellCoordinate);
-	    TmpStateDescription |= 0xbul << unitCellCoordinate;
-	    return this->FindStateIndex(TmpStateDescription);
-	  }
-	  break;
-	case 0x2ul:
-	  {
-	    TmpStateDescription &= ~(0xful << unitCellCoordinate);
-	    TmpStateDescription |= 0x8ul << unitCellCoordinate;
-	    return this->FindStateIndex(TmpStateDescription);
-	  }
-	  break;
-	}
-    }
   return this->HilbertSpaceDimension;
 }
 
@@ -626,80 +576,36 @@ int PairHoppingP3AsSpin1Chain::SwapOperatorPlus (int unitCellCoordinate, int sit
 // state = index of the state on which the operator has to be applied
 // return value = index of resulting state 
 
-int PairHoppingP3AsSpin1Chain::PlusMinusOperator (int leftUnitCellCoordinate, int rightUnitCellCoordinate, int state)
+int PairHoppingGenericPAsSpin1ChainLong::PlusMinusOperator (int leftUnitCellCoordinate, int rightUnitCellCoordinate, int state)
 {
-  unsigned long TmpStateDescription = this->StateDescription[state];
-  leftUnitCellCoordinate *= this->UnitCellSize << 1;
-  leftUnitCellCoordinate += (this->UnitCellSize - 1) << 1;
-  rightUnitCellCoordinate *= this->UnitCellSize << 1;
-  unsigned long Tmp = ((TmpStateDescription >> leftUnitCellCoordinate) & 0x3ul) | (((TmpStateDescription >> rightUnitCellCoordinate) & 0x3ul) << 2);
-  if (Tmp == 0xaul)
+  ULONGLONG TmpStateDescription = this->StateDescription[state];
+  leftUnitCellCoordinate *= 2 * this->UnitCellSize;
+  leftUnitCellCoordinate += 2 * (this->UnitCellSize - 1);
+  rightUnitCellCoordinate *= 2 * this->UnitCellSize;
+  ULONGLONG Tmp = ((TmpStateDescription >> leftUnitCellCoordinate) & ((ULONGLONG) 0x3ul)) | (((TmpStateDescription >> rightUnitCellCoordinate) & ((ULONGLONG) 0x3ul)) << 2);
+  if (Tmp == ((ULONGLONG) 0xaul))
     {
-      TmpStateDescription &= ~(0x3ul << leftUnitCellCoordinate);
-      TmpStateDescription |= 0x3ul << leftUnitCellCoordinate;
-      TmpStateDescription &= ~(0x3ul << rightUnitCellCoordinate);
-      TmpStateDescription |= 0x0ul << rightUnitCellCoordinate;
+      TmpStateDescription &= ~(((ULONGLONG) 0x3ul) << leftUnitCellCoordinate);
+      TmpStateDescription |= ((ULONGLONG) 0x3ul) << leftUnitCellCoordinate;
+      TmpStateDescription &= ~(((ULONGLONG) 0x3ul) << rightUnitCellCoordinate);
+      TmpStateDescription |= ((ULONGLONG) 0x0ul) << rightUnitCellCoordinate;
       return this->FindStateIndex(TmpStateDescription);
    }
-  if (Tmp == 0x3ul)
+  if (Tmp == ((ULONGLONG) 0x3ul))
     {
-      TmpStateDescription &= ~(0x3ul << leftUnitCellCoordinate);
-      TmpStateDescription |= 0x2ul << leftUnitCellCoordinate;
-      TmpStateDescription &= ~(0x3ul << rightUnitCellCoordinate);
-      TmpStateDescription |= 0x2ul << rightUnitCellCoordinate;            
+      TmpStateDescription &= ~(((ULONGLONG) 0x3ul) << leftUnitCellCoordinate);
+      TmpStateDescription |= ((ULONGLONG) 0x2ul) << leftUnitCellCoordinate;
+      TmpStateDescription &= ~(((ULONGLONG) 0x3ul) << rightUnitCellCoordinate);
+      TmpStateDescription |= ((ULONGLONG) 0x2ul) << rightUnitCellCoordinate;            
       return this->FindStateIndex(TmpStateDescription);
     }
   return this->HilbertSpaceDimension;
 }
-
-// apply the operator coupling neighboring unit cells with a constraint of the unit cell parity
-//
-// leftUnitCellCoordinate = coordinate of the left unit cell
-// rightUnitCellCoordinate = coordinate of the right unit cell
-// state = index of the state on which the operator has to be applied
-// return value = index of resulting state 
-
-int PairHoppingP3AsSpin1Chain::PlusMinusOperatorPlus (int leftUnitCellCoordinate, int rightUnitCellCoordinate, int state)
-{
-  unsigned long TmpStateDescription = this->StateDescription[state];
-  if ((rightUnitCellCoordinate & 1) == 0)
-    {
-      leftUnitCellCoordinate *= this->UnitCellSize << 1;
-      leftUnitCellCoordinate += (this->UnitCellSize - 1) << 1;
-      rightUnitCellCoordinate *= this->UnitCellSize << 1;
-      unsigned long Tmp = ((TmpStateDescription >> leftUnitCellCoordinate) & 0x3ul) | (((TmpStateDescription >> rightUnitCellCoordinate) & 0x3ul) << 2);
-      if (Tmp == 0xaul)
-	{
-	  TmpStateDescription &= ~(0x3ul << leftUnitCellCoordinate);
-	  TmpStateDescription |= 0x3ul << leftUnitCellCoordinate;
-	  TmpStateDescription &= ~(0x3ul << rightUnitCellCoordinate);
-	  TmpStateDescription |= 0x0ul << rightUnitCellCoordinate;
-	  return this->FindStateIndex(TmpStateDescription);
-	}
-    }
-  else
-    {
-      leftUnitCellCoordinate *= this->UnitCellSize << 1;
-      leftUnitCellCoordinate += (this->UnitCellSize - 1) << 1;
-      rightUnitCellCoordinate *= this->UnitCellSize << 1;
-      unsigned long Tmp = ((TmpStateDescription >> leftUnitCellCoordinate) & 0x3ul) | (((TmpStateDescription >> rightUnitCellCoordinate) & 0x3ul) << 2);
-      if (Tmp == 0x3ul)
-	{
-	  TmpStateDescription &= ~(0x3ul << leftUnitCellCoordinate);
-	  TmpStateDescription |= 0x2ul << leftUnitCellCoordinate;
-	  TmpStateDescription &= ~(0x3ul << rightUnitCellCoordinate);
-	  TmpStateDescription |= 0x2ul << rightUnitCellCoordinate;            
-	  return this->FindStateIndex(TmpStateDescription);
-	}
-    }
-  return this->HilbertSpaceDimension;
-}
-
 
 // generate all the posible unit cells 
 //
 
-void PairHoppingP3AsSpin1Chain::GenerateAllPossibleUnitCells()
+void PairHoppingGenericPAsSpin1ChainLong::GenerateAllPossibleUnitCells()
 {
   unsigned long TmpMaxNbrPossibleUnitCells = 0x3ul;
   for (int i = 1; i < this->UnitCellSize; ++i)
@@ -707,7 +613,7 @@ void PairHoppingP3AsSpin1Chain::GenerateAllPossibleUnitCells()
       TmpMaxNbrPossibleUnitCells *= 0x3ul;
     }
   this->NbrPossibleUnitCells = 0; 
-  this->PossibleUnitCells = new unsigned long[TmpMaxNbrPossibleUnitCells];
+  this->PossibleUnitCells = new ULONGLONG[TmpMaxNbrPossibleUnitCells];
   this->PossibleUnitCellsNbrPlus = new int[TmpMaxNbrPossibleUnitCells];
   int* TmpPossibleUnitCellsNbrMinus = new int[TmpMaxNbrPossibleUnitCells];
 
@@ -754,7 +660,7 @@ void PairHoppingP3AsSpin1Chain::GenerateAllPossibleUnitCells()
 	}
       if ((MinusFlag == false) && (DiscardFlag == false))
 	{
-	  this->PossibleUnitCells[this->NbrPossibleUnitCells] = (unsigned long) i;
+	  this->PossibleUnitCells[this->NbrPossibleUnitCells] = (ULONGLONG) i;
 	  this->PossibleUnitCellsNbrPlus[this->NbrPossibleUnitCells] = 0;
 	  TmpPossibleUnitCellsNbrMinus[this->NbrPossibleUnitCells] = 0;
 	  for (Tmp = 0; Tmp < this->UnitCellSize; ++Tmp)
@@ -785,13 +691,13 @@ void PairHoppingP3AsSpin1Chain::GenerateAllPossibleUnitCells()
     {
       this->NbrPossibleUnitCellsPerNbrMinus[TmpPossibleUnitCellsNbrMinus[i]]++;
     }
-  this->PossibleUnitCellsPerNbrMinus = new unsigned long*[this->UnitCellSize + 1];
+  this->PossibleUnitCellsPerNbrMinus = new ULONGLONG*[this->UnitCellSize + 1];
   this->PossibleUnitCellsNbrPlusPerNbrMinus = new int*[this->UnitCellSize + 1];
   for (int i = 0; i <= this->UnitCellSize; ++i)
     {
       if (this->NbrPossibleUnitCellsPerNbrMinus[i] != 0)
 	{
-	  this->PossibleUnitCellsPerNbrMinus[i] = new unsigned long [this->NbrPossibleUnitCellsPerNbrMinus[i]];
+	  this->PossibleUnitCellsPerNbrMinus[i] = new ULONGLONG [this->NbrPossibleUnitCellsPerNbrMinus[i]];
 	  this->PossibleUnitCellsNbrPlusPerNbrMinus[i] = new int [this->NbrPossibleUnitCellsPerNbrMinus[i]];
 	}
       else
