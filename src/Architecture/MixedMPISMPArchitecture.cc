@@ -287,7 +287,7 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
     {
       cout << "number of nodes = " << this->NbrMPINodes << endl << "total performance index = " << this->TotalPerformanceIndex << endl;
       for (int i = 0; i < this->NbrMPINodes; ++i)
-	cout << "node " << i << " performance index = " << this->ClusterPerformanceArray[i] << endl;
+	cout << "node " << i << " using " << this->NbrCPUPerNode[i] << " CPU/cores, performance index = " << this->ClusterPerformanceArray[i] << endl;
     }
   if (this->NbrCPUPerNode[this->MPIRank] > 1)
     {
