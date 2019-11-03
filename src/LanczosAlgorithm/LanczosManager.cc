@@ -425,6 +425,32 @@ AbstractLanczosAlgorithm* LanczosManager::GetLanczosAlgorithm(AbstractArchitectu
   return this->LanczosAlgorithm;
 }
 
+// set Lanczos to complex algorithms
+//
+
+void LanczosManager::SetComplexAlgorithms()
+{
+  this->ComplexFlag = true;
+  if (this->LanczosAlgorithm != 0)
+    {
+      delete this->LanczosAlgorithm;
+      this->LanczosAlgorithm = 0;
+    }
+}
+
+// set Lanczos to real algorithms
+//
+
+void LanczosManager::SetRealAlgorithms()
+{
+  this->ComplexFlag = false;
+  if (this->LanczosAlgorithm != 0)
+    {
+      delete this->LanczosAlgorithm;
+      this->LanczosAlgorithm = 0;
+    }
+}
+
 // delete last created Lanczos object
 //
 // return = true if object deleted
@@ -436,5 +462,8 @@ bool LanczosManager::FreeLanczosAlgorithm()
       this->LanczosAlgorithm=NULL;
       return true;
     }
-  else return false;
+  else
+    {
+      return false;
+    }
 }

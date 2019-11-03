@@ -91,9 +91,11 @@ using std::ofstream;
 // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
 // kxValue = set the Kx value (-1 if the hamiltonian does not handle the Kx symmetry)
 // explicitInitialVector = an optional pointer to an initial vector to be used in the Lanczos run, overriding command line arguments
+// forceReal = assume that the hamiltonian is real even for kx>=0 (usually at the high symmetry points)
+
 FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbertSpace* space, LanczosManager* lanczos, 
 					 AbstractQHEHamiltonian* hamiltonian, int kyValue, double shift, char* outputFileName,
-					 bool firstRun, char* eigenvectorFileName, int kxValue, Vector *explicitInitialVector)
+					 bool firstRun, char* eigenvectorFileName, int kxValue, Vector *explicitInitialVector, bool forceReal)
 {
   this->OutputFileName = new char [strlen(outputFileName) + 1];
   strncpy(this->OutputFileName, outputFileName, strlen(outputFileName));
@@ -118,7 +120,7 @@ FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbert
     {
       this->KxValue = kxValue;
       this->KyOnlyFlag = false;
-      this->RealFlag = false;      
+      this->RealFlag = forceReal;      
     }
   this->MultiplicityFlag = false;
   this->AlgorithmManager = lanczos;

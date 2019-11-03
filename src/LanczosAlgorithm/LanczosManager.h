@@ -93,22 +93,6 @@ class LanczosManager
 
 };
 
-// set Lanczos to complex algorithms
-//
-
-inline void LanczosManager::SetComplexAlgorithms()
-{
-  this->ComplexFlag = true;
-}
-
-// set Lanczos to real algorithms
-//
-
-inline void LanczosManager::SetRealAlgorithms()
-{
-  this->ComplexFlag = false;
-}
-
 
 #endif
 

@@ -95,9 +95,10 @@ class FQHEOnTorusMainTask: public QHEOnDiskMainTask
   // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
   // kxValue = set the Kx value (-1 if the hamiltonian does not handle the Kx symmetry)
   // explicitInitialVector = an optional pointer to an initial vector to be used in the Lanczos run, overriding command line arguments
+  // forceReal = assume that the hamiltonian is real even for kx>=0 (usually at the high symmetry points)
   FQHEOnTorusMainTask(OptionManager* options, AbstractHilbertSpace* space, LanczosManager* lanczos, 
 		      AbstractQHEHamiltonian* hamiltonian, int kyValue, double shift, char* outputFileName,
-		      bool firstRun = true, char* eigenvectorFileName = 0, int kxValue = -1, Vector *explicitInitialVector=NULL);
+		      bool firstRun = true, char* eigenvectorFileName = 0, int kxValue = -1, Vector *explicitInitialVector = NULL, bool forceReal = false);
   
   // destructor
   //  

@@ -7,6 +7,7 @@
 #include "HilbertSpace/FermionOnTorus.h"
 #include "HilbertSpace/FermionOnTorusWithMagneticTranslations.h"
 #include "Hamiltonian/ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian.h"
+#include "Hamiltonian/ParticleOnTorusCoulombWithMagneticTranslationsRealHamiltonian.h"
 #include "Hamiltonian/ParticleOnTorusDoubleGatedCoulombWithMagneticTranslationsHamiltonian.h"
 #include "Hamiltonian/ParticleOnTorusCoulombMassAnisotropyWithMagneticTranslationsHamiltonian.h"
 #include "Hamiltonian/ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian.h"
@@ -85,6 +86,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
+  (*SystemGroup) += new  BooleanOption ('\n', "enable-realhamiltonian", "use a real Hamiltonian at the inversion symmetric points");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 
 						      500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
@@ -402,7 +404,8 @@ int main(int argc, char** argv)
 	}
     }
   
-  bool FirstRun=true;
+  bool FirstRun = true;
+  bool ForceRealFlag = false;
   for (int Pos = 0; Pos < NbrMomenta; ++Pos)
     {
       XMomentum=XMomenta[Pos];
@@ -431,9 +434,24 @@ int main(int argc, char** argv)
 		}
 	      else
 		{
-		  Hamiltonian = new ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian(TotalSpace, NbrFermions, MaxMomentum, XMomentum, 
-											      XRatio, HaveCoulomb, LandauLevel, NbrPseudopotentials, Pseudopotentials, !Manager.GetBoolean("add-wigner"),
-											      Architecture.GetArchitecture(), Memory, LoadPrecalculationFile);
+		  if ((Manager.GetBoolean("enable-realhamiltonian") == true) &&
+		      ((XMomentum == 0) || (((MomentumModulo & 1) == 0) && (XMomentum == (MomentumModulo / 2)))) &&
+		      ((YMomentum == 0) || (((MomentumModulo & 1) == 0) && (YMomentum == (MomentumModulo / 2)))))
+		    {
+		      cout << "using real hamiltonian" << endl;
+		      ForceRealFlag = true;
+		      Lanczos.SetRealAlgorithms();
+		      Hamiltonian = new ParticleOnTorusCoulombWithMagneticTranslationsRealHamiltonian(TotalSpace, NbrFermions, MaxMomentum, XMomentum, 
+												      XRatio, HaveCoulomb, LandauLevel, NbrPseudopotentials, Pseudopotentials, !Manager.GetBoolean("add-wigner"),
+												      Architecture.GetArchitecture(), Memory, LoadPrecalculationFile);
+		    }
+		  else
+		    {		      
+		      cout << "using complex hamiltonian" << endl;
+		      Hamiltonian = new ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian(TotalSpace, NbrFermions, MaxMomentum, XMomentum, 
+												  XRatio, HaveCoulomb, LandauLevel, NbrPseudopotentials, Pseudopotentials, !Manager.GetBoolean("add-wigner"),
+												  Architecture.GetArchitecture(), Memory, LoadPrecalculationFile);
+		    }
 		}
 	    }
 	  else
@@ -497,8 +515,8 @@ int main(int argc, char** argv)
 
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);      
-      FQHEOnTorusMainTask Task (&Manager, TotalSpace, &Lanczos, Hamiltonian, YMomentum, Shift, OutputName, FirstRun, EigenvectorName);
-      Task.SetKxValue(XMomentum);
+      FQHEOnTorusMainTask Task (&Manager, TotalSpace, &Lanczos, Hamiltonian, YMomentum, Shift, OutputName, FirstRun, EigenvectorName, XMomentum, 0, ForceRealFlag);
+      //      Task.SetKxValue(XMomentum);
       if (Multiplicities!=0)
 	Task.SetMultiplicity(Multiplicities[Pos]);
       MainTaskOperation TaskOperation (&Task);
@@ -509,6 +527,8 @@ int main(int argc, char** argv)
 	}
       if (FirstRun == true)
 	FirstRun = false;
+      Lanczos.SetComplexAlgorithms();
+      ForceRealFlag = false;
       delete Hamiltonian;
       delete TotalSpace;
     }
