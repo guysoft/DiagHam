@@ -129,7 +129,8 @@ class FQHEOnTorusMainTask: public QHEOnDiskMainTask
   // file = stream to write to
   // value = numerical value to be printed after columns for flux and momentum (if defined)
   // terminate = indicate if line should be terminated with endl
-  void WriteResult(ofstream& file, double value, bool terminate=true);
+  // return value = stream to write to
+  ofstream& WriteResult(ofstream& file, double value, bool terminate = true);
 
   // do the Hamiltonian diagonalization in a given Hilbert subspace
   //

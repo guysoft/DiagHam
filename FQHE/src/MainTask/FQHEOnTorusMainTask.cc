@@ -113,7 +113,7 @@ FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbert
   this->Hamiltonian = hamiltonian;
   this->Space = space;
   this->KyValue = kyValue;
-  this->KxValue = 0;
+  this->KxValue = -1;
   this->KyOnlyFlag = true;
   this->RealFlag = true;
   if (kxValue >= 0)
@@ -535,7 +535,9 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 		    {
 		      HRep.LapackDiagonalize(TmpDiag);
 		      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
-			File << this->KyValue << " " << (TmpDiag[j] - this->EnergyShift) << endl;
+			{
+			  this->WriteResult(File, TmpDiag[j] - this->EnergyShift);
+			}
 		    }
 		  else
 		    {
@@ -557,7 +559,7 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 			}
 		      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
 			{
-			  File << this->KyValue << " " << (TmpDiag[j] - this->EnergyShift);
+			  this->WriteResult(File, TmpDiag[j] - this->EnergyShift, false);
 			  if (this->ComputeEnergyFlag == true)
 			    {
 			      RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
@@ -578,7 +580,9 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 		      TmpTriDiag.Diagonalize();
 		      TmpTriDiag.SortMatrixUpOrder();
 		      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
-			File << this->KyValue << " " << (TmpTriDiag.DiagonalElement(j) - this->EnergyShift) << endl;
+			{
+			  this->WriteResult(File, TmpTriDiag.DiagonalElement(j) - this->EnergyShift);
+			}
 		    }
 		  else
 		    {
@@ -602,7 +606,7 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 			}
 		      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
 			{
-			  File << this->KyValue << " " << (TmpTriDiag.DiagonalElement(j) - this->EnergyShift);
+			  this->WriteResult(File, TmpTriDiag.DiagonalElement(j) - this->EnergyShift, false);
 			  if (this->ComputeEnergyFlag == true)
 			    {
 			      RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
@@ -618,7 +622,7 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 	    }
 	  else
 	    {
-	      File << this->KyValue << " " << (HRep(0, 0)  - this->EnergyShift);
+	      this->WriteResult(File, HRep(0, 0)  - this->EnergyShift, false);
 	      if (this->ComputeEnergyFlag == true)
 		File << " " << (HRep(0, 0)  - this->EnergyShift) ;
 	      File << endl;
@@ -758,7 +762,9 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 	    {
 	      cout << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << " ";
 	      if  (this->ComputeEnergyFlag == false)
-		File << this->KyValue << " " << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << endl;
+		{
+		  this->WriteResult(File, TmpMatrix.DiagonalElement(i) - this->EnergyShift);
+		}
 	    }
 	  cout << endl;
 	  if ((this->EvaluateEigenvectors == true) && 
@@ -808,7 +814,7 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 		  for (int i = 0; i < this->NbrEigenvalue; ++i)
 		    {
 		      if (this->ComputeEnergyFlag == true)
-			File << this->KyValue << " " << (TmpMatrix.DiagonalElement(i) - this->EnergyShift);
+			this->WriteResult(File, TmpMatrix.DiagonalElement(i) - this->EnergyShift);
 		      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[i]), &TmpEigenvector);
 		      Operation1.ApplyOperation(this->Architecture);
 		      cout << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift) << " ";	
@@ -1164,8 +1170,9 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 // file = stream to write to
 // value = numerical value to be printed after columns for flux and momentum (if defined)
 // terminate = indicate if line should be terminated with endl
+// return value = stream to write to
 
-void FQHEOnTorusMainTask::WriteResult(ofstream& file, double value, bool terminate)
+ofstream& FQHEOnTorusMainTask::WriteResult(ofstream& file, double value, bool terminate)
 {
   if (this->KyOnlyFlag)
     file << this->KyValue << " ";
@@ -1176,6 +1183,7 @@ void FQHEOnTorusMainTask::WriteResult(ofstream& file, double value, bool termina
     file << " " << this->Multiplicity;
   if (terminate)
     file << endl;
+  return file;
 }
 
 // do the Hamiltonian diagonalization in a given Hilbert subspace
