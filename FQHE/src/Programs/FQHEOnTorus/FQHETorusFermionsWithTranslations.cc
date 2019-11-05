@@ -435,8 +435,8 @@ int main(int argc, char** argv)
 	      else
 		{
 		  if ((Manager.GetBoolean("enable-realhamiltonian") == true) &&
-		      ((XMomentum == 0) || (((MomentumModulo & 1) == 0) && (XMomentum == (MomentumModulo / 2)))) &&
-		      ((YMomentum == 0) || (((MomentumModulo & 1) == 0) && (YMomentum == (MomentumModulo / 2)))))
+		      (((XMomentum % MomentumModulo) == 0) || (((MomentumModulo & 1) == 0) && ((XMomentum % MomentumModulo) == (MomentumModulo / 2)))) &&
+		      (((YMomentum % MomentumModulo) == 0) || (((MomentumModulo & 1) == 0) && ((YMomentum % MomentumModulo) == (MomentumModulo / 2)))))
 		    {
 		      cout << "using real hamiltonian" << endl;
 		      ForceRealFlag = true;
