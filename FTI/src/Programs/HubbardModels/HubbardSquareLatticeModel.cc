@@ -68,7 +68,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of unit cells along the y direction", 2);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "gutzwiller", "use the Gutzwiller projection");
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "sz", "twice the spin Sz value", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "sz-value", "twice the spin Sz value", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use the Sz <-> -Sz symmetry");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "sz-parity", "select the  Sz <-> -Sz parity (can be 1 or -1, 0 if both sectors have to be computed", 0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive on-site (Hubbard) potential strength", 0.0);
@@ -110,7 +110,7 @@ int main(int argc, char** argv)
   int NbrParticles = Manager.GetInteger("nbr-particles"); 
   int NbrSitesX = Manager.GetInteger("nbr-sitex"); 
   int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
-  int TotalSz = Manager.GetInteger("sz");
+  int TotalSz = Manager.GetInteger("sz-value");
   int NbrSites = NbrSitesX * NbrSitesY; 
   bool GutzwillerFlag = Manager.GetBoolean("gutzwiller");
   bool SzSymmetryFlag = Manager.GetBoolean("szsymmetrized-basis");
