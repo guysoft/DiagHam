@@ -262,7 +262,7 @@ class SpinChainHamiltonianWithTranslations : public AbstractHamiltonian
 
   // evaluate all cosinus/sinus that are needed when computing matrix elements
   //
-  void EvaluateCosinusTable();
+  virtual void EvaluateCosinusTable();
 
   // evaluate all matrix elements
   //   

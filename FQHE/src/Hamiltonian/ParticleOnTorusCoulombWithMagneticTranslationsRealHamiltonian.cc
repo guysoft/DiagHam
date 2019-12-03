@@ -133,7 +133,7 @@ ParticleOnTorusCoulombWithMagneticTranslationsRealHamiltonian::ParticleOnTorusCo
     }
   cout << "FormFactor=" << this->FormFactor << endl;
   if ((particles->GetHilbertSpaceDimension() > 0) && (noWignerEnergy == false))
-    this->WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
+    this->WignerEnergy = ((double) this->NbrParticles) * this->EvaluateWignerCrystalEnergy() / 2.0;
   else 
     this->WignerEnergy = 0.0;
   this->Architecture = architecture;
@@ -209,6 +209,7 @@ void ParticleOnTorusCoulombWithMagneticTranslationsRealHamiltonian::EvaluateInte
   this->InteractionFactors = new double* [this->NbrSectorSums];
   if (this->Particles->GetParticleStatistic() == ParticleOnTorus::FermionicStatistic)
     {
+      double TmpPHEnergyShift = 0.0;
       for (int i = 0; i < this->NbrSectorSums; ++i)
 	{
 	  this->InteractionFactors[i] = new double[this->NbrSectorIndicesPerSum[i] * this->NbrSectorIndicesPerSum[i]];
@@ -229,8 +230,13 @@ void ParticleOnTorusCoulombWithMagneticTranslationsRealHamiltonian::EvaluateInte
 		  if (fabs(TmpCoefficient) > MaxCoefficient)
 		    MaxCoefficient = fabs(TmpCoefficient);
 		}
+	      TmpPHEnergyShift += (this->EvaluateInteractionCoefficient(m1, m2, m1, m2)
+				   + this->EvaluateInteractionCoefficient(m2, m1, m2, m1)
+				   - this->EvaluateInteractionCoefficient(m1, m2, m2, m1)
+				   - this->EvaluateInteractionCoefficient(m2, m1, m1, m2));
 	    }
 	}
+      cout << "ph energy shift = " << TmpPHEnergyShift << endl;
       MaxCoefficient *= MACHINE_PRECISION;
       for (int i = 0; i < this->NbrSectorSums; ++i)
 	{

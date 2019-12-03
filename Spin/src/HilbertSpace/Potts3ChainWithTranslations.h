@@ -228,6 +228,19 @@ class Potts3ChainWithTranslations : public AbstractSpinChainWithTranslations
   // return value = index of resulting state
   int SmiSpj (int i, int j, int state, double& coefficient, int& nbrTranslation);
 
+  // return index of resulting state from application of Sz_k S-_i S+_j operator on a given state, notice that the numerical factor produced by Szk
+  // is NOT included in coefficient but is returned separately 
+  //
+  // i = position of S- operator
+  // j = position of S+ operator
+  // k = position of Sz operator
+  // state = index of the state to be applied on Sz_k S-_i S+_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // szkCoefficient = reference on double where numerical coefficient for Szk has to be stored
+  // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of resulting state
+  int SzkSmiSpj (int i, int j, int k, int state, double& coefficient, double& szkCoefficient, int& nbrTranslation);
+
   // return index of resulting state from application of Sz_i operator on a given state
   //
   // i = position of Sz operator
@@ -406,6 +419,54 @@ inline int Potts3ChainWithTranslations::SmiSpj (int i, int j, int state, double&
       TmpState |= 0x2ul << i;      
       break;
     }	  
+  return this->FindStateIndexAndTransaltion(state, TmpState, nbrTranslation, i, coefficient);
+}
+
+// return index of resulting state from application of Sz_k S-_i S+_j operator on a given state, notice that the numerical factor produced by Szk
+// is NOT included in coefficient but is returned separately 
+//
+// i = position of S- operator
+// j = position of S+ operator
+// k = position of Sz operator
+// state = index of the state to be applied on Sz_k S-_i S+_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// szkCoefficient = reference on double where numerical coefficient for Szk has to be stored
+// nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of resulting state
+
+inline int Potts3ChainWithTranslations::SzkSmiSpj (int i, int j, int k, int state, double& coefficient, double& szkCoefficient, int& nbrTranslation)
+{
+  unsigned long TmpState = this->ChainDescription[state];
+  unsigned long TmpState2 = TmpState;
+  j <<= 1;
+  TmpState2 >>= j;
+  TmpState2 &= 0x3ul;
+  TmpState &= ~(0x3ul << j);
+  switch (TmpState2)
+    {
+    case 0x1ul:
+      TmpState |= 0x2ul << j;
+      break;
+    case 0x0ul:
+      TmpState |= 0x1ul << j;
+      break;
+    }	  
+  i <<= 1;
+  TmpState2 = TmpState;
+  TmpState2 >>= i;
+  TmpState2 &= 0x3ul;
+  TmpState &= ~(0x3ul << i);
+  switch (TmpState2)
+    {
+    case 0x2ul:
+      TmpState |= 0x1ul << i;      
+      break;
+    case 0x0ul:
+      TmpState |= 0x2ul << i;      
+      break;
+    }
+  szkCoefficient = (((double) ((TmpState >> (k << 1)) & 0x1ul))
+		    - ((double) ((TmpState >> ((k << 1) + 1)) & 0x1ul)));
   return this->FindStateIndexAndTransaltion(state, TmpState, nbrTranslation, i, coefficient);
 }
 

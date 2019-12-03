@@ -158,36 +158,6 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // return value = inearized momentum index
   virtual void GetLinearizedMomentumIndexSafe(int index, int& kx, int& ky);
   
-  // get the linearized momentum index
-  //
-  // kx = momentum along the x direction
-  // ky = momentum along the y direction
-  // return value = linearized momentum index
-  virtual int GetLinearizedMomentumIndexSuperlattice(int kx, int ky);
-  
-  // get momentum value from a linearized momentum index
-  //
-  // index = linearized momentum index
-  // kx = reference on the momentum along the x direction
-  // ky = reference on the momentum along the y direction
-  // return value = inearized momentum index
-  virtual void GetLinearizedMomentumIndexSuperlattice(int index, int& kx, int& ky);
-  
-  // get the linearized momentum index, without assuming k to be in the first BZ
-  //
-  // kx = momentum along the x direction
-  // ky = momentum along the y direction
-  // return value = linearized momentum index
-  virtual int GetLinearizedMomentumIndexSuperlatticeSafe(int kx, int ky);
-  
-  // get momentum value from a linearized momentum index, without assuming k to be in the first BZ
-  //
-  // index = linearized momentum index
-  // kx = reference on the momentum along the x direction
-  // ky = reference on the momentum along the y direction
-  // return value = inearized momentum index
-  virtual void GetLinearizedMomentumIndexSuperlatticeSafe(int index, int& kx, int& ky);
-  
   // get the index of the real space tight binding model from the real space coordinates
   //
   // x = x coordinate of the unit cell
@@ -655,54 +625,6 @@ inline void Abstract2DTightBindingModel::GetLinearizedMomentumIndexSafe(int inde
   ky = index % this->NbrSiteY;
 }
 
-
-// get the linearized momentum index
-//
-// kx = momentum along the x direction
-// ky = momentum along the y direction
-// return value = linearized momentum index
-
-inline int Abstract2DTightBindingModel::GetLinearizedMomentumIndexSuperlattice(int kx, int ky)
-{
-    std::cout <<"using dummy Abstract2DTightBindingModel::GetLinearizedMomentumIndexSuperlattice"<<std::endl;
-    return -1;
-}
-
-// get momentum value from a linearized momentum index
-//
-// index = linearized momentum index
-// kx = reference on the momentum along the x direction
-// ky = reference on the momentum along the y direction
-// return value = inearized momentum index
-
-inline void Abstract2DTightBindingModel::GetLinearizedMomentumIndexSuperlattice(int index, int& kx, int& ky)
-{
-    std::cout <<"using dummy Abstract2DTightBindingModel::GetLinearizedMomentumIndexSuperlattice"<<std::endl;
-}
-
-// get the linearized momentum index, without assuming k to be in the first BZ
-//
-// kx = momentum along the x direction
-// ky = momentum along the y direction
-// return value = linearized momentum index
-
-inline int Abstract2DTightBindingModel::GetLinearizedMomentumIndexSuperlatticeSafe(int kx, int ky)
-{
-    std::cout <<"using dummy Abstract2DTightBindingModel::GetLinearizedMomentumIndexSuperlatticeSafe"<<std::endl;
-    return -1;
-}
-
-// get momentum value from a linearized momentum index, without assuming k to be in the first BZ
-//
-// index = linearized momentum index
-// kx = reference on the momentum along the x direction
-// ky = reference on the momentum along the y direction
-// return value = inearized momentum index
-
-inline void Abstract2DTightBindingModel::GetLinearizedMomentumIndexSuperlatticeSafe(int index, int& kx, int& ky)
-{
-    std::cout <<"using dummy Abstract2DTightBindingModel::GetLinearizedMomentumIndexSuperlatticeSafe"<<std::endl;
-}
 
 // get the index of the real space tight binding model from the real space coordinates
 //

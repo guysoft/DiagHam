@@ -131,7 +131,7 @@ ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulom
     }
   cout << "FormFactor=" << this->FormFactor << endl;
   if ((particles->GetHilbertSpaceDimension() > 0) && (noWignerEnergy == false))
-    this->WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
+    this->WignerEnergy = ((double) this->NbrParticles) * this->EvaluateWignerCrystalEnergy() / 2.0;
   else 
     this->WignerEnergy = 0.0;
   this->Architecture = architecture;
