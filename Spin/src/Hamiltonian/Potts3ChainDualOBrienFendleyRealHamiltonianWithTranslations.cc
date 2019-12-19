@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "Hamiltonian/Potts3ChainDualOBrienFendleyHamiltonianWithTranslations.h"
+#include "Hamiltonian/Potts3ChainDualOBrienFendleyRealHamiltonianWithTranslations.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
@@ -51,12 +51,11 @@ using std::ostream;
 // chain = reference on Hilbert space of the associated system
 // nbrSpin = number of spin
 
-Potts3ChainDualOBrienFendleyHamiltonianWithTranslations::Potts3ChainDualOBrienFendleyHamiltonianWithTranslations(Potts3ChainWithTranslations* chain, int nbrSpin)
+Potts3ChainDualOBrienFendleyRealHamiltonianWithTranslations::Potts3ChainDualOBrienFendleyRealHamiltonianWithTranslations(Potts3ChainWithTranslations* chain, int nbrSpin)
 {
   this->Chain = chain;
   this->NbrSpin = nbrSpin;
   this->ReducedNbrSpin = this->NbrSpin -1;
-  this->FastMultiplicationFlag = false;
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateDiagonalMatrixElements();
   this->EvaluateCosinusTable();
@@ -65,7 +64,7 @@ Potts3ChainDualOBrienFendleyHamiltonianWithTranslations::Potts3ChainDualOBrienFe
 // destructor
 //
 
-Potts3ChainDualOBrienFendleyHamiltonianWithTranslations::~Potts3ChainDualOBrienFendleyHamiltonianWithTranslations() 
+Potts3ChainDualOBrienFendleyRealHamiltonianWithTranslations::~Potts3ChainDualOBrienFendleyRealHamiltonianWithTranslations() 
 {
 }
 
@@ -73,7 +72,7 @@ Potts3ChainDualOBrienFendleyHamiltonianWithTranslations::~Potts3ChainDualOBrienF
 //
 // hilbertSpace = pointer to Hilbert space to use
 
-void Potts3ChainDualOBrienFendleyHamiltonianWithTranslations::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+void Potts3ChainDualOBrienFendleyRealHamiltonianWithTranslations::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
   delete[] this->SzSzContributions;
   this->Chain = (Potts3ChainWithTranslations*) hilbertSpace;
@@ -85,7 +84,7 @@ void Potts3ChainDualOBrienFendleyHamiltonianWithTranslations::SetHilbertSpace (A
 //
 // return value = pointer to used Hilbert space
 
-AbstractHilbertSpace* Potts3ChainDualOBrienFendleyHamiltonianWithTranslations::GetHilbertSpace ()
+AbstractHilbertSpace* Potts3ChainDualOBrienFendleyRealHamiltonianWithTranslations::GetHilbertSpace ()
 {
   return this->Chain;
 }
@@ -94,7 +93,7 @@ AbstractHilbertSpace* Potts3ChainDualOBrienFendleyHamiltonianWithTranslations::G
 //
 // return value = corresponding matrix elementdimension
 
-int Potts3ChainDualOBrienFendleyHamiltonianWithTranslations::GetHilbertSpaceDimension ()
+int Potts3ChainDualOBrienFendleyRealHamiltonianWithTranslations::GetHilbertSpaceDimension ()
 {
   return this->Chain->GetHilbertSpaceDimension();
 }
@@ -108,8 +107,8 @@ int Potts3ChainDualOBrienFendleyHamiltonianWithTranslations::GetHilbertSpaceDime
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-ComplexVector& Potts3ChainDualOBrienFendleyHamiltonianWithTranslations::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-											    int firstComponent, int nbrComponent)
+RealVector& Potts3ChainDualOBrienFendleyRealHamiltonianWithTranslations::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+											     int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   int dim = this->Chain->GetHilbertSpaceDimension();
@@ -121,7 +120,7 @@ ComplexVector& Potts3ChainDualOBrienFendleyHamiltonianWithTranslations::LowLevel
   Potts3ChainWithTranslations* TmpChain = (Potts3ChainWithTranslations*) (this->Chain);
   for (int i = firstComponent; i < LastComponent; ++i)
     {
-      Complex TmpValue = vSource[i];
+      double TmpValue = vSource[i];
       vDestination[i] += this->SzSzContributions[i] * TmpValue;
       for (int j = 0; j < this->ReducedNbrSpin; ++j)
 	{
@@ -214,27 +213,10 @@ ComplexVector& Potts3ChainDualOBrienFendleyHamiltonianWithTranslations::LowLevel
   return vDestination;
 }
 
-// evaluate all cosinus/sinus that are needed when computing matrix elements
-//
-
-void Potts3ChainDualOBrienFendleyHamiltonianWithTranslations::EvaluateCosinusTable()
-{
-  this->CosinusTable = new double [2 * this->NbrSpin];
-  this->SinusTable = new double [2 * this->NbrSpin];
-  this->ExponentialTable = new Complex [2 * this->NbrSpin];
-  double Coef = 2.0 * M_PI * ((double) this->Chain->GetMomentum()) / ((double) this->NbrSpin);
-  for (int i = 0; i < (2 * this->NbrSpin); ++i)
-    {
-      this->CosinusTable[i] = cos(Coef * ((double) i));
-      this->SinusTable[i] = sin(Coef * ((double) i));
-      this->ExponentialTable[i] = Phase(Coef * ((double) i));
-    }
-}
-
 // evaluate diagonal matrix elements
 // 
 
-void Potts3ChainDualOBrienFendleyHamiltonianWithTranslations::EvaluateDiagonalMatrixElements()
+void Potts3ChainDualOBrienFendleyRealHamiltonianWithTranslations::EvaluateDiagonalMatrixElements()
 {
   int Dimension = this->Chain->GetHilbertSpaceDimension();
   double Coefficient;

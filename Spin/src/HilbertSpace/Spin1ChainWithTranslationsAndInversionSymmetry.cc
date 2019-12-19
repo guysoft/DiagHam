@@ -82,9 +82,9 @@ Spin1ChainWithTranslationsAndInversionSymmetry::Spin1ChainWithTranslationsAndInv
       this->InversionSector = -1.0;
     }
 #ifdef __64_BITS__
-  this->InversionShift = 32 - ((((this->ChainLength - 1) >> 1) - 1) << 1);
+  this->InversionShift = 32 - ((((this->ChainLength + 1) >> 1)) << 1);
 #else
-  this->InversionShift = 16 - ((((this->ChainLength - 1) >> 1) - 1) << 1);
+  this->InversionShift = 16 - ((((this->ChainLength + 1) >> 1) - 1) << 1);
 #endif
   if ((this->ChainLength & 1) == 0)
     this->InversionUnshift = this->InversionShift - 2;

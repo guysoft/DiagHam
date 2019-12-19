@@ -73,4 +73,5 @@ PairHoppingRealHamiltonianWithTranslations.cc \
 SpinChainOBrienFendleyHamiltonianWithTranslations.cc \
 SpinChainOBrienFendleyRealHamiltonianWithTranslations.cc \
 Potts3ChainDualOBrienFendleyHamiltonian.cc \
-Potts3ChainDualOBrienFendleyHamiltonianWithTranslations.cc
+Potts3ChainDualOBrienFendleyHamiltonianWithTranslations.cc \
+Potts3ChainDualOBrienFendleyRealHamiltonianWithTranslations.cc
