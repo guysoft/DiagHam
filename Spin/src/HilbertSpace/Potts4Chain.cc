@@ -58,7 +58,7 @@ Potts4Chain::Potts4Chain ()
   this->LookUpTableSize = 0;
   this->LookUpTableShift = 0;
   this->HilbertSpaceDimension = 0;
-  this->ChainDescription = 0;
+  this->StateDescription = 0;
   this->ChainLength = 0;
   this->Sz = 0;
   this->FixedQuantumNumberFlag = false;
@@ -79,7 +79,7 @@ Potts4Chain::Potts4Chain (int chainLength, int memorySize)
   for (int i = 1; i < chainLength; i++)
     this->LargeHilbertSpaceDimension *= 4l;
   
-  this->ChainDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+  this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
   this->LargeHilbertSpaceDimension = this->GenerateStates (this->ChainLength - 1, 0);
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
@@ -100,7 +100,7 @@ Potts4Chain::Potts4Chain (int chainLength, int memorySize)
     }
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     {
-      unsigned long Tmp = this->ChainDescription[i] >> this->LookUpTableShift;
+      unsigned long Tmp = this->StateDescription[i] >> this->LookUpTableShift;
       if (this->LookUpTable[Tmp] == this->HilbertSpaceDimension)
 	this->LookUpTable[Tmp] = i;
     }
@@ -125,7 +125,7 @@ Potts4Chain::Potts4Chain (int chainLength, int sz, int memorySize)
   else
     this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
 
-  this->ChainDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+  this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
   this->LargeHilbertSpaceDimension = this->GenerateStates (this->ChainLength - 1, 0, 0);
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
@@ -146,7 +146,7 @@ Potts4Chain::Potts4Chain (int chainLength, int sz, int memorySize)
     }
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     {
-      unsigned long Tmp = this->ChainDescription[i] >> this->LookUpTableShift;
+      unsigned long Tmp = this->StateDescription[i] >> this->LookUpTableShift;
       if (this->LookUpTable[Tmp] == this->HilbertSpaceDimension)
 	this->LookUpTable[Tmp] = i;
     }
@@ -171,7 +171,7 @@ Potts4Chain::Potts4Chain (long largeHilbertSpaceDimension, unsigned long* chainD
   this->LookUpTable = lookUpTable;
   this->LookUpTableShift = lookUpTableShift;
   this->LookUpTableSize = lookUpTableSize;
-  this->ChainDescription = chainDescription;
+  this->StateDescription = chainDescription;
   this->Sz = sz;
   this->FixedQuantumNumberFlag = fixedQuantumNumberFlag;
   this->ChainLength = chainLength;
@@ -196,7 +196,7 @@ Potts4Chain::Potts4Chain (const Potts4Chain& chain)
       this->LookUpTable = chain.LookUpTable;
       this->LookUpTableShift = chain.LookUpTableShift;
       this->LookUpTableSize = chain.LookUpTableSize;
-      this->ChainDescription = chain.ChainDescription;
+      this->StateDescription = chain.StateDescription;
       this->Sz = chain.Sz;
       this->FixedQuantumNumberFlag = chain.FixedQuantumNumberFlag;
       this->LargeHilbertSpaceDimension = chain.LargeHilbertSpaceDimension;
@@ -207,7 +207,7 @@ Potts4Chain::Potts4Chain (const Potts4Chain& chain)
       this->LookUpTableSize = 0;
       this->LookUpTableShift = 0;
       this->HilbertSpaceDimension = 0;
-      this->ChainDescription = 0;
+      this->StateDescription = 0;
       this->ChainLength = 0;
       this->Sz = 0;
       this->FixedQuantumNumberFlag = false;
@@ -222,7 +222,7 @@ Potts4Chain::~Potts4Chain ()
 {
   if ((this->ChainLength != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->ChainDescription;
+      delete[] this->StateDescription;
       delete[] this->LookUpTable;
     }
 }
@@ -236,13 +236,13 @@ Potts4Chain& Potts4Chain::operator = (const Potts4Chain& chain)
 {
   if ((this->ChainLength != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->ChainDescription;
+      delete[] this->StateDescription;
       delete[] this->LookUpTable;
     }  
   this->Flag = chain.Flag;
   if (chain.ChainLength != 0)
     {
-      this->ChainDescription = chain.ChainDescription;
+      this->StateDescription = chain.StateDescription;
       this->ChainLength = chain.ChainLength;
       this->HilbertSpaceDimension = chain.HilbertSpaceDimension;
       this->LookUpTable = chain.LookUpTable;
@@ -258,7 +258,7 @@ Potts4Chain& Potts4Chain::operator = (const Potts4Chain& chain)
       this->LookUpTableSize = 0;
       this->LookUpTableShift = 0;
       this->HilbertSpaceDimension = 0;
-      this->ChainDescription = 0;
+      this->StateDescription = 0;
       this->ChainLength = 0;
       this->Sz = 0;
       this->FixedQuantumNumberFlag = false;
@@ -309,21 +309,21 @@ long Potts4Chain::GenerateStates(int currentSite, long currentPosition)
 {
   if (currentSite < 0)
     {
-      this->ChainDescription[currentPosition] = 0x0l;
+      this->StateDescription[currentPosition] = 0x0l;
       return (currentPosition + 1l);
     }
   long TmpPosition = this->GenerateStates(currentSite - 1, currentPosition);
   unsigned long TmpMask = 0x3ul << (currentSite << 1);
   for (; currentPosition < TmpPosition; ++currentPosition)
-    this->ChainDescription[currentPosition] |= TmpMask;
+    this->StateDescription[currentPosition] |= TmpMask;
   TmpPosition = this->GenerateStates(currentSite - 1, currentPosition);
   TmpMask = 0x2ul << (currentSite << 1);
   for (; currentPosition < TmpPosition; ++currentPosition)
-    this->ChainDescription[currentPosition] |= TmpMask;
+    this->StateDescription[currentPosition] |= TmpMask;
   TmpPosition = this->GenerateStates(currentSite - 1, currentPosition);
   TmpMask = 0x1ul << (currentSite << 1);
   for (; currentPosition < TmpPosition; ++currentPosition)
-    this->ChainDescription[currentPosition] |= TmpMask;
+    this->StateDescription[currentPosition] |= TmpMask;
   return this->GenerateStates(currentSite - 1, currentPosition);
 }
 
@@ -340,7 +340,7 @@ long Potts4Chain::GenerateStates(int currentSite, int currentSzValue, long curre
     {
       if ((currentSzValue & 2) == this->Sz)
 	{
-	  this->ChainDescription[currentPosition] = 0x0l;
+	  this->StateDescription[currentPosition] = 0x0l;
 	  return (currentPosition + 1l);
 	}
       else
@@ -350,19 +350,19 @@ long Potts4Chain::GenerateStates(int currentSite, int currentSzValue, long curre
   unsigned long TmpMask = 0x3ul << (currentSite << 1);
   for (; currentPosition < TmpPosition; ++currentPosition)
     {
-      this->ChainDescription[currentPosition] |= TmpMask;
+      this->StateDescription[currentPosition] |= TmpMask;
     }
   TmpPosition = this->GenerateStates(currentSite - 1, currentSzValue + 2, currentPosition);
   TmpMask = 0x2ul << (currentSite << 1);
   for (; currentPosition < TmpPosition; ++currentPosition)
     {
-      this->ChainDescription[currentPosition] |= TmpMask;
+      this->StateDescription[currentPosition] |= TmpMask;
     }
   TmpPosition = this->GenerateStates(currentSite - 1, currentSzValue + 1, currentPosition);
   TmpMask = 0x1ul << (currentSite << 1);
   for (; currentPosition < TmpPosition; ++currentPosition)
     {
-      this->ChainDescription[currentPosition] |= TmpMask;
+      this->StateDescription[currentPosition] |= TmpMask;
     }
   return this->GenerateStates(currentSite - 1, currentSzValue, currentPosition);
 }
@@ -408,7 +408,7 @@ int Potts4Chain::TotalSz (int index)
 {
   if (this->FixedQuantumNumberFlag == true)
     return this->Sz;
-  unsigned long State = this->ChainDescription[index];
+  unsigned long State = this->StateDescription[index];
   unsigned long TmpSz = 0l;
   for (int i = 0; i < this->ChainLength; ++i)
     {
@@ -428,7 +428,7 @@ int Potts4Chain::TotalSz (int index)
 
 int Potts4Chain::SpiSpj (int i, int j, int state, double& coefficient)
 {
-  unsigned long tmpState = this->ChainDescription[state];
+  unsigned long tmpState = this->StateDescription[state];
   unsigned long tmpState2 = tmpState;
   j <<= 1;
   tmpState2 >>= j;
@@ -476,7 +476,7 @@ int Potts4Chain::SpiSpj (int i, int j, int state, double& coefficient)
 
 int Potts4Chain::SmiSmj (int i, int j, int state, double& coefficient)
 {
-  unsigned long tmpState = this->ChainDescription[state];
+  unsigned long tmpState = this->StateDescription[state];
   unsigned long tmpState2 = tmpState;
   j <<= 1;
   tmpState2 >>= j;
@@ -524,7 +524,7 @@ int Potts4Chain::SmiSmj (int i, int j, int state, double& coefficient)
 
 int Potts4Chain::SpiSzj (int i, int j, int state, double& coefficient)
 {
-  unsigned long tmpState = this->ChainDescription[state];
+  unsigned long tmpState = this->StateDescription[state];
   unsigned long tmpState2 = tmpState;
   j <<= 1;
   tmpState2 >>= j;
@@ -565,7 +565,7 @@ int Potts4Chain::SpiSzj (int i, int j, int state, double& coefficient)
 
 int Potts4Chain::SmiSzj (int i, int j, int state, double& coefficient)
 {
-  unsigned long tmpState = this->ChainDescription[state];
+  unsigned long tmpState = this->StateDescription[state];
   unsigned long tmpState2 = tmpState;
   j <<= 1;
   tmpState2 >>= j;
@@ -605,7 +605,7 @@ int Potts4Chain::SmiSzj (int i, int j, int state, double& coefficient)
 
 int Potts4Chain::Spi (int i, int state, double& coefficient)
 {
-  unsigned long tmpState = this->ChainDescription[state];
+  unsigned long tmpState = this->StateDescription[state];
   unsigned long tmpState2 = tmpState;
   i <<= 1;
   tmpState2 = tmpState;
@@ -636,7 +636,7 @@ int Potts4Chain::Spi (int i, int state, double& coefficient)
 
 int Potts4Chain::Smi (int i, int state, double& coefficient)
 {
-  unsigned long tmpState = this->ChainDescription[state];
+  unsigned long tmpState = this->StateDescription[state];
   unsigned long tmpState2 = tmpState;
   i <<= 1;
   tmpState2 = tmpState;
@@ -666,7 +666,7 @@ int Potts4Chain::Smi (int i, int state, double& coefficient)
 
 int Potts4Chain::TranslateState (int nbrTranslations, int state)
 {
-  unsigned long TmpState = this->ChainDescription[state];
+  unsigned long TmpState = this->StateDescription[state];
   TmpState = (((TmpState & (0x3ul << ((this->ChainLength - nbrTranslations) - 1ul)) << 1) << nbrTranslations)
 	      | (TmpState >> ((this->ChainLength - nbrTranslations) << 1)));
   return this->FindStateIndex(TmpState);
@@ -680,7 +680,7 @@ int Potts4Chain::TranslateState (int nbrTranslations, int state)
 
 ostream& Potts4Chain::PrintState (ostream& Str, int state)
 {
-  unsigned long StateDescription = this->ChainDescription[state];  
+  unsigned long StateDescription = this->StateDescription[state];  
   for (int j = 0; j < this->ChainLength; ++j)
     {
       Str << (StateDescription & 0x3ul) << " ";
@@ -746,10 +746,10 @@ HermitianMatrix Potts4Chain::EvaluatePartialDensityMatrix (int nbrSites, int szS
   for (; MinIndex < MaxIndex; ++MinIndex)    
     {
       int Pos = 0;
-      unsigned long TmpState = (TmpHilbertSpace.ChainDescription[MinIndex] << Shift);
+      unsigned long TmpState = (TmpHilbertSpace.StateDescription[MinIndex] << Shift);
       for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
 	{
-	  unsigned long TmpState2 = TmpState | TmpDestinationHilbertSpace.ChainDescription[j];
+	  unsigned long TmpState2 = TmpState | TmpDestinationHilbertSpace.StateDescription[j];
 	  int TmpPos = this->FindStateIndex(TmpState2);
 	  if (TmpPos != this->HilbertSpaceDimension)
 	    {
@@ -835,10 +835,10 @@ ComplexMatrix Potts4Chain::EvaluatePartialEntanglementMatrix (int nbrSites, int 
   for (; MinIndex < MaxIndex; ++MinIndex)    
     {
       int Pos = 0;
-      unsigned long TmpState = (TmpHilbertSpace.ChainDescription[MinIndex] << Shift);
+      unsigned long TmpState = (TmpHilbertSpace.StateDescription[MinIndex] << Shift);
       for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
 	{
-	  unsigned long TmpState2 = TmpState | TmpDestinationHilbertSpace.ChainDescription[j];
+	  unsigned long TmpState2 = TmpState | TmpDestinationHilbertSpace.StateDescription[j];
 	  int TmpPos = this->FindStateIndex(TmpState2);
 	  if (TmpPos != this->HilbertSpaceDimension)
 	    {

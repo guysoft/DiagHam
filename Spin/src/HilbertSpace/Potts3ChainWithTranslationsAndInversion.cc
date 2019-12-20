@@ -30,6 +30,8 @@
 
 
 #include "HilbertSpace/Potts3ChainWithTranslationsAndInversion.h"
+#include "HilbertSpace/Potts3ChainWithTranslations.h"
+#include "HilbertSpace/Potts3Chain.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealMatrix.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
@@ -201,6 +203,7 @@ Potts3ChainWithTranslationsAndInversion::Potts3ChainWithTranslationsAndInversion
       this->InversionSector = chain.InversionSector;
       this->InversionShift = chain.InversionShift;
       this->InversionUnshift = chain.InversionUnshift;
+      this->RescalingFactors = chain.RescalingFactors;
    }
   else
     {
@@ -263,7 +266,8 @@ Potts3ChainWithTranslationsAndInversion& Potts3ChainWithTranslationsAndInversion
       this->InversionSector = chain.InversionSector;
       this->InversionShift = chain.InversionShift;
       this->InversionUnshift = chain.InversionUnshift;
-   }
+      this->RescalingFactors = chain.RescalingFactors;
+    }
   else
     {
       this->LookUpTable = 0;
@@ -364,3 +368,95 @@ void Potts3ChainWithTranslationsAndInversion::GenerateStates()
 	}
     }
 }
+
+// evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
+// 
+// nbrSites = number of sites that are part of the A subsytem 
+// szSector = Sz sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+
+RealMatrix Potts3ChainWithTranslationsAndInversion::EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture)
+{
+  if (nbrSites == 0)
+    {
+      if (szSector == 0)
+	{
+	  RealMatrix TmpEntanglementMatrix(1, 1);
+          double Tmp = 1.0;
+	  TmpEntanglementMatrix.SetMatrixElement(0, 0, Tmp);
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  RealMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;	  
+	}
+      
+    }
+  if (nbrSites == this->ChainLength)
+    {
+      if (szSector == this->Sz)
+	{
+	  RealMatrix TmpEntanglementMatrix(1, 1);
+	  double Tmp = 1.0;
+	  TmpEntanglementMatrix.SetMatrixElement(0, 0, Tmp);
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  RealMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;	  
+	}      
+    }
+  Potts3Chain TmpDestinationHilbertSpace(nbrSites, szSector, 1000000);
+  int QB = this->Sz - szSector;
+  if (QB < 0)
+    {
+      QB += 3;
+    }
+  Potts3Chain TmpHilbertSpace(this->ChainLength - nbrSites, QB, 1000000);
+
+  RealMatrix TmpEntanglementMatrix(TmpHilbertSpace.HilbertSpaceDimension, TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
+  int Shift = 2 * nbrSites;
+  int MinIndex = 0;
+  int MaxIndex = TmpHilbertSpace.HilbertSpaceDimension;
+  int TmpNbrTranslation;
+  int TmpNbrTranslationToIdentity;
+  double* TmpPhases = new double [2 * this->ChainLength];
+  TmpPhases[0] = 1.0;
+  if (this->Momentum == 0)
+    {
+      for (int i = 1; i < (2 * this->ChainLength); ++i)
+	{
+	  TmpPhases[i] = 1.0;
+	}
+    }
+  else
+    {
+      for (int i = 1; i < (2 * this->ChainLength); ++i)
+	{
+	  TmpPhases[i] = -TmpPhases[i - 1];
+	}
+    }
+  unsigned long Mask1 = (0x1ul << Shift) - 0x1ul;
+  unsigned long Mask2 = (0x1ul << (2 * this->ChainLength)) - 0x1ul;
+  for (; MinIndex < MaxIndex; ++MinIndex)    
+    {
+      unsigned long TmpState = TmpHilbertSpace.StateDescription[MinIndex] << Shift;
+      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpState2 = (TmpState | (TmpDestinationHilbertSpace.StateDescription[j] & Mask1)) & Mask2;
+	  double Coefficient = 1.0;
+	  int TmpPos = this->SymmetrizeResult(TmpState2, 1, Coefficient, TmpNbrTranslation);
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+	      TmpEntanglementMatrix.AddToMatrixElement(MinIndex, j, groundState[TmpPos] * TmpPhases[TmpNbrTranslation] * Coefficient);
+	    }
+	}
+    }
+  delete[] TmpPhases;
+  return TmpEntanglementMatrix;
+}
+

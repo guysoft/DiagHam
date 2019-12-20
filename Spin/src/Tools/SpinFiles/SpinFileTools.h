@@ -215,6 +215,44 @@ bool SpinWith2DTranslationInversionFindSystemInfoFromVectorFileName(char* filena
 // return value = true if no error occured
 bool PottsFindSystemInfoFromVectorFileName(char* filename, int& nbrSites, int& qValue);
 
+// try to guess system information from file name without a fixed total Q value
+//
+// filename = file name
+// nbrSpins = reference to the number of spins 
+// nValue = reference to the n of the Zn
+// qValue = reference to Zn charge
+// return value = true if no error occured
+bool PottsFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& nValue, int& qValue);
+
+// try to guess system information from file name without a fixed total Q value
+//
+// filename = file name
+// nbrSpins = reference to the number of spins 
+// nValue = reference to the n of the Zn
+// qValue = reference to Zn charge
+// momentum = reference on the momentum
+// return value = true if no error occured
+bool PottsFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& nValue, int& qValue, int& momentum);
+
+// try to guess system information from file name without a fixed total Q value
+//
+// filename = file name
+// nbrSpins = reference to the number of spins 
+// nValue = reference to the n of the Zn
+// qValue = reference to Zn charge
+// momentum = reference on the momentum
+// inversion =  reference on the inversion parity
+// return value = true if no error occured
+bool PottsFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& nValue, int& qValue, int& momentum, int& inversion);
+
+// try to guess system information from file name
+//
+// filename = file name
+// nbrSites = reference to the number of sites
+// qValue = reference to Zn charge
+// return value = true if no error occured
+bool PottsFindSystemInfoFromVectorFileName(char* filename, int& nbrSites, int& qValue);
+
 bool PEPSFindSystemInfoFromVectorFileNameUndescribedSpace(char* filename, int& nbrSpins, int & bondDimension);
 
 bool PEPSFindSystemInfoFromVectorFileNameUndescribedSpace(char* filename, int& nbrSpins,int & bondDimension, int & momentum);

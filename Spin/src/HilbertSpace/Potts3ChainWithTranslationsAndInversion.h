@@ -128,6 +128,15 @@ class Potts3ChainWithTranslationsAndInversion : public Potts3ChainWithTranslatio
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
+  // evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
+  // 
+  // nbrSites = number of sites that are part of the A subsytem 
+  // szSector = Sz sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+  virtual RealMatrix EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture = 0);
+
  protected:
   
   // factorized code that is used to symmetrize the result of any operator action

@@ -956,9 +956,10 @@ bool PottsFindSystemInfoFromVectorFileName(char* filename, int& nbrSites, int& q
 	++SizeString;
       if ((SizeString > 1) || ((SizeString == 1) && (StrNbrSpins[0] != '-')))
 	{
+	  char TmpChar = StrNbrSpins[SizeString];
 	  StrNbrSpins[SizeString] = '\0';
 	  qValue = atoi(StrNbrSpins);
-	  StrNbrSpins[SizeString] = '.';
+	  StrNbrSpins[SizeString] = TmpChar;
 	  StrNbrSpins += SizeString;
 	}
       else
@@ -970,6 +971,136 @@ bool PottsFindSystemInfoFromVectorFileName(char* filename, int& nbrSites, int& q
       return false;            
     }
   return true; 
+}
+
+// try to guess system information from file name without a fixed total Q value
+//
+// filename = file name
+// nbrSpins = reference to the number of spins 
+// nValue = reference to the n of the Zn
+// qValue = reference to Zn charge
+// return value = true if no error occured
+
+bool PottsFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& nValue, int& qValue)
+{
+  if (PottsFindSystemInfoFromVectorFileName(filename, nbrSpins, qValue) == false)
+    return false;
+  char* StrNbrSpins;
+  StrNbrSpins = strstr(filename, "potts");
+  if (StrNbrSpins != 0)
+    {
+      StrNbrSpins += 5;
+      if ((StrNbrSpins[0] >= '0') && (StrNbrSpins[0] <= '9'))
+	{
+	  char TmpChar = StrNbrSpins[1];
+	  StrNbrSpins[1] = '\0';
+	  nValue = atoi(StrNbrSpins);
+	  StrNbrSpins[1] = TmpChar;
+	}
+      else
+	{
+	  StrNbrSpins = 0;
+	}
+    }
+  if (StrNbrSpins == 0)
+    {
+      cout << "can't guess Zn from file name " << filename << endl;
+      return false;
+    }
+  return true;  
+}
+
+// try to guess system information from file name without a fixed total Q value
+//
+// filename = file name
+// nbrSpins = reference to the number of spins 
+// nValue = reference to the n of the Zn
+// qValue = reference to Zn charge
+// momentum = reference on the momentum
+// return value = true if no error occured
+
+bool PottsFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& nValue, int& qValue, int& momentum)
+{
+  if (PottsFindSystemInfoFromVectorFileName(filename, nbrSpins, nValue, qValue) == false)
+    return false;
+  char* StrMomentum = strstr(filename, "_k_");
+  if (StrMomentum != 0)
+    {
+      StrMomentum += 3;
+      int SizeString = 0;
+      if (StrMomentum[SizeString] == '-')
+	++SizeString;
+      while ((StrMomentum[SizeString] != '\0') && (StrMomentum[SizeString] != '_') && (StrMomentum[SizeString] != '.') && (StrMomentum[SizeString] >= '0') 
+	     && (StrMomentum[SizeString] <= '9'))
+	++SizeString;
+      if ((StrMomentum[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrMomentum[SizeString] = '\0';
+	  momentum = atoi(StrMomentum);
+	  StrMomentum[SizeString] = '_';
+	  StrMomentum += SizeString;
+	}
+      else
+	{
+	  if ((StrMomentum[SizeString] == '.') && (SizeString != 0))
+	    {
+	      StrMomentum[SizeString] = '\0';
+	      momentum = atoi(StrMomentum);
+	      StrMomentum[SizeString] = '.';
+	      StrMomentum += SizeString;
+	    }
+	  else
+	    {
+	      StrMomentum = 0;
+	    }
+	}
+    }
+  if (StrMomentum == 0)
+    {
+      cout << "can't guess momentum from file name " << filename << endl;
+      return false;            
+    }
+  return true;
+}
+
+// try to guess system information from file name without a fixed total Q value
+//
+// filename = file name
+// nbrSpins = reference to the number of spins 
+// nValue = reference to the n of the Zn
+// qValue = reference to Zn charge
+// momentum = reference on the momentum
+// inversion =  reference on the inversion parity
+// return value = true if no error occured
+
+bool PottsFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& nValue, int& qValue, int& momentum, int& inversion)
+{
+  if (PottsFindSystemInfoFromVectorFileName(filename, nbrSpins, nValue, qValue, momentum) == false)
+    return false;
+  inversion = 0;
+  char* StrNbrParticles = strstr(filename, "_invsym_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 8;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && 
+	     (((StrNbrParticles[SizeString] >= '0') && (StrNbrParticles[SizeString] <= '9')) || (StrNbrParticles[SizeString] == '-')))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  inversion = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	{
+	  cout << "error while retrieving the inversion parity" << endl;
+	  return false;
+	}
+    }
+  return true;
 }
 
 bool PEPSFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz)

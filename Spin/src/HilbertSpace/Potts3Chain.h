@@ -56,6 +56,10 @@ using std::endl;
 class Potts3Chain : public AbstractSpinChain
 {
 
+
+  friend class Potts3ChainWithTranslations;
+  friend class Potts3ChainWithTranslationsAndInversion;
+  
  protected:
 
   // total quantum number for the chain (i.e. either 0, 1 or 2)
@@ -70,9 +74,11 @@ class Potts3Chain : public AbstractSpinChain
   // shift to apply to a state to get the key in th look-up table
   int LookUpTableShift;
 
- public:
+  // array containing the state descriptions
+  unsigned long* StateDescription;
 
-  unsigned long* ChainDescription;
+public:
+
 
   // default constructor
   //
@@ -326,9 +332,9 @@ class Potts3Chain : public AbstractSpinChain
 
 inline int Potts3Chain::Szi (int i, int state, double& coefficient)
 {
-  //  coefficient = (double) ((this->ChainDescription[state] >> (i << 1)) & 0x3ul);
-  coefficient = (((double) ((this->ChainDescription[state] >> (i << 1)) & 0x1ul))
-		 - ((double) ((this->ChainDescription[state] >> ((i << 1) + 1)) & 0x1ul)));
+  //  coefficient = (double) ((this->StateDescription[state] >> (i << 1)) & 0x3ul);
+  coefficient = (((double) ((this->StateDescription[state] >> (i << 1)) & 0x1ul))
+		 - ((double) ((this->StateDescription[state] >> ((i << 1) + 1)) & 0x1ul)));
   return state;
 }
 
@@ -341,8 +347,8 @@ inline int Potts3Chain::Szi (int i, int state, double& coefficient)
 
 inline double Potts3Chain::SziSzj (int i, int j, int state)
 {  
-  return ((double) (((this->ChainDescription[state] >> (i << 1)) & 0x3ul)
-		    * ((this->ChainDescription[state] >> (j << 1)) & 0x3ul)));
+  return ((double) (((this->StateDescription[state] >> (i << 1)) & 0x3ul)
+		    * ((this->StateDescription[state] >> (j << 1)) & 0x3ul)));
 }
 
 // return index of resulting state from application of S-_i S+_j operator on a given state
@@ -355,7 +361,7 @@ inline double Potts3Chain::SziSzj (int i, int j, int state)
 
 inline int Potts3Chain::SmiSpj (int i, int j, int state, double& coefficient)
 {  
-  unsigned long tmpState = this->ChainDescription[state];
+  unsigned long tmpState = this->StateDescription[state];
   unsigned long tmpState2 = tmpState;
   j <<= 1;
   tmpState2 >>= j;
@@ -395,7 +401,7 @@ inline int Potts3Chain::SmiSpj (int i, int j, int state, double& coefficient)
 inline double Potts3Chain::QValue (int index)
 {
   unsigned long Tmp = 0x0ul;
-  unsigned long Tmp2 = this->ChainDescription[index];
+  unsigned long Tmp2 = this->StateDescription[index];
   for (int i = 0; i < this->ChainLength; ++i)
     {
       Tmp += Tmp2 & 0x3ul;
@@ -411,10 +417,10 @@ inline double Potts3Chain::QValue (int index)
 
 inline int Potts3Chain::FindStateIndex(unsigned long state)
 {
-  return SearchInArrayDownOrdering<unsigned long> (state, this->ChainDescription, 
+  return SearchInArrayDownOrdering<unsigned long> (state, this->StateDescription, 
 						   this->HilbertSpaceDimension);
 /*   int TmpShift = this->LookUpTable[state >> this->LookUpTableShift]; */
-/*   return (TmpShift + SearchInArrayDownOrdering<unsigned long> (state, this->ChainDescription + TmpShift, */
+/*   return (TmpShift + SearchInArrayDownOrdering<unsigned long> (state, this->StateDescription + TmpShift, */
 /* 							       this->HilbertSpaceDimension - TmpShift)); */
 }
 

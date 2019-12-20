@@ -292,7 +292,7 @@ class Potts4Chain : public Potts3Chain
 
 inline int Potts4Chain::Szi (int i, int state, double& coefficient)
 {
-  coefficient = (double) ((this->ChainDescription[state] >> (i << 1)) & 0x3ul);
+  coefficient = (double) ((this->StateDescription[state] >> (i << 1)) & 0x3ul);
   return state;
 }
 
@@ -305,8 +305,8 @@ inline int Potts4Chain::Szi (int i, int state, double& coefficient)
 
 inline double Potts4Chain::SziSzj (int i, int j, int state)
 {  
-  return ((double) (((this->ChainDescription[state] >> (i << 1)) & 0x3ul)
-		    * ((this->ChainDescription[state] >> (j << 1)) & 0x3ul)));
+  return ((double) (((this->StateDescription[state] >> (i << 1)) & 0x3ul)
+		    * ((this->StateDescription[state] >> (j << 1)) & 0x3ul)));
 }
 
 // return index of resulting state from application of S-_i S+_j operator on a given state
@@ -319,7 +319,7 @@ inline double Potts4Chain::SziSzj (int i, int j, int state)
 
 inline int Potts4Chain::SmiSpj (int i, int j, int state, double& coefficient)
 {  
-  unsigned long tmpState = this->ChainDescription[state];
+  unsigned long tmpState = this->StateDescription[state];
   unsigned long tmpState2 = tmpState;
   j <<= 1;
   tmpState2 >>= j;
@@ -365,7 +365,7 @@ inline int Potts4Chain::SmiSpj (int i, int j, int state, double& coefficient)
 inline double Potts4Chain::QValue (int index)
 {
   unsigned long Tmp = 0x0ul;
-  unsigned long Tmp2 = this->ChainDescription[index];
+  unsigned long Tmp2 = this->StateDescription[index];
   for (int i = 0; i < this->ChainLength; ++i)
     {
       Tmp += Tmp2 & 0x3ul;
@@ -381,7 +381,7 @@ inline double Potts4Chain::QValue (int index)
 
 inline int Potts4Chain::FindStateIndex(unsigned long state)
 {
-  return SearchInArrayDownOrdering<unsigned long> (state, this->ChainDescription, 
+  return SearchInArrayDownOrdering<unsigned long> (state, this->StateDescription, 
 						   this->HilbertSpaceDimension);
 }
 
