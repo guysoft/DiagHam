@@ -81,7 +81,7 @@ int main(int argc, char** argv)
 
   if ((Manager.GetString("input-file") == 0) && (Manager.GetString("file-list") == 0))
     {
-      cout << "error, an input state file should be provided. See man page for option syntax or type FTIEntanglementEntropyParticlePartition -h" << endl;
+      cout << "error, an input state file should be provided. See man page for option syntax or type FTIGutzwillerProjection -h" << endl;
       return -1;
     }
   if ((Manager.GetString("input-file") != 0) && 

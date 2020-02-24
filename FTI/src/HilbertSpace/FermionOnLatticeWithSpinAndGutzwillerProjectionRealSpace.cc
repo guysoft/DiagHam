@@ -75,8 +75,8 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::FermionOnLatticeWithSp
   this->NbrFermionsUp = 0;
   this->NbrFermionsDown = 0;
   this->NbrSite = nbrSite;
-  this->LzMax = this->NbrSite;
-  this->NbrLzValue = this->LzMax;
+  this->LzMax = this->NbrSite - 1;
+  this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
   if (this->NbrFermions > 0)
     {
@@ -154,8 +154,8 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::FermionOnLatticeWithSp
   this->NbrFermionsUp = (totalSpin + this->NbrFermions) >> 1;
   this->NbrFermionsDown = this->NbrFermions - this->NbrFermionsUp;
   this->NbrSite = nbrSite;
-  this->LzMax = this->NbrSite;
-  this->NbrLzValue = this->LzMax;
+  this->LzMax = this->NbrSite - 1;
+  this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
   if (this->NbrFermions > 0)
     {

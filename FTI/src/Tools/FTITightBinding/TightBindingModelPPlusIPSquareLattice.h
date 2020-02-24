@@ -6,9 +6,11 @@
 //                  Copyright (C) 2001-2012 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//            class of tight binding model for the Checkerboard lattice       //
+//            class of tight binding model for the Chern insulator of         //
+//                 PHYSICAL REVIEW B 84, 075128 (2011) equivalent             //
+//                           to a p+ip superconductor                         //
 //                                                                            //
-//                        last modification : 08/05/2012                      //
+//                        last modification : 19/02/2020                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,54 +30,35 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef TIGHTBINDINGMODELCHECKERBOARDLATTICE_H
-#define TIGHTBINDINGMODELCHECKERBOARDLATTICE_H
+#ifndef TIGHTBINDINGMODELPPLUSIPSQUARELATTICE_H
+#define TIGHTBINDINGMODELPPLUSIPSQUARELATTICE_H
 
 
 #include "config.h"
-#include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
+#include "Tools/FTITightBinding/TightBindingModelCheckerboardLattice.h"
 
 
-class TightBindingModelCheckerboardLattice : public Abstract2DTightBindingModel
+class TightBindingModelPPlusIPSquareLattice : public TightBindingModelCheckerboardLattice
 {
 
  protected:
 
-  // hoping amplitude between neareast neighbor sites
-  double NNHoping;
-  // hoping amplitude between next neareast neighbor sites
-  double NextNNHoping;
-  // hoping amplitude between second next neareast neighbor sites
-  double SecondNextNNHoping;
-  
-  // four times the sublattice staggered chemical potential 
-  double MuS;
-
-  // use the Bloch form instead of the the traditional form
-  bool BlochFormFlag;
-
- public:
+  public:
 
   // default constructor
-  //
-  TightBindingModelCheckerboardLattice();
-
-  // constructor
   //
   // nbrSiteX = number of sites in the x direction
   // nbrSiteY = number of sites in the y direction
   // t1 = hoping amplitude between neareast neighbor sites
   // t2 = hoping amplitude between next neareast neighbor sites
-  // t2p = hoping amplitude between second next neareast neighbor sites
   // mus = sublattice chemical potential on A sites
   // gammaX = boundary condition twisting angle along x
   // gammaY = boundary condition twisting angle along y
   // architecture = pointer to the architecture
   // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
-  // blochFormFlag = use the Bloch form instead of the the traditional form
-  TightBindingModelCheckerboardLattice(int nbrSiteX, int nbrSiteY, double t1, double t2, double t2p, double mus, 
-				       double gammaX, double gammaY, 
-				       AbstractArchitecture* architecture, bool storeOneBodyMatrices = true, bool blochFormFlag = false);
+  TightBindingModelPPlusIPSquareLattice(int nbrSiteX, int nbrSiteY, double t1, double t2, double mus, 
+					double gammaX, double gammaY, 
+					AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
   
   // constructor for a tilted lattice
   //
@@ -88,28 +71,20 @@ class TightBindingModelCheckerboardLattice : public Abstract2DTightBindingModel
   // offset = second coordinate in momentum space of the second spanning vector of the reciprocal lattice (0 if lattice is untilted or if Ny = 1)
   // t1 = hoping amplitude between neareast neighbor sites
   // t2 = hoping amplitude between next neareast neighbor sites
-  // t2p = hoping amplitude between second next neareast neighbor sites
   // mus = sublattice chemical potential on A sites
   // gammaX = boundary condition twisting angle along x
   // gammaY = boundary condition twisting angle along y
   // architecture = pointer to the architecture
   // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
-  // blochFormFlag = use the Bloch form instead of the the traditional form
-  TightBindingModelCheckerboardLattice(int nbrSiteX, int nbrSiteY, int nx1, int ny1, int nx2, int ny2, int offset, double t1, double t2, double t2p, double mus, 
-				       double gammaX, double gammaY, 
-				       AbstractArchitecture* architecture, int offsetReal = 0, bool storeOneBodyMatrices = true, bool blochFormFlag = false);
+  TightBindingModelPPlusIPSquareLattice(int nbrSiteX, int nbrSiteY, int nx1, int ny1, int nx2, int ny2, int offset, double t1, double t2, double mus, 
+					double gammaX, double gammaY, 
+					AbstractArchitecture* architecture, int offsetReal = 0, bool storeOneBodyMatrices = true);
 
   // destructor
   //
-  ~TightBindingModelCheckerboardLattice();
+  ~TightBindingModelPPlusIPSquareLattice();
 
  protected :
-
-  // core part that compute the band structure
-  //
-  // minStateIndex = minimum index of the state to compute
-  // nbrStates = number of states to compute
-  virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates);
 
   // find the orbitals connected to those located at the origin unit cell
   // 

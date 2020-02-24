@@ -1557,16 +1557,34 @@ void Abstract2DTightBindingModel::ComputeAllProjectedMomenta()
     this->ProjectedMomenta[i] = new double [2];
   double projectedMomentum1;
   double projectedMomentum2;
-  for (int kx = 0; kx < this->NbrSiteX; ++kx)
+  if (this->NbrConnectedOrbitals != 0)
     {
-      for (int ky = 0; ky < this->NbrSiteY; ++ky)
+      for (int kx = 0; kx < this->NbrSiteX; ++kx)
 	{
-	  double kx_trans = kx + this->Offset * ky + this->GammaX;
-	  double ky_trans = ky + this->GammaY;
-	  projectedMomentum1 = 2.0 * M_PI * ((double) kx_trans * (double) this->Ny2 - (double) ky_trans * (double) this->Ny1) / ((double) (this->NbrSiteX * this->NbrSiteY));
-	  projectedMomentum2 = 2.0 * M_PI * ((double) kx_trans * (double) (-this->Nx2) + (double) ky_trans * (double)this->Nx1) / ((double) (this->NbrSiteX * this->NbrSiteY));
-	  this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][0] = projectedMomentum1;
-	  this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][1] = projectedMomentum2;
+	  for (int ky = 0; ky < this->NbrSiteY; ++ky)
+	    {
+	      double kx_trans = kx + this->Offset * ky;
+	      double ky_trans = ky;
+	      projectedMomentum1 = 2.0 * M_PI * ((double) kx_trans * (double) this->Ny2 - (double) ky_trans * (double) this->Ny1) / ((double) (this->NbrSiteX * this->NbrSiteY));
+	      projectedMomentum2 = 2.0 * M_PI * ((double) kx_trans * (double) (-this->Nx2) + (double) ky_trans * (double)this->Nx1) / ((double) (this->NbrSiteX * this->NbrSiteY));
+	      this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][0] = projectedMomentum1;
+	      this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][1] = projectedMomentum2;
+	    }
+	}
+    }
+  else
+    {
+      for (int kx = 0; kx < this->NbrSiteX; ++kx)
+	{
+	  for (int ky = 0; ky < this->NbrSiteY; ++ky)
+	    {
+	      double kx_trans = kx + this->Offset * ky + this->GammaX;
+	      double ky_trans = ky + this->GammaY;
+	      projectedMomentum1 = 2.0 * M_PI * ((double) kx_trans * (double) this->Ny2 - (double) ky_trans * (double) this->Ny1) / ((double) (this->NbrSiteX * this->NbrSiteY));
+	      projectedMomentum2 = 2.0 * M_PI * ((double) kx_trans * (double) (-this->Nx2) + (double) ky_trans * (double)this->Nx1) / ((double) (this->NbrSiteX * this->NbrSiteY));
+	      this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][0] = projectedMomentum1;
+	      this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][1] = projectedMomentum2;
+	    }
 	}
     }
 }
@@ -1690,7 +1708,9 @@ HermitianMatrix Abstract2DTightBindingModel::BuildTightBindingHamiltonianRecipro
 	  double TmpPhase = ((TmpKx * ((double) p)) 
 			      + (TmpKy * ((double) q)));
 	  if (k >= orbitalIndices[k][l])
-	    TmpHamiltonian.AddToMatrixElement(k, orbitalIndices[k][l], Conj(hoppingAmplitudes[k][l]) * Phase(TmpPhase));
+	    {
+	      TmpHamiltonian.AddToMatrixElement(k, orbitalIndices[k][l], Conj(hoppingAmplitudes[k][l]) * Phase(TmpPhase));
+	    }
 	}
     }
   return TmpHamiltonian; 

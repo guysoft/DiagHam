@@ -41,8 +41,32 @@ using std::endl;
 using std::ostream;
 
 
-
 // default constructor
+//
+
+TightBindingModelCheckerboardLattice::TightBindingModelCheckerboardLattice()
+{
+  this->NbrSiteX = 1;
+  this->NbrSiteY = 1;
+  this->Nx1 = this->NbrSiteX;
+  this->Ny1 = 0;
+  this->Nx2 = 0;
+  this->Ny2 = this->NbrSiteY;
+  this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
+  this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
+  this->NNHoping = 0.0;
+  this->NextNNHoping = 0.0;
+  this->SecondNextNNHoping = 0.0;
+  this->MuS = 0.0;
+  this->GammaX = 0.0;
+  this->GammaY = 0.0;
+  this->NbrBands = 2;
+  this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
+  this->Architecture = 0;
+  this->BlochFormFlag = true;
+}
+
+// constructor
 //
 // nbrSiteX = number of sites in the x direction
 // nbrSiteY = number of sites in the y direction

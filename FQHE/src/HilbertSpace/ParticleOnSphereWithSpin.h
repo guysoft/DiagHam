@@ -942,6 +942,24 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // return value = converted vector
   virtual ComplexVector ConvertFromNbodyBasis(ComplexVector& state, ParticleOnSphereWithSpin& basis);
   
+  // create an SU(2) state from two U(1) state
+  //
+  // upState = vector describing the up spin part of the output state
+  // upStateSpace = reference on the Hilbert space associated to the up spin part
+  // downState = vector describing the down spin part of the output state
+  // downStateSpace = reference on the Hilbert space associated to the down spin part  
+  // return value = resluting SU(2) state
+  virtual RealVector ForgeSU2FromU1(RealVector& upState, ParticleOnSphere* upStateSpace, RealVector& downState, ParticleOnSphere* downStateSpace);
+
+  // create an SU(2) state from two U(1) state
+  //
+  // upState = vector describing the up spin part of the output state
+  // upStateSpace = reference on the Hilbert space associated to the up spin part
+  // downState = vector describing the down spin part of the output state
+  // downStateSpace = reference on the Hilbert space associated to the down spin part  
+  // return value = resluting SU(2) state
+  virtual ComplexVector ForgeSU2FromU1(ComplexVector& upState, ParticleOnSphere* upStateSpace, ComplexVector& downState, ParticleOnSphere* downStateSpace);
+
   // convert state of a SU(2) Hilbert space with fixed Sz to a SU(2) space with all sz sectors
   //
   // state = state that needs to be projected

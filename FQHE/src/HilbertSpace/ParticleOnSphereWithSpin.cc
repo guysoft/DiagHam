@@ -1463,3 +1463,33 @@ void ParticleOnSphereWithSpin::SymmetrizeSU2SU2StateCore (RealVector& symmetrize
 {
   cout << "warning, using dummy method ParticleOnSphereWithSpin::SymmetrizeSU2SU2StateCore" << endl;
 }
+
+
+// create an SU(2) state from two U(1) state
+//
+// upState = vector describing the up spin part of the output state
+// upStateSpace = reference on the Hilbert space associated to the up spin part
+// downState = vector describing the down spin part of the output state
+// downStateSpace = reference on the Hilbert space associated to the down spin part  
+// return value = resluting SU(2) state
+
+RealVector ParticleOnSphereWithSpin::ForgeSU2FromU1(RealVector& upState, ParticleOnSphere* upStateSpace, RealVector& downState, ParticleOnSphere* downStateSpace)
+{
+  cout << "warning, using dummy method ParticleOnSphereWithSpin::ForgeSU2FromU1" << endl;
+  return RealVector();
+}
+
+// create an SU(2) state from two U(1) state
+//
+// upState = vector describing the up spin part of the output state
+// upStateSpace = reference on the Hilbert space associated to the up spin part
+// downState = vector describing the down spin part of the output state
+// downStateSpace = reference on the Hilbert space associated to the down spin part  
+// return value = resluting SU(2) state
+
+ComplexVector ParticleOnSphereWithSpin::ForgeSU2FromU1(ComplexVector& upState, ParticleOnSphere* upStateSpace, ComplexVector& downState, ParticleOnSphere* downStateSpace)
+{
+  cout << "warning, using dummy method ParticleOnSphereWithSpin::ForgeSU2FromU1" << endl;
+  return ComplexVector();
+}
+
