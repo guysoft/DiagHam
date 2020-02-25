@@ -87,6 +87,42 @@ class FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace : public FermionO
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
+  // create an SU(2) state from two U(1) state
+  //
+  // upState = vector describing the up spin part of the output state
+  // upStateSpace = reference on the Hilbert space associated to the up spin part
+  // downState = vector describing the down spin part of the output state
+  // downStateSpace = reference on the Hilbert space associated to the down spin part  
+  // return value = resluting SU(2) state
+  virtual RealVector ForgeSU2FromU1(RealVector& upState, ParticleOnSphere* upStateSpace, RealVector& downState, ParticleOnSphere* downStateSpace);
+
+  // create an SU(2) state from two U(1) state
+  //
+  // upState = vector describing the up spin part of the output state
+  // upStateSpace = reference on the Hilbert space associated to the up spin part
+  // downState = vector describing the down spin part of the output state
+  // downStateSpace = reference on the Hilbert space associated to the down spin part  
+  // return value = resluting SU(2) state
+  virtual ComplexVector ForgeSU2FromU1(ComplexVector& upState, ParticleOnSphere* upStateSpace, ComplexVector& downState, ParticleOnSphere* downStateSpace);
+
+  // create an SU(2) state from two U(1) state
+  //
+  // upState = vector describing the up spin part of the output state
+  // upStateSpace = reference on the Hilbert space associated to the up spin part
+  // downState = vector describing the down spin part of the output state
+  // downStateSpace = reference on the Hilbert space associated to the down spin part  
+  // return value = resluting SU(2) state
+  virtual RealVector ForgeSU2FromU1(RealVector& upState, FermionOnSphere& upStateSpace, RealVector& downState, FermionOnSphere& downStateSpace);
+
+  // create an SU(2) state from two U(1) state
+  //
+  // upState = vector describing the up spin part of the output state
+  // upStateSpace = reference on the Hilbert space associated to the up spin part
+  // downState = vector describing the down spin part of the output state
+  // downStateSpace = reference on the Hilbert space associated to the down spin part  
+  // return value = resluting SU(2) state
+  virtual ComplexVector ForgeSU2FromU1(ComplexVector& upState, FermionOnSphere& upStateSpace, ComplexVector& downState, FermionOnSphere& downStateSpace);
+
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given momentum sector.
   // 
   // nbrParticleSector = number of particles that belong to the subsytem 

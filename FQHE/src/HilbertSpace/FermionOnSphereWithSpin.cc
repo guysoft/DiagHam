@@ -2560,15 +2560,6 @@ RealVector FermionOnSphereWithSpin::ForgeSU2FromU1(RealVector& upState, FermionO
   for (int j = 0; j < upStateSpace.HilbertSpaceDimension; ++j)
     {
       unsigned long TmpUpState = upStateSpace.StateDescription[j];
-// #ifdef  __64_BITS__
-//       TmpUpState |= TmpUpState << 32;
-//       TmpUpState &= 0xffff0000fffful;
-//       TmpUpState |= TmpUpState << 16;
-//       TmpUpState &= 0xff00ff00ff00fful;
-// #endif
-//       TmpUpState |= TmpUpState << 16;
-//       TmpUpState &= 0xffff0000fffful;
-      
       int TmpPos = upStateSpace.LzMax;
       while (TmpPos > 0)
 	{
@@ -2585,7 +2576,7 @@ RealVector FermionOnSphereWithSpin::ForgeSU2FromU1(RealVector& upState, FermionO
       int Min = 0;
       while ((TmpUpState & (0x1ul << Min)) == 0x0ul)
 	++Min;
-      unsigned long TmpUpStateMask = (0x1ul << Max) - 1;
+      unsigned long TmpUpStateMask = (0x1ul << (Max + 1)) - 0x1ul;
       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 	if ((this->StateDescription[i] & TmpUpState) == TmpUpState)
 	  {	    
@@ -2662,16 +2653,7 @@ ComplexVector FermionOnSphereWithSpin::ForgeSU2FromU1(ComplexVector& upState, Fe
   ComplexVector FinalState(this->HilbertSpaceDimension, true);
   for (int j = 0; j < upStateSpace.HilbertSpaceDimension; ++j)
     {
-      unsigned long TmpUpState = upStateSpace.StateDescription[j];
-// #ifdef  __64_BITS__
-//       TmpUpState |= TmpUpState << 32;
-//       TmpUpState &= 0xffff0000fffful;
-//       TmpUpState |= TmpUpState << 16;
-//       TmpUpState &= 0xff00ff00ff00fful;
-// #endif
-//       TmpUpState |= TmpUpState << 16;
-//       TmpUpState &= 0xffff0000fffful;
-      
+      unsigned long TmpUpState = upStateSpace.StateDescription[j];      
       int TmpPos = upStateSpace.LzMax;
       while (TmpPos > 0)
 	{
@@ -2688,7 +2670,7 @@ ComplexVector FermionOnSphereWithSpin::ForgeSU2FromU1(ComplexVector& upState, Fe
       int Min = 0;
       while ((TmpUpState & (0x1ul << Min)) == 0x0ul)
 	++Min;
-      unsigned long TmpUpStateMask = (0x1ul << Max) - 1;
+      unsigned long TmpUpStateMask = (0x1ul << (Max + 1)) - 0x1ul;
       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 	if ((this->StateDescription[i] & TmpUpState) == TmpUpState)
 	  {	    
