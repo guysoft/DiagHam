@@ -411,7 +411,7 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // numY = number of unit cells within MUC along y-direction
   virtual void GetMUCDimensions(int &numX, int &numY);
   
-   // compute the index in real space lattice starting from the cartesian coordinates
+  // compute the index in real space lattice starting from the cartesian coordinates
   //
   // i = cartesian coordinate in the x direction of the Bravais lattice
   // j = cartesian coordinate in the y direction of the Bravais lattice
@@ -768,50 +768,55 @@ inline double Abstract2DTightBindingModel::GetProjectedMomentum(int kx, int ky, 
   return this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][latticeComponent];
 }
 
- //get the value of the embedding vectors
- //
- inline void Abstract2DTightBindingModel::GetEmbedding(RealVector& embeddingX, RealVector& embeddingY)
+// get the value of the embedding vectors
+//
+
+inline void Abstract2DTightBindingModel::GetEmbedding(RealVector& embeddingX, RealVector& embeddingY)
  {
    embeddingX = this->EmbeddingX;
    embeddingY = this->EmbeddingY;
  }
 
-//get the value of the embedding for a given sublattice
+// get the value of the embedding for a given sublattice
 //
+
 inline void Abstract2DTightBindingModel::GetEmbedding(int sublattice, double &embeddingX, double &embeddingY)
 {
   embeddingX = this->EmbeddingX[sublattice];
   embeddingY = this->EmbeddingY[sublattice];
 }
  
- //set the value of the embedding vectors
- //
- inline void Abstract2DTightBindingModel::SetEmbedding(RealVector embeddingX, RealVector embeddingY)
- {
-   this->EmbeddingX = embeddingX;
-   this->EmbeddingY = embeddingY;
- }
+// set the value of the embedding vectors
+//
 
- //set no/trivial embedding, i.e. all sublattices at the origin
- //
- inline void Abstract2DTightBindingModel::SetNoEmbedding()
- {
-   this->EmbeddingX.ResizeAndClean(NbrBands);
-   this->EmbeddingY.ResizeAndClean(NbrBands);
- }
+inline void Abstract2DTightBindingModel::SetEmbedding(RealVector embeddingX, RealVector embeddingY)
+{
+  this->EmbeddingX = embeddingX;
+  this->EmbeddingY = embeddingY;
+}
+
+//set no/trivial embedding, i.e. all sublattices at the origin
+//
+
+inline void Abstract2DTightBindingModel::SetNoEmbedding()
+{
+  this->EmbeddingX.ResizeAndClean(NbrBands);
+  this->EmbeddingY.ResizeAndClean(NbrBands);
+}
 
  
-  // compute the index in real space lattice starting from the cartesian coordinates
-  //
-  // i = cartesian coordinate in the x direction of the Bravais lattice
-  // j = cartesian coordinate in the y direction of the Bravais lattice
-  // p = reference on the first lattice index
-  // q = reference on the second lattice index
-  inline void Abstract2DTightBindingModel::GetRealSpaceIndex (int i, int j, int& p, int& q)
-  {
-    p = i - this->OffsetReal * j;
-    q = j;
-  }
+// compute the index in real space lattice starting from the cartesian coordinates
+//
+// i = cartesian coordinate in the x direction of the Bravais lattice
+// j = cartesian coordinate in the y direction of the Bravais lattice
+// p = reference on the first lattice index
+// q = reference on the second lattice index
+
+inline void Abstract2DTightBindingModel::GetRealSpaceIndex (int i, int j, int& p, int& q)
+{
+  p = i - this->OffsetReal * j;
+  q = j;
+}
 
 // code set of quantum numbers posx, posy into a single integer
 // posx = position along x-direction
@@ -819,33 +824,38 @@ inline void Abstract2DTightBindingModel::GetEmbedding(int sublattice, double &em
 // numXTranslations = number of translation in the x direction to get back to the unit cell 
 // numXTranslations = number of translation in the y direction to get back to the unit cell
 //
+
 inline int  Abstract2DTightBindingModel::EncodeSublatticeIndex(int posx, int posy,int & numXTranslations,int &numYTranslations, Complex &translationPhase)
 {
   std::cout <<"using dummy Abstract2DTightBindingModel::EncodeSublatticeIndex(int posx, int posy,int & numXTranslations,int &numYTranslations, Complex &translationPhase)"<<std::endl;
-return -1;
+  return -1;
 }
 
 
 // decode single integer for sublattice index into set of quantum numbers/positions posx, posy
+//
 // index = sublattice index
 // [out] posx = position along x-direction
 // [out] posy = position along y-direction
 //
+
 inline void Abstract2DTightBindingModel::DecodeSublatticeIndex(int index, int &posx, int &posy)
 {
   std::cout <<"using dummy Abstract2DTightBindingModel::DecodeSublatticeIndex(int index, int &posx, int &posy)"<<std::endl;
-  posx=0;
-  posy=0;
+  posx = 0;
+  posy = 0;
 }
 
    
 // obtain dimensions of magnetic unit cell for case of Hofstadter model
+//
 // numX = number of unit cells within MUC along x-direction
 // numY = number of unit cells within MUC along y-direction
+
 inline void Abstract2DTightBindingModel::GetMUCDimensions(int &numX, int &numY) 
 {
-  numX=1;
-  numY=1;
+  numX = 1;
+  numY = 1;
 }
 
 // evaluate the norm of a momentum space vector
@@ -853,6 +863,7 @@ inline void Abstract2DTightBindingModel::GetMUCDimensions(int &numX, int &numY)
 // kx = component of momentum along first Bravais vector
 // ky = component of momentum along second Bravais vector
 // return value = norm of vector
+
 inline double Abstract2DTightBindingModel::EvaluateNormQ(int kx, int ky)
 {
     double Kx = this->KxFactor * ((double) kx);
