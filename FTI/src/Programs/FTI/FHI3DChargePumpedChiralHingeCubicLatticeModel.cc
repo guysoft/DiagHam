@@ -116,7 +116,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "flatband-gap", "when using the flat band model with two bands, set the one-body gap between the two bands", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "real-space", "use the real space representation when considering the system with all bands");
-  (*SystemGroup) += new BooleanOption  ('\n', "no-translation", "use the real space representation when considering the system with all bandswithout the translations");
+  (*SystemGroup) += new BooleanOption  ('\n', "no-translation", "when using real space representation, discard all translations");
+  (*SystemGroup) += new BooleanOption  ('\n', "xy-translation", "when using real space representation, only considertranslations in the x and y direction");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
@@ -190,13 +191,27 @@ int main(int argc, char** argv)
 	{
 	  if (Manager.GetBoolean("no-translation") == false)
 	    {
-	      if (Manager.GetBoolean ("gutzwiller") == false)
+	      if (Manager.GetBoolean("xy-translation") == false)
 		{
-		  sprintf (FilePrefix, "%s_realspace_3dchiralhinge_%s", StatisticPrefix, FileSystemGeometry);
+		  if (Manager.GetBoolean ("gutzwiller") == false)
+		    {
+		      sprintf (FilePrefix, "%s_realspace_3dchiralhinge_%s", StatisticPrefix, FileSystemGeometry);
+		    }
+		  else
+		    {
+		      sprintf (FilePrefix, "%s_realspace_gutzwiller_3dchiralhinge_%s", StatisticPrefix, FileSystemGeometry);
+		    }
 		}
 	      else
 		{
-		  sprintf (FilePrefix, "%s_realspace_gutzwiller_3dchiralhinge_%s", StatisticPrefix, FileSystemGeometry);
+		  if (Manager.GetBoolean ("gutzwiller") == false)
+		    {
+		      sprintf (FilePrefix, "%s_realspace_xytranslation_3dchiralhinge_%s", StatisticPrefix, FileSystemGeometry);
+		    }
+		  else
+		    {
+		      sprintf (FilePrefix, "%s_realspace_xytranslation_gutzwiller_3dchiralhinge_%s", StatisticPrefix, FileSystemGeometry);
+		    }
 		}
 	    }
 	  else
@@ -331,6 +346,10 @@ int main(int argc, char** argv)
     {  
       MaxKx = 0;
       MaxKy = 0;
+      MaxKz = 0;
+    }
+  if (Manager.GetBoolean("xy-translation") == true)
+    {
       MaxKz = 0;
     }
 
@@ -494,7 +513,14 @@ int main(int argc, char** argv)
 		  if ((Manager.GetBoolean("real-space") == false) || (Manager.GetBoolean("no-translation") == false))
 		    {
 		      char* TmpExtention = new char [512];
-		      sprintf (TmpExtention, "_kx_%d_ky_%d_kz_%d", i, j, k);
+		      if (Manager.GetBoolean("xy-translation") == true)
+			{
+			  sprintf (TmpExtention, "_kx_%d_ky_%d", i, j);
+			}
+		      else
+			{
+			  sprintf (TmpExtention, "_kx_%d_ky_%d_kz_%d", i, j, k);
+			}
 		      EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
 		      delete[] TmpExtention;
 		    }

@@ -93,6 +93,7 @@ TightBindingModel3DChargePumpedChiralHingeCubicLattice::TightBindingModel3DCharg
   this->GammaY = gammaY;
   this->GammaZ = gammaZ;
   this->NbrBands = 4;
+  this->NbrBandsAs2DModel = this->NbrBands * this->NbrSiteZ;
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ;
   this->Architecture = architecture;
   

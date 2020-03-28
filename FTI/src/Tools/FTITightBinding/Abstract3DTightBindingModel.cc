@@ -56,6 +56,7 @@ Abstract3DTightBindingModel::Abstract3DTightBindingModel()
   this->LatticeVector1[0] = 1.0;
   this->LatticeVector2[1] = 1.0;
   this->LatticeVector3[2] = 1.0;
+  this->NbrBandsAs2DModel = 1;
 }
 
 // destructor

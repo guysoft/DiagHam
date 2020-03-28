@@ -72,6 +72,10 @@ class Abstract3DTightBindingModel : public Abstract2DTightBindingModel
   int Ny3;
   // second coordinate of the third spanning vector for a tilted lattice
   int Nz3;
+
+  // the number of sites per unit cell  assuming the model is 2D, i.e. the actual number of orbitals times the number of orbitals in the z direction
+  int NbrBandsAs2DModel;
+  
   
  public:
 
@@ -157,7 +161,34 @@ class Abstract3DTightBindingModel : public Abstract2DTightBindingModel
   // latticeComponent = index of the lattice vector along which the projection is to be performed
   // return value = projected momentum
   virtual double GetProjectedMomentum(int kx, int ky, int kz, int latticeComponent);
+    
+  // get the index of the real space tight binding model from the real space coordinates, assuming the model is 2D
+  // (the number of sites per unit cell being the actual number of orbitals times the number of orbitals in the z direction)
+  //
+  // x = x coordinate of the unit cell
+  // y = y coordinate of the unit cell
+  // orbitalIndex = index of the orbital / site within the unit cell
+  // return value = linearized index  
+  virtual int GetRealSpaceTightBindingLinearizedIndex(int x, int y, int orbitalIndex);
   
+  // get the index of the real space tight binding model from the real space coordinates, without assumption on the coordinates, assuming the model is 2D
+  // (the number of sites per unit cell being the actual number of orbitals times the number of orbitals in the z direction)
+  //
+  // x = x coordinate of the unit cell
+  // y = y coordinate of the unit cell
+  // orbitalIndex = index of the orbital / site within the unit cell
+  // return value = linearized index  
+  virtual int GetRealSpaceTightBindingLinearizedIndexSafe(int x, int y, int orbitalIndex);
+
+  // get the real space coordinates from the index of the real space tight binding model, assuming the model is 2D
+  // (the number of sites per unit cell being the actual number of orbitals times the number of orbitals in the z direction)
+  //
+  // index = linearized index of the real space tight binding model
+  // x = reference on the x coordinate of the unit cell
+  // y = reference on the y coordinate of the unit cell
+  // orbitalIndex = reference on the index of the orbital / site within the unit cell
+  //  virtual void GetRealSpaceTightBindingLinearizedIndex(int index, int& x, int& y, int& orbitalIndex);
+
   // get the number of sites in the z direction
   //
   // return value = number of sites in the z direction
@@ -417,7 +448,8 @@ inline void Abstract3DTightBindingModel::GetRealSpaceIndex (int i, int j, int k,
   r = k;
 }
 
-// compute the index in real space lattice starting from the cartesian coordinates
+// compute the index in real space lattice starting from the cartesian coordinates, assuming the model is 2D
+// (the number of sites per unit cell being the actual number of orbitals times the number of orbitals in the z direction)
 //
 // i = cartesian coordinate in the x direction of the Bravais lattice
 // j = cartesian coordinate in the y direction of the Bravais lattice
@@ -430,6 +462,57 @@ inline void Abstract3DTightBindingModel::GetRealSpaceIndex (int i, int j, int k,
   latticeIndices[1] = j;
   latticeIndices[2] = k;  
 }
+
+// get the index of the real space tight binding model from the real space coordinates, assuming the model is 2D
+// (the number of sites per unit cell being the actual number of orbitals times the number of orbitals in the z direction)
+//
+// x = x coordinate of the unit cell
+// y = y coordinate of the unit cell
+// orbitalIndex = index of the orbital / site within the unit cell
+// return value = linearized index  
+
+inline int Abstract3DTightBindingModel::GetRealSpaceTightBindingLinearizedIndex(int x, int y, int orbitalIndex)
+{
+  return (orbitalIndex + ((y  + x * this->NbrSiteY) * this->NbrBandsAs2DModel)); 
+}
+
+// get the index of the real space tight binding model from the real space coordinates, without assumption on the coordinates, assuming the model is 2D
+// (the number of sites per unit cell being the actual number of orbitals times the number of orbitals in the z direction)
+//
+// x = x coordinate of the unit cell
+// y = y coordinate of the unit cell
+// orbitalIndex = index of the orbital / site within the unit cell
+// return value = linearized index  
+
+inline int Abstract3DTightBindingModel::GetRealSpaceTightBindingLinearizedIndexSafe(int x, int y, int orbitalIndex)
+{
+  orbitalIndex %= this->NbrBandsAs2DModel;
+  if (orbitalIndex < 0)
+    orbitalIndex +=  this->NbrBandsAs2DModel;
+  x %= this->NbrSiteX;
+  if (x < 0)
+    x +=  this->NbrSiteX;
+  y %= this->NbrSiteY;
+  if (y < 0)
+    y +=  this->NbrSiteY;
+  return this->GetRealSpaceTightBindingLinearizedIndex(x, y, orbitalIndex); 
+}
+
+// get the real space coordinates from the index of the real space tight binding model, assuming the model is 2D
+// (the number of sites per unit cell being the actual number of orbitals times the number of orbitals in the z direction)
+//
+// index = linearized index of the real space tight binding model
+// x = reference on the x coordinate of the unit cell
+// y = reference on the y coordinate of the unit cell
+// orbitalIndex = reference on the index of the orbital / site within the unit cell
+
+// inline void Abstract3DTightBindingModel::GetRealSpaceTightBindingLinearizedIndex(int index, int& x, int& y, int& orbitalIndex)
+// {
+//   orbitalIndex = index % this->NbrBandsAs2DModel;
+//   index /= this->NbrBandsAs2DModel;
+//   y = index % this->NbrSiteY;
+//   x = index / this->NbrSiteY;
+// }
 
 
 #endif
