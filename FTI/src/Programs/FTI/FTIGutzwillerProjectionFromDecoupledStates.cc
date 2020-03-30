@@ -349,7 +349,7 @@ int main(int argc, char** argv)
 	}
       double TmpWeight = TmpVector.SqrNorm();
       cout << "   weight of the projected state = " << TmpWeight << endl;
-      if ((TmpWeight > MACHINE_PRECISION) || (!(Manager.GetBoolean("disable-weightcutoff"))))
+      if ((TmpWeight > MACHINE_PRECISION) || (Manager.GetBoolean("disable-weightcutoff")))
 	{
 	  TmpVector /= sqrt(TmpWeight);
 	  char* TmpOutputName;
