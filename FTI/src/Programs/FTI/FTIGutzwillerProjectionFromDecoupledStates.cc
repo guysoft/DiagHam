@@ -48,8 +48,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('1', "input-file1", "name of the first decoulped state");
   (*SystemGroup) += new SingleStringOption  ('2', "input-file2", "name of the second decoulped state");  
   (*SystemGroup) += new SingleStringOption  ('\n', "file-list", "two column file describing a list to states that have to be projected");
+  (*SystemGroup) += new  BooleanOption ('\n', "disable-weightcutoff", "do not discard the projected state has its square norm below machine accuracy");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (while happen .x.vec at the end of each stored vector)");
-  (*OutputGroup) += new BooleanOption ('\n', "disable-gutzwillerbasis", "do not express the projected wave function in th Gutzwiller reduced Hilbert space but the full SU(2) basis");
+  (*OutputGroup) += new BooleanOption ('\n', "disable-gutzwillerbasis", "do not express the projected wave function in the Gutzwiller reduced Hilbert space but the full SU(2) basis");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -348,7 +349,7 @@ int main(int argc, char** argv)
 	}
       double TmpWeight = TmpVector.SqrNorm();
       cout << "   weight of the projected state = " << TmpWeight << endl;
-      if (TmpWeight > MACHINE_PRECISION)
+      if ((TmpWeight > MACHINE_PRECISION) || (!(Manager.GetBoolean("disable-weightcutoff"))))
 	{
 	  TmpVector /= sqrt(TmpWeight);
 	  char* TmpOutputName;
