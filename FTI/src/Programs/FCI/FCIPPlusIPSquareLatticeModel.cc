@@ -214,9 +214,9 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("real-space") == false)
 	{
 	  if (TiltedFlag == false)
-	    sprintf (FilePrefix, "%s_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+	    sprintf (FilePrefix, "%s_pplusipsquarelattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 	  else
-	    sprintf (FilePrefix, "%s_checkerboardlatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+	    sprintf (FilePrefix, "%s_pplusipsquarelatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
 	}
       else
 	{
@@ -225,16 +225,16 @@ int main(int argc, char** argv)
 	     if (Manager.GetBoolean ("gutzwiller") == false)
 	       {
 		 if (TiltedFlag == false)
-		   sprintf (FilePrefix, "%s_realspace_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+		   sprintf (FilePrefix, "%s_realspace_pplusipsquarelattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 		 else
-		   sprintf (FilePrefix, "%s_realspace_checkerboardlatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+		   sprintf (FilePrefix, "%s_realspace_pplusipsquarelatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
 	       }
 	     else
 	       {
 		 if (TiltedFlag == false)
-		   sprintf (FilePrefix, "%s_realspace_gutzwiller_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+		   sprintf (FilePrefix, "%s_realspace_gutzwiller_pplusipsquarelattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 		 else
-		   sprintf (FilePrefix, "%s_realspace_gutzwiller_checkerboardlatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+		   sprintf (FilePrefix, "%s_realspace_gutzwiller_pplusipsquarelatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
 	       }
 	   }
 	 else
@@ -242,16 +242,16 @@ int main(int argc, char** argv)
 	     if (Manager.GetBoolean ("gutzwiller") == false)
 	       {
 		 if (TiltedFlag == false)
-		   sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+		   sprintf (FilePrefix, "%s_realspace_notranslation_pplusipsquarelattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 		 else
-		   sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+		   sprintf (FilePrefix, "%s_realspace_notranslation_pplusipsquarelatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
 	       }
 	     else
 	       {
 		 if (TiltedFlag == false)
-		   sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+		   sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_pplusipsquarelattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 		 else
-		   sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_checkerboardlatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+		   sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_pplusipsquarelatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
 	       }
 	   }
 	}
@@ -261,25 +261,25 @@ int main(int argc, char** argv)
       if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
 	{ 
 	  if (TiltedFlag == false)
-	    sprintf (FilePrefix, "%s_singleband_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+	    sprintf (FilePrefix, "%s_singleband_pplusipsquarelattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 	  else
-	    sprintf (FilePrefix, "%s_singleband_checkerboardlatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+	    sprintf (FilePrefix, "%s_singleband_pplusipsquarelatticetilted_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
 	}
       else
 	{
 	  if (Manager.GetBoolean("three-body") == true)
 	    {
-	      sprintf (FilePrefix, "%s_singleband_threebody_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles,  NbrSites, NbrSitesX, NbrSitesY);
+	      sprintf (FilePrefix, "%s_singleband_threebody_pplusipsquarelattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles,  NbrSites, NbrSitesX, NbrSitesY);
 	    }
 	  else
 	    {
 	      if (Manager.GetBoolean("four-body") == true)
 		{
-		  sprintf (FilePrefix, "%s_singleband_fourbody_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+		  sprintf (FilePrefix, "%s_singleband_fourbody_pplusipsquarelattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 		}
 	      else
 		{
-		  sprintf (FilePrefix, "%s_singleband_fivebody_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+		  sprintf (FilePrefix, "%s_singleband_fivebody_pplusipsquarelattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 		}
 	    }
 	}

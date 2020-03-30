@@ -37,6 +37,7 @@
 
 #include "config.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeRealSpaceAnd2DTranslation.h"
 
 #include <iostream>
 
@@ -135,7 +136,26 @@ class FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation :
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int szSector, int kxSector, int kySector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
   
+  // create an SU(2) state from two U(1) state
+  //
+  // upState = vector describing the up spin part of the output state
+  // upStateSpace = reference on the Hilbert space associated to the up spin part
+  // downState = vector describing the down spin part of the output state
+  // downStateSpace = reference on the Hilbert space associated to the down spin part  
+  // return value = resluting SU(2) state
+  virtual ComplexVector ForgeSU2FromU1(ComplexVector& upState, ParticleOnSphere* upStateSpace, ComplexVector& downState, ParticleOnSphere* downStateSpace);
+
  protected:
+
+  // create an SU(2) state from two U(1) state
+  //
+  // upState = vector describing the up spin part of the output state
+  // upStateSpace = reference on the Hilbert space associated to the up spin part
+  // downState = vector describing the down spin part of the output state
+  // downStateSpace = reference on the Hilbert space associated to the down spin part  
+  // return value = resluting SU(2) state
+  virtual ComplexVector ForgeSU2FromU1(ComplexVector& upState, FermionOnLatticeRealSpaceAnd2DTranslation& upStateSpace,
+				       ComplexVector& downState, FermionOnLatticeRealSpaceAnd2DTranslation& downStateSpace);
 
   // evaluate Hilbert space dimension
   //

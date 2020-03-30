@@ -45,6 +45,8 @@
 class  FermionOnLatticeRealSpaceAnd2DTranslation : public FermionOnTorusWithMagneticTranslations
 {
 
+  friend class FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation;
+  
  protected:
 
   // total number of sites

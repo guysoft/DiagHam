@@ -292,13 +292,14 @@ int main(int argc, char** argv)
 		    }
 		  else
 		    {
-		      cout << "building Hilbert spinful space N=" << (NbrParticles[i] + NbrParticles[i + 1]) << " Ns=" << NbrSites << " 2Sz=" << (NbrParticles[i] - NbrParticles[i + 1]) << endl;
+		      cout << "building Hilbert spinful space N=" << (NbrParticles[i] + NbrParticles[i + 1]) << " Ns=" << NbrSites << " 2Sz=" << (NbrParticles[i] - NbrParticles[i + 1]) << " kx=" << ((TotalKx[i] + TotalKx[i + 1]) % NbrSiteX) << " ky=" << ((TotalKy[i] + TotalKy[i + 1]) % NbrSiteY) << endl;
 		      TargetSpaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpace (NbrParticles[i] + NbrParticles[i + 1], NbrParticles[i] - NbrParticles[i + 1], NbrSites);
 		    }
 		}
 	      else
 		{
 		  
+		  cout << "building Hilbert spinless space N=" << NbrParticles[i] << " Ns=" << NbrSites << " kx=" << TotalKx[i] << "/" << NbrSiteX << " ky=" << TotalKy[i] << "/" << NbrSiteY << endl;
 		  if (!Manager.GetBoolean("disable-gutzwillerbasis"))
 		    {
 		      TargetSpaces[TmpIndex] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles[i] + NbrParticles[i + 1],
@@ -414,11 +415,13 @@ int main(int argc, char** argv)
 			}
 		    }
 		}
-	      Tmp = TmpOutputName[TmpDotPosition];
-	      
-	      TmpOutputName2 =  new char[strlen(TmpOutputName) + 24];
-	      TmpOutputName[TmpDotPosition] = '\0';
-	      sprintf(TmpOutputName2, "%s_sz_%d.%s", TmpOutputName, (NbrParticles[i] - NbrParticles[i + 1]), TmpOutputName + TmpDotPosition + 1);
+	      char* TmpKString = strstr(TmpOutputName, "_kx_");
+	      Tmp = TmpKString[0];
+	      TmpKString[0] = '\0';
+	      TmpOutputName2 =  new char[strlen(TmpOutputName) + 256];
+	      sprintf(TmpOutputName2, "%s_kx_%d_ky_%d_sz_%d.%s", TmpOutputName, ((TotalKx[i] + TotalKx[i + 1]) % NbrSiteX),
+		      ((TotalKy[i] + TotalKy[i + 1]) % NbrSiteY),
+		      (NbrParticles[i] - NbrParticles[i + 1]), TmpOutputName + TmpDotPosition + 1);
 	      TmpOutputName[TmpDotPosition] = Tmp;
 	      delete[]  TmpOutputName;
 	      TmpOutputName = TmpOutputName2;

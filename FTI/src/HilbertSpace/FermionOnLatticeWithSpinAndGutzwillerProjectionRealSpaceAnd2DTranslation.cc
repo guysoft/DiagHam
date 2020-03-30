@@ -929,3 +929,155 @@ long FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::E
   delete TmpDestinationFullHilbertSpace;
   return TmpNbrNonZeroElements;
 }
+
+// create an SU(2) state from two U(1) state
+//
+// upState = vector describing the up spin part of the output state
+// upStateSpace = reference on the Hilbert space associated to the up spin part
+// downState = vector describing the down spin part of the output state
+// downStateSpace = reference on the Hilbert space associated to the down spin part  
+// return value = resluting SU(2) state
+
+ComplexVector FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::ForgeSU2FromU1(ComplexVector& upState, ParticleOnSphere* upStateSpace,
+												       ComplexVector& downState, ParticleOnSphere* downStateSpace)
+{
+  return this->ForgeSU2FromU1(upState, *((FermionOnLatticeRealSpaceAnd2DTranslation*) upStateSpace),
+			      downState, *((FermionOnLatticeRealSpaceAnd2DTranslation*) downStateSpace));
+}
+
+// create an SU(2) state from two U(1) state
+//
+// upState = vector describing the up spin part of the output state
+// upStateSpace = reference on the Hilbert space associated to the up spin part
+// downState = vector describing the down spin part of the output state
+// downStateSpace = reference on the Hilbert space associated to the down spin part  
+// return value = resluting SU(2) state
+
+ComplexVector FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::ForgeSU2FromU1(ComplexVector& upState, FermionOnLatticeRealSpaceAnd2DTranslation& upStateSpace,
+												       ComplexVector& downState, FermionOnLatticeRealSpaceAnd2DTranslation& downStateSpace)
+{
+  ComplexVector FinalState(this->HilbertSpaceDimension, true);
+  Complex** FourrierCoefficients = new Complex* [this->MomentumModulo];
+  Complex** FourrierCoefficientsDownState = new Complex* [this->MomentumModulo];
+  for (int i = 0; i < this->MaxXMomentum; ++i)
+    {
+      FourrierCoefficientsDownState[i] = new Complex [this->MaxYMomentum];
+      FourrierCoefficients[i] = new Complex [this->MaxYMomentum];
+      for (int j = 0; j < this->MaxYMomentum; ++j)
+	{
+	  FourrierCoefficientsDownState[i][j] = Phase (2.0 * M_PI * ((double) (i * downStateSpace.XMomentum) / ((double) this->MaxXMomentum) + (double) (j * downStateSpace.YMomentum) / ((double) this->MaxYMomentum)));
+	  FourrierCoefficients[i][j] = Phase (2.0 * M_PI * ((double) (i * this->XMomentum) / ((double) this->MaxXMomentum) + (double) (j * this->YMomentum) / ((double) this->MaxYMomentum)));
+	}
+    }
+
+   if ((upStateSpace.NbrFermions + downStateSpace.NbrFermions) != this->NbrSite)
+     {
+       cout << "cases where the number of sites is not equal to the total number of fermions is not supported" << endl;
+     }
+   else
+     {
+      unsigned long TmpSpinlessMask = (0x1ul << this->NbrSite) - 0x1ul;
+      for (int j = 0; j < upStateSpace.HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpUpState = upStateSpace.StateDescription[j];
+	  unsigned long TmpDownState = (~TmpUpState) & TmpSpinlessMask;
+	  int TmpDownStateNbrTranslationX;
+	  int TmpDownStateNbrTranslationY;
+	  unsigned long TmpCanonicalDownState = downStateSpace.FindCanonicalForm(TmpDownState, TmpDownStateNbrTranslationX, TmpDownStateNbrTranslationY);
+	  int TmpPos = downStateSpace.NbrSite - 1;
+	  while ((TmpPos > 0) && ((TmpCanonicalDownState & (0x1ul << TmpPos)) == 0x0ul))
+	    {
+	      --TmpPos;
+	    }
+	  int TmpSpinDownIndex = downStateSpace.FindStateIndex(TmpCanonicalDownState, TmpPos);
+	  if (TmpSpinDownIndex != downStateSpace.HilbertSpaceDimension)
+	    {
+	      TmpPos = upStateSpace.NbrSite - 1;
+	      while (TmpPos > 0)
+		{
+		  unsigned long Tmp = TmpUpState & (0x1ul << TmpPos);
+		  TmpUpState |= Tmp << TmpPos;
+		  TmpUpState ^= Tmp;
+		  --TmpPos;
+		}
+	      TmpUpState <<= 1;
+	      TmpPos = downStateSpace.NbrSite - 1;
+	      while (TmpPos > 0)
+		{
+		  unsigned long Tmp = TmpDownState & (0x1ul << TmpPos);
+		  TmpDownState |= Tmp << TmpPos;
+		  TmpDownState ^= Tmp;
+		  --TmpPos;
+		}
+	      TmpUpState |= TmpDownState;
+	      int TmpNbrTranslationX;
+	      int TmpNbrTranslationY;
+	      unsigned long TmpSpinfulCanonical = this->FindCanonicalForm(TmpUpState, TmpNbrTranslationX, TmpNbrTranslationY);
+#ifdef  __64_BITS__
+	      int Max = 63;
+#else
+	      int Max = 31;
+#endif
+	      while ((TmpSpinfulCanonical & (0x1ul << Max)) == 0x0ul)
+		{
+		  --Max;
+		}
+	      int TmpSpinfulIndex = this->FindStateIndex(TmpSpinfulCanonical, Max);
+	      if (TmpSpinfulIndex != this->HilbertSpaceDimension)
+		{
+		  unsigned long TmpUpState3 = TmpUpState;
+		  unsigned long TmpUpState2 = TmpUpState3;
+#ifdef  __64_BITS__
+		  TmpUpState3 &= 0x5555555555555555ul;
+		  TmpUpState2 &= 0xaaaaaaaaaaaaaaaaul;
+#else
+		  TmpUpState3 &= 0x55555555ul;
+		  TmpUpState2 &= 0xaaaaaaaaul;
+#endif	    
+		  unsigned long Sign = 0x0;
+		  int Pos = 2 * this->NbrSite - 2;
+		  while ((Pos > 0) && ((TmpUpState3 & (0x1ul << Pos)) == 0x0ul))
+		    Pos -= 2;
+		  while (Pos > 0)
+		    {
+		      unsigned long TmpUpState4 = TmpUpState2 & ((0x1ul << Pos) - 1ul);
+#ifdef  __64_BITS__
+		      TmpUpState4 ^= TmpUpState4 >> 32;
+#endif	
+		      TmpUpState4 ^= TmpUpState4 >> 16;
+		      TmpUpState4 ^= TmpUpState4 >> 8;
+		      TmpUpState4 ^= TmpUpState4 >> 4;
+		      TmpUpState4 ^= TmpUpState4 >> 2;
+		      TmpUpState4 ^= TmpUpState4 >> 1;
+		      Sign ^= TmpUpState4;
+		      Pos -= 2;
+		      while ((Pos > 0) && ((TmpUpState3 & (0x1ul << Pos)) == 0x0ul))
+			Pos -= 2;
+		    }
+		  int NbrTranslationX = (this->MaxXMomentum - TmpNbrTranslationX) % this->MaxXMomentum;
+		  int NbrTranslationY = (this->MaxYMomentum - TmpNbrTranslationY) % this->MaxYMomentum;
+		  int DownStateNbrTranslationX = (this->MaxXMomentum - TmpDownStateNbrTranslationX) % this->MaxXMomentum;
+		  int DownStateNbrTranslationY = (this->MaxYMomentum - TmpDownStateNbrTranslationY) % this->MaxYMomentum;
+		  Sign ^= (downStateSpace.ReorderingSign[TmpSpinDownIndex] >> (TmpDownStateNbrTranslationY * downStateSpace.MaxXMomentum + TmpDownStateNbrTranslationX)) & 0x1ul;	      
+		  Sign ^= (this->ReorderingSign[TmpSpinfulIndex] >> (NbrTranslationY * this->MaxXMomentum + NbrTranslationX)) & 0x1ul;
+		  Complex Coefficient = ((FourrierCoefficients[TmpNbrTranslationX][TmpNbrTranslationY] *
+					 FourrierCoefficientsDownState[DownStateNbrTranslationX][DownStateNbrTranslationY]) *
+					 sqrt (((double) this->NbrStateInOrbit[TmpSpinfulIndex]) / ((double) (upStateSpace.NbrStateInOrbit[j] * downStateSpace.NbrStateInOrbit[TmpSpinDownIndex]))));
+		  if ((Sign & 0x1ul) == 0x0ul)
+		    FinalState[TmpSpinfulIndex] = upState[j] * downState[TmpSpinDownIndex] * Coefficient;
+		  else
+		    FinalState[TmpSpinfulIndex] = -upState[j] * downState[TmpSpinDownIndex] * Coefficient;		  
+		}
+	    }
+	}
+     }
+   
+   for (int i = 0; i < this->MaxXMomentum; ++i)
+    {
+      delete[] FourrierCoefficients[i];
+      delete[] FourrierCoefficientsDownState[i];
+    } 
+  delete[] FourrierCoefficients;
+  delete[] FourrierCoefficientsDownState;
+  return FinalState;
+}
