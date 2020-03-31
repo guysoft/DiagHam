@@ -1,4 +1,5 @@
 #include "Vector/RealVector.h"
+#include "Vector/ComplexVector.h"
 #include "Vector/LongRationalVector.h"
 
 #include "Options/OptionManager.h"
@@ -37,6 +38,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('i', "input-vector", "name of the file containing the binary vector");
   (*SystemGroup) += new SingleDoubleOption  ('e', "error", "rounding error (for floattig point vectors)", 1e-14);
   (*SystemGroup) +=  new BooleanOption  ('r', "rational", "input vectors are rational vectors");
+  (*SystemGroup) +=  new BooleanOption  ('c', "complex", "input vectors are complex vectors");
   (*SystemGroup) +=  new BooleanOption  ('\n', "histogram", "compute the number of components whithin each order of magnitude");
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -87,37 +89,71 @@ int main(int argc, char** argv)
      }
   else
     {
-      RealVector State;
-      if (State.ReadVector (Manager.GetString("input-vector")) == false)
+      if (Manager.GetBoolean("complex"))
 	{
-	  cout << "can't open vector file " << Manager.GetString("input-vector") << endl;
-	  return -1;      
+	  ComplexVector State;
+	  if (State.ReadVector (Manager.GetString("input-vector")) == false)
+	    {
+	      cout << "can't open vector file " << Manager.GetString("input-vector") << endl;
+	      return -1;      
+	    }
+	  Dimension = State.GetLargeVectorDimension();
+	  for (long i = 0; i < Dimension; ++i)
+	    {
+	      if (Norm(State[i]) < Error)
+		{
+		  ++Count;
+		}
+	      int TmpMagnitude = (int) (log10(Norm(State[i])));
+	      if (Norm(State[i]) < 1.0)
+		{
+		  TmpMagnitude--;
+		}
+	      if (MaxMagnitude < TmpMagnitude)
+		{
+		  MaxMagnitude = TmpMagnitude;
+		}
+	      if (MinMagnitude > TmpMagnitude)
+		{
+		  MinMagnitude = TmpMagnitude;
+		}
+	      NbrComponentPerMagnitude[TmpMagnitude + MagnitudeShift]++;
+	      WeightPerMagnitude[TmpMagnitude + MagnitudeShift] += SqrNorm(State[i]);	  
+	    }
 	}
-      Dimension = State.GetLargeVectorDimension();
-      for (long i = 0; i < Dimension; ++i)
+      else
 	{
-	  if (fabs(State[i]) < Error)
+	  RealVector State;
+	  if (State.ReadVector (Manager.GetString("input-vector")) == false)
 	    {
-	      ++Count;
+	      cout << "can't open vector file " << Manager.GetString("input-vector") << endl;
+	      return -1;      
 	    }
-	  int TmpMagnitude = (int) (log10(fabs(State[i])));
-	  if (fabs(State[i]) < 1.0)
+	  Dimension = State.GetLargeVectorDimension();
+	  for (long i = 0; i < Dimension; ++i)
 	    {
-	      TmpMagnitude--;
+	      if (fabs(State[i]) < Error)
+		{
+		  ++Count;
+		}
+	      int TmpMagnitude = (int) (log10(fabs(State[i])));
+	      if (fabs(State[i]) < 1.0)
+		{
+		  TmpMagnitude--;
+		}
+	      if (MaxMagnitude < TmpMagnitude)
+		{
+		  MaxMagnitude = TmpMagnitude;
+		}
+	      if (MinMagnitude > TmpMagnitude)
+		{
+		  MinMagnitude = TmpMagnitude;
+		}
+	      NbrComponentPerMagnitude[TmpMagnitude + MagnitudeShift]++;
+	      WeightPerMagnitude[TmpMagnitude + MagnitudeShift] += State[i] * State[i];	  
 	    }
-	  if (MaxMagnitude < TmpMagnitude)
-	    {
-	      MaxMagnitude = TmpMagnitude;
-	    }
-	  if (MinMagnitude > TmpMagnitude)
-	    {
-	      MinMagnitude = TmpMagnitude;
-	    }
-	  NbrComponentPerMagnitude[TmpMagnitude + MagnitudeShift]++;
-	  WeightPerMagnitude[TmpMagnitude + MagnitudeShift] += State[i] * State[i];	  
 	}
-    }
- 
+    } 
   if (Manager.GetBoolean("histogram"))
     {
       cout << "# magnitude nbr_components sum_nbr_components weight sum_weight" << endl;
