@@ -54,8 +54,8 @@ class ParticleOnSphereBilayerHamiltonian : public ParticleOnSphereWithSpinGeneri
 
  protected:
 
-  //parameter taking into account the in-plane field defined by Q=(B_paralel/B_perpendicular)*distance	
-  double Qvector;
+  //charging energy for the bilayer with d>0 (= Ec * Sz^2)	
+  double ChargingEnergy;
 
  public:
 
@@ -70,12 +70,13 @@ class ParticleOnSphereBilayerHamiltonian : public ParticleOnSphereWithSpinGeneri
   // onebodyPotentialUpUp =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin up, null pointer if none
   // onebodyPotentialDownDown =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin down, null pointer if none
   // onebodyPotentialUpDown =  one-body tunnelling potential (sorted from component on the lowest Lz state to component on the highest Lz state), on site, symmetric spin up / spin down
+  // chargingEnergy = charging energy for bilayer with d > 0
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnSphereBilayerHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, double** pseudoPotential,
 					     double* onebodyPotentialUpUp, double* onebodyPotentialDownDown,
-					     double* onebodyPotentialUpDown, double qvector,
+					     double* onebodyPotentialUpDown, double chargingEnergy,
 					     AbstractArchitecture* architecture, long memory = -1, 
 					     bool onDiskCacheFlag = false, char* precalculationFileName = 0);
 

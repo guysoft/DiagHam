@@ -114,6 +114,9 @@ class AbstractQHEOnSphereWithSpinHamiltonian : public AbstractQHEOnSphereHamilto
   // array that contains all one-body interaction factors for the pairing term
   double* OneBodyInteractionFactorsPairing;  
 
+  //charging energy for bilayer simulations (=Ec * Sz^2)
+  double ChargingEnergy;
+
   // pointer to an optional L^2 operator in the Hamiltonian 
   ParticleOnSphereWithSpinL2Hamiltonian* L2Hamiltonian;
   // pointer to an optional S^2 operator in the Hamiltonian 
@@ -894,6 +897,23 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNOneBodyAddMultiply
 	    }
 	}
     }
+
+  if (this->ChargingEnergy != 0)
+      {
+        double TmpSz = 0.0;
+        for (int i = firstComponent; i < lastComponent; i += step)
+          { 
+             TmpSz = 0.0;
+             for (int j = 0; j <= this->LzMax; ++j) 
+               {
+                 TmpSz += particles->AduAu(i, j);
+                 TmpSz -= particles->AddAd(i, j);
+              }
+             TmpSz = this->ChargingEnergy * TmpSz * TmpSz; 
+             vDestination[i] += TmpSz * vSource[i];
+          }
+      }
+
 }
 
 // core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
@@ -1025,6 +1045,29 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNOneBodyAddMultiply
 	    }
 	}
     }
+
+
+  if (this->ChargingEnergy != 0) 
+      {
+         double TmpSz = 0.0;
+         for (int p = 0; p < nbrVectors; ++p)
+           {
+             RealVector& TmpSourceVector = vSources[p];
+             RealVector& TmpDestinationVector = vDestinations[p];
+             for (int i = firstComponent; i < lastComponent; i += step)
+               { 
+                  TmpSz = 0.0;
+                   for (int j = 0; j <= this->LzMax; ++j) 
+                     {
+                        TmpSz += particles->AduAu(i, j);
+                        TmpSz -= particles->AddAd(i, j);
+                     }
+                  TmpSz = this->ChargingEnergy * TmpSz * TmpSz;    
+                  TmpDestinationVector[i] += TmpSz * TmpSourceVector[i];
+               }
+           }
+      }
+
 }
 
 // core part of the FastMultiplication method involving the one-body interaction
@@ -1098,7 +1141,24 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNOneBodyFastMultipl
 	      ++position;
 	    }
 	}
-    }    
+    }
+
+
+  if (this->ChargingEnergy != 0)
+    {
+      double TmpSz = 0.0;
+      for (int j = 0; j <= this->LzMax; ++j)
+        {
+           TmpSz += particles->AduAu(index + this->PrecalculationShift, j);
+           TmpSz -= particles->AddAd(index + this->PrecalculationShift, j);
+         }
+      TmpSz = this->ChargingEnergy * TmpSz * TmpSz;    
+
+      indexArray[position] = index + this->PrecalculationShift;
+      coefficientArray[position] = TmpSz;
+      ++position; 
+     }
+
 }
 
 // core part of the PartialFastMultiplicationMemory method involving two-body term
@@ -1301,6 +1361,16 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNOneBodyFastMultipl
 	    }
 	}
     }
+
+  if (this->ChargingEnergy != 0)
+    {
+      for (int i = firstComponent; i < lastComponent; ++i)
+        {
+          ++memory;
+          ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];    
+        }
+    }
+
 }
 
 

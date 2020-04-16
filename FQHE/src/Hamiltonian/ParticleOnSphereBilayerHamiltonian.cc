@@ -64,14 +64,13 @@ using std::ostream;
 // onebodyPotentialUpUp =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin up, null pointer if none
 // onebodyPotentialDownDown =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin down, null pointer if none
 // onebodyPotentialUpDown =  one-body tunnelling potential (sorted from component on the lowest Lz state to component on the highest Lz state), on site, symmetric spin up / spin down
+// chargingEnergy = charging energy for bilayers with d > 0
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnSphereBilayerHamiltonian::ParticleOnSphereBilayerHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, 
-										       double** pseudoPotential, double* onebodyPotentialUpUp, double* onebodyPotentialDownDown, double* onebodyPotentialUpDown, double qvector,
-										       AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
-										       char* precalculationFileName)
+										       double** pseudoPotential, double* onebodyPotentialUpUp, double* onebodyPotentialDownDown, double* onebodyPotentialUpDown, double chargingEnergy, AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, char* precalculationFileName)
 {
   this->Particles = particles;
   this->LzMax = lzmax;
@@ -89,7 +88,7 @@ ParticleOnSphereBilayerHamiltonian::ParticleOnSphereBilayerHamiltonian(ParticleO
       for (int i = 0; i < this->NbrLzValue; ++i)
 	this->PseudoPotentials[j][i] = pseudoPotential[j][this->LzMax - i];
     }
-  this->Qvector = qvector;
+  this->ChargingEnergy = chargingEnergy;
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.0;
   long MinIndex;

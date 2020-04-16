@@ -594,6 +594,16 @@ long AbstractQHEOnSphereWithSpinHamiltonian::PartialFastMultiplicationMemory(int
 	}
     }
 
+  if (this->ChargingEnergy != 0)
+    {
+      for (int i = firstComponent; i < LastComponent; ++i)
+	   {
+	     ++Memory;
+	     ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+	   }
+    }
+
+
   delete TmpParticles;
 
   return Memory;
