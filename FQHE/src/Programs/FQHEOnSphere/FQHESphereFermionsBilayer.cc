@@ -55,7 +55,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 9);
   (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
-  (*SystemGroup) += new SingleDoubleOption  ('t', "tunnelling", "tunnelling splitting Delta_SAS", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('d', "bilayer-distance", "distance between the layers (if d>0, charging energy will be added)", 0.0);
 
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
@@ -132,7 +131,6 @@ int main(int argc, char** argv)
   bool onDiskCacheFlag = Manager.GetBoolean("disk");
   bool FirstRun = true;
 
-  double DeltaSAS = Manager.GetDouble("tunnelling"); 
   double BilayerDistance = Manager.GetDouble("bilayer-distance");
   double ChargingEnergy = 0.0;
   if (BilayerDistance > 0)
@@ -142,7 +140,6 @@ int main(int argc, char** argv)
        ChargingEnergy = 2.0 * BetaTimesEighttPi/(4.0 * NbrFermions * NbrFermions); //extra factor of 2 to account for DiagHam's stupid convention
        cout << "Including charging energy= " << ChargingEnergy << " for distance= " << BilayerDistance << endl;
     }
-
 
   double** PseudoPotentials  = new double*[10];
   for (int i = 0; i < 3; ++i)
@@ -268,18 +265,9 @@ int main(int argc, char** argv)
 
     }
 
-  
-  //if (DeltaSAS!=0.0)
-  //  {
-  //    OneBodyPotentialUpDown = new double[LzMax + 1];
-  //    for (int i=0; i<=LzMax; ++i)
-  //     OneBodyPotentialUpDown[i] = -1.0 * DeltaSAS;
-  //  }
-
-
   char* OutputNameLz = new char [512 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
-  sprintf (OutputNameLz, "fermions_sphere_su2_%s_n_%d_2s_%d_t_%f_lz.dat", Manager.GetString("interaction-name"), 
-	   NbrFermions, LzMax, DeltaSAS);
+  sprintf (OutputNameLz, "fermions_sphere_su2_%s_n_%d_2s_%d_lz.dat", Manager.GetString("interaction-name"), 
+	   NbrFermions, LzMax);
 
   
   int Max = (((LzMax - (NbrFermions+1)/2 + 1) * ((NbrFermions+1)/2)) + ((LzMax - (NbrFermions)/2 + 1) * (NbrFermions/2)));
@@ -379,9 +367,9 @@ int main(int argc, char** argv)
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
 	  EigenvectorName = new char [120];
-	  sprintf (EigenvectorName, "fermions_sphere_su2_%s_n_%d_2s_%d_t_%f_lz_%d",
+	  sprintf (EigenvectorName, "fermions_sphere_su2_%s_n_%d_2s_%d_lz_%d",
 		   ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
-		   NbrFermions, LzMax, DeltaSAS, L);
+		   NbrFermions, LzMax, L);
 	}
       QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
       MainTaskOperation TaskOperation (&Task);

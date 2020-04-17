@@ -905,10 +905,7 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNOneBodyAddMultiply
           { 
              TmpSz = 0.0;
              for (int j = 0; j <= this->LzMax; ++j) 
-               {
-                 TmpSz += particles->AduAu(i, j);
-                 TmpSz -= particles->AddAd(i, j);
-              }
+                 TmpSz += (particles->AduAu(i, j) - particles->AddAd(i, j));
              TmpSz = this->ChargingEnergy * TmpSz * TmpSz; 
              vDestination[i] += TmpSz * vSource[i];
           }
@@ -1058,12 +1055,9 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNOneBodyAddMultiply
                { 
                   TmpSz = 0.0;
                    for (int j = 0; j <= this->LzMax; ++j) 
-                     {
-                        TmpSz += particles->AduAu(i, j);
-                        TmpSz -= particles->AddAd(i, j);
-                     }
-                  TmpSz = this->ChargingEnergy * TmpSz * TmpSz;    
-                  TmpDestinationVector[i] += TmpSz * TmpSourceVector[i];
+                        TmpSz += (particles->AduAu(i, j) - particles->AddAd(i, j));
+                  TmpSz = this->ChargingEnergy * TmpSz * TmpSz;
+                  TmpDestinationVector[i] += TmpSz * TmpSourceVector[i];    
                }
            }
       }
@@ -1148,10 +1142,7 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNOneBodyFastMultipl
     {
       double TmpSz = 0.0;
       for (int j = 0; j <= this->LzMax; ++j)
-        {
-           TmpSz += particles->AduAu(index + this->PrecalculationShift, j);
-           TmpSz -= particles->AddAd(index + this->PrecalculationShift, j);
-         }
+           TmpSz += (particles->AduAu(index + this->PrecalculationShift, j) - particles->AddAd(index + this->PrecalculationShift, j));
       TmpSz = this->ChargingEnergy * TmpSz * TmpSz;    
 
       indexArray[position] = index + this->PrecalculationShift;

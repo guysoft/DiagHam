@@ -89,6 +89,7 @@ ParticleOnSphereBilayerHamiltonian::ParticleOnSphereBilayerHamiltonian(ParticleO
 	this->PseudoPotentials[j][i] = pseudoPotential[j][this->LzMax - i];
     }
   this->ChargingEnergy = chargingEnergy;
+  cout << "Shifting the bilayer energies by " << this->ChargingEnergy << endl;
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.0;
   long MinIndex;
@@ -440,7 +441,7 @@ void ParticleOnSphereBilayerHamiltonian::EvaluateInteractionFactors()
 		      TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
 		      this->InteractionFactorsupdown[i][Index] += this->PseudoPotentials[2][J >> 1] * TmpCoefficient;
 		    }
-		  this->InteractionFactorsupdown[i][Index] *= -Factor*cos(this->Qvector*((double)(m1-m3)));
+		  this->InteractionFactorsupdown[i][Index] *= -Factor;
 		  ++TotalNbrInteractionFactors;
 		  ++Index;
 		}

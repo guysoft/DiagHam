@@ -58,9 +58,6 @@ class ParticleOnSphereWithSpinGenericHamiltonian : public AbstractQHEOnSphereWit
   // first index refered to the spin sector (sorted as up-up, down-down, up-down)
   double** PseudoPotentials;
 
-  //parameter taking into account the in-plane field defined by Q=(B_paralel/B_perpendicular)*distance	
-  double Qvector;
-
  public:
 
   ParticleOnSphereWithSpinGenericHamiltonian();

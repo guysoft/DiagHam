@@ -54,9 +54,6 @@ class ParticleOnSphereBilayerHamiltonian : public ParticleOnSphereWithSpinGeneri
 
  protected:
 
-  //charging energy for the bilayer with d>0 (= Ec * Sz^2)	
-  double ChargingEnergy;
-
  public:
 
   // constructor from default datas
