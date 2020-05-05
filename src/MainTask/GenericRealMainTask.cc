@@ -297,7 +297,7 @@ GenericRealMainTask::GenericRealMainTask(OptionManager* options, AbstractHilbert
     }  
   if (((*options)["test-hermitian"] != 0) && (options->GetBoolean("test-hermitian") == true))
     {
-      RealMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
+      RealMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension(), true);
       this->Hamiltonian->GetHamiltonian(HRep);
       double Tmp1;
       double Tmp2;
