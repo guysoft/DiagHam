@@ -67,6 +67,39 @@ bool FQHETorusGetPseudopotentials (char* fileName, int& nbrPseudoPotentials, dou
 }
 
 
+// get pseudopototentials for particles on torus from file with an interaction name
+// 
+// fileName = name of the file that contains the pseudopotantial description
+// nbrPseudoPotentials = reference on the number of pseudopotentials
+// pseudoPotentials = reference on the array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
+// interactionName = naming convention read from definition, or generated from LL index
+// return value = true if no error occured
+
+bool FQHETorusGetPseudopotentials (char* fileName, int& nbrPseudoPotentials, double*& pseudoPotentials, char*& interactionName)
+{
+  ConfigurationParser InteractionDefinition;
+  if (InteractionDefinition.Parse(fileName) == false)
+    {
+      InteractionDefinition.DumpErrors(cout) << endl;
+      return false;
+    }
+  if (InteractionDefinition["Name"] == NULL)
+    {
+      cout << "Attention, using unnamed interaction! Please include a line 'Name = ...'" << endl;
+      interactionName = new char[10];
+      sprintf(interactionName,"unnamed");
+    }
+  else
+    {
+      interactionName = new char[strlen(InteractionDefinition["Name"])+1];
+      strcpy(interactionName, InteractionDefinition["Name"]);
+    }
+  InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', pseudoPotentials, nbrPseudoPotentials);
+  
+  return true;
+}
+
+
 // get pseudopototentials for particles on torus from file
 // 
 // fileName = name of the file that contains the pseudopotantial description
