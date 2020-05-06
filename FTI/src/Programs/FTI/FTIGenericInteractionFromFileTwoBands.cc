@@ -2,6 +2,8 @@
 
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpaceLong.h"
+#include "HilbertSpace/FermionOnSquareLatticeWithSU4SpinMomentumSpace.h"
+#include "HilbertSpace/FermionOnSquareLatticeWithSU4SpinMomentumSpaceLong.h"
 #include "HilbertSpace/BosonOnSquareLatticeWithSU2SpinMomentumSpace.h"
 
 #include "Hamiltonian/ParticleOnLatticeFromFileInteractionTwoBandHamiltonian.h"
@@ -64,7 +66,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "interaction-file", "name of the file containing the two-body interaction matrix elements");
   (*SystemGroup) += new BooleanOption  ('\n', "real-interaction", "assume that the two-body interaction matrix elements are real");
   (*SystemGroup) += new SingleStringOption  ('\n', "interaction-name", "name of the two-body interaction", "noname");
-  (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
+  (*SystemGroup) += new BooleanOption  ('\n', "add-spin", "add spin 1/2 degree of freedom while assuming an SU(2) invariant interaction");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "sz-value", "twice the spin Sz value", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)"),
+    (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-chernnumber", "compute the chern number (only in singleparticle-spectrum mode)");
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebody", "export the one-body information (band structure and eigenstates) in a binary file");
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebodytext", "export the one-body information (band structure and eigenstates) in an ASCII text file");
@@ -135,7 +140,14 @@ int main(int argc, char** argv)
   sprintf (FilePrefix, "%s_%s_%s", StatisticPrefix, Manager.GetString("interaction-name"), FileSystemGeometry);
 
   char* CommentLine = new char [256];
-  sprintf (CommentLine, "eigenvalues\n# kx ky");
+  if (Manager.GetBoolean("add-spin") == false)
+    {
+      sprintf (CommentLine, "eigenvalues\n# kx ky");
+    }
+  else
+    {
+      sprintf (CommentLine, "eigenvalues\n# Sz kx ky");
+    }
   
   char* EigenvalueOutputFile = new char [512 + strlen(FilePrefix)];
   
@@ -163,7 +175,13 @@ int main(int argc, char** argv)
       MinKy = Manager.GetInteger("only-ky");
       MaxKy = MinKy;
     }
-  
+  int MinSz = NbrParticles & 1;
+  int MaxSz = MinSz;
+  if (Manager.GetBoolean("add-spin") == true)
+    {
+      MinSz = Manager.GetInteger("sz-value") | (NbrParticles & 1);
+      MaxSz = MinSz;
+    }  
   double* DummyChemicalPotentials = new double[2];
   DummyChemicalPotentials[0] = 0.0;
   DummyChemicalPotentials[1] = 0.0;
@@ -183,24 +201,54 @@ int main(int argc, char** argv)
     }
 
   bool FirstRunFlag = true;
+
+  if (Manager.GetBoolean("real-interaction"))
+    {
+      Lanczos.SetRealAlgorithms();
+    }
+  
   for (int i = MinKx; i <= MaxKx; ++i)
     {
       for (int j = MinKy; j <= MaxKy; ++j)
 	{
-	  cout << "(kx=" << i << ",ky=" << j << ") : " << endl;
+	  if (Manager.GetBoolean("add-spin") == false)
+	    {
+	      cout << "(kx=" << i << ",ky=" << j << ") : " << endl;
+	    }
+	  else
+	    {
+	      cout << "(kx=" << i << ",ky=" << j << ", 2sz=" << MinSz << ") : " << endl;
+	    }	    
 	  ParticleOnSphereWithSpin* Space = 0;
 	  AbstractQHEHamiltonian* Hamiltonian = 0;
 	  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	    Memory = Architecture.GetArchitecture()->GetLocalMemory();
 	  if (Manager.GetBoolean("boson") == false)
 	    {
-	      if ((NbrSitesX * NbrSitesY) <= 31)
+	      if (Manager.GetBoolean("add-spin") == false)
 		{
-		  Space = new FermionOnSquareLatticeWithSpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		  if ((NbrSitesX * NbrSitesY) <= 32)
+		    {
+		      Space = new FermionOnSquareLatticeWithSpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		    }
+		  else
+		    {
+		      Space = new FermionOnSquareLatticeWithSpinMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		    }
 		}
 	      else
 		{
-		  Space = new FermionOnSquareLatticeWithSpinMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		  if ((NbrSitesX * NbrSitesY) <= 16)
+		    {
+		      Space = new FermionOnSquareLatticeWithSU4SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j,
+										  MinSz, 10000000ul);
+		    }
+		  else
+		    {
+		      cout << "SU(4) not supported with more than 16 momenta" << endl;
+		      Space = 0;
+		      //		      Space = new FermionOnSquareLatticeWithSU4SpinMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j, MinSz);
+		    }
 		}
 	    }
 	  else
@@ -227,10 +275,24 @@ int main(int argc, char** argv)
 											Architecture.GetArchitecture(), Memory);
 	    }
 	  char* ContentPrefix = new char[256];
-	  sprintf (ContentPrefix, "%d %d", i, j);
+	  if (Manager.GetBoolean("add-spin") == false)
+	    {
+	      sprintf (ContentPrefix, "%d %d", i, j);
+	    }
+	  else
+	    {
+	      sprintf (ContentPrefix, "%d %d %d", MinSz, i, j);
+	    }
 	  char* EigenstateOutputFile = new char [512];
 	  char* TmpExtention = new char[256];
-	  sprintf (TmpExtention, "_kx_%d_ky_%d", i, j);
+	  if (Manager.GetBoolean("add-spin") == false)
+	    {
+	      sprintf (TmpExtention, "_kx_%d_ky_%d", i, j);
+	    }
+	  else
+	    {
+	      sprintf (TmpExtention, "_kx_%d_ky_%d_sz_%d", i, j, MinSz);
+	    }
 	  EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
 	  delete[] TmpExtention;
 	  if (Manager.GetBoolean("real-interaction"))
