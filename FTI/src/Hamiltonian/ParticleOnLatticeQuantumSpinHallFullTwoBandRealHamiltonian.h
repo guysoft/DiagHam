@@ -63,6 +63,9 @@ class ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian : public Partic
   // sixth entry is the linearized index (annihilation_index * nbr_creation_index + creation_index)
   double****** InteractionFactorsSigma;
 
+  // number of internal indices (i.e number of entries for indices 0, 1, 2 and 3 of InteractionFactorsSigma)
+  int NbrInternalIndices;
+  
  public:
 
   // default constructor
@@ -160,39 +163,45 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
       TmpIndices2 = this->InterSectorIndicesPerSum[j];
       for (int i1 = 0; i1 < Lim; i1 += 2)
 	{
-	  for (int sigma1 = 0; sigma1 < 2; ++sigma1)
+	  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
 	    {
 	      Coefficient3 = particles->AsigmaAsigma(index, TmpIndices[i1], TmpIndices[i1 + 1], sigma1, sigma1);
 	      if (Coefficient3 != 0.0)
 		{
 		  Coefficient4 = vSource[index];
 		  Coefficient4 *= Coefficient3;
-		  for (int sigma3 = 0; sigma3 < 2; ++sigma3)
+		  for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
 		    {
-		      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1][j][(i1 * Lim) >> 2]);
-		      for (int i2 = 0; i2 < Lim; i2 += 2)
+		      if (this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1] != 0)
 			{
-			  Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
-			  if (Index < Dim)
+			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1][j][(i1 * Lim) >> 2]);
+			  for (int i2 = 0; i2 < Lim; i2 += 2)
 			    {
-			      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
-			    }
-			  ++TmpInteractionFactor;
-			}
-		    }
-		  for (int sigma3 = 0; sigma3 < 2; ++sigma3)
-		    {
-		      for (int sigma4 = sigma3 + 1; sigma4 < 2; ++sigma4)
-			{			  
-			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim2) >> 2]);
-			  for (int i2 = 0; i2 < Lim2; i2 += 2)
-			    {
-			      Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
+			      Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
 			      if (Index < Dim)
 				{
-				  vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+			      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
 				}
 			      ++TmpInteractionFactor;
+			    }
+			}
+		    }
+		  for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
+		    {
+		      for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
+			{			  
+			  if (this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1] != 0)
+			    {
+			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim2) >> 2]);
+			      for (int i2 = 0; i2 < Lim2; i2 += 2)
+				{
+				  Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
+				  if (Index < Dim)
+				    {
+				      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+				    }
+				  ++TmpInteractionFactor;
+				}
 			    }
 			}
 		    }
@@ -201,41 +210,47 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 	}
       for (int i1 = 0; i1 < Lim2; i1 += 2)
 	{
-	  for (int sigma1 = 0; sigma1 < 2; ++sigma1)
+	  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
 	    {
-	      for (int sigma2 = sigma1 + 1; sigma2 < 2; ++sigma2)
+	      for (int sigma2 = sigma1 + 1; sigma2 < this->NbrInternalIndices; ++sigma2)
 		{
 		  Coefficient3 = particles->AsigmaAsigma(index, TmpIndices2[i1], TmpIndices2[i1 + 1], sigma1, sigma2);
 		  if (Coefficient3 != 0.0)
 		    {
 		      Coefficient4 = vSource[index];
 		      Coefficient4 *= Coefficient3;
-		      for (int sigma3 = 0; sigma3 < 2; ++sigma3)
+		      for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
 			{
-			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim) >> 2]);
-			  for (int i2 = 0; i2 < Lim; i2 += 2)
+			  if (this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2] != 0)
 			    {
-			      Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
-			      if (Index < Dim)
+			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim) >> 2]);
+			      for (int i2 = 0; i2 < Lim; i2 += 2)
 				{
-				  vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+				  Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
+				  if (Index < Dim)
+				    {
+				      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+				    }
+				  ++TmpInteractionFactor;
 				}
-			      ++TmpInteractionFactor;
 			    }
 			}
-		      for (int sigma3 = 0; sigma3 < 2; ++sigma3)
+		      for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
 			{
-			  for (int sigma4 = sigma3 + 1; sigma4 < 2; ++sigma4)
+			  for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
 				{			  
-				  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
-				  for (int i2 = 0; i2 < Lim2; i2 += 2)
+				  if (this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2] != 0)
 				    {
-				      Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
-				      if (Index < Dim)
+				      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
+				      for (int i2 = 0; i2 < Lim2; i2 += 2)
 					{
-					  vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+					  Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
+					  if (Index < Dim)
+					    {
+					      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+					    }
+					  ++TmpInteractionFactor;
 					}
-				      ++TmpInteractionFactor;
 				    }
 				}
 			}
@@ -273,57 +288,18 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
       TmpIndices2 = this->InterSectorIndicesPerSum[j];
       for (int i1 = 0; i1 < Lim; i1 += 2)
 	{
-	  for (int sigma1 = 0; sigma1 < 2; ++sigma1)
+	  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
 	    {
 	      Coefficient3 = particles->AsigmaAsigma(index, TmpIndices[i1], TmpIndices[i1 + 1], sigma1, sigma1);
 	      if (Coefficient3 != 0.0)
 		{
 		  for (int p = 0; p < nbrVectors; ++p)
 		    tmpCoefficients[p] = Coefficient3 * vSources[p][index];
-		  for (int sigma3 = 0; sigma3 < 2; ++sigma3)
+		  for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
 		    {
-		      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1][j][(i1 * Lim) >> 2]);
-		      for (int i2 = 0; i2 < Lim; i2 += 2)
+		      if (this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1] != 0)
 			{
-			  Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
-			  if (Index < Dim)
-			    for (int p = 0; p < nbrVectors; ++p)
-			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-			  ++TmpInteractionFactor;
-			}
-		    }
-		  for (int sigma3 = 0; sigma3 < 2; ++sigma3)
-		    {
-		      for (int sigma4 = sigma3 + 1; sigma4 < 2; ++sigma4)
-			{			  
-			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim) >> 2]);
-			  for (int i2 = 0; i2 < Lim2; i2 += 2)
-			    {
-			      Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
-			      if (Index < Dim)
-				for (int p = 0; p < nbrVectors; ++p)
-				  vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-			      ++TmpInteractionFactor;
-			    }
-			}
-		    }
-		}
-	    }
-	}
-      for (int i1 = 0; i1 < Lim2; i1 += 2)
-	{
-	  for (int sigma1 = 0; sigma1 < 2; ++sigma1)
-	    {
-	      for (int sigma2 = sigma1 + 1; sigma2 < 2; ++sigma2)
-		{
-		  Coefficient3 = particles->AsigmaAsigma(index, TmpIndices2[i1], TmpIndices2[i1 + 1], sigma1, sigma2);
-		  if (Coefficient3 != 0.0)
-		    {
-		      for (int p = 0; p < nbrVectors; ++p)
-			tmpCoefficients[p] = Coefficient3 * vSources[p][index];
-		      for (int sigma3 = 0; sigma3 < 2; ++sigma3)
-			{
-			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
+			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1][j][(i1 * Lim) >> 2]);
 			  for (int i2 = 0; i2 < Lim; i2 += 2)
 			    {
 			      Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
@@ -333,11 +309,14 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 			      ++TmpInteractionFactor;
 			    }
 			}
-		      for (int sigma3 = 0; sigma3 < 2; ++sigma3)
-			{
-			  for (int sigma4 = sigma3 + 1; sigma4 < 2; ++sigma4)
-			    {			  
-			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
+		    }
+		  for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
+		    {
+		      for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
+			{			  
+			  if (this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1] != 0)
+			    {
+			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim) >> 2]);
 			      for (int i2 = 0; i2 < Lim2; i2 += 2)
 				{
 				  Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
@@ -345,6 +324,54 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 				    for (int p = 0; p < nbrVectors; ++p)
 				      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
 				  ++TmpInteractionFactor;
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+      for (int i1 = 0; i1 < Lim2; i1 += 2)
+	{
+	  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+	    {
+	      for (int sigma2 = sigma1 + 1; sigma2 < this->NbrInternalIndices; ++sigma2)
+		{
+		  Coefficient3 = particles->AsigmaAsigma(index, TmpIndices2[i1], TmpIndices2[i1 + 1], sigma1, sigma2);
+		  if (Coefficient3 != 0.0)
+		    {
+		      for (int p = 0; p < nbrVectors; ++p)
+			tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+		      for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
+			{
+			  if (this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2] != 0)
+			    {
+			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
+			      for (int i2 = 0; i2 < Lim; i2 += 2)
+				{
+				  Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
+				  if (Index < Dim)
+				    for (int p = 0; p < nbrVectors; ++p)
+				      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+				  ++TmpInteractionFactor;
+				}
+			    }
+			}
+		      for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
+			{
+			  for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
+			    {			  
+			      if (this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2] != 0)
+				{
+				  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
+				  for (int i2 = 0; i2 < Lim2; i2 += 2)
+				    {
+				      Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
+				      if (Index < Dim)
+					for (int p = 0; p < nbrVectors; ++p)
+					  vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+				      ++TmpInteractionFactor;
+				    }
 				}
 			    }
 			}
@@ -381,63 +408,18 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Hermitia
       TmpIndices2 = this->InterSectorIndicesPerSum[j];
       for (int i1 = 0; i1 < Lim; i1 += 2)
 	{
-	  for (int sigma1 = 0; sigma1 < 2; ++sigma1)
+	  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
 	    {
 	      Coefficient3 = particles->AsigmaAsigma(index, TmpIndices[i1], TmpIndices[i1 + 1], sigma1, sigma1);
 	      if (Coefficient3 != 0.0)
 		{
 		  Coefficient4 = vSource[index];
 		  Coefficient4 *= Coefficient3;
-		  for (int sigma3 = 0; sigma3 < 2; ++sigma3)
+		  for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
 		    {
-		      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1][j][(i1 * Lim) >> 2]);
-		      for (int i2 = 0; i2 < Lim; i2 += 2)
+		      if (this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1] != 0)
 			{
-			  Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
-			  if (Index <= index)
-			    {
-			      if (Index < index)
-				TmpSum += vSource[Index] * (Coefficient * Coefficient3) * (*TmpInteractionFactor);
-			      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
-			    }
-			  ++TmpInteractionFactor;
-			}
-		    }
-		  for (int sigma3 = 0; sigma3 < 2; ++sigma3)
-		    {
-		      for (int sigma4 = sigma3 + 1; sigma4 < 2; ++sigma4)
-			{			  
-			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim2) >> 2]);
-			  for (int i2 = 0; i2 < Lim2; i2 += 2)
-			    {
-			      Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
-			      if (Index <= index)
-				{
-				  if (Index < index)
-				    TmpSum += vSource[Index] * (Coefficient * Coefficient3) * (*TmpInteractionFactor);
-				  vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
-				}
-			      ++TmpInteractionFactor;
-			    }
-			}
-		    }
-		}
-	    }
-	}
-      for (int i1 = 0; i1 < Lim2; i1 += 2)
-	{
-	  for (int sigma1 = 0; sigma1 < 2; ++sigma1)
-	    {
-	      for (int sigma2 = sigma1 + 1; sigma2 < 2; ++sigma2)
-		{
-		  Coefficient3 = particles->AsigmaAsigma(index, TmpIndices2[i1], TmpIndices2[i1 + 1], sigma1, sigma2);
-		  if (Coefficient3 != 0.0)
-		    {
-		      Coefficient4 = vSource[index];
-		      Coefficient4 *= Coefficient3;
-		      for (int sigma3 = 0; sigma3 < 2; ++sigma3)
-			{
-			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim) >> 2]);
+			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1][j][(i1 * Lim) >> 2]);
 			  for (int i2 = 0; i2 < Lim; i2 += 2)
 			    {
 			      Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
@@ -450,11 +432,14 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Hermitia
 			      ++TmpInteractionFactor;
 			    }
 			}
-		      for (int sigma3 = 0; sigma3 < 2; ++sigma3)
-			{
-			  for (int sigma4 = sigma3 + 1; sigma4 < 2; ++sigma4)
-			    {			  
-			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
+		    }
+		  for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
+		    {
+		      for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
+			{			  
+			  if (this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1] != 0)
+			    {
+			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim2) >> 2]);
 			      for (int i2 = 0; i2 < Lim2; i2 += 2)
 				{
 				  Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
@@ -465,6 +450,60 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Hermitia
 				      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
 				    }
 				  ++TmpInteractionFactor;
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+      for (int i1 = 0; i1 < Lim2; i1 += 2)
+	{
+	  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+	    {
+	      for (int sigma2 = sigma1 + 1; sigma2 < this->NbrInternalIndices; ++sigma2)
+		{
+		  Coefficient3 = particles->AsigmaAsigma(index, TmpIndices2[i1], TmpIndices2[i1 + 1], sigma1, sigma2);
+		  if (Coefficient3 != 0.0)
+		    {
+		      Coefficient4 = vSource[index];
+		      Coefficient4 *= Coefficient3;
+		      for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
+			{
+			  if (this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2] != 0)
+			    {
+			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim) >> 2]);
+			      for (int i2 = 0; i2 < Lim; i2 += 2)
+				{
+				  Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
+				  if (Index <= index)
+				    {
+				      if (Index < index)
+					TmpSum += vSource[Index] * (Coefficient * Coefficient3) * (*TmpInteractionFactor);
+				      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+				    }
+				  ++TmpInteractionFactor;
+				}
+			    }
+			}
+		      for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
+			{
+			  for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
+			    {			  
+			      if (this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2] != 0)
+				{
+				  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
+				  for (int i2 = 0; i2 < Lim2; i2 += 2)
+				    {
+				      Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
+				      if (Index <= index)
+					{
+					  if (Index < index)
+					    TmpSum += vSource[Index] * (Coefficient * Coefficient3) * (*TmpInteractionFactor);
+					  vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+					}
+				      ++TmpInteractionFactor;
+				    }
 				}
 			    }
 			}
@@ -504,87 +543,18 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Hermitia
       TmpIndices2 = this->InterSectorIndicesPerSum[j];
       for (int i1 = 0; i1 < Lim; i1 += 2)
 	{
-	  for (int sigma1 = 0; sigma1 < 2; ++sigma1)
+	  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
 	    {
 	      Coefficient3 = particles->AsigmaAsigma(index, TmpIndices[i1], TmpIndices[i1 + 1], sigma1, sigma1);
 	      if (Coefficient3 != 0.0)
 		{
 		  for (int p = 0; p < nbrVectors; ++p)
 		    tmpCoefficients[p] = Coefficient3 * vSources[p][index];
-		  for (int sigma3 = 0; sigma3 < 2; ++sigma3)
+		  for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
 		    {
-		      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1][j][(i1 * Lim) >> 2]);
-		      for (int i2 = 0; i2 < Lim; i2 += 2)
+		      if (this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1] != 0)
 			{
-			  Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
-			  if (Index <= index)
-			    {
-			      if (Index < index)
-				{
-				  for (int p = 0; p < nbrVectors; ++p)
-				    {
-				      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-				      TmpSum[p] += (Coefficient * Coefficient3) * ((*TmpInteractionFactor)) * vSources[p][Index];
-				    }
-				}
-			      else
-				{
-				  for (int p = 0; p < nbrVectors; ++p)
-				    {
-				      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-				    }
-				}
-			    }
-			  ++TmpInteractionFactor;
-			}
-		    }
-		}
-	      for (int sigma3 = 0; sigma3 < 2; ++sigma3)
-		{
-		  for (int sigma4 = sigma3 + 1; sigma4 < 2; ++sigma4)
-		    {			  
-		      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim) >> 2]);
-		      for (int i2 = 0; i2 < Lim2; i2 += 2)
-			{
-			  Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
-			  if (Index <= index)
-			    {
-			      if (Index < index)
-				{
-				  for (int p = 0; p < nbrVectors; ++p)
-				    {
-				      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-				      TmpSum[p] += (Coefficient * Coefficient3) * ((*TmpInteractionFactor)) * vSources[p][Index];
-				    }
-				}
-			      else
-				{
-				  for (int p = 0; p < nbrVectors; ++p)
-				    {
-				      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-				    }
-				}
-			    }
-			  ++TmpInteractionFactor;
-			}
-		    }
-		}
-	    }
-	}
-      for (int i1 = 0; i1 < Lim2; i1 += 2)
-	{
-	  for (int sigma1 = 0; sigma1 < 2; ++sigma1)
-	    {
-	      for (int sigma2 = sigma1 + 1; sigma2 < 2; ++sigma2)
-		{
-		  Coefficient3 = particles->AsigmaAsigma(index, TmpIndices2[i1], TmpIndices2[i1 + 1], sigma1, sigma2);
-		  if (Coefficient3 != 0.0)
-		    {
-		      for (int p = 0; p < nbrVectors; ++p)
-			tmpCoefficients[p] = Coefficient3 * vSources[p][index];
-		      for (int sigma3 = 0; sigma3 < 2; ++sigma3)
-			{
-			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
+			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1][j][(i1 * Lim) >> 2]);
 			  for (int i2 = 0; i2 < Lim; i2 += 2)
 			    {
 			      Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
@@ -609,33 +579,117 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Hermitia
 			      ++TmpInteractionFactor;
 			    }
 			}
-		      for (int sigma3 = 0; sigma3 < 2; ++sigma3)
+		    }
+		}
+	      for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
+		{
+		  for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
+		    {			  
+		      if (this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1] != 0)
 			{
-			  for (int sigma4 = sigma3 + 1; sigma4 < 2; ++sigma4)
-			    {			  
-			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
-			      for (int i2 = 0; i2 < Lim2; i2 += 2)
+			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim) >> 2]);
+			  for (int i2 = 0; i2 < Lim2; i2 += 2)
+			    {
+			      Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
+			      if (Index <= index)
 				{
-				  Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma4, Coefficient);
-				  if (Index <= index)
+				  if (Index < index)
 				    {
-				      if (Index < index)
+				      for (int p = 0; p < nbrVectors; ++p)
 					{
-					  for (int p = 0; p < nbrVectors; ++p)
-					    {
-					      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-					      TmpSum[p] += (Coefficient * Coefficient3) * ((*TmpInteractionFactor)) * vSources[p][Index];
-					    }
-					}
-				      else
-					{
-					  for (int p = 0; p < nbrVectors; ++p)
-					    {
-					      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-					    }
+					  vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+					  TmpSum[p] += (Coefficient * Coefficient3) * ((*TmpInteractionFactor)) * vSources[p][Index];
 					}
 				    }
-				  ++TmpInteractionFactor;
+				  else
+				    {
+				      for (int p = 0; p < nbrVectors; ++p)
+					{
+					  vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+					}
+				    }
+				}			    
+			      ++TmpInteractionFactor;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+      for (int i1 = 0; i1 < Lim2; i1 += 2)
+	{
+	  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+	    {
+	      for (int sigma2 = sigma1 + 1; sigma2 < this->NbrInternalIndices; ++sigma2)
+		{
+		  Coefficient3 = particles->AsigmaAsigma(index, TmpIndices2[i1], TmpIndices2[i1 + 1], sigma1, sigma2);
+		  if (Coefficient3 != 0.0)
+		    {
+		      for (int p = 0; p < nbrVectors; ++p)
+			tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+		      for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
+			{
+			  if (this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2] != 0)
+			    {
+			      if (this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2] != 0)
+				{
+				  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
+				  for (int i2 = 0; i2 < Lim; i2 += 2)
+				    {
+				      Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
+				      if (Index <= index)
+					{
+					  if (Index < index)
+					    {
+					      for (int p = 0; p < nbrVectors; ++p)
+						{
+						  vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+						  TmpSum[p] += (Coefficient * Coefficient3) * ((*TmpInteractionFactor)) * vSources[p][Index];
+						}
+					    }
+					  else
+					    {
+					      for (int p = 0; p < nbrVectors; ++p)
+						{
+						  vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+						}
+					    }
+					}
+				      ++TmpInteractionFactor;
+				    }
+				}
+			    }
+			}
+		      for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
+			{
+			  for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
+			    {			  
+			      if (this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2] != 0)
+				{
+				  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
+				  for (int i2 = 0; i2 < Lim2; i2 += 2)
+				    {
+				      Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma4, Coefficient);
+				      if (Index <= index)
+					{
+					  if (Index < index)
+					    {
+					      for (int p = 0; p < nbrVectors; ++p)
+						{
+						  vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+						  TmpSum[p] += (Coefficient * Coefficient3) * ((*TmpInteractionFactor)) * vSources[p][Index];
+						}
+					    }
+					  else
+					    {
+					      for (int p = 0; p < nbrVectors; ++p)
+						{
+						  vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+						}
+					    }
+					}
+				      ++TmpInteractionFactor;
+				    }
 				}
 			    }
 			}
@@ -683,47 +737,47 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 	  TmpIndices2 = this->InterSectorIndicesPerSum[j];
 	  for (int i1 = 0; i1 < Lim; i1 += 2)
 	    {
-	      for (int sigma1 = 0; sigma1 < 2; ++sigma1)
+	      for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
 		{
 		  Coefficient3 = particles->AsigmaAsigma(AbsoluteIndex, TmpIndices[i1], TmpIndices[i1 + 1], sigma1, sigma1);
 		  if (Coefficient3 != 0.0)
 		    {
-		      for (int sigma3 = 0; sigma3 < 2; ++sigma3)
+		      for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
 			{
-			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1][j][(i1 * Lim) >> 2]);
-			  for (int i2 = 0; i2 < Lim; i2 += 2)
+			  if (this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1] != 0)
 			    {
-			      Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
-			      if (Index < Dim)
+			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1][j][(i1 * Lim) >> 2]);
+			      for (int i2 = 0; i2 < Lim; i2 += 2)
 				{
-				  indexArray[position] = Index;
-				  coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
-// 				  cout <<  Coefficient3 << " " << Coefficient << " " << (*TmpInteractionFactor) << " " << coefficientArray[position];
-// 				  this->Particles->PrintState(cout, Index);
-// 				  cout << endl;
-				  ++position;
-				}
-			      ++TmpInteractionFactor;
-			    }
-			}
-		      for (int sigma3 = 0; sigma3 < 2; ++sigma3)
-			{
-			  for (int sigma4 = sigma3 + 1; sigma4 < 2; ++sigma4)
-			    {			  
-			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim2) >> 2]);
-			      for (int i2 = 0; i2 < Lim2; i2 += 2)
-				{
-				  Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
+				  Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
 				  if (Index < Dim)
 				    {
 				      indexArray[position] = Index;
 				      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
-// 				      cout <<  Coefficient3 << " " << Coefficient << " " << (*TmpInteractionFactor) << " " << coefficientArray[position];
-// 				      this->Particles->PrintState(cout, Index);
-// 				      cout << endl;
 				      ++position;
 				    }
 				  ++TmpInteractionFactor;
+				}
+			    }
+			}
+		      for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
+			{
+			  for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
+			    {			  
+			      if (this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1] != 0)
+				{
+				  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim2) >> 2]);
+				  for (int i2 = 0; i2 < Lim2; i2 += 2)
+				    {
+				      Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
+				      if (Index < Dim)
+					{
+					  indexArray[position] = Index;
+					  coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+					  ++position;
+					}
+				      ++TmpInteractionFactor;
+				    }
 				}
 			    }
 			}
@@ -732,49 +786,49 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 	    }
 	  for (int i1 = 0; i1 < Lim2; i1 += 2)
 	    {
-	      for (int sigma1 = 0; sigma1 < 2; ++sigma1)
+	      for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
 		{
-		  for (int sigma2 = sigma1 + 1; sigma2 < 2; ++sigma2)
+		  for (int sigma2 = sigma1 + 1; sigma2 < this->NbrInternalIndices; ++sigma2)
 		    {
 		      Coefficient3 = particles->AsigmaAsigma(AbsoluteIndex, TmpIndices2[i1], TmpIndices2[i1 + 1], sigma1, sigma2);
 		      if (Coefficient3 != 0.0)
 			{
-			  for (int sigma3 = 0; sigma3 < 2; ++sigma3)
+			  for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
 			    {
-			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim) >> 2]);
-			      for (int i2 = 0; i2 < Lim; i2 += 2)
+			      if (this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2] != 0)
 				{
-				  Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
-				  if (Index < Dim)
+				  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim) >> 2]);
+				  for (int i2 = 0; i2 < Lim; i2 += 2)
 				    {
-				      indexArray[position] = Index;
-				      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
-// 				      cout <<  Coefficient3 << " " << Coefficient << " " << (*TmpInteractionFactor) << " " << coefficientArray[position];
-// 				      this->Particles->PrintState(cout, Index);
-// 				      cout << endl;
-				      ++position;
-				    }
-				  ++TmpInteractionFactor;
-				}
-			    }
-			  for (int sigma3 = 0; sigma3 < 2; ++sigma3)
-			    {
-			      for (int sigma4 = sigma3 + 1; sigma4 < 2; ++sigma4)
-				{			  
-				  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
-				  for (int i2 = 0; i2 < Lim2; i2 += 2)
-				    {
-				      Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
+				      Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
 				      if (Index < Dim)
 					{
 					  indexArray[position] = Index;
 					  coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
-// 					  cout <<  Coefficient3 << " " << Coefficient << " " << (*TmpInteractionFactor) << " " << coefficientArray[position];
-// 					  this->Particles->PrintState(cout, Index);
-// 					  cout << endl;
 					  ++position;
 					}
 				      ++TmpInteractionFactor;
+				    }
+				}
+			    }
+			  for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
+			    {
+			      for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
+				{			  
+				  if (this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2] != 0)
+				    {
+				      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
+				      for (int i2 = 0; i2 < Lim2; i2 += 2)
+					{
+					  Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
+					  if (Index < Dim)
+					    {
+					      indexArray[position] = Index;
+					      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+					      ++position;
+					    }
+					  ++TmpInteractionFactor;
+					}
 				    }
 				}
 			    }
@@ -795,81 +849,16 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 	  int Count = 0;
 	  for (int i1 = 0; i1 < Lim; i1 += 2)
 	    {
-	      for (int sigma1 = 0; sigma1 < 2; ++sigma1)
+	      for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
 		{
 		  Coefficient3 = particles->AsigmaAsigma(AbsoluteIndex, TmpIndices[i1], TmpIndices[i1 + 1], sigma1, sigma1);
 		  if (Coefficient3 != 0.0)
 		    {
-		      for (int sigma3 = 0; sigma3 < 2; ++sigma3)
+		      for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
 			{
-			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1][j][(i1 * Lim) >> 2]);
-			  for (int i2 = 0; i2 < Lim; i2 += 2)
+			  if (this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1] != 0)
 			    {
-			      Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
-			      if (Index <= AbsoluteIndex)
-				{
-				  if (Index == AbsoluteIndex)
-				    {
-				      indexArray[position] = Index;
-				      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
-				      ++position;
-				      ++Count;
-				    }
-				  else
-				    {
-				      indexArray[position] = Index;
-				      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
-				      ++position;
-				      ++Count;
-				    }
-				}
-			      ++TmpInteractionFactor;
-			    }
-			}
-		      for (int sigma3 = 0; sigma3 < 2; ++sigma3)
-			{
-			  for (int sigma4 = sigma3 + 1; sigma4 < 2; ++sigma4)
-			    {			  
-			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim2) >> 2]);
-			      for (int i2 = 0; i2 < Lim2; i2 += 2)
-				{
-				  Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
-				  if (Index <= AbsoluteIndex)
-				    {
-				      if (Index == AbsoluteIndex)
-					{
-					  indexArray[position] = Index;
-					  coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
-					  ++position;
-					  ++Count;
-					}
-				      else
-					{
-					  indexArray[position] = Index;
-					  coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
-					  ++position;
-					  ++Count;
-					}
-				    }
-				  ++TmpInteractionFactor;
-				}
-			    }
-			}
-		    }
-		}
-	    }
-	  for (int i1 = 0; i1 < Lim2; i1 += 2)
-	    {
-	      for (int sigma1 = 0; sigma1 < 2; ++sigma1)
-		{
-		  for (int sigma2 = sigma1 + 1; sigma2 < 2; ++sigma2)
-		    {
-		      Coefficient3 = particles->AsigmaAsigma(AbsoluteIndex, TmpIndices2[i1], TmpIndices2[i1 + 1], sigma1, sigma2);
-		      if (Coefficient3 != 0.0)
-			{
-			  for (int sigma3 = 0; sigma3 < 2; ++sigma3)
-			    {
-			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim) >> 2]);
+			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1][j][(i1 * Lim) >> 2]);
 			      for (int i2 = 0; i2 < Lim; i2 += 2)
 				{
 				  Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
@@ -893,11 +882,14 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 				  ++TmpInteractionFactor;
 				}
 			    }
-			  for (int sigma3 = 0; sigma3 < 2; ++sigma3)
-			    {
-			      for (int sigma4 = sigma3 + 1; sigma4 < 2; ++sigma4)
-				{			  
-				  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
+			}
+		      for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
+			{
+			  for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
+			    {			  
+			      if (this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1] != 0)
+				{
+				  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim2) >> 2]);
 				  for (int i2 = 0; i2 < Lim2; i2 += 2)
 				    {
 				      Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
@@ -919,6 +911,80 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 					    }
 					}
 				      ++TmpInteractionFactor;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	  for (int i1 = 0; i1 < Lim2; i1 += 2)
+	    {
+	      for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+		{
+		  for (int sigma2 = sigma1 + 1; sigma2 < this->NbrInternalIndices; ++sigma2)
+		    {
+		      Coefficient3 = particles->AsigmaAsigma(AbsoluteIndex, TmpIndices2[i1], TmpIndices2[i1 + 1], sigma1, sigma2);
+		      if (Coefficient3 != 0.0)
+			{
+			  for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
+			    {
+			      if (this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2] != 0)
+				{
+				  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim) >> 2]);
+				  for (int i2 = 0; i2 < Lim; i2 += 2)
+				    {
+				      Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
+				      if (Index <= AbsoluteIndex)
+					{
+					  if (Index == AbsoluteIndex)
+					    {
+					      indexArray[position] = Index;
+					      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
+					      ++position;
+					      ++Count;
+					    }
+					  else
+					    {
+					      indexArray[position] = Index;
+					      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+					      ++position;
+					      ++Count;
+					    }
+					}
+				      ++TmpInteractionFactor;
+				    }
+				}
+			    }
+			  for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
+			    {
+			      for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
+				{			  
+				  if (this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2] != 0)
+				    {
+				      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
+				      for (int i2 = 0; i2 < Lim2; i2 += 2)
+					{
+					  Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
+					  if (Index <= AbsoluteIndex)
+					    {
+					      if (Index == AbsoluteIndex)
+						{
+						  indexArray[position] = Index;
+						  coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
+						  ++position;
+						  ++Count;
+						}
+					      else
+						{
+						  indexArray[position] = Index;
+						  coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+						  ++position;
+						  ++Count;
+						}
+					    }
+					  ++TmpInteractionFactor;
+					}
 				    }
 				}
 			    }
@@ -960,58 +1026,16 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 	      TmpIndices2 = this->InterSectorIndicesPerSum[j];
 	      for (int i1 = 0; i1 < Lim; i1 += 2)
 		{
-		  for (int sigma1 = 0; sigma1 < 2; ++sigma1)
+		  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
 		    {
 		      Coefficient3 = particles->AsigmaAsigma(i, TmpIndices[i1], TmpIndices[i1 + 1], sigma1, sigma1);
 		      if (Coefficient3 != 0.0)
 			{
-			  for (int sigma3 = 0; sigma3 < 2; ++sigma3)
+			  for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
 			    {
-			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1][j][(i1 * Lim) >> 2]);
-			      for (int i2 = 0; i2 < Lim; i2 += 2)
+			      if (this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1] != 0)
 				{
-				  Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
-				  if (Index < Dim)
-				    {
-				      ++memory;
-				      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-				    }
-				  ++TmpInteractionFactor;
-				}
-			    }
-			  for (int sigma3 = 0; sigma3 < 2; ++sigma3)
-			    {
-			      for (int sigma4 = sigma3 + 1; sigma4 < 2; ++sigma4)
-				{			  
-				  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim2) >> 2]);
-				  for (int i2 = 0; i2 < Lim2; i2 += 2)
-				    {
-				      Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
-				      if (Index < Dim)
-					{
-					  ++memory;
-					  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-					}
-				      ++TmpInteractionFactor;
-				    }
-				}
-			    }
-			}
-		    }
-		}
-	      
-	      for (int i1 = 0; i1 < Lim2; i1 += 2)
-		{
-		  for (int sigma1 = 0; sigma1 < 2; ++sigma1)
-		    {
-		      for (int sigma2 = sigma1 + 1; sigma2 < 2; ++sigma2)
-			{
-			  Coefficient3 = particles->AsigmaAsigma(i, TmpIndices2[i1], TmpIndices2[i1 + 1], sigma1, sigma2);
-			  if (Coefficient3 != 0.0)
-			    {
-			      for (int sigma3 = 0; sigma3 < 2; ++sigma3)
-				{
-				  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim) >> 2]);
+				  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1][j][(i1 * Lim) >> 2]);
 				  for (int i2 = 0; i2 < Lim; i2 += 2)
 				    {
 				      Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
@@ -1023,11 +1047,14 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 				      ++TmpInteractionFactor;
 				    }
 				}
-			      for (int sigma3 = 0; sigma3 < 2; ++sigma3)
-				{
-				  for (int sigma4 = sigma3 + 1; sigma4 < 2; ++sigma4)
-				    {			  
-				      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
+			    }
+			  for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
+			    {
+			      for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
+				{			  
+				  if (this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1] != 0)
+				    {
+				      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim2) >> 2]);
 				      for (int i2 = 0; i2 < Lim2; i2 += 2)
 					{
 					  Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
@@ -1037,6 +1064,57 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 					      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 					    }
 					  ++TmpInteractionFactor;
+					}
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	      
+	      for (int i1 = 0; i1 < Lim2; i1 += 2)
+		{
+		  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+		    {
+		      for (int sigma2 = sigma1 + 1; sigma2 < this->NbrInternalIndices; ++sigma2)
+			{
+			  Coefficient3 = particles->AsigmaAsigma(i, TmpIndices2[i1], TmpIndices2[i1 + 1], sigma1, sigma2);
+			  if (Coefficient3 != 0.0)
+			    {
+			      for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
+				{
+				  if (this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2] != 0)
+				    {
+				      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim) >> 2]);
+				      for (int i2 = 0; i2 < Lim; i2 += 2)
+					{
+					  Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
+					  if (Index < Dim)
+					    {
+					      ++memory;
+					      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+					    }
+					  ++TmpInteractionFactor;
+					}
+				    }
+				}
+			      for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
+				{
+				  for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
+				    {			  
+				      if (this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2] != 0)
+					{
+					  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
+					  for (int i2 = 0; i2 < Lim2; i2 += 2)
+					    {
+					      Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
+					      if (Index < Dim)
+						{
+						  ++memory;
+						  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+						}
+					      ++TmpInteractionFactor;
+					    }
 					}
 				    }
 				}
@@ -1059,58 +1137,16 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 	      TmpIndices2 = this->InterSectorIndicesPerSum[j];
 	      for (int i1 = 0; i1 < Lim; i1 += 2)
 		{
-		  for (int sigma1 = 0; sigma1 < 2; ++sigma1)
+		  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
 		    {
-
 		      Coefficient3 = particles->AsigmaAsigma(i, TmpIndices[i1], TmpIndices[i1 + 1], sigma1, sigma1);
 		      if (Coefficient3 != 0.0)
 			{
-			  for (int sigma3 = 0; sigma3 < 2; ++sigma3)
+			  for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
 			    {
-			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1][j][(i1 * Lim) >> 2]);
-			      for (int i2 = 0; i2 < Lim; i2 += 2)
+			      if (this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1] != 0)
 				{
-				  Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
-				  if (Index <= i)
-				    {
-				      ++memory;
-				      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-				    }
-				  ++TmpInteractionFactor;
-				}
-			    }
-			  for (int sigma3 = 0; sigma3 < 2; ++sigma3)
-			    {
-			      for (int sigma4 = sigma3 + 1; sigma4 < 2; ++sigma4)
-				{			  
-				  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim2) >> 2]);
-				  for (int i2 = 0; i2 < Lim2; i2 += 2)
-				    {
-				      Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
-				      if (Index <= i)
-					{
-					  ++memory;
-					  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-					}
-				      ++TmpInteractionFactor;
-				    }
-				}
-			    }
-			}
-		    }
-		}
-	      for (int i1 = 0; i1 < Lim2; i1 += 2)
-		{
-		  for (int sigma1 = 0; sigma1 < 2; ++sigma1)
-		    {
-		      for (int sigma2 = sigma1 + 1; sigma2 < 2; ++sigma2)
-			{
-			  Coefficient3 = particles->AsigmaAsigma(i, TmpIndices2[i1], TmpIndices2[i1 + 1], sigma1, sigma2);
-			  if (Coefficient3 != 0.0)
-			    {
-			      for (int sigma3 = 0; sigma3 < 2; ++sigma3)
-				{
-				  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim) >> 2]);
+				  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1][j][(i1 * Lim) >> 2]);
 				  for (int i2 = 0; i2 < Lim; i2 += 2)
 				    {
 				      Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
@@ -1122,11 +1158,14 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 				      ++TmpInteractionFactor;
 				    }
 				}
-			      for (int sigma3 = 0; sigma3 < 2; ++sigma3)
-				{
-				  for (int sigma4 = sigma3 + 1; sigma4 < 2; ++sigma4)
-				    {			  
-				      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
+			    }
+			  for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
+			    {
+			      for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
+				{			  
+				  if (this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1] != 0)
+				    {
+				      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim2) >> 2]);
 				      for (int i2 = 0; i2 < Lim2; i2 += 2)
 					{
 					  Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
@@ -1136,6 +1175,56 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 					      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 					    }
 					  ++TmpInteractionFactor;
+					}
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	      for (int i1 = 0; i1 < Lim2; i1 += 2)
+		{
+		  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+		    {
+		      for (int sigma2 = sigma1 + 1; sigma2 < this->NbrInternalIndices; ++sigma2)
+			{
+			  Coefficient3 = particles->AsigmaAsigma(i, TmpIndices2[i1], TmpIndices2[i1 + 1], sigma1, sigma2);
+			  if (Coefficient3 != 0.0)
+			    {
+			      for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
+				{
+				  if (this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2] != 0)
+				    {
+				      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim) >> 2]);
+				      for (int i2 = 0; i2 < Lim; i2 += 2)
+					{
+					  Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
+					  if (Index <= i)
+					    {
+					      ++memory;
+					      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+					    }
+					  ++TmpInteractionFactor;
+					}
+				    }
+				}
+			      for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
+				{
+				  for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
+				    {			  
+				      if (this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2] != 0)
+					{
+					  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
+					  for (int i2 = 0; i2 < Lim2; i2 += 2)
+					    {
+					      Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
+					      if (Index <= i)
+						{
+						  ++memory;
+						  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+						}
+					      ++TmpInteractionFactor;
+					    }
 					}
 				    }
 				}

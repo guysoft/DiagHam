@@ -97,6 +97,8 @@ class FermionOnSphere :  public ParticleOnSphere
   friend class FermionOnSphereWithSU3Spin;
   friend class FermionOnSphereWithSU4Spin;  
   friend class FermionOnSphereWithSU4SpinLong;
+  friend class FermionOnSphereWithSU8Spin;
+  friend class FermionOnSphereWithSU8SpinLong;
   friend class FermionOnSphereWithSpinSqueezedBasis;
   friend class FermionOnSphereTwoLandauLevels;
   friend class FermionOnSphereThreeLandauLevels;

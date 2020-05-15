@@ -196,4 +196,9 @@ BosonOnT2xS2.cc \
 BosonOnSphereWithSU2SpinPartialPolarization.cc \
 BosonOnSphereWithSU2SpinAllLz.cc \
 FermionOnSphereWithSpinPartialPolarization.cc \
-FermionOnSphereDroplet.cc 
+FermionOnSphereDroplet.cc \
+ParticleOnSphereWithSU8Spin.cc \
+FermionOnSphereWithSU8Spin.cc  \
+FermionOnSquareLatticeWithSU8SpinMomentumSpace.cc \
+FermionOnSphereWithSU8SpinLong.cc \
+FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong.cc

@@ -303,6 +303,11 @@ GenericRealMainTask::GenericRealMainTask(OptionManager* options, AbstractHilbert
       double Tmp2;
       cout << "check hermiticity" << endl;
       double AverageNorm = 0.0;
+      double Error = MACHINE_PRECISION;
+      if (((*options)["testhermitian-error"] != 0) && (options->GetDouble("testhermitian-error") != 0.0))
+	{
+	  Error = options->GetDouble("testhermitian-error");
+	}
       for (int i = 0; i < this->Hamiltonian->GetHilbertSpaceDimension(); ++i)
 	for (int j = i; j < this->Hamiltonian->GetHilbertSpaceDimension(); ++j)
 	  {
@@ -315,7 +320,7 @@ GenericRealMainTask::GenericRealMainTask(OptionManager* options, AbstractHilbert
 	  {
 	    HRep.GetMatrixElement(i, j, Tmp1);
 	    HRep.GetMatrixElement(j, i, Tmp2);
-	    if (fabs(Tmp1 - Tmp2) > (MACHINE_PRECISION * AverageNorm))
+	    if (fabs(Tmp1 - Tmp2) > (Error * AverageNorm))
 	      {
 		cout << "error at " << i << " " << j << " : " << Tmp1 << " " << Tmp2 << endl;
 	      }

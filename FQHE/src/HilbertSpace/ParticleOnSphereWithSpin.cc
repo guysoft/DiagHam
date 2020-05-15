@@ -977,7 +977,7 @@ int ParticleOnSphereWithSpin::ProdAd (int* m, int spinIndices, int nbrIndices, d
 
 double ParticleOnSphereWithSpin::AddAd (int index, int m)
 {
-  return this->HilbertSpaceDimension;
+  return 0.0;
 }
 
 // apply a^+_m_u a_m_u operator to a given state  (only spin up)
@@ -988,7 +988,31 @@ double ParticleOnSphereWithSpin::AddAd (int index, int m)
 
 double ParticleOnSphereWithSpin::AduAu (int index, int m)
 {
-  return this->HilbertSpaceDimension;
+  return 0.0;
+}
+
+// apply a^+_m_s a_m_s operator to a given state
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// sigma = internal degree of freedom label of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m a_m
+
+double ParticleOnSphereWithSpin::AdsigmaAsigma (int index, int m, int sigma)
+{
+  return 0.0;
+}
+
+// apply a^+_m_s a_m_s operator to a given state)
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// sigma = internal degree of freedom label of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m a_m
+
+double ParticleOnSphereWithSpin::AdsigmaAsigma (long index, int m, int sigma)
+{
+  return 0.0;
 }
 
 // carefully test whether state is in Hilbert-space and find corresponding state index

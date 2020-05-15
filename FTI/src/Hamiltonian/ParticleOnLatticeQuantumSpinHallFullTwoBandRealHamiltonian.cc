@@ -55,6 +55,7 @@ using std::ostream;
 
 ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian()
 {
+  this->NbrInternalIndices = 2;
 }
 
 // destructor
@@ -64,24 +65,30 @@ ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::~ParticleOnLatticeQu
 {
   if (this->InteractionFactorsSigma != 0)
     {
-       for (int sigma1 = 0; sigma1 < 2; ++sigma1)
+       for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
 	{
-	  for (int sigma2 = sigma1; sigma2 < 2; ++sigma2)
+	  for (int sigma2 = sigma1; sigma2 < this->NbrInternalIndices; ++sigma2)
 	    {
-	      for (int sigma3 = 0; sigma3 < 2; ++sigma3)
+	      for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
 		{
-		  for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+		  if (this->InteractionFactorsSigma[sigma1][sigma2][sigma3][sigma3] != 0)
 		    {
-		      delete[] this->InteractionFactorsSigma[sigma1][sigma2][sigma3][sigma3][i];
-		    }
-		  delete[] this->InteractionFactorsSigma[sigma1][sigma2][sigma3][sigma3] ;
-		  for (int sigma4 = sigma3 + 1; sigma4 < 2; ++sigma4)
-		    {			  
-		      for (int i = 0; i < this->NbrInterSectorSums; ++i)
+		      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 			{
-			  delete[] this->InteractionFactorsSigma[sigma1][sigma2][sigma3][sigma4][i];
+			  delete[] this->InteractionFactorsSigma[sigma1][sigma2][sigma3][sigma3][i];
 			}
-		      delete[] this->InteractionFactorsSigma[sigma1][sigma2][sigma3][sigma4] ;
+		      delete[] this->InteractionFactorsSigma[sigma1][sigma2][sigma3][sigma3] ;
+		    }
+		  for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
+		    {
+		      if (this->InteractionFactorsSigma[sigma1][sigma2][sigma3][sigma4] != 0)
+			{
+			  for (int i = 0; i < this->NbrInterSectorSums; ++i)
+			    {
+			      delete[] this->InteractionFactorsSigma[sigma1][sigma2][sigma3][sigma4][i];
+			    }
+			  delete[] this->InteractionFactorsSigma[sigma1][sigma2][sigma3][sigma4];
+			}
 		    }
 		}
 	    }

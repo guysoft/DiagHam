@@ -135,6 +135,22 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // return value = coefficient obtained when applying a^+_m a_m
   virtual double AduAu (int index, int m);
 
+  // apply a^+_m_s a_m_s operator to a given state
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // sigma = internal degree of freedom label of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m a_m
+  virtual double AdsigmaAsigma (int index, int m, int sigma);
+
+  // apply a^+_m_s a_m_s operator to a given state)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // sigma = internal degree of freedom label of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m a_m
+  virtual double AdsigmaAsigma (long index, int m, int sigma);
+
   // apply a^+_m_u a_n_u operator to a given state 
   //
   // index = index of the state on which the operator has to be applied

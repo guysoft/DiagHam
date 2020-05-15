@@ -67,6 +67,9 @@ class ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian : public Partic
   //  gap between the first band and the second band when using the flat band model   
   double FlatBandOneBodyGap;
 
+  // include an additional spin 1/2 degree of freedom, building an SU(2) invariant interaction
+  bool AdditionalSpinFlag;
+  
   // name of the ASCII file containing the matrix element for the generic two body interaction term
   char* MatrixElementsInteractionFile;
   
@@ -86,12 +89,13 @@ class ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian : public Partic
   // tightBindingModel = pointer to the tight binding model
   // flatBandFlag = use flat band model
   // flatBandOneBodyGap = set the gap between the first band and the second band when using the flat band model
+  // spinFlag = include an additional spin 1/2 degree of freedom, building an SU(2) invariant interaction
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY,
-							 char* matrixElementsInteractionFile,
-							 Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, double flatBandOneBodyGap, 
-							 AbstractArchitecture* architecture, long memory = -1);
+							     char* matrixElementsInteractionFile,
+							     Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, double flatBandOneBodyGap, 
+							     bool spinFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //

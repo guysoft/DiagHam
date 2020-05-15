@@ -57,6 +57,8 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   friend class FermionOnSphereWithSpinLzSymmetry;
   friend class FermionOnSphereWithSU4Spin;
   friend class FermionOnSphereWithSU4SpinLong;
+  friend class FermionOnSphereWithSU8Spin;
+  friend class FermionOnSphereWithSU8SpinLong;
   friend class FermionOnSphereWithSpinAllSz;
   friend class FermionOnSphereWithSpinHaldaneBasis;
   friend class FermionOnSphereWithSpinAllSzLzSymmetry;
