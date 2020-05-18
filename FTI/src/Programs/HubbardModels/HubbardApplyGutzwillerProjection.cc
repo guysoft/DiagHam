@@ -59,6 +59,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleStringOption('i', "input-state", "name of the file containing the state whose Kx momentum has to be computed");
   (*SystemGroup) += new SingleStringOption('\n', "degenerate-states", "name of the file containing a list of states (override input-state)");
+  (*SystemGroup) += new BooleanOption ('\n', "unnormalized", "store the Gutzwiller projected states without normalizing them");
   (*MiscGroup) += new BooleanOption ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -233,17 +234,27 @@ int main(int argc, char** argv)
   char* UnprojectedString = new char[256];
   char* GutzwillerProjectedString = new char[256];
   sprintf (UnprojectedString, "hubbard");
-  sprintf (GutzwillerProjectedString, "hubbard_gutzwiller_projected");
+  if (Manager.GetBoolean("unnormalized") == false)
+    {
+      sprintf (GutzwillerProjectedString, "hubbard_gutzwiller_projected");
+    }
+  else
+    {
+      sprintf (GutzwillerProjectedString, "hubbard_unnormalized_gutzwiller_projected");
+    }
  
   
   for (int i = 0; i < NbrInputStates; ++i)
     {
       char* VectorOutputName = ReplaceString(InputStateNames[i], UnprojectedString, GutzwillerProjectedString);
       ComplexVector TmpVector = OutputSpace[i]->ConvertToNbodyBasis(InputStates[i], InputSpace[i]);
-      double TmpNorm = TmpVector.Norm();
-      cout << "norm of projected state " << i << " : " << TmpNorm << endl;      
-      TmpVector /= TmpNorm;
-      TmpVector *= Phase(-Arg(TmpVector[0]));
+      if (Manager.GetBoolean("unnormalized") == false)
+	{
+	  double TmpNorm = TmpVector.Norm();
+	  cout << "norm of projected state " << i << " : " << TmpNorm << endl;      
+	  TmpVector /= TmpNorm;
+	  TmpVector *= Phase(-Arg(TmpVector[0]));
+	}
       if (TmpVector.WriteVector(VectorOutputName) == false)
 	{
 	  cout << "error, can't write vector " << VectorOutputName << endl;

@@ -719,6 +719,21 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // return value = Gutzwiller projected state
   virtual ComplexVector GutzwillerProjection(ComplexVector& state, ParticleOnSphere* space);
 
+  // convert a state from one SU(2) basis to another, transforming the one body basis in each momentum sector
+  //
+  // initialState = state to transform  
+  // targetState = vector where the transformed state has to be stored
+  // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+  // firstComponent = index of the first component to compute in initialState
+  // nbrComponents = number of consecutive components to compute
+  virtual void TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis, long firstComponent = 0l, long nbrComponents = 0l);
+
+  // compute the transformation matrix from one SU(2) basis to another, transforming the one body basis in each momentum sector
+  //
+  // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+  // return value = transformation matrix
+  virtual ComplexMatrix TransformationMatrixOneBodyBasis(ComplexMatrix* oneBodyBasis);
+
  protected:
 
   // find state index
@@ -882,6 +897,19 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // return value = number of components that have been added to the density matrix
   virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
 								  ComplexVector& groundState, HermitianMatrix* densityMatrix);
+
+  // recursive part of the convertion from a state from one SU(2) basis to another, transforming the one body basis in each momentum sector
+  //
+  // targetState = vector where the transformed state has to be stored
+  // coefficient = current coefficient to assign
+  // position = current particle consider in the n-body state
+  // momentumIndices = array that gives the momentum partition of the initial n-body state
+  // initialSU2Indices = array that gives the spin dressing the initial n-body state
+  // currentSU2Indices = array that gives the spin dressing the current transformed n-body state
+  // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+  virtual void TransformOneBodyBasisRecursive(ComplexVector& targetState, Complex coefficient,
+					      int position, int* momentumIndices, int* initialSU2Indices,
+					      int* currentSU2Indices, ComplexMatrix* oneBodyBasis);
 
 };
 

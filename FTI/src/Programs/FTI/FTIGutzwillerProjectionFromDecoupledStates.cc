@@ -51,6 +51,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  BooleanOption ('\n', "disable-weightcutoff", "do not discard the projected state has its square norm below machine accuracy");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (while happen .x.vec at the end of each stored vector)");
   (*OutputGroup) += new BooleanOption ('\n', "disable-gutzwillerbasis", "do not express the projected wave function in the Gutzwiller reduced Hilbert space but the full SU(2) basis");
+  (*OutputGroup) += new BooleanOption ('\n', "unnormalized", "store the Gutzwiller projected states without normalizing them");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -324,6 +325,30 @@ int main(int argc, char** argv)
 	}
     }
 
+  char* TmpGutzwillerOutputName = new char [256];
+  if (Manager.GetBoolean("disable-gutzwillerbasis") == true)
+    {
+      if (Manager.GetBoolean("unnormalized") == false)
+	{
+	  sprintf(TmpGutzwillerOutputName, "realspace_gutzwillerprojected");
+	}
+      else
+	{
+	  sprintf(TmpGutzwillerOutputName, "realspace_unnormalized_gutzwillerprojected");
+	}
+    }
+  else
+    {
+      if (Manager.GetBoolean("unnormalized") == false)
+	{
+	  sprintf(TmpGutzwillerOutputName, "realspace_gutzwiller_gutzwillerprojected");
+ 	}
+      else
+	{
+	  sprintf(TmpGutzwillerOutputName, "realspace_gutzwiller_unnormalized_gutzwillerprojected");
+ 	}
+   }
+	      
   for (int i = 0; i < NbrSpaces; i += 2)
     {
       int TmpIndex1;
@@ -351,7 +376,10 @@ int main(int argc, char** argv)
       cout << "   weight of the projected state = " << TmpWeight << endl;
       if ((TmpWeight > MACHINE_PRECISION) || (Manager.GetBoolean("disable-weightcutoff")))
 	{
-	  TmpVector /= sqrt(TmpWeight);
+	  if (Manager.GetBoolean("unnormalized") == false)
+	    {
+	      TmpVector /= sqrt(TmpWeight);
+	    }
 	  char* TmpOutputName;
 	  if (Manager.GetString("output-file") != 0)
 	    {
@@ -366,17 +394,10 @@ int main(int argc, char** argv)
 		  cout << "no occurence of _realspace_ was find in " << InputStateFiles[i] << " file name, cannot build output file name" << endl;
 		  return 0;
 		}
-	      TmpOutputName =  new char[strlen(InputStateFiles[i])+ 256];
+	      TmpOutputName =  new char[strlen(InputStateFiles[i])+ strlen(TmpGutzwillerOutputName) + 256];
 	      char Tmp = (*TmpString);
 	      TmpString[0] = '\0';
-	      if (Manager.GetBoolean("disable-gutzwillerbasis") == true)
-		{
-		  sprintf(TmpOutputName, "%s_realspace_gutzwillerprojected_%s", InputStateFiles[i], TmpString + 11);
-		}
-	      else
-		{
-		  sprintf(TmpOutputName, "%s_realspace_gutzwiller_gutzwillerprojected_%s", InputStateFiles[i], TmpString + 11);
-		}
+	      sprintf(TmpOutputName, "%s_%s_%s", InputStateFiles[i], TmpGutzwillerOutputName, TmpString + 11);
 	      TmpString[0] = Tmp;
 	      
 	      TmpString = strstr (TmpOutputName, "_n_");

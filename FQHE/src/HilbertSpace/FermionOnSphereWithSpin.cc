@@ -5069,3 +5069,152 @@ ComplexVector FermionOnSphereWithSpin::GutzwillerProjection(ComplexVector& state
   return ProjectedState;
 }
 
+// convert a state from one SU(2) basis to another, transforming the one body basis in each momentum sector
+//
+// initialState = state to transform  
+// targetState = vector where the transformed state has to be stored
+// oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+// firstComponent = index of the first component to compute in initialState
+// nbrComponents = number of consecutive components to compute
+
+void FermionOnSphereWithSpin::TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis,
+						    long firstComponent, long nbrComponents)
+{
+  int* TmpMomentumIndices = new int [this->NbrFermions];
+  int* TmpSU2Indices = new int [this->NbrFermions];
+  int* TmpSU2Indices2 = new int [this->NbrFermions];
+  targetState.ClearVector();
+  long LastComponent = firstComponent + nbrComponents;
+  if (nbrComponents == 0)
+    LastComponent = this->LargeHilbertSpaceDimension;
+  for (long i = firstComponent; i < LastComponent; ++i)
+    {
+      unsigned long TmpState = this->StateDescription[i];
+      unsigned long Tmp;
+      int TmpLzMax = this->NbrLzValue << 2;
+      int TmpIndex = 0;
+      for (int j = this->LzMax; j >= 0; --j)
+	{
+	  Tmp = (TmpState >> (j << 1)) & 0x3ul;;
+	  if ((Tmp & 0x2ul) != 0x0ul)
+	    {
+	      TmpMomentumIndices[TmpIndex] = j;
+	      TmpSU2Indices[TmpIndex] = 1;
+	      ++TmpIndex;
+	    }
+	  if ((Tmp & 0x1ul) != 0x0ul)
+	    {
+	      TmpMomentumIndices[TmpIndex] = j;
+	      TmpSU2Indices[TmpIndex] = 0;
+	      ++TmpIndex;
+	    }	  
+	}
+      this->TransformOneBodyBasisRecursive(targetState, initialState[i], 0, TmpMomentumIndices, TmpSU2Indices, TmpSU2Indices2, oneBodyBasis);
+    }
+  delete[] TmpMomentumIndices;
+  delete[] TmpSU2Indices;
+  delete[] TmpSU2Indices2;
+}
+
+// compute the transformation matrix from one SU(2) basis to another, transforming the one body basis in each momentum sector
+//
+// oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+// return value = transformation matrix
+
+ComplexMatrix FermionOnSphereWithSpin::TransformationMatrixOneBodyBasis(ComplexMatrix* oneBodyBasis)
+{
+  int* TmpMomentumIndices = new int [this->NbrFermions];
+  int* TmpSU2Indices = new int [this->NbrFermions];
+  int* TmpSU2Indices2 = new int [this->NbrFermions];
+  ComplexMatrix TmpMatrix(this->HilbertSpaceDimension, this->HilbertSpaceDimension, true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState = this->StateDescription[i];
+      unsigned long Tmp;
+      int TmpLzMax = this->NbrLzValue << 2;
+      int TmpIndex = 0;
+      for (int j = this->LzMax; j >= 0; --j)
+	{
+	  Tmp = (TmpState >> (j << 1)) & 0x3ul;;
+	  if ((Tmp & 0x2ul) != 0x0ul)
+	    {
+	      TmpMomentumIndices[TmpIndex] = j;
+	      TmpSU2Indices[TmpIndex] = 1;
+	      ++TmpIndex;
+	    }
+	  if ((Tmp & 0x1ul) != 0x0ul)
+	    {
+	      TmpMomentumIndices[TmpIndex] = j;
+	      TmpSU2Indices[TmpIndex] = 0;
+	      ++TmpIndex;
+	    }	  
+	}
+      this->TransformOneBodyBasisRecursive(TmpMatrix[i], 1.0, 0, TmpMomentumIndices, TmpSU2Indices, TmpSU2Indices2, oneBodyBasis);
+    }
+  delete[] TmpMomentumIndices;
+  delete[] TmpSU2Indices;
+  delete[] TmpSU2Indices2;
+  return TmpMatrix;
+}
+
+// recursive part of the convertion from a state from one SU(2) basis to another, transforming the one body basis in each momentum sector
+//
+// targetState = vector where the transformed state has to be stored
+// coefficient = current coefficient to assign
+// position = current particle consider in the n-body state
+// momentumIndices = array that gives the momentum partition of the initial n-body state
+// initialSU2Indices = array that gives the spin dressing the initial n-body state
+// currentSU2Indices = array that gives the spin dressing the current transformed n-body state
+// oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+
+void FermionOnSphereWithSpin::TransformOneBodyBasisRecursive(ComplexVector& targetState, Complex coefficient,
+							     int position, int* momentumIndices, int* initialSU2Indices,
+							     int* currentSU2Indices, ComplexMatrix* oneBodyBasis) 
+{
+  if (position == this->NbrFermions)
+    {
+      unsigned long TmpState = 0x0ul;
+      unsigned long TmpState2;
+      unsigned long Mask = 0x0ul;
+      unsigned long MaskSign = 0x0ul;
+      for (int i = 0; i < this->NbrFermions; ++i)
+	{
+	  Mask = 0x1ul << ((momentumIndices[i] << 1) + currentSU2Indices[i]);
+	  if ((TmpState & Mask) != 0x0ul)
+	    return;
+	  TmpState2 = TmpState & (Mask - 0x1ul);
+#ifdef __64_BITS__
+	  TmpState2 ^= TmpState2 >> 32;
+#endif
+	  TmpState2 ^= (TmpState2 >> 16);
+	  TmpState2 ^= (TmpState2 >> 8);
+	  TmpState2 ^= (TmpState2 >> 4);
+	  TmpState2 ^= (TmpState2 >> 2);
+	  MaskSign ^= (TmpState2 ^ (TmpState2 >> 1)) & 0x1ul;
+	  TmpState |= Mask;
+	}
+      int TmpLzMax = this->NbrLzValue << 1;
+      while ((TmpState >> TmpLzMax) == 0x0ul)
+	--TmpLzMax;
+      int Index = this->FindStateIndex(TmpState, TmpLzMax);
+      if (Index < this->HilbertSpaceDimension)
+	{
+	  if (MaskSign == 0ul)
+	    {
+	      targetState[Index] += coefficient;
+	    }
+	  else
+	    {
+	      targetState[Index] -= coefficient;
+	    }
+	}
+      return;      
+    }
+  else
+    {
+      currentSU2Indices[position] = 0;
+      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][1 - initialSU2Indices[position]][1]), position + 1, momentumIndices, initialSU2Indices, currentSU2Indices, oneBodyBasis);
+      currentSU2Indices[position] = 1;
+      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][1 - initialSU2Indices[position]][0]), position + 1, momentumIndices, initialSU2Indices, currentSU2Indices, oneBodyBasis);
+    }
+}

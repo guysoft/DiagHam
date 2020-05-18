@@ -463,19 +463,19 @@ long FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong::GenerateStates(int nbrF
 	{
 	  if ((((currentKx + currentTotalKx) % this->NbrSiteX) == this->KxMomentum) && (((j + currentTotalKy) % this->NbrSiteY) == this->KyMomentum))
 	    {
-	      this->StateDescription[pos] = 0x80ul << (((currentKx * this->NbrSiteY) + j) << 3);
+	      this->StateDescription[pos] = ((ULONGLONG) 0x80ul) << (((currentKx * this->NbrSiteY) + j) << 3);
 	      ++pos;
-	      this->StateDescription[pos] = 0x40ul << (((currentKx * this->NbrSiteY) + j) << 3);
+	      this->StateDescription[pos] = ((ULONGLONG) 0x40ul) << (((currentKx * this->NbrSiteY) + j) << 3);
 	      ++pos;
-	      this->StateDescription[pos] = 0x20ul << (((currentKx * this->NbrSiteY) + j) << 3);
+	      this->StateDescription[pos] = ((ULONGLONG) 0x20ul) << (((currentKx * this->NbrSiteY) + j) << 3);
 	      ++pos;
-	      this->StateDescription[pos] = 0x10ul << (((currentKx * this->NbrSiteY) + j) << 3);
+	      this->StateDescription[pos] = ((ULONGLONG) 0x10ul) << (((currentKx * this->NbrSiteY) + j) << 3);
 	      ++pos;
-	      this->StateDescription[pos] = 0x8ul << (((currentKx * this->NbrSiteY) + j) << 3);
+	      this->StateDescription[pos] = ((ULONGLONG) 0x8ul) << (((currentKx * this->NbrSiteY) + j) << 3);
 	      ++pos;
-	      this->StateDescription[pos] = 0x4ul << (((currentKx * this->NbrSiteY) + j) << 3);
+	      this->StateDescription[pos] = ((ULONGLONG) 0x4ul) << (((currentKx * this->NbrSiteY) + j) << 3);
 	      ++pos;
-	      this->StateDescription[pos] = 0x2ul << (((currentKx * this->NbrSiteY) + j) << 3);
+	      this->StateDescription[pos] = ((ULONGLONG) 0x2ul) << (((currentKx * this->NbrSiteY) + j) << 3);
 	      ++pos;
 	      this->StateDescription[pos] = ((ULONGLONG) 0x1ul) << (((currentKx * this->NbrSiteY) + j) << 3);
 	      ++pos;
@@ -487,19 +487,19 @@ long FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong::GenerateStates(int nbrF
 	    {
 	      if ((((i + currentTotalKx) % this->NbrSiteX) == this->KxMomentum) && (((j + currentTotalKy) % this->NbrSiteY) == this->KyMomentum))
 		{
-		  this->StateDescription[pos] = 0x80ul << (((i * this->NbrSiteY) + j) << 3);
+		  this->StateDescription[pos] = ((ULONGLONG) 0x80ul) << (((i * this->NbrSiteY) + j) << 3);
 		  ++pos;
-		  this->StateDescription[pos] = 0x40ul << (((i * this->NbrSiteY) + j) << 3);
+		  this->StateDescription[pos] = ((ULONGLONG) 0x40ul) << (((i * this->NbrSiteY) + j) << 3);
 		  ++pos;
-		  this->StateDescription[pos] = 0x20ul << (((i * this->NbrSiteY) + j) << 3);
+		  this->StateDescription[pos] = ((ULONGLONG) 0x20ul) << (((i * this->NbrSiteY) + j) << 3);
 		  ++pos;
-		  this->StateDescription[pos] = 0x10ul << (((i * this->NbrSiteY) + j) << 3);
+		  this->StateDescription[pos] = ((ULONGLONG) 0x10ul) << (((i * this->NbrSiteY) + j) << 3);
 		  ++pos;
-		  this->StateDescription[pos] = 0x8ul << (((i * this->NbrSiteY) + j) << 3);
+		  this->StateDescription[pos] = ((ULONGLONG) 0x8ul) << (((i * this->NbrSiteY) + j) << 3);
 		  ++pos;
-		  this->StateDescription[pos] = 0x4ul << (((i * this->NbrSiteY) + j) << 3);
+		  this->StateDescription[pos] = ((ULONGLONG) 0x4ul) << (((i * this->NbrSiteY) + j) << 3);
 		  ++pos;
-		  this->StateDescription[pos] = 0x2ul << (((i * this->NbrSiteY) + j) << 3);
+		  this->StateDescription[pos] = ((ULONGLONG) 0x2ul) << (((i * this->NbrSiteY) + j) << 3);
 		  ++pos;
 		  this->StateDescription[pos] = ((ULONGLONG) 0x1ul) << (((i * this->NbrSiteY) + j) << 3);
 		  ++pos;

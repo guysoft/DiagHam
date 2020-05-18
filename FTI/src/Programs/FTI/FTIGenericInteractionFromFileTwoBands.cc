@@ -215,7 +215,7 @@ int main(int argc, char** argv)
 	}
     }
   char* FilePrefix = new char [512 + strlen(FileSystemGeometry)];
-  sprintf (FilePrefix, "%s_%s_%s", StatisticPrefix, Manager.GetString("interaction-name"), FileSystemGeometry);
+  sprintf (FilePrefix, "%s_twoband_%s_%s", StatisticPrefix, Manager.GetString("interaction-name"), FileSystemGeometry);
   
   char* EigenvalueOutputFile = new char [512 + strlen(FilePrefix)];
   
