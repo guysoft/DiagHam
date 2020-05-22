@@ -543,7 +543,7 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandHamiltonian::HermitianEva
 		{
 		  for (int sigma4 = sigma3 + 1; sigma4 < 2; ++sigma4)
 		    {			  
-		      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim) >> 2]);
+		      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim2) >> 2]);
 		      for (int i2 = 0; i2 < Lim2; i2 += 2)
 			{
 			  Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
@@ -584,7 +584,7 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandHamiltonian::HermitianEva
 			tmpCoefficients[p] = Coefficient3 * vSources[p][index];
 		      for (int sigma3 = 0; sigma3 < 2; ++sigma3)
 			{
-			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
+			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim) >> 2]);
 			  for (int i2 = 0; i2 < Lim; i2 += 2)
 			    {
 			      Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
@@ -616,7 +616,7 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandHamiltonian::HermitianEva
 			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
 			      for (int i2 = 0; i2 < Lim2; i2 += 2)
 				{
-				  Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma4, Coefficient);
+				  Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
 				  if (Index <= index)
 				    {
 				      if (Index < index)

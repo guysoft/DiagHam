@@ -64,8 +64,9 @@ class ParticleOnLatticeFromFileInteractionTwoBandHamiltonian : public ParticleOn
   
   // use flat band model
   bool FlatBand;
-  //  gap between the first band and the second band when using the flat band model   
-  double FlatBandOneBodyGap;
+
+  // global rescaling factor for the two-body interaction term
+  double InteractionRescalingFactor;
 
   // name of the ASCII file containing the matrix element for the generic two body interaction term
   char* MatrixElementsInteractionFile;
@@ -85,12 +86,12 @@ class ParticleOnLatticeFromFileInteractionTwoBandHamiltonian : public ParticleOn
   // matrixElementsInteractionFile = name of the ASCII file containing the matrix element for the generic two body interaction term
   // tightBindingModel = pointer to the tight binding model
   // flatBandFlag = use flat band model
-  // flatBandOneBodyGap = set the gap between the first band and the second band when using the flat band model
+  // interactionRescalingFactor = global rescaling factor for the two-body interaction term
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   ParticleOnLatticeFromFileInteractionTwoBandHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY,
 							 char* matrixElementsInteractionFile,
-							 Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, double flatBandOneBodyGap, 
+							 Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, double interactionRescalingFactor, 
 							 AbstractArchitecture* architecture, long memory = -1);
 
   // destructor

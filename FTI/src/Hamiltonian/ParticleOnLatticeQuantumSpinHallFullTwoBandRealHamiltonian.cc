@@ -55,6 +55,7 @@ using std::ostream;
 
 ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian()
 {
+  this->OneBodyInteractionFactorsSigma = 0;
   this->NbrInternalIndices = 2;
 }
 
@@ -93,6 +94,21 @@ ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::~ParticleOnLatticeQu
 		}
 	    }
 	}
+    }
+  if (this->OneBodyInteractionFactorsSigma != 0)
+    {
+       for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+	{
+	  for (int sigma2 = sigma1; sigma2 < this->NbrInternalIndices; ++sigma2)
+	    {
+	      if (this->OneBodyInteractionFactorsSigma[sigma1][sigma2] != 0)
+		{
+		  delete[] this->OneBodyInteractionFactorsSigma[sigma1][sigma2];
+		}	      
+	    }
+	  delete[] this->OneBodyInteractionFactorsSigma[sigma1];
+	}
+       delete[] this->OneBodyInteractionFactorsSigma;
     }
 }
 

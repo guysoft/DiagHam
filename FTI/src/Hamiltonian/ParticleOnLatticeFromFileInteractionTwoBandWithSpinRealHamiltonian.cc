@@ -67,7 +67,7 @@ ParticleOnLatticeFromFileInteractionTwoBandWithSpinRealHamiltonian::ParticleOnLa
 // matrixElementsInteractionFile = name of the ASCII file containing the matrix element for the generic two body interaction term
 // tightBindingModel = pointer to the tight binding model
 // flatBandFlag = use flat band model
-// flatBandOneBodyGap = set the gap between the first band and the second band when using the flat band model
+// interactionRescalingFactor = global rescaling factor for the two-body interaction term
 // additionalSpinFlag = include an additional spin 1/2 degree of freedom, building an SU(2) invariant interaction
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
@@ -76,7 +76,7 @@ ParticleOnLatticeFromFileInteractionTwoBandWithSpinRealHamiltonian::ParticleOnLa
 																       int nbrSiteX, int nbrSiteY,
 																       char* matrixElementsInteractionFile,
 																       Abstract2DTightBindingModel* tightBindingModel, 
-																       bool flatBandFlag, double flatBandOneBodyGap,
+																       bool flatBandFlag, double interactionRescalingFactor,
 																       bool additionalSpinFlag, 
 																       AbstractArchitecture* architecture, long memory)
 {
@@ -90,7 +90,7 @@ ParticleOnLatticeFromFileInteractionTwoBandWithSpinRealHamiltonian::ParticleOnLa
   this->HamiltonianShift = 0.0;
   this->TightBindingModel = tightBindingModel;
   this->FlatBand = flatBandFlag;
-  this->FlatBandOneBodyGap = flatBandOneBodyGap;
+  this->InteractionRescalingFactor = interactionRescalingFactor;
   this->AdditionalSpinFlag = additionalSpinFlag;
   if (this->AdditionalSpinFlag == true)
     {
@@ -227,7 +227,8 @@ void ParticleOnLatticeFromFileInteractionTwoBandWithSpinRealHamiltonian::Evaluat
       TmpSigma4[i] = (TmpSpinIndex4[i] + 1) + TmpBandIndex4[i];
       if ((TmpSpinIndex1[i] + TmpSpinIndex2[i]) != (TmpSpinIndex3[i] + TmpSpinIndex4[i]))
 	{
-	  cout << TmpSigma1[i] << " " << TmpSigma2[i] << " " << TmpSigma3[i] << " " << TmpSigma4[i] << endl;
+	  cout << "error spin conservation violation at line " << i << " : " << TmpSigma1[i] << " " << TmpSigma2[i] << " " << TmpSigma3[i] << " " << TmpSigma4[i] << endl;
+	  exit(0);
 	}
       TmpLinearizedSumK[i] = this->TightBindingModel->GetLinearizedMomentumIndex((TmpKx1[i] + TmpKx2[i]) % this->NbrSiteX,
 										 (TmpKy1[i] + TmpKy2[i]) % this->NbrSiteY);
@@ -235,39 +236,10 @@ void ParticleOnLatticeFromFileInteractionTwoBandWithSpinRealHamiltonian::Evaluat
       TmpLinearizedK2[i] = this->TightBindingModel->GetLinearizedMomentumIndex(TmpKx2[i], TmpKy2[i]);
       TmpLinearizedK3[i] = this->TightBindingModel->GetLinearizedMomentumIndex(TmpKx3[i], TmpKy3[i]);
       TmpLinearizedK4[i] = this->TightBindingModel->GetLinearizedMomentumIndex(TmpKx4[i], TmpKy4[i]);
+      TmpMatrixElements[i] *= this->InteractionRescalingFactor;
     }
 
-  this->BandIndex1 = 0;
-  this->BandIndex2 = 1;
-  int* SigmaToBand = new int[2];
-  SigmaToBand[0] = this->BandIndex1;
-  SigmaToBand[1] = this->BandIndex2;
-
-  if ((this->FlatBand == false) || (this->FlatBandOneBodyGap != 0.0))
-    {
-      this->OneBodyInteractionFactorsupup = new double [this->TightBindingModel->GetNbrStatePerBand()];
-      this->OneBodyInteractionFactorsdowndown = new double [this->TightBindingModel->GetNbrStatePerBand()];
-    }
-  for (int kx = 0; kx < this->NbrSiteX; ++kx)
-    for (int ky = 0; ky < this->NbrSiteY; ++ky)
-      {
-	int Index = this->TightBindingModel->GetLinearizedMomentumIndex(kx, ky);
-	if (this->FlatBand == false)
-	  {
-	    this->OneBodyInteractionFactorsupup[Index] = this->TightBindingModel->GetEnergy(this->BandIndex1, Index);
-	    this->OneBodyInteractionFactorsdowndown[Index] = this->TightBindingModel->GetEnergy(this->BandIndex2, Index);
-	  }
-	else
-	  {
-	    if (this->FlatBandOneBodyGap != 0.0)
-	      {
-		this->OneBodyInteractionFactorsupup[Index] = 0.0;
-		this->OneBodyInteractionFactorsdowndown[Index] = this->FlatBandOneBodyGap;		
-	      }
-	  }
-      }
-
-
+  this->EvaluateOneBodyFactors();
  
   this->NbrInterSectorSums = this->NbrSiteX * this->NbrSiteY;
   this->NbrInterSectorIndicesPerSum = new int[this->NbrInterSectorSums];
@@ -797,7 +769,6 @@ void ParticleOnLatticeFromFileInteractionTwoBandWithSpinRealHamiltonian::Evaluat
       delete[] TmpLinearizedKIntraIndices[j];
     }
   delete[] TmpLinearizedKIntraIndices;
-  delete[] SigmaToBand;
   cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
   cout << "====================================" << endl;
 }

@@ -66,7 +66,7 @@ ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::ParticleOnLatticeFromFil
 // matrixElementsInteractionFile = name of the ASCII file containing the matrix element for the generic two body interaction term
 // tightBindingModel = pointer to the tight binding model
 // flatBandFlag = use flat band model
-// flatBandOneBodyGap = set the gap between the first band and the second band when using the flat band model
+// interactionRescalingFactor = global rescaling factor for the two-body interaction term
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
@@ -74,7 +74,7 @@ ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::ParticleOnLatticeFromFil
 													       int nbrSiteX, int nbrSiteY,
 													       char* matrixElementsInteractionFile,
 													       Abstract2DTightBindingModel* tightBindingModel, 
-													       bool flatBandFlag, double flatBandOneBodyGap,
+													       bool flatBandFlag, double interactionRescalingFactor,
 													       AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
@@ -87,7 +87,7 @@ ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::ParticleOnLatticeFromFil
   this->HamiltonianShift = 0.0;
   this->TightBindingModel = tightBindingModel;
   this->FlatBand = flatBandFlag;
-  this->FlatBandOneBodyGap = flatBandOneBodyGap;
+  this->InteractionRescalingFactor = interactionRescalingFactor;
   this->MatrixElementsInteractionFile = new char[strlen(matrixElementsInteractionFile) + 1];
   strcpy(this->MatrixElementsInteractionFile, matrixElementsInteractionFile);
   
@@ -207,6 +207,7 @@ void ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::EvaluateInteraction
       TmpLinearizedK2[i] = this->TightBindingModel->GetLinearizedMomentumIndex(TmpKx2[i], TmpKy2[i]);
       TmpLinearizedK3[i] = this->TightBindingModel->GetLinearizedMomentumIndex(TmpKx3[i], TmpKy3[i]);
       TmpLinearizedK4[i] = this->TightBindingModel->GetLinearizedMomentumIndex(TmpKx4[i], TmpKy4[i]);
+      TmpMatrixElements[i] *= this->InteractionRescalingFactor;
     }
 
   this->BandIndex1 = 0;
@@ -215,7 +216,7 @@ void ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::EvaluateInteraction
   SigmaToBand[0] = this->BandIndex1;
   SigmaToBand[1] = this->BandIndex2;
 
-  if ((this->FlatBand == false) || (this->FlatBandOneBodyGap != 0.0))
+  if (this->FlatBand == false)
     {
       this->OneBodyInteractionFactorsupup = new double [this->TightBindingModel->GetNbrStatePerBand()];
       this->OneBodyInteractionFactorsdowndown = new double [this->TightBindingModel->GetNbrStatePerBand()];
@@ -228,14 +229,6 @@ void ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::EvaluateInteraction
 	  {
 	    this->OneBodyInteractionFactorsupup[Index] = this->TightBindingModel->GetEnergy(this->BandIndex1, Index);
 	    this->OneBodyInteractionFactorsdowndown[Index] = this->TightBindingModel->GetEnergy(this->BandIndex2, Index);
-	  }
-	else
-	  {
-	    if (this->FlatBandOneBodyGap != 0.0)
-	      {
-		this->OneBodyInteractionFactorsupup[Index] = 0.0;
-		this->OneBodyInteractionFactorsdowndown[Index] = this->FlatBandOneBodyGap;		
-	      }
 	  }
 	OneBodyBasis[Index] =  this->TightBindingModel->GetOneBodyMatrix(Index);
       }

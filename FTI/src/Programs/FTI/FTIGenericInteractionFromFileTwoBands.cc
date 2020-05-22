@@ -14,6 +14,7 @@
  
 #include "Tools/FTITightBinding/TightBindingModel2DAtomicLimitLattice.h"
 #include "Tools/FTITightBinding/Generic2DTightBindingModel.h"
+#include "Tools/FTITightBinding/TightBindingModel2DExplicitBandStructure.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -69,6 +70,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "interaction-file", "name of the file containing the two-body interaction matrix elements");
   (*SystemGroup) += new BooleanOption  ('\n', "real-interaction", "assume that the two-body interaction matrix elements are real");
   (*SystemGroup) += new SingleStringOption  ('\n', "interaction-name", "name of the two-body interaction", "noname");
+  (*SystemGroup) += new SingleDoubleOption  ('u', "interaction-rescaling", "global rescaling of the two-body intearction", 1.0);
+  (*SystemGroup) += new SingleStringOption  ('\n', "singleparticle-file", "optional name of the file containing the one-body matrix elements");
   (*SystemGroup) += new BooleanOption  ('\n', "add-valley", "add valley-like degree of freedom (i.e. U(1) symmetry) included in --interaction-file");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "pz-value", "twice the valley Pz value", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "ez-value", "twice the Ez =1/2(N_{1u}+N_{2d}-N_{1d}-N_{2u}) value", 0);
@@ -85,7 +88,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "export-onebodyname", "optional file name for the one-body information output");
   (*SystemGroup) += new SingleStringOption('\n', "import-onebody", "import information on the tight binding model from a file");
   (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model");
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "flatband-gap", "when using the flat band model with two bands, set the one-body gap between the two bands", 0.0);
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
@@ -215,7 +217,15 @@ int main(int argc, char** argv)
 	}
     }
   char* FilePrefix = new char [512 + strlen(FileSystemGeometry)];
-  sprintf (FilePrefix, "%s_twoband_%s_%s", StatisticPrefix, Manager.GetString("interaction-name"), FileSystemGeometry);
+  if (Manager.GetBoolean("flat-band"))
+    {
+      sprintf (FilePrefix, "%s_twoband_flatband_%s_%s", StatisticPrefix, Manager.GetString("interaction-name"), FileSystemGeometry);
+    }
+  else
+    {
+      sprintf (FilePrefix, "%s_twoband_u_%.3f_%s_%s", StatisticPrefix, Manager.GetDouble("interaction-rescaling"),
+	       Manager.GetString("interaction-name"), FileSystemGeometry);
+    }
   
   char* EigenvalueOutputFile = new char [512 + strlen(FilePrefix)];
   
@@ -228,19 +238,151 @@ int main(int argc, char** argv)
       sprintf (EigenvalueOutputFile, "%s.dat", FilePrefix);
     }
   
+
   Abstract2DTightBindingModel* TightBindingModel;
-  double* DummyChemicalPotentials = new double[2];
-  DummyChemicalPotentials[0] = 0.0;
-  DummyChemicalPotentials[1] = 0.0;
   
   if (Manager.GetString("import-onebody") == 0)
     {
-      TightBindingModel = new TightBindingModel2DAtomicLimitLattice (NbrSitesX, NbrSitesY, 2, DummyChemicalPotentials,
-								     0.0, 0.0, Architecture.GetArchitecture(), true);
-      
-      // char* BandStructureOutputFile = new char [64 + strlen(FilePrefix) + strlen(FileParameterString) + strlen(FileTwistedBoundaryConditions)];
-      // sprintf (BandStructureOutputFile, "%s_%s_tightbinding.dat", FilePrefix, FileParameterString, FileTwistedBoundaryConditions);
-      // TightBindingModel->WriteBandStructure(BandStructureOutputFile);
+      if (Manager.GetString("singleparticle-file") == 0)
+	{
+	  double* DummyChemicalPotentials = new double[2];
+	  DummyChemicalPotentials[0] = 0.0;
+	  DummyChemicalPotentials[1] = 0.0;
+	  TightBindingModel = new TightBindingModel2DAtomicLimitLattice (NbrSitesX, NbrSitesY, 2, DummyChemicalPotentials,
+									 0.0, 0.0, Architecture.GetArchitecture(), true);
+	}
+      else
+	{
+	  double* DummyChemicalPotentials = new double[2];
+	  DummyChemicalPotentials[0] = 0.0;
+	  DummyChemicalPotentials[1] = 0.0;
+	  int* TmpKxValues = 0;
+	  int* TmpKyValues = 0;
+	  int* TmpValleyIndices = 0;
+	  int* TmpBandIndices = 0;	  
+	  double* TmpOneBodyEnergies = 0;
+	  MultiColumnASCIIFile OneBodyEnergyFile;
+	  if (OneBodyEnergyFile.Parse(Manager.GetString("singleparticle-file")) == false)
+	    {
+	      OneBodyEnergyFile.DumpErrors(cout) << endl;
+	      return 0;
+	    }
+	  if (OneBodyEnergyFile.GetNbrLines() == 0)
+	    {
+	      cout << Manager.GetString("singleparticle-file") << " is an empty file" << endl;
+	      return 0;
+	    }
+	  if (((Manager.GetBoolean("add-valley") == false) && (OneBodyEnergyFile.GetNbrColumns() < 4))
+	      || ((Manager.GetBoolean("add-valley") == true) && (OneBodyEnergyFile.GetNbrColumns() < 5)))
+	    {
+	      cout << Manager.GetString("singleparticle-file") << " has a wrong number of columns (has "
+		   << OneBodyEnergyFile.GetNbrColumns() << ", should be at least 4 without valley, 5 with valley)" << endl;
+	      return 0;
+	    }
+	  int NbrEnergies = OneBodyEnergyFile.GetNbrLines();
+	  if (((Manager.GetBoolean("add-valley") == false) && (NbrEnergies != (2 * NbrSitesX * NbrSitesY)))
+	      || ((Manager.GetBoolean("add-valley") == true) && (NbrEnergies != (4 * NbrSitesX * NbrSitesY))))
+	    {
+	      cout << Manager.GetString("singleparticle-file") << " has a wrong number of lins (has "
+		   << OneBodyEnergyFile.GetNbrColumns() << ", should be " << (2 * NbrSitesX * NbrSitesY)
+		   << " without valley, " << (4 * NbrSitesX * NbrSitesY) << " with vallley)" << endl;
+	      return 0;
+	    }
+
+	  int TmpNbrBands = 2;
+	  if (Manager.GetBoolean("add-valley") == true)
+	    {
+	      TmpNbrBands = 4;
+	    }
+	  if (Manager.GetBoolean("add-spin") == true)
+	    {
+	      TmpNbrBands *= 2;
+	    }
+	  int* KxValues = new int[NbrSitesX * NbrSitesY];
+	  int* KyValues = new int[NbrSitesX * NbrSitesY];
+	  double** Energies = new double*[NbrSitesX * NbrSitesY];
+	  int TmpIndex = 0;
+	  int* IndexToKIndex = new int[NbrSitesX * NbrSitesY];
+	  int* NbrBandsPerKSector = new int[NbrSitesX * NbrSitesY];
+	  for (int i = 0; i < NbrSitesX; ++i)
+	    {
+	      for (int j = 0; j < NbrSitesY; ++j)
+		{
+		  KxValues[TmpIndex] = i;
+		  KyValues[TmpIndex] = j;
+		  Energies[TmpIndex] = new double[TmpNbrBands];
+		  IndexToKIndex[(i * NbrSitesY) + j] = TmpIndex;
+		  ++TmpIndex;
+		}
+	    }
+	  TmpKxValues = OneBodyEnergyFile.GetAsIntegerArray(0);
+	  TmpKyValues = OneBodyEnergyFile.GetAsIntegerArray(1);
+	  	  
+	  if (Manager.GetBoolean("add-valley") == false)
+	    {
+	      TmpBandIndices = OneBodyEnergyFile.GetAsIntegerArray(2);
+	      TmpOneBodyEnergies = OneBodyEnergyFile.GetAsDoubleArray(3);
+	      
+	      if (Manager.GetBoolean("add-spin") == false)
+		{
+		  for (int i = 0; i < NbrEnergies; ++i)
+		    {
+		      Energies[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]][TmpBandIndices[i]] = TmpOneBodyEnergies[i];
+		    }
+		}
+	      else
+		{
+		  for (int i = 0; i < NbrEnergies; ++i)
+		    {
+		      Energies[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]][TmpBandIndices[i]] = TmpOneBodyEnergies[i];
+		      Energies[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]][2 + TmpBandIndices[i]] = TmpOneBodyEnergies[i];
+		    }
+		}			      
+	    }
+	  else
+	    {
+	      TmpValleyIndices = OneBodyEnergyFile.GetAsIntegerArray(2);
+	      TmpBandIndices = OneBodyEnergyFile.GetAsIntegerArray(3);
+	      TmpOneBodyEnergies = OneBodyEnergyFile.GetAsDoubleArray(4);
+	      if (Manager.GetBoolean("add-spin") == false)
+		{
+		  for (int i = 0; i < NbrEnergies; ++i)
+		    {
+		      Energies[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]][TmpBandIndices[i] + (TmpValleyIndices[i] + 1)] = TmpOneBodyEnergies[i];
+		    }
+		}
+	      else
+		{
+		  for (int i = 0; i < NbrEnergies; ++i)
+		    {
+		      Energies[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]][TmpBandIndices[i] + (TmpValleyIndices[i] + 1)] = TmpOneBodyEnergies[i];
+		      Energies[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]][4 + TmpBandIndices[i] + (TmpValleyIndices[i] + 1)] = TmpOneBodyEnergies[i];
+		    }
+		}			      
+	    }
+	  
+	  
+	  TightBindingModel = new TightBindingModel2DExplicitBandStructure (NbrSitesX, NbrSitesY, TmpNbrBands, 0.0, 0.0,
+									    KxValues, KyValues, Energies,
+									    Architecture.GetArchitecture(), true);
+	  char* BandStructureOutputFile = new char [64 + strlen(FilePrefix)];
+	  sprintf (BandStructureOutputFile, "%s_tightbinding.dat", FilePrefix);
+	  TightBindingModel->WriteBandStructure(BandStructureOutputFile);
+
+	  TmpIndex = 0;
+	  for (int i = 0; i < NbrSitesX; ++i)
+	    {
+	      for (int j = 0; j < NbrSitesY; ++j)
+		{
+		  delete[] Energies[TmpIndex];
+		  ++TmpIndex;
+		}
+	    }
+	  delete[] IndexToKIndex;
+	  delete[] KxValues;
+	  delete[] KyValues;
+	  delete[] Energies;
+	}      
     }
   else
     {
@@ -396,7 +538,7 @@ int main(int argc, char** argv)
 		  Hamiltonian = new ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian (Space, NbrParticles, NbrSitesX, NbrSitesY,
 												Manager.GetString("interaction-file"),
 												TightBindingModel, Manager.GetBoolean("flat-band"), 
-												Manager.GetDouble("flatband-gap"),
+												Manager.GetDouble("interaction-rescaling"),
 												Manager.GetBoolean("add-spin"),
 												Architecture.GetArchitecture(), Memory);
 		}
@@ -405,7 +547,7 @@ int main(int argc, char** argv)
 		  Hamiltonian = new ParticleOnLatticeFromFileInteractionTwoBandWithSpinRealHamiltonian (Space, NbrParticles, NbrSitesX, NbrSitesY,
 													Manager.GetString("interaction-file"),
 													TightBindingModel, Manager.GetBoolean("flat-band"), 
-													Manager.GetDouble("flatband-gap"),
+													Manager.GetDouble("interaction-rescaling"),
 													Manager.GetBoolean("add-spin"),
 													Architecture.GetArchitecture(), Memory);
 		}		
@@ -415,7 +557,7 @@ int main(int argc, char** argv)
 	      Hamiltonian = new ParticleOnLatticeFromFileInteractionTwoBandHamiltonian (Space, NbrParticles, NbrSitesX, NbrSitesY,
 											Manager.GetString("interaction-file"),
 											TightBindingModel, Manager.GetBoolean("flat-band"), 
-											Manager.GetDouble("flatband-gap"),
+											Manager.GetDouble("interaction-rescaling"),
 											Architecture.GetArchitecture(), Memory);
 	    }
 	  

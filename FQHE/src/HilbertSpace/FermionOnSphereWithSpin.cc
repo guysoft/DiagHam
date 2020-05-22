@@ -5091,7 +5091,7 @@ void FermionOnSphereWithSpin::TransformOneBodyBasis(ComplexVector& initialState,
     {
       unsigned long TmpState = this->StateDescription[i];
       unsigned long Tmp;
-      int TmpLzMax = this->NbrLzValue << 2;
+      int TmpLzMax = this->NbrLzValue << 1;
       int TmpIndex = 0;
       for (int j = this->LzMax; j >= 0; --j)
 	{
@@ -5131,7 +5131,7 @@ ComplexMatrix FermionOnSphereWithSpin::TransformationMatrixOneBodyBasis(ComplexM
     {
       unsigned long TmpState = this->StateDescription[i];
       unsigned long Tmp;
-      int TmpLzMax = this->NbrLzValue << 2;
+      int TmpLzMax = this->NbrLzValue << 1;
       int TmpIndex = 0;
       for (int j = this->LzMax; j >= 0; --j)
 	{

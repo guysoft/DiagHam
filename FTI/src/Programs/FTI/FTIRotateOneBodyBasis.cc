@@ -147,7 +147,7 @@ int main(int argc, char** argv)
       cout << Manager.GetString("transformation-file") << " is an empty file" << endl;
       return 0;
     }
-  if (TransformationMatrixFile.GetNbrColumns() < 13)
+  if (TransformationMatrixFile.GetNbrColumns() < 6)
     {
       cout << Manager.GetString("transformation-file") << " has a wrong number of columns (has "
 	   << TransformationMatrixFile.GetNbrColumns() << ", should be at least 13)" << endl;
@@ -165,18 +165,18 @@ int main(int argc, char** argv)
   int* TmpKy = TransformationMatrixFile.GetAsIntegerArray(1);
   int* TmpLinearizedK = new int[NbrTransformationMatrices];
   Complex* TmpMatrix00 = TransformationMatrixFile.GetAsComplexArray(2);
-  Complex* TmpMatrix01 = TransformationMatrixFile.GetAsComplexArray(3);
-  Complex* TmpMatrix10 = TransformationMatrixFile.GetAsComplexArray(4);
+  Complex* TmpMatrix10 = TransformationMatrixFile.GetAsComplexArray(3);
+  Complex* TmpMatrix01 = TransformationMatrixFile.GetAsComplexArray(4);
   Complex* TmpMatrix11 = TransformationMatrixFile.GetAsComplexArray(5);
   ComplexMatrix* TransformationMatrices = new ComplexMatrix[NbrTransformationMatrices];
   for (int i = 0; i < NbrTransformationMatrices; ++i)
     {
       TmpLinearizedK[i] = TightBindingModel->GetLinearizedMomentumIndex(TmpKx[i], TmpKy[i]);
-      TransformationMatrices[i] = ComplexMatrix(2, 2, true);
-      TransformationMatrices[i].SetMatrixElement(0 , 0, TmpMatrix00[i]);
-      TransformationMatrices[i].SetMatrixElement(0 , 1, TmpMatrix01[i]);
-      TransformationMatrices[i].SetMatrixElement(1 , 0, TmpMatrix10[i]);
-      TransformationMatrices[i].SetMatrixElement(1 , 1, TmpMatrix11[i]);	
+      TransformationMatrices[TmpLinearizedK[i]] = ComplexMatrix(2, 2, true);
+      TransformationMatrices[TmpLinearizedK[i]].SetMatrixElement(0 , 0, TmpMatrix00[TmpLinearizedK[i]]);
+      TransformationMatrices[TmpLinearizedK[i]].SetMatrixElement(0 , 1, TmpMatrix01[TmpLinearizedK[i]]);
+      TransformationMatrices[TmpLinearizedK[i]].SetMatrixElement(1 , 0, TmpMatrix10[TmpLinearizedK[i]]);
+      TransformationMatrices[TmpLinearizedK[i]].SetMatrixElement(1 , 1, TmpMatrix11[TmpLinearizedK[i]]);
     }
 
 	 
@@ -199,8 +199,11 @@ int main(int argc, char** argv)
   
   
   ComplexVector FinalState (Space->GetHilbertSpaceDimension(), true);
-  Space->TransformOneBodyBasis(InitialState, FinalState, 0l, Space->GetLargeHilbertSpaceDimension());
+  Space->TransformOneBodyBasis(InitialState, FinalState, TransformationMatrices, 0l, Space->GetLargeHilbertSpaceDimension());
   FinalState.WriteVector(OutputFileName);
+
+  cout << "Norm of the rotated many-body state = " << FinalState.Norm() << endl;
+  cout << "Overlap between the orginal and the rotated states = "<< (InitialState * FinalState) << endl;
   
   delete Space;
   delete TightBindingModel;

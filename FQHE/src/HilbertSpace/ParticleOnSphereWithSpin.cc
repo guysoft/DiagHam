@@ -1015,6 +1015,22 @@ double ParticleOnSphereWithSpin::AdsigmaAsigma (long index, int m, int sigma)
   return 0.0;
 }
 
+// apply a^+_m1_s1 a_m2_s2 operator to a given state
+//
+// index = index of the state on which the operator has to be applied
+// m1 = index of the creation operator
+// sigma1 = internal degree of freedom label of the creation operator
+// m2 = index of the annihilation operator
+// sigma2 = internal degree of freedom label of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state
+
+int ParticleOnSphereWithSpin::AdsigmaAsigma (int index, int m1, int sigma1, int m2, int sigma2, double& coefficient)
+{
+  cout << "warning using dummy method ParticleOnSphereWithSpin::AdsigmaAsigma" << endl;
+  return this->HilbertSpaceDimension;
+}
+
 // carefully test whether state is in Hilbert-space and find corresponding state index
 //
 // stateDescription = unsigned integer describing the state

@@ -456,10 +456,9 @@ inline double FermionOnSphereWithSU8Spin::AsigmaAsigma (int index, int n1, int n
 
 inline double FermionOnSphereWithSU8Spin::AdsigmaAsigma (int index, int m, int sigma)
 {
-  unsigned long TmpState = this->ProdATemporaryState;
   m <<= 3;
   m += sigma;
-  return ((double) ((TmpState >> m) & 0x1ul));
+  return ((double) ((this->StateDescription[index] >> m) & 0x1ul));
 }
 
 // apply a^+_m_s a_m_s operator to a given state)
@@ -471,10 +470,9 @@ inline double FermionOnSphereWithSU8Spin::AdsigmaAsigma (int index, int m, int s
 
 inline double FermionOnSphereWithSU8Spin::AdsigmaAsigma (long index, int m, int sigma)
 {
-  unsigned long TmpState = this->ProdATemporaryState;
   m <<= 3;
   m += sigma;
-  return ((double) ((TmpState >> m) & 0x1ul));
+  return ((double) ((this->StateDescription[index] >> m) & 0x1ul));
 }
 
 // apply a^+_m1_sigma1 a^+_m2_sigma2 operator to the state produced using A*A* method (without destroying it)

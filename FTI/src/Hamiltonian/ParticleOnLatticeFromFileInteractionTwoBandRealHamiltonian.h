@@ -64,8 +64,9 @@ class ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian : public Partic
   
   // use flat band model
   bool FlatBand;
-  //  gap between the first band and the second band when using the flat band model   
-  double FlatBandOneBodyGap;
+  
+  // global rescaling factor for the two-body interaction term
+  double InteractionRescalingFactor;
 
   // include an additional spin 1/2 degree of freedom, building an SU(2) invariant interaction
   bool AdditionalSpinFlag;
@@ -88,13 +89,14 @@ class ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian : public Partic
   // matrixElementsInteractionFile = name of the ASCII file containing the matrix element for the generic two body interaction term
   // tightBindingModel = pointer to the tight binding model
   // flatBandFlag = use flat band model
-  // flatBandOneBodyGap = set the gap between the first band and the second band when using the flat band model
+  // interactionRescalingFactor = global rescaling factor for the two-body interaction term
   // spinFlag = include an additional spin 1/2 degree of freedom, building an SU(2) invariant interaction
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY,
 							     char* matrixElementsInteractionFile,
-							     Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, double flatBandOneBodyGap, 
+							     Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag,
+							     double interactionRescalingFactor, 
 							     bool spinFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
@@ -108,6 +110,9 @@ class ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian : public Partic
   //   
   virtual void EvaluateInteractionFactors();
   
+  // evaluate all one-body factors
+  //     
+  virtual void EvaluateOneBodyFactors();
 
 };
 

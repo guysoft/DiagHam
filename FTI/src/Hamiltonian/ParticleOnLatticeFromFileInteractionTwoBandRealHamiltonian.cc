@@ -66,7 +66,7 @@ ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian::ParticleOnLatticeFro
 // matrixElementsInteractionFile = name of the ASCII file containing the matrix element for the generic two body interaction term
 // tightBindingModel = pointer to the tight binding model
 // flatBandFlag = use flat band model
-// flatBandOneBodyGap = set the gap between the first band and the second band when using the flat band model
+// interactionRescalingFactor = global rescaling factor for the two-body interaction term
 // spinFlag = include an additional spin 1/2 degree of freedom, building an SU(2) invariant interaction
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
@@ -75,7 +75,7 @@ ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian::ParticleOnLatticeFro
 														       int nbrSiteX, int nbrSiteY,
 														       char* matrixElementsInteractionFile,
 														       Abstract2DTightBindingModel* tightBindingModel, 
-														       bool flatBandFlag, double flatBandOneBodyGap, bool spinFlag, 
+														       bool flatBandFlag, double interactionRescalingFactor, bool spinFlag, 
 														       AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
@@ -88,7 +88,7 @@ ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian::ParticleOnLatticeFro
   this->HamiltonianShift = 0.0;
   this->TightBindingModel = tightBindingModel;
   this->FlatBand = flatBandFlag;
-  this->FlatBandOneBodyGap = flatBandOneBodyGap;
+  this->InteractionRescalingFactor = interactionRescalingFactor;
   this->AdditionalSpinFlag = spinFlag;
   if (this->AdditionalSpinFlag == true)
     {
@@ -216,39 +216,10 @@ void ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian::EvaluateInterac
       TmpLinearizedK2[i] = this->TightBindingModel->GetLinearizedMomentumIndex(TmpKx2[i], TmpKy2[i]);
       TmpLinearizedK3[i] = this->TightBindingModel->GetLinearizedMomentumIndex(TmpKx3[i], TmpKy3[i]);
       TmpLinearizedK4[i] = this->TightBindingModel->GetLinearizedMomentumIndex(TmpKx4[i], TmpKy4[i]);
+      TmpMatrixElements[i] *= this->InteractionRescalingFactor;
     }
 
-  this->BandIndex1 = 0;
-  this->BandIndex2 = 1;
-  int* SigmaToBand = new int[2];
-  SigmaToBand[0] = this->BandIndex1;
-  SigmaToBand[1] = this->BandIndex2;
-
-  if ((this->FlatBand == false) || (this->FlatBandOneBodyGap != 0.0))
-    {
-      this->OneBodyInteractionFactorsupup = new double [this->TightBindingModel->GetNbrStatePerBand()];
-      this->OneBodyInteractionFactorsdowndown = new double [this->TightBindingModel->GetNbrStatePerBand()];
-    }
-  for (int kx = 0; kx < this->NbrSiteX; ++kx)
-    for (int ky = 0; ky < this->NbrSiteY; ++ky)
-      {
-	int Index = this->TightBindingModel->GetLinearizedMomentumIndex(kx, ky);
-	if (this->FlatBand == false)
-	  {
-	    this->OneBodyInteractionFactorsupup[Index] = this->TightBindingModel->GetEnergy(this->BandIndex1, Index);
-	    this->OneBodyInteractionFactorsdowndown[Index] = this->TightBindingModel->GetEnergy(this->BandIndex2, Index);
-	  }
-	else
-	  {
-	    if (this->FlatBandOneBodyGap != 0.0)
-	      {
-		this->OneBodyInteractionFactorsupup[Index] = 0.0;
-		this->OneBodyInteractionFactorsdowndown[Index] = this->FlatBandOneBodyGap;		
-	      }
-	  }
-      }
-
-
+  this->EvaluateOneBodyFactors();
  
   this->NbrInterSectorSums = this->NbrSiteX * this->NbrSiteY;
   this->NbrInterSectorIndicesPerSum = new int[this->NbrInterSectorSums];
@@ -800,8 +771,44 @@ void ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian::EvaluateInterac
       delete[] TmpLinearizedKIntraIndices[j];
     }
   delete[] TmpLinearizedKIntraIndices;
-  delete[] SigmaToBand;
   cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
   cout << "====================================" << endl;
+}
+
+// evaluate all one-body factors
+//   
+
+void ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian::EvaluateOneBodyFactors()
+{
+  this->BandIndex1 = 0;
+  this->BandIndex2 = 1;
+  this->OneBodyInteractionFactorsSigma = new double**[this->NbrInternalIndices];
+  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+    {
+      this->OneBodyInteractionFactorsSigma[sigma1] = new double*[this->NbrInternalIndices];
+      for (int sigma2 = sigma1; sigma2 < this->NbrInternalIndices; ++sigma2)
+	{
+	  this->OneBodyInteractionFactorsSigma[sigma1][sigma2] = 0;
+	}
+    }
+      
+  if (this->FlatBand == false)
+    {
+      for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+	{
+	  this->OneBodyInteractionFactorsSigma[sigma1][sigma1] = new double [this->TightBindingModel->GetNbrStatePerBand()];
+	}
+      for (int kx = 0; kx < this->NbrSiteX; ++kx)
+	{
+	  for (int ky = 0; ky < this->NbrSiteY; ++ky)
+	    {
+	       int Index = this->TightBindingModel->GetLinearizedMomentumIndex(kx, ky);
+	       for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+		 {
+		   this->OneBodyInteractionFactorsSigma[sigma1][sigma1][Index] = this->TightBindingModel->GetEnergy(sigma1, Index);
+		 }
+	     }
+	 }
+    }
 }
 

@@ -143,6 +143,17 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // return value = coefficient obtained when applying a^+_m a_m
   virtual double AdsigmaAsigma (int index, int m, int sigma);
 
+  // apply a^+_m1_s1 a_m2_s2 operator to a given state
+  //
+  // index = index of the state on which the operator has to be applied
+  // m1 = index of the creation operator
+  // sigma1 = internal degree of freedom label of the creation operator
+  // m2 = index of the annihilation operator
+  // sigma2 = internal degree of freedom label of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AdsigmaAsigma (int index, int m1, int sigma1, int m2, int sigma2, double& coefficient);
+
   // apply a^+_m_s a_m_s operator to a given state)
   //
   // index = index of the state on which the operator has to be applied

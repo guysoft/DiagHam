@@ -182,6 +182,17 @@ class FermionOnSphereWithSU8SpinLong :  public ParticleOnSphereWithSU8Spin
   // return value = coefficient obtained when applying a^+_m a_m
   virtual double AdsigmaAsigma (int index, int m, int sigma);
 
+ // apply a^+_m1_s1 a_m2_s2 operator to a given state
+  //
+  // index = index of the state on which the operator has to be applied
+  // m1 = index of the creation operator
+  // sigma1 = internal degree of freedom label of the creation operator
+  // m2 = index of the annihilation operator
+  // sigma2 = internal degree of freedom label of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AdsigmaAsigma (int index, int m1, int sigma1, int m2, int sigma2, double& coefficient);
+
   // apply a^+_m_s a_m_s operator to a given state)
   //
   // index = index of the state on which the operator has to be applied
@@ -457,10 +468,9 @@ inline double FermionOnSphereWithSU8SpinLong::AsigmaAsigma (int index, int n1, i
 
 inline double FermionOnSphereWithSU8SpinLong::AdsigmaAsigma (int index, int m, int sigma)
 {
-  ULONGLONG TmpState = this->ProdATemporaryState;
   m <<= 3;
   m += sigma;
-  return ((double) ((TmpState >> m) & ((ULONGLONG) 0x1ul)));
+  return ((double) ((this->StateDescription[index] >> m) & ((ULONGLONG) 0x1ul)));
 }
 
 // apply a^+_m_s a_m_s operator to a given state)
@@ -472,10 +482,24 @@ inline double FermionOnSphereWithSU8SpinLong::AdsigmaAsigma (int index, int m, i
 
 inline double FermionOnSphereWithSU8SpinLong::AdsigmaAsigma (long index, int m, int sigma)
 {
-  ULONGLONG TmpState = this->ProdATemporaryState;
   m <<= 3;
   m += sigma;
-  return ((double) ((TmpState >> m) & ((ULONGLONG) 0x1ul)));
+  return ((double) ((this->StateDescription[index] >> m) & ((ULONGLONG) 0x1ul)));
+}
+
+// apply a^+_m1_s1 a_m2_s2 operator to a given state
+//
+// index = index of the state on which the operator has to be applied
+// m1 = index of the creation operator
+// sigma1 = internal degree of freedom label of the creation operator
+// m2 = index of the annihilation operator
+// sigma2 = internal degree of freedom label of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+inline int FermionOnSphereWithSU8SpinLong::AdsigmaAsigma (int index, int m1, int sigma1, int m2, int sigma2, double& coefficient)
+{
+  return this->GenericAdA(index, (m1 << 3) + sigma1, (m2 << 3) + sigma2, coefficient);
 }
 
 // apply a^+_m1_sigma1 a^+_m2_sigma2 operator to the state produced using A*A* method (without destroying it)

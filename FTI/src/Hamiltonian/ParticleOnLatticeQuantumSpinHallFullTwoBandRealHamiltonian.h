@@ -54,17 +54,23 @@ class ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian : public Partic
 
  protected:
   
-  // interaction factors : the table first entry , 
+  // interaction factors
   // first entry is the sigma index for the first creation operator
   // second entry is the sigma index for the second creation operator
   // third entry is the sigma index for the first annihilation operator
-  // twoth entry is the sigma index for the second annihilation operator
+  // fourth entry is the sigma index for the second annihilation operator
   // fifth entry is a the sum of annihilation/creation indices
   // sixth entry is the linearized index (annihilation_index * nbr_creation_index + creation_index)
   double****** InteractionFactorsSigma;
 
   // number of internal indices (i.e number of entries for indices 0, 1, 2 and 3 of InteractionFactorsSigma)
   int NbrInternalIndices;
+
+  // one-body interaction factor 
+  // first entry is the sigma index for the creation operator
+  // second entry is the sigma index for the annihilation operator
+  // third entry is the linearized momentum index
+  double*** OneBodyInteractionFactorsSigma;
   
  public:
 
@@ -79,6 +85,47 @@ class ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian : public Partic
 
  protected:
  
+  // core part of the FastMultiplication method involving the one-body interaction
+  // 
+  // particles = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // indexArray = array where indices connected to the index-th component through the Hamiltonian
+  // coefficientArray = array of the numerical coefficients related to the indexArray
+  // position = reference on the current position in arrays indexArray and coefficientArray
+  virtual void EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index, 
+							    int* indexArray, double* coefficientArray, long& position);
+
+  // core part of the AddMultiply method involving the one-body interaction, including loop on vector components
+  // 
+  // particles = pointer to the Hilbert space
+  // firstComponent = first index vector to act on
+  // lastComponent = last index vector to act on (not included)
+  // step = step to go from one component to the other one
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  virtual void EvaluateMNOneBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent,
+						     int step, RealVector& vSource, RealVector& vDestination);
+
+  // core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
+  // 
+  // particles = pointer to the Hilbert space
+  // firstComponent = first index vector to act on
+  // lastComponent = last index vector to act on (not included)
+  // step = step to go from one component to the other one
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  virtual void EvaluateMNOneBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent,
+						     int step, RealVector* vSources, RealVector* vDestinations, int nbrVectors);
+  
+  // core part of the PartialFastMultiplicationMemory method involving two-body term and one-body terms
+  // 
+  // particles = pointer to the Hilbert space
+  // firstComponent = index of the first component that has to be precalcualted
+  // lastComponent  = index of the last component that has to be precalcualted
+  // memory = reference on the amount of memory required for precalculations
+  virtual void EvaluateMNOneBodyFastMultiplicationMemoryComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent, long& memory);
+
   // core part of the AddMultiply method involving the two-body interaction
   // 
   // particles = pointer to the Hilbert space
@@ -138,6 +185,389 @@ class ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian : public Partic
 
 };
 
+// core part of the AddMultiply method involving the one-body interaction, including loop on vector components
+// 
+// particles = pointer to the Hilbert space
+// firstComponent = first index vector to act on
+// lastComponent = last index vector to act on (not included)
+// step = step to go from one component to the other one
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+
+inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::EvaluateMNOneBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent,
+												      int step, RealVector& vSource, RealVector& vDestination)
+{
+  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+    {
+      if (this->OneBodyInteractionFactorsSigma[sigma1][sigma1] != 0)
+	{
+	  double TmpDiagonal = 0.0;
+	  for (int i = firstComponent; i < lastComponent; i += step)
+	    { 
+	      TmpDiagonal = 0.0;
+	      for (int j = 0; j <= this->LzMax; ++j) 
+		{
+		  TmpDiagonal += this->OneBodyInteractionFactorsSigma[sigma1][sigma1][j] * particles->AdsigmaAsigma(i, j, sigma1);
+		}
+	      vDestination[i] += TmpDiagonal * vSource[i];
+	    }
+	}
+    }
+  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+    {
+      for (int sigma2 = sigma1 + 1; sigma2 < this->NbrInternalIndices; ++sigma2)
+	{
+	  if (this->OneBodyInteractionFactorsSigma[sigma1][sigma2] != 0)
+	    {
+	      double Coefficient;
+	      double Source;
+	      int Dim = particles->GetHilbertSpaceDimension();
+	      int Index;
+	      if (this->HermitianSymmetryFlag == false)
+		{
+		  for (int i = firstComponent; i < lastComponent; i += step)
+		    {
+		      Source = vSource[i];
+		      for (int j = 0; j <= this->LzMax; ++j)
+			{
+			  Index = particles->AdsigmaAsigma(i, j, j, sigma1, sigma2, Coefficient);
+			  if (Index < Dim)
+			    {
+			      vDestination[Index] += (Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * Source;
+			    }
+			  Index = particles->AdsigmaAsigma(i, j, j, sigma2, sigma1, Coefficient);
+			  if (Index < Dim)
+			    {
+			      vDestination[Index] += (Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * Source;
+			    }
+			}
+		    }
+		}
+	      else
+		{
+		  for (int i = firstComponent; i < lastComponent; i += step)
+		    {
+		      Source = vSource[i];
+		      for (int j = 0; j <= this->LzMax; ++j)
+			{
+			  Index = particles->AdsigmaAsigma(i, j, j, sigma1, sigma2, Coefficient);
+			  if (Index <= i)
+			    {
+			      if (Index < i)
+				{
+				  vDestination[Index] += (Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * Source;
+				  vDestination[i] += (Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * vSource[Index];
+				}
+			      else
+				{
+				  vDestination[Index] += (Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * Source;
+				}
+			    }
+			  Index = particles->AdsigmaAsigma(i, j, j, sigma2, sigma1, Coefficient);
+			  if (Index < Dim)
+			    {
+			      if (Index <= i)
+				{
+				  if (Index < i)
+				    {
+				      vDestination[Index] += (Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * Source;
+				      vDestination[i] += (Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * vSource[Index];
+				    }
+				  else
+				    {
+				      vDestination[Index] += (Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * Source;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+  
+  for (int i = firstComponent; i < lastComponent; i += step)
+    {
+      vDestination[i] += this->HamiltonianShift * vSource[i];
+    }
+}
+
+// core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
+// 
+// particles = pointer to the Hilbert space
+// firstComponent = first index vector to act on
+// lastComponent = last index vector to act on (not included)
+// step = step to go from one component to the other one
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+
+inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::EvaluateMNOneBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent,
+												      int step, RealVector* vSources, RealVector* vDestinations, int nbrVectors)
+{
+  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+    {
+      if (this->OneBodyInteractionFactorsSigma[sigma1][sigma1] != 0)
+	{
+	  double TmpDiagonal = 0.0;
+	  for (int i = firstComponent; i < lastComponent; i += step)
+	    { 
+	      TmpDiagonal = 0.0;
+	      for (int j = 0; j <= this->LzMax; ++j) 
+		{
+		  TmpDiagonal += this->OneBodyInteractionFactorsSigma[sigma1][sigma1][j] * particles->AdsigmaAsigma(i, j, sigma1);
+		}
+	      for (int p = 0; p < nbrVectors; ++p)
+		{
+		  vDestinations[p][i] += TmpDiagonal * vSources[p][i];
+		}
+	    }
+	}
+    }
+  for (int p = 0; p < nbrVectors; ++p)
+    {
+      RealVector& TmpSourceVector = vSources[p];
+      RealVector& TmpDestinationVector = vDestinations[p];
+      for (int i = firstComponent; i < lastComponent; i += step)
+	TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+    }
+  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+    {
+      for (int sigma2 = sigma1 + 1; sigma2 < this->NbrInternalIndices; ++sigma2)
+	{
+	  if (this->OneBodyInteractionFactorsSigma[sigma1][sigma2] != 0)
+	    {
+	      double Coefficient;
+	      int Dim = particles->GetHilbertSpaceDimension();
+	      int Index;
+	      if (this->HermitianSymmetryFlag == false)
+		{
+		  for (int i = firstComponent; i < lastComponent; i += step)
+		    {
+		      for (int j = 0; j <= this->LzMax; ++j)
+			{
+			  Index = particles->AdsigmaAsigma(i, j, j, sigma1, sigma2, Coefficient);
+			  if (Index < Dim)
+			    {
+			      for (int p = 0; p < nbrVectors; ++p)
+				vDestinations[p][Index] += Coefficient * (this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * vSources[p][i];
+			    }
+			  Index = particles->AdsigmaAsigma(i, j, j, sigma2, sigma1, Coefficient);
+			  if (Index < Dim)
+			    {
+			      for (int p = 0; p < nbrVectors; ++p)
+				vDestinations[p][Index] += Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j] * vSources[p][i];
+			    }
+			}
+		    }
+		}
+	      else
+		{
+		  for (int i = firstComponent; i < lastComponent; i += step)
+		    {
+		      for (int j = 0; j <= this->LzMax; ++j)
+			{
+			  Index = particles->AdsigmaAsigma(i, j, j, sigma1, sigma2, Coefficient);
+			  if (Index <= i)
+			    {
+			      if (Index < i)
+				{
+				  for (int p = 0; p < nbrVectors; ++p)
+				    {
+				      vDestinations[p][Index] += Coefficient * (this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * vSources[p][i];
+				      vDestinations[p][i] += Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j] * vSources[p][Index];
+				    }
+				}
+			      else
+				{
+				  for (int p = 0; p < nbrVectors; ++p)
+				    {
+				      vDestinations[p][Index] += Coefficient * (this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * vSources[p][i];
+				    }
+				}
+			    }
+			  Index = particles->AdsigmaAsigma(i, j, j, sigma2, sigma1, Coefficient);
+			  if (Index <= i)
+			    {
+			      if (Index < i)
+				{
+				  for (int p = 0; p < nbrVectors; ++p)
+				    {
+				      vDestinations[p][Index] += Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j] * vSources[p][i];
+				      vDestinations[p][i] += Coefficient * (this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * vSources[p][Index];
+				    }
+				}
+			      else
+				{
+				  for (int p = 0; p < nbrVectors; ++p)
+				    vDestinations[p][Index] += Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j] * vSources[p][i];
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+}
+
+// core part of the FastMultiplication method involving the one-body interaction
+// 
+// particles = pointer to the Hilbert space
+// index = index of the component on which the Hamiltonian has to act on
+// indexArray = array where indices connected to the index-th component through the Hamiltonian
+// coefficientArray = array of the numerical coefficients related to the indexArray
+// position = reference on the current position in arrays indexArray and coefficientArray
+
+inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index, 
+														     int* indexArray, double* coefficientArray, long& position)
+{
+  double TmpDiagonal = 0.0;
+  bool TmpFlag = false;
+  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+    {
+      if (this->OneBodyInteractionFactorsSigma[sigma1][sigma1] != 0)
+	{
+	  TmpFlag = true;
+	  for (int j = 0; j <= this->LzMax; ++j)
+	    {
+	      TmpDiagonal += this->OneBodyInteractionFactorsSigma[sigma1][sigma1][j] * particles->AdsigmaAsigma(index + this->PrecalculationShift, j, sigma1);	      
+	    }
+	}
+    }
+  if (TmpFlag == true)
+    {
+      indexArray[position] = index + this->PrecalculationShift;
+      if (this->HermitianSymmetryFlag == true)
+	TmpDiagonal *= 0.5;
+      coefficientArray[position] = TmpDiagonal;
+      ++position;
+    }
+
+  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+    {
+      for (int sigma2 = sigma1 + 1; sigma2 < this->NbrInternalIndices; ++sigma2)
+	{
+	  if (this->OneBodyInteractionFactorsSigma[sigma1][sigma2] != 0)
+	    {
+	      int Dim = particles->GetHilbertSpaceDimension();
+	      double Coefficient;
+	      int Index;
+	      for (int j = 0; j <= this->LzMax; ++j)
+		{
+		  Index = particles->AdsigmaAsigma(index + this->PrecalculationShift, j, j, sigma1, sigma2, Coefficient);
+		  if (Index < Dim)
+		    {
+		      indexArray[position] = Index;
+		      coefficientArray[position] = Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j];
+		      ++position;
+		    }
+		  Index = particles->AdsigmaAsigma(index + this->PrecalculationShift, j, j, sigma2, sigma1, Coefficient);
+		  if (Index < Dim)
+		    {
+		      indexArray[position] = Index;
+		      coefficientArray[position] = Coefficient * (this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]);
+		      ++position;
+		    }
+		}
+	    }
+	}
+    }
+}
+
+// core part of the PartialFastMultiplicationMemory method involving two-body term and one-body terms
+// 
+// particles = pointer to the Hilbert space
+// firstComponent = index of the first component that has to be precalcualted
+// lastComponent  = index of the last component that has to be precalcualted
+// memory = reference on the amount of memory required for precalculations
+
+inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::EvaluateMNOneBodyFastMultiplicationMemoryComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent, long& memory)
+{
+  int Index;
+  double Coefficient = 0.0;
+
+  int Dim = particles->GetHilbertSpaceDimension();
+  
+  if (this->HermitianSymmetryFlag == false)
+    {
+      for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+	{
+	  for (int sigma2 = sigma1 + 1; sigma2 < this->NbrInternalIndices; ++sigma2)
+	    {
+	      if (this->OneBodyInteractionFactorsSigma[sigma1][sigma2] != 0)
+		{
+		  for (int i = firstComponent; i < lastComponent; ++i)
+		    {
+		      for (int j = 0; j <= this->LzMax; ++j)
+			{
+			  Index = particles->AdsigmaAsigma(i, j, j, sigma1, sigma2, Coefficient);
+			  if (Index < Dim)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			    }
+			  Index = particles->AdsigmaAsigma(i, j, j, sigma2, sigma1, Coefficient);
+			  if (Index < Dim)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+  else
+    {
+      for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+	{
+	  for (int sigma2 = sigma1 + 1; sigma2 < this->NbrInternalIndices; ++sigma2)
+	    {
+	      if (this->OneBodyInteractionFactorsSigma[sigma1][sigma2] != 0)
+		{
+		  for (int i = firstComponent; i < lastComponent; ++i)
+		    {
+		      for (int j=0; j <= this->LzMax; ++j)
+			{
+			  Index = particles->AdsigmaAsigma(i, j, j, sigma1, sigma2, Coefficient);
+			  if (Index <= i)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			    }
+			  Index = particles->AdsigmaAsigma(i, j, j, sigma2, sigma1, Coefficient);
+			  if (Index <= i)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+  bool TmpFlag = false;
+  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+    {
+      if (this->OneBodyInteractionFactorsSigma[sigma1][sigma1] != 0)
+	{
+	  TmpFlag = true;
+	}
+   }
+  if (TmpFlag == true)
+    {
+      for (int i = firstComponent; i < lastComponent; ++i)
+	{
+	  ++memory;
+	  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+	}
+    }
+}
+
 // core part of the AddMultiply method involving the two-body interaction
 // 
 // particles = pointer to the Hilbert space
@@ -180,7 +610,7 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 			      Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
 			      if (Index < Dim)
 				{
-			      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+				  vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
 				}
 			      ++TmpInteractionFactor;
 			    }
@@ -238,21 +668,21 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 		      for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
 			{
 			  for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
-				{			  
-				  if (this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2] != 0)
+			    {			  
+			      if (this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2] != 0)
+				{
+				  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
+				  for (int i2 = 0; i2 < Lim2; i2 += 2)
 				    {
-				      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
-				      for (int i2 = 0; i2 < Lim2; i2 += 2)
+				      Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
+				      if (Index < Dim)
 					{
-					  Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
-					  if (Index < Dim)
-					    {
-					      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
-					    }
-					  ++TmpInteractionFactor;
+					  vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
 					}
+				      ++TmpInteractionFactor;
 				    }
 				}
+			    }
 			}
 		    }
 		}
@@ -304,8 +734,10 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 			    {
 			      Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
 			      if (Index < Dim)
-				for (int p = 0; p < nbrVectors; ++p)
-				  vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+				{
+				  for (int p = 0; p < nbrVectors; ++p)
+				    vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+				}
 			      ++TmpInteractionFactor;
 			    }
 			}
@@ -316,13 +748,15 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 			{			  
 			  if (this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1] != 0)
 			    {
-			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim) >> 2]);
+			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim2) >> 2]);
 			      for (int i2 = 0; i2 < Lim2; i2 += 2)
 				{
 				  Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
 				  if (Index < Dim)
-				    for (int p = 0; p < nbrVectors; ++p)
-				      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+				    {
+				      for (int p = 0; p < nbrVectors; ++p)
+					vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+				    }
 				  ++TmpInteractionFactor;
 				}
 			    }
@@ -346,13 +780,15 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 			{
 			  if (this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2] != 0)
 			    {
-			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
+			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim) >> 2]);
 			      for (int i2 = 0; i2 < Lim; i2 += 2)
 				{
 				  Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
 				  if (Index < Dim)
-				    for (int p = 0; p < nbrVectors; ++p)
-				      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+				    {
+				      for (int p = 0; p < nbrVectors; ++p)
+					vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+				    }
 				  ++TmpInteractionFactor;
 				}
 			    }
@@ -368,8 +804,10 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 				    {
 				      Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
 				      if (Index < Dim)
-					for (int p = 0; p < nbrVectors; ++p)
-					  vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+					{
+					  for (int p = 0; p < nbrVectors; ++p)
+					    vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+					}
 				      ++TmpInteractionFactor;
 				    }
 				}
@@ -535,6 +973,8 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Hermitia
   int* TmpIndices2;
   double* TmpInteractionFactor;
   double* TmpSum = new double[nbrVectors];
+  for (int p = 0; p < nbrVectors; ++p)
+    TmpSum[p] = 0.0;
   for (int j = 0; j < this->NbrIntraSectorSums; ++j)
     {
       int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
@@ -580,36 +1020,36 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Hermitia
 			    }
 			}
 		    }
-		}
-	      for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
-		{
-		  for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
-		    {			  
-		      if (this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1] != 0)
-			{
-			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim) >> 2]);
-			  for (int i2 = 0; i2 < Lim2; i2 += 2)
+		  for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
+		    {
+		      for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
+			{			  
+			  if (this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1] != 0)
 			    {
-			      Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
-			      if (Index <= index)
+			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim2) >> 2]);
+			      for (int i2 = 0; i2 < Lim2; i2 += 2)
 				{
-				  if (Index < index)
+				  Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
+				  if (Index <= index)
 				    {
-				      for (int p = 0; p < nbrVectors; ++p)
+				      if (Index < index)
 					{
-					  vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-					  TmpSum[p] += (Coefficient * Coefficient3) * ((*TmpInteractionFactor)) * vSources[p][Index];
+					  for (int p = 0; p < nbrVectors; ++p)
+					    {
+					      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+					      TmpSum[p] += (Coefficient * Coefficient3) * ((*TmpInteractionFactor)) * vSources[p][Index];
+					    }
 					}
-				    }
-				  else
-				    {
-				      for (int p = 0; p < nbrVectors; ++p)
+				      else
 					{
-					  vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+					  for (int p = 0; p < nbrVectors; ++p)
+					    {
+					      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+					    }
 					}
-				    }
-				}			    
-			      ++TmpInteractionFactor;
+				    }			    
+				  ++TmpInteractionFactor;
+				}
 			    }
 			}
 		    }
@@ -631,32 +1071,29 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Hermitia
 			{
 			  if (this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2] != 0)
 			    {
-			      if (this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2] != 0)
+			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim) >> 2]);
+			      for (int i2 = 0; i2 < Lim; i2 += 2)
 				{
-				  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
-				  for (int i2 = 0; i2 < Lim; i2 += 2)
+				  Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
+				  if (Index <= index)
 				    {
-				      Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
-				      if (Index <= index)
+				      if (Index < index)
 					{
-					  if (Index < index)
+					  for (int p = 0; p < nbrVectors; ++p)
 					    {
-					      for (int p = 0; p < nbrVectors; ++p)
-						{
-						  vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-						  TmpSum[p] += (Coefficient * Coefficient3) * ((*TmpInteractionFactor)) * vSources[p][Index];
-						}
-					    }
-					  else
-					    {
-					      for (int p = 0; p < nbrVectors; ++p)
-						{
-						  vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-						}
+					      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+					      TmpSum[p] += (Coefficient * Coefficient3) * ((*TmpInteractionFactor)) * vSources[p][Index];
 					    }
 					}
-				      ++TmpInteractionFactor;
+				      else
+					{
+					  for (int p = 0; p < nbrVectors; ++p)
+					    {
+					      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+					    }
+					}
 				    }
+				  ++TmpInteractionFactor;
 				}
 			    }
 			}
@@ -669,7 +1106,7 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Hermitia
 				  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
 				  for (int i2 = 0; i2 < Lim2; i2 += 2)
 				    {
-				      Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma4, Coefficient);
+				      Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
 				      if (Index <= index)
 					{
 					  if (Index < index)
