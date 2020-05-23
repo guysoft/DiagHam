@@ -15,6 +15,7 @@
 #include "Tools/FTITightBinding/TightBindingModel2DAtomicLimitLattice.h"
 #include "Tools/FTITightBinding/Generic2DTightBindingModel.h"
 #include "Tools/FTITightBinding/TightBindingModel2DExplicitBandStructure.h"
+#include "Tools/FTITightBinding/TightBindingModel2DExplicitBlochHamiltonian.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -72,6 +73,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "interaction-name", "name of the two-body interaction", "noname");
   (*SystemGroup) += new SingleDoubleOption  ('u', "interaction-rescaling", "global rescaling of the two-body intearction", 1.0);
   (*SystemGroup) += new SingleStringOption  ('\n', "singleparticle-file", "optional name of the file containing the one-body matrix elements");
+  (*SystemGroup) += new BooleanOption  ('\n', "full-singleparticle", "the one-body matrix element file contains off-diagonal inter-band contributions");
   (*SystemGroup) += new BooleanOption  ('\n', "add-valley", "add valley-like degree of freedom (i.e. U(1) symmetry) included in --interaction-file");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "pz-value", "twice the valley Pz value", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "ez-value", "twice the Ez =1/2(N_{1u}+N_{2d}-N_{1d}-N_{2u}) value", 0);
@@ -259,7 +261,8 @@ int main(int argc, char** argv)
 	  int* TmpKxValues = 0;
 	  int* TmpKyValues = 0;
 	  int* TmpValleyIndices = 0;
-	  int* TmpBandIndices = 0;	  
+	  int* TmpBandIndices1 = 0;	  
+	  int* TmpBandIndices2 = 0;	  
 	  double* TmpOneBodyEnergies = 0;
 	  MultiColumnASCIIFile OneBodyEnergyFile;
 	  if (OneBodyEnergyFile.Parse(Manager.GetString("singleparticle-file")) == false)
@@ -272,21 +275,42 @@ int main(int argc, char** argv)
 	      cout << Manager.GetString("singleparticle-file") << " is an empty file" << endl;
 	      return 0;
 	    }
-	  if (((Manager.GetBoolean("add-valley") == false) && (OneBodyEnergyFile.GetNbrColumns() < 4))
-	      || ((Manager.GetBoolean("add-valley") == true) && (OneBodyEnergyFile.GetNbrColumns() < 5)))
-	    {
-	      cout << Manager.GetString("singleparticle-file") << " has a wrong number of columns (has "
-		   << OneBodyEnergyFile.GetNbrColumns() << ", should be at least 4 without valley, 5 with valley)" << endl;
-	      return 0;
-	    }
 	  int NbrEnergies = OneBodyEnergyFile.GetNbrLines();
-	  if (((Manager.GetBoolean("add-valley") == false) && (NbrEnergies != (2 * NbrSitesX * NbrSitesY)))
-	      || ((Manager.GetBoolean("add-valley") == true) && (NbrEnergies != (4 * NbrSitesX * NbrSitesY))))
+	  if (Manager.GetBoolean("full-singleparticle") == false)
 	    {
-	      cout << Manager.GetString("singleparticle-file") << " has a wrong number of lins (has "
-		   << OneBodyEnergyFile.GetNbrColumns() << ", should be " << (2 * NbrSitesX * NbrSitesY)
-		   << " without valley, " << (4 * NbrSitesX * NbrSitesY) << " with vallley)" << endl;
-	      return 0;
+	      if (((Manager.GetBoolean("add-valley") == false) && (NbrEnergies != (2 * NbrSitesX * NbrSitesY)))
+		  || ((Manager.GetBoolean("add-valley") == true) && (NbrEnergies != (4 * NbrSitesX * NbrSitesY))))
+		{
+		  cout << Manager.GetString("singleparticle-file") << " has a wrong number of lines (has "
+		       << NbrEnergies << ", should be " << (2 * NbrSitesX * NbrSitesY)
+		       << " without valley, " << (4 * NbrSitesX * NbrSitesY) << " with vallley)" << endl;
+		  return 0;
+		}
+	      if (((Manager.GetBoolean("add-valley") == false) && (OneBodyEnergyFile.GetNbrColumns() < 4))
+		  || ((Manager.GetBoolean("add-valley") == true) && (OneBodyEnergyFile.GetNbrColumns() < 5)))
+		{
+		  cout << Manager.GetString("singleparticle-file") << " has a wrong number of columns (has "
+		       << OneBodyEnergyFile.GetNbrColumns() << ", should be at least 4 without valley, 5 with valley)" << endl;
+		  return 0;
+		}
+	    }
+	  else
+	    {
+	      if (((Manager.GetBoolean("add-valley") == false) && (NbrEnergies != (4 * NbrSitesX * NbrSitesY)))
+		  || ((Manager.GetBoolean("add-valley") == true) && (NbrEnergies != (8 * NbrSitesX * NbrSitesY))))
+		{
+		  cout << Manager.GetString("singleparticle-file") << " has a wrong number of lines (has "
+		       << NbrEnergies << ", should be " << (4 * NbrSitesX * NbrSitesY)
+		       << " without valley and --full-singleparticle, " << (8 * NbrSitesX * NbrSitesY) << " with vallley and --full-singleparticle)" << endl;
+		  return 0;
+		}
+	      if (((Manager.GetBoolean("add-valley") == false) && (OneBodyEnergyFile.GetNbrColumns() < 5))
+		  || ((Manager.GetBoolean("add-valley") == true) && (OneBodyEnergyFile.GetNbrColumns() < 6)))
+		{
+		  cout << Manager.GetString("singleparticle-file") << " has a wrong number of columns (has "
+		       << OneBodyEnergyFile.GetNbrColumns() << ", should be at least 5 without valley, 6 with valley when using --full-singleparticle)" << endl;
+		  return 0;
+		}
 	    }
 
 	  int TmpNbrBands = 2;
@@ -300,7 +324,6 @@ int main(int argc, char** argv)
 	    }
 	  int* KxValues = new int[NbrSitesX * NbrSitesY];
 	  int* KyValues = new int[NbrSitesX * NbrSitesY];
-	  double** Energies = new double*[NbrSitesX * NbrSitesY];
 	  int TmpIndex = 0;
 	  int* IndexToKIndex = new int[NbrSitesX * NbrSitesY];
 	  int* NbrBandsPerKSector = new int[NbrSitesX * NbrSitesY];
@@ -310,78 +333,149 @@ int main(int argc, char** argv)
 		{
 		  KxValues[TmpIndex] = i;
 		  KyValues[TmpIndex] = j;
-		  Energies[TmpIndex] = new double[TmpNbrBands];
 		  IndexToKIndex[(i * NbrSitesY) + j] = TmpIndex;
 		  ++TmpIndex;
 		}
 	    }
 	  TmpKxValues = OneBodyEnergyFile.GetAsIntegerArray(0);
 	  TmpKyValues = OneBodyEnergyFile.GetAsIntegerArray(1);
-	  	  
-	  if (Manager.GetBoolean("add-valley") == false)
+
+	  if (Manager.GetBoolean("full-singleparticle") == false)
 	    {
-	      TmpBandIndices = OneBodyEnergyFile.GetAsIntegerArray(2);
-	      TmpOneBodyEnergies = OneBodyEnergyFile.GetAsDoubleArray(3);
-	      
-	      if (Manager.GetBoolean("add-spin") == false)
+	      double** Energies = new double*[NbrSitesX * NbrSitesY];
+	      TmpIndex = 0;
+	      for (int i = 0; i < NbrSitesX; ++i)
 		{
-		  for (int i = 0; i < NbrEnergies; ++i)
+		  for (int j = 0; j < NbrSitesY; ++j)
 		    {
-		      Energies[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]][TmpBandIndices[i]] = TmpOneBodyEnergies[i];
+		      Energies[TmpIndex] = new double[TmpNbrBands];
+		      ++TmpIndex;
 		    }
+		}
+	      if (Manager.GetBoolean("add-valley") == false)
+		{
+		  TmpBandIndices1 = OneBodyEnergyFile.GetAsIntegerArray(2);
+		  TmpOneBodyEnergies = OneBodyEnergyFile.GetAsDoubleArray(3);
+		  
+		  if (Manager.GetBoolean("add-spin") == false)
+		    {
+		      for (int i = 0; i < NbrEnergies; ++i)
+			{
+			  Energies[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]][TmpBandIndices1[i]] = TmpOneBodyEnergies[i];
+			}
+		    }
+		  else
+		    {
+		      for (int i = 0; i < NbrEnergies; ++i)
+			{
+			  Energies[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]][TmpBandIndices1[i]] = TmpOneBodyEnergies[i];
+			  Energies[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]][2 + TmpBandIndices1[i]] = TmpOneBodyEnergies[i];
+			}
+		    }			      
 		}
 	      else
 		{
-		  for (int i = 0; i < NbrEnergies; ++i)
+		  TmpValleyIndices = OneBodyEnergyFile.GetAsIntegerArray(2);
+		  TmpBandIndices1 = OneBodyEnergyFile.GetAsIntegerArray(3);
+		  TmpOneBodyEnergies = OneBodyEnergyFile.GetAsDoubleArray(4);
+		  if (Manager.GetBoolean("add-spin") == false)
 		    {
-		      Energies[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]][TmpBandIndices[i]] = TmpOneBodyEnergies[i];
-		      Energies[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]][2 + TmpBandIndices[i]] = TmpOneBodyEnergies[i];
+		      for (int i = 0; i < NbrEnergies; ++i)
+			{
+			  Energies[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]][TmpBandIndices1[i] + (TmpValleyIndices[i] + 1)] = TmpOneBodyEnergies[i];
+			}
 		    }
-		}			      
+		  else
+		    {
+		      for (int i = 0; i < NbrEnergies; ++i)
+			{
+			  Energies[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]][TmpBandIndices1[i] + (TmpValleyIndices[i] + 1)] = TmpOneBodyEnergies[i];
+			  Energies[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]][4 + TmpBandIndices1[i] + (TmpValleyIndices[i] + 1)] = TmpOneBodyEnergies[i];
+			}
+		    }			      
+		}
+	      TightBindingModel = new TightBindingModel2DExplicitBandStructure (NbrSitesX, NbrSitesY, TmpNbrBands, 0.0, 0.0,
+										KxValues, KyValues, Energies,
+										Architecture.GetArchitecture(), true);
+	      TmpIndex = 0;
+	      for (int i = 0; i < NbrSitesX; ++i)
+		{
+		  for (int j = 0; j < NbrSitesY; ++j)
+		    {
+		      delete[] Energies[TmpIndex];
+		      ++TmpIndex;
+		    }
+		}
+	      delete[] Energies;
 	    }
 	  else
 	    {
-	      TmpValleyIndices = OneBodyEnergyFile.GetAsIntegerArray(2);
-	      TmpBandIndices = OneBodyEnergyFile.GetAsIntegerArray(3);
-	      TmpOneBodyEnergies = OneBodyEnergyFile.GetAsDoubleArray(4);
-	      if (Manager.GetBoolean("add-spin") == false)
+	      HermitianMatrix* BlochHamiltonian = new HermitianMatrix[NbrSitesX * NbrSitesY];
+	      TmpIndex = 0;
+	      for (int i = 0; i < NbrSitesX; ++i)
 		{
-		  for (int i = 0; i < NbrEnergies; ++i)
+		  for (int j = 0; j < NbrSitesY; ++j)
 		    {
-		      Energies[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]][TmpBandIndices[i] + (TmpValleyIndices[i] + 1)] = TmpOneBodyEnergies[i];
+		      BlochHamiltonian[TmpIndex] = HermitianMatrix(TmpNbrBands, true);
+		      ++TmpIndex;
 		    }
+		}
+	      if (Manager.GetBoolean("add-valley") == false)
+		{
+		  TmpBandIndices1 = OneBodyEnergyFile.GetAsIntegerArray(2);
+		  TmpBandIndices2 = OneBodyEnergyFile.GetAsIntegerArray(3);
+		  TmpOneBodyEnergies = OneBodyEnergyFile.GetAsDoubleArray(4);
+		  
+		  if (Manager.GetBoolean("add-spin") == false)
+		    {
+		      for (int i = 0; i < NbrEnergies; ++i)
+			{
+			  BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(TmpBandIndices1[i], TmpBandIndices2[i], TmpOneBodyEnergies[i]);
+			}
+		    }
+		  else
+		    {
+		      for (int i = 0; i < NbrEnergies; ++i)
+			{
+			  BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(TmpBandIndices1[i], TmpBandIndices2[i], TmpOneBodyEnergies[i]);
+			  BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(2 + TmpBandIndices1[i], 2 + TmpBandIndices2[i], TmpOneBodyEnergies[i]);
+			}
+		    }			      
 		}
 	      else
 		{
-		  for (int i = 0; i < NbrEnergies; ++i)
+		  TmpBandIndices1 = OneBodyEnergyFile.GetAsIntegerArray(2);
+		  TmpBandIndices2 = OneBodyEnergyFile.GetAsIntegerArray(3);
+		  TmpValleyIndices = OneBodyEnergyFile.GetAsIntegerArray(4);
+		  TmpOneBodyEnergies = OneBodyEnergyFile.GetAsDoubleArray(5);
+		  if (Manager.GetBoolean("add-spin") == false)
 		    {
-		      Energies[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]][TmpBandIndices[i] + (TmpValleyIndices[i] + 1)] = TmpOneBodyEnergies[i];
-		      Energies[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]][4 + TmpBandIndices[i] + (TmpValleyIndices[i] + 1)] = TmpOneBodyEnergies[i];
+		      for (int i = 0; i < NbrEnergies; ++i)
+			{
+			  BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(TmpBandIndices1[i] + (TmpValleyIndices[i] + 1), TmpBandIndices2[i] + (TmpValleyIndices[i] + 1), TmpOneBodyEnergies[i]);
+			}
 		    }
-		}			      
+		  else
+		    {
+		      for (int i = 0; i < NbrEnergies; ++i)
+			{
+			  BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(TmpBandIndices1[i] + (TmpValleyIndices[i] + 1), TmpBandIndices2[i] + (TmpValleyIndices[i] + 1), TmpOneBodyEnergies[i]);
+			  BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(4 + TmpBandIndices1[i] + (TmpValleyIndices[i] + 1), 4 + TmpBandIndices2[i] + (TmpValleyIndices[i] + 1), TmpOneBodyEnergies[i]);
+			}
+		    }			      
+		}
+	      TightBindingModel = new TightBindingModel2DExplicitBlochHamiltonian (NbrSitesX, NbrSitesY, TmpNbrBands, 0.0, 0.0,
+										   KxValues, KyValues, BlochHamiltonian,
+										   Architecture.GetArchitecture(), true);
+	      delete[] BlochHamiltonian;
 	    }
-	  
-	  
-	  TightBindingModel = new TightBindingModel2DExplicitBandStructure (NbrSitesX, NbrSitesY, TmpNbrBands, 0.0, 0.0,
-									    KxValues, KyValues, Energies,
-									    Architecture.GetArchitecture(), true);
 	  char* BandStructureOutputFile = new char [64 + strlen(FilePrefix)];
 	  sprintf (BandStructureOutputFile, "%s_tightbinding.dat", FilePrefix);
 	  TightBindingModel->WriteBandStructure(BandStructureOutputFile);
 
-	  TmpIndex = 0;
-	  for (int i = 0; i < NbrSitesX; ++i)
-	    {
-	      for (int j = 0; j < NbrSitesY; ++j)
-		{
-		  delete[] Energies[TmpIndex];
-		  ++TmpIndex;
-		}
-	    }
 	  delete[] IndexToKIndex;
 	  delete[] KxValues;
 	  delete[] KyValues;
-	  delete[] Energies;
 	}      
     }
   else

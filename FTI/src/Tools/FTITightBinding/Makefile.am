@@ -72,4 +72,5 @@ TightBindingModelSimpleC4QuadrupoleFullOBCAndFullC4Symmetry.cc \
 TightBindingModelSimpleC4QuadrupoleFullOBCC4Symmetry.cc \
 TightBindingModelPPlusIPSquareLattice.cc \
 TightBindingModel3DChargePumpedChiralHingeCubicLattice.cc \
-TightBindingModel2DExplicitBandStructure.cc
+TightBindingModel2DExplicitBandStructure.cc \
+TightBindingModel2DExplicitBlochHamiltonian.cc

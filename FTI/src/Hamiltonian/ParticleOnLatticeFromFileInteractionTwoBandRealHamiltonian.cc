@@ -794,21 +794,61 @@ void ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian::EvaluateOneBody
       
   if (this->FlatBand == false)
     {
+
+      bool** TmpOneBodyFlags = new bool*[this->NbrInternalIndices];
       for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
 	{
-	  this->OneBodyInteractionFactorsSigma[sigma1][sigma1] = new double [this->TightBindingModel->GetNbrStatePerBand()];
+	  TmpOneBodyFlags[sigma1] = new bool[this->NbrInternalIndices];
+	  for (int sigma2 = sigma1; sigma2 < this->NbrInternalIndices; ++sigma2)
+	    {
+	      TmpOneBodyFlags[sigma1][sigma2] = false;
+	    }
 	}
+      
       for (int kx = 0; kx < this->NbrSiteX; ++kx)
 	{
 	  for (int ky = 0; ky < this->NbrSiteY; ++ky)
 	    {
-	       int Index = this->TightBindingModel->GetLinearizedMomentumIndex(kx, ky);
-	       for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
-		 {
-		   this->OneBodyInteractionFactorsSigma[sigma1][sigma1][Index] = this->TightBindingModel->GetEnergy(sigma1, Index);
-		 }
-	     }
-	 }
+	      HermitianMatrix TmpBlochHamiltonian(this->TightBindingModel->ComputeBlochHamiltonian(kx, ky));
+	      Complex Tmp;
+	      for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+		{
+		  for (int sigma2 = sigma1; sigma2 < this->NbrInternalIndices; ++sigma2)
+		    {
+		      TmpBlochHamiltonian.GetMatrixElement(sigma1, sigma2, Tmp);
+		      if (Tmp.Re != 0.0)
+			{
+			  if (TmpOneBodyFlags[sigma1][sigma2] == false)
+			    {
+			      this->OneBodyInteractionFactorsSigma[sigma1][sigma2] = new double [this->TightBindingModel->GetNbrStatePerBand()];			      
+			      TmpOneBodyFlags[sigma1][sigma2] = true;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+      
+      for (int kx = 0; kx < this->NbrSiteX; ++kx)
+	{
+	  for (int ky = 0; ky < this->NbrSiteY; ++ky)
+	    {
+	      HermitianMatrix TmpBlochHamiltonian(this->TightBindingModel->ComputeBlochHamiltonian(kx, ky));
+	      Complex Tmp;
+	      int Index = this->TightBindingModel->GetLinearizedMomentumIndex(kx, ky);
+	      for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+		{
+		  for (int sigma2 = sigma1; sigma2 < this->NbrInternalIndices; ++sigma2)
+		    {
+		      if (TmpOneBodyFlags[sigma1][sigma2] == true)
+			{
+			  TmpBlochHamiltonian.GetMatrixElement(sigma1, sigma2, Tmp);
+			  this->OneBodyInteractionFactorsSigma[sigma1][sigma2][Index] = Tmp.Re;
+			}
+		    }
+		}
+	    }
+	}
     }
 }
 

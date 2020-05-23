@@ -230,12 +230,12 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 		      Source = vSource[i];
 		      for (int j = 0; j <= this->LzMax; ++j)
 			{
-			  Index = particles->AdsigmaAsigma(i, j, j, sigma1, sigma2, Coefficient);
+			  Index = particles->AdsigmaAsigma(i, j, sigma1, j, sigma2, Coefficient);
 			  if (Index < Dim)
 			    {
 			      vDestination[Index] += (Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * Source;
 			    }
-			  Index = particles->AdsigmaAsigma(i, j, j, sigma2, sigma1, Coefficient);
+			  Index = particles->AdsigmaAsigma(i, j, sigma2, j, sigma1, Coefficient);
 			  if (Index < Dim)
 			    {
 			      vDestination[Index] += (Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * Source;
@@ -250,7 +250,7 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 		      Source = vSource[i];
 		      for (int j = 0; j <= this->LzMax; ++j)
 			{
-			  Index = particles->AdsigmaAsigma(i, j, j, sigma1, sigma2, Coefficient);
+			  Index = particles->AdsigmaAsigma(i, j, sigma1, j, sigma2, Coefficient);
 			  if (Index <= i)
 			    {
 			      if (Index < i)
@@ -263,7 +263,7 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 				  vDestination[Index] += (Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * Source;
 				}
 			    }
-			  Index = particles->AdsigmaAsigma(i, j, j, sigma2, sigma1, Coefficient);
+			  Index = particles->AdsigmaAsigma(i, j, sigma2, j, sigma1, Coefficient);
 			  if (Index < Dim)
 			    {
 			      if (Index <= i)
@@ -346,13 +346,13 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 		    {
 		      for (int j = 0; j <= this->LzMax; ++j)
 			{
-			  Index = particles->AdsigmaAsigma(i, j, j, sigma1, sigma2, Coefficient);
+			  Index = particles->AdsigmaAsigma(i, j, sigma1, j, sigma2, Coefficient);
 			  if (Index < Dim)
 			    {
 			      for (int p = 0; p < nbrVectors; ++p)
 				vDestinations[p][Index] += Coefficient * (this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * vSources[p][i];
 			    }
-			  Index = particles->AdsigmaAsigma(i, j, j, sigma2, sigma1, Coefficient);
+			  Index = particles->AdsigmaAsigma(i, j, sigma2, j, sigma1, Coefficient);
 			  if (Index < Dim)
 			    {
 			      for (int p = 0; p < nbrVectors; ++p)
@@ -367,7 +367,7 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 		    {
 		      for (int j = 0; j <= this->LzMax; ++j)
 			{
-			  Index = particles->AdsigmaAsigma(i, j, j, sigma1, sigma2, Coefficient);
+			  Index = particles->AdsigmaAsigma(i, j, sigma1, j, sigma2, Coefficient);
 			  if (Index <= i)
 			    {
 			      if (Index < i)
@@ -386,7 +386,7 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 				    }
 				}
 			    }
-			  Index = particles->AdsigmaAsigma(i, j, j, sigma2, sigma1, Coefficient);
+			  Index = particles->AdsigmaAsigma(i, j, sigma2, j, sigma1, Coefficient);
 			  if (Index <= i)
 			    {
 			      if (Index < i)
@@ -424,6 +424,7 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 {
   double TmpDiagonal = 0.0;
   bool TmpFlag = false;
+  int AbsoluteIndex = index + this->PrecalculationShift;
   for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
     {
       if (this->OneBodyInteractionFactorsSigma[sigma1][sigma1] != 0)
@@ -431,43 +432,92 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 	  TmpFlag = true;
 	  for (int j = 0; j <= this->LzMax; ++j)
 	    {
-	      TmpDiagonal += this->OneBodyInteractionFactorsSigma[sigma1][sigma1][j] * particles->AdsigmaAsigma(index + this->PrecalculationShift, j, sigma1);	      
+	      TmpDiagonal += this->OneBodyInteractionFactorsSigma[sigma1][sigma1][j] * particles->AdsigmaAsigma(AbsoluteIndex, j, sigma1);	      
 	    }
 	}
     }
   if (TmpFlag == true)
     {
-      indexArray[position] = index + this->PrecalculationShift;
+      indexArray[position] = AbsoluteIndex;
       if (this->HermitianSymmetryFlag == true)
 	TmpDiagonal *= 0.5;
       coefficientArray[position] = TmpDiagonal;
       ++position;
     }
 
-  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+  if (this->HermitianSymmetryFlag == false)
     {
-      for (int sigma2 = sigma1 + 1; sigma2 < this->NbrInternalIndices; ++sigma2)
+      for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
 	{
-	  if (this->OneBodyInteractionFactorsSigma[sigma1][sigma2] != 0)
+	  for (int sigma2 = sigma1 + 1; sigma2 < this->NbrInternalIndices; ++sigma2)
 	    {
-	      int Dim = particles->GetHilbertSpaceDimension();
-	      double Coefficient;
-	      int Index;
-	      for (int j = 0; j <= this->LzMax; ++j)
+	      if (this->OneBodyInteractionFactorsSigma[sigma1][sigma2] != 0)
 		{
-		  Index = particles->AdsigmaAsigma(index + this->PrecalculationShift, j, j, sigma1, sigma2, Coefficient);
-		  if (Index < Dim)
+		  int Dim = particles->GetHilbertSpaceDimension();
+		  double Coefficient;
+		  int Index;
+		  for (int j = 0; j <= this->LzMax; ++j)
 		    {
-		      indexArray[position] = Index;
-		      coefficientArray[position] = Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j];
+		      Index = particles->AdsigmaAsigma(AbsoluteIndex, j, sigma1, j, sigma2, Coefficient);
+		      if (Index < Dim)
+			{
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j];
 		      ++position;
+			}
+		      Index = particles->AdsigmaAsigma(AbsoluteIndex, j, sigma2, j, sigma1, Coefficient);
+		      if (Index < Dim)
+			{
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * (this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]);
+			  ++position;
+			}
 		    }
-		  Index = particles->AdsigmaAsigma(index + this->PrecalculationShift, j, j, sigma2, sigma1, Coefficient);
-		  if (Index < Dim)
+		}
+	    }
+	}
+    }
+  else
+    {
+      for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+	{
+	  for (int sigma2 = sigma1 + 1; sigma2 < this->NbrInternalIndices; ++sigma2)
+	    {
+	      if (this->OneBodyInteractionFactorsSigma[sigma1][sigma2] != 0)
+		{
+		  int Dim = particles->GetHilbertSpaceDimension();
+		  double Coefficient;
+		  int Index;
+		  for (int j = 0; j <= this->LzMax; ++j)
 		    {
-		      indexArray[position] = Index;
-		      coefficientArray[position] = Coefficient * (this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]);
-		      ++position;
+		      Index = particles->AdsigmaAsigma(AbsoluteIndex, j, sigma1, j, sigma2, Coefficient);
+		      if (Index <= AbsoluteIndex)
+			{
+			  indexArray[position] = Index;
+			  if (Index == AbsoluteIndex)
+			    {
+			      coefficientArray[position] = 0.5 * Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j];
+			    }
+			  else
+			    {
+			      coefficientArray[position] = Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j];
+			    }
+			  ++position;
+			}
+		      Index = particles->AdsigmaAsigma(AbsoluteIndex, j, sigma2, j, sigma1, Coefficient);
+		      if (Index <= AbsoluteIndex)
+			{
+			  indexArray[position] = Index;
+			  if (Index == AbsoluteIndex)
+			    {
+			      coefficientArray[position] = 0.5 * Coefficient * (this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]);
+			    }
+			  else
+			    {
+			      coefficientArray[position] = Coefficient * (this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]);
+			    }			    
+			  ++position;
+			}
 		    }
 		}
 	    }
@@ -489,6 +539,23 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 
   int Dim = particles->GetHilbertSpaceDimension();
   
+  bool TmpFlag = false;
+  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
+    {
+      if (this->OneBodyInteractionFactorsSigma[sigma1][sigma1] != 0)
+	{
+	  TmpFlag = true;
+	}
+   }
+  if (TmpFlag == true)
+    {
+      for (int i = firstComponent; i < lastComponent; ++i)
+	{
+	  ++memory;
+	  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+	}
+    }
+
   if (this->HermitianSymmetryFlag == false)
     {
       for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
@@ -501,13 +568,13 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 		    {
 		      for (int j = 0; j <= this->LzMax; ++j)
 			{
-			  Index = particles->AdsigmaAsigma(i, j, j, sigma1, sigma2, Coefficient);
+			  Index = particles->AdsigmaAsigma(i, j, sigma1, j, sigma2, Coefficient);
 			  if (Index < Dim)
 			    {
 			      ++memory;
 			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
 			    }
-			  Index = particles->AdsigmaAsigma(i, j, j, sigma2, sigma1, Coefficient);
+			  Index = particles->AdsigmaAsigma(i, j, sigma2, j, sigma1, Coefficient);
 			  if (Index < Dim)
 			    {
 			      ++memory;
@@ -531,13 +598,13 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 		    {
 		      for (int j=0; j <= this->LzMax; ++j)
 			{
-			  Index = particles->AdsigmaAsigma(i, j, j, sigma1, sigma2, Coefficient);
+			  Index = particles->AdsigmaAsigma(i, j, sigma1, j, sigma2, Coefficient);
 			  if (Index <= i)
 			    {
 			      ++memory;
 			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
 			    }
-			  Index = particles->AdsigmaAsigma(i, j, j, sigma2, sigma1, Coefficient);
+			  Index = particles->AdsigmaAsigma(i, j, sigma2, j, sigma1, Coefficient);
 			  if (Index <= i)
 			    {
 			      ++memory;
@@ -550,22 +617,6 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandRealHamiltonian::Evaluate
 	}
     }
 
-  bool TmpFlag = false;
-  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
-    {
-      if (this->OneBodyInteractionFactorsSigma[sigma1][sigma1] != 0)
-	{
-	  TmpFlag = true;
-	}
-   }
-  if (TmpFlag == true)
-    {
-      for (int i = firstComponent; i < lastComponent; ++i)
-	{
-	  ++memory;
-	  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-	}
-    }
 }
 
 // core part of the AddMultiply method involving the two-body interaction
