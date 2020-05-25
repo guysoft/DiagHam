@@ -218,7 +218,8 @@ void ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian::EvaluateInterac
       TmpLinearizedK4[i] = this->TightBindingModel->GetLinearizedMomentumIndex(TmpKx4[i], TmpKy4[i]);
       TmpMatrixElements[i] *= this->InteractionRescalingFactor;
     }
-
+  bool**** InternalIndicesFlags = this->TestMatrixElementsConservedDegreesOfFreedom(TmpNbrTwoBodyMatrixElements, TmpSigma1, TmpSigma2, TmpSigma3, TmpSigma4);
+  
   this->EvaluateOneBodyFactors();
  
   this->NbrInterSectorSums = this->NbrSiteX * this->NbrSiteY;
@@ -419,16 +420,23 @@ void ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian::EvaluateInterac
 		    {
 		      for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
 			{
-			  this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2] = new double*[this->NbrIntraSectorSums];
-			  for (int j = 0; j < this->NbrInterSectorSums; ++j)
+			  if (InternalIndicesFlags[sigma3][sigma4][sigma1][sigma2] == true)
 			    {
-			      int Tmp = this->NbrInterSectorIndicesPerSum[j] * this->NbrInterSectorIndicesPerSum[j];
-			      this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j] = new double [Tmp];
-			      double* TmpInteractionArray = this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j];
-			      for (int k = 0; k < Tmp; ++k)
+			      this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2] = new double*[this->NbrIntraSectorSums];
+			      for (int j = 0; j < this->NbrInterSectorSums; ++j)
 				{
-				  TmpInteractionArray[k] = 0.0;
+				  int Tmp = this->NbrInterSectorIndicesPerSum[j] * this->NbrInterSectorIndicesPerSum[j];
+				  this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j] = new double [Tmp];
+				  double* TmpInteractionArray = this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j];
+				  for (int k = 0; k < Tmp; ++k)
+				    {
+				      TmpInteractionArray[k] = 0.0;
+				    }
 				}
+			    }
+			  else
+			    {
+			      this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2] = 0;
 			    }
 			}
 		    }
@@ -554,7 +562,8 @@ void ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian::EvaluateInterac
 		    {
 		      for (int sigma4 = sigma3; sigma4 < this->NbrInternalIndices; ++sigma4)
 			{
-			  if (((sigma1 & 2) + (sigma2 & 2)) == ((sigma3 & 2) + (sigma4 & 2)))
+			  if ((InternalIndicesFlags[sigma3 & 2][sigma4 & 2][sigma1 & 2][sigma2 & 2] == true) &&
+			      (((sigma1 & 2) + (sigma2 & 2)) == ((sigma3 & 2) + (sigma4 & 2))))
 			    {
 			      if (sigma3 == sigma4)
 				{
@@ -735,6 +744,8 @@ void ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian::EvaluateInterac
       
     }
 
+
+  this->FreeMatrixElementsConservedDegreesOfFreedom(InternalIndicesFlags);
   delete[] TmpSigma1;
   delete[] TmpSigma2;
   delete[] TmpSigma3;
@@ -852,3 +863,95 @@ void ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian::EvaluateOneBody
     }
 }
 
+// test which internal degrees of freedom are conserved in the matrix elements
+//   
+// nbrMatrixElements = number of matrix elements
+// sigmaIndices1 = array for internal degrees of freedom of the first creation operator
+// sigmaIndices2 = array for internal degrees of freedom of the second creation operator
+// sigmaIndices3 = array for internal degrees of freedom of the first annihilation operator
+// sigmaIndices4 = array for internal degrees of freedom of the second annihilation operator
+// return value = array that indicates which internal degrees of freedom are conserved
+
+bool**** ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian::TestMatrixElementsConservedDegreesOfFreedom (int nbrMatrixElements,
+														  int* sigmaIndices1, int* sigmaIndices2,
+														  int* sigmaIndices3, int* sigmaIndices4)
+{
+  int ReducedNbrInternalIndices = this->NbrInternalIndices;
+  if (this->AdditionalSpinFlag == true)
+    {
+      ReducedNbrInternalIndices /= 2;
+    }
+  bool**** InternalIndicesFlags = new bool*** [ReducedNbrInternalIndices];
+  for (int sigma1 = 0; sigma1 < ReducedNbrInternalIndices; ++sigma1)
+    {
+      InternalIndicesFlags[sigma1] = new bool** [ReducedNbrInternalIndices];
+      for (int sigma2 = 0; sigma2 < ReducedNbrInternalIndices; ++sigma2)
+	{
+	  InternalIndicesFlags[sigma1][sigma2] = new bool* [ReducedNbrInternalIndices];
+	  for (int sigma3 = 0; sigma3 < ReducedNbrInternalIndices; ++sigma3)
+	    {
+	      InternalIndicesFlags[sigma1][sigma2][sigma3] = new bool [ReducedNbrInternalIndices];
+	      for (int sigma4 = 0; sigma4 < ReducedNbrInternalIndices; ++sigma4)
+		{
+		  InternalIndicesFlags[sigma1][sigma2][sigma3][sigma4] = false;
+		}
+	    }
+	}
+    }
+
+  for (int i = 0; i < nbrMatrixElements; ++i)
+    {
+      InternalIndicesFlags[sigmaIndices1[i]][sigmaIndices2[i]][sigmaIndices3[i]][sigmaIndices4[i]] = true;
+      InternalIndicesFlags[sigmaIndices2[i]][sigmaIndices1[i]][sigmaIndices3[i]][sigmaIndices4[i]] = true;
+      InternalIndicesFlags[sigmaIndices1[i]][sigmaIndices2[i]][sigmaIndices4[i]][sigmaIndices3[i]] = true;
+      InternalIndicesFlags[sigmaIndices2[i]][sigmaIndices1[i]][sigmaIndices4[i]][sigmaIndices3[i]] = true;
+    }
+
+  int NbrActivatedTerms = 0;
+  for (int sigma1 = 0; sigma1 < ReducedNbrInternalIndices; ++sigma1)
+    {
+      for (int sigma2 = 0; sigma2 < ReducedNbrInternalIndices; ++sigma2)
+	{
+	  for (int sigma3 = 0; sigma3 < ReducedNbrInternalIndices; ++sigma3)
+	    {
+	      for (int sigma4 = 0; sigma4 < ReducedNbrInternalIndices; ++sigma4)
+		{
+		  if (InternalIndicesFlags[sigma1][sigma2][sigma3][sigma4] == true)
+		    {
+		      NbrActivatedTerms++;
+		    }
+		}
+	    }
+	}
+    }
+  cout << "using " << NbrActivatedTerms << " out of the "
+       << (ReducedNbrInternalIndices * ReducedNbrInternalIndices * ReducedNbrInternalIndices * ReducedNbrInternalIndices)
+       << " possible two-body terms due to the internal degrees of freedom" << endl;
+  return InternalIndicesFlags;
+}
+
+// free the array tagging which internal degrees of freedom are conserved in the matrix elements
+//   
+// internalIndicesFlags = array that indicates which internal degrees of freedom are conserved
+
+void ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian::FreeMatrixElementsConservedDegreesOfFreedom (bool**** internalIndicesFlags)
+{
+  int ReducedNbrInternalIndices = this->NbrInternalIndices;
+  if (this->AdditionalSpinFlag == true)
+    {
+      ReducedNbrInternalIndices /= 2;
+    }
+  for (int sigma1 = 0; sigma1 < ReducedNbrInternalIndices; ++sigma1)
+    {
+      for (int sigma2 = 0; sigma2 < ReducedNbrInternalIndices; ++sigma2)
+	{
+	  for (int sigma3 = 0; sigma3 < ReducedNbrInternalIndices; ++sigma3)
+	    {
+	      delete[] internalIndicesFlags[sigma1][sigma2][sigma3];
+	    }
+	  delete[] internalIndicesFlags[sigma1][sigma2];
+	}
+      delete[] internalIndicesFlags[sigma1];
+    }
+  delete[] internalIndicesFlags;
+}

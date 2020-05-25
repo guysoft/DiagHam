@@ -509,11 +509,11 @@ int main(int argc, char** argv)
 	    {
 	      if (Manager.GetBoolean("add-spin") == false)
 		{
-		  cout << "(kx=" << i << ",ky=" << j << ",2pz" << MinPz << ") : " << endl;
+		  cout << "(kx=" << i << ",ky=" << j << ",2pz=" << MinPz << ") : " << endl;
 		}
 	      else
 		{
-		  cout << "(kx=" << i << ",ky=" << j << ",2pz" << MinPz << ",2sz=" << MinSz << ",2ez=" << MinEz<< ") : " << endl;
+		  cout << "(kx=" << i << ",ky=" << j << ",2pz=" << MinPz << ",2sz=" << MinSz << ",2ez=" << MinEz<< ") : " << endl;
 		}
 	    }
 	  ParticleOnSphereWithSpin* Space = 0;

@@ -114,6 +114,22 @@ class ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian : public Partic
   //     
   virtual void EvaluateOneBodyFactors();
 
+  // test which internal degrees of freedom are conserved in the matrix elements
+  //   
+  // nbrMatrixElements = number of matrix elements
+  // sigmaIndices1 = array for internal degrees of freedom of the first creation operator
+  // sigmaIndices2 = array for internal degrees of freedom of the second creation operator
+  // sigmaIndices3 = array for internal degrees of freedom of the first annihilation operator
+  // sigmaIndices4 = array for internal degrees of freedom of the second annihilation operator
+  // return value = array that indicates which internal degrees of freedom are conserved  
+  virtual bool**** TestMatrixElementsConservedDegreesOfFreedom (int nbrMatrixElements, int* sigmaIndices1, int* sigmaIndices2,
+								int* sigmaIndices3, int* sigmaIndices4);
+  
+  // free the array tagging which internal degrees of freedom are conserved in the matrix elements
+  //   
+  // internalIndicesFlags = array that indicates which internal degrees of freedom are conserved
+  void FreeMatrixElementsConservedDegreesOfFreedom (bool**** internalIndicesFlags);
+
 };
 
 

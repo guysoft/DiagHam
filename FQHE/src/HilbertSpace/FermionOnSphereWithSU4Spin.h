@@ -631,14 +631,14 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // n = global index of the annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int GenericAdA(int index, int m, int n, double& coefficient);
+  virtual int GenericAdA(int index, int m, int n, double& coefficient);
 
   // find state index
   //
   // stateDescription = unsigned integer describing the state
   // lzmax = maximum Lz value reached by a fermion in the state
   // return value = corresponding index
-  int FindStateIndex(unsigned long stateDescription, int lzmax);
+  virtual int FindStateIndex(unsigned long stateDescription, int lzmax);
 
 
   // evaluate Hilbert space dimension

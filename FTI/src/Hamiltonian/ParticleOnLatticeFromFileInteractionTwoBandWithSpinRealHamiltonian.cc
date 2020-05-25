@@ -238,9 +238,10 @@ void ParticleOnLatticeFromFileInteractionTwoBandWithSpinRealHamiltonian::Evaluat
       TmpLinearizedK4[i] = this->TightBindingModel->GetLinearizedMomentumIndex(TmpKx4[i], TmpKy4[i]);
       TmpMatrixElements[i] *= this->InteractionRescalingFactor;
     }
+  bool**** InternalIndicesFlags = this->TestMatrixElementsConservedDegreesOfFreedom(TmpNbrTwoBodyMatrixElements, TmpSigma1, TmpSigma2, TmpSigma3, TmpSigma4);
 
   this->EvaluateOneBodyFactors();
- 
+
   this->NbrInterSectorSums = this->NbrSiteX * this->NbrSiteY;
   this->NbrInterSectorIndicesPerSum = new int[this->NbrInterSectorSums];
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
@@ -380,7 +381,8 @@ void ParticleOnLatticeFromFileInteractionTwoBandWithSpinRealHamiltonian::Evaluat
 		    {
 		      for (int sigma4 = sigma3; sigma4 < this->NbrInternalIndices; ++sigma4)
 			{
-			  if (((sigma1 & 2) + (sigma2 & 2)) == ((sigma3 & 2) + (sigma4 & 2)))
+			  if ((InternalIndicesFlags[sigma3][sigma4][sigma1][sigma2] == true) &&
+			      (((sigma1 & 2) + (sigma2 & 2)) == ((sigma3 & 2) + (sigma4 & 2))))
 			    {
 			      if (sigma3 == sigma4)
 				{
@@ -543,8 +545,9 @@ void ParticleOnLatticeFromFileInteractionTwoBandWithSpinRealHamiltonian::Evaluat
 			{
 			  // if ((((sigma1 & 4) + (sigma2 & 4)) == ((sigma3 & 4) + (sigma4 & 4))) &&
 			  //     (((sigma1 & 2) + (sigma2 & 2)) == ((sigma3 & 2) + (sigma4 & 2))))
-			  if ((((sigma1 & 6) == (sigma3 & 6)) && ((sigma2 & 6) == (sigma4 & 6))) ||
-			      (((sigma1 & 6) == (sigma4 & 6)) && ((sigma2 & 6) == (sigma3 & 6))))
+			  if ((InternalIndicesFlags[sigma3 & 6][sigma4 & 6][sigma1 & 6][sigma2 & 6] == true) && 
+			      ((((sigma1 & 6) == (sigma3 & 6)) && ((sigma2 & 6) == (sigma4 & 6))) ||
+			       (((sigma1 & 6) == (sigma4 & 6)) && ((sigma2 & 6) == (sigma3 & 6)))))
 			    {
 			      if (sigma3 == sigma4)
 				{
@@ -725,6 +728,7 @@ void ParticleOnLatticeFromFileInteractionTwoBandWithSpinRealHamiltonian::Evaluat
       
     }
 
+  this->FreeMatrixElementsConservedDegreesOfFreedom(InternalIndicesFlags);
   delete[] TmpBandIndex1;
   delete[] TmpBandIndex2;
   delete[] TmpBandIndex3;
