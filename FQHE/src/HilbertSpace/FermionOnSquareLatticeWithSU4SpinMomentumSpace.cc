@@ -281,6 +281,87 @@ FermionOnSquareLatticeWithSU4SpinMomentumSpace::FermionOnSquareLatticeWithSU4Spi
     }
 }
 
+// constructor when preserving the three Cartan quantum numbers
+// 
+// nbrFermions = number of fermions
+// nbrSiteX = number of sites in the x direction
+// nbrSiteY = number of sites in the y direction
+// kxMomentum = momentum along the x direction
+// kyMomentum = momentum along the y direction
+// totalSpin = twice the total spin value
+// totalIsospin = twice the total isospin value
+// totalEntanglement = twice the total entanglement value
+// memory = amount of memory granted for precalculations
+
+FermionOnSquareLatticeWithSU4SpinMomentumSpace::FermionOnSquareLatticeWithSU4SpinMomentumSpace (int nbrFermions, int nbrSiteX, int nbrSiteY, int kxMomentum, int kyMomentum, int totalSpin, int totalIsospin,
+												int totalEntanglement, unsigned long memory)
+{  
+  this->NbrFermions = nbrFermions;
+  this->IncNbrFermions = this->NbrFermions + 1;
+  this->SzFlag = true;
+  this->PzFlag = true;
+  this->TotalLz = 0;
+  this->TotalSpin = totalSpin;
+  this->TotalIsospin = totalIsospin;
+  this->TotalEntanglement = totalEntanglement;
+  this->NbrFermionsUpPlus = (this->NbrFermions + this->TotalSpin + this->TotalIsospin + this->TotalEntanglement) / 4;
+  this->NbrFermionsUpMinus = (this->NbrFermions + this->TotalSpin - this->TotalIsospin - this->TotalEntanglement) / 4;
+  this->NbrFermionsDownPlus = (this->NbrFermions - this->TotalSpin + this->TotalIsospin - this->TotalEntanglement) / 4;
+  this->NbrFermionsDownMinus = (this->NbrFermions - this->TotalSpin - this->TotalIsospin + this->TotalEntanglement) / 4;
+  cout << "this->NbrFermionsUpPlus=" << this->NbrFermionsUpPlus << " this->NbrFermionsUpMinus=" << this->NbrFermionsUpMinus
+       << " this->NbrFermionsDownPlus=" << this->NbrFermionsDownPlus << " this->NbrFermionsDownMinus=" << this->NbrFermionsDownMinus << endl;
+  cout << this->TotalSpin << " " << this->TotalIsospin << " " << this->TotalEntanglement << endl;
+  this->NbrSiteX = nbrSiteX;
+  this->NbrSiteY = nbrSiteY;
+  this->KxMomentum = kxMomentum;
+  this->KyMomentum = kyMomentum;
+  this->LzMax = this->NbrSiteX * this->NbrSiteY;
+  this->NbrLzValue = this->LzMax + 1;
+  this->MaximumSignLookUp = 16;
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0,
+									 this->NbrFermionsDownMinus, this->NbrFermionsDownPlus, this->NbrFermionsUpMinus, this->NbrFermionsUpPlus);
+  
+  if (this->LargeHilbertSpaceDimension >= (1l << 30))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  if (this->LargeHilbertSpaceDimension > 0l)
+    {
+      this->Flag.Initialize();
+      this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
+      this->StateHighestBit = new int [this->HilbertSpaceDimension];  
+      long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0,
+								this->NbrFermionsDownMinus, this->NbrFermionsDownPlus, this->NbrFermionsUpMinus, this->NbrFermionsUpPlus, 0l);
+      if (this->LargeHilbertSpaceDimension != TmpLargeHilbertSpaceDimension)
+	{
+	  cout << "error while generating the Hilbert space " << this->LargeHilbertSpaceDimension << " " << TmpLargeHilbertSpaceDimension << endl;
+	}
+      this->GenerateLookUpTable(memory);
+      
+#ifdef __DEBUG__
+      long UsedMemory = 0;
+      UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+      cout << "memory requested for Hilbert space = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+      UsedMemory = this->NbrLzValue * sizeof(int);
+      UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+      cout << "memory requested for lookup table = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+#endif
+    }
+}
 
 // copy constructor (without duplicating datas)
 //
@@ -886,6 +967,92 @@ long FermionOnSquareLatticeWithSU4SpinMomentumSpace::GenerateStates(int nbrFermi
   return this->GenerateStates(nbrFermions, currentKx, currentKy - 1, currentTotalKx, currentTotalKy, pos, nbrFermionsUp, nbrFermionsPlus);
 }
 
+// generate all states corresponding to the constraints
+// 
+// nbrFermions = number of fermions
+// currentKx = current momentum along x for a single particle
+// currentKy = current momentum along y for a single particle
+// currentTotalKx = current total momentum along x
+// currentTotalKy = current total momentum along y
+// nbrParticlesDownMinus = number of particles with down minus
+// nbrParticlesDownPlus = number of particles with down plus
+// nbrParticlesUpMinus = number of particles with up minus
+// nbrParticlesUpPlus = number of particles with up plus
+// pos = position in StateDescription array where to store states
+// return value = position from which new states have to be stored
+
+long FermionOnSquareLatticeWithSU4SpinMomentumSpace::GenerateStates(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy,
+								    int nbrParticlesDownMinus, int nbrParticlesDownPlus, int nbrParticlesUpMinus, int nbrParticlesUpPlus, long pos)
+{
+  if (currentKy < 0)
+    {
+      currentKy = this->NbrSiteY - 1;
+      currentKx--;
+    }
+  if ((nbrFermions < 0)
+      || (nbrParticlesDownMinus < 0) || (nbrParticlesDownPlus < 0) || (nbrParticlesUpMinus < 0) || (nbrParticlesUpPlus < 0)
+      || (nbrParticlesDownMinus > nbrFermions) || (nbrParticlesDownPlus > nbrFermions) || (nbrParticlesUpMinus > nbrFermions) || (nbrParticlesUpPlus > nbrFermions))
+    {
+      return 0l;
+    }
+  if (nbrFermions == 0)
+    {
+      if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && ((currentTotalKy % this->NbrSiteY) == this->KyMomentum))
+        {
+            this->StateDescription[pos] = 0x0ul;	  
+            return (pos + 1l);
+        }
+      else
+	{
+          return pos;
+	}
+    }
+  if (currentKx < 0)
+    return pos;
+  if (nbrFermions == 1)
+    {
+      unsigned long TmpMask = ((unsigned long) (nbrParticlesDownMinus | (nbrParticlesDownPlus << 1) | (nbrParticlesUpMinus << 2) | (nbrParticlesUpPlus << 3)));
+      for (int j = currentKy; j >= 0; --j)
+	{
+	  if ((((currentKx + currentTotalKx) % this->NbrSiteX) == this->KxMomentum) &&
+	      (((j + currentTotalKy) % this->NbrSiteY) == this->KyMomentum))
+	    {
+	      this->StateDescription[pos] = TmpMask << (((currentKx * this->NbrSiteY) + j) << 2);
+	      ++pos;
+	    }
+	}
+      for (int i = currentKx - 1; i >= 0; --i)
+	{
+	  for (int j = this->NbrSiteY - 1; j >= 0; --j)
+	    {
+	      if ((((i + currentTotalKx) % this->NbrSiteX) == this->KxMomentum) &&
+		  (((j + currentTotalKy) % this->NbrSiteY) == this->KyMomentum))
+		{
+		  this->StateDescription[pos] = TmpMask << (((i * this->NbrSiteY) + j) << 2);
+		  ++pos;
+		}
+	    }
+	}
+      return pos;
+    }
+
+  long TmpPos;
+  unsigned long Mask;
+  int TmpNbrParticles;  
+  for (int i = 15; i >= 0; --i)
+    {
+      TmpNbrParticles = ((i & 1) + ((i & 2) >> 1) + ((i & 4) >> 2) + ((i & 8) >> 3));
+      TmpPos = this->GenerateStates(nbrFermions - TmpNbrParticles, currentKx, currentKy - 1,
+				    currentTotalKx + (TmpNbrParticles * currentKx),
+				    currentTotalKy + (TmpNbrParticles * currentKy),
+				    nbrParticlesDownMinus - (i & 1), nbrParticlesDownPlus - ((i & 2) >> 1),
+				    nbrParticlesUpMinus - ((i & 4) >> 2), nbrParticlesUpPlus - ((i & 8) >> 3), pos);
+      Mask = ((unsigned long) i) << (((currentKx * this->NbrSiteY) + currentKy) << 2);
+      for (; pos < TmpPos; ++pos)
+	this->StateDescription[pos] |= Mask;
+   }
+  return pos;
+}
 
 // evaluate Hilbert space dimension
 //
@@ -1080,3 +1247,74 @@ long FermionOnSquareLatticeWithSU4SpinMomentumSpace::EvaluateHilbertSpaceDimensi
   Count += this->EvaluateHilbertSpaceDimension(nbrFermions, currentKx, currentKy - 1, currentTotalKx, currentTotalKy, nbrFermionsUp, nbrFermionsPlus);
   return Count;
 }
+
+// evaluate Hilbert space dimension
+//
+// nbrFermions = number of fermions
+// currentKx = current momentum along x for a single particle
+// currentKy = current momentum along y for a single particle
+// currentTotalKx = current total momentum along x
+// currentTotalKy = current total momentum along y
+// nbrParticlesDownMinus = number of particles with down minus
+// nbrParticlesDownPlus = number of particles with down plus
+// nbrParticlesUpMinus = number of particles with up minus
+// nbrParticlesUpPlus = number of particles with up plus
+// return value = Hilbert space dimension
+
+long FermionOnSquareLatticeWithSU4SpinMomentumSpace::EvaluateHilbertSpaceDimension(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy,
+										   int nbrParticlesDownMinus, int nbrParticlesDownPlus, int nbrParticlesUpMinus, int nbrParticlesUpPlus)
+{
+  if (currentKy < 0)
+    {
+      currentKy = this->NbrSiteY - 1;
+      currentKx--;
+    }
+  if ((nbrFermions < 0)
+      || (nbrParticlesDownMinus < 0) || (nbrParticlesDownPlus < 0) || (nbrParticlesUpMinus < 0) || (nbrParticlesUpPlus < 0)
+      || (nbrParticlesDownMinus > nbrFermions) || (nbrParticlesDownPlus > nbrFermions) || (nbrParticlesUpMinus > nbrFermions) || (nbrParticlesUpPlus > nbrFermions))
+    {
+      return 0l;
+    }
+  if (nbrFermions == 0)
+    {
+      if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && ((currentTotalKy % this->NbrSiteY) == this->KyMomentum))
+	{
+	  return 1l;
+	}
+      else	
+	return 0l;
+    }
+  if (currentKx < 0)
+    return 0l;
+  
+  unsigned long Tmp = 0l;
+  if (nbrFermions == 1)
+    {
+      for (int j = currentKy; j >= 0; --j)
+	{
+	  if ((((currentKx + currentTotalKx) % this->NbrSiteX) == this->KxMomentum) && (((j + currentTotalKy) % this->NbrSiteY) == this->KyMomentum))
+	    Tmp += 1l;
+	}
+      for (int i = currentKx - 1; i >= 0; --i)
+	{
+	  for (int j = this->NbrSiteY - 1; j >= 0; --j)
+	    {
+	      if ((((i + currentTotalKx) % this->NbrSiteX) == this->KxMomentum) && (((j + currentTotalKy) % this->NbrSiteY) == this->KyMomentum))
+		Tmp += 1l;
+	    }
+	}
+      return Tmp;
+    }
+  
+  for (int i = 15; i >= 0; --i)
+    {
+      int TmpNbrParticles = ((i & 1) + ((i & 2) >> 1) + ((i & 4) >> 2) + ((i & 8) >> 3));
+      Tmp += this->EvaluateHilbertSpaceDimension(nbrFermions - TmpNbrParticles, currentKx, currentKy - 1,
+						 currentTotalKx + (TmpNbrParticles * currentKx), currentTotalKy + (TmpNbrParticles * currentKy),
+						 nbrParticlesDownMinus - (i & 1), nbrParticlesDownPlus - ((i & 2) >> 1),
+						 nbrParticlesUpMinus - ((i & 4) >> 2), nbrParticlesUpPlus - ((i & 8) >> 3));
+    }
+  return Tmp;
+}
+
+

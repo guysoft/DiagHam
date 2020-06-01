@@ -7,10 +7,11 @@
 //                                                                            //
 //                        class author: Nicolas Regnault                      //
 //                                                                            //
-//          class of a two body interaction projected onto two bands          //
-//         from an ASCII file providing the two body matrix elements          //
+//       class of a two body interaction projected onto two bands with        //
+//      spin-like degree of freedom (requiring only U(1) conservation)        //
+//        from an ASCII file providing the two body matrix elements           //
 //                                                                            //
-//                        last modification : 01/05/2020                      //
+//                        last modification : 28/05/2020                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -31,7 +32,7 @@
 
 
 #include "config.h"
-#include "Hamiltonian/ParticleOnLatticeFromFileInteractionTwoBandHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeFromFileInteractionTwoBandWithSpinHamiltonian.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
@@ -53,7 +54,7 @@ using std::ostream;
 // default constructor
 //
 
-ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::ParticleOnLatticeFromFileInteractionTwoBandHamiltonian()
+ParticleOnLatticeFromFileInteractionTwoBandWithSpinHamiltonian::ParticleOnLatticeFromFileInteractionTwoBandWithSpinHamiltonian()
 {
 }
 
@@ -67,16 +68,17 @@ ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::ParticleOnLatticeFromFil
 // tightBindingModel = pointer to the tight binding model
 // flatBandFlag = use flat band model
 // interactionRescalingFactor = global rescaling factor for the two-body interaction term
-// spinFlag = include an additional spin 1/2 degree of freedom, building an SU(2) invariant interaction
+// additionalSpinFlag = include an additional spin 1/2 degree of freedom, building an SU(2) invariant interaction
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::ParticleOnLatticeFromFileInteractionTwoBandHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles,
-													       int nbrSiteX, int nbrSiteY,
-													       char* matrixElementsInteractionFile,
-													       Abstract2DTightBindingModel* tightBindingModel, 
-													       bool flatBandFlag, double interactionRescalingFactor, bool spinFlag,
-													       AbstractArchitecture* architecture, long memory)
+ParticleOnLatticeFromFileInteractionTwoBandWithSpinHamiltonian::ParticleOnLatticeFromFileInteractionTwoBandWithSpinHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles,
+																       int nbrSiteX, int nbrSiteY,
+																       char* matrixElementsInteractionFile,
+																       Abstract2DTightBindingModel* tightBindingModel, 
+																       bool flatBandFlag, double interactionRescalingFactor,
+																       bool additionalSpinFlag, 
+																       AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -89,15 +91,16 @@ ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::ParticleOnLatticeFromFil
   this->TightBindingModel = tightBindingModel;
   this->FlatBand = flatBandFlag;
   this->InteractionRescalingFactor = interactionRescalingFactor;
-  this->AdditionalSpinFlag = spinFlag;
+  this->AdditionalSpinFlag = additionalSpinFlag;
   if (this->AdditionalSpinFlag == true)
     {
-      this->NbrInternalIndices = 4;
+      this->NbrInternalIndices = 8;
     }
   else
     {
-      this->NbrInternalIndices = 2;
+      this->NbrInternalIndices = 4;
     }
+  
   this->MatrixElementsInteractionFile = new char[strlen(matrixElementsInteractionFile) + 1];
   strcpy(this->MatrixElementsInteractionFile, matrixElementsInteractionFile);
   
@@ -107,7 +110,7 @@ ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::ParticleOnLatticeFromFil
   this->OneBodyInteractionFactorsdowndown = 0;
   this->OneBodyInteractionFactorsupdown = 0;
   this->FastMultiplicationFlag = false;
-  this->HermitianSymmetryFlag = false;
+  this->HermitianSymmetryFlag = true;
   long MinIndex;
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
@@ -141,16 +144,16 @@ ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::ParticleOnLatticeFromFil
 // destructor
 //
 
-ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::~ParticleOnLatticeFromFileInteractionTwoBandHamiltonian()
+ParticleOnLatticeFromFileInteractionTwoBandWithSpinHamiltonian::~ParticleOnLatticeFromFileInteractionTwoBandWithSpinHamiltonian()
 {
 }
   
 // evaluate all interaction factors
 //   
 
-void ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::EvaluateInteractionFactors()
+void ParticleOnLatticeFromFileInteractionTwoBandWithSpinHamiltonian::EvaluateInteractionFactors()
 {
-  long TotalNbrInteractionFactors = 0l;
+  long TotalNbrInteractionFactors = 0;
   this->InteractionFactorsupup = 0;
   this->InteractionFactorsdowndown = 0;
   this->InteractionFactorsupdown = 0;
@@ -184,19 +187,23 @@ void ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::EvaluateInteraction
   int TmpNbrTwoBodyMatrixElements = TmpInteractionFile.GetNbrLines();
   cout << "nbr of two body matrix elements in " << this->MatrixElementsInteractionFile << " = " << TmpNbrTwoBodyMatrixElements << endl;
 
-  int* TmpSigma1 = TmpInteractionFile.GetAsIntegerArray(0);
-  int* TmpSigma2 = TmpInteractionFile.GetAsIntegerArray(3);
-  int* TmpSigma3 = TmpInteractionFile.GetAsIntegerArray(6);
-  int* TmpSigma4 = TmpInteractionFile.GetAsIntegerArray(9);
-  int* TmpKx1 = TmpInteractionFile.GetAsIntegerArray(1);
-  int* TmpKx2 = TmpInteractionFile.GetAsIntegerArray(4);
-  int* TmpKx3 = TmpInteractionFile.GetAsIntegerArray(7);
-  int* TmpKx4 = TmpInteractionFile.GetAsIntegerArray(10);
-  int* TmpKy1 = TmpInteractionFile.GetAsIntegerArray(2);
-  int* TmpKy2 = TmpInteractionFile.GetAsIntegerArray(5);
-  int* TmpKy3 = TmpInteractionFile.GetAsIntegerArray(8);
-  int* TmpKy4 = TmpInteractionFile.GetAsIntegerArray(11);
-  Complex* TmpMatrixElements = TmpInteractionFile.GetAsComplexArray(12);
+  int* TmpBandIndex1 = TmpInteractionFile.GetAsIntegerArray(0);
+  int* TmpBandIndex2 = TmpInteractionFile.GetAsIntegerArray(4);
+  int* TmpBandIndex3 = TmpInteractionFile.GetAsIntegerArray(8);
+  int* TmpBandIndex4 = TmpInteractionFile.GetAsIntegerArray(12);
+  int* TmpSpinIndex1 = TmpInteractionFile.GetAsIntegerArray(1);
+  int* TmpSpinIndex2 = TmpInteractionFile.GetAsIntegerArray(5);
+  int* TmpSpinIndex3 = TmpInteractionFile.GetAsIntegerArray(9);
+  int* TmpSpinIndex4 = TmpInteractionFile.GetAsIntegerArray(13);
+  int* TmpKx1 = TmpInteractionFile.GetAsIntegerArray(2);
+  int* TmpKx2 = TmpInteractionFile.GetAsIntegerArray(6);
+  int* TmpKx3 = TmpInteractionFile.GetAsIntegerArray(10);
+  int* TmpKx4 = TmpInteractionFile.GetAsIntegerArray(14);
+  int* TmpKy1 = TmpInteractionFile.GetAsIntegerArray(3);
+  int* TmpKy2 = TmpInteractionFile.GetAsIntegerArray(7);
+  int* TmpKy3 = TmpInteractionFile.GetAsIntegerArray(11);
+  int* TmpKy4 = TmpInteractionFile.GetAsIntegerArray(15);
+  double* TmpMatrixElements = TmpInteractionFile.GetAsDoubleArray(16);
   if (TmpMatrixElements == 0)
     {
       TmpInteractionFile.DumpErrors(cout) << endl;
@@ -208,8 +215,21 @@ void ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::EvaluateInteraction
   int* TmpLinearizedK2 = new int[TmpNbrTwoBodyMatrixElements];
   int* TmpLinearizedK3 = new int[TmpNbrTwoBodyMatrixElements];
   int* TmpLinearizedK4 = new int[TmpNbrTwoBodyMatrixElements];
+  int* TmpSigma1 = new int[TmpNbrTwoBodyMatrixElements];
+  int* TmpSigma2 = new int[TmpNbrTwoBodyMatrixElements];
+  int* TmpSigma3 = new int[TmpNbrTwoBodyMatrixElements];
+  int* TmpSigma4 = new int[TmpNbrTwoBodyMatrixElements];
   for (int i = 0; i < TmpNbrTwoBodyMatrixElements; ++i)
     {
+      TmpSigma1[i] = (TmpSpinIndex1[i] + 1) + TmpBandIndex1[i];
+      TmpSigma2[i] = (TmpSpinIndex2[i] + 1) + TmpBandIndex2[i];
+      TmpSigma3[i] = (TmpSpinIndex3[i] + 1) + TmpBandIndex3[i];
+      TmpSigma4[i] = (TmpSpinIndex4[i] + 1) + TmpBandIndex4[i];
+      if ((TmpSpinIndex1[i] + TmpSpinIndex2[i]) != (TmpSpinIndex3[i] + TmpSpinIndex4[i]))
+	{
+	  cout << "error spin conservation violation at line " << i << " : " << TmpSigma1[i] << " " << TmpSigma2[i] << " " << TmpSigma3[i] << " " << TmpSigma4[i] << endl;
+	  exit(0);
+	}
       TmpLinearizedSumK[i] = this->TightBindingModel->GetLinearizedMomentumIndex((TmpKx1[i] + TmpKx2[i]) % this->NbrSiteX,
 										 (TmpKy1[i] + TmpKy2[i]) % this->NbrSiteY);
       TmpLinearizedK1[i] = this->TightBindingModel->GetLinearizedMomentumIndex(TmpKx1[i], TmpKy1[i]);
@@ -219,9 +239,9 @@ void ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::EvaluateInteraction
       TmpMatrixElements[i] *= this->InteractionRescalingFactor;
     }
   bool**** InternalIndicesFlags = this->TestMatrixElementsConservedDegreesOfFreedom(TmpNbrTwoBodyMatrixElements, TmpSigma1, TmpSigma2, TmpSigma3, TmpSigma4);
-  
+
   this->EvaluateOneBodyFactors();
- 
+
   this->NbrInterSectorSums = this->NbrSiteX * this->NbrSiteY;
   this->NbrInterSectorIndicesPerSum = new int[this->NbrInterSectorSums];
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
@@ -330,7 +350,7 @@ void ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::EvaluateInteraction
       double TmpKy2 = 0.0;
       double TmpKy3 = 0.0;
       double TmpKy4 = 0.0;
-      
+
       this->InteractionFactorsSigma = new Complex***** [this->NbrInternalIndices];
       for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
 	{
@@ -348,73 +368,56 @@ void ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::EvaluateInteraction
 		}
 	    }
 	}
+
       
       if (this->AdditionalSpinFlag == false)
 	{
 	  // spinless case
 	  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
 	    {
-	      for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
-		{
-		  this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1] = new Complex*[this->NbrIntraSectorSums];
-		  for (int j = 0; j < this->NbrIntraSectorSums; ++j)
-		    {
-		      int Tmp = this->NbrIntraSectorIndicesPerSum[j] * this->NbrIntraSectorIndicesPerSum[j];
-		      this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1][j] = new Complex [Tmp];
-		    }
-		}
-	    }
-	  
-	  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
-	    {
-	      for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
-		{
-		  for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
-		    {
-		      this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1] = new Complex*[this->NbrIntraSectorSums];
-		      for (int j = 0; j < this->NbrInterSectorSums; ++j)
-			{
-			  this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j] = new Complex [this->NbrIntraSectorIndicesPerSum[j] * this->NbrInterSectorIndicesPerSum[j]];
-			}
-		    }
-		}
-	    }
-
-	  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
-	    {
-	      for (int sigma2 = sigma1 + 1; sigma2 < this->NbrInternalIndices; ++sigma2)
+	      for (int sigma2 = sigma1; sigma2 < this->NbrInternalIndices; ++sigma2)
 		{
 		  for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
 		    {
-		      this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2] = new Complex*[this->NbrIntraSectorSums];
-		      for (int j = 0; j < this->NbrInterSectorSums; ++j)
+		      for (int sigma4 = sigma3; sigma4 < this->NbrInternalIndices; ++sigma4)
 			{
-			  this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j] = new Complex [this->NbrInterSectorIndicesPerSum[j] * this->NbrIntraSectorIndicesPerSum[j]];
-			  
-			}
-		    }
-		}
-	    }
-	  
-	  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
-	    {
-	      for (int sigma2 = sigma1 + 1; sigma2 < this->NbrInternalIndices; ++sigma2)
-		{
-		  for (int sigma3 = 0; sigma3 < this->NbrInternalIndices; ++sigma3)
-		    {
-		      for (int sigma4 = sigma3 + 1; sigma4 < this->NbrInternalIndices; ++sigma4)
-			{
-			  if (InternalIndicesFlags[sigma3][sigma4][sigma1][sigma2] == true)
+			  if ((InternalIndicesFlags[sigma3][sigma4][sigma1][sigma2] == true) &&
+			      (((sigma1 & 2) + (sigma2 & 2)) == ((sigma3 & 2) + (sigma4 & 2))))
 			    {
-			      this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2] = new Complex*[this->NbrIntraSectorSums];
+			      if (sigma3 == sigma4)
+				{
+				  this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2] = new Complex*[this->NbrIntraSectorSums];
+				}
+			      else
+				{
+				  this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2] = new Complex*[this->NbrInterSectorSums];
+				}
 			      for (int j = 0; j < this->NbrInterSectorSums; ++j)
 				{
-				  this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j] = new Complex [this->NbrInterSectorIndicesPerSum[j] * this->NbrInterSectorIndicesPerSum[j]];
+				  int Tmp;
+				  if (sigma3 == sigma4)
+				    {
+				      Tmp = this->NbrIntraSectorIndicesPerSum[j];
+				    }
+				  else
+				    {
+				      Tmp = this->NbrInterSectorIndicesPerSum[j];
+				    }
+				  if (sigma1 == sigma2)
+				    {
+				      Tmp *= this->NbrIntraSectorIndicesPerSum[j];
+				    }
+				  else
+				    {
+				      Tmp *= this->NbrInterSectorIndicesPerSum[j];
+				    }
+				  this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j] = new Complex [Tmp];
+				  Complex* TmpInteractionArray = this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j];
+				  for (int k = 0; k < Tmp; ++k)
+				    {
+				      TmpInteractionArray[k] = 0.0;
+				    }
 				}
-			    }
-			  else
-			    {
-			      this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2] = 0;
 			    }
 			}
 		    }
@@ -526,7 +529,6 @@ void ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::EvaluateInteraction
 	      if (TmpSign != 0.0)
 		{
 		  this->InteractionFactorsSigma[Sigma1][Sigma2][Sigma3][Sigma4][TmpSumK][TmpIndex] += TmpSign * TmpMatrixElements[i];
-		  ++TotalNbrInteractionFactors;
 		}
 	    }
 	}
@@ -541,9 +543,11 @@ void ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::EvaluateInteraction
 		    {
 		      for (int sigma4 = sigma3; sigma4 < this->NbrInternalIndices; ++sigma4)
 			{
-			  if ((InternalIndicesFlags[sigma3 & 1][sigma4 & 1][sigma1 & 1][sigma2 & 1] == true) &&
-			      ((((sigma1 & 2) == (sigma3 & 2)) && ((sigma2 & 2) == (sigma4 & 2))) ||
-			       (((sigma1 & 2) == (sigma4 & 2)) && ((sigma2 & 2) == (sigma3 & 2)))))
+			  // if ((((sigma1 & 4) + (sigma2 & 4)) == ((sigma3 & 4) + (sigma4 & 4))) &&
+			  //     (((sigma1 & 2) + (sigma2 & 2)) == ((sigma3 & 2) + (sigma4 & 2))))
+			  if ((InternalIndicesFlags[sigma3 & 6][sigma4 & 6][sigma1 & 6][sigma2 & 6] == true) && 
+			      ((((sigma1 & 6) == (sigma3 & 6)) && ((sigma2 & 6) == (sigma4 & 6))) ||
+			       (((sigma1 & 6) == (sigma4 & 6)) && ((sigma2 & 6) == (sigma3 & 6)))))
 			    {
 			      if (sigma3 == sigma4)
 				{
@@ -574,6 +578,10 @@ void ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::EvaluateInteraction
 				    }
 				  this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j] = new Complex [Tmp];
 				  Complex* TmpInteractionArray = this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j];
+				  for (int k = 0; k < Tmp; ++k)
+				    {
+				      TmpInteractionArray[k] = 0.0;
+				    }
 				}
 			    }
 			}
@@ -686,8 +694,7 @@ void ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::EvaluateInteraction
 	      if (TmpSign != 0.0)
 		{
 		  this->InteractionFactorsSigma[Sigma1][Sigma2][Sigma3][Sigma4][TmpSumK][TmpIndex] += TmpSign * TmpMatrixElements[i];
-		  this->InteractionFactorsSigma[Sigma1 + 2][Sigma2 + 2][Sigma3 + 2][Sigma4 + 2][TmpSumK][TmpIndex] += TmpSign * TmpMatrixElements[i];
-		  TotalNbrInteractionFactors += 2l;
+		  this->InteractionFactorsSigma[Sigma1 + 4][Sigma2 + 4][Sigma3 + 4][Sigma4 + 4][TmpSumK][TmpIndex] += TmpSign * TmpMatrixElements[i];
 		}
 	    }	  	
 	  for (int i = 0; i < TmpNbrTwoBodyMatrixElements; ++i)
@@ -707,21 +714,29 @@ void ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::EvaluateInteraction
 	      TmpIndex = ((this->NbrInterSectorIndicesPerSum[TmpSumK] * TmpLinearizedKInterIndices[TmpSumK][K4][K3])
 	       		  + TmpLinearizedKInterIndices[TmpSumK][K1][K2]);
 	      TmpSign = -1.0;
-	      this->InteractionFactorsSigma[Sigma1][Sigma2 + 2][Sigma4][Sigma3 + 2][TmpSumK][TmpIndex] += TmpSign * TmpMatrixElements[i];
+	      this->InteractionFactorsSigma[Sigma1][Sigma2 + 4][Sigma4][Sigma3 + 4][TmpSumK][TmpIndex] += TmpSign * TmpMatrixElements[i];
 	      TmpIndex = ((this->NbrInterSectorIndicesPerSum[TmpSumK] * TmpLinearizedKInterIndices[TmpSumK][K3][K4])
 	       		  + TmpLinearizedKInterIndices[TmpSumK][K2][K1]);
 	      TmpSign = -1.0;
-	      this->InteractionFactorsSigma[Sigma2][Sigma1 + 2][Sigma3][Sigma4 + 2][TmpSumK][TmpIndex] += TmpSign * TmpMatrixElements[i];
-	      TotalNbrInteractionFactors += 2l;
+	      this->InteractionFactorsSigma[Sigma2][Sigma1 + 4][Sigma3][Sigma4 + 4][TmpSumK][TmpIndex] += TmpSign * TmpMatrixElements[i];
 	    }
 	}
     }
   else
     {      
       // bosonic interaction
+      
     }
 
   this->FreeMatrixElementsConservedDegreesOfFreedom(InternalIndicesFlags);
+  delete[] TmpBandIndex1;
+  delete[] TmpBandIndex2;
+  delete[] TmpBandIndex3;
+  delete[] TmpBandIndex4;
+  delete[] TmpSpinIndex1;
+  delete[] TmpSpinIndex2;
+  delete[] TmpSpinIndex3;
+  delete[] TmpSpinIndex4;
   delete[] TmpSigma1;
   delete[] TmpSigma2;
   delete[] TmpSigma3;
@@ -758,177 +773,7 @@ void ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::EvaluateInteraction
       delete[] TmpLinearizedKIntraIndices[j];
     }
   delete[] TmpLinearizedKIntraIndices;
-   cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
+  cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
   cout << "====================================" << endl;
-}
-
-// evaluate all one-body factors
-//   
-
-void ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::EvaluateOneBodyFactors()
-{
-  this->BandIndex1 = 0;
-  this->BandIndex2 = 1;
-  this->OneBodyInteractionFactorsSigma = new Complex**[this->NbrInternalIndices];
-  for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
-    {
-      this->OneBodyInteractionFactorsSigma[sigma1] = new Complex*[this->NbrInternalIndices];
-      for (int sigma2 = sigma1; sigma2 < this->NbrInternalIndices; ++sigma2)
-	{
-	  this->OneBodyInteractionFactorsSigma[sigma1][sigma2] = 0;
-	}
-    }
-      
-  if (this->FlatBand == false)
-    {
-
-      bool** TmpOneBodyFlags = new bool*[this->NbrInternalIndices];
-      for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
-	{
-	  TmpOneBodyFlags[sigma1] = new bool[this->NbrInternalIndices];
-	  for (int sigma2 = sigma1; sigma2 < this->NbrInternalIndices; ++sigma2)
-	    {
-	      TmpOneBodyFlags[sigma1][sigma2] = false;
-	    }
-	}
-      
-      for (int kx = 0; kx < this->NbrSiteX; ++kx)
-	{
-	  for (int ky = 0; ky < this->NbrSiteY; ++ky)
-	    {
-	      HermitianMatrix TmpBlochHamiltonian(this->TightBindingModel->ComputeBlochHamiltonian(kx, ky));
-	      Complex Tmp;
-	      for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
-		{
-		  for (int sigma2 = sigma1; sigma2 < this->NbrInternalIndices; ++sigma2)
-		    {
-		      TmpBlochHamiltonian.GetMatrixElement(sigma1, sigma2, Tmp);
-		      if ((Tmp.Re != 0.0) || (Tmp.Im != 0.0))
-			{
-			  if (TmpOneBodyFlags[sigma1][sigma2] == false)
-			    {
-			      this->OneBodyInteractionFactorsSigma[sigma1][sigma2] = new Complex [this->TightBindingModel->GetNbrStatePerBand()];			      
-			      TmpOneBodyFlags[sigma1][sigma2] = true;
-			    }
-			}
-		    }
-		}
-	    }
-	}
-      
-      for (int kx = 0; kx < this->NbrSiteX; ++kx)
-	{
-	  for (int ky = 0; ky < this->NbrSiteY; ++ky)
-	    {
-	      HermitianMatrix TmpBlochHamiltonian(this->TightBindingModel->ComputeBlochHamiltonian(kx, ky));
-	      Complex Tmp;
-	      int Index = this->TightBindingModel->GetLinearizedMomentumIndex(kx, ky);
-	      for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
-		{
-		  for (int sigma2 = sigma1; sigma2 < this->NbrInternalIndices; ++sigma2)
-		    {
-		      if (TmpOneBodyFlags[sigma1][sigma2] == true)
-			{
-			  TmpBlochHamiltonian.GetMatrixElement(sigma1, sigma2, Tmp);
-			  this->OneBodyInteractionFactorsSigma[sigma1][sigma2][Index] = Tmp;
-			}
-		    }
-		}
-	    }
-	}
-    }
-}
-
-// test which internal degrees of freedom are conserved in the matrix elements
-//   
-// nbrMatrixElements = number of matrix elements
-// sigmaIndices1 = array for internal degrees of freedom of the first creation operator
-// sigmaIndices2 = array for internal degrees of freedom of the second creation operator
-// sigmaIndices3 = array for internal degrees of freedom of the first annihilation operator
-// sigmaIndices4 = array for internal degrees of freedom of the second annihilation operator
-// return value = array that indicates which internal degrees of freedom are conserved
-
-bool**** ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::TestMatrixElementsConservedDegreesOfFreedom (int nbrMatrixElements,
-														  int* sigmaIndices1, int* sigmaIndices2,
-														  int* sigmaIndices3, int* sigmaIndices4)
-{
-  int ReducedNbrInternalIndices = this->NbrInternalIndices;
-  if (this->AdditionalSpinFlag == true)
-    {
-      ReducedNbrInternalIndices /= 2;
-    }
-  bool**** InternalIndicesFlags = new bool*** [ReducedNbrInternalIndices];
-  for (int sigma1 = 0; sigma1 < ReducedNbrInternalIndices; ++sigma1)
-    {
-      InternalIndicesFlags[sigma1] = new bool** [ReducedNbrInternalIndices];
-      for (int sigma2 = 0; sigma2 < ReducedNbrInternalIndices; ++sigma2)
-	{
-	  InternalIndicesFlags[sigma1][sigma2] = new bool* [ReducedNbrInternalIndices];
-	  for (int sigma3 = 0; sigma3 < ReducedNbrInternalIndices; ++sigma3)
-	    {
-	      InternalIndicesFlags[sigma1][sigma2][sigma3] = new bool [ReducedNbrInternalIndices];
-	      for (int sigma4 = 0; sigma4 < ReducedNbrInternalIndices; ++sigma4)
-		{
-		  InternalIndicesFlags[sigma1][sigma2][sigma3][sigma4] = false;
-		}
-	    }
-	}
-    }
-
-  for (int i = 0; i < nbrMatrixElements; ++i)
-    {
-      InternalIndicesFlags[sigmaIndices1[i]][sigmaIndices2[i]][sigmaIndices3[i]][sigmaIndices4[i]] = true;
-      InternalIndicesFlags[sigmaIndices2[i]][sigmaIndices1[i]][sigmaIndices3[i]][sigmaIndices4[i]] = true;
-      InternalIndicesFlags[sigmaIndices1[i]][sigmaIndices2[i]][sigmaIndices4[i]][sigmaIndices3[i]] = true;
-      InternalIndicesFlags[sigmaIndices2[i]][sigmaIndices1[i]][sigmaIndices4[i]][sigmaIndices3[i]] = true;
-    }
-
-  int NbrActivatedTerms = 0;
-  for (int sigma1 = 0; sigma1 < ReducedNbrInternalIndices; ++sigma1)
-    {
-      for (int sigma2 = 0; sigma2 < ReducedNbrInternalIndices; ++sigma2)
-	{
-	  for (int sigma3 = 0; sigma3 < ReducedNbrInternalIndices; ++sigma3)
-	    {
-	      for (int sigma4 = 0; sigma4 < ReducedNbrInternalIndices; ++sigma4)
-		{
-		  if (InternalIndicesFlags[sigma1][sigma2][sigma3][sigma4] == true)
-		    {
-		      NbrActivatedTerms++;
-		    }
-		}
-	    }
-	}
-    }
-  cout << "using " << NbrActivatedTerms << " out of the "
-       << (ReducedNbrInternalIndices * ReducedNbrInternalIndices * ReducedNbrInternalIndices * ReducedNbrInternalIndices)
-       << " possible two-body terms due to the internal degrees of freedom" << endl;
-  return InternalIndicesFlags;
-}
-
-// free the array tagging which internal degrees of freedom are conserved in the matrix elements
-//   
-// internalIndicesFlags = array that indicates which internal degrees of freedom are conserved
-
-void ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::FreeMatrixElementsConservedDegreesOfFreedom (bool**** internalIndicesFlags)
-{
-  int ReducedNbrInternalIndices = this->NbrInternalIndices;
-  if (this->AdditionalSpinFlag == true)
-    {
-      ReducedNbrInternalIndices /= 2;
-    }
-  for (int sigma1 = 0; sigma1 < ReducedNbrInternalIndices; ++sigma1)
-    {
-      for (int sigma2 = 0; sigma2 < ReducedNbrInternalIndices; ++sigma2)
-	{
-	  for (int sigma3 = 0; sigma3 < ReducedNbrInternalIndices; ++sigma3)
-	    {
-	      delete[] internalIndicesFlags[sigma1][sigma2][sigma3];
-	    }
-	  delete[] internalIndicesFlags[sigma1][sigma2];
-	}
-      delete[] internalIndicesFlags[sigma1];
-    }
-  delete[] internalIndicesFlags;
 }
 

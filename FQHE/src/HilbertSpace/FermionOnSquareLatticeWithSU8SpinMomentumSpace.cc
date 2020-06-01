@@ -184,8 +184,6 @@ FermionOnSquareLatticeWithSU8SpinMomentumSpace::FermionOnSquareLatticeWithSU8Spi
 	{
 	  cout << "error while generating the Hilbert space " << this->LargeHilbertSpaceDimension << " " << TmpLargeHilbertSpaceDimension << endl;
 	}
-//       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-// 	this->PrintState(cout, i) << endl;
       this->GenerateLookUpTable(memory);
       
 #ifdef __DEBUG__
@@ -212,7 +210,6 @@ FermionOnSquareLatticeWithSU8SpinMomentumSpace::FermionOnSquareLatticeWithSU8Spi
 #endif
     }
 }
-
 
 // constructor when conserving all 8 Cartan related quantum numbers
 // 

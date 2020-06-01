@@ -10,6 +10,7 @@
 
 #include "Hamiltonian/ParticleOnLatticeFromFileInteractionTwoBandHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeFromFileInteractionTwoBandWithSpinHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeFromFileInteractionTwoBandWithSpinRealHamiltonian.h"
  
 #include "Tools/FTITightBinding/TightBindingModel2DAtomicLimitLattice.h"
@@ -82,7 +83,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "use-valleyspin", "use the spin per valley instead of --sz-value and --ez-value");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "sz1-value", "twice the Sz value in valley 1", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "sz2-value", "twice the Sz value in valley 2", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)");
+  (*SystemGroup) += new BooleanOption  ('\n', "conserve-bandoccuption", "assume that the interaction conserves the number of particles per band");
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-chernnumber", "compute the chern number (only in singleparticle-spectrum mode)");
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebody", "export the one-body information (band structure and eigenstates) in a binary file");
@@ -196,13 +197,29 @@ int main(int argc, char** argv)
     {
       if (Manager.GetBoolean("add-spin") == false)
 	{
-	  sprintf (FileSystemGeometry, "n_%d_ns_%d_x_%d_y_%d", NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
-	  sprintf (CommentLine, "eigenvalues\n# kx ky");
+	  if (Manager.GetBoolean("conserve-bandoccuption") == false)
+	    {
+	      sprintf (FileSystemGeometry, "n_%d_ns_%d_x_%d_y_%d", NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+	      sprintf (CommentLine, "eigenvalues\n# kx ky");
+	    }
+	  else
+	    {
+	      sprintf (FileSystemGeometry, "n_%d_ns_%d_x_%d_y_%d", NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+	      sprintf (CommentLine, "eigenvalues\n# kx ky n1 n2");
+	    }
 	}
       else
 	{
-	  sprintf (FileSystemGeometry, "n_%d_ns_%d_x_%d_y_%d_sz_%d", NbrParticles, NbrSites, NbrSitesX, NbrSitesY, MinSz);
-	  sprintf (CommentLine, "eigenvalues\n# Sz kx ky");
+	  if (Manager.GetBoolean("conserve-bandoccuption") == false)
+	    {
+	      sprintf (FileSystemGeometry, "n_%d_ns_%d_x_%d_y_%d_sz_%d", NbrParticles, NbrSites, NbrSitesX, NbrSitesY, MinSz);
+	      sprintf (CommentLine, "eigenvalues\n# Sz kx ky");
+	    }
+	  else
+	    {
+	      sprintf (FileSystemGeometry, "n_%d_ns_%d_x_%d_y_%d_sz_%d", NbrParticles, NbrSites, NbrSitesX, NbrSitesY, MinSz);
+	      sprintf (CommentLine, "eigenvalues\n# Sz kx ky n1up n1down n2up n2down");
+	    }
 	}
    }
   else
@@ -489,227 +506,571 @@ int main(int argc, char** argv)
     {
       Lanczos.SetRealAlgorithms();
     }
-  
-  for (int i = MinKx; i <= MaxKx; ++i)
+
+  int* NbrParticlesBand1UpPlus = 0;
+  int* NbrParticlesBand2UpPlus = 0;
+  int* NbrParticlesBand1UpMinus = 0;
+  int* NbrParticlesBand2UpMinus = 0;
+  int* NbrParticlesBand1DownPlus = 0;
+  int* NbrParticlesBand2DownPlus = 0;
+  int* NbrParticlesBand1DownMinus = 0;
+  int* NbrParticlesBand2DownMinus = 0;
+  int NbrSymmetrySectors = 1;
+  if (Manager.GetBoolean("conserve-bandoccuption") == false)
     {
-      for (int j = MinKy; j <= MaxKy; ++j)
+      if (Manager.GetBoolean("add-spin") == false)
 	{
 	  if (Manager.GetBoolean("add-valley") == false)
 	    {
-	      if (Manager.GetBoolean("add-spin") == false)
+	      NbrSymmetrySectors = 1;
+	      NbrParticlesBand1UpPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2UpPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand1UpMinus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2UpMinus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand1DownPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2DownPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand1DownMinus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2DownMinus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand1UpPlus[0] = NbrParticles;
+	      NbrParticlesBand2UpPlus[0] = 0;
+	      NbrParticlesBand1UpMinus[0] = 0;
+	      NbrParticlesBand2UpMinus[0] = 0;
+	      NbrParticlesBand1DownPlus[0] = 0;
+	      NbrParticlesBand2DownPlus[0] = 0;
+	      NbrParticlesBand1DownMinus[0] = 0;
+	      NbrParticlesBand2DownMinus[0] = 0;	      
+	    }
+	  else
+	    {
+	      NbrSymmetrySectors = 1;
+	      NbrParticlesBand1UpPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2UpPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand1UpMinus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2UpMinus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand1DownPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2DownPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand1DownMinus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2DownMinus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand1UpPlus[0] = (NbrParticles + MinPz) / 2;
+	      NbrParticlesBand2UpPlus[0] = 0;
+	      NbrParticlesBand1UpMinus[0] = (NbrParticles - MinPz) / 2;
+	      NbrParticlesBand2UpMinus[0] = 0;
+	      NbrParticlesBand1DownPlus[0] = 0;
+	      NbrParticlesBand2DownPlus[0] = 0;
+	      NbrParticlesBand1DownMinus[0] = 0;
+	      NbrParticlesBand2DownMinus[0] = 0;	      
+	    }
+	}
+      else
+	{
+	  if (Manager.GetBoolean("add-valley") == false)
+	    {
+	      NbrSymmetrySectors = 1;
+	      NbrParticlesBand1UpPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2UpPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand1UpMinus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2UpMinus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand1DownPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2DownPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand1DownMinus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2DownMinus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand1UpPlus[0] = (NbrParticles + MinSz) / 2;
+	      NbrParticlesBand2UpPlus[0] = 0;
+	      NbrParticlesBand1UpMinus[0] = 0;
+	      NbrParticlesBand2UpMinus[0] = 0;
+	      NbrParticlesBand1DownPlus[0] = (NbrParticles - MinSz) / 2;
+	      NbrParticlesBand2DownPlus[0] = 0;
+	      NbrParticlesBand1DownMinus[0] = 0;
+	      NbrParticlesBand2DownMinus[0] = 0;	      
+	    }
+	  else
+	    {
+	      NbrSymmetrySectors = 1;
+	      NbrParticlesBand1UpPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2UpPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand1UpMinus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2UpMinus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand1DownPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2DownPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand1DownMinus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2DownMinus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand1UpPlus[0] = (NbrParticles + MinSz + MinPz + MinEz);
+	      NbrParticlesBand1UpMinus[0] = (NbrParticles + MinSz - MinPz - MinEz);
+	      NbrParticlesBand1DownPlus[0] = (NbrParticles - MinSz + MinPz - MinEz);
+	      NbrParticlesBand1DownMinus[0] = (NbrParticles - MinSz - MinPz + MinEz);			  
+	      NbrParticlesBand2UpPlus[0] = 0;
+	      NbrParticlesBand2UpMinus[0] = 0;
+	      NbrParticlesBand2DownPlus[0] = 0;
+	      NbrParticlesBand2DownMinus[0] = 0;			  
+	      if ((NbrParticlesBand1UpPlus[0] < 0) || (NbrParticlesBand1UpMinus[0] < 0) || (NbrParticlesBand1DownPlus[0] < 0) || (NbrParticlesBand1DownMinus[0] < 0)
+		  || ((NbrParticlesBand1UpPlus[0] & 3) != 0) ||  ((NbrParticlesBand1UpMinus[0] & 3) != 0)
+		  || ((NbrParticlesBand1DownPlus[0] & 3) != 0) ||  ((NbrParticlesBand1DownMinus[0] & 3) != 0))
 		{
-		  cout << "(kx=" << i << ",ky=" << j << ") : " << endl;
+		  cout << "Incompatible values of N, 2Sz, 2Pz and 2Ez, lead to 4N_{up,+}=" << NbrParticlesBand1UpPlus[0]
+		       << " 4N_{up,-}=" << NbrParticlesBand1UpMinus[0] << " 4N_{down,+}=" << NbrParticlesBand1DownPlus[0]
+		       << " 4N_{down,-}=" << NbrParticlesBand1DownMinus[0] << endl;
+		  return 0;
 		}
-	      else
+	      NbrParticlesBand1UpPlus[0] /= 4;
+	      NbrParticlesBand1UpMinus[0] /= 4;
+	      NbrParticlesBand1DownPlus[0] /= 4;
+	      NbrParticlesBand1DownMinus[0] /= 4;
+	      if ((NbrParticlesBand1UpPlus[0] > NbrParticles) || (NbrParticlesBand1UpMinus[0] > NbrParticles)
+		  || (NbrParticlesBand1DownPlus[0] > NbrParticles) || (NbrParticlesBand1DownMinus[0] > NbrParticles))
 		{
-		  cout << "(kx=" << i << ",ky=" << j << ",2sz=" << MinSz << ") : " << endl;
+		  cout << "Incompatible values of N, 2Sz, 2Pz and 2Ez, lead to N_{up,+}=" << NbrParticlesBand1UpPlus[0]
+		       << " N_{up,-}=" << NbrParticlesBand1UpMinus[0] << " N_{down,+}=" << NbrParticlesBand1DownPlus[0]
+		       << " N_{down,-}=" << NbrParticlesBand1DownMinus[0] << endl;
+		  return 0;
+		}
+	      cout << "N_{up,+}=" << NbrParticlesBand1UpPlus[0] << " N_{up,-}=" << NbrParticlesBand1UpMinus[0]
+		   << " N_{down,+}=" << NbrParticlesBand1DownPlus[0] << " N_{down,-}=" << NbrParticlesBand1DownMinus[0] << endl;
+	    }
+	}
+    }
+  else
+    {
+      if (Manager.GetBoolean("add-spin") == false)
+	{
+	  if (Manager.GetBoolean("add-valley") == false)
+	    {
+	      NbrSymmetrySectors = NbrParticles + 1;
+	      NbrParticlesBand1UpPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2UpPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand1UpMinus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2UpMinus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand1DownPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2DownPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand1DownMinus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2DownMinus = new int [NbrSymmetrySectors];
+	      for (int i = 0; i < NbrSymmetrySectors; ++i)
+		{
+		  NbrParticlesBand1UpPlus[i] = i;
+		  NbrParticlesBand2UpPlus[i] = NbrParticles - i;
+		  NbrParticlesBand1UpMinus[i] = 0;
+		  NbrParticlesBand2UpMinus[i] = 0;
+		  NbrParticlesBand1DownPlus[i] = 0;
+		  NbrParticlesBand2DownPlus[i] = 0;
+		  NbrParticlesBand1DownMinus[i] = 0;
+		  NbrParticlesBand2DownMinus[i] = 0;
 		}
 	    }
 	  else
 	    {
-	      if (Manager.GetBoolean("add-spin") == false)
+	    }
+	}
+      else
+	{
+	  if (Manager.GetBoolean("add-valley") == false)
+	    {
+	      NbrSymmetrySectors = 0;
+	      for (int TmpUp1 = 0; TmpUp1 <= NbrParticles; ++TmpUp1)
 		{
-		  cout << "(kx=" << i << ",ky=" << j << ",2pz=" << MinPz << ") : " << endl;
+		  int TmpUp2 = ((MinSz + NbrParticles) / 2) - TmpUp1;
+		  if ((TmpUp2 >= 0) && (TmpUp2 <= NbrParticles))
+		    {
+		      for (int TmpDown1 = 0; TmpDown1 <= NbrParticles; ++TmpDown1)
+			{
+			  int TmpDown2 = ((NbrParticles - MinSz) / 2) - TmpDown1;
+			  if ((TmpDown2 >= 0) && (TmpDown2 <= NbrParticles))
+			    {
+			      ++NbrSymmetrySectors;
+			    }
+			}
+		    }
 		}
-	      else
+	      NbrParticlesBand1UpPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2UpPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand1UpMinus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2UpMinus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand1DownPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2DownPlus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand1DownMinus = new int [NbrSymmetrySectors];
+	      NbrParticlesBand2DownMinus = new int [NbrSymmetrySectors];
+	      NbrSymmetrySectors = 0;
+	      for (int TmpUp1 = 0; TmpUp1 <= NbrParticles; ++TmpUp1)
 		{
-		  cout << "(kx=" << i << ",ky=" << j << ",2pz=" << MinPz << ",2sz=" << MinSz << ",2ez=" << MinEz<< ") : " << endl;
+		  int TmpUp2 = ((MinSz + NbrParticles) / 2) - TmpUp1;
+		  if ((TmpUp2 >= 0) && (TmpUp2 <= NbrParticles))
+		    {
+		      for (int TmpDown1 = 0; TmpDown1 <= NbrParticles; ++TmpDown1)
+			{
+			  int TmpDown2 = ((NbrParticles - MinSz) / 2) - TmpDown1;
+			  if ((TmpDown2 >= 0) && (TmpDown2 <= NbrParticles))
+			    {
+			      NbrParticlesBand1UpPlus[NbrSymmetrySectors] = TmpUp1;
+			      NbrParticlesBand2UpPlus[NbrSymmetrySectors] = TmpUp2;
+			      NbrParticlesBand1UpMinus[NbrSymmetrySectors] = 0;
+			      NbrParticlesBand2UpMinus[NbrSymmetrySectors] = 0;
+			      NbrParticlesBand1DownPlus[NbrSymmetrySectors] = TmpDown1;
+			      NbrParticlesBand2DownPlus[NbrSymmetrySectors] = TmpDown2;
+			      NbrParticlesBand1DownMinus[NbrSymmetrySectors] = 0;
+			      NbrParticlesBand2DownMinus[NbrSymmetrySectors] = 0;
+			      ++NbrSymmetrySectors;
+			    }
+			}
+		    }
 		}
 	    }
-	  ParticleOnSphereWithSpin* Space = 0;
-	  AbstractQHEHamiltonian* Hamiltonian = 0;
-	  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
-	    Memory = Architecture.GetArchitecture()->GetLocalMemory();
-	  if (Manager.GetBoolean("boson") == false)
+	  else
 	    {
-	      if (Manager.GetBoolean("add-spin") == false)
+	    }
+	}
+    }
+
+  int TotalDim = 0;
+  for (int SymmetrySectorIndex = 0; SymmetrySectorIndex < NbrSymmetrySectors; ++SymmetrySectorIndex)
+    {
+      for (int i = MinKx; i <= MaxKx; ++i)
+	{
+	  for (int j = MinKy; j <= MaxKy; ++j)
+	    {
+	      if (Manager.GetBoolean("add-valley") == false)
 		{
-		  if (Manager.GetBoolean("add-valley") == false)
+		  if (Manager.GetBoolean("add-spin") == false)
 		    {
-		      if ((NbrSitesX * NbrSitesY) <= 32)
+		      if (Manager.GetBoolean("conserve-bandoccuption") == false)
 			{
-			  Space = new FermionOnSquareLatticeWithSpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+			  cout << "(kx=" << i << ",ky=" << j << ") : " << endl;
 			}
 		      else
 			{
-			  Space = new FermionOnSquareLatticeWithSpinMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+			  cout << "(kx=" << i << ",ky=" << j 
+			       << ",n1=" << NbrParticlesBand1UpPlus[SymmetrySectorIndex]
+			       << ",n2=" << NbrParticlesBand2UpPlus[SymmetrySectorIndex] << ") : " << endl;
 			}
 		    }
 		  else
 		    {
-		      if ((NbrSitesX * NbrSitesY) <= 16)
+		      if (Manager.GetBoolean("conserve-bandoccuption") == false)
 			{
-			  Space = new FermionOnSquareLatticeWithSU4SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j,
-										      MinPz, 10000000ul);
+			  cout << "(kx=" << i << ",ky=" << j << ",2sz=" << MinSz << ") : " << endl;
 			}
 		      else
 			{
-			  cout << "SU(4) not supported with more than 16 momenta" << endl;
-			  Space = 0;
-			  //		      Space = new FermionOnSquareLatticeWithSU4SpinMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j, MinSz);
+			  cout << "(kx=" << i << ",ky=" << j 
+			       << ",n1up=" << NbrParticlesBand1UpPlus[SymmetrySectorIndex]
+			       << ",n2up=" << NbrParticlesBand2UpPlus[SymmetrySectorIndex]
+			       << ",n1down=" << NbrParticlesBand1DownPlus[SymmetrySectorIndex]
+			       << ",n2down=" << NbrParticlesBand2DownPlus[SymmetrySectorIndex] << ") : " << endl;
 			}
 		    }
 		}
 	      else
 		{
-		  if (Manager.GetBoolean("add-valley") == false)
+		  if (Manager.GetBoolean("add-spin") == false)
 		    {
-		      if ((NbrSitesX * NbrSitesY) <= 16)
+		      if (Manager.GetBoolean("conserve-bandoccuption") == false)
 			{
-			  Space = new FermionOnSquareLatticeWithSU4SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j,
-										      MinSz, 10000000ul);
+			  cout << "(kx=" << i << ",ky=" << j << ",2pz=" << MinPz << ") : " << endl;
 			}
 		      else
 			{
-			  cout << "SU(4) not supported with more than 16 momenta" << endl;
-			  Space = 0;
-			  //		      Space = new FermionOnSquareLatticeWithSU4SpinMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j, MinSz);
+			  cout << "(kx=" << i << ",ky=" << j << ",2pz=" << MinPz
+			       << ",n1plus=" << NbrParticlesBand1UpPlus[SymmetrySectorIndex]
+			       << ",n2plus=" << NbrParticlesBand2UpPlus[SymmetrySectorIndex]
+			       << ",n1minus=" << NbrParticlesBand1UpMinus[SymmetrySectorIndex]
+			       << ",n2minus=" << NbrParticlesBand2UpMinus[SymmetrySectorIndex] << ") : " << endl;
 			}
 		    }
 		  else
 		    {
-		      int NbrParticlesUpPlus = (NbrParticles + MinSz + MinPz + MinEz);
-		      int NbrParticlesUpMinus = (NbrParticles + MinSz - MinPz - MinEz);
-		      int NbrParticlesDownPlus = (NbrParticles - MinSz + MinPz - MinEz);
-		      int NbrParticlesDownMinus = (NbrParticles - MinSz - MinPz + MinEz);			  
-		      if ((NbrParticlesUpPlus < 0) || (NbrParticlesUpMinus < 0) || (NbrParticlesDownPlus < 0) || (NbrParticlesDownMinus < 0)
-			  || ((NbrParticlesUpPlus & 3) != 0) ||  ((NbrParticlesUpMinus & 3) != 0)
-			  || ((NbrParticlesDownPlus & 3) != 0) ||  ((NbrParticlesDownMinus & 3) != 0))
+		      if (Manager.GetBoolean("conserve-bandoccuption") == false)
 			{
-			  cout << "Incompatible values of N, 2Sz, 2Pz and 2Ez, lead to 4N_{up,+}=" << NbrParticlesUpPlus
-				   << " 4N_{up,-}=" << NbrParticlesUpMinus << " 4N_{down,+}=" << NbrParticlesDownPlus
-			       << " 4N_{down,-}=" << NbrParticlesDownMinus << endl;
-			  return 0;
-			    }
-		      NbrParticlesUpPlus /= 4;
-		      NbrParticlesUpMinus /= 4;
-		      NbrParticlesDownPlus /= 4;
-		      NbrParticlesDownMinus /= 4;
-		      if ((NbrParticlesUpPlus > NbrParticles) || (NbrParticlesUpMinus > NbrParticles)
-			  || (NbrParticlesDownPlus > NbrParticles) || (NbrParticlesDownMinus > NbrParticles))
-			{
-			  cout << "Incompatible values of N, 2Sz, 2Pz and 2Ez, lead to N_{up,+}=" << NbrParticlesUpPlus
-			       << " N_{up,-}=" << NbrParticlesUpMinus << " N_{down,+}=" << NbrParticlesDownPlus
-			       << " N_{down,-}=" << NbrParticlesDownMinus << endl;
-			  return 0;
+			  cout << "(kx=" << i << ",ky=" << j << ",2pz=" << MinPz << ",2sz=" << MinSz << ",2ez=" << MinEz<< ") : " << endl;
 			}
-		      cout << "N_{up,+}=" << NbrParticlesUpPlus << " N_{up,-}=" << NbrParticlesUpMinus
-			   << " N_{down,+}=" << NbrParticlesDownPlus << " N_{down,-}=" << NbrParticlesDownMinus << endl;
-		      if ((NbrSitesX * NbrSitesY) <= 8)
+		      else
 			{
-			  Space = new FermionOnSquareLatticeWithSU8SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j,
-										      NbrParticlesDownMinus, NbrParticlesDownPlus,
-										      NbrParticlesUpMinus, NbrParticlesUpPlus, 10000000ul);
+			  cout << "(kx=" << i << ",ky=" << j << ",2pz=" << MinPz
+			       << ",n1upplus=" << NbrParticlesBand1UpPlus[SymmetrySectorIndex]
+			       << ",n2upplus=" << NbrParticlesBand2UpPlus[SymmetrySectorIndex]
+			       << ",n1upminus=" << NbrParticlesBand1UpMinus[SymmetrySectorIndex]
+			       << ",n2upminus=" << NbrParticlesBand2UpMinus[SymmetrySectorIndex]
+			       << ",n1downplus=" << NbrParticlesBand1DownPlus[SymmetrySectorIndex]
+			       << ",n2downplus=" << NbrParticlesBand2DownPlus[SymmetrySectorIndex]
+			       << ",n1downminus=" << NbrParticlesBand1DownMinus[SymmetrySectorIndex]
+			       << ",n2downminus=" << NbrParticlesBand2DownMinus[SymmetrySectorIndex] << ") : " << endl;
+			}
+		    }
+		}
+	      ParticleOnSphereWithSpin* Space = 0;
+	      AbstractQHEHamiltonian* Hamiltonian = 0;
+	      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+		Memory = Architecture.GetArchitecture()->GetLocalMemory();
+	      if (Manager.GetBoolean("boson") == false)
+		{
+		  if (Manager.GetBoolean("add-spin") == false)
+		    {
+		      if (Manager.GetBoolean("add-valley") == false)
+			{
+			  if (Manager.GetBoolean("conserve-bandoccuption") == false)
+			    {
+			      if ((NbrSitesX * NbrSitesY) <= 32)
+				{
+				  Space = new FermionOnSquareLatticeWithSpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+				}
+			      else
+				{
+				  Space = new FermionOnSquareLatticeWithSpinMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+				}
+			    }
+			  else
+			    {
+			      if ((NbrSitesX * NbrSitesY) <= 32)
+				{
+				  Space = new FermionOnSquareLatticeWithSpinMomentumSpace (NbrParticles, NbrParticlesBand1UpPlus[SymmetrySectorIndex], NbrSitesX, NbrSitesY, i, j);
+				}
+			      else
+				{
+				  Space = new FermionOnSquareLatticeWithSpinMomentumSpaceLong (NbrParticles, NbrParticlesBand1UpPlus[SymmetrySectorIndex], NbrSitesX, NbrSitesY, i, j);
+				}
+			    }
 			}
 		      else
 			{
 			  if ((NbrSitesX * NbrSitesY) <= 16)
-			    {			  
-			      Space = new FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong(NbrParticles, NbrSitesX, NbrSitesY, i, j,
-										      NbrParticlesDownMinus, NbrParticlesDownPlus,
-										      NbrParticlesUpMinus, NbrParticlesUpPlus, 10000000ul);
+			    {
+			      Space = new FermionOnSquareLatticeWithSU4SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j,
+											  MinPz, 10000000ul);
 			    }
 			  else
 			    {
-			      cout << "SU(8) not supported with more than 16 momenta" << endl;
-			      Space = 0;			      
+			      cout << "SU(4) not supported with more than 16 momenta" << endl;
+			      Space = 0;
+			      //		      Space = new FermionOnSquareLatticeWithSU4SpinMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j, MinSz);
+			    }
+			}
+		    }
+		  else
+		    {
+		      if (Manager.GetBoolean("add-valley") == false)
+			{
+			  if (Manager.GetBoolean("conserve-bandoccuption") == false)
+			    {
+			      if ((NbrSitesX * NbrSitesY) <= 16)
+				{
+				  Space = new FermionOnSquareLatticeWithSU4SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j,
+											      MinSz, 10000000ul);
+				}
+			      else
+				{
+				  cout << "SU(4) not supported with more than 16 momenta" << endl;
+				  Space = 0;
+				  //		      Space = new FermionOnSquareLatticeWithSU4SpinMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j, MinSz);
+				}
+			    }
+			  else
+			    {
+			      int FakePz = (NbrParticlesBand1UpPlus[SymmetrySectorIndex] - NbrParticlesBand2UpPlus[SymmetrySectorIndex]
+					    + NbrParticlesBand1DownPlus[SymmetrySectorIndex] - NbrParticlesBand2DownPlus[SymmetrySectorIndex]);
+			      if ((NbrSitesX * NbrSitesY) <= 16)
+				{
+				  Space = new FermionOnSquareLatticeWithSU4SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j,
+											      MinSz, FakePz, 10000000ul);
+				}
+			      else
+				{
+				  cout << "SU(4) not supported with more than 16 momenta" << endl;
+				  Space = 0;
+				  //		      Space = new FermionOnSquareLatticeWithSU4SpinMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j, MinSz);
+				}
+			    }
+			}
+		      else
+			{
+			  if (Manager.GetBoolean("conserve-bandoccuption") == false)
+			    {
+			      if ((NbrSitesX * NbrSitesY) <= 8)
+				{
+				  Space = new FermionOnSquareLatticeWithSU8SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j,
+											      NbrParticlesBand1DownMinus[SymmetrySectorIndex], NbrParticlesBand1DownPlus[SymmetrySectorIndex],
+											      NbrParticlesBand1UpMinus[SymmetrySectorIndex], NbrParticlesBand1UpPlus[SymmetrySectorIndex], 10000000ul);
+				}
+			      else
+				{
+				  if ((NbrSitesX * NbrSitesY) <= 16)
+				    {			  
+				      Space = new FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong(NbrParticles, NbrSitesX, NbrSitesY, i, j,
+												     NbrParticlesBand1DownMinus[SymmetrySectorIndex], NbrParticlesBand1DownPlus[SymmetrySectorIndex],
+												     NbrParticlesBand1UpMinus[SymmetrySectorIndex], NbrParticlesBand1UpPlus[SymmetrySectorIndex], 10000000ul);
+				    }
+				  else
+				    {
+				      cout << "SU(8) not supported with more than 16 momenta" << endl;
+				      Space = 0;			      
+				    }
+				}
+			    }
+			  else
+			    {
+			      int TmpNbrParticles[8];
+			      TmpNbrParticles[0] = NbrParticlesBand1DownMinus[SymmetrySectorIndex];
+			      TmpNbrParticles[1] = NbrParticlesBand2DownMinus[SymmetrySectorIndex];
+			      TmpNbrParticles[2] = NbrParticlesBand1DownPlus[SymmetrySectorIndex];
+			      TmpNbrParticles[3] = NbrParticlesBand2DownPlus[SymmetrySectorIndex];
+			      TmpNbrParticles[4] = NbrParticlesBand1UpMinus[SymmetrySectorIndex];
+			      TmpNbrParticles[5] = NbrParticlesBand2UpMinus[SymmetrySectorIndex];
+			      TmpNbrParticles[6] = NbrParticlesBand1UpPlus[SymmetrySectorIndex];
+			      TmpNbrParticles[7] = NbrParticlesBand2UpPlus[SymmetrySectorIndex];
+			      if ((NbrSitesX * NbrSitesY) <= 8)
+				{
+				  Space = new FermionOnSquareLatticeWithSU8SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j, TmpNbrParticles, 10000000ul);
+				}
+			      else
+				{
+				  if ((NbrSitesX * NbrSitesY) <= 16)
+				    {			  
+				      Space = new FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong(NbrParticles, NbrSitesX, NbrSitesY, i, j, TmpNbrParticles, 10000000ul);
+				    }
+				  else
+				    {
+				      cout << "SU(8) not supported with more than 16 momenta" << endl;
+				      Space = 0;			      
+				    }
+				}
 			    }
 			}
 		    }
 		}
-	    }
-	  else
-	    {
-	      Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
-	    }
-	  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
-	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-
-	  if (Manager.GetBoolean("real-interaction"))
-	    {
-	      if (Manager.GetBoolean("add-valley") == false)
-		{
-		  Hamiltonian = new ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian (Space, NbrParticles, NbrSitesX, NbrSitesY,
-												Manager.GetString("interaction-file"),
-												TightBindingModel, Manager.GetBoolean("flat-band"), 
-												Manager.GetDouble("interaction-rescaling"),
-												Manager.GetBoolean("add-spin"),
-												Architecture.GetArchitecture(), Memory);
-		}
 	      else
 		{
-		  Hamiltonian = new ParticleOnLatticeFromFileInteractionTwoBandWithSpinRealHamiltonian (Space, NbrParticles, NbrSitesX, NbrSitesY,
+		  Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		}
+	      cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
+	      TotalDim += Space->GetHilbertSpaceDimension();
+	      if (Space->GetHilbertSpaceDimension() > 0)
+		{
+		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+		  
+		  if (Manager.GetBoolean("real-interaction"))
+		    {
+		      if (Manager.GetBoolean("add-valley") == false)
+			{
+			  Hamiltonian = new ParticleOnLatticeFromFileInteractionTwoBandRealHamiltonian (Space, NbrParticles, NbrSitesX, NbrSitesY,
 													Manager.GetString("interaction-file"),
 													TightBindingModel, Manager.GetBoolean("flat-band"), 
 													Manager.GetDouble("interaction-rescaling"),
 													Manager.GetBoolean("add-spin"),
 													Architecture.GetArchitecture(), Memory);
-		}		
-	    }
-	  else
-	    {
-	      Hamiltonian = new ParticleOnLatticeFromFileInteractionTwoBandHamiltonian (Space, NbrParticles, NbrSitesX, NbrSitesY,
-											Manager.GetString("interaction-file"),
-											TightBindingModel, Manager.GetBoolean("flat-band"), 
-											Manager.GetDouble("interaction-rescaling"),
-											Architecture.GetArchitecture(), Memory);
-	    }
-	  
-	  
-	  char* ContentPrefix = new char[256];
-	  char* EigenstateOutputFile = new char [512];
-	  char* TmpExtention = new char[256];
-	  if (Manager.GetBoolean("add-valley") == false)
-	    {
-	      if (Manager.GetBoolean("add-spin") == false)
-		{
-		  sprintf (ContentPrefix, "%d %d", i, j);
-		  sprintf (TmpExtention, "_kx_%d_ky_%d", i, j);
+			}
+		      else
+			{
+			  Hamiltonian = new ParticleOnLatticeFromFileInteractionTwoBandWithSpinRealHamiltonian (Space, NbrParticles, NbrSitesX, NbrSitesY,
+														Manager.GetString("interaction-file"),
+														TightBindingModel, Manager.GetBoolean("flat-band"), 
+														Manager.GetDouble("interaction-rescaling"),
+														Manager.GetBoolean("add-spin"),
+														Architecture.GetArchitecture(), Memory);
+			}		
+		    }
+		  else
+		    {
+		      if (Manager.GetBoolean("add-valley") == false)
+			{
+			  Hamiltonian = new ParticleOnLatticeFromFileInteractionTwoBandHamiltonian (Space, NbrParticles, NbrSitesX, NbrSitesY,
+												    Manager.GetString("interaction-file"),
+												    TightBindingModel, Manager.GetBoolean("flat-band"), 
+												    Manager.GetDouble("interaction-rescaling"),
+												    Manager.GetBoolean("add-spin"),
+												    Architecture.GetArchitecture(), Memory);
+			}
+		      else
+			{
+			  Hamiltonian = new ParticleOnLatticeFromFileInteractionTwoBandWithSpinHamiltonian (Space, NbrParticles, NbrSitesX, NbrSitesY,
+													    Manager.GetString("interaction-file"),
+													    TightBindingModel, Manager.GetBoolean("flat-band"), 
+													    Manager.GetDouble("interaction-rescaling"),
+													    Manager.GetBoolean("add-spin"),
+													    Architecture.GetArchitecture(), Memory);
+			}				
+		    }
+		  
+		  
+		  char* ContentPrefix = new char[256];
+		  char* EigenstateOutputFile = new char [512];
+		  char* TmpExtention = new char[256];
+		  if (Manager.GetBoolean("add-valley") == false)
+		    {
+		      if (Manager.GetBoolean("add-spin") == false)
+			{
+			  if (Manager.GetBoolean("conserve-bandoccuption") == false)
+			    {
+			      sprintf (ContentPrefix, "%d %d", i, j);
+			      sprintf (TmpExtention, "_kx_%d_ky_%d", i, j);
+			    }
+			  else
+			    {
+			      sprintf (ContentPrefix, "%d %d %d %d", i, j, NbrParticlesBand1UpPlus[SymmetrySectorIndex],
+				       NbrParticlesBand2UpPlus[SymmetrySectorIndex]);
+			      sprintf (TmpExtention, "_kx_%d_ky_%d_bz_%d", i, j, (NbrParticlesBand1UpPlus[SymmetrySectorIndex] - NbrParticlesBand2UpPlus[SymmetrySectorIndex]));
+			    }
+			}
+		      else
+			{
+			  if (Manager.GetBoolean("conserve-bandoccuption") == false)
+			    {
+			      sprintf (ContentPrefix, "%d %d %d", MinSz, i, j);
+			      sprintf (TmpExtention, "_kx_%d_ky_%d_sz_%d", i, j, MinSz);
+			    }
+			  else
+			    {
+			      sprintf (ContentPrefix, "%d %d %d %d %d %d %d", MinSz, i, j, NbrParticlesBand1UpPlus[SymmetrySectorIndex],
+				       NbrParticlesBand2UpPlus[SymmetrySectorIndex], NbrParticlesBand1DownPlus[SymmetrySectorIndex],
+				       NbrParticlesBand2DownPlus[SymmetrySectorIndex]);
+			      sprintf (TmpExtention, "_kx_%d_ky_%d_sz_%d", i, j, MinSz);
+			    }
+			}
+		    }
+		  else
+		    {
+		      if (Manager.GetBoolean("add-spin") == false)
+			{
+			  if (Manager.GetBoolean("conserve-bandoccuption") == false)
+			    {
+			      sprintf (ContentPrefix, "%d %d %d", MinPz, i, j);
+			      sprintf (TmpExtention, "_kx_%d_ky_%d_pz_%d", i, j, MinPz);
+			    }
+			  else
+			    {
+			    }
+			}
+		      else
+			{
+			  if (Manager.GetBoolean("conserve-bandoccuption") == false)
+			    {
+			      sprintf (ContentPrefix, "%d %d %d %d %d", MinPz, MinSz, MinEz, i, j);
+			      sprintf (TmpExtention, "_kx_%d_ky_%d_pz_%d_ez_%d_sz_%d", i, j, MinPz, MinEz, MinSz);
+			    }
+			}
+		    }
+		  EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
+		  delete[] TmpExtention;
+		  if (Manager.GetBoolean("real-interaction"))
+		    {
+		      GenericRealMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix,
+					       CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
+		      MainTaskOperation TaskOperation (&Task);
+		      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+		    }
+		  else
+		    {
+		      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix,
+						  CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
+		      MainTaskOperation TaskOperation (&Task);
+		      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+		    }
+		  FirstRunFlag = false;
+		  
+		  cout << "------------------------------------" << endl;
+		  delete Hamiltonian;
+		  delete[] EigenstateOutputFile;
+		  delete[] ContentPrefix;
 		}
-	      else
-		{
-		  sprintf (ContentPrefix, "%d %d %d", MinSz, i, j);
-		  sprintf (TmpExtention, "_kx_%d_ky_%d_sz_%d", i, j, MinSz);
-		}
+	      delete Space;
 	    }
-	  else
-	    {
-	      if (Manager.GetBoolean("add-spin") == false)
-		{
-		  sprintf (ContentPrefix, "%d %d %d", MinPz, i, j);
-		  sprintf (TmpExtention, "_kx_%d_ky_%d_pz_%d", i, j, MinPz);
-		}
-	      else
-		{
-		  sprintf (ContentPrefix, "%d %d %d %d %d", MinPz, MinSz, MinEz, i, j);
-		  sprintf (TmpExtention, "_kx_%d_ky_%d_pz_%d_ez_%d_sz_%d", i, j, MinPz, MinEz, MinSz);
-		}
-	    }
-	  EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
-	  delete[] TmpExtention;
-	  if (Manager.GetBoolean("real-interaction"))
-	    {
-	      GenericRealMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix,
-				       CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
-	      MainTaskOperation TaskOperation (&Task);
-	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-	    }
-	  else
-	    {
-	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix,
-					  CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
-	      MainTaskOperation TaskOperation (&Task);
-	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-	    }
-	  FirstRunFlag = false;
-	  
-	  cout << "------------------------------------" << endl;
-	  delete Hamiltonian;
-	  delete Space;
-	  delete[] EigenstateOutputFile;
-	  delete[] ContentPrefix;
 	}
     }
+  cout << "Total dim=" << TotalDim << endl;
   return 0;
 }
 
