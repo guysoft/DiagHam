@@ -542,8 +542,8 @@ void ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::EvaluateInteraction
 		      for (int sigma4 = sigma3; sigma4 < this->NbrInternalIndices; ++sigma4)
 			{
 			  if ((InternalIndicesFlags[sigma3 & 1][sigma4 & 1][sigma1 & 1][sigma2 & 1] == true) &&
-			      ((((sigma1 & 2) == (sigma3 & 2)) && ((sigma2 & 2) == (sigma4 & 2))) ||
-			       (((sigma1 & 2) == (sigma4 & 2)) && ((sigma2 & 2) == (sigma3 & 2)))))
+			      ((((sigma1 & 2) == (sigma3 & 2)) && ((sigma2 & 2) == (sigma4 & 2)))))
+			    //			      ((((sigma1 & 2) == (sigma4 & 2)) && ((sigma2 & 2) == (sigma3 & 2)))))
 			    {
 			      if (sigma3 == sigma4)
 				{
@@ -702,7 +702,7 @@ void ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::EvaluateInteraction
 	      int K1 = TmpLinearizedK1[i];
 	      int K2 = TmpLinearizedK2[i];
 	      int K3 = TmpLinearizedK3[i];
-	      int K4 = TmpLinearizedK4[i];
+	      int K4 = TmpLinearizedK4[i];	      
 	      double TmpSign = 1.0;
 	      TmpIndex = ((this->NbrInterSectorIndicesPerSum[TmpSumK] * TmpLinearizedKInterIndices[TmpSumK][K4][K3])
 	       		  + TmpLinearizedKInterIndices[TmpSumK][K1][K2]);
@@ -877,10 +877,28 @@ bool**** ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::TestMatrixEleme
 
   for (int i = 0; i < nbrMatrixElements; ++i)
     {
-      InternalIndicesFlags[sigmaIndices1[i]][sigmaIndices2[i]][sigmaIndices3[i]][sigmaIndices4[i]] = true;
-      InternalIndicesFlags[sigmaIndices2[i]][sigmaIndices1[i]][sigmaIndices3[i]][sigmaIndices4[i]] = true;
-      InternalIndicesFlags[sigmaIndices1[i]][sigmaIndices2[i]][sigmaIndices4[i]][sigmaIndices3[i]] = true;
-      InternalIndicesFlags[sigmaIndices2[i]][sigmaIndices1[i]][sigmaIndices4[i]][sigmaIndices3[i]] = true;
+      // if (sigmaIndices1[i] <= sigmaIndices2[i])
+      // 	{
+	  // if (sigmaIndices3[i] <= sigmaIndices4[i])
+	  //   {	  
+	  //     InternalIndicesFlags[sigmaIndices1[i]][sigmaIndices2[i]][sigmaIndices3[i]][sigmaIndices4[i]] = true;
+      	  //   }
+      	  // else
+      	  //   {	     
+      	      InternalIndicesFlags[sigmaIndices1[i]][sigmaIndices2[i]][sigmaIndices4[i]][sigmaIndices3[i]] = true;
+      // 	    }
+      // 	}
+      // else
+      // 	{
+      // 	  if (sigmaIndices3[i] <= sigmaIndices4[i])
+      // 	    {	  
+      // 	      InternalIndicesFlags[sigmaIndices2[i]][sigmaIndices1[i]][sigmaIndices3[i]][sigmaIndices4[i]] = true;
+      // 	    }
+      // 	  else
+      // 	    {
+      // 	      InternalIndicesFlags[sigmaIndices2[i]][sigmaIndices1[i]][sigmaIndices4[i]][sigmaIndices3[i]] = true;
+      // 	    }
+	      //       	}
     }
 
   int NbrActivatedTerms = 0;

@@ -159,7 +159,6 @@ FermionOnSquareLatticeWithSU4SpinMomentumSpace::FermionOnSquareLatticeWithSU4Spi
   this->MaximumSignLookUp = 16;
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0,
 									 (this->NbrFermions + this->TotalSpin) / 2);
-  cout << this->LargeHilbertSpaceDimension << endl;
   
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
@@ -308,9 +307,6 @@ FermionOnSquareLatticeWithSU4SpinMomentumSpace::FermionOnSquareLatticeWithSU4Spi
   this->NbrFermionsUpMinus = (this->NbrFermions + this->TotalSpin - this->TotalIsospin - this->TotalEntanglement) / 4;
   this->NbrFermionsDownPlus = (this->NbrFermions - this->TotalSpin + this->TotalIsospin - this->TotalEntanglement) / 4;
   this->NbrFermionsDownMinus = (this->NbrFermions - this->TotalSpin - this->TotalIsospin + this->TotalEntanglement) / 4;
-  cout << "this->NbrFermionsUpPlus=" << this->NbrFermionsUpPlus << " this->NbrFermionsUpMinus=" << this->NbrFermionsUpMinus
-       << " this->NbrFermionsDownPlus=" << this->NbrFermionsDownPlus << " this->NbrFermionsDownMinus=" << this->NbrFermionsDownMinus << endl;
-  cout << this->TotalSpin << " " << this->TotalIsospin << " " << this->TotalEntanglement << endl;
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
   this->KxMomentum = kxMomentum;

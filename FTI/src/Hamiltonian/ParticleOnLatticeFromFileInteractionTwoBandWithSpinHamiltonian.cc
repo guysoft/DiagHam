@@ -203,7 +203,7 @@ void ParticleOnLatticeFromFileInteractionTwoBandWithSpinHamiltonian::EvaluateInt
   int* TmpKy2 = TmpInteractionFile.GetAsIntegerArray(7);
   int* TmpKy3 = TmpInteractionFile.GetAsIntegerArray(11);
   int* TmpKy4 = TmpInteractionFile.GetAsIntegerArray(15);
-  double* TmpMatrixElements = TmpInteractionFile.GetAsDoubleArray(16);
+  Complex* TmpMatrixElements = TmpInteractionFile.GetAsComplexArray(16);
   if (TmpMatrixElements == 0)
     {
       TmpInteractionFile.DumpErrors(cout) << endl;
@@ -545,9 +545,9 @@ void ParticleOnLatticeFromFileInteractionTwoBandWithSpinHamiltonian::EvaluateInt
 			{
 			  // if ((((sigma1 & 4) + (sigma2 & 4)) == ((sigma3 & 4) + (sigma4 & 4))) &&
 			  //     (((sigma1 & 2) + (sigma2 & 2)) == ((sigma3 & 2) + (sigma4 & 2))))
-			  if ((InternalIndicesFlags[sigma3 & 6][sigma4 & 6][sigma1 & 6][sigma2 & 6] == true) && 
-			      ((((sigma1 & 6) == (sigma3 & 6)) && ((sigma2 & 6) == (sigma4 & 6))) ||
-			       (((sigma1 & 6) == (sigma4 & 6)) && ((sigma2 & 6) == (sigma3 & 6)))))
+			  if ((InternalIndicesFlags[sigma3 & 3][sigma4 & 3][sigma1 & 3][sigma2 & 3] == true) && 
+			      ((((sigma1 & 4) == (sigma3 & 4)) && ((sigma2 & 4) == (sigma4 & 4)))))
+			    //			    || (((sigma1 & 6) == (sigma4 & 6)) && ((sigma2 & 6) == (sigma3 & 6)))))
 			    {
 			      if (sigma3 == sigma4)
 				{
