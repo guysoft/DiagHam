@@ -201,4 +201,6 @@ ParticleOnSphereWithSU8Spin.cc \
 FermionOnSphereWithSU8Spin.cc  \
 FermionOnSquareLatticeWithSU8SpinMomentumSpace.cc \
 FermionOnSphereWithSU8SpinLong.cc \
-FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong.cc
+FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong.cc \
+FermionOnSquareLatticeWithSU4SpinMomentumSpaceSzSymmetry.cc \
+FermionOnSquareLatticeWithSU4SpinMomentumSpaceSzPzPreservingEzSymmetry.cc

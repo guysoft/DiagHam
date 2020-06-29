@@ -75,7 +75,7 @@ FermionOnSphereWithSU4Spin::FermionOnSphereWithSU4Spin()
   this->LookUpTable = 0;  
   this->SignLookUpTable = 0;
   this->SignLookUpTableMask = 0;
-  this->MaximumSignLookUp = 0;
+  this->MaximumSignLookUp = 0;  
 }
 
 // basic constructor
@@ -1311,7 +1311,7 @@ long FermionOnSphereWithSU4Spin::ShiftedEvaluateHilbertSpaceDimension(int nbrFer
 // totalSpin = twce the total spin value
 // return value = Hilbert space dimension
 
-int FermionOnSphereWithSU4Spin::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin)
+long FermionOnSphereWithSU4Spin::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin)
 {
   return this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax, (totalLz + (nbrFermions * lzMax)) >> 1, 
 						    (totalSpin + nbrFermions) >> 1, (totalIsospin + nbrFermions) >> 1);

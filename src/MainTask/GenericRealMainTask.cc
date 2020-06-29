@@ -92,7 +92,7 @@ GenericRealMainTask::GenericRealMainTask(OptionManager* options, AbstractHilbert
   if (outputFileName != 0)
     {
       this->OutputFileName = new char [strlen(outputFileName) + 1];
-      strncpy(this->OutputFileName, outputFileName, strlen(outputFileName));
+      strcpy(this->OutputFileName, outputFileName);
       this->OutputFileName[strlen(outputFileName)] = '\0';
     }
   else
@@ -106,7 +106,7 @@ GenericRealMainTask::GenericRealMainTask(OptionManager* options, AbstractHilbert
   else
     {
       this->EigenvectorFileName = new char [strlen(eigenvectorFileName) + 1];
-      strncpy(this->EigenvectorFileName, eigenvectorFileName, strlen(eigenvectorFileName));
+      strcpy(this->EigenvectorFileName, eigenvectorFileName);
       this->EigenvectorFileName[strlen(eigenvectorFileName)] = '\0';
     }
   this->Hamiltonian = hamiltonian;

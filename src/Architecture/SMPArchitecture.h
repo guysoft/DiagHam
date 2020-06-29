@@ -92,7 +92,7 @@ class SMPArchitecture : public AbstractArchitecture
   // flag to indicate if the log file option is activated
   bool VerboseModeFlag;
 
- public:
+public:
   
   // constructor
   //
@@ -201,5 +201,6 @@ inline int SMPArchitecture::GetThreadID()
 {
   return this->ThreadParameters->ThreadID;
 }
+
 
 #endif

@@ -87,7 +87,7 @@ GenericComplexMainTask::GenericComplexMainTask(OptionManager* options, AbstractH
 					       double shift, char* outputFileName, bool firstRun, char* eigenvectorFileName)
 {
   this->OutputFileName = new char [strlen(outputFileName) + 1];
-  strncpy(this->OutputFileName, outputFileName, strlen(outputFileName));
+  strcpy(this->OutputFileName, outputFileName);
   this->OutputFileName[strlen(outputFileName)] = '\0';
   if (eigenvectorFileName == 0)
     {
@@ -96,7 +96,7 @@ GenericComplexMainTask::GenericComplexMainTask(OptionManager* options, AbstractH
   else
     {
       this->EigenvectorFileName = new char [strlen(eigenvectorFileName) + 1];
-      strncpy(this->EigenvectorFileName, eigenvectorFileName, strlen(eigenvectorFileName));
+      strcpy(this->EigenvectorFileName, eigenvectorFileName);
       this->EigenvectorFileName[strlen(eigenvectorFileName)] = '\0';
     }
   this->Hamiltonian = hamiltonian;

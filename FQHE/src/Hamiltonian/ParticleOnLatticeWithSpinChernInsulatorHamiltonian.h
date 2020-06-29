@@ -108,6 +108,11 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   // array containing the (m1,m2) indices per index sum for the creation (or annhilation) operators for the inter spin sector
   int** InterSectorIndicesPerSum;
 
+  // number of tasks for load balancing
+  int NbrBalancedTasks;
+  // load balancing array for parallelisation, indicating starting indices
+  long* LoadBalancingArray;
+
   // arrays containing all interaction factors, the first index correspond correspond to index sum for the creation (or annhilation) operators
   // the second index is a linearized index (m1,m2) + (n1,n2) * (nbr element in current index sum) (m for creation operators, n for annhilation operators)
   // array containing all interaction factors for spin up and spin up
@@ -252,6 +257,13 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   // memory = amount of memory that can be used for S^2  precalculations
   virtual void AddS2 (double factor = 1.0, bool fixedSz = true, long memory = 0l);
 
+  // get the preferred distribution over parallel execution in N tasks for parallel Hamiltonian-Vector multiplication
+  //
+  // nbrThreads = number of threads requested
+  // segmentIndices = array returning the reference to an array of the first index of each of the segments
+  // return value = true if no error occured
+  virtual bool GetLoadBalancing(int nbrTasks, long* &segmentIndices);
+    
  protected:
  
   // core part of the AddMultiply method involving the two-body interaction

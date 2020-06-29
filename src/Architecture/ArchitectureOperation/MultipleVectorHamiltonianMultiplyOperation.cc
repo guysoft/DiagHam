@@ -558,9 +558,9 @@ bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOpera
   if (this->ComplexDestinationVectors == 0)
     RealFlag = true;
   long *SegmentIndices=0;
-  bool CleanUp=false;
+  bool CleanUp = false;
   int TmpNbrThreads = architecture->GetNbrThreads();
-  if (Hamiltonian->GetLoadBalancing(TmpNbrThreads, SegmentIndices)==false)
+  if (Hamiltonian->GetLoadBalancing(TmpNbrThreads, SegmentIndices) == false)
     {
       SegmentIndices = new long[TmpNbrThreads+1];
       CleanUp=true;

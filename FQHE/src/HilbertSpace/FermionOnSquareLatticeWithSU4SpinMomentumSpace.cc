@@ -55,6 +55,19 @@ using std::ifstream;
 using std::ios;
 
 
+// default constructor
+//
+
+FermionOnSquareLatticeWithSU4SpinMomentumSpace::FermionOnSquareLatticeWithSU4SpinMomentumSpace ()
+{
+  this->NbrSiteX = 0;
+  this->NbrSiteY = 0;
+  this->KxMomentum = 0;
+  this->KyMomentum = 0;
+  this->SzFlag = false;
+  this->PzFlag = false;
+}
+
 // basic constructor
 // 
 // nbrFermions = number of fermions
@@ -80,6 +93,7 @@ FermionOnSquareLatticeWithSU4SpinMomentumSpace::FermionOnSquareLatticeWithSU4Spi
   this->NbrSiteY = nbrSiteY;
   this->KxMomentum = kxMomentum;
   this->KyMomentum = kyMomentum;
+  this->HighestBit = (4 * this->NbrSiteX * this->NbrSiteY) - 1;
   this->LzMax = this->NbrSiteX * this->NbrSiteY;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
@@ -152,6 +166,7 @@ FermionOnSquareLatticeWithSU4SpinMomentumSpace::FermionOnSquareLatticeWithSU4Spi
   this->NbrFermionsDownMinus = ((this->NbrFermions-this->TotalSpin)/2 - this->TotalIsospin)/2;
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
+  this->HighestBit = (4 * this->NbrSiteX * this->NbrSiteY) - 1;
   this->KxMomentum = kxMomentum;
   this->KyMomentum = kyMomentum;
   this->LzMax = this->NbrSiteX * this->NbrSiteY;
@@ -230,6 +245,7 @@ FermionOnSquareLatticeWithSU4SpinMomentumSpace::FermionOnSquareLatticeWithSU4Spi
   this->NbrFermionsDownMinus = ((this->NbrFermions-this->TotalSpin)/2 - this->TotalIsospin)/2;
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
+  this->HighestBit = (4 * this->NbrSiteX * this->NbrSiteY) - 1;
   this->KxMomentum = kxMomentum;
   this->KyMomentum = kyMomentum;
   this->LzMax = this->NbrSiteX * this->NbrSiteY;
@@ -309,6 +325,7 @@ FermionOnSquareLatticeWithSU4SpinMomentumSpace::FermionOnSquareLatticeWithSU4Spi
   this->NbrFermionsDownMinus = (this->NbrFermions - this->TotalSpin - this->TotalIsospin + this->TotalEntanglement) / 4;
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
+  this->HighestBit = (4 * this->NbrSiteX * this->NbrSiteY) - 1;
   this->KxMomentum = kxMomentum;
   this->KyMomentum = kyMomentum;
   this->LzMax = this->NbrSiteX * this->NbrSiteY;
@@ -378,6 +395,8 @@ FermionOnSquareLatticeWithSU4SpinMomentumSpace::FermionOnSquareLatticeWithSU4Spi
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
   this->TotalSpin = fermions.TotalSpin;
+  this->TotalIsospin = fermions.TotalIsospin;
+  this->TotalEntanglement = fermions.TotalEntanglement;
   this->SzFlag = fermions.SzFlag;
   this->PzFlag = fermions.PzFlag;
   this->NbrFermionsUpPlus = fermions.NbrFermionsUpPlus;
@@ -430,12 +449,15 @@ FermionOnSquareLatticeWithSU4SpinMomentumSpace& FermionOnSquareLatticeWithSU4Spi
   this->SzFlag = fermions.SzFlag;
   this->PzFlag = fermions.PzFlag;
   this->TotalSpin = fermions.TotalSpin;
+  this->TotalIsospin = fermions.TotalIsospin;
+  this->TotalEntanglement = fermions.TotalEntanglement;
   this->NbrFermionsUpPlus = fermions.NbrFermionsUpPlus;
   this->NbrFermionsDownPlus = fermions.NbrFermionsDownPlus;
   this->NbrFermionsUpMinus = fermions.NbrFermionsUpMinus;
   this->NbrFermionsDownMinus = fermions.NbrFermionsDownMinus;
   this->StateDescription = fermions.StateDescription;
   this->StateHighestBit = fermions.StateHighestBit;
+  this->HighestBit = fermions.HighestBit;
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
   this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
   this->LookUpTableShift = fermions.LookUpTableShift;

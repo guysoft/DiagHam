@@ -83,7 +83,7 @@ void ArchitectureManager::AddOptionGroup(OptionManager* manager)
   (*ParallelizationGroup) += new SingleStringOption ('\n', "mpi-smp", "enable both MPI and SMP mode, the name file describing the cluster has to be passed as argument");
 #endif
   (*ParallelizationGroup) += new SingleStringOption  ('\n', "cluster-profil", "enable cluster profiling, the name of the log file  has to be passed as argument");  
-  (*ParallelizationGroup) += new BooleanOption ('\n', "mpi-autoloadbalancing", "use automatic load balancing, overriding any manual load balancing");
+  (*ParallelizationGroup) += new BooleanOption ('\n', "auto-loadbalancing", "use automatic load balancing, overriding any manual load balancing");
 #endif
   
 }
@@ -104,7 +104,7 @@ AbstractArchitecture* ArchitectureManager::GetArchitecture()
 #ifdef __MPI__
       bool MPIFlag = this->Options->GetBoolean("mpi");
       char* MPILogFile = this->Options->GetString("cluster-profil");
-      bool AutomaticLoadBalancing = this->Options->GetBoolean("mpi-autoloadbalancing");
+      bool AutomaticLoadBalancing = this->Options->GetBoolean("auto-loadbalancing");
 #ifdef __SMP__
       if (this->Options->GetString("mpi-smp") != 0)
 	{

@@ -110,7 +110,9 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   unsigned long ProdATemporaryState;
   // Lz maximum value associated to temporary state used when applying ProdA operator
   int ProdALzMax;
-
+  // symmetry factor associated to the temporary state used when applying ProdA operator
+  double ProdASymmetryFactor;
+  
  public:
 
   // default constructor
@@ -188,28 +190,28 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
   // return value = coefficient obtained when applying a^+_m_dm a_m_dm
-  double AddpAdp (int index, int m);
+  virtual double AddpAdp (int index, int m);
 
   // apply a^+_m_up a_m_up operator to a given state  (only spin up isospin plus)
   //
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
   // return value = coefficient obtained when applying a^+_m_um a_m_um
-  double AdupAup (int index, int m);
+  virtual double AdupAup (int index, int m);
 
   // apply a^+_m_dm a_m_dm operator to a given state (only spin down isospin minus)
   //
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
   // return value = coefficient obtained when applying a^+_m_dm a_m_dm
-  double AddmAdm (int index, int m);
+  virtual double AddmAdm (int index, int m);
 
   // apply a^+_m_um a_m_um operator to a given state  (only spin up isospin minus)
   //
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
   // return value = coefficient obtained when applying a^+_m_um a_m_um
-  double AdumAum (int index, int m);
+  virtual double AdumAum (int index, int m);
 
   // apply a^+_m_s a_m_s operator to a given state
   //
@@ -398,7 +400,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  double AupAup (int index, int n1, int n2);
+  virtual double AupAup (int index, int n1, int n2);
 
   // apply a_n1_up a_n2_um operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
@@ -406,7 +408,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  double AupAum (int index, int n1, int n2);
+  virtual double AupAum (int index, int n1, int n2);
 
   // apply a_n1_up a_n2_dp operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
@@ -422,7 +424,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  double AupAdm (int index, int n1, int n2);
+  virtual double AupAdm (int index, int n1, int n2);
 
   // apply a_n1_um a_n2_um operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
@@ -430,7 +432,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  double AumAum (int index, int n1, int n2);
+  virtual double AumAum (int index, int n1, int n2);
 
   // apply a_n1_um a_n2_dp operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
@@ -438,7 +440,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  double AumAdp (int index, int n1, int n2);
+  virtual double AumAdp (int index, int n1, int n2);
 
   // apply a_n1_um a_n2_dm operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
@@ -446,7 +448,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  double AumAdm (int index, int n1, int n2);
+  virtual double AumAdm (int index, int n1, int n2);
 
   // apply a_n1_dp a_n2_dp operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
@@ -454,7 +456,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  double AdpAdp (int index, int n1, int n2);
+  virtual double AdpAdp (int index, int n1, int n2);
 
   // apply a_n1_dp a_n2_dm operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
@@ -462,7 +464,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  double AdpAdm (int index, int n1, int n2);
+  virtual double AdpAdm (int index, int n1, int n2);
 
   // apply a_n1_dm a_n2_dm operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
@@ -470,7 +472,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  double AdmAdm (int index, int n1, int n2);
+  virtual double AdmAdm (int index, int n1, int n2);
 
   // apply a^+_m1_sigma1 a^+_m2_sigma2 operator to the state produced using A*A* method (without destroying it). Sigma is 0 for up, 1 for um, 2 for dp and 3 for dm 
   //
@@ -488,7 +490,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AdupAdup (int m1, int m2, double& coefficient);
+  virtual int AdupAdup (int m1, int m2, double& coefficient);
 
   // apply a^+_m1_up a^+_m2_um operator to the state produced using A*A* method (without destroying it)
   //
@@ -496,7 +498,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AdupAdum (int m1, int m2, double& coefficient);
+  virtual int AdupAdum (int m1, int m2, double& coefficient);
 
   // apply a^+_m1_up a^+_m2_dp operator to the state produced using A*A* method (without destroying it)
   //
@@ -504,7 +506,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AdupAddp (int m1, int m2, double& coefficient);
+  virtual int AdupAddp (int m1, int m2, double& coefficient);
 
   // apply a^+_m1_up a^+_m2_dm operator to the state produced using A*A* method (without destroying it)
   //
@@ -512,7 +514,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AdupAddm (int m1, int m2, double& coefficient);
+  virtual int AdupAddm (int m1, int m2, double& coefficient);
 
   // apply a^+_m1_um a^+_m2_um operator to the state produced using A*A* method (without destroying it)
   //
@@ -520,7 +522,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AdumAdum (int m1, int m2, double& coefficient);
+  virtual int AdumAdum (int m1, int m2, double& coefficient);
 
   // apply a^+_m1_um a^+_m2_dp operator to the state produced using A*A* method (without destroying it)
   //
@@ -528,7 +530,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AdumAddp (int m1, int m2, double& coefficient);
+  virtual int AdumAddp (int m1, int m2, double& coefficient);
 
   // apply a^+_m1_um a^+_m2_dm operator to the state produced using A*A* method (without destroying it)
   //
@@ -536,7 +538,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AdumAddm (int m1, int m2, double& coefficient);
+  virtual int AdumAddm (int m1, int m2, double& coefficient);
 
   // apply a^+_m1_dp a^+_m2_dp operator to the state produced using A*A* method (without destroying it)
   //
@@ -544,7 +546,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AddpAddp (int m1, int m2, double& coefficient);
+  virtual int AddpAddp (int m1, int m2, double& coefficient);
 
   // apply a^+_m1_dp a^+_m2_dm operator to the state produced using A*A* method (without destroying it)
   //
@@ -552,7 +554,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AddpAddm (int m1, int m2, double& coefficient);
+  virtual int AddpAddm (int m1, int m2, double& coefficient);
 
   // apply a^+_m1_dm a^+_m2_dm operator to the state produced using A*A* method (without destroying it)
   //
@@ -560,14 +562,14 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AddmAddm (int m1, int m2, double& coefficient);
+  virtual int AddmAddm (int m1, int m2, double& coefficient);
 
   // print a given State
   //
   // Str = reference on current output stream 
   // state = ID of the state to print
   // return value = reference on current output stream 
-  ostream& PrintState (ostream& Str, int state);
+  virtual ostream& PrintState (ostream& Str, int state);
 
   // evaluate wave function in real space using a given basis and only for agiven range of components
   //
@@ -577,13 +579,13 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = wave function evaluated at the given location
-  Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
+  virtual Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
 				int firstComponent, int nbrComponent);                                
   
   // initialize evaluation of wave function in real space using a given basis and only for a given range of components and
   //
   // timeCoherence = true if time coherence has to be used
-  void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
+  virtual void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
   
   // create a U(1) state from an SU(4) state
   //
@@ -633,6 +635,19 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // return value = index of the destination state 
   virtual int GenericAdA(int index, int m, int n, double& coefficient);
 
+  // factorized code that is used to compute any symmetry information of a given state
+  //
+  // state = reference on the state that has been produced with the operator action
+  virtual void SymmetrizeAAInput(unsigned long& state);
+  
+  // factorized code that is used to symmetrize the result of any operator action
+  //
+  // state = reference on the state that has been produced with the operator action
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // highestBit = highest bit set to one in state
+  // return value = index of the destination state  
+  virtual int SymmetrizeAdAdResult(unsigned long& state, double& coefficient, int highestBit);
+
   // find state index
   //
   // stateDescription = unsigned integer describing the state
@@ -649,7 +664,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // totalSpin = twice the total spin value
   // totalIsospin = twice the total isospin value
   // return value = Hilbert space dimension
-  int EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin);
+  virtual long EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin);
 
   // evaluate Hilbert space dimension with shifted values for lzMax and totalLz
   //
@@ -659,7 +674,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // totalSpin = number of particles with spin up
   // totalIsospin = number of particles with isospin plus
   // return value = Hilbert space dimension  
-  long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin);
+  virtual long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin);
 
   // evaluate Hilbert space dimension with shifted values for lzMax and totalLz
   //
@@ -670,7 +685,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // totalIsospin = number of particles with isospin plus
   // entanglement = number of particles with entanglement plus
   // return value = Hilbert space dimension  
-  long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin, int entanglement);
+  virtual long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin, int entanglement);
 
   // generate look-up table associated to current Hilbert space
   // 
@@ -686,7 +701,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // totalIsospin = number of particles with isospin plus
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  long GenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin, long pos);
+  virtual long GenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin, long pos);
 
   // generate all states corresponding to the constraints
   // 
@@ -698,7 +713,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // totalEntanglement = number of particles with entanglement plus
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  long GenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin, int totalEntanglement, long pos);
+  virtual long GenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin, int totalEntanglement, long pos);
 
   // recursive part of the convertion from a state from one SU(4) basis to another, transforming the one body basis in each momentum sector
   //
@@ -709,8 +724,8 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // initialSU4Indices = array that gives the spin dressing the initial n-body state
   // currentSU4Indices = array that gives the spin dressing the current transformed n-body state
   // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
-  void TransformOneBodyBasisRecursive(ComplexVector& targetState, Complex coefficient,
-				      int position, int* momentumIndices, int* initialSU4Indices, int* currentSU4Indices, ComplexMatrix* oneBodyBasis);
+  virtual void TransformOneBodyBasisRecursive(ComplexVector& targetState, Complex coefficient,
+					      int position, int* momentumIndices, int* initialSU4Indices, int* currentSU4Indices, ComplexMatrix* oneBodyBasis);
 
 };
 
@@ -779,6 +794,7 @@ inline int FermionOnSphereWithSU4Spin::GenericAdA(int index, int m, int n, doubl
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
+  this->SymmetrizeAAInput(State);
   int NewLargestBit = StateHighestBit;
   coefficient = -this->SignLookUpTable[(State >> n) & this->SignLookUpTableMask[n]];
   coefficient *= this->SignLookUpTable[(State >> (n + 16)) & this->SignLookUpTableMask[n + 16]];
@@ -810,7 +826,7 @@ inline int FermionOnSphereWithSU4Spin::GenericAdA(int index, int m, int n, doubl
 #endif
     }
   State |= 0x1ul << m;
-  return this->FindStateIndex(State, NewLargestBit);
+  return this->SymmetrizeAdAdResult(State, coefficient, NewLargestBit);
 }
 
 // apply a_n1_sigma1 a_n2_sigma2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call. Sigma is 0 for up, 1 for um, 2 for dp and 3 for dm 
@@ -829,8 +845,9 @@ inline double FermionOnSphereWithSU4Spin::AsigmaAsigma (int index, int n1, int n
   n1 += 3 - sigma1;
   n2 <<= 2;
   n2 += 3 - sigma2;
- if (((this->ProdATemporaryState & (0x1ul << n1)) == 0) || ((this->ProdATemporaryState & (0x1ul << n2)) == 0) || (n1 == n2))
+  if (((this->ProdATemporaryState & (0x1ul << n1)) == 0) || ((this->ProdATemporaryState & (0x1ul << n2)) == 0) || (n1 == n2))
     return 0.0;
+  this->SymmetrizeAAInput(this->ProdATemporaryState);
   this->ProdALzMax = this->StateHighestBit[index];
   double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n2) & this->SignLookUpTableMask[n2]];
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];
@@ -900,7 +917,27 @@ inline int FermionOnSphereWithSU4Spin::AdsigmaAdsigma (int m1, int m2, int sigma
 #endif
     }
   TmpState |= (0x1ul << m1);
-  return this->FindStateIndex(TmpState, NewLzMax);
+  return this->SymmetrizeAdAdResult(TmpState, coefficient, NewLzMax);
+}
+
+// factorized code that is used to symmetrize the result of any operator action
+//
+// state = reference on the state that has been produced with the operator action
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// highestBit = highest bit set to one in state
+// return value = index of the destination state  
+
+inline int FermionOnSphereWithSU4Spin::SymmetrizeAdAdResult(unsigned long& state, double& coefficient, int highestBit)
+{
+  return this->FindStateIndex(state, highestBit);
+}
+
+// factorized code that is used to compute any symmetry information of a given state
+//
+// state = reference on the state that has been produced with the operator action
+
+inline void FermionOnSphereWithSU4Spin::SymmetrizeAAInput(unsigned long& state)
+{
 }
 
 #endif
