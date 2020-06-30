@@ -32,6 +32,9 @@
 #include "Architecture/ArchitectureOperation/MultipleComplexScalarProductOperation.h"
 #include "Architecture/SMPArchitecture.h"
 
+#include <sys/time.h>
+#include <stdlib.h>
+
 
 // constructor 
 //
@@ -52,6 +55,7 @@ MultipleComplexScalarProductOperation::MultipleComplexScalarProductOperation(Com
   this->LeftVector = leftVector;
   this->OperationType = AbstractArchitectureOperation::MultipleComplexScalarProduct;
   this->Strategy = MultipleComplexScalarProductOperation::VectorSubdivision;
+  this->ExecutionTime = 0.0;
 }
 
 // constructor 
@@ -73,6 +77,7 @@ MultipleComplexScalarProductOperation::MultipleComplexScalarProductOperation(Com
   this->LeftVector = leftVector;
   this->OperationType = AbstractArchitectureOperation::MultipleComplexScalarProduct;
   this->Strategy = MultipleComplexScalarProductOperation::VectorSubdivision;
+  this->ExecutionTime = 0.0;
 }
 
 // constructor 
@@ -93,6 +98,7 @@ MultipleComplexScalarProductOperation::MultipleComplexScalarProductOperation(Com
   this->RightVectorsByPointers = 0; 
   this->RightVectorMatrix = rightVectors;
   this->LeftVector = leftVector;
+  this->ExecutionTime = 0.0;
   this->OperationType = AbstractArchitectureOperation::MultipleComplexScalarProduct;
   this->Strategy = MultipleComplexScalarProductOperation::VectorSubdivision;
 }
@@ -111,6 +117,7 @@ MultipleComplexScalarProductOperation::MultipleComplexScalarProductOperation(con
   this->RightVectorsByPointers = operation.RightVectorsByPointers;
   this->RightVectorMatrix = operation.RightVectorMatrix;
   this->LeftVector = operation.LeftVector;
+  this->ExecutionTime = operation.ExecutionTime;
   this->OperationType = AbstractArchitectureOperation::MultipleComplexScalarProduct;
   this->Strategy = operation.Strategy;
 }
@@ -168,6 +175,9 @@ AbstractArchitectureOperation* MultipleComplexScalarProductOperation::Clone()
 
 bool MultipleComplexScalarProductOperation::RawApplyOperation()
 {
+  timeval TotalStartingTime2;
+  timeval TotalEndingTime2;
+  gettimeofday (&(TotalStartingTime2), 0);
   if (this->Strategy == MultipleComplexScalarProductOperation::VectorSubdivision)
     {
       if (this->RightVectors != 0)
@@ -219,6 +229,9 @@ bool MultipleComplexScalarProductOperation::RawApplyOperation()
 	      }
 	  }
     }
+  gettimeofday (&(TotalEndingTime2), 0);
+  this->ExecutionTime = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
+    ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
   return true;
 }
 
@@ -249,6 +262,29 @@ bool MultipleComplexScalarProductOperation::ArchitectureDependentApplyOperation(
   TmpOperations[ReducedNbrThreads]->SetScalarProducts(new Complex [this->GetNbrScalarProduct()]);
   architecture->SetThreadOperation(TmpOperations[ReducedNbrThreads], ReducedNbrThreads);		
   architecture->SendJobs();
+  if (architecture->VerboseMode() == true)
+    {
+      char TmpString[512];
+      sprintf (TmpString, "MultipleComplexScalarProductOperation core operation on SMP id 0 done in %.3f seconds", this->ExecutionTime);
+      architecture->AddToLog(TmpString);
+      double MinTime = this->ExecutionTime;
+      double MaxTime = this->ExecutionTime;
+      for (int i = 1; i < architecture->GetNbrThreads(); ++i)
+	{
+	  sprintf (TmpString, "MultipleComplexScalarProductOperation core operation on SMP id %d done in %.3f seconds", i, TmpOperations[i]->ExecutionTime);
+	  if (MinTime > TmpOperations[i]->ExecutionTime)
+	    {
+	      MinTime = TmpOperations[i]->ExecutionTime;
+	    }
+	  if (MaxTime < TmpOperations[i]->ExecutionTime)
+	    {
+	      MaxTime = TmpOperations[i]->ExecutionTime;
+	    }
+	  architecture->AddToLog(TmpString);
+	}
+      sprintf (TmpString, "MultipleComplexScalarProductOperation core operation min time=%.3f sec, max time=%.3f sec", MinTime, MaxTime);
+      architecture->AddToLog(TmpString);
+    }
   for (int i = 1; i < architecture->GetNbrThreads(); ++i)
     {
       for (int j = 0; j < this->GetNbrScalarProduct(); ++j)

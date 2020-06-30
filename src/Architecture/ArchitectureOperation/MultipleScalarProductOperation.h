@@ -56,6 +56,9 @@ class MultipleRealScalarProductOperation: public AbstractArchitectureOperation
   // pointer to the vector to use for the left hand side of the scalar product
   RealVector* LeftVector;  
 
+  // execution time measured in RawApply
+  double ExecutionTime;
+
  public:
   
   // constructor 

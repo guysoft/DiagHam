@@ -135,10 +135,10 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   int FastMultiplicationStep;
 
   // stored interactions per component
-  int *NbrInteractionPerComponent;
+  int* NbrInteractionPerComponent;
 
   // indices of matrix elements per component
-  int **InteractionPerComponentIndex;
+  int** InteractionPerComponentIndex;
   // coefficients of matrix elements per component
   Complex** InteractionPerComponentCoefficient;
   // translations of matrix elements per component

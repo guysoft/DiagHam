@@ -433,7 +433,12 @@ void FullReorthogonalizedComplexBlockLanczosAlgorithm::RunLanczosAlgorithm (int 
     {
       int NewVectorPosition = this->Index * this->BlockSize;
       int Lim = (this->Index - 2) * this->BlockSize;
-
+      if (this->Architecture->VerboseMode() == true)
+	{
+	  char TmpString[512];
+	  sprintf (TmpString, "FullReorthogonalizedComplexBlockLanczosAlgorithm running step %d", NewVectorPosition);
+	  this->Architecture->AddToLog(TmpString, true);
+	}
       for (int j = 0; j < this->BlockSize; ++j)
 	{
 	  for (int k = j; k < (2 * this->BlockSize); ++k)

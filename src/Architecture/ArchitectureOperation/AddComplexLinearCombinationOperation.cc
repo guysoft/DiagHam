@@ -34,6 +34,9 @@
 #include "MathTools/Complex.h"
 #include "Architecture/SMPArchitecture.h"
 
+#include <sys/time.h>
+#include <stdlib.h>
+
 
 // constructor 
 //
@@ -55,6 +58,7 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation (Comp
   this->Coefficients = coefficients;
   this->RealCoefficients = 0;
   this->DestinationVector = destinationVector;  
+  this->ExecutionTime = 0.0;
   this->OperationType = AbstractArchitectureOperation::AddComplexLinearCombination;
 }
 
@@ -78,6 +82,7 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation (Comp
   this->Coefficients = coefficients;
   this->RealCoefficients = 0;
   this->DestinationVector = destinationVector;  
+  this->ExecutionTime = 0.0;
   this->OperationType = AbstractArchitectureOperation::AddComplexLinearCombination;
 }
 
@@ -102,6 +107,7 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation(Compl
   this->Coefficients = coefficients;
   this->RealCoefficients = 0;
   this->DestinationVector = destinationVector;  
+  this->ExecutionTime = 0.0;
   this->OperationType = AbstractArchitectureOperation::AddComplexLinearCombination;
 }
 
@@ -125,6 +131,7 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation (Comp
   this->Coefficients = 0;
   this->RealCoefficients = coefficients;
   this->DestinationVector = destinationVector;  
+  this->ExecutionTime = 0.0;
   this->OperationType = AbstractArchitectureOperation::AddComplexLinearCombination;
 }
 
@@ -148,6 +155,7 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation (Comp
   this->Coefficients = 0;
   this->RealCoefficients = coefficients;
   this->DestinationVector = destinationVector;  
+  this->ExecutionTime = 0.0;
   this->OperationType = AbstractArchitectureOperation::AddComplexLinearCombination;
 }
 
@@ -172,6 +180,7 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation(Compl
   this->Coefficients = 0;
   this->RealCoefficients = coefficients;
   this->DestinationVector = destinationVector;  
+  this->ExecutionTime = 0.0;
   this->OperationType = AbstractArchitectureOperation::AddComplexLinearCombination;
 }
 
@@ -195,6 +204,7 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation (Comp
   this->Coefficients = coefficients;
   this->RealCoefficients = 0;
   this->DestinationVector = destinationVector;  
+  this->ExecutionTime = 0.0;
   this->OperationType = AbstractArchitectureOperation::AddComplexLinearCombination;
 }
 
@@ -218,6 +228,7 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation (Comp
   this->Coefficients = coefficients;
   this->RealCoefficients = 0;
   this->DestinationVector = destinationVector;  
+  this->ExecutionTime = 0.0;
   this->OperationType = AbstractArchitectureOperation::AddComplexLinearCombination;
 }
 
@@ -242,6 +253,7 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation(Compl
   this->Coefficients = coefficients;
   this->RealCoefficients = 0;
   this->DestinationVector = destinationVector;  
+  this->ExecutionTime = 0.0;
   this->OperationType = AbstractArchitectureOperation::AddComplexLinearCombination;
 }
 
@@ -264,6 +276,7 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation(const
   this->DestinationVector = operation.DestinationVector;  
   this->SourceVectorMatrix = operation.SourceVectorMatrix;
   this->RealSourceVectorMatrix = operation.RealSourceVectorMatrix;
+  this->ExecutionTime = operation.ExecutionTime;
 }
   
 // destructor
@@ -299,6 +312,9 @@ AbstractArchitectureOperation* AddComplexLinearCombinationOperation::Clone()
 
 bool AddComplexLinearCombinationOperation::RawApplyOperation()
 {
+  timeval TotalStartingTime2;
+  timeval TotalEndingTime2;
+  gettimeofday (&(TotalStartingTime2), 0);
   if ((this->RealSourceVector != 0) || (this->RealSourceVectorByPointers != 0) || (this->RealSourceVectorMatrix.GetNbrRow() != 0))
     {
       if (this->RealSourceVector != 0)
@@ -368,6 +384,9 @@ bool AddComplexLinearCombinationOperation::RawApplyOperation()
 		}
 	}
     }
+  gettimeofday (&(TotalEndingTime2), 0);
+  this->ExecutionTime = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
+    ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
   return true;
 }
 
@@ -393,6 +412,27 @@ bool AddComplexLinearCombinationOperation::ArchitectureDependentApplyOperation(S
   TmpOperations[ReducedNbrThreads]->SetIndicesRange(FirstComponent, this->DestinationVector->GetVectorDimension() - FirstComponent);  
   architecture->SetThreadOperation(TmpOperations[ReducedNbrThreads], ReducedNbrThreads);
   architecture->SendJobs();
+  if (architecture->VerboseMode() == true)
+    {
+      char TmpString[512];
+      double MinTime = 1e14;
+      double MaxTime = 0.0;
+      for (int i = 0; i < architecture->GetNbrThreads(); ++i)
+	{
+	  sprintf (TmpString, "AddComplexLinearCombinationOperation core operation on SMP id %d done in %.3f seconds", i, TmpOperations[i]->ExecutionTime);
+	  if (MinTime > TmpOperations[i]->ExecutionTime)
+	    {
+	      MinTime = TmpOperations[i]->ExecutionTime;
+	    }
+	  if (MaxTime < TmpOperations[i]->ExecutionTime)
+	    {
+	      MaxTime = TmpOperations[i]->ExecutionTime;
+	    }
+	  architecture->AddToLog(TmpString);
+	}
+      sprintf (TmpString, "AddComplexLinearCombinationOperation core operation min time=%.3f sec, max time=%.3f sec", MinTime, MaxTime);
+      architecture->AddToLog(TmpString);
+   }
   for (int i = 0; i < architecture->GetNbrThreads(); ++i)
     {
       delete TmpOperations[i];

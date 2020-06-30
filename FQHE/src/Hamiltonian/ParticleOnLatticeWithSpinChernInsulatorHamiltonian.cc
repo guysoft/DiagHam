@@ -66,6 +66,7 @@ ParticleOnLatticeWithSpinChernInsulatorHamiltonian::ParticleOnLatticeWithSpinChe
   this->S2Hamiltonian = 0;
   this->LoadBalancingArray = 0;
   this->NbrInteractionPerComponent = 0;
+  this->FastMultiplicationStep = 0;
 }
 
 // constructor

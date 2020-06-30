@@ -69,7 +69,7 @@ MultipleVectorHamiltonianMultiplyOperation::MultipleVectorHamiltonianMultiplyOpe
   this->ComplexDestinationPartialVectors = 0; 
   this->NbrVectors = nbrVectors;
   this->OperationType = AbstractArchitectureOperation::MultipleVectorHamiltonianMultiply;
-  this->ExecutionTime=0.0;
+  this->ExecutionTime = 0.0;
   if ((forceNormalMultiplication == false) && (forceConjugateMultiplication == false) && (forceHermitianeMultiplication == false))
     {
       this->UseConjugateFlag = false;
@@ -594,12 +594,24 @@ bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOpera
   if (architecture->VerboseMode() == true)
     {
       char TmpString[512];
+      double MinTime = 1e14;
+      double MaxTime = 0.0;
       for (int i = 0; i < architecture->GetNbrThreads(); ++i)
 	{
 	  sprintf (TmpString, "MultipleVectorHamiltonianMultiply core operation on SMP id %d done in %.3f seconds", i, TmpOperations[i]->ExecutionTime);
+	  if (MinTime > TmpOperations[i]->ExecutionTime)
+	    {
+	      MinTime = TmpOperations[i]->ExecutionTime;
+	    }
+	  if (MaxTime < TmpOperations[i]->ExecutionTime)
+	    {
+	      MaxTime = TmpOperations[i]->ExecutionTime;
+	    }
 	  architecture->AddToLog(TmpString);
 	}
-    }
+      sprintf (TmpString, "MultipleVectorHamiltonianMultiply core operation min time=%.3f sec, max time=%.3f sec", MinTime, MaxTime);
+      architecture->AddToLog(TmpString);
+   }
   for (int i = 1; i < architecture->GetNbrThreads(); ++i)
     {
       if (this->UseConjugateFlag == false)

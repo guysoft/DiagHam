@@ -75,7 +75,10 @@ class AddComplexLinearCombinationOperation: public AbstractArchitectureOperation
   // vector where the result has to be stored
   ComplexVector* DestinationVector;  
 
- public:
+  // execution time measured in RawApply
+  double ExecutionTime;
+
+public:
   
   // constructor 
   //
