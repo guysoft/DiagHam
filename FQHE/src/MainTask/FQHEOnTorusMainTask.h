@@ -65,18 +65,20 @@ class FQHEOnTorusMainTask: public QHEOnDiskMainTask
   int Multiplicity;
   // pointer to an externally provided initial vector
   Vector *ExplicitInitialVector;
-  // calculate spectral response at every so many steps
-  int SpectralResponseInterval;
-  // 
-  double SpectralResponseEpsilon;
-  //
-  double SpectralResponseOmegaMin;
-  //
-  double SpectralResponseOmegaMax;
-
-  //  if non-zero, store the Hamiltonian as a binary file
-  char* ExportBinaryHamiltonian;
   
+  // save spectral response at every so many steps
+  int SpectralResponseSaveInterval;
+  // minimum value of omega
+  double SpectralResponseOmegaMin;
+  // maximum value of omega
+  double SpectralResponseOmegaMax;
+   // small parameter to avoid the poles
+  double SpectralResponseEpsilon;
+  // omega step size
+  double SpectralResponseOmegaInterval;
+  // only print spectral response if difference between adjacent points > spectral resolution
+  double SpectralResponseSpectralResolution;
+
   // pointer to Lanczos manager
   LanczosManager* AlgorithmManager;
 

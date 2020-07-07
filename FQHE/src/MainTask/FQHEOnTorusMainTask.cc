@@ -122,6 +122,8 @@ FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbert
       this->KyOnlyFlag = false;
       this->RealFlag = forceReal;      
     }
+  //if (explicitInitialVector->GetVectorType()&Vector::ComplexDatas)
+  //  this->RealFlag = false;
   this->MultiplicityFlag = false;
   this->AlgorithmManager = lanczos;
   this->EnergyShift = shift;
@@ -186,21 +188,14 @@ FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbert
     {
       this->PartialLanczos = false;
     }
-  if ((*options)["sr-interval"] != 0)
+    
+  if ((*options)["sr-save-interval"] != 0)
     {
-      this->SpectralResponseInterval = options->GetInteger("sr-interval");
+      this->SpectralResponseSaveInterval = options->GetInteger("sr-save-interval");
     }
   else
     {
-      this->SpectralResponseInterval = false;
-    }
-  if ((*options)["sr-epsilon"] != 0)
-    {
-      this-> SpectralResponseEpsilon = options->GetDouble("sr-epsilon");
-    }
-  else
-    {
-      this->SpectralResponseEpsilon = false;
+      this->SpectralResponseSaveInterval = 0;
     }
   if ((*options)["sr-omega-min"] != 0)
     {
@@ -208,7 +203,7 @@ FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbert
     }
   else
     {
-      this->SpectralResponseOmegaMin = false;
+      this->SpectralResponseOmegaMin = 0.0;
     }
   if ((*options)["sr-omega-max"] != 0)
     {
@@ -216,8 +211,33 @@ FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbert
     }
   else
     {
-      this->SpectralResponseOmegaMax = false;
+      this->SpectralResponseOmegaMax = 0.0;
     }
+  if ((*options)["sr-epsilon"] != 0)
+    {
+      this-> SpectralResponseEpsilon = options->GetDouble("sr-epsilon");
+    }
+  else
+    {
+      this->SpectralResponseEpsilon = 0.0;
+    }
+  if ((*options)["sr-omega-interval"] != 0)
+    {
+      this-> SpectralResponseOmegaInterval = options->GetDouble("sr-omega-interval");
+    }
+  else
+    {
+      this->SpectralResponseOmegaInterval = 0.0;
+    }
+  if ((*options)["sr-spectral-resolution"] != 0)
+    {
+      this-> SpectralResponseSpectralResolution = options->GetDouble("sr-spectral-resolution");
+    }
+  else
+    {
+      this->SpectralResponseSpectralResolution = 0.0;
+    }
+    
   if ((*options)["use-lapack"] != 0)
     {
       this->LapackFlag = ((BooleanOption*) (*options)["use-lapack"])->GetBoolean();
@@ -328,32 +348,7 @@ FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbert
 		}
 	    }
 	}
-    } 
-  this->ExportBinaryHamiltonian = 0;
-  if (((*options)["export-binhamiltonian"] != 0) && (options->GetString("export-binhamiltonian") != 0)) 
-    {
-      if (this->ReducedHilbertSpaceDescription == 0)
-	{
-        if (RealFlag)  
-        {
-            RealSymmetricMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), true);
-            this->Hamiltonian->GetHamiltonian(HRep);
-            HRep.WriteMatrix(options->GetString("export-binhamiltonian"));	
-        }
-        else
-        {
-            HermitianMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), true);
-            this->Hamiltonian->GetHamiltonian(HRep);
-            HRep.WriteMatrix(options->GetString("export-binhamiltonian"));	  
-        }
-	}
-      else
-	{
-	  this->ExportBinaryHamiltonian = new char [strlen(options->GetString("export-binhamiltonian")) + 1];
-	  strcpy (this->ExportBinaryHamiltonian, options->GetString("export-binhamiltonian"));
-	}
-    }
-    
+    }  
   if (((*options)["test-hermitian"] != 0) && (options->GetBoolean("test-hermitian") == true))
     {
       if (RealFlag)  
@@ -732,12 +727,12 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 		  TotalCurrentTime.tv_sec = TotalEndingTime.tv_sec;
 		}
 	      cout << endl;
-	      if ((SpectralResponseInterval > 0)&&(CurrentNbrIterLanczos%SpectralResponseInterval == 0))
+	      if ((SpectralResponseSaveInterval > 0)&&(CurrentNbrIterLanczos%SpectralResponseSaveInterval == 0))
 	        {
 		  char* TmpName = new char [strlen(this->EigenvectorFileName) + 16];
                   sprintf (TmpName, "%s.omega_%g-%g_eps_%g.ni_%d.sr", this->EigenvectorFileName,SpectralResponseOmegaMin, SpectralResponseOmegaMax, SpectralResponseEpsilon, CurrentNbrIterLanczos);
 	          ofstream File(TmpName, ios::out); 
-         	  Lanczos->SampleSpectralResponse(File, SpectralResponseOmegaMin, SpectralResponseOmegaMax, SpectralResponseEpsilon);
+         	  Lanczos->SampleSpectralResponse(File, SpectralResponseOmegaMin, SpectralResponseOmegaMax, SpectralResponseEpsilon, SpectralResponseOmegaInterval, SpectralResponseSpectralResolution);
 		  File.close();
 		  delete [] TmpName;
 		}
@@ -844,15 +839,18 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 		  cout << "eigenvectors can't be computed" << endl;
 		}
 	    }
-	    if (SpectralResponseInterval != 0)
-	      {
-	          char* TmpName = new char [strlen(this->EigenvectorFileName) + 16];
-		  sprintf (TmpName, "%s.omega_%g-%g_eps_%g.sr", this->EigenvectorFileName,SpectralResponseOmegaMin, SpectralResponseOmegaMax, SpectralResponseEpsilon);
-		  ofstream File(TmpName, ios::out); 
-		  Lanczos->SampleSpectralResponse(File, SpectralResponseOmegaMin, SpectralResponseOmegaMax, SpectralResponseEpsilon);
-		  File.close();
-		  delete [] TmpName;
-		}
+
+	    //print final spectral response	    
+	    if (SpectralResponseSaveInterval != 0)
+	    {
+	      char* TmpName = new char [strlen(this->EigenvectorFileName) + 64];
+	      sprintf (TmpName, "%s.omega_%g-%g_eps_%g.sr", this->EigenvectorFileName,SpectralResponseOmegaMin, SpectralResponseOmegaMax, SpectralResponseEpsilon);
+	      ofstream File(TmpName, ios::out); 
+	      Lanczos->SampleSpectralResponse(File, SpectralResponseOmegaMin, SpectralResponseOmegaMax, SpectralResponseEpsilon, SpectralResponseOmegaInterval, SpectralResponseSpectralResolution);
+	      File.close();
+	      delete [] TmpName;
+	    }
+	    
 	  gettimeofday (&(TotalEndingTime), 0);
 	  cout << "------------------------------------------------------------------" << endl << endl;;
 	  Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
@@ -1051,12 +1049,23 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 		  TotalCurrentTime.tv_sec = TotalEndingTime.tv_sec;
 		}
 	      cout << endl;
+	      if ((SpectralResponseSaveInterval > 0)&&(CurrentNbrIterLanczos%SpectralResponseSaveInterval == 0))
+	        {
+		  char* TmpName = new char [strlen(this->EigenvectorFileName) + 64];
+                  sprintf (TmpName, "%s.omega_%g-%g_eps_%g.ni_%d.sr", this->EigenvectorFileName,SpectralResponseOmegaMin, SpectralResponseOmegaMax, SpectralResponseEpsilon, CurrentNbrIterLanczos);
+	          ofstream File(TmpName, ios::out); 
+         	  Lanczos->SampleSpectralResponse(File, SpectralResponseOmegaMin, SpectralResponseOmegaMax, SpectralResponseEpsilon, SpectralResponseOmegaInterval, SpectralResponseSpectralResolution);
+		  File.close();
+		  delete [] TmpName;
+		}
 	    }
+	    
 	  if ((Lanczos->TestConvergence() == true) && (CurrentNbrIterLanczos == 0))
 	    {
 	      TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
 	      TmpMatrix.SortMatrixUpOrder();
 	    }
+	    
 	  if (CurrentNbrIterLanczos >= this->MaxNbrIterLanczos)
 	    {
 	      cout << "too many Lanczos iterations" << endl;
@@ -1064,16 +1073,19 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 	      File.close();
 	      return 1;
 	    }
+	    
 	  GroundStateEnergy = Lowest;
 	  cout << endl;
 	  cout << (TmpMatrix.DiagonalElement(0) - this->EnergyShift) << " " << Lowest << " " << Precision << "  Nbr of iterations = " 
 	       << CurrentNbrIterLanczos << endl;
+	       
 	  for (int i = 0; i < this->NbrEigenvalue; ++i)
 	    {
 	      cout << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << " ";
 	      if  (this->ComputeEnergyFlag == false)
 		this->WriteResult(File, (TmpMatrix.DiagonalElement(i) - this->EnergyShift));
 	    }
+	    
 	  cout << endl;
 	  if ((this->EvaluateEigenvectors == true) && 
 	      (((this->DiskFlag == true) && (((this->MaximumAllowedTime == 0) && (CurrentNbrIterLanczos < this->NbrIterLanczos)) || 
@@ -1152,6 +1164,18 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 		  cout << "eigenvectors can't be computed" << endl;
 		}
 	    }
+	    
+	    //print final spectral repsonse	    
+	    if (SpectralResponseSaveInterval != 0)
+	    {
+	      char* TmpName = new char [strlen(this->EigenvectorFileName) + 64];
+	      sprintf (TmpName, "%s.omega_%g-%g_eps_%g.sr", this->EigenvectorFileName,SpectralResponseOmegaMin, SpectralResponseOmegaMax, SpectralResponseEpsilon);
+	      ofstream File(TmpName, ios::out);
+	      Lanczos->SampleSpectralResponse(File, SpectralResponseOmegaMin, SpectralResponseOmegaMax, SpectralResponseEpsilon, SpectralResponseOmegaInterval, SpectralResponseSpectralResolution);
+	      File.close();
+	      delete [] TmpName;
+	    }
+	  
 	  gettimeofday (&(TotalEndingTime), 0);
 	  cout << "------------------------------------------------------------------" << endl << endl;;
 	  Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 

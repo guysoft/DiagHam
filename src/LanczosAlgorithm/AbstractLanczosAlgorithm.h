@@ -166,7 +166,14 @@ class AbstractLanczosAlgorithm
   virtual Complex EvaluateSpectralResponse(double omega, const double epsilon=1E-10, int final_term=-1, int term_start=0);
   
   // sample the spectral response and write to file
-  virtual void SampleSpectralResponse(std::ostream &Str, double omegaMin, double omegaMax, double epsilon, int nbrPoints=100);
+  //
+  // Str = output file
+  // omegaMin = minimum omega
+  // omegaMax = maximum omega
+  // epsilon = epsilon small parameter to avoid poles
+  // omegaInterval = omega step size
+  // spectralResolution = only print points which differ from adjacent point by > spectralResoltion
+  virtual void SampleSpectralResponse(std::ostream &Str, double omegaMin, double omegaMax, double epsilon, double omegaInterval, double spectralResolution);
   
 
  protected:

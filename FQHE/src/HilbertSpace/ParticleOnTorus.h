@@ -167,7 +167,7 @@ class ParticleOnTorus :  public ParticleOnSphere
   // return value = transformed state
   virtual ComplexVector ChangeTorusAngle (ComplexVector& inputVector, double inputAngle, double inputAspectRatio, double outputAngle, double outputAspectRatio,
 					  unsigned long firstComponent, unsigned long nbrComponents);
-
+  
   // symmetrized a product of two uncoupled states 
   //
   // outputVector = reference on the vector which will contain the symmetrized state
