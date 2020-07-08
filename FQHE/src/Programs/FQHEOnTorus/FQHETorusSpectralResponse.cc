@@ -16,6 +16,8 @@
 #include "MainTask/FQHEOnTorusMainTask.h" //added by ba340
 
 #include "Hamiltonian/ParticleOnTorusGenericHamiltonian.h" //added by ba340
+#include "Hamiltonian/ParticleOnTorusCoulombHamiltonian.h"
+#include "Hamiltonian/ParticleOnTorusPerturbedCoulombHamiltonian.h"
 
 #include "Operator/ParticleOnSphereDensityDensityOperator.h"
 #include "Operator/ParticleOnSphereDensityOperator.h"
@@ -86,6 +88,7 @@ int main ( int argc, char** argv )
     // some running options and help
     OptionManager Manager ( "FQHETorusSpectralResponse" , "0.01" );
     OptionGroup* SystemGroup = new OptionGroup ( "system options" );
+    OptionGroup* CoulombGroup = new OptionGroup ( "options for (optional) Coulomb Hamiltonian" );
     OptionGroup* PlotOptionGroup = new OptionGroup ( "plot options" );
     OptionGroup* PrecalculationGroup = new OptionGroup ( "precalculation options" );
     OptionGroup* MiscGroup = new OptionGroup ( "misc options" );
@@ -94,6 +97,7 @@ int main ( int argc, char** argv )
     LanczosManager Lanczos(false);
 
     Manager += SystemGroup;
+    Manager += CoulombGroup;
     Manager += PlotOptionGroup;
     Architecture.AddOptionGroup ( &Manager );
     Lanczos.AddOptionGroup(&Manager);
@@ -110,6 +114,14 @@ int main ( int argc, char** argv )
     (*SystemGroup) += new SingleDoubleOption ('\n', "sr-epsilon", "spectral response epsilon (default = 1E-2)",1E-2);
     (*SystemGroup) += new SingleDoubleOption ('\n', "sr-omega-interval", "spectral response omega step size (default = 1E-2)",1E-2);
     (*SystemGroup) += new SingleDoubleOption ('\n', "sr-spectral-resolution", "spectral response omega step size (default = 1E-2)",1E-2);
+
+    (*CoulombGroup) += new BooleanOption ('\n', "use-coulomb", "allocate a Coulomb Hamiltonian instead of a generic Hamiltonian");
+    (*CoulombGroup) += new SingleIntegerOption ('\n', "coulomb-LL", "Landau-level parameter for Coulomb Hamiltonian",0);
+    (*CoulombGroup) += new SingleDoubleOption ('\n', "coulomb-strength", "relative strength of Coulomb interaction", 1.0);
+    (*CoulombGroup) += new SingleStringOption ('\n', "perturbation-file", "file describing an additional 2-body perturbation in terms of its pseudo-potentials (should include Name=)");
+    (*CoulombGroup) += new SingleDoubleOption ('\n', "perturbation-strength", "relative strength of the additional perturbation", 1.0);
+    (*CoulombGroup) += new SingleIntegerOption ('\n', "nbr-perturbation", "maximum number of pseudopotentials to consider (-1=all)", -1);
+
     
     ( *PlotOptionGroup ) += new SingleStringOption ( '\n', "output", "output file ame (default output name replace the .vec extension of the input file with .rho or .rhorho)", 0 );
     
@@ -165,22 +177,63 @@ int main ( int argc, char** argv )
     cout << setw ( 20 ) << std::left << "Momentum" << setw ( 20 ) << std::left << Momentum << endl;
     cout << setw ( 20 ) << std::left << "Ratio" << setw ( 20 ) << std::left << Ratio << endl;
     cout << setw ( 20 ) << std::left << "Statistics" << setw ( 20 ) << std::left << Statistics << endl;
-    
-    double* PseudoPotentials;
-	  int NbrPseudoPotentials = 0;
-	  if (Manager.GetString("interaction-file") == 0)
-		{
-		  cout << "an interaction file has to be provided" << endl;
-		  return -1;
-		}
-	  else
-		{
-		  if (FQHETorusGetPseudopotentials(Manager.GetString("interaction-file"), NbrPseudoPotentials, PseudoPotentials) == false)
-		return -1;
-		}
 
-	  char* OutputNamePrefix = new char [1024];
-	  sprintf (OutputNamePrefix, "fermions_torus_spec_resp_kysym_%s_n_%d_2s_%d_ratio_%f", Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta, Ratio);
+
+    double* PseudoPotentials;
+    int NbrPseudoPotentials = 0;
+    char *InteractionName=0;
+    int PerturbationNbrPseudoPotentials;
+    double* PerturbationPseudoPotentials=NULL;
+    char* PerturbationName = NULL;
+    bool UsePerturbed=false;
+    bool UseCoulomb=Manager.GetBoolean("use-coulomb");
+    
+    if (UseCoulomb)
+      {
+	InteractionName = new char [256];
+	int offset=0;
+	if ( Manager.GetDouble("coulomb-strength")==1.0)
+	  offset+=sprintf(InteractionName+offset,"coulomb");
+	else
+	  {
+	    offset+=sprintf(InteractionName+offset,"coulomb_%g",Manager.GetDouble("coulomb-strength"));
+	    UsePerturbed=true;
+	  }
+	if (Manager.GetString("perturbation-file")!=NULL)
+	  {      
+	    UsePerturbed=true;
+	    if (FQHETorusGetPseudopotentials(Manager.GetString("perturbation-file"), PerturbationNbrPseudoPotentials, PerturbationPseudoPotentials, PerturbationName) == false)
+	      {
+		cout << "Error reading Pseudopotentials of perturbation";
+		return -1;
+	      }      
+	    offset+=sprintf(InteractionName+offset,"_plus_%s", PerturbationName);
+	    if ( Manager.GetDouble("perturbation-strength")!=1.0)
+	      offset+=sprintf(InteractionName+offset,"_scale_%g",Manager.GetDouble("perturbation-strength"));
+	    if (Manager.GetInteger("nbr-perturbation")>0 && Manager.GetInteger("nbr-perturbation")<PerturbationNbrPseudoPotentials)
+	      {
+		PerturbationNbrPseudoPotentials=Manager.GetInteger("nbr-perturbation");
+		offset+=sprintf(InteractionName+offset,"_trunc_%d",PerturbationNbrPseudoPotentials);
+	      }
+	  }
+      }
+    else
+      {
+	if (Manager.GetString("interaction-file") == 0)
+	  {
+	    cout << "an interaction file has to be provided" << endl;
+	    return -1;
+	  }
+	else
+	  {
+	    if (FQHETorusGetPseudopotentials(Manager.GetString("interaction-file"), NbrPseudoPotentials, PseudoPotentials) == false)
+	      return -1;
+	  }
+	InteractionName=Manager.GetString("interaction-name");
+      }
+
+    char* OutputNamePrefix = new char [1024];
+    sprintf (OutputNamePrefix, "fermions_torus_spec_resp_kysym_%s_n_%d_2s_%d_ratio_%f", InteractionName, NbrParticles, NbrFluxQuanta, Ratio);
     
     RealVector* RealState = new RealVector();
     
@@ -203,7 +256,6 @@ int main ( int argc, char** argv )
     // qx and qy are the Fourier modes of the density operator
     for (int qy=0;qy<NbrFluxQuanta;++qy)
       {
-
 	ParticleOnTorus* TargetSpace = GetHilbertSpace(Statistics, NbrParticles, NbrFluxQuanta, (Momentum+qy)%NbrFluxQuanta);
 	Space->SetTargetSpace(TargetSpace);
 	ComplexVector* TargetVector = new ComplexVector(TargetSpace->GetHilbertSpaceDimension(),true);
@@ -224,7 +276,19 @@ int main ( int argc, char** argv )
 	
 	//create hamiltonian
 	
-	AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusGenericHamiltonian (TargetSpace, NbrParticles, NbrFluxQuanta, Ratio, NbrPseudoPotentials, PseudoPotentials, Architecture.GetArchitecture(), /*1024*/ Memory);
+	AbstractQHEHamiltonian* Hamiltonian;
+	if (UseCoulomb)
+	  {
+	    if (UsePerturbed)
+	      Hamiltonian = new ParticleOnTorusPerturbedCoulombHamiltonian (TargetSpace, NbrParticles, NbrFluxQuanta, Ratio, Manager.GetInteger("coulomb-LL"),
+								      Manager.GetDouble("coulomb-strength"), PerturbationNbrPseudoPotentials, 
+								      PerturbationPseudoPotentials, Manager.GetDouble("perturbation-strength"),
+								      Architecture.GetArchitecture(), 0);
+	    else Hamiltonian = new ParticleOnTorusCoulombHamiltonian (TargetSpace, NbrParticles, NbrFluxQuanta, Ratio, Manager.GetInteger("coulomb-LL"), Architecture.GetArchitecture(), 0);
+	  }
+	else
+	  Hamiltonian = new ParticleOnTorusGenericHamiltonian (TargetSpace, NbrParticles, NbrFluxQuanta, Ratio, NbrPseudoPotentials, PseudoPotentials, Architecture.GetArchitecture(), /*1024*/ 0);
+
 	double Shift = -10.0;	
 	Hamiltonian->ShiftHamiltonian(Shift);
 	
