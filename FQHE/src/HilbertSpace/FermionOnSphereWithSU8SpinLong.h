@@ -432,7 +432,8 @@ inline double FermionOnSphereWithSU8SpinLong::AsigmaAsigma (int index, int n1, i
   n1 +=  sigma1;
   n2 <<= 3;
   n2 +=  sigma2;
-  if (((this->ProdATemporaryState & (((ULONGLONG) 0x1ul) << n1)) == 0) || ((this->ProdATemporaryState & (((ULONGLONG) 0x1ul) << n2)) == 0) || (n1 == n2))
+  if (((this->ProdATemporaryState & (((ULONGLONG) 0x1ul) << n1)) == ((ULONGLONG) 0x0ul)) ||
+      ((this->ProdATemporaryState & (((ULONGLONG) 0x1ul) << n2)) == ((ULONGLONG) 0x0ul)) || (n1 == n2))
     return 0.0;
   this->ProdALzMax = this->StateHighestBit[index];
   double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n2) & this->SignLookUpTableMask[n2]];
@@ -518,7 +519,7 @@ inline int FermionOnSphereWithSU8SpinLong::AdsigmaAdsigma (int m1, int m2, int s
   m1 +=  sigma1;
   m2 <<= 3;
   m2 +=  sigma2;
-  if (((TmpState & (((ULONGLONG) 0x1ul) << m1)) != 0) || ((TmpState & (((ULONGLONG) 0x1ul) << m2)) != 0) || (m1 == m2))
+  if (((TmpState & (((ULONGLONG) 0x1ul) << m1)) != ((ULONGLONG) 0x0ul)) || ((TmpState & (((ULONGLONG) 0x1ul) << m2)) != ((ULONGLONG) 0x0ul)) || (m1 == m2))
     return this->HilbertSpaceDimension;
   int NewLzMax = this->ProdALzMax;
   coefficient = 1.0;
