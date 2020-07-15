@@ -41,6 +41,7 @@
 #include "GeneralTools/UnsignedIntegerTools.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "GeneralTools/Endian.h"
+#include "GeneralTools/ArrayTools.h"
 
 #include <math.h>
 #include <cstdlib>
@@ -566,8 +567,8 @@ long FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong::GenerateStates(int nbrF
     {
       if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && ((currentTotalKy % this->NbrSiteY) == this->KyMomentum))
         {
-            this->StateDescription[pos] = ((ULONGLONG) 0x0ul);	  
-            return (pos + 1l);
+	  this->StateDescription[pos] = ((ULONGLONG) 0x0ul);	  
+	  return (pos + 1l);
         }
       else
 	{
@@ -659,8 +660,8 @@ long FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong::GenerateStates(int nbrF
     {
       if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && ((currentTotalKy % this->NbrSiteY) == this->KyMomentum))
         {
-            this->StateDescription[pos] = ((ULONGLONG) 0x0ul);	  
-            return (pos + 1l);
+	  this->StateDescription[pos] = ((ULONGLONG) 0x0ul);	  
+	  return (pos + 1l);
         }
       else
           return pos;
@@ -719,6 +720,171 @@ long FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong::GenerateStates(int nbrF
   return pos;
 }
 
+// generate all states corresponding to the constraints from the one component Hilbert spaces
+// 
+// nbrParticles1 = number of particles with sigma=1
+// nbrParticles2 = number of particles with sigma=2
+// nbrParticles3 = number of particles with sigma=3
+// nbrParticles4 = number of particles with sigma=4
+// nbrParticles5 = number of particles with sigma=5
+// nbrParticles6 = number of particles with sigma=6
+// nbrParticles7 = number of particles with sigma=7
+// nbrParticles8 = number of particles with sigma=8
+// return value = position from which new states have to be stored
+
+long FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong::GenerateStates(int nbrParticles1, int nbrParticles2, int nbrParticles3, int nbrParticles4,
+								    int nbrParticles5, int nbrParticles6, int nbrParticles7, int nbrParticles8)
+{
+  int TotalNbrSites = this->NbrSiteX * this->NbrSiteY;
+  int MinNbrParticlesPerSector = 0;
+  int MaxNbrParticlesPerSector = this->NbrFermions;
+  if (MaxNbrParticlesPerSector > TotalNbrSites)
+    {
+      MaxNbrParticlesPerSector = TotalNbrSites;
+    }
+
+  long** DimensionPerKSector = new long* [MaxNbrParticlesPerSector + 1];
+  int** DimensionPerKSectorKx = new int* [MaxNbrParticlesPerSector + 1];
+  int** DimensionPerKSectorKy = new int* [MaxNbrParticlesPerSector+ 1];
+  ULONGLONG*** HilbertSpacePerKSector = new  ULONGLONG** [MaxNbrParticlesPerSector+ 1];
+  int* NbrDimensionPerKSector = new int [MaxNbrParticlesPerSector+ 1];
+  for (int TmpN = MinNbrParticlesPerSector; TmpN <= MaxNbrParticlesPerSector; ++TmpN)
+    {
+      if ((TmpN == nbrParticles1) || (TmpN == nbrParticles2) || (TmpN == nbrParticles3) || (TmpN == nbrParticles4)
+	  || (TmpN == nbrParticles5) || (TmpN == nbrParticles6) || (TmpN == nbrParticles7) || (TmpN == nbrParticles8))
+	{
+	  int MaxTotalKx = this->NbrSiteX * TmpN;
+	  int MaxTotalKy = this->NbrSiteY * TmpN;
+	  DimensionPerKSector[TmpN] = new long [(MaxTotalKx + 1) * (MaxTotalKy + 1)];
+	  DimensionPerKSectorKx[TmpN] = new int [(MaxTotalKx + 1) * (MaxTotalKy + 1)];
+	  DimensionPerKSectorKy[TmpN] = new int [(MaxTotalKx + 1) * (MaxTotalKy + 1)];
+	  HilbertSpacePerKSector[TmpN] = new ULONGLONG* [(MaxTotalKx + 1) * (MaxTotalKy + 1)];
+	  NbrDimensionPerKSector[TmpN] = 0;
+	  for (int i = MaxTotalKx ; i >= 0; --i)
+	    {
+	      for (int j = MaxTotalKy; j >= 0; --j)
+		{
+		  long TmpDimension = this->EvaluateHilbertSpaceDimensionOneBand(TmpN, i, j, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0);
+		  if (TmpDimension > 0l)
+		    {
+		      DimensionPerKSector[TmpN][NbrDimensionPerKSector[TmpN]] = TmpDimension;
+		      DimensionPerKSectorKx[TmpN][NbrDimensionPerKSector[TmpN]] = i;
+		      DimensionPerKSectorKy[TmpN][NbrDimensionPerKSector[TmpN]] = j;
+		      HilbertSpacePerKSector[TmpN][NbrDimensionPerKSector[TmpN]] = new ULONGLONG[TmpDimension];
+		      this->GenerateStatesOneBand(HilbertSpacePerKSector[TmpN][NbrDimensionPerKSector[TmpN]], TmpN, i, j,
+						  this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0, 0l);
+		      ++NbrDimensionPerKSector[TmpN];
+		    }
+		}
+	    }
+	}
+      else
+	{
+	  DimensionPerKSector[TmpN] = 0;
+	  DimensionPerKSectorKx[TmpN] = 0;
+	  DimensionPerKSectorKy[TmpN] = 0;
+	  NbrDimensionPerKSector[TmpN] = 0;
+	}
+    }
+  long TmpDimension = 0l;
+  for (int i8 = 0; i8 < NbrDimensionPerKSector[nbrParticles8]; ++i8)
+    {
+      for (int i7 = 0; i7 < NbrDimensionPerKSector[nbrParticles7]; ++i7)
+	{
+	  for (int i6 = 0; i6 < NbrDimensionPerKSector[nbrParticles6]; ++i6)
+	    {
+	      for (int i5 = 0; i5 < NbrDimensionPerKSector[nbrParticles5]; ++i5)
+		{
+		  for (int i4 = 0; i4 < NbrDimensionPerKSector[nbrParticles4]; ++i4)
+		    {
+		      for (int i3 = 0; i3 < NbrDimensionPerKSector[nbrParticles3]; ++i3)
+			{
+			  for (int i2 = 0; i2 < NbrDimensionPerKSector[nbrParticles2]; ++i2)
+			    {
+			      for (int i1 = 0; i1 < NbrDimensionPerKSector[nbrParticles1]; ++i1)
+				{
+				  int TmpKx = (DimensionPerKSectorKx[nbrParticles1][i1] + DimensionPerKSectorKx[nbrParticles2][i2]
+					       + DimensionPerKSectorKx[nbrParticles3][i3] + DimensionPerKSectorKx[nbrParticles4][i4]
+					       + DimensionPerKSectorKx[nbrParticles5][i5] + DimensionPerKSectorKx[nbrParticles6][i6]
+					       + DimensionPerKSectorKx[nbrParticles7][i7] + DimensionPerKSectorKx[nbrParticles8][i8]) % this->NbrSiteX;
+				  int TmpKy = (DimensionPerKSectorKy[nbrParticles1][i1] + DimensionPerKSectorKy[nbrParticles2][i2]
+					       + DimensionPerKSectorKy[nbrParticles3][i3] + DimensionPerKSectorKy[nbrParticles4][i4]
+					       + DimensionPerKSectorKy[nbrParticles5][i5] + DimensionPerKSectorKy[nbrParticles6][i6]
+					       + DimensionPerKSectorKy[nbrParticles7][i7] + DimensionPerKSectorKy[nbrParticles8][i8]) % this->NbrSiteY;
+				  if ((TmpKx == this->KxMomentum) && (TmpKy == this->KyMomentum))
+				    {
+				      int Dim1 = DimensionPerKSector[nbrParticles1][i1];
+				      int Dim2 = DimensionPerKSector[nbrParticles2][i2];
+				      int Dim3 = DimensionPerKSector[nbrParticles3][i3];
+				      int Dim4 = DimensionPerKSector[nbrParticles4][i4];
+				      int Dim5 = DimensionPerKSector[nbrParticles5][i5];
+				      int Dim6 = DimensionPerKSector[nbrParticles6][i6];
+				      int Dim7 = DimensionPerKSector[nbrParticles7][i7];
+				      int Dim8 = DimensionPerKSector[nbrParticles8][i8];
+				      for (int j8 = 0; j8 < Dim8; ++j8)
+					{
+					  ULONGLONG Mask8 = HilbertSpacePerKSector[nbrParticles8][i8][j8] << 7;
+					  for (int j7 = 0; j7 < Dim7; ++j7)
+					    {
+					      ULONGLONG Mask7 = Mask8 | (HilbertSpacePerKSector[nbrParticles7][i7][j7] << 6);
+					      for (int j6 = 0; j6 < Dim6; ++j6)
+						{
+						  ULONGLONG Mask6 = Mask7 | (HilbertSpacePerKSector[nbrParticles6][i6][j6] << 5);
+						  for (int j5 = 0; j5 < Dim5; ++j5)
+						    {
+						      ULONGLONG Mask5 = Mask6 | (HilbertSpacePerKSector[nbrParticles5][i5][j5] << 4);
+						      for (int j4 = 0; j4 < Dim4; ++j4)
+							{
+							  ULONGLONG Mask4 = Mask5 | (HilbertSpacePerKSector[nbrParticles4][i4][j4] << 3);
+							  for (int j3 = 0; j3 < Dim3; ++j3)
+							    {
+							      ULONGLONG Mask3 = Mask4 | (HilbertSpacePerKSector[nbrParticles3][i3][j3] << 2);
+							      for (int j2 = 0; j2 < Dim2; ++j2)
+								{
+								  ULONGLONG Mask2 = Mask3 | (HilbertSpacePerKSector[nbrParticles2][i2][j2] << 1);
+								  for (int j1 = 0; j1 < Dim1; ++j1)
+								    {
+								      this->StateDescription[TmpDimension] = Mask2 | HilbertSpacePerKSector[nbrParticles1][i1][j1];
+								      ++TmpDimension;
+								    }
+								}
+							    }
+							}
+						    }
+						}
+					    }
+					}
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+  SortArrayDownOrdering<ULONGLONG>(this->StateDescription, TmpDimension);
+  for (int TmpN = MinNbrParticlesPerSector; TmpN <= MaxNbrParticlesPerSector; ++TmpN)
+    {
+      if (DimensionPerKSector[TmpN] != 0)
+	{
+	  for (int i = 0; i < NbrDimensionPerKSector[TmpN]; ++i)
+	    {
+	      delete[] HilbertSpacePerKSector[TmpN][i];
+	    }
+	  delete[] HilbertSpacePerKSector[TmpN];
+	  delete[] DimensionPerKSector[TmpN];
+	  delete[] DimensionPerKSectorKx[TmpN];
+	  delete[] DimensionPerKSectorKy[TmpN];
+	}
+    }
+  delete[] DimensionPerKSector;
+  delete[] DimensionPerKSectorKx;
+  delete[] DimensionPerKSectorKy;
+  delete[] NbrDimensionPerKSector;
+  
+  return TmpDimension;
+}
 
 // evaluate Hilbert space dimension
 //
@@ -825,7 +991,7 @@ long FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong::EvaluateHilbertSpaceDim
   if (currentKx < 0)
     return 0l;
   
-  unsigned long Tmp = 0l;
+  ULONGLONG Tmp = 0l;
   if (nbrFermions == 1)
     {
       for (int j = currentKy; j >= 0; --j)
@@ -858,6 +1024,122 @@ long FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong::EvaluateHilbertSpaceDim
   return Tmp;
 }
 
+// evaluate the Hilbert space dimension for the 8 component case from the one component Hilbert space dimensions
+//
+// nbrParticles1 = number of particles with sigma=1
+// nbrParticles2 = number of particles with sigma=2
+// nbrParticles3 = number of particles with sigma=3
+// nbrParticles4 = number of particles with sigma=4
+// nbrParticles5 = number of particles with sigma=5
+// nbrParticles6 = number of particles with sigma=6
+// nbrParticles7 = number of particles with sigma=7
+// nbrParticles8 = number of particles with sigma=8
+
+long FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong::EvaluateHilbertSpaceDimension(int nbrParticles1, int nbrParticles2, int nbrParticles3, int nbrParticles4,
+										   int nbrParticles5, int nbrParticles6, int nbrParticles7, int nbrParticles8)
+{
+  int TotalNbrSites = this->NbrSiteX * this->NbrSiteY;
+  int MinNbrParticlesPerSector = 0;
+  int MaxNbrParticlesPerSector = this->NbrFermions;
+  if (MaxNbrParticlesPerSector > TotalNbrSites)
+    {
+      MaxNbrParticlesPerSector = TotalNbrSites;
+    }
+
+  long** DimensionPerKSector = new long* [MaxNbrParticlesPerSector + 1];
+  int** DimensionPerKSectorKx = new int* [MaxNbrParticlesPerSector + 1];
+  int** DimensionPerKSectorKy = new int* [MaxNbrParticlesPerSector+ 1];
+  int* NbrDimensionPerKSector = new int [MaxNbrParticlesPerSector+ 1];
+  for (int TmpN = MinNbrParticlesPerSector; TmpN <= MaxNbrParticlesPerSector; ++TmpN)
+    {
+      if ((TmpN == nbrParticles1) || (TmpN == nbrParticles2) || (TmpN == nbrParticles3) || (TmpN == nbrParticles4)
+	  || (TmpN == nbrParticles5) || (TmpN == nbrParticles6) || (TmpN == nbrParticles7) || (TmpN == nbrParticles8))
+	{
+	  int MaxTotalKx = this->NbrSiteX * TmpN;
+	  int MaxTotalKy = this->NbrSiteY * TmpN;
+	  DimensionPerKSector[TmpN] = new long [(MaxTotalKx + 1) * (MaxTotalKy + 1)];
+	  DimensionPerKSectorKx[TmpN] = new int [(MaxTotalKx + 1) * (MaxTotalKy + 1)];
+	  DimensionPerKSectorKy[TmpN] = new int [(MaxTotalKx + 1) * (MaxTotalKy + 1)];
+	  NbrDimensionPerKSector[TmpN] = 0;
+	  for (int i = 0 ; i <= MaxTotalKx; ++i)
+	    {
+	      for (int j = 0; j <= MaxTotalKy; ++j)
+		{
+		  long TmpDimension = this->EvaluateHilbertSpaceDimensionOneBand(TmpN, i, j, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0);
+		  if (TmpDimension > 0l)
+		    {
+		      DimensionPerKSector[TmpN][NbrDimensionPerKSector[TmpN]] = TmpDimension;
+		      DimensionPerKSectorKx[TmpN][NbrDimensionPerKSector[TmpN]] = i;
+		      DimensionPerKSectorKy[TmpN][NbrDimensionPerKSector[TmpN]] = j;
+		      ++NbrDimensionPerKSector[TmpN];
+		    }
+		}
+	    }
+	}
+      else
+	{
+	  DimensionPerKSector[TmpN] = 0;
+	  DimensionPerKSectorKx[TmpN] = 0;
+	  DimensionPerKSectorKy[TmpN] = 0;
+	  NbrDimensionPerKSector[TmpN] = 0;
+	}
+    }
+  long TmpDimension = 0l;
+  for (int i1 = 0; i1 < NbrDimensionPerKSector[nbrParticles1]; ++i1)
+    {
+      for (int i2 = 0; i2 < NbrDimensionPerKSector[nbrParticles2]; ++i2)
+	{
+	  for (int i3 = 0; i3 < NbrDimensionPerKSector[nbrParticles3]; ++i3)
+	    {
+	      for (int i4 = 0; i4 < NbrDimensionPerKSector[nbrParticles4]; ++i4)
+		{
+		  for (int i5 = 0; i5 < NbrDimensionPerKSector[nbrParticles5]; ++i5)
+		    {
+		      for (int i6 = 0; i6 < NbrDimensionPerKSector[nbrParticles6]; ++i6)
+			{
+			  for (int i7 = 0; i7 < NbrDimensionPerKSector[nbrParticles7]; ++i7)
+			    {
+			      for (int i8 = 0; i8 < NbrDimensionPerKSector[nbrParticles8]; ++i8)
+				{
+				  int TmpKx = (DimensionPerKSectorKx[nbrParticles1][i1] + DimensionPerKSectorKx[nbrParticles2][i2]
+					       + DimensionPerKSectorKx[nbrParticles3][i3] + DimensionPerKSectorKx[nbrParticles4][i4]
+					       + DimensionPerKSectorKx[nbrParticles5][i5] + DimensionPerKSectorKx[nbrParticles6][i6]
+					       + DimensionPerKSectorKx[nbrParticles7][i7] + DimensionPerKSectorKx[nbrParticles8][i8]) % this->NbrSiteX;
+				  int TmpKy = (DimensionPerKSectorKy[nbrParticles1][i1] + DimensionPerKSectorKy[nbrParticles2][i2]
+					       + DimensionPerKSectorKy[nbrParticles3][i3] + DimensionPerKSectorKy[nbrParticles4][i4]
+					       + DimensionPerKSectorKy[nbrParticles5][i5] + DimensionPerKSectorKy[nbrParticles6][i6]
+					       + DimensionPerKSectorKy[nbrParticles7][i7] + DimensionPerKSectorKy[nbrParticles8][i8]) % this->NbrSiteY;
+				  if ((TmpKx == this->KxMomentum) && (TmpKy == this->KyMomentum))
+				    {
+				      TmpDimension += (DimensionPerKSector[nbrParticles1][i1] * DimensionPerKSector[nbrParticles2][i2]
+						       * DimensionPerKSector[nbrParticles3][i3] * DimensionPerKSector[nbrParticles4][i4]
+						       * DimensionPerKSector[nbrParticles5][i5] * DimensionPerKSector[nbrParticles6][i6]
+						       * DimensionPerKSector[nbrParticles7][i7] * DimensionPerKSector[nbrParticles8][i8]);
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+  for (int TmpN = MinNbrParticlesPerSector; TmpN <= MaxNbrParticlesPerSector; ++TmpN)
+    {
+      if (DimensionPerKSector[TmpN] != 0)
+	{
+	  delete[] DimensionPerKSector[TmpN];
+	  delete[] DimensionPerKSectorKx[TmpN];
+	  delete[] DimensionPerKSectorKy[TmpN];
+	}
+    }
+  delete[] DimensionPerKSector;
+  delete[] DimensionPerKSectorKx;
+  delete[] DimensionPerKSectorKy;
+  delete[] NbrDimensionPerKSector;
+  
+  return TmpDimension;
+}
 
 // evaluate Hilbert space dimension
 //
@@ -873,7 +1155,7 @@ long FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong::EvaluateHilbertSpaceDim
 // return value = Hilbert space dimension
 
 long FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong::EvaluateHilbertSpaceDimension(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy,
-										       int nbrParticles12, int nbrParticles34, int nbrParticles56, int nbrParticles78)
+										   int nbrParticles12, int nbrParticles34, int nbrParticles56, int nbrParticles78)
 {
   if (currentKy < 0)
     {
@@ -898,7 +1180,7 @@ long FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong::EvaluateHilbertSpaceDim
   if (currentKx < 0)
     return 0l;
   
-  unsigned long Tmp = 0l;
+  ULONGLONG Tmp = 0l;
   if (nbrFermions == 1)
     {
       for (int j = currentKy; j >= 0; --j)
@@ -929,4 +1211,92 @@ long FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong::EvaluateHilbertSpaceDim
 						 nbrParticles78 - (((i & 64) >> 6) + ((i & 128) >> 7)));
     }
   return Tmp;
+}
+
+// generate all states corresponding to the constraints for a single band
+//
+// stateDescriptions = array where the many-body basis configurations will be stored
+// nbrFermions = number of fermions
+// kxMomentum = total momentum along x
+// kyMomentum = total momentum along y
+// currentKx = current momentum along x for a single particle
+// currentKy = current momentum along y for a single particle
+// currentTotalKx = current total momentum along x
+// currentTotalKy = current total momentum along y
+// pos = position in StateDescription array where to store states
+// return value = position from which new states have to be stored
+
+long FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong::GenerateStatesOneBand(ULONGLONG* stateDescriptions, int nbrFermions,
+									   int kxMomentum, int kyMomentum,
+									   int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, long pos)
+{
+  if (currentKy < 0)
+    {
+      currentKy = this->NbrSiteY - 1;
+      currentKx--;
+    }
+  if (nbrFermions < 0)
+    {
+      return 0l;
+    }
+  if (nbrFermions == 0)
+    {
+      if ((currentTotalKx == kxMomentum) && (currentTotalKy == kyMomentum))
+        {
+	  stateDescriptions[pos] = ((ULONGLONG) 0x0ul);	  
+	  return (pos + 1l);
+        }
+      else
+	{
+          return pos;
+	}
+    }
+  if (currentKx < 0)
+    return pos;
+  long TmpPos = this->GenerateStatesOneBand(stateDescriptions, nbrFermions - 1, kxMomentum, kyMomentum, currentKx, currentKy - 1,
+					    currentTotalKx + currentKx, currentTotalKy + currentKy, pos);
+  ULONGLONG Mask = ((ULONGLONG) 0x1ul) << (((currentKx * this->NbrSiteY) + currentKy) << 3);
+  for (; pos < TmpPos; ++pos)
+    {
+      stateDescriptions[pos] |= Mask;
+    }  
+  return this->GenerateStatesOneBand(stateDescriptions, nbrFermions, kxMomentum, kyMomentum, currentKx, currentKy - 1,
+				     currentTotalKx, currentTotalKy, pos);
+}
+
+// evaluate Hilbert space dimension for fermions for a single band
+//
+// nbrParticles = number of nbrParticles
+// kxMomentum = total momentum along x
+// kyMomentum = total momentum along y
+// currentKx = current momentum along x for a single particle
+// currentKy = current momentum along y for a single particle
+// currentTotalKx = current total momentum along x
+// currentTotalKy = current total momentum along y
+// return value = Hilbert space dimension
+
+long FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong::EvaluateHilbertSpaceDimensionOneBand(int nbrParticles, int kxMomentum, int kyMomentum,
+											      int currentKx, int currentKy,
+											      int currentTotalKx, int currentTotalKy)
+{
+  if (currentKy < 0)
+    {
+      currentKy = this->NbrSiteY - 1;
+      currentKx--;
+    }
+  if (nbrParticles == 0)
+    {
+      if ((currentTotalKx == kxMomentum) && (currentTotalKy == kyMomentum))
+	return 1l;
+      else	
+	return 0l;
+    }
+  if (currentKx < 0)
+    return 0l;
+  long Count = 0;
+  Count += this->EvaluateHilbertSpaceDimensionOneBand(nbrParticles - 1, kxMomentum, kyMomentum, currentKx, currentKy - 1,
+						      currentTotalKx + currentKx, currentTotalKy + currentKy);
+  Count += this->EvaluateHilbertSpaceDimensionOneBand(nbrParticles, kxMomentum, kyMomentum, currentKx, currentKy - 1,
+						      currentTotalKx, currentTotalKy);
+  return Count;
 }

@@ -130,7 +130,7 @@ class FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong : public FermionOnSpher
   virtual ostream& PrintState (ostream& Str, int state);
 
  protected:
-
+ 
   // evaluate Hilbert space dimension
   //
   // nbrFermions = number of fermions
@@ -176,6 +176,32 @@ class FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong : public FermionOnSpher
   virtual long EvaluateHilbertSpaceDimension(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy,
 					     int nbrParticles12, int nbrParticles34, int nbrParticles56, int nbrParticles78);
   
+  // evaluate the Hilbert space dimension for the 8 component case from the one component Hilbert space dimensions
+  //
+  // nbrParticles1 = number of particles with sigma=1
+  // nbrParticles2 = number of particles with sigma=2
+  // nbrParticles3 = number of particles with sigma=3
+  // nbrParticles4 = number of particles with sigma=4
+  // nbrParticles5 = number of particles with sigma=5
+  // nbrParticles6 = number of particles with sigma=6
+  // nbrParticles7 = number of particles with sigma=7
+  // nbrParticles8 = number of particles with sigma=8
+  virtual long EvaluateHilbertSpaceDimension(int nbrParticles1, int nbrParticles2, int nbrParticles3, int nbrParticles4,
+					     int nbrParticles5, int nbrParticles6, int nbrParticles7, int nbrParticles8);
+
+  // evaluate Hilbert space dimension for fermions for a single band
+  //
+  // nbrParticles = number of nbrParticles
+  // kxMomentum = total momentum along x
+  // kyMomentum = total momentum along y
+  // currentKx = current momentum along x for a single particle
+  // currentKy = current momentum along y for a single particle
+  // currentTotalKx = current total momentum along x
+  // currentTotalKy = current total momentum along y
+  // return value = Hilbert space dimension  
+  long EvaluateHilbertSpaceDimensionOneBand(int nbrParticles, int kxMomentum, int kyMomentum,
+					    int currentKx, int currentKy, int currentTotalKx, int currentTotalKy);
+
   // generate all states corresponding to the constraints
   // 
   // nbrFermions = number of fermions
@@ -208,6 +234,20 @@ class FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong : public FermionOnSpher
 					     int nbrParticles1, int nbrParticles2, int nbrParticles3, int nbrParticles4,
 					     int nbrParticles5, int nbrParticles6, int nbrParticles7, int nbrParticles8, long pos);
 
+  // generate all states corresponding to the constraints from the one component Hilbert spaces
+  // 
+  // nbrParticles1 = number of particles with sigma=1
+  // nbrParticles2 = number of particles with sigma=2
+  // nbrParticles3 = number of particles with sigma=3
+  // nbrParticles4 = number of particles with sigma=4
+  // nbrParticles5 = number of particles with sigma=5
+  // nbrParticles6 = number of particles with sigma=6
+  // nbrParticles7 = number of particles with sigma=7
+  // nbrParticles8 = number of particles with sigma=8
+  // return value = position from which new states have to be stored
+  virtual long GenerateStates(int nbrParticles1, int nbrParticles2, int nbrParticles3, int nbrParticles4,
+			      int nbrParticles5, int nbrParticles6, int nbrParticles7, int nbrParticles8);
+
   // generate all states corresponding to the constraints
   // 
   // nbrFermions = number of fermions
@@ -224,6 +264,21 @@ class FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong : public FermionOnSpher
   virtual long GenerateStates(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy,
 			      int nbrParticles12, int nbrParticles34, int nbrParticles56, int nbrParticles78, long pos);
 
+  // generate all states corresponding to the constraints for a single band
+  // 
+  // stateDescriptions = array where the many-body basis configurations will be stored
+  // nbrFermions = number of fermions
+  // kxMomentum = total momentum along x
+  // kyMomentum = total momentum along y
+  // currentKx = current momentum along x for a single particle
+  // currentKy = current momentum along y for a single particle
+  // currentTotalKx = current total momentum along x
+  // currentTotalKy = current total momentum along y
+  // pos = position in StateDescription array where to store states
+  // return value = position from which new states have to be stored
+  virtual long GenerateStatesOneBand(ULONGLONG* stateDescriptions, int nbrFermions, int kxMomentum, int kyMomentum,
+				     int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, long pos);
+  
 };
 
 
