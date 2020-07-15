@@ -249,9 +249,11 @@ FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong::FermionOnSquareLatticeWithSU
   this->LzMax = this->NbrSiteX * this->NbrSiteY;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
-  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0,
-									 this->NbrFermions1, this->NbrFermions2, this->NbrFermions3, this->NbrFermions4,
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions1, this->NbrFermions2, this->NbrFermions3, this->NbrFermions4,
 									 this->NbrFermions5, this->NbrFermions6, this->NbrFermions7, this->NbrFermions8);
+  // this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0,
+  // 									 this->NbrFermions1, this->NbrFermions2, this->NbrFermions3, this->NbrFermions4,
+  // 									 this->NbrFermions5, this->NbrFermions6, this->NbrFermions7, this->NbrFermions8);
   
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
@@ -262,12 +264,16 @@ FermionOnSquareLatticeWithSU8SpinMomentumSpaceLong::FermionOnSquareLatticeWithSU
       this->Flag.Initialize();
       this->StateDescription = new ULONGLONG [this->HilbertSpaceDimension];
       this->StateHighestBit = new int [this->HilbertSpaceDimension];  
-      long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0,
-								this->NbrFermions1, this->NbrFermions2,
+      // long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0,
+      // 								this->NbrFermions1, this->NbrFermions2,
+      // 								this->NbrFermions3, this->NbrFermions4,
+      // 								this->NbrFermions5, this->NbrFermions6,
+      // 								this->NbrFermions7, this->NbrFermions8, 0l);
+     long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions1, this->NbrFermions2,
 								this->NbrFermions3, this->NbrFermions4,
 								this->NbrFermions5, this->NbrFermions6,
-								this->NbrFermions7, this->NbrFermions8, 0l);
-      if (this->LargeHilbertSpaceDimension != TmpLargeHilbertSpaceDimension)
+								this->NbrFermions7, this->NbrFermions8);
+       if (this->LargeHilbertSpaceDimension != TmpLargeHilbertSpaceDimension)
 	{
 	  cout << "error while generating the Hilbert space " << this->LargeHilbertSpaceDimension << " " << TmpLargeHilbertSpaceDimension << endl;
 	}
