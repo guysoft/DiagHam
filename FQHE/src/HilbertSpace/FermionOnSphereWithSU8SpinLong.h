@@ -452,7 +452,7 @@ inline double FermionOnSphereWithSU8SpinLong::AsigmaAsigma (int index, int n1, i
   this->ProdATemporaryState &= ~(((ULONGLONG) 0x1ul) << n1);
   if (this->ProdATemporaryState != ((ULONGLONG) 0x0ul))
     {
-      while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
+      while ((this->ProdATemporaryState >> this->ProdALzMax) == ((ULONGLONG) 0x0ul))
 	--this->ProdALzMax;
     }
   else

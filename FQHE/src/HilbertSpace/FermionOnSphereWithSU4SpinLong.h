@@ -776,7 +776,7 @@ inline double FermionOnSphereWithSU4SpinLong::GenericAA(int index, int n1, int n
   this->ProdATemporaryState &= ~(((ULONGLONG) 0x1ul) << n1);
   if (this->ProdATemporaryState != ((ULONGLONG) 0x0ul))
     {
-      while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
+      while ((this->ProdATemporaryState >> this->ProdALzMax) == ((ULONGLONG) 0x0ul))
 	--this->ProdALzMax;
     }
   else
