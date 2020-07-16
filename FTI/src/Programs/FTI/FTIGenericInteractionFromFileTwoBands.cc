@@ -961,6 +961,10 @@ int main(int argc, char** argv)
 		  NbrParticlesBand2DownPlus = new int [NbrSymmetrySectors];
 		  NbrParticlesBand1DownMinus = new int [NbrSymmetrySectors];
 		  NbrParticlesBand2DownMinus = new int [NbrSymmetrySectors];
+		  PzParityValues1 = new int[NbrSymmetrySectors];
+		  SzParityValues1 = new int[NbrSymmetrySectors];
+		  PzParityValues2 = new int[NbrSymmetrySectors];
+		  SzParityValues2 = new int[NbrSymmetrySectors];
 		  NbrSymmetrySectors = 0;
 		  for (int TmpUp1 = 0; TmpUp1 <= MaxNbrParticlesPerSector; ++TmpUp1)
 		    {
@@ -980,6 +984,10 @@ int main(int argc, char** argv)
 				  NbrParticlesBand2DownPlus[NbrSymmetrySectors] = TmpDown2;
 				  NbrParticlesBand1DownMinus[NbrSymmetrySectors] = 0;
 				  NbrParticlesBand2DownMinus[NbrSymmetrySectors] = 0;
+				  PzParityValues1[NbrSymmetrySectors] = 0;
+				  PzParityValues2[NbrSymmetrySectors] = 0;
+				  SzParityValues1[NbrSymmetrySectors] = 0;
+				  SzParityValues2[NbrSymmetrySectors] = 0;
 				  NbrSymmetrySectors += NbrMomentumSectors;
 				}
 			    }

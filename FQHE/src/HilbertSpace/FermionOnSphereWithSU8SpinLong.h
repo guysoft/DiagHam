@@ -385,9 +385,13 @@ inline int FermionOnSphereWithSU8SpinLong::GenericAdA(int index, int m, int n, d
   int NewLargestBit = StateHighestBit;
   coefficient = -this->SignLookUpTable[(State >> n) & this->SignLookUpTableMask[n]];
   coefficient *= this->SignLookUpTable[(State >> (n + 16)) & this->SignLookUpTableMask[n + 16]];
-#ifdef  __64_BITS__
   coefficient *= this->SignLookUpTable[(State >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
   coefficient *= this->SignLookUpTable[(State >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#ifdef __128_BIT_LONGLONG__
+  coefficient *= this->SignLookUpTable[(State >> (n + 64)) & this->SignLookUpTableMask[n + 64]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 80))  & this->SignLookUpTableMask[n + 80]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 96)) & this->SignLookUpTableMask[n + 96]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 112)) & this->SignLookUpTableMask[n + 112]];
 #endif
   State &= ~(((ULONGLONG) 0x1ul) << n);
   if (State != ((ULONGLONG) 0x0ul))
@@ -407,9 +411,13 @@ inline int FermionOnSphereWithSU8SpinLong::GenericAdA(int index, int m, int n, d
     {
       coefficient *= this->SignLookUpTable[(State >> m) & this->SignLookUpTableMask[m]];
       coefficient *= this->SignLookUpTable[(State >> (m + 16)) & this->SignLookUpTableMask[m + 16]];
-#ifdef  __64_BITS__
       coefficient *= this->SignLookUpTable[(State >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
       coefficient *= this->SignLookUpTable[(State >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#ifdef __128_BIT_LONGLONG__
+      coefficient *= this->SignLookUpTable[(State >> (m + 64)) & this->SignLookUpTableMask[m + 64]];
+      coefficient *= this->SignLookUpTable[(State >> (m + 80))  & this->SignLookUpTableMask[m + 80]];
+      coefficient *= this->SignLookUpTable[(State >> (m + 96)) & this->SignLookUpTableMask[m + 96]];
+      coefficient *= this->SignLookUpTable[(State >> (m + 112)) & this->SignLookUpTableMask[m + 112]];
 #endif
     }
   State |= ((ULONGLONG) 0x1ul) << m;
@@ -438,16 +446,24 @@ inline double FermionOnSphereWithSU8SpinLong::AsigmaAsigma (int index, int n1, i
   this->ProdALzMax = this->StateHighestBit[index];
   double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n2) & this->SignLookUpTableMask[n2]];
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];
-#ifdef  __64_BITS__
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
+#ifdef __128_BIT_LONGLONG__
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 64)) & this->SignLookUpTableMask[n2 + 64]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 80))  & this->SignLookUpTableMask[n2 + 80]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 96)) & this->SignLookUpTableMask[n2 + 96]];
+  Coefficient *= this->SignLookUpTable[( this->ProdATemporaryState >> (n2 + 112)) & this->SignLookUpTableMask[n2 + 112]];
 #endif
   this->ProdATemporaryState &= ~(((ULONGLONG) 0x1ul) << n2);
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> n1) & this->SignLookUpTableMask[n1]];
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
-#ifdef  __64_BITS__
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
+#ifdef __128_BIT_LONGLONG__
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 64)) & this->SignLookUpTableMask[n1 + 64]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 80))  & this->SignLookUpTableMask[n1 + 80]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 96)) & this->SignLookUpTableMask[n1 + 96]];
+  Coefficient *= this->SignLookUpTable[( this->ProdATemporaryState >> (n1 + 112)) & this->SignLookUpTableMask[n1 + 112]];
 #endif
   this->ProdATemporaryState &= ~(((ULONGLONG) 0x1ul) << n1);
   if (this->ProdATemporaryState != ((ULONGLONG) 0x0ul))
@@ -529,9 +545,13 @@ inline int FermionOnSphereWithSU8SpinLong::AdsigmaAdsigma (int m1, int m2, int s
     {
       coefficient *= this->SignLookUpTable[(TmpState >> m2) & this->SignLookUpTableMask[m2]];
       coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 16))  & this->SignLookUpTableMask[m2 + 16]];
-#ifdef  __64_BITS__
       coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 32)) & this->SignLookUpTableMask[m2 + 32]];
       coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
+#ifdef __128_BIT_LONGLONG__
+      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 64)) & this->SignLookUpTableMask[m2 + 64]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 80))  & this->SignLookUpTableMask[m2 + 80]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 96)) & this->SignLookUpTableMask[m2 + 96]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 112)) & this->SignLookUpTableMask[m2 + 112]];
 #endif
     }
   TmpState |= (((ULONGLONG) 0x1ul) << m2);
@@ -541,9 +561,13 @@ inline int FermionOnSphereWithSU8SpinLong::AdsigmaAdsigma (int m1, int m2, int s
     {
       coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
-#ifdef  __64_BITS__
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
+#ifdef __128_BIT_LONGLONG__
+      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 64)) & this->SignLookUpTableMask[m1 + 64]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 80))  & this->SignLookUpTableMask[m1 + 80]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 96)) & this->SignLookUpTableMask[m1 + 96]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 112)) & this->SignLookUpTableMask[m1 + 112]];
 #endif
     }
   TmpState |= (((ULONGLONG) 0x1ul) << m1);
