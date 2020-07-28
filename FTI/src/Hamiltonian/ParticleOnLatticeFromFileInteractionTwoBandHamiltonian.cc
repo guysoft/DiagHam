@@ -780,8 +780,7 @@ void ParticleOnLatticeFromFileInteractionTwoBandHamiltonian::EvaluateOneBodyFact
     }
       
   if (this->FlatBand == false)
-    {
-
+    { 
       bool** TmpOneBodyFlags = new bool*[this->NbrInternalIndices];
       for (int sigma1 = 0; sigma1 < this->NbrInternalIndices; ++sigma1)
 	{

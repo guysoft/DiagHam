@@ -100,6 +100,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
+  (*SystemGroup) += new SingleDoubleOption ('\n', "energy-shift", "apply a temporary energy shift during the diagonalization", 0.0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -141,6 +142,7 @@ int main(int argc, char** argv)
   int NbrSitesY = Manager.GetInteger("nbr-sitey");
   int NbrSites = 2 * NbrSitesX * NbrSitesY;
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
+  double EnergyShift = Manager.GetDouble("energy-shift");
   int MinKx = 0;
   int MaxKx = NbrSitesX - 1;
   if (Manager.GetInteger("only-kx") >= 0)
@@ -1785,17 +1787,18 @@ int main(int argc, char** argv)
 	    }
 	  EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
 	  delete[] TmpExtention;
+	  Hamiltonian->ShiftHamiltonian(EnergyShift);
 	  if (Manager.GetBoolean("real-interaction"))
 	    {
 	      GenericRealMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix,
-				       CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
+				       CommentLine, EnergyShift,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 	      MainTaskOperation TaskOperation (&Task);
 	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 	    }
 	  else
 	    {
 	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix,
-					  CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
+					  CommentLine, EnergyShift,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 	      MainTaskOperation TaskOperation (&Task);
 	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 	    }
