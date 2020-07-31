@@ -1573,9 +1573,9 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyAddMultiplyCompone
   if (this->NbrDiagonalInteractionFactors>0 || this->NbrRhoRhoInteractionFactors>0)
     {
       Coefficient = 0.0;
-      if (NbrDiagonalInteractionFactors!=0.0)
+      if (NbrDiagonalInteractionFactors!=0)
 	Coefficient += particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
-      if (NbrRhoRhoInteractionFactors!=0.0)
+      if (NbrRhoRhoInteractionFactors!=0)
 	Coefficient += particles->RhoRhoDiagonal(index, NbrRhoRhoInteractionFactors, RhoRhoInteractionFactors, RhoRhoQ12Values);
       vDestination[index] +=  Coefficient * vSource[index];
     }

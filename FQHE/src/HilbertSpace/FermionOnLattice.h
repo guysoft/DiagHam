@@ -164,6 +164,11 @@ class FermionOnLattice :  public ParticleOnLattice
   // return value = number of sites
   virtual int GetNbrSites();
 
+  // get the minimum number of particles
+  //
+  // return value = smallest number of particles within Hilbert Space
+  virtual int GetMinNbrParticles() {return this->NbrFermions;}
+
   // get the number of sublattices
   //
   // return value = number of sublattices

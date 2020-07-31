@@ -131,6 +131,11 @@ class SingleParticleOnLattice : public ParticleOnLattice
   // return value = number of sites
   virtual int GetNbrSites();
 
+  // get the minimum number of particles
+  //
+  // return value = smallest number of particles within Hilbert Space
+  virtual int GetMinNbrParticles() {return 1;}
+
   // get the number of sublattices
   //
   // return value = number of sublattices

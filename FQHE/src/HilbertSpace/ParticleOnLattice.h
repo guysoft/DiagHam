@@ -78,6 +78,11 @@ class ParticleOnLattice :  public AbstractQHEParticle
   // return value = number of sites
   virtual int GetNbrSites() = 0;
 
+  // get the minimum number of particles
+  //
+  // return value = smallest number of particles within Hilbert Space
+  virtual int GetMinNbrParticles() = 0;
+
   // get the number of sublattices
   //
   // return value = number of sublattices

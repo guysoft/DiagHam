@@ -346,9 +346,8 @@ void ParticleOnLatticeDeltaHamiltonian::EvaluateInteractionFactors()
     }
   else // no such interactions
     {
-      if (this->Particles->GetParticleStatistic() == ParticleOnLattice::FermionicStatistic)
+      if ((this->Particles->GetParticleStatistic() == ParticleOnLattice::FermionicStatistic) && (this->Particles->GetMinNbrParticles()>1))
 	{
-	  std::cout << "Initializing fermions"<<std::endl;
 	  this->NbrDiagonalInteractionFactors=0;
 	  this->NbrRhoRhoInteractionFactors = 2*this->NbrSites - this->Ly * (this->CylinderGeometry==true);
 	  this->RhoRhoInteractionFactors = new double[this->NbrRhoRhoInteractionFactors];

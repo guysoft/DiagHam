@@ -85,12 +85,13 @@ int main(int argc, char** argv)
   
   AbstractMCSamplingFunction* SamplingFunction = SamplingFunctionManager.GetSamplingFunction();
 
-  if (TestWaveFunction==0)
+  if (TestWaveFunction==0 && SamplingFunction==0)
     {
       cout << "Invalid wavefunction requested - list available states with --list-wavefunctions"<<endl;
       exit(-1);
     }
-  cout << "Function: " << WaveFunctionManager.GetDescription()<<endl;
+  if (TestWaveFunction!=0)
+    cout << "Function: " << WaveFunctionManager.GetDescription()<<endl;
   if (SamplingFunction!=0)
     cout << "Sampler:  " << SamplingFunctionManager.GetDescription()<<endl;
 
@@ -152,7 +153,7 @@ int main(int argc, char** argv)
       int highResRange=Manager.GetInteger("rho-highres-range");
       int highResFactor=Manager.GetInteger("rho-highres-factor");
       std::cout << "NbrFlux="<<NbrFlux<<endl;
-      Density = new SimpleDensityOnDisk(1.25*std::sqrt((double)NbrFlux)+2, Manager.GetInteger("rho-resolution"), highResFactor * highResRange, highResRange);
+      Density = new SimpleDensityOnDisk((1.25*std::sqrt((double)NbrFlux)+2)/(1.0-Manager.GetDouble("defect-angle")), Manager.GetInteger("rho-resolution"), highResFactor * highResRange, highResRange);
       MonteCarloRoutine.AddObservable(Density, 20);
       Density->IncludeInPrint(false); // do not write output to logfile.
     }
