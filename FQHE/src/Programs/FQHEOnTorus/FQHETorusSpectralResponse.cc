@@ -3,7 +3,6 @@
 
 #include "Tools/FQHEFiles/FQHEOnTorusFileTools.h"
 #include "Tools/FQHEFiles/FQHETorusPseudopotentialTools.h" //added by ba340
-#include "Tools/FTITightBinding/TightBindingModelHofstadterSquare.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
