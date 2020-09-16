@@ -238,7 +238,7 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandHamiltonian::EvaluateMNOn
 			  Index = particles->AdsigmaAsigma(i, j, sigma2, j, sigma1, Coefficient);
 			  if (Index < Dim)
 			    {
-			      vDestination[Index] += (Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * Source;
+			      vDestination[Index] += (Coefficient * Conj(this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j])) * Source;
 			    }
 			}
 		    }
@@ -270,12 +270,12 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandHamiltonian::EvaluateMNOn
 				{
 				  if (Index < i)
 				    {
-				      vDestination[Index] += (Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * Source;
-				      vDestination[i] += (Coefficient * Conj(this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j])) * vSource[Index];
+				      vDestination[Index] += (Coefficient * Conj(this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j])) * Source;
+				      vDestination[i] += (Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * vSource[Index];
 				    }
 				  else
 				    {
-				      vDestination[Index] += (Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * Source;
+				      vDestination[Index] += (Coefficient * Conj(this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j])) * Source;
 				    }
 				}
 			    }
@@ -356,7 +356,7 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandHamiltonian::EvaluateMNOn
 			  if (Index < Dim)
 			    {
 			      for (int p = 0; p < nbrVectors; ++p)
-				vDestinations[p][Index] += Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j] * vSources[p][i];
+				vDestinations[p][Index] += Coefficient * Conj(this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * vSources[p][i];
 			    }
 			}
 		    }
@@ -393,14 +393,14 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandHamiltonian::EvaluateMNOn
 				{
 				  for (int p = 0; p < nbrVectors; ++p)
 				    {
-				      vDestinations[p][Index] += Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j] * vSources[p][i];
-				      vDestinations[p][i] += Coefficient * Conj(this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * vSources[p][Index];
+				      vDestinations[p][Index] += Coefficient * Conj(this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * vSources[p][i];
+				      vDestinations[p][i] += Coefficient * (this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * vSources[p][Index];
 				    }
 				}
 			      else
 				{
 				  for (int p = 0; p < nbrVectors; ++p)
-				    vDestinations[p][Index] += Coefficient * this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j] * vSources[p][i];
+				    vDestinations[p][Index] += Coefficient * Conj(this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]) * vSources[p][i];
 				}
 			    }
 			}
@@ -469,7 +469,7 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandHamiltonian::EvaluateMNOn
 		      if (Index < Dim)
 			{
 			  indexArray[position] = Index;
-			  coefficientArray[position] = Coefficient * (this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]);
+			  coefficientArray[position] = Coefficient * Conj(this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]);
 			  ++position;
 			}
 		    }
@@ -510,11 +510,11 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandHamiltonian::EvaluateMNOn
 			  indexArray[position] = Index;
 			  if (Index == AbsoluteIndex)
 			    {
-			      coefficientArray[position] = 0.5 * Coefficient * (this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]);
+			      coefficientArray[position] = 0.5 * Coefficient * Conj(this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]);
 			    }
 			  else
 			    {
-			      coefficientArray[position] = Coefficient * (this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]);
+			      coefficientArray[position] = Coefficient * Conj(this->OneBodyInteractionFactorsSigma[sigma1][sigma2][j]);
 			    }			    
 			  ++position;
 			}

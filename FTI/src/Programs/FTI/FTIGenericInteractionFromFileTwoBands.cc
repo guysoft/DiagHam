@@ -77,6 +77,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('u', "interaction-rescaling", "global rescaling of the two-body intearction", 1.0);
   (*SystemGroup) += new SingleStringOption  ('\n', "singleparticle-file", "optional name of the file containing the one-body matrix elements");
   (*SystemGroup) += new BooleanOption  ('\n', "full-singleparticle", "the one-body matrix element file contains off-diagonal inter-band contributions");
+  (*SystemGroup) += new BooleanOption  ('\n', "complex-singlebody", "the one-body matrix element file contains complex entries (only valid when using --full-singleparticle)");
   (*SystemGroup) += new BooleanOption  ('\n', "add-valley", "add valley-like degree of freedom (i.e. U(1) symmetry) included in --interaction-file");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "pz-value", "twice the valley Pz value", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "ez-value", "twice the Ez =1/2(N_{1u}+N_{2d}-N_{1d}-N_{2u}) value", 0);
@@ -426,6 +427,11 @@ int main(int argc, char** argv)
 		{
 		  TmpBandIndices1 = OneBodyEnergyFile.GetAsIntegerArray(2);
 		  TmpOneBodyEnergies = OneBodyEnergyFile.GetAsDoubleArray(3);
+		  if (TmpOneBodyEnergies == 0)
+		    {
+		      OneBodyEnergyFile.DumpErrors(cout) << endl;
+		      return 0;
+		    }
 		  
 		  if (Manager.GetBoolean("add-spin") == false)
 		    {
@@ -448,6 +454,11 @@ int main(int argc, char** argv)
 		  TmpValleyIndices = OneBodyEnergyFile.GetAsIntegerArray(2);
 		  TmpBandIndices1 = OneBodyEnergyFile.GetAsIntegerArray(3);
 		  TmpOneBodyEnergies = OneBodyEnergyFile.GetAsDoubleArray(4);
+		  if (TmpOneBodyEnergies == 0)
+		    {
+		      OneBodyEnergyFile.DumpErrors(cout) << endl;
+		      return 0;
+		    }
 		  if (Manager.GetBoolean("add-spin") == false)
 		    {
 		      for (int i = 0; i < NbrEnergies; ++i)
@@ -490,25 +501,54 @@ int main(int argc, char** argv)
 		      ++TmpIndex;
 		    }
 		}
+	      Complex* TmpComplexOneBodyEnergies = 0;
 	      if (Manager.GetBoolean("add-valley") == false)
 		{
 		  TmpBandIndices1 = OneBodyEnergyFile.GetAsIntegerArray(2);
 		  TmpBandIndices2 = OneBodyEnergyFile.GetAsIntegerArray(3);
-		  TmpOneBodyEnergies = OneBodyEnergyFile.GetAsDoubleArray(4);
-		  
+		  if (Manager.GetBoolean("complex-singlebody") == false)
+		    {
+		      TmpOneBodyEnergies = OneBodyEnergyFile.GetAsDoubleArray(4);
+		      TmpComplexOneBodyEnergies = 0;
+		    }
+		  else
+		    {
+		      TmpComplexOneBodyEnergies = OneBodyEnergyFile.GetAsComplexArray(4);
+		      TmpOneBodyEnergies = 0;
+		    }
+		  if ((TmpOneBodyEnergies == 0) && (TmpComplexOneBodyEnergies == 0))
+		    {
+		      OneBodyEnergyFile.DumpErrors(cout) << endl;
+		      return 0;
+		    }
 		  if (Manager.GetBoolean("add-spin") == false)
 		    {
 		      for (int i = 0; i < NbrEnergies; ++i)
 			{
-			  BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(TmpBandIndices1[i], TmpBandIndices2[i], TmpOneBodyEnergies[i]);
+			  if (TmpOneBodyEnergies != 0)
+			    {
+			      BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(TmpBandIndices1[i], TmpBandIndices2[i], TmpOneBodyEnergies[i]);
+			    }
+			  else
+			    {
+			      BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(TmpBandIndices1[i], TmpBandIndices2[i], TmpComplexOneBodyEnergies[i]);
+			    }
 			}
 		    }
 		  else
 		    {
 		      for (int i = 0; i < NbrEnergies; ++i)
 			{
-			  BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(TmpBandIndices1[i], TmpBandIndices2[i], TmpOneBodyEnergies[i]);
-			  BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(2 + TmpBandIndices1[i], 2 + TmpBandIndices2[i], TmpOneBodyEnergies[i]);
+			  if (TmpOneBodyEnergies != 0)
+			    {
+			      BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(TmpBandIndices1[i], TmpBandIndices2[i], TmpOneBodyEnergies[i]);
+			      BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(2 + TmpBandIndices1[i], 2 + TmpBandIndices2[i], TmpOneBodyEnergies[i]);
+			    }
+			  else
+			    {
+			      BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(TmpBandIndices1[i], TmpBandIndices2[i], TmpComplexOneBodyEnergies[i]);
+			      BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(2 + TmpBandIndices1[i], 2 + TmpBandIndices2[i], TmpComplexOneBodyEnergies[i]);
+			    }
 			}
 		    }			      
 		}
@@ -517,22 +557,49 @@ int main(int argc, char** argv)
 		  TmpBandIndices1 = OneBodyEnergyFile.GetAsIntegerArray(2);
 		  TmpBandIndices2 = OneBodyEnergyFile.GetAsIntegerArray(3);
 		  TmpValleyIndices = OneBodyEnergyFile.GetAsIntegerArray(4);
-		  TmpOneBodyEnergies = OneBodyEnergyFile.GetAsDoubleArray(5);
+		  if (Manager.GetBoolean("complex-singlebody") == false)
+		    {
+		      TmpOneBodyEnergies = OneBodyEnergyFile.GetAsDoubleArray(5);
+		    }
+		  else
+		    {
+		      TmpComplexOneBodyEnergies = OneBodyEnergyFile.GetAsComplexArray(5);
+		    }
+		  if ((TmpOneBodyEnergies == 0) && (TmpComplexOneBodyEnergies == 0))
+		    {
+		      OneBodyEnergyFile.DumpErrors(cout) << endl;
+		      return 0;
+		    }
 		  if (Manager.GetBoolean("add-spin") == false)
 		    {
 		      for (int i = 0; i < NbrEnergies; ++i)
 			{
-			  BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(TmpBandIndices1[i] + (TmpValleyIndices[i] + 1), TmpBandIndices2[i] + (TmpValleyIndices[i] + 1), TmpOneBodyEnergies[i]);
+			  if (TmpOneBodyEnergies != 0)
+			    {
+			      BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(TmpBandIndices1[i] + (TmpValleyIndices[i] + 1), TmpBandIndices2[i] + (TmpValleyIndices[i] + 1), TmpOneBodyEnergies[i]);
+			    }
+			  else
+			    {
+			      BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(TmpBandIndices1[i] + (TmpValleyIndices[i] + 1), TmpBandIndices2[i] + (TmpValleyIndices[i] + 1), TmpComplexOneBodyEnergies[i]);
+			    }
 			}
 		    }
 		  else
 		    {
 		      for (int i = 0; i < NbrEnergies; ++i)
 			{
-			  BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(TmpBandIndices1[i] + (TmpValleyIndices[i] + 1), TmpBandIndices2[i] + (TmpValleyIndices[i] + 1), TmpOneBodyEnergies[i]);
-			  BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(4 + TmpBandIndices1[i] + (TmpValleyIndices[i] + 1), 4 + TmpBandIndices2[i] + (TmpValleyIndices[i] + 1), TmpOneBodyEnergies[i]);
+			  if (TmpOneBodyEnergies != 0)
+			    {
+			      BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(TmpBandIndices1[i] + (TmpValleyIndices[i] + 1), TmpBandIndices2[i] + (TmpValleyIndices[i] + 1), TmpOneBodyEnergies[i]);
+			      BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(4 + TmpBandIndices1[i] + (TmpValleyIndices[i] + 1), 4 + TmpBandIndices2[i] + (TmpValleyIndices[i] + 1), TmpOneBodyEnergies[i]);
+			    }
+			  else
+			    {
+			      BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(TmpBandIndices1[i] + (TmpValleyIndices[i] + 1), TmpBandIndices2[i] + (TmpValleyIndices[i] + 1), TmpComplexOneBodyEnergies[i]);
+			      BlochHamiltonian[IndexToKIndex[(TmpKxValues[i] * NbrSitesY) + TmpKyValues[i]]].SetMatrixElement(4 + TmpBandIndices1[i] + (TmpValleyIndices[i] + 1), 4 + TmpBandIndices2[i] + (TmpValleyIndices[i] + 1), TmpComplexOneBodyEnergies[i]);
+			    }
 			}
-		    }			      
+		    }
 		}
 	      TightBindingModel = new TightBindingModel2DExplicitBlochHamiltonian (NbrSitesX, NbrSitesY, TmpNbrBands, 0.0, 0.0,
 										   KxValues, KyValues, BlochHamiltonian,
