@@ -215,10 +215,10 @@ double ParticleOnTorusPerturbedCoulombHamiltonian::GetVofQ(double Q2_half)
 {
   // Coulomb term
   double CoulombTerm = 1.0;
-  if (Q2_half != 0.0)
+  if ((Q2_half != 0.0) && (this->CoulombPrefactor != 0.0))
     {
-      CoulombTerm = this->CoulombPrefactor*this->FormFactor(Q2_half);
-      CoulombTerm *= CoulombTerm;
+      CoulombTerm = this->FormFactor(Q2_half);
+      CoulombTerm *= this->CoulombPrefactor*CoulombTerm;
       CoulombTerm /= sqrt(2.0*Q2_half);
     }
   else CoulombTerm=0.0;
@@ -226,7 +226,7 @@ double ParticleOnTorusPerturbedCoulombHamiltonian::GetVofQ(double Q2_half)
   double TmpInteraction = 0.0;
   for (int i = 0; i < this->NbrPseudopotentials; ++i)
     if (this->Pseudopotentials[i] != 0.0)
-      TmpInteraction += this->Pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(Q2_half);
+      TmpInteraction += this->Pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(2.0*Q2_half);
   
-  return exp(-Q2_half) * (TmpInteraction+CoulombTerm);
+  return exp(-2.0*Q2_half) * (TmpInteraction+CoulombTerm);
 }
